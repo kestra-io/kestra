@@ -86,52 +86,38 @@
                 </div>
             </KsCard>
 
+            <KsCard v-if="focusedTaskRun" shadow="never" class="failure-debug-panel__context">
+                <KsTabs v-model="activeContextTab" type="box">
+                    <KsTabPane name="stateHistory" :label="$t('failureDebugPanel.stateHistory.title')">
+                        <FailureStateHistory :taskRun="focusedTaskRun" />
+                    </KsTabPane>
+                    <KsTabPane name="resolvedConfig" :label="$t('failureDebugPanel.resolvedConfig.title')">
+                        <FailureResolvedConfig
+                            :rawBlock="focusedRawTaskBlock"
+                            :flowLoading="focusedFlowLoading"
+                            :flowError="focusedFlowError"
+                            :executionId="execution.id"
+                            :taskRunId="focusedTaskRun.id"
+                        />
+                    </KsTabPane>
+                    <KsTabPane name="executionInputs" :label="$t('failureDebugPanel.executionInputs.title')">
+                        <FailureExecutionInputs
+                            :inputIds="flowInputIds"
+                            :executionId="execution.id"
+                            :taskRunId="focusedTaskRun.id"
+                        />
+                    </KsTabPane>
+                    <KsTabPane name="upstreamOutputs" :label="$t('failureDebugPanel.upstreamOutputs.title')">
+                        <FailureUpstreamOutputs
+                            :referencedTaskIds="referencedOutputTaskIds"
+                            :taskRunList="taskRunList"
+                            :executionId="execution.id"
+                        />
+                    </KsTabPane>
+                </KsTabs>
+            </KsCard>
+
             <div class="failure-debug-panel__grid">
-                <KsCard shadow="never">
-                    <template #header>
-                        <h4>{{ $t("failureDebugPanel.stateHistory.title") }}</h4>
-                    </template>
-                    <FailureStateHistory v-if="focusedTaskRun" :taskRun="focusedTaskRun" />
-                </KsCard>
-
-                <KsCard shadow="never">
-                    <template #header>
-                        <h4>{{ $t("failureDebugPanel.resolvedConfig.title") }}</h4>
-                    </template>
-                    <FailureResolvedConfig
-                        v-if="focusedTaskRun"
-                        :rawBlock="focusedRawTaskBlock"
-                        :flowLoading="focusedFlowLoading"
-                        :flowError="focusedFlowError"
-                        :executionId="execution.id"
-                        :taskRunId="focusedTaskRun.id"
-                    />
-                </KsCard>
-
-                <KsCard shadow="never">
-                    <template #header>
-                        <h4>{{ $t("failureDebugPanel.executionInputs.title") }}</h4>
-                    </template>
-                    <FailureExecutionInputs
-                        v-if="focusedTaskRun"
-                        :inputIds="flowInputIds"
-                        :executionId="execution.id"
-                        :taskRunId="focusedTaskRun.id"
-                    />
-                </KsCard>
-
-                <KsCard shadow="never">
-                    <template #header>
-                        <h4>{{ $t("failureDebugPanel.upstreamOutputs.title") }}</h4>
-                    </template>
-                    <FailureUpstreamOutputs
-                        v-if="focusedTaskRun"
-                        :referencedTaskIds="referencedOutputTaskIds"
-                        :taskRunList="taskRunList"
-                        :executionId="execution.id"
-                    />
-                </KsCard>
-
                 <KsCard shadow="never">
                     <template #header>
                         <h4>{{ $t("failureDebugPanel.structuralImpact.title") }}</h4>
@@ -180,7 +166,7 @@
     import {computed, nextTick, ref, watch, type ComponentPublicInstance} from "vue"
     import {useI18n} from "vue-i18n"
     import {useRoute} from "vue-router"
-    import {State, KsExecutionStatus} from "@kestra-io/design-system"
+    import {State, KsExecutionStatus, KsTabs, KsTabPane} from "@kestra-io/design-system"
     import Close from "vue-material-design-icons/Close.vue"
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
     import Pencil from "vue-material-design-icons/Pencil.vue"
@@ -243,6 +229,7 @@
     const announcement = ref("")
     const timeRange = ref<TimeRange | undefined>(undefined)
     const focusedId = ref<string | undefined>(undefined)
+    const activeContextTab = ref("stateHistory")
 
     const ts = (date: string): number => new Date(date).getTime()
 

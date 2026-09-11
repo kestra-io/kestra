@@ -88,11 +88,13 @@ public class RunContextFactory {
     @Inject
     private AssetManagerFactory assetManagerFactory;
 
+    // Late injection: both read a repository, which a worker does not have, and a worker only ever
+    // builds a run context from variables — never from an execution.
     @Inject
-    private TaskOutputService taskOutputService;
+    private Provider<TaskOutputService> taskOutputServiceProvider;
 
     @Inject
-    private ExecutionOutputService executionOutputService;
+    private Provider<ExecutionOutputService> executionOutputServiceProvider;
 
     @Inject
     private Provider<RunContextInitializer> runContextInitializerProvider;
@@ -123,7 +125,7 @@ public class RunContextFactory {
             newRunVariablesBuilder()
                 .withFlow(flow)
                 .withExecution(execution)
-                .withOutputs(taskOutputService.computeOutputs(execution))
+                .withOutputs(taskOutputServiceProvider.get().computeOutputs(execution))
                 .withExecutionOutputs(executionOutputs(flow, execution))
         );
         Map<String, Object> variables = runVariablesBuilder.build(runContextLogger, PropertyContext.create(variableRenderer));
@@ -155,7 +157,7 @@ public class RunContextFactory {
             .withFlow(flow)
             .withTask(task)
             .withExecution(execution)
-            .withOutputs(taskOutputService.computeOutputs(execution))
+            .withOutputs(taskOutputServiceProvider.get().computeOutputs(execution))
             .withExecutionOutputs(executionOutputs(flow, execution))
             .withTaskRun(taskRun);
         Map<String, Object> variables = runVariablesBuilder.build(runContextLogger, PropertyContext.create(variableRenderer));
@@ -267,7 +269,7 @@ public class RunContextFactory {
         Execution realExecution = execution != null && execution.getLoopRun() != null ? execution.getLoopRun().parent() : execution;
 
         try {
-            return executionOutputService.getOutputs(realExecution);
+            return executionOutputServiceProvider.get().getOutputs(realExecution);
         } catch (InternalException e) {
             throw new KestraRuntimeException(e);
         }

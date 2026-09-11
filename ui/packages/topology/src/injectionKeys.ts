@@ -5,3 +5,4 @@ export const EXECUTION_INJECTION_KEY = Symbol("execution-injection-key") as Inje
 export const SUBFLOWS_EXECUTIONS_INJECTION_KEY = Symbol("subflows-executions-injection-key") as InjectionKey<ComputedRef<Record<string, GraphExecution>>>
 export const SHOW_EXTRA_DETAILS_INJECTION_KEY = Symbol("show-extra-details-injection-key") as InjectionKey<Ref<boolean>>
 export const VALIDATION_ISSUES_INJECTION_KEY = Symbol("validation-issues-injection-key") as InjectionKey<ComputedRef<Map<string, string[]>>>
+export const FOCUSED_TASK_INJECTION_KEY = Symbol("focused-task-injection-key") as InjectionKey<ComputedRef<string | undefined>>

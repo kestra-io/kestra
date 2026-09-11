@@ -3,6 +3,8 @@ package io.kestra.worker.processors;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.MetricEntry;
+import io.kestra.core.models.tasks.TaskRunStatistic;
+import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.runners.RunContextInitializer;
 import io.kestra.core.runners.RunContextLoggerFactory;
 import io.kestra.core.runners.Worker;
@@ -20,9 +22,11 @@ import io.kestra.worker.WorkerSecurityService;
 import io.kestra.worker.queues.WorkerQueueRegistry;
 import io.kestra.worker.services.ExecutionKilledManager;
 
+import jakarta.annotation.Nullable;
 import jakarta.annotation.PostConstruct;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
+import io.micronaut.context.annotation.Value;
 
 @Singleton
 public class WorkerJobProcessorFactory {
@@ -51,6 +55,10 @@ public class WorkerJobProcessorFactory {
     private TracerFactory tracerFactory;
     private Tracer tracer;
 
+    @Inject
+    @Nullable //since the taskrun-statistic service is disabled by default
+    private DispatchQueueInterface<TaskRunStatistic> taskRunStatisticQueue;
+
     @PostConstruct
     public void init() {
         this.tracer = tracerFactory.getTracer(Worker.class, "WORKER");
@@ -70,7 +78,8 @@ public class WorkerJobProcessorFactory {
                 runContextLoggerFactory,
                 workerQueueRegistry.getOrCreate(context, WorkerTaskResult.class),
                 workerQueueRegistry.getOrCreate(context, MetricEntry.class),
-                executionKilledManager
+                executionKilledManager,
+                taskRunStatisticQueue
             );
         } else if (job instanceof WorkerTrigger) {
             return (WorkerJobProcessor<T>) new WorkerTriggerProcessor(

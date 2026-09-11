@@ -2,6 +2,7 @@ package io.kestra.jdbc.repository;
 
 import java.sql.Timestamp;
 import java.time.Duration;
+import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
 import java.util.*;

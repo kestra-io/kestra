@@ -28,8 +28,12 @@ import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
+import io.kestra.core.models.tasks.TaskRunStatistic;
+import io.kestra.core.repositories.TaskRunStatisticRepositoryInterface;
+import io.micronaut.context.annotation.Property;
 
 @KestraTest
+@Property(name = "kestra.task-run-statistics.enabled", value = "true")
 class DefaultIndexerTest {
     @Inject
     private DefaultIndexer indexer;
@@ -51,6 +55,12 @@ class DefaultIndexerTest {
 
     @Inject
     private MetricRepositoryInterface metricRepository;
+
+    @Inject
+    private TaskRunStatisticRepositoryInterface taskRunStatisticsRepository;
+
+    @Inject
+    private DispatchQueueInterface<TaskRunStatistic> taskRunStatisticQueue;
 
     @Test
     void shouldPersistExecutionStatisticsConsumedFromTheQueue() throws Exception {
@@ -136,6 +146,81 @@ class DefaultIndexerTest {
             ArrayListTotal<MetricEntry> metrics = metricRepository.findByExecutionId(tenant, executionId, Pageable.from(1, 10));
             assertThat(metrics).hasSize(1);
             assertThat(metrics.getFirst().getName()).isEqualTo("counter");
+        });
+    }
+
+    @Test
+    void shouldPersistTaskRunStatisticsConsumedFromTheQueue() throws Exception {
+        // Given
+        indexer.startQueues();
+
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        String executionId = FriendlyId.createFriendlyId();
+        String taskRunId = FriendlyId.createFriendlyId();
+        Instant bucket = Instant.now().truncatedTo(ChronoUnit.MINUTES);
+
+        TaskRunStatistic statistic = new TaskRunStatistic(
+            tenant,
+            "namespace",
+            "flow",
+            "task",
+            bucket,
+            State.Type.SUCCESS,
+            1,
+            1000,
+            1000,
+            1000,
+            executionId,
+            taskRunId
+        );
+
+        // When
+        taskRunStatisticQueue.emit(statistic);
+
+        // Then: the indexer batch-consumes the queue asynchronously and persists it via saveBatch
+        await().atMost(Duration.ofSeconds(10)).untilAsserted(() ->
+        {
+            List<DailyExecutionStatistics> stats = taskRunStatisticsRepository.statistics(
+                tenant, "namespace", "flow", "task", bucket, bucket, DateUtils.GroupType.MINUTE
+            );
+            assertThat(stats).hasSize(1);
+            assertThat(stats.getFirst().getExecutionCounts().get(State.Type.SUCCESS)).isEqualTo(1L);
+        });
+    }
+
+    @Test
+    void shouldPersistTaskRunStatisticsCreatedFromTaskRunModel() throws Exception {
+        // Given
+        indexer.startQueues();
+
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        String executionId = FriendlyId.createFriendlyId();
+        String taskRunId = FriendlyId.createFriendlyId();
+        Instant bucket = Instant.now().truncatedTo(ChronoUnit.MINUTES);
+
+        TaskRun taskRun = TaskRun.builder()
+            .tenantId(tenant)
+            .namespace("namespace")
+            .flowId("flow")
+            .taskId("task")
+            .id(taskRunId)
+            .executionId(executionId)
+            .state(new State().withState(State.Type.SUCCESS))
+            .build();
+
+        TaskRunStatistic statistic = new TaskRunStatistic(taskRun, bucket);
+
+        // When
+        taskRunStatisticQueue.emit(statistic);
+
+        // Then
+        await().atMost(Duration.ofSeconds(10)).untilAsserted(() ->
+        {
+            List<DailyExecutionStatistics> stats = taskRunStatisticsRepository.statistics(
+                tenant, "namespace", "flow", "task", bucket, bucket, DateUtils.GroupType.MINUTE
+            );
+            assertThat(stats).hasSize(1);
+            assertThat(stats.getFirst().getExecutionCounts().get(State.Type.SUCCESS)).isEqualTo(1L);
         });
     }
 }

@@ -218,6 +218,9 @@ public class MetricRegistry {
     public static final String METRIC_JDBC_EXECUTION_STATISTICS_COMPACTOR_DURATION = "jdbc.execution-statistics.compactor.duration";
     public static final String METRIC_JDBC_EXECUTION_STATISTICS_COMPACTOR_DURATION_DESCRIPTION = "Duration of a single execution statistics compaction run";
 
+    public static final String METRIC_JDBC_TASKRUN_STATISTICS_COMPACTOR_DURATION = "jdbc.taskrun-statistics.compactor.duration";
+    public static final String METRIC_JDBC_TASKRUN_STATISTICS_COMPACTOR_DURATION_DESCRIPTION = "Duration of a single taskrun statistics compaction run";
+
     public static final String METRIC_QUEUE_MESSAGE_BIG_TOTAL = "queue.message.big.total";
     public static final String METRIC_QUEUE_MESSAGE_BIG_TOTAL_DESCRIPTION = "Total number of big messages";
     public static final String METRIC_QUEUE_MESSAGE_EMITTED_TOTAL = "queue.message.emitted.total";

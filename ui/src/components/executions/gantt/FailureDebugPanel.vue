@@ -96,6 +96,21 @@
 
                 <KsCard shadow="never">
                     <template #header>
+                        <h4>{{ $t("failureDebugPanel.resolvedConfig.title") }}</h4>
+                    </template>
+                    <FailureResolvedConfig
+                        v-if="focusedTaskRun"
+                        :namespace="execution.namespace"
+                        :flowId="execution.flowId"
+                        :flowRevision="execution.flowRevision"
+                        :executionId="execution.id"
+                        :taskRunId="focusedTaskRun.id"
+                        :taskId="focusedTaskRun.taskId"
+                    />
+                </KsCard>
+
+                <KsCard shadow="never">
+                    <template #header>
                         <h4>{{ $t("failureDebugPanel.structuralImpact.title") }}</h4>
                     </template>
                     <FailureStructuralImpact
@@ -151,6 +166,7 @@
     import Restart from "../overview/components/actions/Restart.vue"
     import FailureMiniTimeline from "./FailureMiniTimeline.vue"
     import FailureStateHistory from "./FailureStateHistory.vue"
+    import FailureResolvedConfig from "./FailureResolvedConfig.vue"
     import FailureStructuralImpact from "./FailureStructuralImpact.vue"
     import FailureLogPanel from "./FailureLogPanel.vue"
 

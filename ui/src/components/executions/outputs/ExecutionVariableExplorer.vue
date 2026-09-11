@@ -176,7 +176,8 @@
                 : t("variable_explorer.n_items", {count: value.length})
         }
         if (typeof value === "object") {
-            const keys = Object.keys(value as object)
+            // Each key costs a character at least, so more than this can only build text nobody sees.
+            const keys = Object.keys(value as object).slice(0, PREVIEW_MAX_CHARS)
             // Unguarded, an empty object previews as `{  }`.
             return keys.length ? `{ ${keys.join(", ")} }` : "{}"
         }

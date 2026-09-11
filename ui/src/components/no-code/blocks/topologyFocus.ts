@@ -1,6 +1,6 @@
 import * as flowYamlUtils from "@kestra-io/topology/flow-yaml-utils"
 import {displayTaskOf} from "../../../utils/flowableBlockOps"
-import {ALL_SECTIONS, NESTED_BLOCK_KEYS} from "./blockSections"
+import {NESTED_BLOCK_KEYS, TASK_SECTIONS} from "./blockSections"
 
 export interface TopologyFocusNode {
     id: string
@@ -70,7 +70,9 @@ export function buildTopologyFocusOrder(source: string): TopologyFocusNode[] {
     const parsed = flowYamlUtils.parse<Record<string, unknown>>(source)
     if (!parsed) return []
     const out: TopologyFocusNode[] = []
-    for (const section of ALL_SECTIONS) {
+    // `triggers` is left out: the shortcuts act through the task helpers, so focusing a trigger
+    // would only add a stop where nothing can happen.
+    for (const section of TASK_SECTIONS) {
         walk(parsed[section], section, 0, out)
     }
     return out

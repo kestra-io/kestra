@@ -18,7 +18,7 @@ export const ALL_SECTIONS: BlockSection[] = ["tasks", "triggers", "errors", "fin
 /** Sections that hold tasks. `triggers` is excluded: a flow may legally reuse a trigger id for a task
  *  (FlowValidator checks task ids and trigger ids as two separate sets), so searching it when resolving
  *  a task would route the insertion into `triggers:`. */
-const TASK_SECTIONS: BlockSection[] = ["tasks", "errors", "finally", "afterExecution"]
+export const TASK_SECTIONS: BlockSection[] = ["tasks", "errors", "finally", "afterExecution"]
 
 const SECTION_SENTINEL_PREFIX = "__section:"
 const LANE_SENTINEL_PREFIX = "__lane:"
@@ -165,7 +165,10 @@ export interface MoveTarget {
  * destination index is resolved after the removal so a same-lane move cannot shift onto itself.
  */
 export function moveTaskOntoEdge(source: string, movedId: string, target: MoveTarget): string {
+    // An edge the task is already an endpoint of describes where it already is, and re-inserting it
+    // there would only cost it the `dependsOn` that is stripped on the way out.
     if (movedId === target.refId) return source
+    if (target.dagDependency?.fromId === movedId || target.dagDependency?.toId === movedId) return source
 
     const origin = resolveTaskInsertionTargetInAnySection(source, movedId)
     if (!origin) return source

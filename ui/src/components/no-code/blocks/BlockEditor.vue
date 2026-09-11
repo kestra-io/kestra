@@ -200,6 +200,7 @@
     import {useTaskPicker} from "./useTaskPicker"
     import {buildFooterHints, buildShortcutGroups, type FooterHint} from "./shortcutHints"
     import {BLOCK_EDITOR_KEYMAP} from "./keymap"
+    import {useAuthoringSurface} from "./useAuthoringSurface"
     import type {NoCodeProps} from "../../flows/noCodeTypes"
     import {usePlaygroundRun} from "../../../composables/playground/usePlaygroundRun"
     import {trackAuthoringAction} from "../../../utils/tabTracking"
@@ -641,9 +642,11 @@
         }
     }
 
+    const authoringSurface = useAuthoringSurface(editorEl)
+
     useBlockEditorKeyboard({
         keymap: BLOCK_EDITOR_KEYMAP,
-        dispatch: dispatchBlockEditorAction,
+        dispatch: (id, event) => (authoringSurface.isActive() ? dispatchBlockEditorAction(id, event) : false),
         isOverlayOpen: isAnyOverlayOpen,
     })
 

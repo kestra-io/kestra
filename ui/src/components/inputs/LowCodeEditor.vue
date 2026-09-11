@@ -304,6 +304,7 @@
     import {useBlockEditorProvides} from "../no-code/blocks/useBlockEditorProvides"
     import {BLOCK_EDITOR_KEYMAP} from "../no-code/blocks/keymap"
     import {useBlockEditorKeyboard} from "../no-code/blocks/useBlockEditorKeyboard"
+    import {useAuthoringSurface} from "../no-code/blocks/useAuthoringSurface"
     import {
         buildTopologyFocusOrder,
         firstChildOf,
@@ -914,13 +915,23 @@
     const focusedTaskId = ref<string | undefined>(undefined)
     const focusOrder = computed(() => buildTopologyFocusOrder(flowSource.value ?? ""))
 
-    const isAuthoringOverlayOpen = () => taskPicker.taskPickerVisible.value || Boolean(modalTarget.value)
+    const isAuthoringOverlayOpen = () =>
+        taskPicker.taskPickerVisible.value
+        || Boolean(modalTarget.value)
+        || isTaskModalOpen.value
+        || isDrawerOpen.value
+
+    /** The focus walk reaches every task-holding lane, so the action has to follow it there. */
+    function focusedSection(): BlockSection {
+        const node = focusOrder.value.find(entry => entry.id === focusedTaskId.value)
+        return node ? sectionFromParentPath(node.parentPath) : "tasks"
+    }
 
     function openFocusedTask() {
         const id = focusedTaskId.value
         const task = id ? sourceTaskById.value[id] : undefined
         if (!task) return
-        onEditTask({task, section: SECTIONS.TASKS})
+        onEditTask({task, section: focusedSection()})
     }
 
     function insertRelativeToFocused(position: "before" | "after") {
@@ -933,6 +944,11 @@
 
     function dispatchTopologyShortcut(id: string, event: KeyboardEvent) {
         if (props.isReadOnly || !props.isAllowedEdit) return false
+        // Checked here rather than through a watch: watching the order would re-parse the whole
+        // flow on every keystroke in the code editor, which shares this source.
+        if (focusedTaskId.value && !focusOrder.value.some(entry => entry.id === focusedTaskId.value)) {
+            focusedTaskId.value = undefined
+        }
         switch (id) {
         case "move":
             focusedTaskId.value = moveWithinSiblings(
@@ -952,7 +968,7 @@
             return
         case "delete":
             if (!focusedTaskId.value) return false
-            onDelete({id: focusedTaskId.value, section: SECTIONS.TASKS})
+            onDelete({id: focusedTaskId.value, section: focusedSection()})
             return
         case "insert-after":
             insertRelativeToFocused("after")
@@ -974,18 +990,15 @@
         }
     }
 
+    const authoringSurface = useAuthoringSurface(vueFlow)
+
     useBlockEditorKeyboard({
         keymap: BLOCK_EDITOR_KEYMAP,
-        dispatch: dispatchTopologyShortcut,
+        dispatch: (id, event) => (authoringSurface.isActive() ? dispatchTopologyShortcut(id, event) : false),
         isOverlayOpen: isAuthoringOverlayOpen,
     })
 
-    // A focused task that the source no longer holds would keep an invisible ring alive.
-    watch(focusOrder, (order) => {
-        if (focusedTaskId.value && !order.some(entry => entry.id === focusedTaskId.value)) {
-            focusedTaskId.value = undefined
-        }
-    })
+
 
     const onAddFlowableError = (event: {task: Record<string, any>}) => {
         const target = errorsLaneTarget(flowSource.value ?? "", event.task.id)

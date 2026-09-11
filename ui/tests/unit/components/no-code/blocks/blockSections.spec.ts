@@ -261,6 +261,22 @@ tasks:
             expect(moved.id).toBe("middle")
         })
 
+        it("is a no-op when dropped on an edge it already ends, keeping its dependsOn", () => {
+            const onOwnOutgoing = moveTaskOntoEdge(DAG, "middle", {
+                refId: "sink",
+                position: "before",
+                dagDependency: {fromId: "middle", toId: "sink"},
+            })
+            const onOwnIncoming = moveTaskOntoEdge(DAG, "middle", {
+                refId: "middle",
+                position: "before",
+                dagDependency: {fromId: "fetch", toId: "middle"},
+            })
+
+            expect(onOwnOutgoing).toBe(DAG)
+            expect(onOwnIncoming).toBe(DAG)
+        })
+
         it("leaves the source alone when the target id does not exist", () => {
             expect(moveTaskOntoEdge(SEQUENTIAL, "a", {refId: "nope", position: "after"})).toBe(SEQUENTIAL)
         })

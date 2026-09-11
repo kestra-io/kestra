@@ -162,6 +162,10 @@ charts:
       width: 6
     data:
       type: io.kestra.plugin.core.dashboard.data.Triggers
+      where:
+        - field: DISABLED
+          type: EQUAL_TO
+          value: false
       columns:
         namespace:
           field: NAMESPACE

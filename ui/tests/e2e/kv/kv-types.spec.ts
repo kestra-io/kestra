@@ -15,7 +15,7 @@ type RoundTrip = {
     /** Typed into the value control, in the pinned Europe/Paris timezone. */
     entered: string;
     storedType: string;
-    storedValue: any;
+    storedValue: unknown;
     /** What the value control holds once the entry is reopened; defaults to `entered`. */
     reopened?: string;
 }

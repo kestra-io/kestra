@@ -30,7 +30,7 @@
                         {{ $t("join_slack") }}
                     </KsDropdownItem>
                     
-                    <KsDropdownItem divided command="version">
+                    <KsDropdownItem v-if="configs" divided command="version" >
                         <KsIcon size="base">
                             <InformationIcon />
                         </KsIcon>

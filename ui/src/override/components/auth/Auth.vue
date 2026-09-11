@@ -38,15 +38,15 @@
                         <KsPopover width="max-content" trigger="hover" placement="right" :showArrow="false" :offset="24">
                             <template #default>
                                 <div class="auth-item__popover">
-                                    <div>{{ $t("Version") }}: {{ configs.version }}</div>
+                                    <div>{{ $t("version") }}: {{ configs.version }}</div>
                                     <div >
-                                        {{ $t("Commit id") }}:
+                                        {{ $t("commit_id") }}:
                                         <span class="auth-item__commit">
                                             {{ configs.commitId}}
                                         </span>
                                     </div>
                                     <div >
-                                        {{ $t("Date") }}:
+                                        {{ $t("date") }}:
                                         {{ dateUtils.dateFilter(configs.commitDate) }}
                                     </div>
                                 </div>

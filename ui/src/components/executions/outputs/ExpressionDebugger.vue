@@ -101,7 +101,7 @@
     const parsedResult = ref<unknown>(undefined)
 
     // Evaluating an expression over a large output put the whole result in Monaco. A JSON result
-    // previews through its parsed value so the editor is never handed a clipped, unparseable one.
+    // previews through its parsed value so the editor is never handed a clipped, broken one.
     const resultPreview = computed(() => parsedResult.value === undefined
         ? undefined
         : Utils.boundForDisplay(parsedResult.value))

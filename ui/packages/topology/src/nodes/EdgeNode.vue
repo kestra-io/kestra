@@ -35,8 +35,9 @@
             @keydown.space.stop.prevent="emit('add-task', addTarget)"
             @mouseenter="hovered = true"
             @mouseleave="hovered = false"
-            @dragover.prevent="onDragOver"
-            @dragleave="onDragLeave"
+            @dragenter.prevent="emit('drag-over-edge', id)"
+            @dragover.prevent
+            @dragleave="emit('drag-over-edge', undefined)"
             @drop.prevent="onDrop"
         >
             <span class="edge-add-button-dot"><Plus :size="12" /></span>
@@ -50,8 +51,7 @@
         :d="path[0]"
         @mouseenter="hovered = true"
         @mouseleave="hovered = false"
-        @dragover.prevent="onDragOver"
-        @dragleave="onDragLeave"
+        @dragover.prevent
         @drop.prevent="onDrop"
     />
 </template>
@@ -81,14 +81,6 @@
         (event: "drop-task", payload: {taskId: string; target: AddTaskTarget}): void
         (event: "drag-over-edge", edgeId: string | undefined): void
     }>()
-
-    function onDragOver() {
-        if (props.id) emit("drag-over-edge", props.id)
-    }
-
-    function onDragLeave() {
-        emit("drag-over-edge", undefined)
-    }
 
     function onDrop(event: DragEvent) {
         const taskId = event.dataTransfer?.getData("text/plain")
@@ -211,9 +203,18 @@
     .edge-add-button--standby {
         opacity: 1;
         color: var(--ks-text-link);
+        /* It is the drop target, so it takes the pointer and grows an invisible margin to hit.
+           Nodes share its z-index and come later in the DOM, so it also has to outrank them or a
+           marker overlapping a card is both invisible and unreachable. */
+        pointer-events: auto;
+        width: 2.5rem;
+        height: 2.5rem;
+        z-index: 10;
     }
 
     .edge-add-button-dot {
+        /* Purely decorative: entering it would count as leaving the button and cancel the target. */
+        pointer-events: none;
         display: flex;
         align-items: center;
         justify-content: center;

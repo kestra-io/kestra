@@ -289,10 +289,11 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
                                                     .orElse(null);
                                                 if (workerTask.getTask() instanceof WorkingDirectory) {
                                                     // WorkingDirectory is a flowable so it will be moved to RUNNING a few lines under
-                                                    workerJobEventQueue.emit(workerQueueId, WorkerJobEvent.of(workerTask, workerQueueId));
+                                                    executor.withWorkerJobEvent(WorkerJobEvent.of(workerTask, workerQueueId));
                                                 } else {
                                                     TaskRun taskRun = workerTask.getTaskRun().withState(State.Type.SUBMITTED);
-                                                    workerJobEventQueue.emit(workerQueueId, WorkerJobEvent.of(workerTask.withTaskRun(taskRun), workerQueueId));
+                                                    // WorkerJobEvents are collected here and emitted outside of the execution lock to prevent race conditions on non-transactional queues.
+                                                    executor.withWorkerJobEvent(WorkerJobEvent.of(workerTask.withTaskRun(taskRun), workerQueueId));
                                                     workerTaskResults.add(new WorkerTaskResult(taskRun));
                                                 }
                                             }
@@ -409,6 +410,16 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
                 }
             )
         );
+
+        executorContextOpt.ifPresent(executor -> {
+            if (!executor.getWorkerJobEvents().isEmpty()) {
+                executor.getWorkerJobEvents().forEach(throwConsumer(event -> {
+                    workerJobEventQueue.emit(event.workerQueueId(), event);
+                }));
+            }
+        });
+
+        return executorContextOpt;
     }
 
     private Execution fail(Execution message, Exception e) {

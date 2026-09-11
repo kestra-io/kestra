@@ -179,11 +179,15 @@ public class TriggerStateService {
      * @throws ValidationErrorException if the backfill window is empty, which the scheduler would otherwise
      *                                  accept and then immediately discard.
      * @throws NotFoundException if the trigger does not exist.
-     * @throws ConflictException if the backfill cannot be created.
+     * @throws ConflictException if the trigger is one the scheduler does not evaluate, or if the backfill
+     *         cannot be created.
      */
     public TriggerState createBackfill(TriggerId triggerId, CreateBackfillTrigger.Backfill backfill) throws NotFoundException, ConflictException {
         validateBackfillWindow(backfill);
-        getTriggerState(triggerId);
+        TriggerState state = getTriggerState(triggerId);
+        if (!TriggerType.isEvaluatedByScheduler(state.getType())) {
+            throw new ConflictException("Cannot backfill trigger '%s': the scheduler does not evaluate this kind of trigger.".formatted(triggerId));
+        }
         awaitBlockingAction(
             triggerId.uid(),
             operationId -> triggerEventQueue.send(new CreateBackfillTrigger(triggerId, backfill).withOperationId(operationId)),
@@ -317,10 +321,15 @@ public class TriggerStateService {
      * @param recoverMissedSchedules when {@code true}, missed schedules are recovered on enable according to the
      *                               trigger's own configuration; {@code null} or {@code false} means they are skipped.
      * @throws NotFoundException if the flow or trigger does not exist.
-     * @throws ConflictException if the change failed.
+     * @throws ConflictException if the trigger is one the scheduler does not evaluate, or if the change failed.
      */
     public TriggerState toggleTriggerById(TriggerId trigger, boolean disabled, @Nullable Boolean recoverMissedSchedules) throws NotFoundException, ConflictException {
         validateToggleable(trigger);
+        if (!isEvaluatedByScheduler(trigger)) {
+            throw new ConflictException(
+                "Cannot enable or disable trigger '%s': the scheduler does not evaluate this kind of trigger, change it in the flow source instead.".formatted(trigger)
+            );
+        }
         awaitBlockingAction(
             trigger.uid(),
             operationId -> triggerEventQueue.send(new SetDisableTrigger(trigger, disabled, recoverMissedSchedules).withOperationId(operationId)),
@@ -330,19 +339,13 @@ public class TriggerStateService {
     }
 
     /**
-     * Enables or disables the given triggers. Missing triggers are silently skipped.
+     * Enables or disables the given triggers. Missing triggers, and triggers the scheduler does not evaluate,
+     * are silently skipped.
      */
     public ApiAsyncOperationResponse toggleAllByIds(List<TriggerId> triggers, boolean disabled, @Nullable Boolean recoverMissedSchedules) {
         List<TriggerId> toggleable = triggers.stream()
-            .filter(id ->
-            {
-                try {
-                    validateToggleable(id);
-                    return true;
-                } catch (NotFoundException e) {
-                    return false;
-                }
-            })
+            .filter(this::isFlowBackedTrigger)
+            .filter(this::isEvaluatedByScheduler)
             .toList();
         return submitBatch(
             toggleable, (id, operationId) -> triggerEventQueue.send(new SetDisableTrigger(id, disabled, recoverMissedSchedules).withOperationId(operationId))
@@ -350,11 +353,13 @@ public class TriggerStateService {
     }
 
     /**
-     * Enables or disables triggers matching the given filters.
+     * Enables or disables triggers matching the given filters. Triggers the scheduler does not evaluate are
+     * silently skipped.
      */
     public ApiAsyncOperationResponse toggleAllMatching(String tenant, List<QueryFilter> filters, boolean disabled, @Nullable Boolean recoverMissedSchedules) {
         String operationId = IdUtils.create();
         int count = triggerRepository.find(tenant, filters)
+            .filter(trigger -> TriggerType.isEvaluatedByScheduler(trigger.getType()))
             .map(trigger ->
             {
                 TriggerId id = TriggerId.of(trigger);
@@ -412,6 +417,17 @@ public class TriggerStateService {
             .filter(t -> t.getId().equals(triggerId.getTriggerId()))
             .findFirst()
             .orElseThrow(() -> new NotFoundException("Trigger not found: %s".formatted(triggerId)));
+    }
+
+    /**
+     * Returns whether the scheduler evaluates this trigger, and so whether it honours its stored
+     * {@code disabled} flag. A trigger with no state is treated as evaluated: {@code FlowService} writes the
+     * state of an unscheduled trigger as soon as its flow is saved, so a missing one is never unscheduled.
+     */
+    private boolean isEvaluatedByScheduler(TriggerId triggerId) {
+        return triggerRepository.findByIdWithoutAcl(triggerId)
+            .map(state -> TriggerType.isEvaluatedByScheduler(state.getType()))
+            .orElse(true);
     }
 
     /**

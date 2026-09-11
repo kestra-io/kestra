@@ -972,6 +972,7 @@
       "success": "Trigger разблокирован"
     },
     "trigger disabled": "Триггер отключен в источнике Flow",
+    "trigger not toggleable": "Этот триггер не обрабатывается Scheduler, отключите его в источнике Flow",
     "trigger enable dialog": {
       "title": "Включить trigger",
       "bulk title": "Включить {count} triggers",

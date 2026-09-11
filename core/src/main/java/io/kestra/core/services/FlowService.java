@@ -35,7 +35,6 @@ import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.topologies.FlowTopology;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.TriggerId;
-import io.kestra.core.models.triggers.WorkerTriggerInterface;
 import io.kestra.core.models.validations.ManualConstraintViolation;
 import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.models.validations.ValidateConstraintViolation;
@@ -53,12 +52,17 @@ import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.runners.pebble.PebbleExpressionService;
 import io.kestra.core.runners.pebble.PebbleFunction;
+import io.kestra.core.scheduler.SchedulerConfiguration;
 import io.kestra.core.scheduler.events.TriggerCreated;
 import io.kestra.core.scheduler.events.TriggerDeleted;
 import io.kestra.core.scheduler.events.TriggerEvent;
 import io.kestra.core.scheduler.events.TriggerFlowRevisionUpdated;
 import io.kestra.core.scheduler.events.TriggerUpdated;
+import io.kestra.core.scheduler.model.TriggerState;
+import io.kestra.core.scheduler.model.TriggerType;
 import io.kestra.core.scheduler.queue.TriggerEventQueue;
+import io.kestra.core.scheduler.store.TriggerStateStore;
+import io.kestra.core.scheduler.vnodes.VNodes;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.topologies.FlowTopologyService;
 import io.kestra.core.utils.ExecutorsUtils;
@@ -106,6 +110,12 @@ public class FlowService {
 
     @Inject
     private TriggerEventQueue triggerEventQueue;
+
+    @Inject
+    private TriggerStateStore triggerStateStore;
+
+    @Inject
+    private SchedulerConfiguration schedulerConfiguration;
 
     @Inject
     private PluginRegistry pluginRegistry;
@@ -301,9 +311,7 @@ public class FlowService {
         }
 
         if (flow.isDeleted()) {
-            ListUtils.emptyOnNull(flow.getTriggers()).forEach(
-                trigger -> sendTriggerEvent(new TriggerDeleted(TriggerId.of(flow, trigger)))
-            );
+            ListUtils.emptyOnNull(flow.getTriggers()).forEach(trigger -> onTriggerRemoved(flow, trigger));
             return;
         }
 
@@ -317,9 +325,7 @@ public class FlowService {
         }
 
         if (previous != null) {
-            FlowService.findRemovedTrigger(flow, previous).forEach(
-                trigger -> sendTriggerEvent(new TriggerDeleted(TriggerId.of(flow, trigger)))
-            );
+            FlowService.findRemovedTrigger(flow, previous).forEach(trigger -> onTriggerRemoved(flow, trigger));
 
             if (flow.isDeleted()) {
                 return;
@@ -327,35 +333,65 @@ public class FlowService {
         }
 
         if (previous != null && !Objects.equals(previous.getRevision(), flow.getRevision())) {
-            FlowService.findUpdatedTrigger(flow, previous)
-                .stream()
-                .filter(trigger -> trigger instanceof WorkerTriggerInterface)
-                .forEach(
-                    trigger -> sendTriggerEvent(new TriggerUpdated(TriggerId.of(flow, trigger), flow.getRevision()))
-                );
-            FlowService.findNewTrigger(flow, previous)
-                .stream()
-                .filter(trigger -> trigger instanceof WorkerTriggerInterface)
-                .forEach(
-                    trigger -> sendTriggerEvent(new TriggerCreated(TriggerId.of(flow, trigger), flow.getRevision()))
-                );
-            FlowService.findUnchangedTrigger(flow, previous)
-                .stream()
-                .filter(trigger -> trigger instanceof WorkerTriggerInterface)
-                .forEach(
-                    trigger -> sendTriggerEvent(new TriggerFlowRevisionUpdated(TriggerId.of(flow, trigger), flow.getRevision()))
-                );
+            FlowService.findUpdatedTrigger(flow, previous).forEach(trigger -> onTriggerUpdated(flow, trigger));
+            FlowService.findNewTrigger(flow, previous).forEach(trigger -> onTriggerCreated(flow, trigger));
+            FlowService.findUnchangedTrigger(flow, previous).forEach(trigger -> onTriggerUnchanged(flow, trigger));
             return;
         }
 
-        if (flow.getTriggers() != null) {
-            flow.getTriggers()
-                .stream()
-                .filter(trigger -> trigger instanceof WorkerTriggerInterface)
-                .forEach(
-                    trigger -> sendTriggerEvent(new TriggerCreated(TriggerId.of(flow, trigger), flow.getRevision()))
-                );
+        ListUtils.emptyOnNull(flow.getTriggers()).forEach(trigger -> onTriggerCreated(flow, trigger));
+    }
+
+    private void onTriggerCreated(FlowWithSource flow, AbstractTrigger trigger) {
+        if (isUnscheduled(trigger)) {
+            saveUnscheduledTriggerState(flow, trigger);
+        } else {
+            sendTriggerEvent(new TriggerCreated(TriggerId.of(flow, trigger), flow.getRevision()));
         }
+    }
+
+    private void onTriggerUpdated(FlowWithSource flow, AbstractTrigger trigger) {
+        if (isUnscheduled(trigger)) {
+            saveUnscheduledTriggerState(flow, trigger);
+        } else {
+            sendTriggerEvent(new TriggerUpdated(TriggerId.of(flow, trigger), flow.getRevision()));
+        }
+    }
+
+    private void onTriggerUnchanged(FlowWithSource flow, AbstractTrigger trigger) {
+        // TriggerFlowRevisionUpdated only repoints the scheduler's flow cache, which holds nothing for a
+        // trigger it does not evaluate.
+        if (!isUnscheduled(trigger)) {
+            sendTriggerEvent(new TriggerFlowRevisionUpdated(TriggerId.of(flow, trigger), flow.getRevision()));
+        }
+    }
+
+    private void onTriggerRemoved(FlowWithSource flow, AbstractTrigger trigger) {
+        if (isUnscheduled(trigger)) {
+            triggerStateStore.delete(TriggerId.of(flow, trigger));
+        } else {
+            sendTriggerEvent(new TriggerDeleted(TriggerId.of(flow, trigger)));
+        }
+    }
+
+    /**
+     * Writes the state of a trigger the scheduler never evaluates, which is what makes it listable on the
+     * triggers page.
+     * <p>
+     * Written here rather than emitted as a trigger event so that these triggers never reach the scheduler's
+     * event loop: a webhook or MCP call must not compete with the triggers the scheduler actually evaluates.
+     * The vNode is computed from the same key the scheduler hashes, so a state written here is indistinguishable
+     * from one the scheduler would have created. Nothing on such a state has to survive a rewrite: it takes no
+     * lock, carries no backfill, and its {@code disabled} flag comes from the flow source.
+     */
+    private void saveUnscheduledTriggerState(FlowWithSource flow, AbstractTrigger trigger) {
+        triggerStateStore.save(
+            TriggerState.of(flow, trigger, VNodes.computeVNodeFromFlow(flow, schedulerConfiguration.vnodes()))
+        );
+    }
+
+    private static boolean isUnscheduled(AbstractTrigger trigger) {
+        return !TriggerType.isEvaluatedByScheduler(TriggerType.from(trigger));
     }
 
     private void updateConcurrencyLimit(FlowWithSource flow) {

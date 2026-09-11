@@ -972,6 +972,7 @@
       "success": "触发器已解锁"
     },
     "trigger disabled": "在Flow源中触发器已禁用",
+    "trigger not toggleable": "该触发器不由Scheduler评估，请在Flow源中禁用它",
     "trigger enable dialog": {
       "title": "启用 trigger",
       "bulk title": "启用 {count} triggers",

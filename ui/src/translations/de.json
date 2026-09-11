@@ -972,6 +972,7 @@
       "success": "Der Trigger wurde entsperrt"
     },
     "trigger disabled": "Der Trigger ist in der Flow-Quelle deaktiviert",
+    "trigger not toggleable": "Dieser Trigger wird nicht vom Scheduler ausgewertet, deaktivieren Sie ihn in der Flow-Quelle",
     "trigger enable dialog": {
       "title": "Trigger aktivieren",
       "bulk title": "{count} Trigger aktivieren",

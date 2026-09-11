@@ -196,8 +196,8 @@
                 <template #default="scope">
                     <KsTooltip
                         v-if="!scope.row.missingSource"
-                        :content="$t('trigger disabled')"
-                        :disabled="!scope.row.codeDisabled"
+                        :content="notToggleableReason(scope.row)"
+                        :disabled="!notToggleableReason(scope.row)"
                         effect="light"
                     >
                         <!-- update:modelValue (not change) keeps the switch prop-controlled: the knob only
@@ -205,7 +205,7 @@
                         <KsSwitch
                             :modelValue="!(scope.row.disabled || scope.row.codeDisabled)"
                             @update:modelValue="(value: string | number | boolean | undefined) => setDisabled(scope.row, Boolean(value))"
-                            :disabled="scope.row.codeDisabled"
+                            :disabled="!!notToggleableReason(scope.row)"
                         />
                     </KsTooltip>
                     <KsTooltip v-else :content="$t('flow source not found')" effect="light">
@@ -538,6 +538,14 @@
     })
 
     const isSchedule = (type?: string) => type === "io.kestra.plugin.core.trigger.Schedule"
+
+    // A trigger the scheduler does not evaluate never reads the stored disabled flag, so the API refuses to
+    // toggle it: it can only be disabled in the flow source.
+    const notToggleableReason = (row: TriggerRow): string | undefined => {
+        if (row.codeDisabled) return t("trigger disabled")
+        if (row.kind === "UNSCHEDULED") return t("trigger not toggleable")
+        return undefined
+    }
 
     const triggersMerged = computed<TriggerRow[]>(() =>
         triggers.value.map(tr => ({

@@ -2315,7 +2315,7 @@ export type TriggerControllerSetDisabledRequest = {
  */
 export type TriggerPluginCategory = 'core' | 'realtime' | 'app';
 
-export type TriggerType = 'SCHEDULE' | 'POLLING' | 'REALTIME';
+export type TriggerType = 'SCHEDULE' | 'POLLING' | 'REALTIME' | 'UNSCHEDULED';
 
 export type Type = 'STRING' | 'SELECT' | 'INT' | 'FLOAT' | 'BOOL' | 'DATETIME' | 'DATE' | 'TIME' | 'DURATION' | 'FILE' | 'JSON' | 'ION' | 'URI' | 'SECRET' | 'ARRAY' | 'MULTISELECT' | 'YAML' | 'EMAIL' | 'FORM' | 'REUSABLE_INPUTS';
 
@@ -4308,7 +4308,7 @@ export type ExportChartResponses = {
     /**
      * exportChart 200 response
      */
-    200: string;
+    200: Blob | File;
 };
 
 export type ExportChartResponse = ExportChartResponses[keyof ExportChartResponses];
@@ -4470,7 +4470,7 @@ export type ExportDashboardChartResponses = {
     /**
      * exportDashboardChart 200 response
      */
-    200: string;
+    200: Blob | File;
 };
 
 export type ExportDashboardChartResponse = ExportDashboardChartResponses[keyof ExportDashboardChartResponses];
@@ -10391,7 +10391,7 @@ export type ExportNamespaceFilesResponses = {
     /**
      * exportNamespaceFiles 200 response
      */
-    200: string;
+    200: Blob | File;
 };
 
 export type ExportNamespaceFilesResponse = ExportNamespaceFilesResponses[keyof ExportNamespaceFilesResponses];
@@ -10979,6 +10979,10 @@ export type CreateBackfillErrors = {
      * If the backfill cannot be created
      */
     409: ProblemDetail;
+    /**
+     * If the backfill end date is not after its start date
+     */
+    422: ProblemDetail;
     /**
      * Internal server error
      */

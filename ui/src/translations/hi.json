@@ -972,6 +972,7 @@
       "success": "Trigger अनलॉक किया गया"
     },
     "trigger disabled": "Flow स्रोत के भीतर Trigger अक्षम है",
+    "trigger not toggleable": "इस Trigger का मूल्यांकन Scheduler द्वारा नहीं किया जाता, इसे Flow स्रोत में अक्षम करें",
     "trigger enable dialog": {
       "title": "trigger सक्षम करें",
       "bulk title": "सक्षम करें {count} triggers",

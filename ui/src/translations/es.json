@@ -972,6 +972,7 @@
       "success": "Trigger desbloqueado"
     },
     "trigger disabled": "El trigger está deshabilitado dentro del Flow source",
+    "trigger not toggleable": "Este trigger no es evaluado por el Scheduler, deshabilítalo en el Flow source",
     "trigger enable dialog": {
       "title": "Habilitar trigger",
       "bulk title": "Habilitar {count} triggers",

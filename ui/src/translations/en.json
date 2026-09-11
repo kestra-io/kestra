@@ -226,6 +226,11 @@
         "title": "State history",
         "elapsed": "+{duration}"
       },
+      "resolvedConfig": {
+        "title": "Resolved configuration",
+        "empty": "This task's definition could not be found in the flow revision this execution ran on.",
+        "error": "Could not resolve this task's configuration. Try again from Edit flow."
+      },
       "structuralImpact": {
         "title": "Structural impact",
         "relation": {

@@ -226,6 +226,11 @@
         "title": "状态历史",
         "elapsed": "+{duration}"
       },
+      "resolvedConfig": {
+        "title": "已解析的配置",
+        "empty": "在此次执行所运行的流程版本中找不到该 task 的定义。",
+        "error": "无法解析该 task 的配置。请从编辑流程重试。"
+      },
       "structuralImpact": {
         "title": "结构性影响",
         "relation": {

@@ -226,6 +226,11 @@
         "title": "状態履歴",
         "elapsed": "+{duration}"
       },
+      "resolvedConfig": {
+        "title": "解決済みの設定",
+        "empty": "この task の定義が、この実行が使用した flow リビジョンに見つかりませんでした。",
+        "error": "この task の設定を解決できませんでした。Flowを編集から再試行してください。"
+      },
       "structuralImpact": {
         "title": "構造的な影響",
         "relation": {

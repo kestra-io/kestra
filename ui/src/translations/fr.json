@@ -226,6 +226,11 @@
         "title": "Historique d'état",
         "elapsed": "+{duration}"
       },
+      "resolvedConfig": {
+        "title": "Configuration résolue",
+        "empty": "La définition de cette task est introuvable dans la révision du flow sur laquelle cette exécution s'est basée.",
+        "error": "Impossible de résoudre la configuration de cette task. Réessayez depuis Modifier le flow."
+      },
       "structuralImpact": {
         "title": "Impact structurel",
         "relation": {

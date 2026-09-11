@@ -226,6 +226,11 @@
         "title": "Statusverlauf",
         "elapsed": "+{duration}"
       },
+      "resolvedConfig": {
+        "title": "Aufgelöste Konfiguration",
+        "empty": "Die Definition dieser task konnte in der Flow-Revision, mit der diese Ausführung lief, nicht gefunden werden.",
+        "error": "Die Konfiguration dieser task konnte nicht aufgelöst werden. Versuchen Sie es erneut über Flow bearbeiten."
+      },
       "structuralImpact": {
         "title": "Strukturelle Auswirkung",
         "relation": {

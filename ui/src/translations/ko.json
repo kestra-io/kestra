@@ -226,6 +226,11 @@
         "title": "상태 기록",
         "elapsed": "+{duration}"
       },
+      "resolvedConfig": {
+        "title": "해석된 구성",
+        "empty": "이 task의 정의를 이 실행이 사용한 flow 리비전에서 찾을 수 없습니다.",
+        "error": "이 task의 구성을 해석할 수 없습니다. Flow 편집에서 다시 시도하세요."
+      },
       "structuralImpact": {
         "title": "구조적 영향",
         "relation": {

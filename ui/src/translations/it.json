@@ -226,6 +226,11 @@
         "title": "Cronologia dello stato",
         "elapsed": "+{duration}"
       },
+      "resolvedConfig": {
+        "title": "Configurazione risolta",
+        "empty": "La definizione di questa task non è stata trovata nella revisione del flow su cui è stata eseguita questa esecuzione.",
+        "error": "Impossibile risolvere la configurazione di questa task. Riprova da Modifica flow."
+      },
       "structuralImpact": {
         "title": "Impatto strutturale",
         "relation": {

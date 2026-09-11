@@ -26,10 +26,25 @@ function execution(state: string, taskRunList: ReturnType<typeof taskRun>[]): Ex
         id: "exec-failed",
         namespace: "company.team",
         flowId: "orders-pipeline",
+        flowRevision: 1,
         state: {current: state, histories: []},
         taskRunList,
     } as unknown as Execution
 }
+
+const FLOW_SOURCE = `id: orders-pipeline
+namespace: company.team
+tasks:
+  - id: extract
+    type: io.kestra.plugin.core.log.Log
+    message: extracting
+  - id: transform
+    type: io.kestra.plugin.core.log.Log
+    message: transforming
+  - id: load
+    type: io.kestra.plugin.core.log.Log
+    message: "{{ secret('WAREHOUSE_URL') }}"
+`
 
 const meta: Meta<typeof FailureDebugPanel> = {
     title: "Components/Executions/Gantt/FailureDebugPanel",
@@ -57,7 +72,18 @@ const meta: Meta<typeof FailureDebugPanel> = {
         },
     },
     beforeEach() {
-        mockStoryApiRoutes({"GET /logs/exec-failed": {results: [], total: 0}})
+        mockStoryApiRoutes({
+            "GET /logs/exec-failed": {results: [], total: 0},
+            "GET /flows/company.team/orders-pipeline": {source: FLOW_SOURCE},
+            // Echoes the raw task block back unchanged — good enough for a story, where the
+            // point is showing the card renders, not the display-renderer's own masking logic
+            // (already covered by ExpressionControllerTest on the backend). context.body is the
+            // raw request text, not a parsed object — the mock fetch layer hands it through as-is.
+            "POST /expressions/render": (context: {body?: unknown}) => {
+                const expression = (JSON.parse((context.body as string) ?? "{}")?.expressions?.[0]) ?? ""
+                return {rendered: {[expression]: expression}}
+            },
+        })
     },
 }
 export default meta
@@ -107,6 +133,7 @@ export const SingleFailure: Story = {
         await waitFor(() => expect(canvas.getByRole("region")).toBeVisible())
         await expect(canvas.queryByRole("tablist")).toBeNull()
         await expect(canvasElement.querySelector(".failure-debug-panel__subtitle")?.textContent).toContain("transform")
+        await waitFor(() => expect(canvasElement.textContent).toContain("transforming"))
     },
 }
 

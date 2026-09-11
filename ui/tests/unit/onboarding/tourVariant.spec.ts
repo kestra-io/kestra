@@ -10,6 +10,10 @@ import {DEFAULT_TOUR_VARIANT} from "../../../src/components/onboarding/tour/tour
 import {useTourVariant} from "../../../src/override/components/onboarding/tour/useTourVariant"
 import en from "../../../src/translations/en.json"
 
+const copyAt = (path: string): unknown => path
+    .split(".")
+    .reduce<unknown>((node, key) => node !== null && typeof node === "object" ? (node as Record<string, unknown>)[key] : undefined, en.en)
+
 const SCENES = [
     {id: "first", step: 1},
     {id: "second", step: 1},
@@ -40,28 +44,26 @@ describe("tour variant", () => {
     })
 
     it("reads its copy from the subtree its prefix points at", () => {
-        const subtree = DEFAULT_TOUR_VARIANT.i18nPrefix
-            .split(".")
-            .reduce<any>((node, key) => node?.[key], (en as any).en)
+        const prefix = DEFAULT_TOUR_VARIANT.i18nPrefix
 
-        expect(subtree, `no copy under ${DEFAULT_TOUR_VARIANT.i18nPrefix}`).toBeDefined()
+        expect(copyAt(prefix), `no copy under ${prefix}`).toBeDefined()
 
         // The keys TourOverlay reads outside of a scene, plus every scene's own title.
         for (const key of ["intro", "actions", "steps", "step_of", "menu", "nudge"]) {
-            expect(subtree[key], `missing ${key}`).toBeDefined()
+            expect(copyAt(`${prefix}.${key}`), `missing ${key}`).toBeDefined()
         }
         for (const scene of DEFAULT_TOUR_VARIANT.scenes) {
-            expect(subtree.scenes[scene.id]?.title, `missing title for ${scene.id}`).toBeTruthy()
+            expect(copyAt(`${prefix}.scenes.${scene.id}.title`), `missing title for ${scene.id}`).toBeTruthy()
         }
     })
 
     it("offers itself from the route it auto-starts on", () => {
-        const route = DEFAULT_TOUR_VARIANT.entryRoute("my-tenant") as any
-
         // The entry has to land on the auto-start route with the query the overlay consumes,
         // otherwise following the menu entry opens a page that never starts the tour.
-        expect(route.name).toBe(DEFAULT_TOUR_VARIANT.autoStartRoute)
-        expect(route.query).toEqual({tour: "start"})
-        expect(route.params).toEqual({tenant: "my-tenant"})
+        expect(DEFAULT_TOUR_VARIANT.entryRoute("my-tenant")).toEqual({
+            name: DEFAULT_TOUR_VARIANT.autoStartRoute,
+            query: {tour: "start"},
+            params: {tenant: "my-tenant"},
+        })
     })
 })

@@ -46,10 +46,10 @@ export interface TourScene<A = TourActions> {
     callout?: boolean;
     confetti?: boolean;
     offersExit?: boolean;
-    enter?: (context: TourSceneContext<A>) => Promise<void> | void;
-    action?: (context: TourSceneContext<A>) => Promise<void> | void;
-    completedByUser?: (context: TourSceneContext<A> & {route: TourRoute}) => boolean;
-    poll?: (context: TourSceneContext<A>) => Promise<boolean>;
+    enter?(context: TourSceneContext<A>): Promise<void> | void;
+    action?(context: TourSceneContext<A>): Promise<void> | void;
+    completedByUser?(context: TourSceneContext<A> & {route: TourRoute}): boolean;
+    poll?(context: TourSceneContext<A>): Promise<boolean>;
 }
 
 type SceneShape = {id: string; step: number};

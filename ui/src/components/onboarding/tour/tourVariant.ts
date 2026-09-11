@@ -11,7 +11,7 @@ import {shouldShowWelcome} from "../../../utils/welcomeGuard"
  * `override/components/onboarding/tour/useTourVariant` resolves, so a distribution can serve a
  * different tour without forking the overlay.
  */
-export interface TourVariant<A = any> {
+export interface TourVariant<A = unknown> {
     id: string;
     /** Scene copy is read from `<i18nPrefix>.scenes.<sceneId>.*`. */
     i18nPrefix: string;
@@ -21,7 +21,8 @@ export interface TourVariant<A = any> {
     autoStartRoute: string;
     eligible: () => Promise<boolean>;
     useActions: () => A;
-    cleanup?: (actions: A) => void;
+    // Method syntax keeps `A` bivariant, so any `TourVariant<X>` still widens to the bare `TourVariant`.
+    cleanup?(actions: A): void;
 }
 
 export const DEFAULT_TOUR_VARIANT: TourVariant<ReturnType<typeof useTourActions>> = {

@@ -223,7 +223,7 @@
         border-left: 1px solid transparent;
         width: 0;
         overflow: hidden;
-        transition: all .2s ease-in-out;
+        transition: width 200ms ease, border-color 200ms ease;
         h3{
             display: flex;
             align-items: center;

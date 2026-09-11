@@ -75,7 +75,7 @@ describe("VarValue", () => {
         expect(wrapper.find("[data-test=var-value-truncated]").exists()).toBe(false)
     })
 
-    it("should cap the editor content and report the real size when the value is large", () => {
+    it("should hand the editor parseable JSON and report the real size when the value is large", () => {
         // The reported shape: one big Ansible-style value arriving as a JSON string.
         const tasks = Array.from({length: 6000}, (_, index) => ({
             uid: `all | arcgis_access_audit : Get the credentials ${index}`,
@@ -85,22 +85,13 @@ describe("VarValue", () => {
         const value = JSON.stringify({exitCode: 0, playbooks: {plays: [{name: "all", tasks}]}})
 
         const wrapper = mountVarValue(value)
+        const shown = JSON.parse(editorContent(wrapper))
 
-        expect(editorContent(wrapper).length).toBeLessThanOrEqual(256 * 1024)
+        expect(shown.playbooks.plays[0].tasks).toHaveLength(101)
+        expect(shown.playbooks.plays[0].tasks.at(-1)).toBe("… 5900")
         expect(wrapper.find("[data-test=var-value-truncated]").text()).toContain(
             "Showing a truncated preview of this 1.1 MiB value.",
         )
-    })
-
-    it("should stop at the line limit when the value is under the size limit but deep", () => {
-        const value = Object.fromEntries(
-            Array.from({length: 1000}, (_, index) => [`item_${index}`, index]),
-        )
-
-        const wrapper = mountVarValue(value)
-
-        expect(editorContent(wrapper).split("\n")).toHaveLength(200)
-        expect(wrapper.find("[data-test=var-value-truncated]").exists()).toBe(true)
     })
 
     it("should cap a long plain string, which never reaches the editor", () => {

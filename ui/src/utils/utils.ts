@@ -90,8 +90,8 @@ export function executionVars(data: Record<string, any>) {
     })
 }
 
-export const DISPLAY_MAX_CHARS = 256 * 1024
-export const DISPLAY_MAX_LINES = 200
+const DISPLAY_MAX_CHARS = 256 * 1024
+const DISPLAY_MAX_LINES = 200
 // Monaco costs per line, so one pathological line is as slow as a whole large document:
 // a 2.5 MiB string value pretty-prints to a single line and blocked for ~1 s under the other caps.
 export const DISPLAY_MAX_LINE_CHARS = 2000
@@ -122,6 +122,65 @@ function clipLines(text: string): string {
         .split("\n")
         .map(line => line.length > DISPLAY_MAX_LINE_CHARS ? line.slice(0, DISPLAY_MAX_LINE_CHARS) : line)
         .join("\n")
+}
+
+export const PREVIEW_MAX_ENTRIES = 100
+export const PREVIEW_MAX_NODES = 1000
+export const PREVIEW_MAX_STRING_CHARS = 500
+
+export interface BoundedValue {
+    value: unknown;
+    truncated: boolean;
+}
+
+/**
+ * Shrink a parsed value to a preview that stays valid JSON: clipping the serialized text instead
+ * cuts mid-token and Monaco then reports the preview as a syntax error (kestra-io/kestra#19316).
+ * Omitted entries are named by an `…` marker carrying how many were dropped.
+ */
+export function boundForDisplay(value: unknown): BoundedValue {
+    let budget = PREVIEW_MAX_NODES
+    let truncated = false
+
+    function bound(node: unknown): unknown {
+        if (typeof node === "string") {
+            if (node.length <= PREVIEW_MAX_STRING_CHARS) {
+                return node
+            }
+            truncated = true
+            return `${node.slice(0, PREVIEW_MAX_STRING_CHARS)}…`
+        }
+
+        if (node === null || typeof node !== "object") {
+            return node
+        }
+
+        if (Array.isArray(node)) {
+            const kept = Math.min(node.length, PREVIEW_MAX_ENTRIES, budget)
+            budget -= kept
+            const bounded = node.slice(0, kept).map(bound)
+            if (kept < node.length) {
+                truncated = true
+                bounded.push(`… ${node.length - kept}`)
+            }
+            return bounded
+        }
+
+        const keys = Object.keys(node)
+        const kept = Math.min(keys.length, PREVIEW_MAX_ENTRIES, budget)
+        budget -= kept
+        const bounded: Record<string, unknown> = {}
+        for (let index = 0; index < kept; index++) {
+            bounded[keys[index]] = bound((node as Record<string, unknown>)[keys[index]])
+        }
+        if (kept < keys.length) {
+            truncated = true
+            bounded["…"] = keys.length - kept
+        }
+        return bounded
+    }
+
+    return {value: bound(value), truncated}
 }
 
 /** Size of `text` on the wire: a character count understates a multi-byte value. */

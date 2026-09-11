@@ -43,7 +43,7 @@
 
                             <template v-else-if="isRawEditor">
                                 <KsAlert
-                                    v-if="isRawTruncated"
+                                    v-if="rawPreview.truncated"
                                     type="warning"
                                     :closable="false"
                                     data-test="raw-value-truncated"
@@ -54,7 +54,7 @@
                                     :readOnly="true"
                                     :inline="true"
                                     :navbar="false"
-                                    :modelValue="cappedRawValue"
+                                    :modelValue="rawPreviewText"
                                     lang="json"
                                 />
                             </template>
@@ -422,6 +422,11 @@
 
     // Only what is rendered is clipped: copyValue still hands over the whole value.
     const cappedRawValue = computed(() => Utils.capForDisplay(rawValue.value))
+
+    // The raw view only ever holds an object, so it previews as valid JSON rather than clipped text.
+    const rawPreview = computed(() => Utils.boundForDisplay(selectedValue.value))
+
+    const rawPreviewText = computed(() => JSON.stringify(rawPreview.value.value, null, 2) ?? "")
 
     const isRawTruncated = computed(() => cappedRawValue.value.length < rawValue.value.length)
 

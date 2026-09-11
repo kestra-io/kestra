@@ -174,29 +174,40 @@
         return value
     }
 
+    const displayed = computed(() => getDisplayValue(props.value))
+
     // Empty containers are complex enough to reach the editor branch, one Monaco mount per row.
     const emptyContainer = computed(() => {
-        const displayed = getDisplayValue(props.value)
+        const value = displayed.value
 
-        if (Array.isArray(displayed)) {
-            return displayed.length === 0 ? "[]" : undefined
+        if (Array.isArray(value)) {
+            return value.length === 0 ? "[]" : undefined
         }
-        if (typeof displayed === "object" && displayed !== null) {
-            return Object.keys(displayed).length === 0 ? "{}" : undefined
+        if (typeof value === "object" && value !== null) {
+            return Object.keys(value).length === 0 ? "{}" : undefined
         }
 
         return undefined
     })
 
-    // A plain string never reaches the editor, so both paths share one bounded text.
-    const fullText = computed(() => {
-        const displayed = getDisplayValue(props.value)
-        return typeof displayed === "string" ? displayed : JSON.stringify(displayed, null, 2) ?? ""
+    // Only the editor needs valid JSON; a plain string never reaches it and is clipped by length.
+    const preview = computed(() => {
+        const value = displayed.value
+        return typeof value === "object" && value !== null ? Utils.boundForDisplay(value) : undefined
     })
 
-    const displayText = computed(() => Utils.capForDisplay(fullText.value))
+    const fullText = computed(() => {
+        const value = displayed.value
+        return typeof value === "string" ? value : JSON.stringify(value, null, 2) ?? ""
+    })
 
-    const isTruncated = computed(() => displayText.value.length < fullText.value.length)
+    const displayText = computed(() => preview.value
+        ? JSON.stringify(preview.value.value, null, 2) ?? ""
+        : Utils.capForDisplay(fullText.value))
+
+    const isTruncated = computed(() => preview.value
+        ? preview.value.truncated
+        : displayText.value.length < fullText.value.length)
 
     const fullTextSize = computed(() => Utils.humanTextSize(fullText.value))
 

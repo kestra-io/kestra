@@ -98,11 +98,21 @@
     )
 
     const result = ref<string | undefined>(undefined)
+    const parsedResult = ref<unknown>(undefined)
 
-    // Evaluating an expression over a large output put the whole result in Monaco.
-    const displayResult = computed(() => Utils.capForDisplay(result.value ?? ""))
+    // Evaluating an expression over a large output put the whole result in Monaco. A JSON result
+    // previews through its parsed value so the editor is never handed a clipped, unparseable one.
+    const resultPreview = computed(() => parsedResult.value === undefined
+        ? undefined
+        : Utils.boundForDisplay(parsedResult.value))
 
-    const isResultTruncated = computed(() => displayResult.value.length < (result.value?.length ?? 0))
+    const displayResult = computed(() => resultPreview.value
+        ? JSON.stringify(resultPreview.value.value, null, 2) ?? ""
+        : Utils.capForDisplay(result.value ?? ""))
+
+    const isResultTruncated = computed(() => resultPreview.value
+        ? resultPreview.value.truncated
+        : displayResult.value.length < (result.value?.length ?? 0))
 
     const resultSize = computed(() => Utils.humanTextSize(result.value ?? ""))
 
@@ -120,6 +130,7 @@
 
     function clear() {
         result.value = undefined
+        parsedResult.value = undefined
         error.value = undefined
     }
 
@@ -138,7 +149,10 @@
             }
 
             try {
-                result.value = JSON.stringify(JSON.parse(response.result ?? ""), null, 2)
+                const parsed = JSON.parse(response.result ?? "")
+                result.value = JSON.stringify(parsed, null, 2)
+                // Only a container previews structurally; a scalar is worth reading in full.
+                parsedResult.value = typeof parsed === "object" && parsed !== null ? parsed : undefined
                 resultLang.value = "json"
             } catch {
                 result.value = response.result ?? ""

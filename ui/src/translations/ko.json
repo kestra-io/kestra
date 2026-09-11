@@ -426,6 +426,7 @@
       "expression": "표현식"
     },
     "attempt": "시도",
+    "iteration": "반복",
     "name": "이름",
     "key": "Key",
     "value": "Value",

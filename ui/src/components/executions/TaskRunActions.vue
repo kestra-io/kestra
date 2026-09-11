@@ -5,6 +5,23 @@
         </KsButton>
         <template #dropdown>
             <KsDropdownMenu>
+                <div v-if="taskRuns && taskRuns.length > 1" class="px-3 py-2 border-bottom">
+                    <KsSelect
+                        v-model="selectedTaskRunIndex"
+                        size="small"
+                        :clearable="false"
+                    >
+                        <template #label="{value}">
+                            {{ $t('iteration') }} {{ value + 1 }}
+                        </template>
+                        <KsOption
+                            v-for="(run, index) in taskRuns"
+                            :key="run.id"
+                            :value="index"
+                            :label="run.value || `${$t('iteration')} ${index + 1}`"
+                        />
+                    </KsSelect>
+                </div>
                 <KsDropdownItem
                     v-if="selectedAttempt?.state.current === 'FAILED'"
                     @click="fixErrorWithAi"
@@ -18,74 +35,72 @@
                     v-if="isSubflow"
                     component="KsDropdownItem"
                     tabExecution="logs"
-                    :executionId="taskRun.outputs.executionId"
+                    :executionId="currentTaskRun.outputs.executionId"
                 />
 
-                <template v-if="!(taskRuns && taskRuns.length > 1)">
-                    <Metrics :taskRun="taskRun" :execution="execution" />
+                <Metrics :taskRun="currentTaskRun" :execution="execution" />
 
-                    <Outputs
-                        :taskRun="taskRun"
-                        :executionId="execution.id"
-                        :execution="execution"
-                    />
+                <Outputs
+                    :taskRun="currentTaskRun"
+                    :executionId="execution.id"
+                    :execution="execution"
+                />
 
-                    <Restart
-                        component="KsDropdownItem"
-                        :key="`restart-${attemptIndex}-${selectedAttempt?.state.startDate}`"
-                        isReplay
-                        tooltipPosition="left"
-                        :execution="execution"
-                        :taskRun="taskRun"
-                        :attemptIndex="attemptIndex"
-                        @follow="emit('follow', $event)"
-                    />
+                <Restart
+                    component="KsDropdownItem"
+                    :key="`restart-${attemptIndex}-${selectedAttempt?.state.startDate}`"
+                    isReplay
+                    tooltipPosition="left"
+                    :execution="execution"
+                    :taskRun="currentTaskRun"
+                    :attemptIndex="attemptIndex"
+                    @follow="emit('follow', $event)"
+                />
 
-                    <ChangeStatus
-                        component="KsDropdownItem"
-                        :key="`change-status-${attemptIndex}-${selectedAttempt?.state.startDate}`"
-                        :execution="execution"
-                        :taskRun="taskRun"
-                        :attemptIndex="attemptIndex"
-                        @follow="emit('follow', $event)"
-                    />
+                <ChangeStatus
+                    component="KsDropdownItem"
+                    :key="`change-status-${attemptIndex}-${selectedAttempt?.state.startDate}`"
+                    :execution="execution"
+                    :taskRun="currentTaskRun"
+                    :attemptIndex="attemptIndex"
+                    @follow="emit('follow', $event)"
+                />
 
-                    <TaskEdit
-                        v-if="canReadFlow"
-                        :readOnly="true"
-                        component="KsDropdownItem"
-                        :taskId="taskRun.taskId"
-                        section="tasks"
-                        :flowId="execution.flowId"
-                        :namespace="execution.namespace"
-                        :revision="execution.flowRevision"
-                        :flowSource="flow?.source"
-                    />
-                    <KsDropdownItem
-                        :icon="Download"
-                        @click="downloadContent(taskRun.id)"
-                    >
-                        {{ $t("download logs") }}
-                    </KsDropdownItem>
-                    <KsDropdownItem
-                        :icon="Copy"
-                        @click="copyContent(taskRun.id)"
-                    >
-                        {{ $t("copy logs") }}
-                    </KsDropdownItem>
-                    <KsDropdownItem
-                        :icon="Delete"
-                        @click="deleteLogs(taskRun.id)"
-                    >
-                        {{ $t("delete logs") }}
-                    </KsDropdownItem>
-                    <WorkerInfo
-                        component="KsDropdownItem"
-                        v-if="hasWorkerId !== null"
-                        :taskRun="taskRun"
-                        @follow="emit('follow', $event)"
-                    />
-                </template>
+                <TaskEdit
+                    v-if="canReadFlow"
+                    :readOnly="true"
+                    component="KsDropdownItem"
+                    :taskId="currentTaskRun.taskId"
+                    section="tasks"
+                    :flowId="execution.flowId"
+                    :namespace="execution.namespace"
+                    :revision="execution.flowRevision"
+                    :flowSource="flow?.source"
+                />
+                <KsDropdownItem
+                    :icon="Download"
+                    @click="downloadContent(currentTaskRun.id)"
+                >
+                    {{ $t("download logs") }}
+                </KsDropdownItem>
+                <KsDropdownItem
+                    :icon="Copy"
+                    @click="copyContent(currentTaskRun.id)"
+                >
+                    {{ $t("copy logs") }}
+                </KsDropdownItem>
+                <KsDropdownItem
+                    :icon="Delete"
+                    @click="deleteLogs(currentTaskRun.id)"
+                >
+                    {{ $t("delete logs") }}
+                </KsDropdownItem>
+                <WorkerInfo
+                    component="KsDropdownItem"
+                    v-if="hasWorkerId !== null"
+                    :taskRun="currentTaskRun"
+                    @follow="emit('follow', $event)"
+                />
                 <NodeMenuItem
                     v-for="action in nodeActions"
                     :key="action.key"
@@ -97,7 +112,7 @@
 </template>
 
 <script setup lang="ts">
-    import {computed} from "vue"
+    import {computed, ref, watch} from "vue"
     import {useI18n} from "vue-i18n"
     import {useRoute} from "vue-router"
 
@@ -156,6 +171,22 @@
     const executionsStore = useExecutionsStore()
     const authStore = useAuthStore()
 
+    const selectedTaskRunIndex = ref(0)
+    watch(() => props.taskRuns, (newRuns) => {
+        if (!newRuns || newRuns.length === 0) {
+            selectedTaskRunIndex.value = 0
+        } else if (selectedTaskRunIndex.value >= newRuns.length) {
+            selectedTaskRunIndex.value = newRuns.length - 1
+        }
+    }, {deep: true})
+    
+    const currentTaskRun = computed(() => {
+        if (props.taskRuns && props.taskRuns.length > 0) {
+            return props.taskRuns[selectedTaskRunIndex.value] || props.taskRun
+        }
+        return props.taskRun
+    })
+
     function attempts(taskRun: any): any[] {
         if (props.execution.state.current === State.RUNNING || props.forcedAttemptNumber === undefined) {
             return taskRun.attempts ?? [{state: taskRun.state}]
@@ -163,12 +194,12 @@
         return taskRun.attempts ? [taskRun.attempts[props.forcedAttemptNumber]] : []
     }
 
-    const selectedAttempt = computed(() => attempts(props.taskRun)[props.attemptIndex ?? 0])
+    const selectedAttempt = computed(() => attempts(currentTaskRun.value)[props.attemptIndex ?? 0])
 
-    const isSubflow = computed<boolean>(() => props.taskRun?.outputs?.executionId)
+    const isSubflow = computed<boolean>(() => currentTaskRun.value?.outputs?.executionId)
 
     const hasWorkerId = computed<boolean | null>(() =>
-        props.taskRun.attempts?.find((attempt: any) => attempt.workerId !== null) !== null,
+        currentTaskRun.value.attempts?.find((attempt: any) => attempt.workerId !== null) !== null,
     )
 
     const canReadFlow = computed(() =>
@@ -226,7 +257,7 @@
             taskRunLogs = await executionsStore.loadLogs({
                 store: false,
                 executionId: props.execution.id,
-                params: {taskRunId: props.taskRun.id, minLevel: "ERROR"},
+                params: {taskRunId: currentTaskRun.value.id, minLevel: "ERROR"},
                 showMessageOnError: false,
             }).catch(() => [])
         }
@@ -239,8 +270,8 @@
             const last = [...taskRunLogs].reverse().find((l: any) => (l.message ?? "").length > 0)
             return last?.message ?? ""
         })()
-        const prompt = `Fix the task ${props.taskRun.taskId} as it generated the following error:\n${errorLines}`
-        miscStore.promptCopilot(prompt, {title: t("ai.copilot.fixThread.task", {id: props.taskRun.taskId}), newThread: true})
+        const prompt = `Fix the task ${currentTaskRun.value.taskId} as it generated the following error:\n${errorLines}`
+        miscStore.promptCopilot(prompt, {title: t("ai.copilot.fixThread.task", {id: currentTaskRun.value.taskId}), newThread: true})
     }
 </script>
 

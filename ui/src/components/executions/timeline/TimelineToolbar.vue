@@ -8,7 +8,7 @@
             size="small"
             :aria-label="$t('executionsTimeline.toolbar.rangePicker')"
         >
-            {{ readout }}
+            {{ readout() }}
         </KsButton>
 
         <!-- The range-pill button is also the popover's own reactive trigger (its class and
@@ -80,7 +80,7 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, ref} from "vue"
+    import {ref} from "vue"
     import {useI18n} from "vue-i18n"
     import CalendarRange from "vue-material-design-icons/CalendarRange.vue"
     import ChevronLeft from "vue-material-design-icons/ChevronLeft.vue"
@@ -118,11 +118,18 @@
     // then left to the user so switching tabs doesn't fight their choice on every prop change.
     const selectedMode = ref<"REL" | "ABS">(props.activePreset !== undefined ? "REL" : "ABS")
 
-    const readout = computed(() => t("executionsTimeline.toolbar.range", {
-        start: dateUtils.dateFilter(new Date(props.rangeStartMs).toISOString(), "lll"),
-        end: dateUtils.dateFilter(new Date(props.rangeEndMs).toISOString(), "lll"),
-        duration: durationUtils.humanDuration((props.rangeEndMs - props.rangeStartMs) / 1000),
-    }))
+    // dateUtils.dateFilter() reads getCurrentInstance() internally, which is only set while
+    // Vue is synchronously rendering this component. A computed's getter can be re-invoked by
+    // Vue's reactivity scheduler outside of any render pass (e.g. flushJobs refreshing a dirty
+    // computed before the owning component's render job runs), where getCurrentInstance() is
+    // undefined — so this must stay a plain function called from the template, not a computed.
+    function readout() {
+        return t("executionsTimeline.toolbar.range", {
+            start: dateUtils.dateFilter(new Date(props.rangeStartMs).toISOString(), "lll"),
+            end: dateUtils.dateFilter(new Date(props.rangeEndMs).toISOString(), "lll"),
+            duration: durationUtils.humanDuration((props.rangeEndMs - props.rangeStartMs) / 1000),
+        })
+    }
 
     function onRelativeChange({timeRange}: {timeRange?: string}) {
         if (timeRange) emit("apply-preset", timeRange)

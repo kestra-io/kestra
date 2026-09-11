@@ -148,7 +148,7 @@
 </template>
 
 <script lang="ts" setup>
-    import {computed, nextTick, onMounted, provide, ref, watch} from "vue"
+    import {computed, nextTick, onMounted, onUnmounted, provide, ref, watch} from "vue"
     import {useVueFlow, VueFlow, Panel} from "@vue-flow/core"
     import {ControlButton, Controls} from "@vue-flow/controls"
     import {Background} from "@vue-flow/background"
@@ -295,6 +295,23 @@
     function onNodeDragStart({node}: {node: {id: string}}) {
         draggingNodeId.value = node.id
     }
+
+    // vue-flow ends a drag on pointerup, which never arrives if the window loses focus mid-drag;
+    // a stuck flag would keep click-to-edit disabled for the rest of the session.
+    function releaseDrag() {
+        draggingNodeId.value = undefined
+        dropEdgeId.value = undefined
+    }
+
+    onMounted(() => {
+        window.addEventListener("blur", releaseDrag)
+        document.addEventListener("visibilitychange", releaseDrag)
+    })
+
+    onUnmounted(() => {
+        window.removeEventListener("blur", releaseDrag)
+        document.removeEventListener("visibilitychange", releaseDrag)
+    })
 
     function onNodeDrag({event}: {event: MouseEvent | TouchEvent}) {
         dropEdgeId.value = edgeTargetUnderPointer(event)?.edgeId

@@ -481,6 +481,8 @@ export function rewireDagDependency(
 ): string {
     const {fromId, toId} = dependency
     if (!fromId && !toId) return source
+    // Dropping a task on an edge it is already an endpoint of would make it depend on itself.
+    if (fromId === insertedId || toId === insertedId) return source
 
     const parsed = flowYamlUtils.parse<Record<string, unknown>>(source)
     if (!parsed) return source

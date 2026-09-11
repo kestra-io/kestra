@@ -1,4 +1,5 @@
-import {describe, it, expect} from "vitest"
+import {describe, it, expect, vi} from "vitest"
+import {nextTick} from "vue"
 import {mount} from "@vue/test-utils"
 import CopilotComposer from "../../../../../src/components/ai/copilot/CopilotComposer.vue"
 import {mountGlobal} from "./_helpers"
@@ -70,6 +71,19 @@ describe("CopilotComposer", () => {
         expect((input(w).element as HTMLTextAreaElement).value).toBe("Fix this error")
         // A seeded prompt is submittable straight away.
         expect(sendBtn(w).attributes("disabled")).toBeUndefined()
+    })
+
+    it("grows to fit a multiline draft that is already in the model when it mounts", async () => {
+        // jsdom has no layout, so stand in for the height a multiline draft would measure.
+        const scrollHeight = vi.spyOn(HTMLTextAreaElement.prototype, "scrollHeight", "get").mockReturnValue(210)
+        try {
+            const w = mountComposer({modelValue: "Fix this flow\n\njava.lang.RuntimeException\n\tat io.kestra"})
+            await nextTick()
+            // Without sizing on mount the box keeps its one-row height around the whole prompt.
+            expect((input(w).element as HTMLTextAreaElement).style.height).toBe("210px")
+        } finally {
+            scrollHeight.mockRestore()
+        }
     })
 
     it("emits update:modelValue as the user types", async () => {

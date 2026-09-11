@@ -373,6 +373,7 @@ If your `<style>` block needs to exist:
 | `KsRadio` / `KsRadioGroup` / `KsRadioButton` | Radio button variants |
 | `KsRadioCardGroup` | Single-select radio group rendered as option cards (title + optional hint/icon/disabled); options-driven via `:options` + `v-model` |
 | `KsSwitch` | Toggle switch |
+| `KsThemePicker` | Theme chooser, one miniature of the app per theme painted in that theme's own colours; options-driven via `:options` + `v-model` |
 | `KsDatePicker` / `KsTimePicker` | Date and time pickers |
 | `KsColorPicker` | Color picker |
 | `KsDurationPicker` | ISO 8601 duration picker |

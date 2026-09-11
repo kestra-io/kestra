@@ -233,16 +233,16 @@
         background:
             linear-gradient(
                 to right,
-                rgba(23, 97, 253, 0.22) 0%,
-                rgba(23, 97, 253, 0.08) 45%,
+                color-mix(in srgb, var(--ks-toggle-playground) 22%, transparent) 0%,
+                color-mix(in srgb, var(--ks-toggle-playground) 8%, transparent) 45%,
                 transparent 80%
             ),
             var(--ks-bg-overlay);
 
         .dark & {
             background:
-                linear-gradient(0deg, rgba(23, 97, 253, 0.15) 0%, rgba(23, 97, 253, 0.15) 100%),
-                var(--ks-bg-overlay, #1A1C22);
+                linear-gradient(color-mix(in srgb, var(--ks-toggle-playground) 15%, transparent), color-mix(in srgb, var(--ks-toggle-playground) 15%, transparent)),
+                var(--ks-bg-overlay);
         }
     }
 </style>

@@ -8,9 +8,6 @@
 // types
 $types: success, warning, error, info;
 
-
-$fill-color-base: #fafcff;
-
 @forward 'element-plus/theme-chalk/src/common/var.scss' as light-* with (
     $font-family: (
         '':  var(--ks-font-family-sans),

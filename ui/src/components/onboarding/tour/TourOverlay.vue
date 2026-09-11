@@ -818,7 +818,7 @@
     }
 
     :global(html.dark .onboarding-v2-highlight-static) {
-        --onboarding-static-color: color-mix(in srgb, var(--ks-btn-primary-bg-default) 70%, white 30%);
+        --onboarding-static-color: color-mix(in srgb, var(--ks-btn-primary-bg-default) 70%, var(--ks-white) 30%);
     }
 
     // Position is set every frame; a transition would make the ring trail behind its target.
@@ -829,7 +829,7 @@
     }
 
     .tour-ring {
-        --tour-ring-color: color-mix(in srgb, var(--ks-btn-primary-bg-default) 75%, white 25%);
+        --tour-ring-color: color-mix(in srgb, var(--ks-btn-primary-bg-default) 75%, var(--ks-white) 25%);
         position: fixed;
         border: var(--ks-border-width-base) solid var(--tour-ring-color);
         border-radius: var(--ks-radius-lg);

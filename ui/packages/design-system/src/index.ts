@@ -147,6 +147,8 @@ import KsNoData from "./components/Data/KsNoData.vue"
 import KsTag from "./components/Data/KsTag/KsTag.vue"
 export type {KsTagType} from "./components/Data/KsTag/KsTag.vue"
 import KsText from "./components/Basic/KsText.vue"
+import KsThemePicker from "./components/Form/KsThemePicker/KsThemePicker.vue"
+export type {ThemeOption} from "./components/Form/KsThemePicker/KsThemePicker.vue"
 import KsTimeline from "./components/Data/KsTimeline/KsTimeline.vue"
 import KsTimelineItem from "./components/Data/KsTimeline/KsTimelineItem.vue"
 import KsTimePicker from "./components/Form/KsTimePicker.vue"
@@ -362,6 +364,7 @@ const components: Record<string, Component> = {
     KsTag,
     KsLogoBadge,
     KsText,
+    KsThemePicker,
     KsTimeline,
     KsTimelineItem,
     KsTimePicker,
@@ -473,6 +476,7 @@ export {
     KsTag,
     KsLogoBadge,
     KsText,
+    KsThemePicker,
     KsTimeline,
     KsTimelineItem,
     KsTimePicker,
@@ -612,6 +616,7 @@ declare module "vue" {
         KsTag: typeof KsTag
         KsLogoBadge: typeof KsLogoBadge
         KsText: typeof KsText
+        KsThemePicker: typeof KsThemePicker
         KsTimeline: typeof KsTimeline
         KsTimelineItem: typeof KsTimelineItem
         KsTimePicker: typeof KsTimePicker

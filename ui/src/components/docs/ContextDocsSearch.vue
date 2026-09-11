@@ -164,7 +164,7 @@
         max-height: 400px;
         overflow-y: auto;
         z-index: 1001;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        box-shadow: 0 4px 12px var(--ks-shadow-elevated);
         padding: 4px 0;
     }
 
@@ -184,8 +184,8 @@
         }
 
         &.selected {
-            background: rgba(132, 5, 255, 0.1);
-            border-left: 3px solid #8405FF;
+            background: color-mix(in srgb, var(--ks-border-focus) 10%, transparent);
+            border-left: 3px solid var(--ks-border-focus);
         }
 
         .result-title {

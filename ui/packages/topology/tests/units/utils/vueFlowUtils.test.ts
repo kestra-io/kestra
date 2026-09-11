@@ -372,7 +372,7 @@ describe("generateGraph node draggability", () => {
         ],
     } as any
 
-    test("lets a task be picked up but never the cluster wrapping it", () => {
+    test("marks a task carriable but never the cluster wrapping it", () => {
         const elements =
             VueFlowUtils.generateGraph(
                 "vfid",
@@ -390,11 +390,14 @@ describe("generateGraph node draggability", () => {
                 false,
             ) ?? []
 
+        // vue-flow must never reposition a node itself: the layout is server-computed.
+        expect(elements.every((element: any) => element.draggable !== true)).toBe(true)
+
         const cluster = elements.find((element: any) => element.type === "cluster") as any
         expect(cluster).toBeDefined()
-        expect(cluster.draggable).toBe(false)
+        expect(cluster.class).not.toContain("topology-carriable")
 
         const child = elements.find((element: any) => element.id === "root.branch.child") as any
-        expect(child?.draggable).toBe(true)
+        expect(child?.class).toContain("topology-carriable")
     })
 })

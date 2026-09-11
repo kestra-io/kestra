@@ -335,3 +335,66 @@ describe("generateGraph CHOICE edge labels", () => {
         expect(edge?.data?.relationType).toBeUndefined()
     })
 })
+describe("generateGraph node draggability", () => {
+    const flowGraphWithCluster = {
+        nodes: [
+            {
+                uid: "root.branch",
+                type: "io.kestra.core.models.hierarchies.GraphTask",
+                task: {id: "branch", type: "io.kestra.plugin.core.flow.Sequential"},
+            },
+            {
+                uid: "root.branch.child",
+                type: "io.kestra.core.models.hierarchies.GraphTask",
+                task: {id: "child", type: "io.kestra.plugin.core.log.Log"},
+            },
+        ],
+        edges: [
+            {
+                source: "root.branch",
+                target: "root.branch.child",
+                relation: {relationType: "SEQUENTIAL"},
+            },
+        ],
+        clusters: [
+            {
+                cluster: {
+                    uid: "cluster_root.branch",
+                    type: "io.kestra.core.models.hierarchies.GraphCluster",
+                    taskNode: {
+                        uid: "root.branch",
+                        task: {id: "branch", type: "io.kestra.plugin.core.flow.Sequential"},
+                    },
+                },
+                nodes: ["root.branch.child"],
+                parents: [],
+            },
+        ],
+    } as any
+
+    test("lets a task be picked up but never the cluster wrapping it", () => {
+        const elements =
+            VueFlowUtils.generateGraph(
+                "vfid",
+                "flow",
+                "ns",
+                flowGraphWithCluster,
+                undefined,
+                [],
+                false,
+                {},
+                new Set(),
+                [],
+                false,
+                true,
+                false,
+            ) ?? []
+
+        const cluster = elements.find((element: any) => element.type === "cluster") as any
+        expect(cluster).toBeDefined()
+        expect(cluster.draggable).toBe(false)
+
+        const child = elements.find((element: any) => element.id === "root.branch.child") as any
+        expect(child?.draggable).toBe(true)
+    })
+})

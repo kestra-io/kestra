@@ -425,6 +425,50 @@ export interface DagDependency {
 }
 
 /**
+ * Closes the gap a task leaves behind in a Dag: whoever depended on it inherits what it depended on,
+ * so pulling a task out of `a -> b -> c` leaves `a -> c` instead of orphaning `c`.
+ */
+export function healDagRemoval(source: string, lanePath: string, removedId: string): string {
+    const parsed = flowYamlUtils.parse<Record<string, unknown>>(source)
+    if (!parsed) return source
+    const lane = getAtPath(parsed, lanePath)
+    if (!Array.isArray(lane)) return source
+
+    const removed = lane.find(
+        item => String(displayTaskOf(item as Record<string, unknown>)?.id ?? "") === removedId,
+    ) as Record<string, unknown> | undefined
+    if (!removed) return source
+    const inherited = Array.isArray(removed.dependsOn) ? (removed.dependsOn as string[]) : []
+
+    let next = source
+    lane.forEach((raw, index) => {
+        const item = raw as Record<string, unknown>
+        const deps = Array.isArray(item.dependsOn) ? (item.dependsOn as string[]) : undefined
+        if (!deps?.includes(removedId)) return
+
+        const rebuilt: string[] = []
+        const push = (id: string) => {
+            if (id !== removedId && !rebuilt.includes(id)) rebuilt.push(id)
+        }
+        for (const dep of deps) {
+            if (dep === removedId) inherited.forEach(push)
+            else push(dep)
+        }
+
+        const updated = {...item}
+        if (rebuilt.length > 0) updated.dependsOn = rebuilt
+        else delete updated.dependsOn
+
+        next = flowYamlUtils.replaceBlockWithPath({
+            source: next,
+            path: `${lanePath}[${index}]`,
+            newContent: flowYamlUtils.stringify(updated),
+        })
+    })
+    return next
+}
+
+/**
  * Splices a task into a Dag's dependency chain. A Dag expresses order through `dependsOn` rather
  * than list position, so inserting into the array alone would leave the new task a disconnected
  * root; dropping it on the edge `fromId -> toId` has to mean `fromId -> insertedId -> toId`.

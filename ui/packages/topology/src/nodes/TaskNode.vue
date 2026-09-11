@@ -93,6 +93,7 @@
         SHOW_EXTRA_DETAILS_INJECTION_KEY,
         VALIDATION_ISSUES_INJECTION_KEY,
         FOCUSED_TASK_INJECTION_KEY,
+        DRAGGING_NODE_INJECTION_KEY,
     } from "../injectionKeys"
 
     import AlertCircle from "vue-material-design-icons/AlertCircle.vue"
@@ -218,9 +219,11 @@
     const execution = inject(EXECUTION_INJECTION_KEY)
     const subflowsExecutions = inject(SUBFLOWS_EXECUTIONS_INJECTION_KEY)
     const globalShowExtraDetails = inject(SHOW_EXTRA_DETAILS_INJECTION_KEY)
+    const isDraggingNode = inject(DRAGGING_NODE_INJECTION_KEY, undefined)
+
     function onCardClick() {
         const task = props.data.node.task
-        if (props.data.isReadOnly || !task) return
+        if (props.data.isReadOnly || !task || isDraggingNode?.value) return
         emit(EVENTS.EDIT, {task, section: SECTIONS.TASKS})
     }
 

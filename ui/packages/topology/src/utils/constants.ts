@@ -20,6 +20,7 @@ export const EVENTS = {
     SHOW_CUSTOM_ACTION: "showCustomAction",
     SHOW_DETAILS: "showDetails",
     CARD_CLICK: "cardClick",
+    MOVE_TASK: "moveTask",
 } as const
 
 export interface CustomActionConfig {

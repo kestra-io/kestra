@@ -1,6 +1,7 @@
 import {describe, it, expect} from "vitest"
 
-import {isRootSectionPath, isTaskListPath, resolveTaskInsertionTarget, resolveTaskInsertionTargetInAnySection, sectionFromParentPath} from "../../../../../src/components/no-code/blocks/blockSections"
+import {isRootSectionPath, isTaskListPath, moveTaskOntoEdge, resolveTaskInsertionTarget, resolveTaskInsertionTargetInAnySection, sectionFromParentPath} from "../../../../../src/components/no-code/blocks/blockSections"
+import * as flowYamlUtils from "@kestra-io/topology/flow-yaml-utils"
 
 describe("blockSections", () => {
     const FLOW = `id: topology-insert
@@ -161,6 +162,98 @@ errors:
 
             // Then
             expect(target).toBeUndefined()
+        })
+    })
+
+
+    describe("moveTaskOntoEdge", () => {
+        const SEQUENTIAL = `id: seq
+namespace: qa
+tasks:
+  - id: a
+    type: io.kestra.plugin.core.log.Log
+    message: a
+  - id: b
+    type: io.kestra.plugin.core.log.Log
+    message: b
+  - id: c
+    type: io.kestra.plugin.core.log.Log
+    message: c
+`
+
+        const DAG = `id: dag
+namespace: qa
+tasks:
+  - id: pipeline
+    type: io.kestra.plugin.core.flow.Dag
+    tasks:
+      - task:
+          id: fetch
+          type: io.kestra.plugin.core.log.Log
+          message: fetch
+      - task:
+          id: middle
+          type: io.kestra.plugin.core.log.Log
+          message: middle
+        dependsOn:
+          - fetch
+      - task:
+          id: sink
+          type: io.kestra.plugin.core.log.Log
+          message: sink
+        dependsOn:
+          - middle
+      - task:
+          id: spare
+          type: io.kestra.plugin.core.log.Log
+          message: spare
+`
+        const idsOf = (source: string) =>
+            ((flowYamlUtils.parse(source) as any).tasks as any[]).map(t => t.id)
+
+        const dagOf = (source: string) => {
+            const lane = (flowYamlUtils.parse(source) as any).tasks[0].tasks
+            return Object.fromEntries(lane.map((i: any) => [i.task.id, i.dependsOn ?? null]))
+        }
+
+        it("reorders a sequential lane", () => {
+            const next = moveTaskOntoEdge(SEQUENTIAL, "c", {refId: "a", position: "before"})
+
+            expect(idsOf(next)).toEqual(["c", "a", "b"])
+        })
+
+        it("is a no-op when dropped on itself", () => {
+            expect(moveTaskOntoEdge(SEQUENTIAL, "b", {refId: "b", position: "after"})).toBe(SEQUENTIAL)
+        })
+
+        it("heals the chain it leaves and splices into the one it joins", () => {
+            const next = moveTaskOntoEdge(DAG, "middle", {
+                refId: "spare",
+                position: "after",
+                dagDependency: {fromId: "spare"},
+            })
+
+            expect(dagOf(next)).toEqual({
+                fetch: null,
+                // sink inherited middle's upstream instead of being orphaned
+                sink: ["fetch"],
+                spare: null,
+                middle: ["spare"],
+            })
+        })
+
+        it("drops a stale dependsOn when the task leaves the dag", () => {
+            const next = moveTaskOntoEdge(DAG, "middle", {refId: "pipeline", position: "after"})
+
+            expect(idsOf(next)).toEqual(["pipeline", "middle"])
+            expect(dagOf(next)).toEqual({fetch: null, sink: ["fetch"], spare: null})
+            const moved = (flowYamlUtils.parse(next) as any).tasks[1]
+            expect(moved.dependsOn).toBeUndefined()
+            expect(moved.id).toBe("middle")
+        })
+
+        it("leaves the source alone when the target id does not exist", () => {
+            expect(moveTaskOntoEdge(SEQUENTIAL, "a", {refId: "nope", position: "after"})).toBe(SEQUENTIAL)
         })
     })
 

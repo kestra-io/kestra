@@ -32,6 +32,7 @@
             @delete="onDelete"
             @duplicate="onDuplicate"
             @addTrigger="onAddTrigger"
+            @editFlow="flowPropertiesOpen = true"
             @open-link="openFlow"
             @show-logs="showLogs"
             @show-outputs="showOutputs"
@@ -105,6 +106,8 @@
         <UndoToast :state="undoState" @undo="performUndo" />
 
         <BlockShortcutsDialog v-model:open="shortcutsOpen" :groups="shortcutGroups" />
+
+        <FlowPropertiesModal v-if="flowPropertiesOpen" @close="flowPropertiesOpen = false" />
 
         <BlockCommandMenu
             v-if="commandMenuOpen"
@@ -315,6 +318,7 @@
     import {useBlockEditorProvides} from "../no-code/blocks/useBlockEditorProvides"
     import {BLOCK_EDITOR_KEYMAP} from "../no-code/blocks/keymap"
     import BlockShortcutsDialog from "../no-code/blocks/BlockShortcutsDialog.vue"
+    import FlowPropertiesModal from "../no-code/blocks/FlowPropertiesModal.vue"
     import BlockCommandMenu, {type BlockCommandMenuItem} from "../no-code/blocks/BlockCommandMenu.vue"
     import {
         buildCommandMenuContextLabel,
@@ -936,6 +940,7 @@
     const shortcutsOpen = ref(false)
     const shortcutGroups = buildShortcutGroups()
     const commandMenuOpen = ref(false)
+    const flowPropertiesOpen = ref(false)
 
     const focusedTaskId = ref<string | undefined>(undefined)
     const focusOrder = computed(() => buildTopologyFocusOrder(flowSource.value ?? ""))
@@ -943,6 +948,7 @@
     const isAuthoringOverlayOpen = () =>
         shortcutsOpen.value
         || commandMenuOpen.value
+        || flowPropertiesOpen.value
         || taskPicker.taskPickerVisible.value
         || Boolean(modalTarget.value)
         || isTaskModalOpen.value

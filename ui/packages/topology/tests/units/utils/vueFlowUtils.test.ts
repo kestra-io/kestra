@@ -472,4 +472,36 @@ describe("generateGraph node draggability", () => {
             expect(box?.data?.canAddTrigger, `readOnly=${readOnly} allowedEdit=${allowedEdit}`).toBe(false)
         }
     })
+
+    test("puts a flow card ahead of the graph, and none when there is no flow", () => {
+        const withFlow = VueFlowUtils.generateGraph(
+            "vfid", "flow", "ns", triggersGraph, undefined, [], false, {}, new Set(), [], false, true, false,
+        ) ?? []
+
+        const card = withFlow.find((element: any) => element.id === VueFlowUtils.FLOW_NODE_ID) as any
+        expect(card?.type).toBe("flow")
+        expect(card?.data).toEqual({flowId: "flow", namespace: "ns"})
+        // The layout is server-computed: the card must sit clear of it, never be dragged into it.
+        expect(card?.draggable).toBe(false)
+
+        const others = withFlow.filter(
+            (element: any) =>
+                element.position
+                && !element.parentNode
+                && element.id !== VueFlowUtils.FLOW_NODE_ID
+                && Number.isFinite(element.position.y),
+        ) as any[]
+        expect(others.length).toBeGreaterThan(0)
+        for (const other of others) {
+            expect(card.position.y, `above ${other.id}`).toBeLessThan(other.position.y)
+        }
+
+        const edge = withFlow.find((element: any) => element.source === VueFlowUtils.FLOW_NODE_ID) as any
+        expect(edge, "the card is wired to the graph head").toBeDefined()
+
+        const anonymous = VueFlowUtils.generateGraph(
+            "vfid", undefined, "ns", triggersGraph, undefined, [], false, {}, new Set(), [], false, true, false,
+        ) ?? []
+        expect(anonymous.some((element: any) => element.id === VueFlowUtils.FLOW_NODE_ID)).toBe(false)
+    })
 })

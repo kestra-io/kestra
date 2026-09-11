@@ -708,7 +708,67 @@ export function generateGraph(
         }
     }
 
+    appendFlowNode(elements, flowId, namespace, isHorizontal)
+
     return elements
+}
+
+export const FLOW_NODE_ID = "__flow__"
+
+/**
+ * The flow itself is not part of the server-computed graph, so the card is placed just clear of the
+ * laid-out nodes rather than fed through dagre — which would shift every existing graph.
+ */
+function appendFlowNode(
+    elements: Elements,
+    flowId: string | undefined,
+    namespace: string | undefined,
+    isHorizontal: boolean,
+) {
+    if (!flowId) return
+
+    const positioned = elements.filter(
+        (element) => "position" in element && element.position && !("source" in element),
+    ) as {id: string; position: {x: number; y: number}; parentNode?: string}[]
+    // dagre hands back NaN for a cluster it had nothing to lay out, which would place the card
+    // nowhere and take the edge with it.
+    const roots = positioned.filter(
+        (element) =>
+            !element.parentNode &&
+            Number.isFinite(element.position.x) &&
+            Number.isFinite(element.position.y),
+    )
+    if (!roots.length) return
+
+    const GAP = 60
+    const head = roots.reduce((best, element) =>
+        (isHorizontal ? element.position.x < best.position.x : element.position.y < best.position.y)
+            ? element
+            : best,
+    )
+    const position = isHorizontal
+        ? {x: head.position.x - NODE_SIZES.TASK_WIDTH - GAP, y: head.position.y}
+        : {x: head.position.x, y: head.position.y - NODE_SIZES.TASK_HEIGHT - GAP}
+
+    elements.push({
+        id: FLOW_NODE_ID,
+        type: "flow",
+        position,
+        draggable: false,
+        selectable: false,
+        sourcePosition: isHorizontal ? Position.Right : Position.Bottom,
+        targetPosition: isHorizontal ? Position.Left : Position.Top,
+        data: {flowId, namespace},
+    } as any)
+
+    elements.push({
+        id: `${FLOW_NODE_ID}|${head.id}`,
+        source: FLOW_NODE_ID,
+        target: head.id,
+        type: "edge",
+        data: {unused: true, color: "default"},
+        style: {zIndex: 10},
+    } as any)
 }
 
 export function isClusterRootOrEnd(node: MinimalNode) {

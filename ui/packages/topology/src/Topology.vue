@@ -22,6 +22,10 @@
             />
         </template>
 
+        <template #node-flow="flowProps">
+            <FlowNode v-bind="flowProps as any" @editFlow="emit(EVENTS.EDIT_FLOW)" />
+        </template>
+
         <template #node-dot="dotProps">
             <DotNode
                 v-bind="dotProps as any"
@@ -176,6 +180,7 @@
     import {Background} from "@vue-flow/background"
     import ClusterNode from "./nodes/ClusterNode.vue"
     import DotNode from "./nodes/DotNode.vue"
+    import FlowNode from "./nodes/FlowNode.vue"
     import EdgeNode from "./nodes/EdgeNode.vue"
     import TaskNode from "./nodes/TaskNode.vue"
     import TriggerNode from "./nodes/TriggerNode.vue"
@@ -349,6 +354,7 @@
             "on-add-flowable-error",
             EVENTS.ADD_TASK,
             EVENTS.ADD_TRIGGER,
+            EVENTS.EDIT_FLOW,
             "toggle-orientation",
             "loading",
             "expand-subflow",

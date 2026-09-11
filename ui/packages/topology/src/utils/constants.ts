@@ -10,6 +10,7 @@ export const EVENTS = {
     OPEN_LINK: "openLink",
     ADD_TASK: "addTask",
     ADD_TRIGGER: "addTrigger",
+    EDIT_FLOW: "editFlow",
     SHOW_LOGS: "showLogs",
     SHOW_OUTPUTS: "showOutputs",
     REPLAY_TASK: "replayTask",

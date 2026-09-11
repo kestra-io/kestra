@@ -184,10 +184,11 @@
         transition: opacity 0.12s, color 0.12s;
     }
 
-    /* The button itself must never take the pointer during a drag, or it would shadow the edge
+    /* The button must never take the pointer while a card is carried, or it would shadow the edge
        hit area the drop target is resolved from. */
     .edge-add-button--standby {
-        opacity: 0.85;
+        opacity: 1;
+        color: var(--ks-text-link);
     }
 
     .edge-add-button-dot {
@@ -203,8 +204,8 @@
     }
 
     .edge-add-button--standby .edge-add-button-dot {
-        transform: scale(0.8);
-        border-style: dashed;
+        background: var(--ks-bg-info);
+        border-color: var(--ks-border-info);
     }
 
     .edge-add-button--visible,

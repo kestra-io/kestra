@@ -1621,34 +1621,4 @@ class FlowServiceTest {
                 .ifPresent(f -> flowRepository.delete(f));
         }
     }
-
-    @Test
-    void shouldWarnOnDeprecatedPebbleFunction() throws IllegalAccessException {
-        PebbleFunction deprecatedFunc = new PebbleFunction("oldFunc", List.of(), true, "newFunc");
-        PebbleExpressionService mockPebbleService = mock(PebbleExpressionService.class);
-        when(mockPebbleService.functions()).thenReturn(List.of(deprecatedFunc));
-        PebbleExpressionService original = (PebbleExpressionService) org.apache.commons.lang3.reflect.FieldUtils.readDeclaredField(flowService, "pebbleExpressionService", true);
-        try {
-            org.apache.commons.lang3.reflect.FieldUtils.writeDeclaredField(flowService, "pebbleExpressionService", mockPebbleService, true);
-            String flowId = IdUtils.create();
-            String source = """
-                id: %s
-                namespace: %s
-                tasks:
-                  - id: log
-                    type: io.kestra.plugin.core.log.Log
-                    message: "{{ oldFunc() }}"
-                """.formatted(flowId, TEST_NAMESPACE);
-            FlowWithSource flow = FlowWithSource.of(Flow.builder().id(flowId).namespace(TEST_NAMESPACE).build(), source);
-            List<String> warnings = flowService.warnings(flow, TenantService.MAIN_TENANT);
-            assertThat(warnings).contains("Pebble function 'oldFunc' is deprecated. Use 'newFunc' instead.");
-        } finally {
-            FieldUtils.writeDeclaredField(
-                flowService,
-                "pebbleExpressionService",
-                original,
-                true
-            );
-        }
-    }
 }

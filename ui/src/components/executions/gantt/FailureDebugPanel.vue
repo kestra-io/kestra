@@ -77,7 +77,7 @@
                 <FailureMiniTimeline
                     v-if="focusedId"
                     ref="miniTimelineRef"
-                    :nodes="structuralNodes"
+                    :nodes="timelineNodes"
                     :focusedId="focusedId"
                     @focus-task="focusFailureFromNeighbor"
                     @select-range="onSelectRange"
@@ -272,6 +272,13 @@
 
         return nodes
     })
+
+    // The mini-timeline is a chronological axis, so its rows must read in the same top-to-bottom
+    // start-time order as the Gantt view above it — structuralNodes is ordered focused-first by
+    // relevance instead, which reads backwards there.
+    const timelineNodes = computed<StructuralNode[]>(() =>
+        [...structuralNodes.value].sort((a, b) => ts(a.taskRun.state.histories[0].date) - ts(b.taskRun.state.histories[0].date)),
+    )
 
     watch(
         failedTaskRuns,

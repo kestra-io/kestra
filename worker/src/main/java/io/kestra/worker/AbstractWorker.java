@@ -60,6 +60,10 @@ import static io.kestra.core.server.Service.ServiceState.TERMINATED_GRACEFULLY;
 @Slf4j
 public abstract class AbstractWorker extends AbstractService {
 
+    // Keeps the shutdown wait outliving the executor shutdown it observes, so the two deadlines never
+    // expire together and race on the resulting state. Must stay above the wait's poll interval.
+    private static final Duration FORCED_SHUTDOWN_MARGIN = Duration.ofSeconds(5);
+
     protected final MetricRegistry metricRegistry;
     protected final ServerConfig serverConfig;
     protected final MaintenanceService maintenanceService;
@@ -334,7 +338,7 @@ public abstract class AbstractWorker extends AbstractService {
         try {
             Await.await()
                 // Awaitility caps at 10s by default, and honouring the grace period is the whole point here.
-                .atMost(timeout)
+                .atMost(timeout.plus(FORCED_SHUTDOWN_MARGIN))
                 .pollInterval(Duration.ofSeconds(1))
                 .ignoreExceptions()
                 .until(() ->
@@ -357,8 +361,9 @@ public abstract class AbstractWorker extends AbstractService {
             // Returning instead of propagating keeps doStop() on its normal path, which still has the
             // Worker IO senders to flush.
             log.warn(
-                "Grace period of {} elapsed with {} job(s) still running, forcing termination.",
-                timeout, this.workerJobExecutor.getRunningJobCount()
+                "Worker job executor did not report back {} past its {} deadline, forcing termination "
+                    + "({} job(s) still running).",
+                FORCED_SHUTDOWN_MARGIN, timeout, this.workerJobExecutor.getRunningJobCount()
             );
             return false;
         }

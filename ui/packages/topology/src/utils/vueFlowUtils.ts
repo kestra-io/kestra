@@ -329,12 +329,19 @@ export function nodeColor(node: MinimalNode, collapsed: Set<string>) {
     return "default"
 }
 
+export interface AddTaskTarget {
+    refId: string
+    position: "before" | "after"
+    /** Both ends of the edge, when it is a `dependsOn` relation inside a Dag. */
+    dagDependency?: {fromId?: string; toId?: string}
+}
+
 export function haveAdd(
     edge: FlowGraphEdge,
     nodeByUid: Record<string, MinimalNode>,
     clustersRootTaskUids: string[],
     readOnlyUidPrefixes: string[],
-) {
+): AddTaskTarget | undefined {
     if (
         readOnlyUidPrefixes.some(
             (prefix) => edge.source.startsWith(prefix) && edge.target.startsWith(prefix),
@@ -362,18 +369,36 @@ export function haveAdd(
     ) {
         return undefined
     }
+    // A Dag orders its tasks through `dependsOn`, so an insertion there has to know both ends of
+    // the edge it landed on, not just the neighbour it is placed next to.
+    const isDagLane = nodeByUid[targetNodeClusterUid]?.task?.type?.endsWith(".Dag") === true
+    const dagTaskIdAt = (uid: string): string | undefined => {
+        const node = nodeByUid[uid]
+        if (!node) return undefined
+        if (node.type.endsWith("GraphClusterRoot") || node.type.endsWith("GraphClusterEnd")) return undefined
+        const parts = uid.split(".")
+        parts.pop()
+        return parts.join(".") === targetNodeClusterUid ? Utils.afterLastDot(uid) : undefined
+    }
+    const withDag = (target: AddTaskTarget): AddTaskTarget => {
+        if (!isDagLane) return target
+        const fromId = dagTaskIdAt(edge.source)
+        const toId = dagTaskIdAt(edge.target)
+        return fromId || toId ? {...target, dagDependency: {fromId, toId}} : target
+    }
+
     if (targetNode.type.endsWith("GraphClusterRoot")) {
-        return [clusterRootTaskId, "before"]
+        return {refId: clusterRootTaskId ?? "", position: "before"}
     }
     const sourceIsEndOfCluster = nodeByUid[edge.source].type.endsWith("GraphClusterEnd")
     if (!sourceIsEndOfCluster && targetNode.type.endsWith("GraphClusterEnd")) {
-        return [Utils.afterLastDot(edge.source), "after"]
+        return withDag({refId: Utils.afterLastDot(edge.source) ?? "", position: "after"})
     }
     if (sourceIsEndOfCluster) {
         const dotSplitSource = edge.source.split(".")
-        return [dotSplitSource[dotSplitSource.length - 2], "after"]
+        return {refId: dotSplitSource[dotSplitSource.length - 2] ?? "", position: "after"}
     }
-    return [Utils.afterLastDot(edge.target), "before"]
+    return withDag({refId: Utils.afterLastDot(edge.target) ?? "", position: "before"})
 }
 
 export function getEdgeColor(

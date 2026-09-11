@@ -151,6 +151,105 @@ public class SecretFunctionTest {
     }
 
     @Test
+    void shouldFailedGivenNonExistingSecretUsingDefaults() {
+        // Given
+        Map<String, Object> context = Map.of(
+            "flow", Map.of("namespace", "io.kestra.unittest")
+        );
+
+        // When / Then
+        Throwable cause = Assertions.assertThrows(IllegalVariableEvaluationException.class, () ->
+        {
+            variableRenderer.render("{{ secret('missing-secret') }}", context);
+        }).getCause();
+        assertThat(cause.getMessage()).isEqualTo("Cannot find secret for key 'missing-secret'. ({{ secret('missing-secret') }}:1)");
+    }
+
+    @Test
+    void shouldFailedGivenNonExistingSecretAndErrorOnMissingTrue() {
+        // Given
+        Map<String, Object> context = Map.of(
+            "flow", Map.of("namespace", "io.kestra.unittest")
+        );
+
+        // When / Then
+        Throwable cause = Assertions.assertThrows(IllegalVariableEvaluationException.class, () ->
+        {
+            variableRenderer.render("{{ secret('missing-secret', errorOnMissing=true) }}", context);
+        }).getCause();
+        assertThat(cause.getMessage())
+            .isEqualTo("Cannot find secret for key 'missing-secret'. ({{ secret('missing-secret', errorOnMissing=true) }}:1)");
+    }
+
+    @Test
+    void shouldGetEmptyGivenNonExistingSecretAndErrorOnMissingFalse() throws IllegalVariableEvaluationException {
+        // Given
+        Map<String, Object> context = Map.of(
+            "flow", Map.of("namespace", "io.kestra.unittest")
+        );
+
+        // When / Then
+        assertThat(variableRenderer.render("{{ secret('missing-secret', errorOnMissing=false) }}", context)).isEqualTo("");
+    }
+
+    @Test
+    void shouldGetEmptyGivenNonExistingSecretAndFullAndErrorOnMissingFalse() throws IllegalVariableEvaluationException {
+        // Given
+        Map<String, Object> context = Map.of(
+            "flow", Map.of("namespace", "io.kestra.unittest")
+        );
+
+        // When / Then
+        assertThat(variableRenderer.render("{{ secret('missing-secret', full=true, errorOnMissing=false) }}", context)).isEqualTo("");
+    }
+
+    @Test
+    void shouldGetEmptyGivenNonExistingSecretAndSubKeyAndErrorOnMissingFalse() throws IllegalVariableEvaluationException {
+        // Given
+        Map<String, Object> context = Map.of(
+            "flow", Map.of("namespace", "io.kestra.unittest")
+        );
+
+        // When / Then
+        // the secret itself is absent, so it is tolerated before any sub-key lookup is attempted.
+        assertThat(variableRenderer.render("{{ secret('missing-secret', subkey='x', errorOnMissing=false) }}", context)).isEqualTo("");
+    }
+
+    @Test
+    void shouldFailedGivenNonExistingSubKeyAndErrorOnMissingFalse() {
+        // Given
+        Map<String, Object> context = Map.of(
+            "flow", Map.of("namespace", "io.kestra.unittest")
+        );
+
+        // When / Then
+        // 'errorOnMissing' tolerates a missing secret, not a missing sub-key of an existing one.
+        Throwable cause = Assertions.assertThrows(IllegalVariableEvaluationException.class, () ->
+        {
+            variableRenderer.render("{{ secret('json-secret', subkey='missing', errorOnMissing=false) }}", context);
+        }).getCause();
+        assertThat(cause.getMessage())
+            .isEqualTo("Cannot find secret sub-key 'missing' in secret 'json-secret'. ({{ secret('json-secret', subkey='missing', errorOnMissing=false) }}:1)");
+    }
+
+    @Test
+    void shouldFailedGivenSecretBackendFailureAndErrorOnMissingFalse() {
+        // Given
+        Map<String, Object> context = Map.of(
+            "flow", Map.of("namespace", "io.kestra.unittest")
+        );
+
+        // When / Then
+        // A backend failure is not a missing secret: it must surface even when 'errorOnMissing' is false.
+        Throwable cause = Assertions.assertThrows(IllegalVariableEvaluationException.class, () ->
+        {
+            variableRenderer.render("{{ secret('backend-failure', errorOnMissing=false) }}", context);
+        }).getCause();
+        assertThat(cause.getMessage())
+            .isEqualTo("Secret backend is unavailable. ({{ secret('backend-failure', errorOnMissing=false) }}:1)");
+    }
+
+    @Test
     void getUnknownSecret() {
         var exception = assertThrows(SecretNotFoundException.class, () -> secretService.findSecret(null, null, "unknown_secret_key"));
         assertThat(exception.getMessage()).isEqualTo("Cannot find secret for key 'unknown_secret_key'.");
@@ -173,6 +272,11 @@ public class SecretFunctionTest {
         );
 
         public String findSecret(String tenantId, String namespace, String key) throws SecretNotFoundException, IOException {
+            if ("backend-failure".equals(key)) {
+                // a secret backend that is reachable but failing: a SecretException that is not a SecretNotFoundException
+                throw new SecretException("Secret backend is unavailable.");
+            }
+
             Optional<String> optional = Optional.ofNullable(SECRETS.get(namespace + "." + key));
             if (optional.isPresent()) {
                 return optional.get();

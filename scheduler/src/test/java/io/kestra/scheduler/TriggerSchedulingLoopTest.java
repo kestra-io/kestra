@@ -37,6 +37,7 @@ import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 class TriggerSchedulingLoopTest {
@@ -227,6 +228,39 @@ class TriggerSchedulingLoopTest {
 
         // THEN
         assertThat(thread.isAlive()).isFalse();
+    }
+
+    @Test
+    void shouldKeepAlreadyReturnedAssignmentsUnchangedWhenReassigned() {
+        // GIVEN
+        TriggerSchedulingLoop loop = createLoop();
+        loop.setAssignments(Set.of(1, 2));
+        Set<Integer> snapshot = loop.assignments();
+
+        // WHEN
+        loop.setAssignments(Set.of(3));
+
+        // THEN
+        assertThat(snapshot).containsExactlyInAnyOrder(1, 2);
+        assertThat(loop.assignments()).containsExactly(3);
+    }
+
+    @Test
+    void shouldNotStartSchedulingWhenStoppedBeforeTheSubmissionRuns() throws InterruptedException {
+        // GIVEN
+        TriggerSchedulingLoop loop = createLoop();
+        loop.setAssignments(Set.of(1));
+
+        // WHEN
+        loop.stop();
+        Thread thread = new Thread(loop);
+        thread.start();
+        thread.join(2000);
+
+        // THEN
+        assertThat(loop.isRunning()).isFalse();
+        assertThat(thread.isAlive()).isFalse();
+        verifyNoInteractions(triggerScheduler);
     }
 
     @Test

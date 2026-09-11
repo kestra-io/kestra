@@ -3,6 +3,7 @@ package io.kestra.webserver.controllers.api;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -34,6 +35,7 @@ import io.kestra.jdbc.JdbcTestUtils;
 import io.kestra.jdbc.repository.AbstractJdbcTriggerRepository;
 import io.kestra.plugin.core.debug.Return;
 import io.kestra.plugin.core.trigger.Schedule;
+import io.kestra.webserver.controllers.api.TriggerController.ApiCreateBackfillRequest;
 import io.kestra.webserver.controllers.api.TriggerController.SetDisabledRequest;
 import io.kestra.webserver.models.api.ApiAsyncOperationResponse;
 import io.kestra.webserver.models.api.ApiTriggerAndState;
@@ -46,6 +48,7 @@ import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.client.annotation.Client;
 import io.kestra.core.junit.assertions.Problems;
+import io.kestra.webserver.errors.ProblemError;
 import io.kestra.webserver.errors.ProblemTypes;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.reactor.http.client.ReactorHttpClient;
@@ -762,6 +765,47 @@ class TriggerControllerTest {
 
         // THEN
         assertThat(exception.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
+    }
+
+    @Test
+    void shouldReturnUnprocessableEntityWhenCreatingBackfillWithEndNotAfterStart() throws FlowProcessingException, QueueException {
+        // GIVEN
+        Flow flow = generateFlowWithTrigger("ns-" + IdUtils.create().toLowerCase());
+        flowService.create(GenericFlow.of(flow));
+        TriggerState trigger = createTriggerFromFlow(flow, false);
+        Awaitility.await().atMost(Duration.ofSeconds(30)).pollInterval(Duration.ofMillis(100))
+            .until(() -> jdbcTriggerRepository.findByIdWithoutAcl(trigger).isPresent());
+
+        ZonedDateTime start = ZonedDateTime.parse("2026-06-10T00:00:00Z");
+
+        for (ZonedDateTime end : List.of(start.minusDays(9), start)) {
+            // WHEN
+            HttpClientResponseException e = assertThrows(
+                HttpClientResponseException.class,
+                () -> client.toBlocking().retrieve(
+                    HttpRequest.PUT(
+                        TRIGGER_PATH + "/backfill/create",
+                        new ApiCreateBackfillRequest(
+                            flow.getNamespace(),
+                            flow.getId(),
+                            trigger.getTriggerId(),
+                            new ApiCreateBackfillRequest.Backfill(start, end, Map.of(), List.of())
+                        )
+                    ),
+                    ApiTriggerState.class
+                )
+            );
+
+            // THEN
+            Problems.assertProblem(e, ProblemTypes.VALIDATION_FAILED);
+            Problems.assertErrors(e)
+                .extracting(ProblemError::detail)
+                .containsExactly(
+                    "The backfill end date must be after its start date, but got start '%s' and end '%s'.".formatted(start, end)
+                );
+        }
+
+        assertThat(jdbcTriggerRepository.findByIdWithoutAcl(trigger).orElseThrow().getBackfill()).isNull();
     }
 
     @Test

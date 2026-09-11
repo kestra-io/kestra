@@ -491,6 +491,9 @@
     },
     "download": "Download",
     "jsonl": "JSONL",
+    "large_outputs": {
+      "value_truncated": "Showing a truncated preview of this {size} value."
+    },
     "concurrency_limit": {
       "dialog_title": "Concurrency Limits",
       "warning": "Changing the running counter may corrupt concurrency, so executions may exceed the allowed limit."
@@ -2214,7 +2217,6 @@
     "submit": "Submit",
     "accept": "Accept",
     "reject": "Reject",
-    "draft_available": "Draft change is available in the editor",
     "last modified": "Last modified",
     "run task in playground": "Run task in playground",
     "defaultsToNamespaceFile": "Defaults to namespace file: <code>{name}</code>",

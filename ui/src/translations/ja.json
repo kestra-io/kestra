@@ -491,6 +491,9 @@
     },
     "download": "ダウンロード",
     "jsonl": "JSONL",
+    "large_outputs": {
+      "value_truncated": "この{size}値の切り捨てられたプレビューを表示しています。"
+    },
     "concurrency_limit": {
       "dialog_title": "同時実行制限",
       "warning": "実行中のカウンターを変更すると、Concurrencyが破損し、Executionが許可された制限を超える可能性があります。"
@@ -2214,7 +2217,6 @@
     "submit": "送信",
     "accept": "承認",
     "reject": "拒否",
-    "draft_available": "エディターでドラフト変更が利用可能です",
     "last modified": "最終更新日時",
     "run task in playground": "プレイグラウンドでタスクを実行",
     "defaultsToNamespaceFile": "デフォルトはnamespaceファイル: <code>{name}</code>",

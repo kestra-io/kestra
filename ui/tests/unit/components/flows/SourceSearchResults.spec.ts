@@ -204,7 +204,7 @@ describe("SourceSearchResults", () => {
             ],
         })
 
-        expect(wrapper.text()).toContain("company.platform")
+        expect(wrapper.find(".type-fail-text").findAll("span")[0].text()).toBe("company.platform couldn't be searched")
         expect(wrapper.text()).toContain("Timed out")
 
         await wrapper.find(".type-fail button").trigger("click")
@@ -217,8 +217,7 @@ describe("SourceSearchResults", () => {
             filesNamespaces: [{namespace: "company.ml", status: "pending", paths: []}],
         })
 
-        expect(wrapper.find(".type-pending").exists()).toBe(true)
-        expect(wrapper.text()).toContain("company.ml")
+        expect(wrapper.find(".type-pending").text()).toBe("Searching company.ml")
     })
 
     test("renders kv rows grouped by namespace with highlighted keys", () => {

@@ -80,11 +80,13 @@ class ChatMessageAdaptorTest {
             .build();
 
         // When
-        List<ChatMessage> projected = ChatMessageAdaptor.project(List.of(toolCallRow));
+        List<ChatMessage> projected = ChatMessageAdaptor.project(List.of(
+            toolCallRow, toolResult(call, Map.of("outcome", "ok", "result", "hits"))
+        ));
 
         // Then — the tool request is preserved and the reasoning state is re-attached under the keys
         // LangChain4j reads back when sending the call to the provider
-        assertThat(projected).hasSize(1).first().isInstanceOf(AiMessage.class);
+        assertThat(projected).hasSize(2).first().isInstanceOf(AiMessage.class);
         AiMessage ai = (AiMessage) projected.getFirst();
         assertThat(ai.hasToolExecutionRequests()).isTrue();
         assertThat(ai.toolExecutionRequests()).first().extracting(ToolExecutionRequest::name).isEqualTo("search-docs");
@@ -108,12 +110,77 @@ class ChatMessageAdaptorTest {
             .build();
 
         // When
-        AiMessage ai = (AiMessage) ChatMessageAdaptor.project(List.of(toolCallRow)).get(0);
+        AiMessage ai = (AiMessage) ChatMessageAdaptor.project(List.of(
+            toolCallRow, toolResult(call, Map.of("outcome", "ok", "result", "hits"))
+        )).get(0);
 
         // Then — nothing spurious is attached, so nothing is sent back to the provider
         assertThat(ai.thinking()).isNull();
         assertThat(ai.attribute(ChatMessageAdaptor.THINKING_SIGNATURE_KEY, String.class)).isNull();
         assertThat(ChatMessageAdaptor.thinkingOf(ai)).isNull();
+    }
+
+    @Test
+    void shouldDropUnpairedToolCallWhenProjecting() {
+        AgentToolCall call = AgentToolCall.platform("c1", "search-docs", null, Map.of("q", "trigger"));
+        List<ChatMessage> projected = ChatMessageAdaptor.project(List.of(
+            text(AgentMessageRole.USER, "search"),
+            toolCall(call),
+            cancelled()
+        ));
+
+        assertThat(projected).hasSize(1).first().isInstanceOf(UserMessage.class);
+    }
+
+    @Test
+    void shouldKeepPendingProposedToolCallWhenProjecting() {
+        AgentToolCall call = AgentToolCall.platform("c1", "update-artefact", null, Map.of("executionId", "exec-1"));
+        List<ChatMessage> projected = ChatMessageAdaptor.project(List.of(
+            text(AgentMessageRole.USER, "update it"),
+            toolCall(call),
+            proposedAction(call)
+        ));
+
+        assertThat(projected).hasSize(2);
+        assertThat(projected.get(1)).isInstanceOf(AiMessage.class);
+        assertThat(((AiMessage) projected.get(1)).toolExecutionRequests())
+            .extracting(ToolExecutionRequest::id)
+            .containsExactly("c1");
+    }
+
+    private static AgentMessage toolCall(final AgentToolCall call) {
+        return AgentMessage.builder()
+            .uid("tc-" + call.id())
+            .threadId("thread-1")
+            .role(AgentMessageRole.ASSISTANT)
+            .type(AgentMessageType.TOOL_CALL)
+            .toolCall(call)
+            .traceId("t1")
+            .createdAt(Instant.now())
+            .build();
+    }
+
+    private static AgentMessage proposedAction(final AgentToolCall call) {
+        return AgentMessage.builder()
+            .uid("pa-" + call.id())
+            .threadId("thread-1")
+            .role(AgentMessageRole.ASSISTANT)
+            .type(AgentMessageType.PROPOSED_ACTION)
+            .toolCall(call)
+            .traceId("t1")
+            .createdAt(Instant.now())
+            .build();
+    }
+
+    private static AgentMessage cancelled() {
+        return AgentMessage.builder()
+            .uid("cancelled")
+            .threadId("thread-1")
+            .role(AgentMessageRole.SYSTEM)
+            .type(AgentMessageType.CANCELLED)
+            .traceId("t1")
+            .createdAt(Instant.now())
+            .build();
     }
 
     private static AgentMessage toolResult(final AgentToolCall call, final Map<String, Object> result) {

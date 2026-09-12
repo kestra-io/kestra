@@ -2072,6 +2072,7 @@
         "title": "Copilot IA",
         "placeholder": "Dites-moi quoi construire…",
         "send": "Envoyer",
+        "stop": "Arrêter",
         "mode": {
           "ask": "Demander",
           "edit": "Modifier",

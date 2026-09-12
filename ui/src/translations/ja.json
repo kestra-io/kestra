@@ -2072,6 +2072,7 @@
         "title": "AI Copilot",
         "placeholder": "何を作成するか教えてください…",
         "send": "送信",
+        "stop": "停止",
         "mode": {
           "ask": "質問",
           "edit": "編集",

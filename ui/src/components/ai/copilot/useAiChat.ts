@@ -5,7 +5,7 @@
  * renderable message list. The thread `status` is the single source of truth for
  * what the UI may do next:
  *   - IDLE                  → a new turn may be sent
- *   - RUNNING               → a turn is streaming; composer disabled (a 2nd turn 409s)
+ *   - RUNNING               → a turn is streaming; composer shows stop (a 2nd turn 409s)
  *   - AWAITING_CONFIRMATION → a proposal is suspended; call `confirm(...)` to resume
  *
  * Non-streaming calls (create/get) go through the `useClient()` facade — not the generated SDK AI
@@ -116,6 +116,10 @@ export function useAiChat() {
     // The active thread uid is remembered client-side so the conversation survives a reload
     // (threads are persisted + user-scoped server-side). A stale/foreign uid just 404s → cleared.
     const THREAD_STORAGE_KEY = "kestra.copilot.activeThread"
+    const THREAD_IDLE_POLL_MS = 100
+    // Bumped on reset/loadThread so a Stop that is still waiting for the server to go IDLE
+    // does not overwrite a newer conversation's status.
+    let idleWaitGeneration = 0
     const rememberThread = (uid: string) => {
         try {
             localStorage.setItem(THREAD_STORAGE_KEY, uid)
@@ -165,6 +169,7 @@ export function useAiChat() {
 
     /** Rehydrates an existing thread's transcript on reload. Sorts messages by uid. */
     async function loadThread(threadId: string): Promise<void> {
+        idleWaitGeneration++
         // `showMessageOnError: false` keeps the global error toast quiet for an expected 404 — the
         // thread no longer exists (e.g. an evicted OSS in-memory conversation, or a deleted one) —
         // handled here by forgetting the remembered id and starting a fresh session.
@@ -273,7 +278,7 @@ export function useAiChat() {
         await runStream(`${base()}/${active.uid}/confirm`, request)
     }
 
-    /** Cancels an in-flight stream (e.g. on unmount). */
+    /** Aborts an in-flight stream (stop button, or unmount). */
     function cancel(): void {
         abort?.abort()
     }
@@ -281,6 +286,8 @@ export function useAiChat() {
     /** Starts a fresh conversation: drops the current thread/transcript back to the empty state. */
     function reset(): void {
         cancel()
+        idleWaitGeneration++
+        abort = null
         thread.value = null
         messages.value = []
         status.value = "IDLE"
@@ -307,6 +314,7 @@ export function useAiChat() {
         abort = new AbortController()
         lastTurn = {url, body}
         const countBefore = messages.value.length
+        let waitForServerIdle = false
 
         try {
             await streamSse({url, body, signal: abort.signal, onFrame: reduce})
@@ -318,16 +326,51 @@ export function useAiChat() {
                 notice.value = "emptyTurn"
             }
         } catch (e) {
-            if ((e as Error)?.name === "AbortError") return
-            // 503 mid-stream (provider removed) → the unavailable state; otherwise a generic error.
-            if (is503(e)) unavailable.value = true
-            else error.value = toErrorCode(e)
-            // A stream error never leaves us in RUNNING; fall back to a safe resting state.
-            status.value = "IDLE"
+            if (isAbortError(e)) {
+                // `reset()` nulls `abort` before the fetch rejects, so a New chat does not paint
+                // a cancelled marker onto the empty transcript.
+                if (abort !== null) {
+                    push({id: uid(), role: "SYSTEM", type: "CANCELLED"})
+                    waitForServerIdle = true
+                }
+            } else {
+                // 503 mid-stream (provider removed) → the unavailable state; otherwise a generic error.
+                if (is503(e)) unavailable.value = true
+                else error.value = toErrorCode(e)
+                // A stream error never leaves us in RUNNING; fall back to a safe resting state.
+                status.value = "IDLE"
+            }
         } finally {
             streaming.value = false
             activeAssistant = null
             abort = null
+        }
+        if (waitForServerIdle) {
+            const threadId = thread.value?.uid
+            if (threadId) await awaitServerIdle(threadId)
+            else status.value = "IDLE"
+        }
+    }
+
+    /** Stop aborts the SSE immediately, but abortCancelled only runs after an in-flight catalog.dispatch returns, so Send stays off until GET reports the thread is no longer RUNNING. */
+    async function awaitServerIdle(threadId: string): Promise<void> {
+        const generation = idleWaitGeneration
+        for (;;) {
+            if (generation !== idleWaitGeneration || thread.value?.uid !== threadId) return
+            try {
+                const {data} = await client.get<ThreadDetail>(`${base()}/${threadId}`, {showMessageOnError: false})
+                if (generation !== idleWaitGeneration || thread.value?.uid !== threadId) return
+                if (data.status !== "RUNNING") {
+                    status.value = data.status
+                    return
+                }
+            } catch (e) {
+                if (is404(e)) {
+                    if (generation === idleWaitGeneration && thread.value?.uid === threadId) status.value = "IDLE"
+                    return
+                }
+            }
+            await new Promise<void>((resolve) => setTimeout(resolve, THREAD_IDLE_POLL_MS))
         }
     }
 
@@ -434,6 +477,10 @@ export function useAiChat() {
         if (e instanceof SseHttpError) return e.status === 404
         const err = e as {status?: number; response?: {status?: number}}
         return err?.status === 404 || err?.response?.status === 404
+    }
+
+    function isAbortError(e: unknown): boolean {
+        return (e as {name?: string})?.name === "AbortError"
     }
 
     return {

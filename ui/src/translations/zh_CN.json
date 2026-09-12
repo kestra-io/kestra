@@ -2072,6 +2072,7 @@
         "title": "AI 副驾驶",
         "placeholder": "告诉我构建什么…",
         "send": "发送",
+        "stop": "停止",
         "mode": {
           "ask": "询问",
           "edit": "编辑",

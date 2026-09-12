@@ -2072,6 +2072,7 @@
         "title": "Copilota AI",
         "placeholder": "Dimmi cosa costruire…",
         "send": "Invia",
+        "stop": "Interrompi",
         "mode": {
           "ask": "Chiedi",
           "edit": "Modifica",

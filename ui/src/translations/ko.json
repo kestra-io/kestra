@@ -2072,6 +2072,7 @@
         "title": "AI 코파일럿",
         "placeholder": "무엇을 만들까요?",
         "send": "보내기",
+        "stop": "중지",
         "mode": {
           "ask": "질문하기",
           "edit": "편집",

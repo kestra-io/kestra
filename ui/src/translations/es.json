@@ -2072,6 +2072,7 @@
         "title": "Copiloto de IA",
         "placeholder": "Dime qué construir…",
         "send": "Enviar",
+        "stop": "Detener",
         "mode": {
           "ask": "Preguntar",
           "edit": "Editar",

@@ -100,6 +100,16 @@
                         @click="toggleVoiceInput"
                     />
                     <KsButton
+                        v-if="streaming"
+                        circle
+                        type="primary"
+                        :icon="Stop"
+                        :aria-label="$t('ai.copilot.stop')"
+                        data-test="copilot-stop"
+                        @click="emit('stop')"
+                    />
+                    <KsButton
+                        v-else
                         circle
                         type="primary"
                         :icon="ArrowUp"
@@ -118,6 +128,7 @@
     import {ref, computed, nextTick, watch, onMounted, onBeforeUnmount, type Component} from "vue"
     import {useI18n} from "vue-i18n"
     import ArrowUp from "vue-material-design-icons/ArrowUp.vue"
+    import Stop from "vue-material-design-icons/Stop.vue"
     import ChevronDown from "vue-material-design-icons/ChevronDown.vue"
     import Microphone from "vue-material-design-icons/Microphone.vue"
     import Check from "vue-material-design-icons/Check.vue"
@@ -133,6 +144,8 @@
         mode: AgentMode
         /** Disables input while a turn is streaming or awaiting confirmation. */
         disabled?: boolean
+        /** Replaces send with stop while a turn is streaming. */
+        streaming?: boolean
         /** Overrides the placeholder (e.g. the descriptive helper text in the empty state). */
         placeholder?: string
         /** Initial visible rows (empty state uses more so the helper text wraps); collapses on input. */
@@ -145,6 +158,7 @@
 
     const emit = defineEmits<{
         (e: "submit", prompt: string): void
+        (e: "stop"): void
         (e: "update:mode", mode: AgentMode): void
         (e: "update:provider", provider: string): void
     }>()

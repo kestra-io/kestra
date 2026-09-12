@@ -46,9 +46,11 @@
                     v-model:provider="selectedProvider"
                     :providers="providers"
                     :disabled="!canSend"
+                    :streaming="streaming"
                     :placeholder="$t('ai.copilot.emptyHelper')"
                     :rows="3"
                     @submit="onSubmit"
+                    @stop="onStop"
                 />
                 <div class="copilot-suggestions">
                     <KsButton
@@ -127,7 +129,9 @@
                     v-model:provider="selectedProvider"
                     :providers="providers"
                     :disabled="!canSend"
+                    :streaming="streaming"
                     @submit="onSubmit"
+                    @stop="onStop"
                 />
             </div>
         </template>
@@ -340,6 +344,12 @@
     watch(streaming, (now, was) => {
         clearTimeout(endTimer)
         if (was && !now) {
+            const last = lastMessage.value
+            // Stop and New chat also drop `streaming`; the gather is a completion beat, not a cancel beat.
+            if (!last || last.type === "CANCELLED") {
+                ending.value = false
+                return
+            }
             ending.value = true
             // Covers the full end sequence: dots gather + mark bloom (~0.7s), a 3s hold, then the fade.
             endTimer = setTimeout(() => (ending.value = false), 4300)
@@ -385,12 +395,31 @@
     // user can type what to change (the next turn re-plans). Focus once the turn resolves and
     // the composer is enabled again.
     const footerComposer = ref<InstanceType<typeof CopilotComposer> | null>(null)
+    const focusAfterStop = ref(false)
+
+    function focusActiveComposer(): void {
+        (isEmpty.value ? emptyComposer.value : footerComposer.value)?.focus()
+    }
 
     async function onReject(): Promise<void> {
         await confirm("REJECT", undefined, selectedProvider.value)
         await nextTick()
         footerComposer.value?.focus()
     }
+
+    function onStop(): void {
+        // Stop only aborts the fetch; canSend flips later in runStream's finally. Focus then,
+        // after the textarea is re-enabled — focusing a disabled textarea is a no-op.
+        focusAfterStop.value = true
+        cancel()
+    }
+
+    watch(canSend, async (now) => {
+        if (!now || !focusAfterStop.value) return
+        focusAfterStop.value = false
+        await nextTick()
+        focusActiveComposer()
+    })
 
     // Seeded prompts: an entry point (e.g. "Fix with AI") stashes text via miscStore, which opens
     // this tab. Prefill the composer with it and focus, then clear the store so it doesn't re-seed —
@@ -410,7 +439,7 @@
         miscStore.copilotThreadTitle = null
         miscStore.copilotNewThread = false
         await nextTick()
-        ;(isEmpty.value ? emptyComposer.value : footerComposer.value)?.focus()
+        focusActiveComposer()
     }
 
     onMounted(consumeSeededPrompt)

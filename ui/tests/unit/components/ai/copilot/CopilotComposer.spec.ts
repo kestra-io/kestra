@@ -91,4 +91,15 @@ describe("CopilotComposer", () => {
         await input(w).setValue("hello")
         expect(w.emitted("update:modelValue")?.at(-1)).toEqual(["hello"])
     })
+
+    it("replaces send with stop while streaming", async () => {
+        const w = mountComposer({streaming: true, disabled: true})
+        expect(sendBtn(w).exists()).toBe(false)
+        const stop = w.find("[data-test=\"copilot-stop\"]")
+        expect(stop.exists()).toBe(true)
+        expect(stop.attributes("disabled")).toBeUndefined()
+
+        await stop.trigger("click")
+        expect(w.emitted("stop")).toHaveLength(1)
+    })
 })

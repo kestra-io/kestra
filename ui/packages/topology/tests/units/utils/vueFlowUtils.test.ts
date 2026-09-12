@@ -473,35 +473,18 @@ describe("generateGraph node draggability", () => {
         }
     })
 
-    test("puts a flow card ahead of the graph, and none when there is no flow", () => {
-        const withFlow = VueFlowUtils.generateGraph(
+    // The flow is no longer a node: it is a canvas-anchored chip, so the graph must contain
+    // nothing standing for the flow and no edge leaving one.
+    test("builds no node or edge for the flow itself", () => {
+        const elements = VueFlowUtils.generateGraph(
             "vfid", "flow", "ns", triggersGraph, undefined, [], false, {}, new Set(), [], false, true, false,
         ) ?? []
 
-        const card = withFlow.find((element: any) => element.id === VueFlowUtils.FLOW_NODE_ID) as any
-        expect(card?.type).toBe("flow")
-        expect(card?.data).toEqual({flowId: "flow", namespace: "ns"})
-        // The layout is server-computed: the card must sit clear of it, never be dragged into it.
-        expect(card?.draggable).toBe(false)
-
-        const others = withFlow.filter(
-            (element: any) =>
-                element.position
-                && !element.parentNode
-                && element.id !== VueFlowUtils.FLOW_NODE_ID
-                && Number.isFinite(element.position.y),
-        ) as any[]
-        expect(others.length).toBeGreaterThan(0)
-        for (const other of others) {
-            expect(card.position.y, `above ${other.id}`).toBeLessThan(other.position.y)
+        expect(elements.length).toBeGreaterThan(0)
+        for (const element of elements as any[]) {
+            expect(String(element.id)).not.toContain("__flow__")
+            expect(String(element.source ?? "")).not.toContain("__flow__")
+            expect(element.type).not.toBe("flow")
         }
-
-        const edge = withFlow.find((element: any) => element.source === VueFlowUtils.FLOW_NODE_ID) as any
-        expect(edge, "the card is wired to the graph head").toBeDefined()
-
-        const anonymous = VueFlowUtils.generateGraph(
-            "vfid", undefined, "ns", triggersGraph, undefined, [], false, {}, new Set(), [], false, true, false,
-        ) ?? []
-        expect(anonymous.some((element: any) => element.id === VueFlowUtils.FLOW_NODE_ID)).toBe(false)
     })
 })

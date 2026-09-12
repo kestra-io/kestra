@@ -1,158 +1,166 @@
 <template>
-    <VueFlow
-        :id="id"
-        :defaultMarkerColor="cssVariable('--ks-topology-dash')"
-        fitViewOnInit
-        :nodesDraggable="false"
-        :nodesConnectable="false"
-        :elevateNodesOnSelect="false"
-        :elevateEdgesOnSelect="false"
-    >
-        <Background :patternColor="cssVariable('--ks-topology-bg')" />
+    <div class="topology-shell">
+        <FlowSummaryChip
+            v-if="flowId"
+            class="topology-flow-bar"
+            :flowId="flowId"
+            :namespace="namespace"
+            :description="flowDescription"
+            :labels="flowLabels"
+            @editFlow="emit(EVENTS.EDIT_FLOW)"
+        />
 
-        <Panel v-if="showDetailsToggle" position="top-right">
-            <KsSwitch v-model="showExtraDetails" :activeText="$t('show more details')" size="small"/>
-        </Panel>
+        <VueFlow
+            :id="id"
+            :defaultMarkerColor="cssVariable('--ks-topology-dash')"
 
-        <template #node-cluster="clusterProps">
-            <ClusterNode
-                v-bind="clusterProps"
-                @collapse="collapseCluster($event, true)"
-                @addTrigger="emit(EVENTS.ADD_TRIGGER)"
-            />
-        </template>
+            :nodesDraggable="false"
+            :nodesConnectable="false"
+            :elevateNodesOnSelect="false"
+            :elevateEdgesOnSelect="false"
+        >
+            <Background :patternColor="cssVariable('--ks-topology-bg')" />
 
-        <template #node-flow="flowProps">
-            <FlowNode v-bind="flowProps as any" @editFlow="emit(EVENTS.EDIT_FLOW)" />
-        </template>
+            <Panel v-if="showDetailsToggle" position="top-right">
+                <KsSwitch v-model="showExtraDetails" :activeText="$t('show more details')" size="small"/>
+            </Panel>
 
-        <template #node-dot="dotProps">
-            <DotNode
-                v-bind="dotProps as any"
-            />
-        </template>
+            <template #node-cluster="clusterProps">
+                <ClusterNode
+                    v-bind="clusterProps"
+                    @collapse="collapseCluster($event, true)"
+                    @addTrigger="emit(EVENTS.ADD_TRIGGER)"
+                />
+            </template>
 
-        <template #node-task="taskProps">
-            <TaskNode
-                v-bind="taskProps"
-                :icons="icons"
-                :loadIcon="loadIcon"
-                :playgroundEnabled="playgroundEnabled"
-                :playgroundReadyToStart="playgroundReadyToStart"
-                :replayEnabled="replayEnabled"
-                :customActions="customActions"
-                :showDetails="showDetails"
-                @edit="emit(EVENTS.EDIT, $event)"
-                @delete="emit(EVENTS.DELETE, $event)"
-                @duplicate="emit(EVENTS.DUPLICATE, $event)"
-                @run-task="emit(EVENTS.RUN_TASK, $event)"
-                @expand="expand($event)"
-                @open-link="emit(EVENTS.OPEN_LINK, $event)"
-                @show-logs="emit(EVENTS.SHOW_LOGS, $event)"
-                @show-outputs="emit(EVENTS.SHOW_OUTPUTS, $event)"
-                @replay-task="emit(EVENTS.REPLAY_TASK, $event)"
-                @show-description="emit(EVENTS.SHOW_DESCRIPTION, $event)"
-                @show-condition="emit(EVENTS.SHOW_CONDITION, $event)"
-                @show-custom-action="emit(EVENTS.SHOW_CUSTOM_ACTION, $event)"
-                @show-details="emit(EVENTS.SHOW_DETAILS, $event)"
-                @mouseover="onMouseOver($event)"
-                @mouseleave="onMouseLeave()"
-                @add-error="emit('on-add-flowable-error', $event)"
-                @taskDragStart="onTaskDragStart"
-                @taskDragEnd="onTaskDragEnd"
-                :dragging="draggingNodeId === taskProps.id"
-                :enableSubflowInteraction="enableSubflowInteraction"
-            >
-                <template #details>
-                    <slot name="taskDetails" v-bind="taskProps" />
-                </template>
-                <template #taskActions="taskActionProps">
-                    <slot name="taskActions" v-bind="{...taskProps, ...taskActionProps}" />
-                </template>
-            </TaskNode>
-        </template>
+            <template #node-dot="dotProps">
+                <DotNode
+                    v-bind="dotProps as any"
+                />
+            </template>
 
-        <template #node-custom="taskProps">
-            <BasicNode
-                v-bind="taskProps"
-                :icons="icons"
-                :loadIcon="loadIcon"
-            />
-        </template>
+            <template #node-task="taskProps">
+                <TaskNode
+                    v-bind="taskProps"
+                    :icons="icons"
+                    :loadIcon="loadIcon"
+                    :playgroundEnabled="playgroundEnabled"
+                    :playgroundReadyToStart="playgroundReadyToStart"
+                    :replayEnabled="replayEnabled"
+                    :customActions="customActions"
+                    :showDetails="showDetails"
+                    @edit="emit(EVENTS.EDIT, $event)"
+                    @delete="emit(EVENTS.DELETE, $event)"
+                    @duplicate="emit(EVENTS.DUPLICATE, $event)"
+                    @run-task="emit(EVENTS.RUN_TASK, $event)"
+                    @expand="expand($event)"
+                    @open-link="emit(EVENTS.OPEN_LINK, $event)"
+                    @show-logs="emit(EVENTS.SHOW_LOGS, $event)"
+                    @show-outputs="emit(EVENTS.SHOW_OUTPUTS, $event)"
+                    @replay-task="emit(EVENTS.REPLAY_TASK, $event)"
+                    @show-description="emit(EVENTS.SHOW_DESCRIPTION, $event)"
+                    @show-condition="emit(EVENTS.SHOW_CONDITION, $event)"
+                    @show-custom-action="emit(EVENTS.SHOW_CUSTOM_ACTION, $event)"
+                    @show-details="emit(EVENTS.SHOW_DETAILS, $event)"
+                    @mouseover="onMouseOver($event)"
+                    @mouseleave="onMouseLeave()"
+                    @add-error="emit('on-add-flowable-error', $event)"
+                    @taskDragStart="onTaskDragStart"
+                    @taskDragEnd="onTaskDragEnd"
+                    :dragging="draggingNodeId === taskProps.id"
+                    :enableSubflowInteraction="enableSubflowInteraction"
+                >
+                    <template #details>
+                        <slot name="taskDetails" v-bind="taskProps" />
+                    </template>
+                    <template #taskActions="taskActionProps">
+                        <slot name="taskActions" v-bind="{...taskProps, ...taskActionProps}" />
+                    </template>
+                </TaskNode>
+            </template>
 
-        <template #node-trigger="triggerProps">
-            <TriggerNode
-                v-bind="triggerProps as any"
-                :icons="icons"
-                :loadIcon="loadIcon"
-                :isReadOnly="isReadOnly"
-                :isAllowedEdit="isAllowedEdit"
-                @delete="emit(EVENTS.DELETE, $event)"
-                @edit="emit(EVENTS.EDIT, $event)"
-                @show-description="emit(EVENTS.SHOW_DESCRIPTION, $event)"
-            />
-        </template>
+            <template #node-custom="taskProps">
+                <BasicNode
+                    v-bind="taskProps"
+                    :icons="icons"
+                    :loadIcon="loadIcon"
+                />
+            </template>
 
-        <template #node-collapsedcluster="CollapsedProps">
-            <CollapsedClusterNode
-                v-bind="CollapsedProps as any"
-                @expand="expand($event)"
-            />
-        </template>
+            <template #node-trigger="triggerProps">
+                <TriggerNode
+                    v-bind="triggerProps as any"
+                    :icons="icons"
+                    :loadIcon="loadIcon"
+                    :isReadOnly="isReadOnly"
+                    :isAllowedEdit="isAllowedEdit"
+                    @delete="emit(EVENTS.DELETE, $event)"
+                    @edit="emit(EVENTS.EDIT, $event)"
+                    @show-description="emit(EVENTS.SHOW_DESCRIPTION, $event)"
+                />
+            </template>
 
-        <template #edge-edge="EdgeProps">
-            <EdgeNode
-                v-bind="EdgeProps"
-                :yamlSource="source"
-                @add-task="emit(EVENTS.ADD_TASK, $event)"
-                @drag-over-edge="dropEdgeId = $event"
-                @drop-task="onDropTask"
-                :isReadOnly="isReadOnly"
-                :isAllowedEdit="isAllowedEdit"
-            />
-        </template>
+            <template #node-collapsedcluster="CollapsedProps">
+                <CollapsedClusterNode
+                    v-bind="CollapsedProps as any"
+                    @expand="expand($event)"
+                />
+            </template>
 
-        <Controls v-if="controlsShown" :showZoom="false" :showInteractive="false" :showFitView="false">
-            <KsTooltip :content="$t('topology-graph.zoom-in')" placement="right">
-                <ControlButton @click.stop="zoomIn()">
-                    <Plus />
-                </ControlButton>
-            </KsTooltip>
-            <KsTooltip :content="$t('topology-graph.zoom-out')" placement="right">
-                <ControlButton @click.stop="zoomOut()">
-                    <Minus />
-                </ControlButton>
-            </KsTooltip>
-            <KsTooltip :content="$t('topology-graph.zoom-fit')" placement="right">
-                <ControlButton @click.stop="fitView()">
-                    <Fullscreen />
-                </ControlButton>
-            </KsTooltip>
-            <KsTooltip v-if="toggleOrientationButton" :content="$t('topology-graph.graph-orientation')" placement="right">
-                <ControlButton @click.stop="emit('toggle-orientation', $event)">
-                    <component :is="isHorizontal ? AlignHorizontalCenter : AlignVerticalCenter" />
-                </ControlButton>
-            </KsTooltip>
-            <KsTooltip :content="$t('download')" placement="right">
-                <ControlButton @click.stop="toggleDropdown">
-                    <Download />
-                </ControlButton>
-            </KsTooltip>
-            <KsTooltip v-if="collapsed.size > 0" :content="$t('expand all')" placement="right">
-                <ControlButton @click.stop="uncollapseAll()">
-                    <ArrowExpandAll />
-                </ControlButton>
-            </KsTooltip>
-            <ul v-if="isDropdownOpen" class="exporting">
-                <li @click="exportAsImage('jpeg')" class="item">
-                    Export as .JPEG
-                </li>
-                <li @click="exportAsImage('png')" class="item">
-                    Export as .PNG
-                </li>
-            </ul>
-        </Controls>
-    </VueFlow>
+            <template #edge-edge="EdgeProps">
+                <EdgeNode
+                    v-bind="EdgeProps"
+                    :yamlSource="source"
+                    @add-task="emit(EVENTS.ADD_TASK, $event)"
+                    @drag-over-edge="dropEdgeId = $event"
+                    @drop-task="onDropTask"
+                    :isReadOnly="isReadOnly"
+                    :isAllowedEdit="isAllowedEdit"
+                />
+            </template>
+
+            <Controls v-if="controlsShown" :showZoom="false" :showInteractive="false" :showFitView="false">
+                <KsTooltip :content="$t('topology-graph.zoom-in')" placement="right">
+                    <ControlButton @click.stop="zoomIn()">
+                        <Plus />
+                    </ControlButton>
+                </KsTooltip>
+                <KsTooltip :content="$t('topology-graph.zoom-out')" placement="right">
+                    <ControlButton @click.stop="zoomOut()">
+                        <Minus />
+                    </ControlButton>
+                </KsTooltip>
+                <KsTooltip :content="$t('topology-graph.zoom-fit')" placement="right">
+                    <ControlButton @click.stop="fitView()">
+                        <Fullscreen />
+                    </ControlButton>
+                </KsTooltip>
+                <KsTooltip v-if="toggleOrientationButton" :content="$t('topology-graph.graph-orientation')" placement="right">
+                    <ControlButton @click.stop="emit('toggle-orientation', $event)">
+                        <component :is="isHorizontal ? AlignHorizontalCenter : AlignVerticalCenter" />
+                    </ControlButton>
+                </KsTooltip>
+                <KsTooltip :content="$t('download')" placement="right">
+                    <ControlButton @click.stop="toggleDropdown">
+                        <Download />
+                    </ControlButton>
+                </KsTooltip>
+                <KsTooltip v-if="collapsed.size > 0" :content="$t('expand all')" placement="right">
+                    <ControlButton @click.stop="uncollapseAll()">
+                        <ArrowExpandAll />
+                    </ControlButton>
+                </KsTooltip>
+                <ul v-if="isDropdownOpen" class="exporting">
+                    <li @click="exportAsImage('jpeg')" class="item">
+                        Export as .JPEG
+                    </li>
+                    <li @click="exportAsImage('png')" class="item">
+                        Export as .PNG
+                    </li>
+                </ul>
+            </Controls>
+        </VueFlow>
+    </div>
 
     <div
         v-if="dragGhost"
@@ -180,7 +188,7 @@
     import {Background} from "@vue-flow/background"
     import ClusterNode from "./nodes/ClusterNode.vue"
     import DotNode from "./nodes/DotNode.vue"
-    import FlowNode from "./nodes/FlowNode.vue"
+    import FlowSummaryChip from "./nodes/FlowSummaryChip.vue"
     import EdgeNode from "./nodes/EdgeNode.vue"
     import TaskNode from "./nodes/TaskNode.vue"
     import TriggerNode from "./nodes/TriggerNode.vue"
@@ -211,6 +219,8 @@
         flowGraph: VueFlowUtils.FlowGraph;
         flowId?: string;
         namespace?: string;
+        flowDescription?: string;
+        flowLabels?: [string, string][];
         expandedSubflows?: string[];
         icons?: Record<string, any>;
         // Per-class resolver for icons absent from `icons`, which only indexes the plugins
@@ -239,6 +249,8 @@
         toggleOrientationButton: false,
         flowId: undefined,
         namespace: undefined,
+        flowDescription: undefined,
+        flowLabels: () => [],
         expandedSubflows: () => [],
         icons: () => ({}),
         loadIcon: undefined,
@@ -291,6 +303,8 @@
     provide(SHOW_EXTRA_DETAILS_INJECTION_KEY, showExtraDetails)
     provide(VALIDATION_ISSUES_INJECTION_KEY, computed(() => props.validationIssuesByTask ?? new Map()))
     provide(FOCUSED_TASK_INJECTION_KEY, computed(() => props.focusedTaskId))
+
+    const initialFitDone = ref(false)
 
     const dropEdgeId = ref<string | undefined>(undefined)
     const draggingNodeId = ref<string | undefined>(undefined)
@@ -387,6 +401,11 @@
 
     const refitOnNodesInitialized = ref(false)
     onNodesInitialized(() => {
+        if (!initialFitDone.value) {
+            initialFitDone.value = true
+            fitView()
+            return
+        }
         if (refitOnNodesInitialized.value) {
             refitOnNodesInitialized.value = false
             fitView()
@@ -542,6 +561,27 @@
 </script>
 
 <style scoped lang="scss">
+    /* The graph fills what is left: the flow bar takes its own row rather than floating over the
+       canvas, where it clipped the first cluster's badge at every open. */
+    .topology-shell {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        min-height: 0;
+    }
+
+    .topology-shell > :deep(.vue-flow) {
+        flex: 1;
+        min-height: 0;
+    }
+
+    .topology-flow-bar {
+        flex-shrink: 0;
+        border-width: 0 0 1px;
+        border-radius: 0;
+        box-shadow: none;
+    }
+
     :deep(.unused-path) {
         opacity: 0.3;
     }

@@ -33,6 +33,8 @@
             @duplicate="onDuplicate"
             @addTrigger="onAddTrigger"
             @editFlow="flowPropertiesOpen = true"
+            :flowDescription="flowDescription"
+            :flowLabels="flowLabels"
             @open-link="openFlow"
             @show-logs="showLogs"
             @show-outputs="showOutputs"
@@ -318,6 +320,7 @@
     import {useBlockEditorProvides} from "../no-code/blocks/useBlockEditorProvides"
     import {BLOCK_EDITOR_KEYMAP} from "../no-code/blocks/keymap"
     import BlockShortcutsDialog from "../no-code/blocks/BlockShortcutsDialog.vue"
+    import {flowDescriptionOf, flowLabelEntriesOf} from "../no-code/blocks/flowSummary"
     import FlowPropertiesModal from "../no-code/blocks/FlowPropertiesModal.vue"
     import BlockCommandMenu, {type BlockCommandMenuItem} from "../no-code/blocks/BlockCommandMenu.vue"
     import {
@@ -951,6 +954,12 @@
     const shortcutGroups = buildShortcutGroups()
     const commandMenuOpen = ref(false)
     const flowPropertiesOpen = ref(false)
+
+    const parsedFlowSummary = computed(() =>
+        YAML_UTILS.parse<Record<string, unknown>>(flowSource.value ?? ""),
+    )
+    const flowDescription = computed(() => flowDescriptionOf(parsedFlowSummary.value))
+    const flowLabels = computed(() => flowLabelEntriesOf(parsedFlowSummary.value))
 
     const focusedTaskId = ref<string | undefined>(undefined)
     const focusOrder = computed(() => buildTopologyFocusOrder(flowSource.value ?? ""))

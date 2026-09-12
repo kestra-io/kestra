@@ -199,6 +199,7 @@
     import {useCanvasFocus} from "./useCanvasFocus"
     import {useTaskPicker} from "./useTaskPicker"
     import {buildFooterHints, buildShortcutGroups, type FooterHint} from "./shortcutHints"
+    import {flowDescriptionOf, flowLabelEntriesOf} from "./flowSummary"
     import {BLOCK_EDITOR_KEYMAP} from "./keymap"
     import {useAuthoringSurface} from "./useAuthoringSurface"
     import type {NoCodeProps} from "../../flows/noCodeTypes"
@@ -280,23 +281,9 @@
         }
     })
 
-    const flowDescription = computed<string | undefined>(() => {
-        const description = parsedFlow.value?.description
-        return typeof description === "string" ? description : undefined
-    })
+    const flowDescription = computed(() => flowDescriptionOf(parsedFlow.value))
 
-    const flowLabelEntries = computed<[string, string][]>(() => {
-        const labels = parsedFlow.value?.labels
-        if (Array.isArray(labels)) {
-            return labels
-                .filter((label): label is {key: string; value: unknown} => Boolean(label) && typeof label === "object" && "key" in label)
-                .map((label) => [String(label.key), String(label.value ?? "")])
-        }
-        if (labels && typeof labels === "object") {
-            return Object.entries(labels).map(([key, value]) => [key, String(value ?? "")])
-        }
-        return []
-    })
+    const flowLabelEntries = computed(() => flowLabelEntriesOf(parsedFlow.value))
 
     const editingItemPath = computed<string>(() => {
         if (!props.editingTask) return props.parentPath ?? ""

@@ -111,6 +111,10 @@
       }
     },
     "toggle menu": "Menü umschalten",
+    "favourites": "Favoriten",
+    "to close": "zum Schließen",
+    "tabs": "Registerkarten",
+    "select": "Auswählen",
     "panel actions": "Panel-Aktionen",
     "playground actions": "Aktionen im Playground",
     "bulk actions": "Massenaktionen",
@@ -136,6 +140,7 @@
     "invalid duration": "Ungültiges Dauerformat. Bitte ISO 8601 verwenden (z. B. PT30M, P1D).",
     "update": "Aktualisieren",
     "confirmation": "Bestätigung",
+    "toast confirm": "Bist du sicher?",
     "common": {
       "back": "Zurück",
       "openInNewTab": "In neuem Tab öffnen"
@@ -222,6 +227,7 @@
       "invalid duration": "Ungültiges Dauerformat. Bitte ISO 8601 verwenden (z. B. PT30M, P1D).",
       "leave empty for infinite": "Leer lassen für unendliche Dauer oder eine ISO 8601-Dauer eingeben (z. B. 'P1DT1H1M1S')",
       "duration example": "Beispiel: 'P1DT1H1M1S'",
+      "examples": "Beispiele:",
       "error": "Ungültiges Dauerformat, es muss eine ISO-8601-Dauer sein (z. B. P1DT1H1M1S)",
       "custom": "Benutzerdefiniert",
       "last5minutes": "Letzte 5 Minuten",
@@ -279,6 +285,7 @@
     "expiration date": "Ablaufdatum",
     "healthcheck date": "Healthcheck-Datum",
     "last execution status": "Letzter Execution-Status",
+    "jump to": "Gehe zu",
     "jump to...": "Springe zu…",
     "contextBar": {
       "ai": "AI",
@@ -342,9 +349,31 @@
     "select a state": "Status auswählen",
     "are you sure change state": "Möchtest du den Status wirklich ändern?",
     "yes": "Ja",
+    "no": "Nein",
     "change state done": "Der Task-Status wurde aktualisiert",
     "change state confirm": "Möchtest du den Status des Task-Runs für den Task <code>{task}</code> in Execution <code>{id}</code> wirklich ändern?<br/>Die Execution wird dann ab dem nächsten Task neu gestartet, und die übergeordnete Execution, falls vorhanden, ebenfalls.",
     "change state current state": "Aktueller Status:",
+    "change state hint": {
+      "WARNING": [
+        "Der Flow wird als WARNING markiert.",
+        "Die nächsten Tasks werden ausgeführt.",
+        "Die Fehler-Tasks werden ausgeführt."
+      ],
+      "FAILED": [
+        "Der Flow wird als FAILED markiert.",
+        "Keine andere Task wird ausgeführt.",
+        "Die Fehler-Tasks werden ausgeführt."
+      ],
+      "SUCCESS": [
+        "Der Flow wird neu gestartet, da dieser Task erfolgreich war.",
+        "Alle blockierten Tasks werden ausgeführt.",
+        "Der Flow wird im Zustand SUCCESS sein, wenn alle Task-Ausführungen erfolgreich sind."
+      ],
+      "RUNNING": [
+        "Der flow wird neu gestartet und alle nächsten Tasks werden ausgeführt.",
+        "Alle blockierten Tasks werden ausgeführt."
+      ]
+    },
     "replay execution title": "Replay der Execution",
     "restart execution title": "Execution neu starten",
     "replay execution description": "Dadurch wird eine neue Execution auf Basis der ausgewählten Execution erstellt.",
@@ -455,12 +484,16 @@
       "big_file_download_only": "Diese Datei ist {size} groß. Sie ist zu groß, um sie im Editor zu öffnen. Lade sie stattdessen herunter.",
       "load_anyway": "Trotzdem laden",
       "load_error": "Die Dateivorschau konnte nicht geladen werden. Möglicherweise handelt es sich um ein vorübergehendes Problem oder ein Berechtigungsproblem.",
+      "image_alt": "Vorschau des Bild-Outputs",
       "retry": "Erneut versuchen",
       "html_asset_warning": "Diese Vorschau rendert das HTML in einem isolierten Frame. Lokale Assets wie Bilder und Stylesheets mit relativen Pfaden werden nicht geladen.",
       "html_preview_title": "Vorschau der HTML-Datei"
     },
     "download": "Herunterladen",
     "jsonl": "JSONL",
+    "large_outputs": {
+      "value_truncated": "Es wird eine gekürzte Vorschau dieses {size}-Werts angezeigt."
+    },
     "concurrency_limit": {
       "dialog_title": "Concurrency-Limits",
       "warning": "Das Ändern des laufenden Zählers kann die Concurrency beschädigen, sodass Executions das erlaubte Limit überschreiten können."
@@ -475,6 +508,8 @@
     "docsPage": {
       "notFound": "Diese Dokumentationsseite existiert nicht. Sie wurde möglicherweise verschoben oder umbenannt.",
       "loadError": "Diese Dokumentationsseite konnte nicht geladen werden. Bitte versuche es erneut.",
+      "close_menu": "Menü schließen",
+      "open_menu": "Menü öffnen",
       "backToDocs": "Zurück zu Docs"
     },
     "documentation": {
@@ -514,6 +549,10 @@
       }
     },
     "use": "Verwenden",
+    "plugin_card": {
+      "tasks": "Task | Tasks",
+      "blueprints": "Blueprint | Blueprints"
+    },
     "plugins": {
       "autoInstall": {
         "failed": "Plugin-Installation fehlgeschlagen",
@@ -527,8 +566,10 @@
       "names": "Plugins",
       "release": "Versionshinweise",
       "beta": "Beta",
+      "beta_notice": "Dieses Plugin befindet sich derzeit in der Beta-Phase. Es gilt als sicher in der Anwendung, aber seine API kann sich in künftigen Versionen auf nicht abwärtskompatible Weise ändern, oder das Plugin wird möglicherweise nicht mehr unterstützt.",
       "copy_type": "Typ kopieren",
       "deprecated": "Veraltet",
+      "documentation_sections": "Dokumentationsabschnitte",
       "dynamic": "dynamisch",
       "filter_all": "Alle",
       "filter_properties": "Eigenschaften filtern…",
@@ -570,6 +611,8 @@
       "nav_overview": "Übersicht",
       "nav_properties": "Eigenschaften",
       "non_dynamic": "nicht dynamisch",
+      "possible_values": "Mögliche Werte",
+      "sub_type": "Untertyp",
       "required": "Erforderlich"
     },
     "last execution date": "Letztes Execution-Datum",
@@ -844,6 +887,7 @@
     "enable": "Aktivieren",
     "enabled": "Aktiviert",
     "flow delete": "Möchtest du <code>{flowCount}</code> Flow(s) wirklich löschen?",
+    "delete flow error": "Flow {id} konnte nicht gelöscht werden",
     "flows deleted": "<code>{count}</code> Flow(s) gelöscht",
     "flow disable": "Möchtest du <code>{flowCount}</code> Flow(s) wirklich deaktivieren?",
     "flow enable": "Möchtest du <code>{flowCount}</code> Flow(s) wirklich aktivieren?",
@@ -982,9 +1026,11 @@
         "file_already_exists": "Eine Datei mit diesem Namen existiert bereits",
         "file_conflicts_with_folder": "Ein Ordner mit diesem Namen existiert bereits",
         "file_error": "Beim Erstellen der Datei ist ein Fehler aufgetreten",
+        "file_success": "Datei \"{name}\" wurde erstellt.",
         "folder": "Ordner erstellen",
         "folder_already_exists": "Ein Ordner mit diesem Namen existiert bereits",
         "folder_conflicts_with_file": "Eine Datei mit diesem Namen existiert bereits",
+        "folder_success": "Ordner \"{name}\" wurde erstellt.",
         "folder_error": "Beim Erstellen des Ordners ist ein Fehler aufgetreten"
       },
       "rename": {
@@ -998,8 +1044,10 @@
       "delete": {
         "label": "Löschen",
         "file": "Datei löschen",
+        "file_error": "Datei konnte nicht gelöscht werden: {name}",
         "folder": "Ordner löschen",
         "files": "{count} ausgewählte Dateien löschen",
+        "bulk_success": "Ausgewählte Dateien erfolgreich gelöscht.",
         "folders": "{count} ausgewählte Ordner löschen"
       },
       "move": {
@@ -1603,6 +1651,7 @@
     "webhook link copied": "Webhook-Link kopiert.",
     "copy url": "URL kopieren",
     "scheduleDate": "Geplantes Datum",
+    "scheduleDateInPast": "Das geplante Datum muss in der Zukunft liegen",
     "warning": "Warnung",
     "trigger_check_warning": "Trigger-Variablen funktionieren nicht bei einer manuell gestarteten Execution. Füge den Coalesce-Operator `??` hinzu, um das Problem zu lösen. Verwende zum Beispiel statt `trigger.date` den Ausdruck `trigger.date ?? execution.startDate`.",
     "docs": "Docs",
@@ -1652,6 +1701,7 @@
     "last error was": "Letzter Fehler war",
     "active": "Aktiv",
     "flows imported": "Flows importiert",
+    "flows not imported": "Flows nicht importiert",
     "custom value": "Benutzerdefinierter Wert",
     "chart": "Diagramm",
     "chart preview": "Diagrammvorschau",
@@ -1697,7 +1747,8 @@
           "workerSelector": "Worker-Selektor",
           "checks": "Checks",
           "updated": "Aktualisiert",
-          "quotas": "Quotas"
+          "quotas": "Quotas",
+          "policyRefs": "Policy-Referenzen"
         }
       },
       "select": {
@@ -1933,6 +1984,9 @@
         "label": "Dashboard bearbeiten",
         "chart": "Dieses Diagramm bearbeiten"
       },
+      "creation": {
+        "label": "Dashboard erstellen"
+      },
       "no_description": "Keine Beschreibung",
       "no_description_hint": "Füge diesem Flow eine Beschreibung hinzu, um zu dokumentieren, was er tut.<br>Markdown wird unterstützt.",
       "others": "Andere",
@@ -1943,6 +1997,7 @@
         "csv": "Als CSV exportieren",
         "ion": "Als ION exportieren"
       },
+      "show_all_statuses": "Alle Status anzeigen",
       "quick_filters": {
         "all": "Alle",
         "running": "Läuft",
@@ -2162,7 +2217,6 @@
     "submit": "Absenden",
     "accept": "Akzeptieren",
     "reject": "Ablehnen",
-    "draft_available": "Ein Entwurf der Änderung ist im Editor verfügbar",
     "last modified": "Zuletzt geändert",
     "run task in playground": "Task im Playground ausführen",
     "defaultsToNamespaceFile": "Standardmäßig die Namespace-Datei <code>{name}</code>",
@@ -2614,8 +2668,6 @@
       "open_mode_hint": "Tasks werden standardmäßig in einem Modal geöffnet. Unter {settings} kannst du Tabs als Standard festlegen."
     },
     "blocks": "Blöcke",
-    "flow_description": "Flow-Beschreibung",
-    "flow_no_description": "Keine Beschreibung. Füge deinem Flow-YAML eine Beschreibung hinzu, um zu dokumentieren, was er tut.",
     "split_horizontal": "Horizontal teilen",
     "split_vertical": "Vertikal teilen",
     "pwa": {

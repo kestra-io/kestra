@@ -180,9 +180,13 @@ public class State {
         return this.current.isTerminated();
     }
 
+    /**
+     * A PAUSED execution cannot be restarted: it must be resumed or killed instead.
+     * Restarting it would resume the Pause task without any resume information, leading to a failed execution.
+     */
     @JsonIgnore
     public boolean canBeRestarted() {
-        return this.current.isFailed() || this.current.isPaused();
+        return this.current.isFailed();
     }
 
     @JsonIgnore

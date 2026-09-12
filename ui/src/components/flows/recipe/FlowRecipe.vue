@@ -53,18 +53,21 @@
                     <div class="trigger-config">
                         <ExecutionPanel
                             v-if="recipe.triggerType === 'execution'"
-                            :recipe="recipe"
+                            v-model:watchNamespace="recipe.watchNamespace"
+                            v-model:includeSub="recipe.includeSub"
+                            :states="recipe.states"
                             :namespaceOptions="namespaceOptions"
                             :namespacesLoading="namespacesLoading"
                             :toggleState="toggleState"
                         />
                         <SchedulePanel
                             v-else-if="recipe.triggerType === 'schedule'"
-                            :recipe="recipe"
+                            v-model:cron="recipe.cron"
+                            v-model:timezone="recipe.timezone"
                         />
                         <WebhookPanel
                             v-else-if="recipe.triggerType === 'webhook'"
-                            :recipe="recipe"
+                            v-model:webhookKey="recipe.webhookKey"
                             :systemNamespace="systemNamespace"
                             :flowId="flowId"
                         />
@@ -81,7 +84,11 @@
                     <span class="wizard-sub">{{ $t("recipe.then.subtitle") }}</span>
 
                     <NotifyGrid
-                        :recipe="recipe"
+                        v-model:slackChannel="recipe.slackChannel"
+                        v-model:teamsWebhook="recipe.teamsWebhook"
+                        v-model:emailTo="recipe.emailTo"
+                        :notify="recipe.notify"
+                        :triggerType="recipe.triggerType"
                         :channelAvailability="channelAvailability"
                         :toggleNotify="toggleNotify"
                     />

@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
@@ -47,5 +48,27 @@ class ReindexCommandTest {
         } catch (IOException | URISyntaxException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    @Test
+    void shouldFailWithAClearMessageWhenTypeIsMissing() {
+        ByteArrayOutputStream err = new ByteArrayOutputStream();
+        System.setErr(new PrintStream(err));
+
+        int exitCode = PicocliRunner.execute(ReindexCommand.class, List.of(Environment.TEST), new String[0]);
+
+        assertThat(exitCode).isNotZero();
+        assertThat(err.toString()).contains("Missing required option").contains("--type");
+    }
+
+    @Test
+    void shouldFailWithAClearMessageWhenTypeIsUnsupported() {
+        ByteArrayOutputStream err = new ByteArrayOutputStream();
+        System.setErr(new PrintStream(err));
+
+        int exitCode = PicocliRunner.execute(ReindexCommand.class, List.of(Environment.TEST), new String[] { "--type", "execution" });
+
+        assertThat(exitCode).isNotZero();
+        assertThat(err.toString()).contains("Unsupported enum value 'execution'").contains("FLOW");
     }
 }

@@ -8,6 +8,7 @@ import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.GenericFlow;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.services.FlowService;
+import io.kestra.core.utils.Enums;
 
 import io.micronaut.context.ApplicationContext;
 import jakarta.inject.Inject;
@@ -26,28 +27,43 @@ public class ReindexCommand extends AbstractCommand {
     @Inject
     private ApplicationContext applicationContext;
 
-    @CommandLine.Option(names = { "-t", "--type" }, description = "The type of the records to reindex, only 'flow' is supported for now.")
+    @CommandLine.Spec
+    private CommandLine.Model.CommandSpec spec;
+
+    @CommandLine.Option(names = { "-t", "--type" }, description = "The type of the records to reindex, only 'flow' is supported for now.", required = true)
     private String type;
 
     @Override
     public Integer call() throws Exception {
         super.call();
 
-        if ("flow".equals(type)) {
-            FlowRepositoryInterface flowRepository = applicationContext.getBean(FlowRepositoryInterface.class);
-            FlowService flowService = applicationContext.getBean(FlowService.class);
+        switch (parseType()) {
+            case FLOW -> {
+                FlowRepositoryInterface flowRepository = applicationContext.getBean(FlowRepositoryInterface.class);
+                FlowService flowService = applicationContext.getBean(FlowService.class);
 
-            List<Flow> allFlow = flowRepository.findAllForAllTenants();
-            allFlow.stream()
-                .map(flow -> flowRepository.findByIdWithSource(flow.getTenantId(), flow.getNamespace(), flow.getId()).orElse(null))
-                .filter(Objects::nonNull)
-                .forEach(throwConsumer(flow -> flowService.update(GenericFlow.of(flow), flow)));
+                List<Flow> allFlow = flowRepository.findAllForAllTenants();
+                allFlow.stream()
+                    .map(flow -> flowRepository.findByIdWithSource(flow.getTenantId(), flow.getNamespace(), flow.getId()).orElse(null))
+                    .filter(Objects::nonNull)
+                    .forEach(throwConsumer(flow -> flowService.update(GenericFlow.of(flow), flow)));
 
-            stdOut("Successfully reindex " + allFlow.size() + " flow(s).");
-        } else {
-            throw new IllegalArgumentException("Reindexing type '" + type + "' is not supported");
+                stdOut("Successfully reindex " + allFlow.size() + " flow(s).");
+            }
         }
 
         return 0;
+    }
+
+    private ReindexType parseType() {
+        try {
+            return Enums.getForNameIgnoreCase(type, ReindexType.class);
+        } catch (IllegalArgumentException e) {
+            throw new CommandLine.ParameterException(this.spec.commandLine(), e.getMessage());
+        }
+    }
+
+    public enum ReindexType {
+        FLOW
     }
 }

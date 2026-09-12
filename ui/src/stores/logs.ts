@@ -5,18 +5,31 @@ import type {QueryFilter} from "@kestra-io/kestra-sdk"
 import {routeQueryToQueryFilters} from "../utils/queryFilters"
 import * as Utils from "../utils/utils"
 import {LevelKey, formatLogsAsText, logsDownloadFilename} from "../utils/logs"
+import type {KestraRequestOptions} from "../utils/kestraHttp"
+
+/**
+ * A route query only whose `filters[...]` keys reach the backend as filters. Left open because
+ * callers merge a page's route query with their own keys and pass one bag (see `LogsWrapper.vue`).
+ */
+type FilterQuery = Record<string, unknown>
+
+/** A log search: the filter bag plus the paging keys read off it by name. */
+type LogSearchOptions = FilterQuery & {
+    page?: number;
+    size?: number;
+    sort?: string;
+}
 
 /** Splits a flat `{page, size, sort, "filters[field][OP]": value, ...}` options object
  * (as built by callers' `loadQuery()` route.query merges) into the SDK's declared
  * page/size/sort params plus a proper QueryFilter[] array. */
-function toSearchParams(options: Record<string, any>, cursor?: string) {
-    const {page, size, sort, ...filterKeys} = options
+function toSearchParams(options: LogSearchOptions, cursor?: string) {
     return {
-        page,
-        size,
-        sort: sort ? [sort] : undefined,
+        page: options.page,
+        size: options.size,
+        sort: options.sort ? [options.sort] : undefined,
         cursor,
-        filters: routeQueryToQueryFilters(filterKeys),
+        filters: routeQueryToQueryFilters(options),
     }
 }
 
@@ -88,7 +101,7 @@ export const useLogsStore = defineStore("logs", () => {
 
     /** Fresh load — resets the cursor back-stack. Used for the first page, filter changes, refresh
      * and mode transitions. Next/Previous navigation goes through the dedicated actions below. */
-    function findLogs(options: Record<string, any>, cursor?: string) {
+    function findLogs(options: LogSearchOptions, cursor?: string) {
         const searchId = ++latestSearchId
         return LogsAPI.searchLogs(toSearchParams(options, cursor)).then(response => {
             const isSuperseded = searchId !== latestSearchId
@@ -103,7 +116,7 @@ export const useLogsStore = defineStore("logs", () => {
     /** Advance one page using the current `nextCursor`. The backend leaves `nextCursor` null only on
      * an empty page, so the last page *with logs* still advertises a cursor; when that Next comes back
      * empty we keep the current rows and just drop the Next control instead of blanking the view. */
-    function loadNextPage(options: Record<string, any>) {
+    function loadNextPage(options: LogSearchOptions) {
         const cursor = nextCursor.value
         if (!cursor) return Promise.resolve()
         const searchId = ++latestSearchId
@@ -123,7 +136,7 @@ export const useLogsStore = defineStore("logs", () => {
     }
 
     /** Go back one page by re-fetching the previous page with the cursor that originally loaded it. */
-    function loadPreviousPage(options: Record<string, any>) {
+    function loadPreviousPage(options: LogSearchOptions) {
         if (cursorStack.value.length === 0) return Promise.resolve()
         const stack = [...cursorStack.value]
         const previousCursor = stack.pop()
@@ -145,7 +158,7 @@ export const useLogsStore = defineStore("logs", () => {
 
     /** Pages through the whole matching result set, so an export is no longer silently cut to
      *  the first page. `truncated` lets the caller warn when the safety ceiling kicked in. */
-    async function downloadLogs(options: Record<string, any>): Promise<LogsDownloadResult> {
+    async function downloadLogs(options: LogSearchOptions): Promise<LogsDownloadResult> {
         const size = options.size ?? DOWNLOAD_PAGE_SIZE
         const collected: Log[] = []
         let reportedTotal: number | undefined = undefined
@@ -155,14 +168,16 @@ export const useLogsStore = defineStore("logs", () => {
 
         let failed = false
 
+        // This failure is reported by the caller, so opt out of the SDK's global error toast:
+        // otherwise a 500 raises a raw internal-error message alongside it.
+        const requestOptions: KestraRequestOptions = {showMessageOnError: false}
+
         for (;;) {
             let response: Awaited<ReturnType<typeof LogsAPI.searchLogs>>
             try {
-                // This failure is reported by the caller, so opt out of the SDK's global error
-                // toast: otherwise a 500 raises a raw internal-error message alongside it.
                 response = await LogsAPI.searchLogs(
                     toSearchParams({...options, page, size}, cursor),
-                    {showMessageOnError: false} as Parameters<typeof LogsAPI.searchLogs>[1],
+                    requestOptions,
                 )
             } catch (error) {
                 // Deep offset paging can be refused outright rather than returning a short page:
@@ -220,7 +235,7 @@ export const useLogsStore = defineStore("logs", () => {
 
     const LEVELS_ASC: LevelKey[] = ["TRACE", "DEBUG", "INFO", "WARN", "ERROR"]
 
-    async function levelCounts(baseParams: Record<string, any>): Promise<Record<string, number>> {
+    async function levelCounts(baseParams: FilterQuery): Promise<Record<string, number>> {
         const baseFilters = routeQueryToQueryFilters(baseParams)
             .filter((f) => f.field !== "level")
 

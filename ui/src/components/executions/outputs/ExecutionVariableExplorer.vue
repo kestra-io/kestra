@@ -41,15 +41,28 @@
                                 />
                             </template>
 
-                            <KsEditor
-                                v-else-if="isRawEditor"
-                                v-bind="editorBindings"
-                                :readOnly="true"
-                                :inline="true"
-                                :navbar="false"
-                                :modelValue="rawValue"
-                                lang="json"
-                            />
+                            <template v-else-if="isRawEditor">
+                                <div v-if="rawPreview.truncated" class="truncated-banner">
+                                    <KsAlert type="warning" :closable="false" data-test="raw-value-truncated">
+                                        <template #title>
+                                            <div class="truncated-row">
+                                                <span>{{ $t('large_outputs.value_truncated', {size: rawValueSize}) }}</span>
+                                                <KsButton size="small" :icon="Download" data-test="download-raw" @click="downloadValue">
+                                                    {{ $t('download') }}
+                                                </KsButton>
+                                            </div>
+                                        </template>
+                                    </KsAlert>
+                                </div>
+                                <KsEditor
+                                    v-bind="editorBindings"
+                                    :readOnly="true"
+                                    :inline="true"
+                                    :navbar="false"
+                                    :modelValue="rawPreviewText"
+                                    lang="json"
+                                />
+                            </template>
 
                             <div class="file-preview" v-else-if="fileSelectedOutput && execution?.id">
                                 <FilePreview
@@ -64,14 +77,27 @@
                                 :value="selectedValue"
                                 :basePath="selectedBase"
                                 :selectedPath="expressionPath"
-                                :previewFormatter="treePreviewFormatter"
                                 defaultExpanded
                                 @select="onSelectPath"
                             />
 
-                            <div v-else class="viewer__scalar">
-                                <code>{{ rawValue }}</code>
-                            </div>
+                            <template v-else>
+                                <div v-if="isRawTruncated" class="truncated-banner">
+                                    <KsAlert type="warning" :closable="false" data-test="raw-value-truncated">
+                                        <template #title>
+                                            <div class="truncated-row">
+                                                <span>{{ $t('large_outputs.value_truncated', {size: rawValueSize}) }}</span>
+                                                <KsButton size="small" :icon="Download" data-test="download-raw" @click="downloadValue">
+                                                    {{ $t('download') }}
+                                                </KsButton>
+                                            </div>
+                                        </template>
+                                    </KsAlert>
+                                </div>
+                                <div class="viewer__scalar">
+                                    <code>{{ cappedRawValue }}</code>
+                                </div>
+                            </template>
                         </div>
                     </KsSplitterPanel>
                 </KsSplitter>
@@ -102,6 +128,8 @@
         KsSplitterPanel,
         KsSegmented,
         KsIconButton,
+        KsAlert,
+        KsButton,
         KsEditor,
         KsJsonTree,
         copyToClipboard,
@@ -109,6 +137,7 @@
     import * as OutputsAPI from "@kestra-io/kestra-sdk/outputs"
 
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
+    import Download from "vue-material-design-icons/Download.vue"
 
     import {useExecutionsStore, type Execution} from "../../../stores/executions"
     import {loadExecutionOutputs} from "../../../composables/useTaskRunOutputs"
@@ -143,7 +172,14 @@
         return typeof value
     }
 
+    // The preview is a single clipped line, so only its head ever reaches the screen.
+    const PREVIEW_MAX_CHARS = 200
+
     function preview(value: unknown): string {
+        return previewText(value).slice(0, PREVIEW_MAX_CHARS)
+    }
+
+    function previewText(value: unknown): string {
         if (value === null) return "null"
         if (typeof value === "string") return value
         if (Array.isArray(value)) {
@@ -152,23 +188,12 @@
                 : t("variable_explorer.n_items", {count: value.length})
         }
         if (typeof value === "object") {
-            const keys = Object.keys(value as object)
+            // Each key costs a character at least, so more than this can only build text nobody sees.
+            const keys = Object.keys(value as object).slice(0, PREVIEW_MAX_CHARS)
             // Unguarded, an empty object previews as `{  }`.
             return keys.length ? `{ ${keys.join(", ")} }` : "{}"
         }
         return String(value)
-    }
-
-    function treePreviewFormatter(_value: unknown, context: {kind: "array" | "object", count: number}): string {
-        if (context.kind === "array") {
-            return context.count === 1
-                ? t("variable_explorer.one_item")
-                : t("variable_explorer.n_items", {count: context.count})
-        }
-
-        return context.count === 1
-            ? t("variable_explorer.one_key")
-            : t("variable_explorer.n_keys", {count: context.count})
     }
 
     function itemsFromRecord(record: Record<string, unknown> | undefined, prefix: string): ExplorerItem[] {
@@ -407,6 +432,18 @@
             : JSON.stringify(selectedValue.value, null, 2),
     )
 
+    // Only what is rendered is clipped: copyValue still hands over the whole value.
+    const cappedRawValue = computed(() => Utils.capForDisplay(rawValue.value))
+
+    // The raw view only ever holds an object, so it previews as valid JSON rather than clipped text.
+    const rawPreview = computed(() => Utils.boundForDisplay(selectedValue.value))
+
+    const rawPreviewText = computed(() => JSON.stringify(rawPreview.value.value, null, 2) ?? "")
+
+    const isRawTruncated = computed(() => cappedRawValue.value.length < rawValue.value.length)
+
+    const rawValueSize = computed(() => Utils.humanTextSize(rawValue.value))
+
     async function selectItem(item: ExplorerItem) {
         if (item.taskRunId) {
             await loadTaskOutputs(item)
@@ -477,6 +514,14 @@
 
     function copyValue() {
         copyToClipboard(rawValue.value)
+    }
+
+    function downloadValue() {
+        // formatStep writes a non-identifier key as ["a.b"], so the last segment is not just a split.
+        const path = expressionPath.value
+        const last = path.match(/\["(.*)"\]$/)?.[1] ?? path.split(".").pop() ?? ""
+        const name = last.replace(/[^\w.-]+/g, "_") || "output"
+        Utils.downloadText(rawValue.value, `${name}.${isExpandableValue.value ? "json" : "txt"}`)
     }
 
     /* --------------------------------- Layout -------------------------------- */
@@ -551,6 +596,21 @@
     .file-preview {
         padding: var(--ks-spacing-4);
     }
+}
+
+.truncated-banner {
+    /* Padding on a wrapper, not a margin on the alert: the alert is width:100%, so a margin
+       pushes it 32px past the panel and the whole panel scrolls sideways. */
+    padding: 0 var(--ks-spacing-4);
+}
+
+.truncated-row {
+    /* The alert's title is an inline span, so the row needs a width of its own to reach the edge. */
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--ks-spacing-3);
+    width: 100%;
 }
 
 .viewer--fill {

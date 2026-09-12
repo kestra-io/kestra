@@ -21,10 +21,10 @@
                     >
                         <KsMarkdown :content="inputLabel(input)" class="d-inline-flex md-label" />
                         <KsButton
-                            type="text"
                             :icon="ContentCopyIcon"
-                            :tooltip="$t('copy_to_clipboard')"
-                            class="input-copy-btn"
+                            :tooltip="`${$t('copy_to_clipboard')}: ${inputRefExpression(input.id)}`"
+                            tooltipPlacement="right"
+                            link
                             @click.prevent="copyInputRef(input.id)"
                         />
                     </span>
@@ -738,12 +738,12 @@
         const run = async (): Promise<void> => {
             if (props.flow !== undefined) {
                 const options = {namespace: props.flow.namespace, id: props.flow.id}
-                const {data} = await executionsStore.validateExecution({...options, formData})
+                const data = await executionsStore.validateExecution({...options, formData})
 
                 metadataCallback(data)
             } else if (props.execution !== undefined) {
                 const options = {id: props.execution.id}
-                const {data} = await executionsStore.validateResume({...options, formData})
+                const data = await executionsStore.validateResume({...options, formData})
 
                 metadataCallback(data)
             } else {
@@ -1026,16 +1026,6 @@
     display: inline-flex;
     align-items: center;
     gap: var(--ks-spacing-1);
-
-    .input-copy-btn {
-        opacity: 0;
-        transition: opacity 0.15s ease-in-out;
-    }
-
-    &:hover .input-copy-btn,
-    &[draggable="true"]:focus-within .input-copy-btn {
-        opacity: 1;
-    }
 }
 
 .wizard-progress {

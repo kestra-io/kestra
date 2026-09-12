@@ -51,7 +51,7 @@ jobs:
 
       - name: Typecheck
         if: inputs.skip-test != 'true'
-        run: npm run typecheck --workspace @kestra-io/hey-api-plugin
+        run: npm run check:types --workspace @kestra-io/hey-api-plugin
 
       - name: Read version
         id: version

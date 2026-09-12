@@ -42,7 +42,9 @@
             </span>
         </template>
         <template #title-actions>
-            <NodeMenu :actions="actions" />
+            <slot name="taskActions" :task="data.node.task" :actions="actions" :execution="taskExecution" :taskRuns="taskRunsWithDynamicChildren" :taskRun="taskRuns[0]">
+                <NodeMenu :actions="actions" />
+            </slot>
         </template>
     </BasicNode>
     <Handle type="target" :position="targetPosition" />
@@ -212,7 +214,7 @@
             return executionId === execution?.value?.id
                 ? execution?.value
                 : Object.values(subflowsExecutions?.value || {})
-                    .find((exec: any) => exec.id === executionId)
+                    .find(exec => exec.id === executionId)
         }
         return undefined
     })

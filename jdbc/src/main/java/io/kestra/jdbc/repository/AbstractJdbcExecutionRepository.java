@@ -90,6 +90,11 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
         this.filterService = filterService;
     }
 
+    @Override
+    protected Condition defaultFilter(String tenantId, boolean allowDeleted) {
+        return super.defaultFilter(tenantId, allowDeleted).and(aclCondition(Resource.EXECUTION));
+    }
+
     /**
      * {@inheritDoc}
      **/
@@ -121,6 +126,14 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
     }
 
     @Override
+    public Optional<Execution> findLatestForStatesWithoutAcl(String tenantId, String namespace, String flowId, List<State.Type> states) {
+        var condition = field("namespace").eq(namespace)
+            .and(field("flow_id").eq(flowId))
+            .and(this.statesFilter(states));
+        return findOne(this.defaultFilterWithNoACL(tenantId), condition, field("start_date").desc());
+    }
+
+    @Override
     public List<String> findDistinctFieldValues(String tenantId, QueryFilter.Field field, List<QueryFilter> filters, Pageable pageable) {
         return findDistinctFieldValues(tenantId, field, filters, pageable, QueryFilter.Resource.EXECUTION);
     }
@@ -136,7 +149,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
     }
 
     @Override
-    public Execution findById(String id) {
+    public Execution findByIdWithoutAcl(String id) {
         return findOne(DSL.noCondition(), KEY_FIELD.eq(id)).orElse(null);
     }
 

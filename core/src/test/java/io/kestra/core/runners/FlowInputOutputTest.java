@@ -6,6 +6,8 @@ import java.io.InputStream;
 import java.net.URI;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.security.GeneralSecurityException;
 import java.util.List;
 import java.util.Map;
@@ -24,6 +26,7 @@ import io.kestra.core.encryption.EncryptionService;
 import io.kestra.core.exceptions.InputOutputValidationException;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.*;
+import io.kestra.core.models.flows.input.BoolInput;
 import io.kestra.core.models.flows.input.EmailInput;
 import io.kestra.core.models.flows.input.FileInput;
 import io.kestra.core.models.flows.input.FloatInput;
@@ -775,6 +778,74 @@ class FlowInputOutputTest {
         assertThat(result.get("upload").toString()).contains(executionId);
     }
 
+    @Test
+    void shouldRejectFileInputPointingToUnauthorizedHostPath() throws Exception {
+        // Given
+        Path unauthorizedHostFile = Files.createTempFile("lfi-repro", ".txt");
+        Files.writeString(unauthorizedHostFile, "root:x:0:0:root:/root:/bin/bash");
+
+        Flow flow = Flow.builder()
+            .id("lfi-child")
+            .tenantId(MAIN_TENANT)
+            .namespace("io.kestra.test")
+            .inputs(List.of(FileInput.builder().id("d").type(Type.FILE).required(true).build()))
+            .build();
+
+        try {
+            // When / Then
+            assertThatThrownBy(() -> flowInputOutput.readExecutionInputs(flow, DEFAULT_TEST_EXECUTION, Map.of("d", unauthorizedHostFile.toString())))
+                .isInstanceOf(InputOutputValidationException.class)
+                .hasMessageContaining("is not authorized")
+                .hasMessageContaining(LocalPath.ALLOWED_PATHS_CONFIG);
+        } finally {
+            Files.deleteIfExists(unauthorizedHostFile);
+        }
+    }
+
+    @Test
+    void shouldRejectFileInputPointingToASymlinkEscapingAnAllowedPath() throws Exception {
+        // Given
+        Path unauthorizedTarget = Files.createTempFile("lfi-repro-target", ".txt");
+        Files.writeString(unauthorizedTarget, "root:x:0:0:root:/root:/bin/bash");
+        Path linkInsideAllowedPath = Path.of("build/resources/test").toRealPath().resolve("lfi-repro-link.txt");
+        Files.deleteIfExists(linkInsideAllowedPath);
+        Files.createSymbolicLink(linkInsideAllowedPath, unauthorizedTarget);
+
+        Flow flow = Flow.builder()
+            .id("lfi-child")
+            .tenantId(MAIN_TENANT)
+            .namespace("io.kestra.test")
+            .inputs(List.of(FileInput.builder().id("d").type(Type.FILE).required(true).build()))
+            .build();
+
+        try {
+            // When / Then
+            assertThatThrownBy(() -> flowInputOutput.readExecutionInputs(flow, DEFAULT_TEST_EXECUTION, Map.of("d", linkInsideAllowedPath.toString())))
+                .isInstanceOf(InputOutputValidationException.class)
+                .hasMessageContaining("is not authorized")
+                .hasMessageContaining(unauthorizedTarget.toRealPath().toString());
+        } finally {
+            Files.deleteIfExists(linkInsideAllowedPath);
+            Files.deleteIfExists(unauthorizedTarget);
+        }
+    }
+
+    @Test
+    void shouldReportMissingHostFileForFileInput() {
+        // Given
+        Flow flow = Flow.builder()
+            .id("lfi-child")
+            .tenantId(MAIN_TENANT)
+            .namespace("io.kestra.test")
+            .inputs(List.of(FileInput.builder().id("d").type(Type.FILE).required(true).build()))
+            .build();
+
+        // When / Then
+        assertThatThrownBy(() -> flowInputOutput.readExecutionInputs(flow, DEFAULT_TEST_EXECUTION, Map.of("d", "/nonexistent/nope.txt")))
+            .isInstanceOf(InputOutputValidationException.class)
+            .hasMessageContaining("does not exist");
+    }
+
     private static Stream<Input<?>> inputsThatDoNotAcceptFileUploads() {
         return Stream.of(
             IonInput.builder().id("upload").type(Type.ION).build(),
@@ -1236,6 +1307,78 @@ class FlowInputOutputTest {
         // Then — "" is preserved for EMAIL inputs
         assertThat(values).hasSize(1);
         assertThat(values.getFirst().value()).isEqualTo("");
+        assertThat(values.getFirst().exceptions()).isNull();
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"yes", "1", "maybe", "xyz"})
+    void shouldRejectInvalidBooleanInput(String value) {
+        // Given
+        BoolInput input = BoolInput.builder()
+            .id("active")
+            .type(Type.BOOL)
+            .required(true)
+            .build();
+
+        // When
+        List<InputAndValue> values = flowInputOutput.resolveInputs(
+            List.of(input),
+            null,
+            DEFAULT_TEST_EXECUTION,
+            Map.of("active", value)
+        );
+
+        // Then
+        assertThat(values).hasSize(1);
+        assertThat(values.getFirst().exceptions())
+            .as("an invalid BOOL value must produce a validation error")
+            .isNotNull()
+            .isNotEmpty();
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"true", "false", "TRUE", "False"})
+    void shouldAcceptValidBooleanStringInput(String value) {
+        // Given
+        BoolInput input = BoolInput.builder()
+            .id("active")
+            .type(Type.BOOL)
+            .required(true)
+            .build();
+
+        // When
+        List<InputAndValue> values = flowInputOutput.resolveInputs(
+            List.of(input),
+            null,
+            DEFAULT_TEST_EXECUTION,
+            Map.of("active", value)
+        );
+
+        // Then
+        assertThat(values).hasSize(1);
+        assertThat(values.getFirst().exceptions()).isNull();
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    void shouldAcceptBooleanInput(boolean value) {
+        // Given
+        BoolInput input = BoolInput.builder()
+            .id("active")
+            .type(Type.BOOL)
+            .required(true)
+            .build();
+
+        // When
+        List<InputAndValue> values = flowInputOutput.resolveInputs(
+            List.of(input),
+            null,
+            DEFAULT_TEST_EXECUTION,
+            Map.of("active", value)
+        );
+
+        // Then
+        assertThat(values).hasSize(1);
         assertThat(values.getFirst().exceptions()).isNull();
     }
 

@@ -7,8 +7,8 @@ This directory holds the tooling that keeps the Kestra UI translated. This READM
 - English is the single source of truth: [`ui/src/translations/en.json`](../../src/translations/en.json) here, `ui-ee/src/translations/ee_translations/en.json` in EE. The twelve other languages are **generated** from it via Gemini - never hand-written.
 - Every key carries a **fingerprint** of the English text its translations were generated from. Editing an English value (even just capitalisation) marks the key stale in all languages and fails the check until regenerated.
 - **One shared implementation** lives here. EE keeps only thin entry points that import from this directory, so the two repositories cannot drift into different prompts, rules, or change detection.
-- Two commands, the same in both repositories: `npm run translations:generate` (needs `GEMINI_API_KEY`) and `npm run translations:check` (must report no missing / no extra / no stale keys for every language).
-- A scheduled GitHub Action runs the generator every 3 hours on weekdays and opens a bot PR when there is anything to translate. A dependency-free PR gate checks key parity and placeholders on every PR.
+- Two commands, the same in both repositories: `npm run translations:generate` (needs `GEMINI_API_KEY`) and `npm run translations:check`, which runs the PR gate and then the compiler-backed comparer, so a green local run is the same verdict CI gives.
+- A scheduled GitHub Action runs the generator every 3 hours on weekdays and opens a bot PR when there is anything to translate. A dependency-free gate applies the shared rules on every PR (forks included), on every push to `develop` and `releases/*`, and, in EE, whenever an OSS push changes the shared keys.
 
 ## The files
 
@@ -95,22 +95,24 @@ Key points:
 
 Two checkers apply the same shared rules at different depths:
 
-| | `translations:check` ([`compareTranslations.ts`](compareTranslations.ts)) | PR gate ([`check-translations.mjs`](check-translations.mjs)) |
+| | Comparer ([`compareTranslations.ts`](compareTranslations.ts)) | PR gate ([`check-translations.mjs`](check-translations.mjs)) |
 |---|---|---|
-| Runs | Locally + at the end of the auto-translate workflow | CI, on every PR touching translations |
+| Runs | Second half of `npm run translations:check`, and at the end of the auto-translate workflow | CI, on every PR touching translations or UI source (forks included), on every push to `develop` and `releases/*`, and in EE on every such OSS push as well (see below); first half of `npm run translations:check` |
 | Needs | `node_modules` (vue-i18n's real message compiler) | Nothing - Node builtins only, runs before `npm ci` |
-| Checks | Missing / extra / **stale** keys (fingerprints), placeholders through the actual compiler | Key parity, placeholder well-formedness + parity with English, untranslated English copies in non-Latin-script locales, EE keys shadowing OSS keys |
+| Checks | Missing / extra / **stale** keys (fingerprints), placeholders through the actual compiler | Key parity, **stale** keys (fingerprints), placeholder well-formedness + parity with English, untranslated English copies in non-Latin-script locales, EE keys shadowing OSS keys, keys used in code but defined in no `en.json` |
 
-A clean `translations:check` run reports **No missing keys / No extra keys / No stale keys** for every language - anything less blocks the merge.
+A clean `translations:check` run prints `Translation check passed (scope: oss)` from the gate and then **No missing keys / No extra keys / No stale keys** for every language from the comparer - anything less blocks the merge. `translations:check` runs both on purpose: the gate carries the rules the comparer does not have (used-but-undefined keys, runtime-built namespaces, EE keys shadowing OSS keys) and the comparer carries the real message compiler the dependency-free gate cannot load, so neither alone matches CI. The gate applies the same staleness rule, so a fork PR, which gets no generated commit, cannot merge an edited English value without regenerating the other languages either; a maintainer generates them for the fork with the on-demand workflow described below.
 
 The PR gate runs as two ownership-scoped passes so a failure points at the right repository:
 
-- `--scope oss` - every OSS locale matches OSS's own `en.json`. A failure is an OSS problem, wherever it is observed.
-- `--scope ee` - every EE locale matches EE's `en.json`, and no EE key redefines a key OSS already owns.
+- `--scope oss` - every OSS locale matches OSS's own `en.json`, and every literal key the OSS, design-system and topology sources pass to `t()`, `$t()` or `<i18n-t keypath>` exists in OSS's `en.json` or a design-system `*.locale.ts`. A failure is an OSS problem, wherever it is observed.
+- `--scope ee` - every EE locale matches EE's `en.json`, no EE key redefines a key OSS already owns, and every literal key `ui-ee/src` uses exists in EE's, OSS's or the design system's English files.
+
+The used-key rule ([`usageRules.mjs`](usageRules.mjs)) only reads literal keys. A key built at runtime - `t(e.message)`, `` t(`errors.${code}`) ``, `t("crud.type." + type)`, `:keypath="expr"` - is skipped, and a key the code tests with `te()` first is allowed to be absent. A key completed at runtime is checked as far as it can be: `t("crud.type." + type)` and `` t(`ai.copilot.error.${error}`) `` require the `crud.type` and `ai.copilot.error` namespaces to exist, which is what protects them from a cleanup that finds no literal naming them. So a failure is always a real raw-id render. The reverse is not checked: a key nothing references is not reported, because the same dynamic lookups make "unused" impossible to prove from the source.
 
 ## CI: the auto-translate bot
 
-Both repositories run `.github/workflows/auto-translate-ui-keys.yml`:
+Both repositories run `.github/workflows/auto-translate-ui-keys.yml`, once per branch in its list (`develop` and `releases/v2.0.x`; a schedule fires from the default branch, so the `develop` copy of the file drives every branch and opens each bot PR against its own branch):
 
 ```mermaid
 sequenceDiagram
@@ -133,7 +135,16 @@ sequenceDiagram
 ```
 
 - A **concurrency group** prevents overlapping scheduled runs from opening duplicate PRs for the same change ([#17822](https://github.com/kestra-io/kestra/issues/17822)).
-- In EE, the PR gate runs from its own `translation-tests.yml` workflow, deliberately kept off the frontend unit/storybook/e2e path - a translation typo should not block those, and the check needs no build.
+- In EE, the gate runs from its own `translation-tests.yml` workflow, deliberately kept off the frontend unit/storybook/e2e path - a translation typo should not block those, and the check needs no build.
+
+## CI: pushes, the OSS to EE dispatch, and fork PRs
+
+The gate does not stop at pull requests:
+
+- **Pushes.** `translations-push.yml` (OSS) and the `push` trigger of `translation-tests.yml` (EE) run the gate on every push to `develop` and `releases/*` that touches the UI, so a merge race between two green PRs, a direct push or a cherry-pick with a stale locale is reported by the branch itself instead of by the next unrelated PR against it.
+- **OSS to EE dispatch.** Most EE keys resolve against the OSS `en.json`, so an OSS push that renames or deletes a key can break EE without any EE change. Once the OSS push gate passed, its `notify-ee` job fires a `repository_dispatch` of type `oss-translations-updated` (payload: `branch`, `commit_sha`) at `kestra-io/kestra-ee`; `translation-tests.yml` there checks out the same-name EE branch and that exact OSS commit and runs both scopes. A dispatch always runs the workflow file of the EE default branch, which is why the EE checkout takes its branch from the payload.
+- **Fork PRs.** The PR workflow generates translations only for branches of this repository (a fork has no `GEMINI_API_KEY`), so a contributor cannot get the missing languages generated on their own. A maintainer runs `Translations - Generate for a pull request` from the Actions tab with the PR number: the workflow checks out the fork's head, generates, and pushes the commit onto the PR branch when it can (the PR allows maintainer edits and the `TRANSLATIONS_PUSH_TOKEN` secret holds a maintainer token); otherwise it uploads the commit as a patch artifact and comments the `git am` one-liner on the PR.
+- **Runtime.** Static rules only see literal keys, so the app also reports every key it could not resolve on the console (throwing in unit and Storybook tests); the Playwright fixtures in both repositories fail the test that rendered a raw key.
 
 ## Developer workflow
 
@@ -141,9 +152,9 @@ sequenceDiagram
 
 1. Add the key to `en.json` (here, or `ee_translations/en.json` for EE-only strings). Reuse existing generic keys (`cancel`, `save`, `delete`, ...) instead of duplicating.
 2. Run `npm run translations:generate`, commit the locale files **and** `fingerprints.json` together.
-3. Run `npm run translations:check` - every language must report no missing / extra / stale keys.
+3. Run `npm run translations:check` - the gate must pass and every language must report no missing / extra / stale keys.
 
-Merging with only `en.json` updated also works - the bot fills the languages within a few hours - but the PR gate flags the missing keys, so generating yourself is the clean path.
+Merging with only `en.json` updated also works - the bot fills the languages within a few hours - but the PR gate flags the missing keys, so generating yourself is the clean path. For a PR from a fork, a maintainer runs the on-demand workflow instead (see the CI section above).
 
 ### Editing an existing English value
 

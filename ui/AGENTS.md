@@ -194,26 +194,25 @@ The general rule: **if you find yourself reaching for `{deep: true}` on a comput
 
 ### Unsaved input in modals (discard guard)
 
-Any modal/drawer where the user **enters data** must not silently lose it on an accidental dismissal. Use the shared `useDiscardGuard` composable — never reimplement the confirm-before-discard logic per modal.
-
-```ts
-// ui/src/composables/useDiscardGuard.ts (import path is relative to your component)
-import {useDiscardGuard} from "../../composables/useDiscardGuard"
-
-// isDirty: true when there is unsaved input worth a prompt
-const {guardedClose} = useDiscardGuard(() => /* isDirty */, {message: t("...")}) // message optional; defaults to "discard changes confirmation"
-const beforeClose = (done: () => void) => guardedClose(() => { reset(); done() })
-```
+Any modal/drawer where the user **enters data** must not silently lose it on an accidental dismissal. `KsDialog` and `KsDrawer` take a `dirty` prop and ask for confirmation themselves; never reimplement the confirm-before-discard logic per modal.
 
 ```vue
-<KsDialog :beforeClose="beforeClose" ... />
-<KsDrawer  :beforeClose="beforeClose" ... />
+<KsDialog v-model="visible" :dirty="isDirty" ... />
+<KsDrawer  v-model="visible" :dirty="isDirty" ... />
 ```
+
+```ts
+// isDirty: true when there is unsaved input worth a prompt, usually a comparison against a snapshot taken on open
+const baseline = ref("")
+const isDirty = computed(() => JSON.stringify(form.value) !== baseline.value)
+```
+
+`dirtyMessage` replaces the default confirmation text when the discarded thing is not a form (`TriggerFlow.vue` uses it for an unsubmitted execution). When the close also has to run cleanup, keep `:beforeClose="(done) => { reset(); done() }"` next to `:dirty`: the confirmation runs first, `beforeClose` only once the user agreed. The composable behind the prop, `useDiscardGuard(isDirty, {message?})` from `@kestra-io/design-system`, stays available for closes that do not go through a `Ks*` container.
 
 Rules:
 - **Guard only *accidental* close paths** — overlay click, `Escape`, the `X`. These all go through `beforeClose`. Explicit **Cancel / Save** buttons set `v-model = false` directly and **must not** be guarded (the user already expressed intent; a prompt there is friction). Note: a programmatic `v-model = false` does **not** trigger `beforeClose` (Element Plus only calls it for user-initiated closes), which is exactly why Cancel/Save bypass it.
 - **`isDirty` is per-modal.** Compare current input against a baseline captured on open (`JSON.stringify` snapshot), or "any meaningful input"; **ignore empty rows** (e.g. a blank label/tag row is not dirty). Reset dirty-relevant state on open so a reopen starts clean.
-- **`KsDialog` and `KsDrawer` both expose a `beforeClose` prop** with signature `(done) => void` — call `done()` to proceed with closing. (Element Plus's `ElDrawer.beforeClose` is a prop, not an event; `KsDrawer` forwards it.)
+- **`KsDialog` and `KsDrawer` both expose `dirty` and a `beforeClose` prop** with signature `(done) => void` — call `done()` to proceed with closing. (Element Plus's `ElDrawer.beforeClose` is a prop, not an event; `KsDrawer` forwards it.)
 - **Don't guard** read-only viewers, action/confirmation dialogs, or ephemeral forms that reset on every open.
 
 ### Icons
@@ -221,6 +220,7 @@ Rules:
 - All icons come from [`vue-material-design-icons`](https://github.com/robcresswell/vue-material-design-icons) via `<KsIcon>` (or `<KsIconButton>` for clickable icons).
 - Never inline raw SVG, font-icon classes, or emoji as UI state. If a needed icon is missing, propose adding it to the DS rather than dropping an SVG into a feature folder.
 - Pass `name` (the kebab-case Material name); size and color come from props or the surrounding token context — don't override with inline `style`.
+- **Two file-type icon sets coexist on purpose, so don't merge them.** `fileUtils.fileIcon()` (behind `KsFileTag`) maps an extension to a monochrome `vue-material-design-icons` component, which inherits `--ks-icon-*` and so recolors per theme and per tag variant. `ui/src/components/utils/icons/Type.vue` renders the colored `material-file-icons` SVGs for the namespace file explorer, where the brand colors are the point. That package is a `ui/` dependency the design system does not have, and it bakes its colors into a base64 `<img>` that no token can reach, so it cannot be used from a `Ks*` component.
 
 ### Performance
 
@@ -229,6 +229,35 @@ Rules:
 - Pass stable `key` props in lists. Avoid index-based keys when items have IDs.
 - Don't render giant tables without `KsDataTable`'s pagination/virtualization — server-side paging is the default for anything that can grow.
 - Watch out for `watch(..., { deep: true })` and `computed` with object identity — they often re-run more than you expect.
+
+### Types
+
+**Never write `any`.** TypeScript stops checking a value the moment it is typed `any`, so a typo or a renamed field is found by whoever opens the page instead of by the compiler. The rule covers every spelling: `(row: any)`, `x as any`, `any[]`, `Record<string, any>`, in the `<script>` block and in template expressions alike.
+
+Where the type comes from, in this order:
+
+1. **Data from the backend: `kestra-sdk`.** It is generated from our OpenAPI spec, so the type already exists and stays in step with the API. `import type {Execution} from "@kestra-io/kestra-sdk"`.
+2. **Data from a library** (vue-router, element-plus, monaco, echarts, the DOM): the library's own types. When a package ships none, add a `declare module` file next to `src/material-icons.d.ts` rather than reaching for `any`.
+3. **An interface the app already has.** Search for one before writing another.
+4. **A new interface**, only when none of the above fit.
+
+For a value whose shape really is not known yet, `unknown` with a narrowing check is the honest escape hatch. `any` is not.
+
+**A legitimate `any`, or a package with no types?** Give the package a small `.d.ts` shim next to `src/material-icons.d.ts`. An `any` that truly cannot be avoided is a conversation with a maintainer, not a number you change on your own.
+
+**MANDATORY — never raise the baseline to make the check pass.** A bigger number hides the new `any` from every later run, which is the one thing the baseline exists to prevent, and it will be treated as a bug in review. Specifically, and this applies to coding agents as much as to people:
+
+- Do not hand-edit `scripts/explicit-any/baseline.json`. The only writes to it come from the check itself.
+- Do not run `--accept-new-any`. A maintainer who has already agreed to a raise records it with `npm run check:ts-any -- --write --accept-new-any`; it is never a way to get a green check.
+- A red `check:ts-any` is fixed by typing the value, not by making the check agree with the code.
+- When you cannot type it, stop. Leave the check red, say in the PR which value defeated you and why, and let a maintainer decide. An unfinished PR is fine; a silently raised baseline is not.
+
+**The check.** `npm run check:ts-any` counts the explicit `any` per file, oxlint for the `<script>` block and the Vue compiler for template expressions, and compares the counts with `scripts/explicit-any/baseline.json`, which records what was already in the tree when the rule came in. The same check runs on every PR, as `Npm - check ts-any`. It fails in two directions and the message says which:
+
+- ``New `any` in 1 file(s)`` with a line like `src/utils/filters.ts: 1 -> 2`. Your change added one. Type it with the order above.
+- `The baseline is out of date` with `src/utils/filters.ts: 3 -> 2`, or `moved from …` when you renamed a file. Nothing got worse, the baseline just has to follow the code. Run `npm run check:ts-any -- --write` and commit it alongside your change. A rename is followed whether it is staged or already committed on your branch, so the count travels with the file either way.
+
+Install the repo hooks once with `.github/.hooks/setup_hooks.sh` and the second case stops happening: the pre-commit hook lowers the baseline and stages it with the rest of your commit.
 
 ### Testing UI
 
@@ -245,6 +274,8 @@ npm run check:types && npm run test:unit && npm run lint
 ```
 
 `npm run lint` is not optional. Without it, one PR comment per eslint violation is posted by reviewdog (missing trailing commas, mostly) and the human review is buried underneath them.
+
+`npm run check:ts-any` compares the explicit `any` per file against `scripts/explicit-any/baseline.json`. It fails when a file gains one, so type it instead of raising the number. It also fails when a file loses one, because the baseline has to come down with the code: run `npm run check:ts-any -- --write` and commit the smaller numbers, or install the repo's git hooks (`.github/.hooks/setup_hooks.sh`) and the pre-commit hook does it for you. `--write` only ever lowers; it refuses to raise a count.
 
 Then read your own diff for the design-system violations that no linter catches:
 
@@ -321,8 +352,8 @@ If your `<style>` block needs to exist:
 | Component | Purpose |
 |-----------|---------|
 | `KsAlert` | Alert banner for messages and status feedback |
-| `KsDialog` | Modal dialog (handles focus trap + Escape) |
-| `KsDrawer` | Side drawer / panel |
+| `KsDialog` | Modal dialog (handles focus trap + Escape); `dirty` asks before an accidental close |
+| `KsDrawer` | Side drawer / panel; `dirty` asks before an accidental close |
 | `KsTooltip` | Hover tooltip |
 | `KsPopover` | Popover for contextual content |
 | `KsLoading` (`vKsLoading`) | Loading spinner directive |
@@ -359,7 +390,7 @@ If your `<style>` block needs to exist:
 | `KsEntityLink` | Clickable cross-entity reference (namespace / flow) for table cells — neutral tag with leading icon, violet on hover. Pass `noIcon` in dense embedded tables (e.g. dashboard chart tables, ~90px columns) where the icon's 20px costs more than it tells |
 | `KsBadge` | Small indicator badge |
 | `KsNewBadge` | Compact uppercase "NEW" pill flagging a newly shipped feature — caller supplies the label via the default slot |
-| `KsTag` / `KsCheckTag` | Tag / label; clickable checkbox-style tag |
+| `KsTag` / `KsCheckTag` | Tag / label; clickable checkbox-style tag. Pass `truncate` to clip a long label with an ellipsis instead of letting the tag outgrow its container |
 | `KsAvatar` | Avatar with fallback |
 | `KsProgress` | Progress bar |
 | `KsPagination` | Pagination controls |
@@ -369,7 +400,9 @@ If your `<style>` block needs to exist:
 | `KsDateAgo` | Relative time display ("2 hours ago") |
 | `KsSegmented` | Segmented control; object options may carry an `icon` component, rendered before the label |
 | `KsCollapse` / `KsCollapseItem` | Collapsible sections |
+| `KsFileTag` | Storage URI rendered as a file reference: a `KsTag` whose symbol comes from the extension, with a readable name (`name`, defaulting to the URI's last segment); the full URI stays in the tooltip |
 | `KsTree` | Hierarchical tree view |
+| `KsJsonTree` | Read-only JSON tree viewer; leaves holding a storage URI render through `KsFileTag` |
 | `KsTimeline` / `KsTimelineItem` | Timeline visualization |
 | `KsExecutionStatus` | Execution / task status badge with icon and color |
 | `KsCodeStatus` | Compact validity badge with icon (`valid` / `error`) — caller supplies the label |
@@ -389,7 +422,7 @@ If your `<style>` block needs to exist:
 |-----------|---------|
 | `KsTabs` / `KsTabPane` | Tabbed interface |
 | `KsMenu` / `KsMenuItem` | Hierarchical menu |
-| `KsDropdown` / `KsDropdownMenu` / `KsDropdownItem` | Dropdown menu |
+| `KsDropdown` / `KsDropdownMenu` / `KsDropdownItem` | Dropdown menu; pass `danger` on an item to give a destructive or exit action (delete, log out) the error-coloured hover |
 | `KsTopNavBar` | Top navigation bar |
 | `KsSideBar` / `KsSideBarSection` / `KsSideBarItem` | Left sidebar shell (header / scrollable body / footer slots), section with title, and styled link primitive with icon, active and locked states |
 | `KsBreadcrumb` / `KsBreadcrumbItem` | Breadcrumb navigation |
@@ -402,18 +435,20 @@ If your `<style>` block needs to exist:
 - `dateUtils` — `dateFilter()`, `DATE_FORMAT_STORAGE_KEY`, `TIMEZONE_STORAGE_KEY`
 - `durationUtils` — `duration()`, `humanDuration()` — ISO 8601 ↔ ms and human-readable
 - `stringUtils` — `afterLastDot()`
+- `fileUtils` — `isFileUri()`, `fileName()`, `fileExtension()`, `fileIcon()` — storage-URI detection and the file symbol used by `KsFileTag`
 - `flowYamlUtils` — YAML parsing / manipulation for flow definitions
 - `Comparators` — enum of filter comparison operators
 - Filter helpers — `decodeSearchParams()`, `encodeFiltersToQuery()`, `getUniqueFilters()`, etc.
 - `applyDefaultFilters()`, `useRouteFilterPolicy()` — filter composables
 - `setMomentInstance()`, `setDateFormatter()` — date library configuration
 - `designSystemLocale`, `setDesignSystemLocale`, `registerDesignSystemI18n` — i18n
+- `designSystemI18nReady()` — the locale registration the plugin's `install` started, to await instead of leaving it in flight (the unit setup awaits it after each test)
 
 ## Composables
 
 - `useTheme()` — detects and tracks dark / light mode via MutationObserver. Use this instead of reading `document.documentElement` yourself.
 - `useFilters`, `useSavedFilters`, `useDefaultFilter`, `usePreAppliedFilters`, `useRouteFilterPolicy`, `useTableColumns`, `useDataOptions`, `useDragAndDrop`, `usePeriodicRefresh` — data-table filter composables
-- `useDiscardGuard(isDirty, {message?})` — confirm-before-discard for data-entry modals; see "Unsaved input in modals (discard guard)"
+- `useDiscardGuard(isDirty, {message?})` — confirm-before-discard behind the `dirty` prop of `KsDialog` / `KsDrawer`; see "Unsaved input in modals (discard guard)"
 - `useTaskIcon()` — resolves the app-provided task-icon component via `TASK_ICON_INJECTION_KEY` (falling back to a generic placeholder icon). The app provides its own `TaskIcon` component once, at bootstrap (`app.provide(TASK_ICON_INJECTION_KEY, TaskIcon)`) — the design system cannot own that component since it depends on the app's plugin-icon backend API. Used internally by `KsEditor` (Monaco suggestion icons) and the `@kestra-io/topology` package (graph node icons) so both share the same app-provided instance.
 
 ## Design tokens

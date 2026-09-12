@@ -134,10 +134,11 @@ npm run build               # tsdown: JS + per-component .d.ts + CSS into dist/
 npm run dev                 # same, in watch mode
 
 npm run test                # lint + types + unit + storybook, in parallel
-npm run unit:test           # vitest units only
-npm run storybook:test      # storybook component tests (needs chromium)
-npm run types:test          # vue-tsc --noEmit
-npm run lint:fix            # oxlint + eslint, with fixes
+npm run test:unit           # vitest units only
+npm run test:storybook      # storybook component tests (needs chromium)
+npm run check:types         # vue-tsc --noEmit
+npm run test:lint           # oxlint + eslint
+npm run lint                # oxlint + eslint, with fixes
 ```
 
 Every new `Ks*` component needs a Storybook story; prefer a story over a Vitest unit test when the

@@ -130,6 +130,27 @@ export const WithDisabledItems: Story = {
     }),
 }
 
+/** Destructive or exit actions – `danger` swaps the hover for the error palette */
+export const DangerItem: Story = {
+    render: () => ({
+        components: {KsButton, KsDropdown, KsDropdownItem, KsDropdownMenu},
+        template: `
+            <div style="padding:48px">
+                <ks-dropdown trigger="click">
+                    <ks-button>Options ▼</ks-button>
+                    <template #dropdown>
+                        <ks-dropdown-menu>
+                            <ks-dropdown-item>Edit</ks-dropdown-item>
+                            <ks-dropdown-item>Duplicate</ks-dropdown-item>
+                            <ks-dropdown-item divided danger>Delete</ks-dropdown-item>
+                        </ks-dropdown-menu>
+                    </template>
+                </ks-dropdown>
+            </div>
+        `,
+    }),
+}
+
 /**
  * Split button – the label runs the default action, the caret opens the menu.
  * The halves are plain `ElButton`s, so pass `buttonProps: {plain: true}` to get the

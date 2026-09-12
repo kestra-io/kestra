@@ -19,7 +19,7 @@
                 <slot />
             </template>
         </KsInput>
-        <KsButton class="hide" link v-if="!disabled && model" :icon="hidden ? EyeOffOutline : EyeOutline" @click="toggle" />
+        <KsButton class="hide" link v-if="!disabled && model" :aria-label="hidden ? $t('ks_password.show') : $t('ks_password.hide')" :icon="hidden ? EyeOffOutline : EyeOutline" @click="toggle" />
     </div>
 </template>
 

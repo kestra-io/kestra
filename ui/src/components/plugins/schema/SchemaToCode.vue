@@ -12,6 +12,7 @@
         >
             <KsButton
                 class="copy"
+                :aria-label="$t('copy')"
                 :icon="copied ? Check : ContentCopy"
                 link
                 @click="copyToClipboard"

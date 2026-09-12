@@ -491,6 +491,9 @@
     },
     "download": "Baixar",
     "jsonl": "JSONL",
+    "large_outputs": {
+      "value_truncated": "Mostrando uma prévia truncada deste valor de {size}."
+    },
     "concurrency_limit": {
       "dialog_title": "Limites de Concurrency",
       "warning": "Alterar o contador em execução pode corromper a Concurrency, então as execuções podem exceder o limite permitido."
@@ -2214,7 +2217,6 @@
     "submit": "Enviar",
     "accept": "Aceitar",
     "reject": "Rejeitar",
-    "draft_available": "Alteração de rascunho disponível no editor",
     "last modified": "Última modificação",
     "run task in playground": "Executar task no playground",
     "defaultsToNamespaceFile": "Padrões para arquivo de namespace: <code>{name}</code>",

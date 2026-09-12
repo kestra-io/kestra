@@ -17,6 +17,8 @@ export interface Schema{
     items?: Schema;
     const?: string;
     format?: string;
+    enum?: unknown[];
+    pattern?: string;
     $language: string;
     $secret?: boolean;
 }

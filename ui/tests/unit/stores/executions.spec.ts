@@ -1,12 +1,12 @@
 import {describe, expect, test} from "vitest"
 
-import {normalizeFilePreview} from "../../../src/stores/executions"
+import {normalizeFilePreview, type FilePreview} from "../../../src/stores/executions"
 
 describe("executions store", () => {
     test("keeps Ion preview objects without requiring array helpers", () => {
-        const preview = {
+        const preview: FilePreview = {
             extension: "ion",
-            type: "RAW",
+            type: "TEXT",
             content: {message: "hello from ship logs", level: "INFO"},
             truncated: false,
         }

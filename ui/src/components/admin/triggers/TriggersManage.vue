@@ -12,7 +12,7 @@
             :selectable="canCheck"
             :selectionMapper="selectionMapper"
             :rowClassName="getClasses"
-            :rowKey="(row: any) => `${row.namespace}-${row.flowId}-${row.triggerId}`"
+            :rowKey="(row: TriggerRow) => `${row.namespace}-${row.flowId}-${row.triggerId}`"
             :forceExpandedRowKeys="expandedRowKeys"
             :no-data-text="$t('no_results.triggers')"
             @page-changed="({page, size}: {page: number; size: number}) => router.push({query: {...route.query, page: String(page), size: String(size)}})"
@@ -344,6 +344,16 @@
     import {ref, computed, watch, useTemplateRef} from "vue"
     import {useI18n} from "vue-i18n"
     import {asProblem} from "@kestra-io/kestra-sdk"
+    import type {
+        AbstractTrigger,
+        ApiAsyncOperationResponse,
+        ApiTriggerAndState,
+        ApiTriggerState,
+        Label,
+        QueryFilter,
+        TriggerControllerApiCreateBackfillRequest,
+        TriggerControllerApiTriggerId,
+    } from "@kestra-io/kestra-sdk"
     import {problemBulkBody, problemTitle} from "../../../utils/problem"
     import {useRoute, useRouter} from "vue-router"
     import {KsMessage, KsDrawer, KsMarkdown, KsTag, KsDropdown, KsDropdownMenu, KsDropdownItem} from "@kestra-io/design-system"
@@ -357,7 +367,7 @@
     import {searchTriggers, type TriggerDeleteOptions} from "../../../utils/triggers"
     import {useExecutionsStore} from "../../../stores/executions"
     import {useTriggerFilter} from "../../filter/configurations"
-    import {type ColumnConfig, useTableColumns} from "../../../composables/useTableColumns"
+    import {useTableColumns, type ColumnConfig} from "@kestra-io/design-system"
     import useRestoreUrl from "../../../composables/useRestoreUrl"
 
     import action from "../../../models/action"
@@ -371,7 +381,7 @@
     import Restart from "vue-material-design-icons/Restart.vue"
     import TextSearch from "vue-material-design-icons/TextSearch.vue"
 
-    import FlowRun, {SelectedTrigger} from "../../flows/FlowRun.vue"
+    import FlowRun from "../../flows/FlowRun.vue"
     import LogsWrapper from "../../logs/LogsWrapper.vue"
     import BackfillBanner from "../../flows/BackfillBanner.vue"
     import Vars from "../../executions/Vars.vue"
@@ -391,14 +401,34 @@
 
     const {loadInit} = useRestoreUrl()
 
-    const dataTable = useTemplateRef<any>("dataTable")
+    // A row is the trigger definition merged over its runtime state; `inputs` and `logs` come from
+    // trigger plugin subclasses, which AbstractTrigger does not model.
+    type TriggerRow = Partial<AbstractTrigger> & ApiTriggerState & {
+        codeDisabled?: boolean;
+        missingSource: boolean;
+        inputs?: Record<string, unknown>;
+        logs?: unknown[];
+    }
+
+    /** The part of the KsDataTable instance this table drives. */
+    interface TriggersDataTable {
+        selection: TriggerControllerApiTriggerId[];
+        queryBulkAction: boolean;
+        reload: () => void;
+        resetAndReload: () => void;
+        setSelection: (selection: TriggerControllerApiTriggerId[]) => void;
+        toggleAllUnselected: () => void;
+        waitTableRender: () => Promise<void>;
+    }
+
+    const dataTable = useTemplateRef<TriggersDataTable>("dataTable")
 
     const total = ref(0)
-    const triggers = ref<any[]>([])
+    const triggers = ref<ApiTriggerAndState[]>([])
     const isBackfillOpen = ref(false)
     const isDetailsOpen = ref(false)
     const detailsTriggerId = ref<string | undefined>()
-    const selectedTrigger = ref<SelectedTrigger | undefined>()
+    const selectedTrigger = ref<TriggerRow | undefined>()
 
     // evaluatedAt/updatedAt are TriggerState JSON fields with no backing column on the triggers table, so they're excluded here.
     const SORTABLE_COLUMNS: readonly string[] = ["flowId", "namespace", "lastTriggeredDate", "nextEvaluationDate"]
@@ -411,8 +441,8 @@
     const backfill = ref<{
         start: Date | null;
         end: Date | null;
-        inputs: any;
-        labels: any[];
+        inputs: Record<string, unknown> | null;
+        labels: Label[];
     }>({
         start: null,
         end: null,
@@ -427,7 +457,7 @@
         backfill.value.start ||
         backfill.value.end ||
         Object.keys(backfillInputsNoDefault.value).length > 0 ||
-        backfill.value.labels?.some((label: any) => label.key || label.value)
+        backfill.value.labels.some(label => label.key || label.value)
     ))
 
     const optionalColumns = computed<ColumnConfig[]>(() => [
@@ -501,51 +531,51 @@
 
     const canCheck = computed(() => authStore.user?.hasAny(resource.TRIGGER) ?? false)
 
-    const selectionMapper = (row: any) => ({
+    const selectionMapper = (row: TriggerRow): TriggerControllerApiTriggerId => ({
         namespace: row.namespace,
         flowId: row.flowId,
         triggerId: row.triggerId ?? row.id,
     })
 
-    const isSchedule = (type: string) => type === "io.kestra.plugin.core.trigger.Schedule"
+    const isSchedule = (type?: string) => type === "io.kestra.plugin.core.trigger.Schedule"
 
-    const triggersMerged = computed(() => {
-        return triggers.value?.map((tr: any) => ({
-            ...tr?.trigger,
-            ...tr?.state,
-            codeDisabled: tr?.trigger?.disabled,
-            missingSource: !tr?.trigger,
-        })) ?? []
-    })
+    const triggersMerged = computed<TriggerRow[]>(() =>
+        triggers.value.map(tr => ({
+            ...tr.trigger,
+            ...tr.state,
+            codeDisabled: tr.trigger?.disabled,
+            missingSource: !tr.trigger,
+        })),
+    )
 
     const expandedRowKeys = computed<string[]>(() =>
         triggersMerged.value
-            .filter((row: any) => !!row.backfill)
-            .map((row: any) => `${row.namespace}-${row.flowId}-${row.triggerId}`),
+            .filter(row => !!row.backfill)
+            .map(row => `${row.namespace}-${row.flowId}-${row.triggerId}`),
     )
 
     const detailsTrigger = computed(() =>
-        triggersMerged.value.find((row: any) => row.triggerId === detailsTriggerId.value),
+        triggersMerged.value.find(row => row.triggerId === detailsTriggerId.value),
     )
 
-    const detailsData = computed(() => {
+    const detailsData = computed<Record<string, unknown>>(() => {
         const trigger = detailsTrigger.value
         if (!trigger) return {}
         return Object
             .entries(trigger)
             .filter(([key]) => !["tenantId", "namespace", "flowId", "flowRevision", "triggerId", "description"].includes(key))
-            .reduce((map, [key, value]) => {
+            .reduce<Record<string, unknown>>((map, [key, value]) => {
                 map[key] = value
                 return map
-            }, {} as any)
+            }, {})
     })
 
-    const selection = computed<any[]>(() => dataTable.value?.selection ?? [])
+    const selection = computed<TriggerControllerApiTriggerId[]>(() => dataTable.value?.selection ?? [])
     const queryBulkAction = computed<boolean>(() => dataTable.value?.queryBulkAction ?? false)
     const toggleAllUnselected = () => dataTable.value?.toggleAllUnselected()
 
-    const loadQuery = (base: any) => {
-        const {page: _p, size: _s, sort: _so, ...restQuery} = route.query as Record<string, any>
+    const loadQuery = <T extends object>(base: T): T => {
+        const {page: _p, size: _s, sort: _so, ...restQuery} = route.query
         const nonFilterRest = Object.fromEntries(
             Object.entries(restQuery).filter(([key]) => !key.startsWith("filters[")),
         )
@@ -587,7 +617,7 @@
 
     const refresh = () => dataTable.value?.reload()
 
-    const setBackfillModal = (trigger: any, bool: boolean) => {
+    const setBackfillModal = (trigger: TriggerRow | null, bool: boolean) => {
         if (!trigger) {
             isBackfillOpen.value = false
             selectedTrigger.value = undefined
@@ -606,38 +636,41 @@
         })
     }
 
-    const cleanBackfill = computed(() => {
-        const labels = backfill.value.labels?.filter((label: any) => label.key && label.value)
-        return {...backfill.value, labels: labels?.length ? labels : null}
+    type BackfillRequest = TriggerControllerApiCreateBackfillRequest["backfill"]
+
+    const cleanBackfill = computed<BackfillRequest>(() => {
+        const labels = backfill.value.labels.filter(label => label.key && label.value)
+        return {
+            start: backfill.value.start?.toISOString(),
+            end: backfill.value.end?.toISOString(),
+            // the spec models the endpoint's Map<String, Object> inputs as a map of maps
+            inputs: (backfill.value.inputs ?? undefined) as BackfillRequest["inputs"],
+            labels: labels.length ? labels : undefined,
+        }
     })
 
     const postBackfill = () => {
-        const trigger = selectedTrigger.value as any
+        const trigger = selectedTrigger.value
+        if (!trigger) return
+
         TriggersAPI.createBackfill({
             namespace: trigger.namespace,
             flowId: trigger.flowId,
             triggerId: trigger.triggerId,
-            backfill: cleanBackfill.value as any,
+            backfill: cleanBackfill.value,
         })
             .then(() => {
-                toast.saved(trigger?.triggerId)
+                toast.saved(trigger.triggerId)
                 setBackfillModal(null, false)
-                backfill.value = {
-                    start: null,
-                    end: null,
-                    inputs: null,
-                    labels: [],
-                }
+                backfill.value = {start: null, end: null, inputs: null, labels: []}
                 triggerLoadDataAfterBulkEditAction()
             })
     }
 
-    const hasLogsContent = (row: any) => row.logs && row.logs.length > 0
+    const hasLogsContent = (row: TriggerRow) => !!row.logs?.length
 
-    const getClasses = (arg: any) => {
-        const row = arg?.row ?? arg
-        return hasLogsContent(row) || row?.backfill ? "expandable" : "no-expand"
-    }
+    const getClasses = ({row}: {row: TriggerRow}) =>
+        hasLogsContent(row) || row.backfill ? "expandable" : "no-expand"
 
     const disabledStartDate = (time: Date): boolean => {
         return new Date() < time || (backfill.value.end !== null && time > backfill.value.end)
@@ -654,7 +687,7 @@
         setTimeout(() => dataTable.value?.reload(), 5000)
     }
 
-    const unlock = (row: any) => {
+    const unlock = (row: TriggerRow) => {
         TriggersAPI.unlockTrigger({
             namespace: row.namespace,
             flowId: row.flowId,
@@ -668,7 +701,7 @@
         })
     }
 
-    const restart = (row: any) => {
+    const restart = (row: TriggerRow) => {
         TriggersAPI.restartTrigger({
             namespace: row.namespace,
             flowId: row.flowId,
@@ -679,12 +712,12 @@
         })
     }
 
-    const openDetails = (row: any) => {
+    const openDetails = (row: TriggerRow) => {
         detailsTriggerId.value = row.triggerId
         isDetailsOpen.value = true
     }
 
-    const pauseBackfill = (row: any) => {
+    const pauseBackfill = (row: TriggerRow) => {
         TriggersAPI.pauseBackfill({
             namespace: row.namespace,
             flowId: row.flowId,
@@ -695,7 +728,7 @@
         })
     }
 
-    const unpauseBackfill = (row: any) => {
+    const unpauseBackfill = (row: TriggerRow) => {
         TriggersAPI.unpauseBackfill({
             namespace: row.namespace,
             flowId: row.flowId,
@@ -706,7 +739,7 @@
         })
     }
 
-    const deleteBackfill = (row: any) => {
+    const deleteBackfill = (row: TriggerRow) => {
         TriggersAPI.deleteBackfill({
             namespace: row.namespace,
             flowId: row.flowId,
@@ -719,11 +752,11 @@
 
     const isEnableDialogOpen = ref(false)
     // The schedule trigger being enabled; null when enabling in bulk.
-    const enableDialogTrigger = ref<any>(null)
+    const enableDialogTrigger = ref<TriggerRow | null>(null)
 
-    const isScheduleTrigger = (row: any) => row?.kind === "SCHEDULE" || row?.type === "io.kestra.plugin.core.trigger.Schedule"
+    const isScheduleTrigger = (row?: TriggerRow) => row?.kind === "SCHEDULE" || isSchedule(row?.type)
 
-    const setDisabled = (trigger: any, value: boolean) => {
+    const setDisabled = (trigger: TriggerRow, value: boolean) => {
         if (trigger.codeDisabled) {
             KsMessage({
                 message: t("triggerflow disabled"),
@@ -741,23 +774,27 @@
         doSetDisabled(trigger, !value)
     }
 
-    const doSetDisabled = (trigger: any, disabled: boolean, recoverMissedSchedules?: boolean) => {
-        const isTargetRow = (tr: any) => {
-            const {namespace, flowId, triggerId} = tr.state ?? tr.trigger ?? {}
-            return namespace === trigger.namespace
-                && flowId === trigger.flowId
-                && triggerId === trigger.triggerId
-        }
+    const doSetDisabled = (trigger: TriggerRow, disabled: boolean, recoverMissedSchedules?: boolean) => {
+        const isTargetRow = (tr: ApiTriggerAndState) => tr.state?.namespace === trigger.namespace
+            && tr.state?.flowId === trigger.flowId
+            && tr.state?.triggerId === trigger.triggerId
+
         // Flip the row before the API call so the knob animates on click instead of after the roundtrip.
-        const previousRow = triggers.value?.find(isTargetRow)
-        triggers.value = triggers.value?.map((tr: any) => isTargetRow(tr) ? {...tr, state: {...tr.state, disabled}} : tr)
-        TriggersAPI.disableTriggerById({...trigger, disabled, recoverMissedSchedules})
-            .then((updatedTrigger: any) => {
+        const previousRow = triggers.value.find(isTargetRow)
+        triggers.value = triggers.value.map(tr => isTargetRow(tr) ? {...tr, state: {...tr.state, disabled}} : tr)
+        TriggersAPI.disableTriggerById({
+            namespace: trigger.namespace,
+            flowId: trigger.flowId,
+            triggerId: trigger.triggerId,
+            disabled,
+            recoverMissedSchedules,
+        })
+            .then(updatedTrigger => {
                 toast.saved(updatedTrigger.triggerId)
-                triggers.value = triggers.value?.map((tr: any) => isTargetRow(tr) ? {...tr, state: updatedTrigger} : tr)
+                triggers.value = triggers.value.map(tr => isTargetRow(tr) ? {...tr, state: updatedTrigger} : tr)
             })
             .catch(() => {
-                triggers.value = triggers.value?.map((tr: any) => isTargetRow(tr) ? previousRow : tr)
+                triggers.value = triggers.value.map(tr => isTargetRow(tr) ? previousRow ?? tr : tr)
             })
     }
 
@@ -766,8 +803,7 @@
             doSetDisabled(enableDialogTrigger.value, false, recoverMissedSchedules)
         } else {
             genericConfirmCallback(
-                "setDisabledByQuery",
-                "setDisabledByTriggers",
+                "setDisabled",
                 "bulk success disabled status.false",
                 {disabled: false, recoverMissedSchedules},
             )
@@ -795,15 +831,14 @@
     const deleteTriggers = () => {
         genericConfirmAction(
             "bulk delete triggers",
-            "deleteByQuery",
-            "deleteByTriggers",
+            "delete",
             "bulk success delete triggers",
-            null,
+            undefined,
             "WARNING: deleting triggers may lead to duplicate executions if the triggers are still active in flows",
         )
     }
 
-    const genericConfirmAction = (toastKey: string, queryAction: string, byIdAction: string, success: string, data?: any, extraWarning?: string) => {
+    const genericConfirmAction = (toastKey: string, actionName: BulkActionName, success: string, data?: BulkDisableData, extraWarning?: string) => {
         let message = t(toastKey, {"count": queryBulkAction.value ? total.value : selection.value?.length}) + ". " + t("bulk action async warning")
 
         if (extraWarning) {
@@ -812,120 +847,143 @@
 
         toast.confirm(
             message,
-            () => genericConfirmCallback(queryAction, byIdAction, success, data),
+            () => genericConfirmCallback(actionName, success, data),
         )
     }
 
-    const genericConfirmCallback = (queryAction: string, byIdAction: string, success: string, data?: any) => {
-        const actionMap: Record<string, () => any> = {
-            "unpauseBackfillByQuery": () => (options: any) => TriggersAPI.unpauseBackfillByQuery(options),
-            "unpauseBackfillByTriggers": () => (triggers: any) => TriggersAPI.unpauseBackfillByIds({body: triggers}),
-            "pauseBackfillByQuery": () => (options: any) => TriggersAPI.pauseBackfillByQuery(options),
-            "pauseBackfillByTriggers": () => (triggers: any) => TriggersAPI.pauseBackfillByIds({body: triggers}),
-            "deleteBackfillByQuery": () => (options: any) => TriggersAPI.deleteBackfillByQuery(options),
-            "deleteBackfillByTriggers": () => (triggers: any) => TriggersAPI.deleteBackfillByIds({body: triggers}),
-            "unlockByQuery": () => (options: any) => TriggersAPI.unlockTriggersByQuery(options),
-            "unlockByTriggers": () => (triggers: any) => TriggersAPI.unlockTriggersByIds({body: triggers}),
-            "setDisabledByQuery": () => (options: any) => TriggersAPI.disabledTriggersByQuery(options),
-            "setDisabledByTriggers": () => (options: any) => TriggersAPI.disabledTriggersByIds(options),
-            "deleteByQuery": () => (options: any) => TriggersAPI.deleteTriggersByQuery(options),
-            "deleteByTriggers": () => (triggers: any) => TriggersAPI.deleteTriggersByIds({body: triggers}),
+    type BulkQueryOptions = {
+        filters?: QueryFilter[];
+        disabled?: boolean;
+        recoverMissedSchedules?: boolean;
+    }
+
+    type BulkDisableData = {disabled: boolean; recoverMissedSchedules?: boolean}
+
+    /** Query mode targets every trigger matching the filters, selection mode only the checked rows. */
+    interface BulkAction {
+        byQuery: (options: BulkQueryOptions) => Promise<ApiAsyncOperationResponse>;
+        byIds: (triggers: TriggerControllerApiTriggerId[], data?: BulkDisableData) => Promise<ApiAsyncOperationResponse>;
+    }
+
+    const BULK_ACTIONS = {
+        unpauseBackfill: {
+            byQuery: options => TriggersAPI.unpauseBackfillByQuery(options),
+            byIds: triggers => TriggersAPI.unpauseBackfillByIds({body: triggers}),
+        },
+        pauseBackfill: {
+            byQuery: options => TriggersAPI.pauseBackfillByQuery(options),
+            byIds: triggers => TriggersAPI.pauseBackfillByIds({body: triggers}),
+        },
+        deleteBackfill: {
+            byQuery: options => TriggersAPI.deleteBackfillByQuery(options),
+            byIds: triggers => TriggersAPI.deleteBackfillByIds({body: triggers}),
+        },
+        unlock: {
+            byQuery: options => TriggersAPI.unlockTriggersByQuery(options),
+            byIds: triggers => TriggersAPI.unlockTriggersByIds({body: triggers}),
+        },
+        setDisabled: {
+            byQuery: options => TriggersAPI.disabledTriggersByQuery(options),
+            byIds: (triggers, data) => TriggersAPI.disabledTriggersByIds({
+                triggers,
+                disabled: data?.disabled ?? false,
+                recoverMissedSchedules: data?.recoverMissedSchedules,
+            }),
+        },
+        delete: {
+            byQuery: options => TriggersAPI.deleteTriggersByQuery(options),
+            byIds: triggers => TriggersAPI.deleteTriggersByIds({body: triggers}),
+        },
+    } satisfies Record<string, BulkAction>
+
+    type BulkActionName = keyof typeof BULK_ACTIONS
+
+    const genericConfirmCallback = (actionName: BulkActionName, success: string, data?: BulkDisableData) => {
+        const action = BULK_ACTIONS[actionName]
+        const onSubmitted = (response: ApiAsyncOperationResponse) => {
+            toast.success(t(success, {count: response.totalItems}))
+            toggleAllUnselected()
+            triggerLoadDataAfterBulkEditAction()
         }
 
         if (queryBulkAction.value) {
             const query = loadQuery({filters: routeQueryToQueryFilters(route.query)})
-            const options = {...query, ...data}
-            const actions = actionMap[queryAction]()
-            return actions(options)
-                .then((d: any) => {
-                    toast.success(t(success, {count: d?.count}))
-                    toggleAllUnselected()
-                    triggerLoadDataAfterBulkEditAction()
-                })
-        } else {
-            const selectionData = selection.value
-            const options = {triggers: selectionData, ...data}
-            const actions = actionMap[byIdAction]()
-            return actions(byIdAction.includes("setDisabled") ? options : selectionData)
-                .then((d: any) => {
-                    toast.success(t(success, {count: d?.count}))
-                    toggleAllUnselected()
-                    triggerLoadDataAfterBulkEditAction()
-                }).catch((e: unknown) => {
-                    const problem = asProblem(e)
-                    toast.error(
-                        problemBulkBody(problem, t, te),
-                        problemTitle(problem, t, te),
-                    )
-                })
+            return action.byQuery({...query, ...data}).then(onSubmitted)
         }
+
+        return action.byIds(selection.value, data)
+            .then(onSubmitted)
+            .catch((e: unknown) => {
+                const problem = asProblem(e)
+                toast.error(
+                    problemBulkBody(problem, t, te),
+                    problemTitle(problem, t, te),
+                )
+            })
     }
 
     const unpauseBackfills = () => {
-        genericConfirmAction("bulk unpause backfills", "unpauseBackfillByQuery", "unpauseBackfillByTriggers", "bulk success unpause backfills")
+        genericConfirmAction("bulk unpause backfills", "unpauseBackfill", "bulk success unpause backfills")
     }
 
     const pauseBackfills = () => {
-        genericConfirmAction("bulk pause backfills", "pauseBackfillByQuery", "pauseBackfillByTriggers", "bulk success pause backfills")
+        genericConfirmAction("bulk pause backfills", "pauseBackfill", "bulk success pause backfills")
     }
 
     const deleteBackfills = () => {
-        genericConfirmAction("bulk delete backfills", "deleteBackfillByQuery", "deleteBackfillByTriggers", "bulk success delete backfills")
+        genericConfirmAction("bulk delete backfills", "deleteBackfill", "bulk success delete backfills")
     }
 
     const unlockTriggers = () => {
-        genericConfirmAction("bulk unlock", "unlockByQuery", "unlockByTriggers", "bulk success unlock")
+        genericConfirmAction("bulk unlock", "unlock", "bulk success unlock")
     }
 
     const setDisabledTriggers = (bool: boolean) => {
         // Enabling may recover missed schedules: the dialog carries both the confirmation and the
         // recovery choice. In query mode trigger types are unknowable so it is always shown; in
         // selection mode only when the selection contains a schedule trigger.
-        if (!bool && (queryBulkAction.value || selection.value?.some((sel: any) => isScheduleTrigger(findRowBySelection(sel))))) {
+        if (!bool && (queryBulkAction.value || selection.value.some(sel => isScheduleTrigger(findRowBySelection(sel))))) {
             enableDialogTrigger.value = null
             isEnableDialogOpen.value = true
             return
         }
         genericConfirmAction(
             `bulk disabled status.${bool}`,
-            "setDisabledByQuery",
-            "setDisabledByTriggers",
+            "setDisabled",
             `bulk success disabled status.${bool}`,
             {disabled: bool},
         )
     }
 
-    const findRowBySelection = (sel: any) => triggersMerged.value.find((row: any) =>
+    const findRowBySelection = (sel: TriggerControllerApiTriggerId) => triggersMerged.value.find(row =>
         (row.triggerId ?? row.id) === sel.triggerId && row.flowId === sel.flowId && row.namespace === sel.namespace)
 
     const checkBackfill = computed(() => {
-        if (!backfill.value?.start) {
+        const {start, end, inputs, labels} = backfill.value
+
+        if (!start) {
             return true
         }
-        if (backfill.value?.end && backfill.value.start > backfill.value.end) {
+        if (end && start > end) {
             return true
         }
         if (flowStore.flow?.inputs) {
-            const requiredInputs = flowStore.flow.inputs?.map((input: any) => input?.required !== false ? input?.id : null).filter((i: any) => i !== null) || []
+            const requiredInputs = flowStore.flow.inputs
+                .filter(input => input?.required !== false)
+                .map(input => input.id)
 
             if (requiredInputs.length > 0) {
-                if (!backfill.value?.inputs) {
+                if (!inputs) {
                     return true
                 }
-                const fillInputs = Object.keys(backfill.value.inputs).filter((i: string) => backfill.value?.inputs?.[i] !== null && backfill.value?.inputs?.[i] !== undefined)
+                const fillInputs = Object.keys(inputs).filter(key => inputs[key] !== null && inputs[key] !== undefined)
                 if (requiredInputs.sort().join(",") !== fillInputs.sort().join(",")) {
                     return true
                 }
             }
         }
-        if (backfill.value?.labels?.length > 0) {
-            for (let label of backfill.value.labels) {
-                if (((label as any)?.key && !(label as any)?.value) || (!(label as any)?.key && (label as any)?.value)) {
-                    return true
-                }
-            }
-        }
-        return false
+
+        return labels.some(label => Boolean(label.key) !== Boolean(label.value))
     })
 
 </script>

@@ -27,6 +27,7 @@
                         :autoClose="2000"
                     >
                         <KsButton
+                            :aria-label="$t('toggle_word_wrap')"
                             :icon="Wrap"
                             type="default"
                             @click="wordWrap = !wordWrap"
@@ -51,7 +52,7 @@
 
     export interface Preview {
         truncated?: boolean;
-        type?: "LIST" | "IMAGE" | "PDF" | "MARKDOWN" | "RAW";
+        type?: "TEXT" | "LIST" | "IMAGE" | "PDF" | "MARKDOWN" | "RAW";
         content?: any;
         extension?: string;
     }

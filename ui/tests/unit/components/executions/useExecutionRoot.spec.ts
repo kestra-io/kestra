@@ -27,7 +27,8 @@ vi.mock("../../../../src/stores/flow", async () => {
 vi.mock("../../../../src/stores/executions", () => ({
     useExecutionsStore: () => ({
         execution: undefined,
-        logs: {total: 0, results: []},
+        logs: [],
+        resetLogs: vi.fn(),
         closeSSE: vi.fn(),
         followExecution: vi.fn(),
     }),

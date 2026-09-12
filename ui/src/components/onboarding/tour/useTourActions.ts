@@ -27,9 +27,6 @@ const FLOW_TAB = {
     triggers: `${FLOW_PARENT_ROUTE}/triggers`,
 } as const
 
-// Not State.isRunning: QUEUED/RETRYING/RESTARTED are non-running yet not a final outcome.
-const TERMINAL_STATES: readonly string[] = [State.SUCCESS, State.WARNING, State.FAILED, State.KILLED, State.CANCELLED]
-
 const randomWebhookKey = () => {
     const random = Math.random().toString(36).slice(2, 10)
     return `order-events-${random}`
@@ -261,7 +258,7 @@ export function useTourActions() {
         for (;;) {
             const execution = await executionsStore.loadExecution({id: executionId})
             const current = execution?.state?.current
-            if (current && TERMINAL_STATES.includes(current)) {
+            if (current && State.isTerminated(current)) {
                 return execution
             }
             if (Date.now() - startedAt > timeoutMs) {

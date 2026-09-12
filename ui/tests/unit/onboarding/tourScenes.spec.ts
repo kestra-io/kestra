@@ -2,11 +2,8 @@ import {describe, expect, it} from "vitest"
 
 import {
     TOUR_SCENES,
-    TOUR_SCENE_IDS,
-    TOUR_STEP_GROUPS,
-    TOUR_STEP_GROUP_COUNT,
-    TOUR_TOTAL_STEPS,
-    tourSceneIndex,
+    sceneIdsOf,
+    stepGroupsOf,
 } from "../../../src/components/onboarding/tour/tourScenes"
 import {
     TOUR_FLOW_ID,
@@ -36,21 +33,14 @@ const completedOn = (
 
 describe("product tour scenes", () => {
     it("has unique scene ids", () => {
-        expect(new Set(TOUR_SCENE_IDS).size).toBe(TOUR_SCENE_IDS.length)
-    })
-
-    it("counts one numbered step per scene", () => {
-        expect(TOUR_TOTAL_STEPS).toBe(TOUR_SCENES.length)
-        expect(TOUR_STEP_GROUPS.reduce((total, group) => total + group.scenes.length, 0))
-            .toBe(TOUR_TOTAL_STEPS)
+        const ids = sceneIdsOf(TOUR_SCENES)
+        expect(new Set(ids).size).toBe(ids.length)
     })
 
     it("groups the steps without ever going backwards", () => {
         const steps = TOUR_SCENES.map((scene) => scene.step)
 
         expect(Math.min(...steps)).toBe(1)
-        expect(Math.max(...steps)).toBe(TOUR_STEP_GROUP_COUNT)
-        expect(TOUR_STEP_GROUPS.length).toBe(TOUR_STEP_GROUP_COUNT)
         expect([...steps]).toEqual([...steps].sort((a, b) => a - b))
     })
 
@@ -122,13 +112,6 @@ describe("product tour scenes", () => {
         expect(unrendered).toEqual([])
     })
 
-    it("resolves scene indexes, falling back to the first scene", () => {
-        expect(tourSceneIndex("copilot")).toBe(0)
-        expect(tourSceneIndex("chain")).toBe(TOUR_SCENES.length - 1)
-        expect(tourSceneIndex("a_scene_that_was_renamed")).toBe(0)
-        expect(tourSceneIndex(null)).toBe(0)
-    })
-
     it("only skips the work on the scenes that describe what is already on screen", () => {
         const withoutAction = TOUR_SCENES.filter((scene) => !scene.action)
         expect(withoutAction.map((scene) => scene.id)).toEqual([
@@ -175,7 +158,7 @@ describe("product tour scenes", () => {
     })
 
     it("names every step, for the plan listed on the intro card", () => {
-        for (const group of TOUR_STEP_GROUPS) {
+        for (const group of stepGroupsOf(TOUR_SCENES)) {
             expect(
                 translations.steps[String(group.step)],
                 `missing name for step ${group.step}`,

@@ -240,6 +240,13 @@ const ALLOWED_ENGLISH_KEYS = new Set([
     // Plugin-doc section label that Hindi keeps in English on every reroll, matching its sibling
     // nav labels ("Outputs", "Tasks") that stay English through the reserved-terms rule.
     "plugins.nav_metrics",
+    // EE tenant wizard, infrastructure nav and asset filters. A full generator pass translated their
+    // sibling "Tenant identity" but returned these three unchanged: "Secrets manager" names the feature
+    // being configured, "Flavor" is the cloud instance-size term, and the metadata-key label wraps a
+    // quoted interpolation the model keeps verbatim.
+    "tenant.create.steps.secret",
+    "tenant.focus.infraNav.mappingsPage.flavor",
+    "assets.filter.table_column.assets.metadata_key",
 ])
 
 /**

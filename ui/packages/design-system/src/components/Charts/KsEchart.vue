@@ -49,7 +49,7 @@
     import {vKsLoading} from "../Feedback/KsLoading"
     import KsTooltip from "../Feedback/KsTooltip.vue"
     import KsTheme from "./ksTheme.ts"
-    import {deepMerge, buildDisabledFeaturesOverride, ChartFeature, TooltipType, ChartRenderer} from "../../utils/chart"
+    import {categoryLabel, deepMerge, buildDisabledFeaturesOverride, ChartFeature, TooltipType, ChartRenderer} from "../../utils/chart"
 
     defineOptions({inheritAttrs: false})
 
@@ -204,10 +204,6 @@
         return typeof tooltip?.valueFormatter === "function" ? tooltip.valueFormatter as (value: unknown) => string : undefined
     }
 
-    function toCapitalCase(text: string): string {
-        return text.replace(/\w\S*/g, (word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-    }
-
     function buildContentFromParams(params: unknown): string {
         const list: EChartsTooltipParam[] = Array.isArray(params) ? params : [params as EChartsTooltipParam]
         if (!list.length) return ""
@@ -218,7 +214,7 @@
         const category = list[0]?.name ?? ""
 
         if (category) {
-            rows.push(`<div style="margin-bottom:6px;font-weight:600;color:var(--ks-text-primary)">${isPie ? toCapitalCase(category) : category}</div>`)
+            rows.push(`<div style="margin-bottom:6px;font-weight:600;color:var(--ks-text-primary)">${isPie ? categoryLabel(category) : category}</div>`)
         }
 
         for (const p of list) {
@@ -231,7 +227,7 @@
             const swatch = p.seriesType === "line"
                 ? `<span style="display:inline-block;width:10px;height:2px;border-radius:2px;background:${p.color ?? "currentColor"};flex-shrink:0"></span>`
                 : `<span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:${p.color ?? "currentColor"};flex-shrink:0"></span>`
-            const label = isPie ? "" : toCapitalCase(p.seriesName ?? "")
+            const label = isPie ? "" : categoryLabel(p.seriesName ?? "")
             const suffix = isPie ? ` (${p.percent}%)` : ""
             rows.push(
                 `<div style="display:flex;align-items:center;gap:6px;line-height:18px;white-space:nowrap">${swatch}<span style="flex:1">${label}</span><span style="margin-left:12px">${value}${suffix}</span></div>`,

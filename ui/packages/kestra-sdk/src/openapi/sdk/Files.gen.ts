@@ -50,7 +50,7 @@ export const createNamespaceDirectory = (parameters: Omit<Parameters<typeof _523
  */
 export const exportNamespaceFiles = (parameters: Omit<Parameters<typeof _4157Eab0>[0], 'tenant'> & {
     tenant?: string;
-}, options?: Omit<Parameters<typeof _4157Eab0>[1], 'throwOnError'>) => getDataOrThrow(_4157Eab0(addTenantToParameters(parameters), { ...options, parseAs: 'text' }));
+}, options?: Omit<Parameters<typeof _4157Eab0>[1], 'throwOnError'>) => getDataOrThrow(_4157Eab0(addTenantToParameters(parameters), options));
 
 /**
  * Get namespace file revisions

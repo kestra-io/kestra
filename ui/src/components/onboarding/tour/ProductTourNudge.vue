@@ -1,18 +1,18 @@
 <template>
     <div v-if="visible && isBlueprints" class="product-tour-nudge">
         <span class="product-tour-nudge__dismiss">
-            <KsIconButton :tooltip="$t('onboarding.tour.actions.dismiss')" placement="top" @click="dismiss">
+            <KsIconButton :tooltip="$t(translationKey('actions.dismiss'))" placement="top" @click="dismiss">
                 <Close />
             </KsIconButton>
         </span>
         <p class="product-tour-nudge__title">
-            {{ $t("onboarding.tour.nudge.title") }}
+            {{ $t(translationKey("nudge.title")) }}
         </p>
         <RouterLink :to="tourRoute" class="product-tour-nudge__link">
             <span class="product-tour-nudge__play">
                 <Play :size="14" />
             </span>
-            <span>{{ $t("onboarding.tour.nudge.action") }}</span>
+            <span>{{ $t(translationKey("nudge.action")) }}</span>
         </RouterLink>
     </div>
 </template>
@@ -26,7 +26,7 @@
     import {useProductTourNudge} from "./useProductTourEntry"
 
     const route = useRoute()
-    const {visible, tourRoute, dismiss} = useProductTourNudge()
+    const {visible, tourRoute, translationKey, dismiss} = useProductTourNudge()
 
     const isBlueprints = computed(() => String(route.name ?? "").startsWith("blueprints"))
 </script>

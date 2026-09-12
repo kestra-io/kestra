@@ -16,6 +16,8 @@
                 </KsTooltip>
                 <KsSwitch v-model="periodicRefreshEnabled" />
             </div>
+
+            <slot name="extra-options" />
         </div>
     </div>
 </template>
@@ -89,7 +91,8 @@
         flex-direction: column;
     }
 
-    .row {
+    .row,
+    :slotted(.row) {
         display: flex;
         justify-content: space-between;
         align-items: center;
@@ -100,11 +103,12 @@
         &:last-child {
             border-bottom: none;
         }
+    }
 
-        .label {
-            font-size: var(--ks-font-size-sm);
-            color: var(--ks-text-primary);
-        }
+    .row .label,
+    :slotted(.row) .label {
+        font-size: var(--ks-font-size-sm);
+        color: var(--ks-text-primary);
     }
 }
 </style>

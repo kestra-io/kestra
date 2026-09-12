@@ -11,7 +11,6 @@ import {useMcpStore} from "../../stores/mcp"
 import {useDashboardStore} from "../../stores/dashboard"
 import {isExportableChart} from "../../components/dashboard/composables/useDashboards"
 import {useNamespacesStore} from "override/stores/namespaces"
-import {useBaseNamespacesStore} from "../../composables/useBaseNamespaces"
 import type {YAMLMap} from "yaml"
 
 function distinct<T>(val: T[] | undefined): T[] {
@@ -119,7 +118,7 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
 
     private tasks(source: string): YAMLMap[] {
         const tasksFromTasksProp = YAML_UTILS.extractFieldFromMaps(source, "tasks")
-            .flatMap(allTasks => allTasks.tasks as YAMLMap[] ?? [])
+            .flatMap(allTasks => allTasks.tasks ?? [])
         const tasksFromTaskProp = YAML_UTILS.extractFieldFromMaps(source, "task")
             .map(task => task.task)
             .flatMap(task => YAML_UTILS.pairsToMap(task) ?? [])
@@ -382,8 +381,7 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
                 if (namespace === undefined) {
                     return Promise.resolve([])
                 }
-                const namespacesStore = this.namespacesStore as unknown as ReturnType<typeof useBaseNamespacesStore>
-                return Array.from(new Set<string>((await namespacesStore.usableSecrets(namespace)).map((secret: string) => QUOTE + secret + QUOTE)))
+                return Array.from(new Set<string>((await this.namespacesStore.usableSecrets(namespace)).map((secret: string) => QUOTE + secret + QUOTE)))
             }
             case "kv": {
                 const namespace = this.extractArgValue(namespaceArg)

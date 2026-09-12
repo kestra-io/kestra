@@ -53,6 +53,7 @@ describe("useAiChat", () => {
         lastBody = null
         localStorage.clear()
         post.mockResolvedValue(idleThread())
+        get.mockResolvedValue({data: {uid: "t1", mode: "ASK", status: "IDLE", messages: []}})
     })
 
     afterAll(() => {
@@ -145,6 +146,51 @@ describe("useAiChat", () => {
         expect(chat.error.value).toBeNull()
         expect(chat.messages.value.some((m) => m.type === "CANCELLED")).toBe(true)
         expect(chat.messages.value.some((m) => m.role === "USER" && m.content === "hi")).toBe(true)
+        expect(get).toHaveBeenCalledWith(
+            "http://localhost/api/v1/main/ai/threads/t1",
+            expect.objectContaining({showMessageOnError: false}),
+        )
+    })
+
+    it("keeps Send disabled after stop until the server thread is IDLE", async () => {
+        hangUntilAbort = true
+        let serverStatus = "RUNNING"
+        get.mockImplementation(async () => ({
+            data: {uid: "t1", mode: "ASK", status: serverStatus, messages: []},
+        }))
+        const chat = useAiChat()
+        const pending = chat.sendChat({prompt: "hi"})
+        await vi.waitFor(() => expect(chat.streaming.value).toBe(true))
+
+        chat.cancel()
+        await vi.waitFor(() => expect(get).toHaveBeenCalled())
+        expect(chat.streaming.value).toBe(false)
+        expect(chat.status.value).toBe("RUNNING")
+        expect(chat.canSend.value).toBe(false)
+        expect(chat.messages.value.some((m) => m.type === "CANCELLED")).toBe(true)
+
+        serverStatus = "IDLE"
+        await pending
+        expect(chat.status.value).toBe("IDLE")
+        expect(chat.canSend.value).toBe(true)
+    })
+
+    it("reset during the post-stop idle wait does not restore the cancelled thread", async () => {
+        hangUntilAbort = true
+        get.mockImplementation(async () => ({
+            data: {uid: "t1", mode: "ASK", status: "RUNNING", messages: []},
+        }))
+        const chat = useAiChat()
+        const pending = chat.sendChat({prompt: "hi"})
+        await vi.waitFor(() => expect(chat.streaming.value).toBe(true))
+        chat.cancel()
+        await vi.waitFor(() => expect(get).toHaveBeenCalled())
+        chat.reset()
+        await pending
+        expect(chat.thread.value).toBeNull()
+        expect(chat.messages.value).toEqual([])
+        expect(chat.status.value).toBe("IDLE")
+        expect(chat.canSend.value).toBe(true)
     })
 
     it("reset during a streaming turn does not leave a cancelled marker on the fresh chat", async () => {

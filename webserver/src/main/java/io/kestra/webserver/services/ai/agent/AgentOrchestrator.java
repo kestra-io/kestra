@@ -243,6 +243,11 @@ public class AgentOrchestrator {
         }
 
         if (sink.isCancelled()) {
+            threadManager.appendToolResult(
+                ctx.thread().tenant(), ctx.thread().uid(), ctx.traceId(),
+                ChatMessageAdaptor.toToolCall(held, entry.kind(), entry.family()),
+                Map.of("outcome", "cancelled")
+            );
             abortCancelled(ctx);
             return;
         }
@@ -373,9 +378,6 @@ public class AgentOrchestrator {
     }
 
     private void executeTool(final AgentLoopContext ctx, final ToolExecutionRequest req, final ToolEntry entry, final TurnEventSink sink) {
-        if (sink.isCancelled()) {
-            return;
-        }
         log.info("Copilot thread {}: calling tool '{}' (kind={}, family={})", ctx.thread().uid(), req.name(), entry.kind(), entry.family());
         emitToolCall(sink, req, entry.kind(), entry.family());
         ToolCatalog.DispatchResult result;

@@ -395,6 +395,11 @@
     // user can type what to change (the next turn re-plans). Focus once the turn resolves and
     // the composer is enabled again.
     const footerComposer = ref<InstanceType<typeof CopilotComposer> | null>(null)
+    const focusAfterStop = ref(false)
+
+    function focusActiveComposer(): void {
+        (isEmpty.value ? emptyComposer.value : footerComposer.value)?.focus()
+    }
 
     async function onReject(): Promise<void> {
         await confirm("REJECT", undefined, selectedProvider.value)
@@ -403,9 +408,18 @@
     }
 
     function onStop(): void {
+        // Stop only aborts the fetch; canSend flips later in runStream's finally. Focus then,
+        // after the textarea is re-enabled — focusing a disabled textarea is a no-op.
+        focusAfterStop.value = true
         cancel()
-        nextTick(() => footerComposer.value?.focus())
     }
+
+    watch(canSend, async (now) => {
+        if (!now || !focusAfterStop.value) return
+        focusAfterStop.value = false
+        await nextTick()
+        focusActiveComposer()
+    })
 
     // Seeded prompts: an entry point (e.g. "Fix with AI") stashes text via miscStore, which opens
     // this tab. Prefill the composer with it and focus, then clear the store so it doesn't re-seed —
@@ -425,7 +439,7 @@
         miscStore.copilotThreadTitle = null
         miscStore.copilotNewThread = false
         await nextTick()
-        ;(isEmpty.value ? emptyComposer.value : footerComposer.value)?.focus()
+        focusActiveComposer()
     }
 
     onMounted(consumeSeededPrompt)

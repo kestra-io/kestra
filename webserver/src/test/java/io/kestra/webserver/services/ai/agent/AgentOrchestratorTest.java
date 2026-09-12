@@ -640,6 +640,28 @@ class AgentOrchestratorTest {
         assertThat(reload(thread).status()).isEqualTo(AgentThreadStatus.IDLE);
         assertThat(messageStore.load(thread.tenant(), thread.uid()))
             .anyMatch(m -> m.type() == AgentMessageType.CANCELLED);
+        assertEveryToolCallHasResult(messageStore.load(thread.tenant(), thread.uid()));
+    }
+
+    @Test
+    void shouldCloseHeldToolCallWhenClientDisconnectsOnApprovedResume() {
+        AgentThread thread = newThread(AgentMode.EDIT);
+        scriptedModel.enqueue(AiMessage.from("", List.of(toolCall("c1", "update-artefact", "exec-1"))));
+        CollectingSink first = new CollectingSink();
+        orchestrator.runTurn(new AgentTurnContext(thread, "restart it", AgentMode.EDIT, TENANT, null, null, null), first);
+
+        CollectingSink sink = new CollectingSink();
+        sink.cancel();
+        orchestrator.resume(claim(reload(thread)), null, true, null, null, sink);
+
+        assertThat(sink.error).isNull();
+        assertThat(reload(thread).status()).isEqualTo(AgentThreadStatus.IDLE);
+        List<AgentMessage> log = messageStore.load(thread.tenant(), thread.uid());
+        assertThat(log).anyMatch(m -> m.type() == AgentMessageType.CANCELLED);
+        assertEveryToolCallHasResult(log);
+        assertThat(log)
+            .filteredOn(m -> m.type() == AgentMessageType.TOOL_RESULT)
+            .allMatch(m -> "cancelled".equals(m.toolResult().get("outcome")));
     }
 
     @Test
@@ -743,6 +765,16 @@ class AgentOrchestratorTest {
 
     private static String confirmationId(final CollectingSink sink) {
         return ((AgentEvents.ProposedActionEvent) sink.first(AgentEvents.PROPOSED_ACTION)).confirmationId();
+    }
+
+    private static void assertEveryToolCallHasResult(final List<AgentMessage> log) {
+        List<String> resultIds = log.stream()
+            .filter(m -> m.type() == AgentMessageType.TOOL_RESULT && m.toolCall() != null)
+            .map(m -> m.toolCall().id())
+            .toList();
+        assertThat(log)
+            .filteredOn(m -> m.type() == AgentMessageType.TOOL_CALL)
+            .allMatch(m -> m.toolCall() != null && resultIds.contains(m.toolCall().id()));
     }
 
     private static final class CollectingSink implements TurnEventSink {

@@ -116,6 +116,10 @@ export function useAiChat() {
     // The active thread uid is remembered client-side so the conversation survives a reload
     // (threads are persisted + user-scoped server-side). A stale/foreign uid just 404s → cleared.
     const THREAD_STORAGE_KEY = "kestra.copilot.activeThread"
+    const THREAD_IDLE_POLL_MS = 100
+    // Bumped on reset/loadThread so a Stop that is still waiting for the server to go IDLE
+    // does not overwrite a newer conversation's status.
+    let idleWaitGeneration = 0
     const rememberThread = (uid: string) => {
         try {
             localStorage.setItem(THREAD_STORAGE_KEY, uid)
@@ -165,6 +169,7 @@ export function useAiChat() {
 
     /** Rehydrates an existing thread's transcript on reload. Sorts messages by uid. */
     async function loadThread(threadId: string): Promise<void> {
+        idleWaitGeneration++
         // `showMessageOnError: false` keeps the global error toast quiet for an expected 404 — the
         // thread no longer exists (e.g. an evicted OSS in-memory conversation, or a deleted one) —
         // handled here by forgetting the remembered id and starting a fresh session.
@@ -281,6 +286,7 @@ export function useAiChat() {
     /** Starts a fresh conversation: drops the current thread/transcript back to the empty state. */
     function reset(): void {
         cancel()
+        idleWaitGeneration++
         abort = null
         thread.value = null
         messages.value = []
@@ -308,6 +314,7 @@ export function useAiChat() {
         abort = new AbortController()
         lastTurn = {url, body}
         const countBefore = messages.value.length
+        let waitForServerIdle = false
 
         try {
             await streamSse({url, body, signal: abort.signal, onFrame: reduce})
@@ -320,23 +327,50 @@ export function useAiChat() {
             }
         } catch (e) {
             if (isAbortError(e)) {
-                status.value = "IDLE"
                 // `reset()` nulls `abort` before the fetch rejects, so a New chat does not paint
                 // a cancelled marker onto the empty transcript.
                 if (abort !== null) {
                     push({id: uid(), role: "SYSTEM", type: "CANCELLED"})
+                    waitForServerIdle = true
                 }
-                return
+            } else {
+                // 503 mid-stream (provider removed) → the unavailable state; otherwise a generic error.
+                if (is503(e)) unavailable.value = true
+                else error.value = toErrorCode(e)
+                // A stream error never leaves us in RUNNING; fall back to a safe resting state.
+                status.value = "IDLE"
             }
-            // 503 mid-stream (provider removed) → the unavailable state; otherwise a generic error.
-            if (is503(e)) unavailable.value = true
-            else error.value = toErrorCode(e)
-            // A stream error never leaves us in RUNNING; fall back to a safe resting state.
-            status.value = "IDLE"
         } finally {
             streaming.value = false
             activeAssistant = null
             abort = null
+        }
+        if (waitForServerIdle) {
+            const threadId = thread.value?.uid
+            if (threadId) await awaitServerIdle(threadId)
+            else status.value = "IDLE"
+        }
+    }
+
+    /** Stop aborts the SSE immediately, but abortCancelled only runs after an in-flight catalog.dispatch returns, so Send stays off until GET reports the thread is no longer RUNNING. */
+    async function awaitServerIdle(threadId: string): Promise<void> {
+        const generation = idleWaitGeneration
+        for (;;) {
+            if (generation !== idleWaitGeneration || thread.value?.uid !== threadId) return
+            try {
+                const {data} = await client.get<ThreadDetail>(`${base()}/${threadId}`, {showMessageOnError: false})
+                if (generation !== idleWaitGeneration || thread.value?.uid !== threadId) return
+                if (data.status !== "RUNNING") {
+                    status.value = data.status
+                    return
+                }
+            } catch (e) {
+                if (is404(e)) {
+                    if (generation === idleWaitGeneration && thread.value?.uid === threadId) status.value = "IDLE"
+                    return
+                }
+            }
+            await new Promise<void>((resolve) => setTimeout(resolve, THREAD_IDLE_POLL_MS))
         }
     }
 

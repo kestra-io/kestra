@@ -292,6 +292,26 @@ describe("CopilotChat", () => {
         expect(state.cancel).toHaveBeenCalled()
     })
 
+    it("focuses the composer once it re-enables after stop", async () => {
+        state.messages.value = [{id: "1", role: "USER", type: "TEXT", content: "hi"}]
+        state.streaming.value = true
+        state.canSend.value = false
+        const w = mount(CopilotChat, {global: mountGlobal, attachTo: document.body})
+        try {
+            w.findComponent({name: "CopilotComposer"}).vm.$emit("stop")
+            await flushPromises()
+            const textarea = w.find("[data-test=\"copilot-composer-input\"]").element
+            expect(document.activeElement).not.toBe(textarea)
+
+            state.streaming.value = false
+            state.canSend.value = true
+            await flushPromises()
+            expect(document.activeElement).toBe(textarea)
+        } finally {
+            w.unmount()
+        }
+    })
+
     it("shows the thinking movement while streaming before the next output", () => {
         state.messages.value = [{id: "1", role: "USER", type: "TEXT", content: "hi"}]
         state.streaming.value = true

@@ -172,7 +172,7 @@
     )
 
     const canReadFlow = computed(() =>
-        authStore.user?.isAllowed(resource.FLOW, action.VIEW, route.params.namespace),
+        authStore.user?.isAllowed(resource.FLOW, action.VIEW, route.params.namespace as string),
     )
 
     function downloadNameFor(currentTaskRunId: string): string {

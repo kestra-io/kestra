@@ -1,8 +1,9 @@
 import Revisions from "../../../src/components/layout/Revisions.vue";
 import {ComponentPropsAndSlots, StoryObj} from "@storybook/vue3-vite";
-import {expect, fn, waitFor} from "storybook/test";
+import {expect, fn, spyOn, waitFor} from "storybook/test";
 import {vueRouter} from "storybook-vue3-router";
-import {nextTick} from "vue";
+import {nextTick, ref} from "vue";
+import {useFlowStore} from "../../../src/stores/flow";
 
 
 export default {
@@ -27,6 +28,22 @@ const render: Story["render"] = (args: ComponentPropsAndSlots<typeof Revisions>)
         return {args, crudText};
     },
     template: `<Revisions v-bind="{...args}">
+        <template #crud="{revision}">
+            <div>{{crudText(revision)}}</div>
+        </template>
+    </Revisions>`
+});
+
+const deletionRender: Story["render"] = (args: ComponentPropsAndSlots<typeof Revisions>) => ({
+    components: {Revisions},
+    setup() {
+        const revisionsList = ref([...(args.revisions ?? [])]);
+        function onDeleted(revision: number) {
+            revisionsList.value = revisionsList.value.filter(r => r.revision !== revision);
+        }
+        return {args, revisionsList, onDeleted, crudText};
+    },
+    template: `<Revisions v-bind="{...args}" :revisions="revisionsList" @deleted="onDeleted">
         <template #crud="{revision}">
             <div>{{crudText(revision)}}</div>
         </template>
@@ -121,5 +138,46 @@ export const Default: Story = {
         await waitFor(() => expect(revisions[revisions.length - 1].revision).toEqual(5));
         await expect(revisions[revisions.length - 1].source).toContain("\"revision\": 1");
         await expect(revisionSourceMock).not.toHaveBeenCalledWith(5);
+    }
+};
+
+export const DeleteSelectedRevision: Story = {
+    render: deletionRender,
+    args: {
+        lang: "json",
+        revisions: [{revision: 1}, {revision: 3}, {revision: 4}],
+        revisionSource: fn((revision: number) =>
+            Promise.resolve(`{"revision": ${revision}, "content": "Content for revision ${revision}"}`)
+        ),
+        canDelete: true,
+        editRouteQuery: false,
+    },
+    async play({canvasElement}) {
+        const flowStore = useFlowStore();
+        spyOn(flowStore, "deleteRevision").mockResolvedValue(undefined);
+
+        await waitFor(() =>
+            expect(canvasElement.querySelectorAll(".revision-grid-col").length).toBe(2)
+        );
+
+        const [leftOptions] = await selectorOptions(canvasElement);
+
+        const rev3Option = leftOptions.find(opt => opt.textContent?.includes("3"));
+        expect(rev3Option).toBeDefined();
+        const trashIcon = (rev3Option!.querySelector("span[role='img']") ?? rev3Option!.querySelector("svg")) as Element;
+        expect(trashIcon).not.toBeNull();
+        (trashIcon as HTMLElement).click();
+
+        await waitFor(() => {
+            const confirmBtn = document.querySelector(
+                "[role='dialog'][aria-label='Confirmation'] button.kel-button--primary"
+            ) as HTMLElement;
+            expect(confirmBtn).not.toBeNull();
+            confirmBtn.click();
+        });
+
+        await waitFor(() =>
+            expect(canvasElement.querySelector(".revision-grid-col")).not.toBeNull()
+        );
     }
 };

@@ -21,6 +21,7 @@ import io.kestra.core.models.triggers.multipleflows.MultipleConditionWindow;
 import io.kestra.core.runners.*;
 import io.kestra.core.scheduler.model.TriggerState;
 import io.kestra.core.server.ServiceInstance;
+import io.kestra.fethr.secret.Secret;
 
 import io.micronaut.context.annotation.Bean;
 import io.micronaut.context.annotation.Factory;
@@ -138,6 +139,12 @@ public class JdbcTableConfigsFactory {
     @Named("namespacefilemetadata")
     public InstantiableJdbcTableConfig namespaceFileMetadata() {
         return new InstantiableJdbcTableConfig("namespacefilemetadata", NamespaceFileMetadata.class, "namespace_file_metadata");
+    }
+
+    @Bean
+    @Named("secrets")
+    public InstantiableJdbcTableConfig secrets() {
+        return new InstantiableJdbcTableConfig("secrets", Secret.class, "secrets");
     }
 
     @Bean

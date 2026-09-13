@@ -24,9 +24,14 @@
 
 
 /* --- secrets (was V1_45__vault_secrets) ---------------------------------------------------- */
--- Reproduced as it stands today. The namespace/tags model change is deliberately NOT folded in
--- here: it is a data migration with a product decision attached (every existing row sits in
--- SYSTEM_FLOWS_DEFAULT_NAMESPACE), and it lands in 2.0.999999999-fethr-02-secrets-namespace-tags.
+-- The tags column is new in 2.0: 2.0's secrets table renders and filters on tags, and this script
+-- has not shipped anywhere, so the column belongs in the create rather than in a follow-up ALTER.
+--
+-- No data migration accompanies the namespace change. Resolution is now an exact namespace match
+-- (see FethrSecretService), and the rows this table already holds were unreachable by any other
+-- means anyway: the 1.x secrets API pinned every row to the "system" namespace, and an inheritance
+-- chain from NamespaceUtils.asTree never yields "system" for a flow outside it. Only an explicit
+-- secret(namespace='system', ...) ever resolved one, and exact matching serves that identically.
 CREATE TABLE IF NOT EXISTS secrets (
     key VARCHAR(250) NOT NULL PRIMARY KEY,
     value JSONB NOT NULL,
@@ -37,6 +42,10 @@ CREATE TABLE IF NOT EXISTS secrets (
     created TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Separate from the create so an existing Fethr database, whose secrets table predates tags, gets
+-- the column too.
+ALTER TABLE secrets ADD COLUMN IF NOT EXISTS tags JSONB GENERATED ALWAYS AS (value -> 'tags') STORED;
 
 CREATE INDEX IF NOT EXISTS vault_secrets__tenant ON secrets ("deleted", "tenant_id");
 CREATE INDEX IF NOT EXISTS vault_secrets__tenant_key ON secrets ("key", "deleted", "tenant_id");

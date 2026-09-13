@@ -3,14 +3,14 @@
         <template #actions>
             <ul>
                 <li>
-                    <KsButton :icon="Plus" type="primary" @click="namespacesStore.addKvModalVisible = true">
+                    <KsButton :icon="Plus" type="primary" data-test="kv-add" @click="namespacesStore.addKvModalVisible = true">
                         {{ $t("kv.add") }}
                     </KsButton>
                 </li>
             </ul>
         </template>
     </TopNavBar>
-    <section class="d-flex flex-column fill-height container padding-bottom">
+    <section class="full-container">
         <KVTable />
     </section>
 </template>

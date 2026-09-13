@@ -10,7 +10,7 @@ export type PluginAuthor = {
     avatarUrl?: string;
 };
 
-export type PluginIconMap = Record<string, {icon: string; flowable: boolean}>;
+export type PluginIconMap = Record<string, {flowable: boolean; monochrome: boolean; hasIcon: boolean; iconUrl?: string; hash?: string}>;
 
 export type Plugin = {
     name: string;
@@ -34,6 +34,18 @@ export function isEntryAPluginElementPredicate(key: string, value: any): value i
         !["categories", "controllers", "storages", "aliases", "guides"].includes(key) &&
         ((value as any[]).length === 0 ||
         value[0]?.cls !== undefined)
+}
+
+export function countUniquePluginElements(plugins: Plugin[]): number {
+    const classes = new Set<string>()
+    for (const plugin of plugins) {
+        for (const [key, value] of Object.entries(plugin)) {
+            if (isEntryAPluginElementPredicate(key, value)) {
+                value.forEach(({cls}) => classes.add(cls))
+            }
+        }
+    }
+    return classes.size
 }
 
 export function extractPluginElements(plugin: Plugin): Record<string, string[]> {

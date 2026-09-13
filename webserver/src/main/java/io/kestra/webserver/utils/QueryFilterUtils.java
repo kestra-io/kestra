@@ -89,11 +89,13 @@ public class QueryFilterUtils {
 
         List<QueryFilter> updatedFilters = new java.util.ArrayList<>(
             filters.stream()
-                .map(filter -> mapLeavesRecursively(filter, leaf ->
-                    isStartDateFilter(leaf) || isTimeRangeFilter(leaf)
-                        ? createUpdatedStartDateFilter(leaf, resolvedStartDate)
-                        : leaf
-                ))
+                .map(
+                    filter -> mapLeavesRecursively(
+                        filter, leaf -> isStartDateFilter(leaf) || isTimeRangeFilter(leaf)
+                            ? createUpdatedStartDateFilter(leaf, resolvedStartDate)
+                            : leaf
+                    )
+                )
                 .toList()
         );
 
@@ -113,11 +115,13 @@ public class QueryFilterUtils {
 
         List<QueryFilter> updatedFilters = new java.util.ArrayList<>(
             filters.stream()
-                .map(filter -> mapLeavesRecursively(filter, leaf ->
-                    isTimeRangeFilter(leaf)
-                        ? createUpdatedDateFilter(leaf, resolvedDate, QueryFilter.Field.END_DATE)
-                        : leaf
-                ))
+                .map(
+                    filter -> mapLeavesRecursively(
+                        filter, leaf -> isTimeRangeFilter(leaf)
+                            ? createUpdatedDateFilter(leaf, resolvedDate, QueryFilter.Field.END_DATE)
+                            : leaf
+                    )
+                )
                 .toList()
         );
 
@@ -136,9 +140,9 @@ public class QueryFilterUtils {
      * Resolves {@link QueryFilter.Field#TIME_RANGE} into a concrete date boundary filter targeting
      * the date column(s) selected by {@code dateFilter}.
      * <ul>
-     *   <li>{@link DateFilter#START_DATE} – translates TIME_RANGE to a START_DATE lower bound (existing behavior).</li>
-     *   <li>{@link DateFilter#END_DATE} – translates TIME_RANGE to an END_DATE lower bound.</li>
-     *   <li>{@link DateFilter#START_OR_END_DATE} – same as START_DATE; the repository handles the OR across both columns.</li>
+     * <li>{@link DateFilter#START_DATE} – translates TIME_RANGE to a START_DATE lower bound (existing behavior).</li>
+     * <li>{@link DateFilter#END_DATE} – translates TIME_RANGE to an END_DATE lower bound.</li>
+     * <li>{@link DateFilter#START_OR_END_DATE} – same as START_DATE; the repository handles the OR across both columns.</li>
      * </ul>
      */
     public static List<QueryFilter> replaceTimeRangeWithComputedDateFilter(List<QueryFilter> filters, DateFilter dateFilter) {
@@ -178,7 +182,8 @@ public class QueryFilterUtils {
         ZonedDateTime resolvedDate = timeLineSearch.getStartDate();
 
         return filters.stream()
-            .map(f -> mapLeavesRecursively(f, leaf -> {
+            .map(f -> mapLeavesRecursively(f, leaf ->
+            {
                 if (isTimeRangeFilter(leaf)) {
                     return QueryFilter.builder()
                         .field(target)

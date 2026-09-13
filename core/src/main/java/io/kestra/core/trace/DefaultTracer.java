@@ -90,11 +90,15 @@ class DefaultTracer implements Tracer {
             var span = tracer.spanBuilder(spanNamePrefix + " - " + spanName)
                 .setAllAttributes(attributes)
                 .startSpan();
-            try {
-                return callable.call();
-            } catch (Exception e) {
-                span.setStatus(StatusCode.ERROR, e.getMessage());
-                throw e;
+            // Make the span current so callers inside the callable can reach it via Span.current()
+            // and so that any child spans are properly nested under it.
+            try (Scope spanScope = span.makeCurrent()) {
+                try {
+                    return callable.call();
+                } catch (Exception e) {
+                    span.setStatus(StatusCode.ERROR, e.getMessage());
+                    throw e;
+                }
             } finally {
                 span.end();
             }

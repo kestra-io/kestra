@@ -1,5 +1,11 @@
 package io.kestra.webserver.services.ai;
 
+import java.time.Duration;
+import java.util.Map;
+
+import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.utils.VersionProvider;
+
 import dev.langchain4j.agent.tool.P;
 import dev.langchain4j.agent.tool.Tool;
 import dev.langchain4j.agent.tool.ToolExecutionRequest;
@@ -7,17 +13,12 @@ import dev.langchain4j.mcp.client.DefaultMcpClient;
 import dev.langchain4j.mcp.client.McpClient;
 import dev.langchain4j.mcp.client.transport.http.StreamableHttpMcpTransport;
 import dev.langchain4j.service.tool.ToolExecutionResult;
-import io.kestra.core.serializers.JacksonMapper;
-import io.kestra.core.utils.VersionProvider;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.context.annotation.Value;
 import jakarta.annotation.PreDestroy;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
-
-import java.time.Duration;
-import java.util.Map;
 
 /**
  * A LangChain4j tool that provides the AI Copilot with access to Kestra documentation
@@ -35,15 +36,16 @@ public class KestraDocsContextTool implements AutoCloseable {
     @Inject
     public KestraDocsContextTool(
         @Value("${micronaut.http.services.api.url:https://api.kestra.io}") String apiUrl,
-        VersionProvider versionProvider
-    ) {
+        VersionProvider versionProvider) {
         McpClient client = null;
         try {
             client = new DefaultMcpClient.Builder()
-                .transport(StreamableHttpMcpTransport.builder()
-                    .url(apiUrl + "/v1/mcp")
-                    .timeout(MCP_TIMEOUT)
-                    .build())
+                .transport(
+                    StreamableHttpMcpTransport.builder()
+                        .url(apiUrl + "/v1/mcp")
+                        .timeout(MCP_TIMEOUT)
+                        .build()
+                )
                 .clientName("Kestra/" + versionProvider.getVersion())
                 .toolExecutionTimeout(MCP_TIMEOUT)
                 .build();

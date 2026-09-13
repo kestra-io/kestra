@@ -23,7 +23,8 @@ class WorkerSelectorTest {
                 WorkerQueueFallback.FAIL,
                 WorkerQueueFallback.WAIT,
                 WorkerQueueFallback.CANCEL,
-                WorkerQueueFallback.IGNORE);
+                WorkerQueueFallback.IGNORE
+            );
     }
 
     @Test

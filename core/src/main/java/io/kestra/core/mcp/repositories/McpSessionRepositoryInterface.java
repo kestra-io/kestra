@@ -1,10 +1,10 @@
 package io.kestra.core.mcp.repositories;
 
-import io.kestra.core.mcp.models.McpSession;
-
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
+
+import io.kestra.core.mcp.models.McpSession;
 
 public interface McpSessionRepositoryInterface {
 

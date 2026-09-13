@@ -16,26 +16,27 @@ html.dark {
     #{--ks-bg-badge}: $base-gray-cool-800;
     #{--ks-bg-base}: $base-gray-cool-950;
     #{--ks-bg-elevated}: $base-gray-cool-900;
-    #{--ks-bg-error}: $base-gray-cool-950;
+    #{--ks-bg-error}: rgba($base-red-300, 0.1);
     #{--ks-bg-hover}: $base-gray-cool-500;
     #{--ks-bg-hover-elevated}: $base-gray-cool-600;
     #{--ks-bg-inactive}: $base-gray-cool-700;
-    #{--ks-bg-info}: $base-gray-cool-950;
+    #{--ks-bg-info}: rgba($base-blue-300, 0.1);
     #{--ks-bg-input}: $base-gray-cool-950;
     #{--ks-bg-overlay}: $base-gray-cool-800;
     #{--ks-bg-scrim}: rgba($base-gray-cool-950, 0.8);
     #{--ks-bg-sidebar}: $base-gray-cool-900;
-    #{--ks-bg-success}: $base-gray-cool-950;
+    #{--ks-bg-success}: rgba($base-green-400, 0.1);
     #{--ks-bg-surface}: $base-gray-cool-800;
+    #{--ks-bg-tabs-default}: $base-gray-cool-600;
     #{--ks-bg-tag}: rgba($base-gray-cool-white, 0.1);
     #{--ks-bg-tag-active}: rgba($base-primary-300, 0.4);
     #{--ks-bg-tag-hover}: rgba($base-primary-300, 0.2);
     #{--ks-bg-tag-inactive}: rgba($base-gray-cool-white, 0.05);
-    #{--ks-bg-warning}: $base-gray-cool-950;
+    #{--ks-bg-warning}: rgba($base-orange-300, 0.1);
 
     /* border */
     #{--ks-border-default}: $base-gray-cool-600;
-    #{--ks-border-error}: $base-red-500;
+    #{--ks-border-error}: $base-red-400;
     #{--ks-border-focus}: $base-primary-500;
     #{--ks-border-info}: $base-blue-300;
     #{--ks-border-strong}: $base-gray-cool-400;
@@ -61,6 +62,29 @@ html.dark {
     #{--ks-btn-secondary-border-default}: $base-gray-cool-500;
     #{--ks-btn-secondary-border-hover}: $base-gray-cool-400;
     #{--ks-btn-secondary-border-inactive}: $base-gray-cool-700;
+
+    /* chart */
+    #{--ks-chart-breakpoint}: #c4a5ff;
+    #{--ks-chart-cancelled}: #b4b4c4;
+    #{--ks-chart-created}: $base-blue-300;
+    #{--ks-chart-debug}: #c4a5ff;
+    #{--ks-chart-duration}: #4545fa;
+    #{--ks-chart-error}: $base-red-300;
+    #{--ks-chart-failed}: $base-red-300;
+    #{--ks-chart-info}: #3f6fe0;
+    #{--ks-chart-killed}: #d44a4c;
+    #{--ks-chart-killing}: $base-yellow-300;
+    #{--ks-chart-paused}: #ffb27d;
+    #{--ks-chart-queued}: #4c4c5c;
+    #{--ks-chart-restarted}: #4fc3f7;
+    #{--ks-chart-retried}: #3f6fe0;
+    #{--ks-chart-retrying}: #f7693c;
+    #{--ks-chart-running}: $base-primary-300;
+    #{--ks-chart-skipped}: #8585a0;
+    #{--ks-chart-success}: #27a676;
+    #{--ks-chart-trace}: #b4b4c4;
+    #{--ks-chart-warn}: $base-orange-300;
+    #{--ks-chart-warning}: $base-orange-300;
 
     /* dependencies */
     #{--ks-dependencies-edge-default}: $base-gray-cool-200;
@@ -134,12 +158,36 @@ html.dark {
 
     /* toggle */
     #{--ks-toggle-active}: $base-primary-400;
-    #{--ks-toggle-default}: $base-gray-cool-700;
+    #{--ks-toggle-default}: $base-gray-cool-400;
     #{--ks-toggle-hover}: $base-gray-cool-400;
     #{--ks-toggle-inactive}: $base-gray-cool-800;
     #{--ks-toggle-playground}: $base-blue-500;
 
     /* topology */
     #{--ks-topology-bg}: $base-gray-cool-600;
+    #{--ks-topology-bg-cancelled}: $base-gray-cool-700;
+    #{--ks-topology-bg-errors}: rgba($base-red-400, 0.1);
+    #{--ks-topology-bg-flowable-task}: rgba($base-blue-500, 0.1);
+    #{--ks-topology-bg-killing}: $base-yellow-1000;
+    #{--ks-topology-bg-running}: $base-primary-1000;
+    #{--ks-topology-bg-subflow}: rgba($base-primary-400, 0.1);
+    #{--ks-topology-bg-success}: $base-green-1000;
+    #{--ks-topology-bg-triggers}: rgba($base-green-500, 0.1);
+    #{--ks-topology-border-cancelled}: $base-gray-cool-300;
+    #{--ks-topology-border-errors}: $base-red-400;
+    #{--ks-topology-border-flowable-task}: $base-blue-500;
+    #{--ks-topology-border-killing}: $base-yellow-500;
+    #{--ks-topology-border-running}: $base-primary-300;
+    #{--ks-topology-border-subflow}: $base-primary-300;
+    #{--ks-topology-border-success}: $base-green-700;
+    #{--ks-topology-border-triggers}: $base-green-500;
+    #{--ks-topology-btn-cancelled}: $base-gray-cool-800;
+    #{--ks-topology-btn-errors}: $base-red-400;
+    #{--ks-topology-btn-flowable-task}: $base-blue-500;
+    #{--ks-topology-btn-killing}: $base-yellow-500;
+    #{--ks-topology-btn-running}: $base-primary-300;
+    #{--ks-topology-btn-subflow}: $base-primary-300;
+    #{--ks-topology-btn-success}: $base-green-500;
+    #{--ks-topology-btn-triggers}: $base-green-500;
     #{--ks-topology-dash}: $base-gray-cool-white;
 }

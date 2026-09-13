@@ -165,8 +165,8 @@ export const STATES:Record<string, StateModel> = Object.freeze({
         color: "#918BA9",
         colorClass: "gray-300",
         icon: PauseCircle,
-        isRunning: false,
-        isKillable: false,
+        isRunning: true,
+        isKillable: true,
         isFailed: false,
     },
 })

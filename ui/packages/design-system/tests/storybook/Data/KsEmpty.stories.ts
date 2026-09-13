@@ -81,3 +81,11 @@ export const CustomImage: Story = {
         `,
     }),
 }
+
+/** Transparent variant: omits the surface background for empty states nested inside an already-surfaced panel. */
+export const NoBackground: Story = {
+    render: () => ({
+        components: {KsEmpty},
+        template: "<div style=\"padding:24px\"><ks-empty :background=\"false\" description=\"No results\" /></div>",
+    }),
+}

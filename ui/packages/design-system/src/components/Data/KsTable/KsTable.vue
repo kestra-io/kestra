@@ -11,8 +11,10 @@
         <template v-if="$slots.default" #default>
             <slot />
         </template>
-        <template v-if="$slots.empty" #empty>
-            <slot name="empty" />
+        <template #empty>
+            <slot name="empty">
+                <KsNoData :title="emptyText" />
+            </slot>
         </template>
     </ElTable>
 </template>
@@ -22,6 +24,7 @@
     import {ElTable} from "element-plus"
     import type {TableInstance} from "element-plus"
     import {useFilteredProps} from "../../../utils/filteredProps"
+    import KsNoData from "../KsNoData.vue"
 
     defineOptions({inheritAttrs: false})
 
@@ -95,11 +98,11 @@
         --kel-table-tr-bg-color: var(--ks-bg-overlay);
         --kel-table-current-row-bg-color: var(--ks-bg-overlay);
 
-        outline: 1px solid var(--ks-border-default);
         border-radius: 0;
         background-color: var(--ks-bg-overlay);
         border: none;
         font-size: var(--ks-font-size-sm);
+        height: 100%;
 
         &--striped {
             .kel-table__body tr.kel-table__row--striped:not(:hover) td.kel-table__cell {
@@ -115,6 +118,7 @@
             padding: 0 8px;
             word-break: break-word;
             font-weight: 400;
+            font-size: var(--ks-font-size-sm);
         }
 
         .kel-table__inner-wrapper::before {
@@ -127,7 +131,7 @@
 
         .kel-table__body tr:hover > td.kel-table__cell,
         .kel-table__body tr.hover-row > td.kel-table__cell {
-            background-color: var(--ks-bg-hover);
+            background-color: var(--ks-table-row-hover-bg, var(--ks-bg-hover));
         }
 
         th {
@@ -169,11 +173,10 @@
                 padding: 0;
                 cursor: pointer;
 
-                .material-design-icon__svg {
-                    bottom: 0;
-                    width: 16px;
-                    height: 16px;
-                    transform: translateY(1px) translateX(-0.5px);
+                .material-design-icon,
+                .material-design-icon > .material-design-icon__svg {
+                    width: var(--ks-icon-size-sm);
+                    height: var(--ks-icon-size-sm);
                 }
             }
 
@@ -215,7 +218,8 @@
                 margin-right: .3rem;
             }
 
-            a {
+            // Plain links only: an <a> rendered by KsButton (tag="a") must keep its button styling.
+            a:not(.kel-button) {
                 color: var(--ks-text-primary);
                 &:hover{
                     text-decoration: underline;

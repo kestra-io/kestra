@@ -1,0 +1,14 @@
+id: flow-concurrency-sla-fail-parent
+namespace: io.kestra.tests
+
+concurrency:
+  behavior: QUEUE
+  limit: 1
+
+tasks:
+  - id: subflow
+    type: io.kestra.plugin.core.flow.Subflow
+    namespace: io.kestra.tests
+    flowId: flow-concurrency-sla-fail-child
+    wait: true
+    transmitFailed: true

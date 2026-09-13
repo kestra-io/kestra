@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 
 import io.kestra.core.runners.pebble.functions.KestraFunction;
+
 import io.micronaut.context.annotation.Context;
 import io.pebbletemplates.pebble.extension.Extension;
 import io.pebbletemplates.pebble.extension.Filter;
@@ -48,14 +49,13 @@ public class PebbleExpressionService {
             .map(entry -> {
                 Function fn = entry.getValue();
                 List<String> argNames = fn.getArgumentNames();
-                if (argNames == null) {
-                    return new PebbleFunction(entry.getKey(), List.of());
-                }
                 Map<String, String> defaults = fn instanceof KestraFunction kf ? kf.getArgumentDefaults() : Map.of();
-                List<PebbleFunction.Argument> arguments = argNames.stream()
+                boolean deprecated = fn.getClass().isAnnotationPresent(Deprecated.class);
+                String replacement = fn instanceof KestraFunction kf ? kf.replacement() : null;
+                List<PebbleFunction.Argument> arguments = argNames == null ? List.of() : argNames.stream()
                     .map(name -> new PebbleFunction.Argument(name, defaults.get(name)))
                     .toList();
-                return new PebbleFunction(entry.getKey(), arguments);
+                return new PebbleFunction(entry.getKey(), arguments, deprecated, replacement);
             })
             .toList();
     }

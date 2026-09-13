@@ -4,8 +4,6 @@ import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.net.URI;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
@@ -23,6 +21,7 @@ import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.runners.RunContext;
+import io.kestra.core.utils.TypeConverter;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
@@ -98,10 +97,17 @@ public class Download extends AbstractHttp implements RunnableTask<Download.Outp
                         size.set(0L);
                     }
 
-                    if (r.getBody() != null) {
+                    // Content-Length describes the size of the transferred (encoded) body, while `size` counts the
+                    // bytes actually written after any content-coding has been transparently decoded (e.g. gzip).
+                    // The two only match for identity encoding, so skip the check when the response is content-encoded.
+                    boolean contentEncoded = r.getHeaders().firstValue("Content-Encoding")
+                        .map(encoding -> !encoding.isBlank() && !"identity".equalsIgnoreCase(encoding))
+                        .orElse(false);
+
+                    if (r.getBody() != null && !contentEncoded) {
                         r.getHeaders().firstValue("Content-Length").ifPresent(header ->
                         {
-                            long length = Long.parseLong(header);
+                            long length = TypeConverter.toLong(header);
 
                             if (length != size.get()) {
                                 throw new IllegalStateException("Invalid size, got " + size + ", expected " + length);
@@ -130,11 +136,10 @@ public class Download extends AbstractHttp implements RunnableTask<Download.Outp
                     String contentDisposition = response.getHeaders().firstValue("Content-Disposition").orElseThrow();
                     rFilename = filenameFromHeader(runContext, contentDisposition);
                     if (rFilename != null) {
-                        URLEncoder.encode(rFilename, StandardCharsets.UTF_8);
+                        // Spaces are encoded as '+' to keep backward compatibility with the existing file naming convention.
+                        // All other URI-special characters (e.g. '[', ']', '#', '%') are handled by InternalStorage.buildStorageUri
+                        // via the quoting URI constructor, which percent-encodes them without double-encoding.
                         rFilename = rFilename.replace(' ', '+');
-                        // brackets are IPv6 reserved characters
-                        rFilename = rFilename.replace("[", "%5B");
-                        rFilename = rFilename.replace("]", "%5D");
                     }
                 }
             }

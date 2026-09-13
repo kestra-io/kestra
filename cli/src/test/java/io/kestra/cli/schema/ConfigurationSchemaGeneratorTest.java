@@ -1,10 +1,11 @@
 package io.kestra.cli.schema;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -51,15 +52,17 @@ class ConfigurationSchemaGeneratorTest {
     }
 
     @ParameterizedTest
-    @CsvSource({
-        "camelCase, camel-case",
-        "myPropertyName, my-property-name",
-        "simpleURL, simple-url",
-        "HTMLParser, html-parser",
-        "simple, simple",
-        "a, a",
-        "'', ''"
-    })
+    @CsvSource(
+        {
+            "camelCase, camel-case",
+            "myPropertyName, my-property-name",
+            "simpleURL, simple-url",
+            "HTMLParser, html-parser",
+            "simple, simple",
+            "a, a",
+            "'', ''"
+        }
+    )
     void shouldConvertToKebabCase(String input, String expected) {
         assertThat(ConfigurationSchemaGenerator.toKebabCase(input)).isEqualTo(expected);
     }

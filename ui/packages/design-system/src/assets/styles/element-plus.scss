@@ -145,6 +145,7 @@ $fill-color-base: #fafcff;
     #{--kel-color-warning-light-9}: palette.$base-orange-25;
     #{--kel-color-warning-dark-2}: palette.$base-orange-700;
 
+    #{--kel-color-danger}: var(--ks-text-error);
     #{--kel-color-danger-light-3}: palette.$base-red-300;
     #{--kel-color-danger-light-5}: palette.$base-red-200;
     #{--kel-color-danger-light-7}: palette.$base-red-100;
@@ -168,7 +169,7 @@ $fill-color-base: #fafcff;
 
     /* page */
     //#{--kel-bg-color-page}: var(--ks-text-primary);
-    #{--kel-bg-color}: var(--ks-bg-base);
+    #{--kel-bg-color}: var(--ks-bg-surface);
     #{--kel-bg-color-overlay}: var(--ks-bg-elevated);
 
     #{--kel-popover-bg-color}: var(--ks-bg-elevated);
@@ -200,13 +201,21 @@ $fill-color-base: #fafcff;
     /* disabled */
     #{--kel-disabled-bg-color}: var(--ks-bg-inactive);
     #{--kel-disabled-text-color}: var(--ks-text-inactive);
-    #{--kel-disabled-border-color}: var(--ks-border-subtle);
+    #{--kel-disabled-border-color}: var(--ks-border-strong);
+    #{--kel-input-border-color}: var(--ks-border-strong);
 
     /* shadow */
     #{--kel-box-shadow}: 0px 12px 32px 4px var(--ks-shadow-element), 0px 8px 20px var(--ks-shadow-surface);
     #{--kel-box-shadow-light}: 0px 0px 12px var(--ks-shadow-surface);
     #{--kel-box-shadow-lighter}: 0px 0px 6px var(--ks-shadow-element);
     #{--kel-box-shadow-dark}: 0px 16px 48px 16px var(--ks-shadow-elevated), 0px 12px 32px var(--ks-shadow-surface), 0px 8px 16px -8px var(--ks-shadow-surface);
+}
+
+:root .kel-input__inner::placeholder,
+:root .kel-textarea__inner::placeholder {
+    color: var(--ks-placeholder-color);
+    font-size: var(--ks-placeholder-font-size);
+    font-weight: var(--ks-placeholder-font-weight);
 }
 
 // popper
@@ -324,6 +333,22 @@ $fill-color-base: #fafcff;
     .kel-message-box__header {
         margin-bottom: var(--kel-messagebox-padding-primary);
         font-weight: bold;
+    }
+
+    .kel-message-box__container {
+        align-items: flex-start;
+    }
+
+    .kel-message-box__message .ks-markdown > * {
+        margin: var(--ks-spacing-3) 0;
+
+        &:first-child {
+            margin-top: 0;
+        }
+
+        &:last-child {
+            margin-bottom: 0;
+        }
     }
 
     .kel-message-box__btns {

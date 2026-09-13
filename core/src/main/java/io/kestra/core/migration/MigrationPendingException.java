@@ -1,13 +1,14 @@
 package io.kestra.core.migration;
 
-import io.kestra.core.exceptions.KestraRuntimeException;
-
 import java.util.List;
+
+import io.kestra.core.exceptions.KestraRuntimeException;
 
 /**
  * Thrown at startup when pending migrations exist and automatic migration is disabled.
  *
- * <p>Used by the EE migration runner override when {@code kestra.migration.auto=false}
+ * <p>
+ * Used by the EE migration runner override when {@code kestra.migration.auto=false}
  * (the EE default) and there are unapplied migration scripts. The application refuses to start
  * until the operator either runs {@code kestra migrate run} or sets
  * {@code kestra.migration.auto=true}.

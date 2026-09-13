@@ -74,6 +74,7 @@ public class StandAloneRunner implements Runnable, AutoCloseable {
 
         poolExecutor = executorsUtils.cachedThreadPool("standalone-runner");
         poolExecutor.execute(defaultExecutor);
+        servers.add(defaultExecutor);
 
         if (controllerEnabled) {
             Controller controller = controllerProvider.get();
@@ -105,16 +106,22 @@ public class StandAloneRunner implements Runnable, AutoCloseable {
         servers.add(systemWorker);
 
         try {
-            Await.await().atMost(getRunningTimeout()).until(
-                () -> servers.stream().allMatch(s -> Optional.ofNullable(s.getState()).orElse(Service.ServiceState.RUNNING).isRunning())
-            );
+            Await.await().atMost(getRunningTimeout()).until(() -> servers.stream().allMatch(StandAloneRunner::isStarted));
         } catch (ConditionTimeoutException e) {
             throw new RuntimeException(
-                servers.stream().filter(s -> !Optional.ofNullable(s.getState()).orElse(Service.ServiceState.RUNNING).isRunning())
-                    .map(Service::getClass)
+                servers.stream().filter(s -> !isStarted(s))
+                    .map(s -> s.getClass().getSimpleName() + " (state: " + s.getState() + ")")
                     .toList() + " not started in time"
             );
         }
+    }
+
+    /**
+     * A service is only considered started once it reached RUNNING (or MAINTENANCE).
+     */
+    private static boolean isStarted(Service service) {
+        Service.ServiceState state = service.getState();
+        return Service.ServiceState.RUNNING == state || Service.ServiceState.MAINTENANCE == state;
     }
 
     private Duration getRunningTimeout() {

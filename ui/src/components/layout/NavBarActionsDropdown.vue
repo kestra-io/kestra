@@ -1,5 +1,5 @@
 <template>
-    <KsDropdown trigger="click">
+    <KsDropdown trigger="click" persistent>
         <KsIconButton :ariaLabel="$t('actions')">
             <DotsVertical />
         </KsIconButton>

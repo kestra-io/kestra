@@ -49,7 +49,7 @@ public @interface PluginProperty {
 
     /**
      * @return true if this property holds a secret value that must be provided via a Pebble expression,
-     * not as a plain-text value. Kestra will reject flows that supply a literal value for this property.
+     *         not as a plain-text value. Kestra will reject flows that supply a literal value for this property.
      */
     boolean secret() default false;
 

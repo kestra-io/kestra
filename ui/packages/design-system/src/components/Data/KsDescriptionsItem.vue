@@ -13,7 +13,7 @@
     import {ElDescriptionsItem} from "element-plus"
     import {useFilteredProps} from "../../utils/filteredProps"
 
-    defineOptions({inheritAttrs: false})
+    defineOptions({inheritAttrs: false, name: "ElDescriptionsItem"})
 
     const props = defineProps<{
         label?: string

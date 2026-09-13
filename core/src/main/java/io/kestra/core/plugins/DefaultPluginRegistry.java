@@ -306,12 +306,7 @@ public class DefaultPluginRegistry implements PluginRegistry {
     @Override
     public Class<? extends Plugin> findClassByIdentifier(final String identifier) {
         requireNonNull(identifier, "Cannot found plugin for null identifier");
-        lock.lock();
-        try {
-            return findClassByIdentifier(ClassTypeIdentifier.create(identifier));
-        } finally {
-            lock.unlock();
-        }
+        return findClassByIdentifier(ClassTypeIdentifier.create(identifier));
     }
 
     /**

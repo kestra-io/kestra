@@ -1,5 +1,5 @@
-import * as monaco from "monaco-editor/esm/vs/editor/editor.api"
-import {IDisposable} from "monaco-editor/esm/vs/editor/editor.api"
+import * as monaco from "monaco-editor/editor/editor.api"
+import {IDisposable} from "monaco-editor/editor/editor.api"
 import {useI18n} from "vue-i18n"
 import {usePluginsStore} from "../../../stores/plugins"
 

@@ -2,6 +2,7 @@ package io.kestra.core.mcp.models;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import io.kestra.core.models.HasUID;
 import io.kestra.core.queues.event.BroadcastEvent;
 import io.kestra.core.utils.IdUtils;
@@ -13,8 +14,7 @@ public record McpSession(
     String sessionId,
     String sseNode,
     String userId,
-    boolean deleted
-) implements HasUID, BroadcastEvent {
+    boolean deleted) implements HasUID, BroadcastEvent {
 
     /** {@inheritDoc} */
     @Override

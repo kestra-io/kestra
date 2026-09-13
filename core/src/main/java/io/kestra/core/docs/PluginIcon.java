@@ -11,4 +11,10 @@ public class PluginIcon {
     String name;
     String icon;
     Boolean flowable;
+    Boolean monochrome;
+    String hash;
+
+    public PluginIcon(String name, String icon, Boolean flowable) {
+        this(name, icon, flowable, false, null);
+    }
 }

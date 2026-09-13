@@ -1,11 +1,10 @@
 package io.kestra.queue;
 
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
-
-import java.util.Set;
 
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.queues.QueueException;

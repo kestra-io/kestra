@@ -17,13 +17,15 @@ export interface Schema{
     items?: Schema;
     const?: string;
     format?: string;
+    enum?: unknown[];
+    pattern?: string;
     $language: string;
     $secret?: boolean;
 }
 
 export const LIST_FIELDS = SECTIONS_IDS.filter(id => id !== "outputs")
 
-function getType(property: any, definitions: Record<string, any>, key?: string): string {
+export function getType(property: any, definitions: Record<string, any>, key?: string, siblingKeys?: string[]): string {
 
     if (property.enum !== undefined) {
         return "enum"
@@ -62,7 +64,6 @@ function getType(property: any, definitions: Record<string, any>, key?: string):
             return "dict"
         }
 
-        // for dag tasks
         if (property.anyOf.length > 10 || key === "taskRunner") {
             return "task"
         }
@@ -85,10 +86,26 @@ function getType(property: any, definitions: Record<string, any>, key?: string):
         return "namespace"
     }
 
-    const properties = Object.keys(definitions?.properties ?? {})
+    if (key === "namespaces" && property.type === "array") {
+        return "namespaces"
+    }
+
+    if (key === "tenants" && property.type === "array") {
+        return "tenants"
+    }
+
+    const properties = siblingKeys ?? []
     const hasNamespaceProperty = properties.includes("namespace")
     if (key === "flowId" && hasNamespaceProperty) {
         return "subflow-id"
+    }
+
+    if (key === "dashboardId") {
+        return "dashboard-id"
+    }
+
+    if (key === "chartId" && properties.includes("dashboardId")) {
+        return "chart-id"
     }
 
     if (key === "inputs" && hasNamespaceProperty && properties.includes("flowId")) {
@@ -115,8 +132,8 @@ function getType(property: any, definitions: Record<string, any>, key?: string):
     return property.type || "expression"
 }
 
-export function getTaskComponent(property: any, definitions: Record<string, any>, key?: string): any {
-    const typeString = getType(property, definitions, key)
+export function getTaskComponent(property: any, definitions: Record<string, any>, key?: string, siblingKeys?: string[]): any {
+    const typeString = getType(property, definitions, key, siblingKeys)
     const type = pascalCase(typeString)
     const component = TasksComponents[`./Task${type}.vue`]?.default
     if (component) {

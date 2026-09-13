@@ -2,7 +2,7 @@
     <div v-if="name" id="environment">
         <span class="dot" />
         <span class="name" :title="name">{{ name }}</span>
-        <span class="label">{{ t("environment") }}</span>
+        <span class="label">{{ $t("environment") }}</span>
     </div>
 </template>
 
@@ -11,9 +11,7 @@
     import {useLayoutStore} from "../../stores/layout"
     import {useMiscStore} from "override/stores/misc"
     import {computed} from "vue"
-    import {useI18n} from "vue-i18n"
 
-    const {t} = useI18n()
     const layoutStore = useLayoutStore()
     const miscStore = useMiscStore()
 
@@ -38,13 +36,14 @@
 <style scoped lang="scss">
 #environment {
     display: flex;
-    align-items: center;
+    align-items: baseline;
     gap: var(--ks-spacing-1);
     border: 1px solid v-bind('color');
     border-radius: var(--ks-radius-sm);
     padding: 0.125rem var(--ks-spacing-2);
 
     .dot {
+        align-self: center;
         flex-shrink: 0;
         width: 0.25rem;
         height: 0.25rem;

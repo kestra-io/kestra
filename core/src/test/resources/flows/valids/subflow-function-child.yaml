@@ -1,0 +1,17 @@
+id: subflow-function-child
+namespace: io.kestra.tests
+
+inputs:
+  - id: region
+    type: STRING
+    defaults: eu
+
+tasks:
+  - id: hello
+    type: io.kestra.plugin.core.debug.Return
+    format: "{{ inputs.region }}"
+
+outputs:
+  - id: datacenters
+    type: STRING
+    value: "dc-{{ inputs.region }}"

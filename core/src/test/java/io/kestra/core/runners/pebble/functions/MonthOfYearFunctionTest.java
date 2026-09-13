@@ -1,13 +1,15 @@
 package io.kestra.core.runners.pebble.functions;
 
-import io.kestra.core.exceptions.IllegalVariableEvaluationException;
-import io.kestra.core.runners.VariableRenderer;
-import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
-import jakarta.inject.Inject;
-import org.junit.jupiter.api.Test;
-
 import java.util.Collections;
 import java.util.Map;
+
+import org.junit.jupiter.api.Test;
+
+import io.kestra.core.exceptions.IllegalVariableEvaluationException;
+import io.kestra.core.runners.VariableRenderer;
+
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -60,23 +62,29 @@ class MonthOfYearFunctionTest {
 
     @Test
     void missingDateThrows() {
-        assertThatThrownBy(() -> variableRenderer.render(
-            "{{ monthOfYear() }}", Collections.emptyMap()
-        )).isInstanceOf(IllegalVariableEvaluationException.class);
+        assertThatThrownBy(
+            () -> variableRenderer.render(
+                "{{ monthOfYear() }}", Collections.emptyMap()
+            )
+        ).isInstanceOf(IllegalVariableEvaluationException.class);
     }
 
     @Test
     void missingVariableThrows() {
         // Variable present in template but absent from context resolves to null
-        assertThatThrownBy(() -> variableRenderer.render(
-            "{{ monthOfYear(dt) }}", Collections.emptyMap()
-        )).isInstanceOf(IllegalVariableEvaluationException.class);
+        assertThatThrownBy(
+            () -> variableRenderer.render(
+                "{{ monthOfYear(dt) }}", Collections.emptyMap()
+            )
+        ).isInstanceOf(IllegalVariableEvaluationException.class);
     }
 
     @Test
     void invalidDateFormatThrows() {
-        assertThatThrownBy(() -> variableRenderer.render(
-            "{{ monthOfYear('not-a-date') }}", Collections.emptyMap()
-        )).isInstanceOf(IllegalVariableEvaluationException.class);
+        assertThatThrownBy(
+            () -> variableRenderer.render(
+                "{{ monthOfYear('not-a-date') }}", Collections.emptyMap()
+            )
+        ).isInstanceOf(IllegalVariableEvaluationException.class);
     }
 }

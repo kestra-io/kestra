@@ -4,10 +4,11 @@ import java.time.Duration;
 import java.util.List;
 import java.util.function.Supplier;
 
+import org.apache.commons.lang3.ArrayUtils;
+
 import io.kestra.core.metrics.MetricRegistry;
 
 import io.micrometer.core.instrument.Counter;
-import org.apache.commons.lang3.ArrayUtils;
 
 /**
  * Decorate a queue with monitoring capabilities.

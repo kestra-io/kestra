@@ -3,16 +3,18 @@ package io.kestra.core.models.kv;
 import java.time.Instant;
 import java.util.Optional;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import io.kestra.core.models.HasUID;
 import io.kestra.core.models.SoftDeletable;
 import io.kestra.core.models.TenantInterface;
 import io.kestra.core.storages.kv.KVEntry;
 import io.kestra.core.utils.IdUtils;
+import io.kestra.core.validations.TenantId;
 
 import io.swagger.v3.oas.annotations.Hidden;
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
@@ -26,7 +28,7 @@ import lombok.extern.slf4j.Slf4j;
 public class PersistedKvMetadata implements SoftDeletable<PersistedKvMetadata>, TenantInterface, HasUID {
     @With
     @Hidden
-    @Pattern(regexp = "^[a-z0-9][a-z0-9_-]*")
+    @TenantId
     private String tenantId;
 
     @NotNull
@@ -37,8 +39,11 @@ public class PersistedKvMetadata implements SoftDeletable<PersistedKvMetadata>, 
 
     private String description;
 
+    // Field renamed to 'revision' but the persisted JSON key stays "version" (frozen via @JsonProperty)
+    // to avoid a JSONB backfill on existing installs; see VersionJsonKeyFreezeTest.
     @NotNull
-    private Integer version;
+    @JsonProperty("version")
+    private Integer revision;
 
     @Builder.Default
     private boolean last = true;
@@ -54,13 +59,14 @@ public class PersistedKvMetadata implements SoftDeletable<PersistedKvMetadata>, 
 
     private boolean deleted;
 
-    public PersistedKvMetadata(String tenantId, String namespace, String name, String description, Integer version, boolean last, @Nullable Instant expirationDate, @Nullable Instant created,
+    public PersistedKvMetadata(String tenantId, String namespace, String name, String description, @JsonProperty("version") Integer revision, boolean last, @Nullable Instant expirationDate,
+        @Nullable Instant created,
         @Nullable Instant updated, boolean deleted) {
         this.tenantId = tenantId;
         this.namespace = namespace;
         this.name = name;
         this.description = description;
-        this.version = version;
+        this.revision = revision;
         this.last = last;
         this.expirationDate = expirationDate;
         this.created = Optional.ofNullable(created).orElse(Instant.now());
@@ -73,7 +79,7 @@ public class PersistedKvMetadata implements SoftDeletable<PersistedKvMetadata>, 
             .tenantId(tenantId)
             .namespace(kvEntry.namespace())
             .name(kvEntry.key())
-            .version(kvEntry.version())
+            .revision(kvEntry.revision())
             .description(kvEntry.description())
             .created(kvEntry.creationDate())
             .updated(kvEntry.updateDate())
@@ -92,6 +98,6 @@ public class PersistedKvMetadata implements SoftDeletable<PersistedKvMetadata>, 
 
     @Override
     public String uid() {
-        return IdUtils.fromParts(getTenantId(), getNamespace(), getName(), String.valueOf(getVersion()));
+        return IdUtils.fromParts(getTenantId(), getNamespace(), getName(), String.valueOf(getRevision()));
     }
 }

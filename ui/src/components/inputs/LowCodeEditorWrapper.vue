@@ -12,7 +12,6 @@
             @on-edit="onEdit"
             @loading="loadingState"
             @expand-subflow="onExpandSubflow"
-            @swapped-task="onSwappedTask"
         />
         <div v-else-if="invalidGraph">
             <KsAlert
@@ -29,11 +28,14 @@
 
 <script setup lang="ts">
     import {computed, ref} from "vue"
-    import {stringUtils} from "@kestra-io/design-system"
+    import {useI18n} from "vue-i18n"
     import LowCodeEditor from "./LowCodeEditor.vue"
     import {useFlowStore} from "../../stores/flow"
+    import {useToast} from "../../utils/toast"
 
     const flowStore = useFlowStore()
+    const toast = useToast()
+    const {t} = useI18n()
 
     const flowYaml = computed(() => flowStore.flowYaml)
     const flowGraph = computed(() => flowStore.flowGraph)
@@ -50,36 +52,22 @@
         isLoading.value = loading
     }
 
-    const onExpandSubflow = (subflows: string[]) => {
+    const onExpandSubflow = async (subflows: string[]) => {
+        const previousExpandedSubflows = flowStore.expandedSubflows
+        isLoading.value = true
         flowStore.expandedSubflows = subflows
-    }
-
-    const onSwappedTask = (swappedTasks: [string, string]) => {
-        onExpandSubflow(expandedSubflows.value.map((expandedSubflow) => {
-            let swappedTaskSplit
-            if (expandedSubflow === swappedTasks[0]) {
-                swappedTaskSplit = swappedTasks[1].split(".")
-                swappedTaskSplit.pop()
-
-                return (
-                    swappedTaskSplit.join(".") +
-                    "." +
-                    stringUtils.afterLastDot(expandedSubflow)
-                )
+        try {
+            await flowStore.fetchGraph()
+        } catch (error) {
+            flowStore.expandedSubflows = previousExpandedSubflows
+            const status = (error as {status?: number}).status
+            if (![404, 422].includes(status ?? 0)) {
+                toast.error(t("topology-graph.load_error"))
             }
-            if (expandedSubflow === swappedTasks[1]) {
-                swappedTaskSplit = swappedTasks[0].split(".")
-                swappedTaskSplit.pop()
-
-                return (
-                    swappedTaskSplit.join(".") +
-                    "." +
-                    stringUtils.afterLastDot(expandedSubflow)
-                )
-            }
-
-            return expandedSubflow
-        }))
+            console.error("Failed to fetch expanded subflow graph:", error)
+        } finally {
+            isLoading.value = false
+        }
     }
 
     const onEdit = async (source: string, currentIsFlow = false) => {

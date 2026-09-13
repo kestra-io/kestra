@@ -1,9 +1,10 @@
 <template>
     <KsSelect
-        :class="{'fit-text': !fit}"
+        :class="{'fit-text': !fit && !multiple}"
         v-model="modelValue"
         :multiple
-        collapseTags
+        :singleLineTags="multiple"
+
         :disabled="readOnly"
         :clearable="clearable"
         :allowCreate="taggable"
@@ -14,15 +15,23 @@
     >
         <template #tag>
             <KsTag
-                v-for="(value, index) in validValues"
-                :key="index"
-                class="namespace-tag"
+                v-for="value in visibleTags"
+                :key="value"
                 closable
+                type="info"
                 @close="modelValue = (modelValue as string[]).filter(v => v !== value)"
             >
-                <FolderOpenOutline class="tag-icon" />
-                {{ value }}
+                <FolderOpenOutline />
+                <span class="tag-label" :title="value">{{ value }}</span>
             </KsTag>
+            <KsTooltip v-if="hiddenTags.length > 0" placement="top">
+                <template #content>
+                    <div v-for="value in hiddenTags" :key="value">{{ value }}</div>
+                </template>
+                <KsTag class="tag-counter">
+                    +{{ hiddenTags.length }}
+                </KsTag>
+            </KsTooltip>
         </template>
         <KsOption
             v-for="item in options"
@@ -48,11 +57,13 @@
         placeholder?: string | undefined
         fit?: boolean
         autoDefault?: boolean
+        maxVisibleTags?: number
     }>(), {
         multiple: false,
         clearable: true,
         placeholder: undefined,
         autoDefault: true,
+        maxVisibleTags: 3,
     })
 
     const suffixIcon = computed(() => props.readOnly ? Lock : undefined)
@@ -66,8 +77,12 @@
     const namespacesStore = useNamespacesStore()
 
     const validValues = computed(() =>
-        [modelValue.value].flat().filter(Boolean),
+        [modelValue.value].flat().filter(Boolean) as string[],
     )
+
+    const visibleTags = computed(() => validValues.value.slice(0, props.maxVisibleTags))
+
+    const hiddenTags = computed(() => validValues.value.slice(props.maxVisibleTags))
 
     const options = computed(() => {
         return namespacesStore.autocomplete === undefined ? [] : namespacesStore.autocomplete
@@ -94,24 +109,15 @@
 </script>
 
 <style scoped lang="scss">
-    .namespace-tag {
-        background-color: var(--ks-log-background-debug) !important;
-        color: var(--ks-status-info);
-        border: 1px solid var(--ks-log-border-debug);
-        padding: 0 6px;
+    .tag-label {
+        max-width: 12.5rem;
+        min-width: 5ch;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
 
-        :deep(.kel-tag__content) {
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
-
-        :deep(.kel-tag__close) {
-            color: var(--ks-status-info);
-
-            &:hover {
-                background-color: transparent;
-            }
-        }
+    .tag-counter {
+        flex-shrink: 0;
     }
 </style>

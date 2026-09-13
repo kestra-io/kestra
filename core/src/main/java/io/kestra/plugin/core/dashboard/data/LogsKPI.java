@@ -8,7 +8,7 @@ import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.dashboards.ColumnDescriptor;
 import io.kestra.core.models.dashboards.DataFilterKPI;
-import io.kestra.core.repositories.LogRepositoryInterface;
+import io.kestra.core.repositories.LogDataStoreInterface;
 import io.kestra.core.repositories.QueryBuilderInterface;
 
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -62,7 +62,7 @@ import lombok.experimental.SuperBuilder;
 public class LogsKPI<C extends ColumnDescriptor<LogsKPI.Fields>> extends DataFilterKPI<LogsKPI.Fields, C> implements ILogs {
     @Override
     public Class<? extends QueryBuilderInterface<Fields>> repositoryClass() {
-        return LogRepositoryInterface.class;
+        return LogDataStoreInterface.class;
     }
 
     @Override

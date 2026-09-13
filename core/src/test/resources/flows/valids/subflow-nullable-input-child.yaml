@@ -1,0 +1,12 @@
+id: subflow-nullable-input-child
+namespace: io.kestra.tests
+
+inputs:
+  - id: integerValue
+    type: INT
+    required: false
+
+tasks:
+  - id: log
+    type: io.kestra.plugin.core.log.Log
+    message: "{{ inputs.integerValue }}"

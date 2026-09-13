@@ -1,11 +1,5 @@
 package io.kestra.core.runners.pebble.functions;
 
-import io.kestra.core.exceptions.InternalException;
-import io.kestra.core.utils.DateUtils;
-import io.pebbletemplates.pebble.error.PebbleException;
-import io.pebbletemplates.pebble.template.EvaluationContext;
-import io.pebbletemplates.pebble.template.PebbleTemplate;
-
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.temporal.TemporalAdjusters;
@@ -15,19 +9,28 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import io.kestra.core.exceptions.InternalException;
+import io.kestra.core.utils.DateUtils;
+
+import io.pebbletemplates.pebble.error.PebbleException;
+import io.pebbletemplates.pebble.template.EvaluationContext;
+import io.pebbletemplates.pebble.template.PebbleTemplate;
+
 /**
  * Pebble function that returns {@code true} if the given date is the last working day of its month.
  *
- * <p>A working day is Monday–Friday by default. Pass a {@code workingDays} argument (comma-separated
+ * <p>
+ * A working day is Monday–Friday by default. Pass a {@code workingDays} argument (comma-separated
  * or space-separated day names) to override which days count as working days.
  *
- * <p>Usage:
+ * <p>
+ * Usage:
  * <ul>
- *   <li>{@code {{ isLastWorkingDay(date) }}}</li>
- *   <li>{@code {{ isLastWorkingDay(date, 'MONDAY,TUESDAY,WEDNESDAY,THURSDAY,FRIDAY') }}}</li>
+ * <li>{@code {{ isLastWorkingDay(date) }}}</li>
+ * <li>{@code {{ isLastWorkingDay(date, 'MONDAY,TUESDAY,WEDNESDAY,THURSDAY,FRIDAY') }}}</li>
  * </ul>
  *
- * @param date        any valid ISO 8601 date or datetime string
+ * @param date any valid ISO 8601 date or datetime string
  * @param workingDays optional comma- or space-separated list of day names (e.g. {@code "MONDAY,TUESDAY,WEDNESDAY,THURSDAY,FRIDAY"})
  */
 public class IsLastWorkingDayFunction implements KestraFunction {
@@ -84,9 +87,11 @@ public class IsLastWorkingDayFunction implements KestraFunction {
             try {
                 result.add(DayOfWeek.valueOf(trimmed.toUpperCase()));
             } catch (IllegalArgumentException e) {
-                throw new PebbleException(e,
+                throw new PebbleException(
+                    e,
                     "The 'isLastWorkingDay()' function received an invalid 'workingDays' value: '" + trimmed + "'. Expected day names like MONDAY, TUESDAY, etc.",
-                    lineNumber, self.getName());
+                    lineNumber, self.getName()
+                );
             }
         }
 

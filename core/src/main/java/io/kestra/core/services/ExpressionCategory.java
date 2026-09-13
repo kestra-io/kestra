@@ -1,5 +1,6 @@
 package io.kestra.core.services;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonValue;
 
 /**
@@ -11,16 +12,26 @@ import com.fasterxml.jackson.annotation.JsonValue;
  * prompts) must use these constants so that renaming is caught at compile time.
  */
 public enum ExpressionCategory {
+    @JsonProperty("taskOutputs")
     TASK_OUTPUTS("Task Outputs", "taskOutputs"),
+    @JsonProperty("executionContext")
     EXECUTION_CONTEXT("Execution Context", "executionContext"),
+    @JsonProperty("inputs")
     INPUTS("Inputs", "inputs"),
+    @JsonProperty("variables")
     VARIABLES("Variables", "variables"),
+    @JsonProperty("secrets")
     SECRETS("Secrets", "secrets"),
+    @JsonProperty("kvPairs")
     KV_PAIRS("KV Pairs", "kvPairs"),
+    @JsonProperty("namespaceFiles")
     NAMESPACE_FILES("Namespace Files", "namespaceFiles"),
+    @JsonProperty("filters")
     FILTERS("Filters (use as | filterName)", "filters"),
+    @JsonProperty("functions")
     FUNCTIONS("Functions", "functions"),
     // App-specific categories
+    @JsonProperty("appContext")
     APP_CONTEXT("App Context", "appContext");
 
     private final String displayName;

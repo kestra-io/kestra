@@ -76,13 +76,20 @@
         }
     }
 
+    const isEmptyValue = (value: AppliedFilter["value"]) =>
+        value == null || value === "" || (Array.isArray(value) && value.length === 0)
+
     const closeDialog = () => {
+        // Clean up a filter left empty on close, unless it's shown by default (stays as "in any").
+        if (props.filter && isEmptyValue(props.filter.value) && !props.filterKey?.visibleByDefault) {
+            emits("remove", props.filter.id)
+        }
         isDialogVisible.value = false
     }
 
     const handleUpdate = (updatedFilter: AppliedFilter) => {
+        // Live apply: keep the popover open so the user can keep adjusting; close is explicit.
         emits("update", updatedFilter)
-        isDialogVisible.value = false
     }
 
     const handleRemove = (filterId: string) => {

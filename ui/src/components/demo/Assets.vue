@@ -3,9 +3,7 @@
     <Empty
         type="assets"
         demoCta
-        :title="t(`demos.assets.title`)"
-        video="https://www.youtube.com/embed/XhICXP_GXic"
-        learnMore="https://kestra.io/docs/enterprise/governance/assets"
+        :title="$t(`demos.assets.title`)"
     >
         <template #description>
             {{ $t(`demos.assets.message`) }}

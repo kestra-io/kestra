@@ -1,14 +1,5 @@
 package io.kestra.core.runners;
 
-import io.kestra.core.exceptions.IllegalVariableEvaluationException;
-import io.kestra.core.runners.configuration.VariableConfiguration;
-import io.kestra.core.runners.pebble.PebbleEngineFactory;
-import io.micronaut.context.ApplicationContext;
-import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
-import jakarta.inject.Inject;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
-
 import java.math.BigDecimal;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -19,10 +10,11 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
+import io.kestra.core.runners.configuration.VariableConfiguration;
 import io.kestra.core.runners.pebble.PebbleEngineFactory;
-import io.pebbletemplates.pebble.PebbleEngine;
 
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import io.pebbletemplates.pebble.PebbleEngine;
 import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;

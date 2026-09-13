@@ -12,7 +12,6 @@ import io.kestra.core.events.CrudEventType;
 import io.kestra.core.models.Setting;
 import io.kestra.core.repositories.SettingRepositoryInterface;
 
-import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.event.ApplicationEventPublisher;
 import lombok.SneakyThrows;
 
@@ -43,7 +42,7 @@ public abstract class AbstractJdbcSettingRepository extends AbstractJdbcCrudRepo
 
     @Override
     public Setting save(Setting setting) {
-        this.eventPublisher.publishEvent(new CrudEvent<>(setting, CrudEventType.UPDATE));
+        this.eventPublisher.publishEvent(new CrudEvent<>(setting, null, CrudEventType.UPDATE));
 
         return internalSave(setting);
     }

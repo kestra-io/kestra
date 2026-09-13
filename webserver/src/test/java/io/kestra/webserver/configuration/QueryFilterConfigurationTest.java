@@ -57,10 +57,14 @@ class QueryFilterConfigurationTest {
 
         // WHEN / THEN
         assertEquals(8, config.maxDepthFor(QueryFilter.Resource.EXECUTION));
-        assertEquals(20, config.maxWidthFor(QueryFilter.Resource.EXECUTION),
-            "width unset on EXECUTION override should fall back to global");
-        assertEquals(3, config.maxDepthFor(QueryFilter.Resource.FLOW),
-            "FLOW has no override — should use global");
+        assertEquals(
+            20, config.maxWidthFor(QueryFilter.Resource.EXECUTION),
+            "width unset on EXECUTION override should fall back to global"
+        );
+        assertEquals(
+            3, config.maxDepthFor(QueryFilter.Resource.FLOW),
+            "FLOW has no override — should use global"
+        );
         assertEquals(20, config.maxWidthFor(QueryFilter.Resource.FLOW));
     }
 

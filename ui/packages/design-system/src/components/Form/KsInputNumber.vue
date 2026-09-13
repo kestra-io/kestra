@@ -52,6 +52,7 @@
 
         .kel-input-number__increase, .kel-input-number__decrease {
             background: var(--ks-bg-surface);
+            border-color: var(--ks-border-strong);
         }
 
         &.kel-input-number--small {

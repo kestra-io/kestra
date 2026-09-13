@@ -1,20 +1,15 @@
 package io.kestra.plugin.core.storage;
 
-import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.net.URI;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
 
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.property.Property;
@@ -117,20 +112,9 @@ class DeduplicateItemsTest {
         final DeduplicateItems.Output output,
         final List<T> expected,
         final Class<T> type) throws IOException {
-        try (
-            InputStream resource = runContext.storage().getFile(output.getUri());
-            InputStreamReader inputStreamReader = new InputStreamReader(resource, StandardCharsets.UTF_8);
-            BufferedReader bufferedReader = new BufferedReader(inputStreamReader)
-        ) {
-            List<T> list = bufferedReader.lines()
-                .map(line ->
-                {
-                    try {
-                        return JacksonMapper.ofIon().readValue(line, type);
-                    } catch (JsonProcessingException e) {
-                        throw new RuntimeException(e);
-                    }
-                }).toList();
+        try (InputStream resource = new java.io.BufferedInputStream(runContext.storage().getFile(output.getUri()), io.kestra.core.serializers.FileSerde.BUFFER_SIZE)) {
+            List<T> list = new java.util.ArrayList<>();
+            io.kestra.core.serializers.FileSerde.read(resource, row -> list.add(JacksonMapper.ofIon().convertValue(row, type)));
             Assertions.assertEquals(expected, list);
         }
     }
@@ -149,6 +133,56 @@ class DeduplicateItemsTest {
             });
         }
         return runContext.storage().putFile(path.toFile());
+    }
+
+    private URI generateBinaryKeyValueFile(final List<?> items, RunContext runContext) throws IOException {
+        Path path = runContext.workingDir().createTempFile(".ion");
+        try (var output = new java.io.BufferedOutputStream(new java.io.FileOutputStream(path.toFile()), io.kestra.core.serializers.FileSerde.BUFFER_SIZE)) {
+            for (Object item : items) {
+                io.kestra.core.serializers.FileSerde.write(output, item);
+            }
+        }
+        return runContext.storage().putFile(path.toFile());
+    }
+
+    @Test
+    void shouldDeduplicateBinaryIonFileGivenKeyExpression() throws Exception {
+        // Given
+        RunContext runContext = runContextFactory.of();
+
+        List<KeyValue1> values = List.of(
+            new KeyValue1("k1", "v1"),
+            new KeyValue1("k2", "v1"),
+            new KeyValue1("k3", "v1"),
+            new KeyValue1("k1", "v2"),
+            new KeyValue1("k2", "v2"),
+            new KeyValue1("k2", null),
+            new KeyValue1("k3", "v2"),
+            new KeyValue1("k1", "v3")
+        );
+
+        DeduplicateItems task = DeduplicateItems
+            .builder()
+            .from(Property.ofValue(generateBinaryKeyValueFile(values, runContext).toString()))
+            .expr(" {{ key }} ")
+            .build();
+
+        // When
+        DeduplicateItems.Output output = task.run(runContext);
+
+        // Then
+        Assertions.assertNotNull(output);
+        Assertions.assertNotNull(output.getUri());
+        Assertions.assertEquals(3, output.getNumKeys());
+        Assertions.assertEquals(5, output.getDroppedItemsTotal());
+        Assertions.assertEquals(8, output.getProcessedItemsTotal());
+
+        List<KeyValue1> expected = List.of(
+            new KeyValue1("k2", null),
+            new KeyValue1("k3", "v2"),
+            new KeyValue1("k1", "v3")
+        );
+        assertSimpleCompactedFile(runContext, output, expected, KeyValue1.class);
     }
 
     record KeyValue1(String key, Object value) {

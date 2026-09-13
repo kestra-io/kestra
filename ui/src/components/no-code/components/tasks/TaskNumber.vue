@@ -7,7 +7,6 @@
         :max="schema?.maximum as number | undefined"
         :step="schema?.step as number | undefined"
         type="number"
-        class="w-100"
     />
 </template>
 

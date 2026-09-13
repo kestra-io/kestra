@@ -19,7 +19,6 @@ export function getTabType(tab: TrackedTab): string {
             const mapping: [string, string][] = [
                 ["tasks", "task_no_code"],
                 ["triggers", "trigger_no_code"],
-                ["pluginDefaults", "pluginDefaults_no_code"],
                 ["errors", "error_no_code"],
                 ["finally", "finally_no_code"],
                 ["afterExecution", "afterExecution_no_code"],

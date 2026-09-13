@@ -3,7 +3,9 @@ package io.kestra.core.runners;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
+import java.nio.file.NoSuchFileException;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -22,6 +24,7 @@ import io.kestra.core.encryption.EncryptionConfig;
 import io.kestra.core.encryption.EncryptionService;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.exceptions.InputOutputValidationException;
+import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.*;
 import io.kestra.core.models.flows.input.FileInput;
@@ -33,10 +36,12 @@ import io.kestra.core.models.property.PropertyContext;
 import io.kestra.core.models.property.URIFetcher;
 import io.kestra.core.models.tasks.common.EncryptedString;
 import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.services.LabelService;
 import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.MapUtils;
+import io.kestra.core.utils.TypeConverter;
 
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.http.multipart.CompletedFileUpload;
@@ -58,20 +63,27 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 @Singleton
 public class FlowInputOutput {
 
+    private static final ObjectMapper ION_MAPPER = JacksonMapper.ofIon();
     private static final ObjectMapper YAML_MAPPER = JacksonMapper.ofYaml();
 
     private final StorageInterface storageInterface;
     private final Optional<String> secretKey;
     private final Provider<RunContextFactory> runContextFactory; // Lazy init: avoid circular dependency error.
+    private final ReusableInputsExpander reusableInputsExpander;
+    private final LocalPathFactory localPathFactory;
 
     @Inject
     public FlowInputOutput(
         StorageInterface storageInterface,
         Provider<RunContextFactory> runContextFactory,
-        EncryptionConfig encryptionConfig) {
+        EncryptionConfig encryptionConfig,
+        ReusableInputsExpander reusableInputsExpander,
+        LocalPathFactory localPathFactory) {
         this.storageInterface = storageInterface;
         this.runContextFactory = runContextFactory;
         this.secretKey = encryptionConfig.asOptional();
+        this.reusableInputsExpander = reusableInputsExpander;
+        this.localPathFactory = localPathFactory;
     }
 
     /**
@@ -121,7 +133,25 @@ public class FlowInputOutput {
         final FlowInterface flow,
         final String executionId,
         final Publisher<CompletedPart> data) {
-        return readExecutionInputs(flow, minimalExecution(flow, executionId), data);
+        return readExecutionInputs(flow, executionId, null, data);
+    }
+
+    /**
+     * Same as {@link #readExecutionInputs(FlowInterface, String, Publisher)}, rendering inputs against the
+     * labels the created execution will carry: the flow's own merged with the given contributed ones.
+     *
+     * @param flow The Flow.
+     * @param executionId The ID that will be assigned to the execution.
+     * @param contributed The labels contributed by whoever starts the execution.
+     * @param data The execution's inputs data.
+     * @return The Map of typed inputs.
+     */
+    public Mono<Map<String, Object>> readExecutionInputs(
+        final FlowInterface flow,
+        final String executionId,
+        @Nullable final List<Label> contributed,
+        final Publisher<CompletedPart> data) {
+        return readExecutionInputs(flow, minimalExecution(flow, executionId, contributed), data);
     }
 
     /**
@@ -139,9 +169,11 @@ public class FlowInputOutput {
         return readData(inputs, execution, data, true).map(inputData -> this.readExecutionInputs(inputs, flow, execution, inputData));
     }
 
-    private Mono<Map<String, Object>> readData(List<Input<?>> inputs, Execution execution, Publisher<CompletedPart> data, boolean uploadFiles) {
+    private Mono<Map<String, Object>> readData(List<Input<?>> rawInputs, Execution execution, Publisher<CompletedPart> data, boolean uploadFiles) {
+        // Inline reusable-inputs references, then flatten FORMs so FILE part matching works against dotted leaf ids.
+        final List<Input<?>> inputs = Input.expandToLeaves(reusableInputsExpander.expand(execution.getTenantId(), execution.getNamespace(), rawInputs));
         return Flux.from(data)
-            .publishOn(Schedulers.boundedElastic()).<Map.Entry<String, String>> handle((input, sink) ->
+            .publishOn(Schedulers.boundedElastic()).<Map.Entry<String, Object>> handle((input, sink) ->
             {
                 if (input instanceof CompletedFileUpload fileUpload) {
                     boolean oldStyleInput = false;
@@ -157,15 +189,21 @@ public class FlowInputOutput {
                     }
                     String inputId = oldStyleInput ? fileUpload.getFilename() : fileUpload.getName();
                     String fileName = oldStyleInput ? FileInput.DEFAULT_EXTENSION : fileUpload.getFilename();
+                    // An input not declared at all is left to the "undeclared input" warning below rather than rejected here.
+                    boolean acceptsFile = ListUtils.emptyOnNull(inputs).stream()
+                        .filter(i -> i.getId().equals(inputId))
+                        .findFirst()
+                        .map(i -> acceptsFileUpload(i.getType()))
+                        .orElse(true);
 
-                    if (!uploadFiles) {
+                    if (!uploadFiles || !acceptsFile) {
                         URI from = URI.create(
                             "kestra://" + StorageContext
                                 .forInput(execution, inputId, fileName)
                                 .getContextStorageURI()
                         );
                         fileUpload.discard();
-                        sink.next(Map.entry(inputId, from.toString()));
+                        sink.next(Map.entry(inputId, new UploadedFile(from.toString())));
                     } else {
                         try {
                             final String fileExtension = FileInput.DEFAULT_EXTENSION;
@@ -178,7 +216,7 @@ public class FlowInputOutput {
                             ) {
                                 inputStream.transferTo(outputStream);
                                 URI from = storageInterface.from(execution, inputId, fileName, tempFile);
-                                sink.next(Map.entry(inputId, from.toString()));
+                                sink.next(Map.entry(inputId, new UploadedFile(from.toString())));
                             } finally {
                                 if (!tempFile.delete()) {
                                     tempFile.deleteOnExit();
@@ -200,11 +238,23 @@ public class FlowInputOutput {
             .collectMap(Map.Entry::getKey, Map.Entry::getValue);
     }
 
+    private static boolean acceptsFileUpload(Type type) {
+        return type == Type.FILE;
+    }
+
+    /**
+     * Marks a value read from a multipart file part, so {@link #resolveInputs} can tell it apart
+     * from user-typed text before it reaches {@link #parseType}, without ever leaking the wrapper
+     * into a resolved input's value.
+     */
+    private record UploadedFile(String uri) {
+    }
+
     public Map<String, Object> readExecutionInputs(
         final FlowInterface flow,
         final String executionId,
         final Map<String, ?> data) {
-        return readExecutionInputs(flow.getInputs(), flow, minimalExecution(flow, executionId), data);
+        return readExecutionInputs(flow.getInputs(), flow, minimalExecution(flow, executionId, null), data);
     }
 
     /**
@@ -281,8 +331,12 @@ public class FlowInputOutput {
             return Collections.emptyList();
         }
 
+        // Inline reusable-inputs references, then flatten FORMs into dotted-id leaves so resolution runs on a flat
+        // list and the nested payload reassembles via flattenToNestedMap. Idempotent on leaves.
+        final List<Input<?>> leafInputs = Input.expandToLeaves(reusableInputsExpander.expand(execution.getTenantId(), execution.getNamespace(), inputs));
+
         final Map<String, ResolvableInput> resolvableInputMap = Collections.unmodifiableMap(
-            inputs.stream()
+            leafInputs.stream()
                 .map(input -> ResolvableInput.of(input, data.get(input.getId())))
                 .collect(Collectors.toMap(it -> it.get().input().getId(), Function.identity(), (o1, o2) -> o1, LinkedHashMap::new))
         );
@@ -333,23 +387,49 @@ public class FlowInputOutput {
                 return resolvable.get();
             }
 
-            // render input
-            input = RenderableInput.mayRenderInput(input, expression ->
-            {
-                try {
-                    return runContext.renderTyped(expression);
-                } catch (IllegalVariableEvaluationException e) {
-                    throw new RuntimeException(e.getMessage(), e);
-                }
-            });
+            // render input (e.g. a SELECT's dynamic `expression` values). A failure here means the field
+            // itself can't be rendered, so flag it as a render error so the UI can surface it eagerly.
+            try {
+                input = RenderableInput.mayRenderInput(input, expression ->
+                {
+                    try {
+                        return runContext.renderTyped(expression);
+                    } catch (IllegalVariableEvaluationException e) {
+                        throw new RuntimeException(e.getMessage(), e);
+                    }
+                });
+            } catch (Exception e) {
+                resolvable.resolveWithError(InputOutputValidationException.ofRenderError(e.getMessage(), input));
+                return resolvable.get();
+            }
             resolvable.setInput(input);
+
+            // Reject a file upload bound to an input that doesn't accept one.
+            if (resolvable.isFromFileUpload() && !acceptsFileUpload(input.getType())) {
+                resolvable.resolveWithError(InputOutputValidationException.of(
+                    "A file upload is only accepted by an input of type FILE, but this input is of type %s.".formatted(input.getType()),
+                    input
+                ));
+                return resolvable.get();
+            }
 
             Object value = resolvable.get().value();
 
-            // resolve default if needed
+            // Pebble renders a null reference as ""; treat "" as absent for non-text types.
+            if (value instanceof String s && s.isEmpty() && !isTextType(input.getType())) {
+                value = null;
+            }
+
+            // resolve default if needed; a `defaults` that is a Pebble expression (e.g. subflow()/secret())
+            // can itself fail to render — that is also a broken field, so flag it as a render error.
             if (value == null && input.getDefaults() != null) {
                 RunContext runContextForDefault = decryptSecrets ? runContext : buildRunContextForExecutionAndInputs(flow, execution, dependencies, false);
-                value = resolveDefaultValue(input, runContextForDefault);
+                try {
+                    value = resolveDefaultValue(input, runContextForDefault);
+                } catch (Exception e) {
+                    resolvable.resolveWithError(InputOutputValidationException.ofRenderError(e.getMessage(), input));
+                    return resolvable.get();
+                }
                 resolvable.isDefault(true);
             }
 
@@ -393,10 +473,22 @@ public class FlowInputOutput {
             case TIME -> resolveDefaultPropertyAs(input, renderer, LocalTime.class);
             case DURATION -> resolveDefaultPropertyAs(input, renderer, Duration.class);
             case FILE, URI -> resolveDefaultPropertyAs(input, renderer, URI.class);
-            case JSON, YAML -> resolveDefaultPropertyAs(input, renderer, Object.class);
+            case JSON, ION, YAML -> resolveDefaultPropertyAs(input, renderer, Object.class);
             case ARRAY -> resolveDefaultPropertyAsList(input, renderer, Object.class);
             case MULTISELECT -> resolveDefaultPropertyAsList(input, renderer, String.class);
+            case FORM, REUSABLE_INPUTS -> throw new IllegalStateException("FORM and REUSABLE_INPUTS inputs must be expanded before resolution");
         };
+    }
+
+    /**
+     * Returns {@code true} for input types that treat an empty string as a valid value.
+     * All other types (INT, FLOAT, BOOL, DATE/TIME variants, DURATION, JSON, ION, YAML, URI, FILE,
+     * ARRAY, MULTISELECT) cannot be meaningfully parsed from {@code ""} and should treat it as absent.
+     * FORM inputs are always expanded before reaching this point, so they are intentionally omitted.
+     */
+    private static boolean isTextType(Type type) {
+        return type == Type.STRING || type == Type.SELECT
+            || type == Type.EMAIL || type == Type.SECRET;
     }
 
     @SuppressWarnings("unchecked")
@@ -410,20 +502,21 @@ public class FlowInputOutput {
     }
 
     private RunContext buildRunContextForExecutionAndInputs(final FlowInterface flow, final Execution execution, Map<String, InputAndValue> dependencies, final boolean decryptSecrets) {
-        Map<String, Object> flattenInputs = MapUtils.flattenToNestedMap(
-            dependencies.entrySet()
-                .stream()
-                .collect(HashMap::new, (m, v) -> m.put(v.getKey(), v.getValue().value()), HashMap::putAll)
-        );
+        Map<String, Object> flatInputs = dependencies.entrySet()
+            .stream()
+            .collect(HashMap::new, (m, v) -> m.put(v.getKey(), v.getValue().value()), HashMap::putAll);
         // Hack: Pre-inject all inputs that have a default value with 'null' to prevent
         // RunContextFactory from attempting to render them when absent, which could
         // otherwise cause an exception if a Pebble expression is involved.
-        List<Input<?>> inputs = Optional.ofNullable(flow).map(FlowInterface::getInputs).orElse(List.of());
+        // FORM inputs are expanded to dotted leaves first, and defaults are injected into the flat map
+        // before nesting so they end up under the form key (e.g. inputs.environment.region).
+        List<Input<?>> inputs = flow == null ? List.of() : flow.resolvableInputs(reusableInputsExpander);
         for (Input<?> input : inputs) {
-            if (input.getDefaults() != null && !flattenInputs.containsKey(input.getId())) {
-                flattenInputs.put(input.getId(), null);
+            if (input.getDefaults() != null && !flatInputs.containsKey(input.getId())) {
+                flatInputs.put(input.getId(), null);
             }
         }
+        Map<String, Object> flattenInputs = MapUtils.flattenToNestedMap(flatInputs);
         return runContextFactory.get().of(flow, execution, vars -> vars.withInputs(flattenInputs), decryptSecrets);
     }
 
@@ -494,10 +587,42 @@ public class FlowInputOutput {
         );
     }
 
+    /**
+     * Coerces a scalar input value to its typed form for {@code type}, returning empty for types whose parsing needs
+     * execution-time infrastructure (FILE, SECRET) or structural/document handling (URI, ARRAY, MULTISELECT, JSON,
+     * ION, YAML, FORM, REUSABLE_INPUTS). Shared by input resolution ({@link #parseType}) and save-time flow validation
+     * so both coerce a literal identically.
+     */
+    public static Optional<Object> parseScalarInputValue(Type type, Object current) {
+        return Optional.ofNullable(switch (type) {
+            case STRING, EMAIL, SELECT -> current.toString();
+            case INT -> TypeConverter.toInteger(current);
+            case FLOAT -> TypeConverter.toFloat(current);
+            case BOOL -> {
+                if (current instanceof Boolean b) {
+                    yield b;
+                }
+
+                if (!(current instanceof String s &&
+                    (s.equalsIgnoreCase("true") || s.equalsIgnoreCase("false")))) {
+                    throw new IllegalArgumentException("Unable to parse `" + current + "` as a boolean");
+                }
+
+                yield TypeConverter.toBoolean(current);
+            }
+            case DATETIME -> TypeConverter.toInstant(current);
+            case DATE -> TypeConverter.toLocalDate(current);
+            case TIME -> TypeConverter.toLocalTime(current);
+            case DURATION -> TypeConverter.toDuration(current);
+            case FILE, URI, SECRET, JSON, ION, YAML, ARRAY, MULTISELECT, FORM, REUSABLE_INPUTS -> null;
+        });
+    }
+
     private Object parseType(Execution execution, Type type, String id, Type elementType, Object current, Data data) throws Exception {
         try {
             return switch (type) {
-                case SELECT, STRING, EMAIL -> current.toString();
+                case STRING, EMAIL, SELECT, INT, FLOAT, BOOL, DATETIME, DATE, TIME, DURATION ->
+                    parseScalarInputValue(type, current).orElseThrow();
                 case SECRET -> {
                     if (secretKey.isEmpty()) {
                         throw new Exception("Unable to use a `SECRET` input/output as encryption is not configured");
@@ -508,24 +633,29 @@ public class FlowInputOutput {
                     String encrypted = EncryptionService.encrypt(secretKey.get(), current.toString());
                     yield EncryptedString.from(encrypted);
                 }
-                case INT -> current instanceof Integer ? current : Integer.valueOf(current.toString());
-                // Assuming that after the render we must have a double/int, so we can safely use its toString representation
-                case FLOAT -> current instanceof Float ? current : Float.valueOf(current.toString());
-                case BOOL -> current instanceof Boolean ? current : Boolean.valueOf(current.toString());
-                case DATETIME -> current instanceof Instant ? current : Instant.parse(current.toString());
-                case DATE -> current instanceof LocalDate ? current : LocalDate.parse(current.toString());
-                case TIME -> current instanceof LocalTime ? current : LocalTime.parse(current.toString());
-                case DURATION -> current instanceof Duration ? current : Duration.parse(current.toString());
                 case FILE -> {
                     URI uri = URI.create(current.toString().replace(File.separator, "/"));
 
                     if (URIFetcher.supports(uri)) {
                         yield uri;
                     } else {
-                        yield storageInterface.from(execution, id, current.toString().substring(current.toString().lastIndexOf("/") + 1), new File(current.toString()));
+                        File requestedFile = new File(current.toString());
+                        // Read through LocalPath so allowed-paths is enforced and the stream is opened on the
+                        // path it validated, not on the one we were given, which a symlink swap could re-point.
+                        try (InputStream authorized = localPathFactory.createLocalPath().get(requestedFile.toURI())) {
+                            yield storageInterface.put(
+                                execution.getTenantId(),
+                                execution.getNamespace(),
+                                StorageContext.forInput(execution, id, requestedFile.getName()).getContextStorageURI(),
+                                authorized
+                            );
+                        } catch (NoSuchFileException e) {
+                            throw new IllegalArgumentException("The file '" + requestedFile + "' does not exist.", e);
+                        }
                     }
                 }
                 case JSON -> (current instanceof Map || current instanceof Collection<?>) ? current : JacksonMapper.toObject(current.toString());
+                case ION -> (current instanceof Map || current instanceof Collection<?>) ? current : ION_MAPPER.readValue(current.toString(), JacksonMapper.OBJECT_TYPE_REFERENCE);
                 case YAML -> (current instanceof Map || current instanceof Collection<?>) ? current : YAML_MAPPER.readValue(current.toString(), JacksonMapper.OBJECT_TYPE_REFERENCE);
                 case URI -> {
                     URI uri = java.net.URI.create(current.toString());
@@ -558,6 +688,7 @@ public class FlowInputOutput {
                         yield asList;
                     }
                 }
+                case FORM, REUSABLE_INPUTS -> throw new IllegalStateException("FORM and REUSABLE_INPUTS inputs must be expanded before resolution");
             };
         } catch (IllegalArgumentException | ConstraintViolationException e) {
             throw e;
@@ -566,7 +697,7 @@ public class FlowInputOutput {
         }
     }
 
-    private static Execution minimalExecution(FlowInterface flow, String executionId) {
+    private static Execution minimalExecution(FlowInterface flow, String executionId, @Nullable List<Label> contributed) {
         return Execution.builder()
             .id(executionId)
             .tenantId(flow.getTenantId())
@@ -575,6 +706,7 @@ public class FlowInputOutput {
             .flowRevision(flow.getRevision())
             .state(new State())
             .variables(flow.getVariables())
+            .labels(LabelService.forExecution(flow, contributed, executionId))
             .build();
     }
 
@@ -590,14 +722,22 @@ public class FlowInputOutput {
          * Specify whether the input's value is resoled.
          */
         private boolean isResolved;
+        /**
+         * Whether the raw value came from a multipart file part, as opposed to user-typed text.
+         */
+        private final boolean fromFileUpload;
 
         public static ResolvableInput of(@NotNull final Input<?> input, @Nullable final Object value) {
-            return new ResolvableInput(new InputAndValue(input, value), false);
+            if (value instanceof UploadedFile(String uri)) {
+                return new ResolvableInput(new InputAndValue(input, uri), false, true);
+            }
+            return new ResolvableInput(new InputAndValue(input, value), false, false);
         }
 
-        private ResolvableInput(InputAndValue input, boolean isResolved) {
+        private ResolvableInput(InputAndValue input, boolean isResolved, boolean fromFileUpload) {
             this.input = input;
             this.isResolved = isResolved;
+            this.fromFileUpload = fromFileUpload;
         }
 
         @Override
@@ -638,6 +778,10 @@ public class FlowInputOutput {
 
         public boolean isResolved() {
             return isResolved;
+        }
+
+        public boolean isFromFileUpload() {
+            return fromFileUpload;
         }
     }
 }

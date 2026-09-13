@@ -71,13 +71,15 @@ class SelectInputTest {
     @Test
     void shouldRenderInputGivenExpressionReturningLabelValueObjects() {
         // Given
-        RunContext runContext = runContextFactory.of(Map.of(
-            "options",
-            List.of(
-                Map.of("label", "Prod", "value", "123"),
-                Map.of("label", "Staging", "value", "456")
+        RunContext runContext = runContextFactory.of(
+            Map.of(
+                "options",
+                List.of(
+                    Map.of("label", "Prod", "value", "123"),
+                    Map.of("label", "Staging", "value", "456")
+                )
             )
-        ));
+        );
         SelectInput input = SelectInput
             .builder()
             .id("id")
@@ -167,6 +169,31 @@ class SelectInputTest {
         // label does not
         assertThatThrownBy(() -> input.validate("Prod"))
             .hasMessageContaining("[123, 456]");
+    }
+
+    @Test
+    void validateRejectsOutOfListValueForOptionalInput() {
+        SelectInput input = SelectInput
+            .builder()
+            .id("id")
+            .values(List.of(new ValueOption("a", "a"), new ValueOption("b", "b"), new ValueOption("c", "c")))
+            .required(false)
+            .build();
+
+        assertThatThrownBy(() -> input.validate("zzz"))
+            .hasMessageContaining("[a, b, c]");
+    }
+
+    @Test
+    void validateAcceptsAnyValueWhenValuesComeFromAnUnrenderedExpression() {
+        SelectInput input = SelectInput
+            .builder()
+            .id("id")
+            .expression("{{ values }}")
+            .required(false)
+            .build();
+
+        input.validate("789");
     }
 
     @Test

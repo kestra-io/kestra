@@ -1,0 +1,64 @@
+suite: Deployment replicas
+
+templates:
+  - templates/deployment.yaml
+
+tests:
+  - it: defaults to common.replicas when not set on the deployment
+    set:
+      deployments:
+        standalone:
+          enabled: true
+    asserts:
+      - isKind:
+          of: Deployment
+      - equal:
+          path: spec.replicas
+          value: 1
+
+  - it: uses common.replicas when overridden globally
+    set:
+      common:
+        replicas: 0
+      deployments:
+        standalone:
+          enabled: true
+    asserts:
+      - equal:
+          path: spec.replicas
+          value: 0
+
+  - it: uses the deployment-level replicas over common.replicas
+    set:
+      deployments:
+        standalone:
+          enabled: true
+          replicas: 2
+    asserts:
+      - equal:
+          path: spec.replicas
+          value: 2
+
+  - it: respects an explicit replicas 0 on the deployment
+    set:
+      deployments:
+        standalone:
+          enabled: true
+          replicas: 0
+    asserts:
+      - equal:
+          path: spec.replicas
+          value: 0
+
+  - it: falls back to common.replicas when the deployment sets replicas to null
+    set:
+      common:
+        replicas: 3
+      deployments:
+        standalone:
+          enabled: true
+          replicas: null
+    asserts:
+      - equal:
+          path: spec.replicas
+          value: 3

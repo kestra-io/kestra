@@ -1,15 +1,16 @@
 <template>
-    <div class="tabs-wrapper">
+    <div ref="wrapper" class="tabs-wrapper">
         <div v-if="!isMobile" class="tabs">
             <KsTooltip
                 v-for="element of tabs"
                 :key="element.uid"
-                :content="element.button.label"
+                :content="element.button.disabled ? (element.button.disabledTooltip ?? element.button.label) : element.button.label"
                 placement="bottom"
                 :showAfter="500"
             >
                 <button
                     :class="{active: openTabs.includes(element.uid)}"
+                    :disabled="element.button.disabled"
                     @click="setTabValue(element.uid)"
                 >
                     <component class="tabs-icon" :is="element.button.icon" />
@@ -33,6 +34,7 @@
                         v-for="element of tabs"
                         :key="element.uid"
                         :class="{active: openTabs.includes(element.uid)}"
+                        :disabled="element.button.disabled"
                         @click="setTabValue(element.uid)"
                     >
                         <component class="tabs-icon" :is="element.button.icon" />
@@ -47,10 +49,11 @@
 </template>
 
 <script setup lang="ts">
+    import {computed, ref} from "vue"
     import {Tab} from "../utils/multiPanelTypes"
-    import {useMediaQuery} from "@vueuse/core"
     import ChevronDown from "vue-material-design-icons/ChevronDown.vue"
     import Check from "vue-material-design-icons/Check.vue"
+    import {EDITOR_HEADER_BREAKPOINTS, provideEditorHeaderWidth} from "../composables/useEditorHeaderWidth"
 
     defineProps<{
         tabs: Tab[],
@@ -61,7 +64,9 @@
         (e: "update:tabs", tabValue: string): void;
     }>()
 
-    const isMobile = useMediaQuery("(max-width: 768px)")
+    const wrapper = ref<HTMLElement>()
+    const headerWidth = provideEditorHeaderWidth(wrapper)
+    const isMobile = computed(() => headerWidth.value <= EDITOR_HEADER_BREAKPOINTS.tabsAsDropdown)
 
     function setTabValue(tabValue: string) {
         emit("update:tabs", tabValue)
@@ -70,6 +75,7 @@
 
 <style scoped lang="scss">
     .tabs-wrapper {
+        container: editor-header / inline-size;
         display: flex;
         align-items: center;
         justify-content: space-between;
@@ -100,8 +106,13 @@
             transition: all 0.2s ease-in-out;
             gap: var(--ks-spacing-2);
 
-            &:hover {
+            &:hover:not(:disabled) {
                 background-color: var(--ks-bg-base);
+            }
+
+            &:disabled {
+                opacity: 0.5;
+                cursor: not-allowed;
             }
 
             &.active {
@@ -113,7 +124,7 @@
     }
 
     .tabs-icon {
-        font-size: 1.1em;
+        font-size: var(--ks-font-size-lg);
         vertical-align: middle;
         flex-shrink: 0;
     }
@@ -128,7 +139,7 @@
         }
     }
 
-    @media (max-width: 1200px) {
+    @container editor-header (max-width: 950px) {
         .tabs .tab-label {
             display: none;
         }

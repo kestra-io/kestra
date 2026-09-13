@@ -115,12 +115,10 @@ class RequestTest {
 
     @Test
     void head404() throws Exception {
-        final String url = "https://bdnb-data.s3.fr-par.scw.cloud/bnb_export_metropole_sql_dump.tar.gz";
-
         Request task = Request.builder()
             .id(RequestTest.class.getSimpleName())
             .type(RequestTest.class.getName())
-            .uri(Property.ofValue(url))
+            .uri(Property.ofValue(serverUrl() + "/not-found"))
             .method(Property.ofValue("HEAD"))
             .build();
 

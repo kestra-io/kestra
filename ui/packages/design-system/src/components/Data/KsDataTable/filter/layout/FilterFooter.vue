@@ -9,16 +9,13 @@
         </div>
 
         <div class="action-buttons">
-            <KsTooltip :content="$t('filter.reset_tooltip')" placement="top">
-                <KsButton size="small" :icon="Restore" @click="emits('reset')" />
-            </KsTooltip>
             <KsButton
-                type="primary"
+                :tooltip="$t('filter.reset_tooltip')"
+                tooltipPlacement="top"
                 size="small"
-                @click="emits('apply')"
-            >
-                {{ $t("filter.footer_apply") }}
-            </KsButton>
+                :icon="Restore"
+                @click="emits('reset')"
+            />
         </div>
     </div>
 </template>
@@ -33,7 +30,6 @@
 
     const emits = defineEmits<{
         reset: [];
-        apply: [];
     }>()
 </script>
 

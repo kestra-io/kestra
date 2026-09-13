@@ -20,8 +20,6 @@ import io.kestra.core.models.topologies.FlowTopologyGraph;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.repositories.FlowTopologyRepositoryInterface;
 import io.kestra.plugin.core.log.Log;
-import io.kestra.webserver.models.api.secret.ApiSecretListResponse;
-import io.kestra.webserver.models.api.secret.ApiSecretMeta;
 import io.kestra.webserver.responses.PagedResults;
 
 import io.micronaut.core.type.Argument;

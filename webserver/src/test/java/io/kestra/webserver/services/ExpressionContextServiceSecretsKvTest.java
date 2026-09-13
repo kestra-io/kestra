@@ -10,14 +10,14 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import io.kestra.core.docs.JsonSchemaGenerator;
-import io.kestra.core.services.ExpressionCategory;
-import io.kestra.core.services.ExpressionContext;
-import io.kestra.core.services.ExpressionContextService;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.runners.RunContextCache;
 import io.kestra.core.runners.pebble.PebbleExpressionService;
 import io.kestra.core.runners.pebble.PebbleFunction;
 import io.kestra.core.secret.SecretService;
+import io.kestra.core.services.ExpressionCategory;
+import io.kestra.core.services.ExpressionContext;
+import io.kestra.core.services.ExpressionContextService;
 import io.kestra.core.services.KVStoreService;
 import io.kestra.core.storages.NamespaceFactory;
 import io.kestra.core.storages.StorageInterface;
@@ -62,9 +62,11 @@ class ExpressionContextServiceSecretsKvTest {
             Map.of("io.kestra.test", Set.of("TENANT_SECRET"))
         );
         KVStore kvStore = mock(KVStore.class);
-        when(kvStore.list()).thenReturn(List.of(
-            new KVEntry("io.kestra.test", "tenant_key", 1, null, null, null, null)
-        ));
+        when(kvStore.list()).thenReturn(
+            List.of(
+                new KVEntry("io.kestra.test", "tenant_key", 1, null, null, null, null)
+            )
+        );
         when(kvStoreService.get(eq(tenantId), any())).thenReturn(kvStore);
 
         ExpressionContextService service = new ExpressionContextService(
@@ -77,7 +79,7 @@ class ExpressionContextServiceSecretsKvTest {
             .id("test-flow")
             .namespace("io.kestra.test")
             .tasks(List.of())
-            .tenantId(tenantId)  // injected after YAML parse
+            .tenantId(tenantId) // injected after YAML parse
             .build();
 
         // When
@@ -137,10 +139,12 @@ class ExpressionContextServiceSecretsKvTest {
         when(secretService.ownAndInheritedSecrets(any(), any())).thenReturn(Map.of());
 
         KVStore kvStore = mock(KVStore.class);
-        when(kvStore.list()).thenReturn(List.of(
-            new KVEntry("io.kestra.test", "cache_ttl", 1, null, null, null, null),
-            new KVEntry("io.kestra.test", "feature_flag_enabled", 1, null, null, null, null)
-        ));
+        when(kvStore.list()).thenReturn(
+            List.of(
+                new KVEntry("io.kestra.test", "cache_ttl", 1, null, null, null, null),
+                new KVEntry("io.kestra.test", "feature_flag_enabled", 1, null, null, null, null)
+            )
+        );
         when(kvStoreService.get(any(), any())).thenReturn(kvStore);
 
         ExpressionContextService service = new ExpressionContextService(
@@ -203,20 +207,24 @@ class ExpressionContextServiceSecretsKvTest {
     void shouldReturnBothSecretsAndKvPairs() throws Exception {
         // Given
         when(pebbleExpressionService.filters()).thenReturn(List.of("upper", "lower"));
-        when(pebbleExpressionService.functions()).thenReturn(List.of(
-            new PebbleFunction("now", List.of()),
-            new PebbleFunction("secret", List.of(new PebbleFunction.Argument("key", "'MY_SECRET'")))
-        ));
+        when(pebbleExpressionService.functions()).thenReturn(
+            List.of(
+                new PebbleFunction("now", List.of()),
+                new PebbleFunction("secret", List.of(new PebbleFunction.Argument("key", "'MY_SECRET'")))
+            )
+        );
 
         when(secretService.ownAndInheritedSecrets(any(), any())).thenReturn(
             Map.of("io.kestra.test", Set.of("SECRET_A", "SECRET_B"))
         );
 
         KVStore kvStore = mock(KVStore.class);
-        when(kvStore.list()).thenReturn(List.of(
-            new KVEntry("io.kestra.test", "config_key", 1, null, null, null, null),
-            new KVEntry("io.kestra.test", "status_key", 1, null, null, null, null)
-        ));
+        when(kvStore.list()).thenReturn(
+            List.of(
+                new KVEntry("io.kestra.test", "config_key", 1, null, null, null, null),
+                new KVEntry("io.kestra.test", "status_key", 1, null, null, null, null)
+            )
+        );
         when(kvStoreService.get(any(), any())).thenReturn(kvStore);
 
         ExpressionContextService service = new ExpressionContextService(

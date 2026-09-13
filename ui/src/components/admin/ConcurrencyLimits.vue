@@ -2,8 +2,8 @@
     <TopNavBar :title="routeInfo.title" />
 
     <Empty v-if="data?.results === undefined || data?.results.length === 0" type="concurrency_limits" />
-    <section v-else class="container">
-        <KsDataTable :total="data?.total ?? 0">
+    <section v-else class="full-container">
+        <KsDataTable :total="data?.total ?? 0" fitHeight>
             <template #table>
                 <KsTable
                     :data="data?.results"
@@ -28,7 +28,7 @@
                 </KsTable>
             </template>
         </KsDataTable>
-        <KsDialog v-model="editRunning" :title="$t('concurrency_limit.dialog_title')" destroyOnClose :appendToBody="true" width="400px" :beforeClose="beforeEditClose">
+        <KsDialog v-model="editRunning" :title="$t('concurrency_limit.dialog_title')" destroyOnClose :appendToBody="true" :dirty="isEditDirty">
             <KsAlert type="warning" :closable="false">
                 {{ $t("concurrency_limit.warning") }}
             </KsAlert>
@@ -47,17 +47,20 @@
 </template>
 
 <script lang="ts" setup>
-    import {computed, onMounted, ref} from "vue"
+    import {computed, ref, watch} from "vue"
+    import {useRoute} from "vue-router"
     import {useI18n} from "vue-i18n"
     import TopNavBar from "../layout/TopNavBar.vue"
     import Empty from "../layout/empty/Empty.vue"
     import useRouteContext from "../../composables/useRouteContext"
     import {useClient} from "@kestra-io/kestra-sdk"
     import IconEdit from "vue-material-design-icons/Pencil.vue"
-    import {apiUrl, apiUrlWithoutTenants} from "override/utils/route"
-    import {useDiscardGuard} from "../../composables/useDiscardGuard"
+    import {apiUrlWithTenant, apiUrlWithoutTenants} from "override/utils/route"
 
     const {t} = useI18n()
+    const route = useRoute()
+
+    const baseUrl = computed(() => apiUrlWithTenant(route))
 
     const routeInfo = computed(() => {
         return {
@@ -75,15 +78,15 @@
     const KEYS: (keyof ConcurrencyLimit)[] = ["tenantId", "namespace", "flowId", "running"]
 
     const axios = useClient()
-    const data = ref<{ 
-        total: number; 
-        results: ConcurrencyLimit[] 
+    const data = ref<{
+        total: number;
+        results: ConcurrencyLimit[]
     }>()
 
     async function loadData(){
-        const response = await axios.get(`${apiUrl()}/concurrency-limit/search`)
+        const response = await axios.get(`${baseUrl.value}/concurrency-limit/search`)
         if(response?.status !== 200){
-            throw new Error(`Failed to load concurrency limits: ${response?.statusText}`)
+            throw new Error(`Failed to load concurrency limits: status ${response?.status}`)
         }
         data.value = response.data
     }
@@ -92,10 +95,7 @@
     const newRunningCount = ref(0)
     const editingRow = ref<ConcurrencyLimit|null>(null)
 
-    const {guardedClose} = useDiscardGuard(
-        () => editingRow.value != null && newRunningCount.value !== editingRow.value.running,
-    )
-    const beforeEditClose = (done: () => void) => guardedClose(() => done())
+    const isEditDirty = computed(() => editingRow.value != null && newRunningCount.value !== editingRow.value.running)
 
     function openDialog(row: ConcurrencyLimit){
         editRunning.value = true
@@ -111,9 +111,7 @@
         editRunning.value = false
     }
 
-    onMounted(() => {
-        loadData()
-    })
+    watch(baseUrl, () => loadData(), {immediate: true})
 
     useRouteContext(routeInfo)
 </script>

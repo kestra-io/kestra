@@ -1,5 +1,6 @@
 package io.kestra.core.junit.extensions;
 
+import java.io.IOException;
 import java.net.URISyntaxException;
 
 import org.apache.commons.lang3.StringUtils;
@@ -43,7 +44,7 @@ public class WithFlowExtension extends AbstractLoaderExtension implements
     }
 
     @Override
-    public void afterEach(ExtensionContext extensionContext) throws URISyntaxException {
+    public void afterEach(ExtensionContext extensionContext) throws URISyntaxException, IOException {
         ExtensionContext.Store store = extensionContext.getStore(NAMESPACE);
         String tenantId = store.get(KEY_TENANT_ID, String.class);
 

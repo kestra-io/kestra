@@ -1,13 +1,21 @@
 package io.kestra.mcp;
 
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.BiConsumer;
+
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+
 import io.kestra.core.mcp.models.McpServer;
 import io.kestra.core.mcp.models.McpServerClusterEventPayload;
 import io.kestra.core.mcp.repositories.McpServerRepositoryInterface;
 import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.QueueSubscriber;
 import io.kestra.core.server.ClusterEvent;
+
 import io.micronaut.context.annotation.Requires;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
@@ -15,16 +23,11 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.function.BiConsumer;
-
 /**
  * Shared, cluster-aware cache of {@link McpServer} entries keyed by {@code (tenantId, serverId)}.
  *
- * <p>Subscribes once to {@link ClusterEvent.EventType#MCP_SERVER_CHANGED} and invalidates the
+ * <p>
+ * Subscribes once to {@link ClusterEvent.EventType#MCP_SERVER_CHANGED} and invalidates the
  * matching entry whenever a server is created, updated, or deleted on any node. Other components
  * that maintain derived caches keyed off the same {@code (tenantId, serverId)} can register an
  * invalidation listener via {@link #addInvalidationListener(BiConsumer)} instead of subscribing
@@ -46,8 +49,7 @@ public class McpServerCache {
     public McpServerCache(
         McpServerRepositoryInterface mcpServerRepository,
         BroadcastQueueInterface<ClusterEvent> clusterEventQueue,
-        McpConfig mcpConfig
-    ) {
+        McpConfig mcpConfig) {
         this.mcpServerRepository = Objects.requireNonNull(mcpServerRepository);
         this.clusterEventQueue = Objects.requireNonNull(clusterEventQueue);
         McpConfig.ServerCacheConfig serverCacheConfig = mcpConfig.serverCacheConfig();
@@ -59,7 +61,8 @@ public class McpServerCache {
 
     @PostConstruct
     public void start() {
-        clusterEventSubscriber = clusterEventQueue.subscriber().subscribe(either -> {
+        clusterEventSubscriber = clusterEventQueue.subscriber().subscribe(either ->
+        {
             if (either.isRight()) {
                 log.warn("Failed to deserialize cluster event in MCP server cache: {}", either.getRight().getMessage());
                 return;
@@ -117,5 +120,6 @@ public class McpServerCache {
         invalidationListeners.add(Objects.requireNonNull(listener));
     }
 
-    private record McpCacheKey(String tenantId, String serverId) {}
+    private record McpCacheKey(String tenantId, String serverId) {
+    }
 }

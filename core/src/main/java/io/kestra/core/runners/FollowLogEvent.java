@@ -23,11 +23,12 @@ public record FollowLogEvent(
     Level level,
     String thread,
     String message,
-    ExecutionKind executionKind) implements BroadcastEvent {
+    ExecutionKind executionKind,
+    String progress) implements BroadcastEvent {
     public static FollowLogEvent from(LogEntry logEntry) {
         return new FollowLogEvent(
             logEntry.getTenantId(), logEntry.getNamespace(), logEntry.getFlowId(), logEntry.getTaskId(), logEntry.getExecutionId(), logEntry.getTaskRunId(), logEntry.getAttemptNumber(),
-            logEntry.getTriggerId(), logEntry.getTimestamp(), logEntry.getLevel(), logEntry.getThread(), logEntry.getMessage(), logEntry.getExecutionKind()
+            logEntry.getTriggerId(), logEntry.getTimestamp(), logEntry.getLevel(), logEntry.getThread(), logEntry.getMessage(), logEntry.getExecutionKind(), logEntry.getProgress()
         );
     }
 

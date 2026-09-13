@@ -1,6 +1,20 @@
 <template>
-    <template v-if="!loading">
-        <slot v-if="secondaryCount <= MAX_SECONDARY_ACTIONS" />
+    <!--
+        Keyed on slot declaration rather than rendered content, so a caller whose `#secondary`
+        content is `v-if`-ed away still gets the two-slot layout instead of silently falling back
+        to the legacy one. Read straight off `$slots` in the template so it is re-evaluated on
+        every render: a `computed(() => !!slots.secondary)` never registers a dependency (it checks
+        for the key without invoking the slot) and would freeze at its first-render value for a
+        caller that gates the `<template #secondary>` declaration itself.
+    -->
+    <template v-if="$slots.secondary">
+        <NavBarActionsDropdown v-if="overflowCount > 0">
+            <slot />
+        </NavBarActionsDropdown>
+        <slot name="secondary" />
+    </template>
+    <template v-else>
+        <slot v-if="overflowCount <= MAX_INLINE_ACTIONS" />
         <NavBarActionsDropdown v-else>
             <slot />
         </NavBarActionsDropdown>
@@ -12,9 +26,7 @@
     import {Comment, Fragment, Text, computed, useSlots, type VNode} from "vue"
     import NavBarActionsDropdown from "./NavBarActionsDropdown.vue"
 
-    defineProps<{loading?: boolean}>()
-
-    const MAX_SECONDARY_ACTIONS = 1
+    const MAX_INLINE_ACTIONS = 1
 
     const slots = useSlots()
 
@@ -29,5 +41,5 @@
             return [node]
         })
 
-    const secondaryCount = computed(() => flatten(slots.default?.() ?? []).length)
+    const overflowCount = computed(() => flatten(slots.default?.() ?? []).length)
 </script>

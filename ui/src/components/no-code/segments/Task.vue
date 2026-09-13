@@ -12,8 +12,8 @@
 <script setup lang="ts">
     import {ref, watch, computed, inject, nextTick} from "vue"
     import {SECTIONS} from "@kestra-io/design-system"
-    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
-    import {PLUGIN_DEFAULTS_SECTION, SECTIONS_MAP} from "../../../utils/constants"
+    import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
+    import {SECTIONS_MAP} from "../../../utils/constants"
     import {
         CLOSE_TASK_FUNCTION_INJECTION_KEY,
         UPDATE_YAML_FUNCTION_INJECTION_KEY,
@@ -25,6 +25,7 @@
     import TaskEditor from "../components/TaskEditor.vue"
     import ValidationError from "../../../components/flows/ValidationError.vue"
     import {useFlowStore} from "../../../stores/flow"
+    import {splitValidationErrors} from "../../../utils/validationErrors"
 
     const flow = inject(FULL_SOURCE_INJECTION_KEY, ref(""))
     const parentPath = inject(PARENT_PATH_INJECTION_KEY, "")
@@ -91,7 +92,7 @@
 
     const flowStore = useFlowStore()
     const validateTask = (task?: string) => {
-        if(section.value !== PLUGIN_DEFAULTS_SECTION && task){
+        if(task){
             clearTimeout(timer.value)
             timer.value = setTimeout(() => {
                 if (lastValidatedValue.value !== task) {
@@ -109,7 +110,10 @@
     const lastValidatedValue = ref<string>()
 
 
-    const errors = computed(() => flowStore.taskError?.split(/, ?/))
+    const errors = computed(() => {
+        const split = splitValidationErrors(flowStore.taskError)
+        return split.length === 0 ? undefined : split
+    })
 
     const saveTask = () => {
         let result: string = flow.value

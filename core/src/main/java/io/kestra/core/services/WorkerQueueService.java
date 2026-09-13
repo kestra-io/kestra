@@ -25,7 +25,7 @@ public interface WorkerQueueService {
     /**
      * Resolves the target Worker Queue routing for a Worker Job.
      *
-     * @param flow      the flow that owns the job
+     * @param flow the flow that owns the job
      * @param workerJob the worker job (task or trigger) being routed
      * @return the resolved {@link WorkerQueueRouting}, or {@link Optional#empty()} when
      *         no routing is configured (the job will run on the global default queue)
@@ -39,13 +39,15 @@ public interface WorkerQueueService {
     /**
      * Default implementation of {@link WorkerQueueService}.
      *
-     * <p>Enforces the {@link SystemTask} reservation: any {@code WorkerTask} whose task is
+     * <p>
+     * Enforces the {@link SystemTask} reservation: any {@code WorkerTask} whose task is
      * a {@link SystemTask} is routed to the reserved {@link WorkerQueues#SYSTEM_ID} queue
      * served by the in-process SystemWorker, bypassing any other resolution rule. A
      * {@code workerSelector.tags} declared on a SystemTask is silently ignored apart from
      * a warning log entry.
      *
-     * <p>All other jobs delegate to {@link #doResolveWorkerQueueForJob(FlowInterface, WorkerJob)},
+     * <p>
+     * All other jobs delegate to {@link #doResolveWorkerQueueForJob(FlowInterface, WorkerJob)},
      * which returns no routing by default. Subclasses may override this hook to add
      * tag-based resolution.
      */
@@ -76,7 +78,8 @@ public interface WorkerQueueService {
          * Returns {@link Optional#empty()} by default (no routing → default queue).
          * Subclasses may override this hook to add tag-based resolution.
          *
-         * <p>Subclasses must not handle the SystemTask reservation — it is enforced by
+         * <p>
+         * Subclasses must not handle the SystemTask reservation — it is enforced by
          * {@link #resolveWorkerQueueForJob(FlowInterface, WorkerJob)} before delegating here.
          */
         protected Optional<WorkerQueueRouting> doResolveWorkerQueueForJob(FlowInterface flow, WorkerJob workerJob) throws NoMatchingWorkerQueueException {

@@ -2,152 +2,183 @@
     <TopNavBar :title="routeInfo?.title" :breadcrumb="routeInfo?.breadcrumb">
         <template #title>
             {{ routeInfo?.title }}
-            <Badge v-if="isATestExecution" :label="$t('test-badge-text')" :tooltip="$t('test-badge-tooltip')" />
+            <Badge
+                v-if="isATestExecution"
+                :label="$t('test-badge-text')"
+                :tooltip="$t('test-badge-tooltip')"
+            />
         </template>
         <template #actions>
-            <slot name="actions" />
-            <div class="d-flex align-items-center gap-2" v-if="hasVisibleActions && $route.params.tab !== 'audit-logs'">
-                <ul class="d-none d-xl-flex align-items-center">
-                    <li v-if="isAllowedEdit" data-onboarding-target="execution-edit-flow-button">
-                        <KsButton
-                            class="execution-edit-flow-button"
-                            :icon="Pencil"
-                            @click="editFlow"
-                        >
-                            {{ $t("edit flow") }}
-                        </KsButton>
-                    </li>
-                </ul>
+            <NavBarActions v-if="execution">
+                <component
+                    :is="ACTIONS[key].component"
+                    v-for="key in overflowKeys"
+                    :key="key"
+                    v-bind="ACTIONS[key].props ?? {}"
+                    :execution="execution"
+                />
 
-                <KsDropdown class="d-flex d-xl-none align-items-center">
-                    <KsButton>
-                        <KsIcon><DotsVerticalIcon /></KsIcon>
-                        <span class="d-none d-lg-inline-block">{{ $t("more_actions") }}</span>
-                    </KsButton>
-                    <template #dropdown>
-                        <KsDropdownMenu>
-                            <KsDropdownItem v-if="isAllowedEdit" @click="editFlow">
-                                <KsIcon><Pencil /></KsIcon>
-                                {{ $t("edit flow") }}
-                            </KsDropdownItem>
-                        </KsDropdownMenu>
-                    </template>
-                </KsDropdown>
+                <component
+                    :is="extra"
+                    v-for="(extra, index) in overflowActionComponents"
+                    :key="`extra-${index}`"
+                    :execution="execution"
+                />
 
-                <div v-if="primaryAction || fallbackToExecute">
-                    <div class="d-flex align-items-center gap-2">
+                <component :is="ACTIONS.delete.component" :execution="execution" />
+
+                <!--
+                    A tab with its own more specific action (Audit Logs exporting to CSV in the
+                    Enterprise Edition) contributes it here; every other tab falls back to the
+                    action that matches the execution's state.
+
+                    Callers MUST gate the `<template #secondary>` declaration itself, e.g.
+                    `<template #secondary v-if="activeTab === 'audit-logs'">`. Putting the `v-if`
+                    on the content inside the slot instead would keep the slot declared on every
+                    tab and blank the secondary, losing Replay / Restart / Pause / Resume.
+                -->
+                <template #secondary>
+                    <slot name="secondary">
                         <component
-                            v-if="primaryAction"
-                            :is="primaryAction.component"
-                            v-bind="primaryAction.props"
+                            :is="ACTIONS[secondaryKey].component"
+                            v-bind="ACTIONS[secondaryKey].props ?? {}"
                             :execution="execution"
-                            type="primary"
                         />
+                    </slot>
+                </template>
 
-                        <TriggerFlow
-                            v-else-if="fallbackToExecute"
-                            type="primary"
-                            :flowId="$route.params.flowId as string"
-                            :namespace="$route.params.namespace as string"
-                        />
-                    </div>
-                </div>
-            </div>
+                <template #primary>
+                    <TriggerFlow
+                        v-if="isAllowedTrigger"
+                        type="primary"
+                        :flowId="execution?.flowId"
+                        :namespace="execution?.namespace"
+                    />
+                </template>
+            </NavBarActions>
         </template>
     </TopNavBar>
 </template>
 
 <script setup lang="ts">
-    import {computed} from "vue"
-    import {useRouter, useRoute} from "vue-router"
-    import Pencil from "vue-material-design-icons/Pencil.vue"
-    import DotsVerticalIcon from "vue-material-design-icons/DotsVertical.vue"
-    import Badge from "../global/Badge.vue"
+    import {computed, type Component} from "vue"
     import {State} from "@kestra-io/design-system"
-    import TriggerFlow from "../flows/TriggerFlow.vue"
-    import Pause from "./overview/components/actions/Pause.vue"
-    import Resume from "./overview/components/actions/Resume.vue"
-    import Restart from "./overview/components/actions/Restart.vue"
+
+    import Badge from "../global/Badge.vue"
     import TopNavBar from "../layout/TopNavBar.vue"
-    import resource from "../../models/resource"
+    import NavBarActions from "../layout/NavBarActions.vue"
+    import TriggerFlow from "../flows/TriggerFlow.vue"
+    import Api from "./overview/components/actions/Api.vue"
+    import Delete from "./overview/components/actions/Delete.vue"
+    import EditFlow from "./overview/components/actions/EditFlow.vue"
+    import ForceRun from "./overview/components/actions/ForceRun.vue"
+    import Kill from "./overview/components/actions/Kill.vue"
+    import Pause from "./overview/components/actions/Pause.vue"
+    import Restart from "./overview/components/actions/Restart.vue"
+    import Resume from "./overview/components/actions/Resume.vue"
+    import ResumeFromBreakpoint from "./overview/components/actions/ResumeFromBreakpoint.vue"
+    import Unqueue from "./overview/components/actions/Unqueue.vue"
     import action from "../../models/action"
+    import resource from "../../models/resource"
     import {useExecutionsStore} from "../../stores/executions"
     import {useAuthStore} from "override/stores/auth"
+    import {overflowActionComponents} from "override/components/executions/executionsExtensions"
 
     defineProps<{
         // FIXME: any - routeInfo shape varies across usage
         routeInfo: any // FIXME: any
     }>()
 
-    const router = useRouter()
-    const route = useRoute()
     const executionsStore = useExecutionsStore()
     const authStore = useAuthStore()
 
-    // FIXME: any - execution is an untyped domain object from the store
-    const execution = computed(() => executionsStore.execution as any) // FIXME: any
-
-    const isAllowedEdit = computed(() =>
-        execution.value && authStore.user?.isAllowed(resource.FLOW, action.UPDATE, execution.value.namespace),
-    )
+    const execution = computed(() => executionsStore.execution)
 
     const isAllowedTrigger = computed(() =>
-        execution.value && authStore.user?.isAllowed(resource.EXECUTION, action.CREATE, execution.value.namespace),
+        execution.value && authStore.user?.isAllowed(resource.FLOW, action.EXECUTE, execution.value.namespace),
     )
 
-    const primaryAction = computed(() => {
-        if (!execution.value?.state) {
-            return null
+    type ActionKey =
+        | "restart"
+        | "replay"
+        | "kill"
+        | "pause"
+        | "resume"
+        | "resumeFromBreakpoint"
+        | "unqueue"
+        | "forceRun"
+        | "api"
+        | "editFlow"
+        | "delete"
+
+    const ACTIONS: Record<ActionKey, {component: Component; props?: Record<string, unknown>}> = {
+        restart: {component: Restart},
+        replay: {component: Restart, props: {isReplay: true}},
+        kill: {component: Kill},
+        pause: {component: Pause},
+        resume: {component: Resume},
+        resumeFromBreakpoint: {component: ResumeFromBreakpoint},
+        unqueue: {component: Unqueue},
+        forceRun: {component: ForceRun},
+        api: {component: Api},
+        editFlow: {component: EditFlow},
+        delete: {component: Delete},
+    }
+
+    /**
+     * The single visible secondary action: the one action that only makes sense for the
+     * execution's current state, falling back to Edit Flow. Execute owns the primary slot on
+     * every tab, so replaying is one click away without being what a user hits by reflex.
+     */
+    const secondaryKey = computed<ActionKey>(() => {
+        const current = execution.value?.state?.current
+
+        if (!current) {
+            return "editFlow"
         }
 
-        if (State.isPaused(execution.value.state.current)) {
-            return {component: Resume, props: {}}
+        if (current === "BREAKPOINT") {
+            return "resumeFromBreakpoint"
         }
 
-        if (State.isRunning(execution.value.state.current)) {
-            return {component: Pause, props: {}}
+        if (State.isPaused(current)) {
+            return "resume"
         }
 
-        if (execution.value.state.current === State.FAILED) {
-            return {component: Restart, props: {}}
+        if (State.isRunning(current)) {
+            return "pause"
         }
 
-        if (State.getTerminatedStates().includes(execution.value.state.current)) {
-            return {component: Restart, props: {isReplay: true}}
+        if (current === State.FAILED) {
+            return "restart"
         }
 
-        return null
+        if (State.getTerminatedStates().includes(current)) {
+            return "replay"
+        }
+
+        return "editFlow"
     })
 
-    const fallbackToExecute = computed(() =>
-        execution.value && isAllowedTrigger.value && !primaryAction.value,
-    )
-
-    const hasVisibleActions = computed(() =>
-        isAllowedEdit.value || primaryAction.value || fallbackToExecute.value,
-    )
+    const overflowKeys = computed<ActionKey[]>(() => {
+        const isPaused = execution.value?.state?.current === "PAUSED"
+        const keys: ActionKey[] = [
+            "restart",
+            "replay",
+            "kill",
+            isPaused ? "resume" : "pause",
+            "resumeFromBreakpoint",
+            "unqueue",
+            "forceRun",
+            "api",
+            "editFlow",
+        ]
+        return keys.filter((key) => key !== secondaryKey.value)
+    })
 
     const isATestExecution = computed(() =>
-        execution.value && execution.value.labels && execution.value.labels.some((label: {key: string; value: string}) => label.key === "system.test" && label.value === "true"),
+        execution.value?.labels?.some(
+            (label: {key: string; value: string}) => label.key === "system.test" && label.value === "true",
+        ) ?? false,
     )
-
-    function editFlow() {
-        router.push({
-            name: "flows/update", params: {
-                namespace: route.params.namespace as string,
-                id: route.params.flowId as string,
-                tab: "edit",
-                tenant: route.params.tenant as string,
-            },
-        })
-    }
 </script>
-<style scoped>
-
-@media (max-width: 575.98px) {
-  .sm-extra-padding {
-    padding: 0;
-  }
-}
-
-</style>

@@ -53,4 +53,31 @@
 <style lang="scss">
     @use '../../assets/styles/el-ns';
     @use 'element-plus/theme-chalk/src/upload';
+
+    .kel-upload {
+        &:focus {
+            // Prevent purple color from propagating to child text nodes
+            color: inherit;
+
+            .kel-upload-dragger {
+                border-color: var(--ks-border-focus);
+            }
+        }
+    }
+
+    .kel-upload-dragger {
+        background-color: var(--ks-bg-input);
+        border-color: var(--ks-border-default);
+        border-radius: var(--ks-radius-base);
+
+        &:hover {
+            border-color: var(--ks-border-focus);
+        }
+
+        &.is-dragover {
+            background-color: var(--ks-bg-hover);
+            border-color: var(--ks-border-focus);
+            border-width: 2px;
+        }
+    }
 </style>

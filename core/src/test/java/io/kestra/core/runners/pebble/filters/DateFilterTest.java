@@ -233,4 +233,20 @@ class DateFilterTest {
             """);
     }
 
+    @Test
+    void shouldRenderNegativeMillisTimestamp() throws IllegalVariableEvaluationException {
+        String render = variableRenderer.render(
+            """
+                {{ -1234567890123 | date(format="iso_milli", timeZone="UTC") }}
+                {{ 1234567890123 | date(format="iso_milli", timeZone="UTC") }}
+                """,
+            Map.of()
+        );
+
+        assertThat(render).isEqualTo("""
+            1930-11-18T00:28:29.877Z
+            2009-02-13T23:31:30.123Z
+            """);
+    }
+
 }

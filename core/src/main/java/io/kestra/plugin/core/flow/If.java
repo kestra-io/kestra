@@ -42,7 +42,7 @@ import lombok.experimental.SuperBuilder;
 @Schema(
     title = "Branch tasks based on a rendered condition.",
     description = """
-        Renders `condition` and coerces it to boolean (empty string/0/null is false, everything else true). Executes `then` when true, `else` when false, with optional `errors`/`finally` blocks.
+        Renders `condition` and coerces it to boolean (the strings `false`, `0`, `-0`, an empty string and null are false; every other value is true). Executes `then` when true, `else` when false, with optional `errors`/`finally` blocks.
 
         Frequently used after previous task results to drive control flow."""
 )
@@ -78,7 +78,7 @@ import lombok.experimental.SuperBuilder;
 public class If extends Task implements FlowableTask<If.Output> {
     @Schema(
         title = "The `If` condition which can be any expression that evaluates to a boolean value.",
-        description = "Boolean coercion allows 0, -0, null and '' to evaluate to false, all other values will evaluate to true."
+        description = "Boolean coercion evaluates the strings 'false', '0', '-0', an empty string and null to false; all other values evaluate to true."
     )
     // Note: we can't use Property<String> here because of the cache of the property evaluation which causes issue when using If in a ForEach with concurrencyLimit > 1!
     // See https://github.com/kestra-io/kestra/issues/8697

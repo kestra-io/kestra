@@ -29,10 +29,13 @@ Watch out for duplicates! If you are creating a new issue, please check existing
 
 ### Your First Code Contribution
 
+#### Get the issue assigned first
+Before you start writing code, comment on the issue you would like to work on and wait until it is assigned to you. This keeps two contributors from solving the same problem twice, and gives us a chance to share context or to flag that the issue still needs a product decision. Pull requests for unassigned issues are welcome, but they may take longer to review, or be closed in favor of work that is already underway.
+
 #### Requirements
 The following dependencies are required to build Kestra locally:
 - Java 25+
-- Node 22+ and npm 10+
+- Node 24+ and npm 11+
 - Python 3, pip and python venv
 - Docker & Docker Compose
 - an IDE (Intellij IDEA, Eclipse or VS Code)

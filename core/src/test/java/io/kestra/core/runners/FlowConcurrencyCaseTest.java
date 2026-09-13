@@ -4,6 +4,9 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import org.awaitility.core.ConditionTimeoutException;
 
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
@@ -21,6 +24,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
 
 @Singleton
 public class FlowConcurrencyCaseTest {
@@ -174,6 +178,129 @@ public class FlowConcurrencyCaseTest {
         assertThat(executionResult2.getState().getHistories().get(2).getState()).isEqualTo(State.Type.RUNNING);
     }
 
+    /**
+     * Reproduces GitHub issue #16579: when a parent flow with a concurrency limit of 1 (QUEUE behavior)
+     * runs subflows that are killed by an SLA MAX_DURATION/FAIL violation, the duplicate terminal
+     * messages produced by the kill must NOT each release a concurrency slot — otherwise more than
+     * one parent ends up RUNNING simultaneously.
+     */
+    public void flowConcurrencySlaFailSubflow(String tenantId) throws QueueException {
+        // Run 3 executions: only 1 can be RUNNING at a time; the other 2 are QUEUED.
+        // The SLA on the child subflow fires after ~3 s, causing the parent to FAIL.
+        // After each parent fails the next queued one must be promoted to RUNNING.
+        // At the end, the concurrency counter must be 0 (nothing is running).
+        Flow flow = flowRepository
+            .findById(tenantId, NAMESPACE, "flow-concurrency-sla-fail-parent", Optional.empty())
+            .orElseThrow();
+
+        Execution execution1 = runnerUtils.runOneUntilRunning(tenantId, NAMESPACE, "flow-concurrency-sla-fail-parent", null, null, Duration.ofSeconds(30));
+        Execution execution2 = runnerUtils.emitAndAwaitExecution(e -> e.getState().isQueued(), Execution.newExecution(flow, null, null, Optional.empty()));
+        Execution execution3 = runnerUtils.emitAndAwaitExecution(e -> e.getState().isQueued(), Execution.newExecution(flow, null, null, Optional.empty()));
+
+        assertThat(execution1.getState().isRunning()).isTrue();
+        assertThat(execution2.getState().isQueued()).isTrue();
+        assertThat(execution3.getState().isQueued()).isTrue();
+
+        // Wait for all 3 to terminate — SLA will kill the child (FAIL), propagating FAILED to the parent.
+        // Use a generous timeout because 3 executions run sequentially, each ~3 s.
+        List<Execution> results = runnerUtils.awaitFlowExecutionNumber(3, tenantId, NAMESPACE, "flow-concurrency-sla-fail-parent", Duration.ofSeconds(60));
+
+        // Every execution must have terminated as FAILED because SLA FAIL propagates via transmitFailed.
+        assertThat(results).extracting(e -> e.getState().getCurrent())
+            .allMatch(State.Type.FAILED::equals);
+
+        // The concurrency counter must be back to 0 — no slot leak.
+        assertRunningCounterBackToZero(tenantId, "flow-concurrency-sla-fail-parent");
+    }
+
+    /**
+     * Reproduces kestra-ee#9200: an execution admitted by the concurrency gate, then terminated by
+     * an SLA while still CREATED, has the very state history of an execution the gate rejected.
+     * Inferring "it never held a slot" from that shape leaked the slot permanently, and with a
+     * limit of 1 every later execution stayed queued — or was cancelled — forever.
+     */
+    public void flowConcurrencySlaAssertCancel(String tenantId) throws QueueException {
+        Flow flow = flowRepository
+            .findById(tenantId, NAMESPACE, "flow-concurrency-sla-assert-cancel", Optional.empty())
+            .orElseThrow();
+
+        // The SLA assertion is always false, so the execution is cancelled during the very pass
+        // that admitted it: it never leaves CREATED.
+        Execution execution1 = runnerUtils.emitAndAwaitExecution(
+            e -> e.getState().isTerminated(), Execution.newExecution(flow, null, null, Optional.empty()), Duration.ofSeconds(30)
+        );
+        assertThat(execution1.getState().getCurrent()).isEqualTo(State.Type.CANCELLED);
+
+        // The slot must have been released, so this one is admitted too instead of queueing forever.
+        Execution execution2 = runnerUtils.emitAndAwaitExecution(
+            e -> e.getState().isTerminated(), Execution.newExecution(flow, null, null, Optional.empty()), Duration.ofSeconds(30)
+        );
+        assertThat(execution2.getState().getCurrent()).isEqualTo(State.Type.CANCELLED);
+
+        // The decisive assertion: a leaked slot does not show up in the final counter, because the
+        // queued execution's own termination spuriously releases the slot it never held and brings
+        // the count back to 0. What it cannot hide is that this execution had to wait behind a
+        // concurrency slot held by nothing at all.
+        assertThat(execution2.getState().getHistories())
+            .extracting(history -> history.getState())
+            .doesNotContain(State.Type.QUEUED);
+
+        assertRunningCounterBackToZero(tenantId, "flow-concurrency-sla-assert-cancel");
+    }
+
+    /**
+     * A killed execution of a flow that also declares {@code afterExecution} tasks: those run once
+     * the execution state is already terminal, so the KILLING to KILLED cycle is not the one that
+     * completes the execution. Keying the release off the entry state alone skipped it entirely and
+     * leaked the slot, leaving the queued executions stuck.
+     */
+    public void flowConcurrencyQueueKilledAfterExecution(String tenantId) throws QueueException {
+        Flow flow = flowRepository
+            .findById(tenantId, NAMESPACE, "flow-concurrency-queue-killed-after-execution", Optional.empty())
+            .orElseThrow();
+
+        Execution execution1 = runnerUtils.runOneUntilRunning(tenantId, NAMESPACE, "flow-concurrency-queue-killed-after-execution", null, null, Duration.ofSeconds(30));
+        Execution execution2 = runnerUtils.emitAndAwaitExecution(e -> e.getState().isQueued(), Execution.newExecution(flow, null, null, Optional.empty()));
+
+        assertThat(execution1.getState().isRunning()).isTrue();
+        assertThat(execution2.getState().isQueued()).isTrue();
+
+        // Killing the running execution must hand its slot back so the queued one starts.
+        runnerUtils.killExecution(execution1);
+        Execution runningExecution2 = runnerUtils.awaitExecution(e -> e.getState().isRunning(), execution2, Duration.ofSeconds(30));
+        assertThat(runningExecution2.getState().isRunning()).isTrue();
+
+        runnerUtils.killExecution(runningExecution2);
+        assertRunningCounterBackToZero(tenantId, "flow-concurrency-queue-killed-after-execution");
+    }
+
+    /**
+     * The counter decrement is committed in a separate, later transaction than the terminal
+     * execution row, so a single read taken right after an execution terminates can race a
+     * still-in-flight release. Poll instead, and report the last value observed rather than letting
+     * a bare {@link ConditionTimeoutException} hide how many slots leaked.
+     */
+    private void assertRunningCounterBackToZero(String tenantId, String flowId) {
+        AtomicInteger lastObservedRunning = new AtomicInteger(-1);
+        try {
+            Await.await()
+                .atMost(Duration.ofSeconds(10))
+                .until(() -> {
+                    ConcurrencyLimit concurrencyLimit = concurrencyLimitRepository
+                        .findById(tenantId, NAMESPACE, flowId)
+                        .orElseThrow(() -> new AssertionError("ConcurrencyLimit record must exist after executions ran"));
+                    lastObservedRunning.set(concurrencyLimit.getRunning());
+                    return concurrencyLimit.getRunning() == 0;
+                });
+        } catch (ConditionTimeoutException e) {
+            fail(
+                "Concurrency running counter of '%s' must be 0 after all executions terminate but was %d.".formatted(
+                    flowId, lastObservedRunning.get()
+                )
+            );
+        }
+    }
+
     public void flowConcurrencySubflow(String tenantId) throws TimeoutException, QueueException {
         runnerUtils.runOneUntilRunning(tenantId, NAMESPACE, "flow-concurrency-subflow", null, null, Duration.ofSeconds(30));
         runnerUtils.runOne(tenantId, NAMESPACE, "flow-concurrency-subflow");
@@ -224,9 +351,11 @@ public class FlowConcurrencyCaseTest {
             Await.await()
                 .during(Duration.ofMillis(100))
                 .atMost(Duration.ofSeconds(5))
-                .until(() -> executionRepository.findById(execution3.getTenantId(), execution3.getId())
-                    .map(e -> e.getState().isQueued())
-                    .orElse(false));
+                .until(
+                    () -> executionRepository.findById(execution3.getTenantId(), execution3.getId())
+                        .map(e -> e.getState().isQueued())
+                        .orElse(false)
+                );
         } finally {
             runnerUtils.killExecution(execution2);
             runnerUtils.killExecution(execution3);
@@ -255,9 +384,11 @@ public class FlowConcurrencyCaseTest {
             Await.await()
                 .during(Duration.ofMillis(100))
                 .atMost(Duration.ofSeconds(5))
-                .until(() -> executionRepository.findById(execution3.getTenantId(), execution3.getId())
-                    .map(e -> e.getState().isQueued())
-                    .orElse(false));
+                .until(
+                    () -> executionRepository.findById(execution3.getTenantId(), execution3.getId())
+                        .map(e -> e.getState().isQueued())
+                        .orElse(false)
+                );
         } finally {
             runnerUtils.killExecution(execution1);
             runnerUtils.killExecution(execution3);

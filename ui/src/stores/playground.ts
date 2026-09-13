@@ -1,7 +1,7 @@
 import {computed, ref, watch, type Ref} from "vue"
 import {defineStore} from "pinia"
 import {useUrlSearchParams} from "@vueuse/core"
-import * as VueFlowUtils from "@kestra-io/topology/vue-flow-utils"
+import type {FlowGraph} from "@kestra-io/topology/vue-flow-utils"
 import {Execution, useExecutionsStore} from "./executions"
 import {normalize} from "../utils/inputs"
 import {useRoute, useRouter} from "vue-router"
@@ -12,8 +12,12 @@ import {Flow, useFlowStore} from "./flow"
 import {useFileExplorerStore} from "./fileExplorer"
 import isEqual from "lodash/isEqual"
 
+// Loaded on demand: this store is reachable from the top nav bar, and statically
+// its graph helpers put Vue Flow and dagre in the bundle every page loads.
+const graphUtils = () => import("@kestra-io/topology/vue-flow-utils")
+
 export interface ExecutionWithGraph extends Execution {
-    graph?: VueFlowUtils.FlowGraph;
+    graph?: FlowGraph;
 }
 
 export const usePlaygroundStore = defineStore("playground", () => {
@@ -38,11 +42,10 @@ export const usePlaygroundStore = defineStore("playground", () => {
     function navigateToEdit(runUntilTaskId?: string, runDownstreamTasks?: boolean) {
         const flowParsed = flowStore.flow
         router.push({
-            name: "flows/update",
+            name: "flows/update/edit",
             params: {
                 id: flowParsed?.id,
                 namespace: flowParsed?.namespace,
-                tab: "edit",
                 tenant: route.params.tenant,
             },
             query: {
@@ -54,7 +57,7 @@ export const usePlaygroundStore = defineStore("playground", () => {
     }
 
     const executions = ref([]) as Ref<ExecutionWithGraph[]>
-    function addExecution(execution: ExecutionWithGraph, graph: VueFlowUtils.FlowGraph) {
+    function addExecution(execution: ExecutionWithGraph, graph?: FlowGraph) {
         execution.graph = graph
         executions.value.unshift(execution)
     }
@@ -89,6 +92,8 @@ export const usePlaygroundStore = defineStore("playground", () => {
             formData: defaultInputValues,
             kind: "PLAYGROUND",
             breakpoints,
+            // Explicit revision so drafts run too - the backend otherwise resolves the latest published one.
+            revision: flow.revision,
         })
     }
 
@@ -117,7 +122,7 @@ export const usePlaygroundStore = defineStore("playground", () => {
         // we can skip them and start the execution at the current task using replayExecution()
         if (lastExecution && taskId && graph
             && lastExecution.graph
-            && VueFlowUtils.areTasksIdenticalInGraphUntilTask(lastExecution.graph, graph, taskId)
+            && (await graphUtils()).areTasksIdenticalInGraphUntilTask(lastExecution.graph, graph, taskId)
             && taskIdToTaskRunIdMap.has(taskId)) {
             return await executionsStore.replayExecution({
                 executionId: lastExecution.id,
@@ -143,16 +148,22 @@ export const usePlaygroundStore = defineStore("playground", () => {
 
         const graph = await flowStore.loadGraph({flow: flowStore.flow})
 
-        if (!taskId) {
+        if (!taskId || !graph) {
             return {nextTasksIds: [], graph}
         }
 
         // find the node uid of the task with the given taskId
-        const taskNode = graph.nodes.find((node: any) => node?.task?.id === taskId)
+        const taskNode = graph.nodes.find((node) => node.task?.id === taskId)
 
-        const nextTasksNodes = VueFlowUtils.getNextTaskNodes(graph, taskNode)
+        if (!taskNode) {
+            return {nextTasksIds: [], graph}
+        }
 
-        const nextTasksIds = nextTasksNodes.map((node: any) => node.task.id)
+        const nextTasksNodes = (await graphUtils()).getNextTaskNodes(graph, taskNode)
+
+        const nextTasksIds = nextTasksNodes
+            .map((node) => node.task?.id)
+            .filter((id): id is string => id !== undefined)
 
         return {nextTasksIds, graph}
     }
@@ -251,10 +262,9 @@ export const usePlaygroundStore = defineStore("playground", () => {
         // the task specified by the user will not be executed.
         const {nextTasksIds, graph} = await getNextTaskIds(runDownstreamTasks ? undefined : taskId) ?? {}
 
-        let execution
+        let execution: Execution | undefined = undefined
         try {
-            const response = await replayOrTriggerExecution(taskId, runDownstreamTasks ? undefined : nextTasksIds, graph)
-            execution = response?.data
+            execution = await replayOrTriggerExecution(taskId, runDownstreamTasks ? undefined : nextTasksIds, graph)
         } catch (error: any) {
             if (error?.response?.status === 422) {
                 // Invalid entity, most likely due to invalid inputs - allow triggering the task again

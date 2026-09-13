@@ -1,8 +1,10 @@
 <template>
     <TopNavBar :title="routeInfo.title" />
     <section class="container" v-show="ready">
-        <Usages class="mb-2" @loaded="ready = true" />
-        <EditionComparator class="mt-4" />
+        <div class="stats-content">
+            <Usages @loaded="ready = true" />
+            <Pricing />
+        </div>
     </section>
 </template>
 
@@ -10,7 +12,7 @@
     import {ref, computed} from "vue"
     import TopNavBar from "../../../../components/layout/TopNavBar.vue"
     import Usages from "../../../../components/admin/stats/Usages.vue"
-    import EditionComparator from "../../../../components/admin/stats/EditionComparator.vue"
+    import Pricing from "../../../../components/admin/stats/Pricing.vue"
     import useRouteContext from "../../../../composables/useRouteContext"
     import {useI18n} from "vue-i18n"
 
@@ -23,3 +25,17 @@
     }))
     useRouteContext(routeInfo)
 </script>
+
+<style scoped lang="scss">
+    .container {
+        margin-block: var(--ks-spacing-10);
+    }
+
+    .stats-content {
+        display: flex;
+        flex-direction: column;
+        gap: var(--ks-spacing-6);
+        max-width: 593px;
+        margin-inline: auto;
+    }
+</style>

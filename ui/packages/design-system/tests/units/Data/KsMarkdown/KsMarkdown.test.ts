@@ -1,4 +1,5 @@
 import {describe, test, expect, vi, beforeEach} from "vitest"
+import {markRaw} from "vue"
 import {flushPromises} from "@vue/test-utils"
 import {mount} from "@vue/test-utils"
 import KestraDesignSystem from "../../../../src/index"
@@ -121,6 +122,25 @@ describe("KsMarkdown", () => {
         expect(navigator.clipboard.writeText).toHaveBeenCalledWith("const x = 42")
     })
 
+    test("copy button falls back to execCommand when the Clipboard API is unavailable", async () => {
+        // navigator.clipboard is undefined in non-secure contexts (plain HTTP)
+        Object.defineProperty(navigator, "clipboard", {
+            value: undefined,
+            configurable: true,
+        })
+        const execCommand = vi.fn().mockReturnValue(true)
+        document.execCommand = execCommand
+
+        const wrapper = mount(KsMarkdown, {
+            props: {content: "```\nconst x = 42\n```"},
+            global: globalConfig,
+            attachTo: document.body,
+        })
+        await wrapper.find(".ks-markdown__copy-btn").trigger("click")
+        expect(execCommand).toHaveBeenCalledWith("copy")
+        wrapper.unmount()
+    })
+
     test("renders mermaid code block as mermaid div", () => {
         const wrapper = mount(KsMarkdown, {
             props: {content: "```mermaid\ngraph TD\n  A --> B\n```"},
@@ -198,6 +218,62 @@ describe("KsMarkdown", () => {
         const link = wrapper.find("a.ks-markdown__link")
         expect(link.exists()).toBe(true)
         expect(link.attributes("target")).toBeUndefined()
+    })
+
+    test("drops the href of a javascript: markdown link", () => {
+        const wrapper = mount(KsMarkdown, {
+            props: {content: "[Click here](javascript:alert(document.domain))"},
+            global: globalConfig,
+        })
+        const link = wrapper.find("a.ks-markdown__link")
+        expect(link.exists()).toBe(true)
+        expect(link.text()).toBe("Click here")
+        expect(link.attributes("href")).toBeUndefined()
+    })
+
+    test("drops the href of an obfuscated javascript: markdown link", () => {
+        const wrapper = mount(KsMarkdown, {
+            props: {content: "[Click here](<JaVa\tScRiPt:alert(1)>)"},
+            global: globalConfig,
+        })
+        const link = wrapper.find("a.ks-markdown__link")
+        expect(link.exists()).toBe(true)
+        expect(link.attributes("href")).toBeUndefined()
+    })
+
+    test("drops the href of a data: markdown link", () => {
+        const wrapper = mount(KsMarkdown, {
+            props: {content: "[Click here](data:text/html;base64,PHNjcmlwdD5hbGVydCgxKTwvc2NyaXB0Pg==)"},
+            global: globalConfig,
+        })
+        expect(wrapper.find("a.ks-markdown__link").attributes("href")).toBeUndefined()
+    })
+
+    test("keeps a mailto: link", () => {
+        const wrapper = mount(KsMarkdown, {
+            props: {content: "[Mail us](mailto:hello@kestra.io)"},
+            global: globalConfig,
+        })
+        expect(wrapper.find("a.ks-markdown__link").attributes("href")).toBe("mailto:hello@kestra.io")
+    })
+
+    test("keeps an anchor-only link", () => {
+        const wrapper = mount(KsMarkdown, {
+            props: {content: "[Section](#my-title)"},
+            global: globalConfig,
+        })
+        expect(wrapper.find("a.ks-markdown__link").attributes("href")).toBe("#my-title")
+    })
+
+    test("drops the src of a javascript: markdown image", () => {
+        const wrapper = mount(KsMarkdown, {
+            props: {content: "![oops](javascript:alert(document.domain))"},
+            global: globalConfig,
+        })
+        const img = wrapper.find("img.ks-markdown__image")
+        expect(img.exists()).toBe(true)
+        expect(img.attributes("src")).toBeUndefined()
+        expect(img.attributes("alt")).toBe("oops")
     })
 
     test("renders thematic break", () => {
@@ -392,6 +468,32 @@ describe("KsMarkdown", () => {
     })
 
 
+    test("highlights a language that is not pre-registered, from Shiki's on-demand bundle", async () => {
+        // Elixir is deliberately absent from shikiHighlighter's static grammars.
+        const wrapper = mount(KsMarkdown, {
+            props: {content: "```elixir\ndefmodule Greeter do\nend\n```"},
+            global: globalConfig,
+        })
+
+        await vi.waitFor(
+            () => expect(wrapper.find(".ks-markdown__code-shiki").exists()).toBe(true),
+            {timeout: 10000, interval: 50},
+        )
+
+        expect(wrapper.find(".ks-markdown__code-shiki pre.shiki").exists()).toBe(true)
+        expect(wrapper.find(".ks-markdown__code-shiki").text()).toContain("defmodule")
+    }, 15000)
+
+    test("falls back to plain text for a language Shiki does not know", async () => {
+        const wrapper = mount(KsMarkdown, {
+            props: {content: "```notarealilanguage\nsome code\n```"},
+            global: globalConfig,
+        })
+        await flushPromises()
+
+        expect(wrapper.text()).toContain("some code")
+    })
+
     test("Shiki-highlighted code contains the original source text", async () => {
         const wrapper = mount(KsMarkdown, {
             props: {content: "```typescript\nconst greeting: string = 'hello'\n```"},
@@ -403,5 +505,106 @@ describe("KsMarkdown", () => {
         if (shikiDiv.exists()) {
             expect(shikiDiv.text()).toContain("greeting")
         }
+    })
+
+    // ─── XSS protection ──────────────────────────────────────────────────────
+
+    test("strips <script> tag from raw HTML by default (xssProtection on)", () => {
+        const wrapper = mount(KsMarkdown, {
+            props: {content: "<script>alert('xss')</script>"},
+            global: globalConfig,
+        })
+        // The <script> element is removed entirely, so nothing can execute.
+        // Its former body survives only as inert text — never as a live tag.
+        expect(wrapper.html()).not.toContain("<script")
+        expect(wrapper.find("script").exists()).toBe(false)
+    })
+
+    test("strips event-handler attributes from raw HTML by default", () => {
+        const wrapper = mount(KsMarkdown, {
+            props: {content: "<img src=\"x\" onerror=\"alert('xss')\">"},
+            global: globalConfig,
+        })
+        expect(wrapper.html()).not.toContain("onerror")
+    })
+
+    test("injects raw HTML verbatim when xssProtection is disabled (escape hatch)", () => {
+        const wrapper = mount(KsMarkdown, {
+            props: {content: "<img src=\"x\" onerror=\"alert('xss')\">", xssProtection: false},
+            global: globalConfig,
+        })
+        expect(wrapper.html()).toContain("onerror")
+    })
+
+    test("sanitizes custom-component inner HTML when xssProtection is on", () => {
+        // markRaw prevents Vue's reactive() from wrapping the component definition
+        // when it flows through @vue/test-utils' reactive props bag — without it, mounting
+        // warns "Vue received a Component that was made a reactive object".
+        const ChildCard = markRaw({name: "ChildCard", template: "<div class=\"child-card\"><slot /></div>"})
+        const wrapper = mount(KsMarkdown, {
+            props: {
+                content: "<ChildCard><img src=x onerror=\"alert('xss')\"></ChildCard>",
+                components: {ChildCard},
+            },
+            global: globalConfig,
+        })
+        expect(wrapper.find(".child-card").exists()).toBe(true)
+        expect(wrapper.html()).not.toContain("onerror")
+    })
+
+    test("renders iframe with a YouTube embed src", () => {
+        const wrapper = mount(KsMarkdown, {
+            props: {content: "<div class=\"video-container\">\n<iframe src=\"https://www.youtube.com/embed/abc123\" title=\"YouTube video player\" allowfullscreen></iframe>\n</div>"},
+            global: globalConfig,
+        })
+        const iframe = wrapper.find("iframe")
+        expect(iframe.exists()).toBe(true)
+        expect(iframe.attributes("src")).toBe("https://www.youtube.com/embed/abc123")
+    })
+
+    test("strips src from an iframe pointing at a non-YouTube host", () => {
+        const wrapper = mount(KsMarkdown, {
+            props: {content: "<iframe src=\"https://evil.example.com/phish\"></iframe>"},
+            global: globalConfig,
+        })
+        const iframe = wrapper.find("iframe")
+        expect(iframe.exists()).toBe(true)
+        expect(iframe.attributes("src")).toBeUndefined()
+    })
+
+    test("renders iframe with a youtube-nocookie.com embed src", () => {
+        const wrapper = mount(KsMarkdown, {
+            props: {content: "<iframe src=\"https://www.youtube-nocookie.com/embed/abc123\"></iframe>"},
+            global: globalConfig,
+        })
+        const iframe = wrapper.find("iframe")
+        expect(iframe.exists()).toBe(true)
+        expect(iframe.attributes("src")).toBe("https://www.youtube-nocookie.com/embed/abc123")
+    })
+
+    test("strips src from an iframe using http instead of https", () => {
+        const wrapper = mount(KsMarkdown, {
+            props: {content: "<iframe src=\"http://www.youtube.com/embed/abc123\"></iframe>"},
+            global: globalConfig,
+        })
+        const iframe = wrapper.find("iframe")
+        expect(iframe.exists()).toBe(true)
+        expect(iframe.attributes("src")).toBeUndefined()
+    })
+
+    test("injects custom-component inner HTML verbatim when xssProtection is disabled", () => {
+        // markRaw prevents Vue's reactive() from wrapping the component definition
+        // when it flows through @vue/test-utils' reactive props bag — without it, mounting
+        // warns "Vue received a Component that was made a reactive object".
+        const ChildCard = markRaw({name: "ChildCard", template: "<div class=\"child-card\"><slot /></div>"})
+        const wrapper = mount(KsMarkdown, {
+            props: {
+                content: "<ChildCard><img src=x onerror=\"alert('xss')\"></ChildCard>",
+                components: {ChildCard},
+                xssProtection: false,
+            },
+            global: globalConfig,
+        })
+        expect(wrapper.html()).toContain("onerror")
     })
 })

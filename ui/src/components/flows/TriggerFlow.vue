@@ -1,53 +1,53 @@
 <template>
     <div class="trigger-flow-wrapper">
         <span data-onboarding-target="flow-execute-button">
-            <KsButton
-                v-if="iconOnly"
-                :id="actionId"
-                class="execute-icon-only"
-                type="success"
-                :icon="PlayOutlineIcon"
-                :disabled="actionDisabled"
-                :aria-label="actionLabel"
-                @click="runAction()"
-            />
-            <KsButton
-                v-else
-                id="execute-button"
-                :icon="PlayOutlineIcon"
-                :type="type"
-                :disabled="isDisabled()"
-                @click="onClick()"
-            >
-                {{ t("execute") }}
-            </KsButton>
+            <slot name="button" :execute="runAction" :disabled="actionDisabled">
+                <KsButton
+                    :id="actionId"
+                    :icon="PlayOutlineIcon"
+                    :type="type"
+                    :disabled="actionDisabled"
+                    @click="runAction()"
+                >
+                    {{ actionLabel }}
+                </KsButton>
+            </slot>
         </span>
         <KsDialog
             id="execute-flow-dialog"
             v-model="isOpen"
             destroyOnClose
             :showClose="true"
+            :dirty="flowRunRef?.isDirty"
+            :dirtyMessage="$t('discard execution confirmation')"
             :beforeClose="beforeClose"
             :appendToBody="true"
-            :width="dialogWidth"
+            scrollable
+            large
         >
             <template #header>
-                <span v-html="t('execute the flow', {id: flowId})" />
+                <span v-html="$t('execute the flow', {id: flowId})" />
             </template>
-            <FlowRun ref="flowRunRef" @execution-trigger="handleExecutionStart" :redirect="!playgroundStore.enabled" />
+            <FlowRun ref="flowRunRef" :embed="true" :replaySubmit="submit" @execution-trigger="handleExecutionStart" :redirect="!playgroundStore.enabled" />
+            <template #footer>
+                <FlowRunActions :flowRun="flowRunRef" />
+            </template>
         </KsDialog>
         <KsDialog
             v-if="isSelectFlowOpen"
             v-model="isSelectFlowOpen"
             destroyOnClose
-            :beforeClose="beforeSelectFlowClose"
+            :dirty="selectFlowRunRef?.isDirty"
+            :dirtyMessage="$t('discard execution confirmation')"
+            :beforeClose="beforeClose"
             :appendToBody="true"
-            :width="dialogWidth"
+            scrollable
+            large
         >
             <KsForm
                 labelPosition="top"
             >
-                <KsFormItem :label="t('namespace')">
+                <KsFormItem :label="$t('namespace')">
                     <KsSelect
                         v-model="localNamespace"
                     >
@@ -61,7 +61,7 @@
                 </KsFormItem>
                 <KsFormItem
                     v-if="localNamespace && executionsStore.flowsExecutable.length > 0"
-                    :label="t('flow')"
+                    :label="$t('flow')"
                 >
                     <KsSelect
                         v-model="localFlow"
@@ -75,12 +75,15 @@
                         />
                     </KsSelect>
                 </KsFormItem>
-                <KsFormItem v-if="localFlow" :label="t('inputs')">
+                <KsFormItem v-if="localFlow" :label="$t('inputs')">
                     <div class="w-100">
-                        <FlowRun ref="selectFlowRunRef" @execution-trigger="handleExecutionStart" :redirect="!playgroundStore.enabled" />
+                        <FlowRun ref="selectFlowRunRef" :embed="true" @execution-trigger="handleExecutionStart" :redirect="!playgroundStore.enabled" />
                     </div>
                 </KsFormItem>
             </KsForm>
+            <template #footer>
+                <FlowRunActions :flowRun="selectFlowRunRef" />
+            </template>
         </KsDialog>
     </div>
 </template>
@@ -88,23 +91,17 @@
 
 <script setup lang="ts">
     import {ref, computed, watch} from "vue"
-    import {useMediaQuery} from "@vueuse/core"
     import {useI18n} from "vue-i18n"
     import {useToast} from "../../utils/toast"
-    import {useDiscardGuard} from "../../composables/useDiscardGuard"
     import {useApiStore} from "../../stores/api"
     import {useExecutionsStore} from "../../stores/executions"
     import {usePlaygroundStore} from "../../stores/playground"
     import {useFlowStore} from "../../stores/flow"
-    import FlowRun from "./FlowRun.vue"
+    import FlowRun, {type ReplaySubmitOptions} from "./FlowRun.vue"
+    import FlowRunActions from "./FlowRunActions.vue"
     import FlowWarningDialog from "./FlowWarningDialog.vue"
     import PlayOutlineIcon from "vue-material-design-icons/PlayOutline.vue"
-
-    interface ExecutableFlow {
-        id: string
-        deleted?: boolean
-        [key: string]: unknown
-    }
+    import type {FlowForExecution} from "@kestra-io/kestra-sdk"
 
     const props = withDefaults(defineProps<{
         flowId?: string
@@ -112,12 +109,14 @@
         disabled?: boolean
         type?: "default" | "primary" | "success" | "warning" | "info" | "danger" | "text" | ""
         flowSource?: string | null
-        iconOnly?: boolean
+        submit?: ((options: ReplaySubmitOptions) => void | Promise<void>) | null
+        lazy?: boolean
     }>(), {
         disabled: false,
         type: "primary",
         flowSource: null,
-        iconOnly: false,
+        submit: null,
+        lazy: false,
     })
 
     const {t} = useI18n({useScope: "global"})
@@ -131,9 +130,8 @@
     const isSelectFlowOpen = ref(false)
     const flowRunRef = ref<InstanceType<typeof FlowRun> | null>(null)
     const selectFlowRunRef = ref<InstanceType<typeof FlowRun> | null>(null)
-    const localFlow = ref<ExecutableFlow | undefined>(undefined)
+    const localFlow = ref<FlowForExecution | undefined>(undefined)
     const localNamespace = ref<string | undefined>(undefined)
-    const isLargeScreen = useMediaQuery("(min-width: 768px)")
 
     function trackExecutionAction(action: string) {
         apiStore.posthogEvents({
@@ -144,7 +142,10 @@
 
     async function handleExecutionStart() {
         closeModal()
-        toast.success(t("execution_started"))
+        // a caller that overrides the submission owns the user feedback too, otherwise it toasts twice
+        if (!props.submit) {
+            toast.success(t("execution_started"))
+        }
     }
 
     function isDisabled() {
@@ -170,27 +171,9 @@
         localNamespace.value = undefined
     }
 
-    const {guardedClose: guardExecuteClose} = useDiscardGuard(
-        () => flowRunRef.value?.isDirty,
-        {message: t("discard execution confirmation")},
-    )
-    const {guardedClose: guardSelectFlowClose} = useDiscardGuard(
-        () => selectFlowRunRef.value?.isDirty,
-        {message: t("discard execution confirmation")},
-    )
-
     function beforeClose(done: () => void) {
-        guardExecuteClose(() => {
-            reset()
-            done()
-        })
-    }
-
-    function beforeSelectFlowClose(done: () => void) {
-        guardSelectFlowClose(() => {
-            reset()
-            done()
-        })
+        reset()
+        done()
     }
 
     async function toggleModal(newValue?: boolean) {
@@ -241,10 +224,6 @@
             : t("execute"),
     )
 
-    const dialogWidth = computed(() =>
-        isLargeScreen.value ? "50%" : "90%",
-    )
-
     const computedFlowId = computed(() =>
         props.flowId ?? localFlow.value?.id,
     )
@@ -280,7 +259,7 @@
             
             loadDefinition()
         },
-        {immediate: true},
+        {immediate: !props.lazy},
     )
 
     watch(
@@ -311,11 +290,5 @@
 <style scoped>
     .trigger-flow-wrapper {
         display: inline;
-    }
-
-    .execute-icon-only {
-        aspect-ratio: 1 / 1;
-        padding-left: 0;
-        padding-right: 0;
     }
 </style>

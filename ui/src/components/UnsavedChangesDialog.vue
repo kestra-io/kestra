@@ -2,7 +2,6 @@
     <KsDialog
         v-model="unsavedChangesStore.isDialogVisible"
         :title="$t('unsaved changes')"
-        width="500px"
         alignCenter
         :closeOnClickModal="false"
         :closeOnPressEscape="false"

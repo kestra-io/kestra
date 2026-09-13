@@ -17,12 +17,35 @@ spec:
   type: {{ .Values.service.type }}
   ports:
     {{- range $n, $p := .Values.service.ports }}
+    {{- if and (eq $n "grpc") $.Values.deployments.controller.enabled }}
+    {{- /* grpc port is owned by the dedicated controller Service in distributed mode */}}
+    {{- else }}
     - name: {{ $n }}
       port: {{ $p.port }}
       targetPort: {{ $p.targetPort }}
       protocol: {{ $p.protocol | default "TCP" }}
     {{- end }}
+    {{- end }}
   selector:
     {{- include "kestra.selectorLabels" . | nindent 4 }}
     app.kubernetes.io/component: "{{ $deployment }}"
+{{- end }}
+{{- if .Values.deployments.controller.enabled }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: "{{ include "kestra.fullname" . }}-controller"
+  labels:
+    {{- include "kestra.labels" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  ports:
+    - name: grpc
+      port: {{ .Values.service.ports.grpc.port }}
+      targetPort: {{ .Values.service.ports.grpc.targetPort }}
+      protocol: {{ .Values.service.ports.grpc.protocol | default "TCP" }}
+  selector:
+    {{- include "kestra.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: controller
 {{- end }}

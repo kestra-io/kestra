@@ -1,5 +1,7 @@
 package io.kestra.worker.systemworker;
 
+import java.util.List;
+
 import io.kestra.core.contexts.KestraContext;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.server.ServerConfig;
@@ -9,13 +11,12 @@ import io.kestra.core.services.MaintenanceService;
 import io.kestra.core.worker.WorkerQueues;
 import io.kestra.worker.AbstractWorker;
 import io.kestra.worker.WorkerJobExecutor;
+
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.context.event.ApplicationEventPublisher;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
-
-import java.util.List;
 
 /**
  * Worker variant hosted inside the executor / standalone process. Reuses
@@ -27,6 +28,10 @@ import java.util.List;
  * Does not implement {@link io.kestra.core.runners.Worker} on purpose so it
  * does not collide with the regular {@link io.kestra.worker.WorkerAgent}
  * singleton in STANDALONE mode where both run in the same JVM.
+ * <p>
+ * Registers as {@link ServiceType#SYSTEM_WORKER} rather than {@link ServiceType#WORKER}: the
+ * {@link io.kestra.core.server.ServiceRegistry} is keyed by service type, so sharing the type with
+ * the {@link io.kestra.worker.WorkerAgent} would make one evict the other in STANDALONE mode.
  */
 @Singleton
 @Requires(property = "kestra.server-type", pattern = "(EXECUTOR|STANDALONE)")
@@ -41,10 +46,9 @@ public class SystemWorker extends AbstractWorker {
         List<DirectQueueWorkerIOSender<?>> workerIOSenders,
         MaintenanceService maintenanceService,
         MetricRegistry metricRegistry,
-        ServerConfig serverConfig
-    ) {
+        ServerConfig serverConfig) {
         super(
-            ServiceType.WORKER,
+            ServiceType.SYSTEM_WORKER,
             eventPublisher,
             workerJobExecutor,
             directQueueJobFetcher,

@@ -1,0 +1,13 @@
+id: webhook-draft
+namespace: io.kestra.tests
+draft: true
+
+tasks:
+  - id: return_value
+    type: io.kestra.plugin.core.debug.Return
+    format: "drafted"
+
+triggers:
+  - id: webhook
+    type: io.kestra.plugin.core.trigger.Webhook
+    key: webhook-draft-key

@@ -1,7 +1,6 @@
 export {useKvFilter} from "./kvFilter"
 export {useLogFilter} from "./logFilter"
 export {useFlowFilter} from "./flowFilter"
-export {usePluginFilter} from "./pluginFilter"
 export {useTriggerFilter} from "./triggerFilter"
 export {useSecretsFilter} from "./secretsFilter"
 export {useMcpToolsFilter} from "./mcpToolsFilter"

@@ -1,24 +1,24 @@
 package io.kestra.core.utils;
 
-import io.kestra.core.models.tasks.Output;
-import io.kestra.core.models.tasks.Task;
-import io.kestra.core.models.tasks.RunnableTask;
-import io.kestra.core.models.tasks.WorkerSelector;
-import io.kestra.core.models.property.Property;
-import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.annotation.Nullable;
-import jakarta.validation.constraints.NotNull;
-import lombok.*;
-import lombok.experimental.SuperBuilder;
-import io.kestra.core.runners.RunContext;
-import io.kestra.core.models.annotations.Plugin;
-
 import java.time.Duration;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+import io.kestra.core.models.annotations.Plugin;
+import io.kestra.core.models.property.Property;
+import io.kestra.core.models.tasks.Output;
+import io.kestra.core.models.tasks.RunnableTask;
+import io.kestra.core.models.tasks.Task;
+import io.kestra.core.models.tasks.WorkerSelector;
+import io.kestra.core.runners.RunContext;
+
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.annotation.Nullable;
+import jakarta.validation.constraints.NotNull;
+import lombok.*;
+import lombok.experimental.SuperBuilder;
 
 @SuperBuilder(toBuilder = true)
 @ToString
@@ -88,13 +88,13 @@ public class CountDownLatchTask extends Task implements RunnableTask<Output> {
         return null;
     }
 
-
     public static CountDownLatchTask getTaskForCountDownLatch(CountDownLatch countDownLatch, CountDownLatch awaitCountDownLatch, Duration awaitCountDownLatchDuration) {
         return getTaskForCountDownLatch(countDownLatch, awaitCountDownLatch, awaitCountDownLatchDuration, null);
     }
 
     @SuppressWarnings("unchecked")
-    public static CountDownLatchTask getTaskForCountDownLatch(CountDownLatch countDownLatch, CountDownLatch awaitCountDownLatch, Duration awaitCountDownLatchDuration, WorkerSelector workerSelector) {
+    public static CountDownLatchTask getTaskForCountDownLatch(CountDownLatch countDownLatch, CountDownLatch awaitCountDownLatch, Duration awaitCountDownLatchDuration,
+        WorkerSelector workerSelector) {
         CountDownLatchTaskBuilder<?, ?> builder = builder()
             .id("unit-test")
             .type(CountDownLatchTask.class.getName())

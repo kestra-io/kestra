@@ -1,26 +1,30 @@
 package io.kestra.core.runners.pebble.functions;
 
-import io.kestra.core.exceptions.InternalException;
-import io.kestra.core.utils.DateUtils;
-import io.pebbletemplates.pebble.error.PebbleException;
-import io.pebbletemplates.pebble.template.EvaluationContext;
-import io.pebbletemplates.pebble.template.PebbleTemplate;
-
 import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import io.kestra.core.exceptions.InternalException;
+import io.kestra.core.utils.DateUtils;
+
+import io.pebbletemplates.pebble.error.PebbleException;
+import io.pebbletemplates.pebble.template.EvaluationContext;
+import io.pebbletemplates.pebble.template.PebbleTemplate;
+
 /**
  * Pebble function that returns the day-of-week name of the given date as an uppercase string
  * (e.g. {@code "MONDAY"}, {@code "TUESDAY"}, …, {@code "SUNDAY"}).
  *
- * <p>Prefer this over {@code date | date('EEEE')} when a locale-independent, machine-readable
+ * <p>
+ * Prefer this over {@code date | date('EEEE')} when a locale-independent, machine-readable
  * day name is needed (for example, to compare against another value or pass to a condition).
  *
- * <p>Usage: {@code {{ dayOfWeek(date) }}}
+ * <p>
+ * Usage: {@code {{ dayOfWeek(date) }}}
  *
- * <p>Note: the day name is derived from the local date component of the input string;
+ * <p>
+ * Note: the day name is derived from the local date component of the input string;
  * no UTC normalization is performed. A datetime string such as {@code "2025-01-06T00:30:00+02:00"}
  * yields {@code "MONDAY"} (Jan 6), not {@code "SUNDAY"} (Jan 5 in UTC).
  *

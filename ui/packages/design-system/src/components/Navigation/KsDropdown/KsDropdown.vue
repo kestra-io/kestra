@@ -1,6 +1,8 @@
 <template>
     <ElDropdown
+        ref="dropdown"
         :persistent="false"
+        :popperOptions="POPPER_OPTIONS"
         v-bind="$attrs"
     >
         <template v-if="$slots.default" #default>
@@ -13,19 +15,50 @@
 </template>
 
 <script setup lang="ts">
-    import {ElDropdown} from "element-plus"
+    import {ref} from "vue"
+    import {ElDropdown, type DropdownInstance} from "element-plus"
 
     defineOptions({inheritAttrs: false})
+
+    const POPPER_OPTIONS = {
+        modifiers: [
+            {name: "flip", options: {rootBoundary: "viewport", padding: 8}},
+            {name: "preventOverflow", options: {rootBoundary: "viewport", padding: 8}},
+        ],
+    }
 
     defineSlots<{
         default?(): unknown
         dropdown?(): unknown
     }>()
+
+    // Forward the underlying ElDropdown open/close controls so callers can dismiss the menu
+    // programmatically — needed when the dropdown holds custom content (not KsDropdownItems,
+    // which auto-close on click).
+    const dropdown = ref<DropdownInstance>()
+    defineExpose({
+        handleOpen: () => dropdown.value?.handleOpen(),
+        handleClose: () => dropdown.value?.handleClose(),
+    })
 </script>
 
 <style lang="scss">
     @use '../../../assets/styles/el-ns';
     @use 'element-plus/theme-chalk/src/dropdown';
+
+    .kel-dropdown {
+        // Element Plus draws the split-button divider as the border colour at half opacity,
+        // which vanishes against every Kestra button fill; use the strong border token instead
+        .kel-dropdown__caret-button.kel-button::before {
+            background: var(--ks-border-strong);
+            opacity: 1;
+        }
+
+        // a primary button is filled, so use the lighter button-group divide colour instead
+        .kel-dropdown__caret-button.kel-button--primary:not(.is-disabled)::before {
+            background: var(--kel-button-divide-border-color);
+        }
+    }
 
     .kel-dropdown__popper {
         --kel-popper-border-radius: var(--ks-radius-base);
@@ -68,11 +101,25 @@
                 margin-right: 0;
             }
 
+            &:not(.is-disabled) i {
+                color: var(--ks-icon-muted);
+            }
+
             &:not(.is-disabled):hover,
             &:not(.is-disabled):focus {
                 background-color: var(--ks-bg-hover-elevated);
                 outline: none;
                 box-shadow: none;
+            }
+
+            &.is-danger:not(.is-disabled):hover,
+            &.is-danger:not(.is-disabled):focus {
+                background-color: var(--ks-bg-error);
+                color: var(--ks-text-error);
+
+                i {
+                    color: var(--ks-icon-error);
+                }
             }
 
             > a,

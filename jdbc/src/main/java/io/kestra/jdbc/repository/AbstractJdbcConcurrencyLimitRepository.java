@@ -42,6 +42,12 @@ public class AbstractJdbcConcurrencyLimitRepository extends AbstractJdbcReposito
     }
 
     @Override
+    public ConcurrencyLimit delete(ConcurrencyLimit concurrencyLimit) {
+        this.jdbcRepository.delete(concurrencyLimit);
+        return concurrencyLimit;
+    }
+
+    @Override
     public Optional<ConcurrencyLimit> findById(String tenantId, String namespace, String flowId) {
         return jdbcRepository
             .getDslContextWrapper()

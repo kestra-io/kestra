@@ -1,20 +1,11 @@
 import type {Page} from "@playwright/test"
-import {expect} from "@playwright/test"
-import {shared} from "../fixtures/shared"
 
+/**
+ * There is no `login()` here: the session comes from the `setup` project's
+ * `storageState` (see `tests/e2e/auth.setup.ts`).
+ */
 export class BasePage {
     constructor(public readonly page: Page) { }
-
-    async login() {
-        await this.page.goto("/")
-        await this.page.getByRole("textbox", {name: "Email"}).fill(shared.username)
-        await this.page.getByRole("textbox", {name: "Password"}).fill(shared.password)
-        await this.page.getByRole("button", {name: "Login"}).click()
-
-        await this.page.goto("/")
-
-        await expect(this.page.getByRole("heading", {name: "Default Dashboard"})).toBeVisible()
-    }
 
     async addQueryParam(page: Page, key: string, value: string) {
         // Get the current URL

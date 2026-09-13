@@ -9,12 +9,10 @@ import com.google.common.collect.ImmutableMap;
 import io.kestra.core.models.ServerType;
 import io.kestra.core.runners.Indexer;
 import io.kestra.core.services.IgnoreExecutionService;
-import org.awaitility.Awaitility;
+import io.kestra.core.utils.Await;
 
-import io.micronaut.context.ApplicationContext;
 import jakarta.inject.Inject;
 import picocli.CommandLine;
-import io.kestra.core.utils.Await;
 
 @CommandLine.Command(
     name = "indexer",

@@ -4,8 +4,6 @@
         type="instance"
         demoCta
         :title="$t('demos.instance.title')"
-        video="https://www.youtube.com/embed/pcC3OAJPQao"
-        learnMore="https://kestra.io/docs/enterprise/instance"
     >
         <template #description>
             {{ $t('demos.instance.message') }}

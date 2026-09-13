@@ -8,5 +8,6 @@ public record TasksConfiguration(
     @Nullable TmpDir tmpDir) {
 
     @ConfigurationProperties("tmp-dir")
-    public record TmpDir(@Nullable String path) {}
+    public record TmpDir(@Nullable String path) {
+    }
 }

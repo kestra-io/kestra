@@ -1,5 +1,5 @@
 import {describe, test, expect} from "vitest"
-import {isOffsetInPebbleBlock, isPebbleEnabled, PEBBLE_SCHEMA_TYPES} from "../../../src/utils/pebbleBlock"
+import {createPebbleEntryTracker, isOffsetInPebbleBlock, isPebbleEnabled, pebbleBlockKeyAtOffset, PEBBLE_SCHEMA_TYPES} from "../../../src/utils/pebbleBlock"
 import {findDuplicateTaskIds} from "../../../src/utils/yamlValidation"
 
 describe("KsEditor / pebbleBlock", () => {
@@ -82,6 +82,97 @@ errors:
     test("handles invalid yaml without throwing", () => {
         const yaml = ":::: not yaml ::::"
         expect(() => findDuplicateTaskIds(yaml)).not.toThrow()
+    })
+})
+
+describe("KsEditor / pebbleBlockKeyAtOffset", () => {
+    //               0         1
+    //               0123456789012345678
+    const text =    "a = {{ x }} {{ y }}"
+
+    test("returns null outside any block", () => {
+        expect(pebbleBlockKeyAtOffset(text, 2)).toBe(null)
+    })
+
+    test("returns the opening `{{` offset for the containing block", () => {
+        expect(pebbleBlockKeyAtOffset(text, text.indexOf("x"))).toBe(4)
+        expect(pebbleBlockKeyAtOffset(text, text.indexOf("y"))).toBe(12)
+    })
+
+    test("distinct blocks yield distinct keys", () => {
+        const a = pebbleBlockKeyAtOffset(text, text.indexOf("x"))
+        const b = pebbleBlockKeyAtOffset(text, text.indexOf("y"))
+        expect(a).not.toBe(b)
+    })
+
+    // Regression for kestra #14989: the cursor wedged between the two opening braces (`{|{}}`)
+    // must NOT count as being in the block. It resolves to the same nearest `{{` as `{{|}}`,
+    // so without this distinction moving `{{|}}` -> `{|{}}` -> `{{|}}` looks like "never left"
+    // and autocomplete never reopens.
+    test("cursor between the opening braces is not in the block", () => {
+        const empty = "x = {{}}"          // `{{` at 4, `}}` at 6
+        expect(pebbleBlockKeyAtOffset(empty, 6)).toBe(4)   // {{|}}  -> in body
+        expect(pebbleBlockKeyAtOffset(empty, 5)).toBe(null) // {|{}}  -> wedged in `{{`
+        expect(pebbleBlockKeyAtOffset(empty, 7)).toBe(null) // {{}|}  -> wedged in `}}`
+    })
+})
+
+describe("KsEditor / createPebbleEntryTracker", () => {
+    test("detects a fresh entry into a Pebble block", () => {
+        const tracker = createPebbleEntryTracker()
+        tracker.track(null)
+        tracker.track(10)
+        expect(tracker.consumeEntered()).toBe(true)
+    })
+
+    test("consumeEntered resets the flag", () => {
+        const tracker = createPebbleEntryTracker()
+        tracker.track(null)
+        tracker.track(10)
+        expect(tracker.consumeEntered()).toBe(true)
+        expect(tracker.consumeEntered()).toBe(false)
+    })
+
+    test("no entry while staying outside a Pebble block", () => {
+        const tracker = createPebbleEntryTracker()
+        tracker.track(null)
+        tracker.track(null)
+        expect(tracker.consumeEntered()).toBe(false)
+    })
+
+    test("no fresh entry while staying inside the same block", () => {
+        const tracker = createPebbleEntryTracker()
+        tracker.track(10)
+        expect(tracker.consumeEntered()).toBe(true)
+        // cursor keeps moving but stays in the same block (same key) — should not re-trigger
+        tracker.track(10)
+        tracker.track(10)
+        expect(tracker.consumeEntered()).toBe(false)
+    })
+
+    // Regression for kestra #14989: a fast move out of and back into a `{{ }}` block,
+    // collapsed into a single debounced settle, must still register as a fresh entry.
+    // The previous implementation updated the latch only inside the debounced callback,
+    // so the intermediate "out" position was swallowed and autocomplete never reopened.
+    test("detects re-entry after a fast out-and-back round-trip", () => {
+        const tracker = createPebbleEntryTracker()
+        tracker.track(10) // already inside
+        expect(tracker.consumeEntered()).toBe(true)
+        // within a single debounce burst: leave, then return to the same block
+        tracker.track(null)
+        tracker.track(10)
+        expect(tracker.consumeEntered()).toBe(true)
+    })
+
+    // Regression for kestra #14989 follow-up: moving straight from one `{{ }}` block to a
+    // different one (no non-block position in between) is a fresh entry too. A boolean
+    // in/out latch missed this because "in pebble" never flipped to false.
+    test("detects moving directly from one block to another", () => {
+        const tracker = createPebbleEntryTracker()
+        tracker.track(10) // in block A
+        expect(tracker.consumeEntered()).toBe(true)
+        tracker.track(30) // straight into block B
+        expect(tracker.consumeEntered()).toBe(true)
     })
 })
 

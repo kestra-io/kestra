@@ -1,5 +1,5 @@
-import {h, markRaw, onScopeDispose, provide, Ref, watchEffect} from "vue"
-import FlowFileEditorTab, {EditorTabProps, FILES_SET_DIRTY_INJECTION_KEY, FILES_UPDATE_CONTENT_INJECTION_KEY} from "../inputs/FlowFileEditorTab.vue"
+import {h, markRaw, onScopeDispose, provide, ref, Ref, watchEffect} from "vue"
+import FlowFileEditorTab, {EditorTabProps, FILES_REFRESH_CONTENT_INJECTION_KEY, FILES_SET_DIRTY_INJECTION_KEY, FILES_UPDATE_CONTENT_INJECTION_KEY} from "../inputs/FlowFileEditorTab.vue"
 import TypeIcon from "../utils/icons/Type.vue"
 import {EditorElement, Panel, Tab, TabLive} from "../../utils/multiPanelTypes"
 import {FILES_CLOSE_TAB_INJECTION_KEY, FILES_OPEN_TAB_INJECTION_KEY} from "../inputs/FileExplorer.vue"
@@ -98,11 +98,15 @@ export function useFilesPanels(panels: Ref<Panel[]>, namespace: Ref<string | und
 
     provide(FILES_CLOSE_TAB_INJECTION_KEY, (tab) => {
         const uid = generateUid(tab)
+        let closed = false
         for(const panel of panels.value){
-            const tabIndex = panel.tabs.findIndex(e => e.uid.startsWith(uid))
-            
+            // Exact match: uids are `code-<path>`, so a prefix test picks `a.python` when asked
+            // for `a.py`, whenever the longer path is listed first.
+            const tabIndex = panel.tabs.findIndex(e => e.uid === uid)
+
             if (tabIndex > -1) {
-                // if the closed tab is the active one, 
+                closed = true
+                // if the closed tab is the active one,
                 // we need to set a new active tab
                 panel.tabs.splice(tabIndex, 1)
                 if (panel.tabs.length === 0) {
@@ -111,12 +115,13 @@ export function useFilesPanels(panels: Ref<Panel[]>, namespace: Ref<string | und
                 }
                 panel.activeTab = panel.tabs[
                     Math.min(
-                        tabIndex, 
+                        tabIndex,
                         panel.tabs.length - 1,
                     )
                 ]
             }
         }
+        return closed
     })
 
     provide(FILES_SET_DIRTY_INJECTION_KEY, ({path, dirty}) => {
@@ -135,6 +140,9 @@ export function useFilesPanels(panels: Ref<Panel[]>, namespace: Ref<string | und
             tab.path = path
         }
     })
+
+    const externalContentUpdates = ref<Record<string, {content: string}>>({})
+    provide(FILES_REFRESH_CONTENT_INJECTION_KEY, externalContentUpdates)
 
     const namespacesStore = useNamespacesStore()
 

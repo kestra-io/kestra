@@ -36,6 +36,7 @@ import io.kestra.core.utils.Enums;
         @JsonSubTypes.Type(value = ResetTrigger.class, name = "RESET_TRIGGER"),
         @JsonSubTypes.Type(value = SetDisableTrigger.class, name = "SET_DISABLE_TRIGGER"),
         @JsonSubTypes.Type(value = TriggerReceived.class, name = "TRIGGER_RECEIVED"),
+        @JsonSubTypes.Type(value = TriggerWorkerLost.class, name = "TRIGGER_WORKER_LOST"),
         @JsonSubTypes.Type(value = TriggerEvent.Invalid.class, name = "INVALID"),
     }
 )

@@ -9,6 +9,8 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import io.kestra.core.exceptions.InvalidQueryFiltersException;
 import io.kestra.core.models.QueryFilter.Field;
 import io.kestra.core.models.QueryFilter.Logical;
@@ -18,6 +20,7 @@ import io.kestra.core.models.dashboards.filters.AbstractFilter;
 import io.kestra.core.models.dashboards.filters.EqualTo;
 import io.kestra.core.models.dashboards.filters.Prefix;
 import io.kestra.core.models.dashboards.filters.StartsWith;
+import io.kestra.core.serializers.JacksonMapper;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertThrows;
@@ -39,6 +42,26 @@ public class QueryFilterTest {
             () -> QueryFilter.validateQueryFilters(List.of(filter), resource)
         );
         assertThat(e.getMessage()).contains("Operation");
+    }
+
+    @Test
+    void shouldThrowExceptionWhenFieldIsNotSupportedForResource() {
+        QueryFilter filter = QueryFilter.builder().field(Field.LOCKED).operation(Op.EQUALS).value(true).build();
+        InvalidQueryFiltersException e = assertThrows(
+            InvalidQueryFiltersException.class,
+            () -> QueryFilter.validateQueryFilters(List.of(filter), Resource.FLOW)
+        );
+        assertThat(e.getMessage()).contains("LOCKED", "FLOW");
+    }
+
+    @Test
+    void shouldThrowExceptionWhenFieldIsNotSupportedForPromotionTargets() {
+        QueryFilter filter = QueryFilter.builder().field(Field.NAMESPACE).operation(Op.EQUALS).value("io.kestra").build();
+        InvalidQueryFiltersException e = assertThrows(
+            InvalidQueryFiltersException.class,
+            () -> QueryFilter.validateQueryFilters(List.of(filter), Resource.PROMOTION_TARGETS)
+        );
+        assertThat(e.getMessage()).contains("NAMESPACE", "PROMOTION_TARGETS");
     }
 
     static Stream<Arguments> validOperationFilters() {
@@ -83,7 +106,10 @@ public class QueryFilterTest {
                     Op.NOT_EQUALS,
                     Op.IN,
                     Op.NOT_IN,
-                    Op.CONTAINS
+                    Op.CONTAINS,
+                    Op.NOT_CONTAINS,
+                    Op.IS_NULL,
+                    Op.IS_NOT_NULL
                 )
             ),
 
@@ -176,6 +202,16 @@ public class QueryFilterTest {
             ),
 
             buildQueryFiltersForOperations(
+                Field.KIND, Resource.LOG,
+                Set.of(
+                    Op.EQUALS,
+                    Op.NOT_EQUALS,
+                    Op.IN,
+                    Op.NOT_IN
+                )
+            ),
+
+            buildQueryFiltersForOperations(
                 Field.CHILD_FILTER, Resource.EXECUTION,
                 Set.of(
                     Op.EQUALS,
@@ -215,7 +251,9 @@ public class QueryFilterTest {
                 Field.LEVEL, Resource.LOG,
                 Set.of(
                     Op.GREATER_THAN_OR_EQUAL_TO,
-                    Op.LESS_THAN_OR_EQUAL_TO
+                    Op.LESS_THAN_OR_EQUAL_TO,
+                    Op.IN,
+                    Op.NOT_IN
                 )
             ),
 
@@ -312,7 +350,36 @@ public class QueryFilterTest {
             ),
 
             buildQueryFiltersForOperations(
+                Field.LOCKED, Resource.ASSET,
+                Set.of(
+                    Op.EQUALS
+                )
+            ),
+
+            buildQueryFiltersForOperations(
                 Field.TYPE, Resource.CREDENTIALS,
+                Set.of(
+                    Op.EQUALS,
+                    Op.NOT_EQUALS,
+                    Op.CONTAINS,
+                    Op.STARTS_WITH,
+                    Op.ENDS_WITH,
+                    Op.REGEX,
+                    Op.IN,
+                    Op.NOT_IN
+                )
+            ),
+
+            buildQueryFiltersForOperations(
+                Field.QUERY, Resource.PROMOTION_TARGETS,
+                Set.of(
+                    Op.EQUALS,
+                    Op.NOT_EQUALS
+                )
+            ),
+
+            buildQueryFiltersForOperations(
+                Field.ID, Resource.PROMOTION_TARGETS,
                 Set.of(
                     Op.EQUALS,
                     Op.NOT_EQUALS,
@@ -364,6 +431,22 @@ public class QueryFilterTest {
             ),
 
             buildQueryFiltersForOperations(
+                Field.QUERY, Resource.BANNER,
+                Set.of(
+                    Op.EQUALS,
+                    Op.NOT_EQUALS
+                )
+            ),
+
+            buildQueryFiltersForOperations(
+                Field.QUERY, Resource.SERVICE_INSTANCE,
+                Set.of(
+                    Op.EQUALS,
+                    Op.NOT_EQUALS
+                )
+            ),
+
+            buildQueryFiltersForOperations(
                 Field.TYPE, Resource.BANNER,
                 Set.of(
                     Op.EQUALS,
@@ -374,7 +457,7 @@ public class QueryFilterTest {
             ),
 
             buildQueryFiltersForOperations(
-                Field.SUPER_ADMIN, Resource.USER,
+                Field.INSTANCE_OWNER, Resource.USER,
                 Set.of(
                     Op.EQUALS
                 )
@@ -436,10 +519,33 @@ public class QueryFilterTest {
             ),
 
             buildQueryFiltersForOperations(
+                // STATUS is virtual for Invitation (ACCEPTED/PENDING map to the status column,
+                // EXPIRED is computed from expired_at), so unlike Case it can't support IN/NOT_IN
+                // even though Field.STATUS.supportedOp() offers it globally — see Resource.supportedOp().
                 Field.STATUS, Resource.INVITATION,
                 Set.of(
                     Op.EQUALS,
                     Op.NOT_EQUALS
+                )
+            ),
+
+            buildQueryFiltersForOperations(
+                Field.SEVERITY, Resource.CASE,
+                Set.of(
+                    Op.EQUALS,
+                    Op.NOT_EQUALS,
+                    Op.IN,
+                    Op.NOT_IN
+                )
+            ),
+
+            buildQueryFiltersForOperations(
+                Field.ASSIGNEE, Resource.CASE,
+                Set.of(
+                    Op.EQUALS,
+                    Op.NOT_EQUALS,
+                    Op.IN,
+                    Op.NOT_IN
                 )
             ),
 
@@ -449,7 +555,7 @@ public class QueryFilterTest {
             ),
 
             buildQueryFiltersForOperations(
-                Field.SUPER_ADMIN, Resource.INVITATION,
+                Field.INSTANCE_OWNER, Resource.INVITATION,
                 Set.of(
                     Op.EQUALS
                 )
@@ -707,24 +813,24 @@ public class QueryFilterTest {
 
     @Test
     void shouldBuildLeafWhenFieldAndOperationProvided() {
-        assertDoesNotThrow(() ->
-            QueryFilter.builder().field(Field.STATE).operation(Op.EQUALS).value("RUNNING").build()
+        assertDoesNotThrow(
+            () -> QueryFilter.builder().field(Field.STATE).operation(Op.EQUALS).value("RUNNING").build()
         );
     }
 
     @Test
     void shouldBuildNodeWhenLogicalAndChildrenProvided() {
         QueryFilter leaf = QueryFilter.builder().field(Field.STATE).operation(Op.EQUALS).value("X").build();
-        assertDoesNotThrow(() ->
-            QueryFilter.builder().logical(Logical.OR).children(List.of(leaf)).build()
+        assertDoesNotThrow(
+            () -> QueryFilter.builder().logical(Logical.OR).children(List.of(leaf)).build()
         );
     }
 
     @Test
     void shouldThrowExceptionWhenMixingLeafAndNodeShape() {
         QueryFilter leaf = QueryFilter.builder().field(Field.STATE).operation(Op.EQUALS).value("X").build();
-        assertThrows(IllegalArgumentException.class, () ->
-            QueryFilter.builder()
+        assertThrows(
+            IllegalArgumentException.class, () -> QueryFilter.builder()
                 .field(Field.STATE)
                 .operation(Op.EQUALS)
                 .logical(Logical.OR)
@@ -735,15 +841,15 @@ public class QueryFilterTest {
 
     @Test
     void shouldThrowExceptionWhenNodeHasEmptyChildren() {
-        assertThrows(IllegalArgumentException.class, () ->
-            QueryFilter.builder().logical(Logical.OR).children(List.of()).build()
+        assertThrows(
+            IllegalArgumentException.class, () -> QueryFilter.builder().logical(Logical.OR).children(List.of()).build()
         );
     }
 
     @Test
     void shouldThrowExceptionWhenLeafMissingOperation() {
-        assertThrows(IllegalArgumentException.class, () ->
-            QueryFilter.builder().field(Field.STATE).build()
+        assertThrows(
+            IllegalArgumentException.class, () -> QueryFilter.builder().field(Field.STATE).build()
         );
     }
 
@@ -757,9 +863,66 @@ public class QueryFilterTest {
             .logical(Logical.OR)
             .children(List.of(invalidLeaf))
             .build();
-        assertThrows(InvalidQueryFiltersException.class, () ->
-            QueryFilter.validateQueryFilters(List.of(node), Resource.EXECUTION)
+        assertThrows(
+            InvalidQueryFiltersException.class, () -> QueryFilter.validateQueryFilters(List.of(node), Resource.EXECUTION)
         );
+    }
+
+    @Test
+    void shouldThrowExceptionWhenRegexIsCatastrophic() {
+        // Given a REGEX filter prone to catastrophic backtracking
+        QueryFilter filter = QueryFilter.builder()
+            .field(Field.NAMESPACE)
+            .operation(Op.REGEX)
+            .value("(a+)+")
+            .build();
+
+        // When / Then — it must be rejected before reaching any repository backend
+        InvalidQueryFiltersException e = assertThrows(
+            InvalidQueryFiltersException.class,
+            () -> QueryFilter.validateQueryFilters(List.of(filter), Resource.EXECUTION)
+        );
+        assertThat(e.getMessage()).contains("catastrophic backtracking");
+    }
+
+    @ParameterizedTest
+    @MethodSource("invalidSyntaxRegex")
+    void shouldThrowExceptionWhenRegexSyntaxIsInvalid(String pattern) {
+        // Given a REGEX filter that is not a syntactically valid regular expression
+        QueryFilter filter = QueryFilter.builder()
+            .field(Field.NAMESPACE)
+            .operation(Op.REGEX)
+            .value(pattern)
+            .build();
+
+        // When / Then — it must be rejected before reaching any repository backend
+        InvalidQueryFiltersException e = assertThrows(
+            InvalidQueryFiltersException.class,
+            () -> QueryFilter.validateQueryFilters(List.of(filter), Resource.EXECUTION)
+        );
+        assertThat(e.getMessage()).contains("is not a valid regular expression");
+        assertThat(e.getMessage()).contains(pattern);
+        assertThat(e.getMessage()).doesNotContain("catastrophic backtracking");
+    }
+
+    static Stream<Arguments> invalidSyntaxRegex() {
+        return Stream.of(
+            Arguments.of("[a-"),
+            Arguments.of("*abc")
+        );
+    }
+
+    @Test
+    void shouldNotThrowExceptionWhenRegexIsSafe() {
+        // Given a safe REGEX filter
+        QueryFilter filter = QueryFilter.builder()
+            .field(Field.NAMESPACE)
+            .operation(Op.REGEX)
+            .value("io\\.kestra\\..*")
+            .build();
+
+        // When / Then
+        assertDoesNotThrow(() -> QueryFilter.validateQueryFilters(List.of(filter), Resource.EXECUTION));
     }
 
     @Test
@@ -959,6 +1122,21 @@ public class QueryFilterTest {
             ),
 
             buildQueryFiltersForOperations(
+                Field.KIND, Resource.LOG,
+                Set.of(
+                    Op.GREATER_THAN,
+                    Op.LESS_THAN,
+                    Op.GREATER_THAN_OR_EQUAL_TO,
+                    Op.LESS_THAN_OR_EQUAL_TO,
+                    Op.STARTS_WITH,
+                    Op.ENDS_WITH,
+                    Op.CONTAINS,
+                    Op.REGEX,
+                    Op.PREFIX
+                )
+            ),
+
+            buildQueryFiltersForOperations(
                 Field.CHILD_FILTER, Resource.EXECUTION,
                 Set.of(
                     Op.GREATER_THAN,
@@ -1004,8 +1182,6 @@ public class QueryFilterTest {
                     Op.NOT_EQUALS,
                     Op.GREATER_THAN,
                     Op.LESS_THAN,
-                    Op.IN,
-                    Op.NOT_IN,
                     Op.STARTS_WITH,
                     Op.ENDS_WITH,
                     Op.CONTAINS,
@@ -1098,7 +1274,53 @@ public class QueryFilterTest {
             ),
 
             buildQueryFiltersForOperations(
+                Field.LOCKED, Resource.ASSET,
+                Set.of(
+                    Op.NOT_EQUALS,
+                    Op.GREATER_THAN,
+                    Op.LESS_THAN,
+                    Op.GREATER_THAN_OR_EQUAL_TO,
+                    Op.LESS_THAN_OR_EQUAL_TO,
+                    Op.IN,
+                    Op.NOT_IN,
+                    Op.STARTS_WITH,
+                    Op.ENDS_WITH,
+                    Op.CONTAINS,
+                    Op.REGEX,
+                    Op.PREFIX
+                )
+            ),
+
+            buildQueryFiltersForOperations(
                 Field.TYPE, Resource.CREDENTIALS,
+                Set.of(
+                    Op.PREFIX,
+                    Op.LESS_THAN,
+                    Op.LESS_THAN_OR_EQUAL_TO,
+                    Op.GREATER_THAN,
+                    Op.GREATER_THAN_OR_EQUAL_TO
+                )
+            ),
+
+            buildQueryFiltersForOperations(
+                Field.QUERY, Resource.PROMOTION_TARGETS,
+                Set.of(
+                    Op.GREATER_THAN,
+                    Op.LESS_THAN,
+                    Op.GREATER_THAN_OR_EQUAL_TO,
+                    Op.LESS_THAN_OR_EQUAL_TO,
+                    Op.IN,
+                    Op.NOT_IN,
+                    Op.STARTS_WITH,
+                    Op.ENDS_WITH,
+                    Op.CONTAINS,
+                    Op.REGEX,
+                    Op.PREFIX
+                )
+            ),
+
+            buildQueryFiltersForOperations(
+                Field.ID, Resource.PROMOTION_TARGETS,
                 Set.of(
                     Op.PREFIX,
                     Op.LESS_THAN,
@@ -1223,12 +1445,42 @@ public class QueryFilterTest {
             buildQueryFiltersForOperations(
                 Field.STATUS, Resource.INVITATION,
                 Set.of(
+                    Op.IN,
+                    Op.NOT_IN,
                     Op.GREATER_THAN,
                     Op.LESS_THAN,
                     Op.GREATER_THAN_OR_EQUAL_TO,
                     Op.LESS_THAN_OR_EQUAL_TO,
-                    Op.IN,
-                    Op.NOT_IN,
+                    Op.STARTS_WITH,
+                    Op.ENDS_WITH,
+                    Op.CONTAINS,
+                    Op.REGEX,
+                    Op.PREFIX
+                )
+            ),
+
+            buildQueryFiltersForOperations(
+                Field.SEVERITY, Resource.CASE,
+                Set.of(
+                    Op.GREATER_THAN,
+                    Op.LESS_THAN,
+                    Op.GREATER_THAN_OR_EQUAL_TO,
+                    Op.LESS_THAN_OR_EQUAL_TO,
+                    Op.STARTS_WITH,
+                    Op.ENDS_WITH,
+                    Op.CONTAINS,
+                    Op.REGEX,
+                    Op.PREFIX
+                )
+            ),
+
+            buildQueryFiltersForOperations(
+                Field.ASSIGNEE, Resource.CASE,
+                Set.of(
+                    Op.GREATER_THAN,
+                    Op.LESS_THAN,
+                    Op.GREATER_THAN_OR_EQUAL_TO,
+                    Op.LESS_THAN_OR_EQUAL_TO,
                     Op.STARTS_WITH,
                     Op.ENDS_WITH,
                     Op.CONTAINS,
@@ -1257,7 +1509,7 @@ public class QueryFilterTest {
             ),
 
             buildQueryFiltersForOperations(
-                Field.SUPER_ADMIN, Resource.INVITATION,
+                Field.INSTANCE_OWNER, Resource.INVITATION,
                 Set.of(
                     Op.NOT_EQUALS,
                     Op.GREATER_THAN,
@@ -1585,6 +1837,59 @@ public class QueryFilterTest {
                 )
             )
         ).flatMap(s -> s);
+    }
+
+    // The @JsonProperty added on each Field/Logical constant aligns the generated OpenAPI schema
+    // with the @JsonValue wire form; these guard that the actual Jackson wire form is still driven
+    // by @JsonValue/@JsonCreator (i.e. the enum wire values), not the constant names.
+    @Test
+    void shouldSerializeFieldUsingItsWireValue() throws Exception {
+        // Given
+        ObjectMapper mapper = JacksonMapper.ofJson();
+        QueryFilter filter = QueryFilter.builder()
+            .field(Field.TIME_RANGE)
+            .operation(Op.EQUALS)
+            .value("PT24H")
+            .build();
+
+        // When
+        String json = mapper.writeValueAsString(filter);
+
+        // Then
+        assertThat(json).contains("\"field\":\"timeRange\"");
+        assertThat(json).doesNotContain("TIME_RANGE");
+    }
+
+    @Test
+    void shouldDeserializeFieldFromItsWireValue() throws Exception {
+        // Given
+        ObjectMapper mapper = JacksonMapper.ofJson();
+
+        // When
+        QueryFilter filter = mapper.readValue(
+            "{\"field\":\"flowId\",\"operation\":\"EQUALS\",\"value\":\"my-flow\"}",
+            QueryFilter.class
+        );
+
+        // Then
+        assertThat(filter.field()).isEqualTo(Field.FLOW_ID);
+    }
+
+    @Test
+    void shouldRoundTripLogicalNodeUsingWireValues() throws Exception {
+        // Given
+        ObjectMapper mapper = JacksonMapper.ofJson();
+        QueryFilter leaf = QueryFilter.builder().field(Field.STATE).operation(Op.EQUALS).value("RUNNING").build();
+        QueryFilter node = QueryFilter.builder().logical(Logical.OR).children(List.of(leaf)).build();
+
+        // When
+        String json = mapper.writeValueAsString(node);
+        QueryFilter roundTripped = mapper.readValue(json, QueryFilter.class);
+
+        // Then
+        assertThat(json).contains("\"logical\":\"or\"");
+        assertThat(roundTripped.logical()).isEqualTo(Logical.OR);
+        assertThat(roundTripped.children().getFirst().field()).isEqualTo(Field.STATE);
     }
 
     private static Stream<Arguments> buildQueryFiltersForOperations(Field field, Resource resource, Set<Op> operations) {

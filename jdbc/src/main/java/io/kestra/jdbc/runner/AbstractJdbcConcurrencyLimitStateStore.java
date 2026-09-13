@@ -16,6 +16,7 @@ import io.kestra.core.runners.ConcurrencyLimit;
 import io.kestra.core.runners.ExecutionQueuedStateStore;
 import io.kestra.core.runners.ExecutionRunning;
 import io.kestra.core.runners.TransactionContext;
+import io.kestra.core.utils.IdUtils;
 import io.kestra.executor.ConcurrencyLimitStateStore;
 import io.kestra.jdbc.repository.AbstractJdbcRepository;
 
@@ -169,13 +170,16 @@ public class AbstractJdbcConcurrencyLimitStateStore extends AbstractJdbcReposito
         return concurrencyLimit;
     }
 
+    /**
+     * Fetch the concurrency limit row of the given flow and lock it for the current transaction.
+     * <p>
+     * The row is looked up by primary key on purpose, so this is a unique-index lookup locking exactly one row.
+     */
     private Optional<ConcurrencyLimit> fetchOne(DSLContext dslContext, FlowInterface flow) {
         var select = dslContext
             .select()
             .from(this.jdbcRepository.getTable())
-            .where(this.buildTenantCondition(flow.getTenantId()))
-            .and(NAMESPACE_FIELD.eq(flow.getNamespace()))
-            .and(FLOW_ID_FIELD.eq(flow.getId()));
+            .where(KEY_FIELD.eq(IdUtils.fromPartsAndSeparator('|', flow.getTenantId(), flow.getNamespace(), flow.getId())));
 
         return this.jdbcRepository.fetchOne(select.forUpdate());
     }

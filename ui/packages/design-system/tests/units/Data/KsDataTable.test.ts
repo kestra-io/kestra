@@ -3,7 +3,9 @@ import {mount} from "@vue/test-utils"
 import {createI18n} from "vue-i18n"
 import KestraDesignSystem from "../../../src/index"
 import KsDataTable from "../../../src/components/Data/KsDataTable/KsDataTable.vue"
+import KsBulkSelect from "../../../src/components/Data/KsDataTable/KsBulkSelect.vue"
 import KsTableColumn from "../../../src/components/Data/KsTable/KsTableColumn.vue"
+import KsTable from "../../../src/components/Data/KsTable/KsTable.vue"
 
 const globalConfig = {plugins: [createI18n({legacy: false, locale: "en"}), KestraDesignSystem]}
 
@@ -34,6 +36,19 @@ describe("KsDataTable", () => {
             setup: () => ({data: SAMPLE_DATA}),
         }, {global: globalConfig})
         expect(wrapper.find(".kel-table").exists()).toBe(true)
+    })
+
+    test("forwards row-click from the underlying table", () => {
+        const wrapper = mount(KsDataTable, {
+            props: {data: SAMPLE_DATA, total: 3},
+            global: globalConfig,
+        })
+
+        const column = {type: "default", property: "id"}
+        const event = new MouseEvent("click")
+        wrapper.findComponent(KsTable).vm.$emit("rowClick", SAMPLE_DATA[0], column, event)
+
+        expect(wrapper.emitted("row-click")?.[0]).toEqual([SAMPLE_DATA[0], column, event])
     })
 
     test("does not render pagination when total is 0", () => {
@@ -175,6 +190,35 @@ describe("KsDataTable", () => {
         }, {global: globalConfig})
         // Table renders correctly with selection enabled
         expect(wrapper.find(".kel-table").exists()).toBe(true)
+    })
+
+    test("select-all count reflects only selectable rows", async () => {
+        const wrapper = mount({
+            components: {KsDataTable, KsTableColumn},
+            template: `
+                <ks-data-table
+                    :data="data"
+                    :total="30"
+                    :selectable="true"
+                    :show-selection="true"
+                    :rowSelectable="rowSelectable"
+                    rowKey="id"
+                >
+                    <ks-table-column prop="id" label="ID" />
+                    <template #bulk-actions><span /></template>
+                </ks-data-table>
+            `,
+            setup: () => ({
+                data: SAMPLE_DATA,
+                rowSelectable: (row: any) => row.status !== "RUNNING",
+            }),
+        }, {global: globalConfig})
+        const table = wrapper.findComponent(KsDataTable)
+        ;(table.vm as any).setSelection([SAMPLE_DATA[0]])
+        await wrapper.vm.$nextTick()
+        const bulk = wrapper.findComponent(KsBulkSelect)
+        expect(bulk.exists()).toBe(true)
+        expect(bulk.props("total")).toBe(2)
     })
 
     test("isLoading updates when loading prop changes", async () => {
@@ -381,5 +425,51 @@ describe("KsDataTable", () => {
         const loads = mountWithSpy({currentPage: 3, pageSize: 50})
         await tick()
         expect(lastLoad(loads)).toEqual({page: 3, size: 50, sort: undefined})
+    })
+
+    const mountWithSortSpy = (props: Record<string, any>) => {
+        const loads: Load[] = []
+        const wrapper = mount(KsDataTable, {
+            props: {
+                data: SAMPLE_DATA,
+                total: 100,
+                loadData: async (p: Load) => { loads.push(p) },
+                ...props,
+            },
+            global: globalConfig,
+        })
+        return {loads, wrapper}
+    }
+
+    test("passes the raw column prop as sort key to loadData when no sortKeyMapper is set", async () => {
+        const {loads, wrapper} = mountWithSortSpy({})
+        wrapper.findComponent(KsTable).vm.$emit("sortChange", {column: {}, prop: "id", order: "descending"})
+        await tick()
+        expect(lastLoad(loads).sort).toBe("id:desc")
+    })
+
+    test("applies sortKeyMapper to the column prop before calling loadData", async () => {
+        const {loads, wrapper} = mountWithSortSpy({
+            sortKeyMapper: (key: string) => key.replace(/^auditLog\./, ""),
+        })
+        wrapper.findComponent(KsTable).vm.$emit("sortChange", {column: {}, prop: "auditLog.detail.resourceType", order: "ascending"})
+        await tick()
+        expect(lastLoad(loads).sort).toBe("detail.resourceType:asc")
+    })
+
+    test("applies ks-data-table-body--fit modifier class when fitHeight is true", () => {
+        const wrapper = mount(KsDataTable, {
+            props: {data: SAMPLE_DATA, total: 3, fitHeight: true},
+            global: globalConfig,
+        })
+        expect(wrapper.find(".ks-data-table-body--fit").exists()).toBe(true)
+    })
+
+    test("does not apply ks-data-table-body--fit modifier class when fitHeight is false (default)", () => {
+        const wrapper = mount(KsDataTable, {
+            props: {data: SAMPLE_DATA, total: 3},
+            global: globalConfig,
+        })
+        expect(wrapper.find(".ks-data-table-body--fit").exists()).toBe(false)
     })
 })

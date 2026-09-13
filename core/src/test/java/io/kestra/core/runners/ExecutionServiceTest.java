@@ -7,29 +7,32 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeoutException;
 
-import io.kestra.core.models.flows.FlowWithSource;
-import io.kestra.core.services.FlowService;
 import org.junit.jupiter.api.Test;
 import org.slf4j.event.Level;
 
 import com.google.common.collect.ImmutableMap;
 
 import io.kestra.core.debug.Breakpoint;
+import io.kestra.core.executor.command.Create;
 import io.kestra.core.junit.annotations.ExecuteFlow;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.junit.annotations.LoadFlows;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.ExecutionId;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.GenericFlow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
-import io.kestra.core.repositories.LogRepositoryInterface;
+import io.kestra.core.repositories.LogDataStoreInterface;
 import io.kestra.core.serializers.YamlParser;
 import io.kestra.core.services.ExecutionService;
+import io.kestra.core.services.FlowService;
 import io.kestra.core.utils.Await;
+import io.kestra.core.utils.IdUtils;
 import io.kestra.plugin.core.flow.Pause;
 
 import jakarta.inject.Inject;
@@ -37,6 +40,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
@@ -62,7 +66,7 @@ class ExecutionServiceTest {
     ExecutionRepositoryInterface executionRepository;
 
     @Inject
-    LogRepositoryInterface logRepository;
+    LogDataStoreInterface logRepository;
 
     @Inject
     TestRunnerUtils runnerUtils;
@@ -130,7 +134,7 @@ class ExecutionServiceTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/replay-loop.yaml"})
+    @LoadFlows({ "flows/valids/replay-loop.yaml" })
     void restartLoop() throws Exception {
         // Given: with the Loop task, parent has only 1_each; loop sub-executions have the child task runs
         Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "replay-loop", null, (f, e) -> ImmutableMap.of("failed", "FIRST"));
@@ -147,7 +151,7 @@ class ExecutionServiceTest {
         assertThat(restart.getTaskRunList()).hasSize(1);
         assertThat(restart.getTaskRunList().getFirst().getState().getCurrent()).isEqualTo(State.Type.RESTARTED);
         assertThat(restart.getLabels()).contains(new Label(Label.RESTARTED, "true"));
-        var subExecutions = executionRepository.findLoopSubExecutions(restart.getTenantId(), restart.getId());
+        var subExecutions = executionRepository.findLoopSubExecutions(restart.getTenantId(), restart.getId(), null);
         assertThat(subExecutions).hasSize(3);
     }
 
@@ -216,7 +220,7 @@ class ExecutionServiceTest {
         // Given: with the Loop task, parent has only 2 task runs (1_each + 2_end); loop iterations are sub-executions
         assertThat(execution.getTaskRunList()).hasSize(2);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
-        var subExecutions = executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId());
+        var subExecutions = executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId(), null);
         assertThat(subExecutions).hasSize(3);
 
         // When: replay from the task that comes after the Loop (still in the parent execution)
@@ -294,9 +298,9 @@ class ExecutionServiceTest {
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
         // Navigate to a level-3 sub-execution to find the item task run
-        List<Execution> loop1Subs = executionRepository.findLoopSubExecutions(TENANT_2, execution.getId());
-        List<Execution> loop2Subs = executionRepository.findLoopSubExecutions(TENANT_2, loop1Subs.getFirst().getId());
-        List<Execution> loop3Subs = executionRepository.findLoopSubExecutions(TENANT_2, loop2Subs.getFirst().getId());
+        List<Execution> loop1Subs = executionRepository.findLoopSubExecutions(TENANT_2, execution.getId(), null);
+        List<Execution> loop2Subs = executionRepository.findLoopSubExecutions(TENANT_2, loop1Subs.getFirst().getId(), null);
+        List<Execution> loop3Subs = executionRepository.findLoopSubExecutions(TENANT_2, loop2Subs.getFirst().getId(), null);
         TaskRun itemTaskRun = loop3Subs.getFirst().findTaskRunsByTaskId("item").getFirst();
 
         // When: replay from item in the deepest sub-execution
@@ -319,9 +323,9 @@ class ExecutionServiceTest {
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
         // Navigate to a level-3 sub-execution to find the parents task run
-        List<Execution> loop1Subs = executionRepository.findLoopSubExecutions(TENANT_1, execution.getId());
-        List<Execution> loop2Subs = executionRepository.findLoopSubExecutions(TENANT_1, loop1Subs.getFirst().getId());
-        List<Execution> loop3Subs = executionRepository.findLoopSubExecutions(TENANT_1, loop2Subs.getFirst().getId());
+        List<Execution> loop1Subs = executionRepository.findLoopSubExecutions(TENANT_1, execution.getId(), null);
+        List<Execution> loop2Subs = executionRepository.findLoopSubExecutions(TENANT_1, loop1Subs.getFirst().getId(), null);
+        List<Execution> loop3Subs = executionRepository.findLoopSubExecutions(TENANT_1, loop2Subs.getFirst().getId(), null);
         TaskRun parentsTaskRun = loop3Subs.getFirst().findTaskRunsByTaskId("parents").getFirst();
 
         // When: replay from parents — item and parent are predecessors and should be kept
@@ -367,7 +371,7 @@ class ExecutionServiceTest {
         assertThat(execution.getTaskRunList()).hasSize(1);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
-        List<Execution> subExecutions = executionRepository.findLoopSubExecutions(MAIN_TENANT, execution.getId());
+        List<Execution> subExecutions = executionRepository.findLoopSubExecutions(MAIN_TENANT, execution.getId(), null);
         assertThat(subExecutions).hasSize(3);
         TaskRun itemTaskRun = subExecutions.getFirst().findTaskRunsByTaskId("item").getFirst();
 
@@ -405,11 +409,41 @@ class ExecutionServiceTest {
                 message: "{{ render(vars.greeting) }}"
             """;
         FlowWithSource updated = flowService.update(GenericFlow.fromYaml(flow.getTenantId(), newSource), flow);
-        
+
         Execution restart = executionService.replay(execution, updated, null, updated.getRevision(), Optional.empty());
 
         assertThat(restart.getFlowRevision()).isEqualTo(updated.getRevision());
         assertThat(restart.getVariables()).containsEntry("greeting", "Hello World");
+    }
+
+    @Test
+    @LoadFlows(value = { "flows/valids/replay-moved-task.yaml" }, tenantId = TENANT_1)
+    void shouldThrowWhenReplayingATaskThatMovedInTheRequestedRevision() throws Exception {
+        Execution execution = runnerUtils.runOne(TENANT_1, "io.kestra.tests", "replay-moved-task");
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        String standaloneTaskRunId = execution.findTaskRunsByTaskId("standalone").getFirst().getId();
+
+        // move "standalone" inside "seq" in the new revision
+        FlowWithSource flow = flowRepository.findByExecutionWithSource(execution);
+        String newSource = """
+            id: replay-moved-task
+            namespace: io.kestra.tests
+
+            tasks:
+              - id: seq
+                type: io.kestra.plugin.core.flow.Sequential
+                tasks:
+                  - id: standalone
+                    type: io.kestra.plugin.core.log.Log
+                    message: standalone moved inside seq
+                  - id: boom
+                    type: io.kestra.plugin.core.execution.Fail
+            """;
+        FlowWithSource updated = flowService.update(GenericFlow.fromYaml(flow.getTenantId(), newSource), flow);
+
+        assertThatThrownBy(() -> executionService.replay(execution, updated, standaloneTaskRunId, updated.getRevision(), Optional.empty()))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("standalone");
     }
 
     @Test
@@ -423,7 +457,7 @@ class ExecutionServiceTest {
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
         // child task runs live in loop sub-executions, not in the parent
-        List<Execution> subExecutions = executionRepository.findLoopSubExecutions(TENANT_1, execution.getId());
+        List<Execution> subExecutions = executionRepository.findLoopSubExecutions(TENANT_1, execution.getId(), null);
         assertThat(subExecutions).hasSize(3);
         TaskRun itemTaskRun = subExecutions.getFirst().findTaskRunsByTaskId("item").getFirst();
 
@@ -513,6 +547,24 @@ class ExecutionServiceTest {
     }
 
     @Test
+    @LoadFlows({ "flows/valids/pause-test.yaml" })
+    void shouldNotRestartPausedExecution() throws Exception {
+        Execution execution = runnerUtils.runOneUntilPaused(MAIN_TENANT, "io.kestra.tests", "pause-test");
+
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.PAUSED);
+
+        Flow flow = flowRepository.findByExecution(execution);
+
+        // a PAUSED execution must be resumed or killed, restarting it would lose the pause information
+        IllegalStateException exception = assertThrows(
+            IllegalStateException.class,
+            () -> executionService.restart(execution, flow, null)
+        );
+
+        assertThat(exception.getMessage()).contains("current state is 'PAUSED'");
+    }
+
+    @Test
     @ExecuteFlow("flows/valids/failed-first.yaml")
     void shouldRestartAfterChangeTaskState(Execution execution) throws Exception {
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
@@ -591,7 +643,7 @@ class ExecutionServiceTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/loop-pause.yaml"})
+    @LoadFlows({ "flows/valids/loop-pause.yaml" })
     void parentExecutionIsPausedWhenLoopIterationIsPaused() throws Exception {
         Execution execution = runnerUtils.runOneUntilPaused(MAIN_TENANT, "io.kestra.tests", "loop-pause");
 
@@ -695,5 +747,40 @@ class ExecutionServiceTest {
         labels.add(new Label("test", "test"));
         Execution newExecution = executionService.updateLabels(execution, labels);
         assertThat(newExecution.getLabels()).contains(new Label("test", "test"));
+    }
+
+    @Test
+    @LoadFlows("flows/valids/minimal.yaml")
+    void createShouldSetOriginalIdToCreateCommandExecutionId() throws Exception {
+        // Given
+        FlowWithSource flow = flowRepository.findByIdWithSource(MAIN_TENANT, "io.kestra.tests", "minimal").orElseThrow();
+        String executionId = IdUtils.create();
+        Create createCommand = Create.of(new ExecutionId(flow.toFlowId(), executionId));
+
+        // When
+        Execution execution = executionService.create(createCommand, ProcessedFlow.of(flow));
+
+        // Then
+        // originalId must match the provided execution id, not the auto-generated id from newExecution().
+        assertThat(execution.getId()).isEqualTo(executionId);
+        assertThat(execution.getOriginalId()).isEqualTo(executionId);
+    }
+
+    @Test
+    @LoadFlows("flows/valids/minimal.yaml")
+    void restartShouldSuccessWhenNoTaskRun() throws Exception {
+        // Given
+        Flow flow = flowRepository.findById(MAIN_TENANT, "io.kestra.tests", "minimal").orElseThrow();
+        Execution newExecution = Execution.newExecution(flow, Collections.emptyList())
+            .withState(State.Type.FAILED);
+
+        // When
+        Execution restarted = executionService.restart(newExecution, flow, null);
+
+        // Then
+        assertThat(restarted.getState().getCurrent()).isEqualTo(State.Type.RESTARTED);
+        assertThat(restarted.getId()).isEqualTo(newExecution.getId());
+        assertThat(restarted.getOriginalId()).isEqualTo(newExecution.getId());
+        assertThat(restarted.getTaskRunList()).isEmpty();
     }
 }

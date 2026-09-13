@@ -1,0 +1,10 @@
+id: blocks-flowable-fixture
+namespace: company.team
+tasks:
+  - id: my_if
+    type: io.kestra.plugin.core.flow.If
+    condition: "{{ true }}"
+    then:
+      - id: yes_task
+        type: io.kestra.plugin.core.log.Log
+        message: hi

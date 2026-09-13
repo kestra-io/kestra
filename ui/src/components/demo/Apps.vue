@@ -3,12 +3,10 @@
     <Empty
         type="apps"
         demoCta
-        :title="t(`demos.apps.title`)"
-        video="https://www.youtube.com/embed/KwBO8mcS3kk"
-        learnMore="https://kestra.io/docs/enterprise/scalability/apps"
+        :title="$t(`${keyPrefix}.title`)"
     >
         <template #description>
-            {{ $t(`demos.apps.message`) }}
+            {{ $t(`${keyPrefix}.message`) }}
         </template>
     </Empty>
 </template>
@@ -20,9 +18,22 @@
     import TopNavBar from "../../components/layout/TopNavBar.vue"
     import useRouteContext from "../../composables/useRouteContext"
 
+    const props = defineProps({
+        blueprints: {
+            type: Boolean,
+            default: false,
+        },
+    })
+
     const {t} = useI18n()
 
-    const routeInfo = computed(() => ({title: t("demos.apps.title")}))
+    const keyPrefix = computed(() =>
+        props.blueprints ? "demos.apps.blueprints" : "demos.apps",
+    )
+
+    const routeInfo = computed(() =>
+        ({title: props.blueprints ? t("blueprints.apps") : t("demos.apps.title")}),
+    )
 
     useRouteContext(routeInfo)
 </script>

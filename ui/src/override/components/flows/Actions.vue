@@ -2,68 +2,82 @@
     <FlowPlaygroundToggle
         v-if="isEditTab && isPlaygroundAllowed && editorIsAllowedEdit && !deleted"
     />
-    <NavBarActions :loading="tab === 'logs' && logsStore.logs === undefined">
-        <Dashboards
-            v-if="showDashboards"
-            @dashboard="onSelectDashboard"
-        />
-        <NavBarAction
-            v-if="deleted"
-            :icon="BackupRestore"
-            :label="t('restore')"
-            @click="restoreFlow"
-        />
-        <NavBarAction
-            v-if="canEdit && !deleted && !isEditTab"
-            :icon="Pencil"
-            :label="t('edit flow')"
-            @click="editFlow"
-        />
-        <NavBarAction
-            v-if="tab === 'logs' && hasLogs"
-            :icon="TrashCan"
-            :label="t('delete logs')"
-            @click="deleteLogs"
-        />
-
-        <NavBarAction
-            v-if="isEditTab && canEdit && !deleted && !flowStore.isCreating && editorHaveChange"
-            :icon="PlayBoxOutline"
-            :label="t('save_and_execute')"
-            :disabled="editorHasErrors || editorIsReadOnly"
-            @click="editorSaveAndExecute"
-        />
+    <template v-if="showDashboards">
+        <Dashboards @dashboard="onSelectDashboard" />
+        <KsDivider direction="vertical" />
+    </template>
+    <NavBarActions>
         <NavBarAction
             v-if="isEditTab && canEdit && !deleted && !flowStore.isCreating"
             :icon="ContentCopy"
-            :label="t('copy')"
+            :label="$t('copy')"
             @click="editorCopyFlow"
         />
         <NavBarAction
             v-if="isEditTab && editorIsAllowedEdit && !deleted"
             :icon="Download"
-            :label="t('flow_export')"
+            :label="$t('flow_export')"
             @click="editorExportYaml"
         />
         <NavBarAction
             v-if="isEditTab && canDelete && !deleted && !flowStore.isCreating"
             :icon="Delete"
-            :label="t('delete')"
+            :label="$t('delete')"
             @click="editorDeleteFlow"
         />
+        <NavBarAction
+            v-if="tab === 'logs' && hasLogs"
+            :icon="TrashCan"
+            :label="$t('delete logs')"
+            @click="deleteLogs"
+        />
+
+        <template #secondary>
+            <KsDropdown
+                v-if="isEditTab && editorIsAllowedEdit && !deleted"
+                splitButton
+                :disabled="editorIsReadOnly || (!isPublishAction && !editorCanSave)"
+                :buttonProps="{disabled: editorHasErrors}"
+                @click="editorSaveOrPublish"
+            >
+                {{ isPublishAction ? $t('publish') : $t('save') }}
+                <template #dropdown>
+                    <KsDropdownMenu>
+                        <KsDropdownItem v-if="isPublishAction" :icon="ContentSave" @click="editorSave">
+                            {{ $t('save') }}
+                        </KsDropdownItem>
+                        <KsDropdownItem :icon="FileDocumentEditOutline" @click="editorSaveAsDraft">
+                            {{ $t('save_as_draft') }}
+                        </KsDropdownItem>
+                        <KsDropdownItem
+                            v-if="editorHaveChange && !flowStore.isCreating"
+                            :icon="PlayBoxOutline"
+                            :disabled="editorHasErrors || editorIsReadOnly"
+                            @click="editorSaveAndExecute"
+                        >
+                            {{ $t('save_and_execute') }}
+                        </KsDropdownItem>
+                    </KsDropdownMenu>
+                </template>
+            </KsDropdown>
+            <NavBarAction
+                v-else-if="flow && canEdit && !deleted && !flowStore.isCreating"
+                :icon="Pencil"
+                :label="$t('edit flow')"
+                @click="editFlow"
+            />
+        </template>
 
         <template #primary>
             <NavBarAction
-                v-if="isEditTab && editorIsAllowedEdit && !deleted"
+                v-if="deleted"
                 type="primary"
-                :label="t('save')"
-                :disabled="!editorCanSave || editorHasErrors || editorIsReadOnly"
-                @click="editorSave"
+                :icon="BackupRestore"
+                :label="$t('restore')"
+                @click="restoreFlow"
             />
-
             <TriggerFlow
-                v-if="shouldShowExecute"
-                :iconOnly="isEditTab"
+                v-else-if="shouldShowExecute"
                 type="primary"
                 :flowId="flow?.id"
                 :namespace="flow?.namespace"
@@ -78,7 +92,7 @@
     import {useI18n} from "vue-i18n"
     import {useRoute, useRouter} from "vue-router"
     import {useFlowStore} from "../../../stores/flow"
-    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
+    import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
     import Pencil from "vue-material-design-icons/Pencil.vue"
     import BackupRestore from "vue-material-design-icons/BackupRestore.vue"
     import TrashCan from "vue-material-design-icons/TrashCan.vue"
@@ -86,12 +100,16 @@
     import Download from "vue-material-design-icons/Download.vue"
     import Delete from "vue-material-design-icons/Delete.vue"
     import PlayBoxOutline from "vue-material-design-icons/PlayBoxOutline.vue"
+    import ContentSave from "vue-material-design-icons/ContentSave.vue"
+    import FileDocumentEditOutline from "vue-material-design-icons/FileDocumentEditOutline.vue"
     import NavBarActions from "../../../components/layout/NavBarActions.vue"
     import NavBarAction from "../../../components/layout/NavBarAction.vue"
     import FlowPlaygroundToggle from "../../../components/inputs/FlowPlaygroundToggle.vue"
     import TriggerFlow from "../../../components/flows/TriggerFlow.vue"
-    import Dashboards from "../../../components/dashboard/components/selector/Selector.vue"
+    import Dashboards from "override/components/dashboard/Selector.vue"
     import {ALLOWED_CREATION_ROUTES} from "../../../components/dashboard/composables/useDashboards"
+    import {routeFamily} from "../../../utils/routeFamily"
+    import {useActiveTab} from "../../../composables/useActiveTab"
     import resource from "../../../models/resource"
     import action from "../../../models/action"
     import {useAuthStore} from "override/stores/auth"
@@ -112,7 +130,7 @@
 
     const flow = computed(() => flowStore.flow)
     const deleted = computed(() => flow.value?.deleted || false)
-    const tab = computed(() => route.params?.tab as string)
+    const tab = useActiveTab()
     const isEditTab = computed(() => tab.value === "edit" || flowStore.isCreating)
 
     const authStore = useAuthStore()
@@ -124,8 +142,11 @@
         hasErrors: editorHasErrors,
         isReadOnly: editorIsReadOnly,
         isAllowedEdit: editorIsAllowedEdit,
+        isDraft: editorIsDraft,
         isPlaygroundAllowed,
         save: editorSave,
+        saveAsDraft: editorSaveAsDraft,
+        publishDraft: editorPublishDraft,
         saveAndExecute: editorSaveAndExecute,
         exportYaml: editorExportYaml,
         copyFlow: editorCopyFlow,
@@ -141,20 +162,31 @@
     }
 
     const showDashboards = computed(() =>
-        tab.value === "overview" && ALLOWED_CREATION_ROUTES.includes(String(route.name)),
+        tab.value === "overview" && ALLOWED_CREATION_ROUTES.includes(routeFamily(route.name)),
     )
 
     const canExecute = computed(() =>
-        flow.value && authStore.user?.isAllowed(resource.EXECUTION, action.CREATE, flow.value.namespace),
+        flow.value && authStore.user?.isAllowed(resource.FLOW, action.EXECUTE, flow.value.namespace),
     )
 
     const shouldShowExecute = computed(() => {
         if (!flow.value || deleted.value) return false
         if (flowStore.isCreating) return false
-        if (!canExecute.value) return false
-        if (!isEditTab.value && tab.value === "apps") return false
-        return true
+        return !!canExecute.value
     })
+
+    // The single save-family control: publishing is what a draft is for, saving is what an
+    // already-published flow (or a flow being created) needs. The variant not taken stays
+    // reachable in the dropdown.
+    const isPublishAction = computed(() => editorIsDraft.value && !flowStore.isCreating)
+
+    const editorSaveOrPublish = () => {
+        if (isPublishAction.value) {
+            editorPublishDraft()
+            return
+        }
+        editorSave()
+    }
 
     const canEdit = computed(() =>
         authStore.user?.isAllowed(resource.FLOW, action.UPDATE, flow.value?.namespace),
@@ -166,11 +198,10 @@
 
     const editFlow = () => {
         router.push({
-            name: "flows/update",
+            name: "flows/update/edit",
             params: {
                 namespace: flow.value?.namespace,
                 id: flow.value?.id,
-                tab: "edit",
                 tenant: route.params.tenant,
             },
         })
@@ -194,13 +225,13 @@
     }
 
     const restoreFlow = () => {
+        if (!flow.value?.source) return
         flowStore.createFlow({
-            flow: YAML_UTILS.deleteMetadata(flow.value?.source, "deleted"),
+            flow: YAML_UTILS.deleteMetadata(flow.value.source, "deleted"),
+            restore: true,
         }).then(() => {
             unsavedChangesStore.unsavedChange = false
             router.go(0)
         })
     }
-
-
 </script>

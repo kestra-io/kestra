@@ -1,246 +1,141 @@
 package io.kestra.webserver.controllers;
 
-import java.io.FileNotFoundException;
-import java.lang.reflect.Field;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.NoSuchElementException;
-import java.util.Optional;
+import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
-import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
-import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import com.fasterxml.jackson.databind.exc.InvalidTypeIdException;
 
-import io.kestra.core.exceptions.*;
-import io.kestra.libs.copilot.exceptions.AiException;
+import io.kestra.webserver.exceptions.BulkValidationException;
+import io.kestra.core.exceptions.ValidationErrorException;
+import io.kestra.webserver.errors.ProblemDetail;
+import io.kestra.webserver.errors.ProblemError;
+import io.kestra.webserver.errors.ProblemTypes;
+import io.kestra.webserver.errors.ProblemFactory;
 
 import io.micronaut.core.convert.exceptions.ConversionErrorException;
+import io.micronaut.http.HttpHeaders;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
+import io.micronaut.http.MutableHttpResponse;
 import io.micronaut.http.annotation.Controller;
 import io.micronaut.http.annotation.Error;
-import io.micronaut.http.client.exceptions.HttpClientResponseException;
-import io.micronaut.http.exceptions.HttpStatusException;
-import io.micronaut.http.hateoas.JsonError;
-import io.micronaut.http.hateoas.Link;
-import io.micronaut.web.router.exceptions.UnsatisfiedBodyRouteException;
-import io.micronaut.web.router.exceptions.UnsatisfiedQueryValueRouteException;
+import io.micronaut.http.server.exceptions.NotAllowedException;
+import jakarta.inject.Inject;
 import jakarta.validation.ConstraintViolationException;
-import lombok.extern.slf4j.Slf4j;
 
-@Slf4j
+/**
+ * Translates every exception reaching the HTTP layer into an RFC 9457 problem document.
+ *
+ * <p>Which {@link io.kestra.webserver.errors.ProblemType} an exception maps to is decided by
+ * {@link io.kestra.webserver.errors.ProblemMapperRegistry}, not here, so the catch-all below covers the vast
+ * majority of cases. The remaining handlers exist only because they can populate the {@code errors} array,
+ * which needs knowledge of the specific exception's structure.
+ *
+ * <p>Micronaut resolves {@code @Error} routes ahead of {@code ExceptionHandler} beans, and the catch-all here
+ * always matches — which is why registering an {@code ExceptionHandler} for a server exception has no effect.
+ */
 @Controller
 public class ErrorController {
-    @Error(global = true)
-    public HttpResponse<JsonError> error(HttpRequest<?> request, JsonParseException e) {
-        return jsonError(request, e, HttpStatus.UNPROCESSABLE_ENTITY, "Invalid json");
+    private final ProblemFactory problems;
+
+    @Inject
+    public ErrorController(final ProblemFactory problems) {
+        this.problems = Objects.requireNonNull(problems, "problems must not be null");
     }
 
     @Error(global = true)
-    public HttpResponse<JsonError> error(HttpRequest<?> request, InputOutputValidationException e) {
-        return jsonError(request, e, HttpStatus.UNPROCESSABLE_ENTITY, "Invalid entity");
-    }
-
-    @Error(global = true)
-    public HttpResponse<JsonError> error(HttpRequest<?> request, ConversionErrorException e) {
-        if (e.getConversionError().getCause() instanceof InvalidTypeIdException invalidTypeIdException) {
-            try {
-                String path = path(invalidTypeIdException);
-
-                Field typeField = InvalidTypeIdException.class.getDeclaredField("_typeId");
-                typeField.setAccessible(true);
-                Object typeClass = typeField.get(invalidTypeIdException);
-
-                JsonError error = new JsonError("Invalid type: " + typeClass)
-                    .link(Link.SELF, Link.of(request.getUri()))
-                    .embedded(
-                        "errors",
-                        Arrays.asList(
-                            new JsonError("Invalid type: " + typeClass)
-                                .path(path),
-                            new JsonError(e.getMessage())
-                                .path(path)
-                        )
-                    );
-
-                return jsonError(error, HttpStatus.UNPROCESSABLE_ENTITY, "Invalid entity");
-            } catch (Exception ignored) {
-            }
-        } else if (e.getConversionError().getCause() instanceof JsonMappingException jsonMappingException) {
-            try {
-                String path = path(jsonMappingException);
-
-                JsonError error = new JsonError("Invalid json mapping")
-                    .link(Link.SELF, Link.of(request.getUri()))
-                    .embedded(
-                        "errors",
-                        Collections.singletonList(
-                            new JsonError(e.getMessage())
-                                .path(path)
-                        )
-                    );
-
-                return jsonError(error, HttpStatus.UNPROCESSABLE_ENTITY, "Invalid json mapping");
-            } catch (Exception ignored) {
-            }
+    public HttpResponse<ProblemDetail> error(HttpRequest<?> request, Throwable e) {
+        MutableHttpResponse<ProblemDetail> response = this.problems.response(request, e);
+        // A 405 must advertise the methods that would have worked (RFC 9110 §15.5.6). Micronaut's own handler
+        // did this, but it is shadowed by the catch-all above, so the header is set here instead.
+        if (e instanceof NotAllowedException notAllowed && notAllowed.getAllowedMethods() != null) {
+            response.header(HttpHeaders.ALLOW, String.join(", ", notAllowed.getAllowedMethods()));
         }
-
-        return jsonError(request, e, HttpStatus.UNPROCESSABLE_ENTITY, "Internal server error");
+        return response;
     }
 
-    @SuppressWarnings("unchecked")
-    private static String path(JsonMappingException jsonMappingException) throws NoSuchFieldException, IllegalAccessException {
-        Field pathField = JsonMappingException.class.getDeclaredField("_path");
-        pathField.setAccessible(true);
-        LinkedList<JsonMappingException.Reference> path = (LinkedList<JsonMappingException.Reference>) pathField.get(jsonMappingException);
-
-        return path
-            .stream()
-            .map(JsonMappingException.Reference::getDescription)
-            .collect(Collectors.joining(" > "));
-    }
-
+    /** Bean validation: one {@code errors} entry per violated constraint. */
     @Error(global = true)
-    public HttpResponse<JsonError> error(HttpRequest<?> request, ConstraintViolationException e) {
-        JsonError error = new JsonError("Invalid entity: " + e.getMessage())
-            .link(Link.SELF, Link.of(request.getUri()))
-            .embedded(
-                "errors",
-                e.getConstraintViolations()
-                    .stream()
-                    .map(
-                        ex -> new JsonError(ex.getMessage())
-                            .path(ex.getPropertyPath().toString())
-                    )
-                    .collect(Collectors.toList())
+    public HttpResponse<ProblemDetail> error(HttpRequest<?> request, ConstraintViolationException e) {
+        return this.problems.response(
+            request,
+            e,
+            ProblemTypes.VALIDATION_FAILED,
+            ProblemError.ofViolations(e.getConstraintViolations())
+        );
+    }
+
+    /** Bulk endpoints: one {@code errors} entry per rejected item. */
+    @Error(global = true)
+    public HttpResponse<ProblemDetail> error(HttpRequest<?> request, BulkValidationException e) {
+        return this.problems.response(request, e, ProblemTypes.BULK_VALIDATION_FAILED, e.errors());
+    }
+
+    /** Resource validation, which reports its problems as plain strings with no path. */
+    @Error(global = true)
+    public HttpResponse<ProblemDetail> error(HttpRequest<?> request, ValidationErrorException e) {
+        return this.problems.response(
+            request,
+            e,
+            ProblemTypes.VALIDATION_FAILED,
+            e.getInvalids() == null ? List.of() : e.getInvalids().stream().map(ProblemError::of).toList()
+        );
+    }
+
+    /**
+     * Body decoding failed. The underlying Jackson exception knows where in the document the problem is, which
+     * is the only reason this is handled separately from the catch-all.
+     */
+    @Error(global = true)
+    public HttpResponse<ProblemDetail> error(HttpRequest<?> request, ConversionErrorException e) {
+        Throwable cause = e.getConversionError().getCause();
+
+        if (cause instanceof InvalidTypeIdException invalidTypeId) {
+            return this.problems.response(
+                request,
+                e,
+                ProblemTypes.INVALID_PLUGIN_TYPE,
+                List.of(ProblemError.of(
+                    "Unknown type '%s'.".formatted(invalidTypeId.getTypeId()),
+                    null,
+                    pathOf(invalidTypeId)
+                ))
             );
-
-        return jsonError(error, HttpStatus.UNPROCESSABLE_ENTITY, "Invalid entity");
-    }
-
-    @Error(global = true)
-    public HttpResponse<JsonError> error(HttpRequest<?> request, IllegalArgumentException e) {
-        return jsonError(request, e, HttpStatus.UNPROCESSABLE_ENTITY, "Illegal argument");
-    }
-
-    @Error(global = true)
-    public HttpResponse<JsonError> error(HttpRequest<?> request, AiException e) {
-        return jsonError(request, HttpStatus.UNPROCESSABLE_ENTITY, e.getMessage());
-    }
-
-    @Error(global = true)
-    public HttpResponse<JsonError> error(HttpRequest<?> request, IllegalStateException e) {
-        return jsonError(request, e, HttpStatus.CONFLICT, "Illegal state");
-    }
-
-    @Error(global = true)
-    public HttpResponse<JsonError> error(HttpRequest<?> request, InvalidFormatException e) {
-        return jsonError(request, e, HttpStatus.UNPROCESSABLE_ENTITY, "Invalid format");
-    }
-
-    @Error(global = true)
-    public HttpResponse<JsonError> error(HttpRequest<?> request, UnsatisfiedBodyRouteException e) {
-        return jsonError(request, e, HttpStatus.UNPROCESSABLE_ENTITY, "Invalid route params");
-    }
-
-    @Error(global = true)
-    public HttpResponse<JsonError> error(HttpRequest<?> request, InvalidException e) {
-        String entity = Optional.ofNullable(e.invalidObject()).map(Object::getClass).map(Class::getSimpleName).orElse("entity");
-        return jsonError(request, e, HttpStatus.UNPROCESSABLE_ENTITY, "Invalid " + entity);
-    }
-
-    @Error(global = true)
-    public HttpResponse<JsonError> error(HttpRequest<?> request, NotFoundException e) {
-        return jsonError(request, e, HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND.getReason());
-    }
-
-    @Error(global = true)
-    public HttpResponse<JsonError> error(HttpRequest<?> request, ConflictException e) {
-        return jsonError(request, e, HttpStatus.CONFLICT, HttpStatus.CONFLICT.getReason());
-    }
-
-    @Error(global = true)
-    public HttpResponse<JsonError> error(HttpRequest<?> request, InvalidQueryFiltersException e) {
-        return jsonError(request, e, HttpStatus.BAD_REQUEST, "Invalid query filters");
-    }
-
-    @Error(global = true)
-    public HttpResponse<JsonError> error(HttpRequest<?> request, ValidationErrorException e) {
-        return jsonError(request, e, HttpStatus.BAD_REQUEST, e.formatedInvalidObjects());
-    }
-
-    @Error(global = true)
-    public HttpResponse<JsonError> error(HttpRequest<?> request, HttpStatusException e) {
-        return jsonError(request, e, e.getStatus(), e.getStatus().getReason());
-    }
-
-    @Error(global = true)
-    public HttpResponse<JsonError> error(HttpRequest<?> request, Throwable e) {
-        return jsonError(request, e, HttpStatus.INTERNAL_SERVER_ERROR, "Internal server error");
-    }
-
-    @Error(global = true, status = HttpStatus.NOT_FOUND)
-    public HttpResponse<JsonError> notFound(HttpRequest<?> request) {
-        return jsonError(request, HttpStatus.NOT_FOUND, "Not Found");
-    }
-
-    @Error(global = true)
-    public HttpResponse<JsonError> notFound(HttpRequest<?> request, NoSuchElementException e) {
-        return jsonError(request, e, HttpStatus.NOT_FOUND, "Not Found");
-    }
-
-    @Error(global = true)
-    public HttpResponse<JsonError> notFound(HttpRequest<?> request, FileNotFoundException e) {
-        return jsonError(request, e, HttpStatus.NOT_FOUND, "Not Found");
-    }
-
-    @Error(global = true)
-    public HttpResponse<JsonError> notFound(HttpRequest<?> request, UnsatisfiedQueryValueRouteException e) {
-        return jsonError(request, e, HttpStatus.BAD_REQUEST, "Bad Request");
-    }
-
-    @Error(global = true)
-    public HttpResponse<JsonError> serialization(HttpRequest<?> request, DeserializationException e) {
-        return jsonError(request, e, HttpStatus.LOCKED, "Locked");
-    }
-
-    @Error(global = true)
-    public HttpResponse<JsonError> serialization(HttpRequest<?> request, ResourceExpiredException e) {
-        return jsonError(request, e, HttpStatus.GONE, "Resource has expired");
-    }
-
-    @Error(global = true)
-    public HttpResponse<JsonError> httpClient(HttpRequest<?> request, HttpClientResponseException e) {
-        return jsonError(request, e, e.getStatus(), e.getStatus().getReason());
-    }
-
-    private static HttpResponse<JsonError> jsonError(JsonError jsonError, HttpStatus status, String reason) {
-        return HttpResponse
-            .<JsonError> status(status, reason)
-            .body(jsonError);
-    }
-
-    public static HttpResponse<JsonError> jsonError(HttpRequest<?> request, HttpStatus status, String reason) {
-        JsonError error = new JsonError(reason)
-            .link(Link.SELF, Link.of(request.getUri()));
-
-        return jsonError(error, status, reason);
-    }
-
-    public static HttpResponse<JsonError> jsonError(HttpRequest<?> request, Throwable e, HttpStatus status, String reason) {
-        if (status == HttpStatus.INTERNAL_SERVER_ERROR) {
-            log.error("Server error: {}", e.getMessage() != null ? e.getMessage() : "", e);
-        } else {
-            log.trace("Client error: {}", e.getMessage() != null ? e.getMessage() : "", e);
         }
 
-        JsonError error = new JsonError(reason + (e.getMessage() != null ? ": " + e.getMessage() : ""))
-            .link(Link.SELF, Link.of(request.getUri()));
+        if (cause instanceof JsonMappingException mappingException) {
+            String path = pathOf(mappingException);
+            return this.problems.responseWithoutMessage(
+                request,
+                e,
+                ProblemTypes.INVALID_JSON,
+                path.isEmpty() ? List.of() : List.of(ProblemError.of(null, null, path))
+            );
+        }
 
-        return jsonError(error, status, reason);
+        return this.problems.responseWithoutMessage(request, e);
+    }
+
+    /** A request that matched no route at all, and so carries no exception. */
+    @Error(global = true, status = HttpStatus.NOT_FOUND)
+    public HttpResponse<ProblemDetail> notFound(HttpRequest<?> request) {
+        return this.problems.response(request, null, ProblemTypes.NOT_FOUND, List.of());
+    }
+
+    /**
+     * The document path Jackson recorded, e.g. {@code tasks[0].type}. Uses the public reference chain rather
+     * than the private field the previous implementation reflected into.
+     */
+    private static String pathOf(final JsonMappingException e) {
+        return e.getPath()
+            .stream()
+            .map(reference -> reference.getFieldName() != null
+                ? reference.getFieldName()
+                : "[" + reference.getIndex() + "]")
+            .collect(Collectors.joining("."))
+            .replace(".[", "[");
     }
 }

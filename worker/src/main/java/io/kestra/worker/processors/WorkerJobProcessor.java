@@ -38,4 +38,17 @@ public interface WorkerJobProcessor<T extends WorkerJob> {
      * If no job is currently running, the method returns immediately without any side effects.
      */
     void kill();
+
+    /**
+     * Signals that the currently running job is being forcibly interrupted by the worker shutdown,
+     * because the termination grace period elapsed (or a force shutdown was requested).
+     * <p>
+     * Unlike {@link #stop()} — the cooperative drain signal sent at the start of shutdown, which lets an
+     * in-flight task keep running and possibly reach its own terminal state — this marks the job as
+     * <em>interrupted by the shutdown</em> so a task torn down here can be told apart from one that failed
+     * on its own during the drain window.
+     * <p>
+     * If no job is currently running, the method returns immediately without any side effects.
+     */
+    void signalShutdownInterrupt();
 }

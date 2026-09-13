@@ -1,6 +1,6 @@
 #!/bin/bash
 set -e
-KESTRA_DOCKER_IMAGE_TO_TEST="kestra/kestra:develop-no-plugins"
+KESTRA_DOCKER_IMAGE_TO_TEST="kestra/kestra:develop-slim"
 
 # Parse arguments
 while [[ $# -gt 0 ]]; do

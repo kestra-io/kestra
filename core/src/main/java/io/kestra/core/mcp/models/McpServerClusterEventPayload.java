@@ -1,6 +1,7 @@
 package io.kestra.core.mcp.models;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import io.kestra.core.serializers.JacksonMapper;
 
 /**

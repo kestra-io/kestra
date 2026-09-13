@@ -2,8 +2,8 @@ package io.kestra.core.scheduler.events;
 
 import java.time.Instant;
 
-import io.kestra.core.events.EventId;
 import io.kestra.core.async.AsyncOperation;
+import io.kestra.core.events.EventId;
 import io.kestra.core.models.triggers.TriggerId;
 
 import jakarta.annotation.Nullable;

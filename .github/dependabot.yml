@@ -140,10 +140,6 @@ updates:
       - dependency-name: "monaco-yaml"
         versions: [">=5.3.2"]
 
-      # Ignore lint-staged major updates (v17 requires Node.js >=22.22.1 which is not yet released)
-      - dependency-name: "lint-staged"
-        update-types: ["version-update:semver-major"]
-
   # Maintain dependencies for ui/packages/design-system
   - package-ecosystem: "npm"
     directory: "/ui/packages/design-system"

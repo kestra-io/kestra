@@ -16,8 +16,8 @@ import io.kestra.core.models.flows.GenericFlow;
 import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
+import io.kestra.core.services.FlowParsingService;
 import io.kestra.core.services.FlowService;
-import io.kestra.core.services.PluginDefaultService;
 
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.scheduling.io.watch.FileWatchConfiguration;
@@ -45,7 +45,7 @@ public class FileChangedEventListener {
     private FlowService flowService;
 
     @Inject
-    private PluginDefaultService pluginDefaultService;
+    private FlowParsingService flowParsingService;
 
     @Inject
     private ModelValidator modelValidator;
@@ -254,7 +254,7 @@ public class FileChangedEventListener {
 
     private Optional<FlowWithSource> parseFlow(String content, Path entry) {
         try {
-            FlowWithSource flow = pluginDefaultService.parseFlowWithAllDefaults(getTenantIdFromPath(entry), content, false);
+            FlowWithSource flow = flowParsingService.parse(getTenantIdFromPath(entry), content, false);
             modelValidator.validate(flow);
             return Optional.of(flow);
         } catch (ConstraintViolationException | FlowProcessingException e) {

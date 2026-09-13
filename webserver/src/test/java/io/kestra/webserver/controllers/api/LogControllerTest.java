@@ -16,13 +16,13 @@ import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.executions.*;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
-import io.kestra.core.repositories.LogRepositoryInterface;
+import io.kestra.core.repositories.LogDataStoreInterface;
 import io.kestra.core.runners.FollowLogEvent;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.QueryFilterTestUtils;
 import io.kestra.core.utils.TestsUtils;
-import io.kestra.webserver.responses.PagedResults;
+import io.kestra.webserver.responses.CursorOrOffsetPagedResults;
 import io.kestra.webserver.tenants.TenantValidationFilter;
 
 import io.micronaut.core.type.Argument;
@@ -51,7 +51,7 @@ class LogControllerTest {
     private ExecutionRepositoryInterface executionRepository;
 
     @Inject
-    private LogRepositoryInterface logRepository;
+    private LogDataStoreInterface logRepository;
 
     @Inject
     @Client("/")
@@ -82,15 +82,15 @@ class LogControllerTest {
         logRepository.save(log2);
         logRepository.save(log3);
 
-        PagedResults<LogEntry> logs = client.toBlocking().retrieve(
+        CursorOrOffsetPagedResults<LogEntry> logs = client.toBlocking().retrieve(
             GET("/api/v1/" + tenant + "/logs/search"),
-            Argument.of(PagedResults.class, LogEntry.class)
+            Argument.of(CursorOrOffsetPagedResults.class, LogEntry.class)
         );
         assertThat(logs.getTotal()).isEqualTo(3L);
 
         logs = client.toBlocking().retrieve(
             GET("/api/v1/" + tenant + "/logs/search?filters[level][GREATER_THAN_OR_EQUAL_TO]=INFO"),
-            Argument.of(PagedResults.class, LogEntry.class)
+            Argument.of(CursorOrOffsetPagedResults.class, LogEntry.class)
         );
         assertThat(logs.getTotal()).isEqualTo(2L);
 
@@ -107,6 +107,45 @@ class LogControllerTest {
         );
 
         assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
+
+        e = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().retrieve(GET("/api/v1/" + tenant + "/logs/search?page=1&size=1001"))
+        );
+
+        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
+    }
+
+    @Test
+    void searchLogsWithUnknownSortFieldReturns422() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        when(tenantService.resolveTenant()).thenReturn(tenant);
+
+        HttpClientResponseException e = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().exchange(GET("/api/v1/" + tenant + "/logs/search?sort=nonexistent:asc"))
+        );
+
+        assertThat(e.getStatus().getCode()).isEqualTo(422);
+        String body = e.getResponse().getBody(String.class).orElse("");
+        assertThat(body).contains("nonexistent");
+        // regression guard: the generated SQL must never reach the client (kestra-io/kestra#18490)
+        assertThat(body).doesNotContainIgnoringCase("select ");
+        assertThat(body).doesNotContainIgnoringCase(" from ");
+        assertThat(body).doesNotContainIgnoringCase("order by");
+    }
+
+    @Test
+    void searchLogsSortsByTimestamp() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        when(tenantService.resolveTenant()).thenReturn(tenant);
+        logRepository.save(logEntry(tenant, Level.INFO));
+
+        CursorOrOffsetPagedResults<LogEntry> logs = client.toBlocking().retrieve(
+            GET("/api/v1/" + tenant + "/logs/search?sort=timestamp:desc"),
+            Argument.of(CursorOrOffsetPagedResults.class, LogEntry.class)
+        );
+        assertThat(logs.getTotal()).isEqualTo(1L);
     }
 
     @SuppressWarnings("unchecked")
@@ -128,6 +167,38 @@ class LogControllerTest {
         assertThat(logs.size()).isEqualTo(2);
         assertThat(logs.getFirst().getExecutionId()).isEqualTo(log1.getExecutionId());
         assertThat(logs.get(1).getExecutionId()).isEqualTo(log1.getExecutionId());
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void shouldDefaultToNormalKindAndAllowKindFilter() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        when(tenantService.resolveTenant()).thenReturn(tenant);
+        LogEntry playgroundLog = logEntry(tenant, Level.INFO).toBuilder()
+            .executionKind(ExecutionKind.PLAYGROUND)
+            .build();
+        logRepository.save(playgroundLog);
+
+        List<LogEntry> logs = client.toBlocking().retrieve(
+            GET("/api/v1/" + tenant + "/logs/" + playgroundLog.getExecutionId() + "?filters[kind][EQUALS]=PLAYGROUND"),
+            Argument.of(List.class, LogEntry.class)
+        );
+        assertThat(logs.size()).isEqualTo(1);
+        assertThat(logs.getFirst().getExecutionKind()).isEqualTo(ExecutionKind.PLAYGROUND);
+
+        // Global search defaults to NORMAL kind only too...
+        CursorOrOffsetPagedResults<LogEntry> search = client.toBlocking().retrieve(
+            GET("/api/v1/" + tenant + "/logs/search"),
+            Argument.of(CursorOrOffsetPagedResults.class, LogEntry.class)
+        );
+        assertThat(search.getTotal()).isEqualTo(0L);
+
+        // ...and can be narrowed with an explicit KIND filter.
+        search = client.toBlocking().retrieve(
+            GET("/api/v1/" + tenant + "/logs/search?filters[kind][EQUALS]=PLAYGROUND"),
+            Argument.of(CursorOrOffsetPagedResults.class, LogEntry.class)
+        );
+        assertThat(search.getTotal()).isEqualTo(1L);
     }
 
     @Test
@@ -233,9 +304,9 @@ class LogControllerTest {
         logRepository.save(log2);
         logRepository.save(log3);
 
-        PagedResults<LogEntry> logs = client.toBlocking().retrieve(
+        CursorOrOffsetPagedResults<LogEntry> logs = client.toBlocking().retrieve(
             GET("/api/v1/" + tenant + "/logs/search?filters[timeRange][EQUALS]=PT25H"),
-            Argument.of(PagedResults.class, LogEntry.class)
+            Argument.of(CursorOrOffsetPagedResults.class, LogEntry.class)
         );
         assertThat(logs.getTotal()).isEqualTo(2L);
     }
@@ -334,9 +405,11 @@ class LogControllerTest {
     }
 
     private void seedLogs(String tenant, FiltersTestCase testCase) {
-        testCase.logs().forEach(log -> logRepository.save(
-            log.toBuilder().tenantId(tenant).executionId(testCase.executionId()).build()
-        ));
+        testCase.logs().forEach(
+            log -> logRepository.save(
+                log.toBuilder().tenantId(tenant).executionId(testCase.executionId()).build()
+            )
+        );
     }
 
     private void seedExecution(String tenant, String executionId) {
@@ -348,15 +421,17 @@ class LogControllerTest {
                 .flowId("full")
                 .flowRevision(1)
                 .state(new State().withState(State.Type.RUNNING).withState(State.Type.SUCCESS))
-                .taskRunList(Collections.singletonList(
-                    TaskRun.builder()
-                        .id(IdUtils.create())
-                        .namespace("io.kestra.unittest")
-                        .flowId("full")
-                        .state(new State().withState(State.Type.RUNNING).withState(State.Type.SUCCESS))
-                        .attempts(Collections.singletonList(TaskRunAttempt.builder().build()))
-                        .build()
-                ))
+                .taskRunList(
+                    Collections.singletonList(
+                        TaskRun.builder()
+                            .id(IdUtils.create())
+                            .namespace("io.kestra.unittest")
+                            .flowId("full")
+                            .state(new State().withState(State.Type.RUNNING).withState(State.Type.SUCCESS))
+                            .attempts(Collections.singletonList(TaskRunAttempt.builder().build()))
+                            .build()
+                    )
+                )
                 .build()
         );
     }
@@ -376,6 +451,14 @@ class LogControllerTest {
     private static final LogEntry errorLog = baseLog(Level.ERROR, "transform", "task-run-2", 1, "error line");
     private static final List<LogEntry> allLogs = List.of(traceLog, debugLog, infoLog, warnLog, errorLog);
 
+    private static final LogEntry normalKindLog = baseLog(Level.INFO, "load-data", "task-run-1", 0, "normal kind line")
+        .toBuilder().executionKind(ExecutionKind.NORMAL).build();
+    private static final LogEntry playgroundKindLog = baseLog(Level.INFO, "load-data", "task-run-1", 0, "playground kind line")
+        .toBuilder().executionKind(ExecutionKind.PLAYGROUND).build();
+    private static final LogEntry loopKindLog = baseLog(Level.INFO, "load-data", "task-run-1", 0, "loop kind line")
+        .toBuilder().executionKind(ExecutionKind.LOOP).build();
+    private static final List<LogEntry> kindLogs = List.of(normalKindLog, playgroundKindLog, loopKindLog);
+
     private static final List<FiltersTestCase> filtersTestCases = List.of(
         FiltersTestCase.builder()
             .executionId(TEST_EXECUTION_ID)
@@ -388,83 +471,155 @@ class LogControllerTest {
             .executionId(TEST_EXECUTION_ID)
             .logs(allLogs)
             .expectedLogs(List.of(infoLog, warnLog, errorLog))
-            .filters(List.of(
-                QueryFilter.builder()
-                    .field(QueryFilter.Field.LEVEL)
-                    .operation(QueryFilter.Op.GREATER_THAN_OR_EQUAL_TO)
-                    .value(Level.INFO)
-                    .build()
-            ))
+            .filters(
+                List.of(
+                    QueryFilter.builder()
+                        .field(QueryFilter.Field.LEVEL)
+                        .operation(QueryFilter.Op.GREATER_THAN_OR_EQUAL_TO)
+                        .value(Level.INFO)
+                        .build()
+                )
+            )
             .build(),
 
         FiltersTestCase.builder()
             .executionId(TEST_EXECUTION_ID)
             .logs(allLogs)
             .expectedLogs(List.of(traceLog, debugLog, infoLog))
-            .filters(List.of(
-                QueryFilter.builder()
-                    .field(QueryFilter.Field.LEVEL)
-                    .operation(QueryFilter.Op.LESS_THAN_OR_EQUAL_TO)
-                    .value(Level.INFO)
-                    .build()
-            ))
+            .filters(
+                List.of(
+                    QueryFilter.builder()
+                        .field(QueryFilter.Field.LEVEL)
+                        .operation(QueryFilter.Op.LESS_THAN_OR_EQUAL_TO)
+                        .value(Level.INFO)
+                        .build()
+                )
+            )
             .build(),
 
         FiltersTestCase.builder()
             .executionId(TEST_EXECUTION_ID)
             .logs(allLogs)
             .expectedLogs(List.of(warnLog, errorLog))
-            .filters(List.of(
-                QueryFilter.builder()
-                    .field(QueryFilter.Field.TASK_ID)
-                    .operation(QueryFilter.Op.EQUALS)
-                    .value("transform")
-                    .build()
-            ))
+            .filters(
+                List.of(
+                    QueryFilter.builder()
+                        .field(QueryFilter.Field.TASK_ID)
+                        .operation(QueryFilter.Op.EQUALS)
+                        .value("transform")
+                        .build()
+                )
+            )
             .build(),
 
         FiltersTestCase.builder()
             .executionId(TEST_EXECUTION_ID)
             .logs(allLogs)
             .expectedLogs(List.of(traceLog, debugLog, infoLog))
-            .filters(List.of(
-                QueryFilter.builder()
-                    .field(QueryFilter.Field.TASK_RUN_ID)
-                    .operation(QueryFilter.Op.EQUALS)
-                    .value("task-run-1")
-                    .build()
-            ))
+            .filters(
+                List.of(
+                    QueryFilter.builder()
+                        .field(QueryFilter.Field.TASK_RUN_ID)
+                        .operation(QueryFilter.Op.EQUALS)
+                        .value("task-run-1")
+                        .build()
+                )
+            )
             .build(),
 
         FiltersTestCase.builder()
             .executionId(TEST_EXECUTION_ID)
             .logs(allLogs)
             .expectedLogs(List.of(errorLog))
-            .filters(List.of(
-                QueryFilter.builder()
-                    .field(QueryFilter.Field.ATTEMPT_NUMBER)
-                    .operation(QueryFilter.Op.EQUALS)
-                    .value(1)
-                    .build()
-            ))
+            .filters(
+                List.of(
+                    QueryFilter.builder()
+                        .field(QueryFilter.Field.ATTEMPT_NUMBER)
+                        .operation(QueryFilter.Op.EQUALS)
+                        .value(1)
+                        .build()
+                )
+            )
             .build(),
 
         FiltersTestCase.builder()
             .executionId(TEST_EXECUTION_ID)
             .logs(allLogs)
             .expectedLogs(List.of(infoLog))
-            .filters(List.of(
-                QueryFilter.builder()
-                    .field(QueryFilter.Field.LEVEL)
-                    .operation(QueryFilter.Op.GREATER_THAN_OR_EQUAL_TO)
-                    .value(Level.INFO)
-                    .build(),
-                QueryFilter.builder()
-                    .field(QueryFilter.Field.TASK_ID)
-                    .operation(QueryFilter.Op.EQUALS)
-                    .value("load-data")
-                    .build()
-            ))
+            .filters(
+                List.of(
+                    QueryFilter.builder()
+                        .field(QueryFilter.Field.LEVEL)
+                        .operation(QueryFilter.Op.GREATER_THAN_OR_EQUAL_TO)
+                        .value(Level.INFO)
+                        .build(),
+                    QueryFilter.builder()
+                        .field(QueryFilter.Field.TASK_ID)
+                        .operation(QueryFilter.Op.EQUALS)
+                        .value("load-data")
+                        .build()
+                )
+            )
+            .build(),
+
+        FiltersTestCase.builder()
+            .executionId(TEST_EXECUTION_ID)
+            .logs(kindLogs)
+            .expectedLogs(List.of(playgroundKindLog))
+            .filters(
+                List.of(
+                    QueryFilter.builder()
+                        .field(QueryFilter.Field.KIND)
+                        .operation(QueryFilter.Op.EQUALS)
+                        .value(ExecutionKind.PLAYGROUND.name())
+                        .build()
+                )
+            )
+            .build(),
+
+        FiltersTestCase.builder()
+            .executionId(TEST_EXECUTION_ID)
+            .logs(kindLogs)
+            .expectedLogs(List.of(normalKindLog, loopKindLog))
+            .filters(
+                List.of(
+                    QueryFilter.builder()
+                        .field(QueryFilter.Field.KIND)
+                        .operation(QueryFilter.Op.NOT_EQUALS)
+                        .value(ExecutionKind.PLAYGROUND.name())
+                        .build()
+                )
+            )
+            .build(),
+
+        FiltersTestCase.builder()
+            .executionId(TEST_EXECUTION_ID)
+            .logs(kindLogs)
+            .expectedLogs(List.of(playgroundKindLog, loopKindLog))
+            .filters(
+                List.of(
+                    QueryFilter.builder()
+                        .field(QueryFilter.Field.KIND)
+                        .operation(QueryFilter.Op.IN)
+                        .value(List.of(ExecutionKind.PLAYGROUND.name(), ExecutionKind.LOOP.name()))
+                        .build()
+                )
+            )
+            .build(),
+
+        FiltersTestCase.builder()
+            .executionId(TEST_EXECUTION_ID)
+            .logs(kindLogs)
+            .expectedLogs(List.of(normalKindLog))
+            .filters(
+                List.of(
+                    QueryFilter.builder()
+                        .field(QueryFilter.Field.KIND)
+                        .operation(QueryFilter.Op.NOT_IN)
+                        .value(List.of(ExecutionKind.PLAYGROUND.name(), ExecutionKind.LOOP.name()))
+                        .build()
+                )
+            )
             .build()
     );
 
@@ -487,7 +642,6 @@ class LogControllerTest {
         String executionId,
         List<LogEntry> logs,
         List<LogEntry> expectedLogs,
-        List<QueryFilter> filters
-    ) {
+        List<QueryFilter> filters) {
     }
 }

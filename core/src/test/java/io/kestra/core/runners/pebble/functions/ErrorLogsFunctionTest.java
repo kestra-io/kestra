@@ -12,7 +12,7 @@ import org.slf4j.event.Level;
 
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.executions.LogEntry;
-import io.kestra.core.repositories.LogRepositoryInterface;
+import io.kestra.core.repositories.LogDataStoreInterface;
 import io.kestra.core.runners.VariableRenderer;
 import io.kestra.core.runners.pebble.PebbleUtils;
 
@@ -28,7 +28,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Execution(ExecutionMode.SAME_THREAD)
 class ErrorLogsFunctionTest {
     @Inject
-    private LogRepositoryInterface logRepository;
+    private LogDataStoreInterface logRepository;
 
     @Inject
     private VariableRenderer variableRenderer;

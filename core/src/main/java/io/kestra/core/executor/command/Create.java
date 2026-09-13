@@ -1,7 +1,13 @@
 package io.kestra.core.executor.command;
 
+import java.time.Instant;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+
 import io.kestra.core.debug.Breakpoint;
 import io.kestra.core.events.EventId;
 import io.kestra.core.models.Label;
@@ -12,14 +18,10 @@ import io.kestra.core.models.flows.FlowId;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.test.flow.TaskFixture;
 import io.kestra.core.utils.IdUtils;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.annotation.Nullable;
 import lombok.With;
-
-import java.time.Instant;
-import java.util.List;
-import java.util.Map;
-import java.util.function.Function;
 
 public record Create(
     ExecutionId executionFullId,
@@ -36,13 +38,14 @@ public record Create(
     @With @JsonProperty @Nullable List<Breakpoint> breakpoints,
     @With @JsonProperty @Nullable String traceParent,
     @With @JsonInclude(JsonInclude.Include.NON_EMPTY) @Nullable List<TaskFixture> fixtures,
-    @With @JsonInclude(JsonInclude.Include.NON_EMPTY) @Nullable @Schema(implementation = Object.class) Map<String, Object> variables
-) implements ExecutionCommand {
+    @With @JsonInclude(JsonInclude.Include.NON_EMPTY) @Nullable @Schema(implementation = Object.class) Map<String, Object> variables,
+    @With @JsonProperty @Nullable Integer executionDepth) implements ExecutionCommand {
     public static Create of(FlowId flowId) {
         return new Create(
-            new  ExecutionId(flowId, IdUtils.create()),
+            new ExecutionId(flowId, IdUtils.create()),
             Instant.now(),
             EventId.create(),
+            null,
             null,
             null,
             null,
@@ -56,11 +59,13 @@ public record Create(
             null
         );
     }
+
     public static Create of(ExecutionId executionId) {
         return new Create(
             executionId,
             Instant.now(),
             EventId.create(),
+            null,
             null,
             null,
             null,
@@ -77,7 +82,9 @@ public record Create(
 
     public Create withInputsFromReader(Function<String, Map<String, Object>> inputsReader) {
         var inputs = inputsReader.apply(this.executionId());
-        return new Create(executionFullId, timestamp, eventId, operationId, stateType, kind, trigger, labels, scheduleDate, inputs, breakpoints, traceParent, fixtures, variables);
+        return new Create(
+            executionFullId, timestamp, eventId, operationId, stateType, kind, trigger, labels, scheduleDate, inputs, breakpoints, traceParent, fixtures, variables, executionDepth
+        );
     }
 
     @Override

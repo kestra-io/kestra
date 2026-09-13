@@ -1,17 +1,16 @@
 package io.kestra.indexer;
 
-import java.time.Duration;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.MetricEntry;
+import io.kestra.core.models.executions.statistics.ExecutionStatistic;
 import io.kestra.core.queues.*;
 import io.kestra.core.queues.event.DispatchEvent;
-import io.kestra.core.repositories.LogRepositoryInterface;
+import io.kestra.core.repositories.ExecutionStatisticsRepositoryInterface;
+import io.kestra.core.repositories.LogDataStoreInterface;
 import io.kestra.core.repositories.MetricRepositoryInterface;
 import io.kestra.core.runners.Indexer;
 import io.kestra.core.runners.IndexingRepository;
@@ -19,12 +18,9 @@ import io.kestra.core.server.AbstractService;
 import io.kestra.core.server.ServiceStateChangeEvent;
 import io.kestra.core.server.ServiceType;
 import io.kestra.core.services.IgnoreExecutionService;
-import io.kestra.core.utils.ExecutorsUtils;
-import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.ListUtils;
 
 import io.micronaut.context.event.ApplicationEventPublisher;
-import jakarta.annotation.PreDestroy;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
@@ -37,29 +33,30 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Singleton
 public class DefaultIndexer extends AbstractService implements Indexer {
-    private final LogRepositoryInterface logRepository;
+    private final LogDataStoreInterface logRepository;
     private final DispatchQueueInterface<LogEntry> logQueue;
 
     private final MetricRepositoryInterface metricRepository;
     private final DispatchQueueInterface<MetricEntry> metricQueue;
+
+    private final ExecutionStatisticsRepositoryInterface executionStatisticsRepository;
+    private final DispatchQueueInterface<ExecutionStatistic> executionStatisticQueue;
+
     private final MetricRegistry metricRegistry;
-    private final List<QueueSubscriber<?>> subscribers = new ArrayList<>();
-
-    private final String id = IdUtils.create();
-    private final AtomicReference<ServiceState> state = new AtomicReference<>();
-    private final ApplicationEventPublisher<ServiceStateChangeEvent> eventPublisher;
-
-    private final AtomicBoolean closed = new AtomicBoolean(false);
+    // Thread-safe: populated by run() but iterated from doStop() on the context-close thread.
+    private final List<QueueSubscriber<?>> subscribers = new CopyOnWriteArrayList<>();
 
     private final IgnoreExecutionService ignoreExecutionService;
     private final QueueService queueService;
 
     @Inject
     public DefaultIndexer(
-        LogRepositoryInterface logRepository,
+        LogDataStoreInterface logRepository,
         DispatchQueueInterface<LogEntry> logQueue,
         MetricRepositoryInterface metricRepositor,
         DispatchQueueInterface<MetricEntry> metricQueue,
+        ExecutionStatisticsRepositoryInterface executionStatisticsRepository,
+        DispatchQueueInterface<ExecutionStatistic> executionStatisticQueue,
         MetricRegistry metricRegistry,
         ApplicationEventPublisher<ServiceStateChangeEvent> eventPublisher,
         IgnoreExecutionService ignoreExecutionService,
@@ -70,8 +67,9 @@ public class DefaultIndexer extends AbstractService implements Indexer {
         this.logQueue = logQueue;
         this.metricRepository = metricRepositor;
         this.metricQueue = metricQueue;
+        this.executionStatisticsRepository = executionStatisticsRepository;
+        this.executionStatisticQueue = executionStatisticQueue;
         this.metricRegistry = metricRegistry;
-        this.eventPublisher = eventPublisher;
         this.ignoreExecutionService = ignoreExecutionService;
         this.queueService = queueService;
 
@@ -80,15 +78,21 @@ public class DefaultIndexer extends AbstractService implements Indexer {
 
     @Override
     public void run() {
-        log.debug("Starting the indexer");
-        startQueues();
-        setState(ServiceState.RUNNING);
-        log.info("Indexer started");
+        guardedStart(() ->
+        {
+            log.debug("Starting the indexer");
+            startQueues();
+        }, () ->
+        {
+            setState(ServiceState.RUNNING);
+            log.info("Indexer started");
+        });
     }
 
     protected void startQueues() {
         this.sendBatch(logQueue, logRepository);
         this.sendBatch(metricQueue, metricRepository);
+        this.sendBatch(executionStatisticQueue, executionStatisticsRepository);
     }
 
     protected <T extends DispatchEvent> void sendBatch(DispatchQueueInterface<T> queueInterface, IndexingRepository<T> indexingRepository) {
@@ -125,24 +129,6 @@ public class DefaultIndexer extends AbstractService implements Indexer {
                 });
             }
         }));
-    }
-
-    /** {@inheritDoc} **/
-    @Override
-    public String getId() {
-        return id;
-    }
-
-    /** {@inheritDoc} **/
-    @Override
-    public ServiceType getType() {
-        return ServiceType.INDEXER;
-    }
-
-    /** {@inheritDoc} **/
-    @Override
-    public ServiceState getState() {
-        return state.get();
     }
 
     @Override

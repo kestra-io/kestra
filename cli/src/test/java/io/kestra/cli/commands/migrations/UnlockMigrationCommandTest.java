@@ -1,9 +1,10 @@
 package io.kestra.cli.commands.migrations;
 
+import org.junit.jupiter.api.Test;
+
 import io.micronaut.configuration.picocli.PicocliRunner;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.env.Environment;
-import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

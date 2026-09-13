@@ -24,6 +24,7 @@ import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import jakarta.inject.Inject;
+import jakarta.validation.constraints.Max;
 
 @Controller("/api/v1/{tenant}/secrets")
 public class SecretController<META extends ApiSecretMeta> {
@@ -45,7 +46,7 @@ public class SecretController<META extends ApiSecretMeta> {
     @Operation(tags = { "Secrets" }, summary = "Search secrets of all namespaces")
     public HttpResponse<ApiSecretListResponse<META>> listSecrets(
         @Parameter(description = "The current page") @QueryValue(value = "page", defaultValue = "1") int page,
-        @Parameter(description = "The current page size") @QueryValue(value = "size", defaultValue = "10") int size,
+        @Parameter(description = "The current page size") @QueryValue(value = "size", defaultValue = "10") @Max(PageableUtils.MAX_PAGE_SIZE) int size,
         @Parameter(description = "The sort of current page") @Nullable @QueryValue(value = "sort") List<String> sort,
         @Parameter(description = "Filters") @QueryFilterFormat(Resource.SECRET_METADATA) List<QueryFilter> filters) throws IllegalArgumentException, IOException {
         final String tenantId = this.tenantService.resolveTenant();

@@ -1,15 +1,15 @@
 import {computed, watch} from "vue"
 import {useI18n} from "vue-i18n"
 import {configureMonacoYaml} from "monaco-yaml"
-import * as monaco from "monaco-editor/esm/vs/editor/editor.api"
-import {languages} from "monaco-editor/esm/vs/editor/editor.api"
+import * as monaco from "monaco-editor/editor/editor.api"
+import {languages} from "monaco-editor/editor/editor.api"
 import {yamlSchemas} from "override/utils/yamlSchemas"
-import {StandaloneServices} from "monaco-editor/esm/vs/editor/standalone/browser/standaloneServices"
-import {ILanguageFeaturesService} from "monaco-editor/esm/vs/editor/common/services/languageFeatures"
+import {StandaloneServices} from "monaco-editor/editor/standalone/browser/standaloneServices"
+import {ILanguageFeaturesService} from "monaco-editor/editor/common/services/languageFeatures"
 import AbstractLanguageConfigurator from "./abstractLanguageConfigurator"
 import {YamlAutoCompletion} from "../../../services/autoCompletionProvider"
 import RegexProvider from "../../../utils/regex"
-import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
+import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
 import {
     endOfWordColumn,
     NO_SUGGESTIONS,
@@ -20,111 +20,63 @@ import {
 } from "./pebbleLanguageConfigurator"
 import {usePluginsStore} from "../../../stores/plugins"
 import {useBlueprintsStore} from "../../../stores/blueprints"
-import IPosition = monaco.IPosition;
-import IDisposable = monaco.IDisposable;
+import * as Utils from "../../../utils/utils"
+import {makeToast} from "../../../utils/toast"
+import {provideEditorArtifacts, ARTIFACT_COPY_COMMAND} from "../artifacts"
+import type {Router} from "vue-router"
+import {useFlowStore} from "../../../stores/flow"
+import {
+    buildSubflowLinks,
+    createFlowExistenceChecker,
+    createSubflowLinkOpener,
+    encodeSubflowTarget,
+    filterExistingSubflowLinks,
+    SUBFLOW_LINK_SCHEME,
+} from "./subflowLinkProvider"
+import {
+    filterMissingRequiredTaskProperties,
+    scopePropertySuggestionsToTaskType,
+    taskIdentityAtCursor,
+} from "./taskCompletionScoping"
+import type {IPosition, IDisposable, CancellationToken} from "monaco-editor/editor/editor.api"
 import IModel = monaco.editor.IModel;
 import ProviderResult = monaco.languages.ProviderResult;
 import CompletionList = monaco.languages.CompletionList;
 import CompletionItem = languages.CompletionItem;
 import CompletionContext = languages.CompletionContext;
-import CancellationToken = monaco.CancellationToken;
 
-type TaskLike = Record<string, unknown>;
-
-function isTaskLike(value: unknown): value is TaskLike {
-    return (
-        typeof value === "object" &&
-        value !== null &&
-        typeof (value as TaskLike).id === "string" &&
-        typeof (value as TaskLike).type === "string"
-    )
-}
-
-function filterMissingRequiredTaskProperties({
-                                                 source,
-                                                 cursorIndex,
-                                                 requiredProperties,
-                                             }: {
-    source: string;
-    cursorIndex: number;
-    requiredProperties: string[];
-}): string[] {
-    if (!requiredProperties.length || !source.length) {
-        return []
-    }
-
-    try {
-        const safeCursorIndex = Math.max(
-            0,
-            Math.min(cursorIndex - 1, source.length - 1),
-        )
-        const probeIndexes = [safeCursorIndex]
-        let previousNonWhitespace = safeCursorIndex
-        while (
-            previousNonWhitespace > 0 &&
-            /\s/.test(source.charAt(previousNonWhitespace))
-            ) {
-            previousNonWhitespace--
-        }
-        if (previousNonWhitespace !== safeCursorIndex) {
-            probeIndexes.push(previousNonWhitespace)
-        }
-
-        for (const probeIndex of probeIndexes) {
-            const localized = YAML_UTILS.localizeElementAtIndex(
-                source,
-                probeIndex,
-            )
-            const candidates = [...(localized?.parents ?? []), localized?.value]
-
-            for (let i = candidates.length - 1; i >= 0; i--) {
-                const candidate = candidates[i]
-                if (
-                    isTaskLike(candidate) &&
-                    typeof candidate.id === "string" &&
-                    typeof candidate.type === "string"
-                ) {
-                    return requiredProperties.filter(
-                        (property) =>
-                            !Object.prototype.hasOwnProperty.call(
-                                candidate,
-                                property,
-                            ),
-                    )
-                }
-            }
-        }
-
-        return requiredProperties
-    } catch {
-        return requiredProperties
-    }
-}
+const unscopableTaskTypes = new Set<string>()
 
 export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
-    private readonly yamlAutoCompletionObject: YamlAutoCompletion
+    protected readonly yamlAutoCompletionObject: YamlAutoCompletion
+    protected readonly router?: Router
+    protected readonly flowStore?: ReturnType<typeof useFlowStore>
 
-    constructor(yamlAutoCompletion: YamlAutoCompletion) {
+    constructor(yamlAutoCompletion: YamlAutoCompletion, router?: Router, flowStore?: ReturnType<typeof useFlowStore>) {
         super("yaml")
         this.yamlAutoCompletionObject = yamlAutoCompletion
+        this.router = router
+        this.flowStore = flowStore
     }
 
     async configureLanguage(pluginsStore: ReturnType<typeof usePluginsStore>) {
         const validateYAML = computed(() => useBlueprintsStore().validateYAML)
-        // Keep Monaco YAML validation in sync with the blueprint store setting.
-        watch(validateYAML, (shouldValidate) =>
-            configureMonacoYaml(monaco, {validate: shouldValidate}),
-        )
 
         // Base YAML language setup shared across all YAML editors.
-        configureMonacoYaml(monaco, {
+        const monacoYaml = configureMonacoYaml(monaco, {
             enableSchemaRequest: true,
             hover: localStorage.getItem("hoverTextEditor") === "true",
             completion: true,
             validate: validateYAML.value ?? true,
-            format: true,
             schemas: yamlSchemas(),
         })
+
+        // Keep Monaco YAML validation in sync with the blueprint store setting. The single instance must be
+        // updated in place: calling configureMonacoYaml again would stack a second undisposed instance whose
+        // validate flag can never be turned off again.
+        watch(validateYAML, (shouldValidate) =>
+            monacoYaml.update({validate: shouldValidate ?? true}),
+        )
 
         const yamlCompletion = (
             StandaloneServices.get(ILanguageFeaturesService).completionProvider
@@ -177,9 +129,24 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
             const isTypeValueContext = /^\s*(?:-\s*)?type\s*:\s*$/i.test(
                 beforeWord,
             )
-            // Split plugin class names (`a.b.C`) into lowercase searchable segments.
-            const getLabelSegments = (label: string) =>
-                label.toLowerCase().split(/\.(?=\w)/).filter(Boolean)
+            // Split plugin FQCN (`a.b.C`) into lowercase searchable segments,
+            // plus class name words in the last segment (e.g. `SentryExecution` → `sentry`, `execution`).
+            const getLabelSegments = (label: string) => {
+                const result: string[] = []
+                const dotSegments = label.split(/\.(?=\w)/)
+
+                for (const seg of dotSegments) {
+                    result.push(seg.toLowerCase())
+                }
+
+                const lastSegment = dotSegments[dotSegments.length - 1]
+                const parts = lastSegment.split(/(?=[A-Z])/)
+                if (parts.length > 1) {
+                    result.push(...parts.map((p) => p.toLowerCase()))
+                }
+
+                return result
+            }
             // Match typed input against any segment, while still preferring the last segment.
             const matchesTypeInput = (label: string, input: string) => {
                 if (!input) return true
@@ -359,20 +326,59 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
                     return suggestion
                 })
 
+            // Monaco YAML derives property suggestions from the union of every task type, so a task
+            // body offers keys from unrelated plugins. Restrict them to the task's resolved `type`.
+            let scopedSuggestions = suggestions
+            if (!isTypeValueContext) {
+                const task = taskIdentityAtCursor({
+                    source: model.getValue(),
+                    cursorIndex: model.getOffsetAt(position),
+                })
+                // Only a plugin FQCN resolves to a schema. `inputs:`/`outputs:` entries share the
+                // task shape but carry types like `STRING`, which would 404 on every keystroke.
+                const scopeKey = task && task.type.includes(".")
+                    ? `${task.type}@${task.version ?? ""}`
+                    : undefined
+                if (task && scopeKey && !unscopableTaskTypes.has(scopeKey)) {
+                    try {
+                        // `all` is required: without it the endpoint omits every inherited `Task`
+                        // property (`retry`, `timeout`, `description`…), which would filter them out.
+                        const pluginDoc = await pluginsStore.load({
+                            cls: task.type,
+                            version: task.version,
+                            commit: false,
+                            all: true,
+                        })
+                        const properties = pluginDoc?.schema?.properties?.properties
+                        scopedSuggestions = scopePropertySuggestionsToTaskType({
+                            suggestions,
+                            validPropertyKeys: properties ? Object.keys(properties) : undefined,
+                            propertyKind: monaco.languages.CompletionItemKind.Property,
+                        })
+                    } catch {
+                        // Fail open, and remember the failure: the provider is re-invoked on every
+                        // keystroke, so retrying a type that cannot resolve would request it each time.
+                        unscopableTaskTypes.add(scopeKey)
+                    }
+                }
+            }
+
             return {
                 ...defaultCompletion,
                 incomplete: true,
-                suggestions,
+                suggestions: scopedSuggestions,
             }
         }
     }
 
     configureAutoCompletion(
-        _: ReturnType<typeof useI18n>["t"],
+        t: ReturnType<typeof useI18n>["t"],
         ___: monaco.editor.ICodeEditor | undefined,
     ) {
         const autoCompletionProviders: IDisposable[] = []
         const yamlAutoCompletion = this.yamlAutoCompletionObject
+
+        autoCompletionProviders.push(...this.registerEditorArtifacts(t))
 
         // Values autocompletion
         autoCompletionProviders.push(
@@ -603,6 +609,115 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
             ["yaml", "plaintext"],
         )
 
+        this.registerSubflowLinks(autoCompletionProviders)
+        this.registerEditionProviders(autoCompletionProviders, t)
+
         return autoCompletionProviders
+    }
+
+    /**
+     * Seam for edition-specific Monaco providers (hover/definition/etc.). Empty in open-source; the Enterprise
+     * {@link YamlLanguageConfigurator} subclass overrides it to register the reusable-inputs flow-editor providers.
+     */
+    protected registerEditionProviders(_disposables: IDisposable[], _t: ReturnType<typeof useI18n>["t"]): void {
+        // no-op in open-source
+    }
+
+    private registerEditorArtifacts(t: ReturnType<typeof useI18n>["t"]): IDisposable[] {
+        const toast = makeToast(t)
+
+        const copyCommand = monaco.editor.registerCommand(
+            ARTIFACT_COPY_COMMAND,
+            async (_accessor, payload?: {text?: string; message?: string}) => {
+                if (!payload?.text) {
+                    return
+                }
+                try {
+                    await Utils.copy(payload.text)
+                    if (payload.message) {
+                        toast.success(payload.message)
+                    }
+                } catch (error) {
+                    console.error(error)
+                }
+            },
+        )
+
+        const codeLensProvider = monaco.languages.registerCodeLensProvider("yaml", {
+            provideCodeLenses(model) {
+                const noLenses = {lenses: [], dispose() {}}
+                if (!model.uri.path.includes("flow-")) {
+                    return noLenses
+                }
+
+                const source = model.getValue()
+                let artifacts
+                try {
+                    const {blocks, namespace, id} = YAML_UTILS.extractTypedBlocksWithMeta(source)
+                    artifacts = provideEditorArtifacts(blocks, {namespace, id, t})
+                } catch {
+                    return noLenses
+                }
+
+                const lenses = artifacts.map(({range, lens}, index) => {
+                    const line = model.getPositionAt(range[0]).lineNumber
+                    return {
+                        id: `kestra-artifact-${index}`,
+                        range: {
+                            startLineNumber: line,
+                            startColumn: 1,
+                            endLineNumber: line,
+                            endColumn: 1,
+                        },
+                        command: {
+                            id: lens.command.id,
+                            title: lens.title,
+                            arguments: lens.command.arguments,
+                        },
+                    }
+                })
+
+                return {lenses, dispose() {}}
+            },
+        })
+
+        return [copyCommand, codeLensProvider]
+    }
+
+    private registerSubflowLinks(disposables: IDisposable[]) {
+        const router = this.router
+        const flowStore = this.flowStore
+        if (!router || !flowStore) {
+            return
+        }
+
+        const flowExists = createFlowExistenceChecker(
+            (namespace) =>
+                flowStore.flowsByNamespace(namespace).then((flows: {id: string}[]) => flows.map((flow) => flow.id)),
+            () => String(router.currentRoute.value.params.tenant ?? ""),
+        )
+
+        disposables.push(
+            monaco.languages.registerLinkProvider("yaml", {
+                async provideLinks(model) {
+                    const existing = await filterExistingSubflowLinks(buildSubflowLinks(model), flowExists)
+                    return {
+                        links: existing.map((link) => ({
+                            range: link.range,
+                            url: monaco.Uri.from({
+                                scheme: SUBFLOW_LINK_SCHEME,
+                                path: "/open",
+                                query: encodeSubflowTarget(link.target),
+                            }),
+                            tooltip: `${link.target.namespace} / ${link.target.flowId}`,
+                        })),
+                    }
+                },
+            }),
+        )
+
+        disposables.push(
+            monaco.editor.registerLinkOpener(createSubflowLinkOpener(router)),
+        )
     }
 }

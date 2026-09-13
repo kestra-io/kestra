@@ -13,6 +13,7 @@
     import {useTabs} from "override/components/namespaces/useTabs"
     import {useHelpers} from "./utils/useHelpers"
     import useRouteContext from "../../composables/useRouteContext"
+    import {useActiveTab} from "../../composables/useActiveTab"
     import {useNamespacesStore} from "override/stores/namespaces"
     import TopNavBar from "../layout/TopNavBar.vue"
     import Actions from "override/components/namespaces/Actions.vue"
@@ -31,14 +32,18 @@
 
     const miscStore = useMiscStore()
     const namespacesStore = useNamespacesStore()
+    const activeTabName = useActiveTab()
 
-    watch(namespace, (newID) => {
-        if (newID) {
-            namespacesStore.load(newID)
-        }
-    })
+    // The route guard loads the namespace into the store before this page mounts (see its route
+    // record), so this only fetches what the store does not already hold.
+    const loadNamespace = () => {
+        if (!namespace.value || namespacesStore.namespace?.id === namespace.value) return
+        namespacesStore.load(namespace.value)
+    }
 
-    watch(() => route.params.tab, (newTab) => {
+    watch(namespace, loadNamespace)
+
+    watch(activeTabName, (newTab) => {
         if (newTab === "overview" || newTab === "executions") {
             const dateTimeKeys = ["startDate", "endDate", "timeRange"]
 
@@ -54,8 +59,6 @@
         const main = document.querySelector("main")
         if(main) main.scrollTop = 0
 
-        if (namespace.value) {
-            namespacesStore.load(namespace.value)
-        }
+        loadNamespace()
     })
 </script>

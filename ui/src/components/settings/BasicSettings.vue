@@ -37,6 +37,15 @@
             </SettingRow>
 
             <SettingRow
+                :label="$t('settings.blocks.configuration.fields.task_edit_default_mode')"
+                :description="$t('settings.blocks.configuration.descriptions.task_edit_default_mode')"
+            >
+                <KsSelect fit :modelValue="settings.taskEditDefaultMode" @update:model-value="onTaskEditDefaultMode">
+                    <KsOption v-for="item in taskEditDefaultModeOptions" :key="item.value" :label="item.label" :value="item.value" />
+                </KsSelect>
+            </SettingRow>
+
+            <SettingRow
                 :label="$t('settings.blocks.configuration.fields.execute_flow')"
                 :description="$t('settings.blocks.configuration.descriptions.execute_flow')"
             >
@@ -64,6 +73,15 @@
             </SettingRow>
 
             <SettingRow
+                :label="$t('settings.blocks.configuration.fields.triggers_default_tab')"
+                :description="$t('settings.blocks.configuration.descriptions.triggers_default_tab')"
+            >
+                <KsSelect fit :modelValue="settings.triggersDefaultTab" @update:model-value="onTriggersDefaultTab">
+                    <KsOption v-for="item in triggersDefaultTabOptions" :key="item.value" :label="item.label" :value="item.value" />
+                </KsSelect>
+            </SettingRow>
+
+            <SettingRow
                 :label="$t('settings.blocks.configuration.fields.auto_refresh_interval')"
                 :description="$t('settings.blocks.configuration.descriptions.auto_refresh_interval')"
             >
@@ -82,22 +100,88 @@
                     @change="onEditorPlayground"
                 />
             </SettingRow>
+
+            <SettingRow
+                stacked
+                :label="$t('settings.blocks.configuration.fields.flow_template')"
+                :description="$t('settings.blocks.configuration.descriptions.flow_template')"
+            >
+                <div class="flow-template">
+                    <KsEditor
+                        v-bind="editorBindings"
+                        v-model="settings.flowTemplate"
+                        lang="yaml"
+                        :options="{fullHeight: false, lineNumbers: true}"
+                        :navbar="false"
+                        class="flow-template-editor"
+                        data-test="flow-template-editor"
+                        @focusout="onFlowTemplate"
+                    />
+
+                    <div class="flow-template-footer">
+                        <KsAlert
+                            v-if="flowTemplateError"
+                            type="warning"
+                            :closable="false"
+                            class="flow-template-error"
+                            data-test="flow-template-error"
+                        >
+                            {{ $t(`settings.blocks.configuration.flow_template_error.${flowTemplateError.errorCode}`) }}
+                            <template v-if="flowTemplateError.parseMessage">
+                                <br>
+                                <KsText class="flow-template-error-detail">{{ flowTemplateError.parseMessage }}</KsText>
+                            </template>
+                        </KsAlert>
+
+                        <KsButton
+                            link
+                            class="flow-template-reset"
+                            :disabled="!settings.flowTemplate.trim()"
+                            data-test="flow-template-reset"
+                            @click="onFlowTemplateReset"
+                        >
+                            {{ $t("settings.blocks.configuration.flow_template_reset") }}
+                        </KsButton>
+                    </div>
+                </div>
+            </SettingRow>
         </Block>
 
         <Block :heading="$t('settings.blocks.theme.label')">
             <SettingRow
                 stacked
                 :label="$t('settings.blocks.theme.fields.color_mode')"
-                :description="$t('settings.blocks.theme.descriptions.color_mode')"
             >
+                <template #description>
+                    <span v-html="$t('settings.blocks.theme.descriptions.color_mode')" /><br>
+                    <span v-html="$t('settings.blocks.theme.descriptions.color_mode_shortcut')" />
+                </template>
                 <ThemePicker :modelValue="settings.theme" :options="themeOptions" @update:model-value="onTheme" />
+            </SettingRow>
+
+            <SettingRow
+                :label="$t('settings.blocks.theme.fields.app_font_size')"
+                :description="$t('settings.blocks.theme.descriptions.app_font_size')"
+            >
+                <KsSelect fit :modelValue="settings.appFontSize" @update:model-value="onAppFontSize">
+                    <KsOption v-for="item in appFontSizeOptions" :key="item.value" :label="item.label" :value="item.value" />
+                </KsSelect>
             </SettingRow>
 
             <SettingRow
                 :label="$t('settings.blocks.theme.fields.logs_font_size')"
                 :description="$t('settings.blocks.theme.descriptions.logs_font_size')"
             >
-                <KsSelect fit :modelValue="settings.logsFontSize" @update:model-value="onLogsFontSize">
+                <KsSelect fit :modelValue="logsFontSize" @update:model-value="onLogsFontSize">
+                    <KsOption v-for="item in fontSizeOptions" :key="item.value" :label="item.label" :value="item.value" />
+                </KsSelect>
+            </SettingRow>
+
+            <SettingRow
+                :label="$t('settings.blocks.theme.fields.editor_font_size')"
+                :description="$t('settings.blocks.theme.descriptions.editor_font_size')"
+            >
+                <KsSelect fit :modelValue="effectiveEditorFontSize" @update:model-value="onFontSize">
                     <KsOption v-for="item in fontSizeOptions" :key="item.value" :label="item.label" :value="item.value" />
                 </KsSelect>
             </SettingRow>
@@ -107,16 +191,9 @@
                 :description="$t('settings.blocks.theme.descriptions.editor_font_family')"
             >
                 <KsSelect fit :modelValue="settings.editorFontFamily" @update:model-value="onFontFamily">
-                    <KsOption v-for="item in fontFamilyOptions" :key="item.value" :label="item.text" :value="item.value" />
-                </KsSelect>
-            </SettingRow>
-
-            <SettingRow
-                :label="$t('settings.blocks.theme.fields.editor_font_size')"
-                :description="$t('settings.blocks.theme.descriptions.editor_font_size')"
-            >
-                <KsSelect fit :modelValue="settings.editorFontSize" @update:model-value="onFontSize">
-                    <KsOption v-for="item in fontSizeOptions" :key="item.value" :label="item.label" :value="item.value" />
+                    <KsOption v-for="item in fontFamilyOptions" :key="item.value" :label="item.text" :value="item.value">
+                        <span :style="{fontFamily: item.value}">{{ item.text }}</span>
+                    </KsOption>
                 </KsSelect>
             </SettingRow>
 
@@ -144,23 +221,10 @@
 
             <SettingRow
                 :label="$t('settings.blocks.theme.fields.environment_name')"
-                :description="$t('settings.blocks.theme.descriptions.environment_name')"
+                :description="isEnvNameFromConfig ? $t('settings.blocks.theme.fields.environment_name_tooltip') : $t('settings.blocks.theme.descriptions.environment_name')"
             >
-                <KsTooltip
-                    v-if="isEnvNameFromConfig"
-                    :content="$t('settings.blocks.theme.fields.environment_name_tooltip')"
-                    placement="top"
-                >
-                    <KsInput
-                        :modelValue="settings.envName"
-                        @change="onEnvName"
-                        :placeholder="$t('name')"
-                        clearable
-                    />
-                </KsTooltip>
                 <KsInput
-                    v-else
-                    :modelValue="settings.envName"
+                    v-model="settings.envName"
                     @change="onEnvName"
                     :placeholder="$t('name')"
                     clearable
@@ -176,6 +240,17 @@
                     @change="onEnvColor"
                     showAlpha
                 />
+            </SettingRow>
+        </Block>
+
+        <Block :heading="$t('settings.blocks.sidebar.label')">
+            <SettingRow
+                :label="$t('settings.blocks.sidebar.fields.items')"
+                :description="$t('settings.blocks.sidebar.descriptions.items')"
+            >
+                <KsButton @click="showSidebarCustomize = true">
+                    {{ $t("customize sidebar") }}
+                </KsButton>
             </SettingRow>
         </Block>
 
@@ -218,22 +293,29 @@
             </SettingRow>
         </Block>
     </Wrapper>
+
+    <SidebarCustomizeModal v-model="showSidebarCustomize" :menu="menu" />
 </template>
 
 <script setup lang="ts">
-    import {computed, reactive, watch, onMounted, onBeforeUnmount} from "vue"
+    import {computed, reactive, ref, watch, onMounted, onBeforeUnmount} from "vue"
     import {useI18n} from "vue-i18n"
     import moment from "moment-timezone"
-
     import useRouteContext from "../../composables/useRouteContext"
     import {useToast} from "../../utils/toast"
     import {date as dateFilter} from "../../utils/filters"
     import * as Utils from "../../utils/utils"
     import type {SelectedTheme} from "../../utils/utils"
-    import {logDisplayTypes, storageKeys, executeFlowBehaviours} from "../../utils/constants"
+    import {logDisplayTypes, storageKeys, executeFlowBehaviours, taskEditDefaultModes} from "../../utils/constants"
+    import {DEFAULT_EXECUTION_TAB, DEFAULT_TAB_STORAGE_KEY} from "../executions/executionTabs"
+    import {applyFontScale, APP_FONT_SIZE_KEY, type AppFontSizeMode} from "../../utils/appFontSize"
+    import {appFontSizeMode, logsFontSizeOverride, effectiveEditorFontSize, editorFontSizeOverride, logsFontSize} from "../../composables/useLogDisplay"
     import {defaultNamespace} from "../../composables/useNamespaces"
+    import {useEditorBindings} from "../../composables/useEditorBindings"
+    import {validateFlowTemplate, type FlowTemplateValidation} from "../../utils/newFlowTemplate"
     import {useMiscStore} from "override/stores/misc"
     import {useLayoutStore} from "../../stores/layout"
+    import {useLeftMenu} from "override/components/useLeftMenu"
 
     import TopNavBar from "../../components/layout/TopNavBar.vue"
     import NamespaceSelect from "../../components/namespaces/components/NamespaceSelect.vue"
@@ -242,6 +324,8 @@
     import Block from "./components/block/Block.vue"
     import SettingRow from "./components/block/SettingRow.vue"
     import ThemePicker, {type ThemeOption} from "./components/block/ThemePicker.vue"
+    import SidebarCustomizeModal from "../layout/SidebarCustomizeModal.vue"
+    import {KsButton} from "@kestra-io/design-system"
 
     const FONT_SIZES = [10, 11, 12, 13, 14, 15, 16, 18, 20]
     const AUTO_REFRESH_INTERVALS = [5, 10, 15, 30, 60, 120]
@@ -255,11 +339,15 @@
         defaultLogLevel: [`${CONFIG}.fields.log_level`, `${CONFIG}.descriptions.log_level`],
         logDisplay: [`${CONFIG}.fields.log_display`, `${CONFIG}.descriptions.log_display`],
         [storageKeys.EDITOR_VIEW_TYPE]: [`${CONFIG}.fields.editor_type`, `${CONFIG}.descriptions.editor_type`],
+        [storageKeys.TASK_EDIT_DEFAULT_MODE]: [`${CONFIG}.fields.task_edit_default_mode`, `${CONFIG}.descriptions.task_edit_default_mode`],
         [storageKeys.EXECUTE_FLOW_BEHAVIOUR]: [`${CONFIG}.fields.execute_flow`, `${CONFIG}.descriptions.execute_flow`],
         executeDefaultTab: [`${CONFIG}.fields.execute_default_tab`, `${CONFIG}.descriptions.execute_default_tab`],
         flowDefaultTab: [`${CONFIG}.fields.flow_default_tab`, `${CONFIG}.descriptions.flow_default_tab`],
+        triggersDefaultTab: [`${CONFIG}.fields.triggers_default_tab`, `${CONFIG}.descriptions.triggers_default_tab`],
         [storageKeys.AUTO_REFRESH_INTERVAL]: [`${CONFIG}.fields.auto_refresh_interval`, `${CONFIG}.descriptions.auto_refresh_interval`],
         editorPlayground: [`${CONFIG}.fields.playground`, `${CONFIG}.descriptions.playground`],
+        [storageKeys.FLOW_TEMPLATE]: [`${CONFIG}.fields.flow_template`, `${CONFIG}.descriptions.flow_template`],
+        [APP_FONT_SIZE_KEY]: [`${THEME}.fields.app_font_size`, `${THEME}.descriptions.app_font_size`],
         logsFontSize: [`${THEME}.fields.logs_font_size`, `${THEME}.descriptions.logs_font_size`],
         editorFontFamily: [`${THEME}.fields.editor_font_family`, `${THEME}.descriptions.editor_font_family`],
         editorFontSize: [`${THEME}.fields.editor_font_size`, `${THEME}.descriptions.editor_font_size`],
@@ -275,6 +363,10 @@
     const toast = useToast()
     const miscStore = useMiscStore()
     const layoutStore = useLayoutStore()
+    const {menu} = useLeftMenu()
+    const showSidebarCustomize = ref(false)
+    const editorBindings = useEditorBindings()
+    const flowTemplateError = ref<FlowTemplateValidation | undefined>()
 
     const routeInfo = computed(() => ({title: t("settings.label")}))
     useRouteContext(routeInfo)
@@ -284,14 +376,15 @@
         defaultLogLevel: localStorage.getItem("defaultLogLevel") || "INFO",
         logDisplay: localStorage.getItem("logDisplay") || logDisplayTypes.DEFAULT,
         editorType: localStorage.getItem(storageKeys.EDITOR_VIEW_TYPE) || "YAML",
+        taskEditDefaultMode: localStorage.getItem(storageKeys.TASK_EDIT_DEFAULT_MODE) || taskEditDefaultModes.MODAL,
         executeFlowBehaviour: localStorage.getItem(storageKeys.EXECUTE_FLOW_BEHAVIOUR) || executeFlowBehaviours.SAME_TAB,
-        executeDefaultTab: localStorage.getItem("executeDefaultTab") || "gantt",
-        flowDefaultTab: localStorage.getItem("flowDefaultTab") || "overview",
+        executeDefaultTab: localStorage.getItem(DEFAULT_TAB_STORAGE_KEY) || DEFAULT_EXECUTION_TAB,
+        flowDefaultTab: localStorage.getItem("flowDefaultTab") || "edit",
+        triggersDefaultTab: localStorage.getItem("triggersDefaultTab") || "add",
         autoRefreshInterval: parseInt(localStorage.getItem(storageKeys.AUTO_REFRESH_INTERVAL) ?? "") || 10,
         theme: Utils.getSelectedTheme(),
-        logsFontSize: parseInt(localStorage.getItem("logsFontSize") ?? "") || 12,
+        appFontSize: appFontSizeMode.value,
         editorFontFamily: localStorage.getItem("editorFontFamily") || "'JetBrains Mono', monospace",
-        editorFontSize: parseInt(localStorage.getItem("editorFontSize") ?? "") || 12,
         autofoldTextEditor: localStorage.getItem("autofoldTextEditor") === "true",
         hoverTextEditor: localStorage.getItem("hoverTextEditor") === "true",
         lang: Utils.getLang(),
@@ -300,6 +393,7 @@
         editorPlayground: localStorage.getItem("editorPlayground") !== "false",
         envName: layoutStore.envName || miscStore.configs?.environment?.name,
         envColor: layoutStore.envColor || miscStore.configs?.environment?.color,
+        flowTemplate: localStorage.getItem(storageKeys.FLOW_TEMPLATE) ?? "",
     })
 
     const isEnvNameFromConfig = computed(() =>
@@ -325,6 +419,11 @@
         {label: t("no_code.labels.no_code"), value: "NO_CODE"},
     ])
 
+    const taskEditDefaultModeOptions = computed(() => [
+        {label: t("settings.blocks.configuration.task_edit_default_mode_options.modal"), value: taskEditDefaultModes.MODAL},
+        {label: t("settings.blocks.configuration.task_edit_default_mode_options.tab"), value: taskEditDefaultModes.TAB},
+    ])
+
     const executeFlowOptions = computed(() => Object.values(executeFlowBehaviours).map((item) => ({
         value: item,
         label: t(`open in ${item}`),
@@ -337,6 +436,12 @@
     ])
 
     const fontSizeOptions = computed(() => FONT_SIZES.map((size) => ({value: size, label: `${size}px`})))
+
+    const appFontSizeOptions = computed<{value: AppFontSizeMode; label: string}[]>(() => [
+        {value: "small", label: t("settings.blocks.theme.app_font_size_options.small")},
+        {value: "medium", label: t("settings.blocks.theme.app_font_size_options.medium")},
+        {value: "large", label: t("settings.blocks.theme.app_font_size_options.large")},
+    ])
 
     const autoRefreshOptions = computed(() => AUTO_REFRESH_INTERVALS.map((seconds) => ({value: seconds, label: `${seconds}`})))
 
@@ -377,14 +482,12 @@
         {value: "overview", label: t("overview")},
         {value: "gantt", label: t("gantt")},
         {value: "logs", label: t("logs")},
-        {value: "topology", label: t("topology")},
         {value: "outputs", label: t("outputs")},
         {value: "metrics", label: t("metrics")},
     ])
 
     const flowDefaultTabOptions = computed(() => [
         {value: "overview", label: t("overview")},
-        {value: "topology", label: t("topology")},
         {value: "executions", label: t("executions")},
         {value: "edit", label: t("edit")},
         {value: "revisions", label: t("revisions")},
@@ -393,7 +496,12 @@
         {value: "metrics", label: t("metrics")},
         {value: "dependencies", label: t("dependencies")},
         {value: "concurrency", label: t("concurrency")},
-        {value: "auditlogs", label: t("auditlogs")},
+        {value: "audit-logs", label: t("auditlogs")},
+    ])
+
+    const triggersDefaultTabOptions = computed(() => [
+        {value: "add", label: t("triggers_tabs_add")},
+        {value: "manage", label: t("triggers_tabs_manage")},
     ])
 
     const dateFormats = [
@@ -424,11 +532,11 @@
         notifySaved(meta?.[0], meta?.[1])
     }
 
-    function notifySaved(labelKey?: string, descriptionKey?: string) {
+    function notifySaved(labelKey?: string, descriptionKey?: string, bodyOverride?: string) {
         const title = labelKey
             ? t("settings.updated", {name: t(labelKey)})
             : t("saved")
-        const body = descriptionKey ? t(descriptionKey) : t("settings.label")
+        const body = bodyOverride ?? (descriptionKey ? t(descriptionKey) : t("settings.label"))
         toast.success(body, title)
     }
 
@@ -478,6 +586,11 @@
         persist(storageKeys.EDITOR_VIEW_TYPE, value)
     }
 
+    function onTaskEditDefaultMode(value: string) {
+        settings.taskEditDefaultMode = value
+        persist(storageKeys.TASK_EDIT_DEFAULT_MODE, value)
+    }
+
     function onExecuteFlowBehaviour(value: string) {
         settings.executeFlowBehaviour = value
         persist(storageKeys.EXECUTE_FLOW_BEHAVIOUR, value)
@@ -485,12 +598,35 @@
 
     function onExecuteDefaultTab(value: string) {
         settings.executeDefaultTab = value
-        persist("executeDefaultTab", value)
+        persist(DEFAULT_TAB_STORAGE_KEY, value)
     }
 
     function onFlowDefaultTab(value: string) {
         settings.flowDefaultTab = value
         persist("flowDefaultTab", value)
+    }
+
+    function onTriggersDefaultTab(value: string) {
+        settings.triggersDefaultTab = value
+        persist("triggersDefaultTab", value)
+    }
+
+    function onFlowTemplate(value?: string) {
+        const template = value ?? settings.flowTemplate
+        if (template === (localStorage.getItem(storageKeys.FLOW_TEMPLATE) ?? "")) {
+            return
+        }
+
+        settings.flowTemplate = template
+        const validation = validateFlowTemplate(template)
+        flowTemplateError.value = validation.errorCode ? validation : undefined
+        persist(storageKeys.FLOW_TEMPLATE, template)
+    }
+
+    function onFlowTemplateReset() {
+        settings.flowTemplate = ""
+        flowTemplateError.value = undefined
+        persist(storageKeys.FLOW_TEMPLATE, "")
     }
 
     function onAutoRefreshInterval(value: number) {
@@ -500,12 +636,21 @@
 
     function onTheme(value: string) {
         settings.theme = value as SelectedTheme
-        Utils.switchTheme(miscStore, value)
-        notifySaved(`${THEME}.fields.color_mode`, `${THEME}.descriptions.color_mode`)
+        Utils.switchTheme(miscStore, value as SelectedTheme)
+        const mode = themeOptions.value.find((option) => option.value === value)?.label ?? value
+        notifySaved(`${THEME}.fields.color_mode`, undefined, t(`${THEME}.confirmations.color_mode`, {mode}))
+    }
+
+    function onAppFontSize(value: AppFontSizeMode) {
+        settings.appFontSize = value
+        appFontSizeMode.value = value
+        applyFontScale(value)
+        const meta = SETTING_TOASTS[APP_FONT_SIZE_KEY]
+        notifySaved(meta?.[0], meta?.[1])
     }
 
     function onLogsFontSize(value: number) {
-        settings.logsFontSize = value
+        logsFontSizeOverride.value = value
         persist("logsFontSize", value)
     }
 
@@ -515,7 +660,7 @@
     }
 
     function onFontSize(value: number) {
-        settings.editorFontSize = value
+        editorFontSizeOverride.value = value
         persist("editorFontSize", value)
     }
 
@@ -534,8 +679,7 @@
         persist("editorPlayground", settings.editorPlayground)
     }
 
-    function onEnvName(value: string | number) {
-        settings.envName = String(value)
+    function onEnvName() {
         layoutStore.setEnvName(settings.envName)
         notifySaved(`${THEME}.fields.environment_name`)
     }
@@ -577,6 +721,9 @@
     onMounted(() => {
         mediaQuery = window.matchMedia("(prefers-color-scheme: dark)")
         mediaQuery.addEventListener("change", updateThemeBasedOnSystem)
+
+        const validation = validateFlowTemplate(settings.flowTemplate)
+        flowTemplateError.value = validation.errorCode ? validation : undefined
     })
 
     onBeforeUnmount(() => {
@@ -587,3 +734,52 @@
         settings.theme = Utils.getSelectedTheme()
     }, {immediate: true})
 </script>
+
+<style scoped lang="scss">
+.flow-template {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ks-spacing-2);
+    width: 100%;
+}
+
+.flow-template-editor {
+    min-height: 12rem;
+    border: var(--ks-border-width-thin) solid var(--ks-border-default);
+    border-radius: var(--ks-radius-base);
+    overflow: hidden;
+}
+
+.flow-template-footer {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--ks-spacing-2);
+}
+
+.flow-template-error {
+    margin: 0;
+}
+
+.flow-template-error-detail {
+    display: block;
+    font-family: var(--ks-font-family-mono, monospace);
+    font-size: var(--ks-font-size-sm);
+    word-break: break-word;
+}
+
+.flow-template-reset {
+    margin-left: auto;
+}
+
+:deep(kbd) {
+    display: inline-block;
+    padding: 0.1em 0.4em;
+    border: 1px solid var(--ks-border-default);
+    border-radius: 3px;
+    background: var(--ks-bg-surface);
+    color: var(--ks-text-primary);
+    font-family: inherit;
+    font-size: var(--ks-font-size-xs);
+    line-height: 1.4;
+}
+</style>

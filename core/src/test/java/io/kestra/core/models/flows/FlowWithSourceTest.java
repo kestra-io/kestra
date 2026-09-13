@@ -1,5 +1,6 @@
 package io.kestra.core.models.flows;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 
@@ -132,18 +133,6 @@ class FlowWithSourceTest {
                     Schedule.builder().id("schedule").cron("0 1 9 * * *").build()
                 )
             )
-            .pluginDefaults(
-                List.of(
-                    FlowPluginDefault.builder()
-                        .type(Log.class.getName())
-                        .values(
-                            Map.of(
-                                "message", "Default message"
-                            )
-                        )
-                        .build()
-                )
-            )
             .concurrency(
                 Concurrency.builder()
                     .behavior(Concurrency.Behavior.CANCEL)
@@ -156,5 +145,60 @@ class FlowWithSourceTest {
 
         assertThat(of.equalsWithoutRevision(flow)).isTrue();
         assertThat(of.getSource()).isEqualTo(expectedSource);
+    }
+
+    @Test
+    void toDeletedShouldClearDraft() {
+        // A draft revision is skipped by the ranking used to resolve an execution without an
+        // explicit revision, so a deleted revision left as a draft would let the previous,
+        // still-live revision resurface as executable.
+        FlowWithSource flow = FlowWithSource.builder()
+            .id(IdUtils.create())
+            .namespace("io.kestra.unittest")
+            .revision(1)
+            .draft(true)
+            .tasks(
+                List.of(
+                    Log.builder()
+                        .id(IdUtils.create())
+                        .type(Log.class.getName())
+                        .message("Hello World")
+                        .build()
+                )
+            )
+            .source("source")
+            .build();
+
+        FlowWithSource deleted = flow.toDeleted();
+
+        assertThat(deleted.isDeleted()).isTrue();
+        assertThat(deleted.isDraft()).isFalse();
+        assertThat(deleted.getRevision()).isEqualTo(2);
+    }
+
+    @Test
+    void toFlowShouldPreserveRevisionAndUpdated() {
+        Instant updated = Instant.parse("2026-08-06T08:55:00.788514407Z");
+        FlowWithSource flowWithSource = FlowWithSource.builder()
+            .id(IdUtils.create())
+            .namespace("io.kestra.unittest")
+            .revision(2)
+            .updated(updated)
+            .tasks(
+                List.of(
+                    Log.builder()
+                        .id(IdUtils.create())
+                        .type(Log.class.getName())
+                        .message("Hello World")
+                        .build()
+                )
+            )
+            .source("source")
+            .build();
+
+        Flow flow = flowWithSource.toFlow();
+
+        assertThat(flow.getRevision()).isEqualTo(2);
+        assertThat(flow.getUpdated()).isEqualTo(updated);
     }
 }

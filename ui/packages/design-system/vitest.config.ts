@@ -65,5 +65,8 @@ export default defineConfig({
                 },
             },
         ],
+        coverage: {
+            include: ["src/**/*.{ts,vue}"],
+        },
     },
 })

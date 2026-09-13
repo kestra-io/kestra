@@ -23,6 +23,7 @@ import jakarta.inject.Inject;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
+@io.micronaut.context.annotation.Property(name = "test.context.id", value = "grpc-flow")
 class GrpcWorkerFlowMetaStoreTest extends AbstractGrpcMetaStoreTest {
 
     @Inject

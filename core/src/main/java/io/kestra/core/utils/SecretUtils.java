@@ -1,18 +1,19 @@
 package io.kestra.core.utils;
 
-import io.kestra.core.models.annotations.PluginProperty;
-import io.kestra.core.models.property.Property;
-
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
+
+import io.kestra.core.models.annotations.PluginProperty;
+import io.kestra.core.models.property.Property;
 
 /**
  * Utility for validating fields annotated with {@link PluginProperty#secret()}.
  */
 public final class SecretUtils {
 
-    private SecretUtils() {}
+    private SecretUtils() {
+    }
 
     /**
      * Returns a list of warning messages for any {@link PluginProperty#secret()} field
@@ -57,7 +58,9 @@ public final class SecretUtils {
                 }
 
                 if (strValue != null && !PebbleUtil.containsOpeningBlockDelimiter(strValue)) {
-                    warnings.add("Property '" + field.getName() + "' is annotated as a secret and should be provided as a Pebble expression (e.g., `{{ secret('MY_SECRET') }}`), not a plain-text value.");
+                    warnings.add(
+                        "Property '" + field.getName() + "' is annotated as a secret and should be provided as a Pebble expression (e.g., `{{ secret('MY_SECRET') }}`), not a plain-text value."
+                    );
                 }
             }
             clazz = clazz.getSuperclass();

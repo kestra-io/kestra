@@ -20,7 +20,7 @@ import jakarta.inject.Singleton;
 @Singleton
 public class FileURIFunction extends AbstractFileFunction {
     public static final String NAME = "fileURI";
-    public static final String VERSION = "version";
+    public static final String REVISION = "revision";
 
     private static final String ERROR_MESSAGE = "The 'fileURI' function expects an argument 'path' that is a path to a namespace file.";
 
@@ -28,7 +28,7 @@ public class FileURIFunction extends AbstractFileFunction {
     public List<String> getArgumentNames() {
         return Stream.concat(
             super.getArgumentNames().stream(),
-            Stream.of(VERSION)
+            Stream.of(REVISION)
         ).toList();
     }
 
@@ -37,7 +37,7 @@ public class FileURIFunction extends AbstractFileFunction {
         HashMap<String, String> defaults = new HashMap<>();
         defaults.put(PATH, "'a/namespace/file'");
         defaults.put(NAMESPACE, null);
-        defaults.put(VERSION, null);
+        defaults.put(REVISION, null);
         return defaults;
     }
 
@@ -59,19 +59,19 @@ public class FileURIFunction extends AbstractFileFunction {
         Namespace namespaceStorage = namespaceFactory.get().of(tenantId, namespace, storageInterface.get());
         Path filePath = NamespaceFile.normalize(Path.of(pathStr));
 
-        if (args.containsKey(VERSION)) {
-            Integer version;
+        if (args.containsKey(REVISION)) {
+            Integer revision;
             try {
-                version = Integer.parseInt(args.get(VERSION).toString());
+                revision = Integer.parseInt(args.get(REVISION).toString());
             } catch (NumberFormatException e) {
-                throw new IllegalArgumentException("The 'fileURI' function expects the 'version' argument to be a valid integer.");
+                throw new IllegalArgumentException("The 'fileURI' function expects the 'revision' argument to be a valid integer.");
             }
             try {
-                namespaceStorage.getFileContent(filePath, version).close();
+                namespaceStorage.getFileContent(filePath, revision).close();
             } catch (FileNotFoundException e) {
-                throw new FileNotFoundException("Version " + version + " of file '" + filePath + "' was not found in namespace '" + namespace + "'.");
+                throw new FileNotFoundException("Revision " + revision + " of file '" + filePath + "' was not found in namespace '" + namespace + "'.");
             }
-            NamespaceFile namespaceFile = NamespaceFile.of(namespace, filePath, version);
+            NamespaceFile namespaceFile = NamespaceFile.of(namespace, filePath, revision);
             return namespaceFile.uri().toString();
         } else {
             NamespaceFile namespaceFile = namespaceStorage.get(filePath);

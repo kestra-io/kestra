@@ -1,11 +1,5 @@
 package io.kestra.core.runners.pebble.filters;
 
-import io.kestra.core.utils.RegexUtils;
-import io.pebbletemplates.pebble.error.PebbleException;
-import io.pebbletemplates.pebble.extension.Filter;
-import io.pebbletemplates.pebble.template.EvaluationContext;
-import io.pebbletemplates.pebble.template.PebbleTemplate;
-
 import java.text.MessageFormat;
 import java.util.List;
 import java.util.Map;
@@ -13,15 +7,28 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
+import io.kestra.core.utils.RegexUtils;
+
+import io.pebbletemplates.pebble.error.PebbleException;
+import io.pebbletemplates.pebble.extension.Filter;
+import io.pebbletemplates.pebble.template.EvaluationContext;
+import io.pebbletemplates.pebble.template.PebbleTemplate;
+
 /**
  * Pebble filter that extracts the first portion of a string matching a regular expression.
  *
- * <p>Usage: {@code {{ "order-12345-done" | regexExtract(regex="\d+") }}}</p>
+ * <p>
+ * Usage: {@code {{ "order-12345-done" | regexExtract(regex="\d+") }}}
+ * </p>
  *
- * <p>An optional {@code group} argument (default {@code 0}) selects which capture group to return.
- * Group {@code 0} returns the entire match; groups {@code 1..n} return specific capture groups.</p>
+ * <p>
+ * An optional {@code group} argument (default {@code 0}) selects which capture group to return.
+ * Group {@code 0} returns the entire match; groups {@code 1..n} return specific capture groups.
+ * </p>
  *
- * <p>Returns {@code null} if no match is found.</p>
+ * <p>
+ * Returns {@code null} if no match is found.
+ * </p>
  *
  * @see RegexMatchFilter
  * @see RegexReplaceFilter

@@ -14,7 +14,7 @@
             <div class="filter-toolbar__search">
                 <KsSearch
                     v-model="searchText"
-                    :placeholder="$t('pluginPage.search')"
+                    :placeholder="$t('pluginPage.search', {count: totalPlugins})"
                     clearable
                 />
             </div>
@@ -47,10 +47,10 @@
             </div>
         </div>
 
-        <KsEmpty
+        <KsNoData
             v-if="pluginsList.length === 0"
-            :description="$t('pluginPage.noResults')"
             class="my-6"
+            :description="$t('pluginPage.noResults')"
         />
 
         <section v-else class="plugins-container">
@@ -82,10 +82,11 @@
                         </template>
                     </div>
                 </template>
-                <KsPluginCard
+                <PluginCard
                     :iconCls="hasIcon(plugin.subGroup) ? plugin.subGroup : plugin.group"
                     :icons
-                    :title="plugin.title.capitalize()"
+                    :loadIcon="pluginsStore.loadIcon"
+                    :title="enrichmentStore.getEnrichment(plugin)?.title ?? plugin.title.capitalize()"
                     :description="plugin.description"
                     :categories="plugin.categories"
                     :taskCount="taskCount(plugin)"
@@ -101,10 +102,12 @@
     import {ref, computed, markRaw, onMounted, watch, type Component} from "vue"
     import {useI18n} from "vue-i18n"
     import {useRoute, useRouter} from "vue-router"
-    import {KsPluginCard, KsSearch, KsAlert, KsEmpty, KsSkeleton} from "@kestra-io/design-system"
+    import {KsSearch, KsAlert, KsSkeleton} from "@kestra-io/design-system"
+    import PluginCard from "./PluginCard.vue"
     import {isEntryAPluginElementPredicate, isPluginMatched, type Plugin, type PluginElement} from "../../utils/pluginUtils"
     import {usePluginsStore} from "../../stores/plugins"
     import {usePluginsEnrichmentStore} from "../../stores/pluginsEnrichment"
+    import {usePluginsCount} from "../../composables/usePluginsCount"
     import {useMiscStore} from "override/stores/misc"
     import useRouteContext from "../../composables/useRouteContext"
     import TopNavBar from "../../components/layout/TopNavBar.vue"
@@ -122,6 +125,7 @@
     const pluginsStore = usePluginsStore()
     const miscStore = useMiscStore()
     const enrichmentStore = usePluginsEnrichmentStore()
+    const {totalPlugins} = usePluginsCount()
 
     const title = computed(() => t("plugins.names"))
     const routeInfo = computed(() => ({title: title.value, breadcrumb: undefined}))
@@ -158,9 +162,10 @@
             return acc
         }, {})
 
-        const filtered = Object.values(grouped).flatMap(group =>
-            group.filter(p => p.subGroup).length ? group.filter(p => p.subGroup) : group.filter(p => !p.subGroup),
-        )
+        const filtered = Object.values(grouped).flatMap(group => {
+            const subGroups = group.filter(p => p.subGroup && isVisible(p))
+            return subGroups.length ? subGroups : group.filter(p => !p.subGroup)
+        })
 
         return filtered
             .filter((plugin, index, self) =>
@@ -231,8 +236,7 @@
         return baseList.value
             .filter(plugin => isPluginMatched(plugin, searchInput.value))
             .filter(plugin => matchesSelectedCategories(plugin))
-            .slice()
-            .sort(comparators[sortBy.value] ?? nameAsc)
+            .sort(comparators[sortBy.value])
     })
 
     const loadPluginIcons = async () => {
@@ -293,6 +297,7 @@
 
     onMounted(() => {
         loadPluginIcons()
+        pluginsStore.fetchIcons()
         miscStore.loadConfigs()
         pluginsStore.ensurePlugins().catch((err) => {
             console.error("Failed to load plugins", err)
@@ -303,7 +308,6 @@
 </script>
 
 <style scoped lang="scss">
-    
     .filter-toolbar {
         display: flex;
         flex-wrap: wrap;
@@ -377,10 +381,6 @@
     }
 
     @media (max-width: 650px) {
-        .plugin-header {
-            padding: var(--ks-spacing-3);
-        }
-
         .plugins-container {
             padding-left: var(--ks-spacing-3);
             padding-right: var(--ks-spacing-3);

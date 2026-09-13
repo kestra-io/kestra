@@ -1,10 +1,6 @@
 package io.kestra.cli.commands.migrations;
 
-import java.util.Map;
-
-import io.kestra.cli.AbstractCommand;
 import io.kestra.core.migration.MigrationLock;
-import io.kestra.core.migration.MigrationRunner;
 
 import jakarta.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
@@ -27,16 +23,10 @@ import picocli.CommandLine;
     description = "Force-release the migration lock",
     mixinStandardHelpOptions = true
 )
-public class UnlockMigrationCommand extends AbstractCommand {
+public class UnlockMigrationCommand extends AbstractMigrationCommand {
 
     @Inject
     private MigrationLock migrationLock;
-
-    @SuppressWarnings("unused")
-    public static Map<String, Object> propertiesOverrides() {
-        MigrationRunner.setSkipAutoRun(true);
-        return Map.of();
-    }
 
     @Override
     public Integer call() throws Exception {

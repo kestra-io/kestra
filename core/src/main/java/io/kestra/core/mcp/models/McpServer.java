@@ -12,6 +12,7 @@ import io.kestra.core.models.SoftDeletable;
 import io.kestra.core.queues.event.BroadcastEvent;
 import io.kestra.core.utils.Enums;
 import io.kestra.core.utils.IdUtils;
+import io.kestra.core.validations.TenantId;
 
 import io.swagger.v3.oas.annotations.Hidden;
 import jakarta.validation.constraints.NotBlank;
@@ -23,13 +24,11 @@ import jakarta.validation.constraints.Pattern;
  */
 public record McpServer(
     @Hidden
-    @Pattern(regexp = "^[a-z0-9][a-z0-9_-]*")
-    String tenantId,
+    @TenantId String tenantId,
 
     @NotNull
     @NotBlank
-    @Pattern(regexp = "^[a-z0-9][a-z0-9_-]*")
-    String id,
+    @Pattern(regexp = "^[a-z0-9][a-z0-9_-]*") String id,
 
     String description,
 
@@ -45,18 +44,13 @@ public record McpServer(
 
     boolean disabled,
 
-    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
-    boolean isDefault,
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY) boolean isDefault,
 
-    @Hidden
-    boolean deleted,
+    @Hidden boolean deleted,
 
-    @Hidden
-    Instant created,
+    @Hidden Instant created,
 
-    @Hidden
-    Instant updated
-) implements HasUID, SoftDeletable<McpServer>, BroadcastEvent {
+    @Hidden Instant updated) implements HasUID, SoftDeletable<McpServer>, BroadcastEvent {
 
     /** The well-known id of the default MCP server, auto-provisioned per tenant. */
     public static final String DEFAULT_ID = "default";
@@ -126,12 +120,16 @@ public record McpServer(
     /** {@inheritDoc} */
     @Override
     public McpServer toDeleted() {
-        return new McpServer(tenantId, id, description, instructions,
-            serverType, authType, oauthProvider, oauthScopesSupported, disabled, isDefault, true, created, updated);
+        return new McpServer(
+            tenantId, id, description, instructions,
+            serverType, authType, oauthProvider, oauthScopesSupported, disabled, isDefault, true, created, updated
+        );
     }
 
     public McpServer withTimestamps(Instant created, Instant updated) {
-        return new McpServer(tenantId, id, description, instructions,
-            serverType, authType, oauthProvider, oauthScopesSupported, disabled, isDefault, deleted, created, updated);
+        return new McpServer(
+            tenantId, id, description, instructions,
+            serverType, authType, oauthProvider, oauthScopesSupported, disabled, isDefault, deleted, created, updated
+        );
     }
 }

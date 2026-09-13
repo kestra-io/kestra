@@ -11,6 +11,7 @@ import java.util.List;
 import com.google.common.io.Files;
 
 import io.kestra.cli.AbstractCommand;
+import io.kestra.cli.commands.NoDatabaseCommandInterface;
 import io.kestra.core.docs.DocumentationGenerator;
 import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.plugins.RegisteredPlugin;
@@ -26,7 +27,7 @@ import static io.kestra.core.models.Plugin.isDeprecated;
     name = "doc",
     description = "Generate documentation for all plugins currently installed"
 )
-public class PluginDocCommand extends AbstractCommand {
+public class PluginDocCommand extends AbstractCommand implements NoDatabaseCommandInterface {
     @Inject
     private ApplicationContext applicationContext;
 

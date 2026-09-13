@@ -12,14 +12,14 @@ import io.kestra.core.storages.FileAttributes;
 
 import jakarta.annotation.Nullable;
 
-public record KVEntry(String namespace, String key, Integer version, @Nullable String description, Instant creationDate, Instant updateDate, @Nullable Instant expirationDate) {
+public record KVEntry(String namespace, String key, Integer revision, @Nullable String description, Instant creationDate, Instant updateDate, @Nullable Instant expirationDate) {
 
-    private static final Pattern captureKeyAndVersion = Pattern.compile("(.*)\\.ion(?:\\.v(\\d+))?$");
+    private static final Pattern captureKeyAndRevision = Pattern.compile("(.*)\\.ion(?:\\.v(\\d+))?$");
 
     public static KVEntry from(String namespace, FileAttributes fileAttributes) throws IOException {
         Optional<KVMetadata> kvMetadata = Optional.ofNullable(fileAttributes.getMetadata()).map(KVMetadata::new);
         String fileName = fileAttributes.getFileName();
-        Matcher matcher = captureKeyAndVersion.matcher(fileName);
+        Matcher matcher = captureKeyAndRevision.matcher(fileName);
         if (!matcher.matches()) {
             throw new IOException("Invalid KV file name format: " + fileName);
         }
@@ -40,7 +40,7 @@ public record KVEntry(String namespace, String key, Integer version, @Nullable S
         return new KVEntry(
             persistedKvMetadata.getNamespace(),
             persistedKvMetadata.getName(),
-            persistedKvMetadata.getVersion(),
+            persistedKvMetadata.getRevision(),
             persistedKvMetadata.getDescription(),
             persistedKvMetadata.getCreated(),
             persistedKvMetadata.getUpdated(),

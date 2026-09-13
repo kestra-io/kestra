@@ -1,0 +1,224 @@
+<template>
+    <div class="expression-debugger">
+        <h2>{{ $t("eval.expression") }}</h2>
+        <KsEditor
+            v-bind="editorBindings"
+            v-model="editorValue"
+            :navbar="false"
+            :inline="true"
+            :options="{fullHeight: false, customHeight: 5}"
+            lang="yaml-pebble"
+            class="input"
+            @confirm="onDebug"
+        />
+
+        <KsButton type="primary" class="button" @click="onDebug">
+            {{ $t("eval.title") }}
+        </KsButton>
+
+        <KsAlert
+            v-if="error"
+            type="error"
+            :closable="false"
+            class="error overflow-auto"
+        >
+            <p>
+                <strong>{{ error }}</strong>
+            </p>
+        </KsAlert>
+
+        <template v-else-if="result !== undefined || fileResult !== undefined">
+            <div class="result-section">
+                <span class="result-label">{{ $t("eval.preview") }}</span>
+                <VarValue
+                    v-if="execution && fileResult"
+                    :value="fileResult"
+                    :execution="execution"
+                />
+                <template v-else>
+                    <KsAlert
+                        v-if="isResultTruncated"
+                        type="warning"
+                        :closable="false"
+                        data-test="result-truncated"
+                        :title="$t('large_outputs.value_truncated', {size: resultSize})"
+                    >
+                        <KsButton size="small" @click="copyFullResult">
+                            {{ $t('copy') }}
+                        </KsButton>
+                        <KsButton size="small" :icon="Download" data-test="download-result" @click="downloadFullResult">
+                            {{ $t('download') }}
+                        </KsButton>
+                    </KsAlert>
+                    <KsEditor
+                        v-bind="editorBindings"
+                        :readOnly="true"
+                        :inline="true"
+                        :navbar="false"
+                        :options="{showScroll: true, fullHeight: false, customHeight: 8}"
+                        :modelValue="displayResult"
+                        :lang="resultLang"
+                        class="result"
+                    />
+                </template>
+            </div>
+        </template>
+    </div>
+</template>
+
+<script setup lang="ts">
+    import {ref, computed, watch} from "vue"
+
+    import Download from "vue-material-design-icons/Download.vue"
+    import {KsEditor, KsButton, KsAlert, copyToClipboard} from "@kestra-io/design-system"
+    import {evalExpression} from "@kestra-io/kestra-sdk/executions"
+
+    import {useEditorBindings} from "../../../composables/useEditorBindings"
+    import * as Utils from "../../../utils/utils"
+    import type {Execution} from "../../../stores/executions"
+
+    import VarValue from "../VarValue.vue"
+
+    const props = defineProps<{
+        execution?: Execution;
+        /** Suggested expression to seed the editor with (e.g. `{{ vars.x }}`). */
+        expression?: string;
+        /** File URI of the selected value, previewed without waiting for an evaluation. */
+        fileUri?: string;
+    }>()
+
+    const editorBindings = useEditorBindings()
+
+    const editorValue = ref(props.expression ?? "")
+
+    // Re-seed the editor whenever the parent suggests a new expression
+    // (e.g. when the user selects a different variable).
+    watch(
+        () => props.expression,
+        (value) => {
+            editorValue.value = value ?? ""
+            clear()
+        },
+    )
+
+    const result = ref<string | undefined>(undefined)
+    const parsedResult = ref<unknown>(undefined)
+
+    // Evaluating an expression over a large output put the whole result in Monaco. A JSON result
+    // previews through its parsed value so the editor is never handed a clipped, broken one.
+    const resultPreview = computed(() => parsedResult.value === undefined
+        ? undefined
+        : Utils.boundForDisplay(parsedResult.value))
+
+    const displayResult = computed(() => resultPreview.value
+        ? JSON.stringify(resultPreview.value.value, null, 2) ?? ""
+        : Utils.capForDisplay(result.value ?? ""))
+
+    const isResultTruncated = computed(() => resultPreview.value
+        ? resultPreview.value.truncated
+        : displayResult.value.length < (result.value?.length ?? 0))
+
+    const resultSize = computed(() => Utils.humanTextSize(result.value ?? ""))
+
+    const copyFullResult = () => copyToClipboard(result.value ?? "")
+
+    const downloadFullResult = () => Utils.downloadText(
+        result.value ?? "",
+        `expression-result.${resultLang.value === "json" ? "json" : "txt"}`,
+    )
+
+    const resultLang = ref<"json" | "">("")
+    const error = ref<string | undefined>(undefined)
+
+    const fileResult = computed(() => {
+        if (result.value !== undefined) {
+            return Utils.isFile(result.value) ? result.value : undefined
+        }
+        return props.execution ? props.fileUri : undefined
+    })
+
+    function clear() {
+        result.value = undefined
+        parsedResult.value = undefined
+        error.value = undefined
+    }
+
+    async function onDebug() {
+        const executionId = props.execution?.id
+        if (!executionId || !editorValue.value) return
+
+        clear()
+
+        try {
+            const response = await evalExpression({executionId, body: editorValue.value})
+
+            if (response.error) {
+                error.value = response.error
+                return
+            }
+
+            try {
+                const parsed = JSON.parse(response.result ?? "")
+                result.value = JSON.stringify(parsed, null, 2)
+                // Only a container previews structurally; a scalar is worth reading in full.
+                parsedResult.value = typeof parsed === "object" && parsed !== null ? parsed : undefined
+                resultLang.value = "json"
+            } catch {
+                result.value = response.result ?? ""
+                resultLang.value = ""
+            }
+        } catch (err) {
+            error.value = (err as Error).message ?? "Failed to evaluate expression"
+        }
+    }
+</script>
+
+<style scoped lang="scss">
+.expression-debugger {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ks-spacing-3);
+
+    .input {
+        min-height: 7rem;
+        border-radius: 8px;
+        border: 1px solid var(--ks-border-default);
+    }
+
+    .button {
+        align-self: stretch;
+    }
+
+    .error {
+        overflow: auto;
+    }
+
+    h2 {
+        margin: 0;
+        font-size: var(--ks-font-size-sm);
+        font-weight: 600;
+    }
+
+    .result-section {
+        display: flex;
+        flex-direction: column;
+        gap: var(--ks-spacing-2);
+        border-top: 1px solid var(--ks-border-default);
+        padding-top: var(--ks-spacing-3);
+    }
+
+    .result-label {
+        font-size: var(--ks-font-size-xs);
+        font-weight: 600;
+        color: var(--ks-text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .result {
+        border: 1px solid var(--ks-border-default);
+        border-radius: var(--ks-spacing-2);
+        background: var(--ks-bg-base);
+    }
+}
+</style>

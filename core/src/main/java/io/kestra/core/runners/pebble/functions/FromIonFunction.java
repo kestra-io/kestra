@@ -17,6 +17,7 @@ import reactor.core.publisher.Flux;
 
 public class FromIonFunction implements KestraFunction {
     public static final String NAME = "fromIon";
+
     public List<String> getArgumentNames() {
         return List.of("ion", "allRows");
     }

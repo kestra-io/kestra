@@ -8,7 +8,7 @@
     >
         <span class="content">
             <span class="key">{{ filter.keyLabel }}</span>
-            <span v-if="!hasValue(filter.value)" class="in">{{ t("filter.in any") }}</span>
+            <span v-if="!hasValue(filter.value)" class="in">{{ $t("filter.in any") }}</span>
             <span v-else-if="shouldShowComparatorLabel" class="comparator" :class="{negative: isNegative}">{{ getComparatorLabel() }}</span>
             <KsTooltip
                 v-if="hasValue(filter.value)"
@@ -30,6 +30,7 @@
             link
             size="small"
             class="close"
+            :aria-label="$t('filter.remove_filter')"
             :icon="Close"
             @click.stop="emit('remove', filter.id)"
         />
@@ -59,7 +60,7 @@
         {label: t("datepicker.last24hours"), value: "PT24H"},
         {label: t("datepicker.last48hours"), value: "PT48H"},
         {label: t("datepicker.last7days"), value: "PT168H"},
-        {label: t("datepicker.last30days"), value: "P30D"},
+        {label: t("datepicker.last30days"), value: "PT720H"},
         {label: t("datepicker.last365days"), value: "PT8760H"},
     ]
 
@@ -166,7 +167,7 @@
     background-color: var(--ks-btn-secondary-bg-default);
     border: 1px solid var(--ks-border-default);
     padding: 3px 12px;
-    border-radius: 4px;
+    border-radius: var(--ks-radius-base);
     cursor: pointer;
     max-width: 300px;
     min-height: 32px;
@@ -192,7 +193,7 @@
         .comparator,
         .value,
         .in {
-            font-size: var(--ks-font-size-xs);
+            font-size: var(--ks-font-size-sm);
             color: var(--ks-text-primary);
             white-space: nowrap;
             display: flex;
@@ -236,7 +237,7 @@
     :deep(.kel-tag) {
         background-color: var(--ks-bg-tag);
         color: var(--ks-text-secondary);
-        font-size: 10px;
+        font-size: var(--ks-font-size-2xs);
         margin-left: 0.25rem;
     }
 }

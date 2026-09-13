@@ -7,6 +7,8 @@ import {useAuthStore} from "override/stores/auth"
 import {useValues} from "../composables/useValues"
 import {useI18n} from "vue-i18n"
 import {useRoute} from "vue-router"
+import {labelComparatorLabels} from "./labelComparatorLabels"
+import {routeFamily} from "../../../utils/routeFamily"
 
 export const useFlowFilter = (): ComputedRef<FilterConfiguration> => {
     const {t} = useI18n()
@@ -17,7 +19,7 @@ export const useFlowFilter = (): ComputedRef<FilterConfiguration> => {
             title: t("filter.titles.flow_filters"),
             searchPlaceholder: t("filter.search_placeholders.search_flows"),
             keys: [
-                ...(route.name !== "namespaces/update" ? [
+                ...(routeFamily(route.name) !== "namespaces/update" ? [
                     {
                         key: "namespace",
                         label: t("filter.namespace.label"),
@@ -66,8 +68,18 @@ export const useFlowFilter = (): ComputedRef<FilterConfiguration> => {
                     key: "labels",
                     label: t("filter.labels_flow.label"),
                     description: t("filter.labels_flow.description"),
-                    comparators: [Comparators.EQUALS, Comparators.NOT_EQUALS],
+                    comparators: [
+                        Comparators.IN,
+                        Comparators.NOT_IN,
+                        Comparators.EQUALS,
+                        Comparators.CONTAINS,
+                        Comparators.NOT_CONTAINS,
+                        Comparators.IS_NOT_NULL,
+                        Comparators.IS_NULL,
+                    ],
+                    comparatorLabels: labelComparatorLabels(t),
                     valueType: "key-value",
+                    showComparatorSelection: true,
                 },
             ],
         }

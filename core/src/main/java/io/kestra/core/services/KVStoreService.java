@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
 
+import io.kestra.core.exceptions.ResourceAccessDeniedException;
 import io.kestra.core.models.FetchVersion;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.kv.PersistedKvMetadata;
@@ -135,7 +136,7 @@ public class KVStoreService {
         Integer purgedMetadataCount = getKvMetadataRepository().purge(kvEntries.stream().map(kv -> PersistedKvMetadata.from(tenant, kv)).toList());
 
         long actualDeletedEntries = kvEntries.stream()
-            .map(entry -> KVStore.storageUri(entry.key(), namespace, entry.version()))
+            .map(entry -> KVStore.storageUri(entry.key(), namespace, entry.revision()))
             .map(throwFunction(uri ->
             {
                 boolean deleted = this.storage.delete(tenant, namespace, uri);
@@ -163,11 +164,13 @@ public class KVStoreService {
      * @param fromNamespace The namespace from which the K/V store is accessed.
      */
     public void checkAccessNamespaceIsAllowed(String tenant, String namespace, @Nullable String fromNamespace) {
-        boolean isNotSameNamespace = fromNamespace != null && !namespace.equals(fromNamespace);
-        if (isNotSameNamespace && isNotParentNamespace(namespace, fromNamespace)) {
+        // A namespace inherits the K/V store of its ancestors, so the allow-list only governs access to any other namespace.
+        boolean inheritsTargetNamespace = fromNamespace != null && isDescendantOrSelf(namespace, fromNamespace);
+
+        if (fromNamespace != null && !inheritsTargetNamespace) {
             try {
                 namespaceService.checkAllowedNamespace(tenant, namespace, tenant, fromNamespace);
-            } catch (IllegalArgumentException e) {
+            } catch (ResourceAccessDeniedException e) {
                 throw new KVStoreException(
                     String.format(
                         "Cannot access the KV store. Access to '%s' namespace is not allowed from '%s'.", namespace, fromNamespace
@@ -177,8 +180,7 @@ public class KVStoreService {
         }
 
         // Only check namespace existence if not a descendant
-        boolean checkIfNamespaceExists = fromNamespace == null || isNotParentNamespace(namespace, fromNamespace);
-        if (checkIfNamespaceExists && !namespaceService.isNamespaceExists(tenant, namespace)) {
+        if (!inheritsTargetNamespace && !namespaceService.isNamespaceExists(tenant, namespace)) {
             // if it didn't exist, we still check if there are KV as you can add KV without creating a namespace in DB or having flows in it
             if (!kvMetadataStateStore.existsByNamespace(tenant, namespace)) {
                 throw new KVStoreException(
@@ -191,7 +193,10 @@ public class KVStoreService {
         }
     }
 
-    private static boolean isNotParentNamespace(final String parentNamespace, final String childNamespace) {
-        return !childNamespace.startsWith(parentNamespace);
+    /**
+     * The trailing dot is required: without it 'prod2' would be treated as a descendant of 'prod' and skip the allow-list.
+     */
+    private static boolean isDescendantOrSelf(final String parentNamespace, final String childNamespace) {
+        return childNamespace.equals(parentNamespace) || childNamespace.startsWith(parentNamespace + ".");
     }
 }

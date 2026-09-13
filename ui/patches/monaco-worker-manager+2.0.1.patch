@@ -1,0 +1,61 @@
+diff --git a/node_modules/monaco-worker-manager/index.js b/node_modules/monaco-worker-manager/index.js
+index 6527afa..6eefe1c 100644
+--- a/node_modules/monaco-worker-manager/index.js
++++ b/node_modules/monaco-worker-manager/index.js
+@@ -1,3 +1,37 @@
++/**
++ * Build a raw worker the same way monaco-editor's own first-party language workers do
++ * (`internal/common/workers.js`'s `getWorker`/`createWebWorker`): resolve it via
++ * `MonacoEnvironment.getWorker`/`getWorkerUrl`, then prime it with the same
++ * ignore-message-then-createData handshake monaco itself uses.
++ *
++ * monaco-editor 0.56 requires an `esmModuleLocation` on the descriptor passed to
++ * `monaco.editor.createWebWorker({createData, label, moduleId})` when it has to construct the
++ * worker itself, which this package (and MonacoEnvironment.getWorker-based setups generally)
++ * never provides - `createWebWorker` then silently falls back to an in-process no-op worker
++ * whose foreign module is always null, so every RPC call to it rejects with "Missing
++ * requestHandler or method". Passing an already-primed worker instead makes it take the
++ * "already a Worker" fast path and skip that requirement.
++ */
++function createPrimedWorker(label, moduleId, createData) {
++    const monacoEnvironment = globalThis.MonacoEnvironment;
++    let rawWorker;
++    if (monacoEnvironment && typeof monacoEnvironment.getWorker === 'function') {
++        rawWorker = monacoEnvironment.getWorker(moduleId, label);
++    }
++    else if (monacoEnvironment && typeof monacoEnvironment.getWorkerUrl === 'function') {
++        const workerUrl = monacoEnvironment.getWorkerUrl(moduleId, label);
++        rawWorker = new Worker(workerUrl, { name: label, type: 'module' });
++    }
++    else {
++        throw new Error('You must define a function MonacoEnvironment.getWorkerUrl or MonacoEnvironment.getWorker');
++    }
++    return Promise.resolve(rawWorker).then((worker) => {
++        worker.postMessage('ignore');
++        worker.postMessage(createData);
++        return worker;
++    });
++}
++
+ /**
+  * Create a worker manager.
+  *
+@@ -41,7 +75,7 @@ export function createWorkerManager(monaco, options) {
+             lastUsedTime = Date.now();
+             if (!worker) {
+                 worker = monaco.editor.createWebWorker({
+-                    createData,
++                    worker: createPrimedWorker(label, moduleId, createData),
+                     label,
+                     moduleId,
+                 });
+diff --git a/node_modules/monaco-worker-manager/worker.js b/node_modules/monaco-worker-manager/worker.js
+index 8fe26e5..c3c3851 100644
+--- a/node_modules/monaco-worker-manager/worker.js
++++ b/node_modules/monaco-worker-manager/worker.js
+@@ -1,4 +1,4 @@
+-import { initialize as initializeWorker } from 'monaco-editor/esm/vs/editor/editor.worker.js';
++import { initialize as initializeWorker } from 'monaco-editor/editor/editor.worker.js';
+ /**
+  * Create a web worker proxy.
+  *

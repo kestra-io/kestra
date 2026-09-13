@@ -1,74 +1,78 @@
 <template>
     <KsAlert
         v-if="duplicatedKeys?.length"
-        :title="t('duplicate-pair', {label: t('key'), key: duplicatedKeys[0]})"
+        :title="$t('duplicate-pair', {label: $t('key'), key: duplicatedKeys[0]})"
         type="error"
         :closable="false"
         class="mb-2"
     />
-    <template v-if="componentType">
-        <Wrapper v-for="(item, index) in currentValue" :key="index" class="item-wrapper">
-            <template #tasks>
-                <InputText
-                    :ref="el => { if (el) keyInputRefs[index] = el }"
-                    :modelValue="item[0]"
-                    @update:model-value="onKey(index, $event)"
-                    margin="m-0"
-                    placeholder="Key"
-                    :haveError="duplicatedKeys.includes(item[0])"
-                />
-                <hr>
-                <component
-                    ref="valueComponent"
-                    :is="componentType"
-                    :modelValue="item[1]"
-                    @update:model-value="onValueChange(index, $event)"
-                    :root="getKey(item[0])"
-                    :schema="schema.additionalProperties"
-                    :required="isRequired(item[0])"
-                    :disabled
-                    merge
-                />
-                <div class="delete-container">
-                    <button @click="removeItem(index)" class="remove-entry">
-                        {{ te(`no_code.remove.${root}`) ? t(`no_code.remove.${root}`) : t('no_code.remove.default') }} <DeleteOutline />
-                    </button>
-                </div>
-            </template>
-        </Wrapper>
-    </template>
-    <template v-else>
-        <KsRow v-for="(item, index) in currentValue" :key="index" :gutter="10" class="w-100" :data-testid="`task-dict-item-${item[0]}-${index}`">
-            <KsCol :span="6">
-                <InputText
-                    :ref="el => { if (el) keyInputRefs[index] = el }"
-                    :modelValue="item[0]"
-                    @update:model-value="onKey(index, $event)"
-                    margin="m-0"
-                    placeholder="Key"
-                    :haveError="duplicatedKeys.includes(item[0])"
-                />
-            </KsCol>
-            <KsCol :span="16">
-                <TaskExpression
-                    :modelValue="item[1]"
-                    @update:model-value="onValueChange(index, $event)"
-                    :root="getKey(item[0])"
-                    :schema="schema.additionalProperties"
-                    :required="isRequired(item[0])"
-                    :disabled
-                />
-            </KsCol>
-            <KsCol :span="2" class="col align-self-center delete">
-                <DeleteOutline @click="removeItem(index)" />
-            </KsCol>
-        </KsRow>
-    </template>
-    <Add v-if="!props.disabled" :disabled="addButtonDisabled" @add="addItem()" />
+    <div class="task-collection" :class="{'task-collection--filled': currentValue.length > 0}">
+        <template v-if="componentType">
+            <Wrapper v-for="(item, index) in currentValue" :key="rowKey(item)" class="item-wrapper">
+                <template #tasks>
+                    <InputText
+                        :ref="el => { if (el) keyInputRefs[index] = el }"
+                        :modelValue="item[0]"
+                        @update:model-value="onKey(index, $event)"
+                        margin="m-0"
+                        :placeholder="$t('key')"
+                        :haveError="duplicatedKeys.includes(item[0])"
+                    />
+                    <hr>
+                    <component
+                        ref="valueComponent"
+                        :is="componentType"
+                        :modelValue="item[1]"
+                        @update:model-value="onValueChange(index, $event)"
+                        :root="getKey(item[0])"
+                        :schema="schema.additionalProperties"
+                        :required="isRequired(item[0])"
+                        :disabled
+                        merge
+                    />
+                    <div class="delete-container">
+                        <button @click="removeItem(index)" class="remove-entry">
+                            {{ te(`no_code.remove.${root}`) ? $t(`no_code.remove.${root}`) : $t('no_code.remove.default') }} <DeleteOutline />
+                        </button>
+                    </div>
+                </template>
+            </Wrapper>
+        </template>
+        <template v-else>
+            <KsRow v-for="(item, index) in currentValue" :key="rowKey(item)" :gutter="10" class="w-100" style="align-items: center;" :data-testid="`task-dict-item-${item[0]}-${index}`">
+                <KsCol :span="6">
+                    <InputText
+                        :ref="el => { if (el) keyInputRefs[index] = el }"
+                        :modelValue="item[0]"
+                        @update:model-value="onKey(index, $event)"
+                        margin="m-0"
+                        :placeholder="$t('key')"
+                        :haveError="duplicatedKeys.includes(item[0])"
+                        :inputStyle="{minHeight: 'var(--kel-component-size)', padding: '7px 11px'}"
+                    />
+                </KsCol>
+                <KsCol :span="16">
+                    <TaskExpression
+                        :modelValue="item[1]"
+                        @update:model-value="onValueChange(index, $event)"
+                        :root="getKey(item[0])"
+                        :schema="schema.additionalProperties"
+                        :required="isRequired(item[0])"
+                        :disabled
+                    />
+                </KsCol>
+                <KsCol :span="2" class="col align-self-center delete">
+                    <DeleteOutline @click="removeItem(index)" />
+                </KsCol>
+            </KsRow>
+        </template>
+        <Add v-if="!props.disabled" :to="addTargetName" @add="addItem()" />
+    </div>
 </template>
 
 <script setup lang="ts">
     import {computed, ref, watch, nextTick} from "vue"
+    import {rowKey} from "@kestra-io/design-system"
     import {useI18n} from "vue-i18n"
     import {DeleteOutline} from "../../utils/icons"
 
@@ -78,9 +82,8 @@
     import debounce from "lodash/debounce"
     import Wrapper from "./Wrapper.vue"
     import {useBlockComponent} from "./useBlockComponent"
-    import {useToast} from "../../../../utils/toast"
 
-    const {t, te} = useI18n()
+    const {te} = useI18n()
 
     defineOptions({
         inheritAttrs: false,
@@ -100,6 +103,9 @@
 
     const {getBlockComponent} = useBlockComponent()
 
+    const addTargetName = computed(() =>
+        props.root?.split(".").pop()?.replace(/\[\d+\]$/, "") || undefined)
+
     const componentType = computed(() => {
         return props.schema?.additionalProperties ? getBlockComponent.value(
             props.schema.additionalProperties,
@@ -110,8 +116,6 @@
     const currentValue = ref<[string, any][]>([])
     const keyInputRefs: Record<number, any> = {}
 
-    // this flag will avoid updating the modelValue when the
-    // change was initiated in the component itself
     const localEdit = ref(false)
 
     watch(
@@ -135,6 +139,7 @@
 
     const duplicatedKeys = computed(() => {
         return currentValue.value.map(pair => pair[0])
+            .filter(key => key !== "")
             .filter((key, index, self) =>
                 self.indexOf(key) !== index,
             )
@@ -151,7 +156,8 @@
     const emit = defineEmits(["update:modelValue"])
 
     function getKey(key: string) {
-        return props.root ? `${props.root}.${key}` : key
+        if (!props.root) return key
+        return key ? `${props.root}.${key}` : props.root
     }
 
     function isRequired(key: string) {
@@ -173,28 +179,17 @@
         emitUpdate()
     }
 
-    const toast = useToast()
-
     function addItem() {
-        if(addButtonDisabled.value) {
-            toast.warning(t("no_code.add.disabled_warning"))
-            return
-        }
         currentValue.value.push(["", undefined])
         const newIndex = currentValue.value.length - 1
         emitUpdate()
 
-        // Focus the key input field after the new row is rendered
         nextTick(() => {
             setTimeout(() => {
                 keyInputRefs[newIndex]?.focus()
             }, 100)
         })
     }
-
-    const addButtonDisabled = computed(() => {
-        return currentValue.value.at(-1)?.[0] === "" && currentValue.value.at(-1)?.[1] === undefined
-    })
 </script>
 
 <style scoped lang="scss">

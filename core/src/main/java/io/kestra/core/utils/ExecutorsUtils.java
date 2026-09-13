@@ -44,7 +44,7 @@ public class ExecutorsUtils {
         return this.wrap(
             name,
             Executors.newCachedThreadPool(
-                Thread.ofVirtual().name(name + "_%d").factory()
+                Thread.ofVirtual().name(name + "_%d").uncaughtExceptionHandler(new ThreadUncaughtExceptionHandler()).factory()
             )
         );
     }
@@ -74,7 +74,7 @@ public class ExecutorsUtils {
             60L,
             TimeUnit.SECONDS,
             new LinkedBlockingQueue<>(),
-            Thread.ofVirtual().name(name + "_%d").factory()
+            Thread.ofVirtual().name(name + "_%d").uncaughtExceptionHandler(new ThreadUncaughtExceptionHandler()).factory()
         );
 
         threadPoolExecutor.allowCoreThreadTimeOut(true);

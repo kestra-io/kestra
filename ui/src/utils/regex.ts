@@ -1,10 +1,11 @@
-const maybeText = (allowSeparators: boolean) => "(?:\"[^\"]*\")|(?:'[^']*')|(?:(?:(?!\\}\\})" + (allowSeparators ? "[\\S\\n ]" : "[^~+,:\\n ]") + ")*)"
 const pebbleStart = "\\{\\{[\\n ]*"
 const fieldWithoutDotCapture = "([^()}:~+.\\n '\"]*)(?![^()}\\n ])"
 const dotAccessedFieldWithParentCapture = "([^()}:~+\\n '\"]*)\\." + fieldWithoutDotCapture
-const maybeTextFollowedBySeparator = "(?:" + maybeText(true) + "[\\n ]*(?:(?:[~+]+)|(?:\\}\\}[\\n ]*" + pebbleStart + "))[\\n ]*)*"
+const skippedTermToken = "(?:\"[^\"]*\")|(?:'[^']*')|[^\"'~+}]|(?:\\}(?!\\}))"
+const termSeparator = "[~+]|(?:\\}\\}[\\n ]*\\{\\{)"
+const maybeTextFollowedBySeparator = "(?:(?:" + skippedTermToken + ")*(?:" + termSeparator + "))*[\\n ]*"
 const paramKey = "[^\\n ()~+},:=]+"
-const paramValue = "(?:(?:(?:\"[^\"]*\"?)|(?:'[^']*'?)|[^,)}]))*"
+const paramValue = "(?:(?:\"[^\"]*\")|(?:'[^']*')|[^,)}\"'])*(?:\"[^\"]*|'[^']*)?"
 const maybeParams = "(" +
     "(?:[\\n ]*" + paramKey + "[\\n ]*=[\\n ]*" + paramValue + "(?:[\\n ]*,[\\n ]*)?)+)?" +
     "([^\\n ()~+},:=]*)?"

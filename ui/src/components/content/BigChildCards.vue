@@ -68,7 +68,7 @@ h2.big-title {
     padding: 1rem;
     h4.card-title {
         padding-top: 0;
-        font-size: 1.4rem;
+        font-size: var(--ks-font-size-2xl);
         font-weight: normal;
     }
     p.card-text{

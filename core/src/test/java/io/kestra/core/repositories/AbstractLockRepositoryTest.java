@@ -70,21 +70,27 @@ public abstract class AbstractLockRepositoryTest {
 
     @RetryingTest(2) // In H2 only it fails the first time and succeed the second
     void deleteByOwner() throws InterruptedException {
-        var lock = Lock.builder().category("test").id("deleteByOwner").owner("me").build();
-        boolean created = lockRepository.create(lock);
-        assertThat(created).isTrue();
+        var first = Lock.builder().category("test").id("deleteByOwnerFirst").owner("me").build();
+        assertThat(lockRepository.create(first)).isTrue();
+        var second = Lock.builder().category("test").id("deleteByOwnerSecond").owner("me").build();
+        assertThat(lockRepository.create(second)).isTrue();
+        var other = Lock.builder().category("test").id("deleteByOwnerOther").owner("other").build();
+        assertThat(lockRepository.create(other)).isTrue();
 
         // In Elasticsearch, as we search then delete we need to wait for the refresh period
         // This would not be an issue in real-case scenario as when we delete by owner the service would be down for a certain amount of time
         Thread.sleep(1000);
 
         List<Lock> deleted = lockRepository.deleteByOwner("me");
-        assertThat(deleted).hasSize(1);
-        assertThat(deleted.getFirst().getOwner()).isEqualTo("me");
-        assertThat(deleted.getFirst().getId()).isEqualTo("deleteByOwner");
-        assertThat(deleted.getFirst().getCategory()).isEqualTo("test");
+        assertThat(deleted).hasSize(2);
+        assertThat(deleted).extracting(Lock::getOwner).containsOnly("me");
+        assertThat(deleted).extracting(Lock::getId).containsExactlyInAnyOrder("deleteByOwnerFirst", "deleteByOwnerSecond");
 
-        var existing = lockRepository.findById("test", "deleteByOwner");
-        assertThat(existing).isEmpty();
+        assertThat(lockRepository.findById("test", "deleteByOwnerFirst")).isEmpty();
+        assertThat(lockRepository.findById("test", "deleteByOwnerSecond")).isEmpty();
+        // locks owned by another owner must be left untouched
+        assertThat(lockRepository.findById("test", "deleteByOwnerOther")).isPresent();
+
+        lockRepository.delete(other);
     }
 }

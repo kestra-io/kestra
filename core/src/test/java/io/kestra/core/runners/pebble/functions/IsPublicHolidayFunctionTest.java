@@ -1,12 +1,14 @@
 package io.kestra.core.runners.pebble.functions;
 
-import io.kestra.core.exceptions.IllegalVariableEvaluationException;
-import io.kestra.core.runners.VariableRenderer;
-import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
-import jakarta.inject.Inject;
+import java.util.Collections;
+
 import org.junit.jupiter.api.Test;
 
-import java.util.Collections;
+import io.kestra.core.exceptions.IllegalVariableEvaluationException;
+import io.kestra.core.runners.VariableRenderer;
+
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -65,31 +67,39 @@ class IsPublicHolidayFunctionTest {
     @Test
     void missingDateThrows() {
         // No arguments — date is null
-        assertThatThrownBy(() -> variableRenderer.render(
-            "{{ isPublicHoliday() }}", Collections.emptyMap()
-        )).isInstanceOf(IllegalVariableEvaluationException.class);
+        assertThatThrownBy(
+            () -> variableRenderer.render(
+                "{{ isPublicHoliday() }}", Collections.emptyMap()
+            )
+        ).isInstanceOf(IllegalVariableEvaluationException.class);
     }
 
     @Test
     void missingCountryCodeThrows() {
         // Only date provided — countryCode is null
-        assertThatThrownBy(() -> variableRenderer.render(
-            "{{ isPublicHoliday('2024-12-25') }}", Collections.emptyMap()
-        )).isInstanceOf(IllegalVariableEvaluationException.class);
+        assertThatThrownBy(
+            () -> variableRenderer.render(
+                "{{ isPublicHoliday('2024-12-25') }}", Collections.emptyMap()
+            )
+        ).isInstanceOf(IllegalVariableEvaluationException.class);
     }
 
     @Test
     void invalidDateFormatThrows() {
-        assertThatThrownBy(() -> variableRenderer.render(
-            "{{ isPublicHoliday('not-a-date', 'FR') }}", Collections.emptyMap()
-        )).isInstanceOf(IllegalVariableEvaluationException.class);
+        assertThatThrownBy(
+            () -> variableRenderer.render(
+                "{{ isPublicHoliday('not-a-date', 'FR') }}", Collections.emptyMap()
+            )
+        ).isInstanceOf(IllegalVariableEvaluationException.class);
     }
 
     @Test
     void invalidCountryCodeThrows() {
-        var exception = assertThrows(IllegalVariableEvaluationException.class, () -> variableRenderer.render(
-            "{{ isPublicHoliday('2024-12-25', 'XX') }}", Collections.emptyMap()
-        ));
+        var exception = assertThrows(
+            IllegalVariableEvaluationException.class, () -> variableRenderer.render(
+                "{{ isPublicHoliday('2024-12-25', 'XX') }}", Collections.emptyMap()
+            )
+        );
         assertThat(exception.getCause()).isInstanceOf(IllegalStateException.class);
     }
 }

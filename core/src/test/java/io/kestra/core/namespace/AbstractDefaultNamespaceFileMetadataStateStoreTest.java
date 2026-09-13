@@ -48,7 +48,7 @@ public abstract class AbstractDefaultNamespaceFileMetadataStateStoreTest {
 
         // Then
         assertThat(result).isPresent();
-        assertThat(result.get().getVersion()).isEqualTo(2);
+        assertThat(result.get().getRevision()).isEqualTo(2);
         assertThat(result.get().isLast()).isTrue();
         assertThat(result.get().isDeleted()).isFalse();
     }
@@ -82,7 +82,7 @@ public abstract class AbstractDefaultNamespaceFileMetadataStateStoreTest {
 
         // Then
         assertThat(result).isPresent();
-        assertThat(result.get().getVersion()).isEqualTo(1);
+        assertThat(result.get().getRevision()).isEqualTo(1);
         assertThat(result.get().isLast()).isFalse();
     }
 
@@ -356,7 +356,7 @@ public abstract class AbstractDefaultNamespaceFileMetadataStateStoreTest {
 
         // Then
         assertThat(result).hasSize(2);
-        assertThat(result).extracting(NamespaceFileMetadata::getVersion)
+        assertThat(result).extracting(NamespaceFileMetadata::getRevision)
             .containsExactlyInAnyOrder(1, 2);
     }
 
@@ -419,8 +419,8 @@ public abstract class AbstractDefaultNamespaceFileMetadataStateStoreTest {
         );
 
         // Then
-        assertThat(v1.getVersion()).isEqualTo(1);
-        assertThat(v2.getVersion()).isEqualTo(2);
+        assertThat(v1.getRevision()).isEqualTo(1);
+        assertThat(v2.getRevision()).isEqualTo(2);
     }
 
     @Test
@@ -522,7 +522,7 @@ public abstract class AbstractDefaultNamespaceFileMetadataStateStoreTest {
 
         // Then
         assertThat(result).isPresent();
-        assertThat(result.get().getVersion()).isEqualTo(2);
+        assertThat(result.get().getRevision()).isEqualTo(2);
         assertThat(result.get().isDeleted()).isTrue();
     }
 

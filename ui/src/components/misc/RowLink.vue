@@ -1,6 +1,6 @@
 <template>
     <div class="row-link" @click.prevent="$emit('click')" :class="{clickable: clickable}">
-        <KsTaskIcon
+        <TaskIcon
             v-if="icon"
             class="icon"
             :onlyIcon="true"
@@ -14,12 +14,13 @@
 
 <script setup lang="ts">
     import ChevronRight from "vue-material-design-icons/ChevronRight.vue"
-    import {KsTaskIcon} from "@kestra-io/design-system"
+    import TaskIcon from "../plugins/TaskIcon.vue"
+    import type {PluginIconMap} from "../../utils/pluginUtils"
 
     interface Props {
         icon?: string;
         text: string;
-        icons?: Record<string, {icon: string; flowable: boolean}>;
+        icons?: PluginIconMap;
         clickable?: boolean;
     }
 

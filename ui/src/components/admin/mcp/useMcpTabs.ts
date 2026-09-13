@@ -30,6 +30,7 @@ export function useMcpTabs() {
             title: t("mcp.tab_tool_flows"),
             component: McpToolFlows,
             disabled: isCreate.value,
+            fullContainer: true,
         },
     ])
 

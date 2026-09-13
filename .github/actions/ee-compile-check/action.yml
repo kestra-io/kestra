@@ -1,0 +1,135 @@
+name: "EE compile check via Kestra webhook"
+description: >-
+  Run the kestra-ee compileJava check for an OSS ref on a Kestra instance via a
+  synchronous webhook, and surface the result inline (job summary + log group).
+  Because kestra-ee extends OSS via Micronaut @Replaces/@Override, an OSS change
+  can compile in OSS yet break EE — this catches that at PR time. The step fails
+  on a compile failure, a non-JSON response, or an inconclusive verdict, so it
+  never reports a false green.
+
+inputs:
+  webhook-url:
+    description: "Full Kestra webhook URL, including its key. Pass from a secret — never hardcode."
+    required: true
+  ref:
+    description: "Branch, tag, or SHA to compile. The flow resolves the matching kestra-ee ref (falls back to develop)."
+    required: true
+  commit-sha:
+    description: "PR head SHA. When set, the flow posts a commit-status callback to the PR."
+    required: false
+    default: ""
+  pr-number:
+    description: "PR number (context only)."
+    required: false
+    default: ""
+  pr-repo:
+    description: "OSS repo 'owner/name' for the commit-status callback."
+    required: false
+    default: ""
+
+runs:
+  using: "composite"
+  steps:
+    - name: "Trigger EE compile check and surface result"
+      shell: bash
+      env:
+        WEBHOOK_URL: ${{ inputs.webhook-url }}
+        REF: ${{ inputs.ref }}
+        COMMIT_SHA: ${{ inputs.commit-sha }}
+        PR_NUMBER: ${{ inputs.pr-number }}
+        PR_REPO: ${{ inputs.pr-repo }}
+      run: |
+        set -uo pipefail
+
+        if [ -z "${WEBHOOK_URL:-}" ]; then
+          echo "::error::Kestra webhook URL is not set (missing secret?)."
+          exit 1
+        fi
+
+        echo "Triggering EE compile check for ref: $REF"
+        # integrateWithGithub turns on the commit-status callback; the flow gates
+        # the actual post on commit_sha being present too. No test_filter is sent,
+        # so the flow runs compile-only (skip_test).
+        PAYLOAD=$(jq -n \
+          --arg ref         "$REF" \
+          --arg commit_sha  "${COMMIT_SHA:-}" \
+          --arg pr_number   "${PR_NUMBER:-}" \
+          --arg pr_repo     "${PR_REPO:-}" \
+          '{ref: $ref, commit_sha: $commit_sha, pr_number: $pr_number, pr_repo: $pr_repo, integrateWithGithub: true}')
+
+        # Print the params we're about to send (the webhook URL/key stays secret).
+        echo "::group::Webhook payload"
+        echo "$PAYLOAD" | jq .
+        echo "::endgroup::"
+
+        BODY=$(mktemp)
+        STATUS=$(curl -sS -o "$BODY" -w '%{http_code}' \
+          -X POST "$WEBHOOK_URL" \
+          -H 'Content-Type: application/json' \
+          --max-time 1800 \
+          -d "$PAYLOAD" || echo "000")
+
+        echo "Webhook HTTP status: $STATUS"
+
+        # The body must be JSON with our outputs even on HTTP 500 (a compile
+        # failure makes the flow terminate FAILED). A non-JSON body means an
+        # infra/auth error, not a compile result — surface it raw and fail.
+        if ! jq -e . "$BODY" >/dev/null 2>&1; then
+          echo "::error::Webhook did not return a JSON result (HTTP $STATUS). Raw response:"
+          cat "$BODY"
+          exit 1
+        fi
+
+        COMPILE_FAILED=$(jq -r '.compileFailed // ""' "$BODY")
+        COMPILE_ERROR=$(jq -r '.compileError // ""' "$BODY")
+
+        # The flow always sets compileFailed to "true"/"false". An empty value
+        # means the Kestra flow terminated BEFORE producing a verdict (e.g. a
+        # transient Kubernetes pod-scheduling timeout, or a clone/auth error).
+        # That is inconclusive, NOT a pass — fail the check so it isn't a false
+        # green, and surface the raw response + status for debugging.
+        if [ "$COMPILE_FAILED" != "true" ] && [ "$COMPILE_FAILED" != "false" ]; then
+          {
+            echo "## :warning: EE compile check inconclusive for \`$REF\`"
+            echo ""
+            echo "The Kestra flow did not return a compile verdict (HTTP $STATUS)."
+            echo "This is usually a transient infra error (e.g. a runner pod failed to schedule). Re-run the job."
+            echo ""
+            echo "<details><summary>Raw webhook response</summary>"
+            echo ""
+            echo '```json'
+            cat "$BODY"
+            echo '```'
+            echo ""
+            echo "</details>"
+          } >> "$GITHUB_STEP_SUMMARY"
+          echo "::group::Raw webhook response (HTTP $STATUS)"
+          cat "$BODY"
+          echo "::endgroup::"
+          echo "::error::EE compile check inconclusive for ref $REF (no compile verdict; HTTP $STATUS). Likely a transient runner error — re-run the job."
+          exit 1
+        fi
+
+        {
+          echo "## EE compile check for \`$REF\`"
+          echo ""
+          if [ "$COMPILE_FAILED" = "true" ]; then
+            echo "### :x: EE compilation failed"
+            echo ""
+            echo '```'
+            echo "$COMPILE_ERROR"
+            echo '```'
+          else
+            echo "### :white_check_mark: EE compilation passed"
+          fi
+        } >> "$GITHUB_STEP_SUMMARY"
+
+        if [ "$COMPILE_FAILED" = "true" ]; then
+          echo "::group::EE compile error"
+          echo "$COMPILE_ERROR"
+          echo "::endgroup::"
+          echo "::error::EE compilation failed for ref $REF"
+          exit 1
+        fi
+
+        echo "EE compilation passed for ref $REF"

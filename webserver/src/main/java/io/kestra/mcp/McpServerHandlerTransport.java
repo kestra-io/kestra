@@ -1,18 +1,6 @@
 package io.kestra.mcp;
 
-import io.kestra.core.queues.DispatchQueueInterface;
-import io.kestra.core.mcp.models.McpServer;
-import com.google.common.annotations.VisibleForTesting;
-import io.modelcontextprotocol.server.McpAsyncServer;
-import io.modelcontextprotocol.server.McpServerFeatures;
-import io.modelcontextprotocol.spec.McpSchema;
-import io.micronaut.context.annotation.Requires;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-import lombok.extern.slf4j.Slf4j;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
-
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -20,10 +8,28 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
+import com.google.common.annotations.VisibleForTesting;
+
+import io.kestra.core.mcp.models.McpServer;
+import io.kestra.core.queues.DispatchQueueInterface;
+
+import io.micronaut.context.annotation.Requires;
+import io.modelcontextprotocol.server.McpAsyncServer;
+import io.modelcontextprotocol.server.McpServerFeatures;
+import io.modelcontextprotocol.spec.McpSchema;
+import jakarta.annotation.PreDestroy;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+import lombok.extern.slf4j.Slf4j;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+
 @Singleton
 @Requires(beans = DispatchQueueInterface.class)
 @Slf4j
 public class McpServerHandlerTransport {
+    private static final Duration SHUTDOWN_TIMEOUT = Duration.ofSeconds(10);
+
     private final Map<HandlerKey, KestraFluxStreamableServerTransportProvider> handlers = new ConcurrentHashMap<>();
     private final Map<HandlerKey, McpAsyncServer> servers = new ConcurrentHashMap<>();
     private final McpErrorResponseMapper mcpErrorResponseMapper;
@@ -36,8 +42,7 @@ public class McpServerHandlerTransport {
         McpErrorResponseMapper mcpErrorResponseMapper,
         McpToolService mcpToolService,
         McpServerCache mcpServerCache,
-        McpSessionService mcpSessionService
-    ) {
+        McpSessionService mcpSessionService) {
         this.mcpErrorResponseMapper = mcpErrorResponseMapper;
         this.mcpToolService = mcpToolService;
         this.mcpServerCache = mcpServerCache;
@@ -45,9 +50,9 @@ public class McpServerHandlerTransport {
     }
 
     public KestraFluxStreamableServerTransportProvider getServerHandler(
-        KestraMcpTransportContext kestraMcpTransportContext
-    ) {
-        return handlers.computeIfAbsent(HandlerKey.from(kestraMcpTransportContext), handlerKey -> {
+        KestraMcpTransportContext kestraMcpTransportContext) {
+        return handlers.computeIfAbsent(HandlerKey.from(kestraMcpTransportContext), handlerKey ->
+        {
             log.debug("Building server for handler transportContext: {}", kestraMcpTransportContext);
             KestraFluxStreamableServerTransportProvider transportProvider = new KestraFluxStreamableServerTransportProvider(
                 mcpErrorResponseMapper,
@@ -56,6 +61,22 @@ public class McpServerHandlerTransport {
             servers.put(handlerKey, buildServer(handlerKey, transportProvider));
             return transportProvider;
         });
+    }
+
+    /**
+     * Shuts down every server built by this registry when the application context closes.
+     * <p>
+     * Each {@link KestraFluxStreamableServerTransportProvider} starts a keep-alive scheduler in its
+     * constructor; without this hook those schedulers outlive the context and keep pinging dead
+     * sessions for the lifetime of the JVM, which is particularly visible in tests where many
+     * contexts are created in a single JVM.
+     */
+    @PreDestroy
+    public void close() {
+        Flux.fromIterable(Set.copyOf(handlers.keySet()))
+            .concatMap(key -> evictAndNotify(key.tenantId(), key.serverId()).onErrorComplete())
+            .then()
+            .block(SHUTDOWN_TIMEOUT);
     }
 
     public Mono<Void> refreshTools(String tenantId, String serverId) {
@@ -69,8 +90,7 @@ public class McpServerHandlerTransport {
             .map(McpServer::serverType)
             .orElse(McpServer.ServerType.PRIVATE);
 
-        List<McpServerFeatures.AsyncToolSpecification> newSpecs =
-            mcpToolService.listToolSpecsForServer(tenantId, serverId, serverType);
+        List<McpServerFeatures.AsyncToolSpecification> newSpecs = mcpToolService.listToolSpecsForServer(tenantId, serverId, serverType);
         Set<String> newToolNames = newSpecs.stream()
             .map(spec -> spec.tool().name())
             .collect(Collectors.toSet());
@@ -94,12 +114,14 @@ public class McpServerHandlerTransport {
         McpAsyncServer asyncServer = servers.remove(key);
 
         log.debug("Initiating graceful shutdown tenantId: {}, serverId: {} as the server is deleted or disabled", tenantId, serverId);
-        Mono<Void> transportClosed = Optional.ofNullable(transport).map(KestraFluxStreamableServerTransportProvider::closeGracefully).orElseGet(() -> {
+        Mono<Void> transportClosed = Optional.ofNullable(transport).map(KestraFluxStreamableServerTransportProvider::closeGracefully).orElseGet(() ->
+        {
             log.debug("No transport providers found for tenantId: {}, serverId: {}", tenantId, serverId);
             return Mono.empty();
         });
 
-        return transportClosed.then(Optional.ofNullable(asyncServer).map(McpAsyncServer::closeGracefully).orElseGet(() -> {
+        return transportClosed.then(Optional.ofNullable(asyncServer).map(McpAsyncServer::closeGracefully).orElseGet(() ->
+        {
             log.debug("No server found for tenantId: {}, serverId: {}", tenantId, serverId);
             return Mono.empty();
         }));
@@ -113,8 +135,7 @@ public class McpServerHandlerTransport {
 
     private McpAsyncServer buildServer(
         HandlerKey handlerKey,
-        KestraFluxStreamableServerTransportProvider serverTransport
-    ) {
+        KestraFluxStreamableServerTransportProvider serverTransport) {
         var mcpServerSpec = io.modelcontextprotocol.server.McpServer.async(serverTransport)
             .capabilities(
                 McpSchema.ServerCapabilities.builder()
@@ -123,7 +144,8 @@ public class McpServerHandlerTransport {
             );
 
         Optional<McpServer> serverOpt = mcpServerCache.get(handlerKey.tenantId(), handlerKey.serverId());
-        serverOpt.ifPresent(mcpServer -> {
+        serverOpt.ifPresent(mcpServer ->
+        {
             mcpServerSpec.serverInfo(mcpServer.id(), "1.0.0");
             if (mcpServer.instructions() != null) {
                 mcpServerSpec.instructions(mcpServer.instructions());
@@ -131,18 +153,18 @@ public class McpServerHandlerTransport {
         });
 
         McpServer.ServerType serverType = serverOpt.map(McpServer::serverType).orElse(McpServer.ServerType.PRIVATE);
-        return mcpServerSpec.tools(this.mcpToolService.listToolSpecsForServer(
-            handlerKey.tenantId(),
-            handlerKey.serverId(),
-            serverType
-        )).build();
+        return mcpServerSpec.tools(
+            this.mcpToolService.listToolSpecsForServer(
+                handlerKey.tenantId(),
+                handlerKey.serverId(),
+                serverType
+            )
+        ).build();
     }
-
 
     private record HandlerKey(
         String tenantId,
-        String serverId
-    ) {
+        String serverId) {
         public static HandlerKey from(KestraMcpTransportContext kestraMcpTransportContext) {
             return new HandlerKey(
                 kestraMcpTransportContext.getTenantId(),

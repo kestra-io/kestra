@@ -1,30 +1,52 @@
 <template>
-    <div v-if="shouldShowComparator" class="comp-container">
-        <label class="label">{{ $t("filter.operator") }}</label>
-        <KsSelect
-            v-model="comparatorModel"
-            class="select"
+    <template v-if="shouldShowComparator">
+        <div
+            v-if="useSegments"
+            class="comparator-segments"
+            role="group"
+            :aria-label="$t('filter.operator')"
         >
-            <template #label="{value}">
-                {{ getLabel(value) }}
-            </template>
-            <KsOption
+            <KsTooltip
                 v-for="comparator in filterKey.comparators"
                 :key="comparator"
-                :label="getLabel(comparator)"
-                :value="comparator"
+                :content="getLabel(comparator)"
+                :disabled="!allHaveGlyphs"
+                placement="top"
             >
-                <div class="option">
-                    <div class="comp-label">
+                <button
+                    type="button"
+                    class="comparator-segment"
+                    :class="{active: comparator === selectedComparator}"
+                    :aria-pressed="comparator === selectedComparator"
+                    :aria-label="getLabel(comparator)"
+                    @click="emits('update:selectedComparator', comparator)"
+                >{{ segmentContent(comparator) }}</button>
+            </KsTooltip>
+        </div>
+        <KsDropdown
+            v-else
+            class="comparator-dropdown"
+            trigger="click"
+            placement="bottom-start"
+        >
+            <button type="button" class="comparator-trigger" :aria-label="$t('filter.operator')">
+                <span class="comparator-trigger-label">{{ getLabel(selectedComparator) }}</span>
+                <ChevronDown class="comparator-trigger-icon" />
+            </button>
+            <template #dropdown>
+                <KsDropdownMenu>
+                    <KsDropdownItem
+                        v-for="comparator in filterKey.comparators"
+                        :key="comparator"
+                        :title="getDescription(comparator)"
+                        @click="emits('update:selectedComparator', comparator)"
+                    >
                         {{ getLabel(comparator) }}
-                    </div>
-                    <div class="comp-desc">
-                        {{ getDescription(comparator) }}
-                    </div>
-                </div>
-            </KsOption>
-        </KsSelect>
-    </div>
+                    </KsDropdownItem>
+                </KsDropdownMenu>
+            </template>
+        </KsDropdown>
+    </template>
 </template>
 
 <script setup lang="ts">
@@ -35,8 +57,18 @@
         COMPARATOR_LABELS,
         Comparators,
     } from "../utils/filterTypes"
+    import {ChevronDown} from "../utils/icons"
 
     const {t} = useI18n()
+
+    const COMPARATOR_GLYPHS: Partial<Record<Comparators, string>> = {
+        [Comparators.EQUALS]: "=",
+        [Comparators.NOT_EQUALS]: "≠",
+        [Comparators.GREATER_THAN]: ">",
+        [Comparators.LESS_THAN]: "<",
+        [Comparators.GREATER_THAN_OR_EQUAL_TO]: "≥",
+        [Comparators.LESS_THAN_OR_EQUAL_TO]: "≤",
+    }
 
     const props = defineProps<{
         shouldShowComparator: boolean;
@@ -48,51 +80,85 @@
         "update:selectedComparator": [value: Comparators];
     }>()
 
-    const comparatorModel = computed({
-        get: () => props.selectedComparator,
-        set: (value: Comparators) => emits("update:selectedComparator", value),
-    })
+    const useSegments = computed(() => props.filterKey.comparators.length <= 3)
+
+    const allHaveGlyphs = computed(() =>
+        props.filterKey.comparators.every((c) => c in COMPARATOR_GLYPHS),
+    )
 
     const getLabel = (comparator: Comparators) =>
         props.filterKey.comparatorLabels?.[comparator] ?? COMPARATOR_LABELS[comparator]
     const getDescription = (comparator: Comparators) => t(COMPARATOR_DESCRIPTIONS[comparator])
+
+    const segmentContent = (comparator: Comparators) =>
+        allHaveGlyphs.value ? COMPARATOR_GLYPHS[comparator] : getLabel(comparator)
 </script>
 
 <style lang="scss" scoped>
-.comp-container {
-    padding-left: 1rem;
-    padding-right: 1rem;
+.comparator-segments {
+    display: flex;
+    align-items: center;
+    border: 1px solid var(--ks-border-default);
+    border-radius: var(--ks-radius-sm);
+    overflow: hidden;
+}
 
-    .label {
-        display: block;
-        font-size: var(--ks-font-size-xs);
+.comparator-segment {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1.75rem;
+    height: 1.5rem;
+    padding: 0 var(--ks-spacing-2);
+    white-space: nowrap;
+    background: var(--ks-bg-surface);
+    color: var(--ks-text-secondary);
+    border: none;
+    border-left: 1px solid var(--ks-border-default);
+    font-size: var(--ks-font-size-sm);
+    cursor: pointer;
+    transition: background var(--ks-duration-base) ease, color var(--ks-duration-base) ease;
+
+    &:first-child {
+        border-left: none;
+    }
+
+    &:hover {
+        background: var(--ks-bg-hover);
+        color: var(--ks-text-primary);
+    }
+
+    &.active {
+        background: var(--ks-bg-tag-active);
+        color: var(--ks-text-link);
         font-weight: 500;
-        margin: 0.25rem 0;
-        color: var(--ks-text-dim);
-    }
-
-    .select {
-        width: 100%;
     }
 }
 
-.option {
-    padding: 4px 0;
-
-    .comp-label {
-        font-size: var(--ks-font-size-sm);
-        line-height: 1.2;
-    }
-
-    .comp-desc {
-        color: var(--ks-text-dim);
-        font-size: var(--ks-font-size-xs);
-        line-height: 1.3;
-    }
+.comparator-trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--ks-spacing-1);
+    height: 1.5rem;
+    padding: 0 var(--ks-spacing-2);
+    border: 1px solid var(--ks-border-default);
+    border-radius: var(--ks-radius-sm);
+    background: var(--ks-bg-surface);
+    color: var(--ks-text-secondary);
+    font-size: var(--ks-font-size-sm);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background var(--ks-duration-base) ease, color var(--ks-duration-base) ease;
 }
 
-.kel-select-dropdown__item {
-    height: fit-content;
-    padding: 4px 12px;
+.comparator-trigger:hover {
+    background: var(--ks-bg-hover);
+    color: var(--ks-text-primary);
+}
+
+.comparator-trigger-icon {
+    display: inline-flex;
+    align-items: center;
+    font-size: var(--ks-font-size-sm);
 }
 </style>

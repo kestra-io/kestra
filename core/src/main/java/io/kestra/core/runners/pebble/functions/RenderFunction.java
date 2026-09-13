@@ -46,10 +46,12 @@ public class RenderFunction implements KestraFunction, RenderingFunctionInterfac
         int depth = context.getVariable(VariableRenderer.RENDER_DEPTH_VAR) instanceof Number n ? n.intValue() : 0;
         int maxDepth = variableConfiguration.getMaxRenderDepth();
         if (depth >= maxDepth) {
-            throw new PebbleException(null,
+            throw new PebbleException(
+                null,
                 "Maximum render() nesting depth (" + maxDepth + ") exceeded at line " + lineNumber +
                     " — check for circular render() calls in your template.",
-                lineNumber, self.getName());
+                lineNumber, self.getName()
+            );
         }
 
         if (!args.containsKey("toRender")) {

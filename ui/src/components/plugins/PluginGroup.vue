@@ -19,12 +19,13 @@
                     {{ $t("pluginPage.group.plugins", {count: childSubGroups.length}) }}
                 </h5>
                 <div class="plugin-group__grid">
-                    <KsPluginCard
+                    <PluginCard
                         v-for="sub in childSubGroups"
                         :key="sub.subGroup"
                         :iconCls="sub.subGroup"
                         :icons="allIcons"
-                        :title="sub.title"
+                        :loadIcon="pluginsStore.loadIcon"
+                        :title="enrichmentStore.getEnrichment(sub)?.title ?? sub.title"
                         :description="sub.description"
                         :categories="sub.categories"
                         :taskCount="elementCountFor(sub)"
@@ -39,11 +40,12 @@
                     {{ $t("pluginPage.group.tasks", {count: subElements.length}) }}
                 </h5>
                 <div class="plugin-group__grid">
-                    <KsPluginCard
+                    <PluginCard
                         v-for="el in subElements"
                         :key="el.cls"
                         :iconCls="el.cls"
                         :icons="allIcons"
+                        :loadIcon="pluginsStore.loadIcon"
                         :title="shortClassName(el.cls)"
                         :description="el.title"
                         @click="openTask(el.cls)"
@@ -56,7 +58,7 @@
                     {{ $t("pluginPage.group.blueprints", {count: groupBlueprints.length}) }}
                 </h5>
                 <div class="plugin-group__grid">
-                    <KsPluginCard
+                    <PluginCard
                         v-for="bp in groupBlueprints"
                         :key="bp.id"
                         :title="bp.title"
@@ -64,17 +66,17 @@
                         @click="openBlueprint(bp.id)"
                     >
                         <template #footer-content>
-                            <BlueprintIconStack :clses="bp.includedTasks ?? []" :icons="allIcons" />
+                            <BlueprintIconStack :clses="blueprintTaskTypes(bp.includedTasks)" :icons="allIcons" :loadIcon="pluginsStore.loadIcon" />
                         </template>
-                    </KsPluginCard>
+                    </PluginCard>
                 </div>
             </section>
         </template>
 
-        <KsEmpty
+        <KsNoData
             v-else-if="pluginsStore.plugins"
-            :description="$t('pluginPage.notFound')"
             class="plugin-group__state"
+            :description="$t('pluginPage.notFound')"
         />
 
         <div v-else class="plugin-group__state">
@@ -88,14 +90,16 @@
     import {useRoute, useRouter} from "vue-router"
     import {useI18n} from "vue-i18n"
     import axios from "axios"
-    import {KsPluginCard, KsEmpty, KsSkeleton, type KsBreadcrumbItem} from "@kestra-io/design-system"
+    import {KsSkeleton, type KsBreadcrumbItem} from "@kestra-io/design-system"
+    import PluginCard from "./PluginCard.vue"
     import PluginLayout from "./PluginLayout.vue"
     import BlueprintIconStack from "./BlueprintIconStack.vue"
     import {usePluginsStore} from "../../stores/plugins"
     import {usePluginsEnrichmentStore} from "../../stores/pluginsEnrichment"
     import {useMiscStore} from "override/stores/misc"
-    import {isEntryAPluginElementPredicate, isEnterpriseEditionPlugin, type Plugin, type PluginElement} from "../../utils/pluginUtils"
+    import {extractPluginElements, isEntryAPluginElementPredicate, isEnterpriseEditionPlugin, type Plugin, type PluginElement} from "../../utils/pluginUtils"
     import useRouteContext from "../../composables/useRouteContext"
+    import {blueprintTaskTypes} from "../../composables/useBlueprintPlugins"
     import {API_URL} from "../../stores/api"
 
     type Blueprint = {
@@ -134,7 +138,7 @@
     const childSubGroups = computed<Plugin[]>(() => {
         const g = groupPlugin.value
         if (!g || g.subGroup) return []
-        return (pluginsStore.plugins ?? []).filter(p => p.name === g.name && p.subGroup)
+        return (pluginsStore.plugins ?? []).filter(p => p.name === g.name && p.subGroup && elementCountFor(p) > 0)
     })
 
     const isShowingSubGroups = computed<boolean>(() => childSubGroups.value.length > 0)
@@ -155,7 +159,7 @@
         return out.sort((a, b) => shortClassName(a.cls).localeCompare(shortClassName(b.cls)))
     })
 
-    const headerTitle = computed<string>(() => groupPlugin.value?.title ?? "")
+    const headerTitle = computed<string>(() => enrichmentStore.getEnrichment(groupPlugin.value)?.title ?? groupPlugin.value?.title ?? "")
 
     const headerIconCls = computed<string | undefined>(() => {
         const g = groupPlugin.value
@@ -194,14 +198,14 @@
         ]
         if (parentGroup.value?.title) {
             crumbs.push({
-                label: parentGroup.value.title,
+                label: enrichmentStore.getEnrichment(parentGroup.value)?.title ?? parentGroup.value.title,
                 link: {name: "plugins/group", params: {name: parentGroup.value.name}},
             })
         }
         return crumbs
     })
 
-    const title = computed(() => groupPlugin.value?.title ?? t("plugins.names"))
+    const title = computed(() => headerTitle.value || (route.params.name as string))
 
     const routeInfo = computed(() => ({title: title.value, breadcrumb: breadcrumb.value}))
     useRouteContext(routeInfo)
@@ -212,13 +216,7 @@
     }
 
     function elementCountFor(plugin: Plugin): number {
-        let count = 0
-        for (const [key, value] of Object.entries(plugin)) {
-            if (isEntryAPluginElementPredicate(key, value)) {
-                count += value.filter(el => !el?.deprecated).length
-            }
-        }
-        return count
+        return Object.values(extractPluginElements(plugin)).flat().length
     }
 
     function blueprintCountFor(plugin: Plugin): number {
@@ -272,7 +270,7 @@
     }
 
     watch(
-        () => groupPlugin.value,
+        groupPlugin,
         (g) => {
             if (g) loadGroupBlueprints()
         },
@@ -282,6 +280,7 @@
     onMounted(() => {
         miscStore.loadConfigs()
         pluginsStore.ensurePlugins()
+        pluginsStore.fetchIcons()
         loadGroupIcons()
     })
 </script>

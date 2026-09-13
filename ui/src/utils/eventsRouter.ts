@@ -2,6 +2,7 @@ import {nextTick} from "vue"
 import _isEqual from "lodash/isEqual"
 import type {RouteLocationNormalized} from "vue-router"
 import {useApiStore} from "../stores/api"
+import {routeSection} from "./analytics/activation"
 
 interface PageInfo {
     origin: string
@@ -53,6 +54,7 @@ export default (_app: any, router: any) => {
             apiStore.events({
                 type: "PAGE",
                 page: pageFromRoute(to),
+                section: routeSection(to.name?.toString()),
                 $referrer: referrerUrl,
                 $referring_domain: referringDomain,
             })

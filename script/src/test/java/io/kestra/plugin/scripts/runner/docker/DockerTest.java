@@ -11,14 +11,13 @@ import java.util.regex.Pattern;
 
 import org.assertj.core.api.Assertions;
 import org.hamcrest.MatcherAssert;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Assumptions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 import com.github.dockerjava.api.model.Container;
 
-import io.kestra.core.junit.annotations.FlakyTest;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.runners.AbstractTaskRunnerTest;
@@ -231,7 +230,6 @@ class DockerTest extends AbstractTaskRunnerTest {
     }
 
     @Test
-    @FlakyTest(description = "Docker container lifecycle timing varies across CI environments")
     void interruptAfterResume() throws Exception {
         var taskRunId = IdUtils.create();
 

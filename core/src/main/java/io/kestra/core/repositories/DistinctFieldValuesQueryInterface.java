@@ -30,6 +30,5 @@ public interface DistinctFieldValuesQueryInterface {
         String tenantId,
         QueryFilter.Field field,
         @Nullable List<QueryFilter> filters,
-        Pageable pageable
-    );
+        Pageable pageable);
 }

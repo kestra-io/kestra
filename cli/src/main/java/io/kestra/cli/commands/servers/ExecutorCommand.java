@@ -14,16 +14,15 @@ import io.kestra.core.models.ServerType;
 import io.kestra.core.repositories.LocalFlowRepositoryLoader;
 import io.kestra.core.runners.Executor;
 import io.kestra.core.services.IgnoreExecutionService;
+import io.kestra.core.utils.Await;
 import io.kestra.core.utils.ExecutorsUtils;
 import io.kestra.worker.systemworker.SystemWorker;
-import org.awaitility.Awaitility;
 
 import io.micronaut.context.BeanProvider;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine;
-import io.kestra.core.utils.Await;
 
 @CommandLine.Command(
     name = "executor",

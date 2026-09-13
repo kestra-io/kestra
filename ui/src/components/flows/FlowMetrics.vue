@@ -26,13 +26,6 @@
             </div>
         </template>
     </KSFilter>
-    <QuickFilters
-        :intervals="quickIntervals"
-        :timeRange="selectedTimeRange"
-        :intervalLabel="t('filter.timeRange_metric.label')"
-        :showLevel="false"
-        @update:timeRange="onQuickFilterTimeRange"
-    />
 
     <div v-bind="$attrs">
         <KsRow v-if="displayedMetrics.length > 0" :gutter="16">
@@ -64,7 +57,10 @@
             </KsCol>
         </KsRow>
         <KsCard v-else-if="!isLoading">
-            <KsAlert type="info" :closable="false">
+            <KsAlert v-if="hasAnyMetrics" type="warning" :closable="false">
+                {{ $t("metric filter no match", {term: filterTerm}) }}
+            </KsAlert>
+            <KsAlert v-else type="info" :closable="false">
                 {{ $t("metric choice") }}
             </KsAlert>
         </KsCard>
@@ -78,12 +74,11 @@
     import {useI18n} from "vue-i18n"
     import {useFlowStore} from "../../stores/flow"
     import {getFormat} from "../dashboard/composables/charts"
+    import {date as dateFilter} from "../../utils/filters"
     import {cssVar, KsBar, KsLine, KsSegmented} from "@kestra-io/design-system"
     import type {KsChartSeriesItem} from "@kestra-io/design-system"
     import {KsFilter as KSFilter} from "@kestra-io/design-system"
     import {useFlowMetricFilter} from "../filter/configurations"
-    import QuickFilters from "../filter/QuickFilters.vue"
-    import {useQuickIntervalFilter} from "../filter/composables/useQuickIntervalFilter"
 
     defineOptions({
         name: "FlowMetrics",
@@ -96,7 +91,6 @@
 
     const flowMetricFilter = useFlowMetricFilter()
     const flowStore = useFlowStore()
-    const {quickIntervals, selectedTimeRange, onQuickFilterTimeRange} = useQuickIntervalFilter()
 
     const isLoading = ref(false)
     const metricsData = ref<Record<string, any>>({})
@@ -147,7 +141,7 @@
     })
 
     const displayedMetrics = computed(() => {
-        const metrics = (flowStore.metrics ?? []) as string[]
+        const metrics = flowStore.metrics ?? []
         if (selectedMetric.value) {
             return metrics.filter((m) => m === selectedMetric.value)
         }
@@ -158,6 +152,11 @@
 
         return metrics
     })
+
+    // Distinguishes "this flow genuinely has no metrics" (info) from "your filter matched none of them"
+    const hasAnyMetrics = computed(() => (flowStore.metrics?.length ?? 0) > 0)
+
+    const filterTerm = computed(() => selectedMetric.value ?? selectedTextSearch.value ?? "")
 
     function getTimeRangeParams(): {startDate?: string; endDate?: string} {
         const timeRange = route.query["filters[timeRange][EQUALS]"] as string | undefined
@@ -171,7 +170,7 @@
         const data = metricsData.value[metric]
         if (!data) return []
         const aggregations = (data.aggregations ?? []) as MetricAggregation[]
-        return aggregations.map((e) => moment(e.date).format(getFormat(data.groupBy)))
+        return aggregations.map((e) => dateFilter(e.date, getFormat(data.groupBy)))
     }
 
     function getSeriesData(metric: string): KsChartSeriesItem[] {

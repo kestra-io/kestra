@@ -18,13 +18,16 @@ import {
     type useFilterGroups,
 } from "./useFilterGroups"
 import type {useDismissedKeys} from "./useDismissedKeys"
+import type {usePreAppliedFilters} from "./usePreAppliedFilters"
 
 type Tree = ReturnType<typeof useFilterGroups>
 type Dismissed = ReturnType<typeof useDismissedKeys>
+type PreApplied = ReturnType<typeof usePreAppliedFilters>
 
 interface UseFilterActionsOptions {
     tree: Tree;
     dismissed: Dismissed;
+    preApplied: PreApplied;
     searchQuery: Ref<string>;
     /** Called after each action to push the new tree state to the URL. */
     updateRoute: (shouldResetPage?: boolean) => void;
@@ -35,6 +38,7 @@ interface UseFilterActionsOptions {
 export function useFilterActions({
     tree,
     dismissed,
+    preApplied,
     searchQuery,
     updateRoute,
     hasValue,
@@ -86,6 +90,7 @@ export function useFilterActions({
             filters: leaf.filters.filter(f => f?.id !== filterId),
         }))
         dismissed.dismissDefaultVisibleKey(found.key)
+        preApplied.clearPreAppliedKey(found.key)
         updateRoute(false)
     }
 
@@ -103,6 +108,10 @@ export function useFilterActions({
     // Structural operations — delegate to the tree composable, then push to route.
     const moveFilter = (filterId: string, targetGroupId: string) => {
         tree.moveFilter(filterId, targetGroupId)
+        updateRoute(false)
+    }
+    const placeFilter = (filterId: string, targetLeafId: string, targetIndex: number) => {
+        tree.placeFilter(filterId, targetLeafId, targetIndex)
         updateRoute(false)
     }
     const wrapGroups = (sourceGroupId: string, targetGroupId: string) => {
@@ -131,6 +140,7 @@ export function useFilterActions({
 
     const clearFilters = () => {
         dismissed.dismissAllDefaultVisibleKeys()
+        preApplied.clearPreApplied()
         tree.clearTree()
         searchQuery.value = ""
         updateRoute(true)
@@ -141,6 +151,7 @@ export function useFilterActions({
         removeFilter,
         updateFilter,
         moveFilter,
+        placeFilter,
         wrapGroups,
         unwrapGroup,
         setTopLogical,

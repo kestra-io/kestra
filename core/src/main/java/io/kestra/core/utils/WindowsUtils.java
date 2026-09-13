@@ -1,13 +1,14 @@
 package io.kestra.core.utils;
 
 import java.net.URI;
+import java.util.Locale;
 import java.util.regex.Matcher;
 
 public class WindowsUtils {
 
     public static String windowsToUnixPath(String path, boolean startWithSlash) {
         Matcher matcher = java.util.regex.Pattern.compile("([A-Za-z]:)").matcher(path);
-        String unixPath = matcher.replaceAll(m -> m.group().toLowerCase());
+        String unixPath = matcher.replaceAll(m -> m.group().toLowerCase(Locale.ROOT));
 
         unixPath = unixPath
             .replace("\\", "/")

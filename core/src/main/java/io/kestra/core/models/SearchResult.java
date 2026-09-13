@@ -9,5 +9,6 @@ import lombok.Getter;
 @Getter
 public class SearchResult<T> {
     T model;
-    List<String> fragments;
+    List<SourceMatch> matches;
+    boolean editable;
 }

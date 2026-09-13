@@ -198,7 +198,10 @@ class PurgeStorageTest {
         assertThat(storageInterface.exists(MAIN_TENANT, childNamespace, childFile)).isFalse();
     }
 
-    /** Storage path /<ns>/executions/ is ambiguous between a flow named "executions" and a sub-namespace literally named "executions"; namespace-only scope skips it and requires explicit flowId. */
+    /**
+     * Storage path /<ns>/executions/ is ambiguous between a flow named "executions" and a sub-namespace literally named "executions"; namespace-only scope skips it and requires explicit
+     * flowId.
+     */
     @Test
     void shouldSkipAmbiguousExecutionsNameInNamespaceOnlyScan() throws Exception {
         String namespace = uniqueNamespace();

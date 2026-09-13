@@ -5,7 +5,6 @@ import java.util.List;
 import com.github.javaparser.utils.Log;
 
 import io.kestra.cli.AbstractCommand;
-import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.queues.DispatchQueueInterface;
@@ -36,11 +35,12 @@ public class V2ExecutionResubmitMigrationCommand extends AbstractCommand {
 
         Log.info("🔁 Starting running and created execution resubmission...");
         List<String> tenants = tenantService.listTenants();
-        QueryFilter filter = QueryFilter.builder().field(QueryFilter.Field.STATE).value(List.of(State.Type.RUNNING, State.Type.CREATED)).operation(QueryFilter.Op.IN).build();
+        List<State.Type> states = List.of(State.Type.RUNNING, State.Type.CREATED);
         tenants.forEach(tenant ->
         {
             Log.info("Resubmitting executions for tenant: " + tenant);
-            long count = repository.findAsync(tenant, List.of(filter))
+            // every kind must be resubmitted, including the loop iterations that the executions search hides
+            long count = repository.find(null, tenant, null, null, null, null, null, states, null, null)
                 .doOnNext(execution ->
                 {
                     try {

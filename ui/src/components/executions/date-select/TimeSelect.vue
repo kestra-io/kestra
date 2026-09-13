@@ -7,8 +7,22 @@
         :clearable="clearable"
         @change="onTimeRangeSelect"
     />
-    <KsTooltip v-if="allowCustom && timeRangeSelect === undefined" :content="allowInfinite ? $t('datepicker.leave empty for infinite') : $t('datepicker.duration example')">
-        <KsInput class="mt-2" :modelValue="timeRange" :placeholder="$t('datepicker.custom duration')" @update:model-value="onTimeRangeChange" />
+    <KsTooltip v-if="allowCustom && timeRangeSelect === undefined">
+        <template #content>
+            <span v-if="allowInfinite">{{ $t('datepicker.leave empty for infinite') }}</span>
+            <span v-else>{{ $t('datepicker.duration example') }}</span>
+            <div class="mt-2 duration-examples">
+                <strong>{{ $t("datepicker.examples") }}</strong>
+                <table class="duration-table">
+                    <tbody>
+                        <tr v-for="example in DURATION_EXAMPLES" :key="example">
+                            <td>{{ example }}</td><td>&rarr; {{ humanExample(example) }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </template>
+        <KsInput class="mt-2" data-test="custom-duration" :modelValue="timeRange" :placeholder="$t('datepicker.custom duration')" @update:model-value="onTimeRangeChange" />
     </KsTooltip>
 </template>
 
@@ -16,6 +30,7 @@
     import {ref, computed, watch, PropType} from "vue"
     import DateSelect from "./DateSelect.vue"
     import {useI18n} from "vue-i18n"
+    import {durationUtils} from "@kestra-io/design-system"
 
     interface TimePreset {
         value?: string;
@@ -37,6 +52,9 @@
     })
 
     const timeRangeSelect = ref<string | undefined>(undefined)
+
+    const DURATION_EXAMPLES = ["PT30M", "PT1H", "P1D", "P7D", "P30D", "P1DT2H"]
+    const humanExample = (iso: string) => durationUtils.humanDuration(iso, {units: ["d", "h", "m"]})
 
     const label = (duration: string): string =>
         "datepicker." + (props.fromNow ? "last" : "") + duration
@@ -98,3 +116,18 @@
         {immediate: true},
     )
 </script>
+
+<style scoped lang="scss">
+.duration-examples {
+    line-height: 1.5;
+}
+
+.duration-table {
+    margin-top: 4px;
+    border-collapse: collapse;
+
+    td:first-child {
+        padding-right: 12px;
+    }
+}
+</style>

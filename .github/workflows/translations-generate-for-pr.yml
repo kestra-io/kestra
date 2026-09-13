@@ -1,0 +1,125 @@
+name: Translations - Generate for a pull request
+
+# The pull request workflow generates translations only for branches of this repository: a fork has
+# no GEMINI_API_KEY, so its generate job is skipped and the gate then rejects the missing keys. An
+# external contributor cannot get a green PR on their own. This is the maintainer's one-click
+# replacement for "check the branch out, run the generator with my key, push to the fork": pick the
+# PR number in the Actions tab and the run generates the missing and stale translations for that
+# head.
+#
+# Pushing to a fork needs a token with write access to the fork (GITHUB_TOKEN never has it). When the
+# PR allows edits from maintainers and the TRANSLATIONS_PUSH_TOKEN secret holds a maintainer token,
+# the commit is pushed straight onto the PR branch; otherwise the run leaves the commit as a patch
+# artifact and says so on the PR.
+on:
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: "Number of the pull request to generate translations for"
+        required: true
+        type: string
+
+concurrency:
+  group: translations-generate-for-pr-${{ inputs.pr_number }}
+  cancel-in-progress: false
+
+jobs:
+  generate:
+    name: 'Translations - Generate for PR #${{ inputs.pr_number }}'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: write
+      pull-requests: write
+    env:
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      GH_TOKEN: ${{ github.token }}
+      PR: ${{ inputs.pr_number }}
+    steps:
+      - uses: actions/checkout@v7
+        name: Checkout
+        with:
+          fetch-depth: 0
+
+      - name: Resolve the pull request
+        id: pr
+        run: |
+          gh pr view "$PR" --json headRefName,headRepositoryOwner,headRepository,isCrossRepository,maintainerCanModify,url \
+            --jq '"head_ref=\(.headRefName)\nhead_repo=\(.headRepositoryOwner.login)/\(.headRepository.name)\ncross=\(.isCrossRepository)\nmaintainer_can_modify=\(.maintainerCanModify)\nurl=\(.url)"' >> "$GITHUB_OUTPUT"
+          cat "$GITHUB_OUTPUT"
+
+      - name: Check out the pull request head
+        run: |
+          gh pr checkout "$PR"
+          git log --oneline -1
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: 'ui/.nvmrc'
+
+      - name: Install Node dependencies
+        run: npm ci
+        working-directory: ui
+
+      - name: Generate missing and stale translations
+        run: npm run translations:generate
+        working-directory: ui
+
+      - name: Commit them
+        id: commit
+        run: |
+          git config user.name "GitHub Action"
+          git config user.email "actions@github.com"
+          git add ui/src/translations/*.json ui/scripts/translations/fingerprints*.json
+          git add ':(glob)ui/packages/design-system/**/*.locale.ts'
+          if git diff --cached --quiet; then
+            echo "Translations are already up to date."
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          git commit -m "chore(core): localize to languages other than english"
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+
+      # Same-repository branches take GITHUB_TOKEN; a fork takes the maintainer token, and only when
+      # the contributor allowed maintainer edits. Anything else falls through to the patch below.
+      - name: Push onto the pull request branch
+        id: push
+        if: steps.commit.outputs.changed == 'true'
+        continue-on-error: true
+        env:
+          PUSH_TOKEN: ${{ steps.pr.outputs.cross == 'true' && secrets.TRANSLATIONS_PUSH_TOKEN || github.token }}
+        run: |
+          if [ "${{ steps.pr.outputs.cross }}" = "true" ] && [ "${{ steps.pr.outputs.maintainer_can_modify }}" != "true" ]; then
+            echo "::warning::The pull request does not allow edits from maintainers, so the commit cannot be pushed to the fork."
+            exit 1
+          fi
+          if [ -z "$PUSH_TOKEN" ]; then
+            echo "::warning::No token can push to ${{ steps.pr.outputs.head_repo }} (set the TRANSLATIONS_PUSH_TOKEN secret to a maintainer token)."
+            exit 1
+          fi
+          git push "https://x-access-token:${PUSH_TOKEN}@github.com/${{ steps.pr.outputs.head_repo }}.git" "HEAD:${{ steps.pr.outputs.head_ref }}"
+
+      - name: Save the commit as a patch instead
+        if: steps.commit.outputs.changed == 'true' && steps.push.outcome == 'failure'
+        run: git format-patch -1 HEAD --output-directory translations-patch
+
+      - uses: actions/upload-artifact@v5
+        if: steps.commit.outputs.changed == 'true' && steps.push.outcome == 'failure'
+        with:
+          name: translations-patch-pr-${{ inputs.pr_number }}
+          path: translations-patch
+          retention-days: 7
+
+      - name: Tell the pull request where the patch is
+        if: steps.commit.outputs.changed == 'true' && steps.push.outcome == 'failure'
+        run: |
+          gh pr comment "$PR" --body "$(cat <<COMMENT
+          The missing and stale translations for this pull request were generated by [this run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}), but the commit could not be pushed to \`${{ steps.pr.outputs.head_repo }}\`. Download the \`translations-patch-pr-$PR\` artifact from the run and apply it on your branch:
+
+          \`\`\`bash
+          git am translations-patch/*.patch
+          \`\`\`
+
+          A maintainer can also push it for you once the pull request allows edits from maintainers.
+          COMMENT
+          )"

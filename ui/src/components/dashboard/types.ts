@@ -1,18 +1,10 @@
-export type Dashboard = {
-    id: string;
-    charts: Chart[];
-    title?: string;
-    sourceCode?: string;
-    timeWindow?: {
-        default?: string;
-        max?: string;
-    };
-    [key: string]: unknown;
-};
+import {ChartChartOption, DashboardControllerDashboardResponse} from "@kestra-io/kestra-sdk"
 
-export type Chart = {
-    id: string;
-    type: string;
+export interface Dashboard extends DashboardControllerDashboardResponse {
+    charts: Chart[]
+}
+
+export interface Chart extends ChartChartOption {
     chartOptions?: {
         displayName?: string;
         description?: string;
@@ -43,17 +35,9 @@ export type Chart = {
     [key: string]: unknown;
 };
 
-export type Request = {
-    chart: Chart["content"];
-    globalFilter?: Parameters;
-};
-
-export type Parameters = {
-    pageNumber?: number;
-    pageSize?: number;
-    startDate?: Date;
-    endDate?: Date;
-    namespace?: string;
-    labels?: Record<string, string>;
-    filters?: Record<string, any>;
-};
+/** The tenant's default dashboards. The schema is Enterprise-only and absent from the OSS SDK, so it is declared here for the store shared by both editions. */
+export interface DashboardSettings {
+    defaultHomeDashboard?: string;
+    defaultFlowOverviewDashboard?: string;
+    defaultNamespaceOverviewDashboard?: string;
+}

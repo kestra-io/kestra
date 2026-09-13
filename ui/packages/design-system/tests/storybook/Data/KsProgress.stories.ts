@@ -12,6 +12,7 @@ const meta: Meta<typeof KsProgress> = {
         showText: {control: "boolean"},
         striped: {control: "boolean"},
         color: {control: "text", type: {name: "string"}},
+        radius: {control: "text"},
     },
     parameters: {
         docs: {description: {component: "KsProgress is the Kestra design-system abstraction over `ElProgress` from Element Plus."}},
@@ -124,6 +125,19 @@ export const Circle: Story = {
                 <ks-progress :percentage="25" type="circle" />
                 <ks-progress :percentage="75" type="circle" status="success" />
                 <ks-progress :percentage="50" type="circle" status="exception" />
+            </div>
+        `,
+    }),
+}
+
+/** Custom radius – pill-shaped thin bar */
+export const Rounded: Story = {
+    render: () => ({
+        components: {KsProgress},
+        template: `
+            <div style="padding:24px;display:flex;flex-direction:column;gap:12px;width:350px">
+                <ks-progress :percentage="60" :stroke-width="7" :radius="81" />
+                <ks-progress :percentage="80" :stroke-width="7" :radius="81" status="success" />
             </div>
         `,
     }),

@@ -3,21 +3,18 @@ import type {RouteRecordRaw} from "vue-router"
 import OnlyLeftMenuLayout from "../components/layout/OnlyLeftMenuLayout.vue"
 import FullScreenLayout from "../components/layout/FullScreenLayout.vue"
 import Errors from "../components/errors/Errors.vue"
-import DemoIAM from "../components/demo/IAM.vue"
-import DemoTenants from "../components/demo/Tenants.vue"
-import DemoAuditLogs from "../components/demo/AuditLogs.vue"
-import DemoInstance from "../components/demo/Instance.vue"
-import DemoApps from "../components/demo/Apps.vue"
-import DemoTests from "../components/demo/Tests.vue"
-import DemoAssets from "../components/demo/Assets.vue"
+import {EXECUTION_ROUTE} from "../components/executions/executionTabs"
+import {FLOW_ROUTE} from "../components/flows/flowTabs"
+import {NAMESPACE_PARENT_ROUTE, createNamespaceTabRoutes} from "../utils/namespaceTabRoutes"
 
-const routes: RouteRecordRaw[] = [
+/** A route record, plus `ossOnly`: editions layering on this table (EE) drop the flagged records. */
+export type KestraRouteRecord = RouteRecordRaw & {ossOnly?: boolean}
+
+const routes: KestraRouteRecord[] = [
     //Initial
     {name: "root", path: "/", redirect: {name: "home"}, meta: {layout: {template: "<div />"}, anonymous: true}},
 
-    // New onboarding pages, initial one and the success one after the user has completed the onboarding flow.
-    {name: "welcome", path: "/:tenant?/welcome", component: () => import("../components/onboarding/Welcome.vue")},
-    {name: "welcome/success", path: "/:tenant?/welcome/success", component: () => import("../components/onboarding/Success.vue")},
+    {name: "ai",path: "/:tenant?/ai", component: () => import("../components/ai/copilot/CopilotPage.vue")},
 
     //Dashboards
     {
@@ -25,8 +22,6 @@ const routes: RouteRecordRaw[] = [
         path: "/:tenant?/dashboards/:dashboard?",
         component: () => import("../components/dashboard/Dashboard.vue"),
     },
-    {name: "dashboards/create", path: "/:tenant?/dashboards/new", component: () => import("../components/dashboard/components/Create.vue")},
-    {name: "dashboards/update", path: "/:tenant?/dashboards/:dashboard/edit", component: () => import("override/components/dashboard/Edit.vue")},
 
     //Flows
     {
@@ -36,7 +31,7 @@ const routes: RouteRecordRaw[] = [
     },
     {name: "flows/search", path: "/:tenant?/flows/search", component: () => import("../components/flows/FlowsSearch.vue")},
     {name: "flows/create", path: "/:tenant?/flows/new", component: () => import("../components/flows/FlowCreate.vue")},
-    {name: "flows/update", path: "/:tenant?/flows/edit/:namespace/:id/:tab?", component: () => import("../components/flows/FlowRoot.vue")},
+    FLOW_ROUTE,
 
     //Executions
     {
@@ -44,7 +39,7 @@ const routes: RouteRecordRaw[] = [
         path: "/:tenant?/executions",
         component: () => import("../components/executions/Executions.vue"),
     },
-    {name: "executions/update", path: "/:tenant?/executions/:namespace/:flowId/:id/:tab?", component: () => import("../components/executions/ExecutionRoot.vue")},
+    EXECUTION_ROUTE,
 
     //KV
     {name: "kv/list", path: "/:tenant?/kv", component: () => import("../components/kv/KVs.vue")},
@@ -70,7 +65,26 @@ const routes: RouteRecordRaw[] = [
 
     //Namespaces
     {name: "namespaces/list", path: "/:tenant?/namespaces", component: () => import("override/components/namespaces/Namespaces.vue")},
-    {name: "namespaces/update", path: "/:tenant?/namespaces/edit/:id/:tab?", component: () => import("../components/namespaces/Namespace.vue")},
+    {
+        name: NAMESPACE_PARENT_ROUTE,
+        path: "/:tenant?/namespaces/edit/:id",
+        component: () => import("../components/namespaces/Namespace.vue"),
+        // Only Enterprise Edition reports a missing namespace: the OSS endpoint echoes any id back,
+        // since an OSS namespace is whatever its flows declare rather than a stored entity.
+        meta: {
+            entity: async (to) => {
+                const {useNamespacesStore} = await import("override/stores/namespaces")
+                return useNamespacesStore().load(String(to.params.id))
+            },
+        },
+        // Resolve legacy deep-links `{name: "namespaces/update", params: {tab}}` and bare
+        // `/:id` URLs to the matching child route, preserving params and query.
+        redirect: (to) => {
+            const tab = (to.params.tab as string) || "overview"
+            return {name: `${NAMESPACE_PARENT_ROUTE}/${tab}`, params: to.params, query: to.query}
+        },
+        children: createNamespaceTabRoutes(),
+    },
 
     //Docs
     {name: "docs/view", path: "/:tenant?/docs/:path(.*)?", component: () => import("../components/docs/Docs.vue"), meta: {layout: OnlyLeftMenuLayout}},
@@ -87,7 +101,8 @@ const routes: RouteRecordRaw[] = [
     {name: "admin/mcp-servers/create", path: "/:tenant?/admin/mcp-servers/new/:tab?",                 component: () => import("../components/admin/McpServer.vue")},
 
     //Setup
-    {name: "setup", path: "/:tenant?/setup", component: () => import("../components/basicauth/BasicAuthSetup.vue"), meta: {layout: FullScreenLayout, anonymous: true}},
+    // ossOnly: posts to /api/v1/{tenant}/basicAuth, which EE does not implement.
+    {name: "setup", path: "/:tenant?/setup", component: () => import("../components/basicauth/BasicAuthSetup.vue"), meta: {layout: FullScreenLayout, anonymous: true}, ossOnly: true},
     //Login
     {name: "login", path: "/:tenant?/login", component: () => import("../components/basicauth/BasicAuthLogin.vue"), meta: {layout: FullScreenLayout, anonymous: true}},
 
@@ -95,13 +110,19 @@ const routes: RouteRecordRaw[] = [
     {name: "errors/404-wildcard", path: "/:tenant?/:pathMatch(.*)", component: Errors, props: {code: 404}},
 
     //Demo Pages
-    {name: "apps/list", path: "/:tenant?/apps", component: DemoApps},
-    {name: "tests/list", path: "/:tenant?/tests", component: DemoTests},
-    {name: "assets/list", path: "/:tenant?/assets", component: DemoAssets},
-    {name: "admin/iam", path: "/:tenant?/admin/iam", component: DemoIAM},
-    {name: "admin/tenants/list", path: "/:tenant?/admin/tenants/list", component: DemoTenants},
-    {name: "admin/auditlogs/list", path: "/:tenant?/admin/auditlogs", component: DemoAuditLogs},
-    {name: "admin/instance", path: "/:tenant?/admin/instance", component: DemoInstance},
+    {name: "dashboards/create", path: "/:tenant?/dashboards/new", component: () => import("../components/demo/Dashboards.vue")},
+    {name: "dashboards/update", path: "/:tenant?/dashboards/:dashboard/edit", component: () => import("../components/demo/Dashboards.vue")},
+    {name: "apps/list", path: "/:tenant?/apps", component: () => import("../components/demo/Apps.vue")},
+    {name: "tests/list", path: "/:tenant?/tests", component: () => import("../components/demo/Tests.vue")},
+    {name: "assets/list", path: "/:tenant?/assets", component: () => import("../components/demo/Assets.vue")},
+    {name: "cases/list", path: "/:tenant?/cases", component: () => import("../components/demo/Cases.vue")},
+    {name: "admin/iam", path: "/:tenant?/admin/iam", component: () => import("../components/demo/IAM.vue")},
+    {name: "admin/tenants/list", path: "/:tenant?/admin/tenants/list", component: () => import("../components/demo/Tenants.vue")},
+    {name: "admin/auditlogs/list", path: "/:tenant?/admin/auditlogs", component: () => import("../components/demo/AuditLogs.vue")},
+    {name: "admin/quotas/list", path: "/:tenant?/admin/quotas", component: () => import("../components/demo/Quotas.vue")},
+    {name: "admin/policies", path: "/:tenant?/admin/policies", component: () => import("../components/demo/Policies.vue")},
+    {name: "admin/instance", path: "/:tenant?/admin/instance", component: () => import("../components/demo/Instance.vue")},
+    {name: "promote/targets", path: "/:tenant?/promote/targets", component: () => import("../components/demo/Promote.vue")},
 ]
 
 export default routes

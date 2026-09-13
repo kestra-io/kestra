@@ -3,17 +3,17 @@ package io.kestra.webserver.utils;
 import java.util.List;
 import java.util.function.Function;
 
-import io.kestra.core.exceptions.InvalidQueryFiltersException;
-import io.kestra.core.models.QueryFilter;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.FieldSource;
 
+import io.kestra.core.exceptions.InvalidQueryFiltersException;
+import io.kestra.core.models.QueryFilter;
 import io.kestra.core.repositories.ArrayListTotal;
 
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.tuple;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -35,7 +35,7 @@ class SearchableTest {
 
     @Test
     void shouldReturnMatchingResultsWhenSearchByQuery() {
-        ArrayListTotal<TestEntity> result = Searchable.<TestEntity>builder()
+        ArrayListTotal<TestEntity> result = Searchable.<TestEntity> builder()
             .searchableExtractor("name", TestEntity::name)
             .build()
             .filter(entities, 1, 100, null, null, "Alice");
@@ -46,7 +46,7 @@ class SearchableTest {
 
     @Test
     void shouldSortResultsWhenSortedAscBySingleField() {
-        ArrayListTotal<TestEntity> result = Searchable.<TestEntity>builder()
+        ArrayListTotal<TestEntity> result = Searchable.<TestEntity> builder()
             .sortableExtractor("age", TestEntity::age)
             .build()
             .filter(entities, 1, 100, List.of("age:asc"), null, null);
@@ -59,7 +59,7 @@ class SearchableTest {
 
     @Test
     void shouldSortResultsWhenSortedDesBySingleField() {
-        ArrayListTotal<TestEntity> result = Searchable.<TestEntity>builder()
+        ArrayListTotal<TestEntity> result = Searchable.<TestEntity> builder()
             .sortableExtractor("age", TestEntity::age)
             .build()
             .filter(entities, 1, 100, List.of("age:desc"), null, null);
@@ -72,7 +72,7 @@ class SearchableTest {
 
     @Test
     void shouldSortResultsWhenSortedByMultipleFields() {
-        ArrayListTotal<TestEntity> result = Searchable.<TestEntity>builder()
+        ArrayListTotal<TestEntity> result = Searchable.<TestEntity> builder()
             .sortableExtractor("name", TestEntity::name)
             .sortableExtractor("age", TestEntity::age)
             .build()
@@ -86,7 +86,7 @@ class SearchableTest {
 
     @Test
     void shouldReturnPaginatedResultsWhenPaginationApplied() {
-        ArrayListTotal<TestEntity> result = Searchable.<TestEntity>builder()
+        ArrayListTotal<TestEntity> result = Searchable.<TestEntity> builder()
             .build()
             .filter(entities, 1, 2, null, null, null);
 
@@ -106,7 +106,7 @@ class SearchableTest {
         );
 
         // When
-        ArrayListTotal<TestEntity> result = Searchable.<TestEntity>builder()
+        ArrayListTotal<TestEntity> result = Searchable.<TestEntity> builder()
             .searchableQueryFilterExtractor(
                 QueryFilter.Field.QUERY,
                 QueryFilter.Op.EQUALS,
@@ -131,7 +131,7 @@ class SearchableTest {
         );
 
         // When
-        ArrayListTotal<TestEntity> result = Searchable.<TestEntity>builder()
+        ArrayListTotal<TestEntity> result = Searchable.<TestEntity> builder()
             .searchableQueryFilterExtractor(
                 QueryFilter.Field.QUERY,
                 QueryFilter.Op.EQUALS,
@@ -156,7 +156,7 @@ class SearchableTest {
                 .build()
         );
 
-        Searchable<TestEntity> searchable = Searchable.<TestEntity>builder()
+        Searchable<TestEntity> searchable = Searchable.<TestEntity> builder()
             .searchableQueryFilterExtractor(
                 QueryFilter.Field.QUERY,
                 QueryFilter.Op.EQUALS,
@@ -182,23 +182,25 @@ class SearchableTest {
         List<QueryFilter> queryFilters = List.of(
             QueryFilter.builder()
                 .logical(QueryFilter.Logical.OR)
-                .children(List.of(
-                    QueryFilter.builder()
-                        .field(QueryFilter.Field.QUERY)
-                        .operation(QueryFilter.Op.EQUALS)
-                        .value("Alice")
-                        .build(),
-                    QueryFilter.builder()
-                        .field(QueryFilter.Field.PARENT_ID)
-                        .operation(QueryFilter.Op.EQUALS)
-                        .value(25)
-                        .build()
-                ))
+                .children(
+                    List.of(
+                        QueryFilter.builder()
+                            .field(QueryFilter.Field.QUERY)
+                            .operation(QueryFilter.Op.EQUALS)
+                            .value("Alice")
+                            .build(),
+                        QueryFilter.builder()
+                            .field(QueryFilter.Field.PARENT_ID)
+                            .operation(QueryFilter.Op.EQUALS)
+                            .value(25)
+                            .build()
+                    )
+                )
                 .build()
         );
 
         // When
-        ArrayListTotal<TestEntity> result = Searchable.<TestEntity>builder()
+        ArrayListTotal<TestEntity> result = Searchable.<TestEntity> builder()
             .searchableQueryFilterExtractor(
                 QueryFilter.Field.QUERY, QueryFilter.Op.EQUALS,
                 (entity, value) -> entity.name().equals(value)
@@ -225,23 +227,25 @@ class SearchableTest {
         List<QueryFilter> queryFilters = List.of(
             QueryFilter.builder()
                 .logical(QueryFilter.Logical.AND)
-                .children(List.of(
-                    QueryFilter.builder()
-                        .field(QueryFilter.Field.QUERY)
-                        .operation(QueryFilter.Op.EQUALS)
-                        .value("Alice")
-                        .build(),
-                    QueryFilter.builder()
-                        .field(QueryFilter.Field.PARENT_ID)
-                        .operation(QueryFilter.Op.EQUALS)
-                        .value(30)
-                        .build()
-                ))
+                .children(
+                    List.of(
+                        QueryFilter.builder()
+                            .field(QueryFilter.Field.QUERY)
+                            .operation(QueryFilter.Op.EQUALS)
+                            .value("Alice")
+                            .build(),
+                        QueryFilter.builder()
+                            .field(QueryFilter.Field.PARENT_ID)
+                            .operation(QueryFilter.Op.EQUALS)
+                            .value(30)
+                            .build()
+                    )
+                )
                 .build()
         );
 
         // When
-        ArrayListTotal<TestEntity> result = Searchable.<TestEntity>builder()
+        ArrayListTotal<TestEntity> result = Searchable.<TestEntity> builder()
             .searchableQueryFilterExtractor(
                 QueryFilter.Field.QUERY, QueryFilter.Op.EQUALS,
                 (entity, value) -> entity.name().equals(value)
@@ -265,43 +269,49 @@ class SearchableTest {
         List<QueryFilter> queryFilters = List.of(
             QueryFilter.builder()
                 .logical(QueryFilter.Logical.OR)
-                .children(List.of(
-                    QueryFilter.builder()
-                        .logical(QueryFilter.Logical.AND)
-                        .children(List.of(
-                            QueryFilter.builder()
-                                .field(QueryFilter.Field.QUERY)
-                                .operation(QueryFilter.Op.EQUALS)
-                                .value("Alice")
-                                .build(),
-                            QueryFilter.builder()
-                                .field(QueryFilter.Field.PARENT_ID)
-                                .operation(QueryFilter.Op.EQUALS)
-                                .value(30)
-                                .build()
-                        ))
-                        .build(),
-                    QueryFilter.builder()
-                        .logical(QueryFilter.Logical.AND)
-                        .children(List.of(
-                            QueryFilter.builder()
-                                .field(QueryFilter.Field.QUERY)
-                                .operation(QueryFilter.Op.EQUALS)
-                                .value("Bob")
-                                .build(),
-                            QueryFilter.builder()
-                                .field(QueryFilter.Field.PARENT_ID)
-                                .operation(QueryFilter.Op.EQUALS)
-                                .value(25)
-                                .build()
-                        ))
-                        .build()
-                ))
+                .children(
+                    List.of(
+                        QueryFilter.builder()
+                            .logical(QueryFilter.Logical.AND)
+                            .children(
+                                List.of(
+                                    QueryFilter.builder()
+                                        .field(QueryFilter.Field.QUERY)
+                                        .operation(QueryFilter.Op.EQUALS)
+                                        .value("Alice")
+                                        .build(),
+                                    QueryFilter.builder()
+                                        .field(QueryFilter.Field.PARENT_ID)
+                                        .operation(QueryFilter.Op.EQUALS)
+                                        .value(30)
+                                        .build()
+                                )
+                            )
+                            .build(),
+                        QueryFilter.builder()
+                            .logical(QueryFilter.Logical.AND)
+                            .children(
+                                List.of(
+                                    QueryFilter.builder()
+                                        .field(QueryFilter.Field.QUERY)
+                                        .operation(QueryFilter.Op.EQUALS)
+                                        .value("Bob")
+                                        .build(),
+                                    QueryFilter.builder()
+                                        .field(QueryFilter.Field.PARENT_ID)
+                                        .operation(QueryFilter.Op.EQUALS)
+                                        .value(25)
+                                        .build()
+                                )
+                            )
+                            .build()
+                    )
+                )
                 .build()
         );
 
         // When
-        ArrayListTotal<TestEntity> result = Searchable.<TestEntity>builder()
+        ArrayListTotal<TestEntity> result = Searchable.<TestEntity> builder()
             .searchableQueryFilterExtractor(
                 QueryFilter.Field.QUERY, QueryFilter.Op.EQUALS,
                 (entity, value) -> entity.name().equals(value)
@@ -327,33 +337,37 @@ class SearchableTest {
         List<QueryFilter> queryFilters = List.of(
             QueryFilter.builder()
                 .logical(QueryFilter.Logical.AND)
-                .children(List.of(
-                    QueryFilter.builder()
-                        .field(QueryFilter.Field.QUERY)
-                        .operation(QueryFilter.Op.EQUALS)
-                        .value("Alice")
-                        .build(),
-                    QueryFilter.builder()
-                        .logical(QueryFilter.Logical.OR)
-                        .children(List.of(
-                            QueryFilter.builder()
-                                .field(QueryFilter.Field.PARENT_ID)
-                                .operation(QueryFilter.Op.EQUALS)
-                                .value(30)
-                                .build(),
-                            QueryFilter.builder()
-                                .field(QueryFilter.Field.PARENT_ID)
-                                .operation(QueryFilter.Op.EQUALS)
-                                .value(40)
-                                .build()
-                        ))
-                        .build()
-                ))
+                .children(
+                    List.of(
+                        QueryFilter.builder()
+                            .field(QueryFilter.Field.QUERY)
+                            .operation(QueryFilter.Op.EQUALS)
+                            .value("Alice")
+                            .build(),
+                        QueryFilter.builder()
+                            .logical(QueryFilter.Logical.OR)
+                            .children(
+                                List.of(
+                                    QueryFilter.builder()
+                                        .field(QueryFilter.Field.PARENT_ID)
+                                        .operation(QueryFilter.Op.EQUALS)
+                                        .value(30)
+                                        .build(),
+                                    QueryFilter.builder()
+                                        .field(QueryFilter.Field.PARENT_ID)
+                                        .operation(QueryFilter.Op.EQUALS)
+                                        .value(40)
+                                        .build()
+                                )
+                            )
+                            .build()
+                    )
+                )
                 .build()
         );
 
         // When
-        ArrayListTotal<TestEntity> result = Searchable.<TestEntity>builder()
+        ArrayListTotal<TestEntity> result = Searchable.<TestEntity> builder()
             .searchableQueryFilterExtractor(
                 QueryFilter.Field.QUERY, QueryFilter.Op.EQUALS,
                 (entity, value) -> entity.name().equals(value)
@@ -379,18 +393,20 @@ class SearchableTest {
         List<QueryFilter> queryFilters = List.of(
             QueryFilter.builder()
                 .logical(QueryFilter.Logical.OR)
-                .children(List.of(
-                    QueryFilter.builder()
-                        .field(QueryFilter.Field.PARENT_ID)
-                        .operation(QueryFilter.Op.EQUALS)
-                        .value(30)
-                        .build(),
-                    QueryFilter.builder()
-                        .field(QueryFilter.Field.PARENT_ID)
-                        .operation(QueryFilter.Op.EQUALS)
-                        .value(40)
-                        .build()
-                ))
+                .children(
+                    List.of(
+                        QueryFilter.builder()
+                            .field(QueryFilter.Field.PARENT_ID)
+                            .operation(QueryFilter.Op.EQUALS)
+                            .value(30)
+                            .build(),
+                        QueryFilter.builder()
+                            .field(QueryFilter.Field.PARENT_ID)
+                            .operation(QueryFilter.Op.EQUALS)
+                            .value(40)
+                            .build()
+                    )
+                )
                 .build(),
             QueryFilter.builder()
                 .field(QueryFilter.Field.QUERY)
@@ -400,7 +416,7 @@ class SearchableTest {
         );
 
         // When
-        ArrayListTotal<TestEntity> result = Searchable.<TestEntity>builder()
+        ArrayListTotal<TestEntity> result = Searchable.<TestEntity> builder()
             .searchableQueryFilterExtractor(
                 QueryFilter.Field.QUERY, QueryFilter.Op.EQUALS,
                 (entity, value) -> entity.name().equals(value)
@@ -426,22 +442,24 @@ class SearchableTest {
         List<QueryFilter> queryFilters = List.of(
             QueryFilter.builder()
                 .logical(QueryFilter.Logical.OR)
-                .children(List.of(
-                    QueryFilter.builder()
-                        .field(QueryFilter.Field.FLOW_ID)
-                        .operation(QueryFilter.Op.EQUALS)
-                        .value("ignored")
-                        .build(),
-                    QueryFilter.builder()
-                        .field(QueryFilter.Field.QUERY)
-                        .operation(QueryFilter.Op.EQUALS)
-                        .value("Alice")
-                        .build()
-                ))
+                .children(
+                    List.of(
+                        QueryFilter.builder()
+                            .field(QueryFilter.Field.FLOW_ID)
+                            .operation(QueryFilter.Op.EQUALS)
+                            .value("ignored")
+                            .build(),
+                        QueryFilter.builder()
+                            .field(QueryFilter.Field.QUERY)
+                            .operation(QueryFilter.Op.EQUALS)
+                            .value("Alice")
+                            .build()
+                    )
+                )
                 .build()
         );
 
-        Searchable<TestEntity> searchable = Searchable.<TestEntity>builder()
+        Searchable<TestEntity> searchable = Searchable.<TestEntity> builder()
             .searchableQueryFilterExtractor(
                 QueryFilter.Field.QUERY, QueryFilter.Op.EQUALS,
                 (entity, value) -> entity.name().equals(value)
@@ -460,9 +478,11 @@ class SearchableTest {
     @Test
     void shouldMatchReturnTrueWhenFiltersIsNull() {
         // Given
-        Searchable<TestEntity> searchable = Searchable.<TestEntity>builder()
-            .searchableQueryFilterExtractor(QueryFilter.Field.QUERY, QueryFilter.Op.EQUALS,
-                (entity, value) -> entity.name().equals(value))
+        Searchable<TestEntity> searchable = Searchable.<TestEntity> builder()
+            .searchableQueryFilterExtractor(
+                QueryFilter.Field.QUERY, QueryFilter.Op.EQUALS,
+                (entity, value) -> entity.name().equals(value)
+            )
             .build();
 
         // Then
@@ -472,9 +492,11 @@ class SearchableTest {
     @Test
     void shouldMatchReturnTrueWhenFiltersIsEmpty() {
         // Given
-        Searchable<TestEntity> searchable = Searchable.<TestEntity>builder()
-            .searchableQueryFilterExtractor(QueryFilter.Field.QUERY, QueryFilter.Op.EQUALS,
-                (entity, value) -> entity.name().equals(value))
+        Searchable<TestEntity> searchable = Searchable.<TestEntity> builder()
+            .searchableQueryFilterExtractor(
+                QueryFilter.Field.QUERY, QueryFilter.Op.EQUALS,
+                (entity, value) -> entity.name().equals(value)
+            )
             .build();
 
         // Then
@@ -484,11 +506,15 @@ class SearchableTest {
     @Test
     void shouldMatchReturnTrueWhenAllFiltersMatchAndedTogether() {
         // Given
-        Searchable<TestEntity> searchable = Searchable.<TestEntity>builder()
-            .searchableQueryFilterExtractor(QueryFilter.Field.QUERY, QueryFilter.Op.EQUALS,
-                (entity, value) -> entity.name().equals(value))
-            .searchableQueryFilterExtractor(QueryFilter.Field.FLOW_ID, QueryFilter.Op.GREATER_THAN,
-                (entity, value) -> entity.age() > (Integer) value)
+        Searchable<TestEntity> searchable = Searchable.<TestEntity> builder()
+            .searchableQueryFilterExtractor(
+                QueryFilter.Field.QUERY, QueryFilter.Op.EQUALS,
+                (entity, value) -> entity.name().equals(value)
+            )
+            .searchableQueryFilterExtractor(
+                QueryFilter.Field.FLOW_ID, QueryFilter.Op.GREATER_THAN,
+                (entity, value) -> entity.age() > (Integer) value
+            )
             .build();
 
         // When
@@ -504,11 +530,15 @@ class SearchableTest {
     @Test
     void shouldMatchReturnFalseWhenAnyFilterDoesNotMatch() {
         // Given
-        Searchable<TestEntity> searchable = Searchable.<TestEntity>builder()
-            .searchableQueryFilterExtractor(QueryFilter.Field.QUERY, QueryFilter.Op.EQUALS,
-                (entity, value) -> entity.name().equals(value))
-            .searchableQueryFilterExtractor(QueryFilter.Field.FLOW_ID, QueryFilter.Op.GREATER_THAN,
-                (entity, value) -> entity.age() > (Integer) value)
+        Searchable<TestEntity> searchable = Searchable.<TestEntity> builder()
+            .searchableQueryFilterExtractor(
+                QueryFilter.Field.QUERY, QueryFilter.Op.EQUALS,
+                (entity, value) -> entity.name().equals(value)
+            )
+            .searchableQueryFilterExtractor(
+                QueryFilter.Field.FLOW_ID, QueryFilter.Op.GREATER_THAN,
+                (entity, value) -> entity.age() > (Integer) value
+            )
             .build();
 
         // When
@@ -524,9 +554,11 @@ class SearchableTest {
     @Test
     void shouldMatchThrowWhenFieldOpPairNotRegistered() {
         // Given
-        Searchable<TestEntity> searchable = Searchable.<TestEntity>builder()
-            .searchableQueryFilterExtractor(QueryFilter.Field.QUERY, QueryFilter.Op.EQUALS,
-                (entity, value) -> entity.name().equals(value))
+        Searchable<TestEntity> searchable = Searchable.<TestEntity> builder()
+            .searchableQueryFilterExtractor(
+                QueryFilter.Field.QUERY, QueryFilter.Op.EQUALS,
+                (entity, value) -> entity.name().equals(value)
+            )
             .build();
 
         // When
@@ -549,7 +581,7 @@ class SearchableTest {
     @FieldSource("defaultOperatorCases")
     void shouldApplyStandardSemanticsForFunctionOverload(DefaultOperatorCase testCase) {
         // Given
-        Searchable<String> searchable = Searchable.<String>builder()
+        Searchable<String> searchable = Searchable.<String> builder()
             .searchableQueryFilterExtractor(QueryFilter.Field.QUERY, Function.identity(), testCase.op())
             .build();
 
@@ -561,8 +593,10 @@ class SearchableTest {
             .build();
 
         // Then
-        assertEquals(testCase.expectedMatch(), searchable.matches(testCase.input(), List.of(filter)),
-            testCase.description());
+        assertEquals(
+            testCase.expectedMatch(), searchable.matches(testCase.input(), List.of(filter)),
+            testCase.description()
+        );
     }
 
     @SuppressWarnings("unused") // referenced via @FieldSource
@@ -600,8 +634,10 @@ class SearchableTest {
 
     @Test
     void shouldThrowAtBuilderTimeForOpWithoutDefault() {
-        assertThatThrownBy(() -> Searchable.<String>builder()
-                .searchableQueryFilterExtractor(QueryFilter.Field.QUERY, Function.identity(), QueryFilter.Op.GREATER_THAN))
+        assertThatThrownBy(
+            () -> Searchable.<String> builder()
+                .searchableQueryFilterExtractor(QueryFilter.Field.QUERY, Function.identity(), QueryFilter.Op.GREATER_THAN)
+        )
             .isInstanceOf(UnsupportedOperationException.class)
             .hasMessageContaining("GREATER_THAN")
             .hasMessageContaining("BiPredicate");
@@ -612,7 +648,6 @@ class SearchableTest {
         String input,
         Object queryValue,
         boolean expectedMatch,
-        String description
-    ) {
+        String description) {
     }
 }

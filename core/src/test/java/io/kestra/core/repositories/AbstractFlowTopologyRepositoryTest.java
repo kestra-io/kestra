@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
+import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.topologies.FlowNode;
 import io.kestra.core.models.topologies.FlowRelation;
 import io.kestra.core.models.topologies.FlowTopology;
@@ -111,4 +112,92 @@ public abstract class AbstractFlowTopologyRepositoryTest {
 
         assertThat(list.size()).isEqualTo(3);
     }
+
+    @Test
+    void findByFlowDestinationOnly() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        flowTopologyRepository.save(
+            createSimpleFlowTopology(tenant, "flow-a", "flow-b", "io.kestra.tests")
+        );
+
+        flowTopologyRepository.save(
+            createSimpleFlowTopology(tenant, "flow-c", "flow-a", "io.kestra.tests")
+        );
+
+        List<FlowTopology> list = flowTopologyRepository.findByFlow(tenant, "io.kestra.tests", "flow-a", true);
+
+        assertThat(list).hasSize(1);
+        assertThat(list.getFirst().getDestination().getId()).isEqualTo("flow-a");
+        assertThat(list.getFirst().getSource().getId()).isEqualTo("flow-c");
+    }
+
+    @Test
+    void findByFlowNoMatch() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+
+        flowTopologyRepository.save(
+            createSimpleFlowTopology(tenant, "flow-a", "flow-b", "io.kestra.tests")
+        );
+
+        List<FlowTopology> list = flowTopologyRepository.findByFlow(tenant, "io.kestra.tests", "flow-c", false);
+
+        assertThat(list).isEmpty();
+    }
+
+    @Test
+    void shouldReplaceEdgesWhenSavingSameFlowAgain() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        String namespace = "io.kestra.tests";
+        Flow flowA = Flow.builder().id("flow-a").namespace(namespace).tenantId(tenant).build();
+
+        flowTopologyRepository.save(flowA, List.of(createSimpleFlowTopology(tenant, "flow-a", "flow-b", namespace)));
+
+        assertThat(flowTopologyRepository.findByFlow(tenant, namespace, "flow-a", false))
+            .extracting(ft -> ft.getDestination().getId())
+            .containsExactly("flow-b");
+
+        flowTopologyRepository.save(flowA, List.of(createSimpleFlowTopology(tenant, "flow-a", "flow-c", namespace)));
+
+        List<FlowTopology> list = flowTopologyRepository.findByFlow(tenant, namespace, "flow-a", false);
+        assertThat(list).hasSize(1);
+        assertThat(list.getFirst().getDestination().getId()).isEqualTo("flow-c");
+    }
+
+    @Test
+    void shouldNotDeleteCounterpartEdgesWhenSavingAnotherFlow() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        String namespace = "io.kestra.tests";
+        Flow flowA = Flow.builder().id("flow-a").namespace(namespace).tenantId(tenant).build();
+        Flow flowC = Flow.builder().id("flow-c").namespace(namespace).tenantId(tenant).build();
+
+        // flow-b is incident to both edges below, but only flow-a and flow-c ever get re-saved.
+        flowTopologyRepository.save(flowA, List.of(createSimpleFlowTopology(tenant, "flow-a", "flow-b", namespace)));
+        flowTopologyRepository.save(flowC, List.of(createSimpleFlowTopology(tenant, "flow-b", "flow-c", namespace)));
+
+        // Re-saving flow-a's own edge set must not remove the flow-b -> flow-c edge it does not own.
+        flowTopologyRepository.save(flowA, List.of(createSimpleFlowTopology(tenant, "flow-a", "flow-b", namespace)));
+
+        assertThat(flowTopologyRepository.findByFlow(tenant, namespace, "flow-c", false))
+            .extracting(ft -> ft.getSource().getId())
+            .containsExactly("flow-b");
+    }
+
+    @Test
+    void shouldScopeSaveDeleteToTenantNamespaceAndId() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        String otherTenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        String namespace = "io.kestra.tests";
+        Flow flowA = Flow.builder().id("flow-a").namespace(namespace).tenantId(tenant).build();
+        Flow otherTenantFlowA = Flow.builder().id("flow-a").namespace(namespace).tenantId(otherTenant).build();
+
+        flowTopologyRepository.save(flowA, List.of(createSimpleFlowTopology(tenant, "flow-a", "flow-b", namespace)));
+        flowTopologyRepository.save(otherTenantFlowA, List.of(createSimpleFlowTopology(otherTenant, "flow-a", "flow-b", namespace)));
+
+        // Saving (an empty topology for) flow-a in otherTenant must not touch flow-a's edges in tenant.
+        flowTopologyRepository.save(otherTenantFlowA, List.of());
+
+        assertThat(flowTopologyRepository.findByFlow(tenant, namespace, "flow-a", false)).hasSize(1);
+        assertThat(flowTopologyRepository.findByFlow(otherTenant, namespace, "flow-a", false)).isEmpty();
+    }
+
 }

@@ -16,8 +16,7 @@
             <KsIconButton
                 v-if="!row.backfill.paused"
                 data-test="backfill-pause"
-                size="small"
-                :tooltip="t('pause backfill')"
+                :tooltip="$t('pause backfill')"
                 @click="emit('pause')"
             >
                 <Pause />
@@ -25,16 +24,14 @@
             <KsIconButton
                 v-else
                 data-test="backfill-resume"
-                size="small"
-                :tooltip="t('continue backfill')"
+                :tooltip="$t('continue backfill')"
                 @click="emit('resume')"
             >
                 <Play />
             </KsIconButton>
             <KsIconButton
                 data-test="backfill-stop"
-                size="small"
-                :tooltip="t('delete backfill')"
+                :tooltip="$t('delete backfill')"
                 class="bf-stop"
                 @click="emit('stop')"
             >
@@ -47,7 +44,6 @@
 <script setup lang="ts">
     import moment from "moment"
     import {computed} from "vue"
-    import {useI18n} from "vue-i18n"
 
     import Play from "vue-material-design-icons/Play.vue"
     import Pause from "vue-material-design-icons/Pause.vue"
@@ -55,7 +51,6 @@
 
     import {dateUtils, KsIconButton, KsProgress} from "@kestra-io/design-system"
 
-    const {t} = useI18n()
 
     const props = defineProps<{
         row: {
@@ -95,12 +90,12 @@
     align-items: center;
     gap: 0.75rem;
     padding: 0.625rem 1rem;
-    background: var(--ks-background-card);
-    border-top: 1px dashed var(--ks-border-primary);
+    background: var(--ks-bg-base);
+    border-top: 1px dashed var(--ks-border-default);
 }
 
 .bf-meta {
-    color: var(--ks-content-secondary);
+    color: var(--ks-text-secondary);
     font-size: var(--ks-font-size-sm);
     min-width: 14rem;
     white-space: nowrap;
@@ -117,6 +112,6 @@
 }
 
 .bf-stop :deep(.material-design-icon) {
-    color: var(--ks-content-error);
+    color: var(--ks-text-error);
 }
 </style>

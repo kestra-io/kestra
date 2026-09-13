@@ -1,10 +1,11 @@
 package io.kestra.queue.jdbc.client;
 
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.function.Consumer;
 
 import org.apache.commons.lang3.tuple.Pair;
@@ -66,10 +67,12 @@ public class JdbcQueueClient {
             String message = current.getMessage();
             if (message != null) {
                 String lower = message.toLowerCase();
-                if (message.contains("unsupported Unicode escape sequence") ||
-                    lower.contains("surrogate") ||
-                    lower.contains("unicode escape") ||
-                    lower.contains("invalid unicode")) {
+                if (
+                    message.contains("unsupported Unicode escape sequence") ||
+                        lower.contains("surrogate") ||
+                        lower.contains("unicode escape") ||
+                        lower.contains("invalid unicode")
+                ) {
                     return true;
                 }
             }
@@ -86,7 +89,7 @@ public class JdbcQueueClient {
             {
                 DSLContext context = DSL.using(configuration);
 
-                Map<Field<?>, Object> fields = HashMap.newHashMap(5);
+                Map<Field<?>, Object> fields = LinkedHashMap.newLinkedHashMap(5); // Use a linked hash map for a predictable iteration order
                 fields.put(TYPE, queue);
                 fields.put(ROUTING_KEY, (routingKey == null || routingKey.isEmpty()) ? null : routingKey);
                 fields.put(KEY, key);
@@ -142,7 +145,6 @@ public class JdbcQueueClient {
                     .insertInto(jdbcRepository.getTable())
                     .columns(COLUMNS);
 
-                // TODO check if we should not do a batch insert instead
                 Instant now = Instant.now();
                 for (PublishedMessage entry : messages) {
                     insert = insert.values(
@@ -194,10 +196,9 @@ public class JdbcQueueClient {
                     .stream()
                     .map(record ->
                     {
-                        consumer.accept(record.get(VALUE).data().getBytes());
+                        consumer.accept(record.get(VALUE).data().getBytes(StandardCharsets.UTF_8));
                         return record.get(OFFSET);
                     })
-                    .filter(Objects::nonNull)
                     .toList();
 
                 if (!processedItems.isEmpty()) {
@@ -235,7 +236,7 @@ public class JdbcQueueClient {
                 .fetch();
 
             if (!result.isEmpty()) {
-                consumer.accept(result.stream().map(record -> record.get(VALUE).data().getBytes()).toList());
+                consumer.accept(result.stream().map(record -> record.get(VALUE).data().getBytes(StandardCharsets.UTF_8)).toList());
 
                 List<Long> processedItems = result
                     .stream()
@@ -256,9 +257,12 @@ public class JdbcQueueClient {
         {
             DSLContext context = DSL.using(conf);
 
+            // Filters identically to subscribeBroadcast/subscribeBroadcastBatch so the seeded
+            // offset and the poll queries always operate over the same row set.
             return context.select(DSL.max(OFFSET))
                 .from(this.jdbcRepository.getTable())
                 .where(TYPE.eq(queue))
+                .and(ROUTING_KEY.isNull())
                 .fetchAny("max", Long.class);
         });
 
@@ -271,9 +275,13 @@ public class JdbcQueueClient {
             DSLContext context = DSL.using(conf);
             Long maxOffsetResult = null;
 
+            // Broadcast messages are always published with a null routing key. Binding it explicitly here
+            // (instead of leaving it unconstrained) lets the (type, routing_key, offset) index be used as a
+            // seek on offset instead of a full scan of every retained row for this type on each poll.
             var select = context.select(OFFSET, VALUE)
                 .from(this.jdbcRepository.getTable())
-                .where(TYPE.eq(queue));
+                .where(TYPE.eq(queue))
+                .and(ROUTING_KEY.isNull());
 
             if (maxOffset != null) {
                 select = select.and(OFFSET.gt(maxOffset));
@@ -285,7 +293,7 @@ public class JdbcQueueClient {
                 .fetch();
 
             if (!result.isEmpty()) {
-                result.forEach(record -> consumer.accept(record.get(VALUE).data().getBytes()));
+                result.forEach(record -> consumer.accept(record.get(VALUE).data().getBytes(StandardCharsets.UTF_8)));
 
                 maxOffsetResult = result
                     .stream()
@@ -304,9 +312,13 @@ public class JdbcQueueClient {
             DSLContext context = DSL.using(conf);
             Long maxOffsetResult = null;
 
+            // Broadcast messages are always published with a null routing key. Binding it explicitly here
+            // (instead of leaving it unconstrained) lets the (type, routing_key, offset) index be used as a
+            // seek on offset instead of a full scan of every retained row for this type on each poll.
             var select = context.select(OFFSET, VALUE)
                 .from(this.jdbcRepository.getTable())
-                .where(TYPE.eq(queue));
+                .where(TYPE.eq(queue))
+                .and(ROUTING_KEY.isNull());
 
             if (maxOffset != null) {
                 select = select.and(OFFSET.gt(maxOffset));
@@ -318,7 +330,7 @@ public class JdbcQueueClient {
                 .fetch();
 
             if (!result.isEmpty()) {
-                consumer.accept(result.stream().map(record -> record.get(VALUE).data().getBytes()).toList());
+                consumer.accept(result.stream().map(record -> record.get(VALUE).data().getBytes(StandardCharsets.UTF_8)).toList());
 
                 maxOffsetResult = result
                     .stream()

@@ -5,11 +5,6 @@ labels:
   country: FR
   region: "Nord"
 
-pluginDefaults:
-  - type: io.kestra.plugin.core.log.Log
-    values:
-      message: third {{flow.id}}
-
 tasks:
 - id: t1
   type: io.kestra.plugin.core.log.Log

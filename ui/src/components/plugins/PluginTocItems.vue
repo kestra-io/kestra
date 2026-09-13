@@ -11,11 +11,12 @@
                 :to="{name: 'plugins/view', params: {tenant: route.params.tenant, cls: el.cls}}"
                 @click="emit('navigate')"
             >
-                <KsTaskIcon
+                <TaskIcon
                     class="plugin-toc-elements__icon"
                     :onlyIcon="true"
                     :cls="el.cls"
                     :icons="icons"
+                    variable="--ks-black"
                 />
                 <span class="plugin-toc-elements__label">{{ shortName(el.cls) }}</span>
             </router-link>
@@ -26,7 +27,7 @@
 <script setup lang="ts">
     import {computed} from "vue"
     import {useRoute} from "vue-router"
-    import {KsTaskIcon} from "@kestra-io/design-system"
+    import TaskIcon from "./TaskIcon.vue"
     import type {PluginElement, PluginIconMap} from "../../utils/pluginUtils"
 
     const props = defineProps<{
@@ -101,7 +102,8 @@
         flex-shrink: 0;
         width: 1rem;
         height: 1rem;
-        background-color: var(--ks-bg-tag);
+        background-color: var(--ks-bg-plugin-icon);
+        color: var(--ks-black);
         border-radius: var(--ks-radius-xs);
     }
 

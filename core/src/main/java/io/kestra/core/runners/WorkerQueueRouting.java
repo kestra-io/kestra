@@ -11,21 +11,22 @@ import io.kestra.core.worker.WorkerQueues;
  * the {@link WorkerQueueFallback} policy when no worker is available, and the
  * {@link Disposition} the caller must enact.
  *
- * <p>Returned by {@link io.kestra.core.services.WorkerQueueService#resolveWorkerQueueForJob}.
+ * <p>
+ * Returned by {@link io.kestra.core.services.WorkerQueueService#resolveWorkerQueueForJob}.
  * The resolver is responsible for the worker-availability check; callers switch on
  * {@link #disposition()} rather than re-checking availability.
  *
  * @param workerQueueId the resolved Worker Queue id; {@link WorkerQueues#DEFAULT_ID} for
- *                      {@link #toDefault()}, {@link WorkerQueues#SYSTEM_ID} for {@link #forSystem()}.
- * @param tags          the source tags that drove resolution; {@code null} or empty for
- *                      default and system routing. Useful for log/diagnostic messages.
- * @param fallback      the user-configured fallback policy; {@code null} when the routing
- *                      resolved successfully against an available worker. {@code null},
- *                      {@link WorkerQueueFallback#FAIL}, {@link WorkerQueueFallback#WAIT},
- *                      or {@link WorkerQueueFallback#CANCEL} only — {@link WorkerQueueFallback#IGNORE}
- *                      collapses to a default-queue {@link #toDefault()} routing (with
- *                      {@code fallback=null}) at resolution time and never appears here.
- * @param disposition   what the caller must do — never {@code null}.
+ *        {@link #toDefault()}, {@link WorkerQueues#SYSTEM_ID} for {@link #forSystem()}.
+ * @param tags the source tags that drove resolution; {@code null} or empty for
+ *        default and system routing. Useful for log/diagnostic messages.
+ * @param fallback the user-configured fallback policy; {@code null} when the routing
+ *        resolved successfully against an available worker. {@code null},
+ *        {@link WorkerQueueFallback#FAIL}, {@link WorkerQueueFallback#WAIT},
+ *        or {@link WorkerQueueFallback#CANCEL} only — {@link WorkerQueueFallback#IGNORE}
+ *        collapses to a default-queue {@link #toDefault()} routing (with
+ *        {@code fallback=null}) at resolution time and never appears here.
+ * @param disposition what the caller must do — never {@code null}.
  */
 public record WorkerQueueRouting(String workerQueueId, List<String> tags, WorkerQueueFallback fallback, Disposition disposition) {
 

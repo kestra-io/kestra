@@ -18,6 +18,8 @@ const meta: Meta<typeof KsSelect> = {
         collapseTags: {control: "boolean"},
         disabled: {control: "boolean"},
         allowCreate: {control: "boolean"},
+        loading: {control: "boolean"},
+        selectAll: {control: "boolean"},
     },
     parameters: {
         docs: {
@@ -214,6 +216,31 @@ export const Disabled: Story = {
     },
 }
 
+/** Loading – spinning suffix icon while options are (re)computed */
+export const Loading: Story = {
+    render: (args) => ({
+        components: {KsSelect, ElOption},
+        setup() {
+            const value = ref("")
+            return {args, value, LOG_LEVELS}
+        },
+        template: `
+            <div style="padding:24px;min-height:320px;display:flex;flex-direction:column;gap:24px">
+                <ks-select v-model="value" v-bind="args" style="width:240px">
+                    <ks-option v-for="l in LOG_LEVELS" :key="l" :value="l" :label="l" />
+                </ks-select>
+                <ks-select v-model="value" v-bind="args" disabled placeholder="Computing…" style="width:240px">
+                    <ks-option v-for="l in LOG_LEVELS" :key="l" :value="l" :label="l" />
+                </ks-select>
+            </div>
+        `,
+    }),
+    args: {loading: true, placeholder: "Loading options…"},
+    async play({canvasElement}) {
+        await expect(canvasElement.querySelector(".kel-icon.is-loading")).toBeTruthy()
+    },
+}
+
 /** Custom option content with coloured status dots */
 export const CustomOptionContent: Story = {
     render: (args) => ({
@@ -399,6 +426,38 @@ export const RichOptionContent: Story = {
         `,
     }),
     args: {size: "small", placeholder: "Previous versions"},
+}
+
+/** selectAll – "Select All" header row for MULTISELECT flow inputs; selects every option matching the active filter, then closes the dropdown */
+export const SelectAll: Story = {
+    render: (args) => ({
+        components: {KsSelect, ElOption},
+        setup() {
+            const value = ref<string[]>([])
+            const JOBS = [
+                "CREATED", "RUNNING", "PAUSED",
+                "SUCCESS", "WARNING", "FAILED",
+                "KILLED", "CANCELLED",
+            ]
+            return {args, value, JOBS}
+        },
+        template: `
+            <div style="padding:24px;min-height:360px;display:flex;flex-direction:column;gap:12px">
+                <ks-select v-model="value" v-bind="args" style="width:300px">
+                    <ks-option v-for="j in JOBS" :key="j" :value="j" :label="j" />
+                </ks-select>
+                <span style="font-size:13px;opacity:0.6">Selected: {{ value.join(', ') || '(none)' }}</span>
+            </div>
+        `,
+    }),
+    args: {multiple: true, filterable: true, clearable: true, selectAll: true, placeholder: "Select statuses"},
+    async play({canvasElement}) {
+        const canvas = within(canvasElement)
+        const trigger = canvas.getByRole("combobox")
+        await userEvent.click(trigger)
+        const selectAllBtn = document.querySelector(".kel-select-all-btn")
+        await expect(selectAllBtn).toBeTruthy()
+    },
 }
 
 /** Label slot – as used in Plugin.vue for version display */

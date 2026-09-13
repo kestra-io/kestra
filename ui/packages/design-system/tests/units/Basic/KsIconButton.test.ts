@@ -105,9 +105,8 @@ describe("KsIconButton", () => {
             slots: {default: StarIcon},
             global: globalConfig,
         })
-        // In jsdom (no vue-router), router-link renders as a custom element
         const button = wrapper.find(".ks-icon-button")
-        expect(button.element.tagName.toLowerCase()).toBe("router-link")
+        expect(button.element.tagName.toLowerCase()).toBe("a")
     })
 
     test("does not navigate when disabled and to is set", () => {
@@ -126,5 +125,22 @@ describe("KsIconButton", () => {
             global: globalConfig,
         })
         expect(wrapper.find("[data-testid=my-icon-btn]").exists()).toBe(true)
+    })
+
+    test("is not filled by default", () => {
+        const wrapper = mount(KsIconButton, {
+            slots: {default: StarIcon},
+            global: globalConfig,
+        })
+        expect(wrapper.find(".ks-icon-button--filled").exists()).toBe(false)
+    })
+
+    test("filled prop adds the ks-icon-button--filled modifier", () => {
+        const wrapper = mount(KsIconButton, {
+            props: {filled: true},
+            slots: {default: StarIcon},
+            global: globalConfig,
+        })
+        expect(wrapper.find(".ks-icon-button--filled").exists()).toBe(true)
     })
 })

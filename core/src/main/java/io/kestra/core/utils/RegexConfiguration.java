@@ -18,7 +18,7 @@ public class RegexConfiguration {
 
     /**
      * Maximum duration for a single regex operation before it is aborted.
-     * Defaults to 30 seconds.
+     * Defaults to 10 seconds.
      */
     private Duration timeout = Duration.ofSeconds(10);
 

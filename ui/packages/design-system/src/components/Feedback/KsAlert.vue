@@ -11,7 +11,7 @@
             <CheckCircleOutline v-if="type === 'success'" />
             <InformationOutline v-if="type === 'info'" />
             <AlertCircleOutline v-if="type === 'warning'" />
-            <AlertOutline v-if="type === 'error'" />
+            <AlertBoxOutline v-if="type === 'error'" />
         </template>
     </ElAlert>
 </template>
@@ -21,7 +21,7 @@
     import CheckCircleOutline from "vue-material-design-icons/CheckCircleOutline.vue"
     import InformationOutline from "vue-material-design-icons/InformationOutline.vue"
     import AlertCircleOutline from "vue-material-design-icons/AlertCircleOutline.vue"
-    import AlertOutline from "vue-material-design-icons/AlertOutline.vue"
+    import AlertBoxOutline from "vue-material-design-icons/AlertBoxOutline.vue"
 
     import {useFilteredProps} from "../../utils/filteredProps"
 
@@ -57,15 +57,41 @@
         --kel-alert-description-font-size: var(--ks-font-size-xs);
         --kel-alert-title-with-description-font-size: var(--ks-font-size-sm);
 
+        /* Element Plus centres the row, which leaves the icon mid-block once the message wraps. */
+        align-items: flex-start;
+
+        /* Font size of whichever element renders line one; the title shrinks when a description is present. */
+        --ks-alert-first-line-font-size: var(--kel-alert-title-font-size);
+
+        &:has(.kel-alert__title.with-description) {
+            --ks-alert-first-line-font-size: var(--kel-alert-title-with-description-font-size);
+        }
+
+        &:not(:has(.kel-alert__title)) {
+            --ks-alert-first-line-font-size: var(--kel-alert-description-font-size);
+        }
+
          .kel-alert__title {
-            line-height: 1;
+            line-height: var(--ks-line-height-base);
+        }
+
+        .kel-alert__description {
+            line-height: var(--ks-line-height-base);
         }
 
         .kel-alert__icon {
+            height: var(--kel-alert-icon-size);
+            align-self: flex-start;
+
             .material-design-icon,
             .material-design-icon > .material-design-icon__svg {
                 height: var(--kel-alert-icon-size);
                 width: var(--kel-alert-icon-size);
+            }
+
+            .material-design-icon > .material-design-icon__svg {
+                /* Raise the glyph by half its overhang so it centres on line one, not on its own taller box. */
+                bottom: calc((var(--kel-alert-icon-size) - var(--ks-line-height-base) * var(--ks-alert-first-line-font-size)) / 2);
             }
         }
 

@@ -1,42 +1,44 @@
 import {ref} from "vue"
 
-export function useDragAndDrop() {
-    const draggedIndex = ref<number | null>(null)
-    const dragOverIndex = ref<number | null>(null)
+export function useDragAndDrop(commit: (orderedIds: string[], draggedId: string) => void) {
+    const draggedId = ref<string | null>(null)
+    const previewIds = ref<string[] | null>(null)
+    const originalIds = ref<string[]>([])
 
-    const handleDragStart = (event: DragEvent, index: number) => {
-        draggedIndex.value = index
-        if (event.dataTransfer) {
-            event.dataTransfer.effectAllowed = "move"
+    const start = (id: string, currentIds: string[]) => {
+        draggedId.value = id
+        originalIds.value = [...currentIds]
+        previewIds.value = [...currentIds]
+    }
+
+    const over = (overId: string, event: DragEvent) => {
+        if (!draggedId.value || overId === draggedId.value) return
+        const order = [...originalIds.value]
+        const from = order.indexOf(draggedId.value)
+        if (from === -1) return
+        order.splice(from, 1)
+        let insertAt = order.indexOf(overId)
+        if (insertAt === -1) return
+        const target = event.currentTarget as HTMLElement | null
+        if (target) {
+            const rect = target.getBoundingClientRect()
+            if (event.clientY > rect.top + rect.height / 2) insertAt += 1
         }
+        order.splice(insertAt, 0, draggedId.value)
+        if (previewIds.value?.length === order.length && previewIds.value.every((id, i) => id === order[i])) return
+        previewIds.value = order
     }
 
-    const handleDragOver = (event: DragEvent, index: number) => {
-        event.preventDefault()
-        dragOverIndex.value = index
-        if (event.dataTransfer) {
-            event.dataTransfer.dropEffect = "move"
-        }
+    const drop = () => {
+        if (draggedId.value && previewIds.value) commit(previewIds.value, draggedId.value)
+        reset()
     }
 
-    const handleDrop = (event: DragEvent, targetIndex: number, onReorder: (fromIndex: number, toIndex: number) => void) => {
-        event.preventDefault()
-        if (draggedIndex.value != null && draggedIndex.value !== targetIndex) {
-            onReorder(draggedIndex.value, targetIndex)
-        }
-        handleDragEnd()
+    const reset = () => {
+        draggedId.value = null
+        previewIds.value = null
+        originalIds.value = []
     }
 
-    const handleDragEnd = () => {
-        draggedIndex.value = dragOverIndex.value = null
-    }
-
-    return {
-        draggedIndex,
-        dragOverIndex,
-        handleDragStart,
-        handleDragOver,
-        handleDrop,
-        handleDragEnd,
-    }
+    return {draggedId, previewIds, start, over, drop, reset}
 }

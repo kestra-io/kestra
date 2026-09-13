@@ -2,10 +2,9 @@ package io.kestra.cli.commands.namespaces;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
+import java.util.Map;
 
 import org.junit.jupiter.api.Test;
-
-import java.util.Map;
 
 import io.micronaut.configuration.picocli.PicocliRunner;
 import io.micronaut.context.ApplicationContext;
@@ -18,13 +17,17 @@ class NamespaceCommandTest {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         System.setOut(new PrintStream(out));
 
-        try (ApplicationContext ctx = ApplicationContext.builder()
-            .deduceEnvironment(false)
-            .properties(Map.of(
-                "kestra.repository.type", "memory",
-                "kestra.queue.type", "memory"
-            ))
-            .start()) {
+        try (
+            ApplicationContext ctx = ApplicationContext.builder()
+                .deduceEnvironment(false)
+                .properties(
+                    Map.of(
+                        "kestra.repository.type", "memory",
+                        "kestra.queue.type", "memory"
+                    )
+                )
+                .start()
+        ) {
             String[] args = {};
             Integer call = PicocliRunner.call(NamespaceCommand.class, ctx, args);
 

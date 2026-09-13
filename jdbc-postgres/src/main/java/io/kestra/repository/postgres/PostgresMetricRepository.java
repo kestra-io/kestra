@@ -1,5 +1,6 @@
 package io.kestra.repository.postgres;
 
+import java.sql.Timestamp;
 import java.util.Date;
 
 import org.jooq.Field;
@@ -20,6 +21,11 @@ public class PostgresMetricRepository extends AbstractJdbcMetricRepository {
     public PostgresMetricRepository(@Named("metrics") PostgresRepository<MetricEntry> repository,
         JdbcFilterService filterService) {
         super(repository, filterService);
+    }
+
+    @Override
+    protected Field<Timestamp> groupByTimestampField(String dateField) {
+        return PostgresRepositoryUtils.utcTimestampField(dateField);
     }
 
     @Override

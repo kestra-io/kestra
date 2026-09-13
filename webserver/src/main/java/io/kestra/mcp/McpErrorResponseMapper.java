@@ -36,9 +36,9 @@ public class McpErrorResponseMapper {
     private static HttpStatus status(@NonNull McpSchema.JSONRPCResponse.JSONRPCError error) {
         return switch (error.code()) {
             case McpSchema.ErrorCodes.PARSE_ERROR,
-                 McpSchema.ErrorCodes.INVALID_REQUEST,
-                 McpSchema.ErrorCodes.METHOD_NOT_FOUND,
-                 McpSchema.ErrorCodes.INVALID_PARAMS -> HttpStatus.BAD_REQUEST;
+                McpSchema.ErrorCodes.INVALID_REQUEST,
+                McpSchema.ErrorCodes.METHOD_NOT_FOUND,
+                McpSchema.ErrorCodes.INVALID_PARAMS -> HttpStatus.BAD_REQUEST;
             default -> HttpStatus.INTERNAL_SERVER_ERROR;
         };
     }
@@ -50,7 +50,7 @@ public class McpErrorResponseMapper {
 
     @NonNull
     private static McpSchema.JSONRPCResponse errorJsonrpcResponse(@NonNull McpSchema.JSONRPCMessage message,
-                                                          @NonNull McpError error) {
+        @NonNull McpError error) {
         var jsonrpcError = error.getJsonRpcError() != null
             ? error.getJsonRpcError()
             : new McpSchema.JSONRPCResponse.JSONRPCError(McpSchema.ErrorCodes.INTERNAL_ERROR, error.getMessage(), null);

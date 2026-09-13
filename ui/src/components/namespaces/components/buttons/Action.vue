@@ -8,6 +8,7 @@
                 :tag="to ? 'router-link' : 'button'"
                 :to
                 :loading="props.loading ?? false"
+                :disabled="props.disabled ?? false"
             >
                 {{ props.label }}
             </KsButton>
@@ -27,5 +28,6 @@
         type?: string;
         to?: Record<string, any>;
         loading?: boolean;
+        disabled?: boolean;
     }>()
 </script>

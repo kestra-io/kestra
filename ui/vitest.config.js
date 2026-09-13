@@ -13,10 +13,12 @@ const dirname =
         ? __dirname
         : path.dirname(fileURLToPath(import.meta.url))
 
+// vite.config.js skips the federation()/VitePWA() plugins when this is set (they have no
+// place in a test run); the storybook CLI sets it automatically, so mirror that here.
+process.env.STORYBOOK = "true"
+
 const resolvedViteConfig = typeof viteConfig === "function" ? viteConfig({mode: "test"}) : viteConfig
 
-// No backend is available during tests — clear the API proxy so Vite doesn't
-// emit "[vite] http proxy error" for every story that fires an /api request.
 if (resolvedViteConfig.server) {
     resolvedViteConfig.server.proxy = {}
 }
@@ -31,6 +33,14 @@ console.warn = (...args) => {
     if (typeof args[0] === "string" && args[0].includes("decodeEntities")) return
     originalConsoleWarn(...args)
 }
+
+// Node 26 defines a `localStorage` global that stays undefined unless --localstorage-file is
+// given, and it shadows the one jsdom installs, so every unit spec touching storage throws.
+// Disabling Node's own web storage lets jsdom provide it, as it does on the Node 24 in .nvmrc,
+// where the global does not exist and the flag is a no-op. Set here rather than in
+// poolOptions.execArgv, which vitest overrides with its own, and rather than in the npm script,
+// which would not survive someone running vitest directly.
+process.env.NODE_OPTIONS = `${process.env.NODE_OPTIONS ?? ""} --no-experimental-webstorage`.trim()
 
 // Vite writes logger warnings to process.stderr. Silence the
 // "Sourcemap for X points to a source file outside its package" noise
@@ -59,9 +69,6 @@ export default defineConfig({
             ...resolvedViteConfig.resolve.alias,
         ],
     },
-    coverage: {
-        exclude: ["**/*.json"],
-    },
     test: {
         projects: [
             "./vitest.config.unit.js",
@@ -75,29 +82,52 @@ export default defineConfig({
                 ],
                 test: {
                     name: "storybook",
-                    setupFiles: ["./.storybook/vitest.setup.js"],
+                    setupFiles: ["./.storybook/vitest.setup.ts"],
+                    reporters: [
+                        ["default"],
+                        ["junit"],
+                    ],
+                    outputFile: {
+                        junit: "./test-report.storybook.junit.xml",
+                    },
+                    // Each worker drives its own headless Chromium instance; letting
+                    // this scale with CPU count (the default) spins up enough
+                    // concurrent browsers to exhaust CI memory, which kills a
+                    // worker mid-run and surfaces as "[birpc] rpc is closed,
+                    // cannot call 'createTesters'" rather than a real test failure.
+                    maxWorkers: 2,
                     browser: {
                         enabled: true,
                         headless: true,
-                        provider: playwright(),
+                        // enable early garbage collection
+                        provider: playwright({
+                            launchOptions: {
+                                args: ["--js-flags=--max-old-space-size=1536", "--disable-dev-shm-usage"],
+                            },
+                        }),
                         instances: [
                             {
                                 browser: "chromium",
                             },
                         ],
                     },
-                    coverage: {
-                        reporter: ["text", "html"],
-                        exclude: [
-                            "**/*.stories.{ts,tsx}",
-                            "**/*.spec.{ts,tsx}",
-                            "**/node_modules/**",
-                            "**/*.json",
-                        ],
-                    },
                 },
             }),
         ],
+        coverage: {
+            reporter: ["text", "html"],
+            include: [
+                "src/**/*.{ts,vue}",
+            ],
+            exclude: [
+                "**/node_modules/**",
+                "**/*.stories.*",
+                "**/*.spec.{ts,tsx}",
+                "**/*.d.ts",
+                "**/.storybook/**",
+                "storybook-static/**",
+            ],
+        },
     },
     define: {
         "window.KESTRA_BASE_PATH": "/ui/",

@@ -13,6 +13,18 @@ import io.kestra.core.models.dashboards.DataFilterKPI;
 import io.micronaut.data.model.Pageable;
 
 public interface QueryBuilderInterface<F extends Enum<F>> {
+    /**
+     * Whether this query builder can compute dashboard aggregations ({@link #fetchData}/{@link #fetchValue}).
+     * <p>
+     * Backends that cannot aggregate (e.g. a cloud log store such as GCP Cloud Logging) return {@code false};
+     * the dashboard engine then short-circuits to an empty result so charts render "No data" instead of erroring.
+     *
+     * @return {@code true} by default.
+     */
+    default boolean canAggregate() {
+        return true;
+    }
+
     default Set<F> dateFields() {
         return Collections.emptySet();
     }

@@ -1,5 +1,6 @@
 package io.kestra.queue.jdbc;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Set;
 
@@ -36,7 +37,7 @@ public class JdbcVNodeDispatchQueue<T extends VNodeDispatchEvent> extends Abstra
             this.queueName(),
             this.vNodeRoutingKey(this.queueService.computeVNode(key)),
             key,
-            new String(message)
+            new String(message, StandardCharsets.UTF_8)
         );
     }
 
@@ -51,7 +52,7 @@ public class JdbcVNodeDispatchQueue<T extends VNodeDispatchEvent> extends Abstra
                         queueName,
                         this.vNodeRoutingKey(this.queueService.computeVNode(e.key())),
                         e.key(),
-                        new String(e.value())
+                        new String(e.value(), StandardCharsets.UTF_8)
                     )
                 )
                 .toList()

@@ -17,7 +17,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 
-@Endpoint(id = "scheduler", defaultSensitive = false)
+@Endpoint(id = "scheduler")
 @Requires(property = "kestra.server-type", pattern = "(SCHEDULER|STANDALONE)")
 public class SchedulerEndpoint {
 

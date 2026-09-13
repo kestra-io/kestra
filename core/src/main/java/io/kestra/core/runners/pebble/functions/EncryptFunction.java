@@ -12,6 +12,7 @@ import io.pebbletemplates.pebble.template.PebbleTemplate;
 
 public class EncryptFunction implements KestraFunction {
     public static final String NAME = "encrypt";
+
     @Override
     public List<String> getArgumentNames() {
         return List.of("key", "plaintext");

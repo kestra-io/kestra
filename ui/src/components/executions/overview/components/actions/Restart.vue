@@ -1,6 +1,14 @@
 <template>
+    <NavBarAction
+        v-if="trigger && asItem && hasPermission && (isReplay || enabled)"
+        :icon="icon"
+        :disabled="!enabled"
+        @click="isOpen = !isOpen"
+    >
+        {{ $t(replayOrRestart) }}
+    </NavBarAction>
     <KsTooltip
-        v-if="isReplay || enabled"
+        v-else-if="trigger && hasPermission && (isReplay || enabled)"
         :placement="tooltipPosition"
         :enterable="false"
         :content="tooltip"
@@ -8,7 +16,7 @@
         rawContent
     >
         <component
-            v-if="component !== 'el-dropdown-item'"
+            v-if="component !== 'KsDropdownItem'"
             v-bind="$attrs"
             :is="component"
             :icon="icon"
@@ -18,7 +26,7 @@
         >
             {{ $t(replayOrRestart) }}
         </component>
-        <span v-else-if="component === 'el-dropdown-item'">
+        <span v-else>
             <component
                 v-bind="$attrs"
                 :is="component"
@@ -37,27 +45,26 @@
         v-model="isOpen"
         destroyOnClose
         :appendToBody="true"
-        width="500px"
     >
         <template #header>
             <div class="modal-header m-0">
                 <h3 class="modal-title">
-                    {{ t("restart execution title") }}
+                    {{ $t("restart execution title") }}
                 </h3>
                 <KsDivider />
             </div>
         </template>
 
         <div class="p-3 pt-0">
-            <p class="mb-0" v-html="t('restart confirm', {id: execution.id})" />
+            <p class="mb-0" v-html="$t('restart confirm', {id: escape(execution.id)})" />
         </div>
 
         <template #footer>
             <KsButton @click="isOpen = false">
-                {{ t("cancel") }}
+                {{ $t("cancel") }}
             </KsButton>
             <KsButton type="primary" @click="handleRestartExecute">
-                {{ t("restart") }}
+                {{ $t("restart") }}
             </KsButton>
         </template>
     </KsDialog>
@@ -67,12 +74,12 @@
         v-model="isOpen"
         destroyOnClose
         :appendToBody="true"
-        width="600px"
+        scrollable
     >
         <template #header>
             <div class="modal-header m-0">
                 <h3 class="modal-title">
-                    {{ t("replay execution title") }}
+                    {{ $t("replay execution title") }}
                 </h3>
                 <KsDivider />
             </div>
@@ -80,23 +87,23 @@
 
         <div class="p-3 pt-0">
             <p class="mb-0">
-                {{ t("replay execution description") }}
+                {{ $t("replay execution description") }}
             </p>
             <KsId :value="execution.id" :shrink="false" />
 
             <h4 class="section-title">
-                {{ t("replay using") }}:
+                {{ $t("replay using") }}:
             </h4>
 
             <KsRadioGroup v-model="replayRevisionMode" class="radio-vertical">
                 <KsRadio value="original" class="radio-item">
-                    {{ t("flow revision original") }}
+                    {{ $t("flow revision original") }}
                 </KsRadio>
                 <KsRadio value="latest" class="radio-item">
-                    {{ t("flow revision latest") }}
+                    {{ $t("flow revision latest") }}
                 </KsRadio>
                 <KsRadio value="specific" class="radio-item">
-                    {{ t("flow revision specific") }}
+                    {{ $t("flow revision specific") }}
                 </KsRadio>
             </KsRadioGroup>
 
@@ -119,30 +126,30 @@
             <template v-if="hasInputs">
                 <template v-if="!taskRun">
                     <h4 class="section-title">
-                        {{ t("replay inputs") }}:
+                        {{ $t("replay inputs") }}:
                     </h4>
 
                     <KsRadioGroup v-if="canReuseInputs" v-model="inputMode" class="radio-vertical">
                         <KsRadio value="reuse" class="radio-item">
-                            {{ t("reuse original inputs") }}
+                            {{ $t("reuse original inputs") }}
                         </KsRadio>
                         <KsRadio value="modify" class="radio-item">
-                            {{ t("modify inputs") }}
+                            {{ $t("modify inputs") }}
                         </KsRadio>
                     </KsRadioGroup>
                 </template>
                 <p v-if="!canReuseInputs" class="execution-description mt-2 mb-0">
-                    {{ t("replay inputs new required") }}
+                    {{ $t("replay inputs new required") }}
                 </p>
             </template>
         </div>
 
         <template #footer>
             <KsButton @click="isOpen = false">
-                {{ t("cancel") }}
+                {{ $t("cancel") }}
             </KsButton>
             <KsButton type="primary" @click="handleReplayExecute">
-                {{ t("execute") }}
+                {{ $t("execute") }}
             </KsButton>
         </template>
     </KsDialog>
@@ -152,13 +159,13 @@
         v-model="isReplayWithInputsOpen"
         destroyOnClose
         :appendToBody="true"
-        width="60%"
+        scrollable
     >
         <template #header>
             <span
-                v-html="t('replay the execution', {
-                    executionId: execution.id,
-                    flowId: execution.flowId
+                v-html="$t('replay the execution', {
+                    executionId: escape(execution.id),
+                    flowId: escape(execution.flowId)
                 })"
             />
         </template>
@@ -173,7 +180,8 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, watch} from "vue"
+    import {ref, computed, watch, inject} from "vue"
+    import escape from "lodash/escape"
     import {useRouter} from "vue-router"
     import {useI18n} from "vue-i18n"
     import {useToast} from "../../../../../utils/toast"
@@ -184,20 +192,26 @@
     import action from "../../../../../models/action"
     import resource from "../../../../../models/resource"
     import ReplayWithInputs from "../../../ReplayWithInputs.vue"
+    import {EXECUTION_PARENT_ROUTE} from "../../../executionTabs"
     import RestartIcon from "vue-material-design-icons/Restart.vue"
     import PlayBoxMultiple from "vue-material-design-icons/PlayBoxMultiple.vue"
     import {KsId} from "@kestra-io/design-system"
+    import NavBarAction from "../../../../layout/NavBarAction.vue"
+    import {asItemKey} from "../../../../layout/navBarActionsContext"
 
     defineOptions({inheritAttrs: false})
 
+    const asItem = inject(asItemKey, false)
+
     const props = defineProps({
-        component: {type: String, default: "el-button"},
+        component: {type: String, default: "KsButton"},
         isReplay: {type: Boolean, default: false},
         isButton: {type: Boolean, default: true},
         execution: {type: Object, required: true},
         taskRun: {type: Object, required: false, default: undefined},
         attemptIndex: {type: Number, required: false, default: undefined},
         tooltipPosition: {type: String, default: "bottom"},
+        trigger: {type: Boolean, default: true},
     })
 
     const {t} = useI18n()
@@ -248,14 +262,21 @@
             .reverse(),
     )
 
+    // Split out of `enabled` so a missing permission hides the action entirely instead of
+    // rendering it disabled: a permanently dead button in the nav bar would leave the user with
+    // no reachable action at all in that slot.
+    const hasPermission = computed(() => {
+        if (!props.execution) return false
+
+        return props.isReplay
+            ? !!authStore.user?.isAllowed(resource.EXECUTION, action.REPLAY, props.execution.namespace)
+            : !!authStore.user?.isAllowed(resource.EXECUTION, action.UPDATE, props.execution.namespace)
+    })
+
     const enabled = computed(() => {
         if (!props.execution?.state) return false
 
-        const hasPermission = props.isReplay
-            ? authStore.user?.isAllowed(resource.EXECUTION, action.CREATE, props.execution.namespace)
-            : authStore.user?.isAllowed(resource.EXECUTION, action.UPDATE, props.execution.namespace)
-
-        if (!hasPermission) return false
+        if (!hasPermission.value) return false
 
         if (
             props.isReplay &&
@@ -352,18 +373,18 @@
             revision: revisionsSelected.value,
         })
 
-        const newExecution = response.data
+        const newExecution = response
 
-        toast.success(t("replayed"))
+        toast.success(t(props.isReplay ? "replayed" : "restarted"))
 
         if (newExecution.id !== props.execution.id) {
+            // The parent route resolves the default tab; the full page load runs the redirect.
             window.location.href = router.resolve({
-                name: "executions/update",
+                name: EXECUTION_PARENT_ROUTE,
                 params: {
                     namespace: newExecution.namespace,
                     flowId: newExecution.flowId,
                     id: newExecution.id,
-                    tab: "gantt",
                     tenant: router.currentRoute.value.params.tenant,
                 },
             }).href
@@ -387,6 +408,12 @@
 
     watch(canReuseInputs, (canReuse) => {
         inputMode.value = canReuse ? "reuse" : "modify"
+    })
+
+    defineExpose({
+        open: () => {
+            isOpen.value = true
+        },
     })
 </script>
 

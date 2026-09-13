@@ -1,6 +1,7 @@
 package io.kestra.plugin.core.flow;
 
 import java.util.*;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -26,6 +27,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.PositiveOrZero;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
@@ -87,14 +89,25 @@ import lombok.experimental.SuperBuilder;
         )
     }
 )
-public class Dag extends Task implements FlowableTask<VoidOutput> {
+public class Dag extends Task implements FlowableTask<VoidOutput>, OnChildFailureInterface {
     @NotNull
     @Builder.Default
     @Schema(
         title = "Number of concurrent parallel tasks that can be running at any point in time",
         description = "If the value is `0`, no concurrency limit exists for the tasks in a DAG and all tasks that can run in parallel will start at the same time."
     )
-    private final Property<Integer> concurrent = Property.ofValue(0);
+    private final Property<@PositiveOrZero Integer> concurrent = Property.ofValue(0);
+
+    @NotNull
+    @Builder.Default
+    @Schema(
+        title = "What to do with the other still-running tasks when one task fails.",
+        description = """
+            `CONTINUE` (default): other tasks keep running to completion, as today.
+
+            `CANCELLED` / `FAILED`: as soon as a task fails with no retry left, every other still-running task in this DAG is interrupted and lands in the given state. The DAG itself still resolves to `FAILED` and its `errors`/`finally` tasks still run normally."""
+    )
+    private final Property<OnChildFailure> onChildFailure = Property.ofValue(OnChildFailure.CONTINUE);
 
     @Valid
     @NotEmpty
@@ -211,40 +224,43 @@ public class Dag extends Task implements FlowableTask<VoidOutput> {
     }
 
     public ArrayList<String> dagCheckCyclicDependencies(List<DagTask> taskDepends) {
+        Map<String, List<String>> depMap = taskDepends.stream()
+            .collect(
+                Collectors.toMap(
+                    t -> t.getTask().getId(),
+                    t -> t.getDependsOn() != null ? t.getDependsOn() : List.of(),
+                    (first, second) -> first
+                )
+            );
+
         ArrayList<String> cyclicDependency = new ArrayList<>();
-        taskDepends.forEach(taskDepend ->
-        {
+        for (DagTask taskDepend : taskDepends) {
             if (taskDepend.getDependsOn() != null) {
-                List<String> nestedDependencies = this.nestedDependencies(taskDepend, taskDepends, new ArrayList<>());
-                if (nestedDependencies.contains(taskDepend.getTask().getId())) {
-                    cyclicDependency.add(taskDepend.getTask().getId());
+                String startId = taskDepend.getTask().getId();
+                if (hasCycle(startId, depMap)) {
+                    cyclicDependency.add(startId);
                 }
             }
-        });
-
+        }
         return cyclicDependency;
     }
 
-    private ArrayList<String> nestedDependencies(DagTask taskDepend, List<DagTask> tasks, List<String> visited) {
-        final ArrayList<String> localVisited = new ArrayList<>(visited);
-        if (taskDepend.getDependsOn() != null) {
-            taskDepend.getDependsOn()
-                .stream()
-                .filter(depend -> !localVisited.contains(depend))
-                .forEach(depend ->
-                {
-                    localVisited.add(depend);
-                    Optional<DagTask> task = tasks
-                        .stream()
-                        .filter(t -> t.getTask().getId().equals(depend))
-                        .findFirst();
-
-                    if (task.isPresent()) {
-                        localVisited.addAll(this.nestedDependencies(task.get(), tasks, localVisited));
-                    }
-                });
+    private boolean hasCycle(String startId, Map<String, List<String>> depMap) {
+        Set<String> visited = new HashSet<>();
+        Deque<String> stack = new ArrayDeque<>();
+        stack.push(startId);
+        while (!stack.isEmpty()) {
+            String current = stack.pop();
+            for (String dep : depMap.getOrDefault(current, List.of())) {
+                if (dep.equals(startId)) {
+                    return true;
+                }
+                if (visited.add(dep)) {
+                    stack.push(dep);
+                }
+            }
         }
-        return localVisited;
+        return false;
     }
 
     @SuperBuilder
@@ -254,6 +270,7 @@ public class Dag extends Task implements FlowableTask<VoidOutput> {
     @NoArgsConstructor
     public static class DagTask {
         @NotNull
+        @Valid
         @Schema(
             title = "The task within the DAG"
         )

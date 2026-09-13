@@ -42,14 +42,15 @@ class LogStreamingServiceTest {
         String subscriberId = IdUtils.create();
         List<FollowLogEvent> received = new CopyOnWriteArrayList<>();
 
-        Flux.<Event<FollowLogEvent>>create(sink ->
-                service.registerSubscriber(EXECUTION_ID, subscriberId, sink, testCase.filters())
-            )
+        Flux.<Event<FollowLogEvent>> create(
+            sink -> service.registerSubscriber(EXECUTION_ID, subscriberId, sink, testCase.filters())
+        )
             .doFinally(sig -> service.unregisterSubscriber(EXECUTION_ID, subscriberId))
             .subscribe(event -> received.add(event.getData()));
 
         // When
-        testCase.events().forEach(event -> {
+        testCase.events().forEach(event ->
+        {
             try {
                 queue.emit(event);
             } catch (Exception e) {
@@ -89,90 +90,104 @@ class LogStreamingServiceTest {
         FiltersTestCase.builder()
             .events(allEvents)
             .expectedEvents(List.of(infoEvent, warnEvent, errorEvent))
-            .filters(List.of(
-                QueryFilter.builder()
-                    .field(QueryFilter.Field.LEVEL)
-                    .operation(QueryFilter.Op.GREATER_THAN_OR_EQUAL_TO)
-                    .value(Level.INFO)
-                    .build()
-            ))
+            .filters(
+                List.of(
+                    QueryFilter.builder()
+                        .field(QueryFilter.Field.LEVEL)
+                        .operation(QueryFilter.Op.GREATER_THAN_OR_EQUAL_TO)
+                        .value(Level.INFO)
+                        .build()
+                )
+            )
             .build(),
 
         FiltersTestCase.builder()
             .events(allEvents)
             .expectedEvents(List.of(traceEvent, debugEvent, infoEvent))
-            .filters(List.of(
-                QueryFilter.builder()
-                    .field(QueryFilter.Field.LEVEL)
-                    .operation(QueryFilter.Op.LESS_THAN_OR_EQUAL_TO)
-                    .value(Level.INFO)
-                    .build()
-            ))
+            .filters(
+                List.of(
+                    QueryFilter.builder()
+                        .field(QueryFilter.Field.LEVEL)
+                        .operation(QueryFilter.Op.LESS_THAN_OR_EQUAL_TO)
+                        .value(Level.INFO)
+                        .build()
+                )
+            )
             .build(),
 
         FiltersTestCase.builder()
             .events(allEvents)
             .expectedEvents(List.of(warnEvent, errorEvent))
-            .filters(List.of(
-                QueryFilter.builder()
-                    .field(QueryFilter.Field.TASK_ID)
-                    .operation(QueryFilter.Op.EQUALS)
-                    .value("transform")
-                    .build()
-            ))
+            .filters(
+                List.of(
+                    QueryFilter.builder()
+                        .field(QueryFilter.Field.TASK_ID)
+                        .operation(QueryFilter.Op.EQUALS)
+                        .value("transform")
+                        .build()
+                )
+            )
             .build(),
 
         FiltersTestCase.builder()
             .events(allEvents)
             .expectedEvents(List.of(traceEvent, debugEvent, infoEvent))
-            .filters(List.of(
-                QueryFilter.builder()
-                    .field(QueryFilter.Field.TASK_RUN_ID)
-                    .operation(QueryFilter.Op.EQUALS)
-                    .value("task-run-1")
-                    .build()
-            ))
+            .filters(
+                List.of(
+                    QueryFilter.builder()
+                        .field(QueryFilter.Field.TASK_RUN_ID)
+                        .operation(QueryFilter.Op.EQUALS)
+                        .value("task-run-1")
+                        .build()
+                )
+            )
             .build(),
 
         FiltersTestCase.builder()
             .events(allEvents)
             .expectedEvents(List.of(errorEvent))
-            .filters(List.of(
-                QueryFilter.builder()
-                    .field(QueryFilter.Field.ATTEMPT_NUMBER)
-                    .operation(QueryFilter.Op.EQUALS)
-                    .value(1)
-                    .build()
-            ))
+            .filters(
+                List.of(
+                    QueryFilter.builder()
+                        .field(QueryFilter.Field.ATTEMPT_NUMBER)
+                        .operation(QueryFilter.Op.EQUALS)
+                        .value(1)
+                        .build()
+                )
+            )
             .build(),
 
         FiltersTestCase.builder()
             .events(allEvents)
             .expectedEvents(List.of(infoEvent))
-            .filters(List.of(
-                QueryFilter.builder()
-                    .field(QueryFilter.Field.LEVEL)
-                    .operation(QueryFilter.Op.GREATER_THAN_OR_EQUAL_TO)
-                    .value(Level.INFO)
-                    .build(),
-                QueryFilter.builder()
-                    .field(QueryFilter.Field.TASK_ID)
-                    .operation(QueryFilter.Op.EQUALS)
-                    .value("load-data")
-                    .build()
-            ))
+            .filters(
+                List.of(
+                    QueryFilter.builder()
+                        .field(QueryFilter.Field.LEVEL)
+                        .operation(QueryFilter.Op.GREATER_THAN_OR_EQUAL_TO)
+                        .value(Level.INFO)
+                        .build(),
+                    QueryFilter.builder()
+                        .field(QueryFilter.Field.TASK_ID)
+                        .operation(QueryFilter.Op.EQUALS)
+                        .value("load-data")
+                        .build()
+                )
+            )
             .build(),
 
         FiltersTestCase.builder()
             .events(allEvents)
             .expectedEvents(List.of())
-            .filters(List.of(
-                QueryFilter.builder()
-                    .field(QueryFilter.Field.EXECUTION_ID)
-                    .operation(QueryFilter.Op.EQUALS)
-                    .value("some-other-execution")
-                    .build()
-            ))
+            .filters(
+                List.of(
+                    QueryFilter.builder()
+                        .field(QueryFilter.Field.EXECUTION_ID)
+                        .operation(QueryFilter.Op.EQUALS)
+                        .value("some-other-execution")
+                        .build()
+                )
+            )
             .build()
     );
 
@@ -190,6 +205,7 @@ class LogStreamingServiceTest {
             level,
             "main",
             message,
+            null,
             null
         );
     }
@@ -198,7 +214,6 @@ class LogStreamingServiceTest {
     private record FiltersTestCase(
         List<FollowLogEvent> events,
         List<FollowLogEvent> expectedEvents,
-        List<QueryFilter> filters
-    ) {
+        List<QueryFilter> filters) {
     }
 }

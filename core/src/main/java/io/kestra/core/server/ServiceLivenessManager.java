@@ -3,6 +3,7 @@ package io.kestra.core.server;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -49,8 +50,11 @@ public class ServiceLivenessManager extends AbstractServiceLivenessTask {
         final LocalServiceStateFactory localServiceStateFactory,
         final ServerInstanceFactory serverInstanceFactory,
         final ServiceLivenessUpdater serviceLivenessUpdater,
-        final List<ServiceLivenessListener> livenessListeners) {
-        this(configuration, serviceRegistry, localServiceStateFactory, serverInstanceFactory, serviceLivenessUpdater, new DefaultStateTransitionFailureCallback(), livenessListeners);
+        final List<ServiceLivenessListener> livenessListeners,
+        final KestraContext kestraContext) {
+        this(
+            configuration, serviceRegistry, localServiceStateFactory, serverInstanceFactory, serviceLivenessUpdater, new DefaultStateTransitionFailureCallback(kestraContext), livenessListeners
+        );
     }
 
     @VisibleForTesting
@@ -59,7 +63,10 @@ public class ServiceLivenessManager extends AbstractServiceLivenessTask {
         final LocalServiceStateFactory localServiceStateFactory,
         final ServerInstanceFactory serverInstanceFactory,
         final ServiceLivenessUpdater serviceLivenessUpdater) {
-        this(configuration, serviceRegistry, localServiceStateFactory, serverInstanceFactory, serviceLivenessUpdater, new DefaultStateTransitionFailureCallback(), List.of());
+        this(
+            configuration, serviceRegistry, localServiceStateFactory, serverInstanceFactory, serviceLivenessUpdater, new DefaultStateTransitionFailureCallback(KestraContext.getContext()),
+            List.of()
+        );
     }
 
     @VisibleForTesting
@@ -384,8 +391,10 @@ public class ServiceLivenessManager extends AbstractServiceLivenessTask {
             try {
                 listener.onLivenessUpdate(now, instance, newState);
             } catch (Exception e) {
-                log.warn("Liveness listener [{}] threw an exception; ignoring",
-                    listener.getClass().getName(), e);
+                log.warn(
+                    "Liveness listener [{}] threw an exception; ignoring",
+                    listener.getClass().getName(), e
+                );
             }
         }
     }
@@ -433,6 +442,15 @@ public class ServiceLivenessManager extends AbstractServiceLivenessTask {
 
     public static final class DefaultStateTransitionFailureCallback implements OnStateTransitionFailureCallback {
 
+        private final KestraContext kestraContext;
+
+        /**
+         * Creates a callback shutting down the given owning context on liveness failure.
+         */
+        public DefaultStateTransitionFailureCallback(final KestraContext kestraContext) {
+            this.kestraContext = Objects.requireNonNull(kestraContext, "kestraContext cannot be null");
+        }
+
         /**
          * {@inheritDoc}
          **/
@@ -466,7 +484,7 @@ public class ServiceLivenessManager extends AbstractServiceLivenessTask {
                 if (state.equals(Service.ServiceState.NOT_RUNNING) || state.equals(Service.ServiceState.INACTIVE)) {
                     service.skipGracefulTermination(true);
                 }
-                KestraContext.getContext().shutdown();
+                kestraContext.shutdown();
                 return Optional.empty();
             }
 

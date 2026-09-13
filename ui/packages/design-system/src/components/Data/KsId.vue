@@ -1,5 +1,5 @@
 <template>
-    <KsTooltip v-if="hasTooltip" placement="top">
+    <KsTooltip v-if="hasTooltip" :placement>
         <template #content>
             <code>{{ value }}</code>
         </template>
@@ -20,10 +20,13 @@
         value?: string
         shrink?: boolean
         size?: number
+        /** Tooltip placement. Defaults to "top". */
+        placement?: string
     }>(), {
         value: undefined,
         shrink: true,
         size: undefined,
+        placement: "top",
     })
 
     const emit = defineEmits<{

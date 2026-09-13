@@ -1,50 +1,39 @@
 <template>
     <div class="no-code" ref="scrollContainer">
-        <AiCopilotWrapper
-            ref="copilotWrapper"
-            sticky
-            :flow="flowYaml"
-            :generationType="aiGenerationTypes.FLOW"
-            :namespace="namespace"
-            @generated-yaml="onGeneratedYaml"
-        >
-            <template #default="{aiCopilotAllowed}">
-                <div class="p-4" :class="{'no-code-content-with-ai': aiCopilotAllowed}">
-                    <Task
-                        v-if="creatingTask || editingTask"
-                    />
+        <div class="p-4">
+            <Task
+                v-if="creatingTask || editingTask"
+            />
 
-                    <KsForm v-else labelPosition="top">
-                        <Wrapper :key="v.fieldKey" v-for="(v) in fieldsFromSchemaTop" :merge="shouldMerge(v.schema)" :transparent="v.fieldKey === 'inputs'">
-                            <template #tasks>
-                                <TaskObjectField
-                                    v-bind="v"
-                                    @update:model-value="(val) => onTaskUpdateField(v.fieldKey, val)"
-                                />
-                            </template>
-                        </Wrapper>
+            <KsForm v-else labelPosition="top">
+                <Wrapper :key="v.fieldKey" v-for="(v) in fieldsFromSchemaTop" :merge="shouldMerge(v.schema)" :transparent="v.fieldKey === 'inputs'">
+                    <template #tasks>
+                        <TaskObjectField
+                            v-bind="v"
+                            @update:model-value="(val) => onTaskUpdateField(v.fieldKey, val)"
+                        />
+                    </template>
+                </Wrapper>
 
-                        <hr class="my-4">
+                <hr class="my-4">
 
-                        <Wrapper :key="v.fieldKey" v-for="(v) in fieldsFromSchemaRest" :transparent="LIST_FIELDS.includes(v.fieldKey)">
-                            <template #tasks>
-                                <TaskObjectField
-                                    v-bind="v"
-                                    @update:model-value="(val) => onTaskUpdateField(v.fieldKey, val)"
-                                />
-                            </template>
-                        </Wrapper>
-                    </KsForm>
-                </div>
-            </template>
-        </AiCopilotWrapper>
+                <Wrapper :key="v.fieldKey" v-for="(v) in fieldsFromSchemaRest" :transparent="LIST_FIELDS.includes(v.fieldKey)">
+                    <template #tasks>
+                        <TaskObjectField
+                            v-bind="v"
+                            @update:model-value="(val) => onTaskUpdateField(v.fieldKey, val)"
+                        />
+                    </template>
+                </Wrapper>
+            </KsForm>
+        </div>
     </div>
 </template>
 
 <script setup lang="ts">
     import {computed, onActivated, provide, ref, watch} from "vue"
 
-    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
+    import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
     import {removeNullAndUndefined} from "./utils/cleanUp"
 
     import Task from "./segments/Task.vue"
@@ -68,6 +57,7 @@
         REF_PATH_INJECTION_KEY,
         ROOT_SCHEMA_INJECTION_KEY,
         SCHEMA_DEFINITIONS_INJECTION_KEY,
+        SAVE_FLOW_FUNCTION_INJECTION_KEY,
         UPDATE_YAML_FUNCTION_INJECTION_KEY,
     } from "./injectionKeys"
     import {useFlowFields} from "./utils/useFlowFields"
@@ -80,17 +70,7 @@
     import {useScrollMemory} from "../../composables/useScrollMemory"
     import {defaultNamespace} from "../../composables/useNamespaces"
     import {LIST_FIELDS} from "./components/tasks/getTaskComponent"
-    import {aiGenerationTypes} from "../../utils/constants"
-    import AiCopilotWrapper from "../ai/AiCopilotWrapper.vue"
     const props = defineProps<NoCodeProps>()
-
-    const copilotWrapper = ref<InstanceType<typeof AiCopilotWrapper>>()
-    const namespace = computed(() => flowStore.flow?.namespace)
-
-    function onGeneratedYaml(yaml: string) {
-        editorUpdate(yaml)
-        copilotWrapper.value?.resetConversation()
-    }
 
     function shouldMerge(schema: any): boolean {
         const complexObject = ["object", "array"].includes(schema?.type) || schema?.$ref || schema?.oneOf || schema?.anyOf || schema?.allOf
@@ -99,13 +79,9 @@
 
     function onTaskUpdateField(key: string, val: any) {
         const realValue = val === null || val === undefined ? undefined :
-            // allow array to be created with null values (specifically for metadata)
-            // metadata do not use a buffer value, so each change needs to be reflected in the code,
-            // for TaskKvPair.vue (object) we added the buffer value in the input component
             typeof val === "object" && !Array.isArray(val)
                 ? removeNullAndUndefined(val)
                 : val // Handle null values
-
 
         editorUpdate(YAML_UTILS.replaceBlockWithPath({
             source: flowYaml.value,
@@ -146,19 +122,15 @@
         try {
             parsedSource = YAML_UTILS.parse(source)
         } catch {
-            // ignore parse errors here
             return
         }
 
-        // if no-code would not change the structure of the flow,
-        // do not trigger an update as it would remove all formatting and comments
         if(deepEqual(parsedSource, flowStore.flowParsed)) {
             return
         }
         flowStore.flowYaml = source
         validateFlow()
 
-        // throttle the trigger of the flow update
         clearTimeout(timeout.value)
         timeout.value = setTimeout(() => {
             flowStore.onEdit({
@@ -201,7 +173,7 @@
 
     const emit = defineEmits<{
         (e: "createTask", parentPath: string, blockSchemaPath: string, refPath: number | undefined,  position: "after" | "before"): boolean | void;
-        (e: "editTask", parentPath: string, blockSchemaPath: string, refPath: number | undefined): boolean | void;
+        (e: "editTask", parentPath: string, blockSchemaPath: string, refPath: number | undefined, split?: boolean): boolean | void;
         (e: "closeTask"): boolean | void;
     }>()
 
@@ -213,15 +185,18 @@
         editorUpdate(yaml)
     })
 
+    provide(SAVE_FLOW_FUNCTION_INJECTION_KEY, () => {
+        flowStore.save?.()
+    })
+
     provide(CREATE_TASK_FUNCTION_INJECTION_KEY, (parentPath, blockSchemaPath, refPath) => {
         emit("createTask", parentPath, blockSchemaPath, refPath, "after")
     })
 
-    provide(EDIT_TASK_FUNCTION_INJECTION_KEY, ( parentPath, blockSchemaPath, refPath) => {
-        emit("editTask", parentPath, blockSchemaPath, refPath)
+    provide(EDIT_TASK_FUNCTION_INJECTION_KEY, (parentPath, blockSchemaPath, refPath, split) => {
+        emit("editTask", parentPath, blockSchemaPath, refPath, split)
     })
 
-    // Scroll position persistence for No-code editor
     const scrollContainer = ref<HTMLDivElement | null>(null)
 
     const flowIdentity = computed(() => {
@@ -232,9 +207,7 @@
 
     const scrollKey = computed(() => {
         const base = `nocode:${flowIdentity.value}`
-        // home screen
         if (!props.creatingTask && !props.editingTask) return `${base}:home`
-        // task-specific
         const action = props.creatingTask ? "create" : "edit"
         const parentPath = props.parentPath ?? ""
         const refPath = props.refPath ?? ""

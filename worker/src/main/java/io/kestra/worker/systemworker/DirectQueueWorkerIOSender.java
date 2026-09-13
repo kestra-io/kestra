@@ -3,6 +3,9 @@ package io.kestra.worker.systemworker;
 import java.time.Duration;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.event.DispatchEvent;
@@ -11,9 +14,6 @@ import io.kestra.worker.WorkerLoop;
 import io.kestra.worker.queues.WorkerQueue;
 import io.kestra.worker.queues.WorkerQueueRegistry;
 import io.kestra.worker.senders.WorkerIOSender;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Direct-queue analog of {@link io.kestra.worker.senders.GrpcWorkerIOSender}.
@@ -43,8 +43,7 @@ public class DirectQueueWorkerIOSender<T extends DispatchEvent> extends WorkerLo
         final WorkerQueueRegistry workerQueueRegistry,
         final DispatchQueueInterface<T> dispatchQueue,
         final String name,
-        final Class<T> eventType
-    ) {
+        final Class<T> eventType) {
         super(name);
         this.workerQueueRegistry = workerQueueRegistry;
         this.dispatchQueue = dispatchQueue;
@@ -94,8 +93,10 @@ public class DirectQueueWorkerIOSender<T extends DispatchEvent> extends WorkerLo
             try {
                 dispatchQueue.emit(event);
             } catch (QueueException e) {
-                LOG.error("Error dispatching {} event to direct queue: {}",
-                    eventType.getSimpleName(), e.getMessage(), e);
+                LOG.error(
+                    "Error dispatching {} event to direct queue: {}",
+                    eventType.getSimpleName(), e.getMessage(), e
+                );
             }
         }
     }

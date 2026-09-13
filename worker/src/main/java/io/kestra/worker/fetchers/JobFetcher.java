@@ -38,7 +38,7 @@ public interface JobFetcher extends Runnable {
      * for in-flight work to complete.
      *
      * @param timeout the maximum time to wait. {@link Duration#ZERO} means
-     *                signal stop and return immediately.
+     *        signal stop and return immediately.
      */
     void stop(Duration timeout);
 }

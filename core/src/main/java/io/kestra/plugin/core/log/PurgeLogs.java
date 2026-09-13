@@ -1,6 +1,5 @@
 package io.kestra.plugin.core.log;
 
-import java.time.ZonedDateTime;
 import java.util.List;
 
 import org.slf4j.event.Level;
@@ -14,6 +13,7 @@ import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.DefaultRunContext;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.services.ExecutionLogService;
+import io.kestra.core.utils.TypeConverter;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
@@ -151,8 +151,8 @@ public class PurgeLogs extends Task implements RunnableTask<PurgeLogs.Output>, S
             runContext.render(flowId).as(String.class).orElse(null),
             runContext.render(executionId).as(String.class).orElse(null),
             logLevelsRendered.isEmpty() ? null : logLevelsRendered,
-            renderedDate != null ? ZonedDateTime.parse(renderedDate) : null,
-            ZonedDateTime.parse(runContext.render(endDate).as(String.class).orElseThrow()),
+            TypeConverter.toZonedDateTime(renderedDate),
+            TypeConverter.toZonedDateTime(runContext.render(endDate).as(String.class).orElseThrow()),
             execLogs,
             nonExecLogs,
             runContext.render(this.batchSize).as(Integer.class).orElse(null)

@@ -213,6 +213,66 @@ describe("useFilterGroups", () => {
         })
     })
 
+    describe("placeFilter", () => {
+        it("repositions a filter within the same leaf at the given index", () => {
+            const tree = useFilterGroups()
+            const [g1] = tree.groups.value.map(g => g.id)
+            const a = filter("a", "state", Comparators.EQUALS, "RUNNING")
+            const b = filter("b", "namespace", Comparators.EQUALS, "x")
+            const c = filter("c", "flowId", Comparators.EQUALS, "y")
+            tree.updateLeaf(g1, l => ({...l, filters: [a, b, c]}))
+
+            tree.placeFilter("a", g1, 2)
+
+            expect(findLeafById(tree.groups.value, g1)!.filters.map(f => f.id)).toEqual(["b", "c", "a"])
+        })
+
+        it("inserts a filter into another group's leaf at the given index", () => {
+            const tree = useFilterGroups()
+            tree.addGroup()
+            const [g1, g2] = tree.groups.value.map(g => g.id)
+            const a = filter("a", "state", Comparators.EQUALS, "RUNNING")
+            const b1 = filter("b1", "namespace", Comparators.EQUALS, "x")
+            const b2 = filter("b2", "flowId", Comparators.EQUALS, "y")
+            tree.updateLeaf(g1, l => ({...l, filters: [a]}))
+            tree.updateLeaf(g2, l => ({...l, filters: [b1, b2]}))
+
+            tree.placeFilter("a", g2, 1)
+
+            expect(findLeafById(tree.groups.value, g1)?.filters ?? []).toHaveLength(0)
+            expect(findLeafById(tree.groups.value, g2)!.filters.map(f => f.id)).toEqual(["b1", "a", "b2"])
+        })
+
+        it("drops the last filter at the end of the previous group instead of the start of the next (boundary regression)", () => {
+            const tree = useFilterGroups()
+            tree.addGroup()
+            const [g1, g2] = tree.groups.value.map(g => g.id)
+            const a1 = filter("a1", "state", Comparators.EQUALS, "RUNNING")
+            const a2 = filter("a2", "namespace", Comparators.EQUALS, "x")
+            const b1 = filter("b1", "flowId", Comparators.EQUALS, "y")
+            const b2 = filter("b2", "labels", Comparators.EQUALS, "z")
+            tree.updateLeaf(g1, l => ({...l, filters: [a1, a2]}))
+            tree.updateLeaf(g2, l => ({...l, filters: [b1, b2]}))
+
+            tree.placeFilter("b2", g1, 2)
+
+            expect(findLeafById(tree.groups.value, g1)!.filters.map(f => f.id)).toEqual(["a1", "a2", "b2"])
+            expect(findLeafById(tree.groups.value, g2)!.filters.map(f => f.id)).toEqual(["b1"])
+        })
+
+        it("clamps an out-of-range index to the end of the leaf", () => {
+            const tree = useFilterGroups()
+            const [g1] = tree.groups.value.map(g => g.id)
+            const a = filter("a", "state", Comparators.EQUALS, "RUNNING")
+            const b = filter("b", "namespace", Comparators.EQUALS, "x")
+            tree.updateLeaf(g1, l => ({...l, filters: [a, b]}))
+
+            tree.placeFilter("a", g1, 99)
+
+            expect(findLeafById(tree.groups.value, g1)!.filters.map(f => f.id)).toEqual(["b", "a"])
+        })
+    })
+
     describe("setTopLogical / setWrapperLogical", () => {
         it("flips the top-level operator", () => {
             const tree = useFilterGroups()

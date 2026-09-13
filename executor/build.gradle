@@ -8,7 +8,7 @@ dependencies {
 
     // test
     testAnnotationProcessor project(':processor')
-    testImplementation project(':core').sourceSets.test.output
+    testImplementation project(path: ':core', configuration: 'testArtifacts')
     testImplementation project(':storage-local')
     testImplementation project(':worker')
 

@@ -114,7 +114,9 @@ public class Exit extends Task implements ExecutionUpdatableTask {
     }
 
     private State.Type executionState(RunContext runContext) throws IllegalVariableEvaluationException {
-        return switch (runContext.render(this.state).as(ExitState.class).orElseThrow()) {
+        // the executor reuses the task instance of its cached flow for every execution of the flow,
+        // so the rendering cache of the property must be skipped to render with the current execution context
+        return switch (runContext.render(this.state.skipCache()).as(ExitState.class).orElseThrow()) {
             case ExitState.SUCCESS -> State.Type.SUCCESS;
             case WARNING -> State.Type.WARNING;
             case KILLED -> State.Type.KILLED;

@@ -1,5 +1,6 @@
 <template>
     <div
+        ref="sidebar"
         class="p-2 sidebar"
         @contextmenu.prevent="onTabContextMenu"
         @click="onRootClick"
@@ -26,17 +27,18 @@
             </KsSelect>
             <KsButtonGroup class="d-flex">
                 <KsTooltip
-                    :content="$t('namespace files.create.file')"
+                    :content="canManageFiles ? $t('namespace files.create.file') : $t('namespace files.read_only')"
                 >
-                    <KsButton class="px-2" @click="toggleDialog(true, 'file')">
+                    <KsButton class="px-2" :disabled="!canManageFiles" @click="toggleDialog(true, 'file')">
                         <FilePlus />
                     </KsButton>
                 </KsTooltip>
                 <KsTooltip
-                    :content="$t('namespace files.create.folder')"
+                    :content="canManageFiles ? $t('namespace files.create.folder') : $t('namespace files.read_only')"
                 >
                     <KsButton
                         class="px-2"
+                        :disabled="!canManageFiles"
                         @click="toggleDialog(true, 'folder')"
                     >
                         <FolderPlus />
@@ -60,23 +62,27 @@
                     class="hidden"
                     @change="importFiles"
                 >
-                <KsDropdown>
-                    <KsButton :aria-label="$t('import')">
-                        <PlusBox />
-                    </KsButton>
-                    <template #dropdown>
-                        <KsDropdownMenu>
-                            <KsDropdownItem @click="filePicker?.click()">
-                                {{ $t("namespace files.import.files") }}
-                            </KsDropdownItem>
-                            <KsDropdownItem
-                                @click="folderPicker?.click()"
-                            >
-                                {{ $t("namespace files.import.folder") }}
-                            </KsDropdownItem>
-                        </KsDropdownMenu>
-                    </template>
-                </KsDropdown>
+                <KsTooltip
+                    :content="canManageFiles ? $t('import') : $t('namespace files.read_only')"
+                >
+                    <KsDropdown :disabled="!canManageFiles">
+                        <KsButton :aria-label="$t('import')" :disabled="!canManageFiles">
+                            <PlusBox />
+                        </KsButton>
+                        <template #dropdown>
+                            <KsDropdownMenu>
+                                <KsDropdownItem @click="filePicker?.click()">
+                                    {{ $t("namespace files.import.files") }}
+                                </KsDropdownItem>
+                                <KsDropdownItem
+                                    @click="folderPicker?.click()"
+                                >
+                                    {{ $t("namespace files.import.folder") }}
+                                </KsDropdownItem>
+                            </KsDropdownMenu>
+                        </template>
+                    </KsDropdown>
+                </KsTooltip>
                 <KsTooltip
                     :content="$t('namespace files.export')"
                 >
@@ -95,23 +101,19 @@
             :allowDrop="
                 (_: any, drop: any, dropType: string) => !drop.data?.leaf || dropType !== 'inner'
             "
-            draggable
+            :draggable="canManageFiles"
             nodeKey="id"
             v-ks-loading="filesStore.fileTree === undefined"
             :props="({class: nodeClass, isLeaf: 'leaf'} as any)"
             class="mt-3"
-            @node-drag-start="
-                nodeBeforeDrag = {
-                    parent: $event.parent.data.id,
-                    path: filesStore.getPath($event.data.id) ?? '',
-                }
-            "
+            :class="{'is-drop-not-allow': isDropOutsideSidebar}"
+            @node-drag-start="onNodeDragStart"
             @node-drop="nodeMoved"
             @keydown.delete.prevent="removeSelectedFiles"
         >
             <template #empty>
                 <div class="m-4 empty">
-                    <img alt="Empty icon" :src="FileExplorerEmpty">
+                    <img alt="" :src="FileExplorerEmpty">
                     <h3>{{ $t("namespace files.no_items.heading") }}</h3>
                     <p>{{ $t("namespace files.no_items.paragraph") }}</p>
                 </div>
@@ -129,11 +131,11 @@
                         @click.stop="(e) => { if(!selectionMode) onRowClickWrapper(data, node, e) }"
                     >
                         <div class="item-line">
-                            <Checkbox
+                            <KsCheckbox
                                 v-if="selectionMode"
                                 class="me-2"
                                 :modelValue="selectedNodes.includes(data.id)"
-                                @update-model-value="checked => toggleCheckboxSelection(checked, node)"
+                                @change="checked => toggleCheckboxSelection(checked, node)"
                                 @mousedown.stop
                                 @click.stop
                             />
@@ -149,12 +151,14 @@
                         <KsDropdownMenu>
                             <KsDropdownItem
                                 v-if="!data.leaf && !multiSelected"
+                                :disabled="!canManageFiles"
                                 @click="toggleDialog(true, 'file', node)"
                             >
                                 {{ $t("namespace files.create.file") }}
                             </KsDropdownItem>
                             <KsDropdownItem
                                 v-if="!data.leaf && !multiSelected"
+                                :disabled="!canManageFiles"
                                 @click="toggleDialog(true, 'folder', node)"
                             >
                                 {{ $t("namespace files.create.folder") }}
@@ -165,11 +169,12 @@
                             <KsDropdownItem v-if="!multiSelected" @click="copyPath(data)">
                                 {{ $t("namespace files.path.copy") }}
                             </KsDropdownItem>
-                            <KsDropdownItem v-if="data.leaf && !multiSelected" @click="exportFile(node, data)">
+                            <KsDropdownItem v-if="data.leaf && !multiSelected" @click="exportFile(data)">
                                 {{ $t("namespace files.export_single") }}
                             </KsDropdownItem>
                             <KsDropdownItem
                                 v-if="data.leaf && !multiSelected"
+                                :disabled="!canManageFiles"
                                 @click="
                                     toggleRenameDialog(
                                         true,
@@ -187,7 +192,7 @@
                                     )
                                 }}
                             </KsDropdownItem>
-                            <KsDropdownItem @click="removeSelectedFiles(data, node)">
+                            <KsDropdownItem :disabled="!canManageFiles" @click="removeSelectedFiles(data, node)">
                                 {{
                                     selectedNodes.length <= 1 ? $t(
                                         `namespace files.delete.${
@@ -215,7 +220,8 @@
                     : $t('namespace files.create.folder')
             "
             width="500"
-            @keydown.enter.prevent="dialog.name ? dialogHandler() : undefined"
+            appendToBody
+            @keydown.enter.prevent="dialog.name?.trim() ? dialogHandler() : undefined"
             @opened="focusCreationInput"
         >
             <div class="pb-1">
@@ -255,7 +261,7 @@
                     </KsButton>
                     <KsButton
                         type="primary"
-                        :disabled="!dialog.name"
+                        :disabled="!dialog.name?.trim()"
                         @click="dialogHandler"
                     >
                         {{ $t("namespace files.create.label") }}
@@ -268,7 +274,6 @@
         <KsDialog
             v-model="renameDialog.visible"
             :title="$t(`namespace files.rename.${renameDialog.type}`)"
-            width="500"
             @keydown.enter.prevent="renameItem()"
             @opened="focusRenamingInput"
         >
@@ -290,7 +295,8 @@
                     </KsButton>
                     <KsButton
                         type="primary"
-                        :disabled="!renameDialog.name"
+                        :disabled="!renameDialog.name || isRenaming"
+                        :loading="isRenaming"
                         @click="renameItem()"
                     >
                         {{ $t("namespace files.rename.label") }}
@@ -302,7 +308,6 @@
         <KsDialog
             v-model="confirmation.visible"
             :title="confirmationLabels.title"
-            width="500"
             @keydown.enter.prevent="removeItems()"
         >
             <span class="py-3" v-html="confirmationLabels.message" />
@@ -321,8 +326,9 @@
         <KsDialog
             v-model="revisionsHistory.visible"
             :title="$t('namespace files.revisions.history')"
-            width="75%"
             top="10vh"
+            width="min(1200px, 90vw)"
+            appendToBody
         >
             <Revisions
                 v-if="revisionsHistory.visible"
@@ -347,10 +353,10 @@
             }"
             class="tabs-context"
         >
-            <KsMenuItem @click="toggleDialog(true, 'file')">
+            <KsMenuItem :disabled="!canManageFiles" @click="toggleDialog(true, 'file')">
                 {{ $t("namespace files.create.file") }}
             </KsMenuItem>
-            <KsMenuItem @click="toggleDialog(true, 'folder')">
+            <KsMenuItem :disabled="!canManageFiles" @click="toggleDialog(true, 'folder')">
                 {{ $t("namespace files.create.folder") }}
             </KsMenuItem>
         </KsMenu>
@@ -362,13 +368,16 @@
     import {EditorTabProps} from "./FlowFileEditorTab.vue"
 
     export const FILES_OPEN_TAB_INJECTION_KEY = Symbol("files-open-tab-injection-key") as InjectionKey<(tab: EditorTabProps) => void>
-    export const FILES_CLOSE_TAB_INJECTION_KEY = Symbol("files-close-tab-injection-key") as InjectionKey<(tab: {path: string}) => void>
+    /** Returns whether a tab was actually open for that path, so callers can reopen it elsewhere. */
+    export const FILES_CLOSE_TAB_INJECTION_KEY = Symbol("files-close-tab-injection-key") as InjectionKey<(tab: {path: string}) => boolean>
 </script>
 
 <script lang="ts" setup>
     import {ref, computed, inject, watch} from "vue"
     import {useRoute} from "vue-router"
+    import {apiUrl} from "override/utils/route"
     import {useNamespacesStore} from "override/stores/namespaces"
+    import {safePath} from "../../composables/useBaseNamespaces"
     import * as Utils from "../../utils/utils"
     import FileExplorerEmpty from "../../assets/icons/file_explorer_empty.svg"
     import Magnify from "vue-material-design-icons/Magnify.vue"
@@ -377,7 +386,9 @@
     import PlusBox from "vue-material-design-icons/PlusBox.vue"
     import FolderDownloadOutline from "vue-material-design-icons/FolderDownloadOutline.vue"
     import TypeIcon from "../utils/icons/Type.vue"
+    import escape from "lodash/escape"
     import {useI18n} from "vue-i18n"
+    import {useRestrictDropTo} from "../../composables/useRestrictDropTo"
     import {useToast} from "../../utils/toast"
     import {
         ElTreeNode,
@@ -388,8 +399,11 @@
         useFileExplorerStore,
     } from "../../stores/fileExplorer"
     import Revisions, {Revision} from "../layout/Revisions.vue"
+    import {FILES_REFRESH_CONTENT_INJECTION_KEY} from "./FlowFileEditorTab.vue"
     import Crud from "override/components/auth/Crud.vue"
-    import Checkbox from "../layout/Checkbox.vue"
+    import {useAuthStore} from "override/stores/auth"
+    import resource from "../../models/resource"
+    import action from "../../models/action"
 
     const DIALOG_DEFAULTS:Dialog = {
         visible: false,
@@ -411,10 +425,19 @@
     }>()
 
     const openTab = inject(FILES_OPEN_TAB_INJECTION_KEY)
+    const closeTab = inject(FILES_CLOSE_TAB_INJECTION_KEY)
+    const refreshTabContent = inject(FILES_REFRESH_CONTENT_INJECTION_KEY, undefined)
+
+    // exposed so parents (e.g. the dedicated empty state) can reuse the
+    // create dialog instead of duplicating file-creation logic
+    defineExpose({
+        openCreationDialog: (type: "file" | "folder" = "file") => toggleDialog(true, type),
+    })
 
     const route = useRoute()
     const namespacesStore = useNamespacesStore()
     const filesStore = useFileExplorerStore()
+    const authStore = useAuthStore()
 
     watch(
         () => props.currentNS,
@@ -430,6 +453,11 @@
         filesStore.namespaceId = props.currentNS
     }
 
+    interface FileExplorerNode {
+        data: TreeNode;
+        parent: ElTreeNode;
+    }
+
     interface Dialog{
         visible: boolean;
         type: "file" | "folder";
@@ -443,6 +471,9 @@
     const filter = ref<string>("")
     const dialog = ref<Dialog>({...DIALOG_DEFAULTS})
     const renameDialog = ref<Dialog>({...RENAME_DEFAULTS})
+    const isRenaming = ref(false)
+    const sidebar = ref<HTMLElement>()
+    const {start: startRestrictDrop, isOutside: isDropOutsideSidebar} = useRestrictDropTo(sidebar)
     const tree = ref<any>()
     const filePicker = ref<HTMLInputElement>()
     const folderPicker = ref<HTMLInputElement>()
@@ -457,6 +488,7 @@
     const selectedNodes = ref<any[]>([])
     const selectionMode = computed(() => selectedNodes.value.length > 1)
     const lastClickedIndex = ref<number | null>(null)
+    const bulkDragSiblings = ref<{ path: string; fileName: string }[]>()
 
     const selectedFiles = computed(() => {
         return selectedNodes.value.map(id => filesStore.getPath(id)).filter((p): p is string => !!p)
@@ -471,6 +503,13 @@
 
     const namespaceId = computed<string>(() => props.currentNS ?? route.params.namespace as string)
 
+    // Namespace files write operations (create / import / rename / delete) all hit
+    // endpoints guarded by NAMESPACE:MANAGE_FILES; gate the matching UI actions so a
+    // read-only user sees them disabled instead of triggering a rejected request.
+    const canManageFiles = computed<boolean>(() =>
+        authStore.user?.isAllowed(resource.NAMESPACE, action.MANAGE_FILES, namespaceId.value) ?? false,
+    )
+
     const multiSelected = computed(() => selectedNodes.value.length > 1)
 
     const confirmationLabels = computed(() => {
@@ -479,8 +518,8 @@
         const folders = confirmation.value.nodes?.filter(n => n.type === "Directory")
         const foldersCount = folders?.length ?? 0
         const labels = {title: t("namespace files.dialog.deletion.title"), message: ""}
-        if (foldersCount === 1) labels.message = t("namespace files.dialog.deletion.folder_single", {name: folders?.[0].fileName})
-        else if (filesCount === 1) labels.message = t("namespace files.dialog.deletion.file_single", {name: files?.[0].fileName})
+        if (foldersCount === 1) labels.message = t("namespace files.dialog.deletion.folder_single", {name: escape(folders?.[0].fileName)})
+        else if (filesCount === 1) labels.message = t("namespace files.dialog.deletion.file_single", {name: escape(files?.[0].fileName)})
         else if (foldersCount > 0 && filesCount > 0) labels.message = t("namespace files.dialog.deletion.mixed", {folders: foldersCount, files: filesCount})
         else if (foldersCount > 0) labels.message = t("namespace files.dialog.deletion.folders", {count: foldersCount})
         else labels.message = t("namespace files.dialog.deletion.files", {count: filesCount})
@@ -650,19 +689,24 @@
     }
 
     async function restore(source: string) {
+        const path = revisionsHistory.value.path
+
         await namespacesStore.saveOrCreateFile({
             namespace: namespaceId.value,
-            path: revisionsHistory.value.path,
+            path,
             content: source,
         })
 
         toast.success(t("namespace files.revisions.restore.success"))
 
-        closeTab?.({path: revisionsHistory.value.path})
+        if (refreshTabContent) {
+            refreshTabContent.value[path] = {content: source}
+        }
+
         openTab?.({
-            name: revisionsHistory.value.path.split("/").pop()!,
-            path: revisionsHistory.value.path,
-            extension: revisionsHistory.value.path.split(".").pop()!,
+            name: path.split("/").pop()!,
+            path,
+            extension: path.split(".").pop()!,
             flow: false,
             dirty: false,
         })
@@ -675,6 +719,8 @@
     }
 
     async function removeSelectedFiles(_data?: any, node?: ElTreeNode) {
+        // Guards the keyboard-delete path, which bypasses the disabled context-menu item
+        if (!canManageFiles.value) return
         if (selectedFiles.value.length <= 1 && node) {
             selectedNodes.value = [node.data.id]
         }
@@ -710,10 +756,13 @@
                 dropdowns.value[dd]?.handleClose()
             }
         }
-        dropdowns.value[id]?.handleOpen()
+        if(typeof dropdowns.value[id]?.handleOpen === "function") {
+            dropdowns.value[id].handleOpen()
+        }
     }
 
     async function dialogHandler() {
+        if (!canManageFiles.value) return
         if (dialog.value.type === "file") {
             await addFile({creation: true})
         } else {
@@ -729,9 +778,9 @@
             } else {
                 const selectedKey = tree.value.getCurrentKey ? tree.value.getCurrentKey() : null
                 const selectedNode = selectedKey ? tree.value.getNode(selectedKey) : null
-                if (selectedNode?.leaf === false) {
-                    node = selectedNode.id
-                    folder = filesStore.getPath(selectedNode.id)
+                if (selectedNode?.data?.leaf === false) {
+                    node = selectedNode.data.id
+                    folder = filesStore.getPath(selectedNode.data.id)
                 }
             }
             if(!type) return
@@ -758,29 +807,131 @@
         }
     }
 
-    function renameItem() {
-        const path = renameDialog.value.node?.data.id ? filesStore.getPath(renameDialog.value.node.data.id) ?? "" : ""
+    async function renameItem() {
+        // The Enter handler on the dialog is not gated by the button's disabled state, so
+        // without this a second Enter fires a duplicate rename whose `old` path is already gone.
+        if (!canManageFiles.value || isRenaming.value) return
+
+        const {node, old: oldName, name: newName, type} = renameDialog.value
+        if (!newName) return
+
+        const path = node?.data.id ? filesStore.getPath(node.data.id) ?? "" : ""
         const start = path.substring(0, path.lastIndexOf("/") + 1)
-        namespacesStore.renameFileDirectory({
-            namespace: namespaceId.value,
-            old: `${start}${renameDialog.value.old}`,
-            new: `${start}${renameDialog.value.name}`,
-        })
-        tree.value.getNode(renameDialog.value.node).data.fileName = renameDialog.value.name
+        const oldPath = `${start}${oldName}`
+        const newPath = `${start}${newName}`
+
+        isRenaming.value = true
+        try {
+            await namespacesStore.renameFileDirectory({
+                namespace: namespaceId.value,
+                old: oldPath,
+                new: newPath,
+            })
+        } catch (error) {
+            // The tree is left untouched on purpose: it used to be renamed before the response
+            // arrived, so a refused rename (an existing name answers 500) still looked applied.
+            console.error(`Failed to rename ${oldPath} to ${newPath}`, error)
+            toast.error(t("namespace files.rename.error", {name: newName}))
+            return
+        } finally {
+            isRenaming.value = false
+        }
+
+        tree.value.getNode(node).data.fileName = newName
         renameDialog.value = {...RENAME_DEFAULTS}
+
+        // Tabs are keyed by path, so a renamed file left one pointing at a path that no longer
+        // exists — clicking it navigated to a full-page 404. Move it across instead.
+        if (type === "file" && closeTab?.({path: oldPath})) {
+            openTab?.({
+                name: newName,
+                path: newPath,
+                extension: newName.split(".").pop()!,
+                flow: false,
+                dirty: false,
+            })
+        }
+    }
+
+    function onNodeDragStart(draggingNode: FileExplorerNode) {
+        startRestrictDrop()
+
+        nodeBeforeDrag.value = {
+            parent: draggingNode.parent.data.id,
+            path: filesStore.getPath(draggingNode.data.id) ?? "",
+        }
+    
+        bulkDragSiblings.value = undefined
+
+        const isBulkDrag = selectedNodes.value.length > 1 && selectedNodes.value.includes(draggingNode.data.id)
+        if (!isBulkDrag) {
+            return
+        }
+
+        // handle bulk drag
+        const draggedPath = nodeBeforeDrag.value.path
+        const selectedPaths = selectedFiles.value
+
+        if (selectedPaths.some(p => draggedPath.startsWith(`${p}/`))) {
+            return
+        }
+
+        bulkDragSiblings.value = selectedNodes.value
+            // ignore the main node
+            .filter(id => id !== draggingNode.data.id)
+            .map(id => filesStore.getPath(id))
+            .filter((path): path is string => !!path && !selectedPaths.some(p => p !== path && path.startsWith(`${p}/`)))
+            .map(path => ({path, fileName: path.split("/").pop() ?? ""}))
     }
 
     async function nodeMoved(draggedNode: any) {
+        // Guards the drag-and-drop move path, which bypasses the disabled toolbar actions
+        if (!canManageFiles.value) {
+            tree.value.remove(draggedNode.data.id)
+            tree.value.append(draggedNode.data, nodeBeforeDrag.value?.parent)
+            return
+        }
+        const newPath = filesStore.getPath(draggedNode.data.id) ?? ""
+
         try {
             await namespacesStore.moveFileDirectory({
                 namespace: namespaceId.value,
                 old: nodeBeforeDrag.value?.path ?? "",
-                new: filesStore.getPath(draggedNode.data.id) ?? "",
+                new: newPath,
             })
         } catch {
             tree.value.remove(draggedNode.data.id)
             tree.value.append(draggedNode.data, nodeBeforeDrag.value?.parent)
+            bulkDragSiblings.value = undefined
+            return
         }
+
+        const siblings = bulkDragSiblings.value
+        bulkDragSiblings.value = undefined
+        if (!siblings?.length) {
+            return
+        }
+
+        // handle siblings move
+        const targetFolder = newPath.includes("/") ? newPath.substring(0, newPath.lastIndexOf("/")) : ""
+        const results = await Promise.allSettled(siblings.map((sibling) =>
+            namespacesStore.moveFileDirectory({
+                namespace: namespaceId.value,
+                old: sibling.path,
+                new: targetFolder ? `${targetFolder}/${sibling.fileName}` : sibling.fileName,
+            }),
+        ))
+
+        await filesStore.loadNodes()
+        selectedNodes.value = []
+        lastClickedIndex.value = null
+
+        const failedCount = results.filter(r => r.status === "rejected").length
+
+        if (failedCount > 0) {
+            return toast.error(t("namespace files.move.bulk_error", {count: failedCount}))
+        }
+        return toast.success(t("namespace files.move.bulk_success"))
     }
 
     const creation_name = ref<any>()
@@ -796,15 +947,20 @@
 
     async function importFiles(event: Event) {
         const importedFiles = (event.target as HTMLInputElement).files
-        if (!importedFiles) return
+        if (!importedFiles || !canManageFiles.value) return
         try {
-            filesStore.importFiles(importedFiles)
+            // Awaited so the success toast only fires once the upload actually
+            // succeeds; a rejected upload (e.g. missing permission) surfaces the error instead
+            await filesStore.importFiles(importedFiles)
             toast.success(t("namespace files.import.success"))
         } catch {
             toast.error(t("namespace files.import.error"))
         } finally {
             (event.target as HTMLInputElement).value = ""
             dialog.value = {...DIALOG_DEFAULTS}
+            selectedNodes.value = []
+            lastClickedIndex.value = null
+            syncTreeCurrentKey()
         }
     }
 
@@ -817,16 +973,18 @@
     async function addFile({file, creation, shouldReset = true}: { file?: Omit<TreeNodeFile, "id" | "type">; creation?: boolean; shouldReset?: boolean }) {
         let FILE: Omit<TreeNodeFile, "id" | "type">
         if (creation && dialog.value.name) {
-            const [fileName, extension] = getFileNameWithExtension(dialog.value.name)
+            const [fileName, extension] = getFileNameWithExtension(dialog.value.name.trim())
             FILE = {fileName, extension, content: "", leaf: true}
         } else {
             if(!file) return
             FILE = file
         }
 
-        const {path, file: createdFile} = await filesStore.addFile(FILE, dialog.value.folder, creation)
+        const parentFolder = dialog.value.folder
+        const {path, file: createdFile} = await filesStore.addFile(FILE, parentFolder, creation)
         if (creation) {
             if(path === undefined || createdFile === undefined) return
+            reloadFolder(parentFolder)
             openTab?.({
                 name: createdFile.fileName,
                 path,
@@ -849,8 +1007,6 @@
         }
     }
 
-    const closeTab = inject(FILES_CLOSE_TAB_INJECTION_KEY)
-
     async function removeItems() {
         if(confirmation.value.nodes === undefined) return
         await Promise.all(confirmation.value.nodes.map(async (node) => {
@@ -866,21 +1022,33 @@
                 })
             } catch (error) {
                 console.error(`Failed to delete file: ${node.fileName}`, error)
-                toast.error(`Failed to delete file: ${node.fileName}`)
+                toast.error(t("namespace files.delete.file_error", {name: node.fileName}))
             }
         }))
         confirmation.value = {visible: false, nodes: []}
-        toast.success("Selected files deleted successfully.")
+        toast.success(t("namespace files.delete.bulk_success"))
     }
 
     async function addFolder(folder?: {fileName: string, children?: TreeNode[]}, creation?: boolean) {
         const parentPath = dialog.value.folder || ""
-        filesStore.addFolder({
-            fileName: dialog.value.name ?? "unknown",
+        const payload = {
+            fileName: dialog.value.name?.trim() ?? "unknown",
             parentPath,
             ...folder,
-        }, creation)
+        }
         dialog.value = {...DIALOG_DEFAULTS}
+        await filesStore.addFolder(payload, creation)
+        reloadFolder(parentPath)
+    }
+
+    /** Re-fetches an already loaded folder, since the tree only diffs its own root level and would otherwise stay stale until a refresh. */
+    function reloadFolder(path?: string) {
+        const node = path ? tree.value?.getNode(filesStore.findNodeByPath(path)?.id) : undefined
+        if (!node?.loaded) {
+            return
+        }
+        node.loaded = false
+        node.expand()
     }
 
     async function showRevisionsHistory(data: TreeNode) {
@@ -902,15 +1070,17 @@
         }
     }
 
-    async function exportFile(node: TreeNode, data: {fileName: string}) {
-        const {content} = await namespacesStore.readFile({
-            path: filesStore.getPath(node.id) ?? "",
-            namespace: namespaceId.value,
-        })
-        if(!content?.length)
-            throw new Error("File is empty or undefined")
-        const blob = new Blob([content], {type: "text/plain"})
-        Utils.downloadUrl(window.URL.createObjectURL(blob), data.fileName)
+    function exportFile(file: TreeNode) {
+        // `getPath` resolves the tree's own uid; it used to be handed Element Plus's numeric
+        // internal node id, which never matched, so the request asked for the namespace root
+        // and silently downloaded nothing.
+        const path = filesStore.getPath(file.id)
+        if (!path) {
+            toast.error(t("namespace files.export_error", {name: file.fileName}))
+            return
+        }
+
+        Utils.downloadUrl(`${apiUrl()}/namespaces/${namespaceId.value}/files?path=/${safePath(path)}`, file.fileName)
     }
 
     function onTabContextMenu(event: MouseEvent) {
@@ -931,6 +1101,11 @@
 
 <style scoped lang="scss">
 
+.revision-history-dialog-body {
+    // We subtract the dialog margins and title height (78px)
+    height: calc(100vh - (var(--kel-dialog-margin-top) * 2) - 78px);
+}
+
 .sidebar {
     background: var(--ks-bg-surface);
     border-right: 1px solid var(--ks-border-default);
@@ -938,13 +1113,10 @@
     min-width: calc(20% - 11px);
     width: 20%;
 
-    :deep(.revision-history-dialog-body) {
-        // We subtract the dialog margins and title height (78px)
-        height: calc(100vh - (var(--kel-dialog-margin-top) * 2) - 78px);
-    }
-
     .filter{
-        .kel-input__wrapper {
+        :deep(.kel-select__wrapper) {
+            min-height: 32px;
+            height: 32px;
             padding-right: 0px;
         }
     }

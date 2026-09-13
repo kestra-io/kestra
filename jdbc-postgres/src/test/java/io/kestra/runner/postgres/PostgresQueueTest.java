@@ -6,7 +6,6 @@ import org.jooq.exception.DataException;
 import org.junit.jupiter.api.Test;
 
 import io.kestra.core.models.executions.TaskRun;
-import io.kestra.core.models.executions.Variables;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.UnsupportedMessageException;
@@ -26,12 +25,13 @@ class PostgresQueueTest extends JdbcQueueTest {
                 TaskRun.builder()
                     .taskId("taskId")
                     .id(IdUtils.create())
+                    .executionId(IdUtils.create())
                     .namespace("namespace")
                     .flowId("flowId")
                     .state(new State().withState(State.Type.SUCCESS))
                     .build()
             )
-            .outputs(Variables.inMemory(Map.of("value", "\u0000")))
+            .outputs(Map.of("value", "\u0000"))
             .build();
 
         // JdbcJsonbUtils strips null bytes and their JSON-escaped form before storage,
@@ -46,12 +46,13 @@ class PostgresQueueTest extends JdbcQueueTest {
                 TaskRun.builder()
                     .taskId("taskId")
                     .id(IdUtils.create())
+                    .executionId(IdUtils.create())
                     .namespace("namespace")
                     .flowId("flowId")
                     .state(new State().withState(State.Type.SUCCESS))
                     .build()
             )
-            .outputs(Variables.inMemory(Map.of("value", "test\uD800text")))
+            .outputs(Map.of("value", "test\uD800text"))
             .build();
 
         var exception = assertThrows(QueueException.class, () -> workerTaskResultQueue.emit(workerTaskResult));
@@ -66,12 +67,13 @@ class PostgresQueueTest extends JdbcQueueTest {
                 TaskRun.builder()
                     .taskId("taskId")
                     .id(IdUtils.create())
+                    .executionId(IdUtils.create())
                     .namespace("namespace")
                     .flowId("flowId")
                     .state(new State().withState(State.Type.SUCCESS))
                     .build()
             )
-            .outputs(Variables.inMemory(Map.of("value", "\uDC59 test")))
+            .outputs(Map.of("value", "\uDC59 test"))
             .build();
 
         var exception = assertThrows(QueueException.class, () -> workerTaskResultQueue.emit(workerTaskResult));

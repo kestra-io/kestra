@@ -57,7 +57,8 @@ public abstract class AbstractJdbcMcpSessionRepository extends AbstractJdbcCrudR
     public Optional<McpSession> find(String tenantId, String serverId, String sessionId) {
         return jdbcRepository
             .getDslContextWrapper()
-            .transactionResult(configuration -> {
+            .transactionResult(configuration ->
+            {
                 DSLContext context = DSL.using(configuration);
                 Record record = context
                     .select(VALUE_FIELD)
@@ -74,7 +75,8 @@ public abstract class AbstractJdbcMcpSessionRepository extends AbstractJdbcCrudR
     public List<McpSession> findByServerId(String tenantId, String serverId) {
         return jdbcRepository
             .getDslContextWrapper()
-            .transactionResult(configuration -> {
+            .transactionResult(configuration ->
+            {
                 DSLContext context = DSL.using(configuration);
                 return context
                     .select(VALUE_FIELD)
@@ -90,7 +92,8 @@ public abstract class AbstractJdbcMcpSessionRepository extends AbstractJdbcCrudR
     public List<McpSession> findBySseNode(String sseNode) {
         return jdbcRepository
             .getDslContextWrapper()
-            .transactionResult(configuration -> {
+            .transactionResult(configuration ->
+            {
                 DSLContext context = DSL.using(configuration);
                 return context
                     .select(VALUE_FIELD)
@@ -119,7 +122,8 @@ public abstract class AbstractJdbcMcpSessionRepository extends AbstractJdbcCrudR
 
     @Override
     public int purgeOlderThan(Instant threshold) {
-        return jdbcRepository.getDslContextWrapper().transactionResult(configuration -> {
+        return jdbcRepository.getDslContextWrapper().transactionResult(configuration ->
+        {
             DSLContext context = DSL.using(configuration);
             return context.deleteFrom(jdbcRepository.getTable())
                 .where(CREATED_AT_FIELD.lt(Timestamp.from(threshold)))
@@ -130,7 +134,8 @@ public abstract class AbstractJdbcMcpSessionRepository extends AbstractJdbcCrudR
     private Optional<McpSession> findBySessionId(String tenantId, String sessionId) {
         return jdbcRepository
             .getDslContextWrapper()
-            .transactionResult(configuration -> {
+            .transactionResult(configuration ->
+            {
                 DSLContext context = DSL.using(configuration);
                 Record record = context
                     .select(VALUE_FIELD)

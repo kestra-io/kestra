@@ -10,20 +10,31 @@ import {Comparators} from "./filterTypes"
 const LEVEL_FILTER_PREFIX = "filters[level]["
 const LEVEL_GTE_FILTER_KEY = "filters[level][GREATER_THAN_OR_EQUAL_TO]"
 const LEVEL_LTE_FILTER_KEY = "filters[level][LESS_THAN_OR_EQUAL_TO]"
+const LEVEL_IN_FILTER_KEY = "filters[level][IN]"
+const LEVEL_NOT_IN_FILTER_KEY = "filters[level][NOT_IN]"
 const LEVEL_EQUALS_FILTER_KEY = "filters[level][EQUALS]"
 const LEGACY_LEVEL_FILTER_KEY = "level"
 
 const SUPPORTED_LEVEL_FILTER_KEYS = new Set([
     LEVEL_GTE_FILTER_KEY,
     LEVEL_LTE_FILTER_KEY,
+    LEVEL_IN_FILTER_KEY,
+    LEVEL_NOT_IN_FILTER_KEY,
     LEVEL_EQUALS_FILTER_KEY,
 ])
 
-export type LevelFilterDirection = "min" | "max";
+export type LevelFilterDirection = "min" | "max" | "in" | "not_in";
 
 export interface LevelFilterValue {
     value: string;
     direction: LevelFilterDirection;
+}
+
+const LEVEL_FILTER_KEY_BY_DIRECTION: Record<LevelFilterDirection, string> = {
+    min: LEVEL_GTE_FILTER_KEY,
+    max: LEVEL_LTE_FILTER_KEY,
+    in: LEVEL_IN_FILTER_KEY,
+    not_in: LEVEL_NOT_IN_FILTER_KEY,
 }
 
 const firstStringValue = (
@@ -54,6 +65,16 @@ export const readRouteLevelFilter = (query: LocationQuery | LocationQueryRaw): L
         return {value: gte, direction: "min"}
     }
 
+    const notIn = nonEmpty(firstStringValue(query[LEVEL_NOT_IN_FILTER_KEY]))
+    if (notIn) {
+        return {value: notIn, direction: "not_in"}
+    }
+
+    const inValues = nonEmpty(firstStringValue(query[LEVEL_IN_FILTER_KEY]))
+    if (inValues) {
+        return {value: inValues, direction: "in"}
+    }
+
     // Legacy: EQUALS (pre-rename) and bare `level` query param both meant "at or above"
     const legacyEquals = nonEmpty(firstStringValue(query[LEVEL_EQUALS_FILTER_KEY]))
     if (legacyEquals) {
@@ -81,11 +102,21 @@ export const readAppliedLevelFilter = (filters: AppliedFilter[]): LevelFilterVal
         return undefined
     }
 
-    const direction: LevelFilterDirection =
-        levelFilter.comparator === Comparators.LESS_THAN_OR_EQUAL_TO ? "max" : "min"
+    const direction: LevelFilterDirection = (() => {
+        switch (levelFilter.comparator) {
+        case Comparators.LESS_THAN_OR_EQUAL_TO:
+            return "max"
+        case Comparators.IN:
+            return "in"
+        case Comparators.NOT_IN:
+            return "not_in"
+        default:
+            return "min"
+        }
+    })()
 
     const rawValue = Array.isArray(levelFilter.value)
-        ? levelFilter.value[0]
+        ? (direction === "in" || direction === "not_in" ? levelFilter.value.join(",") : levelFilter.value[0])
         : levelFilter.value
 
     if (typeof rawValue !== "string" || rawValue.length === 0) {
@@ -113,8 +144,7 @@ export const normalizeRouteLevelFilter = (
         // Backward-compat: plain string callers default to min (≥) semantic
         const resolved: LevelFilterValue =
             typeof level === "string" ? {value: level, direction: "min"} : level
-        const key = resolved.direction === "max" ? LEVEL_LTE_FILTER_KEY : LEVEL_GTE_FILTER_KEY
-        normalized[key] = resolved.value
+        normalized[LEVEL_FILTER_KEY_BY_DIRECTION[resolved.direction]] = resolved.value
     }
 
     return normalized
@@ -126,6 +156,5 @@ export const levelToRequestParams = (
     if (!level) {
         return {}
     }
-    const key = level.direction === "max" ? LEVEL_LTE_FILTER_KEY : LEVEL_GTE_FILTER_KEY
-    return {[key]: level.value}
+    return {[LEVEL_FILTER_KEY_BY_DIRECTION[level.direction]]: level.value}
 }

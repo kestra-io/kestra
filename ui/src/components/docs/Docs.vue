@@ -1,26 +1,46 @@
 <template>
     <TopNavBar :title="routeInfo.title" />
-    <DocsLayout>
-        <template #menu>
-            <Toc />
-        </template>
-        <template #content>
-            <template>
-                <KsMarkdown class="markdown" :content="markdownContent" :xssProtection="false" :components="markdownComponents" />
+    <section class="full-container flush-top">
+        <DocsLayout>
+            <template #menu>
+                <Toc />
             </template>
-        </template>
-    </DocsLayout>
+            <template #content>
+                <KsAlert v-if="loadError === 'failed'" type="error" :closable="false">
+                    {{ $t("docsPage.loadError") }}
+                </KsAlert>
+
+                <div v-else-if="loadError === 'notFound'" class="docs-not-found">
+                    <KsNoData
+                        :icon="FileRemoveOutline"
+                        :title="$t('errors.404.title')"
+                        :description="$t('docsPage.notFound')"
+                    />
+                    <KsButton tag="router-link" :to="docsHome" type="primary">
+                        {{ $t("docsPage.backToDocs") }}
+                    </KsButton>
+                </div>
+
+                <KsSkeleton v-else-if="markdownContent === undefined" animated :rows="10" />
+
+                <KsMarkdown v-else class="markdown" :content="markdownContent" :components="markdownComponents" />
+            </template>
+        </DocsLayout>
+    </section>
 </template>
 
 <script setup lang="ts">
     import {computed,ref,watch} from "vue"
+    import type {AxiosError} from "axios"
     import TopNavBar from "../layout/TopNavBar.vue"
+    import useRouteContext from "../../composables/useRouteContext"
     import {useDocStore} from "../../stores/doc"
     import DocsLayout from "./DocsLayout.vue"
     import Toc from "./Toc.vue"
     import {useRoute} from "vue-router"
     import {useI18n} from "vue-i18n"
-    import {KsMarkdown} from "@kestra-io/design-system"
+    import {KsAlert, KsButton, KsMarkdown, KsNoData, KsSkeleton} from "@kestra-io/design-system"
+    import FileRemoveOutline from "vue-material-design-icons/FileRemoveOutline.vue"
     import PluginCount from "./PluginCount.vue"
     import WhatsNew from "../content/WhatsNew.vue"
     import SupportLinks from "../content/SupportLinks.vue"
@@ -35,6 +55,7 @@
     import ProseA from "../content/ProseA.vue"
     import ChildTableOfContents from "../content/ChildTableOfContents.vue"
     import ChildCard from "../content/ChildCard.vue"
+    import {removeMDXImports, extractMultilineJSXComponents, replaceSelfClosingTagsWithOpenClose} from "./docsUtils"
 
     const markdownComponents = {
         a: ProseA,
@@ -58,6 +79,7 @@
     const docStore = useDocStore()
 
     const markdownContent = ref()
+    const loadError = ref<"notFound" | "failed" | undefined>()
 
     const path = computed(() => {
         const routePath = Array.isArray(route.params.path) ? route.params.path.join("/") : route.params.path
@@ -68,17 +90,45 @@
         title: docStore.pageMetadata?.title ?? t("docs"),
     }))
 
+    const docsHome = computed(() => ({name: "docs/view", params: {tenant: route.params.tenant}}))
+
+    useRouteContext(routeInfo)
+
     watch(
-        () => route.params.path,
-        async () => {
-            const response = await docStore.fetchResource(path.value ? `/${path.value}` : "")
+        [() => route.params.path, () => docStore.resourceUrlTemplate],
+        async ([, resourceUrlTemplate]) => {
+            if (!resourceUrlTemplate) return
+
+            markdownContent.value = undefined
+            docStore.pageMetadata = undefined
+            loadError.value = undefined
+
+            let response
+            try {
+                response = await docStore.fetchResource(path.value ? `/docs/${path.value}` : "/docs")
+            } catch (error) {
+                loadError.value = (error as AxiosError).response?.status === 404 ? "notFound" : "failed"
+                return
+            }
+
             docStore.pageMetadata = response.metadata
             let content = response.content
             if (!("canShare" in navigator)) {
                 content = content.replaceAll(/\s*web-share\s*/g, "")
             }
-            markdownContent.value = content
+            content = removeMDXImports(content)
+            const {content: cleanedContent} = extractMultilineJSXComponents(content)
+            markdownContent.value = replaceSelfClosingTagsWithOpenClose(cleanedContent)
         },
         {immediate: true},
     )
 </script>
+
+<style scoped lang="scss">
+    .docs-not-found {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: var(--ks-spacing-4);
+    }
+</style>

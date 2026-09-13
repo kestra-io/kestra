@@ -1,6 +1,7 @@
 package io.kestra.core.namespace;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -126,7 +127,7 @@ public class NamespaceFileService {
         return getRepository().find(
             Pageable.UNPAGED, tenantId, List.of(
                 QueryFilter.builder().field(QueryFilter.Field.NAMESPACE).operation(QueryFilter.Op.EQUALS).value(namespace).build(),
-                QueryFilter.builder().field(QueryFilter.Field.PATH).operation(QueryFilter.Op.EQUALS).value(path).build()
+                QueryFilter.builder().field(QueryFilter.Field.PATH).operation(QueryFilter.Op.EQUALS).value(NamespaceFile.normalize(Path.of(path)).toString()).build()
             ), true, FetchVersion.ALL
         );
     }

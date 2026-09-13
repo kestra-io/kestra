@@ -1,17 +1,17 @@
 package io.kestra.scheduler;
 
 import java.time.Clock;
-import java.util.ArrayList;
-import java.util.HashSet;
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import com.google.common.annotations.VisibleForTesting;
 
@@ -45,12 +45,13 @@ public class DefaultScheduler extends AbstractService implements Scheduler {
 
     private static final String EXECUTOR_NAME = "scheduler-scheduling-loop";
 
-    private final AtomicBoolean started = new AtomicBoolean(false);
     private final ExecutorsUtils executorsUtils;
     private final TriggerSchedulingLoopFactory schedulerEventLoopFactory;
 
     private ExecutorService executorService;
-    private List<TriggerSchedulingLoop> schedulingLoops;
+    private int maxThreads;
+    // Thread-safe: mutated by the vNodes rebalance listener thread and iterated from doStop().
+    private final List<TriggerSchedulingLoop> schedulingLoops = new CopyOnWriteArrayList<>();
     private final VNodesAssigner vNodesAssigner;
     private final Clock clock;
 
@@ -66,11 +67,14 @@ public class DefaultScheduler extends AbstractService implements Scheduler {
     private final MaintenanceService maintenanceService;
 
     // Consumers
-    private final List<Disposable> consumerDisposables = new ArrayList<>();
+    // Thread-safe: mutated by the vNodes rebalance listener thread and iterated from doStop().
+    private final List<Disposable> consumerDisposables = new CopyOnWriteArrayList<>();
 
     private Disposable maintenanceListener;
 
-    private final Set<Integer> currentVNodesAssignment = new HashSet<>();
+    // Published as an immutable snapshot: written by the vNodes-assignment consumer and by the
+    // teardown, while the scheduler endpoint and the trigger monitor read it from their own threads.
+    private volatile Set<Integer> currentVNodesAssignment = Set.of();
 
     private Disposable rebalanceDisposable;
 
@@ -131,15 +135,19 @@ public class DefaultScheduler extends AbstractService implements Scheduler {
      */
     @Override
     public void start(int maxThreads) {
-        if (!this.started.compareAndSet(false, true)) {
-            throw new IllegalStateException("Scheduler already started");
-        }
+        guardedStart(() -> doStart(maxThreads), () ->
+        {
+            setState(maintenanceService.isInMaintenanceMode() ? ServiceState.MAINTENANCE : ServiceState.RUNNING);
+            log.info("Scheduler started with {} thread(s) [timezone={}]", maxThreads, SchedulerClock.getClock().getZone());
+        });
+    }
+
+    private void doStart(int maxThreads) {
+        this.maxThreads = maxThreads;
         this.metricRegistry.gauge(MetricRegistry.METRIC_SCHEDULER_EVENTLOOP_THREAD_MAX, MetricRegistry.METRIC_SCHEDULER_EVENTLOOP_THREAD_MAX_DESCRIPTION, maxThreads);
 
         // Create the scheduling loops
         this.executorService = executorsUtils.maxCachedThreadPool(maxThreads, EXECUTOR_NAME);
-
-        this.schedulingLoops = new ArrayList<>(maxThreads);
 
         final AtomicInteger metricAssignedVNodesCount = this.metricRegistry.gauge(
             MetricRegistry.METRIC_SCHEDULER_ASSIGNED_VNODES_COUNT,
@@ -171,32 +179,19 @@ public class DefaultScheduler extends AbstractService implements Scheduler {
 
                 metricAssignedVNodesCount.set(vNodes.size());
 
-                final int numSchedulingLoop = Math.min(maxThreads, vNodes.size());
-
                 // (Re)initialize trigger state store for assigned VNodes
                 triggerStateStore.init(vNodes);
 
-                // (Re)create TriggerSchedulingLoop
-                for (int i = 0; i < numSchedulingLoop; i++) {
-                    TriggerSchedulingLoop schedulingLoop = schedulerEventLoopFactory.create(i, clock);
-                    schedulingLoops.add(schedulingLoop);
-                }
+                currentVNodesAssignment = Stream.concat(currentVNodesAssignment.stream(), vNodes.stream())
+                    .collect(Collectors.toUnmodifiableSet());
 
-                // Assign scheduling-loops to VNodes
-                schedulingLoops.forEach(schedulingLoop ->
-                {
-                    // Compute vNodes assignments for the current event-loop
-                    Set<Integer> assignments = vNodes.stream()
-                        .filter(vNodeId -> vNodeId % maxThreads == schedulingLoop.id())
-                        .collect(Collectors.toSet());
-                    schedulingLoop.setAssignments(assignments);
-                });
-
-                currentVNodesAssignment.addAll(vNodes);
+                // Create and assign the scheduling-loops even in maintenance mode, so that exiting
+                // maintenance only has to resubmit them.
+                assignVNodesToSchedulingLoops();
 
                 // Restart scheduling only if not in maintenance mode
                 if (!maintenanceService.isInMaintenanceMode()) {
-                    startScheduling();
+                    startScheduling(false);
                 }
             }
         });
@@ -204,8 +199,12 @@ public class DefaultScheduler extends AbstractService implements Scheduler {
         maintenanceListener = maintenanceService.listen(new MaintenanceService.MaintenanceListener() {
             @Override
             public void onMaintenanceModeEnter() {
+                if (!getState().isRunning()) {
+                    return; // scheduler is either terminating or already terminated.
+                }
+
                 // vNode assignments may change during maintenance mode (e.g., a scheduler leaves or joins the cluster).
-                // it's therefore more reliable to just stop scheduling in a similar way to vNodes revokation. 
+                // it's therefore more reliable to just stop scheduling in a similar way to vNodes revokation.
                 stopAllConsumers();
                 stopAllSchedulingLoop(false);
                 setState(ServiceState.MAINTENANCE);
@@ -213,21 +212,52 @@ public class DefaultScheduler extends AbstractService implements Scheduler {
 
             @Override
             public void onMaintenanceModeExit() {
-                // restart scheduling
-                startScheduling();
+                if (!getState().isRunning()) {
+                    return; // scheduler is either terminating or already terminated.
+                }
+
+                // restart scheduling, restoring the vNode assignments revoked when entering maintenance
+                startScheduling(true);
                 setState(ServiceState.RUNNING);
             }
         });
 
-        if (maintenanceService.isInMaintenanceMode()) {
-            setState(ServiceState.MAINTENANCE);
-        } else {
-            setState(ServiceState.RUNNING);
-        }
-        log.info("Scheduler started with {} thread(s) [timezone={}]", maxThreads, SchedulerClock.getClock().getZone());
     }
 
-    private void startScheduling() {
+    /**
+     * (Re)creates the {@link TriggerSchedulingLoop} for the currently assigned vNodes and distributes
+     * those vNodes across them.
+     */
+    private void assignVNodesToSchedulingLoops() {
+        final Set<Integer> vNodes = currentVNodesAssignment;
+        if (vNodes.isEmpty()) {
+            return; // nothing to assign
+        }
+
+        final int numSchedulingLoop = Math.min(maxThreads, vNodes.size());
+        for (int i = schedulingLoops.size(); i < numSchedulingLoop; i++) {
+            schedulingLoops.add(schedulerEventLoopFactory.create(i, clock));
+        }
+
+        schedulingLoops.forEach(schedulingLoop ->
+        {
+            Set<Integer> assignments = vNodes.stream()
+                .filter(vNodeId -> vNodeId % schedulingLoops.size() == schedulingLoop.id())
+                .collect(Collectors.toSet());
+            schedulingLoop.setAssignments(assignments);
+        });
+    }
+
+    /**
+     * Starts, or restarts, the scheduling.
+     *
+     * @param reassignVNodes whether the vNodes must be redistributed across the scheduling-loops first.
+     */
+    private void startScheduling(boolean reassignVNodes) {
+        if (reassignVNodes) {
+            assignVNodesToSchedulingLoops();
+        }
+
         if (schedulingLoops.isEmpty()) {
             return; // nothing to start
         }
@@ -236,7 +266,17 @@ public class DefaultScheduler extends AbstractService implements Scheduler {
         startTriggerEventConsumers();
 
         // (Re)submit all scheduling loops
-        schedulingLoops.forEach(executorService::execute);
+        schedulingLoops.forEach(schedulingLoop ->
+        {
+            // Reset lifecycle latches so a reused loop can be started again (e.g. exiting maintenance).
+            schedulingLoop.prepareForStart();
+            executorService.execute(schedulingLoop);
+        });
+
+        // Wait until all loops have effectively started before returning. Otherwise a subsequent
+        // stop() (e.g. entering maintenance mode) could race loop startup: stop() would be a no-op
+        // on a not-yet-running loop, which would then start and keep running indefinitely.
+        schedulingLoops.forEach(schedulingLoop -> schedulingLoop.awaitStarted(Duration.ofSeconds(5)));
     }
 
     private void stopAllSchedulingLoop(boolean clearAssignment) {
@@ -269,7 +309,7 @@ public class DefaultScheduler extends AbstractService implements Scheduler {
         if (clearAssignment) {
             // Clear local assignments
             schedulingLoops.clear();
-            currentVNodesAssignment.clear();
+            currentVNodesAssignment = Set.of();
         }
     }
 
@@ -316,10 +356,12 @@ public class DefaultScheduler extends AbstractService implements Scheduler {
      */
     @Override
     protected ServiceState doStop() {
-        if (!this.started.compareAndSet(true, false)) {
-            return ServiceState.TERMINATED_GRACEFULLY; // Already shut down or not started.
+        // Dispose the listeners first: their isRunning() guards are check-then-act, so a callback
+        // that passed its guard just before we transitioned to TERMINATING could otherwise
+        // recreate consumers or resubmit scheduling loops concurrently with the teardown below.
+        if (this.maintenanceListener != null) {
+            this.maintenanceListener.dispose();
         }
-
         if (rebalanceDisposable != null) {
             rebalanceDisposable.dispose();
         }
@@ -327,12 +369,13 @@ public class DefaultScheduler extends AbstractService implements Scheduler {
         // Stop all queues consumption
         stopAllConsumers();
 
-        if (this.maintenanceListener != null) {
-            this.maintenanceListener.dispose();
-        }
-
         // Stop all scheduling loops
         stopAllSchedulingLoop(true);
+
+        if (this.executorService == null) {
+            // the startup was aborted before the executor was created — nothing left to stop
+            return ServiceState.TERMINATED_GRACEFULLY;
+        }
 
         // Initiate graceful shutdown
         this.executorService.shutdown();

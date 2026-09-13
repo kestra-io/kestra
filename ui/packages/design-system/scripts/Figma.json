@@ -435,6 +435,12 @@
             "rootAlias": "gray-neutral/white"
           },
           {
+            "name": "ks/bg-tabs-default",
+            "value": "#f7f7f8",
+            "var": "gray-neutral/50",
+            "rootAlias": "gray-neutral/50"
+          },
+          {
             "name": "ks/bg-tag",
             "value": "#e9e9ee",
             "var": "gray-neutral/100",
@@ -613,6 +619,132 @@
             "value": "#f7f7f8",
             "var": "gray-neutral/50",
             "rootAlias": "gray-neutral/50"
+          },
+          {
+            "name": "ks/chart-breakpoint",
+            "value": "#9061f9",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/chart-cancelled",
+            "value": "#6f6f7b",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/chart-created",
+            "value": "#1761fd",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/chart-debug",
+            "value": "#9061f9",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/chart-duration",
+            "value": "#5e5efb",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/chart-error",
+            "value": "#cc1d1f",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/chart-failed",
+            "value": "#cc1d1f",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/chart-info",
+            "value": "#0b3aa8",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/chart-killed",
+            "value": "#8a0a0c",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/chart-killing",
+            "value": "#c79100",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/chart-paused",
+            "value": "#ec8b3a",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/chart-queued",
+            "value": "#62627a",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/chart-restarted",
+            "value": "#0a8fd4",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/chart-retried",
+            "value": "#0b3aa8",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/chart-retrying",
+            "value": "#b34400",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/chart-running",
+            "value": "#631bff",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/chart-skipped",
+            "value": "#9695a0",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/chart-success",
+            "value": "#12a072",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/chart-trace",
+            "value": "#6f6f7b",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/chart-warn",
+            "value": "#dd5f00",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/chart-warning",
+            "value": "#dd5f00",
+            "var": "",
+            "rootAlias": ""
           },
           {
             "name": "ks/dependencies-edge-default",
@@ -946,9 +1078,9 @@
           },
           {
             "name": "ks/toggle-default",
-            "value": "#e9e9ee",
-            "var": "gray-neutral/100",
-            "rootAlias": "gray-neutral/100"
+            "value": "#d0d0da",
+            "var": "gray-neutral/200",
+            "rootAlias": "gray-neutral/200"
           },
           {
             "name": "ks/toggle-hover",
@@ -973,6 +1105,150 @@
             "value": "#e9e9ee",
             "var": "gray-neutral/100",
             "rootAlias": "gray-neutral/100"
+          },
+          {
+            "name": "ks/topology-bg-cancelled",
+            "value": "#e9e9ee",
+            "var": "gray-neutral/100",
+            "rootAlias": "gray-neutral/100"
+          },
+          {
+            "name": "ks/topology-bg-errors",
+            "value": "#ff6a6c1a",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/topology-bg-flowable-task",
+            "value": "#718bfe1a",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/topology-bg-killing",
+            "value": "#fffceb",
+            "var": "yellow/50",
+            "rootAlias": "yellow/50"
+          },
+          {
+            "name": "ks/topology-bg-running",
+            "value": "#f9f5ff",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/topology-bg-subflow",
+            "value": "#9869f71a",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/topology-bg-success",
+            "value": "#ecfff5",
+            "var": "green/50",
+            "rootAlias": "green/50"
+          },
+          {
+            "name": "ks/topology-bg-triggers",
+            "value": "#43f6b61a",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/topology-border-cancelled",
+            "value": "#d0d0da",
+            "var": "gray-neutral/200",
+            "rootAlias": "gray-neutral/200"
+          },
+          {
+            "name": "ks/topology-border-errors",
+            "value": "#ed0011",
+            "var": "red/500",
+            "rootAlias": "red/500"
+          },
+          {
+            "name": "ks/topology-border-flowable-task",
+            "value": "#1761fd",
+            "var": "blue/500",
+            "rootAlias": "blue/500"
+          },
+          {
+            "name": "ks/topology-border-killing",
+            "value": "#fce070",
+            "var": "yellow/300",
+            "rootAlias": "yellow/300"
+          },
+          {
+            "name": "ks/topology-border-running",
+            "value": "#7738f5",
+            "var": "primary/400",
+            "rootAlias": "primary/400"
+          },
+          {
+            "name": "ks/topology-border-subflow",
+            "value": "#7738f5",
+            "var": "primary/400",
+            "rootAlias": "primary/400"
+          },
+          {
+            "name": "ks/topology-border-success",
+            "value": "#15b983",
+            "var": "green/500",
+            "rootAlias": "green/500"
+          },
+          {
+            "name": "ks/topology-border-triggers",
+            "value": "#15b983",
+            "var": "green/500",
+            "rootAlias": "green/500"
+          },
+          {
+            "name": "ks/topology-btn-cancelled",
+            "value": "#d0d0da",
+            "var": "gray-neutral/200",
+            "rootAlias": "gray-neutral/200"
+          },
+          {
+            "name": "ks/topology-btn-errors",
+            "value": "#ed0011",
+            "var": "red/500",
+            "rootAlias": "red/500"
+          },
+          {
+            "name": "ks/topology-btn-flowable-task",
+            "value": "#1761fd",
+            "var": "blue/500",
+            "rootAlias": "blue/500"
+          },
+          {
+            "name": "ks/topology-btn-killing",
+            "value": "#f0b429",
+            "var": "yellow/500",
+            "rootAlias": "yellow/500"
+          },
+          {
+            "name": "ks/topology-btn-running",
+            "value": "#7738f5",
+            "var": "primary/400",
+            "rootAlias": "primary/400"
+          },
+          {
+            "name": "ks/topology-btn-subflow",
+            "value": "#7738f5",
+            "var": "primary/400",
+            "rootAlias": "primary/400"
+          },
+          {
+            "name": "ks/topology-btn-success",
+            "value": "#06f0b1",
+            "var": "green/400",
+            "rootAlias": "green/400"
+          },
+          {
+            "name": "ks/topology-btn-triggers",
+            "value": "#15b983",
+            "var": "green/500",
+            "rootAlias": "green/500"
           },
           {
             "name": "ks/topology-dash",
@@ -1664,9 +1940,9 @@
           },
           {
             "name": "ks/bg-error",
-            "value": "#14181f",
-            "var": "gray-cool/950",
-            "rootAlias": "gray-cool/950"
+            "value": "#ff6a6c1a",
+            "var": "",
+            "rootAlias": ""
           },
           {
             "name": "ks/bg-hover",
@@ -1688,9 +1964,9 @@
           },
           {
             "name": "ks/bg-info",
-            "value": "#14181f",
-            "var": "gray-cool/950",
-            "rootAlias": "gray-cool/950"
+            "value": "#718bfe1a",
+            "var": "",
+            "rootAlias": ""
           },
           {
             "name": "ks/bg-input",
@@ -1718,15 +1994,21 @@
           },
           {
             "name": "ks/bg-success",
-            "value": "#14181f",
-            "var": "gray-cool/950",
-            "rootAlias": "gray-cool/950"
+            "value": "#06f0b11a",
+            "var": "",
+            "rootAlias": ""
           },
           {
             "name": "ks/bg-surface",
             "value": "#20232d",
             "var": "gray-cool/800",
             "rootAlias": "gray-cool/800"
+          },
+          {
+            "name": "ks/bg-tabs-default",
+            "value": "#2c303f",
+            "var": "gray-cool/600",
+            "rootAlias": "gray-cool/600"
           },
           {
             "name": "ks/bg-tag",
@@ -1754,9 +2036,9 @@
           },
           {
             "name": "ks/bg-warning",
-            "value": "#14181f",
-            "var": "gray-cool/950",
-            "rootAlias": "gray-cool/950"
+            "value": "#ff8b611a",
+            "var": "",
+            "rootAlias": ""
           },
           {
             "name": "ks/border-default",
@@ -1766,9 +2048,9 @@
           },
           {
             "name": "ks/border-error",
-            "value": "#ed0011",
-            "var": "red/500",
-            "rootAlias": "red/500"
+            "value": "#f73a3d",
+            "var": "red/400",
+            "rootAlias": "red/400"
           },
           {
             "name": "ks/border-focus",
@@ -1907,6 +2189,132 @@
             "value": "#262a35",
             "var": "gray-cool/700",
             "rootAlias": "gray-cool/700"
+          },
+          {
+            "name": "ks/chart-breakpoint",
+            "value": "#c4a5ff",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/chart-cancelled",
+            "value": "#b4b4c4",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/chart-created",
+            "value": "#718bfe",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/chart-debug",
+            "value": "#c4a5ff",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/chart-duration",
+            "value": "#4545fa",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/chart-error",
+            "value": "#ff6a6c",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/chart-failed",
+            "value": "#ff6a6c",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/chart-info",
+            "value": "#3f6fe0",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/chart-killed",
+            "value": "#d44a4c",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/chart-killing",
+            "value": "#fce070",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/chart-paused",
+            "value": "#ffb27d",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/chart-queued",
+            "value": "#4c4c5c",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/chart-restarted",
+            "value": "#4fc3f7",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/chart-retried",
+            "value": "#3f6fe0",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/chart-retrying",
+            "value": "#f7693c",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/chart-running",
+            "value": "#9869f7",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/chart-skipped",
+            "value": "#8585a0",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/chart-success",
+            "value": "#27a676",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/chart-trace",
+            "value": "#b4b4c4",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/chart-warn",
+            "value": "#ff8b61",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/chart-warning",
+            "value": "#ff8b61",
+            "var": "",
+            "rootAlias": ""
           },
           {
             "name": "ks/dependencies-edge-default",
@@ -2240,9 +2648,9 @@
           },
           {
             "name": "ks/toggle-default",
-            "value": "#262a35",
-            "var": "gray-cool/700",
-            "rootAlias": "gray-cool/700"
+            "value": "#404559",
+            "var": "gray-cool/400",
+            "rootAlias": "gray-cool/400"
           },
           {
             "name": "ks/toggle-hover",
@@ -2267,6 +2675,150 @@
             "value": "#2c303f",
             "var": "gray-cool/600",
             "rootAlias": "gray-cool/600"
+          },
+          {
+            "name": "ks/topology-bg-cancelled",
+            "value": "#262a35",
+            "var": "gray-cool/700",
+            "rootAlias": "gray-cool/700"
+          },
+          {
+            "name": "ks/topology-bg-errors",
+            "value": "#f73a3d1a",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/topology-bg-flowable-task",
+            "value": "#1761fd1a",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/topology-bg-killing",
+            "value": "#170d02",
+            "var": "yellow/1000",
+            "rootAlias": "yellow/1000"
+          },
+          {
+            "name": "ks/topology-bg-running",
+            "value": "#0b021c",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/topology-bg-subflow",
+            "value": "#7738f51a",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/topology-bg-success",
+            "value": "#040c08",
+            "var": "green/1000",
+            "rootAlias": "green/1000"
+          },
+          {
+            "name": "ks/topology-bg-triggers",
+            "value": "#15b9831a",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/topology-border-cancelled",
+            "value": "#9797a6",
+            "var": "gray-cool/300",
+            "rootAlias": "gray-cool/300"
+          },
+          {
+            "name": "ks/topology-border-errors",
+            "value": "#f73a3d",
+            "var": "red/400",
+            "rootAlias": "red/400"
+          },
+          {
+            "name": "ks/topology-border-flowable-task",
+            "value": "#1761fd",
+            "var": "blue/500",
+            "rootAlias": "blue/500"
+          },
+          {
+            "name": "ks/topology-border-killing",
+            "value": "#f0b429",
+            "var": "yellow/500",
+            "rootAlias": "yellow/500"
+          },
+          {
+            "name": "ks/topology-border-running",
+            "value": "#9869f7",
+            "var": "primary/300",
+            "rootAlias": "primary/300"
+          },
+          {
+            "name": "ks/topology-border-subflow",
+            "value": "#9869f7",
+            "var": "primary/300",
+            "rootAlias": "primary/300"
+          },
+          {
+            "name": "ks/topology-border-success",
+            "value": "#215d42",
+            "var": "green/700",
+            "rootAlias": "green/700"
+          },
+          {
+            "name": "ks/topology-border-triggers",
+            "value": "#15b983",
+            "var": "green/500",
+            "rootAlias": "green/500"
+          },
+          {
+            "name": "ks/topology-btn-cancelled",
+            "value": "#20232d",
+            "var": "gray-cool/800",
+            "rootAlias": "gray-cool/800"
+          },
+          {
+            "name": "ks/topology-btn-errors",
+            "value": "#f73a3d",
+            "var": "red/400",
+            "rootAlias": "red/400"
+          },
+          {
+            "name": "ks/topology-btn-flowable-task",
+            "value": "#1761fd",
+            "var": "blue/500",
+            "rootAlias": "blue/500"
+          },
+          {
+            "name": "ks/topology-btn-killing",
+            "value": "#f0b429",
+            "var": "yellow/500",
+            "rootAlias": "yellow/500"
+          },
+          {
+            "name": "ks/topology-btn-running",
+            "value": "#9869f7",
+            "var": "primary/300",
+            "rootAlias": "primary/300"
+          },
+          {
+            "name": "ks/topology-btn-subflow",
+            "value": "#9869f7",
+            "var": "primary/300",
+            "rootAlias": "primary/300"
+          },
+          {
+            "name": "ks/topology-btn-success",
+            "value": "#15b983",
+            "var": "green/500",
+            "rootAlias": "green/500"
+          },
+          {
+            "name": "ks/topology-btn-triggers",
+            "value": "#15b983",
+            "var": "green/500",
+            "rootAlias": "green/500"
           },
           {
             "name": "ks/topology-dash",
@@ -2958,9 +3510,9 @@
           },
           {
             "name": "ks/bg-error",
-            "value": "#111115",
-            "var": "gray-neutral/950",
-            "rootAlias": "gray-neutral/950"
+            "value": "#ff6a6c1a",
+            "var": "",
+            "rootAlias": ""
           },
           {
             "name": "ks/bg-hover",
@@ -2982,9 +3534,9 @@
           },
           {
             "name": "ks/bg-info",
-            "value": "#111115",
-            "var": "gray-neutral/950",
-            "rootAlias": "gray-neutral/950"
+            "value": "#718bfe1a",
+            "var": "",
+            "rootAlias": ""
           },
           {
             "name": "ks/bg-input",
@@ -3012,15 +3564,21 @@
           },
           {
             "name": "ks/bg-success",
-            "value": "#111115",
-            "var": "gray-neutral/950",
-            "rootAlias": "gray-neutral/950"
+            "value": "#06f0b11a",
+            "var": "",
+            "rootAlias": ""
           },
           {
             "name": "ks/bg-surface",
             "value": "#1a1c22",
             "var": "gray-neutral/900",
             "rootAlias": "gray-neutral/900"
+          },
+          {
+            "name": "ks/bg-tabs-default",
+            "value": "#2e2e3c",
+            "var": "gray-neutral/700",
+            "rootAlias": "gray-neutral/700"
           },
           {
             "name": "ks/bg-tag",
@@ -3048,9 +3606,9 @@
           },
           {
             "name": "ks/bg-warning",
-            "value": "#111115",
-            "var": "gray-neutral/950",
-            "rootAlias": "gray-neutral/950"
+            "value": "#ff8b611a",
+            "var": "",
+            "rootAlias": ""
           },
           {
             "name": "ks/border-default",
@@ -3060,9 +3618,9 @@
           },
           {
             "name": "ks/border-error",
-            "value": "#ed0011",
-            "var": "red/500",
-            "rootAlias": "red/500"
+            "value": "#f73a3d",
+            "var": "red/400",
+            "rootAlias": "red/400"
           },
           {
             "name": "ks/border-focus",
@@ -3203,6 +3761,132 @@
             "rootAlias": "gray-neutral/600"
           },
           {
+            "name": "ks/chart-breakpoint",
+            "value": "#c4a5ff",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/chart-cancelled",
+            "value": "#b4b4c4",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/chart-created",
+            "value": "#718bfe",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/chart-debug",
+            "value": "#c4a5ff",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/chart-duration",
+            "value": "#4545fa",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/chart-error",
+            "value": "#ff6a6c",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/chart-failed",
+            "value": "#ff6a6c",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/chart-info",
+            "value": "#3f6fe0",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/chart-killed",
+            "value": "#d44a4c",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/chart-killing",
+            "value": "#fce070",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/chart-paused",
+            "value": "#ffb27d",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/chart-queued",
+            "value": "#4c4c5c",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/chart-restarted",
+            "value": "#4fc3f7",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/chart-retried",
+            "value": "#3f6fe0",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/chart-retrying",
+            "value": "#f7693c",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/chart-running",
+            "value": "#9869f7",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/chart-skipped",
+            "value": "#8585a0",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/chart-success",
+            "value": "#27a676",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/chart-trace",
+            "value": "#b4b4c4",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/chart-warn",
+            "value": "#ff8b61",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/chart-warning",
+            "value": "#ff8b61",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
             "name": "ks/dependencies-edge-default",
             "value": "#adadbf",
             "var": "gray-neutral/300",
@@ -3228,9 +3912,9 @@
           },
           {
             "name": "ks/dependencies-node-background-assets",
-            "value": "#718bfe",
-            "var": "blue/300",
-            "rootAlias": "blue/300"
+            "value": "#022670",
+            "var": "blue/800",
+            "rootAlias": "blue/800"
           },
           {
             "name": "ks/dependencies-node-background-default",
@@ -3258,9 +3942,9 @@
           },
           {
             "name": "ks/dependencies-node-border-assets",
-            "value": "#a9b5fe",
-            "var": "blue/200",
-            "rootAlias": "blue/200"
+            "value": "#1761fd",
+            "var": "blue/500",
+            "rootAlias": "blue/500"
           },
           {
             "name": "ks/dependencies-node-border-default",
@@ -3444,9 +4128,9 @@
           },
           {
             "name": "ks/status-success",
-            "value": "#43f6b6",
-            "var": "green/300",
-            "rootAlias": "green/300"
+            "value": "#06f0b1",
+            "var": "green/400",
+            "rootAlias": "green/400"
           },
           {
             "name": "ks/status-warning",
@@ -3561,6 +4245,150 @@
             "value": "#23252e",
             "var": "gray-neutral/800",
             "rootAlias": "gray-neutral/800"
+          },
+          {
+            "name": "ks/topology-bg-cancelled",
+            "value": "#2e2e3c",
+            "var": "gray-neutral/700",
+            "rootAlias": "gray-neutral/700"
+          },
+          {
+            "name": "ks/topology-bg-errors",
+            "value": "#f73a3d1a",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/topology-bg-flowable-task",
+            "value": "#1761fd1a",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/topology-bg-killing",
+            "value": "#170d02",
+            "var": "yellow/1000",
+            "rootAlias": "yellow/1000"
+          },
+          {
+            "name": "ks/topology-bg-running",
+            "value": "#0b021c",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/topology-bg-subflow",
+            "value": "#7738f51a",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/topology-bg-success",
+            "value": "#040c08",
+            "var": "green/1000",
+            "rootAlias": "green/1000"
+          },
+          {
+            "name": "ks/topology-bg-triggers",
+            "value": "#15b9831a",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/topology-border-cancelled",
+            "value": "#424256",
+            "var": "gray-neutral/600",
+            "rootAlias": "gray-neutral/600"
+          },
+          {
+            "name": "ks/topology-border-errors",
+            "value": "#f73a3d",
+            "var": "red/400",
+            "rootAlias": "red/400"
+          },
+          {
+            "name": "ks/topology-border-flowable-task",
+            "value": "#1761fd",
+            "var": "blue/500",
+            "rootAlias": "blue/500"
+          },
+          {
+            "name": "ks/topology-border-killing",
+            "value": "#f0b429",
+            "var": "yellow/500",
+            "rootAlias": "yellow/500"
+          },
+          {
+            "name": "ks/topology-border-running",
+            "value": "#9869f7",
+            "var": "primary/300",
+            "rootAlias": "primary/300"
+          },
+          {
+            "name": "ks/topology-border-subflow",
+            "value": "#9869f7",
+            "var": "primary/300",
+            "rootAlias": "primary/300"
+          },
+          {
+            "name": "ks/topology-border-success",
+            "value": "#215d42",
+            "var": "green/700",
+            "rootAlias": "green/700"
+          },
+          {
+            "name": "ks/topology-border-triggers",
+            "value": "#15b983",
+            "var": "green/500",
+            "rootAlias": "green/500"
+          },
+          {
+            "name": "ks/topology-btn-cancelled",
+            "value": "#23252e",
+            "var": "gray-neutral/800",
+            "rootAlias": "gray-neutral/800"
+          },
+          {
+            "name": "ks/topology-btn-errors",
+            "value": "#f73a3d",
+            "var": "red/400",
+            "rootAlias": "red/400"
+          },
+          {
+            "name": "ks/topology-btn-flowable-task",
+            "value": "#1761fd",
+            "var": "blue/500",
+            "rootAlias": "blue/500"
+          },
+          {
+            "name": "ks/topology-btn-killing",
+            "value": "#f0b429",
+            "var": "yellow/500",
+            "rootAlias": "yellow/500"
+          },
+          {
+            "name": "ks/topology-btn-running",
+            "value": "#9869f7",
+            "var": "primary/300",
+            "rootAlias": "primary/300"
+          },
+          {
+            "name": "ks/topology-btn-subflow",
+            "value": "#9869f7",
+            "var": "primary/300",
+            "rootAlias": "primary/300"
+          },
+          {
+            "name": "ks/topology-btn-success",
+            "value": "#215d42",
+            "var": "green/700",
+            "rootAlias": "green/700"
+          },
+          {
+            "name": "ks/topology-btn-triggers",
+            "value": "#15b983",
+            "var": "green/500",
+            "rootAlias": "green/500"
           },
           {
             "name": "ks/topology-dash",

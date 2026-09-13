@@ -1,11 +1,13 @@
 <template>
     <div ref="container" class="blueprint-icon-stack">
-        <KsTaskIcon
+        <TaskIcon
             v-for="cls in visible"
             :key="cls"
             class="blueprint-icon-stack__icon"
             :cls="cls"
             :icons="icons"
+            :loadIcon="loadIcon"
+            variable="--ks-black"
             onlyIcon
         />
         <span v-if="overflow > 0" class="blueprint-icon-stack__more">+{{ overflow }}</span>
@@ -14,12 +16,13 @@
 
 <script setup lang="ts">
     import {ref, computed, onMounted, onBeforeUnmount} from "vue"
-    import {KsTaskIcon} from "@kestra-io/design-system"
+    import TaskIcon from "./TaskIcon.vue"
     import type {PluginIconMap} from "../../utils/pluginUtils"
 
     const props = defineProps<{
         clses: string[]
         icons: PluginIconMap
+        loadIcon?: (cls: string) => Promise<any>
     }>()
 
     const ICON_PX = 24
@@ -87,7 +90,9 @@
             width: var(--ks-spacing-5);
             height: var(--ks-spacing-5);
             padding: 2px;
-            background-color: var(--ks-bg-tag);
+            background-color: var(--ks-bg-plugin-icon);
+            border: 1px solid var(--ks-border-default);
+            color: var(--ks-black);
             border-radius: var(--ks-radius-base);
         }
 

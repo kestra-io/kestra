@@ -34,6 +34,7 @@ import static io.kestra.jdbc.repository.AbstractJdbcRepository.KEY_FIELD;
 import static io.kestra.jdbc.repository.AbstractJdbcRepository.VALUE_FIELD;
 
 @Requires(condition = PostgresRepository.PostgresCondition.class)
+@Requires(property = "kestra.server-type", notEquals = "WORKER")
 @EachBean(JdbcTableConfig.class)
 public class PostgresRepository<T> extends io.kestra.jdbc.AbstractJdbcRepository<T> {
 
@@ -76,7 +77,7 @@ public class PostgresRepository<T> extends io.kestra.jdbc.AbstractJdbcRepository
             .set(finalFields)
             .onConflict(KEY_FIELD)
             .doUpdate()
-            .set(finalFields)
+            .set(excluded(finalFields))
             .execute();
     }
 
@@ -90,7 +91,7 @@ public class PostgresRepository<T> extends io.kestra.jdbc.AbstractJdbcRepository
             .set(fields)
             .onConflict(KEY_FIELD)
             .doUpdate()
-            .set(fields);
+            .set(excluded(fields));
     }
 
     @SuppressWarnings("unchecked")

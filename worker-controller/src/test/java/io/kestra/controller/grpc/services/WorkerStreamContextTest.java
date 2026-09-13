@@ -2,11 +2,12 @@ package io.kestra.controller.grpc.services;
 
 import java.util.List;
 
+import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
+
 import io.kestra.core.worker.QueueSubscription;
 
 import io.grpc.stub.StreamObserver;
-import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -14,7 +15,8 @@ import static org.assertj.core.api.Assertions.assertThat;
  * Tests stream-context-level concerns: permits, in-flight tracking, completion,
  * and the convenience constructor that installs the {@link SinglePoolCapacityPolicy}.
  *
- * <p>Tests that exercise richer per-queue bucket math live alongside the
+ * <p>
+ * Tests that exercise richer per-queue bucket math live alongside the
  * implementing policy.
  */
 class WorkerStreamContextTest {

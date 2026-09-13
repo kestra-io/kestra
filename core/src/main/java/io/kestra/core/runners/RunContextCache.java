@@ -5,11 +5,12 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import io.kestra.core.runners.configuration.VariableConfiguration;
+
 import io.micronaut.context.ApplicationContext;
 import jakarta.annotation.PostConstruct;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
-import io.kestra.core.runners.configuration.VariableConfiguration;
 import lombok.Getter;
 
 @Singleton

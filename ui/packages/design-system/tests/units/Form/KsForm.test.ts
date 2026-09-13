@@ -2,6 +2,7 @@ import {describe, test, expect} from "vitest"
 import {mount} from "@vue/test-utils"
 import KestraDesignSystem from "../../../src/index"
 import KsForm from "../../../src/components/Form/KsForm/KsForm.vue"
+import KsFormItem from "../../../src/components/Form/KsForm/KsFormItem.vue"
 
 const globalConfig = {plugins: [KestraDesignSystem]}
 
@@ -47,5 +48,43 @@ describe("KsForm", () => {
             global: globalConfig,
         })
         expect(typeof (wrapper.vm as any).clearValidate).toBe("function")
+    })
+})
+
+describe("KsFormItem", () => {
+    test("adds is-inline-row class when inline", () => {
+        const wrapper = mount(KsFormItem, {
+            props: {label: "Name", inline: true},
+            global: globalConfig,
+        })
+        expect(wrapper.find(".kel-form-item.is-inline-row").exists()).toBe(true)
+    })
+
+    test("omits is-inline-row class by default", () => {
+        const wrapper = mount(KsFormItem, {
+            props: {label: "Name"},
+            global: globalConfig,
+        })
+        expect(wrapper.find(".kel-form-item.is-inline-row").exists()).toBe(false)
+    })
+
+    test("forwards for so the label can opt out of pointing at a control", () => {
+        const wrapper = mount(KsFormItem, {
+            props: {label: "Name", for: ""},
+            slots: {default: "<ks-input />"},
+            global: globalConfig,
+        })
+        const label = wrapper.find(".kel-form-item__label")
+        expect(label.element.tagName).toBe("DIV")
+        expect(label.attributes("for")).toBe("")
+    })
+
+    test("leaves for unset so element-plus can derive it", () => {
+        const wrapper = mount(KsFormItem, {
+            props: {label: "Name"},
+            slots: {default: "<ks-input />"},
+            global: globalConfig,
+        })
+        expect(wrapper.find(".kel-form-item__label").attributes("for")).toBeUndefined()
     })
 })

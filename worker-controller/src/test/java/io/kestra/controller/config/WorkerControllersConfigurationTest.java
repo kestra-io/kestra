@@ -41,31 +41,10 @@ class WorkerControllersConfigurationTest {
     }
 
     @Test
-    void shouldParseDnsSrvConfiguration() {
-        Map<String, Object> properties = Map.of(
-            "kestra.worker.controllers.type", "DNS",
-            "kestra.worker.controllers.dns.hostname", "kestra-controller.default.svc.cluster.local",
-            "kestra.worker.controllers.dns.record-type", "SRV",
-            "kestra.worker.controllers.dns.refresh-interval", "30s"
-        );
-
-        try (ApplicationContext context = ApplicationContext.run(PropertySource.of("test", properties))) {
-            WorkerControllersConfiguration config = context.getBean(WorkerControllersConfiguration.class);
-
-            assertThat(config.type()).isEqualTo(WorkerControllersConfiguration.DiscoveryType.DNS);
-            assertThat(config.dnsConfig()).isNotNull();
-            assertThat(config.dnsConfig().hostname()).isEqualTo("kestra-controller.default.svc.cluster.local");
-            assertThat(config.dnsConfig().recordType()).isEqualTo(WorkerControllersConfiguration.DnsConfig.DnsRecordType.SRV);
-            assertThat(config.dnsConfig().refreshInterval()).isEqualTo(Duration.ofSeconds(30));
-        }
-    }
-
-    @Test
-    void shouldParseDnsARecordConfiguration() {
+    void shouldParseDnsConfiguration() {
         Map<String, Object> properties = Map.of(
             "kestra.worker.controllers.type", "DNS",
             "kestra.worker.controllers.dns.hostname", "controllers.internal.company.com",
-            "kestra.worker.controllers.dns.record-type", "A",
             "kestra.worker.controllers.dns.default-port", "9096",
             "kestra.worker.controllers.dns.refresh-interval", "60s"
         );
@@ -76,7 +55,6 @@ class WorkerControllersConfigurationTest {
             assertThat(config.type()).isEqualTo(WorkerControllersConfiguration.DiscoveryType.DNS);
             assertThat(config.dnsConfig()).isNotNull();
             assertThat(config.dnsConfig().hostname()).isEqualTo("controllers.internal.company.com");
-            assertThat(config.dnsConfig().recordType()).isEqualTo(WorkerControllersConfiguration.DnsConfig.DnsRecordType.A);
             assertThat(config.dnsConfig().defaultPort()).isEqualTo(9096);
             assertThat(config.dnsConfig().refreshInterval()).isEqualTo(Duration.ofSeconds(60));
         }

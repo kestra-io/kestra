@@ -10,6 +10,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.kestra.cli.AbstractApiCommand;
 import io.kestra.cli.services.TenantIdSelectorService;
 import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.utils.TypeConverter;
 
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.MediaType;
@@ -66,7 +67,7 @@ public class KvUpdateCommand extends AbstractApiCommand {
             value = wrapAsJsonLiteral(value);
         }
 
-        Duration ttl = expiration == null ? null : Duration.parse(expiration);
+        Duration ttl = TypeConverter.toDuration(expiration);
         MutableHttpRequest<String> request = HttpRequest
             .PUT(apiUri("/namespaces/", tenantService.getTenantId(tenantId)) + namespace + "/kv/" + key, value)
             .contentType(MediaType.TEXT_PLAIN);

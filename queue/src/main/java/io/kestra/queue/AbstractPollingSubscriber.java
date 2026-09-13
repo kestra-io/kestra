@@ -15,8 +15,6 @@ import io.kestra.queue.poller.QueuePollerConfiguration;
 
 import lombok.extern.slf4j.Slf4j;
 
-import static org.awaitility.Awaitility.await;
-
 /**
  * A subscriber that uses a polling mechanism.
  * It used the {@link QueuePoller} to periodically execute a poll query (whether on a database or a message broker)
@@ -94,8 +92,6 @@ public abstract class AbstractPollingSubscriber<T extends Event> extends Abstrac
                 this.markEnd();
             }
         });
-
-        await().until(this::isActive);
 
         return this;
     }

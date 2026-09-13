@@ -1,0 +1,9 @@
+id: labels-update-nested-value-map
+namespace: io.kestra.tests
+
+tasks:
+  - id: list_form_nested_value
+    type: io.kestra.plugin.core.execution.Labels
+    labels:
+      stage:
+        name: done

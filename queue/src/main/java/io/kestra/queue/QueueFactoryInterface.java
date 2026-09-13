@@ -1,8 +1,10 @@
 package io.kestra.queue;
 
-import io.kestra.core.executor.command.ExecutionCommand;
 import io.kestra.core.async.AsyncOperationProcessedEvent;
+import io.kestra.core.executor.command.ExecutionCommand;
+import io.kestra.core.mcp.models.McpSessionEvent;
 import io.kestra.core.models.executions.*;
+import io.kestra.core.models.executions.statistics.ExecutionStatistic;
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.DispatchQueueInterface;
@@ -12,7 +14,6 @@ import io.kestra.core.runners.*;
 import io.kestra.core.runners.MultipleConditionEvent;
 import io.kestra.core.runners.SubflowExecutionEnd;
 import io.kestra.core.runners.SubflowExecutionResult;
-import io.kestra.core.mcp.models.McpSessionEvent;
 import io.kestra.core.runners.WorkerJobEvent;
 import io.kestra.core.scheduler.events.SchedulerEvent;
 import io.kestra.core.scheduler.events.TriggerEvent;
@@ -40,6 +41,8 @@ public interface QueueFactoryInterface<D> {
     VNodeDispatchQueueInterface<TriggerEvent> triggerEventQueue(D dependencies);
 
     DispatchQueueInterface<MetricEntry> metricQueue(D dependencies);
+
+    DispatchQueueInterface<ExecutionStatistic> executionStatisticQueue(D dependencies);
 
     BroadcastQueueInterface<FollowExecutionEvent> followExecutionQueue(D dependencies);
 

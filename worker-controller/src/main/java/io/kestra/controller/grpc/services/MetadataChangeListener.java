@@ -1,5 +1,8 @@
 package io.kestra.controller.grpc.services;
 
+import java.util.Objects;
+import java.util.function.Consumer;
+
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.QueueSubscriber;
@@ -8,9 +11,6 @@ import io.kestra.core.worker.MetadataChangePayload;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
-
-import java.util.Objects;
-import java.util.function.Consumer;
 
 /**
  * Subscribes to metastore broadcast queues and forwards each change as a
@@ -36,14 +36,18 @@ public class MetadataChangeListener {
 
     public void start(Consumer<MetadataChangePayload> onChange) {
         this.flowSubscriber = flowQueue.subscriber();
-        this.flowSubscriber.subscribe(either -> {
+        this.flowSubscriber.subscribe(either ->
+        {
             if (either.isRight()) {
                 log.warn("Failed to deserialize flow change: {}", either.getRight().getMessage());
                 return;
             }
             FlowInterface flow = either.getLeft();
-            onChange.accept(new MetadataChangePayload(
-                MetadataChangePayload.Type.FLOW, flow.getTenantId(), flow.getNamespace()));
+            onChange.accept(
+                new MetadataChangePayload(
+                    MetadataChangePayload.Type.FLOW, flow.getTenantId(), flow.getNamespace()
+                )
+            );
         });
     }
 

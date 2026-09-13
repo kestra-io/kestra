@@ -28,6 +28,7 @@ public abstract class AbstractFilterService<Q> {
                     case IsTrue<F> f -> isTrue(finalQuery.get(), fieldsMapping.get(f.getField()), f);
                     case LessThan<F> f -> lessThan(finalQuery.get(), fieldsMapping.get(f.getField()), f);
                     case LessThanOrEqualTo<F> f -> lessThanOrEqualTo(finalQuery.get(), fieldsMapping.get(f.getField()), f);
+                    case NotContains<F> f -> notContains(finalQuery.get(), fieldsMapping.get(f.getField()), f);
                     case NotEqualTo<F> f -> notEqualTo(finalQuery.get(), fieldsMapping.get(f.getField()), f);
                     case NotIn<F> f -> notIn(finalQuery.get(), fieldsMapping.get(f.getField()), f);
                     case Or<F> f -> or(finalQuery.get(), fieldsMapping, f);
@@ -68,6 +69,8 @@ public abstract class AbstractFilterService<Q> {
     protected abstract <F extends Enum<F>> Q lessThanOrEqualTo(Q query, String field, LessThanOrEqualTo<F> filter);
 
     protected abstract <F extends Enum<F>> Q notEqualTo(Q query, String field, NotEqualTo<F> filter);
+
+    protected abstract <F extends Enum<F>> Q notContains(Q query, String field, NotContains<F> filter);
 
     protected abstract <F extends Enum<F>> Q notIn(Q query, String field, NotIn<F> filter);
 

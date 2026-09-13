@@ -1,18 +1,20 @@
 package io.kestra.core.storages;
 
-import io.kestra.core.annotations.Retryable;
-import io.kestra.core.models.Plugin;
-import io.kestra.core.models.executions.Execution;
-import io.kestra.core.utils.FileUtils;
-import jakarta.annotation.Nullable;
-import org.apache.commons.lang3.RandomStringUtils;
-
 import java.io.*;
 import java.net.URI;
 import java.nio.file.NoSuchFileException;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+
+import org.apache.commons.lang3.RandomStringUtils;
+
+import io.kestra.core.annotations.Retryable;
+import io.kestra.core.models.Plugin;
+import io.kestra.core.models.executions.Execution;
+import io.kestra.core.utils.FileUtils;
+
+import jakarta.annotation.Nullable;
 
 /**
  * Interface for internal Kestra storage implementations. It handles file-like operations
@@ -307,24 +309,26 @@ public interface StorageInterface extends AutoCloseable, Plugin {
      * window {@code [startDate, endDate]}. The window bounds are both nullable: a {@code null} bound
      * means "unbounded on that side."
      *
-     * <p>Implementations are encouraged to override this method to use the native listing primitive
+     * <p>
+     * Implementations are encouraged to override this method to use the native listing primitive
      * of the underlying backend (e.g. {@code ListObjectsV2} on S3, {@code Bucket.list} on GCS) so
      * that traversal cost scales with what the backend can natively filter or paginate over rather
      * than the total object count. The default implementation walks the prefix using
      * {@link #list(String, String, URI)} and {@link #delete(String, String, URI)}.
      *
-     * <p>This is a maintenance primitive: callers must enforce authorization (namespace/tenant ACLs)
+     * <p>
+     * This is a maintenance primitive: callers must enforce authorization (namespace/tenant ACLs)
      * before invoking it. The {@code namespace} parameter is threaded through to {@code list} and
      * {@code delete} so that backends enforcing per-namespace isolation can apply it.
      *
-     * @param tenantId  the tenant identifier
+     * @param tenantId the tenant identifier
      * @param namespace the namespace (may be {@code null} only for backends that do not enforce
-     *                  per-namespace isolation; passing {@code null} on an enforcing backend will
-     *                  yield empty results or an error from {@link #list})
-     * @param prefix    the URI prefix to scan
+     *        per-namespace isolation; passing {@code null} on an enforcing backend will
+     *        yield empty results or an error from {@link #list})
+     * @param prefix the URI prefix to scan
      * @param startDate inclusive lower bound on last-modified time; {@code null} = unbounded
-     * @param endDate   inclusive upper bound on last-modified time; {@code null} = unbounded
-     * @param dryRun    when {@code true}, returns the URIs that would be deleted without deleting
+     * @param endDate inclusive upper bound on last-modified time; {@code null} = unbounded
+     * @param dryRun when {@code true}, returns the URIs that would be deleted without deleting
      * @return the URIs that were deleted (or would be deleted in dry-run mode)
      * @throws IOException if listing or deletion fails
      */
@@ -335,8 +339,7 @@ public interface StorageInterface extends AutoCloseable, Plugin {
         URI prefix,
         @Nullable Instant startDate,
         @Nullable Instant endDate,
-        boolean dryRun
-    ) throws IOException {
+        boolean dryRun) throws IOException {
         Long startMillis = startDate == null ? null : startDate.toEpochMilli();
         Long endMillis = endDate == null ? null : endDate.toEpochMilli();
         List<URI> matched = new ArrayList<>();
@@ -359,8 +362,7 @@ public interface StorageInterface extends AutoCloseable, Plugin {
         URI uri,
         @Nullable Long startMillis,
         @Nullable Long endMillis,
-        List<URI> out
-    ) throws IOException {
+        List<URI> out) throws IOException {
         List<FileAttributes> children;
         try {
             children = list(tenantId, namespace, uri);
@@ -373,8 +375,10 @@ public interface StorageInterface extends AutoCloseable, Plugin {
             URI childUri = URI.create(parent + child.getFileName());
             if (child.getType() == FileAttributes.FileType.Directory) {
                 collectFilesInWindow(tenantId, namespace, URI.create(childUri + "/"), startMillis, endMillis, out);
-            } else if ((startMillis == null || child.getLastModifiedTime() >= startMillis)
-                && (endMillis == null || child.getLastModifiedTime() <= endMillis)) {
+            } else if (
+                (startMillis == null || child.getLastModifiedTime() >= startMillis)
+                    && (endMillis == null || child.getLastModifiedTime() <= endMillis)
+            ) {
                 out.add(childUri);
             }
         }
@@ -407,7 +411,6 @@ public interface StorageInterface extends AutoCloseable, Plugin {
             throw new IllegalArgumentException("File should be accessed with their full path and not using relative '..' path.");
         }
     }
-
 
     /**
      * Builds the internal storage path based on the URI.

@@ -2,11 +2,17 @@ package io.kestra.core.utils;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.slf4j.LoggerFactory;
+
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -220,6 +226,33 @@ class MapUtilsTest {
 
         assertThat(results).hasSize(1);
         // due to ordering change on each JVM restart, the result map would be different as different entries will be skipped
+    }
+
+    @Test
+    void shouldReportFullDottedKeyPathOnConflict() {
+        // Given an appender capturing MapUtils warnings
+        Logger logger = (Logger) LoggerFactory.getLogger(MapUtils.class);
+        ListAppender<ILoggingEvent> appender = new ListAppender<>();
+        appender.start();
+        logger.addAppender(appender);
+
+        try {
+            // A deeper key ("k1.k2.k3") conflicts with a value already set at "k1.k2".
+            // LinkedHashMap keeps the insertion order so the conflict is deterministic.
+            Map<String, Object> flatMap = new LinkedHashMap<>();
+            flatMap.put("k1.k2", "v1");
+            flatMap.put("k1.k2.k3", "v2");
+
+            // When
+            MapUtils.flattenToNestedMap(flatMap);
+
+            // Then the warning reports the full dotted path where the conflict happens ("k1.k2"),
+            // not a comma-joined prefix that omits the conflicting segment ("k1").
+            assertThat(appender.list)
+                .anyMatch(event -> event.getFormattedMessage().contains("Conflict at key: 'k1.k2'"));
+        } finally {
+            logger.detachAppender(appender);
+        }
     }
 
     @Test

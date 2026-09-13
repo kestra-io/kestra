@@ -11,7 +11,11 @@ import org.apache.commons.io.IOUtils;
 
 import com.google.common.collect.ImmutableMap;
 
+import io.kestra.core.app.AppBlockInterface;
+import io.kestra.core.app.AppPluginInterface;
 import io.kestra.core.models.annotations.PluginSubGroup;
+import io.kestra.core.models.dashboards.DataFilter;
+import io.kestra.core.models.dashboards.charts.Chart;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.logs.LogExporter;
 import io.kestra.core.models.tasks.runners.TaskRunner;
@@ -19,6 +23,7 @@ import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.plugins.AdditionalPlugin;
 import io.kestra.core.plugins.PluginClassAndMetadata;
 import io.kestra.core.plugins.RegisteredPlugin;
+import io.kestra.core.preview.FileRenderer;
 import io.kestra.core.runners.pebble.Extension;
 import io.kestra.core.runners.pebble.JsonWriter;
 import io.kestra.core.runners.pebble.filters.*;
@@ -78,6 +83,11 @@ public class DocumentationGenerator {
         result.addAll(this.generate(registeredPlugin, registeredPlugin.getTaskRunners(), (Class) TaskRunner.class, "task-runners"));
         result.addAll(this.generate(registeredPlugin, registeredPlugin.getLogExporters(), (Class) LogExporter.class, "log-exporters"));
         result.addAll(this.generate(registeredPlugin, registeredPlugin.getAdditionalPlugins(), AdditionalPlugin.class, "additional-plugins"));
+        result.addAll(this.generate(registeredPlugin, registeredPlugin.getCharts(), (Class) Chart.class, "charts"));
+        result.addAll(this.generate(registeredPlugin, registeredPlugin.getDataFilters(), (Class) DataFilter.class, "data-filters"));
+        result.addAll(this.generate(registeredPlugin, registeredPlugin.getApps(), AppPluginInterface.class, "apps"));
+        result.addAll(this.generate(registeredPlugin, registeredPlugin.getAppBlocks(), AppBlockInterface.class, "app-blocks"));
+        result.addAll(this.generate(registeredPlugin, registeredPlugin.getFileRenderers(), FileRenderer.class, "file-renderers"));
 
         result.addAll(guides(registeredPlugin));
 

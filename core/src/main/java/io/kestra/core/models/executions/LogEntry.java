@@ -16,11 +16,13 @@ import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.TriggerId;
 import io.kestra.core.queues.event.DispatchEvent;
 import io.kestra.core.utils.IdUtils;
+import io.kestra.core.validations.TenantId;
 
+import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.api.trace.SpanContext;
 import io.swagger.v3.oas.annotations.Hidden;
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
 import lombok.Builder;
 import lombok.Value;
 
@@ -28,7 +30,7 @@ import lombok.Value;
 @Builder(toBuilder = true)
 public class LogEntry implements TenantInterface, DispatchEvent {
     @Hidden
-    @Pattern(regexp = "^[a-z0-9][a-z0-9_-]*")
+    @TenantId
     String tenantId;
 
     @NotNull
@@ -64,6 +66,10 @@ public class LogEntry implements TenantInterface, DispatchEvent {
     @Nullable
     ExecutionKind executionKind;
 
+    // Opaque plugin-defined step token; wrap in a record if percent/total is ever needed
+    @Nullable
+    String progress;
+
     public static List<Level> findLevelsByMin(Level minLevel) {
         if (minLevel == null) {
             return Arrays.asList(Level.values());
@@ -91,6 +97,16 @@ public class LogEntry implements TenantInterface, DispatchEvent {
             .flowId(execution.getFlowId())
             .executionId(execution.getId())
             .executionKind(execution.getKind())
+            .build();
+    }
+
+    public static LogEntry of(ExecutionId executionId, ExecutionKind executionKind) {
+        return LogEntry.builder()
+            .tenantId(executionId.tenantId())
+            .namespace(executionId.namespace())
+            .flowId(executionId.flowId())
+            .executionId(executionId.executionId())
+            .executionKind(executionKind)
             .build();
     }
 
@@ -142,7 +158,7 @@ public class LogEntry implements TenantInterface, DispatchEvent {
     }
 
     public Map<String, String> toMap() {
-        return Stream
+        Map<String, String> map = Stream
             .of(
                 new AbstractMap.SimpleEntry<>("tenantId", this.tenantId),
                 new AbstractMap.SimpleEntry<>("namespace", this.namespace),
@@ -155,6 +171,15 @@ public class LogEntry implements TenantInterface, DispatchEvent {
             )
             .filter(e -> e.getValue() != null)
             .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+
+        // enrich with the active OpenTelemetry trace context, a no-op when tracing is disabled
+        SpanContext spanContext = Span.current().getSpanContext();
+        if (spanContext.isValid()) {
+            map.put("trace_id", spanContext.getTraceId());
+            map.put("span_id", spanContext.getSpanId());
+        }
+
+        return map;
     }
 
     public Map<String, Object> toLogMap() {

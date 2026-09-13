@@ -4,13 +4,16 @@
             :label="filterKey.label"
             :description="filterKey.description"
             @close="emits('close')"
-        />
-        <FilterComparatorSelect
-            :shouldShowComparator
-            :selectedComparator="state.selectedComparator"
-            :filterKey="filterKey"
-            @update:selected-comparator="state.selectedComparator = $event"
-        />
+        >
+            <template #trailing>
+                <FilterComparatorSelect
+                    :shouldShowComparator
+                    :selectedComparator="state.selectedComparator"
+                    :filterKey="filterKey"
+                    @update:selected-comparator="changeComparator"
+                />
+            </template>
+        </FilterHeader>
 
         <component
             v-if="valueComponent"
@@ -23,23 +26,27 @@
             :footerText
             :timeRangeMode="state.timeRangeMode"
             @reset="resetState"
-            @apply="handleApply"
         />
     </div>
 </template>
 
 <script setup lang="ts">
-    import {computed, onMounted, reactive, inject, watch} from "vue"
+    import {computed, onMounted, reactive, inject, ref, watch} from "vue"
     import {useI18n} from "vue-i18n"
+    import {useDebounceFn} from "@vueuse/core"
     import {
         type AppliedFilter,
         type FilterKeyConfig,
         type FilterValue,
+        Comparators,
         COMPARATOR_LABELS,
+        RANGE_COMPARATORS,
         TEXT_COMPARATORS,
         KV_COMPARATORS,
+        NULL_COMPARATORS,
     } from "../utils/filterTypes"
     import {FILTER_CONTEXT_INJECTION_KEY} from "../utils/filterInjectionKeys"
+    import {resolveDefaultVisibleValue} from "../utils/filterChipFactory"
     import FilterText from "./FilterText.vue"
     import FilterRadio from "./FilterRadio.vue"
     import FilterFooter from "./FilterFooter.vue"
@@ -60,7 +67,7 @@
         {label: t("datepicker.last24hours"), value: "PT24H"},
         {label: t("datepicker.last48hours"), value: "PT48H"},
         {label: t("datepicker.last7days"), value: "PT168H"},
-        {label: t("datepicker.last30days"), value: "P30D"},
+        {label: t("datepicker.last30days"), value: "PT720H"},
         {label: t("datepicker.last365days"), value: "PT8760H"},
     ]
 
@@ -83,6 +90,8 @@
 
     const filterContext = inject(FILTER_CONTEXT_INJECTION_KEY)
 
+    const ready = ref(false)
+
     const state = reactive({
         textValue: "",
         selectValue: "",
@@ -102,11 +111,11 @@
     )
 
     const isTextOp = computed(() =>
-        TEXT_COMPARATORS.includes(state.selectedComparator) && props.filterKey?.key !== "resources",
+        (TEXT_COMPARATORS.includes(state.selectedComparator) || NULL_COMPARATORS.includes(state.selectedComparator)) && props.filterKey?.key !== "resources",
     )
 
     const isKVPairFilter = computed(() =>
-        props.filterKey?.valueType === "key-value",
+        props.filterKey?.valueType === "key-value" && !isTextOp.value,
     )
 
     const isTimeRange = computed(() =>
@@ -117,6 +126,35 @@
     const supportsServerSideSearch = computed(() =>
         (props.filterKey?.valueProvider?.length ?? 0) > 0,
     )
+
+    // Range/threshold comparators (GTE/LTE/…) always target one bound value.
+    // Other comparators (IN/NOT_IN) are multi-value.
+    const effectiveValueType = computed(() => {
+        const type = props.filterKey?.valueType
+        if (type === "multi-select" && RANGE_COMPARATORS.includes(state.selectedComparator)) {
+            return "select"
+        }
+        return type
+    })
+
+    const normalizeKeyValuePairs = (values: string[]) => {
+        const pairByKey = new Map<string, string>()
+        values.forEach(pair => {
+            const separatorIndex = pair.indexOf(":")
+            if (separatorIndex <= 0 || separatorIndex === pair.length - 1) return
+            pairByKey.set(pair.slice(0, separatorIndex), pair)
+        })
+        return [...pairByKey.values()]
+    }
+
+    const changeComparator = (comparator: AppliedFilter["comparator"]) => {
+        if (props.filterKey?.valueType === "key-value"
+            && comparator !== Comparators.IN
+            && comparator !== Comparators.NOT_IN) {
+            state.keyValuePair = normalizeKeyValuePairs(state.keyValuePair)
+        }
+        state.selectedComparator = comparator
+    }
 
     const valueComponent = computed(() => {
         if (isTextOp.value) {
@@ -131,7 +169,7 @@
         if (isKVPairFilter.value) {
             return {
                 component: FilterKVPairs,
-                props: {modelValue: state.keyValuePair},
+                props: {modelValue: state.keyValuePair, comparator: state.selectedComparator},
                 events: {"update:modelValue": (value: string[]) => (state.keyValuePair = value)},
             }
         }
@@ -208,7 +246,7 @@
             },
         }
 
-        const valueType = props.filterKey.valueType === "time-range" ? "select" : props.filterKey.valueType
+        const valueType = props.filterKey.valueType === "time-range" ? "select" : effectiveValueType.value
 
         return (
             componentConfigs[valueType as keyof typeof componentConfigs] || null
@@ -222,7 +260,7 @@
             return t("filter.kv_pair_selected", {count: state.keyValuePair.length})
         }
 
-        switch (props.filterKey?.valueType) {
+        switch (effectiveValueType.value) {
         case "multi-select":
             return `${state.keyValuePair.length} ${props.filterKey?.label} selected`
         case "select":
@@ -248,10 +286,14 @@
             return
         }
 
+        // Falling back to a blank value left the filter with nothing selected, rather than with
+        // the default the page configured (the executions view's 24h interval, for instance).
+        const defaultValue = resolveDefaultVisibleValue(props.filterKey)
+
         Object.assign(state, {
-            textValue: "",
-            selectValue: "",
-            keyValuePair: [],
+            textValue: typeof defaultValue === "string" ? defaultValue : "",
+            selectValue: typeof defaultValue === "string" ? defaultValue : "",
+            keyValuePair: Array.isArray(defaultValue) ? [...defaultValue] : [],
             radioValue: "ALL",
             dateValue: null,
             timeRangeMode: "predefined",
@@ -272,17 +314,16 @@
             }
         }
 
-        switch (props.filterKey.valueType) {
+        switch (effectiveValueType.value) {
         case "text":
             return {value: state.textValue, label: state.textValue}
         case "select":
             if (props.filterKey?.key === "timeRange" && state.timeRangeMode === "custom") {
+                const startDate = state.startDateValue ?? new Date()
+                const endDate = state.endDateValue ?? new Date()
                 return {
-                    value: {
-                        startDate: state.startDateValue!,
-                        endDate: state.endDateValue!,
-                    },
-                    label: `${state.startDateValue!.toLocaleDateString()} - ${state.endDateValue!.toLocaleDateString()}`,
+                    value: {startDate, endDate},
+                    label: `${startDate.toLocaleDateString()} - ${endDate.toLocaleDateString()}`,
                     meta: state.dateFilterMode ? {dateFilter: state.dateFilterMode} : undefined,
                 }
             }
@@ -297,12 +338,11 @@
             }
         case "time-range":
             if (state.timeRangeMode === "custom") {
+                const startDate = state.startDateValue ?? new Date()
+                const endDate = state.endDateValue ?? new Date()
                 return {
-                    value: {
-                        startDate: state.startDateValue!,
-                        endDate: state.endDateValue!,
-                    },
-                    label: `${state.startDateValue!.toLocaleDateString()} - ${state.endDateValue!.toLocaleDateString()}`,
+                    value: {startDate, endDate},
+                    label: `${startDate.toLocaleDateString()} - ${endDate.toLocaleDateString()}`,
                 }
             }
             return {
@@ -333,37 +373,52 @@
         }
     }
 
-    const handleApply = () => {
-        if (!state.selectedComparator) return
+    const emptyValueForType = (): AppliedFilter["value"] => {
+        const type = effectiveValueType.value
+        return type === "multi-select" || type === "key-value" ? [] : ""
+    }
 
-        const filterData = getFilterValue()
-        if (!filterData) {
-            // The parent closes the dialog as part of handling `remove`; no extra `close` needed.
-            emits("remove", props.filter.id)
+    // Live apply: every change emits `update` immediately (no Apply button). The popover stays
+    // open and is closed by the user (X / overlay); empty filters are cleaned up on close by the
+    // parent. Text inputs are debounced by the caller; time-range custom waits for both ends.
+    const applyLive = () => {
+        if (!ready.value || !state.selectedComparator) return
+
+        // A custom range needs at least one bound to be worth applying; the other bound
+        // defaults to now (getFilterValue) so typing just a Start or End date applies immediately.
+        if (isTimeRange.value && state.timeRangeMode === "custom"
+            && !state.startDateValue && !state.endDateValue) {
             return
         }
 
+        // An inverted range is rejected by the API with a 422, so it is never applied. It compares
+        // the bounds getFilterValue will send, since an end left unset still defaults to now.
+        if (isTimeRange.value && state.timeRangeMode === "custom") {
+            const now = new Date()
+            if ((state.startDateValue ?? now) > (state.endDateValue ?? now)) {
+                return
+            }
+        }
+
+        const filterData = getFilterValue()
         const updatedFilter: any = {
             ...props.filter,
             comparator: state.selectedComparator,
             comparatorLabel: props.filterKey?.comparatorLabels?.[state.selectedComparator] ?? COMPARATOR_LABELS[state.selectedComparator],
-            value: filterData.value,
-            valueLabel: filterData.label,
+            value: filterData ? filterData.value : emptyValueForType(),
+            valueLabel: filterData ? filterData.label : "",
         }
 
-        if (filterData.meta !== undefined) {
+        if (filterData?.meta !== undefined) {
             updatedFilter.meta = filterData.meta
         } else if (props.filterKey?.key !== "timeRange") {
             delete updatedFilter.meta
         }
 
         if (props.filterKey?.keyLabelProvider) {
-            updatedFilter.keyLabel = props.filterKey.keyLabelProvider(filterData.meta)
+            updatedFilter.keyLabel = props.filterKey.keyLabelProvider(filterData?.meta)
         }
 
-        // The parent closes the dialog as part of handling `update`; no extra `close` needed.
-        // Emitting `close` here would run the parent's empty-chip auto-remove against the stale
-        // pre-update props and discard the chip we just applied.
         emits("update", updatedFilter)
     }
 
@@ -392,7 +447,7 @@
             state.endDateValue = null
         }
 
-        const isTextOpLocal = TEXT_COMPARATORS.includes(filter.comparator) && props.filterKey?.key !== "resources"
+        const isTextOpLocal = (TEXT_COMPARATORS.includes(filter.comparator) || NULL_COMPARATORS.includes(filter.comparator)) && props.filterKey?.key !== "resources"
         const isKVPair = props.filterKey?.valueType === "key-value" || (props.filterKey?.key === "labels" && KV_COMPARATORS.includes(filter.comparator))
 
         if (isTextOpLocal) {
@@ -404,7 +459,7 @@
                     ? [filter.value]
                     : []
         } else {
-            switch (props.filterKey.valueType) {
+            switch (effectiveValueType.value) {
             case "text":
                 state.textValue = typeof filter.value === "string" ? filter.value : ""
                 break
@@ -475,7 +530,10 @@
         initializeStateFromFilter(props.filter)
     }
 
-    onMounted(initializeFilter)
+    onMounted(async () => {
+        await initializeFilter()
+        ready.value = true
+    })
 
     // When the "Apply to" segmented selector flips, refresh the dropdown options so providers can
     // vary labels by the chosen date field. Cheap for filters with dateFilterOptions (relative dates
@@ -483,6 +541,21 @@
     // never changes there.
     watch(
         () => state.dateFilterMode,
-        () => loadValueOptions(),
+        async () => { await loadValueOptions(); applyLive() },
     )
+
+    const debouncedApplyLive = useDebounceFn(applyLive, 400)
+
+    watch(() => state.textValue, () => debouncedApplyLive())
+
+    watch([
+        () => state.selectValue,
+        () => state.keyValuePair,
+        () => state.radioValue,
+        () => state.dateValue,
+        () => state.selectedComparator,
+        () => state.startDateValue,
+        () => state.endDateValue,
+        () => state.timeRangeMode,
+    ], () => applyLive())
 </script>

@@ -1,8 +1,9 @@
 <template>
     <div class="wrapper">
-        <div v-if="title || $slots['back-button']" class="title">
+        <div v-if="title || $slots['back-button'] || $slots['header']" class="title">
             <slot name="back-button" />
             <h2 v-if="title">{{ title }}</h2>
+            <slot name="header" />
         </div>
         <div class="content" ref="contentRef">
             <slot />
@@ -24,21 +25,21 @@
 
 <style scoped lang="scss">
     .wrapper {
-        height: 100vh;
+        height: 100%;
         display: flex;
         flex-direction: column;
         background-color: var(--ks-bg-surface);
         .content {
+            flex: 1;
+            min-height: 0;
             overflow-y: auto;
         }
     }
 
     .title {
         display: flex;
-        padding: 1rem;
-        padding-left: 1.6rem;
-        padding-right: 3rem;
-        border-bottom: 1px solid var(--ks-border-default);
+        padding: 2rem;
+        padding-bottom: 1rem;
         align-items: center;
         gap: 1rem;
 
@@ -49,8 +50,10 @@
             overflow: hidden;
             margin-bottom: 0;
             margin-top: 0;
-            width: 100%;
+            flex: 1;
+            min-width: 0;
             line-height: 1.2;
+            font-weight: var(--ks-font-weight-semibold);
         }
     }
 </style>

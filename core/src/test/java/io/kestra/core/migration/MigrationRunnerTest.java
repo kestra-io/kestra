@@ -10,6 +10,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
@@ -122,6 +123,106 @@ class MigrationRunnerTest {
         assertThatThrownBy(runner2::runAlways)
             .isInstanceOf(IllegalStateException.class)
             .hasMessageContaining("Checksum mismatch");
+    }
+
+    @Test
+    void repairChecksum_updatesStoredChecksumForAppliedScript() throws Exception {
+        // Given
+        InMemoryHistoryStore historyStore = new InMemoryHistoryStore();
+        MigrationRunner initialRunner = new MigrationRunner(
+            noOpLock, historyStore, List.of(
+                scriptWithChecksum("2.0.01-upgrade", "original-checksum")
+            )
+        );
+        initialRunner.runAlways();
+
+        MigrationScript repairedScript = scriptWithChecksum("2.0.01-upgrade", "current-checksum");
+        MigrationRunner repairRunner = new MigrationRunner(noOpLock, historyStore, List.of(repairedScript));
+
+        // When
+        repairRunner.repairChecksum("2.0.01-upgrade");
+
+        // Then
+        assertThatNoException().isThrownBy(() -> historyStore.validateChecksum(repairedScript));
+    }
+
+    @Test
+    void repairChecksum_rejectsUnknownScript() {
+        // Given
+        MigrationRunner runner = new MigrationRunner(
+            noOpLock, new InMemoryHistoryStore(), List.of(
+                scriptWithChecksum("2.0.01-upgrade", "checksum")
+            )
+        );
+
+        // When / Then
+        assertThatThrownBy(() -> runner.repairChecksum("missing-script"))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("Unknown migration script [missing-script]");
+    }
+
+    @Test
+    void repairChecksum_rejectsUnappliedScript() {
+        // Given
+        MigrationRunner runner = new MigrationRunner(
+            noOpLock, new InMemoryHistoryStore(), List.of(
+                scriptWithChecksum("2.0.01-upgrade", "checksum")
+            )
+        );
+
+        // When / Then
+        assertThatThrownBy(() -> runner.repairChecksum("2.0.01-upgrade"))
+            .isInstanceOf(IllegalStateException.class)
+            .hasMessageContaining("has not been applied");
+    }
+
+    @Test
+    void repairChecksum_rejectsScriptWithoutChecksum() {
+        // Given
+        InMemoryHistoryStore historyStore = new InMemoryHistoryStore();
+        MigrationScript script = scriptWithChecksum("2.0.07-triggers", null);
+        historyStore.markApplied(script, 10L);
+        MigrationRunner runner = new MigrationRunner(noOpLock, historyStore, List.of(script));
+
+        // When / Then
+        assertThatThrownBy(() -> runner.repairChecksum("2.0.07-triggers"))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("has no checksum to repair");
+    }
+
+    @Test
+    void repairChecksum_throwsWhenLocked() {
+        // Given
+        AtomicInteger releaseCount = new AtomicInteger(0);
+        MigrationLock lockedLock = new MigrationLock() {
+            @Override
+            public void acquire() {
+            }
+
+            @Override
+            public void release() {
+                releaseCount.incrementAndGet();
+            }
+
+            @Override
+            public boolean tryAcquire() {
+                return false;
+            }
+
+            @Override
+            public void forceRelease() {
+            }
+        };
+        MigrationRunner runner = new MigrationRunner(
+            lockedLock, new InMemoryHistoryStore(), List.of(
+                scriptWithChecksum("2.0.01-upgrade", "checksum")
+            )
+        );
+
+        // When / Then
+        assertThatThrownBy(() -> runner.repairChecksum("2.0.01-upgrade"))
+            .isInstanceOf(MigrationLockedException.class);
+        assertThat(releaseCount.get()).isZero();
     }
 
     @Test
@@ -239,25 +340,20 @@ class MigrationRunnerTest {
     }
 
     @Test
-    void initOnStartup_skipsWhenSkipAutoRunIsTrue() {
-        // Given
+    void autoRun_appliesAllPendingScripts() throws Exception {
+        // Given: OSS autoRun() applies every pending script (this is what MigrationStartupRunner
+        // triggers at context startup).
         AtomicInteger callCount = new AtomicInteger(0);
         MigrationRunner runner = new MigrationRunner(
             noOpLock, new InMemoryHistoryStore(),
             List.of(simpleScript("2.0.01-upgrade", callCount::incrementAndGet))
         );
 
-        try {
-            MigrationRunner.setSkipAutoRun(true);
+        // When
+        runner.autoRun();
 
-            // When
-            runner.initOnStartup();
-
-            // Then
-            assertThat(callCount.get()).isEqualTo(0);
-        } finally {
-            MigrationRunner.setSkipAutoRun(false);
-        }
+        // Then
+        assertThat(callCount.get()).isEqualTo(1);
     }
 
     @Test
@@ -573,6 +669,14 @@ class MigrationRunnerTest {
 
         @Override
         public void markApplied(final MigrationScript script, final long executionMs) {
+            applied.put(script.scriptId(), script.checksum());
+        }
+
+        @Override
+        public void updateChecksum(final MigrationScript script) {
+            if (!applied.containsKey(script.scriptId())) {
+                throw new IllegalStateException("Cannot repair checksum for unapplied migration [" + script.scriptId() + "].");
+            }
             applied.put(script.scriptId(), script.checksum());
         }
 

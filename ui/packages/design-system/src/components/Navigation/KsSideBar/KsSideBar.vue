@@ -42,6 +42,7 @@
 .ks-sidebar__header {
     flex: 0 0 auto;
     padding: 0 var(--ks-spacing-4);
+    margin-bottom: var(--ks-spacing-3);
 }
 
 .ks-sidebar__body {

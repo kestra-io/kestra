@@ -2,7 +2,6 @@ package io.kestra.plugin.core.flow;
 
 import java.util.concurrent.TimeoutException;
 
-import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import org.junit.jupiter.api.Test;
 
 import com.google.common.collect.ImmutableMap;
@@ -13,6 +12,7 @@ import io.kestra.core.junit.annotations.LoadFlows;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.queues.QueueException;
+import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.runners.TestRunnerUtils;
 import io.kestra.core.services.TaskOutputService;
 
@@ -100,6 +100,22 @@ class SwitchTest {
     }
 
     @Test
+    @LoadFlows(value = { "flows/valids/switch-defaults-only.yaml" }, tenantId = "switchdefaultsonly")
+    void switchDefaultsOnly() throws TimeoutException, QueueException, io.kestra.core.exceptions.InternalException {
+        Execution execution = runnerUtils.runOne(
+            "switchdefaultsonly",
+            "io.kestra.tests",
+            "switch-defaults-only",
+            null,
+            (f, e) -> ImmutableMap.of("string", "ANYTHING")
+        );
+
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.getTaskRunList().get(1).getTaskId()).isEqualTo("default");
+        assertThat((Boolean) taskOutputService.getOutputs(execution.findTaskRunsByTaskId("parent-seq").getFirst()).get("defaults")).isTrue();
+    }
+
+    @Test
     @LoadFlows(value = { "flows/valids/switch-impossible.yaml" }, tenantId = "switchimpossible")
     void switchImpossible() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(
@@ -119,7 +135,7 @@ class SwitchTest {
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(execution.getTaskRunList()).hasSize(1);
 
-        var subExecutions = executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId());
+        var subExecutions = executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId(), null);
         assertThat(subExecutions.size()).isEqualTo(2);
 
         // we check that OOMCRM_EB_DD_000 and OOMCRM_EB_DD_001 have been processed once across all sub-executions

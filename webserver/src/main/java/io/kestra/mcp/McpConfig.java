@@ -1,9 +1,9 @@
 package io.kestra.mcp;
 
+import java.time.Duration;
+
 import io.micronaut.context.annotation.ConfigurationProperties;
 import io.micronaut.core.bind.annotation.Bindable;
-
-import java.time.Duration;
 
 @ConfigurationProperties("kestra.mcp")
 public record McpConfig(

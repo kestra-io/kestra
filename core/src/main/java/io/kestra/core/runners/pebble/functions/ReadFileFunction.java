@@ -23,7 +23,7 @@ import jakarta.inject.Singleton;
 @Singleton
 public class ReadFileFunction extends AbstractFileFunction {
     public static final String NAME = "read";
-    public static final String VERSION = "version";
+    public static final String REVISION = "revision";
 
     private static final String ERROR_MESSAGE = "The 'read' function expects an argument 'path' that is a path to a namespace file or an internal storage URI.";
 
@@ -31,7 +31,7 @@ public class ReadFileFunction extends AbstractFileFunction {
     public List<String> getArgumentNames() {
         return Stream.concat(
             super.getArgumentNames().stream(),
-            Stream.of(VERSION)
+            Stream.of(REVISION)
         ).toList();
     }
 
@@ -40,7 +40,7 @@ public class ReadFileFunction extends AbstractFileFunction {
         HashMap<String, String> defaults = new HashMap<>();
         defaults.put(PATH, "'a/namespace/file'");
         defaults.put(NAMESPACE, "flow.namespace");
-        defaults.put(VERSION, null);
+        defaults.put(REVISION, null);
         return defaults;
     }
 
@@ -78,10 +78,16 @@ public class ReadFileFunction extends AbstractFileFunction {
     private InputStream contentInputStream(URI path, String namespace, String tenantId, Map<String, Object> args) throws IOException {
         Namespace namespaceStorage = namespaceFactory.get().of(tenantId, namespace, storageInterface.get());
 
-        if (args.containsKey(VERSION)) {
+        if (args.containsKey(REVISION)) {
+            Integer revision;
+            try {
+                revision = Integer.parseInt(args.get(REVISION).toString());
+            } catch (NumberFormatException e) {
+                throw new IllegalArgumentException("The '" + NAME + "' function expects the 'revision' argument to be a valid integer.");
+            }
             return namespaceStorage.getFileContent(
                 NamespaceFile.normalize(Path.of(path.getPath())),
-                Integer.parseInt(args.get(VERSION).toString())
+                revision
             );
         }
 

@@ -1,14 +1,16 @@
 package io.kestra.plugin.core.http;
 
+import java.time.Duration;
+
+import org.awaitility.Awaitility;
+import org.junit.jupiter.api.Test;
+
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.junit.annotations.LoadFlowsWithTenant;
 import io.kestra.core.runners.Scheduler;
 import io.kestra.core.runners.TestRunnerUtils;
-import jakarta.inject.Inject;
-import org.awaitility.Awaitility;
-import org.junit.jupiter.api.Test;
 
-import java.time.Duration;
+import jakarta.inject.Inject;
 
 @KestraTest(startRunner = true, startScheduler = true)
 class TriggerTest {
@@ -19,7 +21,7 @@ class TriggerTest {
     protected Scheduler scheduler;
 
     @Test
-    @LoadFlowsWithTenant({"flows/valids/http-listen.yaml"})
+    @LoadFlowsWithTenant({ "flows/valids/http-listen.yaml" })
     void shouldExecuteFlowForHttpTrigger(String tenantId) {
         Awaitility.await().atMost(Duration.ofSeconds(20)).pollInterval(Duration.ofMillis(100)).until(() -> scheduler.isActive());
 
@@ -27,7 +29,7 @@ class TriggerTest {
     }
 
     @Test
-    @LoadFlowsWithTenant({"flows/valids/http-listen-encrypted.yaml"})
+    @LoadFlowsWithTenant({ "flows/valids/http-listen-encrypted.yaml" })
     void shouldExecuteFlowForHttpTriggerWithEncryptedBody(String tenantId) {
         Awaitility.await().atMost(Duration.ofSeconds(20)).pollInterval(Duration.ofMillis(100)).until(() -> scheduler.isActive());
 

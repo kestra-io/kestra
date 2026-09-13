@@ -30,24 +30,29 @@ public class WebhookTestPlugin extends AbstractWebhookTrigger implements Trigger
             throw new Exception("Failed as requested");
         }
 
-        Optional<Execution> maybeExecution = context.webhookService().newExecution(
-            context,
-            context.flow(),
-            this,
-            WebhookTestOutput.builder()
-                .body(JacksonMapper.toMap((String) context.request().getBody().getContent()))
-                .encryptedString(EncryptedString.from("super-secret", context.webhookService().runContext(context.flow(), context.trigger())))
-                .build()
-        );
+        Optional<Execution> maybeExecution;
+        try {
+            maybeExecution = context.webhookService().newExecution(
+                context,
+                context.flow(),
+                this,
+                WebhookTestOutput.builder()
+                    .body(JacksonMapper.toMap((String) context.request().getBody().getContent()))
+                    .encryptedString(EncryptedString.from("super-secret", context.webhookService().runContext(context.flow(), context.trigger())))
+                    .build()
+            );
+        } catch (WebhookInputRenderException e) {
+            return Mono.just(HttpResponse.of(HttpResponse.Status.UNPROCESSABLE_ENTITY));
+        }
 
         if (maybeExecution.isEmpty()) {
-            return Mono.just(HttpResponse.of(HttpResponse.Status.CONFLICT));
+            return Mono.just(HttpResponse.of(HttpResponse.Status.NO_CONTENT));
         }
 
         Execution execution = maybeExecution.get();
 
         return context.webhookService().startExecution(execution)
-            .<HttpResponse<?>>thenReturn(HttpResponse.of(HttpStatus.OK))
+            .<HttpResponse<?>> thenReturn(HttpResponse.of(HttpStatus.OK))
             .onErrorReturn(HttpResponse.of(HttpResponse.Status.INTERNAL_SERVER_ERROR));
     }
 

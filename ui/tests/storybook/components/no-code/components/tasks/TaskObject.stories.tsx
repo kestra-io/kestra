@@ -63,14 +63,15 @@ export const AppTableBlock: Story = {
     render: AppTableBlockRender,
     async play({canvasElement}) {
         const canvas = within(canvasElement);
-        fireEvent.click(await canvas.findByText("+ Add a new value", undefined, {timeout: 4000}));
+        fireEvent.click(await canvas.findByText("+ Add to data", undefined, {timeout: 4000}));
         expect(await canvas.findByText(/null/, {selector: "pre"})).toBeVisible();
-        fireEvent.click(await canvas.findByText("+ Add a new value", {selector: ".schema-wrapper .schema-wrapper button"}));
+        fireEvent.click(await canvas.findByText("+ Add to data", {selector: ".task-array-item .add-value-btn"}));
 
         fireEvent.input(await canvas.findByPlaceholderText("Key"), {target: {value: "key1"}})
-        fireEvent.input(await canvas.findByTestId("monaco-editor-hidden-synced-textarea"), {target: {value: "value1"}})
+        // First editor of the run: KsEditor is async, so Monaco's chunk loads here.
+        fireEvent.input(await canvas.findByTestId("monaco-editor-hidden-synced-textarea", undefined, {timeout: 15000}), {target: {value: "value1"}})
 
-        fireEvent.click(await canvas.findByText("+ Add a new value", {selector: ".schema-wrapper .schema-wrapper button"}))
+        fireEvent.click(await canvas.findByText("+ Add to data", {selector: ".task-array-item .add-value-btn"}))
 
         await waitFor(function getByPlaceholderKey() {
             expect(canvas.getAllByPlaceholderText("Key")[1]).toBeVisible();

@@ -121,11 +121,13 @@
 <style scoped lang="scss">
     pre {
         border-radius: var(--kel-border-radius-base);
+        padding-right: var(--ks-spacing-8);
     }
 
     /* Allow line-wraps */
     code {
         display: block;
         white-space: pre-wrap;
+        overflow-wrap: anywhere;
     }
 </style>

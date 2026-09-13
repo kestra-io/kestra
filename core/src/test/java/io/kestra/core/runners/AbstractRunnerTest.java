@@ -57,9 +57,6 @@ public abstract class AbstractRunnerTest {
     protected MultipleConditionTriggerCaseTest multipleConditionTriggerCaseTest;
 
     @Inject
-    private PluginDefaultsCaseTest pluginDefaultsCaseTest;
-
-    @Inject
     protected FlowCaseTest flowCaseTest;
 
     @Inject
@@ -131,6 +128,22 @@ public abstract class AbstractRunnerTest {
     @ExecuteFlow("flows/valids/parallel-nested.yaml")
     void parallelNested(Execution execution) {
         assertThat(execution.getTaskRunList()).hasSize(11);
+    }
+
+    @Test
+    @LoadFlows({ "flows/valids/parallel-fail-fast-cancelled.yaml" })
+    void parallelFailFastCancelled() throws QueueException, TimeoutException {
+        Execution execution = runnerUtils.runOneUntil(
+            MAIN_TENANT,
+            NAMESPACE, "parallel-fail-fast-cancelled", null, null, Duration.ofSeconds(20),
+            execution1 -> execution1.getState().isTerminated()
+                && execution1.getTaskRunList() != null
+                && execution1.getTaskRunList().stream().allMatch(taskRun -> taskRun.getState().isTerminated())
+        );
+
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        // the sibling must be cancelled quickly instead of running its full PT10S duration
+        assertThat(execution.findTaskRunsByTaskId("sleep").getFirst().getState().getCurrent()).isEqualTo(State.Type.CANCELLED);
     }
 
     @Test
@@ -225,11 +238,12 @@ public abstract class AbstractRunnerTest {
 
     @Test
     @LoadFlows(
-        { "flows/valids/trigger-flow-listener-with-pause.yaml",
-            "flows/valids/trigger-flow-with-pause.yaml" }
+        value = { "flows/valids/trigger-flow-listener-with-pause.yaml",
+            "flows/valids/trigger-flow-with-pause.yaml" },
+        tenantId = "pause-tenant"
     )
     void flowTriggerWithPause() throws Exception {
-        flowTriggerCaseTest.triggerWithPause();
+        flowTriggerCaseTest.triggerWithPause("pause-tenant");
     }
 
     @Test
@@ -270,7 +284,7 @@ public abstract class AbstractRunnerTest {
 
     @Test
     @LoadFlows(
-        { "flows/valids/flow-trigger-multiple-depends-on-flow-a.yaml", "flows/valids/flow-trigger-fire-once-true-flow-b.yaml",
+        { "flows/valids/flow-trigger-multiple-depends-on-flow-a.yaml", "flows/valids/flow-trigger-reset-after-fire-flow-b.yaml",
             "flows/valids/flow-trigger-multiple-depends-on-flow-listen.yaml" }
     )
     void flowTriggerMultipleDependsOn() throws Exception {
@@ -278,9 +292,9 @@ public abstract class AbstractRunnerTest {
     }
 
     @Test
-    @LoadFlows({ "flows/valids/flow-trigger-fire-once-true-flow-a.yaml", "flows/valids/flow-trigger-fire-once-true-flow-b.yaml", "flows/valids/flow-trigger-fire-once-true-flow-listen.yaml" })
-    void flowTriggerDependsOnFireOnceTrue() throws Exception {
-        multipleConditionTriggerCaseTest.flowTriggerDependsOnFireOnceTrue();
+    @LoadFlows({ "flows/valids/flow-trigger-reset-after-fire-flow-a.yaml", "flows/valids/flow-trigger-reset-after-fire-flow-b.yaml", "flows/valids/flow-trigger-reset-after-fire-flow-unrelated.yaml", "flows/valids/flow-trigger-reset-after-fire-flow-listen.yaml" })
+    void flowTriggerDependsOnResetsAfterFiring() throws Exception {
+        multipleConditionTriggerCaseTest.flowTriggerDependsOnResetsAfterFiring();
     }
 
     @Test
@@ -335,12 +349,6 @@ public abstract class AbstractRunnerTest {
     )
     void flowTriggerWithInvalidInputs() throws Exception {
         multipleConditionTriggerCaseTest.flowTriggerWithInvalidInputs();
-    }
-
-    @Test
-    @LoadFlows({ "flows/tests/plugin-defaults.yaml" })
-    void taskDefaults() throws Exception {
-        pluginDefaultsCaseTest.pluginDefaults();
     }
 
     @Test
@@ -405,6 +413,12 @@ public abstract class AbstractRunnerTest {
     @LoadFlows(value = { "flows/valids/pause-duration-from-input.yaml" }, tenantId = "pause-run-duration")
     public void pauseRunDurationFromInput() throws Exception {
         pauseTest.runDurationFromInput("pause-run-duration", runnerUtils);
+    }
+
+    @Test
+    @LoadFlows(value = { "flows/valids/pause-duration-manual-resume.yaml" }, tenantId = "pause-manual-resume")
+    public void pauseRunDurationManuallyResumed() throws Exception {
+        pauseTest.runDurationManuallyResumed("pause-manual-resume", runnerUtils);
     }
 
     @Test
@@ -710,6 +724,12 @@ public abstract class AbstractRunnerTest {
     @ExecuteFlow("flows/valids/after-execution-error.yaml")
     public void shouldCallTasksAfterError(Execution execution) throws InternalException {
         afterExecutionTestCase.shouldCallTasksAfterError(execution);
+    }
+
+    @Test
+    @ExecuteFlow("flows/valids/after-execution-flowable.yaml")
+    public void shouldCallFlowableTasksAfterExecution(Execution execution) {
+        afterExecutionTestCase.shouldCallFlowableTasksAfterExecution(execution);
     }
 
     @Test

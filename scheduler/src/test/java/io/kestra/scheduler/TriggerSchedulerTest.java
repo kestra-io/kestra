@@ -5,6 +5,7 @@ import java.time.DayOfWeek;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
@@ -12,29 +13,32 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.IntStream;
 
-import io.kestra.core.models.triggers.*;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import org.reactivestreams.Publisher;
 
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.conditions.ConditionContext;
-import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.property.Property;
+import io.kestra.core.models.triggers.*;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.scheduler.SchedulerClock;
 import io.kestra.core.scheduler.SchedulerConfiguration;
 import io.kestra.core.scheduler.model.TriggerState;
 import io.kestra.core.scheduler.model.TriggerType;
 import io.kestra.core.services.ConditionService;
-import io.kestra.core.services.PluginDefaultService;
+import io.kestra.core.services.FlowParsingService;
 import io.kestra.scheduler.internals.DefaultSchedulableTriggerFetcher;
+import io.kestra.scheduler.internals.NextEvaluationDate;
 import io.kestra.scheduler.internals.SchedulableEvaluator;
 import io.kestra.scheduler.pubsub.TriggerWorkerJobPublisher;
 import io.kestra.scheduler.utils.CollectorTriggerExecutionPublisher;
+import io.kestra.scheduler.utils.CollectorTriggerExecutionPublisher.PublishedExecution;
 import io.kestra.scheduler.utils.InMemoryFlowMetaStore;
 import io.kestra.scheduler.utils.InMemoryTriggerStateStore;
 
@@ -64,7 +68,7 @@ class TriggerSchedulerTest {
     ConditionService conditionService;
 
     @Inject
-    PluginDefaultService pluginDefaultService;
+    FlowParsingService flowParsingService;
 
     @Inject
     SchedulableEvaluator schedulableEvaluator;
@@ -85,6 +89,14 @@ class TriggerSchedulerTest {
         triggerExecutionPublisher = new CollectorTriggerExecutionPublisher();
     }
 
+    @AfterEach
+    void restoreSchedulerClock() {
+        // SchedulerClock is a JVM-wide static: without a restore, the last fixed clock set by a
+        // test here leaks into every later test class of the fork, whose trigger dates are then
+        // computed against a frozen past instant.
+        SchedulerClock.setClock(Clock.systemDefaultZone());
+    }
+
     @Test
     void shouldCreateMissingTriggerStateOnStart() {
         // region [GIVEN]
@@ -96,7 +108,7 @@ class TriggerSchedulerTest {
         scheduler.onStart(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS); // vNode are 0-based
 
         // THEN
-        TriggerState state = triggerStateStore.findById(Fixtures.triggerId()).orElse(null);
+        TriggerState state = triggerStateStore.findByIdWithoutAcl(Fixtures.triggerId()).orElse(null);
         assertThat(state).isNotNull();
         assertThat(state.isLocked()).isFalse();
         assertThat(state.getEvaluatedAt()).isNull();
@@ -109,13 +121,12 @@ class TriggerSchedulerTest {
         TriggerScheduler scheduler = newTriggerScheduler(List.of(flow));
         scheduler.onStart(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS); // vNode are 0-based
         // endregion [GIVEN]
-
         // WHEN
         SchedulerClock.offset(Duration.ofMinutes(15));
         scheduler.onSchedule(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS);
 
         // THEN
-        TriggerState state = triggerStateStore.findById(Fixtures.triggerId()).orElse(null);
+        TriggerState state = triggerStateStore.findByIdWithoutAcl(Fixtures.triggerId()).orElse(null);
         assertThat(state).isNotNull();
 
         assertThat(state.isLocked()).isTrue();
@@ -125,14 +136,14 @@ class TriggerSchedulerTest {
         // Check that an execution was created
         assertThat(triggerExecutionPublisher.executions().size()).isEqualTo(1);
 
-        Execution execution = triggerExecutionPublisher.executions().getFirst();
-        assertThat(execution.getScheduleDate()).isEqualTo(SchedulerClock.now().toInstant());
-        assertThat(execution.getTenantId()).isEqualTo(flow.getTenantId());
-        assertThat(execution.getNamespace()).isEqualTo(flow.getNamespace());
-        assertThat(execution.getFlowId()).isEqualTo(flow.getId());
+        PublishedExecution execution = triggerExecutionPublisher.executions().getFirst();
+        assertThat(execution.evaluation().scheduleDate()).isEqualTo(SchedulerClock.now().toInstant());
+        assertThat(execution.triggerId().getTenantId()).isEqualTo(flow.getTenantId());
+        assertThat(execution.triggerId().getNamespace()).isEqualTo(flow.getNamespace());
+        assertThat(execution.triggerId().getFlowId()).isEqualTo(flow.getId());
 
         // The locking execution id is persisted on the trigger state (allowConcurrent defaults to false).
-        assertThat(state.getExecutionId()).isEqualTo(execution.getId());
+        assertThat(state.getExecutionId()).isEqualTo(execution.evaluation().executionId());
     }
 
     @Test
@@ -154,7 +165,7 @@ class TriggerSchedulerTest {
         scheduler.onSchedule(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS);
 
         // THEN
-        TriggerState state = triggerStateStore.findById(Fixtures.triggerId("polling")).orElse(null);
+        TriggerState state = triggerStateStore.findByIdWithoutAcl(Fixtures.triggerId("polling")).orElse(null);
         assertThat(state).isNotNull();
 
         assertThat(state.isLocked()).isTrue();
@@ -181,7 +192,7 @@ class TriggerSchedulerTest {
         scheduler.onSchedule(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS);
 
         // THEN
-        TriggerState state = triggerStateStore.findById(Fixtures.triggerId("polling")).orElse(null);
+        TriggerState state = triggerStateStore.findByIdWithoutAcl(Fixtures.triggerId("polling")).orElse(null);
         assertThat(state).isNotNull();
 
         assertThat(state.isLocked()).isFalse();
@@ -206,12 +217,37 @@ class TriggerSchedulerTest {
         scheduler.onSchedule(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS);
 
         // THEN
-        TriggerState state = triggerStateStore.findById(Fixtures.triggerId("realtime")).orElse(null);
+        TriggerState state = triggerStateStore.findByIdWithoutAcl(Fixtures.triggerId("realtime")).orElse(null);
         assertThat(state).isNotNull();
 
         assertThat(state.isLocked()).isTrue();
         assertThat(state.getEvaluatedAt()).isEqualTo(SchedulerClock.now().toInstant());
         assertThat(state.getNextEvaluationDate()).isEqualTo(SchedulerClock.now().toInstant());
+    }
+
+    @Test
+    void shouldNotLockTriggerWhenWorkerJobIsNotDispatched() throws Exception {
+        // region [GIVEN]
+        FlowWithSource flow = Fixtures.flowWithTrigger(
+            TestRealTimeTrigger.builder()
+                .id("realtime")
+                .type(TestRealTimeTrigger.class.getName())
+                .build()
+        );
+        TriggerWorkerJobPublisher publisher = Mockito.mock(TriggerWorkerJobPublisher.class);
+        Mockito.when(publisher.send(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any())).thenReturn(false);
+        TriggerScheduler scheduler = newTriggerScheduler(List.of(flow), publisher);
+        scheduler.onStart(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS);
+        // endregion [GIVEN]
+
+        // WHEN
+        scheduler.onSchedule(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS);
+
+        // THEN — the trigger must stay unlocked so it is retried at its next evaluation date
+        TriggerState state = triggerStateStore.findByIdWithoutAcl(Fixtures.triggerId("realtime")).orElse(null);
+        assertThat(state).isNotNull();
+        assertThat(state.isLocked()).isFalse();
+        assertThat(state.getLastTriggeredDate()).isNull();
     }
 
     @Test
@@ -309,7 +345,8 @@ class TriggerSchedulerTest {
         SchedulerClock.setClock(Clock.fixed(friday.toInstant(), ZoneId.systemDefault()));
 
         FlowWithSource flow = Fixtures.flowWithEveryMinuteScheduleOnDayWeek(
-            ZoneId.systemDefault().getId(), DayOfWeek.SUNDAY);
+            ZoneId.systemDefault().getId(), DayOfWeek.SUNDAY
+        );
         TriggerScheduler scheduler = newTriggerScheduler(List.of(flow));
         scheduler.onStart(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS);
 
@@ -318,7 +355,7 @@ class TriggerSchedulerTest {
         scheduler.onSchedule(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS);
 
         // THEN the condition failed (Friday ≠ Sunday) and the persisted nextEvaluationDate is on a Sunday
-        TriggerState state = triggerStateStore.findById(Fixtures.triggerId()).orElseThrow();
+        TriggerState state = triggerStateStore.findByIdWithoutAcl(Fixtures.triggerId()).orElseThrow();
         ZonedDateTime nextZoned = state.getNextEvaluationDate().atZone(ZoneId.systemDefault());
         assertThat(nextZoned.getDayOfWeek())
             .as("nextEvaluationDate should fall on a SUNDAY, but was %s", nextZoned)
@@ -354,7 +391,7 @@ class TriggerSchedulerTest {
             scheduler.onSchedule(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS);
 
             // Assertions on TriggerState
-            TriggerState currentTriggerState = triggerStateStore.findById(Fixtures.triggerId()).orElse(null);
+            TriggerState currentTriggerState = triggerStateStore.findByIdWithoutAcl(Fixtures.triggerId()).orElse(null);
             assertThat(currentTriggerState).isNotNull();
 
             // [1-4 Calls] onSchedule
@@ -366,11 +403,11 @@ class TriggerSchedulerTest {
                 // Check an execution was created
                 assertThat(triggerExecutionPublisher.executions().size()).isEqualTo(1);
 
-                Execution execution = triggerExecutionPublisher.executions().getFirst();
-                assertThat(execution.getScheduleDate()).isEqualTo(SchedulerClock.now().toInstant());
-                assertThat(execution.getTenantId()).isEqualTo(flow.getTenantId());
-                assertThat(execution.getNamespace()).isEqualTo(flow.getNamespace());
-                assertThat(execution.getFlowId()).isEqualTo(flow.getId());
+                PublishedExecution execution = triggerExecutionPublisher.executions().getFirst();
+                assertThat(execution.evaluation().scheduleDate()).isEqualTo(SchedulerClock.now().toInstant());
+                assertThat(execution.triggerId().getTenantId()).isEqualTo(flow.getTenantId());
+                assertThat(execution.triggerId().getNamespace()).isEqualTo(flow.getNamespace());
+                assertThat(execution.triggerId().getFlowId()).isEqualTo(flow.getId());
 
                 // Simulate execution completed
                 completeExecution();
@@ -416,7 +453,7 @@ class TriggerSchedulerTest {
             scheduler.onSchedule(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS);
 
             // Assertions on TriggerState
-            TriggerState currentTriggerState = triggerStateStore.findById(Fixtures.triggerId()).orElse(null);
+            TriggerState currentTriggerState = triggerStateStore.findByIdWithoutAcl(Fixtures.triggerId()).orElse(null);
             assertThat(currentTriggerState).isNotNull();
 
             // [1st Call] onSchedule
@@ -424,16 +461,16 @@ class TriggerSchedulerTest {
                 assertThat(currentTriggerState.isLocked()).isTrue();
                 assertThat(currentTriggerState.getEvaluatedAt()).isEqualTo(expectedNextEvaluationNDate.minusMinutes(15).toInstant());
                 assertThat(currentTriggerState.getUpdatedAt()).isEqualTo(SchedulerClock.now().toInstant());
-                assertThat(expectedNextEvaluationNDate);
+                assertThat(currentTriggerState.getNextEvaluationDate()).isEqualTo(expectedNextEvaluationNDate.toInstant());
 
                 // Assert NO Execution
                 assertThat(triggerExecutionPublisher.executions().size()).isEqualTo(1);
 
-                Execution execution = triggerExecutionPublisher.executions().getFirst();
-                assertThat(execution.getScheduleDate()).isEqualTo(SchedulerClock.now().toInstant());
-                assertThat(execution.getTenantId()).isEqualTo(flow.getTenantId());
-                assertThat(execution.getNamespace()).isEqualTo(flow.getNamespace());
-                assertThat(execution.getFlowId()).isEqualTo(flow.getId());
+                PublishedExecution execution = triggerExecutionPublisher.executions().getFirst();
+                assertThat(execution.evaluation().scheduleDate()).isEqualTo(SchedulerClock.now().toInstant());
+                assertThat(execution.triggerId().getTenantId()).isEqualTo(flow.getTenantId());
+                assertThat(execution.triggerId().getNamespace()).isEqualTo(flow.getNamespace());
+                assertThat(execution.triggerId().getFlowId()).isEqualTo(flow.getId());
 
                 // Simulate execution completed
                 completeExecution();
@@ -481,7 +518,7 @@ class TriggerSchedulerTest {
         // [THEN]
         final ZonedDateTime expectedNextEvaluationNDate = ZonedDateTime.now(Clock.offset(initialSchedulerClock, Duration.ofHours(1)));
         // Assert TriggerState
-        TriggerState currentTriggerState = triggerStateStore.findById(Fixtures.triggerId()).orElse(null);
+        TriggerState currentTriggerState = triggerStateStore.findByIdWithoutAcl(Fixtures.triggerId()).orElse(null);
         assertThat(currentTriggerState).isNotNull();
 
         assertThat(currentTriggerState.getEvaluatedAt()).isEqualTo(initialState.getEvaluatedAt());
@@ -506,7 +543,7 @@ class TriggerSchedulerTest {
         scheduler.onSchedule(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS);
 
         // THEN
-        TriggerState state = triggerStateStore.findById(Fixtures.triggerId()).orElse(null);
+        TriggerState state = triggerStateStore.findByIdWithoutAcl(Fixtures.triggerId()).orElse(null);
         assertThat(state).isNotNull();
         assertThat(state.isLocked()).isFalse();
         assertThat(triggerExecutionPublisher.executions().size()).isEqualTo(0);
@@ -527,7 +564,7 @@ class TriggerSchedulerTest {
 
         // THEN
         assertThat(triggerExecutionPublisher.executions().size()).isEqualTo(1);
-        assertThat(triggerExecutionPublisher.executions().getFirst().getFlowId()).isEqualTo(Fixtures.TEST_FLOW_ID);
+        assertThat(triggerExecutionPublisher.executions().getFirst().triggerId().getFlowId()).isEqualTo(Fixtures.TEST_FLOW_ID);
     }
 
     @Test
@@ -546,7 +583,7 @@ class TriggerSchedulerTest {
 
         // THEN - a FAILED execution is sent due to the render exception
         assertThat(triggerExecutionPublisher.executions().size()).isEqualTo(1);
-        assertThat(triggerExecutionPublisher.executions().getFirst().getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        assertThat(triggerExecutionPublisher.executions().getFirst().evaluation().stateType()).isEqualTo(State.Type.FAILED);
     }
 
     @Test
@@ -558,7 +595,7 @@ class TriggerSchedulerTest {
         // endregion [GIVEN]
 
         // WHEN
-        TriggerState initialState = triggerStateStore.findById(Fixtures.triggerId()).orElse(null);
+        TriggerState initialState = triggerStateStore.findByIdWithoutAcl(Fixtures.triggerId()).orElse(null);
         triggerStateStore.save(
             initialState
                 .locked(SchedulerClock.getClock(), false)
@@ -569,7 +606,7 @@ class TriggerSchedulerTest {
         scheduler.onSchedule(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS);
 
         // THEN
-        TriggerState state = triggerStateStore.findById(Fixtures.triggerId()).orElse(null);
+        TriggerState state = triggerStateStore.findByIdWithoutAcl(Fixtures.triggerId()).orElse(null);
         assertThat(state).isNotNull();
 
         assertThat(state.isLocked()).isFalse();
@@ -596,7 +633,7 @@ class TriggerSchedulerTest {
         scheduler.onSchedule(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS);
 
         // THEN
-        TriggerState state = triggerStateStore.findById(Fixtures.triggerId()).orElse(null);
+        TriggerState state = triggerStateStore.findByIdWithoutAcl(Fixtures.triggerId()).orElse(null);
         assertThat(state).isNull();
         assertThat(triggerExecutionPublisher.executions().size()).isEqualTo(0);
     }
@@ -613,7 +650,7 @@ class TriggerSchedulerTest {
         // Trigger an initial execution
         scheduler.onSchedule(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS);
 
-        TriggerState triggerState = triggerStateStore.findById(Fixtures.triggerId()).orElse(null);
+        TriggerState triggerState = triggerStateStore.findByIdWithoutAcl(Fixtures.triggerId()).orElse(null);
         assertThat(triggerState).isNotNull();
         assertThat(triggerState.getNextEvaluationDate()).isEqualTo(SchedulerClock.now().plusMinutes(15).toInstant());
 
@@ -627,7 +664,7 @@ class TriggerSchedulerTest {
             triggerState
                 .locked(SchedulerClock.getClock(), false)
                 .updateForNextEvaluationDate(SchedulerClock.getClock(), backfillStart)
-                .backfill(SchedulerClock.getClock(), Backfill.builder().start(backfillStart).build())
+                .backfill(SchedulerClock.getClock(), Backfill.builder().start(backfillStart).currentDate(backfillStart).build())
         );
 
         // Simulate multiple 'onSchedule'
@@ -636,7 +673,7 @@ class TriggerSchedulerTest {
             scheduler.onSchedule(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS);
 
             // Assertions on TriggerState
-            TriggerState currentTriggerState = triggerStateStore.findById(Fixtures.triggerId()).orElse(null);
+            TriggerState currentTriggerState = triggerStateStore.findByIdWithoutAcl(Fixtures.triggerId()).orElse(null);
             assertThat(currentTriggerState).isNotNull();
             assertThat(currentTriggerState.isLocked()).isTrue();
             assertThat(currentTriggerState.getUpdatedAt()).isEqualTo(SchedulerClock.now().toInstant());
@@ -645,11 +682,11 @@ class TriggerSchedulerTest {
             // Check an execution was created
             assertThat(triggerExecutionPublisher.executions().size()).isEqualTo(1);
 
-            Execution execution = triggerExecutionPublisher.executions().getFirst();
-            assertThat(execution.getScheduleDate()).isEqualTo(SchedulerClock.now().toInstant());
-            assertThat(execution.getTenantId()).isEqualTo(flow.getTenantId());
-            assertThat(execution.getNamespace()).isEqualTo(flow.getNamespace());
-            assertThat(execution.getFlowId()).isEqualTo(flow.getId());
+            PublishedExecution execution = triggerExecutionPublisher.executions().getFirst();
+            assertThat(execution.evaluation().scheduleDate()).isEqualTo(SchedulerClock.now().toInstant());
+            assertThat(execution.triggerId().getTenantId()).isEqualTo(flow.getTenantId());
+            assertThat(execution.triggerId().getNamespace()).isEqualTo(flow.getNamespace());
+            assertThat(execution.triggerId().getFlowId()).isEqualTo(flow.getId());
 
             // Simulate execution completed
             completeExecution();
@@ -671,6 +708,83 @@ class TriggerSchedulerTest {
     }
 
     @Test
+    void shouldNotScheduleExecutionWhenBackfillIsPausedGivenScheduleOnDatesTrigger() {
+        assertNoExecutionScheduledWhileBackfillIsPaused(
+            Fixtures.flowWithScheduleOnDate(
+                TEST_TZ,
+                List.of(
+                    SchedulerClock.now().minusHours(2),
+                    SchedulerClock.now().minusHours(1),
+                    SchedulerClock.now().plusHours(1)
+                )
+            )
+        );
+    }
+
+    @Test
+    void shouldNotScheduleExecutionWhenBackfillIsPausedGivenScheduleTrigger() {
+        assertNoExecutionScheduledWhileBackfillIsPaused(Fixtures.flowWithSchedulePT15M(TEST_TZ));
+    }
+
+    private void assertNoExecutionScheduledWhileBackfillIsPaused(FlowWithSource flow) {
+        // region [GIVEN]
+        TriggerScheduler scheduler = newTriggerScheduler(List.of(flow));
+        scheduler.onStart(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS);
+
+        ZonedDateTime backfillStart = SchedulerClock.now().minus(Duration.ofHours(2));
+        TriggerState triggerState = triggerStateStore.findByIdWithoutAcl(Fixtures.triggerId()).orElseThrow();
+        triggerStateStore.save(
+            triggerState
+                .updateForNextEvaluationDate(SchedulerClock.getClock(), backfillStart)
+                .backfill(SchedulerClock.getClock(), Backfill.builder().start(backfillStart).currentDate(backfillStart).paused(true).build())
+        );
+        // endregion [GIVEN]
+
+        // WHEN
+        for (int i = 0; i < 5; i++) {
+            scheduler.onSchedule(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS);
+            completeExecution();
+            SchedulerClock.offset(Duration.ofSeconds(1));
+        }
+
+        // THEN
+        assertThat(triggerExecutionPublisher.executions().size()).isEqualTo(0);
+        TriggerState state = triggerStateStore.findByIdWithoutAcl(Fixtures.triggerId()).orElseThrow();
+        assertThat(state.getBackfill().getCurrentDate()).isEqualTo(backfillStart);
+    }
+
+    @Test
+    void shouldCreateExecutionAtBackfillStartWhenStartIsACronTick() {
+        // GIVEN: same create order as TriggerEventHandler.onCreateBackfill (seed, then nextEvaluationDate)
+        Clock clock = Clock.fixed(Instant.parse("2024-06-15T13:00:00Z"), ZoneOffset.UTC);
+        SchedulerClock.setClock(clock);
+        FlowWithSource flow = Fixtures.defaultFlow(b -> b.cron("* * * * *").timezone("UTC").build());
+        TriggerScheduler scheduler = newTriggerScheduler(List.of(flow));
+        scheduler.onStart(clock, clock.instant(), NODES_ASSIGNMENTS);
+
+        ZonedDateTime start = ZonedDateTime.parse("2024-06-15T12:00:00Z");
+        ZonedDateTime end = ZonedDateTime.parse("2024-06-15T12:05:00Z");
+        TriggerState state = triggerStateStore.findByIdWithoutAcl(Fixtures.triggerId()).orElseThrow()
+            .locked(clock, false)
+            .backfill(clock, Backfill.builder().start(start).end(end).build());
+        ConditionContext conditionContext = conditionService.conditionContext(
+            runContextFactory.of(flow, flow.getTriggers().getFirst()), flow, null);
+        ZonedDateTime next = NextEvaluationDate.get(
+            clock, flow.getTriggers().getFirst(), state.context(), conditionContext);
+        triggerStateStore.save(state.updateForNextEvaluationDate(clock, next));
+
+        // WHEN
+        scheduler.onSchedule(clock, clock.instant(), NODES_ASSIGNMENTS);
+
+        // THEN: the first backfilled execution is the start tick, not start+1 minute
+        assertThat(triggerExecutionPublisher.executions().size()).isEqualTo(1);
+        PublishedExecution execution = triggerExecutionPublisher.executions().getFirst();
+        assertThat(execution.evaluation().trigger()).isNotNull();
+        assertThat(ZonedDateTime.parse((String) execution.evaluation().trigger().getVariables().get("date")).toInstant())
+            .isEqualTo(start.toInstant());
+    }
+
+    @Test
     void shouldFailInitMissingScheduleTriggerGivenInvalidTimeZone() {
         // region [GIVEN]
         FlowWithSource flow = Fixtures.flowWithSchedulePT15M("Asia/Delhi");
@@ -681,12 +795,12 @@ class TriggerSchedulerTest {
         scheduler.onStart(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS); // vNode are 0-based
 
         // THEN
-        TriggerState state = triggerStateStore.findById(Fixtures.triggerId()).orElse(null);
+        TriggerState state = triggerStateStore.findByIdWithoutAcl(Fixtures.triggerId()).orElse(null);
         assertThat(state).isNull();
     }
 
     private void completeExecution() {
-        triggerStateStore.findById(Fixtures.triggerId()).ifPresent(state ->
+        triggerStateStore.findByIdWithoutAcl(Fixtures.triggerId()).ifPresent(state ->
         {
             TriggerState newState = state
                 .updateOnExecutionTerminated(SchedulerClock.getClock(), State.Type.SUCCESS)
@@ -696,17 +810,24 @@ class TriggerSchedulerTest {
     }
 
     private TriggerScheduler newTriggerScheduler(List<FlowWithSource> flows) {
-        InMemoryFlowMetaStore flowMetaStore = new InMemoryFlowMetaStore(1, flows);
+        return newTriggerScheduler(flows, triggerWorkerJobPublisher);
+    }
+
+    private TriggerScheduler newTriggerScheduler(List<FlowWithSource> flows, TriggerWorkerJobPublisher workerJobPublisher) {
+        return newTriggerScheduler(new InMemoryFlowMetaStore(1, flows), workerJobPublisher);
+    }
+
+    private TriggerScheduler newTriggerScheduler(InMemoryFlowMetaStore flowMetaStore, TriggerWorkerJobPublisher workerJobPublisher) {
         return new TriggerScheduler(
             triggerStateStore,
             flowMetaStore,
             metricRegistry,
             runContextFactory,
             conditionService,
-            pluginDefaultService,
+            flowParsingService,
             schedulableEvaluator,
-            new DefaultSchedulableTriggerFetcher(runContextFactory, triggerStateStore, flowMetaStore, pluginDefaultService),
-            triggerWorkerJobPublisher,
+            new DefaultSchedulableTriggerFetcher(runContextFactory, triggerStateStore, flowMetaStore, flowParsingService),
+            workerJobPublisher,
             triggerExecutionPublisher,
             new SchedulerConfiguration(1, Duration.ZERO, 100)
         );

@@ -1,11 +1,11 @@
 package io.kestra.mcp;
 
+import java.util.Map;
+
 import io.modelcontextprotocol.common.McpTransportContext;
 import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-
-import java.util.Map;
 
 @Data
 @Builder

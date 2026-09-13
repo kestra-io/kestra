@@ -10,15 +10,27 @@ export enum Comparators {
     STARTS_WITH = "^=",
     ENDS_WITH = "$=",
     CONTAINS = "*=",
+    NOT_CONTAINS = "!*=",
+    IS_NULL = "IS_NULL",
+    IS_NOT_NULL = "IS_NOT_NULL",
     REGEX = "~=",
     PREFIX = "^.=",
 }
 
-export const KV_COMPARATORS = [Comparators.EQUALS, Comparators.NOT_EQUALS]
+export const KV_COMPARATORS = [Comparators.EQUALS, Comparators.NOT_EQUALS, Comparators.IN, Comparators.NOT_IN]
 export const TEXT_COMPARATORS = [
     Comparators.CONTAINS,
+    Comparators.NOT_CONTAINS,
     Comparators.ENDS_WITH,
     Comparators.STARTS_WITH,
+]
+export const NULL_COMPARATORS = [Comparators.IS_NULL, Comparators.IS_NOT_NULL]
+// Range/threshold comparators always target a single bound value
+export const RANGE_COMPARATORS = [
+    Comparators.GREATER_THAN,
+    Comparators.LESS_THAN,
+    Comparators.GREATER_THAN_OR_EQUAL_TO,
+    Comparators.LESS_THAN_OR_EQUAL_TO,
 ]
 
 export interface DateFilterOption {
@@ -64,6 +76,11 @@ export interface FilterKeyConfig {
     customDateMode?: "single" | "range";
     visibleByDefault?: boolean;
     defaultValue?: AppliedFilter["value"] | (() => AppliedFilter["value"]);
+    /**
+     * When `false`, the filter is a global AND scope: it cannot be added to or moved into a
+     * conditional group, and is omitted from the "add field" menu. Defaults to `true`.
+     */
+    groupable?: boolean;
     /** When set, renders an "Apply to" segmented selector inside the timeRange popover. */
     dateFilterOptions?: DateFilterOption[];
     /** Overrides the chip's keyLabel based on the active dateFilter meta value. */
@@ -75,6 +92,8 @@ export interface FilterKeyConfig {
      * level filter rather than "Greater Than or Equal").
      */
     comparatorLabels?: Partial<Record<Comparators, string>>;
+    /** When `true`, renders colored status tags in multi-select value display. */
+    colored?: boolean;
 }
 
 export interface FilterValue {
@@ -132,6 +151,7 @@ export interface SavedFilter {
     description?: string;
     filters: AppliedFilter[];
     groups?: FilterGroup[];
+    topLogical?: LogicalOperator;
 }
 
 export interface FilterConfiguration {
@@ -175,6 +195,9 @@ export const COMPARATOR_LABELS: Record<Comparators, string> = {
     [Comparators.STARTS_WITH]: "Starts With",
     [Comparators.ENDS_WITH]: "Ends With",
     [Comparators.CONTAINS]: "Contains",
+    [Comparators.NOT_CONTAINS]: "Does Not Contain",
+    [Comparators.IS_NULL]: "Is Not Set",
+    [Comparators.IS_NOT_NULL]: "Is Set",
     [Comparators.REGEX]: "Matches Pattern",
     [Comparators.PREFIX]: "Prefix",
 }
@@ -191,6 +214,9 @@ export const COMPARATOR_DESCRIPTIONS: Record<Comparators, string> = {
     [Comparators.STARTS_WITH]: "filter.comparator_descriptions.STARTS_WITH",
     [Comparators.ENDS_WITH]: "filter.comparator_descriptions.ENDS_WITH",
     [Comparators.CONTAINS]: "filter.comparator_descriptions.CONTAINS",
+    [Comparators.NOT_CONTAINS]: "filter.comparator_descriptions.NOT_CONTAINS",
+    [Comparators.IS_NULL]: "filter.comparator_descriptions.IS_NULL",
+    [Comparators.IS_NOT_NULL]: "filter.comparator_descriptions.IS_NOT_NULL",
     [Comparators.REGEX]: "filter.comparator_descriptions.REGEX",
     [Comparators.PREFIX]: "filter.comparator_descriptions.PREFIX",
 }

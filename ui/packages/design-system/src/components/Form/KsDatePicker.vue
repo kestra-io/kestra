@@ -49,7 +49,8 @@
     .kel-date-editor.kel-input {
         --kel-date-editor-width: 100%;
         --kel-input-border-color: var(--ks-border-default);
-        --kel-input-bg-color: var(--ks-bg-elevated);
+        --kel-input-bg-color: var(--ks-bg-base);
+        --kel-input-hover-border-color: var(--ks-border-strong);
 
         .kel-input__icon {
             margin-right: .25rem;
@@ -59,6 +60,11 @@
     .kel-date-table td.disabled .kel-date-table-cell {
         background: none;
         color: var(--ks-text-inactive);
+    }
+
+    .kel-date-picker,
+    .kel-date-range-picker {
+        --kel-datepicker-hover-text-color: var(--ks-text-link);
     }
 
     .kel-date-range-picker {

@@ -1,0 +1,31 @@
+name: EE compile check via Kestra webhook (manual)
+
+# Ad-hoc EE compile check for an arbitrary OSS ref, on demand.
+# Pull requests get this check automatically via pull-request.yml (job:
+# trigger-ee); this workflow only exists to run it manually against any
+# branch/tag/SHA. Both entry points share the same composite action:
+# .github/actions/ee-compile-check.
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "Branch, tag, or SHA to compile"
+        required: true
+
+concurrency:
+  group: ee-compile-check-manual-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ee-compile:
+    name: EE compile check
+    runs-on: ubuntu-latest
+    if: github.repository == 'kestra-io/kestra'
+    steps:
+      - uses: actions/checkout@v7
+      - name: EE compile check (via Kestra webhook)
+        uses: ./.github/actions/ee-compile-check
+        with:
+          webhook-url: ${{ secrets.KESTRA_CI_EEBUILD_WEBHOOK_URL }}
+          ref: ${{ inputs.ref }}

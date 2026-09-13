@@ -1,12 +1,14 @@
 package io.kestra.core.runners.pebble.functions;
 
-import io.kestra.core.exceptions.IllegalVariableEvaluationException;
-import io.kestra.core.runners.VariableRenderer;
-import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
-import jakarta.inject.Inject;
+import java.util.Collections;
+
 import org.junit.jupiter.api.Test;
 
-import java.util.Collections;
+import io.kestra.core.exceptions.IllegalVariableEvaluationException;
+import io.kestra.core.runners.VariableRenderer;
+
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -113,43 +115,55 @@ class IsDayWeekInMonthFunctionTest {
 
     @Test
     void missingDateThrows() {
-        assertThatThrownBy(() -> variableRenderer.render(
-            "{{ isDayWeekInMonth() }}", Collections.emptyMap()
-        )).isInstanceOf(IllegalVariableEvaluationException.class);
+        assertThatThrownBy(
+            () -> variableRenderer.render(
+                "{{ isDayWeekInMonth() }}", Collections.emptyMap()
+            )
+        ).isInstanceOf(IllegalVariableEvaluationException.class);
     }
 
     @Test
     void missingDayOfWeekThrows() {
-        assertThatThrownBy(() -> variableRenderer.render(
-            "{{ isDayWeekInMonth('2025-01-06') }}", Collections.emptyMap()
-        )).isInstanceOf(IllegalVariableEvaluationException.class);
+        assertThatThrownBy(
+            () -> variableRenderer.render(
+                "{{ isDayWeekInMonth('2025-01-06') }}", Collections.emptyMap()
+            )
+        ).isInstanceOf(IllegalVariableEvaluationException.class);
     }
 
     @Test
     void missingPositionThrows() {
-        assertThatThrownBy(() -> variableRenderer.render(
-            "{{ isDayWeekInMonth('2025-01-06', 'MONDAY') }}", Collections.emptyMap()
-        )).isInstanceOf(IllegalVariableEvaluationException.class);
+        assertThatThrownBy(
+            () -> variableRenderer.render(
+                "{{ isDayWeekInMonth('2025-01-06', 'MONDAY') }}", Collections.emptyMap()
+            )
+        ).isInstanceOf(IllegalVariableEvaluationException.class);
     }
 
     @Test
     void invalidDayOfWeekThrows() {
-        assertThatThrownBy(() -> variableRenderer.render(
-            "{{ isDayWeekInMonth('2025-01-06', 'BLURSDAY', 'FIRST') }}", Collections.emptyMap()
-        )).isInstanceOf(IllegalVariableEvaluationException.class);
+        assertThatThrownBy(
+            () -> variableRenderer.render(
+                "{{ isDayWeekInMonth('2025-01-06', 'BLURSDAY', 'FIRST') }}", Collections.emptyMap()
+            )
+        ).isInstanceOf(IllegalVariableEvaluationException.class);
     }
 
     @Test
     void invalidPositionThrows() {
-        assertThatThrownBy(() -> variableRenderer.render(
-            "{{ isDayWeekInMonth('2025-01-06', 'MONDAY', 'FIFTH') }}", Collections.emptyMap()
-        )).isInstanceOf(IllegalVariableEvaluationException.class);
+        assertThatThrownBy(
+            () -> variableRenderer.render(
+                "{{ isDayWeekInMonth('2025-01-06', 'MONDAY', 'FIFTH') }}", Collections.emptyMap()
+            )
+        ).isInstanceOf(IllegalVariableEvaluationException.class);
     }
 
     @Test
     void invalidDateFormatThrows() {
-        assertThatThrownBy(() -> variableRenderer.render(
-            "{{ isDayWeekInMonth('not-a-date', 'MONDAY', 'FIRST') }}", Collections.emptyMap()
-        )).isInstanceOf(IllegalVariableEvaluationException.class);
+        assertThatThrownBy(
+            () -> variableRenderer.render(
+                "{{ isDayWeekInMonth('not-a-date', 'MONDAY', 'FIRST') }}", Collections.emptyMap()
+            )
+        ).isInstanceOf(IllegalVariableEvaluationException.class);
     }
 }

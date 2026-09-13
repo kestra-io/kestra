@@ -20,13 +20,17 @@ import io.kestra.core.models.assets.AssetExporter;
 import io.kestra.core.models.dashboards.DataFilter;
 import io.kestra.core.models.dashboards.DataFilterKPI;
 import io.kestra.core.models.dashboards.charts.Chart;
+import io.kestra.core.models.policies.RulePluginInterface;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.logs.LogExporter;
 import io.kestra.core.models.tasks.runners.TaskRunner;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.ui.PluginUiModule;
+import io.kestra.core.preview.FileRenderer;
+import io.kestra.core.repositories.LogDataStoreInterface;
 import io.kestra.core.secret.SecretPluginInterface;
 import io.kestra.core.storages.StorageInterface;
+import io.kestra.core.utils.SvgSanitizer;
 
 import lombok.*;
 
@@ -41,6 +45,7 @@ public class RegisteredPlugin {
     public static final String TRIGGERS_GROUP_NAME = "triggers";
     public static final String STORAGES_GROUP_NAME = "storages";
     public static final String SECRETS_GROUP_NAME = "secrets";
+    public static final String LOG_DATA_STORES_GROUP_NAME = "log-data-stores";
     public static final String TASK_RUNNERS_GROUP_NAME = "task-runners";
     public static final String ASSETS_GROUP_NAME = "assets";
     public static final String ASSETS_EXPORTERS_GROUP_NAME = "asset-exporters";
@@ -50,7 +55,9 @@ public class RegisteredPlugin {
     public static final String DATA_FILTERS_GROUP_NAME = "data-filters";
     public static final String DATA_FILTERS_KPI_GROUP_NAME = "data-filters-kpi";
     public static final String LOG_EXPORTERS_GROUP_NAME = "log-exporters";
+    public static final String RULES_GROUP_NAME = "rules";
     public static final String ADDITIONAL_PLUGINS_GROUP_NAME = "additional-plugins";
+    public static final String FILE_RENDERERS_GROUP_NAME = "file-renderers";
 
     private final ExternalPlugin externalPlugin;
     private final Manifest manifest;
@@ -59,6 +66,7 @@ public class RegisteredPlugin {
     private final List<Class<? extends AbstractTrigger>> triggers;
     private final List<Class<? extends StorageInterface>> storages;
     private final List<Class<? extends SecretPluginInterface>> secrets;
+    private final List<Class<? extends LogDataStoreInterface>> logDataStores;
     private final List<Class<? extends TaskRunner<?>>> taskRunners;
     private final List<Class<? extends Asset>> assets;
     private final List<Class<? extends AssetExporter<?>>> assetExporters;
@@ -68,7 +76,9 @@ public class RegisteredPlugin {
     private final List<Class<? extends DataFilter<?, ?>>> dataFilters;
     private final List<Class<? extends DataFilterKPI<?, ?>>> dataFiltersKPI;
     private final List<Class<? extends LogExporter<?>>> logExporters;
+    private final List<Class<? extends RulePluginInterface>> rules;
     private final List<Class<? extends AdditionalPlugin>> additionalPlugins;
+    private final List<Class<? extends FileRenderer>> fileRenderers;
     private final List<String> guides;
     // Map<lowercasealias, <Alias, Class>>
     private final Map<String, Map.Entry<String, Class<?>>> aliases;
@@ -80,6 +90,7 @@ public class RegisteredPlugin {
             !triggers.isEmpty() ||
             !storages.isEmpty() ||
             !secrets.isEmpty() ||
+            !logDataStores.isEmpty() ||
             !taskRunners.isEmpty() ||
             !assets.isEmpty() ||
             !assetExporters.isEmpty() ||
@@ -89,7 +100,9 @@ public class RegisteredPlugin {
             !dataFilters.isEmpty() ||
             !dataFiltersKPI.isEmpty() ||
             !logExporters.isEmpty() ||
-            !additionalPlugins.isEmpty();
+            !rules.isEmpty() ||
+            !additionalPlugins.isEmpty() ||
+            !fileRenderers.isEmpty();
     }
 
     public boolean hasClass(String cls) {
@@ -123,6 +136,10 @@ public class RegisteredPlugin {
 
         if (this.getSecrets().stream().anyMatch(r -> r.getName().equals(cls))) {
             return SecretPluginInterface.class;
+        }
+
+        if (this.getLogDataStores().stream().anyMatch(r -> r.getName().equals(cls))) {
+            return LogDataStoreInterface.class;
         }
 
         if (this.getTaskRunners().stream().anyMatch(r -> r.getName().equals(cls))) {
@@ -161,8 +178,16 @@ public class RegisteredPlugin {
             return LogExporter.class;
         }
 
+        if (this.getRules().stream().anyMatch(r -> r.getName().equals(cls))) {
+            return RulePluginInterface.class;
+        }
+
         if (this.getAdditionalPlugins().stream().anyMatch(r -> r.getName().equals(cls))) {
             return AdditionalPlugin.class;
+        }
+
+        if (this.getFileRenderers().stream().anyMatch(r -> r.getName().equals(cls))) {
+            return FileRenderer.class;
         }
 
         if (this.getAliases().containsKey(cls.toLowerCase())) {
@@ -190,6 +215,7 @@ public class RegisteredPlugin {
         result.put(TRIGGERS_GROUP_NAME, Arrays.asList(this.getTriggers().toArray(Class[]::new)));
         result.put(STORAGES_GROUP_NAME, Arrays.asList(this.getStorages().toArray(Class[]::new)));
         result.put(SECRETS_GROUP_NAME, Arrays.asList(this.getSecrets().toArray(Class[]::new)));
+        result.put(LOG_DATA_STORES_GROUP_NAME, Arrays.asList(this.getLogDataStores().toArray(Class[]::new)));
         result.put(TASK_RUNNERS_GROUP_NAME, Arrays.asList(this.getTaskRunners().toArray(Class[]::new)));
         result.put(ASSETS_GROUP_NAME, Arrays.asList(this.getAssets().toArray(Class[]::new)));
         result.put(ASSETS_EXPORTERS_GROUP_NAME, Arrays.asList(this.getAssetExporters().toArray(Class[]::new)));
@@ -199,7 +225,9 @@ public class RegisteredPlugin {
         result.put(DATA_FILTERS_GROUP_NAME, Arrays.asList(this.getDataFilters().toArray(Class[]::new)));
         result.put(DATA_FILTERS_KPI_GROUP_NAME, Arrays.asList(this.getDataFiltersKPI().toArray(Class[]::new)));
         result.put(LOG_EXPORTERS_GROUP_NAME, Arrays.asList(this.getLogExporters().toArray(Class[]::new)));
+        result.put(RULES_GROUP_NAME, Arrays.asList(this.getRules().toArray(Class[]::new)));
         result.put(ADDITIONAL_PLUGINS_GROUP_NAME, Arrays.asList(this.getAdditionalPlugins().toArray(Class[]::new)));
+        result.put(FILE_RENDERERS_GROUP_NAME, Arrays.asList(this.getFileRenderers().toArray(Class[]::new)));
 
         return result;
     }
@@ -292,8 +320,20 @@ public class RegisteredPlugin {
         return this.getManifest() == null ? null : this.getManifest().getMainAttributes().getValue("X-Kestra-Version");
     }
 
-    @SneakyThrows
     public String icon(Class<?> cls) {
+        return iconAndMonochrome(cls).map(IconAndMonochrome::icon).orElse(null);
+    }
+
+    public String icon() {
+        return icon("plugin-icon");
+    }
+
+    public String icon(String iconName) {
+        return iconAndMonochrome(iconName).map(IconAndMonochrome::icon).orElse(null);
+    }
+
+    @SneakyThrows
+    public Optional<IconAndMonochrome> iconAndMonochrome(Class<?> cls) {
         InputStream resourceAsStream = Stream
             .of(
                 this.getClassLoader().getResourceAsStream("icons/" + cls.getName() + ".svg"),
@@ -303,27 +343,27 @@ public class RegisteredPlugin {
             .findFirst()
             .orElse(null);
 
-        if (resourceAsStream != null) {
-            return Base64.getEncoder().encodeToString(
-                IOUtils.toString(resourceAsStream, StandardCharsets.UTF_8).getBytes(StandardCharsets.UTF_8)
-            );
-        }
-        return null;
-    }
-
-    public String icon() {
-        return icon("plugin-icon");
+        return encodeIcon(resourceAsStream);
     }
 
     @SneakyThrows
-    public String icon(String iconName) {
-        InputStream resourceAsStream = this.getClassLoader().getResourceAsStream("icons/" + iconName + ".svg");
-        if (resourceAsStream != null) {
-            return Base64.getEncoder().encodeToString(
-                IOUtils.toString(resourceAsStream, StandardCharsets.UTF_8).getBytes(StandardCharsets.UTF_8)
-            );
+    public Optional<IconAndMonochrome> iconAndMonochrome(String iconName) {
+        return encodeIcon(this.getClassLoader().getResourceAsStream("icons/" + iconName + ".svg"));
+    }
+
+    @SneakyThrows
+    private Optional<IconAndMonochrome> encodeIcon(InputStream resourceAsStream) {
+        if (resourceAsStream == null) {
+            return Optional.empty();
         }
-        return null;
+
+        String svg = SvgSanitizer.sanitize(IOUtils.toString(resourceAsStream, StandardCharsets.UTF_8));
+        String base64 = Base64.getEncoder().encodeToString(svg.getBytes(StandardCharsets.UTF_8));
+
+        return Optional.of(new IconAndMonochrome(base64, svg.contains("currentColor")));
+    }
+
+    public record IconAndMonochrome(String icon, boolean monochrome) {
     }
 
     public long crc32() {
@@ -361,6 +401,12 @@ public class RegisteredPlugin {
         if (!this.getSecrets().isEmpty()) {
             b.append("[Secrets: ");
             b.append(this.getSecrets().stream().map(Class::getName).collect(Collectors.joining(", ")));
+            b.append("] ");
+        }
+
+        if (!this.getLogDataStores().isEmpty()) {
+            b.append("[Log Stores: ");
+            b.append(this.getLogDataStores().stream().map(Class::getName).collect(Collectors.joining(", ")));
             b.append("] ");
         }
 
@@ -412,9 +458,21 @@ public class RegisteredPlugin {
             b.append("] ");
         }
 
+        if (!this.getRules().isEmpty()) {
+            b.append("[Rules: ");
+            b.append(this.getRules().stream().map(Class::getName).collect(Collectors.joining(", ")));
+            b.append("] ");
+        }
+
         if (!this.getAdditionalPlugins().isEmpty()) {
             b.append("[Additional Plugins: ");
             b.append(this.getAdditionalPlugins().stream().map(Class::getName).collect(Collectors.joining(", ")));
+            b.append("] ");
+        }
+
+        if (!this.getFileRenderers().isEmpty()) {
+            b.append("[File Renderers: ");
+            b.append(this.getFileRenderers().stream().map(Class::getName).collect(Collectors.joining(", ")));
             b.append("] ");
         }
 

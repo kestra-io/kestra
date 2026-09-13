@@ -91,7 +91,7 @@ public class DataChartValidator implements ConstraintValidator<DataChartValidati
             }
         }
 
-        Set<String> usedFields = dataChart.getData().getColumns().values().stream().map(c -> c.getAgg() + "-" + c.getField() + "-" + c.getLabelKey()).collect(Collectors.toSet());
+        Set<String> usedFields = dataChart.getData().getColumns().values().stream().map(c -> c.getAgg() + "-" + c.getField() + "-" + c.getKey()).collect(Collectors.toSet());
         if (usedFields.size() != dataChart.getData().getColumns().size()) {
             violations.add("Fields can only appear once in `data.columns`.");
         }

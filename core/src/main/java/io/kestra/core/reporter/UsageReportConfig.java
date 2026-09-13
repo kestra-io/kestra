@@ -17,13 +17,12 @@ public record UsageReportConfig(
     @Bindable(defaultValue = "true") boolean enabled,
     @Bindable(defaultValue = DEFAULT_URI) URI uri,
     @Bindable(defaultValue = "5m") Duration initialDelay,
-    @Bindable(defaultValue = "5m") Duration fixedDelay
-) {
+    @Bindable(defaultValue = "5m") Duration fixedDelay) {
 
     public static final String ANONYMOUS_USAGE_REPORT = "anonymous-usage-report";
-    
+
     public static final String DEFAULT_URI = "https://api.kestra.io/v1/reports/server-events";
-    
+
     public static UsageReportConfig getDefault() {
         return new UsageReportConfig(
             true,

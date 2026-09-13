@@ -57,6 +57,7 @@ class DashboardControllerTest {
     @Inject
     ExecutionRepositoryInterface executionRepository;
 
+    @SuppressWarnings("unchecked")
     @Test
     void shouldExportAnAdHocPreviewChartToCsv() {
         var uuid = IdUtils.create();
@@ -145,6 +146,7 @@ class DashboardControllerTest {
         assertThat(exported.getStatus().getCode()).isEqualTo(200);
     }
 
+    @SuppressWarnings({"unchecked", "rawtypes"})
     @Test
     void shouldReturnBuiltinDefaultDashboardDefinitions() {
         Map definitions = client.toBlocking().retrieve(
@@ -157,6 +159,7 @@ class DashboardControllerTest {
         assertThat((String) definitions.get("namespace")).contains("kpi_success_ratio");
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     void shouldPreviewChartFilteredByLabels() {
         String namespace = TestsUtils.randomNamespace();
@@ -248,6 +251,7 @@ class DashboardControllerTest {
         assertThat(httpClientResponseException.getMessage()).contains("catastrophic backtracking");
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     void shouldProcessDashboardIntervalRangeGreaterThanYear() {
         String namespace = TestsUtils.randomNamespace();

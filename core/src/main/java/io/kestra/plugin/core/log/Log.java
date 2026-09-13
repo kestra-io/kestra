@@ -13,6 +13,9 @@ import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.VoidOutput;
 import io.kestra.core.runners.RunContext;
+import io.kestra.fethr.taxonomy.Category;
+import io.kestra.fethr.taxonomy.FethrTaxonomy;
+import io.kestra.fethr.taxonomy.SubCategory;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
@@ -64,6 +67,12 @@ import static io.kestra.core.utils.Rethrow.throwConsumer;
                       - If you need some help, reach out via Slack"""
         ),
     }
+)
+@FethrTaxonomy(
+    category = Category.CORE,
+    subCategory = SubCategory.LOGGING,
+    icon = "FileText",
+    order = 1
 )
 public class Log extends Task implements RunnableTask<VoidOutput> {
     @Schema(

@@ -9,6 +9,8 @@ import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.RunContext;
+import io.kestra.fethr.taxonomy.Category;
+import io.kestra.fethr.taxonomy.FethrTaxonomy;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
@@ -51,6 +53,11 @@ import lombok.experimental.SuperBuilder;
                 """
         )
     }
+)
+@FethrTaxonomy(
+    category = Category.FILE_OPERATOR,
+    icon = "FileSearch",
+    order = 5
 )
 public class Size extends Task implements RunnableTask<Size.Output> {
     @Schema(

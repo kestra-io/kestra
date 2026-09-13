@@ -19,6 +19,8 @@ import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.fethr.taxonomy.Category;
+import io.kestra.fethr.taxonomy.FethrTaxonomy;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
@@ -150,6 +152,11 @@ import static io.kestra.core.utils.Rethrow.throwConsumer;
                 """
         )
     }
+)
+@FethrTaxonomy(
+    category = Category.FILE_OPERATOR,
+    icon = "Merge",
+    order = 3
 )
 public class Concat extends Task implements RunnableTask<Concat.Output> {
     @Schema(

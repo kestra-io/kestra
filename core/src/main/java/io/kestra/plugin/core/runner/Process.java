@@ -14,6 +14,9 @@ import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.tasks.runners.*;
 import io.kestra.core.runners.RunContext;
+import io.kestra.fethr.taxonomy.Category;
+import io.kestra.fethr.taxonomy.FethrTaxonomy;
+import io.kestra.fethr.taxonomy.SubCategory;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.EqualsAndHashCode;
@@ -107,6 +110,12 @@ import lombok.experimental.SuperBuilder;
             full = true
         )
     }
+)
+@FethrTaxonomy(
+    category = Category.CORE,
+    subCategory = SubCategory.DEVELOPER_TOOLS,
+    icon = "Terminal",
+    order = 1
 )
 public class Process extends TaskRunner<TaskRunnerDetailResult> {
 

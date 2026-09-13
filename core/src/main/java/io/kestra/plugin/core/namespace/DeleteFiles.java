@@ -22,6 +22,8 @@ import io.kestra.core.storages.Namespace;
 import io.kestra.core.storages.NamespaceFile;
 import io.kestra.core.utils.PathMatcherPredicate;
 import io.kestra.core.utils.Rethrow;
+import io.kestra.fethr.taxonomy.Category;
+import io.kestra.fethr.taxonomy.FethrTaxonomy;
 import io.kestra.plugin.core.namespace.DeleteFiles.Output;
 
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -76,6 +78,11 @@ import lombok.experimental.SuperBuilder;
             }
         )
     }
+)
+@FethrTaxonomy(
+    category = Category.FILE_OPERATOR,
+    icon = "FolderX",
+    order = 10
 )
 public class DeleteFiles extends Task implements RunnableTask<Output> {
     @NotNull

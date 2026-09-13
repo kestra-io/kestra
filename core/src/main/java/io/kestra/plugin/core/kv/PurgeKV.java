@@ -12,6 +12,9 @@ import io.kestra.core.runners.DefaultRunContext;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.services.KVStoreService;
 import io.kestra.core.storages.kv.KVEntry;
+import io.kestra.fethr.taxonomy.Category;
+import io.kestra.fethr.taxonomy.FethrTaxonomy;
+import io.kestra.fethr.taxonomy.SubCategory;
 import io.kestra.plugin.core.purge.PurgeTask;
 
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -53,6 +56,12 @@ import lombok.extern.slf4j.Slf4j;
                 """
         )
     }
+)
+@FethrTaxonomy(
+    category = Category.CORE,
+    subCategory = SubCategory.VARIABLE_AND_DATA,
+    icon = "Trash2",
+    order = 8
 )
 public class PurgeKV extends Task implements PurgeTask<KVEntry>, RunnableTask<PurgeKV.Output> {
     @Schema(

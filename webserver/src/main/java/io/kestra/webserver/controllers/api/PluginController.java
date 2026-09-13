@@ -20,7 +20,6 @@ import io.kestra.core.models.ui.PluginUiManifest;
 import io.kestra.core.models.ui.PluginUiModuleWithGroup;
 import io.kestra.core.models.ui.TaskWithVersion;
 import io.kestra.core.plugins.PluginArtifact;
-import io.kestra.core.plugins.PluginAutoInstallDetectResult;
 import io.kestra.core.plugins.PluginAutoInstallService;
 import io.kestra.core.plugins.PluginCatalogService;
 import io.kestra.core.plugins.PluginInstallJob;
@@ -33,6 +32,10 @@ import io.kestra.core.utils.EditionProvider;
 import io.kestra.core.utils.Hashing;
 import io.kestra.core.utils.MapUtils;
 import io.kestra.core.utils.VersionProvider;
+import io.kestra.fethr.taxonomy.Category;
+import io.kestra.fethr.taxonomy.CategoryVo;
+import io.kestra.fethr.taxonomy.SubCategory;
+import io.kestra.fethr.taxonomy.SubCategoryVo;
 import io.kestra.webserver.converters.QueryFilterFormat;
 import io.kestra.webserver.responses.PagedResults;
 import io.kestra.webserver.utils.PageableUtils;
@@ -630,6 +633,37 @@ public class PluginController {
     public HttpResponse<ApiPluginVersions> getPluginVersions(
         @Parameter(description = "The plugin type") @PathVariable String cls) {
         return HttpResponse.ok(new ApiPluginVersions(cls, pluginRegistry.getAllVersionsForType(cls)));
+    }
+
+    @Get(uri = "categories")
+    @ExecuteOn(TaskExecutors.IO)
+    @Operation(tags = { "Plugins" }, summary = "Get all categories")
+    public List<CategoryVo> getCategories() {
+        return Arrays.stream(Category.values())
+            .map(CategoryVo::of)
+            .sorted(Comparator.comparing(CategoryVo::id))
+            .toList();
+    }
+
+    @Get(uri = "{categoryId}/subcategories")
+    @ExecuteOn(TaskExecutors.IO)
+    @Operation(tags = { "Plugins" }, summary = "Get all sub categories for the category Id")
+    public List<SubCategoryVo> getSubCategories(
+        @Parameter(description = "Id of the category") @PathVariable int categoryId) {
+        if (categoryId < 0 || categoryId >= Category.values().length) {
+            throw new NoSuchElementException("Category with id '" + categoryId + "' doesn't exists ");
+        }
+
+        // Only CORE is subdivided; every other category is a flat list of plugins.
+        Category category = Category.values()[categoryId];
+        if (category != Category.CORE) {
+            throw new UnsupportedOperationException("Category with id '" + categoryId + "' does not support sub categories");
+        }
+
+        return Arrays.stream(SubCategory.values())
+            .map(SubCategoryVo::of)
+            .sorted(Comparator.comparing(SubCategoryVo::id))
+            .toList();
     }
 
     @Get("/groups/subgroups")

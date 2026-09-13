@@ -17,6 +17,9 @@ import io.kestra.core.models.tasks.*;
 import io.kestra.core.runners.FlowableUtils;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.utils.GraphUtils;
+import io.kestra.fethr.taxonomy.Category;
+import io.kestra.fethr.taxonomy.FethrTaxonomy;
+import io.kestra.fethr.taxonomy.SubCategory;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
@@ -57,6 +60,13 @@ import lombok.experimental.SuperBuilder;
                 """
         )
     }
+)
+@FethrTaxonomy(
+    category = Category.CORE,
+    subCategory = SubCategory.FLOW_CONTROL,
+    icon = "List",
+    order = 9,
+    visible = false
 )
 public class Sequential extends AbstractBranch<VoidOutput> {
     @Override

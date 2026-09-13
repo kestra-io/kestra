@@ -26,6 +26,9 @@ import io.kestra.core.utils.GraphUtils;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.MapUtils;
 import io.kestra.core.utils.TruthUtils;
+import io.kestra.fethr.taxonomy.Category;
+import io.kestra.fethr.taxonomy.FethrTaxonomy;
+import io.kestra.fethr.taxonomy.SubCategory;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
@@ -74,6 +77,12 @@ import lombok.experimental.SuperBuilder;
                 """
         )
     }
+)
+@FethrTaxonomy(
+    category = Category.CORE,
+    subCategory = SubCategory.FLOW_CONTROL,
+    icon = "Split",
+    order = 1
 )
 public class If extends Task implements FlowableTask<If.Output> {
     @Schema(

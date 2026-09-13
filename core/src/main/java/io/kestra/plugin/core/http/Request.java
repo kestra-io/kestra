@@ -23,6 +23,9 @@ import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.common.EncryptedString;
 import io.kestra.core.runners.RunContext;
+import io.kestra.fethr.taxonomy.Category;
+import io.kestra.fethr.taxonomy.FethrTaxonomy;
+import io.kestra.fethr.taxonomy.SubCategory;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
@@ -331,6 +334,12 @@ import lombok.experimental.SuperBuilder;
         )
     },
     aliases = "io.kestra.plugin.fs.http.Request"
+)
+@FethrTaxonomy(
+    category = Category.CORE,
+    subCategory = SubCategory.WEB_REQUEST,
+    icon = "Globe",
+    order = 1
 )
 public class Request extends AbstractHttp implements RunnableTask<Request.Output> {
 

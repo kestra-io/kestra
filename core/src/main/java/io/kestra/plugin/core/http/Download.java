@@ -22,6 +22,9 @@ import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.utils.TypeConverter;
+import io.kestra.fethr.taxonomy.Category;
+import io.kestra.fethr.taxonomy.FethrTaxonomy;
+import io.kestra.fethr.taxonomy.SubCategory;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
@@ -58,6 +61,12 @@ import static io.kestra.core.utils.Rethrow.throwConsumer;
         @Metric(name = "response.length", type = "counter", description = "The content length")
     },
     aliases = "io.kestra.plugin.fs.http.Download"
+)
+@FethrTaxonomy(
+    category = Category.CORE,
+    subCategory = SubCategory.WEB_REQUEST,
+    icon = "Download",
+    order = 2
 )
 public class Download extends AbstractHttp implements RunnableTask<Download.Output> {
     @Schema(title = "Should the task fail when downloading an empty file.")

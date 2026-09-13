@@ -18,6 +18,9 @@ import io.kestra.core.models.tasks.VoidOutput;
 import io.kestra.core.runners.FlowableUtils;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.utils.GraphUtils;
+import io.kestra.fethr.taxonomy.Category;
+import io.kestra.fethr.taxonomy.FethrTaxonomy;
+import io.kestra.fethr.taxonomy.SubCategory;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
@@ -124,6 +127,12 @@ import lombok.experimental.SuperBuilder;
                 """
         )
     }
+)
+@FethrTaxonomy(
+    category = Category.CORE,
+    subCategory = SubCategory.FLOW_CONTROL,
+    icon = "Columns",
+    order = 4
 )
 public class Parallel extends AbstractBranch<VoidOutput> implements OnChildFailureInterface {
     @NotNull

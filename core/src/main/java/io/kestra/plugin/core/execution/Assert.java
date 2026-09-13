@@ -15,6 +15,9 @@ import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.VoidOutput;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.utils.TruthUtils;
+import io.kestra.fethr.taxonomy.Category;
+import io.kestra.fethr.taxonomy.FethrTaxonomy;
+import io.kestra.fethr.taxonomy.SubCategory;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
@@ -45,7 +48,6 @@ import lombok.experimental.SuperBuilder;
                     id: assert
                     namespace: company.team
 
-
                     inputs:
                       - id: param
                         type: STRING
@@ -64,6 +66,13 @@ import lombok.experimental.SuperBuilder;
         @Metric(name = "failed", type = Counter.TYPE),
         @Metric(name = "success", type = Counter.TYPE)
     }
+)
+@FethrTaxonomy(
+    category = Category.CORE,
+    subCategory = SubCategory.EXECUTION_MANAGEMENT,
+    icon = "CheckCircle",
+    order = 10,
+    visible = false
 )
 public class Assert extends Task implements RunnableTask<VoidOutput> {
     @Schema(

@@ -8,6 +8,9 @@ import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.RunContext;
+import io.kestra.fethr.taxonomy.Category;
+import io.kestra.fethr.taxonomy.FethrTaxonomy;
+import io.kestra.fethr.taxonomy.SubCategory;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
@@ -57,6 +60,12 @@ import lombok.experimental.SuperBuilder;
                 """
         )
     }
+)
+@FethrTaxonomy(
+    category = Category.CORE,
+    subCategory = SubCategory.VARIABLE_AND_DATA,
+    icon = "ArrowRightFromLine",
+    order = 9
 )
 public class OutputValues extends Task implements RunnableTask<OutputValues.Output> {
     @Schema(

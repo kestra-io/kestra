@@ -23,6 +23,8 @@ import io.kestra.core.runners.RunContext;
 import io.kestra.core.serializers.FileSerde;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.TruthUtils;
+import io.kestra.fethr.taxonomy.Category;
+import io.kestra.fethr.taxonomy.FethrTaxonomy;
 
 import io.micronaut.core.util.functional.ThrowingFunction;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -71,6 +73,11 @@ import lombok.experimental.SuperBuilder;
 @EqualsAndHashCode
 @Getter
 @NoArgsConstructor
+@FethrTaxonomy(
+    category = Category.FILE_OPERATOR,
+    icon = "Filter",
+    order = 7
+)
 public class FilterItems extends Task implements RunnableTask<FilterItems.Output> {
 
     @Schema(

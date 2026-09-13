@@ -10,6 +10,8 @@ import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.RunContext;
+import io.kestra.fethr.taxonomy.Category;
+import io.kestra.fethr.taxonomy.FethrTaxonomy;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
@@ -48,6 +50,11 @@ import static io.kestra.core.utils.Rethrow.throwSupplier;
                 """
         )
     }
+)
+@FethrTaxonomy(
+    category = Category.FILE_OPERATOR,
+    icon = "FilePlus",
+    order = 1
 )
 public class Write extends Task implements RunnableTask<Write.Output> {
     @Schema(title = "The file content")

@@ -12,6 +12,9 @@ import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.fethr.taxonomy.Category;
+import io.kestra.fethr.taxonomy.FethrTaxonomy;
+import io.kestra.fethr.taxonomy.SubCategory;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
@@ -51,6 +54,13 @@ import lombok.experimental.SuperBuilder;
                 """
         )
     }
+)
+@FethrTaxonomy(
+    category = Category.CORE,
+    subCategory = SubCategory.DEVELOPER_TOOLS,
+    icon = "FileCode",
+    order = 11,
+    visible = false
 )
 public class TemplatedTask extends Task implements RunnableTask<Output> {
     private static final ObjectMapper OBJECT_MAPPER = JacksonMapper.ofYaml();

@@ -28,6 +28,9 @@ import io.kestra.core.runners.FlowableUtils;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.utils.GraphUtils;
 import io.kestra.core.validations.SwitchTaskValidation;
+import io.kestra.fethr.taxonomy.Category;
+import io.kestra.fethr.taxonomy.FethrTaxonomy;
+import io.kestra.fethr.taxonomy.SubCategory;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
@@ -88,6 +91,12 @@ import static io.kestra.core.utils.Rethrow.throwPredicate;
     }
 )
 @SwitchTaskValidation
+@FethrTaxonomy(
+    category = Category.CORE,
+    subCategory = SubCategory.FLOW_CONTROL,
+    icon = "Network",
+    order = 5
+)
 public class Switch extends Task implements FlowableTask<Switch.Output> {
     @NotNull
     @Schema(

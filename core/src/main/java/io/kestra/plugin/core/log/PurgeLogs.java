@@ -14,6 +14,9 @@ import io.kestra.core.runners.DefaultRunContext;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.services.ExecutionLogService;
 import io.kestra.core.utils.TypeConverter;
+import io.kestra.fethr.taxonomy.Category;
+import io.kestra.fethr.taxonomy.FethrTaxonomy;
+import io.kestra.fethr.taxonomy.SubCategory;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
@@ -70,6 +73,12 @@ import lombok.experimental.SuperBuilder;
                 """
         )
     }
+)
+@FethrTaxonomy(
+    category = Category.CORE,
+    subCategory = SubCategory.LOGGING,
+    icon = "Trash",
+    order = 3
 )
 public class PurgeLogs extends Task implements RunnableTask<PurgeLogs.Output>, SystemTask {
     @Schema(

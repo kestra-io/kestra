@@ -14,6 +14,9 @@ import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.RunContext;
+import io.kestra.fethr.taxonomy.Category;
+import io.kestra.fethr.taxonomy.FethrTaxonomy;
+import io.kestra.fethr.taxonomy.SubCategory;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
@@ -83,6 +86,13 @@ import lombok.experimental.SuperBuilder;
         @Metric(name = "length", type = Counter.TYPE),
         @Metric(name = "duration", type = Timer.TYPE)
     }
+)
+@FethrTaxonomy(
+    category = Category.CORE,
+    subCategory = SubCategory.DEVELOPER_TOOLS,
+    icon = "CornerDownLeft",
+    order = 12,
+    visible = false
 )
 public class Return extends Task implements RunnableTask<Return.Output> {
     @Schema(

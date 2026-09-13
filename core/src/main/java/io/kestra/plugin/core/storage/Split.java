@@ -12,6 +12,8 @@ import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.services.StorageService;
 import io.kestra.core.storages.StorageSplitInterface;
+import io.kestra.fethr.taxonomy.Category;
+import io.kestra.fethr.taxonomy.FethrTaxonomy;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
@@ -109,6 +111,11 @@ import lombok.experimental.SuperBuilder;
                 """
         ),
     }
+)
+@FethrTaxonomy(
+    category = Category.FILE_OPERATOR,
+    icon = "Scissors",
+    order = 2
 )
 public class Split extends Task implements RunnableTask<Split.Output>, StorageSplitInterface {
     @Schema(

@@ -3,6 +3,8 @@ package io.kestra.plugin.core.flow;
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 
+import org.hibernate.validator.constraints.time.DurationMin;
+
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.property.Property;
@@ -10,10 +12,11 @@ import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.VoidOutput;
 import io.kestra.core.runners.RunContext;
+import io.kestra.fethr.taxonomy.Category;
+import io.kestra.fethr.taxonomy.FethrTaxonomy;
+import io.kestra.fethr.taxonomy.SubCategory;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import org.hibernate.validator.constraints.time.DurationMin;
-
 import jakarta.validation.constraints.NotNull;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -45,6 +48,12 @@ import lombok.experimental.SuperBuilder;
                 """
         )
     }
+)
+@FethrTaxonomy(
+    category = Category.CORE,
+    subCategory = SubCategory.TIMING,
+    icon = "Clock",
+    order = 2
 )
 public class Sleep extends Task implements RunnableTask<VoidOutput> {
     @Schema(

@@ -2,11 +2,11 @@ package io.kestra.plugin.core.kv;
 
 import java.time.Duration;
 import java.time.Instant;
-
-import org.hibernate.validator.constraints.time.DurationMin;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeParseException;
+
+import org.hibernate.validator.constraints.time.DurationMin;
 
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
@@ -21,6 +21,9 @@ import io.kestra.core.storages.kv.KVMetadata;
 import io.kestra.core.storages.kv.KVStore;
 import io.kestra.core.storages.kv.KVValueAndMetadata;
 import io.kestra.core.utils.TypeConverter;
+import io.kestra.fethr.taxonomy.Category;
+import io.kestra.fethr.taxonomy.FethrTaxonomy;
+import io.kestra.fethr.taxonomy.SubCategory;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
@@ -61,6 +64,12 @@ import lombok.experimental.SuperBuilder;
                 """
         )
     }
+)
+@FethrTaxonomy(
+    category = Category.CORE,
+    subCategory = SubCategory.VARIABLE_AND_DATA,
+    icon = "KeySquare",
+    order = 5
 )
 public class Set extends Task implements RunnableTask<VoidOutput> {
     @NotNull

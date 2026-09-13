@@ -1,10 +1,10 @@
 package io.kestra.plugin.core.flow;
 
 import java.time.Duration;
-
-import org.hibernate.validator.constraints.time.DurationMin;
 import java.time.LocalDateTime;
 import java.util.*;
+
+import org.hibernate.validator.constraints.time.DurationMin;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -30,6 +30,9 @@ import io.kestra.core.runners.RunContext;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.GraphUtils;
 import io.kestra.core.utils.ListUtils;
+import io.kestra.fethr.taxonomy.Category;
+import io.kestra.fethr.taxonomy.FethrTaxonomy;
+import io.kestra.fethr.taxonomy.SubCategory;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.annotation.Nullable;
@@ -156,6 +159,12 @@ import lombok.experimental.SuperBuilder;
                 """
         )
     }
+)
+@FethrTaxonomy(
+    category = Category.CORE,
+    subCategory = SubCategory.TIMING,
+    icon = "PauseCircle",
+    order = 1
 )
 public class Pause extends Task implements FlowableTask<Pause.Output> {
     @Schema(

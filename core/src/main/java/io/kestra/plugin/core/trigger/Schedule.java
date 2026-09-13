@@ -7,6 +7,8 @@ import java.time.temporal.ChronoUnit;
 import java.util.Map;
 import java.util.Optional;
 
+import org.hibernate.validator.constraints.time.DurationMin;
+
 import com.cronutils.model.Cron;
 import com.cronutils.model.definition.CronDefinitionBuilder;
 import com.cronutils.model.time.ExecutionTime;
@@ -25,8 +27,8 @@ import io.kestra.core.scheduler.SchedulerClock;
 import io.kestra.core.utils.TruthUtils;
 import io.kestra.core.validations.ScheduleValidation;
 import io.kestra.core.validations.TimezoneId;
-
-import org.hibernate.validator.constraints.time.DurationMin;
+import io.kestra.fethr.taxonomy.Category;
+import io.kestra.fethr.taxonomy.FethrTaxonomy;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
@@ -167,6 +169,11 @@ import lombok.extern.slf4j.Slf4j;
     }
 )
 @ScheduleValidation
+@FethrTaxonomy(
+    category = Category.TRIGGER,
+    icon = "Clock",
+    order = 2
+)
 public class Schedule extends AbstractTrigger implements Schedulable, TriggerOutput<Schedule.Output> {
     private static final CronDefinitionBuilder CRON_DEFINITION_BUILDER = CronDefinitionBuilder.defineCron()
         .withMinutes().withValidRange(0, 59).withStrictRange().and()

@@ -15,6 +15,8 @@ import io.kestra.core.models.property.Property;
 import io.kestra.core.models.triggers.*;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.utils.TruthUtils;
+import io.kestra.fethr.taxonomy.Category;
+import io.kestra.fethr.taxonomy.FethrTaxonomy;
 
 import io.micronaut.http.MediaType;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -84,6 +86,11 @@ import lombok.experimental.SuperBuilder;
         )
     },
     aliases = "io.kestra.plugin.fs.http.Trigger"
+)
+@FethrTaxonomy(
+    category = Category.TRIGGER,
+    icon = "RefreshCcw",
+    order = 6
 )
 public class Trigger extends AbstractTrigger implements PollingTriggerInterface, HttpInterface, TriggerOutput<Request.Output> {
     @Builder.Default

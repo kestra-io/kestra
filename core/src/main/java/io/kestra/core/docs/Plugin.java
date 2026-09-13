@@ -6,6 +6,8 @@ import java.util.stream.Collectors;
 
 import io.kestra.core.models.annotations.PluginSubGroup;
 import io.kestra.core.plugins.RegisteredPlugin;
+import io.kestra.fethr.taxonomy.Category;
+import io.kestra.fethr.taxonomy.FethrTaxonomy;
 
 import io.micronaut.core.annotation.Nullable;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -157,11 +159,65 @@ public class Plugin {
                 var description = Optional.ofNullable(schema).map(Schema::description).filter(d -> !d.isEmpty()).orElse(null);
                 var deprecated = io.kestra.core.models.Plugin.isDeprecated(c) ? true : null;
 
-                return new PluginElementMetadata(c.getName(), deprecated, title, description);
+                return PluginElementMetadata.of(c, deprecated, title, description);
             })
             .toList();
     }
 
-    public record PluginElementMetadata(String cls, Boolean deprecated, String title, String description) {
+    /**
+     * Plugin metadata for the editor.
+     *
+     * <p>
+     * The trailing five components carry Fethr's editor taxonomy, read from {@link FethrTaxonomy}.
+     * A plugin that carries no taxonomy keeps upstream's four-component shape through the compact
+     * constructor, so untagged plugins serialize exactly as they did before.
+     */
+    public record PluginElementMetadata(
+        String cls,
+        Boolean deprecated,
+        String title,
+        String description,
+        List<String> aliases,
+        String category,
+        String subCategory,
+        String icon,
+        int order,
+        boolean visible) {
+        public PluginElementMetadata(String cls, Boolean deprecated, String title, String description) {
+            this(cls, deprecated, title, description, List.of(), "", "", "", -1, true);
+        }
+
+        /**
+         * Builds the metadata for a plugin class, folding in its {@link FethrTaxonomy} when it
+         * declares one. A plugin with no annotation, or one left in {@link Category#INTEGRATION},
+         * is reported without taxonomy: INTEGRATION is the catch-all bucket the editor does not
+         * group by, so tagging it would add fields the UI ignores.
+         */
+        static PluginElementMetadata of(Class<?> cls, Boolean deprecated, String title, String description) {
+            FethrTaxonomy taxonomy = cls.getAnnotation(FethrTaxonomy.class);
+
+            if (taxonomy == null || taxonomy.category() == Category.INTEGRATION) {
+                return new PluginElementMetadata(cls.getName(), deprecated, title, description);
+            }
+
+            io.kestra.core.models.annotations.Plugin plugin = cls.getAnnotation(io.kestra.core.models.annotations.Plugin.class);
+            List<String> aliases = Optional.ofNullable(plugin)
+                .map(io.kestra.core.models.annotations.Plugin::aliases)
+                .map(List::of)
+                .orElseGet(List::of);
+
+            return new PluginElementMetadata(
+                cls.getName(),
+                deprecated,
+                title,
+                description,
+                aliases,
+                taxonomy.category().getDisplayName(),
+                taxonomy.subCategory().getDisplayName(),
+                taxonomy.icon(),
+                taxonomy.order(),
+                taxonomy.visible()
+            );
+        }
     }
 }

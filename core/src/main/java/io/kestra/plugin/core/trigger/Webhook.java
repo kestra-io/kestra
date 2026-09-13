@@ -15,7 +15,6 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.kestra.core.exceptions.InternalException;
-import io.kestra.core.queues.MessageTooBigException;
 import io.kestra.core.http.HttpRequest;
 import io.kestra.core.http.HttpResponse;
 import io.kestra.core.models.annotations.Example;
@@ -24,9 +23,12 @@ import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.triggers.TriggerOutput;
+import io.kestra.core.queues.MessageTooBigException;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.validations.WebhookValidation;
+import io.kestra.fethr.taxonomy.Category;
+import io.kestra.fethr.taxonomy.FethrTaxonomy;
 
 import io.micronaut.http.MediaType;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -173,6 +175,11 @@ import reactor.core.publisher.Mono;
     }
 )
 @WebhookValidation
+@FethrTaxonomy(
+    category = Category.TRIGGER,
+    icon = "Webhook",
+    order = 5
+)
 public class Webhook extends AbstractWebhookTrigger implements TriggerOutput<Webhook.Output> {
     private static final ObjectMapper MAPPER = JacksonMapper.ofJson().copy()
         .setDefaultPropertyInclusion(JsonInclude.Include.USE_DEFAULTS);
@@ -318,9 +325,9 @@ public class Webhook extends AbstractWebhookTrigger implements TriggerOutput<Web
      * A body the trigger asked to store never reaches here: it carries no content but the URI it was stored
      * under, which is exposed as {@code uri}.
      *
-     * @param context       the webhook request context
-     * @param requestBody   the body of the webhook request, {@code null} if the request has none, or if it was
-     *                      stored rather than read
+     * @param context the webhook request context
+     * @param requestBody the body of the webhook request, {@code null} if the request has none, or if it was
+     *        stored rather than read
      * @param storedBodyUri the URI the body was stored under, {@code null} unless the trigger stores it
      * @return the trigger output
      */
@@ -334,7 +341,8 @@ public class Webhook extends AbstractWebhookTrigger implements TriggerOutput<Web
         }
 
         switch (requestBody) {
-            case null -> { }
+            case null -> {
+            }
             case HttpRequest.MultipartFormDataRequestBody multipart -> {
                 MultipartContent content = multipartContent(multipart);
                 output.parts(content.parts()).formFields(content.formFields());
@@ -363,13 +371,15 @@ public class Webhook extends AbstractWebhookTrigger implements TriggerOutput<Web
         multipart.getContent().forEach(part ->
         {
             switch (part) {
-                case HttpRequest.MultipartFormDataRequestBody.FilePart file -> parts.add(Output.Part.builder()
-                    .name(file.name())
-                    .filename(file.filename())
-                    .contentType(file.contentType())
-                    .size(file.size())
-                    .uri(file.uri().toString())
-                    .build());
+                case HttpRequest.MultipartFormDataRequestBody.FilePart file -> parts.add(
+                    Output.Part.builder()
+                        .name(file.name())
+                        .filename(file.filename())
+                        .contentType(file.contentType())
+                        .size(file.size())
+                        .uri(file.uri().toString())
+                        .build()
+                );
                 case HttpRequest.MultipartFormDataRequestBody.FormFieldPart formField ->
                     formFields.computeIfAbsent(formField.name(), name -> new ArrayList<>()).add(new String(formField.content(), charset));
             }
@@ -396,7 +406,8 @@ public class Webhook extends AbstractWebhookTrigger implements TriggerOutput<Web
         }
     }
 
-    private record MultipartContent(List<Output.Part> parts, Map<String, List<String>> formFields) {}
+    private record MultipartContent(List<Output.Part> parts, Map<String, List<String>> formFields) {
+    }
 
     @Builder
     @ToString

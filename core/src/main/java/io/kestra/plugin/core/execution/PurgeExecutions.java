@@ -13,6 +13,9 @@ import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.DefaultRunContext;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.services.ExecutionService;
+import io.kestra.fethr.taxonomy.Category;
+import io.kestra.fethr.taxonomy.FethrTaxonomy;
+import io.kestra.fethr.taxonomy.SubCategory;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
@@ -51,6 +54,12 @@ import lombok.experimental.SuperBuilder;
                 """
         )
     }
+)
+@FethrTaxonomy(
+    category = Category.CORE,
+    subCategory = SubCategory.EXECUTION_MANAGEMENT,
+    icon = "Trash2",
+    order = 3
 )
 public class PurgeExecutions extends Task implements RunnableTask<PurgeExecutions.Output>, SystemTask {
     @Schema(

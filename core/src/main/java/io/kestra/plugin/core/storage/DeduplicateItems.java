@@ -22,6 +22,8 @@ import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.serializers.FileSerde;
 import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.fethr.taxonomy.Category;
+import io.kestra.fethr.taxonomy.FethrTaxonomy;
 
 import io.micronaut.core.util.functional.ThrowingFunction;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -77,6 +79,11 @@ import lombok.experimental.SuperBuilder;
 @EqualsAndHashCode
 @Getter
 @NoArgsConstructor
+@FethrTaxonomy(
+    category = Category.FILE_OPERATOR,
+    icon = "Copy",
+    order = 8
+)
 public class DeduplicateItems extends Task implements RunnableTask<DeduplicateItems.Output> {
 
     @Schema(

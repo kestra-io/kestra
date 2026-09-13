@@ -20,6 +20,9 @@ import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.ListUtils;
+import io.kestra.fethr.taxonomy.Category;
+import io.kestra.fethr.taxonomy.FethrTaxonomy;
+import io.kestra.fethr.taxonomy.SubCategory;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
@@ -75,6 +78,12 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
                 """
         )
     }
+)
+@FethrTaxonomy(
+    category = Category.CORE,
+    subCategory = SubCategory.VARIABLE_AND_DATA,
+    icon = "Tag",
+    order = 3
 )
 public class Labels extends Task implements ExecutionUpdatableTask {
     private static final TypeReference<Map<String, String>> MAP_TYPE_REFERENCE = new TypeReference<>() {

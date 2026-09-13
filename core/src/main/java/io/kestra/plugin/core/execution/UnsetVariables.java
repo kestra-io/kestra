@@ -10,6 +10,9 @@ import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.ExecutionUpdatableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.RunContext;
+import io.kestra.fethr.taxonomy.Category;
+import io.kestra.fethr.taxonomy.FethrTaxonomy;
+import io.kestra.fethr.taxonomy.SubCategory;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
@@ -56,6 +59,12 @@ import lombok.experimental.SuperBuilder;
                       - name"""
         )
     }
+)
+@FethrTaxonomy(
+    category = Category.CORE,
+    subCategory = SubCategory.VARIABLE_AND_DATA,
+    icon = "VariableIcon",
+    order = 2
 )
 public class UnsetVariables extends Task implements ExecutionUpdatableTask {
     @Schema(title = "The variables")

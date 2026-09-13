@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import org.hibernate.validator.constraints.time.DurationMin;
 import org.slf4j.Logger;
 
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
@@ -26,10 +27,11 @@ import io.kestra.core.utils.GraphUtils;
 import io.kestra.core.utils.MapUtils;
 import io.kestra.core.utils.TruthUtils;
 import io.kestra.core.utils.TypeConverter;
+import io.kestra.fethr.taxonomy.Category;
+import io.kestra.fethr.taxonomy.FethrTaxonomy;
+import io.kestra.fethr.taxonomy.SubCategory;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import org.hibernate.validator.constraints.time.DurationMin;
-
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
@@ -69,6 +71,12 @@ import lombok.experimental.SuperBuilder;
         )
     },
     aliases = "io.kestra.plugin.core.flow.WaitFor"
+)
+@FethrTaxonomy(
+    category = Category.CORE,
+    subCategory = SubCategory.FLOW_CONTROL,
+    icon = "RefreshCcw",
+    order = 3
 )
 public class LoopUntil extends AbstractBranch<LoopUntil.Output> {
     private static final int INITIAL_LOOP_VALUE = 1;

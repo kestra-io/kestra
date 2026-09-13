@@ -20,6 +20,8 @@ import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.storages.Namespace;
+import io.kestra.fethr.taxonomy.Category;
+import io.kestra.fethr.taxonomy.FethrTaxonomy;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
@@ -113,6 +115,11 @@ import static io.kestra.core.utils.PathUtil.checkLeadingSlash;
                 """
         )
     }
+)
+@FethrTaxonomy(
+    category = Category.FILE_OPERATOR,
+    icon = "FolderUp",
+    order = 12
 )
 public class UploadFiles extends Task implements RunnableTask<UploadFiles.Output> {
     @NotNull

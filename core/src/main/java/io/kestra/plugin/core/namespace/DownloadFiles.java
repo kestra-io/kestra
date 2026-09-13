@@ -20,6 +20,8 @@ import io.kestra.core.runners.RunContext;
 import io.kestra.core.storages.Namespace;
 import io.kestra.core.utils.PathMatcherPredicate;
 import io.kestra.core.utils.Rethrow;
+import io.kestra.fethr.taxonomy.Category;
+import io.kestra.fethr.taxonomy.FethrTaxonomy;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
@@ -77,6 +79,11 @@ import static io.kestra.core.storages.NamespaceFile.toLogicalPath;
             }
         )
     }
+)
+@FethrTaxonomy(
+    category = Category.FILE_OPERATOR,
+    icon = "FolderDown",
+    order = 11
 )
 public class DownloadFiles extends Task implements RunnableTask<DownloadFiles.Output> {
     @NotNull

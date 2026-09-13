@@ -20,6 +20,8 @@ import io.kestra.core.models.triggers.*;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.scheduler.SchedulerClock;
 import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.fethr.taxonomy.Category;
+import io.kestra.fethr.taxonomy.FethrTaxonomy;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
@@ -44,6 +46,11 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
         Use when a cron can’t express required occurrences (e.g., ad-hoc or irregular calendars)."""
 )
 @Plugin
+@FethrTaxonomy(
+    category = Category.TRIGGER,
+    icon = "CalendarDays",
+    order = 3
+)
 public class ScheduleOnDates extends AbstractTrigger implements Schedulable, TriggerOutput<VoidOutput> {
     private static final String PLUGIN_PROPERTY_RECOVER_MISSED_SCHEDULES = "recoverMissedSchedules";
 

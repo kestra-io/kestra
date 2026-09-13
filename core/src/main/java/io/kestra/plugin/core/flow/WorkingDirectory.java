@@ -13,6 +13,8 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
+import org.hibernate.validator.constraints.time.DurationMin;
+
 import com.fasterxml.jackson.core.type.TypeReference;
 
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
@@ -37,10 +39,11 @@ import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.NamespaceFilesUtils;
 import io.kestra.core.validations.WorkingDirectoryTaskValidation;
+import io.kestra.fethr.taxonomy.Category;
+import io.kestra.fethr.taxonomy.FethrTaxonomy;
+import io.kestra.fethr.taxonomy.SubCategory;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import org.hibernate.validator.constraints.time.DurationMin;
-
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -208,6 +211,13 @@ import lombok.experimental.SuperBuilder;
     }
 )
 @WorkingDirectoryTaskValidation
+@FethrTaxonomy(
+    category = Category.CORE,
+    subCategory = SubCategory.DEVELOPER_TOOLS,
+    icon = "FolderOpen",
+    order = 10,
+    visible = false
+)
 public class WorkingDirectory extends Sequential implements NamespaceFilesInterface, InputFilesInterface, OutputFilesInterface {
 
     private static final String OUTPUTS_FILE = "outputs.ion";

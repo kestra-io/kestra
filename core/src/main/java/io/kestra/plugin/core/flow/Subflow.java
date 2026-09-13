@@ -31,6 +31,9 @@ import io.kestra.core.runners.SubflowExecutionResult;
 import io.kestra.core.serializers.ListOrMapOfLabelDeserializer;
 import io.kestra.core.serializers.ListOrMapOfLabelSerializer;
 import io.kestra.core.validations.NoSystemLabelValidation;
+import io.kestra.fethr.taxonomy.Category;
+import io.kestra.fethr.taxonomy.FethrTaxonomy;
+import io.kestra.fethr.taxonomy.SubCategory;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Min;
@@ -77,6 +80,12 @@ import lombok.experimental.SuperBuilder;
                 """
         )
     }
+)
+@FethrTaxonomy(
+    category = Category.CORE,
+    subCategory = SubCategory.FLOW_CONTROL,
+    icon = "Workflow",
+    order = 7
 )
 public class Subflow extends Task implements ExecutableTask<Subflow.Output>, ChildFlowInterface {
     @NotEmpty

@@ -29,6 +29,8 @@ import io.kestra.core.runners.RunContext;
 import io.kestra.core.services.LabelService;
 import io.kestra.core.utils.*;
 import io.kestra.core.validations.FlowTriggerValidation;
+import io.kestra.fethr.taxonomy.Category;
+import io.kestra.fethr.taxonomy.FethrTaxonomy;
 
 import io.micronaut.core.annotation.Nullable;
 import io.swagger.v3.oas.annotations.Hidden;
@@ -234,6 +236,11 @@ import static io.kestra.core.topologies.FlowTopologyService.SIMULATED_EXECUTION;
 )
 @Slf4j
 @FlowTriggerValidation
+@FethrTaxonomy(
+    category = Category.TRIGGER,
+    icon = "Workflow",
+    order = 4
+)
 public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> {
     private static final String TRIGGER_VAR = "trigger";
     private static final String OUTPUTS_VAR = "outputs";

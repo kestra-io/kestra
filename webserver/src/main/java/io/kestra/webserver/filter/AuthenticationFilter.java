@@ -108,9 +108,8 @@ public class AuthenticationFilter implements HttpServerFilter {
         return false;
     }
 
-    @SuppressWarnings("rawtypes")
     private boolean isAnonymousRoute(HttpRequest<?> request) {
-        Optional<RouteMatch> routeMatch = RouteMatchUtils.findRouteMatch(request);
+        Optional<RouteMatch<?>> routeMatch = RouteAttributes.getRouteMatch(request);
         if (routeMatch.isPresent() && routeMatch.get() instanceof MethodBasedRouteMatch<?, ?> method) {
             return method.getAnnotation(AnonymousAccess.class) != null;
         }

@@ -413,6 +413,7 @@ public class Kestra implements Callable<Integer>, NoDatabaseCommandInterface {
      * {@code @Context} bean: these commands parse flows and read plugins, so they need the rest of
      * the DI infrastructure to stay.
      */
+    @SuppressWarnings("overrides") // DefaultApplicationContext (Micronaut) implements ExecutionHandleLocator's varargs methods without '...', not something we control
     private static final class NoDatabaseApplicationContext extends DefaultApplicationContext {
 
         NoDatabaseApplicationContext(ApplicationContextConfiguration configuration) {
@@ -420,6 +421,7 @@ public class Kestra implements Callable<Integer>, NoDatabaseCommandInterface {
         }
 
         @Override
+        @SuppressWarnings("rawtypes") // matches the raw List<BeanDefinitionReference> signature of DefaultBeanContext (Micronaut), which we cannot change
         protected List<BeanDefinitionReference> resolveBeanDefinitionReferences() {
             return super.resolveBeanDefinitionReferences().stream()
                 .filter(reference -> !reference.getBeanDefinitionName().startsWith(MICRONAUT_JDBC_PACKAGE))

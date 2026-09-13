@@ -175,7 +175,7 @@ class StaticNameResolverTest {
             assertThat(target.getHostString()).isEqualTo("controller-1.example.com");
             assertThat(target.getPort()).isEqualTo(9096);
         });
-        assertThat(result.get().getAddresses()).singleElement()
+        assertThat(result.get().getAddressesOrError().getValue()).singleElement()
             .satisfies(group -> assertThat(group.getAddresses()).singleElement()
                 .isInstanceOfSatisfying(HttpConnectProxiedSocketAddress.class, address ->
                 {

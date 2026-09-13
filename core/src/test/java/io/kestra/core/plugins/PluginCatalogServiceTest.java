@@ -325,6 +325,7 @@ class PluginCatalogServiceTest {
 
     // -- local catalog entries carried by the schema bundle --
 
+    @SuppressWarnings("unchecked")
     @Test
     void shouldExtendHostedCatalogWithBundleEntries() {
         // Given — the hosted catalog knows plugin-serdes, the bundle also carries an in-house plugin
@@ -352,6 +353,7 @@ class PluginCatalogServiceTest {
             .containsExactlyInAnyOrder("plugin-serdes", "plugin-acme");
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     void shouldPreferHostedEntryOverBundleEntryForSameArtifact() {
         // Given — the same artifact on both sides: the hosted one carries the authoritative metadata
@@ -381,6 +383,7 @@ class PluginCatalogServiceTest {
         });
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     void shouldIgnoreIncompleteBundleEntries() {
         // Given — an entry without a Java package group cannot back a type lookup

@@ -457,8 +457,6 @@ public class FlowableUtils {
                         "The `values` must be a list, a map, or an expression that renders to one, but got: '" + renderValue + "'.",
                         e
                     );
-                } catch (IOException e) {
-                    throw new IllegalVariableEvaluationException(e);
                 }
             }
             case List<?> listValue -> {

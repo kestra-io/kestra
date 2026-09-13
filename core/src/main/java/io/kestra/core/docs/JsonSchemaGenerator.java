@@ -57,6 +57,9 @@ import io.kestra.core.preview.FileRenderer;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.validations.TimezoneId;
 import io.kestra.fethr.credential.CredentialProperty;
+import io.kestra.fethr.plugin.AppliesWhen;
+import io.kestra.fethr.table.ColumnReference;
+import io.kestra.fethr.table.TableReference;
 
 import io.micronaut.core.annotation.Nullable;
 import io.swagger.v3.oas.annotations.Hidden;
@@ -723,6 +726,29 @@ public class JsonSchemaGenerator {
                 if (pluginPropertyAnnotation.index() != -1) {
                     memberAttributes.put("$index", pluginPropertyAnnotation.index());
                 }
+            }
+
+            // A property that applies only for some values of a sibling is shown conditionally.
+            AppliesWhen appliesWhen = member.getAnnotationConsideringFieldAndGetter(AppliesWhen.class);
+            if (appliesWhen != null) {
+                ObjectNode appliesWhenNode = memberAttributes.putObject("$appliesWhen");
+                appliesWhenNode.put("property", appliesWhen.property());
+                ArrayNode values = appliesWhenNode.putArray("values");
+                Arrays.stream(appliesWhen.values()).forEach(values::add);
+                ArrayNode requiredFor = appliesWhenNode.putArray("requiredFor");
+                Arrays.stream(appliesWhen.requiredFor()).forEach(requiredFor::add);
+            }
+
+            // A property naming a table, or naming columns of the table a sibling names, renders as a
+            // picker over the real catalogue rather than a free-text box.
+            TableReference tableReference = member.getAnnotationConsideringFieldAndGetter(TableReference.class);
+            if (tableReference != null) {
+                memberAttributes.put("$tableReference", true);
+            }
+
+            ColumnReference columnReference = member.getAnnotationConsideringFieldAndGetter(ColumnReference.class);
+            if (columnReference != null) {
+                memberAttributes.putObject("$columnReference").put("property", columnReference.property());
             }
 
             // A property holding the name of a saved credential renders as a credential picker rather

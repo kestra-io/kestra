@@ -28,7 +28,12 @@ public class Extension extends AbstractExtension {
     private SecretFunction secretFunction;
 
     @Inject
+    @Nullable
     private io.kestra.fethr.credential.CredentialFunction credentialFunction;
+
+    @Inject
+    @Nullable
+    private io.kestra.fethr.table.TableLookupFunction tableLookupFunction;
 
     @Inject
     private KvFunction kvFunction;
@@ -153,7 +158,15 @@ public class Extension extends AbstractExtension {
         functions.put(FromJsonFunction.NAME, new FromJsonFunction());
         functions.put(EnvFunction.NAME, new EnvFunction());
         functions.put(SecretFunction.NAME, secretFunction);
-        functions.put(io.kestra.fethr.credential.CredentialFunction.NAME, credentialFunction);
+        // Both are absent where their repositories are, which is every non-Postgres deployment.
+        // Injected nullable rather than required: a missing one would otherwise fail this whole
+        // extension, and with it every Pebble expression in the instance.
+        if (credentialFunction != null) {
+            functions.put(io.kestra.fethr.credential.CredentialFunction.NAME, credentialFunction);
+        }
+        if (tableLookupFunction != null) {
+            functions.put(io.kestra.fethr.table.TableLookupFunction.NAME, tableLookupFunction);
+        }
         functions.put(KvFunction.NAME, kvFunction);
         functions.put(ReadFileFunction.NAME, readFileFunction);
         functions.put(FileURIFunction.NAME, fileURIFunction);

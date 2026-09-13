@@ -23,6 +23,7 @@ import io.kestra.core.scheduler.model.TriggerState;
 import io.kestra.core.server.ServiceInstance;
 import io.kestra.fethr.credential.Credential;
 import io.kestra.fethr.secret.Secret;
+import io.kestra.fethr.table.TableDefinition;
 
 import io.micronaut.context.annotation.Bean;
 import io.micronaut.context.annotation.Factory;
@@ -140,6 +141,12 @@ public class JdbcTableConfigsFactory {
     @Named("namespacefilemetadata")
     public InstantiableJdbcTableConfig namespaceFileMetadata() {
         return new InstantiableJdbcTableConfig("namespacefilemetadata", NamespaceFileMetadata.class, "namespace_file_metadata");
+    }
+
+    @Bean
+    @Named("tables")
+    public InstantiableJdbcTableConfig tables() {
+        return new InstantiableJdbcTableConfig("tables", TableDefinition.class, "tables");
     }
 
     @Bean

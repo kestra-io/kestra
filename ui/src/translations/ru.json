@@ -1594,7 +1594,9 @@
       "description": "Описание",
       "descriptionPlaceholder": "Опишите этот секрет",
       "tags": "Теги",
-      "addTag": "Добавить тег"
+      "addTag": "Добавить тег",
+      "showValue": "Показать значение",
+      "hideValue": "Скрыть значение"
     },
     "workerId": "Worker Id",
     "kv": {

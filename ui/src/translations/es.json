@@ -1594,7 +1594,9 @@
       "description": "Descripción",
       "descriptionPlaceholder": "Describe este secreto",
       "tags": "Etiquetas",
-      "addTag": "Añadir etiqueta"
+      "addTag": "Añadir etiqueta",
+      "showValue": "Mostrar valor",
+      "hideValue": "Ocultar valor"
     },
     "workerId": "Worker Id",
     "kv": {

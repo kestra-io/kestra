@@ -1594,7 +1594,9 @@
       "description": "설명",
       "descriptionPlaceholder": "이 비밀을 설명하세요",
       "tags": "태그",
-      "addTag": "태그 추가"
+      "addTag": "태그 추가",
+      "showValue": "값 표시",
+      "hideValue": "값 숨기기"
     },
     "workerId": "Worker Id",
     "kv": {

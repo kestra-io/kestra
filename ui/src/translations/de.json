@@ -1594,7 +1594,9 @@
       "description": "Beschreibung",
       "descriptionPlaceholder": "Beschreibe dieses Secret",
       "tags": "Tags",
-      "addTag": "Tag hinzufügen"
+      "addTag": "Tag hinzufügen",
+      "showValue": "Wert anzeigen",
+      "hideValue": "Wert ausblenden"
     },
     "workerId": "Worker-ID",
     "kv": {

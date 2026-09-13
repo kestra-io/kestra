@@ -8,7 +8,9 @@
             :currentPage="urlPage"
             :pageSize="urlSize"
             :defaultSort="{prop: 'key', order: 'ascending'}"
-            :selectable="false"
+            :selectable="bulkDeletable"
+            :rowSelectable="isRowSelectable"
+            @selection-change="(rows: NamespaceSecret[]) => selection = rows"
             @page-changed="({page, size}: {page: number; size: number}) => router.push({query: {...route.query, page: String(page), size: String(size)}})"
             @sort-change="({prop, order}: {column: any; prop: string | null; order: string | null}) => router.push({query: {...route.query, sort: `${prop}:${order === 'ascending' ? 'asc' : 'desc'}`}})"
             :no-data-text="$t('no_results.secrets')"
@@ -17,6 +19,18 @@
         >
             <template v-if="$slots.empty && showEmptyState" #empty>
                 <slot name="empty" />
+            </template>
+
+            <template #bulk-actions>
+                <button
+                    class="bulk-delete-btn"
+                    :disabled="!selection.length || bulkDeleting"
+                    data-testid="secrets-bulk-delete"
+                    @click="removeSelectedSecrets"
+                >
+                    <Delete />
+                    <span>{{ $t('delete') }}</span>
+                </button>
             </template>
 
             <template #top v-if="!paneView">
@@ -87,6 +101,30 @@
                             <Lock />
                         </KsIcon>
                     </KsTooltip>
+                </template>
+            </KsTableColumn>
+
+            <KsTableColumn
+                v-if="!keyOnly && !paneView"
+                columnKey="value"
+                :label="$t('value')"
+            >
+                <template #default="scope">
+                    <div class="value-cell" v-if="scope.row?.key !== undefined && canReveal(scope.row)">
+                        <span class="value-text" :class="{masked: !isRevealed(scope.row)}">
+                            {{ isRevealed(scope.row) ? revealed[revealKey(scope.row)] : "••••••••••" }}
+                        </span>
+                        <KsIconButton
+                            :tooltip="isRevealed(scope.row) ? $t('secret.hideValue') : $t('secret.showValue')"
+                            placement="left"
+                            :disabled="revealing[revealKey(scope.row)]"
+                            data-testid="secrets-reveal"
+                            @click="toggleReveal(scope.row)"
+                        >
+                            <EyeOff v-if="isRevealed(scope.row)" />
+                            <Eye v-else />
+                        </KsIconButton>
+                    </div>
                 </template>
             </KsTableColumn>
 
@@ -228,6 +266,8 @@
     import Lock from "vue-material-design-icons/Lock.vue"
     import Plus from "vue-material-design-icons/Plus.vue"
     import Delete from "vue-material-design-icons/Delete.vue"
+    import Eye from "vue-material-design-icons/Eye.vue"
+    import EyeOff from "vue-material-design-icons/EyeOff.vue"
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
     import ContentSave from "vue-material-design-icons/ContentSave.vue"
     import FileDocumentEdit from "vue-material-design-icons/FileDocumentEdit.vue"
@@ -450,6 +490,97 @@
             !areNamespaceSecretsReadOnly.value
     }
 
+    /**
+     * Revealing is gated per namespace like updating and deleting are. The page being visible only
+     * means the viewer may list secrets somewhere; it does not follow that they may read the value
+     * of every secret they can see listed.
+     */
+    const canReveal = (item: NamespaceSecret & {namespace?: string}) => {
+        return item?.namespace !== undefined &&
+            authStore.user?.isAllowed(resource.SECRET, action.VIEW, item.namespace)
+    }
+
+    /**
+     * Only rows the viewer may actually delete are selectable, so a bulk delete cannot be assembled
+     * out of rows the server would refuse. Coerced to a plain boolean because canDelete answers
+     * through an optional chain and the table's contract is boolean.
+     */
+    const isRowSelectable = (row: NamespaceSecret & {namespace?: string}) => canDelete(row) === true
+
+    // Bulk delete is offered only where per-row delete is: the compact and key-only renderings
+    // have no row actions at all, so a selection column there would select rows nothing can act on.
+    const bulkDeletable = computed(() => !props.keyOnly && !props.paneView)
+
+    const selection = ref<NamespaceSecret[]>([])
+    const bulkDeleting = ref(false)
+
+    /**
+     * Secrets are addressed by namespace and key together, so reveal state is keyed by both: two
+     * namespaces may each hold a DB_PASSWORD and they are different secrets.
+     */
+    const revealKey = (item: NamespaceSecret) => `${item.namespace ?? ""}/${item.key}`
+
+    const revealed = ref<Record<string, string>>({})
+    const revealing = ref<Record<string, boolean>>({})
+
+    const isRevealed = (item: NamespaceSecret) => revealKey(item) in revealed.value
+
+    /**
+     * Fetches the plaintext on demand and drops it again on hide. Values are never part of a
+     * listing, so this is the only path by which one reaches the browser, and nothing caches it
+     * beyond the moment it is on screen.
+     */
+    const toggleReveal = async (item: NamespaceSecret) => {
+        const id = revealKey(item)
+
+        if (id in revealed.value) {
+            delete revealed.value[id]
+            return
+        }
+
+        revealing.value[id] = true
+        try {
+            revealed.value[id] = await namespacesStore.revealSecret({
+                namespace: item.namespace as string,
+                key: item.key,
+            })
+        } finally {
+            delete revealing.value[id]
+        }
+    }
+
+    /**
+     * Deletes the selected secrets a namespace at a time, because deletion is scoped to the
+     * namespace that owns the secret and a selection may span several.
+     */
+    const removeSelectedSecrets = () => {
+        const chosen = selection.value.filter(item => item.namespace !== undefined)
+        if (!chosen.length) return
+
+        toast.confirm(t("delete confirm", {name: `${chosen.length} ${t("secret.names")}`}), async () => {
+            bulkDeleting.value = true
+            try {
+                const byNamespace = chosen.reduce((acc, item) => {
+                    (acc[item.namespace as string] ??= []).push(item.key)
+                    return acc
+                }, {} as Record<string, string[]>)
+
+                await Promise.all(
+                    Object.entries(byNamespace).map(([namespace, keys]) =>
+                        namespacesStore.bulkDeleteSecrets({namespace, keys}),
+                    ),
+                )
+
+                selection.value = []
+                revealed.value = {}
+                toast.deleted(chosen.map(item => item.key).join(", "))
+                dataTable.value?.reload()
+            } finally {
+                bulkDeleting.value = false
+            }
+        })
+    }
+
     const dataTable = useTemplateRef("dataTable")
 
     const loadQuery = (base: any) => {
@@ -649,6 +780,62 @@
         display: flex;
         flex-direction: column;
         min-height: 0;
+    }
+
+    /*
+     * The bulk-action bar, the row icons and the masked value cell follow the 1.x fork's secrets
+     * screen. Its palette was hardcoded light-mode hex; here each colour goes through the theme
+     * token with the fork's hex as the fallback, so light mode matches the fork exactly and dark
+     * mode -- which 2.0 supports and the fork did not -- still reads correctly.
+     */
+    .bulk-delete-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 12px;
+        font-size: var(--ks-font-size-sm, 13px);
+        border: 1px solid var(--ks-border-error, #fecaca);
+        background: var(--ks-background-card, #fff);
+        color: var(--ks-content-alert, #dc2626);
+        border-radius: 6px;
+        cursor: pointer;
+        transition: background-color 0.15s, border-color 0.15s;
+
+        :deep(svg) {
+            width: 14px;
+            height: 14px;
+        }
+
+        &:hover:not(:disabled) {
+            background: var(--ks-background-alert, #fef2f2);
+            border-color: var(--ks-content-alert, #dc2626);
+        }
+
+        &:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+    }
+
+    /* Masked dots or revealed plaintext, plus the toggle that swaps them. */
+    .value-cell {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+
+        .value-text {
+            font-family: var(--bs-font-monospace, monospace);
+            font-size: var(--ks-font-size-xs, 12px);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 320px;
+
+            &.masked {
+                letter-spacing: 1px;
+                color: var(--ks-content-inactive, #9ca3af);
+            }
+        }
     }
 
     .secret-tag-row {

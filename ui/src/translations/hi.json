@@ -1594,7 +1594,9 @@
       "description": "विवरण",
       "descriptionPlaceholder": "इस secret का वर्णन करें",
       "tags": "टैग",
-      "addTag": "टैग जोड़ें"
+      "addTag": "टैग जोड़ें",
+      "showValue": "मान दिखाएँ",
+      "hideValue": "मान छिपाएँ"
     },
     "workerId": "Worker Id",
     "kv": {

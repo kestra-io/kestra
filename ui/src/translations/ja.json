@@ -1594,7 +1594,9 @@
       "description": "説明",
       "descriptionPlaceholder": "このシークレットの説明",
       "tags": "タグ",
-      "addTag": "タグを追加"
+      "addTag": "タグを追加",
+      "showValue": "値を表示",
+      "hideValue": "値を非表示"
     },
     "workerId": "Worker Id",
     "kv": {

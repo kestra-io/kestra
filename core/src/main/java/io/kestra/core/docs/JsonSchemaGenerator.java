@@ -34,6 +34,7 @@ import com.google.common.collect.ImmutableMap;
 
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
+import io.kestra.fethr.credential.CredentialProperty;
 import io.kestra.core.models.assets.Asset;
 import io.kestra.core.models.assets.AssetExporter;
 import io.kestra.core.models.dashboards.DataFilter;
@@ -722,6 +723,13 @@ public class JsonSchemaGenerator {
                 if (pluginPropertyAnnotation.index() != -1) {
                     memberAttributes.put("$index", pluginPropertyAnnotation.index());
                 }
+            }
+
+            // A property holding the name of a saved credential renders as a credential picker rather
+            // than a text box. Follows the $-prefixed convention of $dynamic and $group above.
+            CredentialProperty credentialProperty = member.getAnnotationConsideringFieldAndGetter(CredentialProperty.class);
+            if (credentialProperty != null) {
+                memberAttributes.put("$credentialType", credentialProperty.type().name());
             }
 
             Schema schema = member.getAnnotationConsideringFieldAndGetter(Schema.class);

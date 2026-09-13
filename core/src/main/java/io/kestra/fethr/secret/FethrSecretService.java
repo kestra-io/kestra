@@ -1,5 +1,7 @@
 package io.kestra.fethr.secret;
 
+import io.kestra.fethr.vault.CryptographicValue;
+
 import java.io.IOException;
 import java.util.Map;
 import java.util.Set;

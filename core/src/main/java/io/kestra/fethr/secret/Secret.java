@@ -1,5 +1,7 @@
 package io.kestra.fethr.secret;
 
+import io.kestra.fethr.vault.CryptographicValue;
+
 import java.time.Instant;
 import java.util.HashSet;
 import java.util.List;

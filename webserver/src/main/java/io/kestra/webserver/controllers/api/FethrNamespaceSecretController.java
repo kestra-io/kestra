@@ -4,7 +4,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
-import io.kestra.fethr.secret.CryptographicValue;
+import io.kestra.fethr.vault.CryptographicValue;
 import io.kestra.fethr.secret.Secret;
 import io.kestra.fethr.secret.SecretRepositoryInterface;
 import io.kestra.webserver.models.api.secret.FethrSecretMeta;

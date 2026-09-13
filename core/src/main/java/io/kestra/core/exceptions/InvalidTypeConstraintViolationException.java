@@ -1,5 +1,6 @@
 package io.kestra.core.exceptions;
 
+import java.io.Serial;
 import java.util.Set;
 
 import jakarta.validation.ConstraintViolation;
@@ -12,6 +13,8 @@ import jakarta.validation.ConstraintViolationException;
  * instead of parsing the message.
  */
 public class InvalidTypeConstraintViolationException extends ConstraintViolationException {
+    @Serial
+    private static final long serialVersionUID = 1L;
 
     private final String typeId;
 

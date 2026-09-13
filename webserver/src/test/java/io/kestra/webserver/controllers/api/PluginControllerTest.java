@@ -382,8 +382,8 @@ class PluginControllerTest {
 
     @Test
     void catalogMergedSchemaRevalidatesViaEtagLikeTheLocalOnlySchema() {
-        HttpResponse<Map> local = client.toBlocking().exchange(HttpRequest.GET(PATH + "/schemas/task"), Map.class);
-        HttpResponse<Map> merged = client.toBlocking().exchange(HttpRequest.GET(PATH + "/schemas/task?includeCatalog=true"), Map.class);
+        HttpResponse<?> local = client.toBlocking().exchange(HttpRequest.GET(PATH + "/schemas/task"), Map.class);
+        HttpResponse<?> merged = client.toBlocking().exchange(HttpRequest.GET(PATH + "/schemas/task?includeCatalog=true"), Map.class);
 
         // Both variants revalidate on every use via ETag (no-cache, see #12102); the merged tag also
         // covers the bundle fingerprint so it changes when a different bundle is loaded.
@@ -555,6 +555,7 @@ class PluginControllerTest {
     }
 
     @SafeVarargs
+    @SuppressWarnings("varargs")
     private static RegisteredPlugin pluginWithTriggers(Class<? extends AbstractTrigger>... triggers) {
         Manifest manifest = new Manifest();
         manifest.getMainAttributes().putValue("X-Kestra-Title", "Core");

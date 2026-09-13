@@ -96,6 +96,7 @@ class PluginAutoInstallServiceTest {
         );
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     void shouldNotReturnAlreadyRegisteredTypes() {
         // Given
@@ -334,6 +335,7 @@ class PluginAutoInstallServiceTest {
         verify(installJobRegistry, never()).submit(anyList());
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     void shouldNotInstallWhenAllTypesAreRegistered() {
         // Given

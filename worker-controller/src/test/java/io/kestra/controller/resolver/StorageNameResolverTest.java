@@ -196,7 +196,7 @@ class StorageNameResolverTest {
         resolver.start(new TestListener(result, new AtomicInteger()));
 
         // Then
-        assertThat(result.get().getAddresses()).singleElement()
+        assertThat(result.get().getAddressesOrError().getValue()).singleElement()
             .satisfies(group -> assertThat(group.getAddresses()).singleElement()
                 .isInstanceOfSatisfying(HttpConnectProxiedSocketAddress.class, address ->
                 {

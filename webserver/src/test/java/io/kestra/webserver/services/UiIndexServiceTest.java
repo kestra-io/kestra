@@ -16,9 +16,11 @@ import io.micronaut.http.cookie.Cookie;
 import io.micronaut.http.simple.SimpleHttpRequest;
 import io.micronaut.security.csrf.CsrfConfiguration;
 import io.micronaut.security.csrf.generator.CsrfTokenGenerator;
+import io.micronaut.security.csrf.validator.CsrfTokenValidator;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -29,7 +31,20 @@ class UiIndexServiceTest {
     private static final String COOKIE_NAME = "CSRF-TOKEN";
 
     private static UiIndexService service(String basePath, WebserverConfiguration configuration) {
-        return new UiIndexService(basePath, configuration, Optional.empty(), Optional.empty());
+        return new UiIndexService(basePath, configuration, Optional.empty(), Optional.empty(), Optional.empty());
+    }
+
+    private static CsrfConfiguration csrfConfiguration() {
+        CsrfConfiguration csrfConfiguration = mock(CsrfConfiguration.class);
+        when(csrfConfiguration.getCookieName()).thenReturn(COOKIE_NAME);
+        return csrfConfiguration;
+    }
+
+    @SuppressWarnings("unchecked")
+    private static CsrfTokenValidator<HttpRequest<?>> validatorAccepting(boolean valid) {
+        CsrfTokenValidator<HttpRequest<?>> validator = mock(CsrfTokenValidator.class);
+        when(validator.validateCsrfToken(any(), any())).thenReturn(valid);
+        return validator;
     }
 
     private static WebserverConfiguration emptyConfiguration() {
@@ -109,12 +124,10 @@ class UiIndexServiceTest {
     @Test
     void shouldInsertEscapedCsrfMetaAndCookieWhenGeneratorIsPresent() {
         // Given
-        CsrfConfiguration csrfConfiguration = mock(CsrfConfiguration.class);
-        when(csrfConfiguration.getCookieName()).thenReturn(COOKIE_NAME);
         @SuppressWarnings("unchecked")
         CsrfTokenGenerator<HttpRequest<?>> generator = mock(CsrfTokenGenerator.class);
         when(generator.generateCsrfToken(any())).thenReturn("to<k>&en");
-        UiIndexService service = new UiIndexService(null, emptyConfiguration(), Optional.of(csrfConfiguration), Optional.of(generator));
+        UiIndexService service = new UiIndexService(null, emptyConfiguration(), Optional.of(csrfConfiguration()), Optional.of(generator), Optional.empty());
 
         // When
         MutableHttpResponse<byte[]> response = service.render(get("/ui/")).orElseThrow();
@@ -127,12 +140,10 @@ class UiIndexServiceTest {
     @Test
     void shouldInsertExactlyOneCsrfMetaTagPerRender() {
         // Given
-        CsrfConfiguration csrfConfiguration = mock(CsrfConfiguration.class);
-        when(csrfConfiguration.getCookieName()).thenReturn(COOKIE_NAME);
         @SuppressWarnings("unchecked")
         CsrfTokenGenerator<HttpRequest<?>> generator = mock(CsrfTokenGenerator.class);
         when(generator.generateCsrfToken(any())).thenReturn("token");
-        UiIndexService service = new UiIndexService(null, emptyConfiguration(), Optional.of(csrfConfiguration), Optional.of(generator));
+        UiIndexService service = new UiIndexService(null, emptyConfiguration(), Optional.of(csrfConfiguration()), Optional.of(generator), Optional.empty());
 
         // When - the template is rendered twice from the same immutable source
         service.render(get("/ui/")).orElseThrow();
@@ -146,11 +157,29 @@ class UiIndexServiceTest {
     @Test
     void shouldReuseTokenFromRequestCookieWithoutGeneratingANewOne() {
         // Given
-        CsrfConfiguration csrfConfiguration = mock(CsrfConfiguration.class);
-        when(csrfConfiguration.getCookieName()).thenReturn(COOKIE_NAME);
         @SuppressWarnings("unchecked")
         CsrfTokenGenerator<HttpRequest<?>> generator = mock(CsrfTokenGenerator.class);
-        UiIndexService service = new UiIndexService(null, emptyConfiguration(), Optional.of(csrfConfiguration), Optional.of(generator));
+        CsrfTokenValidator<HttpRequest<?>> validator = validatorAccepting(true);
+        UiIndexService service = new UiIndexService(null, emptyConfiguration(), Optional.of(csrfConfiguration()), Optional.of(generator), Optional.of(validator));
+
+        // When
+        MutableHttpResponse<byte[]> response = service
+            .render(get("/ui/").cookie(Cookie.of(COOKIE_NAME, "existing-token")))
+            .orElseThrow();
+
+        // Then
+        assertThat(body(response)).contains("<meta name=\"csrf-token\" content=\"existing-token\">");
+        assertThat(response.getCookies().findCookie(COOKIE_NAME).map(Cookie::getValue)).contains("existing-token");
+        verify(validator).validateCsrfToken(any(), eq("existing-token"));
+        verify(generator, never()).generateCsrfToken(any());
+    }
+
+    @Test
+    void shouldReuseTokenFromRequestCookieWhenNoValidatorIsAvailable() {
+        // Given - the check is skipped when no validator bean exists
+        @SuppressWarnings("unchecked")
+        CsrfTokenGenerator<HttpRequest<?>> generator = mock(CsrfTokenGenerator.class);
+        UiIndexService service = new UiIndexService(null, emptyConfiguration(), Optional.of(csrfConfiguration()), Optional.of(generator), Optional.empty());
 
         // When
         MutableHttpResponse<byte[]> response = service
@@ -160,5 +189,26 @@ class UiIndexServiceTest {
         // Then
         assertThat(body(response)).contains("<meta name=\"csrf-token\" content=\"existing-token\">");
         verify(generator, never()).generateCsrfToken(any());
+    }
+
+    @Test
+    void shouldReplaceACookieTokenThisInstanceCannotValidate() {
+        // Given - a cookie left behind by another instance on the same host (different signature key)
+        @SuppressWarnings("unchecked")
+        CsrfTokenGenerator<HttpRequest<?>> generator = mock(CsrfTokenGenerator.class);
+        when(generator.generateCsrfToken(any())).thenReturn("fresh-token");
+        CsrfTokenValidator<HttpRequest<?>> validator = validatorAccepting(false);
+        UiIndexService service = new UiIndexService(null, emptyConfiguration(), Optional.of(csrfConfiguration()), Optional.of(generator), Optional.of(validator));
+
+        // When
+        MutableHttpResponse<byte[]> response = service
+            .render(get("/ui/").cookie(Cookie.of(COOKIE_NAME, "stale-token")))
+            .orElseThrow();
+
+        // Then - the page and the cookie both carry a token this instance will accept
+        assertThat(body(response)).contains("<meta name=\"csrf-token\" content=\"fresh-token\">");
+        assertThat(body(response)).doesNotContain("stale-token");
+        assertThat(response.getCookies().findCookie(COOKIE_NAME).map(Cookie::getValue)).contains("fresh-token");
+        verify(validator).validateCsrfToken(any(), eq("stale-token"));
     }
 }

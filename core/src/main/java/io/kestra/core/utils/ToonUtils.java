@@ -251,19 +251,23 @@ public class ToonUtils {
         }
 
         private void writeListArray(JsonNode array, int indent, String key) throws IOException {
-            int size = array.size();
-            String header = headerPrefix(key) + "[" + size + "]:";
-            writeLine(indent, header);
+            writeLine(indent, headerPrefix(key) + "[" + array.size() + "]:");
+            writeListArrayItems(array, indent);
+        }
 
-            // Each element rendered as a list item
+        /**
+         * Writes the items of a list array whose header line sits at {@code headerIndent}.
+         * Items are always emitted one level deeper, so a `- ` marker lands exactly two
+         * columns past the start of the header it belongs to.
+         */
+        private void writeListArrayItems(JsonNode array, int headerIndent) throws IOException {
             for (JsonNode item : array) {
                 if (item.isObject()) {
-                    writeListObjectItem(item, indent);
+                    writeListObjectItem(item, headerIndent);
                 } else if (item.isArray()) {
-                    writeListArrayItem(item, indent);
+                    writeListArrayItem(item, headerIndent);
                 } else {
-                    String v = formatPrimitive(item);
-                    writeLine(indent + 1, "- " + v);
+                    writeLine(headerIndent + 1, "- " + formatPrimitive(item));
                 }
             }
         }
@@ -282,7 +286,7 @@ public class ToonUtils {
             if (firstValue.isObject()) {
                 writeLine(indent + 1, "- " + firstKey + ":");
                 if (!firstValue.isEmpty()) {
-                    writeObject(firstValue, indent + 2);
+                    writeObject(firstValue, indent + 3);
                 }
             } else if (firstValue.isArray()) {
                 writeListArrayFirstField(firstKey, firstValue, indent + 1);
@@ -341,9 +345,8 @@ public class ToonUtils {
                 }
                 writeLine(hyphenIndent, line.toString());
             } else {
-                String header = "- " + key + "[" + size + "]:";
-                writeLine(hyphenIndent, header);
-                writeListArray(array, hyphenIndent + 1, null);
+                writeLine(hyphenIndent, "- " + key + "[" + size + "]:");
+                writeListArrayItems(array, hyphenIndent + 1);
             }
         }
 
@@ -351,8 +354,9 @@ public class ToonUtils {
             writeArray(array, indent, key);
         }
 
-        private void writeListArrayItem(JsonNode arrayNode, int indent) throws IOException {
+        private void writeListArrayItem(JsonNode arrayNode, int headerIndent) throws IOException {
             int size = arrayNode.size();
+            int hyphenIndent = headerIndent + 1;
             boolean allPrimitive = true;
 
             for (JsonNode item : arrayNode) {
@@ -377,21 +381,10 @@ public class ToonUtils {
                         line.append(formatPrimitive(arrayNode.get(i)));
                     }
                 }
-                writeLine(indent + 1, line.toString());
+                writeLine(hyphenIndent, line.toString());
             } else {
-                String header = "- [" + size + "]:";
-                writeLine(indent + 1, header);
-
-                for (JsonNode item : arrayNode) {
-                    if (item.isObject()) {
-                        writeListObjectItem(item, indent + 1);
-                    } else if (item.isArray()) {
-                        writeListArrayItem(item, indent + 1);
-                    } else {
-                        String v = formatPrimitive(item);
-                        writeLine(indent + 2, "- " + v);
-                    }
-                }
+                writeLine(hyphenIndent, "- [" + size + "]:");
+                writeListArrayItems(arrayNode, hyphenIndent + 1);
             }
         }
 
@@ -440,6 +433,16 @@ public class ToonUtils {
             // Empty string
             if (value.isEmpty()) {
                 return "\"\"";
+            }
+
+            // Leading or trailing whitespace is not recoverable once emitted bare
+            if (!value.strip().equals(value)) {
+                return "\"" + escape(value) + "\"";
+            }
+
+            // A leading '#' is ambiguous with a comment marker
+            if (value.charAt(0) == '#') {
+                return "\"" + escape(value) + "\"";
             }
 
             // Reserved keywords

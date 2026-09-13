@@ -2,21 +2,23 @@ package io.kestra.core.utils;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.serializers.JacksonMapper;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
+
+import java.util.stream.Stream;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-@KestraTest
 class ToonUtilsTest {
     private static final ObjectMapper MAPPER = JacksonMapper.ofJson();
 
     @Test
-    void testSimpleObject() throws Exception {
-        String json = """
+    void simpleObject() throws Exception {
+        assertToon("""
             {
               "type": "object",
               "properties": {
@@ -25,20 +27,16 @@ class ToonUtilsTest {
                 }
               }
             }
-            """;
-
-        JsonNode node = MAPPER.readTree(json);
-        String toon = ToonUtils.jsonToToon(node);
-
-        assertThat(toon, containsString("type: object"));
-        assertThat(toon, containsString("properties:"));
-        assertThat(toon, containsString("name:"));
-        assertThat(toon, containsString("type: string"));
+            """, """
+            type: object
+            properties:
+              name:
+                type: string""");
     }
 
     @Test
-    void testNestedObject() throws Exception {
-        String json = """
+    void nestedObject() throws Exception {
+        assertToon("""
             {
               "type": "object",
               "properties": {
@@ -55,162 +53,260 @@ class ToonUtilsTest {
                 }
               }
             }
-            """;
-
-        JsonNode node = MAPPER.readTree(json);
-        String toon = ToonUtils.jsonToToon(node);
-
-        assertThat(toon, containsString("user:"));
-        assertThat(toon, containsString("type: object"));
-        assertThat(toon, containsString("name:"));
-        assertThat(toon, containsString("age:"));
+            """, """
+            type: object
+            properties:
+              user:
+                type: object
+                properties:
+                  name:
+                    type: string
+                  age:
+                    type: integer""");
     }
 
     @Test
-    void testPrimitiveArray() throws Exception {
-        String json = """
+    void primitiveArray() throws Exception {
+        assertToon("""
             {
               "required": ["id", "name", "type"]
             }
-            """;
-
-        JsonNode node = MAPPER.readTree(json);
-        String toon = ToonUtils.jsonToToon(node);
-
-        assertThat(toon, containsString("required[3]: id,name,type"));
+            """, "required[3]: id,name,type");
     }
 
     @Test
-    void testEmptyArray() throws Exception {
-        String json = """
+    void emptyArray() throws Exception {
+        assertToon("""
             {
               "items": []
             }
-            """;
-
-        JsonNode node = MAPPER.readTree(json);
-        String toon = ToonUtils.jsonToToon(node);
-
-        assertThat(toon, containsString("items[0]:"));
+            """, "items[0]:");
     }
 
     @Test
-    void testUniformObjectArray() throws Exception {
-        String json = """
+    void uniformObjectArrayUsesTabularForm() throws Exception {
+        assertToon("""
             {
               "users": [
-                {
-                  "id": 1,
-                  "name": "Alice"
-                },
-                {
-                  "id": 2,
-                  "name": "Bob"
-                }
+                {"id": 1, "name": "Alice"},
+                {"id": 2, "name": "Bob"}
               ]
             }
-            """;
-
-        JsonNode node = MAPPER.readTree(json);
-        String toon = ToonUtils.jsonToToon(node);
-
-        // Should use tabular format
-        assertThat(toon, containsString("users[2]{id,name}:"));
-        assertThat(toon, containsString(" 1,Alice"));
-        assertThat(toon, containsString(" 2,Bob"));
+            """, """
+            users[2]{id,name}:
+              1,Alice
+              2,Bob""");
     }
 
     @Test
-    void testMixedArray() throws Exception {
-        String json = """
+    void nonUniformObjectArrayUsesListForm() throws Exception {
+        assertToon("""
             {
               "items": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "integer",
-                  "minimum": 0
-                }
+                {"type": "string"},
+                {"type": "integer", "minimum": 0}
               ]
             }
-            """;
+            """, """
+            items[2]:
+              - type: string
+              - type: integer
+                minimum: 0""");
+    }
 
-        JsonNode node = MAPPER.readTree(json);
-        String toon = ToonUtils.jsonToToon(node);
+    /**
+     * Regression: the `- ` marker already shifts the first key two columns right, so an
+     * object-valued first field used to emit its children at the marker's own level, flattening
+     * them into siblings of the key they belong to.
+     */
+    @Test
+    void objectAsFirstFieldOfListItemKeepsItsNesting() throws Exception {
+        assertToon("""
+            {
+              "anyOf": [
+                {"props": {"a": 1, "b": 2}, "second": "x"}
+              ]
+            }
+            """, """
+            anyOf[1]:
+              - props:
+                  a: 1
+                  b: 2
+                second: x""");
+    }
 
-        // Should use list format due to non-uniform structure
-        assertThat(toon, containsString("items[2]:"));
-        assertThat(toon, containsString("- type: string"));
-        assertThat(toon, containsString("- type: integer"));
-        assertThat(toon, containsString("minimum: 0"));
+    /** Regression: an array-valued first field used to emit a second, orphaned `[N]:` header. */
+    @Test
+    void arrayAsFirstFieldOfListItemEmitsASingleHeader() throws Exception {
+        assertToon("""
+            {
+              "anyOf": [
+                {"items": [{"x": 1}, {"y": 2}], "tail": "t"}
+              ]
+            }
+            """, """
+            anyOf[1]:
+              - items[2]:
+                  - x: 1
+                  - y: 2
+                tail: t""");
     }
 
     @Test
-    void testPrimitiveValues() throws Exception {
-        String json = """
+    void nestedArraysOfPrimitives() throws Exception {
+        assertToon("""
+            {
+              "matrix": [[1, 2], [3, 4]]
+            }
+            """, """
+            matrix[2]:
+              - [2]: 1,2
+              - [2]: 3,4""");
+    }
+
+    /** Regression: a nested array of objects used to indent its contents one level short. */
+    @Test
+    void nestedArrayOfObjects() throws Exception {
+        assertToon("""
+            {
+              "matrix": [[{"x": 1}, {"y": 2}]]
+            }
+            """, """
+            matrix[1]:
+              - [2]:
+                  - x: 1
+                  - y: 2""");
+    }
+
+    @Test
+    void emptyObjectsInAListItem() throws Exception {
+        assertToon("""
+            {
+              "anyOf": [{}, {}]
+            }
+            """, """
+            anyOf[2]:
+              -
+              -""");
+    }
+
+    @Test
+    void primitiveValues() throws Exception {
+        assertToon("""
             {
               "string": "hello",
-              "numberAsString": 42,
+              "integer": 42,
               "decimal": 3.14,
               "boolean": true,
               "nullValue": null
             }
-            """;
-
-        JsonNode node = MAPPER.readTree(json);
-        String toon = ToonUtils.jsonToToon(node);
-
-        assertThat(toon, containsString("string: hello"));
-        assertThat(toon, containsString("numberAsString: 42"));
-        assertThat(toon, containsString("decimal: 3.14"));
-        assertThat(toon, containsString("boolean: true"));
-        assertThat(toon, containsString("nullValue: null"));
+            """, """
+            string: hello
+            integer: 42
+            decimal: 3.14
+            boolean: true
+            nullValue: null""");
     }
 
     @Test
-    void testStringEscaping() throws Exception {
-        String json = """
+    void stringsWithSpecialCharactersAreQuotedAndEscaped() throws Exception {
+        assertToon("""
             {
               "withColon": "key:value",
               "withQuotes": "say \\"hello\\"",
               "withNewline": "line1\\nline2",
-              "withComma": "a,b,c"
+              "withComma": "a,b,c",
+              "withBracket": "a[0]"
             }
-            """;
+            """, """
+            withColon: "key:value"
+            withQuotes: "say \\"hello\\""
+            withNewline: "line1\\nline2"
+            withComma: "a,b,c"
+            withBracket: "a[0]\"""");
+    }
 
-        JsonNode node = MAPPER.readTree(json);
-        String toon = ToonUtils.jsonToToon(node);
-
-        // These should be quoted due to special characters
-        assertThat(toon, containsString("withColon: \"key:value\""));
-        assertThat(toon, containsString("withQuotes:"));
-        assertThat(toon, containsString("withNewline:"));
-        assertThat(toon, containsString("withComma: \"a,b,c\""));
+    /**
+     * Regression: surrounding whitespace is not recoverable once emitted bare, and a leading '#'
+     * is ambiguous with a comment marker -- both used to be written unquoted.
+     */
+    @Test
+    void ambiguousStringsAreQuoted() throws Exception {
+        assertToon("""
+            {
+              "leading": "  padded",
+              "trailing": "padded  ",
+              "ref": "#/definitions/Task",
+              "innerDash": "a-b",
+              "leadingDash": "-x"
+            }
+            """, """
+            leading: "  padded"
+            trailing: "padded  "
+            ref: "#/definitions/Task"
+            innerDash: a-b
+            leadingDash: "-x\"""");
     }
 
     @Test
-    void testReservedKeywords() throws Exception {
-        String json = """
+    void stringsThatLookLikeKeywordsOrNumbersAreQuoted() throws Exception {
+        assertToon("""
             {
               "truthValue": "true",
               "falseValue": "false",
-              "nullString": "null"
+              "nullString": "null",
+              "numeric": "42",
+              "leadingZero": "007",
+              "empty": ""
             }
-            """;
-
-        JsonNode node = MAPPER.readTree(json);
-        String toon = ToonUtils.jsonToToon(node);
-
-        // Should be quoted to distinguish from boolean/null primitives
-        assertThat(toon, containsString("truthValue: \"true\""));
-        assertThat(toon, containsString("falseValue: \"false\""));
-        assertThat(toon, containsString("nullString: \"null\""));
+            """, """
+            truthValue: "true"
+            falseValue: "false"
+            nullString: "null"
+            numeric: "42"
+            leadingZero: "007"
+            empty: \"\"""");
     }
 
     @Test
-    void testJsonSchemaPattern() throws Exception {
-        String json = """
+    void keysAreQuotedOnlyWhenNecessary() throws Exception {
+        assertToon("""
+            {
+              "simple": "value",
+              "with.dot": "value",
+              "with-dash": "value",
+              "with space": "value",
+              "$special": "value"
+            }
+            """, """
+            simple: value
+            with.dot: value
+            "with-dash": value
+            "with space": value
+            "$special": value""");
+    }
+
+    @Test
+    void numbersAreNormalisedToPlainForm() throws Exception {
+        assertToon("""
+            {
+              "zero": 0,
+              "negative": -5,
+              "decimal": 3.14159,
+              "scientific": 1.5e10,
+              "trailingZeros": 10.0
+            }
+            """, """
+            zero: 0
+            negative: -5
+            decimal: 3.14159
+            scientific: 15000000000
+            trailingZeros: 10""");
+    }
+
+    @Test
+    void jsonSchemaShape() throws Exception {
+        assertToon("""
             {
               "type": "object",
               "properties": {
@@ -232,194 +328,162 @@ class ToonUtilsTest {
               },
               "required": ["id"]
             }
-            """;
-
-        JsonNode node = MAPPER.readTree(json);
-        String toon = ToonUtils.jsonToToon(node);
-
-        assertThat(toon, containsString("type: object"));
-        assertThat(toon, containsString("properties:"));
-        assertThat(toon, containsString("id:"));
-        assertThat(toon, containsString("tasks:"));
-        assertThat(toon, containsString("items:"));
-        assertThat(toon, containsString("required[1]: id"));
+            """, """
+            type: object
+            properties:
+              id:
+                type: string
+                description: Unique identifier
+              tasks:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    type:
+                      type: string
+            required[1]: id""");
     }
 
     @Test
-    void testSizeReduction() throws Exception {
-        String json = """
-            {
-              "type": "object",
-              "properties": {
-                "id": {
-                  "type": "string",
-                  "description": "Unique identifier"
-                },
-                "name": {
-                  "type": "string"
-                },
-                "age": {
-                  "type": "integer"
-                },
-                "tags": {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  }
+    void emptyObjectProducesAnEmptyDocument() throws Exception {
+        assertToon("{}", "");
+    }
+
+    @Test
+    void rootLevelValues() throws Exception {
+        assertToon("\"hello\"", "hello");
+        assertToon("42", "42");
+        assertToon("[1, 2, 3]", "[3]: 1,2,3");
+    }
+
+    @Test
+    void nullInputIsRejected() {
+        assertThrows(IllegalArgumentException.class, () -> ToonUtils.jsonToToon(null));
+    }
+
+    /**
+     * TOON's compaction comes almost entirely from the tabular form, so it depends on the shape of
+     * the document rather than on its size. Indentation costs two characters per nesting level per
+     * line, which cancels the saved braces and quotes once a document is deeply nested -- the shape
+     * a JSON Schema actually has.
+     *
+     * <p>These are character counts, not token counts. Before relying on either number, measure the
+     * real generated Flow schema with the tokenizer of the model in use.</p>
+     */
+    @Test
+    void compactionDependsOnDocumentShape() throws Exception {
+        StringBuilder rows = new StringBuilder();
+        StringBuilder properties = new StringBuilder();
+        for (int i = 0; i < 40; i++) {
+            rows.append(i > 0 ? "," : "").append("{\"id\":%d,\"name\":\"task%d\",\"enabled\":true}".formatted(i, i));
+            properties.append(i > 0 ? "," : "").append("\"p%d\":{\"type\":\"string\",\"description\":\"prop %d\"}".formatted(i, i));
+        }
+
+        // A uniform array of objects collapses into the tabular form: a large, real saving.
+        assertThat(savingPercent("{\"rows\":[" + rows + "]}"), greaterThan(40.0));
+
+        // The same data expressed as a nested schema saves nothing. The assertion only guards
+        // against the encoder inflating the payload; it is deliberately not a claimed win.
+        assertThat(savingPercent("{\"type\":\"object\",\"properties\":{" + properties + "}}"), greaterThan(-10.0));
+    }
+
+    private static double savingPercent(String json) throws Exception {
+        JsonNode node = MAPPER.readTree(json);
+        int minified = MAPPER.writeValueAsString(node).length();
+        return (1.0 - (double) ToonUtils.jsonToToon(node).length() / minified) * 100;
+    }
+
+    /**
+     * The only assertion that genuinely covers an indentation-based format: encode, decode, and
+     * check nothing was lost. Substring assertions cannot distinguish a correct document from one
+     * whose nesting has collapsed.
+     */
+    @ParameterizedTest
+    @MethodSource("roundTripDocuments")
+    void roundTripsWithoutLoss(String json) throws Exception {
+        assertRoundTrip(MAPPER.readTree(json));
+    }
+
+    static Stream<String> roundTripDocuments() {
+        return Stream.of(
+            "{}",
+            "[]",
+            "\"hello\"",
+            "42",
+            """
+            {"a": {}, "b": {"c": {}}, "d": null}""",
+            """
+            {"anyOf": [{"props": {"a": 1, "b": {"deep": true}}, "second": "x"}]}""",
+            """
+            {"anyOf": [{"items": [{"x": 1}, {"y": 2}], "tail": "t"}]}""",
+            """
+            {"matrix": [[{"x": 1}], [[1, 2], []], [], 7]}""",
+            """
+            {"rows": [{"id": 1, "name": "Alice"}, {"id": 2, "name": "Bob,Jr"}]}""",
+            """
+            {"mixed": [1, "two", null, true, {"k": "v"}, [3]]}""",
+            """
+            {"odd keys": {"with-dash": 1, "$ref": "#/x", "a.b": 2}}""",
+            """
+            {"tricky": ["  pad  ", "", "true", "42", "007", "-x", "a:b", "a,b", "say \\"hi\\"", "l1\\nl2", "#c"]}""",
+            """
+            {"numbers": [0, 10.0, 1.5e10, -5, 3.14159]}""",
+            """
+            {"type": "object", "properties": {"tasks": {"type": "array", "items": {"anyOf": [
+              {"$ref": "#/defs/Log"},
+              {"type": "object", "properties": {"id": {"type": "string"}}, "required": ["id"]}
+            ]}}}}"""
+        );
+    }
+
+    private static void assertToon(String json, String expectedToon) throws Exception {
+        JsonNode node = MAPPER.readTree(json);
+        assertThat(ToonUtils.jsonToToon(node), is(expectedToon));
+        assertRoundTrip(node);
+    }
+
+    private static void assertRoundTrip(JsonNode original) {
+        String toon = ToonUtils.jsonToToon(original);
+        JsonNode decoded = ToonDecoder.decode(toon);
+
+        assertThat(
+            "round-trip lost data\n--- toon ---\n" + toon + "\n--- decoded ---\n" + decoded.toPrettyString(),
+            equivalent(original, decoded),
+            is(true)
+        );
+    }
+
+    /** Structural equality, comparing numbers by value so 10.0 and 10 match. */
+    private static boolean equivalent(JsonNode expected, JsonNode actual) {
+        if (expected.isNumber() && actual.isNumber()) {
+            return expected.decimalValue().compareTo(actual.decimalValue()) == 0;
+        }
+        if (expected.getNodeType() != actual.getNodeType()) {
+            return false;
+        }
+        if (expected.isObject()) {
+            if (expected.size() != actual.size()) {
+                return false;
+            }
+            for (var entry : expected.properties()) {
+                JsonNode other = actual.get(entry.getKey());
+                if (other == null || !equivalent(entry.getValue(), other)) {
+                    return false;
                 }
-              },
-              "required": ["id", "name"]
             }
-            """;
-
-        JsonNode node = MAPPER.readTree(json);
-        String toon = ToonUtils.jsonToToon(node);
-        String jsonMinified = MAPPER.writeValueAsString(node);
-
-        // TOON should be more compact than minified JSON
-        assertThat(toon.length(), lessThan(jsonMinified.length()));
-        
-        // Calculate reduction percentage
-        double reduction = (1.0 - (double) toon.length() / jsonMinified.length()) * 100;
-        System.out.println("\n" + "=".repeat(80));
-        System.out.println("BEFORE (JSON Format):");
-        System.out.println("=".repeat(80));
-        System.out.println(jsonMinified);
-        System.out.println("\nSize: " + jsonMinified.length() + " bytes");
-        
-        System.out.println("\n" + "=".repeat(80));
-        System.out.println("AFTER (TOON Format):");
-        System.out.println("=".repeat(80));
-        System.out.println(toon);
-        System.out.println("\nSize: " + toon.length() + " bytes");
-        
-        System.out.println("\n" + "=".repeat(80));
-        System.out.println("COMPARISON RESULTS:");
-        System.out.println("=".repeat(80));
-        System.out.printf("JSON size: %d bytes%n", jsonMinified.length());
-        System.out.printf("TOON size: %d bytes%n", toon.length());
-        System.out.printf("Reduction: %.1f%%%n", reduction);
-        System.out.printf("Saved: %d bytes%n", jsonMinified.length() - toon.length());
-        System.out.println("\nBenefits:");
-        System.out.println("✓ Reduced token usage for LLM");
-        System.out.println("✓ Faster response times");
-        System.out.println("✓ More readable indentation-based format");
-        System.out.println("✓ Less redundant syntax");
-        System.out.println("=".repeat(80) + "\n");
-        
-        // Should have at least some reduction
-        assertThat(reduction, greaterThan(0.0));
-    }
-
-    @Test
-    void testEmptyObject() throws Exception {
-        String json = "{}";
-        JsonNode node = MAPPER.readTree(json);
-        String toon = ToonUtils.jsonToToon(node);
-
-        // Empty object should produce empty string
-        assertThat(toon, is(""));
-    }
-
-    @Test
-    void testRootPrimitive() throws Exception {
-        String json = "\"hello\"";
-        JsonNode node = MAPPER.readTree(json);
-        String toon = ToonUtils.jsonToToon(node);
-
-        assertThat(toon, is("hello"));
-    }
-
-    @Test
-    void testRootNumber() throws Exception {
-        String json = "42";
-        JsonNode node = MAPPER.readTree(json);
-        String toon = ToonUtils.jsonToToon(node);
-
-        assertThat(toon, is("42"));
-    }
-
-    @Test
-    void testRootArray() throws Exception {
-        String json = "[1, 2, 3]";
-        JsonNode node = MAPPER.readTree(json);
-        String toon = ToonUtils.jsonToToon(node);
-
-        assertThat(toon, containsString("[3]: 1,2,3"));
-    }
-
-    @Test
-    void testNullInput() {
-        assertThrows(IllegalArgumentException.class, () -> {
-            ToonUtils.jsonToToon(null);
-        });
-    }
-
-    @Test
-    void testKeyFormatting() throws Exception {
-        String json = """
-            {
-              "simple": "value",
-              "with-dash": "value",
-              "with space": "value",
-              "with.dot": "value",
-              "$special": "value"
+            return true;
+        }
+        if (expected.isArray()) {
+            if (expected.size() != actual.size()) {
+                return false;
             }
-            """;
-
-        JsonNode node = MAPPER.readTree(json);
-        String toon = ToonUtils.jsonToToon(node);
-
-        // Simple keys and keys with dots should be unquoted
-        assertThat(toon, containsString("simple: value"));
-        assertThat(toon, containsString("with.dot: value"));
-
-        // Keys with dashes and spaces should be quoted
-        assertThat(toon, containsString("\"with-dash\": value"));
-        assertThat(toon, containsString("\"with space\": value"));
-        assertThat(toon, containsString("\"$special\": value"));
-    }
-
-    @Test
-    void testNestedArrays() throws Exception {
-        String json = """
-            {
-              "matrix": [
-                [1, 2],
-                [3, 4]
-              ]
+            for (int i = 0; i < expected.size(); i++) {
+                if (!equivalent(expected.get(i), actual.get(i))) {
+                    return false;
+                }
             }
-            """;
-
-        JsonNode node = MAPPER.readTree(json);
-        String toon = ToonUtils.jsonToToon(node);
-
-        assertThat(toon, containsString("matrix[2]:"));
-        assertThat(toon, containsString("- [2]: 1,2"));
-        assertThat(toon, containsString("- [2]: 3,4"));
-    }
-
-    @Test
-    void testNumberFormatting() throws Exception {
-        String json = """
-            {
-              "zero": 0,
-              "negative": -5,
-              "decimal": 3.14159,
-              "scientific": 1.5e10,
-              "trailingZeros": 10.0
-            }
-            """;
-
-        JsonNode node = MAPPER.readTree(json);
-        String toon = ToonUtils.jsonToToon(node);
-
-        assertThat(toon, containsString("zero: 0"));
-        assertThat(toon, containsString("negative: -5"));
-        assertThat(toon, containsString("decimal: 3.14159"));
-        // Scientific notation should be converted to plain
-        assertThat(toon, containsString("scientific: 15000000000"));
-        // Trailing zeros should be stripped
-        assertThat(toon, containsString("trailingZeros: 10"));
+            return true;
+        }
+        return expected.equals(actual);
     }
 }

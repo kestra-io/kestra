@@ -1966,7 +1966,8 @@
       "kv_pairs": "Aucune paire clé-valeur trouvée",
       "secrets": "Aucun secret trouvé",
       "all_columns_hidden": "Toutes les colonnes sont masquées",
-      "all_columns_hidden_description": "Réactivez au moins une colonne dans Personnaliser les colonnes du tableau pour revoir les données."
+      "all_columns_hidden_description": "Réactivez au moins une colonne dans Personnaliser les colonnes du tableau pour revoir les données.",
+      "credentials": "Identifiants"
     },
     "duplicate-pair": "{label} \"{key}\" est dupliqué, première clé ignorée.",
     "dashboards": {
@@ -2667,6 +2668,29 @@
       "install_description": "Installez Kestra comme application pour un accès plus rapide et une expérience plein écran.",
       "install": "Installer",
       "dismiss": "Pas maintenant"
+    },
+    "credential": {
+      "names": "Identifiants",
+      "add": "Créer",
+      "update": "Mettre à jour l'identifiant '{name}'",
+      "name": "Nom",
+      "namePlaceholder": "Nom utilisé pour référencer cet identifiant",
+      "type": "Type",
+      "description": "Description",
+      "key": "Clé d'API",
+      "bearerToken": "Jeton bearer",
+      "username": "Nom d'utilisateur",
+      "password": "Mot de passe",
+      "tokenUrl": "URL du jeton",
+      "tenantKey": "Locataire",
+      "clientId": "ID client",
+      "clientSecret": "Secret client",
+      "scopes": "Portées",
+      "scopesPlaceholder": "Une portée par ligne",
+      "fhirVersion": "Version FHIR",
+      "sandbox": "Bac à sable",
+      "valuePlaceholder": "Saisir la valeur secrète",
+      "updated": "Mis à jour"
     }
   }
 }

@@ -1966,7 +1966,8 @@
       "kv_pairs": "Пары kv store не найдены",
       "secrets": "Секреты не найдены",
       "all_columns_hidden": "Все столбцы скрыты",
-      "all_columns_hidden_description": "Включите хотя бы один столбец в разделе «Настроить столбцы таблицы», чтобы снова увидеть данные."
+      "all_columns_hidden_description": "Включите хотя бы один столбец в разделе «Настроить столбцы таблицы», чтобы снова увидеть данные.",
+      "credentials": "Учётные данные"
     },
     "duplicate-pair": "{label} \"{key}\" дублируется, первый ключ игнорируется.",
     "dashboards": {
@@ -2667,6 +2668,29 @@
       "install_description": "Установите Kestra как приложение для более быстрого доступа и полноэкранного режима.",
       "install": "Установить",
       "dismiss": "Не сейчас"
+    },
+    "credential": {
+      "names": "Учётные данные",
+      "add": "Создать",
+      "update": "Обновить учётные данные '{name}'",
+      "name": "Имя",
+      "namePlaceholder": "Имя для ссылки на эти учётные данные",
+      "type": "Тип",
+      "description": "Описание",
+      "key": "Ключ API",
+      "bearerToken": "Bearer-токен",
+      "username": "Имя пользователя",
+      "password": "Пароль",
+      "tokenUrl": "URL токена",
+      "tenantKey": "Арендатор",
+      "clientId": "ID клиента",
+      "clientSecret": "Секрет клиента",
+      "scopes": "Области",
+      "scopesPlaceholder": "По одной области в строке",
+      "fhirVersion": "Версия FHIR",
+      "sandbox": "Песочница",
+      "valuePlaceholder": "Введите секретное значение",
+      "updated": "Обновлено"
     }
   }
 }

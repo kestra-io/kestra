@@ -1966,7 +1966,8 @@
       "kv_pairs": "キー-バリュー ペアが見つかりません",
       "secrets": "シークレットが見つかりません",
       "all_columns_hidden": "すべての列が非表示です",
-      "all_columns_hidden_description": "データを再度表示するには、テーブル列のカスタマイズで少なくとも1つの列を再度オンにしてください。"
+      "all_columns_hidden_description": "データを再度表示するには、テーブル列のカスタマイズで少なくとも1つの列を再度オンにしてください。",
+      "credentials": "認証情報"
     },
     "duplicate-pair": "{label} \"{key}\" は重複しています。最初のキーは無視されます。",
     "dashboards": {
@@ -2667,6 +2668,29 @@
       "install_description": "より高速なアクセスとフルスクリーン体験のために、Kestra をアプリとしてインストールします。",
       "install": "インストール",
       "dismiss": "後で"
+    },
+    "credential": {
+      "names": "認証情報",
+      "add": "作成",
+      "update": "認証情報 '{name}' を更新",
+      "name": "名前",
+      "namePlaceholder": "この認証情報を参照する名前",
+      "type": "種類",
+      "description": "説明",
+      "key": "APIキー",
+      "bearerToken": "ベアラートークン",
+      "username": "ユーザー名",
+      "password": "パスワード",
+      "tokenUrl": "トークンURL",
+      "tenantKey": "テナント",
+      "clientId": "クライアントID",
+      "clientSecret": "クライアントシークレット",
+      "scopes": "スコープ",
+      "scopesPlaceholder": "1行に1つのスコープ",
+      "fhirVersion": "FHIRバージョン",
+      "sandbox": "サンドボックス",
+      "valuePlaceholder": "シークレット値を入力",
+      "updated": "更新日時"
     }
   }
 }

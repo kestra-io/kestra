@@ -17,6 +17,7 @@ import io.kestra.fethr.credential.CredentialRepositoryInterface;
 import io.kestra.fethr.credential.CredentialType;
 import io.kestra.webserver.converters.QueryFilterFormat;
 import io.kestra.webserver.models.api.credential.CredentialDetail;
+import io.kestra.webserver.models.api.credential.CredentialRequest;
 import io.kestra.webserver.models.api.credential.CredentialSummary;
 import io.kestra.webserver.utils.PageableUtils;
 
@@ -125,26 +126,29 @@ public class CredentialController {
     @Operation(tags = { "Credentials" }, summary = "Create a credential")
     public HttpResponse<CredentialDetail> createCredential(
         @Parameter(description = "The namespace") @PathVariable String namespace,
-        @Parameter(description = "The credential") @Valid @Body Credential credential) throws ConstraintViolationException {
+        @Parameter(description = "The credential") @Valid @Body CredentialRequest request) throws ConstraintViolationException {
         String tenantId = tenantService.resolveTenant();
 
-        if (credentialRepository.findByName(tenantId, namespace, credential.getName()).isPresent()) {
+        if (credentialRepository.findByName(tenantId, namespace, request.name()).isPresent()) {
             throw new ConstraintViolationException(
                 Collections.singleton(
                     ManualConstraintViolation.of(
                         "A credential with this name already exists in this namespace",
-                        credential,
-                        Credential.class,
+                        request,
+                        CredentialRequest.class,
                         "credential.name",
-                        credential.getName()
+                        request.name()
                     )
                 )
             );
         }
 
         Instant now = Instant.now();
+        Credential credential = request.toEntity(tenantId, namespace);
         credential.setTenantId(tenantId);
         credential.setNamespace(namespace);
+        credential.setName(request.name());
+        credential.setDescription(request.description());
         credential.setCreated(now);
         credential.setUpdated(now);
 
@@ -162,16 +166,20 @@ public class CredentialController {
     public HttpResponse<CredentialDetail> updateCredential(
         @Parameter(description = "The namespace") @PathVariable String namespace,
         @Parameter(description = "The credential name") @PathVariable String name,
-        @Parameter(description = "The credential") @Valid @Body Credential credential) throws ConstraintViolationException {
+        @Parameter(description = "The credential") @Valid @Body CredentialRequest request) throws ConstraintViolationException {
         Optional<Credential> existing = credentialRepository.findByName(tenantService.resolveTenant(), namespace, name);
         if (existing.isEmpty()) {
             return HttpResponse.notFound();
         }
 
+        // Identity comes from the stored row, not the body: name, namespace and type cannot move,
+        // and taking them from the path leaves nothing for a mismatched body to quietly change.
         Credential previous = existing.get();
+        Credential credential = request.toEntity(previous.getTenantId(), previous.getNamespace());
         credential.setTenantId(previous.getTenantId());
         credential.setNamespace(previous.getNamespace());
         credential.setName(previous.getName());
+        credential.setDescription(request.description());
         credential.setCreated(previous.getCreated());
         credential.setUpdated(Instant.now());
 

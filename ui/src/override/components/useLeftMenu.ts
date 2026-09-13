@@ -26,6 +26,7 @@ import ShapePlusOutline from "vue-material-design-icons/ShapePlusOutline.vue"
 // Tenant Administration icons
 import Monitor from "vue-material-design-icons/Monitor.vue"
 import DatabaseOutline from "vue-material-design-icons/DatabaseOutline.vue"
+import KeyOutline from "vue-material-design-icons/KeyOutline.vue"
 import LockOutline from "vue-material-design-icons/LockOutline.vue"
 import LightningBolt from "vue-material-design-icons/LightningBolt.vue"
 import Battery40 from "vue-material-design-icons/Battery40.vue"
@@ -304,6 +305,17 @@ export function useLeftMenu() {
                         },
                         attributes: {
                             locked: true,
+                        },
+                    },
+                    {
+                        id: "credentials",
+                        title: t("credential.names"),
+                        routes: routeStartWith("credentials"),
+                        href: {
+                            name: "credentials/list",
+                        },
+                        icon: {
+                            element: KeyOutline,
                         },
                     },
                     {

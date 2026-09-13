@@ -1966,7 +1966,8 @@
       "kv_pairs": "No Key-Value pairs Found",
       "secrets": "No Secrets Found",
       "all_columns_hidden": "All columns are hidden",
-      "all_columns_hidden_description": "Turn at least one column back on in Customize table columns to see the data again."
+      "all_columns_hidden_description": "Turn at least one column back on in Customize table columns to see the data again.",
+      "credentials": "Credentials"
     },
     "duplicate-pair": "{label} \"{key}\" is duplicated, first key ignored.",
     "dashboards": {
@@ -2667,6 +2668,29 @@
       "install_description": "Install Kestra as an app for quicker access and a full-screen experience.",
       "install": "Install",
       "dismiss": "Not now"
+    },
+    "credential": {
+      "names": "Credentials",
+      "add": "Create",
+      "update": "Update credential '{name}'",
+      "name": "Name",
+      "namePlaceholder": "Name used to reference this credential",
+      "type": "Type",
+      "description": "Description",
+      "key": "API key",
+      "bearerToken": "Bearer token",
+      "username": "Username",
+      "password": "Password",
+      "tokenUrl": "Token URL",
+      "tenantKey": "Tenant",
+      "clientId": "Client ID",
+      "clientSecret": "Client secret",
+      "scopes": "Scopes",
+      "scopesPlaceholder": "One scope per line",
+      "fhirVersion": "FHIR version",
+      "sandbox": "Sandbox",
+      "valuePlaceholder": "Enter the secret value",
+      "updated": "Updated"
     }
   }
 }

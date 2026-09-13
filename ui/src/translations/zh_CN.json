@@ -1966,7 +1966,8 @@
       "kv_pairs": "未找到Key-Value对",
       "secrets": "未找到Secrets",
       "all_columns_hidden": "所有列均已隐藏",
-      "all_columns_hidden_description": "在“自定义表格列”中至少重新开启一列，以再次查看数据。"
+      "all_columns_hidden_description": "在“自定义表格列”中至少重新开启一列，以再次查看数据。",
+      "credentials": "凭据"
     },
     "duplicate-pair": "{label} \"{key}\" 是重复的，第一个 key 被忽略。",
     "dashboards": {
@@ -2667,6 +2668,29 @@
       "install_description": "将 Kestra 安装为应用,以获得更快的访问速度和全屏体验。",
       "install": "安装",
       "dismiss": "暂不"
+    },
+    "credential": {
+      "names": "凭据",
+      "add": "创建",
+      "update": "更新凭据 '{name}'",
+      "name": "名称",
+      "namePlaceholder": "用于引用此凭据的名称",
+      "type": "类型",
+      "description": "描述",
+      "key": "API 密钥",
+      "bearerToken": "Bearer 令牌",
+      "username": "用户名",
+      "password": "密码",
+      "tokenUrl": "令牌 URL",
+      "tenantKey": "租户",
+      "clientId": "客户端 ID",
+      "clientSecret": "客户端密钥",
+      "scopes": "作用域",
+      "scopesPlaceholder": "每行一个作用域",
+      "fhirVersion": "FHIR 版本",
+      "sandbox": "沙盒",
+      "valuePlaceholder": "输入密钥值",
+      "updated": "更新时间"
     }
   }
 }

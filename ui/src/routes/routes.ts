@@ -46,6 +46,7 @@ const routes: KestraRouteRecord[] = [
 
     //Secrets
     {name: "secrets/list", path: "/:tenant?/secrets", component: () => import("../components/secrets/Secrets.vue")},
+    {name: "credentials/list", path: "/:tenant?/credentials", component: () => import("../components/credentials/Credentials.vue")},
 
     //Blueprints
     {name: "blueprints", path: "/:tenant?/blueprints/:kind/:tab", component: () => import("override/components/flows/blueprints/Blueprints.vue"), props: true},

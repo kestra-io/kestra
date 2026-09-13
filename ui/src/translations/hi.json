@@ -1966,7 +1966,8 @@
       "kv_pairs": "कोई Key-Value जोड़े नहीं मिले",
       "secrets": "कोई Secrets नहीं मिले",
       "all_columns_hidden": "सभी कॉलम छिपे हुए हैं",
-      "all_columns_hidden_description": "डेटा को फिर से देखने के लिए कस्टमाइज़ टेबल कॉलम में कम से कम एक कॉलम को वापस चालू करें।"
+      "all_columns_hidden_description": "डेटा को फिर से देखने के लिए कस्टमाइज़ टेबल कॉलम में कम से कम एक कॉलम को वापस चालू करें।",
+      "credentials": "क्रेडेंशियल"
     },
     "duplicate-pair": "{label} \"{key}\" दोहराया गया है, पहला key अनदेखा किया गया।",
     "dashboards": {
@@ -2667,6 +2668,29 @@
       "install_description": "तेज़ पहुंच और पूर्ण-स्क्रीन अनुभव के लिए Kestra को ऐप के रूप में इंस्टॉल करें।",
       "install": "इंस्टॉल करें",
       "dismiss": "अभी नहीं"
+    },
+    "credential": {
+      "names": "क्रेडेंशियल",
+      "add": "बनाएँ",
+      "update": "क्रेडेंशियल '{name}' अपडेट करें",
+      "name": "नाम",
+      "namePlaceholder": "इस क्रेडेंशियल को संदर्भित करने वाला नाम",
+      "type": "प्रकार",
+      "description": "विवरण",
+      "key": "API कुंजी",
+      "bearerToken": "बियरर टोकन",
+      "username": "उपयोगकर्ता नाम",
+      "password": "पासवर्ड",
+      "tokenUrl": "टोकन URL",
+      "tenantKey": "टेनेंट",
+      "clientId": "क्लाइंट ID",
+      "clientSecret": "क्लाइंट सीक्रेट",
+      "scopes": "स्कोप",
+      "scopesPlaceholder": "प्रति पंक्ति एक स्कोप",
+      "fhirVersion": "FHIR संस्करण",
+      "sandbox": "सैंडबॉक्स",
+      "valuePlaceholder": "गुप्त मान दर्ज करें",
+      "updated": "अपडेट किया गया"
     }
   }
 }

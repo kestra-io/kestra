@@ -1966,7 +1966,8 @@
       "kv_pairs": "Nessuna coppia Key-Value trovata",
       "secrets": "Nessun Secret Trovato",
       "all_columns_hidden": "Tutte le colonne sono nascoste",
-      "all_columns_hidden_description": "Riattiva almeno una colonna in Personalizza colonne della tabella per visualizzare nuovamente i dati."
+      "all_columns_hidden_description": "Riattiva almeno una colonna in Personalizza colonne della tabella per visualizzare nuovamente i dati.",
+      "credentials": "Credenziali"
     },
     "duplicate-pair": "Il {label} \"{key}\" è duplicato, il primo key è ignorato.",
     "dashboards": {
@@ -2667,6 +2668,29 @@
       "install_description": "Installa Kestra come app per un accesso più rapido e un'esperienza a schermo intero.",
       "install": "Installa",
       "dismiss": "Non ora"
+    },
+    "credential": {
+      "names": "Credenziali",
+      "add": "Crea",
+      "update": "Aggiorna la credenziale '{name}'",
+      "name": "Nome",
+      "namePlaceholder": "Nome usato per referenziare questa credenziale",
+      "type": "Tipo",
+      "description": "Descrizione",
+      "key": "Chiave API",
+      "bearerToken": "Token bearer",
+      "username": "Nome utente",
+      "password": "Password",
+      "tokenUrl": "URL del token",
+      "tenantKey": "Tenant",
+      "clientId": "ID client",
+      "clientSecret": "Segreto client",
+      "scopes": "Ambiti",
+      "scopesPlaceholder": "Un ambito per riga",
+      "fhirVersion": "Versione FHIR",
+      "sandbox": "Sandbox",
+      "valuePlaceholder": "Inserisci il valore segreto",
+      "updated": "Aggiornato"
     }
   }
 }

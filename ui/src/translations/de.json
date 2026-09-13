@@ -1966,7 +1966,8 @@
       "kv_pairs": "Keine KV-Paare gefunden",
       "secrets": "Keine Secrets gefunden",
       "all_columns_hidden": "Alle Spalten sind ausgeblendet",
-      "all_columns_hidden_description": "Aktiviere mindestens eine Spalte in „Tabellenspalten anpassen“ wieder, um die Daten erneut anzuzeigen."
+      "all_columns_hidden_description": "Aktiviere mindestens eine Spalte in „Tabellenspalten anpassen“ wieder, um die Daten erneut anzuzeigen.",
+      "credentials": "Anmeldedaten"
     },
     "duplicate-pair": "{label} „{key}“ ist doppelt vorhanden, der erste Key wird ignoriert.",
     "dashboards": {
@@ -2667,6 +2668,29 @@
       "install_description": "Installiere Kestra als App für schnelleren Zugriff und eine Vollbild-Ansicht.",
       "install": "Installieren",
       "dismiss": "Nicht jetzt"
+    },
+    "credential": {
+      "names": "Anmeldedaten",
+      "add": "Erstellen",
+      "update": "Anmeldedaten '{name}' aktualisieren",
+      "name": "Name",
+      "namePlaceholder": "Name, über den diese Anmeldedaten referenziert werden",
+      "type": "Typ",
+      "description": "Beschreibung",
+      "key": "API-Schlüssel",
+      "bearerToken": "Bearer-Token",
+      "username": "Benutzername",
+      "password": "Passwort",
+      "tokenUrl": "Token-URL",
+      "tenantKey": "Mandant",
+      "clientId": "Client-ID",
+      "clientSecret": "Client-Secret",
+      "scopes": "Scopes",
+      "scopesPlaceholder": "Ein Scope pro Zeile",
+      "fhirVersion": "FHIR-Version",
+      "sandbox": "Sandbox",
+      "valuePlaceholder": "Geheimen Wert eingeben",
+      "updated": "Aktualisiert"
     }
   }
 }

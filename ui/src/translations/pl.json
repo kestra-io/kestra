@@ -1966,7 +1966,8 @@
       "kv_pairs": "Nie znaleziono par KV",
       "secrets": "Nie znaleziono sekretów",
       "all_columns_hidden": "Wszystkie kolumny są ukryte",
-      "all_columns_hidden_description": "Włącz co najmniej jedną kolumnę w Dostosuj kolumny tabeli, aby ponownie zobaczyć dane."
+      "all_columns_hidden_description": "Włącz co najmniej jedną kolumnę w Dostosuj kolumny tabeli, aby ponownie zobaczyć dane.",
+      "credentials": "Poświadczenia"
     },
     "duplicate-pair": "{label} „{key}” jest zduplikowany, pierwszy Key został zignorowany.",
     "dashboards": {
@@ -2667,6 +2668,29 @@
       "install_description": "Zainstaluj Kestrę jako aplikację, aby mieć szybszy dostęp i pełnoekranowy widok.",
       "install": "Zainstaluj",
       "dismiss": "Nie teraz"
+    },
+    "credential": {
+      "names": "Poświadczenia",
+      "add": "Utwórz",
+      "update": "Zaktualizuj poświadczenie '{name}'",
+      "name": "Nazwa",
+      "namePlaceholder": "Nazwa używana do odwołania się do tego poświadczenia",
+      "type": "Typ",
+      "description": "Opis",
+      "key": "Klucz API",
+      "bearerToken": "Token bearer",
+      "username": "Nazwa użytkownika",
+      "password": "Hasło",
+      "tokenUrl": "URL tokenu",
+      "tenantKey": "Dzierżawca",
+      "clientId": "ID klienta",
+      "clientSecret": "Sekret klienta",
+      "scopes": "Zakresy",
+      "scopesPlaceholder": "Jeden zakres w wierszu",
+      "fhirVersion": "Wersja FHIR",
+      "sandbox": "Piaskownica",
+      "valuePlaceholder": "Wprowadź wartość sekretu",
+      "updated": "Zaktualizowano"
     }
   }
 }

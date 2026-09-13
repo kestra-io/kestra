@@ -3,18 +3,24 @@ package io.kestra.webserver.utils;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 import io.kestra.core.exceptions.KestraRuntimeException;
 
+import de.siegmar.fastcsv.reader.CsvReader;
+import de.siegmar.fastcsv.reader.NamedCsvRecord;
+import de.siegmar.fastcsv.reader.NamedCsvRecordHandler;
 import de.siegmar.fastcsv.writer.CsvWriter;
 import reactor.core.publisher.Flux;
 
 /**
  * Renders records to RFC 4180 compliant CSV.
  *
- * <p>The keys of the first record define the columns: every subsequent record is projected onto them, so a record
+ * <p>
+ * The keys of the first record define the columns: every subsequent record is projected onto them, so a record
  * holding extra or missing keys can never shift the remaining values into the wrong columns.
  */
 public final class CSVUtils {
@@ -27,6 +33,31 @@ public final class CSVUtils {
      * @param outWriter the writer to render the CSV to
      * @param lines the records to render, nothing is written when empty
      */
+    /**
+     * Parses a CSV of a header row plus data rows into one map per row, keyed by header name.
+     *
+     * <p>
+     * Uses the same FastCSV reader the write side uses, so a quoted field with an embedded comma or
+     * newline round-trips. An empty or header-only CSV yields no rows; a malformed one is the
+     * caller's mistake rather than a server fault.
+     */
+    public static List<Map<String, Object>> parseCSV(String csv) {
+        if (csv == null || csv.isBlank()) {
+            return List.of();
+        }
+
+        List<Map<String, Object>> rows = new ArrayList<>();
+        try (CsvReader<NamedCsvRecord> reader = CsvReader.builder().build(NamedCsvRecordHandler.of(), csv)) {
+            for (NamedCsvRecord record : reader) {
+                rows.add(new LinkedHashMap<>(record.getFieldsAsMap()));
+            }
+        } catch (IOException | RuntimeException e) {
+            throw new IllegalArgumentException("Could not parse the CSV: " + e.getMessage(), e);
+        }
+
+        return rows;
+    }
+
     public static void toCSV(Writer outWriter, List<Map<String, Object>> lines) {
 
         try (var csvWriter = CsvWriter.builder().build(outWriter)) {

@@ -74,7 +74,7 @@ public class CredentialController {
     @Get(uri = "credentials")
     @ExecuteOn(TaskExecutors.IO)
     @Operation(
-        tags = {"Credentials"},
+        tags = { "Credentials" },
         summary = "Search credentials across namespaces",
         description = "Returns identity only. Use the per-credential read to obtain material."
     )
@@ -82,20 +82,21 @@ public class CredentialController {
         @Parameter(description = "The current page") @QueryValue(value = "page", defaultValue = "1") int page,
         @Parameter(description = "The current page size") @QueryValue(value = "size", defaultValue = "10") @Max(PageableUtils.MAX_PAGE_SIZE) int size,
         @Parameter(description = "The sort of current page") @Nullable @QueryValue(value = "sort") List<String> sort,
-        @Parameter(description = "Filters") @QueryFilterFormat(Resource.CREDENTIALS) List<QueryFilter> filters
-    ) throws IllegalArgumentException, IOException {
+        @Parameter(description = "Filters") @QueryFilterFormat(Resource.CREDENTIALS) List<QueryFilter> filters) throws IllegalArgumentException, IOException {
         Pageable pageable = PageableUtils.from(page, size, sort, key -> key);
         ArrayListTotal<Credential> credentials = credentialRepository.find(pageable, tenantService.resolveTenant(), filters);
 
-        return HttpResponse.ok(new PagedCredentials(
-            credentials.stream().map(CredentialSummary::of).toList(),
-            credentials.getTotal()
-        ));
+        return HttpResponse.ok(
+            new PagedCredentials(
+                credentials.stream().map(CredentialSummary::of).toList(),
+                credentials.getTotal()
+            )
+        );
     }
 
     @Get(uri = "credentials/types")
     @ExecuteOn(TaskExecutors.IO)
-    @Operation(tags = {"Credentials"}, summary = "List the credential types that can be created")
+    @Operation(tags = { "Credentials" }, summary = "List the credential types that can be created")
     public List<CredentialTypeVo> listCredentialTypes() {
         return Arrays.stream(CredentialType.values())
             .map(type -> new CredentialTypeVo(type, type.getLabel()))
@@ -105,15 +106,14 @@ public class CredentialController {
     @Get(uri = "namespaces/{namespace}/credentials/{name}")
     @ExecuteOn(TaskExecutors.IO)
     @Operation(
-        tags = {"Credentials"},
+        tags = { "Credentials" },
         summary = "Get a credential, material included",
         description = "The only read that returns secrets, and it returns them for one named "
             + "credential at a time."
     )
     public HttpResponse<CredentialDetail> getCredential(
         @Parameter(description = "The namespace") @PathVariable String namespace,
-        @Parameter(description = "The credential name") @PathVariable String name
-    ) {
+        @Parameter(description = "The credential name") @PathVariable String name) {
         return credentialRepository.findByName(tenantService.resolveTenant(), namespace, name)
             .map(CredentialDetail::of)
             .map(HttpResponse::ok)
@@ -122,21 +122,24 @@ public class CredentialController {
 
     @Post(uri = "namespaces/{namespace}/credentials", consumes = MediaType.APPLICATION_JSON)
     @ExecuteOn(TaskExecutors.IO)
-    @Operation(tags = {"Credentials"}, summary = "Create a credential")
+    @Operation(tags = { "Credentials" }, summary = "Create a credential")
     public HttpResponse<CredentialDetail> createCredential(
         @Parameter(description = "The namespace") @PathVariable String namespace,
-        @Parameter(description = "The credential") @Valid @Body Credential credential
-    ) throws ConstraintViolationException {
+        @Parameter(description = "The credential") @Valid @Body Credential credential) throws ConstraintViolationException {
         String tenantId = tenantService.resolveTenant();
 
         if (credentialRepository.findByName(tenantId, namespace, credential.getName()).isPresent()) {
-            throw new ConstraintViolationException(Collections.singleton(ManualConstraintViolation.of(
-                "A credential with this name already exists in this namespace",
-                credential,
-                Credential.class,
-                "credential.name",
-                credential.getName()
-            )));
+            throw new ConstraintViolationException(
+                Collections.singleton(
+                    ManualConstraintViolation.of(
+                        "A credential with this name already exists in this namespace",
+                        credential,
+                        Credential.class,
+                        "credential.name",
+                        credential.getName()
+                    )
+                )
+            );
         }
 
         Instant now = Instant.now();
@@ -151,7 +154,7 @@ public class CredentialController {
     @Put(uri = "namespaces/{namespace}/credentials/{name}", consumes = MediaType.APPLICATION_JSON)
     @ExecuteOn(TaskExecutors.IO)
     @Operation(
-        tags = {"Credentials"},
+        tags = { "Credentials" },
         summary = "Update a credential",
         description = "Name, namespace and type are a credential's identity and cannot be changed; "
             + "an attempt to change any of them is rejected rather than silently applied."
@@ -159,8 +162,7 @@ public class CredentialController {
     public HttpResponse<CredentialDetail> updateCredential(
         @Parameter(description = "The namespace") @PathVariable String namespace,
         @Parameter(description = "The credential name") @PathVariable String name,
-        @Parameter(description = "The credential") @Valid @Body Credential credential
-    ) throws ConstraintViolationException {
+        @Parameter(description = "The credential") @Valid @Body Credential credential) throws ConstraintViolationException {
         Optional<Credential> existing = credentialRepository.findByName(tenantService.resolveTenant(), namespace, name);
         if (existing.isEmpty()) {
             return HttpResponse.notFound();
@@ -178,28 +180,26 @@ public class CredentialController {
 
     @Delete(uri = "namespaces/{namespace}/credentials/{name}")
     @ExecuteOn(TaskExecutors.IO)
-    @Operation(tags = {"Credentials"}, summary = "Delete a credential")
+    @Operation(tags = { "Credentials" }, summary = "Delete a credential")
     public HttpResponse<Void> deleteCredential(
         @Parameter(description = "The namespace") @PathVariable String namespace,
-        @Parameter(description = "The credential name") @PathVariable String name
-    ) {
+        @Parameter(description = "The credential name") @PathVariable String name) {
         return credentialRepository.delete(tenantService.resolveTenant(), namespace, name)
-            .map(deleted -> HttpResponse.<Void>noContent())
+            .map(deleted -> HttpResponse.<Void> noContent())
             .orElseGet(HttpResponse::notFound);
     }
 
     @Delete(uri = "namespaces/{namespace}/credentials", consumes = MediaType.APPLICATION_JSON)
     @ExecuteOn(TaskExecutors.IO)
     @Operation(
-        tags = {"Credentials"},
+        tags = { "Credentials" },
         summary = "Delete several credentials of a namespace",
         description = "Deletes every name that exists and reports which ones went, rather than "
             + "failing the whole request because one of them was already gone."
     )
     public HttpResponse<ApiDeleteBulkResponse> deleteCredentials(
         @Parameter(description = "The namespace") @PathVariable String namespace,
-        @Parameter(description = "The names to delete") @Body ApiDeleteBulkRequest request
-    ) {
+        @Parameter(description = "The names to delete") @Body ApiDeleteBulkRequest request) {
         String tenantId = tenantService.resolveTenant();
 
         List<String> deleted = request.names().stream()

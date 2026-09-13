@@ -1,7 +1,5 @@
 package io.kestra.fethr.secret;
 
-import io.kestra.fethr.vault.CryptographicValue;
-
 import java.io.IOException;
 import java.util.Map;
 import java.util.Set;
@@ -11,6 +9,7 @@ import java.util.stream.Collectors;
 import io.kestra.core.secret.SecretNotFoundException;
 import io.kestra.core.secret.SecretObject;
 import io.kestra.core.secret.SecretService;
+import io.kestra.fethr.vault.CryptographicValue;
 
 import io.micronaut.context.annotation.Replaces;
 import jakarta.inject.Inject;

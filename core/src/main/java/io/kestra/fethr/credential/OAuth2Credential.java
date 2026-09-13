@@ -41,6 +41,7 @@ public class OAuth2Credential extends Credential {
         this.scopes = builder.scopes;
         this.setType(CredentialType.OAUTH2);
     }
+
     @Override
     public Credential toDeleted() {
         return markDeleted(this.toBuilder());

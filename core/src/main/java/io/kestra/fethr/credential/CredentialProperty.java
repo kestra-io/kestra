@@ -21,7 +21,7 @@ import java.lang.annotation.Target;
  * Surfaced into the generated JSON schema as {@code $credentialType}, following the same
  * {@code $}-prefixed convention as {@code $dynamic} and {@code $group}.
  */
-@Target({ElementType.FIELD, ElementType.METHOD})
+@Target({ ElementType.FIELD, ElementType.METHOD })
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
 public @interface CredentialProperty {

@@ -23,6 +23,7 @@ public class ApiKeyCredential extends Credential {
         this.key = builder.key;
         this.setType(CredentialType.API_KEY);
     }
+
     @Override
     public Credential toDeleted() {
         return markDeleted(this.toBuilder());

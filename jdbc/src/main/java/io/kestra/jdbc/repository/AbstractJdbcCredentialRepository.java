@@ -70,7 +70,8 @@ public abstract class AbstractJdbcCredentialRepository extends AbstractJdbcCrudR
     public Credential update(Credential credential, Credential previous) {
         findByName(previous.getTenantId(), previous.getNamespace(), previous.getName())
             .flatMap(current -> current.validateUpdate(credential))
-            .ifPresent(violation -> {
+            .ifPresent(violation ->
+            {
                 throw violation;
             });
 

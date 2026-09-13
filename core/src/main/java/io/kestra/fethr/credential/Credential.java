@@ -52,13 +52,15 @@ import lombok.experimental.SuperBuilder;
     property = "type",
     visible = true
 )
-@JsonSubTypes({
-    @JsonSubTypes.Type(value = ApiKeyCredential.class, name = "API_KEY"),
-    @JsonSubTypes.Type(value = OAuth2Credential.class, name = "OAUTH2"),
-    @JsonSubTypes.Type(value = BearerTokenCredential.class, name = "BEARER_TOKEN"),
-    @JsonSubTypes.Type(value = BasicAuthCredential.class, name = "BASIC_AUTH"),
-    @JsonSubTypes.Type(value = CernerFhirCredential.class, name = "CERNER_FHIR")
-})
+@JsonSubTypes(
+    {
+        @JsonSubTypes.Type(value = ApiKeyCredential.class, name = "API_KEY"),
+        @JsonSubTypes.Type(value = OAuth2Credential.class, name = "OAUTH2"),
+        @JsonSubTypes.Type(value = BearerTokenCredential.class, name = "BEARER_TOKEN"),
+        @JsonSubTypes.Type(value = BasicAuthCredential.class, name = "BASIC_AUTH"),
+        @JsonSubTypes.Type(value = CernerFhirCredential.class, name = "CERNER_FHIR")
+    }
+)
 public abstract class Credential implements SoftDeletable<Credential>, TenantInterface, HasUID {
 
     @Hidden
@@ -134,33 +136,39 @@ public abstract class Credential implements SoftDeletable<Credential>, TenantInt
         Set<ConstraintViolation<?>> violations = new HashSet<>();
 
         if (!Objects.equals(updated.getName(), this.getName())) {
-            violations.add(ManualConstraintViolation.of(
-                "Illegal credential name update",
-                updated,
-                Credential.class,
-                "credential.name",
-                updated.getName()
-            ));
+            violations.add(
+                ManualConstraintViolation.of(
+                    "Illegal credential name update",
+                    updated,
+                    Credential.class,
+                    "credential.name",
+                    updated.getName()
+                )
+            );
         }
 
         if (!Objects.equals(updated.getNamespace(), this.getNamespace())) {
-            violations.add(ManualConstraintViolation.of(
-                "Illegal namespace update",
-                updated,
-                Credential.class,
-                "credential.namespace",
-                updated.getNamespace()
-            ));
+            violations.add(
+                ManualConstraintViolation.of(
+                    "Illegal namespace update",
+                    updated,
+                    Credential.class,
+                    "credential.namespace",
+                    updated.getNamespace()
+                )
+            );
         }
 
         if (updated.getType() != this.getType()) {
-            violations.add(ManualConstraintViolation.of(
-                "Illegal type update",
-                updated,
-                Credential.class,
-                "credential.type",
-                updated.getType()
-            ));
+            violations.add(
+                ManualConstraintViolation.of(
+                    "Illegal type update",
+                    updated,
+                    Credential.class,
+                    "credential.type",
+                    updated.getType()
+                )
+            );
         }
 
         return violations.isEmpty() ? Optional.empty() : Optional.of(new ConstraintViolationException(violations));

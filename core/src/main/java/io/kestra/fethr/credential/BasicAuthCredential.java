@@ -34,6 +34,7 @@ public class BasicAuthCredential extends Credential {
         this.password = builder.password;
         this.setType(CredentialType.BASIC_AUTH);
     }
+
     @Override
     public Credential toDeleted() {
         return markDeleted(this.toBuilder());

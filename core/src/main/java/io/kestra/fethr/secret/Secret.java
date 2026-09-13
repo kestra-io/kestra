@@ -1,7 +1,5 @@
 package io.kestra.fethr.secret;
 
-import io.kestra.fethr.vault.CryptographicValue;
-
 import java.time.Instant;
 import java.util.HashSet;
 import java.util.List;
@@ -13,6 +11,7 @@ import io.kestra.core.models.HasUID;
 import io.kestra.core.models.SoftDeletable;
 import io.kestra.core.models.TenantInterface;
 import io.kestra.core.models.validations.ManualConstraintViolation;
+import io.kestra.fethr.vault.CryptographicValue;
 
 import io.micronaut.core.annotation.Introspected;
 import io.swagger.v3.oas.annotations.Hidden;

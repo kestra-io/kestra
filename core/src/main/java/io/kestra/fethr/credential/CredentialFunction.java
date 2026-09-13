@@ -110,12 +110,14 @@ public class CredentialFunction implements KestraFunction {
             found = credentialRepository.findByName(flowTenantId, namespace, key);
         }
 
-        Credential credential = found.orElseThrow(() -> new PebbleException(
-            null,
-            "Cannot find credential '" + key + "' in namespace '" + flow.get(NAMESPACE_ARG) + "'.",
-            lineNumber,
-            self.getName()
-        ));
+        Credential credential = found.orElseThrow(
+            () -> new PebbleException(
+                null,
+                "Cannot find credential '" + key + "' in namespace '" + flow.get(NAMESPACE_ARG) + "'.",
+                lineNumber,
+                self.getName()
+            )
+        );
 
         String subkey = (String) args.get(SUBKEY_ARG);
         String value = subkey == null || subkey.isEmpty()

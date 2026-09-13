@@ -18,8 +18,7 @@ public record CredentialSummary(
     String name,
     String description,
     CredentialType type,
-    Instant updated
-) {
+    Instant updated) {
     public static CredentialSummary of(Credential credential) {
         return new CredentialSummary(
             credential.getTenantId(),

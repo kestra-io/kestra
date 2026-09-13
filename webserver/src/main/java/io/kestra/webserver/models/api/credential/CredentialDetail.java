@@ -11,8 +11,8 @@ import io.kestra.fethr.credential.BearerTokenCredential;
 import io.kestra.fethr.credential.CernerFhirCredential;
 import io.kestra.fethr.credential.Credential;
 import io.kestra.fethr.credential.CredentialType;
-import io.kestra.fethr.credential.OAuth2Credential;
 import io.kestra.fethr.credential.FhirVersion;
+import io.kestra.fethr.credential.OAuth2Credential;
 import io.kestra.fethr.vault.CryptographicValue;
 
 /**
@@ -63,8 +63,7 @@ public record CredentialDetail(
     FhirVersion fhirVersion,
     Boolean sandbox,
     String fhirBaseUrl,
-    String conformance
-) {
+    String conformance) {
 
     public static CredentialDetail of(Credential credential) {
         Builder builder = new Builder(credential);
@@ -129,19 +128,70 @@ public record CredentialDetail(
             this.credential = credential;
         }
 
-        private Builder key(String v) { this.key = v; return this; }
-        private Builder bearerToken(String v) { this.bearerToken = v; return this; }
-        private Builder username(String v) { this.username = v; return this; }
-        private Builder password(String v) { this.password = v; return this; }
-        private Builder tokenUrl(String v) { this.tokenUrl = v; return this; }
-        private Builder tenantKey(String v) { this.tenantKey = v; return this; }
-        private Builder clientId(String v) { this.clientId = v; return this; }
-        private Builder clientSecret(String v) { this.clientSecret = v; return this; }
-        private Builder scopes(List<String> v) { this.scopes = v; return this; }
-        private Builder fhirVersion(FhirVersion v) { this.fhirVersion = v; return this; }
-        private Builder sandbox(Boolean v) { this.sandbox = v; return this; }
-        private Builder fhirBaseUrl(String v) { this.fhirBaseUrl = v; return this; }
-        private Builder conformance(String v) { this.conformance = v; return this; }
+        private Builder key(String v) {
+            this.key = v;
+            return this;
+        }
+
+        private Builder bearerToken(String v) {
+            this.bearerToken = v;
+            return this;
+        }
+
+        private Builder username(String v) {
+            this.username = v;
+            return this;
+        }
+
+        private Builder password(String v) {
+            this.password = v;
+            return this;
+        }
+
+        private Builder tokenUrl(String v) {
+            this.tokenUrl = v;
+            return this;
+        }
+
+        private Builder tenantKey(String v) {
+            this.tenantKey = v;
+            return this;
+        }
+
+        private Builder clientId(String v) {
+            this.clientId = v;
+            return this;
+        }
+
+        private Builder clientSecret(String v) {
+            this.clientSecret = v;
+            return this;
+        }
+
+        private Builder scopes(List<String> v) {
+            this.scopes = v;
+            return this;
+        }
+
+        private Builder fhirVersion(FhirVersion v) {
+            this.fhirVersion = v;
+            return this;
+        }
+
+        private Builder sandbox(Boolean v) {
+            this.sandbox = v;
+            return this;
+        }
+
+        private Builder fhirBaseUrl(String v) {
+            this.fhirBaseUrl = v;
+            return this;
+        }
+
+        private Builder conformance(String v) {
+            this.conformance = v;
+            return this;
+        }
 
         private CredentialDetail build() {
             return new CredentialDetail(

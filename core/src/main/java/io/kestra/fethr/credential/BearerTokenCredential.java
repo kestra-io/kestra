@@ -23,6 +23,7 @@ public class BearerTokenCredential extends Credential {
         this.bearerToken = builder.bearerToken;
         this.setType(CredentialType.BEARER_TOKEN);
     }
+
     @Override
     public Credential toDeleted() {
         return markDeleted(this.toBuilder());

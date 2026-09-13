@@ -34,7 +34,6 @@ import com.google.common.collect.ImmutableMap;
 
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
-import io.kestra.fethr.credential.CredentialProperty;
 import io.kestra.core.models.assets.Asset;
 import io.kestra.core.models.assets.AssetExporter;
 import io.kestra.core.models.dashboards.DataFilter;
@@ -57,6 +56,7 @@ import io.kestra.core.plugins.RegisteredPlugin;
 import io.kestra.core.preview.FileRenderer;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.validations.TimezoneId;
+import io.kestra.fethr.credential.CredentialProperty;
 
 import io.micronaut.core.annotation.Nullable;
 import io.swagger.v3.oas.annotations.Hidden;

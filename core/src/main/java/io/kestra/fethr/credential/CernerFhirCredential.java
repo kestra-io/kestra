@@ -79,6 +79,7 @@ public class CernerFhirCredential extends Credential {
         this.conformance = builder.conformance;
         this.setType(CredentialType.CERNER_FHIR);
     }
+
     @Override
     public Credential toDeleted() {
         return markDeleted(this.toBuilder());

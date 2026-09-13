@@ -90,7 +90,9 @@ SET "JAVA_ADD_OPENS=--add-opens java.base/java.nio=ALL-UNNAMED --add-opens java.
 
 REM Java options that Kestra engineers think are best for Kestra, they should be added before JAVA_OPTS so they are overridable:
 REM -XX:MaxRAMPercentage=50.0: configure max heap to 50% of available RAM (default 25%)
-SET "KESTRA_JAVA_OPTS=-XX:MaxRAMPercentage=50.0"
+REM -XX:MaxDirectMemorySize=256M: cap direct (off-heap) memory; when unset the JVM defaults it to the max heap size,
+REM letting Netty's pooled direct arenas silently double the process footprint under load
+SET "KESTRA_JAVA_OPTS=-XX:MaxRAMPercentage=50.0 -XX:MaxDirectMemorySize=256M"
 
 java %KESTRA_JAVA_OPTS% %JAVA_OPTS% %JAVA_ADD_OPENS% --enable-native-access=ALL-UNNAMED -jar "%this%" %*
 

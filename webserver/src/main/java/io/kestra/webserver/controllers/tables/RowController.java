@@ -8,6 +8,7 @@ import java.util.Map;
 import io.kestra.core.contexts.configuration.SystemFlowsConfiguration;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.tenant.TenantService;
+import io.kestra.fethr.auth.Permission;
 import io.kestra.fethr.table.RowService;
 import io.kestra.webserver.models.tables.CsvImportVo;
 import io.kestra.webserver.responses.PagedResults;
@@ -31,6 +32,7 @@ import io.micronaut.http.multipart.CompletedFileUpload;
 import io.micronaut.http.uri.UriBuilder;
 import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.scheduling.annotation.ExecuteOn;
+import io.micronaut.security.annotation.Secured;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.inject.Inject;
@@ -62,6 +64,7 @@ public class RowController {
         this.tenantService = tenantService;
     }
 
+    @Secured(Permission.Names.TABLE_WRITE)
     @Post
     @Operation(summary = "Insert a row, values keyed by column name.")
     public HttpResponse<Map<String, Object>> insert(
@@ -76,6 +79,7 @@ public class RowController {
         );
     }
 
+    @Secured(Permission.Names.TABLE_WRITE)
     @Post(value = "/import", consumes = MediaType.MULTIPART_FORM_DATA)
     @Operation(
         summary = "Import rows from a CSV upload.",
@@ -89,6 +93,7 @@ public class RowController {
         return new CsvImportVo(inserted);
     }
 
+    @Secured(Permission.Names.TABLE_READ)
     @Get
     @Operation(summary = "List a page of rows, with free-text search and sort.")
     public PagedResults<Map<String, Object>> list(
@@ -112,6 +117,7 @@ public class RowController {
         return PagedResults.of(rows);
     }
 
+    @Secured(Permission.Names.TABLE_WRITE)
     @Patch(value = "/{rowId}", consumes = "application/json-patch+json")
     @Operation(
         summary = "Update the given columns of a row.",
@@ -124,6 +130,7 @@ public class RowController {
         return rowService.updateRow(tenantService.resolveTenant(), NAMESPACE, name, rowId, values);
     }
 
+    @Secured(Permission.Names.TABLE_WRITE)
     @Delete
     @Operation(summary = "Delete one or more rows by id.")
     public HttpResponse<Void> delete(@PathVariable String name, @Body List<String> rowIds) {

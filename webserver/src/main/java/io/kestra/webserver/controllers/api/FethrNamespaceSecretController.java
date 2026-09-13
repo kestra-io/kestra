@@ -4,6 +4,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
+import io.kestra.fethr.auth.Permission;
 import io.kestra.fethr.secret.Secret;
 import io.kestra.fethr.secret.SecretRepositoryInterface;
 import io.kestra.fethr.vault.CryptographicValue;
@@ -22,6 +23,7 @@ import io.micronaut.http.annotation.PathVariable;
 import io.micronaut.http.annotation.Put;
 import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.scheduling.annotation.ExecuteOn;
+import io.micronaut.security.annotation.Secured;
 import io.micronaut.validation.Validated;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -58,6 +60,7 @@ public class FethrNamespaceSecretController<META extends io.kestra.webserver.mod
      * Upsert rather than create-only because that is what the secrets table expects: it sends the
      * same call whether the drawer was opened through "add" or through "update with a new value".
      */
+    @Secured(Permission.Names.SECRET_WRITE)
     @Put(uri = "{namespace}/secrets", consumes = MediaType.APPLICATION_JSON)
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = { "Secrets" }, summary = "Create or replace a secret")
@@ -102,6 +105,7 @@ public class FethrNamespaceSecretController<META extends io.kestra.webserver.mod
      * Separate from the upsert above so someone can relabel a secret without knowing it, which is
      * exactly the distinction the secrets table draws between editing a secret and rotating it.
      */
+    @Secured(Permission.Names.SECRET_WRITE)
     @Patch(uri = "{namespace}/secrets", consumes = MediaType.APPLICATION_JSON)
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = { "Secrets" }, summary = "Update a secret's description and tags")
@@ -123,6 +127,7 @@ public class FethrNamespaceSecretController<META extends io.kestra.webserver.mod
         return HttpResponse.ok(FethrSecretMeta.of(secretRepository.update(updated, previous)));
     }
 
+    @Secured(Permission.Names.SECRET_WRITE)
     @Delete(uri = "{namespace}/secrets/{key}")
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = { "Secrets" }, summary = "Delete a secret")
@@ -134,6 +139,7 @@ public class FethrNamespaceSecretController<META extends io.kestra.webserver.mod
             .orElseGet(HttpResponse::notFound);
     }
 
+    @Secured(Permission.Names.SECRET_WRITE)
     @Delete(uri = "{namespace}/secrets", consumes = MediaType.APPLICATION_JSON)
     @ExecuteOn(TaskExecutors.IO)
     @Operation(
@@ -161,6 +167,7 @@ public class FethrNamespaceSecretController<META extends io.kestra.webserver.mod
      * Its own endpoint, so a value is served only to a caller that asked for it and never as a side
      * effect of listing or of reading metadata.
      */
+    @Secured(Permission.Names.SECRET_READ)
     @Get(uri = "{namespace}/secrets/{key}/value")
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = { "Secrets" }, summary = "Reveal a secret's value")

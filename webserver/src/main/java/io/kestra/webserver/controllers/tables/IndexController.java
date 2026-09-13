@@ -2,6 +2,7 @@ package io.kestra.webserver.controllers.tables;
 
 import io.kestra.core.contexts.configuration.SystemFlowsConfiguration;
 import io.kestra.core.tenant.TenantService;
+import io.kestra.fethr.auth.Permission;
 import io.kestra.fethr.table.IndexService;
 import io.kestra.fethr.table.TableIndexDefinition;
 import io.kestra.webserver.models.tables.IndexForm;
@@ -16,6 +17,7 @@ import io.micronaut.http.annotation.PathVariable;
 import io.micronaut.http.annotation.Post;
 import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.scheduling.annotation.ExecuteOn;
+import io.micronaut.security.annotation.Secured;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.inject.Inject;
@@ -39,6 +41,7 @@ public class IndexController {
         this.tenantService = tenantService;
     }
 
+    @Secured(Permission.Names.TABLE_UPDATE)
     @Post
     @Operation(summary = "Create an index, which runs CREATE INDEX.")
     public HttpResponse<TableDetailVo> create(@PathVariable String name, @Valid @Body IndexForm body) {
@@ -51,6 +54,7 @@ public class IndexController {
         );
     }
 
+    @Secured(Permission.Names.TABLE_DELETE)
     @Delete("/{indexName}")
     @Operation(summary = "Drop an index, which runs DROP INDEX.")
     public TableDetailVo drop(@PathVariable String name, @PathVariable String indexName) {

@@ -24,6 +24,19 @@ dependencies {
 
     implementation "io.micronaut.security:micronaut-security-csrf"
 
+    // Fethr: session auth backed by Keycloak, active only when micronaut.security.enabled is true.
+    // -session brings the login/logout handlers and the in-memory session store; -jwt parses the
+    // Direct-Grant access token server-side to read realm_access.roles, and validates the bearer
+    // tokens the HL7 service presents. Neither token ever reaches the browser.
+    implementation "io.micronaut.security:micronaut-security-session"
+    implementation "io.micronaut.security:micronaut-security-jwt"
+
+    // Keycloak admin API: user provisioning, role assignment, logout by id, realm events.
+    implementation "org.keycloak:keycloak-admin-client"
+
+    // JSON Merge Patch (RFC 7386), for the user-update PATCH endpoint.
+    implementation "com.github.java-json-tools:json-patch"
+
     implementation("com.posthog.java:posthog:1.2.0")
 
     // ai

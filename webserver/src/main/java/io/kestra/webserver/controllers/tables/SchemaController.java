@@ -9,6 +9,7 @@ import io.kestra.core.models.QueryFilter.Resource;
 import io.kestra.core.models.validations.ManualConstraintViolation;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.tenant.TenantService;
+import io.kestra.fethr.auth.Permission;
 import io.kestra.fethr.table.ColumnDefinition;
 import io.kestra.fethr.table.TableDefinition;
 import io.kestra.fethr.table.TableRepositoryInterface;
@@ -35,6 +36,7 @@ import io.micronaut.http.annotation.Post;
 import io.micronaut.http.annotation.QueryValue;
 import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.scheduling.annotation.ExecuteOn;
+import io.micronaut.security.annotation.Secured;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.inject.Inject;
@@ -73,6 +75,7 @@ public class SchemaController {
         this.tenantService = tenantService;
     }
 
+    @Secured(Permission.Names.TABLE_CREATE)
     @Post
     @Operation(summary = "Create a table, which creates a real backing table at runtime.")
     public HttpResponse<TableVo> create(@Valid @Body TableForm body) {
@@ -94,12 +97,14 @@ public class SchemaController {
         return HttpResponse.created(TableVo.of(tableService.createTable(definition)));
     }
 
+    @Secured(Permission.Names.TABLE_READ)
     @Get("/{name}")
     @Operation(summary = "Get a table's schema.")
     public TableDetailVo get(@PathVariable String name) {
         return TableDetailVo.of(tableService.getTable(tenantService.resolveTenant(), NAMESPACE, name));
     }
 
+    @Secured(Permission.Names.TABLE_READ)
     @Get
     @Operation(summary = "List and search the tables.")
     public PagedResults<TableVo> list(
@@ -118,6 +123,7 @@ public class SchemaController {
         );
     }
 
+    @Secured(Permission.Names.TABLE_UPDATE)
     @Patch(value = "/{name}", consumes = "application/json-patch+json")
     @Operation(summary = "Rename a table and change its description.")
     public HttpResponse<Void> rename(@PathVariable String name, @Valid @Body TableRenameForm body) {
@@ -139,6 +145,7 @@ public class SchemaController {
         return HttpResponse.noContent();
     }
 
+    @Secured(Permission.Names.TABLE_DELETE)
     @Delete("/{name}")
     @Operation(summary = "Delete a table, which drops the real backing table.")
     public HttpResponse<Void> delete(@PathVariable String name) {

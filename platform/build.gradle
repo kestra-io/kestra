@@ -138,6 +138,9 @@ dependencies {
         api "de.siegmar:fastcsv:4.4.0"
         // Json Diff
         api "com.github.java-json-tools:json-patch:1.13"
+
+        // Fethr: the Keycloak admin API client, for user provisioning and realm events.
+        api "org.keycloak:keycloak-admin-client:26.0.9"
         api 'com.rabbitmq:amqp-client:5.35.0'
         api 'org.apache.commons:commons-pool2:2.13.1'
         api 'io.lettuce:lettuce-core:7.7.0.RELEASE'

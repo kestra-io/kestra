@@ -6,6 +6,7 @@ import java.util.List;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.QueryFilter.Resource;
 import io.kestra.core.repositories.ArrayListTotal;
+import io.kestra.fethr.auth.Permission;
 import io.kestra.fethr.secret.Secret;
 import io.kestra.fethr.secret.SecretRepositoryInterface;
 import io.kestra.webserver.converters.QueryFilterFormat;
@@ -22,6 +23,7 @@ import io.micronaut.http.annotation.Get;
 import io.micronaut.http.annotation.QueryValue;
 import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.scheduling.annotation.ExecuteOn;
+import io.micronaut.security.annotation.Secured;
 import io.micronaut.validation.Validated;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -50,6 +52,7 @@ public class FethrSecretController extends SecretController<FethrSecretMeta> {
     @Inject
     private SecretRepositoryInterface secretRepository;
 
+    @Secured(Permission.Names.SECRET_READ)
     @Get
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = { "Secrets" }, summary = "Search secrets of all namespaces")

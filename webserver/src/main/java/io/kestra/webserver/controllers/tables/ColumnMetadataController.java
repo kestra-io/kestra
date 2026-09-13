@@ -1,11 +1,13 @@
 package io.kestra.webserver.controllers.tables;
 
+import io.kestra.fethr.auth.Permission;
 import io.kestra.webserver.models.tables.ColumnTypesVo;
 
 import io.micronaut.http.annotation.Controller;
 import io.micronaut.http.annotation.Get;
 import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.scheduling.annotation.ExecuteOn;
+import io.micronaut.security.annotation.Secured;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
@@ -21,6 +23,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 @Tag(name = "Tables")
 public class ColumnMetadataController {
 
+    @Secured(Permission.Names.TABLE_READ)
     @Get
     @Operation(summary = "List the column data types, and which of them can back a primary key.")
     public ColumnTypesVo listColumnTypes() {

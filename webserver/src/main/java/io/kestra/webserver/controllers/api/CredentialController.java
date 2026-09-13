@@ -12,6 +12,7 @@ import io.kestra.core.models.QueryFilter.Resource;
 import io.kestra.core.models.validations.ManualConstraintViolation;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.tenant.TenantService;
+import io.kestra.fethr.auth.Permission;
 import io.kestra.fethr.credential.Credential;
 import io.kestra.fethr.credential.CredentialRepositoryInterface;
 import io.kestra.fethr.credential.CredentialType;
@@ -36,6 +37,7 @@ import io.micronaut.http.annotation.Put;
 import io.micronaut.http.annotation.QueryValue;
 import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.scheduling.annotation.ExecuteOn;
+import io.micronaut.security.annotation.Secured;
 import io.micronaut.validation.Validated;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -72,6 +74,7 @@ public class CredentialController {
     @Inject
     private TenantService tenantService;
 
+    @Secured(Permission.Names.CREDENTIAL_READ)
     @Get(uri = "credentials")
     @ExecuteOn(TaskExecutors.IO)
     @Operation(
@@ -95,6 +98,7 @@ public class CredentialController {
         );
     }
 
+    @Secured(Permission.Names.CREDENTIAL_READ)
     @Get(uri = "credentials/types")
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = { "Credentials" }, summary = "List the credential types that can be created")
@@ -104,6 +108,7 @@ public class CredentialController {
             .toList();
     }
 
+    @Secured(Permission.Names.CREDENTIAL_READ)
     @Get(uri = "namespaces/{namespace}/credentials/{name}")
     @ExecuteOn(TaskExecutors.IO)
     @Operation(
@@ -121,6 +126,7 @@ public class CredentialController {
             .orElseGet(HttpResponse::notFound);
     }
 
+    @Secured(Permission.Names.CREDENTIAL_WRITE)
     @Post(uri = "namespaces/{namespace}/credentials", consumes = MediaType.APPLICATION_JSON)
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = { "Credentials" }, summary = "Create a credential")
@@ -155,6 +161,7 @@ public class CredentialController {
         return HttpResponse.created(CredentialDetail.of(credentialRepository.save(credential)));
     }
 
+    @Secured(Permission.Names.CREDENTIAL_WRITE)
     @Put(uri = "namespaces/{namespace}/credentials/{name}", consumes = MediaType.APPLICATION_JSON)
     @ExecuteOn(TaskExecutors.IO)
     @Operation(
@@ -186,6 +193,7 @@ public class CredentialController {
         return HttpResponse.ok(CredentialDetail.of(credentialRepository.update(credential, previous)));
     }
 
+    @Secured(Permission.Names.CREDENTIAL_WRITE)
     @Delete(uri = "namespaces/{namespace}/credentials/{name}")
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = { "Credentials" }, summary = "Delete a credential")
@@ -197,6 +205,7 @@ public class CredentialController {
             .orElseGet(HttpResponse::notFound);
     }
 
+    @Secured(Permission.Names.CREDENTIAL_WRITE)
     @Delete(uri = "namespaces/{namespace}/credentials", consumes = MediaType.APPLICATION_JSON)
     @ExecuteOn(TaskExecutors.IO)
     @Operation(

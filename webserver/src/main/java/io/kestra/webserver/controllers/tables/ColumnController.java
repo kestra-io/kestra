@@ -2,6 +2,7 @@ package io.kestra.webserver.controllers.tables;
 
 import io.kestra.core.contexts.configuration.SystemFlowsConfiguration;
 import io.kestra.core.tenant.TenantService;
+import io.kestra.fethr.auth.Permission;
 import io.kestra.fethr.table.ColumnDefinition;
 import io.kestra.fethr.table.ColumnService;
 import io.kestra.webserver.models.tables.ColumnForm;
@@ -19,6 +20,7 @@ import io.micronaut.http.annotation.PathVariable;
 import io.micronaut.http.annotation.Post;
 import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.scheduling.annotation.ExecuteOn;
+import io.micronaut.security.annotation.Secured;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.inject.Inject;
@@ -48,6 +50,7 @@ public class ColumnController {
         this.tenantService = tenantService;
     }
 
+    @Secured(Permission.Names.TABLE_UPDATE)
     @Post
     @Operation(summary = "Add a column, which runs ALTER TABLE ADD COLUMN.")
     public HttpResponse<TableDetailVo> add(@PathVariable String name, @Valid @Body ColumnForm body) {
@@ -69,6 +72,7 @@ public class ColumnController {
         );
     }
 
+    @Secured(Permission.Names.TABLE_UPDATE)
     @Patch(value = "/{columnName}", consumes = "application/json-patch+json")
     @Operation(summary = "Rename a column, which runs ALTER TABLE RENAME COLUMN.")
     public TableDetailVo rename(
@@ -80,6 +84,7 @@ public class ColumnController {
         );
     }
 
+    @Secured(Permission.Names.TABLE_UPDATE)
     @Patch(value = "/{columnName}/type")
     @Operation(
         summary = "Change a column's data type, which runs ALTER TABLE ALTER COLUMN TYPE.",
@@ -94,6 +99,7 @@ public class ColumnController {
         );
     }
 
+    @Secured(Permission.Names.TABLE_DELETE)
     @Delete("/{columnName}")
     @Operation(
         summary = "Drop a column, which runs ALTER TABLE DROP COLUMN.",

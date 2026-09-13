@@ -4,6 +4,19 @@ micronaut:
   # Disable Micronaut Open Telemetry
   otel:
     enabled: false
+  # Server-side session: opaque SESSION cookie carrying only the session id (no token). The in-memory
+  # InMemorySessionStore (from micronaut-session) is the store; multi-instance/HA would switch to Redis
+  # via config only. Two limits end a session: the sliding idle window below (max-inactive-interval --
+  # any request resets it; surfaced to the SPA via /configs sessionIdleSeconds so the client idle
+  # monitor derives its threshold from here, no hardcoding), and the absolute cap, which remains the
+  # realm SSO Session Max (the KC-backed refresh fails past it and the session is invalidated).
+  session:
+    max-inactive-interval: 1h
+    http:
+      cookie: true
+      header: false
+      cookie-name: SESSION
+
   router:
     static-resources:
       swagger:
@@ -59,6 +72,57 @@ micronaut:
       cookie-name: csrfToken
       filter:
         enabled: false
+    enabled: ${KEYCLOAK_SECURITY_ENABLED:false}
+    # Server-managed session: the SPA login goes through the built-in /login handler (KeycloakAuthenticationProvider,
+    # Direct Grant), the realm tokens are kept server-side in the session and the browser only gets an opaque
+    # SESSION cookie (no JWT). The HL7 service authenticates separately with a Keycloak bearer token (the
+    # token.jwt block below), validated against the realm JWKS.
+    authentication: session
+    # The built-in login endpoint is moved off the default /login to /login/auth so it does not collide
+    # with the SPA's client-side /login route (the SPA posts credentials to /login/auth).
+    endpoints:
+      login:
+        path: /login/auth
+    # Login API returns 200 on success and 401 on failure (redirect disabled) so the SPA routes client-side.
+    redirect:
+      enabled: false
+    # Only /api/v1/** is guarded (mirrors the legacy AuthenticationFilter scope); the SPA bootstrap (/configs),
+    # onboarding sign-up and the login endpoint stay anonymous, as do UI, static resources, swagger, /ping
+    # and /health so the SPA still loads.
+    intercept-url-map:
+      - pattern: /api/v1/configs
+        access:
+          - isAnonymous()
+      - pattern: /api/v1/sign-up
+        access:
+          - isAnonymous()
+      - pattern: /login/auth
+        access:
+          - isAnonymous()
+      # Webhook triggers are authenticated by the secret key in the URL, not the session, so external
+      # systems (e.g. Mirth connectors posting HL7) can POST to them without a Keycloak session.
+      - pattern: /api/v1/*/executions/webhook/**
+        access:
+          - isAnonymous()
+      - pattern: /api/v1/**
+        access:
+          - isAuthenticated()
+      - pattern: /**
+        access:
+          - isAnonymous()
+    # HL7 authenticates with a Keycloak bearer token (service-account client_credentials) instead of basic
+    # auth: validate incoming Authorization: Bearer JWTs against the realm JWKS + issuer. The realm roles
+    # (realm_access.roles, via KeycloakRolesFinder) gate the bearer with @Secured exactly like the session,
+    # and the two coexist (a request resolves by its bearer header or its SESSION cookie). The JWKS is
+    # fetched lazily, so Keycloak need not be reachable at startup.
+    token:
+      jwt:
+        signatures:
+          jwks:
+            keycloak:
+              url: ${kestra.server.keycloak.base-url}/realms/${kestra.server.keycloak.realm}/protocol/openid-connect/certs
+        claims-validators:
+          issuer: ${kestra.server.keycloak.base-url}/realms/${kestra.server.keycloak.realm}
   caches:
     default:
       maximum-weight: 10485760
@@ -179,6 +243,13 @@ kestra:
       max-rows: 5000
 
     # The expected time for this server to complete all its tasks before initiating a graceful shutdown.
+    keycloak:
+      base-url: "${KEYCLOAK_BASE_URL:}"
+      realm: "${KEYCLOAK_REALM:}"
+      client-id: "${KEYCLOAK_CLIENT_ID:}"
+      client-secret: "${KEYCLOAK_CLIENT_SECRET:}"
+
+
     terminationGracePeriod: 5m
     workerTaskRestartStrategy: AFTER_TERMINATION_GRACE_PERIOD
     # Configuration for Liveness and Heartbeat mechanism between servers.

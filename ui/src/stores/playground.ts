@@ -9,6 +9,7 @@ import {State} from "@kestra-io/design-system"
 import {useToast} from "../utils/toast"
 import {useI18n} from "vue-i18n"
 import {Flow, useFlowStore} from "./flow"
+import type {FlowForExecution} from "@kestra-io/kestra-sdk"
 import {useFileExplorerStore} from "./fileExplorer"
 import isEqual from "lodash/isEqual"
 
@@ -19,6 +20,15 @@ const graphUtils = () => import("@kestra-io/topology/vue-flow-utils")
 export interface ExecutionWithGraph extends Execution {
     graph?: FlowGraph;
 }
+
+/** The execution store's flow requires the flags and tasks that the flow store leaves optional. */
+const forExecution = (flow: Flow): FlowForExecution => ({
+    ...flow,
+    disabled: flow.disabled ?? false,
+    draft: flow.draft ?? false,
+    deleted: flow.deleted ?? false,
+    tasks: flow.tasks ?? [],
+})
 
 export const usePlaygroundStore = defineStore("playground", () => {
 
@@ -71,7 +81,7 @@ export const usePlaygroundStore = defineStore("playground", () => {
 
     const taskIdToTaskRunIdMap: Map<string, string>  = new Map()
 
-    async function triggerExecution(flow: Flow, breakpoints?: string[], customFormData?: Record<string, any>) {
+    async function triggerExecution(flow: Flow, breakpoints?: string[], customFormData?: Record<string, unknown>) {
         let formData = customFormData
         if (!formData) {
             formData = {}
@@ -133,7 +143,7 @@ export const usePlaygroundStore = defineStore("playground", () => {
         return false
     }
 
-    async function replayOrTriggerExecution(taskId?: string, breakpoints?: string[], graph?: any, customFormData?: Record<string, any>) {
+    async function replayOrTriggerExecution(taskId?: string, breakpoints?: string[], graph?: any, customFormData?: Record<string, unknown>) {
         const canReplay = await checkCanReplay(taskId, graph)
         const lastExecution = executions.value.length ? executions.value[0] : undefined
 
@@ -253,7 +263,7 @@ export const usePlaygroundStore = defineStore("playground", () => {
 
     const {t} = useI18n()
 
-    async function runUntilTask(taskId?: string, runDownstreamTasks = false, customFormData?: Record<string, any>) {
+    async function runUntilTask(taskId?: string, runDownstreamTasks = false, customFormData?: Record<string, unknown>) {
         if(readyToStart.value === false) {
             console.warn("Playground is not ready to start, latest execution is still in progress")
             return
@@ -295,7 +305,7 @@ export const usePlaygroundStore = defineStore("playground", () => {
             if (hasMissing) {
                 readyToStart.value = true
                 actionOptions.value = {taskId, runDownstreamTasks}
-                executionsStore.flow = flowStore.flow
+                executionsStore.flow = forExecution(flowStore.flow)
                 showInputPrompt.value = true
                 return
             }
@@ -309,7 +319,7 @@ export const usePlaygroundStore = defineStore("playground", () => {
                 readyToStart.value = true
                 if (!customFormData && flowStore.flow && flowStore.flow.inputs?.length) {
                     actionOptions.value = {taskId, runDownstreamTasks}
-                    executionsStore.flow = flowStore.flow
+                    executionsStore.flow = forExecution(flowStore.flow)
                     showInputPrompt.value = true
                     return
                 }

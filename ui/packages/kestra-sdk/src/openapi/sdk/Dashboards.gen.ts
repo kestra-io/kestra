@@ -20,7 +20,7 @@ export const exportChart = (parameters: Omit<Parameters<typeof _07E6Bfb76>[0], '
     ...parameters,
     tenant: resolveTenant(parameters?.tenant),
     dashboardControllerPreviewRequest: parameters
-}, { ...options, parseAs: 'text' }));
+}, options));
 
 /**
  * Preview a chart data
@@ -52,4 +52,4 @@ export const exportDashboardChart = (parameters: Omit<Parameters<typeof _05A0131
     ...parameters,
     tenant: resolveTenant(parameters?.tenant),
     chartFiltersOverrides: parameters
-}, { ...options, parseAs: 'text' }));
+}, options));

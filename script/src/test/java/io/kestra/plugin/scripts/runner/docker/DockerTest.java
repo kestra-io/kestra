@@ -155,7 +155,7 @@ class DockerTest extends AbstractTaskRunnerTest {
 
             var timeout = Duration.ofSeconds(30);
             // Wait for the container to be created
-            Await.await().pollDelay(Duration.ofMillis(100)).atMost(timeout).until(() ->
+            Await.await().pollDelay(Duration.ZERO).pollInterval(Duration.ofMillis(100)).atMost(timeout).until(() ->
             {
                 List<Container> existingContainers = client.listContainersCmd()
                     .withShowAll(true)
@@ -263,7 +263,7 @@ class DockerTest extends AbstractTaskRunnerTest {
 
             var timeout = Duration.ofSeconds(30);
             // Wait for the container to be created
-            Await.await().pollDelay(Duration.ofMillis(100)).atMost(timeout).until(() ->
+            Await.await().pollDelay(Duration.ZERO).pollInterval(Duration.ofMillis(100)).atMost(timeout).until(() ->
             {
                 List<Container> existingContainers = client.listContainersCmd()
                     .withShowAll(true)

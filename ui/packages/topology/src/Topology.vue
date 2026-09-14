@@ -187,7 +187,7 @@
         loadIcon?: (cls: string) => Promise<any>;
         enableSubflowInteraction?: boolean;
         execution?: any;
-        subflowsExecutions?: Record<string, any[]>;
+        subflowsExecutions?: Record<string, VueFlowUtils.GraphExecution>;
         playgroundEnabled?: boolean;
         playgroundReadyToStart?: boolean;
         replayEnabled?: boolean;

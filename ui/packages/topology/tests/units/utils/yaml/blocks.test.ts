@@ -235,6 +235,28 @@ describe("insertBlockWithPath", () => {
             name: Plugin 3
         `
 
+    test("fills an empty section rather than repeating its key", () => {
+        const result = YamlUtils.insertBlockWithPath({
+            source: "id: t\nnamespace: n\ntasks:\n",
+            parentPath: "tasks",
+            newBlock: "id: new\ntype: io.kestra.plugin.core.log.Log\n",
+        })
+
+        expect(result.match(/^tasks:/gm)).toHaveLength(1)
+        expect(result).toContain("id: new")
+    })
+
+    test("fills an empty nested section rather than repeating its key", () => {
+        const result = YamlUtils.insertBlockWithPath({
+            source: "id: t\ntasks:\n  - id: sw\n    type: io.kestra.plugin.core.flow.Switch\n    cases:\n",
+            parentPath: "tasks[0].cases[\"1.0\"]",
+            newBlock: "id: new\ntype: io.kestra.plugin.core.log.Log\n",
+        })
+
+        expect(result.match(/cases:/g)).toHaveLength(1)
+        expect(result).toContain("id: new")
+    })
+
     test("rejects a parent path that holds a scalar rather than a collection", () => {
         expect(() =>
             YamlUtils.insertBlockWithPath({

@@ -86,7 +86,17 @@
 
     const toPercent = (ms: number) => ((ms - props.rangeStartMs) / rangeSpanMs.value) * 100
 
-    const laned = computed(() => props.packLanes ? assignLanes(props.executions) : props.executions.map(e => ({...e, lane: 0})))
+    // Lane-packing splits overlapping executions into as many lanes as there are concurrent runs,
+    // each too narrow on its own to ever trip shouldBucketRow's per-lane check — so a genuine burst
+    // of concurrency would render as a wall of single-item, sub-minimum-width slivers instead of the
+    // clean bucket a namespace row (never lane-packed) shows for the same data. Checking bucketing
+    // against the combined, not-yet-split set first keeps concurrency lanes for when they're actually
+    // wide enough to read, and collapses to one bucketed lane otherwise.
+    const shouldSkipLanePacking = computed(() =>
+        props.packLanes && shouldBucketRow(props.executions, props.rangeStartMs, props.rangeEndMs, props.availableWidthPx),
+    )
+
+    const laned = computed(() => props.packLanes && !shouldSkipLanePacking.value ? assignLanes(props.executions) : props.executions.map(e => ({...e, lane: 0})))
 
     const laneCount = computed(() => laned.value.reduce((max, e) => Math.max(max, e.lane + 1), 1))
 

@@ -1461,6 +1461,7 @@ export type MiscControllerConfiguration = {
     chartDefaultDuration?: string;
     flowTemplate?: string;
     commitDate?: string;
+    versionUpgrade?: VersionServiceVersionUpgrade;
     isCustomDashboardsEnabled?: boolean;
     isAnonymousUsageEnabled?: boolean;
     isUiAnonymousUsageEnabled?: boolean;
@@ -2329,6 +2330,12 @@ export type ValidateConstraintViolation = {
     deprecationPaths?: Array<string>;
     warnings?: Array<string>;
     infos?: Array<string>;
+};
+
+export type VersionServiceVersionUpgrade = {
+    from?: string;
+    to?: string;
+    at?: string;
 };
 
 export type WebhookResponse = {

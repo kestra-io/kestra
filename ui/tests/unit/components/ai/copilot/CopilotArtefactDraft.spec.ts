@@ -117,6 +117,20 @@ describe("CopilotArtefactDraft", () => {
         expect(w.find("[data-test=\"copilot-draft-dismissed\"]").text()).toContain("Dismissed")
     })
 
+    // A draft that already saved successfully must not keep offering Apply — clicking it again would
+    // silently re-save the same content (kestra-io/kestra#19330 review round 2: `appliedDraftIds` was
+    // tracked in CopilotChat.vue but never reached this card, so it stayed fully interactive forever).
+    it("hides the actions and shows a quiet status once applied", () => {
+        const w = mount(CopilotArtefactDraft, {
+            props: {draft: {draftId: "d14", kind: "FLOW", yaml: "id: f", valid: true, constraints: null}, applied: true},
+            global: mountGlobal,
+        })
+        expect(w.find("[data-test=\"copilot-draft-dismiss\"]").exists()).toBe(false)
+        expect(w.find("[data-test=\"copilot-draft-open\"]").exists()).toBe(false)
+        expect(w.find("[data-test=\"copilot-draft-apply\"]").exists()).toBe(false)
+        expect(w.find("[data-test=\"copilot-draft-applied\"]").text()).toContain("Applied")
+    })
+
     // Bug 2 (kestra-io/kestra#19330 review): CopilotChat.vue needs to know a draft was applied so it
     // stops treating it as pending — the card only knows once `useApplyDraft.ts`'s apply actually wrote
     // something, not merely that Apply was clicked (a cancelled confirm or a failed write emits nothing).

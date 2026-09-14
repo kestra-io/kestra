@@ -86,6 +86,7 @@
         <CopilotArtefactDraft
             :draft="message.draft"
             :dismissed="isDraftDismissed"
+            :applied="isDraftApplied"
             @dismiss="emit('dismissDraft', $event)"
             @applied="emit('draftApplied', $event)"
         />
@@ -124,6 +125,8 @@
         isRunning?: boolean
         /** Draft ids the user already declined (CopilotChat.vue) — hides this ARTEFACT_DRAFT's actions. */
         dismissedDraftIds?: Set<string>
+        /** Draft ids already applied (CopilotChat.vue) — hides this ARTEFACT_DRAFT's actions. */
+        appliedDraftIds?: Set<string>
     }>()
 
     const emit = defineEmits<{
@@ -133,6 +136,9 @@
 
     const isDraftDismissed = computed(
         () => Boolean(props.message.draft && props.dismissedDraftIds?.has(props.message.draft.draftId)),
+    )
+    const isDraftApplied = computed(
+        () => Boolean(props.message.draft && props.appliedDraftIds?.has(props.message.draft.draftId)),
     )
 
     // The user prompt rendered literally, split on ``` fences only — full markdown would mangle

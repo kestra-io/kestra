@@ -86,6 +86,7 @@
                         :isPending="message.id === pendingProposalMessageId"
                         :isRunning="message.id === runningToolCallId"
                         :dismissedDraftIds="dismissedDraftIds"
+                        :appliedDraftIds="appliedDraftIds"
                         @dismissDraft="dismissDraft"
                         @draftApplied="markDraftApplied"
                     />

@@ -2190,6 +2190,7 @@
           "apply": "Applica",
           "dismiss": "Ignora",
           "dismissed": "Ignorato",
+          "applied": "Applicato",
           "previewBanner": "Stai esaminando una modifica suggerita dall'IA: l'editor è di sola lettura finché non la applichi o la ignori.",
           "applyTitle": "Applica flow",
           "applyConfirm": "Salvare il flow {namespace}.{id} come revisione bozza per la revisione? Verrà creato, oppure verrà aggiunta una nuova revisione bozza se esiste già — le bozze non vengono considerate da trigger o subflow finché non vengono pubblicate.",

@@ -2190,6 +2190,7 @@
           "apply": "Anwenden",
           "dismiss": "Verwerfen",
           "dismissed": "Verworfen",
+          "applied": "Angewendet",
           "previewBanner": "Eine KI-vorgeschlagene Änderung wird angezeigt – der Editor ist schreibgeschützt, bis du sie anwendest oder verwirfst.",
           "applyTitle": "Flow anwenden",
           "applyConfirm": "{namespace}.{id} als Entwurfsrevision zur Überprüfung speichern? Der Flow wird erstellt oder, falls er bereits existiert, um eine neue Entwurfsrevision ergänzt – Entwürfe werden von Triggern oder Subflows erst nach der Veröffentlichung berücksichtigt.",

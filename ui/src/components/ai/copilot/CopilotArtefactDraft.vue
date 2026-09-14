@@ -24,11 +24,14 @@
              KsMarkdown provides its own copy-to-clipboard control, so no separate copy button. -->
         <KsMarkdown class="copilot-draft-yaml" data-test="copilot-draft-yaml" :content="yamlBlock" />
 
-        <!-- Once dismissed, the card stops locking the editor (CopilotChat.vue excludes it from the
-             pending-draft scan) and the footer no longer offers actions — a quiet status line instead,
-             matching the cancelled-turn treatment in CopilotMessage.vue. -->
+        <!-- Once dismissed or applied, the card stops locking the editor (CopilotChat.vue excludes it
+             from the pending-draft scan) and the footer no longer offers actions — a quiet status line
+             instead, matching the cancelled-turn treatment in CopilotMessage.vue. -->
         <div v-if="dismissed" class="copilot-draft-footer" data-test="copilot-draft-dismissed">
-            <KsText size="small" class="copilot-draft-dismissed-label">{{ $t("ai.copilot.draft.dismissed") }}</KsText>
+            <KsText size="small" class="copilot-draft-status-label">{{ $t("ai.copilot.draft.dismissed") }}</KsText>
+        </div>
+        <div v-else-if="applied" class="copilot-draft-footer" data-test="copilot-draft-applied">
+            <KsText size="small" class="copilot-draft-status-label">{{ $t("ai.copilot.draft.applied") }}</KsText>
         </div>
         <!-- Apply actions: flows + dashboards open in the editor or apply directly. Apps are EE-only —
              open in the app editor only (no direct apply), and only when the EE app path is present, so
@@ -73,6 +76,8 @@
         draft: ArtefactDraftEvent
         /** True once this draft was dismissed (tracked by `CopilotChat.vue`) — hides the actions. */
         dismissed?: boolean
+        /** True once this draft was applied (tracked by `CopilotChat.vue`) — hides the actions. */
+        applied?: boolean
     }>()
 
     const emit = defineEmits<{
@@ -156,7 +161,7 @@
         color: var(--ks-text-secondary);
     }
 
-    .copilot-draft-dismissed-label {
+    .copilot-draft-status-label {
         --kel-text-color: var(--ks-text-muted);
         font-style: italic;
     }

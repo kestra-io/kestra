@@ -2190,6 +2190,7 @@
           "apply": "应用",
           "dismiss": "忽略",
           "dismissed": "已忽略",
+          "applied": "已应用",
           "previewBanner": "正在查看 AI 建议的更改——在您应用或忽略之前，编辑器为只读状态。",
           "applyTitle": "应用 flow",
           "applyConfirm": "将 flow {namespace}.{id} 保存为待审核的草稿修订版？如果尚不存在将被创建，如果已存在则会添加一个新的草稿修订版 — 草稿在发布之前不会被 trigger 或 subflow 处理。",

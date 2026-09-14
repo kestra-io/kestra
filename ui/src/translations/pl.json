@@ -2190,6 +2190,7 @@
           "apply": "Zastosuj",
           "dismiss": "Odrzuć",
           "dismissed": "Odrzucono",
+          "applied": "Zastosowano",
           "previewBanner": "Przeglądasz zmianę zasugerowaną przez AI — edytor jest tylko do odczytu, dopóki jej nie zastosujesz lub nie odrzucisz.",
           "applyTitle": "Zastosuj Flow",
           "applyConfirm": "Zapisać Flow {namespace}.{id} jako wersję roboczą do przeglądu? Zostanie utworzony lub, jeśli już istnieje, zostanie dodana nowa wersja robocza — wersje robocze nie są uruchamiane przez triggery ani subflow, dopóki nie zostaną opublikowane.",

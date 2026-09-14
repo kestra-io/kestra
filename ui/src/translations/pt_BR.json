@@ -2190,6 +2190,7 @@
           "apply": "Aplicar",
           "dismiss": "Descartar",
           "dismissed": "Descartado",
+          "applied": "Aplicado",
           "previewBanner": "Revisando uma alteração sugerida pela IA — o editor fica somente leitura até você aplicar ou descartar.",
           "applyTitle": "Aplicar flow",
           "applyConfirm": "Salvar o flow {namespace}.{id} como uma revisão de rascunho para revisão? Ele será criado, ou uma nova revisão de rascunho será adicionada se já existir — rascunhos não são acionados por triggers nem subflows até serem publicados.",

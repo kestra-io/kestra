@@ -2190,6 +2190,7 @@
           "apply": "適用",
           "dismiss": "却下",
           "dismissed": "却下済み",
+          "applied": "適用済み",
           "previewBanner": "AI による変更案を確認中です — 適用または却下するまでエディターは読み取り専用になります。",
           "applyTitle": "flow を適用",
           "applyConfirm": "{namespace}.{id} をレビュー用のドラフトリビジョンとして保存しますか？作成されるか、既に存在する場合は新しいドラフトリビジョンが追加されます。ドラフトは公開されるまで trigger や subflow から参照されません。",

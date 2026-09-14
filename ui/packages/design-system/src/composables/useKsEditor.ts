@@ -15,7 +15,7 @@ import UnfoldMoreHorizontal from "vue-material-design-icons/UnfoldMoreHorizontal
 import {TabFocus} from "monaco-editor/editor/browser/config/tabFocus"
 import * as monaco from "monaco-editor/editor/editor.api"
 import {editor as monacoEditorNs} from "monaco-editor/editor/editor.api"
-import debounce from "lodash/debounce"
+import {debounce} from "../utils/lang"
 import type {EditorOptions, KsEditorOptions} from "../utils/editorTypes"
 import {configureMonacoTypescript, editorModelUid as uid, getOrCreateOverflowWidgetsDomNode, registerMonacoThemes} from "../utils/monacoSetup"
 import {useTaskIcon} from "./taskIcon"

@@ -601,9 +601,9 @@
     const defaultTopologyOrientation = localStorage.getItem(storageKeys.DEFAULT_TOPOLOGY_ORIENTATION)
     const isHorizontal = ref(
         props.horizontalDefault ??
-        (isHorizontalLS.value !== undefined
-            ? isHorizontalLS.value?.toString() === "true"
-            : defaultTopologyOrientation === topologyOrientations.HORIZONTAL),
+            (isHorizontalLS.value !== undefined
+                ? isHorizontalLS.value?.toString() === "true"
+                : defaultTopologyOrientation === topologyOrientations.HORIZONTAL),
     )
 
     watch(() => props.horizontalDefault, (value) => {

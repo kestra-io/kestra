@@ -89,7 +89,6 @@
   "packages/design-system/src/index.ts": 2,
   "packages/design-system/src/utils/duration.ts": 1,
   "packages/design-system/src/utils/editorTypes.ts": 2,
-  "packages/design-system/src/utils/util.ts": 2,
   "packages/design-system/tests/storybook/Basic/KsScrollbar.stories.ts": 1,
   "packages/design-system/tests/storybook/Data/KsTable.stories.ts": 1,
   "packages/design-system/tests/units/Data/KsDataTable.test.ts": 22,

@@ -30,7 +30,9 @@
                         {{ $t("join_slack") }}
                     </KsDropdownItem>
 
-                    <KsDropdownItem divided danger command="logout">
+                    <VersionMenuItem />
+
+                    <KsDropdownItem danger command="logout">
                         <KsIcon size="base">
                             <Logout />
                         </KsIcon>
@@ -52,6 +54,7 @@
     import Slack from "vue-material-design-icons/Slack.vue"
     import KS_LOGO from "../../../assets/ks-logo-small.svg"
     import * as BasicAuth from "../../../utils/basicAuth"
+    import VersionMenuItem from "../../../components/layout/VersionMenuItem.vue"
 
     const SLACK_URL = "https://kestra.io/slack?utm_source=app&utm_medium=referral&utm_campaign=top-auth"
 
@@ -70,7 +73,7 @@
             router.push(startTutorial.value)
         } else if (command === "slack") {
             window.open(SLACK_URL, "_blank", "noopener")
-        } else {
+        } else if (command === "logout") {
             logout()
         }
     }

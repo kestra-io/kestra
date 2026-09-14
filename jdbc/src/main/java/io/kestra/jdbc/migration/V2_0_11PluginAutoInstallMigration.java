@@ -25,7 +25,8 @@ import lombok.extern.slf4j.Slf4j;
  * 1.3 → 2.0 first-sync migration: crawls the latest non-deleted revision of every flow, aggregates
  * the task/trigger types missing from the local plugin registry and bulk-installs their artifacts,
  * so an instance upgraded to a slim distribution does not fail every pre-existing flow.
- * Best-effort with a bounded wait: a failure is logged and never fails the startup.
+ * Best-effort with a bounded wait: a failure is logged and never fails the startup — see
+ * {@link #migrate()}.
  */
 @Slf4j
 @Singleton
@@ -69,26 +70,45 @@ public class V2_0_11PluginAutoInstallMigration implements MigrationScript {
         return null;
     }
 
+    /**
+     * Never throws — installing plugins is a convenience and must not be able to stop Kestra from
+     * starting. The guard covers the whole body, {@code autoInstallService.get()} included: that
+     * provider transitively pulls in a repository and therefore the queue, so a misconfigured queue
+     * used to abort {@code ApplicationContext.start()} from here — and {@code kestra migrate run} /
+     * {@code migrate plan} with it — reporting an unrelated queue error as a failed migration.
+     */
     @Override
-    public void migrate() throws Exception {
-        PluginAutoInstallService service = autoInstallService.get();
-        if (!service.isEnabled()) {
-            log.info("Plugin auto-install is disabled, skipping the first-sync plugin crawl.");
-            return;
+    public void migrate() {
+        try {
+            PluginAutoInstallService service = autoInstallService.get();
+            if (!service.isEnabled()) {
+                log.info("Plugin auto-install is disabled, skipping the first-sync plugin crawl.");
+                return;
+            }
+
+            // Migrations run before AbstractCommand.maybeInitPlugins() registers the external plugins
+            // directory — without this, every already-installed plugin would be re-downloaded.
+            registerExternalPluginsDirectory();
+
+            Set<String> missingTypes = findMissingTypesInAllFlows();
+            if (missingTypes.isEmpty()) {
+                log.info("All plugin types referenced by existing flows are available, nothing to install.");
+                return;
+            }
+
+            log.info("Detected {} plugin types referenced by existing flows but missing from the local registry: {}.", missingTypes.size(), missingTypes);
+            service.installMissingTypes(missingTypes);
+        } catch (Exception e) {
+            // The script is still recorded as applied, so startup is not retried into the same
+            // failure. Missing plugins are installed on the next flow save anyway, and can be
+            // installed by hand at any time.
+            log.warn(
+                "Skipping the first-sync plugin crawl: {}. Existing flows may reference plugins that are "
+                    + "not installed locally — install them manually if a flow fails to load.",
+                e.getMessage(),
+                e
+            );
         }
-
-        // Migrations run before AbstractCommand.maybeInitPlugins() registers the external plugins
-        // directory — without this, every already-installed plugin would be re-downloaded.
-        registerExternalPluginsDirectory();
-
-        Set<String> missingTypes = findMissingTypesInAllFlows();
-        if (missingTypes.isEmpty()) {
-            log.info("All plugin types referenced by existing flows are available, nothing to install.");
-            return;
-        }
-
-        log.info("Detected {} plugin types referenced by existing flows but missing from the local registry: {}.", missingTypes.size(), missingTypes);
-        service.installMissingTypes(missingTypes);
     }
 
     private void registerExternalPluginsDirectory() {

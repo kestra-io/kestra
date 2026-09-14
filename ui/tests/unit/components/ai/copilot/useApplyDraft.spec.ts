@@ -29,8 +29,8 @@ vi.mock("@kestra-io/design-system", () => ({
     ),
 }))
 
-let parsed: {namespace?: string; id?: string} = {}
-vi.mock("@kestra-io/topology", () => ({flowYamlUtils: {parse: () => parsed}}))
+// The drafted YAML goes through topology's real parser (parseTarget reads the target out of it),
+// so each test states its target in its own source rather than in a stubbed parse result.
 
 const createFlow = vi.fn().mockResolvedValue({})
 const updateFlow = vi.fn().mockResolvedValue({})
@@ -92,7 +92,6 @@ describe("useApplyDraft", () => {
         vi.clearAllMocks()
         routeName = undefined
         routeParams = {tenant: "main"}
-        parsed = {namespace: "company.team", id: "my-flow"}
         alert.mockResolvedValue(undefined)
         createFlow.mockResolvedValue({})
         updateFlow.mockResolvedValue({})
@@ -224,7 +223,6 @@ describe("useApplyDraft", () => {
     })
 
     it("apply alerts and skips confirm when the draft has no namespace/id", async () => {
-        parsed = {} // no namespace/id parsed from the YAML
         await useApplyDraft().apply(draft({yaml: "not: a-flow"}))
         expect(alert).toHaveBeenCalled()
         expect(messageBox).not.toHaveBeenCalled()
@@ -322,7 +320,6 @@ describe("useApplyDraft", () => {
     })
 
     it("apply CREATES the dashboard, then navigates to it (id only, no namespace)", async () => {
-        parsed = {id: "my-dash"}
         confirm.mockResolvedValueOnce(true)
         await useApplyDraft().apply(dashboardDraft())
         expect(clientPost).toHaveBeenCalledWith(
@@ -335,7 +332,6 @@ describe("useApplyDraft", () => {
     })
 
     it("apply UPDATES the dashboard when create reports it already exists", async () => {
-        parsed = {id: "my-dash"}
         confirm.mockResolvedValueOnce(true)
         clientPost.mockRejectedValueOnce(dashboardExists)
         await useApplyDraft().apply(dashboardDraft())
@@ -347,7 +343,6 @@ describe("useApplyDraft", () => {
     })
 
     it("apply alerts and skips confirm when the dashboard draft has no id", async () => {
-        parsed = {} // no id parsed
         await useApplyDraft().apply(dashboardDraft({yaml: "title: nope"}))
         expect(alert).toHaveBeenCalled()
         expect(confirm).not.toHaveBeenCalled()

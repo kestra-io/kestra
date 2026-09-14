@@ -1,5 +1,9 @@
 {
   "pl": {
+    "versionUpgradeNotice": {
+      "message": "Kestra został zaktualizowany do wersji {version} i może zawierać zmiany powodujące niezgodność, które wymagają aktualizacji Twoich Flowów.",
+      "cta": "Zobacz, co się zmieniło"
+    },
     "loading": "Ładowanie...",
     "more actions": "Więcej akcji",
     "recipe": {

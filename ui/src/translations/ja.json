@@ -491,6 +491,9 @@
     },
     "download": "ダウンロード",
     "jsonl": "JSONL",
+    "large_outputs": {
+      "value_truncated": "この{size}値の切り捨てられたプレビューを表示しています。"
+    },
     "concurrency_limit": {
       "dialog_title": "同時実行制限",
       "warning": "実行中のカウンターを変更すると、Concurrencyが破損し、Executionが許可された制限を超える可能性があります。"
@@ -2142,7 +2145,7 @@
         },
         "unavailable": {
           "title": "AI Copilot は利用できません",
-          "detail": "AIプロバイダーが設定されていません。管理者に設定を依頼してください。",
+          "detail": "このインスタンスにはAIプロバイダーが設定されていません。AI Copilotを有効にするには、Kestra設定ファイルでAIプロバイダーを設定してください。",
           "docs": "ドキュメントを見る"
         },
         "thinkingWords": [

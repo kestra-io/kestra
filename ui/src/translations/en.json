@@ -491,6 +491,9 @@
     },
     "download": "Download",
     "jsonl": "JSONL",
+    "large_outputs": {
+      "value_truncated": "Showing a truncated preview of this {size} value."
+    },
     "concurrency_limit": {
       "dialog_title": "Concurrency Limits",
       "warning": "Changing the running counter may corrupt concurrency, so executions may exceed the allowed limit."
@@ -2142,7 +2145,7 @@
         },
         "unavailable": {
           "title": "AI Copilot isn't available",
-          "detail": "No AI provider is configured. Ask an administrator to set one up.",
+          "detail": "No AI provider is configured for this instance. Configure one in your Kestra configuration file to enable AI Copilot.",
           "docs": "View documentation"
         },
         "thinkingWords": [

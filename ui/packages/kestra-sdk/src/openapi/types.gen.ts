@@ -10999,6 +10999,10 @@ export type CreateBackfillErrors = {
      */
     409: ProblemDetail;
     /**
+     * If the backfill end date is not after its start date
+     */
+    422: ProblemDetail;
+    /**
      * Internal server error
      */
     500: ProblemDetail;

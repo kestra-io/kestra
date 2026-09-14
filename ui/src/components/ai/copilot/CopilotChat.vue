@@ -391,12 +391,18 @@
         footerComposer.value?.focus()
     }
 
+    /** How long the first message waits on the provider list before going out on the backend default. */
+    const PROVIDERS_WAIT_MS = 2000
+
+    /** Set on unmount: anything resuming after an await must stop rather than act on a dead component. */
+    let disposed = false
+
     // Seeded prompts: an entry point (e.g. "Fix with AI") stashes text via miscStore, which opens
     // this tab. Prefill the composer with it and focus, then clear the store so it doesn't re-seed —
     // run on mount (drawer just opened) and via a watcher (already open / kept alive).
-    // An `autoSend` entry point ("Generate a unit test") sends the turn itself instead: the user
-    // already committed to it by picking the action, so the agent starts working on open. If a turn
-    // is in flight (`canSend` false) we fall back to seeding rather than dropping the prompt.
+    // A `sendInitialMessage` entry point ("Generate a unit test") sends that first message itself
+    // instead: the user already committed to it by picking the action, so the agent starts working
+    // on open. If a turn is in flight (`canSend` false) we fall back to seeding rather than dropping it.
     // A `newThread` entry point drops the restored conversation first, so its turn starts clean
     // instead of inheriting an unrelated transcript.
     async function consumeSeededPrompt(): Promise<void> {
@@ -404,15 +410,18 @@
         if (!seeded) return
         const newThread = miscStore.copilotNewThread
         const threadTitle = miscStore.copilotThreadTitle
-        const autoSend = miscStore.copilotAutoSend
+        const sendInitialMessage = miscStore.copilotSendInitialMessage
         miscStore.copilotPrompt = null
         miscStore.copilotThreadTitle = null
         miscStore.copilotNewThread = false
-        miscStore.copilotAutoSend = false
+        miscStore.copilotSendInitialMessage = false
 
         // Settle the in-flight restore before acting on either flag: resetting ahead of it would be
         // undone when it lands, and sending without it would fork a second thread.
-        if (newThread || autoSend) await restored
+        if (newThread || sendInitialMessage) await restored
+        // The dock can close while the awaits above are pending, and resuming past that point
+        // would start a turn `onBeforeUnmount(cancel)` has already missed.
+        if (disposed) return
 
         // EE seeds each fix as its own conversation: drop the active thread (still reachable from
         // the Recents list) and title the thread the seeded turn will create. Never set in OSS,
@@ -422,11 +431,17 @@
             nextThreadTitle.value = threadTitle
         }
 
-        if (autoSend) {
-            // The provider list has to be in hand before the turn goes out, or it is sent against
-            // the default provider rather than the one the picker restored.
-            await providersLoaded
+        if (sendInitialMessage) {
+            // Shown before the wait below, so a slow `/ai/providers` can't leave the prompt
+            // neither sent nor visible; the send path clears it again.
+            composerText.value = seeded
+            // The turn carries `providerId` only once the list is in hand, otherwise the backend
+            // picks its own default — bounded, so a hanging fetch degrades to that rather than
+            // never sending.
+            await Promise.race([providersLoaded, new Promise((resolve) => setTimeout(resolve, PROVIDERS_WAIT_MS))])
+            if (disposed) return
             if (canSend.value) {
+                composerText.value = ""
                 onSubmit(seeded)
                 return
             }
@@ -442,7 +457,10 @@
         if (value) consumeSeededPrompt()
     })
 
-    onBeforeUnmount(cancel)
+    onBeforeUnmount(() => {
+        disposed = true
+        cancel()
+    })
 </script>
 
 <style scoped>

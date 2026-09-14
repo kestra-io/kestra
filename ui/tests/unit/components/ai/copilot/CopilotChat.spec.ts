@@ -38,7 +38,7 @@ const miscStore = reactive({
     copilotPrompt: null as string | null,
     copilotThreadTitle: null as string | null,
     copilotNewThread: false,
-    copilotAutoSend: false,
+    copilotSendInitialMessage: false,
     configs: {isAiApiKeyConfigured: true} as Record<string, any> | undefined,
     openCopilot: vi.fn(),
     promptCopilot: vi.fn(),
@@ -86,7 +86,7 @@ describe("CopilotChat", () => {
         miscStore.copilotPrompt = null
         miscStore.copilotThreadTitle = null
         miscStore.copilotNewThread = false
-        miscStore.copilotAutoSend = false
+        miscStore.copilotSendInitialMessage = false
         miscStore.configs = {isAiApiKeyConfigured: true}
         flowStore.flowYaml = ""
     })
@@ -129,10 +129,10 @@ describe("CopilotChat", () => {
         expect(state.sendChat).not.toHaveBeenCalled()
     })
 
-    it("sends an autoSend prompt itself instead of seeding the composer", async () => {
+    it("sends the seeded prompt itself instead of leaving it in the composer", async () => {
         // "Generate a unit test" and friends: the user already committed by picking the action.
         miscStore.copilotPrompt = "Generate a unit test for the flow hello"
-        miscStore.copilotAutoSend = true
+        miscStore.copilotSendInitialMessage = true
         const w = mountChat()
         await flushPromises()
         expect(state.sendChat).toHaveBeenCalledWith(expect.objectContaining({prompt: "Generate a unit test for the flow hello"}))
@@ -141,12 +141,12 @@ describe("CopilotChat", () => {
         expect(miscStore.copilotPrompt).toBeNull()
     })
 
-    it("starts a fresh thread before sending an auto-sent prompt", async () => {
+    it("starts a fresh thread before sending the seeded prompt", async () => {
         // "Generate a unit test" must not inherit whatever the restored conversation was about.
         state.thread.value = {uid: "t-1"} as any
         state.messages.value = [{id: "1", role: "USER", type: "TEXT", content: "unrelated"}]
         miscStore.copilotPrompt = "Generate a unit test for the flow hello"
-        miscStore.copilotAutoSend = true
+        miscStore.copilotSendInitialMessage = true
         miscStore.copilotNewThread = true
         mountChat()
         await flushPromises()
@@ -163,11 +163,11 @@ describe("CopilotChat", () => {
         expect(state.reset).not.toHaveBeenCalled()
     })
 
-    it("falls back to seeding an autoSend prompt while a turn is in flight", async () => {
+    it("falls back to seeding the prompt while a turn is in flight", async () => {
         // Nothing is dropped: the prompt lands in the composer for the user to send when free.
         state.canSend.value = false
         miscStore.copilotPrompt = "Generate a unit test"
-        miscStore.copilotAutoSend = true
+        miscStore.copilotSendInitialMessage = true
         const w = mountChat()
         await flushPromises()
         expect(state.sendChat).not.toHaveBeenCalled()
@@ -201,20 +201,54 @@ describe("CopilotChat", () => {
         expect(state.nextThreadTitle.value).toBe("Fix task extract")
     })
 
-    it("waits for the provider list before auto-sending, so the turn carries a providerId", async () => {
+    it("waits for the provider list before sending, so the turn carries a providerId", async () => {
         // The thread restore and the provider fetch are independent calls. Sending as soon as the
         // restore lands would drop providerId and silently take the server default instead.
         // Held open so the restore lands first, the way a slower provider fetch would.
         let resolveProviders: (list: unknown) => void = () => {}
         ;(providersMock as any).mockReturnValueOnce(new Promise((resolve) => { resolveProviders = resolve }))
         miscStore.copilotPrompt = "Generate a unit test"
-        miscStore.copilotAutoSend = true
-        mountChat()
+        miscStore.copilotSendInitialMessage = true
+        const w = mountChat()
         await flushPromises()
         expect(state.sendChat).not.toHaveBeenCalled()
+        // Visible while the wait lasts: a slow provider fetch must never hide the prompt entirely.
+        const textarea = () => w.find("[data-test=\"copilot-composer-input\"]").element as HTMLTextAreaElement
+        expect(textarea().value).toBe("Generate a unit test")
         resolveProviders([{id: "gemini", isDefault: true}])
         await flushPromises()
         expect(state.sendChat).toHaveBeenCalledWith(expect.objectContaining({prompt: "Generate a unit test", providerId: "gemini"}))
+        // Cleared on the send path, so the sent turn isn't left sitting in the composer too.
+        expect(textarea().value).toBe("")
+    })
+
+    it("sends on the backend default rather than waiting on a hanging provider fetch", async () => {
+        // `/ai/providers` has no client timeout: the turn goes out once the bounded wait elapses.
+        vi.useFakeTimers()
+        try {
+            ;(providersMock as any).mockReturnValueOnce(new Promise(() => {}))
+            miscStore.copilotPrompt = "Generate a unit test"
+            miscStore.copilotSendInitialMessage = true
+            mountChat()
+            await vi.advanceTimersByTimeAsync(2000)
+            expect(state.sendChat).toHaveBeenCalledWith(expect.objectContaining({prompt: "Generate a unit test", providerId: undefined}))
+        } finally {
+            vi.useRealTimers()
+        }
+    })
+
+    it("does not start a turn when the dock closes while the send is still waiting", async () => {
+        // Resuming after unmount would stream an SSE turn `onBeforeUnmount(cancel)` already missed.
+        let resolveProviders: (list: unknown) => void = () => {}
+        ;(providersMock as any).mockReturnValueOnce(new Promise((resolve) => { resolveProviders = resolve }))
+        miscStore.copilotPrompt = "Generate a unit test"
+        miscStore.copilotSendInitialMessage = true
+        const w = mountChat()
+        await flushPromises()
+        w.unmount()
+        resolveProviders([{id: "gemini", isDefault: true}])
+        await flushPromises()
+        expect(state.sendChat).not.toHaveBeenCalled()
     })
 
     it("forwards a composer submit to sendChat with the current mode (no scope off a plain route)", async () => {

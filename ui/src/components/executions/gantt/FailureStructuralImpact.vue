@@ -6,7 +6,7 @@
             class="structural-node"
             :class="{'is-focused': node.taskRun.id === focusedId}"
         >
-            <div class="structural-node__row">
+            <div class="structural-node__bar">
                 <button
                     type="button"
                     class="structural-node__button"
@@ -87,10 +87,25 @@
         list-style: none;
     }
 
-    .structural-node__row {
+    // The toggle lives inside this bar (not as a sibling next to it) so every row's bar spans
+    // the same width and height whether or not that row happens to have a toggle.
+    .structural-node__bar {
         display: flex;
         align-items: center;
         gap: var(--ks-spacing-2);
+        padding: var(--ks-spacing-2) var(--ks-spacing-3);
+        background: var(--ks-bg-surface);
+        border: 1px solid var(--ks-border-default);
+        border-radius: var(--ks-radius-base);
+
+        &:hover {
+            background: var(--ks-bg-hover);
+        }
+    }
+
+    .is-focused .structural-node__bar {
+        background: var(--ks-status-background-failed);
+        border-color: var(--ks-status-border-failed);
     }
 
     .structural-node__definition {
@@ -103,21 +118,14 @@
         flex: 1;
         min-width: 0;
         gap: var(--ks-spacing-3);
-        padding: var(--ks-spacing-2) var(--ks-spacing-3);
-        background: var(--ks-bg-surface);
-        border: 1px solid var(--ks-border-default);
-        border-radius: var(--ks-radius-base);
+        background: none;
+        border: none;
+        padding: 0;
         cursor: pointer;
         text-align: left;
-
-        &:hover {
-            background: var(--ks-bg-hover);
-        }
     }
 
     .is-focused .structural-node__button {
-        background: var(--ks-status-background-failed);
-        border-color: var(--ks-status-border-failed);
         cursor: default;
     }
 

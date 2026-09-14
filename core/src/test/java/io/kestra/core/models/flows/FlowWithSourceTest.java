@@ -148,6 +148,35 @@ class FlowWithSourceTest {
     }
 
     @Test
+    void toDeletedShouldClearDraft() {
+        // A draft revision is skipped by the ranking used to resolve an execution without an
+        // explicit revision, so a deleted revision left as a draft would let the previous,
+        // still-live revision resurface as executable.
+        FlowWithSource flow = FlowWithSource.builder()
+            .id(IdUtils.create())
+            .namespace("io.kestra.unittest")
+            .revision(1)
+            .draft(true)
+            .tasks(
+                List.of(
+                    Log.builder()
+                        .id(IdUtils.create())
+                        .type(Log.class.getName())
+                        .message("Hello World")
+                        .build()
+                )
+            )
+            .source("source")
+            .build();
+
+        FlowWithSource deleted = flow.toDeleted();
+
+        assertThat(deleted.isDeleted()).isTrue();
+        assertThat(deleted.isDraft()).isFalse();
+        assertThat(deleted.getRevision()).isEqualTo(2);
+    }
+
+    @Test
     void toFlowShouldPreserveRevisionAndUpdated() {
         Instant updated = Instant.parse("2026-08-06T08:55:00.788514407Z");
         FlowWithSource flowWithSource = FlowWithSource.builder()

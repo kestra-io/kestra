@@ -2,7 +2,7 @@
     <div class="settings-panel">
         <div class="header">
             <h6>{{ $t("filter.options") }}</h6>
-            <KsButton link :icon="Close" size="small" class="close-icon" @click="$emit('close')" />
+            <KsButton link :aria-label="$t('filter.close')" :icon="Close" size="small" class="close-icon" @click="$emit('close')" />
         </div>
 
         <div class="list">

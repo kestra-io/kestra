@@ -19,7 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * The two ways a null reaches the outputs, which Jackson treats separately.
  *
- * @see io.kestra.core.serializers.JacksonMapper#toMapKeepingNullValues(Object)
+ * @see io.kestra.core.models.tasks.Output#toMap()
  */
 @KestraTest(startRunner = true)
 class NullOutputTest {

@@ -4,6 +4,7 @@ import {Meta, StoryObj} from "@storybook/vue3-vite";
 import {expect, fireEvent, waitFor, within} from "storybook/test";
 import {vueRouter} from "storybook-vue3-router";
 import {SCHEMA_DEFINITIONS_INJECTION_KEY} from "../../../../../../src/components/no-code/injectionKeys";
+import type {Schema} from "../../../../../../src/components/no-code/components/tasks/getTaskComponent";
 
 const meta: Meta<typeof TaskAnyOf> = {
     title: "Components/NoCode/TaskAnyOf",
@@ -38,11 +39,11 @@ export const SimpleTypes: Story = {
         modelValue: undefined,
         schema: {
             anyOf: [
-                {type: "string"} as any,
-                {type: "number"} as any,
-                {type: "boolean"} as any,
+                {type: "string"},
+                {type: "number"},
+                {type: "boolean"},
             ],
-        } as any,
+        } as Schema,
     },
 };
 
@@ -67,10 +68,10 @@ export const ArrayVariants: Story = {
         modelValue: undefined,
         schema: {
             anyOf: [
-                {type: "array", items: {type: "string"}} as any,
-                {type: "array", items: {type: "number"}} as any,
+                {type: "array", items: {type: "string"}},
+                {type: "array", items: {type: "number"}},
             ],
-        } as any,
+        } as Schema,
     },
 };
 
@@ -104,10 +105,10 @@ export const EnumAndPatternBranches: Story = {
         schema: {
             type: "string",
             anyOf: [
-                {enum: ["UTC", "Europe/Paris", "Asia/Tokyo"]} as any,
-                {pattern: "^(Z|[+-]\\d{2}(:?\\d{2})?)$"} as any,
+                {enum: ["UTC", "Europe/Paris", "Asia/Tokyo"]},
+                {pattern: "^(Z|[+-]\\d{2}(:?\\d{2})?)$"},
             ],
-        } as any,
+        } as Schema,
     },
     async play({canvasElement}) {
         const canvas = within(canvasElement);
@@ -137,10 +138,10 @@ export const PatternOnlyBranches: Story = {
         schema: {
             type: "string",
             anyOf: [
-                {pattern: "^[a-z]+$"} as any,
-                {pattern: "^[0-9]+$"} as any,
+                {pattern: "^[a-z]+$"},
+                {pattern: "^[0-9]+$"},
             ],
-        } as any,
+        } as Schema,
     },
     async play({canvasElement}) {
         const canvas = within(canvasElement);

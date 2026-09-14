@@ -38,4 +38,10 @@ jobs:
       - name: Check pinning and version comments
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: pinact run --check --verify
+        run: pinact run --check --verify --exclude '^aquasecurity/'
+
+      # The aquasecurity organization rejects the Actions token from runner IPs
+      # (IP allow list); anonymous requests are allowed, and these few stay well
+      # inside the unauthenticated rate limit.
+      - name: Check pinning and version comments - aquasecurity
+        run: pinact run --check --verify --include '^aquasecurity/'

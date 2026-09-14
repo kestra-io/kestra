@@ -44,4 +44,5 @@ jobs:
       # (IP allow list); anonymous requests are allowed, and these few stay well
       # inside the unauthenticated rate limit.
       - name: Check pinning and version comments - aquasecurity
+        if: '!cancelled()'
         run: pinact run --check --verify --include '^aquasecurity/'

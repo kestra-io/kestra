@@ -23,7 +23,7 @@
     "scripts": {
         "build": "tsdown",
         "dev": "tsdown --watch",
-        "typecheck": "vue-tsc --noEmit",
+        "check:types": "vue-tsc --noEmit",
         "prepublishOnly": "npm run build"
     },
     "peerDependencies": {

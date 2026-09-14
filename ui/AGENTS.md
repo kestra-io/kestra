@@ -442,6 +442,7 @@ If your `<style>` block needs to exist:
 - `applyDefaultFilters()`, `useRouteFilterPolicy()` — filter composables
 - `setMomentInstance()`, `setDateFormatter()` — date library configuration
 - `designSystemLocale`, `setDesignSystemLocale`, `registerDesignSystemI18n` — i18n
+- `designSystemI18nReady()` — the locale registration the plugin's `install` started, to await instead of leaving it in flight (the unit setup awaits it after each test)
 
 ## Composables
 

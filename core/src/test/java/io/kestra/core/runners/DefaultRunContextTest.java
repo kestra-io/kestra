@@ -31,6 +31,46 @@ class DefaultRunContextTest {
     private TestRunContextFactory runContextFactory;
 
     @Test
+    void dynamicWorkerResult_boundsOverLongTaskId() {
+        RunContext runContext = runContextFactory.of();
+
+        // a dynamic taskrun (only dbt produces these) whose runtime-generated task id exceeds the DB column
+        String longTaskId = "n".repeat(io.kestra.core.models.tasks.Task.ID_MAX_LENGTH + 60);
+        runContext.dynamicWorkerResult(java.util.List.of(new WorkerTaskResult(dynamicTaskRun(longTaskId))));
+
+        // the stored taskrun (persisted downstream) is bounded at the source
+        String storedTaskId = runContext.dynamicWorkerResults().get(0).getTaskRun().getTaskId();
+        assertThat(storedTaskId).hasSizeLessThanOrEqualTo(io.kestra.core.models.tasks.Task.ID_MAX_LENGTH);
+        assertThat(storedTaskId).startsWith(longTaskId.substring(0, 250));
+    }
+
+    @Test
+    void dynamicWorkerResult_keepsCollidingTaskIdsDistinct() {
+        RunContext runContext = runContextFactory.of();
+
+        // two long task ids sharing a 250-char prefix but differing at the tail (as dbt node ids do)
+        String shared = "b".repeat(260);
+        runContext.dynamicWorkerResult(java.util.List.of(
+            new WorkerTaskResult(dynamicTaskRun(shared + ".taila")),
+            new WorkerTaskResult(dynamicTaskRun(shared + ".tailb"))
+        ));
+
+        var stored = runContext.dynamicWorkerResults();
+        assertThat(stored.get(0).getTaskRun().getTaskId())
+            .isNotEqualTo(stored.get(1).getTaskRun().getTaskId());
+    }
+
+    private static io.kestra.core.models.executions.TaskRun dynamicTaskRun(String taskId) {
+        return io.kestra.core.models.executions.TaskRun.builder()
+            .id(java.util.UUID.randomUUID().toString())
+            .taskId(taskId)
+            .namespace("namespace")
+            .flowId("flowId")
+            .executionId("executionId")
+            .build();
+    }
+
+    @Test
     void shouldGetKestraVersion() {
         DefaultRunContext runContext = new DefaultRunContext();
         runContext.init(applicationContext);

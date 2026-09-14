@@ -78,6 +78,7 @@
                             :availableWidthPx="availableWidthPx"
                             :packLanes="viewLevel === 'flow'"
                             :dimmedStates="dimmedStates"
+                            :drillable="viewLevel !== 'flow'"
                             @drill-in="onDrillIn(row)"
                             @open-own-page="onOpenOwnPage(row)"
                             @show-only-flow="onShowOnlyFlow"

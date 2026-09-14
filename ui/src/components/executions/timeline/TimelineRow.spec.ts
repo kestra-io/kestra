@@ -48,6 +48,30 @@ describe("TimelineRow", () => {
         expect(wrapper.emitted("drill-in")).toHaveLength(1)
     })
 
+    it("should not show a persistent drill affordance when the row isn't drillable", () => {
+        const wrapper = mountRow()
+
+        expect(wrapper.find("[data-test=drill-chevron]").exists()).toBe(false)
+    })
+
+    it("should show a persistent drill affordance when the row is drillable", () => {
+        const wrapper = mount(TimelineRow, {
+            props: {
+                label: "company.team",
+                executions,
+                rangeStartMs: 0,
+                rangeEndMs: 10_000,
+                availableWidthPx: 600,
+                packLanes: false,
+                dimmedStates: new Set<string>(),
+                drillable: true,
+            },
+            global: {plugins: [i18n], stubs},
+        })
+
+        expect(wrapper.find("[data-test=drill-chevron]").exists()).toBe(true)
+    })
+
     it("should collapse into a single lane instead of one sliver per run when a lane-packed burst would already bucket combined", () => {
         const overlapping: TimelineExecution[] = Array.from({length: 25}, (_, i) => ({
             id: `exec-${i}`,

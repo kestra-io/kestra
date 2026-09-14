@@ -1,5 +1,9 @@
 {
   "pt_BR": {
+    "versionUpgradeNotice": {
+      "message": "O Kestra foi atualizado para a versão {version} e pode incluir alterações que exigem atualizações nos seus Flows.",
+      "cta": "Ver o que mudou"
+    },
     "loading": "Carregando...",
     "more actions": "Mais ações",
     "recipe": {

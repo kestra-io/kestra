@@ -112,10 +112,10 @@ public abstract class ExecutionStateStoreContract {
 
         // Then: the new execution is inserted under its own id, the locked row is untouched
         assertThat(result).isPresent();
-        Execution insertedRow = store().findById(replayed.getId());
+        Execution insertedRow = store().findByIdWithoutAcl(replayed.getId());
         assertThat(insertedRow).isNotNull();
         assertThat(insertedRow.getId()).isEqualTo(replayed.getId());
-        Execution originalRow = store().findById(original.getId());
+        Execution originalRow = store().findByIdWithoutAcl(original.getId());
         assertThat(originalRow).isNotNull();
         assertThat(originalRow.getState().getCurrent()).isEqualTo(original.getState().getCurrent());
     }

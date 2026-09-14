@@ -55,7 +55,7 @@ class ExecutionDelayProcessorTest {
         Execution replayed = toEmit.getFirst().getExecution();
         Assertions.assertThat(replayed.getId()).isNotEqualTo(failed.getId());
         Assertions.assertThat(replayed.getState().getCurrent()).isEqualTo(State.Type.CREATED);
-        Assertions.assertThat(harness.executionStateStore().findById(replayed.getId())).isNotNull();
+        Assertions.assertThat(harness.executionStateStore().findByIdWithoutAcl(replayed.getId())).isNotNull();
 
         // and NOTHING was emitted during processing: the processor has no queue access by
         // design — the caller (DefaultExecutor#executionDelayLoop) emits the returned contexts

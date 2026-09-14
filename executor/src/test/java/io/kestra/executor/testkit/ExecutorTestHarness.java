@@ -24,6 +24,7 @@ import io.kestra.core.namespace.NamespaceFileMetadataStateStore;
 import io.kestra.core.runners.DisabledReusableInputsExpander;
 import io.kestra.core.runners.FlowInputOutput;
 import io.kestra.core.runners.FollowExecutionEvent;
+import io.kestra.core.runners.LocalPathFactory;
 import io.kestra.core.runners.PausedTaskNotifier;
 import io.kestra.core.runners.RunContextInitializer;
 import io.kestra.core.runners.RunContextLoggerFactory;
@@ -32,6 +33,7 @@ import io.kestra.core.runners.VariableRenderer;
 import io.kestra.core.runners.WorkerJobEvent;
 import io.kestra.core.runners.WorkerTaskResult;
 import io.kestra.core.runners.configuration.ExecutionDepthConfiguration;
+import io.kestra.core.runners.configuration.LocalFilesConfiguration;
 import io.kestra.core.runners.configuration.LoggingConfiguration;
 import io.kestra.core.runners.configuration.VariableConfiguration;
 import io.kestra.core.runners.pebble.PebbleEngineFactory;
@@ -190,7 +192,8 @@ public final class ExecutorTestHarness {
             Mockito.mock(StorageInterface.class),
             () -> runContextFactoryRef[0],
             new EncryptionConfig(null),
-            new DisabledReusableInputsExpander()
+            new DisabledReusableInputsExpander(),
+            new LocalPathFactory(new LocalFilesConfiguration(List.of(), false, false))
         );
         ApplicationContext runContextBeanLocator = Mockito.mock(ApplicationContext.class, invocation ->
         {

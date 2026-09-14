@@ -91,6 +91,7 @@
             <ChartLegend
                 :items="legendItems"
                 :formatValue="(v: number) => String(v)"
+                :toggledOff="dimmedStates"
                 @toggle="onLegendToggle"
             />
         </div>

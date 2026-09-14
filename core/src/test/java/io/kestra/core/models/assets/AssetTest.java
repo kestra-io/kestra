@@ -231,13 +231,4 @@ class AssetTest {
 
         assertThat(asset.getStatus()).isEqualTo("active");
     }
-
-    @Test
-    void shouldOnlyReserveTheSystemPrefix() {
-        // A user is free to name a key `status`: ours is `system.status`, so they never collide.
-        assertThat(Asset.isReservedMetadataKey(Asset.STATUS_METADATA_KEY)).isTrue();
-        assertThat(Asset.isReservedMetadataKey("status")).isFalse();
-        assertThat(Asset.isReservedMetadataKey("_status")).isFalse();
-        assertThat(Asset.isReservedMetadataKey(null)).isFalse();
-    }
 }

@@ -41,10 +41,6 @@ public abstract class Asset implements HasUID, SoftDeletable<Asset>, Plugin {
 
     public static final String OWNER_METADATA_KEY = SYSTEM_METADATA_PREFIX + "owner";
 
-    public static boolean isReservedMetadataKey(String key) {
-        return key != null && key.startsWith(SYSTEM_METADATA_PREFIX);
-    }
-
     @Hidden
     @TenantId
     protected String tenantId;

@@ -52,6 +52,22 @@ const popoverAwareStubs = {
     KsId: {props: ["value"], template: "<span>{{ value }}</span>"},
 }
 
+const placementAwareStubs = {
+    ...popoverAwareStubs,
+    KsPopover: {
+        props: ["visible", "placement"],
+        emits: ["update:visible"],
+        template: `
+            <div>
+                <div data-test="reference" @click="$emit('update:visible', !visible)">
+                    <slot name="reference" />
+                </div>
+                <div v-if="visible" data-test="popover-body" :data-placement="placement"><slot /></div>
+            </div>
+        `,
+    },
+}
+
 const execution: TimelineExecution = {
     id: "exec-1",
     namespace: "company.team",
@@ -133,5 +149,45 @@ describe("TimelineBar", () => {
         expect(wrapper.find("[data-test=\"popover-body\"]").exists()).toBe(true)
         expect(wrapper.text()).toContain("execution-id")
         expect(wrapper.text()).toContain("my-flow")
+    })
+
+    test("flips the popover to bottom when the bar is near the top of the timeline card", async () => {
+        const card = document.createElement("div")
+        card.className = "executions-timeline"
+        document.body.appendChild(card)
+
+        const wrapper = mount(TimelineBar, {
+            props: {leftPercent: 0, widthPercent: 10, dimmed: false, execution},
+            global: {plugins: [i18n], stubs: placementAwareStubs},
+            attachTo: card,
+        })
+
+        // jsdom never lays elements out, so both rects default to zero (bar flush with the card's
+        // top) - exactly the "no room above" case this test targets, with no rect mocking needed.
+        await wrapper.get(".timeline-bar").trigger("click")
+
+        expect(wrapper.get("[data-test=\"popover-body\"]").attributes("data-placement")).toBe("bottom")
+
+        card.remove()
+    })
+
+    test("keeps the popover on top when there is plenty of room above the bar", async () => {
+        const card = document.createElement("div")
+        card.className = "executions-timeline"
+        document.body.appendChild(card)
+
+        const wrapper = mount(TimelineBar, {
+            props: {leftPercent: 0, widthPercent: 10, dimmed: false, execution},
+            global: {plugins: [i18n], stubs: placementAwareStubs},
+            attachTo: card,
+        })
+
+        vi.spyOn(wrapper.get(".timeline-bar").element, "getBoundingClientRect").mockReturnValue({top: 500} as DOMRect)
+
+        await wrapper.get(".timeline-bar").trigger("click")
+
+        expect(wrapper.get("[data-test=\"popover-body\"]").attributes("data-placement")).toBe("top")
+
+        card.remove()
     })
 })

@@ -612,7 +612,11 @@ class ExecutionControllerRunnerTest {
         triggerExecutionExecution(tenantId, namespace, flowId, MultipartBody.builder().addPart("string", "myString").build(), false);
 
         // Wait for execution indexation
-        Await.await().pollDelay(Duration.ofMillis(100)).atMost(Duration.ofMillis(10)).until(() -> executionRepositoryInterface.findByFlowId(tenantId, namespace, flowId, Pageable.from(1)).size() == 1);
+        Await.await()
+            .pollDelay(Duration.ZERO)
+            .pollInterval(Duration.ofMillis(100))
+            .atMost(Duration.ofSeconds(10))
+            .until(() -> executionRepositoryInterface.findByFlowId(tenantId, namespace, flowId, Pageable.from(1)).size() == 1);
         PagedResults<Execution> executionsAfter = client.toBlocking().retrieve(
             GET("/api/v1/" + tenantId + "/executions?namespace=" + namespace + "&flowId=" + flowId),
             Argument.of(PagedResults.class, Execution.class)

@@ -511,7 +511,8 @@ class ExecutionServiceTest {
     void deleteExecution(Execution execution) throws IOException, TimeoutException {
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         Await.await()
-            .pollDelay(Duration.ofMillis(10))
+            .pollDelay(Duration.ZERO)
+            .pollInterval(Duration.ofMillis(10))
             .atMost(Duration.ofSeconds(5))
             .until(() -> logRepository.findByExecutionId(execution.getTenantId(), execution.getId(), Level.TRACE).size() == 5);
 
@@ -526,7 +527,8 @@ class ExecutionServiceTest {
     void deleteExecutionKeepLogs(Execution execution) throws IOException, TimeoutException {
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         Await.await()
-            .pollDelay(Duration.ofMillis(10))
+            .pollDelay(Duration.ZERO)
+            .pollInterval(Duration.ofMillis(10))
             .atMost(Duration.ofSeconds(5))
             .until(() -> logRepository.findByExecutionId(execution.getTenantId(), execution.getId(), Level.TRACE).size() == 5);
 

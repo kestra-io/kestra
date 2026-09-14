@@ -224,7 +224,8 @@ class FinallyTest {
         // but other sub-executions continue running their errors/finally tasks in parallel.
         // Wait for all sub-executions to reach terminal state before asserting.
         Await.await()
-            .pollDelay(Duration.ofMillis(100))
+            .pollDelay(Duration.ZERO)
+            .pollInterval(Duration.ofMillis(100))
             .atMost(Duration.ofSeconds(30))
             .until(() -> executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId(), null).stream().allMatch(e -> e.getState().isTerminated()));
         var subExecutions = executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId(), null);
@@ -273,7 +274,8 @@ class FinallyTest {
         // but other sub-executions continue running their errors/finally tasks in parallel.
         // Wait for all sub-executions to reach terminal state before asserting.
         Await.await()
-            .pollDelay(Duration.ofMillis(100))
+            .pollDelay(Duration.ZERO)
+            .pollInterval(Duration.ofMillis(100))
             .atMost(Duration.ofSeconds(30))
             .until(() -> executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId(), null).stream().allMatch(e -> e.getState().isTerminated()));
         var subExecutions = executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId(), null);

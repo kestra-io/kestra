@@ -31,6 +31,11 @@ const TIME_RANGE_QUERY_KEY = "filters[timeRange][EQUALS]"
 const SLIDER_DOMAIN_MULTIPLIER = 8
 const SLIDER_DOMAIN_FLOOR_MS = durationUtils.duration("P1D") * 1000
 const SLIDER_DOMAIN_CEILING_MS = durationUtils.duration("P120D") * 1000
+// A flat day-scale floor drowns a short selection (e.g. "last 15 minutes") to a sliver of that
+// floor, so its two handles render on top of each other. Capping how much wider than the
+// selection the floor is allowed to stretch the domain keeps the selection at least this share
+// of the track, regardless of how small it is, so the handles always stay visually apart.
+const SLIDER_DOMAIN_MAX_FLOOR_TO_SPAN_RATIO = 20
 
 /**
  * The slider's domain (its full track span), sized relative to the current selection so it stays
@@ -38,7 +43,8 @@ const SLIDER_DOMAIN_CEILING_MS = durationUtils.duration("P120D") * 1000
  */
 export function computeSliderDomain(rangeStartMs: number, rangeEndMs: number): [number, number] {
     const span = Math.max(rangeEndMs - rangeStartMs, MIN_RANGE_MS)
-    const boundedSpan = Math.min(Math.max(span * SLIDER_DOMAIN_MULTIPLIER, SLIDER_DOMAIN_FLOOR_MS), SLIDER_DOMAIN_CEILING_MS)
+    const floor = Math.min(SLIDER_DOMAIN_FLOOR_MS, span * SLIDER_DOMAIN_MAX_FLOOR_TO_SPAN_RATIO)
+    const boundedSpan = Math.min(Math.max(span * SLIDER_DOMAIN_MULTIPLIER, floor), SLIDER_DOMAIN_CEILING_MS)
     const domainSpan = Math.max(boundedSpan, span)
     const center = (rangeStartMs + rangeEndMs) / 2
     return [center - domainSpan / 2, center + domainSpan / 2]

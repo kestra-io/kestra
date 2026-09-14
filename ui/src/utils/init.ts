@@ -101,9 +101,10 @@ export default async (
         window.dispatchEvent(new CustomEvent("KestraRouterAfterEach", to as unknown as CustomEventInit))
     })
 
-    // Registered before the router installs: app.use(router) starts the first navigation, and a guard
-    // added after any of the awaits below is missed by it.
+    // Registered before the router installs: app.use(router) starts the first navigation, and both
+    // beforeEach and afterEach hooks added after any of the awaits below are missed by it.
     createUnsavedChanged(app, router)
+    createEventsRouter(app, router)
 
     // avoid loading router in storybook
     // as it conflicts with storybook's
@@ -163,8 +164,6 @@ export default async (
 
     // kestra design system (registers KsSelect, etc. globally)
     app.use(KestraDesignSystem)
-
-    createEventsRouter(app, router)
 
     app.component("RouterMd", RouterMd)
 

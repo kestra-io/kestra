@@ -17,8 +17,8 @@ function hrefFor(to: string) {
         global: {
             mocks: {$t: (key: string) => key},
             stubs: {
+                KsAlert: {template: "<div><slot name=\"title\" /><slot /></div>"},
                 KsButton: {props: ["href"], template: "<a :href=\"href\"><slot /></a>"},
-                KsIconButton: true,
             },
         },
     })

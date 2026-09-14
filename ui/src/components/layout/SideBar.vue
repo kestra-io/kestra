@@ -16,8 +16,6 @@
             />
         </template>
 
-        <VersionUpgradeNotice />
-
         <template v-for="(section, sIdx) in menu" :key="section.id ?? `s-${sIdx}`">
             <div v-if="!section.child" class="top-level-link">
                 <MenuLink
@@ -90,7 +88,6 @@
     import SquareEditOutline from "vue-material-design-icons/SquareEditOutline.vue"
 
     import BookmarkLinkList from "./BookmarkLinkList.vue"
-    import VersionUpgradeNotice from "../VersionUpgradeNotice.vue"
     import SidebarCustomizeModal from "./SidebarCustomizeModal.vue"
     import {useBookmarksStore} from "../../stores/bookmarks"
     import {useLayoutStore} from "../../stores/layout"

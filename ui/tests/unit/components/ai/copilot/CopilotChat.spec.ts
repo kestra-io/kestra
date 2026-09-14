@@ -421,6 +421,45 @@ describe("CopilotChat", () => {
             w.unmount()
             expect(flowStore.previewSource).toBeUndefined()
         })
+
+        // Bug 1 (kestra-io/kestra#19330 review): a mirrored preview otherwise locks the editor with no
+        // way back to plain editing — dismissing the draft from its transcript card must free it.
+        it("clears the preview once its draft is dismissed from the transcript card, and it stays cleared", async () => {
+            routeStub = {name: "flows/update", params: {namespace: "company.team", id: "my-flow"}}
+            state.messages.value = [flowDraftMessage("id: my-flow\nnamespace: company.team")]
+            const w = mountChat()
+            expect(flowStore.previewSource).toBeDefined()
+
+            const card = w.findComponent({name: "CopilotArtefactDraft"})
+            card.vm.$emit("dismiss", "d1")
+            await flushPromises()
+            expect(flowStore.previewSource).toBeUndefined()
+
+            // A later rescan (anything that changes the message list) must not resurrect it.
+            state.messages.value = [...state.messages.value, {id: "u2", role: "USER", type: "TEXT", content: "anything"}]
+            await flushPromises()
+            expect(flowStore.previewSource).toBeUndefined()
+        })
+
+        // Bug 2 (kestra-io/kestra#19330 review): applying a draft clears `previewSource` once (via
+        // `flowStore.loadFlow`), but without tracking the draft as applied, the very next rescan of the
+        // still-present ARTEFACT_DRAFT message picks it back up as "pending" and re-locks the editor
+        // against content that already matches it — an empty diff with no way out.
+        it("stays unlocked after a draft is applied, even once something else triggers a rescan", async () => {
+            routeStub = {name: "flows/update", params: {namespace: "company.team", id: "my-flow"}}
+            state.messages.value = [flowDraftMessage("id: my-flow\nnamespace: company.team")]
+            const w = mountChat()
+            expect(flowStore.previewSource).toBeDefined()
+
+            const card = w.findComponent({name: "CopilotArtefactDraft"})
+            card.vm.$emit("applied", "d1")
+            await flushPromises()
+            expect(flowStore.previewSource).toBeUndefined()
+
+            state.messages.value = [...state.messages.value, {id: "u2", role: "ASSISTANT", type: "TEXT", content: "done"}]
+            await flushPromises()
+            expect(flowStore.previewSource).toBeUndefined()
+        })
     })
 
     it("disables the composer when a turn cannot be sent", () => {

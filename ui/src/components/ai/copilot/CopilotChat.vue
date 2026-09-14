@@ -85,6 +85,9 @@
                         :message="message"
                         :isPending="message.id === pendingProposalMessageId"
                         :isRunning="message.id === runningToolCallId"
+                        :dismissedDraftIds="dismissedDraftIds"
+                        @dismissDraft="dismissDraft"
+                        @draftApplied="markDraftApplied"
                     />
 
                     <CopilotThinking v-if="working" :phase="workPhase" />
@@ -288,21 +291,64 @@
         return editorFlowSource.value
     })
 
-    // The most recent FLOW-kind artefact draft that targets the flow currently open, if any — mirrors
-    // `pendingConfirmationFlowSource`'s "is this targeting the open flow" check but for the
-    // non-mutating draft-card path (`useApplyDraft.ts`), reusing its `isViewingFlow`/`parseArtefactYaml`
-    // so the two "is this the flow I'm looking at" checks can't drift apart. Scanned newest-first so a
-    // later draft in the same thread supersedes an earlier one for the same flow, while an unrelated
-    // draft for a different flow in between doesn't hide it.
-    const pendingDraftFlowSource = computed<string | undefined>(() => {
+    // Drafts the user has explicitly declined or already applied — excluded from the pending-draft scan
+    // below so neither re-locks the editor later (dismissing: kestra-io/kestra#19330 review; applying:
+    // `flowStore.loadFlow` clears `previewSource` on success, but the draft message itself is still
+    // sitting in the transcript as "the newest matching draft" with nothing to mark it resolved, so a
+    // later recompute — a new message, a route change — would otherwise pick it back up against
+    // now-identical content). Local to this component's lifetime; reset per-thread below.
+    const dismissedDraftIds = ref(new Set<string>())
+    const appliedDraftIds = ref(new Set<string>())
+
+    /** Decline a drafted artefact from its transcript card — see `dismissedDraftIds` above. */
+    function dismissDraft(draftId: string): void {
+        dismissedDraftIds.value.add(draftId)
+    }
+
+    /** Mark a drafted artefact as applied once `useApplyDraft.ts` confirms the write succeeded. */
+    function markDraftApplied(draftId: string): void {
+        appliedDraftIds.value.add(draftId)
+    }
+
+    /** Dismissed/applied tracking is per-conversation — called everywhere a new/different thread starts. */
+    function resetDraftTracking(): void {
+        dismissedDraftIds.value.clear()
+        appliedDraftIds.value.clear()
+    }
+
+    // The most recent FLOW-kind artefact draft that targets the flow currently open, if any (and isn't
+    // dismissed/applied) — mirrors `pendingConfirmationFlowSource`'s "is this targeting the open flow"
+    // check but for the non-mutating draft-card path (`useApplyDraft.ts`), reusing its
+    // `isViewingFlow`/`parseArtefactYaml` so the two "is this the flow I'm looking at" checks can't
+    // drift apart. Scanned newest-first so a later draft in the same thread supersedes an earlier one
+    // for the same flow, while an unrelated draft for a different flow in between doesn't hide it.
+    //
+    // Kept out of a plain `computed()` on purpose: `messages.value` is deeply reactive and a streamed
+    // token mutates the active assistant bubble's `content` in place, so a computed reading the array
+    // directly would re-scan (and re-parse every candidate draft's YAML) on every token. A `watch`
+    // callback isn't tracked the same way — it only re-runs when the signal below actually changes
+    // (a message added, dismissed/applied tracking changed, or the route changed), never on a token tick.
+    const pendingDraft = ref<{draftId: string; yaml: string} | undefined>(undefined)
+    const draftScanSignal = computed(() =>
+        `${messages.value.length}|${messages.value[messages.value.length - 1]?.id ?? ""}|${dismissedDraftIds.value.size}|${appliedDraftIds.value.size}|${route.fullPath}`,
+    )
+    watch(draftScanSignal, () => {
+        pendingDraft.value = findPendingDraft()
+    }, {immediate: true})
+
+    function findPendingDraft(): {draftId: string; yaml: string} | undefined {
         for (let i = messages.value.length - 1; i >= 0; i--) {
             const message = messages.value[i]
             if (message.type !== "ARTEFACT_DRAFT" || message.draft?.kind !== "FLOW") continue
-            const {namespace, id} = parseArtefactYaml(message.draft.yaml)
-            if (namespace && id && isViewingFlow(route, namespace, id)) return message.draft.yaml
+            const {draftId, yaml} = message.draft
+            if (dismissedDraftIds.value.has(draftId) || appliedDraftIds.value.has(draftId)) continue
+            const {namespace, id} = parseArtefactYaml(yaml)
+            if (namespace && id && isViewingFlow(route, namespace, id)) return {draftId, yaml}
         }
         return undefined
-    })
+    }
+
+    const pendingDraftFlowSource = computed<string | undefined>(() => pendingDraft.value?.yaml)
 
     // The one flow diff the main editor can mirror at a time: a pending mutate confirmation takes
     // priority over a draft card on the rare chance both exist together.
@@ -312,10 +358,29 @@
     // diff live, in-place, instead of only inside this chat panel (kestra-io/kestra#19330). Reactive on
     // `activeFlowPreview`, so it already clears itself once the confirmation/draft no longer targets the
     // open flow (approved, rejected, superseded, or navigated away from) — `loadFlow` also resets it for
-    // free on a successful apply (`stores/flow.ts`).
+    // free on a successful apply (`stores/flow.ts`). `immediate: true` also fires this once on mount with
+    // whatever's pending yet (nothing, since `messages`/`pendingConfirmation` start empty) — a harmless
+    // `undefined` write in the common case, but it's what clears a stale `previewSource` left over from a
+    // prior CopilotChat instance sharing this same (persistent) flow store.
     watch(activeFlowPreview, (value) => {
         flowStore.previewSource = value
     }, {immediate: true})
+
+    /** Decline whichever preview the editor is currently mirroring — the shared "give up the diff back
+     *  to my own editing" action behind both the transcript card's Dismiss button and the main editor's
+     *  read-only banner (`FlowFileEditorTab.vue`, via `flowStore.declinePreview`). */
+    function declineActivePreview(): void {
+        // Only mark a draft dismissed when it's the thing actually being mirrored — a pending mutate
+        // confirmation takes priority in `activeFlowPreview`, and declining that one goes through its
+        // own Reject action on the interactive card, not this shared "drop the preview" shortcut.
+        if (!pendingConfirmationFlowSource.value && pendingDraft.value) dismissDraft(pendingDraft.value.draftId)
+        flowStore.previewSource = undefined
+    }
+
+    flowStore.declinePreview = declineActivePreview
+    onBeforeUnmount(() => {
+        if (flowStore.declinePreview === declineActivePreview) flowStore.declinePreview = null
+    })
 
     // `/configs` reports whether any AI provider is configured. It's known up front, but the copilot
     // waits for the user to actually try sending something before acting on it: an instance with no
@@ -331,6 +396,7 @@
 
     /** Switch to a thread picked from the (EE) Recents list — rehydrates its transcript + pending action. */
     function onSelectThread(threadId: string): void {
+        resetDraftTracking()
         loadThread(threadId)
     }
 
@@ -422,6 +488,7 @@
      *  editor. */
     function onNewChat(): void {
         flowStore.previewSource = undefined
+        resetDraftTracking()
         reset()
     }
 
@@ -458,7 +525,10 @@
         // the Recents list) and title the thread the seeded turn will create. Never set in OSS,
         // where resetting would discard the only conversation for good.
         if (miscStore.copilotNewThread) {
-            if (thread.value || messages.value.length > 0) reset()
+            if (thread.value || messages.value.length > 0) {
+                resetDraftTracking()
+                reset()
+            }
             nextThreadTitle.value = miscStore.copilotThreadTitle
         }
         composerText.value = seeded

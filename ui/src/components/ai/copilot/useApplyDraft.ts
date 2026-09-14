@@ -90,20 +90,21 @@ export function useApplyDraft() {
         })
     }
 
-    /** (B) Create (or update) the artefact directly. Confirms first; dispatches on the draft kind. */
-    async function apply(draft: ArtefactDraftEvent): Promise<void> {
+    /** (B) Create (or update) the artefact directly. Confirms first; dispatches on the draft kind.
+     *  Resolves `true` once the artefact was actually written (not merely confirmed) — the caller uses
+     *  this to stop treating the draft as pending (see `CopilotChat.vue`'s applied-draft tracking). */
+    async function apply(draft: ArtefactDraftEvent): Promise<boolean> {
         if (draft.kind === "DASHBOARD") {
-            await applyDashboard(draft)
-            return
+            return applyDashboard(draft)
         }
-        await applyFlow(draft)
+        return applyFlow(draft)
     }
 
-    async function applyFlow(draft: ArtefactDraftEvent): Promise<void> {
+    async function applyFlow(draft: ArtefactDraftEvent): Promise<boolean> {
         const {namespace, id} = parseArtefactYaml(draft.yaml)
         if (!namespace || !id) {
             await KsMessageBox.alert(t("ai.copilot.draft.applyNoTarget"), t("ai.copilot.draft.applyTitle"), {type: "error"})
-            return
+            return false
         }
 
         // Resolved once per apply (not merely rendering a draft card, so a store dependency here is
@@ -116,7 +117,7 @@ export function useApplyDraft() {
         applying.value = true
         try {
             const confirmed = await confirmApplyFlow(namespace, id, draft.yaml, onThisFlow, flowStore)
-            if (!confirmed) return
+            if (!confirmed) return false
 
             // Try to create; if the flow already exists, update it instead — one round trip rather
             // than probing with a GET first. Applied as a draft revision, not a live one: drafts aren't
@@ -144,8 +145,10 @@ export function useApplyDraft() {
             } else {
                 router.push({name: "flows/update", params: {namespace, id, ...tenantParam()}})
             }
+            return true
         } catch (e) {
             await alertError(e, t("ai.copilot.draft.applyError"), t("ai.copilot.draft.applyTitle"))
+            return false
         } finally {
             applying.value = false
         }
@@ -194,16 +197,16 @@ export function useApplyDraft() {
         }
     }
 
-    async function applyDashboard(draft: ArtefactDraftEvent): Promise<void> {
+    async function applyDashboard(draft: ArtefactDraftEvent): Promise<boolean> {
         // Dashboards are tenant-scoped and identified by `id` alone (no namespace).
         const {id} = parseArtefactYaml(draft.yaml)
         if (!id) {
             await KsMessageBox.alert(t("ai.copilot.draft.applyNoTarget"), t("ai.copilot.draft.applyTitleDashboard"), {type: "error"})
-            return
+            return false
         }
 
         const confirmed = await confirmApply(t("ai.copilot.draft.applyConfirmDashboard", {id}), t("ai.copilot.draft.applyTitleDashboard"))
-        if (!confirmed) return
+        if (!confirmed) return false
 
         applying.value = true
         try {
@@ -217,8 +220,10 @@ export function useApplyDraft() {
                 await useClient().put(`${apiUrl()}/dashboards/${id}`, draft.yaml, yaml)
             }
             router.push({name: "dashboards/update", params: {dashboard: id, ...tenantParam()}})
+            return true
         } catch (e) {
             await alertError(e, t("ai.copilot.draft.applyErrorDashboard"), t("ai.copilot.draft.applyTitleDashboard"))
+            return false
         } finally {
             applying.value = false
         }

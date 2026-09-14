@@ -52,6 +52,7 @@ import io.kestra.core.scheduler.model.TriggerType;
 import io.kestra.core.scheduler.service.TriggerExecutionPublisher;
 import io.kestra.core.scheduler.store.TriggerStateStore;
 import io.kestra.core.services.ConditionService;
+import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.Logs;
 import io.kestra.scheduler.internals.NextEvaluationDate;
 import io.kestra.scheduler.stores.FlowMetaStore;
@@ -611,7 +612,7 @@ public class TriggerEventHandler {
             return Pair.of(null, null);
         }
 
-        AbstractTrigger trigger = flow.getTriggers().stream()
+        AbstractTrigger trigger = ListUtils.emptyOnNull(flow.getTriggers()).stream()
             .filter(it -> it.getId().equals(event.id().getTriggerId()))
             .findFirst()
             .orElse(null);

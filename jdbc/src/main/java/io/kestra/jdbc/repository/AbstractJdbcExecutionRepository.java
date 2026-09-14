@@ -90,6 +90,11 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
         this.filterService = filterService;
     }
 
+    @Override
+    protected Condition defaultFilter(String tenantId, boolean allowDeleted) {
+        return super.defaultFilter(tenantId, allowDeleted).and(aclCondition(Resource.EXECUTION));
+    }
+
     /**
      * {@inheritDoc}
      **/

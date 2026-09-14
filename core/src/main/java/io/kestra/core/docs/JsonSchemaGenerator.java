@@ -162,15 +162,24 @@ public class JsonSchemaGenerator {
      * such as {@code REUSABLE_INPUTS}) from the generated flow schema. The {@code Type} enum is carried in two places:
      * the {@code enum} arrays (the {@code type} discriminator and {@code ArrayInput.itemType}) AND the polymorphic
      * {@code anyOf}/{@code oneOf}/{@code allOf} discriminator branches ({@code {properties:{type:{const:...}}}}); both
-     * must be pruned. Open-source removes the {@code @EeOnly} types; the Enterprise override of
-     * {@code includeInputSubtype} keeps them all, so the excluded set is empty here (no-op).
+     * must be pruned, along with the subtype's own definitions — a branch reaching one by {@code $ref} keeps
+     * validating the excluded input, only without the {@code type} that identifies it. Open-source removes the
+     * {@code @EeOnly} types; the Enterprise override of {@code includeInputSubtype} keeps them all, so the excluded
+     * set is empty here (no-op).
      */
-    private void stripEditionRestrictedInputTypes(Object node, Class<?> cls) {
+    private void stripEditionRestrictedInputTypes(Map<String, Object> schema, Class<?> cls) {
         Set<String> excluded = this.excludedInputTypes(cls);
 
-        if (!excluded.isEmpty()) {
-            stripEditionRestrictedInputTypes(node, excluded);
+        if (excluded.isEmpty()) {
+            return;
         }
+
+        // the subtype definitions have to be spotted first: the strip below removes the discriminator branch that
+        // tells them apart from an ordinary input definition
+        Set<String> excludedDefinitions = excludedSubtypeDefinitions(schema, excluded);
+
+        stripEditionRestrictedInputTypes(schema, excluded, excludedDefinitions);
+        removeExcludedDefinitions(schema, excludedDefinitions);
     }
 
     /**
@@ -186,7 +195,7 @@ public class JsonSchemaGenerator {
     }
 
     @SuppressWarnings("unchecked")
-    private static void stripEditionRestrictedInputTypes(Object node, Set<String> excluded) {
+    private static void stripEditionRestrictedInputTypes(Object node, Set<String> excluded, Set<String> excludedDefinitions) {
         if (node instanceof Map<?, ?> rawMap) {
             Map<String, Object> map = (Map<String, Object>) rawMap;
 
@@ -195,13 +204,104 @@ public class JsonSchemaGenerator {
             }
             for (String key : List.of("anyOf", "oneOf", "allOf")) {
                 if (map.get(key) instanceof List<?> branches) {
-                    branches.removeIf(branch -> isExcludedDiscriminatorBranch(branch, excluded));
+                    branches.removeIf(
+                        branch -> isExcludedDiscriminatorBranch(branch, excluded)
+                            || referencesExcludedDefinition(branch, excludedDefinitions)
+                    );
                 }
             }
-            map.values().forEach(value -> stripEditionRestrictedInputTypes(value, excluded));
+            map.values().forEach(value -> stripEditionRestrictedInputTypes(value, excluded, excludedDefinitions));
         } else if (node instanceof List<?> list) {
-            list.forEach(value -> stripEditionRestrictedInputTypes(value, excluded));
+            list.forEach(value -> stripEditionRestrictedInputTypes(value, excluded, excludedDefinitions));
         }
+    }
+
+    /** The definitions of the excluded subtypes: the discriminator branch itself, or the wrapper carrying it. */
+    @SuppressWarnings("unchecked")
+    private static Set<String> excludedSubtypeDefinitions(Map<String, Object> schema, Set<String> excluded) {
+        if (!(schema.get("definitions") instanceof Map<?, ?> definitions)) {
+            return Set.of();
+        }
+
+        return ((Map<String, Object>) definitions).entrySet().stream()
+            .filter(entry -> isExcludedSubtypeDefinition(entry.getValue(), excluded))
+            .map(Map.Entry::getKey)
+            .collect(Collectors.toSet());
+    }
+
+    @SuppressWarnings("unchecked")
+    private static boolean isExcludedSubtypeDefinition(Object definition, Set<String> excluded) {
+        if (isExcludedDiscriminatorBranch(definition, excluded)) {
+            return true;
+        }
+        if (!(definition instanceof Map<?, ?> map)) {
+            return false;
+        }
+
+        for (String key : List.of("anyOf", "oneOf", "allOf")) {
+            if (
+                ((Map<String, Object>) map).get(key) instanceof List<?> branches
+                    && branches.stream().anyMatch(branch -> isExcludedDiscriminatorBranch(branch, excluded))
+            ) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Drops the excluded subtype definitions, then whatever only they referenced: a discriminator wrapper points at a
+     * plain body definition no other subtype uses, while shared ones (e.g. {@code DependsOn}) stay referenced.
+     */
+    @SuppressWarnings("unchecked")
+    private static void removeExcludedDefinitions(Map<String, Object> schema, Set<String> excludedDefinitions) {
+        if (excludedDefinitions.isEmpty() || !(schema.get("definitions") instanceof Map<?, ?> rawDefinitions)) {
+            return;
+        }
+
+        Map<String, Object> definitions = (Map<String, Object>) rawDefinitions;
+        Set<String> orphanCandidates = new HashSet<>();
+        excludedDefinitions.forEach(name -> collectRefs(definitions.remove(name), orphanCandidates));
+
+        boolean removedAny = true;
+        while (removedAny) {
+            removedAny = false;
+            Set<String> referenced = new HashSet<>();
+            collectRefs(schema, referenced);
+
+            for (String candidate : Set.copyOf(orphanCandidates)) {
+                if (!referenced.contains(candidate) && definitions.containsKey(candidate)) {
+                    orphanCandidates.remove(candidate);
+                    collectRefs(definitions.remove(candidate), orphanCandidates);
+                    removedAny = true;
+                }
+            }
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private static boolean referencesExcludedDefinition(Object node, Set<String> definitions) {
+        return node instanceof Map<?, ?> map
+            && ((Map<String, Object>) map).get("$ref") instanceof String ref
+            && definitions.contains(definitionName(ref));
+    }
+
+    @SuppressWarnings("unchecked")
+    private static void collectRefs(Object node, Set<String> refs) {
+        if (node instanceof Map<?, ?> rawMap) {
+            Map<String, Object> map = (Map<String, Object>) rawMap;
+
+            if (map.get("$ref") instanceof String ref) {
+                refs.add(definitionName(ref));
+            }
+            map.values().forEach(value -> collectRefs(value, refs));
+        } else if (node instanceof List<?> list) {
+            list.forEach(value -> collectRefs(value, refs));
+        }
+    }
+
+    private static String definitionName(String ref) {
+        return ref.substring(ref.lastIndexOf('/') + 1);
     }
 
     @SuppressWarnings("unchecked")

@@ -491,6 +491,9 @@
     },
     "download": "Herunterladen",
     "jsonl": "JSONL",
+    "large_outputs": {
+      "value_truncated": "Es wird eine gekürzte Vorschau dieses {size}-Werts angezeigt."
+    },
     "concurrency_limit": {
       "dialog_title": "Concurrency-Limits",
       "warning": "Das Ändern des laufenden Zählers kann die Concurrency beschädigen, sodass Executions das erlaubte Limit überschreiten können."
@@ -1648,6 +1651,7 @@
     "webhook link copied": "Webhook-Link kopiert.",
     "copy url": "URL kopieren",
     "scheduleDate": "Geplantes Datum",
+    "scheduleDateInPast": "Das geplante Datum muss in der Zukunft liegen",
     "warning": "Warnung",
     "trigger_check_warning": "Trigger-Variablen funktionieren nicht bei einer manuell gestarteten Execution. Füge den Coalesce-Operator `??` hinzu, um das Problem zu lösen. Verwende zum Beispiel statt `trigger.date` den Ausdruck `trigger.date ?? execution.startDate`.",
     "docs": "Docs",
@@ -1980,6 +1984,9 @@
         "label": "Dashboard bearbeiten",
         "chart": "Dieses Diagramm bearbeiten"
       },
+      "creation": {
+        "label": "Dashboard erstellen"
+      },
       "no_description": "Keine Beschreibung",
       "no_description_hint": "Füge diesem Flow eine Beschreibung hinzu, um zu dokumentieren, was er tut.<br>Markdown wird unterstützt.",
       "others": "Andere",
@@ -2137,7 +2144,7 @@
         },
         "unavailable": {
           "title": "Der AI Copilot ist nicht verfügbar",
-          "detail": "Kein AI-Provider ist konfiguriert. Bitte einen Administrator, einen einzurichten.",
+          "detail": "Für diese Instanz ist kein AI-Provider konfiguriert. Konfiguriere einen in deiner Kestra-Konfigurationsdatei, um AI Copilot zu aktivieren.",
           "docs": "Dokumentation ansehen"
         },
         "thinkingWords": [
@@ -2210,7 +2217,6 @@
     "submit": "Absenden",
     "accept": "Akzeptieren",
     "reject": "Ablehnen",
-    "draft_available": "Ein Entwurf der Änderung ist im Editor verfügbar",
     "last modified": "Zuletzt geändert",
     "run task in playground": "Task im Playground ausführen",
     "defaultsToNamespaceFile": "Standardmäßig die Namespace-Datei <code>{name}</code>",

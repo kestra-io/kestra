@@ -183,7 +183,7 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcCrudRepo
 
     @Override
     protected Condition defaultFilter(String tenantId, boolean allowDeleted) {
-        return buildTenantCondition(tenantId);
+        return buildTenantCondition(tenantId).and(aclCondition(Resource.TRIGGER));
     }
 
     @Override

@@ -131,11 +131,11 @@
                         @click.stop="(e) => { if(!selectionMode) onRowClickWrapper(data, node, e) }"
                     >
                         <div class="item-line">
-                            <Checkbox
+                            <KsCheckbox
                                 v-if="selectionMode"
                                 class="me-2"
                                 :modelValue="selectedNodes.includes(data.id)"
-                                @update-model-value="checked => toggleCheckboxSelection(checked, node)"
+                                @change="checked => toggleCheckboxSelection(checked, node)"
                                 @mousedown.stop
                                 @click.stop
                             />
@@ -401,7 +401,6 @@
     import Revisions, {Revision} from "../layout/Revisions.vue"
     import {FILES_REFRESH_CONTENT_INJECTION_KEY} from "./FlowFileEditorTab.vue"
     import Crud from "override/components/auth/Crud.vue"
-    import Checkbox from "../layout/Checkbox.vue"
     import {useAuthStore} from "override/stores/auth"
     import resource from "../../models/resource"
     import action from "../../models/action"

@@ -491,6 +491,9 @@
     },
     "download": "Télécharger",
     "jsonl": "JSONL",
+    "large_outputs": {
+      "value_truncated": "Affichage d'un aperçu tronqué de cette valeur de {size}."
+    },
     "concurrency_limit": {
       "dialog_title": "Limites de Concurrence",
       "warning": "La modification du compteur en cours peut corrompre la concurrence, de sorte que les exécutions peuvent dépasser la limite autorisée."
@@ -1648,6 +1651,7 @@
     "webhook link copied": "Lien du webhook copié.",
     "copy url": "Copier l'URL",
     "scheduleDate": "Date de planification",
+    "scheduleDateInPast": "La date de planification doit être future",
     "warning": "Avertissement",
     "trigger_check_warning": "L'utilisation des variables de trigger ne fonctionnera pas avec l'exécution manuelle du flow. Ajoutez l'opérateur de coalescence `??` pour résoudre le problème. Par exemple, au lieu de `trigger.date`, utilisez `trigger.date ?? execution.startDate`.",
     "docs": "Documentation",
@@ -1980,6 +1984,9 @@
         "label": "Modifier le tableau de bord",
         "chart": "Modifier ce graphique"
       },
+      "creation": {
+        "label": "Créer un Dashboard"
+      },
       "no_description": "Aucune description",
       "no_description_hint": "Ajoutez une description à ce flow pour documenter ce qu'il fait.<br>Markdown est pris en charge.",
       "others": "Autres",
@@ -2137,7 +2144,7 @@
         },
         "unavailable": {
           "title": "AI Copilot n'est pas disponible",
-          "detail": "Aucun fournisseur d'AI n'est configuré. Demandez à un administrateur d'en configurer un.",
+          "detail": "Aucun fournisseur d'IA n'est configuré pour cette instance. Configurez-en un dans votre fichier de configuration Kestra pour activer l'AI Copilot.",
           "docs": "Voir la documentation"
         },
         "thinkingWords": [
@@ -2210,7 +2217,6 @@
     "submit": "Soumettre",
     "accept": "Accepter",
     "reject": "Rejeter",
-    "draft_available": "Un changement de brouillon est disponible dans l'éditeur",
     "last modified": "Dernière modification",
     "run task in playground": "Exécuter la task dans le playground",
     "defaultsToNamespaceFile": "Par défaut, fichier de namespace : <code>{name}</code>",

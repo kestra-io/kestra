@@ -491,6 +491,9 @@
     },
     "download": "Descargar",
     "jsonl": "JSONL",
+    "large_outputs": {
+      "value_truncated": "Mostrando una vista previa truncada de este valor de {size}."
+    },
     "concurrency_limit": {
       "dialog_title": "Límites de Concurrencia",
       "warning": "Cambiar el contador en ejecución puede corromper la Concurrency, por lo que las egzekucje pueden exceder el límite permitido."
@@ -1648,6 +1651,7 @@
     "webhook link copied": "Enlace de Webhook copiado.",
     "copy url": "Copiar URL",
     "scheduleDate": "Fecha de programación",
+    "scheduleDateInPast": "La fecha de programación debe ser en el futuro",
     "warning": "Advertencia",
     "trigger_check_warning": "Al usar variables de trigger no funcionará con la ejecución manual de flow. Agrega el operador de coalescencia `??` para resolver el problema. Por ejemplo, en lugar de `trigger.date`, usa `trigger.date ?? execution.startDate`.",
     "docs": "Documentos",
@@ -1980,6 +1984,9 @@
         "label": "Editar Dashboard",
         "chart": "Editar este gráfico"
       },
+      "creation": {
+        "label": "Crear Dashboard"
+      },
       "no_description": "Sin descripción",
       "no_description_hint": "Agrega una descripción a este flow para documentar qué hace.<br>Markdown es compatible.",
       "others": "Otros",
@@ -2137,7 +2144,7 @@
         },
         "unavailable": {
           "title": "AI Copilot no está disponible",
-          "detail": "No hay ningún proveedor de AI configurado. Pide a un administrador que configure uno.",
+          "detail": "No hay ningún proveedor de AI configurado para esta instancia. Configura uno en tu archivo de configuración de Kestra para habilitar AI Copilot.",
           "docs": "Ver documentación"
         },
         "thinkingWords": [
@@ -2210,7 +2217,6 @@
     "submit": "Enviar",
     "accept": "Aceptar",
     "reject": "Rechazar",
-    "draft_available": "El cambio en borrador está disponible en el editor",
     "last modified": "Última modificación",
     "run task in playground": "Ejecutar task en el playground",
     "defaultsToNamespaceFile": "Por defecto en el archivo de namespace: <code>{name}</code>",

@@ -59,4 +59,15 @@ class HttpClientAllowedListTest {
             ));
         }
     }
+
+    @Test
+    void shouldRejectUriWhenHostIsASubdomainOfAnExactAllowedEntry() throws IllegalVariableEvaluationException, IOException {
+        try (HttpClient client = client()) {
+            var exception = assertThrows(IllegalArgumentException.class, () -> client.request(
+                HttpRequest.of(URI.create("http://sub.localhost/")),
+                String.class
+            ));
+            assertThat(exception.getMessage()).isEqualTo("The URI http://sub.localhost/ is not in the configured allowed list (kestra.tasks.http.allowed-list).");
+        }
+    }
 }

@@ -57,6 +57,9 @@
                 <template #details>
                     <slot name="taskDetails" v-bind="taskProps" />
                 </template>
+                <template #taskActions="taskActionProps">
+                    <slot name="taskActions" v-bind="{...taskProps, ...taskActionProps}" />
+                </template>
             </TaskNode>
         </template>
 
@@ -184,7 +187,7 @@
         loadIcon?: (cls: string) => Promise<any>;
         enableSubflowInteraction?: boolean;
         execution?: any;
-        subflowsExecutions?: Record<string, any[]>;
+        subflowsExecutions?: Record<string, VueFlowUtils.GraphExecution>;
         playgroundEnabled?: boolean;
         playgroundReadyToStart?: boolean;
         replayEnabled?: boolean;

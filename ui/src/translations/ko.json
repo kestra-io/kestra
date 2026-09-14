@@ -953,6 +953,9 @@
     },
     "trigger disabled": "Flow 소스 내에서 Trigger가 비활성화되었습니다.",
     "trigger not toggleable": "이 Trigger는 Scheduler가 평가하지 않습니다. Flow 소스에서 비활성화하세요.",
+    "bulk not toggleable warning": "선택된 트리거 {count}개가 건너뛰어집니다. 스케줄러가 이를 평가하지 않으므로 Flow 소스에서만 비활성화할 수 있습니다.",
+    "bulk none applied": "영향을 받은 트리거가 없습니다: 선택된 트리거 중 처리할 수 있는 것이 없습니다.",
+    "bulk partially applied": "{requested}개의 트리거 중 {count}개가 처리되었으며, 나머지는 건너뛰었습니다.",
     "trigger enable dialog": {
       "title": "trigger 활성화",
       "bulk title": "{count}개의 triggers 활성화",

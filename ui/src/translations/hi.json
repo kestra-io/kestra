@@ -953,6 +953,9 @@
     },
     "trigger disabled": "Flow स्रोत के भीतर Trigger अक्षम है",
     "trigger not toggleable": "इस Trigger का मूल्यांकन Scheduler द्वारा नहीं किया जाता, इसे Flow स्रोत में अक्षम करें",
+    "bulk not toggleable warning": "{count} चयनित ट्रिगर छोड़े जाएंगे: शेड्यूलर उनका मूल्यांकन नहीं करता है, इसलिए उन्हें केवल Flow स्रोत में अक्षम किया जा सकता है।",
+    "bulk none applied": "कोई भी ट्रिगर प्रभावित नहीं हुआ: चयनित में से किसी को भी संसाधित नहीं किया जा सका।",
+    "bulk partially applied": "{requested} में से {count} ट्रिगर संसाधित किए गए, बाकी छोड़ दिए गए।",
     "trigger enable dialog": {
       "title": "trigger सक्षम करें",
       "bulk title": "सक्षम करें {count} triggers",

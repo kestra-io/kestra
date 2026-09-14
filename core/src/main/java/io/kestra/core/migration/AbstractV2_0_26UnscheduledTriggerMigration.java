@@ -23,7 +23,7 @@ import lombok.extern.slf4j.Slf4j;
  * MCP-tool, flow and asset event triggers — of the flows that already exist.
  * <p>
  * Until 2.0.26 only the triggers the scheduler evaluates held a state, so the others could not be listed on
- * the triggers page. {@code FlowService} now writes their state on every flow mutation; this back-fills the
+ * the triggers page. The scheduler now creates their state on every flow mutation; this back-fills the
  * flows that already exist, so an upgrade does not require re-saving them.
  *
  * <p>
@@ -84,9 +84,8 @@ public abstract class AbstractV2_0_26UnscheduledTriggerMigration implements Migr
                     id,
                     TriggerType.UNSCHEDULED,
                     trigger.stopAfter(),
-                    Boolean.TRUE.equals(trigger.disabled()),
                     VNodes.computeVNodeFromTrigger(id, vnodes)
-                );
+                ).sourceDisabled(null, Boolean.TRUE.equals(trigger.disabled()));
             })
             .toList();
     }
@@ -97,12 +96,12 @@ public abstract class AbstractV2_0_26UnscheduledTriggerMigration implements Migr
      * <p>
      * This is the same rule {@link TriggerType#from(AbstractTrigger)} applies at runtime — every kind the
      * scheduler evaluates is a {@link WorkerTriggerInterface} — so the states this creates cannot disagree with
-     * the ones {@code FlowService} writes from then on. It also keeps the edition's own kinds working without
+     * the ones the scheduler creates from then on. It also keeps the edition's own kinds working without
      * core having to name them: EE's asset event trigger classifies itself, and is simply absent in OSS.
      * <p>
      * Resolved without initializing the class, and a type that cannot be loaded is left alone: a migration runs
      * before the plugin registry, so an external plugin's trigger is unresolvable here either way, and one that
-     * needs a state gets it from {@code FlowService} on the next save of its flow.
+     * needs a state gets it on the next save of its flow.
      */
     private static boolean isUnscheduled(String type) {
         if (type == null) {

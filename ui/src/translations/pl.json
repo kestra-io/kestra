@@ -953,6 +953,9 @@
     },
     "trigger disabled": "Trigger jest wyłączony w źródle Flow",
     "trigger not toggleable": "Ten Trigger nie jest oceniany przez Scheduler, wyłącz go w źródle Flow",
+    "bulk not toggleable warning": "{count} wybrany Trigger zostanie pominięty: Scheduler ich nie ocenia, więc można je wyłączyć tylko w źródle Flow. | {count} wybrane Triggery zostaną pominięte: Scheduler ich nie ocenia, więc można je wyłączyć tylko w źródle Flow. | {count} wybranych Triggerów zostanie pominiętych: Scheduler ich nie ocenia, więc można je wyłączyć tylko w źródle Flow.",
+    "bulk none applied": "Żadne triggery nie zostały zmienione: żaden z wybranych nie mógł zostać przetworzony.",
+    "bulk partially applied": "Przetworzono {count} z {requested} Triggerów, pozostałe pominięto.",
     "trigger enable dialog": {
       "title": "Włącz Trigger",
       "bulk title": "Włącz {count} Triggerów",

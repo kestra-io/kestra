@@ -81,9 +81,6 @@ class TriggerControllerTest {
     @Inject
     SchedulerConfiguration schedulerConfiguration;
 
-    // Every test here scopes itself to a namespace of its own, so the tables are deliberately not
-    // truncated between tests: this class starts the runner, and truncating QUEUES underneath a
-    // running executor deadlocks on the table lock as soon as any test drives a real execution.
     @BeforeEach
     protected void setup() {
         Awaitility.await().atMost(Duration.ofSeconds(30)).pollInterval(Duration.ofMillis(100)).until(() -> scheduler.isActive());
@@ -92,9 +89,7 @@ class TriggerControllerTest {
     @SuppressWarnings("unchecked")
     @Test
     void shouldFindTriggersGivenQueryOnIdPrefix() throws FlowProcessingException, QueueException {
-        // GIVEN two triggers whose ids share the queried prefix, and one in the same namespace whose
-        // id does not: the namespace filter isolates this test from the rest of the class, the extra
-        // trigger keeps the assertion below a test of `q` rather than of the namespace filter alone.
+        // GIVEN
         Flow flow = generateFlow();
         flowService.create(GenericFlow.of(flow));
         createTriggersFromFlow(flow).forEach(jdbcTriggerRepository::save);
@@ -181,35 +176,6 @@ class TriggerControllerTest {
     }
 
     @Test
-    void shouldReturnConflictWhenBackfillingATriggerTheSchedulerDoesNotEvaluate() throws FlowProcessingException, QueueException {
-        // GIVEN a webhook trigger, which now holds a state and so passes the trigger-exists check
-        Flow flow = generateFlowWithUnscheduledTriggers();
-        flowService.create(GenericFlow.of(flow));
-        awaitTriggerStates(flow);
-
-        // WHEN
-        HttpClientResponseException e = assertThrows(
-            HttpClientResponseException.class, () -> client.toBlocking().exchange(
-                HttpRequest.PUT(
-                    TRIGGER_PATH + "/backfill/create",
-                    new TriggerController.ApiCreateBackfillRequest(
-                        flow.getNamespace(),
-                        flow.getId(),
-                        "webhook",
-                        new TriggerController.ApiCreateBackfillRequest.Backfill(
-                            ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), Map.of(), List.of()
-                        )
-                    )
-                )
-            )
-        );
-
-        // THEN it is refused rather than accepted into a backfill that could never run
-        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.CONFLICT.getCode());
-        assertThat(e.getMessage()).contains("the scheduler does not evaluate this kind of trigger");
-    }
-
-    @Test
     void shouldReturnConflictWhenTogglingATriggerTheSchedulerDoesNotEvaluate() throws FlowProcessingException, QueueException {
         // GIVEN a webhook trigger, whose state the scheduler never reads
         Flow flow = generateFlowWithUnscheduledTriggers();
@@ -228,7 +194,7 @@ class TriggerControllerTest {
 
         // THEN it is refused rather than stored as a flag nothing enforces
         assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.CONFLICT.getCode());
-        assertThat(e.getMessage()).contains("the scheduler does not evaluate this kind of trigger");
+        assertThat(e.getMessage()).contains("is not managed by the scheduler");
     }
 
     @Test
@@ -893,7 +859,7 @@ class TriggerControllerTest {
 
     @Test
     void shouldReturnUnprocessableEntityWhenCreatingBackfillOnNonScheduleTrigger() {
-        for (TriggerType type : List.of(TriggerType.POLLING, TriggerType.REALTIME)) {
+        for (TriggerType type : List.of(TriggerType.POLLING, TriggerType.REALTIME, TriggerType.UNSCHEDULED)) {
             // GIVEN
             TriggerState trigger = newRandomTriggerState(type);
             jdbcTriggerRepository.save(trigger);

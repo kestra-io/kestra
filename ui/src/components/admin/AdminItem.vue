@@ -5,8 +5,7 @@
         :active="active"
         class="admin-item"
         @click="open"
-    >
-    </KsSideBarItem>
+    />
 </template>
 
 <script setup lang="ts">

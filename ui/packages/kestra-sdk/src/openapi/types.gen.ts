@@ -27,7 +27,7 @@ export type AbstractFlow = {
     draft: boolean;
     labels?: Array<Label>;
     variables?: {
-        [key: string]: never;
+        [key: string]: unknown;
     };
     /**
      * Routing requirements (tags + fallback) for this flow.
@@ -927,7 +927,9 @@ export type Flow = AbstractFlow & {
     workerSelector?: WorkerSelector;
     deleted: boolean;
     finally?: Array<Task>;
-    variables?: {};
+    variables?: {
+        [key: string]: unknown;
+    };
     tasks: Array<Task>;
     errors?: Array<Task>;
     afterExecution?: Array<Task>;
@@ -1002,7 +1004,9 @@ export type FlowForExecution = AbstractFlow & {
      * Labels as a list of Label (key/value pairs) or as a map of string to string.
      */
     labels?: MapObjectObject;
-    variables?: {};
+    variables?: {
+        [key: string]: unknown;
+    };
     /**
      * Routing requirements (tags + fallback) for this flow.
      */
@@ -1175,7 +1179,9 @@ export type FlowWithSource = Flow & AbstractFlow & {
      */
     workerSelector?: WorkerSelector;
     deleted: boolean;
-    variables?: {};
+    variables?: {
+        [key: string]: unknown;
+    };
     /**
      * Concurrency
      *
@@ -3150,7 +3156,7 @@ export type GetPluginIconSvgResponses = {
     /**
      * getPluginIconSvg 200 response
      */
-    200: string;
+    200: Blob | File;
 };
 
 export type GetPluginIconSvgResponse = GetPluginIconSvgResponses[keyof GetPluginIconSvgResponses];
@@ -3735,7 +3741,7 @@ export type ChatResponses = {
     /**
      * chat 200 response
      */
-    200: EventObject;
+    200: Array<EventObject>;
 };
 
 export type ChatResponse = ChatResponses[keyof ChatResponses];
@@ -3771,7 +3777,7 @@ export type ConfirmResponses = {
     /**
      * confirm 200 response
      */
-    200: EventObject;
+    200: Array<EventObject>;
 };
 
 export type ConfirmResponse = ConfirmResponses[keyof ConfirmResponses];
@@ -7151,7 +7157,7 @@ export type FollowExecutionResponses = {
     /**
      * followExecution 200 response
      */
-    200: EventExecution;
+    200: Array<EventExecution>;
 };
 
 export type FollowExecutionResponse = FollowExecutionResponses[keyof FollowExecutionResponses];
@@ -7199,7 +7205,7 @@ export type FollowDependenciesExecutionsResponses = {
     /**
      * followDependenciesExecutions 200 response
      */
-    200: EventExecutionStatusEvent;
+    200: Array<EventExecutionStatusEvent>;
 };
 
 export type FollowDependenciesExecutionsResponse = FollowDependenciesExecutionsResponses[keyof FollowDependenciesExecutionsResponses];
@@ -7858,7 +7864,7 @@ export type ExportFlowsByIdsResponses = {
     /**
      * exportFlowsByIds 200 response
      */
-    200: string;
+    200: Blob | File;
 };
 
 export type ExportFlowsByIdsResponse = ExportFlowsByIdsResponses[keyof ExportFlowsByIdsResponses];
@@ -7898,7 +7904,7 @@ export type ExportFlowsByQueryResponses = {
     /**
      * exportFlowsByQuery 200 response
      */
-    200: string;
+    200: Blob | File;
 };
 
 export type ExportFlowsByQueryResponse = ExportFlowsByQueryResponses[keyof ExportFlowsByQueryResponses];
@@ -9208,7 +9214,7 @@ export type FollowLogsFromExecutionResponses = {
     /**
      * followLogsFromExecution 200 response
      */
-    200: EventFollowLogEvent;
+    200: Array<EventFollowLogEvent>;
 };
 
 export type FollowLogsFromExecutionResponse = FollowLogsFromExecutionResponses[keyof FollowLogsFromExecutionResponses];

@@ -956,7 +956,8 @@ public abstract class AbstractFlowRepositoryTest {
         }
 
         Await.await()
-            .pollDelay(Duration.ofMillis(100))
+            .pollDelay(Duration.ZERO)
+            .pollInterval(Duration.ofMillis(100))
             .atMost(Duration.ofSeconds(5))
             .until(() -> FlowListener.filterByTenant(tenant)
                 .size() == 3);
@@ -1002,7 +1003,8 @@ public abstract class AbstractFlowRepositoryTest {
         }
 
         Await.await()
-            .pollDelay(Duration.ofMillis(100))
+            .pollDelay(Duration.ZERO)
+            .pollInterval(Duration.ofMillis(100))
             .atMost(Duration.ofSeconds(5))
             .until(() -> FlowListener.filterByTenant(tenant)
                 .size() == 2);

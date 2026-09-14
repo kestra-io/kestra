@@ -104,7 +104,8 @@ public class RetryCaseTest {
         );
         Await.await()
             .alias("flow should have ended in Failed state")
-            .pollDelay(Duration.ofMillis(100))
+            .pollDelay(Duration.ZERO)
+            .pollInterval(Duration.ofMillis(100))
             .atMost(Duration.ofSeconds(30))
             .until(() ->
             {

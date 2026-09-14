@@ -253,7 +253,7 @@ public class TestRunnerUtils {
             if (duration == null) {
                 duration = Duration.ofSeconds(20);
             }
-            return Await.await().pollDelay(Duration.ofMillis(10)).atMost(duration).until(() ->
+            return Await.await().pollDelay(Duration.ZERO).pollInterval(Duration.ofMillis(10)).atMost(duration).until(() ->
             {
                 Optional<Execution> exec = executionRepository.findById(execution.getTenantId(), execution.getId());
                 if (exec.isPresent() && predicate.test(exec.get())) {
@@ -292,7 +292,7 @@ public class TestRunnerUtils {
             if (duration == null) {
                 duration = Duration.ofSeconds(20);
             }
-            return Await.await().pollDelay(Duration.ofMillis(50)).atMost(duration).until(() ->
+            return Await.await().pollDelay(Duration.ZERO).pollInterval(Duration.ofMillis(50)).atMost(duration).until(() ->
             {
                 ArrayListTotal<Execution> byFlowId = executionRepository.findByFlowId(
                     tenantId, namespace, flowId, Pageable.UNPAGED
@@ -337,7 +337,7 @@ public class TestRunnerUtils {
             if (duration == null) {
                 duration = Duration.ofSeconds(20);
             }
-            Await.await().pollDelay(Duration.ofMillis(50)).atMost(duration).until(() ->
+            Await.await().pollDelay(Duration.ZERO).pollInterval(Duration.ofMillis(50)).atMost(duration).until(() ->
             {
                 ArrayListTotal<Execution> byFlowId = executionRepository.findByFlowId(
                     tenantId, namespace, flowId, Pageable.UNPAGED
@@ -394,7 +394,7 @@ public class TestRunnerUtils {
             if (duration == null) {
                 duration = Duration.ofSeconds(20);
             }
-            return Await.await().pollDelay(Duration.ofMillis(10)).atMost(duration).until(() ->
+            return Await.await().pollDelay(Duration.ZERO).pollInterval(Duration.ofMillis(10)).atMost(duration).until(() ->
             {
                 Optional<Execution> exec = executionRepository.findByFlowId(flow.getTenantId(), flow.getNamespace(), flow.getId(), Pageable.UNPAGED)
                     .stream()

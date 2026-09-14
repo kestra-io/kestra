@@ -148,7 +148,7 @@ abstract public class TestsUtils {
     public static List<LogEntry> awaitLogs(List<LogEntry> logs, Predicate<LogEntry> logMatcher, Predicate<Integer> countMatcher) {
         AtomicReference<List<LogEntry>> matchingLogs = new AtomicReference<>();
         try {
-            Await.await().pollDelay(Duration.ofMillis(10)).atMost(Duration.ofMillis(1000)).until(() ->
+            Await.await().pollDelay(Duration.ZERO).pollInterval(Duration.ofMillis(10)).atMost(Duration.ofMillis(1000)).until(() ->
             {
                 matchingLogs.set(
                     Collections.synchronizedList(logs)

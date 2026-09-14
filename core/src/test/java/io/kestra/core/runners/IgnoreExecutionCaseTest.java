@@ -53,7 +53,8 @@ public class IgnoreExecutionCaseTest {
         // the execution 2 should be in success and the 1 still created
         assertThat(execution2.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         Execution execution1 = Await.await()
-            .pollDelay(Duration.ofMillis(100))
+            .pollDelay(Duration.ZERO)
+            .pollInterval(Duration.ofMillis(100))
             .atMost(Duration.ofSeconds(1))
             .until(() -> executionRepository.findById(MAIN_TENANT, execution1Id).orElse(null), Objects::nonNull);
         assertThat(execution1.getState().getCurrent()).isEqualTo(State.Type.CREATED);
@@ -70,7 +71,8 @@ public class IgnoreExecutionCaseTest {
         // the execution 2 should be in success and the 1 still created
         assertThat(execution2.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         Execution execution1 = Await.await()
-            .pollDelay(Duration.ofMillis(100))
+            .pollDelay(Duration.ZERO)
+            .pollInterval(Duration.ofMillis(100))
             .atMost(Duration.ofSeconds(1))
             .until(() -> executionRepository.findById(MAIN_TENANT, execution1Id).orElse(null), Objects::nonNull);
         assertThat(execution1.getState().getCurrent()).isEqualTo(State.Type.CREATED);
@@ -87,7 +89,8 @@ public class IgnoreExecutionCaseTest {
         // the execution 2 should be in success and the 1 still created
         assertThat(execution2.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         Execution execution1 = Await.await()
-            .pollDelay(Duration.ofMillis(100))
+            .pollDelay(Duration.ZERO)
+            .pollInterval(Duration.ofMillis(100))
             .atMost(Duration.ofSeconds(1))
             .until(() -> executionRepository.findById(MAIN_TENANT, execution1Id).orElse(null), Objects::nonNull);
         assertThat(execution1.getState().getCurrent()).isEqualTo(State.Type.CREATED);

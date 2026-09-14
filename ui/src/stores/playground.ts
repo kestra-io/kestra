@@ -57,7 +57,7 @@ export const usePlaygroundStore = defineStore("playground", () => {
     }
 
     const executions = ref([]) as Ref<ExecutionWithGraph[]>
-    function addExecution(execution: ExecutionWithGraph, graph: FlowGraph) {
+    function addExecution(execution: ExecutionWithGraph, graph?: FlowGraph) {
         execution.graph = graph
         executions.value.unshift(execution)
     }
@@ -148,16 +148,22 @@ export const usePlaygroundStore = defineStore("playground", () => {
 
         const graph = await flowStore.loadGraph({flow: flowStore.flow})
 
-        if (!taskId) {
+        if (!taskId || !graph) {
             return {nextTasksIds: [], graph}
         }
 
         // find the node uid of the task with the given taskId
-        const taskNode = graph.nodes.find((node: any) => node?.task?.id === taskId)
+        const taskNode = graph.nodes.find((node) => node.task?.id === taskId)
+
+        if (!taskNode) {
+            return {nextTasksIds: [], graph}
+        }
 
         const nextTasksNodes = (await graphUtils()).getNextTaskNodes(graph, taskNode)
 
-        const nextTasksIds = nextTasksNodes.map((node: any) => node.task.id)
+        const nextTasksIds = nextTasksNodes
+            .map((node) => node.task?.id)
+            .filter((id): id is string => id !== undefined)
 
         return {nextTasksIds, graph}
     }

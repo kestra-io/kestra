@@ -491,6 +491,9 @@
     },
     "download": "डाउनलोड करें",
     "jsonl": "JSONL",
+    "large_outputs": {
+      "value_truncated": "इस {size} मान का एक छोटा पूर्वावलोकन दिखाया जा रहा है।"
+    },
     "concurrency_limit": {
       "dialog_title": "समानांतरता सीमाएँ",
       "warning": "चल रहे काउंटर को बदलने से समवर्तीता दूषित हो सकती है, इसलिए एग्जीक्यूशन अनुमत सीमा से अधिक हो सकते हैं।"
@@ -2214,7 +2217,6 @@
     "submit": "प्रस्तुत करें",
     "accept": "स्वीकारें",
     "reject": "अस्वीकार करें",
-    "draft_available": "संपादक में ड्राफ्ट परिवर्तन उपलब्ध है",
     "last modified": "अंतिम संशोधित",
     "run task in playground": "प्लेग्राउंड में task चलाएं",
     "defaultsToNamespaceFile": "डिफ़ॉल्ट रूप से namespace फ़ाइल: <code>{name}</code>",

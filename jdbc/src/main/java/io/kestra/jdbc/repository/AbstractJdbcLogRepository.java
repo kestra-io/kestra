@@ -1,5 +1,8 @@
 package io.kestra.jdbc.repository;
 
+import java.time.Instant;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -36,6 +39,8 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcRepository i
 
     private static final Condition NORMAL_KIND_CONDITION = field("execution_kind").isNull().or(field("execution_kind").eq(ExecutionKind.NORMAL.name()));
     private static final String DATE_COLUMN = "timestamp";
+    private static final Field<String> KEY_FIELD = field("key", String.class);
+    private static final Field<Object> VALUE_FIELD = field("value", Object.class);
     protected io.kestra.jdbc.AbstractJdbcRepository<LogEntry> jdbcRepository;
 
     public AbstractJdbcLogRepository(io.kestra.jdbc.AbstractJdbcRepository<LogEntry> jdbcRepository,
@@ -159,6 +164,37 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcRepository i
                     }
                 }),
             FluxSink.OverflowStrategy.BUFFER
+        );
+    }
+
+    @Override
+    public List<KeyedLog> findAfterWithoutAcl(
+        @Nullable String tenantId,
+        List<QueryFilter> filters,
+        Instant afterTimestamp,
+        @Nullable String afterKey,
+        int pageSize) {
+        var condition = NORMAL_KIND_CONDITION.and(this.filter(filters, DATE_COLUMN, Resource.LOG));
+
+        // With a key, seek strictly after the (timestamp, key) row; without one (first run or a legacy date-only
+        // offset), fall back to a strict timestamp lower bound (which matches the previous START_DATE behaviour).
+        Field<OffsetDateTime> dateField = field(DATE_COLUMN, OffsetDateTime.class);
+        OffsetDateTime after = afterTimestamp.atOffset(ZoneOffset.UTC);
+        Condition seek = afterKey == null
+            ? dateField.gt(after)
+            : DSL.row(dateField, KEY_FIELD).gt(DSL.row(DSL.val(after), DSL.val(afterKey)));
+
+        return this.jdbcRepository.getDslContextWrapper().transactionResult(configuration ->
+            DSL.using(configuration)
+                .select(KEY_FIELD, VALUE_FIELD)
+                .from(this.jdbcRepository.getTable())
+                .where(this.defaultFilterWithNoACL(tenantId))
+                .and(condition)
+                .and(seek)
+                .orderBy(dateField.asc(), KEY_FIELD.asc())
+                .limit(pageSize)
+                .fetch()
+                .map(record -> new KeyedLog(record.get(KEY_FIELD), this.jdbcRepository.map(record)))
         );
     }
 

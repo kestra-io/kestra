@@ -491,6 +491,9 @@
     },
     "download": "다운로드",
     "jsonl": "JSONL",
+    "large_outputs": {
+      "value_truncated": "이 {size} 값의 잘린 미리보기를 표시합니다."
+    },
     "concurrency_limit": {
       "dialog_title": "동시성 제한",
       "warning": "실행 중인 카운터를 변경하면 Concurrency가 손상되어 실행이 허용된 limit을 초과할 수 있습니다."

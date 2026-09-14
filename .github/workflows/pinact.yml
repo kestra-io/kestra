@@ -1,0 +1,41 @@
+name: Pinned Actions Check
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/**'
+      - '.github/actions/**'
+      - '.pinact.yaml'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref_name }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  PINACT_VERSION: v5.0.0
+  PINACT_CHECKSUM: d005bbb85da80dacdc07816f24a5da723a9f6d1e9f3d3e7e73df33f9caa1358f
+
+jobs:
+  pinact:
+    name: Actions pinned to a commit SHA
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install pinact
+        run: |
+          curl -fsSL -o pinact.tar.gz "https://github.com/suzuki-shunsuke/pinact/releases/download/${PINACT_VERSION}/pinact_linux_amd64.tar.gz"
+          echo "${PINACT_CHECKSUM}  pinact.tar.gz" | sha256sum --check --strict -
+          tar -xzf pinact.tar.gz pinact
+          sudo install pinact /usr/local/bin/pinact
+
+      - name: Check pinning and version comments
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: pinact run --check --verify

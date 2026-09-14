@@ -4,8 +4,8 @@ import {createRouter, createMemoryHistory} from "vue-router"
 
 import {setupTenantRouter, tenantGuard} from "../../../src/composables/useTenant"
 
-// Mirrors main.ts: the guard is registered before the router installs, since installing
-// starts the first navigation and guards added after it are missed by that navigation.
+// Mirrors main.ts, where the guard goes through initApp: registering it after one of initApp's
+// awaits would leave the router's first navigation, started by app.use(router), without it.
 function buildRouter() {
     const router = createRouter({
         history: createMemoryHistory(),

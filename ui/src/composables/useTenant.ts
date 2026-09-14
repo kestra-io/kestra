@@ -2,7 +2,7 @@ import type {Router, RouteLocationNormalized, RouteLocationRaw, RouteLocationNam
 import type {App} from "vue"
 
 /** Rewrites a tenant-less path to the current tenant, defaulting to "main". Must be registered through
- *  `initApp`: a guard added after the router installs is missed by the first navigation. */
+ *  `initApp`: a guard registered after one of its awaits is missed by the router's first navigation. */
 export function tenantGuard(_router: Router, to: RouteLocationNormalized, from: RouteLocationNormalized): boolean | RouteLocationRaw {
     // on login, prevent redirection to tenant
     if (to.meta?.anonymous === true) {
@@ -11,8 +11,8 @@ export function tenantGuard(_router: Router, to: RouteLocationNormalized, from: 
     if (to.path !== "/" && !to.params.tenant) {
         // Use current tenant from route context, fallback to "main"
         const currentTenant = from.params?.tenant || "main"
-        // No `replace` here: vue-router merges this return over the outer navigation's options, so
-        // setting it - even to `false` - would turn a caller's `router.replace()` into a `push`.
+        // No `replace` here: vue-router forces one on the first navigation, keeping the tenant-less URL
+        // out of history, and setting it explicitly would turn a caller's `router.replace()` into a `push`.
         return {path: `/${currentTenant}${to.path}`, query: to.query, hash: to.hash}
     }
     return true

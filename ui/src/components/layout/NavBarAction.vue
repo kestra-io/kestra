@@ -5,10 +5,15 @@
         v-bind="$attrs"
         @click="onClick"
     >
-        <RouterLink v-if="props.to" :to="props.to">
+        <RouterLink v-if="props.to" class="nav-bar-action-link" :to="props.to">
             <slot>{{ label }}</slot>
         </RouterLink>
-        <a v-else-if="props.href" :href="props.href" :download="props.download">
+        <a
+            v-else-if="props.href"
+            class="nav-bar-action-link"
+            :href="props.href"
+            :download="props.download"
+        >
             <slot>{{ label }}</slot>
         </a>
         <slot v-else>{{ label }}</slot>
@@ -53,10 +58,22 @@
     // An `href: undefined` falling through onto RouterLink overrides the href it computes itself.
     const linkAttrs = computed(() => props.to || !props.href ? {} : {href: props.href, download: props.download})
 
-    const onClick = () => {
-        if (props.to) {
+    // A modifier or middle click is the browser's own open-in-a-new-tab gesture, which RouterLink
+    // lets through untouched; every click it does handle itself comes back with preventDefault.
+    const isLinkOwnedClick = (event?: MouseEvent) =>
+        !!event && (event.defaultPrevented || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0)
+
+    const onClick = (event?: MouseEvent) => {
+        if (props.to && !isLinkOwnedClick(event)) {
             router.push(props.to)
         }
         emit("click")
     }
 </script>
+
+<style scoped lang="scss">
+    /* The link fills the dropdown row so a modifier click anywhere on it reaches the anchor. */
+    .nav-bar-action-link {
+        flex: 1;
+    }
+</style>

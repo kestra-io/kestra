@@ -2144,7 +2144,7 @@
         },
         "unavailable": {
           "title": "AI Copilot을(를) 사용할 수 없습니다",
-          "detail": "AI 공급자가 구성되지 않았습니다. 관리자에게 설정을 요청하세요.",
+          "detail": "이 인스턴스에 구성된 AI provider가 없습니다. AI Copilot을 활성화하려면 Kestra 구성 파일에서 AI provider를 구성하세요.",
           "docs": "문서 보기"
         },
         "thinkingWords": [

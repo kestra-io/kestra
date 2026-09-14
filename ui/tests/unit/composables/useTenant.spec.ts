@@ -2,8 +2,10 @@ import {describe, it, expect, vi} from "vitest"
 import {createApp} from "vue"
 import {createRouter, createMemoryHistory} from "vue-router"
 
-import {setupTenantRouter} from "../../../src/composables/useTenant"
+import {setupTenantRouter, tenantGuard} from "../../../src/composables/useTenant"
 
+// Mirrors main.ts: the guard is registered before the router installs, since installing
+// starts the first navigation and guards added after it are missed by that navigation.
 function buildRouter() {
     const router = createRouter({
         history: createMemoryHistory(),
@@ -13,6 +15,7 @@ function buildRouter() {
             {path: "/:tenant?/executions/:id", name: "executions/update", component: {template: "<div/>"}},
         ],
     })
+    router.beforeEach((to, from) => tenantGuard(router, to, from))
     const app = createApp({template: "<router-view/>"})
     app.use(router)
     setupTenantRouter(router, app)

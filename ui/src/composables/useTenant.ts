@@ -1,6 +1,23 @@
 import type {Router, RouteLocationNormalized, RouteLocationRaw, RouteLocationNamedRaw} from "vue-router"
 import type {App} from "vue"
 
+/** Rewrites a tenant-less path to the current tenant, defaulting to "main". Must be registered through
+ *  `initApp`: a guard added after the router installs is missed by the first navigation. */
+export function tenantGuard(_router: Router, to: RouteLocationNormalized, from: RouteLocationNormalized): boolean | RouteLocationRaw {
+    // on login, prevent redirection to tenant
+    if (to.meta?.anonymous === true) {
+        return true
+    }
+    if (to.path !== "/" && !to.params.tenant) {
+        // Use current tenant from route context, fallback to "main"
+        const currentTenant = from.params?.tenant || "main"
+        // No `replace` here: vue-router merges this return over the outer navigation's options, so
+        // setting it - even to `false` - would turn a caller's `router.replace()` into a `push`.
+        return {path: `/${currentTenant}${to.path}`, query: to.query, hash: to.hash}
+    }
+    return true
+}
+
 export function setupTenantRouter(router: Router, app: App): void {
     // Auto-inject tenant in route resolution with "main" as default
     const originalResolve = router.resolve
@@ -22,25 +39,4 @@ export function setupTenantRouter(router: Router, app: App): void {
             params: {tenant: this.$route?.params?.tenant || "main", ...toWithParams.params},
         }
     }
-
-    router.beforeEach((to, from) => {
-        // on login, prevent redirection to tenant
-        if (to.meta?.anonymous === true) {
-            return true
-        }
-        if (to.path !== "/" && !to.params.tenant) {
-            // Use current tenant from route context, fallback to "main"
-            const currentTenant = from.params?.tenant || "main"
-            // No `replace` here: vue-router merges whatever this guard returns
-            // over the outer navigation's own options, so setting it explicitly
-            // - even to `false` - would override a caller's `router.replace()`
-            // and silently turn it into a `push`. Leaving it out lets
-            // vue-router's own first-navigation handling (which already forces
-            // a replace when there is no real previous page to preserve) do the
-            // right thing, while every later navigation keeps whatever
-            // push/replace semantics its caller intended.
-            return {path: `/${currentTenant}${to.path}`, query: to.query, hash: to.hash}
-        }
-        return true
-    })
 }

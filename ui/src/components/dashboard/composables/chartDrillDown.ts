@@ -1,9 +1,10 @@
-import {useRoute, useRouter, type LocationQuery} from "vue-router"
+import {useRoute, useRouter, type LocationQuery, type LocationQueryRaw} from "vue-router"
 import {STATES} from "@kestra-io/design-system"
 import {useMiscStore} from "override/stores/misc"
 import {useDrillDownStore, type DrillDownTarget} from "../../../stores/drillDown"
 import {keepTopLevelFilters} from "../../../utils/queryFilters"
 import {getDrillDownPreview} from "./drillDownPreview"
+import type {Chart} from "../types.ts"
 
 interface WhereCondition {
     field?: string;
@@ -162,11 +163,11 @@ function whereToFilters(descriptor: DrillDownDescriptor, where?: unknown): Recor
 }
 
 export function chartDrillDownTarget(
-    chart: {data?: Record<string, any>} | undefined,
+    chart: {data?: Chart["data"]} | undefined,
     dimensions: ClickDimension[],
     context?: {routeQuery?: LocationQuery; dateRange?: {startDate: string; endDate: string}},
 ): DrillDownTarget | null {
-    const descriptor = DRILL_DOWNS[chart?.data?.type?.split(".").pop() ?? ""]
+    const descriptor = DRILL_DOWNS[(chart?.data?.type as string | undefined)?.split(".").pop() ?? ""]
     if (!descriptor) return null
 
     const routeQuery = context?.routeQuery ?? {}
@@ -210,7 +211,7 @@ function routeTimeWindow(query: LocationQuery): Record<string, string> | undefin
  * window), so the drawer's fetch, the drawer's "Open full page" push, and the legacy full-page
  * redirect all build the exact same query from a drill-down target.
  */
-export function buildFullQuery(target: DrillDownTarget, pagination?: {size: number; page: number}): Record<string, any> {
+export function buildFullQuery(target: DrillDownTarget, pagination?: {size: number; page: number}): LocationQueryRaw {
     return {
         ...target.query,
         scope: "USER",
@@ -221,7 +222,7 @@ export function buildFullQuery(target: DrillDownTarget, pagination?: {size: numb
     }
 }
 
-export function useChartDrillDown(chart: {data?: Record<string, any>} | undefined) {
+export function useChartDrillDown(chart: {data?: Chart["data"]} | undefined) {
     const route = useRoute()
     const router = useRouter()
 

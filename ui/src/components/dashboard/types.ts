@@ -4,6 +4,16 @@ export interface Dashboard extends DashboardControllerDashboardResponse {
     charts: Chart[]
 }
 
+/** A dashboard chart's data-column config, as declared under `data.columns` in the chart's YAML. Shape is plugin-driven (not modeled in the OpenAPI schema), so unknown properties stay accessible through the index signature. */
+export interface Column {
+    field?: string;
+    key?: string;
+    agg?: string;
+    displayName?: string;
+    graphStyle?: string;
+    [key: string]: unknown;
+}
+
 export interface Chart extends ChartChartOption {
     chartOptions?: {
         displayName?: string;
@@ -17,11 +27,13 @@ export interface Chart extends ChartChartOption {
             enabled?: boolean;
         };
         column: string;
+        /** Bar.vue: caps how many stacked-bar categories render before collapsing the rest into "Others". */
+        limit?: number;
         [key: string]: unknown;
     };
     data?: {
         columns?: {
-            [key: string]: Record<string, any>;
+            [key: string]: Column;
         };
         [key: string]: unknown;
     };

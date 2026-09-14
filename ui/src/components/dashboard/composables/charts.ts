@@ -14,6 +14,21 @@ export interface RankedStackedBars {
     othersNames: string[]
 }
 
+/**
+ * The subset of an ECharts click-event payload the dashboard charts read. `KsBar`/`KsPie`/`KsEchart`
+ * emit `echarts-click` as `unknown` (the design system doesn't depend on echarts' own event types),
+ * so this narrows it once at the boundary for every chart that reacts to a click.
+ */
+export interface EchartsClickParams {
+    name?: string;
+    seriesName?: string;
+    seriesType?: string;
+    dataIndex?: number;
+    value?: unknown;
+    /** Present only for pie/donut chart items. */
+    percent?: number;
+}
+
 export const DEFAULT_BAR_CATEGORY_LIMIT = 8
 
 /**
@@ -119,7 +134,7 @@ function hashToHexColor(value: string): string {
     return `#${((hash >>> 0) & 0xffffff).toString(16).padStart(6, "0")}`
 }
 
-export function getConsistentHEXColor(_theme: "light" | "dark", value: string): string {
+export function getConsistentHEXColor(_theme: "light" | "dark", value: string | undefined): string {
     const status = (value?.includes(",") ? value.split(",").pop()?.trim() : value) ?? ""
 
     const tokenColor = status ? cssVar(`--ks-chart-${status.toLowerCase()}`) : ""

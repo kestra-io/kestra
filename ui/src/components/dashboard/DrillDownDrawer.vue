@@ -17,7 +17,7 @@
                 :currentPage="page"
                 :pageSize="size"
                 :loadData="loadData"
-                :rowKey="(row: any) => `${row.namespace}-${row.id}`"
+                :rowKey="(row: {namespace: string; id: string}) => `${row.namespace}-${row.id}`"
                 @page-changed="onPageChanged"
                 @row-dblclick="onRowDblClick"
             >
@@ -71,7 +71,7 @@
     })
 
     const dataTable = ref<{resetAndReload: () => void} | null>(null)
-    const rows = ref<any[]>([])
+    const rows = ref<Record<string, unknown>[]>([])
     const total = ref(0)
     const loading = ref(false)
     const page = ref(1)
@@ -107,7 +107,7 @@
         if (value) dataTable.value?.resetAndReload()
     })
 
-    const onRowDblClick = (row: any) => {
+    const onRowDblClick = (row: Record<string, unknown>) => {
         const currentPreview = preview.value
         if (currentPreview?.mode !== "table") return
 

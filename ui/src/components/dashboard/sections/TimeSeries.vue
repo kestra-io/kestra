@@ -42,7 +42,7 @@
     import {KsEchart, KsSkeleton, TooltipType, cssVar, durationUtils} from "@kestra-io/design-system"
 
     import {Chart, useChartGenerator} from "../composables/useDashboards"
-    import {DASHBOARD_CHART_MAX_PIXEL_RATIO, fillTimeBucketLabels, getConsistentHEXColor, useLegendToggle} from "../composables/charts"
+    import {DASHBOARD_CHART_MAX_PIXEL_RATIO, fillTimeBucketLabels, getConsistentHEXColor, useLegendToggle, type EchartsClickParams} from "../composables/charts"
     import {useChartDrillDown} from "../composables/chartDrillDown"
     import ChartLegend from "./ChartLegend.vue"
     import {getDateGrouping, useTheme} from "../../../utils/utils"
@@ -51,6 +51,33 @@
     use([BarChart, LineChart])
 
     defineOptions({inheritAttrs: false})
+
+    /** Per-stack accumulator built while grouping raw rows into bar series; flattened into `number[]` data before being handed to ECharts. */
+    interface BarAccumulatorEntry {
+        type: "bar";
+        yAxisID: string;
+        data: {x: unknown; y: number}[];
+        tooltip: string;
+        label: unknown;
+        backgroundColor: string;
+        unique: Set<unknown>;
+    }
+
+    /** `BarAccumulatorEntry` once `data` has been flattened from `{x,y}[]` onto the shared x-axis as `number[]`. */
+    type FlattenedBarDataset = Omit<BarAccumulatorEntry, "data"> & {data: number[]}
+
+    /** The duration line series added alongside the bar datasets when a second (duration) aggregator is present. */
+    interface LineDataset {
+        type: "line";
+        yAxisID: string;
+        data: number[];
+        label: string | undefined;
+        borderColor: string;
+        smooth: boolean;
+        areaStyle?: unknown;
+    }
+
+    type TimeSeriesDataset = FlattenedBarDataset | LineDataset
 
     const props = withDefaults(defineProps<{
         dashboardId?: string;
@@ -126,29 +153,29 @@
         return segments.length === 3 ? segments.slice(1).join("-") : datePart
     }
 
-    const parsedData = computed(() => {
-        const rawData = generated.value.results as Record<string, any>[] | undefined
+    const parsedData = computed((): {labels: string[]; datasets: TimeSeriesDataset[]} => {
+        const rawData = generated.value.results as Record<string, unknown>[] | undefined
         // fill the buckets between the earliest and latest returned dates so gaps stay visible on the axis
         const xAxis = fillTimeBucketLabels(
-            rawData?.map((v: Record<string, any>) => v[chartOptions?.column ?? ""]) ?? [],
+            rawData?.map((v: Record<string, unknown>) => v[chartOptions?.column ?? ""]) ?? [],
             grouping.value,
         )
 
         const aggregatorKeys = aggregator.value.map(([key]) => key)
 
-        const reducer = (array: Record<string, any>[] | undefined, field: string, yAxisID: string) => {
+        const reducer = (array: Record<string, unknown>[] | undefined, field: string, yAxisID: string) => {
             if (!array?.length) return
 
             const columns = data?.columns ?? {}
             const column = chartOptions?.column ?? ""
-            const colorByColumn = (chartOptions as Record<string, any>)?.colorByColumn as string | undefined
+            const colorByColumn = chartOptions?.colorByColumn as string | undefined
 
             // Get the fields for stacks (columns without `agg` and not the xAxis column)
             const fields = Object.keys(columns)
                 .filter(key => !aggregatorKeys.includes(key))
                 .filter(key => key !== column)
 
-            return array.reduce((acc: any, {...params}) => {
+            return array.reduce<Record<string, BarAccumulatorEntry>>((acc, {...params}) => {
                 const stack = fields.map((f) => params[f]).join(", ")
 
                 if (!acc[stack]) {
@@ -160,7 +187,7 @@
                         label: colorByColumn ? params[colorByColumn] : undefined,
                         backgroundColor: getConsistentHEXColor(
                             theme.value,
-                            colorByColumn ? params[colorByColumn] : undefined,
+                            colorByColumn ? (params[colorByColumn] as string | undefined) : undefined,
                         ),
                         unique: new Set(),
                     }
@@ -174,22 +201,22 @@
                     current.unique.add(parsedDate)
                     current.data.push({
                         x: parsedDate,
-                        y: params[field],
+                        y: params[field] as number,
                     })
                 } else {
                     // Update existing stack value for the same date
-                    const existing = current.data.find((v: {x: unknown; y: number}) => v.x === parsedDate)
-                    if (existing) existing.y += params[field]
+                    const existing = current.data.find((v) => v.x === parsedDate)
+                    if (existing) existing.y += params[field] as number
                 }
 
                 return acc
             }, {})
         }
 
-        const getData = (_field: string, object: Record<string, any> = {}) => {
-            return Object.values(object).map((dataset: any) => {
+        const getData = (_field: string, object: Record<string, BarAccumulatorEntry> = {}) => {
+            return Object.values(object).map((dataset) => {
                 const datasetData = xAxis.map((xAxisLabel) => {
-                    const temp = dataset.data.find((v: {x: unknown; y: number}) => v.x === xAxisLabel)
+                    const temp = dataset.data.find((v) => v.x === xAxisLabel)
                     return temp ? temp.y : 0
                 })
 
@@ -200,8 +227,8 @@
         const yDataset = reducer(rawData, aggregator.value[0][0], "y")
 
         // Sorts the dataset array alphabetically by label for a consistent order across time ranges.
-        const yDatasetData = Object.values(getData(aggregator.value[0][0], yDataset)).sort((a: any, b: any) =>
-            (a.label ?? "").localeCompare(b.label ?? ""),
+        const yDatasetData = Object.values(getData(aggregator.value[0][0], yDataset)).sort((a, b) =>
+            ((a.label as string | undefined) ?? "").localeCompare((b.label as string | undefined) ?? ""),
         )
 
         const label = aggregator.value?.[1]?.[1]?.displayName ?? aggregator.value?.[1]?.[1]?.field
@@ -213,9 +240,9 @@
 
             // Step 1: Group durations by formatted date
             const groupedDurations: Record<string, number> = {}
-            rawData?.forEach((item: Record<string, any>) => {
+            rawData?.forEach((item: Record<string, unknown>) => {
                 const formattedDate = parseValue(item[column]) as string
-                groupedDurations[formattedDate] = (groupedDurations[formattedDate] || 0) + item[durationKey]
+                groupedDurations[formattedDate] = (groupedDurations[formattedDate] || 0) + (item[durationKey] as number)
             })
 
             // Step 2: Map onto the x-axis labels so the line stays aligned with the bars
@@ -254,11 +281,11 @@
 
     const echartsOption = computed((): Record<string, unknown> => {
         const pd = parsedData.value
-        const xAxisData = pd.labels as string[]
+        const xAxisData = pd.labels
         const isCompact = props.short || props.execution
         const showAxes = !isCompact && !verticalLayout.value
 
-        const barDatasets = (pd.datasets as any[]).filter((ds) => ds.type !== "line")
+        const barDatasets = pd.datasets.filter((ds): ds is FlattenedBarDataset => ds.type !== "line")
         const radius = props.short ? 0.5 : 2
 
         // format duration values in the tooltip as human durations instead of raw seconds
@@ -276,7 +303,7 @@
             name: ds.label,
             stack: "total",
             yAxisIndex: 0,
-            data: (ds.data as number[]).map((value, x) => ({
+            data: ds.data.map((value, x) => ({
                 value,
                 itemStyle: {
                     borderRadius: index === barDatasets.findIndex((d) => (d.data[x] ?? 0) > 0)
@@ -294,8 +321,8 @@
             ...durationTooltip(0),
         }))
 
-        const lineSeries = (pd.datasets as any[])
-            .filter((ds) => ds.type === "line")
+        const lineSeries = pd.datasets
+            .filter((ds): ds is LineDataset => ds.type === "line")
             .map((ds) => ({
                 type: "line",
                 name: ds.label,
@@ -350,7 +377,7 @@
             yAxis,
             legend: {
                 show: false,
-                selected: legendSelected([...barSeries, ...lineSeries].map((s) => s.name)),
+                selected: legendSelected([...barSeries, ...lineSeries].map((s) => s.name as string | undefined)),
             },
             tooltip: {axisPointer: {type: "none"}},
             series: [...barSeries, ...lineSeries],
@@ -362,33 +389,33 @@
     const showLegend = computed(() => !props.short && !props.execution && !!chartOptions?.legend?.enabled)
 
     const legendStatuses = computed(() =>
-        (parsedData.value.datasets as any[])
-            .filter((ds) => ds.type !== "line")
+        parsedData.value.datasets
+            .filter((ds): ds is FlattenedBarDataset => ds.type !== "line")
             .map((ds) => ({
                 label: ds.label as string,
-                color: ds.backgroundColor as string,
-                count: (ds.data as number[]).reduce((sum, n) => sum + (n || 0), 0),
+                color: ds.backgroundColor,
+                count: ds.data.reduce((sum, n) => sum + (n || 0), 0),
             })),
     )
 
     const durationLabel = computed(() =>
-        (parsedData.value.datasets as any[]).find((ds) => ds.type === "line")?.label ?? "Duration",
+        parsedData.value.datasets.find((ds): ds is LineDataset => ds.type === "line")?.label ?? "Duration",
     )
 
     const ksEchartRef = ref<InstanceType<typeof KsEchart> | null>(null)
 
     const dimensionColumn = computed(() => {
-        const key = (chartOptions as Record<string, any>)?.colorByColumn as string | undefined
+        const key = chartOptions?.colorByColumn as string | undefined
         return (key ? data?.columns?.[key] : undefined) as {field?: string; key?: string} | undefined
     })
 
     // The row's date is already the boundary the backend truncated to: re-snapping it with `startOf`
     // would re-anchor the window to the browser's calendar and to moment's Sunday-based week.
     function bucketDateRange(dataIndex: number): {startDate: string; endDate: string} | undefined {
-        const label = (parsedData.value.labels as string[])[dataIndex]
+        const label = parsedData.value.labels[dataIndex]
         const column = chartOptions?.column ?? ""
 
-        const dates = (generated.value?.results as Record<string, any>[] | undefined)
+        const dates = (generated.value?.results as Record<string, unknown>[] | undefined)
             ?.map((row) => moment(row[column] as moment.MomentInput, moment.ISO_8601, true))
             .filter((date) => date.isValid() && date.format(grouping.value.format) === label) ?? []
         if (!dates.length) return undefined
@@ -401,16 +428,17 @@
         }
     }
 
-    function onChartClick(params: any) {
+    function onChartClick(rawParams: unknown) {
+        const params = rawParams as EchartsClickParams
         if (params.seriesType !== "bar" || props.execution) return
 
         drillDown(
             [
-                {column: dimensionColumn.value, value: params.seriesName},
+                {column: dimensionColumn.value, value: params.seriesName ?? ""},
                 ...(props.namespace ? [{column: {field: "NAMESPACE"}, value: props.namespace}] : []),
                 ...(props.flow ? [{column: {field: "FLOW_ID"}, value: props.flow}] : []),
             ],
-            {dateRange: bucketDateRange(params.dataIndex)},
+            {dateRange: bucketDateRange(params.dataIndex ?? -1)},
         )
     }
 

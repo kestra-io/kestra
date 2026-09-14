@@ -3,7 +3,8 @@
         <div class="timeline-row-label">
             <div class="name-row">
                 <button type="button" class="name-button" @click="$emit('drill-in')">
-                    {{ label }}
+                    <span class="name-text">{{ label }}</span>
+                    <ChevronRight v-if="drillable" class="drill-chevron" data-test="drill-chevron" />
                 </button>
                 <KsIconButton
                     class="open-icon"
@@ -42,6 +43,7 @@
 <script setup lang="ts">
     import {computed} from "vue"
     import OpenInNew from "vue-material-design-icons/OpenInNew.vue"
+    import ChevronRight from "vue-material-design-icons/ChevronRight.vue"
     import TimelineBar from "./TimelineBar.vue"
     import {
         assignLanes,
@@ -53,7 +55,7 @@
 
     const LANE_HEIGHT_REM = 1.75
 
-    const props = defineProps<{
+    const props = withDefaults(defineProps<{
         label: string;
         executions: TimelineExecution[];
         total?: number;
@@ -63,7 +65,8 @@
         availableWidthPx: number;
         packLanes: boolean;
         dimmedStates: Set<string>;
-    }>()
+        drillable?: boolean;
+    }>(), {drillable: false})
 
     defineEmits<{
         "drill-in": [];
@@ -193,6 +196,7 @@
     min-width: 0;
     display: flex;
     align-items: center;
+    gap: var(--ks-spacing-1);
     background: none;
     border: none;
     padding: 0;
@@ -202,13 +206,27 @@
     font-size: var(--ks-font-size-sm);
     color: var(--ks-text-primary);
     font-weight: 500;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
 
     &:hover {
         color: var(--ks-text-link);
     }
+}
+
+.name-text {
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.drill-chevron {
+    flex-shrink: 0;
+    color: var(--ks-icon-inactive);
+    transition: color var(--ks-duration-fast) var(--ks-ease-standard);
+}
+
+.name-button:hover .drill-chevron {
+    color: var(--ks-icon-hover);
 }
 
 .open-icon {

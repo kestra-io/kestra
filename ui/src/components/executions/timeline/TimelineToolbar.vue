@@ -1,6 +1,22 @@
 <template>
     <div class="timeline-toolbar">
-        <div class="toolbar-controls">
+        <!-- The slider is the primary, fast way to adjust the range, so it gets its own row and the
+             visual weight; the pill + zoom/pan icons below are the precise/secondary controls. -->
+        <div class="primary-controls">
+            <KsRangeSlider
+                class="range-slider"
+                :min="domainStartMs"
+                :max="domainEndMs"
+                :minRange="MIN_RANGE_MS"
+                :modelValue="sliderRange"
+                :formatValue="formatSliderValue"
+                :startLabel="$t('executionsTimeline.toolbar.rangeSliderStart')"
+                :endLabel="$t('executionsTimeline.toolbar.rangeSliderEnd')"
+                @change="onSliderChange"
+            />
+        </div>
+
+        <div class="secondary-controls">
             <KsButton
                 ref="rangePillRef"
                 class="range-pill"
@@ -78,18 +94,6 @@
                 </KsIconButton>
             </div>
         </div>
-
-        <KsRangeSlider
-            class="range-slider"
-            :min="domainStartMs"
-            :max="domainEndMs"
-            :minRange="MIN_RANGE_MS"
-            :modelValue="sliderRange"
-            :formatValue="formatSliderValue"
-            :startLabel="$t('executionsTimeline.toolbar.rangeSliderStart')"
-            :endLabel="$t('executionsTimeline.toolbar.rangeSliderEnd')"
-            @change="onSliderChange"
-        />
     </div>
 </template>
 
@@ -182,21 +186,27 @@
 .timeline-toolbar {
     display: flex;
     flex-direction: column;
-    gap: var(--ks-spacing-2);
-    padding: var(--ks-spacing-2) var(--ks-spacing-4);
+    gap: var(--ks-spacing-3);
+    padding: var(--ks-spacing-3) var(--ks-spacing-4);
     border-bottom: 1px solid var(--ks-border-default);
     background: var(--ks-bg-surface);
 }
 
-.toolbar-controls {
+.primary-controls {
     display: flex;
     align-items: center;
-    flex-wrap: wrap;
-    gap: var(--ks-spacing-3);
+    padding-block: var(--ks-spacing-1);
 }
 
 .range-slider {
     width: 100%;
+}
+
+.secondary-controls {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--ks-spacing-2);
 }
 
 .range-pill {

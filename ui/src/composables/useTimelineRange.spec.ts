@@ -91,13 +91,27 @@ describe("computeSliderDomain", () => {
         expect(selectionSpan / domainSpan).toBeGreaterThan(0.1)
     })
 
-    it("floors the domain to a day-scale span for a very narrow selection", () => {
+    it("floors the domain to a day-scale span for a moderately narrow selection", () => {
         const rangeEndMs = Date.now()
-        const rangeStartMs = rangeEndMs - 5 * 60 * 1000
+        const rangeStartMs = rangeEndMs - 2 * 60 * 60 * 1000
 
         const [domainStartMs, domainEndMs] = computeSliderDomain(rangeStartMs, rangeEndMs)
 
         expect(domainEndMs - domainStartMs).toBe(24 * 60 * 60 * 1000)
+    })
+
+    it("scales the floor down instead of drowning a very narrow selection to an unreadable sliver", () => {
+        const rangeEndMs = Date.now()
+        const rangeStartMs = rangeEndMs - 15 * 60 * 1000
+
+        const [domainStartMs, domainEndMs] = computeSliderDomain(rangeStartMs, rangeEndMs)
+
+        const domainSpan = domainEndMs - domainStartMs
+        const selectionSpan = rangeEndMs - rangeStartMs
+        expect(domainSpan).toBeLessThan(24 * 60 * 60 * 1000)
+        // The two handles must stay visually distinguishable: the selection should occupy at
+        // least a twentieth of the track, however short the selection itself is.
+        expect(selectionSpan / domainSpan).toBeGreaterThanOrEqual(1 / 20)
     })
 
     it("caps the domain instead of ballooning for a wide-but-not-huge selection", () => {

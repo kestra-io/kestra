@@ -343,6 +343,10 @@
             if (message.type !== "ARTEFACT_DRAFT" || message.draft?.kind !== "FLOW") continue
             const {draftId, yaml} = message.draft
             if (dismissedDraftIds.value.has(draftId) || appliedDraftIds.value.has(draftId)) continue
+            // A draft whose YAML already matches the editor is resolved regardless of whether the
+            // local applied/dismissed tracking survived (a reload, or the copilot dock's KeepAlive
+            // being destroyed by closing it) — a zero-change diff should never lock the editor.
+            if (yaml === flowStore.flowYaml) continue
             const {namespace, id} = parseArtefactYaml(yaml)
             if (namespace && id && isViewingFlow(route, namespace, id)) return {draftId, yaml}
         }

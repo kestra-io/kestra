@@ -460,6 +460,19 @@ describe("CopilotChat", () => {
             await flushPromises()
             expect(flowStore.previewSource).toBeUndefined()
         })
+
+        // Round 3 (kestra-io/kestra#19330 review): `dismissedDraftIds`/`appliedDraftIds` are
+        // component-local, so they come back empty on a fresh mount (a page reload, or the copilot
+        // dock's KeepAlive being destroyed by closing it) — even for a draft that was already applied.
+        // A remount is simulated here simply by never emitting "applied" on this instance: the guard
+        // must instead recognize the draft is resolved because its YAML already matches the editor.
+        it("never locks the editor for a draft whose YAML already matches the editor (e.g. after a remount)", () => {
+            routeStub = {name: "flows/update", params: {namespace: "company.team", id: "my-flow"}}
+            flowStore.flowYaml = "id: my-flow\nnamespace: company.team"
+            state.messages.value = [flowDraftMessage("id: my-flow\nnamespace: company.team")]
+            mountChat()
+            expect(flowStore.previewSource).toBeUndefined()
+        })
     })
 
     it("disables the composer when a turn cannot be sent", () => {

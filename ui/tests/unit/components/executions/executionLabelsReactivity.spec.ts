@@ -123,7 +123,9 @@ describe("execution labels stay in sync with the Overview banner after a save (#
         store.execution = buildExecution([])
 
         const updatedExecution = buildExecution([{key: "env", value: "prod"}])
-        vi.spyOn(store, "setLabels").mockResolvedValue(updatedExecution as any)
+        vi.spyOn(store, "setLabels").mockResolvedValue(
+            updatedExecution as unknown as Awaited<ReturnType<typeof store.setLabels>>,
+        )
 
         const wrapper = mount(OverviewLike, {global: globalConfig})
 

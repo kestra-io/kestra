@@ -47,11 +47,13 @@ function createControlledStream() {
 function buildExecution(overrides: Record<string, unknown> = {}) {
     return {
         id: "execution-id",
+        originalId: "execution-id",
         flowId: "flow",
         namespace: "io.kestra.tests",
         flowRevision: 1,
         labels: [],
         state: {current: "RUNNING", histories: []},
+        metadata: {originalCreatedDate: new Date().toISOString()},
         ...overrides,
     }
 }
@@ -70,7 +72,9 @@ describe("executions store: SSE live-follow vs. a local write (#18766)", () => {
     test("applyLocalExecutionUpdate is not clobbered by a throttled SSE update already queued before it", async () => {
         const store = useExecutionsStore()
         const stream = createControlledStream()
-        vi.mocked(ExecutionsAPI.followExecution).mockResolvedValue({stream} as any)
+        vi.mocked(ExecutionsAPI.followExecution).mockResolvedValue(
+            {stream} as unknown as Awaited<ReturnType<typeof ExecutionsAPI.followExecution>>,
+        )
 
         store.followExecution({id: "execution-id"}, (s: string) => s)
         // Let subscribeToExecution's `.then(async ({stream}) => ...)` attach before pushing.

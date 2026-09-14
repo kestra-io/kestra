@@ -1,0 +1,2 @@
+Throwaway file verifying the PR docker base-tag fallback for stacked PRs.
+Delete with the branch.

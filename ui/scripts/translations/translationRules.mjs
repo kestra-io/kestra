@@ -245,7 +245,7 @@ const ALLOWED_ENGLISH_KEYS = new Set([
     // being configured, "Flavor" is the cloud instance-size term, and the metadata-key label wraps a
     // quoted interpolation the model keeps verbatim.
     "tenant.create.steps.secret",
-    "tenant.focus.infraNav.mappingsPage.flavor",
+    "tenant.type.infraNav.mappingsPage.flavor",
     "assets.filter.table_column.assets.metadata_key",
 ])
 

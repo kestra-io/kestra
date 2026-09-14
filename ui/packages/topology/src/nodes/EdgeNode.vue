@@ -23,6 +23,7 @@
             type="button"
             class="edge-add-button"
             :class="{
+                'edge-add-button--ambient': isAmbient,
                 'edge-add-button--visible': hovered || isDropTarget,
                 'edge-add-button--standby': isDraggingNode && !isDropTarget,
                 'edge-add-button--drop': isDropTarget,
@@ -62,7 +63,11 @@
     import {getSmoothStepPath, EdgeLabelRenderer} from "@vue-flow/core"
     import Plus from "vue-material-design-icons/Plus.vue"
     import type {AddTaskTarget} from "../utils/vueFlowUtils"
-    import {DRAGGING_NODE_INJECTION_KEY, DROP_EDGE_INJECTION_KEY} from "../injectionKeys"
+    import {
+        CANVAS_HOVERED_INJECTION_KEY,
+        DRAGGING_NODE_INJECTION_KEY,
+        DROP_EDGE_INJECTION_KEY,
+    } from "../injectionKeys"
 
     const props = defineProps({
         id: {type: String, default: undefined},
@@ -95,6 +100,13 @@
 
     const draggingNode = inject(DRAGGING_NODE_INJECTION_KEY, undefined)
     const isDraggingNode = computed(() => Boolean(draggingNode?.value))
+
+    // Being anywhere on the canvas hints at every landing place; the drag state is louder because
+    // by then the user is committed to putting something down.
+    const canvasHovered = inject(CANVAS_HOVERED_INJECTION_KEY, undefined)
+    const isAmbient = computed(
+        () => Boolean(canvasHovered?.value) && !isDraggingNode.value && !hovered.value && !isDropTarget.value,
+    )
 
     // The graph already computed where a `+` on this edge should insert and relative to which
     // task — `undefined` when the edge sits on a read-only boundary or a cluster's own wiring.
@@ -196,6 +208,13 @@
         opacity: 0;
         pointer-events: none;
         transition: opacity 0.12s, color 0.12s;
+    }
+
+    /* A quiet hint at rest: every edge that accepts a task, faint enough not to compete with the
+       graph, and clickable so the nearest one can be used without hunting for its edge first. */
+    .edge-add-button--ambient {
+        opacity: 0.65;
+        pointer-events: auto;
     }
 
     /* Shown for the whole drag so the eligible landing points are visible before the pointer

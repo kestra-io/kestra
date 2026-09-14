@@ -8,7 +8,7 @@
         :pageSize="urlSize"
         :defaultSort="{prop: 'key', order: 'ascending'}"
         @page-changed="({page, size}: {page: number; size: number}) => router.push({query: {...route.query, page: String(page), size: String(size)}})"
-        @sort-change="({prop, order}: {column: unknown; prop: string | null; order: string | null}) => router.push({query: {...route.query, sort: `${prop}:${order === 'ascending' ? 'asc' : 'desc'}`}})"
+        @sort-change="({prop, order}: {prop: string | null; order: string | null}) => router.push({query: {...route.query, sort: `${prop}:${order === 'ascending' ? 'asc' : 'desc'}`}})"
         :no-data-text="hasVisibleColumns ? $t('no_results.kv_pairs') : $t('no_results.all_columns_hidden')"
         :no-data-description="hasVisibleColumns ? undefined : $t('no_results.all_columns_hidden_description')"
         :fitHeight="!paneView"
@@ -398,7 +398,7 @@
 
     type KvQuery = NonNullable<ListAllKeysData["query"]>
 
-    const loadQuery = (base: KvQuery): KvQuery => {
+    const loadQuery = (base: KvQuery): KvQuery & Record<string, unknown> => {
         const {page: _p, size: _s, sort: _so, ...rest} = route.query
         const nonFilterRest = Object.fromEntries(
             Object.entries(rest).filter(([key]) => !key.startsWith("filters[")),
@@ -427,6 +427,11 @@
         update?: boolean;
         description?: string;
         expirationDate?: string;
+    }
+
+    // The generated SDK types the detail value as an object map, but non-JSON types return a scalar.
+    type KvDetail = Omit<KvControllerKvDetail, "value"> & {
+        value?: string | number | boolean | Record<string, unknown> | unknown[] | null;
     }
 
     const kv = ref<KvItem>({
@@ -609,9 +614,10 @@
     }
 
     async function updateKvModal(entry: KvEntry) {
+        if (entry.namespace === undefined || entry.key === undefined) return
         kv.value.namespace = entry.namespace
         kv.value.key = entry.key
-        const {type, value}: KvControllerKvDetail = await namespacesStore.kv({namespace: entry.namespace!, key: entry.key!})
+        const {type, value}: KvDetail = await namespacesStore.kv({namespace: entry.namespace, key: entry.key})
         kv.value.type = type ?? "STRING"
         // Force the type reset before setting the value
         await nextTick()
@@ -650,7 +656,8 @@
     const viewKv = ref<{namespace?: string; key?: string; type?: KvType; value?: string; description?: string}>({})
 
     async function viewKvModal(entry: KvEntry) {
-        const {type, value}: KvControllerKvDetail = await namespacesStore.kv({namespace: entry.namespace!, key: entry.key!})
+        if (entry.namespace === undefined || entry.key === undefined) return
+        const {type, value}: KvDetail = await namespacesStore.kv({namespace: entry.namespace, key: entry.key})
         const userTimezone = dateUtils.currentTimezone()
         viewKv.value = {
             namespace: entry.namespace,
@@ -722,23 +729,13 @@
                 : undefined
             const ttl = preservedTtl ?? kv.value.ttl
 
-            const payload: {
-                namespace: string;
-                key: string;
-                value: string;
-                contentType: string;
-                description: string;
-                ttl?: string;
-            } = {
+            const payload: Parameters<typeof namespacesStore.createKv>[0] = {
                 namespace,
                 key,
                 value,
                 contentType,
                 description,
-            }
-
-            if (ttl) {
-                payload.ttl = ttl
+                ...(ttl ? {ttl} : {}),
             }
 
             // update flag is set by updateKvModal(); setKeyValue() is an upsert and can't tell them apart.

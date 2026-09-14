@@ -325,7 +325,6 @@
 
 <script setup lang="ts">
     import {useI18n} from "vue-i18n"
-    import _isEqual from "lodash/isEqual"
     import {useRoute, useRouter} from "vue-router"
     import {ref, computed, watch, onMounted, useTemplateRef} from "vue"
 
@@ -338,7 +337,7 @@
     import FlashOutline from "vue-material-design-icons/FlashOutline.vue"
     import CalendarCollapseHorizontalOutline from "vue-material-design-icons/CalendarCollapseHorizontalOutline.vue"
 
-    import {KsDataTable, KsDropdown, KsDropdownMenu, KsDropdownItem, KsFilter as KSFilter, KsMarkdown, KsTag, KsTooltip} from "@kestra-io/design-system"
+    import {KsDataTable, KsDropdown, KsDropdownMenu, KsDropdownItem, KsFilter as KSFilter, KsMarkdown, KsTag, KsTooltip, isDeepEqual} from "@kestra-io/design-system"
     import FlowRun from "./FlowRun.vue"
     import Vars from "../executions/Vars.vue"
     import BackfillBanner from "./BackfillBanner.vue"
@@ -831,7 +830,7 @@
     })
 
     watch(route, (newValue, oldValue) => {
-        if (oldValue.name === newValue.name && !_isEqual(newValue.query, oldValue.query)) {
+        if (oldValue.name === newValue.name && !isDeepEqual(newValue.query, oldValue.query)) {
             loadData()
         }
     })

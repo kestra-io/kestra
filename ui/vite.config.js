@@ -170,9 +170,9 @@ export default defineConfig(({mode}) => {
                 "node_modules/@kestra-io/design-system/src/**/*.{ts,vue}",
             ],
             include: [
-                "lodash",
                 "debug",
                 "@braintree/sanitize-url",
+                // still pulled in by element-plus and mermaid, not by our own code
                 "lodash-es",
                 "nprogress",
                 // CJS-only packages imported as ESM defaults by unified, fault, @kestra-io/ui-libs, etc.

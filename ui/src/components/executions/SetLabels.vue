@@ -33,7 +33,7 @@
             </div>
 
             <div class="set-labels__footer">
-                <p class="set-labels__description" v-html="$t('Set labels to execution', {id: escape(execution.id)})" />
+                <p class="set-labels__description" v-html="$t('Set labels to execution', {id: escapeHtml(execution.id)})" />
                 <div class="set-labels__actions">
                     <KsButton @click="onCancel">
                         {{ $t("cancel") }}
@@ -50,10 +50,9 @@
 <script setup lang="ts">
     import {computed, ref, watch} from "vue"
     import {useI18n} from "vue-i18n"
-    import escape from "lodash/escape"
     import Close from "vue-material-design-icons/Close.vue"
     import Plus from "vue-material-design-icons/Plus.vue"
-    import {State} from "@kestra-io/design-system"
+    import {State, escapeHtml} from "@kestra-io/design-system"
 
     import LabelInput from "../labels/LabelInput.vue"
     import {filterValidLabels} from "./utils"

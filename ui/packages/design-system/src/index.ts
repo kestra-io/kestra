@@ -180,6 +180,20 @@ export * as stringUtils from "./utils/string"
 export {rowKey} from "./utils/rowKey"
 export * as fileUtils from "./utils/file"
 export * as durationUtils from "./utils/duration"
+export {
+    cloneDeep,
+    debounce,
+    deepMerge,
+    escapeHtml,
+    getPath,
+    groupBy,
+    isDeepEqual,
+    isPlainObject,
+    mapValues,
+    setPath,
+    throttle,
+} from "./utils/lang"
+export type {PathSegments, Scheduled} from "./utils/lang"
 export * as State from "./utils/state"
 export {LOG_LEVELS, STATES} from "./utils/state"
 export {SECTIONS, CLUSTER_PREFIX} from "./utils/constants"

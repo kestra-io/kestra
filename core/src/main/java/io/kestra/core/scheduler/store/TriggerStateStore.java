@@ -12,7 +12,7 @@ import io.kestra.core.scheduler.model.TriggerState;
  * Service interface providing read-write access to trigger states.
  * <p>
  * This service is attended to be used only the {@link io.kestra.core.runners.Scheduler}.
- *
+ * 
  * @see TriggerState
  */
 public interface TriggerStateStore {

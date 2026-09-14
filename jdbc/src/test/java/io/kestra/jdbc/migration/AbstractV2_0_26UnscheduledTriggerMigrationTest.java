@@ -108,7 +108,7 @@ public abstract class AbstractV2_0_26UnscheduledTriggerMigrationTest {
         migration.migrate();
 
         // Then
-        assertThat(readTriggerState("disabled-webhook", "webhook").isDisabled()).isTrue();
+        assertThat(readTriggerState("disabled-webhook", "webhook").isSourceDisabled()).isTrue();
     }
 
     @Test

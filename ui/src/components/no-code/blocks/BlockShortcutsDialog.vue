@@ -1,6 +1,7 @@
 <template>
     <KsDialog
         :modelValue="open"
+        appendToBody
         :title="$t('block_editor.shortcuts.title')"
         data-test="block-editor-shortcuts"
         @update:modelValue="(next?: boolean) => emit('update:open', next ?? false)"

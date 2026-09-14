@@ -7,8 +7,10 @@ import org.apache.commons.lang3.ObjectUtils;
 
 import com.fasterxml.jackson.annotation.JsonAnySetter;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import io.kestra.core.models.HasUID;
+import io.kestra.core.models.Label;
 import io.kestra.core.models.Plugin;
 import io.kestra.core.models.flows.FlowAction;
 import io.kestra.core.models.SoftDeletable;
@@ -29,6 +31,20 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor
 public abstract class Asset implements HasUID, SoftDeletable<Asset>, Plugin {
+    /** Metadata keys Kestra owns, under the prefix already reserved for system labels. Flat: the
+     * repositories address {@link #metadata} one level deep. */
+    public static final String SYSTEM_METADATA_PREFIX = Label.SYSTEM_PREFIX;
+
+    public static final String STATUS_METADATA_KEY = SYSTEM_METADATA_PREFIX + "status";
+
+    public static final String TTL_METADATA_KEY = SYSTEM_METADATA_PREFIX + "ttl";
+
+    public static final String OWNER_METADATA_KEY = SYSTEM_METADATA_PREFIX + "owner";
+
+    public static boolean isReservedMetadataKey(String key) {
+        return key != null && key.startsWith(SYSTEM_METADATA_PREFIX);
+    }
+
     @Hidden
     @TenantId
     protected String tenantId;
@@ -128,6 +144,49 @@ public abstract class Asset implements HasUID, SoftDeletable<Asset>, Plugin {
             : Optional.ofNullable(previousAsset).map(Asset::getAssetActions).orElse(null);
 
         return (T) this;
+    }
+
+    @JsonProperty("status")
+    public String getStatus() {
+        return reserved(STATUS_METADATA_KEY);
+    }
+
+    /** An empty value is meaningful: it is how "no expiry" is stored, and differs from an absent key. */
+    @JsonProperty("ttl")
+    public String getTtl() {
+        return reserved(TTL_METADATA_KEY);
+    }
+
+    @JsonProperty("owner")
+    public String getOwner() {
+        return reserved(OWNER_METADATA_KEY);
+    }
+
+    public void setStatus(String status) {
+        reserve(STATUS_METADATA_KEY, status);
+    }
+
+    public void setTtl(String ttl) {
+        reserve(TTL_METADATA_KEY, ttl);
+    }
+
+    public void setOwner(String owner) {
+        reserve(OWNER_METADATA_KEY, owner);
+    }
+
+    private String reserved(String key) {
+        return Optional.ofNullable(metadata).map(m -> m.get(key)).map(Object::toString).orElse(null);
+    }
+
+    private void reserve(String key, String value) {
+        if (value == null) {
+            return;
+        }
+        // Bound after construction, so a subtype built through the no-args constructor has no map yet.
+        if (metadata == null) {
+            metadata = new HashMap<>();
+        }
+        metadata.put(key, value);
     }
 
     @Override

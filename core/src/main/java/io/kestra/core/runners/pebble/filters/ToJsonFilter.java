@@ -15,7 +15,7 @@ import io.pebbletemplates.pebble.template.PebbleTemplate;
 
 public class ToJsonFilter implements Filter {
     private static final ObjectMapper MAPPER = JacksonMapper.ofJson();
-    private static final ObjectMapper NULL_KEEPING_MAPPER = JacksonMapper.ofJsonKeepingNullValues();
+    private static final ObjectMapper NULL_KEEPING_MAPPER = JacksonMapper.ofJsonWithNullValues();
 
     @Override
     public List<String> getArgumentNames() {

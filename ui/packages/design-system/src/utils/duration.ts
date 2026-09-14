@@ -1,4 +1,4 @@
-import moment from "moment"
+import dayjs from "../date/dayjs"
 import humanizeDuration, {type Options as HumanizeDurationOptions} from "humanize-duration"
 
 const humanizeDurationLanguages = {
@@ -34,10 +34,17 @@ const humanizeDurationLanguages = {
     },
 }
 
+const ISO_8601_DURATION = /^-?P(?!$)(\d+(?:\.\d+)?Y)?(\d+(?:\.\d+)?M)?(\d+(?:\.\d+)?W)?(\d+(?:\.\d+)?D)?(T(?!$)(\d+(?:\.\d+)?H)?(\d+(?:\.\d+)?M)?(\d+(?:\.\d+)?S)?)?$/
+
+/** Whether the text is an ISO 8601 duration; dayjs coerces anything else to null rather than failing. */
+export function isValidDuration(value: string): boolean {
+    return ISO_8601_DURATION.test(value)
+}
+
 export function duration(isoString: string) {
-    return (
-        moment.duration(isoString, moment.ISO_8601 as any).asMilliseconds() / 1000
-    )
+    return isValidDuration(isoString)
+        ? dayjs.duration(isoString).asMilliseconds() / 1000
+        : 0
 }
 
 export function humanDuration(

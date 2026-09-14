@@ -273,7 +273,7 @@
     import {State, levelToRequestParams, type LevelFilterValue} from "@kestra-io/design-system"
     import _xor from "lodash/xor"
     import _groupBy from "lodash/groupBy"
-    import moment from "moment"
+    import {dayjs} from "@kestra-io/design-system"
     import "vue-virtual-scroller/dist/vue-virtual-scroller.css"
     import {logDisplayTypes} from "../../utils/constants"
     import {DynamicScroller, DynamicScrollerItem} from "vue-virtual-scroller"
@@ -355,7 +355,7 @@
     // Reactive state
     const shownAttemptsUid = ref<string[]>([])
     const rawLogs = ref<any[]>([]) // FIXME: any
-    const timer = ref<ReturnType<typeof moment> | undefined>(undefined)
+    const timer = ref<ReturnType<typeof dayjs> | undefined>(undefined)
     const timeout = ref<ReturnType<typeof setTimeout> | undefined>(undefined)
     const selectedAttemptNumberByTaskRunId = ref<Record<string, number>>({})
     const executionSSE = ref<any>(undefined) // FIXME: any
@@ -851,7 +851,7 @@
     }
 
     function refreshLogs() {
-        timer.value = moment()
+        timer.value = dayjs()
         rawLogs.value = deduplicateLogs(rawLogs.value.concat(logsBuffer.value))
         logsBuffer.value = []
         scrollToBottomFailedTask()
@@ -878,7 +878,7 @@
                 }, 100)
 
                 // force at least 1 logs refresh / 500ms
-                if (moment().diff(timer.value, "seconds") > 0.5) {
+                if (dayjs().diff(timer.value, "second") > 0.5) {
                     clearTimeout(timeout.value)
                     refreshLogs()
                 }

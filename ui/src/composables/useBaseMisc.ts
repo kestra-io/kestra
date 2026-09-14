@@ -19,18 +19,18 @@ export const useBaseMiscStore = () => {
     const copilotThreadTitle = ref<string | null>(null)
     /** Never set in OSS: without the EE thread list, a fresh thread would discard the previous conversation. */
     const copilotNewThread = ref(false)
-    /** Sends the seeded prompt as a turn straight away; set by single-purpose entry points the user already committed to by clicking. */
-    const copilotAutoSend = ref(false)
+    /** Sends this one seeded prompt as the first turn rather than a standing mode; set by single-purpose entry points the user already committed to by clicking. */
+    const copilotSendInitialMessage = ref(false)
 
     function openCopilot() {
         lastContextTab.value = "ai"
         contextInfoBarOpenTab.value = "ai"
     }
 
-    function promptCopilot(prompt: string, options?: {title?: string, newThread?: boolean, autoSend?: boolean}) {
+    function promptCopilot(prompt: string, options?: {title?: string, newThread?: boolean, sendInitialMessage?: boolean}) {
         copilotPrompt.value = prompt
         copilotThreadTitle.value = options?.title ?? null
-        copilotAutoSend.value = options?.autoSend === true
+        copilotSendInitialMessage.value = options?.sendInitialMessage === true
         openCopilot()
     }
 
@@ -110,7 +110,7 @@ export const useBaseMiscStore = () => {
         copilotPrompt,
         copilotThreadTitle,
         copilotNewThread,
-        copilotAutoSend,
+        copilotSendInitialMessage,
         openCopilot,
         promptCopilot,
         loadConfigs,

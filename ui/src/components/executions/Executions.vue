@@ -685,7 +685,7 @@
             page,
             sort: sort ?? String(route.query.sort ?? "state.startDate:desc"),
             state: route.query?.state ? [route.query?.state] : props.statuses,
-        }) as Record<string, any>
+        }) as Record<string, unknown>
 
         await executionsStore.findExecutions(query)
 
@@ -713,7 +713,7 @@
                 await router.replace({
                     ...route,
                     query: {
-                        ...normalizeRouteTimeRangeFilter({...route.query} as Record<string, any>, widened.timeRange),
+                        ...normalizeRouteTimeRangeFilter({...route.query}, widened.timeRange),
                         page: "1",
                     },
                 })

@@ -12,6 +12,8 @@
 
         <VueFlow
             :id="id"
+            @mouseenter="canvasHovered = true"
+            @mouseleave="canvasHovered = false"
             :defaultMarkerColor="cssVariable('--ks-topology-dash')"
 
             :nodesDraggable="false"
@@ -206,7 +208,7 @@
     import * as VueFlowUtils from "./utils/vueFlowUtils"
     import {afterLastDot} from "./utils/utils"
     import {useScreenshot} from "./composables/useScreenshot"
-    import {EXECUTION_INJECTION_KEY, SUBFLOWS_EXECUTIONS_INJECTION_KEY, SHOW_EXTRA_DETAILS_INJECTION_KEY, VALIDATION_ISSUES_INJECTION_KEY, FOCUSED_TASK_INJECTION_KEY, DROP_EDGE_INJECTION_KEY, DRAGGING_NODE_INJECTION_KEY} from "./injectionKeys"
+    import {EXECUTION_INJECTION_KEY, SUBFLOWS_EXECUTIONS_INJECTION_KEY, SHOW_EXTRA_DETAILS_INJECTION_KEY, VALIDATION_ISSUES_INJECTION_KEY, FOCUSED_TASK_INJECTION_KEY, DROP_EDGE_INJECTION_KEY, DRAGGING_NODE_INJECTION_KEY, CANVAS_HOVERED_INJECTION_KEY} from "./injectionKeys"
     import BasicNode from "./nodes/BasicNode.vue"
 
     const props = withDefaults(defineProps<{
@@ -308,6 +310,11 @@
 
     const dropEdgeId = ref<string | undefined>(undefined)
     const draggingNodeId = ref<string | undefined>(undefined)
+
+    // Every insertion point stays invisible until its own edge is hovered, so the canvas reads as
+    // if only a few places accept a task. Entering it at all now hints at all of them.
+    const canvasHovered = ref(false)
+    provide(CANVAS_HOVERED_INJECTION_KEY, computed(() => canvasHovered.value))
 
     provide(DROP_EDGE_INJECTION_KEY, computed(() => dropEdgeId.value))
     provide(DRAGGING_NODE_INJECTION_KEY, computed(() => Boolean(draggingNodeId.value)))

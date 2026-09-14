@@ -63,7 +63,7 @@ const TimelineRowStub = defineComponent({
 
 const ChartLegendStub = defineComponent({
     name: "ChartLegend",
-    props: ["items", "formatValue"],
+    props: ["items", "formatValue", "toggledOff"],
     emits: ["toggle"],
     template: `
         <div class="stub-legend">

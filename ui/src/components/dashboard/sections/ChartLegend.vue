@@ -59,12 +59,18 @@
         center?: boolean;
         chart?: {getEchartsInstance: () => EChartsType | null} | null;
         formatValue?: (value: number) => string;
+        // Controlled mode: when set, the pills reflect this set instead of the internal one, so a
+        // filter reset from outside (breadcrumb nav, "Clear all", browser back/forward) is reflected
+        // instead of leaving a stale toggled-off pill behind. Omit it to keep the legend
+        // self-contained, as the other ChartLegend call sites (TimeSeries/Bar/Pie) do.
+        toggledOff?: Set<string>;
     }>(), {
         maxVisible: 5,
         durationLabel: undefined,
         center: false,
         chart: null,
         formatValue: undefined,
+        toggledOff: undefined,
     })
 
     const emit = defineEmits<{toggle: [name: string]}>()
@@ -82,13 +88,16 @@
     const visible = computed(() => aggregated.value.slice(0, props.maxVisible))
     const hidden = computed(() => aggregated.value.slice(props.maxVisible))
 
-    const toggledOff = ref(new Set<string>())
+    const internalToggledOff = ref(new Set<string>())
+    const toggledOff = computed(() => props.toggledOff ?? internalToggledOff.value)
 
     function toggle(name: string) {
-        const next = new Set(toggledOff.value)
-        if (next.has(name)) next.delete(name)
-        else next.add(name)
-        toggledOff.value = next
+        if (!props.toggledOff) {
+            const next = new Set(internalToggledOff.value)
+            if (next.has(name)) next.delete(name)
+            else next.add(name)
+            internalToggledOff.value = next
+        }
         props.chart?.getEchartsInstance?.()?.dispatchAction({type: "legendToggleSelect", name})
         emit("toggle", name)
     }

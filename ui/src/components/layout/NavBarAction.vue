@@ -5,7 +5,12 @@
         v-bind="$attrs"
         @click="onClick"
     >
-        <RouterLink v-if="props.to" class="nav-bar-action-link" :to="props.to">
+        <RouterLink
+            v-if="props.to"
+            class="nav-bar-action-link"
+            :to="props.to"
+            @contextmenu="closeDropdown?.()"
+        >
             <slot>{{ label }}</slot>
         </RouterLink>
         <a
@@ -13,6 +18,7 @@
             class="nav-bar-action-link"
             :href="props.href"
             :download="props.download"
+            @contextmenu="closeDropdown?.()"
         >
             <slot>{{ label }}</slot>
         </a>
@@ -34,7 +40,7 @@
 <script setup lang="ts">
     import {computed, inject, type Component} from "vue"
     import {useRouter, type RouteLocationRaw, RouterLink} from "vue-router"
-    import {asItemKey} from "./navBarActionsContext"
+    import {asItemKey, closeDropdownKey} from "./navBarActionsContext"
 
     defineOptions({inheritAttrs: false})
 
@@ -50,6 +56,7 @@
     const emit = defineEmits<{(e: "click"): void}>()
 
     const asItem = inject(asItemKey, false)
+    const closeDropdown = inject(closeDropdownKey, undefined)
 
     const router = useRouter()
 
@@ -67,6 +74,7 @@
         if (props.to && !isLinkOwnedClick(event)) {
             router.push(props.to)
         }
+        closeDropdown?.()
         emit("click")
     }
 </script>

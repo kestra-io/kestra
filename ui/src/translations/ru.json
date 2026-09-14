@@ -977,6 +977,9 @@
     },
     "trigger disabled": "Триггер отключен в источнике Flow",
     "trigger not toggleable": "Этот триггер не обрабатывается Scheduler, отключите его в источнике Flow",
+    "bulk not toggleable warning": "{count} выбранный trigger будет пропущен: Scheduler не оценивает их, поэтому их можно отключить только в исходном коде Flow.",
+    "bulk none applied": "Ни один trigger не был затронут: ни один из выбранных не мог быть обработан.",
+    "bulk partially applied": "Обработано {count} из {requested} триггеров, остальные были пропущены.",
     "trigger enable dialog": {
       "title": "Включить trigger",
       "bulk title": "Включить {count} triggers",

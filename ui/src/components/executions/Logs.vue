@@ -1,5 +1,6 @@
 <template>
     <div data-component="FILENAME_PLACEHOLDER">
+        <LoopIterationsNotice kind="logs" />
         <KSFilter
             :configuration="logExecutionsFilter"
             :tableOptions="{
@@ -117,6 +118,7 @@
     import {useToast} from "../../utils/toast"
     import LogLine from "../logs/LogLine.vue"
     import Restart from "./overview/components/actions/Restart.vue"
+    import LoopIterationsNotice from "./LoopIterationsNotice.vue"
     import * as LogUtils from "../../utils/logs"
     import {useExecutionsStore} from "../../stores/executions"
     import type {LogEntry} from "@kestra-io/kestra-sdk"

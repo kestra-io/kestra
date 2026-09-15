@@ -45,3 +45,9 @@ export function getAllTaskIds(flow: any): string[] {
     return [...new Set(result.map(t => t.id))]
 }
 
+const LOOP_TASK_TYPE = "io.kestra.plugin.core.flow.Loop"
+
+export function loopTaskIds(flow: unknown): Set<string> {
+    const result = loopOver(flow, (value) => value instanceof Object && value.type === LOOP_TASK_TYPE)
+    return new Set(result.map(task => task.id))
+}

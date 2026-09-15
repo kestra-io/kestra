@@ -1,5 +1,9 @@
 {
   "en": {
+    "versionUpgradeNotice": {
+      "message": "Kestra was upgraded to {version} and it may include breaking changes that require updates to your flows.",
+      "cta": "See what changed"
+    },
     "loading": "Loading...",
     "more actions": "More actions",
     "recipe": {

@@ -204,8 +204,6 @@
     import type {TimeRange} from "../../../composables/useTimeRangeSelection"
     import type {FailureTaskRun, StructuralNode} from "./types"
 
-    // Structural impact and the mini-timeline stay scoped to a handful of neighbors regardless of
-    // execution size, so a very long execution never renders its full task list in this panel.
     const MAX_STRUCTURAL_NEIGHBORS = 6
 
     const props = defineProps<{
@@ -225,16 +223,12 @@
     const headingId = "failure-debug-panel-heading"
 
     const panelHeadingRef = ref<HTMLElement>()
-    // Set by the caller via the slot's `setReopenRef`, since the reopen trigger's markup now
-    // lives in the caller's own template (see the `slot` usage below) rather than in this one.
     const reopenWrapperRef = ref<HTMLElement>()
     function setReopenWrapperRef(el: Element | ComponentPublicInstance | null) {
         reopenWrapperRef.value = (el as HTMLElement) ?? undefined
     }
     const miniTimelineRef = ref<InstanceType<typeof FailureMiniTimeline>>()
 
-    // Starts closed: a failed execution is common enough that hijacking the Gantt view on every
-    // visit would be disruptive. The caller's reopen trigger doubles as the initial entry point.
     const isOpen = ref(false)
     const hasAnnounced = ref(false)
     const announcement = ref("")
@@ -244,8 +238,6 @@
 
     const ts = (date: string): number => new Date(date).getTime()
 
-    // Playground runs go through a different (non-persisted) restart path; the restart action
-    // below only knows how to replay a real, persisted execution.
     const isDebuggableExecution = computed(() =>
         props.execution.kind !== "PLAYGROUND" &&
         (props.execution.state?.current === State.FAILED || props.execution.state?.current === State.KILLED),
@@ -277,13 +269,6 @@
         authStore.user?.isAllowed(resource.FLOW, action.UPDATE, props.execution.namespace),
     )
 
-    // The editor is its own child route now, so target it directly: passing `tab` to the parent
-    // still resolves through the redirect but logs a discarded-param warning on every render.
-    // `editTask` deep-links straight to the failing task's no-code edit tab (see
-    // MultiPanelFlowEditorView's onMounted handling), rather than just opening the flow at large.
-    // Sourced from `props.execution` rather than `route.params`: the panel already receives the
-    // execution's own namespace/flowId as props, so there is no need to depend on this component
-    // always being mounted under a route that happens to carry those same values as URL params.
     const editFlowRoute = computed(() => ({
         name: "flows/update/edit",
         params: {
@@ -324,18 +309,10 @@
         return nodes
     })
 
-    // The mini-timeline is a chronological axis, so its rows must read in the same top-to-bottom
-    // start-time order as the Gantt view above it — structuralNodes is ordered focused-first by
-    // relevance instead, which reads backwards there.
     const timelineNodes = computed<StructuralNode[]>(() =>
         [...structuralNodes.value].sort((a, b) => ts(a.taskRun.state.histories[0].date) - ts(b.taskRun.state.histories[0].date)),
     )
 
-    // Fetched once per execution (keyed on its flow revision, not the focused task run): every
-    // failed task run in the same execution ran against the same flow source, so switching the
-    // switcher's focus must not re-fetch it. Shared by "Resolved configuration" (the focused
-    // task's own block), "Execution inputs" (flow.inputs) and "Outputs consumed" (parsing the
-    // focused block for outputs.* references) instead of each fetching it independently.
     const focusedFlow = ref<{source?: string; inputs?: Array<{id: string}>} | undefined>(undefined)
     const focusedFlowLoading = ref(false)
     const focusedFlowError = ref(false)
@@ -362,8 +339,6 @@
         {immediate: true},
     )
 
-    // The exact revision this execution ran on, not the flow's current/latest source — the flow
-    // may have been edited since this task run failed.
     const focusedRawTaskBlock = computed<string | undefined>(() => {
         const source = focusedFlow.value?.source
         const taskId = focusedTaskRun.value?.taskId
@@ -373,9 +348,6 @@
 
     const flowInputIds = computed<string[]>(() => (focusedFlow.value?.inputs ?? []).map((input) => input.id))
 
-    // Which other tasks' outputs the focused task's own config actually reads, so "Outputs
-    // consumed" shows exactly the upstream data that could have fed into this failure — not
-    // every structurally-adjacent task, which is what "Structural impact" is already for.
     const referencedOutputTaskIds = computed<string[]>(() => {
         const block = focusedRawTaskBlock.value
         if (!block) return []
@@ -383,9 +355,6 @@
         return [...new Set([...matches].map((match) => match[1]))]
     })
 
-    // A neighbor's raw (unresolved) YAML block, for "Structural impact" to offer alongside each
-    // task — as-authored, never Pebble-rendered, so there is no secret-exposure surface the way
-    // rendering an arbitrary task's expressions would have (that task may not even have run).
     const structuralRawBlocks = computed<Record<string, string | undefined>>(() => {
         const source = focusedFlow.value?.source
         if (!source) return {}
@@ -425,8 +394,6 @@
         {immediate: true},
     )
 
-    // No `immediate: true`: focus should only move in response to the user actually opening or
-    // closing the panel, never just because the component mounted with the panel closed.
     watch(isOpen, async (open) => {
         await nextTick()
         if (open) {
@@ -599,9 +566,6 @@
         }
     }
 
-    // Same left/right split used throughout the app (Banner.vue's title vs actions, TopNavBar's
-    // title vs NavBarActions, this panel's own header vs close button): info on the left, the
-    // action(s) it belongs to on the right — never the other way around.
     .failure-debug-panel__actions {
         display: flex;
         align-items: center;
@@ -617,19 +581,12 @@
         gap: var(--ks-spacing-2);
     }
 
-    // The three utility actions share one visual language (link-style KsButton, icon + label)
-    // rather than mixing a labelled button with a bare icon button — same weight, same shape —
-    // and sit inside one bordered group so they read as one toolbar rather than three buttons
-    // that happen to be next to each other.
     .failure-debug-panel__actions-secondary {
         display: flex;
         align-items: center;
         flex-wrap: wrap;
         gap: var(--ks-spacing-1);
         padding: var(--ks-spacing-1);
-        // --ks-bg-surface resolves to the same white as the panel's own --ks-bg-elevated in light
-        // theme, so the group would have no visible fill against its own container — --ks-bg-active
-        // is the token KsSegmented itself falls back to for exactly this reason.
         background: var(--ks-bg-active);
         border: 1px solid var(--ks-border-default);
         border-radius: var(--ks-radius-base);
@@ -641,10 +598,6 @@
         font-size: var(--ks-font-size-xs);
     }
 
-    // The mini-timeline gets its own full-width row rather than sharing a 3-column grid with the
-    // taller structural-impact/logs cards: it never grows to fill a stretched grid row (its own
-    // content doesn't expand), which used to leave a block of dead space under a couple of short
-    // bars. Full width also gives long task ids more room on the label side of the track.
     .failure-debug-panel__timeline-body {
         display: flex;
         flex-direction: column;
@@ -658,15 +611,10 @@
         align-items: start;
     }
 
-    // KsTabPane content sits flush against the box-type nav's bottom border with no padding of
-    // its own, unlike a KsCard body (which gets --kel-card-padding on every side) — every pane's
-    // content needs its own top inset to breathe the same way the rest of the panel's cards do.
     .failure-debug-panel__tab-pane {
         padding-top: var(--ks-spacing-4);
     }
 
-    // Execution inputs and outputs consumed share one tab (both are short "name → value"
-    // lists, resolved the same task-run-scoped way) rather than each getting a tab of its own.
     .failure-debug-panel__inputs-outputs {
         display: flex;
         flex-direction: column;

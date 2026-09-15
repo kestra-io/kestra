@@ -1,5 +1,9 @@
 {
   "ko": {
+    "versionUpgradeNotice": {
+      "message": "Kestra가 {version}으로 업그레이드되었습니다. 이 버전에는 Flow 업데이트가 필요한 변경 사항이 포함될 수 있습니다.",
+      "cta": "변경 사항 확인"
+    },
     "loading": "로딩 중...",
     "more actions": "추가 작업",
     "recipe": {
@@ -918,6 +922,7 @@
     "flow creation denied in namespace": "`{namespace}` namespace에서 flow를 생성할 권한이 없습니다.",
     "readonly property": "읽기 전용 속성",
     "namespace and id readonly": "`namespace` 및 `id` 속성은 변경할 수 없습니다. 이제 초기 값으로 설정됩니다. flow 이름을 바꾸거나 namespace를 변경하려면 새 flow를 만들고 이전 flow를 제거할 수 있습니다.",
+    "flow metadata locked": "`id`와 `namespace`는 flow가 생성된 후에는 변경할 수 없습니다.",
     "avg": "평균",
     "sum": "합계",
     "min": "Min",
@@ -2145,7 +2150,7 @@
         },
         "unavailable": {
           "title": "AI Copilot을(를) 사용할 수 없습니다",
-          "detail": "AI 공급자가 구성되지 않았습니다. 관리자에게 설정을 요청하세요.",
+          "detail": "이 인스턴스에 구성된 AI provider가 없습니다. AI Copilot을 활성화하려면 Kestra 구성 파일에서 AI provider를 구성하세요.",
           "docs": "문서 보기"
         },
         "thinkingWords": [

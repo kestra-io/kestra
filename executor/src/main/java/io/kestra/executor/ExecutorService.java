@@ -1382,8 +1382,11 @@ public class ExecutorService {
     }
 
     private boolean shouldSuspend(TaskRun taskRun, List<Breakpoint> breakpoints) {
-        return taskRun.getState().getCurrent().isCreated() && breakpoints.stream()
-            .anyMatch(breakpoint -> taskRun.getTaskId().equals(breakpoint.getId()) && (breakpoint.getValue() == null || Objects.equals(taskRun.getValue(), breakpoint.getValue())));
+        return taskRun.getState().getCurrent().isCreated()
+            && !taskRun.getState().isResumingFromBreakpoint()
+            && breakpoints.stream()
+                .anyMatch(breakpoint -> taskRun.getTaskId().equals(breakpoint.getId())
+                    && (breakpoint.getValue() == null || Objects.equals(taskRun.getValue(), breakpoint.getValue())));
     }
 
     private ExecutorContext handleExecutableTasks(final ExecutorContext executor) {

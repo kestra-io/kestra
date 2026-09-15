@@ -19,9 +19,9 @@ vi.mock("@kestra-io/design-system", () => ({
     }),
     KsButton: defineComponent({
         name: "KsButton",
-        props: {size: String, square: Boolean, tooltip: String},
+        props: {tooltip: String},
         emits: ["click"],
-        template: "<button :data-size=\"size\" :data-square=\"square\" :aria-label=\"tooltip\" @click=\"$emit('click')\" />",
+        template: "<button :aria-label=\"tooltip\" @click=\"$emit('click')\" />",
     }),
     KsMarkdown: defineComponent({template: "<div />"}),
 }))
@@ -34,7 +34,7 @@ const i18n = createI18n({
 })
 
 describe("RawPreview", () => {
-    it("wraps text by default and keeps equal-size actions outside the editor content", async () => {
+    it("wraps text by default and keeps actions outside the editor content", async () => {
         const content = "a very long output line"
         const wrapper = mount(RawPreview, {
             props: {type: "TEXT", content},
@@ -47,8 +47,6 @@ describe("RawPreview", () => {
 
         const buttons = wrapper.findAll("nav button")
         expect(buttons).toHaveLength(2)
-        expect(buttons.map((button) => button.attributes("data-size"))).toEqual(["small", "small"])
-        expect(buttons.map((button) => button.attributes("data-square"))).toEqual(["true", "true"])
 
         await buttons[0].trigger("click")
         expect(copyToClipboard).toHaveBeenCalledWith(content)

@@ -417,6 +417,7 @@
         }
 
         const entries = Object.entries(value)
+        // #19194: task outputs can include metadata beside `uri`; only a lone URI wrapper should open automatically.
         if (entries.length !== 1 || entries[0][0] !== "uri") {
             return undefined
         }

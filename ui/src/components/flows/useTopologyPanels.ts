@@ -40,8 +40,6 @@ function resolveTaskPath(
     return {ok: true, path, refPath, fieldName, blockSchemaPath}
 }
 
-// Reused by callers outside the topology-click flow (e.g. a query-param deep link) that need to
-// jump straight to a task's no-code edit tab without going through a graph click.
 export function resolveEditTaskTarget(
     source: string,
     pluginsStore: ReturnType<typeof usePluginsStore>,

@@ -15,7 +15,6 @@
     import type {FailureTaskRun} from "./types"
 
     const props = defineProps<{
-        // Task ids the focused task's own resolved config references via `{{ outputs.<id>... }}`.
         referencedTaskIds: string[]
         taskRunList: FailureTaskRun[]
         executionId: string
@@ -36,10 +35,6 @@
         try {
             const merged: Record<string, unknown> = {}
             for (const taskId of props.referencedTaskIds) {
-                // A looped task can have several runs; the outputs a Pebble expression like
-                // `{{ outputs.extract[0].rows }}` actually resolves against are already visible
-                // in "Resolved configuration" — here we just need one representative run to show
-                // what that task produced.
                 const taskRun = props.taskRunList.find((run) => run.taskId === taskId)
                 if (!taskRun) continue
 

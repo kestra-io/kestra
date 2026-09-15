@@ -132,7 +132,6 @@ class ExpressionControllerTest {
                 "expressions", List.of("{{ taskrun.startDate }}", "{{ taskrun.id }}")
             )
         );
-        // taskrun.* only resolves once the render is scoped to that specific task run
         assertThat(withTaskRun.rendered().get("{{ taskrun.id }}")).isEqualTo(taskRunId);
         assertThat(withTaskRun.rendered().get("{{ taskrun.startDate }}")).isNotEqualTo("{{ taskrun.startDate }}");
 
@@ -142,7 +141,6 @@ class ExpressionControllerTest {
                 "expressions", List.of("{{ taskrun.id }}")
             )
         );
-        // without taskRunId, there is no "current" task run to bind taskrun.* against
         assertThat(executionOnly.rendered()).containsEntry("{{ taskrun.id }}", "{{ taskrun.id }}");
     }
 

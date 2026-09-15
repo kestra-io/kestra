@@ -3,6 +3,7 @@
         :id="id"
         :defaultMarkerColor="cssVariable('--ks-topology-dash')"
         fitViewOnInit
+        :minZoom="0.1"
         :nodesDraggable="false"
         :nodesConnectable="false"
         :elevateNodesOnSelect="false"
@@ -101,7 +102,7 @@
             />
         </template>
 
-        <Controls v-if="controlsShown" :showZoom="false" :showInteractive="false" :showFitView="false">
+        <Controls :showZoom="false" :showInteractive="false" :showFitView="false">
             <KsTooltip :content="$t('topology-graph.zoom-in')" placement="right">
                 <ControlButton @click.stop="zoomIn()">
                     <Plus />
@@ -146,7 +147,7 @@
 
 <script lang="ts" setup>
     import {computed, nextTick, onMounted, provide, ref, watch} from "vue"
-    import {useVueFlow, VueFlow, Panel} from "@vue-flow/core"
+    import {getRectOfNodes, useVueFlow, VueFlow, Panel} from "@vue-flow/core"
     import {ControlButton, Controls} from "@vue-flow/controls"
     import {Background} from "@vue-flow/background"
     import ClusterNode from "./nodes/ClusterNode.vue"
@@ -166,7 +167,7 @@
     import {CLUSTER_PREFIX} from "./utils/constants"
     import {type CustomActionConfig, type ShowDetailsConfig, EVENTS, NODE_SIZES} from "./utils/constants"
     import * as VueFlowUtils from "./utils/vueFlowUtils"
-    import {useScreenshot} from "./composables/useScreenshot"
+    import {untilNodesMeasured, useScreenshot} from "./composables/useScreenshot"
     import {EXECUTION_INJECTION_KEY, SUBFLOWS_EXECUTIONS_INJECTION_KEY, SHOW_EXTRA_DETAILS_INJECTION_KEY} from "./injectionKeys"
     import BasicNode from "./nodes/BasicNode.vue"
 
@@ -437,19 +438,24 @@
         generateGraph()
     }
 
-    const controlsShown = ref(true)
     const isDropdownOpen = ref(false)
     const toggleDropdown = () => isDropdownOpen.value = !isDropdownOpen.value
-    function exportAsImage(type: "jpeg" | "png") {
+    // Always the whole graph, whichever way it is laid out and wherever the viewport sits: the
+    // capture covers the bounding box of every rendered node, so there is nothing to crop it to.
+    async function exportAsImage(type: "jpeg" | "png") {
         if (!vueFlowRef.value) {
             console.warn("Flow not found")
             return
         }
 
-        controlsShown.value = false
-        capture(vueFlowRef.value, {type, shouldDownload: true})
-            .then(() => controlsShown.value = true)
-            .finally(() => isDropdownOpen.value = false)
+        const renderedNodes = () => getNodes.value.filter(node => !node.hidden)
+
+        try {
+            await untilNodesMeasured(renderedNodes)
+            await capture(vueFlowRef.value, {type, bounds: getRectOfNodes(renderedNodes()), shouldDownload: true})
+        } finally {
+            isDropdownOpen.value = false
+        }
     }
 </script>
 

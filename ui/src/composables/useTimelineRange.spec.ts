@@ -87,7 +87,6 @@ describe("computeSliderDomain", () => {
         const domainSpan = domainEndMs - domainStartMs
         const selectionSpan = rangeEndMs - rangeStartMs
         expect(domainSpan).toBe(selectionSpan * 8)
-        // The selection should occupy a substantial, graspable share of the track (1/8th here).
         expect(selectionSpan / domainSpan).toBeGreaterThan(0.1)
     })
 
@@ -109,8 +108,6 @@ describe("computeSliderDomain", () => {
         const domainSpan = domainEndMs - domainStartMs
         const selectionSpan = rangeEndMs - rangeStartMs
         expect(domainSpan).toBeLessThan(24 * 60 * 60 * 1000)
-        // The two handles must stay visually distinguishable: the selection should occupy at
-        // least a twentieth of the track, however short the selection itself is.
         expect(selectionSpan / domainSpan).toBeGreaterThanOrEqual(1 / 20)
     })
 

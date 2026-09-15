@@ -26,8 +26,6 @@ vi.mock("../../filter/configurations", () => ({
     useFlowExecutionFilter: () => filterConfig,
 }))
 
-// dateUtils.dateFilter reads Vue's $moment global property, wired up by the app plugin at bootstrap
-// and absent in a bare component mount; stub it with a deterministic formatter instead.
 vi.mock("@kestra-io/design-system", async (importOriginal) => {
     const actual = await importOriginal<typeof import("@kestra-io/design-system")>()
     return {

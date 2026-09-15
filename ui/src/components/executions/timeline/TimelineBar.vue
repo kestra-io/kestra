@@ -106,9 +106,6 @@
         leftPercent: number;
         widthPercent: number;
         dimmed: boolean;
-        // How full this bucket is relative to the busiest bucket in the same lane, in [0, 1]. Only
-        // meaningful when `bucket` is set — blends the tint so a light bucket reads lighter than a
-        // packed one, on top of the flat tint that already sets it apart from a real execution bar.
         intensity?: number;
     }>()
 
@@ -116,15 +113,7 @@
         "show-only-flow": [{namespace: string; flowId: string}];
     }>()
 
-    // Popper's own flip modifier only reacts to the *viewport* running out of room, which still has
-    // plenty of space above a bar near the top of the card — that space is just occupied by page
-    // chrome (filter bar, Counts/Timeline switch), not by a clipping ancestor, so flip never kicks
-    // in and the popover overlaps that chrome. A boundary scoped to the card doesn't reliably fix
-    // this either: the card is rarely much taller than the popover itself, so flip's least-overflow
-    // tie-break can still land on "top" when the bar sits mid-card. Deciding placement ourselves from
-    // the bar's actual position within the card sidesteps both — but flip stays enabled by default and
-    // silently re-flips our explicit choice back toward its own pick, so it has to be turned off for
-    // our decision to actually stick.
+    // Popper's flip modifier has to stay off for an explicit placement to stick.
     const POPOVER_MIN_SPACE_ABOVE_PX = 300
     const POPOVER_POPPER_OPTIONS = {modifiers: [{name: "flip", enabled: false}]}
 
@@ -134,9 +123,6 @@
     const barRef = ref<HTMLButtonElement | null>(null)
     const popoverPlacement = ref<"top" | "bottom">("top")
 
-    // Runs on the same reactive flush that shows the popover (rather than on the button's mouse/focus
-    // events, which race the click that opens it): a watcher fired here still lands before Vue's next
-    // render, so the corrected placement is what KsPopover sees on the render that shows the popover.
     watch(popoverVisible, (visible) => {
         if (!visible) return
         const card = barRef.value?.closest(".executions-timeline")
@@ -213,8 +199,6 @@
     }
 }
 
-// Fuller-height, squarer than a real execution bar so a glance tells "aggregated" from "one run"
-// without needing the tooltip.
 .timeline-bucket {
     top: 0.125rem;
     bottom: 0.125rem;
@@ -262,7 +246,6 @@
     background: var(--ks-chart-retrying);
 }
 
-// Static diagonal stripe: distinguishes the "waiting" QUEUED state from a solid fill without relying on color alone.
 .timeline-bar[data-state="QUEUED"] {
     background: repeating-linear-gradient(
         45deg,
@@ -273,7 +256,6 @@
     );
 }
 
-// Animated diagonal stripe: RUNNING/KILLING are in-progress states, visually distinct from QUEUED's static stripe.
 .timeline-bar[data-state="RUNNING"],
 .timeline-bar[data-state="KILLING"] {
     background-size: 200% 200%;
@@ -300,7 +282,6 @@
     );
 }
 
-// Diagonal hatch, opposite angle and denser than the RUNNING/KILLING stripe, so KILLED never reads as "in progress".
 .timeline-bar[data-state="KILLED"] {
     background: repeating-linear-gradient(
         135deg,

@@ -126,6 +126,27 @@ export function resolveTaskInsertionTargetInAnySection(
     return undefined
 }
 
+function removeResolvedTask(
+    source: string,
+    origin: {parentPath: string; refIndex: number},
+    taskId: string,
+): string {
+    const healed = isWrapperLane(source, origin.parentPath)
+        ? healDagRemoval(source, origin.parentPath, taskId)
+        : source
+    return deleteBlockAtPath(healed, `${origin.parentPath}[${origin.refIndex}]`)
+}
+
+/**
+ * Removes a task by id, healing the `dependsOn` chain around it when it sits in a Dag lane and
+ * taking the whole `{task: ...}` wrapper with it. Returns undefined when the id is not a task in
+ * any task-holding section, so the caller can fall back for a trigger.
+ */
+export function removeTaskById(source: string, taskId: string): string | undefined {
+    const origin = resolveTaskInsertionTargetInAnySection(source, taskId)
+    return origin ? removeResolvedTask(source, origin, taskId) : undefined
+}
+
 export function findNestedPath(items: Record<string, unknown>[], id: string, prefix: string): string | undefined {
     for (let index = 0; index < items.length; index++) {
         const item = items[index]
@@ -177,10 +198,7 @@ export function moveTaskOntoEdge(source: string, movedId: string, target: MoveTa
     const movedBlock = flowYamlUtils.extractBlockWithPath({source, path: originPath})
     if (!movedBlock) return source
 
-    const healed = isWrapperLane(source, origin.parentPath)
-        ? healDagRemoval(source, origin.parentPath, movedId)
-        : source
-    const withoutMoved = deleteBlockAtPath(healed, `${origin.parentPath}[${origin.refIndex}]`)
+    const withoutMoved = removeResolvedTask(source, origin, movedId)
 
     const destination = resolveTaskInsertionTargetInAnySection(withoutMoved, target.refId)
     if (!destination) return source

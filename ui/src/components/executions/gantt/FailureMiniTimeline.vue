@@ -109,9 +109,6 @@
         clear,
     } = useTimeRangeSelection(timeAt)
 
-    // Pointer capture keeps the track receiving move/up events even once the cursor leaves its
-    // bounding box mid-drag — without it, releasing outside the track never fires onTrackPointerUp
-    // and the drag state (and its preview band) gets stuck until the next drag silently overwrites it.
     function onTrackPointerDown(event: PointerEvent) {
         onPointerDown(event)
         trackRef.value?.setPointerCapture(event.pointerId)

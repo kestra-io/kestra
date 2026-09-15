@@ -1,98 +1,140 @@
 <template>
     <div data-component="FILENAME_PLACEHOLDER">
-        <KSFilter
-            :configuration="logExecutionsFilter"
-            :tableOptions="{
-                chart: {shown: false},
-                columns: {shown: false},
-                refresh: {shown: true, callback: loadLogs}
-            }"
-            @search="filter = $event"
-            @filter="syncFromAppliedFilters"
-        />
-        <div class="logs-toolbar">
-            <div class="logs-toolbar__left">
-                <template v-for="logLevel in currentLevelOrLower" :key="logLevel">
-                    <LogLevelNavigator
-                        v-if="countByLogLevel[logLevel] > 0"
-                        :cursorIdx="cursorLogLevel === logLevel ? cursorIdxForLevel : undefined"
-                        :level="logLevel"
-                        :totalCount="countByLogLevel[logLevel]"
-                        @previous="previousLogForLevel(logLevel)"
-                        @next="nextLogForLevel(logLevel)"
-                        @close="logCursor = undefined"
-                    />
-                </template>
-                <KsButton class="logs-toolbar__text-btn" @click="expandCollapseAll()" :disabled="raw_view" :icon="logDisplayButtonIcon">
-                    {{ logDisplayButtonText }}
-                </KsButton>
-                <KsTooltip :content="!raw_view ? $t('logs_view.raw_details') : $t('logs_view.compact_details')">
-                    <KsButton class="logs-toolbar__text-btn" @click="toggleViewType" :icon="logViewTypeButtonIcon">
-                        {{ !raw_view ? $t('logs_view.raw') : $t('logs_view.compact') }}
-                    </KsButton>
-                </KsTooltip>
-            </div>
-            <div class="logs-toolbar__actions">
-                <Restart v-if="executionsStore.execution" :execution="executionsStore.execution" />
-                <LogDisplaySettings />
-                <KsButton square type="default" size="default" :icon="Download" :aria-label="$t('download logs')" :tooltip="$t('download logs')" @click="downloadContent()" />
-                <KsButton square type="default" size="default" :icon="ContentCopy" :aria-label="$t('copy logs')" :tooltip="$t('copy logs')" @click="copyAllLogs()" />
-            </div>
-        </div>
+        <div ref="inlineLogsTarget" />
+        <KsDialog
+            v-model="fullscreenModalOpen"
+            :title="$t('logs')"
+            data-test="logs-fullscreen-dialog"
+            fill
+            fullscreen
+            @opened="finishLogScrollRestore"
+            @closed="finishLogScrollRestore"
+        >
+            <div ref="fullscreenLogsTarget" class="fullscreen-logs-container" />
+        </KsDialog>
 
-        <TaskRunDetails
-            v-if="!raw_view"
-            ref="logs"
-            :levelFilter="effectiveLevelValue"
-            :excludeMetas="(['namespace', 'flowId', 'taskId', 'executionId'] as any)"
-            :filter="filter"
-            :levelToHighlight="cursorLogLevel"
-            @log-cursor="logCursor = $event"
-            :logCursor="logCursor"
-           
-            @opened-taskruns-count="openedTaskrunsCount = $event"
-            @log-indices-by-level="setLogIndicesByLevel"
-            :targetFlow="executionsStore.flow"
-            :showProgressBar="false"
-        />
-        <KsCard v-else class="attempt-wrapper" style="--kel-card-padding: 0">
-            <KsNoData
-                v-if="logsLoaded && temporalLogs.length === 0"
-                :title="$t('no_logs_data_title')"
-                :description="$t('no_logs_data_description')"
+        <Teleport v-if="logsTarget" :to="logsTarget">
+            <KSFilter
+                :configuration="logExecutionsFilter"
+                :tableOptions="{
+                    chart: {shown: false},
+                    columns: {shown: false},
+                    refresh: {shown: true, callback: loadLogs}
+                }"
+                @search="filter = $event"
+                @filter="syncFromAppliedFilters"
             />
-            <DynamicScroller
-                v-if="temporalLogs.length > 0"
-                ref="logScroller"
-                :items="temporalLogs"
-                :minItemSize="50"
-                keyField="uid"
-                class="log-lines temporal"
-                :style="{maxHeight: 'calc(100vh - 335px)', marginTop: '0.5rem'}"
-                :buffer="200"
-                :prerender="20"
-            >
-                <template #default="{item, active}">
-                    <DynamicScrollerItem
-                        :item="asLog(item)"
-                        :active="active"
-                        :data-index="asLog(item).index"
-                        :key="asLog(item).uid"
-                    >
-                        <LogLine
-                            @click="logCursor = asLog(item).index.toString()"
-                            class="line"
-                            :class="{['log-bg-' + cursorLogLevel?.toLowerCase()]: cursorLogLevel === asLog(item).level, 'opacity-40': cursorLogLevel && cursorLogLevel !== asLog(item).level}"
-                            :cursor="asLog(item).index.toString() === logCursor"
-                            :excludeMetas="(['namespace', 'flowId', 'executionId'] as any)"
-                            :level="effectiveLevelValue?.value as any"
-                            :filter="filter"
-                            :log="asLog(item) as any"
+            <div class="logs-toolbar" data-test="logs-toolbar">
+                <div class="logs-toolbar__left">
+                    <template v-for="logLevel in currentLevelOrLower" :key="logLevel">
+                        <LogLevelNavigator
+                            v-if="countByLogLevel[logLevel] > 0"
+                            :cursorIdx="cursorLogLevel === logLevel ? cursorIdxForLevel : undefined"
+                            :level="logLevel"
+                            :totalCount="countByLogLevel[logLevel]"
+                            @previous="previousLogForLevel(logLevel)"
+                            @next="nextLogForLevel(logLevel)"
+                            @close="logCursor = undefined"
                         />
-                    </DynamicScrollerItem>
-                </template>
-            </DynamicScroller>
-        </KsCard>
+                    </template>
+                    <KsButton class="logs-toolbar__text-btn" @click="expandCollapseAll()" :disabled="raw_view" :icon="logDisplayButtonIcon">
+                        {{ logDisplayButtonText }}
+                    </KsButton>
+                    <KsTooltip :content="!raw_view ? $t('logs_view.raw_details') : $t('logs_view.compact_details')">
+                        <KsButton class="logs-toolbar__text-btn" @click="toggleViewType" :icon="logViewTypeButtonIcon">
+                            {{ !raw_view ? $t('logs_view.raw') : $t('logs_view.compact') }}
+                        </KsButton>
+                    </KsTooltip>
+                </div>
+                <div class="logs-toolbar__actions">
+                    <Restart v-if="executionsStore.execution" :execution="executionsStore.execution" />
+                    <LogDisplaySettings />
+                    <KsButton
+                        square
+                        type="default"
+                        size="default"
+                        data-test="logs-fullscreen-toggle"
+                        :icon="fullscreenModalOpen ? FullscreenExit : Fullscreen"
+                        :aria-label="fullscreenModalOpen ? $t('logs_view.exit_fullscreen') : $t('logs_view.fullscreen')"
+                        :aria-pressed="fullscreenModalOpen"
+                        :tooltip="fullscreenModalOpen ? $t('logs_view.exit_fullscreen') : $t('logs_view.fullscreen')"
+                        @click="toggleFullscreenModal"
+                    />
+                    <KsButton square type="default" size="default" :icon="Download" :aria-label="$t('download logs')" :tooltip="$t('download logs')" @click="downloadContent()" />
+                    <KsButton square type="default" size="default" :icon="ContentCopy" :aria-label="$t('copy logs')" :tooltip="$t('copy logs')" @click="copyAllLogs()" />
+                </div>
+            </div>
+
+            <TaskRunDetails
+                v-if="!raw_view"
+                ref="logs"
+                :levelFilter="effectiveLevelValue"
+                :excludeMetas="(['namespace', 'flowId', 'taskId', 'executionId'] as any)"
+                :filter="filter"
+                :levelToHighlight="cursorLogLevel"
+                @log-cursor="logCursor = $event"
+                :logCursor="logCursor"
+                @opened-taskruns-count="openedTaskrunsCount = $event"
+                @log-indices-by-level="setLogIndicesByLevel"
+                :targetFlow="executionsStore.flow"
+                :showProgressBar="false"
+                :fullHeight="fullscreenModalOpen"
+                @scroll.capture.passive="rememberLogScroll"
+                @scroller-update="restoreLogScroll"
+            />
+            <KsCard
+                v-else
+                class="attempt-wrapper"
+                :class="{'fullscreen-attempt-wrapper': fullscreenModalOpen}"
+                :bodyStyle="fullscreenModalOpen ? FULLSCREEN_CARD_BODY_STYLE : undefined"
+                style="--kel-card-padding: 0"
+            >
+                <KsNoData
+                    v-if="logsLoaded && !logsLoading && temporalLogs.length === 0"
+                    :title="$t('no_logs_data_title')"
+                    :description="$t('no_logs_data_description')"
+                />
+                <DynamicScroller
+                    v-if="temporalLogs.length > 0"
+                    ref="logScroller"
+                    :items="temporalLogs"
+                    :minItemSize="50"
+                    keyField="uid"
+                    class="log-lines temporal"
+                    data-test="logs-scroller"
+                    data-scroll-key="raw-logs"
+                    :class="{'fullscreen-logs': fullscreenModalOpen}"
+                    :style="{maxHeight: fullscreenModalOpen ? undefined : 'calc(100vh - 335px)', marginTop: '0.5rem'}"
+                    :buffer="200"
+                    :prerender="20"
+                    @scroll.capture.passive="rememberLogScroll"
+                    :emitUpdate="true"
+                    @update="restoreLogScroll"
+                    @resize="restoreLogScroll"
+                    @visible="restoreLogScroll"
+                >
+                    <template #default="{item, active}">
+                        <DynamicScrollerItem
+                            :item="asLog(item)"
+                            :active="active"
+                            :data-index="asLog(item).index"
+                            :key="asLog(item).uid"
+                        >
+                            <LogLine
+                                @click="logCursor = asLog(item).index.toString()"
+                                class="line"
+                                :class="{['log-bg-' + cursorLogLevel?.toLowerCase()]: cursorLogLevel === asLog(item).level, 'opacity-40': cursorLogLevel && cursorLogLevel !== asLog(item).level}"
+                                :cursor="asLog(item).index.toString() === logCursor"
+                                :excludeMetas="(['namespace', 'flowId', 'executionId'] as any)"
+                                :level="effectiveLevelValue?.value as any"
+                                :filter="filter"
+                                :log="asLog(item) as any"
+                            />
+                        </DynamicScrollerItem>
+                    </template>
+                </DynamicScroller>
+            </KsCard>
+        </Teleport>
     </div>
 </template>
 
@@ -105,6 +147,8 @@
     import LogDisplaySettings from "../logs/LogDisplaySettings.vue"
     import Download from "vue-material-design-icons/Download.vue"
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
+    import Fullscreen from "vue-material-design-icons/Fullscreen.vue"
+    import FullscreenExit from "vue-material-design-icons/FullscreenExit.vue"
     import UnfoldMoreHorizontal from "vue-material-design-icons/UnfoldMoreHorizontal.vue"
     import UnfoldLessHorizontal from "vue-material-design-icons/UnfoldLessHorizontal.vue"
     import ViewList from "vue-material-design-icons/ViewList.vue"
@@ -145,6 +189,13 @@
         index: number
         uid: string
         [key: string]: unknown
+    }
+
+    const FULLSCREEN_CARD_BODY_STYLE = {
+        display: "flex",
+        flexDirection: "column",
+        flex: "1",
+        minHeight: "0",
     }
 
     // Cast helper for DynamicScroller slot items which lose type info
@@ -219,11 +270,33 @@
     // The empty-state placeholder is only right once a fetch came back empty: while an execution is
     // still streaming, no logs yet means "not there yet", not "none".
     const logsLoaded = ref(false)
+    const fullscreenModalOpen = ref(false)
 
     const logs = useTemplateRef<InstanceType<typeof TaskRunDetails>>("logs")
     const logScroller = useTemplateRef<any>("logScroller") // FIXME: any
+    const inlineLogsTarget = useTemplateRef<HTMLElement>("inlineLogsTarget")
+    const fullscreenLogsTarget = useTemplateRef<HTMLElement>("fullscreenLogsTarget")
+    const preservedLogScrollPositions = new Map<string, number>()
+    let pendingLogScrollPositions = new Map<string, number>()
+    let fullscreenTransition = false
+    const logsTarget = computed(() =>
+        fullscreenModalOpen.value
+            ? fullscreenLogsTarget.value ?? inlineLogsTarget.value
+            : inlineLogsTarget.value,
+    )
+
+    watch(fullscreenModalOpen, () => {
+        fullscreenTransition = true
+        pendingLogScrollPositions = new Map(preservedLogScrollPositions)
+        restoreLogScroll()
+    }, {flush: "sync"})
+    watch(logsTarget, restoreLogScroll, {flush: "post"})
 
     const executionId = computed(() => executionsStore.execution?.id)
+    watch(executionId, () => {
+        preservedLogScrollPositions.clear()
+        pendingLogScrollPositions.clear()
+    })
 
     // created hook equivalent
     const route = useRoute()
@@ -238,6 +311,7 @@
         if (!sseBuffer.length) return
         executionsStore.appendLogs(sseBuffer)
         sseBuffer = []
+        logsLoading.value = false
     }
 
     const closeLogsSSE = () => {
@@ -250,12 +324,14 @@
             sseFlushTimer = undefined
         }
         sseBuffer = []
+        logsLoading.value = false
     }
 
     const streamLogs = () => {
         closeLogsSSE()
         executionsStore.resetLogs()
         logsLoaded.value = false
+        logsLoading.value = true
         executionsStore.followLogs({
             id: executionId.value!,
             params: {...levelToRequestParams(effectiveLevelValue.value), ...kindParams.value},
@@ -276,6 +352,8 @@
             sse.onerror = () => {
                 closeLogsSSE()
             }
+        }).catch(() => {
+            logsLoading.value = false
         })
     }
 
@@ -444,6 +522,8 @@
 
     function toggleViewType() {
         logCursor.value = undefined
+        preservedLogScrollPositions.clear()
+        pendingLogScrollPositions.clear()
         raw_view.value = !raw_view.value
         localStorage.setItem(storageKeys.LOGS_VIEW_TYPE, String(raw_view.value))
     }
@@ -487,6 +567,42 @@
 
     function scrollToLog(index: string) {
   ;(logScroller.value as any)?.scrollToItem(index)
+    }
+
+    function rememberLogScroll(event: Event) {
+        const scroller = event.target as HTMLElement
+        const key = scroller.dataset.scrollKey
+        if (key && scroller.isConnected && scroller.clientHeight && scroller.scrollHeight > scroller.clientHeight && !pendingLogScrollPositions.has(key)) {
+            preservedLogScrollPositions.set(key, scroller.scrollTop)
+        }
+    }
+
+    function restoreLogScroll() {
+        if (!pendingLogScrollPositions.size) return
+        nextTick(() => {
+            const target = fullscreenModalOpen.value ? fullscreenLogsTarget.value : inlineLogsTarget.value
+            for (const scroller of target?.querySelectorAll<HTMLElement>("[data-scroll-key]") ?? []) {
+                const key = scroller.dataset.scrollKey!
+                const scrollTop = pendingLogScrollPositions.get(key)
+                if (scrollTop === undefined || !scroller.clientHeight) continue
+                const maxScrollTop = scroller.scrollHeight - scroller.clientHeight
+                const position = Math.min(scrollTop, maxScrollTop)
+                scroller.scrollTop = position
+                if (Math.abs(scroller.scrollTop - position) <= 1) {
+                    if (maxScrollTop > 0) preservedLogScrollPositions.set(key, scroller.scrollTop)
+                    if (!fullscreenTransition) pendingLogScrollPositions.delete(key)
+                }
+            }
+        })
+    }
+
+    function finishLogScrollRestore() {
+        fullscreenTransition = false
+        restoreLogScroll()
+    }
+
+    function toggleFullscreenModal() {
+        fullscreenModalOpen.value = !fullscreenModalOpen.value
     }
 </script>
 
@@ -552,5 +668,24 @@
     :deep(.kel-button) {
         margin: 0;
     }
+  }
+
+  .fullscreen-logs-container {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+  }
+
+  .fullscreen-attempt-wrapper {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+  }
+
+  .fullscreen-logs {
+    flex: 1;
+    min-height: 0;
   }
 </style>

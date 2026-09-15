@@ -335,3 +335,172 @@ describe("generateGraph CHOICE edge labels", () => {
         expect(edge?.data?.relationType).toBeUndefined()
     })
 })
+/** What the assertions below read off a generated element; the generator's own return type is a
+ *  vue-flow union that would need narrowing at every access. */
+interface GeneratedElement {
+    id?: string
+    type?: string
+    class?: string
+    draggable?: boolean
+    source?: string
+    parentNode?: string
+    position?: {x: number; y: number}
+    data?: Record<string, unknown>
+}
+
+const asElements = (elements: unknown): GeneratedElement[] => elements as GeneratedElement[]
+
+describe("generateGraph node draggability", () => {
+    const flowGraphWithCluster = {
+        nodes: [
+            {
+                uid: "root.branch",
+                type: "io.kestra.core.models.hierarchies.GraphTask",
+                task: {id: "branch", type: "io.kestra.plugin.core.flow.Sequential", namespace: "ns", flowId: "flow"},
+            },
+            {
+                uid: "root.branch.child",
+                type: "io.kestra.core.models.hierarchies.GraphTask",
+                task: {id: "child", type: "io.kestra.plugin.core.log.Log", namespace: "ns", flowId: "flow"},
+            },
+        ],
+        edges: [
+            {
+                source: "root.branch",
+                target: "root.branch.child",
+                relation: {relationType: "SEQUENTIAL"},
+            },
+        ],
+        clusters: [
+            {
+                cluster: {
+                    uid: "cluster_root.branch",
+                    type: "io.kestra.core.models.hierarchies.GraphCluster",
+                    taskNode: {
+                        uid: "root.branch",
+                        task: {id: "branch", type: "io.kestra.plugin.core.flow.Sequential", namespace: "ns", flowId: "flow"},
+                    },
+                },
+                nodes: ["root.branch.child"],
+                parents: [],
+            },
+        ],
+    } as unknown as VueFlowUtils.FlowGraph
+
+    test("marks a task movable but never the cluster wrapping it", () => {
+        const elements =
+            VueFlowUtils.generateGraph(
+                "vfid",
+                "flow",
+                "ns",
+                flowGraphWithCluster,
+                undefined,
+                [],
+                false,
+                {},
+                new Set(),
+                [],
+                false,
+                true,
+                false,
+            ) ?? []
+
+        // The drag is the browser's own, so vue-flow must never reposition a node itself.
+        const built = asElements(elements)
+        expect(built.every((element) => element.draggable !== true)).toBe(true)
+
+        const cluster = built.find((element) => element.type === "cluster")
+        expect(cluster).toBeDefined()
+        expect(cluster?.data?.isMovable).toBeFalsy()
+
+        const child = built.find((element) => element.id === "root.branch.child")
+        expect(child?.data?.isMovable).toBe(true)
+        // Without `nopan` a drag starting on a card pans the canvas instead.
+        expect(child?.class).toContain("nopan")
+    })
+
+    const triggersGraph = {
+        nodes: [
+            {
+                uid: "root.only_task",
+                type: "io.kestra.core.models.hierarchies.GraphTask",
+                task: {id: "only_task", type: "io.kestra.plugin.core.log.Log", namespace: "ns", flowId: "flow"},
+            },
+            {
+                uid: "root.branch",
+                type: "io.kestra.core.models.hierarchies.GraphTask",
+                task: {id: "branch", type: "io.kestra.plugin.core.flow.Sequential", namespace: "ns", flowId: "flow"},
+            },
+        ],
+        edges: [],
+        clusters: [
+            {
+                cluster: {
+                    uid: "cluster_root.Triggers",
+                    type: "io.kestra.core.models.hierarchies.GraphCluster",
+                },
+                nodes: [],
+                parents: [],
+            },
+            {
+                cluster: {
+                    uid: "cluster_root.branch",
+                    type: "io.kestra.core.models.hierarchies.GraphCluster",
+                    taskNode: {
+                        uid: "root.branch",
+                        task: {id: "branch", type: "io.kestra.plugin.core.flow.Sequential", namespace: "ns", flowId: "flow"},
+                    },
+                },
+                nodes: [],
+                parents: [],
+            },
+        ],
+    } as unknown as VueFlowUtils.FlowGraph
+
+    const clustersOf = (isReadOnly: boolean, isAllowedEdit: boolean) =>
+        (VueFlowUtils.generateGraph(
+            "vfid",
+            "flow",
+            "ns",
+            triggersGraph,
+            undefined,
+            [],
+            false,
+            {},
+            new Set(),
+            [],
+            isReadOnly,
+            isAllowedEdit,
+            false,
+        ) ?? []).filter((element) => asElements([element])[0].type === "cluster")
+
+    test("offers the add-trigger button on the triggers box only, and only when editing", () => {
+        const editable = clustersOf(false, true)
+        const triggers = editable.find((c) => c.id === "cluster_root.Triggers")
+        const flowable = editable.find((c) => c.id === "cluster_root.branch")
+        expect(triggers?.data?.canAddTrigger).toBe(true)
+        expect(flowable?.data?.canAddTrigger).toBe(false)
+
+        // A trigger is still a change to the flow, so read-only and view-only must not offer it.
+        for (const [readOnly, allowedEdit] of [[true, true], [false, false]] as const) {
+            const guarded = clustersOf(readOnly, allowedEdit)
+            const box = guarded.find((c) => c.id === "cluster_root.Triggers")
+            expect(box?.data?.canAddTrigger, `readOnly=${readOnly} allowedEdit=${allowedEdit}`).toBe(false)
+        }
+    })
+
+    // The flow is no longer a node: it is a canvas-anchored chip, so the graph must contain
+    // nothing standing for the flow and no edge leaving one.
+    test("builds no node or edge for the flow itself", () => {
+        const elements = VueFlowUtils.generateGraph(
+            "vfid", "flow", "ns", triggersGraph, undefined, [], false, {}, new Set(), [], false, true, false,
+        ) ?? []
+
+        expect(elements.length).toBeGreaterThan(0)
+        for (const element of asElements(elements)) {
+            expect(String(element.id)).not.toContain("__flow__")
+            expect(String(element.source ?? "")).not.toContain("__flow__")
+            expect(element.type).not.toBe("flow")
+        }
+    })
+})

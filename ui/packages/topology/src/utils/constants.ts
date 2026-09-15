@@ -3,11 +3,14 @@ export const CLUSTER_PREFIX = "cluster_"
 export const EVENTS = {
     EDIT: "edit",
     DELETE: "delete",
+    DUPLICATE: "duplicate",
     SHOW_DESCRIPTION: "showDescription",
     COLLAPSE: "collapse",
     EXPAND: "expand",
     OPEN_LINK: "openLink",
     ADD_TASK: "addTask",
+    ADD_TRIGGER: "addTrigger",
+    EDIT_FLOW: "editFlow",
     SHOW_LOGS: "showLogs",
     SHOW_OUTPUTS: "showOutputs",
     REPLAY_TASK: "replayTask",
@@ -19,6 +22,10 @@ export const EVENTS = {
     RUN_TASK: "runTask",
     SHOW_CUSTOM_ACTION: "showCustomAction",
     SHOW_DETAILS: "showDetails",
+    CARD_CLICK: "cardClick",
+    MOVE_TASK: "moveTask",
+    TASK_DRAG_START: "taskDragStart",
+    TASK_DRAG_END: "taskDragEnd",
 } as const
 
 export interface CustomActionConfig {

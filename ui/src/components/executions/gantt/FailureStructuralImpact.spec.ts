@@ -22,8 +22,6 @@ function mountImpact(nodes: ReturnType<typeof node>[], rawBlocks: Record<string,
         props: {nodes: nodes as never, focusedId: "tr-focused", rawBlocks},
         global: {
             plugins: [i18n],
-            // KsMarkdown's Shiki highlighting crashes in jsdom (no real browser) — stubbed here,
-            // covered for real rendering by the FailureDebugPanel Storybook story instead.
             stubs: {KsMarkdown: {template: "<pre>{{ content }}</pre>", props: ["content"]}},
         },
     })

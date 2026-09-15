@@ -48,8 +48,6 @@ function taskRun(id: string, taskId: string, state: string, startDate: string) {
 function mountPanel(execution: Record<string, unknown>) {
     return mount(FailureDebugPanel, {
         props: {execution: execution as unknown as Execution},
-        // The reopen trigger is now rendered by the caller (Gantt.vue places it next to "Copy
-        // All Logs"), so this recreates that same wrapper/selector shape via the scoped slot.
         slots: {
             default: `
                 <template #default="{shouldRender, isOpen, reopen, setReopenRef}">
@@ -63,10 +61,6 @@ function mountPanel(execution: Record<string, unknown>) {
             plugins: [i18n],
             stubs: {
                 Restart: true,
-                // A plain `true` auto-stub doesn't replicate defineExpose, so
-                // `miniTimelineRef.value?.clearSelection()` (called on every switcher focus
-                // change) would throw — a manual stub with a real method avoids that while still
-                // matching findComponent(FailureMiniTimeline) and exposing its `nodes` prop.
                 FailureMiniTimeline: {
                     name: "FailureMiniTimeline",
                     props: ["nodes", "focusedId"],
@@ -89,8 +83,6 @@ function mountPanel(execution: Record<string, unknown>) {
 }
 
 describe("FailureDebugPanel", () => {
-    // FailureLogPanel's `LogLine` import chain seeds `useLogDisplay` settings into localStorage
-    // as a module-load side effect, even though FailureLogPanel is stubbed for these tests.
     afterAll(() => {
         localStorage.clear()
     })
@@ -111,7 +103,6 @@ describe("FailureDebugPanel", () => {
     })
 
     it("should never render for a task that failed then succeeded on retry", () => {
-        // Only the taskrun's latest (current) state matters, not that an earlier attempt failed.
         const wrapper = mountPanel({
             id: "exec-1",
             state: {current: "SUCCESS"},
@@ -132,8 +123,6 @@ describe("FailureDebugPanel", () => {
         })
 
         expect(wrapper.get(".failure-debug-panel__subtitle").text()).toContain("task-1")
-        // The switcher only renders when more than one failure is present. Scoped to
-        // .failure-switcher: the context card's own KsTabs also renders a role="tablist".
         expect(wrapper.find(".failure-switcher").exists()).toBe(true)
     })
 

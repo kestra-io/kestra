@@ -19,8 +19,6 @@ function mountInputs(inputIds: string[]) {
         props: {inputIds, executionId: "exec-1", taskRunId: "tr-1"},
         global: {
             plugins: [i18n],
-            // Vars.vue's KsTable/KsTableColumn scoped-slot rendering needs the real design-system
-            // plugin (covered by the Storybook story instead) — it throws in jsdom without it.
             stubs: {Vars: {template: "<pre>{{ JSON.stringify(data) }}</pre>", props: ["data"]}},
         },
     })

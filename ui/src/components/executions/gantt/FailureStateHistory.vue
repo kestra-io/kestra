@@ -38,9 +38,6 @@
         })),
     )
 
-    // humanDuration's default unit set stops at seconds, so a transition inside the same
-    // millisecond tick (CREATED -> SUBMITTED -> RUNNING commonly are) always rounds to "0s" —
-    // include "ms" explicitly so the granularity this section exists for isn't lost.
     function formatElapsed(seconds: number): string {
         return durationUtils.humanDuration(seconds, {units: ["d", "h", "m", "s", "ms"]})
     }

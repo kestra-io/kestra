@@ -1,5 +1,9 @@
 {
   "es": {
+    "versionUpgradeNotice": {
+      "message": "Kestra se actualizó a la versión {version} y puede incluir cambios importantes que requieren actualizaciones en tus Flows.",
+      "cta": "Ver qué cambió"
+    },
     "loading": "Cargando...",
     "more actions": "Más acciones",
     "recipe": {
@@ -491,6 +495,9 @@
     },
     "download": "Descargar",
     "jsonl": "JSONL",
+    "large_outputs": {
+      "value_truncated": "Mostrando una vista previa truncada de este valor de {size}."
+    },
     "concurrency_limit": {
       "dialog_title": "Límites de Concurrencia",
       "warning": "Cambiar el contador en ejecución puede corromper la Concurrency, por lo que las egzekucje pueden exceder el límite permitido."
@@ -915,6 +922,7 @@
     "flow creation denied in namespace": "No tienes permiso para crear flows en el namespace `{namespace}`.",
     "readonly property": "Propiedad de solo lectura",
     "namespace and id readonly": "Las propiedades `namespace` e `id` no se pueden cambiar; ahora están configuradas con sus valores iniciales. Si desea renombrar un flow o cambiar su namespace, puede crear un nuevo flow y eliminar el anterior.",
+    "flow metadata locked": "`id` y `namespace` no se pueden cambiar después de crear un flow.",
     "avg": "Promedio",
     "sum": "Suma",
     "min": "Min",
@@ -2147,7 +2155,7 @@
         },
         "unavailable": {
           "title": "AI Copilot no está disponible",
-          "detail": "No hay ningún proveedor de AI configurado. Pide a un administrador que configure uno.",
+          "detail": "No hay ningún proveedor de AI configurado para esta instancia. Configura uno en tu archivo de configuración de Kestra para habilitar AI Copilot.",
           "docs": "Ver documentación"
         },
         "thinkingWords": [

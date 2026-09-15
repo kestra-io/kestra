@@ -43,6 +43,7 @@ kestra:
   executor:
     execution-delay-loop-periodicity-ms: 250
     monitor-sla-loop-periodicity-ms: 250
+    multiple-condition-purge-loop-periodicity-ms: 1000
 
   variables:
     globals:

@@ -7,5 +7,6 @@ import io.micronaut.core.bind.annotation.Bindable;
 public record ExecutorConfiguration(
     @Bindable(defaultValue = "0") Integer threadCount,
     @Bindable(defaultValue = "1000") Integer executionDelayLoopPeriodicityMs,
-    @Bindable(defaultValue = "1000") Integer monitorSLALoopPeriodicityMs) {
+    @Bindable(defaultValue = "1000") Integer monitorSLALoopPeriodicityMs,
+    @Bindable(defaultValue = "60000") Integer multipleConditionPurgeLoopPeriodicityMs) {
 }

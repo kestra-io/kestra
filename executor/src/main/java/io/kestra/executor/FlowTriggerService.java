@@ -168,9 +168,6 @@ public class FlowTriggerService {
             .filter(Objects::nonNull)
             .toList();
 
-        // purge expired multiple condition windows
-        multipleConditionStorage.expired(execution.getTenantId()).forEach(multipleConditionStorage::delete);
-
         return executions;
     }
 

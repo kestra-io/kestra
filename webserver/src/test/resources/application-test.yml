@@ -43,6 +43,9 @@ kestra:
         endpoints:
           - host: localhost
             port: ${kestra.controller.port}
+  executor:
+    execution-delay-loop-periodicity-ms: 250
+    monitor-sla-loop-periodicity-ms: 250
   ai:
     type: gemini
     gemini:

@@ -16,7 +16,7 @@
             :elementsSelectable="false"
             :elevateNodesOnSelect="false"
             :elevateEdgesOnSelect="false"
-            :onlyRenderVisibleElements="true"
+            :onlyRenderVisibleElements="!exporting"
             :minZoom="0.2"
             :maxZoom="1.5"
             @nodeClick="({node}) => emit('select', node.id)"
@@ -42,11 +42,11 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, provide, useTemplateRef, watch} from "vue"
+    import {computed, nextTick, provide, ref, useTemplateRef, watch} from "vue"
     import {useResizeObserver} from "@vueuse/core"
     import {VueFlow, useVueFlow, Position, MarkerType} from "@vue-flow/core"
     import {Background} from "@vue-flow/background"
-    import {useScreenshot} from "@kestra-io/topology"
+    import {untilNodesMeasured, useScreenshot} from "@kestra-io/topology"
     import {cssVar, stringUtils} from "@kestra-io/design-system"
     import {useTheme} from "../../../../utils/utils"
     import AssetNode from "./AssetNode.vue"
@@ -71,7 +71,7 @@
         "pane-click": [];
     }>()
 
-    const {fitBounds, zoomIn, zoomOut, viewport, vueFlowRef} = useVueFlow("asset-dag")
+    const {fitBounds, zoomIn, zoomOut, viewport, vueFlowRef, getNodes} = useVueFlow("asset-dag")
     const theme = useTheme()
     const {capture} = useScreenshot()
 
@@ -238,13 +238,28 @@
     const root = useTemplateRef<HTMLElement>("root")
     useResizeObserver(root, refitIfOwned)
 
+    const exporting = ref(false)
+
     defineExpose({
         zoomIn: () => zoomIn(),
         zoomOut: () => zoomOut(),
         fit: applyFit,
-        exportAsImage: (type: "jpeg" | "png", fileName?: string): void => {
-            if (vueFlowRef.value) {
-                capture(vueFlowRef.value, {type, fileName, shouldDownload: true})
+        /**
+         * `onlyRenderVisibleElements` culls off-screen cards from the DOM, and an export covers
+         * the whole graph: render every card for its duration, then capture the graph's bounds.
+         */
+        exportAsImage: async (type: "jpeg" | "png", fileName?: string): Promise<void> => {
+            if (!vueFlowRef.value || !bounds.value) {
+                return
+            }
+
+            exporting.value = true
+            try {
+                await nextTick()
+                await untilNodesMeasured(() => getNodes.value)
+                await capture(vueFlowRef.value, {type, fileName, bounds: bounds.value, shouldDownload: true})
+            } finally {
+                exporting.value = false
             }
         },
     })

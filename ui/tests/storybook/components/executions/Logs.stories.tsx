@@ -89,7 +89,35 @@ const ROUTER_ROUTES = [
     {path: "/flows", name: "flows/list", component: {template: "<div/>"}},
 ];
 
-function makeDecorators(rawView = true, sourceLogs = FAKE_LOGS) {
+const COMPACT_EXECUTION = {
+    ...FAKE_EXECUTION,
+    taskRunList: Array.from({length: 3}, (_, index) => ({
+        ...FAKE_EXECUTION.taskRunList[0],
+        id: `task-run-${index + 1}`,
+        taskId: `task-${index + 1}`,
+    })),
+};
+
+const COMPACT_LOGS = COMPACT_EXECUTION.taskRunList.flatMap(taskRun =>
+    Array.from({length: 1700}, (_, index) => ({
+        ...BASE,
+        taskRunId: taskRun.id,
+        taskId: taskRun.taskId,
+        index,
+        level: "WARN",
+        timestamp: new Date(Date.UTC(2025, 0, 1, 0, 0, 0, index)).toISOString(),
+        message: `${taskRun.taskId} entry ${index}`,
+    })),
+);
+
+const COMPACT_FILTERS = new URLSearchParams({
+    "filters[level][GREATER_THAN_OR_EQUAL_TO]": "INFO",
+    "filters[taskId][STARTS_WITH]": "task-",
+    "filters[taskRunId][NOT_EQUALS]": "excluded-task-run-with-a-long-identifier",
+    "filters[attemptNumber][EQUALS]": "0",
+}).toString();
+
+function makeDecorators(rawView = true, sourceLogs = FAKE_LOGS, execution = FAKE_EXECUTION) {
     return [
         () => ({
             setup() {
@@ -97,8 +125,10 @@ function makeDecorators(rawView = true, sourceLogs = FAKE_LOGS) {
 
                 const executionsStore = useExecutionsStore();
                 executionsStore.logs = filteredByMinLevel(sourceLogs, "INFO") as any;
-                executionsStore.execution = FAKE_EXECUTION as any;
-                executionsStore.flow = {tasks: [{id: "my-task", type: "io.kestra.plugin.core.log.Log"}]} as any;
+                executionsStore.execution = execution as any;
+                executionsStore.flow = {
+                    tasks: execution.taskRunList.map(task => ({id: task.taskId, type: "io.kestra.plugin.core.log.Log"})),
+                } as typeof executionsStore.flow;
 
                 (executionsStore as any).loadLogs = async ({params}: {executionId: string; params?: Record<string, any>}) => {
                     const gte = params?.["filters[level][GREATER_THAN_OR_EQUAL_TO]"];
@@ -181,23 +211,105 @@ export const Fullscreen: Story = {
     },
 };
 
-export const CompactFullscreen: Story = {
-    decorators: makeDecorators(false),
-    play: async ({canvasElement}: {canvasElement: HTMLElement}) => {
+function compactFullscreenPlay(lastTaskId = "task-3") {
+    return async ({canvasElement}: {canvasElement: HTMLElement}) => {
         const iframeBody = canvasElement.ownerDocument.body;
+        const canvas = within(canvasElement);
+        await userEvent.click(canvas.getByRole("button", {name: "Edit as text"}));
+        const rawFilter = canvas.getByRole("textbox");
+        await userEvent.clear(rawFilter);
+        await userEvent.type(rawFilter, COMPACT_FILTERS);
+        expect(rawFilter).toHaveValue(COMPACT_FILTERS);
+        await userEvent.keyboard("{Enter}");
+        await userEvent.click(canvas.getByRole("button", {name: "Edit visually"}));
+        await waitFor(() => expect(canvas.getByRole("button", {name: "4 rules"})).toBeVisible());
         const fullscreenButton = canvasElement.querySelector<HTMLButtonElement>("[data-test='logs-fullscreen-toggle']");
         if (!fullscreenButton) throw new Error("fullscreen logs button not found");
-
+        let compactScroller = await waitFor(() => {
+            const element = canvasElement.querySelector<HTMLElement>("[data-scroll-key='task-run-1']");
+            if (!element || element.scrollHeight <= element.clientHeight) throw new Error("scrollable compact logs not ready");
+            return element;
+        });
+        compactScroller.scrollTop = 500;
+        compactScroller.dispatchEvent(new Event("scroll"));
+        await waitFor(() => expect(compactScroller.scrollTop).toBeGreaterThan(400));
+        const inlinePosition = compactScroller.scrollTop;
         await userEvent.click(fullscreenButton);
-
-        const compactScroller = await waitFor(() => {
-            const element = iframeBody.querySelector<HTMLElement>("[data-test='logs-fullscreen-dialog'] [data-test='task-run-log-scroller']");
-            if (!element) throw new Error("compact task-run log scroller not found");
+        const dialog = await waitFor(() => {
+            const element = iframeBody.querySelector<HTMLElement>("[data-test='logs-fullscreen-dialog']");
+            if (!element) throw new Error("fullscreen dialog not found");
+            expect(element).toBeVisible();
             return element;
         });
 
-        expect(getComputedStyle(compactScroller).maxHeight).not.toBe("300px");
+        await waitFor(() => {
+            compactScroller = dialog.querySelector<HTMLElement>("[data-scroll-key='task-run-1']")!;
+            const bounds = compactScroller.getBoundingClientRect();
+            const dialogBounds = dialog.getBoundingClientRect();
+            expect(bounds.height).toBeGreaterThan(0);
+            expect(bounds.bottom).toBeLessThanOrEqual(dialogBounds.bottom);
+            expect(getComputedStyle(compactScroller).maxHeight).toBe("none");
+            expect(compactScroller.scrollHeight).toBeGreaterThan(compactScroller.clientHeight);
+            expect(Math.abs(compactScroller.scrollTop - inlinePosition)).toBeLessThan(50);
+        });
+
+        const fullscreenPosition = compactScroller.scrollTop;
+        await userEvent.click(within(dialog).getByRole("button", {name: /exit fullscreen/i}));
+        await waitFor(() => {
+            expect(dialog).not.toBeVisible();
+            compactScroller = canvasElement.querySelector<HTMLElement>("[data-scroll-key='task-run-1']")!;
+            expect(Math.abs(compactScroller.scrollTop - fullscreenPosition)).toBeLessThan(50);
+        });
+        await userEvent.click(fullscreenButton);
+        await waitFor(() => expect(dialog).toBeVisible());
+        await userEvent.keyboard("{Escape}");
+        await waitFor(() => {
+            expect(dialog).not.toBeVisible();
+            compactScroller = canvasElement.querySelector<HTMLElement>("[data-scroll-key='task-run-1']")!;
+            expect(Math.abs(compactScroller.scrollTop - fullscreenPosition)).toBeLessThan(50);
+        });
+        await userEvent.click(fullscreenButton);
+        await waitFor(() => expect(dialog).toBeVisible());
+
+        const taskScroller = dialog.querySelector<HTMLElement>("[data-test='task-run-scroller']")!;
+        const lastScroller = await waitFor(() => {
+            taskScroller.scrollTop = taskScroller.scrollHeight;
+            const element = dialog.querySelector<HTMLElement>(`[data-scroll-key='${lastTaskId.replace("task-", "task-run-")}']`);
+            if (!element || !element.clientHeight) throw new Error("last task log scroller not ready");
+            return element;
+        });
+        await waitFor(() => {
+            lastScroller.scrollTop = lastScroller.scrollHeight;
+            taskScroller.scrollTop = taskScroller.scrollHeight;
+            const tail = within(lastScroller).getByText(`${lastTaskId} entry 1699`);
+            const bounds = tail.getBoundingClientRect();
+            expect(bounds.top).toBeGreaterThanOrEqual(lastScroller.getBoundingClientRect().top);
+            expect(bounds.bottom).toBeLessThanOrEqual(dialog.getBoundingClientRect().bottom);
+        });
+        expect(within(dialog).queryAllByText(/^task-\d entry \d+$/).length).toBeLessThan(300);
+    };
+}
+
+export const CompactFullscreen: Story = {
+    decorators: makeDecorators(false, COMPACT_LOGS, COMPACT_EXECUTION),
+    parameters: {
+        viewport: {
+            options: {narrow: {name: "Narrow log viewport", styles: {width: "900px", height: "720px"}}},
+            defaultViewport: "narrow",
+        },
     },
+    play: compactFullscreenPlay(),
+};
+
+export const CompactFullscreenDark: Story = {
+    ...CompactFullscreen,
+    globals: {theme: "dark"},
+};
+
+export const CompactFullscreenSingleTask: Story = {
+    parameters: CompactFullscreen.parameters,
+    decorators: makeDecorators(false, COMPACT_LOGS.slice(0, 1700), {...COMPACT_EXECUTION, taskRunList: COMPACT_EXECUTION.taskRunList.slice(0, 1)}),
+    play: compactFullscreenPlay("task-1"),
 };
 
 /**

@@ -316,6 +316,7 @@
         resolveTaskInsertionTarget,
         resolveTaskInsertionTargetInAnySection,
         moveTaskOntoEdge,
+        removeTaskById,
         isTaskListPath,
     } from "../no-code/blocks/blockSections"
     import {useBlockEditorProvides} from "../no-code/blocks/useBlockEditorProvides"
@@ -807,11 +808,11 @@
                 }
                 const taskType = flowParsed.tasks.find((e: any) => e.id === event.id)?.type as string | undefined
                 deleteWithUndo(event.id, () => {
-                    const updatedYmlSource = YAML_UTILS.deleteBlock({
-                        source: flowSource.value ?? "",
-                        section,
-                        key: event.id,
-                    })
+                    const source = flowSource.value ?? ""
+                    // A trigger is not a task, so it resolves to no task lane and takes the section path.
+                    const updatedYmlSource =
+                        removeTaskById(source, event.id) ??
+                        YAML_UTILS.deleteBlock({source, section, key: event.id})
                     applyGraphYaml(updatedYmlSource)
                     trackAuthoringAction("task_deleted", "topology", {task_type: taskType})
                 })

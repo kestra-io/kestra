@@ -1,6 +1,6 @@
 import {describe, it, expect} from "vitest"
 
-import {isRootSectionPath, isTaskListPath, moveTaskOntoEdge, resolveTaskInsertionTarget, resolveTaskInsertionTargetInAnySection, sectionFromParentPath} from "../../../../../src/components/no-code/blocks/blockSections"
+import {isRootSectionPath, isTaskListPath, moveTaskOntoEdge, removeTaskById, resolveTaskInsertionTarget, resolveTaskInsertionTargetInAnySection, sectionFromParentPath} from "../../../../../src/components/no-code/blocks/blockSections"
 import * as flowYamlUtils from "@kestra-io/topology/flow-yaml-utils"
 
 interface DagLaneItem {
@@ -175,7 +175,7 @@ errors:
     })
 
 
-    describe("moveTaskOntoEdge", () => {
+    describe("lane mutations", () => {
         const SEQUENTIAL = `id: seq
 namespace: qa
 tasks:
@@ -279,6 +279,27 @@ tasks:
 
         it("leaves the source alone when the target id does not exist", () => {
             expect(moveTaskOntoEdge(SEQUENTIAL, "a", {refId: "nope", position: "after"})).toBe(SEQUENTIAL)
+        })
+
+        it("removes the whole dag lane item, leaving no empty wrapper behind", () => {
+            const next = removeTaskById(DAG, "middle")!
+
+            expect(flowYamlUtils.parse<DagProbeFlow>(next)!.tasks[0]!.tasks).toHaveLength(3)
+            expect(next).not.toContain("task: null")
+        })
+
+        it("heals the chain around the task it removes", () => {
+            const next = removeTaskById(DAG, "middle")!
+
+            expect(dagOf(next)).toEqual({fetch: null, sink: ["fetch"], spare: null})
+        })
+
+        it("removes a plain task from a sequential lane", () => {
+            expect(idsOf(removeTaskById(SEQUENTIAL, "b")!)).toEqual(["a", "c"])
+        })
+
+        it("resolves no task lane for an unknown id, so a trigger keeps the section path", () => {
+            expect(removeTaskById(SEQUENTIAL, "nope")).toBeUndefined()
         })
     })
 

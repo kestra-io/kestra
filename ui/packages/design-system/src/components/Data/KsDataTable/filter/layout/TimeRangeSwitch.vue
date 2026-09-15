@@ -66,7 +66,7 @@
     display: flex;
     padding: 4px;
     position: relative;
-    transition: all 0.3s ease;
+    transition: background-color var(--ks-duration-base) ease, border-color var(--ks-duration-base) ease;
     user-select: none;
     justify-content: space-around;
     box-shadow: rgba(17, 17, 26, 0.1) 0px 0px 16px;
@@ -78,7 +78,7 @@
     font-weight: 500;
     padding: 6px 16px;
     position: relative;
-    transition: color 0.3s ease;
+    transition: color 150ms ease;
     white-space: nowrap;
     z-index: 2;
 }
@@ -91,7 +91,7 @@
     left: 4px;
     position: absolute;
     top: 4px;
-    transition: transform 0.3s ease;
+    transition: transform var(--ks-duration-base) var(--ks-ease-standard);
     width: calc(50% - 4px);
     z-index: 1;
 }

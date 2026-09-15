@@ -167,7 +167,7 @@
     import {CLUSTER_PREFIX} from "./utils/constants"
     import {type CustomActionConfig, type ShowDetailsConfig, EVENTS, NODE_SIZES} from "./utils/constants"
     import * as VueFlowUtils from "./utils/vueFlowUtils"
-    import {useScreenshot} from "./composables/useScreenshot"
+    import {untilNodesMeasured, useScreenshot} from "./composables/useScreenshot"
     import {EXECUTION_INJECTION_KEY, SUBFLOWS_EXECUTIONS_INJECTION_KEY, SHOW_EXTRA_DETAILS_INJECTION_KEY} from "./injectionKeys"
     import BasicNode from "./nodes/BasicNode.vue"
 
@@ -440,16 +440,22 @@
 
     const isDropdownOpen = ref(false)
     const toggleDropdown = () => isDropdownOpen.value = !isDropdownOpen.value
-    function exportAsImage(type: "jpeg" | "png") {
+    // Always the whole graph, whichever way it is laid out and wherever the viewport sits: the
+    // capture covers the bounding box of every rendered node, so there is nothing to crop it to.
+    async function exportAsImage(type: "jpeg" | "png") {
         if (!vueFlowRef.value) {
             console.warn("Flow not found")
             return
         }
 
-        // The whole graph, not the part of it the viewport happens to show.
-        const bounds = getRectOfNodes(getNodes.value.filter(node => !node.hidden))
-        capture(vueFlowRef.value, {type, bounds, shouldDownload: true})
-            .finally(() => isDropdownOpen.value = false)
+        const renderedNodes = () => getNodes.value.filter(node => !node.hidden)
+
+        try {
+            await untilNodesMeasured(renderedNodes)
+            await capture(vueFlowRef.value, {type, bounds: getRectOfNodes(renderedNodes()), shouldDownload: true})
+        } finally {
+            isDropdownOpen.value = false
+        }
     }
 </script>
 

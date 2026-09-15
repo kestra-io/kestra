@@ -46,7 +46,7 @@
     import {useResizeObserver} from "@vueuse/core"
     import {VueFlow, useVueFlow, Position, MarkerType} from "@vue-flow/core"
     import {Background} from "@vue-flow/background"
-    import {useScreenshot} from "@kestra-io/topology"
+    import {untilNodesMeasured, useScreenshot} from "@kestra-io/topology"
     import {cssVar, stringUtils} from "@kestra-io/design-system"
     import {useTheme} from "../../../../utils/utils"
     import AssetNode from "./AssetNode.vue"
@@ -240,21 +240,6 @@
 
     const exporting = ref(false)
 
-    // Vue Flow keeps a card invisible until its ResizeObserver has measured it, so cards that
-    // enter the DOM for an export need a frame or two before they can be captured.
-    const untilNodesMeasured = (): Promise<void> => new Promise((resolve) => {
-        let framesLeft = 60
-        const check = (): void => {
-            const measured = getNodes.value.every((node) => node.dimensions.width > 0 && node.dimensions.height > 0)
-            if (measured || --framesLeft <= 0) {
-                resolve()
-            } else {
-                requestAnimationFrame(check)
-            }
-        }
-        requestAnimationFrame(check)
-    })
-
     defineExpose({
         zoomIn: () => zoomIn(),
         zoomOut: () => zoomOut(),
@@ -271,7 +256,7 @@
             exporting.value = true
             try {
                 await nextTick()
-                await untilNodesMeasured()
+                await untilNodesMeasured(() => getNodes.value)
                 await capture(vueFlowRef.value, {type, fileName, bounds: bounds.value, shouldDownload: true})
             } finally {
                 exporting.value = false

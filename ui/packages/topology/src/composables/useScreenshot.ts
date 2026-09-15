@@ -59,6 +59,28 @@ export function exportGeometry(bounds: Rect, devicePixelRatio = 1): ExportGeomet
   }
 }
 
+interface MeasurableNode {
+  dimensions: {width: number; height: number};
+}
+
+// Vue Flow leaves a node's dimensions at 0 until its ResizeObserver has measured it, and
+// `getRectOfNodes` covers such a node with an empty box. Pass only the nodes that are rendered:
+// a hidden one is never measured, so waiting on it would always run out of frames.
+export function untilNodesMeasured(renderedNodes: () => MeasurableNode[], maxFrames = 60): Promise<void> {
+  return new Promise((resolve) => {
+    let framesLeft = maxFrames
+    const check = (): void => {
+      const measured = renderedNodes().every(({dimensions}) => dimensions.width > 0 && dimensions.height > 0)
+      if (measured || --framesLeft <= 0) {
+        resolve()
+      } else {
+        requestAnimationFrame(check)
+      }
+    }
+    requestAnimationFrame(check)
+  })
+}
+
 // `getRectOfNodes([])` yields infinite coordinates, and a graph of unmeasured nodes a 0x0 box.
 function isExportable(bounds?: Rect): bounds is Rect {
   return !!bounds

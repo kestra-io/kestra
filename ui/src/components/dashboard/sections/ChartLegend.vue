@@ -59,12 +59,14 @@
         center?: boolean;
         chart?: {getEchartsInstance: () => EChartsType | null} | null;
         formatValue?: (value: number) => string;
+        toggledOff?: Set<string>;
     }>(), {
         maxVisible: 5,
         durationLabel: undefined,
         center: false,
         chart: null,
         formatValue: undefined,
+        toggledOff: undefined,
     })
 
     const emit = defineEmits<{toggle: [name: string]}>()
@@ -82,13 +84,16 @@
     const visible = computed(() => aggregated.value.slice(0, props.maxVisible))
     const hidden = computed(() => aggregated.value.slice(props.maxVisible))
 
-    const toggledOff = ref(new Set<string>())
+    const internalToggledOff = ref(new Set<string>())
+    const toggledOff = computed(() => props.toggledOff ?? internalToggledOff.value)
 
     function toggle(name: string) {
-        const next = new Set(toggledOff.value)
-        if (next.has(name)) next.delete(name)
-        else next.add(name)
-        toggledOff.value = next
+        if (!props.toggledOff) {
+            const next = new Set(internalToggledOff.value)
+            if (next.has(name)) next.delete(name)
+            else next.add(name)
+            internalToggledOff.value = next
+        }
         props.chart?.getEchartsInstance?.()?.dispatchAction({type: "legendToggleSelect", name})
         emit("toggle", name)
     }
@@ -117,6 +122,7 @@
         margin-bottom: var(--ks-spacing-2);
         font-size: var(--ks-font-size-2xs);
         color: var(--ks-text-secondary);
+        font-variant-numeric: tabular-nums;
 
         &.center {
             justify-content: center;

@@ -112,6 +112,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
     private final LoopExecutionEventMessageHandler loopExecutionEventMessageHandler;
 
     private final ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
+    private final ExecutorConfiguration executorConfiguration;
     private ScheduledFuture<?> executionDelayFuture;
     private ScheduledFuture<?> monitorSLAFuture;
 
@@ -171,6 +172,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
         LoopExecutionEventMessageHandler loopExecutionEventMessageHandler) {
         super(ServiceType.EXECUTOR, eventPublisher);
 
+        this.executorConfiguration = executorConfiguration;
         this.kestraContext = kestraContext;
         this.executionQueue = executionQueue;
         this.executionCommandQueue = executionCommandQueue;
@@ -344,14 +346,14 @@ public class DefaultExecutor extends AbstractService implements Executor {
         executionDelayFuture = scheduledExecutorService.scheduleAtFixedRate(
             this::executionDelayLoop,
             0,
-            1,
-            TimeUnit.SECONDS
+            executorConfiguration.executionDelayLoopPeriodicityMs(),
+            TimeUnit.MILLISECONDS
         );
         monitorSLAFuture = scheduledExecutorService.scheduleAtFixedRate(
             this::executionSLAMonitorLoop,
             0,
-            1,
-            TimeUnit.SECONDS
+            executorConfiguration.monitorSLALoopPeriodicityMs(),
+            TimeUnit.MILLISECONDS
         );
 
         // look at exceptions on the scheduledDelay thread

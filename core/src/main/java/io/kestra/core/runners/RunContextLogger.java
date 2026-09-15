@@ -112,6 +112,20 @@ public class RunContextLogger implements Supplier<org.slf4j.Logger> {
                 .findFirst()
                 .orElse(null);
 
+        String traceId = event.getKeyValuePairs() == null ? null
+            : event.getKeyValuePairs().stream()
+                .filter(kv -> kv.key.equals("traceId"))
+                .map(kv -> (String) kv.value)
+                .findFirst()
+                .orElse(null);
+
+        String spanId = event.getKeyValuePairs() == null ? null
+            : event.getKeyValuePairs().stream()
+                .filter(kv -> kv.key.equals("spanId"))
+                .map(kv -> (String) kv.value)
+                .findFirst()
+                .orElse(null);
+
         if (message.length() > MAX_MESSAGE_LENGTH) {
             split = Splitter.fixedLength(MAX_MESSAGE_LENGTH).split(message);
         } else {
@@ -136,6 +150,8 @@ public class RunContextLogger implements Supplier<org.slf4j.Logger> {
                     .timestamp(event.getInstant())
                     .thread(event.getThreadName())
                     .progress(progress)
+                    .traceId(traceId)
+                    .spanId(spanId)
                     .build()
             );
         }

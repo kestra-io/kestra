@@ -100,6 +100,6 @@
         gap: var(--ks-spacing-2);
         margin-top: var(--ks-spacing-4);
         font-size: var(--ks-font-size-sm);
-        color: var(--ks-content-secondary);
+        color: var(--ks-text-secondary);
     }
 </style>

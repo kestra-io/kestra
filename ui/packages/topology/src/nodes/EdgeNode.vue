@@ -207,7 +207,7 @@
         cursor: pointer;
         opacity: 0;
         pointer-events: none;
-        transition: opacity 0.12s, color 0.12s;
+        transition: opacity var(--ks-duration-fast) var(--ks-ease-standard), color var(--ks-duration-fast) var(--ks-ease-standard);
     }
 
     /* A quiet hint at rest: every edge that accepts a task, faint enough not to compete with the
@@ -242,7 +242,7 @@
         background: var(--ks-bg-elevated);
         border: 1px solid var(--ks-border-strong);
         border-radius: 50%;
-        transition: border-color 0.12s, transform 0.15s ease;
+        transition: border-color var(--ks-duration-fast) var(--ks-ease-standard), transform var(--ks-duration-fast) var(--ks-ease-standard);
     }
 
     .edge-add-button--standby .edge-add-button-dot {

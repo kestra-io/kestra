@@ -1,5 +1,9 @@
 {
   "de": {
+    "versionUpgradeNotice": {
+      "message": "Kestra wurde auf {version} aktualisiert und kann Breaking Changes enthalten, die Updates deiner Flows erfordern.",
+      "cta": "Siehe, was sich geändert hat"
+    },
     "loading": "Wird geladen...",
     "more actions": "Weitere Aktionen",
     "recipe": {
@@ -2144,7 +2148,7 @@
         },
         "unavailable": {
           "title": "Der AI Copilot ist nicht verfügbar",
-          "detail": "Kein AI-Provider ist konfiguriert. Bitte einen Administrator, einen einzurichten.",
+          "detail": "Für diese Instanz ist kein AI-Provider konfiguriert. Konfiguriere einen in deiner Kestra-Konfigurationsdatei, um AI Copilot zu aktivieren.",
           "docs": "Dokumentation ansehen"
         },
         "thinkingWords": [

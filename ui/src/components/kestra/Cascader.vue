@@ -23,7 +23,8 @@
 </template>
 
 <script setup lang="ts">
-    import {onMounted, ref} from "vue"
+    import {onMounted, ref, type ComponentPublicInstance} from "vue"
+    import type {Execution} from "@kestra-io/kestra-sdk"
 
     import VarValue from "../executions/VarValue.vue"
     import * as Utils from "../../utils/utils"
@@ -34,12 +35,12 @@
         children?: Options[];
     }
 
-    defineProps<{ options: Options[]; execution: any }>()
-        
-    const panelRef = ref<any>(null)
+    defineProps<{ options: Options[]; execution: Execution }>()
+
+    const panelRef = ref<ComponentPublicInstance | null>(null)
 
     onMounted(() => {
-        const nodes =  panelRef.value.$el.querySelectorAll(".kel-cascader-node")
+        const nodes =  panelRef.value?.$el.querySelectorAll(".kel-cascader-node") ?? []
         if(nodes.length > 0) (nodes[0] as HTMLElement).click()
     })
 </script>

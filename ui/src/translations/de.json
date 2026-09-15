@@ -1,5 +1,9 @@
 {
   "de": {
+    "versionUpgradeNotice": {
+      "message": "Kestra wurde auf {version} aktualisiert und kann Breaking Changes enthalten, die Updates deiner Flows erfordern.",
+      "cta": "Siehe, was sich geändert hat"
+    },
     "loading": "Wird geladen...",
     "more actions": "Weitere Aktionen",
     "recipe": {
@@ -491,6 +495,9 @@
     },
     "download": "Herunterladen",
     "jsonl": "JSONL",
+    "large_outputs": {
+      "value_truncated": "Es wird eine gekürzte Vorschau dieses {size}-Werts angezeigt."
+    },
     "concurrency_limit": {
       "dialog_title": "Concurrency-Limits",
       "warning": "Das Ändern des laufenden Zählers kann die Concurrency beschädigen, sodass Executions das erlaubte Limit überschreiten können."
@@ -915,6 +922,7 @@
     "flow creation denied in namespace": "Du hast keine Berechtigung, Flows im Namespace `{namespace}` zu erstellen.",
     "readonly property": "Schreibgeschützte Eigenschaft",
     "namespace and id readonly": "Die Eigenschaften `namespace` und `id` können nicht geändert werden – sie sind jetzt auf ihre ursprünglichen Werte gesetzt. Wenn du einen Flow umbenennen oder seinen Namespace ändern möchtest, erstelle einen neuen Flow und entferne den alten.",
+    "flow metadata locked": "`id` und `namespace` können nach dem Erstellen eines Flows nicht mehr geändert werden.",
     "avg": "Durchschnitt",
     "sum": "Summe",
     "min": "Min",
@@ -2141,7 +2149,7 @@
         },
         "unavailable": {
           "title": "Der AI Copilot ist nicht verfügbar",
-          "detail": "Kein AI-Provider ist konfiguriert. Bitte einen Administrator, einen einzurichten.",
+          "detail": "Für diese Instanz ist kein AI-Provider konfiguriert. Konfiguriere einen in deiner Kestra-Konfigurationsdatei, um AI Copilot zu aktivieren.",
           "docs": "Dokumentation ansehen"
         },
         "thinkingWords": [

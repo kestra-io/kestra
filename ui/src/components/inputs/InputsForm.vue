@@ -738,12 +738,12 @@
         const run = async (): Promise<void> => {
             if (props.flow !== undefined) {
                 const options = {namespace: props.flow.namespace, id: props.flow.id}
-                const {data} = await executionsStore.validateExecution({...options, formData})
+                const data = await executionsStore.validateExecution({...options, formData})
 
                 metadataCallback(data)
             } else if (props.execution !== undefined) {
                 const options = {id: props.execution.id}
-                const {data} = await executionsStore.validateResume({...options, formData})
+                const data = await executionsStore.validateResume({...options, formData})
 
                 metadataCallback(data)
             } else {

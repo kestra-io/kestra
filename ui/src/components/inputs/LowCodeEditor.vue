@@ -65,8 +65,8 @@
                     :execution="taskProps.execution"
                     :flow="flowStore.flow"
                     :nodeActions="taskProps.actions
-                        .filter(a => taskProps.taskRuns?.length > 1 ? !['edit'].includes(a.key) : !EXCLUDED_NODE_ACTIONS.includes(a.key))
-                        .map((a, i) => i === 0 && !(taskProps.taskRuns?.length > 1) ? {...a, divided: true} : a)
+                        .filter(a => !EXCLUDED_NODE_ACTIONS.includes(a.key))
+                        .map((a, i) => i === 0 ? {...a, divided: true} : a)
                     "
                     @follow="$emit('follow', $event)"
                 />

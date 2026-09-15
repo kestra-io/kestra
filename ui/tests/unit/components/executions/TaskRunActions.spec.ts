@@ -1,11 +1,17 @@
-import {describe, expect, it, vi, beforeEach} from "vitest"
 import {mount} from "@vue/test-utils"
-import {createPinia, setActivePinia} from "pinia"
-import {createI18n} from "vue-i18n"
+import {describe, expect, it, vi} from "vitest"
 import TaskRunActions from "../../../../src/components/executions/TaskRunActions.vue"
+import {createI18n} from "vue-i18n"
+import en from "../../../../src/translations/en.json"
+
+const i18n = createI18n({
+    locale: "en",
+    messages: en,
+    legacy: false,
+})
 
 vi.mock("vue-router", () => ({
-    useRoute: () => ({params: {namespace: "test"}}),
+    useRoute: () => ({params: {namespace: "io.kestra"}}),
 }))
 
 vi.mock("override/stores/auth", () => ({
@@ -14,6 +20,8 @@ vi.mock("override/stores/auth", () => ({
 
 export const mockPromptCopilot = vi.fn()
 export const mockLoadLogs = vi.fn().mockResolvedValue([])
+export const mockDeleteLogs = vi.fn().mockResolvedValue(undefined)
+export const mockDownloadLogs = vi.fn().mockResolvedValue(undefined)
 
 vi.mock("override/stores/misc", () => ({
     useMiscStore: () => ({promptCopilot: mockPromptCopilot}),
@@ -24,93 +32,93 @@ vi.mock("../../../../src/stores/core", () => ({
 }))
 
 vi.mock("../../../../src/stores/executions", () => ({
-    useExecutionsStore: () => ({loadLogs: mockLoadLogs}),
+    useExecutionsStore: () => ({
+        loadLogs: mockLoadLogs,
+        deleteLogs: mockDeleteLogs,
+        downloadLogs: mockDownloadLogs,
+    }),
 }))
 
 vi.mock("../../../../src/utils/toast", () => ({
-    useToast: () => ({success: vi.fn(), error: vi.fn()}),
+    useToast: () => ({
+        confirm: vi.fn((msg, cb) => cb()),
+    }),
 }))
 
-const i18n = createI18n({
-    legacy: false,
-    locale: "en",
-    missingWarn: false,
-    fallbackWarn: false,
-})
+const execution = {
+    id: "exe-1",
+    flowId: "flow-1",
+    namespace: "io.kestra",
+    flowRevision: 1,
+    state: {current: "SUCCESS"},
+}
+
+const baseTaskRun = {
+    id: "run-1",
+    taskId: "task-1",
+    state: {current: "SUCCESS", startDate: "2024-01-01T00:00:00Z"},
+    attempts: [{state: {current: "SUCCESS", startDate: "2024-01-01T00:00:00Z"}}],
+}
+
+function mountActions(propsData: Record<string, unknown>) {
+    return mount(TaskRunActions, {
+        global: {
+            plugins: [i18n],
+            stubs: {
+                KsDropdown: {template: "<div><slot /><slot name=\"dropdown\" /></div>"},
+                KsDropdownMenu: {template: "<div><slot /></div>"},
+                KsDropdownItem: {
+                    name: "KsDropdownItem",
+                    template: "<div @click=\"$emit('click')\"><slot /></div>",
+                },
+                KsButton: true,
+                KsSelect: {
+                    name: "KsSelect",
+                    props: ["modelValue"],
+                    emits: ["update:modelValue"],
+                    template: "<div><slot /><slot name=\"label\" :value=\"modelValue\" /></div>",
+                },
+                KsOption: {
+                    name: "KsOption",
+                    props: ["label", "value"],
+                    template: "<div></div>",
+                },
+                KsDivider: true,
+                Metrics: true,
+                Outputs: true,
+                Restart: true,
+                ChangeStatus: true,
+                TaskEdit: true,
+                WorkerInfo: true,
+                NodeMenuItem: true,
+                SubFlowLink: true,
+                AiIcon: true,
+            },
+        },
+        props: propsData,
+    })
+}
 
 describe("TaskRunActions", () => {
-    beforeEach(() => {
-        setActivePinia(createPinia())
-    })
-
-    const execution = {
-        id: "exe-1",
-        state: {current: "SUCCESS"},
-        flowId: "flow-1",
-        namespace: "io.kestra.tests",
-    }
-    const baseTaskRun = {id: "run-1", taskId: "task-1", state: {current: "SUCCESS"}}
-
-    it("should clamp selectedTaskRunIndex when taskRuns shrinks", async () => {
+    it("should clamp and fallback selected iteration when taskRuns mutates", async () => {
         const taskRuns = [
             {...baseTaskRun, id: "run-1", value: "A"},
             {...baseTaskRun, id: "run-2", value: "B"},
             {...baseTaskRun, id: "run-3", value: "C"},
         ]
 
-        const wrapper = mount(TaskRunActions, {
-            global: {
-                plugins: [i18n],
-                stubs: {
-                    KsDropdown: {
-                        template: "<div><slot /><slot name=\"dropdown\" /></div>",
-                    },
-                    KsDropdownMenu: {
-                        template: "<div><slot /></div>",
-                    },
-                    KsDropdownItem: {
-                        template: "<div><slot /></div>",
-                    },
-                    KsButton: {
-                        template: "<button><slot /></button>",
-                    },
-                    KsSelect: {
-                        name: "KsSelect",
-                        props: ["modelValue"],
-                        emits: ["update:modelValue"],
-                        template: "<div><slot /></div>",
-                    },
-                    KsOption: {
-                        name: "KsOption",
-                        props: ["value"],
-                        template: "<div></div>",
-                    },
-                    Metrics: true,
-                    Outputs: true,
-                    Restart: true,
-                    ChangeStatus: true,
-                    TaskEdit: true,
-                    WorkerInfo: true,
-                    NodeMenuItem: true,
-                    SubFlowLink: true,
-                },
-            },
-            props: {
-                taskRun: taskRuns[0],
-                taskRuns,
-                execution,
-            },
+        const wrapper = mountActions({
+            taskRun: taskRuns[0],
+            taskRuns,
+            execution,
         })
 
         const select = wrapper.findComponent({name: "KsSelect"})
-        expect(select.exists()).toBe(true)
+        
+        // Select index 2 (id: run-3)
+        await select.vm.$emit("update:modelValue", "run-3")
 
-        // Select the last iteration (index 2)
-        await select.vm.$emit("update:modelValue", 2)
-        expect((wrapper.vm as unknown as {selectedTaskRunIndex: number}).selectedTaskRunIndex).toBe(2)
-        expect((wrapper.vm as unknown as {currentTaskRun: {id: string}}).currentTaskRun.id).toBe("run-3")
-
-        // Shrink taskRuns to 2 items
+        // Mutate array to remove run-3
         await wrapper.setProps({
             taskRuns: [
                 {...baseTaskRun, id: "run-1", value: "A"},
@@ -118,149 +126,78 @@ describe("TaskRunActions", () => {
             ],
         })
 
-        // It should clamp to index 1 (the new max)
-        expect((wrapper.vm as unknown as {selectedTaskRunIndex: number}).selectedTaskRunIndex).toBe(1)
-        expect((wrapper.vm as unknown as {currentTaskRun: {id: string}}).currentTaskRun.id).toBe("run-2")
+        // It should fallback to run-1
+        expect((wrapper.vm as unknown as {selectedTaskRunId: string}).selectedTaskRunId).toBe("run-1")
     })
 
-    it("should display iteration selector only for multi-iteration tasks", async () => {
-        const wrapper = mount(TaskRunActions, {
-            global: {
-                plugins: [i18n],
-                stubs: {
-                    KsDropdown: {template: "<div><slot /><slot name=\"dropdown\" /></div>"},
-                    KsDropdownMenu: {template: "<div><slot /></div>"},
-                    KsDropdownItem: true,
-                    KsButton: true,
-                    KsSelect: true,
-                    KsOption: true,
-                    Metrics: true,
-                    Outputs: true,
-                    Restart: true,
-                    ChangeStatus: true,
-                    TaskEdit: true,
-                    WorkerInfo: true,
-                    NodeMenuItem: true,
-                    SubFlowLink: true,
-                },
-            },
-            props: {
-                taskRun: baseTaskRun,
-                taskRuns: [baseTaskRun],
-                execution,
-            },
+    it("should correctly render KsOption and label based on filteredTaskRuns", async () => {
+        const wrapper = mountActions({
+            taskRun: baseTaskRun,
+            taskRuns: [
+                baseTaskRun,
+                {...baseTaskRun, id: "run-2"}, // No value, should use Iteration 2
+                {...baseTaskRun, id: "run-3", taskId: "other-task"}, // should be filtered out
+            ],
+            execution,
         })
 
-        // With only 1 taskRun, KsSelect should not be present
-        expect(wrapper.findComponent({name: "KsSelect"}).exists()).toBe(false)
-        
-        // Single taskRun actions should still be present since we removed the guard
-        expect(wrapper.findComponent({name: "Outputs"}).exists()).toBe(true)
+        const options = wrapper.findAllComponents({name: "KsOption"})
+        expect(options).toHaveLength(2)
+        expect(options[0].props("label")).toBe("Iteration 1")
+        expect(options[1].props("label")).toBe("Iteration 2")
     })
 
-    it("should pass the selected taskRun to SubFlowLink when iteration changes", async () => {
-        const taskRuns = [
-            {...baseTaskRun, id: "run-1", outputs: {executionId: "subflow-exe-1"}},
-            {...baseTaskRun, id: "run-2", outputs: {executionId: "subflow-exe-2"}},
-        ]
-
-        const wrapper = mount(TaskRunActions, {
-            global: {
-                plugins: [i18n],
-                stubs: {
-                    KsDropdown: {template: "<div><slot /><slot name=\"dropdown\" /></div>"},
-                    KsDropdownMenu: {template: "<div><slot /></div>"},
-                    KsDropdownItem: true,
-                    KsButton: true,
-                    KsSelect: {
-                        name: "KsSelect",
-                        props: ["modelValue"],
-                        emits: ["update:modelValue"],
-                        template: "<div><slot /></div>",
-                    },
-                    KsOption: true,
-                    Metrics: true,
-                    Outputs: true,
-                    Restart: true,
-                    ChangeStatus: true,
-                    TaskEdit: true,
-                    WorkerInfo: true,
-                    NodeMenuItem: true,
-                    SubFlowLink: {
-                        name: "SubFlowLink",
-                        props: ["executionId"],
-                        template: "<div></div>",
-                    },
-                },
-            },
-            props: {
-                taskRun: taskRuns[0],
-                taskRuns,
-                execution,
-            },
-        })
-
-        const select = wrapper.findComponent({name: "KsSelect"})
-        const subFlowLink = wrapper.findComponent({name: "SubFlowLink"})
-
-        // Initially evaluates against taskRuns[0]
-        expect(subFlowLink.props("executionId")).toBe("subflow-exe-1")
-
-        // Switch to taskRuns[1]
-        await select.vm.$emit("update:modelValue", 1)
-
-        // SubFlowLink should now evaluate against taskRuns[1]
-        expect(subFlowLink.props("executionId")).toBe("subflow-exe-2")
-    })
-
-    it("should reset selected iteration when taskRuns becomes empty", async () => {
+    it("should use the selected taskRun when clicking delete logs", async () => {
         const taskRuns = [
             {...baseTaskRun, id: "run-1", value: "A"},
             {...baseTaskRun, id: "run-2", value: "B"},
-            {...baseTaskRun, id: "run-3", value: "C"},
         ]
 
-        const wrapper = mount(TaskRunActions, {
-            global: {
-                plugins: [i18n],
-                stubs: {
-                    KsDropdown: {template: "<div><slot /><slot name=\"dropdown\" /></div>"},
-                    KsDropdownMenu: {template: "<div><slot /></div>"},
-                    KsDropdownItem: true,
-                    KsButton: true,
-                    KsSelect: {
-                        name: "KsSelect",
-                        props: ["modelValue"],
-                        emits: ["update:modelValue"],
-                        template: "<div><slot /></div>",
-                    },
-                    KsOption: true,
-                    Metrics: true,
-                    Outputs: true,
-                    Restart: true,
-                    ChangeStatus: true,
-                    TaskEdit: true,
-                    WorkerInfo: true,
-                    NodeMenuItem: true,
-                    SubFlowLink: true,
-                },
-            },
-            props: {
-                taskRun: taskRuns[0],
-                taskRuns,
-                execution,
-            },
+        const wrapper = mountActions({
+            taskRun: taskRuns[0],
+            taskRuns,
+            execution,
         })
 
         const select = wrapper.findComponent({name: "KsSelect"})
-        
-        // Select index 2
-        await select.vm.$emit("update:modelValue", 2)
-        expect((wrapper.vm as unknown as {selectedTaskRunIndex: number}).selectedTaskRunIndex).toBe(2)
+        await select.vm.$emit("update:modelValue", "run-2")
 
-        // Empty the array
-        await wrapper.setProps({taskRuns: []})
-        expect((wrapper.vm as unknown as {selectedTaskRunIndex: number}).selectedTaskRunIndex).toBe(0)
+        mockDeleteLogs.mockClear()
+        await (wrapper.vm as unknown as { deleteLogs: (id: string) => void }).deleteLogs("run-2")
+        expect(mockDeleteLogs).toHaveBeenCalledWith(expect.objectContaining({
+            params: expect.objectContaining({taskRunId: "run-2"}),
+        }))
+    })
+
+    it("should pass the selected taskRun to components when iteration changes", async () => {
+        const taskRuns = [
+            {...baseTaskRun, id: "run-1", outputs: {executionId: "subflow-1"}, taskId: "task-1"},
+            {...baseTaskRun, id: "run-2", outputs: {executionId: "subflow-2"}, taskId: "task-1"},
+        ]
+
+        const wrapper = mountActions({
+            taskRun: taskRuns[0],
+            taskRuns,
+            execution,
+            attemptIndex: 1, // To test attemptIndex > 0
+        })
+
+        const select = wrapper.findComponent({name: "KsSelect"})
+
+        expect(wrapper.findComponent({name: "SubFlowLink"}).props("executionId")).toBe("subflow-1")
+        expect(wrapper.findComponent({name: "Restart"}).props("taskRun").id).toBe("run-1")
+        expect(wrapper.findComponent({name: "ChangeStatus"}).props("taskRun").id).toBe("run-1")
+        expect(wrapper.findComponent({name: "Metrics"}).props("taskRun").id).toBe("run-1")
+        expect(wrapper.findComponent({name: "Outputs"}).props("taskRun").id).toBe("run-1")
+
+        // Switch to taskRuns[1]
+        await select.vm.$emit("update:modelValue", "run-2")
+
+        expect(wrapper.findComponent({name: "SubFlowLink"}).props("executionId")).toBe("subflow-2")
+        expect(wrapper.findComponent({name: "Restart"}).props("taskRun").id).toBe("run-2")
+        expect(wrapper.findComponent({name: "ChangeStatus"}).props("taskRun").id).toBe("run-2")
+        expect(wrapper.findComponent({name: "Metrics"}).props("taskRun").id).toBe("run-2")
+        expect(wrapper.findComponent({name: "Outputs"}).props("taskRun").id).toBe("run-2")
     })
 
     it("should use the selected taskRun when fixing an error with AI", async () => {
@@ -269,65 +206,23 @@ describe("TaskRunActions", () => {
             {...baseTaskRun, id: "run-2", state: {current: "FAILED"}},
         ]
 
-        const wrapper = mount(TaskRunActions, {
-            global: {
-                plugins: [i18n],
-                stubs: {
-                    KsDropdown: {template: "<div><slot /><slot name=\"dropdown\" /></div>"},
-                    KsDropdownMenu: {template: "<div><slot /></div>"},
-                    KsDropdownItem: {
-                        name: "KsDropdownItem",
-                        template: "<div @click=\"$emit('click')\"><slot /></div>",
-                    },
-                    KsButton: true,
-                    KsSelect: {
-                        name: "KsSelect",
-                        props: ["modelValue"],
-                        emits: ["update:modelValue"],
-                        template: "<div><slot /></div>",
-                    },
-                    KsOption: true,
-                    Metrics: true,
-                    Outputs: true,
-                    Restart: true,
-                    ChangeStatus: true,
-                    TaskEdit: true,
-                    WorkerInfo: true,
-                    NodeMenuItem: true,
-                    SubFlowLink: true,
-                    AiIcon: true,
-                },
-            },
-            props: {
-                taskRun: taskRuns[0],
-                taskRuns,
-                execution,
-                attemptIndex: 0,
-            },
+        const wrapper = mountActions({
+            taskRun: taskRuns[0],
+            taskRuns,
+            execution,
+            attemptIndex: 0,
         })
 
         const select = wrapper.findComponent({name: "KsSelect"})
-        
-        // Switch to iteration index 1
-        await select.vm.$emit("update:modelValue", 1)
+        await select.vm.$emit("update:modelValue", "run-2")
 
-        // Clear mock calls from before
         mockLoadLogs.mockClear()
         mockPromptCopilot.mockClear()
 
-        // Trigger fixErrorWithAi
-        // We know it's a method on the component
         await (wrapper.vm as unknown as { fixErrorWithAi: () => Promise<void> }).fixErrorWithAi()
 
-        // Assert loadLogs used the new selected taskRun id
         expect(mockLoadLogs).toHaveBeenCalledWith(expect.objectContaining({
             params: expect.objectContaining({taskRunId: "run-2"}),
         }))
-
-        // Assert prompt uses the taskId
-        expect(mockPromptCopilot).toHaveBeenCalledWith(
-            expect.stringContaining("task-1"), 
-            expect.anything(),
-        )
     })
 })

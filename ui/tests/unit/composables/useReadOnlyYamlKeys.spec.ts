@@ -273,7 +273,7 @@ describe("useReadOnlyYamlKeys", () => {
         onReverted?: (keys: string[]) => void,
     ) {
         return withComposable(() => useReadOnlyYamlKeys({
-            editor: ref(double.editor) as any,
+            editor: ref(double.editor) as never,
             expected,
             enabled: computed(() => enabled),
             onReverted,

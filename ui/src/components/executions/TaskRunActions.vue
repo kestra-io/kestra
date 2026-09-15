@@ -5,23 +5,22 @@
         </KsButton>
         <template #dropdown>
             <KsDropdownMenu>
-                <div v-if="taskRuns && taskRuns.length > 1" class="px-3 py-2 border-bottom">
+                <li v-if="currentTaskRuns.length > 1" role="presentation" style="padding: var(--ks-spacing-2);">
                     <KsSelect
-                        v-model="selectedTaskRunIndex"
+                        v-model="selectedTaskRunId"
                         size="small"
                         :clearable="false"
+                        :aria-label="$t('iteration')"
                     >
-                        <template #label="{value}">
-                            {{ $t('iteration') }} {{ value + 1 }}
-                        </template>
                         <KsOption
-                            v-for="(run, index) in taskRuns"
+                            v-for="(run, index) in currentTaskRuns"
                             :key="run.id"
-                            :value="index"
+                            :value="run.id"
                             :label="run.value || `${$t('iteration')} ${index + 1}`"
                         />
                     </KsSelect>
-                </div>
+                </li>
+                <KsDivider v-if="currentTaskRuns.length > 1" />
                 <KsDropdownItem
                     v-if="selectedAttempt?.state.current === 'FAILED'"
                     @click="fixErrorWithAi"
@@ -48,7 +47,7 @@
 
                 <Restart
                     component="KsDropdownItem"
-                    :key="`restart-${attemptIndex}-${selectedAttempt?.state.startDate}`"
+                    :key="`restart-${attemptIndex}-${selectedAttempt?.state.startDate}-${currentTaskRun.id}`"
                     isReplay
                     tooltipPosition="left"
                     :execution="execution"
@@ -59,7 +58,7 @@
 
                 <ChangeStatus
                     component="KsDropdownItem"
-                    :key="`change-status-${attemptIndex}-${selectedAttempt?.state.startDate}`"
+                    :key="`change-status-${attemptIndex}-${selectedAttempt?.state.startDate}-${currentTaskRun.id}`"
                     :execution="execution"
                     :taskRun="currentTaskRun"
                     :attemptIndex="attemptIndex"
@@ -171,18 +170,21 @@
     const executionsStore = useExecutionsStore()
     const authStore = useAuthStore()
 
-    const selectedTaskRunIndex = ref(0)
-    watch(() => props.taskRuns, (newRuns) => {
-        if (!newRuns || newRuns.length === 0) {
-            selectedTaskRunIndex.value = 0
-        } else if (selectedTaskRunIndex.value >= newRuns.length) {
-            selectedTaskRunIndex.value = newRuns.length - 1
+    const currentTaskRuns = computed(() => {
+        return props.taskRuns?.filter((r: { id: string; taskId: string }) => r.taskId === props.taskRun?.taskId) || []
+    })
+
+    const selectedTaskRunId = ref(props.taskRun?.id)
+
+    watch(() => currentTaskRuns.value.length, () => {
+        if (currentTaskRuns.value.length > 0 && !currentTaskRuns.value.find((r: { id: string; taskId: string }) => r.id === selectedTaskRunId.value)) {
+            selectedTaskRunId.value = currentTaskRuns.value[0].id
         }
-    }, {deep: true})
-    
+    })
+
     const currentTaskRun = computed(() => {
-        if (props.taskRuns && props.taskRuns.length > 0) {
-            return props.taskRuns[selectedTaskRunIndex.value] || props.taskRun
+        if (currentTaskRuns.value.length > 0) {
+            return currentTaskRuns.value.find((r: { id: string; taskId: string }) => r.id === selectedTaskRunId.value) || props.taskRun
         }
         return props.taskRun
     })
@@ -238,8 +240,12 @@
     }
 
     function deleteLogs(currentTaskRunId: string) {
+        const iterationContext = currentTaskRuns.value.length > 1
+            ? ` (${currentTaskRun.value.value || `${t("iteration")} ${(currentTaskRuns.value.findIndex(r => r.id === currentTaskRunId) ?? 0) + 1}`})`
+            : ""
+            
         toast.confirm(
-            t("delete_log"),
+            t("delete_log") + iterationContext,
             async () => {
                 await executionsStore.deleteLogs({
                     executionId: props.execution.id,
@@ -252,7 +258,7 @@
     }
 
     async function fixErrorWithAi() {
-        let taskRunLogs = props.attemptLogs ?? []
+        let taskRunLogs = currentTaskRun.value.id === props.taskRun.id ? (props.attemptLogs ?? []) : []
         if (taskRunLogs.length === 0) {
             taskRunLogs = await executionsStore.loadLogs({
                 store: false,

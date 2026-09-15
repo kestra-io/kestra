@@ -13,6 +13,7 @@ import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.assets.Asset;
 import io.kestra.core.models.assets.AssetsInOut;
 import io.kestra.core.models.assets.Custom;
+import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionKind;
 import io.kestra.core.models.executions.TaskRun;
@@ -219,6 +220,60 @@ class ExecutorServiceTest {
         // belong to the parent execution's own completion, not to each loop iteration's sub-execution
         assertThat(result.getExecution().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(result.getExecution().getTaskRunList()).extracting(TaskRun::getTaskId).containsExactly("inner");
+    }
+
+    @Test
+    void shouldCancelExecutionWhenSLAViolatedWithCancelBehavior() throws Exception {
+        ExecutorContext result = executorService.handleExecutionChangedSLA(slaExecutor(SLA.Behavior.CANCEL, "false", null));
+
+        assertThat(result.getExecution().getState().getCurrent()).isEqualTo(State.Type.CANCELLED);
+    }
+
+    @Test
+    void shouldFailExecutionWhenSLAViolatedWithFailBehavior() throws Exception {
+        ExecutorContext result = executorService.handleExecutionChangedSLA(slaExecutor(SLA.Behavior.FAIL, "false", null));
+
+        assertThat(result.getExecution().getState().getCurrent()).isEqualTo(State.Type.FAILED);
+    }
+
+    @Test
+    void shouldAddLabelsWhenSLAViolatedWithNoneBehavior() throws Exception {
+        ExecutorContext result = executorService.handleExecutionChangedSLA(slaExecutor(SLA.Behavior.NONE, "false", List.of(new Label("sla", "violated"))));
+
+        assertThat(result.getExecution().getState().getCurrent()).isEqualTo(State.Type.CREATED);
+        assertThat(result.getExecution().getLabels()).contains(new Label("sla", "violated"));
+    }
+
+    @Test
+    void shouldNotChangeExecutionWhenSLASatisfied() throws Exception {
+        ExecutorContext executor = slaExecutor(SLA.Behavior.CANCEL, "true", null);
+
+        ExecutorContext result = executorService.handleExecutionChangedSLA(executor);
+
+        assertThat(result).isSameAs(executor);
+        assertThat(result.getExecution().getState().getCurrent()).isEqualTo(State.Type.CREATED);
+    }
+
+    private ExecutorContext slaExecutor(SLA.Behavior behavior, String assertExpr, List<Label> labels) {
+        SLA sla = ExecutionAssertionSLA.builder()
+            .id("sla")
+            .type(SLA.Type.EXECUTION_ASSERTION)
+            .behavior(behavior)
+            .labels(labels)
+            ._assert(assertExpr)
+            .build();
+        var task = Log.builder().id("task").type(Log.class.getName()).message("hello").build();
+        var flow = Flow.builder().tenantId("tenant").namespace("io.kestra.unit-test").id(IdUtils.create()).tasks(List.of(task)).sla(List.of(sla)).build();
+        var execution = Execution.builder()
+            .tenantId("tenant")
+            .id(IdUtils.create())
+            .namespace(flow.getNamespace())
+            .flowId(flow.getId())
+            .flowRevision(1)
+            .state(new State())
+            .build();
+
+        return new ExecutorContext(execution, FlowWithSource.of(flow, "flow-source"));
     }
 
     private Asset asset(String id) {

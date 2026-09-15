@@ -46,18 +46,6 @@ public class SLATestCase {
         }
     }
 
-    public void maxDurationSLAShouldPass() throws QueueException, TimeoutException {
-        Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "sla-max-duration-ok");
-
-        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
-    }
-
-    public void executionConditionSLAShouldPass() throws QueueException, TimeoutException {
-        Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "sla-execution-condition");
-
-        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
-    }
-
     public void executionConditionSLAShouldCancel(String tenantId) throws QueueException, TimeoutException {
         Execution execution = runnerUtils.runOne(tenantId, "io.kestra.tests", "sla-execution-condition", null, (f, e) -> Map.of("string", "CANCEL"));
 

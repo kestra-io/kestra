@@ -1,5 +1,6 @@
 package io.kestra.executor.handler;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -10,6 +11,7 @@ import io.kestra.core.killswitch.KillSwitchService;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.runners.FlowMetaStoreInterface;
 import io.kestra.core.runners.WorkerTaskResult;
+import io.kestra.core.services.TaskOutputService;
 import io.kestra.executor.ExecutionStateStore;
 import io.kestra.executor.ExecutorContext;
 import io.kestra.executor.ExecutorMessageHandler;
@@ -29,6 +31,8 @@ public class WorkerTaskResultMessageHandler implements ExecutorMessageHandler<Wo
 
     private final FlowMetaStoreInterface flowMetaStore;
 
+    private final TaskOutputService taskOutputService;
+
     private final KillSwitchService killSwitchService;
     private final KillSwitchActionService killSwitchActionService;
 
@@ -39,12 +43,14 @@ public class WorkerTaskResultMessageHandler implements ExecutorMessageHandler<Wo
         ExecutionStateStore executionStateStore,
         ExecutorService executorService,
         FlowMetaStoreInterface flowMetaStore,
+        TaskOutputService taskOutputService,
         KillSwitchService killSwitchService,
         KillSwitchActionService killSwitchActionService,
         List<WorkerTaskResultListener> workerTaskResultListeners) {
         this.executionStateStore = executionStateStore;
         this.executorService = executorService;
         this.flowMetaStore = flowMetaStore;
+        this.taskOutputService = taskOutputService;
         this.killSwitchService = killSwitchService;
         this.killSwitchActionService = killSwitchActionService;
         this.workerTaskResultListeners = workerTaskResultListeners;
@@ -65,39 +71,67 @@ public class WorkerTaskResultMessageHandler implements ExecutorMessageHandler<Wo
             executorService.log(log, true, message);
         }
 
+        List<JoinedWorkerTaskResult> joinedResults = new ArrayList<>();
         Optional<ExecutorContext> result = executionStateStore.lock(message.getTaskRun().getExecutionId(), execution ->
         {
             ExecutorContext current = new ExecutorContext(execution);
 
-            if (execution.hasTaskRunJoinable(message.getTaskRun())) {
-                try {
-                    // process worker task result
-                    executorService.addWorkerTaskResult(
-                        current,
-                        () -> flowMetaStore.findByExecutionForRuntime(execution).orElseThrow(() -> new FlowNotFoundException(execution)),
-                        message
-                    );
-                    // join worker result
-                    return current;
-                } catch (InternalException e) {
-                    return executorService.handleFailedExecutionFromExecutor(current, e);
-                } catch (FlowNotFoundException e) {
-                    // avoid infinite for FlowNotFoundException
-                    if (!current.getExecution().getState().getCurrent().isFailed()) {
-                        return executorService.handleFailedExecutionFromExecutor(current, e);
-                    }
+            try {
+                for (WorkerTaskResult.WorkerTaskResultPayload precedingResult : message.getPrecedingResults()) {
+                    joinIfPossible(current, execution, precedingResult.toWorkerTaskResult(), joinedResults);
                 }
+                joinIfPossible(current, execution, message, joinedResults);
+                return joinedResults.isEmpty() ? null : current;
+            } catch (InternalException e) {
+                ExecutorContext failed = executorService.handleFailedExecutionFromExecutor(current, e);
+                updateLastJoinedExecution(joinedResults, failed.getExecution());
+                return failed;
+            } catch (FlowNotFoundException e) {
+                if (!current.getExecution().getState().getCurrent().isFailed()) {
+                    ExecutorContext failed = executorService.handleFailedExecutionFromExecutor(current, e);
+                    updateLastJoinedExecution(joinedResults, failed.getExecution());
+                    return failed;
+                }
+                return null;
             }
-
-            return null;
         });
 
-        // a present result means the taskrun was joined here (redeliveries come back empty): notify listeners once
         if (result.isPresent()) {
-            notifyJoined(message, result.get().getExecution());
+            joinedResults.forEach(joined -> notifyJoined(joined.result(), joined.execution()));
         }
 
         return result;
+    }
+
+    private void joinIfPossible(
+        ExecutorContext current,
+        Execution execution,
+        WorkerTaskResult message,
+        List<JoinedWorkerTaskResult> joinedResults
+    ) throws InternalException, FlowNotFoundException {
+        if (current.getExecution().hasTaskRunJoinable(message.getTaskRun())) {
+            int joinedResultIndex = joinedResults.size();
+            joinedResults.add(new JoinedWorkerTaskResult(message, current.getExecution()));
+            executorService.addWorkerTaskResult(
+                current,
+                () -> flowMetaStore.findByExecutionForRuntime(execution).orElseThrow(() -> new FlowNotFoundException(execution)),
+                message
+            );
+            joinedResults.set(joinedResultIndex, new JoinedWorkerTaskResult(message, current.getExecution()));
+        } else if (
+            message.getOutputs() != null &&
+                !message.getOutputs().isEmpty() &&
+                !taskOutputService.hasOutputs(message.getTaskRun())
+        ) {
+            taskOutputService.saveOutputs(message.getTaskRun(), message.getOutputs());
+        }
+    }
+
+    private void updateLastJoinedExecution(List<JoinedWorkerTaskResult> joinedResults, Execution execution) {
+        if (!joinedResults.isEmpty()) {
+            int lastIndex = joinedResults.size() - 1;
+            joinedResults.set(lastIndex, new JoinedWorkerTaskResult(joinedResults.get(lastIndex).result(), execution));
+        }
     }
 
     private void notifyJoined(WorkerTaskResult message, Execution execution) {
@@ -108,5 +142,8 @@ public class WorkerTaskResultMessageHandler implements ExecutorMessageHandler<Wo
                 log.error("Worker task result listener {} failed", listener.getClass().getName(), e);
             }
         }
+    }
+
+    private record JoinedWorkerTaskResult(WorkerTaskResult result, Execution execution) {
     }
 }

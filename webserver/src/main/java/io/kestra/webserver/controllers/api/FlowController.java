@@ -1035,11 +1035,7 @@ public class FlowController {
             .stream()
             .map(id -> flowRepository.findByIdWithSource(tenantService.resolveTenant(), id.getNamespace(), id.getId()).orElseThrow())
             .filter(flowWithSource -> disable != flowWithSource.isDisabled())
-            .peek(throwConsumer(flow ->
-            {
-                GenericFlow genericFlowUpdated = parseFlowSource(FlowService.injectDisabled(flow.getSource(), disable));
-                flowService.update(genericFlowUpdated, flow);
-            }))
+            .peek(throwConsumer(flow -> setFlowDisabled(flow, disable)))
             .toList();
     }
 
@@ -1048,12 +1044,33 @@ public class FlowController {
             .findWithSource(Pageable.UNPAGED, tenantService.resolveTenant(), filters)
             .stream()
             .filter(flowWithSource -> disable != flowWithSource.isDisabled())
-            .peek(throwConsumer(flow ->
-            {
-                GenericFlow genericFlowUpdated = parseFlowSource(FlowService.injectDisabled(flow.getSource(), disable));
-                flowService.update(genericFlowUpdated, flow);
-            }))
+            .peek(throwConsumer(flow -> setFlowDisabled(flow, disable)))
             .toList();
+    }
+
+    /**
+     * Re-saves the flow with `disabled` injected into its source.
+     * <p>
+     * The save re-validates the source, so a stored flow the current model can no longer parse — a 1.x flow
+     * whose trigger still carries the removed `conditions`/`preconditions`, say — cannot be disabled, and the
+     * caller gets its constraint violations as a 422, like {@code PUT /flows}. That is what the unwrapping
+     * below is for: {@code flowService.update} reports them inside a {@link FlowProcessingException}, which is
+     * mapped to an internal error. {@code parseFlowSource} sits outside the try on purpose — it raises a
+     * {@code ConstraintViolationException} directly, which is already a 422.
+     * <p>
+     * Bulk disable still aborts on the first failing flow, leaving the flows processed before it disabled: the
+     * response carries a count, not a per-flow outcome, so partial success cannot be reported as things stand.
+     */
+    private void setFlowDisabled(FlowWithSource flow, boolean disable) throws FlowProcessingException, QueueException {
+        GenericFlow genericFlowUpdated = parseFlowSource(FlowService.injectDisabled(flow.getSource(), disable));
+        try {
+            flowService.update(genericFlowUpdated, flow);
+        } catch (FlowProcessingException e) {
+            if (e.getCause() instanceof ConstraintViolationException cve) {
+                throw cve;
+            }
+            throw e;
+        }
     }
 
     protected <T> T parseTaskTrigger(String input, Class<T> cls) throws ConstraintViolationException {

@@ -72,7 +72,11 @@
 
     function toggleExpanded(taskRunId: string) {
         const next = new Set(expandedIds.value)
-        next.has(taskRunId) ? next.delete(taskRunId) : next.add(taskRunId)
+        if (next.has(taskRunId)) {
+            next.delete(taskRunId)
+        } else {
+            next.add(taskRunId)
+        }
         expandedIds.value = next
     }
 </script>
@@ -87,8 +91,6 @@
         list-style: none;
     }
 
-    // The toggle lives inside this bar (not as a sibling next to it) so every row's bar spans
-    // the same width and height whether or not that row happens to have a toggle.
     .structural-node__bar {
         display: flex;
         align-items: center;

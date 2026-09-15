@@ -67,6 +67,40 @@ class AssetValidationTest {
     }
 
     @Test
+    void shouldAcceptTheTtlFormatTheExpiryBucketsCompareAgainst() {
+        assertThat(modelValidator.isValid(assetWithTtl("2026-09-15T12:00:00.000Z"))).isEmpty();
+    }
+
+    @Test
+    void shouldAcceptAnEmptyTtl() {
+        assertThat(modelValidator.isValid(assetWithTtl(""))).isEmpty();
+    }
+
+    @Test
+    void shouldRejectATtlCarryingAnOffsetRatherThanUtc() {
+        assertThat(modelValidator.isValid(assetWithTtl("2026-09-15T14:00:00.000+02:00")))
+            .get()
+            .isInstanceOf(ConstraintViolationException.class);
+    }
+
+    @Test
+    void shouldRejectATtlWithoutMillis() {
+        assertThat(modelValidator.isValid(assetWithTtl("2026-09-15T12:00:00Z")))
+            .get()
+            .isInstanceOf(ConstraintViolationException.class);
+    }
+
+    private Asset assetWithTtl(String ttl) {
+        Asset asset = Custom.builder()
+            .namespace("io.kestra")
+            .id("my-asset")
+            .type("MY_OWN_ASSET_TYPE")
+            .build();
+        asset.setTtl(ttl);
+        return asset;
+    }
+
+    @Test
     void shouldRejectAnAssetActionWithABlankNamespaceOrFlowId() {
         Asset asset = Custom.builder()
             .namespace("io.kestra")

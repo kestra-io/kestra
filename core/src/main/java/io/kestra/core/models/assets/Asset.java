@@ -41,6 +41,9 @@ public abstract class Asset implements HasUID, SoftDeletable<Asset>, Plugin {
 
     public static final String OWNER_METADATA_KEY = SYSTEM_METADATA_PREFIX + "owner";
 
+    /** The expiry buckets compare TTLs as text, so UTC ISO-8601 with millis is a contract, not a preference. */
+    public static final String TTL_FORMAT = "(\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z)?";
+
     @Hidden
     @TenantId
     protected String tenantId;
@@ -149,6 +152,7 @@ public abstract class Asset implements HasUID, SoftDeletable<Asset>, Plugin {
 
     /** An empty value is meaningful: it is how "no expiry" is stored, and differs from an absent key. */
     @JsonProperty("ttl")
+    @Pattern(regexp = TTL_FORMAT, message = "must be a UTC instant with millis (yyyy-MM-dd'T'HH:mm:ss.SSS'Z'), or empty for no expiry")
     public String getTtl() {
         return reserved(TTL_METADATA_KEY);
     }

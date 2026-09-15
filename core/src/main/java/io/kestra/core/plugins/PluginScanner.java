@@ -15,6 +15,7 @@ import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 import java.util.stream.Collectors;
 
+import io.kestra.core.queues.factory.QueueFactoryInterface;
 import org.apache.commons.io.IOUtils;
 
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -136,6 +137,7 @@ public class PluginScanner {
         List<Class<? extends RulePluginInterface>> rules = new ArrayList<>();
         List<Class<? extends AdditionalPlugin>> additionalPlugins = new ArrayList<>();
         List<Class<? extends FileRenderer>> fileRenderers = new ArrayList<>();
+        List<Class<? extends QueueFactoryInterface>> queueFactories = new ArrayList<>();
         List<String> guides = new ArrayList<>();
         Map<String, Class<?>> aliases = new HashMap<>();
         Map<String, List<PluginUiModule>> pluginUiManifest = new HashMap<>();
@@ -225,6 +227,10 @@ public class PluginScanner {
                         log.debug("Loading fileRenderer plugin: '{}'", plugin.getClass());
                         fileRenderers.add(fileRenderer.getClass());
                     }
+                    case QueueFactoryInterface queueFactory -> {
+                        log.debug("Loading queueFactory plugin: '{}'", plugin.getClass());
+                        queueFactories.add(queueFactory.getClass());
+                    }
                     default -> {
                     }
                 }
@@ -298,6 +304,7 @@ public class PluginScanner {
             .rules(rules)
             .additionalPlugins(additionalPlugins)
             .fileRenderers(fileRenderers)
+            .queueFactories(queueFactories)
             .aliases(
                 aliases.entrySet().stream().collect(
                     Collectors.toMap(

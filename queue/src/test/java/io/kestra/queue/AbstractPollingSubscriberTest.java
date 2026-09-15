@@ -10,6 +10,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import io.kestra.core.metrics.MetricRegistry;
+import io.kestra.core.queues.QueueService;
 import io.kestra.core.queues.event.Event;
 import io.kestra.core.services.IgnoreExecutionService;
 import io.kestra.queue.poller.QueuePollerConfiguration;

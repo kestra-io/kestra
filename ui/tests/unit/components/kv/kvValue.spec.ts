@@ -77,7 +77,8 @@ describe("serializeKvValueForSave", () => {
         expect(serializeKvValueForSave("JSON", "{\"a\":1}")).toBe("{\"a\":1}")
     })
 
-    test("should fall back to an empty payload for an untouched DURATION or JSON", () => {
+    test("should fall back to an empty payload for an untouched STRING, DURATION or JSON", () => {
+        expect(serializeKvValueForSave("STRING", undefined)).toBe("")
         expect(serializeKvValueForSave("DURATION", undefined)).toBe("")
         expect(serializeKvValueForSave("JSON", undefined)).toBe("")
     })
@@ -95,6 +96,11 @@ describe("hydrateKvValueForForm", () => {
     test("should keep a BOOLEAN as a boolean for the switch", () => {
         expect(hydrateKvValueForForm("BOOLEAN", false)).toBe(false)
         expect(hydrateKvValueForForm("BOOLEAN", true)).toBe(true)
+    })
+
+    test("should not trust a truthy non-boolean for the switch", () => {
+        expect(hydrateKvValueForForm("BOOLEAN", "true")).toBe(false)
+        expect(hydrateKvValueForForm("BOOLEAN", 1)).toBe(false)
     })
 
     test("should feed a DATETIME to the picker in the user timezone", () => {

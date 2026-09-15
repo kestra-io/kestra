@@ -29,6 +29,8 @@ import io.kestra.core.exceptions.ConflictException;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.webserver.services.ai.AiServiceManager;
+import io.kestra.webserver.services.ai.AiUsageService;
+import io.kestra.webserver.services.ai.AiUsageStatus;
 import io.kestra.webserver.services.ai.agent.ModeProfiles.ResolvedProfile;
 import io.kestra.webserver.services.ai.agent.data.AgentEvents;
 import io.kestra.webserver.services.ai.agent.internals.ChatMessageAdaptor;
@@ -64,6 +66,7 @@ public class AgentOrchestrator {
     private final ModeProfiles modeProfiles;
     private final AiThreadManager threadManager;
     private final SystemPromptResolver systemPromptResolver;
+    private final AiUsageService usageService;
     private final Duration modelCallTimeout;
     private final int maxContextTurns;
     private final int maxSequentialToolsInvocations;
@@ -75,12 +78,14 @@ public class AgentOrchestrator {
         final ModeProfiles modeProfiles,
         final AiThreadManager threadManager,
         final SystemPromptResolver systemPromptResolver,
+        final AiUsageService usageService,
         final AgentConfiguration configuration) {
         this.aiServiceManager = aiServiceManager;
         this.catalog = catalog;
         this.modeProfiles = modeProfiles;
         this.threadManager = threadManager;
         this.systemPromptResolver = systemPromptResolver;
+        this.usageService = usageService;
         this.modelCallTimeout = configuration.modelCallTimeout();
         this.maxContextTurns = configuration.maxContextTurns();
         this.maxSequentialToolsInvocations = configuration.maxSequentialToolsInvocations();
@@ -91,7 +96,7 @@ public class AgentOrchestrator {
         String traceId = thread.uid() + "-turn-" + (threadManager.load(thread.tenant(), thread.uid()).size() + 1);
         try {
             ResolvedProfile profile = modeProfiles.resolve(context.mode(), context.tenant(), context.principal());
-            StreamingChatModel model = aiServiceManager.getAiService(context.providerId()).streamingChatModel(List.of());
+            StreamingChatModel model = aiServiceManager.getAiService(context.providerId()).streamingChatModel(context.principal(), List.of());
 
             threadManager.appendUser(thread.tenant(), thread.uid(), traceId, context.prompt());
 
@@ -161,7 +166,7 @@ public class AgentOrchestrator {
             // keeps every tool-call/result pair inside one turn so turn-windowing can never split them.
             String traceId = pending.traceId();
             ResolvedProfile profile = modeProfiles.resolve(running.mode(), running.tenant(), principal);
-            StreamingChatModel model = aiServiceManager.getAiService(providerId).streamingChatModel(List.of());
+            StreamingChatModel model = aiServiceManager.getAiService(providerId).streamingChatModel(principal, List.of());
 
             List<ChatMessage> projected = ChatMessageAdaptor.project(TurnWindow.lastNTurns(log, maxContextTurns));
             List<ChatMessage> messages = new ArrayList<>(projected.size() + 1);
@@ -261,12 +266,19 @@ public class AgentOrchestrator {
                 return;
             }
 
+            AiUsageStatus usage = usageService.status(ctx.providerId(), userId(ctx));
+            if (usage.isExceeded()) {
+                stopForUsageLimit(ctx, sink, usage);
+                return;
+            }
+
             ChatRequest request = ChatRequest.builder()
                 .messages(ctx.messages())
                 .toolSpecifications(ctx.profile().toolSpecifications())
                 .build();
 
             ChatResponse response = callModel(ctx.model(), request, sink);
+            recordUsage(ctx, response);
 
             if (sink.isCancelled()) {
                 abortCancelled(ctx);
@@ -460,6 +472,34 @@ public class AgentOrchestrator {
             Throwable cause = e.getCause() != null ? e.getCause() : e;
             throw new IllegalStateException("LLM streaming call failed: " + cause.getMessage(), cause);
         }
+    }
+
+    /**
+     * Books what the call just cost. Deliberately ahead of the cancellation check — a user closing the tab does
+     * not un-bill tokens the provider already generated.
+     */
+    private void recordUsage(final AgentLoopContext ctx, final ChatResponse response) {
+        String model = response.metadata() == null ? null : response.metadata().modelName();
+        usageService.record(ctx.tenant(), ctx.providerId(), userId(ctx), model, response.tokenUsage());
+    }
+
+    /**
+     * Ends a turn gracefully once the provider's spend ceiling is reached. Stopped rather than failed, like the
+     * tool-step cap: the request was valid and the work so far stands, so the thread stays usable.
+     */
+    private void stopForUsageLimit(final AgentLoopContext ctx, final TurnEventSink sink, final AiUsageStatus usage) {
+        log.warn("Copilot turn for thread {} stopped: provider '{}' has reached its usage limit", ctx.thread().uid(), ctx.providerId());
+        usageService.recordRefusal(usage);
+        String message = usage.exceededMessage();
+        threadManager.appendAssistantText(ctx.thread().tenant(), ctx.thread().uid(), ctx.traceId(), message);
+        sink.emit(AgentEvents.TOKEN, new AgentEvents.TokenEvent(message));
+        finishTurn(ctx);
+        done(sink, AgentThreadStatus.IDLE);
+    }
+
+    @Nullable
+    private static String userId(final AgentLoopContext ctx) {
+        return ctx.principal() == null ? null : ctx.principal().userId();
     }
 
     private void finishTurn(final AgentLoopContext ctx) {

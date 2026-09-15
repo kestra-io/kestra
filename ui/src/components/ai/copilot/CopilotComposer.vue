@@ -99,12 +99,23 @@
                         data-test="copilot-mic"
                         @click="toggleVoiceInput"
                     />
+                    <KsTooltip v-if="usageLabel" :persistent="false">
+                        <template #content>
+                            <span>{{ usageTooltip }}</span>
+                        </template>
+                        <KsTag
+                            :type="usage?.exceeded ? 'danger' : (usage?.warning ? 'warning' : 'info')"
+                            data-test="copilot-usage"
+                        >
+                            {{ usageLabel }}
+                        </KsTag>
+                    </KsTooltip>
                     <KsButton
                         circle
                         type="primary"
                         :icon="ArrowUp"
                         :disabled="!canSubmit"
-                        :aria-label="$t('ai.copilot.send')"
+                        :aria-label="usage?.exceeded ? usageTooltip : $t('ai.copilot.send')"
                         data-test="copilot-send"
                         @click="submit"
                     />
@@ -127,7 +138,9 @@
     import ChatQuestionOutline from "vue-material-design-icons/ChatQuestionOutline.vue"
     import Wrench from "vue-material-design-icons/Wrench.vue"
     import MapOutline from "vue-material-design-icons/MapOutline.vue"
+    import {dateUtils} from "@kestra-io/design-system"
     import type {AgentMode, AiControllerAiProviderResponse} from "@kestra-io/kestra-sdk"
+    import type {AiUsageStatus} from "./useAiUsage"
 
     const props = defineProps<{
         mode: AgentMode
@@ -141,6 +154,8 @@
         providers?: AiControllerAiProviderResponse[]
         /** Currently selected provider id (v-model:provider). */
         provider?: string
+        /** This provider's standing against its spend ceiling; absent or disabled shows nothing. */
+        usage?: AiUsageStatus
     }>()
 
     const emit = defineEmits<{
@@ -170,7 +185,24 @@
         return (list.find((p) => p.id === props.provider) ?? list[0])?.displayName
     })
 
-    const canSubmit = computed(() => !props.disabled && draft.value.trim().length > 0)
+    const usageLabel = computed(() =>
+        props.usage?.enabled ? t("ai.copilot.usage.remaining", {percent: props.usage.remainingPercent}) : undefined,
+    )
+
+    const usageTooltip = computed(() => {
+        if (props.usage?.exceeded) {
+            const availableAt = props.usage.availableAt
+            return availableAt
+                ? t("ai.copilot.usage.exceededUntil", {when: dateUtils.dateFilter(availableAt)})
+                : t("ai.copilot.usage.exceeded")
+        }
+        if (props.usage?.warning) return t("ai.copilot.usage.warning")
+        return t("ai.copilot.usage.help")
+    })
+
+    const canSubmit = computed(() =>
+        !props.disabled && !props.usage?.exceeded && draft.value.trim().length > 0,
+    )
 
     // Grow the textarea with its content, up to the CSS max-height (then it scrolls).
     function autosize(): void {

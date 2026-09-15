@@ -239,6 +239,28 @@ public class MetricRegistry {
     public static final String METRIC_SSE_CONNECTIONS_OPENED_TOTAL = "sse.connections.opened.total";
     public static final String METRIC_SSE_CONNECTIONS_OPENED_TOTAL_DESCRIPTION = "The total number of Server-Sent Events (SSE) follow connections opened";
 
+    // AI Copilot usage metrics
+    public static final String METRIC_AI_MODEL_CALL_TOTAL = "ai.model.call.total";
+    public static final String METRIC_AI_MODEL_CALL_TOTAL_DESCRIPTION = "The total number of AI model calls the Copilot made";
+    public static final String METRIC_AI_TOKEN_PROMPT_TOTAL = "ai.token.prompt.total";
+    public static final String METRIC_AI_TOKEN_PROMPT_TOTAL_DESCRIPTION = "The total number of prompt tokens the Copilot consumed, inclusive of the cached share";
+    public static final String METRIC_AI_TOKEN_PROMPT_CACHED_TOTAL = "ai.token.prompt.cached.total";
+    public static final String METRIC_AI_TOKEN_PROMPT_CACHED_TOTAL_DESCRIPTION = "The cached share of the prompt tokens the Copilot consumed, which bills at a fraction of the cold rate";
+    public static final String METRIC_AI_TOKEN_COMPLETION_TOTAL = "ai.token.completion.total";
+    public static final String METRIC_AI_TOKEN_COMPLETION_TOTAL_DESCRIPTION = "The total number of generated tokens produced for the Copilot, excluding thinking tokens";
+    public static final String METRIC_AI_TOKEN_THOUGHT_TOTAL = "ai.token.thought.total";
+    public static final String METRIC_AI_TOKEN_THOUGHT_TOTAL_DESCRIPTION = "The total number of thinking tokens produced for the Copilot, which bill at the output rate";
+    public static final String METRIC_AI_USAGE_RECORD_FAILED_TOTAL = "ai.usage.record.failed.total";
+    public static final String METRIC_AI_USAGE_RECORD_FAILED_TOTAL_DESCRIPTION = "The total number of AI model calls whose usage could not be stored, and which therefore undercount spend";
+    public static final String METRIC_AI_USAGE_REFUSED_TOTAL = "ai.usage.refused.total";
+    public static final String METRIC_AI_USAGE_REFUSED_TOTAL_DESCRIPTION = "The total number of Copilot turns stopped because an AI provider reached its usage limit";
+    public static final String METRIC_AI_USAGE_WEIGHT = "ai.usage.weight";
+    public static final String METRIC_AI_USAGE_WEIGHT_DESCRIPTION = "Weighted tokens spent installation-wide against an AI provider's ceiling in the current window";
+    public static final String METRIC_AI_USAGE_WEIGHT_LIMIT = "ai.usage.weight.limit";
+    public static final String METRIC_AI_USAGE_WEIGHT_LIMIT_DESCRIPTION = "The installation-wide ceiling, in weighted tokens, an AI provider is held to per window";
+    public static final String METRIC_AI_USAGE_REMAINING_RATIO = "ai.usage.remaining.ratio";
+    public static final String METRIC_AI_USAGE_REMAINING_RATIO_DESCRIPTION = "Share of an AI provider's allowance left on its tightest axis, as last observed";
+
     public static final String TAG_TASK_TYPE = "task_type";
     public static final String TAG_TRIGGER_TYPE = "trigger_type";
     public static final String TAG_FLOW_ID = "flow_id";
@@ -249,6 +271,9 @@ public class MetricRegistry {
     public static final String TAG_WORKER_QUEUE = "worker_queue";
     public static final String TAG_QUEUE_NAME = "queue_name";
     public static final String TAG_SSE_TYPE = "sse_type";
+    public static final String TAG_AI_PROVIDER_ID = "ai_provider_id";
+    public static final String TAG_AI_MODEL = "ai_model";
+    public static final String TAG_AI_USAGE_AXIS = "ai_usage_axis";
     public static final String TAG_TENANT_ID = "tenant_id";
     public static final String TAG_CLASS_NAME = "class_name";
     public static final String TAG_EXECUTION_KILLED_TYPE = "execution_killed_type";

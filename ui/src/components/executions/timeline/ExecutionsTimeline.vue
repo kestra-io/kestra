@@ -113,7 +113,7 @@
     import {useExecutionsQueryScope} from "../../../composables/useExecutionsQueryScope"
     import {useTimelineRange} from "../../../composables/useTimelineRange"
     import {useExecutionFilter, useFlowExecutionFilter} from "../../filter/configurations"
-    import {groupByNamespace, countByState, buildAxisTicks, isFailedLikeState, type TimelineExecution} from "../../../utils/executionsTimeline"
+    import {groupByNamespace, countByState, buildAxisTicks, axisTickFormat, isFailedLikeState, type TimelineExecution} from "../../../utils/executionsTimeline"
 
     const MAX_FETCHED_EXECUTIONS = 1000
     const STATE_EXCLUDE_KEY = "filters[state][NOT_IN]"
@@ -263,12 +263,13 @@
         return ((now - rangeStartMs.value) / span) * 100
     })
 
-    const axisTicks = computed(() =>
-        buildAxisTicks(rangeStartMs.value, rangeEndMs.value, AXIS_TICK_COUNT, Date.now()).map((tick, i) => ({
+    const axisTicks = computed(() => {
+        const format = axisTickFormat(rangeEndMs.value - rangeStartMs.value, AXIS_TICK_COUNT)
+        return buildAxisTicks(rangeStartMs.value, rangeEndMs.value, AXIS_TICK_COUNT, Date.now()).map((tick, i) => ({
             key: `${i}-${tick.ms}`,
-            label: tick.isNow ? t("now") : dateUtils.dateFilter(new Date(tick.ms).toISOString(), "LT"),
-        })),
-    )
+            label: tick.isNow ? t("now") : dateUtils.dateFilter(new Date(tick.ms).toISOString(), format),
+        }))
+    })
 
     const breadcrumbItems = computed<KsBreadcrumbItem[]>(() => {
         const items: KsBreadcrumbItem[] = []

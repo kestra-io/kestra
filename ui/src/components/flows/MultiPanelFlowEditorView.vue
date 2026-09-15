@@ -24,7 +24,7 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, markRaw, onMounted, onUnmounted, ref, watch} from "vue"
+    import {computed, markRaw, onMounted, onUnmounted, provide, ref, watch} from "vue"
     import {useRoute, useRouter} from "vue-router"
     import * as Utils from "../../utils/utils"
     import {usePlaygroundStore} from "../../stores/playground"
@@ -37,6 +37,7 @@
     import BlockEditor from "../no-code/blocks/BlockEditor.vue"
     import {useTriggerDraftStore} from "../../stores/triggerDraft"
     import {DEFAULT_ACTIVE_TABS, EDITOR_ELEMENTS} from "override/components/flows/panelDefinition"
+    import {EDITOR_CURSOR_INJECTION_KEY} from "../no-code/injectionKeys"
     import {useFilesPanels, useInitialFilesTabs} from "./useFilesPanels"
     import {useTopologyPanels} from "./useTopologyPanels"
     import {useKeyShortcuts} from "../../utils/useKeyShortcuts"
@@ -48,6 +49,8 @@
     import {trackTabOpen} from "../../utils/tabTracking"
     import {Panel, Tab} from "../../utils/multiPanelTypes"
     import MultiPanelGenericEditorView from "../MultiPanelGenericEditorView.vue"
+
+    provide(EDITOR_CURSOR_INJECTION_KEY, ref<number | undefined>())
 
     function isTabFlowRelated(element: Tab){
         return ["code", "nocode", "topology"].includes(element.uid)

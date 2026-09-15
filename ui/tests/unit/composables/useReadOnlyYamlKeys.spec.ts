@@ -1,6 +1,7 @@
 import {describe, expect, it, vi} from "vitest"
 import {mount} from "@vue/test-utils"
 import {computed, defineComponent, ref, type Ref} from "vue"
+import type * as monaco from "monaco-editor/editor/editor.api"
 import {
     commentOf,
     findReadOnlyLines,
@@ -230,7 +231,7 @@ function editorDouble(initial: string) {
         getSelection: () => null,
         getSelections: () => [],
         setSelection: () => {},
-    }
+    } as unknown as monaco.editor.IStandaloneCodeEditor
 
     return {
         editor,
@@ -273,7 +274,7 @@ describe("useReadOnlyYamlKeys", () => {
         onReverted?: (keys: string[]) => void,
     ) {
         return withComposable(() => useReadOnlyYamlKeys({
-            editor: ref(double.editor) as any,
+            editor: ref(double.editor),
             expected,
             enabled: computed(() => enabled),
             onReverted,

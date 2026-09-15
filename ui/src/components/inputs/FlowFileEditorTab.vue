@@ -42,6 +42,7 @@
             }"
             @update:model-value="editorUpdate"
             @cursor="updatePluginDocumentation"
+            @editorMounted="onEditorMounted"
             @save="flow ? saveFlowYaml(): saveFileContent()"
             @execute="execute"
             @mouse-move="(e) => highlightHoveredTask(e.target?.position?.lineNumber)"
@@ -76,8 +77,9 @@
 </script>
 
 <script setup lang="ts">
-    import {computed, onActivated, onMounted, ref, provide, onBeforeUnmount, watch, InjectionKey, inject, type Ref} from "vue"
+    import {computed, onActivated, onMounted, ref, shallowRef, provide, onBeforeUnmount, watch, InjectionKey, inject, type Ref} from "vue"
     import {useRoute} from "vue-router"
+    import {useI18n} from "vue-i18n"
     import {apiUrl} from "override/utils/route"
     import type * as monaco from "monaco-editor/editor/editor.api"
 
@@ -90,6 +92,7 @@
     import {useMiscStore} from "override/stores/misc"
     import {useProductTourStore} from "../../stores/productTour"
     import useFlowEditorRunTaskButton from "../../composables/playground/useFlowEditorRunTaskButton"
+    import {useReadOnlyYamlKeys} from "../../composables/useReadOnlyYamlKeys"
 
     import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
     import {KsEditor} from "@kestra-io/design-system"
@@ -98,10 +101,13 @@
     import ContentSave from "vue-material-design-icons/ContentSave.vue"
     import Download from "vue-material-design-icons/Download.vue"
     import {humanFileSize} from "../../utils/utils"
+    import {useToast} from "../../utils/toast"
     import PlaygroundRunTaskButton from "./PlaygroundRunTaskButton.vue"
     import {FILES_CLOSE_TAB_INJECTION_KEY} from "./FileExplorer.vue"
 
     const route = useRoute()
+    const {t} = useI18n()
+    const toast = useToast()
 
     const {save} = useFlowEditorActions()
     const flowStore = useFlowStore()
@@ -249,6 +255,44 @@
     const fileUrl = computed(() => `${apiUrl()}/namespaces/${fileNamespace.value}/files?path=${encodeURI(`/${props.path}`)}`)
     const isCreating = computed(() => flowStore.isCreating)
 
+    // `id` and `namespace` are immutable once the flow exists. Monaco has no
+    // read-only ranges, so the guard below refuses those edits as they arrive
+    // rather than letting them land and undoing them on the next onEdit tick.
+    // shallowRef, not ref: a deep reactive proxy around the editor breaks it.
+    const monacoEditor = shallowRef<monaco.editor.IStandaloneCodeEditor>()
+
+    function onEditorMounted(editor?: monaco.editor.IStandaloneCodeEditor | monaco.editor.IStandaloneDiffEditor) {
+        // The revision preview mounts a diff editor, which is read-only as a whole.
+        monacoEditor.value = editor && !("getOriginalEditor" in editor)
+            ? editor as monaco.editor.IStandaloneCodeEditor
+            : undefined
+    }
+
+    // Gated on the editor too, not just on the flow being editable. This value
+    // does double duty: it enables the guard, and it tells the store to drop the
+    // read-only warning. Without a code editor the guard cannot attach, so
+    // suppressing the warning on the strength of the other conditions alone
+    // would leave an edit silently reverted with nothing said — which is the
+    // behaviour this change exists to remove.
+    const metadataGuarded = computed(() => Boolean(monacoEditor.value)
+        && props.flow
+        && !flowStore.isCreating
+        && !flowStore.isReadOnly
+        && previewSource.value === undefined)
+
+    useReadOnlyYamlKeys({
+        editor: monacoEditor,
+        expected: computed(() => props.flow
+            ? {id: flowStore.flow?.id, namespace: flowStore.flow?.namespace}
+            : {}),
+        enabled: metadataGuarded,
+        hoverMessage: computed(() => t("flow metadata locked")),
+        // Reverting the whole document is the one correction that discards what
+        // the user just did, and metadataGuarded has already told the store to
+        // drop its warning, so this is all that is left to say it happened.
+        onReverted: () => toast.warning(t("namespace and id readonly")),
+    })
+
     const timeout = ref<any>(null)
 
     const editorContent = computed(() => source.value)
@@ -311,6 +355,9 @@
                 source: newValue,
                 editorViewType: "YAML", // this is to be opposed to the no-code editor
                 topologyVisible: true,
+                // The id/namespace lines are locked in this editor, so a warning
+                // here would explain a change the user was never able to make.
+                metadataGuarded: metadataGuarded.value,
             })
         }, 1000)
     }

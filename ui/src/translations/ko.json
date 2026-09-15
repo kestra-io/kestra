@@ -1,5 +1,9 @@
 {
   "ko": {
+    "versionUpgradeNotice": {
+      "message": "Kestra가 {version}으로 업그레이드되었습니다. 이 버전에는 Flow 업데이트가 필요한 변경 사항이 포함될 수 있습니다.",
+      "cta": "변경 사항 확인"
+    },
     "loading": "로딩 중...",
     "more actions": "추가 작업",
     "recipe": {
@@ -491,6 +495,9 @@
     },
     "download": "다운로드",
     "jsonl": "JSONL",
+    "large_outputs": {
+      "value_truncated": "이 {size} 값의 잘린 미리보기를 표시합니다."
+    },
     "concurrency_limit": {
       "dialog_title": "동시성 제한",
       "warning": "실행 중인 카운터를 변경하면 Concurrency가 손상되어 실행이 허용된 limit을 초과할 수 있습니다."
@@ -2141,7 +2148,7 @@
         },
         "unavailable": {
           "title": "AI Copilot을(를) 사용할 수 없습니다",
-          "detail": "AI 공급자가 구성되지 않았습니다. 관리자에게 설정을 요청하세요.",
+          "detail": "이 인스턴스에 구성된 AI provider가 없습니다. AI Copilot을 활성화하려면 Kestra 구성 파일에서 AI provider를 구성하세요.",
           "docs": "문서 보기"
         },
         "thinkingWords": [

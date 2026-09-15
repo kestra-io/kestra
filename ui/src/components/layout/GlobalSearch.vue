@@ -347,8 +347,7 @@
             background: var(--ks-bg-surface);
             border: 1px solid var(--ks-border-default);
             border-radius: var(--kel-input-border-radius, var(--kel-border-radius-base));
-            box-shadow:
-                0 8px 24px rgba(0,0,0,0.35);
+            box-shadow: 0 8px 24px var(--ks-shadow-elevated);
             overflow: hidden;
             font-size: var(--ks-font-size-sm);
         }

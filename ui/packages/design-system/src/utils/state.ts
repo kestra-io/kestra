@@ -14,8 +14,6 @@ import {cssVar} from "./css"
 
 interface StateModel {
     name: string;
-    color: string;
-    colorClass: string;
     icon: Component;
     isRunning: boolean;
     isKillable: boolean;
@@ -27,8 +25,6 @@ export const LOG_LEVELS = ["ERROR", "WARN", "INFO", "DEBUG", "TRACE"] as const
 export const STATES:Record<string, StateModel> = Object.freeze({
     SUBMITTED: {
         name: "SUBMITTED",
-        color: "#1761FD",
-        colorClass: "blue-500",
         icon: DotsVerticalCircle,
         isRunning: true,
         isKillable: true,
@@ -36,8 +32,6 @@ export const STATES:Record<string, StateModel> = Object.freeze({
     },
     CREATED: {
         name: "CREATED",
-        color: "#1761FD",
-        colorClass: "blue-500",
         icon: DotsVerticalCircle,
         isRunning: true,
         isKillable: true,
@@ -45,8 +39,6 @@ export const STATES:Record<string, StateModel> = Object.freeze({
     },
     RESTARTED: {
         name: "RESTARTED",
-        color: "#1761FD",
-        colorClass: "blue-500",
         icon: SkipPreviousCircle,
         isRunning: false,
         isKillable: true,
@@ -54,8 +46,6 @@ export const STATES:Record<string, StateModel> = Object.freeze({
     },
     SUCCESS: {
         name: "SUCCESS",
-        color: "#029E73",
-        colorClass: "green-500",
         icon: CheckCircle,
         isRunning: false,
         isKillable: false,
@@ -63,8 +53,6 @@ export const STATES:Record<string, StateModel> = Object.freeze({
     },
     RUNNING: {
         name: "RUNNING",
-        color: "#8405FF",
-        colorClass: "purple-500",
         icon: PlayCircle,
         isRunning: true,
         isKillable: true,
@@ -72,8 +60,6 @@ export const STATES:Record<string, StateModel> = Object.freeze({
     },
     KILLING: {
         name: "KILLING",
-        color: "#FCE07C",
-        colorClass: "yellow-200",
         icon: CloseCircle,
         isRunning: true,
         isKillable: true,
@@ -81,8 +67,6 @@ export const STATES:Record<string, StateModel> = Object.freeze({
     },
     KILLED: {
         name: "KILLED",
-        color: "#FCE07C",
-        colorClass: "yellow-500",
         icon: StopCircle,
         isRunning: false,
         isKillable: false,
@@ -90,8 +74,6 @@ export const STATES:Record<string, StateModel> = Object.freeze({
     },
     WARNING: {
         name: "WARNING",
-        color: "#DD5F00",
-        colorClass: "orange-500",
         icon: AlertCircle,
         isRunning: false,
         isKillable: false,
@@ -99,8 +81,6 @@ export const STATES:Record<string, StateModel> = Object.freeze({
     },
     FAILED: {
         name: "FAILED",
-        color: "#AB0009",
-        colorClass: "red-500",
         icon: CloseCircle,
         isRunning: false,
         isKillable: false,
@@ -108,8 +88,6 @@ export const STATES:Record<string, StateModel> = Object.freeze({
     },
     PAUSED: {
         name: "PAUSED",
-        color: "#918BA9",
-        colorClass: "purple-200",
         icon: PauseCircle,
         isRunning: true,
         isKillable: true,
@@ -117,8 +95,6 @@ export const STATES:Record<string, StateModel> = Object.freeze({
     },
     CANCELLED: {
         name: "CANCELLED",
-        color: "#918BA9",
-        colorClass: "gray-300",
         icon: Cancel,
         isRunning: false,
         isKillable: false,
@@ -126,8 +102,6 @@ export const STATES:Record<string, StateModel> = Object.freeze({
     },
     SKIPPED: {
         name: "SKIPPED",
-        color: "#918BA9",
-        colorClass: "gray-300",
         icon: Cancel,
         isRunning: false,
         isKillable: false,
@@ -135,8 +109,6 @@ export const STATES:Record<string, StateModel> = Object.freeze({
     },
     QUEUED: {
         name: "QUEUED",
-        color: "#918BA9",
-        colorClass: "gray",
         icon: MotionPauseOutline,
         isRunning: false,
         isKillable: false,
@@ -144,8 +116,6 @@ export const STATES:Record<string, StateModel> = Object.freeze({
     },
     RETRYING: {
         name: "RETRYING",
-        color: "#918BA9",
-        colorClass: "gray-300",
         icon: Refresh,
         isRunning: false,
         isKillable: true,
@@ -153,8 +123,6 @@ export const STATES:Record<string, StateModel> = Object.freeze({
     },
     RETRIED: {
         name: "RETRIED",
-        color: "#918BA9",
-        colorClass: "gray-300",
         icon: Refresh,
         isRunning: false,
         isKillable: false,
@@ -162,8 +130,6 @@ export const STATES:Record<string, StateModel> = Object.freeze({
     },
     BREAKPOINT: {
         name: "BREAKPOINT",
-        color: "#918BA9",
-        colorClass: "gray-300",
         icon: PauseCircle,
         isRunning: true,
         isKillable: true,
@@ -174,7 +140,6 @@ export const STATES:Record<string, StateModel> = Object.freeze({
 const mapValues = <T, U>(obj: Record<string, T>, fn: (val: T) => U): Record<string, U> =>
     Object.fromEntries(Object.entries(obj).map(([k, v]) => [k, fn(v)]))
 
-export const SUBMITTED = "SUBMITTED" as const
 export const CREATED = "CREATED" as const
 export const RESTARTED = "RESTARTED" as const
 export const SUCCESS = "SUCCESS" as const
@@ -186,8 +151,6 @@ export const WARNING = "WARNING" as const
 export const PAUSED = "PAUSED" as const
 export const CANCELLED = "CANCELLED" as const
 export const SKIPPED = "SKIPPED" as const
-export const QUEUED = "QUEUED" as const
-export const RETRYING = "RETRYING" as const
 export const RETRIED = "RETRIED" as const
 export const BREAKPOINT = "BREAKPOINT" as const
 
@@ -223,20 +186,12 @@ export function arrayAllStates() {
     return Object.values(STATES)
 }
 
-export function colorClass() {
-    return mapValues(STATES, (state) => state.colorClass)
-}
-
 export function color() {
     return mapValues(STATES, (state) => cssVar(`--ks-status-${state.name.toLowerCase()}`))
 }
 
 export function getStateColor(state:string) {
     return cssVar(`--ks-status-${STATES[state].name.toLowerCase()}`)
-}
-
-export function icon() {
-    return mapValues(STATES, (state) => state.icon)
 }
 
 export function getTerminatedStates() {

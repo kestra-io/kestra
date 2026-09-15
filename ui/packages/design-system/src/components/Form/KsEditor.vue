@@ -162,7 +162,7 @@
 
 <style lang="scss">
     .highlight-lines {
-        background-color: rgba(#3991ff, .2);
+        background-color: color-mix(in srgb, var(--ks-status-info) 20%, transparent);
     }
 
     .editor-content-widget-content {
@@ -326,19 +326,15 @@
     .highlight-text {
         cursor: pointer;
         font-weight: 700;
-        box-shadow: 0 19px 44px rgba(157, 29, 236, 0.31);
+        box-shadow: 0 19px 44px color-mix(in srgb, var(--ks-border-focus) 31%, transparent);
 
         html.dark & {
-            background-color: rgba(255, 255, 255, 0.2);
+            background-color: color-mix(in srgb, var(--ks-text-primary) 20%, transparent);
         }
     }
 
     .highlight-pebble {
-        color: #977100 !important;
-
-        html.dark & {
-            color: #ffca16 !important;
-        }
+        color: var(--ks-editor-pabble) !important;
     }
 
     .disable-text {

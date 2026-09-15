@@ -1,4 +1,5 @@
 <template>
+    <!-- design-system-disable: brand artwork, the colours are the asset rather than a themed surface -->
     <!-- Decorative Kestra-mark animation shown beside the copilot status word while a turn runs: three
          brand dots that bounce ("thinking"), ripple ("answering"), then gather and bloom into the full
          mark ("end") — a lightweight CSS/SVG reproduction of the delivered Lottie set (no runtime dep).

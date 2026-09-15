@@ -156,7 +156,7 @@
                     <span v-html="$t('settings.blocks.theme.descriptions.color_mode')" /><br>
                     <span v-html="$t('settings.blocks.theme.descriptions.color_mode_shortcut')" />
                 </template>
-                <ThemePicker :modelValue="settings.theme" :options="themeOptions" @update:model-value="onTheme" />
+                <KsThemePicker :modelValue="settings.theme" :options="themeOptions" @update:model-value="onTheme" />
             </SettingRow>
 
             <SettingRow
@@ -323,7 +323,7 @@
     import Wrapper from "./components/Wrapper.vue"
     import Block from "./components/block/Block.vue"
     import SettingRow from "./components/block/SettingRow.vue"
-    import ThemePicker, {type ThemeOption} from "./components/block/ThemePicker.vue"
+    import {KsThemePicker, type ThemeOption} from "@kestra-io/design-system"
     import SidebarCustomizeModal from "../layout/SidebarCustomizeModal.vue"
     import {KsButton} from "@kestra-io/design-system"
 

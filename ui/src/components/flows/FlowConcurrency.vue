@@ -21,7 +21,7 @@
                 </span>
             </div>
             <div class="progressbar mb-3">
-                <KsProgress :stroke-width="16" color="#5BB8FF" :percentage="progress" :showText="false" />
+                <KsProgress :stroke-width="16" color="var(--ks-status-info)" :percentage="progress" :showText="false" />
             </div>
         </KsCard>
         <Executions
@@ -32,8 +32,6 @@
             filter
         />
     </div>
-    <!-- A limit record still counting slots for a flow that no longer declares a concurrency
-         block: it cannot be rendered as a ratio, but we should display it anyway. -->
     <KsAlert
         v-else-if="staleLimit"
         type="warning"

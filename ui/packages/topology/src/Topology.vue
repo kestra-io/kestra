@@ -468,7 +468,7 @@
         list-style-type: none;
         background: var(--ks-bg-surface);
         border: 1px solid var(--ks-border-default);
-        box-shadow: 0 12px 12px rgba(130, 103, 158, 0.1019607843);
+        box-shadow: 0 12px 12px var(--ks-shadow-elevated);
         border-radius: 5px;
         text-align:left;
 

@@ -126,18 +126,6 @@
 <style scoped lang="scss">
 .label.kel-check-tag,
 .label-more {
-    --ks-bg-tag: #7b7b7e45;
-;
-    --ks-bg-tag-active: #414557;
-    --label-text-active: #ffffff;
-
-    html.dark & {
-        --ks-bg-tag: #FFFFFF1A;
-;
-        --ks-bg-tag-active: #F2F2F2;
-        --label-text-active: var(--ks-text-primary);
-    }
-
     background-color: var(--ks-bg-tag);
     color: var(--ks-text-primary);
     font-size: var(--ks-font-size-xs);
@@ -188,11 +176,7 @@
 
 .label.kel-check-tag.is-checked {
     background-color: var(--ks-bg-tag-active);
-    color: var(--ks-black);
-    font-weight: var( --ks-font-weight-medium);
-
-    html.light & {
-        color: var(--label-text-active);
-    }
+    color: var(--ks-text-primary);
+    font-weight: var(--ks-font-weight-medium);
 }
 </style>

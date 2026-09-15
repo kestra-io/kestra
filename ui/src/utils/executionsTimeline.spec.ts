@@ -1,6 +1,7 @@
 import {describe, expect, it} from "vitest"
 import {
     assignLanes,
+    axisTickFormat,
     bucketize,
     buildAxisTicks,
     countByState,
@@ -183,5 +184,25 @@ describe("buildAxisTicks", () => {
 
     it("should return no ticks for a zero-width range", () => {
         expect(buildAxisTicks(1_000, 1_000, 6, 1_000)).toEqual([])
+    })
+})
+
+describe("axisTickFormat", () => {
+    const DAY = 86_400_000
+
+    it("should fall back to seconds when consecutive ticks land less than a minute apart", () => {
+        expect(axisTickFormat(2 * 60_000, 6)).toBe("LTS")
+    })
+
+    it("should show the time alone within a single day", () => {
+        expect(axisTickFormat(6 * 60 * 60_000, 6)).toBe("LT")
+    })
+
+    it("should add the date once the range spans a day or more", () => {
+        expect(axisTickFormat(DAY, 6)).toBe("MMM D, LT")
+    })
+
+    it("should drop the time once the range spans more than a week", () => {
+        expect(axisTickFormat(30 * DAY, 6)).toBe("MMM D")
     })
 })

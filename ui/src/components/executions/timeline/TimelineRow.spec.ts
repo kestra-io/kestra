@@ -78,8 +78,8 @@ describe("TimelineRow", () => {
             namespace: "company.team",
             flowId: "flow",
             state: "SUCCESS",
-            startMs: i,
-            endMs: i + 1,
+            startMs: i * 4,
+            endMs: i * 4 + 200,
         }))
 
         const wrapper = mount(TimelineRow, {

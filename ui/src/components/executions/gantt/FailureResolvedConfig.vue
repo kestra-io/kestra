@@ -50,9 +50,6 @@
 
     watch(() => [props.taskRunId, props.rawBlock, props.flowLoading], load, {immediate: true})
 
-    // A single fenced code block is valid markdown on its own, so KsMarkdown's Shiki
-    // highlighter can be reused here instead of pulling in a full read-only Monaco editor
-    // for what is usually a handful of lines.
     const markdownContent = computed(() => "```yaml\n" + (resolvedYaml.value ?? "") + "\n```")
 </script>
 

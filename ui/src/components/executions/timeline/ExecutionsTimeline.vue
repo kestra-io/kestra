@@ -116,12 +116,9 @@
     import {groupByNamespace, countByState, buildAxisTicks, isFailedLikeState, type TimelineExecution} from "../../../utils/executionsTimeline"
 
     const MAX_FETCHED_EXECUTIONS = 1000
-    // Shared with the state filter chip in the filter bar (KsFilter's "state" key uses the same
-    // IN/NOT_IN comparators), so a legend toggle also filters the table below.
     const STATE_EXCLUDE_KEY = "filters[state][NOT_IN]"
     const AXIS_TICK_COUNT = 6
-    // Must match the --timeline-row-label-width custom property set below: the ResizeObserver works
-    // off raw pixels, the CSS var off rem, and there is no build step to derive one from the other.
+    // Must match the --timeline-row-label-width custom property set below.
     const ROW_LABEL_WIDTH_PX = 180
 
     const props = withDefaults(defineProps<{
@@ -231,7 +228,6 @@
         }))
     })
 
-    // Mirrors the [data-state="..."] selectors in TimelineBar.vue's CSS.
     const STATE_CHART_COLOR_VARS: Record<string, string> = {
         SUCCESS: "var(--ks-chart-success)",
         FAILED: "var(--ks-chart-failed)",
@@ -249,9 +245,6 @@
         KILLED: "var(--ks-chart-killed)",
     }
 
-    // Derived from a fetch that ignores the legend's own state-exclude filter (unlike
-    // scopedExecutions), so a toggled-off state's entry stays in the legend instead of vanishing
-    // the moment its executions are excluded from the main, filtered fetch.
     const legendExecutions = ref<TimelineExecution[]>([])
     const legendItems = computed(() =>
         countByState(legendExecutions.value).map(({state, count}) => ({
@@ -261,8 +254,6 @@
         })),
     )
 
-    // Within a minute of "now": close enough that the last axis tick already reads "Now", so the
-    // floating marker below would just duplicate it.
     const isPinnedToNow = computed(() => Date.now() - rangeEndMs.value < 60_000)
 
     const nowPercent = computed(() => {
@@ -353,9 +344,6 @@
     const isTruncated = computed(() => fetchedTotal.value > rawExecutions.value.length)
 
     function mapToTimelineExecutions(results: ApiLightExecution[] | undefined): TimelineExecution[] {
-        // Search executions returns the light DTO (ApiLightExecution), not the full Execution;
-        // the store's findExecutions is declared Promise<any>, so this cast is what vue-tsc would
-        // otherwise infer on its own.
         return (results ?? [])
             .filter((execution): execution is ApiLightExecution & {state: {startDate: string}} => Boolean(execution.state?.startDate))
             .map((execution) => ({
@@ -436,9 +424,6 @@
     box-shadow: 0 var(--ks-spacing-1) var(--ks-spacing-2) 0 var(--ks-shadow-element);
     overflow: hidden;
     margin-bottom: var(--ks-spacing-4);
-    // Only the card's chrome transitions: .timeline-body's max-height swaps to `none` when
-    // expanded (see below) so a namespace with many rows is never clipped, and a CSS transition
-    // can't animate toward an unbounded target without a fixed pixel height to interpolate to.
     transition: border-color var(--ks-duration-slow) ease, border-radius var(--ks-duration-slow) ease,
         box-shadow var(--ks-duration-slow) ease, margin-bottom var(--ks-duration-slow) ease;
 }
@@ -477,11 +462,6 @@
     overflow-y: auto;
 }
 
-// A viewport-relative height rather than an exact `calc(100vh - Npx)`: this component is embedded
-// with different chrome above it (top-level executions list vs. a flow/namespace page), so no single
-// pixel offset is correct everywhere. The parent page drops its fitHeight/internal-scroll layout while
-// expanded (see Executions.vue's `fitHeightResolved`), so growing this beyond its own scroll region
-// grows the page itself rather than squeezing the table below it out of its flex space.
 .executions-timeline.expanded .timeline-body {
     max-height: none;
     min-height: 70vh;
@@ -553,8 +533,6 @@
     display: flex;
     align-items: center;
     gap: var(--ks-spacing-3);
-    // Mirrors a single-lane TimelineRow's rendered height (LANE_HEIGHT_REM + its own vertical
-    // padding) so real rows don't jump the layout when they replace the skeleton.
     min-height: calc(1.75rem + var(--ks-spacing-2) * 2);
 }
 

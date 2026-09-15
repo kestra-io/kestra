@@ -12,11 +12,6 @@ interface ExecutionsQueryScope {
     statuses?: string[];
 }
 
-/**
- * Shared execution-filter scoping between the Executions table and the Timeline view: both must
- * apply the same namespace/flow/status scope and drop query params the active filter configuration
- * doesn't support, so the two stay consistent for the same route.
- */
 export function useExecutionsQueryScope(
     configuration: ComputedRef<FilterConfiguration>,
     scope: ComputedRef<ExecutionsQueryScope>,

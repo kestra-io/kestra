@@ -976,6 +976,10 @@
       "success": "Trigger sbloccato"
     },
     "trigger disabled": "Il trigger è disabilitato all'interno della sorgente del flow",
+    "trigger not toggleable": "Questo trigger non viene valutato dallo Scheduler, disabilitalo nella sorgente del flow",
+    "bulk not toggleable warning": "{count} trigger selezionati verranno saltati: lo Scheduler non li valuta, quindi possono essere disabilitati solo nella sorgente del Flow.",
+    "bulk none applied": "Nessun trigger è stato interessato: nessuno di quelli selezionati è stato elaborato.",
+    "bulk partially applied": "{count} di {requested} trigger sono stati elaborati, gli altri sono stati saltati.",
     "trigger enable dialog": {
       "title": "Abilita trigger",
       "bulk title": "Abilita {count} triggers",

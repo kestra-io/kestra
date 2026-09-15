@@ -259,23 +259,6 @@
     /* Same drop-target treatment as the No-code block cards: link colour plus a dashed edge. */
     .edge-add-button--drop {
         color: var(--ks-text-link);
-    }
-
-    .edge-add-button--drop .edge-add-button-dot {
-        background: var(--ks-bg-info);
-        border-color: var(--ks-text-link);
-        border-style: dashed;
-        transform: scale(1.3);
-    }
-
-    .edge-add-button--visible,
-    .edge-add-button:focus-visible {
-        opacity: 1;
-        pointer-events: auto;
-    }
-
-    .edge-add-button--drop {
-        color: var(--ks-text-link);
         /* The dragged card is z-index 1 in the same stacking context and comes later in the DOM,
            so the marker has to outrank it or it is buried under the card heading for it. */
         z-index: 10;
@@ -283,9 +266,9 @@
 
     .edge-add-button--drop .edge-add-button-dot {
         background: var(--ks-bg-info);
-        border-color: var(--ks-border-focus);
+        border-color: var(--ks-text-link);
+        border-style: dashed;
         transform: scale(1.3);
-        animation: edge-drop-pulse 1.2s ease-in-out infinite;
     }
 
     @media (prefers-reduced-motion: reduce) {

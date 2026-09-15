@@ -37,6 +37,15 @@
             </SettingRow>
 
             <SettingRow
+                :label="$t('settings.blocks.configuration.fields.topology_orientation')"
+                :description="$t('settings.blocks.configuration.descriptions.topology_orientation')"
+            >
+                <KsSelect fit :modelValue="settings.topologyOrientation" @update:model-value="onTopologyOrientation">
+                    <KsOption v-for="item in topologyOrientationOptions" :key="item.value" :label="item.label" :value="item.value" />
+                </KsSelect>
+            </SettingRow>
+
+            <SettingRow
                 :label="$t('settings.blocks.configuration.fields.task_edit_default_mode')"
                 :description="$t('settings.blocks.configuration.descriptions.task_edit_default_mode')"
             >
@@ -306,7 +315,7 @@
     import {date as dateFilter} from "../../utils/filters"
     import * as Utils from "../../utils/utils"
     import type {SelectedTheme} from "../../utils/utils"
-    import {logDisplayTypes, storageKeys, executeFlowBehaviours, taskEditDefaultModes} from "../../utils/constants"
+    import {logDisplayTypes, storageKeys, executeFlowBehaviours, taskEditDefaultModes, topologyOrientations} from "../../utils/constants"
     import {DEFAULT_EXECUTION_TAB, DEFAULT_TAB_STORAGE_KEY} from "../executions/executionTabs"
     import {applyFontScale, APP_FONT_SIZE_KEY, type AppFontSizeMode} from "../../utils/appFontSize"
     import {appFontSizeMode, logsFontSizeOverride, effectiveEditorFontSize, editorFontSizeOverride, logsFontSize} from "../../composables/useLogDisplay"
@@ -376,6 +385,7 @@
         defaultLogLevel: localStorage.getItem("defaultLogLevel") || "INFO",
         logDisplay: localStorage.getItem("logDisplay") || logDisplayTypes.DEFAULT,
         editorType: localStorage.getItem(storageKeys.EDITOR_VIEW_TYPE) || "YAML",
+        topologyOrientation: localStorage.getItem(storageKeys.DEFAULT_TOPOLOGY_ORIENTATION) || topologyOrientations.VERTICAL,
         taskEditDefaultMode: localStorage.getItem(storageKeys.TASK_EDIT_DEFAULT_MODE) || taskEditDefaultModes.MODAL,
         executeFlowBehaviour: localStorage.getItem(storageKeys.EXECUTE_FLOW_BEHAVIOUR) || executeFlowBehaviours.SAME_TAB,
         executeDefaultTab: localStorage.getItem(DEFAULT_TAB_STORAGE_KEY) || DEFAULT_EXECUTION_TAB,
@@ -417,6 +427,11 @@
     const editorTypeOptions = computed(() => [
         {label: t("no_code.labels.yaml"), value: "YAML"},
         {label: t("no_code.labels.no_code"), value: "NO_CODE"},
+    ])
+
+    const topologyOrientationOptions = computed(() => [
+        {label: t("settings.blocks.configuration.topology_orientation_options.vertical"), value: topologyOrientations.VERTICAL},
+        {label: t("settings.blocks.configuration.topology_orientation_options.horizontal"), value: topologyOrientations.HORIZONTAL},
     ])
 
     const taskEditDefaultModeOptions = computed(() => [
@@ -584,6 +599,11 @@
     function onEditorType(value: string) {
         settings.editorType = value
         persist(storageKeys.EDITOR_VIEW_TYPE, value)
+    }
+
+    function onTopologyOrientation(value: string) {
+        settings.topologyOrientation = value
+        persist(storageKeys.DEFAULT_TOPOLOGY_ORIENTATION, value)
     }
 
     function onTaskEditDefaultMode(value: string) {

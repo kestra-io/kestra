@@ -12,14 +12,7 @@
          The resource id is a monospace code token, matching how ids read elsewhere in the copilot. -->
     <div v-else-if="message.type === 'CONTEXT' && message.context" class="copilot-msg copilot-context-notice" data-test="copilot-context-notice">
         <KsText size="small" class="copilot-context-notice-text">
-            <i18n-t
-                :keypath="message.context.action === 'added' ? 'ai.copilot.contextAdded' : 'ai.copilot.contextRemoved'"
-                scope="global"
-                tag="span"
-            >
-                <template #type>{{ $t(message.context.noun) }}</template>
-                <template #id><code class="copilot-context-id">{{ message.context.id }}</code></template>
-            </i18n-t>
+            <span>{{ contextNotice[0] }}<code class="copilot-context-id">{{ message.context.id }}</code>{{ contextNotice[1] }}</span>
         </KsText>
     </div>
 
@@ -103,6 +96,7 @@
 
 <script setup lang="ts">
     import {ref, computed} from "vue"
+    import {useI18n} from "vue-i18n"
     import CheckCircleOutline from "vue-material-design-icons/CheckCircleOutline.vue"
     import CloseCircleOutline from "vue-material-design-icons/CloseCircleOutline.vue"
     import Loading from "vue-material-design-icons/Loading.vue"
@@ -110,6 +104,7 @@
     import ProposedActionCard from "./ProposedActionCard.vue"
     import type {ProposedActionEvent} from "./types"
     import type {ChatMessage} from "./useAiChat"
+    import {splitTranslation} from "../../../utils/splitTranslation"
 
     const props = defineProps<{
         message: ChatMessage
@@ -118,6 +113,14 @@
         /** True when this TOOL_CALL is still executing (no result yet) — drives the running spinner. */
         isRunning?: boolean
     }>()
+
+    const {t} = useI18n()
+    const contextNotice = computed(() => {
+        const context = props.message.context
+        if (!context) return ["", ""] as [string, string]
+        const key = context.action === "added" ? "ai.copilot.contextAdded" : "ai.copilot.contextRemoved"
+        return splitTranslation(t, key, "id", {type: t(context.noun)})
+    })
 
     // The user prompt rendered literally, split on ``` fences only — full markdown would mangle
     // pasted code (a YAML `# comment` must not become a heading) (kestra-io/kestra-ee#10420).

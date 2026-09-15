@@ -2078,6 +2078,7 @@
         "title": "Copiloto de IA",
         "placeholder": "Diga-me o que construir…",
         "send": "Enviar",
+        "stop": "Parar",
         "mode": {
           "ask": "Perguntar",
           "edit": "Editar",
@@ -2189,8 +2190,12 @@
         "draft": {
           "openInEditor": "Abrir no editor",
           "apply": "Aplicar",
+          "dismiss": "Descartar",
+          "dismissed": "Descartado",
+          "applied": "Aplicado",
+          "previewBanner": "Revisando uma alteração sugerida pela IA — o editor fica somente leitura até você aplicar ou descartar.",
           "applyTitle": "Aplicar flow",
-          "applyConfirm": "Aplicar o flow {namespace}.{id}? Ele será criado, ou sobrescrito se já existir.",
+          "applyConfirm": "Salvar o flow {namespace}.{id} como uma revisão de rascunho para revisão? Ele será criado, ou uma nova revisão de rascunho será adicionada se já existir — rascunhos não são acionados por triggers nem subflows até serem publicados.",
           "applyConfirmDashboard": "Aplicar o painel {id}? Ele será criado, ou sobrescrito se já existir.",
           "applyError": "Não foi possível aplicar o flow. Tente novamente.",
           "applyErrorDashboard": "Não foi possível aplicar o dashboard. Por favor, tente novamente.",

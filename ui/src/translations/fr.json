@@ -2078,6 +2078,7 @@
         "title": "Copilot IA",
         "placeholder": "Dites-moi quoi construire…",
         "send": "Envoyer",
+        "stop": "Arrêter",
         "mode": {
           "ask": "Demander",
           "edit": "Modifier",
@@ -2189,8 +2190,12 @@
         "draft": {
           "openInEditor": "Ouvrir dans l'éditeur",
           "apply": "Appliquer",
+          "dismiss": "Ignorer",
+          "dismissed": "Ignoré",
+          "applied": "Appliqué",
+          "previewBanner": "Examen d'une modification suggérée par l'IA : l'éditeur est en lecture seule jusqu'à ce que vous l'appliquiez ou l'ignoriez.",
           "applyTitle": "Appliquer le flow",
-          "applyConfirm": "Appliquer le flow {namespace}.{id} ? Il sera créé, ou écrasé s'il existe déjà.",
+          "applyConfirm": "Enregistrer le flow {namespace}.{id} comme révision brouillon pour relecture ? Il sera créé, ou une nouvelle révision brouillon sera ajoutée s'il existe déjà — les brouillons ne sont pas pris en compte par les triggers ni les subflows tant qu'ils ne sont pas publiés.",
           "applyConfirmDashboard": "Appliquer le tableau de bord {id} ? Il sera créé, ou écrasé s'il existe déjà.",
           "applyError": "Impossible d'appliquer le flow. Veuillez réessayer.",
           "applyErrorDashboard": "Impossible d'appliquer le tableau de bord. Veuillez réessayer.",

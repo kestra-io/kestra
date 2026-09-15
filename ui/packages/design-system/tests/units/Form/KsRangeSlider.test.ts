@@ -26,10 +26,7 @@ function mountSlider(modelValue: [number, number] = [20, 80], disabled = false) 
     return wrapper
 }
 
-// vue-test-utils' `trigger()` reassigns event-init properties after construction, but jsdom defines
-// MouseEvent/PointerEvent coordinate properties as own getter-only accessors, so a post-hoc
-// `event.clientX = ...` throws. Dispatch a real PointerEvent instead, whose init dict sets them
-// at construction time.
+// jsdom defines PointerEvent coordinates as getter-only, so `trigger()` cannot set them post-hoc.
 async function firePointer(target: DOMWrapper<Element>, type: string, init: PointerEventInit) {
     target.element.dispatchEvent(new PointerEvent(type, {bubbles: true, ...init}))
     await nextTick()

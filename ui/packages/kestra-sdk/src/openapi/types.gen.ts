@@ -3741,7 +3741,7 @@ export type ChatResponses = {
     /**
      * chat 200 response
      */
-    200: Array<EventObject>;
+    200: EventObject;
 };
 
 export type ChatResponse = ChatResponses[keyof ChatResponses];
@@ -3777,7 +3777,7 @@ export type ConfirmResponses = {
     /**
      * confirm 200 response
      */
-    200: Array<EventObject>;
+    200: EventObject;
 };
 
 export type ConfirmResponse = ConfirmResponses[keyof ConfirmResponses];
@@ -7157,7 +7157,7 @@ export type FollowExecutionResponses = {
     /**
      * followExecution 200 response
      */
-    200: Array<EventExecution>;
+    200: EventExecution;
 };
 
 export type FollowExecutionResponse = FollowExecutionResponses[keyof FollowExecutionResponses];
@@ -7205,7 +7205,7 @@ export type FollowDependenciesExecutionsResponses = {
     /**
      * followDependenciesExecutions 200 response
      */
-    200: Array<EventExecutionStatusEvent>;
+    200: EventExecutionStatusEvent;
 };
 
 export type FollowDependenciesExecutionsResponse = FollowDependenciesExecutionsResponses[keyof FollowDependenciesExecutionsResponses];
@@ -9214,7 +9214,7 @@ export type FollowLogsFromExecutionResponses = {
     /**
      * followLogsFromExecution 200 response
      */
-    200: Array<EventFollowLogEvent>;
+    200: EventFollowLogEvent;
 };
 
 export type FollowLogsFromExecutionResponse = FollowLogsFromExecutionResponses[keyof FollowLogsFromExecutionResponses];

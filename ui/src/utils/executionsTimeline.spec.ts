@@ -83,7 +83,6 @@ describe("assignLanes", () => {
 
         expect(lanes.find(e => e.id === "1")!.lane).toBe(0)
         expect(lanes.find(e => e.id === "2")!.lane).toBe(1)
-        // Execution 3 starts after lane 0's execution 1 ended (100 <= 150), so it reuses lane 0.
         expect(lanes.find(e => e.id === "3")!.lane).toBe(0)
     })
 })
@@ -109,9 +108,6 @@ describe("shouldBucketRow", () => {
     })
 
     it("should bucket a tight cluster zoomed out to a much wider range", () => {
-        // 15 executions inside a 1-hour window, viewed across a 32-day range: each bar's true
-        // (pre-floor) width is a tiny fraction of a pixel, so the row must bucket even though it has
-        // far fewer executions than the available width in pixels would otherwise allow.
         const oneHourMs = 60 * 60 * 1000
         const thirtyTwoDaysMs = 32 * 24 * 60 * 60 * 1000
         const executions = Array.from({length: 15}, (_, i) =>
@@ -136,7 +132,6 @@ describe("bucketize", () => {
         const total = buckets.reduce((sum, bucket) => sum + bucket.total, 0)
         expect(total).toBe(4)
         expect(buckets.every(bucket => bucket.dominantState.length > 0)).toBe(true)
-        // Buckets never carry an execution id, only aggregated per-state counts.
         expect(buckets.every(bucket => !("id" in bucket))).toBe(true)
     })
 

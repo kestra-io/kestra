@@ -7,8 +7,6 @@ export interface TimelineRangePreset {
     labelKey: string;
 }
 
-// Same ladder as the generic execution time-range filter (TimeSelect.vue), narrowed to the
-// durations that make sense as a timeline zoom level.
 export const TIMELINE_RANGE_PRESETS: TimelineRangePreset[] = [
     {value: "PT1H", labelKey: "datepicker.last1hour"},
     {value: "PT12H", labelKey: "datepicker.last12hours"},
@@ -22,25 +20,14 @@ export const MIN_RANGE_MS = durationUtils.duration("PT5M") * 1000
 export const MAX_RANGE_MS = durationUtils.duration("PT8760H") * 1000
 const START_QUERY_KEY = "filters[startDate][GREATER_THAN_OR_EQUAL_TO]"
 const END_QUERY_KEY = "filters[endDate][LESS_THAN_OR_EQUAL_TO]"
-// startDate/endDate and timeRange are mutually exclusive execution filters on the backend
-// (a request carrying both is rejected with a 422), so writing one must always drop the other.
+// startDate/endDate and timeRange are mutually exclusive server-side: sending both is a 422.
 const TIME_RANGE_QUERY_KEY = "filters[timeRange][EQUALS]"
 
-// How much wider than the current selection the range-slider's track represents, so the
-// selection always renders as a graspable handle instead of a sliver on a fixed year-long track.
 const SLIDER_DOMAIN_MULTIPLIER = 8
 const SLIDER_DOMAIN_FLOOR_MS = durationUtils.duration("P1D") * 1000
 const SLIDER_DOMAIN_CEILING_MS = durationUtils.duration("P120D") * 1000
-// A flat day-scale floor drowns a short selection (e.g. "last 15 minutes") to a sliver of that
-// floor, so its two handles render on top of each other. Capping how much wider than the
-// selection the floor is allowed to stretch the domain keeps the selection at least this share
-// of the track, regardless of how small it is, so the handles always stay visually apart.
 const SLIDER_DOMAIN_MAX_FLOOR_TO_SPAN_RATIO = 20
 
-/**
- * The slider's domain (its full track span), sized relative to the current selection so it stays
- * visually substantial at any zoom level, and recentered on the selection's midpoint.
- */
 export function computeSliderDomain(rangeStartMs: number, rangeEndMs: number): [number, number] {
     const span = Math.max(rangeEndMs - rangeStartMs, MIN_RANGE_MS)
     const floor = Math.min(SLIDER_DOMAIN_FLOOR_MS, span * SLIDER_DOMAIN_MAX_FLOOR_TO_SPAN_RATIO)
@@ -50,11 +37,6 @@ export function computeSliderDomain(rangeStartMs: number, rangeEndMs: number): [
     return [center - domainSpan / 2, center + domainSpan / 2]
 }
 
-/**
- * Owns the Executions timeline's visible [start, end) window and keeps it in sync with the
- * `startDate`/`endDate` execution filters, so the same window drives the timeline chart, the
- * executions table below it, and the URL together.
- */
 export function useTimelineRange() {
     const route = useRoute()
     const router = useRouter()

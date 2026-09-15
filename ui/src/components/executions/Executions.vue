@@ -587,10 +587,6 @@
     const storedChartMode = localStorage.getItem(storageKeys.SHOW_CHART)
     const chartMode = ref<ChartMode>(storedChartMode === "timeline" ? "timeline" : "counts")
     const timelineExpanded = ref(false)
-    // An expanded timeline needs real page height to grow into, which conflicts with the fixed-height,
-    // internally-scrolling table layout fitHeight normally gives this page — so drop it while expanded
-    // and let the page grow and scroll naturally, with the table pushed below the fold instead of
-    // being squeezed into whatever space the timeline didn't take.
     const fitHeightResolved = computed(() => (props.fitHeight ?? props.topbar) && !(chartMode.value === "timeline" && timelineExpanded.value))
     const chartModeOptions = computed(() => [
         {label: t("chart mode.counts"), value: "counts", icon: Counter},

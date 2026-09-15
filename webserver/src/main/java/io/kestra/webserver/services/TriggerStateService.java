@@ -10,6 +10,7 @@ import io.kestra.core.async.AsyncOperationProcessedEvent;
 import io.kestra.core.async.AsyncOperationsConfiguration;
 import io.kestra.core.exceptions.ConflictException;
 import io.kestra.core.exceptions.NotFoundException;
+import io.kestra.core.exceptions.ValidationErrorException;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.executions.ExecutionKilled;
 import io.kestra.core.models.executions.ExecutionKilledTrigger;
@@ -175,10 +176,13 @@ public class TriggerStateService {
     /**
      * Creates a backfill and waits for the scheduler to acknowledge.
      *
+     * @throws ValidationErrorException if the backfill window is empty, which the scheduler would otherwise
+     *                                  accept and then immediately discard.
      * @throws NotFoundException if the trigger does not exist.
      * @throws ConflictException if the backfill cannot be created.
      */
     public TriggerState createBackfill(TriggerId triggerId, CreateBackfillTrigger.Backfill backfill) throws NotFoundException, ConflictException {
+        validateBackfillWindow(backfill);
         getTriggerState(triggerId);
         awaitBlockingAction(
             triggerId.uid(),
@@ -366,6 +370,24 @@ public class TriggerStateService {
             .blockOptional()
             .orElse(0);
         return new ApiAsyncOperationResponse(operationId, count);
+    }
+
+    /**
+     * Rejects a backfill whose window holds no schedule date: the scheduler seeds the backfill cursor just
+     * before {@code start} and clears the backfill as soon as the cursor passes {@code end}, so such a
+     * backfill would be created and dropped again without ever running.
+     */
+    private static void validateBackfillWindow(CreateBackfillTrigger.Backfill backfill) {
+        if (backfill.start() == null) {
+            throw new ValidationErrorException(List.of("The backfill start date is required."));
+        }
+
+        if (backfill.end() != null && !backfill.end().isAfter(backfill.start())) {
+            throw new ValidationErrorException(List.of(
+                "The backfill end date must be after its start date, but got start '%s' and end '%s'."
+                    .formatted(backfill.start(), backfill.end())
+            ));
+        }
     }
 
     private static boolean isUnlockable(TriggerState state) {

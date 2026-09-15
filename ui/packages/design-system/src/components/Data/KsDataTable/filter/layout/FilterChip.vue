@@ -30,6 +30,7 @@
             link
             size="small"
             class="close"
+            :aria-label="$t('filter.remove_filter')"
             :icon="Close"
             @click.stop="emit('remove', filter.id)"
         />

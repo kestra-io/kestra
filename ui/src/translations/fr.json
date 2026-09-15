@@ -1,5 +1,9 @@
 {
   "fr": {
+    "versionUpgradeNotice": {
+      "message": "Kestra a été mis à niveau vers la version {version} et cela peut inclure des changements majeurs qui nécessitent des mises à jour de vos Flows.",
+      "cta": "Voir les modifications"
+    },
     "loading": "Chargement...",
     "more actions": "Plus d'actions",
     "recipe": {
@@ -491,6 +495,9 @@
     },
     "download": "Télécharger",
     "jsonl": "JSONL",
+    "large_outputs": {
+      "value_truncated": "Affichage d'un aperçu tronqué de cette valeur de {size}."
+    },
     "concurrency_limit": {
       "dialog_title": "Limites de Concurrence",
       "warning": "La modification du compteur en cours peut corrompre la concurrence, de sorte que les exécutions peuvent dépasser la limite autorisée."
@@ -915,6 +922,7 @@
     "flow creation denied in namespace": "Vous n'avez pas la permission de créer des flows dans le namespace `{namespace}`.",
     "readonly property": "Propriété non modifiable",
     "namespace and id readonly": "Les propriétés `namespace` et `id` ne peuvent pas être modifiées — elles sont maintenant définies sur leurs valeurs initiales. Si vous souhaitez renommer un flow ou modifier son namespace, vous pouvez créer un nouveau flow et supprimer l'ancien.",
+    "flow metadata locked": "`id` et `namespace` ne peuvent pas être modifiés après la création d'un flow.",
     "avg": "Moyenne",
     "sum": "Somme",
     "min": "Minimum",
@@ -2141,7 +2149,7 @@
         },
         "unavailable": {
           "title": "AI Copilot n'est pas disponible",
-          "detail": "Aucun fournisseur d'AI n'est configuré. Demandez à un administrateur d'en configurer un.",
+          "detail": "Aucun fournisseur d'IA n'est configuré pour cette instance. Configurez-en un dans votre fichier de configuration Kestra pour activer l'AI Copilot.",
           "docs": "Voir la documentation"
         },
         "thinkingWords": [
@@ -2214,7 +2222,6 @@
     "submit": "Soumettre",
     "accept": "Accepter",
     "reject": "Rejeter",
-    "draft_available": "Un changement de brouillon est disponible dans l'éditeur",
     "last modified": "Dernière modification",
     "run task in playground": "Exécuter la task dans le playground",
     "defaultsToNamespaceFile": "Par défaut, fichier de namespace : <code>{name}</code>",

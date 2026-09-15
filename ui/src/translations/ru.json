@@ -1,5 +1,9 @@
 {
   "ru": {
+    "versionUpgradeNotice": {
+      "message": "Kestra был обновлен до версии {version} и может включать критические изменения, требующие обновления ваших Flow.",
+      "cta": "Посмотреть изменения"
+    },
     "loading": "Загрузка...",
     "more actions": "Дополнительные действия",
     "recipe": {
@@ -491,6 +495,9 @@
     },
     "download": "Скачать",
     "jsonl": "JSONL",
+    "large_outputs": {
+      "value_truncated": "Показан усеченный предварительный просмотр этого значения {size}."
+    },
     "concurrency_limit": {
       "dialog_title": "Ограничения на параллельность",
       "warning": "Изменение текущего счетчика может привести к повреждению Concurrency, поэтому egzekucje могут превысить допустимый limit."
@@ -915,6 +922,7 @@
     "flow creation denied in namespace": "У вас нет разрешения на создание flows в namespace `{namespace}`.",
     "readonly property": "Свойство только для чтения",
     "namespace and id readonly": "Свойства `namespace` и `id` не могут быть изменены — они теперь установлены на свои начальные значения. Если вы хотите переименовать flow или изменить его namespace, вы можете создать новый flow и удалить старый.",
+    "flow metadata locked": "`id` и `namespace` нельзя изменить после создания flow.",
     "avg": "Среднее",
     "sum": "Сумма",
     "min": "Мин",
@@ -2141,7 +2149,7 @@
         },
         "unavailable": {
           "title": "AI Copilot недоступен",
-          "detail": "Не настроен ни один AI provider. Попросите администратора настроить его.",
+          "detail": "Для этого экземпляра не настроен ни один AI provider. Настройте его в файле конфигурации Kestra, чтобы включить AI Copilot.",
           "docs": "Просмотреть документацию"
         },
         "thinkingWords": [
@@ -2214,7 +2222,6 @@
     "submit": "Отправить",
     "accept": "Принять",
     "reject": "Отклонить",
-    "draft_available": "Черновик изменений доступен в редакторе",
     "last modified": "Последнее изменение",
     "run task in playground": "Запустить task в playground",
     "defaultsToNamespaceFile": "По умолчанию для файла namespace: <code>{name}</code>",

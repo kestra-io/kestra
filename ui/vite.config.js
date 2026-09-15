@@ -46,6 +46,7 @@ import {stripDeadPrebuildDefault} from "./plugins/stripDeadPrebuildDefault.js"
 import {consolidateChunks} from "./plugins/consolidateChunks.js"
 import {VitePWA} from "vite-plugin-pwa"
 import {loaderFragment} from "./plugins/loaderFragment.js"
+import {pwaShortcuts} from "./plugins/pwaShortcuts"
 
 export default defineConfig(({mode}) => {
     process.env = {...process.env, ...loadEnv(mode, process.cwd())}
@@ -134,6 +135,7 @@ export default defineConfig(({mode}) => {
                         {src: "pwa-512x512.png", sizes: "512x512", type: "image/png", purpose: "any"},
                         {src: "maskable-icon-512x512.png", sizes: "512x512", type: "image/png", purpose: "maskable"},
                     ],
+                    shortcuts: pwaShortcuts,
                 },
                 workbox: {
                     // shell-only precache: JS/CSS stays network-fetched (the assets/ graph is tens of MB)

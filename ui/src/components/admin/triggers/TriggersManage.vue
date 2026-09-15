@@ -340,7 +340,6 @@
 </template>
 
 <script setup lang="ts">
-    import _merge from "lodash/merge"
     import {ref, computed, watch, useTemplateRef} from "vue"
     import {useI18n} from "vue-i18n"
     import {asProblem} from "@kestra-io/kestra-sdk"
@@ -356,7 +355,7 @@
     } from "@kestra-io/kestra-sdk"
     import {problemBulkBody, problemTitle} from "../../../utils/problem"
     import {useRoute, useRouter} from "vue-router"
-    import {KsMessage, KsDrawer, KsMarkdown, KsTag, KsDropdown, KsDropdownMenu, KsDropdownItem} from "@kestra-io/design-system"
+    import {KsMessage, KsDrawer, KsMarkdown, KsTag, KsDropdown, KsDropdownMenu, KsDropdownItem, deepMerge} from "@kestra-io/design-system"
     import {routeQueryToQueryFilters} from "../../../utils/queryFilters"
     import {useToast} from "../../../utils/toast"
     import {useFlowStore} from "../../../stores/flow"
@@ -579,7 +578,7 @@
         const nonFilterRest = Object.fromEntries(
             Object.entries(restQuery).filter(([key]) => !key.startsWith("filters[")),
         )
-        return _merge(base, nonFilterRest)
+        return deepMerge(base, nonFilterRest)
     }
 
     const loadData = async ({page, size, sort}: {page: number; size: number; sort?: string}) => {

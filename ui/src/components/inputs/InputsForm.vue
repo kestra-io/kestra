@@ -333,13 +333,12 @@
 
 <script setup lang="ts">
     import moment from "moment-timezone"
-    import {KsMessage, KsEditor} from "@kestra-io/design-system"
+    import {KsMessage, KsEditor, debounce} from "@kestra-io/design-system"
     import type {FormItemRule} from "@kestra-io/design-system"
     import ValidationError from "../flows/ValidationError.vue"
     import {ref, reactive, computed, watch, onMounted, onBeforeUnmount, toRaw, markRaw, type Component, getCurrentInstance, nextTick} from "vue"
     import {type Check, Execution, useExecutionsStore, ValidationEventPayload, ValidationResponse, ValueOptionLike} from "../../stores/executions"
     import {useI18n} from "vue-i18n"
-    import debounce from "lodash/debounce"
     import {useEditorBindings} from "../../composables/useEditorBindings"
     import {useInputsWizard} from "../../composables/useInputsWizard"
     import {normalize, flattenInputs, type InputType} from "../../utils/inputs"

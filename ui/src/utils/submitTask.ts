@@ -1,4 +1,4 @@
-import _cloneDeep from "lodash/cloneDeep"
+import {cloneDeep} from "@kestra-io/design-system"
 import {useExecutionsStore, type Execution} from "../stores/executions"
 import {Router, type useRoute} from "vue-router"
 import {Flow} from "../stores/flow"
@@ -12,7 +12,7 @@ export const normalizeInputValues = (
     values: Record<string, any>,
 ): Record<string, any> | undefined => {
 
-    let inputValuesCloned = _cloneDeep(values)
+    let inputValuesCloned = cloneDeep(values)
 
     for (const input of inputsList || []) {
         if (inputValuesCloned[input.id] === undefined || inputValuesCloned[input.id] === null || inputValuesCloned[input.id] === "") {

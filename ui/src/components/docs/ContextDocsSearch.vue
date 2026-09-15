@@ -43,7 +43,7 @@
     import {ref, computed, onMounted, onUnmounted} from "vue"
     import {useDocStore} from "../../stores/doc"
     import ContextDocsLink from "./ContextDocsLink.vue"
-    import {debounce} from "lodash-es"
+    import {debounce} from "@kestra-io/design-system"
 
     const docStore = useDocStore()
 

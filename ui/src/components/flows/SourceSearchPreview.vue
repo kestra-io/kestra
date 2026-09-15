@@ -146,7 +146,7 @@
     import {ref, computed, watch} from "vue"
     import {useI18n} from "vue-i18n"
     import {useRoute} from "vue-router"
-    import {KsEditor} from "@kestra-io/design-system"
+    import {KsEditor, escapeHtml} from "@kestra-io/design-system"
     import FileTreeOutline from "vue-material-design-icons/FileTreeOutline.vue"
     import FileDocumentOutline from "vue-material-design-icons/FileDocumentOutline.vue"
     import DatabaseOutline from "vue-material-design-icons/DatabaseOutline.vue"
@@ -161,7 +161,6 @@
     import {buildHighlightHtml, buildTermHighlightHtml, buildPathSegments, type CrossSearchSelection} from "../../utils/crossResourceSearch"
     import type {KvMatchEntry} from "../../stores/crossResourceSearch"
     import type {KsEditorExposes} from "@kestra-io/design-system"
-    import _escape from "lodash/escape"
 
     const props = defineProps<{
         selection: CrossSearchSelection | null
@@ -305,7 +304,7 @@
         if (props.selection.type === "files") {
             return buildPathSegments(props.selection.path, props.query, props.caseSensitive)
                 .map((segment) => {
-                    const text = segment.matched ? `<mark>${_escape(segment.text)}</mark>` : _escape(segment.text)
+                    const text = segment.matched ? `<mark>${escapeHtml(segment.text)}</mark>` : escapeHtml(segment.text)
                     return segment.dim ? `<span class="source-search-preview__meta-dir">${text}</span>` : text
                 })
                 .join("")

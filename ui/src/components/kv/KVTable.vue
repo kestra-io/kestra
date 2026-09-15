@@ -293,7 +293,6 @@
 <script setup lang="ts">
     import {useI18n} from "vue-i18n"
     import {useRoute, useRouter} from "vue-router"
-    import _groupBy from "lodash/groupBy"
     import {computed, nextTick, ref, useTemplateRef, watch} from "vue"
 
     import Delete from "vue-material-design-icons/Delete.vue"
@@ -302,7 +301,7 @@
     import FileDocumentEdit from "vue-material-design-icons/FileDocumentEdit.vue"
     import Eye from "vue-material-design-icons/Eye.vue"
 
-    import {KsId, KsIconButton, KsEditor, KsFilter as KSFilter} from "@kestra-io/design-system"
+    import {KsId, KsIconButton, KsEditor, KsFilter as KSFilter, groupBy, deepMerge} from "@kestra-io/design-system"
     import {routeQueryToQueryFilters} from "../../utils/queryFilters"
     import {date as formatDate} from "../../utils/filters"
     import {useEditorBindings} from "../../composables/useEditorBindings"
@@ -329,8 +328,6 @@
     import {useNamespacesStore} from "override/stores/namespaces"
     import {useApiStore} from "../../stores/api"
     import * as KvAPI from "@kestra-io/kestra-sdk/kv"
-
-    import _merge from "lodash/merge"
     const dataTable = useTemplateRef("dataTable")
     const router = useRouter()
     const route = useRoute()
@@ -400,7 +397,7 @@
         const nonFilterRest = Object.fromEntries(
             Object.entries(rest).filter(([key]) => !key.startsWith("filters[")),
         )
-        return _merge(base, nonFilterRest)
+        return deepMerge(base, nonFilterRest)
     }
 
     const urlPage = computed(() => Number(route.query.page) || 1)
@@ -659,7 +656,7 @@
     }
 
     function removeKvs() {
-        const groupedByNamespace = _groupBy(selection.value, "namespace")
+        const groupedByNamespace = groupBy(selection.value, (kv) => kv.namespace)
         const withDeletePermissionGroupedKvs = Object.fromEntries(Object.entries(groupedByNamespace).filter(([namespace]) => authStore.user?.isAllowed(resource.KVSTORE, action.DELETE, namespace)))
         const withDeletePermissionNamespaces = Object.keys(withDeletePermissionGroupedKvs)
         const withoutDeletePermissionNamespaces = Object.keys(groupedByNamespace).filter(n => !withDeletePermissionNamespaces.includes(n))

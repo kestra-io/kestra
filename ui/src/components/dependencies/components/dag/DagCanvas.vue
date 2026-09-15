@@ -16,7 +16,7 @@
             :elementsSelectable="false"
             :elevateNodesOnSelect="false"
             :elevateEdgesOnSelect="false"
-            :onlyRenderVisibleElements="true"
+            :onlyRenderVisibleElements="!exporting"
             :minZoom="0.2"
             :maxZoom="1.5"
             @nodeClick="({node}) => emit('select', node.id)"
@@ -42,7 +42,7 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, provide, useTemplateRef, watch} from "vue"
+    import {computed, nextTick, provide, ref, useTemplateRef, watch} from "vue"
     import {useResizeObserver} from "@vueuse/core"
     import {VueFlow, useVueFlow, Position, MarkerType} from "@vue-flow/core"
     import {Background} from "@vue-flow/background"
@@ -71,7 +71,7 @@
         "pane-click": [];
     }>()
 
-    const {fitBounds, zoomIn, zoomOut, viewport, vueFlowRef} = useVueFlow("asset-dag")
+    const {fitBounds, zoomIn, zoomOut, viewport, vueFlowRef, getNodes} = useVueFlow("asset-dag")
     const theme = useTheme()
     const {capture} = useScreenshot()
 
@@ -238,13 +238,43 @@
     const root = useTemplateRef<HTMLElement>("root")
     useResizeObserver(root, refitIfOwned)
 
+    const exporting = ref(false)
+
+    // Vue Flow keeps a card invisible until its ResizeObserver has measured it, so cards that
+    // enter the DOM for an export need a frame or two before they can be captured.
+    const untilNodesMeasured = (): Promise<void> => new Promise((resolve) => {
+        let framesLeft = 60
+        const check = (): void => {
+            const measured = getNodes.value.every((node) => node.dimensions.width > 0 && node.dimensions.height > 0)
+            if (measured || --framesLeft <= 0) {
+                resolve()
+            } else {
+                requestAnimationFrame(check)
+            }
+        }
+        requestAnimationFrame(check)
+    })
+
     defineExpose({
         zoomIn: () => zoomIn(),
         zoomOut: () => zoomOut(),
         fit: applyFit,
-        exportAsImage: (type: "jpeg" | "png", fileName?: string): void => {
-            if (vueFlowRef.value) {
-                capture(vueFlowRef.value, {type, fileName, shouldDownload: true})
+        /**
+         * `onlyRenderVisibleElements` culls off-screen cards from the DOM, and an export covers
+         * the whole graph: render every card for its duration, then capture the graph's bounds.
+         */
+        exportAsImage: async (type: "jpeg" | "png", fileName?: string): Promise<void> => {
+            if (!vueFlowRef.value || !bounds.value) {
+                return
+            }
+
+            exporting.value = true
+            try {
+                await nextTick()
+                await untilNodesMeasured()
+                await capture(vueFlowRef.value, {type, fileName, bounds: bounds.value, shouldDownload: true})
+            } finally {
+                exporting.value = false
             }
         },
     })

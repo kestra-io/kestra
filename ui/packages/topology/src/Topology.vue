@@ -3,6 +3,7 @@
         :id="id"
         :defaultMarkerColor="cssVariable('--ks-topology-dash')"
         fitViewOnInit
+        :minZoom="0.1"
         :nodesDraggable="false"
         :nodesConnectable="false"
         :elevateNodesOnSelect="false"
@@ -98,7 +99,7 @@
             />
         </template>
 
-        <Controls v-if="controlsShown" :showZoom="false" :showInteractive="false" :showFitView="false">
+        <Controls :showZoom="false" :showInteractive="false" :showFitView="false">
             <KsTooltip :content="$t('topology-graph.zoom-in')" placement="right">
                 <ControlButton @click.stop="zoomIn()">
                     <Plus />
@@ -143,7 +144,7 @@
 
 <script lang="ts" setup>
     import {computed, nextTick, onMounted, provide, ref, watch} from "vue"
-    import {useVueFlow, VueFlow, Panel} from "@vue-flow/core"
+    import {getRectOfNodes, useVueFlow, VueFlow, Panel} from "@vue-flow/core"
     import {ControlButton, Controls} from "@vue-flow/controls"
     import {Background} from "@vue-flow/background"
     import ClusterNode from "./nodes/ClusterNode.vue"
@@ -434,7 +435,6 @@
         generateGraph()
     }
 
-    const controlsShown = ref(true)
     const isDropdownOpen = ref(false)
     const toggleDropdown = () => isDropdownOpen.value = !isDropdownOpen.value
     function exportAsImage(type: "jpeg" | "png") {
@@ -443,9 +443,9 @@
             return
         }
 
-        controlsShown.value = false
-        capture(vueFlowRef.value, {type, shouldDownload: true})
-            .then(() => controlsShown.value = true)
+        // The whole graph, not the part of it the viewport happens to show.
+        const bounds = getRectOfNodes(getNodes.value.filter(node => !node.hidden))
+        capture(vueFlowRef.value, {type, bounds, shouldDownload: true})
             .finally(() => isDropdownOpen.value = false)
     }
 </script>

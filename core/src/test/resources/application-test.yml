@@ -40,6 +40,10 @@ kestra:
       max-poll-interval: 100ms
       poll-switch-interval: 5s
 
+  executor:
+    execution-delay-loop-periodicity-ms: 250
+    monitor-sla-loop-periodicity-ms: 250
+
   variables:
     globals:
       string: "string"

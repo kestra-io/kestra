@@ -148,6 +148,23 @@ describe("CopilotMessage", () => {
         expect(w.find("[data-test=\"copilot-draft-yaml\"]").text()).toContain("id: demo")
     })
 
+    // kestra-io/kestra#19330 review round 2: `appliedDraftIds` reached CopilotChat.vue's re-lock check
+    // but never this card, so an applied draft kept showing live Apply/Dismiss/Open-in-editor actions.
+    it("marks the draft card applied when its id is in appliedDraftIds", () => {
+        const w = mount(CopilotMessage, {
+            props: {
+                message: {
+                    id: "6b", role: "ASSISTANT", type: "ARTEFACT_DRAFT",
+                    draft: {draftId: "d1", kind: "FLOW", yaml: "id: demo", valid: true, constraints: null},
+                },
+                appliedDraftIds: new Set(["d1"]),
+            },
+            global: mountGlobal,
+        })
+        expect(w.find("[data-test=\"copilot-draft-applied\"]").text()).toContain("Applied")
+        expect(w.find("[data-test=\"copilot-draft-apply\"]").exists()).toBe(false)
+    })
+
     it("renders a CANCELLED message as a subtle system marker", () => {
         const w = mountMessage({id: "7", role: "SYSTEM", type: "CANCELLED"})
         const marker = w.find("[data-test=\"copilot-cancelled\"]")

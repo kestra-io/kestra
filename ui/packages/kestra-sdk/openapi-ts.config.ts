@@ -1,7 +1,7 @@
 import type {UserConfig, OpenApiOperationObject} from "@hey-api/openapi-ts"
 import * as path from "path"
 import {fileURLToPath} from "url"
-import {defineConfigKestraHeyOptionalTenant, fixYamlSourceRequestBodyContentType, normalizeQueryFilterParams, widenQueryFilterValue, replaceFlowLabels} from "@kestra-io/hey-api-plugin"
+import {defineConfigKestraHeyOptionalTenant, fixYamlSourceRequestBodyContentType, normalizeQueryFilterParams, unwrapEventStreamArrayResponses, widenQueryFilterValue, replaceFlowLabels} from "@kestra-io/hey-api-plugin"
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -42,6 +42,8 @@ export default {
                 // Make required QueryFilter[] `filters` params optional (fixes hey-api's broken
                 // array serializer + lets callers omit an empty filters array).
                 normalizeQueryFilterParams(method, path, operation)
+                // Type SSE events from the event schema, not the array Micronaut 4.10.18 declares around it.
+                unwrapEventStreamArrayResponses(method, path, operation)
             },
             schemas: {
                 // Widen QueryFilter.value to `unknown` so callers can assign scalars/arrays directly.

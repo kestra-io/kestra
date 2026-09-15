@@ -4,8 +4,6 @@ import {createI18n} from "vue-i18n"
 import {defineComponent} from "vue"
 import TimelineToolbar from "./TimelineToolbar.vue"
 
-// dateUtils.dateFilter reads Vue's $moment global property, wired up by the app plugin at bootstrap
-// and absent in a bare component mount; stub both date/duration formatting deterministically.
 vi.mock("@kestra-io/design-system", async (importOriginal) => {
     const actual = await importOriginal<typeof import("@kestra-io/design-system")>()
     return {
@@ -15,8 +13,6 @@ vi.mock("@kestra-io/design-system", async (importOriginal) => {
     }
 })
 
-// Statically imported (not resolved by name at runtime), so global.stubs can't intercept them —
-// replace the modules directly instead.
 vi.mock("../date-select/TimeSelect.vue", () => ({
     default: defineComponent({
         name: "TimeSelect",
@@ -41,9 +37,6 @@ const i18n = createI18n({
 
 const passthroughStub = (name: string, slots: string[] = ["default"]) => defineComponent({
     name,
-    // The real KsPopover accepts virtualRef/virtualTriggering as fallthrough attrs and forwards them
-    // to ElPopover; this stub must not let them fall through to its own root div, or Vue tries to
-    // stringify the (object) virtualRef value as an HTML attribute and throws.
     inheritAttrs: false,
     template: `<div>${slots.map(slot => slot === "default" ? "<slot />" : `<slot name="${slot}" />`).join("")}</div>`,
 })

@@ -36,8 +36,6 @@ describe("KsPopover", () => {
             },
             global: globalConfig,
         })
-        // The internalVisible watch that wires up the Escape listener is flushed pre-render, not
-        // synchronously at mount — give it a tick before the keydown reaches it.
         await wrapper.vm.$nextTick()
 
         document.dispatchEvent(new KeyboardEvent("keydown", {key: "Escape"}))

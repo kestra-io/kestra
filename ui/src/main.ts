@@ -12,7 +12,7 @@ import {setupKestraHttp} from "./utils/kestraHttp"
 import {useClient} from "@kestra-io/kestra-sdk"
 import routes from "./routes/routes"
 import en from "./translations/en.json"
-import {setupTenantRouter} from "./composables/useTenant"
+import {setupTenantRouter, tenantGuard} from "./composables/useTenant"
 import * as BasicAuth from "./utils/basicAuth"
 import {getCsrfToken} from "./utils/csrf"
 import {useCoreStore} from "./stores/core"
@@ -143,10 +143,10 @@ async function beforeResolve(router: Router, to: any, from: any): Promise<unknow
     }
 }
 
-initApp(app, routes, null, en as Record<string, unknown>, {}, {beforeResolve: beforeResolve as (...args: unknown[]) => unknown}).then(({router, piniaStore}) => {
-
-
-    // Setup tenant router
+initApp(app, routes, null, en as Record<string, unknown>, {}, {
+    beforeEach: tenantGuard as (...args: unknown[]) => unknown,
+    beforeResolve: beforeResolve as (...args: unknown[]) => unknown,
+}).then(({router, piniaStore}) => {
     setupTenantRouter(router, app)
 
     setupAxios(router)

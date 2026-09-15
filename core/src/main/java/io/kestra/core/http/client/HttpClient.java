@@ -582,6 +582,9 @@ public class HttpClient implements Closeable {
      * (e.g. {@code https://api.trusted.com@169.254.169.254/}, whose host is {@code 169.254.169.254}) or a
      * subdomain suffix (e.g. {@code https://api.trusted.com.attacker.example/}) cannot impersonate an entry
      * they merely start with.
+     * <p>
+     * An entry matches its host exactly. Write it as {@code *.api.trusted.com} to also match every subdomain
+     * of {@code api.trusted.com} (not {@code api.trusted.com} itself, which needs its own entry).
      */
     private static boolean isListEntryMatch(String entry, URI uri) {
         String host = uri.getHost();
@@ -589,9 +592,12 @@ public class HttpClient implements Closeable {
             return false;
         }
 
+        boolean matchSubdomains = entry.startsWith("*.") || entry.contains("://*.");
+        String strippedEntry = entry.replace("://*.", "://").replaceFirst("^\\*\\.", "");
+
         URI entryUri;
         try {
-            entryUri = URI.create(entry.contains("://") ? entry : "//" + entry);
+            entryUri = URI.create(strippedEntry.contains("://") ? strippedEntry : "//" + strippedEntry);
         } catch (IllegalArgumentException e) {
             return false;
         }
@@ -603,7 +609,10 @@ public class HttpClient implements Closeable {
 
         String lowerHost = stripTrailingDot(host).toLowerCase(Locale.ROOT);
         String lowerEntryHost = stripTrailingDot(entryHost).toLowerCase(Locale.ROOT);
-        if (!lowerHost.equals(lowerEntryHost) && !lowerHost.endsWith("." + lowerEntryHost)) {
+        boolean hostMatches = matchSubdomains
+            ? lowerHost.endsWith("." + lowerEntryHost)
+            : lowerHost.equals(lowerEntryHost);
+        if (!hostMatches) {
             return false;
         }
 

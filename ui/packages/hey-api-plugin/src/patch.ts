@@ -4,12 +4,17 @@
  */
 const YAML_MEDIA_TYPE = "application/x-yaml"
 const JSON_MEDIA_TYPE = "application/json"
+const EVENT_STREAM_MEDIA_TYPE = "text/event-stream"
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+    return typeof value === "object" && value !== null
+}
 
 function isPlainString(schema: any): boolean {
     return !!schema && schema.type === "string" && schema.format !== "binary"
 }
 
-export function fixYamlSourceRequestBodyContentType(method: string, path: string, operation: any): void {
+export function fixYamlSourceRequestBodyContentType(_method: string, _path: string, operation: any): void {
     const requestBody = operation?.requestBody
     const content = requestBody?.content
     if (!content || typeof content !== "object") return
@@ -40,7 +45,7 @@ export function fixYamlSourceRequestBodyContentType(method: string, path: string
  *
  * Use as a `parser.patch.operations` hook (signature `(method, path, operation)`).
  */
-export function normalizeQueryFilterParams(method: string, path: string, operation: any): void {
+export function normalizeQueryFilterParams(_method: string, _path: string, operation: any): void {
     const parameters = operation?.parameters
     if (!Array.isArray(parameters)) return
 
@@ -97,6 +102,33 @@ export function replaceFlowLabels(schema: any): void {
                     part.properties.labels = labelsAsArray()
                 }
             }
+        }
+    }
+}
+
+/**
+ * Unwrap a `text/event-stream` response declared as an array of events to the event schema itself.
+ *
+ * Since Micronaut 4.10.18 the OpenAPI spec renders a `Publisher<Event<T>>` endpoint as an `array`
+ * of the event where it used to declare the event alone. hey-api's SSE client types each event its
+ * stream yields from the response schema: an object schema yields the union of its property types
+ * (the `data` payload among them), anything else is yielded as declared - so the array typed every
+ * yielded event as `EventT[]`, a shape the client never produces at runtime (it parses one event at
+ * a time). Keeping the item schema keeps the generated types the shape the client yields, and the
+ * shape they had before the upgrade.
+ *
+ * Use as a `parser.patch.operations` hook (signature `(method, path, operation)`).
+ */
+export function unwrapEventStreamArrayResponses(_method: string, _path: string, operation: unknown): void {
+    if (!isRecord(operation) || !isRecord(operation.responses)) return
+
+    for (const response of Object.values(operation.responses)) {
+        if (!isRecord(response) || !isRecord(response.content)) continue
+        const media = response.content[EVENT_STREAM_MEDIA_TYPE]
+        if (!isRecord(media) || !isRecord(media.schema)) continue
+        const schema = media.schema
+        if (schema.type === "array" && isRecord(schema.items)) {
+            media.schema = schema.items
         }
     }
 }

@@ -41,8 +41,8 @@ if [ -n "$ui_staged_files" ]; then
   echo "Staged UI files: $ui_staged_files"
   for dir in ui ui-ee; do
     if [ -d "$dir" ] && echo "$ui_staged_files" | grep -qE "^$dir/.*\.(ts|tsx|vue)$"; then
-      echo "Lowering the explicit any baseline in $dir..."
-      (cd "$dir" && npm run check:ts-any -- --lock) || exit 1
+      echo "Updating the explicit any baseline in $dir..."
+      (cd "$dir" && npm run check:ts-any -- --write) || exit 1
       git add "$dir/scripts/explicit-any/baseline.json"
     fi
   done

@@ -85,6 +85,14 @@ public class UnsetVariables extends Task implements ExecutionUpdatableTask {
         if (key.indexOf('.') >= 0) {
             String prefix = key.substring(0, key.indexOf('.'));
             String suffix = key.substring(key.indexOf('.') + 1);
+
+            Object child = vars.get(prefix);
+            if (!(child instanceof Map)) {
+                if (!ignoreMissing) {
+                    throw new IllegalArgumentException("Variable '" + prefix + "' is not a map and `ignoreMissing` is false");
+                }
+                return;
+            }
             removeVar((Map<String, Object>) vars.get(prefix), suffix, ignoreMissing);
         } else {
             if (!ignoreMissing && !vars.containsKey(key)) {

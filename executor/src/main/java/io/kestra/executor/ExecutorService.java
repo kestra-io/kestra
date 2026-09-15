@@ -829,15 +829,25 @@ public class ExecutorService {
             // run that is still running is genuinely in progress on a worker and will report its own terminal state.
             if (task instanceof FlowableTask<?> && taskRun.getState().isTerminated()) {
                 FlowWithSource flow = executor.getFlow();
+                // A FAILED parent must not copy its state to still-running children: they are cancelled instead
+                // so that late worker results can still join and the kill channel is not bypassed.
+                State.Type mappedState = taskRun.getState().isFailed() ? State.Type.CANCELLED : taskRun.getState().getCurrent();
                 List<TaskRun> updated = executor.getExecution().findChildren(taskRun).stream()
                     .filter(child -> !child.getState().isTerminated())
                     .filter(child -> flow.findTaskByTaskIdOrNull(child.getTaskId()) instanceof FlowableTask<?>)
-                    .map(throwFunction(child -> child.withState(taskRun.getState().getCurrent())))
+                    .map(throwFunction(child -> child.withStateAndAttempt(mappedState)))
                     .toList();
                 if (!updated.isEmpty()) {
                     Execution execution = executor.getExecution();
                     for (TaskRun child : updated) {
                         execution = execution.withTaskRun(child);
+                        if (mappedState == State.Type.CANCELLED) {
+                            Task childTask = flow.findTaskByTaskIdOrNull(child.getTaskId());
+                            RunContext runContext = childTask != null
+                                ? runContextFactory.of(flow, childTask, execution, child)
+                                : runContextFactory.of(flow, execution);
+                            runContext.logger().warn("Task terminated because sibling task '{}' failed", taskRun.getId());
+                        }
                     }
                     executor = executor.withExecution(execution, "handledTerminatedFlowableTasks");
                 }

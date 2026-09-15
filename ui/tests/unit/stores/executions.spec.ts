@@ -1,7 +1,7 @@
 import {afterEach, beforeEach, describe, expect, test, vi} from "vitest"
 import {createPinia, setActivePinia} from "pinia"
 
-import {normalizeFilePreview, useExecutionsStore, type FilePreview} from "../../../src/stores/executions"
+import {normalizeFilePreview, useExecutionsStore, type Execution, type FilePreview} from "../../../src/stores/executions"
 
 vi.mock("vue-router", () => ({
     useRoute: () => ({query: {}}),
@@ -55,7 +55,7 @@ function buildExecution(overrides: Record<string, unknown> = {}) {
         state: {current: "RUNNING", histories: []},
         metadata: {originalCreatedDate: new Date().toISOString()},
         ...overrides,
-    }
+    } as unknown as Execution
 }
 
 describe("executions store: SSE live-follow vs. a local write (#18766)", () => {

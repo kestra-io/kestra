@@ -12,7 +12,7 @@
  * endpoints, which differ per edition (the EE SDK doesn't expose thread `create`/`get`); the `chat`
  * and `confirm` turns are POST SSE streams read via `streamSse`.
  */
-import {ref, computed} from "vue"
+import {ref, computed, getCurrentScope, onScopeDispose} from "vue"
 import {useClient} from "@kestra-io/kestra-sdk"
 import type {AgentMessageRole, AgentMessageType, AgentThreadStatus, ApiDecision} from "@kestra-io/kestra-sdk"
 import {apiUrl} from "override/utils/route"
@@ -117,9 +117,16 @@ export function useAiChat() {
     // (threads are persisted + user-scoped server-side). A stale/foreign uid just 404s → cleared.
     const THREAD_STORAGE_KEY = "kestra.copilot.activeThread"
     const THREAD_IDLE_POLL_MS = 100
-    // Bumped on reset/loadThread so a Stop that is still waiting for the server to go IDLE
-    // does not overwrite a newer conversation's status.
+    const THREAD_IDLE_POLL_MAX_MS = 1000
+    const THREAD_IDLE_WAIT_MS = 10_000
+    // Bumped on reset/loadThread/unmount so a Stop that is still waiting for the server to go IDLE
+    // does not overwrite a newer conversation's status or keep polling after teardown.
     let idleWaitGeneration = 0
+    if (getCurrentScope()) {
+        onScopeDispose(() => {
+            idleWaitGeneration++
+        })
+    }
     const rememberThread = (uid: string) => {
         try {
             localStorage.setItem(THREAD_STORAGE_KEY, uid)
@@ -183,7 +190,10 @@ export function useAiChat() {
             forgetThread()
             return
         }
-        const {data} = response
+        applyThreadDetail(response.data)
+    }
+
+    function applyThreadDetail(data: ThreadDetail): void {
         thread.value = {
             uid: data.uid,
             title: data.title,
@@ -355,13 +365,19 @@ export function useAiChat() {
     /** Stop aborts the SSE immediately, but abortCancelled only runs after an in-flight catalog.dispatch returns, so Send stays off until GET reports the thread is no longer RUNNING. */
     async function awaitServerIdle(threadId: string): Promise<void> {
         const generation = idleWaitGeneration
+        const deadline = Date.now() + THREAD_IDLE_WAIT_MS
+        let delayMs = THREAD_IDLE_POLL_MS
         for (;;) {
             if (generation !== idleWaitGeneration || thread.value?.uid !== threadId) return
             try {
                 const {data} = await client.get<ThreadDetail>(`${base()}/${threadId}`, {showMessageOnError: false})
                 if (generation !== idleWaitGeneration || thread.value?.uid !== threadId) return
-                if (data.status !== "RUNNING") {
-                    status.value = data.status
+                if (data.status === "IDLE") {
+                    status.value = "IDLE"
+                    return
+                }
+                if (data.status === "AWAITING_CONFIRMATION") {
+                    applyThreadDetail(data)
                     return
                 }
             } catch (e) {
@@ -370,7 +386,13 @@ export function useAiChat() {
                     return
                 }
             }
-            await new Promise<void>((resolve) => setTimeout(resolve, THREAD_IDLE_POLL_MS))
+            const remaining = deadline - Date.now()
+            if (remaining <= 0) {
+                if (generation === idleWaitGeneration && thread.value?.uid === threadId) status.value = "IDLE"
+                return
+            }
+            await new Promise<void>((resolve) => setTimeout(resolve, Math.min(delayMs, remaining)))
+            delayMs = Math.min(delayMs * 2, THREAD_IDLE_POLL_MAX_MS)
         }
     }
 

@@ -1,4 +1,5 @@
-import {describe, it, expect, vi, afterAll, beforeEach} from "vitest"
+import {describe, it, expect, vi, afterAll, afterEach, beforeEach} from "vitest"
+import {effectScope} from "vue"
 import type {AiSseFrame} from "../../../../../src/components/ai/copilot/types"
 
 // Mock the axios client (thread create/get) and the SSE reader so we can drive
@@ -54,6 +55,10 @@ describe("useAiChat", () => {
         localStorage.clear()
         post.mockResolvedValue(idleThread())
         get.mockResolvedValue({data: {uid: "t1", mode: "ASK", status: "IDLE", messages: []}})
+    })
+
+    afterEach(() => {
+        vi.useRealTimers()
     })
 
     afterAll(() => {
@@ -173,6 +178,71 @@ describe("useAiChat", () => {
         await pending
         expect(chat.status.value).toBe("IDLE")
         expect(chat.canSend.value).toBe(true)
+    })
+
+    it("rebuilds a pending proposal when stop lands on AWAITING_CONFIRMATION", async () => {
+        hangUntilAbort = true
+        get.mockResolvedValue({data: {
+            uid: "t1", mode: "EDIT", status: "AWAITING_CONFIRMATION", pendingConfirmationId: "c1",
+            messages: [
+                {uid: "a", role: "USER", type: "TEXT", content: "restart it"},
+                {uid: "b", role: "ASSISTANT", type: "PROPOSED_ACTION", content: "Run restart-execution on exec-1",
+                    toolCall: {tool: "restart-execution", kind: "PLATFORM", family: "MUTATE", arguments: {id: "exec-1"}}},
+            ],
+        }})
+        const chat = useAiChat()
+        const pending = chat.sendChat({prompt: "restart it", mode: "EDIT"})
+        await vi.waitFor(() => expect(chat.streaming.value).toBe(true))
+        chat.cancel()
+        await pending
+        expect(chat.status.value).toBe("AWAITING_CONFIRMATION")
+        expect(chat.canSend.value).toBe(false)
+        expect(chat.pendingConfirmation.value).toMatchObject({
+            confirmationId: "c1",
+            summary: "Run restart-execution on exec-1",
+            tool: "restart-execution",
+        })
+    })
+
+    it("re-enables Send if the server is still RUNNING past the idle wait", async () => {
+        hangUntilAbort = true
+        get.mockImplementation(async () => ({
+            data: {uid: "t1", mode: "ASK", status: "RUNNING", messages: []},
+        }))
+        const chat = useAiChat()
+        const pending = chat.sendChat({prompt: "hi"})
+        await vi.waitFor(() => expect(chat.streaming.value).toBe(true))
+
+        vi.useFakeTimers()
+        chat.cancel()
+        await Promise.resolve()
+        await Promise.resolve()
+        expect(get).toHaveBeenCalled()
+        await vi.advanceTimersByTimeAsync(10_000)
+        await pending
+        expect(chat.status.value).toBe("IDLE")
+        expect(chat.canSend.value).toBe(true)
+    })
+
+    it("stops the idle wait when the composable scope is disposed", async () => {
+        hangUntilAbort = true
+        get.mockImplementation(async () => ({
+            data: {uid: "t1", mode: "ASK", status: "RUNNING", messages: []},
+        }))
+        const scope = effectScope()
+        const chat = scope.run(() => useAiChat())!
+        const pending = chat.sendChat({prompt: "hi"})
+        await vi.waitFor(() => expect(chat.streaming.value).toBe(true))
+        chat.cancel()
+        await vi.waitFor(() => expect(get).toHaveBeenCalled())
+        scope.stop()
+        await pending
+        await new Promise((resolve) => setTimeout(resolve, 250))
+        const afterStop = get.mock.calls.length
+        await new Promise((resolve) => setTimeout(resolve, 250))
+        expect(get.mock.calls.length).toBe(afterStop)
+        expect(chat.status.value).toBe("RUNNING")
+        expect(chat.canSend.value).toBe(false)
     })
 
     it("reset during the post-stop idle wait does not restore the cancelled thread", async () => {

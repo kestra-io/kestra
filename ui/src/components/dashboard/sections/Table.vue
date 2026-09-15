@@ -57,7 +57,7 @@
     import {Motion} from "motion-v"
     import {KsExecutionStatus} from "@kestra-io/design-system"
 
-    import type {Chart, Column} from "../types.ts"
+    import type {Chart, ChartResults, Column} from "../types.ts"
     import {isPaginationEnabled, useChartGenerator} from "../composables/useDashboards"
     import TableQuickFilter from "./TableQuickFilter.vue"
     import {stateFilterForTab} from "./quickFilters"
@@ -136,7 +136,7 @@
         }
     }
 
-    const data = ref()
+    const data = ref<ChartResults>()
     const activeTab = ref("all")
     const stateFilter = ref<QueryFilter | null>(stateFilterForTab(props.chart, "all"))
     const pageNumber = ref(1)

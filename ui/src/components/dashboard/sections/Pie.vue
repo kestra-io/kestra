@@ -40,7 +40,7 @@
     import {KsPie, KsSkeleton, ChartFeature, TooltipType, durationUtils, type KsChartSeriesItem} from "@kestra-io/design-system"
 
     import {Chart, useChartGenerator} from "../composables/useDashboards"
-    import {DASHBOARD_CHART_MAX_PIXEL_RATIO, getConsistentHEXColor, type EchartsClickParams} from "../composables/charts"
+    import {DASHBOARD_CHART_MAX_PIXEL_RATIO, getConsistentHEXColor, type EchartsParams} from "../composables/charts"
     import type {Column} from "../types.ts"
     import {useChartDrillDown} from "../composables/chartDrillDown"
     import ChartLegend from "./ChartLegend.vue"
@@ -84,7 +84,7 @@
     }
 
     const pieData = computed<KsChartSeriesItem[]>(() => {
-        const rawData = generated.value?.results as Record<string, unknown>[] | undefined
+        const rawData = generated.value?.results
         if (!rawData) return []
 
         const results: Record<string, number> = Object.create(null)
@@ -124,7 +124,7 @@
 
     const pieOptions = computed(() => ({
         tooltip: {
-            formatter: (params: EchartsClickParams) =>
+            formatter: (params: EchartsParams) =>
                 isDuration
                     ? `${params.name}: ${durationUtils.humanDuration(Number(params.value))} (${params.percent}%)`
                     : `${params.name}: ${params.value} (${params.percent}%)`,
@@ -133,11 +133,11 @@
 
     const dimensionColumn = computed(() => {
         const dimensionKey = aggregator.field?.key
-        return (dimensionKey ? columns[dimensionKey] : undefined) as {field?: string; key?: string} | undefined
+        return dimensionKey ? columns[dimensionKey] : undefined
     })
 
     function onSegmentClick(rawParams: unknown) {
-        const params = rawParams as EchartsClickParams
+        const params = rawParams as EchartsParams
         if (!params?.name) return
         drillDown([{column: dimensionColumn.value, value: params.name}])
     }

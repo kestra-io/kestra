@@ -15,11 +15,11 @@ export interface RankedStackedBars {
 }
 
 /**
- * The subset of an ECharts click-event payload the dashboard charts read. `KsBar`/`KsPie`/`KsEchart`
- * emit `echarts-click` as `unknown` (the design system doesn't depend on echarts' own event types),
- * so this narrows it once at the boundary for every chart that reacts to a click.
+ * The subset of an ECharts payload the dashboard charts read, shared by the `echarts-click` handlers
+ * and the tooltip formatters. `KsBar`/`KsPie`/`KsEchart` emit `echarts-click` as `unknown` (the design
+ * system doesn't depend on echarts' own event types), so this narrows it once for every reader.
  */
-export interface EchartsClickParams {
+export interface EchartsParams {
     name?: string;
     seriesName?: string;
     seriesType?: string;

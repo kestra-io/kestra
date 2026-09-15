@@ -14,6 +14,12 @@ export interface Column {
     [key: string]: unknown;
 }
 
+/** What a chart's data query resolves to. Row keys are the chart's own `data.columns` keys, so the cell values stay `unknown`. */
+export interface ChartResults {
+    results?: Record<string, unknown>[];
+    total?: number;
+}
+
 export interface Chart extends ChartChartOption {
     chartOptions?: {
         displayName?: string;
@@ -29,9 +35,13 @@ export interface Chart extends ChartChartOption {
         column: string;
         /** Bar.vue: caps how many stacked-bar categories render before collapsing the rest into "Others". */
         limit?: number;
+        /** Bar.vue and TimeSeries.vue: the column whose value colours and labels each stack. */
+        colorByColumn?: string;
         [key: string]: unknown;
     };
     data?: {
+        /** Fully qualified data-source class, e.g. `io.kestra.plugin.core.dashboard.data.Executions`. */
+        type?: string;
         columns?: {
             [key: string]: Column;
         };

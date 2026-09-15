@@ -8,7 +8,7 @@ import {useI18n} from "vue-i18n"
 
 import {decodeSearchParams} from "@kestra-io/design-system"
 
-import {Chart} from "../types.ts"
+import {Chart, type ChartResults} from "../types.ts"
 import {chartLoadQueue} from "./chartLoadQueue"
 import {ChartFiltersOverrides, QueryFilter} from "@kestra-io/kestra-sdk"
 
@@ -33,9 +33,9 @@ export const isExportableChart = (type: string): boolean => !isMarkdownChart(typ
 export const getChartTitle = (chart: Chart): string => chart.chartOptions?.displayName ?? chart.id
 
 /** `data` is undefined when the chart went away before its request answered, or when the request 404ed. */
-export const getPropertyValue = (data: {results?: Record<string, unknown>[]} | undefined, property: "value" | "description"): string | undefined => {
+export const getPropertyValue = (data: ChartResults | undefined, property: "value" | "description"): string | undefined => {
     const value = data?.results?.[0]?.[property]
-    return value === undefined ? undefined : String(value)
+    return value == null ? undefined : String(value)
 }
 
 export const isPaginationEnabled = (chart: Chart): boolean => chart.chartOptions?.pagination?.enabled ?? false
@@ -54,7 +54,7 @@ export function useChartGenerator(dashboardId: string | undefined, props: {chart
     const {t} = useI18n({useScope: "global"})
     const EMPTY_TEXT = t("dashboards.empty")
 
-    const data = ref()
+    const data = ref<ChartResults>()
     const loading = ref(false)
     let isMounted = true
     onBeforeUnmount(() => {

@@ -17,7 +17,7 @@
                 :currentPage="page"
                 :pageSize="size"
                 :loadData="loadData"
-                :rowKey="(row: {namespace: string; id: string}) => `${row.namespace}-${row.id}`"
+                :rowKey="(row: Record<string, unknown>) => `${row.namespace}-${row.id}`"
                 @page-changed="onPageChanged"
                 @row-dblclick="onRowDblClick"
             >

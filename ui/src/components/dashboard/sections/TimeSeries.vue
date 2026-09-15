@@ -2,7 +2,7 @@
     <KsSkeleton v-if="loading && !generated && !props.short" animated :rows="3" class="empty" />
 
     <div
-        v-else-if="generated?.total > 0"
+        v-else-if="(generated?.total ?? 0) > 0"
         class="chart"
         :class="{short: props.short, execution: props.execution}"
     >
@@ -42,7 +42,7 @@
     import {KsEchart, KsSkeleton, TooltipType, cssVar, durationUtils} from "@kestra-io/design-system"
 
     import {Chart, useChartGenerator} from "../composables/useDashboards"
-    import {DASHBOARD_CHART_MAX_PIXEL_RATIO, fillTimeBucketLabels, getConsistentHEXColor, useLegendToggle, type EchartsClickParams} from "../composables/charts"
+    import {DASHBOARD_CHART_MAX_PIXEL_RATIO, fillTimeBucketLabels, getConsistentHEXColor, useLegendToggle, type EchartsParams} from "../composables/charts"
     import {useChartDrillDown} from "../composables/chartDrillDown"
     import ChartLegend from "./ChartLegend.vue"
     import {getDateGrouping, useTheme} from "../../../utils/utils"
@@ -58,7 +58,7 @@
         yAxisID: string;
         data: {x: unknown; y: number}[];
         tooltip: string;
-        label: unknown;
+        label: string | undefined;
         backgroundColor: string;
         unique: Set<unknown>;
     }
@@ -154,7 +154,7 @@
     }
 
     const parsedData = computed((): {labels: string[]; datasets: TimeSeriesDataset[]} => {
-        const rawData = generated.value.results as Record<string, unknown>[] | undefined
+        const rawData = generated.value?.results
         // fill the buckets between the earliest and latest returned dates so gaps stay visible on the axis
         const xAxis = fillTimeBucketLabels(
             rawData?.map((v: Record<string, unknown>) => v[chartOptions?.column ?? ""]) ?? [],
@@ -168,7 +168,7 @@
 
             const columns = data?.columns ?? {}
             const column = chartOptions?.column ?? ""
-            const colorByColumn = chartOptions?.colorByColumn as string | undefined
+            const colorByColumn = chartOptions?.colorByColumn
 
             // Get the fields for stacks (columns without `agg` and not the xAxis column)
             const fields = Object.keys(columns)
@@ -179,16 +179,14 @@
                 const stack = fields.map((f) => params[f]).join(", ")
 
                 if (!acc[stack]) {
+                    const stackLabel = colorByColumn ? params[colorByColumn] as string | undefined : undefined
                     acc[stack] = {
                         type: "bar",
                         yAxisID,
                         data: [],
                         tooltip: stack,
-                        label: colorByColumn ? params[colorByColumn] : undefined,
-                        backgroundColor: getConsistentHEXColor(
-                            theme.value,
-                            colorByColumn ? (params[colorByColumn] as string | undefined) : undefined,
-                        ),
+                        label: stackLabel,
+                        backgroundColor: getConsistentHEXColor(theme.value, stackLabel),
                         unique: new Set(),
                     }
                 }
@@ -228,7 +226,7 @@
 
         // Sorts the dataset array alphabetically by label for a consistent order across time ranges.
         const yDatasetData = Object.values(getData(aggregator.value[0][0], yDataset)).sort((a, b) =>
-            ((a.label as string | undefined) ?? "").localeCompare((b.label as string | undefined) ?? ""),
+            (a.label ?? "").localeCompare(b.label ?? ""),
         )
 
         const label = aggregator.value?.[1]?.[1]?.displayName ?? aggregator.value?.[1]?.[1]?.field
@@ -377,7 +375,7 @@
             yAxis,
             legend: {
                 show: false,
-                selected: legendSelected([...barSeries, ...lineSeries].map((s) => s.name as string | undefined)),
+                selected: legendSelected([...barSeries, ...lineSeries].map((s) => s.name)),
             },
             tooltip: {axisPointer: {type: "none"}},
             series: [...barSeries, ...lineSeries],
@@ -392,7 +390,7 @@
         parsedData.value.datasets
             .filter((ds): ds is FlattenedBarDataset => ds.type !== "line")
             .map((ds) => ({
-                label: ds.label as string,
+                label: ds.label ?? "",
                 color: ds.backgroundColor,
                 count: ds.data.reduce((sum, n) => sum + (n || 0), 0),
             })),
@@ -405,8 +403,8 @@
     const ksEchartRef = ref<InstanceType<typeof KsEchart> | null>(null)
 
     const dimensionColumn = computed(() => {
-        const key = chartOptions?.colorByColumn as string | undefined
-        return (key ? data?.columns?.[key] : undefined) as {field?: string; key?: string} | undefined
+        const key = chartOptions?.colorByColumn
+        return key ? data?.columns?.[key] : undefined
     })
 
     // The row's date is already the boundary the backend truncated to: re-snapping it with `startOf`
@@ -415,7 +413,7 @@
         const label = parsedData.value.labels[dataIndex]
         const column = chartOptions?.column ?? ""
 
-        const dates = (generated.value?.results as Record<string, unknown>[] | undefined)
+        const dates = generated.value?.results
             ?.map((row) => moment(row[column] as moment.MomentInput, moment.ISO_8601, true))
             .filter((date) => date.isValid() && date.format(grouping.value.format) === label) ?? []
         if (!dates.length) return undefined
@@ -429,7 +427,7 @@
     }
 
     function onChartClick(rawParams: unknown) {
-        const params = rawParams as EchartsClickParams
+        const params = rawParams as EchartsParams
         if (params.seriesType !== "bar" || props.execution) return
 
         drillDown(
@@ -438,7 +436,7 @@
                 ...(props.namespace ? [{column: {field: "NAMESPACE"}, value: props.namespace}] : []),
                 ...(props.flow ? [{column: {field: "FLOW_ID"}, value: props.flow}] : []),
             ],
-            {dateRange: bucketDateRange(params.dataIndex ?? -1)},
+            {dateRange: params.dataIndex === undefined ? undefined : bucketDateRange(params.dataIndex)},
         )
     }
 

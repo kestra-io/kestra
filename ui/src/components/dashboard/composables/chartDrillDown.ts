@@ -167,7 +167,7 @@ export function chartDrillDownTarget(
     dimensions: ClickDimension[],
     context?: {routeQuery?: LocationQuery; dateRange?: {startDate: string; endDate: string}},
 ): DrillDownTarget | null {
-    const descriptor = DRILL_DOWNS[(chart?.data?.type as string | undefined)?.split(".").pop() ?? ""]
+    const descriptor = DRILL_DOWNS[chart?.data?.type?.split(".").pop() ?? ""]
     if (!descriptor) return null
 
     const routeQuery = context?.routeQuery ?? {}

@@ -53,7 +53,7 @@
     import {ChartFeature, KsBar, KsSkeleton, TooltipType, cssVar, durationUtils, type KsChartSeriesItem} from "@kestra-io/design-system"
 
     import {Chart, useChartGenerator} from "../composables/useDashboards"
-    import {DASHBOARD_CHART_MAX_PIXEL_RATIO, DEFAULT_BAR_CATEGORY_LIMIT, getConsistentHEXColor, rankStackedBars, useLegendToggle, type EchartsClickParams} from "../composables/charts"
+    import {DASHBOARD_CHART_MAX_PIXEL_RATIO, DEFAULT_BAR_CATEGORY_LIMIT, getConsistentHEXColor, rankStackedBars, useLegendToggle, type EchartsParams} from "../composables/charts"
     import {useChartDrillDown} from "../composables/chartDrillDown"
     import ChartLegend from "./ChartLegend.vue"
     import ChevronDown from "vue-material-design-icons/ChevronDown.vue"
@@ -99,7 +99,7 @@
     const baseLimit = chartOptions?.limit ?? DEFAULT_BAR_CATEGORY_LIMIT
 
     const parsedData = computed(() =>
-        rankStackedBars(generated.value?.results as Record<string, unknown>[] ?? [], {
+        rankStackedBars(generated.value?.results ?? [], {
             categoryKey,
             stackKeys,
             valueKey,
@@ -196,7 +196,7 @@
                 : {
                     trigger: "axis",
                     axisPointer: {type: "none"},
-                    formatter: (params: EchartsClickParams[]) => {
+                    formatter: (params: EchartsParams[]) => {
                         if (!params?.length) return ""
                         const isOthers = parsedData.value.othersCount > 0 && params[0].dataIndex === categories.value.length - 1
                         const categoryName = isOthers ? t("dashboards.others") : (params[0].name ?? "")
@@ -229,18 +229,18 @@
     const ksBarRef = ref<InstanceType<typeof KsBar> | null>(null)
 
     const categoryColumn = computed(() =>
-        (data?.columns?.[chartOptions?.column ?? ""]) as {field?: string; key?: string} | undefined,
+        data?.columns?.[chartOptions?.column ?? ""],
     )
 
     const stackColumn = computed(() => {
         const category = chartOptions?.column ?? ""
         const key = Object.entries(data?.columns ?? {})
             .find(([k, v]) => !v.agg && k !== category)?.[0]
-        return (key ? data?.columns?.[key] : undefined) as {field?: string; key?: string} | undefined
+        return key ? data?.columns?.[key] : undefined
     })
 
     function onChartClick(rawParams: unknown) {
-        const params = rawParams as EchartsClickParams
+        const params = rawParams as EchartsParams
         const isOthers = parsedData.value.othersCount > 0 && params.name === othersLabel.value
         if (isOthers) {
             expanded.value = true

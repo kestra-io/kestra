@@ -48,8 +48,8 @@
             const config = props.columns[key]
             const fieldValue = props.row[key]
 
-            if (config?.field === "FLOW_ID" || config?.field === "NAMESPACE") {
-                result[config.field as "FLOW_ID" | "NAMESPACE"] = String(fieldValue)
+            if ((config?.field === "FLOW_ID" || config?.field === "NAMESPACE") && fieldValue != null) {
+                result[config.field] = String(fieldValue)
             }
         }
 

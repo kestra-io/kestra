@@ -74,6 +74,17 @@ public abstract class Asset implements HasUID, SoftDeletable<Asset>, Plugin {
     private List<@Valid FlowAction> assetActions;
 
     @Nullable
+    @Valid
+    @Schema(title = "The asset this one is part of.", description = "At most one parent, and a parent has no parent of its own.")
+    private AssetRelationRef partOf;
+
+    @Nullable
+    @Size(max = 50)
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    @Schema(title = "Assets related to this one.", description = "Declaration only: turned into RELATED relations when the asset is written, never stored on the asset itself.")
+    private List<@Valid AssetRelationRef> related;
+
+    @Nullable
     @Hidden
     private Instant created;
 
@@ -152,6 +163,8 @@ public abstract class Asset implements HasUID, SoftDeletable<Asset>, Plugin {
             ? this.assetActions
             : Optional.ofNullable(previousAsset).map(Asset::getAssetActions).orElse(null);
 
+        this.partOf = Optional.ofNullable(this.partOf).or(() -> Optional.ofNullable(previousAsset).map(Asset::getPartOf)).orElse(null);
+
         return (T) this;
     }
 
@@ -221,6 +234,16 @@ public abstract class Asset implements HasUID, SoftDeletable<Asset>, Plugin {
         metadata.put(name, value);
     }
 
+    @JsonProperty("partOf")
+    public void setPartOf(AssetRelationRef partOf) {
+        this.partOf = partOf;
+    }
+
+    @JsonProperty("related")
+    public void setRelated(List<AssetRelationRef> related) {
+        this.related = related;
+    }
+
     @Override
     public String uid() {
         return Asset.uid(tenantId, id);
@@ -242,6 +265,16 @@ public abstract class Asset implements HasUID, SoftDeletable<Asset>, Plugin {
 
     public Asset withAssetActions(List<FlowAction> assetActions) {
         this.assetActions = assetActions;
+        return this;
+    }
+
+    public Asset withPartOf(AssetRelationRef partOf) {
+        this.partOf = partOf;
+        return this;
+    }
+
+    public Asset withRelated(List<AssetRelationRef> related) {
+        this.related = related;
         return this;
     }
 }

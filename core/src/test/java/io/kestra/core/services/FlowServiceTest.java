@@ -1596,6 +1596,28 @@ class FlowServiceTest {
     }
 
     @Test
+    void shouldRejectExecutingADeletedFlowWhenRevisionIsMinuOne() throws FlowProcessingException, QueueException {
+        String flowId = IdUtils.create();
+        String source = """
+            id: %s
+            namespace: %s
+            tasks:
+              - id: log
+                type: io.kestra.plugin.core.log.Log
+                message: hello
+            """.formatted(flowId, TEST_NAMESPACE);
+
+        FlowWithSource created = flowService.create(GenericFlow.fromYaml(TenantService.MAIN_TENANT, source));
+        FlowWithSource deleted = flowService.delete(created);
+
+        assertThatThrownBy(() -> flowService.getFlowIfExecutableOrThrow(
+            deleted.getTenantId(), deleted.getNamespace(), deleted.getId(), Optional.of(deleted.getRevision() - 1)
+        ))
+            .isInstanceOf(NoSuchElementException.class)
+            .hasMessage("Requested Flow is not found.");
+    }
+
+    @Test
     void shouldAllowExecutingADraftRevisionWhenRevisionIsExplicit() throws FlowProcessingException, QueueException {
         String flowId = IdUtils.create();
         String source = """

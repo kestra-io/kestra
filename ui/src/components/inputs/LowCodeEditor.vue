@@ -1103,6 +1103,9 @@
         case "undo":
             performUndo()
             return
+        case "save":
+            saveFlow()
+            return
         case "clear":
             // Dismissing the picker or the modal must not also cost the user their place.
             if (isAuthoringOverlayOpen()) return false
@@ -1137,7 +1140,7 @@
             )
             if (first) focusedTaskId.value = first.id
         },
-        saveFlow: () => saveFlowFromModal(),
+        saveFlow: () => saveFlow(),
         taskEntries: taskPicker.focusedContextEntries.value,
         insertTaskType: taskPicker.insertTaskInFocusedContext,
     }))
@@ -1168,7 +1171,7 @@
         taskPicker.openTaskPickerAtPath(target.parentPath, target.refIndex)
     }
 
-    async function saveFlowFromModal() {
+    async function saveFlow() {
         const outcome = await flowStore.save?.()
         if (outcome === "blocked") {
             coreStore.message = {
@@ -1200,7 +1203,7 @@
         editTask: (parentPath, blockSchemaPath, refPath) => pushModalTarget({parentPath, blockSchemaPath, refPath}),
         closeTask: () => closeModal(),
         updateYaml: (yaml: string) => applyGraphYaml(yaml),
-        saveFlow: () => saveFlowFromModal(),
+        saveFlow: () => saveFlow(),
     })
 
     const fitViewOrientation = () => {

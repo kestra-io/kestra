@@ -183,7 +183,7 @@
     }
 
     .flow-chip-chevron {
-        transition: transform 0.15s ease;
+        transition: transform var(--ks-duration-fast) var(--ks-ease-standard);
     }
 
     .flow-chip-chevron--open {

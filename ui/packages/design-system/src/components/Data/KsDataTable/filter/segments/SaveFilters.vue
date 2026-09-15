@@ -241,7 +241,7 @@
 
     .filter-summary {
         padding: 0.5rem 0.75rem;
-        background-color: var(--ks-surface-secondary);
+        background-color: var(--ks-bg-base);
         border-radius: var(--ks-radius-base);
         border: 1px solid var(--ks-border-default);
         min-height: 2rem;

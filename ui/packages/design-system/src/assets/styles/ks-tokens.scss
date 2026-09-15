@@ -141,7 +141,7 @@
     --ks-log-border-warn: color-mix(in srgb, var(--ks-status-warning), var(--ks-bg-base) 80%);
     --ks-log-border-error: color-mix(in srgb, var(--ks-status-error), var(--ks-bg-base) 80%);
 
-    --ks-log-background-trace: color-mix(in srgb, var(--ks-status-trace), var(--ks-bg-base) 95%);
+    --ks-log-background-trace: color-mix(in srgb, var(--ks-status-neutral), var(--ks-bg-base) 95%);
     --ks-log-background-debug: color-mix(in srgb, var(--ks-status-running), var(--ks-bg-base) 95%);
     --ks-log-background-info: color-mix(in srgb, var(--ks-status-info), var(--ks-bg-base) 95%);
     --ks-log-background-warn: color-mix(in srgb, var(--ks-status-warning), var(--ks-bg-base) 95%);

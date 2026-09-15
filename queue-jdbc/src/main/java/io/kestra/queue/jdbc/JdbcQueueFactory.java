@@ -35,7 +35,8 @@ public class JdbcQueueFactory implements QueueFactoryInterface<JdbcDependencies>
     @Override
     public DispatchQueueInterface<Execution> executionQueue(JdbcDependencies dependencies) {
         return new JdbcDispatchQueue<>(
-            Execution.class, dependencies.queueService(), dependencies.jdbcQueueClient(), dependencies.executorsUtils(), dependencies.metricRegistry(), dependencies.ignoreExecutionService()
+            Execution.class, dependencies.queueService(), dependencies.jdbcQueueClient(), dependencies.executorsUtils(), dependencies.metricRegistry(), dependencies.ignoreExecutionService(),
+            dependencies.queueWakeRegistry()
         );
     }
 
@@ -44,7 +45,7 @@ public class JdbcQueueFactory implements QueueFactoryInterface<JdbcDependencies>
     public DispatchQueueInterface<ExecutionCommand> executionCommandQueue(JdbcDependencies dependencies) {
         return new JdbcDispatchQueue<>(
             ExecutionCommand.class, dependencies.queueService(), dependencies.jdbcQueueClient(), dependencies.executorsUtils(), dependencies.metricRegistry(),
-            dependencies.ignoreExecutionService()
+            dependencies.ignoreExecutionService(), dependencies.queueWakeRegistry()
         );
     }
 
@@ -53,7 +54,7 @@ public class JdbcQueueFactory implements QueueFactoryInterface<JdbcDependencies>
     public DispatchQueueInterface<ExecutionEvent> executionEventQueue(JdbcDependencies dependencies) {
         return new JdbcDispatchQueue<>(
             ExecutionEvent.class, dependencies.queueService(), dependencies.jdbcQueueClient(), dependencies.executorsUtils(), dependencies.metricRegistry(),
-            dependencies.ignoreExecutionService()
+            dependencies.ignoreExecutionService(), dependencies.queueWakeRegistry()
         );
     }
 
@@ -62,7 +63,7 @@ public class JdbcQueueFactory implements QueueFactoryInterface<JdbcDependencies>
     public BroadcastQueueInterface<ExecutionKilled> killQueue(JdbcDependencies dependencies) {
         return new JdbcBroadcastQueue<>(
             ExecutionKilled.class, dependencies.queueService(), dependencies.jdbcQueueClient(), dependencies.executorsUtils(), dependencies.metricRegistry(),
-            dependencies.ignoreExecutionService()
+            dependencies.ignoreExecutionService(), dependencies.queueWakeRegistry()
         );
     }
 
@@ -71,7 +72,7 @@ public class JdbcQueueFactory implements QueueFactoryInterface<JdbcDependencies>
     public DispatchQueueInterface<SubflowExecutionResult> subflowExecutionResultQueue(JdbcDependencies dependencies) {
         return new JdbcDispatchQueue<>(
             SubflowExecutionResult.class, dependencies.queueService(), dependencies.jdbcQueueClient(), dependencies.executorsUtils(), dependencies.metricRegistry(),
-            dependencies.ignoreExecutionService()
+            dependencies.ignoreExecutionService(), dependencies.queueWakeRegistry()
         );
     }
 
@@ -80,7 +81,7 @@ public class JdbcQueueFactory implements QueueFactoryInterface<JdbcDependencies>
     public DispatchQueueInterface<SubflowExecutionEnd> subflowExecutionEndQueue(JdbcDependencies dependencies) {
         return new JdbcDispatchQueue<>(
             SubflowExecutionEnd.class, dependencies.queueService(), dependencies.jdbcQueueClient(), dependencies.executorsUtils(), dependencies.metricRegistry(),
-            dependencies.ignoreExecutionService()
+            dependencies.ignoreExecutionService(), dependencies.queueWakeRegistry()
         );
     }
 
@@ -89,7 +90,7 @@ public class JdbcQueueFactory implements QueueFactoryInterface<JdbcDependencies>
     public DispatchQueueInterface<MultipleConditionEvent> multipleConditionEventQueue(JdbcDependencies dependencies) {
         return new JdbcDispatchQueue<>(
             MultipleConditionEvent.class, dependencies.queueService(), dependencies.jdbcQueueClient(), dependencies.executorsUtils(), dependencies.metricRegistry(),
-            dependencies.ignoreExecutionService()
+            dependencies.ignoreExecutionService(), dependencies.queueWakeRegistry()
         );
     }
 
@@ -98,7 +99,7 @@ public class JdbcQueueFactory implements QueueFactoryInterface<JdbcDependencies>
     public BroadcastQueueInterface<FlowInterface> flowQueue(JdbcDependencies dependencies) {
         return new JdbcBroadcastQueue<>(
             FlowInterface.class, dependencies.queueService(), dependencies.jdbcQueueClient(), dependencies.executorsUtils(), dependencies.metricRegistry(),
-            dependencies.ignoreExecutionService()
+            dependencies.ignoreExecutionService(), dependencies.queueWakeRegistry()
         );
     }
 
@@ -107,7 +108,7 @@ public class JdbcQueueFactory implements QueueFactoryInterface<JdbcDependencies>
     public BroadcastQueueInterface<SchedulerEvent> schedulerEventQueue(JdbcDependencies dependencies) {
         return new JdbcBroadcastQueue<>(
             SchedulerEvent.class, dependencies.queueService(), dependencies.jdbcQueueClient(), dependencies.executorsUtils(), dependencies.metricRegistry(),
-            dependencies.ignoreExecutionService()
+            dependencies.ignoreExecutionService(), dependencies.queueWakeRegistry()
         );
     }
 
@@ -115,7 +116,8 @@ public class JdbcQueueFactory implements QueueFactoryInterface<JdbcDependencies>
     @Override
     public VNodeDispatchQueueInterface<TriggerEvent> triggerEventQueue(JdbcDependencies dependencies) {
         return new JdbcVNodeDispatchQueue<>(
-            TriggerEvent.class, dependencies.queueService(), dependencies.jdbcQueueClient(), dependencies.executorsUtils(), dependencies.metricRegistry(), dependencies.ignoreExecutionService()
+            TriggerEvent.class, dependencies.queueService(), dependencies.jdbcQueueClient(), dependencies.executorsUtils(), dependencies.metricRegistry(),
+            dependencies.ignoreExecutionService(), dependencies.queueWakeRegistry()
         );
     }
 
@@ -123,7 +125,8 @@ public class JdbcQueueFactory implements QueueFactoryInterface<JdbcDependencies>
     @Override
     public DispatchQueueInterface<MetricEntry> metricQueue(JdbcDependencies dependencies) {
         return new JdbcDispatchQueue<>(
-            MetricEntry.class, dependencies.queueService(), dependencies.jdbcQueueClient(), dependencies.executorsUtils(), dependencies.metricRegistry(), dependencies.ignoreExecutionService()
+            MetricEntry.class, dependencies.queueService(), dependencies.jdbcQueueClient(), dependencies.executorsUtils(), dependencies.metricRegistry(), dependencies.ignoreExecutionService(),
+            dependencies.queueWakeRegistry()
         );
     }
 
@@ -132,7 +135,7 @@ public class JdbcQueueFactory implements QueueFactoryInterface<JdbcDependencies>
     public DispatchQueueInterface<ExecutionStatistic> executionStatisticQueue(JdbcDependencies dependencies) {
         return new JdbcDispatchQueue<>(
             ExecutionStatistic.class, dependencies.queueService(), dependencies.jdbcQueueClient(), dependencies.executorsUtils(), dependencies.metricRegistry(),
-            dependencies.ignoreExecutionService()
+            dependencies.ignoreExecutionService(), dependencies.queueWakeRegistry()
         );
     }
 
@@ -141,7 +144,7 @@ public class JdbcQueueFactory implements QueueFactoryInterface<JdbcDependencies>
     public BroadcastQueueInterface<FollowExecutionEvent> followExecutionQueue(JdbcDependencies dependencies) {
         return new JdbcBroadcastQueue<>(
             FollowExecutionEvent.class, dependencies.queueService(), dependencies.jdbcQueueClient(), dependencies.executorsUtils(), dependencies.metricRegistry(),
-            dependencies.ignoreExecutionService()
+            dependencies.ignoreExecutionService(), dependencies.queueWakeRegistry()
         );
     }
 
@@ -150,7 +153,7 @@ public class JdbcQueueFactory implements QueueFactoryInterface<JdbcDependencies>
     public BroadcastQueueInterface<AsyncOperationProcessedEvent> asyncOperationProcessedEventQueue(JdbcDependencies dependencies) {
         return new JdbcBroadcastQueue<>(
             AsyncOperationProcessedEvent.class, dependencies.queueService(), dependencies.jdbcQueueClient(), dependencies.executorsUtils(), dependencies.metricRegistry(),
-            dependencies.ignoreExecutionService()
+            dependencies.ignoreExecutionService(), dependencies.queueWakeRegistry()
         );
     }
 
@@ -158,7 +161,8 @@ public class JdbcQueueFactory implements QueueFactoryInterface<JdbcDependencies>
     @Override
     public DispatchQueueInterface<LogEntry> logEntryQueue(JdbcDependencies dependencies) {
         return new JdbcDispatchQueue<>(
-            LogEntry.class, dependencies.queueService(), dependencies.jdbcQueueClient(), dependencies.executorsUtils(), dependencies.metricRegistry(), dependencies.ignoreExecutionService()
+            LogEntry.class, dependencies.queueService(), dependencies.jdbcQueueClient(), dependencies.executorsUtils(), dependencies.metricRegistry(), dependencies.ignoreExecutionService(),
+            dependencies.queueWakeRegistry()
         );
     }
 
@@ -167,7 +171,7 @@ public class JdbcQueueFactory implements QueueFactoryInterface<JdbcDependencies>
     public BroadcastQueueInterface<FollowLogEvent> followLogEventQueue(JdbcDependencies dependencies) {
         return new JdbcBroadcastQueue<>(
             FollowLogEvent.class, dependencies.queueService(), dependencies.jdbcQueueClient(), dependencies.executorsUtils(), dependencies.metricRegistry(),
-            dependencies.ignoreExecutionService()
+            dependencies.ignoreExecutionService(), dependencies.queueWakeRegistry()
         );
     }
 
@@ -176,7 +180,7 @@ public class JdbcQueueFactory implements QueueFactoryInterface<JdbcDependencies>
     public KeyedDispatchQueueInterface<WorkerJobEvent> workerJobEventQueue(JdbcDependencies dependencies) {
         return new JdbcKeyedDispatchQueue<>(
             WorkerJobEvent.class, dependencies.queueService(), dependencies.jdbcQueueClient(), dependencies.executorsUtils(), dependencies.metricRegistry(),
-            dependencies.ignoreExecutionService()
+            dependencies.ignoreExecutionService(), dependencies.queueWakeRegistry()
         );
     }
 
@@ -185,7 +189,7 @@ public class JdbcQueueFactory implements QueueFactoryInterface<JdbcDependencies>
     public DispatchQueueInterface<WorkerTaskResult> workerTaskResultQueue(JdbcDependencies dependencies) {
         return new JdbcDispatchQueue<>(
             WorkerTaskResult.class, dependencies.queueService(), dependencies.jdbcQueueClient(), dependencies.executorsUtils(), dependencies.metricRegistry(),
-            dependencies.ignoreExecutionService()
+            dependencies.ignoreExecutionService(), dependencies.queueWakeRegistry()
         );
     }
 
@@ -194,7 +198,7 @@ public class JdbcQueueFactory implements QueueFactoryInterface<JdbcDependencies>
     public BroadcastQueueInterface<McpSessionEvent> mcpSessionQueue(JdbcDependencies dependencies) {
         return new JdbcBroadcastQueue<>(
             McpSessionEvent.class, dependencies.queueService(), dependencies.jdbcQueueClient(), dependencies.executorsUtils(), dependencies.metricRegistry(),
-            dependencies.ignoreExecutionService()
+            dependencies.ignoreExecutionService(), dependencies.queueWakeRegistry()
         );
     }
 
@@ -204,7 +208,7 @@ public class JdbcQueueFactory implements QueueFactoryInterface<JdbcDependencies>
     public BroadcastQueueInterface<ClusterEvent> clusterEventQueue(JdbcDependencies dependencies) {
         return new JdbcBroadcastQueue<>(
             ClusterEvent.class, dependencies.queueService(), dependencies.jdbcQueueClient(), dependencies.executorsUtils(), dependencies.metricRegistry(),
-            dependencies.ignoreExecutionService()
+            dependencies.ignoreExecutionService(), dependencies.queueWakeRegistry()
         );
     }
 
@@ -213,7 +217,7 @@ public class JdbcQueueFactory implements QueueFactoryInterface<JdbcDependencies>
     public DispatchQueueInterface<LoopExecutionEvent> loopExecutionEventQueue(JdbcDependencies dependencies) {
         return new JdbcDispatchQueue<>(
             LoopExecutionEvent.class, dependencies.queueService(), dependencies.jdbcQueueClient(), dependencies.executorsUtils(), dependencies.metricRegistry(),
-            dependencies.ignoreExecutionService()
+            dependencies.ignoreExecutionService(), dependencies.queueWakeRegistry()
         );
     }
 }

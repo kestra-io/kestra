@@ -45,6 +45,7 @@ import io.kestra.core.server.ServiceType;
 import io.kestra.core.services.ExecutionService;
 import io.kestra.core.services.ExecutionService.ExecutionWithTaskRun;
 import io.kestra.core.services.MaintenanceService;
+import io.kestra.core.services.TaskOutputService;
 import io.kestra.core.utils.*;
 import io.kestra.executor.configuration.ExecutorConfiguration;
 import io.kestra.executor.handler.*;
@@ -101,6 +102,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
     private final KestraContext kestraContext;
 
     private final RunContextFactory runContextFactory;
+    private final TaskOutputService taskOutputService;
 
     private final ExecutionCommandMessageHandler executionCommandMessageHandler;
     private final ExecutionEventMessageHandler executionEventMessageHandler;
@@ -161,6 +163,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
         TriggerEventQueue triggerEventQueue,
         MetricRegistry metricRegistry,
         RunContextFactory runContextFactory,
+        TaskOutputService taskOutputService,
         ExecutionCommandMessageHandler executionCommandMessageHandler,
         ExecutionEventMessageHandler executionEventMessageHandler,
         WorkerTaskResultMessageHandler workerTaskResultMessageHandler,
@@ -199,6 +202,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
         this.triggerEventQueue = triggerEventQueue;
         this.metricRegistry = metricRegistry;
         this.runContextFactory = runContextFactory;
+        this.taskOutputService = taskOutputService;
         this.executionCommandMessageHandler = executionCommandMessageHandler;
         this.executionEventMessageHandler = executionEventMessageHandler;
         this.workerTaskResultMessageHandler = workerTaskResultMessageHandler;
@@ -607,6 +611,23 @@ public class DefaultExecutor extends AbstractService implements Executor {
                         }
                     } catch (Exception e) {
                         executor = executorService.handleFailedExecutionFromExecutor(executor, e);
+                    }
+
+                    if (execution.getId().equals(executor.getExecution().getId())) {
+                        List<String> originalIds = execution.getTaskRunList() != null ? execution.getTaskRunList().stream().map(io.kestra.core.models.executions.TaskRun::getId).toList()
+                            : List.of();
+                        List<String> newIds = executor.getExecution().getTaskRunList() != null
+                            ? executor.getExecution().getTaskRunList().stream().map(io.kestra.core.models.executions.TaskRun::getId).toList()
+                            : List.of();
+
+                        if (originalIds.size() != newIds.size() || !newIds.containsAll(originalIds)) {
+                            List<io.kestra.core.models.executions.TaskRun> pruned = execution.getTaskRunList().stream()
+                                .filter(tr -> !newIds.contains(tr.getId()))
+                                .toList();
+                            if (!pruned.isEmpty()) {
+                                taskOutputService.deleteByTaskRun(executor.getExecution(), pruned);
+                            }
+                        }
                     }
 
                     return executor;

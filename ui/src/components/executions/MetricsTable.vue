@@ -200,6 +200,7 @@
     defineExpose({
         loadData,
         updateDisplayColumns,
+        displayColumns,
         reload: () => dataTable.value?.reload(),
     })
 </script>

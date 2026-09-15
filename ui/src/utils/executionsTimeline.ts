@@ -187,6 +187,15 @@ export interface AxisTick {
     isNow: boolean;
 }
 
+const DAY_MS = 86_400_000
+
+export function axisTickFormat(rangeSpanMs: number, tickCount: number): string {
+    if (rangeSpanMs / tickCount < 60_000) return "LTS"
+    if (rangeSpanMs < DAY_MS) return "LT"
+    if (rangeSpanMs < 7 * DAY_MS) return "MMM D, LT"
+    return "MMM D"
+}
+
 export function buildAxisTicks(rangeStartMs: number, rangeEndMs: number, tickCount: number, nowMs: number): AxisTick[] {
     const span = rangeEndMs - rangeStartMs
     if (span <= 0) return []

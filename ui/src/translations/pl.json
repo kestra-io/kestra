@@ -1,5 +1,9 @@
 {
   "pl": {
+    "versionUpgradeNotice": {
+      "message": "Kestra został zaktualizowany do wersji {version} i może zawierać zmiany powodujące niezgodność, które wymagają aktualizacji Twoich Flowów.",
+      "cta": "Zobacz, co się zmieniło"
+    },
     "loading": "Ładowanie...",
     "more actions": "Więcej akcji",
     "recipe": {
@@ -918,6 +922,7 @@
     "flow creation denied in namespace": "Nie masz uprawnień do tworzenia Flowów w namespace'ie `{namespace}`.",
     "readonly property": "Właściwość tylko do odczytu",
     "namespace and id readonly": "Właściwości `namespace` i `id` nie mogą być zmienione – są teraz ustawione na swoje początkowe wartości. Jeśli chcesz zmienić nazwę Flow lub jego namespace, utwórz nowy Flow i usuń stary.",
+    "flow metadata locked": "`id` i `namespace` nie mogą być zmienione po utworzeniu Flow.",
     "avg": "Średnia",
     "sum": "Suma",
     "min": "Min",
@@ -2184,8 +2189,12 @@
         "draft": {
           "openInEditor": "Otwórz w edytorze",
           "apply": "Zastosuj",
+          "dismiss": "Odrzuć",
+          "dismissed": "Odrzucono",
+          "applied": "Zastosowano",
+          "previewBanner": "Przeglądasz zmianę zasugerowaną przez AI — edytor jest tylko do odczytu, dopóki jej nie zastosujesz lub nie odrzucisz.",
           "applyTitle": "Zastosuj Flow",
-          "applyConfirm": "Zastosować Flow {namespace}.{id}? Zostanie utworzony lub nadpisany, jeśli już istnieje.",
+          "applyConfirm": "Zapisać Flow {namespace}.{id} jako wersję roboczą do przeglądu? Zostanie utworzony lub, jeśli już istnieje, zostanie dodana nowa wersja robocza — wersje robocze nie są uruchamiane przez triggery ani subflow, dopóki nie zostaną opublikowane.",
           "applyConfirmDashboard": "Zastosować Dashboard {id}? Zostanie utworzony lub nadpisany, jeśli już istnieje.",
           "applyError": "Nie udało się zastosować Flow. Spróbuj ponownie.",
           "applyErrorDashboard": "Nie udało się zastosować Dashboardu. Spróbuj ponownie.",

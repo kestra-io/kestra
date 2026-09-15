@@ -1,5 +1,9 @@
 {
   "pt": {
+    "versionUpgradeNotice": {
+      "message": "O Kestra foi atualizado para a versão {version} e pode incluir alterações que exigem atualizações nos seus Flows.",
+      "cta": "Ver o que mudou"
+    },
     "loading": "A carregar...",
     "more actions": "Mais ações",
     "recipe": {
@@ -918,6 +922,7 @@
     "flow creation denied in namespace": "Você não tem permissão para criar flows no namespace `{namespace}`.",
     "readonly property": "Propriedade somente leitura",
     "namespace and id readonly": "As propriedades `namespace` e `id` não podem ser alteradas — elas agora estão definidas para seus valores iniciais. Se você deseja renomear um flow ou alterar seu namespace, você pode criar um novo flow e remover o antigo.",
+    "flow metadata locked": "`id` e `namespace` não podem ser alterados depois que um flow é criado.",
     "avg": "Média",
     "sum": "Soma",
     "min": "Min",
@@ -2184,8 +2189,12 @@
         "draft": {
           "openInEditor": "Abrir no editor",
           "apply": "Aplicar",
+          "dismiss": "Descartar",
+          "dismissed": "Descartado",
+          "applied": "Aplicado",
+          "previewBanner": "A rever uma alteração sugerida pela IA — o editor é apenas de leitura até aplicares ou descartares a alteração.",
           "applyTitle": "Aplicar flow",
-          "applyConfirm": "Aplicar o flow {namespace}.{id}? Ele será criado, ou sobrescrito se já existir.",
+          "applyConfirm": "Guardar o flow {namespace}.{id} como uma revisão de rascunho para revisão? Será criado, ou será adicionada uma nova revisão de rascunho se já existir — os rascunhos não são acionados por triggers nem subflows até serem publicados.",
           "applyConfirmDashboard": "Aplicar o painel {id}? Será criado, ou sobrescrito se já existir.",
           "applyError": "Não foi possível aplicar o flow. Tente novamente.",
           "applyErrorDashboard": "Não foi possível aplicar o dashboard. Por favor, tente novamente.",

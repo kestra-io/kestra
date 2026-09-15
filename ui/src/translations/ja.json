@@ -1,5 +1,9 @@
 {
   "ja": {
+    "versionUpgradeNotice": {
+      "message": "Kestraが{version}にアップグレードされました。これには、Flowの更新が必要となる破壊的変更が含まれている可能性があります。",
+      "cta": "変更点を確認"
+    },
     "loading": "読み込み中...",
     "more actions": "その他のアクション",
     "recipe": {
@@ -918,6 +922,7 @@
     "flow creation denied in namespace": "`{namespace}`でflowを作成する権限がありません。",
     "readonly property": "読み取り専用プロパティ",
     "namespace and id readonly": "プロパティの`namespace`と`id`は変更できません。これらは初期値に設定されています。flowの名前を変更したり、namespaceを変更したい場合は、新しいflowを作成して古いflowを削除してください。",
+    "flow metadata locked": "`id`と`namespace`は、flowの作成後は変更できません。",
     "avg": "平均",
     "sum": "合計",
     "min": "Min",
@@ -2184,8 +2189,12 @@
         "draft": {
           "openInEditor": "エディターで開く",
           "apply": "適用",
+          "dismiss": "却下",
+          "dismissed": "却下済み",
+          "applied": "適用済み",
+          "previewBanner": "AI による変更案を確認中です — 適用または却下するまでエディターは読み取り専用になります。",
           "applyTitle": "flow を適用",
-          "applyConfirm": "flow {namespace}.{id} を適用しますか？作成されるか、既に存在する場合は上書きされます。",
+          "applyConfirm": "{namespace}.{id} をレビュー用のドラフトリビジョンとして保存しますか？作成されるか、既に存在する場合は新しいドラフトリビジョンが追加されます。ドラフトは公開されるまで trigger や subflow から参照されません。",
           "applyConfirmDashboard": "ダッシュボード {id} を適用しますか？作成されます。既に存在する場合は上書きされます。",
           "applyError": "flowの適用に失敗しました。もう一度お試しください。",
           "applyErrorDashboard": "ダッシュボードを適用できませんでした。もう一度お試しください。",

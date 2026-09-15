@@ -141,7 +141,7 @@
     })
 
     const displayedMetrics = computed(() => {
-        const metrics = (flowStore.metrics ?? []) as string[]
+        const metrics = flowStore.metrics ?? []
         if (selectedMetric.value) {
             return metrics.filter((m) => m === selectedMetric.value)
         }
@@ -154,7 +154,7 @@
     })
 
     // Distinguishes "this flow genuinely has no metrics" (info) from "your filter matched none of them"
-    const hasAnyMetrics = computed(() => ((flowStore.metrics as string[] | undefined)?.length ?? 0) > 0)
+    const hasAnyMetrics = computed(() => (flowStore.metrics?.length ?? 0) > 0)
 
     const filterTerm = computed(() => selectedMetric.value ?? selectedTextSearch.value ?? "")
 

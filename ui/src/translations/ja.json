@@ -1,5 +1,9 @@
 {
   "ja": {
+    "versionUpgradeNotice": {
+      "message": "Kestraが{version}にアップグレードされました。これには、Flowの更新が必要となる破壊的変更が含まれている可能性があります。",
+      "cta": "変更点を確認"
+    },
     "loading": "読み込み中...",
     "more actions": "その他のアクション",
     "recipe": {
@@ -492,6 +496,9 @@
     },
     "download": "ダウンロード",
     "jsonl": "JSONL",
+    "large_outputs": {
+      "value_truncated": "この{size}値の切り捨てられたプレビューを表示しています。"
+    },
     "concurrency_limit": {
       "dialog_title": "同時実行制限",
       "warning": "実行中のカウンターを変更すると、Concurrencyが破損し、Executionが許可された制限を超える可能性があります。"
@@ -916,6 +923,7 @@
     "flow creation denied in namespace": "`{namespace}`でflowを作成する権限がありません。",
     "readonly property": "読み取り専用プロパティ",
     "namespace and id readonly": "プロパティの`namespace`と`id`は変更できません。これらは初期値に設定されています。flowの名前を変更したり、namespaceを変更したい場合は、新しいflowを作成して古いflowを削除してください。",
+    "flow metadata locked": "`id`と`namespace`は、flowの作成後は変更できません。",
     "avg": "平均",
     "sum": "合計",
     "min": "Min",
@@ -2142,7 +2150,7 @@
         },
         "unavailable": {
           "title": "AI Copilot は利用できません",
-          "detail": "AIプロバイダーが設定されていません。管理者に設定を依頼してください。",
+          "detail": "このインスタンスにはAIプロバイダーが設定されていません。AI Copilotを有効にするには、Kestra設定ファイルでAIプロバイダーを設定してください。",
           "docs": "ドキュメントを見る"
         },
         "thinkingWords": [

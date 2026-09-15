@@ -7,6 +7,8 @@
             data-test="logs-fullscreen-dialog"
             fill
             fullscreen
+            @opened="finishLogScrollRestore"
+            @closed="finishLogScrollRestore"
         >
             <div ref="fullscreenLogsTarget" class="fullscreen-logs-container" />
         </KsDialog>
@@ -78,6 +80,7 @@
                 :showProgressBar="false"
                 :fullHeight="fullscreenModalOpen"
                 @scroll.capture.passive="rememberLogScroll"
+                @scroller-update="restoreLogScroll"
             />
             <KsCard
                 v-else
@@ -99,11 +102,16 @@
                     keyField="uid"
                     class="log-lines temporal"
                     data-test="logs-scroller"
+                    data-scroll-key="raw-logs"
                     :class="{'fullscreen-logs': fullscreenModalOpen}"
                     :style="{maxHeight: fullscreenModalOpen ? undefined : 'calc(100vh - 335px)', marginTop: '0.5rem'}"
                     :buffer="200"
                     :prerender="20"
                     @scroll.capture.passive="rememberLogScroll"
+                    :emitUpdate="true"
+                    @update="restoreLogScroll"
+                    @resize="restoreLogScroll"
+                    @visible="restoreLogScroll"
                 >
                     <template #default="{item, active}">
                         <DynamicScrollerItem
@@ -268,8 +276,9 @@
     const logScroller = useTemplateRef<any>("logScroller") // FIXME: any
     const inlineLogsTarget = useTemplateRef<HTMLElement>("inlineLogsTarget")
     const fullscreenLogsTarget = useTemplateRef<HTMLElement>("fullscreenLogsTarget")
-    const preservedLogScrollPositions = new Map<HTMLElement, number>()
-    let restoringLogScroll = false
+    const preservedLogScrollPositions = new Map<string, number>()
+    let pendingLogScrollPositions = new Map<string, number>()
+    let fullscreenTransition = false
     const logsTarget = computed(() =>
         fullscreenModalOpen.value
             ? fullscreenLogsTarget.value ?? inlineLogsTarget.value
@@ -277,17 +286,17 @@
     )
 
     watch(fullscreenModalOpen, () => {
-        restoringLogScroll = true
-        nextTick(() => requestAnimationFrame(() => {
-            restoreLogScroll()
-            setTimeout(() => {
-                restoreLogScroll()
-                restoringLogScroll = false
-            })
-        }))
+        fullscreenTransition = true
+        pendingLogScrollPositions = new Map(preservedLogScrollPositions)
+        restoreLogScroll()
     }, {flush: "sync"})
+    watch(logsTarget, restoreLogScroll, {flush: "post"})
 
     const executionId = computed(() => executionsStore.execution?.id)
+    watch(executionId, () => {
+        preservedLogScrollPositions.clear()
+        pendingLogScrollPositions.clear()
+    })
 
     // created hook equivalent
     const route = useRoute()
@@ -514,6 +523,7 @@
     function toggleViewType() {
         logCursor.value = undefined
         preservedLogScrollPositions.clear()
+        pendingLogScrollPositions.clear()
         raw_view.value = !raw_view.value
         localStorage.setItem(storageKeys.LOGS_VIEW_TYPE, String(raw_view.value))
     }
@@ -560,16 +570,35 @@
     }
 
     function rememberLogScroll(event: Event) {
-        if (!restoringLogScroll) {
-            const scroller = event.target as HTMLElement
-            preservedLogScrollPositions.set(scroller, scroller.scrollTop)
+        const scroller = event.target as HTMLElement
+        const key = scroller.dataset.scrollKey
+        if (key && scroller.isConnected && scroller.clientHeight && scroller.scrollHeight > scroller.clientHeight && !pendingLogScrollPositions.has(key)) {
+            preservedLogScrollPositions.set(key, scroller.scrollTop)
         }
     }
 
     function restoreLogScroll() {
-        for (const [scroller, scrollTop] of preservedLogScrollPositions) {
-            scroller.scrollTop = scrollTop
-        }
+        if (!pendingLogScrollPositions.size) return
+        nextTick(() => {
+            const target = fullscreenModalOpen.value ? fullscreenLogsTarget.value : inlineLogsTarget.value
+            for (const scroller of target?.querySelectorAll<HTMLElement>("[data-scroll-key]") ?? []) {
+                const key = scroller.dataset.scrollKey!
+                const scrollTop = pendingLogScrollPositions.get(key)
+                if (scrollTop === undefined || !scroller.clientHeight) continue
+                const maxScrollTop = scroller.scrollHeight - scroller.clientHeight
+                const position = Math.min(scrollTop, maxScrollTop)
+                scroller.scrollTop = position
+                if (Math.abs(scroller.scrollTop - position) <= 1) {
+                    if (maxScrollTop > 0) preservedLogScrollPositions.set(key, scroller.scrollTop)
+                    if (!fullscreenTransition) pendingLogScrollPositions.delete(key)
+                }
+            }
+        })
+    }
+
+    function finishLogScrollRestore() {
+        fullscreenTransition = false
+        restoreLogScroll()
     }
 
     function toggleFullscreenModal() {

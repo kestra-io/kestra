@@ -8,8 +8,6 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.slf4j.event.Level;
 
-import com.devskiller.friendly_id.FriendlyId;
-
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.MetricEntry;
@@ -20,6 +18,7 @@ import io.kestra.core.models.executions.statistics.ExecutionStatistic;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.repositories.*;
+import io.kestra.core.utils.Base62Encoder;
 import io.kestra.core.utils.DateUtils;
 import io.kestra.core.utils.TestsUtils;
 
@@ -60,7 +59,7 @@ class DefaultIndexerTest {
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
         Instant bucket = Instant.now().truncatedTo(ChronoUnit.MINUTES);
         ExecutionStatistic statistic = new ExecutionStatistic(
-            tenant, "namespace", "flow", bucket, State.Type.SUCCESS, 1, 1000, 1000, 1000, 1, 1000, 1000L, 1000L, FriendlyId.createFriendlyId()
+            tenant, "namespace", "flow", bucket, State.Type.SUCCESS, 1, 1000, 1000, 1000, 1, 1000, 1000L, 1000L, Base62Encoder.createId()
         );
 
         // When
@@ -83,14 +82,14 @@ class DefaultIndexerTest {
         indexer.startQueues();
 
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
-        String executionId = FriendlyId.createFriendlyId();
+        String executionId = Base62Encoder.createId();
         LogEntry logEntry = LogEntry.builder()
             .tenantId(tenant)
             .namespace("namespace")
             .flowId("flow")
             .taskId("task")
             .executionId(executionId)
-            .taskRunId(FriendlyId.createFriendlyId())
+            .taskRunId(Base62Encoder.createId())
             .attemptNumber(0)
             .timestamp(Instant.now())
             .level(Level.INFO)
@@ -116,14 +115,14 @@ class DefaultIndexerTest {
         indexer.startQueues();
 
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
-        String executionId = FriendlyId.createFriendlyId();
+        String executionId = Base62Encoder.createId();
         TaskRun taskRun = TaskRun.builder()
             .tenantId(tenant)
             .namespace("namespace")
             .flowId("flow")
             .executionId(executionId)
             .taskId("task")
-            .id(FriendlyId.createFriendlyId())
+            .id(Base62Encoder.createId())
             .build();
         MetricEntry metricEntry = MetricEntry.of(taskRun, Counter.of("counter", 1), null);
 

@@ -75,19 +75,19 @@
                                 v-if="logsStore.hasPreviousPage"
                                 type="default"
                                 :loading="isLoading"
-                                :aria-label="t('previous')"
+                                :aria-label="$t('previous')"
                                 @click="loadPrevious"
                             >
-                                {{ t("previous") }}
+                                {{ $t("previous") }}
                             </KsButton>
                             <KsButton
                                 v-if="logsStore.hasNextCursor"
                                 type="default"
                                 :loading="isLoading"
-                                :aria-label="t('next')"
+                                :aria-label="$t('next')"
                                 @click="loadNext"
                             >
-                                {{ t("next") }}
+                                {{ $t("next") }}
                             </KsButton>
                         </div>
                     </div>

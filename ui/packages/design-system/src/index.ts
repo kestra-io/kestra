@@ -96,6 +96,7 @@ import KsEmptyState from "./components/Data/KsEmptyState.vue"
 import KsEntityLink from "./components/Data/KsEntityLink/KsEntityLink.vue"
 export type {KsEntityLinkEntity} from "./components/Data/KsEntityLink/KsEntityLink.vue"
 import KsExecutionStatus from "./components/Data/KsExecutionStatus/KsExecutionStatus.vue"
+import KsFileTag from "./components/Data/KsFileTag.vue"
 import KsFilter from "./components/Data/KsDataTable/KsFilter.vue"
 import KsForm from "./components/Form/KsForm/KsForm.vue"
 import KsFormItem from "./components/Form/KsForm/KsFormItem.vue"
@@ -176,6 +177,8 @@ export {cssVar} from "./utils/css"
 export {copyToClipboard} from "./utils/clipboard"
 export * as dateUtils from "./utils/date"
 export * as stringUtils from "./utils/string"
+export {rowKey} from "./utils/rowKey"
+export * as fileUtils from "./utils/file"
 export * as durationUtils from "./utils/duration"
 export * as State from "./utils/state"
 export {LOG_LEVELS, STATES} from "./utils/state"
@@ -188,6 +191,12 @@ export {Comparators} from "./components/Data/KsDataTable/filter/utils/filterType
 export type {InputInstance, FormItemRule, FormRules, FormInstance, CascaderOption, CascaderProps} from "element-plus"
 export {TooltipType, ChartRenderer, ChartFeature} from "./utils/chart"
 export {designSystemLocale, setDesignSystemLocale, registerDesignSystemI18n} from "./i18n"
+
+let i18nRegistration: Promise<void> = Promise.resolve()
+
+/** The registration `install` started, so a caller can await it rather than leave it in flight. */
+export const designSystemI18nReady = (): Promise<void> => i18nRegistration
+export {useDiscardGuard} from "./composables/useDiscardGuard"
 export type {FilterContext} from "./components/Data/KsDataTable/filter/utils/filterInjectionKeys"
 export {SAVED_FILTER_ANALYTICS_INJECTION_KEY} from "./components/Data/KsDataTable/filter/utils/filterAnalytics"
 export type {SavedFilterAction, SavedFilterAnalyticsEvent, SavedFilterAnalyticsTracker} from "./components/Data/KsDataTable/filter/utils/filterAnalytics"
@@ -202,6 +211,8 @@ export {
     emptyLeafGroup,
 } from "./components/Data/KsDataTable/filter/composables/useFilterGroups"
 export {useDismissedKeys} from "./components/Data/KsDataTable/filter/composables/useDismissedKeys"
+export {useTableColumns} from "./components/Data/KsDataTable/filter/composables/useTableColumns"
+export type {ColumnConfig, UseTableColumnsOptions} from "./components/Data/KsDataTable/filter/composables/useTableColumns"
 export {EXECUTION_STATUSES, type ExecutionStatus, type ExecutionStatusModel} from "./components/Data/KsExecutionStatus/types"
 export {
     decodeSearchParams,
@@ -305,6 +316,7 @@ const components: Record<string, Component> = {
     KsEmptyState,
     KsEntityLink,
     KsExecutionStatus,
+    KsFileTag,
     KsFilter,
     KsForm,
     KsFormItem,
@@ -415,6 +427,7 @@ export {
     KsEmptyState,
     KsEntityLink,
     KsExecutionStatus,
+    KsFileTag,
     KsFilter,
     KsForm,
     KsFormItem,
@@ -500,7 +513,7 @@ const KestraDesignSystem = {
 
         const symbol = (app as unknown as {__VUE_I18N_SYMBOL__?: symbol}).__VUE_I18N_SYMBOL__
         const i18n = symbol ? (app._context.provides[symbol] as I18n | undefined) : undefined
-        if (i18n) void registerDesignSystemI18n(i18n)
+        if (i18n) i18nRegistration = registerDesignSystemI18n(i18n)
     },
 }
 
@@ -553,6 +566,7 @@ declare module "vue" {
         KsEmptyState: typeof KsEmptyState
         KsEntityLink: typeof KsEntityLink
         KsExecutionStatus: typeof KsExecutionStatus
+        KsFileTag: typeof KsFileTag
         KsFilter: typeof KsFilter
         KsForm: typeof KsForm
         KsFormItem: typeof KsFormItem

@@ -416,6 +416,12 @@ public abstract class AbstractRunnerTest {
     }
 
     @Test
+    @LoadFlows(value = { "flows/valids/pause-duration-manual-resume.yaml" }, tenantId = "pause-manual-resume")
+    public void pauseRunDurationManuallyResumed() throws Exception {
+        pauseTest.runDurationManuallyResumed("pause-manual-resume", runnerUtils);
+    }
+
+    @Test
     @LoadFlows({ "flows/valids/pause-timeout.yaml" })
     public void pauseRunTimeout() throws Exception {
         pauseTest.runTimeout(runnerUtils);

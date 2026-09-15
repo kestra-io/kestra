@@ -15,7 +15,10 @@
             v-for="(row, index) in rows"
             :key="row.path"
             class="json-tree__row"
-            :class="{'json-tree__row--selected': row.path === selectedPath}"
+            :class="{
+                'json-tree__row--selected': row.path === selectedPath,
+                'json-tree__row--file': row.file,
+            }"
             :style="{'--depth': row.depth}"
             @click="$emit('select', row.path, row.value)"
         >
@@ -37,7 +40,8 @@
                 <span class="json-tree__key">"{{ row.label }}"</span>
                 <span class="json-tree__colon">:</span>
 
-                <span v-if="!row.isExpandable" class="json-tree__value" :class="`json-tree__value--${row.type}`">
+                <KsFileTag v-if="row.file" :uri="row.file.uri" :name="row.file.name" />
+                <span v-else-if="!row.isExpandable" class="json-tree__value" :class="`json-tree__value--${row.type}`">
                     {{ row.display }}
                 </span>
                 <span v-else-if="!row.isExpanded" class="json-tree__preview">
@@ -53,6 +57,8 @@
     import {useI18n} from "vue-i18n"
     import ChevronDown from "vue-material-design-icons/ChevronDown.vue"
     import ChevronRight from "vue-material-design-icons/ChevronRight.vue"
+    import KsFileTag from "./KsFileTag.vue"
+    import {isFileUri} from "../../utils/file"
 
     const {t} = useI18n({useScope: "global"})
 
@@ -76,6 +82,8 @@
         display: string;
         isExpandable: boolean;
         isExpanded: boolean;
+        /** Set when the leaf is a storage URI, so the row shows a file symbol instead of the URI. */
+        file?: {uri: string; name?: string};
     }
 
     function isValidVariable(key: string): boolean {
@@ -147,7 +155,8 @@
     }
 
     function buildRows(value: unknown, path: string, depth: number, rows: TreeRow[]) {
-        const entries: [string, unknown][] = Array.isArray(value)
+        const isArray = Array.isArray(value)
+        const entries: [string, unknown][] = isArray
             ? value.map((item, index) => [String(index), item])
             : Object.entries(value as Record<string, unknown>)
 
@@ -165,6 +174,8 @@
                 display: expandable ? collapsedPreview(child) : leafDisplay(child),
                 isExpandable: expandable,
                 isExpanded: rowExpanded,
+                // An array index is no name, so those rows fall back to the URI's own segment.
+                file: isFileUri(child) ? {uri: child, name: isArray ? undefined : key} : undefined,
             })
 
             if (rowExpanded) {
@@ -209,6 +220,10 @@
 
         &--selected {
             background-color: var(--ks-border-default);
+        }
+
+        &--file + &--file {
+            margin-top: var(--ks-spacing-2);
         }
     }
 

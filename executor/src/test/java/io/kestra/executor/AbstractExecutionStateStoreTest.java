@@ -46,7 +46,7 @@ public abstract class AbstractExecutionStateStoreTest {
         assertThat(created).isNotNull();
         assertThat(created.getId()).isEqualTo(execution.getId());
 
-        Execution found = executionStateStore.findById(execution.getId());
+        Execution found = executionStateStore.findByIdWithoutAcl(execution.getId());
         assertThat(found).isNotNull();
         assertThat(found.getId()).isEqualTo(execution.getId());
         assertThat(found.getNamespace()).isEqualTo(flow.getNamespace());
@@ -56,7 +56,7 @@ public abstract class AbstractExecutionStateStoreTest {
     @Test
     void shouldReturnNullWhenExecutionNotFound() {
         // When
-        Execution found = executionStateStore.findById(IdUtils.create());
+        Execution found = executionStateStore.findByIdWithoutAcl(IdUtils.create());
 
         // Then
         assertThat(found).isNull();
@@ -89,7 +89,7 @@ public abstract class AbstractExecutionStateStoreTest {
         assertThat(result).isPresent();
         assertThat(result.get().getExecution().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
-        Execution persisted = executionStateStore.findById(execution.getId());
+        Execution persisted = executionStateStore.findByIdWithoutAcl(execution.getId());
         assertThat(persisted.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
     }
 

@@ -140,7 +140,7 @@
         display: flex;
         align-items: center;
         gap: var(--ks-spacing-4);
-        height: 2.25rem;
+        height: var(--status-bar-height);
         padding: 0 var(--ks-spacing-4);
         background: var(--ks-bg-surface);
         border-top: 1px solid var(--ks-border-subtle);
@@ -192,7 +192,7 @@
     .block-editor-help {
         position: absolute;
         right: var(--ks-spacing-4);
-        bottom: calc(2.25rem + var(--ks-spacing-3));
+        bottom: calc(var(--status-bar-height) + var(--ks-spacing-3));
         z-index: 10;
         display: inline-flex;
         align-items: center;
@@ -237,7 +237,7 @@
 
     .block-editor-undo {
         position: absolute;
-        bottom: calc(2.25rem + var(--ks-spacing-3));
+        bottom: calc(var(--status-bar-height) + var(--ks-spacing-3));
         left: 50%;
         transform: translateX(-50%);
         z-index: 11;

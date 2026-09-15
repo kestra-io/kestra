@@ -151,7 +151,7 @@ export const useFileExplorerStore = defineStore("fileExplorer", () => {
             }
             try {
                 await namespacesStore.createDirectory({namespace: namespaceId.value, path})
-                toast.success(`Folder "${name}" created successfully.`)
+                toast.success(t("namespace files.create.folder_success", {name}))
             } catch (error) {
                 console.error(`Failed to create folder: ${name}`, error)
                 toast.error(t("namespace files.create.folder_error"))
@@ -228,7 +228,7 @@ export const useFileExplorerStore = defineStore("fileExplorer", () => {
                     path,
                     content,
                 })
-                toast.success(`File "${NAME}" created successfully.`)
+                toast.success(t("namespace files.create.file_success", {name: NAME}))
             } catch (error) {
                 console.error(`Failed to create file: ${NAME}`, error)
                 toast.error(t("namespace files.create.file_error"))

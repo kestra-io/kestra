@@ -57,6 +57,9 @@
                 <template #details>
                     <slot name="taskDetails" v-bind="taskProps" />
                 </template>
+                <template #taskActions="taskActionProps">
+                    <slot name="taskActions" v-bind="{...taskProps, ...taskActionProps}" />
+                </template>
             </TaskNode>
         </template>
 
@@ -184,7 +187,7 @@
         loadIcon?: (cls: string) => Promise<any>;
         enableSubflowInteraction?: boolean;
         execution?: any;
-        subflowsExecutions?: Record<string, any[]>;
+        subflowsExecutions?: Record<string, VueFlowUtils.GraphExecution>;
         playgroundEnabled?: boolean;
         playgroundReadyToStart?: boolean;
         replayEnabled?: boolean;
@@ -464,7 +467,7 @@
         z-index: 1000;
         list-style-type: none;
         background: var(--ks-bg-surface);
-        border: 1px solid var(--ks-border-primary);
+        border: 1px solid var(--ks-border-default);
         box-shadow: 0 12px 12px rgba(130, 103, 158, 0.1019607843);
         border-radius: 5px;
         text-align:left;
@@ -477,11 +480,11 @@
             width: 110px;
 
             &:first-child{
-                border-bottom: 1px solid var(--ks-border-primary);
+                border-bottom: 1px solid var(--ks-border-default);
             }
 
             &:hover {
-                background: var(--ks-button-background-secondary-hover);;
+                background: var(--ks-btn-secondary-bg-hover);
             }
         }
     }

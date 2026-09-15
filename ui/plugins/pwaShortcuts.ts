@@ -1,8 +1,10 @@
-// Relative to the manifest URL (<contextPath>/ui/) so sub-path deployments resolve; English-only
-// since the manifest is one static build artifact.
+import en from "../src/translations/en.json"
+
+// URLs are relative to the manifest URL (<contextPath>/ui/) so sub-path deployments resolve;
+// labels come from en.json, English-only because the manifest is one static build artifact.
 export const pwaShortcuts = [
-    {name: "Create Flow", url: "flows/new"},
-    {name: "Flows", url: "flows"},
-    {name: "Executions", url: "executions"},
-    {name: "AI Copilot", url: "ai"},
+    {name: en.en.create_flow, url: "flows/new"},
+    {name: en.en.flows, url: "flows"},
+    {name: en.en.executions, url: "executions"},
+    {name: en.en.ai.flow.title, url: "ai"},
 ]

@@ -55,7 +55,7 @@ jobs:
 
       # Always trigger EE OpenAPI check on non-fork PRs where secrets are available
     - name: Trigger EE OpenAPI spec check
-      uses: peter-evans/repository-dispatch@28959ce8df70de7be546dd1250a005dd32156697
+      uses: peter-evans/repository-dispatch@28959ce8df70de7be546dd1250a005dd32156697 # v4.0.1
       if: ${{ github.event_name == 'pull_request'
         && github.event.pull_request.number != ''
         && github.event.pull_request.head.repo.fork == false
@@ -101,7 +101,7 @@ jobs:
           }
 
     - name: Trigger EE Workflow (pull request, with payload)
-      uses: peter-evans/repository-dispatch@28959ce8df70de7be546dd1250a005dd32156697
+      uses: peter-evans/repository-dispatch@28959ce8df70de7be546dd1250a005dd32156697 # v4.0.1
       if: ${{ false && (github.event_name == 'pull_request'
         && github.event.pull_request.number != ''
         && github.event.pull_request.head.repo.fork == false

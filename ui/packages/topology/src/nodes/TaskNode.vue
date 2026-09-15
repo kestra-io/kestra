@@ -182,8 +182,8 @@
         (event: typeof EVENTS.DELETE, data: any) :void;
         (event: typeof EVENTS.ADD_TASK, data: any) :void;
         (event: typeof EVENTS.SHOW_CONDITION, data: any) :void;
-        (event: typeof EVENTS.SHOW_DESCRIPTION, data: any) :void;
-        (event: typeof EVENTS.RUN_TASK, data: { task: any }) :void;
+        (event: typeof EVENTS.SHOW_DESCRIPTION, data: any): void;
+        (event: typeof EVENTS.RUN_TASK, data: { task: any; runDownstreamTasks?: boolean }) :void;
         (event: typeof EVENTS.SHOW_CUSTOM_ACTION, data: { task: any; customAction: CustomActionConfig }) :void;
         (event: typeof EVENTS.SHOW_DETAILS, data: { task: any; showDetails: ShowDetailsConfig }) :void;
     }>()
@@ -396,6 +396,22 @@
                 label: t("edit"),
                 icon: Pencil,
                 onClick: () => emit(EVENTS.EDIT, {task, section: SECTIONS.TASKS}),
+            })
+        }
+        if (!taskExecution.value && task) {
+            list.push({
+                key: "run-from-task",
+                label: t("playground.run_task_and_downstream"),
+                icon: PlayBoxMultiple,
+                disabled: !props.playgroundReadyToStart,
+                onClick: () => emit(EVENTS.RUN_TASK, {task, runDownstreamTasks: true}),
+            })
+            list.push({
+                key: "run-only-task",
+                label: t("playground.run_this_task"),
+                icon: PlayIcon,
+                disabled: !props.playgroundReadyToStart,
+                onClick: () => emit(EVENTS.RUN_TASK, {task, runDownstreamTasks: false}),
             })
         }
         if (actionConfig.value && task) {

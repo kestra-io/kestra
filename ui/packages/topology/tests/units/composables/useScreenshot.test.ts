@@ -7,7 +7,7 @@ const {toPng, toJpeg} = vi.hoisted(() => ({
 
 vi.mock("html-to-image", () => ({toPng, toJpeg}))
 
-import {EXPORT_PADDING, MAX_EXPORT_SIZE, exportGeometry, useScreenshot} from "../../../src/composables/useScreenshot"
+import {EXPORT_PADDING, MAX_EXPORT_SIZE, exportGeometry, untilNodesMeasured, useScreenshot} from "../../../src/composables/useScreenshot"
 
 describe("exportGeometry", () => {
     it("frames a graph that fits the budget at its on-screen size and device resolution", () => {
@@ -42,6 +42,28 @@ describe("exportGeometry", () => {
     })
 })
 
+describe("untilNodesMeasured", () => {
+    const measured = {dimensions: {width: 100, height: 40}}
+    const unmeasured = {dimensions: {width: 0, height: 0}}
+
+    it("resolves once every rendered node carries dimensions", async () => {
+        const nodes = [measured, unmeasured]
+
+        const waited = untilNodesMeasured(() => nodes)
+        nodes[1] = measured
+
+        await expect(waited).resolves.toBeUndefined()
+    })
+
+    it("resolves straight away for a graph with no nodes", async () => {
+        await expect(untilNodesMeasured(() => [])).resolves.toBeUndefined()
+    })
+
+    it("gives up after its frame budget so a node that never measures cannot block the export", async () => {
+        await expect(untilNodesMeasured(() => [unmeasured], 3)).resolves.toBeUndefined()
+    })
+})
+
 describe("useScreenshot", () => {
     let container: HTMLElement
     let pane: HTMLElement
@@ -50,17 +72,19 @@ describe("useScreenshot", () => {
         toPng.mockReset().mockResolvedValue("data:image/png;base64,png")
         toJpeg.mockReset().mockResolvedValue("data:image/jpeg;base64,jpeg")
 
-        document.body.innerHTML = `
-            <div class="vue-flow" style="background-color: rgb(1, 2, 3)">
-                <div class="vue-flow__transformationpane"></div>
-            </div>
-        `
-        container = document.querySelector<HTMLElement>(".vue-flow")!
-        pane = document.querySelector<HTMLElement>(".vue-flow__transformationpane")!
+        // Appended and removed on its own: the unit project shares one jsdom per worker, and
+        // clearing the whole body would take Element Plus's popper container with it.
+        container = document.createElement("div")
+        container.className = "vue-flow"
+        container.style.backgroundColor = "rgb(1, 2, 3)"
+        pane = document.createElement("div")
+        pane.className = "vue-flow__transformationpane"
+        container.append(pane)
+        document.body.append(container)
     })
 
     afterEach(() => {
-        document.body.innerHTML = ""
+        container.remove()
     })
 
     it("renders the whole graph off the transformed pane when bounds are given", async () => {

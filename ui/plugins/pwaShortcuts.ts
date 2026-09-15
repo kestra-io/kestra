@@ -5,5 +5,5 @@ export const pwaShortcuts = [
     {name: "Executions", url: "executions"},
     {name: "AI Copilot", url: "ai"},
     {name: "Logs", url: "logs"},
-    {name: "New flow", url: "flows/new"},
+    {name: "Create Flow", url: "flows/new"},
 ]

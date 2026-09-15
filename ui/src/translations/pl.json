@@ -2083,6 +2083,7 @@
         "title": "AI Copilot",
         "placeholder": "Powiedz mi, co zbudować…",
         "send": "Wyślij",
+        "stop": "Zatrzymaj",
         "mode": {
           "ask": "Pytaj",
           "edit": "Edytuj",
@@ -2194,8 +2195,12 @@
         "draft": {
           "openInEditor": "Otwórz w edytorze",
           "apply": "Zastosuj",
+          "dismiss": "Odrzuć",
+          "dismissed": "Odrzucono",
+          "applied": "Zastosowano",
+          "previewBanner": "Przeglądasz zmianę zasugerowaną przez AI — edytor jest tylko do odczytu, dopóki jej nie zastosujesz lub nie odrzucisz.",
           "applyTitle": "Zastosuj Flow",
-          "applyConfirm": "Zastosować Flow {namespace}.{id}? Zostanie utworzony lub nadpisany, jeśli już istnieje.",
+          "applyConfirm": "Zapisać Flow {namespace}.{id} jako wersję roboczą do przeglądu? Zostanie utworzony lub, jeśli już istnieje, zostanie dodana nowa wersja robocza — wersje robocze nie są uruchamiane przez triggery ani subflow, dopóki nie zostaną opublikowane.",
           "applyConfirmDashboard": "Zastosować Dashboard {id}? Zostanie utworzony lub nadpisany, jeśli już istnieje.",
           "applyError": "Nie udało się zastosować Flow. Spróbuj ponownie.",
           "applyErrorDashboard": "Nie udało się zastosować Dashboardu. Spróbuj ponownie.",

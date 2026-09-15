@@ -409,21 +409,20 @@
 
     const fileSelectedOutput = computed(() => {
         const value = previewedValue.value
+        if (typeof value === "string") {
+            return Utils.isFile(value) ? value : undefined
+        }
+        if (value === null || typeof value !== "object" || Array.isArray(value)) {
+            return undefined
+        }
 
-        // if an input file is selected, show the contents of the file
-        if(typeof value === "string" && Utils.isFile(value)){
-            return value
+        const entries = Object.entries(value)
+        if (entries.length !== 1 || entries[0][0] !== "uri") {
+            return undefined
         }
-        if (value === null || typeof value !== "object") return undefined
-        try {
-            const fileMetadata = value as {uri?: string}
-            if (Utils.isFile(fileMetadata.uri)) {
-                return fileMetadata.uri
-            }
-        } catch {
-            // If the value is not an object or doesn't have a `uri` field, just ignore it.
-        }
-        return undefined
+
+        const uri = entries[0][1]
+        return typeof uri === "string" && Utils.isFile(uri) ? uri : undefined
     })
 
     const rawValue = computed(() =>

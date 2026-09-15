@@ -66,6 +66,7 @@ describe("CopilotChat", () => {
         routeStub = {name: undefined, params: {}}
         state.sendChat.mockReset()
         state.confirm.mockReset()
+        state.cancel.mockReset()
         state.reset.mockReset()
         state.retryLastTurn.mockReset()
         state.loadThread.mockReset()
@@ -281,6 +282,36 @@ describe("CopilotChat", () => {
         expect(w.findComponent({name: "CopilotComposer"}).props("disabled")).toBe(true)
     })
 
+    it("forwards composer stop to cancel while streaming", async () => {
+        state.messages.value = [{id: "1", role: "USER", type: "TEXT", content: "hi"}]
+        state.streaming.value = true
+        state.canSend.value = false
+        const w = mountChat()
+        expect(w.findComponent({name: "CopilotComposer"}).props("streaming")).toBe(true)
+        w.findComponent({name: "CopilotComposer"}).vm.$emit("stop")
+        expect(state.cancel).toHaveBeenCalled()
+    })
+
+    it("focuses the composer once it re-enables after stop", async () => {
+        state.messages.value = [{id: "1", role: "USER", type: "TEXT", content: "hi"}]
+        state.streaming.value = true
+        state.canSend.value = false
+        const w = mount(CopilotChat, {global: mountGlobal, attachTo: document.body})
+        try {
+            w.findComponent({name: "CopilotComposer"}).vm.$emit("stop")
+            await flushPromises()
+            const textarea = w.find("[data-test=\"copilot-composer-input\"]").element
+            expect(document.activeElement).not.toBe(textarea)
+
+            state.streaming.value = false
+            state.canSend.value = true
+            await flushPromises()
+            expect(document.activeElement).toBe(textarea)
+        } finally {
+            w.unmount()
+        }
+    })
+
     it("shows the thinking movement while streaming before the next output", () => {
         state.messages.value = [{id: "1", role: "USER", type: "TEXT", content: "hi"}]
         state.streaming.value = true
@@ -295,6 +326,35 @@ describe("CopilotChat", () => {
         const w = mountChat()
         expect(w.find("[data-test=\"copilot-thinking\"]").exists()).toBe(true)
         expect(w.find(".copilot-mark").classes()).toContain("copilot-mark-answering")
+    })
+
+    it("plays the end gather when a turn finishes", async () => {
+        state.messages.value = [
+            {id: "1", role: "USER", type: "TEXT", content: "hi"},
+            {id: "2", role: "ASSISTANT", type: "TEXT", content: "hello"},
+        ]
+        state.streaming.value = true
+        const w = mountChat()
+
+        state.streaming.value = false
+        await flushPromises()
+
+        expect(w.find("[data-test=\"copilot-thinking\"]").exists()).toBe(true)
+        expect(w.find(".copilot-mark").classes()).toContain("copilot-mark-end")
+    })
+
+    it("does not play the end gather after the user stops the turn", async () => {
+        state.messages.value = [
+            {id: "1", role: "USER", type: "TEXT", content: "hi"},
+            {id: "2", role: "SYSTEM", type: "CANCELLED"},
+        ]
+        state.streaming.value = true
+        const w = mountChat()
+
+        state.streaming.value = false
+        await flushPromises()
+
+        expect(w.find("[data-test=\"copilot-thinking\"]").exists()).toBe(false)
     })
 
     it("starts a new chat via the top bar", async () => {

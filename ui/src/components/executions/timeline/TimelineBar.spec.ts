@@ -5,8 +5,6 @@ import {defineComponent} from "vue"
 import TimelineBar from "./TimelineBar.vue"
 import type {StateBucket, TimelineExecution} from "../../../utils/executionsTimeline"
 
-// dateUtils.dateFilter reads Vue's $moment global property, wired up by the app plugin at bootstrap
-// and absent in a bare component mount; stub it with a deterministic formatter instead.
 vi.mock("@kestra-io/design-system", () => ({
     dateUtils: {dateFilter: (iso: string) => iso},
     durationUtils: {humanDuration: (seconds: number) => `${seconds}s`},
@@ -28,9 +26,6 @@ const stubs = {
     KsDateAgo: passthroughStub("KsDateAgo"),
 }
 
-// KsPopover's own trigger element is the single node passed in the #reference slot - this stub
-// mirrors that contract so a regression that stacks another trigger on top (the ElOnlyChild
-// composition bug this guards against) would render a second element.
 const popoverAwareStubs = {
     ...stubs,
     KsPopover: {
@@ -162,8 +157,6 @@ describe("TimelineBar", () => {
             attachTo: card,
         })
 
-        // jsdom never lays elements out, so both rects default to zero (bar flush with the card's
-        // top) - exactly the "no room above" case this test targets, with no rect mocking needed.
         await wrapper.get(".timeline-bar").trigger("click")
 
         expect(wrapper.get("[data-test=\"popover-body\"]").attributes("data-placement")).toBe("bottom")

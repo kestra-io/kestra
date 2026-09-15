@@ -59,10 +59,6 @@
         center?: boolean;
         chart?: {getEchartsInstance: () => EChartsType | null} | null;
         formatValue?: (value: number) => string;
-        // Controlled mode: when set, the pills reflect this set instead of the internal one, so a
-        // filter reset from outside (breadcrumb nav, "Clear all", browser back/forward) is reflected
-        // instead of leaving a stale toggled-off pill behind. Omit it to keep the legend
-        // self-contained, as the other ChartLegend call sites (TimeSeries/Bar/Pie) do.
         toggledOff?: Set<string>;
     }>(), {
         maxVisible: 5,

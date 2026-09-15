@@ -1,8 +1,3 @@
-/**
- * Pure grouping, lane-packing and level-of-detail helpers for the Executions timeline view.
- * Kept framework-free so drill-down grouping, lane assignment and the bucketing threshold can be
- * unit tested without mounting any component.
- */
 
 export interface TimelineExecution {
     id: string;
@@ -40,17 +35,12 @@ export interface StateBucket {
     dominantState: string;
 }
 
-// Failed-ish states counted in the per-namespace/flow failure counters shown next to each row label.
 const FAILED_LIKE_STATES = new Set(["FAILED", "KILLED", "KILLING", "WARNING"])
 
 export function isFailedLikeState(state: string): boolean {
     return FAILED_LIKE_STATES.has(state)
 }
 
-/**
- * Groups a flat execution list into namespace rows with nested flow rows, each carrying the total
- * and failed-like counts derived from the same fetched list (no extra request).
- */
 export function groupByNamespace(executions: TimelineExecution[]): NamespaceGroup[] {
     const namespaces = new Map<string, Map<string, TimelineExecution[]>>()
 
@@ -87,10 +77,6 @@ export function groupByNamespace(executions: TimelineExecution[]): NamespaceGrou
         .sort((a, b) => b.total - a.total)
 }
 
-/**
- * Packs overlapping executions of a single flow onto separate lanes (classic greedy interval
- * scheduling), so concurrent/drifting runs render as stacked lanes instead of collapsing visually.
- */
 export function assignLanes(executions: TimelineExecution[]): TimelineExecutionWithLane[] {
     const sorted = [...executions].sort((a, b) => a.startMs - b.startMs)
     const laneEndMs: number[] = []
@@ -112,11 +98,6 @@ export function assignLanes(executions: TimelineExecution[]): TimelineExecutionW
 
 export const MIN_DISCRETE_BAR_WIDTH_PX = 3
 
-/**
- * Number of {@link MIN_DISCRETE_BAR_WIDTH_PX}-wide slots the available width can resolve, and how
- * many milliseconds of the range each slot covers. Shared by {@link shouldBucketRow} and
- * {@link bucketize} so both agree on what "the same slot" means.
- */
 function slotResolution(rangeSpanMs: number, availableWidthPx: number): {slotCount: number; slotSpanMs: number} {
     const slotCount = Math.max(1, Math.floor(availableWidthPx / MIN_DISCRETE_BAR_WIDTH_PX))
     return {slotCount, slotSpanMs: rangeSpanMs / slotCount}
@@ -127,16 +108,6 @@ function slotIndexFor(startMs: number, rangeStartMs: number, rangeEndMs: number,
     return Math.min(slotCount - 1, Math.floor((anchor - rangeStartMs) / slotSpanMs))
 }
 
-/**
- * A row switches from individual bars to aggregated density buckets as soon as two executions would
- * land in the same {@link MIN_DISCRETE_BAR_WIDTH_PX}-wide slot of the visible range — i.e. as soon as
- * they can no longer be told apart as discrete bars at the current zoom. This is evaluated against the
- * executions' real positions on the time axis (not the per-bar rendered width, which is floored to a
- * minimum for visibility), so a tight cluster zoomed out to a much wider range buckets correctly even
- * when the row has far fewer executions than the available width in pixels. Evaluated per row/lane
- * rather than globally, so a busy namespace can bucket while a quiet one in the same view still
- * renders discrete bars.
- */
 export function shouldBucketRow(
     executions: TimelineExecution[],
     rangeStartMs: number,
@@ -158,11 +129,6 @@ export function shouldBucketRow(
     return false
 }
 
-/**
- * Aggregates executions into fixed-width time buckets across [rangeStartMs, rangeEndMs), one bucket
- * per {@link MIN_DISCRETE_BAR_WIDTH_PX} of available width. A bucket only ever reports counts by
- * state, never an execution id, so its tooltip cannot promise identifying a single run.
- */
 export function bucketize(
     executions: TimelineExecution[],
     rangeStartMs: number,
@@ -221,11 +187,6 @@ export interface AxisTick {
     isNow: boolean;
 }
 
-/**
- * Evenly spaced tick timestamps across [rangeStartMs, rangeEndMs], `tickCount + 1` points including
- * both ends. The last tick is flagged {@link AxisTick.isNow} instead of carrying a timestamp label
- * once the range's end is pinned to "now" (within a minute), so the caller can render "Now" there.
- */
 export function buildAxisTicks(rangeStartMs: number, rangeEndMs: number, tickCount: number, nowMs: number): AxisTick[] {
     const span = rangeEndMs - rangeStartMs
     if (span <= 0) return []

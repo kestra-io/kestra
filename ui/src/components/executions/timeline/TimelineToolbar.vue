@@ -1,7 +1,5 @@
 <template>
     <div class="timeline-toolbar">
-        <!-- The slider is the primary, fast way to adjust the range, so it gets its own row and the
-             visual weight; the pill + zoom/pan icons below are the precise/secondary controls. -->
         <div class="primary-controls">
             <KsRangeSlider
                 class="range-slider"
@@ -28,11 +26,6 @@
                 {{ readout() }}
             </KsButton>
 
-            <!-- The range-pill button is also the popover's own reactive trigger (its class and
-                 label change on every zoom/pan), so it can't be nested inside KsPopover's #reference
-                 slot without a second, independent Trigger fighting the same DOM node for the merge
-                 (the ElOnlyChild/ElPopperTrigger composition bug fixed for TimelineBar.vue's hover
-                 tooltip). Point the popover at it via virtualRef/virtualTriggering instead. -->
             <KsPopover
                 v-model:visible="rangePickerVisible"
                 trigger="click"
@@ -133,15 +126,9 @@
 
     const rangePickerVisible = ref(false)
     const rangePillRef = ref<InstanceType<typeof KsButton> | null>(null)
-    // Mirrors DateFilter.vue's own Relative/Absolute toggle: initialized once from the current range,
-    // then left to the user so switching tabs doesn't fight their choice on every prop change.
     const selectedMode = ref<"REL" | "ABS">(props.activePreset !== undefined ? "REL" : "ABS")
 
-    // dateUtils.dateFilter() reads getCurrentInstance() internally, which is only set while
-    // Vue is synchronously rendering this component. A computed's getter can be re-invoked by
-    // Vue's reactivity scheduler outside of any render pass (e.g. flushJobs refreshing a dirty
-    // computed before the owning component's render job runs), where getCurrentInstance() is
-    // undefined — so this must stay a plain function called from the template, not a computed.
+    // dateUtils.dateFilter() needs getCurrentInstance(), so this must stay a template-called function, not a computed.
     function readout() {
         return t("executionsTimeline.toolbar.range", {
             start: dateUtils.dateFilter(new Date(props.rangeStartMs).toISOString(), "lll"),
@@ -159,18 +146,11 @@
         emit("custom-range", {startMs: Date.parse(startDate), endMs: Date.parse(endDate)})
     }
 
-    // Sized relative to the current selection (see computeSliderDomain) rather than a fixed span, so
-    // the selection stays a graspable handle at any zoom level. Derived only from rangeStartMs/rangeEndMs
-    // props, which the slider's own drag doesn't touch (no v-model binding here, only @change on drop),
-    // so a live drag never fights this recomputation — the domain only resettles once the drag ends and
-    // custom-range flows back through the URL.
     const sliderDomain = computed(() => computeSliderDomain(props.rangeStartMs, props.rangeEndMs))
     const domainStartMs = computed(() => sliderDomain.value[0])
     const domainEndMs = computed(() => sliderDomain.value[1])
 
-    // Memoized so the array reference is stable across unrelated re-renders: KsRangeSlider's
-    // defineModel() treats a new reference as an external change and would snap an in-progress
-    // drag back to it (see useModel's watchSyncEffect in Vue's runtime-core).
+    // Stable array reference: KsRangeSlider's defineModel() treats a new one as an external change mid-drag.
     const sliderRange = computed<[number, number]>(() => [props.rangeStartMs, props.rangeEndMs])
 
     function formatSliderValue(ms: number) {

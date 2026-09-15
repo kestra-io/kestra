@@ -1,13 +1,14 @@
 import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
 
-type TaskLike = Record<string, unknown>
+type TaskLike = Record<string, unknown>;
 
 function isTaskLike(value: unknown): value is TaskLike {
     return (
         typeof value === "object" &&
         value !== null &&
         typeof (value as TaskLike).id === "string" &&
-        typeof (value as TaskLike).type === "string"
+        typeof (value as TaskLike).type === "string" &&
+        ((value as TaskLike).type as string).includes(".")
     )
 }
 
@@ -16,10 +17,16 @@ function isMap(value: unknown): value is TaskLike {
 }
 
 function probeIndexes(source: string, cursorIndex: number): number[] {
-    const safeCursorIndex = Math.max(0, Math.min(cursorIndex - 1, source.length - 1))
+    const safeCursorIndex = Math.max(
+        0,
+        Math.min(cursorIndex - 1, source.length - 1),
+    )
     const indexes = [safeCursorIndex]
     let previousNonWhitespace = safeCursorIndex
-    while (previousNonWhitespace > 0 && /\s/.test(source.charAt(previousNonWhitespace))) {
+    while (
+        previousNonWhitespace > 0 &&
+        /\s/.test(source.charAt(previousNonWhitespace))
+    ) {
         previousNonWhitespace--
     }
     if (previousNonWhitespace !== safeCursorIndex) {
@@ -28,7 +35,11 @@ function probeIndexes(source: string, cursorIndex: number): number[] {
     return indexes
 }
 
-function probe<T>(source: string, cursorIndex: number, pick: (candidates: unknown[]) => T | undefined): T | undefined {
+function probe<T>(
+    source: string,
+    cursorIndex: number,
+    pick: (candidates: unknown[]) => T | undefined,
+): T | undefined {
     for (const probeIndex of probeIndexes(source, cursorIndex)) {
         const localized = YAML_UTILS.localizeElementAtIndex(source, probeIndex)
         const found = pick([...(localized?.parents ?? []), localized?.value])
@@ -48,14 +59,22 @@ function innermostTaskIndex(candidates: unknown[]): number {
     return -1
 }
 
-function probeTaskLike(source: string, cursorIndex: number): TaskLike | undefined {
+function probeTaskLike(
+    source: string,
+    cursorIndex: number,
+): TaskLike | undefined {
     return probe(source, cursorIndex, (candidates) => {
         const taskIndex = innermostTaskIndex(candidates)
-        return taskIndex === -1 ? undefined : (candidates[taskIndex] as TaskLike)
+        return taskIndex === -1
+            ? undefined
+            : (candidates[taskIndex] as TaskLike)
     })
 }
 
-function probeTaskOwningCursor(source: string, cursorIndex: number): TaskLike | undefined {
+function probeTaskOwningCursor(
+    source: string,
+    cursorIndex: number,
+): TaskLike | undefined {
     return probe(source, cursorIndex, (candidates) => {
         const taskIndex = innermostTaskIndex(candidates)
         if (taskIndex === -1) {
@@ -70,17 +89,28 @@ function probeTaskOwningCursor(source: string, cursorIndex: number): TaskLike | 
 }
 
 function blankLineAtCursor(source: string, cursorIndex: number): string {
-    const lineStart = source.lastIndexOf("\n", Math.max(0, cursorIndex - 1)) + 1
+    const lineStart =
+        source.lastIndexOf("\n", Math.max(0, cursorIndex - 1)) + 1
     const nextNewline = source.indexOf("\n", lineStart)
     const lineEnd = nextNewline === -1 ? source.length : nextNewline
-    return source.slice(0, lineStart) + " ".repeat(lineEnd - lineStart) + source.slice(lineEnd)
+    return (
+        source.slice(0, lineStart) +
+        " ".repeat(lineEnd - lineStart) +
+        source.slice(lineEnd)
+    )
 }
 
 /**
  * Resolves the task map enclosing the cursor by localizing the YAML node at (and just before) the
  * cursor and walking its ancestry outwards to the nearest node that has both an `id` and a `type`.
  */
-export function findTaskLikeAtCursor({source, cursorIndex}: {source: string; cursorIndex: number}): TaskLike | undefined {
+export function findTaskLikeAtCursor({
+    source,
+    cursorIndex,
+}: {
+    source: string;
+    cursorIndex: number;
+}): TaskLike | undefined {
     if (!source.length) {
         return undefined
     }
@@ -88,8 +118,10 @@ export function findTaskLikeAtCursor({source, cursorIndex}: {source: string; cur
     try {
         // A half-typed property key localizes to nothing, so retry with the cursor's line blanked out
         // (same length, so offsets still line up) to resolve from the surrounding task instead.
-        return probeTaskLike(source, cursorIndex)
-            ?? probeTaskLike(blankLineAtCursor(source, cursorIndex), cursorIndex)
+        return (
+            probeTaskLike(source, cursorIndex) ??
+            probeTaskLike(blankLineAtCursor(source, cursorIndex), cursorIndex)
+        )
     } catch {
         return undefined
     }
@@ -100,23 +132,39 @@ export function findTaskLikeAtCursor({source, cursorIndex}: {source: string; cur
  * Undefined inside a nested sub-map such as `retry:` or `taskRunner:`, whose keys are drawn from
  * their own schema rather than the task's, so scoping them against the task would be wrong.
  */
-export function taskIdentityAtCursor(
-    {source, cursorIndex}: {source: string; cursorIndex: number},
-): {type: string; version?: string} | undefined {
+export function taskIdentityAtCursor({
+    source,
+    cursorIndex,
+    isTrigger,
+}: {
+    source: string;
+    cursorIndex: number;
+    isTrigger?: (type: string) => boolean;
+}): { type: string; version?: string } | undefined {
     if (!source.length) {
         return undefined
     }
 
     try {
-        const task = probeTaskOwningCursor(source, cursorIndex)
-            ?? probeTaskOwningCursor(blankLineAtCursor(source, cursorIndex), cursorIndex)
+        const task =
+            probeTaskOwningCursor(source, cursorIndex) ??
+            probeTaskOwningCursor(
+                blankLineAtCursor(source, cursorIndex),
+                cursorIndex,
+            )
         if (!isTaskLike(task)) {
             return undefined
         }
 
+        const type = task.type as string
+        if (isTrigger && isTrigger(type)) {
+            return undefined
+        }
+
         return {
-            type: task.type as string,
-            version: typeof task.version === "string" ? task.version : undefined,
+            type,
+            version:
+                typeof task.version === "string" ? task.version : undefined,
         }
     } catch {
         return undefined
@@ -124,7 +172,11 @@ export function taskIdentityAtCursor(
 }
 
 /** Returns the `type` of the task whose body directly encloses the cursor. */
-export function taskTypeAtCursor(params: {source: string; cursorIndex: number}): string | undefined {
+export function taskTypeAtCursor(params: {
+    source: string;
+    cursorIndex: number;
+    isTrigger?: (type: string) => boolean;
+}): string | undefined {
     return taskIdentityAtCursor(params)?.type
 }
 
@@ -156,7 +208,9 @@ export function filterMissingRequiredTaskProperties({
  * Drops property-key suggestions that do not belong to the resolved task type. Non-property
  * suggestions are always kept, and an empty/undefined key set fails open (returns everything).
  */
-export function scopePropertySuggestionsToTaskType<T extends {label: string; kind?: number}>({
+export function scopePropertySuggestionsToTaskType<
+    T extends { label: string; kind?: number },
+>({
     suggestions,
     validPropertyKeys,
     propertyKind,
@@ -170,5 +224,8 @@ export function scopePropertySuggestionsToTaskType<T extends {label: string; kin
     }
 
     const valid = new Set(validPropertyKeys)
-    return suggestions.filter((suggestion) => suggestion.kind !== propertyKind || valid.has(suggestion.label))
+    return suggestions.filter(
+        (suggestion) =>
+            suggestion.kind !== propertyKind || valid.has(suggestion.label),
+    )
 }

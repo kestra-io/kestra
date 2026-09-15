@@ -38,7 +38,11 @@ import {
     scopePropertySuggestionsToTaskType,
     taskIdentityAtCursor,
 } from "./taskCompletionScoping"
-import type {IPosition, IDisposable, CancellationToken} from "monaco-editor/editor/editor.api"
+import type {
+    IPosition,
+    IDisposable,
+    CancellationToken,
+} from "monaco-editor/editor/editor.api"
 import IModel = monaco.editor.IModel;
 import ProviderResult = monaco.languages.ProviderResult;
 import CompletionList = monaco.languages.CompletionList;
@@ -52,7 +56,11 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
     protected readonly router?: Router
     protected readonly flowStore?: ReturnType<typeof useFlowStore>
 
-    constructor(yamlAutoCompletion: YamlAutoCompletion, router?: Router, flowStore?: ReturnType<typeof useFlowStore>) {
+    constructor(
+        yamlAutoCompletion: YamlAutoCompletion,
+        router?: Router,
+        flowStore?: ReturnType<typeof useFlowStore>,
+    ) {
         super("yaml")
         this.yamlAutoCompletionObject = yamlAutoCompletion
         this.router = router
@@ -79,8 +87,8 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
         )
 
         const yamlCompletion = (
+            // oxlint-disable-next-line no-underscore-dangle
             StandaloneServices.get(ILanguageFeaturesService).completionProvider
-                // oxlint-disable-next-line no-underscore-dangle
                 ._entries as {
                 selector: string;
                 provider: {
@@ -109,7 +117,12 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
             context: CompletionContext,
             token: CancellationToken,
         ) {
-            const defaultCompletion = await initialCompletion(model, position, context, token)
+            const defaultCompletion = await initialCompletion(
+                model,
+                position,
+                context,
+                token,
+            )
             if (!defaultCompletion || token.isCancellationRequested) {
                 return defaultCompletion
             }
@@ -159,9 +172,7 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
                 if (last.includes(input)) return true
 
                 return segments.slice(0, -1).some((segment) => {
-                    return (
-                        segment.startsWith(input) || segment.includes(input)
-                    )
+                    return segment.startsWith(input) || segment.includes(input)
                 })
             }
 
@@ -175,10 +186,16 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
 
                     if (typeof r.insertText === "string") {
                         r.insertText = r.insertText.replaceAll("\\\\\"", "\"")
-                    } else if (typeof r.insertText === "object" && r.insertText !== null) {
+                    } else if (
+                        typeof r.insertText === "object" &&
+                        r.insertText !== null
+                    ) {
                         const textObj = r.insertText as any
                         if (typeof textObj.value === "string") {
-                            textObj.value = textObj.value.replaceAll("\\\\\"", "\"")
+                            textObj.value = textObj.value.replaceAll(
+                                "\\\\\"",
+                                "\"",
+                            )
                         }
                     }
 
@@ -238,8 +255,7 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
                                         .splice(dotSplit.length - 1, 1)
                                         .reduceRight((prefix, part) => {
                                             let sortBumperPrefixForPart:
-                                                | string
-                                                | undefined
+                                                string | undefined
 
                                             if (
                                                 part.startsWith(wordAtPosition)
@@ -255,9 +271,9 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
 
                                             if (
                                                 sortBumperPrefixForPart ===
-                                                undefined ||
+                                                    undefined ||
                                                 prefix.length >=
-                                                sortBumperPrefixForPart.length
+                                                    sortBumperPrefixForPart.length
                                             ) {
                                                 return prefix
                                             }
@@ -294,8 +310,12 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
                         }
                     }
 
-                    const allProperties = pluginsStore.editorPlugin?.schema?.properties?.properties ?? {}
-                    const requiredProperties = Object.keys(allProperties).filter(p => allProperties[p]?.$required === true)
+                    const allProperties =
+                        pluginsStore.editorPlugin?.schema?.properties
+                            ?.properties ?? {}
+                    const requiredProperties = Object.keys(
+                        allProperties,
+                    ).filter((p) => allProperties[p]?.$required === true)
 
                     if (requiredProperties.includes(suggestion.label)) {
                         suggestion.detail = "required"
@@ -333,12 +353,18 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
                 const task = taskIdentityAtCursor({
                     source: model.getValue(),
                     cursorIndex: model.getOffsetAt(position),
+                    isTrigger: (type) => {
+                        const plugin = pluginsStore.findPluginByCls(type)
+                        const triggers = plugin?.triggers as {cls: string}[] | undefined
+                        return triggers?.some((t) => t.cls === type) ?? false
+                    },
                 })
                 // Only a plugin FQCN resolves to a schema. `inputs:`/`outputs:` entries share the
                 // task shape but carry types like `STRING`, which would 404 on every keystroke.
-                const scopeKey = task && task.type.includes(".")
-                    ? `${task.type}@${task.version ?? ""}`
-                    : undefined
+                const scopeKey =
+                    task && task.type.includes(".")
+                        ? `${task.type}@${task.version ?? ""}`
+                        : undefined
                 if (task && scopeKey && !unscopableTaskTypes.has(scopeKey)) {
                     try {
                         // `all` is required: without it the endpoint omits every inherited `Task`
@@ -349,11 +375,15 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
                             commit: false,
                             all: true,
                         })
-                        const properties = pluginDoc?.schema?.properties?.properties
+                        const properties =
+                            pluginDoc?.schema?.properties?.properties
                         scopedSuggestions = scopePropertySuggestionsToTaskType({
                             suggestions,
-                            validPropertyKeys: properties ? Object.keys(properties) : undefined,
-                            propertyKind: monaco.languages.CompletionItemKind.Property,
+                            validPropertyKeys: properties
+                                ? Object.keys(properties)
+                                : undefined,
+                            propertyKind:
+                                monaco.languages.CompletionItemKind.Property,
                         })
                     } catch {
                         // Fail open, and remember the failure: the provider is re-invoked on every
@@ -397,10 +427,11 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
                         null,
                         true,
                     )
-                    const elementUnderCursor = YAML_UTILS.localizeElementAtIndex(
-                        source,
-                        cursorPosition,
-                    )
+                    const elementUnderCursor =
+                        YAML_UTILS.localizeElementAtIndex(
+                            source,
+                            cursorPosition,
+                        )
                     // No key under cursor means we cannot infer contextual value completions.
                     if (elementUnderCursor?.key === undefined) {
                         return NO_SUGGESTIONS
@@ -409,14 +440,15 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
                     const parentStartLine = model.getPositionAt(
                         elementUnderCursor.range![0],
                     ).lineNumber
-                    
+
                     let autoCompletions = []
                     try {
-                        autoCompletions = await yamlAutoCompletion.valueAutoCompletion(
-                            source,
-                            parsed,
-                            elementUnderCursor,
-                        )
+                        autoCompletions =
+                            await yamlAutoCompletion.valueAutoCompletion(
+                                source,
+                                parsed,
+                                elementUnderCursor,
+                            )
                     } catch {
                         return NO_SUGGESTIONS
                     }
@@ -452,9 +484,9 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
                                 kind:
                                     isKey === undefined
                                         ? monaco.languages.CompletionItemKind
-                                            .Value
+                                              .Value
                                         : monaco.languages.CompletionItemKind
-                                            .Property,
+                                              .Property,
                                 label,
                                 insertText: insertText,
                                 range: {
@@ -553,9 +585,9 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
                             {
                                 insertText: snippet,
                                 insertTextRules:
-                                monaco.languages
-                                    .CompletionItemInsertTextRule
-                                    .InsertAsSnippet,
+                                    monaco.languages
+                                        .CompletionItemInsertTextRule
+                                        .InsertAsSnippet,
                                 range: new monaco.Range(
                                     position.lineNumber,
                                     position.column,
@@ -576,12 +608,9 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
                         enableForwardStability: true,
                     }
                 },
-                handleItemDidShow() {
-                },
-                handlePartialAccept() {
-                },
-                freeInlineCompletions() {
-                },
+                handleItemDidShow() {},
+                handlePartialAccept() {},
+                freeInlineCompletions() {},
             } as any),
         )
 
@@ -619,16 +648,24 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
      * Seam for edition-specific Monaco providers (hover/definition/etc.). Empty in open-source; the Enterprise
      * {@link YamlLanguageConfigurator} subclass overrides it to register the reusable-inputs flow-editor providers.
      */
-    protected registerEditionProviders(_disposables: IDisposable[], _t: ReturnType<typeof useI18n>["t"]): void {
+    protected registerEditionProviders(
+        _disposables: IDisposable[],
+        _t: ReturnType<typeof useI18n>["t"],
+    ): void {
         // no-op in open-source
     }
 
-    private registerEditorArtifacts(t: ReturnType<typeof useI18n>["t"]): IDisposable[] {
+    private registerEditorArtifacts(
+        t: ReturnType<typeof useI18n>["t"],
+    ): IDisposable[] {
         const toast = makeToast(t)
 
         const copyCommand = monaco.editor.registerCommand(
             ARTIFACT_COPY_COMMAND,
-            async (_accessor, payload?: {text?: string; message?: string}) => {
+            async (
+                _accessor,
+                payload?: { text?: string; message?: string },
+            ) => {
                 if (!payload?.text) {
                     return
                 }
@@ -643,43 +680,51 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
             },
         )
 
-        const codeLensProvider = monaco.languages.registerCodeLensProvider("yaml", {
-            provideCodeLenses(model) {
-                const noLenses = {lenses: [], dispose() {}}
-                if (!model.uri.path.includes("flow-")) {
-                    return noLenses
-                }
-
-                const source = model.getValue()
-                let artifacts
-                try {
-                    const {blocks, namespace, id} = YAML_UTILS.extractTypedBlocksWithMeta(source)
-                    artifacts = provideEditorArtifacts(blocks, {namespace, id, t})
-                } catch {
-                    return noLenses
-                }
-
-                const lenses = artifacts.map(({range, lens}, index) => {
-                    const line = model.getPositionAt(range[0]).lineNumber
-                    return {
-                        id: `kestra-artifact-${index}`,
-                        range: {
-                            startLineNumber: line,
-                            startColumn: 1,
-                            endLineNumber: line,
-                            endColumn: 1,
-                        },
-                        command: {
-                            id: lens.command.id,
-                            title: lens.title,
-                            arguments: lens.command.arguments,
-                        },
+        const codeLensProvider = monaco.languages.registerCodeLensProvider(
+            "yaml",
+            {
+                provideCodeLenses(model) {
+                    const noLenses = {lenses: [], dispose() {}}
+                    if (!model.uri.path.includes("flow-")) {
+                        return noLenses
                     }
-                })
 
-                return {lenses, dispose() {}}
+                    const source = model.getValue()
+                    let artifacts
+                    try {
+                        const {blocks, namespace, id} =
+                            YAML_UTILS.extractTypedBlocksWithMeta(source)
+                        artifacts = provideEditorArtifacts(blocks, {
+                            namespace,
+                            id,
+                            t,
+                        })
+                    } catch {
+                        return noLenses
+                    }
+
+                    const lenses = artifacts.map(({range, lens}, index) => {
+                        const line = model.getPositionAt(range[0]).lineNumber
+                        return {
+                            id: `kestra-artifact-${index}`,
+                            range: {
+                                startLineNumber: line,
+                                startColumn: 1,
+                                endLineNumber: line,
+                                endColumn: 1,
+                            },
+                            command: {
+                                id: lens.command.id,
+                                title: lens.title,
+                                arguments: lens.command.arguments,
+                            },
+                        }
+                    })
+
+                    return {lenses, dispose() {}}
+                },
             },
-        })
+        )
 
         return [copyCommand, codeLensProvider]
     }
@@ -693,14 +738,21 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
 
         const flowExists = createFlowExistenceChecker(
             (namespace) =>
-                flowStore.flowsByNamespace(namespace).then((flows: {id: string}[]) => flows.map((flow) => flow.id)),
+                flowStore
+                    .flowsByNamespace(namespace)
+                    .then((flows: { id: string }[]) =>
+                        flows.map((flow) => flow.id),
+                    ),
             () => String(router.currentRoute.value.params.tenant ?? ""),
         )
 
         disposables.push(
             monaco.languages.registerLinkProvider("yaml", {
                 async provideLinks(model) {
-                    const existing = await filterExistingSubflowLinks(buildSubflowLinks(model), flowExists)
+                    const existing = await filterExistingSubflowLinks(
+                        buildSubflowLinks(model),
+                        flowExists,
+                    )
                     return {
                         links: existing.map((link) => ({
                             range: link.range,

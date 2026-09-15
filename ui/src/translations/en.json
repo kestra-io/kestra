@@ -2188,8 +2188,12 @@
         "draft": {
           "openInEditor": "Open in editor",
           "apply": "Apply",
+          "dismiss": "Dismiss",
+          "dismissed": "Dismissed",
+          "applied": "Applied",
+          "previewBanner": "Reviewing an AI-suggested change — the editor is read-only until you apply or dismiss it.",
           "applyTitle": "Apply flow",
-          "applyConfirm": "Apply the flow {namespace}.{id}? It will be created, or overwritten if it already exists.",
+          "applyConfirm": "Save {namespace}.{id} as a draft revision for review? It will be created, or a new draft revision added if it already exists — drafts aren't picked up by triggers or subflows until published.",
           "applyConfirmDashboard": "Apply the dashboard {id}? It will be created, or overwritten if it already exists.",
           "applyError": "Couldn't apply the flow. Please try again.",
           "applyErrorDashboard": "Couldn't apply the dashboard. Please try again.",

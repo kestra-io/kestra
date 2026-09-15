@@ -8,6 +8,7 @@ vi.mock("../../../../src/stores/flow", async () => {
         flowYaml: "",
         flowYamlOrigin: "",
         previewSource: undefined as string | undefined,
+        declinePreview: null as (() => void) | null,
         flow: {namespace: "company.team", id: "flow_1"},
         isReadOnly: false,
         isCreating: false,
@@ -109,13 +110,20 @@ function editor(wrapper: ReturnType<typeof mountTab>) {
 }
 
 describe("FlowFileEditorTab policy mutation preview", () => {
-    let flowStore: {flowYaml: string; flowYamlOrigin: string; previewSource: string | undefined; isReadOnly: boolean}
+    let flowStore: {
+        flowYaml: string
+        flowYamlOrigin: string
+        previewSource: string | undefined
+        declinePreview: (() => void) | null
+        isReadOnly: boolean
+    }
 
     beforeEach(() => {
         flowStore = useFlowStore() as unknown as typeof flowStore
         flowStore.flowYaml = BUFFER
         flowStore.flowYamlOrigin = BUFFER
         flowStore.previewSource = undefined
+        flowStore.declinePreview = null
         flowStore.isReadOnly = false
     })
 
@@ -183,5 +191,35 @@ describe("FlowFileEditorTab policy mutation preview", () => {
 
         expect(editor(wrapper).props("original")).toBeUndefined()
         expect(editor(wrapper).props("modelValue")).toBe("")
+    })
+
+    // Bug 1 (kestra-io/kestra#19330 review): the read-only lock must explain itself and offer a way
+    // out, rather than reading as a dead end.
+    test("shouldShowNoBannerWhenNotPreviewing", () => {
+        const wrapper = mountTab()
+
+        expect(wrapper.find("[data-test=\"flow-preview-banner\"]").exists()).toBe(false)
+    })
+
+    test("shouldShowTheDismissBannerWhilePreviewing", async () => {
+        const wrapper = mountTab()
+
+        flowStore.previewSource = MUTATED
+        await flushPromises()
+
+        expect(wrapper.find("[data-test=\"flow-preview-banner\"]").exists()).toBe(true)
+        expect(wrapper.find("[data-test=\"flow-preview-dismiss\"]").exists()).toBe(true)
+    })
+
+    test("shouldCallDeclinePreviewWhenTheBannerDismissIsClicked", async () => {
+        const decline = vi.fn()
+        flowStore.declinePreview = decline
+        const wrapper = mountTab()
+
+        flowStore.previewSource = MUTATED
+        await flushPromises()
+        await wrapper.find("[data-test=\"flow-preview-dismiss\"]").trigger("click")
+
+        expect(decline).toHaveBeenCalled()
     })
 })

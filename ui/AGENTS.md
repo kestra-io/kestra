@@ -192,6 +192,18 @@ watch(filterQueryKey, () => dataTable.value?.resetAndReload())
 
 The general rule: **if you find yourself reaching for `{deep: true}` on a computed source, the source should probably return a primitive (string / number) instead of an object.** Strings compare by value; references compare by identity. Picking the right primitive is the fix.
 
+### Router guards and `initApp`
+
+Guards are wired through `initApp`, and three things about that are easy to get wrong.
+
+**Register before the router installs.** `app.use(router)` starts the first navigation, and `vue-router` reads `beforeGuards.list()` once that navigation reaches its guard phase. A guard registered synchronously after `app.use(router)` is still picked up; one registered after an `await` is not, and `initApp` awaits i18n and the moment locale between installing the router and returning. A guard added in `initApp(...).then(...)` therefore misses the first navigation, which on a cold load is the only navigation there is. Pass it through the `guards` argument instead.
+
+`afterEach` is in the same window, for a less obvious reason: `afterGuards.list()` is read when a navigation *finishes*, and the first navigation can finish while `initApp` is still awaiting. An `afterEach` registered after those awaits therefore never sees it either, which silently costs anything keyed on the first navigation (`eventsRouter` attributes the landing page to `document.referrer` on exactly that hop).
+
+**A guard's arity decides how `vue-router` reads it.** `initApp` registers guards as `guards.beforeEach.bind(null, router)`, so a `(router, to, from)` guard arrives bound with `length` 2 and stays in return-value mode, where returning a route object redirects. Add a fourth parameter and the bound length becomes 3, which flips `vue-router` into `next()`-callback mode: the returned redirect is ignored and the navigation hangs with no error. Keep guards at `(router, to, from)`.
+
+**There is one `beforeEach` slot.** OSS spends it on `tenantGuard` and can only do so because its auth guard is a `beforeResolve`; EE spends it on `authGuard`. A second `beforeEach` has to be composed into the existing one, or `initApp` has to grow to accept a list, rather than being registered afterwards, since "afterwards" is exactly the case that misses the first navigation.
+
 ### Unsaved input in modals (discard guard)
 
 Any modal/drawer where the user **enters data** must not silently lose it on an accidental dismissal. `KsDialog` and `KsDrawer` take a `dirty` prop and ask for confirmation themselves; never reimplement the confirm-before-discard logic per modal.

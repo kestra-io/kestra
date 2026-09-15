@@ -5,11 +5,10 @@ import routes from "../../src/routes/routes"
 import {pwaShortcuts} from "../../plugins/pwaShortcuts"
 
 const EXPECTED_ROUTE_BY_URL: Record<string, string> = {
+    "flows/new": "flows/create",
     "flows": "flows/list",
     "executions": "executions/list",
     "ai": "ai",
-    "logs": "logs/list",
-    "flows/new": "flows/create",
 }
 
 describe("pwa manifest shortcuts", () => {

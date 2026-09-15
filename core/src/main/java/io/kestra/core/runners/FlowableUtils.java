@@ -415,6 +415,7 @@ public class FlowableUtils {
      * @return a list of String with no duplicates if the values were a list, or a list of pairs of String/String if the values were a map.
      * @throws IllegalVariableEvaluationException in case of JSON error, unsupported value type or duplicate values.
      */
+    @SuppressWarnings("unchecked")
     public static Either<List<String>, List<Pair<String, String>>> resolveValues(RunContext runContext, Object values) throws IllegalVariableEvaluationException {
         switch (values) {
             case String stringValue -> {
@@ -456,8 +457,6 @@ public class FlowableUtils {
                         "The `values` must be a list, a map, or an expression that renders to one, but got: '" + renderValue + "'.",
                         e
                     );
-                } catch (IOException e) {
-                    throw new IllegalVariableEvaluationException(e);
                 }
             }
             case List<?> listValue -> {
@@ -478,6 +477,7 @@ public class FlowableUtils {
         }
     }
 
+    @SuppressWarnings("unchecked")
     private static String valueAsString(RunContext runContext, Object values, Object value) throws IllegalVariableEvaluationException {
         return switch (value) {
             case String stringObj -> runContext.render(stringObj);

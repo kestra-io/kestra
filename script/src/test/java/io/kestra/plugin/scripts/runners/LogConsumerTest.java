@@ -71,7 +71,7 @@ class LogConsumerTest {
             taskCommands,
             Collections.emptyList()
         );
-        Await.until(() -> run.getLogConsumer().getStdOutCount() == 2, null, Duration.ofSeconds(5));
+        Await.await().atMost(Duration.ofSeconds(5)).until(() -> run.getLogConsumer().getStdOutCount() == 2);
         assertThat(run.getLogConsumer().getStdOutCount()).isEqualTo(2);
         assertThat(run.getLogConsumer().getOutputs().get("someOutput")).isEqualTo(outputValue);
     }
@@ -101,7 +101,7 @@ class LogConsumerTest {
             Collections.emptyList()
         );
 
-        Await.until(() -> run.getLogConsumer().getStdOutCount() == 10, null, Duration.ofSeconds(5));
+        Await.await().atMost(Duration.ofSeconds(5)).until(() -> run.getLogConsumer().getStdOutCount() == 10);
         assertThat(run.getLogConsumer().getStdOutCount()).isEqualTo(10);
     }
 
@@ -131,7 +131,7 @@ class LogConsumerTest {
             Collections.emptyList()
         );
 
-        Await.until(() -> logs.size() >= 10, null, Duration.ofSeconds(20));
+        Await.await().atMost(Duration.ofSeconds(20)).until(() -> logs.size() >= 10);
 
         assertThat(logs.stream().filter(m -> m.getLevel().equals(Level.INFO)).count()).isEqualTo(1L);
         assertThat(logs.stream().filter(m -> m.getLevel().equals(Level.ERROR)).count()).isEqualTo(1L);

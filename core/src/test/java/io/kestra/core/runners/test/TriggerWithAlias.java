@@ -23,6 +23,7 @@ import lombok.experimental.SuperBuilder;
 public class TriggerWithAlias extends AbstractTrigger implements PollingTriggerInterface {
 
     @Override
+    @SuppressWarnings("removal")
     public Optional<Execution> evaluate(ConditionContext conditionContext, TriggerContext context) throws IllegalVariableEvaluationException {
         return Optional.empty();
     }

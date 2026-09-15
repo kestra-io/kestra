@@ -270,7 +270,7 @@ public class ExecutionCommandMessageHandler implements ExecutorMessageHandler<Ex
      * {@code outputs} fields), persist them into the output repositories so the rest of the executor can work
      * uniformly with the modern storage.
      */
-    @SuppressWarnings("deprecation")
+    @SuppressWarnings({"deprecation", "removal"})
     private Execution migrateOutputs(Execution execution) throws InternalException {
         if (execution.getOutputs() != null) {
             executionOutputService.saveOutputs(execution, execution.getOutputs());

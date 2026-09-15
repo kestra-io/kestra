@@ -195,6 +195,7 @@ public abstract class AbstractJdbcCrudRepository<T> extends AbstractJdbcReposito
      * @see #findOne(Condition, Condition, OrderField...)
      */
     @SafeVarargs
+    @SuppressWarnings("varargs")
     protected final <F> Optional<T> findOne(String tenantId, Condition condition, OrderField<F>... orderByFields) {
         return findOne(defaultFilter(tenantId), condition, orderByFields);
     }
@@ -209,6 +210,7 @@ public abstract class AbstractJdbcCrudRepository<T> extends AbstractJdbcReposito
      * @see #findOne(Condition, Condition, OrderField[])
      */
     @SafeVarargs
+    @SuppressWarnings("varargs")
     protected final <F> Optional<T> findOne(String tenantId, Condition condition, boolean allowDeleted, OrderField<F>... orderByFields) {
         return findOne(defaultFilter(tenantId, allowDeleted), condition, orderByFields);
     }
@@ -222,6 +224,7 @@ public abstract class AbstractJdbcCrudRepository<T> extends AbstractJdbcReposito
      * @see #findOne(String, Condition, boolean, OrderField...)
      */
     @SafeVarargs
+    @SuppressWarnings("varargs")
     protected final <F> Optional<T> findOne(Condition defaultFilter, Condition condition, OrderField<F>... orderByFields) {
         return this.jdbcRepository
             .getDslContextWrapper()
@@ -251,6 +254,7 @@ public abstract class AbstractJdbcCrudRepository<T> extends AbstractJdbcReposito
      * @see #findPage(Pageable, String, Condition, OrderField...)
      */
     @SafeVarargs
+    @SuppressWarnings("varargs")
     protected final <F> List<T> find(String tenantId, Condition condition, OrderField<F>... orderByFields) {
         return find(defaultFilter(tenantId), condition, orderByFields);
     }
@@ -263,6 +267,7 @@ public abstract class AbstractJdbcCrudRepository<T> extends AbstractJdbcReposito
      * @see #findPage(Pageable, String, Condition, boolean, OrderField...)
      */
     @SafeVarargs
+    @SuppressWarnings("varargs")
     protected final <F> List<T> find(String tenantId, Condition condition, boolean allowDeleted, OrderField<F>... orderByFields) {
         return find(defaultFilter(tenantId, allowDeleted), condition, orderByFields);
     }
@@ -274,6 +279,7 @@ public abstract class AbstractJdbcCrudRepository<T> extends AbstractJdbcReposito
      * @see #findPage(Pageable, Condition, Condition, OrderField...)
      */
     @SafeVarargs
+    @SuppressWarnings("varargs")
     protected final <F> List<T> find(Condition defaultFilter, Condition condition, OrderField<F>... orderByFields) {
         return this.jdbcRepository
             .getDslContextWrapper()
@@ -302,6 +308,7 @@ public abstract class AbstractJdbcCrudRepository<T> extends AbstractJdbcReposito
      * @see #findPage(Pageable, String, Condition, OrderField...)
      */
     @SafeVarargs
+    @SuppressWarnings("varargs")
     protected final <F> Flux<T> findAsync(String tenantId, Condition condition, OrderField<F>... orderByFields) {
         return findAsync(defaultFilter(tenantId), condition, orderByFields);
     }
@@ -315,6 +322,7 @@ public abstract class AbstractJdbcCrudRepository<T> extends AbstractJdbcReposito
      * @see #findPage(Pageable, String, Condition, boolean, OrderField...)
      */
     @SafeVarargs
+    @SuppressWarnings("varargs")
     protected final <F> Flux<T> findAsync(String tenantId, Condition condition, boolean allowDeleted, OrderField<F>... orderByFields) {
         return findAsync(defaultFilter(tenantId, allowDeleted), condition, orderByFields);
     }
@@ -327,6 +335,7 @@ public abstract class AbstractJdbcCrudRepository<T> extends AbstractJdbcReposito
      * @see #findPage(Pageable, Condition, Condition, OrderField...)
      */
     @SafeVarargs
+    @SuppressWarnings("varargs")
     protected final <F> Flux<T> findAsync(Condition defaultFilter, Condition condition, OrderField<F>... orderByFields) {
         return Flux.create(
             emitter -> this.jdbcRepository
@@ -363,6 +372,7 @@ public abstract class AbstractJdbcCrudRepository<T> extends AbstractJdbcReposito
      * @see #findAsync(String, Condition, OrderField...)
      */
     @SafeVarargs
+    @SuppressWarnings("varargs")
     protected final <F> ArrayListTotal<T> findPage(Pageable pageable, String tenantId, Condition condition, OrderField<F>... orderByFields) {
         return findPage(pageable, defaultFilter(tenantId), condition, orderByFields);
     }
@@ -375,6 +385,7 @@ public abstract class AbstractJdbcCrudRepository<T> extends AbstractJdbcReposito
      * @see #findAsync(String, Condition, boolean, OrderField...)
      */
     @SafeVarargs
+    @SuppressWarnings("varargs")
     protected final <F> ArrayListTotal<T> findPage(Pageable pageable, String tenantId, Condition condition, boolean allowDeleted, OrderField<F>... orderByFields) {
         return findPage(pageable, defaultFilter(tenantId, allowDeleted), condition, orderByFields);
     }
@@ -386,6 +397,7 @@ public abstract class AbstractJdbcCrudRepository<T> extends AbstractJdbcReposito
      * @see #findAsync(Condition, Condition, OrderField...)
      */
     @SafeVarargs
+    @SuppressWarnings("varargs")
     protected final <F> ArrayListTotal<T> findPage(Pageable pageable, Condition defaultFilter, Condition condition, OrderField<F>... orderByFields) {
         return this.jdbcRepository
             .getDslContextWrapper()

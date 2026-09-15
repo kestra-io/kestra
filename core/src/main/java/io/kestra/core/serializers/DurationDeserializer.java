@@ -39,7 +39,7 @@ public class DurationDeserializer extends com.fasterxml.jackson.datatype.jsr310.
         if (_isFloat(value)) {
             double d = Double.parseDouble(value);
             BigDecimal bigDecimal = BigDecimal.valueOf(d);
-            return DecimalUtils.extractSecondsAndNanos(bigDecimal, Duration::ofSeconds);
+            return DecimalUtils.extractSecondsAndNanos(bigDecimal, Duration::ofSeconds, true);
         }
 
         try {

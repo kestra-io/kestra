@@ -126,6 +126,7 @@ class PebbleExpressionServiceTest {
         assertThat(fn.replacement()).isNull();
     }
 
+    @SuppressWarnings("deprecation")
     @Test
     void deprecatedFunctionShouldExposeMetadata() {
         PebbleExpressionService customService = new PebbleExpressionService(List.of(new AbstractExtension() {

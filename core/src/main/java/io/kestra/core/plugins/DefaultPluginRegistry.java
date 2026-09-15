@@ -82,6 +82,7 @@ public class DefaultPluginRegistry implements PluginRegistry {
      * {@inheritDoc}
      */
     @Override
+    @SuppressWarnings("rawtypes")
     public List<String> getAllVersionsForType(final String type) {
         return plugins.values()
             .stream().filter(
@@ -155,7 +156,7 @@ public class DefaultPluginRegistry implements PluginRegistry {
                 // Remove all classes to this plugin from the registry
                 this.pluginClassByIdentifier.entrySet().removeIf(entry ->
                 {
-                    PluginClassAndMetadata metadata = entry.getValue();
+                    PluginClassAndMetadata<? extends Plugin> metadata = entry.getValue();
                     return metadata.type().getClassLoader().equals(current.getClassLoader());
                 });
 

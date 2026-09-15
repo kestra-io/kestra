@@ -47,6 +47,7 @@ class ClusterControllerTest {
         assertThat(serviceInstance.server().type()).isEqualTo(ServerInstance.Type.STANDALONE);
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     void shouldGetWorkerMetrics() {
         // Worker metrics are persisted asynchronously via liveness heartbeats; poll until non-empty.

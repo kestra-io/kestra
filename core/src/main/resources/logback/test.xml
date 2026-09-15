@@ -4,6 +4,9 @@
     <logger name="io.kestra.core.plugins.PluginScanner" level="WARN" />
     <logger name="org.flywaydb.core.internal.database.base.Database" level="ERROR" />
     <logger name="io.kestra.core.server.AbstractServiceLivenessTask" level="ERROR" />
+    <logger name="io.kestra.core.migration.MigrationRunner" level="ERROR" />
+    <logger name="io.kestra.ee.jdbc.migration" level="ERROR" />
+    <logger name="io.kestra.ee.migration" level="ERROR" />
 
     <logger name="io.kestra" level="INFO" />
     <logger name="flow" level="INFO" />

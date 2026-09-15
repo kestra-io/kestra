@@ -7,10 +7,10 @@ import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeoutException;
 import java.util.stream.Stream;
 
 import org.awaitility.Awaitility;
+import org.awaitility.core.ConditionTimeoutException;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -83,10 +83,10 @@ class TriggerControllerTest {
     @Inject
     SchedulerConfiguration schedulerConfiguration;
 
+    @SuppressWarnings("deprecation")
     @BeforeEach
     protected void setup() {
         jdbcTestUtils.drop();
-        jdbcTestUtils.migrate();
         Awaitility.await().atMost(Duration.ofSeconds(30)).pollInterval(Duration.ofMillis(100)).until(() -> scheduler.isActive());
     }
 
@@ -573,8 +573,8 @@ class TriggerControllerTest {
         assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.ACCEPTED.getCode());
         assertThat(response.body().totalItems()).isEqualTo(2);
         try {
-            Await.until(() -> !jdbcTriggerRepository.findByIdWithoutAcl(triggerDisabled).get().isDisabled(), Duration.ofSeconds(1), Duration.ofSeconds(30));
-        } catch (TimeoutException e) {
+            Await.await().pollDelay(Duration.ZERO).pollInterval(Duration.ofSeconds(1)).atMost(Duration.ofSeconds(30)).until(() -> !jdbcTriggerRepository.findByIdWithoutAcl(triggerDisabled).get().isDisabled());
+        } catch (ConditionTimeoutException e) {
             Assertions.fail("Timeout waiting for trigger to be disabled");
         }
     }
@@ -614,8 +614,8 @@ class TriggerControllerTest {
         assertThat(response.body().totalItems()).isEqualTo(2);
 
         try {
-            Await.until(() -> jdbcTriggerRepository.findByIdWithoutAcl(triggerToDisable).get().isDisabled(), Duration.ofSeconds(1), Duration.ofSeconds(10));
-        } catch (TimeoutException e) {
+            Await.await().pollDelay(Duration.ZERO).pollInterval(Duration.ofSeconds(1)).atMost(Duration.ofSeconds(10)).until(() -> jdbcTriggerRepository.findByIdWithoutAcl(triggerToDisable).get().isDisabled());
+        } catch (ConditionTimeoutException e) {
             Assertions.fail("Timeout waiting for trigger to be disabled");
         }
     }
@@ -650,8 +650,8 @@ class TriggerControllerTest {
         assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.ACCEPTED.getCode());
         assertThat(response.body().totalItems()).isEqualTo(2);
         try {
-            Await.until(() -> jdbcTriggerRepository.findByIdWithoutAcl(toDisable).get().isDisabled(), Duration.ofSeconds(1), Duration.ofSeconds(30));
-        } catch (TimeoutException e) {
+            Await.await().pollDelay(Duration.ZERO).pollInterval(Duration.ofSeconds(1)).atMost(Duration.ofSeconds(30)).until(() -> jdbcTriggerRepository.findByIdWithoutAcl(toDisable).get().isDisabled());
+        } catch (ConditionTimeoutException e) {
             Assertions.fail("Timeout waiting for trigger to be disabled");
         }
     }
@@ -710,8 +710,8 @@ class TriggerControllerTest {
         assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.ACCEPTED.getCode());
         assertThat(response.body().totalItems()).isEqualTo(1);
         try {
-            Await.until(() -> !jdbcTriggerRepository.findByIdWithoutAcl(trigger).get().isDisabled(), Duration.ofSeconds(1), Duration.ofSeconds(30));
-        } catch (TimeoutException e) {
+            Await.await().pollDelay(Duration.ZERO).pollInterval(Duration.ofSeconds(1)).atMost(Duration.ofSeconds(30)).until(() -> !jdbcTriggerRepository.findByIdWithoutAcl(trigger).get().isDisabled());
+        } catch (ConditionTimeoutException e) {
             Assertions.fail("Timeout waiting for trigger to be enabled");
         }
     }
@@ -739,8 +739,8 @@ class TriggerControllerTest {
         assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.ACCEPTED.getCode());
         assertThat(response.body().totalItems()).isEqualTo(1);
         try {
-            Await.until(() -> !jdbcTriggerRepository.findByIdWithoutAcl(trigger).get().isDisabled(), Duration.ofSeconds(1), Duration.ofSeconds(30));
-        } catch (TimeoutException e) {
+            Await.await().pollDelay(Duration.ZERO).pollInterval(Duration.ofSeconds(1)).atMost(Duration.ofSeconds(30)).until(() -> !jdbcTriggerRepository.findByIdWithoutAcl(trigger).get().isDisabled());
+        } catch (ConditionTimeoutException e) {
             Assertions.fail("Timeout waiting for trigger to be enabled");
         }
     }

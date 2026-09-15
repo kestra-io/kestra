@@ -158,6 +158,7 @@ class PropertyTest {
     }
 
     @Test
+    @SuppressWarnings("removal")
     void withMessagesFromURI() throws Exception {
         Path messages = Files.createTempFile("messages", ".ion");
         final List<DynamicPropertyExampleTask.Message> inputValues = List.of(

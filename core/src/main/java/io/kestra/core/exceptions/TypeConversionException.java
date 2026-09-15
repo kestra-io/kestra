@@ -1,5 +1,7 @@
 package io.kestra.core.exceptions;
 
+import java.io.Serial;
+
 import io.kestra.core.utils.TypeConverter;
 
 /**
@@ -11,6 +13,8 @@ import io.kestra.core.utils.TypeConverter;
  * conversion failures without additional wiring. The original parse failure is preserved as the cause.
  */
 public class TypeConversionException extends IllegalArgumentException {
+    @Serial
+    private static final long serialVersionUID = 1L;
 
     public TypeConversionException(String message) {
         super(message);

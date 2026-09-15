@@ -210,6 +210,7 @@ public class UiController {
 
     // A jar connection has opened no stream, so there is nothing to release; a file: connection opened
     // one while reading its metadata, and closing it hands the file handle back.
+    @SuppressWarnings("try") // the resource is opened only to be closed, so it is never referenced in the body
     private static void release(URLConnection connection) {
         if (connection instanceof JarURLConnection) {
             return;

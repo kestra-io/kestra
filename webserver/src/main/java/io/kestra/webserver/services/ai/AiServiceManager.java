@@ -38,6 +38,9 @@ public class AiServiceManager {
     protected final NamespaceContextTool namespaceContextTool;
     protected final KestraDocsContextTool kestraDocsContextTool;
 
+    // createAiService is overridden by Enterprise Edition subclasses, so calling it here escapes `this`
+    // before the subclass is fully initialized; the framework's provider-registration pattern requires it.
+    @SuppressWarnings({"unchecked", "this-escape"})
     public AiServiceManager(
         AiProvidersConfiguration providersConfiguration,
         Environment environment,

@@ -41,7 +41,8 @@
                 editor: {padding: {top: 16}},
             }"
             @update:model-value="editorUpdate"
-            @cursor="updatePluginDocumentation"
+            @cursor="onCursorChange"
+            @focusout="cursor = undefined"
             @editorMounted="onEditorMounted"
             @save="flow ? saveFlowYaml(): saveFileContent()"
             @execute="execute"
@@ -113,7 +114,7 @@
     const flowStore = useFlowStore()
     const editorBindings = useEditorBindings()
 
-    const cursor = ref()
+    const cursor = inject(EDITOR_CURSOR_INJECTION_KEY, () => ref<number | undefined>(), true)
 
     // Ctrl/⌘+Alt+Shift+K opens the AI Copilot (the v2 context-dock tab). Suppressed during the
     // guided onboarding tour.
@@ -128,8 +129,6 @@
             miscStore.openCopilot()
         }
     }
-
-    provide(EDITOR_CURSOR_INJECTION_KEY, cursor)
 
     const props = defineProps<EditorTabProps>()
 
@@ -364,12 +363,20 @@
 
     onBeforeUnmount(() => {
         clearTimeout(timeout.value)
+        if (props.flow) cursor.value = undefined
     })
 
     function updatePluginDocumentation(event: {position: monaco.Position, model: monaco.editor.ITextModel}) {
         const cls = YAML_UTILS.getTypeAtPosition(source.value, event.position, pluginsStore.allTypes)
         const version = YAML_UTILS.getVersionAtPosition(source.value, event.position)
         pluginsStore.updateDocumentation({cls, version, hash: hash.value})
+    }
+
+    function onCursorChange(event: {position: monaco.Position, model: monaco.editor.ITextModel}) {
+        updatePluginDocumentation(event)
+        if (props.flow) {
+            cursor.value = event.model.getOffsetAt(event.position)
+        }
     }
 
     // Delegate to the shared save action so Ctrl+S / the editor's save event go through the same

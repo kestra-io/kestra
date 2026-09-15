@@ -195,7 +195,7 @@
         color: var(--ks-icon-inactive);
         cursor: grab;
         opacity: 0;
-        transition: opacity 0.15s;
+        transition: opacity var(--ks-duration-fast) var(--ks-ease-standard);
 
         .node-wrapper:hover & {
             opacity: 1;

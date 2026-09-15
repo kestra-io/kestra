@@ -51,7 +51,7 @@
         cursor: pointer;
         padding: var(--ks-spacing-1) var(--ks-spacing-2);
         border-radius: var(--ks-radius-sm);
-        transition: background-color 0.12s;
+        transition: background-color var(--ks-duration-fast) var(--ks-ease-standard);
     }
 
     .undo-toast-btn:hover {
@@ -65,7 +65,7 @@
 
     .undo-toast-enter-active,
     .undo-toast-leave-active {
-        transition: opacity 0.18s ease, transform 0.18s ease;
+        transition: opacity var(--ks-duration-base) var(--ks-ease-standard), transform var(--ks-duration-base) var(--ks-ease-standard);
     }
 
     .undo-toast-enter-from,

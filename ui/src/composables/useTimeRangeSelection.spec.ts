@@ -1,7 +1,6 @@
 import {describe, expect, it} from "vitest"
 import {useTimeRangeSelection} from "./useTimeRangeSelection"
 
-// Maps clientX 0..100px onto timestamps 1000..2000ms, 1:1 for simple assertions.
 const timeAt = (clientX: number) => 1000 + clientX * 10
 
 describe("useTimeRangeSelection", () => {

@@ -23,8 +23,6 @@ function mountOutputs(referencedTaskIds: string[], taskRunList: ReturnType<typeo
         props: {referencedTaskIds, taskRunList: taskRunList as never, executionId: "exec-1"},
         global: {
             plugins: [i18n],
-            // Vars.vue's KsTable/KsTableColumn scoped-slot rendering needs the real design-system
-            // plugin (covered by the Storybook story instead) — it throws in jsdom without it.
             stubs: {Vars: {template: "<pre>{{ JSON.stringify(data) }}</pre>", props: ["data"]}},
         },
     })

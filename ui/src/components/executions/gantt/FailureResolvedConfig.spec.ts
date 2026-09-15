@@ -28,9 +28,6 @@ function mountConfig(props: Partial<{rawBlock: string | undefined; flowLoading: 
         },
         global: {
             plugins: [i18n],
-            // KsMarkdown's Shiki highlighter needs a real browser (covered by the Storybook
-            // story instead) — it throws in jsdom, so it's stubbed here to isolate the logic
-            // this spec actually owns: which content reaches it.
             stubs: {KsMarkdown: {template: "<pre>{{ content }}</pre>", props: ["content"]}},
         },
     })

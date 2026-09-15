@@ -1,5 +1,5 @@
 export {defineConfigKestraHeyOptionalTenant} from "./config"
-export {fixYamlSourceRequestBodyContentType, normalizeQueryFilterParams, widenQueryFilterValue, replaceFlowLabels} from "./patch"
+export {fixYamlSourceRequestBodyContentType, normalizeQueryFilterParams, unwrapEventStreamArrayResponses, widenQueryFilterValue, replaceFlowLabels} from "./patch"
 export type {KestraSdkPlugin} from "./types"
 export {
     PROBLEM_TYPE_BASE,

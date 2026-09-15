@@ -1,25 +1,19 @@
 import {describe, test, expect} from "vitest"
-import {mount} from "@vue/test-utils"
-import {createI18n} from "vue-i18n"
-import KestraDesignSystem from "../../../src/index"
 import KsEmptyState from "../../../src/components/Data/KsEmptyState.vue"
+import {i18nMount} from "../i18nMount"
 
-const i18n = createI18n({
-    legacy: false,
-    locale: "en",
-    messages: {
-        en: {
-            ks_empty_state: {
-                learn_more: "Learn more",
-            },
-        },
+const messages = {
+    ks_empty_state: {
+        learn_more: "Learn more",
     },
-})
-const globalConfig = {plugins: [i18n, KestraDesignSystem]}
+}
+
+const globalConfig = {}
 
 describe("KsEmptyState", () => {
     test("renders title and description", () => {
-        const wrapper = mount(KsEmptyState, {
+        const wrapper = i18nMount(KsEmptyState, {
+            messages,
             props: {title: "No items", description: "Add one to get started."},
             global: globalConfig,
         })
@@ -28,13 +22,15 @@ describe("KsEmptyState", () => {
     })
 
     test("renders artwork only when image is provided", () => {
-        const without = mount(KsEmptyState, {
+        const without = i18nMount(KsEmptyState, {
+            messages,
             props: {title: "Nothing"},
             global: globalConfig,
         })
         expect(without.find(".ks-empty-state__artwork").exists()).toBe(false)
 
-        const withImage = mount(KsEmptyState, {
+        const withImage = i18nMount(KsEmptyState, {
+            messages,
             props: {title: "Nothing", image: "/test.svg"},
             global: globalConfig,
         })
@@ -42,7 +38,8 @@ describe("KsEmptyState", () => {
     })
 
     test("action slot renders inside the actions row", () => {
-        const wrapper = mount(KsEmptyState, {
+        const wrapper = i18nMount(KsEmptyState, {
+            messages,
             props: {title: "Empty"},
             slots: {action: "<button data-test=\"create\">Create</button>"},
             global: globalConfig,
@@ -51,7 +48,8 @@ describe("KsEmptyState", () => {
     })
 
     test("renders Learn more as a button when learnMore is set", () => {
-        const wrapper = mount(KsEmptyState, {
+        const wrapper = i18nMount(KsEmptyState, {
+            messages,
             props: {title: "Empty", learnMore: "https://kestra.io/docs"},
             global: globalConfig,
         })
@@ -65,7 +63,8 @@ describe("KsEmptyState", () => {
     })
 
     test("omits the actions row when there is no action slot and no learnMore", () => {
-        const wrapper = mount(KsEmptyState, {
+        const wrapper = i18nMount(KsEmptyState, {
+            messages,
             props: {title: "Empty"},
             global: globalConfig,
         })
@@ -73,7 +72,8 @@ describe("KsEmptyState", () => {
     })
 
     test("keeps the action slot alongside the Learn more button", () => {
-        const wrapper = mount(KsEmptyState, {
+        const wrapper = i18nMount(KsEmptyState, {
+            messages,
             props: {title: "Empty", learnMore: "https://kestra.io/docs"},
             slots: {action: "<button data-test=\"create\">Create</button>"},
             global: globalConfig,
@@ -85,7 +85,8 @@ describe("KsEmptyState", () => {
     })
 
     test("description slot overrides description prop", () => {
-        const wrapper = mount(KsEmptyState, {
+        const wrapper = i18nMount(KsEmptyState, {
+            messages,
             props: {title: "Empty", description: "from prop"},
             slots: {description: "<span data-test=\"slot-desc\">from slot</span>"},
             global: globalConfig,

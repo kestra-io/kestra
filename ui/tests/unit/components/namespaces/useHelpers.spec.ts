@@ -1,7 +1,5 @@
 import {describe, it, expect, vi} from "vitest"
 import {defineComponent, h} from "vue"
-import {mount} from "@vue/test-utils"
-import {createI18n} from "vue-i18n"
 import {createPinia} from "pinia"
 
 vi.mock("vue-router", () => ({
@@ -9,17 +7,16 @@ vi.mock("vue-router", () => ({
 }))
 
 import {useHelpers} from "../../../../src/components/namespaces/utils/useHelpers"
-
-const i18n = createI18n({legacy: false, locale: "en", messages: {en: {}}, missingWarn: false, fallbackWarn: false})
+import {i18nMount} from "../../i18nMount"
 
 function mountHelpers() {
     let captured: ReturnType<typeof useHelpers>
-    const wrapper = mount(defineComponent({
+    const wrapper = i18nMount(defineComponent({
         setup() {
             captured = useHelpers()
             return () => h("div")
         },
-    }), {global: {plugins: [i18n, createPinia()]}})
+    }), {global: {plugins: [createPinia()]}})
     wrapper.unmount()
     return captured!
 }

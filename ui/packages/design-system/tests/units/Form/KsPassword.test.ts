@@ -1,12 +1,9 @@
 import {describe, test, expect} from "vitest"
-import {mount} from "@vue/test-utils"
-import {createI18n} from "vue-i18n"
-import KestraDesignSystem from "../../../src/index"
 import KsPassword from "../../../src/components/Form/KsPassword.vue"
+import {i18nMount} from "../i18nMount"
 
-const i18n = createI18n({legacy: false, locale: "en", messages: {en: {}}})
-const globalConfig = {plugins: [i18n, KestraDesignSystem]}
-const mountPassword = (props: Record<string, unknown>) => mount(KsPassword, {props, global: globalConfig})
+const globalConfig = {}
+const mountPassword = (props: Record<string, unknown>) => i18nMount(KsPassword, {props, global: globalConfig})
 
 describe("KsPassword", () => {
     test("masks by default, and the toggle switches both ways", async () => {

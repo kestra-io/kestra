@@ -1,6 +1,6 @@
 import {describe, test, expect, vi, beforeEach} from "vitest"
-import {mount, flushPromises} from "@vue/test-utils"
-import {createI18n} from "vue-i18n"
+import {flushPromises} from "@vue/test-utils"
+import {i18nMount} from "../../i18nMount"
 
 vi.mock("../../../../src/stores/flow", async () => {
     const {reactive} = await import("vue")
@@ -90,17 +90,9 @@ import FlowFileEditorTab from "../../../../src/components/inputs/FlowFileEditorT
 const BUFFER = "id: flow_1\nnamespace: company.team\ntasks:\n  - id: hello\n    type: io.kestra.plugin.core.log.Log\n"
 const MUTATED = `${BUFFER}labels:\n  managed-by: governance\n`
 
-const i18n = createI18n({
-    legacy: false,
-    globalInjection: true,
-    locale: "en",
-    messages: {en: {}},
-})
-
 function mountTab(flow = true) {
-    return mount(FlowFileEditorTab, {
+    return i18nMount(FlowFileEditorTab, {
         props: {name: "Flow.yaml", extension: "yaml", path: "Flow.yaml", flow, dirty: false},
-        global: {plugins: [i18n]},
     })
 }
 

@@ -1,7 +1,5 @@
 import {describe, test, expect, beforeEach, vi} from "vitest"
-import {mount} from "@vue/test-utils"
 import {createPinia, setActivePinia} from "pinia"
-import {createI18n} from "vue-i18n"
 import {ref} from "vue"
 import KestraDesignSystem from "@kestra-io/design-system"
 import TaskList from "../../../../../src/components/no-code/components/tasks/TaskList.vue"
@@ -15,6 +13,8 @@ import {
     REF_PATH_INJECTION_KEY,
     UPDATE_YAML_FUNCTION_INJECTION_KEY,
 } from "../../../../../src/components/no-code/injectionKeys"
+
+import {i18nMount} from "../../../i18nMount"
 
 const SOURCE = `
 id: qa
@@ -36,7 +36,7 @@ const dragEvent = () => ({preventDefault: () => {}, dataTransfer: {setData: () =
 function mountList() {
     const updateYaml = vi.fn()
     const editTask = vi.fn()
-    const wrapper = mount(TaskList, {
+    const wrapper = i18nMount(TaskList, {
         props: {
             modelValue: [
                 {id: "then_ok", type: "io.kestra.plugin.core.log.Log"},
@@ -45,10 +45,7 @@ function mountList() {
             root: "then",
         },
         global: {
-            plugins: [
-                createI18n({legacy: false, locale: "en", fallbackWarn: false, missingWarn: false}),
-                KestraDesignSystem,
-            ],
+            plugins: [KestraDesignSystem],
             provide: {
                 [FULL_SOURCE_INJECTION_KEY as symbol]: ref(SOURCE),
                 [UPDATE_YAML_FUNCTION_INJECTION_KEY as symbol]: updateYaml,

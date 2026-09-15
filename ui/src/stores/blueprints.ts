@@ -10,7 +10,7 @@ import {trackBlueprintSelection} from "../utils/tabTracking"
 import {Input} from "./flow.ts"
 
 export type BlueprintType = "community" | "custom";
-type BlueprintKind = "flow" | "dashboard" | "app";
+export type BlueprintKind = "flow" | "dashboard" | "app";
 
 interface Options {
     type: BlueprintType;

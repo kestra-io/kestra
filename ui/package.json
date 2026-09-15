@@ -5,6 +5,7 @@
     "type": "module",
     "packageManager": "npm@11.16.0",
     "engines": {
+        "node": ">=24",
         "npm": ">=11.7.0"
     },
     "workspaces": [
@@ -25,13 +26,14 @@
         "precheck:types": "node scripts/ensure-sdk.mjs",
         "check:types": "vue-tsc --build packages/design-system/tsconfig.app.json && echo \"design-system compiled\" \\\n && vue-tsc --build tsconfig.app.json && echo \"app checked\" \\\n && vue-tsc --project tsconfig.test.json && echo \"test checked\"",
         "test:lint": "oxlint src packages tests && eslint",
+        "check:ts-any": "node scripts/explicit-any/baseline.mjs src packages tests",
         "test:all": "vitest run --coverage",
         "test:unit": "vitest run --project=unit",
         "test:unit:shuffle": "vitest run --project=unit --sequence.shuffle.files",
         "test:storybook": "vitest run --project=storybook",
         "test:e2e": "./run-e2e-tests.sh",
         "test:e2e-without-starting-backend": "playwright test --config=tests/e2e/playwright.config.ts",
-        "translations:check": "npx --yes tsx ./scripts/translations/check.ts",
+        "translations:check": "node ./scripts/translations/check-translations.mjs --scope oss && node --experimental-strip-types ./scripts/translations/check.ts",
         "translations:generate": "node --experimental-strip-types ./scripts/translations/generate.ts",
         "lint": "oxlint --fix src packages tests && eslint --fix",
         "storybook": "storybook dev -p 6006",
@@ -71,6 +73,7 @@
         "@vue-flow/background": "^1.3.2",
         "@vue-flow/controls": "^1.1.3",
         "@vue-flow/core": "^1.48.2",
+        "@vue/compiler-sfc": "^3.5.39",
         "@vue/test-utils": "^2.4.11",
         "@vueuse/core": "^14.3.0",
         "@vueuse/router": "^14.3.0",

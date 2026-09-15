@@ -197,3 +197,43 @@ export const EmptyRootArray: Story = {
         await waitFor(() => expect(within(canvasElement).getByText("[]")).toBeTruthy())
     },
 }
+
+/** A leaf holding a storage URI reads as a file: a symbol for its type, named by its key. */
+export const FileOutputs: Story = {
+    args: {
+        value: {
+            outputFiles: {
+                abc: "kestra:///company/team/6Yd2A/outputs/8f2c1d",
+                "report.csv": "kestra:///company/team/6Yd2A/outputs/3a71bc.csv",
+            },
+            attachments: [
+                "kestra:///company/team/6Yd2A/outputs/chart.png",
+                "kestra:///company/team/6Yd2A/outputs/run.log",
+            ],
+            exitCode: 0,
+        },
+        defaultExpanded: true,
+    },
+    render: (args) => ({
+        setup() {
+            return () => (
+                <KsCard style="font-size:13px;padding:1rem">
+                    <KsJsonTree {...args} />
+                </KsCard>
+            )
+        },
+    }),
+    play: async ({canvasElement}: {canvasElement: HTMLElement}) => {
+        const canvas = within(canvasElement)
+
+        // The key names the file, and the raw URI is left to the tooltip.
+        await waitFor(() => expect(canvas.getByText("abc")).toBeTruthy())
+        expect(canvasElement.textContent).not.toContain("kestra:///company")
+
+        // An array index is no name, so those rows fall back to the URI's own segment.
+        expect(canvas.getByText("chart.png")).toBeTruthy()
+
+        expect(canvasElement.querySelector(".file-delimited-outline-icon")).toBeTruthy()
+        expect(canvasElement.querySelector(".file-image-outline-icon")).toBeTruthy()
+    },
+}

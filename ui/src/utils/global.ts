@@ -3,6 +3,10 @@ declare global {
         capitalize(): string;
         hashCode(): number;
     }
+
+    interface Window {
+        KESTRA_UI_PATH: string;
+    }
 }
 
 export function capitalize(str: string) {

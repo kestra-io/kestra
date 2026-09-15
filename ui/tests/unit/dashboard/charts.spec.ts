@@ -1,5 +1,10 @@
-import {describe, expect, it} from "vitest"
-import {chartSegmentDrillDown, registerDrillDown} from "../../../src/components/dashboard/composables/chartDrillDown"
+import {describe, expect, it, vi} from "vitest"
+
+vi.mock("override/stores/misc", () => ({
+    useMiscStore: () => ({configs: {chartDefaultDuration: "PT24H"}}),
+}))
+
+import {buildFullQuery, chartDrillDownTarget, registerDrillDown} from "../../../src/components/dashboard/composables/chartDrillDown"
 import {DEFAULT_BAR_CATEGORY_LIMIT, MAX_FILLED_TIME_BUCKETS, fillTimeBucketLabels, rankStackedBars} from "../../../src/components/dashboard/composables/charts"
 
 const EXEC = "io.kestra.plugin.core.dashboard.data.Executions"
@@ -7,7 +12,7 @@ const LOGS = "io.kestra.plugin.core.dashboard.data.Logs"
 const FLOWS = "io.kestra.plugin.core.dashboard.data.Flows"
 const METRICS = "io.kestra.plugin.core.dashboard.data.Metrics"
 
-describe("chartSegmentDrillDown", () => {
+describe("chartDrillDownTarget — chart where and clicked dimensions", () => {
     it("reproduces the CLEID dashboard: clicked label + the chart's where conditions, on the executions route", () => {
         const chart = {
             data: {
@@ -18,7 +23,7 @@ describe("chartSegmentDrillDown", () => {
                 ],
             },
         }
-        const result = chartSegmentDrillDown(chart, {field: "LABELS", key: "cleid"}, "cleid-010")
+        const result = chartDrillDownTarget(chart, [{column: {field: "LABELS", key: "cleid"}, value: "cleid-010"}])
         expect(result).toEqual({
             name: "executions/list",
             timeFiltered: true,
@@ -31,22 +36,22 @@ describe("chartSegmentDrillDown", () => {
     })
 
     it("maps a state-grouped executions pie to filters[state][IN] (state is multi-select)", () => {
-        const result = chartSegmentDrillDown({data: {type: EXEC}}, {field: "STATE"}, "FAILED")
+        const result = chartDrillDownTarget({data: {type: EXEC}}, [{column: {field: "STATE"}, value: "FAILED"}])
         expect(result).toEqual({name: "executions/list", timeFiltered: true, query: {"filters[state][IN]": "FAILED"}})
     })
 
     it("routes a Logs chart to the logs list with logs-specific filter keys", () => {
-        const result = chartSegmentDrillDown({data: {type: LOGS}}, {field: "TASK_ID"}, "my-task")
+        const result = chartDrillDownTarget({data: {type: LOGS}}, [{column: {field: "TASK_ID"}, value: "my-task"}])
         expect(result).toEqual({name: "logs/list", timeFiltered: true, query: {"filters[taskId][EQUALS]": "my-task"}})
     })
 
     it("returns null for a data source with no drill-down list (Metrics)", () => {
-        expect(chartSegmentDrillDown({data: {type: METRICS}}, {field: "NAMESPACE"}, "x")).toBeNull()
+        expect(chartDrillDownTarget({data: {type: METRICS}}, [{column: {field: "NAMESPACE"}, value: "x"}])).toBeNull()
     })
 
     it("returns null when the chart has no data type", () => {
-        expect(chartSegmentDrillDown({data: {}}, {field: "STATE"}, "FAILED")).toBeNull()
-        expect(chartSegmentDrillDown(undefined, undefined, "FAILED")).toBeNull()
+        expect(chartDrillDownTarget({data: {}}, [{column: {field: "STATE"}, value: "FAILED"}])).toBeNull()
+        expect(chartDrillDownTarget(undefined, [{column: undefined, value: "FAILED"}])).toBeNull()
     })
 
     it("skips where conditions and dimensions with no list equivalent (superset, never wrong rows)", () => {
@@ -61,7 +66,7 @@ describe("chartSegmentDrillDown", () => {
             },
         }
         // NAMESPACE is multi-select -> EQUAL_TO becomes IN; clicked FLOW_ID dimension also multi-select -> IN
-        const result = chartSegmentDrillDown(chart, {field: "FLOW_ID"}, "always-fail")
+        const result = chartDrillDownTarget(chart, [{column: {field: "FLOW_ID"}, value: "always-fail"}])
         expect(result).toEqual({
             name: "executions/list",
             timeFiltered: true,
@@ -74,7 +79,7 @@ describe("chartSegmentDrillDown", () => {
 
     it("joins array values for IN/NOT_IN where conditions", () => {
         const chart = {data: {type: EXEC, where: [{field: "STATE", type: "IN", value: ["FAILED", "WARNING"]}]}}
-        const result = chartSegmentDrillDown(chart, {field: "LABELS", key: "cleid"}, "cleid-001")
+        const result = chartDrillDownTarget(chart, [{column: {field: "LABELS", key: "cleid"}, value: "cleid-001"}])
         expect(result?.query["filters[state][IN]"]).toBe("FAILED,WARNING")
     })
 
@@ -85,7 +90,7 @@ describe("chartSegmentDrillDown", () => {
                 where: [{field: "NAMESPACE", type: "NOT_EQUAL_TO", value: "system"}],
             },
         }
-        const result = chartSegmentDrillDown(chart, {field: "NAMESPACE"}, "dashboard.test")
+        const result = chartDrillDownTarget(chart, [{column: {field: "NAMESPACE"}, value: "dashboard.test"}])
         expect(result).toEqual({
             name: "flows/list",
             timeFiltered: false, // flows have no time dimension
@@ -98,7 +103,7 @@ describe("chartSegmentDrillDown", () => {
 
     it("passes non-equality operators through on a multi-select field (namespace CONTAINS)", () => {
         const chart = {data: {type: EXEC, where: [{field: "NAMESPACE", type: "CONTAINS", value: "kestra"}]}}
-        const result = chartSegmentDrillDown(chart, undefined, "x")
+        const result = chartDrillDownTarget(chart, [{column: undefined, value: "x"}])
         expect(result?.query).toEqual({"filters[namespace][CONTAINS]": "kestra"})
     })
 
@@ -117,7 +122,7 @@ describe("chartSegmentDrillDown", () => {
             },
         }
         // A metadata-keyed dimension (e.g. grouped by metadata.os) is encoded as a nested key-value filter.
-        const result = chartSegmentDrillDown(chart, {field: "METADATA", key: "os"}, "linux")
+        const result = chartDrillDownTarget(chart, [{column: {field: "METADATA", key: "os"}, value: "linux"}])
         expect(result).toEqual({
             name: "custom/list",
             timeFiltered: false,
@@ -125,6 +130,90 @@ describe("chartSegmentDrillDown", () => {
                 "filters[type][EQUALS]": "vm",
                 "filters[metadata][EQUALS][os]": "linux",
             },
+        })
+    })
+})
+
+describe("chartDrillDownTarget — page filters and time window", () => {
+    const STATE_SEGMENT = [{column: {field: "STATE"}, value: "SUCCESS"}]
+
+    it("carries the list page filters alongside the clicked segment", () => {
+        const target = chartDrillDownTarget({data: {type: EXEC}}, STATE_SEGMENT, {
+            routeQuery: {"filters[namespace][IN]": "system", "filters[flowId][IN]": "test"},
+        })
+        expect(target?.query).toEqual({
+            "filters[namespace][IN]": "system",
+            "filters[flowId][IN]": "test",
+            "filters[state][IN]": "SUCCESS",
+        })
+    })
+
+    it("lets every clicked dimension narrow a page filter on the same field", () => {
+        const target = chartDrillDownTarget(
+            {data: {type: EXEC}},
+            [...STATE_SEGMENT, {column: {field: "FLOW_ID"}, value: "my-flow"}],
+            {routeQuery: {"filters[state][IN]": "RUNNING", "filters[flowId][IN]": "other"}},
+        )
+        expect(target?.query).toEqual({
+            "filters[state][IN]": "SUCCESS",
+            "filters[flowId][IN]": "my-flow",
+        })
+    })
+
+    it("carries the page's own time range when no bucket was clicked", () => {
+        const target = chartDrillDownTarget({data: {type: EXEC}}, STATE_SEGMENT, {
+            routeQuery: {"filters[timeRange][EQUALS]": "PT7D"},
+        })
+        expect(target?.timeWindow).toEqual({"filters[timeRange][EQUALS]": "PT7D"})
+    })
+
+    it("prefers the clicked bucket over the page's own time range", () => {
+        const target = chartDrillDownTarget({data: {type: EXEC}}, STATE_SEGMENT, {
+            routeQuery: {"filters[timeRange][EQUALS]": "PT7D"},
+            dateRange: {startDate: "2026-08-28T00:00:00.000Z", endDate: "2026-08-28T23:59:59.999Z"},
+        })
+        expect(target?.timeWindow).toEqual({
+            "filters[startDate][GREATER_THAN_OR_EQUAL_TO]": "2026-08-28T00:00:00.000Z",
+            "filters[endDate][LESS_THAN_OR_EQUAL_TO]": "2026-08-28T23:59:59.999Z",
+        })
+    })
+})
+
+describe("buildFullQuery", () => {
+    it("emits the resolved time window instead of the chart default duration", () => {
+        const query = buildFullQuery({
+            name: "executions/list",
+            query: {"filters[state][IN]": "SUCCESS"},
+            timeFiltered: true,
+            timeWindow: {"filters[timeRange][EQUALS]": "PT7D"},
+        })
+        expect(query).toEqual({
+            "filters[state][IN]": "SUCCESS",
+            "filters[timeRange][EQUALS]": "PT7D",
+            scope: "USER",
+        })
+    })
+
+    it("falls back to the chart default duration when no window was resolved", () => {
+        const query = buildFullQuery({name: "executions/list", query: {}, timeFiltered: true})
+        expect(query).toEqual({"filters[timeRange][EQUALS]": "PT24H", scope: "USER"})
+    })
+
+    it("emits no time filter at all for a list that is not time filtered", () => {
+        // A TimeSeries over a timeless data source (EE assets grouped by CREATED) still resolves a
+        // bucket on click, and `flows/list` / `assets/list` are not built to accept one.
+        const target = chartDrillDownTarget(
+            {data: {type: FLOWS}},
+            [{column: {field: "NAMESPACE"}, value: "dashboard.test"}],
+            {
+                routeQuery: {"filters[timeRange][EQUALS]": "PT7D"},
+                dateRange: {startDate: "2026-08-28T00:00:00.000Z", endDate: "2026-08-28T23:59:59.999Z"},
+            },
+        )
+
+        expect(buildFullQuery(target!)).toEqual({
+            "filters[namespace][IN]": "dashboard.test",
+            scope: "USER",
         })
     })
 })

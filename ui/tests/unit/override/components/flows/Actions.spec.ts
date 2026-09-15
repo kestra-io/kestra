@@ -1,6 +1,6 @@
-import {beforeEach, describe, expect, it, vi} from "vitest"
+import {afterEach, beforeEach, describe, expect, it, vi} from "vitest"
 import {computed} from "vue"
-import {mount} from "@vue/test-utils"
+import {mount, type VueWrapper} from "@vue/test-utils"
 import {createI18n} from "vue-i18n"
 import KestraDesignSystem from "@kestra-io/design-system"
 
@@ -97,13 +97,24 @@ const i18n = createI18n({
     },
 })
 
+// The unit project shares one jsdom per worker, so a wrapper left mounted keeps the teleported
+// poppers of its two dropdowns attached to <body> and fails the whole file (tests/unit/leakGuard.ts).
+let wrapper: VueWrapper | undefined
+
+afterEach(() => {
+    wrapper?.unmount()
+    wrapper = undefined
+})
+
 function mountActions() {
-    return mount(Actions, {
+    wrapper = mount(Actions, {
         global: {
             plugins: [i18n, KestraDesignSystem],
             stubs: {TriggerFlow: true, Dashboards: true, FlowPlaygroundToggle: true},
         },
     })
+
+    return wrapper
 }
 
 function findButtonByText(wrapper: ReturnType<typeof mountActions>, text: string) {

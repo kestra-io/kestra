@@ -829,7 +829,6 @@
     "delete logs": "Delete logs",
     "delete_all_logs": "Are you sure you want to delete all logs?",
     "delete_log": "Are you sure you want to delete the log?",
-  "delete_log_iteration": "Are you sure you want to delete the log for {iteration}?",
     "copied": "Copied",
     "tags": "Tags",
     "disabled flow title": "This flow is disabled",

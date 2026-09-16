@@ -2682,6 +2682,5 @@
       "install": "Installa",
       "dismiss": "Non ora"
     }
-  },
-  "delete_log_iteration": "Sei sicuro di voler eliminare il log per {iteration}?"
+  }
 }

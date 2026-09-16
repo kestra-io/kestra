@@ -2682,6 +2682,5 @@
       "install": "Installer",
       "dismiss": "Pas maintenant"
     }
-  },
-  "delete_log_iteration": "Êtes-vous sûr de vouloir supprimer le journal pour {iteration} ?"
+  }
 }

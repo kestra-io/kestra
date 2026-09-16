@@ -2682,6 +2682,5 @@
       "install": "安装",
       "dismiss": "暂不"
     }
-  },
-  "delete_log_iteration": "您确定要删除 {iteration} 的日志吗？"
+  }
 }

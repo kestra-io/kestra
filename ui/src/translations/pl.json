@@ -2682,6 +2682,5 @@
       "install": "Zainstaluj",
       "dismiss": "Nie teraz"
     }
-  },
-  "delete_log_iteration": "Czy na pewno chcesz usunąć dziennik dla {iteration}?"
+  }
 }

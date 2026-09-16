@@ -2682,6 +2682,5 @@
       "install": "インストール",
       "dismiss": "後で"
     }
-  },
-  "delete_log_iteration": "{iteration} のログを削除してもよろしいですか？"
+  }
 }

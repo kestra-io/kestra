@@ -9,6 +9,7 @@
             v-if="props.to"
             class="nav-bar-action-link"
             :to="props.to"
+            @auxclick="closeDropdown?.()"
             @contextmenu="closeDropdown?.()"
         >
             <slot>{{ label }}</slot>
@@ -18,6 +19,7 @@
             class="nav-bar-action-link"
             :href="props.href"
             :download="props.download"
+            @auxclick="closeDropdown?.()"
             @contextmenu="closeDropdown?.()"
         >
             <slot>{{ label }}</slot>
@@ -65,8 +67,8 @@
     // An `href: undefined` falling through onto RouterLink overrides the href it computes itself.
     const linkAttrs = computed(() => props.to || !props.href ? {} : {href: props.href, download: props.download})
 
-    // A modifier or middle click is the browser's own open-in-a-new-tab gesture, which RouterLink
-    // lets through untouched; every click it does handle itself comes back with preventDefault.
+    // Mirrors vue-router's guardEvent: the clicks RouterLink handles come back preventDefault-ed,
+    // and it leaves a modifier click alone so the browser can open its new tab.
     const isLinkOwnedClick = (event?: MouseEvent) =>
         !!event && (event.defaultPrevented || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0)
 

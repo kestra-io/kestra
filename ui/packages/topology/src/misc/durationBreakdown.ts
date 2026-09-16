@@ -1,8 +1,7 @@
-import type {Moment} from "moment"
-import {State} from "@kestra-io/design-system"
+import {State, type Dayjs} from "@kestra-io/design-system"
 
 export interface DurationHistoryEntry {
-    date: Moment | string | number;
+    date: Dayjs | string | number;
     state: string;
 }
 
@@ -30,7 +29,7 @@ function bucketOf(state: string): Bucket {
     return "queued"
 }
 
-function toMillis(date: Moment | string | number): number {
+function toMillis(date: Dayjs | string | number): number {
     if (typeof date === "number") return date
     if (typeof date === "string") return new Date(date).getTime()
     return date.valueOf()

@@ -119,7 +119,7 @@
     import {useI18n} from "vue-i18n"
     import {useToast} from "../../utils/toast"
     import {buildScheduleDateParam, isPastScheduleDate, isScheduleDayDisabled} from "../../utils/scheduleDate"
-    import moment from "moment-timezone"
+    import {dateUtils} from "@kestra-io/design-system"
     import {useCoreStore} from "../../stores/core"
     import {useApiStore} from "../../stores/api"
     import {useMiscStore} from "override/stores/misc"
@@ -393,7 +393,6 @@
 
     // Adapter object for the legacy executeTask utility
     const submitor = {
-        $moment: moment,
         $router: router,
         $route: route,
         $toast: () => toast,
@@ -440,7 +439,7 @@
                     } else {
                         if (flow.value) {
                             if (playgroundStore.enabled) {
-                                const formData = normalizeInputValues(submitor, flattenInputs(flow.value.inputs), inputs.value)
+                                const formData = normalizeInputValues(flattenInputs(flow.value.inputs), inputs.value)
                                 await playgroundStore.runUntilTask(
                                     playgroundStore.actionOptions?.taskId, 
                                     playgroundStore.actionOptions?.runDownstreamTasks || false, 
@@ -459,7 +458,7 @@
                                     labels: labelStrings,
                                     scheduleDate: buildScheduleDateParam(
                                         scheduleDate.value,
-                                        localStorage.getItem(storageKeys.TIMEZONE_STORAGE_KEY) ?? moment.tz.guess(),
+                                        dateUtils.currentTimezone(),
                                     ),
                                     nextStep: true,
                                     breakpoints: breakpoints.value,

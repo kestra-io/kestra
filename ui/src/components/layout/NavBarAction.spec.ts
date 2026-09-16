@@ -7,9 +7,19 @@ const {push} = vi.hoisted(() => ({push: vi.fn()}))
 
 vi.mock("vue-router", () => ({
     useRouter: () => ({push}),
+    // Mirrors vue-router's guardEvent, so the tests see the production flow: the clicks RouterLink
+    // handles are preventDefault-ed, the ones the browser turns into a new tab are left alone.
     RouterLink: {
         props: ["to"],
-        template: "<a href=\"#\" @click=\"$event.preventDefault()\"><slot /></a>",
+        template: "<a href=\"#\" @click=\"guardEvent\"><slot /></a>",
+        methods: {
+            guardEvent(event: MouseEvent) {
+                if (event.metaKey || event.altKey || event.ctrlKey || event.shiftKey || event.button !== 0) {
+                    return
+                }
+                event.preventDefault()
+            },
+        },
     },
 }))
 
@@ -61,7 +71,7 @@ describe("NavBarAction", () => {
     it("leaves the current tab where it is on a modifier click", async () => {
         const wrapper = mountItem()
 
-        await wrapper.find("li").trigger("click", {metaKey: true})
+        await wrapper.find("a").trigger("click", {metaKey: true})
 
         expect(push).not.toHaveBeenCalled()
     })
@@ -88,6 +98,15 @@ describe("NavBarAction", () => {
         await openMenu()
 
         link()?.dispatchEvent(new MouseEvent("contextmenu", {bubbles: true, cancelable: true}))
+        await settle()
+
+        expect(isMenuOpen()).toBe(false)
+    })
+
+    it("closes the menu when the link is middle-clicked", async () => {
+        await openMenu()
+
+        link()?.dispatchEvent(new MouseEvent("auxclick", {bubbles: true, cancelable: true, button: 1}))
         await settle()
 
         expect(isMenuOpen()).toBe(false)

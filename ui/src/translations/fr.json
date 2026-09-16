@@ -2668,9 +2668,7 @@
         "zoomIn": "Zoomer",
         "zoomOut": "Dézoomer",
         "range": "{start} → {end} ({duration})",
-        "rangePicker": "Modifier la plage horaire",
-        "rangeSliderStart": "Début de la plage horaire visible",
-        "rangeSliderEnd": "Fin de la plage horaire visible"
+        "rangePicker": "Modifier la plage horaire"
       },
       "row": {
         "openOwnPage": "Ouvrir cette page",

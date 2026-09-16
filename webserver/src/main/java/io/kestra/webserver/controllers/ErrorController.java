@@ -92,12 +92,24 @@ public class ErrorController {
      */
     @Error(global = true)
     public HttpResponse<ProblemDetail> error(HttpRequest<?> request, ConversionErrorException e) {
-        Throwable cause = e.getConversionError().getCause();
+        return jacksonBodyError(request, e, e.getConversionError().getCause());
+    }
 
+    /**
+     * Some Jackson 3 body-binding failures — e.g. a plain JSON string posted where an object DTO is expected —
+     * reach here directly rather than wrapped in a {@link ConversionErrorException} as their Jackson 2
+     * equivalent is. Handled the same way: never echo the raw message, which names the internal DTO class.
+     */
+    @Error(global = true)
+    public HttpResponse<ProblemDetail> error(HttpRequest<?> request, JacksonException e) {
+        return jacksonBodyError(request, e, e);
+    }
+
+    private HttpResponse<ProblemDetail> jacksonBodyError(HttpRequest<?> request, Throwable reported, Throwable cause) {
         if (cause instanceof InvalidTypeIdException invalidTypeId) {
             return this.problems.response(
                 request,
-                e,
+                reported,
                 ProblemTypes.INVALID_PLUGIN_TYPE,
                 List.of(ProblemError.of(
                     "Unknown type '%s'.".formatted(invalidTypeId.getTypeId()),
@@ -110,7 +122,7 @@ public class ErrorController {
         if (cause instanceof tools.jackson.databind.exc.InvalidTypeIdException invalidTypeId) {
             return this.problems.response(
                 request,
-                e,
+                reported,
                 ProblemTypes.INVALID_PLUGIN_TYPE,
                 List.of(ProblemError.of(
                     "Unknown type '%s'.".formatted(invalidTypeId.getTypeId()),
@@ -124,7 +136,7 @@ public class ErrorController {
             String path = pathOf(mappingException);
             return this.problems.responseWithoutMessage(
                 request,
-                e,
+                reported,
                 ProblemTypes.INVALID_JSON,
                 path.isEmpty() ? List.of() : List.of(ProblemError.of(null, null, path))
             );
@@ -134,13 +146,13 @@ public class ErrorController {
             String path = pathOf(jacksonException);
             return this.problems.responseWithoutMessage(
                 request,
-                e,
+                reported,
                 ProblemTypes.INVALID_JSON,
                 path.isEmpty() ? List.of() : List.of(ProblemError.of(null, null, path))
             );
         }
 
-        return this.problems.responseWithoutMessage(request, e);
+        return this.problems.responseWithoutMessage(request, reported);
     }
 
     /** A request that matched no route at all, and so carries no exception. */

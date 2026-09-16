@@ -103,6 +103,7 @@ describe("AppTopNavBar AI Copilot button", () => {
 
         expect(button.exists()).toBe(true)
         expect(button.text()).toBe("")
+        expect(button.find(".ai-menu-icon").exists()).toBe(true)
         expect(button.attributes("aria-label")).toBe("AI Copilot")
         expect(button.attributes("aria-pressed")).toBe("false")
     })

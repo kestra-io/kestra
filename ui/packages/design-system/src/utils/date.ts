@@ -49,21 +49,45 @@ export interface TimezoneOffset {
     formattedOffset: string
 }
 
-let timezonesCache: TimezoneOffset[] | undefined
+let timezonesCache: {zones: TimezoneOffset[]; localOffset: number; extra?: string} | undefined
+
+// Typed here rather than through the ES2022.Intl lib so that consuming apps (EE included) are not
+// forced to widen their own tsconfig `lib` just to compile the design system.
+function supportedTimeZones(): string[] {
+    const intl = Intl as {supportedValuesOf?: (key: "timeZone") => string[]}
+    return [...(intl.supportedValuesOf?.("timeZone") ?? [])]
+}
+
+function describeZone(zone: string): TimezoneOffset {
+    const inZone = dayjs().tz(zone)
+    return {zone, offset: inZone.utcOffset(), formattedOffset: inZone.format("Z")}
+}
 
 /**
- * Every IANA zone with its current offset, sorted west to east. Memoised for the session: each
- * entry costs one `Intl.DateTimeFormat`, and there are over four hundred of them.
+ * Every IANA zone with its current offset, sorted west to east, plus `alsoInclude` when the list
+ * omits it. `Intl.supportedValuesOf` returns canonical zones only, so a stored link name such as
+ * "US/Eastern" has no entry and a picker bound to this list would silently drop the user's setting.
+ *
+ * Memoised, since each entry costs one `Intl.DateTimeFormat` and there are over four hundred of
+ * them, and re-derived when the machine's own offset moves so a tab open across a DST transition
+ * does not keep showing the old offsets.
  */
-export function timezonesWithOffset(): TimezoneOffset[] {
-    timezonesCache ??= Intl.supportedValuesOf("timeZone")
-        .map((zone) => {
-            const inZone = dayjs().tz(zone)
-            return {zone, offset: inZone.utcOffset(), formattedOffset: inZone.format("Z")}
-        })
-        .sort((a, b) => a.offset - b.offset)
+export function timezonesWithOffset(alsoInclude?: string): TimezoneOffset[] {
+    const localOffset = new Date().getTimezoneOffset()
 
-    return timezonesCache
+    if (timezonesCache?.localOffset !== localOffset || timezonesCache.extra !== alsoInclude) {
+        const zones = supportedTimeZones()
+
+        if (alsoInclude && !zones.includes(alsoInclude)) zones.push(alsoInclude)
+
+        timezonesCache = {
+            zones: zones.map(describeZone).sort((a, b) => a.offset - b.offset),
+            localOffset,
+            extra: alsoInclude,
+        }
+    }
+
+    return timezonesCache.zones
 }
 
 /**

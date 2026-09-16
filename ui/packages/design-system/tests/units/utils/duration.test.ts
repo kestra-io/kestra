@@ -20,4 +20,8 @@ describe("duration", () => {
     test("should return zero rather than NaN for text that is not a duration", () => {
         expect(duration("{{ vars.timeout }}")).toBe(0)
     })
+
+    test("should keep the sign of a negative duration, which dayjs parses as positive", () => {
+        expect(duration("-PT5S")).toBe(-5)
+    })
 })

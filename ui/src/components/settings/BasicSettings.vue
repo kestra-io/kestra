@@ -400,7 +400,7 @@
         !layoutStore.envName && !!miscStore.configs?.environment?.name,
     )
 
-    const zonesWithOffset = dateUtils.timezonesWithOffset()
+    const zonesWithOffset = dateUtils.timezonesWithOffset(settings.timezone)
 
     const now = dayjs()
     const localeKey = dateUtils.currentLocale()

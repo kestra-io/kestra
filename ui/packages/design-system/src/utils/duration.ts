@@ -42,9 +42,11 @@ export function isValidDuration(value: string): boolean {
 }
 
 export function duration(isoString: string) {
-    return isValidDuration(isoString)
-        ? dayjs.duration(isoString).asMilliseconds() / 1000
-        : 0
+    if (!isValidDuration(isoString)) return 0
+
+    // dayjs parses "-PT5S" as a positive 5s, so the leading sign has to be reapplied.
+    const seconds = dayjs.duration(isoString).asMilliseconds() / 1000
+    return isoString.startsWith("-") ? -seconds : seconds
 }
 
 export function humanDuration(

@@ -384,6 +384,14 @@ describe("fillTimeBucketLabels", () => {
         expect(labels).toEqual(["2026-08-30", "2026-08-31", "2026-09-01", "2026-09-02"])
     })
 
+    it("renders one distinct label per week for a weekly grouping", () => {
+        const labels = fillTimeBucketLabels(
+            ["2026-08-30 10:00:00", "2026-09-13 08:00:00"],
+            {format: "YYYY-[W]ww", unit: "week"},
+        )
+        expect(labels).toEqual(["2026-W36", "2026-W37", "2026-W38"])
+    })
+
     it("keeps values that are not valid dates as labels verbatim", () => {
         const labels = fillTimeBucketLabels(["not-a-date"], HOURLY)
         expect(labels).toEqual(["not-a-date"])

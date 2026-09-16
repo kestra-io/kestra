@@ -26,6 +26,8 @@ jobs:
     timeout-minutes: 10
     permissions:
       contents: read
+    env:
+      GH_BOT_APP_ID: ${{ secrets.GH_BOT_APP_ID }}
     steps:
       - uses: actions/checkout@v7
         name: Checkout
@@ -34,8 +36,37 @@ jobs:
         with:
           node-version-file: 'ui/.nvmrc'
 
+      # EE renders OSS keys too, so the unused-key rule needs the EE tree: the same-name EE branch exists
+      # for every branch this workflow runs on (develop, releases/*).
+      - name: Generate GitHub App token for kestra-ee
+        id: ee-token
+        if: env.GH_BOT_APP_ID != ''
+        uses: actions/create-github-app-token@v3
+        with:
+          app-id: ${{ secrets.GH_BOT_APP_ID }}
+          private-key: ${{ secrets.GH_BOT_PRIVATE_KEY }}
+          owner: kestra-io
+          repositories: kestra-ee
+
+      - uses: actions/checkout@v7
+        name: Checkout - EE sources
+        if: steps.ee-token.outputs.token != ''
+        with:
+          repository: kestra-io/kestra-ee
+          ref: ${{ github.ref_name }}
+          token: ${{ steps.ee-token.outputs.token }}
+          path: kestra-ee
+          sparse-checkout: |
+            ui-ee/src/
+          sparse-checkout-cone-mode: false
+
       - name: Check translations
-        run: node ui/scripts/translations/check-translations.mjs --scope oss
+        run: |
+          if [ -d kestra-ee/ui-ee/src ]; then
+            node ui/scripts/translations/check-translations.mjs --scope oss --ee-root kestra-ee
+          else
+            node ui/scripts/translations/check-translations.mjs --scope oss
+          fi
 
   # EE resolves most of its keys from this repository's en.json, so an OSS push that renames or
   # deletes a key can break EE without any EE change. Once the gate above passed, tell kestra-ee

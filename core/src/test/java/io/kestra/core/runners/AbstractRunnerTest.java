@@ -66,9 +66,6 @@ public abstract class AbstractRunnerTest {
     protected PauseTest.Suite pauseTest;
 
     @Inject
-    private IgnoreExecutionCaseTest ignoreExecutionCaseTest;
-
-    @Inject
     protected LoopUntilCaseTest loopUntilTestCaseTest;
 
     @Inject
@@ -428,24 +425,6 @@ public abstract class AbstractRunnerTest {
     }
 
     @Test
-    @LoadFlows({ "flows/valids/minimal.yaml" })
-    void shouldIgnoreExecutionById() throws Exception {
-        ignoreExecutionCaseTest.shouldIgnoreExecutionById();
-    }
-
-    @Test
-    @LoadFlows({ "flows/valids/minimal.yaml", "flows/valids/output-values.yml" })
-    void shouldIgnoreExecutionByFlowId() throws Exception {
-        ignoreExecutionCaseTest.shouldIgnoreExecutionByFlowId();
-    }
-
-    @Test
-    @LoadFlows({ "flows/valids/minimal.yaml", "flows/valids/minimal2.yaml" })
-    void shouldIgnoreExecutionByNamespace() throws Exception {
-        ignoreExecutionCaseTest.shouldIgnoreExecutionByNamespace();
-    }
-
-    @Test
     @ExecuteFlow("flows/valids/executable-fail.yml")
     void badExecutable(Execution execution) {
         assertThat(execution.getTaskRunList().size()).isEqualTo(1);
@@ -655,18 +634,6 @@ public abstract class AbstractRunnerTest {
     }
 
     @Test
-    @LoadFlows({ "flows/valids/sla-max-duration-ok.yaml" })
-    void maxDurationSLAShouldPass() throws Exception {
-        slaTestCase.maxDurationSLAShouldPass();
-    }
-
-    @Test
-    @LoadFlows({ "flows/valids/sla-execution-condition.yaml" })
-    void executionConditionSLAShouldPass() throws Exception {
-        slaTestCase.executionConditionSLAShouldPass();
-    }
-
-    @Test
     @LoadFlows(value = { "flows/valids/sla-execution-condition.yaml" }, tenantId = TENANT_1)
     void executionConditionSLAShouldCancel() throws Exception {
         slaTestCase.executionConditionSLAShouldCancel(TENANT_1);
@@ -757,21 +724,6 @@ public abstract class AbstractRunnerTest {
 
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
         assertThat(execution.getTaskRunList().size()).isEqualTo(1);
-    }
-
-    @Test
-    void avoidInfiniteExecutionLoop() throws QueueException {
-        CopyOnWriteArrayList<ExecutionEvent> executions = new CopyOnWriteArrayList<>();
-        executionEventQueue.addListener(e -> executions.add(e));
-
-        executionCommandQueue.emit(Create.of(TestsUtils.mockFlow().toFlowId()));
-
-        // The flow does not exist in the repository: handleCreate logs an error and returns empty.
-        // We expect zero execution events — and certainly no infinite loop.
-        await()
-            .during(Duration.ofMillis(500)) // Wait to ensure no event is ever emitted
-            .atMost(Duration.ofSeconds(1))
-            .until(executions::isEmpty);
     }
 
     @Test

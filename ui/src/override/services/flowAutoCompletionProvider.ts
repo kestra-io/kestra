@@ -11,7 +11,7 @@ import {useMcpStore} from "../../stores/mcp"
 import {useDashboardStore} from "../../stores/dashboard"
 import {isExportableChart} from "../../components/dashboard/composables/useDashboards"
 import {useNamespacesStore} from "override/stores/namespaces"
-import type {YAMLMap} from "yaml"
+import {isMap, type YAMLMap} from "yaml"
 
 function distinct<T>(val: T[] | undefined): T[] {
     return Array.from(new Set(val ?? []))
@@ -124,7 +124,7 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
             .flatMap(task => YAML_UTILS.pairsToMap(task) ?? [])
 
         return [...tasksFromTasksProp, ...tasksFromTaskProp]
-            .filter(task => typeof task?.get === "function" && task?.get("id"))
+            .filter((task): task is YAMLMap => isMap(task) && Boolean(task.get("id")))
     }
 
     private cursorProbeIndexes(source: string, cursorIndex: number): number[] {

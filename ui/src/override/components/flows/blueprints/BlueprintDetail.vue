@@ -52,7 +52,7 @@
 
     import {useFlowStore} from "../../../../stores/flow"
     import {usePluginsStore} from "../../../../stores/plugins"
-    import {useBlueprintsStore, type BlueprintType, type BlueprintKind, type BlueprintTag} from "../../../../stores/blueprints"
+    import {useBlueprintsStore, type BlueprintType, type BlueprintKind} from "../../../../stores/blueprints"
     import {useApiStore} from "../../../../stores/api"
 
     import {canCreate} from "override/composables/blueprintsPermissions"
@@ -155,7 +155,7 @@
     }
 
     const loadTags = async () => {
-        const data: BlueprintTag[] | undefined = await blueprintsStore.getBlueprintTags({
+        const data = await blueprintsStore.getBlueprintTags({
             type: (props.combinedView ? props.blueprintType : route.params?.tab) as BlueprintType,
             kind: props.kind as BlueprintKind,
         })

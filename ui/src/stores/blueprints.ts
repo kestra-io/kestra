@@ -133,16 +133,16 @@ export const useBlueprintsStore = defineStore("blueprints", () => {
         return response.data
     }
 
-    const getBlueprintTags = async (options: Options) => {
+    const getBlueprintTags = async (options: Options): Promise<BlueprintTag[]> => {
         if (options.type === "community") {
             const PARAMS = {params: options.params, ...VALIDATE}
             const COMMUNITY = `${API_URL}/blueprints/kinds/${options.kind}/versions/${version}/tags`
-            const response = await axios.get(COMMUNITY, PARAMS)
+            const response = await axios.get<BlueprintTag[]>(COMMUNITY, PARAMS)
             return response.data
         }
 
         try {
-            const {data} = await axios.get(`${apiUrl()}/blueprints/custom/tags`, {params: toCustomBlueprintParams(options.params)})
+            const {data} = await axios.get<BlueprintTag[]>(`${apiUrl()}/blueprints/custom/tags`, {params: toCustomBlueprintParams(options.params)})
             return data
         } catch (e: any) {
             if (e.status === 401) return []

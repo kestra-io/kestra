@@ -130,7 +130,6 @@ import KsRadio from "./components/Form/KsRadio/KsRadio.vue"
 import KsRadioButton from "./components/Form/KsRadio/KsRadioButton.vue"
 import KsRadioCardGroup from "./components/Form/KsRadio/KsRadioCardGroup.vue"
 import KsRadioGroup from "./components/Form/KsRadio/KsRadioGroup.vue"
-import KsRangeSlider from "./components/Form/KsRangeSlider.vue"
 import KsRow from "./components/Basic/KsRow/KsRow.vue"
 import KsScrollbar from "./components/Basic/KsScrollbar.vue"
 import KsSegmented from "./components/Data/KsSegmented.vue"
@@ -365,7 +364,6 @@ const components: Record<string, Component> = {
     KsRadioButton,
     KsRadioCardGroup,
     KsRadioGroup,
-    KsRangeSlider,
     KsRow,
     KsScrollbar,
     KsSearch,
@@ -478,7 +476,6 @@ export {
     KsRadioButton,
     KsRadioCardGroup,
     KsRadioGroup,
-    KsRangeSlider,
     KsRow,
     KsScrollbar,
     KsSearch,
@@ -625,7 +622,6 @@ declare module "vue" {
         KsRadioButton: typeof KsRadioButton
         KsRadioCardGroup: typeof KsRadioCardGroup
         KsRadioGroup: typeof KsRadioGroup
-        KsRangeSlider: typeof KsRangeSlider
         KsRow: typeof KsRow
         KsScrollbar: typeof KsScrollbar
         KsSearch: typeof KsSearch

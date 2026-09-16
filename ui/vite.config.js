@@ -80,11 +80,9 @@ export default defineConfig(({mode}) => {
         },
         resolve: {
             preserveSymlinks: true,
-            dedupe: ["echarts", "vue-echarts", "dayjs", "vue", "vue-router", "vue-i18n", "@vueuse/core", "pinia", "@vue-flow/core", "@vue-flow/background", "@vue-flow/controls", "moment"],
+            dedupe: ["echarts", "vue-echarts", "dayjs", "vue", "vue-router", "vue-i18n", "@vueuse/core", "pinia", "@vue-flow/core", "@vue-flow/background", "@vue-flow/controls"],
             alias: [
                 {find: "override", replacement: path.resolve(__dirname, "src/override/")},
-                // moment timezones are heavy. only load what is common 
-                {find: /^moment-timezone$/, replacement: "moment-timezone/builds/moment-timezone-with-data-1970-2030"},
             ],
         },
         plugins: [
@@ -182,27 +180,24 @@ export default defineConfig(({mode}) => {
                 "extend",
                 "format",
                 "humanize-duration",
-                "moment",
-                "moment-timezone",
-                "moment-range",
                 "vue-gtag",
-                // Locales are lazy-loaded per language in src/utils/init.ts (only the active
+                // Locales are lazy-loaded per language by the design system (only the active
                 // locale reaches the browser). They are listed here so Vite pre-bundles them on
                 // the FIRST optimize pass — otherwise it discovers each dynamic import at runtime
                 // and triggers a page-reloading re-optimization at startup. This does NOT ship
                 // every locale to the client; it only affects dev-server pre-bundling.
-                "moment/dist/locale/de",
-                "moment/dist/locale/es",
-                "moment/dist/locale/fr",
-                "moment/dist/locale/hi",
-                "moment/dist/locale/it",
-                "moment/dist/locale/ja",
-                "moment/dist/locale/ko",
-                "moment/dist/locale/pl",
-                "moment/dist/locale/pt",
-                "moment/dist/locale/pt-br",
-                "moment/dist/locale/ru",
-                "moment/dist/locale/zh-cn",
+                "dayjs/locale/de",
+                "dayjs/locale/es",
+                "dayjs/locale/fr",
+                "dayjs/locale/hi",
+                "dayjs/locale/it",
+                "dayjs/locale/ja",
+                "dayjs/locale/ko",
+                "dayjs/locale/pl",
+                "dayjs/locale/pt",
+                "dayjs/locale/pt-br",
+                "dayjs/locale/ru",
+                "dayjs/locale/zh-cn",
                 "dagre",
                 "@vue-flow/background",
                 "@vue-flow/controls",

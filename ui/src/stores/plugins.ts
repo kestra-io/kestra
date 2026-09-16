@@ -527,7 +527,8 @@ export const usePluginsStore = defineStore("plugins", () => {
                 }
             }
         }
-        return null
+        const aliasMatches = plugins.value.filter(p => p.aliases?.includes(cls))
+        return aliasMatches.find(p => !p.subGroup) ?? aliasMatches[0] ?? null
     }
 
     function findPluginByName(name: string | null | undefined, subGroup?: string | null): Plugin | null {

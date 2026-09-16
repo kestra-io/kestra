@@ -42,6 +42,22 @@ const STANDALONE = {
     tasks: [{cls: "io.kestra.plugin.core.flow.Subflow", deprecated: false}],
 }
 
+const DOCKER_ALIAS = "io.kestra.plugin.docker.Run"
+const DOCKER = {
+    name: "docker",
+    group: "io.kestra.plugin.docker",
+    title: "Docker",
+    aliases: [DOCKER_ALIAS],
+}
+const DOCKER_CLI = {
+    name: "docker",
+    group: "io.kestra.plugin.docker",
+    subGroup: "io.kestra.plugin.docker.cli",
+    title: "Docker CLI",
+    aliases: [DOCKER_ALIAS],
+    tasks: [{cls: "io.kestra.plugin.docker.cli.Run", deprecated: false}],
+}
+
 describe("plugins store lookups", () => {
     let store: any
 
@@ -49,7 +65,7 @@ describe("plugins store lookups", () => {
         setActivePinia(createPinia())
         const {usePluginsStore} = await import("../../../src/stores/plugins")
         store = usePluginsStore()
-        store.plugins = [PARENT, SUBGROUP_BQ, SUBGROUP_GCS, STANDALONE]
+        store.plugins = [PARENT, SUBGROUP_BQ, SUBGROUP_GCS, STANDALONE, DOCKER, DOCKER_CLI]
     })
 
     describe("findPluginByCls", () => {
@@ -63,6 +79,10 @@ describe("plugins store lookups", () => {
 
         it("falls back to scanning element entries when no subgroup matches", () => {
             expect(idOf(store.findPluginByCls("io.kestra.plugin.core.flow.Subflow"))).toBe(idOf(STANDALONE))
+        })
+
+        it("resolves an aliased cls to the group entry that declares the alias", () => {
+            expect(idOf(store.findPluginByCls(DOCKER_ALIAS))).toBe(idOf(DOCKER))
         })
 
         it("returns null when cls is unknown", () => {

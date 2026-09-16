@@ -2685,6 +2685,9 @@
       },
       "truncated": {
         "description": "Showing the latest {shown} of {total} executions — narrow the time range or filters to see all."
+      },
+      "scrubber": {
+        "label": "Execution density over time, drag to select a range"
       }
     },
     "chart mode": {

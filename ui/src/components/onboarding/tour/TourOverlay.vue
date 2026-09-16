@@ -7,12 +7,11 @@
         aria-live="polite"
     >
         <template v-if="spotlight">
-            <template v-if="spotlight.scrim">
-                <div class="tour-scrim" :style="spotlight.scrim.top" />
-                <div class="tour-scrim" :style="spotlight.scrim.bottom" />
-                <div class="tour-scrim" :style="spotlight.scrim.left" />
-                <div class="tour-scrim" :style="spotlight.scrim.right" />
-            </template>
+            <div
+                v-if="spotlight.scrim"
+                class="tour-scrim"
+                :style="spotlight.scrim"
+            />
             <div
                 v-for="(ring, index) in spotlight.rings"
                 :key="index"
@@ -272,8 +271,10 @@
 
     const RING_PADDING = 6
 
+    type Hole = {top: number; left: number; bottom: number; right: number};
+
     const spotlight = ref<{
-        scrim: Record<"top" | "bottom" | "left" | "right", Record<string, string>> | null;
+        scrim: Record<string, string> | null;
         rings: Record<string, string>[];
     } | null>(null)
 
@@ -281,7 +282,16 @@
     let lastSpotlightKey = ""
     let activeSelector = ""
 
-    const px = (value: number) => `${Math.round(value)}px`
+    const px = (value: number) => `${value}px`
+
+    const scrimClipPath = (hole: Hole) => [
+        "0 0", "100% 0", "100% 100%", "0 100%", "0 0",
+        `${px(hole.left)} ${px(hole.top)}`,
+        `${px(hole.left)} ${px(hole.bottom)}`,
+        `${px(hole.right)} ${px(hole.bottom)}`,
+        `${px(hole.right)} ${px(hole.top)}`,
+        `${px(hole.left)} ${px(hole.top)}`,
+    ].join(", ")
 
     const dialogOpen = () =>
         Array.from(document.querySelectorAll(".kel-overlay-dialog, .kel-overlay")).some((element) => {
@@ -325,24 +335,23 @@
             return
         }
 
-        const top = Math.max(0, Math.min(...rects.map((rect) => rect.top)) - RING_PADDING)
-        const left = Math.max(0, Math.min(...rects.map((rect) => rect.left)) - RING_PADDING)
-        const bottom = Math.min(window.innerHeight, Math.max(...rects.map((rect) => rect.bottom)) + RING_PADDING)
-        const right = Math.min(window.innerWidth, Math.max(...rects.map((rect) => rect.right)) + RING_PADDING)
+        const hole: Hole = {
+            top: Math.max(0, Math.min(...rects.map((rect) => rect.top)) - RING_PADDING),
+            left: Math.max(0, Math.min(...rects.map((rect) => rect.left)) - RING_PADDING),
+            bottom: Math.min(window.innerHeight, Math.max(...rects.map((rect) => rect.bottom)) + RING_PADDING),
+            right: Math.min(window.innerWidth, Math.max(...rects.map((rect) => rect.right)) + RING_PADDING),
+        }
 
-        const key = [top, left, bottom, right, rects.length].map(Math.round).join(":")
+        const key = [hole.top, hole.left, hole.bottom, hole.right, rects.length].map(Math.round).join(":")
         if (key === lastSpotlightKey) {
             return
         }
         lastSpotlightKey = key
 
         spotlight.value = {
-            scrim: scene.value?.dim === false ? null : {
-                top: {top: "0", left: "0", right: "0", height: px(top)},
-                bottom: {top: px(bottom), left: "0", right: "0", bottom: "0"},
-                left: {top: px(top), left: "0", width: px(left), height: px(bottom - top)},
-                right: {top: px(top), left: px(right), right: "0", height: px(bottom - top)},
-            },
+            // A ranked selector matches nested elements, so the scrim keeps one union hole:
+            // overlapping holes cancel each other out and re-dim what the step points at.
+            scrim: scene.value?.dim === false ? null : {clipPath: `polygon(${scrimClipPath(hole)})`},
             rings: rects.map((rect) => ({
                 top: px(rect.top - RING_PADDING),
                 left: px(rect.left - RING_PADDING),
@@ -840,6 +849,7 @@
     // Position is set every frame; a transition would make the ring trail behind its target.
     .tour-scrim {
         position: fixed;
+        inset: 0;
         background: var(--kel-overlay-color-lighter);
         pointer-events: none;
     }

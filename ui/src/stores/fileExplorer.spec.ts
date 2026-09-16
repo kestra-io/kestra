@@ -104,6 +104,45 @@ describe("fileExplorer store", () => {
         expect(filesStore.fileTree.map(node => node.fileName)).toEqual(["one.txt"])
     })
 
+    it("should finish the root load and not reject when the directory read fails", async () => {
+        const filesStore = store()
+        readDirectory.mockRejectedValueOnce(Object.assign(new Error("Directory not found"), {status: 404}))
+
+        // Must not reject: loadNodes is called fire-and-forget, so a throw becomes an unhandled rejection.
+        await expect(filesStore.loadNodes()).resolves.toBeUndefined()
+
+        // rootLoaded must flip true, otherwise NamespaceFilesEditorView spins forever over the whole browser.
+        expect(filesStore.rootLoaded).toBe(true)
+    })
+
+    it("should resolve a failed sub-folder expansion as empty rather than leaving it stuck loading", async () => {
+        const filesStore = store()
+        readDirectory
+            .mockResolvedValueOnce([{type: "Directory", fileName: "gone"}])
+            .mockRejectedValueOnce(Object.assign(new Error("Directory not found"), {status: 404}))
+        await filesStore.loadNodes()
+        const folder = filesStore.fileTree[0]
+
+        const resolve = vi.fn()
+        await filesStore.loadNodes({level: 1, data: {id: folder.id}} as any, resolve)
+
+        expect(resolve).toHaveBeenCalledWith([])
+    })
+
+    it("should propagate a non-404 sub-folder expansion failure instead of hiding the folder", async () => {
+        const filesStore = store()
+        readDirectory
+            .mockResolvedValueOnce([{type: "Directory", fileName: "dir"}])
+            .mockRejectedValueOnce(Object.assign(new Error("boom"), {status: 500}))
+        await filesStore.loadNodes()
+        const folder = filesStore.fileTree[0]
+
+        const resolve = vi.fn()
+        // A transient error must not resolve the node as empty (el-tree would cache it and hide the real children).
+        await expect(filesStore.loadNodes({level: 1, data: {id: folder.id}} as any, resolve)).rejects.toThrow("boom")
+        expect(resolve).not.toHaveBeenCalled()
+    })
+
     it("should not create anything when the name only holds separators", async () => {
         const filesStore = store()
 

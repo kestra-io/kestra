@@ -272,17 +272,39 @@ export const useFileExplorerStore = defineStore("fileExplorer", () => {
         if (node.level === 0) {
             rootLoaded.value = false
             const payload = {namespace: namespaceId.value}
-            const rootTreeNodes = await namespacesStore.readDirectory<TreeNode>(payload)
-            renderNodes(rootTreeNodes)
-            fileTree.value = sorted(fileTree.value)
-            rootLoaded.value = true
-            resolve?.(fileTree.value)
+            try {
+                const rootTreeNodes = await namespacesStore.readDirectory<TreeNode>(payload)
+                renderNodes(rootTreeNodes)
+                fileTree.value = sorted(fileTree.value)
+            } catch (e) {
+                // Defensive: the backend self-heals the root directory, so a 404 here is not
+                // expected, and any non-404 has already been toasted centrally. Swallow either way
+                // so this fire-and-forget call cannot raise an unhandled rejection; the finally
+                // still releases the spinner (see below).
+                console.error(e)
+            } finally {
+                // Always resolve and clear the loading flag: a rejected read (e.g. a 404 after the
+                // directory was deleted server-side) must not pin the whole file browser on an
+                // indefinite spinner (NamespaceFilesEditorView gates the view on `rootLoaded`).
+                rootLoaded.value = true
+                resolve?.(fileTree.value ?? [])
+            }
         } else if (isNotRootTreeNode(node)) {
             const payload = {
-                namespace: namespaceId.value, 
+                namespace: namespaceId.value,
                 path: getPath(node.data.id),
             }
-            let children = await namespacesStore.readDirectory<TreeNode>(payload)
+            let children: TreeNode[]
+            try {
+                children = await namespacesStore.readDirectory<TreeNode>(payload)
+            } catch (e: any) {
+                // Only a 404 means the folder was deleted server-side: render it empty rather than
+                // leaving the el-tree node stuck loading. Any other error is left to propagate as
+                // before (el-tree keeps the node un-expanded and retryable, and it is toasted centrally).
+                if (e?.status !== 404) throw e
+                resolve?.([])
+                return
+            }
             children = sorted(
                 children.map((item) => ({
                     ...item,
@@ -303,7 +325,7 @@ export const useFileExplorerStore = defineStore("fileExplorer", () => {
             const rootNodePath = getPath(node.data.id)
             if(rootNodePath){
                 updateChildren(fileTree.value!, rootNodePath, children)
-            } 
+            }
             resolve?.(children)
         }
     }

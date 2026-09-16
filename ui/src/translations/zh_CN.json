@@ -676,6 +676,7 @@
     "open in new tab": "在新标签页打开",
     "execute the flow": "执行流程 <code>{id}</code>",
     "discard execution confirmation": "您有未保存的输入。您确定要放弃此执行吗？",
+    "discard changes confirmation": "您有未保存的更改。您确定要放弃它们吗？",
     "unsaved changed ?": "你有未保存的更改，是否要离开此页面？",
     "unsaved changes": "未保存的更改",
     "unsaved changes warning": "您有未保存的更改。如果您离开此页面，您的更改将会丢失。",

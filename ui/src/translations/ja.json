@@ -676,6 +676,7 @@
     "open in new tab": "新しいタブで",
     "execute the flow": "Flow <code>{id}</code>を実行",
     "discard execution confirmation": "未保存のinputがあります。このexecutionを破棄してもよろしいですか？",
+    "discard changes confirmation": "保存されていない変更があります。本当に破棄しますか？",
     "unsaved changed ?": "保存されていない変更があります。このページを離れますか？",
     "unsaved changes": "未保存の変更",
     "unsaved changes warning": "未保存の変更があります。このページを離れると、変更は失われます。",

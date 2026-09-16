@@ -676,6 +676,7 @@
     "open in new tab": "En una nueva pestaña",
     "execute the flow": "Ejecutar el flujo <code>{id}</code>",
     "discard execution confirmation": "Tienes entradas no guardadas. ¿Estás seguro de que deseas descartar esta ejecución?",
+    "discard changes confirmation": "Tienes cambios no guardados. ¿Estás seguro de que deseas descartarlos?",
     "unsaved changed ?": "Tienes cambios no guardados, ¿quieres salir de esta página?",
     "unsaved changes": "Cambios no guardados",
     "unsaved changes warning": "Tienes cambios no guardados. Si abandonas esta página, tus cambios se perderán.",

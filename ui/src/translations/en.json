@@ -676,6 +676,7 @@
     "open in new tab": "In a new tab",
     "execute the flow": "Execute the flow <code>{id}</code>",
     "discard execution confirmation": "You have unsaved inputs. Are you sure you want to discard this execution?",
+    "discard changes confirmation": "You have unsaved changes. Are you sure you want to discard them?",
     "unsaved changed ?": "You have unsaved changes, do you want to leave this page?",
     "unsaved changes": "Unsaved Changes",
     "unsaved changes warning": "You have unsaved changes. If you leave this page, your changes will be lost.",

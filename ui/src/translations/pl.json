@@ -676,6 +676,7 @@
     "open in new tab": "W nowej zakładce",
     "execute the flow": "Wykonaj Flow <code>{id}</code>",
     "discard execution confirmation": "Masz niezapisane Inputy. Czy na pewno chcesz odrzucić tę egzekucję?",
+    "discard changes confirmation": "Masz niezapisane zmiany. Czy na pewno chcesz je odrzucić?",
     "unsaved changed ?": "Masz niezapisane zmiany, czy chcesz opuścić tę stronę?",
     "unsaved changes": "Niezapisane zmiany",
     "unsaved changes warning": "Masz niezapisane zmiany. Jeśli opuścisz tę stronę, twoje zmiany zostaną utracone.",

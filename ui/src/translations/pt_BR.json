@@ -676,6 +676,7 @@
     "open in new tab": "Em uma nova aba",
     "execute the flow": "Executar o flow <code>{id}</code>",
     "discard execution confirmation": "Você tem inputs não salvos. Tem certeza de que deseja descartar esta execução?",
+    "discard changes confirmation": "Você tem alterações não salvas. Tem certeza de que deseja descartá-las?",
     "unsaved changed ?": "Você tem alterações não salvas, deseja sair desta página?",
     "unsaved changes": "Alterações Não Salvas",
     "unsaved changes warning": "Você tem alterações não salvas. Se você sair desta página, suas alterações serão perdidas.",

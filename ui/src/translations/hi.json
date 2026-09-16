@@ -676,6 +676,7 @@
     "open in new tab": "एक नए टैब में",
     "execute the flow": "Flow <code>{id}</code> निष्पादित करें",
     "discard execution confirmation": "आपके पास बिना सहेजे गए input हैं। क्या आप वाकई इस execution को छोड़ना चाहते हैं?",
+    "discard changes confirmation": "आपके पास बिना सहेजे गए परिवर्तन हैं। क्या आप वाकई उन्हें छोड़ना चाहते हैं?",
     "unsaved changed ?": "आपके पास असहेजे गए परिवर्तन हैं, क्या आप इस पृष्ठ को छोड़ना चाहते हैं?",
     "unsaved changes": "असहेजित परिवर्तन",
     "unsaved changes warning": "आपके पास बिना सहेजे गए परिवर्तन हैं। यदि आप इस पृष्ठ को छोड़ते हैं, तो आपके परिवर्तन खो जाएंगे।",

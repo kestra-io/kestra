@@ -2,7 +2,7 @@
 process.env.TZ = "Europe/Paris"
 
 import {describe, test, expect} from "vitest"
-import moment from "moment-timezone"
+import {dayjs} from "@kestra-io/design-system"
 
 import {formatKvValueForDisplay, hydrateKvValueForForm, serializeKvValueForSave} from "../../../../src/components/kv/kvValue"
 
@@ -99,7 +99,7 @@ describe("hydrateKvValueForForm", () => {
 
     test("should feed a DATETIME to the picker in the user timezone", () => {
         const date = hydrateKvValueForForm("DATETIME", "2024-01-01T00:00:00Z", "Asia/Tokyo")
-        expect(moment(date).tz("Asia/Tokyo").format("YYYY-MM-DDTHH:mm")).toBe("2024-01-01T09:00")
+        expect(dayjs(date).tz("Asia/Tokyo").format("YYYY-MM-DDTHH:mm")).toBe("2024-01-01T09:00")
     })
 
     test("should feed a DATE to the picker as its calendar day", () => {

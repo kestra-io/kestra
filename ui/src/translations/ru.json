@@ -1170,7 +1170,7 @@
             "log_level": "Минимальный уровень log, отображаемый в execution logs.",
             "log_display": "Как отображаются логи при открытии выполнения.",
             "editor_type": "Редактор, отображаемый при открытии flow в первый раз.",
-            "topology_orientation": "Ориентация панели топологии в редакторе потоков по умолчанию.",
+            "topology_orientation": "Ориентация панели Topology по умолчанию в Flow-редакторе.",
             "execute_flow": "Где результаты выполнения открываются после запуска.",
             "execute_default_tab": "Вкладка выбрана при переходе к выполнению.",
             "flow_default_tab": "Вкладка выбрана при переходе к flow.",
@@ -1185,8 +1185,8 @@
             "tab": "Вкладка"
           },
           "topology_orientation_options": {
-            "vertical": "Вертикальная",
-            "horizontal": "Горизонтальная"
+            "vertical": "Вертикальный",
+            "horizontal": "Горизонтальный"
           },
           "flow_template_reset": "Сбросить до значений по умолчанию",
           "flow_template_error": {

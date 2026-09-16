@@ -35,9 +35,9 @@ describe("taskTypeAtCursor", () => {
         "still resolves the type while the property key %j is half typed",
         (partialKey) => {
             const source = `${FLOW}    ${partialKey}`
-            expect(
-                taskTypeAtCursor({source, cursorIndex: source.length}),
-            ).toBe("io.kestra.plugin.core.log.Log")
+            expect(taskTypeAtCursor({source, cursorIndex: source.length})).toBe(
+                "io.kestra.plugin.core.log.Log",
+            )
         },
     )
 
@@ -52,9 +52,9 @@ tasks:
         type: io.kestra.plugin.core.log.Log
         message: hi
         retr`
-        expect(
-            taskTypeAtCursor({source: nested, cursorIndex: nested.length}),
-        ).toBe("io.kestra.plugin.core.log.Log")
+        expect(taskTypeAtCursor({source: nested, cursorIndex: nested.length})).toBe(
+            "io.kestra.plugin.core.log.Log",
+        )
     })
 
     it.each([
@@ -70,12 +70,7 @@ tasks:
     retry:
       type: constant
 ${tail}`
-        expect(
-            taskTypeAtCursor({
-                source: withRetry,
-                cursorIndex: withRetry.length,
-            }),
-        ).toBeUndefined()
+        expect(taskTypeAtCursor({source: withRetry, cursorIndex: withRetry.length})).toBeUndefined()
     })
 
     it("reports the task's pinned version alongside its type", () => {
@@ -87,56 +82,88 @@ tasks:
     version: 1.2.3
     message: hi
 `
-        const cursorIndex =
-            pinned.indexOf("message: hi") + "message: hi".length
+        const cursorIndex = pinned.indexOf("message: hi") + "message: hi".length
         expect(taskIdentityAtCursor({source: pinned, cursorIndex})).toEqual({
             type: "io.kestra.plugin.core.log.Log",
             version: "1.2.3",
         })
     })
-
-    it("returns undefined for flow inputs/outputs since they are not plugin FQCNs", () => {
+    it("returns undefined for flow inputs/outputs because they are isolated via YAML path", () => {
         const inputFlow = `id: myflow
 namespace: my.ns
 inputs:
   - id: myinput
     type: STRING
     defa`
-        expect(
-            taskTypeAtCursor({
-                source: inputFlow,
-                cursorIndex: inputFlow.length,
-            }),
-        ).toBeUndefined()
+        expect(taskTypeAtCursor({source: inputFlow, cursorIndex: inputFlow.length})).toBeUndefined()
 
         const outputFlow = `id: myflow
 namespace: my.ns
 outputs:
   - id: myoutput
     type: STRING
-    value`
-        expect(
-            taskTypeAtCursor({
-                source: outputFlow,
-                cursorIndex: outputFlow.length,
-            }),
-        ).toBeUndefined()
+    val`
+        expect(taskTypeAtCursor({source: outputFlow, cursorIndex: outputFlow.length})).toBeUndefined()
     })
 
-    it("returns undefined for flow triggers when an isTrigger predicate identifies them", () => {
+    it("returns undefined for flow triggers because they are isolated via YAML path", () => {
         const triggerFlow = `id: myflow
 namespace: my.ns
 triggers:
   - id: mytrigger
     type: io.kestra.plugin.aws.s3.Trigger
     cro`
-        expect(
-            taskTypeAtCursor({
-                source: triggerFlow,
-                cursorIndex: triggerFlow.length,
-                isTrigger: (type) => type === "io.kestra.plugin.aws.s3.Trigger",
-            }),
-        ).toBeUndefined()
+        expect(taskTypeAtCursor({source: triggerFlow, cursorIndex: triggerFlow.length})).toBeUndefined()
+    })
+
+    it("returns undefined for nested maps inside a trigger (e.g. conditions:)", () => {
+        const nestedTrigger = `id: myflow
+namespace: my.ns
+triggers:
+  - id: mytrigger
+    type: io.kestra.plugin.aws.s3.Trigger
+    conditions:
+      - id: cond
+        type: io.kestra.plugin.core.condition.ExecutionStatus
+        in`
+        expect(taskTypeAtCursor({source: nestedTrigger, cursorIndex: nestedTrigger.length})).toBeUndefined()
+    })
+
+    it("resolves tasks nested inside DAGs with tasks: - task: shape", () => {
+        const dagFlow = `id: myflow
+namespace: my.ns
+tasks:
+  - id: dag
+    type: io.kestra.plugin.core.dag.Dag
+    tasks:
+      - task:
+          id: inner
+          type: io.kestra.plugin.core.log.Log
+          mess`
+        expect(taskTypeAtCursor({source: dagFlow, cursorIndex: dagFlow.length})).toBe("io.kestra.plugin.core.log.Log")
+    })
+
+    it("resolves tasks inside errors: and finally: blocks", () => {
+        const errorFlow = `id: myflow
+namespace: my.ns
+errors:
+  - id: err
+    type: io.kestra.plugin.core.log.Log
+    mess`
+        expect(taskTypeAtCursor({source: errorFlow, cursorIndex: errorFlow.length})).toBe("io.kestra.plugin.core.log.Log")
+
+        const finallyFlow = `id: myflow
+namespace: my.ns
+finally:
+  - id: fin
+    type: io.kestra.plugin.core.log.Log
+    mess`
+        expect(taskTypeAtCursor({source: finallyFlow, cursorIndex: finallyFlow.length})).toBe("io.kestra.plugin.core.log.Log")
+    })
+
+    it("returns undefined on unparseable documents", () => {
+        const badFlow = "id: myflow\n::::unparseable!!!!"
+        expect(taskTypeAtCursor({source: badFlow, cursorIndex: badFlow.length})).toBeUndefined()
     })
 })
 
@@ -155,6 +182,22 @@ triggers:
                 requiredProperties: ["id", "type", "bucket"],
             }),
         ).toEqual(["bucket"])
+    })
+
+    it("works for input bodies since they are still identified as task-like", () => {
+        const inputFlow = `id: myflow
+namespace: my.ns
+inputs:
+  - id: myinput
+    type: STRING
+    defa`
+        expect(
+            filterMissingRequiredTaskProperties({
+                source: inputFlow,
+                cursorIndex: inputFlow.length,
+                requiredProperties: ["id", "type", "required"],
+            }),
+        ).toEqual(["required"])
     })
 })
 
@@ -179,9 +222,7 @@ describe("scopePropertySuggestionsToTaskType", () => {
 
     it("leaves non-property suggestions untouched even when their label is not a valid key", () => {
         const result = scopePropertySuggestionsToTaskType({
-            suggestions: [
-                {label: "io.kestra.plugin.core.log.Log", kind: VALUE},
-            ],
+            suggestions: [{label: "io.kestra.plugin.core.log.Log", kind: VALUE}],
             validPropertyKeys: ["id", "type", "message"],
             propertyKind: PROPERTY,
         })

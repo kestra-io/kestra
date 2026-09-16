@@ -153,8 +153,7 @@
     import {computed} from "vue"
     import {useI18n} from "vue-i18n"
 
-    import moment from "moment"
-    import {KsExecutionStatus, State} from "@kestra-io/design-system"
+    import {dayjs, KsExecutionStatus, State} from "@kestra-io/design-system"
 
     import {Execution, useExecutionsStore} from "../../../../stores/executions"
     import {useMiscStore} from "override/stores/misc"
@@ -206,15 +205,15 @@
     const restarted = computed(() => matchesStatus("restarted"))
 
     const createdDate = computed(() =>
-        moment(props.execution.state.histories?.[0]?.date).toDate(),
+        dayjs(props.execution.state.histories?.[0]?.date).toDate(),
     )
 
     const scheduleDate = computed(() =>
-        props.execution.scheduleDate ? moment(props.execution.scheduleDate).toDate() : undefined,
+        props.execution.scheduleDate ? dayjs(props.execution.scheduleDate).toDate() : undefined,
     )
 
     const latestUpdate = computed(() =>
-        moment(
+        dayjs(
             State.isRunning(props.execution.state.current)
                 ? undefined
                 : props.execution.state.histories?.at(-1)?.date,

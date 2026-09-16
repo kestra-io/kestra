@@ -148,13 +148,13 @@ public abstract class AbstractMultipleConditionStateStoreTest {
 
         assertThat(window.getResults().get("a")).isTrue();
 
-        List<MultipleConditionWindow> expired = multipleConditionStateStore.expired(tenant);
-        assertThat(expired.size()).isZero();
+        multipleConditionStateStore.purgeExpired(Instant.now());
+        assertThat(multipleConditionStateStore.get(pair.getKey(), pair.getRight().getId())).isPresent();
 
         Thread.sleep(2005);
 
-        expired = multipleConditionStateStore.expired(tenant);
-        assertThat(expired.size()).isEqualTo(1);
+        multipleConditionStateStore.purgeExpired(Instant.now());
+        assertThat(multipleConditionStateStore.get(pair.getKey(), pair.getRight().getId())).isEmpty();
     }
 
     @Test
@@ -170,13 +170,13 @@ public abstract class AbstractMultipleConditionStateStoreTest {
 
         assertThat(window.getResults().get("a")).isTrue();
 
-        List<MultipleConditionWindow> expired = multipleConditionStateStore.expired(tenant);
-        assertThat(expired.size()).isZero();
+        multipleConditionStateStore.purgeExpired(Instant.now());
+        assertThat(multipleConditionStateStore.get(pair.getKey(), pair.getRight().getId())).isPresent();
 
         Thread.sleep(2005);
 
-        expired = multipleConditionStateStore.expired(tenant);
-        assertThat(expired.size()).isEqualTo(1);
+        multipleConditionStateStore.purgeExpired(Instant.now());
+        assertThat(multipleConditionStateStore.get(pair.getKey(), pair.getRight().getId())).isEmpty();
     }
 
     @Test
@@ -192,8 +192,8 @@ public abstract class AbstractMultipleConditionStateStoreTest {
 
         assertThat(window.getResults()).isEmpty();
 
-        List<MultipleConditionWindow> expired = multipleConditionStateStore.expired(tenant);
-        assertThat(expired.size()).isEqualTo(1);
+        multipleConditionStateStore.purgeExpired(Instant.now());
+        assertThat(multipleConditionStateStore.get(pair.getKey(), pair.getRight().getId())).isEmpty();
     }
 
     @Test
@@ -215,13 +215,13 @@ public abstract class AbstractMultipleConditionStateStoreTest {
         assertThat(window.getResults().get("a")).isTrue();
         assertThat(window.getEnd().toInstant()).isEqualTo(expectedEnd);
 
-        List<MultipleConditionWindow> expired = multipleConditionStateStore.expired(tenant);
-        assertThat(expired.size()).isZero();
+        multipleConditionStateStore.purgeExpired(Instant.now());
+        assertThat(multipleConditionStateStore.get(pair.getKey(), pair.getRight().getId())).isPresent();
 
         Thread.sleep(2005);
 
-        expired = multipleConditionStateStore.expired(tenant);
-        assertThat(expired.size()).isEqualTo(1);
+        multipleConditionStateStore.purgeExpired(Instant.now());
+        assertThat(multipleConditionStateStore.get(pair.getKey(), pair.getRight().getId())).isEmpty();
     }
 
     @Test
@@ -238,8 +238,8 @@ public abstract class AbstractMultipleConditionStateStoreTest {
 
         assertThat(window.getResults()).isEmpty();
 
-        List<MultipleConditionWindow> expired = multipleConditionStateStore.expired(tenant);
-        assertThat(expired.size()).isEqualTo(1);
+        multipleConditionStateStore.purgeExpired(Instant.now());
+        assertThat(multipleConditionStateStore.get(pair.getKey(), pair.getRight().getId())).isEmpty();
     }
 
     @Test
@@ -256,8 +256,8 @@ public abstract class AbstractMultipleConditionStateStoreTest {
 
         assertThat(window.getResults().get("a")).isTrue();
 
-        List<MultipleConditionWindow> expired = multipleConditionStateStore.expired(tenant);
-        assertThat(expired.size()).isZero();
+        multipleConditionStateStore.purgeExpired(Instant.now());
+        assertThat(multipleConditionStateStore.get(pair.getKey(), pair.getRight().getId())).isPresent();
     }
 
     @Test
@@ -273,8 +273,8 @@ public abstract class AbstractMultipleConditionStateStoreTest {
 
         assertThat(window.getResults().get("a")).isTrue();
 
-        List<MultipleConditionWindow> expired = multipleConditionStateStore.expired(tenant);
-        assertThat(expired.size()).isZero();
+        multipleConditionStateStore.purgeExpired(Instant.now());
+        assertThat(multipleConditionStateStore.get(pair.getKey(), pair.getRight().getId())).isPresent();
     }
 
     @Test
@@ -393,13 +393,13 @@ public abstract class AbstractMultipleConditionStateStoreTest {
 
         assertThat(window.getResults().get("a")).isTrue();
 
-        List<MultipleConditionWindow> expired = multipleConditionStateStore.expired(tenant);
-        assertThat(expired.size()).isZero();
+        multipleConditionStateStore.purgeExpired(Instant.now());
+        assertThat(multipleConditionStateStore.get(pair.getKey(), pair.getRight().getId())).isPresent();
 
         Thread.sleep(2005);
 
-        expired = multipleConditionStateStore.expired(tenant);
-        assertThat(expired.size()).isEqualTo(1);
+        multipleConditionStateStore.purgeExpired(Instant.now());
+        assertThat(multipleConditionStateStore.get(pair.getKey(), pair.getRight().getId())).isEmpty();
     }
 
     @Test
@@ -415,13 +415,13 @@ public abstract class AbstractMultipleConditionStateStoreTest {
 
         assertThat(window.getResults().get("a")).isTrue();
 
-        List<MultipleConditionWindow> expired = multipleConditionStateStore.expired(tenant);
-        assertThat(expired.size()).isZero();
+        multipleConditionStateStore.purgeExpired(Instant.now());
+        assertThat(multipleConditionStateStore.get(pair.getKey(), pair.getRight().getId())).isPresent();
 
         Thread.sleep(2005);
 
-        expired = multipleConditionStateStore.expired(tenant);
-        assertThat(expired.size()).isEqualTo(1);
+        multipleConditionStateStore.purgeExpired(Instant.now());
+        assertThat(multipleConditionStateStore.get(pair.getKey(), pair.getRight().getId())).isEmpty();
     }
 
     @Test
@@ -437,8 +437,8 @@ public abstract class AbstractMultipleConditionStateStoreTest {
 
         assertThat(window.getResults()).isEmpty();
 
-        List<MultipleConditionWindow> expired = multipleConditionStateStore.expired(tenant);
-        assertThat(expired.size()).isEqualTo(1);
+        multipleConditionStateStore.purgeExpired(Instant.now());
+        assertThat(multipleConditionStateStore.get(pair.getKey(), pair.getRight().getId())).isEmpty();
     }
 
     @Test
@@ -455,8 +455,8 @@ public abstract class AbstractMultipleConditionStateStoreTest {
 
         assertThat(window.getResults().get("a")).isTrue();
 
-        List<MultipleConditionWindow> expired = multipleConditionStateStore.expired(tenant);
-        assertThat(expired.size()).isZero();
+        multipleConditionStateStore.purgeExpired(Instant.now());
+        assertThat(multipleConditionStateStore.get(pair.getKey(), pair.getRight().getId())).isPresent();
     }
 
     @Test
@@ -472,8 +472,8 @@ public abstract class AbstractMultipleConditionStateStoreTest {
 
         assertThat(window.getResults().get("a")).isTrue();
 
-        List<MultipleConditionWindow> expired = multipleConditionStateStore.expired(tenant);
-        assertThat(expired.size()).isZero();
+        multipleConditionStateStore.purgeExpired(Instant.now());
+        assertThat(multipleConditionStateStore.get(pair.getKey(), pair.getRight().getId())).isPresent();
     }
 
     private static Pair<Flow, MultipleCondition> mockFlowWithDependsOn(String tenantId, Window window) {

@@ -332,7 +332,7 @@
     .highlight-text {
         cursor: pointer;
         font-weight: 700;
-        box-shadow: 0 19px 44px color-mix(in srgb, var(--ks-border-focus) 31%, transparent);
+        box-shadow: 0 19px 44px var(--ks-shadow-elevated);
 
         html.dark & {
             background-color: color-mix(in srgb, var(--ks-text-primary) 20%, transparent);

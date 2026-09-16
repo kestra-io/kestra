@@ -78,7 +78,7 @@ h2.support-title{
         line-height: 1.6em;
     }
     &:hover{
-        border-color: var(--ks-border-focus);
+        border-color: var(--ks-border-strong);
     }
 }
 </style>

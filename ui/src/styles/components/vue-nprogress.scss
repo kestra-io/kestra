@@ -1,8 +1,6 @@
-$indigo: "" !default;
-
 #nprogress {
     .bar {
-        background: $indigo;
+        background: var(--ks-text-link);
         z-index: var(--ks-z-top);
     }
 
@@ -12,11 +10,11 @@ $indigo: "" !default;
     }
 
     .peg {
-        box-shadow: 0 0 10px $indigo, 0 0 5px $indigo;
+        box-shadow: 0 0 10px var(--ks-text-link), 0 0 5px var(--ks-text-link);
     }
 
     .spinner-icon {
-        border-top-color: $indigo;
-        border-left-color: $indigo;
+        border-top-color: var(--ks-text-link);
+        border-left-color: var(--ks-text-link);
     }
 }

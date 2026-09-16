@@ -65,7 +65,7 @@ h2.big-title {
 .big-card{
     border-radius: 0.5rem;
     text-decoration: none;
-    background: var(--ks-bg-surface);
+    background: linear-gradient(180deg, var(--ks-bg-elevated) 0%, var(--ks-bg-base) 100%);
     color: var(--ks-text-primary);
     border: 1px solid var(--ks-border-default);
     transition: all 0.3s;
@@ -80,7 +80,7 @@ h2.big-title {
         line-height: var(--ks-font-size-xl);
     }
     &:hover{
-        background: var(--ks-bg-hover-elevated);
+        background: linear-gradient(180deg, var(--ks-bg-hover-elevated) 0%, var(--ks-bg-elevated) 100%);
         border-color: var(--ks-border-strong);
     }
 }

@@ -34,11 +34,13 @@
 </script>
 
 <style scoped lang="scss">
+    @use "../../../assets/styles/color-palette" as palette;
+
     .theme-window {
         display: block;
         width: 100%;
         height: auto;
-        filter: drop-shadow(0 1px 2px var(--ks-shadow-element));
+        filter: drop-shadow(0 1px 2px rgba(palette.$base-gray-neutral-950, 0.1));
     }
 
     .tw-sidebar { fill: var(--tp-sidebar); }
@@ -46,6 +48,6 @@
     .tw-main { fill: var(--tp-main); }
     .tw-bar { fill: var(--tp-bar); }
     .tw-panel { fill: var(--tp-panel); }
-    .tw-dot { fill: var(--ks-Artwork-fill); }
+    .tw-dot { fill: palette.$base-primary-300; }
     .tw-frame { stroke: var(--tp-frame); }
 </style>

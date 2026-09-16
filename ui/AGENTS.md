@@ -291,14 +291,26 @@ npm run check:types && npm run test:unit && npm run lint
 
 `npm run check:ts-any` compares the explicit `any` per file against `scripts/explicit-any/baseline.json`. It fails when a file gains one, so type it instead of raising the number. It also fails when a file loses one, because the baseline has to come down with the code: run `npm run check:ts-any -- --write` and commit the smaller numbers, or install the repo's git hooks (`.github/.hooks/setup_hooks.sh`) and the pre-commit hook does it for you. `--write` only ever lowers; it refuses to raise a count.
 
-Then read your own diff for the design-system violations that no linter catches:
+Colour is gated automatically. `tests/unit/designSystem/colorGuard.spec.ts` fails on any hex, `rgb()`, `--el-*`, `--bs-*`, SCSS colour variable or bare keyword colour reaching a colour property anywhere under `ui/src`, and prints `path:line (colours)` for each. It runs with `npm run test:unit` and on every PR. Replace what it reports with a `--ks-*` token, a `Ks*` prop, or a change in the design system.
+
+Three escape hatches exist, each taking a reason, for the case the guard cannot judge: artwork whose colours **are** the asset (a brand mark, a third-party logo) rather than a themed surface. Nothing else qualifies, and a hardcoded colour that a token could carry is a bug whether or not the guard is silenced.
+
+```scss
+/* design-system-disable: third-party brand mark, recolouring it would misrepresent the brand */
+/* design-system-disable-next-line: the Kestra mark is fixed artwork */
+/* design-system-disable-start: … */  /* … */  /* design-system-disable-end */
+```
+
+Prefer the narrowest one that covers the colours: a whole-file opt-out also exempts every rule added to that file later. The guard reads `.vue`, `.scss` and `.ts`, and in a `.vue` file it reads `<style>` blocks plus `fill=` / `stroke=` attributes, so a `//`, `/* */` or `<!-- -->` comment all work.
+
+Spacing, radii and `:deep()` are not gated, so still read your own diff for those:
 
 ```bash
 git diff -U0 develop... -- '*.vue' '*.scss' \
-  | grep -nE '^\+.*(#[0-9a-fA-F]{3,8}\b|rgba?\(|--el-|--bs-|:deep\(|(padding|margin|gap|border-radius|font-size)[[:space:]]*:[[:space:]]*[0-9]+px)'
+  | grep -nE '^\+.*(:deep\(|(padding|margin|gap|border-radius|font-size)[[:space:]]*:[[:space:]]*[0-9]+px)'
 ```
 
-Every match has to be replaced with a `--ks-*` token, a `Ks*` prop, or a change in the design system. For a user-visible change, also check it in light **and** dark mode, and attach a screenshot to the PR.
+For a user-visible change, also check it in light **and** dark mode, and attach a screenshot to the PR.
 
 ### Deprecation contract
 
@@ -445,7 +457,7 @@ If your `<style>` block needs to exist:
 
 ## Utilities (import from the design system)
 
-- `State`, `STATES`, `LOG_LEVELS` — execution state constants, icons, and colors
+- `State`, `STATES`, `LOG_LEVELS` — execution state constants and icons. A state's colour is not a property of the state: read it with `State.getStateColor(name)`, which resolves `--ks-status-*`
 - `cssVar(name, opacity?)` — read a `--ks-*` CSS custom property at runtime (use this in JS / chart configs instead of hardcoding hex)
 - `dayjs` — the one configured dayjs instance (utc, timezone, duration, advancedFormat, calendar, isoWeek, localizedFormat, minMax, relativeTime, weekOfYear, isSameOrBefore). Never `import dayjs from "dayjs"` in feature code: plugins are registered on this instance, so a bare import silently lacks them
 - `dateUtils` — `dateFilter()`, `parseIso()`, `toIsoKeepOffset()`, `currentTimezone()`, `timezonesWithOffset()`, `currentLocale()`, `setLocale()`, `DATE_FORMAT_STORAGE_KEY`, `TIMEZONE_STORAGE_KEY`

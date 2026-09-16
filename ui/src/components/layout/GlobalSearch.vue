@@ -333,7 +333,8 @@
         left: 0;
         width: 100vw;
         height: 100vh;
-        background: var(--kel-overlay-color-lighter);
+        background: var(--ks-bg-scrim);
+        z-index: var(--ks-z-overlay);
         display: flex;
         justify-content: center;
         align-items: flex-start;

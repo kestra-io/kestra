@@ -1038,7 +1038,7 @@
         outline: none !important;
 
         .node-wrapper {
-            border-color: var(--bs-gray-900) !important;
+            border-color: var(--ks-border-strong) !important;
         }
     }
 }

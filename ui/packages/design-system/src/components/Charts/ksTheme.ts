@@ -112,7 +112,7 @@ export default () => {
                 scale: 1.1,
                 itemStyle: {
                     shadowBlur: 10,
-                    shadowColor: cssVar("--ks-shadow-elevated"),
+                    shadowColor: cssVar("--ks-shadow-elevated", 0.3),
                 },
             },
             edgeSymbol: ["none", "arrow"],

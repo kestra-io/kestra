@@ -1,4 +1,4 @@
-import moment from "moment/moment"
+import {dayjs} from "@kestra-io/design-system"
 import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
 import {storageKeys} from "./constants"
 
@@ -176,9 +176,9 @@ export function normalize(type: InputType | undefined, value: any) {
     } else if (value === null || value === undefined) {
         res = undefined
     } else if (type === "DATE" || type === "DATETIME") {
-        res = moment(res).toISOString()
+        res = dayjs(res).toISOString()
     } else if (type === "TIME") {
-        res = moment().startOf("day").add(res, "seconds").toString()
+        res = dayjs().startOf("day").add(res, "seconds").toString()
     } else if (type === "ARRAY" || type === "MULTISELECT" || type === "JSON" || type === "ION") {
         if (typeof res !== "string") {
             res = JSON.stringify(res).toString()

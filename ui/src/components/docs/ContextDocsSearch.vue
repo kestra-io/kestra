@@ -184,7 +184,7 @@
         }
 
         &.selected {
-            background: color-mix(in srgb, var(--ks-border-focus) 10%, transparent);
+            background: var(--ks-bg-active);
             border-left: 3px solid var(--ks-border-focus);
         }
 

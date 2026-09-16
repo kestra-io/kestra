@@ -140,6 +140,7 @@ export const STATES:Record<string, StateModel> = Object.freeze({
 const mapValues = <T, U>(obj: Record<string, T>, fn: (val: T) => U): Record<string, U> =>
     Object.fromEntries(Object.entries(obj).map(([k, v]) => [k, fn(v)]))
 
+export const SUBMITTED = "SUBMITTED" as const
 export const CREATED = "CREATED" as const
 export const RESTARTED = "RESTARTED" as const
 export const SUCCESS = "SUCCESS" as const
@@ -151,6 +152,8 @@ export const WARNING = "WARNING" as const
 export const PAUSED = "PAUSED" as const
 export const CANCELLED = "CANCELLED" as const
 export const SKIPPED = "SKIPPED" as const
+export const QUEUED = "QUEUED" as const
+export const RETRYING = "RETRYING" as const
 export const RETRIED = "RETRIED" as const
 export const BREAKPOINT = "BREAKPOINT" as const
 export const RESUBMITTED = "RESUBMITTED" as const

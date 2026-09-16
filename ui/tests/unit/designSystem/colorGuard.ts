@@ -10,6 +10,8 @@ const BACKGROUND = "repeat no-repeat repeat-x repeat-y space round cover contain
 const COLOUR_FUNCTION = "in to at from srgb srgb-linear oklab oklch lab lch hwb hue shorter longer increasing decreasing circle ellipse closest-side closest-corner farthest-side farthest-corner"
 const NOT_A_COLOUR = new Set(`${CSS_WIDE} ${LINE} ${BACKGROUND} ${COLOUR_FUNCTION}`.split(" "))
 
+const FOREIGN_TOKEN = /var\(\s*--(?:k?el|bs)-[\w-]+/g
+const SCSS_VARIABLE = /\$[\w-]+/g
 const HEX_OR_RGB = /#[0-9a-fA-F]{3,8}\b|rgba?\(/g
 const DECLARATION = /(?:^|[;{}])\s*([a-z-]+)\s*:([^;{}]+)/g
 const PATTERNS = [
@@ -19,8 +21,10 @@ const PATTERNS = [
     /\brgba?\(\s*\d/,
 ]
 
-const DISABLE_FILE = /(?:\/\/|\/\*|<!--)[^\n]*design-system-disable(?!-next-line)/
+const DISABLE_FILE = /(?:\/\/|\/\*|<!--)[^\n]*design-system-disable(?!-next-line|-start|-end)/
 const DISABLE_NEXT_LINE = /(?:\/\/|\/\*|<!--)[^\n]*design-system-disable-next-line/
+const DISABLE_START = /(?:\/\/|\/\*|<!--)[^\n]*design-system-disable-start/
+const DISABLE_END = /(?:\/\/|\/\*|<!--)[^\n]*design-system-disable-end/
 
 const sources = (dir: string): string[] =>
     readdirSync(dir, {withFileTypes: true}).flatMap((entry) => {
@@ -52,13 +56,22 @@ const bareWords = (value: string): string[] =>
         .replace(/[\w-]+\(/g, "(")
         .match(/(?<![\w.#-])[a-z][a-z-]*/gi) ?? []
 
+/** SCSS variables the file declares as an alias of a token, which carry no colour of their own. */
+const tokenAliases = (styles: string): Set<string> =>
+    new Set([...styles.matchAll(/(\$[\w-]+)\s*:\s*var\(\s*--ks-[\w-]+/g)].map(([, name]) => name))
+
 /** Keyword colours per line, read from whole declarations so a value spanning lines is seen once. */
 const keywordColours = (styles: string): Map<number, string[]> => {
     const found = new Map<number, string[]>()
+    const aliases = tokenAliases(styles)
     for (const declaration of styles.matchAll(DECLARATION)) {
         const [match, property, value] = declaration
         if (!COLOUR_PROPERTY.test(property)) continue
-        const colours = bareWords(value).filter((word) => !NOT_A_COLOUR.has(word.toLowerCase()))
+        const colours = [
+            ...bareWords(value).filter((word) => !NOT_A_COLOUR.has(word.toLowerCase())),
+            ...(value.match(SCSS_VARIABLE) ?? []).filter((name) => !aliases.has(name)),
+            ...value.match(FOREIGN_TOKEN) ?? [],
+        ]
         if (!colours.length) continue
         const line = styles.slice(0, declaration.index + match.indexOf(property)).split("\n").length - 1
         found.set(line, [...(found.get(line) ?? []), ...colours])
@@ -68,14 +81,24 @@ const keywordColours = (styles: string): Map<number, string[]> => {
 
 /**
  * Returns `path:line (colours)` for every file hardcoding a colour; empty when clean. A file opts out with
- * a `design-system-disable: reason` comment, a single line with `design-system-disable-next-line`.
+ * a `design-system-disable: reason` comment, a single line with `design-system-disable-next-line`, and a
+ * run of lines between `design-system-disable-start` and `design-system-disable-end`.
+ * Callers pass feature roots only: `ui/packages/design-system` composes the tokens from raw palette values,
+ * so scanning it would report the palette itself.
  */
 export const findHardcodedColors = (srcDir: string): string[] =>
     sources(srcDir).flatMap((file) => {
         const path = relative(srcDir, file).replaceAll("\\", "/")
         const raw = readFileSync(file, "utf8")
         if (DISABLE_FILE.test(raw)) return []
-        const muted = new Set(raw.split("\n").flatMap((line, index) => (DISABLE_NEXT_LINE.test(line) ? [index + 1] : [])))
+        const muted = new Set<number>()
+        let inBlock = false
+        raw.split("\n").forEach((line, index) => {
+            if (DISABLE_END.test(line)) inBlock = false
+            else if (DISABLE_START.test(line)) inBlock = true
+            if (inBlock) muted.add(index)
+            if (DISABLE_NEXT_LINE.test(line)) muted.add(index + 1)
+        })
 
         const source = withoutComments(raw)
         const keywords = keywordColours(styleOnly(source, file))

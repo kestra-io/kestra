@@ -853,7 +853,7 @@
     .tour-scrim {
         position: fixed;
         inset: 0;
-        background: var(--kel-overlay-color-lighter);
+        background: var(--ks-bg-scrim);
         pointer-events: none;
     }
 

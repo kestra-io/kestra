@@ -221,7 +221,7 @@
                 .kel-radio__input {
                     .kel-radio__inner {
                         background-color: transparent;
-                        border-color: var(--ks-border-strong);
+                        border-color: var(--ks-icon-muted);
                         border-width: 2px;
                         width: 24px;
                         height: 24px;
@@ -273,7 +273,7 @@
                 .kel-checkbox__input {
                     .kel-checkbox__inner {
                         background-color: transparent;
-                        border-color: var(--ks-border-strong);
+                        border-color: var(--ks-icon-muted);
                         width: 18px;
                         height: 18px;
                         border-radius: 2px;
@@ -310,7 +310,7 @@
             .kel-checkbox__input {
                 .kel-checkbox__inner {
                     background-color: transparent;
-                    border-color: var(--ks-border-strong);
+                    border-color: var(--ks-icon-muted);
                     width: 18px;
                     height: 18px;
                     border-radius: 2px;

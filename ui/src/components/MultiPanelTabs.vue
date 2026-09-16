@@ -873,10 +873,10 @@
         left: 0;
         right: 0;
         bottom: 0;
-        background-color: color-mix(in srgb, var(--ks-text-primary) 10%, transparent);
+        background-color: color-mix(in srgb, var(--ks-bg-scrim) 15%, transparent);
         z-index: var(--ks-z-sticky);
         &.dragover{
-            background-color: color-mix(in srgb, var(--ks-text-primary) 30%, transparent);
+            background-color: color-mix(in srgb, var(--ks-bg-scrim) 40%, transparent);
         }
     }
 
@@ -1046,7 +1046,7 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        background-color: color-mix(in srgb, var(--ks-bg-active) 50%, transparent);
+        background-color: color-mix(in srgb, var(--ks-bg-scrim) 65%, transparent);
         transition: all 0.2s ease;
         border: 2px dashed var(--ks-border-default);
         border-radius: 4px;
@@ -1057,7 +1057,7 @@
 
     .new-panel-drop-zone:hover,
     .new-panel-drop-zone.panel-dragover {
-        background-color: color-mix(in srgb, var(--ks-bg-active) 80%, transparent);
+        background-color: var(--ks-bg-scrim);
         border-color: var(--ks-border-focus);
     }
 

@@ -37,6 +37,21 @@ describe("design system", () => {
         ])
     })
 
+    it("reports an Element Plus or Bootstrap variable and an SCSS colour variable", () => {
+        expect(scan(".a {\n    color: var(--bs-gray-900);\n}")).toEqual(["line 4 (var(--bs-gray-900)"])
+        expect(scan(".a {\n    border-color: var(--el-color-primary);\n}")).toEqual(["line 4 (var(--el-color-primary)"])
+        expect(scan(".a {\n    color: var(--kel-text-color-regular);\n}")).toEqual(["line 4 (var(--kel-text-color-regular)"])
+        expect(scan(".a {\n    color: $brand;\n}")).toEqual(["line 4 ($brand)"])
+    })
+
+    it("leaves a wrapped variable that carries no colour alone", () => {
+        expect(scan(".a {\n    font-size: var(--kel-font-size-small);\n    border-radius: var(--kel-border-radius-base);\n}")).toEqual([])
+    })
+
+    it("leaves an SCSS variable that only aliases a token alone", () => {
+        expect(scan("$muted: var(--ks-text-secondary);\n.a {\n    color: $muted;\n}")).toEqual([])
+    })
+
     it("does not read a custom property whose name says it holds no colour", () => {
         expect(scan(".a {\n    --font-weight: normal;\n    --easing: ease-in-out;\n    --repeat: infinite;\n    --size: 12px;\n}")).toEqual([])
     })
@@ -73,5 +88,15 @@ describe("design system", () => {
             "line 6 (hotpink)",
         ])
         expect(scan("/* design-system-disable: fixture */\n.a {\n    color: red;\n}")).toEqual([])
+    })
+
+    it("honours an opt-out over a run of lines, and guards again after it ends", () => {
+        expect(scan([
+            "/* design-system-disable-start: fixture */",
+            ".a { color: red; }",
+            ".b { color: crimson; }",
+            "/* design-system-disable-end */",
+            ".c { color: hotpink; }",
+        ].join("\n"))).toEqual(["line 7 (hotpink)"])
     })
 })

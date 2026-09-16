@@ -1,5 +1,17 @@
 export const CLUSTER_PREFIX = "cluster_"
 
+// Low enough that zoom-to-fit really fits a large graph. Shared so the topology and the
+// dependencies DAG cannot drift apart on how far out a user may zoom.
+export const MIN_ZOOM = 0.1
+
+// The dot grid every graph canvas paints, and that the image export reproduces. `color` is a
+// design-system token, resolved with `cssVar` where it is used.
+export const GRAPH_BACKGROUND = {
+    gap: 20,
+    size: 1,
+    color: "--ks-topology-bg",
+} as const
+
 export const EVENTS = {
     EDIT: "edit",
     DELETE: "delete",

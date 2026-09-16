@@ -217,7 +217,9 @@
 </script>
 
 <style scoped lang="scss">
-    .copilot-button {
+    // :deep because the tooltip wrapper renders a Fragment root, so this component's scope id
+    // reaches the nav ancestor but not the button itself.
+    :deep(.copilot-button) {
         flex-shrink: 0;
         color: var(--ks-icon-muted);
 

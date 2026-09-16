@@ -21,7 +21,7 @@
                         />
                     </KsSelect>
                 </li>
-                <li v-if="currentTaskRuns.length > 1" class="el-dropdown-menu__item--divided m-0" role="separator"></li>
+                <li v-if="currentTaskRuns.length > 1" class="iteration-divider" role="separator"></li>
                 <KsDropdownItem
                     v-if="selectedAttempt?.state.current === 'FAILED'"
                     @click="fixErrorWithAi"
@@ -292,6 +292,11 @@
 </script>
 
 <style scoped lang="scss">
+
+    .iteration-divider {
+        border-top: 1px solid var(--ks-border-primary);
+        margin: 0;
+    }
     .iteration-picker {
         padding: var(--ks-spacing-2);
     }

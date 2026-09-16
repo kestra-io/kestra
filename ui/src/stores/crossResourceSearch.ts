@@ -9,7 +9,7 @@ import * as NamespacesAPI from "@kestra-io/kestra-sdk/namespaces"
 import {asProblem, type SourceSearchScope} from "@kestra-io/kestra-sdk"
 
 import {groupByNamespace, type CrossSearchSelection, type SearchResourceType, type SearchStatus} from "../utils/crossResourceSearch"
-import type {SourceSearchResult} from "../utils/sourceSearchDiff"
+import {getSeparatorVariant, type SourceSearchResult} from "../utils/sourceSearchDiff"
 
 const SEARCH_PAGE_SIZE = 200
 
@@ -151,6 +151,32 @@ export const useCrossResourceSearchStore = defineStore("crossResourceSearch", ()
         }
     }
 
+    async function searchFlowSuggestion(params: FlowsSearchParams, gen: number): Promise<string | null> {
+        if (!params.query || params.regex) return null
+        const alternativeQuery = getSeparatorVariant(params.query)
+
+        if (!alternativeQuery) return null
+
+        try {
+            const response = await FlowsAPI.searchFlowsBySourceCode({
+                caseSensitive: params.caseSensitive,
+                wholeWord: params.wholeWord,
+                regex: params.regex,
+                scope: params.scope,
+                page: 1,
+                size: SEARCH_PAGE_SIZE,
+                q: alternativeQuery,
+                namespace: params.namespace,
+            })
+
+            if (!isCurrent(gen) || response.results.length === 0) return null
+
+            return alternativeQuery
+        } catch {
+            return null
+        }
+    }
+
     function setNamespaceFileState(state: NamespaceFileState, gen: number) {
         if (!isCurrent(gen)) return
 
@@ -275,7 +301,7 @@ export const useCrossResourceSearchStore = defineStore("crossResourceSearch", ()
         }
     }
 
-    async function search(params: CrossResourceSearchParams) {
+    async function search(params: CrossResourceSearchParams): Promise<number> {
         const gen = nextGeneration()
         const tasks: Promise<void>[] = []
 
@@ -311,6 +337,7 @@ export const useCrossResourceSearchStore = defineStore("crossResourceSearch", ()
         }
 
         await Promise.all(tasks)
+        return gen
     }
 
     const flowsMatchCount = computed(() => flows.value.results.reduce((sum, group) => sum + group.matches.length, 0))
@@ -425,6 +452,7 @@ export const useCrossResourceSearchStore = defineStore("crossResourceSearch", ()
         secrets,
         search,
         searchFlows,
+        searchFlowSuggestion,
         searchFiles,
         searchKv,
         searchSecrets,

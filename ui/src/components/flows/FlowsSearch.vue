@@ -249,8 +249,15 @@
         <div v-else-if="showEmptyResultsState" class="source-search__states">
             <KsEmpty :background="false" :image="images.namespace" :imageSize="120">
                 <template #description>
-                    <h3>{{ t('source_search.no_results_title', {query}) }}</h3>
-                    <p>{{ t('source_search.no_results_description') }}</p>
+                    <KsText tag="h3" size="large">
+                        {{ t('source_search.no_results_title', {query}) }}
+                    </KsText>
+                    <KsText tag="p">
+                        {{ t('source_search.no_results_description') }}
+                    </KsText>
+                    <KsText v-if="hiddenTypeHint" tag="p">
+                        {{ hiddenTypeHint }}
+                    </KsText>
 
                     <i18n-t v-if="suggestedQuery" keypath="source_search.did_you_mean" tag="p">
                         <template #suggestion>
@@ -354,9 +361,8 @@
     import useRestoreUrl from "../../composables/useRestoreUrl"
     import {useToast} from "../../utils/toast"
     import {useCrossResourceSearchStore} from "../../stores/crossResourceSearch"
-    import {computeSelectionSummary, distinctSkipReasons, getSeparatorVariant, type ReplaceContext} from "../../utils/sourceSearchDiff"
+    import {computeSelectionSummary, distinctSkipReasons, type ReplaceContext} from "../../utils/sourceSearchDiff"
     import {SEARCH_RESOURCE_TYPES, crossSearchResultKey, searchViewState, type CrossSearchSelection, type SearchResourceType} from "../../utils/crossResourceSearch"
-
     import * as FlowsAPI from "@kestra-io/kestra-sdk/flows"
     import {asProblem, type SourceSearchReplacePreviewResponse, type SourceSearchReplaceApplyResponse, type SourceSearchScope} from "@kestra-io/kestra-sdk"
 
@@ -532,6 +538,12 @@
         .map((type) => ({type, count: crossResourceSearchStore.countFor(type)}))
         .filter((entry) => entry.count > 0))
 
+    const hiddenTypeHint = computed(() => hiddenTypeCounts.value
+        .map((entry) => t("source_search.no_results_hidden_type", {
+            count: entry.count,
+            type: typeLabel(entry.type),
+        }))
+        .join(" "))
 
     const flowsReadOnlyGroupCount = computed(() => crossResourceSearchStore.flows.results.filter((group) => !group.editable).length)
     const flowsReadOnlyMatchCount = computed(() => crossResourceSearchStore.flows.results
@@ -715,35 +727,29 @@
             crossResourceSearchStore.reset()
             return
         }
+        const currentQuery = query.value
 
         previewResponse.value = null
         suggestedQuery.value = null
 
         try {
-            await crossResourceSearchStore.search({
+            const gen = await crossResourceSearchStore.search({
                 types: SEARCH_RESOURCE_TYPES,
-                query: query.value,
+                query: currentQuery,
                 namespace: namespaceFilter.value,
                 ...searchFilters.value,
             })
-            if (crossResourceSearchStore.flows.results.length === 0) {
-                const alternativeQuery = getSeparatorVariant(query.value)
 
-                if (alternativeQuery) {
-                    try {
-                        const alternativeResponse = await FlowsAPI.searchFlowsBySourceCode({...searchFilters.value,
-                            page: 1,
-                            size: 200,
-                            q: alternativeQuery,
-                            namespace: namespaceFilter.value,
-                        })
-                        if (alternativeResponse.results.length > 0) {
-                            suggestedQuery.value = alternativeQuery
-                        }
-                    } catch {
-                        // Ignore failures from the optional suggestion lookup.
-                    }
-                }
+            if (
+                selectedTypes.value.includes("flows") &&
+                !anyCountingSelected.value &&
+                summaryMatchCount.value === 0
+            ) {
+                suggestedQuery.value = await crossResourceSearchStore.searchFlowSuggestion({
+                    query: currentQuery,
+                    namespace: namespaceFilter.value,
+                    ...searchFilters.value,
+                }, gen)
             }
         } finally {
             searchPending.value = false

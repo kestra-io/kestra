@@ -123,6 +123,10 @@ export function buildDiffHunks(sourceLines: string[], matches: SourceSearchDiffM
 }
 
 export function getSeparatorVariant(query: string): string | null {
+    if (query.includes("-") && query.includes("_")) {
+        return null
+    }
+
     if (query.includes("-")) {
         return query.replace(/-/g, "_")
     }

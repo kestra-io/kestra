@@ -351,7 +351,7 @@ describe("rankStackedBars", () => {
 })
 
 describe("fillTimeBucketLabels", () => {
-    const HOURLY = {format: "yyyy-MM-DD HH:00", unit: "hour"} as const
+    const HOURLY = {format: "YYYY-MM-DD HH:00", unit: "hour"} as const
 
     it("fills the hourly buckets between the earliest and latest dates", () => {
         const labels = fillTimeBucketLabels(
@@ -379,9 +379,17 @@ describe("fillTimeBucketLabels", () => {
     it("fills day buckets across a month boundary", () => {
         const labels = fillTimeBucketLabels(
             ["2026-08-30 10:00:00", "2026-09-02 08:00:00"],
-            {format: "yyyy-MM-DD", unit: "day"},
+            {format: "YYYY-MM-DD", unit: "day"},
         )
         expect(labels).toEqual(["2026-08-30", "2026-08-31", "2026-09-01", "2026-09-02"])
+    })
+
+    it("renders one distinct label per week for a weekly grouping", () => {
+        const labels = fillTimeBucketLabels(
+            ["2026-08-30 10:00:00", "2026-09-13 08:00:00"],
+            {format: "YYYY-[W]ww", unit: "week"},
+        )
+        expect(labels).toEqual(["2026-W36", "2026-W37", "2026-W38"])
     })
 
     it("keeps values that are not valid dates as labels verbatim", () => {
@@ -396,7 +404,7 @@ describe("fillTimeBucketLabels", () => {
     it("stops filling at the bucket cap but keeps every data label", () => {
         const labels = fillTimeBucketLabels(
             ["2026-01-01 00:00:00", "2026-08-19 20:00:00"],
-            {format: "yyyy-MM-DD HH:mm", unit: "minute"},
+            {format: "YYYY-MM-DD HH:mm", unit: "minute"},
         )
         expect(labels.length).toBe(MAX_FILLED_TIME_BUCKETS + 1)
         expect(labels).toContain("2026-08-19 20:00")

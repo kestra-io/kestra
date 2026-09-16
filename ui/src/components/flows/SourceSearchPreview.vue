@@ -50,17 +50,7 @@
 
                     <div v-if="showConfirmBar" class="source-search-preview__confirm-bar">
                         <span class="source-search-preview__confirm-msg">
-                            <i18n-t keypath="source_search.confirm_bar_message" tag="span">
-                                <template #matches>
-                                    <b>{{ $t('source_search.match_count', {count: selectionSummary?.selectedMatchCount ?? 0}) }}</b>
-                                </template>
-                                <template #flows>
-                                    <b>{{ selectionSummary?.selectedFlowCount ?? 0 }}</b>
-                                </template>
-                                <template #skipped>
-                                    <b>{{ readOnlyExcludedCount }}</b>
-                                </template>
-                            </i18n-t>
+                            <span v-html="confirmBarMessage" />
                             <span v-if="excludedFromReplaceCount > 0" class="source-search-preview__confirm-excluded">
                                 {{ $t('source_search.confirm_bar_excluded', {count: excludedFromReplaceCount}) }}
                             </span>
@@ -202,6 +192,12 @@
     })
 
     const excludedFromReplaceCount = computed(() => props.excludedFromReplaceCount ?? 0)
+    const bold = (value: string | number) => `<b>${_escape(String(value))}</b>`
+    const confirmBarMessage = computed(() => t("source_search.confirm_bar_message", {
+        matches: bold(t("source_search.match_count", {count: props.selectionSummary?.selectedMatchCount ?? 0})),
+        flows: bold(props.selectionSummary?.selectedFlowCount ?? 0),
+        skipped: bold(props.readOnlyExcludedCount),
+    }))
 
     const showConfirmBar = computed(() => Boolean(props.selectionSummary))
 

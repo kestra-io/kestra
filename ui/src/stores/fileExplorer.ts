@@ -4,6 +4,7 @@ import * as Utils from "../utils/utils"
 import {useNamespacesStore} from "override/stores/namespaces"
 import {useToast} from "../utils/toast"
 import {useI18n} from "vue-i18n"
+import type {KestraHttpError} from "../utils/kestraHttp"
 
 export interface TreeNodeBase {
     id: string;
@@ -297,11 +298,11 @@ export const useFileExplorerStore = defineStore("fileExplorer", () => {
             let children: TreeNode[]
             try {
                 children = await namespacesStore.readDirectory<TreeNode>(payload)
-            } catch (e: any) {
+            } catch (e) {
                 // Only a 404 means the folder was deleted server-side: render it empty rather than
                 // leaving the el-tree node stuck loading. Any other error is left to propagate as
                 // before (el-tree keeps the node un-expanded and retryable, and it is toasted centrally).
-                if (e?.status !== 404) throw e
+                if ((e as KestraHttpError)?.status !== 404) throw e
                 resolve?.([])
                 return
             }

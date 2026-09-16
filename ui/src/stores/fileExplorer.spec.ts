@@ -1,6 +1,6 @@
 import {beforeEach, describe, expect, it, vi} from "vitest"
 import {createPinia, setActivePinia} from "pinia"
-import {isDirectory, useFileExplorerStore, type TreeNodeDirectory} from "./fileExplorer"
+import {isDirectory, useFileExplorerStore, type ElTreeNode, type TreeNodeDirectory} from "./fileExplorer"
 
 const createDirectory = vi.fn()
 const saveOrCreateFile = vi.fn()
@@ -124,7 +124,7 @@ describe("fileExplorer store", () => {
         const folder = filesStore.fileTree[0]
 
         const resolve = vi.fn()
-        await filesStore.loadNodes({level: 1, data: {id: folder.id}} as any, resolve)
+        await filesStore.loadNodes({level: 1, data: {id: folder.id}} as unknown as ElTreeNode, resolve)
 
         expect(resolve).toHaveBeenCalledWith([])
     })
@@ -139,7 +139,7 @@ describe("fileExplorer store", () => {
 
         const resolve = vi.fn()
         // A transient error must not resolve the node as empty (el-tree would cache it and hide the real children).
-        await expect(filesStore.loadNodes({level: 1, data: {id: folder.id}} as any, resolve)).rejects.toThrow("boom")
+        await expect(filesStore.loadNodes({level: 1, data: {id: folder.id}} as unknown as ElTreeNode, resolve)).rejects.toThrow("boom")
         expect(resolve).not.toHaveBeenCalled()
     })
 

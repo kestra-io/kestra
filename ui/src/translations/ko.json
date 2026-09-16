@@ -1170,7 +1170,7 @@
             "log_level": "실행 로그에 표시되는 최소 log level.",
             "log_display": "실행을 열 때 로그가 표시되는 방식.",
             "editor_type": "flow를 처음 열 때 표시되는 편집기.",
-            "topology_orientation": "플로우 에디터의 토폴로지 패널 기본 방향입니다.",
+            "topology_orientation": "Flow 편집기에서 토폴로지 패널의 기본 방향입니다.",
             "execute_flow": "실행 결과가 실행을 트리거한 후 열리는 위치.",
             "execute_default_tab": "실행으로 이동할 때 선택된 탭.",
             "flow_default_tab": "flow로 이동할 때 선택된 탭.",

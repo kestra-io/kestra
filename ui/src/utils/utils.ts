@@ -1,6 +1,5 @@
 import {computed} from "vue"
-import moment from "moment"
-import {copyToClipboard, fileUtils} from "@kestra-io/design-system"
+import {copyToClipboard, dateUtils, dayjs, fileUtils, type Dayjs} from "@kestra-io/design-system"
 import {useMiscStore} from "override/stores/misc"
 
 export type Optional<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;
@@ -75,7 +74,7 @@ export function executionVars(data: Record<string, any>) {
         }
 
         if (typeof rawValue === "string" && rawValue.match(/\d{4}-\d{2}-\d{2}/)) {
-            const date = moment(rawValue, moment.ISO_8601)
+            const date = dateUtils.parseIso(rawValue)
             if (date.isValid()) {
                 return {key, value: rawValue, date: true}
             }
@@ -433,25 +432,25 @@ export interface DateGrouping {
     unit: "month" | "week" | "day" | "hour" | "minute";
 }
 
-export function getDateGrouping(startDate: moment.MomentInput, endDate: moment.MomentInput, timeRange: string | undefined): DateGrouping {
+export function getDateGrouping(startDate: Dayjs | string | undefined, endDate: Dayjs | string | undefined, timeRange: string | undefined): DateGrouping {
     if ((!startDate || !endDate) && timeRange === undefined) {
-        return {format: "yyyy-MM-DD", unit: "day"}
+        return {format: "YYYY-MM-DD", unit: "day"}
     }
 
     const duration = timeRange === undefined
-        ? moment.duration(moment(endDate).diff(moment(startDate)))
-        : moment.duration(timeRange)
+        ? dayjs.duration(dayjs(endDate).diff(dayjs(startDate)))
+        : dayjs.duration(timeRange)
 
     if (duration.asDays() > 365) {
-        return {format: "yyyy-MM", unit: "month"}
+        return {format: "YYYY-MM", unit: "month"}
     } else if (duration.asDays() > 180) {
-        return {format: "yyyy-'W'ww", unit: "week"}
+        return {format: "YYYY-[W]ww", unit: "week"}
     } else if (duration.asDays() > 1) {
-        return {format: "yyyy-MM-DD", unit: "day"}
+        return {format: "YYYY-MM-DD", unit: "day"}
     } else if (duration.asHours() > 1) {
-        return {format: "yyyy-MM-DD HH:00", unit: "hour"}
+        return {format: "YYYY-MM-DD HH:00", unit: "hour"}
     } else {
-        return {format: "yyyy-MM-DD HH:mm", unit: "minute"}
+        return {format: "YYYY-MM-DD HH:mm", unit: "minute"}
     }
 }
 

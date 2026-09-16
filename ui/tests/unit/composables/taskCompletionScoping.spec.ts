@@ -161,8 +161,8 @@ finally:
         expect(taskTypeAtCursor({source: finallyFlow, cursorIndex: finallyFlow.length})).toBe("io.kestra.plugin.core.log.Log")
     })
 
-    it("returns undefined on unparseable documents", () => {
-        const badFlow = "id: myflow\n::::unparseable!!!!"
+    it("returns undefined on unparsable documents", () => {
+        const badFlow = "id: myflow\n::::unparsable!!!!"
         expect(taskTypeAtCursor({source: badFlow, cursorIndex: badFlow.length})).toBeUndefined()
     })
 })

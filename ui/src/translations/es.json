@@ -2681,6 +2681,7 @@
       "install_description": "Instala Kestra como una aplicación para un acceso más rápido y una experiencia a pantalla completa.",
       "install": "Instalar",
       "dismiss": "Ahora no"
-    }
+    },
+    "delete_log_iteration": "Are you sure you want to delete the log for {iteration}?"
   }
 }

@@ -2681,6 +2681,7 @@
       "install_description": "より高速なアクセスとフルスクリーン体験のために、Kestra をアプリとしてインストールします。",
       "install": "インストール",
       "dismiss": "後で"
-    }
+    },
+    "delete_log_iteration": "Are you sure you want to delete the log for {iteration}?"
   }
 }

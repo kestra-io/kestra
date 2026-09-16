@@ -7,6 +7,7 @@ import {
     readTopLevelValue,
     useReadOnlyYamlKeys,
     violatedKeys,
+    type ReadOnlyYamlKeysOptions,
 } from "../../../src/composables/useReadOnlyYamlKeys"
 
 const FLOW = [
@@ -273,7 +274,7 @@ describe("useReadOnlyYamlKeys", () => {
         onReverted?: (keys: string[]) => void,
     ) {
         return withComposable(() => useReadOnlyYamlKeys({
-            editor: ref(double.editor) as never,
+            editor: ref(double.editor) as unknown as ReadOnlyYamlKeysOptions["editor"],
             expected,
             enabled: computed(() => enabled),
             onReverted,

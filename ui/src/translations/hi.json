@@ -2681,6 +2681,7 @@
       "install_description": "तेज़ पहुंच और पूर्ण-स्क्रीन अनुभव के लिए Kestra को ऐप के रूप में इंस्टॉल करें।",
       "install": "इंस्टॉल करें",
       "dismiss": "अभी नहीं"
-    }
+    },
+    "delete_log_iteration": "Are you sure you want to delete the log for {iteration}?"
   }
 }

@@ -2681,6 +2681,7 @@
       "install_description": "Zainstaluj Kestrę jako aplikację, aby mieć szybszy dostęp i pełnoekranowy widok.",
       "install": "Zainstaluj",
       "dismiss": "Nie teraz"
-    }
+    },
+    "delete_log_iteration": "Are you sure you want to delete the log for {iteration}?"
   }
 }

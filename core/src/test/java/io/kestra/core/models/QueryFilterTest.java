@@ -68,9 +68,11 @@ public class QueryFilterTest {
     void shouldExposeRelationFieldsOnTheRelationResource() {
         assertThat(QueryFilter.Resource.ASSET_RELATION.supportedField()).contains(
             QueryFilter.Field.KIND, QueryFilter.Field.ASSET_ID, QueryFilter.Field.SOURCE_ID, QueryFilter.Field.TARGET_ID,
-            QueryFilter.Field.ORIGIN, QueryFilter.Field.NAMESPACE, QueryFilter.Field.FLOW_ID, QueryFilter.Field.EXECUTION_ID,
-            QueryFilter.Field.TASK_ID, QueryFilter.Field.CREATED
+            QueryFilter.Field.ORIGIN, QueryFilter.Field.NAMESPACE, QueryFilter.Field.FLOW_NAMESPACE, QueryFilter.Field.FLOW_ID,
+            QueryFilter.Field.EXECUTION_ID, QueryFilter.Field.TASK_ID, QueryFilter.Field.CREATED
         );
+        // the shipper filters on the flow namespace with STARTS_WITH; an unsupported op only fails at query time
+        assertThat(QueryFilter.Field.FLOW_NAMESPACE.supportedOp()).contains(QueryFilter.Op.STARTS_WITH, QueryFilter.Op.PREFIX);
         assertThat(QueryFilter.Resource.ASSET.supportedField()).contains(QueryFilter.Field.PARENT_ID);
     }
 

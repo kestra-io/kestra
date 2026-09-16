@@ -20,6 +20,20 @@
                     tabExecution="logs"
                     :executionId="taskRun.outputs.executionId"
                 />
+                <KsDropdownItem
+                    v-if="isLoop"
+                    :icon="Repeat"
+                    @click="router.push({
+                        name: 'executions/list',
+                        query: {
+                            'filters[parentId][EQUALS]': execution.id,
+                            'filters[kind][EQUALS]': 'LOOP',
+                            'filters[taskId][EQUALS]': taskRun.taskId,
+                        },
+                    })"
+                >
+                    {{ $t("iterations") }}
+                </KsDropdownItem>
 
                 <template v-if="!(taskRuns && taskRuns.length > 1)">
                     <Metrics :taskRun="taskRun" :execution="execution" />
@@ -99,16 +113,18 @@
 <script setup lang="ts">
     import {computed} from "vue"
     import {useI18n} from "vue-i18n"
-    import {useRoute} from "vue-router"
+    import {useRoute, useRouter} from "vue-router"
 
     import DotsVertical from "vue-material-design-icons/DotsVertical.vue"
     import Copy from "vue-material-design-icons/ContentCopy.vue"
     import Delete from "vue-material-design-icons/Delete.vue"
     import Download from "vue-material-design-icons/Download.vue"
+    import Repeat from "vue-material-design-icons/Repeat.vue"
 
     import {State} from "@kestra-io/design-system"
 
     import * as Utils from "../../utils/utils"
+    import {findTaskById} from "../../utils/flowUtils"
     import {useToast} from "../../utils/toast"
     import resource from "../../models/resource"
     import action from "../../models/action"
@@ -131,6 +147,7 @@
         taskRuns?: any[]
         execution: any
         flow?: any
+        taskType?: string
         attemptIndex?: number
         forcedAttemptNumber?: number
         attemptLogs?: any[]
@@ -150,6 +167,7 @@
 
     const {t} = useI18n()
     const route = useRoute()
+    const router = useRouter()
     const toast = useToast()
     const miscStore = useMiscStore()
     const coreStore = useCoreStore()
@@ -166,6 +184,7 @@
     const selectedAttempt = computed(() => attempts(props.taskRun)[props.attemptIndex ?? 0])
 
     const isSubflow = computed<boolean>(() => props.taskRun?.outputs?.executionId)
+    const isLoop = computed(() => (props.taskType ?? findTaskById(props.flow, props.taskRun.taskId)?.type) === "io.kestra.plugin.core.flow.Loop")
 
     const hasWorkerId = computed<boolean | null>(() =>
         props.taskRun.attempts?.find((attempt: any) => attempt.workerId !== null) !== null,

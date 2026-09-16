@@ -377,6 +377,9 @@
         selectedTrigger?: SelectedTrigger;
         mode?: "flat" | "wizard";
         formGroups?: Record<string, {displayName?: string; description?: string}>;
+        // Labels the execution will be created with, as `key:value`. Inputs are rendered against them,
+        // so an expression or a default can read a label the caller already knows.
+        renderLabels?: string[];
     }>(), {
         executeClicked: false,
         initialInputs: () => [],
@@ -385,6 +388,7 @@
         selectedTrigger: undefined,
         mode: "flat",
         formGroups: undefined,
+        renderLabels: undefined,
     })
 
     const emit = defineEmits<{
@@ -737,7 +741,7 @@
         const run = async (): Promise<void> => {
             if (props.flow !== undefined) {
                 const options = {namespace: props.flow.namespace, id: props.flow.id}
-                const data = await executionsStore.validateExecution({...options, formData})
+                const data = await executionsStore.validateExecution({...options, formData, labels: props.renderLabels})
 
                 metadataCallback(data)
             } else if (props.execution !== undefined) {

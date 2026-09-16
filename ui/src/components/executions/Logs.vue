@@ -279,6 +279,7 @@
     const preservedLogScrollPositions = new Map<string, number>()
     let pendingLogScrollPositions = new Map<string, number>()
     let fullscreenTransition = false
+    let clearPendingAfterRestore = false
     const logsTarget = computed(() =>
         fullscreenModalOpen.value
             ? fullscreenLogsTarget.value ?? inlineLogsTarget.value
@@ -287,6 +288,7 @@
 
     watch(fullscreenModalOpen, () => {
         fullscreenTransition = true
+        clearPendingAfterRestore = false
         pendingLogScrollPositions = new Map(preservedLogScrollPositions)
         restoreLogScroll()
     }, {flush: "sync"})
@@ -579,25 +581,39 @@
 
     function restoreLogScroll() {
         if (!pendingLogScrollPositions.size) return
-        nextTick(() => {
-            const target = fullscreenModalOpen.value ? fullscreenLogsTarget.value : inlineLogsTarget.value
-            for (const scroller of target?.querySelectorAll<HTMLElement>("[data-scroll-key]") ?? []) {
-                const key = scroller.dataset.scrollKey!
-                const scrollTop = pendingLogScrollPositions.get(key)
-                if (scrollTop === undefined || !scroller.clientHeight) continue
-                const maxScrollTop = scroller.scrollHeight - scroller.clientHeight
-                const position = Math.min(scrollTop, maxScrollTop)
-                scroller.scrollTop = position
-                if (scrollTop <= maxScrollTop && Math.abs(scroller.scrollTop - scrollTop) <= 1) {
-                    if (maxScrollTop > 0) preservedLogScrollPositions.set(key, scroller.scrollTop)
-                    if (!fullscreenTransition) pendingLogScrollPositions.delete(key)
-                }
+        nextTick(applyPendingLogScrollPositions)
+    }
+
+    function applyPendingLogScrollPositions() {
+        const target = fullscreenModalOpen.value ? fullscreenLogsTarget.value : inlineLogsTarget.value
+        let visibleScrollersReady = true
+        for (const scroller of target?.querySelectorAll<HTMLElement>("[data-scroll-key]") ?? []) {
+            const key = scroller.dataset.scrollKey!
+            const scrollTop = pendingLogScrollPositions.get(key)
+            if (scrollTop === undefined) continue
+            if (!scroller.clientHeight) {
+                visibleScrollersReady = false
+                continue
             }
-        })
+            const maxScrollTop = scroller.scrollHeight - scroller.clientHeight
+            const position = Math.min(scrollTop, maxScrollTop)
+            scroller.scrollTop = position
+            if (scrollTop <= maxScrollTop && Math.abs(scroller.scrollTop - scrollTop) <= 1) {
+                if (maxScrollTop > 0) preservedLogScrollPositions.set(key, scroller.scrollTop)
+                if (!fullscreenTransition) pendingLogScrollPositions.delete(key)
+            } else {
+                visibleScrollersReady = false
+            }
+        }
+        if (clearPendingAfterRestore && visibleScrollersReady) {
+            pendingLogScrollPositions.clear()
+            clearPendingAfterRestore = false
+        }
     }
 
     function finishLogScrollRestore() {
         fullscreenTransition = false
+        clearPendingAfterRestore = true
         restoreLogScroll()
     }
 

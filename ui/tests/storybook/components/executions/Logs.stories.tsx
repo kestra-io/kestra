@@ -110,6 +110,27 @@ const COMPACT_LOGS = COMPACT_EXECUTION.taskRunList.flatMap(taskRun =>
     })),
 );
 
+const VIRTUALIZED_EXECUTION = {
+    ...FAKE_EXECUTION,
+    taskRunList: Array.from({length: 10}, (_, index) => ({
+        ...FAKE_EXECUTION.taskRunList[0],
+        id: `virtual-task-run-${index + 1}`,
+        taskId: `virtual-task-${index + 1}`,
+    })),
+};
+
+const VIRTUALIZED_LOGS = VIRTUALIZED_EXECUTION.taskRunList.flatMap(taskRun =>
+    Array.from({length: 50}, (_, index) => ({
+        ...BASE,
+        taskRunId: taskRun.id,
+        taskId: taskRun.taskId,
+        index,
+        level: "WARN",
+        timestamp: new Date(Date.UTC(2025, 0, 1, 0, 0, 0, index)).toISOString(),
+        message: `${taskRun.taskId} entry ${index}`,
+    })),
+);
+
 const COMPACT_FILTERS = new URLSearchParams({
     "filters[level][GREATER_THAN_OR_EQUAL_TO]": "INFO",
     "filters[taskId][STARTS_WITH]": "task-",
@@ -211,6 +232,14 @@ export const Fullscreen: Story = {
     },
 };
 
+async function scrollToBottom(scroller: HTMLElement) {
+    for (let frame = 0; frame < 3; frame++) {
+        scroller.scrollTop = scroller.scrollHeight;
+        scroller.dispatchEvent(new Event("scroll"));
+        await new Promise<void>(resolve => requestAnimationFrame(() => resolve()));
+    }
+}
+
 function compactFullscreenPlay(lastTaskId = "task-3") {
     return async ({canvasElement}: {canvasElement: HTMLElement}) => {
         const iframeBody = canvasElement.ownerDocument.body;
@@ -272,19 +301,23 @@ function compactFullscreenPlay(lastTaskId = "task-3") {
         await waitFor(() => expect(dialog).toBeVisible());
 
         const taskScroller = dialog.querySelector<HTMLElement>("[data-test='task-run-scroller']")!;
+        await scrollToBottom(taskScroller);
         const lastScroller = await waitFor(() => {
-            taskScroller.scrollTop = taskScroller.scrollHeight;
             const element = dialog.querySelector<HTMLElement>(`[data-scroll-key='${lastTaskId.replace("task-", "task-run-")}']`);
-            if (!element || !element.clientHeight) throw new Error("last task log scroller not ready");
+            if (!element || !element.clientHeight || element.scrollHeight < 40000) throw new Error("last task log scroller not ready");
             return element;
         });
+        await scrollToBottom(lastScroller);
+        await scrollToBottom(taskScroller);
+        await scrollToBottom(lastScroller);
         await waitFor(() => {
-            lastScroller.scrollTop = lastScroller.scrollHeight;
-            taskScroller.scrollTop = taskScroller.scrollHeight;
-            const tail = within(lastScroller).getByText(`${lastTaskId} entry 1699`);
-            const bounds = tail.getBoundingClientRect();
-            expect(bounds.top).toBeGreaterThanOrEqual(lastScroller.getBoundingClientRect().top);
-            expect(bounds.bottom).toBeLessThanOrEqual(dialog.getBoundingClientRect().bottom);
+            const scrollerBounds = lastScroller.getBoundingClientRect();
+            const dialogBounds = dialog.getBoundingClientRect();
+            const visibleTail = within(lastScroller).getAllByText(`${lastTaskId} entry 1699`).find(element => {
+                const bounds = element.getBoundingClientRect();
+                return bounds.top >= scrollerBounds.top && bounds.bottom <= dialogBounds.bottom;
+            });
+            expect(visibleTail).toBeDefined();
         });
         expect(within(dialog).queryAllByText(/^task-\d entry \d+$/).length).toBeLessThan(300);
     };
@@ -310,6 +343,50 @@ export const CompactFullscreenSingleTask: Story = {
     parameters: CompactFullscreen.parameters,
     decorators: makeDecorators(false, COMPACT_LOGS.slice(0, 1700), {...COMPACT_EXECUTION, taskRunList: COMPACT_EXECUTION.taskRunList.slice(0, 1)}),
     play: compactFullscreenPlay("task-1"),
+};
+
+export const CompactFullscreenVirtualizedTasks: Story = {
+    parameters: CompactFullscreen.parameters,
+    decorators: makeDecorators(false, VIRTUALIZED_LOGS, VIRTUALIZED_EXECUTION),
+    play: async ({canvasElement}: {canvasElement: HTMLElement}) => {
+        const iframeBody = canvasElement.ownerDocument.body;
+        const fullscreenButton = canvasElement.querySelector<HTMLButtonElement>("[data-test='logs-fullscreen-toggle']")!;
+        await userEvent.click(fullscreenButton);
+        const dialog = await waitFor(() => {
+            const element = iframeBody.querySelector<HTMLElement>("[data-test='logs-fullscreen-dialog']");
+            if (!element) throw new Error("fullscreen dialog not ready");
+            expect(element).toBeVisible();
+            return element;
+        });
+        const firstTaskScroller = await waitFor(() => {
+            const element = dialog.querySelector<HTMLElement>("[data-scroll-key='virtual-task-run-1']");
+            if (!element || element.scrollHeight <= element.clientHeight) throw new Error("first task log scroller not ready");
+            return element;
+        });
+        firstTaskScroller.scrollTop = 100;
+        firstTaskScroller.dispatchEvent(new Event("scroll"));
+
+        const taskScroller = dialog.querySelector<HTMLElement>("[data-test='task-run-scroller']")!;
+        await scrollToBottom(taskScroller);
+        await waitFor(() => expect(dialog.querySelector("[data-scroll-key='virtual-task-run-1']")).not.toBeVisible());
+
+        await userEvent.click(within(dialog).getByRole("button", {name: /exit fullscreen/i}));
+        await waitFor(() => expect(dialog).not.toBeVisible());
+        await userEvent.click(fullscreenButton);
+        await waitFor(() => expect(dialog).toBeVisible());
+        const fullscreenTaskScroller = dialog.querySelector<HTMLElement>("[data-test='task-run-scroller']")!;
+        fullscreenTaskScroller.scrollTop = 0;
+        fullscreenTaskScroller.dispatchEvent(new Event("scroll"));
+        const recycledFirstTaskScroller = await waitFor(() => {
+            const element = dialog.querySelector<HTMLElement>("[data-scroll-key='virtual-task-run-1']");
+            if (!element) throw new Error("recycled first task log scroller not ready");
+            return element;
+        });
+        recycledFirstTaskScroller.scrollTop = 50;
+        recycledFirstTaskScroller.dispatchEvent(new Event("scroll"));
+        await new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
+        expect(Math.abs(recycledFirstTaskScroller.scrollTop - 50)).toBeLessThan(2);
+    },
 };
 
 /**

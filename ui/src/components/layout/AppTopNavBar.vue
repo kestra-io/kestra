@@ -40,7 +40,8 @@
                 class="copilot-button"
                 :class="{'is-open': isCopilotOpen}"
                 data-testid="topnav-copilot-button"
-                :ariaLabel="$t('ai.copilot.title')"
+                :tooltip="$t('ai.copilot.title')"
+                placement="bottom"
                 :aria-pressed="isCopilotOpen"
                 @click="toggleCopilot"
             >
@@ -220,7 +221,10 @@
         flex-shrink: 0;
         color: var(--ks-icon-muted);
 
-        &.is-open {
+        // :hover is covered so this matches KsIconButton's own hover rule on specificity; without it
+        // the open state is repainted while the pointer is on the button.
+        &.is-open,
+        &.is-open:hover {
             color: var(--ks-text-link);
         }
 

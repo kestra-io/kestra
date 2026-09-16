@@ -24,7 +24,7 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, onMounted, getCurrentInstance} from "vue"
+    import {ref, computed, onMounted} from "vue"
     import {useI18n} from "vue-i18n"
     import escape from "lodash/escape"
     import Play from "vue-material-design-icons/Play.vue"
@@ -52,9 +52,6 @@
     const executionsStore = useExecutionsStore()
     const authStore = useAuthStore()
     const toast = useToast()
-    const instance = getCurrentInstance()
-    // FIXME: any - $moment is registered as a global property via Vue plugin
-    const $moment = instance?.appContext.config.globalProperties.$moment as any // FIXME: any
 
     const inputs = ref<Record<string, unknown>>({})
     const isDrawerOpen = ref(false)
@@ -106,7 +103,7 @@
                     return false
                 }
 
-                const formData = inputsToFormData({$moment} as any, inputsList.value, inputs.value) // FIXME: any
+                const formData = inputsToFormData(inputsList.value, inputs.value)
                 resume(formData)
             })
         }

@@ -97,8 +97,11 @@ Reject (or ask to fix) anything that:
 
 - No hardcoded user-facing strings. Always go through i18n.
 - **In `<template>`, always use the global `$t(...)`** — never the `t` from `useI18n()`. Only call `useI18n()` (`const {t} = useI18n()`) when you need `t` in `<script>` (computed labels, toasts, etc.); if a component needs i18n **only** in its template, use `$t` and don't import `useI18n` at all.
-- Use `<i18n-t>` for plurals and interpolation — never string-concatenate.
+- Pass plurals and interpolation as named arguments to `$t(...)`, never string-concatenate. `<i18n-t>` is not used, and `tests/unit/i18n/i18nGuard.spec.ts` fails on it.
+- A string that embeds a component (`router-link`, `KsId`) renders through `splitTranslation(t, key, slot)` from `src/utils/splitTranslation`, which returns the text on each side of the placeholder. Keep the two halves and the component on one physical line: Vue turns a line break between an interpolation and an element into a space.
+- A string that embeds static markup (a `<code>` fragment) passes the markup as a named argument and renders with `v-html`.
 - Format dates and times via `dateUtils` (which respects `TIMEZONE_STORAGE_KEY` and `DATE_FORMAT_STORAGE_KEY`); format durations via `durationUtils.humanDuration()`. Don't reach for `Intl.DateTimeFormat` directly.
+- Date arithmetic goes through the `dayjs` re-exported by the design system. `dayjs` objects are **immutable**, so `d.add(1, "day")` returns a new instance and mutating idioms (`cursor.add(...)` in a loop) silently no-op — reassign instead. Parse untrusted input with `dateUtils.parseIso()`: bare `dayjs()` happily reads an epoch number or a bare year as a date.
 - Strings owned by a `Ks*` component live in the design system's locale files and are registered via `registerDesignSystemI18n`. Strings owned by a feature live in that feature's locale files.
 
 ### Loading, empty, and error states
@@ -444,15 +447,15 @@ If your `<style>` block needs to exist:
 
 - `State`, `STATES`, `LOG_LEVELS` — execution state constants, icons, and colors
 - `cssVar(name, opacity?)` — read a `--ks-*` CSS custom property at runtime (use this in JS / chart configs instead of hardcoding hex)
-- `dateUtils` — `dateFilter()`, `DATE_FORMAT_STORAGE_KEY`, `TIMEZONE_STORAGE_KEY`
-- `durationUtils` — `duration()`, `humanDuration()` — ISO 8601 ↔ ms and human-readable
+- `dayjs` — the one configured dayjs instance (utc, timezone, duration, calendar, isoWeek, localizedFormat, minMax, relativeTime, weekOfYear, isSameOrBefore). Never `import dayjs from "dayjs"` in feature code: plugins are registered on this instance, so a bare import silently lacks them
+- `dateUtils` — `dateFilter()`, `parseIso()`, `toIsoKeepOffset()`, `currentTimezone()`, `timezonesWithOffset()`, `currentLocale()`, `setLocale()`, `DATE_FORMAT_STORAGE_KEY`, `TIMEZONE_STORAGE_KEY`
+- `durationUtils` — `duration()`, `isValidDuration()`, `humanDuration()` — ISO 8601 ↔ ms and human-readable
 - `stringUtils` — `afterLastDot()`
 - `fileUtils` — `isFileUri()`, `fileName()`, `fileExtension()`, `fileIcon()` — storage-URI detection and the file symbol used by `KsFileTag`
 - `flowYamlUtils` — YAML parsing / manipulation for flow definitions
 - `Comparators` — enum of filter comparison operators
 - Filter helpers — `decodeSearchParams()`, `encodeFiltersToQuery()`, `getUniqueFilters()`, etc.
 - `applyDefaultFilters()`, `useRouteFilterPolicy()` — filter composables
-- `setMomentInstance()`, `setDateFormatter()` — date library configuration
 - `designSystemLocale`, `setDesignSystemLocale`, `registerDesignSystemI18n` — i18n
 - `designSystemI18nReady()` — the locale registration the plugin's `install` started, to await instead of leaving it in flight (the unit setup awaits it after each test)
 

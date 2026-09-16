@@ -19,20 +19,20 @@ const mountChip = (scope: any) =>
     mount(CopilotContextChip, {props: {scope}, global: {plugins: [i18n], stubs: {KsTag, KsIcon, KsId}}})
 
 const ids = (w: ReturnType<typeof mountChip>) => w.findAll("code.ks-id").map((c) => c.text())
+const pillText = (w: ReturnType<typeof mountChip>, part: string) => w.get(`[data-test="copilot-context-${part}"]`).find("span").text()
 
 describe("CopilotContextChip", () => {
     it("renders a flow scope as a Flow pill + a Namespace pill, values as code tokens", () => {
         const w = mountChip({kind: "FLOW", namespace: "company.team", flowId: "my-flow"})
-        expect(w.text()).toContain("Flow:")
-        expect(w.text()).toContain("Namespace:")
-        expect(w.find("[data-test=\"copilot-context-flowId\"]").exists()).toBe(true)
+        expect(pillText(w, "flowId")).toBe("Flow: my-flow")
+        expect(pillText(w, "namespace")).toBe("Namespace: company.team")
         // The resource comes first, its namespace second — each value a KsId code token.
         expect(ids(w)).toEqual(["my-flow", "company.team"])
     })
 
     it("renders an execution scope as an Execution pill + a Namespace pill", () => {
         const w = mountChip({kind: "EXECUTION", namespace: "company.team", flowId: "my-flow", executionId: "exec-1"})
-        expect(w.text()).toContain("Execution:")
+        expect(pillText(w, "executionId")).toBe("Execution: exec-1")
         expect(ids(w)).toEqual(["exec-1", "company.team"])
     })
 

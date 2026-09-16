@@ -20,41 +20,55 @@
                 {{ $t("download") }}
             </KsButton>
         </div>
-        <KsEditor
-            v-else
-            v-bind="editorBindings"
-            id="flowFileEditorTab"
-            ref="editorRefElement"
-            class="flex-1"
-            :modelValue="previewSource ?? source"
-            :original="previewSource ? source : undefined"
-            :schemaType="flow ? 'flow': undefined"
-            :lang="lang"
-            :navbar="false"
-            :readOnly="flow && (flowStore.isReadOnly || previewSource !== undefined)"
-            :path="path"
-            :options="{
-                creating: isCreating,
-                diffOverviewBar: false,
-                scrollKey: editorScrollKey,
-                diffSideBySide: false,
-                editor: {padding: {top: 16}},
-            }"
-            @update:model-value="editorUpdate"
-            @cursor="updatePluginDocumentation"
-            @editorMounted="onEditorMounted"
-            @save="flow ? saveFlowYaml(): saveFileContent()"
-            @execute="execute"
-            @mouse-move="(e) => highlightHoveredTask(e.target?.position?.lineNumber)"
-            @mouse-leave="() => highlightHoveredTask(-1)"
-        >
-            <template #absolute>
-                <ContentSave v-if="!flow" :class="{'save-disabled': !isDirty}" @click="isDirty && saveFileContent()" />
-            </template>
-            <template v-if="playgroundStore.enabled" #widget-content>
-                <PlaygroundRunTaskButton :taskId="highlightedLines?.taskId" />
-            </template>
-        </KsEditor>
+        <template v-else>
+            <!-- The editor is forced read-only while a Copilot diff is mirrored in (below) — explain
+                 why and offer a way out, so the lock never reads as a dead end (kestra-io/kestra#19330
+                 review). -->
+            <div v-if="previewSource !== undefined" class="preview-banner" data-test="flow-preview-banner">
+                <KsAlert type="info" :closable="false">
+                    <div class="preview-banner-body">
+                        <span>{{ $t("ai.copilot.draft.previewBanner") }}</span>
+                        <KsButton size="small" data-test="flow-preview-dismiss" @click="flowStore.declinePreview?.()">
+                            {{ $t("ai.copilot.draft.dismiss") }}
+                        </KsButton>
+                    </div>
+                </KsAlert>
+            </div>
+            <KsEditor
+                v-bind="editorBindings"
+                id="flowFileEditorTab"
+                ref="editorRefElement"
+                class="flex-1"
+                :modelValue="previewSource ?? source"
+                :original="previewSource ? source : undefined"
+                :schemaType="flow ? 'flow': undefined"
+                :lang="lang"
+                :navbar="false"
+                :readOnly="flow && (flowStore.isReadOnly || previewSource !== undefined)"
+                :path="path"
+                :options="{
+                    creating: isCreating,
+                    diffOverviewBar: false,
+                    scrollKey: editorScrollKey,
+                    diffSideBySide: false,
+                    editor: {padding: {top: 16}},
+                }"
+                @update:model-value="editorUpdate"
+                @cursor="updatePluginDocumentation"
+                @editorMounted="onEditorMounted"
+                @save="flow ? saveFlowYaml(): saveFileContent()"
+                @execute="execute"
+                @mouse-move="(e) => highlightHoveredTask(e.target?.position?.lineNumber)"
+                @mouse-leave="() => highlightHoveredTask(-1)"
+            >
+                <template #absolute>
+                    <ContentSave v-if="!flow" :class="{'save-disabled': !isDirty}" @click="isDirty && saveFileContent()" />
+                </template>
+                <template v-if="playgroundStore.enabled" #widget-content>
+                    <PlaygroundRunTaskButton :taskId="highlightedLines?.taskId" />
+                </template>
+            </KsEditor>
+        </template>
     </div>
 </template>
 
@@ -417,6 +431,21 @@
 <style scoped lang="scss">
     .image-preview {
         margin: 2rem;
+    }
+
+    .preview-banner {
+        flex-shrink: 0;
+    }
+
+    .preview-banner-body {
+        display: flex;
+        width: 100%;
+        align-items: center;
+        gap: var(--ks-spacing-3);
+    }
+
+    .preview-banner-body > span {
+        flex: 1;
     }
 
     .big-file-warning {

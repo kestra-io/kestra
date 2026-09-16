@@ -1,5 +1,5 @@
 import {afterEach, beforeEach, describe, expect, it} from "vitest"
-import moment from "moment-timezone"
+import {dayjs} from "@kestra-io/design-system"
 import {date, humanizeNumber} from "../../../src/utils/filters"
 import {storageKeys} from "../../../src/utils/constants"
 
@@ -44,7 +44,7 @@ describe("date", () => {
     // The Gantt scale divides a time span into tick timestamps, so it has epoch millis rather
     // than a string. Pre-serialising those with toISOString() threw on a non-finite value.
     it.each([
-        ["an epoch millisecond timestamp", moment(INSTANT).valueOf()],
+        ["an epoch millisecond timestamp", dayjs(INSTANT).valueOf()],
         ["a Date", new Date(INSTANT)],
         ["an ISO string", INSTANT],
     ])("accepts %s", (_label, value) => {
@@ -60,7 +60,7 @@ describe("date", () => {
         ["-Infinity", -Infinity],
     ])("degrades to a placeholder for %s instead of throwing", (_label, value) => {
         expect(() => date(value, "HH:mm:ss")).not.toThrow()
-        expect(date(value, "HH:mm:ss")).toBe("Invalid date")
+        expect(date(value, "HH:mm:ss")).toBe("Invalid Date")
     })
 
     it("resolves the \"iso\" sentinel to a full timestamp", () => {

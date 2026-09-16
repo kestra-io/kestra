@@ -35,11 +35,10 @@
     import {computed, ref, watch} from "vue"
     import {useRoute} from "vue-router"
 
-    import moment from "moment"
     import {use, graphic} from "echarts/core"
     import {BarChart, LineChart} from "echarts/charts"
     import {useBreakpoints, breakpointsElement} from "@vueuse/core"
-    import {KsEchart, KsSkeleton, TooltipType, cssVar, durationUtils} from "@kestra-io/design-system"
+    import {KsEchart, KsSkeleton, TooltipType, cssVar, dateUtils, dayjs, durationUtils} from "@kestra-io/design-system"
 
     import {Chart, useChartGenerator} from "../composables/useDashboards"
     import {DASHBOARD_CHART_MAX_PIXEL_RATIO, fillTimeBucketLabels, getConsistentHEXColor, useLegendToggle, type EchartsParams} from "../composables/charts"
@@ -141,7 +140,7 @@
     })
 
     const parseValue = (value: unknown): unknown => {
-        const date = moment(value as moment.MomentInput, moment.ISO_8601, true)
+        const date = dateUtils.parseIso(value)
         return date.isValid() ? date.format(grouping.value.format) : value
     }
 
@@ -408,21 +407,21 @@
     })
 
     // The row's date is already the boundary the backend truncated to: re-snapping it with `startOf`
-    // would re-anchor the window to the browser's calendar and to moment's Sunday-based week.
+    // would re-anchor the window to the browser's calendar and to dayjs's Sunday-based week.
     function bucketDateRange(dataIndex: number): {startDate: string; endDate: string} | undefined {
         const label = parsedData.value.labels[dataIndex]
         const column = chartOptions?.column ?? ""
 
         const dates = generated.value?.results
-            ?.map((row) => moment(row[column] as moment.MomentInput, moment.ISO_8601, true))
+            ?.map((row) => dateUtils.parseIso(row[column]))
             .filter((date) => date.isValid() && date.format(grouping.value.format) === label) ?? []
         if (!dates.length) return undefined
 
-        const bucket = moment.min(dates)
+        const bucket = dayjs.min(dates)!
 
         return {
             startDate: bucket.toISOString(),
-            endDate: bucket.clone().add(1, grouping.value.unit).subtract(1, "millisecond").toISOString(),
+            endDate: bucket.add(1, grouping.value.unit).subtract(1, "millisecond").toISOString(),
         }
     }
 

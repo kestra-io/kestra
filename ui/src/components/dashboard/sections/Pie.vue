@@ -36,8 +36,7 @@
     import {computed, ref, watch} from "vue"
     import {useRoute} from "vue-router"
 
-    import moment from "moment"
-    import {KsPie, KsSkeleton, ChartFeature, TooltipType, durationUtils, type KsChartSeriesItem} from "@kestra-io/design-system"
+    import {KsPie, KsSkeleton, ChartFeature, TooltipType, dateUtils, durationUtils, type KsChartSeriesItem} from "@kestra-io/design-system"
 
     import {Chart, useChartGenerator} from "../composables/useDashboards"
     import {DASHBOARD_CHART_MAX_PIXEL_RATIO, getConsistentHEXColor, type EchartsParams} from "../composables/charts"
@@ -79,7 +78,7 @@
     const {data: generated, loading, generate} = useChartGenerator(props.dashboardId, props)
 
     function parseValue(value: unknown): string {
-        const date = moment(value as moment.MomentInput, moment.ISO_8601, true)
+        const date = dateUtils.parseIso(value)
         return date.isValid() ? date.format("YYYY-MM-DD") : String(value)
     }
 

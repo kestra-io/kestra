@@ -11,7 +11,7 @@ writing feature code against this package.
 ## Peer dependencies
 
 The package ships no framework of its own: `vue`, `element-plus`, `vue-i18n`, `vue-router`,
-`vue-material-design-icons`, `moment`, `moment-timezone`, `echarts`, `monaco-editor`, `bootstrap`
+`vue-material-design-icons`, `echarts`, `monaco-editor`, `bootstrap`
 and `yaml` are peer dependencies, so the host app owns their versions. See `peerDependencies` in
 [`package.json`](package.json) for the supported ranges.
 

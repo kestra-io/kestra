@@ -1,17 +1,17 @@
-import moment from "moment-timezone"
+import {dateUtils, dayjs} from "@kestra-io/design-system"
 
 export function isPastScheduleDate(value: string | undefined | null, now: Date = new Date()): boolean {
     if (!value) {
         return false
     }
 
-    const parsed = moment(value)
+    const parsed = dayjs(value)
 
     return parsed.isValid() && parsed.valueOf() < now.getTime()
 }
 
 export function isScheduleDayDisabled(day: Date, now: Date = new Date()): boolean {
-    return moment(day).startOf("day").isBefore(moment(now).startOf("day"))
+    return dayjs(day).startOf("day").isBefore(dayjs(now).startOf("day"))
 }
 
 export function buildScheduleDateParam(value: string | undefined | null, timezone: string): string | undefined {
@@ -19,5 +19,5 @@ export function buildScheduleDateParam(value: string | undefined | null, timezon
         return undefined
     }
 
-    return moment(value).tz(timezone).toISOString(true)
+    return dateUtils.toIsoKeepOffset(dayjs(value).tz(timezone))
 }

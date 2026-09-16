@@ -309,7 +309,7 @@
 <script setup lang="ts">
     import {computed, reactive, ref, watch, onMounted, onBeforeUnmount} from "vue"
     import {useI18n} from "vue-i18n"
-    import moment from "moment-timezone"
+    import {dateUtils, dayjs} from "@kestra-io/design-system"
     import useRouteContext from "../../composables/useRouteContext"
     import {useToast} from "../../utils/toast"
     import {date as dateFilter} from "../../utils/filters"
@@ -398,7 +398,7 @@
         autofoldTextEditor: localStorage.getItem("autofoldTextEditor") === "true",
         hoverTextEditor: localStorage.getItem("hoverTextEditor") === "true",
         lang: Utils.getLang(),
-        timezone: localStorage.getItem(storageKeys.TIMEZONE_STORAGE_KEY) || moment.tz.guess(),
+        timezone: dateUtils.currentTimezone(),
         dateFormat: localStorage.getItem(storageKeys.DATE_FORMAT_STORAGE_KEY) || "llll",
         editorPlayground: localStorage.getItem("editorPlayground") !== "false",
         envName: layoutStore.envName || miscStore.configs?.environment?.name,
@@ -410,17 +410,10 @@
         !layoutStore.envName && !!miscStore.configs?.environment?.name,
     )
 
-    const zonesWithOffset = moment.tz.names().map((zone) => {
-        const timezoneMoment = moment.tz(zone)
-        return {
-            zone,
-            offset: timezoneMoment.utcOffset(),
-            formattedOffset: timezoneMoment.format("Z"),
-        }
-    }).sort((a, b) => a.offset - b.offset)
+    const zonesWithOffset = dateUtils.timezonesWithOffset(settings.timezone)
 
-    const now = moment()
-    const localeKey = moment.locale()
+    const now = dayjs()
+    const localeKey = dateUtils.currentLocale()
 
     const formatDate = (format: string) => dateFilter(now.toISOString(), format)
 

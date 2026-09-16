@@ -17,6 +17,7 @@ describe("exportGeometry", () => {
             width: 400 + 2 * EXPORT_PADDING,
             height: 300 + 2 * EXPORT_PADDING,
             pixelRatio: 2,
+            zoom: 1,
             transform: `translate(${EXPORT_PADDING + 50}px, ${EXPORT_PADDING - 20}px) scale(1)`,
         })
     })
@@ -67,10 +68,50 @@ describe("untilNodesMeasured", () => {
 describe("useScreenshot", () => {
     let container: HTMLElement
     let pane: HTMLElement
+    let painted: {dots: number; fills: string[]; encodedAs: string[]}
+    let originalImage: typeof Image
+
+    // jsdom neither decodes an image nor draws on a canvas, so both are stood in for: the capture
+    // resolves at once, and the 2d context records what the composite asked it to paint.
+    function stubCanvasAndImage() {
+        painted = {dots: 0, fills: [], encodedAs: []}
+
+        originalImage = globalThis.Image
+        globalThis.Image = class {
+            onload: (() => void) | null = null
+            onerror: (() => void) | null = null
+            width = 200
+            height = 100
+            set src(_value: string) {
+                queueMicrotask(() => this.onload?.())
+            }
+        } as unknown as typeof Image
+
+        vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockImplementation(function (this: HTMLCanvasElement) {
+            return {
+                canvas: this,
+                set fillStyle(value: string) {
+                    painted.fills.push(value)
+                },
+                fillRect: vi.fn(),
+                beginPath: vi.fn(),
+                arc: () => {
+                    painted.dots += 1
+                },
+                fill: vi.fn(),
+                drawImage: vi.fn(),
+            } as unknown as CanvasRenderingContext2D
+        })
+        vi.spyOn(HTMLCanvasElement.prototype, "toDataURL").mockImplementation((type?: string) => {
+            painted.encodedAs.push(type ?? "image/png")
+            return `composited:${type}`
+        })
+    }
 
     beforeEach(() => {
         toPng.mockReset().mockResolvedValue("data:image/png;base64,png")
         toJpeg.mockReset().mockResolvedValue("data:image/jpeg;base64,jpeg")
+        stubCanvasAndImage()
 
         // Appended and removed on its own: the unit project shares one jsdom per worker, and
         // clearing the whole body would take Element Plus's popper container with it.
@@ -85,39 +126,55 @@ describe("useScreenshot", () => {
 
     afterEach(() => {
         container.remove()
+        globalThis.Image = originalImage
+        vi.restoreAllMocks()
     })
 
-    it("renders the whole graph off the transformed pane when bounds are given", async () => {
+    it("captures the whole graph off the transformed pane, transparent, and composites it", async () => {
         const {capture} = useScreenshot()
 
         const data = await capture(container, {type: "png", bounds: {x: 10, y: 20, width: 100, height: 50}})
 
-        expect(data).toBe("data:image/png;base64,png")
         expect(toPng).toHaveBeenCalledTimes(1)
         expect(toPng).toHaveBeenCalledWith(pane, {
             width: 100 + 2 * EXPORT_PADDING,
             height: 50 + 2 * EXPORT_PADDING,
             pixelRatio: 1,
-            backgroundColor: "rgb(1, 2, 3)",
+            // The ground is painted by the composite, so the capture itself carries none.
+            backgroundColor: undefined,
             style: {transform: `translate(${EXPORT_PADDING - 10}px, ${EXPORT_PADDING - 20}px) scale(1)`},
         })
+        expect(data).toBe("composited:image/png")
+        expect(painted.fills[0]).toBe("rgb(1, 2, 3)")
+        expect(painted.dots).toBeGreaterThan(0)
         expect(container.classList.contains("is-exporting")).toBe(false)
+    })
+
+    it("captures as png for a jpeg export, then re-encodes the composite as jpeg", async () => {
+        const {capture} = useScreenshot()
+
+        const data = await capture(container, {type: "jpeg", bounds: {x: 0, y: 0, width: 10, height: 10}})
+
+        expect(toJpeg).not.toHaveBeenCalled()
+        expect(toPng).toHaveBeenCalledTimes(1)
+        expect(painted.encodedAs).toEqual(["image/jpeg"])
+        expect(data).toBe("composited:image/jpeg")
     })
 
     it("keeps the caller's background colour and style over the derived ones", async () => {
         const {capture} = useScreenshot()
 
         await capture(container, {
-            type: "jpeg",
+            type: "png",
             bounds: {x: 0, y: 0, width: 10, height: 10},
             backgroundColor: "white",
             style: {opacity: "0.5"},
         })
 
-        expect(toJpeg).toHaveBeenCalledWith(pane, expect.objectContaining({
-            backgroundColor: "white",
+        expect(toPng).toHaveBeenCalledWith(pane, expect.objectContaining({
             style: {opacity: "0.5", transform: `translate(${EXPORT_PADDING}px, ${EXPORT_PADDING}px) scale(1)`},
         }))
+        expect(painted.fills[0]).toBe("white")
     })
 
     it("falls back to the on-screen container when the bounds are unusable", async () => {
@@ -130,6 +187,7 @@ describe("useScreenshot", () => {
         expect(toPng).toHaveBeenCalledTimes(2)
         expect(toPng).toHaveBeenNthCalledWith(1, container, {})
         expect(toPng).toHaveBeenNthCalledWith(2, container, {})
+        expect(painted.dots).toBe(0)
     })
 
     it("hides the interactive chrome while capturing and restores it afterwards", async () => {

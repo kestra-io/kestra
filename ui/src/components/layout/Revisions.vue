@@ -111,7 +111,7 @@
         />
 
         <div v-if="isLoadingRevisions" class="text-center p-4">
-            <span class="ml-2">Loading revisions...</span>
+            <span class="ml-2">{{ $t("loading") }}</span>
         </div>
     </div>
     <KsNoData

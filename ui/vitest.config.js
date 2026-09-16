@@ -82,7 +82,7 @@ export default defineConfig({
                 ],
                 test: {
                     name: "storybook",
-                    setupFiles: ["./.storybook/vitest.setup.js"],
+                    setupFiles: ["./.storybook/vitest.setup.ts"],
                     reporters: [
                         ["default"],
                         ["junit"],
@@ -126,7 +126,6 @@ export default defineConfig({
                 "**/*.d.ts",
                 "**/.storybook/**",
                 "storybook-static/**",
-                "stylelint.config.mjs",
             ],
         },
     },

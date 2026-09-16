@@ -100,7 +100,7 @@
     import type {Execution} from "../../stores/executions"
     import {date, humanizeDuration, humanizeNumber} from "../../utils/filters"
 
-    import {useTableColumns} from "../../composables/useTableColumns"
+    import {useTableColumns} from "@kestra-io/design-system"
 
     const {t} = useI18n()
 
@@ -200,6 +200,7 @@
     defineExpose({
         loadData,
         updateDisplayColumns,
+        displayColumns,
         reload: () => dataTable.value?.reload(),
     })
 </script>

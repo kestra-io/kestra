@@ -119,6 +119,29 @@ export async function walkTo(page: Page, targetId: string, direction: "down" | "
     expect(await ringId(page), `walkTo(${targetId}) never reached its target`).toBe(targetId)
 }
 
+// Open the command menu and activate its "Go to <section>" entry.
+//
+// Everything here is scoped to the menu itself. A page-wide getByText for the
+// section name can resolve to a block label on the canvas carrying the same
+// words — the card sits behind the overlay, which still looks visible to
+// Playwright — the same hazard pickTask documents for the insert picker.
+//
+// Activated by click rather than Enter: the same term also matches
+// "Insert <section>", and Enter takes whatever sorted first rather than the
+// entry the test asked for.
+export async function goToSectionViaPalette(page: Page, section: string) {
+    await page.keyboard.press("ControlOrMeta+Shift+p")
+    const menu = page.locator("[data-test='block-command-menu']")
+    await expect(menu).toBeVisible()
+
+    const input = menu.getByRole("textbox")
+    await expect(input).toBeFocused()
+    await input.fill(section)
+
+    await menu.getByText(`Go to ${section}`, {exact: true}).click()
+    await expect(menu).toBeHidden()
+}
+
 // Search the insert picker and confirm the named match. Confirms with a
 // click rather than Enter: the picker preselects whatever landed first in
 // the filtered list, which for a broad search term (e.g. "if" substring-

@@ -28,6 +28,7 @@ import io.kestra.core.utils.TestsUtils;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.HttpRequest;
+import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.client.annotation.Client;
@@ -460,6 +461,19 @@ class NamespaceFileControllerTest {
         InputStream inputStream = storageInterface.get(TENANT_ID, namespace, toNamespacedStorageUri(namespace, fileUri));
         String content = new String(inputStream.readAllBytes());
         assertThat(content).isEqualTo(expectedContent);
+    }
+
+    @Test
+    void shouldNotInjectContentDispositionParametersWhenNamespaceContainsAQuote() {
+        HttpResponse<byte[]> response = client.toBlocking().exchange(
+            HttpRequest.GET(URI.create("/api/v1/main/namespaces/foo%22bar/files/export")),
+            byte[].class
+        );
+
+        assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
+        assertThat(response.getHeaders().get("Content-Disposition"))
+            .isEqualTo("attachment; filename=\"foobar_files.zip\"; filename*=utf-8''foo%22bar_files.zip");
+        assertThat(response.getHeaders().get("Cache-Control")).isEqualTo("no-cache");
     }
 
     @Test

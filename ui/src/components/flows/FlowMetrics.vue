@@ -70,12 +70,11 @@
 <script setup lang="ts">
     import {ref, computed, watch} from "vue"
     import {useRoute, useRouter} from "vue-router"
-    import moment from "moment"
     import {useI18n} from "vue-i18n"
     import {useFlowStore} from "../../stores/flow"
     import {getFormat} from "../dashboard/composables/charts"
     import {date as dateFilter} from "../../utils/filters"
-    import {cssVar, KsBar, KsLine, KsSegmented} from "@kestra-io/design-system"
+    import {cssVar, dayjs, KsBar, KsLine, KsSegmented} from "@kestra-io/design-system"
     import type {KsChartSeriesItem} from "@kestra-io/design-system"
     import {KsFilter as KSFilter} from "@kestra-io/design-system"
     import {useFlowMetricFilter} from "../filter/configurations"
@@ -141,7 +140,7 @@
     })
 
     const displayedMetrics = computed(() => {
-        const metrics = (flowStore.metrics ?? []) as string[]
+        const metrics = flowStore.metrics ?? []
         if (selectedMetric.value) {
             return metrics.filter((m) => m === selectedMetric.value)
         }
@@ -154,15 +153,15 @@
     })
 
     // Distinguishes "this flow genuinely has no metrics" (info) from "your filter matched none of them"
-    const hasAnyMetrics = computed(() => ((flowStore.metrics as string[] | undefined)?.length ?? 0) > 0)
+    const hasAnyMetrics = computed(() => (flowStore.metrics?.length ?? 0) > 0)
 
     const filterTerm = computed(() => selectedMetric.value ?? selectedTextSearch.value ?? "")
 
     function getTimeRangeParams(): {startDate?: string; endDate?: string} {
         const timeRange = route.query["filters[timeRange][EQUALS]"] as string | undefined
         if (!timeRange) return {}
-        const endDate = moment().toISOString()
-        const startDate = moment().subtract(moment.duration(timeRange)).toISOString()
+        const endDate = dayjs().toISOString()
+        const startDate = dayjs().subtract(dayjs.duration(timeRange)).toISOString()
         return {startDate, endDate}
     }
 

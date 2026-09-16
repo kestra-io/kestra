@@ -5,6 +5,7 @@ export interface ColumnConfig {
     label: string;
     prop: string;
     default: boolean;
+    minWidth?: number;
     description?: string;
     condition?: () => boolean;
 }

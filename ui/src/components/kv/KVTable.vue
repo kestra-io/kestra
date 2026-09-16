@@ -158,7 +158,7 @@
         v-if="addKvDrawerVisible"
         v-model="addKvDrawerVisible"
         :title="kvModalTitle"
-        :beforeClose="beforeKvClose"
+        :dirty="isKvDirty"
     >
         <KsForm class="ks-horizontal" :model="kv" :rules="rules" ref="formRef">
             <KsFormItem v-if="namespace === undefined" :label="$t('namespace')" prop="namespace" required data-test="kv-namespace">
@@ -306,7 +306,6 @@
     import {routeQueryToQueryFilters} from "../../utils/queryFilters"
     import {date as formatDate} from "../../utils/filters"
     import {useEditorBindings} from "../../composables/useEditorBindings"
-    import {useDiscardGuard} from "../../composables/useDiscardGuard"
     import InheritedKVs from "./InheritedKVs.vue"
     import {formatKvValueForDisplay, hydrateKvValueForForm, serializeKvValueForSave} from "./kvValue"
     import TimeSelect from "../executions/date-select/TimeSelect.vue"
@@ -322,9 +321,8 @@
     import {useToast} from "../../utils/toast"
     import {storageKeys} from "../../utils/constants"
     import {useKvFilter} from "../filter/configurations"
-    import moment from "moment-timezone"
 
-    import {useTableColumns} from "../../composables/useTableColumns"
+    import {dateUtils, dayjs, useTableColumns} from "@kestra-io/design-system"
 
     import {useAuthStore} from "override/stores/auth"
     import {useNamespacesStore} from "override/stores/namespaces"
@@ -440,8 +438,7 @@
     const ttlTouched = ref(false)
 
     const kvBaseline = ref("")
-    const {guardedClose: guardKvClose} = useDiscardGuard(() => JSON.stringify(kv.value) !== kvBaseline.value)
-    const beforeKvClose = (done: () => void) => guardKvClose(() => done())
+    const isKvDirty = computed(() => JSON.stringify(kv.value) !== kvBaseline.value)
 
     const {t} = useI18n()
 
@@ -449,9 +446,9 @@
 
     const storageKey = storageKeys.DISPLAY_KV_COLUMNS
 
-    const TIMEZONE = localStorage.getItem(storageKeys.TIMEZONE_STORAGE_KEY) || Intl.DateTimeFormat().resolvedOptions().timeZone
+    const TIMEZONE = dateUtils.currentTimezone()
     const convertToUserTimezone = (date: string | Date) => {
-        return moment.utc(date).tz(TIMEZONE).toDate()
+        return dayjs.utc(date).tz(TIMEZONE).toDate()
     }
 
     const optionalColumns = computed(() => {
@@ -608,14 +605,14 @@
     }
 
     function remainingTtl(expirationDate: string): string | undefined {
-        const expiration = moment(expirationDate)
-        const now = moment()
+        const expiration = dayjs(expirationDate)
+        const now = dayjs()
 
         if (!expiration.isValid() || !expiration.isAfter(now)) {
             return undefined
         }
 
-        return moment.duration(Math.round(expiration.diff(now) / 1000) * 1000).toISOString()
+        return dayjs.duration(Math.round(expiration.diff(now) / 1000) * 1000).toISOString()
     }
 
     const currentExpiration = computed(() => {
@@ -623,9 +620,9 @@
             return undefined
         }
 
-        const expiration = moment(kv.value.expirationDate)
+        const expiration = dayjs(kv.value.expirationDate)
 
-        return expiration.isValid() && expiration.isAfter(moment()) ? formatDate(kv.value.expirationDate) : undefined
+        return expiration.isValid() && expiration.isAfter(dayjs()) ? formatDate(kv.value.expirationDate) : undefined
     })
 
     const viewKvDrawerVisible = ref(false)
@@ -633,7 +630,7 @@
 
     async function viewKvModal(entry: any) {
         const {type, value} = await namespacesStore.kv({namespace: entry.namespace, key: entry.key}) as {type: string, value: any}
-        const userTimezone = localStorage.getItem(storageKeys.TIMEZONE_STORAGE_KEY) || moment.tz.guess()
+        const userTimezone = dateUtils.currentTimezone()
         viewKv.value = {
             namespace: entry.namespace,
             key: entry.key,

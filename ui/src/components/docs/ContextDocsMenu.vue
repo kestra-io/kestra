@@ -34,7 +34,7 @@
                     </li>
                 </template>
                 <li v-else>
-                    Loading Menu...
+                    {{ $t("loading") }}
                 </li>
             </ul>
         </div>

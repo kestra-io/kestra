@@ -15,7 +15,7 @@
                 </div>
                 <div v-if="examples && examples.length > 0" class="examples-container">
                     <h6 class="examples-heading">
-                        Examples
+                        {{ $t("plugins.nav_examples") }}
                     </h6>
                     <div v-for="(example, idx) in examples" :key="idx" class="example-item">
                         <slot name="example" :example="example" />
@@ -107,12 +107,12 @@
                             <template #additionalButtonText>
                                 <KsIcon
                                     v-if="showDynamic && !isDynamic(property)"
-                                    tooltip="Non-dynamic"
+                                    :tooltip="$t('plugins.non_dynamic')"
                                     class="property-flag property-flag--info"
                                 >
                                     <Snowflake />
                                 </KsIcon>
-                                <KsTooltip v-if="property['$required']" content="Required">
+                                <KsTooltip v-if="property['$required']" :content="$t('plugins.required')">
                                     <span class="property-flag property-flag--required"> *</span>
                                 </KsTooltip>
                             </template>
@@ -121,14 +121,14 @@
                                     <span class="property-flags">
                                         <KsIcon
                                             v-if="property['$beta']"
-                                            tooltip="Beta"
+                                            :tooltip="$t('plugins.beta')"
                                             class="property-flag property-flag--warning"
                                         >
                                             <AlphaBBox />
                                         </KsIcon>
                                         <KsIcon
                                             v-if="property['$deprecated']"
-                                            tooltip="Deprecated"
+                                            :tooltip="$t('plugins.deprecated')"
                                             class="property-flag property-flag--warning"
                                         >
                                             <Alert />

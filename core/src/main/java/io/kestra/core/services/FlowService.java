@@ -1081,12 +1081,22 @@ public class FlowService {
      * @throws IllegalStateException if the requested flow is not executable.
      */
     public Flow getFlowIfExecutableOrThrow(final String tenant, final String namespace, final String id, final Optional<Integer> revision) {
-        // When no revision is specified we resolve to the latest non-draft revision: drafts are
+        if (revision.isPresent()) {
+            // For a specific revision, check if the flow has not been deleted: the deletion will only occur on the last revision.
+            Optional<Flow> latest = flowRepository.findByIdWithoutAcl(tenant, namespace, id, Optional.empty());
+            if (latest.isEmpty() || latest.get().isDeleted()) {
+                throw new NoSuchElementException("Requested Flow is not found.");
+            }
+        }
+
+        // When no revision is specified, we resolve to the latest non-draft revision: drafts are
         // only executable when the caller passes the revision explicitly.
         Optional<Flow> optional = revision.isPresent()
             ? flowRepository.findByIdWithoutAcl(tenant, namespace, id, revision)
             : flowRepository.findByIdForExecutionWithoutAcl(tenant, namespace, id);
-        if (optional.isEmpty()) {
+        // A delete appends a revision flagged deleted, so the tombstone is reachable only through
+        // an explicit revision; the no-revision lookup above already filters it out.
+        if (optional.isEmpty() || optional.get().isDeleted()) {
             throw new NoSuchElementException("Requested Flow is not found.");
         }
 

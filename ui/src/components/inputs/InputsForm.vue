@@ -332,7 +332,6 @@
 </template>
 
 <script setup lang="ts">
-    import moment from "moment-timezone"
     import {KsMessage, KsEditor} from "@kestra-io/design-system"
     import type {FormItemRule} from "@kestra-io/design-system"
     import ValidationError from "../flows/ValidationError.vue"
@@ -702,7 +701,7 @@
             return
         }
 
-        const formData = inputsToFormData({$moment: moment}, inputsMetaData.value, inputsValuesWithNoDefault.value)
+        const formData = inputsToFormData(inputsMetaData.value, inputsValuesWithNoDefault.value)
 
         const signature = formData ? formDataSignature(formData) : ""
 
@@ -738,12 +737,12 @@
         const run = async (): Promise<void> => {
             if (props.flow !== undefined) {
                 const options = {namespace: props.flow.namespace, id: props.flow.id}
-                const {data} = await executionsStore.validateExecution({...options, formData})
+                const data = await executionsStore.validateExecution({...options, formData})
 
                 metadataCallback(data)
             } else if (props.execution !== undefined) {
                 const options = {id: props.execution.id}
-                const {data} = await executionsStore.validateResume({...options, formData})
+                const data = await executionsStore.validateResume({...options, formData})
 
                 metadataCallback(data)
             } else {
@@ -777,7 +776,7 @@
         }
 
         if (validated) {
-            const latest = inputsToFormData({$moment: moment}, inputsMetaData.value, inputsValuesWithNoDefault.value)
+            const latest = inputsToFormData(inputsMetaData.value, inputsValuesWithNoDefault.value)
             const latestSignature = latest ? formDataSignature(latest) : ""
             if (latestSignature !== lastValidatedSignature) {
                 return validateInputs()

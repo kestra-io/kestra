@@ -264,9 +264,12 @@ export const usePluginsStore = defineStore("plugins", () => {
         return flowRootSchema.value?.properties
     })
     const allTypes = computed(() => {
-        return plugins.value?.flatMap(p => Object.entries(p))
+        const declared = plugins.value?.flatMap(p => Object.entries(p))
             ?.filter(([key, value]) => isEntryAPluginElementPredicate(key, value))
             ?.flatMap(([, value]) => (value as PluginElement[]).map(({cls}) => cls)) ?? []
+        // Aliases resolve to their canonical class server-side, so documentation and property
+        // completion have to accept them (kestra-io/kestra#19479).
+        return [...declared, ...(plugins.value?.flatMap(({aliases}) => aliases ?? []) ?? [])]
     })
     const deprecatedTypes = computed(() => {
         const deprecatedPlugins = plugins.value?.flatMap(p => Object.entries(p))

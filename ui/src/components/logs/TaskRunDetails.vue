@@ -31,7 +31,7 @@
                     class="attempt-wrapper"
                     shadow="never"
                     :class="{'attempt-wrapper--transparent': hideTaskHeader, 'fullscreen-attempt': fullHeight}"
-                    :bodyStyle="fullHeight ? {display: 'flex', flexDirection: 'column', flex: '1', minHeight: '0'} : undefined"
+                    :bodyStyle="fullHeight ? FULLSCREEN_CARD_BODY_STYLE : undefined"
                 >
                     <TaskRunLine
                         :currentTaskRun="currentTaskRun"
@@ -373,6 +373,13 @@
         "scroller-update": []
     }>()
 
+    const FULLSCREEN_CARD_BODY_STYLE = {
+        display: "flex",
+        flexDirection: "column",
+        flex: "1",
+        minHeight: "0",
+    }
+
     // Reactive state
     const shownAttemptsUid = ref<string[]>([])
     const rawLogs = ref<any[]>([]) // FIXME: any
@@ -398,6 +405,12 @@
     // Template ref
     const taskRunScroller = useTemplateRef<any>("taskRunScroller") // FIXME: any
     const taskRunViewportHeight = ref(0)
+    // Seed the cap before Teleport so virtual rows stay bounded until ResizeObserver measures the dialog.
+    watch(() => props.fullHeight, (fullHeight) => {
+        if (!fullHeight) return
+        const currentHeight = taskRunScroller.value?.$el?.clientHeight
+        if (currentHeight) taskRunViewportHeight.value = currentHeight
+    }, {flush: "sync"})
     // Virtual task rows are absolutely positioned, so their cards need the measured flex viewport as a bound.
     useResizeObserver(computed(() => props.fullHeight ? taskRunScroller.value?.$el : undefined), ([entry]) => {
         if (entry?.contentRect.height) taskRunViewportHeight.value = entry.contentRect.height
@@ -1329,20 +1342,19 @@
   }
 }
 
-.log-wrapper.full-height {
+.log-wrapper.full-height,
+.log-wrapper .log-lines.full-height {
   flex: 1;
   min-height: 0;
 }
 
 .log-wrapper .log-lines.full-height {
-  flex: 1;
-  min-height: 0;
   max-height: none;
 }
 
 .fullscreen-attempt {
   display: flex;
   flex-direction: column;
-  max-height: var(--task-run-viewport-height, 0px);
+  max-height: var(--task-run-viewport-height, none);
 }
 </style>

@@ -40,7 +40,7 @@
     const panelRef = ref<ComponentPublicInstance | null>(null)
 
     onMounted(() => {
-        const nodes =  panelRef.value?.$el.querySelectorAll(".kel-cascader-node") ?? []
+        const nodes = (panelRef.value?.$el as HTMLElement | undefined)?.querySelectorAll(".kel-cascader-node") ?? []
         if(nodes.length > 0) (nodes[0] as HTMLElement).click()
     })
 </script>

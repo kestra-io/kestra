@@ -1,19 +1,5 @@
 <template>
     <div class="timeline-toolbar">
-        <div class="primary-controls">
-            <KsRangeSlider
-                class="range-slider"
-                :min="domainStartMs"
-                :max="domainEndMs"
-                :minRange="MIN_RANGE_MS"
-                :modelValue="sliderRange"
-                :formatValue="formatSliderValue"
-                :startLabel="$t('executionsTimeline.toolbar.rangeSliderStart')"
-                :endLabel="$t('executionsTimeline.toolbar.rangeSliderEnd')"
-                @change="onSliderChange"
-            />
-        </div>
-
         <div class="secondary-controls">
             <KsButton
                 ref="rangePillRef"
@@ -91,7 +77,7 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, ref} from "vue"
+    import {ref} from "vue"
     import {useI18n} from "vue-i18n"
     import CalendarRange from "vue-material-design-icons/CalendarRange.vue"
     import ChevronLeft from "vue-material-design-icons/ChevronLeft.vue"
@@ -104,7 +90,6 @@
     import {dateUtils, durationUtils, KsButton} from "@kestra-io/design-system"
     import TimeSelect from "../date-select/TimeSelect.vue"
     import DateRange from "../../layout/DateRange.vue"
-    import {MIN_RANGE_MS, computeSliderDomain} from "../../../composables/useTimelineRange"
 
     const props = defineProps<{
         rangeStartMs: number;
@@ -146,20 +131,6 @@
         emit("custom-range", {startMs: Date.parse(startDate), endMs: Date.parse(endDate)})
     }
 
-    const sliderDomain = computed(() => computeSliderDomain(props.rangeStartMs, props.rangeEndMs))
-    const domainStartMs = computed(() => sliderDomain.value[0])
-    const domainEndMs = computed(() => sliderDomain.value[1])
-
-    // Stable array reference: KsRangeSlider's defineModel() treats a new one as an external change mid-drag.
-    const sliderRange = computed<[number, number]>(() => [props.rangeStartMs, props.rangeEndMs])
-
-    function formatSliderValue(ms: number) {
-        return dateUtils.dateFilter(new Date(ms).toISOString(), "lll")
-    }
-
-    function onSliderChange([startMs, endMs]: [number, number]) {
-        emit("custom-range", {startMs, endMs})
-    }
 </script>
 
 <style scoped lang="scss">
@@ -172,15 +143,7 @@
     background: var(--ks-bg-surface);
 }
 
-.primary-controls {
-    display: flex;
-    align-items: center;
-    padding-block: var(--ks-spacing-1);
-}
 
-.range-slider {
-    width: 100%;
-}
 
 .secondary-controls {
     display: flex;

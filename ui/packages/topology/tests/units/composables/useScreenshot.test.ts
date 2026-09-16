@@ -69,15 +69,13 @@ describe("useScreenshot", () => {
     let container: HTMLElement
     let pane: HTMLElement
     let painted: {dots: number; fills: string[]; encodedAs: string[]}
-    let originalImage: typeof Image
 
     // jsdom neither decodes an image nor draws on a canvas, so both are stood in for: the capture
     // resolves at once, and the 2d context records what the composite asked it to paint.
     function stubCanvasAndImage() {
         painted = {dots: 0, fills: [], encodedAs: []}
 
-        originalImage = globalThis.Image
-        globalThis.Image = class {
+        vi.stubGlobal("Image", class {
             onload: (() => void) | null = null
             onerror: (() => void) | null = null
             width = 200
@@ -85,7 +83,7 @@ describe("useScreenshot", () => {
             set src(_value: string) {
                 queueMicrotask(() => this.onload?.())
             }
-        } as unknown as typeof Image
+        })
 
         vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockImplementation(function (this: HTMLCanvasElement) {
             return {
@@ -126,7 +124,7 @@ describe("useScreenshot", () => {
 
     afterEach(() => {
         container.remove()
-        globalThis.Image = originalImage
+        vi.unstubAllGlobals()
         vi.restoreAllMocks()
     })
 

@@ -3,13 +3,13 @@
         :id="id"
         :defaultMarkerColor="cssVariable('--ks-topology-dash')"
         fitViewOnInit
-        :minZoom="0.1"
+        :minZoom="MIN_ZOOM"
         :nodesDraggable="false"
         :nodesConnectable="false"
         :elevateNodesOnSelect="false"
         :elevateEdgesOnSelect="false"
     >
-        <Background :patternColor="cssVariable('--ks-topology-bg')" />
+        <Background :color="cssVariable(GRAPH_BACKGROUND.color)" :gap="GRAPH_BACKGROUND.gap" :size="GRAPH_BACKGROUND.size" />
 
         <Panel v-if="showDetailsToggle" position="top-right">
             <KsSwitch v-model="showExtraDetails" :activeText="$t('show more details')" size="small"/>
@@ -161,7 +161,7 @@
     import Download from "vue-material-design-icons/Download.vue"
     import ArrowExpandAll from "vue-material-design-icons/ArrowExpandAll.vue"
     import {cssVar as cssVariable, State, KsSwitch, KsTooltip} from "@kestra-io/design-system"
-    import {CLUSTER_PREFIX} from "./utils/constants"
+    import {CLUSTER_PREFIX, GRAPH_BACKGROUND, MIN_ZOOM} from "./utils/constants"
     import {type CustomActionConfig, type ShowDetailsConfig, EVENTS, NODE_SIZES} from "./utils/constants"
     import * as VueFlowUtils from "./utils/vueFlowUtils"
     import {untilNodesMeasured, useScreenshot} from "./composables/useScreenshot"

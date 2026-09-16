@@ -1,8 +1,10 @@
 import {ref} from "vue"
 import type {Ref} from "vue"
 import type {Rect} from "@vue-flow/core"
+import {cssVar} from "@kestra-io/design-system"
 import {toJpeg as ElToJpg, toPng as ElToPng} from "html-to-image"
 import type {Options as HTMLToImageOptions} from "html-to-image/es/types"
+import {GRAPH_BACKGROUND} from "../utils/constants"
 
 type ImageType = "jpeg" | "png";
 
@@ -33,6 +35,7 @@ interface ExportGeometry {
   width: number;
   height: number;
   pixelRatio: number;
+  zoom: number;
   transform: string;
 }
 
@@ -55,8 +58,65 @@ export function exportGeometry(bounds: Rect, devicePixelRatio = 1): ExportGeomet
     width,
     height,
     pixelRatio,
+    zoom,
     transform: `translate(${EXPORT_PADDING - bounds.x * zoom}px, ${EXPORT_PADDING - bounds.y * zoom}px) scale(${zoom})`,
   }
+}
+
+// Vue Flow's dot grid is a sibling of the graph pane, sized to the on-screen container and
+// offset by the live viewport, so it cannot be captured along with a whole-graph export. It is
+// redrawn here instead, at the export's own zoom and aligned to the graph's own coordinates.
+function paintBackground(context: CanvasRenderingContext2D, bounds: Rect, geometry: ExportGeometry, background: string) {
+  const {pixelRatio, zoom} = geometry
+
+  context.fillStyle = background
+  context.fillRect(0, 0, context.canvas.width, context.canvas.height)
+
+  const gap = GRAPH_BACKGROUND.gap * zoom * pixelRatio
+  const radius = GRAPH_BACKGROUND.size * zoom * pixelRatio / 2
+  if (gap < 1 || radius <= 0) {
+    return
+  }
+
+  // Flow coordinate 0 lands here, so the lattice keeps the same phase as the on-screen one.
+  const originX = (EXPORT_PADDING - bounds.x * zoom) * pixelRatio
+  const originY = (EXPORT_PADDING - bounds.y * zoom) * pixelRatio
+
+  context.fillStyle = cssVar(GRAPH_BACKGROUND.color)
+  for (let x = originX % gap; x < context.canvas.width; x += gap) {
+    for (let y = originY % gap; y < context.canvas.height; y += gap) {
+      context.beginPath()
+      context.arc(x, y, radius, 0, 2 * Math.PI)
+      context.fill()
+    }
+  }
+}
+
+// Lays the captured graph, which is transparent, over that ground and re-encodes it.
+function composeOnBackground(captured: string, bounds: Rect, geometry: ExportGeometry, background: string, type: ImageType): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const image = new Image()
+
+    image.onload = () => {
+      const canvas = document.createElement("canvas")
+      canvas.width = image.width
+      canvas.height = image.height
+
+      const context = canvas.getContext("2d")
+      // Only a browser without canvas support, where the flat capture is still the right image.
+      if (!context) {
+        resolve(captured)
+        return
+      }
+
+      paintBackground(context, bounds, geometry, background)
+      context.drawImage(image, 0, 0)
+      resolve(canvas.toDataURL(`image/${type}`))
+    }
+    image.onerror = () => reject(new Error("The exported graph could not be read back for compositing."))
+
+    image.src = captured
+  })
 }
 
 interface MeasurableNode {
@@ -94,20 +154,19 @@ export function useScreenshot(): UseScreenshot {
   const error = ref()
 
   async function capture(el: HTMLElement, options: UseScreenshotOptions = {}) {
-    const {type, fileName = `flow-graph-${Date.now()}`, shouldDownload, bounds, ...imageOptions} = options
+    const {type = "png", fileName = `flow-graph-${Date.now()}`, shouldDownload, bounds, ...imageOptions} = options
 
     // The pane is rendered with its own translate/scale so the image can extend past the
-    // viewport; it has no background of its own, so the container's goes on the canvas.
+    // viewport. It carries no background, and the grid behind it cannot be captured, so both
+    // are painted onto the canvas afterwards - hence a transparent capture here.
     const pane = el.querySelector<HTMLElement>(".vue-flow__transformationpane")
-    let target = el
-    if (pane && isExportable(bounds)) {
-      target = pane
-      const {transform, ...geometry} = exportGeometry(bounds, window.devicePixelRatio)
-      Object.assign(imageOptions, {
-        ...geometry,
-        backgroundColor: imageOptions.backgroundColor ?? getComputedStyle(el).backgroundColor,
-        style: {...imageOptions.style, transform},
-      })
+    const geometry = pane && isExportable(bounds) ? exportGeometry(bounds, window.devicePixelRatio) : undefined
+    const background = imageOptions.backgroundColor ?? getComputedStyle(el).backgroundColor
+    const target = geometry ? pane! : el
+
+    if (geometry) {
+      const {transform, zoom: _zoom, ...size} = geometry
+      Object.assign(imageOptions, {...size, backgroundColor: undefined, style: {...imageOptions.style, transform}})
     }
 
     el.classList.add("is-exporting")
@@ -134,9 +193,18 @@ export function useScreenshot(): UseScreenshot {
     })
 
     try {
-      const data = type === "jpeg"
-        ? await toJpeg(target, imageOptions)
-        : await toPng(target, imageOptions)
+      // A composited export is captured as PNG whatever was asked for: JPEG has no transparency
+      // to lay over the background, and the canvas re-encodes to the requested type at the end.
+      const captured = geometry || type === "png"
+        ? await toPng(target, imageOptions)
+        : await toJpeg(target, imageOptions)
+
+      const data = geometry && isExportable(bounds)
+        ? await composeOnBackground(captured, bounds, geometry, background, type)
+        : captured
+
+      dataUrl.value = data
+      imgType.value = type
 
       if (shouldDownload && fileName) download(fileName)
       return data
@@ -155,11 +223,6 @@ export function useScreenshot(): UseScreenshot {
     error.value = null
 
     return ElToJpg(el, options)
-      .then((data) => {
-        dataUrl.value = data
-        imgType.value = "jpeg"
-        return data
-      })
       .catch((err) => {
         error.value = err
         throw new Error(err)
@@ -173,11 +236,6 @@ export function useScreenshot(): UseScreenshot {
     error.value = null
 
     return ElToPng(el, options)
-      .then((data) => {
-        dataUrl.value = data
-        imgType.value = "png"
-        return data
-      })
       .catch((err) => {
         error.value = err
         throw new Error(err)

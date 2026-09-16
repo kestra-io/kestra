@@ -17,7 +17,7 @@
             :elevateNodesOnSelect="false"
             :elevateEdgesOnSelect="false"
             :onlyRenderVisibleElements="!exporting"
-            :minZoom="0.2"
+            :minZoom="MIN_ZOOM"
             :maxZoom="1.5"
             @nodeClick="({node}) => emit('select', node.id)"
             @nodeDoubleClick="({node}) => emit('open', node.id)"
@@ -26,9 +26,9 @@
             @paneClick="emit('pane-click')"
         >
             <Background
-                :color="cssVar('--ks-topology-dash', theme === 'dark' ? 0.2 : 0.3)"
-                :gap="24"
-                :size="1"
+                :color="backgroundColor"
+                :gap="GRAPH_BACKGROUND.gap"
+                :size="GRAPH_BACKGROUND.size"
             />
 
             <template #node-asset="nodeProps">
@@ -46,7 +46,7 @@
     import {useResizeObserver} from "@vueuse/core"
     import {VueFlow, useVueFlow, Position, MarkerType} from "@vue-flow/core"
     import {Background} from "@vue-flow/background"
-    import {untilNodesMeasured, useScreenshot} from "@kestra-io/topology"
+    import {GRAPH_BACKGROUND, MIN_ZOOM, untilNodesMeasured, useScreenshot} from "@kestra-io/topology"
     import {cssVar, stringUtils} from "@kestra-io/design-system"
     import {useTheme} from "../../../../utils/utils"
     import AssetNode from "./AssetNode.vue"
@@ -74,6 +74,12 @@
     const {fitBounds, zoomIn, zoomOut, viewport, vueFlowRef, getNodes} = useVueFlow("asset-dag")
     const theme = useTheme()
     const {capture} = useScreenshot()
+
+    // cssVar reads the computed value, so the token has to be re-read when the theme flips.
+    const backgroundColor = computed(() => {
+        void theme.value
+        return cssVar(GRAPH_BACKGROUND.color)
+    })
 
     const nodes = computed(() => nodesOf(props.elements))
 

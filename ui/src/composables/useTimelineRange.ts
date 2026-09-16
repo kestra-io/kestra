@@ -23,20 +23,6 @@ const END_QUERY_KEY = "filters[endDate][LESS_THAN_OR_EQUAL_TO]"
 // startDate/endDate and timeRange are mutually exclusive server-side: sending both is a 422.
 const TIME_RANGE_QUERY_KEY = "filters[timeRange][EQUALS]"
 
-const SLIDER_DOMAIN_MULTIPLIER = 8
-const SLIDER_DOMAIN_FLOOR_MS = durationUtils.duration("P1D") * 1000
-const SLIDER_DOMAIN_CEILING_MS = durationUtils.duration("P120D") * 1000
-const SLIDER_DOMAIN_MAX_FLOOR_TO_SPAN_RATIO = 20
-
-export function computeSliderDomain(rangeStartMs: number, rangeEndMs: number): [number, number] {
-    const span = Math.max(rangeEndMs - rangeStartMs, MIN_RANGE_MS)
-    const floor = Math.min(SLIDER_DOMAIN_FLOOR_MS, span * SLIDER_DOMAIN_MAX_FLOOR_TO_SPAN_RATIO)
-    const boundedSpan = Math.min(Math.max(span * SLIDER_DOMAIN_MULTIPLIER, floor), SLIDER_DOMAIN_CEILING_MS)
-    const domainSpan = Math.max(boundedSpan, span)
-    const center = (rangeStartMs + rangeEndMs) / 2
-    return [center - domainSpan / 2, center + domainSpan / 2]
-}
-
 export function useTimelineRange() {
     const route = useRoute()
     const router = useRouter()

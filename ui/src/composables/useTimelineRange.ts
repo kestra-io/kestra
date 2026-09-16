@@ -18,10 +18,21 @@ export const TIMELINE_RANGE_PRESETS: TimelineRangePreset[] = [
 const DEFAULT_RANGE_MS = durationUtils.duration("PT24H") * 1000
 export const MIN_RANGE_MS = durationUtils.duration("PT5M") * 1000
 export const MAX_RANGE_MS = durationUtils.duration("PT8760H") * 1000
-const START_QUERY_KEY = "filters[startDate][GREATER_THAN_OR_EQUAL_TO]"
-const END_QUERY_KEY = "filters[endDate][LESS_THAN_OR_EQUAL_TO]"
+export const START_QUERY_KEY = "filters[startDate][GREATER_THAN_OR_EQUAL_TO]"
+export const END_QUERY_KEY = "filters[endDate][LESS_THAN_OR_EQUAL_TO]"
 // startDate/endDate and timeRange are mutually exclusive server-side: sending both is a 422.
-const TIME_RANGE_QUERY_KEY = "filters[timeRange][EQUALS]"
+export const TIME_RANGE_QUERY_KEY = "filters[timeRange][EQUALS]"
+
+const SCRUBBER_CONTEXT_MULTIPLIER = 2
+
+export function computeScrubberDomain(rangeStartMs: number, rangeEndMs: number, nowMs: number = Date.now()): [number, number] {
+    const span = Math.max(rangeEndMs - rangeStartMs, MIN_RANGE_MS)
+    const domainSpan = span * SCRUBBER_CONTEXT_MULTIPLIER
+    const center = (rangeStartMs + rangeEndMs) / 2
+    // No execution can exist after now, so a domain reaching into the future is track nobody can use.
+    const domainEndMs = Math.max(rangeEndMs, Math.min(center + domainSpan / 2, nowMs))
+    return [domainEndMs - domainSpan, domainEndMs]
+}
 
 export function useTimelineRange() {
     const route = useRoute()

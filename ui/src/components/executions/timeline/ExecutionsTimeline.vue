@@ -5,6 +5,8 @@
             :rangeEndMs="rangeEndMs"
             :activePreset="activePreset"
             :expanded="expanded"
+            :domainExecutions="domainExecutions"
+            :scrubberWidthPx="availableWidthPx"
             @apply-preset="applyPreset"
             @custom-range="({startMs, endMs}) => setRange(startMs, endMs)"
             @zoom="zoom"
@@ -111,7 +113,7 @@
     import ChartLegend from "../../dashboard/sections/ChartLegend.vue"
     import {useExecutionsStore} from "../../../stores/executions"
     import {useExecutionsQueryScope} from "../../../composables/useExecutionsQueryScope"
-    import {useTimelineRange} from "../../../composables/useTimelineRange"
+    import {useTimelineRange, computeScrubberDomain, START_QUERY_KEY, END_QUERY_KEY, TIME_RANGE_QUERY_KEY} from "../../../composables/useTimelineRange"
     import {useExecutionFilter, useFlowExecutionFilter} from "../../filter/configurations"
     import {groupByNamespace, countByState, buildAxisTicks, axisTickFormat, isFailedLikeState, type TimelineExecution} from "../../../utils/executionsTimeline"
 
@@ -341,6 +343,8 @@
         router.push({query: cleared})
     }
 
+    const domainExecutions = ref<TimelineExecution[]>([])
+
     const fetchedTotal = ref(0)
     const isTruncated = computed(() => fetchedTotal.value > rawExecutions.value.length)
 
@@ -370,6 +374,15 @@
             const response = await executionsStore.findExecutions(query) as PagedResultsApiLightExecution
             rawExecutions.value = mapToTimelineExecutions(response.results)
             fetchedTotal.value = response.total ?? response.results?.length ?? 0
+
+            const [domainStartMs, domainEndMs] = computeScrubberDomain(rangeStartMs.value, rangeEndMs.value)
+            const {[TIME_RANGE_QUERY_KEY]: _relativeRange, ...domainQuery} = query
+            const domainResponse = await executionsStore.findExecutions({
+                ...domainQuery,
+                [START_QUERY_KEY]: new Date(domainStartMs).toISOString(),
+                [END_QUERY_KEY]: new Date(domainEndMs).toISOString(),
+            }) as PagedResultsApiLightExecution
+            domainExecutions.value = mapToTimelineExecutions(domainResponse.results)
 
             if (dimmedStates.value.size > 0) {
                 const {[STATE_EXCLUDE_KEY]: _excluded, ...legendQuery} = query

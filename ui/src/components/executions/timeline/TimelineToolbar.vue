@@ -1,5 +1,18 @@
 <template>
     <div class="timeline-toolbar">
+        <div class="primary-controls">
+            <TimelineScrubber
+                class="range-scrubber"
+                :domainStartMs="domainStartMs"
+                :domainEndMs="domainEndMs"
+                :rangeStartMs="rangeStartMs"
+                :rangeEndMs="rangeEndMs"
+                :executions="domainExecutions"
+                :widthPx="scrubberWidthPx"
+                @change="onScrubberChange"
+            />
+        </div>
+
         <div class="secondary-controls">
             <KsButton
                 ref="rangePillRef"
@@ -77,7 +90,7 @@
 </template>
 
 <script setup lang="ts">
-    import {ref} from "vue"
+    import {computed, ref} from "vue"
     import {useI18n} from "vue-i18n"
     import CalendarRange from "vue-material-design-icons/CalendarRange.vue"
     import ChevronLeft from "vue-material-design-icons/ChevronLeft.vue"
@@ -90,12 +103,17 @@
     import {dateUtils, durationUtils, KsButton} from "@kestra-io/design-system"
     import TimeSelect from "../date-select/TimeSelect.vue"
     import DateRange from "../../layout/DateRange.vue"
+    import TimelineScrubber from "./TimelineScrubber.vue"
+    import type {TimelineExecution} from "../../../utils/executionsTimeline"
+    import {computeScrubberDomain} from "../../../composables/useTimelineRange"
 
     const props = defineProps<{
         rangeStartMs: number;
         rangeEndMs: number;
         activePreset?: string;
         expanded: boolean;
+        domainExecutions: TimelineExecution[];
+        scrubberWidthPx: number;
     }>()
 
     const emit = defineEmits<{
@@ -131,6 +149,13 @@
         emit("custom-range", {startMs: Date.parse(startDate), endMs: Date.parse(endDate)})
     }
 
+    const scrubberDomain = computed(() => computeScrubberDomain(props.rangeStartMs, props.rangeEndMs))
+    const domainStartMs = computed(() => scrubberDomain.value[0])
+    const domainEndMs = computed(() => scrubberDomain.value[1])
+
+    function onScrubberChange({startMs, endMs}: {startMs: number; endMs: number}) {
+        emit("custom-range", {startMs, endMs})
+    }
 </script>
 
 <style scoped lang="scss">
@@ -143,7 +168,15 @@
     background: var(--ks-bg-surface);
 }
 
+.primary-controls {
+    display: flex;
+    align-items: center;
+    padding-block: var(--ks-spacing-1);
+}
 
+.range-scrubber {
+    width: 100%;
+}
 
 .secondary-controls {
     display: flex;

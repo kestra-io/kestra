@@ -3,6 +3,7 @@ import {
     assignLanes,
     axisTickFormat,
     bucketize,
+    densitySeries,
     buildAxisTicks,
     countByState,
     groupByNamespace,
@@ -204,5 +205,19 @@ describe("axisTickFormat", () => {
 
     it("should drop the time once the range spans more than a week", () => {
         expect(axisTickFormat(30 * DAY, 6)).toBe("MMM D")
+    })
+})
+
+describe("densitySeries", () => {
+    it("should keep the empty buckets that bucketize drops, so a chart can draw a continuous baseline", () => {
+        const executions: TimelineExecution[] = [
+            {id: "1", namespace: "n", flowId: "f", state: "SUCCESS", startMs: 100, endMs: 200},
+        ]
+
+        const series = densitySeries(executions, 0, 1_000, 10)
+
+        expect(series).toHaveLength(10)
+        expect(series.filter(bucket => bucket.total === 0)).toHaveLength(9)
+        expect(bucketize(executions, 0, 1_000, 30)).toHaveLength(1)
     })
 })

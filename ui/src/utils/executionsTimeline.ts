@@ -129,16 +129,13 @@ export function shouldBucketRow(
     return false
 }
 
-export function bucketize(
+function fillBuckets(
     executions: TimelineExecution[],
     rangeStartMs: number,
     rangeEndMs: number,
-    availableWidthPx: number,
+    bucketCount: number,
+    bucketSpanMs: number,
 ): StateBucket[] {
-    const span = rangeEndMs - rangeStartMs
-    if (span <= 0 || availableWidthPx <= 0) return []
-
-    const {slotCount: bucketCount, slotSpanMs: bucketSpanMs} = slotResolution(span, availableWidthPx)
     const buckets: StateBucket[] = Array.from({length: bucketCount}, (_, i) => ({
         startMs: rangeStartMs + i * bucketSpanMs,
         endMs: rangeStartMs + (i + 1) * bucketSpanMs,
@@ -164,7 +161,32 @@ export function bucketize(
         }
     }
 
-    return buckets.filter(bucket => bucket.total > 0)
+    return buckets
+}
+
+export function bucketize(
+    executions: TimelineExecution[],
+    rangeStartMs: number,
+    rangeEndMs: number,
+    availableWidthPx: number,
+): StateBucket[] {
+    const span = rangeEndMs - rangeStartMs
+    if (span <= 0 || availableWidthPx <= 0) return []
+
+    const {slotCount, slotSpanMs} = slotResolution(span, availableWidthPx)
+    return fillBuckets(executions, rangeStartMs, rangeEndMs, slotCount, slotSpanMs).filter(bucket => bucket.total > 0)
+}
+
+export function densitySeries(
+    executions: TimelineExecution[],
+    rangeStartMs: number,
+    rangeEndMs: number,
+    bucketCount: number,
+): StateBucket[] {
+    const span = rangeEndMs - rangeStartMs
+    if (span <= 0 || bucketCount <= 0) return []
+
+    return fillBuckets(executions, rangeStartMs, rangeEndMs, bucketCount, span / bucketCount)
 }
 
 export interface StateCount {

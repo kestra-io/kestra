@@ -47,11 +47,17 @@ const stubs = {
     KsIconButton: defineComponent({name: "KsIconButton", template: "<button type=\"button\"><slot /></button>"}),
     KsRadioGroup: passthroughStub("KsRadioGroup"),
     KsRadioButton: passthroughStub("KsRadioButton"),
+    TimelineScrubber: defineComponent({
+        name: "TimelineScrubber",
+        props: ["domainStartMs", "domainEndMs", "rangeStartMs", "rangeEndMs", "executions", "widthPx"],
+        emits: ["change"],
+        template: "<div data-test=\"range-scrubber\" />",
+    }),
 }
 
 function mountToolbar(props: {rangeStartMs: number; rangeEndMs: number; activePreset?: string; expanded?: boolean}) {
     return mount(TimelineToolbar, {
-        props: {expanded: false, ...props},
+        props: {expanded: false, domainExecutions: [], scrubberWidthPx: 600, ...props},
         global: {plugins: [i18n], stubs},
     })
 }
@@ -80,4 +86,11 @@ describe("TimelineToolbar", () => {
         expect(wrapper.find("[data-test=relative-preset]").exists()).toBe(false)
     })
 
+    it("should emit custom-range when the scrubber reports a finished brush", async () => {
+        const wrapper = mountToolbar({rangeStartMs: 0, rangeEndMs: 60 * 60 * 1000, activePreset: "PT1H"})
+
+        await wrapper.findComponent({name: "TimelineScrubber"}).vm.$emit("change", {startMs: 1000, endMs: 2000})
+
+        expect(wrapper.emitted("custom-range")).toEqual([[{startMs: 1000, endMs: 2000}]])
+    })
 })

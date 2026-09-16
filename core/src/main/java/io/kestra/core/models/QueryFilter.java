@@ -174,6 +174,13 @@ public record QueryFilter(
                 return List.of(Op.EQUALS, Op.NOT_EQUALS, Op.CONTAINS, Op.STARTS_WITH, Op.ENDS_WITH, Op.REGEX, Op.IN, Op.NOT_IN, Op.PREFIX);
             }
         },
+        @JsonProperty("flowNamespace")
+        FLOW_NAMESPACE("flowNamespace") {
+            @Override
+            public List<Op> supportedOp() {
+                return List.of(Op.EQUALS, Op.NOT_EQUALS, Op.CONTAINS, Op.STARTS_WITH, Op.ENDS_WITH, Op.REGEX, Op.IN, Op.NOT_IN, Op.PREFIX);
+            }
+        },
         @JsonProperty("kind")
         KIND("kind") {
             @Override
@@ -801,6 +808,7 @@ public record QueryFilter(
                     Field.TARGET_ID,
                     Field.ORIGIN,
                     Field.NAMESPACE,
+                    Field.FLOW_NAMESPACE,
                     Field.FLOW_ID,
                     Field.EXECUTION_ID,
                     Field.TASK_ID,

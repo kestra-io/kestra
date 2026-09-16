@@ -8,7 +8,6 @@
     "more actions": "More actions",
     "recipe": {
       "create_flow": "Create flow",
-      "email": "Email",
       "execution": {
         "include_sub": "Include sub-namespaces",
         "include_sub_hint_off": "Only flows in the exact namespace will trigger this alert.",
@@ -56,7 +55,6 @@
       "section_title": "Create a system flow",
       "summary": {
         "any_namespace": "any namespace",
-        "empty": "Configure the trigger and at least one notification channel to preview your flow.",
         "exact_match": "exact match",
         "execution": "When a flow in {ns} ({scope}) reaches state {states}, notify via {channels}.",
         "including_sub": "and sub-namespaces",
@@ -66,7 +64,6 @@
         "other": "When the {trigger} trigger fires, notify via {channels}.",
         "schedule": "On schedule \"{cron}\", notify via {channels}.",
         "selected_trigger": "selected",
-        "title": "Summary",
         "webhook": "When a webhook is received, notify via {channels}.",
         "preview_title": "Preview",
         "live": "LIVE"
@@ -74,7 +71,6 @@
       "then": {
         "no_channel_warning": "Select at least one notification channel.",
         "subtitle": "Select how to notify your team.",
-        "title": "Then notify",
         "unavailable_channels_warning": "{channels}: plugin not installed for this trigger type, no notification will be sent."
       },
       "trigger": {
@@ -95,7 +91,6 @@
       },
       "when": {
         "subtitle": "Choose what triggers this system flow.",
-        "title": "When this happens",
         "trigger_type": "Trigger type"
       },
       "hero_eyebrow": "Your system flow",
@@ -301,7 +296,6 @@
       "star": "Star us"
     },
     "source": "Source",
-    "source only": "Source only",
     "home": "Home",
     "create": "Create",
     "create_flow": "Create Flow",
@@ -687,7 +681,6 @@
     "open in new tab": "In a new tab",
     "execute the flow": "Execute the flow <code>{id}</code>",
     "discard execution confirmation": "You have unsaved inputs. Are you sure you want to discard this execution?",
-    "discard changes confirmation": "You have unsaved changes. Are you sure you want to discard them?",
     "unsaved changed ?": "You have unsaved changes, do you want to leave this page?",
     "unsaved changes": "Unsaved Changes",
     "unsaved changes warning": "You have unsaved changes. If you leave this page, your changes will be lost.",
@@ -856,9 +849,6 @@
     "bulk kill": "Are you sure you want to kill <code>{executionCount}</code> execution(s)?",
     "cancel": "Cancel",
     "errorLogs": "Error logs",
-    "welcome_page": {
-      "guide": "Need guidance to execute your first flow?"
-    },
     "product_tour": "Product Tour",
     "executions replayed": "<code>{executionCount}</code> execution(s) replayed",
     "executions state changed": "The state of <code>{executionCount}</code> execution(s) has been changed",
@@ -869,20 +859,9 @@
     "executions restarted": "<code>{executionCount}</code> execution(s) restarted",
     "executions killed": "<code>{executionCount}</code> execution(s) killed",
     "executions deleted": "<code>{executionCount}</code> execution(s) deleted",
-    "invalid bulk replay": "Could not replay executions",
-    "invalid bulk resume": "Could not resume executions",
-    "invalid bulk pause": "Could not pause executions",
-    "invalid bulk unqueue": "Could not unqueue executions",
-    "invalid bulk force run": "Could not force run executions",
-    "invalid bulk restart": "Could not restart executions",
-    "invalid bulk kill": "Could not kill executions",
-    "invalid bulk delete": "Could not delete executions",
     "execution not found": "Execution {executionId} is not found.",
-    "execution not in state PAUSED": "Execution <code>{executionId}</code> not in state PAUSED",
-    "execution already finished": "Execution <code>{executionId}</code> already finished",
     "seeing old revision": "You are seeing an old revision: {revision}",
     "export": "Export",
-    "exports": "Exports",
     "export_csv": "Export as CSV",
     "flow_export": "Export flow",
     "flow export": "Are you sure you want to export <code>{flowCount}</code> flow(s)?",
@@ -909,9 +888,7 @@
     "disabled": "Disabled",
     "before": "before",
     "after": "after",
-    "dynamic": "Dynamic",
     "choice": "Choice",
-    "sequential": "Sequential",
     "can not delete": "Cannot delete this task",
     "can not have less than 1 task": "A flow must have at least one task. Add another task before deleting this one.",
     "task id": "Task ID",
@@ -931,7 +908,6 @@
     "bar": "Bar",
     "line": "Line",
     "metric": "Metric",
-    "aggregation": "Aggregation",
     "metric choice": "No metrics available for this flow",
     "metric filter no match": "No metric matches \"{term}\"",
     "of": "of",
@@ -997,7 +973,6 @@
     "version": "Version",
     "services": "Services",
     "hostname": "Hostname",
-    "port": "Port",
     "file preview truncated": "Displayed content has been truncated",
     "file unavailable": "File unavailable",
     "file unavailable description": "This file is no longer available — it may have been purged or expired.",
@@ -1107,7 +1082,6 @@
     "execute backfill": "Execute backfill",
     "relative": "Relative",
     "relative start date": "Relative start date",
-    "now": "Now",
     "absolute": "Absolute",
     "backfill": "Backfill",
     "Set labels": "Set labels",
@@ -1284,7 +1258,6 @@
       "label": "Promote"
     },
     "demos": {
-      "enterprise_edition": "Enterprise Edition",
       "get_a_demo_button": "Get a Demo",
       "contact_sales": "Contact Sales",
       "secrets": {
@@ -1668,7 +1641,6 @@
       "title": "Start automating with Kestra",
       "sub_title": "Click on the Execute button to start your first workflow execution.",
       "namespace_sub_title": "Execute one or more flows from this namespace to populate this dashboard.",
-      "namespace_guidance_desc": "Need guidance to manage your Namespace?",
       "need_help": "Need Help?"
     },
     "execution_guide": {
@@ -1710,14 +1682,11 @@
     "flows not imported": "Flows not imported",
     "custom value": "Custom value",
     "chart": "Chart",
-    "chart preview": "Chart preview",
     "no_code": {
       "toggle_pebble": "Toggle Pebble editor",
       "version_oss_placeholder": "Unlock Plugin Versioning with Enterprise Edition",
-      "unnamed": "No Name",
       "adding": "+ Add a {what}",
       "adding_default": "+ Add a new value",
-      "add_field": "Add {field}",
       "clearSelection": "Clear selection",
       "labels": {
         "yaml": "YAML Editor",
@@ -2529,7 +2498,6 @@
     "pricing": "Pricing",
     "license": "License",
     "block_editor": {
-      "add_error_task": "Add error task",
       "add_switch_case": "Add case",
       "adding_to": "New entry in {section}",
       "add_task": "Add task",
@@ -2540,7 +2508,6 @@
       "block_deleted": "{name} deleted",
       "card_aria_label": "Block {id} of type {type}",
       "canvas_aria": "Flow blocks canvas",
-      "close_all": "Close all tabs",
       "cluster_collapse_aria": "Collapse {id}",
       "cluster_expand_aria": "Expand {id} ({count} tasks)",
       "collapsed_summary": "{count} tasks",
@@ -2579,19 +2546,14 @@
       "depth_pill": "Depth {depth}",
       "drag_reorder": "Drag to reorder",
       "duplicate": "Duplicate",
-      "empty": "No tasks or triggers yet. Add your first task to get started.",
       "empty_add_hint": "or press / to search tasks",
       "empty_add_lead": "Click to add {label}",
-      "error_task_noun": "an error task",
       "execution_context": "Execution context",
       "filter_data": "Filter available data…",
       "flow_inputs": "Flow inputs",
-      "flowable_todo": "Nested tasks (editing coming soon)",
       "footer": {
         "canvas": "Canvas",
-        "close_panel": "Close panel",
         "command_menu": "Command menu",
-        "editing": "Editing block",
         "inserting": "Inserting",
         "selected": "Selected · {name}"
       },
@@ -2605,22 +2567,15 @@
       "lane_case": "Case: {key}",
       "lane_defaults": "Default",
       "lane_else": "Else",
-      "lane_empty": "No tasks in {lane}",
       "lane_errors": "Errors",
       "lane_finally": "Finally",
       "lane_tasks": "Tasks",
       "lane_then": "Then",
-      "loading_plugins": "Loading plugins...",
       "move_down": "Move down",
       "move_up": "Move up",
-      "nav_rail_empty": "No tasks or triggers yet.",
-      "nav_rail_title": "Outline",
-      "nested_count": "{count} nested tasks",
       "no_data_matches": "Nothing matches your filter",
-      "no_documentation": "No documentation for this task",
       "no_recent": "No recent task types yet",
       "no_task_results": "No matching task types.",
-      "open_details": "Open details",
       "open_in_split": "Open in split",
       "output": "Output",
       "output_sub": "what this task produces",
@@ -2658,8 +2613,6 @@
         "toggle": "This help",
         "undo": "Undo"
       },
-      "split_into": "{count}-column view",
-      "split_view": "Split view",
       "switch_case_key_placeholder": "New case key",
       "switch_case_key_taken": "Case {key} already exists",
       "tab_apps": "By app",

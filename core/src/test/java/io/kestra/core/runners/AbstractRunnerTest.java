@@ -634,6 +634,18 @@ public abstract class AbstractRunnerTest {
     }
 
     @Test
+    @LoadFlows({ "flows/valids/sla-max-duration-ok.yaml" })
+    void maxDurationSLAShouldPass() throws Exception {
+        slaTestCase.maxDurationSLAShouldPass();
+    }
+
+    @Test
+    @LoadFlows({ "flows/valids/sla-execution-condition.yaml" })
+    void executionConditionSLAShouldPass() throws Exception {
+        slaTestCase.executionConditionSLAShouldPass();
+    }
+
+    @Test
     @LoadFlows(value = { "flows/valids/sla-execution-condition.yaml" }, tenantId = TENANT_1)
     void executionConditionSLAShouldCancel() throws Exception {
         slaTestCase.executionConditionSLAShouldCancel(TENANT_1);

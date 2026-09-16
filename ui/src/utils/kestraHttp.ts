@@ -8,6 +8,10 @@ let requestsCompleted = 0
 
 const SKIP_PROGRESS = "__kestraSkipProgress"
 
+function skipProgress(opts: unknown): boolean {
+    return Boolean((opts as Record<string, unknown> | undefined)?.[SKIP_PROGRESS])
+}
+
 function progressComplete() {
     pendingRoute = false
     requestsTotal = 0
@@ -181,19 +185,19 @@ export function setupKestraHttp(
     }
 
     client.interceptors.request.use((request, opts: unknown) => {
-        if (typeof document !== "undefined" && !(opts as Record<string, unknown>)?.[SKIP_PROGRESS]) initProgress()
+        if (typeof document !== "undefined" && !skipProgress(opts)) initProgress()
         return request
     })
 
-    client.interceptors.response.use((response) => {
-        increaseProgress()
+    client.interceptors.response.use((response, _request, opts) => {
+        if (!skipProgress(opts)) increaseProgress()
         return response
     })
 
     client.interceptors.error.use((error, response, request, opts) => {
         const kestraError = error as KestraHttpError
         if (!response) {
-            increaseProgress()
+            if (!skipProgress(opts)) increaseProgress()
             return kestraError
         }
 
@@ -233,7 +237,15 @@ export function setupKestraHttp(
     for (const target of [client, useClient()] as const) {
         const targetAny = target as unknown as Record<string, (...args: any[]) => Promise<any>>
         for (const method of ["get", "post", "put", "patch", "delete", "request", "stream"]) {
-            if (typeof targetAny[method] === "function") targetAny[method] = withAuthRetry(targetAny[method].bind(target))
+            if (typeof targetAny[method] !== "function") continue
+            let fn = targetAny[method].bind(target)
+            // stream() reads an open body (SSE and similar). Opt it out of the page loader, same as generated `sse` methods.
+            if (method === "stream") {
+                const inner = fn
+                fn = (url: string, data?: unknown, config: Record<string, unknown> = {}) =>
+                    inner(url, data, {...config, [SKIP_PROGRESS]: true})
+            }
+            targetAny[method] = withAuthRetry(fn)
         }
     }
 

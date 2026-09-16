@@ -15,7 +15,8 @@ interface AppOptions {
 export type I18nMountOptions<T> = ComponentMountingOptions<T> & AppOptions
 
 function withApp<T>({messages = {}, locales, global: globalOptions = {}, ...mountOptions}: I18nMountOptions<T>) {
-    const i18n = createI18n({legacy: false, locale: "en", messages: locales ?? {en: messages}})
+    // A spec that asserts on raw keys leaves most of them unset on purpose, so the warnings are off.
+    const i18n = createI18n({legacy: false, locale: "en", missingWarn: false, fallbackWarn: false, messages: locales ?? {en: messages}})
     return {
         ...mountOptions,
         global: {

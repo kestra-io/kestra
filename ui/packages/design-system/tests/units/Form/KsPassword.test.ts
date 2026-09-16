@@ -2,8 +2,7 @@ import {describe, test, expect} from "vitest"
 import KsPassword from "../../../src/components/Form/KsPassword.vue"
 import {i18nMount} from "../i18nMount"
 
-const globalConfig = {}
-const mountPassword = (props: Record<string, unknown>) => i18nMount(KsPassword, {props, global: globalConfig})
+const mountPassword = (props: Record<string, unknown>) => i18nMount(KsPassword, {props})
 
 describe("KsPassword", () => {
     test("masks by default, and the toggle switches both ways", async () => {

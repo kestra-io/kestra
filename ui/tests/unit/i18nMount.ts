@@ -1,6 +1,5 @@
 import {mount, shallowMount, type ComponentMountingOptions} from "@vue/test-utils"
 import {createI18n} from "vue-i18n"
-import type {Pinia} from "pinia"
 
 type MessageValue = string | MessageValue[] | {[key: string]: MessageValue}
 type Messages = {[key: string]: MessageValue}
@@ -10,19 +9,18 @@ interface AppOptions {
     messages?: Messages
     /** A whole locale map, for a spec that loads `en.json` instead of listing the keys it needs. */
     locales?: {[locale: string]: Messages}
-    /** Only for a component that reads a store through the app instance; a spec that calls `setActivePinia` needs nothing here. */
-    pinia?: Pinia
 }
 
 export type I18nMountOptions<T> = ComponentMountingOptions<T> & AppOptions
 
-function withApp<T>({messages = {}, locales, pinia, global: globalOptions = {}, ...mountOptions}: I18nMountOptions<T>) {
-    const i18n = createI18n({legacy: false, locale: "en", messages: locales ?? {en: messages}})
+function withApp<T>({messages = {}, locales, global: globalOptions = {}, ...mountOptions}: I18nMountOptions<T>) {
+    // A spec that asserts on raw keys leaves most of them unset on purpose, so the warnings are off.
+    const i18n = createI18n({legacy: false, locale: "en", missingWarn: false, fallbackWarn: false, messages: locales ?? {en: messages}})
     return {
         ...mountOptions,
         global: {
             ...globalOptions,
-            plugins: [i18n, ...(pinia ? [pinia] : []), ...(globalOptions.plugins ?? [])],
+            plugins: [i18n, ...(globalOptions.plugins ?? [])],
         },
     } as ComponentMountingOptions<T>
 }

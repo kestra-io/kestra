@@ -6,15 +6,12 @@ import {i18nMount} from "../../i18nMount"
 
 const messages = {expand: "Expand", collapse: "Collapse", filter: {state_group: {running: "Running", paused: "Paused", completed: "Completed", failed: "Failed", other: "Other"}}}
 
-const globalConfig = {}
-
 const ALL_STATE_OPTIONS = Object.keys(STATES).map(state => ({value: state, label: state}))
 
 const mountStateFilter = (modelValue: string[] = [], options = ALL_STATE_OPTIONS) =>
     i18nMount(FilterMultiSelect, {
         messages,
         props: {filterKey: "state", modelValue, options, searchable: true},
-        global: globalConfig,
     })
 
 const mountFlatFilter = (modelValue: string[] = []) =>
@@ -26,7 +23,6 @@ const mountFlatFilter = (modelValue: string[] = []) =>
             options: [{value: "ns1", label: "ns1"}, {value: "ns2", label: "ns2"}],
             searchable: true,
         },
-        global: globalConfig,
     })
 
 describe("FilterMultiSelect — grouped state mode", () => {

@@ -10,8 +10,6 @@ import FilterComparatorSelect from "../../../../src/components/Data/KsDataTable/
 import FilterFooter from "../../../../src/components/Data/KsDataTable/filter/layout/FilterFooter.vue"
 import {Comparators, type AppliedFilter, type FilterKeyConfig} from "../../../../src/components/Data/KsDataTable/filter/utils/filterTypes"
 
-const globalConfig = {}
-
 const levelKey: FilterKeyConfig = {
     key: "level",
     label: "Level",
@@ -42,7 +40,6 @@ const labelsKey: FilterKeyConfig = {
 const mountPopper = async (filter: AppliedFilter) => {
     const wrapper = i18nMount(FilterEditPopper, {
         props: {filter, filterKey: levelKey, showComparatorSelection: true},
-        global: globalConfig,
     })
     await flushPromises()
     return wrapper
@@ -130,7 +127,6 @@ describe("FilterEditPopper time range custom mode", () => {
                 },
                 filterKey: timeRangeKey,
             },
-            global: globalConfig,
         })
         await flushPromises()
         return wrapper
@@ -193,7 +189,6 @@ describe("FilterEditPopper date field", () => {
                 filterKey: expirationKey,
                 showComparatorSelection: true,
             },
-            global: globalConfig,
         })
         await flushPromises()
 
@@ -234,7 +229,6 @@ describe("FilterEditPopper key-value comparator changes", () => {
                 filterKey: labelsKey,
                 showComparatorSelection: true,
             },
-            global: globalConfig,
         })
         await flushPromises()
 
@@ -267,7 +261,6 @@ const timeRangeKey: FilterKeyConfig = {
 const mountTimeRange = async (filter: AppliedFilter) => {
     const wrapper = i18nMount(FilterEditPopper, {
         props: {filter, filterKey: timeRangeKey},
-        global: globalConfig,
     })
     await flushPromises()
     return wrapper

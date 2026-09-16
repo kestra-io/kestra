@@ -5,13 +5,10 @@ import KsSelect from "../../../src/components/Form/KsSelect/KsSelect.vue"
 import KsOption from "../../../src/components/Form/KsSelect/KsOption.vue"
 import {i18nMount} from "../i18nMount"
 
-const globalConfig = {}
-
 describe("KsSelect", () => {
     test("renders trigger with placeholder", () => {
         const wrapper = i18nMount(KsSelect, {
             props: {placeholder: "Select a status"},
-            global: globalConfig,
         })
         expect(wrapper.find(".kel-select").exists()).toBe(true)
         expect(wrapper.find(".kel-select__placeholder").text()).toBe("Select a status")
@@ -26,7 +23,6 @@ describe("KsSelect", () => {
                     <ks-option value="B" label="Option B" />
                 </ks-select>`,
             }),
-            {global: globalConfig},
         )
         expect(wrapper.find(".kel-select").exists()).toBe(true)
     })
@@ -34,7 +30,6 @@ describe("KsSelect", () => {
     test("small size applies kel-select--small class", () => {
         const wrapper = i18nMount(KsSelect, {
             props: {size: "small"},
-            global: globalConfig,
         })
         expect(wrapper.find(".kel-select--small").exists()).toBe(true)
     })
@@ -42,7 +37,6 @@ describe("KsSelect", () => {
     test("disabled applies is-disabled class", () => {
         const wrapper = i18nMount(KsSelect, {
             props: {disabled: true},
-            global: globalConfig,
         })
         expect(wrapper.find(".kel-select__wrapper.is-disabled").exists()).toBe(true)
     })
@@ -50,7 +44,6 @@ describe("KsSelect", () => {
     test("multiple mode renders select wrapper", () => {
         const wrapper = i18nMount(KsSelect, {
             props: {multiple: true, placeholder: "Select statuses"},
-            global: globalConfig,
         })
         expect(wrapper.find(".kel-select").exists()).toBe(true)
     })
@@ -58,7 +51,6 @@ describe("KsSelect", () => {
     test("filterable mode renders input", () => {
         const wrapper = i18nMount(KsSelect, {
             props: {filterable: true, placeholder: "Filter…"},
-            global: globalConfig,
         })
         expect(wrapper.find(".kel-select").exists()).toBe(true)
     })
@@ -66,7 +58,6 @@ describe("KsSelect", () => {
     test("loading renders a spinning suffix icon", () => {
         const wrapper = i18nMount(KsSelect, {
             props: {loading: true},
-            global: globalConfig,
         })
         expect(wrapper.find(".kel-icon.is-loading").exists()).toBe(true)
     })
@@ -74,7 +65,6 @@ describe("KsSelect", () => {
     test("loading drives only the suffix spinner, not ElSelect (dropdown stays usable)", () => {
         const wrapper = i18nMount(KsSelect, {
             props: {loading: true},
-            global: globalConfig,
         })
         // `loading` must NOT reach ElSelect — it v-shows the option list on `!loading`,
         // so forwarding would hide still-valid options while they recompute.
@@ -84,7 +74,6 @@ describe("KsSelect", () => {
     test("no spinner when loading is falsy", () => {
         const wrapper = i18nMount(KsSelect, {
             props: {placeholder: "Idle"},
-            global: globalConfig,
         })
         expect(wrapper.find(".kel-icon.is-loading").exists()).toBe(false)
     })
@@ -99,7 +88,6 @@ describe("KsSelect", () => {
                     <ks-option value="B" label="Option B" />
                 </ks-select>`,
             }),
-            {global: globalConfig},
         )
         await nextTick()
 
@@ -122,7 +110,6 @@ describe("KsSelect", () => {
                     <ks-option value="A" label="Option A" />
                 </ks-select>`,
             }),
-            {global: globalConfig},
         )
         await nextTick()
 
@@ -147,7 +134,7 @@ describe("KsSelect", () => {
          * template ref that is only populated after the first render — so it appears one tick in.
          */
         const mountAndSettle = async (component: Parameters<typeof i18nMount>[0]) => {
-            const wrapper = i18nMount(component, {global: globalConfig})
+            const wrapper = i18nMount(component)
             await nextTick()
             return wrapper
         }
@@ -167,7 +154,6 @@ describe("KsSelect", () => {
         test("does not render select-all button when there are no options", () => {
             i18nMount(KsSelect, {
                 props: {selectAll: true, multiple: true},
-                global: globalConfig,
             })
             expect(document.querySelector(".kel-select-all-btn")).toBeFalsy()
         })
@@ -198,7 +184,6 @@ describe("KsSelect", () => {
                         <ks-option value="A" label="Alpha" />
                     </ks-select>`,
                 }),
-                {global: globalConfig},
             )
             expect(document.querySelector(".kel-select-all-btn")).toBeFalsy()
         })
@@ -211,7 +196,6 @@ describe("KsSelect", () => {
                         <ks-option value="A" label="Alpha" />
                     </ks-select>`,
                 }),
-                {global: globalConfig},
             )
             expect(document.querySelector(".kel-select-all-btn")).toBeFalsy()
         })
@@ -389,7 +373,6 @@ describe("KsSelect", () => {
                         <template #header><span class="custom-header">custom</span></template>
                     </ks-select>`,
                 }),
-                {global: globalConfig},
             )
             expect(document.querySelector(".kel-select-all-btn")).toBeFalsy()
             expect(document.querySelector(".custom-header")).toBeTruthy()

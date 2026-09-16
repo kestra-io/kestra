@@ -2,26 +2,21 @@ import {describe, test, expect} from "vitest"
 import KsDurationPicker from "../../../src/components/Form/KsDurationPicker.vue"
 import {i18nMount} from "../i18nMount"
 
-const globalConfig = {}
-
 describe("KsDurationPicker", () => {
     test("renders the duration picker container", () => {
         const wrapper = i18nMount(KsDurationPicker, {
-            global: globalConfig,
         })
         expect(wrapper.find(".ks-duration-picker").exists()).toBe(true)
     })
 
     test("renders all 4 number inputs", () => {
         const wrapper = i18nMount(KsDurationPicker, {
-            global: globalConfig,
         })
         expect(wrapper.findAll(".ks-duration-picker__field").length).toBe(4)
     })
 
     test("renders custom duration text input", () => {
         const wrapper = i18nMount(KsDurationPicker, {
-            global: globalConfig,
         })
         expect(wrapper.find(".ks-duration-picker__custom").exists()).toBe(true)
     })
@@ -29,7 +24,6 @@ describe("KsDurationPicker", () => {
     test("disables unit inputs and custom duration input", () => {
         const wrapper = i18nMount(KsDurationPicker, {
             props: {disabled: true},
-            global: globalConfig,
         })
 
         const unitInputs = wrapper.findAll(".ks-duration-picker__field input")
@@ -43,7 +37,6 @@ describe("KsDurationPicker", () => {
     test("parses modelValue on mount and populates fields", async () => {
         const wrapper = i18nMount(KsDurationPicker, {
             props: {modelValue: "P4DT5H6M7S"},
-            global: globalConfig,
         })
         await wrapper.vm.$nextTick()
 
@@ -54,7 +47,6 @@ describe("KsDurationPicker", () => {
 
     test("emits update:modelValue with null when no values set", async () => {
         const wrapper = i18nMount(KsDurationPicker, {
-            global: globalConfig,
         })
         await wrapper.vm.$nextTick()
 
@@ -68,7 +60,6 @@ describe("KsDurationPicker", () => {
     test("emits update:modelValue with ISO string when modelValue provided", async () => {
         const wrapper = i18nMount(KsDurationPicker, {
             props: {modelValue: "P1D"},
-            global: globalConfig,
         })
         await wrapper.vm.$nextTick()
 
@@ -79,7 +70,6 @@ describe("KsDurationPicker", () => {
     test("reacts to modelValue prop change", async () => {
         const wrapper = i18nMount(KsDurationPicker, {
             props: {modelValue: "P1D"},
-            global: globalConfig,
         })
         await wrapper.vm.$nextTick()
 
@@ -92,7 +82,6 @@ describe("KsDurationPicker", () => {
 
     test("rejects calendar-based (year/month/week) durations as invalid", async () => {
         const wrapper = i18nMount(KsDurationPicker, {
-            global: globalConfig,
         })
 
         const customInputEl = wrapper.find(".ks-duration-picker__custom input")
@@ -108,7 +97,6 @@ describe("KsDurationPicker", () => {
 
     test("custom duration input shows invalid message for bad input", async () => {
         const wrapper = i18nMount(KsDurationPicker, {
-            global: globalConfig,
         })
 
         // Directly call parseDuration on the vm via the input event handler
@@ -124,7 +112,6 @@ describe("KsDurationPicker", () => {
 
     test("custom duration input valid ISO string emits correct value", async () => {
         const wrapper = i18nMount(KsDurationPicker, {
-            global: globalConfig,
         })
 
         const customInputEl = wrapper.find(".ks-duration-picker__custom input")
@@ -141,7 +128,6 @@ describe("KsDurationPicker", () => {
     test("keeps the typed text when an intermediate value parses to zero", async () => {
         const wrapper = i18nMount(KsDurationPicker, {
             props: {modelValue: "PT5M"},
-            global: globalConfig,
         })
         await wrapper.vm.$nextTick()
 
@@ -160,7 +146,6 @@ describe("KsDurationPicker", () => {
     test("emits the parsed value once the typed text becomes valid", async () => {
         const wrapper = i18nMount(KsDurationPicker, {
             props: {modelValue: "PT5M"},
-            global: globalConfig,
         })
         await wrapper.vm.$nextTick()
 
@@ -179,7 +164,6 @@ describe("KsDurationPicker", () => {
     test("unit spinner change rewrites the text canonically and emits", async () => {
         const wrapper = i18nMount(KsDurationPicker, {
             props: {modelValue: "PT5M"},
-            global: globalConfig,
         })
         await wrapper.vm.$nextTick()
 
@@ -197,7 +181,6 @@ describe("KsDurationPicker", () => {
     test("empty modelValue results in null emit", async () => {
         const wrapper = i18nMount(KsDurationPicker, {
             props: {modelValue: ""},
-            global: globalConfig,
         })
         await wrapper.vm.$nextTick()
 

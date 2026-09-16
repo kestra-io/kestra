@@ -3,8 +3,6 @@ import FilterSelect from "../../../../src/components/Data/KsDataTable/filter/lay
 import KsDatePicker from "../../../../src/components/Form/KsDatePicker.vue"
 import {i18nMount} from "../../i18nMount"
 
-const globalConfig = {}
-
 const mountCustomTimeRange = () => i18nMount(FilterSelect, {
     props: {
         modelValue: "",
@@ -12,7 +10,6 @@ const mountCustomTimeRange = () => i18nMount(FilterSelect, {
         filterKey: {key: "timeRange"},
         timeRangeMode: "custom",
     },
-    global: globalConfig,
 })
 
 describe("FilterSelect custom time range", () => {

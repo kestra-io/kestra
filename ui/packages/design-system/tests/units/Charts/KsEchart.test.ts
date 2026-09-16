@@ -73,8 +73,6 @@ vi.mock("../../../src/components/Feedback/KsTooltip.vue", () => ({
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-const globalConfig = {}
-
 const BASE_OPTIONS = {
     xAxis: {type: "category", data: ["Jan", "Feb", "Mar"], boundaryGap: false},
     yAxis: {type: "value"},
@@ -85,7 +83,6 @@ const BASE_OPTIONS = {
 function mountChart(props: Record<string, unknown> = {}) {
     return mount(KsEchart, {
         props: {options: BASE_OPTIONS, ...props},
-        global: globalConfig,
     })
 }
 
@@ -147,7 +144,7 @@ describe("KsEchart", () => {
                 {name: "Duration", type: "line", data: [1.5, 2, 3], tooltip: {valueFormatter: (value: unknown) => `${value}s`}},
             ],
         }
-        const wrapper = mount(KsEchart, {props: {options, tooltipType: "external"}, global: globalConfig})
+        const wrapper = mount(KsEchart, {props: {options, tooltipType: "external"}})
 
         const vChart = wrapper.findComponent({name: "VChart"})
         const opt = vChart.props("option") as {tooltip: {formatter: (params: unknown) => string}}
@@ -230,7 +227,6 @@ describe("KsEchart", () => {
 
         const wrapper = mount(KsEchart, {
             props: {options: mixedOptions},
-            global: globalConfig,
         })
 
         const vChart = wrapper.findComponent({name: "VChart"})
@@ -259,7 +255,6 @@ describe("KsEchart", () => {
 
         const wrapper = mount(KsEchart, {
             props: {options: mixedOptions, disableFeatures: [ChartFeature.AXIS]},
-            global: globalConfig,
         })
 
         const vChart = wrapper.findComponent({name: "VChart"})
@@ -288,7 +283,6 @@ describe("KsEchart", () => {
 
         const wrapper = mount(KsEchart, {
             props: {options: mixedOptions, disableFeatures: [ChartFeature.AXIS_SPLITLINE]},
-            global: globalConfig,
         })
 
         const vChart = wrapper.findComponent({name: "VChart"})

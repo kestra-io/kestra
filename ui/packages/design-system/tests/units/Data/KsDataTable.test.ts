@@ -5,8 +5,6 @@ import KsTableColumn from "../../../src/components/Data/KsTable/KsTableColumn.vu
 import KsTable from "../../../src/components/Data/KsTable/KsTable.vue"
 import {i18nMount} from "../i18nMount"
 
-const globalConfig = {}
-
 const SAMPLE_DATA = [
     {id: "flow-001", namespace: "company.team", status: "SUCCESS"},
     {id: "flow-002", namespace: "company.data", status: "RUNNING"},
@@ -17,7 +15,6 @@ describe("KsDataTable", () => {
     test("renders table element", () => {
         const wrapper = i18nMount(KsDataTable, {
             props: {data: SAMPLE_DATA, total: 3},
-            global: globalConfig,
         })
         expect(wrapper.find(".kel-table").exists()).toBe(true)
     })
@@ -32,14 +29,13 @@ describe("KsDataTable", () => {
                 </ks-data-table>
             `,
             setup: () => ({data: SAMPLE_DATA}),
-        }, {global: globalConfig})
+        })
         expect(wrapper.find(".kel-table").exists()).toBe(true)
     })
 
     test("forwards row-click from the underlying table", () => {
         const wrapper = i18nMount(KsDataTable, {
             props: {data: SAMPLE_DATA, total: 3},
-            global: globalConfig,
         })
 
         const column = {type: "default", property: "id"}
@@ -52,7 +48,6 @@ describe("KsDataTable", () => {
     test("does not render pagination when total is 0", () => {
         const wrapper = i18nMount(KsDataTable, {
             props: {data: [], total: 0},
-            global: globalConfig,
         })
         expect(wrapper.find(".kel-pagination").exists()).toBe(false)
     })
@@ -60,7 +55,6 @@ describe("KsDataTable", () => {
     test("renders pagination when total > 0", () => {
         const wrapper = i18nMount(KsDataTable, {
             props: {data: SAMPLE_DATA, total: 30},
-            global: globalConfig,
         })
         expect(wrapper.find(".kel-pagination").exists()).toBe(true)
     })
@@ -69,7 +63,6 @@ describe("KsDataTable", () => {
         const wrapper = i18nMount(KsDataTable, {
             props: {data: [], total: 0},
             slots: {navbar: "<span class='test-navbar'>Filters</span>"},
-            global: globalConfig,
         })
         expect(wrapper.find(".test-navbar").exists()).toBe(true)
     })
@@ -77,7 +70,6 @@ describe("KsDataTable", () => {
     test("does not render navbar when slot is absent", () => {
         const wrapper = i18nMount(KsDataTable, {
             props: {data: [], total: 0},
-            global: globalConfig,
         })
         expect(wrapper.find("nav").exists()).toBe(false)
     })
@@ -86,7 +78,6 @@ describe("KsDataTable", () => {
         const wrapper = i18nMount(KsDataTable, {
             props: {data: SAMPLE_DATA, total: 3},
             slots: {table: "<div class='custom-content'>Custom</div>"},
-            global: globalConfig,
         })
         expect(wrapper.find(".custom-content").exists()).toBe(true)
         expect(wrapper.find(".kel-table").exists()).toBe(false)
@@ -95,7 +86,6 @@ describe("KsDataTable", () => {
     test("shows loading state when loading prop is true", () => {
         const wrapper = i18nMount(KsDataTable, {
             props: {data: SAMPLE_DATA, total: 3, loading: true},
-            global: globalConfig,
         })
         expect(wrapper.find("[v-ks-loading]").exists() || wrapper.find(".ks-data-table-wrapper").exists()).toBe(true)
     })
@@ -103,7 +93,6 @@ describe("KsDataTable", () => {
     test("exposes isLoading ref", () => {
         const wrapper = i18nMount(KsDataTable, {
             props: {data: [], total: 0},
-            global: globalConfig,
         })
         expect((wrapper.vm as any).isLoading).toBeDefined()
     })
@@ -111,7 +100,6 @@ describe("KsDataTable", () => {
     test("exposes clearSelection method", () => {
         const wrapper = i18nMount(KsDataTable, {
             props: {data: [], total: 0},
-            global: globalConfig,
         })
         expect(typeof (wrapper.vm as any).clearSelection).toBe("function")
     })
@@ -119,7 +107,6 @@ describe("KsDataTable", () => {
     test("exposes setSelection method", () => {
         const wrapper = i18nMount(KsDataTable, {
             props: {data: [], total: 0},
-            global: globalConfig,
         })
         expect(typeof (wrapper.vm as any).setSelection).toBe("function")
     })
@@ -127,7 +114,6 @@ describe("KsDataTable", () => {
     test("exposes getSelectionRows method", () => {
         const wrapper = i18nMount(KsDataTable, {
             props: {data: [], total: 0},
-            global: globalConfig,
         })
         expect(typeof (wrapper.vm as any).getSelectionRows).toBe("function")
     })
@@ -135,7 +121,6 @@ describe("KsDataTable", () => {
     test("exposes toggleAllSelection method", () => {
         const wrapper = i18nMount(KsDataTable, {
             props: {data: [], total: 0},
-            global: globalConfig,
         })
         expect(typeof (wrapper.vm as any).toggleAllSelection).toBe("function")
     })
@@ -143,7 +128,6 @@ describe("KsDataTable", () => {
     test("exposes toggleRowExpansion method", () => {
         const wrapper = i18nMount(KsDataTable, {
             props: {data: [], total: 0},
-            global: globalConfig,
         })
         expect(typeof (wrapper.vm as any).toggleRowExpansion).toBe("function")
     })
@@ -151,7 +135,6 @@ describe("KsDataTable", () => {
     test("exposes waitTableRender method", () => {
         const wrapper = i18nMount(KsDataTable, {
             props: {data: [], total: 0},
-            global: globalConfig,
         })
         expect(typeof (wrapper.vm as any).waitTableRender).toBe("function")
     })
@@ -159,7 +142,6 @@ describe("KsDataTable", () => {
     test("emits page-changed on page change", async () => {
         const wrapper = i18nMount(KsDataTable, {
             props: {data: SAMPLE_DATA, total: 100, pageSize: 10},
-            global: globalConfig,
         })
         // Trigger size change to emit page-changed
         await (wrapper.vm as any).onSizeChange(25)
@@ -170,7 +152,6 @@ describe("KsDataTable", () => {
     test("emits page-changed with correct page on page change", async () => {
         const wrapper = i18nMount(KsDataTable, {
             props: {data: SAMPLE_DATA, total: 100, pageSize: 10},
-            global: globalConfig,
         })
         await (wrapper.vm as any).onPageChange(3)
         expect(wrapper.emitted("page-changed")?.[0]).toEqual([{page: 3, size: 10}])
@@ -185,7 +166,7 @@ describe("KsDataTable", () => {
                 </ks-data-table>
             `,
             setup: () => ({data: SAMPLE_DATA}),
-        }, {global: globalConfig})
+        })
         // Table renders correctly with selection enabled
         expect(wrapper.find(".kel-table").exists()).toBe(true)
     })
@@ -210,7 +191,7 @@ describe("KsDataTable", () => {
                 data: SAMPLE_DATA,
                 rowSelectable: (row: any) => row.status !== "RUNNING",
             }),
-        }, {global: globalConfig})
+        })
         const table = wrapper.findComponent(KsDataTable)
         ;(table.vm as any).setSelection([SAMPLE_DATA[0]])
         await wrapper.vm.$nextTick()
@@ -222,7 +203,6 @@ describe("KsDataTable", () => {
     test("isLoading updates when loading prop changes", async () => {
         const wrapper = i18nMount(KsDataTable, {
             props: {data: [], total: 0, loading: false},
-            global: globalConfig,
         })
         expect((wrapper.vm as any).isLoading).toBe(false)
         await wrapper.setProps({loading: true})
@@ -232,7 +212,6 @@ describe("KsDataTable", () => {
     test("can set isLoading directly from outside", () => {
         const wrapper = i18nMount(KsDataTable, {
             props: {data: [], total: 0},
-            global: globalConfig,
         })
         ;(wrapper.vm as any).isLoading = true
         expect((wrapper.vm as any).isLoading).toBe(true)
@@ -241,7 +220,6 @@ describe("KsDataTable", () => {
     test("emits update:currentPage on page change (v-model contract)", async () => {
         const wrapper = i18nMount(KsDataTable, {
             props: {data: SAMPLE_DATA, total: 100, pageSize: 10, currentPage: 1},
-            global: globalConfig,
         })
         await (wrapper.vm as any).onPageChange(4)
         expect(wrapper.emitted("update:currentPage")?.[0]).toEqual([4])
@@ -250,7 +228,6 @@ describe("KsDataTable", () => {
     test("emits update:currentPage and update:pageSize on size change", async () => {
         const wrapper = i18nMount(KsDataTable, {
             props: {data: SAMPLE_DATA, total: 100, pageSize: 10, currentPage: 3},
-            global: globalConfig,
         })
         await (wrapper.vm as any).onSizeChange(50)
         expect(wrapper.emitted("update:currentPage")?.[0]).toEqual([1])
@@ -261,7 +238,6 @@ describe("KsDataTable", () => {
         let loadCount = 0
         const wrapper = i18nMount(KsDataTable, {
             props: {data: SAMPLE_DATA, total: 100, pageSize: 25, currentPage: 3, loadData: async () => { loadCount++ }},
-            global: globalConfig,
         })
         await new Promise<void>((resolve) => setTimeout(resolve, 0))
         expect(loadCount).toBe(1)
@@ -276,7 +252,6 @@ describe("KsDataTable", () => {
         let loadCount = 0
         const wrapper = i18nMount(KsDataTable, {
             props: {data: SAMPLE_DATA, total: 100, pageSize: 25, currentPage: 1, loadData: async () => { loadCount++ }},
-            global: globalConfig,
         })
         await new Promise<void>((resolve) => setTimeout(resolve, 0))
         expect(loadCount).toBe(1)
@@ -298,7 +273,6 @@ describe("KsDataTable", () => {
                 currentPage: 1,
                 loadData: loadDataSpy,
             },
-            global: globalConfig,
         })
 
         await new Promise<void>((resolve) => setTimeout(resolve, 0))
@@ -340,7 +314,6 @@ describe("KsDataTable", () => {
     test("emits loaded after every load, not only the first", async () => {
         const wrapper = i18nMount(KsDataTable, {
             props: {data: SAMPLE_DATA, total: 100, pageSize: 25, currentPage: 1, loadData: async () => {}},
-            global: globalConfig,
         })
         await new Promise<void>((resolve) => setTimeout(resolve, 0))
         expect(wrapper.emitted("loaded")).toHaveLength(1)
@@ -365,7 +338,6 @@ describe("KsDataTable", () => {
                 loadData: async (p: Load) => { loads.push(p) },
                 ...props,
             },
-            global: globalConfig,
         })
         return loads
     }
@@ -456,7 +428,6 @@ describe("KsDataTable", () => {
                 loadData: async (p: Load) => { loads.push(p) },
                 ...props,
             },
-            global: globalConfig,
         })
         return {loads, wrapper}
     }
@@ -480,7 +451,6 @@ describe("KsDataTable", () => {
     test("applies ks-data-table-body--fit modifier class when fitHeight is true", () => {
         const wrapper = i18nMount(KsDataTable, {
             props: {data: SAMPLE_DATA, total: 3, fitHeight: true},
-            global: globalConfig,
         })
         expect(wrapper.find(".ks-data-table-body--fit").exists()).toBe(true)
     })
@@ -488,7 +458,6 @@ describe("KsDataTable", () => {
     test("does not apply ks-data-table-body--fit modifier class when fitHeight is false (default)", () => {
         const wrapper = i18nMount(KsDataTable, {
             props: {data: SAMPLE_DATA, total: 3},
-            global: globalConfig,
         })
         expect(wrapper.find(".ks-data-table-body--fit").exists()).toBe(false)
     })

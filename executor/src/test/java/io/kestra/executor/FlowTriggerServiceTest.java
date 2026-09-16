@@ -1,5 +1,6 @@
 package io.kestra.executor;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -599,8 +600,7 @@ class FlowTriggerServiceTest {
         }
 
         @Override
-        public List<MultipleConditionWindow> expired(String tenantId) {
-            return List.of();
+        public void purgeExpired(Instant now) {
         }
 
         @Override

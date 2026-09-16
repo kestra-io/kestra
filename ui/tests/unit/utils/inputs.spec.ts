@@ -2,10 +2,6 @@ import {describe, expect, it} from "vitest"
 import {flattenInputs, unflattenToForms, formChildName, buildWizardSteps, normalize} from "../../../src/utils/inputs"
 import {inputsToFormData} from "../../../src/utils/submitTask"
 
-const momentStub = {
-    $moment: (_d: any) => ({toISOString: () => "iso", format: (_f: string) => "fmt"}),
-}
-
 // Regression guard, fixed more than once: `defaults` is a Property, so it crosses the wire as its
 // expression STRING — a `defaults: true` BOOL arrives as "true". el-switch only accepts a real
 // boolean; anything else makes it emit `update:modelValue` = false during setup, which turns the
@@ -256,7 +252,7 @@ describe("inputsToFormData over flattened FORM inputs (submit contract)", () => 
         }]
         const values = {"environment.region": "EU"}
 
-        const formData = inputsToFormData(momentStub, flattenInputs(flowInputs), values)
+        const formData = inputsToFormData(flattenInputs(flowInputs), values)
 
         // backend re-nests `environment.region` -> {environment:{region:"EU"}} via flattenToNestedMap
         expect(formData?.get("environment.region")).toBe("EU")
@@ -272,7 +268,7 @@ describe("inputsToFormData over flattened FORM inputs (submit contract)", () => 
         }]
         const values = {"environment.region": "EU", "environment.data_center": ""}
 
-        const formData = inputsToFormData(momentStub, flattenInputs(flowInputs), values)
+        const formData = inputsToFormData(flattenInputs(flowInputs), values)
 
         expect(formData?.get("environment.region")).toBe("EU")
         expect(formData?.get("environment.data_center")).toBeNull()

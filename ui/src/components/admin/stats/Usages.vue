@@ -24,7 +24,7 @@
     import {useI18n} from "vue-i18n"
     import {useMiscStore} from "override/stores/misc"
     import UsageCard from "./UsageCard.vue"
-    import moment from "moment"
+    import {dayjs} from "@kestra-io/design-system"
 
     interface DailyExecution {
         groupBy: string;
@@ -95,8 +95,8 @@
 
     const executionDurationMinutes = computed(() => {
         const total = dailyExecutions.value.reduce(
-            (acc, day) => acc.add(moment.duration(day.duration.sum ?? "PT0S")),
-            moment.duration("PT0S"),
+            (acc, day) => acc.add(dayjs.duration(day.duration.sum ?? "PT0S")),
+            dayjs.duration("PT0S"),
         )
         return total.minutes()
     })

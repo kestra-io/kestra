@@ -129,8 +129,9 @@
 <script setup lang="ts">
     import {computed, onBeforeUnmount, ref, watch} from "vue"
     import {useI18n} from "vue-i18n"
-    import moment, {type Moment} from "moment-timezone"
     import {
+        dayjs,
+        type Dayjs,
         State,
         KsPopover,
         KsButton,
@@ -164,7 +165,7 @@
 
     const props = withDefaults(defineProps<{
         histories?: {
-            date: string | number | Moment;
+            date: string | number | Dayjs;
             state: string;
         }[];
         interval?: number;
@@ -185,7 +186,7 @@
 
     const normalizedHistories = computed(() =>
         (props.histories ?? []).map((h) => ({
-            date: moment(h.date),
+            date: dayjs(h.date),
             state: h.state,
         })),
     )
@@ -293,7 +294,7 @@
         return `${((part / breakdown.value.total) * 100).toFixed(1)}%`
     }
 
-    function formatInTimezone(date: Moment, format: string): string {
+    function formatInTimezone(date: Dayjs, format: string): string {
         return Utils.dateFilter(date.toISOString(), format)
     }
 

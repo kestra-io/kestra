@@ -150,6 +150,10 @@ export const useFlowStore = defineStore("flow", () => {
     const flowYaml = ref<string>("")
     const flowYamlOrigin = ref<string>("")
     const previewSource = ref<string | undefined>(undefined)
+    /** Registered by `CopilotChat.vue` (mirrors `filesSaveAll`'s pattern) so `FlowFileEditorTab.vue`'s
+     *  read-only-preview banner can decline the active `previewSource` without depending on the AI
+     *  dock's internal state directly. */
+    const declinePreview = ref<(() => void) | null>(null)
     const expandedSubflows = ref<string[]>([])
     const creationId = ref<string>()
 
@@ -1055,6 +1059,7 @@ function deleteFlowAndDependencies() {
         flowYaml,
         flowYamlOrigin,
         previewSource,
+        declinePreview,
         haveChange,
         expandedSubflows,
         addTrigger,

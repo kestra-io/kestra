@@ -119,12 +119,6 @@
         (e: "draftApplied", draftId: string): void
     }>()
 
-    const isDraftDismissed = computed(
-        () => Boolean(props.message.draft && props.dismissedDraftIds?.has(props.message.draft.draftId)),
-    )
-    const isDraftApplied = computed(
-        () => Boolean(props.message.draft && props.appliedDraftIds?.has(props.message.draft.draftId)),
-    )
 
     const {t} = useI18n()
     const contextNotice = computed(() => {

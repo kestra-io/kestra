@@ -2682,6 +2682,6 @@
       "install": "설치",
       "dismiss": "나중에"
     },
-    "delete_log_iteration": "Are you sure you want to delete the log for {iteration}?"
+    "delete_log_iteration": "{iteration}의 로그를 삭제하시겠습니까?"
   }
 }

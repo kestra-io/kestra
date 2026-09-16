@@ -2682,6 +2682,6 @@
       "install": "Установить",
       "dismiss": "Не сейчас"
     },
-    "delete_log_iteration": "Are you sure you want to delete the log for {iteration}?"
+    "delete_log_iteration": "Вы уверены, что хотите удалить журнал для {iteration}?"
   }
 }

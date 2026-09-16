@@ -21,14 +21,12 @@ import io.kestra.core.killswitch.KillSwitchService;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.*;
 import io.kestra.core.models.executions.statistics.ExecutionStatistic;
-import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.flows.sla.ExecutionMonitoringSLA;
-import io.kestra.core.models.flows.sla.SLA;
-import io.kestra.core.models.flows.sla.Violation;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.TriggerId;
+import io.kestra.core.models.triggers.multipleflows.MultipleConditionStateStore;
 import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.queues.QueueException;
@@ -43,7 +41,6 @@ import io.kestra.core.server.Metric;
 import io.kestra.core.server.ServiceStateChangeEvent;
 import io.kestra.core.server.ServiceType;
 import io.kestra.core.services.ExecutionService;
-import io.kestra.core.services.ExecutionService.ExecutionWithTaskRun;
 import io.kestra.core.services.MaintenanceService;
 import io.kestra.core.services.TaskOutputService;
 import io.kestra.core.utils.*;
@@ -84,13 +81,14 @@ public class DefaultExecutor extends AbstractService implements Executor {
     private final ExecutorService executorService;
     private final ExecutionService executionService;
     private final FlowTriggerService flowTriggerService;
-    private final SLAService slaService;
     private final MaintenanceService maintenanceService;
     private final FlowMetaStoreInterface flowMetaStore;
 
     private final ExecutionStateStore executionStateStore;
-    private final ExecutionDelayStateStore executionDelayStateStore;
+    private final ExecutionDelayProcessor executionDelayProcessor;
     private final SLAMonitorStateStore slaMonitorStateStore;
+    private final MultipleConditionStateStore multipleConditionStateStore;
+    private final SLAMonitorProcessor slaMonitorProcessor;
     private final ConcurrencySlotReleaseProcessor concurrencySlotReleaseProcessor;
     private final TriggerEventQueue triggerEventQueue;
 
@@ -114,8 +112,10 @@ public class DefaultExecutor extends AbstractService implements Executor {
     private final LoopExecutionEventMessageHandler loopExecutionEventMessageHandler;
 
     private final ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
+    private final ExecutorConfiguration executorConfiguration;
     private ScheduledFuture<?> executionDelayFuture;
     private ScheduledFuture<?> monitorSLAFuture;
+    private ScheduledFuture<?> multipleConditionPurgeFuture;
 
     // Thread-safe: populated by run() but iterated from maintenance listener and shutdown threads.
     private final List<Runnable> receiveCancellations = new CopyOnWriteArrayList<>();
@@ -129,6 +129,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
     private Timer flowTriggerProcessingTimer;
     private Timer slaMonitorLoopTimer;
     private Timer executionDelayLoopTimer;
+    private Timer multipleConditionPurgeLoopTimer;
 
     @Inject
     public DefaultExecutor(
@@ -153,12 +154,13 @@ public class DefaultExecutor extends AbstractService implements Executor {
         ExecutorService executorService,
         ExecutionService executionService,
         FlowTriggerService flowTriggerService,
-        SLAService slaService,
         MaintenanceService maintenanceService,
         FlowMetaStoreInterface flowMetaStore,
         ExecutionStateStore executionStateStore,
-        ExecutionDelayStateStore executionDelayStateStore,
+        ExecutionDelayProcessor executionDelayProcessor,
         SLAMonitorStateStore slaMonitorStateStore,
+        MultipleConditionStateStore multipleConditionStateStore,
+        SLAMonitorProcessor slaMonitorProcessor,
         ConcurrencySlotReleaseProcessor concurrencySlotReleaseProcessor,
         TriggerEventQueue triggerEventQueue,
         MetricRegistry metricRegistry,
@@ -174,6 +176,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
         LoopExecutionEventMessageHandler loopExecutionEventMessageHandler) {
         super(ServiceType.EXECUTOR, eventPublisher);
 
+        this.executorConfiguration = executorConfiguration;
         this.kestraContext = kestraContext;
         this.executionQueue = executionQueue;
         this.executionCommandQueue = executionCommandQueue;
@@ -192,12 +195,13 @@ public class DefaultExecutor extends AbstractService implements Executor {
         this.executorService = executorService;
         this.executionService = executionService;
         this.flowTriggerService = flowTriggerService;
-        this.slaService = slaService;
         this.maintenanceService = maintenanceService;
         this.flowMetaStore = flowMetaStore;
         this.executionStateStore = executionStateStore;
-        this.executionDelayStateStore = executionDelayStateStore;
+        this.executionDelayProcessor = executionDelayProcessor;
         this.slaMonitorStateStore = slaMonitorStateStore;
+        this.multipleConditionStateStore = multipleConditionStateStore;
+        this.slaMonitorProcessor = slaMonitorProcessor;
         this.concurrencySlotReleaseProcessor = concurrencySlotReleaseProcessor;
         this.triggerEventQueue = triggerEventQueue;
         this.metricRegistry = metricRegistry;
@@ -234,6 +238,8 @@ public class DefaultExecutor extends AbstractService implements Executor {
         this.slaMonitorLoopTimer = this.metricRegistry.timer(MetricRegistry.METRIC_EXECUTOR_SLA_MONITOR_LOOP_DURATION, MetricRegistry.METRIC_EXECUTOR_SLA_MONITOR_LOOP_DURATION_DESCRIPTION);
         this.executionDelayLoopTimer = this.metricRegistry
             .timer(MetricRegistry.METRIC_EXECUTOR_EXECUTION_DELAY_LOOP_DURATION, MetricRegistry.METRIC_EXECUTOR_EXECUTION_DELAY_LOOP_DURATION_DESCRIPTION);
+        this.multipleConditionPurgeLoopTimer = this.metricRegistry
+            .timer(MetricRegistry.METRIC_EXECUTOR_MULTIPLE_CONDITION_PURGE_LOOP_DURATION, MetricRegistry.METRIC_EXECUTOR_MULTIPLE_CONDITION_PURGE_LOOP_DURATION_DESCRIPTION);
     }
 
     @Override
@@ -348,14 +354,20 @@ public class DefaultExecutor extends AbstractService implements Executor {
         executionDelayFuture = scheduledExecutorService.scheduleAtFixedRate(
             this::executionDelayLoop,
             0,
-            1,
-            TimeUnit.SECONDS
+            executorConfiguration.executionDelayLoopPeriodicityMs(),
+            TimeUnit.MILLISECONDS
         );
         monitorSLAFuture = scheduledExecutorService.scheduleAtFixedRate(
             this::executionSLAMonitorLoop,
             0,
-            1,
-            TimeUnit.SECONDS
+            executorConfiguration.monitorSLALoopPeriodicityMs(),
+            TimeUnit.MILLISECONDS
+        );
+        multipleConditionPurgeFuture = scheduledExecutorService.scheduleAtFixedRate(
+            this::multipleConditionPurgeLoop,
+            0,
+            executorConfiguration.multipleConditionPurgeLoopPeriodicityMs(),
+            TimeUnit.MILLISECONDS
         );
 
         // look at exceptions on the scheduledDelay thread
@@ -395,6 +407,28 @@ public class DefaultExecutor extends AbstractService implements Executor {
                     // We avoid closing the Executor if the exception is a CannotCreateTransactionException as it may be transient
                     if (!isStopRequested() && e.getCause() != null && !e.getCause().getClass().getSimpleName().equals("CannotCreateTransactionException")) {
                         log.error("Executor fatal exception in the scheduledSLAMonitor thread", e);
+                        close();
+                        kestraContext.shutdown();
+                    }
+                }
+            }
+        );
+
+        // look at exceptions on the scheduledMultipleConditionPurge thread
+        Thread.ofVirtual().name("executor-multiple-condition-purge-exception-watcher").start(
+            () ->
+            {
+                Await.until(multipleConditionPurgeFuture::isDone);
+
+                try {
+                    multipleConditionPurgeFuture.get();
+                } catch (CancellationException ignored) {
+
+                } catch (ExecutionException | InterruptedException e) {
+                    // An exception during shutdown is teardown noise (e.g. closed datasource), not a reason to escalate.
+                    // We avoid closing the Executor if the exception is a CannotCreateTransactionException as it may be transient
+                    if (!isStopRequested() && e.getCause() != null && !e.getCause().getClass().getSimpleName().equals("CannotCreateTransactionException")) {
+                        log.error("Executor fatal exception in the scheduledMultipleConditionPurge thread", e);
                         close();
                         kestraContext.shutdown();
                     }
@@ -639,6 +673,11 @@ public class DefaultExecutor extends AbstractService implements Executor {
             // Transaction has committed here: the new/updated executions are now durably visible,
             // so emitting their events cannot be consumed before the state store can see them.
             toEmit.forEach(this::toExecution);
+            // Transactional outbox: the processor collects the contexts inside the state-store
+            // transaction; events are emitted only here, after processExpired() has committed.
+            // Emitting inside the transaction lets brokers with their own transactionality (Kafka)
+            // deliver an event before its execution row is committed, and the consumer drops it.
+            executionDelayProcessor.processExpired(Instant.now()).forEach(this::toExecution);
         });
     }
 
@@ -649,53 +688,19 @@ public class DefaultExecutor extends AbstractService implements Executor {
 
         slaMonitorLoopTimer.record(() ->
         {
-            slaMonitorStateStore.processExpired(Instant.now(), slaMonitor ->
-            {
-                Optional<ExecutorContext> maybeExecutor = executionStateStore.lock(slaMonitor.getExecutionId(), execution ->
-                {
-                    FlowWithSource flow = flowMetaStore.findByExecutionForRuntime(execution).orElseThrow(() -> new FlowNotFoundException(execution));
-                    Optional<SLA> sla = flow.getSla().stream().filter(s -> s.getId().equals(slaMonitor.getSlaId())).findFirst();
-                    if (sla.isEmpty()) {
-                        // this can happen in case the flow has been updated and the SLA removed
-                        log.debug("Cannot find the SLA '{}' in the flow for execution '{}', ignoring it.", slaMonitor.getSlaId(), slaMonitor.getExecutionId());
-                        return null;
-                    }
-
-                    // There can be a race: a monitor can be found, but the execution terminated.
-                    // This particularly could occur in ElasticSearch due to refresh.
-                    if (executionService.isTerminated(flow, execution)) {
-                        return null;
-                    }
-
-                    metricRegistry
-                        .counter(MetricRegistry.METRIC_EXECUTOR_SLA_EXPIRED_COUNT, MetricRegistry.METRIC_EXECUTOR_SLA_EXPIRED_COUNT_DESCRIPTION, metricRegistry.tags(execution))
-                        .increment();
-
-                    ExecutorContext executor = new ExecutorContext(execution, flow);
-                    try {
-                        RunContext runContext = runContextFactory.of(executor.getFlow(), executor.getExecution());
-                        Optional<Violation> violation = slaService.evaluateExecutionMonitoringSLA(runContext, executor.getExecution(), sla.get());
-                        if (violation.isPresent()) { // should always be true
-                            log.info("Processing expired SLA monitor '{}' for execution '{}'.", slaMonitor.getSlaId(), slaMonitor.getExecutionId());
-                            executor = executorService.processViolation(runContext, executor, violation.get());
-
-                            metricRegistry
-                                .counter(
-                                    MetricRegistry.METRIC_EXECUTOR_SLA_VIOLATION_COUNT, MetricRegistry.METRIC_EXECUTOR_SLA_VIOLATION_COUNT_DESCRIPTION,
-                                    metricRegistry.tags(executor.getExecution())
-                                )
-                                .increment();
-                        }
-                    } catch (Exception e) {
-                        executor = executorService.handleFailedExecutionFromExecutor(executor, e);
-                    }
-
-                    return executor;
-                });
-
-                maybeExecutor.ifPresent(this::toExecution);
-            });
+            // Transactional outbox: the processor evaluates the violations inside the SLA-monitor
+            // state-store transaction; events are emitted only here, after processExpired() has
+            // committed (same rule as executionDelayLoop).
+            slaMonitorProcessor.processExpired(Instant.now()).forEach(this::toExecution);
         });
+    }
+
+    private void multipleConditionPurgeLoop() {
+        if (isStopRequested() || this.isPaused.get()) {
+            return;
+        }
+
+        multipleConditionPurgeLoopTimer.record(() -> multipleConditionStateStore.purgeExpired(Instant.now()));
     }
 
     private void enterMaintenance() {
@@ -980,7 +985,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
             ExecutorsUtils.closeScheduledThreadPool(
                 scheduledExecutorService,
                 Duration.ofSeconds(5),
-                Stream.of(executionDelayFuture, monitorSLAFuture).filter(Objects::nonNull).toList()
+                Stream.of(executionDelayFuture, monitorSLAFuture, multipleConditionPurgeFuture).filter(Objects::nonNull).toList()
             );
         }
         return ServiceState.TERMINATED_GRACEFULLY;

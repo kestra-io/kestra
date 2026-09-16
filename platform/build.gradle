@@ -13,7 +13,7 @@ dependencies {
     // versions for libraries with multiple module but no BOM
     def slf4jVersion = "2.0.19"
     def protobufVersion = "4.36.1" // aligned with Google Cloud libraries-bom (grpc 1.81 + protobuf 4.33.2)
-    def bouncycastleVersion = "1.85"
+    def bouncycastleVersion = "1.86"
     def mavenResolverVersion = "2.0.10"
     def jollydayVersion = "2.20.0"
     def jsonschemaVersion = "4.38.0"
@@ -32,11 +32,11 @@ dependencies {
     api enforcedPlatform("com.fasterxml.jackson:jackson-bom:$jacksonVersion")
     api enforcedPlatform("org.slf4j:slf4j-api:$slf4jVersion")
     api enforcedPlatform("org.eclipse.jetty:jetty-bom:$jettyVersion")
-    api platform("io.micronaut.platform:micronaut-platform:4.10.17")
+    api platform("io.micronaut.platform:micronaut-platform:4.10.18")
     // we define cloud bom here for GCP, Azure and AWS so they are aligned for all plugins that use them (secret, storage, oss and ee plugins)
-    api platform('com.google.cloud:libraries-bom:26.88.0')
+    api platform('com.google.cloud:libraries-bom:26.88.1')
     api platform("com.azure:azure-sdk-bom:1.3.8")
-    api platform('software.amazon.awssdk:bom:2.54.13')
+    api platform('software.amazon.awssdk:bom:2.54.17')
     api platform("dev.langchain4j:langchain4j-bom:$langchain4jVersion")
     api platform("dev.langchain4j:langchain4j-community-bom:$langchain4jCommunityVersion")
     api platform("io.qameta.allure:allure-bom:2.35.5")
@@ -90,7 +90,7 @@ dependencies {
         api "org.slf4j:jcl-over-slf4j:$slf4jVersion"
         api "org.fusesource.jansi:jansi:2.4.3"
         api "com.devskiller.friendly-id:friendly-id:1.1.0"
-        api "net.thisptr:jackson-jq:1.6.4"
+        api "net.thisptr:jackson-jq:1.6.5"
         api "com.google.guava:guava:33.7.1-jre"
         api "commons-io:commons-io:2.22.0"
         api "org.apache.commons:commons-lang3:3.20.0"

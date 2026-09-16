@@ -183,7 +183,7 @@ export * as durationUtils from "./utils/duration"
 export * as State from "./utils/state"
 export {LOG_LEVELS, STATES} from "./utils/state"
 export {SECTIONS, CLUSTER_PREFIX} from "./utils/constants"
-export {setMomentInstance, setDateFormatter} from "./date/index"
+export {dayjs, type Dayjs} from "./date/index"
 export type {KsChartSeriesItem} from "./components/Charts/KsEchart.vue"
 export type {KsGraphNode, KsGraphEdge} from "./components/Charts/KsGraph.vue"
 export type {KsBreadcrumbItem} from "./components/Navigation/KsBreadcrumb/types"
@@ -191,6 +191,11 @@ export {Comparators} from "./components/Data/KsDataTable/filter/utils/filterType
 export type {InputInstance, FormItemRule, FormRules, FormInstance, CascaderOption, CascaderProps} from "element-plus"
 export {TooltipType, ChartRenderer, ChartFeature} from "./utils/chart"
 export {designSystemLocale, setDesignSystemLocale, registerDesignSystemI18n} from "./i18n"
+
+let i18nRegistration: Promise<void> = Promise.resolve()
+
+/** The registration `install` started, so a caller can await it rather than leave it in flight. */
+export const designSystemI18nReady = (): Promise<void> => i18nRegistration
 export {useDiscardGuard} from "./composables/useDiscardGuard"
 export type {FilterContext} from "./components/Data/KsDataTable/filter/utils/filterInjectionKeys"
 export {SAVED_FILTER_ANALYTICS_INJECTION_KEY} from "./components/Data/KsDataTable/filter/utils/filterAnalytics"
@@ -508,7 +513,7 @@ const KestraDesignSystem = {
 
         const symbol = (app as unknown as {__VUE_I18N_SYMBOL__?: symbol}).__VUE_I18N_SYMBOL__
         const i18n = symbol ? (app._context.provides[symbol] as I18n | undefined) : undefined
-        if (i18n) void registerDesignSystemI18n(i18n)
+        if (i18n) i18nRegistration = registerDesignSystemI18n(i18n)
     },
 }
 

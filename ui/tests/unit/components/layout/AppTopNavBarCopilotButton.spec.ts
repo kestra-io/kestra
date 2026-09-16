@@ -98,11 +98,12 @@ describe("AppTopNavBar AI Copilot button", () => {
         localStorage.clear()
     })
 
-    it("shows a labelled AI Copilot button when the left menu offers the copilot", () => {
+    it("shows an icon-only AI Copilot button when the left menu offers the copilot", () => {
         const button = copilotButton(mountNavBar())
 
         expect(button.exists()).toBe(true)
-        expect(button.text()).toBe("AI Copilot")
+        expect(button.text()).toBe("")
+        expect(button.attributes("aria-label")).toBe("AI Copilot")
         expect(button.attributes("aria-pressed")).toBe("false")
     })
 

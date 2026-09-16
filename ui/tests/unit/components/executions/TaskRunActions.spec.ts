@@ -41,7 +41,7 @@ vi.mock("../../../../src/stores/executions", () => ({
 
 vi.mock("../../../../src/utils/toast", () => ({
     useToast: () => ({
-        confirm: vi.fn((msg, cb) => cb()),
+        confirm: vi.fn((_msg, cb) => cb()),
     }),
 }))
 
@@ -60,7 +60,7 @@ const baseTaskRun = {
     attempts: [{state: {current: "SUCCESS", startDate: "2024-01-01T00:00:00Z"}}],
 }
 
-function mountActions(propsData: Record<string, unknown>) {
+function mountActions(propsData: InstanceType<typeof TaskRunActions>["$props"]) {
     return mount(TaskRunActions, {
         global: {
             plugins: [i18n],
@@ -222,6 +222,50 @@ describe("TaskRunActions", () => {
         await (wrapper.vm as unknown as { fixErrorWithAi: () => Promise<void> }).fixErrorWithAi()
 
         expect(mockLoadLogs).toHaveBeenCalledWith(expect.objectContaining({
+            params: expect.objectContaining({taskRunId: "run-2"}),
+        }))
+    })
+
+    it("should use the selected taskRun when clicking download content", async () => {
+        const taskRuns = [
+            {...baseTaskRun, id: "run-1", value: "A"},
+            {...baseTaskRun, id: "run-2", value: "B"},
+        ]
+
+        const wrapper = mountActions({
+            taskRun: taskRuns[0],
+            taskRuns,
+            execution,
+        })
+
+        const select = wrapper.findComponent({name: "KsSelect"})
+        await select.vm.$emit("update:modelValue", "run-2")
+
+        mockDownloadLogs.mockClear()
+        await (wrapper.vm as unknown as { downloadContent: (id: string) => void }).downloadContent("run-2")
+        expect(mockDownloadLogs).toHaveBeenCalledWith(expect.objectContaining({
+            params: expect.objectContaining({taskRunId: "run-2"}),
+        }))
+    })
+
+    it("should use the selected taskRun when clicking copy content", async () => {
+        const taskRuns = [
+            {...baseTaskRun, id: "run-1", value: "A"},
+            {...baseTaskRun, id: "run-2", value: "B"},
+        ]
+
+        const wrapper = mountActions({
+            taskRun: taskRuns[0],
+            taskRuns,
+            execution,
+        })
+
+        const select = wrapper.findComponent({name: "KsSelect"})
+        await select.vm.$emit("update:modelValue", "run-2")
+
+        mockDownloadLogs.mockClear()
+        await (wrapper.vm as unknown as { copyContent: (id: string) => void }).copyContent("run-2")
+        expect(mockDownloadLogs).toHaveBeenCalledWith(expect.objectContaining({
             params: expect.objectContaining({taskRunId: "run-2"}),
         }))
     })

@@ -5,24 +5,25 @@
         </KsButton>
         <template #dropdown>
             <KsDropdownMenu>
-                <li v-if="currentTaskRuns.length > 1" role="presentation" style="padding: var(--ks-spacing-2);">
+                <li v-if="currentTaskRuns.length > 1" role="presentation" class="iteration-picker">
                     <KsSelect
                         v-model="selectedTaskRunId"
                         size="small"
                         :clearable="false"
+                        :teleported="false"
                         :aria-label="$t('iteration')"
                     >
                         <KsOption
                             v-for="(run, index) in currentTaskRuns"
                             :key="run.id"
                             :value="run.id"
-                            :label="run.value || `${$t('iteration')} ${index + 1}`"
+                            :label="run.value ?? `${$t('iteration')} ${index + 1}`"
                         />
                     </KsSelect>
                 </li>
-                <KsDivider v-if="currentTaskRuns.length > 1" />
                 <KsDropdownItem
                     v-if="selectedAttempt?.state.current === 'FAILED'"
+                    :divided="currentTaskRuns.length > 1"
                     @click="fixErrorWithAi"
                 >
                     <span class="d-inline-flex align-items-center">
@@ -32,12 +33,17 @@
                 </KsDropdownItem>
                 <SubFlowLink
                     v-if="isSubflow"
+                    :divided="currentTaskRuns.length > 1 && selectedAttempt?.state.current !== 'FAILED'"
                     component="KsDropdownItem"
                     tabExecution="logs"
                     :executionId="currentTaskRun.outputs.executionId"
                 />
 
-                <Metrics :taskRun="currentTaskRun" :execution="execution" />
+                <Metrics
+                    :divided="currentTaskRuns.length > 1 && selectedAttempt?.state.current !== 'FAILED' && !isSubflow"
+                    :taskRun="currentTaskRun"
+                    :execution="execution"
+                />
 
                 <Outputs
                     :taskRun="currentTaskRun"
@@ -47,21 +53,21 @@
 
                 <Restart
                     component="KsDropdownItem"
-                    :key="`restart-${attemptIndex}-${selectedAttempt?.state.startDate}-${currentTaskRun.id}`"
+                    :key="`restart-${safeAttemptIndex}-${selectedAttempt?.state.startDate}-${currentTaskRun.id}`"
                     isReplay
                     tooltipPosition="left"
                     :execution="execution"
                     :taskRun="currentTaskRun"
-                    :attemptIndex="attemptIndex"
+                    :attemptIndex="safeAttemptIndex"
                     @follow="emit('follow', $event)"
                 />
 
                 <ChangeStatus
                     component="KsDropdownItem"
-                    :key="`change-status-${attemptIndex}-${selectedAttempt?.state.startDate}-${currentTaskRun.id}`"
+                    :key="`change-status-${safeAttemptIndex}-${selectedAttempt?.state.startDate}-${currentTaskRun.id}`"
                     :execution="execution"
                     :taskRun="currentTaskRun"
-                    :attemptIndex="attemptIndex"
+                    :attemptIndex="safeAttemptIndex"
                     @follow="emit('follow', $event)"
                 />
 
@@ -176,7 +182,7 @@
 
     const selectedTaskRunId = ref(props.taskRun?.id)
 
-    watch(() => currentTaskRuns.value.length, () => {
+    watch(() => currentTaskRuns.value.map(r => r.id).join(), () => {
         if (currentTaskRuns.value.length > 0 && !currentTaskRuns.value.find((r: { id: string; taskId: string }) => r.id === selectedTaskRunId.value)) {
             selectedTaskRunId.value = currentTaskRuns.value[0].id
         }
@@ -196,7 +202,13 @@
         return taskRun.attempts ? [taskRun.attempts[props.forcedAttemptNumber]] : []
     }
 
-    const selectedAttempt = computed(() => attempts(currentTaskRun.value)[props.attemptIndex ?? 0])
+    const safeAttemptIndex = computed(() => {
+        const attemptList = attempts(currentTaskRun.value)
+        const idx = props.attemptIndex ?? 0
+        return idx < attemptList.length ? idx : Math.max(0, attemptList.length - 1)
+    })
+
+    const selectedAttempt = computed(() => attempts(currentTaskRun.value)[safeAttemptIndex.value])
 
     const isSubflow = computed<boolean>(() => currentTaskRun.value?.outputs?.executionId)
 
@@ -240,12 +252,14 @@
     }
 
     function deleteLogs(currentTaskRunId: string) {
-        const iterationContext = currentTaskRuns.value.length > 1
-            ? ` (${currentTaskRun.value.value || `${t("iteration")} ${(currentTaskRuns.value.findIndex(r => r.id === currentTaskRunId) ?? 0) + 1}`})`
-            : ""
-            
+        let msg = t("delete_log")
+        if (currentTaskRuns.value.length > 1) {
+            const iteration = (currentTaskRun.value.value ?? `${t("iteration")} ${(currentTaskRuns.value.findIndex(r => r.id === currentTaskRunId) ?? 0) + 1}`)
+            msg = t("delete_log_iteration", {iteration})
+        }
+
         toast.confirm(
-            t("delete_log") + iterationContext,
+            msg,
             async () => {
                 await executionsStore.deleteLogs({
                     executionId: props.execution.id,
@@ -290,6 +304,15 @@
         &:not(:hover) {
             background: var(--ks-btn-secondary-bg-inactive);
         }
+
+        &:focus-visible {
+            background-color: var(--bs-tertiary-bg);
+            border-radius: var(--bs-border-radius);
+            outline: 2px solid var(--bs-primary);
+        }
     }
 
+    .iteration-picker {
+        padding: var(--ks-spacing-2);
+    }
 </style>

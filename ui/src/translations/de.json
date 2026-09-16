@@ -2682,5 +2682,6 @@
       "install": "Installieren",
       "dismiss": "Nicht jetzt"
     }
-  }
+  },
+  "delete_log_iteration": "Möchten Sie das Protokoll für {iteration} wirklich löschen?"
 }

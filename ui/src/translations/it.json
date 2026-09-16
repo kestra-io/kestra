@@ -8,7 +8,6 @@
     "more actions": "Altre azioni",
     "recipe": {
       "create_flow": "Crea flow",
-      "email": "Email",
       "execution": {
         "include_sub": "Includi i sub-namespace",
         "include_sub_hint_off": "Solo i flow nell'esatto namespace attiveranno questo avviso.",
@@ -56,7 +55,6 @@
       "section_title": "Crea un system flow",
       "summary": {
         "any_namespace": "qualsiasi namespace",
-        "empty": "Configura il trigger e almeno un canale di notifica per visualizzare l'anteprima del tuo flow.",
         "exact_match": "corrispondenza esatta",
         "execution": "Quando un flow in {ns} ({scope}) raggiunge lo stato {states}, notifica tramite {channels}.",
         "including_sub": "e sub-namespace",
@@ -66,7 +64,6 @@
         "other": "Quando il trigger {trigger} si attiva, notifica tramite {channels}.",
         "schedule": "Secondo la pianificazione \"{cron}\", notifica tramite {channels}.",
         "selected_trigger": "selezionato",
-        "title": "Riepilogo",
         "webhook": "Quando viene ricevuto un webhook, notifica tramite {channels}.",
         "preview_title": "Anteprima",
         "live": "LIVE"
@@ -74,7 +71,6 @@
       "then": {
         "no_channel_warning": "Seleziona almeno un canale di notifica.",
         "subtitle": "Seleziona come notificare il tuo team.",
-        "title": "Poi notifica",
         "unavailable_channels_warning": "{channels}: plugin non installato per questo tipo di trigger, nessuna notifica verrà inviata."
       },
       "trigger": {
@@ -95,7 +91,6 @@
       },
       "when": {
         "subtitle": "Scegli cosa attiva questo system flow.",
-        "title": "Quando questo accade",
         "trigger_type": "Tipo di trigger"
       },
       "hero_eyebrow": "Il tuo flow di sistema",
@@ -301,7 +296,6 @@
       "star": "Metti una stella"
     },
     "source": "Fonte",
-    "source only": "Solo sorgente",
     "home": "Home",
     "create": "Crea",
     "create_flow": "Crea Flow",
@@ -682,7 +676,6 @@
     "open in new tab": "In una nuova scheda",
     "execute the flow": "Esegui il flow <code>{id}</code>",
     "discard execution confirmation": "Hai degli input non salvati. Sei sicuro di voler scartare questa esecuzione?",
-    "discard changes confirmation": "Hai modifiche non salvate. Sei sicuro di volerle scartare?",
     "unsaved changed ?": "Hai modifiche non salvate, vuoi lasciare questa pagina?",
     "unsaved changes": "Modifiche Non Salvate",
     "unsaved changes warning": "Hai modifiche non salvate. Se lasci questa pagina, le modifiche andranno perse.",
@@ -851,9 +844,6 @@
     "bulk kill": "Sei sicuro di voler kill <code>{executionCount}</code> esecuzione/i?",
     "cancel": "Annulla",
     "errorLogs": "Log di errore",
-    "welcome_page": {
-      "guide": "Hai bisogno di assistenza per eseguire il tuo primo flow?"
-    },
     "product_tour": "Tour del prodotto",
     "executions replayed": "<code>{executionCount}</code> esecuzione(i) riprodotta(e)",
     "executions state changed": "Lo stato di <code>{executionCount}</code> esecuzione/i è stato cambiato",
@@ -864,20 +854,9 @@
     "executions restarted": "<code>{executionCount}</code> esecuzione(i) riavviata(e)",
     "executions killed": "<code>{executionCount}</code> esecuzione(i) killata(e)",
     "executions deleted": "<code>{executionCount}</code> esecuzione(i) eliminata(e)",
-    "invalid bulk replay": "Impossibile ripetere le esecuzioni",
-    "invalid bulk resume": "Impossibile riprendere le esecuzioni",
-    "invalid bulk pause": "Impossibile mettere in pausa le esecuzioni",
-    "invalid bulk unqueue": "Impossibile rimuovere dalla coda le esecuzioni",
-    "invalid bulk force run": "Impossibile forzare l'esecuzione delle esecuzioni",
-    "invalid bulk restart": "Impossibile riavviare le esecuzioni",
-    "invalid bulk kill": "Impossibile kill le esecuzioni",
-    "invalid bulk delete": "Impossibile eliminare le esecuzioni",
     "execution not found": "L'esecuzione {executionId} non è stata trovata.",
-    "execution not in state PAUSED": "Esecuzione <code>{executionId}</code> non in stato PAUSED",
-    "execution already finished": "Esecuzione <code>{executionId}</code> già terminata",
     "seeing old revision": "Stai vedendo una vecchia revisione: {revision}",
     "export": "Esporta",
-    "exports": "Esportazioni",
     "export_csv": "Esporta come CSV",
     "flow_export": "Esporta flow",
     "flow export": "Sei sicuro di voler esportare <code>{flowCount}</code> flow?",
@@ -904,9 +883,7 @@
     "disabled": "Disabilitato",
     "before": "prima",
     "after": "dopo",
-    "dynamic": "Dinamico",
     "choice": "Scelta",
-    "sequential": "Sequenziale",
     "can not delete": "Impossibile eliminare questo task",
     "can not have less than 1 task": "Un flow deve avere almeno un task. Aggiungi un altro task prima di eliminare questo.",
     "task id": "Task ID",
@@ -925,7 +902,6 @@
     "bar": "Bar",
     "line": "Linea",
     "metric": "Metrica",
-    "aggregation": "Aggregazione",
     "metric choice": "Nessuna metrica disponibile per questo flow",
     "metric filter no match": "Nessuna metrica corrisponde a \"{term}\"",
     "of": "di",
@@ -991,7 +967,6 @@
     "version": "Versione",
     "services": "Servizi",
     "hostname": "Nome host",
-    "port": "Porta",
     "file preview truncated": "Il contenuto visualizzato è stato troncato",
     "file unavailable": "File non disponibile",
     "file unavailable description": "Questo file non è più disponibile — potrebbe essere stato eliminato o scaduto.",
@@ -1101,7 +1076,6 @@
     "execute backfill": "Esegui backfill",
     "relative": "Relativo",
     "relative start date": "Data di inizio relativa",
-    "now": "Ora",
     "absolute": "Assoluto",
     "backfill": "Backfill",
     "Set labels": "Imposta etichette",
@@ -1278,7 +1252,6 @@
       "label": "Promuovi"
     },
     "demos": {
-      "enterprise_edition": "Edizione Enterprise",
       "get_a_demo_button": "Ottieni una Demo",
       "contact_sales": "Contatta il reparto vendite",
       "secrets": {
@@ -1661,7 +1634,6 @@
       "title": "Inizia ad automatizzare con Kestra",
       "sub_title": "Fai clic sul pulsante Esegui per avviare l'esecuzione del tuo primo workflow.",
       "namespace_sub_title": "Esegui uno o più flow da questo namespace per popolare questa dashboard.",
-      "namespace_guidance_desc": "Hai bisogno di assistenza per gestire il tuo Namespace?",
       "need_help": "Hai bisogno di aiuto?"
     },
     "execution_guide": {
@@ -1703,14 +1675,11 @@
     "flows not imported": "Flow non importati",
     "custom value": "Valore personalizzato",
     "chart": "Grafico",
-    "chart preview": "Anteprima grafico",
     "no_code": {
       "toggle_pebble": "Attiva/disattiva editor Pebble",
       "version_oss_placeholder": "Sblocca il Versioning dei Plugin con l'Enterprise Edition",
-      "unnamed": "Nessun Nome",
       "adding": "+ Aggiungi un {what}",
       "adding_default": "+ Aggiungi un nuovo value",
-      "add_field": "Aggiungi {field}",
       "clearSelection": "Cancella selezione",
       "labels": {
         "yaml": "Editor YAML",
@@ -2518,7 +2487,6 @@
     "pricing": "Prezzi",
     "license": "Licenza",
     "block_editor": {
-      "add_error_task": "Aggiungi task di errore",
       "add_switch_case": "Aggiungi caso",
       "adding_to": "Nuova voce in {section}",
       "add_task": "Aggiungi task",
@@ -2529,7 +2497,6 @@
       "block_deleted": "{name} eliminato",
       "card_aria_label": "Blocco {id} di tipo {type}",
       "canvas_aria": "Canvas dei blocchi del flow",
-      "close_all": "Chiudi tutte le schede",
       "cluster_collapse_aria": "Comprimi {id}",
       "cluster_expand_aria": "Espandi {id} ({count} task)",
       "collapsed_summary": "{count} task",
@@ -2568,19 +2535,14 @@
       "depth_pill": "Profondità {depth}",
       "drag_reorder": "Trascina per riordinare",
       "duplicate": "Duplica",
-      "empty": "Ancora nessun task o trigger. Aggiungi il tuo primo task per iniziare.",
       "empty_add_hint": "o premi / per cercare i task",
       "empty_add_lead": "Clicca per aggiungere {label}",
-      "error_task_noun": "un task di errore",
       "execution_context": "Contesto di esecuzione",
       "filter_data": "Filtra i dati disponibili...",
       "flow_inputs": "Input del flow",
-      "flowable_todo": "Task nidificati (modifica in arrivo)",
       "footer": {
         "canvas": "Canvas",
-        "close_panel": "Chiudi pannello",
         "command_menu": "Menu comandi",
-        "editing": "Modifica blocco",
         "inserting": "Inserimento",
         "selected": "Selezionato · {name}"
       },
@@ -2594,22 +2556,15 @@
       "lane_case": "Caso: {key}",
       "lane_defaults": "Predefinito",
       "lane_else": "Altro",
-      "lane_empty": "Nessun task in {lane}",
       "lane_errors": "Errori",
       "lane_finally": "Infine",
       "lane_tasks": "Task",
       "lane_then": "Poi",
-      "loading_plugins": "Caricamento plugin...",
       "move_down": "Sposta in basso",
       "move_up": "Sposta su",
-      "nav_rail_empty": "Ancora nessun task o trigger.",
-      "nav_rail_title": "Struttura",
-      "nested_count": "{count} task nidificati",
       "no_data_matches": "Nessun elemento corrisponde al tuo filtro",
-      "no_documentation": "Nessuna documentazione per questo task",
       "no_recent": "Nessun tipo di task recente ancora",
       "no_task_results": "Nessun tipo di task corrispondente.",
-      "open_details": "Apri dettagli",
       "open_in_split": "Apri in split",
       "output": "Output",
       "output_sub": "cosa produce questo task",
@@ -2647,8 +2602,6 @@
         "toggle": "Questo aiuto",
         "undo": "Annulla"
       },
-      "split_into": "Vista a {count} colonne",
-      "split_view": "Vista divisa",
       "switch_case_key_placeholder": "Nuova chiave case",
       "switch_case_key_taken": "Il caso {key} esiste già",
       "tab_apps": "Per app",

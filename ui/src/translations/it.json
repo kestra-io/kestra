@@ -2659,9 +2659,7 @@
         "zoomIn": "Zoom avanti",
         "zoomOut": "Zoom indietro",
         "range": "{start} → {end} ({duration})",
-        "rangePicker": "Cambia intervallo di tempo",
-        "rangeSliderStart": "Inizio dell'intervallo di tempo visibile",
-        "rangeSliderEnd": "Fine dell'intervallo di tempo visibile"
+        "rangePicker": "Cambia intervallo di tempo"
       },
       "row": {
         "openOwnPage": "Apri questa pagina",

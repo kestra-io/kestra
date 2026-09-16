@@ -2,7 +2,7 @@ import {afterEach, describe, expect, it} from "vitest"
 import {defineComponent, h} from "vue"
 import {flushPromises, mount, VueWrapper} from "@vue/test-utils"
 import {createRouter, createMemoryHistory, type Router} from "vue-router"
-import {computeSliderDomain, useTimelineRange} from "./useTimelineRange"
+import {useTimelineRange} from "./useTimelineRange"
 
 const TIME_RANGE_QUERY_KEY = "filters[timeRange][EQUALS]"
 const START_QUERY_KEY = "filters[startDate][GREATER_THAN_OR_EQUAL_TO]"
@@ -73,70 +73,5 @@ describe("useTimelineRange", () => {
         expect(query[TIME_RANGE_QUERY_KEY]).toBeUndefined()
         expect(query[START_QUERY_KEY]).toBeDefined()
         expect(query[END_QUERY_KEY]).toBeDefined()
-    })
-})
-
-describe("computeSliderDomain", () => {
-    it("sizes the domain to a multiple of the selection so it stays a graspable handle", () => {
-        const dayMs = 24 * 60 * 60 * 1000
-        const rangeEndMs = Date.now()
-        const rangeStartMs = rangeEndMs - dayMs
-
-        const [domainStartMs, domainEndMs] = computeSliderDomain(rangeStartMs, rangeEndMs)
-
-        const domainSpan = domainEndMs - domainStartMs
-        const selectionSpan = rangeEndMs - rangeStartMs
-        expect(domainSpan).toBe(selectionSpan * 8)
-        expect(selectionSpan / domainSpan).toBeGreaterThan(0.1)
-    })
-
-    it("floors the domain to a day-scale span for a moderately narrow selection", () => {
-        const rangeEndMs = Date.now()
-        const rangeStartMs = rangeEndMs - 2 * 60 * 60 * 1000
-
-        const [domainStartMs, domainEndMs] = computeSliderDomain(rangeStartMs, rangeEndMs)
-
-        expect(domainEndMs - domainStartMs).toBe(24 * 60 * 60 * 1000)
-    })
-
-    it("scales the floor down instead of drowning a very narrow selection to an unreadable sliver", () => {
-        const rangeEndMs = Date.now()
-        const rangeStartMs = rangeEndMs - 15 * 60 * 1000
-
-        const [domainStartMs, domainEndMs] = computeSliderDomain(rangeStartMs, rangeEndMs)
-
-        const domainSpan = domainEndMs - domainStartMs
-        const selectionSpan = rangeEndMs - rangeStartMs
-        expect(domainSpan).toBeLessThan(24 * 60 * 60 * 1000)
-        expect(selectionSpan / domainSpan).toBeGreaterThanOrEqual(1 / 20)
-    })
-
-    it("caps the domain instead of ballooning for a wide-but-not-huge selection", () => {
-        const rangeEndMs = Date.now()
-        const rangeStartMs = rangeEndMs - 60 * 24 * 60 * 60 * 1000
-
-        const [domainStartMs, domainEndMs] = computeSliderDomain(rangeStartMs, rangeEndMs)
-
-        expect(domainEndMs - domainStartMs).toBe(120 * 24 * 60 * 60 * 1000)
-    })
-
-    it("widens the domain past the cap when the selection itself is wider than the cap", () => {
-        const rangeEndMs = Date.now()
-        const rangeStartMs = rangeEndMs - 200 * 24 * 60 * 60 * 1000
-
-        const [domainStartMs, domainEndMs] = computeSliderDomain(rangeStartMs, rangeEndMs)
-
-        expect(domainEndMs - domainStartMs).toBe(rangeEndMs - rangeStartMs)
-    })
-
-    it("recenters the domain on the selection's midpoint", () => {
-        const rangeStartMs = 1_000_000
-        const rangeEndMs = 2_000_000
-
-        const [domainStartMs, domainEndMs] = computeSliderDomain(rangeStartMs, rangeEndMs)
-
-        const domainCenter = (domainStartMs + domainEndMs) / 2
-        const selectionCenter = (rangeStartMs + rangeEndMs) / 2
-        expect(domainCenter).toBe(selectionCenter)
     })
 })

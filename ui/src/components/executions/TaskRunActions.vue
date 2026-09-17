@@ -209,7 +209,7 @@
     const isSubflow = computed<boolean>(() => !!currentTaskRun.value?.outputs?.executionId)
 
     const hasWorkerId = computed<boolean>(() =>
-        currentTaskRun.value.attempts?.find((attempt) => attempt.workerId !== null) !== undefined,
+        currentTaskRun.value.attempts?.find((attempt: { workerId?: string | null }) => attempt.workerId !== null) !== undefined,
     )
 
     const canReadFlow = computed(() =>

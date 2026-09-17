@@ -116,7 +116,7 @@ describe("TaskRunActions", () => {
         })
         
         await wrapper.find("select").setValue("tr-2")
-        await (wrapper.vm as { deleteLogs: Function }).deleteLogs({id: "tr-2"})
+        await (wrapper.vm as unknown as { deleteLogs: Function }).deleteLogs({id: "tr-2"})
         
         expect(executionsStore.deleteLogs).toHaveBeenCalledWith({
             executionId: "ex-1",
@@ -138,7 +138,7 @@ describe("TaskRunActions", () => {
         })
         
         await wrapper.find("select").setValue("tr-2")
-        await (wrapper.vm as { downloadContent: Function }).downloadContent("tr-2")
+        await (wrapper.vm as unknown as { downloadContent: Function }).downloadContent("tr-2")
         
         expect(executionsStore.downloadLogs).toHaveBeenCalledWith({
             executionId: "ex-1",
@@ -160,7 +160,7 @@ describe("TaskRunActions", () => {
         })
         
         await wrapper.find("select").setValue("tr-2")
-        await (wrapper.vm as { copyContent: Function }).copyContent("tr-2")
+        await (wrapper.vm as unknown as { copyContent: Function }).copyContent("tr-2")
         
         expect(executionsStore.downloadLogs).toHaveBeenCalledWith({
             executionId: "ex-1",
@@ -194,9 +194,9 @@ describe("TaskRunActions", () => {
             attemptIndex: 1,
         })
         
-        expect((wrapper.vm as { currentAttemptIndex: number }).currentAttemptIndex).toBe(1)
+        expect((wrapper.vm as unknown as { currentAttemptIndex: number }).currentAttemptIndex).toBe(1)
         
         wrapper.find("select").setValue("tr-2")
-        expect((wrapper.vm as { currentAttemptIndex: number }).currentAttemptIndex).toBe(0)
+        expect((wrapper.vm as unknown as { currentAttemptIndex: number }).currentAttemptIndex).toBe(0)
     })
 })

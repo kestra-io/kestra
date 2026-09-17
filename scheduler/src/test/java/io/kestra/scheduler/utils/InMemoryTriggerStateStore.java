@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 
 import io.kestra.core.models.triggers.TriggerId;
 import io.kestra.core.scheduler.model.TriggerState;
+import io.kestra.core.scheduler.model.TriggerType;
 import io.kestra.core.scheduler.store.TriggerStateStore;
 
 /**
@@ -29,6 +30,7 @@ public class InMemoryTriggerStateStore implements TriggerStateStore {
             .filter(ts -> ts.getNextEvaluationDate() != null && !ts.getNextEvaluationDate().isAfter(now.toInstant()))
             .filter(ts -> vNodes.contains(ts.getVnode()))
             .filter(ts -> ts.isLocked() == locked)
+            .filter(ts -> TriggerType.isEvaluatedByScheduler(ts.getType()))
             .collect(Collectors.toList());
     }
 

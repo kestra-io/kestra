@@ -953,6 +953,10 @@
       "success": "Der Trigger wurde entsperrt"
     },
     "trigger disabled": "Der Trigger ist in der Flow-Quelle deaktiviert",
+    "trigger not toggleable": "Dieser Trigger wird nicht vom Scheduler ausgewertet, deaktivieren Sie ihn in der Flow-Quelle",
+    "bulk not toggleable warning": "{count} ausgewählte Trigger werden übersprungen: Der Scheduler wertet sie nicht aus, daher können sie nur in der Flow-Quelle deaktiviert werden.",
+    "bulk none applied": "Keine Trigger wurden betroffen: Keiner der ausgewählten konnte verarbeitet werden.",
+    "bulk partially applied": "{count} von {requested} Triggern wurden verarbeitet, die anderen wurden übersprungen.",
     "trigger enable dialog": {
       "title": "Trigger aktivieren",
       "bulk title": "{count} Trigger aktivieren",

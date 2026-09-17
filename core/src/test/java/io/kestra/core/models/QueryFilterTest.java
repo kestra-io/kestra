@@ -68,6 +68,7 @@ public class QueryFilterTest {
     void shouldExposeRelationFieldsOnTheRelationResource() {
         assertThat(QueryFilter.Resource.ASSET_RELATION.supportedField()).contains(
             QueryFilter.Field.KIND, QueryFilter.Field.ASSET_ID, QueryFilter.Field.SOURCE_ID, QueryFilter.Field.TARGET_ID,
+            QueryFilter.Field.TARGET_NAMESPACE, QueryFilter.Field.TARGET_ASSET_TYPE,
             QueryFilter.Field.ORIGIN, QueryFilter.Field.NAMESPACE, QueryFilter.Field.FLOW_NAMESPACE, QueryFilter.Field.FLOW_ID,
             QueryFilter.Field.EXECUTION_ID, QueryFilter.Field.TASK_ID, QueryFilter.Field.CREATED
         );

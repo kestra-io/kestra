@@ -166,6 +166,7 @@ See [Comments](#comments) for when a Javadoc block is worth writing at all. Once
 - Unit tests must assert that a user can only access a given API if authorized to do so, and that access is denied otherwise
 - APIs must be documented with OpenAPI annotations
 - Use DTOs for requests/responses
+- Tabular exports must use the same column definition and order for empty and non-empty results.
 - Always validate input parameters with `@Valid`
 - Use `@ExecuteOn(TaskExecutors.IO)` for blocking operations
 - Return meaningful error responses in controllers

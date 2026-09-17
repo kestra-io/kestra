@@ -328,7 +328,7 @@ public class DashboardController {
             FileSerde.writeAll(byteArrayOutputStream, Flux.fromIterable(rows)).block();
         } else {
             var outputStreamWriter = new OutputStreamWriter(byteArrayOutputStream, StandardCharsets.UTF_8);
-            if (rows.isEmpty() && chart instanceof DataChart<?, ?> dataChart) {
+            if (chart instanceof DataChart<?, ?> dataChart) {
                 CSVUtils.toCSV(outputStreamWriter, rows, List.copyOf(dataChart.getData().getColumns().keySet()));
             } else {
                 CSVUtils.toCSV(outputStreamWriter, rows);

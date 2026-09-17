@@ -12,7 +12,6 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.event.Level;
 
 import io.kestra.core.junit.annotations.KestraTest;
-import io.kestra.core.junit.assertions.Problems;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.QueryFilter.Op;
@@ -59,46 +58,36 @@ class DashboardControllerTest {
     ExecutionRepositoryInterface executionRepository;
 
     @Test
-    void shouldExportCsvHeadersWhenAdHocChartHasNoRows() {
-        var fakeNamespace = "a-namespace_" + IdUtils.create();
-        String chartYaml = """
-            id: empty_logs_chart_id
-            type: io.kestra.plugin.core.dashboard.chart.Table
-            data:
-              type: io.kestra.plugin.core.dashboard.data.Logs
-              columns:
-                chart_namespace:
-                  field: NAMESPACE
-                chart_execution_id:
-                  field: EXECUTION_ID
-              where:
-                - field: NAMESPACE
-                  type: EQUAL_TO
-                  value: "%s"
-            """.formatted(fakeNamespace);
-
-        var previewRequest = new DashboardController.PreviewRequest(chartYaml, ChartFiltersOverrides.builder().filters(Collections.emptyList()).build());
-        PagedResults<Map<String, Object>> chartData = client.toBlocking().retrieve(
-            POST(DASHBOARD_PATH + "/charts/preview", previewRequest),
-            PagedResults.class
-        );
-        assertThat(chartData.getTotal()).isZero();
-        assertThat(chartData.getResults()).isEmpty();
-
-        HttpResponse<byte[]> csvResponse = client.toBlocking().exchange(
-            POST(DASHBOARD_PATH + "/charts/export", previewRequest),
-            Argument.of(byte[].class)
-        );
-        var csv = new String(csvResponse.getBody().orElse(new byte[0]), StandardCharsets.UTF_8);
-        assertThat(csv).isEqualTo("chart_namespace,chart_execution_id\r\n");
-    }
-
-    @Test
-    void shouldExportAnAdHocPreviewChartToCsv() {
+    void shouldPreserveChartColumnOrderWhenExportingEmptyAndNonEmptyCsv() {
         var uuid = IdUtils.create();
         var fakeNamespace = "a-namespace_" + uuid;
         var logTimestamp = Instant.now();
         var fakeExecutionId = "an-execution-id" + uuid;
+
+        String chartYaml = """
+            id: table_logs_chart_id
+            type: io.kestra.plugin.core.dashboard.chart.Table
+            data:
+              type: io.kestra.plugin.core.dashboard.data.Logs
+              columns:
+                chart_execution_id:
+                  field: EXECUTION_ID
+                chart_namespace:
+                  field: NAMESPACE
+              where:
+                - field: NAMESPACE
+                  type: EQUAL_TO
+                  value: "%s"
+                - field: EXECUTION_ID
+                  type: EQUAL_TO
+                  value: "%s"
+            """.formatted(fakeNamespace, fakeExecutionId);
+
+        var previewRequest = new DashboardController.PreviewRequest(chartYaml, ChartFiltersOverrides.builder().filters(Collections.emptyList()).build());
+        byte[] emptyCsvBytes = client.toBlocking().retrieve(POST(DASHBOARD_PATH + "/charts/export", previewRequest), Argument.of(byte[].class));
+        var emptyCsv = new String(emptyCsvBytes, StandardCharsets.UTF_8);
+        assertThat(emptyCsv).isEqualTo("chart_execution_id,chart_namespace\r\n");
+
         logRepository.save(
             LogEntry.builder()
                 .namespace(fakeNamespace)
@@ -113,27 +102,6 @@ class DashboardControllerTest {
                 .build()
         );
 
-        String chartYaml = """
-            id: table_logs_chart_id
-            type: io.kestra.plugin.core.dashboard.chart.Table
-            data:
-              type: io.kestra.plugin.core.dashboard.data.Logs
-              columns:
-                chart_namespace:
-                  field: NAMESPACE
-                chart_execution_id:
-                  field: EXECUTION_ID
-              where:
-                - field: NAMESPACE
-                  type: EQUAL_TO
-                  value: "%s"
-                - field: EXECUTION_ID
-                  type: EQUAL_TO
-                  value: "%s"
-            """.formatted(fakeNamespace, fakeExecutionId);
-
-        // Compute a dashboard, making sure the query is correct
-        var previewRequest = new DashboardController.PreviewRequest(chartYaml, ChartFiltersOverrides.builder().filters(Collections.emptyList()).build());
         PagedResults<Map<String, Object>> chartData = client.toBlocking().retrieve(
             POST(DASHBOARD_PATH + "/charts/preview", previewRequest),
             PagedResults.class
@@ -146,7 +114,7 @@ class DashboardControllerTest {
         // export CSV
         byte[] csvBytes = client.toBlocking().retrieve(POST(DASHBOARD_PATH + "/charts/export", previewRequest), Argument.of(byte[].class));
         var csv = new String(csvBytes, StandardCharsets.UTF_8);
-        assertThat(csv).isEqualTo("chart_namespace,chart_execution_id\r\n%s,%s\r\n".formatted(fakeNamespace, fakeExecutionId));
+        assertThat(csv).isEqualTo("%s%s,%s\r\n".formatted(emptyCsv, fakeExecutionId, fakeNamespace));
     }
 
     @Test

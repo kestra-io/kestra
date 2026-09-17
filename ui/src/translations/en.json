@@ -1061,6 +1061,7 @@
       },
       "revisions": {
         "history": "Revision history",
+        "load_error": "Revision {revision} could not be loaded; it may have been deleted.",
         "restore": {
           "success": "File revision restored successfully"
         }

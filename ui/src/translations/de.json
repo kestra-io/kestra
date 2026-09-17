@@ -1061,6 +1061,7 @@
       },
       "revisions": {
         "history": "Revisionsverlauf",
+        "load_error": "Revision {revision} konnte nicht geladen werden; sie wurde möglicherweise gelöscht.",
         "restore": {
           "success": "Dateirevision erfolgreich wiederhergestellt"
         }

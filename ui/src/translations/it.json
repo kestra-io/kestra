@@ -1061,6 +1061,7 @@
       },
       "revisions": {
         "history": "Cronologia delle revisioni",
+        "load_error": "Impossibile caricare la revisione {revision}; potrebbe essere stata eliminata.",
         "restore": {
           "success": "Revisione del file ripristinata con successo"
         }

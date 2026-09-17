@@ -168,7 +168,8 @@ export const useBaseNamespacesStore = () => {
 
     async function readDirectory<T>(payload: {namespace: string; path?: string}): Promise<T[]> {
         try {
-            const data = await FilesAPI.listNamespaceDirectoryFiles(payload)
+            // A directory removed server-side is handled by the caller (see fileExplorer loadNodes), so its 404 must not toast.
+            const data = await FilesAPI.listNamespaceDirectoryFiles(payload, expectNotFound as Parameters<typeof FilesAPI.listNamespaceDirectoryFiles>[1])
             return (data ?? []) as unknown as T[]
         } catch (e: any) {
             if (e.status === 404) {
@@ -202,14 +203,16 @@ export const useBaseNamespacesStore = () => {
     }
 
     async function fileMetadata(payload: {namespace: string; path: string}) {
-        return await FilesAPI.fileMetadatas(payload)
+        // A file removed server-side (e.g. by a delete-sync) is reported by the caller, so its 404 must not also toast.
+        return await FilesAPI.fileMetadatas(payload, expectNotFound as Parameters<typeof FilesAPI.fileMetadatas>[1])
     }
 
     async function readFile(payload: {namespace: string; path: string, revision?: number}): Promise<{content?: string, notFound?: boolean, error?: string}> {
         if (!payload.path) return {error: "Path is required"}
 
         try {
-            const blob = await FilesAPI.fileContent(payload)
+            // `notFound` below reports a removed file, so its 404 must not also raise the global toast.
+            const blob = await FilesAPI.fileContent(payload, expectNotFound as Parameters<typeof FilesAPI.fileContent>[1])
             return {content: await blob.text() ?? ""}
         } catch (e: any) {
             if (e.status === 404) {

@@ -22,7 +22,7 @@ const CACHE_TTL_MS = 2_000
 export const RETIRED = {
     "--ks-primary": ["--ks-text-link", "--ks-border-focus"],
     "--ks-background-body": ["--ks-bg-base", "--ks-bg-surface"],
-    "--ks-background-card": ["--ks-bg-surface", "--ks-bg-elevated", "--ks-bg-hover"],
+    "--ks-background-card": ["--ks-bg-surface", "--ks-bg-elevated", "--ks-bg-base", "--ks-bg-hover"],
     "--ks-border-primary": ["--ks-border-default"],
     "--ks-border-radius-sm": ["--ks-radius-sm"],
     "--ks-button-background-secondary-hover": ["--ks-btn-secondary-bg-hover"],

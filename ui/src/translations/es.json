@@ -1156,6 +1156,7 @@
             "log_level": "Nivel de Log Predeterminado",
             "log_display": "Visualización de Log Predeterminada",
             "editor_type": "Tipo de Editor Predeterminado",
+            "topology_orientation": "Orientación de la Topología por Defecto",
             "execute_flow": "Ejecutar el Flow",
             "execute_default_tab": "Pestaña de Ejecución Predeterminada",
             "flow_default_tab": "Pestaña de Flow Predeterminada",
@@ -1170,6 +1171,7 @@
             "log_level": "Nivel mínimo de log mostrado en los logs de ejecución.",
             "log_display": "Cómo se presentan los logs al abrir una ejecución.",
             "editor_type": "Editor mostrado al abrir un flow por primera vez.",
+            "topology_orientation": "Orientación predeterminada del panel de Topología en el editor de Flow.",
             "execute_flow": "Dónde se abren los resultados de ejecución después de activar una ejecución.",
             "execute_default_tab": "Pestaña seleccionada al navegar a una ejecución.",
             "flow_default_tab": "Pestaña seleccionada al navegar a un flow.",
@@ -1182,6 +1184,10 @@
           "task_edit_default_mode_options": {
             "modal": "Modal",
             "tab": "Pestaña"
+          },
+          "topology_orientation_options": {
+            "vertical": "Vertical",
+            "horizontal": "Horizontal"
           },
           "flow_template_reset": "Restablecer a valores predeterminados",
           "flow_template_error": {
@@ -1376,6 +1382,7 @@
     "onboarding": {
       "tour": {
         "menu": "Recorrido del producto",
+        "menu_resume": "Reanudar tour",
         "menu_description": "Crear, ejecutar y corregir un flow, y luego iniciarlo desde un evento",
         "step_of": "Paso {current} de {total}",
         "actions": {

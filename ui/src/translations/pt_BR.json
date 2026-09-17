@@ -1156,6 +1156,7 @@
             "log_level": "Nível de Log Padrão",
             "log_display": "Exibição de Log Padrão",
             "editor_type": "Tipo de Editor Padrão",
+            "topology_orientation": "Orientação Padrão da Topologia",
             "execute_flow": "Executar o Flow",
             "execute_default_tab": "Aba de Execução Padrão",
             "flow_default_tab": "Aba Padrão do Flow",
@@ -1170,6 +1171,7 @@
             "log_level": "Nível mínimo de log mostrado nos logs de execução.",
             "log_display": "Como os logs são apresentados ao abrir uma execução.",
             "editor_type": "Editor exibido ao abrir um flow pela primeira vez.",
+            "topology_orientation": "Orientação padrão do painel de Topologia no editor de Flow.",
             "execute_flow": "Onde os resultados da execução abrem após acionar uma execução.",
             "execute_default_tab": "Aba selecionada ao navegar para uma execução.",
             "flow_default_tab": "Aba selecionada ao navegar para um flow.",
@@ -1182,6 +1184,10 @@
           "task_edit_default_mode_options": {
             "modal": "Modal",
             "tab": "Aba"
+          },
+          "topology_orientation_options": {
+            "vertical": "Vertical",
+            "horizontal": "Horizontal"
           },
           "flow_template_reset": "Redefinir para o padrão",
           "flow_template_error": {
@@ -1376,6 +1382,7 @@
     "onboarding": {
       "tour": {
         "menu": "Tour do produto",
+        "menu_resume": "Retomar tour",
         "menu_description": "Construir, executar e corrigir um flow, depois iniciá-lo a partir de um evento",
         "step_of": "Passo {current} de {total}",
         "actions": {

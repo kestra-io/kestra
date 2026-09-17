@@ -280,7 +280,7 @@
     const noProviderConfigured = computed(() => miscStore.configs?.isAiApiKeyConfigured === false)
 
     /** Where the unavailable state sends the user: the Copilot docs, on the configuration section. */
-    const docsUrl = "https://kestra.io/docs/ai-tools/ai-copilot?utm_source=kestra_app&utm_medium=referral&utm_campaign=ai_copilot_unavailable&utm_content=learn_more#configuration"
+    const docsUrl = "https://kestra.io/docs/ai-tools/ai-copilot?utm_source=app&utm_medium=referral&utm_campaign=ai-copilot-unavailable#configuration"
 
     // Restore the last conversation on open (threads are persisted server-side); harmless no-op if none.
     onMounted(() => { restoreThread() })

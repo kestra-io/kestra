@@ -33,6 +33,7 @@ public class Plugin {
     private List<PluginElementMetadata> storages;
     private List<PluginElementMetadata> secrets;
     private List<PluginElementMetadata> taskRunners;
+    private List<PluginElementMetadata> assets;
     private List<PluginElementMetadata> apps;
     private List<PluginElementMetadata> appBlocks;
     private List<PluginElementMetadata> charts;
@@ -94,6 +95,7 @@ public class Plugin {
         plugin.storages = filterAndGetTypeWithMetadata(registeredPlugin.getStorages(), packagePredicate);
         plugin.secrets = filterAndGetTypeWithMetadata(registeredPlugin.getSecrets(), packagePredicate);
         plugin.taskRunners = filterAndGetTypeWithMetadata(registeredPlugin.getTaskRunners(), packagePredicate);
+        plugin.assets = filterAndGetTypeWithMetadata(registeredPlugin.getAssets(), packagePredicate);
         plugin.apps = filterAndGetTypeWithMetadata(registeredPlugin.getApps(), packagePredicate);
         plugin.appBlocks = filterAndGetTypeWithMetadata(registeredPlugin.getAppBlocks(), packagePredicate);
         plugin.charts = filterAndGetTypeWithMetadata(registeredPlugin.getCharts(), packagePredicate);

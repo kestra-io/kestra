@@ -1,7 +1,7 @@
 import {describe, expect, it} from "vitest"
-import {isScannedSourceFile, translationKeyUsages, undefinedKeyUsages} from "./usageRules.mjs"
+import {isScannedSourceFile, translationKeyUsages, undefinedKeyUsages} from "./usageRules.ts"
 
-const keysOf = (source) => translationKeyUsages(source).map(({key}) => key)
+const keysOf = (source: string) => translationKeyUsages(source).map(({key}) => key)
 
 describe("translationKeyUsages", () => {
     it("collects every call shape the app uses", () => {
@@ -47,6 +47,11 @@ describe("translationKeyUsages", () => {
 
     it("does not mistake other functions for the translator", () => {
         expect(keysOf("format(\"a.b\"); at(\"x\"); foo.at(\"y\"); test(\"z\"); const t = \"q\"")).toEqual([])
+    })
+
+    it("reads the keys an i18n-keys comment declares for a call whose key is a variable", () => {
+        expect(keysOf("// i18n-keys: tasks, chart preview\n{{ $t(elementType) }}")).toEqual(["tasks", "chart preview"])
+        expect(keysOf("<!-- i18n-keys: apps -->")).toEqual(["apps"])
     })
 
     it("marks existence tests as guards", () => {

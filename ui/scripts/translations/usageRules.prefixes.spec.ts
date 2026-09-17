@@ -1,5 +1,5 @@
 import {describe, expect, it} from "vitest"
-import {translationNamespaceUsages, undefinedNamespaceUsages} from "./usageRules.mjs"
+import {translationNamespaceUsages, undefinedNamespaceUsages} from "./usageRules.ts"
 
 describe("translationNamespaceUsages", () => {
     it("reads the namespace of a concatenated prefix", () => {

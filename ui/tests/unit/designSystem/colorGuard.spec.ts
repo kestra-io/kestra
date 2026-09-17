@@ -5,7 +5,7 @@ import {dirname, join, resolve} from "node:path"
 import {fileURLToPath} from "node:url"
 import {findHardcodedColors} from "./colorGuard"
 
-const SRC = resolve(dirname(fileURLToPath(import.meta.url)), "../../../src")
+const UI = resolve(dirname(fileURLToPath(import.meta.url)), "../../..")
 
 const scan = (styles: string): string[] => {
     const dir = mkdtempSync(join(tmpdir(), "color-guard-"))
@@ -13,20 +13,37 @@ const scan = (styles: string): string[] => {
     return findHardcodedColors(dir).map((offence) => offence.replace("Component.vue:", "line "))
 }
 
+const scanScript = (script: string): string[] => {
+    const dir = mkdtempSync(join(tmpdir(), "color-guard-"))
+    writeFileSync(join(dir, "module.ts"), script)
+    return findHardcodedColors(dir).map((offence) => offence.replace("module.ts:", "line "))
+}
+
 describe("design system", () => {
-    it("takes every colour from a --ks-* token across ui/src", () => {
-        const offenders = findHardcodedColors(SRC)
+    it.each(["src", "packages/topology/src"])("takes every colour from a --ks-* token across ui/%s", (root) => {
+        const offenders = findHardcodedColors(resolve(UI, root))
         expect(
             offenders,
             `Replace the hardcoded colour with a --ks-* token (see ui/AGENTS.md):\n${offenders.join("\n")}`,
         ).toEqual([])
     })
 
-    it("reports a hex, an rgb and a keyword colour, as one entry per file", () => {
+    it("reports a hex, an rgb and a keyword colour, one entry per line", () => {
         expect(scan(".a {\n    color: #ff0000;\n}\n.b {\n    background: rgba(0, 0, 0, 0.5);\n}\n.c {\n    border-color: hotpink;\n}")).toEqual([
-            "line 4 (#ff0000, rgba(, hotpink)",
+            "line 4 (#ff0000)",
+            "line 7 (rgba()",
+            "line 10 (hotpink)",
         ])
         expect(scan(".a {\n    border-color: rebeccapurple;\n}")).toEqual(["line 4 (rebeccapurple)"])
+    })
+
+    it("reports a colour written with hsl, hwb, lab, lch or oklch", () => {
+        expect(scan(".a {\n    color: hsl(120deg 50% 50%);\n    background: oklch(0.7 0.1 200);\n    border-color: lab(50% 40 60);\n}")).toEqual([
+            "line 4 (hsl()",
+            "line 5 (oklch()",
+            "line 6 (lab()",
+        ])
+        expect(scan(".a {\n    color: hsl(var(--hue) 50% 50%);\n}")).toEqual([])
     })
 
     it("reads a custom property named like a colour, a shorthand, and a colour used to lighten a token", () => {
@@ -34,6 +51,17 @@ describe("design system", () => {
         expect(scan(".a {\n    text-decoration: underline crimson;\n}")).toEqual(["line 4 (crimson)"])
         expect(scan(".a {\n    --tint: color-mix(in srgb, var(--ks-text-link) 70%, white 30%);\n}")).toEqual([
             "line 4 (white)",
+        ])
+    })
+
+    it("reports a hex assigned to an SCSS variable, before it reaches any property", () => {
+        expect(scan("$node: #7081b9;\n.a {\n    --node: #{$node};\n}")).toEqual(["line 3 (#7081b9)"])
+    })
+
+    it("reports a hex in a script object under a camelCase colour key", () => {
+        expect(scanScript("const TYPE = {\n    WORKER: {colorHex: \"#9F9DFF\"},\n    STYLE: {backgroundColor: \"#C182FF\"},\n}\n")).toEqual([
+            "line 2 (#9F9DFF)",
+            "line 3 (#C182FF)",
         ])
     })
 
@@ -83,11 +111,14 @@ describe("design system", () => {
         ])
     })
 
-    it("honours an opt-out on the next line and for a whole file", () => {
+    it("honours an opt-out on the next line only", () => {
         expect(scan(".a {\n    /* design-system-disable-next-line */\n    color: red;\n    background: hotpink;\n}")).toEqual([
             "line 6 (hotpink)",
         ])
-        expect(scan("/* design-system-disable: fixture */\n.a {\n    color: red;\n}")).toEqual([])
+    })
+
+    it("has no whole-file opt-out", () => {
+        expect(scan("/* design-system-disable: fixture */\n.a {\n    color: red;\n}")).toEqual(["line 5 (red)"])
     })
 
     it("honours an opt-out over a run of lines, and guards again after it ends", () => {
@@ -98,5 +129,13 @@ describe("design system", () => {
             "/* design-system-disable-end */",
             ".c { color: hotpink; }",
         ].join("\n"))).toEqual(["line 7 (hotpink)"])
+    })
+
+    it("reports a start with no end rather than muting the rest of the file", () => {
+        expect(scan([
+            "/* design-system-disable-start: fixture */",
+            ".a { color: red; }",
+            ".b { color: crimson; }",
+        ].join("\n"))).toEqual(["line 3 (design-system-disable-start without design-system-disable-end)"])
     })
 })

@@ -2,6 +2,7 @@ import {describe, test, expect} from "vitest"
 import {mount} from "@vue/test-utils"
 import KestraDesignSystem from "../../../src/index"
 import KsThemePicker from "../../../src/components/Form/KsThemePicker/KsThemePicker.vue"
+import source from "../../../src/components/Form/KsThemePicker/KsThemePicker.vue?raw"
 
 const globalConfig = {plugins: [KestraDesignSystem]}
 
@@ -48,5 +49,15 @@ describe("KsThemePicker", () => {
         })
         await wrapper.findAll("[role='radio']")[1].trigger("click")
         expect(wrapper.emitted("update:modelValue")?.at(-1)).toEqual(["dark"])
+    })
+
+    test("paints each preview from the palette, so it keeps its colours whatever theme the page is in", () => {
+        const previews = source.match(/&--(?:light|dark|dark-2) \{(?:[^{}]|\{[^}]*\})*\}/g) ?? []
+        expect(previews).toHaveLength(3)
+        for (const preview of previews) {
+            const values = [...preview.matchAll(/--tp-[a-z]+:\s*([^;]+);/g)].map(([, value]) => value)
+            expect(values).toHaveLength(6)
+            expect(values.every((value) => value.startsWith("#{palette.$"))).toBe(true)
+        }
     })
 })

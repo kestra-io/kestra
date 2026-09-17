@@ -340,7 +340,12 @@
     }
 
     .highlight-pebble {
-        color: var(--ks-editor-pabble) !important;
+        /* Not `--ks-editor-pabble`: Dark 2.0 maps that token to green, so it stays hardcoded until the token is corrected. */
+        color: #977100 !important;
+
+        html.dark & {
+            color: #ffca16 !important;
+        }
     }
 
     .disable-text {

@@ -55,8 +55,6 @@ jobs:
         run: |
           {
             echo "$MARKER"
-            echo "## 🌐 Translation check failed"
-            echo
             node ui/scripts/translations/build-comment.mjs report/report.json
             if [ "$FORK" = "true" ]; then
               sed -E 's/^ {4}//' <<'GUIDE'

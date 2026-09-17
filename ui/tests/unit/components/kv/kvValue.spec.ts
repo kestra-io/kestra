@@ -3,8 +3,9 @@ process.env.TZ = "Europe/Paris"
 
 import {describe, test, expect} from "vitest"
 import {dayjs} from "@kestra-io/design-system"
+import type {KvType} from "@kestra-io/kestra-sdk"
 
-import {formatKvValueForDisplay, hydrateKvValueForForm, serializeKvValueForSave} from "../../../../src/components/kv/kvValue"
+import {formatKvValueForDisplay, hydrateKvValueForForm, serializeKvValueForSave, type KvFormValue} from "../../../../src/components/kv/kvValue"
 
 describe("formatKvValueForDisplay", () => {
     test("STRING is rendered as-is", () => {
@@ -104,7 +105,7 @@ describe("hydrateKvValueForForm", () => {
     })
 
     test("should feed a DATETIME to the picker in the user timezone", () => {
-        const date = hydrateKvValueForForm("DATETIME", "2024-01-01T00:00:00Z", "Asia/Tokyo")
+        const date = hydrateKvValueForForm("DATETIME", "2024-01-01T00:00:00Z", "Asia/Tokyo") as Date
         expect(dayjs(date).tz("Asia/Tokyo").format("YYYY-MM-DDTHH:mm")).toBe("2024-01-01T09:00")
     })
 
@@ -123,7 +124,7 @@ describe("hydrateKvValueForForm", () => {
 
 describe("KV value round-trip", () => {
     // What the API gives back for each type once the ION payload has been parsed server-side.
-    const roundTrips: {type: string; saved: any; returned: any}[] = [
+    const roundTrips: {type: KvType; saved: KvFormValue; returned: unknown}[] = [
         {type: "STRING", saved: "  padded  ", returned: "  padded  "},
         {type: "STRING", saved: "42", returned: "42"},
         {type: "NUMBER", saved: "42", returned: 42},
@@ -144,6 +145,6 @@ describe("KV value round-trip", () => {
     test("should reopen a DATETIME at the instant it was saved", () => {
         const picked = new Date("2024-01-01T10:30:00Z")
         const stored = serializeKvValueForSave("DATETIME", picked)
-        expect(hydrateKvValueForForm("DATETIME", stored, "Asia/Tokyo").getTime()).toBe(picked.getTime())
+        expect(hydrateKvValueForForm("DATETIME", stored, "Asia/Tokyo")).toStrictEqual(picked)
     })
 })

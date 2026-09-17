@@ -343,7 +343,6 @@
   "tests/unit/components/inputs/inputsFormBoolDefault.spec.ts": 3,
   "tests/unit/components/inputs/inputsFormLoader.spec.ts": 3,
   "tests/unit/components/inputs/inputsFormStringDefault.spec.ts": 4,
-  "tests/unit/components/kv/kvValue.spec.ts": 2,
   "tests/unit/components/logs/logsWrapperCursor.spec.ts": 6,
   "tests/unit/components/logs/logsWrapperInitialLoad.spec.ts": 4,
   "tests/unit/components/logs/logsWrapperPaginationWiring.spec.ts": 2,

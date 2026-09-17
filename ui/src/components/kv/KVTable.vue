@@ -398,7 +398,7 @@
 
     type KvQuery = NonNullable<ListAllKeysData["query"]>
 
-    const loadQuery = (base: KvQuery): KvQuery & Record<string, unknown> => {
+    const loadQuery = (base: KvQuery): KvQuery => {
         const {page: _p, size: _s, sort: _so, ...rest} = route.query
         const nonFilterRest = Object.fromEntries(
             Object.entries(rest).filter(([key]) => !key.startsWith("filters[")),

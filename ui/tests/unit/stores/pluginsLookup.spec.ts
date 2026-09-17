@@ -17,7 +17,16 @@ vi.mock("../../../src/utils/tabTracking", () => ({
 
 const idOf = (p: any) => `${p?.name ?? ""}#${p?.subGroup ?? ""}`
 
-const PARENT = {name: "gcp", group: "io.kestra.plugin.gcp", title: "GCP"}
+const PARENT = {
+    name: "gcp",
+    group: "io.kestra.plugin.gcp",
+    title: "GCP",
+    tasks: [
+        {cls: "io.kestra.plugin.gcp.bigquery.Query", deprecated: false},
+        {cls: "io.kestra.plugin.gcp.bigquery.Load", deprecated: false},
+        {cls: "io.kestra.plugin.gcp.gcs.Upload", deprecated: false},
+    ],
+}
 const SUBGROUP_BQ = {
     name: "gcp",
     group: "io.kestra.plugin.gcp",
@@ -40,6 +49,29 @@ const STANDALONE = {
     group: "io.kestra.plugin.core",
     title: "Core",
     tasks: [{cls: "io.kestra.plugin.core.flow.Subflow", deprecated: false}],
+}
+
+const FS_ALIAS = "io.kestra.plugin.fs.http.Request"
+const CORE_HTTP = {
+    name: "core",
+    group: "io.kestra.plugin.core",
+    title: "Core",
+    aliases: [FS_ALIAS],
+    tasks: [{cls: "io.kestra.plugin.core.http.Request", deprecated: false}],
+}
+const FS_HTTP = {
+    name: "fs",
+    group: "io.kestra.plugin.fs",
+    subGroup: "io.kestra.plugin.fs.http",
+    title: "FS HTTP",
+    tasks: [{cls: FS_ALIAS, deprecated: false}],
+}
+const FS_HTTP_SIBLING = {
+    name: "fs",
+    group: "io.kestra.plugin.fs",
+    subGroup: "io.kestra.plugin.fs.http",
+    title: "FS HTTP",
+    tasks: [{cls: "io.kestra.plugin.fs.http.Download", deprecated: false}],
 }
 
 const DOCKER_ALIAS = "io.kestra.plugin.docker.Run"
@@ -83,6 +115,21 @@ describe("plugins store lookups", () => {
 
         it("resolves an aliased cls to the group entry that declares the alias", () => {
             expect(idOf(store.findPluginByCls(DOCKER_ALIAS))).toBe(idOf(DOCKER))
+        })
+
+        it("prefers the alias owner over a subgroup that only prefixes the alias", () => {
+            store.plugins = [CORE_HTTP, FS_HTTP_SIBLING]
+            expect(idOf(store.findPluginByCls(FS_ALIAS))).toBe(idOf(CORE_HTTP))
+        })
+
+        it("prefers the plugin declaring the class over the one only aliasing it", () => {
+            store.plugins = [CORE_HTTP, FS_HTTP]
+            expect(idOf(store.findPluginByCls(FS_ALIAS))).toBe(idOf(FS_HTTP))
+        })
+
+        it("falls back to a subgroup entry when no group entry carries the alias", () => {
+            store.plugins = [DOCKER_CLI]
+            expect(idOf(store.findPluginByCls(DOCKER_ALIAS))).toBe(idOf(DOCKER_CLI))
         })
 
         it("returns null when cls is unknown", () => {

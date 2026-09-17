@@ -1083,6 +1083,7 @@
     "execute backfill": "backfillを実行",
     "relative": "相対",
     "relative start date": "相対開始日",
+    "now": "現在",
     "absolute": "絶対",
     "backfill": "Backfill",
     "Set labels": "ラベルを設定",

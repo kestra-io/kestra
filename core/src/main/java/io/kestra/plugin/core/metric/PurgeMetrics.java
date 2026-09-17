@@ -14,6 +14,7 @@ import io.kestra.core.runners.RunContext;
 import io.kestra.core.utils.TypeConverter;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -29,7 +30,7 @@ import lombok.experimental.SuperBuilder;
 @Schema(
     title = "Purge execution metrics.",
     description = """
-        Deletes metrics in bulk by namespace/flow filters and date ranges. Requires namespace authorization when targeting other namespaces.
+        Deletes metrics in bulk by namespace/flow/execution filters and date ranges. Requires namespace authorization when targeting other namespaces.
 
         For performance, use this instead of per-execution metric deletions."""
 )
@@ -78,6 +79,11 @@ public class PurgeMetrics extends Task implements RunnableTask<PurgeMetrics.Outp
     private Property<String> flowId;
 
     @Schema(
+        title = "The Execution ID of the metrics to be purged"
+    )
+    private Property<String> executionId;
+
+    @Schema(
         title = "The minimum date to be purged",
         description = "All metrics after this date will be purged."
     )
@@ -90,6 +96,12 @@ public class PurgeMetrics extends Task implements RunnableTask<PurgeMetrics.Outp
     @NotNull
     private Property<String> endDate;
 
+    @Schema(
+        title = "The number of metric rows deleted per batch",
+        description = "Only applies on MySQL. When set, deletion runs in batches of this size using `DELETE ... LIMIT n` to stay within `group_replication_transaction_size_limit`. When not set, all matching rows are deleted in a single transaction."
+    )
+    private Property<@Min(1) Integer> batchSize;
+
     @Override
     public Output run(RunContext runContext) throws Exception {
         MetricRepositoryInterface metricRepository = ((DefaultRunContext) runContext).services().additionalService(MetricRepositoryInterface.class);
@@ -97,6 +109,7 @@ public class PurgeMetrics extends Task implements RunnableTask<PurgeMetrics.Outp
         var flowInfo = runContext.flowInfo();
         String renderedNamespace = runContext.render(this.namespace).as(String.class).orElse(null);
         String renderedFlowId = runContext.render(this.flowId).as(String.class).orElse(null);
+        String renderedExecutionId = runContext.render(this.executionId).as(String.class).orElse(null);
 
         if (renderedNamespace == null && renderedFlowId != null) {
             throw new IllegalArgumentException("Property `namespace` is required when `flowId` is set.");
@@ -111,13 +124,16 @@ public class PurgeMetrics extends Task implements RunnableTask<PurgeMetrics.Outp
         String renderedStartDate = runContext.render(this.startDate).as(String.class).orElse(null);
         ZonedDateTime rStartDate = renderedStartDate != null ? TypeConverter.toZonedDateTime(renderedStartDate) : null;
         ZonedDateTime rEndDate = TypeConverter.toZonedDateTime(runContext.render(this.endDate).as(String.class).orElseThrow());
+        Integer renderedBatchSize = runContext.render(this.batchSize).as(Integer.class).orElse(null);
 
         int count = metricRepository.purge(
             flowInfo.tenantId(),
             renderedNamespace,
             renderedFlowId,
+            renderedExecutionId,
             rStartDate,
-            rEndDate
+            rEndDate,
+            renderedBatchSize
         );
 
         return Output.builder()

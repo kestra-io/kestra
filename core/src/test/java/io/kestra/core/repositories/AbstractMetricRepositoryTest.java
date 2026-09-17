@@ -388,6 +388,72 @@ public abstract class AbstractMetricRepositoryTest {
     }
 
     @Test
+    void shouldPurgeMetricsByExecutionId() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        Instant oldTimestamp = Instant.now().minus(10, ChronoUnit.DAYS);
+
+        metricRepository.save(MetricEntry.builder()
+            .tenantId(tenant)
+            .namespace("io.kestra.purge")
+            .flowId("flow1")
+            .executionId("exec1")
+            .taskId("task1")
+            .taskRunId(FriendlyId.createFriendlyId())
+            .type("counter")
+            .name("metric1")
+            .value(1.0)
+            .timestamp(oldTimestamp)
+            .build());
+
+        metricRepository.save(MetricEntry.builder()
+            .tenantId(tenant)
+            .namespace("io.kestra.purge")
+            .flowId("flow1")
+            .executionId("exec2")
+            .taskId("task1")
+            .taskRunId(FriendlyId.createFriendlyId())
+            .type("counter")
+            .name("metric2")
+            .value(2.0)
+            .timestamp(oldTimestamp)
+            .build());
+
+        int deleted = metricRepository.purge(tenant, null, null, "exec1", null, ZonedDateTime.now(), null);
+        assertThat(deleted).isEqualTo(1);
+
+        assertThat(metricRepository.findByExecutionId(tenant, "exec1", Pageable.from(1, 10))).isEmpty();
+        assertThat(metricRepository.findByExecutionId(tenant, "exec2", Pageable.from(1, 10))).hasSize(1);
+    }
+
+    @Test
+    void shouldPurgeMetricsWithBatchSize() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        Instant oldTimestamp = Instant.now().minus(10, ChronoUnit.DAYS);
+
+        for (int i = 0; i < 5; i++) {
+            metricRepository.save(MetricEntry.builder()
+                .tenantId(tenant)
+                .namespace("io.kestra.purge")
+                .flowId("flow-batch")
+                .executionId("exec-batch-" + i)
+                .taskId("task1")
+                .taskRunId(FriendlyId.createFriendlyId())
+                .type("counter")
+                .name("metric" + i)
+                .value((double) i)
+                .timestamp(oldTimestamp)
+                .build());
+        }
+
+        int deleted = metricRepository.purge(tenant, "io.kestra.purge", "flow-batch", null, null, ZonedDateTime.now(), 2);
+        assertThat(deleted).isEqualTo(5);
+
+        for (int i = 0; i < 5; i++) {
+            assertThat(metricRepository.findByExecutionId(tenant, "exec-batch-" + i, Pageable.from(1, 10))).isEmpty();
+        }
+    }
+
+    @Test
     protected void fetchData() throws IOException {
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
         String executionId = FriendlyId.createFriendlyId();

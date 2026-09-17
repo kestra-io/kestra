@@ -193,6 +193,19 @@ public abstract class AbstractJdbcMetricRepository extends AbstractJdbcCrudRepos
         @Nullable ZonedDateTime startDate,
         ZonedDateTime endDate
     ) {
+        return purge(tenantId, namespace, flowId, null, startDate, endDate, null);
+    }
+
+    @Override
+    public int purge(
+        @Nullable String tenantId,
+        @Nullable String namespace,
+        @Nullable String flowId,
+        @Nullable String executionId,
+        @Nullable ZonedDateTime startDate,
+        ZonedDateTime endDate,
+        @Nullable Integer batchSize
+    ) {
         Condition condition = this.defaultFilter(tenantId)
             .and(field("timestamp").lessOrEqual(endDate.toOffsetDateTime()));
 
@@ -212,10 +225,27 @@ public abstract class AbstractJdbcMetricRepository extends AbstractJdbcCrudRepos
             condition = condition.and(field("flow_id").eq(flowId));
         }
 
+        if (executionId != null) {
+            condition = condition.and(field("execution_id").eq(executionId));
+        }
+
         Condition finalCondition = condition;
-        return this.jdbcRepository.getDslContextWrapper().transactionResult(configuration ->
-            DSL.using(configuration).delete(this.jdbcRepository.getTable()).where(finalCondition).execute()
-        );
+        return this.jdbcRepository.getDslContextWrapper().transactionResult(configuration -> {
+            if (batchSize != null && configuration.dialect().family() == SQLDialect.MYSQL) {
+                int total = 0;
+                int deleted;
+                do {
+                    deleted = DSL.using(configuration)
+                        .delete(this.jdbcRepository.getTable())
+                        .where(finalCondition)
+                        .limit(batchSize)
+                        .execute();
+                    total += deleted;
+                } while (deleted > 0);
+                return total;
+            }
+            return DSL.using(configuration).delete(this.jdbcRepository.getTable()).where(finalCondition).execute();
+        });
     }
 
     @Override

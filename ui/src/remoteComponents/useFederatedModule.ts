@@ -1,4 +1,4 @@
-import {ref, shallowReactive, markRaw, defineComponent, h, onErrorCaptured} from "vue"
+import {ref, shallowReactive, markRaw, defineComponent, h, onErrorCaptured, type Component} from "vue"
 import {apiUrlWithoutTenants} from "override/utils/route"
 import {loadRemote, registerRemotes, registerShared} from "@module-federation/enhanced/runtime"
 import * as PluginsAPI from "@kestra-io/kestra-sdk/plugins"
@@ -7,7 +7,7 @@ import {PluginUiModuleWithGroup} from "@kestra-io/kestra-sdk"
 import {getCsrfToken} from "../utils/csrf"
 
 
-function wrapWithErrorBoundary(inner: any) {
+function wrapWithErrorBoundary(inner: Component) {
     return defineComponent({
         name: "FederatedModuleBoundary",
         inheritAttrs: false,
@@ -41,7 +41,7 @@ function addCSSLinkIfNotAlreadyPresent(href: string) {
 
 export function useFederatedModule<T extends keyof typeof KnownSlotsPropNames>(slotName: T) {
 
-    const RemoteComponents = shallowReactive<Record<string, any>>({})
+    const RemoteComponents = shallowReactive<Record<string, Component>>({})
     const taskAdditionalInfoRemote = ref<Record<string, ManifestsRegistry[T]>>({})
 
     const manifestReady = ref(false)
@@ -122,9 +122,9 @@ export function useFederatedModule<T extends keyof typeof KnownSlotsPropNames>(s
                     const taskRoot = manifest.group ? taskTypeKey.slice(manifest.group.length + 1) : []
                     const remoteId = `${remoteName}/${taskRoot}/${slotName}`
                     
-                    let module: {default: any} | null = null
+                    let module: {default: Component} | null = null
                     try {
-                        module = await loadRemote<{default: any}>(remoteId)
+                        module = await loadRemote<{default: Component}>(remoteId)
                     } catch(err) {
                         console.error(`[FederatedModule] loadRemote FAILED for "${remoteId}":`, err)
                         continue

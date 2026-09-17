@@ -123,12 +123,11 @@
     import {routeFamily} from "../../utils/routeFamily"
     import {useI18n} from "vue-i18n"
     import _merge from "lodash/merge"
-    import moment from "moment"
     import {useLogFilter} from "../filter/configurations"
     import {useValues} from "../filter/composables/useValues"
     import QuickFilters from "../filter/QuickFilters.vue"
     import useRestoreUrl from "../../composables/useRestoreUrl"
-    import {KsFilter as KSFilter} from "@kestra-io/design-system"
+    import {dateUtils, dayjs, KsFilter as KSFilter} from "@kestra-io/design-system"
 
     const {loadInit} = useRestoreUrl()
     import Sections from "../dashboard/sections/Sections.vue"
@@ -367,10 +366,10 @@
         }
 
         if (downloadTimeRange.value) {
-            params.startDate = moment()
-                .subtract(moment.duration(downloadTimeRange.value).as("milliseconds"))
-                .toISOString(true)
-            params.endDate = moment().toISOString(true)
+            params.startDate = dateUtils.toIsoKeepOffset(
+                dayjs().subtract(dayjs.duration(downloadTimeRange.value).as("milliseconds")),
+            )
+            params.endDate = dateUtils.toIsoKeepOffset(dayjs())
         } else {
             if (_sd) params.startDate = _sd
             if (_ed) params.endDate = _ed

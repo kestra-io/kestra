@@ -8,7 +8,6 @@
     "more actions": "更多操作",
     "recipe": {
       "create_flow": "创建 flow",
-      "email": "电子邮件",
       "execution": {
         "include_sub": "包含子 namespace",
         "include_sub_hint_off": "只有精确 namespace 中的 flow 才会触发此警报。",
@@ -56,7 +55,6 @@
       "section_title": "创建系统 flow",
       "summary": {
         "any_namespace": "任何 namespace",
-        "empty": "配置 trigger 和至少一个通知 channel 来预览您的 flow。",
         "exact_match": "精确匹配",
         "execution": "当 {ns} ({scope}) 中的一个 flow 达到 {states} 状态时，通过 {channels} 通知。",
         "including_sub": "和 sub-namespaces",
@@ -66,7 +64,6 @@
         "other": "当 {trigger} trigger 触发时，通过 {channels} 通知。",
         "schedule": "在计划 \"{cron}\" 上，通过 {channels} 通知。",
         "selected_trigger": "已选择",
-        "title": "摘要",
         "webhook": "当收到 webhook 时，通过 {channels} 通知。",
         "preview_title": "预览",
         "live": "实时"
@@ -74,7 +71,6 @@
       "then": {
         "no_channel_warning": "请选择至少一个通知渠道。",
         "subtitle": "选择如何通知您的团队。",
-        "title": "然后通知",
         "unavailable_channels_warning": "{channels}：此 trigger 类型未安装 plugin，将不会发送通知。"
       },
       "trigger": {
@@ -95,7 +91,6 @@
       },
       "when": {
         "subtitle": "选择触发此系统 flow 的方式。",
-        "title": "当此事件发生时",
         "trigger_type": "触发器类型"
       },
       "hero_eyebrow": "您的系统 flow",
@@ -301,7 +296,6 @@
       "star": "点赞我们"
     },
     "source": "来源",
-    "source only": "仅限来源",
     "home": "首页",
     "create": "创建",
     "create_flow": "创建Flow",
@@ -686,7 +680,6 @@
     "open in new tab": "在新标签页打开",
     "execute the flow": "执行流程 <code>{id}</code>",
     "discard execution confirmation": "您有未保存的输入。您确定要放弃此执行吗？",
-    "discard changes confirmation": "您有未保存的更改。您确定要放弃它们吗？",
     "unsaved changed ?": "你有未保存的更改，是否要离开此页面？",
     "unsaved changes": "未保存的更改",
     "unsaved changes warning": "您有未保存的更改。如果您离开此页面，您的更改将会丢失。",
@@ -855,9 +848,6 @@
     "bulk kill": "确定要终止 <code>{executionCount}</code> 个执行吗？",
     "cancel": "取消",
     "errorLogs": "错误 logs",
-    "welcome_page": {
-      "guide": "需要指导来执行您的第一个flow吗？"
-    },
     "product_tour": "产品导览",
     "executions replayed": "<code>{executionCount}</code> 个 Execution 已重放",
     "executions state changed": "<code>{executionCount}</code> 次执行的状态已更改",
@@ -868,20 +858,9 @@
     "executions restarted": "<code>{executionCount}</code> 个执行已重启",
     "executions killed": "<code>{executionCount}</code> 个 execution 已终止",
     "executions deleted": "已删除 <code>{executionCount}</code> 个 execution",
-    "invalid bulk replay": "无法重放执行",
-    "invalid bulk resume": "无法恢复执行",
-    "invalid bulk pause": "无法暂停执行",
-    "invalid bulk unqueue": "无法取消排队的执行",
-    "invalid bulk force run": "无法强制运行执行",
-    "invalid bulk restart": "无法重新开始执行",
-    "invalid bulk kill": "无法终止执行",
-    "invalid bulk delete": "无法删除执行",
     "execution not found": "执行 {executionId} 未找到。",
-    "execution not in state PAUSED": "执行 <code>{executionId}</code> 未处于暂停状态",
-    "execution already finished": "执行 <code>{executionId}</code> 已完成",
     "seeing old revision": "你正在查看旧修订版：{revision}",
     "export": "导出",
-    "exports": "导出",
     "export_csv": "导出为CSV",
     "flow_export": "导出flow",
     "flow export": "确定要导出 <code>{flowCount}</code> 个流程吗？",
@@ -908,9 +887,7 @@
     "disabled": "禁用",
     "before": "之前",
     "after": "之后",
-    "dynamic": "动态",
     "choice": "选择",
-    "sequential": "顺序",
     "can not delete": "无法删除此 task",
     "can not have less than 1 task": "一个 flow 必须至少有一个 task。在删除此 task 之前，添加另一个 task。",
     "task id": "任务ID",
@@ -930,7 +907,6 @@
     "bar": "酒吧",
     "line": "行",
     "metric": "指标",
-    "aggregation": "聚合",
     "metric choice": "此flow没有可用的指标",
     "metric filter no match": "没有指标匹配\"{term}\"",
     "of": "的",
@@ -996,7 +972,6 @@
     "version": "版本",
     "services": "服务",
     "hostname": "主机名",
-    "port": "端口",
     "file preview truncated": "显示的内容已被截断",
     "file unavailable": "文件不可用",
     "file unavailable description": "该文件不再可用——可能已被清除或过期。",
@@ -1106,7 +1081,6 @@
     "execute backfill": "执行回填",
     "relative": "相对",
     "relative start date": "相对开始日期",
-    "now": "现在",
     "absolute": "绝对",
     "backfill": "回填",
     "Set labels": "设置标签",
@@ -1181,6 +1155,7 @@
             "log_level": "默认日志级别",
             "log_display": "默认日志显示",
             "editor_type": "默认编辑器类型",
+            "topology_orientation": "默认拓扑方向",
             "execute_flow": "执行流程",
             "execute_default_tab": "默认执行选项卡",
             "flow_default_tab": "默认 Flow 标签页",
@@ -1195,6 +1170,7 @@
             "log_level": "执行日志中显示的最低日志级别。",
             "log_display": "打开执行时日志的呈现方式。",
             "editor_type": "首次打开flow时显示的编辑器。",
+            "topology_orientation": "Flow 编辑器中拓扑面板的默认方向。",
             "execute_flow": "触发运行后执行结果打开的位置。",
             "execute_default_tab": "导航到执行时选择的选项卡。",
             "flow_default_tab": "导航到flow时选择的选项卡。",
@@ -1207,6 +1183,10 @@
           "task_edit_default_mode_options": {
             "modal": "模态框",
             "tab": "选项卡"
+          },
+          "topology_orientation_options": {
+            "vertical": "垂直",
+            "horizontal": "水平"
           },
           "flow_template_reset": "重置为默认值",
           "flow_template_error": {
@@ -1283,7 +1263,6 @@
       "label": "提升"
     },
     "demos": {
-      "enterprise_edition": "企业版",
       "get_a_demo_button": "获取演示",
       "contact_sales": "联系我们的销售团队",
       "secrets": {
@@ -1667,7 +1646,6 @@
       "title": "使用 Kestra 开始自动化",
       "sub_title": "单击Execute按钮以开始您的第一个工作流执行。",
       "namespace_sub_title": "从此namespace执行一个或多个flow以填充此仪表板。",
-      "namespace_guidance_desc": "需要指导来管理您的Namespace吗？",
       "need_help": "需要帮助？"
     },
     "execution_guide": {
@@ -1709,14 +1687,11 @@
     "flows not imported": "未导入的Flows",
     "custom value": "自定义值",
     "chart": "图表",
-    "chart preview": "图表预览",
     "no_code": {
       "toggle_pebble": "切换Pebble编辑器",
       "version_oss_placeholder": "解锁企业版插件版本控制",
-      "unnamed": "无名称",
       "adding": "+ 添加{what}",
       "adding_default": "+ 添加新value",
-      "add_field": "添加{field}",
       "clearSelection": "清除选择",
       "labels": {
         "yaml": "YAML编辑器",
@@ -2533,7 +2508,6 @@
     "pricing": "定价",
     "license": "许可证",
     "block_editor": {
-      "add_error_task": "添加错误 task",
       "add_switch_case": "添加用例",
       "adding_to": "{section} 中的新条目",
       "add_task": "添加 task",
@@ -2544,7 +2518,6 @@
       "block_deleted": "{name} 已删除",
       "card_aria_label": "类型为 {type} 的 Block {id}",
       "canvas_aria": "flow 块画布",
-      "close_all": "关闭所有选项卡",
       "cluster_collapse_aria": "折叠 {id}",
       "cluster_expand_aria": "展开 {id} ({count} 个 task)",
       "collapsed_summary": "{count} 个 task",
@@ -2583,19 +2556,14 @@
       "depth_pill": "深度 {depth}",
       "drag_reorder": "拖动以重新排序",
       "duplicate": "复制",
-      "empty": "尚无 task 或 trigger。添加您的第一个 task 以开始。",
       "empty_add_hint": "或按 / 搜索 task",
       "empty_add_lead": "点击添加 {label}",
-      "error_task_noun": "一个错误 task",
       "execution_context": "执行上下文",
       "filter_data": "筛选可用数据…",
       "flow_inputs": "flow input",
-      "flowable_todo": "嵌套 task（编辑功能即将推出）",
       "footer": {
         "canvas": "画布",
-        "close_panel": "关闭面板",
         "command_menu": "命令菜单",
-        "editing": "编辑块",
         "inserting": "正在插入",
         "selected": "已选择 · {name}"
       },
@@ -2609,22 +2577,15 @@
       "lane_case": "案例: {key}",
       "lane_defaults": "默认",
       "lane_else": "否则",
-      "lane_empty": "{lane} 中没有 task",
       "lane_errors": "错误",
       "lane_finally": "最后",
       "lane_tasks": "任务",
       "lane_then": "然后",
-      "loading_plugins": "正在加载插件...",
       "move_down": "下移",
       "move_up": "上移",
-      "nav_rail_empty": "尚无 task 或 trigger。",
-      "nav_rail_title": "大纲",
-      "nested_count": "{count} 个嵌套 task",
       "no_data_matches": "没有匹配您筛选条件的结果",
-      "no_documentation": "此 task 无文档",
       "no_recent": "暂无近期 task 类型",
       "no_task_results": "无匹配的 task 类型。",
-      "open_details": "打开详情",
       "open_in_split": "在分屏中打开",
       "output": "输出",
       "output_sub": "此 task 产生的内容",
@@ -2662,8 +2623,6 @@
         "toggle": "此帮助",
         "undo": "撤消"
       },
-      "split_into": "{count} 列视图",
-      "split_view": "分屏视图",
       "switch_case_key_placeholder": "新 case key",
       "switch_case_key_taken": "Case {key} 已存在",
       "tab_apps": "按应用",

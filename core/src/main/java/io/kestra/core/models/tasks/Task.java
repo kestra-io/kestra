@@ -4,6 +4,7 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
 
+import org.hibernate.validator.constraints.time.DurationMin;
 import org.slf4j.event.Level;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -21,8 +22,6 @@ import io.kestra.plugin.core.flow.WorkingDirectory;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.annotation.Nullable;
-import org.hibernate.validator.constraints.time.DurationMin;
-
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Size;
 import lombok.Builder;
@@ -105,9 +104,12 @@ abstract public class Task implements TaskInterface {
     @Valid
     private Cache taskCache;
 
-    @PluginProperty(hidden = true, group = "advanced")
+    @PluginProperty(hidden = false, group = "advanced")
     @Valid
     @Nullable
+    @Schema(
+        description = "Assets this task consumes as inputs or produces as outputs, for lineage tracking and the asset graph (Enterprise Edition). A flow declaring this property on a task is rejected in the open-source edition."
+    )
     private AssetsDeclaration assets;
 
     public Optional<Task> findById(String id) {

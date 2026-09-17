@@ -64,7 +64,7 @@ describe("useRestoreUrl", () => {
         expect(router.currentRoute.value.query).toEqual(SAVED_QUERY)
     })
 
-    it("does not restore pagination from the saved query", async () => {
+    it("restores the page size but not the page number from the saved query", async () => {
         const router = createTestRouter()
         await router.push({name: "home", params: {tenant: "main", dashboard: "default"}})
         window.sessionStorage.setItem("home_main_restore_url", JSON.stringify({...SAVED_QUERY, page: "10", size: "100"}))
@@ -72,7 +72,7 @@ describe("useRestoreUrl", () => {
         wrapper = mountRestoreUrl(router)
         await new Promise((resolve) => setTimeout(resolve, 150))
 
-        expect(router.currentRoute.value.query).toEqual(SAVED_QUERY)
+        expect(router.currentRoute.value.query).toEqual({...SAVED_QUERY, size: "100"})
     })
 
     it("leaves an explicit query untouched", async () => {

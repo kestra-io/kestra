@@ -42,7 +42,7 @@
     const router = useRouter()
     const namespacesStore = useNamespacesStore()
 
-    const onSelectDashboard = (value: any) => {
+    const onSelectDashboard = (value: string) => {
         router.replace({
             params: {...route.params, dashboard: value},
         })

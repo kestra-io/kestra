@@ -332,14 +332,12 @@
 </template>
 
 <script setup lang="ts">
-    import moment from "moment-timezone"
-    import {KsMessage, KsEditor} from "@kestra-io/design-system"
+    import {KsMessage, KsEditor, debounce} from "@kestra-io/design-system"
     import type {FormItemRule} from "@kestra-io/design-system"
     import ValidationError from "../flows/ValidationError.vue"
     import {ref, reactive, computed, watch, onMounted, onBeforeUnmount, toRaw, markRaw, type Component, getCurrentInstance, nextTick} from "vue"
     import {type Check, Execution, useExecutionsStore, ValidationEventPayload, ValidationResponse, ValueOptionLike} from "../../stores/executions"
     import {useI18n} from "vue-i18n"
-    import debounce from "lodash/debounce"
     import {useEditorBindings} from "../../composables/useEditorBindings"
     import {useInputsWizard} from "../../composables/useInputsWizard"
     import {normalize, flattenInputs, type InputType} from "../../utils/inputs"
@@ -378,6 +376,9 @@
         selectedTrigger?: SelectedTrigger;
         mode?: "flat" | "wizard";
         formGroups?: Record<string, {displayName?: string; description?: string}>;
+        // Labels the execution will be created with, as `key:value`. Inputs are rendered against them,
+        // so an expression or a default can read a label the caller already knows.
+        renderLabels?: string[];
     }>(), {
         executeClicked: false,
         initialInputs: () => [],
@@ -386,6 +387,7 @@
         selectedTrigger: undefined,
         mode: "flat",
         formGroups: undefined,
+        renderLabels: undefined,
     })
 
     const emit = defineEmits<{
@@ -702,7 +704,7 @@
             return
         }
 
-        const formData = inputsToFormData({$moment: moment}, inputsMetaData.value, inputsValuesWithNoDefault.value)
+        const formData = inputsToFormData(inputsMetaData.value, inputsValuesWithNoDefault.value)
 
         const signature = formData ? formDataSignature(formData) : ""
 
@@ -738,7 +740,7 @@
         const run = async (): Promise<void> => {
             if (props.flow !== undefined) {
                 const options = {namespace: props.flow.namespace, id: props.flow.id}
-                const data = await executionsStore.validateExecution({...options, formData})
+                const data = await executionsStore.validateExecution({...options, formData, labels: props.renderLabels})
 
                 metadataCallback(data)
             } else if (props.execution !== undefined) {
@@ -777,7 +779,7 @@
         }
 
         if (validated) {
-            const latest = inputsToFormData({$moment: moment}, inputsMetaData.value, inputsValuesWithNoDefault.value)
+            const latest = inputsToFormData(inputsMetaData.value, inputsValuesWithNoDefault.value)
             const latestSignature = latest ? formDataSignature(latest) : ""
             if (latestSignature !== lastValidatedSignature) {
                 return validateInputs()

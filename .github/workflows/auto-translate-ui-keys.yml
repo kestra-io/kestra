@@ -59,14 +59,14 @@ jobs:
       matrix:
         branch: ${{ fromJSON(needs.plan.outputs.branches) }}
     steps:
-        - uses: actions/checkout@v7
+        - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
           name: Checkout
           with:
             ref: ${{ matrix.branch }}
             fetch-depth: 0
 
         - name: Set up Node
-          uses: actions/setup-node@v7
+          uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
           with:
             node-version: "24.x"
 
@@ -129,14 +129,30 @@ jobs:
               else
                 echo "_No commit touched the English sources since the last run; this is a forced or catch-up re-translation._"
               fi
-              echo
-              echo "Someone from the @kestra-io/frontend team needs to review and merge."
             } > "$RUNNER_TEMP/pr-body.md"
             git commit -m "chore(core): localize to languages other than english" -m "Extended localization support by adding translations for multiple languages using English as the base. This enhances accessibility and usability for non-English-speaking users while keeping English as the source reference."
             git push -u origin $BRANCH_NAME || (git push origin --delete $BRANCH_NAME && git push -u origin $BRANCH_NAME)
             PR_URL=$(gh pr create --title "Translations from en.json" --body-file "$RUNNER_TEMP/pr-body.md" --base "${{ matrix.branch }}" --head $BRANCH_NAME)
-            if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-              gh pr edit "$PR_URL" --add-reviewer "${{ github.actor }}" || echo "Could not request a review from ${{ github.actor }} on $PR_URL"
+            PR_NUMBER="${PR_URL##*/}"
+            # Reviewers: whoever authored the commits that changed the English sources since the last
+            # generation - they know what the strings mean. Only collaborators can be requested, so a login
+            # GitHub rejects (an external contributor's merged PR) is skipped, and bots never count. With
+            # nobody left, the frontend team as a whole.
+            REQUESTED=0
+            for SHA in $(git log --format=%H "${SINCE:-HEAD}..HEAD" -- ui/src/translations/en.json ':(glob)ui/packages/design-system/**/*.locale.ts'); do
+              gh api "repos/${{ github.repository }}/commits/$SHA" --jq '.author.login // empty' 2>/dev/null
+            done | grep -v '\[bot\]' | sort -u > "$RUNNER_TEMP/authors"
+            while read -r LOGIN; do
+              [ -n "$LOGIN" ] || continue
+              if gh api -X POST "repos/${{ github.repository }}/pulls/$PR_NUMBER/requested_reviewers" -f "reviewers[]=$LOGIN" --silent 2>/dev/null; then
+                REQUESTED=$((REQUESTED + 1))
+              else
+                echo "Could not request a review from $LOGIN (not a collaborator?)"
+              fi
+            done < "$RUNNER_TEMP/authors"
+            if [ "$REQUESTED" -eq 0 ]; then
+              gh api -X POST "repos/${{ github.repository }}/pulls/$PR_NUMBER/requested_reviewers" -f "team_reviewers[]=frontend" --silent \
+                || echo "Could not request a review from the kestra-io/frontend team on $PR_URL"
             fi
 
         - name: Check keys matching

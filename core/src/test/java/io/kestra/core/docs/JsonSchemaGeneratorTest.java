@@ -590,7 +590,7 @@ class JsonSchemaGeneratorTest {
         Map<String, Object> generate = jsonSchemaGenerator.properties(null, TaskWithSubTaskAndSubTrigger.class);
         var definitions = (Map<String, Map<String, Object>>) generate.get("$defs");
         // the assets declaration of the task base counts the custom asset, the free-form branch of assets.outputs
-        assertThat(definitions.size(), is(11));
+        assertThat(definitions.size(), is(12));
     }
 
     @SuppressWarnings("unchecked")

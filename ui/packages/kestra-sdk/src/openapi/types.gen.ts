@@ -27,7 +27,7 @@ export type AbstractFlow = {
     draft: boolean;
     labels?: Array<Label>;
     variables?: {
-        [key: string]: never;
+        [key: string]: unknown;
     };
     /**
      * Routing requirements (tags + fallback) for this flow.
@@ -423,6 +423,10 @@ export type Asset = {
             [key: string]: unknown;
         };
     };
+    /**
+     * The day-2 actions offered on this asset, each backing onto a flow.
+     */
+    assetActions?: Array<FlowAction>;
 };
 
 export type AssetFailureBehavior = 'IGNORE' | 'FAIL' | 'WARN';
@@ -927,7 +931,9 @@ export type Flow = AbstractFlow & {
     workerSelector?: WorkerSelector;
     deleted: boolean;
     finally?: Array<Task>;
-    variables?: {};
+    variables?: {
+        [key: string]: unknown;
+    };
     tasks: Array<Task>;
     errors?: Array<Task>;
     afterExecution?: Array<Task>;
@@ -974,6 +980,21 @@ export type Flow = AbstractFlow & {
     quotas?: Array<Quota>;
 };
 
+export type FlowAction = {
+    /**
+     * The namespace of the flow backing this action.
+     */
+    namespace: string;
+    /**
+     * The id of the flow backing this action.
+     */
+    flowId: string;
+    /**
+     * The label displayed on this action.
+     */
+    label?: string | null;
+};
+
 export type FlowControllerFlowWithDeprecatedTasks = {
     namespace?: string;
     flowId?: string;
@@ -1002,7 +1023,9 @@ export type FlowForExecution = AbstractFlow & {
      * Labels as a list of Label (key/value pairs) or as a map of string to string.
      */
     labels?: MapObjectObject;
-    variables?: {};
+    variables?: {
+        [key: string]: unknown;
+    };
     /**
      * Routing requirements (tags + fallback) for this flow.
      */
@@ -1175,7 +1198,9 @@ export type FlowWithSource = Flow & AbstractFlow & {
      */
     workerSelector?: WorkerSelector;
     deleted: boolean;
-    variables?: {};
+    variables?: {
+        [key: string]: unknown;
+    };
     /**
      * Concurrency
      *
@@ -1461,6 +1486,7 @@ export type MiscControllerConfiguration = {
     chartDefaultDuration?: string;
     flowTemplate?: string;
     commitDate?: string;
+    versionUpgrade?: VersionServiceVersionUpgrade;
     isCustomDashboardsEnabled?: boolean;
     isAnonymousUsageEnabled?: boolean;
     isUiAnonymousUsageEnabled?: boolean;
@@ -1947,7 +1973,7 @@ export type QueryFilter = {
     children?: Array<QueryFilter>;
 };
 
-export type QueryFilterField = 'q' | 'scope' | 'namespace' | 'kind' | 'POLICY_SCOPE' | 'ENFORCEMENT' | 'labels' | 'tags' | 'metadata' | 'flowId' | 'flowRevision' | 'id' | 'assetId' | 'type' | 'action' | 'created' | 'updated' | 'startDate' | 'endDate' | 'expirationDate' | 'state' | 'status' | 'SEVERITY' | 'ASSIGNEE' | 'email' | 'timeRange' | 'parentId' | 'triggerExecutionId' | 'triggerId' | 'triggerState' | 'executionId' | 'taskId' | 'taskRunId' | 'attemptNumber' | 'childFilter' | 'workerId' | 'existingOnly' | 'userId' | 'resources' | 'details' | 'level' | 'path' | 'parentPath' | 'version' | 'enabled' | 'username' | 'name' | 'groupList' | 'external_id' | 'expired_at' | 'instance_owner' | 'source' | 'locked' | 'lastTriggeredDate' | 'nextExecutionDate' | 'artifactId';
+export type QueryFilterField = 'q' | 'scope' | 'namespace' | 'kind' | 'POLICY_SCOPE' | 'ENFORCEMENT' | 'labels' | 'tags' | 'metadata' | 'assetExpiry' | 'flowId' | 'flowRevision' | 'id' | 'assetId' | 'type' | 'action' | 'created' | 'updated' | 'startDate' | 'endDate' | 'expirationDate' | 'state' | 'status' | 'SEVERITY' | 'ASSIGNEE' | 'email' | 'timeRange' | 'parentId' | 'triggerExecutionId' | 'triggerId' | 'triggerState' | 'executionId' | 'taskId' | 'taskRunId' | 'attemptNumber' | 'childFilter' | 'workerId' | 'existingOnly' | 'userId' | 'resources' | 'details' | 'level' | 'path' | 'parentPath' | 'version' | 'enabled' | 'username' | 'name' | 'groupList' | 'external_id' | 'expired_at' | 'instance_owner' | 'source' | 'locked' | 'lastTriggeredDate' | 'nextExecutionDate' | 'artifactId';
 
 export type QueryFilterLogical = 'and' | 'or';
 
@@ -2329,6 +2355,12 @@ export type ValidateConstraintViolation = {
     deprecationPaths?: Array<string>;
     warnings?: Array<string>;
     infos?: Array<string>;
+};
+
+export type VersionServiceVersionUpgrade = {
+    from?: string;
+    to?: string;
+    at?: string;
 };
 
 export type WebhookResponse = {
@@ -3143,7 +3175,7 @@ export type GetPluginIconSvgResponses = {
     /**
      * getPluginIconSvg 200 response
      */
-    200: string;
+    200: Blob | File;
 };
 
 export type GetPluginIconSvgResponse = GetPluginIconSvgResponses[keyof GetPluginIconSvgResponses];
@@ -4308,7 +4340,7 @@ export type ExportChartResponses = {
     /**
      * exportChart 200 response
      */
-    200: string;
+    200: Blob | File;
 };
 
 export type ExportChartResponse = ExportChartResponses[keyof ExportChartResponses];
@@ -4470,7 +4502,7 @@ export type ExportDashboardChartResponses = {
     /**
      * exportDashboardChart 200 response
      */
-    200: string;
+    200: Blob | File;
 };
 
 export type ExportDashboardChartResponse = ExportDashboardChartResponses[keyof ExportDashboardChartResponses];
@@ -7851,7 +7883,7 @@ export type ExportFlowsByIdsResponses = {
     /**
      * exportFlowsByIds 200 response
      */
-    200: string;
+    200: Blob | File;
 };
 
 export type ExportFlowsByIdsResponse = ExportFlowsByIdsResponses[keyof ExportFlowsByIdsResponses];
@@ -7891,7 +7923,7 @@ export type ExportFlowsByQueryResponses = {
     /**
      * exportFlowsByQuery 200 response
      */
-    200: string;
+    200: Blob | File;
 };
 
 export type ExportFlowsByQueryResponse = ExportFlowsByQueryResponses[keyof ExportFlowsByQueryResponses];
@@ -10391,7 +10423,7 @@ export type ExportNamespaceFilesResponses = {
     /**
      * exportNamespaceFiles 200 response
      */
-    200: string;
+    200: Blob | File;
 };
 
 export type ExportNamespaceFilesResponse = ExportNamespaceFilesResponses[keyof ExportNamespaceFilesResponses];
@@ -10979,6 +11011,10 @@ export type CreateBackfillErrors = {
      * If the backfill cannot be created
      */
     409: ProblemDetail;
+    /**
+     * If the backfill end date is not after its start date
+     */
+    422: ProblemDetail;
     /**
      * Internal server error
      */

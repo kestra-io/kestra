@@ -61,7 +61,6 @@
                         class="editor-tabs"
                         role="tablist"
                         @dragover.prevent="dragover"
-                        @dragleave.prevent="throttle(removeAllPotentialTabs, 300)"
                         @drop="drop"
                         @wheel.passive="onWheelTabScroll"
                         :data-panel-index="panelIndex"
@@ -249,19 +248,6 @@
     import {Panel, Tab, TabLive} from "../utils/multiPanelTypes"
 
     const {showKeyShortcuts} = useKeyShortcuts()
-
-    function throttle(callback: () => void, limit: number): () => void {
-        let waiting = false
-        return function () {
-            if (!waiting) {
-                callback()
-                waiting = true
-                setTimeout(function () {
-                    waiting = false
-                }, limit)
-            }
-        }
-    }
 
     const ComponentCache = new Map<string, any>()
 

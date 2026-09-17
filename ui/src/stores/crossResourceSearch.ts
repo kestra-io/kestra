@@ -110,7 +110,7 @@ export const useCrossResourceSearchStore = defineStore("crossResourceSearch", ()
 
     /**
      * Every search run gets a generation; a resolution only writes to the shared state while its
-     * generation is still the newest. The consumer debounces but lodash's trailing edge only delays
+     * generation is still the newest. The consumer debounces, but a trailing-edge debounce only delays
      * invocation, so a slow earlier run can still resolve after a later one and clobber its results.
      */
     let generation = 0

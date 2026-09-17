@@ -306,7 +306,6 @@
     import {ref, computed, useTemplateRef, watch} from "vue"
     import {useRoute, useRouter} from "vue-router"
     import {useI18n} from "vue-i18n"
-    import _merge from "lodash/merge"
     import BreakableText from "../BreakableText"
     import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
     import {useFlowFilter} from "../filter/configurations"
@@ -327,7 +326,7 @@
     import FileDocumentRemoveOutline from "vue-material-design-icons/FileDocumentRemoveOutline.vue"
     import Play from "vue-material-design-icons/Play.vue"
 
-    import {KsExecutionStatus, KsIconButton} from "@kestra-io/design-system"
+    import {KsExecutionStatus, KsIconButton, deepMerge} from "@kestra-io/design-system"
     import Labels from "../layout/Labels.vue"
     import TriggerAvatar from "./TriggerAvatar.vue"
 
@@ -637,7 +636,7 @@
         if (props.namespace) {
             queryFilter["filters[namespace][PREFIX]"] = route.params.id || props.namespace
         }
-        return _merge(base, queryFilter)
+        return deepMerge(base, queryFilter)
     }
 
     function refresh() {

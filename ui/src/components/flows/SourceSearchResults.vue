@@ -189,11 +189,7 @@
                     aria-busy="true"
                 >
                     <Loading class="spin" />
-                    <i18n-t keypath="source_search.searching_namespace" tag="span">
-                        <template #namespace>
-                            <code>{{ namespaceState.namespace }}</code>
-                        </template>
-                    </i18n-t>
+                    <span>{{ searchingNamespace[0] }}<code>{{ namespaceState.namespace }}</code>{{ searchingNamespace[1] }}</span>
                 </div>
 
                 <div
@@ -203,11 +199,7 @@
                 >
                     <span class="type-fail-icon"><AlertCircleOutline /></span>
                     <span class="type-fail-text">
-                        <i18n-t keypath="source_search.namespace_search_failed" tag="span">
-                            <template #namespace>
-                                <code>{{ namespaceState.namespace }}</code>
-                            </template>
-                        </i18n-t>
+                        <span>{{ namespaceSearchFailed[0] }}<code>{{ namespaceState.namespace }}</code>{{ namespaceSearchFailed[1] }}</span>
                         <span>{{ namespaceState.errorMessage || $t('source_search.namespace_search_failed_detail') }}</span>
                     </span>
                     <KsButton size="small" @click="emit('retry-namespace', {namespace: namespaceState.namespace})">
@@ -306,7 +298,8 @@
 <script setup lang="ts">
     import {ref, computed, watch, nextTick, type Component} from "vue"
     import {useRoute} from "vue-router"
-    import _escape from "lodash/escape"
+    import {escapeHtml} from "@kestra-io/design-system"
+    import {splitTranslation} from "../../utils/splitTranslation"
     import Lock from "vue-material-design-icons/Lock.vue"
     import FindReplace from "vue-material-design-icons/FindReplace.vue"
     import OpenInNew from "vue-material-design-icons/OpenInNew.vue"
@@ -363,6 +356,8 @@
     }>()
 
     const {t} = useI18n()
+    const searchingNamespace = computed(() => splitTranslation(t, "source_search.searching_namespace", "namespace"))
+    const namespaceSearchFailed = computed(() => splitTranslation(t, "source_search.namespace_search_failed", "namespace"))
     const route = useRoute()
 
     const SECRET_PATTERN = /secret\(\s*['"]([^'"]+)['"]\s*\)/
@@ -518,18 +513,18 @@
             .map((part) => {
                 const marked = part.match(/^\[mark\]([\s\S]*)\[\/mark\]$/)
                 if (!marked) {
-                    return _escape(part)
+                    return escapeHtml(part)
                 }
                 const old = marked[1]
                 if (!props.replaceContext) {
-                    return `<mark>${_escape(old)}</mark>`
+                    return `<mark>${escapeHtml(old)}</mark>`
                 }
                 const next = inlineReplacement(old, props.replaceContext)
-                const removed = `<del class="result-match-old">${_escape(old)}</del>`
+                const removed = `<del class="result-match-old">${escapeHtml(old)}</del>`
                 if (next === "") {
                     return removed
                 }
-                return `${removed}<span class="result-match-arrow" aria-hidden="true"> → </span><ins class="result-match-new">${_escape(next)}</ins>`
+                return `${removed}<span class="result-match-arrow" aria-hidden="true"> → </span><ins class="result-match-new">${escapeHtml(next)}</ins>`
             })
             .join("")
     }

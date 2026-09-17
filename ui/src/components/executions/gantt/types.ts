@@ -17,7 +17,6 @@ export interface FailureTaskRun {
     parentTaskRunId?: string
     value?: string
     iteration?: number
-    outputs?: Record<string, unknown>
     attempts?: FailureAttempt[]
     state: {
         current: string

@@ -14,6 +14,11 @@ package io.kestra.core.models.tasks;
  * Plugin authors should implement it on the task that <em>creates</em> a ticket and on nothing else —
  * commenting on, searching or updating a ticket does not make a task a ticketing task.
  * </p>
+ *
+ * <p>
+ * This interface must never gain a method: it is backported unchanged onto the {@code releases/v1.3.x}
+ * line, so a plugin compiled against either copy has to keep running against the other at runtime.
+ * </p>
  */
 public interface TicketingTaskInterface {
 }

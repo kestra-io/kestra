@@ -54,19 +54,33 @@ WebStorm ships stylelint support: enable it under Languages & Frameworks → Sty
   a token you have just typed is not reported while the file is unsaved
 
 Names built by interpolation (`var(--ks-status-#{$state})`) are skipped, since their value is only
-known at runtime.
+known at runtime. A declaration is registered whatever its case, since a usage is reported whatever
+its case; the comparison itself stays exact, so `--ks-Artwork-fill` and `--ks-artwork-fill` remain
+two different properties.
 
-EE will need to set `KS_TOKEN_ROOTS=/path/to/ui-ee/src` so its own declarations count too. Nothing
-sets it yet: `ui-ee/eslint.config.js` spreads this config, so the eslint half goes live there as soon
-as this lands, and EE declares no `--ks-*` of its own today.
+Most of what is known comes from that scan rather than from the palette, so the scan needs a
+**complete** checkout: a sparse or partial `ui/src` and `ui/packages` under-reports what is declared
+and turns live tokens into findings.
+
+EE sets `KS_TOKEN_ROOTS=/path/to/ui-ee/src` in `ui-ee/stylelint.config.mjs` so its own declarations
+count too — `--ks-sidebar-item-title-color`, for one. `ui-ee/eslint.config.js` spreads this config,
+so the eslint half goes live there as soon as this lands.
 
 ## Known gaps
 
 - `var(--ks-…)` inside a template expression (`:style="{color: 'var(--ks-…)'}"`) is seen by neither
   half: stylelint reads `<style>` blocks, and the eslint rule walks the script, not the
-  `vue-eslint-parser` template body. There are 46 such usages and all of them resolve today.
+  `vue-eslint-parser` template body. A static `style="…"` attribute is covered, through
+  `postcss-html`. Count the gap with `grep` over `.vue` template bodies rather than trusting a
+  figure here; every one of them resolves today.
 - `.jsx` and `.tsx` are covered by the eslint half only, since stylelint cannot read a style written
   as a JSX attribute.
+- `tests/` is linted but is not a declaration root, so a token declared in one test file and used in
+  another is reported. That is deliberate: this rule's own fixtures declare names no stylesheet has,
+  and a root covering them would let a fixture vouch for itself.
+- A private hook written as `var(--ks-x, 0px)` with no declaration anywhere is a finding, not an
+  idiom. Register it with `@property` instead, which the rule reads and which keeps the value
+  inheritable — `KsDataTable`'s navbar padding hook is the worked example.
 
 ## Adding a token
 

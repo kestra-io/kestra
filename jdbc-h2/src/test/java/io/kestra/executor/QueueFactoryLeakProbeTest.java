@@ -7,14 +7,14 @@ import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.runners.ExecutionEvent;
 
 import jakarta.inject.Inject;
-import org.mockito.Mockito;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Probe: does the nested {@code @Factory @Replaces} declared in {@link ExecutorStateMachineH2PocTest}
- * leak into other test contexts in this module? This context does not set the gating property, so
- * with the factory correctly gated the ExecutionEvent queue here is the real bean, not a Mockito mock.
+ * Guard: the harness's {@link RecordingQueueFactory} is gated, so it must not leak into other test
+ * contexts in this module (it would otherwise replace the real queues and break the runner tests).
+ * This context does not set the gating property, so the ExecutionEvent queue here must be the real
+ * bean, not a recording fake.
  */
 @MicronautTest
 class QueueFactoryLeakProbeTest {
@@ -22,9 +22,9 @@ class QueueFactoryLeakProbeTest {
     DispatchQueueInterface<ExecutionEvent> executionEventQueue;
 
     @Test
-    void executionEventQueueShouldBeTheRealBeanNotAMock() {
-        assertThat(Mockito.mockingDetails(executionEventQueue).isMock())
-            .as("if true, the state-machine test's @Factory leaked into this context")
-            .isFalse();
+    void executionEventQueueShouldBeTheRealBeanNotAFake() {
+        assertThat(executionEventQueue)
+            .as("if this is a RecordingDispatchQueue, the gated recording-queue factory leaked into this context")
+            .isNotInstanceOf(RecordingDispatchQueue.class);
     }
 }

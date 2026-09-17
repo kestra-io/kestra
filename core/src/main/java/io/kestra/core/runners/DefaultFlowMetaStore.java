@@ -45,12 +45,17 @@ public class DefaultFlowMetaStore implements FlowMetaStoreInterface {
         this.flowQueue = flowQueue;
         this.withDefaultCache = withDefaultCache;
 
-        flowRepository.findAllWithSourceForAllTenants().forEach(it -> cache.put(it.uidWithoutRevision(), it));
+        reload();
     }
 
     @VisibleForTesting
     void clearCache() {
         cache.clear();
+    }
+
+    @VisibleForTesting
+    public void reload() {
+        flowRepository.findAllWithSourceForAllTenants().forEach(it -> cache.put(it.uidWithoutRevision(), it));
     }
 
     @PostConstruct

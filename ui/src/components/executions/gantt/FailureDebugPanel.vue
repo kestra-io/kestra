@@ -497,12 +497,15 @@
     const focusedErrorText = ref("")
     const focusedErrorLoading = ref(false)
 
-    watch(
-        () => focusedTaskRun.value?.id,
-        async (taskRunId) => {
-            focusedErrorText.value = ""
-            if (!taskRunId) return
+    const loadedErrorTaskRunId = ref<string | undefined>(undefined)
 
+    watch(
+        [() => focusedTaskRun.value?.id, isOpen],
+        async ([taskRunId, open]) => {
+            if (!taskRunId || !open || loadedErrorTaskRunId.value === taskRunId) return
+
+            loadedErrorTaskRunId.value = taskRunId
+            focusedErrorText.value = ""
             focusedErrorLoading.value = true
             try {
                 const text = await fetchErrorText(taskRunId)

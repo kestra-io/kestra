@@ -317,6 +317,28 @@ describe("KsDataTable", () => {
         expect(loadCallCount).toBe(2)
     })
 
+    test("coalesces an imperative reload and a page-size change in the same tick into one load", async () => {
+        const loads: {page: number; size: number}[] = []
+        const wrapper = mount(KsDataTable, {
+            props: {
+                data: SAMPLE_DATA,
+                total: 100,
+                pageSize: 25,
+                currentPage: 1,
+                loadData: async (p: {page: number; size: number}) => { loads.push({page: p.page, size: p.size}) },
+            },
+            global: globalConfig,
+        })
+        await new Promise<void>((resolve) => setTimeout(resolve, 0))
+        loads.length = 0
+
+        ;(wrapper.vm as unknown as {resetAndReload: () => void}).resetAndReload()
+        wrapper.setProps({pageSize: 10})
+        await new Promise<void>((resolve) => setTimeout(resolve, 0))
+
+        expect(loads).toEqual([{page: 1, size: 10}])
+    })
+
     test("emits loaded after every load, not only the first", async () => {
         const wrapper = mount(KsDataTable, {
             props: {data: SAMPLE_DATA, total: 100, pageSize: 25, currentPage: 1, loadData: async () => {}},

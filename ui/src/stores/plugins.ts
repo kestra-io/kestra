@@ -518,16 +518,14 @@ export const usePluginsStore = defineStore("plugins", () => {
 
     function findPluginByCls(cls: string | null | undefined): Plugin | null {
         if (!cls || !plugins.value) return null
-        const subgroupMatch = plugins.value.find(p => p.subGroup && cls.startsWith(p.subGroup + "."))
-        if (subgroupMatch) return subgroupMatch
-        for (const plugin of plugins.value) {
-            for (const [key, value] of Object.entries(plugin)) {
-                if (isEntryAPluginElementPredicate(key, value) && value.some(el => el?.cls === cls)) {
-                    return plugin
-                }
-            }
-        }
-        return null
+        // A declared class, then a declared alias, then the package-prefix guess: an alias such as
+        // io.kestra.plugin.fs.http.Request shares no prefix with the group that owns it.
+        const declaring = plugins.value.filter(p => Object.entries(p)
+            .some(([key, value]) => isEntryAPluginElementPredicate(key, value) && value.some(el => el?.cls === cls)))
+        if (declaring.length) return declaring.find(p => p.subGroup) ?? declaring[0]
+        const aliasing = plugins.value.filter(p => p.aliases?.includes(cls))
+        if (aliasing.length) return aliasing.find(p => !p.subGroup) ?? aliasing[0]
+        return plugins.value.find(p => p.subGroup && cls.startsWith(p.subGroup + ".")) ?? null
     }
 
     function findPluginByName(name: string | null | undefined, subGroup?: string | null): Plugin | null {

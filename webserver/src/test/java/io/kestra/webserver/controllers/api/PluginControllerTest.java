@@ -21,6 +21,7 @@ import io.kestra.core.models.ui.PluginUiManifest;
 import io.kestra.core.models.ui.PluginUiModuleWithGroup;
 import io.kestra.core.models.ui.TaskWithVersion;
 import io.kestra.core.plugins.RegisteredPlugin;
+import io.kestra.core.utils.ListUtils;
 import io.kestra.plugin.core.debug.Return;
 import io.kestra.plugin.core.log.Log;
 import io.kestra.plugin.core.trigger.Schedule;
@@ -95,6 +96,23 @@ class PluginControllerTest {
         list = page2.getResults();
 
         assertThat(list.size()).isEqualTo(3);
+    }
+
+    @Test
+    void assetsAreListedSoTheUiNeedsNoHardcodedTypeList() {
+        PagedResults<Plugin> page = client.toBlocking().retrieve(
+            HttpRequest.GET(PATH),
+            Argument.of(PagedResults.class, Plugin.class)
+        );
+
+        List<String> assets = page.getResults().stream()
+            .flatMap(plugin -> ListUtils.emptyOnNull(plugin.getAssets()).stream())
+            .map(Plugin.PluginElementMetadata::cls)
+            .toList();
+
+        assertThat(assets).contains("io.kestra.core.models.assets.External");
+        // Custom is the fallback an unknown type deserializes into, not a type to offer.
+        assertThat(assets).doesNotContain("io.kestra.core.models.assets.Custom");
     }
 
     @Test

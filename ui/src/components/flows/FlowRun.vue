@@ -27,6 +27,7 @@
                         :initialInputs="flow.inputs"
                         :selectedTrigger="selectedTrigger"
                         :flow="flow"
+                        :renderLabels="renderLabels"
                         mode="wizard"
                         v-model="inputs"
                         :executeClicked="executeClicked"
@@ -176,6 +177,7 @@
         buttonIcon?: Component
         buttonTestId?: string
         autoPrefill?: boolean
+        renderLabels?: string[]
     }>(), {
         redirect: true,
         embed: false,
@@ -185,6 +187,7 @@
         buttonIcon: () => Play as Component,
         buttonTestId: "execute-dialog-button",
         autoPrefill: false,
+        renderLabels: undefined,
     })
 
     const emit = defineEmits<{

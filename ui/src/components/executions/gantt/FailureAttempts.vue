@@ -39,7 +39,9 @@
                 state: attempt.state?.current,
                 workerId: attempt.workerId,
                 startedAt: first ? dateFilter(first, TIME_FORMAT) : "",
-                duration: elapsed ? durationUtils.humanDuration(elapsed, {units: ["d", "h", "m", "s", "ms"]}) : undefined,
+                duration: elapsed === undefined
+                    ? undefined
+                    : durationUtils.humanDuration(elapsed, {units: ["d", "h", "m", "s", "ms"]}),
             }
         }),
     )

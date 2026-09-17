@@ -245,6 +245,16 @@ describe("groupBy", () => {
     test("returns an empty object for an empty input", () => {
         expect(groupBy([], (item) => String(item))).toEqual({})
     })
+
+    test("gives a key that names an Object.prototype member its own group", () => {
+        const rows = [{namespace: "constructor"}, {namespace: "dev"}, {namespace: "toString"}]
+
+        expect(groupBy(rows, (row) => row.namespace)).toEqual({
+            constructor: [{namespace: "constructor"}],
+            dev: [{namespace: "dev"}],
+            toString: [{namespace: "toString"}],
+        })
+    })
 })
 
 describe("mapValues", () => {

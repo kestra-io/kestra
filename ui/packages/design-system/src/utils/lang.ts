@@ -68,8 +68,10 @@ export function cloneDeep<T>(value: T): T {
 
 /**
  * Recursively merges `source` into a copy of `target`; neither argument is mutated.
- * `undefined` source values are skipped and source arrays replace target arrays,
- * by reference rather than cloned, so the result shares them with `source`.
+ * `undefined` source values are skipped and source arrays replace target arrays.
+ * Only the plain objects on both sides are rebuilt: every other value is carried into
+ * the result by reference, so arrays and any `target` branch `source` does not touch
+ * stay shared with their input.
  */
 export function deepMerge<T extends object, S extends object>(target: T | null | undefined, source: S): T & S {
     const result: Record<string, unknown> = isPlainObject(target) ? {...target} : {}
@@ -237,7 +239,9 @@ export function groupBy<T>(items: Iterable<T>, iteratee: (item: T) => string | n
     const result: Record<string, T[]> = {}
     for (const item of items) {
         const key = String(iteratee(item))
-        result[key] ??= []
+        if (!Object.prototype.hasOwnProperty.call(result, key)) {
+            result[key] = []
+        }
         result[key].push(item)
     }
     return result

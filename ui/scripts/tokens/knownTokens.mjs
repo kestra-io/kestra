@@ -47,9 +47,9 @@ export const RETIRED = {
  * in a JS style object, or a runtime `setProperty` call.
  */
 export const declarationsIn = (source) => [
-    ...source.matchAll(/(?:#\{)?(--ks-[a-z0-9-]+)["'`]?\}?\s*:/g),
-    ...source.matchAll(/setProperty\(\s*["'`](--ks-[a-z0-9-]+)["'`]/g),
-    ...source.matchAll(/@property\s+(--ks-[a-z0-9-]+)/g),
+    ...source.matchAll(/(?:#\{)?(--ks-[A-Za-z0-9-]+)["'`]?\}?\s*:/g),
+    ...source.matchAll(/setProperty\(\s*["'`](--ks-[A-Za-z0-9-]+)["'`]/g),
+    ...source.matchAll(/@property\s+(--ks-[A-Za-z0-9-]+)/g),
 ].map(match => match[1])
 
 const walk = (directory, files = []) => {

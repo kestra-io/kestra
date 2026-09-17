@@ -67,10 +67,6 @@ describe("the stylelint rule, ks/no-undeclared-custom-property", () => {
 
     // Guards the helper as much as the rule: reading the wrong stream returns an empty report, which
     // would make every "accepts" case above pass without ever seeing a warning.
-    it("reads the report stylelint actually writes", () => {
-        expect(lintTolerant(".x { color: var(--ks-nowhere); }")).toHaveLength(1)
-    })
-
     it("reports at error severity, so a build fails rather than warns", () => {
         expect(lintTolerant(".x { color: var(--ks-nowhere); }").map(warning => [warning.rule, warning.severity]))
             .toEqual([["ks/no-undeclared-custom-property", "error"]])
@@ -78,6 +74,10 @@ describe("the stylelint rule, ks/no-undeclared-custom-property", () => {
 
     it("accepts a token the file under lint declares itself, even when it is unsaved", () => {
         expect(warningsFor(".x { --ks-just-typed: red; color: var(--ks-just-typed); }")).toEqual([])
+    })
+
+    it("registers a self-declaration whatever its case, since a usage is reported in any case", () => {
+        expect(warningsFor(".x { --ks-Just-Typed: red; color: var(--ks-Just-Typed); }")).toEqual([])
     })
 
     it("reads the style block of a single-file component", () => {
@@ -95,13 +95,16 @@ describe("the eslint rule", () => {
             valid: [
                 {code: "cssVar(\"--ks-text-link\")"},
                 {code: "const css = \"color: var(--ks-text-link)\""},
-                // A name this file declares itself, which is why it appears in no stylesheet.
-                {code: "el.style.setProperty(\"--ks-font-scale\", scale)"},
+                // A name nothing else declares, used in the same file: the case fails if
+                // declarationsIn stops registering rather than passing for want of a usage.
+                {code: "el.style.setProperty(\"--ks-probe-hook\", v); const css = \"color: var(--ks-probe-hook)\""},
+                {code: "el.style.setProperty(\"--ks-Probe-Hook\", v); const css = \"color: var(--ks-Probe-Hook)\""},
             ],
             invalid: [
                 {code: "cssVar(\"--ks-nowhere\")", errors: [{messageId: "undeclared"}]},
                 {code: "const css = \"color: var(--ks-nowhere)\"", errors: [{messageId: "undeclared"}]},
                 {code: "const css = `border: 1px solid var(--ks-nowhere)`", errors: [{messageId: "undeclared"}]},
+                {code: "const css = \"color: var(--ks-Nowhere)\"", errors: [{messageId: "undeclared"}]},
             ],
         })).not.toThrow()
     })

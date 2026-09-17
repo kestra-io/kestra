@@ -3,6 +3,7 @@ package io.kestra.webserver.controllers.api;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
+import java.util.jar.Manifest;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -14,13 +15,13 @@ import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.flows.Type;
 import io.kestra.core.models.flows.input.EeOnly;
 import io.kestra.core.models.tasks.FlowableTask;
+import io.kestra.core.models.tasks.TicketingTaskInterface;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.ui.PluginDistribution;
 import io.kestra.core.models.ui.PluginUiManifest;
 import io.kestra.core.models.ui.PluginUiModuleWithGroup;
 import io.kestra.core.models.ui.TaskWithVersion;
 import io.kestra.core.plugins.PluginArtifact;
-import io.kestra.core.plugins.PluginAutoInstallDetectResult;
 import io.kestra.core.plugins.PluginAutoInstallService;
 import io.kestra.core.plugins.PluginCatalogService;
 import io.kestra.core.plugins.PluginInstallJob;
@@ -379,6 +380,62 @@ public class PluginController {
             triggerClass.getName(),
             deprecated
         );
+    }
+
+    @Get(uri = "ticketing-systems")
+    @ExecuteOn(TaskExecutors.IO)
+    @Operation(
+        tags = { "Plugins" },
+        summary = "Get the list of installed ticketing systems",
+        description = "Feeds the ticketing-system picker on a Case. Returns one entry per installed plugin that " +
+            "exposes at least one task implementing TicketingTaskInterface, named after the plugin manifest's " +
+            "X-Kestra-Title."
+    )
+    public PagedResults<ApiTicketingSystem> listTicketingSystems() {
+        List<ApiTicketingSystem> all = toTicketingSystemCatalog(pluginRegistry.plugins());
+
+        return PagedResults.of(new ArrayListTotal<>(all, all.size()));
+    }
+
+    // One entry per system, not per class: two ticketing tasks in one plugin are one system, and a
+    // plugin installed in several versions registers one RegisteredPlugin per version.
+    protected List<ApiTicketingSystem> toTicketingSystemCatalog(List<RegisteredPlugin> plugins) {
+        return plugins.stream()
+            .flatMap(registeredPlugin ->
+            {
+                String title = declaredTitle(registeredPlugin);
+                if (title == null) {
+                    return Stream.<ApiTicketingSystem> empty();
+                }
+
+                return registeredPlugin.getTasks().stream()
+                    .filter(TicketingTaskInterface.class::isAssignableFrom)
+                    .filter(c -> !isInternal(c))
+                    .filter(c -> !c.getName().startsWith("org.kestra."))
+                    .map(c -> new ApiTicketingSystem(title, c.getName()));
+            })
+            .collect(Collectors.toMap(ApiTicketingSystem::name, dto -> dto, (kept, duplicate) -> kept, LinkedHashMap::new))
+            .values().stream()
+            .sorted(Comparator.comparing(ApiTicketingSystem::name, String.CASE_INSENSITIVE_ORDER))
+            .toList();
+    }
+
+    /**
+     * The manifest's declared title, or {@code null} when the module declares none.
+     *
+     * <p>
+     * {@link RegisteredPlugin#title()} falls back to the jar basename and then to {@code "Core"}, so an
+     * uber-jar that stripped its module manifest would publish {@code plugin-github-0.24.0} as a system
+     * name. That name would be stored verbatim on a case and would never group with {@code GitHub}, so
+     * the defined fallback here is to omit the system: the field accepts free typing, which makes a
+     * missing suggestion recoverable and a wrong one permanent.
+     * </p>
+     */
+    private static String declaredTitle(RegisteredPlugin registeredPlugin) {
+        Manifest manifest = registeredPlugin.getManifest();
+        String title = manifest == null ? null : manifest.getMainAttributes().getValue("X-Kestra-Title");
+
+        return title == null || title.isBlank() ? null : title;
     }
 
     /**
@@ -837,5 +894,16 @@ public class PluginController {
         boolean ee,
         String icon,
         Boolean deprecated) {
+    }
+
+    /**
+     * A ticketing system offered by an installed plugin.
+     *
+     * @param name the plugin manifest's declared title ({@code X-Kestra-Title}), stored verbatim on a
+     *        case when a user picks it
+     * @param icon icon key resolvable via {@code GET /api/v1/plugins/icons} — the class of one task in
+     *        this plugin that opens a ticket
+     */
+    public record ApiTicketingSystem(String name, String icon) {
     }
 }

@@ -136,7 +136,7 @@
     import {ref, computed, watch} from "vue"
     import {useI18n} from "vue-i18n"
     import {useRoute} from "vue-router"
-    import {KsEditor} from "@kestra-io/design-system"
+    import {KsEditor, escapeHtml} from "@kestra-io/design-system"
     import FileTreeOutline from "vue-material-design-icons/FileTreeOutline.vue"
     import FileDocumentOutline from "vue-material-design-icons/FileDocumentOutline.vue"
     import DatabaseOutline from "vue-material-design-icons/DatabaseOutline.vue"
@@ -151,7 +151,6 @@
     import {buildHighlightHtml, buildTermHighlightHtml, buildPathSegments, type CrossSearchSelection} from "../../utils/crossResourceSearch"
     import type {KvMatchEntry} from "../../stores/crossResourceSearch"
     import type {KsEditorExposes} from "@kestra-io/design-system"
-    import _escape from "lodash/escape"
 
     const props = defineProps<{
         selection: CrossSearchSelection | null
@@ -192,7 +191,7 @@
     })
 
     const excludedFromReplaceCount = computed(() => props.excludedFromReplaceCount ?? 0)
-    const bold = (value: string | number) => `<b>${_escape(String(value))}</b>`
+    const bold = (value: string | number) => `<b>${escapeHtml(String(value))}</b>`
     const confirmBarMessage = computed(() => t("source_search.confirm_bar_message", {
         matches: bold(t("source_search.match_count", {count: props.selectionSummary?.selectedMatchCount ?? 0})),
         flows: bold(props.selectionSummary?.selectedFlowCount ?? 0),
@@ -301,7 +300,7 @@
         if (props.selection.type === "files") {
             return buildPathSegments(props.selection.path, props.query, props.caseSensitive)
                 .map((segment) => {
-                    const text = segment.matched ? `<mark>${_escape(segment.text)}</mark>` : _escape(segment.text)
+                    const text = segment.matched ? `<mark>${escapeHtml(segment.text)}</mark>` : escapeHtml(segment.text)
                     return segment.dim ? `<span class="source-search-preview__meta-dir">${text}</span>` : text
                 })
                 .join("")

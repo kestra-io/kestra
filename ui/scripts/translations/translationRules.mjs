@@ -42,7 +42,7 @@ export function leafKeys(obj, prefix = "") {
 /**
  * EE keys that collide with an OSS key, with the collision described.
  *
- * EE's locale files are layered over OSS's with `lodash.merge`, so a key defined on both sides
+ * EE's locale files are layered over OSS's with a deep merge, so a key defined on both sides
  * resolves to EE's value. Three shapes of that are all bugs, and only the first is visible when
  * leaf keys are compared to leaf keys:
  *

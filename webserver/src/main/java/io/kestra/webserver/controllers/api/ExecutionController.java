@@ -2254,7 +2254,7 @@ public class ExecutionController {
     @ApiResponse(responseCode = "409", description = "If labels cannot be applied")
     public Mono<HttpResponse<?>> setLabelsOnTerminatedExecution(
         @Parameter(description = "The execution id") @PathVariable String executionId,
-        @RequestBody(description = "The labels to add to the execution") @Body @NotNull @Valid List<Label> labels) throws QueueException {
+        @RequestBody(description = "The labels to add to the execution") @Body @NotNull List<@Valid Label> labels) throws QueueException {
         Execution execution = executionRepository.findById(tenantService.resolveTenant(), executionId)
             .orElseThrow(() -> new io.kestra.core.exceptions.NotFoundException("Execution '%s' was not found.".formatted(executionId)));
 
@@ -2310,7 +2310,7 @@ public class ExecutionController {
         return setLabelsOnTerminatedExecutions(setLabelsByIds.executionLabels(), executions);
     }
 
-    public record SetLabelsByIdsRequest(@NotNull List<String> executionsId, @NotNull @Valid List<Label> executionLabels) {
+    public record SetLabelsByIdsRequest(@NotNull List<String> executionsId, @NotNull List<@Valid Label> executionLabels) {
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -2324,7 +2324,7 @@ public class ExecutionController {
             in = ParameterIn.QUERY
         ) @QueryFilterFormat(Resource.EXECUTION) List<QueryFilter> filters,
 
-        @RequestBody(description = "The labels to add to the execution") @Body @NotNull @Valid List<Label> setLabels) throws QueueException {
+        @RequestBody(description = "The labels to add to the execution") @Body @NotNull List<@Valid Label> setLabels) throws QueueException {
         var executions = getExecutions(QueryFilterUtils.replaceTimeRangeWithComputedStartDateFilter(filters));
         return setLabelsOnTerminatedExecutions(setLabels, executions);
     }

@@ -49,7 +49,7 @@
             @ready="ready = true"
             :defaultSort="{prop: 'state.startDate', order: 'descending'}"
             :selectable="!hidden?.includes('selection') && canCheck"
-            :no-data-text="$t('no_results.executions')"
+            :no-data-text="noDataText ?? $t('no_results.executions')"
             :rowKey="(row: any) => row.id"
             :fitHeight="fitHeightResolved"
         >
@@ -64,7 +64,7 @@
                     }"
                     :prefix="'executions'"
                     :tableOptions="{
-                        chart: {shown: true, value: showChart, callback: onShowChartChange},
+                        chart: {shown: !hideChart, value: showChart, callback: onShowChartChange},
                         refresh: {shown: true, callback: refresh}
                     }"
                     @update-properties="updateDisplayColumns"
@@ -74,7 +74,7 @@
             </template>
 
             <template v-if="showStatChart()" #top>
-                <Sections ref="dashboardComponent" :dashboard="DEFAULT_DASHBOARD" :charts showDefault class="mb-4" />
+                <Sections ref="dashboardComponent" :dashboard="DEFAULT_DASHBOARD" :charts :baseFilters="lockedFilters" showDefault class="mb-4" />
             </template>
 
             <template #bulk-actions>
@@ -410,7 +410,6 @@
 </template>
 
 <script setup lang="ts">
-    import _merge from "lodash/merge"
     import {useI18n} from "vue-i18n"
     import {asProblem} from "@kestra-io/kestra-sdk"
     import {problemBulkBody, problemTitle} from "../../utils/problem"
@@ -418,7 +417,7 @@
     import {routeFamily} from "../../utils/routeFamily"
     import {ref, computed, watch, h, useTemplateRef} from "vue"
     import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
-    import {KsSwitch, KsFormItem, KsAlert, KsCheckbox, KsMessageBox, normalizeRouteTimeRangeFilter} from "@kestra-io/design-system"
+    import {KsSwitch, KsFormItem, KsAlert, KsCheckbox, KsMessageBox, normalizeRouteTimeRangeFilter, deepMerge} from "@kestra-io/design-system"
 
     import Delete from "vue-material-design-icons/Delete.vue"
     import Pencil from "vue-material-design-icons/Pencil.vue"
@@ -482,6 +481,7 @@
     import {useStateFilter} from "../filter/composables/useStateFilter"
     import YAML_CHART from "../dashboard/assets/executions_timeseries_chart.yaml?raw"
     import {DEFAULT_DASHBOARD} from "../../stores/dashboard"
+    import type {QueryFilter} from "@kestra-io/kestra-sdk"
 
     const {t, te} = useI18n()
     const toast = useToast()
@@ -503,6 +503,13 @@
         flowId?: string | undefined;
         namespace?: string | undefined;
         defaultScopeFilter?: boolean;
+        labels?: Record<string, string> | undefined;
+        title?: string | undefined;
+        noDataText?: string | undefined;
+        hideChart?: boolean;
+        columnsStorageKey?: string | undefined;
+        defaultColumns?: string[];
+        childFilter?: "MAIN" | "CHILD";
     }>(), {
         embed: false,
         filter: true,
@@ -517,6 +524,13 @@
         flowId: undefined,
         namespace: undefined,
         defaultScopeFilter: false,
+        labels: undefined,
+        title: undefined,
+        noDataText: undefined,
+        hideChart: false,
+        columnsStorageKey: undefined,
+        defaultColumns: () => [],
+        childFilter: undefined,
     })
 
     const fitHeightResolved = computed(() => props.fitHeight ?? props.topbar)
@@ -623,19 +637,21 @@
     ])
 
     const storageKey = computed(() =>
-        routeFamily(route.name) === "flows/update"
+        props.columnsStorageKey
+        ?? (routeFamily(route.name) === "flows/update"
             ? storageKeys.DISPLAY_FLOW_EXECUTIONS_COLUMNS
-            : storageKeys.DISPLAY_EXECUTIONS_COLUMNS,
+            : storageKeys.DISPLAY_EXECUTIONS_COLUMNS),
     )
 
     const allColumns = computed(() => [
         ...optionalColumns.value,
-        ...getExtraColumns().map(col => ({...col, label: t(col.label)})),
+        ...getExtraColumns(route.name as string).map(col => ({...col, label: t(col.label)})),
     ])
 
     const {visibleColumns: displayColumns, orderedVisibleColumns, updateVisibleColumns: updateDisplayColumns} = useTableColumns({
         columns: allColumns.value,
         storageKey: storageKey.value,
+        initialVisibleColumns: props.defaultColumns,
     })
 
     const visibleColumns = computed(() =>
@@ -753,7 +769,7 @@
         dataTable.value?.resetAndReload()
     })
 
-    const routeInfo = computed(() => ({title: t("executions")}))
+    const routeInfo = computed(() => ({title: props.title ?? t("executions")}))
     useRouteContext(routeInfo, props.embed)
 
     const selection = computed(() => dataTable.value?.selection ?? [])
@@ -823,6 +839,10 @@
         ]
     })
 
+    const lockedFilters = computed<QueryFilter[]>(() =>
+        props.labels ? [{field: "labels", operation: "EQUALS", value: props.labels}] : [],
+    )
+
     const filteredLabels = (labels: any[]) => {
         const toIgnore = miscStore.configs?.hiddenLabelsPrefixes || []
 
@@ -848,7 +868,7 @@
     }
 
     const showStatChart = () => {
-        return isDisplayedTop.value && showChart.value
+        return !props.hideChart && isDisplayedTop.value && showChart.value
     }
 
     const refresh = () => {
@@ -884,12 +904,20 @@
             queryFilter["filters[flowId][EQUALS]"] = props.flowId
         }
 
+        Object.entries(props.labels ?? {}).forEach(([key, value]) => {
+            queryFilter[`filters[labels][EQUALS][${key}]`] = value
+        })
+
+        if (props.childFilter) {
+            queryFilter["filters[childFilter][EQUALS]"] = props.childFilter
+        }
+
         const hasStateFilters = Object.keys(queryFilter).some(key => key.startsWith("filters[state]")) || queryFilter.state
         if (!hasStateFilters && props.statuses?.length > 0) {
             queryFilter["filters[state][IN]"] = props.statuses.join(",")
         }
 
-        return _merge(base, queryFilter)
+        return deepMerge(base, queryFilter)
     }
 
     const genericConfirmAction = (message: string, queryAction: string, byIdAction: string, success: string, showCancelButton = true) => {

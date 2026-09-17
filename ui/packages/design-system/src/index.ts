@@ -181,6 +181,20 @@ export * as stringUtils from "./utils/string"
 export {rowKey} from "./utils/rowKey"
 export * as fileUtils from "./utils/file"
 export * as durationUtils from "./utils/duration"
+export {
+    cloneDeep,
+    debounce,
+    deepMerge,
+    escapeHtml,
+    getPath,
+    groupBy,
+    isDeepEqual,
+    isPlainObject,
+    mapValues,
+    setPath,
+    throttle,
+} from "./utils/lang"
+export type {PathSegments, Scheduled} from "./utils/lang"
 export * as State from "./utils/state"
 export {LOG_LEVELS, STATES} from "./utils/state"
 export {SECTIONS, CLUSTER_PREFIX} from "./utils/constants"
@@ -190,7 +204,7 @@ export type {KsGraphNode, KsGraphEdge} from "./components/Charts/KsGraph.vue"
 export type {KsBreadcrumbItem} from "./components/Navigation/KsBreadcrumb/types"
 export {Comparators} from "./components/Data/KsDataTable/filter/utils/filterTypes"
 export type {InputInstance, FormItemRule, FormRules, FormInstance, CascaderOption, CascaderProps} from "element-plus"
-export {TooltipType, ChartRenderer, ChartFeature} from "./utils/chart"
+export {TooltipType, ChartRenderer, ChartFeature, categoryLabel} from "./utils/chart"
 export {designSystemLocale, setDesignSystemLocale, registerDesignSystemI18n} from "./i18n"
 
 let i18nRegistration: Promise<void> = Promise.resolve()

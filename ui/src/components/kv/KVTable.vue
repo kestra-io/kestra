@@ -8,12 +8,12 @@
         :pageSize="urlSize"
         :defaultSort="{prop: 'key', order: 'ascending'}"
         @page-changed="({page, size}: {page: number; size: number}) => router.push({query: {...route.query, page: String(page), size: String(size)}})"
-        @sort-change="({prop, order}: {column: any; prop: string | null; order: string | null}) => router.push({query: {...route.query, sort: `${prop}:${order === 'ascending' ? 'asc' : 'desc'}`}})"
+        @sort-change="({prop, order}: {prop: string | null; order: string | null}) => router.push({query: {...route.query, sort: `${prop}:${order === 'ascending' ? 'asc' : 'desc'}`}})"
         :no-data-text="hasVisibleColumns ? $t('no_results.kv_pairs') : $t('no_results.all_columns_hidden')"
         :no-data-description="hasVisibleColumns ? undefined : $t('no_results.all_columns_hidden_description')"
         :fitHeight="!paneView"
         :showSelection="!paneView"
-        :rowKey="(row: any) => `${row.namespace}-${row.key}`"
+        :rowKey="(row: KvEntry) => `${row.namespace}-${row.key}`"
     >
         <template #top v-if="!paneView">
             <KSFilter
@@ -192,12 +192,12 @@
             </KsFormItem>
 
             <KsFormItem :label="$t('value')" prop="value" :required="kv.type !== 'BOOLEAN'" data-test="kv-value">
-                <KsInput v-if="kv.type === 'STRING'" type="textarea" :rows="5" v-model="kv.value" />
-                <KsInput v-else-if="kv.type === 'NUMBER'" type="number" v-model="kv.value" />
+                <KsInput v-if="kv.type === 'STRING'" type="textarea" :rows="5" v-model="stringValue" />
+                <KsInput v-else-if="kv.type === 'NUMBER'" type="number" v-model="numberValue" />
                 <KsSwitch
                     v-else-if="kv.type === 'BOOLEAN'"
                     :activeText="$t('true')"
-                    v-model="kv.value"
+                    v-model="booleanValue"
                     class="switch-text"
                 />
                 <KsDatePicker
@@ -213,10 +213,10 @@
                 <TimeSelect
                     v-else-if="kv.type === 'DURATION'"
                     :fromNow="false"
-                    :timeRange="kv.value"
+                    :timeRange="durationValue"
                     clearable
                     allowCustom
-                    @update:model-value="kv.value = $event.timeRange"
+                    @update:model-value="durationValue = $event.timeRange"
                 />
                 <KsEditor
                     v-bind="editorBindings"
@@ -225,7 +225,7 @@
                     :navbar="false"
                     v-else-if="kv.type === 'JSON'"
                     lang="json"
-                    v-model="kv.value"
+                    v-model="stringValue"
                 />
             </KsFormItem>
 
@@ -303,11 +303,12 @@
     import Eye from "vue-material-design-icons/Eye.vue"
 
     import {KsId, KsIconButton, KsEditor, KsFilter as KSFilter} from "@kestra-io/design-system"
+    import type {FormInstance, FormItemRule} from "@kestra-io/design-system"
     import {routeQueryToQueryFilters} from "../../utils/queryFilters"
     import {date as formatDate} from "../../utils/filters"
     import {useEditorBindings} from "../../composables/useEditorBindings"
     import InheritedKVs from "./InheritedKVs.vue"
-    import {formatKvValueForDisplay, hydrateKvValueForForm, serializeKvValueForSave} from "./kvValue"
+    import {formatKvValueForDisplay, hydrateKvValueForForm, serializeKvValueForSave, type KvFormValue} from "./kvValue"
     import TimeSelect from "../executions/date-select/TimeSelect.vue"
     import NamespaceSelect from "../namespaces/components/NamespaceSelect.vue"
     import useRestoreUrl from "../../composables/useRestoreUrl"
@@ -321,14 +322,14 @@
     import {useToast} from "../../utils/toast"
     import {storageKeys} from "../../utils/constants"
     import {useKvFilter} from "../filter/configurations"
-    import moment from "moment-timezone"
 
-    import {useTableColumns} from "@kestra-io/design-system"
+    import {dateUtils, dayjs, useTableColumns} from "@kestra-io/design-system"
 
     import {useAuthStore} from "override/stores/auth"
     import {useNamespacesStore} from "override/stores/namespaces"
     import {useApiStore} from "../../stores/api"
     import * as KvAPI from "@kestra-io/kestra-sdk/kv"
+    import type {KvControllerKvDetail, KvEntry, KvType, ListAllKeysData, QueryFilter} from "@kestra-io/kestra-sdk"
 
     import _merge from "lodash/merge"
     const dataTable = useTemplateRef("dataTable")
@@ -354,8 +355,8 @@
 
     const editorBindings = useEditorBindings()
 
-    const namespaceFilter = (namespace: string) =>
-        [{field: "namespace" as const, operation: "EQUALS" as const, value: namespace}]
+    const namespaceFilter = (namespace: string): QueryFilter[] =>
+        [{field: "namespace", operation: "EQUALS", value: namespace}]
 
     const loadData = async ({page, size, sort}: {page: number; size: number; sort?: string}) => {
         if (!loadInit.value) return
@@ -363,7 +364,7 @@
         const kvsResponse = await KvAPI.listAllKeys(loadQuery({
             size,
             page,
-            sort: sort ?? String(route.query.sort ?? "name:asc"),
+            sort: [sort ?? String(route.query.sort ?? "name:asc")],
             filters: [
                 ...activeFilters,
                 ...(props.namespace === undefined ? [] : namespaceFilter(props.namespace)),
@@ -382,9 +383,9 @@
 
                 const parentKvs = parentKvsResponse?.results ?? []
                 if (parentKvs.length > 0) {
-                    const currentKeys = new Set(allKvs.map((kv: any) => kv?.key).filter(Boolean))
+                    const currentKeys = new Set(allKvs.map(kv => kv.key).filter((key): key is string => key !== undefined))
                     const newKvs = parentKvs.filter(
-                        (kv: any) => kv?.key && !currentKeys.has(kv.key),
+                        kv => kv.key !== undefined && !currentKeys.has(kv.key),
                     )
                     allKvs.push(...newKvs)
                 }
@@ -395,7 +396,9 @@
         total.value = kvsResponse.total ?? 0
     }
 
-    const loadQuery = (base: any) => {
+    type KvQuery = NonNullable<ListAllKeysData["query"]>
+
+    const loadQuery = (base: KvQuery): KvQuery => {
         const {page: _p, size: _s, sort: _so, ...rest} = route.query
         const nonFilterRest = Object.fromEntries(
             Object.entries(rest).filter(([key]) => !key.startsWith("filters[")),
@@ -418,12 +421,17 @@
     interface KvItem {
         namespace?: string;
         key?: string;
-        type: string;
-        value?: any;
+        type: KvType;
+        value?: KvFormValue;
         ttl?: string;
         update?: boolean;
         description?: string;
         expirationDate?: string;
+    }
+
+    // The generated SDK types the detail value as an object map, but non-JSON types return a scalar.
+    type KvDetail = Omit<KvControllerKvDetail, "value"> & {
+        value?: string | number | boolean | Record<string, unknown> | unknown[] | null;
     }
 
     const kv = ref<KvItem>({
@@ -436,6 +444,23 @@
         description: undefined,
     })
 
+    const stringValue = computed({
+        get: () => typeof kv.value.value === "string" ? kv.value.value : "",
+        set: (value: string) => kv.value.value = value,
+    })
+    const numberValue = computed({
+        get: () => typeof kv.value.value === "string" || typeof kv.value.value === "number" ? kv.value.value : undefined,
+        set: (value: string | number | undefined) => kv.value.value = value,
+    })
+    const booleanValue = computed({
+        get: () => kv.value.value === true,
+        set: (value: boolean) => kv.value.value = value,
+    })
+    const durationValue = computed({
+        get: () => typeof kv.value.value === "string" ? kv.value.value : undefined,
+        set: (value: string | undefined) => kv.value.value = value,
+    })
+
     const ttlTouched = ref(false)
 
     const kvBaseline = ref("")
@@ -443,13 +468,13 @@
 
     const {t} = useI18n()
 
-    const kvs = ref<any[] | undefined>(undefined)
+    const kvs = ref<KvEntry[] | undefined>(undefined)
 
     const storageKey = storageKeys.DISPLAY_KV_COLUMNS
 
-    const TIMEZONE = localStorage.getItem(storageKeys.TIMEZONE_STORAGE_KEY) || Intl.DateTimeFormat().resolvedOptions().timeZone
+    const TIMEZONE = dateUtils.currentTimezone()
     const convertToUserTimezone = (date: string | Date) => {
-        return moment.utc(date).tz(TIMEZONE).toDate()
+        return dayjs.utc(date).tz(TIMEZONE).toDate()
     }
 
     const optionalColumns = computed(() => {
@@ -528,7 +553,7 @@
         value: [
             {required: true, trigger: "change"},
             {
-                validator: (rule: any, value: string, callback: (error?: Error) => void) => {
+                validator: (rule: FormItemRule, value: string, callback: (error?: Error) => void) => {
                     if (kv.value.type === "DURATION") {
                         durationValidator(rule, value, callback)
                     } else if (kv.value.type === "JSON") {
@@ -545,19 +570,19 @@
         ],
     })
 
-    function canUpdate(kvItem: {namespace: string}) {
+    function canUpdate(kvItem: KvEntry) {
         return kvItem.namespace !== undefined && authStore.user?.isAllowed(resource.KVSTORE, action.UPDATE, kvItem.namespace)
     }
 
-    function canDelete(kvItem: {namespace: string}) {
+    function canDelete(kvItem: KvEntry) {
         return kvItem.namespace !== undefined && authStore.user?.isAllowed(resource.KVSTORE, action.DELETE, kvItem.namespace)
     }
 
-    function canRead(kvItem: {namespace: string}) {
+    function canRead(kvItem: KvEntry) {
         return kvItem.namespace !== undefined && authStore.user?.isAllowed(resource.KVSTORE, action.VIEW, kvItem.namespace)
     }
 
-    function jsonValidator(_rule: any, value: string, callback: (error?: Error) => void) {
+    function jsonValidator(_rule: FormItemRule, value: string, callback: (error?: Error) => void) {
         try {
             const parsed = JSON.parse(value)
             if (typeof parsed !== "object" || parsed === null) {
@@ -570,7 +595,7 @@
         }
     }
 
-    function durationValidator(_rule: any, value: string, callback: (error?: Error) => void) {
+    function durationValidator(_rule: FormItemRule, value: string, callback: (error?: Error) => void) {
         if (value !== undefined && !value.match(/^P(?=[^T]|T.)(?:\d*D)?(?:T(?=.)(?:\d*H)?(?:\d*M)?(?:\d*S)?)?$/)) {
             callback(new Error(t("invalid duration")))
         } else {
@@ -580,7 +605,7 @@
 
     const total = ref(0)
 
-    function kvKeyDuplicate(_rule: any, value: string, callback: (error?: Error) => void) {
+    function kvKeyDuplicate(_rule: FormItemRule, value: string, callback: (error?: Error) => void) {
         if (kv.value.update === undefined && kvs.value && kvs.value.find(r => r.namespace === kv.value.namespace && r.key === value)) {
             return callback(new Error(t("kv.duplicate")))
         } else {
@@ -588,17 +613,18 @@
         }
     }
 
-    async function updateKvModal(entry: any) {
+    async function updateKvModal(entry: KvEntry) {
+        if (entry.namespace === undefined || entry.key === undefined) return
         kv.value.namespace = entry.namespace
         kv.value.key = entry.key
-        const {type, value} = await namespacesStore.kv({namespace: entry.namespace, key: entry.key}) as {type: string, value: any}
-        kv.value.type = type
+        const {type, value}: KvDetail = await namespacesStore.kv({namespace: entry.namespace, key: entry.key})
+        kv.value.type = type ?? "STRING"
         // Force the type reset before setting the value
         await nextTick()
-        kv.value.value = hydrateKvValueForForm(type, value, localStorage.getItem(storageKeys.TIMEZONE_STORAGE_KEY) ?? undefined)
+        kv.value.value = hydrateKvValueForForm(kv.value.type, value, localStorage.getItem(storageKeys.TIMEZONE_STORAGE_KEY) ?? undefined)
         kv.value.update = true
-        kv.value.description = entry.description
-        kv.value.expirationDate = entry.expirationDate
+        kv.value.description = entry.description ?? undefined
+        kv.value.expirationDate = entry.expirationDate ?? undefined
         kv.value.ttl = entry.expirationDate ? remainingTtl(entry.expirationDate) : undefined
         ttlTouched.value = false
 
@@ -606,14 +632,14 @@
     }
 
     function remainingTtl(expirationDate: string): string | undefined {
-        const expiration = moment(expirationDate)
-        const now = moment()
+        const expiration = dayjs(expirationDate)
+        const now = dayjs()
 
         if (!expiration.isValid() || !expiration.isAfter(now)) {
             return undefined
         }
 
-        return moment.duration(Math.round(expiration.diff(now) / 1000) * 1000).toISOString()
+        return dayjs.duration(Math.round(expiration.diff(now) / 1000) * 1000).toISOString()
     }
 
     const currentExpiration = computed(() => {
@@ -621,23 +647,24 @@
             return undefined
         }
 
-        const expiration = moment(kv.value.expirationDate)
+        const expiration = dayjs(kv.value.expirationDate)
 
-        return expiration.isValid() && expiration.isAfter(moment()) ? formatDate(kv.value.expirationDate) : undefined
+        return expiration.isValid() && expiration.isAfter(dayjs()) ? formatDate(kv.value.expirationDate) : undefined
     })
 
     const viewKvDrawerVisible = ref(false)
-    const viewKv = ref<{namespace?: string; key?: string; type?: string; value?: string; description?: string}>({})
+    const viewKv = ref<{namespace?: string; key?: string; type?: KvType; value?: string; description?: string}>({})
 
-    async function viewKvModal(entry: any) {
-        const {type, value} = await namespacesStore.kv({namespace: entry.namespace, key: entry.key}) as {type: string, value: any}
-        const userTimezone = localStorage.getItem(storageKeys.TIMEZONE_STORAGE_KEY) || moment.tz.guess()
+    async function viewKvModal(entry: KvEntry) {
+        if (entry.namespace === undefined || entry.key === undefined) return
+        const {type, value}: KvDetail = await namespacesStore.kv({namespace: entry.namespace, key: entry.key})
+        const userTimezone = dateUtils.currentTimezone()
         viewKv.value = {
             namespace: entry.namespace,
             key: entry.key,
-            type,
-            value: formatKvValueForDisplay(type, value, userTimezone),
-            description: entry.description,
+            type: type ?? "STRING",
+            value: formatKvValueForDisplay(type ?? "STRING", value, userTimezone),
+            description: entry.description ?? undefined,
         }
         viewKvDrawerVisible.value = true
     }
@@ -669,7 +696,7 @@
             async () => {
                 Object.entries(withDeletePermissionGroupedKvs).forEach(([namespace, group]) => {
                     namespacesStore
-                        .deleteKvs({namespace, request: {keys: group.map(item => item.key)}})
+                        .deleteKvs({namespace, request: {keys: group.flatMap(item => item.key ? [item.key] : [])}})
                         .then(() => {
                             toast.deleted(`${group.length} KV(s) from ${namespace} namespace`)
                             toggleAllUnselected()
@@ -679,10 +706,12 @@
             })
     }
 
-    function saveKv(form: any) {
+    function saveKv(form: FormInstance | undefined) {
+        if (!form) return
+
         form.validate((valid: boolean) => {
             if (!valid) {
-                return false
+                return
             }
 
             const type = kv.value.type
@@ -700,16 +729,13 @@
                 : undefined
             const ttl = preservedTtl ?? kv.value.ttl
 
-            const payload = {
+            const payload: Parameters<typeof namespacesStore.createKv>[0] = {
                 namespace,
                 key,
                 value,
                 contentType,
                 description,
-            }
-
-            if (ttl) {
-                (payload as any).ttl = ttl
+                ...(ttl ? {ttl} : {}),
             }
 
             // update flag is set by updateKvModal(); setKeyValue() is an upsert and can't tell them apart.
@@ -740,7 +766,7 @@
         }
     }
 
-    function onTtlChange(value: any) {
+    function onTtlChange(value: {timeRange: string | undefined}) {
         if (value.timeRange !== kv.value.ttl) {
             ttlTouched.value = true
         }
@@ -757,7 +783,7 @@
         }
     })
 
-    const formRef = ref()
+    const formRef = ref<FormInstance>()
 
     watch(() => kv.value.type, (newType) => {
         formRef.value?.clearValidate("value")

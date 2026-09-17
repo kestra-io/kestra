@@ -2,11 +2,13 @@ package io.kestra.core.models.assets;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.HashMap;
 import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 
 import io.kestra.core.serializers.JacksonMapper;
 
@@ -125,5 +127,108 @@ class AssetTest {
 
         // Then
         assertThat(updated.getNamespace()).isEqualTo("io.kestra");
+    }
+
+    @Test
+    void shouldDeleteAMetadataKeyWithAnExplicitNullOnCreation() {
+        // Given
+        Map<String, Object> metadata = new HashMap<>();
+        metadata.put("keep", "value");
+        metadata.put("drop", null);
+        Custom incoming = Custom.builder().namespace("io.kestra").id("my-asset").type("EC2").metadata(metadata).build();
+
+        // When
+        Custom created = incoming.toUpdated(null, false);
+
+        // Then
+        assertThat(created.getMetadata()).containsEntry("keep", "value");
+        assertThat(created.getMetadata()).doesNotContainKey("drop");
+    }
+
+    @Test
+    void shouldKeepAMetadataKeySetToAnEmptyString() {
+        // Given
+        Custom previous = Custom.builder().namespace("io.kestra").id("my-asset").type("EC2")
+            .metadata(Map.of(Asset.TTL_METADATA_KEY, "2026-01-01T00:00:00.000Z")).build();
+        Custom incoming = Custom.builder().namespace("io.kestra").id("my-asset").type("EC2")
+            .metadata(Map.of(Asset.TTL_METADATA_KEY, "")).build();
+
+        // When
+        Custom updated = incoming.toUpdated(previous, false);
+
+        // Then
+        assertThat(updated.getMetadata()).containsEntry(Asset.TTL_METADATA_KEY, "");
+    }
+
+    @Test
+    void shouldNotDeleteANestedMetadataKeyWithANull() {
+        // Given
+        Map<String, Object> nested = new HashMap<>();
+        nested.put("x", null);
+        Custom previous = Custom.builder().namespace("io.kestra").id("my-asset").type("EC2")
+            .metadata(Map.of("m", Map.of("x", 1, "y", 2))).build();
+        Custom incoming = Custom.builder().namespace("io.kestra").id("my-asset").type("EC2")
+            .metadata(Map.of("m", nested)).build();
+
+        // When
+        Custom updated = incoming.toUpdated(previous, false);
+
+        // Then
+        assertThat(updated.getMetadata()).extracting("m").isEqualTo(Map.of("x", 1, "y", 2));
+    }
+
+    @Test
+    void shouldReadTheSystemPropertiesDeclaredAtRootLevel() throws JsonProcessingException {
+        Asset asset = JacksonMapper.ofYaml().readValue(
+            """
+                id: my-asset
+                type: EC2
+                status: active
+                ttl: "2026-01-01T00:00:00.000Z"
+                owner: "user:alice"
+                """,
+            Asset.class
+        );
+
+        assertThat(asset.getStatus()).isEqualTo("active");
+        assertThat(asset.getTtl()).isEqualTo("2026-01-01T00:00:00.000Z");
+        assertThat(asset.getOwner()).isEqualTo("user:alice");
+        assertThat(asset.getMetadata()).containsEntry(Asset.STATUS_METADATA_KEY, "active");
+        assertThat(asset.getMetadata()).doesNotContainKey("status");
+    }
+
+    @Test
+    void shouldSerialiseTheSystemPropertiesAtRootLevel() throws JsonProcessingException {
+        Custom asset = Custom.builder().namespace("io.kestra").id("my-asset").type("EC2").build();
+        asset.setStatus("active");
+        asset.setOwner("user:alice");
+
+        Map<String, Object> json = JacksonMapper.ofJson().readValue(
+            JacksonMapper.ofJson().writeValueAsString(asset),
+            new TypeReference<>() {}
+        );
+
+        assertThat(json).containsEntry("status", "active");
+        assertThat(json).containsEntry("owner", "user:alice");
+    }
+
+    @Test
+    void shouldTellAnEmptyTtlApartFromAnAbsentOne() {
+        // An empty value means "no expiry" and must be stored; a null one leaves the lease untouched.
+        Custom noExpiry = Custom.builder().namespace("io.kestra").id("a").type("EC2").build();
+        noExpiry.setTtl("");
+        Custom untouched = Custom.builder().namespace("io.kestra").id("b").type("EC2").build();
+        untouched.setTtl(null);
+
+        assertThat(noExpiry.getMetadata()).containsEntry(Asset.TTL_METADATA_KEY, "");
+        assertThat(untouched.getMetadata()).doesNotContainKey(Asset.TTL_METADATA_KEY);
+    }
+
+    @Test
+    void shouldWriteASystemPropertyOnAnAssetBuiltWithoutACreator() {
+        Custom asset = new Custom();
+        asset.setStatus("active");
+
+        assertThat(asset.getStatus()).isEqualTo("active");
     }
 }

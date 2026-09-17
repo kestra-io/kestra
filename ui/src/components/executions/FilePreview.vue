@@ -275,7 +275,7 @@
     const miscStore = useMiscStore()
 
     const configPreviewInitialRows = computed((): number => {
-        return  miscStore.configs?.preview.initial || 500
+        return  miscStore.configs?.preview?.initial || 500
     })
 
     onMounted(() => {

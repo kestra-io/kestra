@@ -104,18 +104,8 @@ public class HarnessAssert extends AbstractAssert<HarnessAssert, ExecutorTestHar
         return this;
     }
 
-    public HarnessAssert emittedNoWorkerJobs() {
-        Assertions.assertThat(actual.workerJobEventQueue().emitted()).as(described("worker jobs emitted")).isEmpty();
-        return this;
-    }
-
     public HarnessAssert emittedNoSubflowResults() {
         Assertions.assertThat(actual.subflowExecutionResultQueue().emitted()).as(described("subflow results emitted")).isEmpty();
-        return this;
-    }
-
-    public HarnessAssert emittedNoFollowEvents() {
-        Assertions.assertThat(actual.followExecutionEventQueue().emitted()).as(described("follow events emitted")).isEmpty();
         return this;
     }
 

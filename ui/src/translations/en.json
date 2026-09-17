@@ -217,9 +217,16 @@
       "copilot": {
         "ask": "Ask Copilot"
       },
+      "error": {
+        "empty": "No error message was recorded for this task run."
+      },
       "miniTimeline": {
         "title": "Where it happened",
         "dragHint": "Drag to select a time range and filter the logs below. Press Escape to clear."
+      },
+      "attempts": {
+        "title": "Attempts",
+        "empty": "No attempt was recorded for this task run."
       },
       "stateHistory": {
         "title": "State history",

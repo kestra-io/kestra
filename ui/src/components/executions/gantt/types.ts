@@ -1,12 +1,27 @@
+export interface FailureStateHistoryEntry {
+    state: string
+    date: string
+}
+
+export interface FailureAttempt {
+    state: {
+        current: string
+        histories: FailureStateHistoryEntry[]
+    }
+    workerId?: string
+}
+
 export interface FailureTaskRun {
     id: string
     taskId: string
     parentTaskRunId?: string
     value?: string
-    attempts?: unknown[]
+    iteration?: number
+    outputs?: Record<string, unknown>
+    attempts?: FailureAttempt[]
     state: {
         current: string
-        histories: Array<{state: string; date: string}>
+        histories: FailureStateHistoryEntry[]
     }
 }
 

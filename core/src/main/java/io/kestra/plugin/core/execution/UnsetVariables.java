@@ -89,7 +89,7 @@ public class UnsetVariables extends Task implements ExecutionUpdatableTask {
             Object child = vars.get(prefix);
             if (!(child instanceof Map)) {
                 if (!ignoreMissing) {
-                    throw new IllegalArgumentException("Variable '" + prefix + "' is not a map and `ignoreMissing` is false");
+                    throw new IllegalArgumentException("Variable '" + key + "' not found and `ignoreMissing` is false");
                 }
                 return;
             }

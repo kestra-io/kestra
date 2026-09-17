@@ -181,6 +181,20 @@ public record QueryFilter(
                 return List.of(Op.EQUALS, Op.NOT_EQUALS, Op.CONTAINS, Op.STARTS_WITH, Op.ENDS_WITH, Op.REGEX, Op.IN, Op.NOT_IN, Op.PREFIX);
             }
         },
+        @JsonProperty("targetNamespace")
+        TARGET_NAMESPACE("targetNamespace") {
+            @Override
+            public List<Op> supportedOp() {
+                return List.of(Op.EQUALS, Op.NOT_EQUALS, Op.CONTAINS, Op.STARTS_WITH, Op.ENDS_WITH, Op.REGEX, Op.IN, Op.NOT_IN, Op.PREFIX);
+            }
+        },
+        @JsonProperty("targetAssetType")
+        TARGET_ASSET_TYPE("targetAssetType") {
+            @Override
+            public List<Op> supportedOp() {
+                return List.of(Op.EQUALS, Op.NOT_EQUALS, Op.IN, Op.NOT_IN);
+            }
+        },
         @JsonProperty("kind")
         KIND("kind") {
             @Override
@@ -806,6 +820,8 @@ public record QueryFilter(
                     Field.ASSET_ID,
                     Field.SOURCE_ID,
                     Field.TARGET_ID,
+                    Field.TARGET_NAMESPACE,
+                    Field.TARGET_ASSET_TYPE,
                     Field.ORIGIN,
                     Field.NAMESPACE,
                     Field.FLOW_NAMESPACE,

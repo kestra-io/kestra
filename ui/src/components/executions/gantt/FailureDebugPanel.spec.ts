@@ -8,6 +8,7 @@ const store = vi.hoisted(() => ({
 }))
 const mocks = vi.hoisted(() => ({
     flow: vi.fn(),
+    loadTaskRunOutputs: vi.fn(),
 }))
 
 vi.mock("../../../stores/executions", () => ({
@@ -25,6 +26,9 @@ vi.mock("vue-router", () => ({
 }))
 vi.mock("@kestra-io/kestra-sdk/flows", () => ({
     flow: mocks.flow,
+}))
+vi.mock("../../../composables/useTaskRunOutputs", () => ({
+    loadTaskRunOutputs: mocks.loadTaskRunOutputs,
 }))
 
 import FailureDebugPanel from "./FailureDebugPanel.vue"
@@ -93,6 +97,7 @@ describe("FailureDebugPanel", () => {
     beforeEach(() => {
         store.executions = {loadLogs: vi.fn().mockResolvedValue([])}
         mocks.flow.mockReset().mockResolvedValue({source: "id: x\nnamespace: y\ntasks: []\n"})
+        mocks.loadTaskRunOutputs.mockReset().mockResolvedValue({})
     })
 
     it("should not render when the execution has no failed task run", () => {
@@ -418,18 +423,33 @@ describe("FailureDebugPanel", () => {
     })
 
     it("should offer a drill-down into the child execution when the failing task is a subflow", async () => {
+        mocks.loadTaskRunOutputs.mockResolvedValue({executionId: "child-exec-9", state: "FAILED"})
+
         const wrapper = mountPanel({
             id: "exec-1",
             state: {current: "FAILED"},
-            taskRunList: [
-                taskRun("tr-1", "run_child", "FAILED", "2024-01-01T00:00:00Z", {outputs: {executionId: "child-exec-9"}}),
-            ],
+            taskRunList: [taskRun("tr-1", "run_child", "FAILED", "2024-01-01T00:00:00Z")],
         })
 
         await wrapper.get(".failure-debug-reopen button").trigger("click")
         await flushPromises()
 
         expect(wrapper.findComponent({name: "SubFlowLink"}).exists()).toBe(true)
+    })
+
+    it("should read the child execution from the outputs API, not the execution payload where it is never serialized", async () => {
+        mocks.loadTaskRunOutputs.mockResolvedValue({executionId: "child-exec-9", state: "FAILED"})
+
+        const wrapper = mountPanel({
+            id: "exec-1",
+            state: {current: "FAILED"},
+            taskRunList: [taskRun("tr-1", "run_child", "FAILED", "2024-01-01T00:00:00Z")],
+        })
+
+        await wrapper.get(".failure-debug-reopen button").trigger("click")
+        await flushPromises()
+
+        expect(mocks.loadTaskRunOutputs).toHaveBeenCalledWith("exec-1", "tr-1")
     })
 
     it("should not offer a subflow drill-down for a task that produced no child execution", async () => {

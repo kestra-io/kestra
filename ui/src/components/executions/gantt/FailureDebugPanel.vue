@@ -227,6 +227,7 @@
     import resource from "../../../models/resource"
     import action from "../../../models/action"
     import * as Utils from "../../../utils/utils"
+    import {loadTaskRunOutputs} from "../../../composables/useTaskRunOutputs"
     import {useToast} from "../../../utils/toast"
     import {useExecutionsStore, type Execution} from "../../../stores/executions"
     import {useAuthStore} from "override/stores/auth"
@@ -287,11 +288,6 @@
     const shouldRender = computed(() => isDebuggableExecution.value && failedTaskRuns.value.length > 0)
 
     const focusedTaskRun = computed(() => failedTaskRuns.value.find((taskRun) => taskRun.id === focusedId.value))
-
-    const focusedSubflowExecutionId = computed(() => {
-        const executionId = focusedTaskRun.value?.outputs?.executionId
-        return typeof executionId === "string" && executionId.length > 0 ? executionId : undefined
-    })
 
     const focusedAttempts = computed(() => focusedTaskRun.value?.attempts ?? [])
     const focusedAttemptCount = computed(() => focusedAttempts.value.length)
@@ -496,6 +492,7 @@
 
     const focusedErrorText = ref("")
     const focusedErrorLoading = ref(false)
+    const focusedSubflowExecutionId = ref<string | undefined>(undefined)
 
     const loadedErrorTaskRunId = ref<string | undefined>(undefined)
 
@@ -506,10 +503,20 @@
 
             loadedErrorTaskRunId.value = taskRunId
             focusedErrorText.value = ""
+            focusedSubflowExecutionId.value = undefined
             focusedErrorLoading.value = true
             try {
-                const text = await fetchErrorText(taskRunId)
-                if (focusedTaskRun.value?.id === taskRunId) focusedErrorText.value = text
+                const [text, outputs] = await Promise.all([
+                    fetchErrorText(taskRunId),
+                    loadTaskRunOutputs(props.execution.id, taskRunId).catch(() => ({}) as Record<string, unknown>),
+                ])
+                if (focusedTaskRun.value?.id !== taskRunId) return
+
+                focusedErrorText.value = text
+                const childExecutionId = outputs.executionId
+                if (typeof childExecutionId === "string" && childExecutionId.length > 0) {
+                    focusedSubflowExecutionId.value = childExecutionId
+                }
             } finally {
                 if (focusedTaskRun.value?.id === taskRunId) focusedErrorLoading.value = false
             }

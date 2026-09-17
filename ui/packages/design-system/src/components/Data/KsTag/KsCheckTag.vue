@@ -73,6 +73,12 @@
         }
     }
 
+    /* Element Plus paints a disabled tag with light-9/light-8 tints that are near-white whatever the theme. */
+    .kel-check-tag.is-disabled {
+        --kel-color-info-light-9: var(--ks-bg-tag);
+        --kel-color-primary-light-8: var(--ks-bg-tag-active);
+    }
+
     .kel-check-tag.kel-check-tag--pill {
         display: inline-flex;
         align-items: center;

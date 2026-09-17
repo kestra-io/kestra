@@ -304,19 +304,19 @@
     "steps": "Steps",
     "state": "State",
     "state_history": {
-        "title": "State history",
-        "open": "State history",
-        "aria_open": "Show the state history",
-        "aria_open_for": "Show the state history for {subject}",
-        "started_at": "Started {time}",
-        "failed_at": "Failed at {time}",
-        "skipped_at": "Skipped at {time}",
-        "created_at": "Created {time}",
-        "did_not_run": "This task did not run",
-        "waiting_to_start": "Waiting to start",
-        "attempt_n": "Attempt {index}",
-        "attempt_count": "{count} attempts",
-        "copy": "Copy state history"
+      "title": "State history",
+      "open": "State history",
+      "aria_open": "Show the state history",
+      "aria_open_for": "Show the state history for {subject}",
+      "started_at": "Started {time}",
+      "failed_at": "Failed at {time}",
+      "skipped_at": "Skipped at {time}",
+      "created_at": "Created {time}",
+      "did_not_run": "This task did not run",
+      "waiting_to_start": "Waiting to start",
+      "attempt_n": "Attempt {index}",
+      "attempt_count": "{count} attempts",
+      "copy": "Copy state history"
     },
     "search": "Search",
     "source search": "Source search",
@@ -687,6 +687,10 @@
     "open full page": "Open Full Page",
     "drill down preview": "Preview",
     "errors": {
+      "400": {
+        "title": "Bad request",
+        "content": "The request could not be understood by the server."
+      },
       "401": {
         "title": "Unauthorized",
         "content": "You need to be authenticated to access this page."
@@ -699,10 +703,6 @@
         "title": "Page not found",
         "content": "The requested URL was not found on this server.<br />That’s all we know.",
         "flow or execution": "The flow or execution you are looking for does not exist."
-      },
-      "400": {
-        "title": "Bad request",
-        "content": "The request could not be understood by the server."
       },
       "409": {
         "title": "Conflict",
@@ -2646,6 +2646,9 @@
       "install_description": "Install Kestra as an app for quicker access and a full-screen experience.",
       "install": "Install",
       "dismiss": "Not now"
-    }
+    },
+    "iteration": "Iteration",
+    "iteration_number": "Iteration {number}",
+    "delete_log_iteration": "Are you sure you want to delete the log for {iteration}?"
   }
 }

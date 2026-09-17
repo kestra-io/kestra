@@ -15,6 +15,10 @@
                     </h3>
                     <p v-if="focusedTaskRun" class="failure-debug-panel__subtitle">
                         {{ $t("failureDebugPanel.subtitle", {taskId: focusedTaskRun.taskId}) }}
+                        <code v-if="focusedTaskRun.value" class="failure-debug-panel__value">{{ focusedTaskRun.value }}</code>
+                        <span v-if="focusedAttemptCount > 1" class="failure-debug-panel__attempt">
+                            {{ $t("attempt") }} {{ focusedAttemptIndex + 1 }}/{{ focusedAttemptCount }}
+                        </span>
                     </p>
                 </div>
                 <KsIconButton :tooltip="$t('close')" placement="top" @click="close">
@@ -41,20 +45,36 @@
                 >
                     <KsExecutionStatus size="small" :status="taskRun.state.current" tabindex="-1" />
                     <code>{{ taskRun.taskId }}</code>
+                    <code v-if="taskRun.value" class="failure-switcher__value">{{ taskRun.value }}</code>
                 </button>
             </div>
+
+            <KsCard v-if="focusedTaskRun" shadow="never" class="failure-debug-panel__error">
+                <template #header>
+                    <h4>{{ $t("error") }}</h4>
+                </template>
+                <FailureErrorSummary :text="focusedErrorText" :loading="focusedErrorLoading" />
+            </KsCard>
 
             <div v-if="focusedTaskRun" class="failure-debug-panel__actions">
                 <p class="failure-debug-panel__restart-caption">{{ $t("failureDebugPanel.restart.caption") }}</p>
                 <div class="failure-debug-panel__actions-buttons">
                     <div class="failure-debug-panel__actions-secondary">
-                        <KsButton v-if="canUseCopilot" :icon="AiIcon" link @click="askCopilot">
+                        <KsButton v-if="canUseCopilot" :icon="AiIcon" link :disabled="!focusedErrorText" @click="askCopilot">
                             {{ $t("failureDebugPanel.copilot.ask") }}
                         </KsButton>
                         <KsButton v-if="canEditFlow" tag="router-link" :to="editFlowRoute" :icon="Pencil" link>
                             {{ $t("edit flow") }}
                         </KsButton>
-                        <KsButton :icon="ContentCopy" link @click="copyFocusedError">
+                        <SubFlowLink
+                            v-if="focusedSubflowExecutionId"
+                            component="KsButton"
+                            link
+                            showLabel
+                            tabExecution="gantt"
+                            :executionId="focusedSubflowExecutionId"
+                        />
+                        <KsButton :icon="ContentCopy" link :disabled="!focusedErrorText" @click="copyFocusedError">
                             {{ $t("failureDebugPanel.copyError") }}
                         </KsButton>
                     </div>
@@ -89,8 +109,15 @@
             <KsCard v-if="focusedTaskRun" shadow="never" class="failure-debug-panel__context">
                 <KsTabs v-model="activeContextTab" type="box">
                     <KsTabPane name="stateHistory" :label="$t('failureDebugPanel.stateHistory.title')">
-                        <div class="failure-debug-panel__tab-pane">
-                            <FailureStateHistory :taskRun="focusedTaskRun" />
+                        <div class="failure-debug-panel__tab-pane failure-debug-panel__stacked">
+                            <div>
+                                <h4>{{ $t("failureDebugPanel.attempts.title") }}</h4>
+                                <FailureAttempts :taskRun="focusedTaskRun" />
+                            </div>
+                            <div>
+                                <h4>{{ $t("failureDebugPanel.stateHistory.title") }}</h4>
+                                <FailureStateHistory :taskRun="focusedTaskRun" />
+                            </div>
                         </div>
                     </KsTabPane>
                     <KsTabPane name="resolvedConfig" :label="$t('failureDebugPanel.resolvedConfig.title')">
@@ -105,7 +132,7 @@
                         </div>
                     </KsTabPane>
                     <KsTabPane name="inputsOutputs" :label="$t('failureDebugPanel.inputsOutputs.title')">
-                        <div class="failure-debug-panel__tab-pane failure-debug-panel__inputs-outputs">
+                        <div class="failure-debug-panel__tab-pane failure-debug-panel__stacked">
                             <div>
                                 <h4>{{ $t("failureDebugPanel.executionInputs.title") }}</h4>
                                 <FailureExecutionInputs
@@ -183,8 +210,11 @@
     import Pencil from "vue-material-design-icons/Pencil.vue"
 
     import AiIcon from "../../ai/AiIcon.vue"
+    import SubFlowLink from "../../flows/SubFlowLink.vue"
     import Restart from "../overview/components/actions/Restart.vue"
+    import FailureErrorSummary from "./FailureErrorSummary.vue"
     import FailureMiniTimeline from "./FailureMiniTimeline.vue"
+    import FailureAttempts from "./FailureAttempts.vue"
     import FailureStateHistory from "./FailureStateHistory.vue"
     import FailureResolvedConfig from "./FailureResolvedConfig.vue"
     import FailureExecutionInputs from "./FailureExecutionInputs.vue"
@@ -258,10 +288,16 @@
 
     const focusedTaskRun = computed(() => failedTaskRuns.value.find((taskRun) => taskRun.id === focusedId.value))
 
-    const focusedAttemptIndex = computed(() => {
-        const attempts = focusedTaskRun.value?.attempts
-        return attempts && attempts.length > 0 ? attempts.length - 1 : 0
+    const focusedSubflowExecutionId = computed(() => {
+        const executionId = focusedTaskRun.value?.outputs?.executionId
+        return typeof executionId === "string" && executionId.length > 0 ? executionId : undefined
     })
+
+    const focusedAttempts = computed(() => focusedTaskRun.value?.attempts ?? [])
+    const focusedAttemptCount = computed(() => focusedAttempts.value.length)
+    const focusedAttemptIndex = computed(() =>
+        focusedAttemptCount.value > 0 ? focusedAttemptCount.value - 1 : 0,
+    )
 
     const canUseCopilot = computed(() => !!authStore.user?.hasAny(resource.COPILOT))
 
@@ -441,15 +477,12 @@
         }
     }
 
-    async function loadFocusedErrorText(): Promise<string> {
-        const taskRun = focusedTaskRun.value
-        if (!taskRun) return ""
-
+    async function fetchErrorText(taskRunId: string): Promise<string> {
         const response = await executionsStore
             .loadLogs({
                 store: false,
                 executionId: props.execution.id,
-                params: {taskRunId: taskRun.id, minLevel: "ERROR"},
+                params: {taskRunId, minLevel: "ERROR"},
                 showMessageOnError: false,
             })
             .catch(() => [])
@@ -461,18 +494,37 @@
         return [...results].reverse().find((log) => (log.message ?? "").length > 0)?.message ?? ""
     }
 
-    async function askCopilot() {
-        const taskRun = focusedTaskRun.value
-        if (!taskRun) return
+    const focusedErrorText = ref("")
+    const focusedErrorLoading = ref(false)
 
-        const errorLines = await loadFocusedErrorText()
-        if (!errorLines) return
+    watch(
+        () => focusedTaskRun.value?.id,
+        async (taskRunId) => {
+            focusedErrorText.value = ""
+            if (!taskRunId) return
+
+            focusedErrorLoading.value = true
+            try {
+                const text = await fetchErrorText(taskRunId)
+                if (focusedTaskRun.value?.id === taskRunId) focusedErrorText.value = text
+            } finally {
+                if (focusedTaskRun.value?.id === taskRunId) focusedErrorLoading.value = false
+            }
+        },
+        {immediate: true},
+    )
+
+    function askCopilot() {
+        const taskRun = focusedTaskRun.value
+        const errorLines = focusedErrorText.value
+        if (!taskRun || !errorLines) return
+
         const prompt = `Fix the task ${taskRun.taskId} as it generated the following error:\n${errorLines}`
         miscStore.promptCopilot(prompt, {title: t("ai.copilot.fixThread.task", {id: taskRun.taskId}), newThread: true})
     }
 
     async function copyFocusedError() {
-        const errorLines = await loadFocusedErrorText()
+        const errorLines = focusedErrorText.value
         if (!errorLines) return
         await Utils.copy(errorLines)
         toast.success(t("copied"))
@@ -533,9 +585,27 @@
     }
 
     .failure-debug-panel__subtitle {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: var(--ks-spacing-2);
         margin: var(--ks-spacing-1) 0 0;
         color: var(--ks-text-secondary);
         font-size: var(--ks-font-size-sm);
+    }
+
+    .failure-debug-panel__value {
+        padding: 0 var(--ks-spacing-1);
+        background: var(--ks-bg-active);
+        border: 1px solid var(--ks-border-default);
+        border-radius: var(--ks-radius-base);
+        color: var(--ks-text-primary);
+        font-size: var(--ks-font-size-xs);
+    }
+
+    .failure-debug-panel__attempt {
+        color: var(--ks-text-secondary);
+        font-size: var(--ks-font-size-xs);
     }
 
     .failure-switcher {
@@ -564,6 +634,13 @@
         &:hover {
             background: var(--ks-bg-hover);
         }
+    }
+
+    .failure-switcher__value {
+        padding: 0 var(--ks-spacing-1);
+        background: var(--ks-bg-active);
+        border-radius: var(--ks-radius-base);
+        color: var(--ks-text-primary);
     }
 
     .failure-debug-panel__actions {
@@ -615,7 +692,7 @@
         padding-top: var(--ks-spacing-4);
     }
 
-    .failure-debug-panel__inputs-outputs {
+    .failure-debug-panel__stacked {
         display: flex;
         flex-direction: column;
         gap: var(--ks-spacing-4);

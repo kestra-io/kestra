@@ -1155,6 +1155,7 @@
             "log_level": "Domyślny poziom logów",
             "log_display": "Domyślne wyświetlanie logów",
             "editor_type": "Domyślny typ edytora",
+            "topology_orientation": "Domyślna orientacja topologii",
             "execute_flow": "Uruchamianie Flow",
             "execute_default_tab": "Domyślna zakładka egzekucji",
             "flow_default_tab": "Domyślna zakładka Flow",
@@ -1169,6 +1170,7 @@
             "log_level": "Minimalny poziom logów wyświetlany w logach egzekucji.",
             "log_display": "Jak logi są prezentowane przy otwieraniu egzekucji.",
             "editor_type": "Edytor wyświetlany przy pierwszym otwarciu Flow.",
+            "topology_orientation": "Domyślna orientacja panelu Topology w edytorze Flow.",
             "execute_flow": "Gdzie otwierają się wyniki egzekucji po uruchomieniu.",
             "execute_default_tab": "Zakładka wybierana przy przejściu do egzekucji.",
             "flow_default_tab": "Zakładka wybierana przy przejściu do Flow.",
@@ -1181,6 +1183,10 @@
           "task_edit_default_mode_options": {
             "modal": "Modal",
             "tab": "Zakładka"
+          },
+          "topology_orientation_options": {
+            "vertical": "Pionowo",
+            "horizontal": "Poziomo"
           },
           "flow_template_reset": "Resetuj do domyślnego szablonu",
           "flow_template_error": {
@@ -1375,6 +1381,7 @@
     "onboarding": {
       "tour": {
         "menu": "Przewodnik po produkcie",
+        "menu_resume": "Wznów przewodnik",
         "menu_description": "Zbuduj, uruchom i napraw Flow, a potem uruchom go zdarzeniem",
         "step_of": "Krok {current} z {total}",
         "actions": {

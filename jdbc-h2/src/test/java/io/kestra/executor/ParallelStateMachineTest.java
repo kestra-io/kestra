@@ -19,7 +19,7 @@ import io.kestra.plugin.core.log.Log;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @ExecutorStateMachineTest
-class ParallelStateMachineTest extends AbstractExecutorStateMachineTest {
+class ParallelStateMachineTest {
     private static Flow parallelFlow(String tenantId) {
         return Flow.builder()
             .tenantId(tenantId)
@@ -47,8 +47,7 @@ class ParallelStateMachineTest extends AbstractExecutorStateMachineTest {
     }
 
     @Test
-    void shouldRunBothBranchesThenSucceed() {
-        ExecutorStateMachineHarness harness = harnesses.create();
+    void shouldRunBothBranchesThenSucceed(ExecutorStateMachineHarness harness) {
         Flow flow = parallelFlow(harness.tenantId());
 
         // Starting the flow submits both branches to the worker at once.

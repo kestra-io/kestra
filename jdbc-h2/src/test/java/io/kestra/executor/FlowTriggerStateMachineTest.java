@@ -16,7 +16,7 @@ import io.kestra.plugin.core.log.Log;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @ExecutorStateMachineTest
-class FlowTriggerStateMachineTest extends AbstractExecutorStateMachineTest {
+class FlowTriggerStateMachineTest {
     private static Flow.FlowBuilder<?, ?> flowBuilder(String tenantId) {
         return Flow.builder()
             .tenantId(tenantId)
@@ -27,9 +27,7 @@ class FlowTriggerStateMachineTest extends AbstractExecutorStateMachineTest {
     }
 
     @Test
-    void shouldCreateListeningExecutionWhenUpstreamSucceeds() {
-        ExecutorStateMachineHarness harness = harnesses.create();
-
+    void shouldCreateListeningExecutionWhenUpstreamSucceeds(ExecutorStateMachineHarness harness) {
         Flow upstream = flowBuilder(harness.tenantId()).build();
         Flow listening = flowBuilder(harness.tenantId())
             .triggers(List.of(io.kestra.plugin.core.trigger.Flow.builder()

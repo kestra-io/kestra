@@ -1,5 +1,6 @@
 package io.kestra.executor;
 
+import java.time.Instant;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -15,6 +16,11 @@ import io.kestra.core.runners.DefaultFlowMetaStore;
 import io.kestra.core.runners.ExecutionEvent;
 import io.kestra.core.runners.ExecutionEventType;
 import io.kestra.core.runners.WorkerTaskResult;
+import io.kestra.core.utils.IdUtils;
+
+import io.micronaut.context.annotation.Prototype;
+import io.micronaut.context.annotation.Requires;
+import jakarta.inject.Inject;
 
 /**
  * Drives the real {@link DefaultExecutor} as a state machine over real H2, one external event at a
@@ -26,9 +32,13 @@ import io.kestra.core.runners.WorkerTaskResult;
  * emitted message (worker jobs, subflow results, released queued executions, ...) is a boundary the
  * test asserts on via {@link #emitted(Class)} and drives explicitly with the next {@code process}.
  *
- * <p>One harness per test carries one unique, non-null tenant; a fixture with a different or missing
- * tenant is rejected, because the H2 file is shared and never cleaned.
+ * <p>Injected straight into a test method — {@code void myTest(ExecutorStateMachineHarness harness)} —
+ * as a fresh instance per test (it is {@link Prototype}-scoped), each carrying one unique, non-null
+ * tenant; a fixture with a different or missing tenant is rejected, because the H2 file is shared and
+ * never cleaned.
  */
+@Prototype
+@Requires(property = "kestra.test.executor-state-machine-harness", value = "true")
 public class ExecutorStateMachineHarness {
     private static final int MAX_CYCLES = 100;
 
@@ -41,14 +51,14 @@ public class ExecutorStateMachineHarness {
     private final String tenantId;
     private final Set<String> registeredFlows = new HashSet<>();
 
-    ExecutorStateMachineHarness(
+    @Inject
+    public ExecutorStateMachineHarness(
         DefaultExecutor executor,
         FlowRepositoryInterface flowRepository,
         DefaultFlowMetaStore flowMetaStore,
         ExecutionRepositoryInterface executionRepository,
         ConcurrencyLimitRepositoryInterface concurrencyLimitRepository,
-        QueueRecorder recorder,
-        String tenantId
+        QueueRecorder recorder
     ) {
         this.executor = executor;
         this.flowRepository = flowRepository;
@@ -56,7 +66,7 @@ public class ExecutorStateMachineHarness {
         this.executionRepository = executionRepository;
         this.concurrencyLimitRepository = concurrencyLimitRepository;
         this.recorder = recorder;
-        this.tenantId = tenantId;
+        this.tenantId = "sm-" + IdUtils.create();
     }
 
     public String tenantId() {
@@ -91,6 +101,24 @@ public class ExecutorStateMachineHarness {
 
     public <T> List<T> emitted(Class<T> type) {
         return recorder.emitted(type);
+    }
+
+    /**
+     * Fire every execution delay (paused-flow resume, failed-task/flow retry, waitFor) whose date is
+     * at or before {@code now}, as the executor's delay loop would — with a time the test controls
+     * instead of the wall clock — then advance {@code tracked} to its resulting state.
+     */
+    public Execution fireExpiredDelays(Instant now, Execution tracked) {
+        recorder.reset();
+        executor.onExpiredExecutionDelays(now);
+        return settle(tracked.getId());
+    }
+
+    /** Fire every SLA monitor expired at {@code now}, as the executor's SLA loop would, then advance {@code tracked}. */
+    public Execution fireExpiredSLAMonitors(Instant now, Execution tracked) {
+        recorder.reset();
+        executor.onExpiredSLAMonitors(now);
+        return settle(tracked.getId());
     }
 
     /**

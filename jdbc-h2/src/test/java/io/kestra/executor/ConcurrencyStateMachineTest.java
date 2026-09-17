@@ -16,7 +16,7 @@ import io.kestra.plugin.core.log.Log;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @ExecutorStateMachineTest
-class ConcurrencyStateMachineTest extends AbstractExecutorStateMachineTest {
+class ConcurrencyStateMachineTest {
     private static Flow limitOneFlow(String tenantId) {
         return Flow.builder()
             .tenantId(tenantId)
@@ -29,8 +29,7 @@ class ConcurrencyStateMachineTest extends AbstractExecutorStateMachineTest {
     }
 
     @Test
-    void shouldQueueSecondExecutionThenReleaseItWhenFirstTerminates() {
-        ExecutorStateMachineHarness harness = harnesses.create();
+    void shouldQueueSecondExecutionThenReleaseItWhenFirstTerminates(ExecutorStateMachineHarness harness) {
         Flow flow = limitOneFlow(harness.tenantId());
 
         // First execution claims the only slot and runs.

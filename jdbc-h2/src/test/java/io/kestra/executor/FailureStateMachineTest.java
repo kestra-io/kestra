@@ -16,7 +16,7 @@ import io.kestra.plugin.core.log.Log;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @ExecutorStateMachineTest
-class FailureStateMachineTest extends AbstractExecutorStateMachineTest {
+class FailureStateMachineTest {
     private static Flow logFlow(String tenantId) {
         return Flow.builder()
             .tenantId(tenantId)
@@ -28,8 +28,7 @@ class FailureStateMachineTest extends AbstractExecutorStateMachineTest {
     }
 
     @Test
-    void shouldFailExecutionWhenTaskFails() {
-        ExecutorStateMachineHarness harness = harnesses.create();
+    void shouldFailExecutionWhenTaskFails(ExecutorStateMachineHarness harness) {
         Flow flow = logFlow(harness.tenantId());
 
         Execution running = harness.process(flow, Execution.newExecution(flow, Collections.emptyList()));

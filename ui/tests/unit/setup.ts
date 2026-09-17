@@ -21,14 +21,15 @@ enableAutoUnmount(afterEach)
 // finishes first is torn down mid-import and the run reports unhandled EnvironmentTeardownErrors.
 afterEach(() => designSystemI18nReady())
 
-// A Vue warning serialises every prop of every component in its trace, so one mount holding a
-// megabyte-sized value writes megabytes per line, which cost CI 10 to 24 minutes (#19566).
-const WARN_TRACE_LIMIT = 2000
+// A Vue warning inlines the offending value twice over, in the trace serialising every prop and in
+// a prop type-check message, so a megabyte-sized value costs CI 10 to 24 minutes of log (#19566).
+const WARN_LIMIT = 2000
+const capWarn = (text: string, part: string) =>
+    text.length > WARN_LIMIT ? `${text.slice(0, WARN_LIMIT)}… (${part} truncated)` : text
 config.global.config = {
     ...config.global.config,
     warnHandler: (message, _instance, trace) => {
-        const capped = trace.length > WARN_TRACE_LIMIT ? `${trace.slice(0, WARN_TRACE_LIMIT)}… (trace truncated)` : trace
-        console.warn(`[Vue warn]: ${message}${capped}`)
+        console.warn(`[Vue warn]: ${capWarn(message, "message")}${trace ? `\n${capWarn(trace, "trace")}` : ""}`)
     },
 }
 

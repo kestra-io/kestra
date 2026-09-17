@@ -27,7 +27,7 @@ describe("useRestoreUrl", () => {
         window.sessionStorage.clear();
     });
 
-    test("restores saved filters but not pagination", async () => {
+    test("restores saved filters and page size but not the page number", async () => {
         const router = createTestRouter();
         await router.push({name: "home", params: {tenant: "main"}});
         window.sessionStorage.setItem("home_main_restore_url", JSON.stringify({...SAVED_QUERY, page: "10", size: "100"}));
@@ -40,6 +40,6 @@ describe("useRestoreUrl", () => {
         }), {global: {plugins: [router]}});
         await new Promise((resolve) => setTimeout(resolve, 150));
 
-        expect(router.currentRoute.value.query).toEqual(SAVED_QUERY);
+        expect(router.currentRoute.value.query).toEqual({...SAVED_QUERY, size: "100"});
     });
 });

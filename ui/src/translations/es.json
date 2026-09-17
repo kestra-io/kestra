@@ -1088,6 +1088,7 @@
     "execute backfill": "Ejecutar backfill",
     "relative": "Relativo",
     "relative start date": "Fecha de inicio relativa",
+    "now": "Ahora",
     "absolute": "Absoluto",
     "backfill": "Backfill",
     "Set labels": "Establecer etiquetas",

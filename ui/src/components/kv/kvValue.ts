@@ -1,4 +1,4 @@
-import moment from "moment-timezone"
+import {dateUtils, dayjs} from "@kestra-io/design-system"
 
 /**
  * Formats a KV value into a human-readable string for the read-only viewer.
@@ -10,8 +10,7 @@ export function formatKvValueForDisplay(type: string, value: any, timezone?: str
     }
     if (type === "DATETIME") {
         // Follow Timezone from Settings to display KV of type DATETIME (issue #9428)
-        const tz = timezone || moment.tz.guess()
-        return moment(value).tz(tz).format()
+        return dayjs(value).tz(timezone || dateUtils.currentTimezone()).format()
     }
     return String(value)
 }
@@ -28,7 +27,7 @@ export function hydrateKvValueForForm(type: string, value: any, timezone?: strin
     }
     if (type === "DATETIME") {
         // Follow Timezone from Settings to display KV of type DATETIME (issue #9428)
-        return moment(value).tz(timezone || moment.tz.guess()).toDate()
+        return dayjs(value).tz(timezone || dateUtils.currentTimezone()).toDate()
     }
     return String(value)
 }
@@ -49,7 +48,7 @@ export function serializeKvValueForSave(type: string, value: any): string {
         return new Date(value).toISOString()
     }
     if (type === "DATE") {
-        return moment(value).format("YYYY-MM-DD")
+        return dayjs(value).format("YYYY-MM-DD")
     }
     return String(value)
 }

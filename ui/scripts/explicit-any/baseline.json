@@ -273,7 +273,7 @@
   "src/utils/scheme.ts": 2,
   "src/utils/submitTask.ts": 7,
   "src/utils/tabTracking.ts": 4,
-  "src/utils/toast.ts": 7,
+  "src/utils/toast.ts": 6,
   "src/utils/triggers.ts": 3,
   "src/utils/unsavedChange.ts": 1,
   "src/utils/utils.ts": 14,

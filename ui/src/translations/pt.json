@@ -1381,6 +1381,7 @@
     "onboarding": {
       "tour": {
         "menu": "Tour do produto",
+        "menu_resume": "Retomar tour",
         "menu_description": "Construir, executar e corrigir um flow, depois inicie-o a partir de um evento",
         "step_of": "Passo {current} de {total}",
         "actions": {
@@ -2433,8 +2434,8 @@
       "next_match": "Próxima correspondência",
       "no_results_description": "Tente ampliar o namespace, mudar o escopo de volta para Todas as fontes ou desativar Diferenciar maiúsculas de minúsculas e Coincidir palavra inteira.",
       "no_results_hidden_type": "Encontrada {count} correspondência em {type}, que não selecionou. | Encontradas {count} correspondências em {type}, que não selecionou.",
-      "no_results_in_types": "Sem correspondências para {query} em {types}",
       "no_results_title": "Nenhum resultado para \"{query}\"",
+      "did_you_mean": "Você quis dizer {suggestion}?",
       "open_flow": "Abrir flow",
       "open_in_editor": "Abrir no editor",
       "open_in_kv": "Abrir no KV Store",

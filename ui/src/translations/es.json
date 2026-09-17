@@ -1381,6 +1381,7 @@
     "onboarding": {
       "tour": {
         "menu": "Recorrido del producto",
+        "menu_resume": "Reanudar tour",
         "menu_description": "Crear, ejecutar y corregir un flow, y luego iniciarlo desde un evento",
         "step_of": "Paso {current} de {total}",
         "actions": {
@@ -2433,8 +2434,8 @@
       "next_match": "Siguiente coincidencia",
       "no_results_description": "Intenta ampliar el namespace, cambiar el ámbito a \"All source\" o desactivar \"Match case\" y \"Match whole word\".",
       "no_results_hidden_type": "Se encontró {count} coincidencia en {type}, que no has seleccionado. | Se encontraron {count} coincidencias en {type}, que no has seleccionado.",
-      "no_results_in_types": "Sin coincidencias para {query} en {types}",
       "no_results_title": "No hay coincidencias para \"{query}\"",
+      "did_you_mean": "¿Te referías a {suggestion}?",
       "open_flow": "Abrir flow",
       "open_in_editor": "Abrir en el editor",
       "open_in_kv": "Abrir en el KV Store",

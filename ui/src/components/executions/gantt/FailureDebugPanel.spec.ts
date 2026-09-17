@@ -328,6 +328,40 @@ describe("FailureDebugPanel", () => {
         expect(wrapper.get(".failure-error-summary__text").text()).toBe("Connection refused: warehouse:5432")
     })
 
+    it("should not fetch the error while the panel is closed, so a failed execution's Gantt view costs nothing extra", async () => {
+        const loadLogs = vi.fn().mockResolvedValue({results: [{level: "ERROR", message: "boom"}]})
+        store.executions = {loadLogs}
+
+        mountPanel({
+            id: "exec-1",
+            state: {current: "FAILED"},
+            taskRunList: [taskRun("tr-1", "load_warehouse", "FAILED", "2024-01-01T00:00:00Z")],
+        })
+        await flushPromises()
+
+        expect(loadLogs).not.toHaveBeenCalled()
+    })
+
+    it("should not refetch the error when the same failure is closed and reopened", async () => {
+        const loadLogs = vi.fn().mockResolvedValue({results: [{level: "ERROR", message: "boom"}]})
+        store.executions = {loadLogs}
+
+        const wrapper = mountPanel({
+            id: "exec-1",
+            state: {current: "FAILED"},
+            taskRunList: [taskRun("tr-1", "load_warehouse", "FAILED", "2024-01-01T00:00:00Z")],
+        })
+
+        await wrapper.get(".failure-debug-reopen button").trigger("click")
+        await flushPromises()
+        await wrapper.get(".failure-debug-panel").trigger("keydown", {key: "Escape"})
+        await flushPromises()
+        await wrapper.get(".failure-debug-reopen button").trigger("click")
+        await flushPromises()
+
+        expect(loadLogs).toHaveBeenCalledTimes(1)
+    })
+
     it("should fetch the error once per focused failure rather than once per action that needs it", async () => {
         const loadLogs = vi.fn().mockResolvedValue({results: [{level: "ERROR", message: "boom"}]})
         store.executions = {loadLogs}

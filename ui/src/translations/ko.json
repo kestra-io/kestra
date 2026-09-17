@@ -1061,6 +1061,7 @@
       },
       "revisions": {
         "history": "수정 기록",
+        "load_error": "리비전 {revision}을(를) 불러올 수 없습니다. 삭제되었을 수 있습니다.",
         "restore": {
           "success": "파일 수정이 성공적으로 복원되었습니다."
         }

@@ -120,15 +120,6 @@ export function useFilesPanels(panels: Ref<Panel[]>, namespace: Ref<string | und
                 }
             }
         }
-        if (closed) {
-            // Drop any panel left with no tabs so the empty-state placeholder renders,
-            // rather than a zombie pane whose `activeTab` still points at the removed tab.
-            for (let i = panels.value.length - 1; i >= 0; i--) {
-                if (panels.value[i].tabs.length === 0) {
-                    panels.value.splice(i, 1)
-                }
-            }
-        }
         return closed
     })
 

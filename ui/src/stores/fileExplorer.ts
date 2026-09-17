@@ -268,6 +268,7 @@ export const useFileExplorerStore = defineStore("fileExplorer", () => {
     async function loadNodes(
         node: ElTreeNode | {level: 0} = {level: 0},
         resolve?: (children: TreeNode[]) => void,
+        reject?: () => void,
     ) {
         if (namespaceId.value === undefined) return
         if (node.level === 0) {
@@ -281,7 +282,9 @@ export const useFileExplorerStore = defineStore("fileExplorer", () => {
                 // Defensive: the backend self-heals the root directory, so a 404 here is not
                 // expected, and any non-404 has already been toasted centrally. Swallow either way
                 // so this fire-and-forget call cannot raise an unhandled rejection; the finally
-                // still releases the spinner (see below).
+                // still releases the spinner (see below). Drop the tree too: `renderNodes` never ran,
+                // so anything left in it belongs to the namespace the user was on before.
+                fileTree.value = []
                 console.error(e)
             } finally {
                 // Always resolve and clear the loading flag: a rejected read (e.g. a 404 after the
@@ -300,9 +303,13 @@ export const useFileExplorerStore = defineStore("fileExplorer", () => {
                 children = await namespacesStore.readDirectory<TreeNode>(payload)
             } catch (e) {
                 // Only a 404 means the folder was deleted server-side: render it empty rather than
-                // leaving the el-tree node stuck loading. Any other error is left to propagate as
-                // before (el-tree keeps the node un-expanded and retryable, and it is toasted centrally).
-                if ((e as KestraHttpError)?.status !== 404) throw e
+                // leaving the el-tree node stuck loading. Anything else still propagates and is toasted
+                // centrally, but el-tree clears its own `loading` flag only through the `reject` callback
+                // it passes here, and a node left loading is never re-fetched on a later expand.
+                if ((e as KestraHttpError)?.status !== 404) {
+                    reject?.()
+                    throw e
+                }
                 resolve?.([])
                 return
             }

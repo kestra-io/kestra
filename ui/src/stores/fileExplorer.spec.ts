@@ -115,6 +115,20 @@ describe("fileExplorer store", () => {
         expect(filesStore.rootLoaded).toBe(true)
     })
 
+    it("should clear the tree when the root load fails so a stale namespace's files are not shown", async () => {
+        const filesStore = store()
+        readDirectory.mockResolvedValueOnce([{type: "File", fileName: "one.txt"}])
+        await filesStore.loadNodes()
+        expect(filesStore.fileTree).toHaveLength(1)
+
+        // The store is a singleton across navigation: a failed load must not leave the previous
+        // namespace's files rendered as the new one's.
+        readDirectory.mockRejectedValueOnce(Object.assign(new Error("boom"), {status: 500}))
+        await filesStore.loadNodes()
+
+        expect(filesStore.fileTree).toEqual([])
+    })
+
     it("should resolve a failed sub-folder expansion as empty rather than leaving it stuck loading", async () => {
         const filesStore = store()
         readDirectory
@@ -138,9 +152,12 @@ describe("fileExplorer store", () => {
         const folder = filesStore.fileTree[0]
 
         const resolve = vi.fn()
+        const reject = vi.fn()
         // A transient error must not resolve the node as empty (el-tree would cache it and hide the real children).
-        await expect(filesStore.loadNodes({level: 1, data: {id: folder.id}} as unknown as ElTreeNode, resolve)).rejects.toThrow("boom")
+        await expect(filesStore.loadNodes({level: 1, data: {id: folder.id}} as unknown as ElTreeNode, resolve, reject)).rejects.toThrow("boom")
         expect(resolve).not.toHaveBeenCalled()
+        // el-tree clears its `loading` flag only through `reject`; without it the node is pinned spinning.
+        expect(reject).toHaveBeenCalled()
     })
 
     it("should not create anything when the name only holds separators", async () => {

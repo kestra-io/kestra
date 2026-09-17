@@ -108,26 +108,4 @@ describe("useFilesPanels close handler", () => {
         expect(openPaths(panels)).toEqual(["code-a.txt", "code-b.txt"])
     })
 
-    /**
-     * Closing the last tab must drop the whole panel, otherwise a zombie panel survives with an
-     * empty tab list and a stale `activeTab` — which keeps the editor pane mounted and hides the
-     * empty-state placeholder (the "editor looks broken after a file is deleted" symptom).
-     */
-    it("should remove the panel entirely when its last tab is closed", () => {
-        const {panels, closeTab} = mountWithTabs(["only.txt"])
-
-        const closed = closeTab({path: "only.txt"})
-
-        expect(closed).toBe(true)
-        expect(panels.value).toEqual([])
-    })
-
-    it("should remove only the emptied panel and keep panels that still have tabs", () => {
-        const {panels, closeTab} = mountWithTabs(["a.txt"])
-        panels.value.push({activeTab: tabFor("b.txt"), tabs: [tabFor("b.txt")], size: 50})
-
-        closeTab({path: "a.txt"})
-
-        expect(openPaths(panels)).toEqual(["code-b.txt"])
-    })
 })

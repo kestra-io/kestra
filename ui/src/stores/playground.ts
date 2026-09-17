@@ -5,13 +5,12 @@ import type {FlowGraph} from "@kestra-io/topology/vue-flow-utils"
 import {Execution, useExecutionsStore} from "./executions"
 import {normalize} from "../utils/inputs"
 import {useRoute, useRouter} from "vue-router"
-import {State} from "@kestra-io/design-system"
+import {State, isDeepEqual} from "@kestra-io/design-system"
 import {useToast} from "../utils/toast"
 import {useI18n} from "vue-i18n"
 import {Flow, useFlowStore} from "./flow"
 import type {FlowForExecution} from "@kestra-io/kestra-sdk"
 import {useFileExplorerStore} from "./fileExplorer"
-import isEqual from "lodash/isEqual"
 
 // Loaded on demand: this store is reachable from the top nav bar, and statically
 // its graph helpers put Vue Flow and dagre in the bundle every page loads.
@@ -127,8 +126,8 @@ export const usePlaygroundStore = defineStore("playground", () => {
                 store: false,
             })
 
-            if(!isEqual(lastExecutionFlow.inputs, flowStore.flow.inputs)
-                || !isEqual(lastExecutionFlow.labels, flowStore.flow.labels)){
+            if(!isDeepEqual(lastExecutionFlow.inputs, flowStore.flow.inputs)
+                || !isDeepEqual(lastExecutionFlow.labels, flowStore.flow.labels)){
                 return false
             };
         }

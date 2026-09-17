@@ -61,7 +61,7 @@
         UPDATE_YAML_FUNCTION_INJECTION_KEY,
     } from "./injectionKeys"
     import {useFlowFields} from "./utils/useFlowFields"
-    import debounce from "lodash/debounce"
+    import {debounce} from "@kestra-io/design-system"
     import {NoCodeProps} from "../flows/noCodeTypes"
     import {useFlowStore} from "../../stores/flow"
     import {usePluginsStore} from "../../stores/plugins"

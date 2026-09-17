@@ -451,6 +451,7 @@ If your `<style>` block needs to exist:
 - `dateUtils` — `dateFilter()`, `parseIso()`, `toIsoKeepOffset()`, `currentTimezone()`, `timezonesWithOffset()`, `currentLocale()`, `setLocale()`, `DATE_FORMAT_STORAGE_KEY`, `TIMEZONE_STORAGE_KEY`
 - `durationUtils` — `duration()`, `isValidDuration()`, `humanDuration()` — ISO 8601 ↔ ms and human-readable
 - `stringUtils` — `afterLastDot()`
+- `escapeHtml()`, `cloneDeep()`, `deepMerge()`, `isDeepEqual()`, `isPlainObject()`, `getPath()`, `setPath()`, `groupBy()`, `mapValues()`, `debounce()`, `throttle()` — the general-purpose helpers that replaced lodash. `debounce`/`throttle` return a function carrying `cancel()` and `flush()`. Do not add `lodash` back for any of these
 - `fileUtils` — `isFileUri()`, `fileName()`, `fileExtension()`, `fileIcon()` — storage-URI detection and the file symbol used by `KsFileTag`
 - `flowYamlUtils` — YAML parsing / manipulation for flow definitions
 - `Comparators` — enum of filter comparison operators

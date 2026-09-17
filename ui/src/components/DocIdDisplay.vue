@@ -43,7 +43,7 @@
     left: 0;
     padding: .5rem 1rem;
     background-color: var(--ks-text-link);
-    color: var(--ks-bg-elevated);
+    color: var(--ks-btn-primary-text);
     z-index: 2000;
     display: flex;
     gap: .5rem;

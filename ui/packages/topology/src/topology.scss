@@ -1,5 +1,6 @@
 @use "@kestra-io/design-system/src/assets/styles/color-palette" as *;
 
+/* design-system-disable-start: composes the --ks-node-* and --ks-topology-icon-* tokens from the palette, as the design system does */
 $node-default: #7081b9;
 
 $node-colors: (
@@ -24,8 +25,9 @@ $node-colors: (
 html.dark {
     --ks-node-default: #{$base-gray-neutral-400};
 }
+/* design-system-disable-end */
 
-.text-danger { color: $base-red-500; }
+.text-danger { color: var(--ks-text-error); }
 
 .button-icon { font-size: var(--ks-font-size-2xs); }
 
@@ -124,7 +126,7 @@ html.dark {
         display: flex;
         justify-content: center;
         padding-right: 3px;
-        color: white;
+        color: var(--ks-btn-primary-text);
     }
     .vue-flow__node-cluster { pointer-events: none !important; }
     .vue-flow__handle       { opacity: 0 !important; }

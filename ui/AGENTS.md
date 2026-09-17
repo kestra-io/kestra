@@ -291,17 +291,16 @@ npm run check:types && npm run test:unit && npm run lint
 
 `npm run check:ts-any` compares the explicit `any` per file against `scripts/explicit-any/baseline.json`. It fails when a file gains one, so type it instead of raising the number. It also fails when a file loses one, because the baseline has to come down with the code: run `npm run check:ts-any -- --write` and commit the smaller numbers, or install the repo's git hooks (`.github/.hooks/setup_hooks.sh`) and the pre-commit hook does it for you. `--write` only ever lowers; it refuses to raise a count.
 
-Colour is gated automatically. `tests/unit/designSystem/colorGuard.spec.ts` fails on any hex, `rgb()`, `--el-*`, `--bs-*`, SCSS colour variable or bare keyword colour reaching a colour property anywhere under `ui/src`, and prints `path:line (colours)` for each. It runs with `npm run test:unit` and on every PR. Replace what it reports with a `--ks-*` token, a `Ks*` prop, or a change in the design system.
+Colour is gated automatically. `tests/unit/designSystem/colorGuard.spec.ts` fails on any hex, `rgb()`, `hsl()`, `oklch()`, `--el-*`, `--bs-*`, SCSS colour variable or bare keyword colour reaching a colour property anywhere under `ui/src` and `ui/packages/topology/src`, and prints `path:line (colours)` for every offending line. It runs with `npm run test:unit` and on every PR. Replace what it reports with a `--ks-*` token, a `Ks*` prop, or a change in the design system.
 
-Three escape hatches exist, each taking a reason, for the case the guard cannot judge: artwork whose colours **are** the asset (a brand mark, a third-party logo) rather than a themed surface. Nothing else qualifies, and a hardcoded colour that a token could carry is a bug whether or not the guard is silenced.
+Two escape hatches exist, each taking a reason, for the case the guard cannot judge: artwork whose colours **are** the asset (a brand mark, a third-party logo) rather than a themed surface. Nothing else qualifies, and a hardcoded colour that a token could carry is a bug whether or not the guard is silenced. There is deliberately no whole-file opt-out, and a `-start` with no `-end` is reported instead of muting the rest of the file.
 
 ```scss
-/* design-system-disable: third-party brand mark, recolouring it would misrepresent the brand */
 /* design-system-disable-next-line: the Kestra mark is fixed artwork */
 /* design-system-disable-start: … */  /* … */  /* design-system-disable-end */
 ```
 
-Prefer the narrowest one that covers the colours: a whole-file opt-out also exempts every rule added to that file later. The guard reads `.vue`, `.scss` and `.ts`, and in a `.vue` file it reads `<style>` blocks plus `fill=` / `stroke=` attributes, so a `//`, `/* */` or `<!-- -->` comment all work.
+The guard reads `.vue`, `.scss`, `.css`, `.ts` and `.js`; in a `.vue` file it reads `<style>` blocks plus `fill=` / `stroke=` attributes, and in a script it reads a hex under a colour-named key (`colorHex: "#…"`), so a `//`, `/* */` or `<!-- -->` comment all work.
 
 Spacing, radii and `:deep()` are not gated, so still read your own diff for those:
 

@@ -32,6 +32,8 @@
             filter
         />
     </div>
+    <!-- A limit record still counting slots for a flow that no longer declares a concurrency
+         block: it cannot be rendered as a ratio, but we should display it anyway. -->
     <KsAlert
         v-else-if="staleLimit"
         type="warning"

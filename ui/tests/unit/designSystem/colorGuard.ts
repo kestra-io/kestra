@@ -12,16 +12,15 @@ const NOT_A_COLOUR = new Set(`${CSS_WIDE} ${LINE} ${BACKGROUND} ${COLOUR_FUNCTIO
 
 const FOREIGN_TOKEN = /var\(\s*--(?:k?el|bs)-[\w-]+/g
 const SCSS_VARIABLE = /\$[\w-]+/g
-const HEX_OR_RGB = /#[0-9a-fA-F]{3,8}\b|rgba?\(/g
+const HEX_OR_FUNCTION = /#[0-9a-fA-F]{3,8}\b|\b(?:rgba?|hsla?|hwb|lab|lch|oklab|oklch)\(/g
 const DECLARATION = /(?:^|[;{}])\s*([a-z-]+)\s*:([^;{}]+)/g
 const PATTERNS = [
-    /(?:color|background|border|outline|fill|stroke|shadow)[a-z-]*\s*:[^;]*#[0-9a-fA-F]{3,8}\b/,
-    /--[a-z0-9-]+\s*:\s*#[0-9a-fA-F]{3,8}\b/,
+    /(?:color|background|border|outline|fill|stroke|shadow)[a-zA-Z-]*\s*:[^;]*#[0-9a-fA-F]{3,8}\b/,
+    /(?:--|\$)[\w-]+\s*:\s*#[0-9a-fA-F]{3,8}\b/,
     /(?:fill|stroke)\s*=\s*\\?["']#[0-9a-fA-F]{3,8}/,
-    /\brgba?\(\s*\d/,
+    /\b(?:rgba?|hsla?|hwb|lab|lch|oklab|oklch)\(\s*[\d.]/,
 ]
 
-const DISABLE_FILE = /(?:\/\/|\/\*|<!--)[^\n]*design-system-disable(?!-next-line|-start|-end)/
 const DISABLE_NEXT_LINE = /(?:\/\/|\/\*|<!--)[^\n]*design-system-disable-next-line/
 const DISABLE_START = /(?:\/\/|\/\*|<!--)[^\n]*design-system-disable-start/
 const DISABLE_END = /(?:\/\/|\/\*|<!--)[^\n]*design-system-disable-end/
@@ -30,7 +29,7 @@ const sources = (dir: string): string[] =>
     readdirSync(dir, {withFileTypes: true}).flatMap((entry) => {
         const path = join(dir, entry.name)
         if (entry.isDirectory()) return sources(path)
-        return /\.(vue|scss|ts)$/.test(entry.name) ? [path] : []
+        return /\.(vue|s?css|[jt]s)$/.test(entry.name) ? [path] : []
     })
 
 /** Comments blanked in place, keeping every newline so reported line numbers stay real. */
@@ -41,7 +40,7 @@ const withoutComments = (source: string): string =>
 
 /** The same source with everything outside a `<style>` block blanked, since `color:` is also object syntax. */
 const styleOnly = (source: string, file: string): string => {
-    if (file.endsWith(".scss")) return source
+    if (/\.s?css$/.test(file)) return source
     if (!file.endsWith(".vue")) return source.replace(/[^\n]/g, " ")
     return source.replace(/<style[^>]*>[\s\S]*?<\/style>|[^\n]/g, (match) => (match.length > 1 ? match : " "))
 }
@@ -80,9 +79,9 @@ const keywordColours = (styles: string): Map<number, string[]> => {
 }
 
 /**
- * Returns `path:line (colours)` for every file hardcoding a colour; empty when clean. A file opts out with
- * a `design-system-disable: reason` comment, a single line with `design-system-disable-next-line`, and a
- * run of lines between `design-system-disable-start` and `design-system-disable-end`.
+ * Returns `path:line (colours)` for every line hardcoding a colour; empty when clean. A line opts out with
+ * `design-system-disable-next-line` on the line before it, and a run of lines with `design-system-disable-start`
+ * before and `design-system-disable-end` after it; a start with no end is reported instead of muting the rest.
  * Callers pass feature roots only: `ui/packages/design-system` composes the tokens from raw palette values,
  * so scanning it would report the palette itself.
  */
@@ -90,27 +89,24 @@ export const findHardcodedColors = (srcDir: string): string[] =>
     sources(srcDir).flatMap((file) => {
         const path = relative(srcDir, file).replaceAll("\\", "/")
         const raw = readFileSync(file, "utf8")
-        if (DISABLE_FILE.test(raw)) return []
         const muted = new Set<number>()
-        let inBlock = false
+        let blockStart: number | undefined
         raw.split("\n").forEach((line, index) => {
-            if (DISABLE_END.test(line)) inBlock = false
-            else if (DISABLE_START.test(line)) inBlock = true
-            if (inBlock) muted.add(index)
+            if (DISABLE_END.test(line)) blockStart = undefined
+            else if (DISABLE_START.test(line)) blockStart = index
+            if (blockStart !== undefined) muted.add(index)
             if (DISABLE_NEXT_LINE.test(line)) muted.add(index + 1)
         })
+        const unterminated = blockStart === undefined
+            ? []
+            : [`${path}:${blockStart + 1} (design-system-disable-start without design-system-disable-end)`]
 
         const source = withoutComments(raw)
         const keywords = keywordColours(styleOnly(source, file))
-        const offenders = source
-            .split("\n")
-            .flatMap((line, index) =>
-                !muted.has(index) && (PATTERNS.some((pattern) => pattern.test(line)) || keywords.has(index))
-                    ? [{line, index}]
-                    : [])
-        if (!offenders.length) return []
-
-        const colours = new Set(offenders.flatMap(({line, index}) =>
-            [...line.match(HEX_OR_RGB) ?? [], ...keywords.get(index) ?? []]))
-        return [`${path}:${offenders[0].index + 1} (${[...colours].join(", ")})`]
+        const offenders = source.split("\n").flatMap((line, index) => {
+            if (muted.has(index) || !(PATTERNS.some((pattern) => pattern.test(line)) || keywords.has(index))) return []
+            const colours = new Set([...line.match(HEX_OR_FUNCTION) ?? [], ...keywords.get(index) ?? []])
+            return [`${path}:${index + 1} (${[...colours].join(", ")})`]
+        })
+        return [...unterminated, ...offenders]
     })

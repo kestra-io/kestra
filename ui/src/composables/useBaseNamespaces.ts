@@ -136,7 +136,10 @@ export const useBaseNamespacesStore = () => {
         }
     }
 
-    async function usableSecrets(this: ReturnType<typeof useBaseNamespacesStore>, id: string): Promise<string[]> {
+    async function usableSecrets(
+        this: {loadInheritedSecrets: typeof loadInheritedSecrets; listSecrets: typeof listSecrets},
+        id: string,
+    ): Promise<string[]> {
         return [
             ...Object.values((await this.loadInheritedSecrets({id, commit: false})) ?? {}).flat(),
             ...(await this.listSecrets({id, commit: false})).results.map(({key}) => key),

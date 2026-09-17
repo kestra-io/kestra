@@ -217,9 +217,16 @@
       "copilot": {
         "ask": "Zapytaj Copilota"
       },
+      "error": {
+        "empty": "Brak komunikatu o błędzie dla tego Task Runa."
+      },
       "miniTimeline": {
         "title": "Gdzie to się stało",
         "dragHint": "Przeciągnij, aby wybrać zakres czasu i filtrować logi poniżej. Naciśnij Escape, aby wyczyścić."
+      },
+      "attempts": {
+        "title": "Próby",
+        "empty": "Nie zarejestrowano żadnej próby dla tego Task Runa."
       },
       "stateHistory": {
         "title": "Historia statusu",

@@ -217,9 +217,16 @@
       "copilot": {
         "ask": "Chiedi a Copilot"
       },
+      "error": {
+        "empty": "Nessun messaggio di errore è stato registrato per questa esecuzione del Task."
+      },
       "miniTimeline": {
         "title": "Dove è successo",
         "dragHint": "Trascina per selezionare un intervallo di tempo e filtrare i logs sottostanti. Premi Escape per cancellare."
+      },
+      "attempts": {
+        "title": "Tentativi",
+        "empty": "Nessun tentativo è stato registrato per questa esecuzione del Task."
       },
       "stateHistory": {
         "title": "Cronologia dello stato",

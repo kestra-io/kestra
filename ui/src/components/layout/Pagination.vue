@@ -38,6 +38,7 @@
     import {ref, computed, watch} from "vue";
     import {useI18n} from "vue-i18n";
     import {useRoute} from "vue-router";
+    import {paginationSizeKey} from "../../composables/useRestoreUrl";
 
     const props = defineProps<{
         total?: number;
@@ -81,6 +82,7 @@
     function pageSizeChange(value: number) {
         internalPage.value = 1;
         internalSize.value = value;
+        window.localStorage?.setItem(paginationSizeKey(route), value.toString());
         emit("page-changed", {
             page: 1,
             size: internalSize.value,

@@ -1,5 +1,18 @@
 import {computed, nextTick, onMounted, ref} from "vue";
 import {RouteLocation, useRoute, useRouter} from "vue-router";
+import {storageKeys} from "../utils/constants";
+
+const PAGE_SIZES = [10, 25, 50, 100];
+
+export function paginationSizeKey(route: RouteLocation): string {
+    return `${storageKeys.PAGINATION_SIZE}__${String(route.name)}`;
+}
+
+/** Unknown values are ignored rather than shown, so a stale or hand-edited entry cannot reach the page-size control. */
+function getStoredSize(route: RouteLocation): string | undefined {
+    const stored = Number(window.localStorage?.getItem(paginationSizeKey(route)));
+    return PAGE_SIZES.includes(stored) ? String(stored) : undefined;
+}
 
 interface UseRestoreUrlOptions {
     restoreUrl?: boolean;
@@ -23,33 +36,39 @@ function getRestoredUrlValue(route: RouteLocation) {
 
 export function getRestoredQuery(route: RouteLocation) {
     const localStorageValue = getRestoredUrlValue(route);
-    if(localStorageValue === null){
-        return {
-            query: route.query,
-            change: false,
-            localStorageValue,
-        };
-    };
     const query = {...route.query};
-    const local = {...localStorageValue};
 
     let change = false;
 
-    for (const key in local) {
-        if (key === "page") {
-            continue;
+    if (localStorageValue !== null) {
+        const local = {...localStorageValue};
+
+        for (const key in local) {
+            if (key === "page") {
+                continue;
+            }
+            if (!query[key] && local[key]) {
+                // empty array break the application
+                if (local[key] instanceof Array && local[key].length === 0) {
+                    continue;
+                }
+
+                if(local[key] === query[key]){
+                    continue;
+                }
+
+                query[key] = local[key];
+                change = true;
+            }
         }
-        if (!query[key] && local[key]) {
-            // empty array break the application
-            if (local[key] instanceof Array && local[key].length === 0) {
-                continue;
-            }
+    }
 
-            if(local[key] === query[key]){
-                continue;
-            }
-
-            query[key] = local[key];
+    // The size rides along with the restore so it reaches the URL in the same navigation as the
+    // filters: pushed afterwards it is dropped by the default-filter replace on pages that have one.
+    if (!query.size) {
+        const storedSize = getStoredSize(route);
+        if (storedSize) {
+            query.size = storedSize;
             change = true;
         }
     }
@@ -126,7 +145,7 @@ export default function useRestoreUrl(options: UseRestoreUrlOptions = {}) {
      * Only triggers when restoreUrl is enabled and saved state exists.
      */
     onMounted(() => {
-        if (restoreUrl && localStorageValue.value){
+        if (restoreUrl && (localStorageValue.value || getStoredSize(route))){
             if(!route.query || Object.keys(route.query).length === 0) {
                 loadInit.value = false;
                 goToRestoreUrl();

@@ -124,7 +124,7 @@ dependencies {
         // rather than winning by Gradle's highest-version conflict resolution. The binary's OTLP
         // envelope key has to match what TaskLogLineMatcher parses, and a mismatch emits valid
         // output that Kestra silently ingests none of — so the version ships only when bumped here.
-        api 'io.kestra:kotlp:0.1.2!!'
+        api 'io.kestra:kotlp:0.1.5!!'
         api "org.opensearch.client:opensearch-java:$opensearchVersion"
         api "org.opensearch.client:opensearch-rest-client:$opensearchRestVersion"
         api "org.opensearch.client:opensearch-rest-high-level-client:$opensearchRestVersion" // used by the elasticsearch plugin

@@ -44,7 +44,7 @@ async function mountActions(type: string, grouped = false) {
 }
 
 describe("TaskRunActions", () => {
-    it.each([false, true])("should open all iterations for a nested Loop without outputs (grouped: %s)", async grouped => {
+    it.each([false, true])("shouldOpenAllIterationsWhenNestedLoopHasNoOutputs (grouped: %s)", async grouped => {
         const {wrapper, router} = await mountActions("io.kestra.plugin.core.flow.Loop", grouped)
         const iterations = wrapper.findAllComponents(KsDropdownItem).find(item => item.text() === "Iterations")
 
@@ -61,23 +61,37 @@ describe("TaskRunActions", () => {
         })
     })
 
-    it("should hide iterations for ordinary tasks and while the flow is unavailable", async () => {
+    it("shouldHideIterationsWhenTaskIsNotALoop", async () => {
         const {wrapper} = await mountActions("io.kestra.plugin.core.log.Log")
 
         expect(wrapper.findAllComponents(KsDropdownItem).map(item => item.text())).not.toContain("Iterations")
+    })
+
+    it("shouldHideIterationsWhenFlowIsUnavailable", async () => {
+        const {wrapper} = await mountActions("io.kestra.plugin.core.flow.Loop")
+
+        expect(wrapper.findAllComponents(KsDropdownItem).map(item => item.text())).toContain("Iterations")
         await wrapper.setProps({flow: undefined})
         expect(wrapper.findAllComponents(KsDropdownItem).map(item => item.text())).not.toContain("Iterations")
     })
 
-    it("should use the topology node type for Loops inside an expanded subflow", async () => {
+    it("shouldUseTopologyNodeTypeWhenLoopIsInsideExpandedSubflow", async () => {
         const {wrapper, router} = await mountActions("io.kestra.plugin.core.log.Log")
-        await wrapper.setProps({taskType: "io.kestra.plugin.core.flow.Loop"})
+        await wrapper.setProps({
+            taskType: "io.kestra.plugin.core.flow.Loop",
+            taskRun: {id: "subflow-task-run", taskId: "subflow-loop", state: {current: "RUNNING"}},
+            execution: {id: "subflow-execution", namespace: "tests", flowId: "child-flow", state: {current: "RUNNING"}},
+        })
         const iterations = wrapper.findAllComponents(KsDropdownItem).find(item => item.text() === "Iterations")
 
         expect(iterations).toBeDefined()
         await iterations!.get("[role=\"menuitem\"]").trigger("click")
         await flushPromises()
 
-        expect(router.currentRoute.value.query["filters[parentId][EQUALS]"]).toBe("parent-execution")
+        expect(router.currentRoute.value.query).toEqual({
+            "filters[parentId][EQUALS]": "subflow-execution",
+            "filters[kind][EQUALS]": "LOOP",
+            "filters[taskId][EQUALS]": "subflow-loop",
+        })
     })
 })

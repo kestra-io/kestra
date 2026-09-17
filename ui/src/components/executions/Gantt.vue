@@ -143,6 +143,7 @@
                                             <div class="task-actions" @click.stop>
                                                 <TaskRunActions
                                                     :taskRun="item.task"
+                                                    :taskType="taskTypeByTaskRunId[item.task.id]"
                                                     :execution="execution"
                                                     :flow="executionsStore.flow"
                                                 />

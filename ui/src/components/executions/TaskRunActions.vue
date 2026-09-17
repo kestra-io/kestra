@@ -23,14 +23,7 @@
                 <KsDropdownItem
                     v-if="isLoop"
                     :icon="Repeat"
-                    @click="router.push({
-                        name: 'executions/list',
-                        query: {
-                            'filters[parentId][EQUALS]': execution.id,
-                            'filters[kind][EQUALS]': 'LOOP',
-                            'filters[taskId][EQUALS]': taskRun.taskId,
-                        },
-                    })"
+                    @click="openIterations"
                 >
                     {{ $t("iterations") }}
                 </KsDropdownItem>
@@ -193,6 +186,17 @@
     const canReadFlow = computed(() =>
         authStore.user?.isAllowed(resource.FLOW, action.VIEW, String(route.params.namespace)),
     )
+
+    function openIterations() {
+        router.push({
+            name: "executions/list",
+            query: {
+                "filters[parentId][EQUALS]": props.execution.id,
+                "filters[kind][EQUALS]": "LOOP",
+                "filters[taskId][EQUALS]": props.taskRun.taskId,
+            },
+        })
+    }
 
     function downloadNameFor(currentTaskRunId: string): string {
         const now = new Date()

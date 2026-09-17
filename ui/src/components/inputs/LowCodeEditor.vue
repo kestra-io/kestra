@@ -61,7 +61,7 @@
                     v-if="isReadOnly && taskProps.execution && taskProps.taskRun"
                     class="node-action-button"
                     :taskRun="taskProps.taskRun"
-                    :taskType="taskProps.task.type"
+                    :taskType="taskProps.task?.type"
                     :taskRuns="taskProps.taskRuns"
                     :execution="taskProps.execution"
                     :flow="flowStore.flow"

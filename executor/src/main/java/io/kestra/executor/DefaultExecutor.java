@@ -469,7 +469,11 @@ public class DefaultExecutor extends AbstractService implements Executor {
             log.error(UNABLE_TO_DESERIALIZE_AN_EXECUTION, either.getRight().getMessage());
             return;
         }
-        executionEventMessageHandler.handle(either.getLeft()).ifPresent(this::toExecution);
+        onExecutionEvent(either.getLeft());
+    }
+
+    void onExecutionEvent(ExecutionEvent event) {
+        executionEventMessageHandler.handle(event).ifPresent(this::toExecution);
     }
 
     private void workerTaskResultQueue(Either<WorkerTaskResult, DeserializationException> either) {
@@ -477,7 +481,11 @@ public class DefaultExecutor extends AbstractService implements Executor {
             log.error("Unable to deserialize a worker task result: {}", either.getRight().getMessage(), either.getRight());
             return;
         }
-        workerTaskResultMessageHandler.handle(either.getLeft()).ifPresent(this::toExecution);
+        onWorkerTaskResult(either.getLeft());
+    }
+
+    void onWorkerTaskResult(WorkerTaskResult workerTaskResult) {
+        workerTaskResultMessageHandler.handle(workerTaskResult).ifPresent(this::toExecution);
     }
 
     private void killQueue(Either<ExecutionKilled, DeserializationException> either) {

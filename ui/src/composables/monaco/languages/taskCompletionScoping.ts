@@ -49,7 +49,7 @@ function innermostTaskIndex(candidates: unknown[]): number {
 }
 
 function probeTaskLike(source: string, cursorIndex: number): TaskLike | undefined {
-    return probe(source, cursorIndex, (candidates, path) => {
+    return probe(source, cursorIndex, (candidates) => {
         const taskIndex = innermostTaskIndex(candidates)
         return taskIndex === -1 ? undefined : (candidates[taskIndex] as TaskLike)
     })

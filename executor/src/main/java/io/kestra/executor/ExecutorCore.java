@@ -1,5 +1,6 @@
 package io.kestra.executor;
 
+import java.time.Clock;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Collection;
@@ -105,6 +106,7 @@ public class ExecutorCore {
     private final MultipleConditionEventMessageHandler multipleConditionEventMessageHandler;
     private final LoopExecutionEventMessageHandler loopExecutionEventMessageHandler;
     private final Timer flowTriggerProcessingTimer;
+    private final Clock clock;
 
     @Inject
     public ExecutorCore(
@@ -121,6 +123,7 @@ public class ExecutorCore {
         KillSwitchService killSwitchService,
         KillSwitchActionService killSwitchActionService,
         MetricRegistry metricRegistry,
+        Clock clock,
         DispatchQueueInterface<Execution> executionQueue,
         DispatchQueueInterface<ExecutionEvent> executionEventQueue,
         BroadcastQueueInterface<FollowExecutionEvent> followExecutionEventQueue,
@@ -167,6 +170,7 @@ public class ExecutorCore {
         this.subflowExecutionEndMessageHandler = subflowExecutionEndMessageHandler;
         this.multipleConditionEventMessageHandler = multipleConditionEventMessageHandler;
         this.loopExecutionEventMessageHandler = loopExecutionEventMessageHandler;
+        this.clock = clock;
         this.flowTriggerProcessingTimer = metricRegistry
             .timer(MetricRegistry.METRIC_EXECUTOR_FLOW_TRIGGER_PROCESSING_DURATION, MetricRegistry.METRIC_EXECUTOR_FLOW_TRIGGER_PROCESSING_DURATION_DESCRIPTION);
     }
@@ -433,7 +437,7 @@ public class ExecutorCore {
     private void emitExecutionStatistic(Execution execution) {
         if (ExecutionKind.isNormal(execution)) {
             // An end date should always be set, but use the current date as a safety belt
-            Instant bucket = execution.getState().getEndDate().orElse(Instant.now()).truncatedTo(ChronoUnit.MINUTES);
+            Instant bucket = execution.getState().getEndDate().orElse(clock.instant()).truncatedTo(ChronoUnit.MINUTES);
             this.executionStatisticQueue.emitAsync(new ExecutionStatistic(execution, bucket));
         }
     }

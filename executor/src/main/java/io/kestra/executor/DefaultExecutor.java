@@ -1,7 +1,7 @@
 package io.kestra.executor;
 
+import java.time.Clock;
 import java.time.Duration;
-import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -63,7 +63,8 @@ public class DefaultExecutor extends AbstractService implements Executor {
     // which can occur at least in tests.
     private final KestraContext kestraContext;
 
-    private final ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
+    private final ScheduledExecutorService scheduledExecutorService;
+    private final Clock clock;
     private final ExecutorConfiguration executorConfiguration;
     private final ExecutorCore executorCore;
     private ScheduledFuture<?> executionDelayFuture;
@@ -87,6 +88,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
     public DefaultExecutor(
         ApplicationEventPublisher<ServiceStateChangeEvent> eventPublisher,
         ExecutorsUtils executorsUtils,
+        Clock clock,
         ExecutorConfiguration executorConfiguration,
         KestraContext kestraContext,
         DispatchQueueInterface<Execution> executionQueue,
@@ -103,6 +105,8 @@ public class DefaultExecutor extends AbstractService implements Executor {
         MultipleConditionStateStore multipleConditionStateStore,
         MetricRegistry metricRegistry) {
         super(ServiceType.EXECUTOR, eventPublisher);
+        this.clock = clock;
+        this.scheduledExecutorService = executorsUtils.singleThreadScheduledExecutor("executor-loops");
 
         this.executorConfiguration = executorConfiguration;
         this.kestraContext = kestraContext;
@@ -132,7 +136,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
     }
 
     @PostConstruct
-    void initMetrics() {
+    public void initMetrics() {
         // create metrics to store thread count
         this.metricRegistry.gauge(MetricRegistry.METRIC_EXECUTOR_THREAD_COUNT, MetricRegistry.METRIC_EXECUTOR_THREAD_COUNT_DESCRIPTION, numberOfThreads);
 
@@ -424,7 +428,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
             return;
         }
 
-        executionDelayLoopTimer.record(() -> executorCore.onExpiredExecutionDelays(Instant.now()));
+        executionDelayLoopTimer.record(() -> executorCore.onExpiredExecutionDelays(clock.instant()));
     }
 
     private void executionSLAMonitorLoop() {
@@ -432,7 +436,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
             return;
         }
 
-        slaMonitorLoopTimer.record(() -> executorCore.onExpiredSLAMonitors(Instant.now()));
+        slaMonitorLoopTimer.record(() -> executorCore.onExpiredSLAMonitors(clock.instant()));
     }
 
     private void multipleConditionPurgeLoop() {
@@ -440,7 +444,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
             return;
         }
 
-        multipleConditionPurgeLoopTimer.record(() -> multipleConditionStateStore.purgeExpired(Instant.now()));
+        multipleConditionPurgeLoopTimer.record(() -> multipleConditionStateStore.purgeExpired(clock.instant()));
     }
 
     private void enterMaintenance() {

@@ -88,6 +88,20 @@ tasks:
             version: "1.2.3",
         })
     })
+
+    it("resolves the task even if its id matches a flow input", () => {
+        const flow = `id: myflow
+namespace: my.ns
+inputs:
+  - id: same
+    type: STRING
+tasks:
+  - id: same
+    type: io.kestra.plugin.core.log.Log
+    mes`
+        expect(taskTypeAtCursor({source: flow, cursorIndex: flow.length})).toBe("io.kestra.plugin.core.log.Log")
+    })
+
     it("returns undefined for flow inputs/outputs because they are isolated via YAML path", () => {
         const inputFlow = `id: myflow
 namespace: my.ns

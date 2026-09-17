@@ -15,19 +15,6 @@ function isMap(value: unknown): value is TaskLike {
     return typeof value === "object" && value !== null && !Array.isArray(value)
 }
 
-function isReachableById(container: unknown, id: string): boolean {
-    if (typeof container === "object" && container !== null) {
-        if ((container as Record<string, unknown>).id === id) {
-            return true
-        }
-        return Object.values(container).some((item) => isReachableById(item, id))
-    }
-    if (Array.isArray(container)) {
-        return container.some((item) => isReachableById(item, id))
-    }
-    return false
-}
-
 function probeIndexes(source: string, cursorIndex: number): number[] {
     const safeCursorIndex = Math.max(0, Math.min(cursorIndex - 1, source.length - 1))
     const indexes = [safeCursorIndex]
@@ -41,10 +28,10 @@ function probeIndexes(source: string, cursorIndex: number): number[] {
     return indexes
 }
 
-function probe<T>(source: string, cursorIndex: number, pick: (candidates: unknown[]) => T | undefined): T | undefined {
+function probe<T>(source: string, cursorIndex: number, pick: (candidates: unknown[], path?: string[]) => T | undefined): T | undefined {
     for (const probeIndex of probeIndexes(source, cursorIndex)) {
         const localized = YAML_UTILS.localizeElementAtIndex(source, probeIndex)
-        const found = pick([...(localized?.parents ?? []), localized?.value])
+        const found = pick([...(localized?.parents ?? []), localized?.value], localized?.path)
         if (found !== undefined) {
             return found
         }
@@ -62,14 +49,14 @@ function innermostTaskIndex(candidates: unknown[]): number {
 }
 
 function probeTaskLike(source: string, cursorIndex: number): TaskLike | undefined {
-    return probe(source, cursorIndex, (candidates) => {
+    return probe(source, cursorIndex, (candidates, path) => {
         const taskIndex = innermostTaskIndex(candidates)
         return taskIndex === -1 ? undefined : (candidates[taskIndex] as TaskLike)
     })
 }
 
-function probeTaskOwningCursor(source: string, cursorIndex: number): {task: TaskLike; candidates: unknown[]} | undefined {
-    return probe(source, cursorIndex, (candidates) => {
+function probeTaskOwningCursor(source: string, cursorIndex: number): {task: TaskLike; candidates: unknown[]; path?: string[]} | undefined {
+    return probe(source, cursorIndex, (candidates, path) => {
         const taskIndex = innermostTaskIndex(candidates)
         if (taskIndex === -1) {
             return undefined
@@ -78,7 +65,7 @@ function probeTaskOwningCursor(source: string, cursorIndex: number): {task: Task
         // `taskRunner:`…) whose keys come from its own schema, so the task must not scope them.
         return candidates.slice(taskIndex + 1).some(isMap)
             ? undefined
-            : {task: candidates[taskIndex] as TaskLike, candidates}
+            : {task: candidates[taskIndex] as TaskLike, candidates, path}
     })
 }
 
@@ -126,13 +113,10 @@ export function taskIdentityAtCursor(
         if (!result || !isTaskLike(result.task)) {
             return undefined
         }
-        
-        const {task, candidates} = result
-        const root = candidates[0] as Record<string, unknown> | undefined
-        if (root && typeof root === "object" && typeof task.id === "string") {
-            const isExcluded = ["triggers", "inputs", "outputs"].some((section) =>
-                isReachableById(root[section], task.id as string),
-            )
+
+        const {task, path} = result
+        if (path && path.length > 0) {
+            const isExcluded = ["triggers", "inputs", "outputs"].includes(path[0])
             if (isExcluded) {
                 return undefined
             }

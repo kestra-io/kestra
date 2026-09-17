@@ -235,22 +235,16 @@
             <KsEmpty :background="false" :image="images.namespace" :imageSize="120">
                 <template #description>
                     <KsText tag="h3" size="large">
-                        {{ t('source_search.no_results_title', {query}) }}
+                        {{ $t('source_search.no_results_title', {query}) }}
                     </KsText>
                     <KsText tag="p">
-                        {{ t('source_search.no_results_description') }}
+                        {{ $t('source_search.no_results_description') }}
                     </KsText>
                     <KsText v-if="hiddenTypeHint" tag="p">
                         {{ hiddenTypeHint }}
                     </KsText>
 
-                    <i18n-t v-if="suggestedQuery" keypath="source_search.did_you_mean" tag="p">
-                        <template #suggestion>
-                            <KsButton type="text" size="small" @click="query = suggestedQuery">
-                                {{ suggestedQuery }}
-                            </KsButton>
-                        </template>
-                    </i18n-t>
+                    <p v-if="suggestedQuery">{{ didYouMeanTranslation[0] }}<KsButton type="text" size="small" @click="query = suggestedQuery">{{ suggestedQuery }}</KsButton>{{ didYouMeanTranslation[1] }}</p>
                 </template>
                 <div class="source-search__examples">
                     <KsButton v-if="hiddenTypeCounts.length > 0" type="primary" @click="selectAllTypes">
@@ -346,6 +340,7 @@
     import useRouteContext from "../../composables/useRouteContext"
     import useRestoreUrl from "../../composables/useRestoreUrl"
     import {useToast} from "../../utils/toast"
+    import {splitTranslation} from "../../utils/splitTranslation"
     import {useCrossResourceSearchStore} from "../../stores/crossResourceSearch"
     import {computeSelectionSummary, distinctSkipReasons, type ReplaceContext} from "../../utils/sourceSearchDiff"
     import {SEARCH_RESOURCE_TYPES, crossSearchResultKey, searchViewState, type CrossSearchSelection, type SearchResourceType} from "../../utils/crossResourceSearch"
@@ -358,6 +353,7 @@
     const route = useRoute()
     const router = useRouter()
     const toast = useToast()
+    const didYouMeanTranslation = computed(() => splitTranslation(t, "source_search.did_you_mean", "suggestion"))
     const crossResourceSearchStore = useCrossResourceSearchStore()
 
     const resultsRef = ref<InstanceType<typeof SourceSearchResults> | null>(null)
@@ -737,11 +733,15 @@
                 !anyCountingSelected.value &&
                 summaryMatchCount.value === 0
             ) {
-                suggestedQuery.value = await crossResourceSearchStore.searchFlowSuggestion({
+                const suggestion = await crossResourceSearchStore.searchFlowSuggestion({
                     query: currentQuery,
                     namespace: namespaceFilter.value,
                     ...searchFilters.value,
                 }, gen)
+
+                if (suggestion !== undefined) {
+                    suggestedQuery.value = suggestion
+                }
             }
         } finally {
             searchPending.value = false

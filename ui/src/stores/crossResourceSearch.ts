@@ -151,7 +151,7 @@ export const useCrossResourceSearchStore = defineStore("crossResourceSearch", ()
         }
     }
 
-    async function searchFlowSuggestion(params: FlowsSearchParams, gen: number): Promise<string | null> {
+    async function searchFlowSuggestion(params: FlowsSearchParams, gen: number): Promise<string | null | undefined> {
         if (!params.query || params.regex) return null
         const alternativeQuery = getSeparatorVariant(params.query)
 
@@ -164,16 +164,17 @@ export const useCrossResourceSearchStore = defineStore("crossResourceSearch", ()
                 regex: params.regex,
                 scope: params.scope,
                 page: 1,
-                size: SEARCH_PAGE_SIZE,
+                size: 1,
                 q: alternativeQuery,
                 namespace: params.namespace,
             })
 
-            if (!isCurrent(gen) || response.results.length === 0) return null
+            if (!isCurrent(gen)) return undefined
+            if ((response.results ?? []).length === 0) return null
 
             return alternativeQuery
         } catch {
-            return null
+            return isCurrent(gen) ? null : undefined
         }
     }
 

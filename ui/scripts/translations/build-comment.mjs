@@ -10,6 +10,11 @@ import fs from "node:fs"
 
 const [ossReportPath, eeReportPath] = process.argv.slice(2)
 
+// The EE workflow posts this comment on EE pull requests, where an OSS finding is something to fix "upstream".
+// The OSS PR-comment workflow sets BUILD_COMMENT_CONTEXT=oss, where the same finding is fixed right here.
+const OSS_IS_HERE = process.env.BUILD_COMMENT_CONTEXT === "oss"
+const OSS_REPO = OSS_IS_HERE ? "this repository" : "upstream, in [kestra-io/kestra](https://github.com/kestra-io/kestra)"
+
 function readReport(filePath) {
     if (!filePath || !fs.existsSync(filePath)) return null
     return JSON.parse(fs.readFileSync(filePath, "utf-8"))
@@ -41,8 +46,10 @@ if (ossReport && Object.keys(ossReport.missing).length > 0) {
         "### ❌ OSS translations\n\n" +
         "**Missing keys:**\n" +
         formatMissing(ossReport.missing) + "\n\n" +
-        "**What to do:** these keys are missing upstream, in [kestra-io/kestra](https://github.com/kestra-io/kestra). " +
-        "Merge the translation PR there (or wait for it to merge) and rerun this check.",
+        (OSS_IS_HERE
+            ? "**What to do:** run `npm run translations:generate` in `ui/` and commit the locale files together with `fingerprints.json`; never paste the English text into another locale file."
+            : "**What to do:** these keys are missing upstream, in [kestra-io/kestra](https://github.com/kestra-io/kestra). " +
+              "Merge the translation PR there (or wait for it to merge) and rerun this check."),
     )
 }
 
@@ -71,7 +78,7 @@ if (Object.keys(placeholdersOf(ossReport)).length > 0) {
     sections.push(
         "### ❌ OSS translations - broken interpolation placeholders\n\n" +
         formatPlaceholders(placeholdersOf(ossReport)) + "\n\n" +
-        "**What to do:** fix these upstream, in [kestra-io/kestra](https://github.com/kestra-io/kestra)'s `ui/src/translations/`. " +
+        `**What to do:** fix these in ${OSS_REPO}'s \`ui/src/translations/\`. ` +
         "vue-i18n interpolates a single pair of braces (`{name}`); `{{name}}` is a compile error, so `t()` throws and the " +
         "component rendering the key fails outright. Each translation must carry exactly the placeholders its English source declares.",
     )
@@ -94,7 +101,7 @@ if (staleOf(ossReport).length > 0) {
         "### ❌ OSS translations - stale keys\n\n" +
         staleOf(ossReport).map(key => `- \`${key}\``).join("\n") + "\n\n" +
         "**What to do:** each key is new, or its English source changed after the other languages were generated, so those " +
-        "languages no longer say what English says. Run `npm run translations:generate` in [kestra-io/kestra](https://github.com/kestra-io/kestra)'s " +
+        `languages no longer say what English says. Run \`npm run translations:generate\` in ${OSS_IS_HERE ? "" : "[kestra-io/kestra](https://github.com/kestra-io/kestra)'s "}` +
         "`ui/` and commit the result. Never paste the English text into the other locale files.",
     )
 }
@@ -120,7 +127,7 @@ if (undefinedKeysOf(ossReport).length > 0) {
     sections.push(
         "### ❌ OSS translations - keys used in code but defined nowhere\n\n" +
         formatUndefinedKeys(undefinedKeysOf(ossReport)) + "\n\n" +
-        "**What to do:** fix these upstream, in [kestra-io/kestra](https://github.com/kestra-io/kestra). Each key is passed " +
+        `**What to do:** fix these in ${OSS_REPO}. Each key is passed ` +
         "to `t()` but exists in no `en.json`, so the UI renders the raw key id. Add it to `ui/src/translations/en.json` " +
         "(or to the owning design-system `*.locale.ts`), or point the call at an existing key, then run `npm run translations:generate`.",
     )

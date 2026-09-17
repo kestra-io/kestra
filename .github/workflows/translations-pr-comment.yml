@@ -1,0 +1,100 @@
+name: Translations - PR comment
+
+# Posts (and clears) the sticky translation comment on a pull request from the report the PR workflow's
+# `translations` job uploads. A separate workflow because a pull request from a fork runs its jobs with a
+# read-only token and no secrets, so the job itself cannot comment; `workflow_run` executes here, in the
+# base repository's context, with a token that can. For a fork the comment also explains how to get the
+# missing translations generated, since the generate job never runs for forks.
+on:
+  workflow_run:
+    workflows: ["Pull Request Workflow"]
+    types: [completed]
+
+permissions:
+  contents: read
+  actions: read
+  pull-requests: write
+
+jobs:
+  comment:
+    name: 'Translations - Comment on the pull request'
+    if: github.event.workflow_run.event == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      GH_TOKEN: ${{ github.token }}
+      MARKER: "<!-- KESTRA-TRANSLATIONS-COMMENT -->"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        name: Checkout
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: 'ui/.nvmrc'
+
+      # No artifact means the translations job did not run (no UI change): nothing to say.
+      - name: Download the translation report
+        id: report
+        run: |
+          if ! gh run download "${{ github.event.workflow_run.id }}" -R "${{ github.repository }}" -n translations-report -D report 2>/dev/null; then
+            echo "found=false" >> "$GITHUB_OUTPUT"
+            echo "No translation report on this run."
+            exit 0
+          fi
+          echo "found=true" >> "$GITHUB_OUTPUT"
+          jq -r '"pr=\(.pr)\nfork=\(.fork)\noutcome=\(.outcome)"' report/meta.json >> "$GITHUB_OUTPUT"
+          cat report/meta.json
+
+      - name: Build the comment
+        id: body
+        if: steps.report.outputs.found == 'true' && steps.report.outputs.outcome == 'failure'
+        env:
+          FORK: ${{ steps.report.outputs.fork }}
+          PR: ${{ steps.report.outputs.pr }}
+          BUILD_COMMENT_CONTEXT: oss
+        run: |
+          {
+            echo "$MARKER"
+            echo "## 🌐 Translation check failed"
+            echo
+            node ui/scripts/translations/build-comment.mjs report/report.json
+            if [ "$FORK" = "true" ]; then
+              sed -E 's/^ {4}//' <<'GUIDE'
+
+              ### How to get the translations generated
+
+              This pull request comes from a fork, so the job that generates the other languages could not run on it (it needs a key the fork does not have). Three ways forward, any one is enough:
+
+              - **A Kestra maintainer** opens the *Actions* tab, picks **Translations - Generate for a pull request**, clicks *Run workflow* and enters this pull request's number. The commit is pushed onto this branch when the pull request allows edits from maintainers; otherwise the run attaches the generated files as a patch artifact and comments here with the command to apply it.
+              - **The author** ticks *Allow edits from maintainers* in the sidebar, then asks a maintainer to run it.
+              - **The author** generates locally: `cd ui && GEMINI_API_KEY=<key> npm run translations:generate && npm run translations:check`, then commits `ui/src/translations/*.json` and `ui/scripts/translations/fingerprints*.json` together.
+
+              Only the English file (`ui/src/translations/en.json`) is ever written by hand; the other languages are always generated from it.
+          GUIDE
+            fi
+          } > comment.md
+          echo "bytes=$(wc -c < comment.md)" >> "$GITHUB_OUTPUT"
+
+      # One sticky comment per pull request, found by its marker: updated while the check fails, deleted
+      # once it passes so a fixed pull request does not keep showing a failure that no longer exists.
+      - name: Post, update or clear the comment
+        if: steps.report.outputs.found == 'true'
+        env:
+          PR: ${{ steps.report.outputs.pr }}
+          OUTCOME: ${{ steps.report.outputs.outcome }}
+        run: |
+          EXISTING=$(gh api "repos/${{ github.repository }}/issues/$PR/comments" --paginate --jq ".[] | select(.body | startswith(\"$MARKER\")) | .id" | head -1)
+          if [ "$OUTCOME" = "failure" ]; then
+            if [ -n "$EXISTING" ]; then
+              gh api -X PATCH "repos/${{ github.repository }}/issues/comments/$EXISTING" -F body=@comment.md --silent
+              echo "Updated comment $EXISTING on #$PR"
+            else
+              gh api "repos/${{ github.repository }}/issues/$PR/comments" -F body=@comment.md --silent
+              echo "Commented on #$PR"
+            fi
+          elif [ -n "$EXISTING" ]; then
+            gh api -X DELETE "repos/${{ github.repository }}/issues/comments/$EXISTING" --silent
+            echo "Check passed, removed the stale comment $EXISTING from #$PR"
+          else
+            echo "Check passed, nothing to clear on #$PR"
+          fi

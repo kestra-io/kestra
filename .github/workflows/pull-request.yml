@@ -267,13 +267,39 @@ jobs:
             ui-ee/src/
           sparse-checkout-cone-mode: false
 
+      # The report and the PR context are kept as an artifact for the "Translations - PR comment" workflow:
+      # this job cannot comment itself, since a pull request from a fork runs with a read-only token.
       - name: Check translations
+        id: check
+        continue-on-error: true
         run: |
           if [ -d kestra-ee/ui-ee/src ]; then
-            node ui/scripts/translations/check-translations.mjs --scope oss --ee-root kestra-ee
+            node ui/scripts/translations/check-translations.mjs --scope oss --ee-root kestra-ee --report "$RUNNER_TEMP/translations-report/report.json"
           else
-            node ui/scripts/translations/check-translations.mjs --scope oss
+            node ui/scripts/translations/check-translations.mjs --scope oss --report "$RUNNER_TEMP/translations-report/report.json"
           fi
+
+      - name: Record the pull request context for the comment workflow
+        if: always()
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          FORK: ${{ github.event.pull_request.head.repo.fork }}
+          OUTCOME: ${{ steps.check.outcome }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/translations-report"
+          printf '{"pr": %s, "fork": %s, "outcome": "%s"}\n' "$PR_NUMBER" "$FORK" "$OUTCOME" > "$RUNNER_TEMP/translations-report/meta.json"
+
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        name: Upload the translation report
+        if: always()
+        with:
+          name: translations-report
+          path: ${{ runner.temp }}/translations-report
+          retention-days: 1
+
+      - name: Fail if the check failed
+        if: steps.check.outcome == 'failure'
+        run: exit 1
 
   frontend:
     name: Frontend - Tests

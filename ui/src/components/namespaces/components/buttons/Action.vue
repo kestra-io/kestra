@@ -19,6 +19,7 @@
 <script setup lang="ts">
     import type {Component} from "vue"
     import type {RouteLocationRaw} from "vue-router"
+    import type {KsButtonType} from "@kestra-io/design-system"
 
     import Plus from "vue-material-design-icons/Plus.vue"
 
@@ -26,7 +27,7 @@
     const props = defineProps<{
         label: string;
         icon?: Component;
-        type?: "default" | "primary" | "success" | "warning" | "info" | "danger" | "text" | "";
+        type?: KsButtonType;
         to?: RouteLocationRaw;
         loading?: boolean;
         disabled?: boolean;

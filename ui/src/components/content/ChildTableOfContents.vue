@@ -4,8 +4,7 @@
     import {useDocStore} from "../../stores/doc"
     import {RouterLink, useRoute} from "vue-router"
 
-    interface DataItem {children?: DataItem[], path: string}
-    type RawDataItem = Partial<DataItem>
+    interface DataItem {children?: DataItem[], path: string, title?: string}
 
 
     export default defineComponent({
@@ -39,7 +38,7 @@
 
             currentPage = currentPage?.endsWith("/") ? currentPage.slice(0, -1) : currentPage
 
-            const rawChildren = await docStore.children(currentPage) as Record<string, RawDataItem>
+            const rawChildren = await docStore.children(currentPage) as Record<string, Partial<DataItem>>
             const childrenWithMetadata: Record<string, DataItem> = Object.fromEntries(Object.entries(rawChildren).map(([url, metadata]) => [url, {...metadata, path: url}]))
             Object.entries(childrenWithMetadata)
                 .forEach(([url, metadata]) => {

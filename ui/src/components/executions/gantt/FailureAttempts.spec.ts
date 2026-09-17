@@ -73,6 +73,14 @@ describe("FailureAttempts", () => {
         expect(durations).toEqual(["2s, 500ms", "140ms"])
     })
 
+    it("should still show a duration for an attempt that started and ended in the same millisecond", () => {
+        const wrapper = mountAttempts([
+            attempt("FAILED", "2024-01-01T00:00:00.000Z", "2024-01-01T00:00:00.000Z"),
+        ])
+
+        expect(wrapper.findAll(".failure-attempts__meta")[1].text()).toBe("0ms")
+    })
+
     it("should show an empty state when the task run recorded no attempt", () => {
         const wrapper = mountAttempts([])
 

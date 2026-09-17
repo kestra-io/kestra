@@ -1082,6 +1082,7 @@
     "execute backfill": "Выполнить заполнение",
     "relative": "Относительный",
     "relative start date": "Относительная дата начала",
+    "now": "Сейчас",
     "absolute": "Абсолютный",
     "backfill": "Заполнение",
     "Set labels": "Установить метки",

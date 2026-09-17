@@ -1,7 +1,6 @@
 import {useRoute} from "vue-router"
 import {useApiStore} from "../stores/api"
 import {pageFromRoute} from "../utils/eventsRouter"
-import {TOUR_SCENE_IDS} from "../components/onboarding/tour/tourScenes"
 
 /** Bumped from 2.0.0 with the new tour, so its events are distinguishable from the old guide's. */
 export const TOUR_ANALYTICS_VERSION = "3.0.0"
@@ -21,7 +20,12 @@ interface TrackOnboardingOptions {
     additional?: Record<string, unknown>;
 }
 
-export function useOnboardingAnalytics() {
+interface OnboardingAnalyticsOptions {
+    sceneIds: readonly string[];
+    guideId: string;
+}
+
+export function useOnboardingAnalytics({sceneIds, guideId}: OnboardingAnalyticsOptions) {
     const apiStore = useApiStore()
     const route = useRoute()
 
@@ -31,8 +35,8 @@ export function useOnboardingAnalytics() {
         mode,
         additional = {},
     }: TrackOnboardingOptions) => {
-        const step = action && TOUR_SCENE_IDS.includes(action)
-            ? TOUR_SCENE_IDS.indexOf(action) + 1
+        const step = action && sceneIds.includes(action)
+            ? sceneIds.indexOf(action) + 1
             : undefined
 
         apiStore.events({
@@ -41,7 +45,7 @@ export function useOnboardingAnalytics() {
                 version: TOUR_ANALYTICS_VERSION,
                 experience: TOUR_ANALYTICS_EXPERIENCE,
                 template: TOUR_ANALYTICS_EXPERIENCE,
-                guideId: "product_tour",
+                guideId,
                 event,
                 action,
                 step,

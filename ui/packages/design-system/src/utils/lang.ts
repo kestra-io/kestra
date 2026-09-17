@@ -68,7 +68,8 @@ export function cloneDeep<T>(value: T): T {
 
 /**
  * Recursively merges `source` into a copy of `target`; neither argument is mutated.
- * `undefined` source values are skipped and source arrays replace target arrays.
+ * `undefined` source values are skipped and source arrays replace target arrays,
+ * by reference rather than cloned, so the result shares them with `source`.
  */
 export function deepMerge<T extends object, S extends object>(target: T | null | undefined, source: S): T & S {
     const result: Record<string, unknown> = isPlainObject(target) ? {...target} : {}
@@ -81,6 +82,7 @@ export function deepMerge<T extends object, S extends object>(target: T | null |
     return result as T & S
 }
 
+/** Structural comparison of primitives, dates, arrays and plain objects; a cyclic input overflows the stack. */
 export function isDeepEqual(a: unknown, b: unknown): boolean {
     if (a === b) {
         return true

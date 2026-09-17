@@ -5,7 +5,10 @@ import {
     deepMerge,
     escapeHtml,
     getPath,
+    groupBy,
     isDeepEqual,
+    isPlainObject,
+    mapValues,
     setPath,
     throttle,
 } from "../../../src/utils/lang"
@@ -211,5 +214,51 @@ describe("getPath and setPath", () => {
         setPath(target, "meta.label", "b")
 
         expect(target).toEqual({tasks: [{id: "a"}], meta: {label: "b"}})
+    })
+})
+
+describe("isPlainObject", () => {
+    test("accepts object literals and null-prototype objects", () => {
+        expect(isPlainObject({})).toBe(true)
+        expect(isPlainObject(Object.create(null))).toBe(true)
+    })
+
+    test("rejects the values deepMerge and cloneDeep must not walk into", () => {
+        expect(isPlainObject(new Date())).toBe(false)
+        expect(isPlainObject(new Map())).toBe(false)
+        expect(isPlainObject(new (class Thing {})())).toBe(false)
+        expect(isPlainObject([])).toBe(false)
+        expect(isPlainObject(null)).toBe(false)
+    })
+})
+
+describe("groupBy", () => {
+    test("keys by the stringified iteratee result, keeping input order in each group", () => {
+        const rows = [{id: 1, kind: 2}, {id: 2, kind: 1}, {id: 3, kind: 2}]
+
+        expect(groupBy(rows, (row) => row.kind)).toEqual({
+            1: [{id: 2, kind: 1}],
+            2: [{id: 1, kind: 2}, {id: 3, kind: 2}],
+        })
+    })
+
+    test("returns an empty object for an empty input", () => {
+        expect(groupBy([], (item) => String(item))).toEqual({})
+    })
+
+    test("gives a key that names an Object.prototype member its own group", () => {
+        const rows = [{namespace: "constructor"}, {namespace: "dev"}, {namespace: "toString"}]
+
+        expect(groupBy(rows, (row) => row.namespace)).toEqual({
+            constructor: [{namespace: "constructor"}],
+            dev: [{namespace: "dev"}],
+            toString: [{namespace: "toString"}],
+        })
+    })
+})
+
+describe("mapValues", () => {
+    test("passes the key as the second argument and leaves the keys untouched", () => {
+        expect(mapValues({a: 1, b: 2}, (value, key) => `${key}${value}`)).toEqual({a: "a1", b: "b2"})
     })
 })

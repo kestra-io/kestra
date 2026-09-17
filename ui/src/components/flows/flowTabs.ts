@@ -146,7 +146,7 @@ export const FLOW_ENTITY_META: RouteMeta = {
  */
 export const FLOW_ROUTE: RouteRecordRaw = {
     name: FLOW_PARENT_ROUTE,
-    path: "/:tenant?/flows/edit/:namespace/:id",
+    path: "/:tenant/flows/edit/:namespace/:id",
     component: () => import("./FlowRoot.vue"),
     meta: FLOW_ENTITY_META,
     // Resolve legacy deep-links `{name: "flows/update", params: {tab}}` and bare

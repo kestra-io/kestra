@@ -13,6 +13,15 @@ describe("routes ossOnly marker", () => {
         expect(setup?.ossOnly).toBe(true)
     })
 
+    // kestra-io/kestra-ee#11139: an optional `:tenant` lets a longer tenant-less route outscore a
+    // tenant-ful one, so `/ui/assets/flows` opens an asset called `flows` rather than the Flows page
+    // of a tenant called `assets`. EE consumes this table, and EE is where that bites.
+    it("declares the tenant as a required param on every tenant-scoped route", () => {
+        const optional = routes.filter(route => String(route.path).includes(":tenant?")).map(route => route.name)
+
+        expect(optional).toEqual([])
+    })
+
     it("keeps every other route registrable by downstream editions", () => {
         // Given
         const ossOnlyNames = routes.filter(route => route.ossOnly).map(route => route.name)

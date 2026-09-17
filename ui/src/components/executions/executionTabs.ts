@@ -97,7 +97,7 @@ export const EXECUTION_ENTITY_META: RouteMeta = {
  */
 export const EXECUTION_ROUTE: RouteRecordRaw = {
     name: EXECUTION_PARENT_ROUTE,
-    path: "/:tenant?/executions/:namespace/:flowId/:id",
+    path: "/:tenant/executions/:namespace/:flowId/:id",
     component: () => import("./ExecutionRoot.vue"),
     meta: EXECUTION_ENTITY_META,
     // Resolve legacy deep-links `{name: "executions/update", params: {tab}}` and bare

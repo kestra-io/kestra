@@ -1,6 +1,7 @@
 package io.kestra.executor.testkit;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -9,6 +10,7 @@ import org.mockito.Mockito;
 
 import io.kestra.core.assets.AssetService;
 import io.kestra.core.async.AsyncOperationService;
+import io.kestra.core.contexts.KestraContext;
 import io.kestra.core.encryption.EncryptionConfig;
 import io.kestra.core.executor.command.ExecutionCommand;
 import io.kestra.core.killswitch.EvaluationType;
@@ -19,6 +21,7 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionKilled;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.LoopExecutionEvent;
+import io.kestra.core.models.executions.statistics.ExecutionStatistic;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.triggers.multipleflows.MultipleConditionStateStore;
@@ -29,21 +32,26 @@ import io.kestra.core.runners.ExecutionEventType;
 import io.kestra.core.runners.FlowInputOutput;
 import io.kestra.core.runners.FollowExecutionEvent;
 import io.kestra.core.runners.LocalPathFactory;
+import io.kestra.core.runners.MultipleConditionEvent;
 import io.kestra.core.runners.PausedTaskNotifier;
 import io.kestra.core.runners.RunContextInitializer;
 import io.kestra.core.runners.RunContextLoggerFactory;
+import io.kestra.core.runners.SubflowExecutionEnd;
 import io.kestra.core.runners.SubflowExecutionResult;
 import io.kestra.core.runners.VariableRenderer;
 import io.kestra.core.runners.WorkerJobEvent;
+import io.kestra.core.runners.WorkerTask;
 import io.kestra.core.runners.WorkerTaskResult;
 import io.kestra.core.runners.configuration.ExecutionDepthConfiguration;
 import io.kestra.core.runners.configuration.LocalFilesConfiguration;
 import io.kestra.core.runners.configuration.LoggingConfiguration;
 import io.kestra.core.runners.configuration.VariableConfiguration;
 import io.kestra.core.runners.pebble.PebbleEngineFactory;
+import io.kestra.core.server.ServiceStateChangeEvent;
 import io.kestra.core.services.ConcurrencyLimitResolver;
 import io.kestra.core.services.ExecutionOutputService;
 import io.kestra.core.services.ExecutionService;
+import io.kestra.core.services.MaintenanceService;
 import io.kestra.core.services.QuotaService;
 import io.kestra.core.services.TaskOutputService;
 import io.kestra.core.services.WorkerQueueService;
@@ -52,14 +60,18 @@ import io.kestra.core.services.configuration.TaskOutputConfiguration;
 import io.kestra.core.storages.NamespaceFactory;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.trace.TracerFactory;
+import io.kestra.core.utils.ExecutorsUtils;
 import io.kestra.executor.ConcurrencySlotReleaseProcessor;
+import io.kestra.executor.DefaultExecutor;
 import io.kestra.executor.ExecutionDelayProcessor;
 import io.kestra.executor.ExecutorContext;
+import io.kestra.executor.ExecutorCore;
 import io.kestra.executor.ExecutorService;
 import io.kestra.executor.FlowTriggerService;
 import io.kestra.executor.KillSwitchActionService;
 import io.kestra.executor.SLAMonitorProcessor;
 import io.kestra.executor.SLAService;
+import io.kestra.executor.configuration.ExecutorConfiguration;
 import io.kestra.executor.handler.ExecutionCommandMessageHandler;
 import io.kestra.executor.handler.ExecutionEventMessageHandler;
 import io.kestra.executor.handler.ExecutionKilledExecutionMessageHandler;
@@ -72,6 +84,7 @@ import io.kestra.executor.handler.WorkerTaskResultMessageHandler;
 
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.micronaut.context.ApplicationContext;
+import io.micronaut.context.event.ApplicationEventPublisher;
 import jakarta.validation.Validator;
 
 /**
@@ -90,6 +103,7 @@ import jakarta.validation.Validator;
  * {@link KillSwitchActionService}) are Mockito mocks exposed for per-test stubbing.
  */
 public final class ExecutorTestHarness {
+    private static final int MAX_STEPS = 500;
     private static final int MAX_CYCLES = 100;
 
     // real production objects
@@ -105,6 +119,12 @@ public final class ExecutorTestHarness {
     private final ExecutionDelayProcessor executionDelayProcessor;
     private final ConcurrencySlotReleaseProcessor concurrencySlotReleaseProcessor;
     private final SLAMonitorProcessor slaMonitorProcessor;
+    private final ExecutorCore executorCore;
+    private final DefaultExecutor executor;
+    private final ManualScheduler timers;
+    private final MetricRegistry metricRegistry;
+    private final EmissionJournal journal;
+    private int workerJobsAnswered = 0;
 
     // in-memory fakes
     private final InMemoryFlowMetaStore flowMetaStore;
@@ -123,6 +143,14 @@ public final class ExecutorTestHarness {
     private final RecordingDispatchQueue<Execution> executionQueue;
     private final RecordingBroadcastQueue<FollowExecutionEvent> followExecutionEventQueue;
     private final RecordingDispatchQueue<ExecutionCommand> executionCommandQueue;
+    private final RecordingDispatchQueue<ExecutionEvent> executionEventQueue;
+    private final RecordingDispatchQueue<WorkerTaskResult> workerTaskResultQueue;
+    private final RecordingDispatchQueue<SubflowExecutionEnd> subflowExecutionEndQueue;
+    private final RecordingDispatchQueue<MultipleConditionEvent> multipleConditionEventQueue;
+    private final RecordingDispatchQueue<ExecutionStatistic> executionStatisticQueue;
+    private final RecordingTriggerEventQueue triggerEventQueue;
+    private final RecordingExecutionTerminatedNotifier executionTerminatedNotifier;
+    private final List<Deliverable> queues;
     private final RecordingLogEntryEmitter logEmitter;
 
     // mocks exposed for per-test stubbing
@@ -152,16 +180,28 @@ public final class ExecutorTestHarness {
         this.concurrencyLimitStateStore = new InMemoryConcurrencyLimitStateStore();
         this.taskOutputRepository = new InMemoryTaskOutputRepository();
         this.executionOutputRepository = new InMemoryExecutionOutputRepository();
-        this.killQueue = new RecordingBroadcastQueue<>("kill");
-        this.loopExecutionEventQueue = new RecordingDispatchQueue<>("loopExecutionEvent");
-        this.workerJobEventQueue = new RecordingKeyedDispatchQueue<>("workerJobEvent");
-        this.subflowExecutionResultQueue = new RecordingDispatchQueue<>("subflowExecutionResult");
-        this.executionQueue = new RecordingDispatchQueue<>("execution");
-        this.followExecutionEventQueue = new RecordingBroadcastQueue<>("followExecutionEvent");
-        this.executionCommandQueue = new RecordingDispatchQueue<>("executionCommand");
+        this.journal = new EmissionJournal();
+        this.killQueue = new RecordingBroadcastQueue<>("kill", journal);
+        this.loopExecutionEventQueue = new RecordingDispatchQueue<>("loopExecutionEvent", journal);
+        this.workerJobEventQueue = new RecordingKeyedDispatchQueue<>("workerJobEvent", journal);
+        this.subflowExecutionResultQueue = new RecordingDispatchQueue<>("subflowExecutionResult", journal);
+        this.executionQueue = new RecordingDispatchQueue<>("execution", journal);
+        this.followExecutionEventQueue = new RecordingBroadcastQueue<>("followExecutionEvent", journal);
+        this.executionCommandQueue = new RecordingDispatchQueue<>("executionCommand", journal);
+        this.executionEventQueue = new RecordingDispatchQueue<>("executionEvent", journal);
+        this.workerTaskResultQueue = new RecordingDispatchQueue<>("workerTaskResult", journal);
+        this.subflowExecutionEndQueue = new RecordingDispatchQueue<>("subflowExecutionEnd", journal);
+        this.multipleConditionEventQueue = new RecordingDispatchQueue<>("multipleConditionEvent", journal);
+        this.executionStatisticQueue = new RecordingDispatchQueue<>("executionStatistic", journal);
+        this.triggerEventQueue = new RecordingTriggerEventQueue(journal);
+        this.executionTerminatedNotifier = new RecordingExecutionTerminatedNotifier(journal);
+        this.queues = List.of(
+            executionQueue, executionEventQueue, workerTaskResultQueue, executionCommandQueue, subflowExecutionResultQueue,
+            subflowExecutionEndQueue, multipleConditionEventQueue, loopExecutionEventQueue, killQueue
+        );
         this.logEmitter = new RecordingLogEntryEmitter();
 
-        MetricRegistry metricRegistry = new MetricRegistry(new SimpleMeterRegistry(), new MetricConfig(null, null, null, Map.of()));
+        this.metricRegistry = new MetricRegistry(new SimpleMeterRegistry(), new MetricConfig(null, null, null, Map.of()));
         RunContextLoggerFactory runContextLoggerFactory = new RunContextLoggerFactory(logEmitter, new LoggingConfiguration(null));
         TaskOutputService taskOutputService = new TaskOutputService(
             taskOutputRepository,
@@ -220,7 +260,7 @@ public final class ExecutorTestHarness {
             }
             return Mockito.RETURNS_DEFAULTS.answer(invocation);
         });
-        this.runContextFactory = new KitRunContextFactory(renderer, runContextLoggerFactory, metricRegistry, taskOutputService, runContextBeanLocator);
+        this.runContextFactory = new KitRunContextFactory(renderer, runContextLoggerFactory, this.metricRegistry, taskOutputService, runContextBeanLocator);
         runContextFactoryRef[0] = runContextFactory;
         WorkerQueueService workerQueueService = new WorkerQueueService.Default();
 
@@ -242,7 +282,7 @@ public final class ExecutorTestHarness {
 
         this.executorService = new ExecutorService(
             runContextFactory,
-            metricRegistry,
+            this.metricRegistry,
             flowMetaStore,
             executionService,
             workerQueueService,
@@ -275,7 +315,7 @@ public final class ExecutorTestHarness {
             runContextLoggerFactory,
             killSwitchService,
             killSwitchActionService,
-            metricRegistry,
+            this.metricRegistry,
             tracerFactory,
             clock
         );
@@ -303,7 +343,7 @@ public final class ExecutorTestHarness {
             executionService,
             executionStateStore,
             executionQueuedStateStore,
-            metricRegistry,
+            this.metricRegistry,
             flowMetaStore,
             killQueue,
             asyncOperationService,
@@ -311,7 +351,7 @@ public final class ExecutorTestHarness {
         );
         this.subflowExecutionResultMessageHandler = new SubflowExecutionResultMessageHandler(
             executorService,
-            metricRegistry,
+            this.metricRegistry,
             executionService,
             executionStateStore,
             taskOutputService,
@@ -367,6 +407,73 @@ public final class ExecutorTestHarness {
             runContextFactory,
             metricRegistry
         );
+
+        this.executorCore = new ExecutorCore(
+            executorService,
+            executionService,
+            flowTriggerService,
+            flowMetaStore,
+            executionStateStore,
+            slaMonitorStateStore,
+            concurrencySlotReleaseProcessor,
+            executionDelayProcessor,
+            slaMonitorProcessor,
+            runContextFactory,
+            killSwitchService,
+            killSwitchActionService,
+            this.metricRegistry,
+            clock,
+            executionQueue,
+            executionEventQueue,
+            followExecutionEventQueue,
+            subflowExecutionEndQueue,
+            multipleConditionEventQueue,
+            loopExecutionEventQueue,
+            executionStatisticQueue,
+            triggerEventQueue,
+            executionTerminatedNotifier,
+            executionCommandMessageHandler,
+            executionEventMessageHandler,
+            workerTaskResultMessageHandler,
+            executionKilledExecutionMessageHandler,
+            subflowExecutionResultMessageHandler,
+            subflowExecutionEndMessageHandler,
+            multipleConditionEventMessageHandler,
+            loopExecutionEventMessageHandler
+        );
+
+        // The production DefaultExecutor: real subscriptions, real dispatch, real loops. Only the
+        // infrastructure is swapped — same-thread pools, a hand-ticked scheduler, the mutable clock.
+        this.timers = new ManualScheduler();
+        ExecutorsUtils executorsUtils = Mockito.mock(ExecutorsUtils.class);
+        Mockito.when(executorsUtils.maxCachedThreadPool(Mockito.anyInt(), Mockito.anyString())).thenAnswer(invocation -> new DirectExecutorService());
+        Mockito.when(executorsUtils.singleThreadScheduledExecutor(Mockito.anyString())).thenReturn(timers);
+        KestraContext kestraContext = Mockito.mock(KestraContext.class);
+        Mockito.when(kestraContext.getAllocatedCpuCores()).thenReturn(1);
+        @SuppressWarnings("unchecked")
+        ApplicationEventPublisher<ServiceStateChangeEvent> eventPublisher = Mockito.mock(ApplicationEventPublisher.class);
+        this.executor = new DefaultExecutor(
+            eventPublisher,
+            executorsUtils,
+            clock,
+            new ExecutorConfiguration(1, 1000, 1000, 60000),
+            kestraContext,
+            executionQueue,
+            executionCommandQueue,
+            executionEventQueue,
+            workerTaskResultQueue,
+            killQueue,
+            subflowExecutionResultQueue,
+            subflowExecutionEndQueue,
+            multipleConditionEventQueue,
+            loopExecutionEventQueue,
+            executorCore,
+            new MaintenanceService.NoopMaintenanceService(),
+            multipleConditionStateStore,
+            this.metricRegistry
+        );
+        this.executor.initMetrics();
+        this.executor.run();
     }
 
     /**
@@ -437,6 +544,142 @@ public final class ExecutorTestHarness {
         }
 
         return context;
+    }
+
+    // --- the whole machine: the real DefaultExecutor, one delivery at a time
+
+    /**
+     * Puts {@code message} on the queue it belongs to and delivers it to the running
+     * {@link DefaultExecutor} — one production delivery. Returns everything the executor emitted in
+     * return, on every queue, in order. Assumes that queue had nothing pending.
+     */
+    public List<EmissionJournal.Entry> step(Object message) {
+        Deliverable queue = enqueue(message);
+        int from = journal.size();
+        queue.deliverNext();
+        return journal.since(from);
+    }
+
+    /** Fires the execution-delay loop at {@code now}, as the scheduler would. */
+    public List<EmissionJournal.Entry> tickExecutionDelays(Instant now) {
+        clock.set(now);
+        int from = journal.size();
+        timers.tick(0);
+        return journal.since(from);
+    }
+
+    /** Fires the SLA-monitor loop at {@code now}, as the scheduler would. */
+    public List<EmissionJournal.Entry> tickSlaMonitors(Instant now) {
+        clock.set(now);
+        int from = journal.size();
+        timers.tick(1);
+        return journal.since(from);
+    }
+
+    public Trace run(Execution execution, ScriptedWorker worker) {
+        return run(List.of(execution), worker, Scheduler.fifo());
+    }
+
+    public Trace run(List<?> messages, ScriptedWorker worker) {
+        return run(messages, worker, Scheduler.fifo());
+    }
+
+    /**
+     * The closed loop: {@code messages} go on their queues, then every queue the executor subscribed
+     * to is drained by delivering one message at a time — the {@link Scheduler} picks the queue,
+     * FIFO within a queue — while {@code worker} answers each worker task that shows up. Stops when
+     * nothing is pending. Nothing about routing is decided here: a queue is drained because the
+     * production {@code doRun()} subscribed to it.
+     */
+    public Trace run(List<?> messages, ScriptedWorker worker, Scheduler scheduler) {
+        messages.forEach(this::enqueue);
+        List<Trace.Step> steps = new ArrayList<>();
+        for (int i = 0; i < MAX_STEPS; i++) {
+            answerWorkerJobs(worker);
+            List<Deliverable> ready = queues.stream().filter(Deliverable::isSubscribed).filter(Deliverable::hasPending).toList();
+            if (ready.isEmpty()) {
+                return new Trace(steps);
+            }
+            Deliverable queue = scheduler.pick(ready);
+            Object message = queue.peekPending();
+            int from = journal.size();
+            queue.deliverNext();
+            steps.add(new Trace.Step(queue.queueName(), message, journal.since(from)));
+        }
+        throw new IllegalStateException("Executor did not quiesce after " + MAX_STEPS + " deliveries — possible execution loop");
+    }
+
+    private void answerWorkerJobs(ScriptedWorker worker) {
+        List<WorkerJobEvent> jobs = workerJobEventQueue.emittedMessages();
+        for (; workerJobsAnswered < jobs.size(); workerJobsAnswered++) {
+            workerTaskResultQueue.emit(worker.run((WorkerTask) jobs.get(workerJobsAnswered).job()));
+        }
+    }
+
+    private Deliverable enqueue(Object message) {
+        switch (message) {
+            case Execution e -> executionQueue.emit(e);
+            case ExecutionEvent e -> executionEventQueue.emit(e);
+            case WorkerTaskResult r -> workerTaskResultQueue.emit(r);
+            case ExecutionKilled k -> killQueue.emit(k);
+            case SubflowExecutionResult r -> subflowExecutionResultQueue.emit(r);
+            case SubflowExecutionEnd e -> subflowExecutionEndQueue.emit(e);
+            case LoopExecutionEvent e -> loopExecutionEventQueue.emit(e);
+            case MultipleConditionEvent e -> multipleConditionEventQueue.emit(e);
+            case ExecutionCommand c -> executionCommandQueue.emit(c);
+            default -> throw new IllegalArgumentException("Not an executor message: " + message.getClass().getName());
+        }
+        return switch (message) {
+            case Execution e -> executionQueue;
+            case ExecutionEvent e -> executionEventQueue;
+            case WorkerTaskResult r -> workerTaskResultQueue;
+            case ExecutionKilled k -> killQueue;
+            case SubflowExecutionResult r -> subflowExecutionResultQueue;
+            case SubflowExecutionEnd e -> subflowExecutionEndQueue;
+            case LoopExecutionEvent e -> loopExecutionEventQueue;
+            case MultipleConditionEvent e -> multipleConditionEventQueue;
+            default -> executionCommandQueue;
+        };
+    }
+
+    public DefaultExecutor executor() {
+        return executor;
+    }
+
+    public ExecutorCore executorCore() {
+        return executorCore;
+    }
+
+    public EmissionJournal journal() {
+        return journal;
+    }
+
+    public RecordingDispatchQueue<ExecutionEvent> executionEventQueue() {
+        return executionEventQueue;
+    }
+
+    public RecordingDispatchQueue<WorkerTaskResult> workerTaskResultQueue() {
+        return workerTaskResultQueue;
+    }
+
+    public RecordingDispatchQueue<SubflowExecutionEnd> subflowExecutionEndQueue() {
+        return subflowExecutionEndQueue;
+    }
+
+    public RecordingDispatchQueue<MultipleConditionEvent> multipleConditionEventQueue() {
+        return multipleConditionEventQueue;
+    }
+
+    public RecordingDispatchQueue<ExecutionStatistic> executionStatisticQueue() {
+        return executionStatisticQueue;
+    }
+
+    public RecordingTriggerEventQueue triggerEventQueue() {
+        return triggerEventQueue;
+    }
+
+    public RecordingExecutionTerminatedNotifier executionTerminatedNotifier() {
+        return executionTerminatedNotifier;
     }
 
     // --- saga verbs

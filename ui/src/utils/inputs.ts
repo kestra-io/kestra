@@ -178,7 +178,15 @@ export function normalize(type: InputType | undefined, value: any) {
     } else if (type === "DATE" || type === "DATETIME") {
         res = dayjs(res).toISOString()
     } else if (type === "TIME") {
-        res = dayjs().startOf("day").add(res, "seconds").toString()
+        // `res` is the wall-clock time as "HH:mm:ss" (Java's LocalTime serialises that way), NOT a
+        // count of seconds — treating it as such (the previous `.add(res, "seconds")`) produced an
+        // Invalid Date for any real default. Parse the hour/minute/second directly instead; the
+        // dayjs instance shared across the app (@kestra-io/design-system) doesn't register the
+        // customParseFormat plugin, so `dayjs(res, "HH:mm:ss")` can't be used to parse it.
+        const [hours, minutes, seconds] = typeof res === "string" ? res.split(":").map(Number) : []
+        res = Number.isFinite(hours)
+            ? dayjs().startOf("day").hour(hours).minute(minutes || 0).second(seconds || 0).toString()
+            : dayjs(res).toString()
     } else if (type === "ARRAY" || type === "MULTISELECT" || type === "JSON" || type === "ION") {
         if (typeof res !== "string") {
             res = JSON.stringify(res).toString()

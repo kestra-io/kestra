@@ -1,4 +1,5 @@
 import {describe, expect, it} from "vitest"
+import {dayjs} from "@kestra-io/design-system"
 import {flattenInputs, unflattenToForms, formChildName, buildWizardSteps, normalize} from "../../../src/utils/inputs"
 import {inputsToFormData} from "../../../src/utils/submitTask"
 
@@ -44,6 +45,31 @@ describe("normalize for ION uses the structured-data editor contract", () => {
 
     it("preserves Ion text", () => {
         expect(normalize("ION", "{name:\"Ada\"}")).toBe("{name:\"Ada\"}")
+    })
+})
+
+// Regression guard for https://github.com/kestra-io/kestra/issues/19367: a TIME default such as
+// "14:30:00" (java.time.LocalTime's wire format) was previously fed to `.add(res, "seconds")`,
+// which coerces the whole string to NaN and yields an Invalid Date — the picker then showed
+// whatever wall-clock time the NaN-add happened to fall back to, not the actual default.
+describe("normalize for TIME parses the wall-clock time instead of treating it as a seconds offset", () => {
+    it("keeps a default's own hour/minute/second (never Invalid Date)", () => {
+        const result = normalize("TIME", "14:30:00")
+        expect(dayjs(result).isValid()).toBe(true)
+        expect(dayjs(result).format("HH:mm:ss")).toBe("14:30:00")
+    })
+
+    it("round-trips midnight and single-digit hours", () => {
+        expect(dayjs(normalize("TIME", "00:00:00")).format("HH:mm:ss")).toBe("00:00:00")
+        expect(dayjs(normalize("TIME", "09:05:07")).format("HH:mm:ss")).toBe("09:05:07")
+    })
+
+    it("defaults missing seconds to :00 when the value omits them", () => {
+        expect(dayjs(normalize("TIME", "14:30")).format("HH:mm:ss")).toBe("14:30:00")
+    })
+
+    it("anchors the parsed time to today, so the picker/curl round-trip stays date-independent", () => {
+        expect(dayjs(normalize("TIME", "14:30:00")).isSame(dayjs(), "day")).toBe(true)
     })
 })
 

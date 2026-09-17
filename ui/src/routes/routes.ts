@@ -6,13 +6,14 @@ import Errors from "../components/errors/Errors.vue"
 import {EXECUTION_ROUTE} from "../components/executions/executionTabs"
 import {FLOW_ROUTE} from "../components/flows/flowTabs"
 import {NAMESPACE_PARENT_ROUTE, createNamespaceTabRoutes} from "../utils/namespaceTabRoutes"
+import {rememberedTenant} from "../composables/useTenant"
 
 /** A route record, plus `ossOnly`: editions layering on this table (EE) drop the flagged records. */
 export type KestraRouteRecord = RouteRecordRaw & {ossOnly?: boolean}
 
 const routes: KestraRouteRecord[] = [
     //Initial
-    {name: "root", path: "/", redirect: {name: "home"}, meta: {layout: {template: "<div />"}, anonymous: true}},
+    {name: "root", path: "/", redirect: () => ({name: "home", params: {tenant: rememberedTenant()}}), meta: {layout: {template: "<div />"}, anonymous: true}},
 
     {name: "ai",path: "/:tenant/ai", component: () => import("../components/ai/copilot/CopilotPage.vue")},
 

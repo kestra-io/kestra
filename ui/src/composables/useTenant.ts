@@ -1,6 +1,8 @@
 import type {Router, RouteLocationNormalized, RouteLocationRaw, RouteLocationNamedRaw} from "vue-router"
 import type {App} from "vue"
 
+import {storageKeys} from "../utils/constants"
+
 /** Exact rather than a substring test: `:tenantId` declares a different param. */
 const TENANT_PARAM = /:tenant(?![A-Za-z0-9_])/
 
@@ -10,6 +12,16 @@ const DEFAULT_TENANT = "main"
  *  `to`: the two differ only in whether `name` can be null, which neither of them looks at. */
 type TenantLocation = Pick<RouteLocationNormalized, "path" | "params" | "query" | "hash" | "meta"> & {
     matched: readonly {path: string}[]
+}
+
+/** The tenant to assume before any route has been matched - the only thing available to a record's
+ *  own `redirect`, which vue-router resolves through its internal closure where no guard can reach. */
+export const rememberedTenant = (): string => {
+    try {
+        return localStorage.getItem(storageKeys.SELECTED_TENANT) || DEFAULT_TENANT
+    } catch {
+        return DEFAULT_TENANT
+    }
 }
 
 /** Nothing matched, or only the catch-all did - i.e. a URL whose first segment is not a tenant.

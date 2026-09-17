@@ -26,10 +26,9 @@
     const tooltip = computed(() => (props.name ? `${label.value} (${props.uri})` : props.uri))
 </script>
 
-<style lang="scss">
-    // Teleported popper — keep unscoped so the class on body can wrap long storage URIs.
-    .kel-popper.ks-tooltip.ks-file-tag-tooltip {
-        max-width: min(20rem, 90vw);
-        overflow-wrap: anywhere;
-    }
+<style scoped>
+:global(.ks-file-tag-tooltip) {
+    max-width: min(20rem, 90vw);
+    overflow-wrap: anywhere;
+}
 </style>

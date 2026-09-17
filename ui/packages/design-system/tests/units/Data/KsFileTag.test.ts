@@ -41,7 +41,7 @@ describe("KsFileTag", () => {
             .toBe("kestra:///company/team/exec/outputs/report.csv")
     })
 
-    test("scopes URI wrapping to its own popper class so other KsTooltip consumers stay uncapped", () => {
+    test("passes a dedicated popperClass to KsTooltip", () => {
         const wrapper = mount(KsFileTag, {
             props: {uri: "kestra:///company/team/exec/outputs/report.csv"},
             global: globalConfig,

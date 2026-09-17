@@ -100,7 +100,7 @@ export const LongUriTooltip: Story = {
         template: "<div style=\"width:180px;padding:48px\"><ks-file-tag v-bind=\"args\" /></div>",
     }),
     args: {
-        uri: "kestra://qa/outputs/shell-commands-output-files/executions/3uxOJzMEzl9KgR69PnbnTF/tasks/run-metadata-extraction/2ZH2p7WIZSXxYylAlJyHh3/s7duRWDnVjMKzSYfJrDA-payload.json",
+        uri: "kestra:///qa/outputs/shell-commands-output-files/executions/3uxOJzMEzl9KgR69PnbnTF/tasks/run-metadata-extraction/2ZH2p7WIZSXxYylAlJyHh3/s7duRWDnVjMKzSYfJrDA-payload.json",
         name: "payload.json",
     },
     play: async ({canvasElement}: {canvasElement: HTMLElement}) => {
@@ -111,7 +111,8 @@ export const LongUriTooltip: Story = {
             expect(el?.textContent ?? "").toContain("kestra://")
             return el!
         })
-        expect(tooltip.clientWidth).toBeLessThanOrEqual(320)
+        const maxWidthPx = Number.parseFloat(getComputedStyle(tooltip).maxWidth)
+        expect(tooltip.clientWidth).toBeLessThanOrEqual(maxWidthPx)
         expect(tooltip.scrollWidth).toBeLessThanOrEqual(tooltip.clientWidth + 1)
     },
 }

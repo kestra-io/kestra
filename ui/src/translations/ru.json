@@ -8,7 +8,6 @@
     "more actions": "Дополнительные действия",
     "recipe": {
       "create_flow": "Создать flow",
-      "email": "Email",
       "execution": {
         "include_sub": "Включить sub-namespaces",
         "include_sub_hint_off": "Только flow в точном namespace будут вызывать это оповещение.",
@@ -56,7 +55,6 @@
       "section_title": "Создать системный flow",
       "summary": {
         "any_namespace": "любой namespace",
-        "empty": "Настройте trigger и хотя бы один канал уведомлений для предварительного просмотра вашего flow.",
         "exact_match": "точное совпадение",
         "execution": "Когда flow в {ns} ({scope}) достигает состояния {states}, уведомить через {channels}.",
         "including_sub": "и под-namespaces",
@@ -66,7 +64,6 @@
         "other": "Когда срабатывает триггер {trigger}, уведомить через {channels}.",
         "schedule": "По расписанию \"{cron}\", уведомлять через {channels}.",
         "selected_trigger": "выбрано",
-        "title": "Сводка",
         "webhook": "При получении вебхука, уведомить через {channels}.",
         "preview_title": "Предварительный просмотр",
         "live": "В РЕАЛЬНОМ ВРЕМЕНИ"
@@ -74,7 +71,6 @@
       "then": {
         "no_channel_warning": "Выберите хотя бы один канал уведомлений.",
         "subtitle": "Выберите способ уведомления вашей команды.",
-        "title": "Затем уведомить",
         "unavailable_channels_warning": "{channels}: плагин не установлен для этого типа trigger, уведомления не будут отправлены."
       },
       "trigger": {
@@ -95,7 +91,6 @@
       },
       "when": {
         "subtitle": "Выберите, что запускает этот системный flow.",
-        "title": "Когда это происходит",
         "trigger_type": "Тип trigger"
       },
       "hero_eyebrow": "Ваш системный flow",
@@ -301,7 +296,6 @@
       "star": "Добавьте нас в избранное"
     },
     "source": "Источник",
-    "source only": "Источник только",
     "home": "Домой",
     "create": "Создать",
     "create_flow": "Создать Flow",
@@ -686,7 +680,6 @@
     "open in new tab": "В новой вкладке",
     "execute the flow": "Выполнить flow <code>{id}</code>",
     "discard execution confirmation": "У вас есть несохраненные input. Вы уверены, что хотите отменить эту execution?",
-    "discard changes confirmation": "У вас есть несохраненные изменения. Вы уверены, что хотите их отменить?",
     "unsaved changed ?": "У вас есть несохраненные изменения, вы хотите покинуть эту страницу?",
     "unsaved changes": "Несохраненные изменения",
     "unsaved changes warning": "У вас есть несохраненные изменения. Если вы покинете эту страницу, ваши изменения будут потеряны.",
@@ -855,9 +848,6 @@
     "bulk kill": "Вы уверены, что хотите убить <code>{executionCount}</code> выполнение(я)?",
     "cancel": "Отмена",
     "errorLogs": "Логи ошибок",
-    "welcome_page": {
-      "guide": "Нужна помощь в выполнении вашего первого flow?"
-    },
     "product_tour": "Тур по продукту",
     "executions replayed": "<code>{executionCount}</code> egzekucja | <code>{executionCount}</code> egzekucje | <code>{executionCount}</code> egzekucji odtworzono",
     "executions state changed": "Состояние выполнения <code>{executionCount}</code> было изменено",
@@ -868,20 +858,9 @@
     "executions restarted": "<code>{executionCount}</code> перезапущенных egzekucji",
     "executions killed": "<code>{executionCount}</code> egzekucja(-e) zabita(-e)",
     "executions deleted": "<code>{executionCount}</code> удаленных egzekucji",
-    "invalid bulk replay": "Не удалось воспроизвести выполнения",
-    "invalid bulk resume": "Не удалось возобновить выполнения",
-    "invalid bulk pause": "Не удалось приостановить выполнения",
-    "invalid bulk unqueue": "Не удалось удалить выполнения из очереди",
-    "invalid bulk force run": "Не удалось принудительно запустить executions",
-    "invalid bulk restart": "Не удалось перезапустить выполнения",
-    "invalid bulk kill": "Не удалось убить выполнения",
-    "invalid bulk delete": "Не удалось удалить выполнения",
     "execution not found": "Выполнение {executionId} не найдено.",
-    "execution not in state PAUSED": "Выполнение <code>{executionId}</code> не в состоянии PAUSED",
-    "execution already finished": "Выполнение <code>{executionId}</code> уже завершено",
     "seeing old revision": "Вы просматриваете старую ревизию: {revision}",
     "export": "Экспорт",
-    "exports": "Экспорты",
     "export_csv": "Экспортировать как CSV",
     "flow_export": "Экспорт flow",
     "flow export": "Вы уверены, что хотите экспортировать <code>{flowCount}</code> flow(ы)?",
@@ -908,9 +887,7 @@
     "disabled": "Отключено",
     "before": "до",
     "after": "после",
-    "dynamic": "Динамический",
     "choice": "Выбор",
-    "sequential": "Последовательный",
     "can not delete": "Невозможно удалить эту task",
     "can not have less than 1 task": "flow должен иметь хотя бы одну task. Добавьте еще одну task перед удалением этой.",
     "task id": "ID задачи",
@@ -930,7 +907,6 @@
     "bar": "Бар",
     "line": "Линия",
     "metric": "Метрика",
-    "aggregation": "Агрегация",
     "metric choice": "Для этого flow метрики недоступны",
     "metric filter no match": "Нет метрик, соответствующих \"{term}\"",
     "of": "из",
@@ -996,7 +972,6 @@
     "version": "Версия",
     "services": "Сервисы",
     "hostname": "Имя хоста",
-    "port": "Порт",
     "file preview truncated": "Отображаемое содержимое было усечено",
     "file unavailable": "Файл недоступен",
     "file unavailable description": "Этот файл больше недоступен — возможно, он был удален или срок его действия истек.",
@@ -1106,7 +1081,6 @@
     "execute backfill": "Выполнить заполнение",
     "relative": "Относительный",
     "relative start date": "Относительная дата начала",
-    "now": "Сейчас",
     "absolute": "Абсолютный",
     "backfill": "Заполнение",
     "Set labels": "Установить метки",
@@ -1181,6 +1155,7 @@
             "log_level": "Уровень логов по умолчанию",
             "log_display": "Отображение логов по умолчанию",
             "editor_type": "Тип редактора по умолчанию",
+            "topology_orientation": "Ориентация топологии по умолчанию",
             "execute_flow": "Выполнить Flow",
             "execute_default_tab": "Вкладка выполнения по умолчанию",
             "flow_default_tab": "Вкладка Flow по умолчанию",
@@ -1195,6 +1170,7 @@
             "log_level": "Минимальный уровень log, отображаемый в execution logs.",
             "log_display": "Как отображаются логи при открытии выполнения.",
             "editor_type": "Редактор, отображаемый при открытии flow в первый раз.",
+            "topology_orientation": "Ориентация панели Topology по умолчанию в Flow-редакторе.",
             "execute_flow": "Где результаты выполнения открываются после запуска.",
             "execute_default_tab": "Вкладка выбрана при переходе к выполнению.",
             "flow_default_tab": "Вкладка выбрана при переходе к flow.",
@@ -1207,6 +1183,10 @@
           "task_edit_default_mode_options": {
             "modal": "Модальное окно",
             "tab": "Вкладка"
+          },
+          "topology_orientation_options": {
+            "vertical": "Вертикальный",
+            "horizontal": "Горизонтальный"
           },
           "flow_template_reset": "Сбросить до значений по умолчанию",
           "flow_template_error": {
@@ -1283,7 +1263,6 @@
       "label": "Продвинуть"
     },
     "demos": {
-      "enterprise_edition": "Enterprise Edition (Корпоративная версия)",
       "get_a_demo_button": "Получить демо-версию",
       "contact_sales": "Связаться с отделом продаж",
       "secrets": {
@@ -1668,7 +1647,6 @@
       "title": "Начните автоматизацию с Kestra",
       "sub_title": "Нажмите на кнопку Execute, чтобы начать выполнение вашего первого workflow.",
       "namespace_sub_title": "Выполните один или несколько flow из этого namespace, чтобы заполнить эту панель.",
-      "namespace_guidance_desc": "Нужна помощь в управлении вашим Namespace?",
       "need_help": "Нужна помощь?"
     },
     "execution_guide": {
@@ -1710,14 +1688,11 @@
     "flows not imported": "Flows не импортированы",
     "custom value": "Пользовательское значение",
     "chart": "График",
-    "chart preview": "Предварительный просмотр диаграммы",
     "no_code": {
       "toggle_pebble": "Переключить редактор Pebble",
       "version_oss_placeholder": "Разблокируйте Версионирование Плагинов с Enterprise Edition",
-      "unnamed": "Без имени",
       "adding": "+ Добавить {what}",
       "adding_default": "+ Добавить новое value",
-      "add_field": "Добавить {field}",
       "clearSelection": "Очистить выбор",
       "labels": {
         "yaml": "Редактор YAML",
@@ -2534,7 +2509,6 @@
     "pricing": "Цены",
     "license": "Лицензия",
     "block_editor": {
-      "add_error_task": "Добавить error task",
       "add_switch_case": "Добавить case",
       "adding_to": "Новая запись в {section}",
       "add_task": "Добавить task",
@@ -2545,7 +2519,6 @@
       "block_deleted": "{name} удален",
       "card_aria_label": "Блок {id} типа {type}",
       "canvas_aria": "Холст блоков flow",
-      "close_all": "Закрыть все вкладки",
       "cluster_collapse_aria": "Свернуть {id}",
       "cluster_expand_aria": "Развернуть {id} ({count} tasks)",
       "collapsed_summary": "{count} задач",
@@ -2584,19 +2557,14 @@
       "depth_pill": "Глубина {depth}",
       "drag_reorder": "Перетащите для изменения порядка",
       "duplicate": "Дублировать",
-      "empty": "Пока нет task'ов или trigger'ов. Добавьте свой первый task, чтобы начать.",
       "empty_add_hint": "или нажмите /, чтобы найти tasks",
       "empty_add_lead": "Нажмите, чтобы добавить {label}",
-      "error_task_noun": "ошибка task",
       "execution_context": "Контекст выполнения",
       "filter_data": "Фильтровать доступные данные…",
       "flow_inputs": "Входные данные flow",
-      "flowable_todo": "Вложенные task'и (редактирование скоро появится)",
       "footer": {
         "canvas": "Холст",
-        "close_panel": "Закрыть панель",
         "command_menu": "Меню команд",
-        "editing": "Редактирование блока",
         "inserting": "Вставка",
         "selected": "Выбрано · {name}"
       },
@@ -2610,22 +2578,15 @@
       "lane_case": "Случай: {key}",
       "lane_defaults": "По умолчанию",
       "lane_else": "Иначе",
-      "lane_empty": "Нет task'ов в {lane}",
       "lane_errors": "Ошибки",
       "lane_finally": "Наконец",
       "lane_tasks": "Задачи",
       "lane_then": "Затем",
-      "loading_plugins": "Загрузка плагинов...",
       "move_down": "Переместить вниз",
       "move_up": "Переместить вверх",
-      "nav_rail_empty": "Пока нет task'ов или trigger'ов.",
-      "nav_rail_title": "Структура",
-      "nested_count": "{count} вложенных task'ов",
       "no_data_matches": "Ничего не соответствует вашему фильтру",
-      "no_documentation": "Нет документации для этой task",
       "no_recent": "Пока нет недавних типов task'ов",
       "no_task_results": "Нет подходящих типов task.",
-      "open_details": "Открыть детали",
       "open_in_split": "Открыть в разделенном режиме",
       "output": "Вывод",
       "output_sub": "что производит этот task",
@@ -2663,8 +2624,6 @@
         "toggle": "Эта справка",
         "undo": "Отменить"
       },
-      "split_into": "{count}-колоночный вид",
-      "split_view": "Разделенный вид",
       "switch_case_key_placeholder": "Новый ключ case",
       "switch_case_key_taken": "Кейс {key} уже существует",
       "tab_apps": "По приложению",

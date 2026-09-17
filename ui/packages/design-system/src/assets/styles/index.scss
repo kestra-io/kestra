@@ -47,7 +47,7 @@
 #nprogress {
     .bar {
         background: palette.$base-primary-500;
-        z-index: 9999;
+        z-index: var(--ks-z-top);
     }
 
     .spinner {

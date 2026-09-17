@@ -4,6 +4,7 @@
     <div
         v-if="tourStore.isGuidedActive && !showFinale"
         class="tour-overlay"
+        :style="{zIndex: topLayer}"
         aria-live="polite"
     >
         <template v-if="spotlight">
@@ -148,6 +149,7 @@
 
 <script setup lang="ts">
     import {computed, onBeforeUnmount, onMounted, ref, watch} from "vue"
+    import {useTopLayer} from "@kestra-io/design-system"
     import {useI18n} from "vue-i18n"
     import {useRoute, useRouter} from "vue-router"
     import CheckCircle from "vue-material-design-icons/CheckCircle.vue"
@@ -171,6 +173,7 @@
     const route = useRoute()
     const router = useRouter()
     const tourStore = useProductTourStore()
+    const topLayer = useTopLayer()
     const miscStore = useMiscStore()
     const actions = useTourActions()
     const {trackOnboarding} = useOnboardingAnalytics()
@@ -479,6 +482,7 @@
             piece.className = "tour-confetti-piece"
             piece.style.left = `${20 + Math.random() * 60}vw`
             piece.style.background = `var(${CONFETTI_TOKENS[index % CONFETTI_TOKENS.length]})`
+            piece.style.zIndex = String(topLayer.value + 1)
             piece.style.animationDelay = `${Math.random() * 0.3}s`
             piece.style.animationDuration = `${1.6 + Math.random() * 1.2}s`
             document.body.appendChild(piece)
@@ -661,7 +665,6 @@
         position: fixed;
         inset: 0;
         pointer-events: none;
-        z-index: 5000;
     }
 
     .guide-card {
@@ -869,7 +872,6 @@
         height: 14px;
         border-radius: 2px;
         pointer-events: none;
-        z-index: 6000;
         animation-name: tourConfettiFall;
         animation-timing-function: linear;
         animation-fill-mode: forwards;

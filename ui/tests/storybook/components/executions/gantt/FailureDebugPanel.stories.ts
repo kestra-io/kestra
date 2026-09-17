@@ -9,7 +9,14 @@ function history(state: string, date: string) {
     return {state, date}
 }
 
-function taskRun(id: string, taskId: string, state: string, startDate: string, parentTaskRunId?: string) {
+function taskRun(
+    id: string,
+    taskId: string,
+    state: string,
+    startDate: string,
+    parentTaskRunId?: string,
+    extra: Record<string, unknown> = {},
+) {
     return {
         id,
         taskId,
@@ -18,6 +25,14 @@ function taskRun(id: string, taskId: string, state: string, startDate: string, p
         flowId: "orders-pipeline",
         executionId: "exec-failed",
         state: {current: state, histories: [history("RUNNING", startDate), history(state, startDate)]},
+        ...extra,
+    }
+}
+
+function attempt(state: string, startDate: string, endDate: string, workerId: string) {
+    return {
+        state: {current: state, histories: [history("RUNNING", startDate), history(state, endDate)]},
+        workerId,
     }
 }
 
@@ -76,7 +91,13 @@ const meta: Meta<typeof FailureDebugPanel> = {
     },
     beforeEach() {
         mockStoryApiRoutes({
-            "GET /logs/exec-failed": {results: [], total: 0},
+            "GET /logs/exec-failed": {
+                results: [
+                    {level: "INFO", message: "transforming 48203 rows", timestamp: "2025-01-01T00:00:05Z"},
+                    {level: "ERROR", message: "Connection refused: warehouse.internal:5432", timestamp: "2025-01-01T00:00:06Z"},
+                ],
+                total: 2,
+            },
             "GET /flows/company.team/orders-pipeline": {source: FLOW_SOURCE, inputs: [{id: "region", type: "STRING"}]},
             "POST /expressions/render": (context: {body?: unknown}) => {
                 const {expressions} = JSON.parse((context.body as string) ?? "{}") as {expressions?: string[]}
@@ -121,7 +142,13 @@ export const SingleFailure: Story = {
     args: {
         execution: execution("FAILED", [
             taskRun("tr-1", "extract", "SUCCESS", "2025-01-01T00:00:00Z"),
-            taskRun("tr-2", "transform", "FAILED", "2025-01-01T00:00:05Z"),
+            taskRun("tr-2", "transform", "FAILED", "2025-01-01T00:00:05Z", undefined, {
+                value: "region=us-east-1",
+                attempts: [
+                    attempt("FAILED", "2025-01-01T00:00:05Z", "2025-01-01T00:00:06Z", "worker-a1b2"),
+                    attempt("FAILED", "2025-01-01T00:00:20Z", "2025-01-01T00:00:21Z", "worker-c3d4"),
+                ],
+            }),
         ]),
     },
     async play({canvasElement}) {
@@ -131,6 +158,15 @@ export const SingleFailure: Story = {
         await waitFor(() => expect(canvas.getByRole("region")).toBeVisible())
         await expect(canvasElement.querySelector(".failure-switcher")).toBeNull()
         await expect(canvasElement.querySelector(".failure-debug-panel__subtitle")?.textContent).toContain("transform")
+        await expect(canvasElement.querySelector(".failure-debug-panel__value")?.textContent).toContain("region=us-east-1")
+        await expect(canvasElement.querySelector(".failure-debug-panel__attempt")?.textContent).toContain("Attempt 2/2")
+        await waitFor(() =>
+            expect(canvasElement.querySelector(".failure-error-summary__text")?.textContent).toContain(
+                "Connection refused: warehouse.internal:5432",
+            ),
+        )
+        await waitFor(() => expect(canvasElement.querySelectorAll(".failure-attempts__row")).toHaveLength(2))
+        await expect(canvasElement.textContent).toContain("worker-c3d4")
         await waitFor(() => expect(canvasElement.textContent).toContain("transforming"))
         await waitFor(() => expect(canvasElement.textContent).toContain("us-east-1"))
         await waitFor(() => expect(canvasElement.textContent).toContain("48203 rows"))

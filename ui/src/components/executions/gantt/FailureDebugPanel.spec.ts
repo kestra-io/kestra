@@ -37,11 +37,12 @@ function history(state: string, date: string) {
     return {state, date}
 }
 
-function taskRun(id: string, taskId: string, state: string, startDate: string) {
+function taskRun(id: string, taskId: string, state: string, startDate: string, extra: Record<string, unknown> = {}) {
     return {
         id,
         taskId,
         state: {current: state, histories: [history("RUNNING", startDate), history(state, startDate)]},
+        ...extra,
     }
 }
 
@@ -73,8 +74,10 @@ function mountPanel(execution: Record<string, unknown>) {
                 FailureUpstreamOutputs: true,
                 FailureStructuralImpact: true,
                 FailureLogPanel: true,
+                FailureAttempts: true,
+                SubFlowLink: true,
                 KsExecutionStatus: true,
-                KsButton: {template: "<button><slot /></button>"},
+                KsButton: {props: ["disabled"], template: "<button :disabled=\"disabled\"><slot /></button>"},
                 KsIconButton: {template: "<button><slot /></button>"},
             },
         },
@@ -235,6 +238,177 @@ describe("FailureDebugPanel", () => {
 
         expect(wrapper.get(".failure-debug-panel").isVisible()).toBe(true)
         expect(document.activeElement).toBe(wrapper.get("h3").element)
+    })
+
+    it("should identify the failing iteration by its value, not just the task id", async () => {
+        const wrapper = mountPanel({
+            id: "exec-1",
+            state: {current: "FAILED"},
+            taskRunList: [
+                taskRun("tr-1", "process_item", "FAILED", "2024-01-01T00:00:00Z", {value: "customer-4711"}),
+            ],
+        })
+
+        await wrapper.get(".failure-debug-reopen button").trigger("click")
+        await flushPromises()
+
+        expect(wrapper.get(".failure-debug-panel__value").text()).toBe("customer-4711")
+    })
+
+    it("should distinguish two failures of the same task id by their value in the switcher", async () => {
+        const wrapper = mountPanel({
+            id: "exec-1",
+            state: {current: "FAILED"},
+            taskRunList: [
+                taskRun("tr-1", "process_item", "FAILED", "2024-01-01T00:00:00Z", {value: "customer-1"}),
+                taskRun("tr-2", "process_item", "FAILED", "2024-01-01T00:00:05Z", {value: "customer-2"}),
+            ],
+        })
+
+        await wrapper.get(".failure-debug-reopen button").trigger("click")
+        await flushPromises()
+
+        const values = wrapper.findAll(".failure-switcher__value").map((node) => node.text())
+        expect(values).toEqual(["customer-1", "customer-2"])
+    })
+
+    it("should show which attempt failed when the task run was retried", async () => {
+        const wrapper = mountPanel({
+            id: "exec-1",
+            state: {current: "FAILED"},
+            taskRunList: [
+                taskRun("tr-1", "load_warehouse", "FAILED", "2024-01-01T00:00:00Z", {
+                    attempts: [{state: {current: "FAILED", histories: []}}, {state: {current: "FAILED", histories: []}}],
+                }),
+            ],
+        })
+
+        await wrapper.get(".failure-debug-reopen button").trigger("click")
+        await flushPromises()
+
+        expect(wrapper.get(".failure-debug-panel__attempt").text()).toBe("Attempt 2/2")
+    })
+
+    it("should not show an attempt counter for a task run with a single attempt", async () => {
+        const wrapper = mountPanel({
+            id: "exec-1",
+            state: {current: "FAILED"},
+            taskRunList: [
+                taskRun("tr-1", "load_warehouse", "FAILED", "2024-01-01T00:00:00Z", {
+                    attempts: [{state: {current: "FAILED", histories: []}}],
+                }),
+            ],
+        })
+
+        await wrapper.get(".failure-debug-reopen button").trigger("click")
+        await flushPromises()
+
+        expect(wrapper.find(".failure-debug-panel__attempt").exists()).toBe(false)
+    })
+
+    it("should surface the error message on its own, without making the user read the log stream", async () => {
+        store.executions = {
+            loadLogs: vi.fn().mockResolvedValue({
+                results: [
+                    {level: "INFO", message: "starting"},
+                    {level: "ERROR", message: "Connection refused: warehouse:5432"},
+                ],
+            }),
+        }
+
+        const wrapper = mountPanel({
+            id: "exec-1",
+            state: {current: "FAILED"},
+            taskRunList: [taskRun("tr-1", "load_warehouse", "FAILED", "2024-01-01T00:00:00Z")],
+        })
+
+        await wrapper.get(".failure-debug-reopen button").trigger("click")
+        await flushPromises()
+
+        expect(wrapper.get(".failure-error-summary__text").text()).toBe("Connection refused: warehouse:5432")
+    })
+
+    it("should fetch the error once per focused failure rather than once per action that needs it", async () => {
+        const loadLogs = vi.fn().mockResolvedValue({results: [{level: "ERROR", message: "boom"}]})
+        store.executions = {loadLogs}
+
+        const wrapper = mountPanel({
+            id: "exec-1",
+            state: {current: "FAILED"},
+            taskRunList: [taskRun("tr-1", "load_warehouse", "FAILED", "2024-01-01T00:00:00Z")],
+        })
+
+        await wrapper.get(".failure-debug-reopen button").trigger("click")
+        await flushPromises()
+
+        expect(loadLogs).toHaveBeenCalledTimes(1)
+    })
+
+    it("should disable the error-dependent actions when no error text was recorded", async () => {
+        store.executions = {loadLogs: vi.fn().mockResolvedValue({results: []})}
+
+        const wrapper = mountPanel({
+            id: "exec-1",
+            state: {current: "FAILED"},
+            taskRunList: [taskRun("tr-1", "load_warehouse", "FAILED", "2024-01-01T00:00:00Z")],
+        })
+
+        await wrapper.get(".failure-debug-reopen button").trigger("click")
+        await flushPromises()
+
+        const actions = wrapper.findAll(".failure-debug-panel__actions-secondary button")
+        const byLabel = (label: string) => actions.find((button) => button.text().trim() === label)
+
+        expect(byLabel("Ask Copilot")?.attributes("disabled")).toBeDefined()
+        expect(byLabel("Copy error")?.attributes("disabled")).toBeDefined()
+        expect(byLabel("Edit flow")?.attributes("disabled")).toBeUndefined()
+    })
+
+    it("should keep the error-dependent actions enabled once an error was recorded", async () => {
+        store.executions = {loadLogs: vi.fn().mockResolvedValue({results: [{level: "ERROR", message: "boom"}]})}
+
+        const wrapper = mountPanel({
+            id: "exec-1",
+            state: {current: "FAILED"},
+            taskRunList: [taskRun("tr-1", "load_warehouse", "FAILED", "2024-01-01T00:00:00Z")],
+        })
+
+        await wrapper.get(".failure-debug-reopen button").trigger("click")
+        await flushPromises()
+
+        const actions = wrapper.findAll(".failure-debug-panel__actions-secondary button")
+        const byLabel = (label: string) => actions.find((button) => button.text().trim() === label)
+
+        expect(byLabel("Ask Copilot")?.attributes("disabled")).toBeUndefined()
+        expect(byLabel("Copy error")?.attributes("disabled")).toBeUndefined()
+    })
+
+    it("should offer a drill-down into the child execution when the failing task is a subflow", async () => {
+        const wrapper = mountPanel({
+            id: "exec-1",
+            state: {current: "FAILED"},
+            taskRunList: [
+                taskRun("tr-1", "run_child", "FAILED", "2024-01-01T00:00:00Z", {outputs: {executionId: "child-exec-9"}}),
+            ],
+        })
+
+        await wrapper.get(".failure-debug-reopen button").trigger("click")
+        await flushPromises()
+
+        expect(wrapper.findComponent({name: "SubFlowLink"}).exists()).toBe(true)
+    })
+
+    it("should not offer a subflow drill-down for a task that produced no child execution", async () => {
+        const wrapper = mountPanel({
+            id: "exec-1",
+            state: {current: "FAILED"},
+            taskRunList: [taskRun("tr-1", "load_warehouse", "FAILED", "2024-01-01T00:00:00Z")],
+        })
+
+        await wrapper.get(".failure-debug-reopen button").trigger("click")
+        await flushPromises()
+
+        expect(wrapper.findComponent({name: "SubFlowLink"}).exists()).toBe(false)
     })
 
     it("should announce the failure as soon as it's detected, regardless of open state", async () => {

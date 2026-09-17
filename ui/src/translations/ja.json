@@ -217,9 +217,16 @@
       "copilot": {
         "ask": "Copilot に質問"
       },
+      "error": {
+        "empty": "このTask Runではエラーメッセージは記録されませんでした。"
+      },
       "miniTimeline": {
         "title": "発生した場所",
         "dragHint": "ドラッグして時間範囲を選択し、下の logs を絞り込みます。Escape キーで選択を解除します。"
+      },
+      "attempts": {
+        "title": "試行回数",
+        "empty": "このTask Runの試行は記録されていません。"
       },
       "stateHistory": {
         "title": "状態履歴",

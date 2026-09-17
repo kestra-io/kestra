@@ -217,9 +217,16 @@
       "copilot": {
         "ask": "询问 Copilot"
       },
+      "error": {
+        "empty": "此 Task Run 未记录任何错误消息。"
+      },
       "miniTimeline": {
         "title": "发生的位置",
         "dragHint": "拖动以选择时间范围并筛选下方的 logs。按 Escape 清除选择。"
+      },
+      "attempts": {
+        "title": "尝试次数",
+        "empty": "此 Task Run 没有记录任何尝试。"
       },
       "stateHistory": {
         "title": "状态历史",

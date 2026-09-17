@@ -217,9 +217,16 @@
       "copilot": {
         "ask": "Copilot fragen"
       },
+      "error": {
+        "empty": "Für diesen Task Run wurde keine Fehlermeldung aufgezeichnet."
+      },
       "miniTimeline": {
         "title": "Wo es passiert ist",
         "dragHint": "Ziehen, um einen Zeitraum auszuwählen und die logs unten zu filtern. Escape drücken, um die Auswahl zu löschen."
+      },
+      "attempts": {
+        "title": "Versuche",
+        "empty": "Für diesen Task Run wurde kein Versuch aufgezeichnet."
       },
       "stateHistory": {
         "title": "Statusverlauf",

@@ -19,15 +19,22 @@ public class RecordingKeyedDispatchQueue<T extends KeyedDispatchEvent> implement
     }
 
     private final String name;
+    private final EmissionJournal journal;
     private final List<Emitted<T>> emitted = new CopyOnWriteArrayList<>();
 
     public RecordingKeyedDispatchQueue(String name) {
+        this(name, new EmissionJournal());
+    }
+
+    public RecordingKeyedDispatchQueue(String name, EmissionJournal journal) {
         this.name = name;
+        this.journal = journal;
     }
 
     @Override
     public void emit(String routingKey, T message) {
         emitted.add(new Emitted<>(routingKey, message));
+        journal.record(name, message);
     }
 
     @Override

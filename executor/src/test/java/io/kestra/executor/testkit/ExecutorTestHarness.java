@@ -20,9 +20,12 @@ import io.kestra.core.models.executions.ExecutionKilled;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.LoopExecutionEvent;
 import io.kestra.core.models.flows.FlowWithSource;
+import io.kestra.core.models.flows.State;
 import io.kestra.core.models.triggers.multipleflows.MultipleConditionStateStore;
 import io.kestra.core.namespace.NamespaceFileMetadataStateStore;
 import io.kestra.core.runners.DisabledReusableInputsExpander;
+import io.kestra.core.runners.ExecutionEvent;
+import io.kestra.core.runners.ExecutionEventType;
 import io.kestra.core.runners.FlowInputOutput;
 import io.kestra.core.runners.FollowExecutionEvent;
 import io.kestra.core.runners.LocalPathFactory;
@@ -434,6 +437,32 @@ public final class ExecutorTestHarness {
         }
 
         return context;
+    }
+
+    // --- saga verbs
+
+    /**
+     * Creates and persists a fresh execution of {@code flow} and runs its CREATED event through the
+     * real {@code ExecutionEventMessageHandler} — the exact path a webserver or scheduler submission takes.
+     */
+    public ExecutorContext start(FlowWithSource flow) {
+        return handle(Executions.created(flow));
+    }
+
+    /**
+     * Persists {@code execution} if the store does not know it yet and runs its CREATED event through
+     * the real handler. Returns the cycle's decision.
+     */
+    public ExecutorContext handle(Execution execution) {
+        if (executionStateStore.findByIdWithoutAcl(execution.getId()) == null) {
+            executionStateStore.save(execution);
+        }
+        return executionEventMessageHandler.handle(new ExecutionEvent(execution, ExecutionEventType.CREATED)).orElseThrow();
+    }
+
+    /** The persisted state of {@code execution}, as the store has it now. */
+    public State.Type stateOf(Execution execution) {
+        return executionStateStore.findByIdWithoutAcl(execution.getId()).getState().getCurrent();
     }
 
     // --- real production objects

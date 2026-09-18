@@ -266,7 +266,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
         monitorSLAFuture = scheduledExecutorService.scheduleAtFixedRate(
             this::executionSLAMonitorLoop,
             0,
-            executorConfiguration.monitorSLALoopPeriodicityMs(),
+            executorConfiguration.monitorSlaLoopPeriodicityMs(),
             TimeUnit.MILLISECONDS
         );
         multipleConditionPurgeFuture = scheduledExecutorService.scheduleAtFixedRate(

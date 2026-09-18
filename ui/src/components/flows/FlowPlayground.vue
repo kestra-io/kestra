@@ -198,7 +198,7 @@
         position: sticky;
         background-color: var(--ks-bg-surface);
         top: 0;
-        z-index: 100;
+        z-index: var(--ks-z-sticky);
         gap: 1rem;
     }
 
@@ -243,7 +243,7 @@
         padding: 8px;
         border-radius: 50%;
         display: flex;
-        z-index: 99;
+        z-index: calc(var(--ks-z-sticky) - 1);
         &:hover {
             background-color: var(--ks-bg-hover-elevated);
         }

@@ -212,6 +212,7 @@ let i18nRegistration: Promise<void> = Promise.resolve()
 /** The registration `install` started, so a caller can await it rather than leave it in flight. */
 export const designSystemI18nReady = (): Promise<void> => i18nRegistration
 export {useDiscardGuard} from "./composables/useDiscardGuard"
+export {useTopLayer} from "./composables/useTopLayer"
 export type {FilterContext} from "./components/Data/KsDataTable/filter/utils/filterInjectionKeys"
 export {SAVED_FILTER_ANALYTICS_INJECTION_KEY} from "./components/Data/KsDataTable/filter/utils/filterAnalytics"
 export type {SavedFilterAction, SavedFilterAnalyticsEvent, SavedFilterAnalyticsTracker} from "./components/Data/KsDataTable/filter/utils/filterAnalytics"

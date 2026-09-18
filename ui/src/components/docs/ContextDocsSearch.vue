@@ -137,7 +137,7 @@
         flex: 1;
         min-width: 0;
         margin-bottom: 0;
-        z-index: 1001;
+        z-index: calc(var(--ks-z-dropdown) + 1);
     }
 
     .search-input {
@@ -163,7 +163,7 @@
         margin-top: 4px;
         max-height: 400px;
         overflow-y: auto;
-        z-index: 1001;
+        z-index: calc(var(--ks-z-dropdown) + 1);
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
         padding: 4px 0;
     }

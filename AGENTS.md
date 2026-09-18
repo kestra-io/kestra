@@ -290,6 +290,7 @@ A whole-repo `./gradlew build` can take tens of minutes, and almost nothing abou
 | Something crossing module boundaries | `./gradlew build -x integrationTest` |
 | A Vue component or composable | `cd ui && npm run check:types && npm run test:unit && npm run lint` |
 | A design-system component | the above, plus `npm run test:storybook` |
+| An e2e spec or fixture | `cd e2e && npm run check:types && npm run test:lint` |
 | `en.json`, whether a key was added or a value edited | `cd ui && npm run translations:generate && npm run translations:check` |
 | A controller or its DTOs | that module's tests, including the authorization tests for the route |
 
@@ -355,7 +356,6 @@ npm run build
 npm run test:all        # All tests with coverage
 npm run test:unit       # Unit tests only
 npm run test:storybook  # Storybook tests
-npm run test:e2e        # End-to-end tests
 
 # Linting
 npm run lint            # Fix linting issues
@@ -364,6 +364,21 @@ npm run test:lint       # Check linting only
 # Storybook
 npm run storybook       # Development
 npm run build-storybook # Build
+```
+
+### End-to-end tests
+
+The Playwright suite is its own npm package at [e2e/](e2e/), installed separately from `ui/` so that
+a spec change pulls in neither the frontend dependency tree nor the frontend CI jobs.
+
+```bash
+cd e2e
+npm ci
+npx playwright install chromium
+
+npm run test:e2e                          # starts a Kestra docker image, runs the suite, stops it
+npm run test:e2e-without-starting-backend # against an instance you already have running
+npm run check:types && npm run test:lint
 ```
 
 ## Development Workflow
@@ -431,6 +446,7 @@ This copies the gitignored `cli/src/main/resources/application-*.yml` files from
 - `jdbc-*` - Database implementations (H2, Postgres, MySQL)
 
 **Testing Modules:**
+- `e2e` - Playwright end-to-end suite, run against a Kestra docker image
 - `tests` - Common test utilities and base classes
 - `jmh-benchmark` - JMH benchmarks for performance testing
 

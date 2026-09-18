@@ -16,19 +16,19 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
+cd "$(dirname "${BASH_SOURCE[0]}")"
+
 cleanup() {
   echo "Stop the backend"
-  cd ./tests/e2e
   ./stop-e2e-tests-backend.sh
-  cd ../..
 }
 trap 'cleanup' EXIT
 
-cd ./tests/e2e
+# This package is installed on its own, so a caller that only ran `npm ci` in ui/ still works.
+[ -d node_modules ] || npm ci
 
 echo "Start backend"
 ./start-e2e-tests-backend.sh --kestra-docker-image-to-test $KESTRA_DOCKER_IMAGE_TO_TEST
-cd ../..
 
 echo "Run tests"
 npm run test:e2e-without-starting-backend

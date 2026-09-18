@@ -21,6 +21,7 @@
         "Default page": "Default page",
         "confirmation": "Confirmation",
         "common": {
+            "openInNewTab": "Open in new tab",
             "back": "Back"
         },
         "delete confirm": "Are you sure you want to delete <code>{name}</code>?",
@@ -1152,6 +1153,12 @@
             "show_yaml": "Show YAML"
         },
         "secret": {
+            "key": "Key",
+            "name": "Secret",
+            "description": "Description",
+            "descriptionPlaceholder": "Short description of the secret",
+            "tags": "Tags",
+            "addTag": "Add tag",
             "add": "New secret",
             "update": "Update secret '{name}'",
             "isReadOnly": "Secret is read-only",
@@ -1348,6 +1355,9 @@
         "chart": "Chart",
         "chart preview": "Chart preview",
         "no_code": {
+            "add": {
+                "disabled_warning": "Fill in the current entry before adding another one"
+            },
             "toggle_pebble": "Toggle Pebble editor",
             "version_oss_placeholder": "Unlock Plugin Versioning with Enterprise Edition",
             "unnamed": "No Name",
@@ -1490,7 +1500,7 @@
         "learn_more": "Learn more",
         "watch_video": "Watch Video",
         "runners": "Runners",
-        "select": "Select your {{section}}",
+        "select": "Select your {section}",
         "for flow": "for flow",
         "confirm": "Confirm",
         "taskRunners": "Task Runners",
@@ -1577,6 +1587,14 @@
         },
         "search_docs": "Search",
         "no_results_found": "No results found",
+        "none": "None",
+        "user": "User",
+        "toast confirm": "Are you sure?",
+        "flows not imported": "Flows not imported",
+        "templates imported": "Templates imported",
+        "read only fields have changed (id, namespace...)": "Read-only fields have changed (id, namespace...)",
+        "failed to load concurrency limit": "Failed to load the concurrency limit",
+        "restart execution title": "Restart execution",
         "searching": "Searching...",
         "worker information": "Worker Information",
         "test-badge-text": "Test",
@@ -1692,6 +1710,7 @@
         },
         "ai": {
             "flow": {
+                "select_provider": "Select a provider",
                 "title": "AI Copilot",
                 "prompt_placeholder": "Enter instructions to create your Kestra flow. Example prompt: Create a flow that runs every Monday at 9 AM.",
                 "generating": {
@@ -1874,6 +1893,7 @@
                 "description": "Filter by execution hierarchy"
             },
             "timeRange": {
+                "applyTo": "Apply to",
                 "label": "Interval",
                 "description": "Filter by execution time",
                 "dateFilter": {

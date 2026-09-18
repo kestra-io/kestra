@@ -54,7 +54,7 @@ function mountActions(propsData: Partial<TaskRunActionsProps>) {
                     props: ["value", "label"],
                 },
                 KsDropdownItem: {
-                    template: "<div class=\"ks-dropdown-item\"><slot /></div>",
+                    template: "<div class=\"ks-dropdown-item\" @click=\"$emit('click', $event)\"><slot /></div>",
                     props: ["divided"],
                 },
                 KsButton: {
@@ -95,108 +95,125 @@ describe("TaskRunActions", () => {
             ],
             execution,
         })
-        
+
         const options = wrapper.findAll("option")
         expect(options).toHaveLength(2)
         expect(options[0].text()).toBe("Iteration 1")
         expect(options[1].text()).toBe("iteration_number")
     })
 
+    const execution2 = {...execution, id: "ex-2"}
     it("targets delete logs at the selected run", async () => {
         const executionsStore = useExecutionsStore()
         executionsStore.deleteLogs = vi.fn().mockResolvedValue({})
-        
+
         const wrapper = mountActions({
             taskRun: {id: "tr-1", taskId: "task-1", state: {current: "SUCCESS"}},
             taskRuns: [
                 {id: "tr-1", taskId: "task-1", value: "Iter 1", state: {current: "SUCCESS"}},
                 {id: "tr-2", taskId: "task-1", value: "Iter 2", state: {current: "SUCCESS"}},
             ],
-            execution,
+            execution: execution2,
         })
-        
+
         await wrapper.find("select").setValue("tr-2")
-        await (wrapper.vm as unknown as { deleteLogs: Function }).deleteLogs({id: "tr-2"})
-        
+        const deleteBtn = wrapper.findAll(".ks-dropdown-item").find(w => w.text().includes("delete_log") || w.text().includes("delete logs"))
+        await deleteBtn!.trigger("click")
+
         expect(executionsStore.deleteLogs).toHaveBeenCalledWith({
-            executionId: "ex-1",
+            executionId: "ex-2",
             params: {taskRunId: "tr-2"},
         })
     })
-    
+
+    const execution3 = {...execution, id: "ex-3"}
     it("targets download logs at the selected run", async () => {
         const executionsStore = useExecutionsStore()
         executionsStore.downloadLogs = vi.fn().mockResolvedValue("log content")
-        
+
         const wrapper = mountActions({
             taskRun: {id: "tr-1", taskId: "task-1", state: {current: "SUCCESS"}},
             taskRuns: [
                 {id: "tr-1", taskId: "task-1", value: "Iter 1", state: {current: "SUCCESS"}},
                 {id: "tr-2", taskId: "task-1", value: "Iter 2", state: {current: "SUCCESS"}},
             ],
-            execution,
+            execution: execution3,
         })
-        
+
         await wrapper.find("select").setValue("tr-2")
-        await (wrapper.vm as unknown as { downloadContent: Function }).downloadContent("tr-2")
-        
+        const downloadBtn = wrapper.findAll(".ks-dropdown-item").find(w => w.text().includes("download"))
+        await downloadBtn!.trigger("click")
+
         expect(executionsStore.downloadLogs).toHaveBeenCalledWith({
-            executionId: "ex-1",
+            executionId: "ex-3",
             params: {taskRunId: "tr-2"},
         })
     })
-    
+
+    const execution4 = {...execution, id: "ex-4"}
     it("targets copy logs at the selected run", async () => {
         const executionsStore = useExecutionsStore()
         executionsStore.downloadLogs = vi.fn().mockResolvedValue("log content")
-        
+
         const wrapper = mountActions({
             taskRun: {id: "tr-1", taskId: "task-1", state: {current: "SUCCESS"}},
             taskRuns: [
                 {id: "tr-1", taskId: "task-1", value: "Iter 1", state: {current: "SUCCESS"}},
                 {id: "tr-2", taskId: "task-1", value: "Iter 2", state: {current: "SUCCESS"}},
             ],
-            execution,
+            execution: execution4,
         })
-        
+
         await wrapper.find("select").setValue("tr-2")
-        await (wrapper.vm as unknown as { copyContent: Function }).copyContent("tr-2")
-        
+        const copyBtn = wrapper.findAll(".ks-dropdown-item").find(w => w.text().includes("copy"))
+        await copyBtn!.trigger("click")
+
         expect(executionsStore.downloadLogs).toHaveBeenCalledWith({
-            executionId: "ex-1",
+            executionId: "ex-4",
             params: {taskRunId: "tr-2"},
         })
     })
-    
-    it("handles attemptIndex > 0 properly", () => {
+
+    it("handles attemptIndex > 0 properly", async () => {
         const wrapper = mountActions({
-            taskRun: { 
-                id: "tr-1", 
+            taskRun: {
+                id: "tr-1",
                 taskId: "task-1",
                 state: {current: "FAILED"},
                 attempts: [{state: {current: "FAILED"}}, {state: {current: "SUCCESS"}}],
             },
             taskRuns: [
-                { 
-                    id: "tr-1", 
+                {
+                    id: "tr-1",
                     taskId: "task-1",
                     state: {current: "FAILED"},
                     attempts: [{state: {current: "FAILED"}}, {state: {current: "SUCCESS"}}],
                 },
-                { 
-                    id: "tr-2", 
+                {
+                    id: "tr-2",
                     taskId: "task-1",
                     state: {current: "SUCCESS"},
                     attempts: [{state: {current: "SUCCESS"}}],
                 },
             ],
-            execution,
+            execution: {id: "ex-5", flowId: "flow-1", namespace: "ns-1", state: {current: "SUCCESS"}},
             attemptIndex: 1,
         })
-        
+
         expect((wrapper.vm as unknown as { currentAttemptIndex: number }).currentAttemptIndex).toBe(1)
-        
-        wrapper.find("select").setValue("tr-2")
+
+        await wrapper.find("select").setValue("tr-2")
         expect((wrapper.vm as unknown as { currentAttemptIndex: number }).currentAttemptIndex).toBe(0)
+    })
+    it("hides selector for single-iteration tasks", () => {
+        const wrapper = mountActions({
+            taskRun: {id: "tr-1", taskId: "task-1", state: {current: "SUCCESS"}},
+            taskRuns: [
+                {id: "tr-1", taskId: "task-1", value: undefined, state: {current: "SUCCESS"}},
+            ],
+            execution,
+        })
+
+        expect(wrapper.find("select").exists()).toBe(false)
     })
 })

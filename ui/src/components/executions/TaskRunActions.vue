@@ -9,20 +9,20 @@
                     <KsSelect
                         v-model="selectedTaskRunId"
                         :teleported="false"
+                        filterable
                         :aria-label="$t('iteration')"
                     >
                         <KsOption
                             v-for="(run, index) in currentTaskRuns"
                             :key="run.id"
                             :value="run.id"
-                            :label="run.value !== undefined && run.value !== null ? run.value : $t('iteration_number', {number: index + 1})"
+                            :label="iterationLabel(run, index)"
                         />
                     </KsSelect>
                 </li>
 
                 <KsDropdownItem
                     v-if="selectedAttempt?.state.current === 'FAILED'"
-                    :divided="currentTaskRuns.length > 1"
                     @click="fixErrorWithAi"
                 >
                     <span class="d-inline-flex align-items-center">
@@ -32,14 +32,12 @@
                 </KsDropdownItem>
                 <SubFlowLink
                     v-if="isSubflow"
-                    :divided="currentTaskRuns.length > 1 && selectedAttempt?.state.current !== 'FAILED'"
                     component="KsDropdownItem"
                     tabExecution="logs"
                     :executionId="currentTaskRun.outputs?.executionId"
                 />
 
                 <Metrics
-                    :divided="currentTaskRuns.length > 1 && selectedAttempt?.state.current !== 'FAILED' && !isSubflow"
                     :taskRun="currentTaskRun"
                     :execution="execution"
                 />
@@ -117,7 +115,7 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, ref, watch} from "vue"
+    import {computed} from "vue"
     import {useI18n} from "vue-i18n"
     import {useRoute} from "vue-router"
 
@@ -180,17 +178,18 @@
         return (props.taskRuns || []).filter((r) => r.taskId === props.taskRun?.taskId)
     })
 
-    const selectedTaskRunId = ref<string>(props.taskRun?.id || currentTaskRuns.value[0]?.id)
+    const selectionKey = computed(() => `${props.execution.id}|${props.taskRun?.taskId}`)
+
+    const selectedTaskRunId = computed({
+        get: () => executionsStore.taskRunSelections.get(selectionKey.value) || props.taskRun?.id || currentTaskRuns.value[0]?.id,
+        set: (val: string) => executionsStore.taskRunSelections.set(selectionKey.value, val),
+    })
 
     const currentTaskRun = computed(() => {
         return currentTaskRuns.value.find((r) => r.id === selectedTaskRunId.value) || props.taskRun
     })
 
-    watch(() => currentTaskRuns.value.map((r) => r.id).join(), () => {
-        if (!currentTaskRuns.value.some((r) => r.id === selectedTaskRunId.value)) {
-            selectedTaskRunId.value = props.taskRun?.id || currentTaskRuns.value[0]?.id
-        }
-    })
+
 
     function attempts(taskRun: any): any[] {
         if (props.execution.state.current === State.RUNNING || props.forcedAttemptNumber === undefined) {
@@ -209,7 +208,7 @@
     const isSubflow = computed<boolean>(() => !!currentTaskRun.value?.outputs?.executionId)
 
     const hasWorkerId = computed<boolean>(() =>
-        currentTaskRun.value.attempts?.find((attempt: { workerId?: string | null }) => attempt.workerId !== null) !== undefined,
+        currentTaskRun.value.attempts?.find((attempt: { workerId?: string | null }) => attempt.workerId != null) !== undefined,
     )
 
     const canReadFlow = computed(() =>
@@ -247,11 +246,17 @@
         })
     }
 
-    function deleteLogs(run: any) {
-        const iterationLabel = run.value !== undefined && run.value !== null ? run.value : t("iteration_number", {number: currentTaskRuns.value.findIndex(r => r.id === run.id) + 1})
-        
+    function iterationLabel(run: { id?: string; value?: unknown }, index?: number) {
+        return run.value !== undefined && run.value !== null
+            ? String(run.value)
+            : t("iteration_number", {number: index !== undefined ? index + 1 : currentTaskRuns.value.findIndex(r => r.id === run.id) + 1})
+    }
+
+    function deleteLogs(run: { id: string; value?: unknown }) {
+        const label = iterationLabel(run)
+
         toast.confirm(
-            currentTaskRuns.value.length > 1 ? t("delete_log_iteration", {iteration: iterationLabel}) : t("delete_log"),
+            currentTaskRuns.value.length > 1 ? t("delete_log_iteration", {iteration: label}) : t("delete_log"),
             async () => {
                 await executionsStore.deleteLogs({
                     executionId: props.execution.id,
@@ -297,8 +302,9 @@
             background: var(--ks-btn-secondary-bg-inactive);
         }
     }
-    
+
     .iteration-selector {
+        border-bottom: 1px solid var(--ks-border-primary);
         padding: var(--ks-spacing-2);
     }
 </style>

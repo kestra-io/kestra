@@ -38,6 +38,8 @@ public class MetricRegistry {
     public static final String METRIC_WORKER_MAX_CONCURRENCY_DESCRIPTION = "Maximum number of in-flight jobs the worker can hold (threads currently executing + jobs pending in the buffer)";
     public static final String METRIC_WORKER_RUNNING_COUNT = "worker.running.count";
     public static final String METRIC_WORKER_RUNNING_COUNT_DESCRIPTION = "The number of tasks currently running inside the Worker";
+    public static final String METRIC_WORKER_ABANDONED_COUNT = "worker.abandoned.count";
+    public static final String METRIC_WORKER_ABANDONED_COUNT_DESCRIPTION = "The number of jobs the Worker stopped waiting for that are still holding a Worker thread";
     public static final String METRIC_WORKER_PENDING_COUNT = "worker.pending.count";
     public static final String METRIC_WORKER_PENDING_COUNT_DESCRIPTION = "The number of tasks currently pending for a runnable thread inside the Worker";
     public static final String METRIC_WORKER_QUEUED_DURATION = "worker.queued.duration";

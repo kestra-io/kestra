@@ -29,6 +29,9 @@ import io.kestra.executor.ConcurrencyLimitStateStore;
  * the widest-scope FIFO pop with per-candidate fit check.
  */
 public class InMemoryConcurrencyLimitStateStore implements ConcurrencyLimitStateStore {
+    /** Blocked-candidate scan bound per release, as in the EE JDBC store; the rest wait for later releases. */
+    static final int MAX_POP_CANDIDATES = 100;
+
     private final Map<String, ConcurrencyLimit> limits = new ConcurrentHashMap<>();
 
     @Override
@@ -109,7 +112,11 @@ public class InMemoryConcurrencyLimitStateStore implements ConcurrencyLimitState
             .sorted(Comparator.comparing(ExecutionQueued::getDate))
             .toList();
 
+        int attempts = 0;
         for (ExecutionQueued candidate : candidates) {
+            if (attempts++ >= MAX_POP_CANDIDATES) {
+                break;
+            }
             List<ScopedConcurrencyLimit> candidateScopes = candidateLimits.apply(candidate.getExecution());
             boolean fits = candidateScopes.stream().allMatch(scope -> running(scope) < scope.concurrency().getLimit());
             if (fits) {

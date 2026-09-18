@@ -25,6 +25,8 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 
+import static io.kestra.core.queues.QueueService.key;
+
 /**
  * This class is responsible for batch-indexing asynchronously queue messages.
  * <p>
@@ -47,7 +49,6 @@ public class DefaultIndexer extends AbstractService implements Indexer {
     private final List<QueueSubscriber<?>> subscribers = new CopyOnWriteArrayList<>();
 
     private final IgnoreExecutionService ignoreExecutionService;
-    private final QueueService queueService;
 
     @Inject
     public DefaultIndexer(
@@ -59,8 +60,7 @@ public class DefaultIndexer extends AbstractService implements Indexer {
         DispatchQueueInterface<ExecutionStatistic> executionStatisticQueue,
         MetricRegistry metricRegistry,
         ApplicationEventPublisher<ServiceStateChangeEvent> eventPublisher,
-        IgnoreExecutionService ignoreExecutionService,
-        QueueService queueService) {
+        IgnoreExecutionService ignoreExecutionService) {
         super(ServiceType.INDEXER, eventPublisher);
 
         this.logRepository = logRepository;
@@ -71,7 +71,6 @@ public class DefaultIndexer extends AbstractService implements Indexer {
         this.executionStatisticQueue = executionStatisticQueue;
         this.metricRegistry = metricRegistry;
         this.ignoreExecutionService = ignoreExecutionService;
-        this.queueService = queueService;
 
         setState(ServiceState.CREATED);
     }
@@ -107,8 +106,8 @@ public class DefaultIndexer extends AbstractService implements Indexer {
                 .map(either -> either.getLeft())
                 .filter(it ->
                 {
-                    if (ignoreExecutionService.ignoreIndexerRecord(queueService.key(it))) {
-                        log.warn("Skipping indexer record for key: {}", queueService.key(it));
+                    if (ignoreExecutionService.ignoreIndexerRecord(key(it))) {
+                        log.warn("Skipping indexer record for key: {}", key(it));
                         return false;
                     }
                     return true;

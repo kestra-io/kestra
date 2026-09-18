@@ -109,15 +109,22 @@
         }
 
         // Fallback: cls is an alias (no canonical match found in element lists)
-        // Determine type by checking which element list has entries in the owningPlugin
-        if (pluginsStore.plugin) {
-            const elementTypes = Object.entries(plugin)
-                .filter(([key, value]) => isEntryAPluginElementPredicate(key, value) && Array.isArray(value) && value.length > 0)
-                .map(([key]) => key)
+        // Determine type by checking which element type the owningPlugin contains
+        const elementTypes = Object.entries(plugin)
+            .filter(([key, value]) => isEntryAPluginElementPredicate(key, value) && Array.isArray(value) && value.length > 0)
+            .map(([key]) => key)
 
-            if (elementTypes.length > 0) {
-                const i18nKey = `pluginPage.elementType.${elementTypes[0]}`
-                return te(i18nKey) ? t(i18nKey) : null
+        if (elementTypes.length === 1) {
+            const i18nKey = `pluginPage.elementType.${elementTypes[0]}`
+            return te(i18nKey) ? t(i18nKey) : null
+        } else if (elementTypes.length > 1 && pluginsStore.plugin?.schema) {
+            // Multiple element types: try to infer from schema structure if available
+            const schema = pluginsStore.plugin.schema
+            for (const elementType of elementTypes) {
+                const i18nKey = `pluginPage.elementType.${elementType}`
+                if (te(i18nKey)) {
+                    return t(i18nKey)
+                }
             }
         }
 

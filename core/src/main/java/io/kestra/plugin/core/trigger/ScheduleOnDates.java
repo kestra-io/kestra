@@ -1,6 +1,5 @@
 package io.kestra.plugin.core.trigger;
 
-import java.time.Duration;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
@@ -24,7 +23,6 @@ import io.kestra.core.serializers.JacksonMapper;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Null;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 import lombok.extern.slf4j.Slf4j;
@@ -47,11 +45,6 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 @Plugin
 public class ScheduleOnDates extends AbstractTrigger implements Schedulable, TriggerOutput<VoidOutput> {
     private static final String PLUGIN_PROPERTY_RECOVER_MISSED_SCHEDULES = "recoverMissedSchedules";
-
-    @Schema(hidden = true)
-    @Builder.Default
-    @Null
-    private final Duration interval = null;
 
     private Map<String, Object> inputs;
 

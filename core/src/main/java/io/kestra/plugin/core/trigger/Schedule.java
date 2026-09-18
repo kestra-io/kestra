@@ -31,7 +31,6 @@ import org.hibernate.validator.constraints.time.DurationMin;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Null;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 import lombok.extern.slf4j.Slf4j;
@@ -227,11 +226,6 @@ public class Schedule extends AbstractTrigger implements Schedulable, TriggerOut
     @TimezoneId
     @Builder.Default
     private String timezone = ZoneId.systemDefault().toString();
-
-    @Schema(hidden = true)
-    @Builder.Default
-    @Null
-    private final Duration interval = null;
 
     private Map<String, Object> inputs;
 

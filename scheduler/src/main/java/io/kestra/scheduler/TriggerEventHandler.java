@@ -24,7 +24,6 @@ import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.Backfill;
-import io.kestra.core.models.triggers.PollingTriggerInterface;
 import io.kestra.core.models.triggers.RecoverMissedSchedules;
 import io.kestra.core.models.triggers.Schedulable;
 import io.kestra.core.models.triggers.TriggerContext;
@@ -183,7 +182,7 @@ public class TriggerEventHandler {
                 return;
             }
 
-            if (trigger instanceof PollingTriggerInterface) {
+            if (trigger instanceof Schedulable) {
                 state = state.updateForNextEvaluationDate(clock, nextEvaluationDate(clock, flow, trigger, state.context()));
             }
 

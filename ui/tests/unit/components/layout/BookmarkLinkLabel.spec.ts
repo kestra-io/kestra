@@ -3,7 +3,6 @@ import {mount} from "@vue/test-utils"
 import {defineComponent, h} from "vue"
 
 vi.mock("@kestra-io/design-system", () => ({
-    KsInput: defineComponent({name: "KsInput", props: {modelValue: {type: String, default: ""}}, setup: () => () => h("input")}),
     KsMessageBox: {confirm: vi.fn(() => Promise.resolve())},
 }))
 vi.mock("vue-i18n", () => ({useI18n: () => ({t: (k: string) => k})}))
@@ -15,6 +14,9 @@ for (const icon of ["DeleteOutline", "PencilOutline", "CheckCircle"]) {
 
 const {createPinia, setActivePinia} = await import("pinia")
 const BookmarkLink = (await import("../../../../src/components/layout/BookmarkLink.vue")).default
+
+// BookmarkLink resolves KsInput globally rather than importing it, so the stub belongs here.
+const KsInput = defineComponent({name: "KsInput", props: {modelValue: {type: String, default: ""}}, setup: () => () => h("input")})
 
 const RouterLinkStub = defineComponent({
     name: "RouterLink",
@@ -36,7 +38,7 @@ const mountLink = (title: string) => {
     setActivePinia(createPinia())
     wrapper = mount(BookmarkLink, {
         props: {href: "/flows", title},
-        global: {stubs: {RouterLink: RouterLinkStub, KsInput: {name: "KsInput", template: "<input>"}}, mocks: {$t: (k: string) => k}},
+        global: {stubs: {RouterLink: RouterLinkStub, KsInput}, mocks: {$t: (k: string) => k}},
     })
     return wrapper
 }

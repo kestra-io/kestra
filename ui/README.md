@@ -88,8 +88,9 @@ If you're doing frontend development, you can run `npm run dev` from the `ui` fo
 
 ### Testing
 
-The devcontainer installs the Playwright browsers on create, so `npm run test:e2e` works out of the
-box. If they are ever missing, reinstall them with `npx playwright install` from this folder.
+Unit and Storybook tests run from this folder. The end-to-end suite is its own package at
+[../e2e](../e2e); the devcontainer installs the Playwright browsers on create, so `npm run test:e2e`
+works out of the box there. If they are ever missing, reinstall them with `npx playwright install`.
 
 ---
 

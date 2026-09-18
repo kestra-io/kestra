@@ -50,6 +50,13 @@
     @use 'element-plus/theme-chalk/src/check-tag';
 
     .kel-check-tag {
+        --kel-color-info-light-9: var(--ks-bg-tag);
+        --kel-color-info-light-7: var(--ks-bg-tag-hover);
+        --kel-color-info: var(--ks-text-secondary);
+        --kel-color-primary-light-8: var(--ks-bg-tag-active);
+        --kel-color-primary-light-7: var(--ks-bg-tag-active);
+        --kel-color-primary: var(--ks-text-primary);
+
         &--small {
             --kel-font-size-base: var(--ks-font-size-xs);
             padding: 3px 8px;
@@ -73,10 +80,9 @@
         }
     }
 
-    /* Element Plus paints a disabled tag with light-9/light-8 tints that are near-white whatever the theme. */
     .kel-check-tag.is-disabled {
-        --kel-color-info-light-9: var(--ks-bg-tag);
-        --kel-color-primary-light-8: var(--ks-bg-tag-active);
+        --kel-color-info-light-9: var(--ks-bg-tag-inactive);
+        --kel-color-primary-light-8: var(--ks-bg-tag-inactive);
     }
 
     .kel-check-tag.kel-check-tag--pill {

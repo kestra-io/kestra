@@ -38,12 +38,14 @@ describe("the known-token set", () => {
     })
 
     it.each([
-        ["plain CSS", "--ks-local: red;"],
-        ["scss interpolation", "#{--ks-local}: red;"],
-        ["a quoted key in a style object", "const s = {'--ks-local': '1px'}"],
-        ["a runtime setProperty", "el.style.setProperty(\"--ks-local\", v)"],
-    ])("counts a declaration written as %s", (_label, source) => {
-        expect(declarationsIn(source)).toContain("--ks-local")
+        ["plain CSS", "--ks-local: red;", "--ks-local"],
+        ["scss interpolation", "#{--ks-local}: red;", "--ks-local"],
+        ["a quoted key in a style object", "const s = {'--ks-local': '1px'}", "--ks-local"],
+        ["a runtime setProperty", "el.style.setProperty(\"--ks-local\", v)", "--ks-local"],
+        ["an @property registration", "@property --ks-local { syntax: \"<length>\" }", "--ks-local"],
+        ["an @property registration in mixed case", "@property --ks-Local { syntax: \"<length>\" }", "--ks-Local"],
+    ])("counts a declaration written as %s", (_label, source, declared) => {
+        expect(declarationsIn(source)).toContain(declared)
     })
 
     it("leaves out a name built by interpolation, since it is only known at runtime", () => {

@@ -49,7 +49,8 @@ WebStorm ships stylelint support: enable it under Languages & Frameworks → Sty
   `packages/design-system/scripts/generate-palette.mjs` writes from the Figma palette and which is
   the source of truth for colour
 - every `--ks-*` declared anywhere under `src/` and `packages/`: plain CSS, SCSS's `#{--name}:` form,
-  a quoted key in a JS style object, or a runtime `element.style.setProperty("--name", …)`
+  a quoted key in a JS style object, a runtime `element.style.setProperty("--name", …)`, or an
+  `@property` registration
 - everything the file being linted declares itself, read from the buffer rather than from disk, so
   a token you have just typed is not reported while the file is unsaved
 

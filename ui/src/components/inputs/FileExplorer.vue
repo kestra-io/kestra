@@ -685,7 +685,13 @@
     }
 
     async function fetchRevisionSource(revision: number): Promise<string> {
-        return (await namespacesStore.readFile({namespace: namespaceId.value, path: revisionsHistory.value.path, revision})).content ?? ""
+        const {content, notFound} = await namespacesStore.readFile({namespace: namespaceId.value, path: revisionsHistory.value.path, revision})
+        // readFile silences the global 404 toast, so surface the missing revision here rather than
+        // rendering a silent empty diff.
+        if (notFound) {
+            toast.error(t("namespace files.revisions.load_error", {revision}))
+        }
+        return content ?? ""
     }
 
     async function restore(source: string) {

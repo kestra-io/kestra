@@ -528,7 +528,12 @@ const KestraDesignSystem = {
 
         const symbol = (app as unknown as {__VUE_I18N_SYMBOL__?: symbol}).__VUE_I18N_SYMBOL__
         const i18n = symbol ? (app._context.provides[symbol] as I18n | undefined) : undefined
-        if (i18n) i18nRegistration = registerDesignSystemI18n(i18n)
+        // Chained rather than replaced, so a second install cannot drop a pending registration and
+        // leave its locale imports unawaitable; settled either way, so one failure blocks no other.
+        if (i18n) {
+            const register = () => registerDesignSystemI18n(i18n)
+            i18nRegistration = i18nRegistration.then(register, register)
+        }
     },
 }
 

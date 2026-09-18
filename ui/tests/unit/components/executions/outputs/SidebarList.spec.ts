@@ -1,5 +1,7 @@
 import {describe, expect, test, vi} from "vitest"
 vi.mock("@kestra-io/design-system", () => ({
+    // A spec that mocks the whole module keeps its own stubs, so the plugin is a no-op here.
+    default: {install: () => {}},
     KsSearch: {
         props: ["modelValue", "placeholder"],
         emits: ["update:modelValue"],

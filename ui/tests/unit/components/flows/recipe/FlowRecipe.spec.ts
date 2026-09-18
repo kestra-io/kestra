@@ -23,6 +23,8 @@ vi.mock("../../../../../src/composables/useNamespaces", () => ({
 }))
 
 vi.mock("@kestra-io/design-system", () => ({
+    // A spec that mocks the whole module keeps its own stubs, so the plugin is a no-op here.
+    default: {install: () => {}},
     STATES: {
         FAILED: {icon: "div", color: "red"},
         WARNING: {icon: "div", color: "orange"},
@@ -122,6 +124,7 @@ const globalConfig = {
         plugins: [createPinia()],
         stubs: {
             KsText: {template: "<span><slot /></span>"},
+            KsTooltip: {template: "<span><slot /></span>"},
             KsIcon: {template: "<span />"},
             KsTag: {template: "<span><slot /></span>"},
             KsCheckTag: {template: "<span @click=\"$emit('change')\"><slot /></span>", emits: ["change"]},

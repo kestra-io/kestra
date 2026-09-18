@@ -796,7 +796,7 @@ paths:
             application/octet-stream:
               schema:
                 type: string
-                format: byte
+                format: binary
   /api/v1/{tenant}/dashboards/charts/preview:
     post:
       tags:
@@ -1028,7 +1028,7 @@ paths:
             application/octet-stream:
               schema:
                 type: string
-                format: byte
+                format: binary
   /api/v1/{tenant}/executions:
     get:
       tags:
@@ -3768,7 +3768,9 @@ paths:
           content:
             text/event-stream:
               schema:
-                $ref: "#/components/schemas/Event_Execution_"
+                type: array
+                items:
+                  $ref: "#/components/schemas/Event_Execution_"
       x-sdk-customization:
         x-replace-follow-execution: "true"
         x-skipped: "true"
@@ -3811,7 +3813,9 @@ paths:
           content:
             text/event-stream:
               schema:
-                $ref: "#/components/schemas/Event_ExecutionStatusEvent_"
+                type: array
+                items:
+                  $ref: "#/components/schemas/Event_ExecutionStatusEvent_"
       x-sdk-customization:
         x-replace-follow-dependencies-execution: "true"
         x-skipped: "true"
@@ -4861,7 +4865,7 @@ paths:
             application/octet-stream:
               schema:
                 type: string
-                format: byte
+                format: binary
   /api/v1/{tenant}/flows/export/by-query:
     get:
       tags:
@@ -4925,7 +4929,7 @@ paths:
             application/octet-stream:
               schema:
                 type: string
-                format: byte
+                format: binary
   /api/v1/{tenant}/flows/export/by-query/csv:
     get:
       tags:
@@ -6096,7 +6100,9 @@ paths:
           content:
             text/event-stream:
               schema:
-                $ref: "#/components/schemas/Event_LogEntry_"
+                type: array
+                items:
+                  $ref: "#/components/schemas/Event_LogEntry_"
   /api/v1/{tenant}/logs/{namespace}/{flowId}:
     delete:
       tags:
@@ -6804,7 +6810,7 @@ paths:
             application/octet-stream:
               schema:
                 type: string
-                format: byte
+                format: binary
   /api/v1/{tenant}/namespaces/{namespace}/files/revisions:
     get:
       tags:
@@ -8105,7 +8111,6 @@ components:
           - $ref: "#/components/schemas/Map_Object.Object_"
         variables:
           type: object
-          additionalProperties: false
         workerGroup:
           $ref: "#/components/schemas/WorkerGroup"
         deleted:
@@ -9136,7 +9141,6 @@ components:
               $ref: "#/components/schemas/PluginDefault"
           variables:
             type: object
-            additionalProperties: false
           tasks:
             minItems: 1
             type: array
@@ -9253,7 +9257,6 @@ components:
             - $ref: "#/components/schemas/Map_Object.Object_"
           variables:
             type: object
-            additionalProperties: false
           workerGroup:
             $ref: "#/components/schemas/WorkerGroup"
           deleted:
@@ -9510,7 +9513,6 @@ components:
             type: boolean
           variables:
             type: object
-            additionalProperties: false
           concurrency:
             $ref: "#/components/schemas/Concurrency"
           outputs:
@@ -10228,7 +10230,6 @@ components:
           type: string
         values:
           type: object
-          additionalProperties: false
     PluginIcon:
       type: object
       properties:

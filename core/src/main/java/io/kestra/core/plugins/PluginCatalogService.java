@@ -34,6 +34,11 @@ public class PluginCatalogService {
 
     private static final Duration MAX_CACHE_DURATION = Duration.ofHours(1);
 
+    /**
+     * Minimum delay before retrying the hosted catalog after a failed or empty load. Package-private so tests can shorten it.
+     */
+    static Duration retryDelay = Duration.ofSeconds(30);
+
     private final HttpClient httpClient;
 
     private CompletableFuture<List<PluginManifest>> plugins;
@@ -41,6 +46,7 @@ public class PluginCatalogService {
     private List<PluginManifest> loaded = List.of();
 
     private Instant cacheLastLoaded = Instant.now();
+    private Instant retryNotBefore = Instant.MIN;
     private final AtomicBoolean isLoaded = new AtomicBoolean(false);
 
     private final boolean icons;
@@ -114,9 +120,20 @@ public class PluginCatalogService {
 
     public synchronized List<PluginManifest> get() {
         try {
+            if (this.plugins == null && !Instant.now().isBefore(retryNotBefore)) {
+                this.isLoaded.set(true);
+                this.plugins = CompletableFuture.supplyAsync(this::load);
+            }
+            if (this.plugins == null) {
+                // a previous load failed recently: keep serving the last good list until the retry delay elapses
+                return loaded;
+            }
             List<PluginManifest> artifacts = this.plugins.get();
             if (!artifacts.isEmpty()) {
                 loaded = artifacts;
+            } else if (loaded.isEmpty()) {
+                // nothing cached yet and the API returned nothing: don't cache the empty result, retry later
+                scheduleRetry();
             }
             if (cacheLastLoaded.plus(MAX_CACHE_DURATION).isBefore(Instant.now())) {
                 if (isLoaded.compareAndSet(false, true)) {
@@ -125,6 +142,9 @@ public class PluginCatalogService {
                 }
             }
         } catch (ExecutionException | InterruptedException e) {
+            // drop the failed future so the next call retries instead of serving the failure for MAX_CACHE_DURATION;
+            // `loaded` still holds the last good list, so a transient API outage never wipes the catalog.
+            scheduleRetry();
             if (e instanceof InterruptedException) {
                 Thread.currentThread().interrupt();
                 log.warn("Failed to retrieve available plugins from Kestra API. Cause: Interrupted");
@@ -134,6 +154,11 @@ public class PluginCatalogService {
             }
         }
         return loaded;
+    }
+
+    private void scheduleRetry() {
+        this.plugins = null;
+        this.retryNotBefore = Instant.now().plus(retryDelay);
     }
 
     private List<PluginManifest> load() {

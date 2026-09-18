@@ -334,11 +334,12 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
                     source: model.getValue(),
                     cursorIndex: model.getOffsetAt(position),
                 })
-                // Only a plugin FQCN resolves to a schema. `inputs:`/`outputs:` entries share the
-                // task shape but carry types like `STRING`, which would 404 on every keystroke.
-                const scopeKey = task && task.type.includes(".")
-                    ? `${task.type}@${task.version ?? ""}`
-                    : undefined
+                // Monaco YAML requests the union of every plugin property for a bare task.
+                // Re-scoping hits the backend to fetch the specific plugin's properties, but
+                // the flow root has other id+type lists that are task-shaped (e.g. sla:).
+                // Guard on dotted FQCNs to skip 404s for enum types like MAX_DURATION.
+                const isPluginType = task?.type.includes(".")
+                const scopeKey = task && isPluginType ? `${task.type}@${task.version ?? ""}` : undefined
                 if (task && scopeKey && !unscopableTaskTypes.has(scopeKey)) {
                     try {
                         // `all` is required: without it the endpoint omits every inherited `Task`
@@ -409,7 +410,7 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
                     const parentStartLine = model.getPositionAt(
                         elementUnderCursor.range![0],
                     ).lineNumber
-                    
+
                     let autoCompletions = []
                     try {
                         autoCompletions = await yamlAutoCompletion.valueAutoCompletion(

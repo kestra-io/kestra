@@ -25,7 +25,6 @@ export default defineProject({
             junit: "./test-report.junit.xml",
         },
         exclude: [
-            "tests/e2e/**",
             // Match node_modules at ANY depth. A bare "node_modules/**" only excludes
             // the top-level one, so bundled test files inside nested package
             // node_modules (e.g. packages/topology/node_modules/cytoscape/**,

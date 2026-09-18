@@ -2175,7 +2175,7 @@ export const _050Bf82E9 = <ThrowOnError extends boolean = true>(parameters: {
 /**
  * Render Pebble expressions for display
  *
- * Renders a list of Pebble expressions for display purposes only, using a restricted engine: secret() is masked as [secret: KEY], env() is kept raw, only a safe allowlist of pure functions is invoked, and anything else is kept raw. Resolution is all-or-nothing per expression: an expression that references anything unresolvable is returned unchanged. Provide an executionId to resolve against an execution context, or a flow source to resolve against a flow context; otherwise only globals are available.
+ * Renders a list of Pebble expressions for display purposes only, using a restricted engine: secret() is masked as [secret: KEY], env() is kept raw, only a safe allowlist of pure functions is invoked, and anything else is kept raw. Resolution is all-or-nothing per expression: an expression that references anything unresolvable is returned unchanged. Provide an executionId to resolve against an execution context (add a taskRunId to also resolve task-run-local bindings like taskrun.value), or a flow source to resolve against a flow context; otherwise only globals are available.
  */
 export const _04A36929b = <ThrowOnError extends boolean = true>(parameters: {
     tenant: string;

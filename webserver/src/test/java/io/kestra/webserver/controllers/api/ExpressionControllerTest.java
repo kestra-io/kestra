@@ -119,6 +119,32 @@ class ExpressionControllerTest {
     }
 
     @Test
+    @LoadFlows({ "flows/valids/minimal.yaml" })
+    void shouldRenderAgainstTaskRunWithTaskLocalBindings() throws TimeoutException, QueueException {
+        when(tenantService.resolveTenant()).thenReturn(TENANT_ID);
+        Execution execution = runnerUtils.runOne(TENANT_ID, TESTS_FLOW_NS, "minimal");
+        String taskRunId = execution.getTaskRunList().getFirst().getId();
+
+        var withTaskRun = render(
+            Map.of(
+                "executionId", execution.getId(),
+                "taskRunId", taskRunId,
+                "expressions", List.of("{{ taskrun.startDate }}", "{{ taskrun.id }}")
+            )
+        );
+        assertThat(withTaskRun.rendered().get("{{ taskrun.id }}")).isEqualTo(taskRunId);
+        assertThat(withTaskRun.rendered().get("{{ taskrun.startDate }}")).isNotEqualTo("{{ taskrun.startDate }}");
+
+        var executionOnly = render(
+            Map.of(
+                "executionId", execution.getId(),
+                "expressions", List.of("{{ taskrun.id }}")
+            )
+        );
+        assertThat(executionOnly.rendered()).containsEntry("{{ taskrun.id }}", "{{ taskrun.id }}");
+    }
+
+    @Test
     @LoadFlows({ "flows/valids/variables.yaml" })
     void shouldRenderAgainstFlowByNamespaceAndId() {
         when(tenantService.resolveTenant()).thenReturn(TENANT_ID);

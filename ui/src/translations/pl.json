@@ -1061,6 +1061,7 @@
       },
       "revisions": {
         "history": "Historia wersji",
+        "load_error": "Nie można wczytać rewizji {revision}; mogła zostać usunięta.",
         "restore": {
           "success": "Wersja pliku została przywrócona"
         }
@@ -1381,6 +1382,7 @@
     "onboarding": {
       "tour": {
         "menu": "Przewodnik po produkcie",
+        "menu_resume": "Wznów przewodnik",
         "menu_description": "Zbuduj, uruchom i napraw Flow, a potem uruchom go zdarzeniem",
         "step_of": "Krok {current} z {total}",
         "actions": {
@@ -2433,8 +2435,8 @@
       "next_match": "Następne dopasowanie",
       "no_results_description": "Spróbuj rozszerzyć namespace, przełączyć zakres z powrotem na „Cały kod źródłowy” lub wyłączyć „Uwzględnij wielkość liter” i „Dopasuj całe słowo”.",
       "no_results_hidden_type": "Znaleziono {count} dopasowanie w {type}, którego nie wybrano. | Znaleziono {count} dopasowania w {type}, którego nie wybrano. | Znaleziono {count} dopasowań w {type}, którego nie wybrano.",
-      "no_results_in_types": "Brak dopasowań dla {query} w {types}",
       "no_results_title": "Brak wyników dla „{query}”",
+      "did_you_mean": "Czy chodziło ci o {suggestion}?",
       "open_flow": "Otwórz Flow",
       "open_in_editor": "Otwórz w edytorze",
       "open_in_kv": "Otwórz w KV Store",

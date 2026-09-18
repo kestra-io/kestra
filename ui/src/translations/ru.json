@@ -1061,6 +1061,7 @@
       },
       "revisions": {
         "history": "История изменений",
+        "load_error": "Не удалось загрузить ревизию {revision}; возможно, она была удалена.",
         "restore": {
           "success": "Файл успешно восстановлен до предыдущей версии"
         }
@@ -1381,6 +1382,7 @@
     "onboarding": {
       "tour": {
         "menu": "Обзор продукта",
+        "menu_resume": "Возобновить тур",
         "menu_description": "Создать, запустить и исправить flow, а затем запустить его по событию",
         "step_of": "Шаг {current} из {total}",
         "actions": {
@@ -2433,8 +2435,8 @@
       "next_match": "Следующее совпадение",
       "no_results_description": "Попробуйте расширить namespace, переключить область видимости обратно на All source или отключить Match case и Match whole word.",
       "no_results_hidden_type": "Найдено {count} совпадение в {type}, который вы не выбрали. | Найдено {count} совпадения в {type}, который вы не выбрали. | Найдено {count} совпадений в {type}, который вы не выбрали.",
-      "no_results_in_types": "Нет совпадений для {query} в {types}",
       "no_results_title": "Нет совпадений для «{query}»",
+      "did_you_mean": "Вы имели в виду {suggestion}?",
       "open_flow": "Открыть flow",
       "open_in_editor": "Открыть в редакторе",
       "open_in_kv": "Открыть в KV Store",

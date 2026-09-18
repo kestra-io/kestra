@@ -451,8 +451,12 @@ public abstract class AbstractJdbcRepository {
             return applyTriggerStateCondition(value, operation);
         }
 
-        if (field.equals(QueryFilter.Field.METADATA)) {
+        if (QueryFilter.Field.METADATA == field) {
             return findMetadataCondition((Map<?, ?>) value, operation);
+        }
+
+        if (QueryFilter.Field.ASSET_EXPIRY == field) {
+            return assetExpiryCondition(value, operation);
         }
 
         if (field == QueryFilter.Field.TYPE) {
@@ -605,6 +609,10 @@ public abstract class AbstractJdbcRepository {
 
     protected Condition findMetadataCondition(Map<?, ?> metadata, QueryFilter.Op operation) {
         throw new InvalidQueryFiltersException("Unsupported operation: " + operation);
+    }
+
+    protected Condition assetExpiryCondition(Object value, QueryFilter.Op operation) {
+        throw new InvalidQueryFiltersException("Unsupported field: ASSET_EXPIRY");
     }
 
     protected Condition getEnabledCondition(Object value, Op operation) {

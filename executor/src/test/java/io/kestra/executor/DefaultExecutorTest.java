@@ -28,7 +28,7 @@ class DefaultExecutorTest {
         Execution execution = executionWithTrigger("realtime", TestRealtimeTrigger.class.getName());
 
         // When - Then
-        assertThat(DefaultExecutor.isRealtimeTriggerExecution(flow, execution)).isTrue();
+        assertThat(ExecutorCore.isRealtimeTriggerExecution(flow, execution)).isTrue();
     }
 
     @Test
@@ -38,7 +38,7 @@ class DefaultExecutorTest {
         Execution execution = executionWithTrigger("polling", TestPollingTrigger.class.getName());
 
         // When - Then
-        assertThat(DefaultExecutor.isRealtimeTriggerExecution(flow, execution)).isFalse();
+        assertThat(ExecutorCore.isRealtimeTriggerExecution(flow, execution)).isFalse();
     }
 
     @Test
@@ -48,7 +48,7 @@ class DefaultExecutorTest {
         Execution execution = executionWithTrigger("removed", TestRealtimeTrigger.class.getName());
 
         // When - Then
-        assertThat(DefaultExecutor.isRealtimeTriggerExecution(flow, execution)).isFalse();
+        assertThat(ExecutorCore.isRealtimeTriggerExecution(flow, execution)).isFalse();
     }
 
     @Test
@@ -57,7 +57,7 @@ class DefaultExecutorTest {
         Execution execution = executionWithTrigger("realtime", TestRealtimeTrigger.class.getName());
 
         // When - Then
-        assertThat(DefaultExecutor.isRealtimeTriggerExecution(null, execution)).isFalse();
+        assertThat(ExecutorCore.isRealtimeTriggerExecution(null, execution)).isFalse();
     }
 
     private static FlowWithSource flowWith(AbstractTrigger trigger) {

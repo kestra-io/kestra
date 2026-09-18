@@ -131,7 +131,7 @@ The used-key rule ([`usageRules.ts`](usageRules.ts)) only reads literal keys. A 
 
 ## CI: the auto-translate bot
 
-Both repositories run `.github/workflows/auto-translate-ui-keys.yml`, once per branch in its list (`develop` and `releases/v2.0.x`; a schedule fires from the default branch, so the `develop` copy of the file drives every branch and opens each bot PR against its own branch):
+Both repositories run `.github/workflows/auto-translate-ui-keys.yml`, once per branch in its list (`develop`, `releases/v2.0.x` and `releases/v1.3.x`; a schedule fires from the default branch, so the `develop` copy of the file drives every branch and opens each bot PR against its own branch):
 
 ```mermaid
 sequenceDiagram
@@ -163,6 +163,7 @@ The gate does not stop at pull requests:
 - **Pushes.** `translations-push.yml` (OSS) and the `push` trigger of `translation-tests.yml` (EE) run the gate on every push to `develop` and `releases/*` that touches the UI, so a merge race between two green PRs, a direct push or a cherry-pick with a stale locale is reported by the branch itself instead of by the next unrelated PR against it.
 - **OSS to EE dispatch.** Most EE keys resolve against the OSS `en.json`, so an OSS push that renames or deletes a key can break EE without any EE change. Once the OSS push gate passed, its `notify-ee` job fires a `repository_dispatch` of type `oss-translations-updated` (payload: `branch`, `commit_sha`) at `kestra-io/kestra-ee`; `translation-tests.yml` there checks out the same-name EE branch and that exact OSS commit and runs both scopes. A dispatch always runs the workflow file of the EE default branch, which is why the EE checkout takes its branch from the payload.
 - **Fork PRs.** The PR workflow generates translations only for branches of this repository (a fork has no `GEMINI_API_KEY`), so a contributor cannot get the missing languages generated on their own. A maintainer runs `Translations - Generate for a pull request` from the Actions tab with the PR number: the workflow checks out the fork's head, generates, and pushes the commit onto the PR branch when it can (the PR allows maintainer edits and the `TRANSLATIONS_PUSH_TOKEN` secret holds a maintainer token); otherwise it uploads the commit as a patch artifact and comments the `git am` one-liner on the PR.
+- **Fork PRs, the comment.** The generate job never runs on a pull request from a fork, so when the gate then reports missing or stale keys, `translations-pr-comment.yml` (a `workflow_run` workflow, which is what has a writable token for a fork) posts one short sticky comment saying how to trigger the generation by hand: a maintainer runs `Translations - Generate for a pull request` with the pull request number, or the author allows maintainer edits or generates locally with a key. The comment is removed once the check passes; pull requests from this repository never get it.
 - **Runtime.** Static rules only see literal keys, so the app also reports every key it could not resolve on the console (throwing in unit and Storybook tests); the Playwright fixtures in both repositories fail the test that rendered a raw key.
 
 ## Developer workflow

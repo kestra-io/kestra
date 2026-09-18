@@ -1061,6 +1061,7 @@
       },
       "revisions": {
         "history": "Historique des révisions",
+        "load_error": "La révision {revision} n'a pas pu être chargée ; elle a peut-être été supprimée.",
         "restore": {
           "success": "Révision du fichier restaurée avec succès"
         }
@@ -1381,6 +1382,7 @@
     "onboarding": {
       "tour": {
         "menu": "Visite guidée du produit",
+        "menu_resume": "Reprendre la visite",
         "menu_description": "Construire, exécuter et corriger un flow, puis le démarrer à partir d'un événement",
         "step_of": "Étape {current} sur {total}",
         "actions": {
@@ -2433,8 +2435,8 @@
       "next_match": "Prochaine correspondance",
       "no_results_description": "Essayez d'élargir le namespace, de revenir à la portée \"Toutes les sources\" ou de désactiver \"Respecter la casse\" et \"Mot entier\".",
       "no_results_hidden_type": "{count} correspondance trouvée dans {type}, que vous n'avez pas sélectionné. | {count} correspondances trouvées dans {type}, que vous n'avez pas sélectionné.",
-      "no_results_in_types": "Aucune correspondance pour {query} dans {types}",
       "no_results_title": "Aucun résultat pour « {query} »",
+      "did_you_mean": "Vouliez-vous dire {suggestion} ?",
       "open_flow": "Ouvrir le flow",
       "open_in_editor": "Ouvrir dans l'éditeur",
       "open_in_kv": "Ouvrir dans le stockage de clés/valeurs",

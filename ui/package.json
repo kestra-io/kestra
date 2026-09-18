@@ -90,7 +90,6 @@
         "globals": "^17.7.0",
         "jsdom": "^29.1.1",
         "lint-staged": "^17.0.8",
-        "lodash": "^4.18.1",
         "mailchecker": "^6.0.20",
         "material-file-icons": "^2.4.0",
         "md5": "^2.3.0",

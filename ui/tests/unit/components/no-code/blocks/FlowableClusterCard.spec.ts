@@ -1,15 +1,11 @@
 import {beforeEach, describe, expect, test} from "vitest"
-import {mount} from "@vue/test-utils"
 import {createPinia, setActivePinia} from "pinia"
-import {createI18n} from "vue-i18n"
 import KestraDesignSystem from "@kestra-io/design-system"
 import FlowableClusterCard from "../../../../../src/components/no-code/blocks/FlowableClusterCard.vue"
+import {i18nMount} from "../../../i18nMount"
 
 const globalConfig = {
-    plugins: [
-        createI18n({legacy: false, locale: "en", fallbackWarn: false, missingWarn: false}),
-        KestraDesignSystem,
-    ],
+    plugins: [KestraDesignSystem],
     stubs: {
         BranchLane: {name: "BranchLane", props: ["laneName", "tasks"], template: "<div class='branch-lane-stub' :data-lane='laneName' />"},
         TaskIcon: {name: "TaskIcon", props: ["cls", "icons", "loadIcon", "onlyIcon"], template: "<span class='task-icon-stub' />"},
@@ -32,14 +28,14 @@ const switchBlock = {
 }
 
 function mountAt(depth: number) {
-    return mount(FlowableClusterCard, {
+    return i18nMount(FlowableClusterCard, {
         global: globalConfig,
         props: {block: sequentialBlock, path: "tasks[0]", depth},
     })
 }
 
 function mountSwitch() {
-    return mount(FlowableClusterCard, {
+    return i18nMount(FlowableClusterCard, {
         global: globalConfig,
         props: {block: switchBlock, path: "tasks[0]", depth: 0},
     })

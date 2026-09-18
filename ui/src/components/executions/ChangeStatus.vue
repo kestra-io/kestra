@@ -13,7 +13,7 @@
             </template>
 
             <template #default>
-                <p v-html="$t('change state confirm', {id: escape(execution.id), task: escape(taskRun.taskId)})" />
+                <p v-html="$t('change state confirm', {id: escapeHtml(execution.id), task: escapeHtml(taskRun.taskId)})" />
 
                 <p>
                     {{ $t('change state current state') }} <KsExecutionStatus size="small" class="me-1" :status="taskRun.state.current" />
@@ -64,14 +64,13 @@
 <script setup lang="ts">
     import StateMachine from "vue-material-design-icons/StateMachine.vue"
     import {computed, ref} from "vue"
-    import escape from "lodash/escape"
     import {useI18n} from "vue-i18n"
     import {useExecutionsStore} from "../../stores/executions"
     import {useAuthStore} from "override/stores/auth"
     import {useToast} from "../../utils/toast"
     import resource from "../../models/resource"
     import action from "../../models/action"
-    import {State} from "@kestra-io/design-system"
+    import {State, escapeHtml} from "@kestra-io/design-system"
 
     // FIXME: any - execution/taskRun are untyped domain objects
     const props = withDefaults(defineProps<{

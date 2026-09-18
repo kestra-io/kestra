@@ -190,6 +190,15 @@ export const QUEUED = "QUEUED" as const
 export const RETRYING = "RETRYING" as const
 export const RETRIED = "RETRIED" as const
 export const BREAKPOINT = "BREAKPOINT" as const
+export const RESUBMITTED = "RESUBMITTED" as const
+
+// Mirrors State.Type.isTerminated() in core. Not the non-running set: QUEUED,
+// RETRYING and RESTARTED are not running yet still on their way somewhere.
+const TERMINATED_STATES: readonly string[] = [SUCCESS, WARNING, FAILED, KILLED, CANCELLED, RETRIED, SKIPPED, RESUBMITTED]
+
+export function isTerminated(state: string) {
+    return TERMINATED_STATES.includes(state)
+}
 
 export function isRunning(state:string) {
     return STATES[state]?.isRunning
@@ -239,6 +248,6 @@ export function icon() {
     return mapValues(STATES, (state) => state.icon)
 }
 
-export function getTerminatedStates() {
+export function getNonRunningStates() {
     return Object.values(STATES).filter(state => !state.isRunning).map(state => state.name)
 }

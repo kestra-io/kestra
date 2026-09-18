@@ -1,7 +1,7 @@
 import {describe, it, expect, vi, afterAll, afterEach, beforeAll, beforeEach} from "vitest"
 import {nextTick, reactive} from "vue"
-import {createI18n} from "vue-i18n"
-import {shallowMount, flushPromises, VueWrapper} from "@vue/test-utils"
+import {flushPromises, VueWrapper} from "@vue/test-utils"
+import {i18nShallowMount} from "../../i18nMount"
 
 // On a fresh browser-tab boot (e.g. the docs pop-out link's target="_blank" nav),
 // Docs.vue can mount before App.vue's async loadGeneralResources() has initialized
@@ -27,12 +27,12 @@ vi.mock("../../../../src/stores/doc", () => ({
 
 import Docs from "../../../../src/components/docs/Docs.vue"
 
-const i18n = createI18n({legacy: false, locale: "en", messages: {en: {docs: "Docs"}}, missingWarn: false, fallbackWarn: false})
+const messages = {docs: "Docs"}
 
 let wrapper: VueWrapper
 
 function mountDocs() {
-    wrapper = shallowMount(Docs, {global: {plugins: [i18n]}})
+    wrapper = i18nShallowMount(Docs, {messages})
     return wrapper
 }
 
@@ -120,7 +120,7 @@ describe("Docs.vue — fetch gated on resourceUrlTemplate", () => {
         docStoreState.resourceUrlTemplate = "http://localhost/api/v1{path}/versions/1.0.0"
         // DocsLayout renders its #content slot directly (no v-if guard), so unstubbing
         // just it lets KsMarkdown's stub (still shallow) receive the real content prop.
-        wrapper = shallowMount(Docs, {global: {plugins: [i18n], stubs: {DocsLayout: false}}})
+        wrapper = i18nShallowMount(Docs, {messages, global: {stubs: {DocsLayout: false}}})
         await flushPromises()
 
         const markdown = wrapper.find("[content]")

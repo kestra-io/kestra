@@ -5,7 +5,6 @@ import {
     isPair,
 } from "yaml"
 import {dump, load} from "js-yaml"
-import cloneDeep from "lodash/cloneDeep"
 
 export function parse<T = any>(item?: string, throwIfError = true): T | undefined {
     if (item === undefined) return undefined
@@ -49,10 +48,12 @@ function preserveCronQuotes(yamlContent: string) {
 export function stringify(item: any) {
     if (item === undefined) return ""
 
-    const clonedValue = cloneDeep(item)
-    delete clonedValue.deleted
+    // transform() rebuilds every node and skips undefined values, so a shallow copy drops `deleted`
+    const value = item === null || typeof item !== "object" || Array.isArray(item)
+        ? item
+        : {...item, deleted: undefined}
 
-    const yamlContent = dump(transform(clonedValue), {
+    const yamlContent = dump(transform(value), {
         lineWidth: -1,
         noCompatMode: true,
         quotingType: "\"",

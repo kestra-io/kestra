@@ -239,7 +239,7 @@
   "src/composables/monaco/languages/yamlLanguageConfigurator.ts": 4,
   "src/composables/playground/useFlowEditorRunTaskButton.ts": 2,
   "src/composables/useBaseNamespaces.ts": 24,
-  "src/composables/useInputsWizard.ts": 3,
+  "src/composables/useInputsWizard.ts": 2,
   "src/composables/useNamespaces.ts": 2,
   "src/composables/usePosthog.ts": 5,
   "src/composables/useScrollMemory.ts": 4,

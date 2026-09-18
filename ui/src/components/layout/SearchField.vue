@@ -48,7 +48,7 @@
         searchDebounce = debounce(() => {
             emit("search", search.value)
             if (props.router !== false) {
-                const query: Record<string, any> = {
+                const query: Record<string, string | string[] | undefined | number> = {
                     ...route.query,
                     q: search.value,
                     page: 1,

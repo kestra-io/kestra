@@ -809,6 +809,47 @@ class TriggerControllerTest {
     }
 
     @Test
+    void shouldReturnUnprocessableEntityWhenCreatingBackfillOnNonScheduleTrigger() {
+        for (TriggerType type : List.of(TriggerType.POLLING, TriggerType.REALTIME)) {
+            // GIVEN
+            TriggerState trigger = newRandomTriggerState(type);
+            jdbcTriggerRepository.save(trigger);
+
+            // WHEN
+            HttpClientResponseException e = assertThrows(
+                HttpClientResponseException.class,
+                () -> client.toBlocking().retrieve(
+                    HttpRequest.PUT(
+                        TRIGGER_PATH + "/backfill/create",
+                        new ApiCreateBackfillRequest(
+                            trigger.getNamespace(),
+                            trigger.getFlowId(),
+                            trigger.getTriggerId(),
+                            new ApiCreateBackfillRequest.Backfill(
+                                ZonedDateTime.parse("2026-06-10T00:00:00Z"),
+                                ZonedDateTime.parse("2026-06-11T00:00:00Z"),
+                                Map.of(),
+                                List.of()
+                            )
+                        )
+                    ),
+                    ApiTriggerState.class
+                )
+            );
+
+            // THEN
+            Problems.assertProblem(e, ProblemTypes.VALIDATION_FAILED);
+            Problems.assertErrors(e)
+                .extracting(ProblemError::detail)
+                .containsExactly(
+                    "Backfills are only supported on schedule triggers, but trigger [tenant=%s, namespace=%s, flow=%s, trigger=%s] is '%s'."
+                        .formatted(trigger.getTenantId(), trigger.getNamespace(), trigger.getFlowId(), trigger.getTriggerId(), type)
+                );
+            assertThat(jdbcTriggerRepository.findByIdWithoutAcl(trigger).orElseThrow().getBackfill()).isNull();
+        }
+    }
+
+    @Test
     void shouldReturnBadRequestWhenDisableByTriggersMissingBody() {
         HttpClientResponseException e = assertThrows(
             HttpClientResponseException.class, () -> client.toBlocking().retrieve(

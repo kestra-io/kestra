@@ -251,7 +251,8 @@
     import PlayBoxMultiple from "vue-material-design-icons/PlayBoxMultiple.vue"
 
     import {Topology, NodeMenu} from "@kestra-io/topology"
-    import {SECTIONS, State, KsMarkdown, KsEditor, KsDialog, vKsLoading} from "@kestra-io/design-system"
+    import {LOG_LEVELS, SECTIONS, State, KsMarkdown, KsEditor, KsDialog, vKsLoading} from "@kestra-io/design-system"
+    import type {LevelKey} from "../../utils/logs"
     import {Execution} from "@kestra-io/kestra-sdk"
     import * as MetricsAPI from "@kestra-io/kestra-sdk/metrics"
     import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
@@ -616,7 +617,8 @@
     const vueFlow = ref<HTMLDivElement>()
     const timer = ref<ReturnType<typeof setTimeout>>()
     const logFilter = ref("")
-    const logLevel = ref(localStorage.getItem("defaultLogLevel") || "INFO")
+    const toLevelKey = (value: string | null): LevelKey => LOG_LEVELS.find((level) => level === value) ?? "INFO"
+    const logLevel = ref<LevelKey>(toLevelKey(localStorage.getItem("defaultLogLevel")))
     const isDrawerOpen = ref(false)
     const isShowDescriptionOpen = ref(false)
     const isShowConditionOpen = ref(false)
@@ -896,7 +898,7 @@
     }
 
     const onLevelChange = (level: string) => {
-        logLevel.value = level
+        logLevel.value = toLevelKey(level)
     }
 
     const showDescription = (event: string) => {

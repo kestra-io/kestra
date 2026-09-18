@@ -49,7 +49,7 @@ public class ApiController {
             "    schema-style=\"table\"\n" +
             "    regular-font='Ubuntu'\n" +
             "  >\n" +
-            "    <img src=\"" + getBasePath() + "/static/logo.svg\" slot=\"nav-logo\" alt=\"logo\" />\n" +
+            "    <img src=\"" + getBasePath() + "/static/logo-white.svg\" slot=\"nav-logo\" alt=\"logo\" />\n" +
             "\n" +
             "  </rapi-doc>\n" +
             "  <script>\n" +

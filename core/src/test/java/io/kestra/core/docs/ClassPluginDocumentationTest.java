@@ -61,7 +61,7 @@ class ClassPluginDocumentationTest {
             assertThat(((Map<String, String>) doc.getInputs().get("format")).get("description")).contains("of this input");
 
             // definitions
-            assertThat(doc.getDefs().size()).isEqualTo(9);
+            assertThat(doc.getDefs().size()).isEqualTo(10);
 
             // enum
             Map<String, Object> enumProperties = (Map<String, Object>) ((Map<String, Object>) ((Map<String, Object>) doc.getDefs()

@@ -1,10 +1,10 @@
 import {describe, expect, test} from "vitest"
 import {mount} from "@vue/test-utils"
 import {createRouter, createWebHistory} from "vue-router"
-import KestraDesignSystem from "@kestra-io/design-system"
-import NavBarAction from "../../../../src/components/layout/NavBarAction.vue"
 // The app registers the design system globally at bootstrap; unit mounts have to do it
 // themselves, and this spec is specifically about what KsButton puts in the DOM.
+import KestraDesignSystem from "@kestra-io/design-system"
+import NavBarAction from "../../../../src/components/layout/NavBarAction.vue"
 
 const router = createRouter({
     history: createWebHistory(),

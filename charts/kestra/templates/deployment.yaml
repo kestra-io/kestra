@@ -182,6 +182,9 @@ spec:
                 --thread={{ $content.workerThreads }} \
                 {{- end }}
                 {{- end }}
+                {{- if and (eq $type "webserver") (not $content.controller) }}
+                --no-controller \
+                {{- end }}
                 {{- with $content.extraArgs }}
                 {{- range $key, $value := $content.extraArgs }}
                 {{- $value }} \

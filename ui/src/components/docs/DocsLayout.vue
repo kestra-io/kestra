@@ -125,7 +125,7 @@
         flex-shrink: 0;
         position: sticky;
         top: 0;
-        z-index: 100;
+        z-index: var(--ks-z-sticky);
 
         .mobile-menu-toggle {
             display: none;
@@ -211,7 +211,7 @@
             position: absolute;
             top: 1rem;
             right: 1rem;
-            z-index: 1001;
+            z-index: calc(var(--ks-z-overlay) + 2);
             width: 44px;
             height: 44px;
             padding: 0;
@@ -239,7 +239,7 @@
             right: 0;
             bottom: 0;
             background: rgba(0, 0, 0, 0.6);
-            z-index: 999;
+            z-index: var(--ks-z-overlay);
             animation: fadeIn 0.3s ease;
         }
 
@@ -255,7 +255,7 @@
             height: 100vh;
             width: calc(100vw - 44px);
             max-width: 100vw;
-            z-index: 1000;
+            z-index: calc(var(--ks-z-overlay) + 1);
             transition: left 0.3s ease-in-out;
             box-shadow: 2px 0 8px rgba(0, 0, 0, 0.15);
             padding: 1rem;

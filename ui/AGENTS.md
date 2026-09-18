@@ -277,6 +277,7 @@ Install the repo hooks once with `.github/.hooks/setup_hooks.sh` and the second 
 ### Testing UI
 
 - Unit tests with **Vitest** + `@vue/test-utils`, colocated next to the component.
+- Mount through `i18nMount` or `i18nShallowMount` rather than calling `mount` with your own `createI18n`. Pass `messages` for the keys the spec asserts on, or `locales: en` when it needs the real `en.json`; with neither, `t("key")` renders the key. Missing-key warnings are off in both helpers, so a spec asserting on raw keys stays quiet. Two copies exist and behave the same: specs under `tests/unit/` and `packages/topology/tests/` import `tests/unit/i18nMount.ts`, and specs under `packages/design-system/tests/units/` import the one next to them. Both install the design system, as the app does at bootstrap, so a mounted `Ks*` component resolves instead of warning; a spec that mocks `@kestra-io/design-system` away has to keep a `default` export for that install, such as `default: {install: () => {}}`. Only a spec that never mounts anything, such as one testing pluralisation on the instance itself, builds its own i18n.
 - Use `data-test="..."` selectors for E2E tests with **Playwright**. Never select on `.el-*` or `.ks-*` class names — those are not stable contracts and will break on Element Plus / DS upgrades.
 - Storybook stories cover: each variant prop, dark mode, edge cases (empty content, very long text, error state). A `*.stories.ts` file with one default story is not enough.
 - Visual regressions caught in Storybook are cheaper to fix than caught in production.

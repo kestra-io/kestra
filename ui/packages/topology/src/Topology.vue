@@ -470,7 +470,7 @@
         left: 40px;
         padding: 0;
         margin: 0;
-        z-index: 1000;
+        z-index: var(--ks-z-dropdown);
         list-style-type: none;
         background: var(--ks-bg-surface);
         border: 1px solid var(--ks-border-default);

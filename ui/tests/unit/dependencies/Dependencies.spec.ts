@@ -1,7 +1,5 @@
 import {describe, it, expect, vi} from "vitest"
 import {defineComponent, h, nextTick} from "vue"
-import {createI18n} from "vue-i18n"
-import {mount} from "@vue/test-utils"
 import KestraDesignSystem from "@kestra-io/design-system"
 
 // Shared across calls so the navigation test can assert on it; a fresh spy per useRouter()
@@ -55,8 +53,7 @@ vi.mock("../../../src/components/dependencies/composables/useDependencies", asyn
 
 import Dependencies from "../../../src/components/dependencies/Dependencies.vue"
 import en from "../../../src/translations/en.json"
-
-const i18n = createI18n({legacy: false, locale: "en", fallbackWarn: false, missingWarn: false, messages: en})
+import {i18nMount} from "../i18nMount"
 
 // VTU's default stubs swallow slots, which would hide the whole graph pane.
 const passThroughStub = (name: string) => defineComponent({
@@ -79,10 +76,11 @@ const KsGraphStub = defineComponent({
 function mountGraphView(dagView: boolean) {
     routerPush.mockClear()
 
-    return mount(Dependencies, {
+    return i18nMount(Dependencies, {
+        locales: en,
         props: {dagView},
         global: {
-            plugins: [i18n, KestraDesignSystem],
+            plugins: [KestraDesignSystem],
             stubs: {
                 KsGraph: KsGraphStub,
                 KsSplitter: passThroughStub("KsSplitter"),

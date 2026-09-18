@@ -60,8 +60,10 @@ micronaut:
       filter:
         enabled: false
   caches:
+    # Entries are weighed by their serialized JSON size (io.kestra.webserver.cache.JsonBytesCacheWeigher),
+    # so maximum-weight is a byte bound rather than an entry count.
     default:
-      maximum-weight: 10485760
+      maximum-weight: 67108864
     # One cache per icon index: the methods behind them take no argument, so they all resolve to the same cache
     # key and sharing a cache would make them serve each other's entries. Each therefore holds a single entry.
     plugin-icons:

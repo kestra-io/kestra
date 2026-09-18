@@ -9,6 +9,8 @@ import io.kestra.core.models.assets.External;
 
 /**
  * Specific {@link JsonDeserializer} for deserializing {@link Asset}.
+ * <p>
+ * Jackson 3 counterpart: {@link Jackson3AssetDeserializer}.
  */
 public final class AssetDeserializer extends PluginDeserializer<Asset> {
     @Override

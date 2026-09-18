@@ -127,9 +127,9 @@
             state: selectedStatus.value!,
         })
 
-        const execution = await executionsStore.waitForStateChange(props.execution) as Execution
+        // waitForStateChange already commits its result to executionsStore.execution.
+        await executionsStore.waitForStateChange(props.execution)
 
-        executionsStore.execution = execution
         // Re-subscribe to the execution SSE stream directly via the store
         // instead of bubbling a `follow` event up to the route component.
         executionsStore.followExecution({id: props.execution.id}, t)

@@ -256,7 +256,7 @@ export const useExecutionsStore = defineStore("executions", () => {
     }
     const waitForStateChange = async (source: Execution) => {
         const updated = await ExecutionUtils.waitForState(axios, source) as Execution
-        execution.value = updated
+        applyLocalExecutionUpdate(updated)
         return updated
     }
 
@@ -313,6 +313,20 @@ export const useExecutionsStore = defineStore("executions", () => {
         return ExecutionsAPI.pauseExecutionsByQuery({filters: routeQueryToQueryFilters(options)})
     }
 
+    // Every write to `execution.value` - from a fetch, a local save response, an SSE push
+    // or a clear - goes through here and bumps this counter. A write that started
+    // asynchronously (the flow-reload branch of `throttledExecutionUpdate` below) can
+    // compare the generation it captured right after its own write against the current
+    // one to tell whether something newer landed while it was in flight, and skip if so -
+    // the one check `.cancel()` cannot provide, since `.cancel()` only stops a throttled
+    // call that has not started yet, not a promise chain already running inside one.
+    let executionWriteGeneration = 0
+
+    function applyExecution(data: Execution | undefined) {
+        executionWriteGeneration++
+        execution.value = data
+    }
+
     let latestExecutionLoad = 0
 
     const loadExecution = (options: { id: string }, requestOptions?: KestraRequestOptions) => {
@@ -326,7 +340,7 @@ export const useExecutionsStore = defineStore("executions", () => {
             // A trailing event from the previous execution's stream, still open until the page
             // mounts and follows this one, would otherwise land on top of this load.
             throttledExecutionUpdate.cancel()
-            execution.value = data
+            applyExecution(data)
             return execution.value
         })
     }
@@ -339,7 +353,15 @@ export const useExecutionsStore = defineStore("executions", () => {
     // once its 500ms window elapses, silently reverting a save the user just made.
     const applyLocalExecutionUpdate = (data: Execution) => {
         throttledExecutionUpdate.cancel()
-        execution.value = data
+        applyExecution(data)
+    }
+
+    // Counterpart to applyLocalExecutionUpdate for the "nothing to show" case (route left,
+    // playground cleared, etc.) - same cancellation, so a pending SSE push can't repopulate
+    // execution.value right after something deliberately emptied it.
+    const clearExecution = () => {
+        throttledExecutionUpdate.cancel()
+        applyExecution(undefined)
     }
 
     function toExecutionSearchParams(options: ExecutionSearchOptions) {
@@ -442,7 +464,7 @@ export const useExecutionsStore = defineStore("executions", () => {
             deleteMetrics: options.deleteMetrics,
             deleteStorage: options.deleteStorage,
         }).then(() => {
-            execution.value = undefined
+            clearExecution()
         })
     }
 
@@ -474,23 +496,32 @@ export const useExecutionsStore = defineStore("executions", () => {
 
     const throttledExecutionUpdate = throttle((parsedExecution: Execution) => {
         const flowValue = flow.value
-
-        if ((!flowValue ||
+        const needsFlowReload = !flowValue ||
             parsedExecution.flowId !== flowValue.id ||
             parsedExecution.namespace !== flowValue.namespace ||
-            parsedExecution.flowRevision !== flowValue.revision)
-        ) {
+            parsedExecution.flowRevision !== flowValue.revision
+
+        applyExecution(parsedExecution)
+
+        if (needsFlowReload) {
+            // Captured after the write just above, not before: it must equal "nothing
+            // else has written since this SSE push landed", not "since before it did".
+            const generationAfterThisPush = executionWriteGeneration
+
             loadFlowForExecutionByExecutionId(
                 {
                     id: parsedExecution.id,
                     revision: route.query.revision?.toString(),
                 },
             ).then(() => {
-                execution.value = parsedExecution
+                // A local write (applyLocalExecutionUpdate/clearExecution/loadExecution)
+                // that landed while the flow was reloading must win over this stale
+                // re-confirmation of the same SSE push.
+                if (executionWriteGeneration === generationAfterThisPush) {
+                    applyExecution(parsedExecution)
+                }
             })
         }
-
-        execution.value = parsedExecution
     }, 500)
 
     /**
@@ -568,7 +599,7 @@ export const useExecutionsStore = defineStore("executions", () => {
         // Keep an execution the route guard already loaded: clearing it would send the page back to
         // its loading state, and cost a second fetch of what the store is already holding.
         if (execution.value?.id !== options.id) {
-            execution.value = undefined
+            clearExecution()
         }
         closeSSE()
 
@@ -930,6 +961,7 @@ export const useExecutionsStore = defineStore("executions", () => {
         queryPauseExecution,
         loadExecution,
         applyLocalExecutionUpdate,
+        clearExecution,
         findExecutions,
         findDistinctFieldValues,
         validateExecution,

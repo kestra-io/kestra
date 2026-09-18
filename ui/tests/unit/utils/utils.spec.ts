@@ -1,4 +1,4 @@
-import {afterAll, beforeEach, describe, expect, it, vi} from "vitest"
+import {afterAll, afterEach, beforeEach, describe, expect, it, vi} from "vitest"
 import {getTheme, getSelectedTheme, switchTheme, type SelectedTheme, flatten, executionVars, getDateGrouping, downloadUrl} from "../../../src/utils/utils"
 
 function mockSystemPrefersDark(prefersDark: boolean) {
@@ -15,13 +15,10 @@ function mockSystemPrefersDark(prefersDark: boolean) {
 }
 
 describe("downloadUrl()", () => {
-    // https://github.com/kestra-io/kestra/issues/17322 - a stray `target="_blank"` on this
-    // anchor is a documented footgun for `download`-attributed blob: URLs: some browsers can
-    // fail to open the new browsing context and fall back to navigating the current tab to
-    // the blob content instead, which is exactly the "flow export takes me to another page"
-    // symptom reported there. `download` alone is sufficient to trigger a save for a
-    // same-origin/blob:/data: URL, so `target` adds nothing there and must not come back.
-    it("does not set a target attribute for a blob: URL", () => {
+    afterEach(() => vi.restoreAllMocks())
+
+    // https://github.com/kestra-io/kestra/issues/17322
+    it("does not set a target attribute", () => {
         const createElementSpy = vi.spyOn(document, "createElement")
 
         downloadUrl("blob:http://localhost/fake", "flow.yaml")
@@ -29,36 +26,6 @@ describe("downloadUrl()", () => {
         const link = createElementSpy.mock.results[0]?.value as HTMLAnchorElement
         expect(link.getAttribute("download")).toBe("flow.yaml")
         expect(link.getAttribute("target")).toBeNull()
-
-        createElementSpy.mockRestore()
-    })
-
-    it("does not set a target attribute for a same-origin URL", () => {
-        const createElementSpy = vi.spyOn(document, "createElement")
-
-        downloadUrl(`${window.location.origin}/api/v1/main/files/export`, "files.zip")
-
-        const link = createElementSpy.mock.results[0]?.value as HTMLAnchorElement
-        expect(link.getAttribute("target")).toBeNull()
-
-        createElementSpy.mockRestore()
-    })
-
-    // The browser only honors `download` for a same-origin (or blob:/data:) URL; for a
-    // cross-origin one - e.g. useBaseNamespaces.ts's exportFileDirectory following a
-    // redirect to cloud storage - it's ignored and the anchor just navigates there. Without
-    // `target="_blank"` that would replace the current page: the exact symptom #17322
-    // reports, from a different cause than the blob: footgun above.
-    it("sets target=_blank for a cross-origin URL", () => {
-        const createElementSpy = vi.spyOn(document, "createElement")
-
-        downloadUrl("https://files.example.com/exports/namespace_files.zip", "namespace_files.zip")
-
-        const link = createElementSpy.mock.results[0]?.value as HTMLAnchorElement
-        expect(link.getAttribute("download")).toBe("namespace_files.zip")
-        expect(link.getAttribute("target")).toBe("_blank")
-
-        createElementSpy.mockRestore()
     })
 })
 

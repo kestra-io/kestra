@@ -27,6 +27,10 @@ trap 'cleanup' EXIT
 # This package is installed on its own, so a caller that only ran `npm ci` in ui/ still works.
 [ -d node_modules ] || npm ci
 
+# The browser revision is tied to the Playwright version this package resolves, which is not
+# necessarily the one whoever installed the browsers used; a present revision makes this a no-op.
+npx playwright install chromium
+
 echo "Start backend"
 ./start-e2e-tests-backend.sh --kestra-docker-image-to-test $KESTRA_DOCKER_IMAGE_TO_TEST
 

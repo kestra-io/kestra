@@ -1,7 +1,7 @@
 <template>
     <div>
         <teleport to="body">
-            <div v-if="isOpen" class="search-overlay" @click="closeSearch">
+            <div v-if="isOpen" class="search-overlay" :style="{zIndex: topLayer}" @click="closeSearch">
                 <div class="search-modal" role="dialog" aria-modal="true" @click.stop>
                     <div class="search-container" :aria-label="$t('jump to...')">
                         <KsSearch
@@ -73,6 +73,7 @@
 
 <script setup lang="ts">
     import {ref, computed, onMounted, onUnmounted, nextTick, watch} from "vue"
+    import {useTopLayer} from "@kestra-io/design-system"
     import {useRouter} from "vue-router"
     import {useLeftMenu} from "override/components/useLeftMenu"
     import type {MenuItem} from "override/components/useLeftMenu"
@@ -99,6 +100,7 @@
 
     const query = ref("")
     const isOpen = ref(false)
+    const topLayer = useTopLayer()
     const searchInput = ref<{ focus?: () => void } | null>(null)
     const activeIndex = ref(0)
     const scopeStack = ref<ScopeNode[]>([])
@@ -332,7 +334,6 @@
         width: 100vw;
         height: 100vh;
         background: var(--kel-overlay-color-lighter);
-        z-index: 10000;
         display: flex;
         justify-content: center;
         align-items: flex-start;

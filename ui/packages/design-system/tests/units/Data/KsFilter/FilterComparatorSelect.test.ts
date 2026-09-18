@@ -1,20 +1,15 @@
 import {describe, test, expect} from "vitest"
-import {mount} from "@vue/test-utils"
-import {createI18n} from "vue-i18n"
-import KestraDesignSystem from "../../../../src/index"
 import FilterComparatorSelect from "../../../../src/components/Data/KsDataTable/filter/layout/FilterComparatorSelect.vue"
 import {Comparators} from "../../../../src/components/Data/KsDataTable/filter/utils/filterTypes"
-
-const i18n = createI18n({legacy: false, locale: "en", messages: {en: {}}})
+import {i18nMount} from "../../i18nMount"
 
 const mountComparator = (
     filterKey: {comparators: Comparators[]; comparatorLabels?: Partial<Record<Comparators, string>>},
     selectedComparator: Comparators,
     shouldShowComparator = true,
 ) =>
-    mount(FilterComparatorSelect, {
+    i18nMount(FilterComparatorSelect, {
         props: {shouldShowComparator, selectedComparator, filterKey},
-        global: {plugins: [i18n, KestraDesignSystem]},
     })
 
 describe("FilterComparatorSelect", () => {

@@ -131,7 +131,7 @@ The used-key rule ([`usageRules.ts`](usageRules.ts)) only reads literal keys. A 
 
 ## CI: the auto-translate bot
 
-Both repositories run `.github/workflows/auto-translate-ui-keys.yml`, once per branch in its list (`develop` and `releases/v2.0.x`; a schedule fires from the default branch, so the `develop` copy of the file drives every branch and opens each bot PR against its own branch):
+Both repositories run `.github/workflows/auto-translate-ui-keys.yml`, once per branch in its list (`develop`, `releases/v2.0.x` and `releases/v1.3.x`; a schedule fires from the default branch, so the `develop` copy of the file drives every branch and opens each bot PR against its own branch):
 
 ```mermaid
 sequenceDiagram

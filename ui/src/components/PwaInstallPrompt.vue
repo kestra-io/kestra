@@ -41,7 +41,7 @@
         right: var(--ks-spacing-5);
         width: 22rem;
         max-width: calc(100vw - var(--ks-spacing-6));
-        z-index: 1000;
+        z-index: var(--ks-z-dropdown);
         box-shadow: var(--ks-shadow-lg);
 
         &:before {

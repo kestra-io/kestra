@@ -291,7 +291,7 @@ describe("KsDataTable", () => {
 
     test("coalesces an imperative reload and a page-size change in the same tick into one load", async () => {
         const loads: {page: number; size: number}[] = []
-        const wrapper = mount(KsDataTable, {
+        const wrapper = i18nMount(KsDataTable, {
             props: {
                 data: SAMPLE_DATA,
                 total: 100,
@@ -299,7 +299,6 @@ describe("KsDataTable", () => {
                 currentPage: 1,
                 loadData: async (p: {page: number; size: number}) => { loads.push({page: p.page, size: p.size}) },
             },
-            global: globalConfig,
         })
         await new Promise<void>((resolve) => setTimeout(resolve, 0))
         loads.length = 0

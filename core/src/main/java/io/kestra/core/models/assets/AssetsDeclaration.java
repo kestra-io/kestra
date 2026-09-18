@@ -16,9 +16,9 @@ import lombok.Getter;
 public class AssetsDeclaration {
     @Schema(description = "Whether to auto-register assets referenced dynamically at runtime that are not statically declared in inputs or outputs.")
     private Property<Boolean> enableAuto;
-    @Schema(description = "The assets this task or trigger consumes as inputs.")
+    @Schema(description = "The assets consumed as inputs.")
     private Property<List<@Valid AssetIdentifier>> inputs;
-    @Schema(description = "The assets this task or trigger produces as outputs.")
+    @Schema(description = "The assets produced as outputs.")
     private Property<List<@Valid Asset>> outputs;
 
     @Schema(

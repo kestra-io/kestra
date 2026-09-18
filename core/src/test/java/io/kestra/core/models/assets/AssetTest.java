@@ -117,6 +117,19 @@ class AssetTest {
     }
 
     @Test
+    void shouldKeepPreviousNamespaceWhenNotDeclaredEvenIfIncomingIsNonNull() {
+        // Given
+        Custom previous = Custom.builder().namespace("io.kestra").id("my-asset").type("EC2").build();
+        Custom incoming = Custom.builder().namespace("io.kestra.other").id("my-asset").type("EC2").build();
+
+        // When
+        Custom updated = incoming.toUpdated(previous, false);
+
+        // Then
+        assertThat(updated.getNamespace()).isEqualTo("io.kestra");
+    }
+
+    @Test
     void shouldUseDeclaredNamespaceOverPrevious() {
         // Given
         Custom previous = Custom.builder().namespace("io.kestra").id("my-asset").type("EC2").build();

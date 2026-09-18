@@ -71,10 +71,126 @@ jobs:
           filters: |
             ui:
               - 'ui/**'
+            translations:
+              - 'ui/src/translations/**'
+              - 'ui/scripts/translations/**'
             backend:
               - '!{ui,.github}/**'
           token: ${{ secrets.GITHUB_TOKEN }}
 
+  # Fills in whatever the PR left missing or stale and commits it straight onto the branch, so the
+  # author does not have to run the generator by hand — the same convenience kestra-ee already has.
+  # The scheduled `auto-translate-ui-keys.yml` still runs independently and remains the way to
+  # translate `develop` or to force a full re-translation from a branch.
+  #
+  # Branches in this repository only: a fork PR is withheld the API key and its branch cannot be
+  # pushed to with `GITHUB_TOKEN`. Those PRs still get the check below, they just have to run the
+  # generator themselves.
+  translations-generate:
+    name: 'Translations - Generate'
+    needs: [file-changes]
+    if: >-
+      needs.file-changes.outputs.translations == 'true'
+      && github.event.pull_request.head.repo.fork == false
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: write
+    # The `secrets` context is not allowed in `if:`, and Dependabot PRs are not forks yet still get
+    # no secrets, so gate the steps on the key itself rather than on the actor.
+    env:
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+    steps:
+      - uses: actions/checkout@v6
+        name: Checkout
+        if: env.GEMINI_API_KEY != ''
+        with:
+          # The branch itself, not the PR's merge commit, so the generated commit can be pushed back.
+          ref: ${{ github.head_ref }}
+
+      - uses: actions/setup-node@v6
+        if: env.GEMINI_API_KEY != ''
+        with:
+          node-version: "24.x"
+
+      - name: Install Node dependencies
+        if: env.GEMINI_API_KEY != ''
+        run: npm ci
+        working-directory: ui
+
+      - name: Generate missing and stale translations
+        if: env.GEMINI_API_KEY != ''
+        run: npm run translations:generate
+        working-directory: ui
+
+      - name: Commit them onto the pull request
+        if: env.GEMINI_API_KEY != ''
+        run: |
+          git config user.name "GitHub Action"
+          git config user.email "actions@github.com"
+          git add ui/src/translations/*.json ui/scripts/translations/fingerprints.json
+          if git diff --cached --quiet; then
+            echo "Translations are already up to date."
+            exit 0
+          fi
+          git commit -m "chore(core): localize to languages other than english"
+          # Generation is idempotent, so the run this push triggers finds nothing to do and stops.
+          git push origin HEAD:${{ github.head_ref }}
+
+  # Kept off the frontend test path: a translation typo shouldn't block those, and this check needs
+  # neither a build nor `npm ci` — just the checked-out files and Node itself. It is what stops an
+  # English value being edited without the other twelve languages following, which is how
+  # kestra-io/kestra#10656 accumulated a year of drift.
+  #
+  # Runs on any UI change, not only on translation files: a `t("new.key")` added to a component
+  # without the key is exactly what the used-key rule exists to catch, and that PR touches no
+  # locale file.
+  #
+  # Runs for forks too, where nothing was generated above, which is exactly when it matters most.
+  translations:
+    name: 'Translations - Key parity, placeholders and drift'
+    needs: [file-changes, translations-generate]
+    if: "always() && (needs.file-changes.outputs.translations == 'true' || needs.file-changes.outputs.ui == 'true')"
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+        name: Checkout
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24.x"
+
+      # The unused-key rule is not wired on this branch (it needs the EE tree and a cleaned-up en.json,
+      # see ui/scripts/translations/README.md), so the OSS tree alone is checked.
+      # The report and the PR context are kept as an artifact for the "Translations - PR comment" workflow:
+      # this job cannot comment itself, since a pull request from a fork runs with a read-only token.
+      - name: Check translations
+        id: check
+        continue-on-error: true
+        run: node ui/scripts/translations/check-translations.mjs --scope oss --report "$RUNNER_TEMP/translations-report/report.json"
+
+      - name: Record the pull request context for the comment workflow
+        if: always()
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          FORK: ${{ github.event.pull_request.head.repo.fork }}
+          OUTCOME: ${{ steps.check.outcome }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/translations-report"
+          printf '{"pr": %s, "fork": %s, "outcome": "%s"}\n' "$PR_NUMBER" "$FORK" "$OUTCOME" > "$RUNNER_TEMP/translations-report/meta.json"
+
+      - uses: actions/upload-artifact@v6
+        name: Upload the translation report
+        if: always()
+        with:
+          name: translations-report
+          path: ${{ runner.temp }}/translations-report
+          retention-days: 1
+
+      - name: Fail if the check failed
+        if: steps.check.outcome == 'failure'
+        run: exit 1
   frontend:
     name: Frontend - Tests
     needs: [file-changes]

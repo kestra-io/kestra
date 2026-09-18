@@ -1082,6 +1082,7 @@
     "execute backfill": "backfill 실행",
     "relative": "상대적",
     "relative start date": "상대적 시작 날짜",
+    "now": "지금",
     "absolute": "절대적",
     "backfill": "Backfill",
     "Set labels": "라벨 설정",
@@ -2646,6 +2647,52 @@
       "install_description": "더 빠른 접근과 전체 화면 경험을 위해 Kestra를 앱으로 설치하세요.",
       "install": "설치",
       "dismiss": "나중에"
+    },
+    "executionsTimeline": {
+      "breadcrumb": {
+        "all": "전체",
+        "total": "실행 {count}개 | 실행 {count}개",
+        "failed": "{count}개 실패"
+      },
+      "toolbar": {
+        "panBack": "뒤로 이동",
+        "panForward": "앞으로 이동",
+        "zoomIn": "확대",
+        "zoomOut": "축소",
+        "range": "{start} → {end} ({duration})",
+        "rangePicker": "시간 범위 변경"
+      },
+      "row": {
+        "openOwnPage": "이 페이지 열기",
+        "runsCount": "실행 {count}개 | 실행 {count}개",
+        "failedCount": "{count}개 실패"
+      },
+      "bucket": {
+        "hint": "집계됨: 확대하면 실행 단위 상세 정보가 표시됩니다"
+      },
+      "popover": {
+        "openExecution": "실행 열기",
+        "showOnlyFlow": "이 flow만 표시"
+      },
+      "empty": {
+        "description": "선택한 기간과 필터에 해당하는 실행이 없습니다.",
+        "resetFilters": "필터 재설정",
+        "widenRange": "7일로 확장"
+      },
+      "error": {
+        "title": "타임라인을 불러오지 못했습니다",
+        "description": "이 기간의 실행을 불러오는 중 오류가 발생했습니다."
+      },
+      "truncated": {
+        "description": "최신 {total}개 중 {shown}개의 실행을 표시하고 있습니다 — 모두 보려면 기간이나 필터를 좁혀 보세요."
+      },
+      "scrubber": {
+        "label": "시간 경과에 따른 Execution 밀도, 범위를 선택하려면 드래그하세요."
+      }
+    },
+    "chart mode": {
+      "counts": "카운트",
+      "timeline": "타임라인"
     }
   }
 }

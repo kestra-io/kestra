@@ -1082,6 +1082,7 @@
     "execute backfill": "Executar backfill",
     "relative": "Relativo",
     "relative start date": "Data de início relativa",
+    "now": "Agora",
     "absolute": "Absoluto",
     "backfill": "Backfill",
     "Set labels": "Definir labels",
@@ -2646,6 +2647,52 @@
       "install_description": "Instale o Kestra como um aplicativo para acesso mais rápido e uma experiência em tela cheia.",
       "install": "Instalar",
       "dismiss": "Agora não"
+    },
+    "executionsTimeline": {
+      "breadcrumb": {
+        "all": "Todos",
+        "total": "{count} execução | {count} execuções",
+        "failed": "{count} com falha"
+      },
+      "toolbar": {
+        "panBack": "Voltar",
+        "panForward": "Avançar",
+        "zoomIn": "Aumentar zoom",
+        "zoomOut": "Diminuir zoom",
+        "range": "{start} → {end} ({duration})",
+        "rangePicker": "Alterar intervalo de tempo"
+      },
+      "row": {
+        "openOwnPage": "Abrir esta página",
+        "runsCount": "{count} execução | {count} execuções",
+        "failedCount": "{count} com falha"
+      },
+      "bucket": {
+        "hint": "Agregado: aumente o zoom para ver o detalhe de cada execução"
+      },
+      "popover": {
+        "openExecution": "Abrir execução",
+        "showOnlyFlow": "Mostrar somente este flow"
+      },
+      "empty": {
+        "description": "Não há execuções no período e filtros selecionados.",
+        "resetFilters": "Redefinir filtros",
+        "widenRange": "Ampliar para 7 dias"
+      },
+      "error": {
+        "title": "Não foi possível carregar a linha do tempo",
+        "description": "Ocorreu um erro ao carregar as execuções deste período."
+      },
+      "truncated": {
+        "description": "Mostrando as últimas {shown} de {total} execuções — reduza o período ou os filtros para ver todas."
+      },
+      "scrubber": {
+        "label": "Densidade de Execution ao longo do tempo, arraste para selecionar um intervalo"
+      }
+    },
+    "chart mode": {
+      "counts": "Contagens",
+      "timeline": "Linha do tempo"
     }
   }
 }

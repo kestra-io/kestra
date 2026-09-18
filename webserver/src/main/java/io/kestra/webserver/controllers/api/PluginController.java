@@ -411,7 +411,6 @@ public class PluginController {
                 return registeredPlugin.getTasks().stream()
                     .filter(TicketingTaskInterface.class::isAssignableFrom)
                     .filter(c -> !isInternal(c))
-                    .filter(c -> !c.getName().startsWith("org.kestra."))
                     .map(c -> new ApiTicketingSystem(title, c.getName()));
             })
             .collect(Collectors.toMap(ApiTicketingSystem::name, dto -> dto, (kept, duplicate) -> kept, LinkedHashMap::new))

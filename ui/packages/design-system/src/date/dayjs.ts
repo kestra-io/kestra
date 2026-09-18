@@ -27,3 +27,17 @@ dayjs.extend(weekOfYear)
 
 export default dayjs
 export type {Dayjs} from "dayjs"
+
+// Declaration emit drops the plugin imports above, so a consumer reading our built .d.ts would get
+// a dayjs with no duration, tz, fromNow or max; this alias keeps their augmentations reachable.
+export type DayjsPlugins = [
+    typeof calendar,
+    typeof duration,
+    typeof isSameOrBefore,
+    typeof isoWeek,
+    typeof minMax,
+    typeof relativeTime,
+    typeof timezone,
+    typeof utc,
+    typeof weekOfYear,
+]

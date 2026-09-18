@@ -12,7 +12,7 @@
             :readonly="readonly"
             :type="(disabled || readonly) ? '' : 'textarea'"
             :autosize="{minRows: 1}"
-            :inputStyle="{...(haveError ? {boxShadow: '0 0 6px #ab0009'} : {}), ...inputStyle}"
+            :inputStyle="{...(haveError ? {boxShadow: '0 0 6px var(--ks-border-error)'} : {}), ...inputStyle}"
             :suffixIcon="SuffixIcon"
         />
     </div>

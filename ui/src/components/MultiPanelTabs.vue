@@ -873,10 +873,10 @@
         left: 0;
         right: 0;
         bottom: 0;
-        background-color: rgba(0, 0, 0, 0.1);
+        background-color: color-mix(in srgb, var(--ks-border-focus) 10%, transparent);
         z-index: var(--ks-z-sticky);
         &.dragover{
-            background-color: rgba(0, 0, 0, 0.3);
+            background-color: color-mix(in srgb, var(--ks-border-focus) 30%, transparent);
         }
     }
 
@@ -1046,9 +1046,9 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        background-color: rgba(30, 30, 30, 0.5);
+        background-color: color-mix(in srgb, var(--ks-border-focus) 15%, transparent);
         transition: all 0.2s ease;
-        border: 2px dashed var(--ks-border-default, #444);
+        border: 2px dashed var(--ks-border-default);
         border-radius: 4px;
         margin: 8px;
         pointer-events: auto;
@@ -1057,8 +1057,8 @@
 
     .new-panel-drop-zone:hover,
     .new-panel-drop-zone.panel-dragover {
-        background-color: rgba(40, 40, 40, 0.8);
-        border-color: var(--ks-border-focus, #888);
+        background-color: color-mix(in srgb, var(--ks-border-focus) 35%, transparent);
+        border-color: var(--ks-border-focus);
     }
 
     .left-drop-zone {

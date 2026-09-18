@@ -69,7 +69,7 @@
     transition: all 0.3s ease;
     user-select: none;
     justify-content: space-around;
-    box-shadow: rgba(17, 17, 26, 0.1) 0px 0px 16px;
+    box-shadow: 0 0 16px var(--ks-shadow-elevated);
 }
 
 .switch-option {
@@ -86,7 +86,7 @@
 .switch-slider {
     background-color: var(--ks-bg-surface);
     border-radius: 16px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 1px 3px var(--ks-shadow-elevated);
     height: calc(100% - 8px);
     left: 4px;
     position: absolute;

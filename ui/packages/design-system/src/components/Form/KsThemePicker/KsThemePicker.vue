@@ -28,7 +28,8 @@
 </template>
 
 <script setup lang="ts">
-    import {KsButton, KsText} from "@kestra-io/design-system"
+    import KsButton from "../../Basic/KsButton/KsButton.vue"
+    import KsText from "../../Basic/KsText.vue"
     import ThemeWindow from "./ThemeWindow.vue"
 
     export type ThemeOption = {
@@ -48,6 +49,8 @@
 </script>
 
 <style scoped lang="scss">
+    @use "../../../assets/styles/color-palette" as palette;
+
     .theme-picker {
         display: flex;
         gap: 0.5rem;
@@ -61,9 +64,6 @@
             height: auto;
             min-height: 0;
 
-            /* Strip ElButton's chrome on every interactive state.
-               Visual feedback is applied to .theme-picker__content below
-               to avoid Element Plus' internal pseudo-element conflicts. */
             &,
             &:hover,
             &:focus,
@@ -102,30 +102,30 @@
 
         &__window {
             &--light {
-                --tp-sidebar: #ffffff;
-                --tp-divider: #e9e9ee;
-                --tp-main: #f7f7f8;
-                --tp-bar: #e9e9ee;
-                --tp-panel: #e9e9ee;
-                --tp-frame: #e9e9ee;
+                --tp-sidebar: #{palette.$base-gray-neutral-white};
+                --tp-divider: #{palette.$base-gray-neutral-100};
+                --tp-main: #{palette.$base-gray-neutral-50};
+                --tp-bar: #{palette.$base-gray-neutral-100};
+                --tp-panel: #{palette.$base-gray-neutral-100};
+                --tp-frame: #{palette.$base-gray-neutral-100};
             }
 
             &--dark {
-                --tp-sidebar: #1e202a;
-                --tp-divider: #2c303f;
-                --tp-main: #14181f;
-                --tp-bar: #2f3342;
-                --tp-panel: #2f3342;
-                --tp-frame: #2c303f;
+                --tp-sidebar: #{palette.$base-gray-cool-900};
+                --tp-divider: #{palette.$base-gray-cool-600};
+                --tp-main: #{palette.$base-gray-cool-950};
+                --tp-bar: #{palette.$base-gray-cool-500};
+                --tp-panel: #{palette.$base-gray-cool-500};
+                --tp-frame: #{palette.$base-gray-cool-600};
             }
 
             &--dark-2 {
-                --tp-sidebar: #1a1c22;
-                --tp-divider: #2e2e3c;
-                --tp-main: #111115;
-                --tp-bar: #23252e;
-                --tp-panel: #23252e;
-                --tp-frame: #2e2e3c;
+                --tp-sidebar: #{palette.$base-gray-neutral-900};
+                --tp-divider: #{palette.$base-gray-neutral-700};
+                --tp-main: #{palette.$base-gray-neutral-950};
+                --tp-bar: #{palette.$base-gray-neutral-800};
+                --tp-panel: #{palette.$base-gray-neutral-800};
+                --tp-frame: #{palette.$base-gray-neutral-700};
             }
 
             &--sync {
@@ -143,10 +143,6 @@
             text-align: center;
             color: var(--ks-text-primary);
             white-space: nowrap;
-        }
-
-        &__option--selected &__label {
-            color: var(--ks-text-primary, #FFF);
         }
     }
 </style>

@@ -83,8 +83,9 @@
         return label.key && label.keyPrefix !== false ? `${label.key}:${value}` : value
     }
 
+    import type {DecodedParam} from "@kestra-io/design-system"
     import {decodeSearchParams} from "@kestra-io/design-system"
-    let query: any[] = []
+    let query: DecodedParam[] = []
     watch(
         () => route.query,
         (q) => (query = decodeSearchParams(q)),
@@ -110,12 +111,12 @@
             : `filters[${props.filterType}][EQUALS][${key}]`)
 
         if (isChecked(label)) {
-            const replacementQuery = {...route.query} as Record<string, any>
+            const replacementQuery = {...route.query} as Record<string, string | string[] | undefined>
             delete replacementQuery[props.filterType === "type" ? getKey() : getKey(label.key)]
             replacementQuery.page = "1"
             router.replace({query: replacementQuery})
         } else {
-            const newQuery = {...route.query, page: "1"} as Record<string, any>
+            const newQuery = {...route.query, page: "1"} as Record<string, string | string[] | undefined>
             if (props.filterType === "type") {
                 newQuery[getKey()] = label.value
             } else {

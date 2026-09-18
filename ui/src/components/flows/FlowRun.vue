@@ -27,6 +27,7 @@
                         :initialInputs="flow.inputs"
                         :selectedTrigger="selectedTrigger"
                         :flow="flow"
+                        :renderLabels="renderLabels"
                         mode="wizard"
                         v-model="inputs"
                         :executeClicked="executeClicked"
@@ -137,7 +138,7 @@
     import {executeFlowBehaviours, storageKeys} from "../../utils/constants"
     import {WEBHOOK_TRIGGER_TYPE} from "../../utils/webhook"
     import {flattenInputs} from "../../utils/inputs"
-    import get from "lodash/get"
+    import {getPath} from "@kestra-io/design-system"
     import type {FormInstance} from "@kestra-io/design-system"
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
     import Play from "vue-material-design-icons/Play.vue"
@@ -176,6 +177,7 @@
         buttonIcon?: Component
         buttonTestId?: string
         autoPrefill?: boolean
+        renderLabels?: string[]
     }>(), {
         redirect: true,
         embed: false,
@@ -185,6 +187,7 @@
         buttonIcon: () => Play as Component,
         buttonTestId: "execute-dialog-button",
         autoPrefill: false,
+        renderLabels: undefined,
     })
 
     const emit = defineEmits<{
@@ -383,7 +386,7 @@
         const executionInputs = execution.value?.inputs ?? {}
         flattenInputs(flow.value.inputs)
             .forEach(leaf => {
-                const value = get(executionInputs, leaf.id)
+                const value = getPath(executionInputs, leaf.id)
                 if (value === undefined) {
                     return
                 }

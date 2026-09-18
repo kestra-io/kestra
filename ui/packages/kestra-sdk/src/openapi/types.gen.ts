@@ -413,6 +413,9 @@ export type ArtefactDraft = {
 export type ArtefactKind = 'FLOW' | 'DASHBOARD' | 'APP';
 
 export type Asset = {
+    status?: string;
+    ttl?: string;
+    owner?: string;
     namespace?: string;
     id: string;
     type: string;
@@ -1708,6 +1711,7 @@ export type Plugin = {
     storages?: Array<PluginPluginElementMetadata>;
     secrets?: Array<PluginPluginElementMetadata>;
     taskRunners?: Array<PluginPluginElementMetadata>;
+    assets?: Array<PluginPluginElementMetadata>;
     apps?: Array<PluginPluginElementMetadata>;
     appBlocks?: Array<PluginPluginElementMetadata>;
     charts?: Array<PluginPluginElementMetadata>;

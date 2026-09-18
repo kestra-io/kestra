@@ -181,6 +181,20 @@ export * as stringUtils from "./utils/string"
 export {rowKey} from "./utils/rowKey"
 export * as fileUtils from "./utils/file"
 export * as durationUtils from "./utils/duration"
+export {
+    cloneDeep,
+    debounce,
+    deepMerge,
+    escapeHtml,
+    getPath,
+    groupBy,
+    isDeepEqual,
+    isPlainObject,
+    mapValues,
+    setPath,
+    throttle,
+} from "./utils/lang"
+export type {PathSegments, Scheduled} from "./utils/lang"
 export * as State from "./utils/state"
 export {LOG_LEVELS, STATES} from "./utils/state"
 export {SECTIONS, CLUSTER_PREFIX} from "./utils/constants"
@@ -198,6 +212,7 @@ let i18nRegistration: Promise<void> = Promise.resolve()
 /** The registration `install` started, so a caller can await it rather than leave it in flight. */
 export const designSystemI18nReady = (): Promise<void> => i18nRegistration
 export {useDiscardGuard} from "./composables/useDiscardGuard"
+export {useTopLayer} from "./composables/useTopLayer"
 export type {FilterContext} from "./components/Data/KsDataTable/filter/utils/filterInjectionKeys"
 export {SAVED_FILTER_ANALYTICS_INJECTION_KEY} from "./components/Data/KsDataTable/filter/utils/filterAnalytics"
 export type {SavedFilterAction, SavedFilterAnalyticsEvent, SavedFilterAnalyticsTracker} from "./components/Data/KsDataTable/filter/utils/filterAnalytics"
@@ -514,7 +529,12 @@ const KestraDesignSystem = {
 
         const symbol = (app as unknown as {__VUE_I18N_SYMBOL__?: symbol}).__VUE_I18N_SYMBOL__
         const i18n = symbol ? (app._context.provides[symbol] as I18n | undefined) : undefined
-        if (i18n) i18nRegistration = registerDesignSystemI18n(i18n)
+        // Chained rather than replaced, so a second install cannot drop a pending registration and
+        // leave its locale imports unawaitable; settled either way, so one failure blocks no other.
+        if (i18n) {
+            const register = () => registerDesignSystemI18n(i18n)
+            i18nRegistration = i18nRegistration.then(register, register)
+        }
     },
 }
 

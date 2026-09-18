@@ -208,7 +208,6 @@ export default defineConfig(({mode}) => {
                 "@module-federation/dts-plugin/dynamic-remote-type-hints-plugin",
                 "js-yaml",
                 "path-browserify",
-                "mailchecker",
                 "rapidoc",
                 // The AI Copilot stories/components import the SDK's `ai` subpath. Pre-bundle it so
                 // Vite doesn't discover it mid-run and reload the dev server — that reload kills

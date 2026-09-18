@@ -153,8 +153,7 @@
 </template>
 
 <script setup lang="ts">
-    import MailChecker from "mailchecker"
-    import {ref, computed, onUnmounted, type Ref} from "vue"
+    import {ref, shallowRef, computed, watch, onUnmounted, type Ref} from "vue"
     import {useRouter} from "vue-router"
     import {useI18n} from "vue-i18n"
     import {useMiscStore} from "override/stores/misc"
@@ -257,7 +256,21 @@
 
     const EMAIL_REGEX = /^[a-zA-Z0-9_!#$%&'*+/=?`{|}~^.-]+@[a-zA-Z0-9.-]+$/
 
-    const validateEmail = (_rule: any, value: string, callback: (error?: Error) => void) => {
+    // mailchecker carries a ~850 kB domain list, so it is fetched while the form is being filled
+    // rather than before this screen can paint; isEmailAllowed stays false until it answers.
+    const mailChecker = shallowRef<{isValid(email: string): boolean} | null>(null)
+    const isEmailAllowed = ref(false)
+
+    async function loadMailChecker() {
+        mailChecker.value ??= (await import("mailchecker")).default
+        return mailChecker.value
+    }
+
+    watch(() => userFormData.value.username, async (email) => {
+        isEmailAllowed.value = Boolean(email) && (await loadMailChecker()).isValid(email)
+    }, {immediate: true})
+
+    const validateEmail = async (_rule: any, value: string, callback: (error?: Error) => void) => {
         if (!value) {
             callback(new Error(t("setup.validation.email_required")))
             return
@@ -268,7 +281,7 @@
             return
         }
 
-        if (!MailChecker.isValid(value)) {
+        if (!(await loadMailChecker()).isValid(value)) {
             callback(new Error(t("setup.validation.email_temporary_not_allowed")))
             return
         }
@@ -291,7 +304,7 @@
         const data = userFormData.value
         return Boolean(data.username) &&
             EMAIL_REGEX.test(data.username) &&
-            MailChecker.isValid(data.username) &&
+            isEmailAllowed.value &&
             isPasswordValid.value &&
             passwordsMatch.value
     })

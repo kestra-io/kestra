@@ -172,6 +172,9 @@ charts:
         nextExec:
           field: NEXT_EXECUTION_DATE
           displayName: Next Execution Date
+      where:
+        - type: IS_FALSE
+          field: DISABLED
 
   - id: executions_per_namespace_bars
     type: io.kestra.plugin.core.dashboard.chart.Bar

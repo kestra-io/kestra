@@ -65,7 +65,7 @@ const undeclaredRule = (primary) => {
 
                 if (!TOKEN_REGEX.test(token) || known.has(token)) return
 
-                const hasFallback = nodes.some((/** @type {{type: string}} */ n) => n.type === "div" && n.value === ",")
+                const hasFallback = nodes.some((/** @type {{type: string, value: string}} */ n) => n.type === "div" && n.value === ",")
 
                 report({
                     result,

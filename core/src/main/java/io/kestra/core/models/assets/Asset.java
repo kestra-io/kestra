@@ -155,13 +155,7 @@ public abstract class Asset implements HasUID, SoftDeletable<Asset>, Plugin {
         return (T) this;
     }
 
-    /**
-     * Convenience for every caller with no raw-source presence information (a flow-declared write, or
-     * repository-internal reconstruction): a non-null namespace is treated as declared, matching today's
-     * "declared wins, omitted keeps previous" behavior for every field except the one caller
-     * ({@code AssetsController.updateAsset}, EE) that can tell "omitted" from "explicitly null" apart and
-     * calls the 2-arg overload directly with that real boolean.
-     */
+    /** Convenience for callers with no raw-source presence information: a non-null namespace is treated as declared. */
     public <T extends Asset> T toUpdated(T previousAsset) {
         return toUpdated(previousAsset, this.namespace != null);
     }

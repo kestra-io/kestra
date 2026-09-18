@@ -104,7 +104,7 @@ abstract public class Task implements TaskInterface {
     @Valid
     private Cache taskCache;
 
-    @PluginProperty(hidden = false, group = "advanced")
+    @PluginProperty(group = "advanced")
     @Valid
     @Nullable
     @Schema(

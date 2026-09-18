@@ -497,7 +497,7 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
                 runContext.assets().emitted().forEach(emit -> bundles.add(new AssetsInOut(emit.inputs(), emit.outputs())));
 
                 if (!bundles.isEmpty()) {
-                    taskRun = taskRun.withAssetEmits(withDefaultNamespace(bundles, taskRun.getNamespace()));
+                    taskRun = taskRun.withAssetEmits(withDefaultInputNamespace(bundles, taskRun.getNamespace()));
                 }
             }
         } catch (ConstraintViolationException e) {
@@ -528,11 +528,11 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
     /**
      * A declared asset input without a namespace belongs to the flow referencing it, and left null it is
      * filtered out of the view of every user whose asset permission is scoped to namespaces rather than
-     * global. Outputs are deliberately left as-is: an omitted output namespace must reach {@link
-     * Asset#toUpdated} as {@code null} so it keeps the stored asset's namespace instead of being silently
-     * rewritten to the flow's own.
+     * global. Outputs are untouched here: an omitted output namespace must reach {@link Asset#toUpdated}
+     * as {@code null} so it keeps the stored asset's namespace instead of being silently rewritten to the
+     * flow's own.
      */
-    private static List<AssetsInOut> withDefaultNamespace(List<AssetsInOut> bundles, String namespace) {
+    private static List<AssetsInOut> withDefaultInputNamespace(List<AssetsInOut> bundles, String namespace) {
         return bundles.stream()
             .map(
                 bundle -> new AssetsInOut(

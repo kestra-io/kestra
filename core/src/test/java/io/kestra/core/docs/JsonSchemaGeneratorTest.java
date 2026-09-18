@@ -110,7 +110,9 @@ class JsonSchemaGeneratorTest {
             .orElseThrow();
 
         Map<String, Object> generate = jsonSchemaGenerator.properties(Task.class, cls);
-        assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).size(), is(7));
+        Map<String, Map<String, Object>> generatedProperties = (Map<String, Map<String, Object>>) generate.get("properties");
+        assertThat(generatedProperties.size(), is(7));
+        assertThat(generatedProperties.containsKey("assets"), is(true));
 
         Map<String, Object> format = properties(generate).get("format");
         assertThat(format.get("default"), is("{}"));

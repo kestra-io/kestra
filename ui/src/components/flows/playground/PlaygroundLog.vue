@@ -3,7 +3,7 @@
         <button
             v-for="execution in executions"
             :key="execution.id"
-            @click="() => executionsStore.execution = execution"
+            @click="() => executionsStore.applyLocalExecutionUpdate(execution)"
             :class="{active: executionsStore.execution?.id === execution.id}"
         >
             <p>{{ date(execution.state.startDate ?? "") }}</p>

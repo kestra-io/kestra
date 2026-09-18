@@ -73,7 +73,7 @@ export const usePlaygroundStore = defineStore("playground", () => {
 
     function clearExecutions() {
         executions.value = []
-        executionsStore.execution = undefined
+        executionsStore.clearExecution()
     }
 
     const executionsStore = useExecutionsStore()
@@ -331,10 +331,12 @@ export const usePlaygroundStore = defineStore("playground", () => {
         // because of https://github.com/kestra-io/kestra/issues/10462
         taskIdToTaskRunIdMap.clear()
 
-        executionsStore.execution = execution
-
-        if(execution)
+        if (execution) {
+            executionsStore.applyLocalExecutionUpdate(execution)
             addExecution(execution, graph)
+        } else {
+            executionsStore.clearExecution()
+        }
     }
 
     function updateExecution(execution: ExecutionWithGraph) {

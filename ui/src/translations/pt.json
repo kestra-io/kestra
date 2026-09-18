@@ -1061,6 +1061,7 @@
       },
       "revisions": {
         "history": "Histórico de revisões",
+        "load_error": "Não foi possível carregar a revisão {revision}; ela pode ter sido excluída.",
         "restore": {
           "success": "Revisão do arquivo restaurada com sucesso"
         }

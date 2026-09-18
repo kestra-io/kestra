@@ -1061,6 +1061,7 @@
       },
       "revisions": {
         "history": "修订历史",
+        "load_error": "无法加载修订 {revision}，它可能已被删除。",
         "restore": {
           "success": "文件修订已成功恢复"
         }

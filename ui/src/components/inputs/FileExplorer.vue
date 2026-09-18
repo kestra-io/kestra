@@ -386,7 +386,7 @@
     import PlusBox from "vue-material-design-icons/PlusBox.vue"
     import FolderDownloadOutline from "vue-material-design-icons/FolderDownloadOutline.vue"
     import TypeIcon from "../utils/icons/Type.vue"
-    import escape from "lodash/escape"
+    import {escapeHtml} from "@kestra-io/design-system"
     import {useI18n} from "vue-i18n"
     import {useRestrictDropTo} from "../../composables/useRestrictDropTo"
     import {useToast} from "../../utils/toast"
@@ -518,8 +518,8 @@
         const folders = confirmation.value.nodes?.filter(n => n.type === "Directory")
         const foldersCount = folders?.length ?? 0
         const labels = {title: t("namespace files.dialog.deletion.title"), message: ""}
-        if (foldersCount === 1) labels.message = t("namespace files.dialog.deletion.folder_single", {name: escape(folders?.[0].fileName)})
-        else if (filesCount === 1) labels.message = t("namespace files.dialog.deletion.file_single", {name: escape(files?.[0].fileName)})
+        if (foldersCount === 1) labels.message = t("namespace files.dialog.deletion.folder_single", {name: escapeHtml(folders?.[0].fileName)})
+        else if (filesCount === 1) labels.message = t("namespace files.dialog.deletion.file_single", {name: escapeHtml(files?.[0].fileName)})
         else if (foldersCount > 0 && filesCount > 0) labels.message = t("namespace files.dialog.deletion.mixed", {folders: foldersCount, files: filesCount})
         else if (foldersCount > 0) labels.message = t("namespace files.dialog.deletion.folders", {count: foldersCount})
         else labels.message = t("namespace files.dialog.deletion.files", {count: filesCount})
@@ -685,7 +685,13 @@
     }
 
     async function fetchRevisionSource(revision: number): Promise<string> {
-        return (await namespacesStore.readFile({namespace: namespaceId.value, path: revisionsHistory.value.path, revision})).content ?? ""
+        const {content, notFound} = await namespacesStore.readFile({namespace: namespaceId.value, path: revisionsHistory.value.path, revision})
+        // readFile silences the global 404 toast, so surface the missing revision here rather than
+        // rendering a silent empty diff.
+        if (notFound) {
+            toast.error(t("namespace files.revisions.load_error", {revision}))
+        }
+        return content ?? ""
     }
 
     async function restore(source: string) {

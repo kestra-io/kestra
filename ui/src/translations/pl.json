@@ -1061,6 +1061,7 @@
       },
       "revisions": {
         "history": "Historia wersji",
+        "load_error": "Nie można wczytać rewizji {revision}; mogła zostać usunięta.",
         "restore": {
           "success": "Wersja pliku została przywrócona"
         }

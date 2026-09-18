@@ -270,10 +270,7 @@
     import ChevronDown from "vue-material-design-icons/ChevronDown.vue"
     import * as OutputsAPI from "@kestra-io/kestra-sdk/outputs"
     import LogLine from "./LogLine.vue"
-    import {State, levelToRequestParams, type LevelFilterValue} from "@kestra-io/design-system"
-    import _xor from "lodash/xor"
-    import _groupBy from "lodash/groupBy"
-    import {dayjs} from "@kestra-io/design-system"
+    import {State, levelToRequestParams, type LevelFilterValue, groupBy, throttle, dayjs} from "@kestra-io/design-system"
     import "vue-virtual-scroller/dist/vue-virtual-scroller.css"
     import {logDisplayTypes} from "../../utils/constants"
     import {DynamicScroller, DynamicScrollerItem} from "vue-virtual-scroller"
@@ -286,7 +283,6 @@
     import * as Utils from "../../utils/utils"
     import * as LogUtils from "../../utils/logs"
     import {buildTaskRunHierarchy} from "../../utils/taskRunHierarchy"
-    import throttle from "lodash/throttle"
     import {useClient, type TaskRun, type TaskRunAttempt} from "@kestra-io/kestra-sdk"
 
     // Recursive component - self reference
@@ -431,7 +427,7 @@
             )
             .map((logLine: any, index: number) => ({...logLine, index})) // FIXME: any
 
-        return _groupBy(indexedLogs, (indexedLog: any) => // FIXME: any
+        return groupBy(indexedLogs, (indexedLog: any) => // FIXME: any
             attemptUid(indexedLog.taskRunId, indexedLog.attemptNumber),
         )
     })
@@ -1053,7 +1049,9 @@
     }
 
     function toggleShowAttempt(uid: string) {
-        shownAttemptsUid.value = _xor(shownAttemptsUid.value, [uid])
+        shownAttemptsUid.value = shownAttemptsUid.value.includes(uid)
+            ? shownAttemptsUid.value.filter((shown) => shown !== uid)
+            : [...shownAttemptsUid.value, uid]
     }
 
     function swapDisplayedAttempt(event: {taskRunId: string; attemptNumber: number}) {

@@ -1,12 +1,13 @@
 import {describe, test, expect} from "vitest"
 import {defineComponent, computed, watch, reactive, ref} from "vue"
-import {mount, flushPromises} from "@vue/test-utils"
-import {createI18n} from "vue-i18n"
+import {flushPromises} from "@vue/test-utils"
+import {i18nMount} from "../../i18nMount"
+
 import KestraDesignSystem from "@kestra-io/design-system"
 import KsDataTable from "@kestra-io/design-system/components/Data/KsDataTable/KsDataTable.vue"
 
 const globalConfig = {
-    plugins: [createI18n({legacy: false, locale: "en"}), KestraDesignSystem],
+    plugins: [KestraDesignSystem],
 }
 
 function makeHarness(initialQuery: Record<string, string> = {}) {
@@ -66,7 +67,7 @@ describe("LogsWrapper-style pagination wiring", () => {
             "filters[level][EQUALS]": "INFO",
         })
 
-        mount(Harness, {global: globalConfig})
+        i18nMount(Harness, {global: globalConfig})
         await flushPromises()
 
         expect(loadCalls.length).toBeGreaterThan(0)
@@ -80,7 +81,7 @@ describe("LogsWrapper-style pagination wiring", () => {
             "filters[level][EQUALS]": "INFO",
         })
 
-        mount(Harness, {global: globalConfig})
+        i18nMount(Harness, {global: globalConfig})
         await flushPromises()
         const baseline = filterResets.count
 
@@ -96,7 +97,7 @@ describe("LogsWrapper-style pagination wiring", () => {
             "filters[level][EQUALS]": "INFO",
         })
 
-        mount(Harness, {global: globalConfig})
+        i18nMount(Harness, {global: globalConfig})
         await flushPromises()
         const baseline = filterResets.count
 
@@ -113,7 +114,7 @@ describe("LogsWrapper-style pagination wiring", () => {
             "filters[level][EQUALS]": "INFO",
         })
 
-        mount(Harness, {global: globalConfig})
+        i18nMount(Harness, {global: globalConfig})
         await flushPromises()
         loadCalls.length = 0
 

@@ -1,6 +1,5 @@
 import {h, ref, render, watch, type Component, type Ref, type VNode} from "vue"
 import * as monaco from "monaco-editor/editor/editor.api"
-import uniqBy from "lodash/uniqBy"
 import {STATES} from "../utils/state"
 import {OVERFLOW_WIDGETS_ID} from "../utils/monacoSetup"
 import {DATE_PICKER_SUGGESTION_LABEL} from "./useEditorDatePicker"
@@ -43,7 +42,11 @@ export function useSuggestWidgetIcons(ctx: SuggestWidgetIconsContext) {
     }
 
     function replaceRowsIcons(nodes: HTMLElement[]) {
-        for (const node of uniqBy(nodes, n => n.id)) {
+        const seenIds = new Set<string>()
+        for (const node of nodes) {
+            if (seenIds.has(node.id)) continue
+            seenIds.add(node.id)
+
             const completionValue = suggestionLabel(node)
             if (!completionValue || node.getAttribute("data-index") === null) continue
 

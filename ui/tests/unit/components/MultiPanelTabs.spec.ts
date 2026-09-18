@@ -1,9 +1,8 @@
 import {beforeEach, describe, expect, test} from "vitest"
-import {mount} from "@vue/test-utils"
 import {createPinia, setActivePinia} from "pinia"
-import {createI18n} from "vue-i18n"
 import KestraDesignSystem from "@kestra-io/design-system"
 import MultiPanelTabs from "../../../src/components/MultiPanelTabs.vue"
+import {i18nMount} from "../i18nMount"
 
 const IconStub = {template: "<span class='icon-stub' />"}
 const PaneStub = {name: "PaneStub", template: "<div class='pane-stub' />"}
@@ -14,14 +13,11 @@ function makePanel(uid: string) {
 }
 
 const globalConfig = {
-    plugins: [
-        createI18n({legacy: false, locale: "en", fallbackWarn: false, missingWarn: false}),
-        KestraDesignSystem,
-    ],
+    plugins: [KestraDesignSystem],
 }
 
 function mountTabs() {
-    return mount(MultiPanelTabs, {
+    return i18nMount(MultiPanelTabs, {
         global: globalConfig,
         props: {modelValue: [makePanel("a"), makePanel("b")]},
     })
@@ -61,7 +57,7 @@ describe("MultiPanelTabs maximize", () => {
     })
 
     test("closing the maximized panel's last tab drops maximize instead of moving it to another panel", async () => {
-        const wrapper = mount(MultiPanelTabs, {
+        const wrapper = i18nMount(MultiPanelTabs, {
             global: globalConfig,
             props: {modelValue: [makePanel("a"), makePanel("b"), makePanel("c")]},
         })

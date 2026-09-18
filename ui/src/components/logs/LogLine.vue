@@ -344,11 +344,11 @@ div.line {
     }
 
     :deep(.clipboard) {
+        position: static;
+        flex: none;
         opacity: 0;
         pointer-events: none;
         transition: opacity 0.15s ease-in-out;
-        top: 0.4rem;
-        right: 0.5rem;
     }
 
     &:hover :deep(.clipboard) {

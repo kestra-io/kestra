@@ -1,4 +1,5 @@
 import dayjs from "dayjs"
+import advancedFormat from "dayjs/plugin/advancedFormat"
 import calendar from "dayjs/plugin/calendar"
 import duration from "dayjs/plugin/duration"
 import isSameOrBefore from "dayjs/plugin/isSameOrBefore"
@@ -15,6 +16,7 @@ import utc from "dayjs/plugin/utc"
 dayjs.extend(utc)
 dayjs.extend(timezone)
 dayjs.extend(duration)
+dayjs.extend(advancedFormat)
 dayjs.extend(calendar)
 dayjs.extend(isSameOrBefore)
 dayjs.extend(isoWeek)

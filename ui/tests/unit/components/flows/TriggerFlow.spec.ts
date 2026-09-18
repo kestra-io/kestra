@@ -30,6 +30,9 @@ function mountTriggerFlow(props: Record<string, unknown> = {}, slots: Record<str
     return i18nShallowMount(TriggerFlow, {
         props: {flowId: "my_flow", namespace: "company.team", ...props},
         slots,
+        // The real dialog keeps its content unmounted until opened, hiding the FlowRun these
+        // tests reach for, so it renders its default slot instead.
+        global: {stubs: {KsDialog: {template: "<div><slot /></div>"}}},
     })
 }
 

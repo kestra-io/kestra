@@ -72,7 +72,7 @@ class PluginInstallCommandTest {
         }
     }
 
-    private static void callPicocliAndFailIfErrors(Class clazz, ApplicationContext ctx, String[] args) {
+    private static void callPicocliAndFailIfErrors(Class<?> clazz, ApplicationContext ctx, String[] args) {
         ByteArrayOutputStream stdout = new ByteArrayOutputStream();
         ByteArrayOutputStream stderr = new ByteArrayOutputStream();
 

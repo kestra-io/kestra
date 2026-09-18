@@ -18,4 +18,7 @@ public interface GenericQueueInterface<T extends Event> extends AutoCloseable {
      * Get the name of the queue
      */
     String queueName();
+
+    @Override
+    void close();
 }

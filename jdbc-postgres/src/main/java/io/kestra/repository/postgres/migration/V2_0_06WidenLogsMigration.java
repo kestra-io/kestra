@@ -22,6 +22,7 @@ public class V2_0_06WidenLogsMigration extends AbstractV2_0_06WidenLogsMigration
 
     public static final class PostgresLogStoreEnabled implements Condition {
         @Override
+        @SuppressWarnings("rawtypes") // Condition.matches() declares a raw ConditionContext parameter
         public boolean matches(final ConditionContext context) {
             return LogStoreTypeResolver.matches(context, "postgres");
         }

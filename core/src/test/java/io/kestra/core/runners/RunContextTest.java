@@ -368,6 +368,7 @@ class RunContextTest {
         private String format;
 
         @Override
+        @SuppressWarnings("removal")
         public Optional<Execution> evaluate(ConditionContext conditionContext, TriggerContext context) throws IllegalVariableEvaluationException {
             conditionContext.getRunContext().logger().info(conditionContext.getRunContext().render(format));
 

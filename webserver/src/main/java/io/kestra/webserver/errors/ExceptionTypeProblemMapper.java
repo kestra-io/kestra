@@ -11,6 +11,7 @@ import java.util.function.BiConsumer;
  * <p>Lookup walks up the exception's superclass chain, so registering a base type covers its subclasses
  * unless one of them is registered more specifically.
  */
+@SuppressWarnings("this-escape")
 public abstract class ExceptionTypeProblemMapper implements ProblemMapper {
     private final Map<Class<? extends Throwable>, ProblemType> table = new LinkedHashMap<>();
 

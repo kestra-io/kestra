@@ -49,7 +49,7 @@ public class DefaultController extends AbstractService implements Controller {
     private static final Logger LOG = LoggerFactory.getLogger(DefaultController.class);
 
     /**
-     * 
+     *
      * Service name used for health checks.
      */
     protected static final String HEALTH_SERVICE_NAME = "kestra.controller";
@@ -67,6 +67,7 @@ public class DefaultController extends AbstractService implements Controller {
     protected final MetricRegistry metricRegistry;
 
     @Inject
+    @SuppressWarnings("this-escape")
     public DefaultController(
         List<WorkerControllerService> workerControllerServices,
         GrpcConfiguration grpcConfiguration,

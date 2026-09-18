@@ -141,7 +141,7 @@ class TriggerSchedulingLoopTest {
 
         try {
             // WHEN
-            Await.until(() -> evaluations.get() >= 2, Duration.ofMillis(10), Duration.ofSeconds(30));
+            Await.await().pollDelay(Duration.ZERO).pollInterval(Duration.ofMillis(10)).atMost(Duration.ofSeconds(30)).until(() -> evaluations.get() >= 2);
         } finally {
             loop.stop();
             thread.join();
@@ -172,11 +172,11 @@ class TriggerSchedulingLoopTest {
             awaitFirstIteration(loop);
             adjustableClock.advance(Duration.ofMillis(5_400));
             loop.setAssignments(Set.of(1));
-            Await.until(() -> evaluations.get() == 1, Duration.ofMillis(10), Duration.ofSeconds(10));
+            Await.await().pollDelay(Duration.ZERO).pollInterval(Duration.ofMillis(10)).atMost(Duration.ofSeconds(10)).until(() -> evaluations.get() == 1);
 
             // THEN
             adjustableClock.advance(Duration.ofMillis(600));
-            Await.until(() -> evaluations.get() == 2, Duration.ofMillis(10), Duration.ofSeconds(10));
+            Await.await().pollDelay(Duration.ZERO).pollInterval(Duration.ofMillis(10)).atMost(Duration.ofSeconds(10)).until(() -> evaluations.get() == 2);
         } finally {
             loop.stop();
             thread.join();
@@ -199,12 +199,12 @@ class TriggerSchedulingLoopTest {
             // WHEN
             awaitFirstIteration(loop);
             loop.setAssignments(Set.of(1));
-            Await.until(() -> evaluations.get() >= 1, Duration.ofMillis(10), Duration.ofSeconds(10));
+            Await.await().pollDelay(Duration.ZERO).pollInterval(Duration.ofMillis(10)).atMost(Duration.ofSeconds(10)).until(() -> evaluations.get() >= 1);
             // The slot is now one interval ahead, so the next iteration lands exactly on it plus one interval.
             adjustableClock.advance(Duration.ofSeconds(2));
 
             // THEN
-            Await.until(() -> evaluations.get() >= 2, Duration.ofMillis(10), Duration.ofSeconds(10));
+            Await.await().pollDelay(Duration.ZERO).pollInterval(Duration.ofMillis(10)).atMost(Duration.ofSeconds(10)).until(() -> evaluations.get() >= 2);
             Thread.sleep(200); // leave room for any catch-up iteration to fire
             assertThat(evaluations.get()).isEqualTo(2);
         } finally {

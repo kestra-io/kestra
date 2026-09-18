@@ -423,6 +423,7 @@ class DefaultFlowMetaStoreTest {
         verify(parsingService, never()).parseForRuntime(any());
     }
 
+    @SuppressWarnings("unchecked")
     private DefaultFlowMetaStore metaStore(FlowWithSource cachedFlow, FlowParsingService parsingService) {
         FlowRepositoryInterface repository = mock(FlowRepositoryInterface.class);
         when(repository.findAllWithSourceForAllTenants()).thenReturn(List.of(cachedFlow));

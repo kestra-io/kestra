@@ -1176,7 +1176,7 @@
 
     ul.tabs-context {
         position: fixed;
-        z-index: 9999;
+        z-index: var(--ks-z-top);
         border: 1px solid var(--ks-border-default);
 
         & li {

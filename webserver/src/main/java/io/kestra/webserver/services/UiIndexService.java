@@ -7,6 +7,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 import java.util.Optional;
 
+import io.kestra.webserver.configuration.CookiesConfiguration;
 import io.kestra.webserver.configuration.WebserverConfiguration;
 
 import io.micronaut.context.annotation.Requires;
@@ -42,6 +43,7 @@ public class UiIndexService {
 
     private final String basePath;
     private final WebserverConfiguration webserverConfiguration;
+    private final CookiesConfiguration cookiesConfiguration;
     private final Optional<CsrfConfiguration> csrfConfiguration;
     private final Optional<CsrfTokenGenerator<HttpRequest<?>>> csrfTokenGenerator;
     private final Optional<CsrfTokenValidator<HttpRequest<?>>> csrfTokenValidator;
@@ -53,12 +55,14 @@ public class UiIndexService {
     public UiIndexService(
         @Nullable @Value("${micronaut.server.context-path}") String basePath,
         WebserverConfiguration webserverConfiguration,
+        CookiesConfiguration cookiesConfiguration,
         Optional<CsrfConfiguration> csrfConfiguration,
         Optional<CsrfTokenGenerator<HttpRequest<?>>> csrfTokenGenerator,
         Optional<CsrfTokenValidator<HttpRequest<?>>> csrfTokenValidator
     ) {
         this.basePath = basePath;
         this.webserverConfiguration = Objects.requireNonNull(webserverConfiguration);
+        this.cookiesConfiguration = Objects.requireNonNull(cookiesConfiguration);
         this.csrfConfiguration = Objects.requireNonNull(csrfConfiguration);
         this.csrfTokenGenerator = Objects.requireNonNull(csrfTokenGenerator);
         this.csrfTokenValidator = Objects.requireNonNull(csrfTokenValidator);
@@ -96,7 +100,7 @@ public class UiIndexService {
                 html = withCsrfMeta(template, "<meta name=\"csrf-token\" content=\"" + escaped + "\">");
                 csrfCookie = Cookie.of(csrfConfiguration.get().getCookieName(), csrfToken)
                     .httpOnly(true)
-                    .secure(request.isSecure())
+                    .secure(cookiesConfiguration.isSecure(request))
                     .sameSite(SameSite.Strict)
                     .path("/");
             }

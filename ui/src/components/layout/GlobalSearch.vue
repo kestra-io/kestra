@@ -69,7 +69,7 @@
                                 </ul>
                             </el-scrollbar>
                             <div v-else class="empty">
-                                {{ $t("no results") }}
+                                {{ $t("no_results_found") }}
                             </div>
                         </div>
                     </div>

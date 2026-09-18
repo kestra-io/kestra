@@ -39,7 +39,7 @@
 
                 <div v-if="selectedStatus" class="alert alert-info alert-status-change mt-2" role="alert">
                     <ul>
-                        <li v-for="(text, i) in $t('change status hint')[selectedStatus]" :key="i">
+                        <li v-for="(text, i) in $t('change state hint')[selectedStatus]" :key="i">
                             {{ text }}
                         </li>
                     </ul>

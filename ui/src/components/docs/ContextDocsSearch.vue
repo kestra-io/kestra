@@ -185,7 +185,7 @@
 
         &.selected {
             background: var(--ks-bg-active);
-            border-left: 3px solid var(--ks-border-strong);
+            border-left: 3px solid var(--ks-border-focus);
         }
 
         .result-title {

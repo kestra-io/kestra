@@ -42,7 +42,7 @@
     top: 0;
     left: 0;
     padding: .5rem 1rem;
-    background-color: var(--ks-text-link);
+    background-color: var(--ks-btn-primary-bg-default);
     color: var(--ks-btn-primary-text);
     z-index: 2000;
     display: flex;

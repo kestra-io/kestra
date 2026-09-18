@@ -1,7 +1,4 @@
 import {describe, it, expect, vi} from "vitest"
-import {shallowMount} from "@vue/test-utils"
-import {createI18n} from "vue-i18n"
-
 const loadFlowForExecution = vi.fn().mockResolvedValue(undefined)
 
 vi.mock("../../../../src/stores/api", () => ({
@@ -27,14 +24,12 @@ vi.mock("../../../../src/utils/toast", () => ({
 
 import TriggerFlow from "../../../../src/components/flows/TriggerFlow.vue"
 import FlowRun from "../../../../src/components/flows/FlowRun.vue"
-
-const i18n = createI18n({legacy: false, locale: "en", missingWarn: false, fallbackWarn: false, messages: {en: {}}})
+import {i18nShallowMount} from "../../i18nMount"
 
 function mountTriggerFlow(props: Record<string, unknown> = {}, slots: Record<string, string> = {}) {
-    return shallowMount(TriggerFlow, {
+    return i18nShallowMount(TriggerFlow, {
         props: {flowId: "my_flow", namespace: "company.team", ...props},
         slots,
-        global: {plugins: [i18n]},
     })
 }
 

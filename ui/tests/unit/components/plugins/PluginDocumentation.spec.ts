@@ -1,7 +1,8 @@
 import {describe, test, expect, beforeEach, vi} from "vitest"
-import {mount, flushPromises} from "@vue/test-utils"
+import {flushPromises} from "@vue/test-utils"
+import {i18nMount} from "../../i18nMount"
+
 import {createPinia, setActivePinia} from "pinia"
-import {createI18n} from "vue-i18n"
 import KestraDesignSystem from "@kestra-io/design-system"
 import PluginDocumentation from "../../../../src/components/plugins/PluginDocumentation.vue"
 import {usePluginsStore} from "../../../../src/stores/plugins"
@@ -30,23 +31,17 @@ vi.mock("@kestra-io/design-system/shiki", () => ({
     loadLanguageOnDemand: vi.fn().mockResolvedValue(false),
 }))
 
-const i18n = createI18n({
-    legacy: false,
-    locale: "en",
-    messages: {
-        en: {
-            plugins: {
-                nav_overview: "Overview",
-                nav_properties: "Properties",
-                nav_outputs: "Outputs",
-                nav_examples: "Examples",
-                nav_metrics: "Metrics",
-                nav_definitions: "Definitions",
-                copy_type: "Copy type",
-            },
-        },
+const messages = {
+    plugins: {
+        nav_overview: "Overview",
+        nav_properties: "Properties",
+        nav_outputs: "Outputs",
+        nav_examples: "Examples",
+        nav_metrics: "Metrics",
+        nav_definitions: "Definitions",
+        copy_type: "Copy type",
     },
-})
+}
 
 const CLS = "io.kestra.plugin.scripts.python.Script"
 const SCHEMA = {properties: {properties: {script: {type: "string"}}}}
@@ -74,9 +69,10 @@ describe("PluginDocumentation", () => {
     const mountWithPlugin = async (plugin: Record<string, unknown>) => {
         usePluginsStore().editorPlugin = plugin as never
 
-        const wrapper = mount(PluginDocumentation, {
+        const wrapper = i18nMount(PluginDocumentation, {
+            messages,
             global: {
-                plugins: [pinia, i18n, KestraDesignSystem],
+                plugins: [pinia, KestraDesignSystem],
                 stubs: {TaskIcon: {template: "<span />"}},
             },
         })

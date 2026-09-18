@@ -1,7 +1,8 @@
 import {describe, it, expect, vi, beforeEach, afterEach} from "vitest"
 import {ref} from "vue"
-import {mount, flushPromises} from "@vue/test-utils"
-import {createI18n} from "vue-i18n"
+import {flushPromises} from "@vue/test-utils"
+import {i18nMount} from "../../../i18nMount"
+
 import {createPinia} from "pinia"
 
 // --- YAML fixtures ---
@@ -359,10 +360,7 @@ import {storageKeys, taskEditDefaultModes} from "../../../../../src/utils/consta
 
 const makeConfig = () => ({
     global: {
-        plugins: [
-            createI18n({legacy: false, locale: "en", messages}),
-            createPinia(),
-        ],
+        plugins: [createPinia()],
         stubs: {
             KsEmpty: {template: "<div data-test='ks-empty'><slot /></div>"},
             KsDialog: {
@@ -386,7 +384,7 @@ describe("BlockEditor", () => {
     // Shared across tests so afterEach can always unmount the last mounted
     // instance — required because the keyboard composable listens on window,
     // and a leaked instance would keep reacting to later tests' key events.
-    let wrapper: ReturnType<typeof mount> | undefined
+    let wrapper: ReturnType<typeof i18nMount> | undefined
 
     beforeEach(() => {
         mockFlowYaml.value = SIMPLE_YAML
@@ -404,7 +402,7 @@ describe("BlockEditor", () => {
             // Given
 
             // When
-            wrapper = mount(BlockEditor, makeConfig())
+            wrapper = i18nMount(BlockEditor, {locales: messages, ...makeConfig()})
 
             // Then
             const cards = wrapper.findAll("[data-test='block-card']")
@@ -415,7 +413,7 @@ describe("BlockEditor", () => {
             // Given
 
             // When
-            wrapper = mount(BlockEditor, makeConfig())
+            wrapper = i18nMount(BlockEditor, {locales: messages, ...makeConfig()})
 
             // Then
             const ids = wrapper.findAll("[data-test='block-card-id']").map(el => el.text())
@@ -427,7 +425,7 @@ describe("BlockEditor", () => {
             // Given
 
             // When
-            wrapper = mount(BlockEditor, makeConfig())
+            wrapper = i18nMount(BlockEditor, {locales: messages, ...makeConfig()})
 
             // Then
             const types = wrapper.findAll("[data-test='block-card-type']").map(el => el.text())
@@ -440,7 +438,7 @@ describe("BlockEditor", () => {
             mockFlowYaml.value = YAML_WITH_TRIGGERS
 
             // When
-            wrapper = mount(BlockEditor, makeConfig())
+            wrapper = i18nMount(BlockEditor, {locales: messages, ...makeConfig()})
 
             // Then
             const triggerList = wrapper.find("[data-test='block-editor-trigger-list']")
@@ -454,7 +452,7 @@ describe("BlockEditor", () => {
             mockFlowYaml.value = EMPTY_YAML
 
             // When
-            wrapper = mount(BlockEditor, makeConfig())
+            wrapper = i18nMount(BlockEditor, {locales: messages, ...makeConfig()})
 
             // Then
             // flow, triggers, tasks, errors, finally, afterExecution
@@ -468,7 +466,7 @@ describe("BlockEditor", () => {
             mockFlowYaml.value = YAML_WITH_FLOWABLE
 
             // When
-            wrapper = mount(BlockEditor, makeConfig())
+            wrapper = i18nMount(BlockEditor, {locales: messages, ...makeConfig()})
 
             // Then
             const clusters = wrapper.findAll("[data-test='flowable-cluster-card']")
@@ -482,7 +480,7 @@ describe("BlockEditor", () => {
             mockFlowYaml.value = YAML_WITH_FLOWABLE
 
             // When
-            wrapper = mount(BlockEditor, makeConfig())
+            wrapper = i18nMount(BlockEditor, {locales: messages, ...makeConfig()})
 
             // Then
             const leafCards = wrapper.findAll("[data-test='block-card']")
@@ -495,7 +493,7 @@ describe("BlockEditor", () => {
             mockFlowYaml.value = YAML_WITH_FLOWABLE
 
             // When
-            wrapper = mount(BlockEditor, makeConfig())
+            wrapper = i18nMount(BlockEditor, {locales: messages, ...makeConfig()})
 
             // Then — stub renders lane divs keyed by lane name
             const cluster = wrapper.find("[data-test='flowable-cluster-card']")
@@ -509,7 +507,7 @@ describe("BlockEditor", () => {
             mockFlowYaml.value = YAML_WITH_SWITCH
 
             // When
-            wrapper = mount(BlockEditor, makeConfig())
+            wrapper = i18nMount(BlockEditor, {locales: messages, ...makeConfig()})
 
             // Then
             const cluster = wrapper.find("[data-test='flowable-cluster-card']")
@@ -525,7 +523,7 @@ describe("BlockEditor", () => {
             mockFlowYaml.value = YAML_WITH_DUPLICATE_IDS
 
             // When
-            wrapper = mount(BlockEditor, makeConfig())
+            wrapper = i18nMount(BlockEditor, {locales: messages, ...makeConfig()})
 
             // Then
             const cards = wrapper.findAll("[data-test='block-card']")
@@ -538,7 +536,7 @@ describe("BlockEditor", () => {
             // Given — regression: the ring used to compare by raw task.id, so focusing
             // one of two same-id siblings lit up both at once
             mockFlowYaml.value = YAML_WITH_DUPLICATE_IDS
-            wrapper = mount(BlockEditor, makeConfig())
+            wrapper = i18nMount(BlockEditor, {locales: messages, ...makeConfig()})
             const cards = wrapper.findAll("[data-test='block-card']")
             const secondDomId = cards[1].attributes("data-block-id")
 
@@ -557,7 +555,7 @@ describe("BlockEditor", () => {
     describe("block selection", () => {
         it("selects a block when clicked", async () => {
             // Given
-            wrapper = mount(BlockEditor, makeConfig())
+            wrapper = i18nMount(BlockEditor, {locales: messages, ...makeConfig()})
             const firstCard = wrapper.find("[data-test='block-card']")
 
             // When
@@ -569,7 +567,7 @@ describe("BlockEditor", () => {
 
         it("keeps a block selected when its card is clicked again", async () => {
             // Given
-            wrapper = mount(BlockEditor, makeConfig())
+            wrapper = i18nMount(BlockEditor, {locales: messages, ...makeConfig()})
             const firstCard = wrapper.find("[data-test='block-card']")
             await firstCard.trigger("click")
             await wrapper.vm.$nextTick()
@@ -587,7 +585,7 @@ describe("BlockEditor", () => {
             // Given — the dock-handoff (TAB) mode: a card click emits editTask to
             // the shared dock instead of opening the local modal (the default).
             localStorage.setItem(storageKeys.TASK_EDIT_DEFAULT_MODE, taskEditDefaultModes.TAB)
-            wrapper = mount(BlockEditor, makeConfig())
+            wrapper = i18nMount(BlockEditor, {locales: messages, ...makeConfig()})
             const firstCard = wrapper.find("[data-test='block-card']")
 
             // When
@@ -605,7 +603,7 @@ describe("BlockEditor", () => {
 
         it("emits editTask with split=true when the card's open-in-split button is clicked", async () => {
             // Given
-            wrapper = mount(BlockEditor, makeConfig())
+            wrapper = i18nMount(BlockEditor, {locales: messages, ...makeConfig()})
 
             // When
             await wrapper.find("[data-test='block-card-open-split']").trigger("click")
@@ -620,7 +618,7 @@ describe("BlockEditor", () => {
 
         it("deselecting via an external delete emits closeTask", async () => {
             // Given
-            wrapper = mount(BlockEditor, makeConfig())
+            wrapper = i18nMount(BlockEditor, {locales: messages, ...makeConfig()})
             await wrapper.find("[data-test='block-card']").trigger("click")
             await wrapper.vm.$nextTick()
 
@@ -636,7 +634,7 @@ describe("BlockEditor", () => {
         it("emits editTask again (with the new block's index) when another block is clicked", async () => {
             // Given — dock-handoff (TAB) mode so each card click emits editTask.
             localStorage.setItem(storageKeys.TASK_EDIT_DEFAULT_MODE, taskEditDefaultModes.TAB)
-            wrapper = mount(BlockEditor, makeConfig())
+            wrapper = i18nMount(BlockEditor, {locales: messages, ...makeConfig()})
             const cards = wrapper.findAll("[data-test='block-card']")
 
             // When — open two different blocks in sequence
@@ -658,7 +656,8 @@ describe("BlockEditor", () => {
         it("renders only TaskEdit for the resolved task when editingTask is true", () => {
             // Given / When — mirrors how useNoCodePanels.ts mounts BlockEditor
             // as the dock tab's component once nocodeEngine=blocks
-            wrapper = mount(BlockEditor, {
+            wrapper = i18nMount(BlockEditor, {
+                locales: messages,
                 ...makeConfig(),
                 props: {editingTask: true, parentPath: "tasks", refPath: 0},
             })
@@ -673,7 +672,8 @@ describe("BlockEditor", () => {
 
         it("writes the updated YAML back to the store when TaskEdit emits update:task", async () => {
             // Given
-            wrapper = mount(BlockEditor, {
+            wrapper = i18nMount(BlockEditor, {
+                locales: messages,
                 ...makeConfig(),
                 props: {editingTask: true, parentPath: "tasks", refPath: 0},
             })
@@ -694,7 +694,8 @@ describe("BlockEditor", () => {
 
         it("emits closeTask when TaskEdit emits close", async () => {
             // Given
-            wrapper = mount(BlockEditor, {
+            wrapper = i18nMount(BlockEditor, {
+                locales: messages,
                 ...makeConfig(),
                 props: {editingTask: true, parentPath: "tasks", refPath: 0},
             })
@@ -712,7 +713,7 @@ describe("BlockEditor", () => {
     describe("delete operation", () => {
         it("removes a leaf task from the store when delete is clicked", async () => {
             // Given
-            wrapper = mount(BlockEditor, makeConfig())
+            wrapper = i18nMount(BlockEditor, {locales: messages, ...makeConfig()})
             const deleteBtns = wrapper.findAll("[data-test='block-card-delete']")
 
             // When
@@ -728,7 +729,7 @@ describe("BlockEditor", () => {
         it("deletes a nested block when FlowableClusterCard emits delete with a path", async () => {
             // Given
             mockFlowYaml.value = YAML_WITH_FLOWABLE
-            wrapper = mount(BlockEditor, makeConfig())
+            wrapper = i18nMount(BlockEditor, {locales: messages, ...makeConfig()})
             const cluster = wrapper.findComponent({name: "FlowableClusterCard"})
 
             // When
@@ -747,7 +748,7 @@ describe("BlockEditor", () => {
     describe("duplicate operation", () => {
         it("adds a copy of a leaf task when duplicate is clicked", async () => {
             // Given
-            wrapper = mount(BlockEditor, makeConfig())
+            wrapper = i18nMount(BlockEditor, {locales: messages, ...makeConfig()})
             const duplicateBtns = wrapper.findAll("[data-test='block-card-duplicate']")
 
             // When
@@ -766,7 +767,7 @@ describe("BlockEditor", () => {
         it("duplicates a nested block when FlowableClusterCard emits duplicate with a path", async () => {
             // Given
             mockFlowYaml.value = YAML_WITH_FLOWABLE
-            wrapper = mount(BlockEditor, makeConfig())
+            wrapper = i18nMount(BlockEditor, {locales: messages, ...makeConfig()})
             const cluster = wrapper.findComponent({name: "FlowableClusterCard"})
 
             // When
@@ -786,7 +787,7 @@ describe("BlockEditor", () => {
             // Given
 
             // When
-            wrapper = mount(BlockEditor, makeConfig())
+            wrapper = i18nMount(BlockEditor, {locales: messages, ...makeConfig()})
 
             // Then
             expect(wrapper.find("[data-test='block-editor-add-task']").exists()).toBe(true)
@@ -795,7 +796,7 @@ describe("BlockEditor", () => {
         it("inserts a nested task when FlowableClusterCard requests add-at-path then user calls insertTask", async () => {
             // Given
             mockFlowYaml.value = YAML_WITH_FLOWABLE
-            wrapper = mount(BlockEditor, makeConfig())
+            wrapper = i18nMount(BlockEditor, {locales: messages, ...makeConfig()})
             const cluster = wrapper.findComponent({name: "FlowableClusterCard"})
 
             // When — cluster signals insert into then lane
@@ -812,7 +813,7 @@ describe("BlockEditor", () => {
             expect(parsed.tasks[1].then).toHaveLength(2)
         })
 
-        function createBlockInList(wrapper: ReturnType<typeof mount>) {
+        function createBlockInList(wrapper: ReturnType<typeof i18nMount>) {
             const provides = (wrapper.vm.$ as unknown as {provides: Record<symbol, unknown>}).provides
             const key = Object.getOwnPropertySymbols(provides)
                 .find(symbol => symbol.description === "creating-function-injection-key")!
@@ -822,7 +823,7 @@ describe("BlockEditor", () => {
         it("names the lane it inserts into, not the section that lane sits under", async () => {
             // Given — regression: every nested lane announced itself as "Tasks"
             mockFlowYaml.value = YAML_WITH_SWITCH
-            wrapper = mount(BlockEditor, makeConfig())
+            wrapper = i18nMount(BlockEditor, {locales: messages, ...makeConfig()})
             const vm = wrapper.vm as unknown as {
                 picker: {openTaskPickerAtPath: (p: string, i: number) => void; sectionLabel: {value: string}}
             }
@@ -837,7 +838,7 @@ describe("BlockEditor", () => {
 
         it("keeps naming the section when the target is a root lane", async () => {
             // Given
-            wrapper = mount(BlockEditor, makeConfig())
+            wrapper = i18nMount(BlockEditor, {locales: messages, ...makeConfig()})
             const vm = wrapper.vm as unknown as {
                 picker: {openTaskPicker: (s: string) => void; sectionLabel: {value: string}}
             }
@@ -852,7 +853,7 @@ describe("BlockEditor", () => {
 
         it("opens the picker when a lane of tasks asks for a new block", async () => {
             // Given
-            wrapper = mount(BlockEditor, makeConfig())
+            wrapper = i18nMount(BlockEditor, {locales: messages, ...makeConfig()})
 
             // When
             createBlockInList(wrapper)("tasks[0].then", "schema/then/items", -1)
@@ -866,7 +867,7 @@ describe("BlockEditor", () => {
 
         it("opens a non-task list where editing a task opens — the modal, by default", async () => {
             // Given — regression: flow inputs used to open the task picker and add nothing
-            wrapper = mount(BlockEditor, makeConfig())
+            wrapper = i18nMount(BlockEditor, {locales: messages, ...makeConfig()})
 
             // When
             createBlockInList(wrapper)("inputs", "schema/inputs/items", -1)
@@ -885,7 +886,7 @@ describe("BlockEditor", () => {
         it("opens a non-task list in a tab when tabs are the task-edit default", async () => {
             // Given
             localStorage.setItem(storageKeys.TASK_EDIT_DEFAULT_MODE, taskEditDefaultModes.TAB)
-            wrapper = mount(BlockEditor, makeConfig())
+            wrapper = i18nMount(BlockEditor, {locales: messages, ...makeConfig()})
 
             // When
             createBlockInList(wrapper)("inputs", "schema/inputs/items", -1)
@@ -906,7 +907,7 @@ describe("BlockEditor", () => {
             vi.useFakeTimers()
             try {
                 // Given
-                wrapper = mount(BlockEditor, makeConfig())
+                wrapper = i18nMount(BlockEditor, {locales: messages, ...makeConfig()})
                 await wrapper.find("[data-test='block-editor-add-task']").trigger("click")
                 const vm = wrapper.vm as unknown as {picker: {taskPickerSearch: {value: string}}}
 
@@ -927,7 +928,7 @@ describe("BlockEditor", () => {
             vi.useFakeTimers()
             try {
                 // Given
-                wrapper = mount(BlockEditor, makeConfig())
+                wrapper = i18nMount(BlockEditor, {locales: messages, ...makeConfig()})
                 await wrapper.find("[data-test='block-editor-add-task']").trigger("click")
                 const vm = wrapper.vm as unknown as {picker: {taskPickerSearch: {value: string}}}
 
@@ -949,7 +950,7 @@ describe("BlockEditor", () => {
     describe("drag-to-reorder", () => {
         it("reorders tasks when a drag sequence completes on the top-level task list", async () => {
             // Given
-            wrapper = mount(BlockEditor, makeConfig())
+            wrapper = i18nMount(BlockEditor, {locales: messages, ...makeConfig()})
             const cards = wrapper.findAll("[data-test='block-card']")
             expect(cards).toHaveLength(2)
 
@@ -969,7 +970,7 @@ describe("BlockEditor", () => {
         it("clears selection when a nested-child edit is open and the parent task is drag-reordered", async () => {
             // Given — flow with leaf at tasks[0], flowable at tasks[1]; nested child open via path tasks[1].then[0]
             mockFlowYaml.value = YAML_WITH_FLOWABLE
-            wrapper = mount(BlockEditor, makeConfig())
+            wrapper = i18nMount(BlockEditor, {locales: messages, ...makeConfig()})
             const cluster = wrapper.findComponent({name: "FlowableClusterCard"})
 
             // Select a nested child inside tasks[1]
@@ -1003,7 +1004,7 @@ describe("BlockEditor", () => {
         it("keeps a nested selection when an unrelated sibling lane is reordered", async () => {
             // Given — a nested child open at tasks[1].then[0]
             mockFlowYaml.value = YAML_WITH_FLOWABLE
-            wrapper = mount(BlockEditor, makeConfig())
+            wrapper = i18nMount(BlockEditor, {locales: messages, ...makeConfig()})
             const cluster = wrapper.findComponent({name: "FlowableClusterCard"})
             cluster.vm.$emit("select", "tasks[1].then[0]")
             await wrapper.vm.$nextTick()
@@ -1029,7 +1030,8 @@ describe("BlockEditor", () => {
 
         it("emits update:selectedId when selectedId changes via v-model", async () => {
             // Given
-            wrapper = mount(BlockEditor, {
+            wrapper = i18nMount(BlockEditor, {
+                locales: messages,
                 ...makeConfig(),
                 props: {selectedId: undefined},
             })
@@ -1051,7 +1053,7 @@ describe("BlockEditor", () => {
         }
 
         function mountBlockEditor() {
-            wrapper = mount(BlockEditor, makeConfig())
+            wrapper = i18nMount(BlockEditor, {locales: messages, ...makeConfig()})
             return wrapper
         }
 
@@ -1246,7 +1248,7 @@ describe("BlockEditor", () => {
 
             it("makes only the focused card a Tab stop", async () => {
                 // Given
-                const wrapper = mount(BlockEditor, {...makeConfig(), attachTo: document.body})
+                const wrapper = i18nMount(BlockEditor, {locales: messages, ...makeConfig(), attachTo: document.body})
                 const vm = wrapper.vm as unknown as {focusedId?: string}
                 const cardTabindexes = () => wrapper.findAll("[data-test='block-card']")
                     .map(c => `${c.attributes("data-block-id")}:${c.attributes("tabindex")}`)
@@ -1263,7 +1265,7 @@ describe("BlockEditor", () => {
 
             it("keeps the canvas container as the Tab entry point only while nothing is focused", async () => {
                 // Given
-                const wrapper = mount(BlockEditor, {...makeConfig(), attachTo: document.body})
+                const wrapper = i18nMount(BlockEditor, {locales: messages, ...makeConfig(), attachTo: document.body})
                 const vm = wrapper.vm as unknown as {focusedId?: string}
                 const canvas = wrapper.find(".block-editor-canvas")
                 expect(canvas.attributes("tabindex")).toBe("0")
@@ -1281,7 +1283,7 @@ describe("BlockEditor", () => {
 
             it("syncs the focus ring from real DOM focus (Tab or click landing on a card)", async () => {
                 // Given
-                const wrapper = mount(BlockEditor, {...makeConfig(), attachTo: document.body})
+                const wrapper = i18nMount(BlockEditor, {locales: messages, ...makeConfig(), attachTo: document.body})
                 const vm = wrapper.vm as unknown as {focusedId?: string}
 
                 // When — real focus lands on a card, as native Tab or a click would
@@ -1296,7 +1298,7 @@ describe("BlockEditor", () => {
 
             it("moves real DOM focus when navigating with the arrows", async () => {
                 // Given
-                const wrapper = mount(BlockEditor, {...makeConfig(), attachTo: document.body})
+                const wrapper = i18nMount(BlockEditor, {locales: messages, ...makeConfig(), attachTo: document.body})
 
                 // When
                 windowKeydown({key: "ArrowDown"})
@@ -1445,7 +1447,7 @@ tasks:
             // Given
 
             // When
-            wrapper = mount(BlockEditor, makeConfig())
+            wrapper = i18nMount(BlockEditor, {locales: messages, ...makeConfig()})
 
             // Then
             const text = footerText()
@@ -1461,7 +1463,7 @@ tasks:
 
         it("renders each hint's keys through their symbol, deduplicated", () => {
             // Given
-            wrapper = mount(BlockEditor, makeConfig())
+            wrapper = i18nMount(BlockEditor, {locales: messages, ...makeConfig()})
 
             // When
             const keys = wrapper.findAll("[data-test='block-editor-footer'] kbd").map(k => k.text())
@@ -1472,7 +1474,7 @@ tasks:
 
         it("offers insert-before and reorder once a real block is focused", async () => {
             // Given
-            wrapper = mount(BlockEditor, makeConfig())
+            wrapper = i18nMount(BlockEditor, {locales: messages, ...makeConfig()})
             const vm = wrapper.vm as unknown as {focusedId?: string}
 
             // When
@@ -1488,7 +1490,7 @@ tasks:
 
         it("withholds insert-before and reorder on an empty section's sentinel", async () => {
             // Given
-            wrapper = mount(BlockEditor, makeConfig())
+            wrapper = i18nMount(BlockEditor, {locales: messages, ...makeConfig()})
             const vm = wrapper.vm as unknown as {focusedId?: string}
 
             // When — the sentinel stands for the section itself, not a block
@@ -1505,7 +1507,7 @@ tasks:
         it("names the lane when an empty lane sentinel inside a flowable is focused", async () => {
             // Given
             mockFlowYaml.value = YAML_WITH_FLOWABLE
-            wrapper = mount(BlockEditor, makeConfig())
+            wrapper = i18nMount(BlockEditor, {locales: messages, ...makeConfig()})
             const vm = wrapper.vm as unknown as {focusedId?: string}
 
             // When
@@ -1518,7 +1520,7 @@ tasks:
 
         it("swaps to the list hints while the picker is open", async () => {
             // Given
-            wrapper = mount(BlockEditor, makeConfig())
+            wrapper = i18nMount(BlockEditor, {locales: messages, ...makeConfig()})
 
             // When
             await wrapper.find("[data-test='block-editor-add-task']").trigger("click")
@@ -1537,7 +1539,7 @@ tasks:
     describe("delete undo badge", () => {
         it("announces the deleted block and restores it when undo is clicked", async () => {
             // Given
-            wrapper = mount(BlockEditor, makeConfig())
+            wrapper = i18nMount(BlockEditor, {locales: messages, ...makeConfig()})
             const before = mockFlowYaml.value
 
             // When
@@ -1561,7 +1563,7 @@ tasks:
 
         it("dismisses the badge on the next edit instead of leaving it stale", async () => {
             // Given
-            wrapper = mount(BlockEditor, makeConfig())
+            wrapper = i18nMount(BlockEditor, {locales: messages, ...makeConfig()})
             await wrapper.find("[data-test='block-card-delete']").trigger("click")
             await wrapper.vm.$nextTick()
             expect(wrapper.find("[data-test='block-editor-undo']").exists()).toBe(true)
@@ -1577,7 +1579,7 @@ tasks:
 
         it("keeps undoing back through several edits", async () => {
             // Given
-            wrapper = mount(BlockEditor, makeConfig())
+            wrapper = i18nMount(BlockEditor, {locales: messages, ...makeConfig()})
             const original = mockFlowYaml.value
             const vm = wrapper.vm as unknown as {picker: {insertTask: (fqcn: string) => void}; performUndo: () => void}
             vm.picker.insertTask("io.kestra.plugin.core.log.Log")
@@ -1614,7 +1616,7 @@ tasks:
 
         it("lists the suggested types for the section it was opened on", async () => {
             // Given
-            wrapper = mount(BlockEditor, makeConfig())
+            wrapper = i18nMount(BlockEditor, {locales: messages, ...makeConfig()})
 
             // When
             await openPicker()
@@ -1627,7 +1629,7 @@ tasks:
 
         it("remembers an inserted type and lists it under the recent tab", async () => {
             // Given
-            wrapper = mount(BlockEditor, makeConfig())
+            wrapper = i18nMount(BlockEditor, {locales: messages, ...makeConfig()})
             await openPicker()
 
             // When
@@ -1651,7 +1653,7 @@ tasks:
 
         it("drills into an app group and walks back out", async () => {
             // Given
-            wrapper = mount(BlockEditor, makeConfig())
+            wrapper = i18nMount(BlockEditor, {locales: messages, ...makeConfig()})
             await openPicker()
 
             // When
@@ -1690,7 +1692,7 @@ tasks:
             mockPlugins[0].tasks.push(...extras)
             try {
                 // Given
-                wrapper = mount(BlockEditor, makeConfig())
+                wrapper = i18nMount(BlockEditor, {locales: messages, ...makeConfig()})
                 await openPicker()
                 const vm = wrapper.vm as unknown as {picker: {taskPickerSearch: {value: string}; pickerHiddenCount: {value: number}}}
 
@@ -1712,7 +1714,7 @@ tasks:
 
         it("inserts the highlighted entry when Enter is pressed in the list", async () => {
             // Given
-            wrapper = mount(BlockEditor, makeConfig())
+            wrapper = i18nMount(BlockEditor, {locales: messages, ...makeConfig()})
             await openPicker()
             const picker = pickerEl()!
 
@@ -1737,7 +1739,8 @@ tasks:
         it("renders the surface that inserts, not the one that only replaces", async () => {
             // Given — regression: creating rendered TaskEdit, which updates a block already
             // at a path. With no block there yet, a create tab could never add the entry.
-            wrapper = mount(BlockEditor, {
+            wrapper = i18nMount(BlockEditor, {
+                locales: messages,
                 ...makeConfig(),
                 props: {creatingTask: true, parentPath: "inputs", refPath: 1, blockSchemaPath: "schema/inputs/items"},
             })
@@ -1749,7 +1752,8 @@ tasks:
 
         it("hands the tab to the edit surface once the entry exists", async () => {
             // Given
-            wrapper = mount(BlockEditor, {
+            wrapper = i18nMount(BlockEditor, {
+                locales: messages,
                 ...makeConfig(),
                 props: {creatingTask: true, parentPath: "inputs", refPath: 1, blockSchemaPath: "schema/inputs/items"},
             })
@@ -1763,7 +1767,8 @@ tasks:
 
         it("still edits in place when editing rather than creating", async () => {
             // Given
-            wrapper = mount(BlockEditor, {
+            wrapper = i18nMount(BlockEditor, {
+                locales: messages,
                 ...makeConfig(),
                 props: {editingTask: true, parentPath: "tasks", refPath: 0, blockSchemaPath: "schema/tasks/items"},
             })
@@ -1788,7 +1793,7 @@ tasks:
 
         it("dismisses only the picker when it sits above the flow properties dialog", async () => {
             // Given — the Configure dialog is open with the picker on top of it
-            wrapper = mount(BlockEditor, makeConfig())
+            wrapper = i18nMount(BlockEditor, {locales: messages, ...makeConfig()})
             await wrapper.find("[data-test='block-editor-configure-flow']").trigger("click")
             const vm = editorVm()
             vm.picker.openTaskPicker("tasks")
@@ -1806,7 +1811,7 @@ tasks:
 
         it("dismisses the flow properties dialog on the next press", async () => {
             // Given
-            wrapper = mount(BlockEditor, makeConfig())
+            wrapper = i18nMount(BlockEditor, {locales: messages, ...makeConfig()})
             await wrapper.find("[data-test='block-editor-configure-flow']").trigger("click")
             const vm = editorVm()
             vm.picker.openTaskPicker("tasks")
@@ -1826,7 +1831,7 @@ tasks:
     describe("shortcuts help", () => {
         it("lists every keymap group but hides the clear binding", async () => {
             // Given
-            wrapper = mount(BlockEditor, makeConfig())
+            wrapper = i18nMount(BlockEditor, {locales: messages, ...makeConfig()})
 
             // When
             window.dispatchEvent(new KeyboardEvent("keydown", {key: "?", bubbles: true, cancelable: true}))
@@ -1844,7 +1849,7 @@ tasks:
 
         it("hides the footer while the help overlay is open", async () => {
             // Given
-            wrapper = mount(BlockEditor, makeConfig())
+            wrapper = i18nMount(BlockEditor, {locales: messages, ...makeConfig()})
             expect(wrapper.find("[data-test='block-editor-footer']").exists()).toBe(true)
 
             // When
@@ -1866,7 +1871,7 @@ tasks:
 
         it("describes the flow itself when no block is focused", async () => {
             // Given
-            wrapper = mount(BlockEditor, makeConfig())
+            wrapper = i18nMount(BlockEditor, {locales: messages, ...makeConfig()})
 
             // When
             const menu = await openCommandMenu()
@@ -1879,7 +1884,7 @@ tasks:
 
         it("describes the focused block and targets it for insertion", async () => {
             // Given
-            wrapper = mount(BlockEditor, makeConfig())
+            wrapper = i18nMount(BlockEditor, {locales: messages, ...makeConfig()})
             const vm = wrapper.vm as unknown as {focusedId?: string}
             vm.focusedId = "log_task"
 
@@ -1894,7 +1899,7 @@ tasks:
 
         it("describes an empty section by its label when its sentinel is focused", async () => {
             // Given
-            wrapper = mount(BlockEditor, makeConfig())
+            wrapper = i18nMount(BlockEditor, {locales: messages, ...makeConfig()})
             const vm = wrapper.vm as unknown as {focusedId?: string}
             vm.focusedId = "__section:triggers"
 
@@ -1909,7 +1914,7 @@ tasks:
 
         it("offers the task types from the plugin catalogue", async () => {
             // Given
-            wrapper = mount(BlockEditor, makeConfig())
+            wrapper = i18nMount(BlockEditor, {locales: messages, ...makeConfig()})
 
             // When
             const menu = await openCommandMenu()
@@ -1926,7 +1931,7 @@ tasks:
 
         it("inserts the picked task type into the focused context", async () => {
             // Given
-            wrapper = mount(BlockEditor, makeConfig())
+            wrapper = i18nMount(BlockEditor, {locales: messages, ...makeConfig()})
             const vm = wrapper.vm as unknown as {focusedId?: string}
             vm.focusedId = "log_task"
             const menu = await openCommandMenu()

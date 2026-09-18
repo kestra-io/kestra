@@ -36,7 +36,7 @@ const mountLink = (title: string) => {
     setActivePinia(createPinia())
     wrapper = mount(BookmarkLink, {
         props: {href: "/flows", title},
-        global: {stubs: {RouterLink: RouterLinkStub}, mocks: {$t: (k: string) => k}},
+        global: {stubs: {RouterLink: RouterLinkStub, KsInput: {name: "KsInput", template: "<input>"}}, mocks: {$t: (k: string) => k}},
     })
     return wrapper
 }

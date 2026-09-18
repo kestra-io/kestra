@@ -1,10 +1,10 @@
 import {describe, expect, test} from "vitest"
 import {mount} from "@vue/test-utils"
 import {createRouter, createWebHistory} from "vue-router"
+import KestraDesignSystem from "@kestra-io/design-system"
 import NavBarAction from "../../../../src/components/layout/NavBarAction.vue"
 // The app registers the design system globally at bootstrap; unit mounts have to do it
 // themselves, and this spec is specifically about what KsButton puts in the DOM.
-import KsButton from "../../../../packages/design-system/src/components/Basic/KsButton/KsButton.vue"
 
 const router = createRouter({
     history: createWebHistory(),
@@ -19,8 +19,7 @@ const mountAction = (props: Record<string, unknown>, attrs: Record<string, unkno
         props,
         attrs,
         global: {
-            plugins: [router],
-            components: {KsButton},
+            plugins: [router, KestraDesignSystem],
             // tests/unit/setup.ts stubs RouterLink with a bare `<a><slot /></a>` for the many
             // specs that mount without a router. This one installs a real router and is about
             // what actually reaches the DOM, so it needs the real component.

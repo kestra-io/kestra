@@ -85,6 +85,26 @@ class FlowTest {
     }
 
     @Test
+    void shouldRejectSwitchWhenCaseIsEmpty() {
+        Flow flow = this.parse("flows/invalids/switch-empty-case-invalid.yaml");
+        Optional<ConstraintViolationException> validate = modelValidator.isValid(flow);
+
+        assertThat(validate).isPresent();
+        assertThat(validate.get().getConstraintViolations()).hasSize(1);
+        assertThat(validate.get().getMessage()).contains("switch.cases[A].<map value>: must not be empty");
+    }
+
+    @Test
+    void shouldRejectSwitchWhenDefaultsAreEmpty() {
+        Flow flow = this.parse("flows/invalids/switch-empty-defaults-invalid.yaml");
+        Optional<ConstraintViolationException> validate = modelValidator.isValid(flow);
+
+        assertThat(validate).isPresent();
+        assertThat(validate.get().getConstraintViolations()).hasSize(1);
+        assertThat(validate.get().getMessage()).contains("switch.defaults: The 'defaults' property cannot be empty.");
+    }
+
+    @Test
     void workingDirectoryTaskInvalid() {
         Flow flow = this.parse("flows/invalids/workingdirectory-invalid.yaml");
         Optional<ConstraintViolationException> validate = modelValidator.isValid(flow);

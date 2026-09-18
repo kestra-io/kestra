@@ -308,7 +308,7 @@
     import {useI18n} from "vue-i18n"
     import BreakableText from "../BreakableText"
     import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
-    import {useFlowFilter} from "../filter/configurations"
+    import {useFlowFilter} from "../filter/configurations/flowFilter"
     import useRestoreUrl from "../../composables/useRestoreUrl"
 
     const {loadInit} = useRestoreUrl()

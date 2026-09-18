@@ -2685,6 +2685,9 @@
       },
       "truncated": {
         "description": "最新の{total}件中{shown}件の実行を表示しています — すべて表示するには期間またはフィルターを絞り込んでください。"
+      },
+      "scrubber": {
+        "label": "時間経過に伴うExecution密度。ドラッグして範囲を選択してください"
       }
     },
     "chart mode": {

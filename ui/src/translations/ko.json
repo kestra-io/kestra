@@ -2685,6 +2685,9 @@
       },
       "truncated": {
         "description": "최신 {total}개 중 {shown}개의 실행을 표시하고 있습니다 — 모두 보려면 기간이나 필터를 좁혀 보세요."
+      },
+      "scrubber": {
+        "label": "시간 경과에 따른 Execution 밀도, 범위를 선택하려면 드래그하세요."
       }
     },
     "chart mode": {

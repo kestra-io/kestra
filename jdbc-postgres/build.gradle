@@ -12,7 +12,12 @@ dependencies {
     implementation project(":queue-jdbc")
 
     implementation("io.micronaut.sql:micronaut-jooq")
-    runtimeOnly("org.postgresql:postgresql")
+    // PgQueueListener needs Micronaut's DatasourceConfiguration (Hikari) to read the JDBC
+    // URL/credentials for its own dedicated (non-pooled) LISTEN connection.
+    implementation("io.micronaut.sql:micronaut-jdbc-hikari")
+    // implementation (not runtimeOnly): PgQueueListener needs org.postgresql.PGConnection/PGNotification
+    // at compile time to LISTEN/NOTIFY for the realtime queue wake-up.
+    implementation("org.postgresql:postgresql")
 
     testAnnotationProcessor project(":processor")
     testImplementation project(path: ':core', configuration: 'testArtifacts')

@@ -308,8 +308,7 @@
     import {ref, computed, watch, type Component} from "vue"
     import {useI18n} from "vue-i18n"
     import {useRoute, useRouter} from "vue-router"
-    import debounce from "lodash/debounce"
-    import _escape from "lodash/escape"
+    import {debounce, escapeHtml} from "@kestra-io/design-system"
     import TopNavBar from "../layout/TopNavBar.vue"
     import NamespaceSelect from "../namespaces/components/NamespaceSelect.vue"
     import SourceSearchResults from "./SourceSearchResults.vue"
@@ -489,7 +488,7 @@
     const summaryMatchCount = computed(() => selectedTypes.value.reduce((sum, type) => sum + crossResourceSearchStore.countFor(type), 0))
     const summaryResourceCount = computed(() => selectedTypes.value.reduce((sum, type) => sum + crossResourceSearchStore.resourceCountFor(type), 0))
     const summaryActiveTypeCount = computed(() => selectedTypes.value.filter((type) => crossResourceSearchStore.countFor(type) > 0).length)
-    const strong = (value: string) => `<strong>${_escape(value)}</strong>`
+    const strong = (value: string) => `<strong>${escapeHtml(value)}</strong>`
     const summaryCross = computed(() => t("source_search.summary_cross", {
         matches: strong(t("source_search.match_count", summaryMatchCount.value)),
         resources: strong(t("source_search.count_resources", summaryResourceCount.value)),

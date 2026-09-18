@@ -44,7 +44,7 @@ jobs:
           if [ -n "$ONLY" ]; then
             echo "branches=$(printf '%s' "$ONLY" | jq -R -c '[.]')" >> "$GITHUB_OUTPUT"
           else
-            echo 'branches=["develop","releases/v2.0.x"]' >> "$GITHUB_OUTPUT"
+            echo 'branches=["develop","releases/v2.0.x","releases/v1.3.x"]' >> "$GITHUB_OUTPUT"
           fi
 
   translations:

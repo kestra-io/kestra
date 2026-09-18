@@ -2055,6 +2055,13 @@
         "placeholder": "Powiedz mi, co zbudować…",
         "send": "Wyślij",
         "stop": "Zatrzymaj",
+        "usage": {
+          "remaining": "Pozostało {percent}%",
+          "help": "Pozostała część limitu użycia AI tego dostawcy w bieżącym oknie.",
+          "warning": "Zbliżasz się do limitu użycia AI tego dostawcy. Tury są odrzucane po jego osiągnięciu.",
+          "exceeded": "Limit użycia AI tego dostawcy został osiągnięty. Zostanie zresetowany po zakończeniu bieżącego okresu.",
+          "exceededUntil": "Limit użycia AI tego dostawcy został osiągnięty. Zostanie zresetowany {when}."
+        },
         "mode": {
           "ask": "Pytaj",
           "edit": "Edytuj",

@@ -247,13 +247,15 @@ function checkOss() {
     const ossEn = readLanguage(ossTranslationsDir, "en")
     const ossEnKeys = leafKeys(ossEn)
 
-    // EE code renders OSS keys too, so "unused" can only be decided with both trees in view.
-    if (fs.existsSync(eeSourceRoots[0])) {
+    // EE code renders OSS keys too, so "unused" can only be decided with both trees in view - and, as for
+    // the EE keys below, only with the full OSS source tree (`ui/packages` included), which the release
+    // branch without a design system does not have.
+    if (fs.existsSync(eeSourceRoots[0]) && hasOssSources()) {
         scanSources(eeRoot, eeSourceRoots, scan.evidence)
         if (unusedCandidatesOnly) printUnusedCandidates("OSS", ossEnKeys, scan.evidence)
         else checkUnusedKeys(result, "OSS", ossEnKeys, scan.evidence, "kestra-io/kestra's ui/src/translations/en.json")
     } else {
-        annotate("warning", `EE sources not found at ${eeSourceRoots[0]} - skipping the unused-key check for OSS keys, which EE code may render.`)
+        annotate("warning", `EE sources not found at ${eeSourceRoots[0]}, or OSS checked out without ui/packages - skipping the unused-key check for OSS keys, which EE code may render.`)
     }
     if (unusedCandidatesOnly) return result
 

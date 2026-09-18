@@ -1,6 +1,7 @@
 import { vueRouter } from "storybook-vue3-router";
 import type { Meta, StoryObj } from "@storybook/vue3";
 import { within, expect, waitFor } from "storybook/test";
+import { configureClient } from "@kestra-io/kestra-sdk";
 import { useExecutionsStore } from "../../../../src/stores/executions";
 import { useFlowStore } from "../../../../src/stores/flow";
 import Gantt from "../../../../src/components/executions/Gantt.vue";
@@ -12,11 +13,29 @@ const EXECUTION_ID = "12HqIIvMvw5K1k5Zksxgus";
 // States the Gantt renders an empty view for (an execution with no task runs).
 const STATE_OPTIONS = ["CREATED", "RUNNING", "PAUSED", "CANCELLED", "FAILED", "KILLED", "WARNING", "QUEUED"];
 
+const AVERAGE_DURATION_MS = 20 * 60 * 1000;
+
 const FLOW = {
     id: FLOW_ID,
     namespace: NAMESPACE,
     tasks: [{ id: "hold", type: "io.kestra.plugin.core.flow.Sleep" }],
 };
+
+// ExecutionProgress renders nothing without a baseline, and its generated SDK call bypasses the axios
+// stub, so the fetch override is the only seam that gives the Running story a bar to assert on.
+function stubAverageDuration() {
+    const realFetch = globalThis.fetch.bind(globalThis);
+    configureClient({
+        fetch: (input: URL | RequestInfo, init?: RequestInit) => {
+            const url = input instanceof Request ? input.url : String(input);
+            if (!url.includes("/average-duration")) return realFetch(input, init);
+            return Promise.resolve(new Response(JSON.stringify({ avgDurationMs: AVERAGE_DURATION_MS, count: 12 }), {
+                status: 200,
+                headers: { "Content-Type": "application/json" },
+            }));
+        },
+    });
+}
 
 function executionWithState(current: string) {
     return {
@@ -25,6 +44,7 @@ function executionWithState(current: string) {
         namespace: NAMESPACE,
         state: {
             current,
+            startDate: new Date(Date.now() - 5 * 60 * 1000).toISOString(),
             histories: [
                 { state: "CREATED", date: "2025-01-01T00:00:00.000Z" },
                 { state: current, date: "2025-01-01T00:00:01.000Z" },
@@ -67,6 +87,8 @@ const meta = {
     decorators: [
         (_story: unknown, context: { args: GanttStoryArgs }) => ({
             setup() {
+                stubAverageDuration();
+
                 const state = context.args.state ?? "CANCELLED";
 
                 const executionsStore = useExecutionsStore();

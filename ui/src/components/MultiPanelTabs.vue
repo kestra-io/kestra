@@ -874,7 +874,7 @@
         right: 0;
         bottom: 0;
         background-color: rgba(0, 0, 0, 0.1);
-        z-index: 100;
+        z-index: var(--ks-z-sticky);
         &.dragover{
             background-color: rgba(0, 0, 0, 0.3);
         }
@@ -1035,7 +1035,7 @@
         right: 0;
         bottom: 0;
         pointer-events: none;
-        z-index: 100;
+        z-index: var(--ks-z-sticky);
         display: flex;
         justify-content: space-between;
     }

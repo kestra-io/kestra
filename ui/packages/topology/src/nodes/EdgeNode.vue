@@ -17,12 +17,57 @@
             {{ data.value }}
         </div>
     </EdgeLabelRenderer>
+
+    <EdgeLabelRenderer v-if="path?.length && addTarget">
+        <button
+            type="button"
+            class="edge-add-button"
+            :class="{
+                'edge-add-button--ambient': isAmbient,
+                'edge-add-button--visible': hovered || isDropTarget,
+                'edge-add-button--standby': isDraggingNode && !isDropTarget,
+                'edge-add-button--drop': isDropTarget,
+            }"
+            :style="{transform: `translate(${addButtonX}px, ${addButtonY}px) translate(-50%, -50%)`}"
+            :aria-label="$t('topology-graph.add-task')"
+            data-test="topology-edge-add-task"
+            @click.stop="emit('add-task', addTarget)"
+            @keydown.enter.stop.prevent="emit('add-task', addTarget)"
+            @keydown.space.stop.prevent="emit('add-task', addTarget)"
+            @mouseenter="hovered = true"
+            @mouseleave="hovered = false"
+            @dragenter.prevent="emit('drag-over-edge', id)"
+            @dragover.prevent
+            @dragleave="emit('drag-over-edge', undefined)"
+            @drop.prevent="onDrop"
+        >
+            <span class="edge-add-button-dot"><Plus :size="12" /></span>
+        </button>
+    </EdgeLabelRenderer>
+
+    <path
+        v-if="path?.length && addTarget"
+        class="edge-hit-area"
+        :data-edge-id="id"
+        :d="path[0]"
+        @mouseenter="hovered = true"
+        @mouseleave="hovered = false"
+        @dragover.prevent
+        @drop.prevent="onDrop"
+    />
 </template>
 
 <script lang="ts" setup>
-    import {computed} from "vue"
+    import {computed, inject, ref} from "vue"
     import type {PropType} from "vue"
     import {getSmoothStepPath, EdgeLabelRenderer} from "@vue-flow/core"
+    import Plus from "vue-material-design-icons/Plus.vue"
+    import type {AddTaskTarget} from "../utils/vueFlowUtils"
+    import {
+        CANVAS_HOVERED_INJECTION_KEY,
+        DRAGGING_NODE_INJECTION_KEY,
+        DROP_EDGE_INJECTION_KEY,
+    } from "../injectionKeys"
 
     const props = defineProps({
         id: {type: String, default: undefined},
@@ -35,6 +80,37 @@
         sourcePosition: {type: String, default: undefined},
         targetPosition: {type: String, default: undefined},
     })
+
+    const emit = defineEmits<{
+        (event: "add-task", data: AddTaskTarget): void
+        (event: "drop-task", payload: {taskId: string; target: AddTaskTarget}): void
+        (event: "drag-over-edge", edgeId: string | undefined): void
+    }>()
+
+    function onDrop(event: DragEvent) {
+        const taskId = event.dataTransfer?.getData("text/plain")
+        emit("drag-over-edge", undefined)
+        if (taskId && addTarget.value) emit("drop-task", {taskId, target: addTarget.value})
+    }
+
+    const hovered = ref(false)
+
+    const dropEdgeId = inject(DROP_EDGE_INJECTION_KEY, undefined)
+    const isDropTarget = computed(() => Boolean(props.id) && dropEdgeId?.value === props.id)
+
+    const draggingNode = inject(DRAGGING_NODE_INJECTION_KEY, undefined)
+    const isDraggingNode = computed(() => Boolean(draggingNode?.value))
+
+    // Being anywhere on the canvas hints at every landing place; the drag state is louder because
+    // by then the user is committed to putting something down.
+    const canvasHovered = inject(CANVAS_HOVERED_INJECTION_KEY, undefined)
+    const isAmbient = computed(
+        () => Boolean(canvasHovered?.value) && !isDraggingNode.value && !hovered.value && !isDropTarget.value,
+    )
+
+    // The graph already computed where a `+` on this edge should insert and relative to which
+    // task — `undefined` when the edge sits on a read-only boundary or a cluster's own wiring.
+    const addTarget = computed<AddTaskTarget | undefined>(() => props.data?.haveAdd)
 
     const classes = computed(() => {
         return props.data
@@ -65,6 +141,9 @@
         if (props.targetPosition === "bottom") return ty + CASE_LABEL_GAP
         return ty
     })
+
+    const addButtonX = computed(() => path.value?.[1] ?? 0)
+    const addButtonY = computed(() => path.value?.[2] ?? 0)
 
     const labelAnchor = computed(() => {
         switch (props.targetPosition) {
@@ -100,5 +179,112 @@
         max-width: 10rem;
         overflow: hidden;
         text-overflow: ellipsis;
+    }
+
+    .edge-hit-area {
+        fill: none;
+        stroke: transparent;
+        stroke-width: 20;
+        cursor: pointer;
+    }
+
+    .edge-add-button {
+        /* vue-flow paints .vue-flow__nodes (z-index 0) after the label layer, so without this lift
+           an edge midpoint falling inside an adjacent node buries the button. */
+        position: absolute;
+        z-index: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        /* The disc stays small so it does not hide the graph, but the target keeps the 24px
+           WCAG 2.5.8 minimum by padding around it. */
+        width: 1.5rem;
+        height: 1.5rem;
+        padding: 0;
+        background: none;
+        border: none;
+        color: var(--ks-icon-default);
+        cursor: pointer;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity var(--ks-duration-fast) var(--ks-ease-standard), color var(--ks-duration-fast) var(--ks-ease-standard);
+    }
+
+    /* A quiet hint at rest: every edge that accepts a task, faint enough not to compete with the
+       graph, and clickable so the nearest one can be used without hunting for its edge first. */
+    .edge-add-button--ambient {
+        opacity: 0.65;
+        pointer-events: auto;
+    }
+
+    /* Shown for the whole drag so the eligible landing points are visible before the pointer
+       reaches one; the edge's hit area underneath is what actually receives the drop. */
+    .edge-add-button--standby {
+        opacity: 1;
+        color: var(--ks-text-link);
+        /* It is the drop target, so it takes the pointer and grows an invisible margin to hit.
+           Nodes share its z-index and come later in the DOM, so it also has to outrank them or a
+           marker overlapping a card is both invisible and unreachable. */
+        pointer-events: auto;
+        width: 2.5rem;
+        height: 2.5rem;
+        z-index: 10;
+    }
+
+    .edge-add-button-dot {
+        /* Purely decorative: entering it would count as leaving the button and cancel the target. */
+        pointer-events: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 1.125rem;
+        height: 1.125rem;
+        background: var(--ks-bg-elevated);
+        border: 1px solid var(--ks-border-strong);
+        border-radius: 50%;
+        transition: border-color var(--ks-duration-fast) var(--ks-ease-standard), transform var(--ks-duration-fast) var(--ks-ease-standard);
+    }
+
+    .edge-add-button--standby .edge-add-button-dot {
+        background: var(--ks-bg-info);
+        border-color: var(--ks-border-info);
+    }
+
+    .edge-add-button--visible,
+    .edge-add-button:focus-visible {
+        opacity: 1;
+        pointer-events: auto;
+    }
+
+    /* Same drop-target treatment as the No-code block cards: link colour plus a dashed edge. */
+    .edge-add-button--drop {
+        color: var(--ks-text-link);
+        /* The dragged card is z-index 1 in the same stacking context and comes later in the DOM,
+           so the marker has to outrank it or it is buried under the card heading for it. */
+        z-index: 10;
+    }
+
+    .edge-add-button--drop .edge-add-button-dot {
+        background: var(--ks-bg-info);
+        border-color: var(--ks-text-link);
+        border-style: dashed;
+        transform: scale(1.3);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .edge-add-button,
+        .edge-add-button-dot {
+            transition: none;
+        }
+    }
+
+    .edge-add-button:hover,
+    .edge-add-button:focus-visible {
+        color: var(--ks-text-link);
+    }
+
+    .edge-add-button:hover .edge-add-button-dot,
+    .edge-add-button:focus-visible .edge-add-button-dot {
+        border-color: var(--ks-border-focus);
     }
 </style>

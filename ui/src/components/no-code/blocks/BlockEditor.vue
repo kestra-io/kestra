@@ -199,9 +199,12 @@
     import {useCanvasFocus} from "./useCanvasFocus"
     import {useTaskPicker} from "./useTaskPicker"
     import {buildFooterHints, buildShortcutGroups, type FooterHint} from "./shortcutHints"
+    import {flowDescriptionOf, flowLabelEntriesOf} from "./flowSummary"
     import {BLOCK_EDITOR_KEYMAP} from "./keymap"
+    import {useAuthoringSurface} from "./useAuthoringSurface"
     import type {NoCodeProps} from "../../flows/noCodeTypes"
     import {usePlaygroundRun} from "../../../composables/playground/usePlaygroundRun"
+    import {trackAuthoringAction} from "../../../utils/tabTracking"
 
     const {t} = useI18n()
     const flowStore = useFlowStore()
@@ -278,23 +281,9 @@
         }
     })
 
-    const flowDescription = computed<string | undefined>(() => {
-        const description = parsedFlow.value?.description
-        return typeof description === "string" ? description : undefined
-    })
+    const flowDescription = computed(() => flowDescriptionOf(parsedFlow.value))
 
-    const flowLabelEntries = computed<[string, string][]>(() => {
-        const labels = parsedFlow.value?.labels
-        if (Array.isArray(labels)) {
-            return labels
-                .filter((label): label is {key: string; value: unknown} => Boolean(label) && typeof label === "object" && "key" in label)
-                .map((label) => [String(label.key), String(label.value ?? "")])
-        }
-        if (labels && typeof labels === "object") {
-            return Object.entries(labels).map(([key, value]) => [key, String(value ?? "")])
-        }
-        return []
-    })
+    const flowLabelEntries = computed(() => flowLabelEntriesOf(parsedFlow.value))
 
     const editingItemPath = computed<string>(() => {
         if (!props.editingTask) return props.parentPath ?? ""
@@ -323,6 +312,7 @@
     function onInlineTaskEdited(newContent: string) {
         if (!editingPath.value) return
         applyYaml(updateBlockAtPath(flowYaml.value, editingPath.value, newContent))
+        trackAuthoringAction("task_edited", "no_code", {task_type: editingTaskData.value?.type as string | undefined})
     }
 
     // The entry now exists, so hand the tab over to the edit surface pointed at it.
@@ -352,6 +342,7 @@
     function onModalTaskEdited(newContent: string) {
         if (!modalPath.value) return
         applyYaml(updateBlockAtPath(flowYaml.value, modalPath.value, newContent))
+        trackAuthoringAction("task_edited", "no_code", {task_type: modalTaskData.value?.type as string | undefined})
     }
 
     function onModalOpenInTabs() {
@@ -491,6 +482,7 @@
         laneDisplayLabel: laneDisplayLabelFromPath,
         flowYaml,
         applyYaml,
+        surface: "no_code",
     })
 
     const {
@@ -637,9 +629,11 @@
         }
     }
 
+    const authoringSurface = useAuthoringSurface(editorEl)
+
     useBlockEditorKeyboard({
         keymap: BLOCK_EDITOR_KEYMAP,
-        dispatch: dispatchBlockEditorAction,
+        dispatch: (id, event) => (authoringSurface.isActive() ? dispatchBlockEditorAction(id, event) : false),
         isOverlayOpen: isAnyOverlayOpen,
     })
 

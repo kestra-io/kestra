@@ -1,6 +1,6 @@
 @use "@kestra-io/design-system/src/assets/styles/color-palette" as *;
 
-/* design-system-disable-start: composes the --ks-node-* and --ks-topology-icon-* tokens from the palette, as the design system does */
+/* design-system-disable-next-line: the default node blue has no palette entry, and _color-palette.scss is generated from Figma */
 $node-default: #7081b9;
 
 $node-colors: (
@@ -25,7 +25,6 @@ $node-colors: (
 html.dark {
     --ks-node-default: #{$base-gray-neutral-400};
 }
-/* design-system-disable-end */
 
 .text-danger { color: var(--ks-text-error); }
 

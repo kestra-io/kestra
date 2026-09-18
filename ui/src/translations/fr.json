@@ -2694,6 +2694,9 @@
       },
       "truncated": {
         "description": "Affichage des {shown} dernières exécutions sur {total} — réduisez la période ou les filtres pour toutes les voir."
+      },
+      "scrubber": {
+        "label": "Densité d'Execution au fil du temps, faites glisser pour sélectionner une plage"
       }
     },
     "chart mode": {

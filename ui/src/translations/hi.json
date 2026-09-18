@@ -2694,6 +2694,9 @@
       },
       "truncated": {
         "description": "नवीनतम {shown} में से {total} executions दिखाए जा रहे हैं — सभी देखने के लिए समय सीमा या फ़िल्टर संकुचित करें।"
+      },
+      "scrubber": {
+        "label": "समय के साथ Execution घनत्व, एक सीमा का चयन करने के लिए खींचें"
       }
     },
     "chart mode": {

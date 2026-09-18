@@ -2694,6 +2694,9 @@
       },
       "truncated": {
         "description": "Zeigt die neuesten {shown} von {total} Ausführungen – schränken Sie den Zeitraum oder die Filter ein, um alle zu sehen."
+      },
+      "scrubber": {
+        "label": "Execution-Dichte im Zeitverlauf, zum Auswählen eines Bereichs ziehen"
       }
     },
     "chart mode": {

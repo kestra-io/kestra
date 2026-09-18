@@ -2694,6 +2694,9 @@
       },
       "truncated": {
         "description": "Wyświetlane są najnowsze {shown} z {total} wykonań — zawęź zakres czasu lub filtry, aby zobaczyć wszystkie."
+      },
+      "scrubber": {
+        "label": "Gęstość egzekucji w czasie, przeciągnij, aby wybrać zakres"
       }
     },
     "chart mode": {

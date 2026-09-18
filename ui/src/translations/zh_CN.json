@@ -213,7 +213,6 @@
     "executionProgress": {
       "title": "执行进度",
       "estimatedRemaining": "预计剩余：{duration}",
-      "noBaseline": "没有历史数据 — 无法估算剩余时间",
       "pastEstimate": "运行时间比平常更长"
     },
     "launch execution": "执行",

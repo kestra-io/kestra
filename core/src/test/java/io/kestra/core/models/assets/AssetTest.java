@@ -3,6 +3,7 @@ package io.kestra.core.models.assets;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.junit.jupiter.api.Test;
@@ -230,5 +231,45 @@ class AssetTest {
         asset.setStatus("active");
 
         assertThat(asset.getStatus()).isEqualTo("active");
+    }
+
+    @Test
+    void shouldReadPartOfAndRelatedAsPropertiesNotMetadata() throws Exception {
+        String yaml = """
+            id: web-1
+            type: io.kestra.core.models.assets.External
+            partOf:
+              id: my-deployment
+            related:
+              - id: db-1
+                role: primary
+            metadata:
+              size: medium
+            """;
+
+        Asset asset = JacksonMapper.ofYaml().readValue(yaml, Asset.class);
+
+        assertThat(asset.getPartOf()).isEqualTo(new AssetRelationRef("my-deployment", null, null));
+        assertThat(asset.getRelated()).containsExactly(new AssetRelationRef("db-1", null, "primary"));
+        assertThat(asset.getMetadata()).containsOnlyKeys("size");
+    }
+
+    @Test
+    void shouldKeepPreviousPartOfWhenIncomingIsNull() {
+        Asset previous = External.builder().id("web-1").build().withPartOf(new AssetRelationRef("dep-1", null, null));
+        Asset incoming = External.builder().id("web-1").build();
+
+        incoming.toUpdated(previous, false);
+
+        assertThat(incoming.getPartOf()).isEqualTo(new AssetRelationRef("dep-1", null, null));
+    }
+
+    @Test
+    void shouldNotSerializeEmptyRelated() throws Exception {
+        Asset asset = External.builder().id("web-1").build().withRelated(List.of());
+
+        String json = JacksonMapper.ofJson().writeValueAsString(asset);
+
+        assertThat(json).doesNotContain("related");
     }
 }

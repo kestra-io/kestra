@@ -38,6 +38,19 @@ public class AbstractJdbcTaskOutputRepository extends io.kestra.jdbc.repository.
     }
 
     @Override
+    public boolean exists(String tenantId, String taskRunId) {
+        return jdbcRepository
+            .getDslContextWrapper()
+            .transactionResult(
+                configuration -> DSL.using(configuration)
+                    .fetchExists(
+                        jdbcRepository.getTable(),
+                        buildTenantCondition(tenantId).and(TASK_RUN_ID_FIELD.eq(taskRunId))
+                    )
+            );
+    }
+
+    @Override
     public Optional<TaskOutput> findById(String tenantId, String taskRunId) {
         var condition = TASK_RUN_ID_FIELD.eq(taskRunId);
         return this.jdbcRepository

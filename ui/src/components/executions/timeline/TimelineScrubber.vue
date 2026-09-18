@@ -259,6 +259,7 @@
         overflow: hidden;
         cursor: crosshair;
         touch-action: none;
+        user-select: none;
     }
 
     .timeline-scrubber:focus-visible {

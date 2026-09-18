@@ -213,7 +213,6 @@
     "executionProgress": {
       "title": "実行の進行状況",
       "estimatedRemaining": "残り時間の目安: {duration}",
-      "noBaseline": "履歴データがないため、残り時間を推定できません",
       "pastEstimate": "通常より時間がかかっています"
     },
     "launch execution": "実行",

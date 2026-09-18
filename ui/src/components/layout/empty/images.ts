@@ -1,67 +1,70 @@
-import announcement from "../../../assets/empty_visuals/announcement.png"
-import apiTokens from "../../../assets/empty_visuals/apiTokens.png"
-import apps from "../../../assets/empty_visuals/apps.png"
-import assets from "../../../assets/empty_visuals/assets.png"
-import auditLogs from "../../../assets/empty_visuals/auditLogs.png"
-import blueprints from "../../../assets/empty_visuals/blueprints.png"
-import cases from "../../../assets/empty_visuals/cases.png"
-import concurrencyExecutions from "../../../assets/empty_visuals/concurrencyExecutions.png"
-import concurrencyFlows from "../../../assets/empty_visuals/concurrencyFlows.png"
-import concurrencyLimits from "../../../assets/empty_visuals/concurrencyLimits.png"
-import credentials from "../../../assets/empty_visuals/credentials.png"
-import dashboards from "../../../assets/empty_visuals/dashboards.png"
-import dependencies from "../../../assets/empty_visuals/dependencies.png"
-import groups from "../../../assets/empty_visuals/groups.png"
-import iam from "../../../assets/empty_visuals/iam.png"
-import instance from "../../../assets/empty_visuals/instance.png"
-import killSwitch from "../../../assets/empty_visuals/killSwitch.png"
-import mcpToolFlows from "../../../assets/empty_visuals/mcpToolFlows.png"
-import namespace from "../../../assets/empty_visuals/namespace.png"
-import namespaceFiles from "../../../assets/empty_visuals/namespaceFiles.png"
-import pluginDefaults from "../../../assets/empty_visuals/pluginDefaults.png"
-import promote from "../../../assets/empty_visuals/promote.png"
-import quotas from "../../../assets/empty_visuals/quotas.png"
-import secrets from "../../../assets/empty_visuals/secrets.png"
-import tenants from "../../../assets/empty_visuals/tenants.png"
-import testSuite from "../../../assets/empty_visuals/testSuite.png"
-import tests from "../../../assets/empty_visuals/tests.png"
-import triggers from "../../../assets/empty_visuals/triggers.png"
-import variables from "../../../assets/empty_visuals/variables.png"
-import versionPlugin from "../../../assets/empty_visuals/versionPlugin.png"
+import {type MaybeRefOrGetter, type Ref, ref, toValue, watchEffect} from "vue"
 
-/** Artwork per empty-state `type`; types without a dedicated visual fall back to the generic one. */
-export const images: Record<string, string> = {
-    announcements: announcement,
-    apiTokens,
-    apps,
-    assets,
-    auditlogs: auditLogs,
-    blueprints,
-    cases,
-    concurrency_executions: concurrencyExecutions,
-    concurrency_limit: concurrencyFlows,
-    concurrency_limits: concurrencyLimits,
-    credentials,
-    dashboards,
-    "dependencies.FLOW": dependencies,
-    "dependencies.EXECUTION": dependencies,
-    "dependencies.NAMESPACE": dependencies,
-    "dependencies.ASSET": dependencies,
-    groups,
-    iam,
-    instance,
-    kill_switches: killSwitch,
-    mcpToolFlows,
-    namespace,
-    namespaceFiles,
-    policies: pluginDefaults,
-    promote,
-    quotas,
-    secrets,
-    tenants,
-    tests,
-    testSuites: testSuite,
-    triggers,
-    variables,
-    versionPlugin,
+/**
+ * Lazy, one-request-per-type: eagerly importing all illustrations (the previous shape of this module)
+ * made every `<Empty>`/`useEmptyImage` caller download the entire ~1.5MB set on module load, regardless
+ * of which single `type` it actually rendered.
+ */
+const modules = import.meta.glob<{default: string}>("../../../assets/empty_visuals/*.png")
+
+/** Filename (without extension) per empty-state `type`; types without an entry fall back to the generic one. */
+const FILES: Record<string, string> = {
+    announcements: "announcement",
+    apiTokens: "apiTokens",
+    apps: "apps",
+    assets: "assets",
+    auditlogs: "auditLogs",
+    blueprints: "blueprints",
+    cases: "cases",
+    concurrency_executions: "concurrencyExecutions",
+    concurrency_limit: "concurrencyFlows",
+    concurrency_limits: "concurrencyLimits",
+    credentials: "credentials",
+    dashboards: "dashboards",
+    "dependencies.FLOW": "dependencies",
+    "dependencies.EXECUTION": "dependencies",
+    "dependencies.NAMESPACE": "dependencies",
+    "dependencies.ASSET": "dependencies",
+    groups: "groups",
+    iam: "iam",
+    instance: "instance",
+    kill_switches: "killSwitch",
+    mcpToolFlows: "mcpToolFlows",
+    namespace: "namespace",
+    namespaceFiles: "namespaceFiles",
+    policies: "pluginDefaults",
+    promote: "promote",
+    quotas: "quotas",
+    secrets: "secrets",
+    tenants: "tenants",
+    tests: "tests",
+    testSuites: "testSuite",
+    triggers: "triggers",
+    variables: "variables",
+    versionPlugin: "versionPlugin",
+}
+
+/** The resolved image URL for `type`, fetched on demand; `undefined` while loading or when `type` has no entry. */
+export function useEmptyImage(type: MaybeRefOrGetter<string>): Ref<string | undefined> {
+    const image = ref<string | undefined>()
+
+    watchEffect((onCleanup) => {
+        const file = FILES[toValue(type)]
+        const loader = file ? modules[`../../../assets/empty_visuals/${file}.png`] : undefined
+        if (!loader) {
+            image.value = undefined
+            return
+        }
+
+        // `type` can change before this resolves; a stale resolution must not clobber a newer one.
+        let stale = false
+        onCleanup(() => {
+            stale = true
+        })
+        loader().then((mod) => {
+            if (!stale) image.value = mod.default
+        })
+    })
+
+    return image
 }

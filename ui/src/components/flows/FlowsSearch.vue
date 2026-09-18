@@ -232,7 +232,7 @@
         </div>
 
         <div v-else-if="showEmptyResultsState" class="source-search__states">
-            <KsEmpty :background="false" :image="images.namespace" :imageSize="120">
+            <KsEmpty :background="false" :image="namespaceEmptyImage" :imageSize="120">
                 <template #description>
                     <KsText tag="h3" size="large">
                         {{ $t('source_search.no_results_title', {query}) }}
@@ -327,7 +327,7 @@
     import ArrowExpandVertical from "vue-material-design-icons/ArrowExpandVertical.vue"
     import FindReplace from "vue-material-design-icons/FindReplace.vue"
     import Magnify from "vue-material-design-icons/Magnify.vue"
-    import {images} from "../layout/empty/images"
+    import {useEmptyImage} from "../layout/empty/images"
     import InformationOutline from "vue-material-design-icons/InformationOutline.vue"
     import AlertCircleOutline from "vue-material-design-icons/AlertCircleOutline.vue"
     import PencilLockOutline from "vue-material-design-icons/PencilLockOutline.vue"
@@ -519,6 +519,7 @@
 
     const showLoadingState = computed(() => viewState.value === "loading")
     const showEmptyResultsState = computed(() => viewState.value === "empty")
+    const namespaceEmptyImage = useEmptyImage("namespace")
 
     const hiddenTypeCounts = computed(() => SEARCH_RESOURCE_TYPES
         .filter((type) => !selectedTypes.value.includes(type))

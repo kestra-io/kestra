@@ -4,7 +4,7 @@
             <KsEmptyState
                 :title="resolvedTitle"
                 :description="resolvedDescription"
-                :image="images[type] ?? generic"
+                :image="resolvedImage"
                 :learnMore="resolvedLearnMore"
             >
                 <template v-if="$slots.description || $slots.message" #description>
@@ -37,7 +37,7 @@
     import {KsButton, KsEmptyState} from "@kestra-io/design-system"
 
     import generic from "../../../assets/empty_visuals/generic.svg"
-    import {images} from "./images"
+    import {useEmptyImage} from "./images"
     import {links} from "./links"
 
     const props = withDefaults(
@@ -56,6 +56,9 @@
     const {t, te} = useI18n()
 
     const typeDocs = computed(() => links[props.type])
+
+    const specificImage = useEmptyImage(() => props.type)
+    const resolvedImage = computed(() => specificImage.value ?? generic)
 
     const resolvedTitle = computed(() => {
         if (props.title) return props.title

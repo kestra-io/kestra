@@ -87,6 +87,12 @@ jobs:
       OTLP_ENDPOINT: ${{ secrets.OTLP_ENDPOINT }}
       OTLP_HEADERS: ${{ secrets.OTLP_HEADERS }}
 
+  e2e-tests:
+    name: E2E - Tests
+    uses: kestra-io/actions/.github/workflows/kestra-oss-e2e-tests.yml@main
+    with:
+      java-version: 25
+
   publish-develop-docker:
     name: Publish Docker
     needs: [backend-tests, frontend-tests, design-system-frontend-tests]

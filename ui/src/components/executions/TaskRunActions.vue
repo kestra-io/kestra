@@ -143,6 +143,7 @@
     import {useExecutionsStore} from "../../stores/executions"
     import {useAuthStore} from "override/stores/auth"
     import {useMiscStore} from "override/stores/misc"
+    
     import Restart from "./overview/components/actions/Restart.vue"
     import Metrics from "./Metrics.vue"
     import ChangeStatus from "./ChangeStatus.vue"
@@ -217,7 +218,6 @@
     const selectedAttempt = computed(() => attempts(currentTaskRun.value)[currentAttemptIndex.value])
 
     const isSubflow = computed<boolean>(() => !!currentTaskRun.value?.outputs?.executionId)
-    const isSubflow = computed<boolean>(() => props.taskRun?.outputs?.executionId)
     const isLoop = computed(() => (props.taskType ?? findTaskById(props.flow, props.taskRun.taskId)?.type) === "io.kestra.plugin.core.flow.Loop")
 
     const hasWorkerId = computed<boolean>(() =>

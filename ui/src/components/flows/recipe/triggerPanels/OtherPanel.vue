@@ -24,7 +24,7 @@
 
         <KsEmpty
             v-else-if="filteredTriggers.length === 0"
-            :image="images.triggers"
+            :image="triggersEmptyImage"
             :imageSize="120"
             :description="$t('recipe.other.no_results')"
         />
@@ -60,7 +60,7 @@
     import type {PluginIconMap} from "../../../../utils/pluginUtils"
     import type {RecipeState} from "../../../../composables/useFlowRecipe"
     import Check from "vue-material-design-icons/Check.vue"
-    import {images} from "../../../layout/empty/images"
+    import {useEmptyImage} from "../../../layout/empty/images"
 
     defineProps<{
         recipe: RecipeState
@@ -73,6 +73,7 @@
     const loading = ref(true)
     const loadError = ref(false)
     const pluginIcons = ref<PluginIconMap>({})
+    const triggersEmptyImage = useEmptyImage("triggers")
 
     const filteredTriggers = computed(() => {
         const q = searchQuery.value.toLowerCase()

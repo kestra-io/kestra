@@ -13,6 +13,7 @@ import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 
+import io.kestra.core.exceptions.InvalidTriggerConfigurationException;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.conditions.ConditionContext;
@@ -34,6 +35,7 @@ import io.kestra.plugin.core.debug.Return;
 import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @KestraTest
@@ -269,6 +271,39 @@ class ScheduleTest {
 
         // Then
         assertThat(result.isPresent()).isTrue();
+    }
+
+    @Test
+    void shouldThrowWhenCronHasNoValidCalendarDate() {
+        Schedule trigger = Schedule.builder()
+            .id("schedule")
+            .type(Schedule.class.getName())
+            .cron("0 0 30 2 *")
+            .build();
+
+        assertThatThrownBy(trigger::nextEvaluationDate)
+            .isInstanceOf(InvalidTriggerConfigurationException.class)
+            .hasMessageContaining("0 0 30 2 *");
+
+        assertThatThrownBy(() -> trigger.nextEvaluationDate(conditionContext(trigger), Optional.empty()))
+            .isInstanceOf(InvalidTriggerConfigurationException.class)
+            .hasMessageContaining("0 0 30 2 *");
+    }
+
+    @Test
+    void shouldReturnEmptyWhenEvaluatingWithNullDate() throws Exception {
+        Schedule trigger = Schedule.builder()
+            .id("schedule")
+            .type(Schedule.class.getName())
+            .cron("0 0 * * *")
+            .build();
+
+        Optional<TriggerEvaluationResult> evaluate = trigger.eval(
+            conditionContext(trigger),
+            TriggerContext.builder().date(null).build()
+        );
+
+        assertThat(evaluate).isEmpty();
     }
 
     @Test

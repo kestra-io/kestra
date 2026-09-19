@@ -6,6 +6,13 @@
         :minItemSize="50"
         keyField="id"
         class="log-wrapper"
+        data-test="task-run-scroller"
+        data-scroll-key="task-runs"
+        :class="{'full-height': fullHeight}"
+        :style="fullHeight && taskRunViewportHeight ? {'--task-run-viewport-height': `${taskRunViewportHeight}px`} : undefined"
+        :emitUpdate="true"
+        @update="emit('scroller-update')"
+        @resize="emit('scroller-update')"
     >
         <template
             #default="{
@@ -20,7 +27,12 @@
                 :active="isTaskRunActive"
                 :data-index="currentTaskRunIndex"
             >
-                <KsCard class="attempt-wrapper" shadow="never" :class="{'attempt-wrapper--transparent': hideTaskHeader}">
+                <KsCard
+                    class="attempt-wrapper"
+                    shadow="never"
+                    :class="{'attempt-wrapper--transparent': hideTaskHeader, 'fullscreen-attempt': fullHeight}"
+                    :bodyStyle="fullHeight ? FULLSCREEN_CARD_BODY_STYLE : undefined"
+                >
                     <TaskRunLine
                         :currentTaskRun="currentTaskRun"
                         :depth="asTaskRun(currentTaskRun).depth"
@@ -57,7 +69,12 @@
                         :minItemSize="32"
                         keyField="index"
                         class="log-lines"
-                        :class="{'single-line': currentTaskRuns.length === 1}"
+                        data-test="task-run-log-scroller"
+                        :data-scroll-key="asTaskRun(currentTaskRun).id"
+                        :class="{'single-line': currentTaskRuns.length === 1, 'full-height': fullHeight}"
+                        :emitUpdate="true"
+                        @update="emit('scroller-update')"
+                        @visible="emit('scroller-update')"
                         :ref="
                             (el) =>
                                 logsScrollerRef(
@@ -71,7 +88,7 @@
                                     ),
                                 )
                         "
-                        @resize="scrollToBottomFailedTask"
+                        @resize="handleLogScrollerResize"
                     >
                         <template #default="{item, active}">
                             <DynamicScrollerItem
@@ -266,6 +283,7 @@
     import {logsFontSize} from "../../composables/useLogDisplay"
     import {useI18n} from "vue-i18n"
     import {RouterLink} from "vue-router"
+    import {useResizeObserver} from "@vueuse/core"
     import Download from "vue-material-design-icons/Download.vue"
     import ChevronDown from "vue-material-design-icons/ChevronDown.vue"
     import * as OutputsAPI from "@kestra-io/kestra-sdk/outputs"
@@ -321,6 +339,7 @@
         level?: string
         showLogs?: boolean
         hideTaskHeader?: boolean
+        fullHeight?: boolean
     }
 
     const props = withDefaults(defineProps<Props>(), {
@@ -338,6 +357,7 @@
         level: undefined,
         showLogs: undefined,
         hideTaskHeader: false,
+        fullHeight: false,
     })
 
     const emit = defineEmits<{
@@ -346,7 +366,15 @@
         "reset-expand-collapse-all-switch": []
         "log-cursor": [cursor: string]
         "log-indices-by-level": [indices: Record<string, string[]>]
+        "scroller-update": []
     }>()
+
+    const FULLSCREEN_CARD_BODY_STYLE = {
+        display: "flex",
+        flexDirection: "column",
+        flex: "1",
+        minHeight: "0",
+    }
 
     // Reactive state
     const shownAttemptsUid = ref<string[]>([])
@@ -372,6 +400,17 @@
 
     // Template ref
     const taskRunScroller = useTemplateRef<any>("taskRunScroller") // FIXME: any
+    const taskRunViewportHeight = ref(0)
+    // Seed the cap before Teleport so virtual rows stay bounded until ResizeObserver measures the dialog.
+    watch(() => props.fullHeight, (fullHeight) => {
+        if (!fullHeight) return
+        const currentHeight = taskRunScroller.value?.$el?.clientHeight
+        if (currentHeight) taskRunViewportHeight.value = currentHeight
+    }, {flush: "sync"})
+    // Virtual task rows are absolutely positioned, so their cards need the measured flex viewport as a bound.
+    useResizeObserver(computed(() => props.fullHeight ? taskRunScroller.value?.$el : undefined), ([entry]) => {
+        if (entry?.contentRect.height) taskRunViewportHeight.value = entry.contentRect.height
+    })
 
     // Computed
     const followedExecution = computed(() =>
@@ -986,6 +1025,11 @@
         }
     }
 
+    function handleLogScrollerResize() {
+        scrollToBottomFailedTask()
+        emit("scroller-update")
+    }
+
     function uniqueTaskRunDisplayFilter(currentTaskRun: TaskRun): boolean {
         return !(props.taskRunId && props.taskRunId !== currentTaskRun.id)
     }
@@ -1294,5 +1338,21 @@
       }
     }
   }
+}
+
+.log-wrapper.full-height,
+.log-wrapper .log-lines.full-height {
+  flex: 1;
+  min-height: 0;
+}
+
+.log-wrapper .log-lines.full-height {
+  max-height: none;
+}
+
+.fullscreen-attempt {
+  display: flex;
+  flex-direction: column;
+  max-height: var(--task-run-viewport-height, none);
 }
 </style>

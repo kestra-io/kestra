@@ -401,7 +401,7 @@ export function useDependencies(
                 }
             })
             chart?.on?.("dblclick", (event: {dataType?: string; data?: {id?: string}}) => {
-                if (event?.dataType === "node") openedNodeID.value = event.data?.id ?? ""
+                if (event?.dataType === "node") openedNodeID.value = event.data?.id
             })
         })
     }

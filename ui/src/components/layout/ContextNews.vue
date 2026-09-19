@@ -29,7 +29,7 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, onMounted, ref, Ref} from "vue"
+    import {computed, onMounted, ref, type Ref} from "vue"
     import {useStorage} from "@vueuse/core"
     import {useScrollMemory} from "../../composables/useScrollMemory"
 

@@ -117,17 +117,10 @@
         if (elementTypes.length === 1) {
             const i18nKey = `pluginPage.elementType.${elementTypes[0]}`
             return te(i18nKey) ? t(i18nKey) : null
-        } else if (elementTypes.length > 1 && pluginsStore.plugin?.schema) {
-            // Multiple element types: try to infer from schema structure if available
-            const schema = pluginsStore.plugin.schema
-            for (const elementType of elementTypes) {
-                const i18nKey = `pluginPage.elementType.${elementType}`
-                if (te(i18nKey)) {
-                    return t(i18nKey)
-                }
-            }
         }
 
+        // Multiple element types: cannot determine which one the alias belongs to without
+        // additional context, so return null to avoid returning an incorrect label
         return null
     })
 

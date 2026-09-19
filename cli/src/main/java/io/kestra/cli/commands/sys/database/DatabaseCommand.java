@@ -12,6 +12,7 @@ import picocli.CommandLine;
     mixinStandardHelpOptions = true,
     subcommands = {
         DatabaseMigrateCommand.class,
+        DatabasePlanCommand.class,
     }
 )
 public class DatabaseCommand extends AbstractCommand {

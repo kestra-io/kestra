@@ -126,6 +126,7 @@
     import {computed, ref, watch} from "vue"
     import {useI18n} from "vue-i18n"
     import {useRoute, useRouter} from "vue-router"
+    import type * as monaco from "monaco-editor/editor/editor.api"
     import History from "vue-material-design-icons/History.vue"
     import Restore from "vue-material-design-icons/Restore.vue"
     import TrashCanOutline from "vue-material-design-icons/TrashCanOutline.vue"
@@ -181,7 +182,7 @@
         highlight?: string
     }>(), {editRouteQuery: true, canDelete: true})
 
-    const revealHighlight =(editor: any) => {
+    const revealHighlight = (editor: monaco.editor.IStandaloneCodeEditor | monaco.editor.IStandaloneDiffEditor | undefined) => {
         if (!props.highlight) return
 
         const modified = editor?.getModifiedEditor?.() ?? editor
@@ -332,8 +333,9 @@
                 toast.deleted(t("revision deleted", {revision: revisionToDelete.toString()}))
                 emit("deleted", revisionToDelete)
                 load()
-            } catch (error: any) {
-                toast.error(t("delete revision error", {revision: revisionToDelete, error: error.message || error.toString()}))
+            } catch (error: unknown) {
+                const message = error instanceof Error ? error.message : String(error)
+                toast.error(t("delete revision error", {revision: revisionToDelete, error: message}))
             }
         })
     };

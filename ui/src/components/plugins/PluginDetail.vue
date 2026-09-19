@@ -99,12 +99,28 @@
         const cls = routeCls.value
         const plugin = owningPlugin.value
         if (!cls || !plugin) return null
+
+        // Direct match: cls is a canonical class name
         for (const [key, value] of Object.entries(plugin)) {
             if (isEntryAPluginElementPredicate(key, value) && value.some(el => el?.cls === cls)) {
                 const i18nKey = `pluginPage.elementType.${key}`
                 return te(i18nKey) ? t(i18nKey) : null
             }
         }
+
+        // Fallback: cls is an alias (no canonical match found in element lists)
+        // Determine type by checking which element type the owningPlugin contains
+        const elementTypes = Object.entries(plugin)
+            .filter(([key, value]) => isEntryAPluginElementPredicate(key, value) && Array.isArray(value) && value.length > 0)
+            .map(([key]) => key)
+
+        if (elementTypes.length === 1) {
+            const i18nKey = `pluginPage.elementType.${elementTypes[0]}`
+            return te(i18nKey) ? t(i18nKey) : null
+        }
+
+        // Multiple element types: cannot determine which one the alias belongs to without
+        // additional context, so return null to avoid returning an incorrect label
         return null
     })
 

@@ -22,6 +22,8 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.LogDataStoreInterface;
 import io.kestra.core.utils.IdUtils;
+import io.kestra.core.scheduler.model.TriggerState;
+import io.kestra.core.scheduler.store.TriggerStateStore;
 import io.kestra.core.utils.TestsUtils;
 import io.kestra.webserver.models.ChartFiltersOverrides;
 import io.kestra.webserver.responses.PagedResults;
@@ -56,6 +58,9 @@ class DashboardControllerTest {
 
     @Inject
     ExecutionRepositoryInterface executionRepository;
+
+    @Inject
+    TriggerStateStore triggerStateStore;
 
     @Test
     void shouldExportAnAdHocPreviewChartToCsv() {
@@ -208,6 +213,7 @@ class DashboardControllerTest {
                 )
             ).build()
         );
+        
         PagedResults<Map<String, Object>> chartData = client.toBlocking().retrieve(
             POST(DASHBOARD_PATH + "/charts/preview", previewRequest),
             PagedResults.class
@@ -215,6 +221,65 @@ class DashboardControllerTest {
         assertThat(chartData).isNotNull();
         assertThat(chartData.getTotal()).isEqualTo(1);
         assertThat(chartData.getResults().get(0).get("execution_id")).isEqualTo(idForLabelAC);
+    }
+
+    @Test
+    void shouldExcludeDisabledTriggersFromNextExecutionsChart() {
+        String namespace = TestsUtils.randomNamespace();
+
+        String enabledTriggerId = IdUtils.create();
+        triggerStateStore.save(
+            TriggerState.builder()
+                .tenantId(MAIN_TENANT)
+                .namespace(namespace)
+                .flowId("flow")
+                .triggerId(enabledTriggerId)
+                .workerId("worker")
+                .nextEvaluationDate(Instant.now())
+                .disabled(false)
+                .build()
+        );
+
+        String disabledTriggerId = IdUtils.create();
+        triggerStateStore.save(
+            TriggerState.builder()
+                .tenantId(MAIN_TENANT)
+                .namespace(namespace)
+                .flowId("flow")
+                .triggerId(disabledTriggerId)
+                .workerId("worker")
+                .nextEvaluationDate(Instant.now())
+                .disabled(true)
+                .build()
+        );
+
+        String chartYaml = """
+            id: table_next_executions_chart_id
+            type: io.kestra.plugin.core.dashboard.chart.Table
+            data:
+              type: io.kestra.plugin.core.dashboard.data.Triggers
+              columns:
+                trigger_id:
+                  field: TRIGGER_ID
+              where:
+                - field: NAMESPACE
+                  type: EQUAL_TO
+                  value: "%s"
+                - field: DISABLED
+                  type: EQUAL_TO
+                  value: false
+            """.formatted(namespace);
+
+        var previewRequest = new DashboardController.PreviewRequest(chartYaml, null);
+
+        PagedResults<Map<String, Object>> chartData = client.toBlocking().retrieve(
+            POST(DASHBOARD_PATH + "/charts/preview", previewRequest),
+            PagedResults.class
+        );
+
+        assertThat(chartData).isNotNull();
+        assertThat(chartData.getTotal()).isEqualTo(1);
+        assertThat(chartData.getResults().get(0).get("trigger_id")).isEqualTo(enabledTriggerId);
     }
 
     @Test

@@ -94,7 +94,15 @@
                         <KsDateAgo :inverted="true" :date="scope.row.lastTriggeredDate" />
                     </template>
                     <template v-else-if="col.prop === 'nextEvaluationDate'">
-                        <KsDateAgo :inverted="true" :date="scope.row.nextEvaluationDate" />
+                        <KsTag
+                            v-if="!scope.row.nextEvaluationDate"
+                            type="warning"
+                            size="small"
+                            effect="light"
+                        >
+                            {{ $t("datepicker.never") }}
+                        </KsTag>
+                        <KsDateAgo v-else :inverted="true" :date="scope.row.nextEvaluationDate" />
                     </template>
                     <template v-else-if="col.prop === 'evaluatedAt'">
                         <KsDateAgo :inverted="true" :date="scope.row.evaluatedAt" />

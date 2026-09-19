@@ -1,13 +1,19 @@
 import {nextTick, ref} from "vue"
 import {createI18n, type I18n} from "vue-i18n"
 
-const translations = import.meta.glob(["./*.json", "!./en.json"])
-
 import {SUPPORT_LOCALES} from "./languages"
 
 type Locales = (typeof SUPPORT_LOCALES)[number]
+type TranslationValue = string | TranslationValue[] | {[key: string]: TranslationValue}
+type LocaleMessages = Record<string, TranslationValue>
+type TranslationMessages = Record<string, LocaleMessages>
+type TranslationModule = {default: TranslationMessages}
+type TranslationProvider = Record<string, () => Promise<TranslationModule>>
+type AppI18n = I18n<TranslationMessages, Record<string, unknown>, Record<string, unknown>, Locales, false>
 
-export const globalI18n = ref<I18n<any, any, any, Locales, false>["global"]>()
+const translations = import.meta.glob<TranslationModule>(["./*.json", "!./en.json"])
+
+export const globalI18n = ref<AppI18n["global"]>()
 
 /**
  * What happens when `t()` is asked for a key no locale defines.
@@ -97,8 +103,8 @@ export function setI18nLanguage(i18n: I18n, locale: (typeof SUPPORT_LOCALES)[num
   document.querySelector("html")?.setAttribute("lang", locale.replace(/_/g, "-"))
 }
 
-export async function loadLocaleMessages(i18n: I18n, locale: (typeof SUPPORT_LOCALES)[number], additionalTranslationsProvider: Record<string, () => Promise<any>>) {
-  let messages = {} as any
+export async function loadLocaleMessages(i18n: AppI18n, locale: Locales, additionalTranslationsProvider: TranslationProvider) {
+  let messages: TranslationMessages = {}
 
   if(additionalTranslationsProvider[locale]){
     // load additional translations from the provider

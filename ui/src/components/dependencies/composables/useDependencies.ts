@@ -4,6 +4,7 @@ import type {RouteParams} from "vue-router"
 import {useI18n} from "vue-i18n"
 import {State, cssVar} from "@kestra-io/design-system"
 import type {KsGraphNode, KsGraphEdge} from "@kestra-io/design-system"
+import type {EChartsType, EChartsOption} from "echarts/core"
 import {useCoreStore} from "../../../stores/core"
 import {useFlowStore} from "../../../stores/flow"
 import {useExecutionsStore} from "../../../stores/executions"
@@ -63,7 +64,15 @@ interface KsGraphRef {
     zoomOut(): void;
     fit(): void;
     exportAsImage(type: "jpeg" | "png", filename?: string): void;
-    getEchartsInstance(): unknown;
+    getEchartsInstance(): EChartsType | undefined;
+}
+
+interface ExecutionDependencyMessage {
+    tenantId: string;
+    namespace: string;
+    flowId: string;
+    executionId: string;
+    state: {current: string};
 }
 
 function buildEdgeCounts(elements: Element[]): Map<string, number> {
@@ -105,8 +114,8 @@ export function useDependencies(
 
     const selectedNodeID: Ref<Node["id"] | undefined> = ref(undefined)
 
-    const getChart = (): Record<string, any> | null =>
-        graphRef.value?.getEchartsInstance?.() as Record<string, any> | null
+    const getChart = (): EChartsType | null =>
+        graphRef.value?.getEchartsInstance?.() ?? null
 
     // chartNodes/chartEdges are frozen after the initial render; applyStylesToChart() then updates
     // styles imperatively with layout:"none" so ECharts never re-runs the force simulation.
@@ -378,7 +387,8 @@ export function useDependencies(
             if (!zr || zr.ksDependenciesBound) return
             zr.ksDependenciesBound = true
             chart?.on?.("graphRoam", () => {
-                const series = (chart.getOption?.() as Record<string, any> | undefined)?.series?.[0]
+                const options = chart.getOption?.() as EChartsOption | undefined
+                const series = (options as {series?: Array<{zoom?: number; center?: [number, number]}>})?.series?.[0]
                 if (series?.zoom !== undefined) viewState.value = {zoom: series.zoom, center: series.center}
             })
             if (!dagView) return
@@ -390,8 +400,8 @@ export function useDependencies(
                     clearGroup()
                 }
             })
-            chart?.on?.("dblclick", (event: Record<string, any>) => {
-                if (event?.dataType === "node") openedNodeID.value = event.data?.id as string
+            chart?.on?.("dblclick", (event: {dataType?: string; data?: {id?: string}}) => {
+                if (event?.dataType === "node") openedNodeID.value = event.data?.id
             })
         })
     }
@@ -420,7 +430,7 @@ export function useDependencies(
         }
     }
 
-    const applyView = (chart: Record<string, any>): void => {
+    const applyView = (chart: EChartsType): void => {
         chart.setOption({series: [{
             type: "graph",
             zoom: viewState.value.zoom,
@@ -490,7 +500,7 @@ export function useDependencies(
                 const {data} = await namespacesStore.loadDependencies({namespace: params.id as string})
                 const nodes = data.nodes ?? []
                 elements.value = {
-                    data:  transformResponse(data as any, NAMESPACE),
+                    data:  transformResponse({nodes: data.nodes, edges: data.edges}, NAMESPACE),
                     count: new Set(nodes.map((r: {uid: string}) => r.uid)).size,
                 }
             } else {
@@ -527,7 +537,7 @@ export function useDependencies(
     const sse = ref()
 
     /** Applies a live execution-state update to its node, replacing the element so Vue picks up the change. */
-    const applyExecutionUpdate = (message: Record<string, any>): void => {
+    const applyExecutionUpdate = (message: ExecutionDependencyMessage): void => {
         const nodeId = `${message.tenantId}_${message.namespace}_${message.flowId}`
         const idx = elements.value.data.findIndex(
             (el): el is {data: Node} => el.data.type === NODE && el.data.id === nodeId,
@@ -538,7 +548,7 @@ export function useDependencies(
         const updated = {
             data: {
                 ...el.data,
-                metadata: {...el.data.metadata, id: message.executionId, state: message.state.current as string},
+                metadata: {...el.data.metadata, id: message.executionId, state: message.state.current},
             },
         }
         elements.value.data.splice(idx, 1, updated)

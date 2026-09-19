@@ -21,7 +21,10 @@ public final class HttpResponseFailure {
             HttpService.HttpEntityCopy copy = HttpService.copy(httpEntity.getEntity());
             httpEntity.setEntity(copy);
 
-            error += " and body:\n" + new String(copy.getBody(), StandardCharsets.UTF_8);
+            String body = new String(copy.getBody(), StandardCharsets.UTF_8)
+            .replace("\r", "\\r")
+            .replace("\n", "\\n");
+            error += " and body: " + body;
         }
 
         return new HttpClientResponseException(error, HttpResponse.from(response, context));

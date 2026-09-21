@@ -413,6 +413,9 @@ export type ArtefactDraft = {
 export type ArtefactKind = 'FLOW' | 'DASHBOARD' | 'APP';
 
 export type Asset = {
+    status?: string;
+    ttl?: string;
+    owner?: string;
     namespace?: string;
     id: string;
     type: string;
@@ -423,6 +426,10 @@ export type Asset = {
             [key: string]: unknown;
         };
     };
+    /**
+     * The day-2 actions offered on this asset, each backing onto a flow.
+     */
+    assetActions?: Array<FlowAction>;
 };
 
 export type AssetFailureBehavior = 'IGNORE' | 'FAIL' | 'WARN';
@@ -974,6 +981,21 @@ export type Flow = AbstractFlow & {
      * Quotas can also be defined at the namespace and tenant level.
      */
     quotas?: Array<Quota>;
+};
+
+export type FlowAction = {
+    /**
+     * The namespace of the flow backing this action.
+     */
+    namespace: string;
+    /**
+     * The id of the flow backing this action.
+     */
+    flowId: string;
+    /**
+     * The label displayed on this action.
+     */
+    label?: string | null;
 };
 
 export type FlowControllerFlowWithDeprecatedTasks = {
@@ -1689,6 +1711,7 @@ export type Plugin = {
     storages?: Array<PluginPluginElementMetadata>;
     secrets?: Array<PluginPluginElementMetadata>;
     taskRunners?: Array<PluginPluginElementMetadata>;
+    assets?: Array<PluginPluginElementMetadata>;
     apps?: Array<PluginPluginElementMetadata>;
     appBlocks?: Array<PluginPluginElementMetadata>;
     charts?: Array<PluginPluginElementMetadata>;
@@ -1954,7 +1977,7 @@ export type QueryFilter = {
     children?: Array<QueryFilter>;
 };
 
-export type QueryFilterField = 'q' | 'scope' | 'namespace' | 'kind' | 'POLICY_SCOPE' | 'ENFORCEMENT' | 'labels' | 'tags' | 'metadata' | 'flowId' | 'flowRevision' | 'id' | 'assetId' | 'type' | 'action' | 'created' | 'updated' | 'startDate' | 'endDate' | 'expirationDate' | 'state' | 'status' | 'SEVERITY' | 'ASSIGNEE' | 'email' | 'timeRange' | 'parentId' | 'triggerExecutionId' | 'triggerId' | 'triggerState' | 'executionId' | 'taskId' | 'taskRunId' | 'attemptNumber' | 'childFilter' | 'workerId' | 'existingOnly' | 'userId' | 'resources' | 'details' | 'level' | 'path' | 'parentPath' | 'version' | 'enabled' | 'username' | 'name' | 'groupList' | 'external_id' | 'expired_at' | 'instance_owner' | 'source' | 'locked' | 'lastTriggeredDate' | 'nextExecutionDate' | 'artifactId';
+export type QueryFilterField = 'q' | 'scope' | 'namespace' | 'kind' | 'POLICY_SCOPE' | 'ENFORCEMENT' | 'labels' | 'tags' | 'metadata' | 'assetExpiry' | 'flowId' | 'flowRevision' | 'id' | 'assetId' | 'type' | 'action' | 'created' | 'updated' | 'startDate' | 'endDate' | 'expirationDate' | 'state' | 'status' | 'SEVERITY' | 'ASSIGNEE' | 'email' | 'timeRange' | 'parentId' | 'triggerExecutionId' | 'triggerId' | 'triggerState' | 'executionId' | 'taskId' | 'taskRunId' | 'attemptNumber' | 'childFilter' | 'workerId' | 'existingOnly' | 'userId' | 'resources' | 'details' | 'level' | 'path' | 'parentPath' | 'version' | 'enabled' | 'username' | 'name' | 'groupList' | 'external_id' | 'expired_at' | 'instance_owner' | 'source' | 'locked' | 'lastTriggeredDate' | 'nextExecutionDate' | 'artifactId';
 
 export type QueryFilterLogical = 'and' | 'or';
 

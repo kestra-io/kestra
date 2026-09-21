@@ -201,7 +201,7 @@
         // slot content is only re-evaluated when a node's graph data is regenerated.
         taskDetailsVersion?: number;
     }>(), {
-        isHorizontal: true,
+        isHorizontal: false,
         isReadOnly: true,
         isAllowedEdit: false,
         toggleOrientationButton: false,
@@ -470,7 +470,7 @@
         left: 40px;
         padding: 0;
         margin: 0;
-        z-index: 1000;
+        z-index: var(--ks-z-dropdown);
         list-style-type: none;
         background: var(--ks-bg-surface);
         border: 1px solid var(--ks-border-default);

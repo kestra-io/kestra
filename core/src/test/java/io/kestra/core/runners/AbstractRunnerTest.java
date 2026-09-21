@@ -109,6 +109,29 @@ public abstract class AbstractRunnerTest {
         assertThat(execution.getTaskRunList()).hasSize(5);
     }
 
+    /**
+     * A nested null must survive the round-trip through the output store, so a downstream expression renders
+     * empty instead of failing on a missing variable.
+     *
+     * @see <a href="https://github.com/kestra-io/plugin-transform/issues/110">plugin-transform#110</a>
+     */
+    @Test
+    @ExecuteFlow("flows/valids/null-content-output.yaml")
+    void nullContentOutput(Execution execution) throws Exception {
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+
+        Map<String, Object> outputs = taskOutputService.getOutputs(execution.findTaskRunsByTaskId("produce").getFirst());
+        @SuppressWarnings("unchecked")
+        Map<String, Object> record = (Map<String, Object>) ((List<Object>) outputs.get("records")).getFirst();
+        assertThat(record).containsKey("b");
+        assertThat(record.get("b")).isNull();
+
+        assertThat(taskOutputService.getOutputs(execution.findTaskRunsByTaskId("render_null").getFirst()))
+            .containsEntry("value", "[]");
+        assertThat(taskOutputService.getOutputs(execution.findTaskRunsByTaskId("render_sibling").getFirst()))
+            .containsEntry("value", "[1]");
+    }
+
     @Test
     @ExecuteFlow("flows/valids/sequential.yaml")
     void sequential(Execution execution) {
@@ -631,6 +654,18 @@ public abstract class AbstractRunnerTest {
     @LoadFlows({ "flows/valids/sla-max-duration-fail.yaml" })
     void maxDurationSLAShouldFail() throws Exception {
         slaTestCase.maxDurationSLAShouldFail();
+    }
+
+    @Test
+    @LoadFlows({ "flows/valids/sla-max-duration-ok.yaml" })
+    void maxDurationSLAShouldPass() throws Exception {
+        slaTestCase.maxDurationSLAShouldPass();
+    }
+
+    @Test
+    @LoadFlows({ "flows/valids/sla-execution-condition.yaml" })
+    void executionConditionSLAShouldPass() throws Exception {
+        slaTestCase.executionConditionSLAShouldPass();
     }
 
     @Test

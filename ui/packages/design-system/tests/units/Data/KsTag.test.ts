@@ -29,6 +29,16 @@ describe("KsTag", () => {
             global: globalConfig,
         })
         expect(wrapper.find(".kel-tag--small").exists()).toBe(true)
+        expect(wrapper.find(".kel-tag--xs").exists()).toBe(false)
+    })
+
+    test("xs size rides on the small modifier and adds kel-tag--xs", () => {
+        const wrapper = mount(KsTag, {
+            props: {size: "xs"},
+            global: globalConfig,
+        })
+        expect(wrapper.find(".kel-tag--small").exists()).toBe(true)
+        expect(wrapper.find(".kel-tag--xs").exists()).toBe(true)
     })
 
     test("closable renders close button", () => {

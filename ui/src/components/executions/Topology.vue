@@ -25,8 +25,7 @@
 </template>
 <script setup lang="ts">
     import {ref, computed, watch, onMounted, onUnmounted} from "vue"
-    import throttle from "lodash/throttle"
-    import {stringUtils, State, levelToRequestParams} from "@kestra-io/design-system"
+    import {stringUtils, State, levelToRequestParams, throttle} from "@kestra-io/design-system"
     import LowCodeEditor from "../inputs/LowCodeEditor.vue"
     import {useExecutionsStore} from "../../stores/executions"
     import {useFlowStore} from "../../stores/flow"

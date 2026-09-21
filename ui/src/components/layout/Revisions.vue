@@ -329,7 +329,7 @@
                     id: route.params.id?.toString() || "",
                     revision: revisionToDelete.toString(),
                 })
-                toast.deleted(t("revision deleted", {revision: revisionToDelete.toString()}))
+                toast.success(t("revision deleted", {revision: revisionToDelete.toString()}), t("deleted"))
                 emit("deleted", revisionToDelete)
                 load()
             } catch (error: any) {

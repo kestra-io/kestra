@@ -87,33 +87,29 @@ public class If extends Task implements FlowableTask<If.Output> {
     @PluginProperty(dynamic = true)
     private String condition;
 
-    @Valid
     @PluginProperty
     @Schema(
         title = "List of tasks to execute if the condition is true"
     )
     @NotEmpty
-    private List<Task> then;
+    private List<@Valid Task> then;
 
-    @Valid
     @PluginProperty
     @Schema(
         title = "List of tasks to execute if the condition is false"
     )
     @JsonProperty("else")
-    private List<Task> _else;
+    private List<@Valid Task> _else;
 
-    @Valid
     @PluginProperty
     @Schema(
         title = "List of tasks to execute in case of errors of a child task"
     )
-    private List<Task> errors;
+    private List<@Valid Task> errors;
 
-    @Valid
     @JsonProperty("finally")
     @Getter(AccessLevel.NONE)
-    protected List<Task> _finally;
+    protected List<@Valid Task> _finally;
 
     public List<Task> getFinally() {
         return this._finally;

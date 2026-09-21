@@ -1,5 +1,6 @@
 package io.kestra.jdbc.repository;
 
+import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.function.Function;
@@ -34,6 +35,7 @@ import io.kestra.executor.ExecutionStateStore;
 import io.kestra.executor.ExecutorContext;
 import io.kestra.jdbc.services.JdbcFilterService;
 import io.kestra.plugin.core.dashboard.data.Executions;
+import io.kestra.plugin.core.dashboard.data.IExecutions;
 
 import io.micronaut.context.event.ApplicationEventPublisher;
 import io.micronaut.data.model.Pageable;
@@ -90,6 +92,11 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
         this.filterService = filterService;
     }
 
+    @Override
+    protected Condition defaultFilter(String tenantId, boolean allowDeleted) {
+        return super.defaultFilter(tenantId, allowDeleted).and(aclCondition(Resource.EXECUTION));
+    }
+
     /**
      * {@inheritDoc}
      **/
@@ -121,6 +128,14 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
     }
 
     @Override
+    public Optional<Execution> findLatestForStatesWithoutAcl(String tenantId, String namespace, String flowId, List<State.Type> states) {
+        var condition = field("namespace").eq(namespace)
+            .and(field("flow_id").eq(flowId))
+            .and(this.statesFilter(states));
+        return findOne(this.defaultFilterWithNoACL(tenantId), condition, field("start_date").desc());
+    }
+
+    @Override
     public List<String> findDistinctFieldValues(String tenantId, QueryFilter.Field field, List<QueryFilter> filters, Pageable pageable) {
         return findDistinctFieldValues(tenantId, field, filters, pageable, QueryFilter.Resource.EXECUTION);
     }
@@ -136,7 +151,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
     }
 
     @Override
-    public Execution findById(String id) {
+    public Execution findByIdWithoutAcl(String id) {
         return findOne(DSL.noCondition(), KEY_FIELD.eq(id)).orElse(null);
     }
 
@@ -624,7 +639,8 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
         } else if (field.getName().equals(START_DATE_FIELD.getName())) {
             return START_DATE_FIELD;
         } else if (field.getName().equals(fieldsMapping.get(Executions.Fields.DURATION))) {
-            return DSL.field("{0} / 1000", Long.class, field);
+            // divide by a decimal so Postgres does not integer-divide, which truncated sub-second durations to 0
+            return DSL.field("{0} / 1000.0", Double.class, field);
         }
         return field;
     }
@@ -634,6 +650,9 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
     protected <F extends Enum<F>> SelectConditionStep<Record> where(SelectConditionStep<Record> selectConditionStep, JdbcFilterService jdbcFilterService, List<AbstractFilter<F>> filters,
         Map<F, String> fieldsMapping) {
         if (!ListUtils.isEmpty(filters)) {
+            // state_duration holds milliseconds, while a DURATION filter carries a duration (`PT1S`, or a number of seconds)
+            filters = DurationFilters.normalize(filters, IExecutions.DURATION_FIELDS, Duration::toMillis);
+
             // Check if descriptors contain a filter of type Executions.Fields.STATE and apply the custom filter "statesFilter" if present
             selectConditionStep = applyStateFilters(filters, selectConditionStep);
 

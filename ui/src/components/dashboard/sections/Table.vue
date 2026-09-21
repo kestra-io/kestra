@@ -28,7 +28,7 @@
                         :key
                         :label="value.displayName || key"
                         :width="value.field === 'STATE' ? 140 : undefined"
-                        :minWidth="ENTITY_LINK_FIELDS.includes(value.field) ? 140 : undefined"
+                        :minWidth="ENTITY_LINK_FIELDS.includes(value.field ?? '') ? 140 : undefined"
                     >
                         <template #default="scope">
                             <template v-if="resolvedComponent(value.field) === undefined">
@@ -53,10 +53,11 @@
     import {computed, ref, watch} from "vue"
     import {useRoute} from "vue-router"
 
+    import {useStorage} from "@vueuse/core"
     import {Motion} from "motion-v"
     import {KsExecutionStatus} from "@kestra-io/design-system"
 
-    import type {Chart} from "../types.ts"
+    import type {Chart, ChartResults, Column} from "../types.ts"
     import {isPaginationEnabled, useChartGenerator} from "../composables/useDashboards"
     import TableQuickFilter from "./TableQuickFilter.vue"
     import {stateFilterForTab} from "./quickFilters"
@@ -88,10 +89,10 @@
     const ENTITY_LINK_FIELDS = ["NAMESPACE", "FLOW_ID"]
 
     const hasIdColumn = computed(() =>
-        Object.values(props.chart.data?.columns ?? {}).some((c: any) => c?.field === "ID"),
+        Object.values(props.chart.data?.columns ?? {}).some((c: Column) => c?.field === "ID"),
     )
 
-    const resolvedComponent = (field: string) => {
+    const resolvedComponent = (field: string | undefined) => {
         switch (field) {
         case "ID":
         case "FLOW_ID":
@@ -108,7 +109,7 @@
         }
     }
 
-    const resolvedProps = (field: string, key: string, row: Record<string, any>) => {
+    const resolvedProps = (field: string | undefined, key: string, row: Record<string, unknown>) => {
         const baseProps = {field: key, row, columns: props.chart.data?.columns ?? {}}
 
         switch (field) {
@@ -117,29 +118,34 @@
         case "FLOW_ID":
             return {...baseProps, flow: true, colored: !hasIdColumn.value}
         case "NAMESPACE":
-            return {field: row[key]}
+            return {field: row[key] as string | undefined}
         case "STATE":
             return {
                 size: "small",
-                status: row[key].toString(),
+                status: String(row[key]),
                 clickable: true,
-                onClick: () => navigateToStateFilter(row[key].toString()),
+                onClick: () => navigateToStateFilter(String(row[key])),
             }
         case "DURATION":
-            return {field: row[key], startDate: row["start_date"]}
+            return {field: row[key] as number | undefined, startDate: row["start_date"] as string | undefined}
         default:
-            if (field.toLowerCase().includes("date")) {
-                return {field: row[key], relative: field === "NEXT_EXECUTION_DATE"}
+            if (field?.toLowerCase().includes("date")) {
+                return {field: row[key] as string | undefined, relative: field === "NEXT_EXECUTION_DATE"}
             }
             return {}
         }
     }
 
-    const data = ref()
+    const data = ref<ChartResults>()
     const activeTab = ref("all")
     const stateFilter = ref<QueryFilter | null>(stateFilterForTab(props.chart, "all"))
     const pageNumber = ref(1)
-    const pageSize = ref(25)
+    const pageSize = useStorage(
+        `dashboard-page-size:${props.dashboardId ?? "default"}:${props.chart.id}`,
+        25,
+        sessionStorage,
+        {writeDefaults: false},
+    )
 
     const {EMPTY_TEXT, generate} = useChartGenerator(props.dashboardId, props, false)
 
@@ -176,7 +182,14 @@
         return getData()
     }
 
-    defineExpose({refresh})
+    function exportParameters() {
+        return {
+            ...(isPaginationEnabled(props.chart) ? {pageNumber: pageNumber.value, pageSize: pageSize.value} : {}),
+            filters: stateFilter.value ? [stateFilter.value] : [],
+        }
+    }
+
+    defineExpose({refresh, exportParameters})
 
     watch(() => route.params.filters, () => refresh(), {deep: true, immediate: true})
 </script>

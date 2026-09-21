@@ -28,25 +28,24 @@ public interface OnChildFailureInterface {
 
     enum OnChildFailure {
         CONTINUE,
-        CANCELLED,
-        FAILED,
-        UNKNOWN;
+        CANCEL,
+        FAIL;
 
         @JsonCreator
         public static OnChildFailure fromString(final String value) {
-            return Enums.getForNameIgnoreCase(value, OnChildFailure.class, UNKNOWN);
+            return Enums.getForNameIgnoreCase(value, OnChildFailure.class, CONTINUE);
         }
 
         /**
          * The task-run state to apply to interrupted children.
          *
-         * @throws IllegalStateException if called on {@link #CONTINUE} or {@link #UNKNOWN}, which never trigger an interrupt.
+         * @throws IllegalStateException if called on {@link #CONTINUE}, which never trigger an interrupt.
          */
         public State.Type toTaskRunState() {
             return switch (this) {
-                case CANCELLED -> State.Type.CANCELLED;
-                case FAILED -> State.Type.FAILED;
-                case CONTINUE, UNKNOWN -> throw new IllegalStateException("No task run state is defined for onChildFailure value '%s'.".formatted(this));
+                case CANCEL -> State.Type.CANCELLED;
+                case FAIL -> State.Type.FAILED;
+                case CONTINUE -> throw new IllegalStateException("No task run state is defined for onChildFailure value '%s'.".formatted(this));
             };
         }
     }

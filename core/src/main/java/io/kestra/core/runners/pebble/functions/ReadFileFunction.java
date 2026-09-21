@@ -79,9 +79,15 @@ public class ReadFileFunction extends AbstractFileFunction {
         Namespace namespaceStorage = namespaceFactory.get().of(tenantId, namespace, storageInterface.get());
 
         if (args.containsKey(REVISION)) {
+            Integer revision;
+            try {
+                revision = Integer.parseInt(args.get(REVISION).toString());
+            } catch (NumberFormatException e) {
+                throw new IllegalArgumentException("The '" + NAME + "' function expects the 'revision' argument to be a valid integer.");
+            }
             return namespaceStorage.getFileContent(
                 NamespaceFile.normalize(Path.of(path.getPath())),
-                Integer.parseInt(args.get(REVISION).toString())
+                revision
             );
         }
 

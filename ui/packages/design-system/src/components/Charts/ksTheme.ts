@@ -1,4 +1,4 @@
-import {deepMerge} from "./ksChartUtils.ts"
+import {deepMerge} from "../../utils/chart.ts"
 import {cssVar} from "../../utils/css.ts"
 
 export default () => {

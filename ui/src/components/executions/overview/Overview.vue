@@ -47,6 +47,9 @@
 
     onMounted(() => {
         if (!route.params.id) return
+        // The route guard loads the execution into the store before this page mounts
+        // (EXECUTION_ENTITY_META), and the SSE stream keeps it current from there.
+        if (execution.value?.id === route.params.id) return
         loadExecution(route.params.id as string)
     })
 

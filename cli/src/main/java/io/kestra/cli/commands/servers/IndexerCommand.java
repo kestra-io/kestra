@@ -12,6 +12,7 @@ import io.kestra.core.services.IgnoreExecutionService;
 import io.kestra.core.utils.Await;
 
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import picocli.CommandLine;
 
 @CommandLine.Command(
@@ -20,7 +21,7 @@ import picocli.CommandLine;
 )
 public class IndexerCommand extends AbstractServerCommand {
     @Inject
-    private Indexer indexer;
+    private Provider<Indexer> indexer;
     @Inject
     private IgnoreExecutionService ignoreExecutionService;
 
@@ -44,7 +45,7 @@ public class IndexerCommand extends AbstractServerCommand {
 
         super.call();
 
-        indexer.run();
+        indexer.get().run();
 
         Await.await().forever().until(() -> !this.applicationContext.isRunning());
 

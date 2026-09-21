@@ -78,11 +78,18 @@
         --kel-input-border-color: var(--ks-border-strong);
         --kel-input-hover-border-color: var(--ks-border-strong);
         --kel-input-bg-color: var(--ks-bg-input);
-        --kel-input-placeholder-color: var(--ks-text-inactive);
     }
 
     .kel-input__inner, .kel-textarea__inner {
         font-variant-ligatures: none;
+    }
+
+    .kel-textarea__inner {
+        // A full-width textarea has nothing to gain from horizontal resizing, and both it and a
+        // long unbroken word were producing a horizontal scrollbar under the field.
+        resize: vertical;
+        overflow-x: hidden;
+        overflow-wrap: break-word;
     }
 
     .kel-input {

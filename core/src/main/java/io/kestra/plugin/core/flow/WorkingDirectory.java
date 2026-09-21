@@ -39,6 +39,8 @@ import io.kestra.core.utils.NamespaceFilesUtils;
 import io.kestra.core.validations.WorkingDirectoryTaskValidation;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import org.hibernate.validator.constraints.time.DurationMin;
+
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -418,7 +420,7 @@ public class WorkingDirectory extends Sequential implements NamespaceFilesInterf
     @NoArgsConstructor
     public static class Cache {
         @Schema(title = "Cache TTL (Time To Live), after this duration the cache will be deleted.")
-        private Property<Duration> ttl;
+        private Property<@DurationMin(millis = 1, message = "must be a positive duration") Duration> ttl;
 
         @Schema(
             title = "List of file [glob](https://en.wikipedia.org/wiki/Glob_(programming)) patterns to include in the cache",

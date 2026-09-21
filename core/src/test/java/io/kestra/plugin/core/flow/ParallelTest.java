@@ -41,6 +41,13 @@ class ParallelTest {
     }
 
     @Test
+    @ExecuteFlow("flows/valids/parallel-invalid-concurrent.yaml")
+    void parallelWithNegativeConcurrentShouldFailExecution(Execution execution) {
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        assertThat(execution.findTaskRunsByTaskId("parallel").getFirst().getState().getCurrent()).isEqualTo(State.Type.FAILED);
+    }
+
+    @Test
     @LoadFlows({ "flows/valids/finally-parallel.yaml" })
     void errors() throws QueueException, TimeoutException {
         Execution execution = runnerUtils.runOne(

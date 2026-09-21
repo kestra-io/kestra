@@ -9,6 +9,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import dev.failsafe.RetryPolicyBuilder;
 import io.kestra.core.validations.DurationMax;
+
+import org.hibernate.validator.constraints.time.DurationMin;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotNull;
@@ -29,10 +31,12 @@ public class Exponential extends AbstractRetry {
 
     @NotNull
     @DurationMax
+    @DurationMin(millis = 1, message = "must be a positive duration")
     private Duration interval;
 
     @NotNull
     @DurationMax
+    @DurationMin(millis = 1, message = "must be a positive duration")
     private Duration maxInterval;
 
     private Double delayFactor;

@@ -3,39 +3,18 @@ import type {App} from "vue"
 import type {RouteRecordRaw} from "vue-router"
 import {configure} from "vue-gtag"
 import {loadLocaleMessages, setI18nLanguage, setupI18n} from "../translations/i18n"
-import moment from "moment-timezone"
-import {extendMoment} from "moment-range"
-
-// Moment locales are loaded on demand: only the active language's locale is fetched,
-// instead of eagerly bundling every supported locale on startup. "en" is built into
-// moment's core and needs no import. Each entry is a static dynamic-import so Vite/Rollup
-// can code-split one chunk per locale.
-const MOMENT_LOCALE_LOADERS: Record<string, () => Promise<unknown>> = {
-    de: () => import("moment/dist/locale/de"),
-    es: () => import("moment/dist/locale/es"),
-    fr: () => import("moment/dist/locale/fr"),
-    hi: () => import("moment/dist/locale/hi"),
-    it: () => import("moment/dist/locale/it"),
-    ja: () => import("moment/dist/locale/ja"),
-    ko: () => import("moment/dist/locale/ko"),
-    pl: () => import("moment/dist/locale/pl"),
-    pt: () => import("moment/dist/locale/pt"),
-    "pt-br": () => import("moment/dist/locale/pt-br"),
-    ru: () => import("moment/dist/locale/ru"),
-    "zh-cn": () => import("moment/dist/locale/zh-cn"),
-}
 import VueVirtualScroller from "vue-virtual-scroller"
 import {createPinia} from "pinia"
 
 import Toast from "./toast"
 import filters from "./filters"
 import KestraDesignSystem from "@kestra-io/design-system"
-import {setDesignSystemLocale, setMomentInstance, setDateFormatter, registerDesignSystemI18n} from "@kestra-io/design-system"
-import {date as dateFilter} from "./filters"
+import {setDesignSystemLocale, dateUtils, registerDesignSystemI18n} from "@kestra-io/design-system"
 import createUnsavedChanged from "./unsavedChange"
 import createEventsRouter from "./eventsRouter"
 import "./global"
 import {useDocStore} from "../stores/doc"
+import {entityNotFoundGuard} from "./routeEntityGuard"
 
 
 import RouterMd from "../components/utils/RouterMd.vue"
@@ -88,6 +67,10 @@ export default async (
         router.beforeResolve(guards.beforeResolve.bind(null, router) as Parameters<typeof router.beforeResolve>[0])
     }
 
+    // After the edition's own guards, so an auth or tenant redirect wins over probing an entity
+    // the user is not going to be shown anyway.
+    router.beforeResolve(entityNotFoundGuard)
+
     if(guards.afterEach){
         router.afterEach(guards.afterEach.bind(null, router) as Parameters<typeof router.afterEach>[0])
     }
@@ -95,6 +78,11 @@ export default async (
     router.afterEach((to) => {
         window.dispatchEvent(new CustomEvent("KestraRouterAfterEach", to as unknown as CustomEventInit))
     })
+
+    // Registered before the router installs: app.use(router) starts the first navigation, and both
+    // beforeEach and afterEach hooks added after any of the awaits below are missed by it.
+    createUnsavedChanged(app, router)
+    createEventsRouter(app, router)
 
     // avoid loading router in storybook
     // as it conflicts with storybook's
@@ -133,16 +121,7 @@ export default async (
     setDesignSystemLocale(locale)
     app.use(i18n)
 
-    // moment — load the active language's locale on demand ("en" is built in).
-    // Normalize the stored lang (e.g. "pt_BR", "zh_CN") to moment's locale key
-    // ("pt-br", "zh-cn"), matching moment's own normalizeLocale behavior.
-    const momentLocale = locale.toLowerCase().replace(/_/g, "-")
-    await MOMENT_LOCALE_LOADERS[momentLocale]?.()
-    moment.locale(momentLocale)
-    const momentExtended = extendMoment(moment)
-    app.config.globalProperties.$moment = momentExtended
-    setMomentInstance(momentExtended)
-    setDateFormatter(dateFilter as any) // FIXME: any - dateFilter signature differs from DateFormatterFn
+    await dateUtils.setLocale(locale)
 
     // others plugins
     app.use(Toast)
@@ -154,10 +133,6 @@ export default async (
 
     // kestra design system (registers KsSelect, etc. globally)
     app.use(KestraDesignSystem)
-
-    // navigation guard
-    createUnsavedChanged(app, router)
-    createEventsRouter(app, router)
 
     app.component("RouterMd", RouterMd)
 

@@ -134,5 +134,5 @@ workspace consumers, by the OSS `ui/scripts/ensure-sdk.mjs` bootstrap.
 
 ```bash
 npm run build      # bundle both entries to dist/ via tsdown
-npm run typecheck  # tsc --noEmit
+npm run check:types  # tsc --noEmit
 ```

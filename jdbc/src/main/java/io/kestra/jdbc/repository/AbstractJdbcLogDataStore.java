@@ -1,5 +1,8 @@
 package io.kestra.jdbc.repository;
 
+import java.time.Instant;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.function.BiFunction;
@@ -161,8 +164,9 @@ public abstract class AbstractJdbcLogDataStore extends AbstractJdbcCrudRepositor
     @Override
     public Page<LogEntry> find(Pageable pageable, @Nullable String tenantId, @Nullable List<QueryFilter> filters) {
         // Default to NORMAL kind only; an explicit KIND filter overrides that and selects the requested kind(s).
+        // The only exception is when a filter specifies an executionId; in this case we should not restrict to any kind so the logs of that execution are always returned.
         var condition = this.filter(filters, DATE_COLUMN, Resource.LOG);
-        if (!QueryFilter.hasField(filters, QueryFilter.Field.KIND)) {
+        if (!QueryFilter.hasField(filters, QueryFilter.Field.KIND) && !QueryFilter.hasField(filters, QueryFilter.Field.EXECUTION_ID)) {
             condition = NORMAL_KIND_CONDITION.and(condition);
         }
         return toOffsetPage(findPage(pageable, tenantId, condition), pageable);
@@ -200,11 +204,48 @@ public abstract class AbstractJdbcLogDataStore extends AbstractJdbcCrudRepositor
     @Override
     public Flux<LogEntry> findAsync(@Nullable String tenantId, List<QueryFilter> filters) {
         // Default to NORMAL kind only; an explicit KIND filter overrides that and selects the requested kind(s).
+        // The only exception is when a filter specifies an executionId; in this case we should not restrict to any kind so the logs of that execution are always returned.
         var condition = this.filter(filters, DATE_COLUMN, Resource.LOG);
-        if (!QueryFilter.hasField(filters, QueryFilter.Field.KIND)) {
+        if (!QueryFilter.hasField(filters, QueryFilter.Field.KIND) && !QueryFilter.hasField(filters, QueryFilter.Field.EXECUTION_ID)) {
             condition = NORMAL_KIND_CONDITION.and(condition);
         }
         return findAsync(tenantId, condition, field(DATE_COLUMN).asc());
+    }
+
+    @Override
+    public List<KeyedLog> findAfterWithoutAcl(
+        @Nullable String tenantId,
+        List<QueryFilter> filters,
+        Instant afterTimestamp,
+        @Nullable String afterKey,
+        int pageSize) {
+        // Same default-kind rule as findAsync: NORMAL only unless a KIND or executionId filter is present.
+        var condition = this.filter(filters, DATE_COLUMN, Resource.LOG);
+        if (!QueryFilter.hasField(filters, QueryFilter.Field.KIND) && !QueryFilter.hasField(filters, QueryFilter.Field.EXECUTION_ID)) {
+            condition = NORMAL_KIND_CONDITION.and(condition);
+        }
+
+        // With a key, seek strictly after the (timestamp, key) row; without one (first run or a legacy date-only
+        // offset), fall back to a strict timestamp lower bound (which matches the previous START_DATE behaviour).
+        Field<OffsetDateTime> dateField = field(DATE_COLUMN, OffsetDateTime.class);
+        OffsetDateTime after = afterTimestamp.atOffset(ZoneOffset.UTC);
+        Condition seek = afterKey == null
+            ? dateField.gt(after)
+            : DSL.row(dateField, KEY_FIELD).gt(DSL.row(DSL.val(after), DSL.val(afterKey)));
+
+        final Condition finalCondition = condition;
+        return this.jdbcRepository.getDslContextWrapper().transactionResult(configuration ->
+            DSL.using(configuration)
+                .select(KEY_FIELD, VALUE_FIELD)
+                .from(this.jdbcRepository.getTable())
+                .where(this.defaultFilter(tenantId))
+                .and(finalCondition)
+                .and(seek)
+                .orderBy(dateField.asc(), KEY_FIELD.asc())
+                .limit(pageSize)
+                .fetch()
+                .map(record -> new KeyedLog(record.get(KEY_FIELD), this.jdbcRepository.map(record)))
+        );
     }
 
     @Override

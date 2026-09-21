@@ -22,8 +22,12 @@ jobs:
     secrets:
       OTLP_ENDPOINT: ${{ secrets.OTLP_ENDPOINT }}
       OTLP_HEADERS: ${{ secrets.OTLP_HEADERS }}
+      GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
     with:
       java-version: 25
+      # Embed the plugin schema bundle in the jar, so the zip/tar and executable published
+      # to the GitHub release carry it just like the Docker images do.
+      embed-plugins-schema-bundle: true
 
   backend-tests:
     name: Backend tests
@@ -76,7 +80,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Download executable
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: exe
           path: build/executable
@@ -116,7 +120,7 @@ jobs:
       OTLP_ENDPOINT: ${{ secrets.OTLP_ENDPOINT }}
     steps:
       - name: OpenTelemetry - Export trace
-        uses: kestra-io/actions/actions/otel-collect@main
+        uses: kestra-io/actions/actions/otel-export-trace@main
         if: ${{ env.OTLP_ENDPOINT != '' }}
         with:
           mode: export-all

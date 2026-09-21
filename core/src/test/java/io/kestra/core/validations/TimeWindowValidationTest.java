@@ -77,13 +77,40 @@ class TimeWindowValidationTest {
 
     @Test
     void shouldNotValidateDailyTimeWindowWhenInvalidParam() {
-        var sla = TimeWindow.builder().type(TimeWindow.Type.DAILY_TIME_WINDOW).startTime(LocalTime.now()).endTime(LocalTime.now()).window(Duration.ofHours(1)).build();
+        var sla = TimeWindow.builder()
+            .type(TimeWindow.Type.DAILY_TIME_WINDOW)
+            .startTime(LocalTime.now())
+            .endTime(LocalTime.now())
+            .window(Duration.ofHours(1))
+            .deadline(LocalTime.now())
+            .build();
 
         Optional<ConstraintViolationException> valid = modelValidator.isValid(sla);
         assertThat(valid.isEmpty()).isFalse();
         assertThat(valid.get().getConstraintViolations()).hasSize(2);
         assertThat(valid.get().getMessage()).contains(": Time window of type `DAILY_TIME_WINDOW` cannot have a window.\n");
         assertThat(valid.get().getMessage()).contains(": Time window of type `DAILY_TIME_WINDOW` cannot have a deadline.\n");
+    }
+
+    @Test
+    void shouldNotValidateDailyTimeWindowWhenStartTimeLooksLikeADeadline() {
+        // Regression guard for kestra-io/kestra#18763: the DAILY_TIME_WINDOW branch used
+        // to inspect getStartTime() while reporting "cannot have a deadline", so a valid
+        // startTime+endTime+window combination (the startTime is required for this type!)
+        // produced a spurious "cannot have a deadline" violation alongside the real
+        // "cannot have a window" one.
+        var sla = TimeWindow.builder()
+            .type(TimeWindow.Type.DAILY_TIME_WINDOW)
+            .startTime(LocalTime.now())
+            .endTime(LocalTime.now())
+            .window(Duration.ofHours(1))
+            .build();
+
+        Optional<ConstraintViolationException> valid = modelValidator.isValid(sla);
+        assertThat(valid.isEmpty()).isFalse();
+        assertThat(valid.get().getConstraintViolations()).hasSize(1);
+        assertThat(valid.get().getMessage()).contains(": Time window of type `DAILY_TIME_WINDOW` cannot have a window.\n");
+        assertThat(valid.get().getMessage()).doesNotContain("cannot have a deadline");
     }
 
     @Test

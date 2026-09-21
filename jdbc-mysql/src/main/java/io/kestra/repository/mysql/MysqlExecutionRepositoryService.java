@@ -6,6 +6,7 @@ import org.jooq.Condition;
 import org.jooq.Field;
 import org.jooq.impl.DSL;
 
+import io.kestra.core.exceptions.InvalidQueryFiltersException;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.utils.Either;
@@ -43,7 +44,7 @@ public abstract class MysqlExecutionRepositoryService {
                 case NOT_CONTAINS -> conditions.add(labelContainsCondition(query).not());
                 case IS_NULL -> conditions.add(labelKeyCondition(query).not());
                 case IS_NOT_NULL -> conditions.add(labelKeyCondition(query));
-                default -> throw new UnsupportedOperationException("Unsupported operation for query: " + operation);
+                default -> throw new InvalidQueryFiltersException("Unsupported operation for query: " + operation);
             }
         } else {
             var labels = input.getLeft();
@@ -72,7 +73,7 @@ public abstract class MysqlExecutionRepositoryService {
                         conditions.add(labelKeyCondition((String) key).not());
                     case IS_NOT_NULL ->
                         conditions.add(labelKeyCondition((String) key));
-                    default -> throw new UnsupportedOperationException("Unsupported operation: " + operation);
+                    default -> throw new InvalidQueryFiltersException("Unsupported operation: " + operation);
                 }
             });
         }

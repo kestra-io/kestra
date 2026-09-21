@@ -6,53 +6,35 @@
     import {KsNotification} from "@kestra-io/design-system"
     import {pageFromRoute} from "../utils/eventsRouter"
     import {h, onUnmounted, watch, computed, ref} from "vue"
+    import {useI18n} from "vue-i18n"
+    import {useRoute} from "vue-router"
+    import type {ProblemFieldError} from "@kestra-io/kestra-sdk"
     import ErrorToastContainer from "./ErrorToastContainer.vue"
     import {useApiStore} from "../stores/api"
-    import {useRoute} from "vue-router"
-
-    export interface Message {
-        title?: string;
-        message?: string;
-        content?: {
-            message?: string;
-            _embedded?: {
-                errors?: any[];
-            };
-        };
-        response?: {
-            status: number;
-            config: {
-                url?: string;
-                method?: string;
-            };
-        };
-        variant?: "success" | "warning" | "info" | "error" | "primary";
-    }
+    import {problemDetail, problemTitle, type ToastMessage} from "../utils/problem"
 
     interface ErrorEvent {
-        type: string;
+        type: string
         error: {
-            message: string;
-            errors: any[];
-            response?: {
-                status?: number;
-            };
-            request?: {
-                url: string;
-                method: string;
-            };
-        };
-        page: any;
+            message: string
+            /** Stable, low-cardinality dimension for error analytics, unlike free-text prose. */
+            problemType?: string
+            errors: readonly ProblemFieldError[]
+            response?: {status?: number}
+            request?: {url: string; method: string}
+        }
+        page: any
     }
 
     const props = withDefaults(defineProps<{
-        message: Message;
-        noAutoHide?: boolean;
+        message: ToastMessage
+        noAutoHide?: boolean
     }>(), {
         noAutoHide: false,
     })
 
     const route = useRoute()
+    const {t, te} = useI18n()
     const apiStore = useApiStore()
     const notifications = ref<any>()
 
@@ -63,31 +45,21 @@
         }
     }
 
-    const title = computed(() => {
-        if (props.message.title) {
-            return props.message.title
-        }
+    // The problem's kind, localized. Independent of `detail`, so a message containing a colon is safe.
+    const title = computed(() => props.message.title ?? problemTitle(props.message.problem, t, te))
 
-        if (props.message.response?.status === 503) {
-            return "503 Service Unavailable"
-        }
+    const detail = computed(() => props.message.content ?? problemDetail(props.message.problem, t, te))
 
-        if (props.message.content?.message && props.message.content.message.indexOf(":") > 0) {
-            return props.message.content.message.substring(0, props.message.content.message.indexOf(":"))
-        }
+    const items = computed<readonly ProblemFieldError[]>(() => props.message.problem?.errors ?? [])
 
-        return "Error"
+    // Only meaningful on a server error, where it is the sole link between what the user saw and the log
+    // entry holding the real cause.
+    const traceId = computed(() => {
+        const problem = props.message.problem
+        return problem && problem.status >= 500 ? problem.traceId : undefined
     })
 
-    const items = computed(() => {
-        // oxlint-disable-next-line no-underscore-dangle
-        const messages = props.message.content?._embedded?.errors || []
-        return Array.isArray(messages) ? messages : [messages]
-    })
-
-    const isLargeNotification = computed(() => {
-        return items.value.length > 0 || (props.message.content?.message?.length ?? 0) > 100
-    })
+    const isLargeNotification = computed(() => items.value.length > 0 || detail.value.length > 100)
 
     watch(route, () => {
         close()
@@ -100,33 +72,28 @@
             type: "ERROR",
             error: {
                 message: title.value,
+                problemType: props.message.problem?.type,
                 errors: items.value,
             },
             page: pageFromRoute(route),
         }
 
-        if (props.message.response) {
-            error.error.response = {}
-            error.error.request = {
-                method: props.message.response.config.method ?? "GET",
-                url: props.message.response.config.url ?? "unknown url",
-            }
-
-            if (props.message.response.status) {
-                error.error.response.status = props.message.response.status
-            }
+        const status = props.message.status ?? props.message.problem?.status
+        if (status !== undefined) {
+            error.error.response = {status}
+        }
+        if (props.message.request) {
+            error.error.request = props.message.request
         }
 
         apiStore.events(error)
 
         notifications.value = KsNotification({
-            title: title.value || "Error",
+            title: title.value,
             message: h(ErrorToastContainer, {
-                message: {
-                    message: props.message?.message,
-                    content: {message: props.message?.content?.message ?? ""},
-                },
+                detail: detail.value,
                 items: items.value,
+                traceId: traceId.value,
                 onClose: () => close(),
             }),
             position: "bottom-right",

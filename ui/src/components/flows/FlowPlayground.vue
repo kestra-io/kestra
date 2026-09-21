@@ -69,6 +69,32 @@
                 <HistoryIcon v-else />
             </button>
         </div>
+        <KsDialog
+            v-if="playgroundStore.showInputPrompt"
+            v-model="playgroundStore.showInputPrompt"
+            destroyOnClose
+            :appendToBody="true"
+            scrollable
+            large
+            :title="$t('execute')"
+        >
+            <KsForm labelPosition="top">
+                <KsFormItem :label="$t('inputs')">
+                    <div class="w-100">
+                        <FlowRun 
+                            ref="playgroundFlowRunRef" 
+                            :embed="true" 
+                            :redirect="false"
+                            :autoPrefill="true"
+                            @execution-trigger="playgroundStore.showInputPrompt = false" 
+                        />
+                    </div>
+                </KsFormItem>
+            </KsForm>
+            <template #footer>
+                <FlowRunActions :flowRun="playgroundFlowRunRef" />
+            </template>
+        </KsDialog>
     </section>
 </template>
 
@@ -89,8 +115,12 @@
     import EmptyVisualPlayground from "../../assets/empty_visuals/playground.png"
     import {useExecutionsStore} from "../../stores/executions"
     import Kill from "../executions/overview/components/actions/Kill.vue"
+    import FlowRun from "./FlowRun.vue"
+    import FlowRunActions from "./FlowRunActions.vue"
 
     const {t} = useI18n()
+
+    const playgroundFlowRunRef = ref()
 
     const tabs = computed(() => ([
         {
@@ -168,7 +198,7 @@
         position: sticky;
         background-color: var(--ks-bg-surface);
         top: 0;
-        z-index: 100;
+        z-index: var(--ks-z-sticky);
         gap: 1rem;
     }
 
@@ -190,7 +220,9 @@
     }
 
     .current-run {
+        display: flex;
         flex: 1;
+        flex-direction: column;
     }
 
 .extra-options{
@@ -211,7 +243,7 @@
         padding: 8px;
         border-radius: 50%;
         display: flex;
-        z-index: 99;
+        z-index: calc(var(--ks-z-sticky) - 1);
         &:hover {
             background-color: var(--ks-bg-hover-elevated);
         }
@@ -273,6 +305,7 @@
     }
 
     .tab-content{
+        flex: 1;
         overflow: auto;
         padding: 1rem;
         background-color: var(--ks-bg-surface);

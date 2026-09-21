@@ -6,13 +6,6 @@ micronaut:
       signature-key: I6EGNzRESu3X3pKZidrqCGOHQFUFC0yK
       filter:
         enabled: false
-  router:
-    static-resources:
-      ui:
-        paths: classpath:ui
-        mapping: /ui/**
-        enabled: ${kestra.webserver.ui.enabled:true}
-
   http:
     client:
       read-idle-timeout: 60s
@@ -50,6 +43,10 @@ kestra:
         endpoints:
           - host: localhost
             port: ${kestra.controller.port}
+  executor:
+    execution-delay-loop-periodicity-ms: 250
+    monitor-sla-loop-periodicity-ms: 250
+    multiple-condition-purge-loop-periodicity-ms: 1000
   ai:
     type: gemini
     gemini:
@@ -215,3 +212,7 @@ grpc:
     enabled: false
     health:
       enabled: false
+
+logger:
+  levels:
+    "io.kestra.core.migration": WARN

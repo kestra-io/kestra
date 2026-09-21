@@ -3,7 +3,7 @@ import {apiUrl, apiUrlWithoutTenants} from "override/utils/route"
 import {useApiStore} from "../../stores/api"
 import * as BasicAuth from "../../utils/basicAuth"
 import {ref} from "vue"
-import {useClient} from "@kestra-io/kestra-sdk"
+import {useClient, type MiscControllerConfiguration} from "@kestra-io/kestra-sdk"
 import {initPosthogIfEnabled} from "../../utils/posthog"
 import {ensureUid} from "../../utils/uid"
 import type {SelectedTheme} from "../../utils/utils"
@@ -12,7 +12,7 @@ import type {SelectedTheme} from "../../utils/utils"
 
 export const useMiscStore = defineStore("misc", () => {
 
-    const configs = ref<Record<string, any>>()
+    const configs = ref<MiscControllerConfiguration>()
     const contextInfoBarOpenTab = ref("")
     // AI Copilot is the first / default context-dock tab.
     const lastContextTab = ref("ai")
@@ -21,6 +21,12 @@ export const useMiscStore = defineStore("misc", () => {
     // points ("Fix with AI", the editor shortcut, …) via `promptCopilot`; consumed and cleared
     // by CopilotChat. `null` means nothing pending.
     const copilotPrompt = ref<string | null>(null)
+    // Title for the thread the seeded prompt should start; only used when `copilotNewThread` is set.
+    const copilotThreadTitle = ref<string | null>(null)
+    // When true, the seeded prompt starts a fresh thread instead of continuing the active one.
+    // Never set in OSS: without the EE thread list there is no way back to the previous
+    // conversation, so a reset would silently discard it. The EE store override honours it.
+    const copilotNewThread = ref(false)
 
     /** Opens the AI Copilot context-dock tab. */
     function openCopilot() {
@@ -29,8 +35,9 @@ export const useMiscStore = defineStore("misc", () => {
     }
 
     /** Opens the AI Copilot context-dock tab and seeds its composer with `prompt`. */
-    function promptCopilot(prompt: string) {
+    function promptCopilot(prompt: string, options?: {title?: string, newThread?: boolean}) {
         copilotPrompt.value = prompt
+        copilotThreadTitle.value = options?.title ?? null
         openCopilot()
     }
 
@@ -103,6 +110,8 @@ export const useMiscStore = defineStore("misc", () => {
         lastContextTab,
         theme,
         copilotPrompt,
+        copilotThreadTitle,
+        copilotNewThread,
         openCopilot,
         promptCopilot,
         loadConfigs,

@@ -8,16 +8,21 @@
                 {{ $t('none') }}
             </div>
             <div v-else class="pairs-container">
-                <KsTag
+                <KsTooltip
                     v-for="(pair, index) in detailPairs"
                     :key="index"
-                    closable
-                    effect="light"
-                    @close="removePair(index)"
-                    class="detail-tag"
+                    :content="`${pair.key}: ${pair.value}`"
+                    placement="bottom"
                 >
-                    <span class="detail-key">{{ pair.key }}:</span><span class="detail-value">{{ pair.value }}</span>
-                </KsTag>
+                    <KsTag
+                        closable
+                        effect="light"
+                        @close="removePair(index)"
+                        class="detail-tag"
+                    >
+                        <span class="detail-key">{{ pair.key }}:</span><span class="detail-value">{{ pair.value }}</span>
+                    </KsTag>
+                </KsTooltip>
             </div>
         </div>
 
@@ -211,9 +216,5 @@
 
 :deep(.kel-input__inner) {
     font-size: var(--ks-font-size-sm);
-
-    &::placeholder {
-        color: var(--ks-text-dim);
-    }
 }
 </style>

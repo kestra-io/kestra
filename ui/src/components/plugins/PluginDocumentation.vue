@@ -47,13 +47,14 @@
                     <p v-if="pluginSummary" class="dp-summary">{{ pluginSummary }}</p>
                 </div>
 
-                <nav class="dp-nav" aria-label="Documentation sections">
+                <nav class="dp-nav" :aria-label="$t('plugins.documentation_sections')" data-test="plugin-doc-nav">
                     <button
                         type="button"
                         v-for="chip in navChips"
                         :key="chip.id"
                         class="dp-navchip"
                         :class="{active: activeSection === chip.id}"
+                        :data-test="`plugin-doc-navchip-${chip.id}`"
                         @click="selectSection(chip.id)"
                     >
                         {{ chip.label }}
@@ -73,6 +74,7 @@
                     compact
                     :activeSection="activeSection"
                     @section-counts="onSectionCounts"
+                    @definition-navigate="selectSection('definitions')"
                 >
                     <template #markdown="{content}">
                         <KsMarkdown
@@ -86,6 +88,7 @@
         <KsMarkdown
             v-else-if="overrideIntro"
             :content="overrideIntro"
+            class="dp-override-intro"
             :class="{'position-absolute': absolute}"
         />
 
@@ -116,7 +119,7 @@
                 </KsInput>
             </div>
 
-            <nav class="dp-nav" aria-label="Documentation sections">
+            <nav class="dp-nav" :aria-label="$t('plugins.documentation_sections')">
                 <button
                     type="button"
                     v-for="tab in introTabs"
@@ -273,6 +276,7 @@
     import SchemaToHtml from "./schema/SchemaToHtml.vue"
     import {KsButton, KsInput, KsMarkdown, KsTag, KsTooltip} from "@kestra-io/design-system"
     import TaskIcon from "./TaskIcon.vue"
+    import {buildHighlightHtml} from "../../utils/crossResourceSearch"
     import {getPluginReleaseUrl} from "../../utils/pluginUtils"
     import {getTheme, copy} from "../../utils/utils"
     import {useMiscStore} from "override/stores/misc"
@@ -309,7 +313,7 @@
     const miscStore = useMiscStore()
     const pluginsStore = usePluginsStore()
     const activeSection = ref("overview")
-    const sectionCounts = ref<{properties?: number; outputs?: number; examples?: boolean}>({})
+    const sectionCounts = ref<{properties?: number; outputs?: number; examples?: boolean; metrics?: number; definitions?: number}>({})
     const introSection = ref("overview")
     const introSearch = ref("")
 
@@ -365,19 +369,24 @@
         if (sectionCounts.value.outputs !== undefined) {
             chips.push({id: "outputs", label: t("plugins.nav_outputs"), count: sectionCounts.value.outputs})
         }
+        if (sectionCounts.value.metrics !== undefined) {
+            chips.push({id: "metrics", label: t("plugins.nav_metrics"), count: sectionCounts.value.metrics})
+        }
         if (sectionCounts.value.examples) {
             chips.push({id: "examples", label: t("plugins.nav_examples")})
+        }
+        if (sectionCounts.value.definitions !== undefined) {
+            chips.push({id: "definitions", label: t("plugins.nav_definitions"), count: sectionCounts.value.definitions})
         }
         return chips
     })
 
-    const onSectionCounts = (counts: {properties?: number; outputs?: number; examples?: boolean}) => {
+    const onSectionCounts = (counts: {properties?: number; outputs?: number; examples?: boolean; metrics?: number; definitions?: number}) => {
         sectionCounts.value = counts
     }
 
-    watch(currentPlugin, () => {
+    watch([() => currentPlugin.value?.cls, () => currentPlugin.value?.version], () => {
         activeSection.value = "overview"
-        sectionCounts.value = {}
     })
 
     const selectSection = (id: string) => {
@@ -476,7 +485,7 @@
             const exMatch = rest.match(/`([^`]+)`\s*(?:—|-)/)
             const example = exMatch ? exMatch[1] : ""
             const desc = rest.replace(/`[^`]+`\s*(?:—|-)\s*/, "").replace(/\\\|/g, "|").trim()
-            rows.push({name, nameHtml: name, desc, descHtml: desc, example})
+            rows.push({name, nameHtml: buildHighlightHtml(name, ""), desc, descHtml: buildHighlightHtml(desc, ""), example})
         }
         return rows
     })
@@ -484,14 +493,12 @@
     const filteredPebbleRows = computed<PebbleRow[]>(() => {
         const q = introSearch.value.trim().toLowerCase()
         if (!q) return pebbleRows.value
-        const esc = q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
-        const re = new RegExp(`(${esc})`, "gi")
         return pebbleRows.value
             .filter(r => r.name.toLowerCase().includes(q) || r.desc.toLowerCase().includes(q) || r.example.toLowerCase().includes(q))
             .map(r => ({
                 ...r,
-                nameHtml: r.name.replace(re, "<mark class=\"dp-intro-hl\">$1</mark>"),
-                descHtml: r.desc.replace(re, "<mark class=\"dp-intro-hl\">$1</mark>"),
+                nameHtml: buildHighlightHtml(r.name, q),
+                descHtml: buildHighlightHtml(r.desc, q),
             }))
     })
 
@@ -571,6 +578,11 @@
 
   .plugin-schema {
     display: block;
+    padding: var(--ks-spacing-5) var(--ks-spacing-4) var(--ks-spacing-6);
+  }
+
+  .dp-override-intro {
+    width: 100%;
     padding: var(--ks-spacing-5) var(--ks-spacing-4) var(--ks-spacing-6);
   }
 
@@ -1135,7 +1147,6 @@
   }
 
   .dp-intro-md :deep(pre) {
-    background: var(--ks-bg-base);
     border: 1px solid var(--ks-border-default);
     border-radius: var(--ks-radius-base);
     padding: var(--ks-spacing-3);
@@ -1148,7 +1159,8 @@
     font-size: var(--ks-font-size-xs);
   }
 
-  :deep(.dp-intro-hl) {
+  .dp-intro-fn-name mark,
+  .dp-intro-fn-desc mark {
     background: color-mix(in srgb, var(--ks-primary-500) 18%, transparent);
     border-radius: 3px;
     padding: 0 2px;

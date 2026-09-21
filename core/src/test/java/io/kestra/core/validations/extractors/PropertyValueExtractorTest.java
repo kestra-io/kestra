@@ -1,5 +1,6 @@
 package io.kestra.core.validations.extractors;
 
+import java.util.List;
 import java.util.Set;
 
 import org.junit.jupiter.api.Test;
@@ -31,6 +32,32 @@ public class PropertyValueExtractorTest {
         assertThat(violations.size()).isEqualTo(1);
         ConstraintViolation<DynamicPropertyDto> violation = violations.stream().findFirst().get();
         assertThat(violation.getMessage()).isEqualTo("must be greater than or equal to 10");
+    }
+
+    // @Valid only cascades into a Property's list elements when it is on the type argument
+    // (Property<List<@Valid X>>), never when it is on the field.
+    @Test
+    public void should_cascade_valid_into_property_list_elements() {
+        DynamicPropertyDto blank = new DynamicPropertyDto(
+            Property.ofValue(20), Property.ofValue("Test"), Property.ofValue(List.of(new NestedDto(" ")))
+        );
+        Set<ConstraintViolation<DynamicPropertyDto>> violations = validator.validate(blank);
+        assertThat(violations).isNotEmpty();
+        assertThat(violations.stream().findFirst().get().getPropertyPath().toString()).contains("list").contains("id");
+
+        DynamicPropertyDto valid = new DynamicPropertyDto(
+            Property.ofValue(20), Property.ofValue("Test"), Property.ofValue(List.of(new NestedDto("ok")))
+        );
+        assertThat(validator.validate(valid)).isEmpty();
+    }
+
+    @Test
+    public void should_not_cascade_valid_into_an_unrendered_expression() {
+        DynamicPropertyDto dto = new DynamicPropertyDto(
+            Property.ofValue(20), Property.ofValue("Test"), Property.ofExpression("{{ x }}")
+        );
+
+        assertThat(validator.validate(dto)).isEmpty();
     }
 
 }

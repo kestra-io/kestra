@@ -92,7 +92,7 @@
     import {useI18n} from "vue-i18n"
     import {useRoute, useRouter} from "vue-router"
     import {useFlowStore} from "../../../stores/flow"
-    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
+    import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
     import Pencil from "vue-material-design-icons/Pencil.vue"
     import BackupRestore from "vue-material-design-icons/BackupRestore.vue"
     import TrashCan from "vue-material-design-icons/TrashCan.vue"
@@ -153,7 +153,7 @@
         deleteFlow: editorDeleteFlow,
     } = useFlowEditorActions()
 
-    const onSelectDashboard = (value: any) => {
+    const onSelectDashboard = (value: string) => {
         const key = dashboardStore.getUserDashboardStorageKey(route)
         localStorage.setItem(key, value)
         router.replace({
@@ -225,8 +225,9 @@
     }
 
     const restoreFlow = () => {
+        if (!flow.value?.source) return
         flowStore.createFlow({
-            flow: YAML_UTILS.deleteMetadata(flow.value?.source, "deleted"),
+            flow: YAML_UTILS.deleteMetadata(flow.value.source, "deleted"),
             restore: true,
         }).then(() => {
             unsavedChangesStore.unsavedChange = false

@@ -104,13 +104,14 @@ public class VariableRenderer {
             PebbleTemplate compiledTemplate = this.pebbleEngine().getLiteralTemplate((String) result);
 
             try {
-                OutputWriter writer = stringify ? new JsonWriter() : new TypedObjectWriter();
+                long maxOutputSize = this.variableConfiguration.getMaxOutputSize();
+                OutputWriter writer = stringify ? new JsonWriter(maxOutputSize) : new TypedObjectWriter(maxOutputSize);
                 compiledTemplate.evaluate(writer, variables);
                 result = writer.output();
             } catch (IllegalArgumentException e) {
                 //can happen in case of mixed type in string
                 if (!stringify) {
-                    JsonWriter fallbackWriter = new JsonWriter();
+                    JsonWriter fallbackWriter = new JsonWriter(this.variableConfiguration.getMaxOutputSize());
                     compiledTemplate.evaluate(fallbackWriter, variables);
                     Object rendered = fallbackWriter.output();
 

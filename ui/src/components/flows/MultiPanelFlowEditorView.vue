@@ -29,7 +29,7 @@
     import * as Utils from "../../utils/utils"
     import {usePlaygroundStore} from "../../stores/playground"
 
-    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
+    import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
     import FlowPlayground from "./FlowPlayground.vue"
     import FlowEditorStats from "override/components/flows/FlowEditorStats.vue"
     import KeyShortcuts from "../inputs/KeyShortcuts.vue"

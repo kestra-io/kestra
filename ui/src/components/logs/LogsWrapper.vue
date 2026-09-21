@@ -75,19 +75,19 @@
                                 v-if="logsStore.hasPreviousPage"
                                 type="default"
                                 :loading="isLoading"
-                                :aria-label="t('previous')"
+                                :aria-label="$t('previous')"
                                 @click="loadPrevious"
                             >
-                                {{ t("previous") }}
+                                {{ $t("previous") }}
                             </KsButton>
                             <KsButton
                                 v-if="logsStore.hasNextCursor"
                                 type="default"
                                 :loading="isLoading"
-                                :aria-label="t('next')"
+                                :aria-label="$t('next')"
                                 @click="loadNext"
                             >
-                                {{ t("next") }}
+                                {{ $t("next") }}
                             </KsButton>
                         </div>
                     </div>
@@ -122,13 +122,11 @@
     import {useRoute, useRouter} from "vue-router"
     import {routeFamily} from "../../utils/routeFamily"
     import {useI18n} from "vue-i18n"
-    import _merge from "lodash/merge"
-    import moment from "moment"
-    import {useLogFilter} from "../filter/configurations"
+    import {useLogFilter} from "../filter/configurations/logFilter"
     import {useValues} from "../filter/composables/useValues"
     import QuickFilters from "../filter/QuickFilters.vue"
     import useRestoreUrl from "../../composables/useRestoreUrl"
-    import {KsFilter as KSFilter} from "@kestra-io/design-system"
+    import {dateUtils, dayjs, KsFilter as KSFilter, deepMerge} from "@kestra-io/design-system"
 
     const {loadInit} = useRestoreUrl()
     import Sections from "../dashboard/sections/Sections.vue"
@@ -151,7 +149,7 @@
     } from "@kestra-io/design-system"
     import {useRouteFilterPolicy} from "@kestra-io/design-system"
     import type {LevelFilterValue} from "@kestra-io/design-system"
-    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
+    import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
     import YAML_CHART from "../dashboard/assets/logs_timeseries_chart.yaml?raw"
     import {useLogsStore} from "../../stores/logs"
     import useRouteContext from "../../composables/useRouteContext"
@@ -290,7 +288,7 @@
             queryFilter = normalizeRouteLevelFilter(queryFilter, effectiveLogLevel.value)
         }
 
-        return _merge(base, queryFilter)
+        return deepMerge(base, queryFilter)
     }
 
     let hasLoadedOnce = false
@@ -367,10 +365,10 @@
         }
 
         if (downloadTimeRange.value) {
-            params.startDate = moment()
-                .subtract(moment.duration(downloadTimeRange.value).as("milliseconds"))
-                .toISOString(true)
-            params.endDate = moment().toISOString(true)
+            params.startDate = dateUtils.toIsoKeepOffset(
+                dayjs().subtract(dayjs.duration(downloadTimeRange.value).as("milliseconds")),
+            )
+            params.endDate = dateUtils.toIsoKeepOffset(dayjs())
         } else {
             if (_sd) params.startDate = _sd
             if (_ed) params.endDate = _ed
@@ -379,7 +377,27 @@
 
         downloading.value = true
         logsStore.downloadLogs(params)
-            .then(() => (downloadOpen.value = false))
+            .then((result) => {
+                downloadOpen.value = false
+
+                // No lines means no file either way, so staying silent would read as a broken
+                // button — which is the silence this whole change exists to remove.
+                if (result.downloaded === 0) {
+                    if (result.outcome === "complete") toast.warning(t("logs_download_empty"))
+                    else toast.error(t("logs_download_failed"))
+                    return
+                }
+
+                // A known total is the useful number, whether the export was capped or cut short.
+                const skipped = result.total === undefined ? undefined : result.total - result.downloaded
+                if (skipped !== undefined && skipped > 0) {
+                    toast.warning(t("logs_download_truncated", {downloaded: result.downloaded, skipped}))
+                } else if (result.outcome === "failed") {
+                    toast.warning(t("logs_download_partial", {downloaded: result.downloaded}))
+                } else if (result.outcome === "capped") {
+                    toast.warning(t("logs_download_capped", {downloaded: result.downloaded}))
+                }
+            })
             .finally(() => (downloading.value = false))
     }
 

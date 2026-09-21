@@ -16,13 +16,17 @@
                         :cls="iconCls"
                         :icons="icons"
                         :loadIcon="loadIcon"
+                        variable="--ks-black"
                         onlyIcon
                     />
                 </slot>
             </div>
 
             <div class="plugin-card__heading">
-                <h5 class="plugin-card__title">{{ title }}</h5>
+                <div class="plugin-card__title-row">
+                    <h5 class="plugin-card__title">{{ title }}</h5>
+                    <slot name="title-badge" />
+                </div>
                 <p v-if="description" class="plugin-card__description">
                     {{ description }}
                 </p>
@@ -41,11 +45,11 @@
             <slot name="footer-content">
                 <span v-if="hasTaskCount" class="plugin-card__count">
                     <span class="plugin-card__count-value">{{ taskCount }}</span>
-                    <span class="plugin-card__count-label">{{ t("plugin_card.tasks", taskCount ?? 0) }}</span>
+                    <span class="plugin-card__count-label">{{ $t("plugin_card.tasks", taskCount ?? 0) }}</span>
                 </span>
                 <span v-if="hasBlueprintCount" class="plugin-card__count">
                     <span class="plugin-card__count-value">{{ blueprintCount }}</span>
-                    <span class="plugin-card__count-label">{{ t("plugin_card.blueprints", blueprintCount ?? 0) }}</span>
+                    <span class="plugin-card__count-label">{{ $t("plugin_card.blueprints", blueprintCount ?? 0) }}</span>
                 </span>
             </slot>
             <ChevronRight
@@ -59,21 +63,14 @@
 
 <script setup lang="ts">
     import {computed, useSlots} from "vue"
-    import {useI18n} from "vue-i18n"
     import ChevronRight from "vue-material-design-icons/ChevronRight.vue"
     import {KsTag} from "@kestra-io/design-system"
     import TaskIcon, {type TaskIconData} from "./TaskIcon.vue"
-    import locale from "./PluginCard.locale"
 
     defineOptions({
         name: "PluginCard",
     })
 
-    const {t} = useI18n({
-        useScope: "local",
-        inheritLocale: true,
-        messages: locale,
-    })
     const slots = useSlots()
 
     const props = withDefaults(defineProps<{
@@ -103,6 +100,7 @@
 
     defineSlots<{
         icon?(): unknown
+        "title-badge"?(): unknown
         "footer-content"?(): unknown
     }>()
 
@@ -161,7 +159,9 @@
             width: 2.625rem;
             height: 2.625rem;
             padding: var(--ks-spacing-1);
-            background-color: var(--ks-bg-tag);
+            background-color: var(--ks-bg-plugin-icon);
+            border: 1px solid var(--ks-border-default);
+            color: var(--ks-black);
             border-radius: var(--ks-radius-base);
         }
 
@@ -173,8 +173,17 @@
             min-width: 0;
         }
 
+        &__title-row {
+            display: flex;
+            align-items: center;
+            gap: var(--ks-spacing-2);
+            min-width: 0;
+        }
+
         &__title {
             margin: 0;
+            flex: 1 1 auto;
+            min-width: 0;
             font-size: var(--ks-font-size-md);
             font-weight: 600;
             line-height: 1.125rem;

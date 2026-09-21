@@ -26,6 +26,13 @@ public class PageableUtils {
             );
         }
 
+        if (size < 1) {
+            throw new HttpStatusException(
+                HttpStatus.UNPROCESSABLE_ENTITY,
+                "The page size must be greater than or equal to 1."
+            );
+        }
+
         if (size > MAX_PAGE_SIZE) {
             throw new HttpStatusException(
                 HttpStatus.UNPROCESSABLE_ENTITY,
@@ -33,17 +40,11 @@ public class PageableUtils {
             );
         }
 
-        final Pageable pageable = Pageable.from(
+        return Pageable.from(
             page,
             size,
             sort(sort, sortMapper)
         );
-
-        if (pageable.isUnpaged()) {
-            throw new IllegalArgumentException("Unpaged data are not supported");
-        }
-
-        return pageable;
     }
 
     public static Pageable from(int page, int size, List<String> sort) throws HttpStatusException {

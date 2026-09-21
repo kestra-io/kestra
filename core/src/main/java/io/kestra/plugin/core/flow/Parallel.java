@@ -21,6 +21,7 @@ import io.kestra.core.utils.GraphUtils;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.PositiveOrZero;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
@@ -131,7 +132,7 @@ public class Parallel extends AbstractBranch<VoidOutput> implements OnChildFailu
         title = "Number of concurrent parallel tasks that can be running at any point in time",
         description = "If the value is `0`, no limit exist and all tasks will start at the same time."
     )
-    private final Property<Integer> concurrent = Property.ofValue(0);
+    private final Property<@PositiveOrZero Integer> concurrent = Property.ofValue(0);
 
     @NotNull
     @Builder.Default
@@ -142,7 +143,7 @@ public class Parallel extends AbstractBranch<VoidOutput> implements OnChildFailu
 
             `CANCELLED` / `FAILED`: as soon as a task fails with no retry left, every other still-running task in this Parallel is interrupted and lands in the given state. The Parallel itself still resolves to `FAILED` and its `errors`/`finally` tasks still run normally."""
     )
-    private final Property<OnChildFailure> onChildFailure = Property.ofValue(OnChildFailure.FAILED);
+    private final Property<OnChildFailure> onChildFailure = Property.ofValue(OnChildFailure.FAIL);
 
     @Override
     public GraphCluster tasksTree(Execution execution, TaskRun taskRun, List<String> parentValues) throws IllegalVariableEvaluationException {

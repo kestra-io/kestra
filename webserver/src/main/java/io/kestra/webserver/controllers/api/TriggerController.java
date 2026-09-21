@@ -223,8 +223,9 @@ public class TriggerController {
     @Operation(tags = { "Triggers" }, summary = "Create a backfill")
     @ApiResponse(responseCode = "200", description = "On success", content = { @Content(schema = @Schema(implementation = ApiTriggerState.class)) })
     @ApiResponse(responseCode = "409", description = "If the backfill cannot be created")
+    @ApiResponse(responseCode = "422", description = "If the backfill end date is not after its start date")
     public HttpResponse<ApiTriggerState> createBackfill(
-        @Parameter(description = "The trigger that need the backfill to be created") @Body ApiCreateBackfillRequest request) {
+        @Parameter(description = "The trigger that need the backfill to be created") @Body @Valid ApiCreateBackfillRequest request) {
         TriggerId triggerId = TriggerId.of(tenantService.resolveTenant(), request.namespace(), request.flowId(), request.triggerId());
         CreateBackfillTrigger.Backfill backfill = new CreateBackfillTrigger.Backfill(
             request.backfill().start(), request.backfill().end(), request.backfill().inputs(), request.backfill().labels()
@@ -481,7 +482,7 @@ public class TriggerController {
         @Parameter(description = "The namespace.") String namespace,
         @Parameter(description = "The ID of the flow.") String flowId,
         @Parameter(description = "The ID of the trigger.") String triggerId,
-        @Parameter(description = "The backfill configuration") Backfill backfill) {
+        @Parameter(description = "The backfill configuration") @NotNull Backfill backfill) {
 
         public record Backfill(
             ZonedDateTime start,

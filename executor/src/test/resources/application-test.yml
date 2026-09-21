@@ -90,3 +90,7 @@ grpc:
     enabled: false
     health:
       enabled: false
+
+logger:
+  levels:
+    "io.kestra.core.migration": WARN

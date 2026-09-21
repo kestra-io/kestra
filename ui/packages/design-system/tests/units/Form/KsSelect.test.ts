@@ -1,27 +1,21 @@
 import {describe, test, expect, afterEach} from "vitest"
-import {mount} from "@vue/test-utils"
 import {defineComponent, nextTick, ref} from "vue"
-import {createI18n} from "vue-i18n"
 import {ElSelect} from "element-plus"
-import KestraDesignSystem from "../../../src/index"
 import KsSelect from "../../../src/components/Form/KsSelect/KsSelect.vue"
 import KsOption from "../../../src/components/Form/KsSelect/KsOption.vue"
-
-const i18n = createI18n({legacy: false, locale: "en"})
-const globalConfig = {plugins: [i18n, KestraDesignSystem]}
+import {i18nMount} from "../i18nMount"
 
 describe("KsSelect", () => {
     test("renders trigger with placeholder", () => {
-        const wrapper = mount(KsSelect, {
+        const wrapper = i18nMount(KsSelect, {
             props: {placeholder: "Select a status"},
-            global: globalConfig,
         })
         expect(wrapper.find(".kel-select").exists()).toBe(true)
         expect(wrapper.find(".kel-select__placeholder").text()).toBe("Select a status")
     })
 
     test("renders options via KsOption", () => {
-        const wrapper = mount(
+        const wrapper = i18nMount(
             defineComponent({
                 components: {KsSelect, KsOption},
                 template: `<ks-select placeholder="Pick">
@@ -29,55 +23,48 @@ describe("KsSelect", () => {
                     <ks-option value="B" label="Option B" />
                 </ks-select>`,
             }),
-            {global: globalConfig},
         )
         expect(wrapper.find(".kel-select").exists()).toBe(true)
     })
 
     test("small size applies kel-select--small class", () => {
-        const wrapper = mount(KsSelect, {
+        const wrapper = i18nMount(KsSelect, {
             props: {size: "small"},
-            global: globalConfig,
         })
         expect(wrapper.find(".kel-select--small").exists()).toBe(true)
     })
 
     test("disabled applies is-disabled class", () => {
-        const wrapper = mount(KsSelect, {
+        const wrapper = i18nMount(KsSelect, {
             props: {disabled: true},
-            global: globalConfig,
         })
         expect(wrapper.find(".kel-select__wrapper.is-disabled").exists()).toBe(true)
     })
 
     test("multiple mode renders select wrapper", () => {
-        const wrapper = mount(KsSelect, {
+        const wrapper = i18nMount(KsSelect, {
             props: {multiple: true, placeholder: "Select statuses"},
-            global: globalConfig,
         })
         expect(wrapper.find(".kel-select").exists()).toBe(true)
     })
 
     test("filterable mode renders input", () => {
-        const wrapper = mount(KsSelect, {
+        const wrapper = i18nMount(KsSelect, {
             props: {filterable: true, placeholder: "Filter…"},
-            global: globalConfig,
         })
         expect(wrapper.find(".kel-select").exists()).toBe(true)
     })
 
     test("loading renders a spinning suffix icon", () => {
-        const wrapper = mount(KsSelect, {
+        const wrapper = i18nMount(KsSelect, {
             props: {loading: true},
-            global: globalConfig,
         })
         expect(wrapper.find(".kel-icon.is-loading").exists()).toBe(true)
     })
 
     test("loading drives only the suffix spinner, not ElSelect (dropdown stays usable)", () => {
-        const wrapper = mount(KsSelect, {
+        const wrapper = i18nMount(KsSelect, {
             props: {loading: true},
-            global: globalConfig,
         })
         // `loading` must NOT reach ElSelect — it v-shows the option list on `!loading`,
         // so forwarding would hide still-valid options while they recompute.
@@ -85,15 +72,14 @@ describe("KsSelect", () => {
     })
 
     test("no spinner when loading is falsy", () => {
-        const wrapper = mount(KsSelect, {
+        const wrapper = i18nMount(KsSelect, {
             props: {placeholder: "Idle"},
-            global: globalConfig,
         })
         expect(wrapper.find(".kel-icon.is-loading").exists()).toBe(false)
     })
 
     test("colorMap colors the selected value and the dropdown options", async () => {
-        const wrapper = mount(
+        const wrapper = i18nMount(
             defineComponent({
                 components: {KsSelect, KsOption},
                 data: () => ({value: "A"}),
@@ -102,7 +88,6 @@ describe("KsSelect", () => {
                     <ks-option value="B" label="Option B" />
                 </ks-select>`,
             }),
-            {global: globalConfig},
         )
         await nextTick()
 
@@ -117,7 +102,7 @@ describe("KsSelect", () => {
     })
 
     test("without colorMap, selected value and options render with no inline color (unaffected)", async () => {
-        const wrapper = mount(
+        const wrapper = i18nMount(
             defineComponent({
                 components: {KsSelect, KsOption},
                 data: () => ({value: "A"}),
@@ -125,7 +110,6 @@ describe("KsSelect", () => {
                     <ks-option value="A" label="Option A" />
                 </ks-select>`,
             }),
-            {global: globalConfig},
         )
         await nextTick()
 
@@ -149,8 +133,8 @@ describe("KsSelect", () => {
          * The button's visibility derives from ElSelect's registered options, reached through a
          * template ref that is only populated after the first render — so it appears one tick in.
          */
-        const mountAndSettle = async (component: Parameters<typeof mount>[0]) => {
-            const wrapper = mount(component, {global: globalConfig})
+        const mountAndSettle = async (component: Parameters<typeof i18nMount>[0]) => {
+            const wrapper = i18nMount(component)
             await nextTick()
             return wrapper
         }
@@ -168,9 +152,8 @@ describe("KsSelect", () => {
         })
 
         test("does not render select-all button when there are no options", () => {
-            mount(KsSelect, {
+            i18nMount(KsSelect, {
                 props: {selectAll: true, multiple: true},
-                global: globalConfig,
             })
             expect(document.querySelector(".kel-select-all-btn")).toBeFalsy()
         })
@@ -194,27 +177,25 @@ describe("KsSelect", () => {
         })
 
         test("does not render select-all button when selectAll is true but multiple is false", () => {
-            mount(
+            i18nMount(
                 defineComponent({
                     components: {KsSelect, KsOption},
                     template: `<ks-select :selectAll="true" :multiple="false">
                         <ks-option value="A" label="Alpha" />
                     </ks-select>`,
                 }),
-                {global: globalConfig},
             )
             expect(document.querySelector(".kel-select-all-btn")).toBeFalsy()
         })
 
         test("does not render select-all button when multiple is true but selectAll is false", () => {
-            mount(
+            i18nMount(
                 defineComponent({
                     components: {KsSelect, KsOption},
                     template: `<ks-select :multiple="true">
                         <ks-option value="A" label="Alpha" />
                     </ks-select>`,
                 }),
-                {global: globalConfig},
             )
             expect(document.querySelector(".kel-select-all-btn")).toBeFalsy()
         })
@@ -385,14 +366,13 @@ describe("KsSelect", () => {
         })
 
         test("custom header slot renders alone when selectAll is not set", () => {
-            mount(
+            i18nMount(
                 defineComponent({
                     components: {KsSelect},
                     template: `<ks-select :multiple="true">
                         <template #header><span class="custom-header">custom</span></template>
                     </ks-select>`,
                 }),
-                {global: globalConfig},
             )
             expect(document.querySelector(".kel-select-all-btn")).toBeFalsy()
             expect(document.querySelector(".custom-header")).toBeTruthy()

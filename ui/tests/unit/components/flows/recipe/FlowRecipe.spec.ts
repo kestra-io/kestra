@@ -1,6 +1,4 @@
 import {describe, test, expect, vi} from "vitest"
-import {mount} from "@vue/test-utils"
-import {createI18n} from "vue-i18n"
 import {createPinia} from "pinia"
 
 vi.mock("override/stores/misc", () => ({
@@ -25,6 +23,8 @@ vi.mock("../../../../../src/composables/useNamespaces", () => ({
 }))
 
 vi.mock("@kestra-io/design-system", () => ({
+    // A spec that mocks the whole module keeps its own stubs, so the plugin is a no-op here.
+    default: {install: () => {}},
     STATES: {
         FAILED: {icon: "div", color: "red"},
         WARNING: {icon: "div", color: "orange"},
@@ -59,8 +59,6 @@ const messages = {
         "recipe.trigger.execution_sub": "Reacts to flow state changes",
         "recipe.trigger.schedule_title": "Schedule",
         "recipe.trigger.schedule_sub": "Runs on a time schedule",
-        "recipe.trigger.case_title": "Case status",
-        "recipe.trigger.case_sub": "EE only feature",
         "recipe.trigger.webhook_title": "Webhook",
         "recipe.trigger.webhook_sub": "Triggered by an HTTP request",
         "recipe.trigger.other_title": "Other trigger",
@@ -123,12 +121,10 @@ const messages = {
 
 const globalConfig = {
     global: {
-        plugins: [
-            createI18n({legacy: false, locale: "en", messages}),
-            createPinia(),
-        ],
+        plugins: [createPinia()],
         stubs: {
             KsText: {template: "<span><slot /></span>"},
+            KsTooltip: {template: "<span><slot /></span>"},
             KsIcon: {template: "<span />"},
             KsTag: {template: "<span><slot /></span>"},
             KsCheckTag: {template: "<span @click=\"$emit('change')\"><slot /></span>", emits: ["change"]},
@@ -154,8 +150,9 @@ const globalConfig = {
 }
 
 import FlowRecipe from "../../../../../src/components/flows/recipe/FlowRecipe.vue"
+import {i18nMount} from "../../../i18nMount"
 
-const next = async (wrapper: ReturnType<typeof mount>) => {
+const next = async (wrapper: ReturnType<typeof i18nMount>) => {
     await wrapper.find("[data-test='recipe-next-btn']").trigger("click")
     await wrapper.vm.$nextTick()
 }
@@ -163,7 +160,7 @@ const next = async (wrapper: ReturnType<typeof mount>) => {
 describe("FlowRecipe", () => {
     test("Next is disabled on the notify step until a channel is selected", async () => {
         // Given — a valid default trigger (execution + FAILED), advance to the notify step
-        const wrapper = mount(FlowRecipe, globalConfig)
+        const wrapper = i18nMount(FlowRecipe, {locales: messages, ...globalConfig})
         await new Promise(r => setTimeout(r, 0))
         await next(wrapper)
 
@@ -175,7 +172,7 @@ describe("FlowRecipe", () => {
 
     test("shows no-channel warning on the notify step when no channel is selected", async () => {
         // Given
-        const wrapper = mount(FlowRecipe, globalConfig)
+        const wrapper = i18nMount(FlowRecipe, {locales: messages, ...globalConfig})
         await new Promise(r => setTimeout(r, 0))
 
         // When — advance to the notify step
@@ -186,10 +183,10 @@ describe("FlowRecipe", () => {
         expect(alert.exists()).toBe(true)
     })
 
-    test("trigger cards use unique keys (no duplicate key for case vs other)", () => {
-        const wrapper = mount(FlowRecipe, globalConfig)
+    test("trigger cards use unique keys", () => {
+        const wrapper = i18nMount(FlowRecipe, {locales: messages, ...globalConfig})
         const cards = wrapper.findAll("[data-test='recipe-trigger-types'] button[role='radio']")
-        expect(cards.length).toBe(5)
+        expect(cards.length).toBe(4)
     })
 
     test("renders a real icon for every trigger-type card and channel", async () => {
@@ -197,7 +194,8 @@ describe("FlowRecipe", () => {
         // :name="card.icon" />` silently rendered an empty icon for every
         // trigger-type card. Found by /qa on 2026-07-03.
         // Report: .gstack/qa-reports/qa-report-localhost-2026-07-03.md
-        const wrapper = mount(FlowRecipe, {
+        const wrapper = i18nMount(FlowRecipe, {
+            locales: messages,
             ...globalConfig,
             global: {
                 ...globalConfig.global,
@@ -207,7 +205,7 @@ describe("FlowRecipe", () => {
         await new Promise(r => setTimeout(r, 0))
 
         // Trigger step: one icon per trigger-type tile
-        expect(wrapper.findAll(".trigger-card-icon svg").length).toBe(5)
+        expect(wrapper.findAll(".trigger-card-icon svg").length).toBe(4)
 
         // Notify step: one icon per channel tile
         await next(wrapper)
@@ -216,7 +214,8 @@ describe("FlowRecipe", () => {
 
     test("emits submit with yaml once a channel is picked and create is clicked", async () => {
         // Given
-        const wrapper = mount(FlowRecipe, {
+        const wrapper = i18nMount(FlowRecipe, {
+            locales: messages,
             ...globalConfig,
             global: {
                 ...globalConfig.global,

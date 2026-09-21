@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.kestra.cli.AbstractCommand;
+import io.kestra.cli.commands.NoDatabaseCommandInterface;
 
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.client.HttpClient;
@@ -19,7 +20,7 @@ import picocli.CommandLine.Parameters;
     name = "search",
     description = "Search for available Kestra plugins"
 )
-public class PluginSearchCommand extends AbstractCommand {
+public class PluginSearchCommand extends AbstractCommand implements NoDatabaseCommandInterface {
     @Inject
     @Client("api")
     private HttpClient httpClient;

@@ -85,10 +85,12 @@ public class PluginDeserializer<T extends Plugin> extends JsonDeserializer<T> {
     private T fromObjectNode(JsonParser jp,
         JsonNode node,
         DeserializationContext context) throws IOException {
-        Class<? extends Plugin> pluginType = null;
+        Class<? extends Plugin> pluginType;
 
         final String identifier = extractPluginRawIdentifier(node, pluginRegistry.isVersioningSupported());
-        if (identifier != null) {
+        if (identifier == null) {
+            pluginType = defaultClass();
+        } else {
             log.trace(
                 "Looking for Plugin for: {}",
                 identifier
@@ -165,6 +167,13 @@ public class PluginDeserializer<T extends Plugin> extends JsonDeserializer<T> {
     }
 
     protected Class<? extends Plugin> fallbackClass() {
+        return null;
+    }
+
+    /**
+     * The class to deserialize to when no type is declared, {@code null} making a missing type an error.
+     */
+    protected Class<? extends Plugin> defaultClass() {
         return null;
     }
 }

@@ -15,20 +15,25 @@ const state = {
     pendingConfirmation: ref<any>(null),
     unavailable: ref(false),
     canSend: ref(true),
+    nextThreadTitle: ref<string | null>(null),
     sendChat: vi.fn(),
     confirm: vi.fn(),
     cancel: vi.fn(),
     reset: vi.fn(),
-    retry: vi.fn(),
     retryLastTurn: vi.fn(),
     loadThread: vi.fn(),
     restoreThread: vi.fn(),
     noteContext: vi.fn(),
 }
 vi.mock("../../../../../src/components/ai/copilot/useAiChat", () => ({useAiChat: () => state}))
+// DiffView (rendered behind a pending MUTATE confirmation) binds useEditorBindings, which pulls in
+// three Pinia stores — stub it out, matching VarValue.spec.ts / FlowFileEditorTab.spec.ts.
+vi.mock("../../../../../src/composables/useEditorBindings", () => ({useEditorBindings: () => ({})}))
 // CopilotChat derives the page scope from the current route — mock a mutable route so tests control it.
+// `useRouter` is needed too: a rendered ARTEFACT_DRAFT message mounts the real `CopilotArtefactDraft.vue`,
+// which calls `useApplyDraft()`.
 let routeStub: {name?: string; params: Record<string, any>} = {name: undefined, params: {}}
-vi.mock("vue-router", () => ({useRoute: () => routeStub}))
+vi.mock("vue-router", () => ({useRoute: () => routeStub, useRouter: () => ({push: vi.fn()})}))
 // The provider list is fetched on mount — stub the SDK so no real request fires.
 vi.mock("@kestra-io/kestra-sdk/ai", () => ({providers: vi.fn().mockResolvedValue([])}))
 // CopilotChat reads a seeded prompt and the AI-availability flag from the misc store. Shared
@@ -36,12 +41,18 @@ vi.mock("@kestra-io/kestra-sdk/ai", () => ({providers: vi.fn().mockResolvedValue
 // unit env.
 const miscStore = reactive({
     copilotPrompt: null as string | null,
+    copilotThreadTitle: null as string | null,
+    copilotNewThread: false,
     configs: {isAiApiKeyConfigured: true} as Record<string, any> | undefined,
-    loadConfigs: vi.fn(),
     openCopilot: vi.fn(),
     promptCopilot: vi.fn(),
 })
 vi.mock("override/stores/misc", () => ({useMiscStore: () => miscStore}))
+// CopilotChat reads the flow editor's buffer from the flow store so a turn on the flow
+// create/edit pages can carry the unsaved source (kestra-io/kestra-ee#10419), and writes
+// `previewSource` back so the main editor mirrors a pending confirmation/draft's diff.
+const flowStore = reactive({flowYaml: "", previewSource: undefined as string | undefined})
+vi.mock("../../../../../src/stores/flow", () => ({useFlowStore: () => flowStore}))
 
 import CopilotChat from "../../../../../src/components/ai/copilot/CopilotChat.vue"
 import CopilotThreadControls from "override/components/ai/copilot/CopilotThreadControls.vue"
@@ -61,16 +72,20 @@ describe("CopilotChat", () => {
         routeStub = {name: undefined, params: {}}
         state.sendChat.mockReset()
         state.confirm.mockReset()
+        state.cancel.mockReset()
         state.reset.mockReset()
-        state.retry.mockReset()
         state.retryLastTurn.mockReset()
         state.loadThread.mockReset()
         state.restoreThread.mockReset()
         state.noteContext.mockReset()
         state.thread.value = null
+        state.nextThreadTitle.value = null
         miscStore.copilotPrompt = null
+        miscStore.copilotThreadTitle = null
+        miscStore.copilotNewThread = false
         miscStore.configs = {isAiApiKeyConfigured: true}
-        miscStore.loadConfigs.mockReset()
+        flowStore.flowYaml = ""
+        flowStore.previewSource = undefined
     })
 
     it("shows the empty state when there are no messages", () => {
@@ -105,6 +120,32 @@ describe("CopilotChat", () => {
         expect(miscStore.copilotPrompt).toBeNull()
     })
 
+    // kestra-io/kestra-ee#10424: a seeded fix must not stack onto the active conversation.
+    it("drops the active conversation and titles the next thread when the seeded prompt asks for a new thread", async () => {
+        state.thread.value = {uid: "t-1"} as any
+        state.messages.value = [{id: "1", role: "USER", type: "TEXT", content: "unrelated"}]
+        miscStore.copilotPrompt = "Fix the task extract"
+        miscStore.copilotThreadTitle = "Fix task extract"
+        miscStore.copilotNewThread = true
+        mountChat()
+        await flushPromises()
+        expect(state.reset).toHaveBeenCalled()
+        expect(state.nextThreadTitle.value).toBe("Fix task extract")
+        // Consumed once, so a later open doesn't reset again.
+        expect(miscStore.copilotNewThread).toBe(false)
+        expect(miscStore.copilotThreadTitle).toBeNull()
+    })
+
+    it("seeds a new-thread fix without resetting when the chat is already fresh", async () => {
+        miscStore.copilotPrompt = "Fix the task extract"
+        miscStore.copilotThreadTitle = "Fix task extract"
+        miscStore.copilotNewThread = true
+        mountChat()
+        await flushPromises()
+        expect(state.reset).not.toHaveBeenCalled()
+        expect(state.nextThreadTitle.value).toBe("Fix task extract")
+    })
+
     it("forwards a composer submit to sendChat with the current mode (no scope off a plain route)", async () => {
         const w = mountChat({initialMode: "PLAN"})
         w.findComponent({name: "CopilotComposer"}).vm.$emit("submit", "do it")
@@ -120,6 +161,43 @@ describe("CopilotChat", () => {
         expect(state.sendChat).toHaveBeenCalledWith(expect.objectContaining({
             prompt: "why did this fail?",
             additionalContext: {currentView: {kind: "EXECUTION", namespace: "company.team", flowId: "my-flow", executionId: "exec-1"}},
+        }))
+    })
+
+    // kestra-io/kestra-ee#10419: a flow pasted on the create page was never saved, so the agent
+    // has nothing to read — the turn must carry the editor buffer itself.
+    it("sends the editor buffer as flowSource on the flow create page", async () => {
+        routeStub = {name: "flows/create", params: {}}
+        flowStore.flowYaml = "id: repro\nnamespace: company.team"
+        const w = mountChat()
+        w.findComponent({name: "CopilotComposer"}).vm.$emit("submit", "fix this error")
+        await flushPromises()
+        expect(state.sendChat).toHaveBeenCalledWith(expect.objectContaining({
+            additionalContext: {currentView: {kind: "FLOW", flowSource: "id: repro\nnamespace: company.team"}},
+        }))
+    })
+
+    it("sends the editor buffer alongside the flow ids on a flow detail route", async () => {
+        routeStub = {name: "flows/update/edit", params: {namespace: "company.team", id: "my-flow"}}
+        flowStore.flowYaml = "id: my-flow"
+        const w = mountChat()
+        w.findComponent({name: "CopilotComposer"}).vm.$emit("submit", "what does this flow do?")
+        await flushPromises()
+        expect(state.sendChat).toHaveBeenCalledWith(expect.objectContaining({
+            additionalContext: {currentView: {kind: "FLOW", namespace: "company.team", flowId: "my-flow", flowSource: "id: my-flow"}},
+        }))
+    })
+
+    it("drops the editor buffer when the flow context pill is dismissed", async () => {
+        routeStub = {name: "flows/update/edit", params: {namespace: "company.team", id: "my-flow"}}
+        flowStore.flowYaml = "id: my-flow"
+        const w = mountChat()
+        w.findComponent({name: "CopilotContextChip"}).vm.$emit("remove", "flowId")
+        await flushPromises()
+        w.findComponent({name: "CopilotComposer"}).vm.$emit("submit", "no flow please")
+        await flushPromises()
+        expect(state.sendChat).toHaveBeenCalledWith(expect.objectContaining({
+            additionalContext: {currentView: {kind: "FLOW", namespace: "company.team"}},
         }))
     })
 
@@ -205,10 +283,233 @@ describe("CopilotChat", () => {
         expect(state.confirm).toHaveBeenCalledWith("REJECT", undefined, undefined)
     })
 
+    it("passes the open flow's buffer as the diff before-source when the pending action targets it", () => {
+        routeStub = {name: "flows/update", params: {namespace: "company.team", id: "my-flow"}}
+        flowStore.flowYaml = "id: my-flow\nnamespace: company.team"
+        state.pendingConfirmation.value = {
+            confirmationId: "c1", tool: "update-flow", family: "MUTATE", summary: "Update",
+            arguments: {namespace: "company.team", flowId: "my-flow", body: "id: my-flow\nnamespace: company.team\ndescription: x"},
+        }
+        const w = mountChat()
+        expect(w.findComponent({name: "ProposedActionCard"}).props("currentFlowSource")).toBe("id: my-flow\nnamespace: company.team")
+    })
+
+    it("omits the diff before-source when the pending action targets a different flow than the one open", () => {
+        routeStub = {name: "flows/update", params: {namespace: "company.team", id: "my-flow"}}
+        flowStore.flowYaml = "id: my-flow\nnamespace: company.team"
+        state.pendingConfirmation.value = {
+            confirmationId: "c1", tool: "update-flow", family: "MUTATE", summary: "Update",
+            arguments: {namespace: "company.team", flowId: "other-flow", body: "id: other-flow"},
+        }
+        const w = mountChat()
+        expect(w.findComponent({name: "ProposedActionCard"}).props("currentFlowSource")).toBeUndefined()
+    })
+
+    it("omits the diff before-source outside a flow route", () => {
+        routeStub = {name: "flows/list", params: {}}
+        state.pendingConfirmation.value = {
+            confirmationId: "c1", tool: "update-flow", family: "MUTATE", summary: "Update",
+            arguments: {namespace: "company.team", flowId: "my-flow", body: "id: my-flow"},
+        }
+        const w = mountChat()
+        expect(w.findComponent({name: "ProposedActionCard"}).props("currentFlowSource")).toBeUndefined()
+    })
+
+    // The main "Flow Code" editor mirrors the same diff live via `flowStore.previewSource`
+    // (kestra-io/kestra#19330), so it reads as an in-IDE diff rather than only a chat aside.
+    describe("editor diff preview (flowStore.previewSource)", () => {
+        const flowDraftMessage = (yaml: string) => ({id: "d1", role: "ASSISTANT", type: "ARTEFACT_DRAFT", draft: {draftId: "d1", kind: "FLOW", yaml, valid: true, constraints: null}})
+
+        it("mirrors the pending mutate confirmation's proposed source when it targets the open flow", () => {
+            routeStub = {name: "flows/update", params: {namespace: "company.team", id: "my-flow"}}
+            flowStore.flowYaml = "id: my-flow\nnamespace: company.team"
+            state.pendingConfirmation.value = {
+                confirmationId: "c1", tool: "update-flow", family: "MUTATE", summary: "Update",
+                arguments: {namespace: "company.team", flowId: "my-flow", body: "id: my-flow\nnamespace: company.team\ndescription: x"},
+            }
+            mountChat()
+            expect(flowStore.previewSource).toBe("id: my-flow\nnamespace: company.team")
+        })
+
+        // The real flow-editor URL resolves to the nested `flows/update/edit` route (a flat
+        // `flows/update` never occurs in the running app) — regression test for the mirror silently
+        // never triggering there (kestra-io/kestra#19330 follow-up).
+        it("mirrors the proposed source on the nested /edit tab route actually used by the editor", () => {
+            routeStub = {name: "flows/update/edit", params: {namespace: "company.team", id: "my-flow"}}
+            flowStore.flowYaml = "id: my-flow\nnamespace: company.team"
+            state.pendingConfirmation.value = {
+                confirmationId: "c1", tool: "update-flow", family: "MUTATE", summary: "Update",
+                arguments: {namespace: "company.team", flowId: "my-flow", body: "id: my-flow\nnamespace: company.team\ndescription: x"},
+            }
+            mountChat()
+            expect(flowStore.previewSource).toBe("id: my-flow\nnamespace: company.team")
+        })
+
+        it("mirrors a pending FLOW artefact draft's yaml when it targets the open flow", () => {
+            routeStub = {name: "flows/update", params: {namespace: "company.team", id: "my-flow"}}
+            state.messages.value = [flowDraftMessage("id: my-flow\nnamespace: company.team\ndescription: drafted")]
+            mountChat()
+            expect(flowStore.previewSource).toBe("id: my-flow\nnamespace: company.team\ndescription: drafted")
+        })
+
+        it("does not mirror a draft targeting a different flow than the one open", () => {
+            routeStub = {name: "flows/update", params: {namespace: "company.team", id: "my-flow"}}
+            state.messages.value = [flowDraftMessage("id: other-flow\nnamespace: company.team")]
+            mountChat()
+            expect(flowStore.previewSource).toBeUndefined()
+        })
+
+        it("supersedes an older matching draft with a newer one for the same flow", () => {
+            routeStub = {name: "flows/update", params: {namespace: "company.team", id: "my-flow"}}
+            state.messages.value = [
+                flowDraftMessage("id: my-flow\nnamespace: company.team\ndescription: first"),
+                flowDraftMessage("id: my-flow\nnamespace: company.team\ndescription: second"),
+            ]
+            mountChat()
+            expect(flowStore.previewSource).toBe("id: my-flow\nnamespace: company.team\ndescription: second")
+        })
+
+        it("keeps mirroring an earlier matching draft across an unrelated later draft for a different flow", () => {
+            routeStub = {name: "flows/update", params: {namespace: "company.team", id: "my-flow"}}
+            state.messages.value = [
+                flowDraftMessage("id: my-flow\nnamespace: company.team\ndescription: mine"),
+                flowDraftMessage("id: other-flow\nnamespace: company.team"),
+            ]
+            mountChat()
+            expect(flowStore.previewSource).toBe("id: my-flow\nnamespace: company.team\ndescription: mine")
+        })
+
+        it("clears once the pending mutate confirmation is approved", async () => {
+            routeStub = {name: "flows/update", params: {namespace: "company.team", id: "my-flow"}}
+            flowStore.flowYaml = "id: my-flow\nnamespace: company.team"
+            state.pendingConfirmation.value = {
+                confirmationId: "c1", tool: "update-flow", family: "MUTATE", summary: "Update",
+                arguments: {namespace: "company.team", flowId: "my-flow", body: "id: my-flow\ndescription: x"},
+            }
+            const w = mountChat()
+            expect(flowStore.previewSource).toBeDefined()
+            state.pendingConfirmation.value = null // confirm() nulls it on APPROVE/REJECT
+            await flushPromises()
+            expect(flowStore.previewSource).toBeUndefined()
+            void w
+        })
+
+        it("clears when a new turn is submitted, even before the draft is superseded", async () => {
+            routeStub = {name: "flows/update", params: {namespace: "company.team", id: "my-flow"}}
+            state.messages.value = [flowDraftMessage("id: my-flow\nnamespace: company.team")]
+            const w = mountChat()
+            expect(flowStore.previewSource).toBeDefined()
+            w.findComponent({name: "CopilotComposer"}).vm.$emit("submit", "revise it")
+            await flushPromises()
+            expect(flowStore.previewSource).toBeUndefined()
+        })
+
+        it("clears when starting a new chat", async () => {
+            routeStub = {name: "flows/update", params: {namespace: "company.team", id: "my-flow"}}
+            state.messages.value = [flowDraftMessage("id: my-flow\nnamespace: company.team")]
+            const w = mountChat()
+            expect(flowStore.previewSource).toBeDefined()
+            await w.find("[data-test=\"copilot-new-chat\"]").trigger("click")
+            expect(flowStore.previewSource).toBeUndefined()
+            expect(state.reset).toHaveBeenCalled()
+        })
+
+        it("clears on unmount", () => {
+            routeStub = {name: "flows/update", params: {namespace: "company.team", id: "my-flow"}}
+            state.messages.value = [flowDraftMessage("id: my-flow\nnamespace: company.team")]
+            const w = mountChat()
+            expect(flowStore.previewSource).toBeDefined()
+            w.unmount()
+            expect(flowStore.previewSource).toBeUndefined()
+        })
+
+        // Bug 1 (kestra-io/kestra#19330 review): a mirrored preview otherwise locks the editor with no
+        // way back to plain editing — dismissing the draft from its transcript card must free it.
+        it("clears the preview once its draft is dismissed from the transcript card, and it stays cleared", async () => {
+            routeStub = {name: "flows/update", params: {namespace: "company.team", id: "my-flow"}}
+            state.messages.value = [flowDraftMessage("id: my-flow\nnamespace: company.team")]
+            const w = mountChat()
+            expect(flowStore.previewSource).toBeDefined()
+
+            const card = w.findComponent({name: "CopilotArtefactDraft"})
+            card.vm.$emit("dismiss", "d1")
+            await flushPromises()
+            expect(flowStore.previewSource).toBeUndefined()
+
+            // A later rescan (anything that changes the message list) must not resurrect it.
+            state.messages.value = [...state.messages.value, {id: "u2", role: "USER", type: "TEXT", content: "anything"}]
+            await flushPromises()
+            expect(flowStore.previewSource).toBeUndefined()
+        })
+
+        // Bug 2 (kestra-io/kestra#19330 review): applying a draft clears `previewSource` once (via
+        // `flowStore.loadFlow`), but without tracking the draft as applied, the very next rescan of the
+        // still-present ARTEFACT_DRAFT message picks it back up as "pending" and re-locks the editor
+        // against content that already matches it — an empty diff with no way out.
+        it("stays unlocked after a draft is applied, even once something else triggers a rescan", async () => {
+            routeStub = {name: "flows/update", params: {namespace: "company.team", id: "my-flow"}}
+            state.messages.value = [flowDraftMessage("id: my-flow\nnamespace: company.team")]
+            const w = mountChat()
+            expect(flowStore.previewSource).toBeDefined()
+
+            const card = w.findComponent({name: "CopilotArtefactDraft"})
+            card.vm.$emit("applied", "d1")
+            await flushPromises()
+            expect(flowStore.previewSource).toBeUndefined()
+
+            state.messages.value = [...state.messages.value, {id: "u2", role: "ASSISTANT", type: "TEXT", content: "done"}]
+            await flushPromises()
+            expect(flowStore.previewSource).toBeUndefined()
+        })
+
+        // Round 3 (kestra-io/kestra#19330 review): `dismissedDraftIds`/`appliedDraftIds` are
+        // component-local, so they come back empty on a fresh mount (a page reload, or the copilot
+        // dock's KeepAlive being destroyed by closing it) — even for a draft that was already applied.
+        // A remount is simulated here simply by never emitting "applied" on this instance: the guard
+        // must instead recognize the draft is resolved because its YAML already matches the editor.
+        it("never locks the editor for a draft whose YAML already matches the editor (e.g. after a remount)", () => {
+            routeStub = {name: "flows/update", params: {namespace: "company.team", id: "my-flow"}}
+            flowStore.flowYaml = "id: my-flow\nnamespace: company.team"
+            state.messages.value = [flowDraftMessage("id: my-flow\nnamespace: company.team")]
+            mountChat()
+            expect(flowStore.previewSource).toBeUndefined()
+        })
+    })
+
     it("disables the composer when a turn cannot be sent", () => {
         state.canSend.value = false
         const w = mountChat()
         expect(w.findComponent({name: "CopilotComposer"}).props("disabled")).toBe(true)
+    })
+
+    it("forwards composer stop to cancel while streaming", async () => {
+        state.messages.value = [{id: "1", role: "USER", type: "TEXT", content: "hi"}]
+        state.streaming.value = true
+        state.canSend.value = false
+        const w = mountChat()
+        expect(w.findComponent({name: "CopilotComposer"}).props("streaming")).toBe(true)
+        w.findComponent({name: "CopilotComposer"}).vm.$emit("stop")
+        expect(state.cancel).toHaveBeenCalled()
+    })
+
+    it("focuses the composer once it re-enables after stop", async () => {
+        state.messages.value = [{id: "1", role: "USER", type: "TEXT", content: "hi"}]
+        state.streaming.value = true
+        state.canSend.value = false
+        const w = mount(CopilotChat, {global: mountGlobal, attachTo: document.body})
+        try {
+            w.findComponent({name: "CopilotComposer"}).vm.$emit("stop")
+            await flushPromises()
+            const textarea = w.find("[data-test=\"copilot-composer-input\"]").element
+            expect(document.activeElement).not.toBe(textarea)
+
+            state.streaming.value = false
+            state.canSend.value = true
+            await flushPromises()
+            expect(document.activeElement).toBe(textarea)
+        } finally {
+            w.unmount()
+        }
     })
 
     it("shows the thinking movement while streaming before the next output", () => {
@@ -225,6 +526,35 @@ describe("CopilotChat", () => {
         const w = mountChat()
         expect(w.find("[data-test=\"copilot-thinking\"]").exists()).toBe(true)
         expect(w.find(".copilot-mark").classes()).toContain("copilot-mark-answering")
+    })
+
+    it("plays the end gather when a turn finishes", async () => {
+        state.messages.value = [
+            {id: "1", role: "USER", type: "TEXT", content: "hi"},
+            {id: "2", role: "ASSISTANT", type: "TEXT", content: "hello"},
+        ]
+        state.streaming.value = true
+        const w = mountChat()
+
+        state.streaming.value = false
+        await flushPromises()
+
+        expect(w.find("[data-test=\"copilot-thinking\"]").exists()).toBe(true)
+        expect(w.find(".copilot-mark").classes()).toContain("copilot-mark-end")
+    })
+
+    it("does not play the end gather after the user stops the turn", async () => {
+        state.messages.value = [
+            {id: "1", role: "USER", type: "TEXT", content: "hi"},
+            {id: "2", role: "SYSTEM", type: "CANCELLED"},
+        ]
+        state.streaming.value = true
+        const w = mountChat()
+
+        state.streaming.value = false
+        await flushPromises()
+
+        expect(w.find("[data-test=\"copilot-thinking\"]").exists()).toBe(false)
     })
 
     it("starts a new chat via the top bar", async () => {
@@ -253,23 +583,38 @@ describe("CopilotChat", () => {
         expect(w.findComponent({name: "CopilotComposer"}).exists()).toBe(false)
     })
 
-    it("retries from the unavailable state, re-checking whether a provider has been added", async () => {
+    // Configuring a provider is an instance-config change, so the unavailable state points at the
+    // docs rather than offering a retry that could never succeed within the session.
+    it("offers the configuration docs — not a retry — from the unavailable state", () => {
         state.unavailable.value = true
         const w = mountChat()
-        await w.find("[data-test=\"copilot-unavailable-retry\"]").trigger("click")
-        await flushPromises()
-        expect(miscStore.loadConfigs).toHaveBeenCalled()
-        expect(state.retry).toHaveBeenCalled()
+        const docs = w.find("[data-test=\"copilot-unavailable-docs\"]")
+        expect(docs.attributes("href")).toContain("kestra.io/docs/ai-tools/ai-copilot")
+        expect(docs.attributes("target")).toBe("_blank")
+        expect(w.find("[data-test=\"copilot-unavailable-retry\"]").exists()).toBe(false)
     })
 
-    // kestra-io/kestra#18322: no provider configured is known from `/configs` before the first turn,
-    // so the surface must say so on load instead of offering a chat that can only fail.
-    it("shows the unavailable state on load when no AI provider is configured", () => {
+    // kestra-io/kestra-ee#10739: `/configs` says up front that no provider is configured, but the
+    // copilot still opens on the regular chat — the unavailable state waits for a send attempt.
+    it("opens on the regular chat when no AI provider is configured", () => {
         miscStore.configs = {isAiApiKeyConfigured: false}
         const w = mountChat()
+        expect(w.find("[data-test=\"copilot-unavailable\"]").exists()).toBe(false)
+        expect(w.text()).toContain("Turn your idea into a workflow")
+        expect(w.findComponent({name: "CopilotComposer"}).exists()).toBe(true)
+        expect(w.find(".copilot-suggestions").exists()).toBe(true)
+    })
+
+    it("shows the unavailable state once a prompt is attempted with no AI provider configured", async () => {
+        miscStore.configs = {isAiApiKeyConfigured: false}
+        const w = mountChat()
+
+        // A quick-start suggestion is a send attempt like any other.
+        await w.find(".copilot-suggestion").trigger("click")
+
         expect(w.find("[data-test=\"copilot-unavailable\"]").exists()).toBe(true)
-        expect(w.findComponent({name: "CopilotComposer"}).exists()).toBe(false)
-        expect(w.find(".copilot-suggestions").exists()).toBe(false)
+        // The turn is short-circuited: it could only ever come back 503.
+        expect(state.sendChat).not.toHaveBeenCalled()
     })
 
     it("keeps the copilot usable when the availability flag is absent (older backend)", () => {
@@ -278,18 +623,6 @@ describe("CopilotChat", () => {
 
         miscStore.configs = undefined
         expect(mountChat().find("[data-test=\"copilot-unavailable\"]").exists()).toBe(false)
-    })
-
-    it("clears the up-front unavailable state once a provider is configured", async () => {
-        miscStore.configs = {isAiApiKeyConfigured: false}
-        miscStore.loadConfigs.mockImplementation(async () => {
-            miscStore.configs = {isAiApiKeyConfigured: true}
-        })
-        const w = mountChat()
-        await w.find("[data-test=\"copilot-unavailable-retry\"]").trigger("click")
-        await flushPromises()
-        expect(w.find("[data-test=\"copilot-unavailable\"]").exists()).toBe(false)
-        expect(w.findComponent({name: "CopilotComposer"}).exists()).toBe(true)
     })
 
     it("auto-scrolls the transcript to the bottom as new content arrives", async () => {

@@ -3,7 +3,7 @@ import {keepSupportedFilters, FILTER_FIELD_PATTERN} from "../../../../src/compon
 
 const SUPPORTED = new Set([
     "namespace", "flowId", "kind", "state", "scope", "childFilter",
-    "timeRange", "startDate", "endDate", "labels", "triggerExecutionId", "parentId", "q",
+    "timeRange", "startDate", "endDate", "labels", "triggerExecutionId", "parentId", "taskId", "q",
 ])
 
 describe("keepSupportedFilters", () => {
@@ -85,6 +85,17 @@ describe("keepSupportedFilters", () => {
 
     it("returns an empty object for an empty query", () => {
         expect(keepSupportedFilters({}, SUPPORTED)).toEqual({})
+    })
+
+    it("keeps the Loop iterations deep-link filters (regression: taskId was silently dropped, #18438)", () => {
+        // Given the query built by the Gantt/Logs "iterations" link for a Loop taskrun.
+        const query = {
+            "filters[parentId][EQUALS]": "parent-execution-id",
+            "filters[kind][EQUALS]": "LOOP",
+            "filters[taskId][EQUALS]": "sub-loop",
+        }
+
+        expect(keepSupportedFilters(query, SUPPORTED)).toEqual(query)
     })
 })
 

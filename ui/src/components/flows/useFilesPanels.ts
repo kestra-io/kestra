@@ -98,25 +98,29 @@ export function useFilesPanels(panels: Ref<Panel[]>, namespace: Ref<string | und
 
     provide(FILES_CLOSE_TAB_INJECTION_KEY, (tab) => {
         const uid = generateUid(tab)
+        let closed = false
         for(const panel of panels.value){
-            const tabIndex = panel.tabs.findIndex(e => e.uid.startsWith(uid))
+            // Exact match: uids are `code-<path>`, so a prefix test picks `a.python` when asked
+            // for `a.py`, whenever the longer path is listed first.
+            const tabIndex = panel.tabs.findIndex(e => e.uid === uid)
 
             if (tabIndex > -1) {
-                // if the closed tab is the active one,
-                // we need to set a new active tab
+                closed = true
+                const wasActive = panel.activeTab?.uid === uid
                 panel.tabs.splice(tabIndex, 1)
-                if (panel.tabs.length === 0) {
-                    // if no tabs left, remove the panel
-                    continue
+                // Only move the active tab when the one just closed was active; closing a
+                // background tab must leave the user's current tab in place.
+                if (wasActive && panel.tabs.length > 0) {
+                    panel.activeTab = panel.tabs[
+                        Math.min(
+                            tabIndex,
+                            panel.tabs.length - 1,
+                        )
+                    ]
                 }
-                panel.activeTab = panel.tabs[
-                    Math.min(
-                        tabIndex,
-                        panel.tabs.length - 1,
-                    )
-                ]
             }
         }
+        return closed
     })
 
     provide(FILES_SET_DIRTY_INJECTION_KEY, ({path, dirty}) => {

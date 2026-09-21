@@ -1,0 +1,17 @@
+id: set-variables-allow-failure
+namespace: io.kestra.tests
+
+variables:
+  name: World
+
+tasks:
+  - id: set-vars
+    type: io.kestra.plugin.core.execution.SetVariables
+    variables:
+      message: Hello
+      name: Loïc
+    overwrite: false
+    allowFailure: true
+  - id: after
+    type: io.kestra.plugin.core.log.Log
+    message: "allowFailure honored, flow continued"

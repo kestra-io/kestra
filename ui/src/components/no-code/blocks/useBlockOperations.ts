@@ -1,5 +1,5 @@
 import {nextTick, ref, type Ref} from "vue"
-import {flowYamlUtils} from "@kestra-io/topology"
+import * as flowYamlUtils from "@kestra-io/topology/flow-yaml-utils"
 import {KsMessageBox} from "@kestra-io/design-system"
 import {displayTaskOf, moveBlockAtPath, type BlockSection} from "../../../utils/flowableBlockOps"
 import {ALL_SECTIONS, parentPathFromLaneSentinel, sectionFromSentinel} from "./blockSections"

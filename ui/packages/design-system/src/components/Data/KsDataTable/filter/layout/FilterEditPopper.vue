@@ -46,6 +46,7 @@
         NULL_COMPARATORS,
     } from "../utils/filterTypes"
     import {FILTER_CONTEXT_INJECTION_KEY} from "../utils/filterInjectionKeys"
+    import {resolveDefaultVisibleValue} from "../utils/filterChipFactory"
     import FilterText from "./FilterText.vue"
     import FilterRadio from "./FilterRadio.vue"
     import FilterFooter from "./FilterFooter.vue"
@@ -66,7 +67,7 @@
         {label: t("datepicker.last24hours"), value: "PT24H"},
         {label: t("datepicker.last48hours"), value: "PT48H"},
         {label: t("datepicker.last7days"), value: "PT168H"},
-        {label: t("datepicker.last30days"), value: "P30D"},
+        {label: t("datepicker.last30days"), value: "PT720H"},
         {label: t("datepicker.last365days"), value: "PT8760H"},
     ]
 
@@ -285,10 +286,14 @@
             return
         }
 
+        // Falling back to a blank value left the filter with nothing selected, rather than with
+        // the default the page configured (the executions view's 24h interval, for instance).
+        const defaultValue = resolveDefaultVisibleValue(props.filterKey)
+
         Object.assign(state, {
-            textValue: "",
-            selectValue: "",
-            keyValuePair: [],
+            textValue: typeof defaultValue === "string" ? defaultValue : "",
+            selectValue: typeof defaultValue === "string" ? defaultValue : "",
+            keyValuePair: Array.isArray(defaultValue) ? [...defaultValue] : [],
             radioValue: "ALL",
             dateValue: null,
             timeRangeMode: "predefined",
@@ -384,6 +389,15 @@
         if (isTimeRange.value && state.timeRangeMode === "custom"
             && !state.startDateValue && !state.endDateValue) {
             return
+        }
+
+        // An inverted range is rejected by the API with a 422, so it is never applied. It compares
+        // the bounds getFilterValue will send, since an end left unset still defaults to now.
+        if (isTimeRange.value && state.timeRangeMode === "custom") {
+            const now = new Date()
+            if ((state.startDateValue ?? now) > (state.endDateValue ?? now)) {
+                return
+            }
         }
 
         const filterData = getFilterValue()

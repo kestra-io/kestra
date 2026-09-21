@@ -885,6 +885,33 @@ public class QueryFilterTest {
         assertThat(e.getMessage()).contains("catastrophic backtracking");
     }
 
+    @ParameterizedTest
+    @MethodSource("invalidSyntaxRegex")
+    void shouldThrowExceptionWhenRegexSyntaxIsInvalid(String pattern) {
+        // Given a REGEX filter that is not a syntactically valid regular expression
+        QueryFilter filter = QueryFilter.builder()
+            .field(Field.NAMESPACE)
+            .operation(Op.REGEX)
+            .value(pattern)
+            .build();
+
+        // When / Then — it must be rejected before reaching any repository backend
+        InvalidQueryFiltersException e = assertThrows(
+            InvalidQueryFiltersException.class,
+            () -> QueryFilter.validateQueryFilters(List.of(filter), Resource.EXECUTION)
+        );
+        assertThat(e.getMessage()).contains("is not a valid regular expression");
+        assertThat(e.getMessage()).contains(pattern);
+        assertThat(e.getMessage()).doesNotContain("catastrophic backtracking");
+    }
+
+    static Stream<Arguments> invalidSyntaxRegex() {
+        return Stream.of(
+            Arguments.of("[a-"),
+            Arguments.of("*abc")
+        );
+    }
+
     @Test
     void shouldNotThrowExceptionWhenRegexIsSafe() {
         // Given a safe REGEX filter

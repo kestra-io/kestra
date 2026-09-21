@@ -68,6 +68,9 @@ export function scopeFromRoute(route: RouteLike | undefined | null): ScopeBindin
     if (name === FLOW_PARENT_ROUTE || name.startsWith(`${FLOW_PARENT_ROUTE}/`)) {
         return {kind: "FLOW", namespace: param(params, "namespace"), flowId: param(params, "id")}
     }
+    if (name === "flows/create") {
+        return {kind: "FLOW"}
+    }
     if (name === NAMESPACE_PARENT_ROUTE || name.startsWith(`${NAMESPACE_PARENT_ROUTE}/`)) {
         return {kind: "NAMESPACE", namespace: param(params, "id")}
     }
@@ -93,18 +96,21 @@ export function scopeFromRoute(route: RouteLike | undefined | null): ScopeBindin
 
 /**
  * Converts a scope into the free-form `additionalContext` map sent on a chat turn (what the user is
- * currently viewing). Returns undefined when there's no scope, and omits absent fields.
+ * currently viewing). Returns undefined when there's no scope and no source, and omits absent fields.
+ * `flowSource` is the flow editor's current buffer: the only place a new or edited-but-unsaved flow
+ * exists, so the agent cannot read it through a tool (kestra-io/kestra-ee#10419).
  */
-export function scopeToContext(scope: ScopeBinding | null | undefined): Record<string, unknown> | undefined {
-    if (!scope) return undefined
-    const currentView: Record<string, unknown> = {kind: scope.kind}
-    if (scope.namespace) currentView.namespace = scope.namespace
-    if (scope.flowId) currentView.flowId = scope.flowId
-    if (scope.executionId) currentView.executionId = scope.executionId
-    if (scope.dashboardId) currentView.dashboardId = scope.dashboardId
-    if (scope.appId) currentView.appId = scope.appId
-    if (scope.testId) currentView.testId = scope.testId
-    if (scope.blueprintId) currentView.blueprintId = scope.blueprintId
-    if (scope.pluginId) currentView.pluginId = scope.pluginId
+export function scopeToContext(scope: ScopeBinding | null | undefined, flowSource?: string): Record<string, unknown> | undefined {
+    if (!scope && !flowSource) return undefined
+    const currentView: Record<string, unknown> = {kind: scope?.kind ?? "FLOW"}
+    if (scope?.namespace) currentView.namespace = scope.namespace
+    if (scope?.flowId) currentView.flowId = scope.flowId
+    if (scope?.executionId) currentView.executionId = scope.executionId
+    if (scope?.dashboardId) currentView.dashboardId = scope.dashboardId
+    if (scope?.appId) currentView.appId = scope.appId
+    if (scope?.testId) currentView.testId = scope.testId
+    if (scope?.blueprintId) currentView.blueprintId = scope.blueprintId
+    if (scope?.pluginId) currentView.pluginId = scope.pluginId
+    if (flowSource) currentView.flowSource = flowSource
     return {currentView}
 }

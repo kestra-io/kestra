@@ -2,7 +2,7 @@
     <div class="settings-panel">
         <div class="header">
             <h6>{{ $t("filter.options") }}</h6>
-            <KsButton link :icon="Close" size="small" class="close-icon" @click="$emit('close')" />
+            <KsButton link :aria-label="$t('filter.close')" :icon="Close" size="small" class="close-icon" @click="$emit('close')" />
         </div>
 
         <div class="list">
@@ -16,6 +16,8 @@
                 </KsTooltip>
                 <KsSwitch v-model="periodicRefreshEnabled" />
             </div>
+
+            <slot name="extra-options" />
         </div>
     </div>
 </template>
@@ -89,7 +91,8 @@
         flex-direction: column;
     }
 
-    .row {
+    .row,
+    :slotted(.row) {
         display: flex;
         justify-content: space-between;
         align-items: center;
@@ -100,11 +103,12 @@
         &:last-child {
             border-bottom: none;
         }
+    }
 
-        .label {
-            font-size: var(--ks-font-size-sm);
-            color: var(--ks-text-primary);
-        }
+    .row .label,
+    :slotted(.row) .label {
+        font-size: var(--ks-font-size-sm);
+        color: var(--ks-text-primary);
     }
 }
 </style>

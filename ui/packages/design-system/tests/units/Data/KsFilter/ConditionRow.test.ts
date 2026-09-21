@@ -1,15 +1,12 @@
 import {describe, test, expect} from "vitest"
 import {nextTick} from "vue"
-import {mount} from "@vue/test-utils"
-import {createI18n} from "vue-i18n"
-import KestraDesignSystem from "../../../../src/index"
 import ConditionRow from "../../../../src/components/Data/KsDataTable/filter/ConditionRow.vue"
 import FilterMultiSelect from "../../../../src/components/Data/KsDataTable/filter/layout/FilterMultiSelect.vue"
 import {Comparators, type AppliedFilter, type FilterKeyConfig} from "../../../../src/components/Data/KsDataTable/filter/utils/filterTypes"
+import {i18nMount} from "../../i18nMount"
 
-const i18n = createI18n({legacy: false, locale: "en", messages: {en: {}}})
 const popoverStub = {template: "<div><slot name=\"reference\" /><slot /></div>"}
-const globalConfig = {plugins: [i18n, KestraDesignSystem], stubs: {KsPopover: popoverStub}}
+const globalConfig = {stubs: {KsPopover: popoverStub}}
 
 const multiKey: FilterKeyConfig = {
     key: "state",
@@ -33,7 +30,7 @@ const baseFilter: AppliedFilter = {
 }
 
 const mountRow = (filter: AppliedFilter) =>
-    mount(ConditionRow, {props: {filter, allKeys: [multiKey]}, global: globalConfig})
+    i18nMount(ConditionRow, {props: {filter, allKeys: [multiKey]}, global: globalConfig})
 
 const rangeAndSetKey: FilterKeyConfig = {
     key: "level",
@@ -52,7 +49,7 @@ const rangeAndSetKey: FilterKeyConfig = {
 }
 
 const mountLevelRow = (filter: AppliedFilter) =>
-    mount(ConditionRow, {props: {filter, allKeys: [rangeAndSetKey]}, global: globalConfig})
+    i18nMount(ConditionRow, {props: {filter, allKeys: [rangeAndSetKey]}, global: globalConfig})
 
 const labelsKey: FilterKeyConfig = {
     key: "labels",
@@ -192,7 +189,7 @@ describe("ConditionRow multi-select commit on close", () => {
 
 describe("ConditionRow key-value comparator changes", () => {
     test("normalizes repeated keys without mounting the lazy value popover", async () => {
-        const wrapper = mount(ConditionRow, {
+        const wrapper = i18nMount(ConditionRow, {
             props: {
                 filter: {
                     id: "f1",

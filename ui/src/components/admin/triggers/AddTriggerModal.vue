@@ -128,7 +128,7 @@
     import {useRouter} from "vue-router"
 
     import {KsEditor, copyToClipboard} from "@kestra-io/design-system"
-    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
+    import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
     import CheckIcon from "vue-material-design-icons/Check.vue"
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
 
@@ -136,7 +136,6 @@
     import {usePluginsStore, type TriggerPluginDto, type PluginComponent} from "../../../stores/plugins"
     import {useTriggerDraftStore} from "../../../stores/triggerDraft"
     import {useEditorBindings} from "../../../composables/useEditorBindings"
-    import {triggerDisplayName} from "./triggerCatalog"
 
     import NamespaceSelect from "../../namespaces/components/NamespaceSelect.vue"
     import PluginDocumentation from "../../plugins/PluginDocumentation.vue"
@@ -148,7 +147,7 @@
     } from "../../no-code/injectionKeys"
 
     const visible = defineModel<boolean>("visible", {required: true})
-    const props = defineProps<{trigger: TriggerPluginDto}>()
+    const props = defineProps<{trigger: TriggerPluginDto; displayName: string}>()
     defineEmits<{cancel: []}>()
 
     const COPY_FEEDBACK_MS = 1600
@@ -189,8 +188,6 @@
     // Fields handled by the modal itself, not rendered through the no-code form.
     const RESERVED_FIELDS = new Set(["id", "type", "description"])
 
-    const displayName = computed(() => triggerDisplayName(props.trigger))
-
     // `triggerPlugin.value.schema` is a JSON Schema wrapper (top-level keys:
     // $schema, properties, required, title…). The actual class fields live at
     // schema.properties.properties, with the required array at schema.properties.required.
@@ -204,7 +201,8 @@
 
     const triggerSchema = computed<{required?: string[]}>(() => {
         const wrapper = triggerPlugin.value?.schema?.properties as unknown as {required?: string[]} | undefined
-        return wrapper?.required ? {required: wrapper.required} : {}
+        const required = wrapper?.required?.filter(key => !RESERVED_FIELDS.has(key))
+        return required?.length ? {required} : {}
     })
 
     const hasTriggerProperties = computed(() => Object.keys(triggerProperties.value).length > 0)

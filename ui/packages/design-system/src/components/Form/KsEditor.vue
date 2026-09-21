@@ -4,20 +4,18 @@
             <slot name="nav">
                 <div class="text-nowrap">
                     <KsButtonGroup>
-                        <KsTooltip :content="$t('Fold content lines')">
-                            <KsButton
-                                :icon="icon.UnfoldLessHorizontal"
-                                @click="autoFold(true)"
-                                size="small"
-                            />
-                        </KsTooltip>
-                        <KsTooltip :content="$t('Unfold content lines')">
-                            <KsButton
-                                :icon="icon.UnfoldMoreHorizontal"
-                                @click="unfoldAll"
-                                size="small"
-                            />
-                        </KsTooltip>
+                        <KsButton
+                            :tooltip="$t('Fold content lines')"
+                            :icon="icon.UnfoldLessHorizontal"
+                            @click="autoFold(true)"
+                            size="small"
+                        />
+                        <KsButton
+                            :tooltip="$t('Unfold content lines')"
+                            :icon="icon.UnfoldMoreHorizontal"
+                            @click="unfoldAll"
+                            size="small"
+                        />
                     </KsButtonGroup>
                     <slot name="extends-navbar" />
                 </div>
@@ -85,7 +83,6 @@
     import KsDatePicker from "./KsDatePicker.vue"
     import KsButton from "../Basic/KsButton/KsButton.vue"
     import KsButtonGroup from "../Basic/KsButton/KsButtonGroup.vue"
-    import KsTooltip from "../Feedback/KsTooltip.vue"
     import * as monaco from "monaco-editor/editor/editor.api"
     import {useKsEditor} from "../../composables/useKsEditor"
     import type {KsEditorExposes, KsEditorProps} from "../../utils/editorTypes"
@@ -168,6 +165,12 @@
         background-color: rgba(#3991ff, .2);
     }
 
+    /* Lines a consumer has locked via useReadOnlyYamlKeys. Styled here because the
+       selector reaches into Monaco's own DOM, which a scoped feature style cannot. */
+    .ks-readonly-yaml-line {
+        background-color: var(--ks-bg-inactive);
+    }
+
     .editor-content-widget-content {
         display: flex;
         align-items: center;
@@ -181,7 +184,7 @@
     :not(.namespace-defaults, .kel-drawer__body) > .ks-editor {
         flex-direction: column;
         height: 100%;
-        z-index: 1001;
+        z-index: calc(var(--ks-z-dropdown) + 1);
     }
 
     :not(.blueprint-container) .ks-editor {
@@ -247,7 +250,7 @@
                 padding-right: inherit;
                 cursor: text;
                 user-select: none;
-                color: var(--ks-text-inactive);
+                color: var(--ks-placeholder-color);
             }
 
             .editor-wrapper {
@@ -313,6 +316,8 @@
             --vscode-editor-background: var(--ks-bg-input);
             --vscode-breadcrumb-background: var(--ks-bg-input);
             --vscode-editorGutter-background: var(--ks-bg-input);
+            --vscode-editorStickyScrollGutter-background: var(--ks-bg-input);
+            --vscode-editorStickyScroll-background: var(--ks-bg-input);
         }
 
         .monaco-editor .margin {

@@ -1,9 +1,7 @@
 import * as Utils from "./utils"
-import {storageKeys} from "../utils/constants"
-import moment from "moment-timezone"
-import {durationUtils} from "@kestra-io/design-system"
+import {dateUtils, durationUtils} from "@kestra-io/design-system"
 
-export function humanizeDuration (value:string, options?:any) {
+export function humanizeDuration (value:number | string, options?:any) {
     return durationUtils.humanDuration(value, options)
 }
 export function humanizeNumber (value:string) {
@@ -15,19 +13,19 @@ export function cap (value:string) {
 export function lower (value:string) {
     return value ? value.toString().toLowerCase() : ""
 }
-export function date (dateString:string, format?:string) {
-    const currentLocale = moment().locale()
-    const momentInstance = moment(dateString).locale(currentLocale)
-    let f
-    if (format === "iso") {
-        f = "YYYY-MM-DD HH:mm:ss.SSS"
-    } else {
-        f = format ?? localStorage.getItem(storageKeys.DATE_FORMAT_STORAGE_KEY) ?? "llll"
-    }
-    // Apply timezone and format using the correct locale
-    return momentInstance
-        .tz(localStorage.getItem(storageKeys.TIMEZONE_STORAGE_KEY) ?? moment.tz.guess())
-        .format(f)
+/**
+ * Formats an instant in the timezone and date format from Settings.
+ *
+ * Accepts what `dayjs` accepts: an ISO string, an epoch millisecond timestamp, or a `Date`.
+ * Callers must not pre-serialise a timestamp with `toISOString()` — that throws on a
+ * non-finite value, whereas this degrades to the string "Invalid Date".
+ *
+ * @param dateValue the instant to format
+ * @param format    a dayjs format, or "iso" for `YYYY-MM-DD HH:mm:ss.SSS`; defaults to the
+ *                  user's stored date format
+ */
+export function date (dateValue:string | number | Date, format?:string) {
+    return dateUtils.dateFilter(dateValue, format)
 }
 
 export interface FilterObject{

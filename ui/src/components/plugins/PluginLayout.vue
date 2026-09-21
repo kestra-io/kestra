@@ -24,6 +24,7 @@
                                 class="plugin-header__logo"
                                 :cls="headerIconCls"
                                 onlyIcon
+                                variable="--ks-black"
                                 :icons="icons"
                             />
 
@@ -302,8 +303,9 @@
             width: 3.75rem;
             height: 3.75rem;
             padding: var(--ks-spacing-2);
-            background-color: var(--ks-bg-tag);
+            background-color: var(--ks-bg-plugin-icon);
             border: 1px solid var(--ks-border-default);
+            color: var(--ks-black);
             border-radius: var(--ks-radius-base);
         }
 

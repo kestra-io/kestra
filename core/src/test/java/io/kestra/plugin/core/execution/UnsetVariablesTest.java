@@ -1,5 +1,6 @@
 package io.kestra.plugin.core.execution;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -17,6 +18,7 @@ import io.kestra.core.utils.IdUtils;
 import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @KestraTest(startRunner = true)
 class UnsetVariablesTest {
@@ -32,6 +34,13 @@ class UnsetVariablesTest {
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(execution.getTaskRunList()).hasSize(3);
         assertThat(((Map<String, Object>) taskOutputService.getOutputs(execution.getTaskRunList().get(2)).get("values"))).containsEntry("message", "default");
+    }
+
+    @ExecuteFlow("flows/valids/unset-variables-missing.yaml")
+    @Test
+    void shouldFailWhenMissingVariable(Execution execution) throws io.kestra.core.exceptions.InternalException {
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        assertThat(execution.getTaskRunList()).hasSize(1);
     }
 
     @Test
@@ -68,5 +77,41 @@ class UnsetVariablesTest {
             .state(new State().withState(State.Type.RUNNING))
             .variables(variables)
             .build();
+    }
+
+    @Test
+    void shouldIgnoreMissingNestedParentWhenIgnoreMissingTrue() throws Exception {
+        UnsetVariables task = JacksonMapper.ofJson().readValue(
+            """
+                {
+                  "id": "unset",
+                  "type": "io.kestra.plugin.core.execution.UnsetVariables",
+                  "ignoreMissing": true,
+                  "variables": ["missingParent.child"]
+                }""",
+            UnsetVariables.class
+        );
+
+        Execution execution = task.update(execution(), runContextFactory.of(Map.of()));
+
+        assertThat(execution.getVariables()).containsOnlyKeys("first", "second");
+    }
+
+    @Test
+    void shouldFailWhenNestedParentMissingAndIgnoreMissingFalse() throws JsonProcessingException {
+        UnsetVariables task = JacksonMapper.ofJson().readValue(
+            """
+                {
+                  "id": "unset",
+                  "type": "io.kestra.plugin.core.execution.UnsetVariables",
+                  "ignoreMissing": false,
+                  "variables": ["missingParent.child"]
+                }""",
+            UnsetVariables.class
+        );
+
+        assertThatThrownBy(() -> task.update(execution(), runContextFactory.of(Map.of())))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("missingParent");
     }
 }

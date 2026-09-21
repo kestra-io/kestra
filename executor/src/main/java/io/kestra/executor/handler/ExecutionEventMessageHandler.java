@@ -1,6 +1,6 @@
 package io.kestra.executor.handler;
 
-import java.time.Instant;
+import java.time.Clock;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -51,6 +51,7 @@ import static io.kestra.core.utils.Rethrow.throwConsumer;
 @Singleton
 @Slf4j
 public class ExecutionEventMessageHandler implements ExecutorMessageHandler<ExecutionEvent> {
+    private final Clock clock;
     private final ExecutionStateStore executionStateStore;
     private final ExecutionQueuedStateStore executionQueuedStateStore;
     private final ExecutionDelayStateStore executionDelayStateStore;
@@ -89,7 +90,9 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
         KillSwitchService killSwitchService,
         KillSwitchActionService killSwitchActionService,
         MetricRegistry metricRegistry,
-        TracerFactory tracerFactory) {
+        TracerFactory tracerFactory,
+        Clock clock) {
+        this.clock = clock;
         this.executionStateStore = executionStateStore;
         this.executionQueuedStateStore = executionQueuedStateStore;
         this.executionDelayStateStore = executionDelayStateStore;
@@ -114,7 +117,7 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
     public Optional<ExecutorContext> handle(ExecutionEvent message) {
         EvaluationType evaluationType = killSwitchService.evaluate(message);
         if (evaluationType != EvaluationType.PASS) {
-            var execution = executionStateStore.findById(message.executionId());
+            var execution = executionStateStore.findByIdWithoutAcl(message.executionId());
             if (execution != null && evaluationType.isKillSwitched(execution)) {
                 killSwitchActionService.handle(evaluationType, execution.getTenantId(), execution.getId());
                 return Optional.empty();
@@ -146,7 +149,7 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
                         ExecutorContext executor = new ExecutorContext(execution, flow);
 
                         // schedule it for later if needed
-                        if (execution.getState().getCurrent() == State.Type.CREATED && execution.getScheduleDate() != null && execution.getScheduleDate().isAfter(Instant.now())) {
+                        if (execution.getState().getCurrent() == State.Type.CREATED && execution.getScheduleDate() != null && execution.getScheduleDate().isAfter(clock.instant())) {
                             ExecutionDelay executionDelay = ExecutionDelay.builder()
                                 .executionId(executor.getExecution().getId())
                                 .date(execution.getScheduleDate())
@@ -159,17 +162,19 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
 
                         // process actions that must be done after the execution has been created
                         if ((execution.getState().getCurrent() == State.Type.CREATED || execution.getState().failedThenRestarted())) {
-                            // create an SLA monitor if needed
-                            if (!ListUtils.isEmpty(flow.getSla())) {
+                            // create an SLA monitor if needed, we skip LOOP executions
+                            if (!ListUtils.isEmpty(flow.getSla()) && execution.getKind() != ExecutionKind.LOOP) {
                                 try {
                                     List<SLAMonitor> monitors = new ArrayList<>();
                                     for (SLA sla : flow.getSla()) {
                                         if (sla instanceof ExecutionMonitoringSLA monitoringSla) {
-                                            monitors.add(SLAMonitor.builder()
-                                                .executionId(execution.getId())
-                                                .slaId(sla.getId())
-                                                .deadline(DateUtils.plusOrThrow(execution.getState().getStartDate(), monitoringSla.getDuration()))
-                                                .build());
+                                            monitors.add(
+                                                SLAMonitor.builder()
+                                                    .executionId(execution.getId())
+                                                    .slaId(sla.getId())
+                                                    .deadline(DateUtils.plusOrThrow(execution.getState().getStartDate(), monitoringSla.getDuration()))
+                                                    .build()
+                                            );
                                         }
                                     }
                                     monitors.forEach(slaMonitorStateStore::save);

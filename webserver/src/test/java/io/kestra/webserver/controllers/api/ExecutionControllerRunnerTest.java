@@ -50,6 +50,8 @@ import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowForExecution;
 import io.kestra.core.models.flows.FlowInterface;
+import io.kestra.core.models.flows.FlowWithSource;
+import io.kestra.core.models.flows.GenericFlow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.flows.State.Type;
 import io.kestra.core.models.storage.FileMetas;
@@ -72,7 +74,8 @@ import io.kestra.plugin.core.trigger.Webhook;
 import io.kestra.plugin.core.trigger.WebhookResponse;
 import io.kestra.webserver.controllers.api.ExecutionController.StateRequest;
 import io.kestra.webserver.models.api.ApiAsyncOperationResponse;
-import io.kestra.webserver.responses.BulkErrorResponse;
+import io.kestra.webserver.errors.ProblemDetail;
+import io.kestra.webserver.errors.ProblemError;
 import io.kestra.webserver.responses.BulkResponse;
 import io.kestra.webserver.responses.PagedResults;
 import io.kestra.webserver.tenants.TenantValidationFilter;
@@ -83,6 +86,8 @@ import io.micronaut.core.type.Argument;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.http.*;
 import io.micronaut.http.client.annotation.Client;
+import io.kestra.core.junit.assertions.Problems;
+import io.kestra.webserver.errors.ProblemTypes;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.http.client.multipart.MultipartBody;
 import io.micronaut.http.sse.Event;
@@ -111,7 +116,7 @@ import static org.mockito.Mockito.when;
 
 @Slf4j
 @KestraTest(startRunner = true)
-@Property(name = LocalPath.ALLOWED_PATHS_CONFIG, value = "/tmp,/private")
+@Property(name = LocalPath.ALLOWED_PATHS_CONFIG, value = "/tmp,/private,build/resources/test")
 class ExecutionControllerRunnerTest {
     public static final String URL_LABEL_VALUE = "https://some-url.com";
     public static final String ENCODED_URL_LABEL_VALUE = URL_LABEL_VALUE.replace("/", URLEncoder.encode("/", StandardCharsets.UTF_8));
@@ -289,6 +294,78 @@ class ExecutionControllerRunnerTest {
             .as("the playground execution runs against the draft revision that was requested")
             .isEqualTo(1);
         assertThat(execution.getKind()).isEqualTo(ExecutionKind.PLAYGROUND);
+    }
+
+    @Test
+    void executingADeletedFlowRevisionIsRejected() {
+        // Deletion appends a revision flagged deleted rather than a fixture (@LoadFlows cannot
+        // express "deleted"), so build and delete the flow directly through the repository.
+        String flowId = IdUtils.create();
+        String source = """
+            id: %s
+            namespace: %s
+            tasks:
+              - id: log
+                type: io.kestra.plugin.core.log.Log
+                message: hello
+            """.formatted(flowId, TESTS_FLOW_NS);
+
+        FlowWithSource created = flowRepositoryInterface.create(GenericFlow.fromYaml(MAIN_TENANT, source));
+        FlowWithSource deleted = flowRepositoryInterface.delete(created);
+
+        HttpClientResponseException e = assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking().retrieve(
+                HttpRequest.POST(
+                    "/api/v1/main/executions/" + TESTS_FLOW_NS + "/" + flowId + "?revision=" + deleted.getRevision(),
+                    null
+                ),
+                Execution.class
+            )
+        );
+
+        assertThat(e.getStatus().getCode())
+            .as("explicitly targeting the deleted revision is rejected as not found, same as a nonexistent flow")
+            .isEqualTo(HttpStatus.NOT_FOUND.getCode());
+    }
+
+    @Test
+    void executingAFlowDeletedWhileItsHeadWasADraftIsRejected() {
+        // A flow that was published then edited into a draft, then deleted: the tombstone must
+        // shadow the published revision beneath it, or the published revision resurfaces as
+        // executable without a revision even though the flow was deleted.
+        String flowId = IdUtils.create();
+        String publishedSource = """
+            id: %s
+            namespace: %s
+            tasks:
+              - id: log
+                type: io.kestra.plugin.core.log.Log
+                message: hello
+            """.formatted(flowId, TESTS_FLOW_NS);
+        String draftSource = """
+            id: %s
+            namespace: %s
+            draft: true
+            tasks:
+              - id: log
+                type: io.kestra.plugin.core.log.Log
+                message: wip
+            """.formatted(flowId, TESTS_FLOW_NS);
+
+        FlowWithSource published = flowRepositoryInterface.create(GenericFlow.fromYaml(MAIN_TENANT, publishedSource));
+        FlowWithSource draft = flowRepositoryInterface.update(GenericFlow.fromYaml(MAIN_TENANT, draftSource), published);
+        flowRepositoryInterface.delete(draft);
+
+        HttpClientResponseException e = assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking().retrieve(
+                HttpRequest.POST("/api/v1/main/executions/" + TESTS_FLOW_NS + "/" + flowId, null),
+                Execution.class
+            )
+        );
+
+        assertThat(e.getStatus().getCode())
+            .as("the published revision beneath the deleted draft head must not resurface as executable")
+            .isEqualTo(HttpStatus.NOT_FOUND.getCode());
     }
 
     @Test
@@ -717,7 +794,7 @@ class ExecutionControllerRunnerTest {
 
         assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.CONFLICT.getCode());
         assertThat(e.getResponse().getBody(String.class).isPresent()).isTrue();
-        assertThat(e.getResponse().getBody(String.class).get()).contains("Cannot restart execution: current state is 'SUCCESS', expected terminated or paused.");
+        assertThat(e.getResponse().getBody(String.class).get()).contains("Cannot restart execution: current state is 'SUCCESS', expected terminated.");
     }
 
     @Test
@@ -1706,7 +1783,7 @@ class ExecutionControllerRunnerTest {
             )
         );
         assertThat(exception.getStatus().getCode()).isEqualTo(422);
-        assertThat(exception.getMessage()).isEqualTo("Invalid entity: Missing required input:asked");
+        assertThat(Problems.detail(exception)).isEqualTo("Missing required input:asked");
     }
 
     @Test
@@ -1901,7 +1978,7 @@ class ExecutionControllerRunnerTest {
         );
 
         assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.CONFLICT.getCode());
-        assertThat(e.getMessage()).contains("Conflict: Cannot change execution state: execution must be terminated and not killed.");
+        assertThat(Problems.detail(e)).isEqualTo("Cannot change execution state: execution must be terminated and not killed.");
 
         e = assertThrows(
             HttpClientResponseException.class,
@@ -2537,10 +2614,11 @@ class ExecutionControllerRunnerTest {
         } catch (HttpClientResponseException e) {
             long afterException = System.currentTimeMillis();
             String errorMessage = "Duration before executions -> %d <-> duration after the exception -> %d <-> Error while pausing execution, err: %s, response: %s";
+            Optional<List<ProblemError>> errors = e.getResponse().getBody(ProblemDetail.class).map(ProblemDetail::errors);
             String formatedError = String.format(
-                errorMessage, afterExec - start, afterException - start, e.getMessage(), e.getResponse().getBody(BulkErrorResponse.class).map(BulkErrorResponse::getInvalids).orElse("errors")
+                errorMessage, afterExec - start, afterException - start, e.getMessage(), errors.orElse(List.of())
             );
-            log.error("Error while pausing execution, err: {}, response: {}", e.getMessage(), e.getResponse().getBody(BulkErrorResponse.class).map(BulkErrorResponse::getInvalids), e);
+            log.error("Error while pausing execution, err: {}, response: {}", e.getMessage(), errors, e);
             fail(formatedError);
         }
 
@@ -3220,7 +3298,7 @@ class ExecutionControllerRunnerTest {
         );
 
         assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.BAD_REQUEST.getCode());
-        assertThat(e.getMessage()).contains("invalid bulk restart");
+        Problems.assertProblem(e, ProblemTypes.BULK_VALIDATION_FAILED);
 
         Execution successful = client.toBlocking().retrieve(
             POST(
@@ -3244,7 +3322,7 @@ class ExecutionControllerRunnerTest {
         );
 
         assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.BAD_REQUEST.getCode());
-        assertThat(e.getMessage()).contains("invalid bulk restart");
+        Problems.assertProblem(e, ProblemTypes.BULK_VALIDATION_FAILED);
 
         // EXECUTION NOT FOUND
         e = assertThrows(
@@ -3259,7 +3337,7 @@ class ExecutionControllerRunnerTest {
         );
 
         assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.BAD_REQUEST.getCode());
-        assertThat(e.getMessage()).contains("invalid bulk restart");
+        Problems.assertProblem(e, ProblemTypes.BULK_VALIDATION_FAILED);
     }
 
     @Test
@@ -3342,6 +3420,60 @@ class ExecutionControllerRunnerTest {
 
     @Test
     @LoadFlowsWithTenant({ "flows/valids/pause-test.yaml" })
+    void shouldReturnConflictWhenRestartExecutionCalledOnPausedExecution(String tenantId) throws QueueException {
+        when(tenantService.resolveTenant()).thenReturn(tenantId);
+        Execution pausedExecution = runnerUtils.runOneUntilPaused(tenantId, TESTS_FLOW_NS, "pause-test");
+        assertThat(pausedExecution.getState().isPaused()).isTrue();
+
+        HttpClientResponseException e = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().retrieve(
+                POST(
+                    "/api/v1/%s/executions/%s/actions/restart".formatted(tenantId, pausedExecution.getId()),
+                    List.of(pausedExecution.getId())
+                ),
+                Execution.class
+            )
+        );
+
+        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.CONFLICT.getCode());
+        assertThat(e.getMessage()).contains("Cannot restart execution: current state is 'PAUSED', expected terminated.");
+
+        e = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().retrieve(
+                POST(
+                    "/api/v1/%s/executions/restart/by-ids".formatted(tenantId),
+                    List.of(pausedExecution.getId())
+                ),
+                MutableHttpResponse.class
+            )
+        );
+
+        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.BAD_REQUEST.getCode());
+        Optional<String> bulkErrorResponse = e.getResponse().getBody(String.class);
+        assertThat(bulkErrorResponse).isPresent();
+        assertThat(bulkErrorResponse.get()).contains("must be terminated to be restarted, current state is 'PAUSED'");
+
+        e = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().retrieve(
+                POST(
+                    "/api/v1/%s/executions/restart/by-query?filters[q][EQUALS]=%s".formatted(tenantId, pausedExecution.getId()),
+                    List.of(pausedExecution.getId())
+                ),
+                MutableHttpResponse.class
+            )
+        );
+
+        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.BAD_REQUEST.getCode());
+        bulkErrorResponse = e.getResponse().getBody(String.class);
+        assertThat(bulkErrorResponse).isPresent();
+        assertThat(bulkErrorResponse.get()).contains("must be terminated to be restarted, current state is 'PAUSED'");
+    }
+
+    @Test
+    @LoadFlowsWithTenant({ "flows/valids/pause-test.yaml" })
     void shouldReturnConflictWhenRestartExecutionCalledOnKilledExecution(String tenantId) throws QueueException {
         when(tenantService.resolveTenant()).thenReturn(tenantId);
         Execution pausedExecution = runnerUtils.runOneUntilPaused(tenantId, TESTS_FLOW_NS, "pause-test");
@@ -3365,7 +3497,7 @@ class ExecutionControllerRunnerTest {
         );
 
         assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.CONFLICT.getCode());
-        assertThat(e.getMessage()).contains("Cannot restart execution: current state is 'KILLED', expected terminated or paused.");
+        assertThat(e.getMessage()).contains("Cannot restart execution: current state is 'KILLED', expected terminated.");
 
         e = assertThrows(
             HttpClientResponseException.class,
@@ -3381,7 +3513,7 @@ class ExecutionControllerRunnerTest {
         assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.BAD_REQUEST.getCode());
         Optional<String> bulkErrorResponse = e.getResponse().getBody(String.class);
         assertThat(bulkErrorResponse).isPresent();
-        assertThat(bulkErrorResponse.get()).contains("must be terminated or paused to be restarted, current state is 'KILLED'");
+        assertThat(bulkErrorResponse.get()).contains("must be terminated to be restarted, current state is 'KILLED'");
 
         e = assertThrows(
             HttpClientResponseException.class,
@@ -3397,7 +3529,7 @@ class ExecutionControllerRunnerTest {
         assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.BAD_REQUEST.getCode());
         bulkErrorResponse = e.getResponse().getBody(String.class);
         assertThat(bulkErrorResponse).isPresent();
-        assertThat(bulkErrorResponse.get()).contains("must be terminated or paused to be restarted, current state is 'KILLED'");
+        assertThat(bulkErrorResponse.get()).contains("must be terminated to be restarted, current state is 'KILLED'");
     }
 
     @Test
@@ -3426,7 +3558,7 @@ class ExecutionControllerRunnerTest {
         );
 
         assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.BAD_REQUEST.getCode());
-        assertThat(e.getMessage()).contains("invalid bulk kill");
+        Problems.assertProblem(e, ProblemTypes.BULK_VALIDATION_FAILED);
 
         // EXECUTION NOT FOUND
         e = assertThrows(
@@ -3441,7 +3573,7 @@ class ExecutionControllerRunnerTest {
         );
 
         assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.BAD_REQUEST.getCode());
-        assertThat(e.getMessage()).contains("invalid bulk kill");
+        Problems.assertProblem(e, ProblemTypes.BULK_VALIDATION_FAILED);
     }
 
     @Test

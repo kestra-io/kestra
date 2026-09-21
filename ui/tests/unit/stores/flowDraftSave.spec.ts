@@ -145,7 +145,7 @@ describe("flow draft save — draft resolution per entry point", () => {
 
         const outcome = await store.publishDraft(target)
 
-        expect(getFlow).toHaveBeenCalledWith(expect.objectContaining({namespace: "ns", id: "f", source: true}))
+        expect(getFlow).toHaveBeenCalledWith(expect.objectContaining({namespace: "ns", id: "f", source: true}), undefined)
         expect(lastUpdateFlowCall())
             .toMatchObject({body: VALID_FLOW, draft: false})
         expect(outcome)

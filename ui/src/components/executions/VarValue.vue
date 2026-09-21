@@ -53,34 +53,50 @@
     <span v-else-if="value === null">
         <em>null</em>
     </span>
-    <div v-else-if="isComplexValue(value)">
+    <span v-else-if="emptyContainer">
+        <em>{{ emptyContainer }}</em>
+    </span>
+    <div v-else>
+        <KsAlert
+            v-if="isTruncated"
+            type="warning"
+            :closable="false"
+            data-test="var-value-truncated"
+            :title="$t('large_outputs.value_truncated', {size: fullTextSize})"
+        >
+            <KsButton size="small" data-test="copy-full" @click="copyFullValue">
+                {{ $t('copy') }}
+            </KsButton>
+            <KsButton size="small" :icon="Download" data-test="download-full" @click="downloadFullValue">
+                {{ $t('download') }}
+            </KsButton>
+        </KsAlert>
         <KsEditor
+            v-if="isComplexValue(value)"
             v-bind="editorBindings"
             :readOnly="true"
             :inline="true"
             :options="{
                 showScroll: true,
                 fullHeight: false,
-                customHeight: Math.min(20, Math.max(5, JSON.stringify(getDisplayValue(value), null, 2).split('\n').length)),
+                customHeight: editorHeight,
             }"
             :navbar="false"
-            :modelValue="JSON.stringify(getDisplayValue(value), null, 2)"
+            :modelValue="displayText"
             lang="json"
             class="complex-value-editor"
         />
+        <span v-else>{{ displayText }}</span>
     </div>
-    <span v-else>
-        {{ value }}
-    </span>
 </template>
 
 <script setup lang="ts">
-    import {ref, watch, onMounted} from "vue"
+    import {computed, ref, watch, onMounted} from "vue"
     import Download from "vue-material-design-icons/Download.vue"
     import OpenInNew from "vue-material-design-icons/OpenInNew.vue"
     import FileAlertOutline from "vue-material-design-icons/FileAlertOutline.vue"
     import FilePreviewDrawer from "./FilePreviewDrawer.vue"
-    import {KsEditor} from "@kestra-io/design-system"
+    import {KsAlert, KsEditor, copyToClipboard} from "@kestra-io/design-system"
     import {useEditorBindings} from "../../composables/useEditorBindings"
     import {apiUrl} from "override/utils/route"
     import * as ExecutionsAPI from "@kestra-io/kestra-sdk/executions"
@@ -95,10 +111,13 @@
         value?: string | object | boolean | number;
         execution?: Execution;
         restrictUri?: boolean;
+        /** Output key this value came from, used to name the download of a truncated value. */
+        name?: string;
     }>(), {
         value: "",
         execution: () => ({id: ""}),
         restrictUri: false,
+        name: "output",
     })
 
     const editorBindings = useEditorBindings()
@@ -161,8 +180,54 @@
         return value
     }
 
+    const displayed = computed(() => getDisplayValue(props.value))
+
+    // Empty containers are complex enough to reach the editor branch, one Monaco mount per row.
+    const emptyContainer = computed(() => {
+        const value = displayed.value
+
+        if (Array.isArray(value)) {
+            return value.length === 0 ? "[]" : undefined
+        }
+        if (typeof value === "object" && value !== null) {
+            return Object.keys(value).length === 0 ? "{}" : undefined
+        }
+
+        return undefined
+    })
+
+    // Only the editor needs valid JSON; a plain string never reaches it and is clipped by length.
+    const preview = computed(() => {
+        const value = displayed.value
+        return typeof value === "object" && value !== null ? Utils.boundForDisplay(value) : undefined
+    })
+
+    const fullText = computed(() => {
+        const value = displayed.value
+        return typeof value === "string" ? value : JSON.stringify(value, null, 2) ?? ""
+    })
+
+    const displayText = computed(() => preview.value
+        ? JSON.stringify(preview.value.value, null, 2) ?? ""
+        : Utils.capForDisplay(fullText.value))
+
+    const isTruncated = computed(() => preview.value
+        ? preview.value.truncated
+        : displayText.value.length < fullText.value.length)
+
+    const fullTextSize = computed(() => Utils.humanTextSize(fullText.value))
+
+    const editorHeight = computed(() => Math.min(20, Math.max(5, displayText.value.split("\n").length)))
+
+    const copyFullValue = () => copyToClipboard(fullText.value)
+
+    const downloadFullValue = () => Utils.downloadText(
+        fullText.value,
+        `${props.name}.${preview.value ? "json" : "txt"}`,
+    )
+
     const itemUrl = (value: string): string => {
-        return `${apiUrl()}/executions/${props.execution?.id}/file?path=${encodeURI(value)}`
+        return `${apiUrl()}/executions/${props.execution?.id}/file?path=${encodeURIComponent(value)}`
     }
 
     const jsonlUrl = (value: string): string => {

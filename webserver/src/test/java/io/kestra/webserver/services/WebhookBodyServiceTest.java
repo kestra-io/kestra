@@ -82,15 +82,13 @@ class WebhookBodyServiceTest {
 
         // Then
         assertThat(parts).hasSize(2);
-        assertThat(parts.getFirst()).isEqualTo(
-            new MultipartFormDataRequestBody.FilePart(
-                "photo",
-                "result.jpg",
-                MediaType.IMAGE_JPEG,
-                6L,
-                URI.create("kestra:///io/kestra/tests/webhook/executions/" + EXECUTION_ID + "/webhook/0/result.jpg")
-            )
-        );
+        assertThat(parts.getFirst()).isEqualTo(new MultipartFormDataRequestBody.FilePart(
+            "photo",
+            "result.jpg",
+            MediaType.IMAGE_JPEG,
+            6L,
+            URI.create("kestra:///io/kestra/tests/webhook/executions/" + EXECUTION_ID + "/webhook/0/result.jpg")
+        ));
         assertThat(parts.getLast()).isInstanceOf(MultipartFormDataRequestBody.FormFieldPart.class);
         assertThat(new String(((MultipartFormDataRequestBody.FormFieldPart) parts.getLast()).content(), StandardCharsets.UTF_8))
             .isEqualTo("looks good");
@@ -459,7 +457,7 @@ class WebhookBodyServiceTest {
 
     /**
      * @param captured where the content the storage is asked to store is written, as it must be read before the
-     *        service closes the stream it hands over
+     *                 service closes the stream it hands over
      * @return a storage that echoes back the URI it is asked to store at, prefixed with the internal storage scheme
      */
     private static StorageInterface storage(OutputStream captured) throws IOException {

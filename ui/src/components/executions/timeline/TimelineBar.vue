@@ -287,8 +287,8 @@
         135deg,
         var(--ks-chart-killed),
         var(--ks-chart-killed) 0.1875rem,
-        color-mix(in srgb, var(--ks-chart-killed) 55%, black 15%) 0.1875rem,
-        color-mix(in srgb, var(--ks-chart-killed) 55%, black 15%) 0.375rem
+        color-mix(in srgb, var(--ks-chart-killed) 55%, var(--ks-text-primary) 15%) 0.1875rem,
+        color-mix(in srgb, var(--ks-chart-killed) 55%, var(--ks-text-primary) 15%) 0.375rem
     );
 }
 

@@ -213,7 +213,6 @@
     "executionProgress": {
       "title": "Postęp egzekucji",
       "estimatedRemaining": "Szacowany pozostały czas: {duration}",
-      "noBaseline": "Brak danych historycznych — nie można oszacować pozostałego czasu",
       "pastEstimate": "Trwa dłużej niż zwykle"
     },
     "launch execution": "Wykonaj",

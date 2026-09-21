@@ -247,6 +247,14 @@
                         </div>
                     </div>
                 </div>
+                <TableInput
+                    v-if="input.type === 'TABLE'"
+                    :data-testid="`input-form-${input.id}`"
+                    :input="input"
+                    :errors="cellErrors(input.id)"
+                    v-model="inputsValues[input.id]"
+                    @update:model-value="onChange(input)"
+                />
                 <KsEditor
                     v-bind="editorBindings"
                     :options="{fullHeight: false, showScroll: inputsValues[input.id]?.length > 530}"
@@ -335,8 +343,9 @@
     import {KsMessage, KsEditor, debounce} from "@kestra-io/design-system"
     import type {FormItemRule} from "@kestra-io/design-system"
     import ValidationError from "../flows/ValidationError.vue"
+    import TableInput from "./TableInput.vue"
     import {ref, reactive, computed, watch, onMounted, onBeforeUnmount, toRaw, markRaw, type Component, getCurrentInstance, nextTick} from "vue"
-    import {type Check, Execution, useExecutionsStore, ValidationEventPayload, ValidationResponse, ValueOptionLike} from "../../stores/executions"
+    import {type Check, Execution, InputError, useExecutionsStore, ValidationEventPayload, ValidationResponse, ValueOptionLike} from "../../stores/executions"
     import {useI18n} from "vue-i18n"
     import {useEditorBindings} from "../../composables/useEditorBindings"
     import {useInputsWizard} from "../../composables/useInputsWizard"
@@ -502,15 +511,24 @@
         if (!meta) {
             return undefined
         }
-        const message = meta.errors!.map(err => err.message).join("\n")
+        const errors = meta.errors!.filter(err => !err.path)
+        if (errors.length === 0) {
+            return undefined
+        }
+        const message = errors.map(err => err.message).join("\n")
 
-        const isRenderError = meta.errors!.some(err => err.renderError)
+        const isRenderError = errors.some(err => err.renderError)
 
         if (!isRenderError && !inputsValidated.value.has(id)) {
             return undefined
         }
 
         return message
+    }
+
+    function cellErrors(id: string): InputError[] {
+        const meta = inputsMetaData.value.find((it) => it.id === id)
+        return meta?.errors?.filter(err => err.path) ?? []
     }
 
     function updateDefaults(): void {

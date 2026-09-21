@@ -60,31 +60,30 @@ export interface KestraHttpError extends Error {
         statusText: string
         headers: Record<string, string>
         request: {responseURL: string}
-        config: {method: string; url: string; showMessageOnError?: boolean; ignoreNotFound?: boolean}
+        config: {method: string; url: string}
     }
-    config?: {method: string; url: string; showMessageOnError?: boolean; ignoreNotFound?: boolean}
+    config?: {method: string; url: string}
+    __kestra_handled?: boolean
+}
+
+/**
+ * Marks an error as handled so that it does not trigger the global error toast.
+ * Use this in a catch block when you want to handle the error locally.
+ */
+export function handled(error: unknown) {
+    if (error && typeof error === "object") {
+        (error as {__kestra_handled?: boolean}).__kestra_handled = true
+    }
 }
 
 /**
  * Whether this failure raises the global error toast, so a caller that reports failures itself can
  * skip the ones already on screen. A 400 or a 401 is left to the caller, as is a failure with no
- * response body, and so is anything the request opted out of.
+ * response body.
  */
 export function isReportedCentrally(error: KestraHttpError): boolean {
-    if (error.config?.showMessageOnError === false) return false
-    if (error.status === 404) return error.config?.ignoreNotFound !== true
+    if (error.__kestra_handled) return false
     return error.status !== 401 && error.status !== 400 && Boolean(error.response?.data)
-}
-
-/**
- * Per-request options the interceptors above read. Declared here rather than derived from the
- * SDK's own option type, which is bound to one edition's generated client.
- */
-export interface KestraRequestOptions {
-    /** `false` silences the error toast, leaving the caller to report the failure. */
-    showMessageOnError?: boolean
-    /** Marks a 404 as an expected outcome the caller handles itself. */
-    ignoreNotFound?: boolean
 }
 
 /**
@@ -149,14 +148,16 @@ export function setupKestraHttp(
     }
 
     function handleErrorCentrally(error: KestraHttpError): KestraHttpError {
-        if (!isReportedCentrally(error)) return error
+        queueMicrotask(() => {
+            if (!isReportedCentrally(error)) return
 
-        if (error.status === 404) {
-            // A 404 is reported where it happened rather than by swapping the page for the
-            // not-found screen: that hid which request failed and left no way back.
-            console.error(`${(error.config?.method ?? "GET").toUpperCase()} ${error.config?.url ?? ""} failed with 404`, error)
-        }
-        onError(error)
+            if (error.status === 404) {
+                // A 404 is reported where it happened rather than by swapping the page for the
+                // not-found screen: that hid which request failed and left no way back.
+                console.error(`${(error.config?.method ?? "GET").toUpperCase()} ${error.config?.url ?? ""} failed with 404`, error)
+            }
+            onError(error)
+        })
 
         return error
     }
@@ -223,8 +224,6 @@ export function setupKestraHttp(
             config: {
                 method: request?.method ?? "",
                 url: request?.url ?? "",
-                showMessageOnError: (opts as {showMessageOnError?: boolean} | undefined)?.showMessageOnError,
-                ignoreNotFound: (opts as {ignoreNotFound?: boolean} | undefined)?.ignoreNotFound,
             },
         }
         kestraError.config = kestraError.response.config

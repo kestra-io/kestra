@@ -7,7 +7,7 @@ import * as FlowsAPI from "@kestra-io/kestra-sdk/flows"
 import * as KvAPI from "@kestra-io/kestra-sdk/kv"
 import * as FilesAPI from "@kestra-io/kestra-sdk/files"
 import * as SecretsAPI from "@kestra-io/kestra-sdk/secrets"
-import type {KestraRequestOptions} from "../utils/kestraHttp"
+import {handled} from "../utils/kestraHttp"
 
 export {PagedResultsNamespace}
 
@@ -43,18 +43,16 @@ export const useBaseNamespacesStore = () => {
         return data
     }
 
-    // A missing namespace is reported through `existing` below, so it must not also toast.
-    const expectNotFound: KestraRequestOptions = {ignoreNotFound: true}
-
     let latestLoad = 0
 
     async function load(id: string) {
         const current = ++latestLoad
         let data: any
         try{
-            data = await NamespaceAPI.loadNamespace({id}, expectNotFound)
+            data = await NamespaceAPI.loadNamespace({id})
         }catch (e: any) {
             if (e.status === 404) {
+                handled(e)
                 // A load the user has navigated away from must not report its absence for the
                 // namespace they are on, the same way a superseded search is dropped in
                 // `stores/logs.ts`.
@@ -169,10 +167,11 @@ export const useBaseNamespacesStore = () => {
     async function readDirectory<T>(payload: {namespace: string; path?: string}): Promise<T[]> {
         try {
             // A directory removed server-side is handled by the caller (see fileExplorer loadNodes), so its 404 must not toast.
-            const data = await FilesAPI.listNamespaceDirectoryFiles(payload, expectNotFound as Parameters<typeof FilesAPI.listNamespaceDirectoryFiles>[1])
+            const data = await FilesAPI.listNamespaceDirectoryFiles(payload)
             return (data ?? []) as unknown as T[]
         } catch (e: any) {
             if (e.status === 404) {
+                handled(e)
                 const notFoundError: any = new Error("Directory not found")
                 notFoundError.status = 404
                 throw notFoundError
@@ -204,7 +203,12 @@ export const useBaseNamespacesStore = () => {
 
     async function fileMetadata(payload: {namespace: string; path: string}) {
         // A file removed server-side (e.g. by a delete-sync) is reported by the caller, so its 404 must not also toast.
-        return await FilesAPI.fileMetadatas(payload, expectNotFound as Parameters<typeof FilesAPI.fileMetadatas>[1])
+        return await FilesAPI.fileMetadatas(payload).catch(e => {
+            if (e.status === 404) {
+                handled(e)
+            }
+            throw e
+        })
     }
 
     async function readFile(payload: {namespace: string; path: string, revision?: number}): Promise<{content?: string, notFound?: boolean, error?: string}> {
@@ -212,10 +216,11 @@ export const useBaseNamespacesStore = () => {
 
         try {
             // `notFound` below reports a removed file, so its 404 must not also raise the global toast.
-            const blob = await FilesAPI.fileContent(payload, expectNotFound as Parameters<typeof FilesAPI.fileContent>[1])
+            const blob = await FilesAPI.fileContent(payload)
             return {content: await blob.text() ?? ""}
         } catch (e: any) {
             if (e.status === 404) {
+                handled(e)
                 return {notFound: true, error: e.message ?? "File not found"}
             }
             throw e
@@ -248,7 +253,6 @@ export const useBaseNamespacesStore = () => {
     async function renameFileDirectory(payload: {namespace: string; old: string; new: string}) {
         await FilesAPI.moveFileDirectory(
             {namespace: payload.namespace, from: payload.old, to: payload.new},
-            {showMessageOnError: false} as Parameters<typeof FilesAPI.moveFileDirectory>[1],
         )
     }
 

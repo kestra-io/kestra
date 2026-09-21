@@ -19,6 +19,7 @@ import {apiUrl, apiUrlWithoutTenants, basePath} from "override/utils/route"
 import {useMiscStore} from "override/stores/misc"
 
 import * as Utils from "../utils/utils"
+import {handled} from "../utils/kestraHttp"
 import {routeFamily} from "../utils/routeFamily"
 
 import type {Dashboard, Chart, DashboardSettings} from "../components/dashboard/types.ts"
@@ -217,14 +218,18 @@ export const useDashboardStore = defineStore("dashboard", () => {
         return false
     }
 
-    const silent = {showMessageOnError: false} as Parameters<typeof DashboardsAPI.dashboard>[1]
-
     async function load(id: Dashboard["id"]) : Promise<Dashboard | undefined> {
         let data
         try{
-            data = await DashboardsAPI.dashboard({id}, silent) as Dashboard
-        } catch {
-            return undefined
+            data = await DashboardsAPI.dashboard({id}) as Dashboard
+        } catch (e: unknown) {
+            const err = e as {status?: number; response?: {status?: number}}
+            const status = err?.status || err?.response?.status
+            if (status === 404) {
+                handled(e)
+                return undefined
+            }
+            throw e
         }
 
         activeDashboard.value = data
@@ -270,10 +275,15 @@ export const useDashboardStore = defineStore("dashboard", () => {
 
     async function generate(id: Dashboard["id"], chartId: Chart["id"], parameters: ChartFiltersOverrides) {
         try {
-            const {data} = await axios.post(`${apiUrl()}/dashboards/${id}/charts/${chartId}`, parameters, {showMessageOnError: false} as AxiosLikeConfig)
+            const {data} = await axios.post(`${apiUrl()}/dashboards/${id}/charts/${chartId}`, parameters)
             return data
-        } catch (e: any) {
-            if (e.status === 404) return undefined
+        } catch (e: unknown) {
+            const err = e as {status?: number; response?: {status?: number}}
+            const status = err?.status || err?.response?.status
+            if (status === 404) {
+                handled(e)
+                return undefined
+            }
             throw e
         }
     }

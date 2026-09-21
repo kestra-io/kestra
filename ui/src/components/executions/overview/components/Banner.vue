@@ -159,6 +159,7 @@
     import {useMiscStore} from "override/stores/misc"
     import * as Utils from "../../../../utils/utils"
     import {useToast} from "../../../../utils/toast"
+    import {handled} from "../../../../utils/kestraHttp"
     import {createLink} from "../utils/links"
     import {executionBannerRelations} from "override/components/executions/overview/OverviewExtensions"
 
@@ -260,9 +261,13 @@
                 store: false,
                 executionId: props.execution.id,
                 params: {minLevel: "ERROR"},
-                showMessageOnError: false,
             })
-            .catch(() => [])
+            .catch((e) => {
+                if (e?.status === 404 || e?.response?.status === 404) {
+                    handled(e)
+                }
+                return []
+            })
 
         const errorLines = (logs ?? [])
             .map((l: {message?: string}) => l.message)

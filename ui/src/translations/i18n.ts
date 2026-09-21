@@ -79,19 +79,14 @@ function polishPluralIndex(choice: number, choicesLength: number): number {
 }
 
 export function setupI18n(options: {locale: Locales} = {locale: "en"}) {
-  const i18n = createI18n<false>({...options, pluralRules: {pl: polishPluralIndex}, missing: onMissingKey, missingWarn: false})
+  const i18n = createI18n<false>({...options, legacy: false, pluralRules: {pl: polishPluralIndex}, missing: onMissingKey, missingWarn: false})
   setI18nLanguage(i18n, options.locale)
   globalI18n.value = i18n.global
   return i18n
 }
 
-export function setI18nLanguage(i18n: I18n, locale: (typeof SUPPORT_LOCALES)[number]) {
-  if (i18n.mode === "legacy") {
-    i18n.global.locale = locale
-  } else {
-    // @ts-expect-error vue-i18n is not typed correctly it seems
-    i18n.global.locale.value = locale
-  }
+export function setI18nLanguage(i18n: AppI18n, locale: Locales) {
+  i18n.global.locale.value = locale
   /**
    * NOTE:
    * If you need to specify the language setting for headers, such as the `fetch` API, set it here.
@@ -104,19 +99,11 @@ export function setI18nLanguage(i18n: I18n, locale: (typeof SUPPORT_LOCALES)[num
 }
 
 export async function loadLocaleMessages(i18n: AppI18n, locale: Locales, additionalTranslationsProvider: TranslationProvider) {
-  let messages: TranslationMessages = {}
+  const module = additionalTranslationsProvider[locale]
+    ? await additionalTranslationsProvider[locale]()
+    : await translations[`./${locale}.json`]()
 
-  if(additionalTranslationsProvider[locale]){
-    // load additional translations from the provider
-    const additionalTranslations = await additionalTranslationsProvider[locale]()
-    messages = additionalTranslations.default
-  }else{
-    // load locale messages with dynamic import
-    messages = await translations[`./${locale}.json`]()
-  }
-
-  // set locale and locale message
-  i18n.global.setLocaleMessage(locale, messages[locale])
+  i18n.global.setLocaleMessage(locale, module.default[locale])
 
   return nextTick()
 }

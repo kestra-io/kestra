@@ -144,7 +144,7 @@ describe("ExecutionsTimeline", () => {
         const router = createTestRouter()
         wrapper = await mountTimeline(router)
 
-        const failedTag = wrapper.find(".ks-tag[data-type=\"danger\"]")
+        const failedTag = wrapper.find("[data-test=timeline-failed-count]")
         expect(failedTag.text()).toBe("Failed 3")
 
         const rowsFailedSum = wrapper.findAll(".stub-row")
@@ -159,7 +159,7 @@ describe("ExecutionsTimeline", () => {
         const router = createTestRouter()
         wrapper = await mountTimeline(router)
 
-        const notice = wrapper.find(".ks-alert[data-type=\"warning\"]")
+        const notice = wrapper.find("[data-test=timeline-truncated]")
         expect(notice.exists()).toBe(true)
         expect(notice.text()).toBe("Showing 3 of 12")
     })
@@ -171,7 +171,7 @@ describe("ExecutionsTimeline", () => {
         const router = createTestRouter()
         wrapper = await mountTimeline(router)
 
-        expect(wrapper.find(".ks-alert[data-type=\"warning\"]").exists()).toBe(false)
+        expect(wrapper.find("[data-test=timeline-truncated]").exists()).toBe(false)
     })
 
     it("should keep a toggled-off state visible in the legend and let it be re-included", async () => {

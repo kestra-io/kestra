@@ -294,7 +294,7 @@
         display: flex;
         flex-direction: column-reverse;
         min-width: 2px;
-        border-radius: 1px 1px 0 0;
+        border-radius: var(--ks-radius-xs) var(--ks-radius-xs) 0 0;
         overflow: hidden;
     }
 
@@ -376,7 +376,7 @@
         top: var(--ks-spacing-1);
         display: flex;
         gap: var(--ks-spacing-2);
-        padding: 2px var(--ks-spacing-2);
+        padding: var(--ks-spacing-1) var(--ks-spacing-2);
         transform: translateX(-50%);
         border-radius: var(--ks-radius-xs);
         background: var(--ks-bg-elevated);

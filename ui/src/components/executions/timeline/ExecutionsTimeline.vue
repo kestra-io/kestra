@@ -19,7 +19,7 @@
             <KsBreadcrumb :items="breadcrumbItems" />
             <div class="scope-stats">
                 <KsTag>{{ $t("executionsTimeline.breadcrumb.total", {count: scopedExecutions.length}) }}</KsTag>
-                <KsTag v-if="scopedFailedCount > 0" type="danger">
+                <KsTag v-if="scopedFailedCount > 0" type="danger" data-test="timeline-failed-count">
                     {{ $t("executionsTimeline.breadcrumb.failed", {count: scopedFailedCount}) }}
                 </KsTag>
             </div>
@@ -28,6 +28,7 @@
         <KsAlert
             v-if="isTruncated"
             type="warning"
+            data-test="timeline-truncated"
             :description="$t('executionsTimeline.truncated.description', {shown: rawExecutions.length, total: fetchedTotal})"
             :closable="false"
         />
@@ -399,13 +400,17 @@
         }
     }
 
-    const fetchKey = computed(() => JSON.stringify({
-        query: route.query,
-        namespace: effectiveNamespace.value,
-        flowId: effectiveFlowId.value,
-        rangeStartMs: rangeStartMs.value,
-        rangeEndMs: rangeEndMs.value,
-    }))
+    // page/size/sort come from the table sharing this route and never reach the timeline's own query.
+    const fetchKey = computed(() => {
+        const {page: _page, size: _size, sort: _sort, ...filters} = route.query
+        return JSON.stringify({
+            query: filters,
+            namespace: effectiveNamespace.value,
+            flowId: effectiveFlowId.value,
+            rangeStartMs: rangeStartMs.value,
+            rangeEndMs: rangeEndMs.value,
+        })
+    })
 
     watch(fetchKey, fetchExecutions, {immediate: true})
 

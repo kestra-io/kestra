@@ -58,13 +58,15 @@ export function useTimelineRange() {
     })
 
     function setRange(startMs: number, endMs: number) {
-        const clampedSpan = Math.min(Math.max(endMs - startMs, MIN_RANGE_MS), MAX_RANGE_MS)
+        // No execution can exist after now, so every caller inherits the bound rather than each guarding it.
+        const boundedEndMs = Math.min(endMs, Date.now())
+        const clampedSpan = Math.min(Math.max(boundedEndMs - startMs, MIN_RANGE_MS), MAX_RANGE_MS)
         const {[TIME_RANGE_QUERY_KEY]: _timeRange, ...rest} = route.query
         router.push({
             query: {
                 ...rest,
-                [START_QUERY_KEY]: new Date(endMs - clampedSpan).toISOString(),
-                [END_QUERY_KEY]: new Date(endMs).toISOString(),
+                [START_QUERY_KEY]: new Date(boundedEndMs - clampedSpan).toISOString(),
+                [END_QUERY_KEY]: new Date(boundedEndMs).toISOString(),
                 page: undefined,
             },
         })

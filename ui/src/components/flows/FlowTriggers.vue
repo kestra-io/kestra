@@ -494,13 +494,13 @@
     const triggersWithType = computed(() => {
         if(!flowStore.flow?.triggers) return []
 
-        let flowTriggers = flowStore.flow?.triggers.map((trigger: any) => {
-            return {...trigger, sourceDisabled: (trigger as any).disabled ?? false}
-        })
+        let flowTriggers = flowStore.flow?.triggers
         if (flowTriggers) {
             const trigs = flowTriggers.map((flowTrigger: any) => {
                 let pollingTrigger = triggers.value.find((trigger: any) => trigger.triggerId === flowTrigger.id)
-                return {...flowTrigger, ...pollingTrigger}
+                // After the state spread: the live flow is authoritative for the definition flag, while the
+                // state carries a mirror of it that is only refreshed when a trigger event is processed.
+                return {...flowTrigger, ...pollingTrigger, sourceDisabled: flowTrigger.disabled ?? false}
             })
 
             return !query.value ? trigs : trigs.filter((trigger: any) => trigger?.id?.includes(query.value))

@@ -216,6 +216,9 @@ jobs:
     if: "always() && (needs.file-changes.outputs.translations == 'true' || needs.file-changes.outputs.ui == 'true')"
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    # The `secrets` context is not allowed in `if:`, so the app id is mirrored into env for the guards below.
+    env:
+      GH_BOT_APP_ID: ${{ secrets.GH_BOT_APP_ID }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         name: Checkout
@@ -224,8 +227,79 @@ jobs:
         with:
           node-version-file: 'ui/.nvmrc'
 
+      # EE renders OSS keys too, so the unused-key rule can only decide with the EE tree in view. Check
+      # EE out sparsely when the bot app can mint a token. A fork PR gets no secrets: there the rule skips
+      # with a warning and the EE run this merge dispatches is the enforcing one.
+      - name: Generate GitHub App token for kestra-ee
+        id: ee-token
+        if: github.event.pull_request.head.repo.fork == false && env.GH_BOT_APP_ID != ''
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          app-id: ${{ secrets.GH_BOT_APP_ID }}
+          private-key: ${{ secrets.GH_BOT_PRIVATE_KEY }}
+          owner: kestra-io
+          repositories: kestra-ee
+
+      # The same-name EE branch when the PR has a companion, otherwise the branch it targets.
+      - name: Resolve the EE branch
+        id: ee-branch
+        if: steps.ee-token.outputs.token != ''
+        env:
+          GH_TOKEN: ${{ steps.ee-token.outputs.token }}
+          HEAD_REF: ${{ github.head_ref }}
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          if gh api "repos/kestra-io/kestra-ee/branches/$HEAD_REF" --silent 2>/dev/null; then
+            echo "ref=$HEAD_REF" >> "$GITHUB_OUTPUT"
+          else
+            echo "ref=$BASE_REF" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        name: Checkout - EE sources
+        if: steps.ee-token.outputs.token != ''
+        with:
+          repository: kestra-io/kestra-ee
+          ref: ${{ steps.ee-branch.outputs.ref }}
+          token: ${{ steps.ee-token.outputs.token }}
+          path: kestra-ee
+          sparse-checkout: |
+            ui-ee/src/
+          sparse-checkout-cone-mode: false
+
+      # The report and the PR context are kept as an artifact for the "Translations - PR comment" workflow:
+      # this job cannot comment itself, since a pull request from a fork runs with a read-only token.
       - name: Check translations
-        run: node ui/scripts/translations/check-translations.mjs --scope oss
+        id: check
+        continue-on-error: true
+        run: |
+          if [ -d kestra-ee/ui-ee/src ]; then
+            node ui/scripts/translations/check-translations.mjs --scope oss --ee-root kestra-ee --report "$RUNNER_TEMP/translations-report/report.json"
+          else
+            node ui/scripts/translations/check-translations.mjs --scope oss --report "$RUNNER_TEMP/translations-report/report.json"
+          fi
+
+      - name: Record the pull request context for the comment workflow
+        if: always()
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          FORK: ${{ github.event.pull_request.head.repo.fork }}
+          OUTCOME: ${{ steps.check.outcome }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/translations-report"
+          printf '{"pr": %s, "fork": %s, "outcome": "%s"}\n' "$PR_NUMBER" "$FORK" "$OUTCOME" > "$RUNNER_TEMP/translations-report/meta.json"
+
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        name: Upload the translation report
+        if: always()
+        with:
+          name: translations-report
+          path: ${{ runner.temp }}/translations-report
+          retention-days: 1
+
+      - name: Fail if the check failed
+        if: steps.check.outcome == 'failure'
+        run: exit 1
 
   frontend:
     name: Frontend - Tests

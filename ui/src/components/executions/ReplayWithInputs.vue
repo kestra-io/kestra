@@ -14,7 +14,6 @@
 <script setup lang="ts">
     import {computed} from "vue"
     import {useI18n} from "vue-i18n"
-    import moment from "moment-timezone"
     import {useToast} from "../../utils/toast"
     import {useRouter, useRoute} from "vue-router"
     import {inputsToFormData} from "../../utils/submitTask"
@@ -46,7 +45,7 @@
 
     const handleReplaySubmit = async ({inputs, breakpoints}: any) => {
 
-        const formData = inputsToFormData({$moment: moment}, flow.value?.inputs, inputs)
+        const formData = inputsToFormData(flow.value?.inputs, inputs)
         const replayed = await executionsStore.replayExecutionWithInputs({
             executionId: props.execution.id,
             taskRunId: props.taskRun?.id,

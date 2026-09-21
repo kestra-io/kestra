@@ -3,9 +3,8 @@ import {ref, watch} from "vue"
 import {apiUrl} from "override/utils/route"
 import * as Utils from "../utils/utils"
 import {useCoreStore} from "./core"
-import throttle from "lodash/throttle"
 import {useRoute, type LocationQuery} from "vue-router"
-import {CLUSTER_PREFIX} from "@kestra-io/design-system"
+import {CLUSTER_PREFIX, throttle} from "@kestra-io/design-system"
 import type {FlowGraph} from "@kestra-io/topology/vue-flow-utils"
 import {routeQueryToQueryFilters} from "../utils/queryFilters"
 import {
@@ -85,6 +84,8 @@ export interface InputMetaData {
     // validate response strips `expression`, keeping `dependsOn` at most
     expression?: string;
     dependsOn?: unknown;
+    /** Set on a FORM input only: the children it groups, mirroring the backend `FormInput.inputs`. */
+    inputs?: InputMetaData[];
 }
 
 /** Mirrors the backend `FilePreview`: `content` is renderer-specific (text, rows, base64, ...). */

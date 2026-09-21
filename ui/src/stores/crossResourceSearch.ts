@@ -9,7 +9,7 @@ import * as NamespacesAPI from "@kestra-io/kestra-sdk/namespaces"
 import {asProblem, type SourceSearchScope} from "@kestra-io/kestra-sdk"
 
 import {groupByNamespace, type CrossSearchSelection, type SearchResourceType, type SearchStatus} from "../utils/crossResourceSearch"
-import type {SourceSearchResult} from "../utils/sourceSearchDiff"
+import {getSeparatorVariant, type SourceSearchResult} from "../utils/sourceSearchDiff"
 
 const SEARCH_PAGE_SIZE = 200
 
@@ -110,7 +110,7 @@ export const useCrossResourceSearchStore = defineStore("crossResourceSearch", ()
 
     /**
      * Every search run gets a generation; a resolution only writes to the shared state while its
-     * generation is still the newest. The consumer debounces but lodash's trailing edge only delays
+     * generation is still the newest. The consumer debounces, but a trailing-edge debounce only delays
      * invocation, so a slow earlier run can still resolve after a later one and clobber its results.
      */
     let generation = 0
@@ -148,6 +148,33 @@ export const useCrossResourceSearchStore = defineStore("crossResourceSearch", ()
         } catch (e: any) {
             if (!isCurrent(gen)) return
             flows.value = {status: "failed", results: [], errorMessage: asProblem(e)?.detail ?? e?.message}
+        }
+    }
+
+    async function searchFlowSuggestion(params: FlowsSearchParams, gen: number): Promise<string | null | undefined> {
+        if (!params.query || params.regex) return null
+        const alternativeQuery = getSeparatorVariant(params.query)
+
+        if (!alternativeQuery) return null
+
+        try {
+            const response = await FlowsAPI.searchFlowsBySourceCode({
+                caseSensitive: params.caseSensitive,
+                wholeWord: params.wholeWord,
+                regex: params.regex,
+                scope: params.scope,
+                page: 1,
+                size: 1,
+                q: alternativeQuery,
+                namespace: params.namespace,
+            })
+
+            if (!isCurrent(gen)) return undefined
+            if ((response.results ?? []).length === 0) return null
+
+            return alternativeQuery
+        } catch {
+            return isCurrent(gen) ? null : undefined
         }
     }
 
@@ -275,7 +302,7 @@ export const useCrossResourceSearchStore = defineStore("crossResourceSearch", ()
         }
     }
 
-    async function search(params: CrossResourceSearchParams) {
+    async function search(params: CrossResourceSearchParams): Promise<number> {
         const gen = nextGeneration()
         const tasks: Promise<void>[] = []
 
@@ -311,6 +338,7 @@ export const useCrossResourceSearchStore = defineStore("crossResourceSearch", ()
         }
 
         await Promise.all(tasks)
+        return gen
     }
 
     const flowsMatchCount = computed(() => flows.value.results.reduce((sum, group) => sum + group.matches.length, 0))
@@ -425,6 +453,7 @@ export const useCrossResourceSearchStore = defineStore("crossResourceSearch", ()
         secrets,
         search,
         searchFlows,
+        searchFlowSuggestion,
         searchFiles,
         searchKv,
         searchSecrets,

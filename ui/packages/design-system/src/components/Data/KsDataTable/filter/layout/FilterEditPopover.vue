@@ -124,7 +124,7 @@
     left: 0;
     right: 0;
     bottom: 0;
-    z-index: 1000;
+    z-index: var(--ks-z-dropdown);
 
     .edit-popup {
         background: var(--ks-bg-elevated);

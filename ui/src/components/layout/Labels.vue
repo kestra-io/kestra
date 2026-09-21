@@ -49,7 +49,10 @@
     interface Label {
         key?: string;
         value: string;
+        /** Replaces the displayed value, keeping the `key:` prefix. */
         display?: string;
+        /** Drops the `key:` prefix when false, for a column already titled with the key. */
+        keyPrefix?: boolean;
     }
 
     const props = withDefaults(
@@ -77,7 +80,7 @@
 
     const text = (label: Label) => {
         const value = label.display ?? label.value
-        return label.key ? `${label.key}:${value}` : value
+        return label.key && label.keyPrefix !== false ? `${label.key}:${value}` : value
     }
 
     import {decodeSearchParams} from "@kestra-io/design-system"

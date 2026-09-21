@@ -18,7 +18,7 @@
 <script lang="ts" setup>
     import {ref, watch, onMounted, onUnmounted} from "vue"
     import {useRoute, useRouter} from "vue-router"
-    import debounce from "lodash/debounce"
+    import {debounce} from "@kestra-io/design-system"
 
     const props = withDefaults(defineProps<{
         router?: boolean;

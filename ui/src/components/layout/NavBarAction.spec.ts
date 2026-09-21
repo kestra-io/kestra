@@ -33,6 +33,7 @@ const mountItem = () =>
     mount(NavBarAction, {
         props: {to, label: "Edit flow"},
         global: {
+            plugins: [KestraDesignSystem],
             provide: {[asItemKey as symbol]: true},
             stubs: {KsDropdownItem: {template: "<li><slot /></li>"}},
         },

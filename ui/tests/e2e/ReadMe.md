@@ -50,3 +50,5 @@ npm run test:e2e-without-starting-backend --ui
 ```bash
 npm run test:e2e-without-starting-backend tests/e2e/your-test-file.spec.ts
 ```
+
+<!-- touched so the ui path filter fires and the e2e job runs; throwaway CI probe branch -->

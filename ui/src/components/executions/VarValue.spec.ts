@@ -57,10 +57,21 @@ const KsButtonStub = defineComponent({
     template: "<button><slot /></button>",
 })
 
+// KsButtonGroup and KsTooltip are resolved on every render, whichever branch is taken, and an
+// unresolved one warns with a trace carrying the whole value (megabytes per mount, #19566).
+const passthroughStub = (name: string) => defineComponent({name, template: "<div><slot /></div>"})
+
 function mountVarValue(value: unknown, name?: string) {
     return mount(VarValue, {
         props: {value: value as string | object, name},
-        global: {plugins: [i18n], stubs: {KsButton: KsButtonStub}},
+        global: {
+            plugins: [i18n],
+            stubs: {
+                KsButton: KsButtonStub,
+                KsButtonGroup: passthroughStub("KsButtonGroup"),
+                KsTooltip: passthroughStub("KsTooltip"),
+            },
+        },
     })
 }
 
@@ -130,6 +141,15 @@ describe("VarValue", () => {
 
         expect(copyToClipboard).toHaveBeenCalledTimes(1)
         expect(copyToClipboard.mock.calls[0][0]).toBe(value)
+    })
+
+    it("should mount a large value without warning, since a warning trace carries the value", () => {
+        const warn = vi.spyOn(console, "warn").mockImplementation(() => {})
+
+        mountVarValue("x".repeat(400 * 1024) + " not json")
+
+        expect(warn).not.toHaveBeenCalled()
+        warn.mockRestore()
     })
 
     it("should serialize the value once per render", () => {

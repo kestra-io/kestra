@@ -35,17 +35,18 @@
             <div id="topnav-actions-slot" class="d-flex gap-2 align-items-center" />
         </template>
         <template #panel-toggle>
-            <KsButton
+            <KsIconButton
                 v-if="showCopilotButton"
                 class="copilot-button"
                 :class="{'is-open': isCopilotOpen}"
                 data-testid="topnav-copilot-button"
-                :icon="AiMenuIcon"
+                :tooltip="$t('ai.copilot.title')"
+                placement="bottom"
                 :aria-pressed="isCopilotOpen"
                 @click="toggleCopilot"
             >
-                {{ $t("ai.copilot.title") }}
-            </KsButton>
+                <AiMenuIcon />
+            </KsIconButton>
             <slot name="panel-toggle" />
         </template>
     </KsTopNavBar>
@@ -54,7 +55,7 @@
 <script setup lang="ts">
     import {computed, ref, watch} from "vue"
     import {useRoute, useRouter} from "vue-router"
-    import {KsButton} from "@kestra-io/design-system"
+    import {KsIconButton} from "@kestra-io/design-system"
     import GlobalSearch from "./GlobalSearch.vue"
     import AiMenuIcon from "../ai/AiMenuIcon.vue"
     import {useBookmarksStore} from "../../stores/bookmarks"
@@ -216,10 +217,16 @@
 </script>
 
 <style scoped lang="scss">
-    .copilot-button {
+    // :deep because the tooltip wrapper renders a Fragment root, so this component's scope id
+    // reaches the nav ancestor but not the button itself.
+    :deep(.copilot-button) {
         flex-shrink: 0;
+        color: var(--ks-icon-muted);
 
-        &.is-open {
+        // :hover is covered so this matches KsIconButton's own hover rule on specificity; without it
+        // the open state is repainted while the pointer is on the button.
+        &.is-open,
+        &.is-open:hover {
             color: var(--ks-text-link);
         }
 

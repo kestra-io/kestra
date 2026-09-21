@@ -41,7 +41,12 @@ export function useVersionUpgradeNotice() {
     const miscStore = useMiscStore()
 
     const instanceUuid = computed<string | undefined>(() => miscStore.configs?.uuid)
-    const notice = computed<VersionUpgrade | undefined>(() => miscStore.configs?.versionUpgrade)
+    const notice = computed<VersionUpgrade | undefined>(() => {
+        const upgrade = miscStore.configs?.versionUpgrade
+        return upgrade?.from && upgrade.to && upgrade.at
+            ? {from: upgrade.from, to: upgrade.to, at: upgrade.at}
+            : undefined
+    })
 
     const stored = ref<PersistedState>(read())
     // A browser that refuses to persist, or an instance that reports no uuid, still gets the banner

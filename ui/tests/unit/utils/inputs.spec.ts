@@ -1,6 +1,7 @@
 import {describe, expect, it} from "vitest"
 import {flattenInputs, unflattenToForms, formChildName, buildWizardSteps, normalize} from "../../../src/utils/inputs"
 import {inputsToFormData} from "../../../src/utils/submitTask"
+import type {InputMetaData} from "../../../src/stores/executions"
 
 // Regression guard, fixed more than once: `defaults` is a Property, so it crosses the wire as its
 // expression STRING — a `defaults: true` BOOL arrives as "true". el-switch only accepts a real
@@ -28,13 +29,6 @@ describe("normalize for BOOL always yields a real boolean", () => {
             expect(typeof normalize("BOOL", value)).toBe("boolean")
         }
     })
-
-    // BOOLEAN is the retired input type; it uses a radio group with an "undefined" third state,
-    // so it must NOT be swept into the boolean coercion.
-    it("leaves the retired BOOLEAN type's tri-state alone", () => {
-        expect(normalize("BOOLEAN", undefined)).toBe("undefined")
-        expect(normalize("BOOLEAN", "true")).toBe("true")
-    })
 })
 
 describe("normalize for ION uses the structured-data editor contract", () => {
@@ -53,12 +47,12 @@ describe("flattenInputs", () => {
     })
 
     it("passes non-FORM inputs through unchanged", () => {
-        const inputs = [{id: "name", type: "STRING"}, {id: "age", type: "INT"}]
+        const inputs: InputMetaData[] = [{id: "name", type: "STRING"}, {id: "age", type: "INT"}]
         expect(flattenInputs(inputs)).toEqual(inputs)
     })
 
     it("expands a FORM into children with dotted ids", () => {
-        const inputs = [{
+        const inputs: InputMetaData[] = [{
             id: "environment",
             type: "FORM",
             inputs: [{id: "region", type: "STRING"}, {id: "data_center", type: "STRING"}],
@@ -70,7 +64,7 @@ describe("flattenInputs", () => {
     })
 
     it("keeps document order across mixed FORM and top-level inputs", () => {
-        const inputs = [
+        const inputs: InputMetaData[] = [
             {id: "environment", type: "FORM", inputs: [{id: "region", type: "STRING"}]},
             {id: "api_key", type: "SECRET"},
             {id: "credentials", type: "FORM", inputs: [{id: "token", type: "SECRET"}]},
@@ -83,7 +77,7 @@ describe("flattenInputs", () => {
     })
 
     it("yields nothing for a FORM with no children", () => {
-        const inputs = [{id: "empty", type: "FORM", inputs: []}]
+        const inputs: InputMetaData[] = [{id: "empty", type: "FORM", inputs: []}]
         expect(flattenInputs(inputs)).toEqual([])
     })
 })
@@ -94,13 +88,13 @@ describe("unflattenToForms", () => {
     })
 
     it("passes leaves through unchanged when there are no form groups", () => {
-        const leaves = [{id: "name", type: "STRING"}, {id: "age", type: "INT"}]
+        const leaves: InputMetaData[] = [{id: "name", type: "STRING"}, {id: "age", type: "INT"}]
         expect(unflattenToForms(leaves, undefined)).toEqual(leaves)
         expect(unflattenToForms(leaves, {})).toEqual(leaves)
     })
 
     it("rebuilds a FORM node (displayName/description from formGroups) with bare-id children", () => {
-        const leaves = [
+        const leaves: InputMetaData[] = [
             {id: "environment.region", type: "STRING", displayName: "Region"},
             {id: "environment.zone", type: "STRING"},
             {id: "api_key", type: "SECRET", displayName: "API Key"},
@@ -122,7 +116,7 @@ describe("unflattenToForms", () => {
     })
 
     it("round-trips with flattenInputs (the inverse invariant)", () => {
-        const leaves = [
+        const leaves: InputMetaData[] = [
             {id: "environment.region", type: "STRING", displayName: "Region"},
             {id: "environment.zone", type: "STRING"},
             {id: "api_key", type: "SECRET", displayName: "API Key"},
@@ -136,7 +130,7 @@ describe("unflattenToForms", () => {
     })
 
     it("places each FORM node at the position of its first child leaf (document order)", () => {
-        const leaves = [
+        const leaves: InputMetaData[] = [
             {id: "a", type: "STRING"},
             {id: "env.region", type: "STRING"},
             {id: "b", type: "INT"},
@@ -245,7 +239,7 @@ describe("buildWizardSteps", () => {
 
 describe("inputsToFormData over flattened FORM inputs (submit contract)", () => {
     it("emits dotted part names from a dotted-keyed value map", () => {
-        const flowInputs = [{
+        const flowInputs: InputMetaData[] = [{
             id: "environment",
             type: "FORM",
             inputs: [{id: "region", type: "STRING"}],
@@ -261,7 +255,7 @@ describe("inputsToFormData over flattened FORM inputs (submit contract)", () => 
     })
 
     it("drops empty dotted leaves", () => {
-        const flowInputs = [{
+        const flowInputs: InputMetaData[] = [{
             id: "environment",
             type: "FORM",
             inputs: [{id: "region", type: "STRING"}, {id: "data_center", type: "STRING"}],

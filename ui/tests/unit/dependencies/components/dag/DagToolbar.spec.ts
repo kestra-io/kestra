@@ -32,8 +32,8 @@ describe("DagToolbar.vue — relation-kind legend", () => {
         expect(wrapper.find(".legend").exists()).toBe(false)
     })
 
-    it("hides the legend outside the layered DAG view", () => {
+    it("shows the legend in the force layout too", () => {
         const wrapper = mountToolbar(new Set(["PRODUCES"]), "force")
-        expect(wrapper.find(".legend").exists()).toBe(false)
+        expect(wrapper.find(".legend").exists()).toBe(true)
     })
 })

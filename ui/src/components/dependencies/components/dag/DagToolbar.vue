@@ -41,7 +41,7 @@
         />
 
         <KsText
-            v-if="legendKinds.length && layoutMode === 'dag'"
+            v-if="legendKinds.length"
             size="small"
             class="legend"
         >

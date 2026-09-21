@@ -13,6 +13,7 @@ import {useNamespacesStore} from "override/stores/namespaces"
 import {useMiscStore} from "override/stores/misc"
 import {NODE, FLOW, EXECUTION, NAMESPACE, ASSET, nodesOf, edgesOf} from "../utils/types"
 import {transformResponse} from "../utils/transform"
+import {edgeKindToken} from "../utils/relationKind"
 import type {Types, Node, Element} from "../utils/types"
 
 const NODE_BG = {
@@ -315,7 +316,7 @@ export function useDependencies(
                     color   = cssVar(EDGE_COLOR.faded)
                     opacity = 0.35
                 } else {
-                    color   = cssVar(EDGE_COLOR.default)
+                    color   = cssVar(edgeKindToken(edge.kind) ?? EDGE_COLOR.default)
                 }
 
                 const baseLineStyle = {

@@ -333,6 +333,8 @@ public class ExecutionService {
         Set<String> taskRunToRestart = this.taskRunToRestart(
             execution,
             taskRun -> taskRun.getState().canBeRestarted()
+                || taskRun.getState().getCurrent().isKilled()
+                || !taskRun.getState().isTerminated() && !taskRun.getState().isPaused()
         );
 
         Map<String, String> mappingTaskRunId = this.mapTaskRunId(execution, revision == null);

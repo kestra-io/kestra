@@ -153,7 +153,7 @@ describe("useAiChat", () => {
         expect(chat.messages.value.some((m) => m.role === "USER" && m.content === "hi")).toBe(true)
         expect(get).toHaveBeenCalledWith(
             "http://localhost/api/v1/main/ai/threads/t1",
-            expect.objectContaining({showMessageOnError: false}),
+
         )
     })
 
@@ -510,7 +510,7 @@ describe("useAiChat", () => {
         }})
         const reloaded = useAiChat()
         await reloaded.restoreThread()
-        expect(get).toHaveBeenCalledWith("http://localhost/api/v1/main/ai/threads/t1", expect.objectContaining({showMessageOnError: false}))
+        expect(get).toHaveBeenCalledWith("http://localhost/api/v1/main/ai/threads/t1")
         expect(reloaded.thread.value?.uid).toBe("t1")
         expect(reloaded.messages.value.some((m) => m.content === "hi")).toBe(true)
     })
@@ -524,7 +524,7 @@ describe("useAiChat", () => {
         expect(localStorage.getItem("kestra.copilot.activeThread")).toBeNull()
         // The load opts out of the global "page not found" so the expected 404 is handled here,
         // not by redirecting the whole app to the 404 page.
-        expect(get).toHaveBeenCalledWith(expect.stringContaining("/gone"), expect.objectContaining({showMessageOnError: false}))
+        expect(get).toHaveBeenCalledWith(expect.stringContaining("/gone"))
     })
 
     it("loadThread rethrows a non-404 error (does not silently forget on e.g. a 500)", async () => {

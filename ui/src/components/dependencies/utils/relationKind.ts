@@ -4,7 +4,7 @@ const KIND_TOKENS: Record<string, string> = {
     UPSTREAM_OF: "--ks-dependencies-edge-upstream-of",
 }
 
-/** The relation kinds that reach the DAG today; order also drives the legend. */
+/** The relation kinds that reach the dependency graph today; order also drives the legend. */
 export const RELATION_KINDS: string[] = Object.keys(KIND_TOKENS)
 
 export const edgeKindToken = (kind?: string): string | undefined => (kind ? KIND_TOKENS[kind] : undefined)

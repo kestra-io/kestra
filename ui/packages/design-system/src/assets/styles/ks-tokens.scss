@@ -44,6 +44,15 @@
     --ks-spacing-12: 5rem;
     --ks-spacing-16: 6rem;
 
+    /** Below Element Plus, whose overlays start at 2000 and climb. To sit above one, use `useTopLayer()`. */
+    --ks-z-base: 0;
+    --ks-z-raised: 1;
+    --ks-z-sticky: 100;
+    --ks-z-dropdown: 1000;
+    --ks-z-overlay: 1030;
+    /** Last resort for plain stylesheets, which cannot call `useTopLayer()`. */
+    --ks-z-top: 9999;
+
     --ks-placeholder-color: var(--ks-text-inactive);
     --ks-placeholder-font-size: var(--ks-font-size-xs);
     --ks-placeholder-font-weight: var(--ks-font-weight-regular);

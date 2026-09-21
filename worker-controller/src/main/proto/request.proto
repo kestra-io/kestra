@@ -28,3 +28,10 @@ message OpaqueData {
   RequestOrResponseHeader header = 1;
   bytes message = 2;
 }
+
+// A chunk of a payload streamed over several messages, when the payload exceeds the configured
+// maximum inbound message size.
+message StreamChunk {
+  RequestOrResponseHeader header = 1;
+  bytes content = 2;
+}

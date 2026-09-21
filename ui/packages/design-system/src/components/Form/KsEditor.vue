@@ -184,7 +184,7 @@
     :not(.namespace-defaults, .kel-drawer__body) > .ks-editor {
         flex-direction: column;
         height: 100%;
-        z-index: 1001;
+        z-index: calc(var(--ks-z-dropdown) + 1);
     }
 
     :not(.blueprint-container) .ks-editor {

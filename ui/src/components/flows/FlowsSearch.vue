@@ -234,9 +234,17 @@
         <div v-else-if="showEmptyResultsState" class="source-search__states">
             <KsEmpty :background="false" :image="images.namespace" :imageSize="120">
                 <template #description>
-                    <!-- eslint-disable-next-line vue/no-v-html -->
-                    <h3 class="source-search__no-results-title" v-html="noResultsMessage" />
-                    <p v-if="hiddenTypeHint" class="source-search__no-results-hint">{{ hiddenTypeHint }}</p>
+                    <KsText tag="h3" size="large">
+                        {{ $t('source_search.no_results_title', {query}) }}
+                    </KsText>
+                    <KsText tag="p">
+                        {{ $t('source_search.no_results_description') }}
+                    </KsText>
+                    <KsText v-if="hiddenTypeHint" tag="p">
+                        {{ hiddenTypeHint }}
+                    </KsText>
+
+                    <p v-if="suggestedQuery">{{ didYouMeanTranslation[0] }}<KsButton type="text" size="small" @click="query = suggestedQuery">{{ suggestedQuery }}</KsButton>{{ didYouMeanTranslation[1] }}</p>
                 </template>
                 <div class="source-search__examples">
                     <KsButton v-if="hiddenTypeCounts.length > 0" type="primary" @click="selectAllTypes">
@@ -308,8 +316,7 @@
     import {ref, computed, watch, type Component} from "vue"
     import {useI18n} from "vue-i18n"
     import {useRoute, useRouter} from "vue-router"
-    import debounce from "lodash/debounce"
-    import _escape from "lodash/escape"
+    import {debounce, escapeHtml} from "@kestra-io/design-system"
     import TopNavBar from "../layout/TopNavBar.vue"
     import NamespaceSelect from "../namespaces/components/NamespaceSelect.vue"
     import SourceSearchResults from "./SourceSearchResults.vue"
@@ -332,10 +339,10 @@
     import useRouteContext from "../../composables/useRouteContext"
     import useRestoreUrl from "../../composables/useRestoreUrl"
     import {useToast} from "../../utils/toast"
+    import {splitTranslation} from "../../utils/splitTranslation"
     import {useCrossResourceSearchStore} from "../../stores/crossResourceSearch"
     import {computeSelectionSummary, distinctSkipReasons, type ReplaceContext} from "../../utils/sourceSearchDiff"
     import {SEARCH_RESOURCE_TYPES, crossSearchResultKey, searchViewState, type CrossSearchSelection, type SearchResourceType} from "../../utils/crossResourceSearch"
-
     import * as FlowsAPI from "@kestra-io/kestra-sdk/flows"
     import {asProblem, type SourceSearchReplacePreviewResponse, type SourceSearchReplaceApplyResponse, type SourceSearchScope} from "@kestra-io/kestra-sdk"
 
@@ -345,6 +352,7 @@
     const route = useRoute()
     const router = useRouter()
     const toast = useToast()
+    const didYouMeanTranslation = computed(() => splitTranslation(t, "source_search.did_you_mean", "suggestion"))
     const crossResourceSearchStore = useCrossResourceSearchStore()
 
     const resultsRef = ref<InstanceType<typeof SourceSearchResults> | null>(null)
@@ -472,6 +480,8 @@
         })
     }
 
+    const suggestedQuery = ref<string | null>(null)
+
     const selectedKey = computed(() => selection.value ? crossSearchResultKey(selection.value) : null)
 
     const showDiffPreview = computed(() => previewResponse.value !== null)
@@ -489,7 +499,7 @@
     const summaryMatchCount = computed(() => selectedTypes.value.reduce((sum, type) => sum + crossResourceSearchStore.countFor(type), 0))
     const summaryResourceCount = computed(() => selectedTypes.value.reduce((sum, type) => sum + crossResourceSearchStore.resourceCountFor(type), 0))
     const summaryActiveTypeCount = computed(() => selectedTypes.value.filter((type) => crossResourceSearchStore.countFor(type) > 0).length)
-    const strong = (value: string) => `<strong>${_escape(value)}</strong>`
+    const strong = (value: string) => `<strong>${escapeHtml(value)}</strong>`
     const summaryCross = computed(() => t("source_search.summary_cross", {
         matches: strong(t("source_search.match_count", summaryMatchCount.value)),
         resources: strong(t("source_search.count_resources", summaryResourceCount.value)),
@@ -516,14 +526,11 @@
         .filter((entry) => entry.count > 0))
 
     const hiddenTypeHint = computed(() => hiddenTypeCounts.value
-        .map((entry) => t("source_search.no_results_hidden_type", {count: entry.count, type: typeLabel(entry.type)}))
+        .map((entry) => t("source_search.no_results_hidden_type", {
+            count: entry.count,
+            type: typeLabel(entry.type),
+        }))
         .join(" "))
-
-    const selectedTypesLabel = computed(() => selectedTypes.value.map(typeLabel).join(", "))
-    const noResultsMessage = computed(() => t("source_search.no_results_in_types", {
-        query: `<code>${query.value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")}</code>`,
-        types: selectedTypesLabel.value,
-    }))
 
     const flowsReadOnlyGroupCount = computed(() => crossResourceSearchStore.flows.results.filter((group) => !group.editable).length)
     const flowsReadOnlyMatchCount = computed(() => crossResourceSearchStore.flows.results
@@ -558,7 +565,6 @@
     function onSelect(value: CrossSearchSelection) {
         selection.value = value
     }
-
     function goToMatch(delta: number) {
         const list = visibleFlatSelections.value
         if (list.length === 0) return
@@ -708,17 +714,34 @@
             crossResourceSearchStore.reset()
             return
         }
+        const currentQuery = query.value
 
         previewResponse.value = null
-        searchPending.value = true
+        suggestedQuery.value = null
 
         try {
-            await crossResourceSearchStore.search({
+            const gen = await crossResourceSearchStore.search({
                 types: SEARCH_RESOURCE_TYPES,
-                query: query.value,
+                query: currentQuery,
                 namespace: namespaceFilter.value,
                 ...searchFilters.value,
             })
+
+            if (
+                selectedTypes.value.includes("flows") &&
+                !anyCountingSelected.value &&
+                summaryMatchCount.value === 0
+            ) {
+                const suggestion = await crossResourceSearchStore.searchFlowSuggestion({
+                    query: currentQuery,
+                    namespace: namespaceFilter.value,
+                    ...searchFilters.value,
+                }, gen)
+
+                if (suggestion !== undefined) {
+                    suggestedQuery.value = suggestion
+                }
+            }
         } finally {
             searchPending.value = false
         }
@@ -962,33 +985,6 @@
 
 .source-search__empty {
     height: auto;
-}
-
-.source-search__no-results-title {
-    margin: 0 auto;
-    max-width: 28rem;
-    font-size: var(--ks-font-size-sm);
-    font-weight: var(--ks-font-weight-medium);
-    line-height: var(--ks-line-height-base);
-    color: var(--ks-text-secondary);
-
-    :deep(code) {
-        padding: 0 var(--ks-spacing-1);
-        background: var(--ks-bg-base);
-        border: 1px solid var(--ks-border-default);
-        border-radius: var(--ks-radius-base);
-        font-family: var(--ks-font-family-mono);
-        font-size: var(--ks-font-size-xs);
-        color: var(--ks-text-primary);
-    }
-}
-
-.source-search__no-results-hint {
-    margin: var(--ks-spacing-2) auto 0;
-    max-width: 28rem;
-    font-size: var(--ks-font-size-sm);
-    line-height: var(--ks-line-height-base);
-    color: var(--ks-text-secondary);
 }
 
 .source-search__examples {

@@ -3,7 +3,7 @@ $indigo: "" !default;
 #nprogress {
     .bar {
         background: $indigo;
-        z-index: 9999;
+        z-index: var(--ks-z-top);
     }
 
     .spinner {

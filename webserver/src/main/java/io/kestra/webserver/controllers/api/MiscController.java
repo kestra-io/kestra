@@ -23,6 +23,7 @@ import io.kestra.core.services.InstanceService;
 import io.kestra.core.services.VersionService;
 import io.kestra.core.utils.EditionProvider;
 import io.kestra.core.utils.VersionProvider;
+import io.kestra.webserver.configuration.CookiesConfiguration;
 import io.kestra.webserver.services.BasicAuthCredentials;
 import io.kestra.webserver.services.BasicAuthService;
 import io.kestra.webserver.services.ai.AiServiceManager;
@@ -78,6 +79,9 @@ public class MiscController {
 
     @Inject
     SystemFlowsConfiguration systemFlowsConfiguration;
+
+    @Inject
+    CookiesConfiguration cookiesConfiguration;
 
     @io.micronaut.context.annotation.Value("${kestra.ui.charts.default-duration:PT24H}")
     private String chartDefaultDuration;
@@ -289,35 +293,39 @@ public class MiscController {
     @Post("/logout")
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = { "Misc" }, summary = "Clear the basic auth session cookie.")
-    public MutableHttpResponse<?> logout() {
+    public MutableHttpResponse<?> logout(HttpRequest<?> request) {
+        boolean secure = cookiesConfiguration.isSecure(request);
+
         Cookie cookie = Cookie.of(BasicAuthService.BASIC_AUTH_COOKIE_NAME, "")
             .path("/")
             .httpOnly(true)
+            .secure(secure)
             .sameSite(SameSite.Strict)
             .maxAge(0);
 
         Cookie flagCookie = Cookie.of(BasicAuthService.BASIC_AUTH_FLAG_COOKIE_NAME, "")
             .path("/")
             .httpOnly(false)
+            .secure(secure)
             .sameSite(SameSite.Strict)
             .maxAge(0);
 
         return HttpResponse.noContent().cookie(cookie).cookie(flagCookie);
     }
 
-    private static Cookie authCookie(HttpRequest<?> request, String username, String password) {
+    private Cookie authCookie(HttpRequest<?> request, String username, String password) {
         return Cookie.of(BasicAuthService.BASIC_AUTH_COOKIE_NAME, BasicAuthService.encodeToken(username, password))
             .path("/")
             .httpOnly(true)
-            .secure(request.isSecure())
+            .secure(cookiesConfiguration.isSecure(request))
             .sameSite(SameSite.Strict);
     }
 
-    private static Cookie authFlagCookie(HttpRequest<?> request) {
+    private Cookie authFlagCookie(HttpRequest<?> request) {
         return Cookie.of(BasicAuthService.BASIC_AUTH_FLAG_COOKIE_NAME, "true")
             .path("/")
             .httpOnly(false)
-            .secure(request.isSecure())
+            .secure(cookiesConfiguration.isSecure(request))
             .sameSite(SameSite.Strict);
     }
 

@@ -37,7 +37,7 @@ public abstract class AbstractWebhookTrigger extends AbstractTrigger {
         description = "The key is used for generating the webhook URL.\n" +
             "\n" +
             "::alert{type=\"warning\"}\n" +
-            "Make sure to keep the webhook key secure. It's the only security mechanism to protect your endpoint from bad actors, and must be considered as a secret. You can use a random key generator to create the key.\n"
+            "Make sure to keep the webhook key secure. It protects your endpoint from bad actors and must be considered as a secret. You can use a random key generator to create the key.\n"
             +
             "::\n"
     )

@@ -90,7 +90,7 @@
                                             'opacity-40': levelToHighlight && levelToHighlight !== member.level,
                                         }"
                                         :level="level"
-                                        :log="asLog(member)"
+                                        :log="member"
                                         :excludeMetas="excludeMetas"
                                     />
                                     <button
@@ -155,7 +155,7 @@
                                         }"
                                         :key="item.index"
                                         :level="level"
-                                        :log="asLog(item)"
+                                        :log="item"
                                         :excludeMetas="excludeMetas"
                                         v-else-if="
                                             filter === '' ||
@@ -306,18 +306,13 @@
     }
 
     // A log file wrapper only carries the attempt it belongs to, so the log fields are optional here.
-    type LogLineSource = Partial<LogEntry> & {logFile?: string}
+    type LogLineSource = Partial<Log> & {logFile?: string}
     type LogLineItem = LogLineSource & {index: number}
-    type LogGroup = {isGroup: true; index: number; level?: LogEntry["level"]; members: LogLineItem[]}
+    type LogGroup = {isGroup: true; index: number; level?: Log["level"]; members: LogLineItem[]}
     type DisplayItem = LogLineItem | LogGroup
 
     function isLogGroup(item: DisplayItem): item is LogGroup {
         return "isGroup" in item
-    }
-
-    // LogLine still declares the pre-SDK `Log` shape, whose required fields the backend does not guarantee.
-    function asLog(item: LogLineItem): Log {
-        return item as unknown as Log
     }
 
     type LogsScroller = Pick<DynamicScrollerExposed, "scrollToItem" | "scrollToBottom">

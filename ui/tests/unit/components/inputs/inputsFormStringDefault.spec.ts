@@ -1,10 +1,11 @@
 import {afterEach, beforeEach, describe, expect, test, vi} from "vitest"
-import {flushPromises, mount} from "@vue/test-utils"
+import {flushPromises} from "@vue/test-utils"
+import {i18nMount} from "../../i18nMount"
+
 import {createPinia, setActivePinia} from "pinia"
-import {createI18n} from "vue-i18n"
 import KestraDesignSystem from "@kestra-io/design-system"
 import InputsForm from "../../../../src/components/inputs/InputsForm.vue"
-import {useExecutionsStore} from "../../../../src/stores/executions"
+import {useExecutionsStore, type ValidationResponse} from "../../../../src/stores/executions"
 
 vi.mock("vue-router", () => ({
     useRoute: () => ({query: {}, params: {}, name: "flow"}),
@@ -12,10 +13,7 @@ vi.mock("vue-router", () => ({
 }))
 
 const globalConfig = {
-    plugins: [
-        createI18n({legacy: false, locale: "en", fallbackWarn: false, missingWarn: false}),
-        KestraDesignSystem,
-    ],
+    plugins: [KestraDesignSystem],
 }
 
 const flow = {namespace: "company.team", id: "get_data"} as any
@@ -27,20 +25,16 @@ const flow = {namespace: "company.team", id: "get_data"} as any
  * drops empty strings — so a mock that ignored the payload would hide the bug covered here.
  */
 function stubValidate(id: string, defaults: string) {
-    return vi.fn(({formData}: {formData?: FormData}) => {
+    return vi.fn(({formData}: {formData?: FormData}): Promise<ValidationResponse> => {
         const submitted = formData?.get(id) ?? null
         return Promise.resolve({
-            status: 200,
-            headers: {},
-            data: {
-                checks: [],
-                inputs: [{
-                    enabled: true,
-                    isDefault: submitted === null,
-                    value: submitted ?? defaults,
-                    input: {id, type: "STRING", required: false, defaults},
-                }],
-            },
+            checks: [],
+            inputs: [{
+                enabled: true,
+                isDefault: submitted === null,
+                value: submitted ?? defaults,
+                input: {id, type: "STRING", required: false, defaults},
+            }],
         })
     })
 }
@@ -48,25 +42,21 @@ function stubValidate(id: string, defaults: string) {
 // Answers with a server-resolved value whatever the form submits, as it does for an input the server
 // renders itself (`expression` / `dependsOn`) and for the inputs of a freshly selected flow.
 function stubAlwaysResolving(id: string, value: string, input: Record<string, unknown> = {}) {
-    return vi.fn(() => Promise.resolve({
-        status: 200,
-        headers: {},
-        data: {
-            checks: [],
-            inputs: [{
-                enabled: true,
-                isDefault: true,
-                value,
-                input: {id, type: "STRING", required: false, ...input},
-            }],
-        },
+    return vi.fn((): Promise<ValidationResponse> => Promise.resolve({
+        checks: [],
+        inputs: [{
+            enabled: true,
+            isDefault: true,
+            value,
+            input: {id, type: "STRING", required: false, ...input},
+        }],
     }))
 }
 
 // `shallow` keeps KsEditor out of jsdom: a STRING input renders as Monaco, which cannot be typed
 // into here.
 function mountForm(inputs: any[]) {
-    return mount(InputsForm, {
+    return i18nMount(InputsForm, {
         global: globalConfig,
         shallow: true,
         props: {flow, initialInputs: inputs as any},

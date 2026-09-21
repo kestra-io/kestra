@@ -1,6 +1,6 @@
 import {describe, it, expect, vi, afterEach} from "vitest"
-import {mount, DOMWrapper} from "@vue/test-utils"
-import {createI18n} from "vue-i18n"
+import {DOMWrapper} from "@vue/test-utils"
+import {i18nMount} from "../../../i18nMount"
 
 import BlockCommandMenu, {type BlockCommandMenuItem} from "../../../../../src/components/no-code/blocks/BlockCommandMenu.vue"
 
@@ -39,11 +39,11 @@ function taskType(run: () => void): BlockCommandMenuItem {
 // BlockCommandMenu teleports its content to document.body, so assertions
 // query the real DOM (via DOMWrapper) instead of the component's own subtree.
 function mountMenu(items: BlockCommandMenuItem[], contextLabel?: string) {
-    const wrapper = mount(BlockCommandMenu, {
+    const wrapper = i18nMount(BlockCommandMenu, {
+        locales: messages,
         attachTo: document.body,
         props: {items, contextLabel},
         global: {
-            plugins: [createI18n({legacy: false, locale: "en", messages})],
             stubs: {
                 KsInput: {
                     template: "<input :value='modelValue' @input=\"$emit('update:modelValue', $event.target.value)\" />",

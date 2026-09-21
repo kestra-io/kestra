@@ -29,7 +29,7 @@ class Rfc1123LabelTest {
         for (String ok : new String[] {
             "a", "ab", "a1", "1a",
             "docker", "linux-amd64", "us-east-1",
-            "a" + "-".repeat(62) + "b" // length 64, dashes in middle
+            "a" + "-".repeat(61) + "b" // length 63, dashes in middle
         }) {
             assertThat(modelValidator.isValid(new LabelHolder(ok)))
                 .as("expected '%s' to be a valid RFC 1123 label", ok)
@@ -52,7 +52,8 @@ class Rfc1123LabelTest {
             "Aa", // uppercase not allowed
             "a b", // space not allowed
             "a.b", // dot not allowed
-            tooLong // > MAX_LENGTH chars
+            tooLong, // > MAX_LENGTH chars
+            "a" + "-".repeat(62) + "b" // length 64: exceeds the 63-character RFC 1123 label limit
         }) {
             assertThat(modelValidator.isValid(new LabelHolder(bad)))
                 .as("expected '%s' to be rejected", bad)

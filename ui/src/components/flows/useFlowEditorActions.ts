@@ -55,7 +55,10 @@ export function useFlowEditorActions() {
                     namespace: flowStore.flow?.namespace,
                     tenant: tenant.value,
                 },
-                query: route.query,
+                query: {
+                    ...route.query,
+                    playground: playgroundStore.enabled ? "on" : undefined,
+                },
             })
         }
 
@@ -149,6 +152,7 @@ export function useFlowEditorActions() {
                 position: "bottom-right",
                 type: "info",
                 duration: 0,
+                customClass: "kel-notification__large",
             })
 
             setTimeout(() => {
@@ -255,7 +259,10 @@ export function useFlowEditorActions() {
                         namespace: flowStore.flow?.namespace,
                         tenant: tenant.value,
                     },
-                    query: route.query,
+                    query: {
+                        ...route.query,
+                        playground: playgroundStore.enabled ? "on" : undefined,
+                    },
                 })
             }
 
@@ -297,7 +304,7 @@ export function useFlowEditorActions() {
                 })
             })
             .catch((error: any) => {
-                if (!isReportedCentrally(error)) toast.error(`Failed to delete flow ${flowId}`)
+                if (!isReportedCentrally(error)) toast.error(t("delete flow error", {id: flowId}))
             })
     }
 

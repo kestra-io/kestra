@@ -99,6 +99,8 @@ class MiscControllerTest {
         assertThat(response.getSystemNamespace()).isEqualTo("some.system.ns");
         assertThat(response.getFlowTemplate()).isEqualTo("tasks:\n  - id: configured\n    type: io.kestra.plugin.core.log.Log\n    message: Configured");
         assertThat(response.getIsAiApiKeyConfigured()).isNotNull();
+        // Nothing was upgraded here, so the UI must not be told to show a migration notice.
+        assertThat(response.getVersionUpgrade()).isNull();
     }
 
     @Test
@@ -307,6 +309,29 @@ class MiscControllerTest {
             assertThat(flagCookie).isPresent();
             assertThat(flagCookie.get().isHttpOnly()).isFalse();
             assertThat(flagCookie.get().getValue()).isEqualTo("true");
+        } finally {
+            basicAuthService.save(new BasicAuthCredentials(null, basicAuthConfiguration.getUsername(), basicAuthConfiguration.getPassword()));
+        }
+    }
+
+    @FlakyTest(description = "BasicAuth state from other tests leaks; needs full security lifecycle isolation")
+    @Test
+    void login_shouldSetSecureCookie_whenForwardedAsHttps() {
+        String uid = "loginForwardedUid";
+        String username = "login.forwarded@kestra.io";
+        String password = "loginPassword1";
+        client.toBlocking().exchange(HttpRequest.POST("/api/v1/main/basicAuth", new BasicAuthCredentials(uid, username, password, basicAuthConfiguration.getPassword())));
+
+        try {
+            // The test client talks plain HTTP, so without the forwarded header the cookie would not be Secure.
+            var response = client.toBlocking().exchange(
+                HttpRequest.POST("/api/v1/login", new MiscController.LoginRequest(username, password))
+                    .header("X-Forwarded-Proto", "https")
+            );
+
+            var cookie = response.getCookie(BasicAuthService.BASIC_AUTH_COOKIE_NAME);
+            assertThat(cookie).isPresent();
+            assertThat(cookie.get().isSecure()).isTrue();
         } finally {
             basicAuthService.save(new BasicAuthCredentials(null, basicAuthConfiguration.getUsername(), basicAuthConfiguration.getPassword()));
         }

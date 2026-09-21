@@ -1,16 +1,14 @@
 import {describe, test, expect} from "vitest"
-import {mount, flushPromises} from "@vue/test-utils"
-import {createI18n} from "vue-i18n"
-import KestraDesignSystem from "../../../../src/index"
+import {flushPromises} from "@vue/test-utils"
+import {i18nMount} from "../../i18nMount"
+
 import FilterEditPopper from "../../../../src/components/Data/KsDataTable/filter/layout/FilterEditPopper.vue"
 import FilterSelect from "../../../../src/components/Data/KsDataTable/filter/layout/FilterSelect.vue"
 import FilterMultiSelect from "../../../../src/components/Data/KsDataTable/filter/layout/FilterMultiSelect.vue"
 import FilterDateTime from "../../../../src/components/Data/KsDataTable/filter/layout/FilterDateTime.vue"
 import FilterComparatorSelect from "../../../../src/components/Data/KsDataTable/filter/layout/FilterComparatorSelect.vue"
+import FilterFooter from "../../../../src/components/Data/KsDataTable/filter/layout/FilterFooter.vue"
 import {Comparators, type AppliedFilter, type FilterKeyConfig} from "../../../../src/components/Data/KsDataTable/filter/utils/filterTypes"
-
-const i18n = createI18n({legacy: false, locale: "en", messages: {en: {}}})
-const globalConfig = {plugins: [i18n, KestraDesignSystem]}
 
 const levelKey: FilterKeyConfig = {
     key: "level",
@@ -40,9 +38,8 @@ const labelsKey: FilterKeyConfig = {
 }
 
 const mountPopper = async (filter: AppliedFilter) => {
-    const wrapper = mount(FilterEditPopper, {
+    const wrapper = i18nMount(FilterEditPopper, {
         props: {filter, filterKey: levelKey, showComparatorSelection: true},
-        global: globalConfig,
     })
     await flushPromises()
     return wrapper
@@ -117,7 +114,7 @@ describe("FilterEditPopper time range custom mode", () => {
     }
 
     const mountTimeRangePopper = async () => {
-        const wrapper = mount(FilterEditPopper, {
+        const wrapper = i18nMount(FilterEditPopper, {
             props: {
                 filter: {
                     id: "f1",
@@ -130,7 +127,6 @@ describe("FilterEditPopper time range custom mode", () => {
                 },
                 filterKey: timeRangeKey,
             },
-            global: globalConfig,
         })
         await flushPromises()
         return wrapper
@@ -179,7 +175,7 @@ describe("FilterEditPopper date field", () => {
     }
 
     test("emits update when a date is picked (live apply)", async () => {
-        const wrapper = mount(FilterEditPopper, {
+        const wrapper = i18nMount(FilterEditPopper, {
             props: {
                 filter: {
                     id: "f1",
@@ -193,7 +189,6 @@ describe("FilterEditPopper date field", () => {
                 filterKey: expirationKey,
                 showComparatorSelection: true,
             },
-            global: globalConfig,
         })
         await flushPromises()
 
@@ -212,7 +207,7 @@ describe("FilterEditPopper date field", () => {
 
 describe("FilterEditPopper key-value comparator changes", () => {
     test("normalizes repeated keys before emitting a single-value comparator update", async () => {
-        const wrapper = mount(FilterEditPopper, {
+        const wrapper = i18nMount(FilterEditPopper, {
             props: {
                 filter: {
                     id: "f1",
@@ -234,7 +229,6 @@ describe("FilterEditPopper key-value comparator changes", () => {
                 filterKey: labelsKey,
                 showComparatorSelection: true,
             },
-            global: globalConfig,
         })
         await flushPromises()
 
@@ -247,6 +241,99 @@ describe("FilterEditPopper key-value comparator changes", () => {
             comparator: Comparators.EQUALS,
             value: ["environment:staging", "team:platform"],
             valueLabel: "environment:staging",
+        })
+    })
+})
+
+const timeRangeKey: FilterKeyConfig = {
+    key: "timeRange",
+    label: "Interval",
+    valueType: "time-range",
+    customDateMode: "range",
+    defaultValue: "PT24H",
+    comparators: [Comparators.EQUALS],
+    valueProvider: async () => [
+        {label: "Last 24 hours", value: "PT24H"},
+        {label: "Last 7 days", value: "P7D"},
+    ],
+}
+
+const mountTimeRange = async (filter: AppliedFilter) => {
+    const wrapper = i18nMount(FilterEditPopper, {
+        props: {filter, filterKey: timeRangeKey},
+    })
+    await flushPromises()
+    return wrapper
+}
+
+describe("FilterEditPopper time range", () => {
+    test("restores the configured default on reset instead of clearing the value", async () => {
+        const wrapper = await mountTimeRange({
+            id: "tr1",
+            key: "timeRange",
+            comparator: Comparators.EQUALS,
+            value: "P7D",
+            valueLabel: "Last 7 days",
+        } as AppliedFilter)
+
+        wrapper.findComponent(FilterFooter).vm.$emit("reset")
+        await flushPromises()
+
+        const updates = wrapper.emitted("update") ?? []
+        const last = updates.at(-1)
+        expect(last).toBeDefined()
+        expect((last![0] as AppliedFilter).value).toBe("PT24H")
+    })
+
+    test("does not apply a custom range whose start is after its end", async () => {
+        const wrapper = await mountTimeRange({
+            id: "tr2",
+            key: "timeRange",
+            comparator: Comparators.EQUALS,
+            value: "PT24H",
+            valueLabel: "Last 24 hours",
+        } as AppliedFilter)
+
+        const select = wrapper.findComponent(FilterSelect)
+        select.vm.$emit("update:timeRangeMode", "custom")
+        select.vm.$emit("update:startDateValue", new Date("2026-08-20T10:00:00.000Z"))
+        select.vm.$emit("update:endDateValue", new Date("2026-08-10T10:00:00.000Z"))
+        await flushPromises()
+
+        // An inverted range is refused by the API with a 422, so it must never be applied.
+        const applied = (wrapper.emitted("update") ?? [])
+            .map(([filter]) => filter as AppliedFilter)
+            .filter(filter => typeof filter.value === "object" && filter.value !== null)
+
+        applied.forEach(filter => {
+            const {startDate, endDate} = filter.value as {startDate: Date; endDate: Date}
+            expect(startDate.getTime()).toBeLessThanOrEqual(endDate.getTime())
+        })
+    })
+
+    test("does not apply a start date later than the end date it defaults to", async () => {
+        const wrapper = await mountTimeRange({
+            id: "tr3",
+            key: "timeRange",
+            comparator: Comparators.EQUALS,
+            value: "PT24H",
+            valueLabel: "Last 24 hours",
+        } as AppliedFilter)
+
+        const select = wrapper.findComponent(FilterSelect)
+        select.vm.$emit("update:timeRangeMode", "custom")
+        select.vm.$emit("update:startDateValue", new Date(Date.now() + 3 * 24 * 60 * 60 * 1000))
+        await flushPromises()
+
+        // With no end date the range still gets one, from getFilterValue's `?? new Date()`, so a
+        // future start inverts it just as surely as an explicit end in the past.
+        const applied = (wrapper.emitted("update") ?? [])
+            .map(([filter]) => filter as AppliedFilter)
+            .filter(filter => typeof filter.value === "object" && filter.value !== null)
+
+        applied.forEach(filter => {
+            const {startDate, endDate} = filter.value as {startDate: Date; endDate: Date}
+            expect(startDate.getTime()).toBeLessThanOrEqual(endDate.getTime())
         })
     })
 })

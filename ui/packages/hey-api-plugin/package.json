@@ -25,7 +25,7 @@
   "scripts": {
     "build": "tsdown",
     "prepack": "tsdown",
-    "typecheck": "tsc --noEmit -p tsconfig.json"
+    "check:types": "tsc --noEmit -p tsconfig.json"
   },
   "peerDependencies": {
     "@hey-api/openapi-ts": ">=0.97.0"

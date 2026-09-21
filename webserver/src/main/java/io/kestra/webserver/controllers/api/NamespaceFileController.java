@@ -270,7 +270,7 @@ public class NamespaceFileController {
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "{namespace}/files/export", produces = MediaType.APPLICATION_OCTET_STREAM)
     @Operation(tags = { "Files" }, summary = "Export namespace files as a ZIP")
-    public HttpResponse<byte[]> exportNamespaceFiles(
+    public HttpResponse<StreamedFile> exportNamespaceFiles(
         @Parameter(description = "The namespace id") @PathVariable String namespace) throws IOException {
         try (
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
@@ -295,7 +295,10 @@ public class NamespaceFileController {
 
             archive.finish();
 
-            return HttpResponse.ok(bos.toByteArray()).header("Content-Disposition", "attachment; filename=\"" + namespace + "_files.zip\"");
+            byte[] zip = bos.toByteArray();
+            StreamedFile streamedFile = new StreamedFile(new ByteArrayInputStream(zip), MediaType.APPLICATION_OCTET_STREAM_TYPE, System.currentTimeMillis(), zip.length)
+                .attach(namespace + "_files.zip");
+            return HttpResponse.ok(streamedFile).header(HttpHeaders.CACHE_CONTROL, "no-cache");
         }
     }
 

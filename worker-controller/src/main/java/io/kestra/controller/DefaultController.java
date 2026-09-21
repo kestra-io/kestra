@@ -5,6 +5,8 @@ import java.io.UncheckedIOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -16,12 +18,14 @@ import com.google.common.annotations.VisibleForTesting;
 
 import io.kestra.controller.config.ControllerConfiguration;
 import io.kestra.controller.config.GrpcConfiguration;
+import io.kestra.controller.grpc.InternalCallServerInterceptor;
 import io.kestra.controller.grpc.WorkerControllerService;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.server.AbstractService;
 import io.kestra.core.server.Metric;
 import io.kestra.core.server.ServiceStateChangeEvent;
 import io.kestra.core.server.ServiceType;
+import io.kestra.core.utils.ExecutorsUtils;
 import io.kestra.core.worker.Controller;
 
 import io.grpc.Grpc;
@@ -54,6 +58,15 @@ public class DefaultController extends AbstractService implements Controller {
     protected static final String HEALTH_SERVICE_NAME = "kestra.controller";
 
     private Server server;
+
+    /**
+     * gRPC would otherwise hand every call to a shared, unbounded cached pool of platform threads.
+     * Controller RPCs block on storage — a streamed plugin artifact for the length of the transfer —
+     * so a fleet-wide resync would cost one platform thread per worker.
+     */
+    private final ExecutorService serverExecutor = Executors.newThreadPerTaskExecutor(
+        Thread.ofVirtual().name("grpc-controller-", 0).factory()
+    );
 
     private final List<WorkerControllerService> workerControllerServices;
 
@@ -148,6 +161,8 @@ public class DefaultController extends AbstractService implements Controller {
     protected ServerBuilder<?> buildServer(int port) {
         ServerCredentials credentials = createServerCredentials();
         ServerBuilder<?> serverBuilder = Grpc.newServerBuilderForPort(port, credentials)
+            .executor(serverExecutor)
+            .intercept(new InternalCallServerInterceptor())
             .addService(healthStatusManager.getHealthService());
 
         if (grpcConfiguration.reflectionEnabled()) {
@@ -203,6 +218,7 @@ public class DefaultController extends AbstractService implements Controller {
         if (server != null && !server.isTerminated()) {
             shutdownServerAndWait();
         }
+        ExecutorsUtils.closeExecutorService("grpc-controller", serverExecutor, controllerConfiguration.maxConnectionAgeGrace());
         return ServiceState.TERMINATED_GRACEFULLY;
     }
 

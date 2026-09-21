@@ -6,6 +6,7 @@ import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,6 +15,7 @@ import io.kestra.controller.grpc.OpaqueData;
 import io.kestra.controller.messages.BatchMessage;
 import io.kestra.controller.messages.MessageFormats;
 import io.kestra.controller.messages.RequestOrResponseHeaderFactory;
+import io.kestra.core.models.HasUID;
 import io.kestra.core.worker.models.WorkerContext;
 import io.kestra.worker.WorkerLoop;
 import io.kestra.worker.queues.WorkerQueue;
@@ -206,19 +208,44 @@ public class GrpcWorkerIOSender<T> extends WorkerLoop implements WorkerIOSender 
             );
             batchMessage.records().forEach(queue::put);
             resendBackoffUntilNanos = System.nanoTime() + RESEND_BACKOFF.toNanos();
+        } else if (resendOnFailure) {
+            LOG.error(
+                "Failed to send {} to the controller, dropping {}. The task runs or triggers they belong to stay in a non-terminal state until the executor detects this worker as lost.",
+                eventType.getSimpleName(), describeRecords(batchMessage), t
+            );
         } else {
-            LOG.error("Error while sending request", t);
+            LOG.error(
+                "Failed to send {} to the controller, dropping {}.",
+                eventType.getSimpleName(), describeRecords(batchMessage), t
+            );
         }
     }
 
     /**
-     * Whether a send failure is a transient transport error worth re-queuing. {@code UNAVAILABLE} covers a
-     * partition or a controller restart; {@code DEADLINE_EXCEEDED} a send that timed out in transit.
+     * Describes the items of a batch for a log message: their uids when the event type carries one, so a
+     * dropped result can be traced back to the task run it belonged to, and their count otherwise, since
+     * logs and metrics have no stable identifier.
+     */
+    private String describeRecords(final BatchMessage<T> batchMessage) {
+        if (!HasUID.class.isAssignableFrom(eventType)) {
+            return batchMessage.records().size() + " item(s)";
+        }
+        return batchMessage.records().stream()
+            .map(record -> ((HasUID) record).uid())
+            .collect(Collectors.joining(", "));
+    }
+
+    /**
+     * Whether a send failure is worth re-queuing. {@code UNAVAILABLE} covers a partition or a controller
+     * restart; {@code DEADLINE_EXCEEDED} a send that timed out in transit; {@code UNAUTHENTICATED} an
+     * access token the controller rejected, which the worker recovers from asynchronously by refreshing
+     * or re-registering, so the batch has to wait for that instead of being dropped. The single immediate
+     * retry in {@link RetryOnUnauthenticatedObserver} only covers a token that has already been renewed.
      */
     private static boolean isRetryable(final Throwable t) {
         return t instanceof StatusRuntimeException sre
             && switch (sre.getStatus().getCode()) {
-                case UNAVAILABLE, DEADLINE_EXCEEDED -> true;
+                case UNAVAILABLE, DEADLINE_EXCEEDED, UNAUTHENTICATED -> true;
                 default -> false;
             };
     }

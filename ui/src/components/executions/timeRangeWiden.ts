@@ -1,4 +1,4 @@
-import moment from "moment"
+import {dayjs} from "@kestra-io/design-system"
 import {FILTER_FIELD_PATTERN} from "./utils"
 
 export const FALLBACK_TIME_RANGE = "PT24H"
@@ -12,7 +12,7 @@ const ABSOLUTE_DATE_KEY = /startDate|endDate/
 const DEFAULT_TIME_RANGE_FIELDS = new Set(["timeRange", "startDate", "endDate", "scope", "namespace"])
 
 export function timeRangeDurationMs(iso: string): number | undefined {
-    const ms = moment.duration(iso).asMilliseconds()
+    const ms = dayjs.duration(iso).asMilliseconds()
     return Number.isFinite(ms) && ms > 0 ? ms : undefined
 }
 

@@ -146,7 +146,7 @@
 
         &.kel-tabs--box {
             position: sticky;
-            z-index: 1000;
+            z-index: var(--ks-z-dropdown);
 
             .kel-tabs__nav-scroll {
                 display: flex;

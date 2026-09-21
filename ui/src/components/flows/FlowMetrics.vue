@@ -70,15 +70,14 @@
 <script setup lang="ts">
     import {ref, computed, watch} from "vue"
     import {useRoute, useRouter} from "vue-router"
-    import moment from "moment"
     import {useI18n} from "vue-i18n"
     import {useFlowStore} from "../../stores/flow"
     import {getFormat} from "../dashboard/composables/charts"
     import {date as dateFilter} from "../../utils/filters"
-    import {cssVar, KsBar, KsLine, KsSegmented} from "@kestra-io/design-system"
+    import {cssVar, dayjs, KsBar, KsLine, KsSegmented} from "@kestra-io/design-system"
     import type {KsChartSeriesItem} from "@kestra-io/design-system"
     import {KsFilter as KSFilter} from "@kestra-io/design-system"
-    import {useFlowMetricFilter} from "../filter/configurations"
+    import {useFlowMetricFilter} from "../filter/configurations/metricFilters"
 
     defineOptions({
         name: "FlowMetrics",
@@ -161,8 +160,8 @@
     function getTimeRangeParams(): {startDate?: string; endDate?: string} {
         const timeRange = route.query["filters[timeRange][EQUALS]"] as string | undefined
         if (!timeRange) return {}
-        const endDate = moment().toISOString()
-        const startDate = moment().subtract(moment.duration(timeRange)).toISOString()
+        const endDate = dayjs().toISOString()
+        const startDate = dayjs().subtract(dayjs.duration(timeRange)).toISOString()
         return {startDate, endDate}
     }
 

@@ -223,7 +223,6 @@
     import {useRoute, useRouter} from "vue-router"
     import type {FormInstance} from "@kestra-io/design-system"
     import {ref, computed, watch, nextTick, useTemplateRef} from "vue"
-    import _merge from "lodash/merge"
 
     import Lock from "vue-material-design-icons/Lock.vue"
     import Plus from "vue-material-design-icons/Plus.vue"
@@ -232,7 +231,7 @@
     import ContentSave from "vue-material-design-icons/ContentSave.vue"
     import FileDocumentEdit from "vue-material-design-icons/FileDocumentEdit.vue"
 
-    import {KsId, KsIconButton, KsPassword, rowKey} from "@kestra-io/design-system"
+    import {KsId, KsIconButton, KsPassword, rowKey, deepMerge} from "@kestra-io/design-system"
     import Labels from "../layout/Labels.vue"
     import {KsFilter as KSFilter} from "@kestra-io/design-system"
     import {routeQueryToQueryFilters} from "../../utils/queryFilters"
@@ -247,7 +246,7 @@
     import {useAuthStore} from "override/stores/auth"
     import {useNamespacesStore} from "override/stores/namespaces"
     import {useApiStore} from "../../stores/api"
-    import {useSecretsFilter} from "../filter/configurations"
+    import {useSecretsFilter} from "../filter/configurations/secretsFilter"
     import {useTableColumns} from "@kestra-io/design-system"
 
     const secretsFilter = useSecretsFilter()
@@ -455,7 +454,7 @@
         const nonFilterRest = Object.fromEntries(
             Object.entries(rest).filter(([key]) => !key.startsWith("filters[")),
         )
-        return _merge(base, nonFilterRest)
+        return deepMerge(base, nonFilterRest)
     }
 
     const namespaceFilter = (namespace: string) =>

@@ -71,7 +71,10 @@ jobs:
           git config user.name "GitHub Action"
           git config user.email "actions@github.com"
           git add ui/src/translations/*.json ui/scripts/translations/fingerprints*.json
-          git add ':(glob)ui/packages/design-system/**/*.locale.ts'
+          # Phase 2 of the generator; a release branch without a design system has nothing to stage here.
+          if [ -d ui/packages/design-system ]; then
+            git add ':(glob)ui/packages/design-system/**/*.locale.ts'
+          fi
           if git diff --cached --quiet; then
             echo "Translations are already up to date."
             echo "changed=false" >> "$GITHUB_OUTPUT"
@@ -103,7 +106,7 @@ jobs:
         if: steps.commit.outputs.changed == 'true' && steps.push.outcome == 'failure'
         run: git format-patch -1 HEAD --output-directory translations-patch
 
-      - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: steps.commit.outputs.changed == 'true' && steps.push.outcome == 'failure'
         with:
           name: translations-patch-pr-${{ inputs.pr_number }}

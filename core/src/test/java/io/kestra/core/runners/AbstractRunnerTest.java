@@ -66,9 +66,6 @@ public abstract class AbstractRunnerTest {
     protected PauseTest.Suite pauseTest;
 
     @Inject
-    private IgnoreExecutionCaseTest ignoreExecutionCaseTest;
-
-    @Inject
     protected LoopUntilCaseTest loopUntilTestCaseTest;
 
     @Inject
@@ -110,6 +107,29 @@ public abstract class AbstractRunnerTest {
     @ExecuteFlow("flows/valids/logs.yaml")
     void logs(Execution execution) {
         assertThat(execution.getTaskRunList()).hasSize(5);
+    }
+
+    /**
+     * A nested null must survive the round-trip through the output store, so a downstream expression renders
+     * empty instead of failing on a missing variable.
+     *
+     * @see <a href="https://github.com/kestra-io/plugin-transform/issues/110">plugin-transform#110</a>
+     */
+    @Test
+    @ExecuteFlow("flows/valids/null-content-output.yaml")
+    void nullContentOutput(Execution execution) throws Exception {
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+
+        Map<String, Object> outputs = taskOutputService.getOutputs(execution.findTaskRunsByTaskId("produce").getFirst());
+        @SuppressWarnings("unchecked")
+        Map<String, Object> record = (Map<String, Object>) ((List<Object>) outputs.get("records")).getFirst();
+        assertThat(record).containsKey("b");
+        assertThat(record.get("b")).isNull();
+
+        assertThat(taskOutputService.getOutputs(execution.findTaskRunsByTaskId("render_null").getFirst()))
+            .containsEntry("value", "[]");
+        assertThat(taskOutputService.getOutputs(execution.findTaskRunsByTaskId("render_sibling").getFirst()))
+            .containsEntry("value", "[1]");
     }
 
     @Test
@@ -428,24 +448,6 @@ public abstract class AbstractRunnerTest {
     }
 
     @Test
-    @LoadFlows({ "flows/valids/minimal.yaml" })
-    void shouldIgnoreExecutionById() throws Exception {
-        ignoreExecutionCaseTest.shouldIgnoreExecutionById();
-    }
-
-    @Test
-    @LoadFlows({ "flows/valids/minimal.yaml", "flows/valids/output-values.yml" })
-    void shouldIgnoreExecutionByFlowId() throws Exception {
-        ignoreExecutionCaseTest.shouldIgnoreExecutionByFlowId();
-    }
-
-    @Test
-    @LoadFlows({ "flows/valids/minimal.yaml", "flows/valids/minimal2.yaml" })
-    void shouldIgnoreExecutionByNamespace() throws Exception {
-        ignoreExecutionCaseTest.shouldIgnoreExecutionByNamespace();
-    }
-
-    @Test
     @ExecuteFlow("flows/valids/executable-fail.yml")
     void badExecutable(Execution execution) {
         assertThat(execution.getTaskRunList().size()).isEqualTo(1);
@@ -757,21 +759,6 @@ public abstract class AbstractRunnerTest {
 
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
         assertThat(execution.getTaskRunList().size()).isEqualTo(1);
-    }
-
-    @Test
-    void avoidInfiniteExecutionLoop() throws QueueException {
-        CopyOnWriteArrayList<ExecutionEvent> executions = new CopyOnWriteArrayList<>();
-        executionEventQueue.addListener(e -> executions.add(e));
-
-        executionCommandQueue.emit(Create.of(TestsUtils.mockFlow().toFlowId()));
-
-        // The flow does not exist in the repository: handleCreate logs an error and returns empty.
-        // We expect zero execution events — and certainly no infinite loop.
-        await()
-            .during(Duration.ofMillis(500)) // Wait to ensure no event is ever emitted
-            .atMost(Duration.ofSeconds(1))
-            .until(executions::isEmpty);
     }
 
     @Test

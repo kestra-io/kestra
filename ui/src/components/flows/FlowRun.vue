@@ -27,6 +27,7 @@
                         :initialInputs="flow.inputs"
                         :selectedTrigger="selectedTrigger"
                         :flow="flow"
+                        :renderLabels="renderLabels"
                         mode="wizard"
                         v-model="inputs"
                         :executeClicked="executeClicked"
@@ -119,7 +120,7 @@
     import {useI18n} from "vue-i18n"
     import {useToast} from "../../utils/toast"
     import {buildScheduleDateParam, isPastScheduleDate, isScheduleDayDisabled} from "../../utils/scheduleDate"
-    import moment from "moment-timezone"
+    import {dateUtils} from "@kestra-io/design-system"
     import {useCoreStore} from "../../stores/core"
     import {useApiStore} from "../../stores/api"
     import {useMiscStore} from "override/stores/misc"
@@ -137,7 +138,7 @@
     import {executeFlowBehaviours, storageKeys} from "../../utils/constants"
     import {WEBHOOK_TRIGGER_TYPE} from "../../utils/webhook"
     import {flattenInputs} from "../../utils/inputs"
-    import get from "lodash/get"
+    import {getPath} from "@kestra-io/design-system"
     import type {FormInstance} from "@kestra-io/design-system"
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
     import Play from "vue-material-design-icons/Play.vue"
@@ -176,6 +177,7 @@
         buttonIcon?: Component
         buttonTestId?: string
         autoPrefill?: boolean
+        renderLabels?: string[]
     }>(), {
         redirect: true,
         embed: false,
@@ -185,6 +187,7 @@
         buttonIcon: () => Play as Component,
         buttonTestId: "execute-dialog-button",
         autoPrefill: false,
+        renderLabels: undefined,
     })
 
     const emit = defineEmits<{
@@ -383,7 +386,7 @@
         const executionInputs = execution.value?.inputs ?? {}
         flattenInputs(flow.value.inputs)
             .forEach(leaf => {
-                const value = get(executionInputs, leaf.id)
+                const value = getPath(executionInputs, leaf.id)
                 if (value === undefined) {
                     return
                 }
@@ -393,7 +396,6 @@
 
     // Adapter object for the legacy executeTask utility
     const submitor = {
-        $moment: moment,
         $router: router,
         $route: route,
         $toast: () => toast,
@@ -440,7 +442,7 @@
                     } else {
                         if (flow.value) {
                             if (playgroundStore.enabled) {
-                                const formData = normalizeInputValues(submitor, flattenInputs(flow.value.inputs), inputs.value)
+                                const formData = normalizeInputValues(flattenInputs(flow.value.inputs), inputs.value)
                                 await playgroundStore.runUntilTask(
                                     playgroundStore.actionOptions?.taskId, 
                                     playgroundStore.actionOptions?.runDownstreamTasks || false, 
@@ -459,7 +461,7 @@
                                     labels: labelStrings,
                                     scheduleDate: buildScheduleDateParam(
                                         scheduleDate.value,
-                                        localStorage.getItem(storageKeys.TIMEZONE_STORAGE_KEY) ?? moment.tz.guess(),
+                                        dateUtils.currentTimezone(),
                                     ),
                                     nextStep: true,
                                     breakpoints: breakpoints.value,

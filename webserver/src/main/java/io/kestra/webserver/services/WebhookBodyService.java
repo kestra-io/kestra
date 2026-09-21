@@ -72,10 +72,10 @@ public class WebhookBodyService {
      * The body is read off the connection in every case, so that the caller always gets its response back; what
      * the fetch type decides is where those bytes go - into the flow, into the internal storage, or nowhere.
      *
-     * @param request the incoming request
-     * @param flow the flow the webhook trigger belongs to
+     * @param request     the incoming request
+     * @param flow        the flow the webhook trigger belongs to
      * @param executionId the identifier the execution created from the request will be given
-     * @param fetchType what the trigger does with the body
+     * @param fetchType   what the trigger does with the body
      * @return the body of the request
      * @throws IOException if the body cannot be read, or cannot be stored
      */
@@ -181,8 +181,8 @@ public class WebhookBodyService {
      * The parts are collected whatever the {@link FetchType} of the trigger: a file part is stored rather than
      * read into the flow in any case, so the fetch type has nothing to choose between here.
      *
-     * @param parts the parts of the request, {@code null} if it has none
-     * @param flow the flow the webhook trigger belongs to
+     * @param parts       the parts of the request, {@code null} if it has none
+     * @param flow        the flow the webhook trigger belongs to
      * @param executionId the identifier the execution created from the request will be given
      * @param contentType the content type of the request
      * @return the collected body
@@ -195,7 +195,8 @@ public class WebhookBodyService {
         // already release the part, so it must not be discarded here: once the read no longer runs inside onNext,
         // that would release it twice.
         return (parts == null ? Flux.<CompletedPart> empty() : Flux.from(parts))
-            .publishOn(Schedulers.boundedElastic()).<MultipartFormDataRequestBody.Part> handle((part, sink) ->
+            .publishOn(Schedulers.boundedElastic())
+            .<MultipartFormDataRequestBody.Part> handle((part, sink) ->
             {
                 try {
                     sink.next(toPart(part, flow, executionId, index.getAndIncrement()));
@@ -204,13 +205,11 @@ public class WebhookBodyService {
                 }
             })
             .collectList()
-            .map(
-                collected -> MultipartFormDataRequestBody.builder()
-                    .contentType(contentType)
-                    .charset(StandardCharsets.UTF_8)
-                    .content(collected)
-                    .build()
-            );
+            .map(collected -> MultipartFormDataRequestBody.builder()
+                .contentType(contentType)
+                .charset(StandardCharsets.UTF_8)
+                .content(collected)
+                .build());
     }
 
     /**
@@ -220,7 +219,7 @@ public class WebhookBodyService {
      * A call that creates no execution because its conditions are not met, or because its inputs cannot be
      * rendered, is cleaned up by {@code WebhookService#newExecution} instead, which knows of that outcome.
      *
-     * @param flow the flow the webhook trigger belongs to
+     * @param flow        the flow the webhook trigger belongs to
      * @param executionId the identifier the execution would have been given
      */
     public void deleteStored(Flow flow, String executionId) {
@@ -321,9 +320,9 @@ public class WebhookBodyService {
      * The body of a webhook request, as the trigger will see it.
      *
      * @param requestBody the body to attach to the request, {@code null} if the request has none, or if it was
-     *        stored rather than read into the flow
-     * @param storedUri the URI the body was stored under, {@code null} unless the trigger fetches it as
-     *        {@link FetchType#STORE}
+     *                    stored rather than read into the flow
+     * @param storedUri   the URI the body was stored under, {@code null} unless the trigger fetches it as
+     *                    {@link FetchType#STORE}
      */
     public record Body(RequestBody requestBody, URI storedUri) {
         private static final Body EMPTY = new Body(null, null);

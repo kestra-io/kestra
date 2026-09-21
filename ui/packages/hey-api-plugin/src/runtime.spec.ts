@@ -3,7 +3,7 @@ import {describe, expect, it} from "vitest"
 import {createConfigureClient, type ConfigurableFetchClient} from "./runtime"
 import {EnterpriseFeatureError, SdkVersionMismatchError} from "./errors"
 
-type ErrorInterceptor = (error: unknown, response: Response | undefined, request: Request | undefined, opts: any) => unknown
+type ErrorInterceptor = (error: unknown, response: Response | undefined, request: Request | undefined, opts: {url?: string}) => unknown
 
 /** Builds a fake @hey-api/client-fetch client that captures the registered error interceptor. */
 function buildFakeClient(): { client: ConfigurableFetchClient; getErrorInterceptor: () => ErrorInterceptor } {

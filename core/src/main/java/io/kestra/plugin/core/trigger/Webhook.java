@@ -31,6 +31,8 @@ import io.kestra.core.validations.WebhookValidation;
 
 import io.micronaut.http.MediaType;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -49,10 +51,33 @@ import reactor.core.publisher.Mono;
 
         Request data is available as `trigger.body`, `trigger.headers`, and `trigger.parameters`. It is untrusted input: pass it to script tasks through `env`, never inside `commands`, `beforeCommands`, `script`, or `interpreter`, where it would be run as code. A binary body is base64-encoded on `trigger.body`, unless `fetchType` is set to `STORE` to stream it into Kestra's internal storage and expose it as `trigger.uri` instead. A `multipart/form-data` body is available as `trigger.parts` (files, always stored in Kestra's internal storage) and `trigger.formFields`. Supports `wait`/`returnOutputs` to block and return Flow outputs, and configurable response status, headers, body, and content type. Conditions are allowed except `MultipleCondition`.
 
-        Responses: 404 (not found), 200 (triggered), 204 (conditions not met), 422 (inputs could not be rendered)."""
+        Responses: 401 (invalid signature), 404 (not found), 200 (triggered), 204 (conditions not met), 422 (inputs could not be rendered)."""
 )
 @Plugin(
     examples = {
+        @Example(
+            title = "Verify a GitHub-style webhook signature before starting the flow.",
+            code = """
+                id: signed_webhook
+                namespace: company.team
+
+                tasks:
+                  - id: log
+                    type: io.kestra.plugin.core.log.Log
+                    message: "Received a verified webhook"
+
+                triggers:
+                  - id: webhook
+                    type: io.kestra.plugin.core.trigger.Webhook
+                    key: "{{ secret('WEBHOOK_KEY') }}"
+                    signature:
+                      header: X-Hub-Signature-256
+                      algorithm: HMAC_SHA256
+                      secret: "{{ secret('GITHUB_WEBHOOK_SECRET') }}"
+                      prefix: "sha256="
+                """,
+            full = true
+        ),
         @Example(
             title = "Add a webhook trigger to the current flow with its key read from the `WEBHOOK_KEY` secret; the webhook will be available at the URI `/api/v1/{tenant}/executions/webhook/{namespace}/{flowId}/{key}`, where `{key}` is the value of that secret.",
             code = """
@@ -251,6 +276,17 @@ public class Webhook extends AbstractWebhookTrigger implements TriggerOutput<Web
     )
     private Property<String> responseBody;
 
+    @Valid
+    @PluginProperty
+    @Schema(
+        title = "Verify the HMAC signature of the raw request body.",
+        description = "When configured, missing or invalid hexadecimal signatures return 401 before an execution is created. " +
+            "Verification supports FETCH, STORE and NONE without buffering stored bodies. " +
+            "Signed multipart/form-data requests are rejected because their original bytes are unavailable after multipart parsing. " +
+            "This validates payload integrity, but does not prevent replay of a signed request."
+    )
+    private Signature signature;
+
     @Override
     public Mono<HttpResponse<?>> evaluate(WebhookContext context) throws Exception {
         // Reject path since not expected
@@ -382,9 +418,9 @@ public class Webhook extends AbstractWebhookTrigger implements TriggerOutput<Web
      * A body the trigger asked to store never reaches here: it carries no content but the URI it was stored
      * under, which is exposed as {@code uri}.
      *
-     * @param context       the webhook request context
-     * @param requestBody   the body of the webhook request, {@code null} if the request has none, or if it was
-     *                      stored rather than read
+     * @param context the webhook request context
+     * @param requestBody the body of the webhook request, {@code null} if the request has none, or if it was
+     *        stored rather than read
      * @param storedBodyUri the URI the body was stored under, {@code null} unless the trigger stores it
      * @return the trigger output
      */
@@ -398,7 +434,8 @@ public class Webhook extends AbstractWebhookTrigger implements TriggerOutput<Web
         }
 
         switch (requestBody) {
-            case null -> { }
+            case null -> {
+            }
             case HttpRequest.MultipartFormDataRequestBody multipart -> {
                 MultipartContent content = multipartContent(multipart);
                 output.parts(content.parts()).formFields(content.formFields());
@@ -427,13 +464,15 @@ public class Webhook extends AbstractWebhookTrigger implements TriggerOutput<Web
         multipart.getContent().forEach(part ->
         {
             switch (part) {
-                case HttpRequest.MultipartFormDataRequestBody.FilePart file -> parts.add(Output.Part.builder()
-                    .name(file.name())
-                    .filename(file.filename())
-                    .contentType(file.contentType())
-                    .size(file.size())
-                    .uri(file.uri().toString())
-                    .build());
+                case HttpRequest.MultipartFormDataRequestBody.FilePart file -> parts.add(
+                    Output.Part.builder()
+                        .name(file.name())
+                        .filename(file.filename())
+                        .contentType(file.contentType())
+                        .size(file.size())
+                        .uri(file.uri().toString())
+                        .build()
+                );
                 case HttpRequest.MultipartFormDataRequestBody.FormFieldPart formField ->
                     formFields.computeIfAbsent(formField.name(), name -> new ArrayList<>()).add(new String(formField.content(), charset));
             }
@@ -460,7 +499,42 @@ public class Webhook extends AbstractWebhookTrigger implements TriggerOutput<Web
         }
     }
 
-    private record MultipartContent(List<Output.Part> parts, Map<String, List<String>> formFields) {}
+    private record MultipartContent(List<Output.Part> parts, Map<String, List<String>> formFields) {
+    }
+
+    @SuperBuilder
+    @Getter
+    @NoArgsConstructor
+    public static class Signature {
+        @NotBlank
+        @PluginProperty
+        @Schema(title = "The request header containing the hexadecimal signature.")
+        private String header;
+
+        @NotNull
+        @Builder.Default
+        @PluginProperty
+        @Schema(title = "The HMAC algorithm used by the sender.", description = "Defaults to `HMAC_SHA256`.")
+        private SignatureAlgorithm algorithm = SignatureAlgorithm.HMAC_SHA256;
+
+        @NotNull
+        @Schema(title = "The shared signing secret.", description = "Use a secret expression such as `{{ secret('GITHUB_WEBHOOK_SECRET') }}`.")
+        private Property<String> secret;
+
+        @PluginProperty
+        @Schema(title = "The optional required prefix before the hexadecimal signature.", description = "For GitHub SHA256 signatures, use `sha256=`.")
+        private String prefix;
+    }
+
+    @Getter
+    @AllArgsConstructor
+    public enum SignatureAlgorithm {
+        HMAC_SHA1("HmacSHA1"),
+        HMAC_SHA256("HmacSHA256"),
+        HMAC_SHA512("HmacSHA512");
+
+        private final String jcaName;
+    }
 
     @Builder
     @ToString

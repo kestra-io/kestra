@@ -746,7 +746,9 @@ public class ExecutionController {
         HttpRequest<?> request) {
         Flow flow;
         try {
-            flow = resolveWebhook(maybeFlow, key).flow();
+            ResolvedWebhook resolved = resolveWebhook(maybeFlow, key);
+            flow = resolved.flow();
+            webhookBodyService.validateMultipartSignature(processedForRuntime(flow, resolved.trigger()));
         } catch (RuntimeException e) {
             // The parts are already bound: unless they are read, their bytes stay in direct memory (GHSA-2355-646m-8m98).
             return MultipartUtils.discard(parts).then(Mono.error(e));
@@ -807,7 +809,7 @@ public class ExecutionController {
 
         // Minted before the body is read, so that a stored body lives under the execution that will carry it.
         String executionId = IdUtils.create();
-        WebhookBodyService.Body body = webhookBodyService.read(request, flow, executionId, webhook.getFetchType());
+        WebhookBodyService.Body body = webhookBodyService.read(request, flow, executionId, webhook, webhookService.runContext(flow, webhook));
 
         try {
             return this.webhook(

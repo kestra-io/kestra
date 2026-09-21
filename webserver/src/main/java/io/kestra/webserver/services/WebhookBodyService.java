@@ -1,27 +1,40 @@
 package io.kestra.webserver.services;
 
+import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PushbackInputStream;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.security.GeneralSecurityException;
+import java.security.MessageDigest;
+import java.util.HexFormat;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
+
 import org.apache.commons.io.FilenameUtils;
 
+import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.http.HttpRequest.MultipartFormDataRequestBody;
 import io.kestra.core.http.HttpRequest.RequestBody;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.runners.RunContext;
 import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
+import io.kestra.plugin.core.trigger.AbstractWebhookTrigger;
 import io.kestra.plugin.core.trigger.AbstractWebhookTrigger.FetchType;
+import io.kestra.plugin.core.trigger.Webhook;
 
+import io.micronaut.http.HttpStatus;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.ServerHttpRequest;
 import io.micronaut.http.body.ByteBody;
+import io.micronaut.http.exceptions.HttpStatusException;
 import io.micronaut.http.multipart.CompletedFileUpload;
 import io.micronaut.http.multipart.CompletedPart;
 import io.micronaut.http.server.multipart.MultipartBody;
@@ -59,10 +72,10 @@ public class WebhookBodyService {
      * The body is read off the connection in every case, so that the caller always gets its response back; what
      * the fetch type decides is where those bytes go - into the flow, into the internal storage, or nowhere.
      *
-     * @param request     the incoming request
-     * @param flow        the flow the webhook trigger belongs to
+     * @param request the incoming request
+     * @param flow the flow the webhook trigger belongs to
      * @param executionId the identifier the execution created from the request will be given
-     * @param fetchType   what the trigger does with the body
+     * @param fetchType what the trigger does with the body
      * @return the body of the request
      * @throws IOException if the body cannot be read, or cannot be stored
      */
@@ -75,17 +88,90 @@ public class WebhookBodyService {
             return new Body(MicronautHttpService.from(request).getBody(), null);
         }
 
-        return switch (fetchType) {
-            case NONE -> {
-                drain(byteBody);
-                yield Body.EMPTY;
+        try (InputStream content = byteBody.toInputStream()) {
+            return read(request, flow, executionId, fetchType, content);
+        }
+    }
+
+    /**
+     * Verify configured signatures over the original bytes before returning a body for execution creation.
+     * Stored content is deleted if verification or ingestion fails.
+     */
+    public Body read(io.micronaut.http.HttpRequest<?> request, Flow flow, String executionId,
+        AbstractWebhookTrigger trigger, RunContext runContext) throws IOException, IllegalVariableEvaluationException {
+        if (!(trigger instanceof Webhook webhook) || webhook.getSignature() == null) {
+            return read(request, flow, executionId, trigger.getFetchType());
+        }
+
+        Webhook.Signature signature = webhook.getSignature();
+        var headers = request.getHeaders().getAll(signature.getHeader());
+        if (headers.size() != 1 || !(request instanceof ServerHttpRequest<?> serverRequest)) {
+            throw invalidSignature();
+        }
+        String value = headers.getFirst();
+        String prefix = signature.getPrefix();
+        if (prefix != null) {
+            if (!value.startsWith(prefix)) {
+                throw invalidSignature();
             }
-            case STORE -> store(byteBody, flow, executionId);
-            case FETCH -> new Body(
-                MicronautHttpService.byteArrayRequestBody(request.getContentType().orElse(null), readFully(byteBody)),
-                null
-            );
-        };
+            value = value.substring(prefix.length());
+        }
+
+        Mac mac;
+        try {
+            mac = Mac.getInstance(signature.getAlgorithm().getJcaName());
+            String secret = runContext.render(signature.getSecret()).as(String.class).orElseThrow();
+            mac.init(new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), mac.getAlgorithm()));
+        } catch (GeneralSecurityException e) {
+            throw new IllegalStateException("Unable to initialize webhook signature verification.", e);
+        }
+        if (value.length() != mac.getMacLength() * 2) {
+            throw invalidSignature();
+        }
+        byte[] expected;
+        try {
+            expected = HexFormat.of().parseHex(value);
+        } catch (IllegalArgumentException e) {
+            throw invalidSignature();
+        }
+
+        try (InputStream content = new FilterInputStream(serverRequest.byteBody().toInputStream()) {
+            @Override
+            public int read() throws IOException {
+                int value = in.read();
+                if (value != -1) {
+                    mac.update((byte) value);
+                }
+                return value;
+            }
+
+            @Override
+            public int read(byte[] bytes, int offset, int length) throws IOException {
+                int count = in.read(bytes, offset, length);
+                if (count > 0) {
+                    mac.update(bytes, offset, count);
+                }
+                return count;
+            }
+        }) {
+            Body body = read(request, flow, executionId, trigger.getFetchType(), content);
+            if (!MessageDigest.isEqual(mac.doFinal(), expected)) {
+                throw invalidSignature();
+            }
+            return body;
+        } catch (IOException | RuntimeException e) {
+            if (FetchType.STORE == trigger.getFetchType()) {
+                deleteStored(flow, executionId);
+            }
+            throw e;
+        }
+    }
+
+    /** Reject signed multipart requests whose raw bytes have already been consumed by the multipart parser. */
+    public void validateMultipartSignature(AbstractWebhookTrigger trigger) {
+        if (trigger instanceof Webhook webhook && webhook.getSignature() != null) {
+            throw invalidSignature();
+        }
     }
 
     /**
@@ -95,8 +181,8 @@ public class WebhookBodyService {
      * The parts are collected whatever the {@link FetchType} of the trigger: a file part is stored rather than
      * read into the flow in any case, so the fetch type has nothing to choose between here.
      *
-     * @param parts       the parts of the request, {@code null} if it has none
-     * @param flow        the flow the webhook trigger belongs to
+     * @param parts the parts of the request, {@code null} if it has none
+     * @param flow the flow the webhook trigger belongs to
      * @param executionId the identifier the execution created from the request will be given
      * @param contentType the content type of the request
      * @return the collected body
@@ -109,8 +195,7 @@ public class WebhookBodyService {
         // already release the part, so it must not be discarded here: once the read no longer runs inside onNext,
         // that would release it twice.
         return (parts == null ? Flux.<CompletedPart> empty() : Flux.from(parts))
-            .publishOn(Schedulers.boundedElastic())
-            .<MultipartFormDataRequestBody.Part> handle((part, sink) ->
+            .publishOn(Schedulers.boundedElastic()).<MultipartFormDataRequestBody.Part> handle((part, sink) ->
             {
                 try {
                     sink.next(toPart(part, flow, executionId, index.getAndIncrement()));
@@ -119,11 +204,13 @@ public class WebhookBodyService {
                 }
             })
             .collectList()
-            .map(collected -> MultipartFormDataRequestBody.builder()
-                .contentType(contentType)
-                .charset(StandardCharsets.UTF_8)
-                .content(collected)
-                .build());
+            .map(
+                collected -> MultipartFormDataRequestBody.builder()
+                    .contentType(contentType)
+                    .charset(StandardCharsets.UTF_8)
+                    .content(collected)
+                    .build()
+            );
     }
 
     /**
@@ -133,7 +220,7 @@ public class WebhookBodyService {
      * A call that creates no execution because its conditions are not met, or because its inputs cannot be
      * rendered, is cleaned up by {@code WebhookService#newExecution} instead, which knows of that outcome.
      *
-     * @param flow        the flow the webhook trigger belongs to
+     * @param flow the flow the webhook trigger belongs to
      * @param executionId the identifier the execution would have been given
      */
     public void deleteStored(Flow flow, String executionId) {
@@ -146,11 +233,30 @@ public class WebhookBodyService {
         }
     }
 
+    private static HttpStatusException invalidSignature() {
+        return new HttpStatusException(HttpStatus.UNAUTHORIZED, "Invalid webhook signature.");
+    }
+
+    private Body read(io.micronaut.http.HttpRequest<?> request, Flow flow, String executionId,
+        FetchType fetchType, InputStream content) throws IOException {
+        return switch (fetchType) {
+            case NONE -> {
+                content.transferTo(OutputStream.nullOutputStream());
+                yield Body.EMPTY;
+            }
+            case STORE -> store(content, flow, executionId);
+            case FETCH -> new Body(
+                MicronautHttpService.byteArrayRequestBody(request.getContentType().orElse(null), content.readAllBytes()),
+                null
+            );
+        };
+    }
+
     /**
      * Stream the body into the internal storage, under the execution the request will create.
      */
-    private Body store(ByteBody byteBody, Flow flow, String executionId) throws IOException {
-        try (PushbackInputStream content = new PushbackInputStream(byteBody.toInputStream())) {
+    private Body store(InputStream input, Flow flow, String executionId) throws IOException {
+        try (PushbackInputStream content = new PushbackInputStream(input)) {
             int first = content.read();
             if (-1 == first) {
                 // A request without a body has nothing to store, and must not leave an empty file behind.
@@ -162,25 +268,6 @@ public class WebhookBodyService {
                 null,
                 storageInterface.put(flow.getTenantId(), flow.getNamespace(), bodyStorageUri(flow, executionId), content)
             );
-        }
-    }
-
-    /**
-     * Read the whole body into memory, as a trigger fetching it carries it in the execution anyway.
-     */
-    private static byte[] readFully(ByteBody byteBody) throws IOException {
-        try (InputStream content = byteBody.toInputStream()) {
-            return content.readAllBytes();
-        }
-    }
-
-    /**
-     * Read the body off the connection and drop it. It is read rather than left unclaimed so that the caller gets
-     * its response over a connection that was not cut short mid-upload; no byte of it is ever held.
-     */
-    private static void drain(ByteBody byteBody) throws IOException {
-        try (InputStream content = byteBody.toInputStream()) {
-            content.transferTo(OutputStream.nullOutputStream());
         }
     }
 
@@ -234,9 +321,9 @@ public class WebhookBodyService {
      * The body of a webhook request, as the trigger will see it.
      *
      * @param requestBody the body to attach to the request, {@code null} if the request has none, or if it was
-     *                    stored rather than read into the flow
-     * @param storedUri   the URI the body was stored under, {@code null} unless the trigger fetches it as
-     *                    {@link FetchType#STORE}
+     *        stored rather than read into the flow
+     * @param storedUri the URI the body was stored under, {@code null} unless the trigger fetches it as
+     *        {@link FetchType#STORE}
      */
     public record Body(RequestBody requestBody, URI storedUri) {
         private static final Body EMPTY = new Body(null, null);

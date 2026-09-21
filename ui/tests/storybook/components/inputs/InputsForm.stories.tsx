@@ -5,7 +5,7 @@ import {vueRouter} from "storybook-vue3-router";
 import {KsForm} from "@kestra-io/design-system";
 import InputsForm from "../../../../src/components/inputs/InputsForm.vue";
 import {flattenInputs, unflattenToForms} from "../../../../src/utils/inputs";
-import type {InputMetaData, ValidationEventPayload} from "../../../../src/stores/executions";
+import type {InputError, InputMetaData, ValidationEventPayload} from "../../../../src/stores/executions";
 import type {Flow} from "../../../../src/stores/flow";
 import {setMockClient} from "@kestra-io/kestra-sdk"
 
@@ -650,5 +650,98 @@ export const MultiSelectStateSources: Story = {
             ]}
             selectedTrigger={{inputs: {shards: ["Fifth value", "Seventh value"]}}}
         />;
+    }
+};
+
+const DISKS: InputMetaData = {
+    id: "disks",
+    type: "TABLE",
+    required: false,
+    displayName: "Additional disks",
+    rows: {min: 1, max: 3},
+    columns: [
+        {id: "size_gb", type: "INT", min: 10, max: 2048},
+        {id: "mountpoint", type: "STRING"}
+    ]
+};
+
+/** As {@link Sut}, but echoes the submitted rows back and attaches the per-cell errors of the story. */
+const TableSut = defineComponent((props: {errors: InputError[]}) => {
+    const axios = {
+        post: (uri: string, body: FormData) => {
+            if (!uri.endsWith("/validate")) {
+                return {data: []};
+            }
+            return Promise.resolve({data: {
+                inputs: [{
+                    input: DISKS,
+                    enabled: true,
+                    isDefault: false,
+                    value: JSON.parse((body?.get("disks") as string) ?? "[]"),
+                    errors: props.errors
+                }]
+            }});
+        }
+    } as unknown as Parameters<typeof setMockClient>[0];
+
+    setMockClient(axios);
+
+    const values = ref<Record<string, unknown> | undefined>({});
+    return () => (<>
+        <KsForm label-position="top" model={values.value}>
+            <InputsForm initialInputs={[DISKS]} modelValue={values.value} flow={FLOW}
+                        onUpdate:modelValue={(value) => values.value = value}
+            />
+        </KsForm>
+        <pre data-testid="test-content">{JSON.stringify(values.value, null, 2)}</pre>
+    </>);
+}, {
+    props: {"errors": {type: Array, required: true}}
+});
+
+/**
+ * A TABLE input as the Execute modal renders it. An untouched grid submits nothing, so the validate
+ * response comes back with an empty list — which must not wipe the row `rows.min` opened the grid on.
+ */
+export const TableInputRows: Story = {
+    async play({canvasElement}) {
+        const can = within(canvasElement);
+
+        await waitFor(function seededRowRendered() {
+            expect(canvasElement.querySelector("[data-test='table-cell-disks-0-size_gb']")).toBeTruthy();
+        });
+        expect(canvasElement.querySelectorAll("tbody tr").length).toBe(1);
+        expect(canvasElement.querySelector("[data-test='table-row-remove-disks-0']")).toBeDisabled();
+
+        await userEvent.type(canvasElement.querySelector("[data-test='table-cell-disks-0-mountpoint']")!, "/dev/sda");
+        await waitFor(function rowSubmitted() {
+            expect(can.getByTestId("test-content").textContent).toContain("/dev/sda");
+        });
+
+        await userEvent.click(canvasElement.querySelector("[data-test='table-row-add-disks']")!);
+        await waitFor(function rowAdded() {
+            expect(canvasElement.querySelectorAll("tbody tr").length).toBe(2);
+        });
+    },
+    render() {
+        return <TableSut errors={[]} />;
+    }
+};
+
+/** A cell error belongs to its cell: the form item under the grid must not repeat it. */
+export const TableInputCellError: Story = {
+    async play({canvasElement}) {
+        await waitFor(function cellErrorRendered() {
+            expect(canvasElement.textContent).toContain("it must be more than `10`");
+        });
+        // The cell carries the cause alone, and the whole-input error slot stays empty.
+        expect(canvasElement.textContent).not.toContain("Invalid value for input");
+        expect(canvasElement.querySelector(".kel-form-item__error")).toBeNull();
+    },
+    render() {
+        return <TableSut errors={[{
+            message: "Invalid value for input `disks[0].size_gb`. Cause: it must be more than `10`",
+            path: "disks[0].size_gb"
+        }]} />;
     }
 };

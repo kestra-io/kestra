@@ -33,8 +33,8 @@ describe("loadLanguageOnDemand", () => {
 
 describe("getShiki", () => {
     test("pre-registers only the grammars the app renders itself, so the rest stay out of the chunk", async () => {
-        const highlighter = await getShiki()
+        const shiki = await getShiki()
 
-        expect(highlighter.getLoadedLanguages().sort()).toEqual(["json", "py", "python", "yaml", "yml"])
+        expect(shiki.getLoadedLanguages().sort()).toEqual(["json", "py", "python", "yaml", "yml"])
     })
 })

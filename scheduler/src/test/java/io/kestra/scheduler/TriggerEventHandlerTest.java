@@ -87,7 +87,7 @@ class TriggerEventHandlerTest {
         triggerExecutionPublisher = new CollectorTriggerExecutionPublisher();
         triggerStateStore = new InMemoryTriggerStateStore();
         triggerId = Fixtures.triggerId();
-        triggerState = TriggerState.of(triggerId, TriggerType.SCHEDULE, null, false, 0);
+        triggerState = TriggerState.of(triggerId, TriggerType.SCHEDULE, null, 0);
         executionKilledQueue = Mockito.mock(BroadcastQueueInterface.class);
         asyncOperationProcessedEventQueue = Mockito.mock(BroadcastQueueInterface.class);
     }
@@ -158,7 +158,7 @@ class TriggerEventHandlerTest {
     @Test
     void shouldSendKillGivenTriggerDeletedEventForRealTimeTriggerWhenHandled() throws QueueException {
         // GIVEN
-        triggerStateStore.save(TriggerState.of(triggerId, TriggerType.REALTIME, null, false, 0));
+        triggerStateStore.save(TriggerState.of(triggerId, TriggerType.REALTIME, null, 0));
         handler = newTriggerEventHandler(List.of());
         TriggerDeleted event = new TriggerDeleted(triggerId);
 
@@ -177,7 +177,7 @@ class TriggerEventHandlerTest {
         handler = newTriggerEventHandler(
             List.of(
                 Fixtures.defaultFlow(
-                    build -> build.disabled(true).build()
+                    build -> build.stopAfter(List.of(State.Type.FAILED)).build()
                 )
             )
         );
@@ -189,10 +189,75 @@ class TriggerEventHandlerTest {
         // THEN
         Optional<TriggerState> updated = triggerStateStore.findByIdWithoutAcl(triggerId);
         assertThat(updated).isPresent();
-        assertThat(updated.get().isDisabled()).isTrue();
+        assertThat(updated.get().getStopAfter()).isEqualTo(List.of(State.Type.FAILED));
         assertThat(updated.get().getUpdatedAt()).isAfter(triggerState.getUpdatedAt());
         assertThat(updated.get().getLastEventId()).isEqualTo(event.eventId());
         assertThat(updated.get().getNextEvaluationDate()).isNotNull();
+    }
+
+    @Test
+    void shouldKeepDisabledWhenTriggerDefinitionUpdated() {
+        // GIVEN a trigger disabled at runtime, from the UI, whose definition does not declare `disabled`
+        triggerStateStore.save(triggerState.disabled(CLOCK, true));
+        handler = newTriggerEventHandler(List.of(Fixtures.defaultFlow()));
+        TriggerUpdated event = new TriggerUpdated(triggerId, Fixtures.defaultFlow().getRevision());
+
+        // WHEN
+        handler.handle(CLOCK, TEST_VNODE, event);
+
+        // THEN
+        Optional<TriggerState> updated = triggerStateStore.findByIdWithoutAcl(triggerId);
+        assertThat(updated).isPresent();
+        assertThat(updated.get().isDisabled()).isTrue();
+    }
+
+    @Test
+    void shouldMirrorTheDefinitionFlagWhenTriggerUpdated() {
+        // GIVEN a trigger disabled at runtime, from the UI, that is then also disabled in the flow
+        triggerStateStore.save(triggerState.disabled(CLOCK, true));
+        handler = newTriggerEventHandler(List.of(Fixtures.defaultFlow(build -> build.disabled(true).build())));
+        TriggerUpdated event = new TriggerUpdated(triggerId, Fixtures.defaultFlow().getRevision());
+
+        // WHEN
+        handler.handle(CLOCK, TEST_VNODE, event);
+
+        // THEN the definition lands in its own field, leaving the runtime disable untouched
+        Optional<TriggerState> updated = triggerStateStore.findByIdWithoutAcl(triggerId);
+        assertThat(updated).isPresent();
+        assertThat(updated.get().isSourceDisabled()).isTrue();
+        assertThat(updated.get().isDisabled()).isTrue();
+    }
+
+    @Test
+    void shouldClearTheDefinitionFlagWhenTriggerEnabledInDefinition() {
+        // GIVEN a trigger whose stored state still mirrors a `disabled: true` the flow no longer declares
+        triggerStateStore.save(triggerState.sourceDisabled(CLOCK, true));
+        handler = newTriggerEventHandler(List.of(Fixtures.defaultFlow()));
+        TriggerUpdated event = new TriggerUpdated(triggerId, Fixtures.defaultFlow().getRevision());
+
+        // WHEN
+        handler.handle(CLOCK, TEST_VNODE, event);
+
+        // THEN
+        Optional<TriggerState> updated = triggerStateStore.findByIdWithoutAcl(triggerId);
+        assertThat(updated).isPresent();
+        assertThat(updated.get().isSourceDisabled()).isFalse();
+    }
+
+    @Test
+    void shouldNotDisableStateWhenCreatedTriggerIsDisabledInDefinition() {
+        // GIVEN
+        handler = newTriggerEventHandler(List.of(Fixtures.defaultFlow(build -> build.disabled(true).build())));
+        TriggerCreated event = new TriggerCreated(triggerId, 1);
+
+        // WHEN
+        handler.handle(CLOCK, TEST_VNODE, event);
+
+        // THEN the definition keeps the trigger off on its own, so the runtime flag stays clear
+        Optional<TriggerState> created = triggerStateStore.findByIdWithoutAcl(triggerId);
+        assertThat(created).isPresent();
+        assertThat(created.get().isDisabled()).isFalse();
+        assertThat(created.get().isSourceDisabled()).isTrue();
     }
 
     @Test
@@ -688,7 +753,7 @@ class TriggerEventHandlerTest {
     void shouldKillRunningRealtimeTriggerWhenUpdated() throws QueueException {
         // GIVEN — a realtime trigger running on a worker (locked) whose definition changed
         TriggerState realtimeState = TriggerState
-            .of(triggerId, TriggerType.REALTIME, null, false, 0)
+            .of(triggerId, TriggerType.REALTIME, null, 0)
             .locked(CLOCK, true);
         triggerStateStore.save(realtimeState);
         FlowWithSource flow = Fixtures.flowWithTrigger(
@@ -716,7 +781,7 @@ class TriggerEventHandlerTest {
     void shouldKillRunningRealtimeTriggerWhenDisabled() throws QueueException {
         // GIVEN — a realtime trigger running on a worker (locked)
         TriggerState realtimeState = TriggerState
-            .of(triggerId, TriggerType.REALTIME, null, false, 0)
+            .of(triggerId, TriggerType.REALTIME, null, 0)
             .locked(CLOCK, true);
         triggerStateStore.save(realtimeState);
         handler = newTriggerEventHandler(List.of());
@@ -735,7 +800,7 @@ class TriggerEventHandlerTest {
     @Test
     void shouldNotKillRealtimeTriggerWhenReEnabled() throws QueueException {
         // GIVEN — a disabled realtime trigger
-        TriggerState realtimeState = TriggerState.of(triggerId, TriggerType.REALTIME, null, true, 0);
+        TriggerState realtimeState = TriggerState.of(triggerId, TriggerType.REALTIME, null, 0).disabled(CLOCK, true);
         triggerStateStore.save(realtimeState);
         handler = newTriggerEventHandler(List.of());
         SetDisableTrigger event = new SetDisableTrigger(triggerId, false);
@@ -754,7 +819,7 @@ class TriggerEventHandlerTest {
     void shouldUnlockTriggerWhenWorkerLost() {
         // GIVEN — a realtime trigger held by the worker that was lost
         TriggerState realtimeState = TriggerState
-            .of(triggerId, TriggerType.REALTIME, null, false, 0)
+            .of(triggerId, TriggerType.REALTIME, null, 0)
             .locked(CLOCK, true)
             .workerId(CLOCK, "worker-1");
         triggerStateStore.save(realtimeState);
@@ -775,7 +840,7 @@ class TriggerEventHandlerTest {
     void shouldIgnoreWorkerLostWhenTriggerHeldByAnotherWorker() {
         // GIVEN — the trigger was already re-assigned to another worker
         TriggerState realtimeState = TriggerState
-            .of(triggerId, TriggerType.REALTIME, null, false, 0)
+            .of(triggerId, TriggerType.REALTIME, null, 0)
             .locked(CLOCK, true)
             .workerId(CLOCK, "worker-2");
         triggerStateStore.save(realtimeState);
@@ -795,7 +860,7 @@ class TriggerEventHandlerTest {
     @Test
     void shouldKillRealtimeTriggerWhenReceivedWhileDisabled() throws QueueException {
         // GIVEN — a realtime trigger disabled while its worker job was still queued
-        TriggerState realtimeState = TriggerState.of(triggerId, TriggerType.REALTIME, null, true, 0);
+        TriggerState realtimeState = TriggerState.of(triggerId, TriggerType.REALTIME, null, 0).disabled(CLOCK, true);
         triggerStateStore.save(realtimeState);
         handler = newTriggerEventHandler(List.of());
         TriggerReceived event = new TriggerReceived(triggerId, "worker-1");
@@ -808,6 +873,20 @@ class TriggerEventHandlerTest {
         Optional<TriggerState> updated = triggerStateStore.findByIdWithoutAcl(triggerId);
         assertThat(updated).isPresent();
         assertThat(updated.get().getWorkerId()).isEqualTo("worker-1");
+    }
+
+    @Test
+    void shouldKillRealtimeTriggerWhenReceivedWhileDisabledInDefinition() throws QueueException {
+        // GIVEN — a realtime trigger disabled in the flow while its worker job was still queued
+        triggerStateStore.save(TriggerState.of(triggerId, TriggerType.REALTIME, null, 0));
+        handler = newTriggerEventHandler(List.of(Fixtures.defaultFlow(build -> build.disabled(true).build())));
+        TriggerReceived event = new TriggerReceived(triggerId, "worker-1");
+
+        // WHEN — a worker reports holding it
+        handler.handle(CLOCK, TEST_VNODE, event);
+
+        // THEN — the instance is killed, as it is for a trigger disabled from the UI
+        Mockito.verify(executionKilledQueue).emit(Mockito.any(ExecutionKilledTrigger.class));
     }
 
     @Test
@@ -827,7 +906,7 @@ class TriggerEventHandlerTest {
     void shouldKeepRealtimeTriggerLockedWhenTerminatedExecutionIsNotFailed() {
         // GIVEN — a realtime trigger locked because it is running on a worker
         TriggerState realtimeState = TriggerState
-            .of(triggerId, TriggerType.REALTIME, null, false, 0)
+            .of(triggerId, TriggerType.REALTIME, null, 0)
             .locked(CLOCK, true);
         triggerStateStore.save(realtimeState);
         handler = newTriggerEventHandler(List.of());
@@ -847,7 +926,7 @@ class TriggerEventHandlerTest {
     void shouldUnlockRealtimeTriggerWhenTerminatedExecutionIsFailed() {
         // GIVEN — a locked realtime trigger whose creation failed on the worker
         TriggerState realtimeState = TriggerState
-            .of(triggerId, TriggerType.REALTIME, null, false, 0)
+            .of(triggerId, TriggerType.REALTIME, null, 0)
             .locked(CLOCK, true)
             .workerId(CLOCK, "worker-1");
         triggerStateStore.save(realtimeState);
@@ -868,7 +947,7 @@ class TriggerEventHandlerTest {
     void shouldIgnoreStaleRealtimeTerminationWhenDispatchEpochSuperseded() {
         // GIVEN — a realtime trigger on its second dispatch (epoch 2), running on worker-2
         TriggerState realtimeState = TriggerState
-            .of(triggerId, TriggerType.REALTIME, null, false, 0)
+            .of(triggerId, TriggerType.REALTIME, null, 0)
             .nextDispatchEpoch(CLOCK)
             .nextDispatchEpoch(CLOCK)
             .locked(CLOCK, true)
@@ -892,7 +971,7 @@ class TriggerEventHandlerTest {
     void shouldIgnoreStaleWorkerLostWhenDispatchEpochSuperseded() {
         // GIVEN — a realtime trigger re-dispatched to the same worker (epoch 2)
         TriggerState realtimeState = TriggerState
-            .of(triggerId, TriggerType.REALTIME, null, false, 0)
+            .of(triggerId, TriggerType.REALTIME, null, 0)
             .nextDispatchEpoch(CLOCK)
             .nextDispatchEpoch(CLOCK)
             .locked(CLOCK, true)
@@ -955,7 +1034,7 @@ class TriggerEventHandlerTest {
     void shouldUnlockTriggerWhenEvaluatedWithoutExecution() {
         // GIVEN — a polling trigger locked at submission whose evaluation matched nothing
         TriggerState pollingState = TriggerState
-            .of(triggerId, TriggerType.POLLING, null, false, 0)
+            .of(triggerId, TriggerType.POLLING, null, 0)
             .locked(CLOCK, true)
             .workerId(CLOCK, "worker-1");
         triggerStateStore.save(pollingState);
@@ -977,7 +1056,7 @@ class TriggerEventHandlerTest {
     void shouldKeepTriggerLockedWhenEvaluatedWithExecution() {
         // GIVEN — a polling trigger locked at submission whose evaluation created an execution
         TriggerState pollingState = TriggerState
-            .of(triggerId, TriggerType.POLLING, null, false, 0)
+            .of(triggerId, TriggerType.POLLING, null, 0)
             .locked(CLOCK, true);
         triggerStateStore.save(pollingState);
         handler = newTriggerEventHandler(List.of(Fixtures.defaultFlow()));

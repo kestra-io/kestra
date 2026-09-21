@@ -83,8 +83,8 @@
         return label.key && label.keyPrefix !== false ? `${label.key}:${value}` : value
     }
 
-    import {decodeSearchParams, type DecodeParam} from "@kestra-io/design-system"
-    let query: DecodeParam[] = []
+    import {decodeSearchParams, type DecodedParam} from "@kestra-io/design-system"
+    let query: DecodedParam[] = []
     watch(
         () => route.query,
         (q) => (query = decodeSearchParams(q)),
@@ -110,12 +110,12 @@
             : `filters[${props.filterType}][EQUALS][${key}]`)
 
         if (isChecked(label)) {
-            const replacementQuery = {...route.query} as LocationQueryRaw
+            const replacementQuery: LocationQueryRaw = {...route.query}
             delete replacementQuery[props.filterType === "type" ? getKey() : getKey(label.key)]
             replacementQuery.page = "1"
             router.replace({query: replacementQuery})
         } else {
-            const newQuery = {...route.query, page: "1"} as LocationQueryRaw
+            const newQuery: LocationQueryRaw = {...route.query, page: "1"}
             if (props.filterType === "type") {
                 newQuery[getKey()] = label.value
             } else {

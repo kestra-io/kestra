@@ -182,12 +182,12 @@
     const revealHighlight = (editor: monaco.editor.IStandaloneCodeEditor | monaco.editor.IStandaloneDiffEditor | undefined) => {
         if (!props.highlight) return
 
-        const modified = editor?.getModifiedEditor?.() ?? editor
-        const lines: string[] | undefined = modified?.getModel?.()?.getLinesContent?.()
+        const modified = editor && "getModifiedEditor" in editor ? editor.getModifiedEditor() : editor
+        const lines = modified?.getModel()?.getLinesContent()
         if (!lines) return
 
         const index = lines.findIndex(line => line.includes(props.highlight!))
-        if (index >= 0) modified.revealLineNearTop(index + 1)
+        if (index >= 0) modified?.revealLineNearTop(index + 1)
     }
 
     const sortedRevisions = computed(() => {
@@ -322,7 +322,7 @@
                 toast.deleted(t("revision deleted", {revision: revision.toString()}))
                 emit("deleted", revision)
             } catch (error: unknown) {
-                const message = error instanceof Error ? error.message : String(error)
+                const message = error instanceof Error && error.message ? error.message : String(error)
                 toast.error(t("delete revision error", {revision, error: message}))
             }
         })

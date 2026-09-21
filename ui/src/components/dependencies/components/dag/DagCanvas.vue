@@ -55,6 +55,7 @@
     import {DAG_CARD, DAG_SELECTED, DAG_HOVERED, DAG_TRACED, DAG_SHOWN} from "../../utils/dagConstants"
     import {ASSET, nodesOf, edgesOf} from "../../utils/types"
     import type {Element} from "../../utils/types"
+    import {edgeKindToken} from "../../utils/relationKind"
 
     const props = defineProps<{
         elements: Element[];
@@ -161,7 +162,7 @@
             const source = positions.get(edge.source)
             const target = positions.get(edge.target)
             const backwards = !!source && !!target && source.x > target.x
-            const stroke = cssVar(onPath ? "--ks-text-link" : "--ks-border-default")
+            const stroke = cssVar(onPath ? "--ks-text-link" : edgeKindToken(edge.kind) ?? "--ks-border-default")
 
             return {
                 id: edge.id,

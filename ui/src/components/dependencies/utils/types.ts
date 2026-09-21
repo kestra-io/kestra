@@ -62,6 +62,8 @@ export type Edge = {
     type: "EDGE";
     source: string;
     target: string;
+    /** Relation kind (e.g. an asset's PRODUCES/CONSUMED_BY/UPSTREAM_OF), when the caller's graph carries one. */
+    kind?: string;
 };
 
 export type Element = { data: Node } | { data: Edge };

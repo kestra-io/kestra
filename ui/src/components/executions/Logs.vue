@@ -58,7 +58,7 @@
         />
         <KsCard v-else class="attempt-wrapper" style="--kel-card-padding: 0">
             <KsNoData
-                v-if="Array.isArray((executionsStore.logs as any)) && temporalLogs.length === 0"
+                v-if="logsLoaded && temporalLogs.length === 0"
                 :title="$t('no_logs_data_title')"
                 :description="$t('no_logs_data_description')"
             />
@@ -101,7 +101,7 @@
     import {computed, nextTick, ref, watch, useTemplateRef, onUnmounted} from "vue"
     import {useRoute} from "vue-router"
     import {useI18n} from "vue-i18n"
-    import {useLogExecutionsFilter} from "../filter/configurations"
+    import {useLogExecutionsFilter} from "../filter/configurations/logExecutionsFilter"
     import TaskRunDetails from "../logs/TaskRunDetails.vue"
     import LogDisplaySettings from "../logs/LogDisplaySettings.vue"
     import Download from "vue-material-design-icons/Download.vue"
@@ -121,6 +121,7 @@
     import LoopIterationsNotice from "./LoopIterationsNotice.vue"
     import * as LogUtils from "../../utils/logs"
     import {useExecutionsStore} from "../../stores/executions"
+    import type {LogEntry} from "@kestra-io/kestra-sdk"
     import {KsFilter as KSFilter} from "@kestra-io/design-system"
     import {storageKeys} from "../../utils/constants"
     import {
@@ -217,6 +218,9 @@
     }
     const logCursor = ref<string | undefined>(undefined)
     const logsLoading = ref(false)
+    // The empty-state placeholder is only right once a fetch came back empty: while an execution is
+    // still streaming, no logs yet means "not there yet", not "none".
+    const logsLoaded = ref(false)
 
     const logs = useTemplateRef<InstanceType<typeof TaskRunDetails>>("logs")
     const logScroller = useTemplateRef<any>("logScroller") // FIXME: any
@@ -228,17 +232,14 @@
     filter.value = (route.query.q as string) || undefined
 
     const logsSSE = ref<EventSource | undefined>(undefined)
-    let sseBuffer: any[] = [] // FIXME: any
+    let sseBuffer: LogEntry[] = []
     let sseFlushTimer: ReturnType<typeof setTimeout> | undefined
 
     const flushSseBuffer =  () => {
         sseFlushTimer = undefined
         if (!sseBuffer.length) return
-        const raw = executionsStore.logs as any // FIXME: any
-        const current: any[] = Array.isArray(raw) ? raw : (raw?.results ?? [])
-        const results = current.concat(sseBuffer)
+        executionsStore.appendLogs(sseBuffer)
         sseBuffer = []
-        executionsStore.logs = {total: results.length, results}
     }
 
     const closeLogsSSE = () => {
@@ -255,7 +256,8 @@
 
     const streamLogs = () => {
         closeLogsSSE()
-        executionsStore.logs = {total: 0, results: []}
+        executionsStore.resetLogs()
+        logsLoaded.value = false
         executionsStore.followLogs({
             id: executionId.value!,
             params: {...levelToRequestParams(effectiveLevelValue.value), ...kindParams.value},
@@ -286,8 +288,9 @@
             streamLogs()
         } else {
             closeLogsSSE()
-            executionsStore.logs = {total: 0, results: []}
+            executionsStore.resetLogs()
             logsLoading.value = false
+            logsLoaded.value = false
             loadLogs()
         }
     }
@@ -335,20 +338,18 @@
 
     // computed
     const temporalLogs = computed(() => {
-        // logs can be a plain array (e.g. in tests) or a paginated {results, total} object
-        const raw = executionsStore.logs as any // FIXME: any - store type is LogsState but tests set a plain array
-        const logResults: any[] = Array.isArray(raw) ? raw : (raw?.results ?? [])
+        const logResults = executionsStore.logs
 
         if (!logResults.length) {
             return []
         }
 
-        const filtered = logResults.filter((log: any) => {
+        const filtered = logResults.filter(log => {
             if (!filter.value) return true
             return log.message?.toLowerCase().includes(filter.value.toLowerCase())
         })
 
-        return filtered.map((logLine: any, index: number) => ({
+        return filtered.map((logLine, index) => ({
             ...logLine,
             index,
             uid: `${logLine.taskRunId ?? ""}-${logLine.attemptNumber ?? 0}-${logLine.timestamp}-${index}`,
@@ -416,6 +417,7 @@
             params: {...levelToRequestParams(effectiveLevelValue.value), ...kindParams.value},
         }).finally(() => {
             logsLoading.value = false
+            logsLoaded.value = true
         })
     }
 

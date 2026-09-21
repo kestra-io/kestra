@@ -56,6 +56,23 @@
                     />
                 </slot>
             </template>
+            <template #taskActions="taskProps">
+                <TaskRunActions
+                    v-if="isReadOnly && taskProps.execution && taskProps.taskRun"
+                    class="node-action-button"
+                    :taskRun="taskProps.taskRun"
+                    :taskType="taskProps.task?.type"
+                    :taskRuns="taskProps.taskRuns"
+                    :execution="taskProps.execution"
+                    :flow="flowStore.flow"
+                    :nodeActions="taskProps.actions
+                        .filter(a => taskProps.taskRuns?.length > 1 ? !['edit'].includes(a.key) : !EXCLUDED_NODE_ACTIONS.includes(a.key))
+                        .map((a, i) => i === 0 && !(taskProps.taskRuns?.length > 1) ? {...a, divided: true} : a)
+                    "
+                    @follow="$emit('follow', $event)"
+                />
+                <NodeMenu v-else :actions="taskProps.actions" />
+            </template>
         </Topology>
 
         <BlockTaskPicker :picker="taskPicker" modal />
@@ -221,6 +238,7 @@
     import {useI18n} from "vue-i18n"
     import {useStorage} from "@vueuse/core"
     import {useRoute, useRouter} from "vue-router"
+    import {storageKeys, topologyOrientations} from "../../utils/constants"
     import {useVueFlow} from "@vue-flow/core"
 
     import SearchField from "../layout/SearchField.vue"
@@ -232,14 +250,15 @@
     import Restart from "../executions/overview/components/actions/Restart.vue"
     import PlayBoxMultiple from "vue-material-design-icons/PlayBoxMultiple.vue"
 
-    import {Topology} from "@kestra-io/topology"
+    import {Topology, NodeMenu} from "@kestra-io/topology"
     import {SECTIONS, State, KsMarkdown, KsEditor, KsDialog, vKsLoading} from "@kestra-io/design-system"
     import {Execution} from "@kestra-io/kestra-sdk"
     import * as MetricsAPI from "@kestra-io/kestra-sdk/metrics"
     import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
+    import type {FlowGraph} from "@kestra-io/topology/vue-flow-utils"
+    import TaskRunActions from "../executions/TaskRunActions.vue"
     import {useEditorBindings} from "../../composables/useEditorBindings"
     import {loadTaskRunOutputs} from "../../composables/useTaskRunOutputs"
-
     import {TOPOLOGY_CLICK_INJECTION_KEY} from "../no-code/injectionKeys"
     import BlockTaskPicker from "../no-code/blocks/BlockTaskPicker.vue"
     import {useTaskPicker} from "../no-code/blocks/useTaskPicker"
@@ -256,6 +275,8 @@
     import {useToast} from "../../utils/toast"
     import {useFederatedModule} from "../../remoteComponents/useFederatedModule"
     import {openFlowInNewTab} from "../../utils/openFlow"
+
+    const EXCLUDED_NODE_ACTIONS = ["outputs", "replay", "edit"]
 
     const router = useRouter()
     const route = useRoute()
@@ -498,7 +519,7 @@
 
     const props = withDefaults(
         defineProps<{
-            flowGraph: Record<string, any>;
+            flowGraph: FlowGraph;
             flowId?: string;
             namespace?: string;
             execution?: Record<string, any>;
@@ -568,8 +589,23 @@
 
     const pluginsStore = usePluginsStore()
 
-    const isHorizontalLS = useStorage("topology-orientation", props.horizontalDefault)
-    const isHorizontal = ref(props.horizontalDefault ?? (isHorizontalLS.value?.toString() === "true"))
+    // `horizontalDefault` is a per-instance, responsive override (e.g. the execution Overview
+    // switching orientation based on viewport width). It must never be persisted as the user's
+    // remembered preference, so `writeDefaults` is disabled: the key is only ever written when
+    // the user explicitly toggles orientation (see `toggleOrientation` below).
+    const isHorizontalLS = useStorage<boolean | undefined>(
+        storageKeys.TOPOLOGY_ORIENTATION,
+        undefined,
+        localStorage,
+        {writeDefaults: false},
+    )
+    const defaultTopologyOrientation = localStorage.getItem(storageKeys.DEFAULT_TOPOLOGY_ORIENTATION)
+    const isHorizontal = ref(
+        props.horizontalDefault ??
+            (isHorizontalLS.value !== undefined
+                ? isHorizontalLS.value?.toString() === "true"
+                : defaultTopologyOrientation === topologyOrientations.HORIZONTAL),
+    )
 
     watch(() => props.horizontalDefault, (value) => {
         if (value !== undefined && value !== isHorizontal.value) {

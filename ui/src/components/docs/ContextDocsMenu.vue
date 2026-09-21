@@ -34,7 +34,7 @@
                     </li>
                 </template>
                 <li v-else>
-                    Loading Menu...
+                    {{ $t("loading") }}
                 </li>
             </ul>
         </div>
@@ -135,7 +135,7 @@
 
         &.is-open {
             position: relative;
-            z-index: 1001;
+            z-index: calc(var(--ks-z-dropdown) + 1);
         }
     }
 
@@ -148,7 +148,7 @@
 
     .docsMenuContainer {
         position: absolute;
-        z-index: 1000;
+        z-index: var(--ks-z-dropdown);
         padding: 1rem 0.25rem 1rem 0.5rem;
         left: 28px;
         right: 28px;

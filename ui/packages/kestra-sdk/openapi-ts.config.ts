@@ -1,7 +1,7 @@
-import type {UserConfig} from "@hey-api/openapi-ts"
+import type {UserConfig, OpenApiOperationObject} from "@hey-api/openapi-ts"
 import * as path from "path"
 import {fileURLToPath} from "url"
-import {defineConfigKestraHeyOptionalTenant, fixYamlSourceRequestBodyContentType, normalizeQueryFilterParams, widenQueryFilterValue, replaceFlowLabels} from "@kestra-io/hey-api-plugin"
+import {defineConfigKestraHeyOptionalTenant, fixYamlSourceRequestBodyContentType, normalizeQueryFilterParams, unwrapEventStreamArrayResponses, widenQueryFilterValue, replaceFlowLabels} from "@kestra-io/hey-api-plugin"
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -35,13 +35,15 @@ export default {
     input: specPath,
     parser: {
         patch: {
-            operations: (method: string, path: string, operation: any) => {
+            operations: (method: string, path: string, operation: OpenApiOperationObject.V2_0_X | OpenApiOperationObject.V3_0_X | OpenApiOperationObject.V3_1_X) => {
                 // hey-api prefers the application/json variant when resolving a request body; force
                 // application/x-yaml for YAML-source bodies (client-sdk issue #340).
                 fixYamlSourceRequestBodyContentType(method, path, operation)
                 // Make required QueryFilter[] `filters` params optional (fixes hey-api's broken
                 // array serializer + lets callers omit an empty filters array).
                 normalizeQueryFilterParams(method, path, operation)
+                // Type SSE events from the event schema, not the array Micronaut 4.10.18 declares around it.
+                unwrapEventStreamArrayResponses(method, path, operation)
             },
             schemas: {
                 // Widen QueryFilter.value to `unknown` so callers can assign scalars/arrays directly.

@@ -19,17 +19,32 @@ public class InputOutputValidationException extends KestraRuntimeException {
      */
     private final boolean renderError;
 
+    /**
+     * The path of the offending value inside a structured input, e.g. {@code disks[2].size_gb} for a cell of a
+     * {@code TABLE}, or {@code null} for an input whose value has no inner structure.
+     */
+    private final String path;
+
     public InputOutputValidationException(String message) {
         this(message, false);
     }
 
     public InputOutputValidationException(String message, boolean renderError) {
+        this(message, renderError, null);
+    }
+
+    public InputOutputValidationException(String message, boolean renderError, String path) {
         super(message);
         this.renderError = renderError;
+        this.path = path;
     }
 
     public boolean isRenderError() {
         return renderError;
+    }
+
+    public String getPath() {
+        return path;
     }
 
     public static InputOutputValidationException of(String message, Input<?> input) {
@@ -46,6 +61,12 @@ public class InputOutputValidationException extends KestraRuntimeException {
     public static InputOutputValidationException of(String message, Output output) {
         String outputMessage = "Invalid value for output" + " `" + output.getId() + "`. Cause: " + message;
         return new InputOutputValidationException(outputMessage);
+    }
+
+    /** As {@link #of(String, Input)}, but locates the error at {@code path} inside a structured input's value. */
+    public static InputOutputValidationException ofPath(String message, String path) {
+        String inputMessage = "Invalid value for input" + " `" + path + "`. Cause: " + message;
+        return new InputOutputValidationException(inputMessage, false, path);
     }
 
     public static InputOutputValidationException of(String message) {

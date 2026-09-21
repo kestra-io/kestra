@@ -153,11 +153,12 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, shallowRef, computed, watch, onUnmounted, type Ref} from "vue"
+    import {ref, computed, watch, onUnmounted, type Ref} from "vue"
     import {useRouter} from "vue-router"
     import {useI18n} from "vue-i18n"
     import {useMiscStore} from "override/stores/misc"
     import {useSurveySkip} from "../../composables/useSurveyData"
+    import {useDisposableEmailGuard} from "./disposableEmailGuard"
     import {trackSetupEvent} from "../../composables/usePosthog"
     import {identifyPosthogUser} from "../../utils/posthog"
 
@@ -256,18 +257,12 @@
 
     const EMAIL_REGEX = /^[a-zA-Z0-9_!#$%&'*+/=?`{|}~^.-]+@[a-zA-Z0-9.-]+$/
 
-    // mailchecker carries a ~850 kB domain list, so it is fetched while the form is being filled
-    // rather than before this screen can paint; isEmailAllowed stays false until it answers.
-    const mailChecker = shallowRef<{isValid(email: string): boolean} | null>(null)
-    const isEmailAllowed = ref(false)
+    const disposableEmail = useDisposableEmailGuard(async () => (await import("mailchecker")).default)
 
-    async function loadMailChecker() {
-        mailChecker.value ??= (await import("mailchecker")).default
-        return mailChecker.value
-    }
+    const isEmailAllowed = computed(() => disposableEmail.isAllowed(userFormData.value.username))
 
-    watch(() => userFormData.value.username, async (email) => {
-        isEmailAllowed.value = Boolean(email) && (await loadMailChecker()).isValid(email)
+    watch(() => userFormData.value.username, (email) => {
+        if (email) void disposableEmail.ensureLoaded()
     }, {immediate: true})
 
     const validateEmail = async (_rule: any, value: string, callback: (error?: Error) => void) => {
@@ -281,7 +276,8 @@
             return
         }
 
-        if (!(await loadMailChecker()).isValid(value)) {
+        const checker = await disposableEmail.ensureLoaded()
+        if (checker && !checker.isValid(value)) {
             callback(new Error(t("setup.validation.email_temporary_not_allowed")))
             return
         }

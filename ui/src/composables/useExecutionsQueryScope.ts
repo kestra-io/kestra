@@ -1,7 +1,6 @@
 import {computed, type ComputedRef} from "vue"
-import _merge from "lodash/merge"
 import {useRoute} from "vue-router"
-import type {FilterConfiguration} from "@kestra-io/design-system"
+import {deepMerge, type FilterConfiguration} from "@kestra-io/design-system"
 import {keepSupportedFilters, FILTER_FIELD_PATTERN} from "../components/executions/utils"
 
 export {FILTER_FIELD_PATTERN}
@@ -48,7 +47,7 @@ export function useExecutionsQueryScope(
             queryFilter["filters[state][IN]"] = scope.value.statuses!.join(",")
         }
 
-        return _merge(base, queryFilter)
+        return deepMerge(base, queryFilter)
     }
 
     return {supportedFilterFields, dropUnsupportedFilters, loadQuery}

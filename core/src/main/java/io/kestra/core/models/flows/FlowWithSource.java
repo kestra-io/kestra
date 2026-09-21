@@ -39,6 +39,7 @@ public class FlowWithSource extends Flow {
             .retry(this.retry)
             .sla(this.sla)
             .checks(this.checks)
+            .updated(this.updated)
             .build();
     }
 
@@ -53,6 +54,7 @@ public class FlowWithSource extends Flow {
         return this.toBuilder()
             .revision(this.revision + 1)
             .deleted(true)
+            .draft(false) // switch to false to avoid resurrecting the previous revision
             .build();
     }
 

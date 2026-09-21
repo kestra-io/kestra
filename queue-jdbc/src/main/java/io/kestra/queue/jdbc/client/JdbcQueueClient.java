@@ -3,6 +3,7 @@ package io.kestra.queue.jdbc.client;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -88,7 +89,7 @@ public class JdbcQueueClient {
             {
                 DSLContext context = DSL.using(configuration);
 
-                Map<Field<?>, Object> fields = HashMap.newHashMap(5);
+                Map<Field<?>, Object> fields = LinkedHashMap.newLinkedHashMap(5); // Use a linked hash map for a predictable iteration order
                 fields.put(TYPE, queue);
                 fields.put(ROUTING_KEY, (routingKey == null || routingKey.isEmpty()) ? null : routingKey);
                 fields.put(KEY, key);

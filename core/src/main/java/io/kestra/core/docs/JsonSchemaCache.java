@@ -1,6 +1,6 @@
 package io.kestra.core.docs;
 
-import java.util.HashMap;
+import java.util.EnumMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -28,7 +28,7 @@ public class JsonSchemaCache {
     private final ConcurrentMap<CacheKey, Map<String, Object>> schemaCache = new ConcurrentHashMap<>();
     private final ConcurrentMap<SchemaType, Map<String, Object>> propertiesCache = new ConcurrentHashMap<>();
 
-    private final Map<SchemaType, Class<?>> classesBySchemaType = new HashMap<>();
+    private final Map<SchemaType, Class<?>> classesBySchemaType = new EnumMap<>(SchemaType.class);
 
     // Hash of the plugin registry the cached schemas were generated from. When the registry changes
     // (a plugin is installed or removed at runtime) the cached schemas become stale and must be dropped,

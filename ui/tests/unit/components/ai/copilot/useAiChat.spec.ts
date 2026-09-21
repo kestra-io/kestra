@@ -1,4 +1,5 @@
-import {describe, it, expect, vi, beforeEach} from "vitest"
+import {describe, it, expect, vi, afterAll, afterEach, beforeEach} from "vitest"
+import {effectScope} from "vue"
 import type {AiSseFrame} from "../../../../../src/components/ai/copilot/types"
 
 // Mock the axios client (thread create/get) and the SSE reader so we can drive
@@ -9,15 +10,26 @@ vi.mock("@kestra-io/kestra-sdk", () => ({useClient: () => ({post, get})}))
 
 let nextFrames: AiSseFrame[] = []
 let nextError: Error | null = null
+/** When true, streamSse waits until `signal` aborts instead of replaying `nextFrames`. */
+let hangUntilAbort = false
 /** Records the JSON body of the most recent stream (chat/confirm) so tests can assert what was sent. */
 let lastBody: Record<string, unknown> | null = null
 vi.mock("../../../../../src/components/ai/copilot/streamSse", async (importOriginal) => {
     const actual = await importOriginal<typeof import("../../../../../src/components/ai/copilot/streamSse")>()
     return {
         ...actual,
-        streamSse: vi.fn(async ({onFrame, body}: {onFrame: (f: AiSseFrame) => void; body: Record<string, unknown>}) => {
+        streamSse: vi.fn(async ({onFrame, body, signal}: {onFrame: (f: AiSseFrame) => void; body: Record<string, unknown>; signal?: AbortSignal}) => {
             lastBody = body
             if (nextError) throw nextError
+            if (hangUntilAbort) {
+                await new Promise<never>((_, reject) => {
+                    const fail = () => {
+                        reject(new DOMException("Aborted", "AbortError"))
+                    }
+                    if (signal?.aborted) fail()
+                    else signal?.addEventListener("abort", fail, {once: true})
+                })
+            }
             for (const f of nextFrames) onFrame(f)
         }),
     }
@@ -38,9 +50,19 @@ describe("useAiChat", () => {
         get.mockReset()
         nextFrames = []
         nextError = null
+        hangUntilAbort = false
         lastBody = null
         localStorage.clear()
         post.mockResolvedValue(idleThread())
+        get.mockResolvedValue({data: {uid: "t1", mode: "ASK", status: "IDLE", messages: []}})
+    })
+
+    afterEach(() => {
+        vi.useRealTimers()
+    })
+
+    afterAll(() => {
+        localStorage.clear()
     })
 
     it("creates the thread once and reuses its uid", async () => {
@@ -51,6 +73,19 @@ describe("useAiChat", () => {
         // One create call total, despite two turns.
         expect(post).toHaveBeenCalledTimes(1)
         expect(post.mock.calls[0][0]).toContain("/ai/threads")
+    })
+
+    it("creates the thread with nextThreadTitle and consumes it, so a later thread is untitled", async () => {
+        const chat = useAiChat()
+        nextFrames = [{event: "done", data: {status: "IDLE"}}]
+        chat.nextThreadTitle.value = "Fix task extract"
+        await chat.sendChat({prompt: "fix it"})
+        expect(post.mock.calls[0][1]).toMatchObject({title: "Fix task extract"})
+        expect(chat.nextThreadTitle.value).toBeNull()
+
+        chat.reset()
+        await chat.sendChat({prompt: "hi"})
+        expect(post.mock.calls[1][1].title).toBeUndefined()
     })
 
     it("appends streamed tokens into a single assistant message", async () => {
@@ -97,6 +132,150 @@ describe("useAiChat", () => {
         expect(chat.pendingConfirmation.value).toBeNull()
         expect(chat.status.value).toBe("IDLE")
         expect(chat.messages.value.some((m) => m.type === "TOOL_RESULT" && m.toolResult?.outcome === "ok")).toBe(true)
+    })
+
+    it("cancel aborts a streaming turn, marks it cancelled, and returns to IDLE", async () => {
+        hangUntilAbort = true
+        const chat = useAiChat()
+        const pending = chat.sendChat({prompt: "hi"})
+        await vi.waitFor(() => expect(chat.streaming.value).toBe(true))
+        expect(chat.status.value).toBe("RUNNING")
+        expect(chat.canSend.value).toBe(false)
+
+        chat.cancel()
+        await pending
+
+        expect(chat.streaming.value).toBe(false)
+        expect(chat.status.value).toBe("IDLE")
+        expect(chat.canSend.value).toBe(true)
+        expect(chat.error.value).toBeNull()
+        expect(chat.messages.value.some((m) => m.type === "CANCELLED")).toBe(true)
+        expect(chat.messages.value.some((m) => m.role === "USER" && m.content === "hi")).toBe(true)
+        expect(get).toHaveBeenCalledWith(
+            "http://localhost/api/v1/main/ai/threads/t1",
+            expect.objectContaining({showMessageOnError: false}),
+        )
+    })
+
+    it("keeps Send disabled after stop until the server thread is IDLE", async () => {
+        hangUntilAbort = true
+        let serverStatus = "RUNNING"
+        get.mockImplementation(async () => ({
+            data: {uid: "t1", mode: "ASK", status: serverStatus, messages: []},
+        }))
+        const chat = useAiChat()
+        const pending = chat.sendChat({prompt: "hi"})
+        await vi.waitFor(() => expect(chat.streaming.value).toBe(true))
+
+        chat.cancel()
+        await vi.waitFor(() => expect(get).toHaveBeenCalled())
+        expect(chat.streaming.value).toBe(false)
+        expect(chat.status.value).toBe("RUNNING")
+        expect(chat.canSend.value).toBe(false)
+        expect(chat.messages.value.some((m) => m.type === "CANCELLED")).toBe(true)
+
+        serverStatus = "IDLE"
+        await pending
+        expect(chat.status.value).toBe("IDLE")
+        expect(chat.canSend.value).toBe(true)
+    })
+
+    it("rebuilds a pending proposal when stop lands on AWAITING_CONFIRMATION", async () => {
+        hangUntilAbort = true
+        get.mockResolvedValue({data: {
+            uid: "t1", mode: "EDIT", status: "AWAITING_CONFIRMATION", pendingConfirmationId: "c1",
+            messages: [
+                {uid: "a", role: "USER", type: "TEXT", content: "restart it"},
+                {uid: "b", role: "ASSISTANT", type: "PROPOSED_ACTION", content: "Run restart-execution on exec-1",
+                    toolCall: {tool: "restart-execution", kind: "PLATFORM", family: "MUTATE", arguments: {id: "exec-1"}}},
+            ],
+        }})
+        const chat = useAiChat()
+        const pending = chat.sendChat({prompt: "restart it", mode: "EDIT"})
+        await vi.waitFor(() => expect(chat.streaming.value).toBe(true))
+        chat.cancel()
+        await pending
+        expect(chat.status.value).toBe("AWAITING_CONFIRMATION")
+        expect(chat.canSend.value).toBe(false)
+        expect(chat.pendingConfirmation.value).toMatchObject({
+            confirmationId: "c1",
+            summary: "Run restart-execution on exec-1",
+            tool: "restart-execution",
+        })
+    })
+
+    it("re-enables Send if the server is still RUNNING past the idle wait", async () => {
+        hangUntilAbort = true
+        get.mockImplementation(async () => ({
+            data: {uid: "t1", mode: "ASK", status: "RUNNING", messages: []},
+        }))
+        const chat = useAiChat()
+        const pending = chat.sendChat({prompt: "hi"})
+        await vi.waitFor(() => expect(chat.streaming.value).toBe(true))
+
+        vi.useFakeTimers()
+        chat.cancel()
+        await Promise.resolve()
+        await Promise.resolve()
+        expect(get).toHaveBeenCalled()
+        await vi.advanceTimersByTimeAsync(10_000)
+        await pending
+        expect(chat.status.value).toBe("IDLE")
+        expect(chat.canSend.value).toBe(true)
+    })
+
+    it("stops the idle wait when the composable scope is disposed", async () => {
+        hangUntilAbort = true
+        get.mockImplementation(async () => ({
+            data: {uid: "t1", mode: "ASK", status: "RUNNING", messages: []},
+        }))
+        const scope = effectScope()
+        const chat = scope.run(() => useAiChat())!
+        const pending = chat.sendChat({prompt: "hi"})
+        await vi.waitFor(() => expect(chat.streaming.value).toBe(true))
+        chat.cancel()
+        await vi.waitFor(() => expect(get).toHaveBeenCalled())
+        scope.stop()
+        await pending
+        await new Promise((resolve) => setTimeout(resolve, 250))
+        const afterStop = get.mock.calls.length
+        await new Promise((resolve) => setTimeout(resolve, 250))
+        expect(get.mock.calls.length).toBe(afterStop)
+        expect(chat.status.value).toBe("RUNNING")
+        expect(chat.canSend.value).toBe(false)
+    })
+
+    it("reset during the post-stop idle wait does not restore the cancelled thread", async () => {
+        hangUntilAbort = true
+        get.mockImplementation(async () => ({
+            data: {uid: "t1", mode: "ASK", status: "RUNNING", messages: []},
+        }))
+        const chat = useAiChat()
+        const pending = chat.sendChat({prompt: "hi"})
+        await vi.waitFor(() => expect(chat.streaming.value).toBe(true))
+        chat.cancel()
+        await vi.waitFor(() => expect(get).toHaveBeenCalled())
+        chat.reset()
+        await pending
+        expect(chat.thread.value).toBeNull()
+        expect(chat.messages.value).toEqual([])
+        expect(chat.status.value).toBe("IDLE")
+        expect(chat.canSend.value).toBe(true)
+    })
+
+    it("reset during a streaming turn does not leave a cancelled marker on the fresh chat", async () => {
+        hangUntilAbort = true
+        const chat = useAiChat()
+        const pending = chat.sendChat({prompt: "hi"})
+        await vi.waitFor(() => expect(chat.streaming.value).toBe(true))
+
+        chat.reset()
+        await pending
+
+        expect(chat.messages.value).toEqual([])
+        expect(chat.streaming.value).toBe(false)
+        expect(chat.status.value).toBe("IDLE")
+        expect(chat.thread.value).toBeNull()
     })
 
     it("does not send a second turn while not IDLE", async () => {
@@ -295,15 +474,6 @@ describe("useAiChat", () => {
         expect(chat.status.value).toBe("IDLE")
     })
 
-    it("retry() clears the unavailable state", async () => {
-        const chat = useAiChat()
-        post.mockRejectedValueOnce({response: {status: 503}})
-        await chat.sendChat({prompt: "hi"})
-        expect(chat.unavailable.value).toBe(true)
-        chat.retry()
-        expect(chat.unavailable.value).toBe(false)
-    })
-
     it("reset() clears the transcript and thread back to the empty state", async () => {
         const chat = useAiChat()
         nextFrames = [{event: "token", data: {text: "hi"}}, {event: "done", data: {status: "IDLE"}}]
@@ -392,5 +562,20 @@ describe("useAiChat", () => {
         expect(localStorage.getItem("kestra.copilot.activeThread")).toBe("t1")
         chat.reset()
         expect(localStorage.getItem("kestra.copilot.activeThread")).toBeNull()
+    })
+
+    it("noteContext appends a display-only CONTEXT line, but only once a conversation has started", async () => {
+        const chat = useAiChat()
+        // Suppressed while the transcript is empty — the context pills already convey the focus there.
+        chat.noteContext({action: "added", noun: "ai.copilot.contextNoun.flow", id: "my-flow"})
+        expect(chat.messages.value).toHaveLength(0)
+
+        // After a turn the transcript exists → the notice is appended as a SYSTEM / CONTEXT line.
+        nextFrames = [{event: "token", data: {text: "hi"}}, {event: "done", data: {status: "IDLE"}}]
+        await chat.sendChat({prompt: "hello"})
+        chat.noteContext({action: "removed", noun: "ai.copilot.contextNoun.namespace", id: "company.team"})
+        const notices = chat.messages.value.filter((m) => m.type === "CONTEXT")
+        expect(notices).toHaveLength(1)
+        expect(notices[0]).toMatchObject({role: "SYSTEM", type: "CONTEXT", context: {action: "removed", noun: "ai.copilot.contextNoun.namespace", id: "company.team"}})
     })
 })

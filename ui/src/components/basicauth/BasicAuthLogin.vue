@@ -222,7 +222,7 @@
     .oss-login__form {
         display: flex;
         flex-direction: column;
-        gap: var(--ks-spacing-4);
+        gap: var(--ks-spacing-1);
         width: 100%;
     }
 

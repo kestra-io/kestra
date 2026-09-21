@@ -9,6 +9,7 @@
             :to="item.to"
             :target="item.href ? '_blank' : undefined"
             :rel="item.href ? 'noreferrer' : undefined"
+            @click="onItemClick(item, $event)"
         >
             <div class="onboarding-resource-item__icon" :class="item.iconClass">
                 <component :is="item.icon" />
@@ -39,6 +40,18 @@
     defineProps<{
         items: OnboardingResourceItem[];
     }>()
+
+    const emit = defineEmits<{
+        /** An in-app item was followed, so whatever hosts this list is no longer the user's context. */
+        navigate: [];
+    }>()
+
+    function onItemClick(item: OnboardingResourceItem, event: MouseEvent) {
+        // Modifier set mirrors vue-router's `guardEvent`: those clicks leave the page in place.
+        if (!item.to || event.metaKey || event.altKey || event.ctrlKey || event.shiftKey || event.button !== 0) return
+
+        emit("navigate")
+    }
 </script>
 
 <style scoped lang="scss">
@@ -82,24 +95,20 @@
             height: 22px;
         }
 
-        &.is-tutorial {
-            color: #4dabf7;
-        }
-
         &.is-blueprints {
-            color: #8b5cf6;
+            color: var(--ks-status-info);
         }
 
         &.is-slack {
-            color: #22c55e;
+            color: var(--ks-status-success);
         }
 
         &.is-videos {
-            color: #f87171;
+            color: var(--ks-status-error);
         }
 
         &.is-demo {
-            color: #fb923c;
+            color: var(--ks-status-warning);
         }
     }
 

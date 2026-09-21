@@ -3,44 +3,18 @@ import type {App} from "vue"
 import type {RouteRecordRaw} from "vue-router"
 import {configure} from "vue-gtag"
 import {loadLocaleMessages, setI18nLanguage, setupI18n} from "../translations/i18n"
-import moment from "moment-timezone"
-// @ts-ignore - moment locale files don't have type declarations
-import "moment/dist/locale/de"
-// @ts-ignore
-import "moment/dist/locale/es"
-// @ts-ignore
-import "moment/dist/locale/fr"
-// @ts-ignore
-import "moment/dist/locale/hi"
-// @ts-ignore
-import "moment/dist/locale/it"
-// @ts-ignore
-import "moment/dist/locale/ja"
-// @ts-ignore
-import "moment/dist/locale/ko"
-// @ts-ignore
-import "moment/dist/locale/pl"
-// @ts-ignore
-import "moment/dist/locale/pt"
-// @ts-ignore
-import "moment/dist/locale/ru"
-// @ts-ignore
-import "moment/dist/locale/zh-cn"
-// @ts-ignore
-import "moment/dist/locale/pt-br"
-import {extendMoment} from "moment-range"
 import VueVirtualScroller from "vue-virtual-scroller"
 import {createPinia} from "pinia"
 
 import Toast from "./toast"
 import filters from "./filters"
 import KestraDesignSystem from "@kestra-io/design-system"
-import {setDesignSystemLocale, setMomentInstance, setDateFormatter, registerDesignSystemI18n} from "@kestra-io/design-system"
-import {date as dateFilter} from "./filters"
+import {setDesignSystemLocale, dateUtils, registerDesignSystemI18n} from "@kestra-io/design-system"
 import createUnsavedChanged from "./unsavedChange"
 import createEventsRouter from "./eventsRouter"
 import "./global"
 import {useDocStore} from "../stores/doc"
+import {entityNotFoundGuard} from "./routeEntityGuard"
 
 
 import RouterMd from "../components/utils/RouterMd.vue"
@@ -93,6 +67,10 @@ export default async (
         router.beforeResolve(guards.beforeResolve.bind(null, router) as Parameters<typeof router.beforeResolve>[0])
     }
 
+    // After the edition's own guards, so an auth or tenant redirect wins over probing an entity
+    // the user is not going to be shown anyway.
+    router.beforeResolve(entityNotFoundGuard)
+
     if(guards.afterEach){
         router.afterEach(guards.afterEach.bind(null, router) as Parameters<typeof router.afterEach>[0])
     }
@@ -100,6 +78,11 @@ export default async (
     router.afterEach((to) => {
         window.dispatchEvent(new CustomEvent("KestraRouterAfterEach", to as unknown as CustomEventInit))
     })
+
+    // Registered before the router installs: app.use(router) starts the first navigation, and both
+    // beforeEach and afterEach hooks added after any of the awaits below are missed by it.
+    createUnsavedChanged(app, router)
+    createEventsRouter(app, router)
 
     // avoid loading router in storybook
     // as it conflicts with storybook's
@@ -138,12 +121,7 @@ export default async (
     setDesignSystemLocale(locale)
     app.use(i18n)
 
-    // moment
-    moment.locale(locale)
-    const momentExtended = extendMoment(moment)
-    app.config.globalProperties.$moment = momentExtended
-    setMomentInstance(momentExtended)
-    setDateFormatter(dateFilter as any) // FIXME: any - dateFilter signature differs from DateFormatterFn
+    await dateUtils.setLocale(locale)
 
     // others plugins
     app.use(Toast)
@@ -155,10 +133,6 @@ export default async (
 
     // kestra design system (registers KsSelect, etc. globally)
     app.use(KestraDesignSystem)
-
-    // navigation guard
-    createUnsavedChanged(app, router)
-    createEventsRouter(app, router)
 
     app.component("RouterMd", RouterMd)
 

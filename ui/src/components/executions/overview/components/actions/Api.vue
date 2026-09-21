@@ -2,7 +2,8 @@
     <NavBarAction
         v-if="isAllowedEdit"
         :icon="Api"
-        @click="openApi"
+        :href="href"
+        :download="filename"
     >
         {{ $t("api") }}
     </NavBarAction>
@@ -35,7 +36,6 @@
         )
     })
 
-    const openApi = () => {
-        window.open(`${apiUrl()}/executions/${props.execution.id}`, "_blank", "noopener,noreferrer")
-    }
+    const href = computed(() => `${apiUrl()}/executions/${props.execution.id}`)
+    const filename = computed(() => `execution-${props.execution.id}.json`)
 </script>

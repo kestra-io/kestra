@@ -1,6 +1,7 @@
 // Taxonomy source of truth: kestra-io/data#354
 const FLAT_EVENT_NAMES: Record<string, string> = {
-    flow_execution: "app.flow.executed",
+    flow_created: "app.flow.created",
+    user_invited: "app.user.invited",
     ai_copilot: "app.ai-copilot.invoked",
     blueprint: "app.blueprint.used",
     survey_submitted: "app.survey.submitted",
@@ -25,7 +26,26 @@ const OSSAUTH_NAMES: Record<string, string> = {
     forgot_password_click: "app.forgot-password.clicked",
 }
 
+const FLOW_EXECUTION_NAMES: Record<string, string> = {
+    executed: "app.flow.executed",
+    open_modal: "app.execute-modal.opened",
+    submit: "app.execute-modal.submitted",
+}
+
+// KV entry, namespace secret and API token are three different objects, so the taxonomy gives them
+// three object segments rather than one event disambiguated by a property.
+const SECRET_OBJECTS: Record<string, string> = {
+    kv: "kv",
+    secret: "secret",
+    token: "token",
+}
+
 const ONBOARDING_NAMES: Record<string, string> = {
+    tour_offered: "app.onboarding-tour.offered",
+    tour_started: "app.onboarding-tour.started",
+    tour_continued: "app.onboarding-tour.continued",
+    tour_completed: "app.onboarding-tour.completed",
+    tour_closed: "app.onboarding-tour.closed",
     step_viewed: "app.onboarding-step.viewed",
     step_next_clicked: "app.onboarding-step.advanced",
     step_auto_advanced: "app.onboarding-step.auto-advanced",
@@ -46,11 +66,28 @@ function resolveOssAuth(properties: Record<string, any>): string {
     return OSSAUTH_NAMES[properties.action] ?? "app.oss-auth.completed"
 }
 
+function resolveFlowExecution(properties: Record<string, any>): string {
+    return FLOW_EXECUTION_NAMES[properties.action] ?? "flow_execution"
+}
+
 function resolveOnboarding(properties: Record<string, any>): string {
-    return ONBOARDING_NAMES[properties.onboarding?.action] ?? "onboarding"
+    const onboarding = properties.onboarding ?? {}
+    return ONBOARDING_NAMES[onboarding.event]
+        ?? ONBOARDING_NAMES[onboarding.action]
+        ?? "onboarding"
+}
+
+function resolveSecret(action: "created" | "updated"): (properties: Record<string, any>) => string {
+    return (properties) => {
+        const object = SECRET_OBJECTS[properties.secret_type]
+        return object ? `app.${object}.${action}` : `secret_${action}`
+    }
 }
 
 const SPLIT_EVENT_RESOLVERS: Record<string, (properties: Record<string, any>) => string> = {
+    flow_execution: resolveFlowExecution,
+    secret_created: resolveSecret("created"),
+    secret_updated: resolveSecret("updated"),
     editor_tab_action: resolveEditorTabAction,
     ossauth: resolveOssAuth,
     onboarding: resolveOnboarding,

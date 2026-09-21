@@ -1,5 +1,37 @@
-import {vi} from "vitest"
-import {config} from "@vue/test-utils"
+import {afterEach, vi} from "vitest"
+import {config, disableAutoUnmount, enableAutoUnmount} from "@vue/test-utils"
+import {designSystemI18nReady} from "@kestra-io/design-system"
+import {installMonacoCssEscapePolyfill} from "./monacoCssEscapePolyfill"
+
+// Required by `isolate: false` (vitest.config.unit.js): workers reuse one module registry, so a
+// module cached while another file's vi.mock was active keeps that mock. Setup files run before
+// each spec's own imports, so resetting here hands every file a fresh `src/**` registry.
+// Externalized node_modules (vue, @vue/test-utils, …) are unaffected.
+vi.resetModules()
+
+// Components that teleport (dialogs, drawers, poppers) keep their content attached
+// to document.body until the wrapper unmounts, and with `isolate: false` that debris
+// outlives the spec file. Auto-unmount every mounted wrapper instead of relying on
+// each test to remember. `enableAutoUnmount` refuses to run twice and the test-utils
+// module is shared across files here, so reset it before re-arming per file.
+disableAutoUnmount()
+enableAutoUnmount(afterEach)
+
+// Installing the design system starts a locale-module glob it does not await, so a spec that
+// finishes first is torn down mid-import and the run reports unhandled EnvironmentTeardownErrors.
+afterEach(() => designSystemI18nReady())
+
+// A Vue warning inlines the offending value twice over, in the trace serialising every prop and in
+// a prop type-check message, so a megabyte-sized value costs CI 10 to 24 minutes of log (#19566).
+const WARN_LIMIT = 2000
+const capWarn = (text: string, part: string) =>
+    text.length > WARN_LIMIT ? `${text.slice(0, WARN_LIMIT)}… (${part} truncated)` : text
+config.global.config = {
+    ...config.global.config,
+    warnHandler: (message, _instance, trace) => {
+        console.warn(`[Vue warn]: ${capWarn(message, "message")}${trace ? `\n${capWarn(trace, "trace")}` : ""}`)
+    },
+}
 
 // Most unit tests mount a component in isolation, without installing vue-router,
 // so a literal <router-link> in its template can never resolve and spams
@@ -40,6 +72,40 @@ if (typeof document !== "undefined" && typeof document.queryCommandSupported !==
 if (typeof document !== "undefined" && typeof document.execCommand !== "function") {
     (document as any).execCommand = () => false
 }
+if (typeof Element !== "undefined" && typeof Element.prototype.scrollIntoView !== "function") {
+    Element.prototype.scrollIntoView = () => {}
+}
+// jsdom implements neither navigator.clipboard nor ClipboardItem; Monaco's WebKit
+// clipboard workaround binds click/keydown handlers on document.body that call
+// `navigator.clipboard.write([new ClipboardItem(...)])`, so any event bubbling to
+// body in an attached mount otherwise throws "ClipboardItem is not defined".
+// That workaround also hands the ClipboardItem ctor a pending promise which the next
+// event cancels; the real ctor consumes it, so the stub has to do the same or the
+// cancellation surfaces as an unhandled rejection and fails the whole run.
+if (typeof globalThis.ClipboardItem === "undefined") {
+    (globalThis as any).ClipboardItem = class ClipboardItem {
+        items: Record<string, unknown>
+        constructor(items: Record<string, unknown>) {
+            this.items = items
+            for (const value of Object.values(items ?? {})) {
+                if (value && typeof (value as Promise<unknown>).then === "function") {
+                    (value as Promise<unknown>).catch(() => {})
+                }
+            }
+        }
+    }
+}
+if (typeof navigator !== "undefined" && !navigator.clipboard) {
+    Object.defineProperty(navigator, "clipboard", {
+        configurable: true,
+        value: {
+            write: () => Promise.resolve(),
+            writeText: () => Promise.resolve(),
+            read: () => Promise.resolve([]),
+            readText: () => Promise.resolve(""),
+        },
+    })
+}
 // pdfjs-dist (pulled in transitively via PdfPreview.vue) constructs a DOMMatrix
 // at module load time, which jsdom doesn't provide.
 if (typeof globalThis.DOMMatrix === "undefined") {
@@ -57,3 +123,12 @@ if (typeof window !== "undefined" && typeof window.matchMedia !== "function") {
         dispatchEvent: () => false,
     })
 }
+// jsdom doesn't implement ResizeObserver (used by TaskEdit's stacked-layout detection)
+if (typeof globalThis.ResizeObserver === "undefined") {
+    (globalThis as any).ResizeObserver = class {
+        observe() {}
+        unobserve() {}
+        disconnect() {}
+    }
+}
+installMonacoCssEscapePolyfill()

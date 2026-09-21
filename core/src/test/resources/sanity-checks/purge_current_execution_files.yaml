@@ -2,9 +2,14 @@ id: purge_current_execution_files
 namespace: sanitychecks.core
 
 tasks:
-  - id: download
-    type: io.kestra.plugin.core.http.Download
-    uri: https://huggingface.co/datasets/kestra/datasets/raw/main/csv/orders.csv
+  # Kept local on purpose: the purge only needs some file in the execution's internal storage,
+  # and the external URI used before made CI fail whenever the host rate-limited the runner.
+  - id: write_file
+    type: io.kestra.plugin.core.storage.Write
+    content: |
+      id,name
+      1,sanity-check
+    extension: .csv
 
   - id: purge
     type: io.kestra.plugin.core.storage.PurgeCurrentExecutionFiles

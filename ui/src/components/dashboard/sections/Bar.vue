@@ -1,6 +1,8 @@
 <template>
+    <KsSkeleton v-if="loading && !generated && !props.short" animated :rows="3" class="empty" />
+
     <div
-        v-if="generated?.results?.length"
+        v-else-if="generated?.results?.length"
         class="chart-wrapper"
         :class="{short: props.short}"
     >
@@ -13,10 +15,12 @@
                 v-if="showLegend"
                 :items="legendItems"
                 :chart="ksBarRef"
+                :formatValue="isDurationAgg() ? durationUtils.humanDuration : undefined"
                 @toggle="onLegendToggle"
             />
             <KsBar
                 ref="ksBarRef"
+                :maxPixelRatio="DASHBOARD_CHART_MAX_PIXEL_RATIO"
                 class="canvas"
                 :data="seriesData"
                 :categories="categories"
@@ -31,7 +35,7 @@
         <div v-if="!props.short && canExpand" class="chart-footer">
             <KsButton text size="small" :aria-expanded="expanded" @click="expanded = !expanded">
                 <span class="expand-toggle">
-                    {{ expanded ? t("showLess") : `${t("dashboards.viewAll")} (${totalNamespaces})` }}
+                    {{ expanded ? $t("showLess") : `${$t("dashboards.viewAll")} (${totalNamespaces})` }}
                     <component :is="expanded ? ChevronUp : ChevronDown" :size="14" />
                 </span>
             </KsButton>
@@ -46,10 +50,10 @@
     import {useI18n} from "vue-i18n"
     import {QueryFilter} from "@kestra-io/kestra-sdk"
 
-    import {ChartFeature, KsBar, TooltipType, cssVar, durationUtils, type KsChartSeriesItem} from "@kestra-io/design-system"
+    import {ChartFeature, KsBar, KsSkeleton, TooltipType, cssVar, durationUtils, type KsChartSeriesItem} from "@kestra-io/design-system"
 
     import {Chart, useChartGenerator} from "../composables/useDashboards"
-    import {DEFAULT_BAR_CATEGORY_LIMIT, getConsistentHEXColor, rankStackedBars, useLegendToggle} from "../composables/charts"
+    import {DASHBOARD_CHART_MAX_PIXEL_RATIO, DEFAULT_BAR_CATEGORY_LIMIT, getConsistentHEXColor, rankStackedBars, useLegendToggle, type EchartsParams} from "../composables/charts"
     import {useChartDrillDown} from "../composables/chartDrillDown"
     import ChartLegend from "./ChartLegend.vue"
     import ChevronDown from "vue-material-design-icons/ChevronDown.vue"
@@ -80,7 +84,7 @@
     const expanded = ref(false)
 
     const {data, chartOptions} = props.chart
-    const {data: generated, generate} = useChartGenerator(props.dashboardId, props)
+    const {data: generated, loading, generate} = useChartGenerator(props.dashboardId, props)
 
     const aggregator = Object.entries(data?.columns ?? {}).filter(([_, v]) => v.agg)
     const isDurationAgg = () => aggregator[0][1].field === "DURATION"
@@ -89,13 +93,13 @@
 
     const categoryKey = chartOptions?.column ?? ""
     const stackKeys = Object.entries(data?.columns ?? {})
-        .filter(([key, value]) => !(value as Record<string, any>).agg && key !== categoryKey)
+        .filter(([key, value]) => !value.agg && key !== categoryKey)
         .map(([key]) => key)
     const valueKey = aggregator[0][0]
-    const baseLimit = (chartOptions as any)?.limit ?? DEFAULT_BAR_CATEGORY_LIMIT
+    const baseLimit = chartOptions?.limit ?? DEFAULT_BAR_CATEGORY_LIMIT
 
     const parsedData = computed(() =>
-        rankStackedBars(generated.value?.results as Record<string, unknown>[] ?? [], {
+        rankStackedBars(generated.value?.results ?? [], {
             categoryKey,
             stackKeys,
             valueKey,
@@ -145,7 +149,7 @@
         parsedData.value.series.map((s) => ({
             label: s.name,
             color: getConsistentHEXColor(theme.value, s.name),
-            count: s.data.reduce((acc, n) => acc + (typeof n === "number" ? n : (n as any).value ?? 0), 0),
+            count: s.data.reduce((acc, n) => acc + n, 0),
         })),
     )
 
@@ -163,8 +167,8 @@
 
         return {
             grid: props.short
-                ? {top: 2, right: 2, bottom: 2, left: 2, containLabel: false}
-                : {left: "0", right: "4%", top: "5%", bottom: "3%", containLabel: true},
+                ? {top: 2, right: 2, bottom: 2, left: 2, outerBoundsMode: "none"}
+                : {left: "0", right: "4%", top: "5%", bottom: "3%", outerBoundsMode: "same"},
             xAxis: {
                 type: "value",
                 show: showAxes,
@@ -192,23 +196,23 @@
                 : {
                     trigger: "axis",
                     axisPointer: {type: "none"},
-                    formatter: (params: any[]) => {
+                    formatter: (params: EchartsParams[]) => {
                         if (!params?.length) return ""
                         const isOthers = parsedData.value.othersCount > 0 && params[0].dataIndex === categories.value.length - 1
-                        const categoryName = isOthers ? t("dashboards.others") : params[0].name
-                        const nonZero = params.filter((p: any) => {
-                            const val = typeof p.value === "number" ? p.value : p.value?.value ?? 0
+                        const categoryName = isOthers ? t("dashboards.others") : (params[0].name ?? "")
+                        const nonZero = params.filter((p) => {
+                            const val = typeof p.value === "number" ? p.value : (p.value as {value?: number} | undefined)?.value ?? 0
                             return val > 0
                         })
                         const rows = nonZero
-                            .map((p: any) => {
-                                const val = typeof p.value === "number" ? p.value : p.value?.value ?? 0
+                            .map((p) => {
+                                const val = typeof p.value === "number" ? p.value : (p.value as {value?: number} | undefined)?.value ?? 0
                                 const formatted = isDurationAgg() ? durationUtils.humanDuration(val) : val
-                                return `<span style="color:${cssVar("--ks-text-secondary")}">${escapeHtml(p.seriesName)}</span>: ${formatted}`
+                                return `<span style="color:${cssVar("--ks-text-secondary")}">${escapeHtml(p.seriesName ?? "")}</span>: ${formatted}`
                             })
                             .join("<br/>")
-                        const total = nonZero.reduce((acc: number, p: any) => {
-                            const val = typeof p.value === "number" ? p.value : p.value?.value ?? 0
+                        const total = nonZero.reduce((acc: number, p) => {
+                            const val = typeof p.value === "number" ? p.value : (p.value as {value?: number} | undefined)?.value ?? 0
                             return acc + val
                         }, 0)
                         const formattedTotal = isDurationAgg() ? durationUtils.humanDuration(total) : total
@@ -225,25 +229,26 @@
     const ksBarRef = ref<InstanceType<typeof KsBar> | null>(null)
 
     const categoryColumn = computed(() =>
-        (data?.columns?.[chartOptions?.column ?? ""]) as {field?: string; key?: string} | undefined,
+        data?.columns?.[chartOptions?.column ?? ""],
     )
 
     const stackColumn = computed(() => {
         const category = chartOptions?.column ?? ""
         const key = Object.entries(data?.columns ?? {})
-            .find(([k, v]) => !(v as Record<string, any>).agg && k !== category)?.[0]
-        return (key ? data?.columns?.[key] : undefined) as {field?: string; key?: string} | undefined
+            .find(([k, v]) => !v.agg && k !== category)?.[0]
+        return key ? data?.columns?.[key] : undefined
     })
 
-    function onChartClick(params: any) {
+    function onChartClick(rawParams: unknown) {
+        const params = rawParams as EchartsParams
         const isOthers = parsedData.value.othersCount > 0 && params.name === othersLabel.value
         if (isOthers) {
             expanded.value = true
             return
         }
         drillDown([
-            {column: stackColumn.value, value: params.seriesName},
-            {column: categoryColumn.value, value: params.name},
+            {column: stackColumn.value, value: params.seriesName ?? ""},
+            {column: categoryColumn.value, value: params.name ?? ""},
         ])
     }
 

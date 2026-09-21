@@ -5,9 +5,12 @@
         filterable
         :filterMethod="onFilter"
         clearable
+        fitInputWidth
+        :fallbackPlacements="['bottom-start', 'top-start']"
+        @visible-change="onVisibleChange"
     >
         <KsOption
-            v-for="item in filteredTaskModels"
+            v-for="item in renderedTaskModels"
             :key="item.cls"
             :label="item.cls"
             :value="item.cls"
@@ -129,6 +132,17 @@
         return taskModels.value.filter(({cls}) => cls.toLowerCase().includes(q))
     })
 
+    const hasOpened = ref(false)
+    const onVisibleChange = (visible: boolean) => {
+        if (visible) hasOpened.value = true
+    }
+
+    const renderedTaskModels = computed(() => {
+        if (hasOpened.value) return filteredTaskModels.value
+        const selected = taskModels.value.find(({cls}) => cls === modelValue.value)
+        return selected ? [selected] : []
+    })
+
     const modelValue = defineModel({
         type: String,
         default: "",
@@ -181,11 +195,10 @@
             gap: 0.25rem;
 
             .cls {
-                font-weight: 600;
+                font-weight: var(--ks-font-weight-semibold);
                 line-height: 1.2;
-                white-space: nowrap;
-                overflow: hidden;
-                text-overflow: ellipsis;
+                white-space: normal;
+                overflow-wrap: anywhere;
             }
 
             .title {
@@ -198,4 +211,3 @@
     }
 
 </style>
-

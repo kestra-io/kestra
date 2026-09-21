@@ -9,7 +9,7 @@ Kestra UI is running using [Vite](https://vite.dev/).
 ### Development:
 - (Optional) By default, your dev server will target `localhost:8080`. If your backend is running elsewhere, you can create `.env.development.local` under `ui` folder with this content:
 ```
-VITE_APP_API_URL={myApiUrl}
+VITE_PROXY_URL={myApiUrl}
 ```
 
 - Navigate into the `ui` folder and run `npm install` to install the dependencies for the frontend project.
@@ -57,8 +57,7 @@ kestra:
 
 datasources:
   postgres:
-    # It is important to note that you must use the "host.docker.internal" host when connecting to a docker container outside of your devcontainer as attempting to use localhost will only point back to this devcontainer.
-    url: jdbc:postgresql://host.docker.internal:5432/kestra
+    url: jdbc:postgresql://localhost:5432/kestra
     driverClassName: org.postgresql.Driver
     username: kestra
     password: k3str4
@@ -90,3 +89,16 @@ If you're doing frontend development, you can run `npm run dev` from the `ui` fo
 Kestra tags every 404 response with `X-Kestra-Edition` and `X-Kestra-Route-Matched` (see `NotFoundHeadersFilter`) so a browser-based client (e.g. `client-sdk`) can tell a genuine not-found apart from a route that simply doesn't exist on this server/edition.
 
 Browsers hide any response header the server doesn't list in `Access-Control-Expose-Headers`, so cross-origin JavaScript would otherwise never see these two. You don't need to configure that: `NotFoundHeadersCorsCustomizer` appends both header names to the `exposed-headers` of every CORS configuration you define — the `all` configuration in the snippet above included. Kestra ships no CORS configuration of its own, because a named configuration declared without `allowedOrigins` matches *any* origin with credentials allowed, and `CorsFilter` uses the first configuration matching the request origin — an OSS default could therefore shadow your own origin-restricted one.
+
+---
+
+### Testing
+
+The devcontainer installs the Playwright browsers on create, so `npm run test:e2e` works out of the
+box. If they are ever missing, reinstall them with `npx playwright install` from this folder.
+
+---
+
+## Translations
+
+The UI is translated into thirteen languages, with English as the source of truth and every other locale generated from it. How the pipeline works - generation, fingerprints, checks, CI - is documented in [scripts/translations/README.md](scripts/translations/README.md).

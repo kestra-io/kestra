@@ -1,15 +1,15 @@
 <template>
     <TopNavBar
-        :title="t('mcp.servers')"
-        :longDescription="t('mcp.page_description')"
+        :title="$t('mcp.servers')"
+        :longDescription="$t('mcp.page_description')"
     >
         <template
             v-if="showCreate"
             #actions
         >
             <Action
-                :label="t('mcp.create')"
-                :to="{name: 'admin/mcp-servers/create', params: {tab: 'edit'}}"
+                :label="$t('mcp.create')"
+                :to="{name: 'admin/mcp-servers/create', params: {tab: 'edit', tenant: route.params.tenant}}"
             />
         </template>
     </TopNavBar>
@@ -30,18 +30,18 @@
         <KsNoData
             v-else-if="displayServers.length === 0"
             class="empty"
-            :description="t('mcp.no_servers')"
+            :description="$t('mcp.no_servers')"
         />
 
         <div
             v-else
             class="server-list"
         >
-            <h2 class="list-title">{{ t("mcp.your_servers") }}</h2>
+            <h2 class="list-title">{{ $t("mcp.your_servers") }}</h2>
 
             <section class="list-card">
                 <header class="list-header">
-                    {{ t("mcp.servers_count", {count: displayServers.length}) }}
+                    {{ $t("mcp.servers_count", {count: displayServers.length}) }}
                 </header>
 
                 <McpServerCard
@@ -65,6 +65,7 @@
 <script lang="ts" setup>
     import {computed, onMounted, ref} from "vue"
     import {useI18n} from "vue-i18n"
+    import {useRoute} from "vue-router"
 
     import {useMcpStore, type McpServer} from "../../stores/mcp"
     import {useMiscStore} from "override/stores/misc"
@@ -92,6 +93,7 @@
     }>()
 
     const {t} = useI18n({useScope: "global"})
+    const route = useRoute()
     const toast = useToast()
     const mcpStore = useMcpStore()
     const miscStore = useMiscStore()
@@ -140,7 +142,7 @@
     }
 
     const routeTo = (server: DisplayServer): RouteLocationRaw => {
-        const params: Record<string, string> = {id: server.id, tab: "edit"}
+        const params: Record<string, string> = {id: server.id, tab: "edit", tenant: route.params.tenant as string}
 
         if (instanceMode.value) {
             return {

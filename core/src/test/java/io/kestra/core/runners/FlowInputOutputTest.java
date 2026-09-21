@@ -1,20 +1,20 @@
 package io.kestra.core.runners;
 
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.InputStream;
 import java.net.URI;
-import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.security.GeneralSecurityException;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.reactivestreams.Publisher;
 
@@ -22,17 +22,21 @@ import io.kestra.core.encryption.EncryptionService;
 import io.kestra.core.exceptions.InputOutputValidationException;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.*;
+import io.kestra.core.models.flows.input.BoolInput;
 import io.kestra.core.models.flows.input.EmailInput;
 import io.kestra.core.models.flows.input.FileInput;
 import io.kestra.core.models.flows.input.FloatInput;
 import io.kestra.core.models.flows.input.FormInput;
 import io.kestra.core.models.flows.input.InputAndValue;
 import io.kestra.core.models.flows.input.IntInput;
+import io.kestra.core.models.flows.input.IonInput;
 import io.kestra.core.models.flows.input.MultiselectInput;
 import io.kestra.core.models.flows.input.ReusableInputsInput;
 import io.kestra.core.models.flows.input.SecretInput;
+import io.kestra.core.models.flows.input.SelectInput;
 import io.kestra.core.models.flows.input.StringInput;
 import io.kestra.core.models.flows.input.URIInput;
+import io.kestra.core.models.flows.input.YamlInput;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.common.EncryptedString;
 import io.kestra.core.secret.SecretNotFoundException;
@@ -45,9 +49,11 @@ import io.kestra.core.storages.kv.KVValue;
 import io.kestra.core.utils.IdUtils;
 
 import io.micronaut.context.annotation.Value;
-import io.micronaut.http.MediaType;
+import io.micronaut.core.io.buffer.ReadBufferFactory;
+import io.micronaut.http.multipart.CompletedAttribute;
 import io.micronaut.http.multipart.CompletedFileUpload;
 import io.micronaut.http.multipart.CompletedPart;
+import io.micronaut.http.multipart.FormFieldMetadata;
 import io.micronaut.test.annotation.MockBean;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
@@ -56,6 +62,7 @@ import reactor.core.publisher.Mono;
 
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @MicronautTest
 class FlowInputOutputTest {
@@ -279,7 +286,7 @@ class FlowInputOutputTest {
             .type(Type.FILE)
             .build();
 
-        Publisher<CompletedPart> data = Mono.just(new MemoryCompletedFileUpload("input", "input", "???".getBytes(StandardCharsets.UTF_8)));
+        Publisher<CompletedPart> data = Mono.just(memoryCompletedFileUpload("input", "input", "???".getBytes(StandardCharsets.UTF_8)));
 
         // When
         List<InputAndValue> values = flowInputOutput.validateExecutionInputs(List.of(input), null, DEFAULT_TEST_EXECUTION, data).block();
@@ -442,6 +449,89 @@ class FlowInputOutputTest {
     }
 
     @Test
+    void shouldParseIonTextIntoStructuredValues() {
+        // Given
+        Flow flow = Flow.builder()
+            .id("test-flow")
+            .namespace("io.kestra.test")
+            .inputs(
+                List.of(
+                    IonInput.builder().id("record").type(Type.ION).build(),
+                    IonInput.builder().id("items").type(Type.ION).build()
+                )
+            )
+            .build();
+
+        // When
+        Map<String, Object> result = flowInputOutput.readExecutionInputs(
+            flow,
+            DEFAULT_TEST_EXECUTION,
+            Map.of(
+                "record", "{name:\"Ada\",nested:{active:true}}",
+                "items", "[\"one\",\"two\"]"
+            )
+        );
+
+        // Then
+        assertThat(result.get("record")).isEqualTo(
+            Map.of("name", "Ada", "nested", Map.of("active", true))
+        );
+        assertThat(result.get("items")).isEqualTo(List.of("one", "two"));
+    }
+
+    @Test
+    void shouldPassThroughStructuredIonValues() {
+        // Given
+        Map<String, Object> record = Map.of("name", "Ada");
+        List<String> items = List.of("one", "two");
+        Flow flow = Flow.builder()
+            .id("test-flow")
+            .namespace("io.kestra.test")
+            .inputs(
+                List.of(
+                    IonInput.builder().id("record").type(Type.ION).build(),
+                    IonInput.builder().id("items").type(Type.ION).build()
+                )
+            )
+            .build();
+
+        // When
+        Map<String, Object> result = flowInputOutput.readExecutionInputs(
+            flow,
+            DEFAULT_TEST_EXECUTION,
+            Map.of("record", record, "items", items)
+        );
+
+        // Then
+        assertThat(result).containsEntry("record", record).containsEntry("items", items);
+    }
+
+    @Test
+    void shouldParseIonTextDefaultIntoStructuredValue() {
+        // Given
+        IonInput input = IonInput.builder()
+            .id("record")
+            .type(Type.ION)
+            .defaults(Property.ofValue("{name:\"Ada\"}"))
+            .build();
+        Flow flow = Flow.builder()
+            .id("test-flow")
+            .namespace("io.kestra.test")
+            .inputs(List.of(input))
+            .build();
+
+        // When
+        Map<String, Object> result = flowInputOutput.readExecutionInputs(
+            flow,
+            DEFAULT_TEST_EXECUTION,
+            Map.of()
+        );
+
+        // Then
+        assertThat(result.get("record")).isEqualTo(Map.of("name", "Ada"));
+    }
+
+    @Test
     void shouldFlagRenderFailuresAsRenderErrorsButNotValueErrors() {
         // A dynamic-values input whose expression fails to render -> the field is broken (render error)
         MultiselectInput brokenExpression = MultiselectInput.builder()
@@ -483,14 +573,8 @@ class FlowInputOutputTest {
     }
 
     @Test
-    void shouldResolveZeroByteFileUpload() throws java.io.IOException {
-        File tempFile = File.createTempFile("empty", ".txt");
-        tempFile.deleteOnExit();
-
-        io.micronaut.http.multipart.CompletedFileUpload fileUpload = org.mockito.Mockito.mock(io.micronaut.http.multipart.CompletedFileUpload.class);
-        org.mockito.Mockito.when(fileUpload.getInputStream()).thenReturn(new java.io.FileInputStream(tempFile));
-        org.mockito.Mockito.when(fileUpload.getFilename()).thenReturn("empty.txt");
-        org.mockito.Mockito.when(fileUpload.getName()).thenReturn("empty_file");
+    void shouldResolveZeroByteFileUpload() {
+        CompletedFileUpload fileUpload = memoryCompletedFileUpload("empty_file", "empty.txt", new byte[0]);
 
         Execution execution = Execution.builder()
             .id(IdUtils.create())
@@ -654,7 +738,7 @@ class FlowInputOutputTest {
         Map<String, Object> result = flowInputOutput
             .readExecutionInputs(
                 flow, executionId,
-                Flux.just(new MemoryCompletedPart("greeting", "hello".getBytes(StandardCharsets.UTF_8)))
+                Flux.just(memoryCompletedPart("greeting", "hello".getBytes(StandardCharsets.UTF_8)))
             )
             .block();
 
@@ -677,13 +761,186 @@ class FlowInputOutputTest {
         Map<String, Object> result = flowInputOutput
             .readExecutionInputs(
                 flow, executionId,
-                Flux.just(new MemoryCompletedFileUpload("upload", "data.csv", "col1,col2".getBytes(StandardCharsets.UTF_8)))
+                Flux.just(memoryCompletedFileUpload("upload", "data.csv", "col1,col2".getBytes(StandardCharsets.UTF_8)))
             )
             .block();
 
         // Then
         assertThat(result.get("upload")).isInstanceOf(URI.class);
         assertThat(result.get("upload").toString()).contains(executionId);
+    }
+
+    @Test
+    void shouldRejectFileInputPointingToUnauthorizedHostPath() throws Exception {
+        // Given
+        Path unauthorizedHostFile = Files.createTempFile("lfi-repro", ".txt");
+        Files.writeString(unauthorizedHostFile, "root:x:0:0:root:/root:/bin/bash");
+
+        Flow flow = Flow.builder()
+            .id("lfi-child")
+            .tenantId(MAIN_TENANT)
+            .namespace("io.kestra.test")
+            .inputs(List.of(FileInput.builder().id("d").type(Type.FILE).required(true).build()))
+            .build();
+
+        try {
+            // When / Then
+            assertThatThrownBy(() -> flowInputOutput.readExecutionInputs(flow, DEFAULT_TEST_EXECUTION, Map.of("d", unauthorizedHostFile.toString())))
+                .isInstanceOf(InputOutputValidationException.class)
+                .hasMessageContaining("is not authorized")
+                .hasMessageContaining(LocalPath.ALLOWED_PATHS_CONFIG);
+        } finally {
+            Files.deleteIfExists(unauthorizedHostFile);
+        }
+    }
+
+    @Test
+    void shouldRejectFileInputPointingToASymlinkEscapingAnAllowedPath() throws Exception {
+        // Given
+        Path unauthorizedTarget = Files.createTempFile("lfi-repro-target", ".txt");
+        Files.writeString(unauthorizedTarget, "root:x:0:0:root:/root:/bin/bash");
+        Path linkInsideAllowedPath = Path.of("build/resources/test").toRealPath().resolve("lfi-repro-link.txt");
+        Files.deleteIfExists(linkInsideAllowedPath);
+        Files.createSymbolicLink(linkInsideAllowedPath, unauthorizedTarget);
+
+        Flow flow = Flow.builder()
+            .id("lfi-child")
+            .tenantId(MAIN_TENANT)
+            .namespace("io.kestra.test")
+            .inputs(List.of(FileInput.builder().id("d").type(Type.FILE).required(true).build()))
+            .build();
+
+        try {
+            // When / Then
+            assertThatThrownBy(() -> flowInputOutput.readExecutionInputs(flow, DEFAULT_TEST_EXECUTION, Map.of("d", linkInsideAllowedPath.toString())))
+                .isInstanceOf(InputOutputValidationException.class)
+                .hasMessageContaining("is not authorized")
+                .hasMessageContaining(unauthorizedTarget.toRealPath().toString());
+        } finally {
+            Files.deleteIfExists(linkInsideAllowedPath);
+            Files.deleteIfExists(unauthorizedTarget);
+        }
+    }
+
+    @Test
+    void shouldReportMissingHostFileForFileInput() {
+        // Given
+        Flow flow = Flow.builder()
+            .id("lfi-child")
+            .tenantId(MAIN_TENANT)
+            .namespace("io.kestra.test")
+            .inputs(List.of(FileInput.builder().id("d").type(Type.FILE).required(true).build()))
+            .build();
+
+        // When / Then
+        assertThatThrownBy(() -> flowInputOutput.readExecutionInputs(flow, DEFAULT_TEST_EXECUTION, Map.of("d", "/nonexistent/nope.txt")))
+            .isInstanceOf(InputOutputValidationException.class)
+            .hasMessageContaining("does not exist");
+    }
+
+    private static Stream<Input<?>> inputsThatDoNotAcceptFileUploads() {
+        return Stream.of(
+            IonInput.builder().id("upload").type(Type.ION).build(),
+            YamlInput.builder().id("upload").type(Type.YAML).build(),
+            StringInput.builder().id("upload").type(Type.STRING).build(),
+            SelectInput.builder().id("upload").type(Type.SELECT).build(),
+            EmailInput.builder().id("upload").type(Type.EMAIL).build(),
+            SecretInput.builder().id("upload").type(Type.SECRET).build(),
+            URIInput.builder().id("upload").type(Type.URI).build()
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource("inputsThatDoNotAcceptFileUploads")
+    void shouldRejectFileUploadForEveryInputTypeOtherThanFile(Input<?> input) {
+        // Given
+        Publisher<CompletedPart> data = Mono.just(memoryCompletedFileUpload("upload", "data.txt", "content".getBytes(StandardCharsets.UTF_8)));
+
+        // When
+        List<InputAndValue> values = flowInputOutput.validateExecutionInputs(List.of(input), null, DEFAULT_TEST_EXECUTION, data).block();
+
+        // Then
+        assertThat(values).hasSize(1);
+        assertThat(values.getFirst().exceptions())
+            .as("a file upload for a %s input must be rejected", input.getType())
+            .isNotEmpty();
+        // the raw value must stay a plain String (the storage URI), never leak the internal upload marker
+        assertThat(values.getFirst().value()).isInstanceOf(String.class);
+    }
+
+    @Test
+    void shouldIgnoreFileUploadOnDisabledInputInsteadOfRejectingIt() {
+        // Given
+        StringInput trigger = StringInput.builder().id("trigger").build();
+        // disabled: dependsOn condition never matches
+        IonInput disabledPayload = IonInput.builder()
+            .id("payload")
+            .type(Type.ION)
+            .dependsOn(new DependsOn(List.of("trigger"), "{{ inputs.trigger equals 'enable-payload' }}"))
+            .build();
+        Publisher<CompletedPart> data = Flux.concat(
+            Mono.just(memoryCompletedPart("trigger", "something-else".getBytes(StandardCharsets.UTF_8))),
+            Mono.just(memoryCompletedFileUpload("payload", "data.ion", "{a:1}".getBytes(StandardCharsets.UTF_8)))
+        );
+
+        // When
+        List<InputAndValue> values = flowInputOutput.validateExecutionInputs(List.of(trigger, disabledPayload), null, DEFAULT_TEST_EXECUTION, data).block();
+
+        // Then: a disabled input is dropped like any other disabled input, not rejected for its stray file upload
+        InputAndValue payloadResult = values.stream().filter(it -> it.input().getId().equals("payload")).findFirst().orElseThrow();
+        assertThat(payloadResult.enabled()).isFalse();
+        assertThat(payloadResult.exceptions()).isNull();
+    }
+
+    @Test
+    void shouldStillAcceptFileUploadOnFileInputAlongsideOtherInputs() {
+        // Given
+        Flow flow = Flow.builder()
+            .id("test-flow")
+            .tenantId(MAIN_TENANT)
+            .namespace("io.kestra.test")
+            .inputs(
+                List.of(
+                    FileInput.builder().id("upload").type(Type.FILE).build(),
+                    StringInput.builder().id("comment").type(Type.STRING).build()
+                )
+            )
+            .build();
+
+        // When
+        Map<String, Object> result = flowInputOutput.readExecutionInputs(
+            flow,
+            IdUtils.create(),
+            Flux.concat(
+                Mono.just(memoryCompletedFileUpload("upload", "data.csv", "col1,col2".getBytes(StandardCharsets.UTF_8))),
+                Mono.just(memoryCompletedPart("comment", "hello".getBytes(StandardCharsets.UTF_8)))
+            )
+        ).block();
+
+        // Then
+        assertThat(result.get("upload")).isInstanceOf(URI.class);
+        assertThat(result.get("comment")).isEqualTo("hello");
+    }
+
+    @Test
+    void shouldNotFailWhenFlowHasNoDeclaredInputsAndAFileIsUploaded() {
+        // Given
+        Flow flow = Flow.builder()
+            .id("test-flow")
+            .tenantId(MAIN_TENANT)
+            .namespace("io.kestra.test")
+            .inputs(null)
+            .build();
+
+        // When: an undeclared-inputs flow must not NPE while looking up the (null) declared input list
+        Map<String, Object> outputs = flowInputOutput.readExecutionInputs(
+            flow,
+            IdUtils.create(),
+            Flux.just(memoryCompletedFileUpload("upload", "data.txt", "content".getBytes(StandardCharsets.UTF_8)))
+        ).block();
+
+        // Then: the upload is stored under an undeclared input id, which is a separate (pre-existing) warning path
+        assertThat(outputs).isEmpty();
     }
 
     @Test
@@ -1045,73 +1302,89 @@ class FlowInputOutputTest {
         assertThat(values.getFirst().exceptions()).isNull();
     }
 
-    private static class MemoryCompletedPart implements CompletedPart {
+    @ParameterizedTest
+    @ValueSource(strings = {"yes", "1", "maybe", "xyz"})
+    void shouldRejectInvalidBooleanInput(String value) {
+        // Given
+        BoolInput input = BoolInput.builder()
+            .id("active")
+            .type(Type.BOOL)
+            .required(true)
+            .build();
 
-        protected final String name;
-        protected final byte[] content;
+        // When
+        List<InputAndValue> values = flowInputOutput.resolveInputs(
+            List.of(input),
+            null,
+            DEFAULT_TEST_EXECUTION,
+            Map.of("active", value)
+        );
 
-        public MemoryCompletedPart(String name, byte[] content) {
-            this.name = name;
-            this.content = content;
-        }
-
-        @Override
-        public InputStream getInputStream() {
-            return new ByteArrayInputStream(content);
-        }
-
-        @Override
-        public byte[] getBytes() {
-            return content;
-        }
-
-        @Override
-        public ByteBuffer getByteBuffer() {
-            return ByteBuffer.wrap(content);
-        }
-
-        @Override
-        public Optional<MediaType> getContentType() {
-            return Optional.empty();
-        }
-
-        @Override
-        public String getName() {
-            return name;
-        }
+        // Then
+        assertThat(values).hasSize(1);
+        assertThat(values.getFirst().exceptions())
+            .as("an invalid BOOL value must produce a validation error")
+            .isNotNull()
+            .isNotEmpty();
     }
 
-    private static final class MemoryCompletedFileUpload extends MemoryCompletedPart implements CompletedFileUpload {
+    @ParameterizedTest
+    @ValueSource(strings = {"true", "false", "TRUE", "False"})
+    void shouldAcceptValidBooleanStringInput(String value) {
+        // Given
+        BoolInput input = BoolInput.builder()
+            .id("active")
+            .type(Type.BOOL)
+            .required(true)
+            .build();
 
-        private final String fileName;
+        // When
+        List<InputAndValue> values = flowInputOutput.resolveInputs(
+            List.of(input),
+            null,
+            DEFAULT_TEST_EXECUTION,
+            Map.of("active", value)
+        );
 
-        public MemoryCompletedFileUpload(String name, String fileName, byte[] content) {
-            super(name, content);
-            this.fileName = fileName;
-        }
+        // Then
+        assertThat(values).hasSize(1);
+        assertThat(values.getFirst().exceptions()).isNull();
+    }
 
-        @Override
-        public String getFilename() {
-            return fileName;
-        }
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    void shouldAcceptBooleanInput(boolean value) {
+        // Given
+        BoolInput input = BoolInput.builder()
+            .id("active")
+            .type(Type.BOOL)
+            .required(true)
+            .build();
 
-        @Override
-        public long getSize() {
-            return content.length;
-        }
+        // When
+        List<InputAndValue> values = flowInputOutput.resolveInputs(
+            List.of(input),
+            null,
+            DEFAULT_TEST_EXECUTION,
+            Map.of("active", value)
+        );
 
-        @Override
-        public long getDefinedSize() {
-            return content.length;
-        }
+        // Then
+        assertThat(values).hasSize(1);
+        assertThat(values.getFirst().exceptions()).isNull();
+    }
 
-        @Override
-        public boolean isComplete() {
-            return true;
-        }
+    private static CompletedPart memoryCompletedPart(String name, byte[] content) {
+        return CompletedAttribute.create(
+            new FormFieldMetadata(name, null, null),
+            ReadBufferFactory.getJdkFactory().adapt(content)
+        );
+    }
 
-        @Override
-        public void discard() {
-        }
+    private static CompletedFileUpload memoryCompletedFileUpload(String name, String fileName, byte[] content) {
+        return CompletedFileUpload.ofMemory(
+            new FormFieldMetadata(name, fileName, null),
+            ReadBufferFactory.getJdkFactory().adapt(content)
+        );
     }
 }

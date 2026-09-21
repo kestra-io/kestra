@@ -1,6 +1,10 @@
 <template>
     <div class="plugin-list-wrapper">
+        <div v-if="!pluginsData" class="loading-container">
+            <KsSkeleton animated :rows="8" />
+        </div>
         <PluginList
+            v-else
             :plugins="pluginsData ?? []"
             :key="useMiscStore().theme"
         />
@@ -30,5 +34,9 @@
         display: flex;
         flex-direction: column;
         background-color: var(--ks-bg-surface);
+    }
+
+    .loading-container {
+        padding: var(--ks-spacing-4);
     }
 </style>

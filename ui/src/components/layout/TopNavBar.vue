@@ -21,6 +21,7 @@
         title: string;
         description?: string;
         breadcrumb?: KsBreadcrumbItem[];
+        bookmarkLabel?: string;
         beta?: boolean;
         hideMainIcon?: boolean;
     }>()
@@ -32,6 +33,7 @@
     watchEffect(() => {
         store.title = props.title
         store.breadcrumb = props.breadcrumb ?? []
+        store.bookmarkLabel = props.bookmarkLabel
         store.description = props.description
         store.beta = !!props.beta
         store.hasTitleSlot = !!slots.title

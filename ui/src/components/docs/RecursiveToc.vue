@@ -30,7 +30,7 @@
             </KsCollapseItem>
             <div v-else>
                 <slot v-bind="child" :class="`depth-${depth}`">
-                    <RouterLink :to="{path: '/' + child.path}">
+                    <RouterLink :to="{path: '/' + child.path}" :class="`depth-${depth}`">
                         {{ child.title.capitalize() }}
                     </RouterLink>
                 </slot>
@@ -81,8 +81,11 @@
     .kel-collapse {
         --kel-collapse-header-font-size: var(--ks-font-size-sm);
         --kel-collapse-header-height: auto;
+        --kel-collapse-header-bg-color: transparent;
+        --kel-collapse-content-bg-color: transparent;
         border-top: none;
         border-bottom: none;
+        background-color: transparent;
 
         > * {
             font-size: var(--kel-collapse-header-font-size);

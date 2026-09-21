@@ -1,6 +1,7 @@
 package io.kestra.core.runners;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -26,6 +27,7 @@ import io.kestra.core.models.flows.input.BoolInput;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.property.PropertyContext;
 import io.kestra.core.models.tasks.Task;
+import io.kestra.core.models.tasks.common.EncryptedString;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.runners.configuration.VariableConfiguration;
 import io.kestra.core.runners.pebble.PebbleEngineFactory;
@@ -449,7 +451,6 @@ class RunVariablesTest {
         // LoopRun with key set and two parents (last has a non-null key → item.parent.key appears)
         Execution parentExecution = Execution.builder()
             .id("parent-exec-id").namespace("ns").flowId("flow").state(new State())
-            .outputs(Map.of())
             .trigger(executionTrigger)
             .build()
             .withState(State.Type.SUCCESS);
@@ -464,7 +465,6 @@ class RunVariablesTest {
             .labels(List.of(new Label("env", "prod")))
             .loopRun(loopRun)
             .variables(new java.util.HashMap<>(Map.of(RunVariables.FIXTURE_FILES_KEY, Map.of())))
-            .outputs(Map.of())
             .build();
 
         Map<String, Object> variables = new RunVariables.DefaultBuilder()
@@ -482,6 +482,7 @@ class RunVariablesTest {
             })
             .withTaskRun(childRun)
             .withExecution(execution)
+            .withExecutionOutputs(Map.of("myExecutionOutput", "value"))
             .withEnvs(Map.of("MY_ENV", "value"))
             .withGlobals(Map.of("myGlobal", "value"))
             .withInputs(Map.of("myInput", "value"))
@@ -490,9 +491,10 @@ class RunVariablesTest {
 
         // Dynamic top-level keys whose children vary per flow/execution — not walked.
         // "trigger" holds execution-trigger variables (dynamic like inputs/outputs).
+        // "execution.outputs" holds the flow-level outputs, dynamic like inputs/outputs.
         Set<String> dynamicTopLevel = Set.of(
             "envs", "files", "globals", "inputs", "labels",
-            "outputs", "tasks", "trigger", "vars", RunVariables.SECRET_CONSUMER_VARIABLE_NAME
+            "outputs", "tasks", "trigger", "vars", "execution.outputs", RunVariables.SECRET_CONSUMER_VARIABLE_NAME
         );
 
         List<String> foundPaths = new ArrayList<>();
@@ -526,17 +528,65 @@ class RunVariablesTest {
             if (RunVariables.SECRET_CONSUMER_VARIABLE_NAME.equals(key) && prefix.isEmpty()) {
                 continue;
             }
-            if (stopAt.contains(key) && prefix.isEmpty()) {
-                // Dynamic key: record the top-level key but don't walk flow-specific children
-                paths.add(key);
+            String fullPath = prefix.isEmpty() ? key : prefix + "." + key;
+            if (stopAt.contains(fullPath)) {
+                // Dynamic key: record the key but don't walk flow-specific children
+                paths.add(fullPath);
                 continue;
             }
-            String fullPath = prefix.isEmpty() ? key : prefix + "." + key;
             paths.add(fullPath);
             if (entry.getValue() instanceof Map<?, ?> nested) {
                 collectStructuralPaths((Map<String, ?>) nested, fullPath, stopAt, paths);
             }
             // Lists (e.g. parents) — record the path but don't recurse into list elements
         }
+    }
+
+    private static Map<String, Object> encryptedString() {
+        return new HashMap<>(Map.of("type", EncryptedString.TYPE, "value", "ciphertext"));
+    }
+
+    @Test
+    void shouldNotMutateExecutionInputsWhenBuildingVariables() {
+        // Given
+        Map<String, Object> nested = new HashMap<>(Map.of("key", encryptedString()));
+        Execution execution = Execution.builder()
+            .id("exec")
+            .namespace("io.kestra.tests")
+            .flowId("flow")
+            .flowRevision(1)
+            .state(new State())
+            .inputs(new HashMap<>(Map.of("nested", nested)))
+            .build();
+
+        // When
+        new RunVariables.DefaultBuilder()
+            .withExecution(execution)
+            .build(new RunContextLogger(), PropertyContext.create(renderer));
+
+        // Then
+        assertThat(nested.get("key")).isEqualTo(encryptedString());
+    }
+
+    @Test
+    void shouldNotMutateExecutionTriggerVariablesWhenBuildingVariables() {
+        // Given
+        Map<String, Object> triggerVariables = new HashMap<>(Map.of("token", encryptedString()));
+        Execution execution = Execution.builder()
+            .id("exec")
+            .namespace("io.kestra.tests")
+            .flowId("flow")
+            .flowRevision(1)
+            .state(new State())
+            .trigger(ExecutionTrigger.builder().id("trigger").type("io.kestra.trigger").variables(triggerVariables).build())
+            .build();
+
+        // When
+        new RunVariables.DefaultBuilder()
+            .withExecution(execution)
+            .build(new RunContextLogger(), PropertyContext.create(renderer));
+
+        // Then
+        assertThat(triggerVariables).doesNotContainKey("_context");
     }
 }

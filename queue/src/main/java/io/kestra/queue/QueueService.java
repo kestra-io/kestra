@@ -116,4 +116,11 @@ public class QueueService {
             return Either.right(new DeserializationException(e, new String(record)));
         }
     }
+
+    /**
+     * @return true if the fail-fast mode is enabled (true by default)
+     */
+    public boolean failFast() {
+        return Boolean.TRUE.equals(queueConfiguration.getFailFast());
+    }
 }

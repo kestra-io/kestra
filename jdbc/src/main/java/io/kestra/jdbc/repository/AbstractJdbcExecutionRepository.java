@@ -1,5 +1,6 @@
 package io.kestra.jdbc.repository;
 
+import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.function.Function;
@@ -34,6 +35,7 @@ import io.kestra.executor.ExecutionStateStore;
 import io.kestra.executor.ExecutorContext;
 import io.kestra.jdbc.services.JdbcFilterService;
 import io.kestra.plugin.core.dashboard.data.Executions;
+import io.kestra.plugin.core.dashboard.data.IExecutions;
 
 import io.micronaut.context.event.ApplicationEventPublisher;
 import io.micronaut.data.model.Pageable;
@@ -90,6 +92,11 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
         this.filterService = filterService;
     }
 
+    @Override
+    protected Condition defaultFilter(String tenantId, boolean allowDeleted) {
+        return super.defaultFilter(tenantId, allowDeleted).and(aclCondition(Resource.EXECUTION));
+    }
+
     /**
      * {@inheritDoc}
      **/
@@ -121,6 +128,14 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
     }
 
     @Override
+    public Optional<Execution> findLatestForStatesWithoutAcl(String tenantId, String namespace, String flowId, List<State.Type> states) {
+        var condition = field("namespace").eq(namespace)
+            .and(field("flow_id").eq(flowId))
+            .and(this.statesFilter(states));
+        return findOne(this.defaultFilterWithNoACL(tenantId), condition, field("start_date").desc());
+    }
+
+    @Override
     public List<String> findDistinctFieldValues(String tenantId, QueryFilter.Field field, List<QueryFilter> filters, Pageable pageable) {
         return findDistinctFieldValues(tenantId, field, filters, pageable, QueryFilter.Resource.EXECUTION);
     }
@@ -136,7 +151,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
     }
 
     @Override
-    public Execution findById(String id) {
+    public Execution findByIdWithoutAcl(String id) {
         return findOne(DSL.noCondition(), KEY_FIELD.eq(id)).orElse(null);
     }
 
@@ -190,7 +205,6 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
         @Nullable List<State.Type> state,
         @Nullable Map<String, String> labels,
         @Nullable String triggerExecutionId,
-        @Nullable ChildFilter childFilter,
         boolean deleted) {
         return Flux.create(
             emitter -> this.jdbcRepository
@@ -211,7 +225,6 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
                         state,
                         labels,
                         triggerExecutionId,
-                        childFilter,
                         deleted
                     );
 
@@ -281,7 +294,6 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
         @Nullable List<State.Type> state,
         @Nullable Map<String, String> labels,
         @Nullable String triggerExecutionId,
-        @Nullable ChildFilter childFilter,
         boolean deleted) {
         var select = context
             .select(
@@ -290,7 +302,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
             .from(this.jdbcRepository.getTable())
             .where(this.defaultFilter(tenantId, deleted));
 
-        select = filteringQuery(select, scope, namespace, flowId, null, query, labels, triggerExecutionId, childFilter);
+        select = filteringQuery(select, scope, namespace, flowId, null, query, labels, triggerExecutionId);
 
         if (startDate != null) {
             select = select.and(START_DATE_FIELD.greaterOrEqual(startDate.toOffsetDateTime()));
@@ -315,11 +327,8 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
 
     @Override
     public Flux<Execution> findAsync(String tenantId, List<QueryFilter> filters) {
-        if (filters == null || filters.isEmpty()) {
-            return findAllAsync(tenantId);
-        }
-        Condition condition = this.filter(filters, fieldsMapping.get(dateFilterField()), Resource.EXECUTION);
-        return findAsync(defaultFilter(tenantId), condition);
+        // same condition as find(Pageable, String, List) so that streaming consumers see exactly what the search returns
+        return findAsync(defaultFilter(tenantId), this.computeFindCondition(filters, null));
     }
 
     private <T extends Record> SelectConditionStep<T> filteringQuery(
@@ -330,8 +339,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
         @Nullable List<FlowFilter> flows,
         @Nullable String query,
         @Nullable Map<String, String> labels,
-        @Nullable String triggerExecutionId,
-        @Nullable ChildFilter childFilter) {
+        @Nullable String triggerExecutionId) {
         if (scope != null && !scope.containsAll(Arrays.stream(FlowScope.values()).toList())) {
             if (scope.contains(FlowScope.USER)) {
                 select = select.and(field("namespace").ne(systemFlowsConfiguration.namespace()));
@@ -358,14 +366,6 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
 
         if (triggerExecutionId != null) {
             select = select.and(field("trigger_execution_id").eq(triggerExecutionId));
-        }
-
-        if (childFilter != null) {
-            if (childFilter.equals(ChildFilter.CHILD)) {
-                select = select.and(field("trigger_execution_id").isNotNull());
-            } else if (childFilter.equals(ChildFilter.MAIN)) {
-                select = select.and(field("trigger_execution_id").isNull());
-            }
         }
 
         if (flows != null) {
@@ -639,7 +639,8 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
         } else if (field.getName().equals(START_DATE_FIELD.getName())) {
             return START_DATE_FIELD;
         } else if (field.getName().equals(fieldsMapping.get(Executions.Fields.DURATION))) {
-            return DSL.field("{0} / 1000", Long.class, field);
+            // divide by a decimal so Postgres does not integer-divide, which truncated sub-second durations to 0
+            return DSL.field("{0} / 1000.0", Double.class, field);
         }
         return field;
     }
@@ -649,30 +650,22 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
     protected <F extends Enum<F>> SelectConditionStep<Record> where(SelectConditionStep<Record> selectConditionStep, JdbcFilterService jdbcFilterService, List<AbstractFilter<F>> filters,
         Map<F, String> fieldsMapping) {
         if (!ListUtils.isEmpty(filters)) {
+            // state_duration holds milliseconds, while a DURATION filter carries a duration (`PT1S`, or a number of seconds)
+            filters = DurationFilters.normalize(filters, IExecutions.DURATION_FIELDS, Duration::toMillis);
+
             // Check if descriptors contain a filter of type Executions.Fields.STATE and apply the custom filter "statesFilter" if present
             selectConditionStep = applyStateFilters(filters, selectConditionStep);
 
-            // Check if descriptors contain a filter of type EXECUTIONS.Fields.LABELS and apply the findCondition() method if present
-            List<Contains<Executions.Fields>> labelFilters = filters.stream()
-                .filter(descriptor -> descriptor.getField().equals(Executions.Fields.LABELS) && descriptor instanceof Contains<F>)
-                .map(descriptor -> (Contains<Executions.Fields>) descriptor)
+            // Check if descriptors contain a filter of type EXECUTIONS.Fields.LABELS and apply the label JSON condition if present
+            List<AbstractFilter<Executions.Fields>> labelFilters = filters.stream()
+                .filter(descriptor -> Executions.Fields.LABELS.equals(descriptor.getField()))
+                .map(descriptor -> (AbstractFilter<Executions.Fields>) descriptor)
                 .toList();
 
             if (!labelFilters.isEmpty()) {
-                Map<String, String> mergedMap = new HashMap<>();
-
-                labelFilters.forEach(labelFilter ->
-                {
-                    if (labelFilter.getKey() != null) {
-                        mergedMap.put(labelFilter.getKey(), labelFilter.getValue().toString());
-                    } else if (labelFilter.getValue() instanceof String stringLabel) {
-                        mergedMap.putAll(Label.from(stringLabel));
-                    } else {
-                        mergedMap.putAll((Map<String, String>) labelFilter.getValue());
-                    }
-                });
-
-                selectConditionStep = selectConditionStep.and(findCondition(null, mergedMap));
+                for (AbstractFilter<Executions.Fields> labelFilter : labelFilters) {
+                    selectConditionStep = selectConditionStep.and(toLabelCondition(labelFilter));
+                }
             }
 
             // Handle SCOPE filters — translate to namespace-based conditions
@@ -689,9 +682,9 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
 
             // Remove the state, label, and scope filters from descriptors
             List<AbstractFilter<F>> remainingFilters = filters.stream()
-                .filter(descriptor -> !descriptor.getField().equals(Executions.Fields.STATE)) // Filter state
-                .filter(descriptor -> !descriptor.getField().equals(Executions.Fields.LABELS) || !(descriptor instanceof Contains<F>)) // Filter labels
-                .filter(descriptor -> !descriptor.getField().equals(Executions.Fields.SCOPE)) // Filter scope
+                .filter(descriptor -> !Executions.Fields.STATE.equals(descriptor.getField())) // Filter state
+                .filter(descriptor -> !Executions.Fields.LABELS.equals(descriptor.getField())) // Filter labels
+                .filter(descriptor -> !Executions.Fields.SCOPE.equals(descriptor.getField())) // Filter scope
                 .toList();
 
             // Use the generic method addFilters with the remaining filters
@@ -699,6 +692,83 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
         } else {
             return selectConditionStep;
         }
+    }
+
+    private Condition toLabelCondition(AbstractFilter<Executions.Fields> filter) {
+        return switch (filter.getType()) {
+            case CONTAINS -> toLabelContainsCondition((Contains<Executions.Fields>) filter, QueryFilter.Op.CONTAINS);
+            case EQUAL_TO -> findLabelCondition(toLabelInput(filter.getKey(), ((EqualTo<Executions.Fields>) filter).getValue()), QueryFilter.Op.EQUALS);
+            case IN -> toLabelInCondition((In<Executions.Fields>) filter);
+            case IS_NOT_NULL -> findLabelCondition(Either.right(filter.getKey()), QueryFilter.Op.IS_NOT_NULL);
+            case IS_NULL -> findLabelCondition(Either.right(filter.getKey()), QueryFilter.Op.IS_NULL);
+            case NOT_CONTAINS -> toLabelContainsCondition((NotContains<Executions.Fields>) filter, QueryFilter.Op.NOT_CONTAINS);
+            case NOT_EQUAL_TO -> findLabelCondition(toLabelInput(filter.getKey(), ((NotEqualTo<Executions.Fields>) filter).getValue()), QueryFilter.Op.NOT_EQUALS);
+            case NOT_IN -> toLabelNotInCondition((NotIn<Executions.Fields>) filter);
+            case OR -> toLabelOrCondition((Or<Executions.Fields>) filter);
+            default -> throw new UnsupportedOperationException("Unsupported dashboard label filter type: %s.".formatted(filter.getType()));
+        };
+    }
+
+    private Condition toLabelContainsCondition(AbstractFilter<Executions.Fields> filter, QueryFilter.Op operation) {
+        Object value = switch (filter) {
+            case Contains<Executions.Fields> contains -> contains.getValue();
+            case NotContains<Executions.Fields> notContains -> notContains.getValue();
+            default -> throw new UnsupportedOperationException("Unsupported dashboard label contains filter type: %s.".formatted(filter.getType()));
+        };
+
+        if (filter.getKey() != null) {
+            return findLabelCondition(Either.left(Collections.singletonMap(filter.getKey(), value.toString())), operation);
+        }
+
+        if (value instanceof String stringLabel) {
+            return findLabelCondition(Either.right(stringLabel), operation);
+        }
+
+        return findLabelCondition(Either.left((Map<?, ?>) value), operation);
+    }
+
+    private Condition toLabelInCondition(In<Executions.Fields> filter) {
+        if (filter.getKey() == null) {
+            return findLabelCondition(Either.left(labelsFromValues(filter.getValues())), QueryFilter.Op.IN);
+        }
+
+        return filter.getValues().stream()
+            .map(value -> findLabelCondition(Either.left(Collections.singletonMap(filter.getKey(), value.toString())), QueryFilter.Op.EQUALS))
+            .reduce(DSL.falseCondition(), Condition::or);
+    }
+
+    private Condition toLabelNotInCondition(NotIn<Executions.Fields> filter) {
+        if (filter.getKey() == null) {
+            return findLabelCondition(Either.left(labelsFromValues(filter.getValues())), QueryFilter.Op.NOT_IN);
+        }
+
+        return filter.getValues().stream()
+            .map(value -> findLabelCondition(Either.left(Collections.singletonMap(filter.getKey(), value.toString())), QueryFilter.Op.NOT_EQUALS))
+            .reduce(DSL.trueCondition(), Condition::and);
+    }
+
+    private Condition toLabelOrCondition(Or<Executions.Fields> filter) {
+        return filter.getValues().stream()
+            .map(this::toLabelCondition)
+            .reduce(DSL.falseCondition(), Condition::or);
+    }
+
+    private Either<Map<?, ?>, String> toLabelInput(String key, Object value) {
+        if (key != null) {
+            return Either.left(Collections.singletonMap(key, value.toString()));
+        }
+
+        if (value instanceof String stringLabel) {
+            return Either.left(Label.from(stringLabel));
+        }
+
+        return Either.left((Map<?, ?>) value);
+    }
+
+    private Map<?, ?> labelsFromValues(List<Object> values) {
+        Map<String, String> labels = new HashMap<>();
+        values.forEach(value -> labels.putAll(Label.from(value.toString())));
+        return labels;
     }
 
     @SuppressWarnings({ "unchecked", "rawtypes" })

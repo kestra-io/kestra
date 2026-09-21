@@ -167,7 +167,7 @@ public class DefaultServiceLivenessCoordinator extends AbstractServiceLivenessTa
     protected void handleAllWorkersForUncleanShutdown(Instant now) {
         serviceInstanceRepository.processAllNonRunningInstances((txContext, serviceInstance) ->
         {
-            if (!serviceInstance.is(ServiceType.WORKER)) {
+            if (!serviceInstance.type().isWorker()) {
                 return;
             }
 
@@ -229,7 +229,7 @@ public class DefaultServiceLivenessCoordinator extends AbstractServiceLivenessTa
 
                 // Eventually restart worker tasks
                 if (
-                    serviceInstance.is(ServiceType.WORKER) &&
+                    serviceInstance.type().isWorker() &&
                         serviceInstance.config().workerTaskRestartStrategy().equals(WorkerTaskRestartStrategy.IMMEDIATELY)
                 ) {
                     log.info("Trigger task restart for non-responding worker after timeout: {}.", serviceInstance.uid());
@@ -332,7 +332,7 @@ public class DefaultServiceLivenessCoordinator extends AbstractServiceLivenessTa
         store
             .findAllInstancesInStates(Set.of(DISCONNECTED, TERMINATING, TERMINATED_GRACEFULLY, TERMINATED_FORCED))
             .stream()
-            .filter(instance -> !instance.is(ServiceType.WORKER)) // WORKERS are handle above.
+            .filter(instance -> !instance.type().isWorker()) // WORKERS are handle above.
             .filter(instance -> instance.isTerminationGracePeriodElapsed(now) || instance.state().equals(TERMINATED_GRACEFULLY))
             .peek(instance -> maybeLogNonRespondingAfterTerminationGracePeriod(instance, now))
             .forEach(instance -> safelyUpdate(instance, NOT_RUNNING, DEFAULT_REASON_FOR_NOT_RUNNING));

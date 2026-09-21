@@ -236,4 +236,28 @@ class RuntimeLabelsTest {
         assertThat(labelRunAttempt.getState().getCurrent()).isEqualTo(State.Type.FAILED);
         assertThat(labelRunAttempt.getState().getHistories().size()).isEqualTo(1);
     }
+
+    @Test
+    @ExecuteFlow("flows/valids/labels-update-nested-value-list.yml")
+    void shouldUpdateWithNestedValueInList(Execution execution) {
+        assertThat(execution.getTaskRunList()).hasSize(1);
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+
+        assertThat(execution.getLabels()).containsExactlyInAnyOrder(
+            new Label(Label.CORRELATION_ID, execution.getId()),
+            new Label("stage", "{\"name\":\"done\"}")
+        );
+    }
+
+    @Test
+    @ExecuteFlow("flows/valids/labels-update-nested-value-map.yml")
+    void shouldUpdateWithNestedValueInMap(Execution execution) {
+        assertThat(execution.getTaskRunList()).hasSize(1);
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+
+        assertThat(execution.getLabels()).containsExactlyInAnyOrder(
+            new Label(Label.CORRELATION_ID, execution.getId()),
+            new Label("stage", "{\"name\":\"done\"}")
+        );
+    }
 }

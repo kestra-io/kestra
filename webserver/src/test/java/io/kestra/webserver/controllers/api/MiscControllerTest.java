@@ -22,6 +22,9 @@ import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.client.annotation.Client;
+import io.kestra.core.junit.assertions.Problems;
+import io.kestra.webserver.errors.ProblemTypes;
+import io.kestra.webserver.errors.ProblemError;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.http.hateoas.JsonError;
 import io.micronaut.reactor.http.client.ReactorHttpClient;
@@ -95,8 +98,9 @@ class MiscControllerTest {
         assertThat(response.getIsAiEnabled()).isTrue();
         assertThat(response.getSystemNamespace()).isEqualTo("some.system.ns");
         assertThat(response.getFlowTemplate()).isEqualTo("tasks:\n  - id: configured\n    type: io.kestra.plugin.core.log.Log\n    message: Configured");
-        assertThat(response.getIsConcurrencyViewEnabled()).isTrue();
         assertThat(response.getIsAiApiKeyConfigured()).isNotNull();
+        // Nothing was upgraded here, so the UI must not be told to show a migration notice.
+        assertThat(response.getVersionUpgrade()).isNull();
     }
 
     @Test
@@ -144,16 +148,84 @@ class MiscControllerTest {
             () -> client.toBlocking().exchange(
                 HttpRequest.POST(
                     "/api/v1/main/basicAuth",
-                    new BasicAuthCredentials("uid", "invalid", "invalid")
+                    new BasicAuthCredentials("uid", "invalid", "invalid", basicAuthConfiguration.getPassword())
                 )
             )
         );
-        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.BAD_REQUEST.getCode());
-        assertThat(e.getResponse().getBody(JsonError.class)).isPresent();
-        JsonError jsonError = e.getResponse().getBody(JsonError.class).get();
-        assertThat(jsonError.getMessage()).isEqualTo(
-            "Invalid username for Basic Authentication. Please provide a valid email address., Invalid password for Basic Authentication. The password must have 8 chars, one upper, one lower and one number: Resource fails validation"
-        );
+        // Each rejected rule is now a separate errors[] entry instead of one comma-joined string.
+        Problems.assertProblem(e, ProblemTypes.VALIDATION_FAILED);
+        Problems.assertErrors(e)
+            .extracting(ProblemError::detail)
+            .containsExactlyInAnyOrder(
+                "Invalid username for Basic Authentication. Please provide a valid email address.",
+                "Invalid password for Basic Authentication. The password must have 8 chars, one upper, one lower and one number"
+            );
+    }
+
+    @FlakyTest(description = "BasicAuth state from other tests leaks; needs full security lifecycle isolation")
+    @Test
+    void changeBasicAuth_shouldRejectWrongCurrentPassword_whenAlreadyInitialized() {
+        // GHSA-94pv-f379-3gp3: changing Basic Authentication credentials must re-check the
+        // current password directly against the stored value, not rely on isAuthenticated()
+        // alone, which can be satisfied by a token cached before a peer node's password rotation.
+        String uid = "requireCurrentPasswordUid";
+        String username = "require.current.password@kestra.io";
+        String password = "newSecurePassword1";
+
+        try {
+            HttpClientResponseException e = assertThrows(
+                HttpClientResponseException.class,
+                () -> client.toBlocking().exchange(
+                    HttpRequest.POST("/api/v1/main/basicAuth", new BasicAuthCredentials(uid, username, password, "WrongCurrentPassword1"))
+                )
+            );
+            Problems.assertProblem(e, ProblemTypes.VALIDATION_FAILED);
+
+            // the rejected attempt must not have changed anything
+            assertThatCode(
+                () -> client.toBlocking().retrieve(
+                    GET("/api/v1/main/dashboards").basicAuth(basicAuthConfiguration.getUsername(), basicAuthConfiguration.getPassword()),
+                    MiscController.Configuration.class
+                )
+            ).as("original credentials must still work after a rejected change").doesNotThrowAnyException();
+
+            // the correct current password is accepted
+            client.toBlocking().exchange(
+                HttpRequest.POST("/api/v1/main/basicAuth", new BasicAuthCredentials(uid, username, password, basicAuthConfiguration.getPassword()))
+            );
+            assertThatCode(
+                () -> client.toBlocking().retrieve(
+                    GET("/api/v1/main/dashboards").basicAuth(username, password),
+                    MiscController.Configuration.class
+                )
+            ).as("new credentials must work after a change with the correct current password").doesNotThrowAnyException();
+        } finally {
+            basicAuthService.save(new BasicAuthCredentials(null, basicAuthConfiguration.getUsername(), basicAuthConfiguration.getPassword()));
+        }
+    }
+
+    @Test
+    void changeBasicAuth_shouldNotRequireCurrentPassword_beforeInitialization() {
+        // TestAuthFilter transparently re-initializes Basic Authentication before every outgoing
+        // test request whenever credentials are absent, which would silently undo the delete
+        // below before the request even reaches the server; disable it to genuinely exercise
+        // the not-yet-initialized path.
+        TestAuthFilter.ENABLED = false;
+        try {
+            settingRepository.delete(Setting.builder().key(BasicAuthService.BASIC_AUTH_SETTINGS_KEY).build());
+            assertThat(basicAuthService.isBasicAuthInitialized()).isFalse();
+
+            assertThatCode(
+                () -> client.toBlocking().exchange(
+                    HttpRequest.POST("/api/v1/main/basicAuth", new BasicAuthCredentials("initUid", "first.setup@kestra.io", "FirstSetupPassword1"))
+                )
+            ).as("initial setup must not require a current password").doesNotThrowAnyException();
+
+            assertThat(basicAuthService.isBasicAuthInitialized()).isTrue();
+        } finally {
+            TestAuthFilter.ENABLED = true;
+            basicAuthService.save(new BasicAuthCredentials(null, basicAuthConfiguration.getUsername(), basicAuthConfiguration.getPassword()));
+        }
     }
 
     @FlakyTest(description = "BasicAuth state from other tests leaks; needs full security lifecycle isolation")
@@ -164,7 +236,7 @@ class MiscControllerTest {
         String uid = "someUid";
         String username = "my.email@kestra.io";
         String password = "myPassword1";
-        client.toBlocking().exchange(HttpRequest.POST("/api/v1/main/basicAuth", new BasicAuthCredentials(uid, username, password)));
+        client.toBlocking().exchange(HttpRequest.POST("/api/v1/main/basicAuth", new BasicAuthCredentials(uid, username, password, basicAuthConfiguration.getPassword())));
         try {
             assertThatThrownBy(
                 () -> client.toBlocking().retrieve("/api/v1/main/dashboards", MiscController.Configuration.class)
@@ -204,7 +276,7 @@ class MiscControllerTest {
         String uid = "loginUid";
         String username = "login.success@kestra.io";
         String password = "loginPassword1";
-        client.toBlocking().exchange(HttpRequest.POST("/api/v1/main/basicAuth", new BasicAuthCredentials(uid, username, password)));
+        client.toBlocking().exchange(HttpRequest.POST("/api/v1/main/basicAuth", new BasicAuthCredentials(uid, username, password, basicAuthConfiguration.getPassword())));
 
         try {
             var response = client.toBlocking().exchange(
@@ -222,11 +294,56 @@ class MiscControllerTest {
 
     @FlakyTest(description = "BasicAuth state from other tests leaks; needs full security lifecycle isolation")
     @Test
+    void login_shouldSetNonHttpOnlyFlagCookie_withValidCredentials() {
+        String uid = "loginFlagUid";
+        String username = "login.flag.success@kestra.io";
+        String password = "loginPassword1";
+        client.toBlocking().exchange(HttpRequest.POST("/api/v1/main/basicAuth", new BasicAuthCredentials(uid, username, password, basicAuthConfiguration.getPassword())));
+
+        try {
+            var response = client.toBlocking().exchange(
+                HttpRequest.POST("/api/v1/login", new MiscController.LoginRequest(username, password))
+            );
+
+            var flagCookie = response.getCookie(BasicAuthService.BASIC_AUTH_FLAG_COOKIE_NAME);
+            assertThat(flagCookie).isPresent();
+            assertThat(flagCookie.get().isHttpOnly()).isFalse();
+            assertThat(flagCookie.get().getValue()).isEqualTo("true");
+        } finally {
+            basicAuthService.save(new BasicAuthCredentials(null, basicAuthConfiguration.getUsername(), basicAuthConfiguration.getPassword()));
+        }
+    }
+
+    @FlakyTest(description = "BasicAuth state from other tests leaks; needs full security lifecycle isolation")
+    @Test
+    void login_shouldSetSecureCookie_whenForwardedAsHttps() {
+        String uid = "loginForwardedUid";
+        String username = "login.forwarded@kestra.io";
+        String password = "loginPassword1";
+        client.toBlocking().exchange(HttpRequest.POST("/api/v1/main/basicAuth", new BasicAuthCredentials(uid, username, password, basicAuthConfiguration.getPassword())));
+
+        try {
+            // The test client talks plain HTTP, so without the forwarded header the cookie would not be Secure.
+            var response = client.toBlocking().exchange(
+                HttpRequest.POST("/api/v1/login", new MiscController.LoginRequest(username, password))
+                    .header("X-Forwarded-Proto", "https")
+            );
+
+            var cookie = response.getCookie(BasicAuthService.BASIC_AUTH_COOKIE_NAME);
+            assertThat(cookie).isPresent();
+            assertThat(cookie.get().isSecure()).isTrue();
+        } finally {
+            basicAuthService.save(new BasicAuthCredentials(null, basicAuthConfiguration.getUsername(), basicAuthConfiguration.getPassword()));
+        }
+    }
+
+    @FlakyTest(description = "BasicAuth state from other tests leaks; needs full security lifecycle isolation")
+    @Test
     void login_shouldReject_withInvalidCredentials() {
         String uid = "loginUid2";
         String username = "login.fail@kestra.io";
         String password = "loginPassword2";
-        client.toBlocking().exchange(HttpRequest.POST("/api/v1/main/basicAuth", new BasicAuthCredentials(uid, username, password)));
+        client.toBlocking().exchange(HttpRequest.POST("/api/v1/main/basicAuth", new BasicAuthCredentials(uid, username, password, basicAuthConfiguration.getPassword())));
 
         try {
             assertThatThrownBy(
@@ -260,7 +377,7 @@ class MiscControllerTest {
         String uid = "logoutUid";
         String username = "logout.success@kestra.io";
         String password = "logoutPassword1";
-        client.toBlocking().exchange(HttpRequest.POST("/api/v1/main/basicAuth", new BasicAuthCredentials(uid, username, password)));
+        client.toBlocking().exchange(HttpRequest.POST("/api/v1/main/basicAuth", new BasicAuthCredentials(uid, username, password, basicAuthConfiguration.getPassword())));
 
         try {
             var response = client.toBlocking().exchange(POST("/api/v1/logout", null).basicAuth(username, password));
@@ -269,6 +386,10 @@ class MiscControllerTest {
             var cookie = response.getCookie(BasicAuthService.BASIC_AUTH_COOKIE_NAME);
             assertThat(cookie).isPresent();
             assertThat(cookie.get().getMaxAge()).isEqualTo(0);
+
+            var flagCookie = response.getCookie(BasicAuthService.BASIC_AUTH_FLAG_COOKIE_NAME);
+            assertThat(flagCookie).isPresent();
+            assertThat(flagCookie.get().getMaxAge()).isEqualTo(0);
         } finally {
             basicAuthService.save(new BasicAuthCredentials(null, basicAuthConfiguration.getUsername(), basicAuthConfiguration.getPassword()));
         }
@@ -297,7 +418,7 @@ class MiscControllerTest {
         String uid = "someUid2";
         String username = "my.email2@kestra.io";
         String password = "myPassword2";
-        client.toBlocking().exchange(HttpRequest.POST("/api/v1/main/basicAuth", new BasicAuthCredentials(uid, username, password)));
+        client.toBlocking().exchange(HttpRequest.POST("/api/v1/main/basicAuth", new BasicAuthCredentials(uid, username, password, basicAuthConfiguration.getPassword())));
 
         try {
             var namespace = "namespace1";

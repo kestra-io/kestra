@@ -3,6 +3,7 @@ package io.kestra.controller.grpc.services;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import io.kestra.controller.RequiresControllerServer;
 import io.kestra.controller.grpc.BooleanResponse;
 import io.kestra.controller.grpc.NamespaceRequest;
 import io.kestra.controller.grpc.WorkerControllerService;
@@ -10,7 +11,6 @@ import io.kestra.controller.grpc.WorkerFlowMetaStoreServiceGrpc;
 import io.kestra.core.runners.FlowMetaStoreInterface;
 
 import io.grpc.stub.StreamObserver;
-import io.micronaut.context.annotation.Requires;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
@@ -19,7 +19,7 @@ import jakarta.inject.Singleton;
  * Provides namespace, tenant, and flow metadata to workers via gRPC.
  */
 @Singleton
-@Requires(property = "kestra.server-type", pattern = "(CONTROLLER|STANDALONE)")
+@RequiresControllerServer
 public class GrpcFlowMetaStoreWorkerControllerService extends WorkerFlowMetaStoreServiceGrpc.WorkerFlowMetaStoreServiceImplBase implements WorkerControllerService {
 
     private static final Logger LOG = LoggerFactory.getLogger(GrpcFlowMetaStoreWorkerControllerService.class);

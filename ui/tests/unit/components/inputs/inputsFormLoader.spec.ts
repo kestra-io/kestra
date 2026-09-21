@@ -1,7 +1,8 @@
 import {afterEach, beforeEach, describe, expect, test, vi} from "vitest"
-import {flushPromises, mount} from "@vue/test-utils"
+import {flushPromises} from "@vue/test-utils"
+import {i18nMount} from "../../i18nMount"
+
 import {createPinia, setActivePinia} from "pinia"
-import {createI18n} from "vue-i18n"
 import KestraDesignSystem from "@kestra-io/design-system"
 import InputsForm from "../../../../src/components/inputs/InputsForm.vue"
 import {useExecutionsStore} from "../../../../src/stores/executions"
@@ -12,17 +13,14 @@ vi.mock("vue-router", () => ({
 }))
 
 const globalConfig = {
-    plugins: [
-        createI18n({legacy: false, locale: "en", fallbackWarn: false, missingWarn: false}),
-        KestraDesignSystem,
-    ],
+    plugins: [KestraDesignSystem],
 }
 
 const flow = {namespace: "io.kestra.tests", id: "my_flow"} as any
 const initialInputs = [{id: "region", type: "SELECT", values: ["a", "b"]}] as any
 
 function mountForm(inputs: any = initialInputs) {
-    return mount(InputsForm, {
+    return i18nMount(InputsForm, {
         global: globalConfig,
         shallow: true,
         props: {flow, initialInputs: inputs},
@@ -52,7 +50,7 @@ describe("InputsForm computing-values state", () => {
         expect(wrapper.vm.isComputingValues).toBe(true)
 
         // And: it clears once the call resolves
-        resolveValidate({data: {checks: [], inputs: []}})
+        resolveValidate({checks: [], inputs: []})
         await flushPromises()
         expect(wrapper.vm.isComputingValues).toBe(false)
     })
@@ -77,7 +75,7 @@ describe("InputsForm computing-values state", () => {
         expect(wrapper.vm.isComputingInput("region")).toBe(false)
 
         // And: nothing is flagged once the call resolves
-        resolveValidate({data: {checks: [], inputs: []}})
+        resolveValidate({checks: [], inputs: []})
         await flushPromises()
         expect(wrapper.vm.isComputingInput("datacenter")).toBe(false)
     })
@@ -100,10 +98,10 @@ describe("InputsForm computing-values state", () => {
         expect(wrapper.vm.isLoadingInput("datacenter")).toBe(true)
 
         // After the initial fetch completes carrying a value for the dynamic input
-        resolveInitial({data: {checks: [], inputs: [
+        resolveInitial({checks: [], inputs: [
             {enabled: true, input: {id: "region", type: "SELECT", values: ["us", "eu"]}, value: "us", isDefault: true},
             {enabled: true, input: {id: "datacenter", type: "SELECT", values: ["us-1", "us-2"]}, value: "us-1", isDefault: false},
-        ]}})
+        ]})
         await flushPromises()
         expect(wrapper.vm.isComputingValues).toBe(false)
         expect(wrapper.vm.inputsValues.datacenter).toBe("us-1")
@@ -131,10 +129,10 @@ describe("InputsForm computing-values state", () => {
         ])
 
         // After the initial fetch completes with no value for the dynamic input
-        resolveInitial({data: {checks: [], inputs: [
+        resolveInitial({checks: [], inputs: [
             {enabled: true, input: {id: "region", type: "SELECT", values: ["us", "eu"]}, value: "us", isDefault: true},
             {enabled: true, input: {id: "datacenter", type: "SELECT", values: ["us-1", "us-2"]}, isDefault: false},
-        ]}})
+        ]})
         await flushPromises()
         expect(wrapper.vm.isComputingValues).toBe(false)
 
@@ -174,9 +172,9 @@ describe("InputsForm computing-values state", () => {
         const stale = new Promise((r) => {resolveStale = r})
         store.validateExecution = vi.fn()
             .mockReturnValueOnce(stale)
-            .mockResolvedValue({data: {checks: [], inputs: [
+            .mockResolvedValue({checks: [], inputs: [
                 {enabled: true, input: {id: "region", type: "SELECT", values: ["us", "eu"]}, value: "eu", isDefault: false},
-            ]}})
+            ]})
 
         const wrapper = mountForm([{id: "region", type: "SELECT", values: ["us", "eu"], defaults: "us"}])
         expect(wrapper.vm.inputsValues.region).toBe("us") // default applied at init
@@ -191,9 +189,9 @@ describe("InputsForm computing-values state", () => {
         expect(wrapper.vm.inputsValues.region).toBe("eu")
 
         // And: the slow initial response finally lands carrying the stale default
-        resolveStale({data: {checks: [], inputs: [
+        resolveStale({checks: [], inputs: [
             {enabled: true, input: {id: "region", type: "SELECT", values: ["us", "eu"]}, value: "us", isDefault: true},
-        ]}})
+        ]})
         await flushPromises()
 
         // Then: the stale response was discarded — the user's pick stands
@@ -245,9 +243,9 @@ describe("InputsForm computing-values state", () => {
         let resolveInitial!: (v: unknown) => void
         store.validateExecution = vi.fn()
             .mockReturnValueOnce(new Promise((r) => {resolveInitial = r}))
-            .mockResolvedValue({data: {checks: [], inputs: [
+            .mockResolvedValue({checks: [], inputs: [
                 {enabled: true, input: {id: "env", type: "SELECT", values: ["dev", "prod"]}, value: "prod", isDefault: false},
-            ]}})
+            ]})
 
         const wrapper = mountForm([{id: "env", type: "SELECT", values: ["dev", "prod"]}])
         expect(store.validateExecution).toHaveBeenCalledTimes(1) // initial in flight
@@ -258,9 +256,9 @@ describe("InputsForm computing-values state", () => {
         await flushPromises()
 
         // And: the slow initial validate finally resolves (its response is stale)
-        resolveInitial({data: {checks: [], inputs: [
+        resolveInitial({checks: [], inputs: [
             {enabled: true, input: {id: "env", type: "SELECT", values: ["dev", "prod"]}, isDefault: true},
-        ]}})
+        ]})
         await flushPromises()
 
         // Then: a follow-up validate fired automatically for the changed value (not swallowed)
@@ -288,12 +286,31 @@ describe("InputsForm computing-values state", () => {
         expect(wrapper.vm.inputError("datacenter")).toBeUndefined()
     })
 
+    test("prefills MULTISELECT in both component and submission state", async () => {
+        // Given: a MULTISELECT form whose initial validation has settled
+        const store = useExecutionsStore()
+        store.validateExecution = vi.fn().mockResolvedValue({checks: [], inputs: [
+            {enabled: true, input: {id: "choices", type: "MULTISELECT", values: ["a", "b", "c"]}, isDefault: true},
+        ]})
+
+        const wrapper = mountForm([{id: "choices", type: "MULTISELECT", values: ["a", "b", "c"]}])
+        await flushPromises()
+
+        // When: an execution prefill supplies the previous selected values
+        wrapper.vm.prefillInputValue({id: "choices", type: "MULTISELECT"}, ["a", "b"])
+
+        // Then: the select control sees the array and the submit path sees JSON
+        expect(wrapper.vm.multiSelectInputs.choices).toEqual(["a", "b"])
+        expect(wrapper.vm.inputsValues.choices).toBe("[\"a\",\"b\"]")
+        expect(wrapper.vm.inputsMetaData[0].isDefault).toBe(false)
+    })
+
     test("shows a per-field error once the dynamic input has settled (not computing)", async () => {
         // Given: a dynamic SELECT whose validate resolves carrying a value AND an error
         const store = useExecutionsStore()
-        store.validateExecution = vi.fn().mockResolvedValue({data: {checks: [], inputs: [
+        store.validateExecution = vi.fn().mockResolvedValue({checks: [], inputs: [
             {enabled: true, input: {id: "datacenter", type: "SELECT", values: ["dc-1"]}, value: "dc-1", isDefault: false, errors: [{message: "Missing required input:datacenter"}]},
-        ]}})
+        ]})
 
         const wrapper = mountForm([{id: "datacenter", type: "SELECT", expression: "{{ subflow(...).outputs.x }}", defaults: "dc-1"}])
         await flushPromises()
@@ -320,10 +337,10 @@ describe("InputsForm surfaces render errors on load, but keeps value errors gate
     // shown — no edit, no Next click, before it is ever added to inputsValidated.
     test("shows an error flagged renderError immediately, without it being validated/touched", async () => {
         const store = useExecutionsStore()
-        store.validateExecution = vi.fn().mockResolvedValue({data: {checks: [], inputs: [
+        store.validateExecution = vi.fn().mockResolvedValue({checks: [], inputs: [
             {enabled: true, isDefault: false, input: {id: "region", type: "SELECT", expression: "{{ subflow(namespace='company.team', id='nope').outputs.regions }}"},
                 errors: [{message: "Invalid value for input `region`. Cause: Cannot render 'expression'. Cause: Unable to find flow 'company.team'.'nope'", renderError: true}]},
-        ]}})
+        ]})
 
         const wrapper = mountForm([{id: "region", type: "SELECT", expression: "{{ subflow(namespace='company.team', id='nope').outputs.regions }}"}])
         await flushPromises()
@@ -339,10 +356,10 @@ describe("InputsForm surfaces render errors on load, but keeps value errors gate
     // input with no `expression` at all. Proves the surfacing keys off the flag, not the SELECT expression.
     test("surfaces a defaults-render failure on a non-SELECT input (no expression)", async () => {
         const store = useExecutionsStore()
-        store.validateExecution = vi.fn().mockResolvedValue({data: {checks: [], inputs: [
+        store.validateExecution = vi.fn().mockResolvedValue({checks: [], inputs: [
             {enabled: true, isDefault: false, input: {id: "name", type: "STRING", defaults: "{{ subflow(namespace='company.team', id='nope').outputs.x }}"},
                 errors: [{message: "Invalid value for input `name`. Cause: Unable to find flow 'company.team'.'nope'", renderError: true}]},
-        ]}})
+        ]})
 
         const wrapper = mountForm([{id: "name", type: "STRING", defaults: "{{ subflow(namespace='company.team', id='nope').outputs.x }}"}])
         await flushPromises()
@@ -356,10 +373,10 @@ describe("InputsForm surfaces render errors on load, but keeps value errors gate
     // interacts — preserves the "don't nag untouched fields" UX.
     test("keeps a required-but-empty error gated until the input is validated", async () => {
         const store = useExecutionsStore()
-        store.validateExecution = vi.fn().mockResolvedValue({data: {checks: [], inputs: [
+        store.validateExecution = vi.fn().mockResolvedValue({checks: [], inputs: [
             {enabled: true, isDefault: false, input: {id: "region", type: "SELECT", values: ["a", "b"]},
                 errors: [{message: "Invalid value for input `region`. Cause: Missing required input:region", renderError: false}]},
-        ]}})
+        ]})
 
         const wrapper = mountForm([{id: "region", type: "SELECT", values: ["a", "b"]}])
         await flushPromises()
@@ -377,10 +394,10 @@ describe("InputsForm surfaces render errors on load, but keeps value errors gate
     // rendering it, and the render error is masked. Leave the value empty so the error stays visible.
     test("does not pre-fill a field with an unrendered (failed) expression default", async () => {
         const store = useExecutionsStore()
-        store.validateExecution = vi.fn().mockResolvedValue({data: {checks: [], inputs: [
+        store.validateExecution = vi.fn().mockResolvedValue({checks: [], inputs: [
             {enabled: true, isDefault: false, input: {id: "name", type: "STRING", defaults: "{{ subflow(namespace='x', id='nope').outputs.y }}"},
                 errors: [{message: "Invalid value for input `name`. Cause: Unable to find flow 'x'.'nope'", renderError: true}]},
-        ]}})
+        ]})
 
         const wrapper = mountForm([{id: "name", type: "STRING", defaults: "{{ subflow(namespace='x', id='nope').outputs.y }}"}])
         await flushPromises()
@@ -395,9 +412,9 @@ describe("InputsForm surfaces render errors on load, but keeps value errors gate
     // concrete value, which the form uses).
     test("still pre-fills a successfully-rendered expression default", async () => {
         const store = useExecutionsStore()
-        store.validateExecution = vi.fn().mockResolvedValue({data: {checks: [], inputs: [
+        store.validateExecution = vi.fn().mockResolvedValue({checks: [], inputs: [
             {enabled: true, isDefault: true, value: "rendered-value", input: {id: "name", type: "STRING", defaults: "{{ 'rendered-value' }}"}},
-        ]}})
+        ]})
 
         const wrapper = mountForm([{id: "name", type: "STRING", defaults: "{{ 'rendered-value' }}"}])
         await flushPromises()
@@ -426,7 +443,7 @@ describe("InputsForm ready event", () => {
 
         expect(wrapper.emitted("ready")).toBeUndefined()
 
-        resolveValidate({data: {checks: [], inputs: []}})
+        resolveValidate({checks: [], inputs: []})
         await flushPromises()
         expect(wrapper.emitted("ready")).toHaveLength(1)
     })

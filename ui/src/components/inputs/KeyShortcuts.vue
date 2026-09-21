@@ -1,5 +1,5 @@
 <template>
-    <KsDialog v-model="isKeyShortcutsDialogShown" top="25vh" headerClass="p-3" bodyClass="p-2">
+    <KsDialog v-model="isKeyShortcutsDialogShown" headerClass="p-3" bodyClass="p-2" scrollable>
         <template #header>
             <div class="d-flex align-items-center gap-2 fw-normal">
                 <KsIcon size="xl">

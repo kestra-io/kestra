@@ -6,6 +6,7 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import io.kestra.controller.RequiresControllerServer;
 import io.kestra.controller.grpc.BooleanResponse;
 import io.kestra.controller.grpc.KVMetadataRequest;
 import io.kestra.controller.grpc.KVMetadataServiceGrpc;
@@ -20,7 +21,6 @@ import io.kestra.core.runners.KVMetadataStateStore;
 import io.kestra.core.worker.models.WorkerInfo;
 
 import io.grpc.stub.StreamObserver;
-import io.micronaut.context.annotation.Requires;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
@@ -29,7 +29,7 @@ import jakarta.inject.Singleton;
  * Provides worker-safe KV metadata read/write to workers via gRPC.
  */
 @Singleton
-@Requires(property = "kestra.server-type", pattern = "(CONTROLLER|STANDALONE)")
+@RequiresControllerServer
 public class GrpcKVMetadataControllerService extends KVMetadataServiceGrpc.KVMetadataServiceImplBase implements WorkerControllerService {
 
     private static final Logger log = LoggerFactory.getLogger(GrpcKVMetadataControllerService.class);

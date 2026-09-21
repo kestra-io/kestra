@@ -25,7 +25,7 @@
                         :iconCls="sub.subGroup"
                         :icons="allIcons"
                         :loadIcon="pluginsStore.loadIcon"
-                        :title="sub.title"
+                        :title="enrichmentStore.getEnrichment(sub)?.title ?? sub.title"
                         :description="sub.description"
                         :categories="sub.categories"
                         :taskCount="elementCountFor(sub)"
@@ -66,7 +66,7 @@
                         @click="openBlueprint(bp.id)"
                     >
                         <template #footer-content>
-                            <BlueprintIconStack :clses="bp.includedTasks ?? []" :icons="allIcons" :loadIcon="pluginsStore.loadIcon" />
+                            <BlueprintIconStack :clses="blueprintTaskTypes(bp.includedTasks)" :icons="allIcons" :loadIcon="pluginsStore.loadIcon" />
                         </template>
                     </PluginCard>
                 </div>
@@ -97,8 +97,9 @@
     import {usePluginsStore} from "../../stores/plugins"
     import {usePluginsEnrichmentStore} from "../../stores/pluginsEnrichment"
     import {useMiscStore} from "override/stores/misc"
-    import {isEntryAPluginElementPredicate, isEnterpriseEditionPlugin, type Plugin, type PluginElement} from "../../utils/pluginUtils"
+    import {extractPluginElements, isEntryAPluginElementPredicate, isEnterpriseEditionPlugin, type Plugin, type PluginElement} from "../../utils/pluginUtils"
     import useRouteContext from "../../composables/useRouteContext"
+    import {blueprintTaskTypes} from "../../composables/useBlueprintPlugins"
     import {API_URL} from "../../stores/api"
 
     type Blueprint = {
@@ -137,7 +138,7 @@
     const childSubGroups = computed<Plugin[]>(() => {
         const g = groupPlugin.value
         if (!g || g.subGroup) return []
-        return (pluginsStore.plugins ?? []).filter(p => p.name === g.name && p.subGroup)
+        return (pluginsStore.plugins ?? []).filter(p => p.name === g.name && p.subGroup && elementCountFor(p) > 0)
     })
 
     const isShowingSubGroups = computed<boolean>(() => childSubGroups.value.length > 0)
@@ -158,7 +159,7 @@
         return out.sort((a, b) => shortClassName(a.cls).localeCompare(shortClassName(b.cls)))
     })
 
-    const headerTitle = computed<string>(() => groupPlugin.value?.title ?? "")
+    const headerTitle = computed<string>(() => enrichmentStore.getEnrichment(groupPlugin.value)?.title ?? groupPlugin.value?.title ?? "")
 
     const headerIconCls = computed<string | undefined>(() => {
         const g = groupPlugin.value
@@ -197,14 +198,14 @@
         ]
         if (parentGroup.value?.title) {
             crumbs.push({
-                label: parentGroup.value.title,
+                label: enrichmentStore.getEnrichment(parentGroup.value)?.title ?? parentGroup.value.title,
                 link: {name: "plugins/group", params: {name: parentGroup.value.name}},
             })
         }
         return crumbs
     })
 
-    const title = computed(() => groupPlugin.value?.title ?? t("plugins.names"))
+    const title = computed(() => headerTitle.value || (route.params.name as string))
 
     const routeInfo = computed(() => ({title: title.value, breadcrumb: breadcrumb.value}))
     useRouteContext(routeInfo)
@@ -215,13 +216,7 @@
     }
 
     function elementCountFor(plugin: Plugin): number {
-        let count = 0
-        for (const [key, value] of Object.entries(plugin)) {
-            if (isEntryAPluginElementPredicate(key, value)) {
-                count += value.filter(el => !el?.deprecated).length
-            }
-        }
-        return count
+        return Object.values(extractPluginElements(plugin)).flat().length
     }
 
     function blueprintCountFor(plugin: Plugin): number {
@@ -275,7 +270,7 @@
     }
 
     watch(
-        () => groupPlugin.value,
+        groupPlugin,
         (g) => {
             if (g) loadGroupBlueprints()
         },

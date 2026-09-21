@@ -57,6 +57,7 @@ import lombok.experimental.SuperBuilder;
 
 import static io.kestra.core.models.flows.FlowScope.SYSTEM;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.*;
 
 @MicronautTest(transactional = false)
@@ -161,6 +162,43 @@ public abstract class AbstractFlowRepositoryTest {
         } finally {
             deleteFlow(flowInBaseNamespace);
             deleteFlow(flowInChildNamespace);
+        }
+    }
+
+    @Test
+    void shouldSortByUpdatedWhenSortRequested() {
+        // Given: flows created in an order that differs from their id order, so a working
+        // sort on `updated` must reorder them rather than return the default (id) order.
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+
+        FlowWithSource first = flowRepository.create(GenericFlow.of(builder(tenant, "sort-flow-c", TEST_FLOW_ID).build()));
+        FlowWithSource second = flowRepository.create(GenericFlow.of(builder(tenant, "sort-flow-a", TEST_FLOW_ID).build()));
+        FlowWithSource third = flowRepository.create(GenericFlow.of(builder(tenant, "sort-flow-b", TEST_FLOW_ID).build()));
+
+        try {
+            // When
+            ArrayListTotal<Flow> ascending = flowRepository.find(
+                Pageable.from(1, 10, Sort.of(Sort.Order.asc("updated"))),
+                tenant,
+                List.of()
+            );
+            ArrayListTotal<Flow> descending = flowRepository.find(
+                Pageable.from(1, 10, Sort.of(Sort.Order.desc("updated"))),
+                tenant,
+                List.of()
+            );
+
+            // Then: both directions return every flow ordered by `updated`. An ignored sort would
+            // yield a single fixed order that cannot be both ascending and descending.
+            assertThat(ascending).hasSize(3);
+            assertThat(descending).hasSize(3);
+            assertThat(ascending).allSatisfy(flow -> assertThat(flow.getUpdated()).isNotNull());
+            assertThat(ascending).isSortedAccordingTo(Comparator.comparing(Flow::getUpdated));
+            assertThat(descending).isSortedAccordingTo(Comparator.comparing(Flow::getUpdated).reversed());
+        } finally {
+            deleteFlow(first);
+            deleteFlow(second);
+            deleteFlow(third);
         }
     }
 
@@ -307,11 +345,105 @@ public abstract class AbstractFlowRepositoryTest {
                 .extracting(Flow::getId)
                 .containsExactlyInAnyOrder("flow-without-label", "flow-with-different-label");
 
+            QueryFilter containsFilter = QueryFilter.builder()
+                .field(QueryFilter.Field.LABELS)
+                .operation(QueryFilter.Op.CONTAINS)
+                .value("ba")
+                .build();
+
+            assertThat(flowRepository.find(Pageable.UNPAGED, tenant, List.of(containsFilter)))
+                .extracting(Flow::getId)
+                .containsExactlyInAnyOrder("flow-with-label", "flow-with-different-label");
+
+            QueryFilter notContainsFilter = QueryFilter.builder()
+                .field(QueryFilter.Field.LABELS)
+                .operation(QueryFilter.Op.NOT_CONTAINS)
+                .value("ba")
+                .build();
+
+            assertThat(flowRepository.find(Pageable.UNPAGED, tenant, List.of(notContainsFilter)))
+                .extracting(Flow::getId)
+                .containsExactlyInAnyOrder("flow-without-label");
+
+            QueryFilter isSetFilter = QueryFilter.builder()
+                .field(QueryFilter.Field.LABELS)
+                .operation(QueryFilter.Op.IS_NOT_NULL)
+                .value("foo")
+                .build();
+
+            assertThat(flowRepository.find(Pageable.UNPAGED, tenant, List.of(isSetFilter)))
+                .extracting(Flow::getId)
+                .containsExactlyInAnyOrder("flow-with-label", "flow-with-different-label");
+
+            QueryFilter isNotSetFilter = QueryFilter.builder()
+                .field(QueryFilter.Field.LABELS)
+                .operation(QueryFilter.Op.IS_NULL)
+                .value("foo")
+                .build();
+
+            assertThat(flowRepository.find(Pageable.UNPAGED, tenant, List.of(isNotSetFilter)))
+                .extracting(Flow::getId)
+                .containsExactlyInAnyOrder("flow-without-label");
+
+            QueryFilter inFilter = QueryFilter.builder()
+                .field(QueryFilter.Field.LABELS)
+                .operation(QueryFilter.Op.IN)
+                .value(Map.of("foo", "bar", "unknown", "value"))
+                .build();
+
+            assertThat(flowRepository.find(Pageable.UNPAGED, tenant, List.of(inFilter)))
+                .extracting(Flow::getId)
+                .containsExactlyInAnyOrder("flow-with-label");
+
+            QueryFilter notInFilter = QueryFilter.builder()
+                .field(QueryFilter.Field.LABELS)
+                .operation(QueryFilter.Op.NOT_IN)
+                .value(Map.of("foo", "bar"))
+                .build();
+
+            assertThat(flowRepository.find(Pageable.UNPAGED, tenant, List.of(notInFilter)))
+                .extracting(Flow::getId)
+                .containsExactlyInAnyOrder("flow-without-label", "flow-with-different-label");
+
+            QueryFilter containsKeyValueFilter = QueryFilter.builder()
+                .field(QueryFilter.Field.LABELS)
+                .operation(QueryFilter.Op.CONTAINS)
+                .value(Map.of("foo", "ar"))
+                .build();
+
+            assertThat(flowRepository.find(Pageable.UNPAGED, tenant, List.of(containsKeyValueFilter)))
+                .extracting(Flow::getId)
+                .containsExactlyInAnyOrder("flow-with-label");
+
+            QueryFilter notContainsKeyValueFilter = QueryFilter.builder()
+                .field(QueryFilter.Field.LABELS)
+                .operation(QueryFilter.Op.NOT_CONTAINS)
+                .value(Map.of("foo", "ar"))
+                .build();
+
+            assertThat(flowRepository.find(Pageable.UNPAGED, tenant, List.of(notContainsKeyValueFilter)))
+                .extracting(Flow::getId)
+                .containsExactlyInAnyOrder("flow-without-label", "flow-with-different-label");
+
         } finally {
             deleteFlow(flowWithLabel);
             deleteFlow(flowWithoutLabel);
             deleteFlow(flowWithDifferentLabel);
         }
+    }
+
+    @Test
+    void shouldThrowExceptionWhenLabelsOperationRequiresKeyButValueIsScalar() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+
+        QueryFilter filter = QueryFilter.builder()
+            .field(QueryFilter.Field.LABELS)
+            .operation(QueryFilter.Op.EQUALS)
+            .value("x")
+            .build();
+
+        assertThatThrownBy(() -> flowRepository.find(Pageable.UNPAGED, tenant, List.of(filter)))
+            .isInstanceOf(InvalidQueryFiltersException.class);
     }
 
     @Test
@@ -471,6 +603,36 @@ public abstract class AbstractFlowRepositoryTest {
     }
 
     @Test
+    void findByIdForExecution_shouldExcludePublishedRevisionShadowedByADeletedDraftHead() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        String flowId = IdUtils.create();
+        final List<Flow> toDelete = new ArrayList<>();
+
+        try {
+            FlowWithSource published = flowRepository.create(createTestingLogFlow(tenant, flowId, "published", false));
+            toDelete.add(published);
+            FlowWithSource draft = flowRepository.update(createTestingLogFlow(tenant, flowId, "wip", true), published);
+            toDelete.add(draft);
+
+            // Before deleting: the published revision is reachable through the execution-time
+            // lookup because the draft head above it is skipped by design.
+            Optional<Flow> beforeDelete = flowRepository.findByIdForExecution(tenant, TEST_NAMESPACE, flowId);
+            assertThat(beforeDelete).isPresent();
+            assertThat(beforeDelete.get().getRevision()).isEqualTo(published.getRevision());
+
+            flowRepository.delete(draft);
+
+            // Deleting the draft head must not leave the published revision beneath it
+            // executable: the tombstone must not itself be skipped by the draft filter, or the
+            // published revision resurfaces as if nothing had been deleted.
+            assertThat(flowRepository.findByIdForExecution(tenant, TEST_NAMESPACE, flowId)).isEmpty();
+            assertThat(flowRepository.findByIdWithSourceForExecution(tenant, TEST_NAMESPACE, flowId)).isEmpty();
+        } finally {
+            toDelete.forEach(this::deleteFlow);
+        }
+    }
+
+    @Test
     void findAllWithSourceForExecutionForAllTenants_shouldExcludeFlowsWhoseLatestIsDraft() {
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
         String publishedId = IdUtils.create();
@@ -509,6 +671,53 @@ public abstract class AbstractFlowRepositoryTest {
 
             // A flow with only draft revisions is not exposed at all.
             assertThat(executableIds).doesNotContain(draftOnlyId);
+        } finally {
+            toDelete.forEach(this::deleteFlow);
+        }
+    }
+
+    @Test
+    void findWithSourceExcludingDrafts_shouldFallBackToLastNonDraftRevision() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        String publishedId = IdUtils.create();
+        String draftLatestId = IdUtils.create();
+        String draftOnlyId = IdUtils.create();
+        final List<Flow> toDelete = new ArrayList<>();
+
+        try {
+            FlowWithSource published = flowRepository.create(createTestingLogFlow(tenant, publishedId, "p1"));
+            toDelete.add(published);
+
+            FlowWithSource draftLatestR1 = flowRepository.create(createTestingLogFlow(tenant, draftLatestId, "head"));
+            toDelete.add(draftLatestR1);
+            FlowWithSource draftLatestR2 = flowRepository.update(createTestingLogFlow(tenant, draftLatestId, "wip", true), draftLatestR1);
+            toDelete.add(draftLatestR2);
+
+            FlowWithSource draftOnly = flowRepository.create(createTestingLogFlow(tenant, draftOnlyId, "wip", true));
+            toDelete.add(draftOnly);
+
+            // findWithSource keeps showing the latest revision, drafts included.
+            assertThat(flowRepository.findWithSource(Pageable.UNPAGED, tenant, null).stream().map(Flow::getId).toList())
+                .contains(publishedId, draftLatestId, draftOnlyId);
+
+            List<FlowWithSource> exportable = flowRepository.findWithSourceExcludingDrafts(Pageable.UNPAGED, tenant, null);
+
+            assertThat(exportable.stream().filter(f -> f.getId().equals(publishedId)).findFirst())
+                .isPresent()
+                .hasValueSatisfying(f -> assertThat(f.getRevision()).isEqualTo(published.getRevision()));
+
+            // A draft on top of a saved revision must not hide the saved one, otherwise external
+            // sync would read the flow as deleted.
+            assertThat(exportable.stream().filter(f -> f.getId().equals(draftLatestId)).findFirst())
+                .isPresent()
+                .hasValueSatisfying(f ->
+                {
+                    assertThat(f.getRevision()).isEqualTo(draftLatestR1.getRevision());
+                    assertThat(f.isDraft()).isFalse();
+                    assertThat(f.getSource()).contains("head");
+                });
+
+            assertThat(exportable.stream().map(Flow::getId).toList()).doesNotContain(draftOnlyId);
         } finally {
             toDelete.forEach(this::deleteFlow);
         }
@@ -1123,7 +1332,7 @@ public abstract class AbstractFlowRepositoryTest {
         try {
             // When — filter by namespace only
             ArrayListTotal<SearchResult<Flow>> byNamespaceA = flowRepository.findSourceCode(
-                Pageable.UNPAGED, null, tenant, namespaceA
+                Pageable.UNPAGED, null, false, false, false, SourceSearchScope.ALL, tenant, namespaceA
             );
 
             // Then — only the flow in namespaceA is returned
@@ -1137,7 +1346,7 @@ public abstract class AbstractFlowRepositoryTest {
 
             // When — filter by query using a token unique to flow-beta's source
             ArrayListTotal<SearchResult<Flow>> byQuery = flowRepository.findSourceCode(
-                Pageable.UNPAGED, "beta", tenant, null
+                Pageable.UNPAGED, "beta", false, false, false, SourceSearchScope.ALL, tenant, null
             );
 
             // Then — only the flow whose source contains "beta" is returned
@@ -1151,6 +1360,75 @@ public abstract class AbstractFlowRepositoryTest {
         } finally {
             deleteFlow(flowA);
             deleteFlow(flowB);
+        }
+    }
+
+    @Test
+    void shouldFilterSourceCodeWithCaseSensitiveWholeWordAndRegexOptions() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+
+        FlowWithSource upper = builder(tenant, "source-flow-upper", TEST_FLOW_ID)
+            .description("marker MARKERWORD end")
+            .build();
+        FlowWithSource lower = builder(tenant, "source-flow-lower", TEST_FLOW_ID)
+            .description("marker markerword end")
+            .build();
+        FlowWithSource longer = builder(tenant, "source-flow-longer", TEST_FLOW_ID)
+            .description("marker markerwordish end")
+            .build();
+        FlowWithSource taskScoped = builder(tenant, "source-flow-task-scoped", TEST_FLOW_ID)
+            .description("marker markerword end")
+            .tasks(Collections.singletonList(Return.builder().id(TEST_FLOW_ID).type(Return.class.getName()).format(Property.ofValue("markerword")).build()))
+            .build();
+
+        upper = flowRepository.create(GenericFlow.of(upper));
+        lower = flowRepository.create(GenericFlow.of(lower));
+        longer = flowRepository.create(GenericFlow.of(longer));
+        taskScoped = flowRepository.create(GenericFlow.of(taskScoped));
+
+        try {
+            ArrayListTotal<SearchResult<Flow>> caseSensitive = flowRepository.findSourceCode(
+                Pageable.UNPAGED, "MARKERWORD", true, false, false, SourceSearchScope.ALL, tenant, null
+            );
+
+            assertThat(caseSensitive.stream().map(r -> r.getModel().getId()).toList())
+                .containsExactly("source-flow-upper");
+
+            ArrayListTotal<SearchResult<Flow>> wholeWord = flowRepository.findSourceCode(
+                Pageable.UNPAGED, "markerword", false, true, false, SourceSearchScope.ALL, tenant, null
+            );
+
+            assertThat(wholeWord.stream().map(r -> r.getModel().getId()).toList())
+                .containsExactlyInAnyOrder("source-flow-upper", "source-flow-lower", "source-flow-task-scoped");
+
+            ArrayListTotal<SearchResult<Flow>> substring = flowRepository.findSourceCode(
+                Pageable.UNPAGED, "markerword", false, false, false, SourceSearchScope.ALL, tenant, null
+            );
+
+            assertThat(substring.stream().map(r -> r.getModel().getId()).toList())
+                .containsExactlyInAnyOrder("source-flow-upper", "source-flow-lower", "source-flow-longer", "source-flow-task-scoped");
+
+            ArrayListTotal<SearchResult<Flow>> regex = flowRepository.findSourceCode(
+                Pageable.UNPAGED, "markerword\\w*ish", false, false, true, SourceSearchScope.ALL, tenant, null
+            );
+
+            assertThat(regex.stream().map(r -> r.getModel().getId()).toList())
+                .containsExactly("source-flow-longer");
+            assertThat(regex.getFirst().getMatches()).hasSize(1);
+            assertThat(regex.getFirst().getMatches().getFirst().snippet()).contains("[mark]markerwordish[/mark]");
+
+            ArrayListTotal<SearchResult<Flow>> tasksScope = flowRepository.findSourceCode(
+                Pageable.UNPAGED, "markerword", false, false, false, SourceSearchScope.TASKS, tenant, null
+            );
+
+            assertThat(tasksScope.stream().map(r -> r.getModel().getId()).toList())
+                .containsExactly("source-flow-task-scoped");
+            assertThat(tasksScope.getFirst().getMatches()).hasSize(1);
+        } finally {
+            deleteFlow(upper);
+            deleteFlow(lower);
+            deleteFlow(longer);
+            deleteFlow(taskScoped);
         }
     }
 
@@ -1440,7 +1718,7 @@ public abstract class AbstractFlowRepositoryTest {
 
         try {
             ArrayListTotal<SearchResult<Flow>> results = flowRepository.findSourceCode(
-                Pageable.UNPAGED, "unique-searchable-string", tenant, TEST_NAMESPACE
+                Pageable.UNPAGED, "unique-searchable-string", false, false, false, SourceSearchScope.ALL, tenant, TEST_NAMESPACE
             );
 
             assertThat(results.getTotal()).isGreaterThanOrEqualTo(1);
@@ -1789,7 +2067,7 @@ public abstract class AbstractFlowRepositoryTest {
 
         try {
             ArrayListTotal<SearchResult<Flow>> results = flowRepository.findSourceCode(
-                Pageable.UNPAGED, null, tenant, null
+                Pageable.UNPAGED, null, false, false, false, SourceSearchScope.ALL, tenant, null
             );
             assertThat(results).isNotEmpty();
         } finally {

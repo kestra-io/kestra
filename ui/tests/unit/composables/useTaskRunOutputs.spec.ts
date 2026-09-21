@@ -4,18 +4,21 @@ import {flushPromises} from "@vue/test-utils"
 
 const taskOutputsInformationMock = vi.fn()
 const taskRunOutputsMock = vi.fn()
+const executionOutputsMock = vi.fn()
 
 vi.mock("@kestra-io/kestra-sdk/outputs", () => ({
     taskOutputsInformation: (...args: unknown[]) => taskOutputsInformationMock(...args),
     taskRunOutputs: (...args: unknown[]) => taskRunOutputsMock(...args),
+    executionOutputs: (...args: unknown[]) => executionOutputsMock(...args),
 }))
 
-import {useHasTaskRunOutputs, loadTaskRunOutputs} from "../../../src/composables/useTaskRunOutputs"
+import {useHasTaskRunOutputs, loadTaskRunOutputs, loadExecutionOutputs} from "../../../src/composables/useTaskRunOutputs"
 
 describe("useTaskRunOutputs", () => {
     beforeEach(() => {
         taskOutputsInformationMock.mockReset()
         taskRunOutputsMock.mockReset()
+        executionOutputsMock.mockReset()
     })
 
     test("resolves true for a task run present in taskOutputsInformation", async () => {
@@ -80,6 +83,26 @@ describe("useTaskRunOutputs", () => {
         taskRunOutputsMock.mockResolvedValue(null)
 
         const outputs = await loadTaskRunOutputs("exec-1", "tr-2")
+
+        expect(outputs).toEqual({})
+    })
+
+    test("loadExecutionOutputs returns the fetched outputs", async () => {
+        executionOutputsMock.mockResolvedValue({key: "value"})
+
+        const outputs = await loadExecutionOutputs("exec-1")
+
+        expect(outputs).toEqual({key: "value"})
+        expect(executionOutputsMock).toHaveBeenCalledWith(
+            {executionId: "exec-1"},
+            expect.objectContaining({validateStatus: expect.any(Function)}),
+        )
+    })
+
+    test("loadExecutionOutputs returns an empty object when there are none", async () => {
+        executionOutputsMock.mockResolvedValue(null)
+
+        const outputs = await loadExecutionOutputs("exec-2")
 
         expect(outputs).toEqual({})
     })

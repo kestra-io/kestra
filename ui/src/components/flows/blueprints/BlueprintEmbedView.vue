@@ -8,7 +8,7 @@
                 <slot
                     name="actions"
                     :hasMissingPlugins="hasMissingPlugins"
-                    :missingPlugins="missingPlugins"
+                    :missingTasks="missingTasks"
                 />
             </div>
         </div>
@@ -78,15 +78,13 @@
 
     const editorBindings = useEditorBindings()
 
-    const {ensureInstalledPluginsLoaded, missingTaskTypes, missingPluginNames} = useBlueprintPlugins()
+    const {ensureInstalledPluginsLoaded, missingTaskTypes} = useBlueprintPlugins()
 
-    const hasMissingPlugins = computed(() =>
-        missingTaskTypes(props.blueprint?.includedTasks).length > 0,
+    const missingTasks = computed(() =>
+        missingTaskTypes(props.blueprint?.includedTasks),
     )
 
-    const missingPlugins = computed(() =>
-        missingPluginNames(props.blueprint?.includedTasks),
-    )
+    const hasMissingPlugins = computed(() => missingTasks.value.length > 0)
 
     onMounted(ensureInstalledPluginsLoaded)
 </script>

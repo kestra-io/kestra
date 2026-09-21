@@ -1,4 +1,4 @@
-import {beforeEach, afterEach, describe, expect, it} from "vitest"
+import {afterAll, afterEach, beforeAll, beforeEach, describe, expect, it} from "vitest"
 import {defineComponent, h, nextTick, ref, type Ref} from "vue"
 import {mount, VueWrapper} from "@vue/test-utils"
 import useRouteContext from "../../../src/composables/useRouteContext"
@@ -14,6 +14,15 @@ function mountRouteContext(routeInfo: Ref<{title: string}>, embed = false) {
 
 describe("useRouteContext", () => {
     let wrapper: VueWrapper
+    let originalTitle: string
+
+    beforeAll(() => {
+        originalTitle = document.title
+    })
+
+    afterAll(() => {
+        document.title = originalTitle
+    })
 
     beforeEach(() => {
         document.title = "Kestra EE"

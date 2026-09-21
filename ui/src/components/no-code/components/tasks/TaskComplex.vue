@@ -1,9 +1,12 @@
 <template>
-    <TaskObject
-        :properties="computedProperties"
-        :schema
-        merge
-    />
+    <div class="task-nested" :class="{'task-nested--bare': bare}">
+        <TaskObject
+            v-bind="$attrs"
+            :properties="computedProperties"
+            :schema
+            merge
+        />
+    </div>
 </template>
 
 <script lang="ts" setup>
@@ -12,11 +15,15 @@
     import {resolve$ref} from "../../../../utils/utils"
     import {FULL_SCHEMA_INJECTION_KEY} from "../../injectionKeys"
 
+    defineOptions({inheritAttrs: false})
+
     const props = withDefaults(defineProps<{
         schema: any,
         properties?: Record<string, any>,
+        bare?: boolean,
     }>(), {
         properties: undefined,
+        bare: false,
     })
 
     const fullSchema = inject(FULL_SCHEMA_INJECTION_KEY, ref({}))
@@ -42,3 +49,15 @@
         }, {})
     })
 </script>
+
+<style scoped lang="scss">
+.task-nested {
+    border-left: 2px solid var(--ks-border-subtle);
+    padding-left: var(--ks-spacing-4);
+}
+
+.task-nested--bare {
+    border-left: none;
+    padding-left: 0;
+}
+</style>

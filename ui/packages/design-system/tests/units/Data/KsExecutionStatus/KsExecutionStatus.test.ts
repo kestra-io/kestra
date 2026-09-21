@@ -89,9 +89,34 @@ describe("KsExecutionStatus", () => {
         expect(wrapper.emitted("click")).toHaveLength(1)
     })
 
+    test("renders native disabled attribute when disabled prop is true", () => {
+        const wrapper = mount(KsExecutionStatus, {
+            props: {status: "SUCCESS", disabled: true},
+            global: globalConfig,
+        })
+        expect(wrapper.find("button").attributes("disabled")).toBeDefined()
+    })
+
+    test("does not render disabled attribute by default", () => {
+        const wrapper = mount(KsExecutionStatus, {
+            props: {status: "SUCCESS"},
+            global: globalConfig,
+        })
+        expect(wrapper.find("button").attributes("disabled")).toBeUndefined()
+    })
+
+    test("drops clickable affordance when disabled is true", () => {
+        const wrapper = mount(KsExecutionStatus, {
+            props: {status: "SUCCESS", clickable: true, disabled: true},
+            global: globalConfig,
+        })
+        expect(wrapper.find(".ks-execution-status--clickable").exists()).toBe(false)
+        expect(wrapper.find("button").attributes("disabled")).toBeDefined()
+    })
+
     test("renders all status variants", () => {
         const statuses = [
-            "CREATED", "RESTARTED", "SUCCESS", "RUNNING", "KILLING",
+            "CREATED", "SUBMITTED", "RESTARTED", "SUCCESS", "RUNNING", "KILLING",
             "KILLED", "WARNING", "FAILED", "PAUSED", "CANCELLED",
             "SKIPPED", "QUEUED", "RETRYING", "RETRIED", "BREAKPOINT",
         ] as const

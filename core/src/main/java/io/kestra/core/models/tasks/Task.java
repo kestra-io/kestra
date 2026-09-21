@@ -21,6 +21,8 @@ import io.kestra.plugin.core.flow.WorkingDirectory;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.annotation.Nullable;
+import org.hibernate.validator.constraints.time.DurationMin;
+
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Size;
 import lombok.Builder;
@@ -36,7 +38,14 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 @JsonInclude(JsonInclude.Include.NON_DEFAULT)
 @Plugin
 abstract public class Task implements TaskInterface {
-    @Size(max = 256, message = "Task id must be at most 256 characters")
+    /**
+     * Maximum length of a task id. Enforced for flow-authored tasks by the {@code @Size} constraint
+     * below, and used to truncate runtime-generated task ids (e.g. dbt node ids) before they are
+     * persisted as {@code task_id} in the logs/metrics stores.
+     */
+    public static final int ID_MAX_LENGTH = 256;
+
+    @Size(max = ID_MAX_LENGTH, message = "Task id must be at most " + ID_MAX_LENGTH + " characters")
     protected String id;
 
     protected String type;
@@ -56,7 +65,7 @@ abstract public class Task implements TaskInterface {
     protected AbstractRetry retry;
 
     @PluginProperty(hidden = true, group = "execution")
-    protected Property<Duration> timeout;
+    protected Property<@DurationMin(millis = 1, message = "must be a positive duration") Duration> timeout;
 
     @Builder.Default
     @PluginProperty(hidden = true, group = "execution")

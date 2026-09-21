@@ -67,28 +67,23 @@ public class Flow extends AbstractFlow implements HasUID {
     )
     Map<String, Object> variables;
 
-    @Valid
     @NotEmpty
     @Schema(additionalProperties = Schema.AdditionalPropertiesValue.TRUE)
-    List<Task> tasks;
+    List<@Valid Task> tasks;
 
-    @Valid
-    List<Task> errors;
+    List<@Valid Task> errors;
 
-    @Valid
     @JsonProperty("finally")
     @Getter(AccessLevel.NONE)
-    protected List<Task> _finally;
+    protected List<@Valid Task> _finally;
 
     public List<Task> getFinally() {
         return this._finally;
     }
 
-    @Valid
-    List<Task> afterExecution;
+    List<@Valid Task> afterExecution;
 
-    @Valid
-    List<AbstractTrigger> triggers;
+    List<@Valid AbstractTrigger> triggers;
 
     @Schema(
         title = "References to governance policies (Enterprise Edition).",
@@ -97,16 +92,12 @@ public class Flow extends AbstractFlow implements HasUID {
     @PluginProperty
     List<String> policyRefs;
 
+    @Schema(
+        title = "Concurrency",
+        description = "Limits the number of concurrent executions of the flow."
+    )
     @Valid
     Concurrency concurrency;
-
-    @Schema(
-        title = "Output values available and exposes to other flows.",
-        description = "Output values make information about the execution of your Flow available and expose for other Kestra flows to use. Output values are similar to return values in programming languages."
-    )
-    @PluginProperty(dynamic = true)
-    @Valid
-    List<Output> outputs;
 
     // implementation = Object.class prevents the Micronaut OpenAPI annotation processor from following
     // the @JsonSubTypes on AbstractRetry, which causes a PostponeToNextRoundException at compile time
@@ -119,17 +110,15 @@ public class Flow extends AbstractFlow implements HasUID {
     @Valid
     AbstractRetry retry;
 
-    @Valid
     @PluginProperty
-    List<SLA> sla;
+    List<@Valid SLA> sla;
 
     @Schema(
         title = "Conditions evaluated before the flow is executed.",
         description = "A list of conditions that are evaluated before the flow is executed.  If no checks are defined, the flow executes normally."
     )
-    @Valid
     @PluginProperty
-    List<Check> checks;
+    List<@Valid Check> checks;
 
     @Schema(
         title = "Quotas evaluated before the flow is executed (EE only).",
@@ -137,9 +126,8 @@ public class Flow extends AbstractFlow implements HasUID {
             A list of quotas that are evaluated before the flow is executed. If no quotas are defined, the flow executes normally.
             Quotas can also be defined at the namespace and tenant level."""
     )
-    @Valid
     @PluginProperty
-    List<Quota> quotas;
+    List<@Valid Quota> quotas;
 
     public Stream<String> allTypes() {
         return Stream.of(
@@ -304,6 +292,7 @@ public class Flow extends AbstractFlow implements HasUID {
         return this.toBuilder()
             .revision(this.revision + 1)
             .deleted(true)
+            .draft(false) // switch to false to avoid resurrecting the previous revision
             .build();
     }
 

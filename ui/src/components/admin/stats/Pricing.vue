@@ -55,10 +55,6 @@
             border-radius: 8px;
             background: var(--ks-bg-surface);
             box-shadow: 0px 1px 4px 0px var(--ks-shadow-element);
-
-            :deep(svg) {
-                color: var(--ks-icon-muted);
-            }
         }
 
         .edition {

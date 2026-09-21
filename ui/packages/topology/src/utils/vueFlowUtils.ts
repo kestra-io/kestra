@@ -3,14 +3,19 @@ import type {GraphNode, GraphEdge, Elements} from "@vue-flow/core"
 import * as dagre from "dagre"
 import * as Utils from "./utils"
 import {CLUSTER_PREFIX, NODE_SIZES} from "./constants"
-import isEqual from "lodash/isEqual"
+import {isDeepEqual} from "@kestra-io/design-system"
 
 const TRIGGERS_NODE_UID = "root.Triggers"
 
-enum BranchType {
+export enum BranchType {
     ERROR = "ERROR",
     FINALLY = "FINALLY",
     AFTER_EXECUTION = "AFTER_EXECUTION",
+}
+
+/** Only what the graph reads off an execution; the package has no `@kestra-io/kestra-sdk` dependency. */
+export interface GraphExecution {
+    id?: string;
 }
 
 interface MinimalNode {
@@ -19,11 +24,13 @@ interface MinimalNode {
     branchType?: BranchType;
     uid: string;
     type: string;
+    disabled?: boolean;
     task?: {
         id?: string;
         type: string;
         namespace: string;
         flowId: string;
+        disabled?: boolean;
     };
 }
 
@@ -271,9 +278,44 @@ export function cleanGraph(vueflowId: string) {
 
 export function flowHaveTasks(source: string): boolean {
     if (!source) return false
-    // Check if the root-level `tasks` key exists and has at least one list item
-    const match = source.match(/^tasks\s*:\s*\r?\n([\s\S]*?)(?=^\S|$(?![\r\n]))/m)
-    return match != null && /^\s+-/m.test(match[1] ?? "")
+
+    const lines = source.split(/\r?\n/)
+
+    // Phase 1: locate the root-level `tasks:` block — its start line, and its
+    // end, i.e. the next root-level key (a line starting with a non-space
+    // character) or the end of the source. Single pass, bounded, no backtracking.
+    let tasksLineIndex = -1
+    let blockEndIndex = lines.length
+    for (let i = 0; i < lines.length; i++) {
+        if (tasksLineIndex === -1) {
+            if (/^tasks\s*:\s*$/.test(lines[i])) {
+                tasksLineIndex = i
+            }
+        } else if (/^\S/.test(lines[i])) {
+            blockEndIndex = i
+            break
+        }
+    }
+    if (tasksLineIndex === -1) return false
+
+    // Phase 2: within that block, a task item starts with "- " (dash-space) and
+    // must contain at least one `id:`/`id :` line — either right after the dash
+    // on the same line, or on a line below it.
+    let sawTaskItem = false
+    for (let i = tasksLineIndex + 1; i < blockEndIndex; i++) {
+        const line = lines[i]
+
+        const dashMatch = /^\s+-\s*(.*)$/.exec(line)
+        if (dashMatch) {
+            sawTaskItem = true
+            if (/^id\s*:/.test(dashMatch[1])) {
+                return true
+            }
+        } else if (sawTaskItem && /^\s*id\s*:/.test(line)) {
+            return true
+        }
+    }
+    return false
 }
 
 export function nodeColor(node: MinimalNode, collapsed: Set<string>) {
@@ -721,7 +763,7 @@ export function areTasksIdenticalInGraphUntilTask(
             ) {
                 return false
             }
-            if (!isEqual(prevTaskValue, currentTaskValue)) return false
+            if (!isDeepEqual(prevTaskValue, currentTaskValue)) return false
         }
     } while (previousRootTaskNodes.length && currentRootTaskNodes.length && failIndex-- > 0)
 

@@ -25,10 +25,6 @@ updates:
       time: "08:00"
     open-pull-requests-limit: 50
     labels: ["dependency-upgrade", "area/backend"]
-    ignore:
-      # Ignore Micronaut 5.x until migration is planned
-      - dependency-name: "io.micronaut*"
-        versions: ["[5,)"]
 
   # Maintain dependencies for NPM modules (core UI)
   - package-ecosystem: "npm"
@@ -139,10 +135,6 @@ updates:
       # Ignore updates to monaco-yaml; version is pinned to 5.3.1 due to patch-package script additions
       - dependency-name: "monaco-yaml"
         versions: [">=5.3.2"]
-
-      # Ignore lint-staged major updates (v17 requires Node.js >=22.22.1 which is not yet released)
-      - dependency-name: "lint-staged"
-        update-types: ["version-update:semver-major"]
 
   # Maintain dependencies for ui/packages/design-system
   - package-ecosystem: "npm"

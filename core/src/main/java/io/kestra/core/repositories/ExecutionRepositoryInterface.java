@@ -65,6 +65,12 @@ public interface ExecutionRepositoryInterface extends QueryBuilderInterface<Exec
      */
     Optional<Execution> findLatestForStates(String tenantId, String namespace, String flowId, List<State.Type> states);
 
+    /**
+     * Same as {@link #findLatestForStates(String, String, String, List)} but without applying the caller's
+     * namespace ACL, for trusted callers that gate access themselves (e.g. a public App rendered anonymously).
+     */
+    Optional<Execution> findLatestForStatesWithoutAcl(String tenantId, String namespace, String flowId, List<State.Type> states);
+
     ArrayListTotal<Execution> find(
         Pageable pageable,
         @Nullable String tenantId,
@@ -88,9 +94,8 @@ public interface ExecutionRepositoryInterface extends QueryBuilderInterface<Exec
         @Nullable ZonedDateTime endDate,
         @Nullable List<State.Type> state,
         @Nullable Map<String, String> labels,
-        @Nullable String triggerExecutionId,
-        @Nullable ChildFilter childFilter) {
-        return find(query, tenantId, scope, namespace, flowId, startDate, endDate, state, labels, triggerExecutionId, childFilter, false);
+        @Nullable String triggerExecutionId) {
+        return find(query, tenantId, scope, namespace, flowId, startDate, endDate, state, labels, triggerExecutionId, false);
     }
 
     Flux<Execution> find(
@@ -104,11 +109,19 @@ public interface ExecutionRepositoryInterface extends QueryBuilderInterface<Exec
         @Nullable List<State.Type> state,
         @Nullable Map<String, String> labels,
         @Nullable String triggerExecutionId,
-        @Nullable ChildFilter childFilter,
         boolean allowDeleted);
 
     Flux<Execution> findAllAsync(@Nullable String tenantId);
 
+    /**
+     * Streams the executions matching the filters, applying the same conditions as {@link #find(Pageable, String, List)}
+     * so that both return the same executions: without an explicit KIND filter, only executions of kind
+     * {@link ExecutionKind#NORMAL} are returned.
+     *
+     * @param tenantId the tenant
+     * @param filters the filters to apply
+     * @return the matching executions
+     */
     Flux<Execution> findAsync(String tenantId, List<QueryFilter> filters);
 
     /**

@@ -1,7 +1,7 @@
 <template>
-    <!-- The copilot working indicator: an animated Kestra mark plus a rotating flavour word. Shown
-         while a turn runs. Decorative: the flavour words would spam a screen reader, so it's hidden
-         from the a11y tree — the transcript's `aria-busy` + the streamed tokens convey "working". -->
+    <!-- The copilot working indicator: an animated Kestra mark plus a rotating flavour word, shown
+         while a turn runs. Decorative and hidden from the a11y tree (the flavour words would spam a
+         screen reader) — the transcript's `aria-busy` + streamed tokens convey "working". -->
     <div class="copilot-thinking" data-test="copilot-thinking" aria-hidden="true">
         <CopilotMarkAnimation :phase="phase" />
         <!-- The rotating word only reads during the "thinking" gap (before any output); while the

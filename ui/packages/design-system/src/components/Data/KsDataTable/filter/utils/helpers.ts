@@ -1,11 +1,15 @@
 import type {LocationQuery} from "vue-router"
 import {type AppliedFilter, type FilterGroup, type LeafFilterGroup, type LogicalOperator, Comparators, isWrapperGroup} from "./filterTypes"
-import {MAX_RENDERABLE_NESTING_DEPTH} from "./constants"
+import {DATE_FILTER_KEY, MAX_RENDERABLE_NESTING_DEPTH} from "./constants"
 
-const decodeURIComponentSafely = (value: string | (string | null)[]): string | string[] =>
+/**
+ * Normalizes a `filters[...]` query-param value after vue-router (or
+ * {@link parseFiltersFromString}) has already decoded it.
+ */
+export const decodeFilterValue = (value: string | (string | null)[]): string | string[] =>
     Array.isArray(value)
-        ? value.filter(v => v !== null).map(decodeURIComponent)
-        : decodeURIComponent(value)
+        ? value.filter((item): item is string => item !== null)
+        : value
 
 export function getComparator(comparatorKey: keyof typeof Comparators): Comparators {
     return Comparators[comparatorKey]
@@ -30,7 +34,7 @@ const FILTER_KEY_PATTERN = new RegExp(
 
 const PREFIX_SEGMENT_PATTERN = /\[(and|or)]\[(\d+)]/gi
 
-interface PrefixSegment {
+export interface PrefixSegment {
     logical: LogicalOperator
     index: number
 }
@@ -56,107 +60,27 @@ export interface DecodedParam {
     wrapperLogical?: LogicalOperator
 }
 
-
-/**
- * A backend `QueryFilter` node (see `core/src/main/java/io/kestra/core/models/QueryFilter.java`):
- * either a leaf (`field`/`operation`/`value`) or a logical group (`logical`/`children`).
- * Kept structurally loose (no dependency on `@kestra-io/kestra-sdk`, which this package must not
- * depend on) — callers with the generated SDK's stricter `QueryFilter` type should cast.
- */
-export interface QueryFilter {
+/** One `filters[and|or][N]…[field][OPERATION][subKey]` key, split into its parts. */
+export interface ParsedFilterKey {
+    /** The `[and|or][N]` grouping chain, outermost first; empty for a root-level filter. */
+    chain: PrefixSegment[]
     field: string
     operation: string
-    value?: unknown
-    logical?: LogicalOperator
-    children?: QueryFilter[]
+    /** Present for keys carrying a sub-key, e.g. the label name in `filters[labels][EQUALS][env]`. */
+    subKey?: string
 }
 
 /**
- * Builds one logical position in the filter tree, mirroring the backend's
- * `QueryFilterFormatBinder.NodeBuilder`: direct leaves land here directly, LABELS leaves sharing an
- * operation are merged into one filter with a map value, and nested `[and|or][N]` segments descend
- * into a sub-node keyed by (logical, index) that is recursively flattened by {@link build}.
+ * Parses a filter URL key into its parts, or returns null when the key does not match
+ * {@link FILTER_KEY_PATTERN}. Exported so callers that translate the route into a backend request
+ * payload read the key format from its owner instead of restating the regex.
  */
-class FilterNodeBuilder {
-    private readonly directLeaves: QueryFilter[] = []
-    private readonly labelsByOp = new Map<string, Record<string, string>>()
-    private readonly subNodes = new Map<LogicalOperator, Map<number, FilterNodeBuilder>>()
+export const parseFilterKey = (key: string): ParsedFilterKey | null => {
+    const match = key.match(FILTER_KEY_PATTERN)
+    if (!match) return null
 
-    descend(logical: LogicalOperator, index: number): FilterNodeBuilder {
-        const slots = this.subNodes.get(logical) ?? new Map<number, FilterNodeBuilder>()
-        this.subNodes.set(logical, slots)
-        const slot = slots.get(index) ?? new FilterNodeBuilder()
-        slots.set(index, slot)
-        return slot
-    }
-
-    addLeaf(field: string, operation: string, subKey: string | undefined, value: string | string[]) {
-        const scalarValue = Array.isArray(value) ? value[0] : value
-
-        if (field === "labels" && subKey) {
-            const map = this.labelsByOp.get(operation) ?? {}
-            map[subKey] = scalarValue
-            this.labelsByOp.set(operation, map)
-            return
-        }
-
-        this.directLeaves.push({field, operation, value})
-    }
-
-    build(): QueryFilter[] {
-        const items: QueryFilter[] = [...this.directLeaves]
-
-        this.labelsByOp.forEach((map, operation) => {
-            if (Object.keys(map).length > 0) {
-                items.push({field: "labels", operation, value: map})
-            }
-        })
-
-        this.subNodes.forEach((slots, logical) => {
-            const branches: QueryFilter[] = []
-            slots.forEach((slot) => {
-                const slotItems = slot.build()
-                if (slotItems.length === 0) return
-                branches.push(slotItems.length === 1
-                    ? slotItems[0]
-                    : {field: "", operation: "", logical: "AND", children: slotItems})
-            })
-            if (branches.length === 0) return
-            items.push(branches.length === 1 && logical === "AND"
-                ? branches[0]
-                : {field: "", operation: "", logical, children: branches})
-        })
-
-        return items
-    }
-}
-
-/**
- * Converts a route's raw `filters[...]` query params (as produced by {@link encodeFiltersToQuery} /
- * {@link encodeFilterGroupsToQuery}) directly into the `QueryFilter[]` array shape the generated
- * `@kestra-io/kestra-sdk` search functions expect. Unlike {@link decodeSearchParams} — which targets
- * restoring `KsFilter` UI chips and lossily flattens a labels `subKey` into a `"key:value"` string —
- * this preserves the LABELS sub-key structure and nested AND/OR grouping needed for a faithful
- * backend request, by porting `QueryFilterFormatBinder`'s regex + tree-building.
- */
-export const routeQueryToQueryFilters = (query: LocationQuery): QueryFilter[] => {
-    const root = new FilterNodeBuilder()
-
-    for (const [key, value] of Object.entries(query)) {
-        if (!key.startsWith("filters[") || !value) continue
-        const match = key.match(FILTER_KEY_PATTERN)
-        if (!match) continue
-
-        const [, prefix, field, operation, subKey] = match
-        const chain = parsePrefixChain(prefix)
-        let target = root
-        for (const segment of chain) {
-            target = target.descend(segment.logical, segment.index)
-        }
-        target.addLeaf(field, operation, subKey, decodeURIComponentSafely(value) as string | string[])
-    }
-
-    return root.build()
+    const [, prefix, field, operation, subKey] = match
+    return {chain: parsePrefixChain(prefix), field, operation, subKey}
 }
 
 export const decodeSearchParams = (query: LocationQuery): DecodedParam[] =>
@@ -164,12 +88,10 @@ export const decodeSearchParams = (query: LocationQuery): DecodedParam[] =>
         .filter(([key]) => key.startsWith("filters[") || key === "q")
         .map(([key, value]): DecodedParam | null => {
             if (!value) return null
-            const match = key.match(FILTER_KEY_PATTERN)
-            if (!match) return null
+            const parsed = parseFilterKey(key)
+            if (!parsed) return null
 
-            const [, prefix, field, operation, subKey] = match
-            const chain = parsePrefixChain(prefix)
-            return buildParam(field, operation, subKey, value, chain)
+            return buildParam(parsed.field, parsed.operation, parsed.subKey, value, parsed.chain)
         })
         .filter((v): v is DecodedParam => v !== null)
 
@@ -180,9 +102,12 @@ const buildParam = (
     value: string | (string | null)[],
     chain: PrefixSegment[],
 ): DecodedParam => {
+    const decodedValue = decodeFilterValue(value)
     const decoded = subKey
-        ? `${subKey}:${decodeURIComponentSafely(value)}`
-        : decodeURIComponentSafely(value)
+        ? Array.isArray(decodedValue)
+            ? decodedValue.map(item => `${subKey}:${item}`)
+            : `${subKey}:${decodedValue}`
+        : decodedValue
     return {
         field,
         value: decoded,
@@ -195,6 +120,7 @@ const buildParam = (
 type Filter = Pick<AppliedFilter, "key" | "comparator" | "value">;
 
 type ComparatorKeyResolver = (comparator: Comparators) => string;
+type FilterQuery = Record<string, string | string[]>;
 
 export const encodeFiltersToQuery = (filters: Filter[], getComparatorKey: ComparatorKeyResolver) =>
     encodeFilterGroupsToQuery(
@@ -206,8 +132,8 @@ export const encodeFilterGroupsToQuery = (
     groups: FilterGroup[],
     getComparatorKey: ComparatorKeyResolver,
     topLogical: LogicalOperator = "OR",
-): Record<string, string> => {
-    const query: Record<string, string> = {}
+): FilterQuery => {
+    const query: FilterQuery = {}
     const onlyOneLeaf = groups.length === 1 && !isWrapperGroup(groups[0])
     const topOp = topLogical.toLowerCase()
 
@@ -230,7 +156,7 @@ export const encodeFilterGroupsToQuery = (
 }
 
 const writeFilter = (
-    query: Record<string, string>,
+    query: FilterQuery,
     prefix: string,
     filter: Filter,
     getComparatorKey: ComparatorKeyResolver,
@@ -260,10 +186,20 @@ const writeFilter = (
                 const {startDate, endDate} = value as {startDate: Date; endDate: Date}
                 query[`${prefix}[${key}][GREATER_THAN_OR_EQUAL_TO]`] = startDate.toISOString()
                 query[`${prefix}[${key}][LESS_THAN_OR_EQUAL_TO]`] = endDate.toISOString()
-            } else if (Array.isArray(value) && value.some(v => typeof v === "string" && v.includes(":"))) {
+            } else if (Array.isArray(value) && (key === "labels" || value.some(v => typeof v === "string" && v.includes(":")))) {
                 value.forEach((item: string) => {
-                    const [k, v] = item.split(":", 2)
-                    if (k && v) query[`${prefix}[${key}][${comparatorKey}][${k}]`] = v
+                    const separatorIndex = item.indexOf(":")
+                    if (separatorIndex <= 0) return
+                    const k = item.slice(0, separatorIndex)
+                    const v = item.slice(separatorIndex + 1)
+                    if (!k || !v) return
+                    const queryKey = `${prefix}[${key}][${comparatorKey}][${k}]`
+                    const existing = query[queryKey]
+                    if ((comparator === Comparators.IN || comparator === Comparators.NOT_IN) && existing !== undefined) {
+                        query[queryKey] = Array.isArray(existing) ? [...existing, v] : [existing, v]
+                    } else {
+                        query[queryKey] = v
+                    }
                 })
             } else {
                 query[`${prefix}[${key}][${comparatorKey}]`] = Array.isArray(value)
@@ -323,11 +259,25 @@ export const getUniqueFilters = <T extends { key: string; comparator?: any }>(fi
         ),
     )
 
+export const isFilterQueryKey = (key: string): boolean =>
+    key.startsWith("filters[") || key === DATE_FILTER_KEY
+
 export const clearFilterQueryParams = (query: Record<string, any>): void => {
     for (const key of Object.keys(query)) {
-        if (key.startsWith("filters[") || key === "dateFilter") delete query[key]
+        if (isFilterQueryKey(key)) delete query[key]
     }
 }
+
+/**
+ * Stable string over just the filter-carrying query entries, so a watcher fires when the filters
+ * change and not when `page`, `size` or `sort` do.
+ */
+export const filterQuerySignature = (query: LocationQuery | undefined): string =>
+    JSON.stringify(
+        Object.entries(query ?? {})
+            .filter(([key]) => isFilterQueryKey(key))
+            .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)),
+    )
 
 /**
  * Returns true if a `filters[...]` key has more `[and|or][N]` prefix segments than the chip UI

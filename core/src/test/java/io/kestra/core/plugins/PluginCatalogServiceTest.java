@@ -1,6 +1,7 @@
 package io.kestra.core.plugins;
 
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -22,6 +23,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class PluginCatalogServiceTest {
@@ -45,6 +48,7 @@ class PluginCatalogServiceTest {
     @AfterEach
     void tearDown() {
         KestraContext.setContext(null);
+        PluginCatalogService.retryDelay = Duration.ofSeconds(30);
     }
 
     // -- get() contract --
@@ -61,7 +65,7 @@ class PluginCatalogServiceTest {
                 )
             );
 
-        PluginCatalogService service = new PluginCatalogService(httpClient, false, true, executorsUtils);
+        PluginCatalogService service = new PluginCatalogService(httpClient, false, true, executorsUtils, null);
 
         // When
         List<PluginCatalogService.PluginManifest> result = service.get();
@@ -87,7 +91,7 @@ class PluginCatalogServiceTest {
                 )
             );
 
-        PluginCatalogService service = new PluginCatalogService(httpClient, false, true, executorsUtils);
+        PluginCatalogService service = new PluginCatalogService(httpClient, false, true, executorsUtils, null);
 
         // When
         List<PluginCatalogService.PluginManifest> result = service.get();
@@ -110,7 +114,7 @@ class PluginCatalogServiceTest {
                 )
             );
 
-        PluginCatalogService service = new PluginCatalogService(httpClient, false, false, executorsUtils);
+        PluginCatalogService service = new PluginCatalogService(httpClient, false, false, executorsUtils, null);
 
         // When
         List<PluginCatalogService.PluginManifest> result = service.get();
@@ -125,13 +129,56 @@ class PluginCatalogServiceTest {
         when(blockingClient.exchange(any(), any(Argument.class)))
             .thenThrow(new RuntimeException("API unavailable"));
 
-        PluginCatalogService service = new PluginCatalogService(httpClient, false, true, executorsUtils);
+        PluginCatalogService service = new PluginCatalogService(httpClient, false, true, executorsUtils, null);
 
         // When
         List<PluginCatalogService.PluginManifest> result = service.get();
 
         // Then
         assertThat(result).isEmpty();
+    }
+
+    @Test
+    void shouldRetryAfterFailedLoadInsteadOfCachingTheFailure() {
+        // Given: first call to the API fails, second succeeds
+        PluginCatalogService.retryDelay = Duration.ZERO;
+        when(blockingClient.exchange(any(), any(Argument.class)))
+            .thenThrow(new RuntimeException("api.kestra.io is restarting"))
+            .thenReturn(
+                HttpResponse.ok(
+                    List.of(
+                        Map.of("name", "plugin-serdes", "title", "Serdes", "group", "io.kestra.plugin", "license", "OPENSOURCE")
+                    )
+                )
+            );
+
+        PluginCatalogService service = new PluginCatalogService(httpClient, false, true, executorsUtils, null);
+
+        // When
+        List<PluginCatalogService.PluginManifest> firstResult = service.get();
+        List<PluginCatalogService.PluginManifest> secondResult = service.get();
+
+        // Then
+        assertThat(firstResult).isEmpty();
+        assertThat(secondResult).hasSize(1);
+        assertThat(secondResult.getFirst().artifactId()).isEqualTo("plugin-serdes");
+    }
+
+    @Test
+    void shouldNotRetryBeforeRetryDelayElapsed() {
+        // Given: a failing API and a long retry delay
+        PluginCatalogService.retryDelay = Duration.ofHours(1);
+        when(blockingClient.exchange(any(), any(Argument.class)))
+            .thenThrow(new RuntimeException("api.kestra.io is restarting"));
+
+        PluginCatalogService service = new PluginCatalogService(httpClient, false, true, executorsUtils, null);
+
+        // When
+        service.get();
+        service.get();
+
+        // Then: only one HTTP call was made, the second get() served the (empty) cache without hammering the API
+        verify(blockingClient, times(1)).exchange(any(), any(Argument.class));
     }
 
     // -- resolveVersions() contract --
@@ -148,7 +195,7 @@ class PluginCatalogServiceTest {
                 )
             );
 
-        PluginCatalogService service = new PluginCatalogService(httpClient, false, false, executorsUtils);
+        PluginCatalogService service = new PluginCatalogService(httpClient, false, false, executorsUtils, null);
         PluginArtifact artifact = new PluginArtifact("io.kestra.plugin", "plugin-serdes", "jar", null, "LATEST", null);
 
         // When
@@ -173,7 +220,7 @@ class PluginCatalogServiceTest {
                 )
             );
 
-        PluginCatalogService service = new PluginCatalogService(httpClient, false, false, executorsUtils);
+        PluginCatalogService service = new PluginCatalogService(httpClient, false, false, executorsUtils, null);
         PluginArtifact artifact = new PluginArtifact("io.kestra.plugin", "plugin-serdes", "jar", null, "0.20.0", null);
 
         // When
@@ -191,7 +238,7 @@ class PluginCatalogServiceTest {
         when(blockingClient.exchange(any(), any(Argument.class)))
             .thenReturn(HttpResponse.ok(List.of()));
 
-        PluginCatalogService service = new PluginCatalogService(httpClient, false, false, executorsUtils);
+        PluginCatalogService service = new PluginCatalogService(httpClient, false, false, executorsUtils, null);
         PluginArtifact artifact = new PluginArtifact("io.kestra.plugin", "plugin-unknown", "jar", null, "1.0.0", null);
 
         // When
@@ -207,7 +254,7 @@ class PluginCatalogServiceTest {
     @Test
     void shouldReturnEmptyListWhenResolvingEmptyArtifacts() {
         // Given
-        PluginCatalogService service = new PluginCatalogService(httpClient, false, false, executorsUtils);
+        PluginCatalogService service = new PluginCatalogService(httpClient, false, false, executorsUtils, null);
 
         // When
         List<PluginResolutionResult> results = service.resolveVersions(List.of());
@@ -230,7 +277,7 @@ class PluginCatalogServiceTest {
         when(blockingClient.exchange(any(HttpRequest.class), eq(String.class)))
             .thenReturn(HttpResponse.ok("<svg>currentColor</svg>"));
 
-        PluginCatalogService service = new PluginCatalogService(httpClient, true, false, executorsUtils);
+        PluginCatalogService service = new PluginCatalogService(httpClient, true, false, executorsUtils, null);
 
         // When
         Optional<byte[]> icon = service.icon("io.kestra.plugin", "plugin-serdes");
@@ -243,7 +290,7 @@ class PluginCatalogServiceTest {
     @Test
     void shouldReturnEmptyIconWhenIconResolutionDisabled() {
         // Given
-        PluginCatalogService service = new PluginCatalogService(httpClient, false, false, executorsUtils);
+        PluginCatalogService service = new PluginCatalogService(httpClient, false, false, executorsUtils, null);
 
         // When
         Optional<byte[]> icon = service.icon("io.kestra.plugin", "plugin-serdes");
@@ -264,7 +311,7 @@ class PluginCatalogServiceTest {
                 )
             );
 
-        PluginCatalogService service = new PluginCatalogService(httpClient, true, false, executorsUtils);
+        PluginCatalogService service = new PluginCatalogService(httpClient, true, false, executorsUtils, null);
 
         // When
         Optional<byte[]> icon = service.icon("io.kestra.plugin", "plugin-unknown");
@@ -279,7 +326,7 @@ class PluginCatalogServiceTest {
         when(blockingClient.exchange(any(HttpRequest.class), eq(String.class)))
             .thenReturn(HttpResponse.ok("<svg>currentColor</svg>"));
 
-        PluginCatalogService service = new PluginCatalogService(httpClient, true, false, executorsUtils);
+        PluginCatalogService service = new PluginCatalogService(httpClient, true, false, executorsUtils, null);
 
         // When
         Optional<byte[]> icon = service.icon("io.kestra.plugin.serdes");
@@ -292,7 +339,7 @@ class PluginCatalogServiceTest {
     @Test
     void shouldReturnEmptyIconByGroupWhenIconResolutionDisabled() {
         // Given
-        PluginCatalogService service = new PluginCatalogService(httpClient, false, false, executorsUtils);
+        PluginCatalogService service = new PluginCatalogService(httpClient, false, false, executorsUtils, null);
 
         // When
         Optional<byte[]> icon = service.icon("io.kestra.plugin.serdes");
@@ -304,12 +351,85 @@ class PluginCatalogServiceTest {
     @Test
     void shouldReturnEmptyIconForNullGroup() {
         // Given
-        PluginCatalogService service = new PluginCatalogService(httpClient, true, false, executorsUtils);
+        PluginCatalogService service = new PluginCatalogService(httpClient, true, false, executorsUtils, null);
 
         // When
         Optional<byte[]> icon = service.icon((String) null);
 
         // Then
         assertThat(icon).isEmpty();
+    }
+
+    // -- local catalog entries carried by the schema bundle --
+
+    @Test
+    void shouldExtendHostedCatalogWithBundleEntries() {
+        // Given — the hosted catalog knows plugin-serdes, the bundle also carries an in-house plugin
+        when(blockingClient.exchange(any(), any(Argument.class)))
+            .thenReturn(
+                HttpResponse.ok(
+                    List.of(
+                        Map.of("name", "plugin-serdes", "title", "Serdes", "group", "io.kestra.plugin.serdes", "license", "OPENSOURCE")
+                    )
+                )
+            );
+        PluginSchemaBundleService schemaBundleService = mock(PluginSchemaBundleService.class);
+        when(schemaBundleService.catalogEntries()).thenReturn(
+            List.of(new PluginCatalogService.PluginManifest("In-house", "com.acme.plugin", "plugin-acme", "com.acme.plugin.acme"))
+        );
+
+        PluginCatalogService service = new PluginCatalogService(httpClient, false, true, executorsUtils, schemaBundleService);
+
+        // When
+        List<PluginCatalogService.PluginManifest> result = service.get();
+
+        // Then
+        assertThat(result)
+            .extracting(PluginCatalogService.PluginManifest::artifactId)
+            .containsExactlyInAnyOrder("plugin-serdes", "plugin-acme");
+    }
+
+    @Test
+    void shouldPreferHostedEntryOverBundleEntryForSameArtifact() {
+        // Given — the same artifact on both sides: the hosted one carries the authoritative metadata
+        when(blockingClient.exchange(any(), any(Argument.class)))
+            .thenReturn(
+                HttpResponse.ok(
+                    List.of(
+                        Map.of("name", "plugin-serdes", "title", "Serdes", "group", "io.kestra.plugin.serdes", "license", "OPENSOURCE")
+                    )
+                )
+            );
+        PluginSchemaBundleService schemaBundleService = mock(PluginSchemaBundleService.class);
+        when(schemaBundleService.catalogEntries()).thenReturn(
+            List.of(new PluginCatalogService.PluginManifest("Stale", "io.kestra.plugin", "plugin-serdes", "io.kestra.plugin.stale"))
+        );
+
+        PluginCatalogService service = new PluginCatalogService(httpClient, false, true, executorsUtils, schemaBundleService);
+
+        // When
+        List<PluginCatalogService.PluginManifest> result = service.get();
+
+        // Then
+        assertThat(result).singleElement().satisfies(manifest ->
+        {
+            assertThat(manifest.artifactId()).isEqualTo("plugin-serdes");
+            assertThat(manifest.group()).isEqualTo("io.kestra.plugin.serdes");
+        });
+    }
+
+    @Test
+    void shouldIgnoreIncompleteBundleEntries() {
+        // Given — an entry without a Java package group cannot back a type lookup
+        when(blockingClient.exchange(any(), any(Argument.class))).thenReturn(HttpResponse.ok(List.of()));
+        PluginSchemaBundleService schemaBundleService = mock(PluginSchemaBundleService.class);
+        when(schemaBundleService.catalogEntries()).thenReturn(
+            List.of(new PluginCatalogService.PluginManifest("Broken", "com.acme.plugin", "plugin-acme", null))
+        );
+
+        PluginCatalogService service = new PluginCatalogService(httpClient, false, true, executorsUtils, schemaBundleService);
+
+        // When / Then
+        assertThat(service.get()).isEmpty();
     }
 }

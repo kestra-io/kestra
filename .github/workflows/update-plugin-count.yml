@@ -1,0 +1,72 @@
+name: Update plugin catalog count and create PR
+
+on:
+  schedule:
+    - cron: "0 6 * * 1"  # Every Monday at 6 AM UTC
+  workflow_dispatch:
+
+concurrency:
+  group: update-plugin-count-${{ github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  plugin-count:
+    name: Plugin catalog count
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    if: github.repository == 'kestra-io/kestra'
+    steps:
+        - name: Generate GitHub App token
+          id: app-token
+          uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+          with:
+            client-id: ${{ secrets.GH_BOT_APP_ID }}
+            private-key: ${{ secrets.GH_BOT_PRIVATE_KEY }}
+            owner: kestra-io
+            repositories: kestra
+
+        - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+          name: Checkout
+          with:
+            token: ${{ steps.app-token.outputs.token }}
+
+        - name: Set up Node
+          uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+          with:
+            node-version: "24.x"
+
+        # No npm ci needed: the script only uses Node built-ins and a dependency-free src import.
+        - name: Update plugin catalog count baseline
+          run: node --experimental-strip-types ui/scripts/update_plugin_catalog_count.ts
+
+        - name: Commit and create PR
+          env:
+            GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          run: |
+            if git diff --quiet -- ui/src/utils/pluginCatalogCount.ts; then
+              echo "No changes to commit. Exiting with success."
+              exit 0
+            fi
+            git config user.name "kestra-io"
+            git config user.email "hello@kestra.io"
+            BRANCH_NAME="chore/update-plugin-count"
+            git switch -c $BRANCH_NAME
+            git add ui/src/utils/pluginCatalogCount.ts
+            git commit -m "chore(plugins): update the plugin catalog count baseline" -m "Weekly refresh of the offline fallback for the catalog-wide plugin count shown in the Plugins page search placeholder and the in-app documentation."
+            # the chore branch is bot-owned and rebuilt from the default branch on every run
+            git push --force -u origin $BRANCH_NAME
+            if [ -z "$(gh pr list --head $BRANCH_NAME --base ${{ github.ref_name }} --state open --json number --jq '.[].number')" ]; then
+              {
+                echo "This PR was created automatically by [.github/workflows/update-plugin-count.yml](https://github.com/${{ github.repository }}/blob/${{ github.ref_name }}/.github/workflows/update-plugin-count.yml), which runs every Monday at 6 AM UTC."
+                echo
+                echo "It refreshes \`ui/src/utils/pluginCatalogCount.ts\`, the committed baseline for the catalog-wide plugin element count, rounded down to the nearest hundred. At runtime the UI reads the live count from the public plugin catalog API and falls back to this value only when that request fails or times out, which is what happens on instances with no outbound access to \`api.kestra.io\`. The number is shown in the Plugins page search placeholder and in the in-app documentation."
+                echo
+                echo "The new value is produced by \`ui/scripts/update_plugin_catalog_count.ts\`, which counts the unique plugin element classes published in the catalog at the time of the run. A failed fetch or an implausible count keeps the committed baseline and never fails the workflow, so this PR only shows up when the number actually moved."
+                echo
+                echo "The diff is a single constant, so reviewing it needs no local checkout: check that the new value is in line with the plugins released since the last refresh."
+              } > "$RUNNER_TEMP/pr-body.md"
+              PR_URL=$(gh pr create --title "chore(plugins): update the plugin catalog count baseline" --body-file "$RUNNER_TEMP/pr-body.md" --base ${{ github.ref_name }} --head $BRANCH_NAME)
+              gh pr edit "$PR_URL" --add-reviewer kestra-io/plugins || echo "::warning::Could not request review from kestra-io/plugins on $PR_URL; please request it manually."
+            else
+              echo "Open PR for $BRANCH_NAME already exists; the branch update refreshed it."
+            fi

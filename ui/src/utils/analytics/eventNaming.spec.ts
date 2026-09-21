@@ -2,7 +2,16 @@ import {describe, expect, it} from "vitest"
 import {resolvePosthogEventName} from "./eventNaming"
 
 const fixtures: [string, Record<string, any>, string][] = [
-    ["flow_execution", {}, "app.flow.executed"],
+    ["flow_execution", {action: "executed"}, "app.flow.executed"],
+    ["flow_execution", {action: "open_modal"}, "app.execute-modal.opened"],
+    ["flow_execution", {action: "submit"}, "app.execute-modal.submitted"],
+    ["flow_created", {}, "app.flow.created"],
+    ["secret_created", {secret_type: "secret"}, "app.secret.created"],
+    ["secret_updated", {secret_type: "secret"}, "app.secret.updated"],
+    ["secret_created", {secret_type: "kv"}, "app.kv.created"],
+    ["secret_updated", {secret_type: "kv"}, "app.kv.updated"],
+    ["secret_created", {secret_type: "token"}, "app.token.created"],
+    ["user_invited", {}, "app.user.invited"],
     ["ai_copilot", {}, "app.ai-copilot.invoked"],
     ["blueprint", {}, "app.blueprint.used"],
     ["survey_submitted", {}, "app.survey.submitted"],
@@ -30,6 +39,11 @@ const fixtures: [string, Record<string, any>, string][] = [
     ["onboarding", {onboarding: {action: "tutorial_canceled"}}, "app.onboarding.cancelled"],
     ["onboarding", {onboarding: {action: "flow_saved_during_tutorial"}}, "app.onboarding-step.viewed"],
     ["onboarding", {onboarding: {action: "flow_executed_during_tutorial"}}, "app.onboarding-step.viewed"],
+    ["onboarding", {onboarding: {event: "tour_offered", action: "copilot"}}, "app.onboarding-tour.offered"],
+    ["onboarding", {onboarding: {event: "tour_started", action: "copilot"}}, "app.onboarding-tour.started"],
+    ["onboarding", {onboarding: {event: "tour_continued", action: "add_task"}}, "app.onboarding-tour.continued"],
+    ["onboarding", {onboarding: {event: "tour_completed", action: "chain"}}, "app.onboarding-tour.completed"],
+    ["onboarding", {onboarding: {event: "tour_closed", action: "test_event"}}, "app.onboarding-tour.closed"],
 ]
 
 describe("resolvePosthogEventName", () => {
@@ -39,6 +53,16 @@ describe("resolvePosthogEventName", () => {
 
     it("falls back to the lowercased type for an unmapped event", () => {
         expect(resolvePosthogEventName("SOMETHING_NEW", {})).toEqual("something_new")
+    })
+
+    it("never resolves an unknown flow_execution action to the activation event", () => {
+        expect(resolvePosthogEventName("flow_execution", {action: "unknown_action"})).toEqual("flow_execution")
+        expect(resolvePosthogEventName("flow_execution", {})).toEqual("flow_execution")
+    })
+
+    it("falls back to the base name when secret_type is unknown or missing", () => {
+        expect(resolvePosthogEventName("secret_created", {secret_type: "unknown"})).toEqual("secret_created")
+        expect(resolvePosthogEventName("secret_updated", {})).toEqual("secret_updated")
     })
 
     it("falls back to the base lowercased name when editor_tab_action has an unknown action", () => {

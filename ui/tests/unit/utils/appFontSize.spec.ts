@@ -1,5 +1,5 @@
 import {describe, it, expect, beforeEach, afterEach} from "vitest"
-import {appFontSizeInfo, getAppFontSizeMode, applyFontScale, APP_FONT_SIZE_KEY, type AppFontSizeMode} from "../../../src/utils/appFontSize"
+import {appFontSizeInfo, getAppFontSizeMode, applyFontScale, APP_FONT_SIZE_KEY, MONO_BASE_PX, type AppFontSizeMode} from "../../../src/utils/appFontSize"
 
 describe("appFontSizeInfo", () => {
     it("returns scale 1 and base 14 for medium", () => {
@@ -18,6 +18,14 @@ describe("appFontSizeInfo", () => {
         const {scale, base} = appFontSizeInfo("large")
         expect(scale).toBeCloseTo(16 / 14)
         expect(base).toBe(16)
+    })
+})
+
+describe("MONO_BASE_PX", () => {
+    it("defaults monospace content one notch below the interface scale", () => {
+        expect(MONO_BASE_PX.small).toBe(11)
+        expect(MONO_BASE_PX.medium).toBe(12)
+        expect(MONO_BASE_PX.large).toBe(14)
     })
 })
 

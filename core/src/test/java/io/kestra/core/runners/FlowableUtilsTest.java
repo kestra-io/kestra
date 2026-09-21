@@ -260,6 +260,17 @@ class FlowableUtilsTest {
     }
 
     @Test
+    void resolveValues_withNullElementInJsonArray_shouldThrow() {
+        // Given
+        RunContext runContext = runContextFactory.of();
+
+        // When / Then — a null iteration value is rejected (drives Loop to fail the execution)
+        assertThatThrownBy(() -> FlowableUtils.resolveValues(runContext, "[\"a\", null, \"c\"]"))
+            .isInstanceOf(IllegalVariableEvaluationException.class)
+            .hasMessageContaining("Found a null value inside the iteration values");
+    }
+
+    @Test
     void resolveValues_withStringJsonObject_shouldReturnListOfPairs() throws Exception {
         // Given
         RunContext runContext = runContextFactory.of();
@@ -313,6 +324,30 @@ class FlowableUtilsTest {
         assertThatThrownBy(() -> FlowableUtils.resolveValues(runContext, values))
             .isInstanceOf(IllegalVariableEvaluationException.class)
             .hasMessageContaining("Found a null value");
+    }
+
+    @Test
+    void resolveValues_withPlainString_shouldThrowClearMessageNotJacksonError() {
+        // Given
+        RunContext runContext = runContextFactory.of();
+
+        // When/Then
+        assertThatThrownBy(() -> FlowableUtils.resolveValues(runContext, "hello world"))
+            .isInstanceOf(IllegalVariableEvaluationException.class)
+            .hasMessageContaining("must be a list, a map, or an expression")
+            .hasMessageNotContaining("Unrecognized token")
+            .hasMessageNotContaining("StreamReadFeature");
+    }
+
+    @Test
+    void resolveValues_withNonContainerJson_shouldThrowClearMessage() {
+        // Given
+        RunContext runContext = runContextFactory.of();
+
+        // When/Then a valid JSON scalar (a number) is still not a list or a map
+        assertThatThrownBy(() -> FlowableUtils.resolveValues(runContext, "5"))
+            .isInstanceOf(IllegalVariableEvaluationException.class)
+            .hasMessageContaining("must be a list, a map, or an expression");
     }
 
     @Test

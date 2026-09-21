@@ -53,24 +53,31 @@ final class Secret {
     Map<String, Object> decrypt(final Map<String, Object> data) {
         Map<String, Object> decryptedMap = new LinkedHashMap<>(data);
         for (var entry : data.entrySet()) {
-            if (entry.getValue() instanceof Map map) {
-                // if some value are of type EncryptedString we decode them and replace the object
+            // an encrypted value is an EncryptedString instance when it never left the JVM, and a Map{type, value}
+            // once it has been through serialization, so both shapes must be handled
+            if (entry.getValue() instanceof EncryptedString encryptedString) {
+                decryptInto(decryptedMap, entry.getKey(), encryptedString.getValue());
+            } else if (entry.getValue() instanceof Map map) {
                 if (map.get("type") instanceof String typeStr && EncryptedString.TYPE.equalsIgnoreCase(typeStr)) {
-                    try {
-                        String decoded = decrypt((String) map.get("value"));
-                        onSecretDecrypted.accept(decoded);
-                        decryptedMap.put(entry.getKey(), decoded);
-                    } catch (GeneralSecurityException | IllegalArgumentException e) {
-                        // NOTE: in rare cases, if for ex a Worker didn't have the encryption but an Executor has it,
-                        // we can have a non-encrypted output that we try to decrypt, this will lead to an IllegalArgumentException.
-                        // As it could break the executor, the best is to do nothing in this case and only log an error.
-                        logger.get().warn("Unable to decrypt the output", e);
-                    }
+                    decryptInto(decryptedMap, entry.getKey(), (String) map.get("value"));
                 } else {
                     decryptedMap.put(entry.getKey(), decrypt((Map<String, Object>) map));
                 }
             }
         }
         return decryptedMap;
+    }
+
+    private void decryptInto(final Map<String, Object> target, final String key, final String encrypted) {
+        try {
+            String decoded = decrypt(encrypted);
+            onSecretDecrypted.accept(decoded);
+            target.put(key, decoded);
+        } catch (GeneralSecurityException | IllegalArgumentException e) {
+            // NOTE: in rare cases, if for ex a Worker didn't have the encryption but an Executor has it,
+            // we can have a non-encrypted output that we try to decrypt, this will lead to an IllegalArgumentException.
+            // As it could break the executor, the best is to do nothing in this case and only log an error.
+            logger.get().warn("Unable to decrypt the output", e);
+        }
     }
 }

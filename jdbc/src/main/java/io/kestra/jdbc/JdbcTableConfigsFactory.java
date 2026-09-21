@@ -6,8 +6,8 @@ import io.kestra.core.lock.Lock;
 import io.kestra.core.mcp.models.McpServer;
 import io.kestra.core.mcp.models.McpSession;
 import io.kestra.core.models.Setting;
-import io.kestra.core.models.dashboards.Dashboard;
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.ExecutionOutput;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.MetricEntry;
 import io.kestra.core.models.executions.TaskOutput;
@@ -123,12 +123,6 @@ public class JdbcTableConfigsFactory {
     }
 
     @Bean
-    @Named("dashboards")
-    public InstantiableJdbcTableConfig dashboards() {
-        return new InstantiableJdbcTableConfig("dashboards", Dashboard.class, "dashboards");
-    }
-
-    @Bean
     @Named("concurrencylimit")
     public InstantiableJdbcTableConfig concurrencyLimit() {
         return new InstantiableJdbcTableConfig("concurrencylimit", ConcurrencyLimit.class, "concurrency_limit");
@@ -156,6 +150,12 @@ public class JdbcTableConfigsFactory {
     @Named("taskoutputs")
     public InstantiableJdbcTableConfig outputs() {
         return new InstantiableJdbcTableConfig("taskoutputs", TaskOutput.class, "task_outputs");
+    }
+
+    @Bean
+    @Named("executionoutputs")
+    public InstantiableJdbcTableConfig executionOutputs() {
+        return new InstantiableJdbcTableConfig("executionoutputs", ExecutionOutput.class, "execution_outputs");
     }
 
     @Bean

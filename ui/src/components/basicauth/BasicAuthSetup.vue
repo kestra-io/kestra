@@ -71,7 +71,7 @@
                                         type="password"
                                         showPassword
                                         v-model="confirmPassword"
-                                        placeholder="Re-enter your password"
+                                        :placeholder="$t('confirm password')"
                                     />
                                 </KsFormItem>
                                 <KsCheckItem :met="passwordsMatch">
@@ -91,7 +91,7 @@
                             <KsFormItem :label="$t('setup.survey.company_size')">
                                 <KsSelect
                                     v-model="surveyData.mainGoal"
-                                    placeholder="Select"
+                                    :placeholder="$t('select')"
                                     class="survey-select"
                                 >
                                     <KsOption
@@ -153,12 +153,12 @@
 </template>
 
 <script setup lang="ts">
-    import MailChecker from "mailchecker"
-    import {ref, computed, onUnmounted, type Ref} from "vue"
+    import {ref, computed, watch, onUnmounted, type Ref} from "vue"
     import {useRouter} from "vue-router"
     import {useI18n} from "vue-i18n"
     import {useMiscStore} from "override/stores/misc"
     import {useSurveySkip} from "../../composables/useSurveyData"
+    import {useDisposableEmailGuard} from "./disposableEmailGuard"
     import {trackSetupEvent} from "../../composables/usePosthog"
     import {identifyPosthogUser} from "../../utils/posthog"
 
@@ -167,7 +167,6 @@
     import MessageOutline from "vue-material-design-icons/MessageOutline.vue"
     import Logo from "../home/Logo.vue"
     import CheckBold from "vue-material-design-icons/CheckBold.vue"
-    import * as BasicAuth from "../../utils/basicAuth"
 
     interface UserFormData {
         username: string
@@ -258,7 +257,15 @@
 
     const EMAIL_REGEX = /^[a-zA-Z0-9_!#$%&'*+/=?`{|}~^.-]+@[a-zA-Z0-9.-]+$/
 
-    const validateEmail = (_rule: any, value: string, callback: (error?: Error) => void) => {
+    const disposableEmail = useDisposableEmailGuard(async () => (await import("mailchecker")).default)
+
+    const isEmailAllowed = computed(() => disposableEmail.isAllowed(userFormData.value.username))
+
+    watch(() => userFormData.value.username, (email) => {
+        if (email) void disposableEmail.ensureLoaded()
+    }, {immediate: true})
+
+    const validateEmail = async (_rule: any, value: string, callback: (error?: Error) => void) => {
         if (!value) {
             callback(new Error(t("setup.validation.email_required")))
             return
@@ -269,7 +276,8 @@
             return
         }
 
-        if (!MailChecker.isValid(value)) {
+        const checker = await disposableEmail.ensureLoaded()
+        if (checker && !checker.isValid(value)) {
             callback(new Error(t("setup.validation.email_temporary_not_allowed")))
             return
         }
@@ -292,7 +300,7 @@
         const data = userFormData.value
         return Boolean(data.username) &&
             EMAIL_REGEX.test(data.username) &&
-            MailChecker.isValid(data.username) &&
+            isEmailAllowed.value &&
             isPasswordValid.value &&
             passwordsMatch.value
     })
@@ -312,12 +320,6 @@
                 password: userFormData.value.password,
             })
 
-            BasicAuth.signIn({
-                username: normalizedEmail,
-                password: userFormData.value.password,
-            })
-
-            // addBasicAuth() above already loaded the full (now-authenticated) configuration.
             await identifyPosthogUser(miscStore.configs, {email: normalizedEmail})
 
             trackSetupEvent("setup_flow:account_created", {

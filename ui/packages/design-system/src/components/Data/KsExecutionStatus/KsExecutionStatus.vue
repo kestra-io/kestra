@@ -2,6 +2,7 @@
     <button
         type="button"
         :class="classes"
+        :disabled="disabled"
     >
         <component
             v-if="icon"
@@ -30,12 +31,14 @@
         size?: "large" | "default" | "small";
         glow?: boolean;
         clickable?: boolean;
+        disabled?: boolean;
     }>(), {
         icon: true,
         size: "default",
         title: undefined,
         glow: false,
         clickable: false,
+        disabled: false,
     })
 
     defineSlots<{
@@ -55,12 +58,12 @@
         props.status?.toLowerCase() && `ks-execution-status--${props.status.toLowerCase()}`,
         props.size !== "default" && `ks-execution-status--${props.size}`,
         props.glow && "ks-execution-status--glow",
-        props.clickable && "ks-execution-status--clickable",
+        props.clickable && !props.disabled && "ks-execution-status--clickable",
     ].filter(Boolean))
 </script>
 
 <style scoped lang="scss">
-$statusList: created, restarted, success, running, killing, killed, warning, failed, paused, cancelled, skipped, queued, retrying, retried, breakpoint;
+$statusList: created, submitted, restarted, success, running, killing, killed, warning, failed, paused, cancelled, skipped, queued, retrying, retried, breakpoint;
 
 .ks-execution-status {
     display: inline-flex;
@@ -68,7 +71,6 @@ $statusList: created, restarted, success, running, killing, killed, warning, fai
     align-items: center;
     line-height: 1;
     white-space: nowrap;
-    cursor: default;
     text-align: center;
     box-sizing: border-box;
     outline: none;
@@ -116,6 +118,15 @@ $statusList: created, restarted, success, running, killing, killed, warning, fai
         gap: 0.25rem;
     }
 
+    /* Bootstrap's reboot puts `cursor: pointer` on `[type="button"]:not(:disabled)`, which ties
+       with this scoped block's `.ks-execution-status[data-v-hash]` at (0,2,0) and wins on source
+       order — so the badge advertised a click it does not handle. The extra `:not()` breaks the
+       tie. `inherit` rather than `default`: a badge is often the target inside a clickable row,
+       and pinning `default` would leave a dead patch in the middle of it. */
+    &:not(.ks-execution-status--clickable) {
+        cursor: inherit;
+    }
+
     &.ks-execution-status--clickable {
         cursor: pointer;
 
@@ -133,6 +144,13 @@ $statusList: created, restarted, success, running, killing, killed, warning, fai
 
         &.ks-execution-status--glow {
             box-shadow: 0 9.85px 29.54px 0 var(--ks-status-background-#{$status});
+        }
+
+        &.ks-execution-status--glow.ks-execution-status--clickable {
+            &:hover,
+            &:focus-visible {
+                box-shadow: inset 0 0 0 1px currentColor, 0 9.85px 29.54px 0 var(--ks-status-background-#{$status});
+            }
         }
     }
 }

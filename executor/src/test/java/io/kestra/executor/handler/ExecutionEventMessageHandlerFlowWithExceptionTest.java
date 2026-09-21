@@ -61,7 +61,7 @@ class ExecutionEventMessageHandlerFlowWithExceptionTest {
         var flow = Fixtures.flow();
         var execution = Execution.newExecution(flow, Collections.emptyList());
         executionRepository.save(execution);
-        when(flowMetaStore.findByExecutionThenInjectDefaults(any()))
+        when(flowMetaStore.findByExecutionForRuntime(any()))
             .thenReturn(Optional.of(FlowWithException.from(flow, new IllegalStateException("blocked by governance policy"))));
 
         // When
@@ -78,7 +78,7 @@ class ExecutionEventMessageHandlerFlowWithExceptionTest {
         var flow = Fixtures.flow();
         var execution = Execution.newExecution(flow, Collections.emptyList()).withState(State.Type.SUCCESS);
         executionRepository.save(execution);
-        when(flowMetaStore.findByExecutionThenInjectDefaults(any()))
+        when(flowMetaStore.findByExecutionForRuntime(any()))
             .thenReturn(Optional.of(FlowWithException.from(flow, new IllegalStateException("blocked by governance policy"))));
 
         // When

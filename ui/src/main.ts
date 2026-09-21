@@ -1,5 +1,5 @@
 import {createApp} from "vue"
-import type {Router} from "vue-router"
+import type {Router, RouteLocationNormalized} from "vue-router"
 
 import "./utils/monacoEnvironment"
 import {setupPreloadErrorReloadHandler} from "./utils/preloadErrorReload"
@@ -12,7 +12,7 @@ import {setupKestraHttp} from "./utils/kestraHttp"
 import {useClient} from "@kestra-io/kestra-sdk"
 import routes from "./routes/routes"
 import en from "./translations/en.json"
-import {setupTenantRouter} from "./composables/useTenant"
+import {setupTenantRouter, tenantGuard} from "./composables/useTenant"
 import * as BasicAuth from "./utils/basicAuth"
 import {getCsrfToken} from "./utils/csrf"
 import {useCoreStore} from "./stores/core"
@@ -34,10 +34,14 @@ const app = createApp(App)
 app.provide(TASK_ICON_INJECTION_KEY, TaskIcon)
 
 // Fail closed: an error probing the pre-auth endpoints is no evidence that setup is needed.
-const handleAuthError = (to: {fullPath: string}) => {
-    BasicAuth.logout()
-    const fromPath = to.fullPath !== "/ui/login" ? to.fullPath : undefined
-    return {name: "login", query: fromPath ? {from: fromPath} : {}}
+const handleAuthError = (to: {fullPath: string}, error: unknown) => {
+    if ((error as {response?: {status?: number}} | null)?.response?.status === 401) {
+        BasicAuth.logout()
+        const fromPath = to.fullPath !== "/ui/login" ? to.fullPath : undefined
+        return {name: "login", query: fromPath ? {from: fromPath} : {}}
+    } 
+    console.error("Error during authentication check:", error)
+    return
 }
 
 let httpClient: ReturnType<typeof setupKestraHttp> | undefined
@@ -75,8 +79,7 @@ function setupAxios(router: Router) {
     return useClient()
 }
 
-// FIXME: any - guard args are untyped in the GuardFn interface
-async function beforeResolve(router: Router, to: any, from: any): Promise<unknown> { // FIXME: any
+async function beforeResolve(router: Router, to: RouteLocationNormalized, from: RouteLocationNormalized): Promise<unknown> {
     if(to.path === from.path && to.query === from.query) {
         return // Prevent navigation if the path and query are the same
     }
@@ -111,7 +114,7 @@ async function beforeResolve(router: Router, to: any, from: any): Promise<unknow
             }
         }
 
-        if ((to as {meta?: {anonymous?: boolean}}).meta?.anonymous === true) {
+        if (to.meta?.anonymous === true) {
             if (to.name === "setup") {
                 return {name: "login"}
             }
@@ -135,14 +138,14 @@ async function beforeResolve(router: Router, to: any, from: any): Promise<unknow
         await miscStore.loadConfigs()
     } catch (error) {
         console.error("Error during authentication check:", error)
-        return handleAuthError(to)
+        return handleAuthError(to, error)
     }
 }
 
-initApp(app, routes, null, en as Record<string, unknown>, {}, {beforeResolve: beforeResolve as (...args: unknown[]) => unknown}).then(({router, piniaStore}) => {
-
-
-    // Setup tenant router
+initApp(app, routes, null, en as Record<string, unknown>, {}, {
+    beforeEach: tenantGuard as (...args: unknown[]) => unknown,
+    beforeResolve: beforeResolve as (...args: unknown[]) => unknown,
+}).then(({router, piniaStore}) => {
     setupTenantRouter(router, app)
 
     setupAxios(router)
@@ -150,8 +153,7 @@ initApp(app, routes, null, en as Record<string, unknown>, {}, {beforeResolve: be
     const $http = setupAxios(router)
 
     piniaStore.use(({store: piniaStoreLocal}) => {
-        // FIXME: any
-        ;(piniaStoreLocal as any).$http = $http
+        piniaStoreLocal.$http = $http
     })
 
     // mount

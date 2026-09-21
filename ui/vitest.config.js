@@ -13,13 +13,9 @@ const dirname =
         ? __dirname
         : path.dirname(fileURLToPath(import.meta.url))
 
-// `--merge-reports` only recombines existing report blobs; it runs no tests.
-// But loading the config still boots a Vite dev server whose dependency scan
-// segfaults (CI and locally). We can't swap in a lighter project to dodge it:
-// the merge recreates each spec using the pool recorded in its blob ("browser"),
-// so the project's pool shape must match the sharded runs exactly.
-// Instead, disable the scan during merge only — nothing is served here anyway.
-const isMergeReports = process.argv.includes("--merge-reports")
+// vite.config.js skips the federation()/VitePWA() plugins when this is set (they have no
+// place in a test run); the storybook CLI sets it automatically, so mirror that here.
+process.env.STORYBOOK = "true"
 
 const resolvedViteConfig = typeof viteConfig === "function" ? viteConfig({mode: "test"}) : viteConfig
 
@@ -37,6 +33,14 @@ console.warn = (...args) => {
     if (typeof args[0] === "string" && args[0].includes("decodeEntities")) return
     originalConsoleWarn(...args)
 }
+
+// Node 26 defines a `localStorage` global that stays undefined unless --localstorage-file is
+// given, and it shadows the one jsdom installs, so every unit spec touching storage throws.
+// Disabling Node's own web storage lets jsdom provide it, as it does on the Node 24 in .nvmrc,
+// where the global does not exist and the flag is a no-op. Set here rather than in
+// poolOptions.execArgv, which vitest overrides with its own, and rather than in the npm script,
+// which would not survive someone running vitest directly.
+process.env.NODE_OPTIONS = `${process.env.NODE_OPTIONS ?? ""} --no-experimental-webstorage`.trim()
 
 // Vite writes logger warnings to process.stderr. Silence the
 // "Sourcemap for X points to a source file outside its package" noise
@@ -76,17 +80,9 @@ export default defineConfig({
                         configDir: path.join(dirname, ".storybook"),
                     }),
                 ],
-                // Merge-only: skip Vite's automatic dependency scan — see the
-                // comment above `isMergeReports` for why.
-                ...(isMergeReports ? {optimizeDeps: {noDiscovery: true, entries: []}} : {}),
                 test: {
                     name: "storybook",
-                    setupFiles: ["./.storybook/vitest.setup.js"],
-                    // Only takes effect during the `--merge-reports` replay (see
-                    // run-storybook-tests.sh): the sharded runs pass their own
-                    // `--reporter` flags on the CLI, which take precedence over this
-                    // config. The merge step doesn't, so this is what produces the
-                    // single, whole-suite JUnit report CI reads to list failing tests.
+                    setupFiles: ["./.storybook/vitest.setup.ts"],
                     reporters: [
                         ["default"],
                         ["junit"],
@@ -103,7 +99,12 @@ export default defineConfig({
                     browser: {
                         enabled: true,
                         headless: true,
-                        provider: playwright(),
+                        // enable early garbage collection
+                        provider: playwright({
+                            launchOptions: {
+                                args: ["--js-flags=--max-old-space-size=1536", "--disable-dev-shm-usage"],
+                            },
+                        }),
                         instances: [
                             {
                                 browser: "chromium",
@@ -125,7 +126,6 @@ export default defineConfig({
                 "**/*.d.ts",
                 "**/.storybook/**",
                 "storybook-static/**",
-                "stylelint.config.mjs",
             ],
         },
     },

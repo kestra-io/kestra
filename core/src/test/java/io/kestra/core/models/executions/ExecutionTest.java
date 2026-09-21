@@ -3,10 +3,12 @@ package io.kestra.core.models.executions;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
+import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
@@ -14,8 +16,40 @@ import io.kestra.core.utils.IdUtils;
 import io.kestra.plugin.core.debug.Return;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class ExecutionTest {
+
+    @Test
+    void findTaskRunByTaskRunIdIfPresentShouldReturnEmptyWhenTaskRunNotFound() {
+        // Given
+        Execution execution = Execution.builder()
+            .id("executionId")
+            .taskRunList(List.of(TaskRun.builder().id("existing").state(new State()).build()))
+            .state(new State())
+            .build();
+
+        // When
+        Optional<TaskRun> result = execution.findTaskRunByTaskRunIdIfPresent("missing");
+
+        // Then
+        assertThat(result).isEqualTo(Optional.empty());
+    }
+
+    @Test
+    void findTaskRunByTaskRunIdShouldThrowWhenTaskRunNotFound() {
+        // Given
+        Execution execution = Execution.builder()
+            .id("executionId")
+            .taskRunList(List.of(TaskRun.builder().id("existing").state(new State()).build()))
+            .state(new State())
+            .build();
+
+        // When / Then
+        assertThatThrownBy(() -> execution.findTaskRunByTaskRunId("missing"))
+            .isInstanceOf(InternalException.class)
+            .hasMessageContaining("Can't find taskrun with taskrunId 'missing'");
+    }
 
     @Test
     void hasTaskRunJoinableTrue() {

@@ -82,6 +82,7 @@ public class GeminiAiService extends AiService<GeminiConfiguration> {
             .thinkingConfig(thinkingConfig())
             .returnThinking(true)
             .sendThinking(true)
+            .customHeaders(getAiConfiguration().customHeaders())
             .timeout(getAiConfiguration().timeout());
 
         if (getAiConfiguration().clientPem() != null) {
@@ -118,6 +119,7 @@ public class GeminiAiService extends AiService<GeminiConfiguration> {
             .thinkingConfig(thinkingConfig())
             .returnThinking(true)
             .sendThinking(true)
+            .customHeaders(getAiConfiguration().customHeaders())
             .timeout(getAiConfiguration().timeout())
             .build();
     }

@@ -43,7 +43,7 @@ export function useInputsWizard(deps: UseInputsWizardDeps) {
     // cleared on unmount (dialog discard or execution creation) so a fresh open starts blank.
     const formValuesStorageKey = computed(() => isWizard.value ? executeFormValuesStorageKey(props.flow) : undefined)
 
-    const steps = computed<WizardStep[]>(() => isWizard.value ? buildWizardSteps(props.initialInputs as any) : [])
+    const steps = computed<WizardStep[]>(() => isWizard.value ? buildWizardSteps(props.initialInputs) : [])
 
     const currentStep = ref(0)
     // Steps the user has passed via Next (sticky — never cleared, so editing from recap and
@@ -171,8 +171,13 @@ export function useInputsWizard(deps: UseInputsWizardDeps) {
         if (!isWizard.value || !formValuesStorageKey.value) return
         try {
             const stored = localStorage.getItem(formValuesStorageKey.value)
-            if (stored) {
-                Object.assign(inputsValues, JSON.parse(stored))
+            if (!stored) return
+            const parsed = JSON.parse(stored)
+            if (!parsed || typeof parsed !== "object") return
+            // Allowlist by declared input id instead of Object.assign, to block mass-assignment of arbitrary/prototype keys.
+            const knownIds = new Set(inputsMetaData.value.map(m => m.id))
+            for (const [id, value] of Object.entries(parsed)) {
+                if (knownIds.has(id)) inputsValues[id] = value
             }
         } catch { /* ignore corrupt storage */ }
     }

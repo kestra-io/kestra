@@ -224,7 +224,26 @@ public interface FlowRepositoryInterface extends QueryBuilderInterface<Flows.Fie
         @Nullable String tenantId,
         @Nullable List<QueryFilter> filters);
 
-    ArrayListTotal<SearchResult<Flow>> findSourceCode(Pageable pageable, @Nullable String query, @Nullable String tenantId, @Nullable String namespace);
+    /**
+     * Same as {@link #findWithSource(Pageable, String, List)} but resolves each flow to its most
+     * recent non-draft revision. A flow whose latest revision is a draft therefore yields the last
+     * revision that was actually saved, and a flow with only draft revisions yields nothing.
+     * <p>
+     * Intended for consumers that must not observe drafts, such as exporting sources to Git. The
+     * revision fallback matters: returning nothing for a draft-headed flow that also has a saved
+     * revision would make external sync treat it as deleted.
+     * <p>
+     * The default implementation does not filter drafts. Implementations that track draft
+     * revisions should override it.
+     */
+    default ArrayListTotal<FlowWithSource> findWithSourceExcludingDrafts(
+        Pageable pageable,
+        @Nullable String tenantId,
+        @Nullable List<QueryFilter> filters) {
+        return this.findWithSource(pageable, tenantId, filters);
+    }
+
+    ArrayListTotal<SearchResult<Flow>> findSourceCode(Pageable pageable, @Nullable String query, boolean caseSensitive, boolean wholeWord, boolean regex, SourceSearchScope scope, @Nullable String tenantId, @Nullable String namespace);
 
     List<String> findDistinctNamespace(String tenantId);
 

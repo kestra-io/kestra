@@ -39,6 +39,18 @@ public class DateUtils {
         }
     }
 
+    /**
+     * Adds {@code duration} to {@code instant}, throwing a checked {@link InternalException} when the
+     * result is out of range instead of the unchecked exception raised by {@link Instant#plus}.
+     */
+    public static Instant plusOrThrow(Instant instant, Duration duration) throws InternalException {
+        try {
+            return instant.plus(duration);
+        } catch (ArithmeticException | DateTimeException e) {
+            throw new InternalException("The duration '%s' is out of the supported range when added to '%s'.".formatted(duration, instant), e);
+        }
+    }
+
     public static GroupType groupByType(Duration duration) {
         if (duration.toDays() > GroupValue.MONTH.getValue()) {
             return GroupType.MONTH;

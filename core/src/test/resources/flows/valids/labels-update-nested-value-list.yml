@@ -1,0 +1,10 @@
+id: labels-update-nested-value-list
+namespace: io.kestra.tests
+
+tasks:
+  - id: list_form_nested_value
+    type: io.kestra.plugin.core.execution.Labels
+    labels:
+      - key: stage
+        value:
+          name: done

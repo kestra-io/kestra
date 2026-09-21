@@ -18,13 +18,16 @@ import {
     type useFilterGroups,
 } from "./useFilterGroups"
 import type {useDismissedKeys} from "./useDismissedKeys"
+import type {usePreAppliedFilters} from "./usePreAppliedFilters"
 
 type Tree = ReturnType<typeof useFilterGroups>
 type Dismissed = ReturnType<typeof useDismissedKeys>
+type PreApplied = ReturnType<typeof usePreAppliedFilters>
 
 interface UseFilterActionsOptions {
     tree: Tree;
     dismissed: Dismissed;
+    preApplied: PreApplied;
     searchQuery: Ref<string>;
     /** Called after each action to push the new tree state to the URL. */
     updateRoute: (shouldResetPage?: boolean) => void;
@@ -35,6 +38,7 @@ interface UseFilterActionsOptions {
 export function useFilterActions({
     tree,
     dismissed,
+    preApplied,
     searchQuery,
     updateRoute,
     hasValue,
@@ -86,6 +90,7 @@ export function useFilterActions({
             filters: leaf.filters.filter(f => f?.id !== filterId),
         }))
         dismissed.dismissDefaultVisibleKey(found.key)
+        preApplied.clearPreAppliedKey(found.key)
         updateRoute(false)
     }
 
@@ -135,6 +140,7 @@ export function useFilterActions({
 
     const clearFilters = () => {
         dismissed.dismissAllDefaultVisibleKeys()
+        preApplied.clearPreApplied()
         tree.clearTree()
         searchQuery.value = ""
         updateRoute(true)

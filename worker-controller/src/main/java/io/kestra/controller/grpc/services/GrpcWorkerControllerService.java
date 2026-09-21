@@ -249,7 +249,7 @@ public class GrpcWorkerControllerService extends WorkerControllerServiceGrpc.Wor
                 }
                 case REALTIME -> {
                     if (evaluation != null) {
-                        triggerExecutionPublisher.send(evaluation.toExecution(workerTriggerResult.id()));
+                        triggerExecutionPublisher.send(workerTriggerResult.id(), evaluation);
                     } else {
                         // The realtime trigger stream ended without producing an execution — clean
                         // completion (stop, kill, stream end) or an error with failOnTriggerError=false:

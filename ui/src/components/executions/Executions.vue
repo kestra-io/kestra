@@ -14,7 +14,7 @@
                         </template>
                     </li>
                 </template>
-                <template v-if="$route.name === 'flows/update'">
+                <template v-if="routeFamily($route.name) === 'flows/update'">
                     <li>
                         <template v-if="isAllowedEdit">
                             <KsButton :icon="Pencil" size="large" @click="editFlow" :disabled="isReadOnly">
@@ -49,7 +49,7 @@
             @ready="ready = true"
             :defaultSort="{prop: 'state.startDate', order: 'descending'}"
             :selectable="!hidden?.includes('selection') && canCheck"
-            :no-data-text="$t('no_results.executions')"
+            :no-data-text="noDataText ?? $t('no_results.executions')"
             :rowKey="(row: any) => row.id"
             :fitHeight="fitHeightResolved"
         >
@@ -58,22 +58,23 @@
                     :configuration="namespace === undefined || flowId === undefined ? executionFilter : flowExecutionFilter"
                     :properties="{
                         shown: true,
-                        columns: optionalColumns,
+                        columns: allColumns,
                         displayColumns,
                         storageKey: storageKey
                     }"
                     :prefix="'executions'"
                     :tableOptions="{
-                        chart: {shown: true, value: showChart, callback: onShowChartChange},
+                        chart: {shown: !hideChart, value: showChart, callback: onShowChartChange},
                         refresh: {shown: true, callback: refresh}
                     }"
                     @update-properties="updateDisplayColumns"
                     :defaultScope="defaultScopeFilter"
+                    :defaultDuration="chartDefaultDuration"
                 />
             </template>
 
             <template v-if="showStatChart()" #top>
-                <Sections ref="dashboardComponent" :dashboard="DEFAULT_DASHBOARD" :charts showDefault class="mb-4" />
+                <Sections ref="dashboardComponent" :dashboard="DEFAULT_DASHBOARD" :charts :baseFilters="lockedFilters" showDefault class="mb-4" />
             </template>
 
             <template #bulk-actions>
@@ -93,6 +94,17 @@
                     {{ $t("delete") }}
                 </KsButton>
 
+                <component
+                    :is="action"
+                    v-for="(action, i) in bulkActionComponents"
+                    :key="i"
+                    :selection="selection"
+                    :queryBulkAction="queryBulkAction"
+                    :namespace="props.namespace"
+                    :loadQuery="loadQuery"
+                    @done="() => {toggleAllUnselected(); dataTable?.resetAndReload()}"
+                />
+
                 <KsDropdown>
                     <KsButton :aria-label="$t('bulk actions')">
                         <DotsVertical />
@@ -108,10 +120,10 @@
                             <KsDropdownItem v-if="canUpdate" :icon="PauseBox" @click="pauseExecutions()">
                                 {{ $t("pause") }}
                             </KsDropdownItem>
-                            <KsDropdownItem v-if="canUpdate" :icon="QueueFirstInLastOut" @click="unqueueDialogVisible = true">
+                            <KsDropdownItem v-if="canUnqueue" :icon="QueueFirstInLastOut" @click="unqueueDialogVisible = true">
                                 {{ $t("unqueue") }}
                             </KsDropdownItem>
-                            <KsDropdownItem v-if="canUpdate" :icon="RunFast" @click="forceRunExecutions()">
+                            <KsDropdownItem v-if="canForceRun" :icon="RunFast" @click="forceRunExecutions()">
                                 {{ $t("force run") }}
                             </KsDropdownItem>
                         </KsDropdownMenu>
@@ -123,6 +135,7 @@
                     destroyOnClose
                     :appendToBody="true"
                     alignCenter
+                    scrollable
                 >
                     <template #header>
                         <h5>{{ $t("Set labels") }}</h5>
@@ -132,7 +145,7 @@
                         <KsButton @click="isOpenLabelsModal = false">
                             {{ $t("cancel") }}
                         </KsButton>
-                        <KsButton type="primary" @click="setLabels()">
+                        <KsButton type="primary" :disabled="hasInvalidLabels" @click="setLabels()">
                             {{ $t("ok") }}
                         </KsButton>
                     </template>
@@ -188,7 +201,7 @@
                     <template v-else-if="col.prop === 'state.duration'">
                         <Duration :field="scope.row?.state?.duration" :startDate="scope.row?.state?.startDate" />
                     </template>
-                    <template v-else-if="col.prop === 'namespace' && $route.name !== 'flows/update'">
+                    <template v-else-if="col.prop === 'namespace' && routeFamily($route.name) !== 'flows/update'">
                         <KsEntityLink
                             v-if="scope.row?.namespace"
                             entity="namespace"
@@ -196,7 +209,7 @@
                             :to="{name: 'namespaces/update', params: {id: scope.row.namespace}}"
                         />
                     </template>
-                    <template v-else-if="col.prop === 'flowId' && $route.name !== 'flows/update'">
+                    <template v-else-if="col.prop === 'flowId' && routeFamily($route.name) !== 'flows/update'">
                         <KsEntityLink
                             v-if="scope.row?.flowId"
                             entity="flow"
@@ -205,14 +218,14 @@
                         />
                     </template>
                     <template v-else-if="col.prop === 'labels'">
-                        <Labels :labels="filteredLabels(scope.row?.labels)" @click.prevent.stop />
+                        <Labels :labels="filteredLabels(scope.row?.labels)" :max="3" @click.prevent.stop />
                     </template>
                     <template v-else-if="col.prop === 'state.current'">
                         <KsExecutionStatus
                             :status="scope.row?.state?.current"
                             size="small"
                             clickable
-                            :aria-label="t('filter by status', {status: scope.row?.state?.current})"
+                            :aria-label="$t('filter by status', {status: scope.row?.state?.current})"
                             @click.stop="onStateClick(scope.row?.state?.current)"
                         />
                     </template>
@@ -255,6 +268,9 @@
                             <KsId :value="scope.row?.trigger?.variables?.executionId" :shrink="true" />
                         </RouterLink>
                         <span v-else>-</span>
+                    </template>
+                    <template v-else-if="cellComponents[col.prop]">
+                        <component :is="cellComponents[col.prop]" :execution="scope.row" />
                     </template>
                 </template>
                 <template v-if="col.prop === 'taskRunList.taskId'" #header="scope">
@@ -394,13 +410,14 @@
 </template>
 
 <script setup lang="ts">
-    import _merge from "lodash/merge"
-    import escape from "lodash/escape"
     import {useI18n} from "vue-i18n"
+    import {asProblem} from "@kestra-io/kestra-sdk"
+    import {problemBulkBody, problemTitle} from "../../utils/problem"
     import {useRoute, useRouter} from "vue-router"
+    import {routeFamily} from "../../utils/routeFamily"
     import {ref, computed, watch, h, useTemplateRef} from "vue"
-    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
-    import {KsSwitch, KsFormItem, KsAlert, KsCheckbox, KsMessageBox} from "@kestra-io/design-system"
+    import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
+    import {KsSwitch, KsFormItem, KsAlert, KsCheckbox, KsMessageBox, normalizeRouteTimeRangeFilter, deepMerge} from "@kestra-io/design-system"
 
     import Delete from "vue-material-design-icons/Delete.vue"
     import Pencil from "vue-material-design-icons/Pencil.vue"
@@ -435,6 +452,14 @@
     import TriggerAvatar from "../../components/flows/TriggerAvatar.vue"
 
     import {filterValidLabels, keepSupportedFilters, FILTER_FIELD_PATTERN} from "./utils"
+    import {
+        FALLBACK_TIME_RANGE,
+        queryHasAbsoluteDateFilter,
+        queryHasUserFilters,
+        readTimeRangeFromQuery,
+        widenEmptyTimeRange,
+    } from "./timeRangeWiden"
+    import {hasInvalidLabelKeys} from "../../utils/executionLabels"
     import {useToast} from "../../utils/toast"
     import {storageKeys} from "../../utils/constants"
     import * as Utils from "../../utils/utils"
@@ -444,19 +469,22 @@
     import resource from "../../models/resource"
 
     import useRouteContext from "../../composables/useRouteContext"
-    import {useTableColumns} from "../../composables/useTableColumns"
+    import {useTableColumns} from "@kestra-io/design-system"
 
     import {useFlowStore} from "../../stores/flow"
     import {useAuthStore} from "override/stores/auth"
     import {useMiscStore} from "override/stores/misc"
     import {Label, useExecutionsStore} from "../../stores/executions"
+    import {getExtraColumns, cellComponents, bulkActionComponents} from "override/components/executions/executionsExtensions"
 
-    import {useExecutionFilter, useFlowExecutionFilter} from "../filter/configurations"
+    import {useExecutionFilter} from "../filter/configurations/executionFilter"
+    import {useFlowExecutionFilter} from "../filter/configurations/flowExecutionFilter"
     import {useStateFilter} from "../filter/composables/useStateFilter"
     import YAML_CHART from "../dashboard/assets/executions_timeseries_chart.yaml?raw"
     import {DEFAULT_DASHBOARD} from "../../stores/dashboard"
+    import type {QueryFilter} from "@kestra-io/kestra-sdk"
 
-    const {t} = useI18n()
+    const {t, te} = useI18n()
     const toast = useToast()
 
     const executionFilter = useExecutionFilter()
@@ -476,6 +504,13 @@
         flowId?: string | undefined;
         namespace?: string | undefined;
         defaultScopeFilter?: boolean;
+        labels?: Record<string, string> | undefined;
+        title?: string | undefined;
+        noDataText?: string | undefined;
+        hideChart?: boolean;
+        columnsStorageKey?: string | undefined;
+        defaultColumns?: string[];
+        childFilter?: "MAIN" | "CHILD";
     }>(), {
         embed: false,
         filter: true,
@@ -490,6 +525,13 @@
         flowId: undefined,
         namespace: undefined,
         defaultScopeFilter: false,
+        labels: undefined,
+        title: undefined,
+        noDataText: undefined,
+        hideChart: false,
+        columnsStorageKey: undefined,
+        defaultColumns: () => [],
+        childFilter: undefined,
     })
 
     const fitHeightResolved = computed(() => props.fitHeight ?? props.topbar)
@@ -507,6 +549,7 @@
     const executionsStore = useExecutionsStore()
 
     const executionLabels = ref<Label[]>([])
+    const hasInvalidLabels = computed(() => hasInvalidLabelKeys(executionLabels.value))
     const recomputeInterval = ref(false)
     const isOpenLabelsModal = ref(false)
     const isOpenReplayModal = ref(false)
@@ -520,6 +563,24 @@
     const showChart = ref(localStorage.getItem(storageKeys.SHOW_CHART) !== "false")
 
     const optionalColumns = ref([
+        {
+            label: t("state"),
+            prop: "state.current",
+            default: true,
+            description: t("filter.table_column.executions.state"),
+        },
+        {
+            label: t("flow"),
+            prop: "flowId",
+            default: true,
+            description: t("filter.table_column.executions.flow"),
+        },
+        {
+            label: t("namespace"),
+            prop: "namespace",
+            default: true,
+            description: t("filter.table_column.executions.namespace"),
+        },
         {
             label: t("start date"),
             prop: "state.startDate",
@@ -539,28 +600,10 @@
             description: t("filter.table_column.executions.duration"),
         },
         {
-            label: t("namespace"),
-            prop: "namespace",
-            default: true,
-            description: t("filter.table_column.executions.namespace"),
-        },
-        {
-            label: t("flow"),
-            prop: "flowId",
-            default: true,
-            description: t("filter.table_column.executions.flow"),
-        },
-        {
             label: t("labels"),
             prop: "labels",
             default: true,
             description: t("filter.table_column.executions.labels"),
-        },
-        {
-            label: t("state"),
-            prop: "state.current",
-            default: true,
-            description: t("filter.table_column.executions.state"),
         },
         {
             label: t("revision"),
@@ -595,23 +638,34 @@
     ])
 
     const storageKey = computed(() =>
-        route.name === "flows/update"
+        props.columnsStorageKey
+        ?? (routeFamily(route.name) === "flows/update"
             ? storageKeys.DISPLAY_FLOW_EXECUTIONS_COLUMNS
-            : storageKeys.DISPLAY_EXECUTIONS_COLUMNS,
+            : storageKeys.DISPLAY_EXECUTIONS_COLUMNS),
     )
 
-    const {visibleColumns: displayColumns, updateVisibleColumns: updateDisplayColumns} = useTableColumns({
-        columns: optionalColumns.value,
+    const allColumns = computed(() => [
+        ...optionalColumns.value,
+        ...getExtraColumns(route.name as string).map(col => ({...col, label: t(col.label)})),
+    ])
+
+    const {visibleColumns: displayColumns, orderedVisibleColumns, updateVisibleColumns: updateDisplayColumns} = useTableColumns({
+        columns: allColumns.value,
         storageKey: storageKey.value,
+        initialVisibleColumns: props.defaultColumns,
     })
 
     const visibleColumns = computed(() =>
-        displayColumns.value
-            .map(prop => optionalColumns.value.find(c => c.prop === prop))
-            .filter(Boolean) as any[],
+        orderedVisibleColumns.value
+            .map(prop => allColumns.value.find(c => c.prop === prop))
+            .filter(c => {
+                const condition = (c as {condition?: () => boolean})?.condition
+                return c && (!condition || condition())
+            }) as any[],
     )
 
     const isColumnSortable = (prop: string) => {
+        if (prop in cellComponents) return false
         return !["labels", "flowRevision", "inputs", "taskRunList.taskId", "trigger", "trigger.variables.executionId"].includes(prop)
     }
 
@@ -635,17 +689,53 @@
 
     const ready = ref(false)
     const dataTable = useTemplateRef<any>("dataTable")
+    const chartDefaultDuration = computed(() => miscStore.configs?.chartDefaultDuration ?? FALLBACK_TIME_RANGE)
+
+    let hasAttemptedTimeRangeWiden = false
 
     const loadData = async ({page, size, sort}: {page: number; size: number; sort?: string}) => {
         if (!loadInit.value) return
         lastRefreshDate.value = new Date()
 
-        await executionsStore.findExecutions(loadQuery({
+        const query = loadQuery({
             size,
             page,
             sort: sort ?? String(route.query.sort ?? "state.startDate:desc"),
             state: route.query?.state ? [route.query?.state] : props.statuses,
-        }))
+        }) as Record<string, unknown>
+
+        await executionsStore.findExecutions(query)
+
+        const currentTimeRange = readTimeRangeFromQuery(query)
+        if (currentTimeRange && !hasAttemptedTimeRangeWiden) {
+            hasAttemptedTimeRangeWiden = true
+            const widened = await widenEmptyTimeRange({
+                currentTimeRange,
+                defaultTimeRange: chartDefaultDuration.value,
+                hasAbsoluteDateFilter: queryHasAbsoluteDateFilter(query),
+                alreadyAttempted: false,
+                hasUserFilters: queryHasUserFilters(query),
+                currentTotal: executionsStore.total ?? 0,
+                search: async (timeRange) => {
+                    await executionsStore.findExecutions(
+                        normalizeRouteTimeRangeFilter({...query, page: 1}, timeRange),
+                    )
+                    return executionsStore.total ?? 0
+                },
+            })
+            if (widened.widened && widened.timeRange) {
+                if (props.embed) {
+                    localPage.value = 1
+                }
+                await router.replace({
+                    ...route,
+                    query: {
+                        ...normalizeRouteTimeRangeFilter({...route.query}, widened.timeRange),
+                        page: "1",
+                    },
+                })
+            }
+        }
 
         if (props.isConcurrency) {
             emitStateCount()
@@ -680,7 +770,7 @@
         dataTable.value?.resetAndReload()
     })
 
-    const routeInfo = computed(() => ({title: t("executions")}))
+    const routeInfo = computed(() => ({title: props.title ?? t("executions")}))
     useRouteContext(routeInfo, props.embed)
 
     const selection = computed(() => dataTable.value?.selection ?? [])
@@ -689,11 +779,11 @@
 
 
     const displayButtons = computed(() => {
-        return (route.name === "flows/update") || (route.name === "executions/list")
+        return (routeFamily(route.name) === "flows/update") || (route.name === "executions/list")
     })
 
     const canCheck = computed(() => {
-        return canDelete.value || canUpdate.value || canKill.value
+        return canDelete.value || canUpdate.value || canKill.value || canForceRun.value || canUnqueue.value
     })
 
     const canReplay = computed(() => {
@@ -710,6 +800,14 @@
 
     const canKill = computed(() => {
         return authStore.user?.isAllowed(resource.EXECUTION, action.KILL, props.namespace)
+    })
+
+    const canForceRun = computed(() => {
+        return authStore.user?.isAllowed(resource.EXECUTION, action.FORCE_RUN, props.namespace)
+    })
+
+    const canUnqueue = computed(() => {
+        return authStore.user?.isAllowed(resource.EXECUTION, action.UNQUEUE, props.namespace)
     })
 
     const isAllowedEdit = computed(() => {
@@ -742,6 +840,10 @@
         ]
     })
 
+    const lockedFilters = computed<QueryFilter[]>(() =>
+        props.labels ? [{field: "labels", operation: "EQUALS", value: props.labels}] : [],
+    )
+
     const filteredLabels = (labels: any[]) => {
         const toIgnore = miscStore.configs?.hiddenLabelsPrefixes || []
 
@@ -767,7 +869,7 @@
     }
 
     const showStatChart = () => {
-        return isDisplayedTop.value && showChart.value
+        return !props.hideChart && isDisplayedTop.value && showChart.value
     }
 
     const refresh = () => {
@@ -780,7 +882,7 @@
             ? executionFilter.value
             : flowExecutionFilter.value
         const fields = (configuration.keys ?? []).flatMap((entry: {key: string}) =>
-            entry.key === "timeRange" ? ["startDate", "endDate"] : [entry.key],
+            entry.key === "timeRange" ? ["timeRange", "startDate", "endDate"] : [entry.key],
         )
         if (configuration.searchPlaceholder) {
             fields.push("q")
@@ -803,12 +905,20 @@
             queryFilter["filters[flowId][EQUALS]"] = props.flowId
         }
 
+        Object.entries(props.labels ?? {}).forEach(([key, value]) => {
+            queryFilter[`filters[labels][EQUALS][${key}]`] = value
+        })
+
+        if (props.childFilter) {
+            queryFilter["filters[childFilter][EQUALS]"] = props.childFilter
+        }
+
         const hasStateFilters = Object.keys(queryFilter).some(key => key.startsWith("filters[state]")) || queryFilter.state
         if (!hasStateFilters && props.statuses?.length > 0) {
             queryFilter["filters[state][IN]"] = props.statuses.join(",")
         }
 
-        return _merge(base, queryFilter)
+        return deepMerge(base, queryFilter)
     }
 
     const genericConfirmAction = (message: string, queryAction: string, byIdAction: string, success: string, showCancelButton = true) => {
@@ -819,6 +929,8 @@
             showCancelButton,
         )
     }
+
+    const affectedCount = (response: any) => response?.count ?? response?.totalItems ?? 0
 
     const genericConfirmCallback = (queryAction: string, byIdAction: string, success: string, params?: any) => {
         const actionMap: Record<string, () => any> = {
@@ -855,7 +967,7 @@
             const ac = actionMap[queryAction]()
             return ac(options)
                 .then((r: any) => {
-                    toast.success(t(success, {executionCount: r.count}))
+                    toast.success(t(success, {executionCount: affectedCount(r)}))
                     toggleAllUnselected()
                     dataTable.value?.reload()
                 })
@@ -869,13 +981,15 @@
             const ac = actionMap[byIdAction]()
             return ac(options)
                 .then((r: any) => {
-                    toast.success(t(success, {executionCount: r.count}))
+                    toast.success(t(success, {executionCount: affectedCount(r)}))
                     toggleAllUnselected()
                     dataTable.value?.reload()
-                }).catch((e: any) => {
-                    toast.error(e?.invalids.map((exec: any) => {
-                        return {message: t(exec.message, {executionId: escape(exec.invalidValue)})}
-                    }), t(e.message))
+                }).catch((e: unknown) => {
+                    const problem = asProblem(e)
+                    toast.error(
+                        problemBulkBody(problem, t, te),
+                        problemTitle(problem, t, te),
+                    )
                 })
         }
     }
@@ -1032,11 +1146,24 @@
         )
     }
 
+    const onSetLabelsError = (e: unknown) => {
+        const problem = asProblem(e)
+        toast.error(
+            problemBulkBody(problem, t, te),
+            problemTitle(problem, t, te),
+        )
+    }
+
     const setLabels = () => {
         const filtered = filterValidLabels(executionLabels.value)
 
         if (filtered.error) {
             toast.error(t("wrong labels"), t("error"))
+            return
+        }
+
+        if (hasInvalidLabelKeys(filtered.labels)) {
+            toast.error(t("invalid label key"), t("error"))
             return
         }
 
@@ -1055,10 +1182,10 @@
                         data: filtered.labels,
                     })
                     .then((r: any) => {
-                        toast.success(t("Set labels done", {executionCount: r.count}))
+                        toast.success(t("Set labels done", {executionCount: affectedCount(r)}))
                         toggleAllUnselected()
                         dataTable.value?.reload()
-                    })
+                    }).catch(onSetLabelsError)
             } else {
                 return executionsStore
                     .bulkSetLabels({
@@ -1066,12 +1193,10 @@
                         executionLabels: filtered.labels,
                     })
                     .then((r: any) => {
-                        toast.success(t("Set labels done", {executionCount: r.count}))
+                        toast.success(t("Set labels done", {executionCount: affectedCount(r)}))
                         toggleAllUnselected()
                         dataTable.value?.reload()
-                    }).catch((e: any) => toast.error(e.invalids.map((exec: any) => {
-                        return {message: t(exec.message, {executionId: escape(exec.invalidValue)})}
-                    }), t(e.message)))
+                    }).catch(onSetLabelsError)
             }
         },
         )
@@ -1080,11 +1205,10 @@
 
     const editFlow = () => {
         router.push({
-            name: "flows/update",
+            name: "flows/update/edit",
             params: {
                 namespace: flowStore.flow?.namespace,
                 id: flowStore.flow?.id,
-                tab: "edit",
                 tenant: route.params?.tenant,
             },
         })

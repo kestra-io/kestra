@@ -1,28 +1,28 @@
 <template>
-    <KsPopover placement="bottom-end" trigger="click" :title="t('display_settings')" width="300">
+    <KsPopover placement="bottom-end" trigger="click" :title="$t('display_settings')" width="300">
         <template #reference>
-            <KsButton square type="default" size="default" :icon="Cog" :aria-label="t('display_settings')" />
+            <KsButton square type="default" size="default" :icon="Cog" :aria-label="$t('display_settings')" />
         </template>
         <template #default>
             <div class="log-display-settings">
                 <div class="row row--stack">
-                    <span class="row-label">{{ t('density') }}</span>
+                    <span class="row-label">{{ $t('density') }}</span>
                     <KsSegmented v-model="logsDensity" :options="densityOptions" block class="density-segmented" />
                 </div>
                 <div class="row">
-                    <span class="row-label">{{ t('font size') }}</span>
+                    <span class="row-label">{{ $t('font size') }}</span>
                     <KsInputNumber v-model="logsFontSize" :min="10" :max="24" :step="1" controlsPosition="right" class="row-number" />
                 </div>
                 <div class="row">
-                    <span class="row-label">{{ t('pretty_json') }}</span>
+                    <span class="row-label">{{ $t('pretty_json') }}</span>
                     <KsSwitch v-model="logsPrettyJson" />
                 </div>
                 <div class="row">
-                    <span class="row-label">{{ t('expand_by_default') }}</span>
+                    <span class="row-label">{{ $t('expand_by_default') }}</span>
                     <KsSwitch v-model="logsExpandByDefault" :disabled="!logsPrettyJson" />
                 </div>
                 <div class="row">
-                    <span class="row-label">{{ t('body_line_clamp') }}</span>
+                    <span class="row-label">{{ $t('body_line_clamp') }}</span>
                     <div class="clamp-control">
                         <KsInputNumber
                             v-if="clampEnabled"

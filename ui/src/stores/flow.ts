@@ -1,24 +1,35 @@
 import {computed, h, ref, watch} from "vue"
-import {KsMarkdown, KsMessageBox, routeQueryToQueryFilters} from "@kestra-io/design-system"
+import {KsMarkdown, KsMessageBox} from "@kestra-io/design-system"
+import {routeQueryToQueryFilters} from "../utils/queryFilters"
 import resource from "../models/resource"
 import action from "../models/action"
-import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
-import * as Utils from "../utils/utils"
-import {apiUrl} from "override/utils/route"
+import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
 import {useCoreStore} from "./core"
 import {useUnsavedChangesStore} from "./unsavedChanges"
 import {defineStore} from "pinia"
-import {FlowGraph} from "@kestra-io/topology/vue-flow-utils"
+import type {FlowGraph} from "@kestra-io/topology/vue-flow-utils"
 import {makeToast} from "../utils/toast"
 import {InputType} from "../utils/inputs"
 import {globalI18n} from "../translations/i18n"
-import {transformResponse} from "../components/dependencies/composables/useDependencies"
+import {transformResponse} from "../components/dependencies/utils/transform"
 import {useAuthStore} from "override/stores/auth"
 import {useRoute} from "vue-router"
-import {useClient, type FlowWithSource, type AbstractTrigger, type Task as SdkTask} from "@kestra-io/kestra-sdk"
+import type {
+    AbstractTrigger,
+    FlowWithSource,
+    PagedResultsFlow,
+    SourceSearchResult,
+    SourceSearchScope,
+    Task as SdkTask,
+} from "@kestra-io/kestra-sdk"
+import {asProblem, isProblemType, ProblemTypes} from "@kestra-io/kestra-sdk"
 import * as FlowsAPI from "@kestra-io/kestra-sdk/flows"
 import * as MetricsAPI from "@kestra-io/kestra-sdk/metrics"
 import {defaultNamespace} from "../composables/useNamespaces"
+import {useApiStore} from "./api"
+import {flowTaskStats, isExampleFlow, primaryTriggerType} from "../utils/analytics/activation"
+import type {KestraHttpError, KestraRequestOptions} from "../utils/kestraHttp"
+import {splitValidationErrors} from "../utils/validationErrors"
 
 const textYamlHeader = {
     headers: {
@@ -26,8 +37,6 @@ const textYamlHeader = {
     },
 }
 
-// backfill (Schedule) and key (Webhook) are trigger-type-specific runtime config, not part of
-// the SDK's generic AbstractTrigger schema (which models fields common to every trigger type).
 export type Trigger = AbstractTrigger & {
     backfill?: {
         start?: string;
@@ -35,8 +44,6 @@ export type Trigger = AbstractTrigger & {
     key?: string;
 }
 
-// tasks nest recursively (Sequential, Parallel, EachSequential, ...), which the SDK's flat,
-// generic Task schema doesn't model - re-added here for this app's tree-walking usage.
 export type Task = SdkTask & {
     tasks?: Task[]
 }
@@ -45,7 +52,7 @@ export interface Input {
     id: string;
     type: InputType;
     required?: boolean;
-    defaults?: any;
+    defaults?: unknown;
 }
 
 export interface FlowValidations {
@@ -56,12 +63,6 @@ export interface FlowValidations {
     deprecationPaths?: string[];
 }
 
-// tasks/errors/triggers/inputs are overridden below: the SDK's generic Task/AbstractTrigger/
-// InputObject types don't model the recursive subtasks or OSS-specific fields (backfill) this
-// app relies on for tree-walking and trigger editing. source is narrowed to required since this
-// store only ever loads flows with the `source: true` request param, which always returns it.
-// disabled/draft/deleted/tasks are widened back to optional: flowStore.flow is also used to hold
-// locally-constructed in-progress flows (new flow/file creation) that don't set them yet.
 export type Flow = Omit<FlowWithSource, "disabled" | "draft" | "deleted" | "tasks"> & {
     source: string;
     disabled?: boolean;
@@ -72,6 +73,48 @@ export type Flow = Omit<FlowWithSource, "disabled" | "draft" | "deleted" | "task
     errors?: Task[];
     tasks?: Task[];
 }
+
+/**
+ * A route query only whose `filters[...]` keys reach the backend as filters, plus the paging and
+ * commit options `findFlows` reads off the same bag.
+ */
+type FlowSearchOptions = Record<string, unknown> & {
+    page?: number;
+    size?: number;
+    sort?: string;
+    /** `false` returns the page without replacing the store's `flows`/`total`. */
+    commit?: boolean;
+    onlyTotal?: boolean;
+}
+
+/**
+ * The source-code search query, with `sort` as the single key the store wraps into an array.
+ * Spelled out rather than derived from `typeof FlowsAPI.searchFlowsBySourceCode`: deriving it puts
+ * this module's own `@kestra-io/kestra-sdk/flows` instance into the store's exported types, and EE
+ * — which imports this store and has its own SDK build — then resolves its SDK to OSS's copy and
+ * loses every EE-only endpoint.
+ */
+type SourceSearchOptions = {
+    page?: number;
+    size?: number;
+    sort?: string;
+    q?: string | null;
+    namespace?: string | null;
+    caseSensitive?: boolean;
+    wholeWord?: boolean;
+    regex?: boolean;
+    scope?: SourceSearchScope;
+    tenant?: string;
+}
+
+/**
+ * A flow revision as `listFlowRevisions` returns it: same shape as any flow, except that `revision`
+ * is always filled - it is what the list is keyed on - where `FlowWithSource` leaves it optional.
+ */
+export type FlowRevision = FlowWithSource & {revision: number}
+
+/** `subflows` lists the subflow paths whose own graph is expanded inline. */
+type GraphSubflows = {params?: {subflows?: string | string[]}}
 
 export type FlowSaveOutcome =
     | "saved"
@@ -88,34 +131,36 @@ export function isSuccessfulFlowSaveOutcome(
 export const useFlowStore = defineStore("flow", () => {
     const flows = ref<Flow[]>()
     const flow = ref<Flow>()
-    const search = ref<any[]>()
+    const search = ref<SourceSearchResult[]>()
     const total = ref<number>(0)
     const flowGraph = ref<FlowGraph>()
     const invalidGraph = ref<boolean>(false)
-    const revisions = ref<any[]>()
+    const revisions = ref<FlowRevision[]>()
     const revisionsCount = ref<number>()
     const dependenciesCount = ref<number>()
     const filesSaveAll = ref<(() => Promise<void>) | null>(null)
     const hasDirtyEditorFiles = ref<boolean>(false)
     const flowValidation = ref<FlowValidations>()
     const taskError = ref<string>()
-    const metrics = ref<any[]>()
-    const tasksWithMetrics = ref<any[]>()
+    const metrics = ref<string[]>()
+    const tasksWithMetrics = ref<string[]>()
     const executeFlow = ref<boolean>(false)
     const isCreating = ref<boolean>(false)
     const readonlyToastShown = ref(false)
     const flowYaml = ref<string>("")
     const flowYamlOrigin = ref<string>("")
     const previewSource = ref<string | undefined>(undefined)
+    /** Registered by `CopilotChat.vue` (mirrors `filesSaveAll`'s pattern) so `FlowFileEditorTab.vue`'s
+     *  read-only-preview banner can decline the active `previewSource` without depending on the AI
+     *  dock's internal state directly. */
+    const declinePreview = ref<(() => void) | null>(null)
     const expandedSubflows = ref<string[]>([])
     const creationId = ref<string>()
-
-    const axios = useClient()
 
     const coreStore = useCoreStore()
     const unsavedChangesStore = useUnsavedChangesStore()
 
-    const t = (key: string, values?: Record<string, any>) => {
+    const t = (key: string, values?: Record<string, unknown>) => {
         if (!globalI18n.value) {
             return key
         }
@@ -133,10 +178,6 @@ export const useFlowStore = defineStore("flow", () => {
 
         if (!haveChange.value && !isCreating.value) {
             return "no_op"
-        }
-
-        if (flowErrors.value?.length && !isDraft) {
-            return "blocked"
         }
 
         if (!flow.value) return "blocked"
@@ -174,14 +215,10 @@ export const useFlowStore = defineStore("flow", () => {
     const route = useRoute()
 
     const getNamespace = () => {
-        return route.query.namespace || defaultNamespace()
+        return route?.query?.namespace || defaultNamespace()
     }
 
     async function save(draft: boolean = false): Promise<FlowSaveOutcome> {
-        if (flowErrors.value?.length && !draft) {
-            return "blocked"
-        }
-
         const source = flowYaml.value
 
         if (source) {
@@ -214,10 +251,16 @@ export const useFlowStore = defineStore("flow", () => {
         return save(false)
     }
 
-    async function onEdit({source, topologyVisible}: {
+    async function onEdit({source, topologyVisible, metadataGuarded}: {
         source: string,
         editorViewType?: string,
-        topologyVisible?: boolean
+        topologyVisible?: boolean,
+        /**
+         * Set by an editor that already prevents id/namespace from being edited.
+         * There the warning would explain a change the user was never able to
+         * make; every other caller still needs it.
+         */
+        metadataGuarded?: boolean
     }): Promise<FlowValidations | undefined> {
         const flowBeforeEdit = flow.value
         const flowOnValidation = flowParsed.value
@@ -234,12 +277,12 @@ export const useFlowStore = defineStore("flow", () => {
                         (flowOnValidation.id !== flowBeforeEdit.id ||
                             flowOnValidation.namespace !== flowBeforeEdit.namespace)) {
 
-                    if (!readonlyToastShown.value) {
+                    if (!metadataGuarded && !readonlyToastShown.value) {
                         readonlyToastShown.value = true
                         coreStore.message = {
                             variant: "warning",
                             title: t("readonly property"),
-                            message: t("namespace and id readonly"),
+                            content: t("namespace and id readonly"),
                         }
                     }
                     flowYaml.value = YAML_UTILS.replaceIdAndNamespace(
@@ -249,7 +292,6 @@ export const useFlowStore = defineStore("flow", () => {
                     )
                 }
             } catch{
-                // yaml is not always valid
             }
         }
 
@@ -260,8 +302,6 @@ export const useFlowStore = defineStore("flow", () => {
                 if (
                     topologyVisible &&
                     flowHaveTasks.value &&
-                    // avoid sending empty errors
-                    // they make the backend fail
                     flowBeforeEdit && (!flowBeforeEdit.errors || flowBeforeEdit.errors.every(e => typeof e.id === "string"))
                 ) {
                     if (!value.constraints) fetchGraph()
@@ -284,14 +324,27 @@ export const useFlowStore = defineStore("flow", () => {
         }
     }
 
+    let inFlightSave: Promise<FlowSaveOutcome> | null = null
+
     async function saveWithoutRevisionGuard(draft: boolean = false): Promise<FlowSaveOutcome> {
+        if (inFlightSave) return inFlightSave
+        if (!isCreating.value && !haveChange.value) return "no_op"
+        inFlightSave = performSave(draft)
+        try {
+            return await inFlightSave
+        } finally {
+            inFlightSave = null
+        }
+    }
+
+    async function performSave(draft: boolean = false): Promise<FlowSaveOutcome> {
         const flowSource = flowYaml.value ?? ""
 
         if (flowParsed.value === undefined && !draft) {
             coreStore.message = {
                 variant: "error",
                 title: t("invalid flow"),
-                message: t("invalid yaml"),
+                content: t("invalid yaml"),
             }
 
             return "blocked"
@@ -329,8 +382,10 @@ export const useFlowStore = defineStore("flow", () => {
                 const response = await createFlow({flow: flowSource ?? "", draft})
                 notifySaved(response.id, draft)
                 isCreating.value = false
-            } catch (error: any) {
-                if (error?.response?.status === 422 && error?.response?.data?.message?.includes("Flow id already exists")) {
+            } catch (error: unknown) {
+                // Branch on the problem type alone. The status is deliberately not checked, so this keeps
+                // working if the type's status is ever revised.
+                if (isProblemType(error, ProblemTypes.ENTITY_ALREADY_EXISTS)) {
                     const shouldRedirect = await KsMessageBox({
                         title: t("confirmation"),
                         message: () => h(KsMarkdown, {content: t("flow already exists message", {id: flowParsed.value?.id ?? "", namespace: flowParsed.value?.namespace ?? ""})}),
@@ -346,12 +401,9 @@ export const useFlowStore = defineStore("flow", () => {
                     return shouldRedirect ? "redirect_to_update" : "blocked"
                 }
 
-                if (error.response?.data) {
-                    coreStore.message = {
-                        variant: "error",
-                        response: error.response,
-                        content: error.response.data,
-                    }
+                const problem = asProblem(error)
+                if (problem) {
+                    coreStore.message = {variant: "error", problem, status: problem.status}
                 }
 
                 throw error
@@ -379,11 +431,7 @@ export const useFlowStore = defineStore("flow", () => {
             flow: flowYaml.value ?? "",
             config: {
                 params: {
-                    // due to usage of axios instance instead of $http which doesn't convert arrays
                     subflows: expandedSubflows.value.join(","),
-                },
-                validateStatus: (status: number) => {
-                    return status === 200
                 },
             },
         })
@@ -398,21 +446,22 @@ export const useFlowStore = defineStore("flow", () => {
             fetchGraph()
         }
 
-        // validate flow on first load
         return validateFlow({flow: isCreating.value ? source : yamlWithNextRevision.value})
     }
 
-    function toFlowSearchParams(options: {[key: string]: any}) {
-        const {sort, onlyTotal: _onlyTotal, commit: _commit, page, size, ...filterKeys} = options
+    function toFlowSearchParams(options: FlowSearchOptions) {
         return {
-            page,
-            size,
-            sort: sort ? [sort] : undefined,
-            filters: routeQueryToQueryFilters(filterKeys),
-        } as Parameters<typeof FlowsAPI.searchFlows>[0]
+            page: options.page,
+            size: options.size,
+            sort: options.sort ? [options.sort] : undefined,
+            filters: routeQueryToQueryFilters(options),
+        }
     }
 
-    function findFlows(options: { [key: string]: any }): Promise<any> {
+    /** With `onlyTotal`, resolves to the number of matches instead of the page of results. */
+    function findFlows(options: FlowSearchOptions & { onlyTotal: true }): Promise<number>
+    function findFlows(options: FlowSearchOptions): Promise<PagedResultsFlow>
+    function findFlows(options: FlowSearchOptions): Promise<PagedResultsFlow | number> {
         return FlowsAPI.searchFlows(toFlowSearchParams(options)).then(response => {
             if (options.onlyTotal) {
                 return response.total
@@ -428,10 +477,10 @@ export const useFlowStore = defineStore("flow", () => {
             }
         })
     }
-    function searchFlows(options: { [key: string]: any }) {
+    function searchFlows(options: SourceSearchOptions) {
         const {sort, ...rest} = options
         return FlowsAPI.searchFlowsBySourceCode({...rest, sort: sort ? [sort] : undefined}).then(response => {
-            search.value = response.results as unknown as any[]
+            search.value = response.results
             total.value = response.total ?? 0
 
             return response
@@ -444,7 +493,19 @@ export const useFlowStore = defineStore("flow", () => {
         })
     }
 
-    async function loadFlow(options: { namespace: string, id: string, revision?: string, allowDeleted?: boolean, source?: boolean, store?: boolean, deleted?: boolean }) {
+    // Tracks the flow the user is currently navigating to, so a load for a flow they have since
+    // moved away from can be dropped without an unrelated caller's own load for the *same* flow
+    // (e.g. Topology.vue re-syncing in the background) being able to drop it too (#10722).
+    let latestFlowLoadKey: string | undefined
+
+    async function loadFlow(
+        options: { namespace: string, id: string, revision?: string, allowDeleted?: boolean, source?: boolean, store?: boolean, deleted?: boolean },
+        requestOptions?: KestraRequestOptions,
+    ) {
+        const key = `${options.namespace}/${options.id}`
+        if (options.store !== false) {
+            latestFlowLoadKey = key
+        }
         let data: Flow & {exception?: string}
         try {
             data = await FlowsAPI.flow({
@@ -453,26 +514,29 @@ export const useFlowStore = defineStore("flow", () => {
                 revision: options.revision ? Number(options.revision) : undefined,
                 allowDeleted: options.allowDeleted,
                 source: true,
-            }) as Flow & {exception?: string}
-        } catch (e: any) {
-            if (options.deleted && e.status === 404) {
-                return e.body ?? {}
+            }, requestOptions) as Flow & {exception?: string}
+        } catch (e) {
+            // A deleted flow answers 404 with a problem document rather than the flow, and the one
+            // caller (subflow-input autocompletion) only reads `inputs`, so an empty flow stands in.
+            if (options.deleted && (e as KestraHttpError).status === 404) {
+                return {} as Flow & {exception?: string}
             }
             throw e
         }
 
-        if (options.store === false) {
+        // A load for a flow the user has navigated away from must not become the flow on screen,
+        // the same way a superseded search is dropped in `stores/logs.ts`.
+        if (options.store === false || key !== latestFlowLoadKey) {
             return data
         }
 
         if (data.exception) {
             coreStore.message = {
                 title: "Invalid source code",
-                message: data.exception,
+                content: data.exception,
                 variant: "error",
             }
 
-            // add this error to the list of errors
             flowValidation.value = {
                 constraints: data.exception,
                 outdated: false,
@@ -503,7 +567,7 @@ export const useFlowStore = defineStore("flow", () => {
             .then(data => {
                 return data
             })
-            .catch((e: any) => {
+            .catch((e: KestraHttpError) => {
                 if (e.status === 404) return null
                 throw e
             })
@@ -530,21 +594,8 @@ export const useFlowStore = defineStore("flow", () => {
             return flow.value
         })
     }
-    function updateFlowTask(options: { flow: Flow, task: Task }) {
-        return axios
-            .patch(`${apiUrl()}/flows/${options.flow.namespace}/${options.flow.id}/${options.task.id}`, options.task).then(response => {
-                flow.value = response.data
 
-                return response.data
-            })
-            .then(f => {
-                loadGraph({flow: f})
-
-                return f
-            })
-    }
-
-    function createFlow(options: { flow: string, draft?: boolean }) {
+    function createFlow(options: { flow: string, draft?: boolean, restore?: boolean }) {
         return FlowsAPI.createFlow({
             body: options.flow,
             draft: options.draft ?? false,
@@ -555,24 +606,72 @@ export const useFlowStore = defineStore("flow", () => {
 
             flow.value = data as Flow
 
-            // clean-up
             localStorage.removeItem(`el-fl-creation-${creationId.value}`)
             creationId.value = undefined
+
+            if (!options.draft) {
+                trackFlowCreated(flow.value, options.restore === true)
+            }
 
             return flow.value
         })
     }
 
-    function loadDependencies(options: { namespace: string, id: string, subtype: "FLOW" | "EXECUTION" }, onlyCount = false) {
+    // Only on creation: saveFlow() fires on every editor save, which would drown the signal.
+    // restoreFlow() also goes through createFlow(), on a flow_id that already reported a creation -
+    // flagged rather than dropped so activation can exclude it downstream.
+    function trackFlowCreated(created: Flow, isRestore: boolean) {
+        const {taskCount, pluginCount} = flowTaskStats(created.tasks)
+
+        useApiStore().posthogEvents({
+            type: "FLOW_CREATED",
+            namespace: created.namespace,
+            flow_id: created.id,
+            task_count: taskCount,
+            plugin_count: pluginCount,
+            trigger_type: primaryTriggerType(created.triggers),
+            is_example: isExampleFlow(created.namespace),
+            is_restore: isRestore,
+        })
+    }
+
+    // The editor wants this count twice - tab badge and toolbar stat - so they share one request.
+    const inFlightDependencyCounts = new Map<string, ReturnType<typeof requestDependencies>>()
+
+    function requestDependencies(options: { namespace: string, id: string, subtype: "FLOW" | "EXECUTION" }, onlyCount: boolean) {
         return FlowsAPI.flowDependencies({namespace: options.namespace, id: options.id, expandAll: !onlyCount}).then(data => {
             const totalNodes = data.nodes ? new Set(data.nodes.map((r:{uid:string}) => r.uid)).size : 0
             const count = Math.max(0, totalNodes - 1)
             dependenciesCount.value = count
             return {
-                ...(!onlyCount ? {data: transformResponse(data as any, options.subtype)} : {}),
+                ...(!onlyCount ? {data: transformResponse(data, options.subtype)} : {}),
                 count,
             }
         })
+    }
+
+    function loadDependencies(options: { namespace: string, id: string, subtype: "FLOW" | "EXECUTION" }, onlyCount = false) {
+        if (!onlyCount) {
+            return requestDependencies(options, onlyCount)
+        }
+
+        const key = `${options.namespace}/${options.id}`
+        const inFlight = inFlightDependencyCounts.get(key)
+        if (inFlight) {
+            return inFlight
+        }
+
+        const request = requestDependencies(options, onlyCount)
+        inFlightDependencyCounts.set(key, request)
+        // Both handlers, so this derived promise never becomes an unhandled rejection.
+        const settle = () => {
+            if (inFlightDependencyCounts.get(key) === request) {
+                inFlightDependencyCounts.delete(key)
+            }
+        }
+        request.then(settle, settle)
+
+        return request
     }
 
 function deleteFlowAndDependencies() {
@@ -584,14 +683,14 @@ function deleteFlowAndDependencies() {
             if (data && data.nodes) {
                 const deps = data.nodes
                     .filter(
-                        (n: any) =>
+                        (n) =>
                             !(
                                 n.namespace === metadataForDelete.namespace &&
                                 n.id === metadataForDelete.id
                             ),
                     )
                     .map(
-                        (n: any) =>
+                        (n) =>
                             "<li>" +
                             n.namespace +
                             ".<code>" +
@@ -632,7 +731,7 @@ function deleteFlowAndDependencies() {
         })
     }
 
-    function loadGraph(options: { flow: Flow, params?: any }): Promise<any> {
+    function loadGraph(options: { flow: Flow, params?: { subflows?: string[] } }): Promise<FlowGraph | undefined> {
         const flowVar = options.flow
         return FlowsAPI.generateFlowGraph({
             namespace: flowVar.namespace,
@@ -642,12 +741,13 @@ function deleteFlowAndDependencies() {
         }).then(data => {
             invalidGraph.value = false
             flowGraph.value = data as unknown as FlowGraph
-            return data
+            return flowGraph.value
         }).catch(() => {
             invalidGraph.value = true
+            return undefined
         })
     }
-    function loadGraphFromSource(options: { flow: string, config?: any }) {
+    function loadGraphFromSource(options: { flow: string, config?: GraphSubflows }) {
         const subflows: string[] | undefined = options.config?.params?.subflows
             ? String(options.config.params.subflows).split(",").filter(Boolean)
             : undefined
@@ -656,7 +756,10 @@ function deleteFlowAndDependencies() {
         if (!flowParsed.id || !flowParsed.namespace) {
             flowSource = YAML_UTILS.updateMetadata(flowSource, {id: "default", namespace: "default"})
         }
-        return FlowsAPI.generateFlowGraphFromSource({subflows, body: flowSource})
+        return FlowsAPI.generateFlowGraphFromSource(
+            {subflows, body: flowSource},
+            {showMessageOnError: false} as Parameters<typeof FlowsAPI.generateFlowGraphFromSource>[1],
+        )
             .then(data => {
                 flowGraph.value = data as unknown as FlowGraph
 
@@ -664,7 +767,6 @@ function deleteFlowAndDependencies() {
                 flowVar.id = flow.value?.id ?? flowVar.id
                 flowVar.namespace = flow.value?.namespace ?? flowVar.namespace
                 flowVar.source = options.flow
-                // prevent losing revision when loading graph from source
                 flowVar.revision = flow.value?.revision
                 flowVar.draft = flow.value?.draft
                 flow.value = flowVar
@@ -678,7 +780,7 @@ function deleteFlowAndDependencies() {
                 if ([404, 422].includes(error.status) && subflows && subflows.length > 0) {
                     coreStore.message = {
                         title: "Couldn't expand subflow",
-                        message: error.response?.data?.message,
+                        content: asProblem(error)?.detail,
                         variant: "error",
                     }
                 }
@@ -687,7 +789,7 @@ function deleteFlowAndDependencies() {
             })
     }
 
-    function getGraphFromSourceResponse(options: { flow: string, config?: any }) {
+    function getGraphFromSourceResponse(options: { flow: string, config?: GraphSubflows }) {
         const subflows: string[] | undefined = options.config?.params?.subflows
             ? String(options.config.params.subflows).split(",").filter(Boolean)
             : undefined
@@ -699,13 +801,14 @@ function deleteFlowAndDependencies() {
         return FlowsAPI.generateFlowGraphFromSource({subflows, body: flowSource})
     }
 
-    function loadRevisions(options: { namespace: string, id: string, store?: boolean, allowDeleted?: boolean }): Promise<any[]> {
+    function loadRevisions(options: { namespace: string, id: string, store?: boolean, allowDeleted?: boolean }): Promise<FlowRevision[]> {
         return FlowsAPI.listFlowRevisions({namespace: options.namespace, id: options.id}).then(data => {
+            const flowRevisions = data as FlowRevision[]
             if (options.store !== false) {
-                revisions.value = data
+                revisions.value = flowRevisions
             }
             revisionsCount.value = Array.isArray(data) ? data.length : 0
-            return data
+            return flowRevisions
         })
     }
 
@@ -719,67 +822,6 @@ function deleteFlowAndDependencies() {
     function clearFlowStats() {
         revisionsCount.value = undefined
         dependenciesCount.value = undefined
-    }
-
-    function exportFlowByIds(options: { ids: string[] }) {
-        return axios.post(`${apiUrl()}/flows/export/by-ids`, options.ids, {responseType: "blob"})
-            .then(response => {
-                const blob = new Blob([response.data], {type: "application/octet-stream"})
-                const url = window.URL.createObjectURL(blob)
-                Utils.downloadUrl(url, "flows.zip")
-            })
-    }
-
-    function exportFlowByQuery(options: { namespace: string, id: string }) {
-        return axios.get(`${apiUrl()}/flows/export/by-query`, {params: options, headers: {"Accept": "application/octet-stream"}})
-            .then(response => {
-                Utils.downloadUrl(response.request?.responseURL ?? "", "flows.zip")
-            })
-    }
-
-    async function exportFlowAsCSV(params: any) {
-        const response = await axios.get(
-            `${apiUrl()}/flows/export/by-query/csv`,
-            {params, responseType: "text", headers: {Accept: "text/csv"}},
-        )
-        const url = window.URL.createObjectURL(new Blob([response.data]))
-        const link = document.createElement("a")
-        link.href = url
-        link.setAttribute("download", "flows.csv")
-        document.body.appendChild(link)
-        link.click()
-        link.remove()
-        window.URL.revokeObjectURL(url)
-    }
-
-    function importFlows(options: { file: FormData,  failOnError: boolean }) {
-         const {file, failOnError} = options
-        // Don't set Content-Type - the browser must generate the multipart boundary itself.
-        return axios.post(`${apiUrl()}/flows/import`, file, {
-            params: {failOnError},
-        }).then(response => {
-            return response
-        })
-    }
-    function disableFlowByIds(options: { ids: {id: string, namespace: string}[] }) {
-        return FlowsAPI.disableFlowsByIds({body: options.ids})
-    }
-    function disableFlowByQuery(options: Record<string, any>) {
-        return FlowsAPI.disableFlowsByQuery({filters: routeQueryToQueryFilters(options)} as Parameters<typeof FlowsAPI.disableFlowsByQuery>[0])
-    }
-    function enableFlowByIds(options: { ids: {id: string, namespace: string}[] }) {
-        return FlowsAPI.enableFlowsByIds({body: options.ids})
-    }
-    function enableFlowByQuery(options: Record<string, any>) {
-        return FlowsAPI.enableFlowsByQuery({filters: routeQueryToQueryFilters(options)} as Parameters<typeof FlowsAPI.enableFlowsByQuery>[0])
-    }
-
-    function deleteFlowByIds(options: { ids: {id: string, namespace: string}[] }) {
-        return FlowsAPI.deleteFlowsByIds({body: options.ids})
-    }
-
-    function deleteFlowByQuery(options: Record<string, any>) {
-        return FlowsAPI.deleteFlowsByQuery({filters: routeQueryToQueryFilters(options)} as Parameters<typeof FlowsAPI.deleteFlowsByQuery>[0])
     }
 
     function validateFlow(options: { flow: string }) {
@@ -797,7 +839,7 @@ function deleteFlowAndDependencies() {
 
         return FlowsAPI.validateFlows({body: options.flow}, {withCredentials: true})
             .then(results => {
-                const validResults: any = results[0] ?? {}
+                const validResults: FlowValidations = results[0] ?? {}
 
                 const constraintsArray = [validResults.constraints, flowValidationIssues.constraints].filter(Boolean)
 
@@ -814,10 +856,15 @@ function deleteFlowAndDependencies() {
 
     function validateTask(options: { task: string, section: string }) {
         return FlowsAPI.validateTask(
-            {section: options.section as Parameters<typeof FlowsAPI.validateTask>[0]["section"], body: options.task as any},
+            {
+                section: options.section as Parameters<typeof FlowsAPI.validateTask>[0]["section"],
+                // The endpoint takes the task as YAML (see the header below), which the generated
+                // body type - an object schema - cannot express.
+                body: options.task as unknown as Parameters<typeof FlowsAPI.validateTask>[0]["body"],
+            },
             {withCredentials: true, headers: textYamlHeader.headers},
         ).then(result => {
-            taskError.value = (result as any).constraints
+            taskError.value = result.constraints
             return result
         })
     }
@@ -941,8 +988,7 @@ function deleteFlowAndDependencies() {
                 ? [`${t(key + ".description")} ${t(key + ".details")}`]
                 : []
 
-        const constraintsError =
-            flowValidation.value?.constraints ? [flowValidation.value.constraints] : []
+        const constraintsError = splitValidationErrors(flowValidation.value?.constraints)
 
         const errors = [...flowExistsError, ...constraintsError]
 
@@ -1013,6 +1059,7 @@ function deleteFlowAndDependencies() {
         flowYaml,
         flowYamlOrigin,
         previewSource,
+        declinePreview,
         haveChange,
         expandedSubflows,
         addTrigger,
@@ -1031,27 +1078,17 @@ function deleteFlowAndDependencies() {
         loadFlow,
         loadTask,
         saveFlow,
-        updateFlowTask,
         createFlow,
         loadDependencies,
         deleteFlowAndDependencies,
         deleteFlow,
         loadGraph,
         loadGraphFromSource,
+        fetchGraph,
         getGraphFromSourceResponse,
         loadRevisions,
         loadFlowStats,
         clearFlowStats,
-        exportFlowByIds,
-        exportFlowByQuery,
-        exportFlowAsCSV,
-        importFlows,
-        disableFlowByIds,
-        disableFlowByQuery,
-        enableFlowByIds,
-        enableFlowByQuery,
-        deleteFlowByIds,
-        deleteFlowByQuery,
         validateFlow,
         validateTask,
         loadFlowMetrics,

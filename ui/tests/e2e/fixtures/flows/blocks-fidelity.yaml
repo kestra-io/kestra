@@ -1,0 +1,7 @@
+id: blocks-fidelity-fixture
+namespace: company.team
+tasks:
+  - id: commented_task
+    type: io.kestra.plugin.core.log.Log
+    # a comment that must survive the Source round-trip
+    message: say « bonjour »

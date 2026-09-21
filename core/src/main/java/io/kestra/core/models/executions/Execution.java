@@ -26,12 +26,15 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.core.queues.event.DispatchEvent;
 import io.kestra.core.runners.RunContextLogger;
+import io.kestra.core.serializers.Jackson3ListOrMapOfLabelDeserializer;
+import io.kestra.core.serializers.Jackson3ListOrMapOfLabelSerializer;
 import io.kestra.core.serializers.ListOrMapOfLabelDeserializer;
 import io.kestra.core.serializers.ListOrMapOfLabelSerializer;
 import io.kestra.core.services.LabelService;
 import io.kestra.core.test.flow.TaskFixture;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.ListUtils;
+import io.kestra.core.validations.TenantId;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.LoggingEvent;
@@ -40,7 +43,6 @@ import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 import lombok.experimental.NonFinal;
@@ -64,7 +66,7 @@ public class Execution implements SoftDeletable<Execution>, TenantInterface, Has
     @NotNull
     @With
     @Hidden
-    @Pattern(regexp = "^[a-z0-9][a-z0-9_-]*")
+    @TenantId
     String tenantId;
 
     @NotNull
@@ -88,13 +90,20 @@ public class Execution implements SoftDeletable<Execution>, TenantInterface, Has
     @Schema(implementation = Object.class)
     Map<String, Object> inputs;
 
+    /**
+     * @deprecated should only be used inside the pre-2.0 compatibility layer.
+     */
     @With
+    @Hidden
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     @Schema(implementation = Object.class)
+    @Deprecated(forRemoval = true, since = "2.0.0")
     Map<String, Object> outputs;
 
     @JsonSerialize(using = ListOrMapOfLabelSerializer.class)
     @JsonDeserialize(using = ListOrMapOfLabelDeserializer.class)
+    @tools.jackson.databind.annotation.JsonSerialize(using = Jackson3ListOrMapOfLabelSerializer.class)
+    @tools.jackson.databind.annotation.JsonDeserialize(using = Jackson3ListOrMapOfLabelDeserializer.class)
     List<Label> labels;
 
     @With
@@ -206,15 +215,7 @@ public class Execution implements SoftDeletable<Execution>, TenantInterface, Has
             .kind(kind)
             .build();
 
-        List<Label> executionLabels = new ArrayList<>(LabelService.labelsExcludingSystem(flow.getLabels()));
-        if (labels != null) {
-            executionLabels.addAll(labels);
-        }
-        if (executionLabels.stream().noneMatch(label -> Label.CORRELATION_ID.equals(label.key()))) {
-            // add a correlation ID if none exist
-            executionLabels.add(new Label(Label.CORRELATION_ID, execution.getId()));
-        }
-        execution = execution.withLabels(executionLabels);
+        execution = execution.withLabels(LabelService.forExecution(flow, labels, execution.getId()));
 
         if (inputs != null) {
             execution = execution.withInputs(inputs.apply(flow, execution));
@@ -412,7 +413,8 @@ public class Execution implements SoftDeletable<Execution>, TenantInterface, Has
             this.flowRevision,
             taskRunList,
             this.inputs,
-            this.outputs,
+            // outputs are not copied: they are recomputed when the child execution ends.
+            null,
             this.labels,
             this.variables,
             state,
@@ -444,7 +446,7 @@ public class Execution implements SoftDeletable<Execution>, TenantInterface, Has
             this.flowRevision,
             null,
             null, // we don't copy inputs to reduce the size, the RunVariables must get them from the parent execution
-            this.outputs,
+            null, // same for the outputs, the RunVariables get them from the parent execution
             this.labels,
             this.variables,
             this.state,
@@ -490,21 +492,30 @@ public class Execution implements SoftDeletable<Execution>, TenantInterface, Has
             .toList();
     }
 
+    /**
+     * Find a task run by its task run id.
+     *
+     * @see #findTaskRunByTaskRunIdIfPresent(String) for a safe alternative
+     * @throws InternalException if the task run doesn't exist
+     */
     public TaskRun findTaskRunByTaskRunId(String id) throws InternalException {
-        Optional<TaskRun> find = (this.taskRunList == null ? Collections.<TaskRun> emptyList()
-            : this.taskRunList)
+        return findTaskRunByTaskRunIdIfPresent(id)
+            .orElseThrow(() -> new InternalException(
+                "Can't find taskrun with taskrunId '" + id + "' on execution '" + this.id + "' "
+                    + this.toStringState()
+            ));
+    }
+
+    /**
+     * Find a task run by its task run id if present, else return an empty optional.
+     *
+     * @see #findTaskRunByTaskRunId(String) for a fail-fast alternative
+     */
+    public Optional<TaskRun> findTaskRunByTaskRunIdIfPresent(String id) {
+        return ListUtils.emptyOnNull(this.taskRunList)
             .stream()
             .filter(taskRun -> taskRun.getId().equals(id))
             .findFirst();
-
-        if (find.isEmpty()) {
-            throw new InternalException(
-                "Can't find taskrun with taskrunId '" + id + "' on execution '" + this.id + "' "
-                    + this.toStringState()
-            );
-        }
-
-        return find.get();
     }
 
     public TaskRun findTaskRunByTaskIdAndValue(String id, List<String> values)
@@ -1029,6 +1040,31 @@ public class Execution implements SoftDeletable<Execution>, TenantInterface, Has
         return taskRunList.stream()
             .filter(taskRun -> parentTaskRun.getId().equals(taskRun.getParentTaskRunId()))
             .toList();
+    }
+
+    /**
+     * Find every descendant of this {@link TaskRun}, at any depth, in breadth-first order.
+     * Unlike {@link #findChildren(TaskRun)}, which returns only direct children, this walks the
+     * {@code parentTaskRunId} chain recursively.
+     */
+    public List<TaskRun> findAllChildren(TaskRun parentTaskRun) {
+        if (this.taskRunList == null) {
+            return Collections.emptyList();
+        }
+
+        Map<String, List<TaskRun>> childrenByParentId = this.taskRunList.stream()
+            .filter(taskRun -> taskRun.getParentTaskRunId() != null)
+            .collect(Collectors.groupingBy(TaskRun::getParentTaskRunId));
+
+        List<TaskRun> result = new ArrayList<>();
+        Deque<TaskRun> toVisit = new ArrayDeque<>(childrenByParentId.getOrDefault(parentTaskRun.getId(), Collections.emptyList()));
+        while (!toVisit.isEmpty()) {
+            TaskRun current = toVisit.poll();
+            result.add(current);
+            toVisit.addAll(childrenByParentId.getOrDefault(current.getId(), Collections.emptyList()));
+        }
+
+        return result;
     }
 
     public List<String> findParentsValues(TaskRun taskRun, boolean withCurrent) {

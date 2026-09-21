@@ -1,3 +1,4 @@
+import {computed} from "vue"
 import {useRoute} from "vue-router"
 import {useI18n} from "vue-i18n"
 
@@ -22,55 +23,58 @@ export function useTabs() {
     const {t} = useI18n({useScope: "global"})
 
     const namespace = route.params?.id as string
+    const {tabs: baseTabs} = useHelpers()
 
-    const tabs: Tab[] = [
-        ...useHelpers().tabs,
-        {
-            ...lockedProps("edit"),
-            name: "edit",
-            title: t("edit"),
-        },
-        {
-            ...lockedProps("secrets"),
-            name: "secrets",
-            title: t("secret.names"),
-        },
-        {
-            ...lockedProps("assets"),
-            name: "assets",
-            title: t("assets.title"),
-        },
-        {
-            ...lockedProps("variables"),
-            name: "variables",
-            title: t("variables"),
-        },
-        {
-            ...lockedProps("policies"),
-            name: "policies",
-            title: t("demos.policies.label"),
-        },
-        {
-            name: "kv",
-            title: t("kv.name"),
-            component: KVTable,
-            props: {namespace},
-            fullContainer: true,
-        },
-        {
-            ...lockedProps("history"),
-            name: "history",
-            title: t("revisions"),
-        },
-        {
-            ...lockedProps("audit-logs"),
-            name: "audit-logs",
-            title: t("auditlogs"),
-        },
-    ]
+    const tabs = computed<Tab[]>(() => {
+        const merged: Tab[] = [
+            ...baseTabs.value,
+            {
+                ...lockedProps("edit"),
+                name: "edit",
+                title: t("edit"),
+            },
+            {
+                ...lockedProps("secrets"),
+                name: "secrets",
+                title: t("secret.names"),
+            },
+            {
+                ...lockedProps("assets"),
+                name: "assets",
+                title: t("assets.title"),
+            },
+            {
+                ...lockedProps("variables"),
+                name: "variables",
+                title: t("variables"),
+            },
+            {
+                ...lockedProps("policies"),
+                name: "policies",
+                title: t("demos.policies.label"),
+            },
+            {
+                name: "kv",
+                title: t("kv.name"),
+                component: KVTable,
+                props: {namespace},
+                fullContainer: true,
+            },
+            {
+                ...lockedProps("history"),
+                name: "history",
+                title: t("revisions"),
+            },
+            {
+                ...lockedProps("audit-logs"),
+                name: "audit-logs",
+                title: t("auditlogs"),
+            },
+        ]
 
-    // Ensure the order of tabs is following the ORDER array
-    tabs.sort((a, b) => ORDER.indexOf(a.name) - ORDER.indexOf(b.name))
+        merged.sort((a, b) => ORDER.indexOf(a.name) - ORDER.indexOf(b.name))
+        return merged
+    })
 
     return {tabs}
 }

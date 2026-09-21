@@ -13,6 +13,7 @@ import java.security.NoSuchAlgorithmException;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.function.Consumer;
 
 import javax.net.ssl.SSLContext;
@@ -48,7 +49,9 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.http.HttpRequest;
 import io.kestra.core.http.HttpResponse;
+import io.kestra.core.http.HttpService;
 import io.kestra.core.http.HttpSseEvent;
+import io.kestra.core.http.KestraMediaTypes;
 import io.kestra.core.http.client.apache.*;
 import io.kestra.core.http.client.configurations.DigestAuthConfiguration;
 import io.kestra.core.http.client.configurations.HttpConfiguration;
@@ -100,6 +103,15 @@ public class HttpClient implements Closeable {
         // is missing. Setting the header explicitly wins: ContentCompressionExec only adds its own
         // Accept-Encoding when the request has none, so gzip/deflate responses are still auto-decoded.
         builder.addRequestInterceptorFirst((request, entity, context) -> request.setHeader(HttpHeaders.ACCEPT_ENCODING, "gzip, x-gzip, deflate"));
+
+        // Positioned right after REDIRECT so it re-runs on every hop RedirectExec follows, unlike a request interceptor which only runs once before the redirect loop starts.
+        builder.addExecInterceptorAfter(
+            ChainElement.REDIRECT.name(), "ssrf-guard",
+            (request, scope, chain) -> {
+                validateUri(HttpService.safeURI(request));
+                return chain.proceed(request, scope);
+            }
+        );
 
         if (observationRegistry != null) {
             // micrometer, must be placed before the retry strategy (see https://docs.micrometer.io/micrometer/reference/reference/httpcomponents.html#_retry_strategy_considerations)
@@ -548,21 +560,104 @@ public class HttpClient implements Closeable {
 
     @SuppressWarnings("unchecked")
     private void validateUri(URI uri) {
-        String requestUri = uri.toString();
         List<String> allowedList = (List<String>) ((DefaultRunContext) runContext).getTaskProperty("kestra.tasks.http.allowed-list", List.class).orElse(Collections.emptyList());
         List<String> deniedList = (List<String>) ((DefaultRunContext) runContext).getTaskProperty("kestra.tasks.http.denied-list", List.class).orElse(Collections.emptyList());
 
         // first check that if there is an allow list, it matches one
         if (!allowedList.isEmpty()) {
-            if (allowedList.stream().noneMatch(requestUri::startsWith)) {
-                throw new IllegalArgumentException("The URI " +  requestUri + " is not in the configured allowed list (kestra.tasks.http.allowed-list).");
+            if (allowedList.stream().noneMatch(entry -> isListEntryMatch(entry, uri))) {
+                throw new IllegalArgumentException("The URI %s is not in the configured allowed list (kestra.tasks.http.allowed-list).".formatted(uri));
             }
         }
 
         // then check that there are no exclusion for it
-        if (deniedList.stream().anyMatch(requestUri::startsWith)) {
-            throw new IllegalArgumentException("The URI " +  requestUri + " is in the configured denied list (kestra.tasks.http.denied-list).");
+        if (deniedList.stream().anyMatch(entry -> isListEntryMatch(entry, uri))) {
+            throw new IllegalArgumentException("The URI %s is in the configured denied list (kestra.tasks.http.denied-list).".formatted(uri));
         }
+    }
+
+    /**
+     * Matches a {@code kestra.tasks.http.allowed-list} / {@code denied-list} entry against the URI Kestra is
+     * actually about to connect to. Matching is done on the parsed authority (host, and scheme/port when the
+     * entry specifies them) rather than on the raw URI string, so that URL-encoded userinfo
+     * (e.g. {@code https://api.trusted.com@169.254.169.254/}, whose host is {@code 169.254.169.254}) or a
+     * subdomain suffix (e.g. {@code https://api.trusted.com.attacker.example/}) cannot impersonate an entry
+     * they merely start with.
+     * <p>
+     * An entry matches its host exactly. Write it as {@code *.api.trusted.com} to also match every subdomain
+     * of {@code api.trusted.com} (not {@code api.trusted.com} itself, which needs its own entry).
+     */
+    private static boolean isListEntryMatch(String entry, URI uri) {
+        String host = uri.getHost();
+        if (host == null) {
+            return false;
+        }
+
+        boolean matchSubdomains = entry.startsWith("*.") || entry.contains("://*.");
+        String strippedEntry = entry.replace("://*.", "://").replaceFirst("^\\*\\.", "");
+
+        URI entryUri;
+        try {
+            entryUri = URI.create(strippedEntry.contains("://") ? strippedEntry : "//" + strippedEntry);
+        } catch (IllegalArgumentException e) {
+            return false;
+        }
+
+        String entryHost = entryUri.getHost();
+        if (entryHost == null) {
+            return false;
+        }
+
+        String lowerHost = stripTrailingDot(host).toLowerCase(Locale.ROOT);
+        String lowerEntryHost = stripTrailingDot(entryHost).toLowerCase(Locale.ROOT);
+        boolean hostMatches = matchSubdomains
+            ? lowerHost.endsWith("." + lowerEntryHost)
+            : lowerHost.equals(lowerEntryHost);
+        if (!hostMatches) {
+            return false;
+        }
+
+        if (entryUri.getScheme() != null && !entryUri.getScheme().equalsIgnoreCase(uri.getScheme())) {
+            return false;
+        }
+
+        if (entryUri.getPort() != -1 && entryUri.getPort() != defaultedPort(uri)) {
+            return false;
+        }
+
+        String entryPath = entryUri.getPath();
+        if (entryPath != null && !entryPath.isEmpty() && !"/".equals(entryPath)) {
+            String path = uri.getPath() == null ? "" : uri.getPath();
+            if (!path.startsWith(entryPath)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Strips a single trailing dot from a hostname, e.g. {@code dangerous-url.com.}, since DNS resolves it
+     * identically to {@code dangerous-url.com} and it would otherwise fail both the exact and suffix match.
+     */
+    private static String stripTrailingDot(String host) {
+        return host.endsWith(".") ? host.substring(0, host.length() - 1) : host;
+    }
+
+    /**
+     * Returns the URI's explicit port, or the scheme's default port when none is given, so that an
+     * allow/deny-list entry with an explicit default port still matches a request that omits it.
+     */
+    private static int defaultedPort(URI uri) {
+        if (uri.getPort() != -1) {
+            return uri.getPort();
+        }
+
+        return switch (uri.getScheme() == null ? "" : uri.getScheme().toLowerCase(Locale.ROOT)) {
+            case "https" -> 443;
+            case "http" -> 80;
+            default -> -1;
+        };
     }
 
     @SuppressWarnings("unchecked")
@@ -573,7 +668,7 @@ public class HttpClient implements Closeable {
             return (T) EntityUtils.toString(entity);
         } else if (Byte[].class.isAssignableFrom(cls)) {
             return (T) ArrayUtils.toObject(EntityUtils.toByteArray(entity));
-        } else if (MediaType.APPLICATION_YAML.equals(entity.getContentType()) || "application/yaml".equals(entity.getContentType())) {
+        } else if (MediaType.APPLICATION_YAML.equals(entity.getContentType()) || KestraMediaTypes.APPLICATION_X_YAML.equals(entity.getContentType())) {
             return (T) JacksonMapper.ofYaml().readValue(entity.getContent(), cls);
         } else {
             return (T) JacksonMapper.ofJson(false).readValue(entity.getContent(), cls);

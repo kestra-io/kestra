@@ -1,4 +1,4 @@
-import {computed} from "vue"
+import {computed, type Component} from "vue"
 
 import {useRoute, useRouter} from "vue-router"
 import type {
@@ -9,9 +9,6 @@ import type {
 
 import {useI18n} from "vue-i18n"
 
-import {useMiscStore} from "override/stores/misc"
-
-
 // Main icons
 import AiMenuIcon from "../../components/ai/AiMenuIcon.vue"
 import ChartLineVariant from "vue-material-design-icons/ChartLineVariant.vue"
@@ -21,6 +18,7 @@ import PlayOutline from "vue-material-design-icons/PlayOutline.vue"
 import FileDocumentOutline from "vue-material-design-icons/FileDocumentOutline.vue"
 import FlaskOutline from "vue-material-design-icons/FlaskOutline.vue"
 import PackageVariantClosed from "vue-material-design-icons/PackageVariantClosed.vue"
+import AlertCircleOutline from "vue-material-design-icons/AlertCircleOutline.vue"
 import FolderOpenOutline from "vue-material-design-icons/FolderOpenOutline.vue"
 import PuzzleOutline from "vue-material-design-icons/PuzzleOutline.vue"
 import ShapePlusOutline from "vue-material-design-icons/ShapePlusOutline.vue"
@@ -34,6 +32,7 @@ import Battery40 from "vue-material-design-icons/Battery40.vue"
 import Gauge from "vue-material-design-icons/Gauge.vue"
 import ShieldAccount from "vue-material-design-icons/ShieldAccount.vue"
 import ShieldCheckOutline from "vue-material-design-icons/ShieldCheckOutline.vue"
+import RocketLaunchOutline from "vue-material-design-icons/RocketLaunchOutline.vue"
 import McpIcon from "../../components/McpIcon.vue"
 
 export type MenuItem = {
@@ -43,8 +42,8 @@ export type MenuItem = {
     routes?: RouteRecordNameGeneric[];
     href?: RouteLocationRaw;
     icon?: {
-        element?: any;
-        class?: any;
+        element?: Component;
+        class?: string;
     };
     child?: MenuItem[];
     attributes?: {
@@ -60,8 +59,6 @@ export function useLeftMenu() {
     const $router = useRouter()
 
     const {t} = useI18n({useScope: "global"})
-
-    const configs = useMiscStore().configs
 
     /**
      * Returns the names of all registered routes whose name starts with the given prefix.
@@ -214,6 +211,20 @@ export function useLeftMenu() {
                         },
                     },
                     {
+                        id: "cases",
+                        title: t("demos.cases.label"),
+                        routes: routeStartWith("cases"),
+                        href: {
+                            name: "cases/list",
+                        },
+                        icon: {
+                            element: AlertCircleOutline,
+                        },
+                        attributes: {
+                            locked: true,
+                        },
+                    },
+                    {
                         id: "plugins",
                         title: t("plugins.names"),
                         routes: routeStartWith("plugins"),
@@ -291,9 +302,6 @@ export function useLeftMenu() {
                         icon: {
                             element: LockOutline,
                         },
-                        attributes: {
-                            locked: true,
-                        },
                     },
                     {
                         id: "triggers",
@@ -332,6 +340,20 @@ export function useLeftMenu() {
                         },
                     },
                     {
+                        id: "promote",
+                        title: t("promote.label"),
+                        routes: routeStartWith("promote"),
+                        href: {
+                            name: "promote/targets",
+                        },
+                        icon: {
+                            element: RocketLaunchOutline,
+                        },
+                        attributes: {
+                            locked: true,
+                        },
+                    },
+                    {
                         id: "quotas",
                         title: t("quotas"),
                         routes: routeStartWith("admin/quotas"),
@@ -355,7 +377,6 @@ export function useLeftMenu() {
                         icon: {
                             element: Battery40,
                         },
-                        hidden: !configs?.isConcurrencyViewEnabled,
                     },
                     {
                         id: "iam",

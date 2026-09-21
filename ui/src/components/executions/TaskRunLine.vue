@@ -16,7 +16,7 @@
                 <ChevronRight v-else />
             </KsIcon>
         </div>
-        <div class="task-icon d-none d-md-inline-block me-1">
+        <div class="task-icon d-none d-md-inline-block">
             <TaskIcon
                 :cls="taskType(currentTaskRun)"
                 v-if="taskType(currentTaskRun)"
@@ -52,7 +52,7 @@
 
         <div class="task-duration d-none d-md-inline-block">
             <small class="me-1">
-                <Duration :histories="currentTaskRun.state.histories" />
+                <Duration :histories="currentTaskRun.state.histories" :attemptCount="currentTaskRun.attempts?.length" :subject="currentTaskRun.taskId" />
             </small>
         </div>
 
@@ -103,7 +103,10 @@
 
         <div class="task-duration d-none d-md-inline-block">
             <small class="me-1">
-                <Duration :histories="selectedAttempt(currentTaskRun).state.histories" />
+                <Duration
+                    :histories="selectedAttempt(currentTaskRun).state.histories"
+                    :subject="`${currentTaskRun.taskId}, ${$t('attempt')} ${(selectedAttemptNumberByTaskRunId[currentTaskRun.id] ?? 0) + 1}`"
+                />
             </small>
         </div>
     </div>
@@ -111,7 +114,7 @@
 
 <script setup lang="ts">
     import {computed} from "vue"
-    import {State, KsExecutionStatus} from "@kestra-io/design-system"
+    import {State, KsExecutionStatus, groupBy} from "@kestra-io/design-system"
     import TaskIcon from "../plugins/TaskIcon.vue"
     import TaskRunActions from "./TaskRunActions.vue"
     import {useStateFilter} from "../filter/composables/useStateFilter"
@@ -119,7 +122,6 @@
     import ChevronRight from "vue-material-design-icons/ChevronRight.vue"
     import ChevronDown from "vue-material-design-icons/ChevronDown.vue"
     import * as FlowUtils from "../../utils/flowUtils"
-    import _groupBy from "lodash/groupBy"
     import {Duration} from "@kestra-io/topology"
     import {usePluginsStore} from "../../stores/plugins"
     import {date as dateFilter, humanizeDuration} from "../../utils/filters"
@@ -179,7 +181,7 @@
         // Remove duplicate logs based on taskRunId and attemptNumber, keeping the one with the highest index (most recent)
         indexedLogs = Array.from(new Set(indexedLogs))
 
-        return _groupBy(indexedLogs, (indexedLog: any) => attemptUid(indexedLog.taskRunId, indexedLog.attemptNumber))
+        return groupBy(indexedLogs, (indexedLog: any) => attemptUid(indexedLog.taskRunId, indexedLog.attemptNumber))
     })
 
     // methods
@@ -222,18 +224,15 @@
 </script>
 
 <style scoped lang="scss">
-    .task-duration {
-        padding: .375rem 0;
-    }
-
     .taskrun-header,
     .attempt-header {
         display: flex;
-        gap: .5rem;
-        padding: 0.5rem 1rem;
+        align-items: center;
+        gap: var(--ks-spacing-2);
+        padding: var(--ks-spacing-1) var(--ks-spacing-4);
         border-bottom: 1px solid var(--ks-border-default);
 
-        >* {
+        > * {
             display: flex;
             align-items: center;
         }
@@ -246,6 +245,7 @@
         .task-duration small {
             white-space: nowrap;
             color: var(--ks-text-secondary);
+            line-height: 1;
         }
 
     }
@@ -255,17 +255,16 @@
         padding-left: calc(var(--ks-spacing-4) + var(--depth, 0) * var(--ks-spacing-5));
 
         .task-icon {
-            width: 36px;
-            padding: 6px 6px 6px 0;
-            border-radius: 0.5rem;
-            margin-left: -0.5rem;
+            flex-shrink: 0;
+            width: var(--ks-spacing-6);
+            height: var(--ks-spacing-6);
+            border-radius: var(--ks-radius-base);
         }
 
         .task-id {
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            padding: .375rem 0;
 
             span span {
                 color: var(--ks-text-primary);

@@ -14,12 +14,52 @@ describe("CopilotMessage", () => {
         expect(w.text()).toContain("hello there")
     })
 
+    it("renders a ``` fenced segment of the user prompt as a literal code block", () => {
+        const w = mountMessage({
+            id: "1a", role: "USER", type: "TEXT",
+            content: "Fix this flow:\n```yaml\nid: demo\nnamespace: company.team\n```\nIt fails on start.",
+        })
+        const code = w.find("[data-test=\"copilot-user-code\"]")
+        expect(code.exists()).toBe(true)
+        expect(code.element.textContent).toBe("id: demo\nnamespace: company.team")
+        const texts = w.findAll(".copilot-bubble-text")
+        expect(texts[0].text()).toBe("Fix this flow:")
+        expect(texts[1].text()).toBe("It fails on start.")
+    })
+
+    it("treats an unclosed ``` fence as a code block running to the end of the prompt", () => {
+        const w = mountMessage({
+            id: "1b", role: "USER", type: "TEXT",
+            content: "Why is this wrong?\n```yaml\nid: demo\ntasks: []",
+        })
+        expect(w.find("[data-test=\"copilot-user-code\"]").element.textContent).toBe("id: demo\ntasks: []")
+    })
+
+    it("renders a plain user prompt without any code block", () => {
+        const w = mountMessage({id: "1c", role: "USER", type: "TEXT", content: "id: demo\nnamespace: company.team"})
+        expect(w.find("[data-test=\"copilot-user-code\"]").exists()).toBe(false)
+        // Line breaks survive into the DOM; `white-space: pre-wrap` renders them.
+        expect(w.find(".copilot-bubble-text").element.textContent).toBe("id: demo\nnamespace: company.team")
+    })
+
     it("renders assistant text as a styled bubble through the markdown renderer", () => {
         const w = mountMessage({id: "2", role: "ASSISTANT", type: "TEXT", content: "**bold** answer"})
         expect(w.find(".copilot-bubble-assistant").exists()).toBe(true)
         const md = w.find(".ks-markdown")
         expect(md.exists()).toBe(true)
         expect(md.text()).toContain("**bold** answer")
+    })
+
+    it("renders a context-change notice with a lowercase type word and the id as a code token", () => {
+        const w = mountMessage({
+            id: "ctx", role: "SYSTEM", type: "CONTEXT",
+            context: {action: "removed", noun: "ai.copilot.contextNoun.flow", id: "good-morning"},
+        })
+        const notice = w.find("[data-test=\"copilot-context-notice\"]")
+        expect(notice.exists()).toBe(true)
+        expect(notice.text()).toBe("Removed flow good-morning from context.")
+        // The id renders as a monospace code token, not plain text.
+        expect(notice.find("code.copilot-context-id").text()).toBe("good-morning")
     })
 
     it("renders a collapsible tool_call with its name in the title and args as JSON", () => {
@@ -29,6 +69,17 @@ describe("CopilotMessage", () => {
         })
         expect(w.find(".copilot-tool-label").text()).toContain("read-execution")
         expect(w.find(".copilot-tool-args").text()).toContain("\"id\": \"exec-1\"")
+    })
+
+    it("spins the tool_call header only while the step is running", () => {
+        const message: ChatMessage = {
+            id: "3r", role: "TOOL", type: "TOOL_CALL",
+            toolCall: {tool: "read-execution", family: "READ", arguments: {}},
+        }
+        const running = mount(CopilotMessage, {props: {message, isRunning: true}, global: mountGlobal})
+        expect(running.find(".copilot-tool-spinner").exists()).toBe(true)
+        const idle = mount(CopilotMessage, {props: {message, isRunning: false}, global: mountGlobal})
+        expect(idle.find(".copilot-tool-spinner").exists()).toBe(false)
     })
 
     it("renders an ok tool_result with a success message", () => {
@@ -95,6 +146,23 @@ describe("CopilotMessage", () => {
         })
         expect(w.find(".copilot-draft").exists()).toBe(true)
         expect(w.find("[data-test=\"copilot-draft-yaml\"]").text()).toContain("id: demo")
+    })
+
+    // kestra-io/kestra#19330 review round 2: `appliedDraftIds` reached CopilotChat.vue's re-lock check
+    // but never this card, so an applied draft kept showing live Apply/Dismiss/Open-in-editor actions.
+    it("marks the draft card applied when its id is in appliedDraftIds", () => {
+        const w = mount(CopilotMessage, {
+            props: {
+                message: {
+                    id: "6b", role: "ASSISTANT", type: "ARTEFACT_DRAFT",
+                    draft: {draftId: "d1", kind: "FLOW", yaml: "id: demo", valid: true, constraints: null},
+                },
+                appliedDraftIds: new Set(["d1"]),
+            },
+            global: mountGlobal,
+        })
+        expect(w.find("[data-test=\"copilot-draft-applied\"]").text()).toContain("Applied")
+        expect(w.find("[data-test=\"copilot-draft-apply\"]").exists()).toBe(false)
     })
 
     it("renders a CANCELLED message as a subtle system marker", () => {

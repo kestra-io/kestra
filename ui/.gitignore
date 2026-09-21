@@ -10,3 +10,4 @@ packages/*/package-lock.json
 
 # module federation build files
 .__mf__temp
+tests/e2e/.auth/

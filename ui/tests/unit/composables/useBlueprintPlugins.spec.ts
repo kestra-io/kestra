@@ -40,7 +40,40 @@ describe("useBlueprintPlugins", () => {
         composable = useBlueprintPlugins()
     })
 
+    describe("blueprintTaskTypes", () => {
+        it("filters out plugin-group prefixes coming from pluginDefaults", async () => {
+            const {blueprintTaskTypes} = await import("../../../src/composables/useBlueprintPlugins")
+            expect(
+                blueprintTaskTypes([
+                    "io.kestra.plugin.jdbc.postgresql.Query",
+                    "io.kestra.plugin.jdbc.postgresql.Queries",
+                    "io.kestra.plugin.jdbc.postgresql",
+                ]),
+            ).toEqual([
+                "io.kestra.plugin.jdbc.postgresql.Query",
+                "io.kestra.plugin.jdbc.postgresql.Queries",
+            ])
+        })
+
+        it("dedupes and handles missing input", async () => {
+            const {blueprintTaskTypes} = await import("../../../src/composables/useBlueprintPlugins")
+            expect(
+                blueprintTaskTypes(["io.kestra.plugin.core.log.Log", "io.kestra.plugin.core.log.Log"]),
+            ).toEqual(["io.kestra.plugin.core.log.Log"])
+            expect(blueprintTaskTypes(undefined)).toEqual([])
+        })
+    })
+
     describe("missingTaskTypes", () => {
+        it("never flags a plugin-group prefix used by pluginDefaults", () => {
+            expect(
+                composable.missingTaskTypes([
+                    "io.kestra.plugin.gcp.bigquery.Query",
+                    "io.kestra.plugin.gcp",
+                ]),
+            ).toEqual([])
+        })
+
         it("flags a task whose exact class is not installed", () => {
             expect(
                 composable.missingTaskTypes([
@@ -86,15 +119,49 @@ describe("useBlueprintPlugins", () => {
         })
     })
 
-    describe("missingPluginNames", () => {
+    describe("uninstalledPluginNames", () => {
         it("derives unique, sorted plugin names from the missing task types", () => {
             expect(
-                composable.missingPluginNames([
+                composable.uninstalledPluginNames([
                     "io.kestra.plugin.dbt.cloud.Trigger",
-                    "io.kestra.plugin.scripts.python.Commands",
+                    "io.kestra.plugin.aws.s3.Upload",
+                    "io.kestra.plugin.dbt.cli.Setup",
+                ]),
+            ).toEqual(["aws", "dbt"])
+        })
+
+        it("names no plugin when an installed one no longer ships the type", () => {
+            // core is installed; ForEach was renamed to Loop in 2.0, so no install fixes it.
+            expect(
+                composable.uninstalledPluginNames(["io.kestra.plugin.core.flow.ForEach"]),
+            ).toEqual([])
+        })
+
+        it("keeps only the absent plugins when a blueprint mixes both causes", () => {
+            expect(
+                composable.uninstalledPluginNames([
+                    "io.kestra.plugin.core.flow.ForEach",
                     "io.kestra.plugin.aws.s3.Upload",
                 ]),
-            ).toEqual(["aws", "dbt", "scripts"])
+            ).toEqual(["aws"])
+        })
+
+        it("stays silent for a sibling artifact sharing an installed plugin name", () => {
+            // scripts.shell is installed, so "install scripts" would be misleading even
+            // though scripts.python is unavailable; the type itself is still reported.
+            expect(
+                composable.missingTaskTypes(["io.kestra.plugin.scripts.python.Commands"]),
+            ).toEqual(["io.kestra.plugin.scripts.python.Commands"])
+            expect(
+                composable.uninstalledPluginNames(["io.kestra.plugin.scripts.python.Commands"]),
+            ).toEqual([])
+        })
+
+        it("returns nothing while the installed set is unknown", () => {
+            pluginsStore.installedPluginTypes = undefined
+            expect(
+                composable.uninstalledPluginNames(["io.kestra.plugin.aws.s3.Upload"]),
+            ).toEqual([])
         })
     })
 

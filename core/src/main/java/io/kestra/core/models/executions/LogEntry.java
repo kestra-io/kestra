@@ -16,13 +16,13 @@ import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.TriggerId;
 import io.kestra.core.queues.event.DispatchEvent;
 import io.kestra.core.utils.IdUtils;
+import io.kestra.core.validations.TenantId;
 
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.SpanContext;
 import io.swagger.v3.oas.annotations.Hidden;
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
 import lombok.Builder;
 import lombok.Value;
 
@@ -30,7 +30,7 @@ import lombok.Value;
 @Builder(toBuilder = true)
 public class LogEntry implements TenantInterface, DispatchEvent {
     @Hidden
-    @Pattern(regexp = "^[a-z0-9][a-z0-9_-]*")
+    @TenantId
     String tenantId;
 
     @NotNull
@@ -97,6 +97,16 @@ public class LogEntry implements TenantInterface, DispatchEvent {
             .flowId(execution.getFlowId())
             .executionId(execution.getId())
             .executionKind(execution.getKind())
+            .build();
+    }
+
+    public static LogEntry of(ExecutionId executionId, ExecutionKind executionKind) {
+        return LogEntry.builder()
+            .tenantId(executionId.tenantId())
+            .namespace(executionId.namespace())
+            .flowId(executionId.flowId())
+            .executionId(executionId.executionId())
+            .executionKind(executionKind)
             .build();
     }
 

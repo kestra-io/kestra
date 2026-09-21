@@ -32,6 +32,16 @@ import jakarta.inject.Singleton;
 @Singleton
 @Requires(bean = AiServiceManager.class)
 public class AuthorFlowTool implements AiAuthoringTool {
+    /**
+     * Namespace to fall back on when the agent authors a flow without one (the user's prompt carried no
+     * namespace and no flow/namespace page was in focus). The one-shot generation pipeline renders
+     * {@code namespace} into a non-lenient prompt template that rejects a null value — throwing
+     * "Value for the variable 'namespace' is null" — so authoring with no namespace would otherwise
+     * hard-fail, and the agent would retry the identical call in a loop. We default to Kestra's canonical
+     * example namespace and report the assumption so the agent can tell the user to change it if needed.
+     */
+    static final String DEFAULT_NAMESPACE = "company.team";
+
     private final AiServiceManager aiServiceManager;
     private final FlowService flowService;
 
@@ -49,11 +59,11 @@ public class AuthorFlowTool implements AiAuthoringTool {
     @Tool(
         name = "author-flow",
         value = "Draft a Kestra flow (YAML) from a natural-language description, or revise an existing flow when its current YAML is provided. The draft is validated and shown to the user as an artefact card; nothing is saved. If the draft comes back invalid, call this tool again passing the draft as `currentFlowYaml` with instructions to fix the reported constraints. Do not paste the full YAML in your reply — refer the user to the draft. "
-            + "Returns an object { draftId, kind, valid, validationError, yaml }: `draftId` and `yaml` identify the published draft and `valid` reflects validation (`validationError` holds the constraints when invalid). If generation fails, the tool errors with the reason instead of returning."
+            + "Returns an object { draftId, kind, valid, validationError, yaml, assumedNamespace }: `draftId` and `yaml` identify the published draft and `valid` reflects validation (`validationError` holds the constraints when invalid). When the flow was authored without a namespace, `assumedNamespace` holds the namespace it defaulted to — tell the user the flow was drafted in that namespace and that they can change it. If generation fails, the tool errors with the reason instead of returning."
     )
     public Result authorFlow(
         @P(name = "instructions", value = "What the flow should do, or how the current flow should be changed") String instructions,
-        @P(name = "namespace", value = "The namespace the flow belongs to; omit if unknown", required = false) String namespace,
+        @P(name = "namespace", value = "The namespace the flow belongs to; omit if unknown — a new flow authored without one defaults to '" + DEFAULT_NAMESPACE + "'", required = false) String namespace,
         @P(name = "currentFlowYaml", value = "The full current flow YAML when revising an existing flow; omit when creating a new one", required = false) String currentFlowYaml,
         final AgentCallContext.Context context) {
 
@@ -62,11 +72,20 @@ public class AuthorFlowTool implements AiAuthoringTool {
             throw new IllegalStateException("No AI provider is configured; flow authoring is unavailable.");
         }
 
+        // The generation pipeline requires a non-null namespace (see DEFAULT_NAMESPACE). When the agent
+        // omits it, fall back — but only a *creation* with no namespace is an assumption worth surfacing:
+        // when revising, the real namespace lives in the provided YAML and is preserved, so the default
+        // is merely a placeholder for the template.
+        boolean creating = currentFlowYaml == null || currentFlowYaml.isBlank();
+        boolean namespaceMissing = namespace == null || namespace.isBlank();
+        String effectiveNamespace = namespaceMissing ? DEFAULT_NAMESPACE : namespace;
+        String assumedNamespace = namespaceMissing && creating ? effectiveNamespace : null;
+
         FlowGenerationPrompt prompt = new FlowGenerationPrompt(
             Objects.requireNonNullElseGet(context.conversationId(), IdUtils::create),
             instructions,
             currentFlowYaml,
-            namespace
+            effectiveNamespace
         );
 
         String yaml;
@@ -79,7 +98,7 @@ public class AuthorFlowTool implements AiAuthoringTool {
         String constraints = validate(context.tenant(), yaml);
         ArtefactDraft draft = new ArtefactDraft(IdUtils.create(), ArtefactKind.FLOW, yaml, constraints == null, constraints);
 
-        return Result.drafted(draft);
+        return Result.drafted(draft, assumedNamespace);
     }
 
     /** Run platform validation on the generated source; returns the violations, or null when valid. */
@@ -100,12 +119,13 @@ public class AuthorFlowTool implements AiAuthoringTool {
      * @param valid whether the generated YAML passed validation
      * @param validationError the validation constraints when invalid, else null
      * @param yaml the generated YAML
+     * @param assumedNamespace the namespace the draft defaulted to when the caller provided none, else null
      */
-    public record Result(String draftId, ArtefactKind kind, boolean valid, String validationError, String yaml)
+    public record Result(String draftId, ArtefactKind kind, boolean valid, String validationError, String yaml, String assumedNamespace)
         implements
             PublishableToolResult {
-        static Result drafted(final ArtefactDraft draft) {
-            return new Result(draft.draftId(), draft.kind(), draft.valid(), draft.constraints(), draft.yaml());
+        static Result drafted(final ArtefactDraft draft, final String assumedNamespace) {
+            return new Result(draft.draftId(), draft.kind(), draft.valid(), draft.constraints(), draft.yaml(), assumedNamespace);
         }
 
         @Override

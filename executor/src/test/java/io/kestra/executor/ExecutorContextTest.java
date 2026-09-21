@@ -34,7 +34,25 @@ class ExecutorContextTest {
         var ctx = new ExecutorContext(execution);
 
         assertThat(ctx.getStateTransitions()).containsExactly(State.Type.CREATED);
-        assertThat(ctx.getOriginalState()).isEqualTo(State.Type.CREATED);
+    }
+
+    @Test
+    void shouldNotKeepTheEntryExecutionWhenItWasNotTerminated() {
+        var ctx = new ExecutorContext(blankExecution());
+
+        // nothing to keep: an execution that was not terminated at entry cannot have been over
+        // before this cycle, whatever its flow declares
+        assertThat(ctx.getTerminalExecutionAtEntry()).isNull();
+    }
+
+    @Test
+    void shouldKeepTheEntryExecutionWhenItWasAlreadyTerminated() {
+        var terminated = blankExecution().withState(State.Type.SUCCESS);
+        var ctx = new ExecutorContext(terminated);
+
+        // its task runs are the only way to tell a duplicate cycle from the one completing the
+        // afterExecution tasks, which run after the execution state is already terminal
+        assertThat(ctx.getTerminalExecutionAtEntry()).isSameAs(terminated);
     }
 
     @Test
@@ -70,14 +88,13 @@ class ExecutorContextTest {
     }
 
     @Test
-    void shouldPreserveOriginalStateWhenExecutionAdvances() {
+    void shouldKeepTheEntryStateAsFirstTransitionWhenExecutionAdvances() {
         var execution = blankExecution();
         var ctx = new ExecutorContext(execution);
 
         ctx.withExecution(execution.withState(State.Type.RUNNING), "running");
         ctx.withExecution(execution.withState(State.Type.SUCCESS), "success");
 
-        assertThat(ctx.getOriginalState()).isEqualTo(State.Type.CREATED);
-        assertThat(ctx.getStateTransitions()).hasSize(3);
+        assertThat(ctx.getStateTransitions()).containsExactly(State.Type.CREATED, State.Type.RUNNING, State.Type.SUCCESS);
     }
 }

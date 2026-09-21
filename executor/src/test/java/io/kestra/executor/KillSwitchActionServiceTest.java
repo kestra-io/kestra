@@ -137,6 +137,9 @@ class KillSwitchActionServiceTest {
     private Execution mockActiveExecution() {
         var state = mock(State.class);
         when(state.isTerminated()).thenReturn(false);
+        // a state always has a current type: leaving it null lets a mock stand for an execution
+        // that cannot exist, and hides NPEs from anything reading the state it transitions from
+        when(state.getCurrent()).thenReturn(State.Type.RUNNING);
         var execution = mock(Execution.class);
         when(execution.getState()).thenReturn(state);
         return execution;

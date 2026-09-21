@@ -7,19 +7,22 @@ import {useAuthStore} from "override/stores/auth"
 import {useValues} from "../composables/useValues"
 import {useI18n} from "vue-i18n"
 import {useRoute} from "vue-router"
+import {routeFamily} from "../../../utils/routeFamily"
 
 export const useTriggerFilter = (): ComputedRef<FilterConfiguration> => {
     const {t} = useI18n()
     const route = useRoute()
 
     return computed(() => {
-        const {VALUES} = useValues("triggers")
+        // `t` is handed over so this never re-enters useI18n: the computed also refreshes outside a
+        // setup context (a flush job after a route-query change), where useI18n throws.
+        const {VALUES} = useValues("triggers", t)
 
         return {
             title: t("filter.titles.trigger_filters"),
             searchPlaceholder: t("filter.search_placeholders.search_triggers"),
             keys: [
-                ...(route.name !== "namespaces/update" ? [
+                ...(routeFamily(route.name) !== "namespaces/update" ? [
                     {
                         key: "namespace",
                         label: t("filter.namespace.label"),
@@ -51,8 +54,8 @@ export const useTriggerFilter = (): ComputedRef<FilterConfiguration> => {
                         },
                         searchable: true,
                     },
-                ] : []) as any,
-                ...(route.name !== "flows/update" ? [{
+                ] : []) as FilterConfiguration["keys"],
+                ...(routeFamily(route.name) !== "flows/update" ? [{
                     key: "flowId",
                     label: t("filter.flowId.label"),
                     description: t("filter.flowId.description"),
@@ -64,7 +67,7 @@ export const useTriggerFilter = (): ComputedRef<FilterConfiguration> => {
                         Comparators.ENDS_WITH,
                     ],
                     valueType: "text",
-                }] : []) as any,
+                }] : []) as FilterConfiguration["keys"],
                 {
                     key: "timeRange",
                     label: t("filter.timeRange_trigger.label"),
@@ -72,8 +75,8 @@ export const useTriggerFilter = (): ComputedRef<FilterConfiguration> => {
                     comparators: [Comparators.EQUALS],
                     valueType: "select",
                     groupable: false,
-                    valueProvider: async (meta?: FilterMeta) => {
-                        return meta?.dateFilter === "LAST_TRIGGERED_DATE"
+                    valueProvider: async (options?: {meta?: FilterMeta}) => {
+                        return options?.meta?.dateFilter === "LAST_TRIGGERED_DATE"
                             ? VALUES.RELATIVE_DATE
                             : VALUES.RELATIVE_DATE_NEXT
                     },
@@ -93,10 +96,7 @@ export const useTriggerFilter = (): ComputedRef<FilterConfiguration> => {
                     description: t("filter.scope_trigger.description"),
                     comparators: [Comparators.EQUALS, Comparators.NOT_EQUALS],
                     valueType: "radio",
-                    valueProvider: async () => {
-                        const {VALUES} = useValues("triggers")
-                        return VALUES.SCOPES
-                    },
+                    valueProvider: async () => VALUES.SCOPES,
                     showComparatorSelection: false,
                 },
                 {
@@ -139,10 +139,27 @@ export const useTriggerFilter = (): ComputedRef<FilterConfiguration> => {
                         Comparators.NOT_EQUALS,
                     ],
                     valueType: "select",
-                    valueProvider: async () => {
-                        const {VALUES} = useValues("triggers")
-                        return VALUES.TRIGGER_STATES
-                    },
+                    valueProvider: async () => VALUES.TRIGGER_STATES,
+                },
+                {
+                    // QueryFilter.Field.LOCKED supports EQUALS only, so there is no comparator to offer.
+                    key: "locked",
+                    label: t("filter.triggerLocked.label"),
+                    description: t("filter.triggerLocked.description"),
+                    comparators: [Comparators.EQUALS],
+                    valueType: "select",
+                    valueProvider: async () => VALUES.TRIGGER_LOCK_STATES,
+                },
+                {
+                    // Keyed `source` after QueryFilter.Field.SOURCE, but labelled "Kind": it targets the
+                    // scheduler's trigger type, which the API exposes as `state.kind` so it does not clash
+                    // with the trigger definition's plugin type.
+                    key: "source",
+                    label: t("filter.triggerKind.label"),
+                    description: t("filter.triggerKind.description"),
+                    comparators: [Comparators.EQUALS],
+                    valueType: "select",
+                    valueProvider: async () => VALUES.TRIGGER_KINDS,
                 },
             ],
         }

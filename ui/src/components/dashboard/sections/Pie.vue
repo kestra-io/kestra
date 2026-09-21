@@ -1,8 +1,10 @@
 <template>
     <div class="pie">
-        <div v-if="generated?.results?.length" class="chart">
+        <KsSkeleton v-if="loading && !generated" animated :rows="3" class="empty" />
+        <div v-else-if="generated?.results?.length" class="chart">
             <KsPie
                 ref="ksPieRef"
+                :maxPixelRatio="DASHBOARD_CHART_MAX_PIXEL_RATIO"
                 :data="pieData"
                 :loading="false"
                 :donut="chartOptions?.graphStyle !== 'PIE'"
@@ -25,6 +27,7 @@
             :maxVisible="6"
             center
             :chart="ksPieRef"
+            :formatValue="isDuration ? durationUtils.humanDuration : undefined"
         />
     </div>
 </template>
@@ -33,11 +36,11 @@
     import {computed, ref, watch} from "vue"
     import {useRoute} from "vue-router"
 
-    import moment from "moment"
-    import {KsPie, ChartFeature, TooltipType, durationUtils, type KsChartSeriesItem} from "@kestra-io/design-system"
+    import {KsPie, KsSkeleton, ChartFeature, TooltipType, dateUtils, durationUtils, type KsChartSeriesItem} from "@kestra-io/design-system"
 
     import {Chart, useChartGenerator} from "../composables/useDashboards"
-    import {getConsistentHEXColor} from "../composables/charts"
+    import {DASHBOARD_CHART_MAX_PIXEL_RATIO, getConsistentHEXColor, type EchartsParams} from "../composables/charts"
+    import type {Column} from "../types.ts"
     import {useChartDrillDown} from "../composables/chartDrillDown"
     import ChartLegend from "./ChartLegend.vue"
     import {QueryFilter} from "@kestra-io/kestra-sdk"
@@ -61,27 +64,26 @@
 
     const {chartOptions} = props.chart
     const columns = props.chart.data?.columns ?? {}
-    const isDuration = Object.values(columns).find((c: Record<string, any>) => c.agg !== undefined)?.field === "DURATION"
+    const isDuration = Object.values(columns).find((c: Column) => c.agg !== undefined)?.field === "DURATION"
 
     const aggregator = Object.entries(columns).reduce<{
         value?: {label: string; key: string};
         field?: {label: string; key: string};
-    }>((result, [key, column]) => {
-        const col = column as Record<string, any>
-        result["agg" in col ? "value" : "field"] = {label: col.displayName ?? col.agg, key}
+    }>((result, [key, col]) => {
+        result["agg" in col ? "value" : "field"] = {label: col.displayName ?? col.agg ?? "", key}
         return result
     }, {})
 
     const ksPieRef = ref<InstanceType<typeof KsPie> | null>(null)
-    const {data: generated, generate} = useChartGenerator(props.dashboardId, props)
+    const {data: generated, loading, generate} = useChartGenerator(props.dashboardId, props)
 
     function parseValue(value: unknown): string {
-        const date = moment(value as moment.MomentInput, moment.ISO_8601, true)
+        const date = dateUtils.parseIso(value)
         return date.isValid() ? date.format("YYYY-MM-DD") : String(value)
     }
 
     const pieData = computed<KsChartSeriesItem[]>(() => {
-        const rawData = generated.value?.results as Record<string, any>[] | undefined
+        const rawData = generated.value?.results
         if (!rawData) return []
 
         const results: Record<string, number> = Object.create(null)
@@ -121,19 +123,20 @@
 
     const pieOptions = computed(() => ({
         tooltip: {
-            formatter: (params: any) =>
+            formatter: (params: EchartsParams) =>
                 isDuration
-                    ? `${params.name}: ${durationUtils.humanDuration(params.value)} (${params.percent}%)`
+                    ? `${params.name}: ${durationUtils.humanDuration(Number(params.value))} (${params.percent}%)`
                     : `${params.name}: ${params.value} (${params.percent}%)`,
         },
     }))
 
     const dimensionColumn = computed(() => {
         const dimensionKey = aggregator.field?.key
-        return (dimensionKey ? columns[dimensionKey] : undefined) as {field?: string; key?: string} | undefined
+        return dimensionKey ? columns[dimensionKey] : undefined
     })
 
-    function onSegmentClick(params: any) {
+    function onSegmentClick(rawParams: unknown) {
+        const params = rawParams as EchartsParams
         if (!params?.name) return
         drillDown([{column: dimensionColumn.value, value: params.name}])
     }

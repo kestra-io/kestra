@@ -1,4 +1,4 @@
-import {describe, it, expect, vi, beforeEach} from "vitest"
+import {describe, it, expect, vi, afterAll, beforeEach} from "vitest"
 import {mount} from "@vue/test-utils"
 import type {AiSseFrame} from "../../../../../src/components/ai/copilot/types"
 import {mountGlobal} from "./_helpers"
@@ -20,6 +20,9 @@ vi.mock("../../../../../src/components/ai/copilot/streamSse", async (importOrigi
     }
 })
 vi.mock("override/utils/route", () => ({apiUrl: () => "http://localhost/api/v1/main"}))
+
+// The dashboard draft card reads the custom-dashboards capability flag from the misc store.
+vi.mock("override/stores/misc", () => ({useMiscStore: () => ({configs: {}})}))
 
 import {useAiChat} from "../../../../../src/components/ai/copilot/useAiChat"
 import CopilotMessage from "../../../../../src/components/ai/copilot/CopilotMessage.vue"
@@ -69,6 +72,10 @@ describe("AI Copilot v2 — full tool catalog", () => {
         get.mockReset()
         nextFrames = []
         post.mockResolvedValue({data: {uid: "t1", mode: "EDIT", status: "IDLE", createdAt: "", updatedAt: ""}})
+    })
+
+    afterAll(() => {
+        localStorage.clear()
     })
 
     it("reduces a stream that exercises every tool into the expected transcript", async () => {

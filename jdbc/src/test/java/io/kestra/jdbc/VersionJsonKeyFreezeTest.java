@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 
 import io.kestra.core.models.kv.PersistedKvMetadata;
 import io.kestra.core.models.namespaces.files.NamespaceFileMetadata;
+import io.kestra.core.serializers.JacksonMapper;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -15,7 +16,8 @@ import static org.assertj.core.api.Assertions.assertThat;
  * JDBC JSONB {@code value} column. The Java field is named {@code revision}, but the serialized key
  * MUST stay {@code "version"}: the DDL generated columns read {@code CAST(value ->> 'version' ...)}
  * and renaming the persisted key would force a JSONB backfill across H2/Postgres/MySQL on every
- * existing install. Uses {@link JdbcMapper#of()} — the exact mapper that writes/reads the column.
+ * existing install. Uses {@link JacksonMapper#ofJson()} — the exact mapper that writes/reads the
+ * column.
  */
 class VersionJsonKeyFreezeTest {
     @Test
@@ -26,7 +28,7 @@ class VersionJsonKeyFreezeTest {
             .revision(7)
             .build();
 
-        JsonNode node = JdbcMapper.of().readTree(JdbcMapper.of().writeValueAsString(metadata));
+        JsonNode node = JacksonMapper.ofJson().readTree(JacksonMapper.ofJson().writeValueAsString(metadata));
 
         assertThat(node.has("version")).isTrue();
         assertThat(node.get("version").asInt()).isEqualTo(7);
@@ -37,7 +39,7 @@ class VersionJsonKeyFreezeTest {
     void persistedKvMetadataReadsLegacyVersionJsonKey() throws JsonProcessingException {
         String legacy = "{\"namespace\":\"my.ns\",\"name\":\"my-key\",\"version\":7,\"last\":true,\"deleted\":false}";
 
-        PersistedKvMetadata metadata = JdbcMapper.of().readValue(legacy, PersistedKvMetadata.class);
+        PersistedKvMetadata metadata = JacksonMapper.ofJson().readValue(legacy, PersistedKvMetadata.class);
 
         assertThat(metadata.getRevision()).isEqualTo(7);
     }
@@ -51,7 +53,7 @@ class VersionJsonKeyFreezeTest {
             .size(12L)
             .build();
 
-        JsonNode node = JdbcMapper.of().readTree(JdbcMapper.of().writeValueAsString(metadata));
+        JsonNode node = JacksonMapper.ofJson().readTree(JacksonMapper.ofJson().writeValueAsString(metadata));
 
         assertThat(node.has("version")).isTrue();
         assertThat(node.get("version").asInt()).isEqualTo(7);
@@ -62,7 +64,7 @@ class VersionJsonKeyFreezeTest {
     void namespaceFileMetadataReadsLegacyVersionJsonKey() throws JsonProcessingException {
         String legacy = "{\"namespace\":\"my.ns\",\"path\":\"/sub/file.txt\",\"version\":7,\"size\":12,\"last\":true,\"deleted\":false}";
 
-        NamespaceFileMetadata metadata = JdbcMapper.of().readValue(legacy, NamespaceFileMetadata.class);
+        NamespaceFileMetadata metadata = JacksonMapper.ofJson().readValue(legacy, NamespaceFileMetadata.class);
 
         assertThat(metadata.getRevision()).isEqualTo(7);
     }

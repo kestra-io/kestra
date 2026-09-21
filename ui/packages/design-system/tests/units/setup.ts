@@ -1,6 +1,7 @@
 import {vi} from "vitest"
-import {AppContext, ref} from "vue"
+import {ref} from "vue"
 import {config} from "@vue/test-utils"
+import {installMonacoCssEscapePolyfill} from "../../../../tests/unit/monacoCssEscapePolyfill"
 
 // Most unit tests mount a component in isolation, without installing vue-router,
 // so a literal <router-link> in its template (or a dynamic :is="'router-link'")
@@ -32,17 +33,7 @@ if (typeof window !== "undefined" && typeof window.matchMedia !== "function") {
         dispatchEvent: () => false,
     })
 }
-
-vi.mock("vue-i18n", () => ({
-  useI18n: () => ({
-    t: (key:string) => key,
-  }),
-  createI18n: () => ({
-    install(app:AppContext) {
-      app.config.globalProperties.$t = (key:string) => key
-    },
-  }),
-}))
+installMonacoCssEscapePolyfill()
 
 // jsdom doesn't run layout, so ResizeObserver-backed hooks like useElementSize
 // would report 0×0 forever, and any v-if gated on dimensions never renders.

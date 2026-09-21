@@ -74,6 +74,16 @@ public class RunContextLoggerFactory {
         );
     }
 
+    public RunContextLogger create(ExecutionId executionId, ExecutionKind executionKind, List<Label> labels) {
+        return new RunContextLogger(
+            logEmitter,
+            LogEntry.of(executionId, executionKind),
+            null,
+            false,
+            mdcLabels(Label.toMap(labels))
+        );
+    }
+
     public RunContextLogger create(TriggerId triggerId, AbstractTrigger trigger) {
         return new RunContextLogger(
             logEmitter,

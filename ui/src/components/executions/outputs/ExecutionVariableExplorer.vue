@@ -10,6 +10,7 @@
                             :sections="sections"
                             :selectedExpression="selectedBase"
                             @select="selectItem"
+                            @search-change="onSearchChange"
                         />
                     </KsSplitterPanel>
 
@@ -34,18 +35,34 @@
                             </div>
 
                             <template v-if="selectedValue === undefined">
-                                <KsNoData :title="$t('variable_explorer.select_prompt')" />
+                                <KsNoData
+                                    :title="$t('variable_explorer.select_prompt')"
+                                    :description="$t('variable_explorer.select_hint')"
+                                />
                             </template>
 
-                            <KsEditor
-                                v-else-if="isRawEditor"
-                                v-bind="editorBindings"
-                                :readOnly="true"
-                                :inline="true"
-                                :navbar="false"
-                                :modelValue="rawValue"
-                                lang="json"
-                            />
+                            <template v-else-if="isRawEditor">
+                                <div v-if="rawPreview.truncated" class="truncated-banner">
+                                    <KsAlert type="warning" :closable="false" data-test="raw-value-truncated">
+                                        <template #title>
+                                            <div class="truncated-row">
+                                                <span>{{ $t('large_outputs.value_truncated', {size: rawValueSize}) }}</span>
+                                                <KsButton size="small" :icon="Download" data-test="download-raw" @click="downloadValue">
+                                                    {{ $t('download') }}
+                                                </KsButton>
+                                            </div>
+                                        </template>
+                                    </KsAlert>
+                                </div>
+                                <KsEditor
+                                    v-bind="editorBindings"
+                                    :readOnly="true"
+                                    :inline="true"
+                                    :navbar="false"
+                                    :modelValue="rawPreviewText"
+                                    lang="json"
+                                />
+                            </template>
 
                             <div class="file-preview" v-else-if="fileSelectedOutput && execution?.id">
                                 <FilePreview
@@ -60,14 +77,27 @@
                                 :value="selectedValue"
                                 :basePath="selectedBase"
                                 :selectedPath="expressionPath"
-                                :previewFormatter="treePreviewFormatter"
                                 defaultExpanded
                                 @select="onSelectPath"
                             />
 
-                            <div v-else class="viewer__scalar">
-                                <code>{{ rawValue }}</code>
-                            </div>
+                            <template v-else>
+                                <div v-if="isRawTruncated" class="truncated-banner">
+                                    <KsAlert type="warning" :closable="false" data-test="raw-value-truncated">
+                                        <template #title>
+                                            <div class="truncated-row">
+                                                <span>{{ $t('large_outputs.value_truncated', {size: rawValueSize}) }}</span>
+                                                <KsButton size="small" :icon="Download" data-test="download-raw" @click="downloadValue">
+                                                    {{ $t('download') }}
+                                                </KsButton>
+                                            </div>
+                                        </template>
+                                    </KsAlert>
+                                </div>
+                                <div class="viewer__scalar">
+                                    <code>{{ cappedRawValue }}</code>
+                                </div>
+                            </template>
                         </div>
                     </KsSplitterPanel>
                 </KsSplitter>
@@ -79,6 +109,7 @@
                     <ExpressionDebugger
                         :execution="execution"
                         :expression="expression"
+                        :fileUri="debuggedFileUri"
                     />
                 </div>
             </KsSplitterPanel>
@@ -88,30 +119,38 @@
 
 <script setup lang="ts">
     import {ref, computed, watch} from "vue"
-    import {useMediaQuery} from "@vueuse/core"
+    import {useDebounceFn, useMediaQuery} from "@vueuse/core"
     import {useI18n} from "vue-i18n"
+    import {useRoute} from "vue-router"
 
     import {
         KsSplitter,
         KsSplitterPanel,
         KsSegmented,
         KsIconButton,
+        KsAlert,
+        KsButton,
         KsEditor,
         KsJsonTree,
+        copyToClipboard,
     } from "@kestra-io/design-system"
     import * as OutputsAPI from "@kestra-io/kestra-sdk/outputs"
 
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
+    import Download from "vue-material-design-icons/Download.vue"
 
-    import {useExecutionsStore} from "../../../stores/executions"
+    import {useExecutionsStore, type Execution} from "../../../stores/executions"
+    import {loadExecutionOutputs} from "../../../composables/useTaskRunOutputs"
     import {useEditorBindings} from "../../../composables/useEditorBindings"
 
     import SidebarList, {ExplorerItem, ExplorerSection} from "./SidebarList.vue"
     import ExpressionDebugger from "./ExpressionDebugger.vue"
+    import {taskOutputLabel} from "./explorerSearch"
     import * as Utils from "../../../utils/utils"
     import FilePreview from "../FilePreview.vue"
 
     const {t} = useI18n({useScope: "global"})
+    const route = useRoute()
     const editorBindings = useEditorBindings()
 
     const executionsStore = useExecutionsStore()
@@ -120,7 +159,7 @@
     /* ----------------------------- Pebble paths ----------------------------- */
 
     function isValidVariable(key: string): boolean {
-        return /^[a-zA-Z][a-zA-Z0-9_]*$/.test(key)
+        return /^[a-zA-Z_][a-zA-Z0-9_]*$/.test(key)
     }
 
     function formatStep(key: string): string {
@@ -133,7 +172,14 @@
         return typeof value
     }
 
+    // The preview is a single clipped line, so only its head ever reaches the screen.
+    const PREVIEW_MAX_CHARS = 200
+
     function preview(value: unknown): string {
+        return previewText(value).slice(0, PREVIEW_MAX_CHARS)
+    }
+
+    function previewText(value: unknown): string {
         if (value === null) return "null"
         if (typeof value === "string") return value
         if (Array.isArray(value)) {
@@ -142,22 +188,12 @@
                 : t("variable_explorer.n_items", {count: value.length})
         }
         if (typeof value === "object") {
-            const keys = Object.keys(value as object)
-            return `{ ${keys.join(", ")} }`
+            // Each key costs a character at least, so more than this can only build text nobody sees.
+            const keys = Object.keys(value as object).slice(0, PREVIEW_MAX_CHARS)
+            // Unguarded, an empty object previews as `{  }`.
+            return keys.length ? `{ ${keys.join(", ")} }` : "{}"
         }
         return String(value)
-    }
-
-    function treePreviewFormatter(_value: unknown, context: {kind: "array" | "object", count: number}): string {
-        if (context.kind === "array") {
-            return context.count === 1
-                ? t("variable_explorer.one_item")
-                : t("variable_explorer.n_items", {count: context.count})
-        }
-
-        return context.count === 1
-            ? t("variable_explorer.one_key")
-            : t("variable_explorer.n_keys", {count: context.count})
     }
 
     function itemsFromRecord(record: Record<string, unknown> | undefined, prefix: string): ExplorerItem[] {
@@ -171,21 +207,41 @@
         }))
     }
 
+    /** Mirrors RunVariables: trigger variables sit at the top level, id and type under `_context`. */
+    function triggerRecord(trigger: Execution["trigger"]): Record<string, unknown> | undefined {
+        if (!trigger) return undefined
+        return {...(trigger.variables ?? {}), _context: {id: trigger.id, type: trigger.type}}
+    }
+
     /* ------------------------- Task outputs sourcing ------------------------- */
     // Sourced exactly like Wrapper.vue: the list of task runs that have outputs
-    // is fetched from the /outputs/{executionId} endpoint, then each task's
-    // values are lazily loaded from /outputs/{executionId}/{taskRunId}.
+    // is fetched from the /outputs/tasks/{executionId} endpoint, then each task's
+    // values are lazily loaded from /outputs/tasks/{executionId}/{taskRunId}.
+
+    interface TaskOutputMeta {
+        taskId: string;
+        value?: string | null;
+        iteration?: number | null;
+    }
 
     const tasksWithOutputs = ref<string[] | undefined>(undefined)
+    const taskOutputMetaByRunId = ref<Record<string, TaskOutputMeta>>({})
     const taskOutputs = ref<Record<string, Record<string, unknown>>>({})
+    const flowOutputs = ref<Record<string, unknown>>({})
 
+    // Re-fetch on state changes too: outputs are written as the execution progresses.
     watch(
-        () => execution.value?.id,
-        async (id) => {
-            tasksWithOutputs.value = undefined
-            taskOutputs.value = {}
+        () => [execution.value?.id, execution.value?.state?.current] as const,
+        async ([id], previous) => {
+            if (id !== previous?.[0]) {
+                tasksWithOutputs.value = undefined
+                taskOutputMetaByRunId.value = {}
+                taskOutputs.value = {}
+                flowOutputs.value = {}
+            }
             if (!id) return
 
+            flowOutputs.value = await loadExecutionOutputs(id)
 
             const data = await OutputsAPI.taskOutputsInformation({
                 executionId: id,
@@ -193,26 +249,75 @@
                 validateStatus: (s: number) => s === 200 || s === 404,
             })
 
-            tasksWithOutputs.value = data
-                .map((task) => task.taskRunId)
-                .filter((taskRunId) => taskRunId !== undefined)
+            const metaByRunId: Record<string, TaskOutputMeta> = {}
+            const taskRunIds = data
+                .map((task) => {
+                    if (task.taskRunId !== undefined) {
+                        metaByRunId[task.taskRunId] = {
+                            taskId: task.taskId ?? "",
+                            value: task.value,
+                            iteration: task.iteration,
+                        }
+                    }
 
+                    return task.taskRunId
+                })
+                .filter((taskRunId): taskRunId is string => taskRunId !== undefined)
+
+            taskOutputMetaByRunId.value = metaByRunId
+            tasksWithOutputs.value = taskRunIds
         },
         {immediate: true},
     )
 
-    async function loadTaskOutputs(item: ExplorerItem) {
+    async function fetchTaskRunOutputs(taskRunId: string) {
         const id = execution.value?.id
-        if (!id || !item.taskRunId || taskOutputs.value[item.taskRunId]) return
+        if (!id) return {}
+
+        const cached = taskOutputs.value[taskRunId]
+        if (cached) {
+            return cached
+        }
 
         const data = await OutputsAPI.taskRunOutputs({
-            taskRunId: item.taskRunId,
+            taskRunId,
             executionId: id,
         }, {
             validateStatus: (s: number) => s === 200 || s === 404,
         })
 
-        taskOutputs.value = {...taskOutputs.value, [item.taskRunId]: data || {}}
+        const outputs = data || {}
+        taskOutputs.value = {...taskOutputs.value, [taskRunId]: outputs}
+        return outputs
+    }
+
+    async function loadTaskOutputs(item: ExplorerItem) {
+        if (!item.taskRunId) return
+
+        await fetchTaskRunOutputs(item.taskRunId)
+    }
+
+    async function prefetchTaskOutputsForSearch() {
+        const taskRunIds = tasksWithOutputs.value ?? []
+        const missingTaskRunIds = taskRunIds.filter((taskRunId) => !taskOutputs.value[taskRunId])
+
+        if (missingTaskRunIds.length === 0) {
+            return
+        }
+
+        await Promise.all(missingTaskRunIds.map((taskRunId) => fetchTaskRunOutputs(taskRunId)))
+    }
+
+    const debouncedPrefetchTaskOutputsForSearch = useDebounceFn(async (query: string) => {
+        if (!query.trim()) {
+            return
+        }
+
+        await prefetchTaskOutputsForSearch()
+    }, 300)
+
+    function onSearchChange(query: string) {
+        void debouncedPrefetchTaskOutputsForSearch(query)
     }
 
     function isOutputTaskAFile(item: any): item is { uri: string } {
@@ -229,14 +334,23 @@
         const taskRunList = execution.value?.taskRunList ?? []
         return taskRunList
             .filter((task) => tasksWithOutputs.value?.includes(task.id))
-            .map((task) => ({
-                label: task.taskId,
-                value: taskOutputs.value[task.id],
-                type: isOutputTaskAFile(taskOutputs.value[task.id]) ? "file" : "object",
-                preview: "",
-                expression: `outputs${formatStep(task.taskId)}`,
-                taskRunId: task.id,
-            }))
+            .map((task) => {
+                const outputs = taskOutputs.value[task.id]
+                const meta = taskOutputMetaByRunId.value[task.id]
+                const iterationValue = meta?.value ?? meta?.iteration
+
+                return {
+                    label: taskOutputLabel(task.taskId, iterationValue),
+                    value: outputs,
+                    type: isOutputTaskAFile(outputs) ? "file" : "object",
+                    preview: outputs ? preview(outputs) : "",
+                    expression: `outputs${formatStep(task.taskId)}`,
+                    taskRunId: task.id,
+                    searchText: [task.taskId, meta?.value, meta?.iteration]
+                        .filter((value) => value !== undefined && value !== null && value !== "")
+                        .join(" "),
+                }
+            })
     })
 
     /* ------------------------------- Sections -------------------------------- */
@@ -245,21 +359,49 @@
         const exec = execution.value
         return [
             {key: "variables", label: t("variables"), items: itemsFromRecord(exec?.variables, "vars")},
-            {key: "triggers", label: t("triggers"), items: itemsFromRecord(exec?.trigger as Record<string, unknown> | undefined, "trigger")},
+            {key: "triggers", label: t("triggers"), items: itemsFromRecord(triggerRecord(exec?.trigger), "trigger")},
             {key: "inputs", label: t("flow_inputs"), items: itemsFromRecord(exec?.inputs, "inputs")},
             {key: "tasksOutputs", label: t("variable_explorer.tasks_outputs"), items: taskItems.value},
-            {key: "flowOutputs", label: t("flow_outputs"), items: itemsFromRecord(exec?.outputs, "outputs")},
+            {key: "flowOutputs", label: t("flow_outputs"), items: itemsFromRecord(flowOutputs.value, "outputs")},
         ]
     })
 
     /* ------------------------------- Selection ------------------------------- */
 
+    /** `?expression=trigger.body` seeds the debugger with that expression. */
+    function seededExpression() {
+        const seed = route.query.expression?.toString()
+        return seed ? `{{ ${seed} }}` : ""
+    }
+
+    /** `?select=trigger.variables` opens that item in the viewer, once, as soon as it exists. */
+    let selectionApplied = false
+
+    function applySeededSelection(available: ExplorerSection[]) {
+        const target = route.query.select?.toString()
+        if (selectionApplied || !target) {
+            return
+        }
+        const item = available.flatMap((section) => section.items)
+            .find((candidate) => candidate.expression === target)
+        if (!item) {
+            return
+        }
+        selectionApplied = true
+        void selectItem(item).then(() => {
+            // selectItem rewrites the expression, so re-apply the link's own.
+            const seed = seededExpression()
+            if (seed) {
+                expression.value = seed
+            }
+        })
+    }
+
     const selectedValue = ref<unknown>(undefined)
     const selectedBase = ref<string>("")
     const expressionPath = ref<string>("")
     const previewedValue = ref<unknown>(undefined)
-    // Suggested expression handed to the debugger; follows the current selection.
-    const expression = ref<string>("")
+    const expression = ref<string>(seededExpression())
 
     const isExpandableValue = computed(
         () => selectedValue.value !== null && typeof selectedValue.value === "object",
@@ -267,21 +409,21 @@
 
     const fileSelectedOutput = computed(() => {
         const value = previewedValue.value
+        if (typeof value === "string") {
+            return Utils.isFile(value) ? value : undefined
+        }
+        if (value === null || typeof value !== "object" || Array.isArray(value)) {
+            return undefined
+        }
 
-        // if an input file is selected, show the contents of the file
-        if(typeof value === "string" && Utils.isFile(value)){
-            return value
+        const entries = Object.entries(value)
+        // #19194: task outputs can include metadata beside `uri`; only a lone URI wrapper should open automatically.
+        if (entries.length !== 1 || entries[0][0] !== "uri") {
+            return undefined
         }
-        if (value === null || typeof value !== "object") return undefined
-        try {
-            const fileMetadata = value as {uri?: string}
-            if (Utils.isFile(fileMetadata.uri)) {
-                return fileMetadata.uri
-            }
-        } catch {
-            // If the value is not an object or doesn't have a `uri` field, just ignore it.
-        }
-        return undefined
+
+        const uri = entries[0][1]
+        return typeof uri === "string" && Utils.isFile(uri) ? uri : undefined
     })
 
     const rawValue = computed(() =>
@@ -289,6 +431,18 @@
             ? selectedValue.value
             : JSON.stringify(selectedValue.value, null, 2),
     )
+
+    // Only what is rendered is clipped: copyValue still hands over the whole value.
+    const cappedRawValue = computed(() => Utils.capForDisplay(rawValue.value))
+
+    // The raw view only ever holds an object, so it previews as valid JSON rather than clipped text.
+    const rawPreview = computed(() => Utils.boundForDisplay(selectedValue.value))
+
+    const rawPreviewText = computed(() => JSON.stringify(rawPreview.value.value, null, 2) ?? "")
+
+    const isRawTruncated = computed(() => cappedRawValue.value.length < rawValue.value.length)
+
+    const rawValueSize = computed(() => Utils.humanTextSize(rawValue.value))
 
     async function selectItem(item: ExplorerItem) {
         if (item.taskRunId) {
@@ -321,11 +475,32 @@
         }
     }
 
+    /** The lone file of the previewed value, offered to the debugger without requiring an evaluation. */
+    const debuggedFileUri = computed(() => {
+        if (fileSelectedOutput.value) return fileSelectedOutput.value
+        const files = collectFileUris(previewedValue.value)
+        return files.length === 1 ? files[0] : undefined
+    })
+
+    function collectFileUris(value: unknown, found: string[] = []) {
+        if (typeof value === "string") {
+            if (Utils.isFile(value)) found.push(value)
+        } else if (value !== null && typeof value === "object") {
+            for (const child of Object.values(value)) {
+                collectFileUris(child, found)
+                if (found.length > 1) break
+            }
+        }
+        return found
+    }
+
     function onSelectPath(path: string, value: unknown) {
         expressionPath.value = path
         expression.value = `{{ ${path} }}`
         previewedValue.value = value
     }
+
+    watch(sections, applySeededSelection, {immediate: true})
 
     /* --------------------------------- Viewer -------------------------------- */
 
@@ -338,7 +513,15 @@
     const isRawEditor = computed(() => viewMode.value === "raw" && isExpandableValue.value)
 
     function copyValue() {
-        navigator.clipboard?.writeText(rawValue.value)
+        copyToClipboard(rawValue.value)
+    }
+
+    function downloadValue() {
+        // formatStep writes a non-identifier key as ["a.b"], so the last segment is not just a split.
+        const path = expressionPath.value
+        const last = path.match(/\["(.*)"\]$/)?.[1] ?? path.split(".").pop() ?? ""
+        const name = last.replace(/[^\w.-]+/g, "_") || "output"
+        Utils.downloadText(rawValue.value, `${name}.${isExpandableValue.value ? "json" : "txt"}`)
     }
 
     /* --------------------------------- Layout -------------------------------- */
@@ -413,6 +596,21 @@
     .file-preview {
         padding: var(--ks-spacing-4);
     }
+}
+
+.truncated-banner {
+    /* Padding on a wrapper, not a margin on the alert: the alert is width:100%, so a margin
+       pushes it 32px past the panel and the whole panel scrolls sideways. */
+    padding: 0 var(--ks-spacing-4);
+}
+
+.truncated-row {
+    /* The alert's title is an inline span, so the row needs a width of its own to reach the edge. */
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--ks-spacing-3);
+    width: 100%;
 }
 
 .viewer--fill {

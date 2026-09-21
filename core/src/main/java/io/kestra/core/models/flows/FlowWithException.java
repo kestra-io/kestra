@@ -34,6 +34,10 @@ public class FlowWithException extends FlowWithSource {
             .disabled(flow.isDisabled())
             .exception(exception.getMessage())
             .tasks(List.of())
+            // an execution is still created for a blocked flow and then failed, so it must keep carrying these:
+            // dropping them leaves label-based filtering, notifications and SLA alerting blind to the failure
+            .labels(flow.getLabels())
+            .variables(flow.getVariables())
             .source(flow.getSource())
             .build();
     }

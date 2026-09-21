@@ -1,9 +1,9 @@
 <template>
-    <!-- Decorative Kestra-mark animation shown beside the copilot status word while a turn runs.
-         Three brand dots that bounce ("thinking") and ripple left→right ("answering"); when the turn
-         ends they gather and bloom into the full Kestra mark ("end"). A lightweight CSS/SVG
-         reproduction of the delivered Lottie set (no runtime dep). Purely decorative: the transcript's
-         aria-busy + the status word already convey "working", so the whole thing is aria-hidden. -->
+    <!-- Decorative Kestra-mark animation shown beside the copilot status word while a turn runs: three
+         brand dots that bounce ("thinking"), ripple ("answering"), then gather and bloom into the full
+         mark ("end") — a lightweight CSS/SVG reproduction of the delivered Lottie set (no runtime dep).
+         Purely decorative and aria-hidden: the transcript's aria-busy + the status word already convey
+         "working". -->
     <span class="copilot-mark" :class="`copilot-mark-${phase}`" aria-hidden="true">
         <!-- The three dots (brand tints, purple → pink). -->
         <svg class="copilot-mark-dots" viewBox="0 0 44 16" width="30" height="11" fill="none" focusable="false">
@@ -41,6 +41,9 @@
 
     .copilot-mark-dots {
         display: block;
+        /* The dots sit near the top of the viewBox and the "thinking" bounce lifts them past it;
+           an SVG's viewport clips by default, so let them overflow to show the full bounce. */
+        overflow: visible;
     }
 
     .copilot-mark-dot {

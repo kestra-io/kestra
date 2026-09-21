@@ -39,7 +39,9 @@ interface InterceptedFetchClient {
     interceptors: {
         request: { fns: Array<((request: Request, options: any) => Request | Promise<Request>) | null> }
         response: { fns: Array<((response: Response, request: Request, options: any) => Response | Promise<Response>) | null> }
-        error: { fns: Array<((error: unknown, response: Response, request: Request, options: any) => unknown) | null> }
+        // `response` is undefined for a network-level failure (offline, CORS block, abort), which
+        // never produces a Response — see the network-error catch below.
+        error: { fns: Array<((error: unknown, response: Response | undefined, request: Request, options: any) => unknown) | null> }
     }
 }
 
@@ -81,8 +83,10 @@ export interface AxiosLikeClient {
      * incrementally — e.g. POST-based SSE streams, which `EventSource` cannot issue. Runs the same
      * shared request/response interceptors as the axios-like methods (CSRF header, progress, any
      * EE additions), so streaming endpoints never need to reimplement that cross-cutting logic.
-     * Unlike the axios-like methods, a non-2xx response is RETURNED, not thrown, and error
-     * interceptors are NOT run: streaming callers own their error UX (no global toasts/redirects).
+     * Unlike the axios-like methods, a non-2xx response is RETURNED, not thrown, and HTTP-error
+     * interceptors are NOT run: streaming callers own that UX (no global toasts/redirects). A
+     * fetch-level failure (abort, offline, CORS) still runs error interceptors — the same catch
+     * axios-like methods already have.
      */
     stream: (url: string, data?: any, config?: StreamConfig) => Promise<Response>
 }
@@ -133,7 +137,21 @@ export function createClientFacade(
             if (fn) request = await fn(request, interceptorOptions)
         }
 
-        let response = await fetch(request)
+        let response: Response
+        try {
+            response = await fetch(request)
+        } catch (networkError) {
+            // A network-level failure (offline, CORS block, abort) rejects here instead of
+            // producing a Response. Without this catch, client.interceptors.error.fns - where
+            // the app wires NProgress's "requestsCompleted" bump - never runs for this request,
+            // so its "requestsTotal" increment is never matched and the loading indicator
+            // never reaches done.
+            let finalError: unknown = networkError
+            for (const fn of client.interceptors.error.fns) {
+                if (fn) finalError = await fn(finalError, undefined, request, interceptorOptions)
+            }
+            throw finalError
+        }
         for (const fn of client.interceptors.response.fns) {
             if (fn) response = await fn(response, request, interceptorOptions)
         }
@@ -200,7 +218,19 @@ export function createClientFacade(
             if (fn) request = await fn(request, interceptorOptions)
         }
 
-        let response = await fetch(request)
+        let response: Response
+        try {
+            response = await fetch(request)
+        } catch (networkError) {
+            // Same catch as axiosLikeRequest: abort / offline / CORS never produces a Response,
+            // so error interceptors still run (parity with GET/POST). stream() itself is opted
+            // out of NProgress, so this is not what settles the loading indicator.
+            let finalError: unknown = networkError
+            for (const fn of client.interceptors.error.fns) {
+                if (fn) finalError = await fn(finalError, undefined, request, interceptorOptions)
+            }
+            throw finalError
+        }
         for (const fn of client.interceptors.response.fns) {
             if (fn) response = await fn(response, request, interceptorOptions)
         }

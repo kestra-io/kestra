@@ -3,8 +3,10 @@ package io.kestra.controller;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.math.BigDecimal;
 import java.net.InetSocketAddress;
 import java.net.URI;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -25,6 +27,10 @@ import io.kestra.controller.config.GrpcConfiguration;
 import io.kestra.controller.config.WorkerControllersConfiguration;
 import io.kestra.controller.discovery.ControllerRegistration;
 import io.kestra.controller.discovery.ControllerRegistry;
+import io.kestra.controller.grpc.ExecutionLogsServiceGrpc;
+import io.kestra.controller.grpc.KVMetadataServiceGrpc;
+import io.kestra.controller.grpc.NamespaceFileMetadataServiceGrpc;
+import io.kestra.controller.grpc.WorkerFlowMetaStoreServiceGrpc;
 import io.kestra.controller.grpc.resolver.StaticNameResolverProvider;
 import io.kestra.controller.grpc.resolver.StorageNameResolverProvider;
 import io.kestra.core.contexts.KestraContext;
@@ -41,8 +47,10 @@ import io.grpc.Grpc;
 import io.grpc.InsecureChannelCredentials;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import io.grpc.MethodDescriptor;
 import io.grpc.NameResolverProvider;
 import io.grpc.NameResolverRegistry;
+import io.grpc.Status;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import jakarta.inject.Inject;
@@ -72,6 +80,57 @@ public class GrpcChannelManager {
     static {
         NameResolverRegistry.getDefaultRegistry().register(new StaticNameResolverProvider());
     }
+
+    /**
+     * The one status on which replaying a call is unambiguously safe: the controller went away — recycled by
+     * {@code kestra.controller.max-connection-age}, restarting, or unreachable — so the call can be retried
+     * against another replica. Deliberately excludes {@code DEADLINE_EXCEEDED} (the deadline has already
+     * elapsed, so a replay cannot help) and {@code RESOURCE_EXHAUSTED} (a replay amplifies the load that
+     * caused it). {@code GrpcWorkerIOSender.isRetryable} does accept {@code DEADLINE_EXCEEDED} because
+     * re-queuing a message for later delivery can absorb a timeout, whereas an in-call replay cannot.
+     */
+    private static final List<String> RETRYABLE_STATUS_CODES = List.of(Status.Code.UNAVAILABLE.name());
+
+    /** The minimum number of attempts the gRPC service-config spec accepts for a retry policy. */
+    private static final int MIN_RETRY_ATTEMPTS = 2;
+
+    /**
+     * The RPCs this channel may replay, listed one by one so that a newly added RPC is never retried until
+     * someone classifies it — {@code GrpcChannelManagerTest} fails until then.
+     * <p>
+     * An RPC belongs here only if it passes two independent tests: replaying it must be safe, and no outer
+     * layer must already retry it. A second layer does not add resilience, it multiplies attempts and spends
+     * the outer layer's time budget. Every RPC absent from here fails one of those tests:
+     * <ul>
+     * <li>{@code heartbeat} — the fixed-rate {@code AbstractServiceLivenessTask} schedule is already the
+     * retry, and retrying in-call delays that cadence while briefly masking a real disconnect.</li>
+     * <li>{@code getMaintenanceMode} — no client caller anywhere; only a server-side implementation.</li>
+     * <li>{@code sendWorkerTaskResults} / {@code sendWorkerTriggerResults} / {@code sendWorkerLogEntries} /
+     * {@code sendWorkerMetricEntries} — {@code GrpcWorkerIOSender} owns redelivery, re-queuing results and
+     * deliberately dropping logs and metrics so a high-volume stream cannot back-pressure the worker; a
+     * channel policy would multiply attempts inside every redrive and duplicate the dropped log lines.</li>
+     * <li>{@code sendReport} — best-effort telemetry whose failures are already swallowed at debug level.</li>
+     * <li>{@code KVMetadataService.save} / {@code deleteByName}, {@code NamespaceFileMetadataService.save} —
+     * mutations.</li>
+     * <li>{@code connect} — already guarded by wait-for-ready and a per-call deadline; a replay risks a
+     * duplicate registration.</li>
+     * <li>{@code streamWorkerJobs} — a bidi stream, where gRPC retry only applies before the first response;
+     * {@code WorkerJobFetcher} owns the reconnect loop instead.</li>
+     * </ul>
+     */
+    private static final List<MethodDescriptor<?, ?>> RETRYABLE_METHODS = List.of(
+        WorkerFlowMetaStoreServiceGrpc.getIsNamespaceExistsMethod(),
+        ExecutionLogsServiceGrpc.getErrorLogsMethod(),
+        KVMetadataServiceGrpc.getFindByNameMethod(),
+        KVMetadataServiceGrpc.getFindMethod(),
+        KVMetadataServiceGrpc.getExistsByNamespaceMethod(),
+        NamespaceFileMetadataServiceGrpc.getFindByPathMethod(),
+        NamespaceFileMetadataServiceGrpc.getFindChildrenMethod(),
+        NamespaceFileMetadataServiceGrpc.getFindAllMethod(),
+        NamespaceFileMetadataServiceGrpc.getFindByPathsMethod(),
+        NamespaceFileMetadataServiceGrpc.getFindAllVersionsByPathsMethod(),
+        NamespaceFileMetadataServiceGrpc.getExistsByNamespaceMethod()
+    );
 
     private static final AtomicBoolean STORAGE_RESOLVER_REGISTERED = new AtomicBoolean(false);
     private static final AtomicReference<StorageNameResolverProvider> REGISTERED_STORAGE_RESOLVER_PROVIDER = new AtomicReference<>();
@@ -315,7 +374,7 @@ public class GrpcChannelManager {
      */
     protected ManagedChannelBuilder<?> configureChannel(ManagedChannelBuilder<?> builder) {
         builder.enableRetry()
-            .maxRetryAttempts(grpcChannelConfiguration.maxRetryAttempts())
+            .maxRetryAttempts(grpcChannelConfiguration.retry().maxAttempts())
             .userAgent(getUserAgent())
             .keepAliveTime(grpcChannelConfiguration.keepAliveTime().toSeconds(), TimeUnit.SECONDS)
             .keepAliveWithoutCalls(true)
@@ -327,20 +386,85 @@ public class GrpcChannelManager {
         log.debug("Using load balancing policy: {}", loadBalancingPolicy);
         builder.defaultLoadBalancingPolicy(loadBalancingPolicy);
 
-        // Configure health checking if enabled
-        if (controllersConfig.healthCheck().enabled()) {
-            builder.defaultServiceConfig(generateHealthConfig());
+        // Health checking and the retry policy share one service config: a second defaultServiceConfig()
+        // call replaces the first, so they cannot be installed independently.
+        Map<String, Object> serviceConfig = serviceConfig();
+        if (!serviceConfig.isEmpty()) {
+            builder.defaultServiceConfig(serviceConfig);
         }
         return builder;
     }
 
-    private static Map<String, Object> generateHealthConfig() {
-        Map<String, Object> config = new HashMap<>();
-        Map<String, Object> serviceMap = new HashMap<>();
+    /**
+     * Builds the channel's service config: health checking, and the retry policy for the RPCs that are
+     * safe to replay.
+     *
+     * @return the service config, empty when both parts are disabled.
+     */
+    @VisibleForTesting
+    public Map<String, Object> serviceConfig() {
+        Map<String, Object> serviceConfig = new HashMap<>();
 
-        config.put("healthCheckConfig", serviceMap);
-        serviceMap.put("serviceName", ""); // The empty string ("") service, signifying the health of the whole server
-        return config;
+        if (controllersConfig.healthCheck().enabled()) {
+            // The empty string ("") service, signifying the health of the whole server
+            serviceConfig.put("healthCheckConfig", Map.of("serviceName", ""));
+        }
+
+        if (isRetryPolicyEnabled()) {
+            serviceConfig.put("methodConfig", List.of(retryableMethodConfig()));
+        }
+
+        return serviceConfig;
+    }
+
+    /**
+     * Whether a retry policy can be installed. Attempts below the spec minimum leave retries off instead of
+     * failing the server at startup, since a single attempt is a legitimate way to ask for no retry.
+     */
+    private boolean isRetryPolicyEnabled() {
+        GrpcChannelConfiguration.Retry retry = grpcChannelConfiguration.retry();
+        if (!retry.enabled()) {
+            return false;
+        }
+        if (retry.maxAttempts() < MIN_RETRY_ATTEMPTS) {
+            log.warn(
+                "gRPC retries are disabled because kestra.grpc.channel.retry.max-attempts is {}, below the minimum of {} required for a retry policy. Set it to {} or more to retry replay-safe RPCs.",
+                retry.maxAttempts(), MIN_RETRY_ATTEMPTS, MIN_RETRY_ATTEMPTS
+            );
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * The single method config entry naming every retryable RPC, plus the policy applied to them.
+     * <p>
+     * gRPC parses a service config from JSON, so the map may only contain the types a JSON parser produces:
+     * numbers must be {@link Double} and durations second-suffixed strings.
+     */
+    private Map<String, Object> retryableMethodConfig() {
+        List<Map<String, String>> names = new ArrayList<>(RETRYABLE_METHODS.size());
+        RETRYABLE_METHODS.forEach(method -> names.add(Map.of(
+            "service", MethodDescriptor.extractFullServiceName(method.getFullMethodName()),
+            "method", MethodDescriptor.extractBareMethodName(method.getFullMethodName())
+        )));
+
+        GrpcChannelConfiguration.Retry retry = grpcChannelConfiguration.retry();
+        return Map.of(
+            "name", names,
+            "retryPolicy", Map.of(
+                "maxAttempts", (double) retry.maxAttempts(),
+                "initialBackoff", toSecondsLiteral(retry.initialBackoff()),
+                "maxBackoff", toSecondsLiteral(retry.maxBackoff()),
+                "backoffMultiplier", retry.backoffMultiplier(),
+                "retryableStatusCodes", RETRYABLE_STATUS_CODES
+            )
+        );
+    }
+
+    /** Formats a duration as the fractional-seconds literal the gRPC service config expects, e.g. {@code 0.5s}. */
+    private static String toSecondsLiteral(Duration duration) {
+        return new BigDecimal(duration.toNanos()).movePointLeft(9).stripTrailingZeros().toPlainString() + "s";
     }
 
     @PreDestroy

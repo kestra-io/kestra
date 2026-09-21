@@ -15,7 +15,7 @@ public final class H2RepositoryUtils {
     public static Field<Date> formatDateField(String dateField, DateUtils.GroupType groupType) {
         switch (groupType) {
             case MONTH:
-                return DSL.field("FORMATDATETIME({0}, 'yyyy-MM')", Date.class, DSL.field(DSL.quotedName(dateField)));
+                return DSL.field("DATE_TRUNC('MONTH', {0})", Date.class, DSL.field(DSL.quotedName(dateField)));
             case WEEK:
                 return DSL.field("DATE_TRUNC('WEEK', {0})", Date.class, DSL.field(DSL.quotedName(dateField)));
             case DAY:

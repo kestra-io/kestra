@@ -64,6 +64,23 @@ describe("Regex", () => {
         expect([...functionMatcher]).toEqual(["{{myFunc(my-param_1='value1')}} {{mySecondFunc(second-func-param_1='secondFuncValue1', 'to", "mySecondFunc", "second-func-param_1='secondFuncValue1', ", "'to"])
     })
 
+    it("does not catastrophically backtrack on long concatenation chains", () => {
+        const chain = Array(30).fill("\"dfasdf\"").join(" ~ ")
+        const patterns = [RegexProvider.capturePebbleVarRoot, RegexProvider.capturePebbleVarParent, RegexProvider.capturePebbleFunction]
+        const start = performance.now()
+        for (const pattern of patterns) {
+            new RegExp(pattern + "$").exec(`{{ ${chain} ~ na`)
+            new RegExp(pattern + "$").exec(`{{ ${chain} }}`)
+            new RegExp(pattern + "$").exec(`{{ fn(x=${chain}, y`)
+        }
+        expect(performance.now() - start).toBeLessThan(500)
+
+        expect(new RegExp(RegexProvider.capturePebbleVarRoot + "$").exec(`{{ ${chain} ~ na`)?.[1]).eq("na")
+        const nestedFieldMatcher = new RegExp(RegexProvider.capturePebbleVarParent + "$").exec(`{{ ${chain} ~ inputs.foo`)
+        expect(nestedFieldMatcher?.[1]).eq("inputs")
+        expect(nestedFieldMatcher?.[2]).eq("foo")
+    })
+
     it("capture string value", () => {
         let stringMatcher: RegExpExecArray | [] | null = new RegExp(RegexProvider.captureStringValue).exec("'a'") ?? []
         expect([...stringMatcher]).toEqual(["'a'", "a"])

@@ -1,7 +1,7 @@
 <template>
     <div v-if="execution" class="wrapper">
         <KsCard class="banner" shadow="always">
-            <Banner :execution @follow="emits('follow', $event)" />
+            <Banner :execution />
         </KsCard>
         <div id="alerts">
             <ErrorAlert
@@ -12,7 +12,6 @@
         <Topology
             class="topology"
             :horizontalDefault="!verticalLayout"
-            @follow="emits('follow', $event)"
         />
         <PrevNext :execution />
     </div>
@@ -42,14 +41,15 @@
     import PrevNext from "./components/main/PrevNext.vue"
     import Topology from "../Topology.vue"
 
-    const emits = defineEmits(["follow"])
-
     const execution = computed(() => store.execution)
 
     const loadExecution = (id: string) => store.loadExecution({id})
 
     onMounted(() => {
         if (!route.params.id) return
+        // The route guard loads the execution into the store before this page mounts
+        // (EXECUTION_ENTITY_META), and the SSE stream keeps it current from there.
+        if (execution.value?.id === route.params.id) return
         loadExecution(route.params.id as string)
     })
 

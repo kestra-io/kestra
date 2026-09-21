@@ -1,0 +1,20 @@
+id: blocks-dag-fixture
+namespace: company.team
+tasks:
+  - id: my_dag
+    type: io.kestra.plugin.core.flow.Dag
+    tasks:
+      - task:
+          id: a
+          type: io.kestra.plugin.core.log.Log
+          message: a
+      - task:
+          id: b
+          type: io.kestra.plugin.core.log.Log
+          message: b
+        dependsOn:
+          - a
+      - task:
+          id: c
+          type: io.kestra.plugin.core.log.Log
+          message: c

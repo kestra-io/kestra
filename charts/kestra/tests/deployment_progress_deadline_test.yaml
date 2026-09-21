@@ -1,0 +1,55 @@
+suite: Deployment progressDeadlineSeconds
+
+templates:
+  - templates/deployment.yaml
+
+tests:
+  - it: is not rendered when unset, leaving the Kubernetes default in place
+    set:
+      deployments:
+        standalone:
+          enabled: true
+    asserts:
+      - isKind:
+          of: Deployment
+      - notExists:
+          path: spec.progressDeadlineSeconds
+
+  - it: uses common.progressDeadlineSeconds when set globally
+    set:
+      common:
+        progressDeadlineSeconds: 1800
+      deployments:
+        standalone:
+          enabled: true
+    asserts:
+      - equal:
+          path: spec.progressDeadlineSeconds
+          value: 1800
+
+  - it: uses the deployment-level value over common
+    set:
+      common:
+        progressDeadlineSeconds: 1800
+      deployments:
+        standalone:
+          enabled: true
+          progressDeadlineSeconds: 3600
+    asserts:
+      - equal:
+          path: spec.progressDeadlineSeconds
+          value: 3600
+
+  - it: is not rendered on a StatefulSet, which has no such field
+    set:
+      common:
+        kind: StatefulSet
+        progressDeadlineSeconds: 1800
+      deployments:
+        standalone:
+          enabled: true
+    asserts:
+      - isKind:
+          of: StatefulSet
+      - notExists:
+          path: spec.progressDeadlineSeconds

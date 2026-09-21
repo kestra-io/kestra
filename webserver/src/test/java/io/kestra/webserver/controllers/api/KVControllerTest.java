@@ -1,6 +1,7 @@
 package io.kestra.webserver.controllers.api;
 
 import java.io.IOException;
+import java.lang.reflect.RecordComponent;
 import java.math.BigDecimal;
 import java.net.URI;
 import java.time.Duration;
@@ -21,6 +22,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import io.kestra.core.exceptions.ResourceExpiredException;
 import io.kestra.core.junit.annotations.KestraTest;
@@ -42,6 +44,8 @@ import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.client.annotation.Client;
+import io.kestra.core.junit.assertions.Problems;
+import io.kestra.webserver.errors.ProblemTypes;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.reactor.http.client.ReactorHttpClient;
 import jakarta.inject.Inject;
@@ -72,6 +76,104 @@ class KVControllerTest {
         storageInterface.delete(MAIN_TENANT, NAMESPACE, toKVUri(NAMESPACE, null));
         List<PersistedKvMetadata> persistedKvMetadata = kvMetadataRepository.find(Pageable.UNPAGED, MAIN_TENANT, Collections.emptyList(), true, true);
         kvMetadataRepository.purge(persistedKvMetadata);
+    }
+
+    /**
+     * Sorting resolves a {@link KVEntry} field to a repository property; the four whose names
+     * differ resolved to nothing, failed the query with a 500 and left the UI with an empty store.
+     * Driven off the record components so an added field cannot silently reintroduce the gap.
+     */
+    @ParameterizedTest
+    @MethodSource("kvEntryFields")
+    void shouldSortAllKeysByEveryEntryField(String field) throws IOException {
+        // Given: two keys in one namespace
+        givenTwoKeys();
+
+        // When / Then: every entry field is a whitelisted sort, in both directions
+        for (String direction : List.of("asc", "desc")) {
+            assertThat(sortedEntries(field, direction))
+                .as("sorting by %s:%s should not fail", field, direction)
+                .hasSize(2);
+        }
+    }
+
+    /**
+     * A wrong-but-existing column clears the "no 500" bar above: drop the {@code key} mapping and
+     * the test still passes, ordering on the uid primary key that happens to share the name. These
+     * assertions pin the column each sort actually lands on, on both fields whose name differs from
+     * the property they resolve to.
+     */
+    @Test
+    void shouldOrderKeysByTheMappedColumn() throws IOException {
+        // Given: a-key at revision 2 and b-key at revision 1, so name order and revision order disagree
+        givenTwoKeys();
+
+        // When / Then: `key` orders on the name, not on the uid primary key of the same name
+        assertThat(sortedEntries("key", "asc").getFirst().key()).isEqualTo("a-key");
+        assertThat(sortedEntries("key", "desc").getFirst().key()).isEqualTo("b-key");
+
+        // And: `revision` orders on `version`, which no name conversion would have reached
+        assertThat(sortedEntries("revision", "asc").getFirst().key()).isEqualTo("b-key");
+        assertThat(sortedEntries("revision", "desc").getFirst().key()).isEqualTo("a-key");
+    }
+
+    /**
+     * The KV table's default sort is {@code name:asc} — the property, not the {@link KVEntry} field
+     * — so a whitelist of entry fields alone broke every list request the UI made. Caught by the
+     * E2E suite, pinned here because it is a millisecond to check.
+     */
+    @ParameterizedTest
+    @ValueSource(strings = {"name", "version", "created", "updated"})
+    void shouldSortAllKeysByAPropertyName(String property) throws IOException {
+        // Given: two keys in one namespace
+        givenTwoKeys();
+
+        // When / Then: the property spelling existing clients send is accepted too
+        assertThat(sortedEntries(property, "asc"))
+            .as("sorting by %s should not be rejected", property)
+            .hasSize(2);
+    }
+
+    @Test
+    void shouldRejectASortFieldThatIsNotAnEntryField() {
+        // Given / When: a sort on an internal column that was never part of the API contract
+        HttpClientResponseException exception = Assertions.assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().retrieve(
+                HttpRequest.GET("/api/v1/main/kv?size=10&page=1&sort=last:asc"),
+                Argument.of(PagedResults.class, KVEntry.class)
+            )
+        );
+
+        // Then: it is answered as an invalid request rather than reaching the query
+        assertThat(exception.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
+    }
+
+    private static Stream<String> kvEntryFields() {
+        return Stream.of(KVEntry.class.getRecordComponents()).map(RecordComponent::getName);
+    }
+
+    /**
+     * Leaves two keys whose name order and revision order disagree: {@code a-key} is written twice so
+     * it reaches revision 2 while {@code b-key} stays at 1. The list fetches {@code LATEST} only, so
+     * this is still two rows. Revisions rather than timestamps because they are ordered by
+     * construction, where two writes can share a clock tick.
+     */
+    private void givenTwoKeys() throws IOException {
+        KVStore kvStore = new InternalKVStore(MAIN_TENANT, TestsUtils.randomNamespace(), storageInterface, kvMetadataStateStore);
+        kvStore.put("b-key", new KVValueAndMetadata(new KVMetadata("first", (Instant) null), "b-value"));
+        kvStore.put("a-key", new KVValueAndMetadata(new KVMetadata("second", (Instant) null), "a-value"));
+        kvStore.put("a-key", new KVValueAndMetadata(new KVMetadata("second", (Instant) null), "a-value-again"));
+    }
+
+    @SuppressWarnings("unchecked")
+    private List<KVEntry> sortedEntries(String field, String direction) {
+        PagedResults<KVEntry> results = client.toBlocking().retrieve(
+            HttpRequest.GET("/api/v1/main/kv?size=10&page=1&sort=" + field + ":" + direction),
+            Argument.of(PagedResults.class, KVEntry.class)
+        );
+
+        return results.getResults();
     }
 
     @SuppressWarnings("unchecked")
@@ -121,6 +223,37 @@ class KVControllerTest {
         assertThat(res.getResults().size()).isEqualTo(1);
         assertThat(res.getResults().getFirst().namespace()).isEqualTo(namespace);
         assertThat(res.getResults().getFirst().key()).isEqualTo(namespaceKey);
+    }
+
+    @Test
+    void listAllKeysWithUnknownSortFieldReturns422() {
+        HttpClientResponseException e = Assertions.assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().exchange(HttpRequest.GET("/api/v1/main/kv?sort=nonexistent:asc"))
+        );
+
+        assertThat(e.getStatus().getCode()).isEqualTo(422);
+        String body = e.getResponse().getBody(String.class).orElse("");
+        assertThat(body).contains("nonexistent");
+        // regression guard: the generated SQL must never reach the client (kestra-io/kestra#18490)
+        assertThat(body).doesNotContainIgnoringCase("select ");
+        assertThat(body).doesNotContainIgnoringCase(" from ");
+        assertThat(body).doesNotContainIgnoringCase("order by");
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void listAllKeysSortsByUpdateDateAlias() throws IOException {
+        // updateDate is the KVEntry API field name; the real column is "updated"
+        String namespace = TestsUtils.randomNamespace();
+        KVStore kvStore = new InternalKVStore(MAIN_TENANT, namespace, storageInterface, kvMetadataStateStore);
+        kvStore.put("some-key", new KVValueAndMetadata(new KVMetadata(null, (Instant) null), "some-value"));
+
+        PagedResults<KVEntry> res = client.toBlocking().retrieve(
+            HttpRequest.GET("/api/v1/main/kv?sort=updateDate:desc"),
+            Argument.of(PagedResults.class, KVEntry.class)
+        );
+        assertThat(res.getTotal()).isEqualTo(1);
     }
 
     @Test
@@ -197,8 +330,8 @@ class KVControllerTest {
     void getKeyValueNotFound() {
         HttpClientResponseException httpClientResponseException = Assertions
             .assertThrows(HttpClientResponseException.class, () -> client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/namespaces/" + NAMESPACE + "/kv/my-key")));
-        assertThat(httpClientResponseException.getStatus().getCode()).isEqualTo(HttpStatus.NOT_FOUND.getCode());
-        assertThat(httpClientResponseException.getMessage()).isEqualTo("Not Found: No value found for key 'my-key' in namespace '" + NAMESPACE + "'");
+        Problems.assertProblem(httpClientResponseException, ProblemTypes.NOT_FOUND);
+        assertThat(Problems.detail(httpClientResponseException)).isEqualTo("No value found for key 'my-key' in namespace '" + NAMESPACE + "'");
     }
 
     @Test
@@ -207,8 +340,8 @@ class KVControllerTest {
 
         HttpClientResponseException httpClientResponseException = Assertions
             .assertThrows(HttpClientResponseException.class, () -> client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/namespaces/" + NAMESPACE + "/kv/my-key")));
-        assertThat(httpClientResponseException.getStatus().getCode()).isEqualTo(HttpStatus.GONE.getCode());
-        assertThat(httpClientResponseException.getMessage()).isEqualTo("Resource has expired: The requested value has expired");
+        Problems.assertProblem(httpClientResponseException, ProblemTypes.RESOURCE_EXPIRED);
+        assertThat(Problems.detail(httpClientResponseException)).isEqualTo("The requested value has expired");
     }
 
     static Stream<Arguments> kvSetKeyValueArgs() {
@@ -300,24 +433,24 @@ class KVControllerTest {
 
     @Test
     void illegalKey() {
-        String expectedErrorMessage = "Illegal argument: Key must start with an alphanumeric character (uppercase or lowercase) and can contain alphanumeric characters (uppercase or lowercase), dots (.), underscores (_), and hyphens (-) only.";
+        String expectedErrorMessage = "Key must start with an alphanumeric character (uppercase or lowercase) and can contain alphanumeric characters (uppercase or lowercase), dots (.), underscores (_), and hyphens (-) only.";
 
         HttpClientResponseException httpClientResponseException = Assertions
             .assertThrows(HttpClientResponseException.class, () -> client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/namespaces/" + NAMESPACE + "/kv/bad$key")));
-        assertThat(httpClientResponseException.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
-        assertThat(httpClientResponseException.getMessage()).isEqualTo(expectedErrorMessage);
+        Problems.assertProblem(httpClientResponseException, ProblemTypes.INVALID_ARGUMENT);
+        assertThat(Problems.detail(httpClientResponseException)).isEqualTo(expectedErrorMessage);
 
         httpClientResponseException = Assertions.assertThrows(
             HttpClientResponseException.class,
             () -> client.toBlocking().exchange(HttpRequest.PUT("/api/v1/main/namespaces/" + NAMESPACE + "/kv/bad$key", "\"content\"").contentType(MediaType.TEXT_PLAIN))
         );
-        assertThat(httpClientResponseException.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
-        assertThat(httpClientResponseException.getMessage()).isEqualTo(expectedErrorMessage);
+        Problems.assertProblem(httpClientResponseException, ProblemTypes.INVALID_ARGUMENT);
+        assertThat(Problems.detail(httpClientResponseException)).isEqualTo(expectedErrorMessage);
 
         httpClientResponseException = Assertions
             .assertThrows(HttpClientResponseException.class, () -> client.toBlocking().retrieve(HttpRequest.DELETE("/api/v1/main/namespaces/" + NAMESPACE + "/kv/bad$key")));
-        assertThat(httpClientResponseException.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
-        assertThat(httpClientResponseException.getMessage()).isEqualTo(expectedErrorMessage);
+        Problems.assertProblem(httpClientResponseException, ProblemTypes.INVALID_ARGUMENT);
+        assertThat(Problems.detail(httpClientResponseException)).isEqualTo(expectedErrorMessage);
     }
 
     @Test

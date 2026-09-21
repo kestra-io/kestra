@@ -55,6 +55,15 @@ public final class RetryUtils {
             .build();
     }
 
+    @SuppressWarnings("unchecked")
+    private static <T, E extends Throwable> T wrap(FailsafeExecutor<T> failsafeExecutor, CheckedSupplier<T> run) throws E {
+        try {
+            return failsafeExecutor.get(run::get);
+        } catch (FailsafeException e) {
+            throw (E) e.getCause();
+        }
+    }
+
     @Slf4j
     @Builder
     @AllArgsConstructor
@@ -103,16 +112,38 @@ public final class RetryUtils {
         }
 
         public T runRetryIf(Predicate<Throwable> predicate, CheckedSupplier<T> run) {
-            return wrap(
-                Failsafe
-                    .with(
-                        this.exceptionFallback(this.failureFunction)
-                            .handleIf(predicate::test).build(),
-                        this.toPolicy(this.policy)
-                            .handleIf(predicate::test).build()
-                    ),
-                run
-            );
+            return this.retryerIf(predicate).run(run);
+        }
+
+        /**
+         * Builds a reusable {@link Retryer} for the given predicate.
+         * <p>
+         * Prefer this over {@link #runRetryIf(Predicate, CheckedSupplier)} on hot paths: the latter
+         * rebuilds the whole policy chain (retry policy, fallback and their listeners) on every
+         * call, whereas the returned retryer builds it once. Failsafe policies and executors are
+         * immutable and thread-safe, so the result is safe to cache in a static field and share
+         * across threads.
+         * <p>
+         * The returned {@link Retryer} is not parameterized by {@code T}: the policy and fallback it
+         * was built with only ever match on the thrown exception, never on the result value, so the
+         * same underlying executor can safely run work of any result type. That lets callers reuse
+         * one cached retryer across calls with different result types without needing to know
+         * anything about Failsafe or perform a cast themselves — see {@link Retryer#run}.
+         *
+         * @param predicate decides whether a thrown exception should be retried
+         * @return a retryer that can be reused for any number of calls, for any result type
+         */
+        @SuppressWarnings("unchecked")
+        public Retryer retryerIf(Predicate<Throwable> predicate) {
+            FailsafeExecutor<T> failsafeExecutor = Failsafe
+                .with(
+                    this.exceptionFallback(this.failureFunction)
+                        .handleIf(predicate::test).build(),
+                    this.toPolicy(this.policy)
+                        .handleIf(predicate::test).build()
+                );
+
+            return new Retryer((FailsafeExecutor<Object>) failsafeExecutor);
         }
 
         public T run(BiPredicate<T, Throwable> predicate, CheckedSupplier<T> run) throws E {
@@ -139,15 +170,6 @@ public final class RetryUtils {
                     ),
                 run
             );
-        }
-
-        @SuppressWarnings("unchecked")
-        private static <T, E extends Throwable> T wrap(FailsafeExecutor<T> failsafeExecutor, CheckedSupplier<T> run) throws E {
-            try {
-                return failsafeExecutor.get(run::get);
-            } catch (FailsafeException e) {
-                throw (E) e.getCause();
-            }
         }
 
         private FallbackBuilder<T> exceptionFallback(Function<RetryFailed, E> failureFunction) {
@@ -199,6 +221,34 @@ public final class RetryUtils {
     @FunctionalInterface
     public interface CheckedSupplier<T> {
         T get() throws Throwable;
+    }
+
+    /**
+     * A pre-built, reusable retry executor, obtained from {@link Instance#retryerIf(Predicate)}.
+     * <p>
+     * Immutable and thread-safe. Not parameterized by a result type: {@link #run} is a generic
+     * method instead, so a single cached instance can run work of any result type.
+     */
+    public static final class Retryer {
+        private final FailsafeExecutor<Object> failsafeExecutor;
+
+        private Retryer(FailsafeExecutor<Object> failsafeExecutor) {
+            this.failsafeExecutor = failsafeExecutor;
+        }
+
+        /**
+         * Runs the given work, retrying it according to the policy this retryer was built with.
+         * <p>
+         * The cast is safe: this retryer's policy and fallback only ever match on the thrown
+         * exception, never on the result value, so the same executor works for any {@code T}.
+         *
+         * @param run the work to run
+         * @return the value returned by {@code run}
+         */
+        @SuppressWarnings("unchecked")
+        public <T> T run(CheckedSupplier<T> run) {
+            return RetryUtils.<T, RuntimeException> wrap((FailsafeExecutor<T>) (FailsafeExecutor<?>) failsafeExecutor, run);
+        }
     }
 
     @Getter

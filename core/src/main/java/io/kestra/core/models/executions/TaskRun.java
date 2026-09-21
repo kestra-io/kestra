@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonSetter;
 
 import io.kestra.core.models.TenantInterface;
 import io.kestra.core.models.assets.AssetsInOut;
@@ -13,12 +14,13 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.core.models.tasks.retrys.AbstractRetry;
 import io.kestra.core.utils.IdUtils;
+import io.kestra.core.utils.ListUtils;
+import io.kestra.core.validations.TenantId;
 
 import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
 import lombok.*;
 
 @ToString
@@ -29,7 +31,7 @@ import lombok.*;
 public class TaskRun implements TenantInterface {
     @NotNull
     @Hidden
-    @Pattern(regexp = "^[a-z0-9][a-z0-9_-]*")
+    @TenantId
     String tenantId;
 
     @NotNull
@@ -55,9 +57,11 @@ public class TaskRun implements TenantInterface {
     @With
     List<TaskRunAttempt> attempts;
 
+    // Lineage bundles, one AssetsInOut per (inputs -> outputs) pair, kept unmerged so each becomes its own lineage event.
     @With
     @Nullable
-    AssetsInOut assets;
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    List<AssetsInOut> assetEmits;
 
     @NotNull
     State state;
@@ -80,7 +84,7 @@ public class TaskRun implements TenantInterface {
     @Nullable
     @Schema(implementation = Object.class)
     @Deprecated(forRemoval = true, since = "2.0.0")
-    Variables outputs;
+    Map<String, Object> outputs;
 
     /**
      * @deprecated should only be used inside the pre-2.0 compatibility layer.
@@ -89,6 +93,24 @@ public class TaskRun implements TenantInterface {
     public TaskRun clearOutputs() {
         this.outputs = null;
         return this;
+    }
+
+    /**
+     * Folds the pre-existing single `assets` object into {@code assetEmits} when deserializing executions
+     * saved before `assetEmits` existed, so old executions still load. New code uses {@link #getAssetEmits()}.
+     *
+     * @deprecated use {@code assetEmits}.
+     */
+    @Deprecated(forRemoval = true, since = "2.0.0")
+    @JsonSetter("assets")
+    public void setAssets(@Nullable AssetsInOut assets) {
+        if (assets == null) {
+            return;
+        }
+        if (!(this.assetEmits instanceof ArrayList)) {
+            this.assetEmits = this.assetEmits == null ? new ArrayList<>() : new ArrayList<>(this.assetEmits);
+        }
+        this.assetEmits.add(assets);
     }
 
     public TaskRun withState(State.Type state) {
@@ -102,7 +124,7 @@ public class TaskRun implements TenantInterface {
             this.parentTaskRunId,
             this.value,
             this.attempts,
-            this.assets,
+            this.assetEmits,
             this.state.withState(state),
             this.iteration,
             this.dynamic,
@@ -131,7 +153,7 @@ public class TaskRun implements TenantInterface {
             this.parentTaskRunId,
             this.value,
             newAttempts,
-            this.assets,
+            this.assetEmits,
             this.state.withState(state),
             this.iteration,
             this.dynamic,
@@ -140,10 +162,32 @@ public class TaskRun implements TenantInterface {
         );
     }
 
+    /**
+     * Fail a task run: set its state to FAILED and create a new attempt.
+     * <p>
+     * If there is an already running attempt, it will be failed. Otherwise, a new attempt will be created.
+     */
     public TaskRun fail() {
-        var attempt = TaskRunAttempt.builder().state(new State(State.Type.FAILED)).build();
-        // Copy defensively: this.attempts may be immutable (e.g. after deserialization), and fail()
-        // must return a new TaskRun without mutating the caller's list in place.
+        TaskRunAttempt attempt;
+        if (!ListUtils.isEmpty(this.attempts) && this.attempts.getLast().getState().isRunning()) {
+            attempt = this.attempts.getLast().withState(State.Type.FAILED);
+        } else {
+            attempt = TaskRunAttempt.builder().state(new State().withState(State.Type.FAILED)).build();
+        }
+
+        return this.withNewStateAndAttempt(State.Type.FAILED, attempt);
+    }
+
+    /**
+     * Start running a task run: set its state to RUNNING and create a new attempt.
+     */
+    public TaskRun run() {
+        var attempt = TaskRunAttempt.builder().state(new State().withState(State.Type.RUNNING)).build();
+        return this.withNewStateAndAttempt(State.Type.RUNNING, attempt);
+    }
+
+    private TaskRun withNewStateAndAttempt(State.Type newState, TaskRunAttempt attempt) {
+        // Copy defensively: this.attempts may be immutable (e.g. after deserialization).
         List<TaskRunAttempt> newAttempts = this.attempts == null ? new ArrayList<>(1) : new ArrayList<>(this.attempts);
         newAttempts.add(attempt);
 
@@ -157,8 +201,8 @@ public class TaskRun implements TenantInterface {
             this.parentTaskRunId,
             this.value,
             newAttempts,
-            this.assets,
-            this.state.withState(State.Type.FAILED),
+            this.assetEmits,
+            this.state.withState(newState),
             this.iteration,
             this.dynamic,
             this.forceExecution,
@@ -180,7 +224,7 @@ public class TaskRun implements TenantInterface {
             .parentTaskRunId(this.getParentTaskRunId() != null ? remapTaskRunId.getOrDefault(this.getParentTaskRunId(), this.getParentTaskRunId()) : null)
             .value(this.getValue())
             .attempts(this.getAttempts())
-            .assets(this.getAssets())
+            .assetEmits(this.assetEmits)
             .state(state == null ? this.getState() : state)
             .iteration(this.getIteration())
             .build();
@@ -264,7 +308,7 @@ public class TaskRun implements TenantInterface {
             ", value=" + this.getValue() +
             ", parentTaskRunId=" + this.getParentTaskRunId() +
             ", state=" + this.getState().getCurrent().toString() +
-            ", assets=" + this.getAssets() +
+            ", assetEmits=" + this.getAssetEmits() +
             ", attempts=" + this.getAttempts() +
             ")";
     }

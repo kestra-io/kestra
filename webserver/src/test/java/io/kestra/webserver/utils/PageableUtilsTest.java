@@ -35,10 +35,32 @@ class PageableUtilsTest {
 
         assertFalse(paged.isUnpaged());
         assertFalse(paged.isSorted());
+    }
 
-        assertThrows(IllegalArgumentException.class, () -> PageableUtils.from(1, -1, List.of("key:asc"), toUpper));
-        assertThrows(IllegalArgumentException.class, () -> PageableUtils.from(1, -1, List.of("key:asc")));
-        assertThrows(IllegalArgumentException.class, () -> PageableUtils.from(1, -1));
+    @Test
+    void shouldThrowWhenPageIsBelowOne() {
+        // page=0 previously reached the repository and produced a 500 leaking the SQL query
+        // (kestra-io/kestra-ee#10223) — it must now be rejected with a clean 422
+        for (int page : new int[]{0, -1}) {
+            HttpStatusException e = assertThrows(
+                HttpStatusException.class,
+                () -> PageableUtils.from(page, 10)
+            );
+            assertEquals(HttpStatus.UNPROCESSABLE_ENTITY, e.getStatus());
+            assertThat(e.getMessage()).contains("greater than or equal to 1");
+        }
+    }
+
+    @Test
+    void shouldThrowWhenSizeIsBelowOne() {
+        for (int size : new int[]{0, -1, -10}) {
+            HttpStatusException e = assertThrows(
+                HttpStatusException.class,
+                () -> PageableUtils.from(1, size)
+            );
+            assertEquals(HttpStatus.UNPROCESSABLE_ENTITY, e.getStatus());
+            assertThat(e.getMessage()).contains("greater than or equal to 1");
+        }
     }
 
     @Test

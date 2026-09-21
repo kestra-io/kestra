@@ -4,6 +4,7 @@ import java.util.ConcurrentModificationException;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.flows.State;
@@ -30,8 +31,16 @@ public abstract class AbstractWorkerJobProcessor<T extends WorkerJob> implements
     private final AtomicReference<WorkerJob> currentWorkerJob = new AtomicReference<>();
     private final AtomicReference<AbstractWorkerCallable> currentWorkerCallable = new AtomicReference<>();
 
+    // Bound once instead of passed as `this::interrupt` on every process() call: `this` never
+    // changes across the many jobs a single processor instance handles, so re-capturing it as a
+    // fresh lambda per call was pure allocation churn.
+    private final Consumer<State.Type> interruptAction = this::interrupt;
+
     private final AtomicBoolean stopped = new AtomicBoolean(false);
-    private final AtomicBoolean killRequested = new AtomicBoolean(false);
+    private final AtomicReference<State.Type> pendingInterruptState = new AtomicReference<>();
+    // A timeout kill carries no state, which pendingInterruptState cannot express since null means
+    // "nothing pending" there.
+    private final AtomicBoolean pendingTimeoutKill = new AtomicBoolean(false);
     private final AtomicBoolean shutdownInterrupted = new AtomicBoolean(false);
 
     public AbstractWorkerJobProcessor(String workerGroup,
@@ -52,7 +61,7 @@ public abstract class AbstractWorkerJobProcessor<T extends WorkerJob> implements
     @Override
     public void process(final T job) {
         if (currentWorkerJob.compareAndSet(null, job)) {
-            executionKilledManager.register(job.uid(), job, this::kill);
+            executionKilledManager.register(job.uid(), job, interruptAction);
             try {
                 doProcess(job);
             } finally {
@@ -69,10 +78,13 @@ public abstract class AbstractWorkerJobProcessor<T extends WorkerJob> implements
 
     protected io.kestra.core.models.flows.State.Type callJob(AbstractWorkerCallable workerJobCallable) {
         this.currentWorkerCallable.set(workerJobCallable);
-        // Propagate a kill that arrived before currentWorkerCallable was set
-        // (between register() and here, kill() was a no-op).
-        if (killRequested.get()) {
-            workerJobCallable.kill();
+        // Propagate an interrupt that arrived before currentWorkerCallable was set
+        // (between register() and here, interrupt() was a no-op).
+        State.Type pendingState = pendingInterruptState.get();
+        if (pendingState != null) {
+            workerJobCallable.kill(pendingState);
+        } else if (pendingTimeoutKill.get()) {
+            workerJobCallable.kill(null);
         }
         try {
             return tracer.inCurrentContext(
@@ -107,8 +119,28 @@ public abstract class AbstractWorkerJobProcessor<T extends WorkerJob> implements
 
     @Override
     public void kill() {
-        killRequested.set(true);
-        Optional.ofNullable(currentWorkerCallable.get()).ifPresent(AbstractWorkerCallable::kill);
+        interrupt(State.Type.KILLED);
+    }
+
+    /**
+     * Interrupts the currently running job, marking it to report {@code state} as its outcome.
+     * Used both for a real kill ({@code KILLED}) and for a fail-fast interrupt targeting a
+     * caller-chosen state (e.g. {@code CANCELLED}).
+     */
+    protected void interrupt(State.Type state) {
+        pendingInterruptState.set(state);
+        Optional.ofNullable(currentWorkerCallable.get()).ifPresent(callable -> callable.kill(state));
+    }
+
+    /**
+     * Kills the running callable without marking a terminal state, so a job reported by
+     * {@link WorkerJobProcessor#onTimeout} still ends FAILED rather than KILLED.
+     */
+    protected void killCurrentCallable() {
+        // Recorded first: a deadline can land before callJob() published the callable, and the kill would
+        // otherwise be lost with the evaluation left running unbounded.
+        pendingTimeoutKill.set(true);
+        Optional.ofNullable(currentWorkerCallable.get()).ifPresent(callable -> callable.kill(null));
     }
 
     @Override

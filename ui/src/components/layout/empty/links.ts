@@ -1,120 +1,44 @@
-/** External resources shown on an empty state: a video and a "Learn more" documentation page. */
-export interface EmptyLinks {
-    video?: string;
-    learnMore?: string;
-}
-
 /**
- * Registry of {@link EmptyLinks} keyed by the `Empty` component's `type` prop.
+ * Docs page per empty-state `type`; an explicit `learnMore` prop wins.
  *
- * `Empty.vue` falls back to this registry when no explicit `video` /
- * `learnMore` prop is passed; an explicit prop always wins.
+ * The UTM tags follow the in-app convention: `utm_campaign` is the type itself,
+ * not the current route, since routes carry namespace and flow names. Add them to
+ * every new entry, and keep them ahead of any `#fragment`.
  */
-export const links: Record<string, EmptyLinks> = {
-    namespaceFiles: {
-        video: "https://www.youtube.com/watch?v=BeQNI2XRddA",
-        learnMore: "https://kestra.io/docs/concepts/namespace-files",
-    },
-    versionPlugin: {
-        video: "https://www.youtube.com/watch?v=h-vmMGlTGM8&t=79s",
-        learnMore: "https://kestra.io/docs/enterprise/instance/versioned-plugins",
-    },
-    kill_switches: {
-        video: "https://youtu.be/LjiEmutGdNY",
-        learnMore: "https://kestra.io/docs/enterprise/instance/kill-switch",
-    },
-    announcements: {
-        video: "https://www.youtube.com/watch?v=2QqGABneiNI&t=5s",
-        learnMore: "https://kestra.io/docs/enterprise/instance/announcements",
-    },
-    testSuites: {
-        video: "https://www.youtube.com/watch?v=jMZ9Cs3xxpo",
-        learnMore: "https://kestra.io/docs/enterprise/governance/unit-tests",
-    },
-    apps: {
-        video: "https://www.youtube.com/watch?v=KwBO8mcS3kk",
-        learnMore: "https://kestra.io/docs/enterprise/scalability/apps",
-    },
-    assets: {
-        video: "https://www.youtube.com/watch?v=XhICXP_GXic",
-        learnMore: "https://kestra.io/docs/enterprise/governance/assets",
-    },
-    apiTokens: {
-        video: "https://www.youtube.com/watch?v=g-740VZLRdA",
-        learnMore: "https://kestra.io/docs/enterprise/auth/api-tokens",
-    },
-    panels: {
-        video: "https://www.youtube.com/watch?v=SGlzRmJqFBI",
-        learnMore: "https://kestra.io/docs/ui/flows",
-    },
-    "dependencies.FLOW": {
-        learnMore: "https://kestra.io/docs/ui/flows#dependencies",
-    },
-    "dependencies.EXECUTION": {
-        learnMore: "https://kestra.io/docs/ui/flows#dependencies",
-    },
-    "dependencies.NAMESPACE": {
-        learnMore: "https://kestra.io/docs/ui/flows#dependencies",
-    },
-    "dependencies.ASSET": {
-        learnMore: "https://kestra.io/docs/ui/flows#dependencies",
-    },
-    triggers: {
-        video: "https://www.youtube.com/watch?v=qDiQtsVEETs",
-        learnMore: "https://kestra.io/docs/workflow-components/triggers",
-    },
-    mcpToolFlows: {
-        video: "https://www.youtube.com/watch?v=QxaMnGuu0kI",
-        learnMore: "https://kestra.io/docs/ai-tools/mcp-server",
-    },
-    concurrency_executions: {
-        video: "https://www.youtube.com/watch?v=lDGOqqMyQEo",
-        learnMore: "https://kestra.io/docs/workflow-components/concurrency",
-    },
-    concurrency_limit: {
-        video: "https://www.youtube.com/watch?v=lDGOqqMyQEo",
-        learnMore: "https://kestra.io/docs/workflow-components/concurrency",
-    },
-    concurrency_limits: {
-        video: "https://www.youtube.com/watch?v=lDGOqqMyQEo",
-        learnMore: "https://kestra.io/docs/workflow-components/concurrency",
-    },
-    policies: {
-        video: "https://www.youtube.com/watch?v=9zQTUeL0KMc",
-        learnMore: "https://kestra.io/docs/enterprise/governance/policies",
-    },
-    tests: {
-        video: "https://www.youtube.com/watch?v=jMZ9Cs3xxpo",
-        learnMore: "https://kestra.io/docs/enterprise/governance/unit-tests",
-    },
-    iam: {
-        video: "https://www.youtube.com/watch?v=9I87QZJPl1Y",
-        learnMore: "https://kestra.io/docs/enterprise/auth",
-    },
-    tenants: {
-        video: "https://www.youtube.com/watch?v=z4uzAyjKeoc",
-        learnMore: "https://kestra.io/docs/enterprise/governance/tenants",
-    },
-    auditlogs: {
-        video: "https://www.youtube.com/watch?v=Qz24gBPGZHs",
-        learnMore: "https://kestra.io/docs/enterprise/governance/audit-logs",
-    },
-    quotas: {
-        learnMore: "https://kestra.io/docs/workflow-components/quotas",
-    },
-    instance: {
-        video: "https://www.youtube.com/watch?v=pcC3OAJPQao",
-        learnMore: "https://kestra.io/docs/enterprise/instance",
-    },
-    blueprints: {
-        video: "https://www.youtube.com/watch?v=qbGfK-FJi6s",
-        learnMore: "https://kestra.io/docs/enterprise/governance/custom-blueprints",
-    },
-    namespace: {
-        learnMore: "https://kestra.io/docs/enterprise/governance/namespace-management",
-    },
-    variables: {
-        video: "https://www.youtube.com/watch?v=fs86GLg-OGM",
-        learnMore: "https://kestra.io/docs/how-to-guides/namespace-variables-vs-kvstore",
-    },
+export const links: Record<string, string> = {
+    namespaceFiles: "https://kestra.io/docs/concepts/namespace-files?utm_source=app&utm_medium=referral&utm_campaign=namespace-files",
+    versionPlugin: "https://kestra.io/docs/enterprise/instance/versioned-plugins?utm_source=app&utm_medium=referral&utm_campaign=version-plugin",
+    kill_switches: "https://kestra.io/docs/enterprise/instance/kill-switch?utm_source=app&utm_medium=referral&utm_campaign=kill-switches",
+    announcements: "https://kestra.io/docs/enterprise/instance/announcements?utm_source=app&utm_medium=referral&utm_campaign=announcements",
+    testSuites: "https://kestra.io/docs/enterprise/governance/unit-tests?utm_source=app&utm_medium=referral&utm_campaign=test-suites",
+    apps: "https://kestra.io/docs/enterprise/scalability/apps?utm_source=app&utm_medium=referral&utm_campaign=apps",
+    assets: "https://kestra.io/docs/enterprise/governance/assets?utm_source=app&utm_medium=referral&utm_campaign=assets",
+    cases: "https://kestra.io/docs/enterprise/governance/cases?utm_source=app&utm_medium=referral&utm_campaign=cases",
+    apiTokens: "https://kestra.io/docs/enterprise/auth/api-tokens?utm_source=app&utm_medium=referral&utm_campaign=api-tokens",
+    panels: "https://kestra.io/docs/ui/flows?utm_source=app&utm_medium=referral&utm_campaign=panels",
+    "dependencies.FLOW": "https://kestra.io/docs/ui/flows?utm_source=app&utm_medium=referral&utm_campaign=dependencies-flow#dependencies",
+    "dependencies.EXECUTION": "https://kestra.io/docs/ui/flows?utm_source=app&utm_medium=referral&utm_campaign=dependencies-execution#dependencies",
+    "dependencies.NAMESPACE": "https://kestra.io/docs/ui/flows?utm_source=app&utm_medium=referral&utm_campaign=dependencies-namespace#dependencies",
+    "dependencies.ASSET": "https://kestra.io/docs/ui/flows?utm_source=app&utm_medium=referral&utm_campaign=dependencies-asset#dependencies",
+    triggers: "https://kestra.io/docs/workflow-components/triggers?utm_source=app&utm_medium=referral&utm_campaign=triggers",
+    mcpToolFlows: "https://kestra.io/docs/ai-tools/mcp-server?utm_source=app&utm_medium=referral&utm_campaign=mcp-tool-flows",
+    concurrency_executions: "https://kestra.io/docs/workflow-components/concurrency?utm_source=app&utm_medium=referral&utm_campaign=concurrency-executions",
+    concurrency_limit: "https://kestra.io/docs/workflow-components/concurrency?utm_source=app&utm_medium=referral&utm_campaign=concurrency-limit",
+    concurrency_limits: "https://kestra.io/docs/workflow-components/concurrency?utm_source=app&utm_medium=referral&utm_campaign=concurrency-limits",
+    policies: "https://kestra.io/docs/enterprise/governance/policies?utm_source=app&utm_medium=referral&utm_campaign=policies",
+    credentials: "https://kestra.io/docs/enterprise/auth/credentials?utm_source=app&utm_medium=referral&utm_campaign=credentials",
+    tests: "https://kestra.io/docs/enterprise/governance/unit-tests?utm_source=app&utm_medium=referral&utm_campaign=tests",
+    iam: "https://kestra.io/docs/enterprise/auth?utm_source=app&utm_medium=referral&utm_campaign=iam",
+    tenants: "https://kestra.io/docs/enterprise/governance/tenants?utm_source=app&utm_medium=referral&utm_campaign=tenants",
+    auditlogs: "https://kestra.io/docs/enterprise/governance/audit-logs?utm_source=app&utm_medium=referral&utm_campaign=auditlogs",
+    quotas: "https://kestra.io/docs/workflow-components/quotas?utm_source=app&utm_medium=referral&utm_campaign=quotas",
+    instance: "https://kestra.io/docs/enterprise/instance?utm_source=app&utm_medium=referral&utm_campaign=instance",
+    dashboards: "https://kestra.io/docs/ui/dashboards?utm_source=app&utm_medium=referral&utm_campaign=dashboards",
+    blueprints: "https://kestra.io/docs/enterprise/governance/custom-blueprints?utm_source=app&utm_medium=referral&utm_campaign=blueprints",
+    namespace: "https://kestra.io/docs/enterprise/governance/namespace-management?utm_source=app&utm_medium=referral&utm_campaign=namespace",
+    variables: "https://kestra.io/docs/how-to-guides/namespace-variables-vs-kvstore?utm_source=app&utm_medium=referral&utm_campaign=variables",
+    secrets: "https://kestra.io/docs/concepts/secret?utm_source=app&utm_medium=referral&utm_campaign=secrets",
+    promote: "https://kestra.io/docs/enterprise/governance/promote?utm_source=app&utm_medium=referral&utm_campaign=promote",
+    /** Groups have no page of their own; RBAC covers them. */
+    groups: "https://kestra.io/docs/enterprise/auth/rbac?utm_source=app&utm_medium=referral&utm_campaign=groups",
 }

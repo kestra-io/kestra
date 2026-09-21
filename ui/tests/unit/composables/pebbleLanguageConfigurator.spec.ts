@@ -4,7 +4,7 @@ import {describe, expect, it, vi} from "vitest";
     getWorker: () => ({postMessage(){}, terminate(){}, addEventListener(){}, removeEventListener(){}}),
 }
 
-import * as monaco from "monaco-editor/esm/vs/editor/editor.api.js"
+import * as monaco from "monaco-editor/editor/editor.api.js"
 
 vi.mock("@kestra-io/topology", () => ({flowYamlUtils: {parse: () => ({})}}))
 
@@ -16,7 +16,7 @@ import {
 } from "../../../src/composables/monaco/languages/pebbleLanguageConfigurator"
 
 describe.each([
-    ["pebble root variable", "{{ inputs",  10, registerPebbleAutocompletion,             {rootFieldAutoCompletion:   () => Promise.resolve(["inputs"])}],
+    ["pebble root variable", "{{ inputs",  10, registerPebbleAutocompletion,             {rootFieldAutoCompletion:   () => Promise.resolve(["inputs"]), functionsWithDefaults: () => Promise.resolve([])}],
     ["function parameters",  "{{ secret(", 11, registerFunctionParametersAutoCompletion, {functionAutoCompletion:    () => Promise.resolve(["'value'"])}],
     ["nested value",         "{{ flow.",    9, registerNestedValueAutoCompletion,        {nestedFieldAutoCompletion: () => Promise.resolve(["id"])}],
     ["filter",               "{{ x | up",  10, registerFilterAutoCompletion,             {filterAutoCompletion:      () => Promise.resolve(["upper"])}],

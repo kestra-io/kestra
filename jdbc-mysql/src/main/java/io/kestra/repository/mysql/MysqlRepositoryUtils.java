@@ -15,7 +15,7 @@ public final class MysqlRepositoryUtils {
     public static Field<Date> formatDateField(String dateField, DateUtils.GroupType groupType) {
         switch (groupType) {
             case MONTH:
-                return DSL.field("DATE_FORMAT({0}, '%Y-%m')", Date.class, DSL.field(dateField));
+                return DSL.field("STR_TO_DATE(DATE_FORMAT(now(), '%Y-%m-01'), '%Y-%m-%d')", Date.class, DSL.field(dateField));
             case WEEK:
                 return DSL.field("STR_TO_DATE(CONCAT(YEARWEEK({0}, 3), ' Monday'), '%X%V %W')", Date.class, DSL.field(dateField));
             case DAY:

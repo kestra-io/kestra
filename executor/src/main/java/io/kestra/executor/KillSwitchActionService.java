@@ -64,7 +64,10 @@ public class KillSwitchActionService {
         {
             if (!execution.getState().isTerminated()) {
                 var newExecution = execution.withState(State.Type.KILLING).addLabel(new Label(Label.KILL_SWITCH, "killed"));
-                return new ExecutorContext(newExecution);
+                // built from the row as loaded, then moved forward: an ExecutorContext must always
+                // carry the cycle-entry execution, which is what tells the cycle that terminated an
+                // execution apart from a later one that only observed it terminated
+                return new ExecutorContext(execution).withExecution(newExecution, "killSwitch");
             }
             return null;
         });
@@ -87,7 +90,8 @@ public class KillSwitchActionService {
         {
             if (!execution.getState().isTerminated()) {
                 var newExecution = execution.withState(State.Type.CANCELLED).addLabel(new Label(Label.KILL_SWITCH, "cancelled"));
-                return new ExecutorContext(newExecution);
+                // see killExecution: keep the cycle-entry execution in the context
+                return new ExecutorContext(execution).withExecution(newExecution, "killSwitch");
             }
             return null;
         });

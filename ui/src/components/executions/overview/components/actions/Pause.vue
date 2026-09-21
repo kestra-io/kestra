@@ -1,5 +1,6 @@
 <template>
     <NavBarAction
+        v-bind="$attrs"
         :disabled="!enabled"
         :icon="Pause"
         @click="click"
@@ -9,7 +10,7 @@
 
     <KsDialog v-if="isDrawerOpen" v-model="isDrawerOpen" destroyOnClose :appendToBody="true">
         <template #header>
-            <span v-html="$t('pause title', {id: escape(execution.id)})" />
+            <span v-html="$t('pause title', {id: escapeHtml(execution.id)})" />
         </template>
         <template #footer>
             <KsButton :icon="Pause" type="primary" @click="pause()" nativeType="submit">
@@ -20,17 +21,18 @@
 </template>
 
 <script setup lang="ts">
-    import escape from "lodash/escape"
     import Pause from "vue-material-design-icons/Pause.vue"
     import NavBarAction from "../../../../layout/NavBarAction.vue"
     import {useExecutionsStore} from "../../../../../stores/executions"
     import resource from "../../../../../models/resource"
     import action from "../../../../../models/action"
-    import {State} from "@kestra-io/design-system"
+    import {State, escapeHtml} from "@kestra-io/design-system"
     import {useAuthStore} from "override/stores/auth"
     import {computed, ref} from "vue"
     import {useI18n} from "vue-i18n"
     import {useToast} from "../../../../../utils/toast"
+
+    defineOptions({inheritAttrs: false})
 
     const props = defineProps({
         execution: {

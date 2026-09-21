@@ -5,6 +5,7 @@ import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 
 import org.junit.jupiter.api.Test;
 
@@ -24,6 +25,7 @@ import io.kestra.plugin.core.dashboard.data.Metrics;
 import io.kestra.plugin.core.dashboard.data.MetricsKPI;
 
 import io.micronaut.data.model.Pageable;
+import io.micronaut.data.model.Sort;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 
@@ -94,6 +96,46 @@ public abstract class AbstractMetricRepositoryTest {
         assertThat(aggregationResults.getAggregations().size()).isBetween(26, 27);
         assertThat(aggregationResults.getGroupBy()).isEqualTo("week");
 
+        // A window over 365 days groups by month; the bucket containing endDate must still be
+        // emitted, otherwise the most recent data point is silently zero-filled away (regression
+        // for JDBC backends walking un-floored buckets from startDate). endDate is captured fresh
+        // here (not the `now` above, which predates the save) so it is guaranteed to be at or
+        // after the counter's own timestamp.
+        ZonedDateTime monthlyEnd = ZonedDateTime.now();
+        aggregationResults = metricRepository.aggregateByFlowId(
+            tenant,
+            "namespace",
+            "flow",
+            null,
+            counter.getName(),
+            monthlyEnd.minusDays(400),
+            monthlyEnd,
+            "sum"
+        );
+
+        // The `timer` entry above reuses the metric name "counter" too, reporting its duration in
+        // milliseconds, so the expected sum is the counter's value plus the timer's millisecond value.
+        double expectedMonthlySum = 1.0 + timer.getValue();
+        assertThat(aggregationResults.getGroupBy()).isEqualTo("month");
+        assertThat(aggregationResults.getAggregations().stream().mapToDouble(bucket -> bucket.value).sum()).isEqualTo(expectedMonthlySum);
+
+        // avg/min/max must aggregate over a window with mostly empty buckets without failing
+        // (regression for the Elasticsearch backend returning a null value for empty buckets).
+        for (String aggregation : List.of("avg", "min", "max")) {
+            MetricAggregations aggregations = metricRepository.aggregateByFlowId(
+                tenant,
+                "namespace",
+                "flow",
+                null,
+                counter.getName(),
+                ZonedDateTime.now().minusDays(30),
+                ZonedDateTime.now(),
+                aggregation
+            );
+
+            assertThat(aggregations.getAggregations().size()).isEqualTo(31);
+            assertThat(aggregations.getGroupBy()).isEqualTo("day");
+        }
     }
 
     @Test
@@ -310,6 +352,44 @@ public abstract class AbstractMetricRepositoryTest {
         List<String> tasksWithMetrics = metricRepository.tasksWithMetrics(tenant, "namespace", "flow");
 
         assertThat(tasksWithMetrics).containsExactlyInAnyOrder("taskA", "taskB");
+    }
+
+    @Test
+    void shouldSortByValueUnlikeOtherResourcesWhereItIsExcluded() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        String executionId = FriendlyId.createFriendlyId();
+        TaskRun taskRun1 = taskRun(tenant, executionId, "task");
+
+        metricRepository.save(MetricEntry.of(taskRun1, Counter.of("c", 3), null));
+        metricRepository.save(MetricEntry.of(taskRun1, Counter.of("c", 1), null));
+        metricRepository.save(MetricEntry.of(taskRun1, Counter.of("c", 2), null));
+
+        Function<String, String> sortMapper = metricRepository.sortMapping();
+        Pageable pageable = Pageable.from(1, 10, Sort.of(Sort.Order.asc(sortMapper.apply("value"))));
+
+        List<MetricEntry> results = metricRepository.findByExecutionId(tenant, executionId, pageable);
+
+        assertThat(results).extracting(MetricEntry::getValue).containsExactly(1.0, 2.0, 3.0);
+    }
+
+    @Test
+    void shouldSortByTaskRunIdUsingItsApiFieldName() {
+        // Regression: AbstractJdbcMetricRepository.sortMapping() used to map the lowercase "taskrunId",
+        // rejecting the camelCase "taskRunId" that MetricEntry#getTaskRunId() and every other sort key
+        // in this map actually use.
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        String executionId = FriendlyId.createFriendlyId();
+        TaskRun taskRun1 = taskRun(tenant, executionId, "task");
+        metricRepository.save(MetricEntry.of(taskRun1, counter("c"), null));
+
+        Function<String, String> sortMapper = metricRepository.sortMapping();
+        String mapped = sortMapper.apply("taskRunId");
+        assertThat(mapped).isNotNull();
+
+        Pageable pageable = Pageable.from(1, 10, Sort.of(Sort.Order.asc(mapped)));
+        List<MetricEntry> results = metricRepository.findByExecutionId(tenant, executionId, pageable);
+
+        assertThat(results).hasSize(1);
     }
 
 }

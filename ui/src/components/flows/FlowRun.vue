@@ -27,6 +27,7 @@
                         :initialInputs="flow.inputs"
                         :selectedTrigger="selectedTrigger"
                         :flow="flow"
+                        :renderLabels="renderLabels"
                         mode="wizard"
                         v-model="inputs"
                         :executeClicked="executeClicked"
@@ -54,6 +55,7 @@
                         <KsDatePicker
                             v-model="scheduleDate"
                             type="datetime"
+                            :disabledDate="isScheduleDayDisabled"
                         />
                     </KsFormItem>
                     <KsFormItem
@@ -117,25 +119,26 @@
     import {useRouter, useRoute} from "vue-router"
     import {useI18n} from "vue-i18n"
     import {useToast} from "../../utils/toast"
-    import moment from "moment-timezone"
+    import {buildScheduleDateParam, isPastScheduleDate, isScheduleDayDisabled} from "../../utils/scheduleDate"
+    import {dateUtils} from "@kestra-io/design-system"
     import {useCoreStore} from "../../stores/core"
     import {useApiStore} from "../../stores/api"
     import {useMiscStore} from "override/stores/misc"
     import {useExecutionsStore} from "../../stores/executions"
+    import {usePlaygroundStore} from "../../stores/playground"
     import {useFlowStore, isSuccessfulFlowSaveOutcome} from "../../stores/flow"
     import {useAuthStore} from "override/stores/auth"
     import resource from "../../models/resource"
     import action from "../../models/action"
     import type {Label, Execution, Check} from "../../stores/executions"
     import type {Flow} from "../../stores/flow"
-    import {buildExecutionLabelStrings, hasForbiddenUserSystemLabels} from "../../utils/executionLabels"
-    import {executeTask} from "../../utils/submitTask"
+    import {buildExecutionLabelStrings, hasForbiddenUserSystemLabels, hasInvalidLabelKeys} from "../../utils/executionLabels"
+    import {executeTask, normalizeInputValues} from "../../utils/submitTask"
     import {getAllTaskIds} from "../../utils/flowUtils"
     import {executeFlowBehaviours, storageKeys} from "../../utils/constants"
     import {WEBHOOK_TRIGGER_TYPE} from "../../utils/webhook"
-    import {normalize, flattenInputs} from "../../utils/inputs"
-    import type {InputType} from "../../utils/inputs"
-    import get from "lodash/get"
+    import {flattenInputs} from "../../utils/inputs"
+    import {getPath} from "@kestra-io/design-system"
     import type {FormInstance} from "@kestra-io/design-system"
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
     import Play from "vue-material-design-icons/Play.vue"
@@ -151,7 +154,7 @@
         return style.toLowerCase() as AlertType
     }
 
-    interface ReplaySubmitOptions {
+    export interface ReplaySubmitOptions {
         formRef: FormInstance
         id: string
         namespace: string
@@ -174,6 +177,7 @@
         buttonIcon?: Component
         buttonTestId?: string
         autoPrefill?: boolean
+        renderLabels?: string[]
     }>(), {
         redirect: true,
         embed: false,
@@ -183,6 +187,7 @@
         buttonIcon: () => Play as Component,
         buttonTestId: "execute-dialog-button",
         autoPrefill: false,
+        renderLabels: undefined,
     })
 
     const emit = defineEmits<{
@@ -200,6 +205,7 @@
     const coreStore = useCoreStore()
     const miscStore = useMiscStore()
     const executionsStore = useExecutionsStore()
+    const playgroundStore = usePlaygroundStore()
     const flowStore = useFlowStore()
     const authStore = useAuthStore()
 
@@ -258,6 +264,16 @@
         hasForbiddenUserSystemLabels(executionLabels.value),
     )
 
+    const haveInvalidLabelKeys = computed(() =>
+        hasInvalidLabelKeys(executionLabels.value),
+    )
+
+    const validationClock = ref(Date.now())
+
+    const hasPastScheduleDate = computed(() =>
+        isPastScheduleDate(scheduleDate.value, new Date(validationClock.value)),
+    )
+
     const validationMessages = computed(() => {
         const messages: string[] = []
         if (haveBadLabels.value) {
@@ -266,11 +282,17 @@
         if (haveForbiddenSystemLabels.value) {
             messages.push(t("forbidden system labels"))
         }
+        if (haveInvalidLabelKeys.value) {
+            messages.push(t("invalid label key"))
+        }
+        if (hasPastScheduleDate.value) {
+            messages.push(t("scheduleDateInPast"))
+        }
         return messages
     })
 
     const flowCanBeExecuted = computed(() =>
-        Boolean(flow.value && !flow.value.disabled && !haveBadLabels.value && !haveForbiddenSystemLabels.value),
+        Boolean(flow.value && !flow.value.disabled && !haveBadLabels.value && !haveForbiddenSystemLabels.value && !haveInvalidLabelKeys.value && !hasPastScheduleDate.value),
     )
 
     const isDirty = computed(() =>
@@ -364,21 +386,16 @@
         const executionInputs = execution.value?.inputs ?? {}
         flattenInputs(flow.value.inputs)
             .forEach(leaf => {
-                const value = get(executionInputs, leaf.id)
+                const value = getPath(executionInputs, leaf.id)
                 if (value === undefined) {
                     return
                 }
-                inputsForm.inputsValues[leaf.id] = normalize(leaf.type as InputType, value)
-                const meta = inputsForm.inputsMetaData.find(m => m.id === leaf.id)
-                if (meta) {
-                    meta.isDefault = false
-                }
+                inputsForm.prefillInputValue(leaf, value)
             })
     }
 
     // Adapter object for the legacy executeTask utility
     const submitor = {
-        $moment: moment,
         $router: router,
         $route: route,
         $toast: () => toast,
@@ -386,11 +403,9 @@
     }
 
     function onSubmit() {
+        validationClock.value = Date.now()
+
         if (form.value && flowCanBeExecuted.value) {
-            apiStore.posthogEvents({
-                type: "FLOW_EXECUTION",
-                action: "submit",
-            })
             checks.value = []
             executeClicked.value = false
             coreStore.message = undefined
@@ -398,6 +413,14 @@
                 if (!valid) {
                     return
                 }
+
+                apiStore.posthogEvents({
+                    type: "FLOW_EXECUTION",
+                    action: "submit",
+                    // Replay-with-inputs bypasses triggerExecution, so it never emits a matching
+                    // `executed`: flagged so it can be excluded from the submit/executed funnel.
+                    is_replay: Boolean(props.replaySubmit),
+                })
 
                 const mergedInputs = props.selectedTrigger?.inputs
                     ? {...props.selectedTrigger.inputs, ...inputsNoDefaults.value}
@@ -417,26 +440,33 @@
                             breakpoints: breakpoints.value,
                         })
                     } else {
-                        const shouldShowOnboardingSuccessAnimation = route.query.onboardingPreset === "true"
                         if (flow.value) {
-                            await executeTask(submitor, flow.value, mergedInputs, {
-                                redirect: props.redirect,
-                                newTab: newTab.value,
-                                id: flow.value.id,
-                                namespace: flow.value.namespace,
-                                // Drafts are playground-only: omit the revision so the backend runs the latest published one.
-                                revision: flow.value.draft ? undefined : flow.value.revision,
-                                labels: labelStrings,
-                                scheduleDate: moment(scheduleDate.value)
-                                    .tz(localStorage.getItem(storageKeys.TIMEZONE_STORAGE_KEY) ?? moment.tz.guess())
-                                    .toISOString(true),
-                                nextStep: true,
-                                query: shouldShowOnboardingSuccessAnimation ? {
-                                    autoExpandGantt: "true",
-                                    onboardingSuccess: "true",
-                                } : undefined,
-                                breakpoints: breakpoints.value,
-                            })
+                            if (playgroundStore.enabled) {
+                                const formData = normalizeInputValues(flattenInputs(flow.value.inputs), inputs.value)
+                                await playgroundStore.runUntilTask(
+                                    playgroundStore.actionOptions?.taskId, 
+                                    playgroundStore.actionOptions?.runDownstreamTasks || false, 
+                                    formData,
+                                )
+                                playgroundStore.showInputPrompt = false
+                                playgroundStore.actionOptions = undefined
+                            } else {
+                                await executeTask(submitor, flow.value, mergedInputs, {
+                                    redirect: props.redirect,
+                                    newTab: newTab.value,
+                                    id: flow.value.id,
+                                    namespace: flow.value.namespace,
+                                    // Drafts are playground-only: omit the revision so the backend runs the latest published one.
+                                    revision: flow.value.draft ? undefined : flow.value.revision,
+                                    labels: labelStrings,
+                                    scheduleDate: buildScheduleDateParam(
+                                        scheduleDate.value,
+                                        dateUtils.currentTimezone(),
+                                    ),
+                                    nextStep: true,
+                                    breakpoints: breakpoints.value,
+                                })
+                            }
                         }
                     }
                     executeClicked.value = true
@@ -447,6 +477,10 @@
             })
         }
     }
+
+    watch(scheduleDate, () => {
+        validationClock.value = Date.now()
+    })
 
     watch(inputs, () => {
         emit("updateInputs", inputs.value)

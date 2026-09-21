@@ -1,0 +1,7 @@
+id: child
+namespace: io.kestra.cli.sub
+
+tasks:
+  - id: date
+    type: io.kestra.plugin.core.debug.Return
+    format: "{{taskrun.startDate}}"

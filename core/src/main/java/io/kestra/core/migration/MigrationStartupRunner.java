@@ -22,12 +22,19 @@ import lombok.extern.slf4j.Slf4j;
  * The startup trigger is intentionally kept separate from {@link MigrationRunner} so the runner
  * itself is an ordinary {@code @Singleton}. The {@code kestra migrate} CLI commands resolve the
  * runner in a minimal context that never registers this trigger, and invoke the runner directly —
- * which is why no "skip auto-run" flag is needed.
+ * which is why no "skip auto-run" flag is needed. A command that owns no repository gets a context
+ * that drops this trigger for the same reason, and never migrates at all.
+ *
+ * <p>
+ * Workers are excluded: they own no repository (see {@code RepositoryBean}) and reach the rest of
+ * the cluster over gRPC, so they must never migrate the schema. Deployments commonly share a single
+ * configuration across every server type, which would otherwise make every worker a migrator.
  */
 @Slf4j
 @Context
 @Order(Ordered.HIGHEST_PRECEDENCE)
 @Requires(property = "kestra.repository.type")
+@Requires(property = "kestra.server-type", notEquals = "WORKER")
 public class MigrationStartupRunner {
 
     private final MigrationRunnerInterface migrationRunner;

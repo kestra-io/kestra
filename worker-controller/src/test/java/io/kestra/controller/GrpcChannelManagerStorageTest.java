@@ -175,7 +175,8 @@ class GrpcChannelManagerStorageTest {
 
     private GrpcChannelManager newManager() {
         GrpcChannelConfiguration channelConfig = new GrpcChannelConfiguration(
-            1, Duration.ofMinutes(1), Duration.ofSeconds(3)
+            Duration.ofMinutes(1), Duration.ofSeconds(3),
+            new GrpcChannelConfiguration.Retry(true, 2, Duration.ofMillis(500), Duration.ofSeconds(5), 2.0)
         );
         GrpcConfiguration grpcConfig = new GrpcConfiguration(false, Integer.MAX_VALUE);
         WorkerControllersConfiguration config = new WorkerControllersConfiguration(

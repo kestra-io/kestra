@@ -5,8 +5,7 @@ import {useMiscStore} from "override/stores/misc"
 import {getTheme} from "../utils/utils"
 import {usePluginsStore} from "../stores/plugins"
 import {useFlowStore} from "../stores/flow"
-import configureLanguageFn from "./monaco/languages/languagesConfigurator"
-import type {editor as monacoEditor} from "monaco-editor/esm/vs/editor/editor.api"
+import type {editor as monacoEditor} from "monaco-editor/editor/editor.api"
 
 export function useEditorBindings() {
     const miscStore = useMiscStore()
@@ -21,7 +20,11 @@ export function useEditorBindings() {
             return getTheme()
         }),
         loadTaskIcon: pluginsStore.loadIcon,
-        configureLanguage: (editor: monacoEditor.ICodeEditor | undefined, language: string, schemaType?: string) =>
-            configureLanguageFn(flowStore, pluginsStore, t, editor, language, schemaType, router),
+        // Imported here rather than at module scope: forty-odd components use
+        // these bindings, and statically this put Monaco on all of their graphs.
+        configureLanguage: async (editor: monacoEditor.ICodeEditor | undefined, language: string, schemaType?: string) => {
+            const {default: configureLanguageFn} = await import("./monaco/languages/languagesConfigurator")
+            return configureLanguageFn(flowStore, pluginsStore, t, editor, language, schemaType, router)
+        },
     })
 }

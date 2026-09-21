@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.time.Instant;
 import java.util.List;
 
+import io.kestra.core.annotations.RequiresExecutor;
 import io.kestra.core.models.FetchVersion;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.QueryFilter.Field;
@@ -25,6 +26,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Requires(property = "kestra.kv.purge-expired.enabled", value = "true", defaultValue = "true")
+@RequiresExecutor
 @Singleton
 public class KVPurgeCleaner {
 

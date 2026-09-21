@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
@@ -22,7 +21,8 @@ import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.repositories.TriggerRepositoryInterface;
 import io.kestra.core.scheduler.events.CreateBackfillTrigger;
 import io.kestra.core.scheduler.model.TriggerState;
-import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.serializers.Jackson3ListOrMapOfLabelDeserializer;
+import io.kestra.core.serializers.Jackson3ListOrMapOfLabelSerializer;
 import io.kestra.core.serializers.ListOrMapOfLabelDeserializer;
 import io.kestra.core.serializers.ListOrMapOfLabelSerializer;
 import io.kestra.core.tenant.TenantService;
@@ -68,11 +68,11 @@ import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Flux;
+import tools.jackson.databind.ObjectMapper;
 
 @Controller("/api/v1/{tenant}/triggers")
 @Slf4j
 public class TriggerController {
-
     @Inject
     private TriggerRepositoryInterface triggerRepository;
 
@@ -223,8 +223,9 @@ public class TriggerController {
     @Operation(tags = { "Triggers" }, summary = "Create a backfill")
     @ApiResponse(responseCode = "200", description = "On success", content = { @Content(schema = @Schema(implementation = ApiTriggerState.class)) })
     @ApiResponse(responseCode = "409", description = "If the backfill cannot be created")
+    @ApiResponse(responseCode = "422", description = "If the backfill end date is not after its start date")
     public HttpResponse<ApiTriggerState> createBackfill(
-        @Parameter(description = "The trigger that need the backfill to be created") @Body ApiCreateBackfillRequest request) {
+        @Parameter(description = "The trigger that need the backfill to be created") @Body @Valid ApiCreateBackfillRequest request) {
         TriggerId triggerId = TriggerId.of(tenantService.resolveTenant(), request.namespace(), request.flowId(), request.triggerId());
         CreateBackfillTrigger.Backfill backfill = new CreateBackfillTrigger.Backfill(
             request.backfill().start(), request.backfill().end(), request.backfill().inputs(), request.backfill().labels()
@@ -405,7 +406,9 @@ public class TriggerController {
         @Parameter(description = "Filters. PHP-style nested query is used - examples: `filters[flowId][EQUALS]=hello-world`, `filters[namespace][CONTAINS]=test`", in = ParameterIn.QUERY)
         @QueryFilterFormat(Resource.TRIGGER) List<QueryFilter> filters,
         @Parameter(description = "The disabled state") @QueryValue(defaultValue = "true") Boolean disabled,
-        @Parameter(description = "When true, missed schedules are recovered on enable according to the trigger's recoverMissedSchedules configuration; omitted or false, missed schedules are skipped") @QueryValue @Nullable Boolean recoverMissedSchedules) {
+        @Parameter(
+            description = "When true, missed schedules are recovered on enable according to the trigger's recoverMissedSchedules configuration; omitted or false, missed schedules are skipped"
+        ) @QueryValue @Nullable Boolean recoverMissedSchedules) {
         return HttpResponse.accepted().body(
             triggerStateService.toggleAllMatching(tenantService.resolveTenant(), QueryFilterUtils.rewriteTriggerDateFilters(filters, null), disabled, recoverMissedSchedules)
         );
@@ -424,7 +427,9 @@ public class TriggerController {
         return HttpResponse.ok(
             CSVUtils.toCSVFlux(
                 triggerRepository.find(this.tenantService.resolveTenant(), QueryFilterUtils.rewriteTriggerDateFilters(filters, null))
-                    .map(log -> objectMapper.convertValue(log, JacksonMapper.MAP_TYPE_REFERENCE))
+                    .map(this::toApiTriggerAndState)
+                    .filter(java.util.Objects::nonNull),
+                objectMapper
             )
         )
             .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=triggers.csv");
@@ -463,7 +468,9 @@ public class TriggerController {
     public record SetDisabledRequest(
         @NotNull @NotEmpty List<ApiTriggerId> triggers,
         @NotNull Boolean disabled,
-        @Parameter(description = "When true, missed schedules are recovered on enable according to the trigger's recoverMissedSchedules configuration; omitted or false, missed schedules are skipped")
+        @Parameter(
+            description = "When true, missed schedules are recovered on enable according to the trigger's recoverMissedSchedules configuration; omitted or false, missed schedules are skipped"
+        )
         @Nullable Boolean recoverMissedSchedules) {
 
         public SetDisabledRequest(List<ApiTriggerId> triggers, Boolean disabled) {
@@ -475,14 +482,16 @@ public class TriggerController {
         @Parameter(description = "The namespace.") String namespace,
         @Parameter(description = "The ID of the flow.") String flowId,
         @Parameter(description = "The ID of the trigger.") String triggerId,
-        @Parameter(description = "The backfill configuration") Backfill backfill) {
+        @Parameter(description = "The backfill configuration") @NotNull Backfill backfill) {
 
         public record Backfill(
             ZonedDateTime start,
             ZonedDateTime end,
             Map<String, Object> inputs,
             @JsonSerialize(using = ListOrMapOfLabelSerializer.class)
-            @JsonDeserialize(using = ListOrMapOfLabelDeserializer.class) List<@NoSystemLabelValidation Label> labels) {
+            @JsonDeserialize(using = ListOrMapOfLabelDeserializer.class)
+            @tools.jackson.databind.annotation.JsonSerialize(using = Jackson3ListOrMapOfLabelSerializer.class)
+            @tools.jackson.databind.annotation.JsonDeserialize(using = Jackson3ListOrMapOfLabelDeserializer.class) List<@NoSystemLabelValidation Label> labels) {
         }
     }
 
@@ -491,7 +500,9 @@ public class TriggerController {
         @Parameter(description = "The ID of the flow.") String flowId,
         @Parameter(description = "The ID of the trigger.") String triggerId,
         @Parameter(description = "Specifies whether trigger should be disabled") boolean disabled,
-        @Parameter(description = "When true, missed schedules are recovered on enable according to the trigger's recoverMissedSchedules configuration; omitted or false, missed schedules are skipped")
+        @Parameter(
+            description = "When true, missed schedules are recovered on enable according to the trigger's recoverMissedSchedules configuration; omitted or false, missed schedules are skipped"
+        )
         @Nullable Boolean recoverMissedSchedules) {
 
         public ApiDisableTriggerRequest(String namespace, String flowId, String triggerId, boolean disabled) {

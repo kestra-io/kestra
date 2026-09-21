@@ -9,7 +9,8 @@
             :id="uid"
             :placeholder
             :disabled
-            :type="disabled ? '' : 'textarea'"
+            :readonly="readonly"
+            :type="(disabled || readonly) ? '' : 'textarea'"
             :autosize="{minRows: 1}"
             :inputStyle="{...(haveError ? {boxShadow: '0 0 6px #ab0009'} : {}), ...inputStyle}"
             :suffixIcon="SuffixIcon"
@@ -22,7 +23,7 @@
     import Lock from "vue-material-design-icons/Lock.vue"
 
     const SuffixIcon = computed(() => {
-        if (props.disabled) {
+        if (props.disabled || props.readonly) {
             return Lock
         }
 
@@ -41,6 +42,7 @@
         placeholder: {type: String, default: ""},
         required: {type: Boolean, default: false},
         disabled: {type: Boolean, default: false},
+        readonly: {type: Boolean, default: false},
         margin: {type: String, default: "mt-1 mb-2"},
         class: {type: String, default: undefined},
         haveError: {type: Boolean, default: false},

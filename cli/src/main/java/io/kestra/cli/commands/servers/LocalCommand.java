@@ -28,18 +28,22 @@ public class LocalCommand extends StandAloneCommand {
         //noinspection ResultOfMethodCallIgnored
         data.toFile().mkdirs();
 
-        return ImmutableMap.of(
-            "kestra.server-type", ServerType.STANDALONE,
-            "kestra.repository.type", "h2",
-            "kestra.queue.type", "h2",
-            "kestra.storage.type", "local",
-            "kestra.storage.local.base-path", data.toString(),
-            "datasources.h2.url", "jdbc:h2:file:" + data.resolve("database") + ";TIME ZONE=UTC;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;LOCK_TIMEOUT=30000",
-            "datasources.h2.username", "sa",
-            "datasources.h2.password", "",
-            "datasources.h2.driverClassName", "org.h2.Driver",
-            "endpoints.all.port", "${random.port}"
-        );
+        return ImmutableMap.<String, Object> builder()
+            .put("kestra.server-type", ServerType.STANDALONE)
+            .put("kestra.repository.type", "h2")
+            .put("kestra.queue.type", "h2")
+            .put("kestra.storage.type", "local")
+            .put("kestra.storage.local.base-path", data.toString())
+            // Plugin auto-install is deliberately NOT forced here: these properties outrank both
+            // the config file and system properties, so setting it would make the feature
+            // impossible to turn off on this persona. The computed default (OSS + local storage,
+            // which the two entries above establish) already turns it on.
+            .put("datasources.h2.url", "jdbc:h2:file:" + data.resolve("database") + ";TIME ZONE=UTC;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;LOCK_TIMEOUT=30000")
+            .put("datasources.h2.username", "sa")
+            .put("datasources.h2.password", "")
+            .put("datasources.h2.driverClassName", "org.h2.Driver")
+            .put("endpoints.all.port", "${random.port}")
+            .build();
     }
 
 }

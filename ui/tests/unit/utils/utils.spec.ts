@@ -1,8 +1,8 @@
-import {beforeEach, describe, expect, it, vi} from "vitest"
-import {getTheme, getSelectedTheme, switchTheme, type SelectedTheme, flatten, executionVars} from "../../../src/utils/utils"
+import {afterAll, afterEach, beforeEach, describe, expect, it, vi} from "vitest"
+import {getTheme, getSelectedTheme, switchTheme, type SelectedTheme, flatten, executionVars, getDateGrouping, downloadUrl} from "../../../src/utils/utils"
 
 function mockSystemPrefersDark(prefersDark: boolean) {
-    window.matchMedia = vi.fn().mockImplementation((query: string) => ({
+    vi.stubGlobal("matchMedia", vi.fn().mockImplementation((query: string) => ({
         matches: prefersDark,
         media: query,
         onchange: null,
@@ -11,14 +11,35 @@ function mockSystemPrefersDark(prefersDark: boolean) {
         addListener: () => {},
         removeListener: () => {},
         dispatchEvent: () => false,
-    })) as any
+    })))
 }
+
+describe("downloadUrl()", () => {
+    afterEach(() => vi.restoreAllMocks())
+
+    // https://github.com/kestra-io/kestra/issues/17322
+    it("does not set a target attribute", () => {
+        const createElementSpy = vi.spyOn(document, "createElement")
+
+        downloadUrl("blob:http://localhost/fake", "flow.yaml")
+
+        const link = createElementSpy.mock.results[0]?.value as HTMLAnchorElement
+        expect(link.getAttribute("download")).toBe("flow.yaml")
+        expect(link.getAttribute("target")).toBeNull()
+    })
+})
 
 describe("theme utils", () => {
     beforeEach(() => {
         localStorage.clear()
         document.documentElement.className = ""
         mockSystemPrefersDark(false)
+    })
+
+    afterAll(() => {
+        localStorage.clear()
+        document.documentElement.className = ""
+        vi.unstubAllGlobals()
     })
 
     describe("getTheme()", () => {
@@ -91,9 +112,58 @@ describe("flatten()", () => {
             .toEqual({"values.greeting": "hello", "values.count": "42", uri: "kestra:///x"})
     })
 
+    // An empty output used to vanish from the Outputs view: recursion found no leaves and
+    // contributed nothing, so the user could not tell an empty value from a missing one.
+    it("keeps an empty object as its own value instead of dropping the key", () => {
+        expect(flatten({data: "Code finished", outputFiles: {}}))
+            .toEqual({data: "Code finished", outputFiles: {}})
+    })
+
+    it("keeps an empty array as its own value instead of dropping the key", () => {
+        expect(flatten({data: "x", outputFiles: []})).toEqual({data: "x", outputFiles: []})
+    })
+
+    it("keeps a nested empty object at its dotted path", () => {
+        expect(flatten({a: {b: {}}})).toEqual({"a.b": {}})
+    })
+
+    it("still flattens a top-level empty object to an empty result", () => {
+        expect(flatten({})).toEqual({})
+    })
+
     it("flattens arrays with index keys and keeps nulls", () => {
         expect(flatten({list: ["a", "b"], empty: null}))
             .toEqual({"list.0": "a", "list.1": "b", empty: null})
+    })
+})
+
+describe("getDateGrouping()", () => {
+    it("returns a date-only day grouping when no dates and no time range are provided", () => {
+        expect(getDateGrouping(undefined, undefined, undefined)).toEqual({format: "YYYY-MM-DD", unit: "day"})
+    })
+
+    it("returns a month grouping for ranges over a year", () => {
+        expect(getDateGrouping(undefined, undefined, "P400D")).toEqual({format: "YYYY-MM", unit: "month"})
+    })
+
+    it("returns a week grouping for ranges over 180 days", () => {
+        expect(getDateGrouping(undefined, undefined, "P200D")).toEqual({format: "YYYY-[W]ww", unit: "week"})
+    })
+
+    it("returns a day grouping for ranges over a day", () => {
+        expect(getDateGrouping(undefined, undefined, "P7D")).toEqual({format: "YYYY-MM-DD", unit: "day"})
+    })
+
+    it("returns an hour grouping, date and hour separated with a space, for ranges over an hour", () => {
+        expect(getDateGrouping(undefined, undefined, "PT24H")).toEqual({format: "YYYY-MM-DD HH:00", unit: "hour"})
+    })
+
+    it("returns a minute grouping, date and time separated with a space, for ranges up to an hour", () => {
+        expect(getDateGrouping(undefined, undefined, "PT30M")).toEqual({format: "YYYY-MM-DD HH:mm", unit: "minute"})
+    })
+
+    it("derives the duration from start and end dates when no time range is provided", () => {
+        expect(getDateGrouping("2026-08-17T00:00:00Z", "2026-08-17T12:00:00Z", undefined)).toEqual({format: "YYYY-MM-DD HH:00", unit: "hour"})
     })
 })
 

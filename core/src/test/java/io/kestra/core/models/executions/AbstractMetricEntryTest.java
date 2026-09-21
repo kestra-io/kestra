@@ -1,6 +1,7 @@
 package io.kestra.core.models.executions;
 
 import java.time.Duration;
+import java.time.Instant;
 
 import org.junit.jupiter.api.Test;
 
@@ -51,5 +52,21 @@ class AbstractMetricEntryTest {
         assertThat(deserialized.getType()).isEqualTo("gauge");
         assertThat(deserialized.getName()).isEqualTo("my.gauge");
         assertThat(((Gauge) deserialized).getValue()).isEqualTo(99.5D);
+    }
+
+    @Test
+    void shouldSetTimestampWhenCounterOfGivenTimestamp() {
+        Instant timestamp = Instant.parse("2024-06-18T00:00:00Z");
+        Counter counter = Counter.of("my.counter", "A counter", 42D, timestamp);
+
+        assertThat(counter.getTimestamp()).isEqualTo(timestamp);
+    }
+
+    @Test
+    void shouldSetTimestampWhenGaugeOfGivenTimestamp() {
+        Instant timestamp = Instant.parse("2024-06-18T00:00:00Z");
+        Gauge gauge = Gauge.of("my.gauge", "A gauge", 99.5D, timestamp);
+
+        assertThat(gauge.getTimestamp()).isEqualTo(timestamp);
     }
 }

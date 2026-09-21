@@ -59,7 +59,10 @@ services:
           url: http://localhost:8080/
     ports:
       - "8080:8080"
-      - "8081:8081"
+      # The following is the management port, not exposed by default.
+      # Note that exposing the management port is intended for development purpose as this port is un-authenticated by default
+      # and expose sensitive information and actions.
+      # - "8081:8081"
     depends_on:
       postgres:
         condition: service_started

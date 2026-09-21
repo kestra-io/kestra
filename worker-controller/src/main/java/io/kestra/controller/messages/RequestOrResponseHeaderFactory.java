@@ -4,6 +4,7 @@ import java.util.UUID;
 
 import io.kestra.controller.grpc.RequestOrResponseHeader;
 import io.kestra.core.contexts.KestraContext;
+import io.kestra.core.utils.EditionProvider;
 import io.kestra.core.worker.models.WorkerContext;
 
 /**
@@ -37,6 +38,20 @@ public class RequestOrResponseHeaderFactory {
             .setClientVersion(KestraContext.getContext().getVersion())
             .setMessageFormat(MessageFormats.JSON.name())
             .setCorrelationId(UUID.randomUUID().toString())
+            .setEdition(toProtoEdition(KestraContext.getContext().getEdition()))
             .build();
+    }
+
+    /**
+     * Maps the core {@link EditionProvider.Edition} to its proto counterpart, falling back to
+     * {@link RequestOrResponseHeader.Edition#EDITION_UNSPECIFIED} when {@code edition} is {@code null} (e.g. a test double
+     * standing in for {@link KestraContext} that only stubs the methods it exercises).
+     */
+    private static RequestOrResponseHeader.Edition toProtoEdition(EditionProvider.Edition edition) {
+        return switch (edition) {
+            case OSS -> RequestOrResponseHeader.Edition.EDITION_OSS;
+            case EE -> RequestOrResponseHeader.Edition.EDITION_EE;
+            case null -> RequestOrResponseHeader.Edition.EDITION_UNSPECIFIED;
+        };
     }
 }

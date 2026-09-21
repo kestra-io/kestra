@@ -5,7 +5,6 @@ import java.util.Optional;
 import io.kestra.core.docs.JsonSchemaGenerator;
 import io.kestra.core.models.ServerType;
 import io.kestra.core.models.tasks.runners.TaskLogLineMatcher;
-import io.kestra.core.services.VariablesService;
 import io.kestra.core.trace.TracerFactory;
 import io.kestra.core.utils.UriProvider;
 
@@ -45,13 +44,6 @@ public class Services {
      */
     public TaskLogLineMatcher taskLogLineMatcher() {
         return applicationContext.getBean(TaskLogLineMatcher.class);
-    }
-
-    /**
-     * Provides access to the {@link VariablesService} bean.
-     */
-    public VariablesService variablesService() {
-        return applicationContext.getBean(VariablesService.class);
     }
 
     /**

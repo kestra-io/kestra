@@ -10,13 +10,14 @@
         </template>
         <template v-else-if="tablePreview && target">
             <KsDataTable
+                ref="dataTable"
                 :data="rows"
                 :total="total"
                 :loading="loading"
                 :currentPage="page"
                 :pageSize="size"
                 :loadData="loadData"
-                :rowKey="(row: any) => `${row.namespace}-${row.id}`"
+                :rowKey="(row: Record<string, unknown>) => `${row.namespace}-${row.id}`"
                 @page-changed="onPageChanged"
                 @row-dblclick="onRowDblClick"
             >
@@ -27,10 +28,10 @@
                     :label="column.label"
                 >
                     <template #default="{row}">
-                        <KsExecutionStatus v-if="column.type === 'status'" :status="get(row, column.prop)" size="small" />
-                        <KsDateAgo v-else-if="column.type === 'date'" :inverted="true" :date="get(row, column.prop)" />
-                        <Labels v-else-if="column.type === 'labels'" :labels="get(row, column.prop)" />
-                        <template v-else>{{ get(row, column.prop) }}</template>
+                        <KsExecutionStatus v-if="column.type === 'status'" :status="getPath<string>(row, column.prop)!" size="small" />
+                        <KsDateAgo v-else-if="column.type === 'date'" :inverted="true" :date="getPath(row, column.prop)" />
+                        <Labels v-else-if="column.type === 'labels'" :labels="getPath(row, column.prop)" />
+                        <template v-else>{{ getPath(row, column.prop) }}</template>
                     </template>
                 </KsTableColumn>
             </KsDataTable>
@@ -45,15 +46,17 @@
 </template>
 
 <script lang="ts" setup>
-    import {computed, ref} from "vue"
+    import {computed, defineAsyncComponent, ref, watch} from "vue"
     import {useRoute, useRouter} from "vue-router"
-    import get from "lodash/get"
-    import {KsExecutionStatus} from "@kestra-io/design-system"
+    import {KsExecutionStatus, getPath} from "@kestra-io/design-system"
     import Labels from "../layout/Labels.vue"
-    import LogsWrapper from "../logs/LogsWrapper.vue"
     import {useDrillDownStore} from "../../stores/drillDown"
     import {getDrillDownPreview} from "./composables/drillDownPreview"
     import {buildFullQuery} from "./composables/chartDrillDown"
+
+    // Only rendered for the logs preview mode, and it reaches the dashboard chart
+    // stack: a static import would put it in the chunk App.vue loads on every page.
+    const LogsWrapper = defineAsyncComponent(() => import("../logs/LogsWrapper.vue"))
 
     const route = useRoute()
     const router = useRouter()
@@ -66,24 +69,31 @@
         return currentPreview?.mode === "table" ? currentPreview : undefined
     })
 
-    const rows = ref<any[]>([])
+    const dataTable = ref<{resetAndReload: () => void} | null>(null)
+    const rows = ref<Record<string, unknown>[]>([])
     const total = ref(0)
     const loading = ref(false)
     const page = ref(1)
     const size = ref(25)
+
+    // Clicking through segments leaves fetches in flight whose responses can land out of order.
+    let sequence = 0
 
     const loadData = async ({page: loadPage, size: loadSize}: {page: number; size: number}) => {
         const currentTarget = target.value
         const currentPreview = preview.value
         if (!currentTarget || currentPreview?.mode !== "table") return
 
+        const current = ++sequence
         loading.value = true
         try {
             const response = await currentPreview.fetch(buildFullQuery(currentTarget, {page: loadPage, size: loadSize}))
+            if (current !== sequence) return
+
             rows.value = response.results
             total.value = response.total
         } finally {
-            loading.value = false
+            if (current === sequence) loading.value = false
         }
     }
 
@@ -92,7 +102,11 @@
         size.value = newSize
     }
 
-    const onRowDblClick = (row: any) => {
+    watch(target, (value) => {
+        if (value) dataTable.value?.resetAndReload()
+    })
+
+    const onRowDblClick = (row: Record<string, unknown>) => {
         const currentPreview = preview.value
         if (currentPreview?.mode !== "table") return
 

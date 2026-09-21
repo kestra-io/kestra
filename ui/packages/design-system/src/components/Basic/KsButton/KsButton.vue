@@ -41,6 +41,10 @@
     </ElButton>
 </template>
 
+<script lang="ts">
+    export type KsButtonType = "default" | "primary" | "success" | "warning" | "info" | "danger" | "text" | ""
+</script>
+
 <script setup lang="ts">
     import type {Component} from "vue"
 
@@ -52,7 +56,7 @@
     defineOptions({inheritAttrs: false})
 
     const props = defineProps<{
-        type?: "default" | "primary" | "success" | "warning" | "info" | "danger" | "text" | ""
+        type?: KsButtonType
         size?: "small" | "default" | "large" | ""
         disabled?: boolean
         icon?: string | object
@@ -143,6 +147,8 @@
         &.is-square {
             .material-design-icon > .material-design-icon__svg {
                 bottom: 0;
+                left: 50%;
+                transform: translateX(-50%);
             }
         }
 

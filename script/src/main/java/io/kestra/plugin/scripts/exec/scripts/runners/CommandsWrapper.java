@@ -2,6 +2,7 @@ package io.kestra.plugin.scripts.exec.scripts.runners;
 
 import java.io.IOException;
 import java.net.URI;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.*;
@@ -16,6 +17,9 @@ import io.kestra.core.models.tasks.runners.*;
 import io.kestra.core.models.tasks.runners.DefaultLogConsumer;
 import io.kestra.core.runners.FilesService;
 import io.kestra.core.runners.RunContext;
+import io.kestra.core.runners.RunVariables;
+import io.kestra.core.runners.WorkingDir;
+import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.NamespaceFilesUtils;
 import io.kestra.plugin.core.runner.Process;
@@ -32,6 +36,15 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 @AllArgsConstructor
 @Getter
 public class CommandsWrapper implements TaskCommands {
+    private static final Set<String> EXECUTION_CONTEXT_EXCLUDED_VARIABLES = Set.of(
+        // already handed to the script as environment variables
+        "envs",
+        "globals",
+        // internal plumbing, not execution metadata
+        RunVariables.SECRET_CONSUMER_VARIABLE_NAME,
+        RunVariables.FIXTURE_FILES_KEY
+    );
+
     private RunContext runContext;
 
     private Path workingDirectory;
@@ -95,6 +108,12 @@ public class CommandsWrapper implements TaskCommands {
     @With
     private TargetOS targetOS;
 
+    @With
+    private KotlpOptions kotlp;
+
+    @With
+    private boolean executionContext;
+
     public CommandsWrapper(RunContext runContext) {
         this.runContext = runContext;
         this.workingDirectory = runContext.workingDir().path();
@@ -126,7 +145,9 @@ public class CommandsWrapper implements TaskCommands {
             outputFiles,
             enableOutputDirectory,
             timeout,
-            targetOS
+            targetOS,
+            kotlp,
+            executionContext
         );
     }
 
@@ -146,6 +167,23 @@ public class CommandsWrapper implements TaskCommands {
         this.env.putAll(envs);
 
         return this;
+    }
+
+    /**
+     * Writes the execution context as JSON into the working directory, so a script can read its
+     * metadata as data instead of interpolating Pebble expressions into its own source.
+     *
+     * `envs` and `globals` are left out: both are already exposed to the script as environment
+     * variables, so writing them again would only widen what ends up on disk.
+     */
+    private void writeExecutionContextFile() throws IOException {
+        Map<String, Object> variables = new TreeMap<>(runContext.getVariables());
+        EXECUTION_CONTEXT_EXCLUDED_VARIABLES.forEach(variables::remove);
+
+        Files.write(
+            this.workingDirectory.resolve(WorkingDir.EXECUTION_CONTEXT_FILE_NAME),
+            JacksonMapper.ofJson().writeValueAsBytes(variables)
+        );
     }
 
     public <T extends TaskRunnerDetailResult> ScriptOutput run() throws Exception {
@@ -174,6 +212,14 @@ public class CommandsWrapper implements TaskCommands {
             FilesService.inputFiles(runContext, runnerVars, this.inputFiles);
         }
 
+        if (this.executionContext) {
+            this.writeExecutionContextFile();
+        }
+
+        if (this.isKotlpEnabled()) {
+            KotlpUtils.copyTo(this.workingDirectory.resolve(kotlpBinaryName()));
+        }
+
         RunContext taskRunnerRunContext = runContext.cloneForPlugin(taskRunner);
 
         List<String> renderedCommands = this.renderCommands(runContext, commands);
@@ -196,6 +242,31 @@ public class CommandsWrapper implements TaskCommands {
                 renderedCommands,
                 Optional.ofNullable(targetOS).orElse(TargetOS.AUTO)
             );
+
+        if (this.isKotlpEnabled()) {
+            if (this.kotlp.logFlushInterval() != null && this.kotlp.logDir() == null) {
+                throw new IllegalArgumentException("The kotlp 'logFlushInterval' option requires 'logDir' to be set.");
+            }
+
+            String workingDir = String.valueOf(runnerVars.getOrDefault(ScriptService.VAR_WORKING_DIR, this.workingDirectory));
+            List<String> wrapped = new ArrayList<>(finalCommands.size() + 7);
+            if (!this.isWindowsTarget()) {
+                // The kotlp APE binary cannot be exec'd directly without kernel binfmt support; its header is a valid shell script that bootstraps it.
+                wrapped.add("/bin/sh");
+            }
+            wrapped.add(workingDir + "/" + kotlpBinaryName());
+            if (this.kotlp.logDir() != null) {
+                wrapped.add("--log-dir");
+                wrapped.add(this.kotlp.logDir());
+                if (this.kotlp.logFlushInterval() != null) {
+                    wrapped.add("--log-flush-interval");
+                    wrapped.add(String.valueOf(this.kotlp.logFlushInterval().toSeconds()));
+                }
+            }
+            wrapped.add("--");
+            wrapped.addAll(finalCommands);
+            finalCommands = wrapped;
+        }
 
         this.commands = Property.ofValue(finalCommands);
 
@@ -224,6 +295,25 @@ public class CommandsWrapper implements TaskCommands {
                 .outputFiles(getOutputFiles(taskRunnerRunContext))
                 .build();
             throw new RunnableTaskException(e, output);
+        } finally {
+            if (this.executionContext) {
+                this.deleteExecutionContextFile();
+            }
+        }
+    }
+
+    /**
+     * Removes the execution context file once the commands are done.
+     * <p>
+     * Inside a {@code WorkingDirectory} the working directory is shared between child tasks, so a
+     * leftover file would be picked up by a later task that never set `executionContext` — handing it
+     * the previous task's metadata instead of its own.
+     */
+    private void deleteExecutionContextFile() {
+        try {
+            Files.deleteIfExists(this.workingDirectory.resolve(WorkingDir.EXECUTION_CONTEXT_FILE_NAME));
+        } catch (IOException e) {
+            runContext.logger().debug("Unable to delete the execution context file", e);
         }
     }
 
@@ -311,16 +401,26 @@ public class CommandsWrapper implements TaskCommands {
     }
 
     protected List<String> getExitOnErrorCommands() {
-        TargetOS os = this.getTargetOS();
-
-        // If targetOS is Windows OR targetOS is AUTO && current system is windows and we use process as a runner.(TLDR will run on windows)
-        if (
-            os == TargetOS.WINDOWS ||
-                (os == TargetOS.AUTO && SystemUtils.IS_OS_WINDOWS && this.getTaskRunner() instanceof Process)
-        ) {
+        if (this.isWindowsTarget()) {
             return List.of("");
         }
         // errexit option may be unsupported by non-shell interpreter.
         return List.of("set -e");
+    }
+
+    // If targetOS is Windows OR targetOS is AUTO && current system is windows and we use process as a runner.(TLDR will run on windows)
+    private boolean isWindowsTarget() {
+        TargetOS os = this.getTargetOS();
+        return os == TargetOS.WINDOWS ||
+            (os == TargetOS.AUTO && SystemUtils.IS_OS_WINDOWS && this.getTaskRunner() instanceof Process);
+    }
+
+    private boolean isKotlpEnabled() {
+        return this.kotlp != null && this.kotlp.isEnabled();
+    }
+
+    // kotlp is a single portable binary; Windows only needs it renamed with an '.exe' extension.
+    private String kotlpBinaryName() {
+        return this.isWindowsTarget() ? KotlpUtils.WINDOWS_BINARY_NAME : KotlpUtils.BINARY_NAME;
     }
 }

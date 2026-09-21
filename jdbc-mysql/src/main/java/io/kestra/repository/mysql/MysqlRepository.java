@@ -32,6 +32,7 @@ import jakarta.inject.Inject;
 
 @SuppressWarnings("this-escape")
 @Requires(condition = MysqlRepository.MysqlCondition.class)
+@Requires(property = "kestra.server-type", notEquals = "WORKER")
 @EachBean(JdbcTableConfig.class)
 public class MysqlRepository<T> extends AbstractJdbcRepository<T> {
 

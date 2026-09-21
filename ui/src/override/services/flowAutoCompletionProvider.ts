@@ -1,7 +1,7 @@
 import {ComputedRef} from "vue"
 import type {JSONSchema} from "../../components/plugins/schema/utils/schemaUtils"
-import {YamlElement} from "@kestra-io/topology"
-import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
+import type {YamlElement} from "@kestra-io/topology/flow-yaml-utils"
+import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
 import {QUOTE, YamlAutoCompletion, functionToSnippet, type RootCompletionContext} from "../../services/autoCompletionProvider"
 import RegexProvider from "../../utils/regex"
 import {State} from "@kestra-io/design-system"
@@ -11,9 +11,20 @@ import {useMcpStore} from "../../stores/mcp"
 import {useDashboardStore} from "../../stores/dashboard"
 import {isExportableChart} from "../../components/dashboard/composables/useDashboards"
 import {useNamespacesStore} from "override/stores/namespaces"
+import {isMap, type YAMLMap} from "yaml"
 
 function distinct<T>(val: T[] | undefined): T[] {
     return Array.from(new Set(val ?? []))
+}
+
+interface ParsedFlow {
+    id?: string;
+    namespace?: string;
+    inputs?: {id?: string; type?: string; inputs?: {id?: string}[]}[];
+    tasks?: {id?: string}[];
+    variables?: Record<string, unknown>;
+    labels?: Record<string, unknown>;
+    triggers?: {type: string}[];
 }
 
 // Pebble functions only valid inside a flow-root input's `values`/`expression` (rendered on the
@@ -62,6 +73,7 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
             "globals",
             "parent",
             "parents",
+            "item",
             "error",
             "kestra",
         ]
@@ -89,8 +101,8 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
             }
 
             const parents = localized.parents ?? []
-            const root: any = parents[0]
-            const inputDefinition: any = parents[parents.length - 1]
+            const root = parents[0] as {inputs?: {id?: string}[]} | undefined
+            const inputDefinition = parents[parents.length - 1] as {id?: string} | undefined
             const rootInputs = root?.inputs
             if (!Array.isArray(rootInputs)) {
                 return false
@@ -104,15 +116,15 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
         }
     }
 
-    private tasks(source: string): any[] {
+    private tasks(source: string): YAMLMap[] {
         const tasksFromTasksProp = YAML_UTILS.extractFieldFromMaps(source, "tasks")
-            .flatMap(allTasks => allTasks.tasks)
+            .flatMap(allTasks => allTasks.tasks ?? [])
         const tasksFromTaskProp = YAML_UTILS.extractFieldFromMaps(source, "task")
             .map(task => task.task)
             .flatMap(task => YAML_UTILS.pairsToMap(task) ?? [])
 
         return [...tasksFromTasksProp, ...tasksFromTaskProp]
-            .filter(task => typeof task?.get === "function" && task?.get("id"))
+            .filter((task): task is YAMLMap => isMap(task) && Boolean(task.get("id")))
     }
 
     private cursorProbeIndexes(source: string, cursorIndex: number): number[] {
@@ -129,7 +141,7 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
         return probeIndexes
     }
 
-    private taskIdFromCandidates(candidates: any[]): string | undefined {
+    private taskIdFromCandidates(candidates: (Record<string, unknown> | undefined)[]): string | undefined {
         for (let i = candidates.length - 1; i >= 0; i--) {
             const candidate = candidates[i]
             if (
@@ -171,15 +183,17 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
     private async outputsFor(taskId: string, source: string): Promise<string[]> {
         const taskType = this.tasks(this.completionSource?.value ?? source).filter(task => task.get("id") === taskId)
             .map(task => task.get("type"))
-            ?.[0]
+            ?.[0] as string | undefined
 
         if (!taskType) {
             return []
         }
 
+        // the flow may reference a catalog type that isn't installed yet — its doc 404s
         const pluginDoc = await this.pluginsStore.load({cls: taskType, commit: false})
+            .catch(() => undefined)
 
-        return Object.keys((pluginDoc?.schema as any)?.outputs?.properties ?? {})
+        return Object.keys(pluginDoc?.schema?.outputs?.properties ?? {})
     }
 
     private async triggerVars(flowAsJs?: {triggers?: {type: string}[]}): Promise<string[]> {
@@ -193,23 +207,23 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
                     const triggerDoc: {schema: JSONSchema} | undefined = await this.pluginsStore.load({
                         cls: triggerType,
                         commit: false,
-                    }) as any
+                    }).catch(() => undefined)
                     return Object.keys(triggerDoc?.schema?.outputs?.properties ?? {})
                 }),
         )
         return distinct(fetchTriggerVarsByType.flat())
     }
 
-    async nestedFieldAutoCompletion(source: string, parsed: any | undefined, parentField: string, cursorIndex?: number): Promise<string[]> {
+    async nestedFieldAutoCompletion(source: string, parsed: ParsedFlow | undefined, parentField: string, cursorIndex?: number): Promise<string[]> {
         switch (parentField) {
             case "inputs":
-                return Promise.resolve(parsed?.inputs?.map((input: {id?: string}) => input.id) ?? [])
+                return Promise.resolve(parsed?.inputs?.map(input => input.id).filter((id): id is string => id !== undefined) ?? [])
             case "outputs": {
                 const currentTaskId = this.currentTaskIdAtCursor(source, cursorIndex)
                 return Promise.resolve(
                     parsed?.tasks
-                        ?.map((task: {id?: string}) => task.id)
-                        .filter((taskId: string | undefined) => taskId && taskId !== currentTaskId) ?? [],
+                        ?.map(task => task.id)
+                        .filter((taskId): taskId is string => !!taskId && taskId !== currentTaskId) ?? [],
                 )
             }
             case "labels":
@@ -226,6 +240,16 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
                 return Promise.resolve(["id", "type"])
             case "taskrun":
                 return Promise.resolve(["id", "startDate", "attemptsCount", "parentId", "value", "iteration"])
+            case "parent":
+                return Promise.resolve(["task", "taskrun"])
+            case "parent.task":
+                return Promise.resolve(["id"])
+            case "parent.taskrun":
+                return Promise.resolve(["value"])
+            case "item":
+                return Promise.resolve(["value", "key", "index", "parent", "parents"])
+            case "item.parent":
+                return Promise.resolve(["value", "key", "index"])
             case "error":
                 return Promise.resolve(["taskId", "message", "stackTrace"])
             case "kestra":
@@ -240,9 +264,9 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
                 const formMatch = parentField.match(/^inputs\.([^.]+)$/)
                 if (formMatch) {
                     const form = parsed?.inputs?.find(
-                        (input: {id?: string; type?: string}) => input.id === formMatch[1] && input.type === "FORM",
+                        input => input.id === formMatch[1] && input.type === "FORM",
                     )
-                    return Promise.resolve(form?.inputs?.map((child: {id?: string}) => child.id) ?? [])
+                    return Promise.resolve(form?.inputs?.map(child => child.id).filter((id): id is string => id !== undefined) ?? [])
                 }
 
                 return Promise.resolve([])
@@ -274,7 +298,7 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
             .map(input => `${input}:`)
     }
 
-    async valueAutoCompletion(_: string, parsed: any | undefined, yamlElement: YamlElement | undefined): Promise<string[]> {
+    async valueAutoCompletion(_: string, parsed: ParsedFlow | undefined, yamlElement: YamlElement | undefined): Promise<string[]> {
         if (yamlElement === undefined) {
             return Promise.resolve([])
         }
@@ -346,7 +370,7 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
         return captureValue?.[1]
     }
 
-    async functionAutoCompletion(parsed: any | undefined, functionName: string, args: Record<string, string>): Promise<string[]> {
+    async functionAutoCompletion(parsed: ParsedFlow | undefined, functionName: string, args: Record<string, string>): Promise<string[]> {
         let namespaceArg = args.namespace
         if (namespaceArg === undefined || namespaceArg === "flow.namespace") {
            namespaceArg = parsed?.namespace === undefined ? "" : QUOTE + parsed.namespace + QUOTE
@@ -357,7 +381,7 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
                 if (namespace === undefined) {
                     return Promise.resolve([])
                 }
-                return Array.from(new Set<string>((await (this.namespacesStore as any).usableSecrets(namespace)).map((secret: string) => QUOTE + secret + QUOTE)))
+                return Array.from(new Set<string>((await this.namespacesStore.usableSecrets(namespace)).map((secret: string) => QUOTE + secret + QUOTE)))
             }
             case "kv": {
                 const namespace = this.extractArgValue(namespaceArg)

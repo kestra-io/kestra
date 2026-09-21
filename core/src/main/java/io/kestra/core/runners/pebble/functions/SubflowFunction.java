@@ -8,14 +8,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.flows.Flow;
-import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.FlowWithException;
+import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.runners.FlowInputOutput;
 import io.kestra.core.runners.FlowMetaStoreInterface;
+import io.kestra.core.services.ExecutionOutputService;
 import io.kestra.core.services.ExecutionService;
 
 import io.micronaut.context.annotation.Requires;
@@ -43,7 +44,10 @@ import lombok.extern.slf4j.Slf4j;
  * <p>
  * <b>Recursion.</b> A subflow whose own inputs call {@code subflow()} is bounded by a per-thread depth
  * cap. Input resolution is synchronous and runs on the same thread, so the cap catches both direct
- * self-recursion and mutual recursion across flows without a dedicated self-call check.
+ * self-recursion and mutual recursion across flows without a dedicated self-call check. This cap is
+ * independent of {@code kestra.execution.depth.max-depth} ({@link io.kestra.core.runners.configuration.ExecutionDepthConfiguration}),
+ * which bounds the Subflow task and Flow trigger chains instead — a subflow executed here does not
+ * carry or check that depth.
  * <p>
  * <b>Bean wiring.</b> The function is only registered on server types that render execute forms
  * ({@code WEBSERVER}, {@code STANDALONE}); on other server types the bean is absent and the function
@@ -81,6 +85,9 @@ public class SubflowFunction implements KestraFunction {
 
     @Inject
     private Provider<ExecutionService> executionService;
+
+    @Inject
+    private Provider<ExecutionOutputService> executionOutputService;
 
     @Override
     public List<String> getArgumentNames() {
@@ -149,8 +156,10 @@ public class SubflowFunction implements KestraFunction {
             // ACL is scoped to the caller flow (callerNamespace/callerId), matching the Subflow task trust model:
             // if the caller flow may reference the target, so may subflow(). Note this is reachable at execute-form
             // render time, not only at execution time, so anyone able to open the form triggers this resolution.
-            FlowInterface targetFlow = flowMetaStore.get()
-                .findByIdFromTask(tenantId, namespace, id, revision, tenantId, callerNamespace, callerId)
+            // resolved for runtime so a governance rejection surfaces as a FlowWithException here, rather than
+            // becoming a created-then-failed execution
+            FlowWithSource targetFlow = flowMetaStore.get()
+                .findByIdFromTaskForRuntime(tenantId, namespace, id, revision, tenantId, callerNamespace, callerId)
                 .orElseThrow(
                     () -> new PebbleException(
                         null, "Unable to find flow '" + namespace + "'.'" + id + "'"
@@ -160,10 +169,18 @@ public class SubflowFunction implements KestraFunction {
                 );
 
             if (targetFlow instanceof FlowWithException fwe) {
-                throw new PebbleException(null, "Cannot run the invalid flow '" + namespace + "'.'" + id + "': " + fwe.getException(), lineNumber, self.getName());
+                // The flow could not be resolved for runtime, either because it is invalid or because governance
+                // blocks it. Which one it was is in the carried message, so state neither here.
+                throw new PebbleException(
+                    null, "Cannot execute flow '%s'.'%s': %s".formatted(namespace, id, fwe.getException()),
+                    lineNumber, self.getName()
+                );
             }
             if (targetFlow.isDisabled()) {
-                throw new PebbleException(null, "Cannot run the disabled flow '" + namespace + "'.'" + id + "'.", lineNumber, self.getName());
+                throw new PebbleException(
+                    null, "Cannot execute flow '%s'.'%s': it is disabled.".formatted(namespace, id),
+                    lineNumber, self.getName()
+                );
             }
 
             Execution execution;
@@ -180,7 +197,7 @@ public class SubflowFunction implements KestraFunction {
 
             Execution terminated;
             try {
-                terminated = executionService.get().runAndWait(execution, (Flow) targetFlow, timeout);
+                terminated = executionService.get().runAndWait(execution, targetFlow, timeout);
             } catch (Exception e) {
                 throw new PebbleException(e, "Failed to run subflow '" + namespace + "'.'" + id + "': " + e.getMessage(), lineNumber, self.getName());
             }
@@ -194,7 +211,11 @@ public class SubflowFunction implements KestraFunction {
                 );
             }
 
-            return Result.of(terminated);
+            try {
+                return Result.of(terminated, executionOutputService.get().getOutputs(terminated));
+            } catch (InternalException e) {
+                throw new PebbleException(e, "Failed to read the outputs of subflow '" + namespace + "'.'" + id + "': " + e.getMessage(), lineNumber, self.getName());
+            }
         } finally {
             int current = DEPTH.get() - 1;
             if (current <= 0) {
@@ -227,7 +248,7 @@ public class SubflowFunction implements KestraFunction {
             });
         }
         // tag the execution as run by the subflow() function (cf. the Subflow task's system.from label)
-        labels.add(new Label(Label.FROM, NAME));
+        labels.add(new Label(Label.FROM, Label.FromLabel.SUBFLOW.value));
         return labels;
     }
 
@@ -263,14 +284,14 @@ public class SubflowFunction implements KestraFunction {
      * @param labels the execution labels as a {@code key -> value} map
      */
     public record Result(String id, String state, Map<String, Object> outputs, Map<String, String> labels) {
-        static Result of(Execution execution) {
+        static Result of(Execution execution, Map<String, Object> outputs) {
             Map<String, String> labels = new HashMap<>();
             execution.getLabels().forEach(label -> labels.put(label.key(), label.value()));
 
             return new Result(
                 execution.getId(),
                 execution.getState().getCurrent().name(),
-                execution.getOutputs() != null ? execution.getOutputs() : Map.of(),
+                outputs != null ? outputs : Map.of(),
                 labels
             );
         }

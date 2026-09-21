@@ -6,6 +6,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
@@ -158,7 +159,7 @@ public class InternalStorage implements Storage {
     @Override
     public URI putFile(InputStream inputStream, String name) throws IOException {
         URI uri = context.getContextStorageURI();
-        URI resolved = uri.resolve(uri.getPath() + PATH_SEPARATOR + toLogicalPath(name));
+        URI resolved = buildStorageUri(uri, toLogicalPath(name));
         return this.storage.put(context.getTenantId(), context.getNamespace(), resolved, new BufferedInputStream(inputStream));
     }
 
@@ -184,7 +185,7 @@ public class InternalStorage implements Storage {
     @Override
     public URI putFile(File file, String name) throws IOException {
         URI uri = context.getContextStorageURI();
-        URI resolved = uri.resolve(uri.getPath() + PATH_SEPARATOR + (name != null ? name : file.getName()));
+        URI resolved = buildStorageUri(uri, name != null ? name : file.getName());
         try (InputStream is = new FileInputStream(file)) {
             return putFile(is, resolved);
         } finally {
@@ -253,14 +254,28 @@ public class InternalStorage implements Storage {
 
     private URI putFileAndDelete(File file, String prefix, String name) throws IOException {
         URI uri = URI.create(prefix);
-        URI resolve = uri.resolve(uri.getPath() + PATH_SEPARATOR + (name != null ? name : file.getName()));
+        URI resolve = buildStorageUri(uri, name != null ? name : file.getName());
         return putFileAndDelete(file, resolve);
     }
 
     private URI putFile(InputStream inputStream, String prefix, String name) throws IOException {
         URI uri = URI.create(prefix);
-        URI resolve = uri.resolve(uri.getPath() + PATH_SEPARATOR + name);
+        URI resolve = buildStorageUri(uri, name);
         return this.storage.put(context.getTenantId(), context.getNamespace(), resolve, new BufferedInputStream(inputStream));
+    }
+
+    /**
+     * Builds a storage URI by appending a raw filename to the base URI path using the quoting
+     * {@link URI#URI(String, String, String, String)} constructor, so that URI-special characters
+     * (e.g. {@code #}, {@code %}, space) in the filename are percent-encoded rather than parsed
+     * as URI syntax. This prevents fragment truncation and escape mis-decoding.
+     */
+    private static URI buildStorageUri(URI base, String rawName) throws IOException {
+        try {
+            return new URI(base.getScheme(), base.getHost(), base.getPath() + PATH_SEPARATOR + rawName, null);
+        } catch (URISyntaxException e) {
+            throw new IOException("Cannot build storage URI for file name '%s'.".formatted(rawName), e);
+        }
     }
 
     @Override

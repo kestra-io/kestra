@@ -1,4 +1,4 @@
-import {describe, it, expect, vi, beforeEach} from "vitest"
+import {describe, it, expect, vi, afterAll, beforeEach} from "vitest"
 import {setActivePinia, createPinia} from "pinia"
 
 const getMock = vi.fn()
@@ -42,6 +42,9 @@ describe("plugins store loadIcon", () => {
     let store: any
 
     beforeEach(async () => {
+        // Another spec may already have imported the store against the real SDK;
+        // with `isolate: false` that instance is cached, so rebuild it under our mocks.
+        vi.resetModules()
         getMock.mockReset()
         nextImageOutcome = "error"
         lastImageSrc = undefined
@@ -49,6 +52,10 @@ describe("plugins store loadIcon", () => {
         setActivePinia(createPinia())
         const {usePluginsStore} = await import("../../../src/stores/plugins")
         store = usePluginsStore()
+    })
+
+    afterAll(() => {
+        vi.unstubAllGlobals()
     })
 
     it("resolves the icon and caches it when the backend finds one", async () => {
@@ -141,6 +148,26 @@ describe("plugins store loadIcon", () => {
 
         const [firstResult, secondResult] = await Promise.all([first, second])
         expect(firstResult).toEqual(secondResult)
+    })
+
+    it("waits for an in-flight catalog fetch instead of issuing its own per-class request", async () => {
+        // Given a catalog fetch in flight that will carry the class
+        let resolveCatalog: (value: any) => void = () => {}
+        getMock.mockReturnValueOnce(new Promise(resolve => {
+            resolveCatalog = resolve
+        }))
+        const catalog = store.fetchIcons()
+
+        // When a node asks for an icon while that fetch is still pending
+        const pending = store.loadIcon("io.kestra.plugin.core.log.Log")
+        resolveCatalog({data: {"io.kestra.plugin.core.log.Log": {icon: "base64svg", flowable: false, monochrome: false}}})
+        await catalog
+        const result = await pending
+
+        // Then it was served from the catalog — no second request, no ecosystem probe
+        expect(getMock).toHaveBeenCalledTimes(1)
+        expect(lastImageSrc).toBeUndefined()
+        expect(result).toEqual({flowable: false, monochrome: false, hasIcon: true})
     })
 
     it("skips the local per-class lookup and goes straight to the ecosystem catalog once the full local catalog is loaded", async () => {

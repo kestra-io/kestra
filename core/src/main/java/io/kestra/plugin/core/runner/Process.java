@@ -135,7 +135,9 @@ public class Process extends TaskRunner<TaskRunnerDetailResult> {
 
         java.lang.Process process = processBuilder.start();
         long pid = process.pid();
-        logger.debug("Starting command with pid {} [{}]", pid, String.join(" ", renderedCommands));
+        if (logger.isDebugEnabled()) {
+            logger.debug("Starting command with pid {} [{}]", pid, TaskLogLineMatcher.redactEncryptedOutputs(String.join(" ", renderedCommands)));
+        }
 
         LogRunnable stdOutRunnable = new LogRunnable(process.getInputStream(), defaultLogConsumer, false);
         LogRunnable stdErrRunnable = new LogRunnable(process.getErrorStream(), defaultLogConsumer, true);

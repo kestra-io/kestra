@@ -1,5 +1,8 @@
 package io.kestra.jdbc.repository;
 
+import java.time.Instant;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.function.BiFunction;
@@ -10,8 +13,11 @@ import org.jooq.Record;
 import org.jooq.impl.DSL;
 import org.slf4j.event.Level;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.QueryFilter.Resource;
+import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.dashboards.ColumnDescriptor;
 import io.kestra.core.models.dashboards.DataFilter;
 import io.kestra.core.models.dashboards.DataFilterKPI;
@@ -35,14 +41,42 @@ import io.micronaut.context.ApplicationContext;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.inject.qualifiers.Qualifiers;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.annotation.Nullable;
 import lombok.Getter;
+import lombok.Setter;
 import reactor.core.publisher.Flux;
 
 public abstract class AbstractJdbcLogDataStore extends AbstractJdbcCrudRepository<LogEntry> implements LogDataStoreInterface {
 
     private static final Condition NORMAL_KIND_CONDITION = field("execution_kind").isNull().or(field("execution_kind").eq(ExecutionKind.NORMAL.name()));
     private static final String DATE_COLUMN = "timestamp";
+
+    @Schema(title = "JDBC URL of a dedicated logs database; leave unset to keep logs in the main backend.")
+    @PluginProperty
+    @Getter
+    @Setter
+    private String url;
+
+    @Schema(title = "Username for the dedicated logs database.")
+    @PluginProperty
+    @Getter
+    @Setter
+    private String username;
+
+    @Schema(title = "Password for the dedicated logs database.")
+    @PluginProperty(hidden = true)
+    @Getter
+    @Setter
+    private String password;
+
+    // Named 'tableName' (mapped to the 'table' key) so its getter doesn't clash with the inherited jOOQ getTable().
+    @Schema(title = "Name of the log table in the dedicated logs database (defaults to 'logs').")
+    @PluginProperty
+    @JsonProperty("table")
+    @Getter
+    @Setter
+    private String tableName;
 
     public AbstractJdbcLogDataStore(io.kestra.jdbc.AbstractJdbcRepository<LogEntry> jdbcRepository, JdbcFilterService filterService) {
         super(jdbcRepository);
@@ -130,8 +164,9 @@ public abstract class AbstractJdbcLogDataStore extends AbstractJdbcCrudRepositor
     @Override
     public Page<LogEntry> find(Pageable pageable, @Nullable String tenantId, @Nullable List<QueryFilter> filters) {
         // Default to NORMAL kind only; an explicit KIND filter overrides that and selects the requested kind(s).
+        // The only exception is when a filter specifies an executionId; in this case we should not restrict to any kind so the logs of that execution are always returned.
         var condition = this.filter(filters, DATE_COLUMN, Resource.LOG);
-        if (!QueryFilter.hasField(filters, QueryFilter.Field.KIND)) {
+        if (!QueryFilter.hasField(filters, QueryFilter.Field.KIND) && !QueryFilter.hasField(filters, QueryFilter.Field.EXECUTION_ID)) {
             condition = NORMAL_KIND_CONDITION.and(condition);
         }
         return toOffsetPage(findPage(pageable, tenantId, condition), pageable);
@@ -169,11 +204,48 @@ public abstract class AbstractJdbcLogDataStore extends AbstractJdbcCrudRepositor
     @Override
     public Flux<LogEntry> findAsync(@Nullable String tenantId, List<QueryFilter> filters) {
         // Default to NORMAL kind only; an explicit KIND filter overrides that and selects the requested kind(s).
+        // The only exception is when a filter specifies an executionId; in this case we should not restrict to any kind so the logs of that execution are always returned.
         var condition = this.filter(filters, DATE_COLUMN, Resource.LOG);
-        if (!QueryFilter.hasField(filters, QueryFilter.Field.KIND)) {
+        if (!QueryFilter.hasField(filters, QueryFilter.Field.KIND) && !QueryFilter.hasField(filters, QueryFilter.Field.EXECUTION_ID)) {
             condition = NORMAL_KIND_CONDITION.and(condition);
         }
         return findAsync(tenantId, condition, field(DATE_COLUMN).asc());
+    }
+
+    @Override
+    public List<KeyedLog> findAfterWithoutAcl(
+        @Nullable String tenantId,
+        List<QueryFilter> filters,
+        Instant afterTimestamp,
+        @Nullable String afterKey,
+        int pageSize) {
+        // Same default-kind rule as findAsync: NORMAL only unless a KIND or executionId filter is present.
+        var condition = this.filter(filters, DATE_COLUMN, Resource.LOG);
+        if (!QueryFilter.hasField(filters, QueryFilter.Field.KIND) && !QueryFilter.hasField(filters, QueryFilter.Field.EXECUTION_ID)) {
+            condition = NORMAL_KIND_CONDITION.and(condition);
+        }
+
+        // With a key, seek strictly after the (timestamp, key) row; without one (first run or a legacy date-only
+        // offset), fall back to a strict timestamp lower bound (which matches the previous START_DATE behaviour).
+        Field<OffsetDateTime> dateField = field(DATE_COLUMN, OffsetDateTime.class);
+        OffsetDateTime after = afterTimestamp.atOffset(ZoneOffset.UTC);
+        Condition seek = afterKey == null
+            ? dateField.gt(after)
+            : DSL.row(dateField, KEY_FIELD).gt(DSL.row(DSL.val(after), DSL.val(afterKey)));
+
+        final Condition finalCondition = condition;
+        return this.jdbcRepository.getDslContextWrapper().transactionResult(configuration ->
+            DSL.using(configuration)
+                .select(KEY_FIELD, VALUE_FIELD)
+                .from(this.jdbcRepository.getTable())
+                .where(this.defaultFilter(tenantId))
+                .and(finalCondition)
+                .and(seek)
+                .orderBy(dateField.asc(), KEY_FIELD.asc())
+                .limit(pageSize)
+                .fetch()
+                .map(record -> new KeyedLog(record.get(KEY_FIELD), this.jdbcRepository.map(record)))
+        );
     }
 
     @Override

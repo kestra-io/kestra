@@ -1,5 +1,7 @@
 <template>
     <DemoBlueprints v-if="tab === 'custom'" />
+    <DemoDashboards v-else-if="kind === 'dashboard'" blueprints />
+    <DemoApps v-else-if="kind === 'app'" blueprints />
     <template v-else>
         <TopNavBar v-if="!embed" :title="routeInfo.title" />
         <section
@@ -20,7 +22,7 @@
                 :embed
                 :blueprintKind="kind"
                 blueprintType="community"
-                @loaded="emit('loaded', $event)"
+                @loaded="emit('loaded')"
                 @go-to-detail="(id: string) => (selectedBlueprintId = id)"
             />
         </section>
@@ -35,6 +37,8 @@
     import BlueprintDetail from "override/components/flows/blueprints/BlueprintDetail.vue"
     import BlueprintsBrowser from "../../../../components/flows/blueprints/BlueprintsBrowser.vue"
     import DemoBlueprints from "../../../../components/demo/Blueprints.vue"
+    import DemoDashboards from "../../../../components/demo/Dashboards.vue"
+    import DemoApps from "../../../../components/demo/Apps.vue"
 
     import useRouteContext from "../../../../composables/useRouteContext"
     import {useRouteTabsStore} from "../../../../stores/routeTabs"
@@ -52,7 +56,7 @@
         embed: false,
     })
 
-    const emit = defineEmits<{loaded: [value: any]}>()
+    const emit = defineEmits<{loaded: []}>()
 
     const {t} = useI18n()
     const routeTabsStore = useRouteTabsStore()
@@ -86,6 +90,13 @@
             name: "dashboard-community",
             title: t("blueprints.dashboards"),
             route: {name: "blueprints", params: {kind: "dashboard", tab: "community"}},
+            locked: true,
+        },
+        {
+            name: "app-community",
+            title: t("blueprints.apps"),
+            route: {name: "blueprints", params: {kind: "app", tab: "community"}},
+            locked: true,
         },
     ])
 

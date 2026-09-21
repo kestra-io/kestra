@@ -11,8 +11,6 @@ $node-colors: (
     "warning": $base-orange-300,
 );
 
-$statusList: created, restarted, success, running, killing, killed, warning, failed, paused, cancelled, skipped, queued, retrying, retried, breakpoint;
-
 :root {
     --ks-topology-icon-color: #{$base-gray-neutral-800};
     --ks-topology-icon-bg: #{$base-gray-neutral-white};
@@ -154,25 +152,5 @@ html.dark {
     .circle-button,
     .node-action-button {
         display: none !important;
-    }
-}
-
-.ks-duration-tt {
-    text-align: left;
-    white-space: nowrap;
-    max-width: none;
-
-    .ks-duration-tt-square {
-        display: inline-block;
-        width: 10px;
-        height: 10px;
-        margin-right: 5px;
-        border-radius: 50%;
-    }
-
-    @each $value in $statusList {
-        .ks-duration-tt-square-#{$value} {
-            background-color: var(--ks-status-#{$value});
-        }
     }
 }

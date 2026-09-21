@@ -1,7 +1,4 @@
-import {describe, it, expect, beforeEach, vi} from "vitest"
-import {createI18n} from "vue-i18n"
-import {shallowMount} from "@vue/test-utils"
-
+import {describe, it, expect, afterAll, beforeAll, beforeEach, vi} from "vitest"
 vi.mock("vue-router", () => ({
     useRoute: () => ({name: "home"}),
 }))
@@ -10,15 +7,28 @@ vi.mock("override/stores/auth", () => ({
     useAuthStore: () => ({user: {isAllowed: () => false}}),
 }))
 
-import Header from "../../../../src/components/dashboard/components/Header.vue"
+vi.mock("override/stores/misc", () => ({
+    useMiscStore: () => ({configs: {}}),
+}))
 
-const i18n = createI18n({legacy: false, locale: "en", messages: {en: {overview: "Overview"}}, missingWarn: false, fallbackWarn: false})
+import Header from "../../../../src/components/dashboard/components/Header.vue"
+import {i18nShallowMount} from "../../i18nMount"
 
 function mountHeader(dashboard: any) {
-    return shallowMount(Header, {props: {dashboard}, global: {plugins: [i18n]}})
+    return i18nShallowMount(Header, {messages: {overview: "Overview"}, props: {dashboard}})
 }
 
 describe("dashboard Header.vue — browser tab title", () => {
+    let originalTitle: string
+
+    beforeAll(() => {
+        originalTitle = document.title
+    })
+
+    afterAll(() => {
+        document.title = originalTitle
+    })
+
     beforeEach(() => {
         document.title = "Kestra EE"
     })

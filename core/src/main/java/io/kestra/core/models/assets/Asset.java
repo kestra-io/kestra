@@ -3,16 +3,25 @@ package io.kestra.core.models.assets;
 import java.time.Instant;
 import java.util.*;
 
+import org.apache.commons.lang3.ObjectUtils;
+
 import com.fasterxml.jackson.annotation.JsonAnySetter;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import io.kestra.core.models.HasUID;
+import io.kestra.core.models.Label;
 import io.kestra.core.models.Plugin;
+import io.kestra.core.models.flows.FlowAction;
 import io.kestra.core.models.SoftDeletable;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.MapUtils;
+import io.kestra.core.validations.TenantId;
 
 import io.swagger.v3.oas.annotations.Hidden;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.annotation.Nullable;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
@@ -22,8 +31,21 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor
 public abstract class Asset implements HasUID, SoftDeletable<Asset>, Plugin {
+    /** Metadata keys Kestra owns, under the prefix already reserved for system labels. Flat: the
+     * repositories address {@link #metadata} one level deep. */
+    public static final String SYSTEM_METADATA_PREFIX = Label.SYSTEM_PREFIX;
+
+    public static final String STATUS_METADATA_KEY = SYSTEM_METADATA_PREFIX + "status";
+
+    public static final String TTL_METADATA_KEY = SYSTEM_METADATA_PREFIX + "ttl";
+
+    public static final String OWNER_METADATA_KEY = SYSTEM_METADATA_PREFIX + "owner";
+
+    /** The expiry buckets compare TTLs as text, so UTC ISO-8601 with millis is a contract, not a preference. */
+    public static final String TTL_FORMAT = "(\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z)?";
+
     @Hidden
-    @Pattern(regexp = "^[a-z0-9][a-z0-9_-]*")
+    @TenantId
     protected String tenantId;
 
     @Pattern(regexp = "^[a-z0-9][a-z0-9._-]*")
@@ -43,6 +65,11 @@ public abstract class Asset implements HasUID, SoftDeletable<Asset>, Plugin {
     protected String description;
 
     protected Map<String, Object> metadata;
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    @Size(max = 100)
+    @Schema(title = "The day-2 actions offered on this asset, each backing onto a flow.")
+    private List<@Valid FlowAction> assetActions;
 
     @Nullable
     @Hidden
@@ -79,19 +106,87 @@ public abstract class Asset implements HasUID, SoftDeletable<Asset>, Plugin {
         this.deleted = deleted;
     }
 
-    public <T extends Asset> T toUpdated(T previousAsset) {
-        this.created = Optional.ofNullable(this.created).or(() -> Optional.ofNullable(previousAsset.getCreated())).orElseGet(Instant::now);
+    /**
+     * Merges this asset over {@code previousAsset}, which is {@code null} on creation.
+     *
+     * @param previousAsset the stored asset this one is merged over, or {@code null} when creating.
+     * @param allowTypeChange whether the incoming type wins over the stored one; either falls back to the other
+     *                        when null, so creation (no previous asset) keeps the incoming type either way.
+     * @return this asset, merged.
+     */
+    public <T extends Asset> T toUpdated(T previousAsset, boolean allowTypeChange) {
+        this.created = Optional.ofNullable(previousAsset).map(Asset::getCreated).or(() -> Optional.ofNullable(this.created)).orElseGet(Instant::now);
         this.updated = Instant.now();
 
-        // Type is immutable, if it was set before we keep it
-        this.type = Optional.ofNullable(previousAsset).map(Asset::getType).orElse(this.type);
+        String previousType = Optional.ofNullable(previousAsset).map(Asset::getType).orElse(null);
+        this.type = allowTypeChange
+            ? ObjectUtils.firstNonNull(this.type, previousType)
+            : ObjectUtils.firstNonNull(previousType, this.type);
+        // The namespace of an existing asset is immutable, as AssetsController.updateAsset already enforces
+        this.namespace = Optional.ofNullable(previousAsset).map(Asset::getNamespace).orElse(this.namespace);
         this.displayName = Optional.ofNullable(this.displayName).or(() -> Optional.ofNullable(previousAsset).map(Asset::getDisplayName)).orElse(null);
         this.description = Optional.ofNullable(this.description).or(() -> Optional.ofNullable(previousAsset).map(Asset::getDescription)).orElse(null);
-        this.metadata = Optional.ofNullable(previousAsset).map(Asset::getMetadata).orElse(null) == null
-            ? this.metadata
-            : MapUtils.mergeWithNullableValues(previousAsset.getMetadata(), Optional.ofNullable(this.metadata).orElse(Collections.emptyMap()));
+        Map<String, Object> incomingMetadata = Optional.ofNullable(this.metadata).orElse(Collections.emptyMap());
+        Map<String, Object> previousMetadata = Optional.ofNullable(previousAsset).map(Asset::getMetadata).orElse(null);
+        Map<String, Object> mergedMetadata = previousMetadata == null
+            ? new HashMap<>(incomingMetadata)
+            : MapUtils.mergeWithNullableValues(previousMetadata, incomingMetadata);
+        incomingMetadata.forEach((key, value) -> {
+            if (value == null) {
+                mergedMetadata.remove(key);
+            }
+        });
+        this.metadata = mergedMetadata;
+
+        this.assetActions = this.assetActions != null
+            ? this.assetActions
+            : Optional.ofNullable(previousAsset).map(Asset::getAssetActions).orElse(null);
 
         return (T) this;
+    }
+
+    @JsonProperty("status")
+    public String getStatus() {
+        return reserved(STATUS_METADATA_KEY);
+    }
+
+    /** An empty value is meaningful: it is how "no expiry" is stored, and differs from an absent key. */
+    @JsonProperty("ttl")
+    @Pattern(regexp = TTL_FORMAT, message = "must be a UTC instant with millis (yyyy-MM-dd'T'HH:mm:ss.SSS'Z'), or empty for no expiry")
+    public String getTtl() {
+        return reserved(TTL_METADATA_KEY);
+    }
+
+    @JsonProperty("owner")
+    public String getOwner() {
+        return reserved(OWNER_METADATA_KEY);
+    }
+
+    public void setStatus(String status) {
+        reserve(STATUS_METADATA_KEY, status);
+    }
+
+    public void setTtl(String ttl) {
+        reserve(TTL_METADATA_KEY, ttl);
+    }
+
+    public void setOwner(String owner) {
+        reserve(OWNER_METADATA_KEY, owner);
+    }
+
+    private String reserved(String key) {
+        return Optional.ofNullable(metadata).map(m -> m.get(key)).map(Object::toString).orElse(null);
+    }
+
+    private void reserve(String key, String value) {
+        if (value == null) {
+            return;
+        }
+        // Bound after construction, so a subtype built through the no-args constructor has no map yet.
+        if (metadata == null) {
+            metadata = new HashMap<>();
+        }
+        metadata.put(key, value);
     }
 
     @Override
@@ -122,6 +217,16 @@ public abstract class Asset implements HasUID, SoftDeletable<Asset>, Plugin {
 
     public Asset withTenantId(String tenantId) {
         this.tenantId = tenantId;
+        return this;
+    }
+
+    public Asset withNamespace(String namespace) {
+        this.namespace = namespace;
+        return this;
+    }
+
+    public Asset withAssetActions(List<FlowAction> assetActions) {
+        this.assetActions = assetActions;
         return this;
     }
 }

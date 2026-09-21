@@ -14,8 +14,8 @@ import type { Client, ClientOptions, Config, RequestOptions } from './types.gen'
 export const createQuerySerializer = <T = unknown>({
   parameters = {},
   ...args
-}: QuerySerializerOptions = {}): ((queryParams: T) => string) => {
-  const querySerializer = (queryParams: T): string => {
+}: QuerySerializerOptions = {}) => {
+  const querySerializer = (queryParams: T) => {
     const search: string[] = [];
     if (queryParams && typeof queryParams === 'object') {
       for (const name in queryParams) {
@@ -118,12 +118,14 @@ const checkForExistence = (
   return false;
 };
 
-export async function setAuthParams(
-  options: Pick<RequestOptions, 'auth' | 'query' | 'security'> & {
+export const setAuthParams = async ({
+  security,
+  ...options
+}: Pick<Required<RequestOptions>, 'security'> &
+  Pick<RequestOptions, 'auth' | 'query'> & {
     headers: Headers;
-  },
-): Promise<void> {
-  for (const auth of options.security ?? []) {
+  }) => {
+  for (const auth of security) {
     if (checkForExistence(options, auth.name)) {
       continue;
     }
@@ -152,7 +154,7 @@ export async function setAuthParams(
         break;
     }
   }
-}
+};
 
 export const buildUrl: Client['buildUrl'] = (options) =>
   getUrl({

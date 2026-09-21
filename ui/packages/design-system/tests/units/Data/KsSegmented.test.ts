@@ -1,6 +1,7 @@
 import {describe, test, expect} from "vitest"
 import {mount} from "@vue/test-utils"
 import KestraDesignSystem from "../../../src/index"
+import Account from "vue-material-design-icons/Account.vue"
 import KsSegmented from "../../../src/components/Data/KsSegmented.vue"
 
 const globalConfig = {plugins: [KestraDesignSystem]}
@@ -28,6 +29,34 @@ describe("KsSegmented", () => {
             global: globalConfig,
         })
         expect(wrapper.find(".kel-segmented--small").exists()).toBe(true)
+    })
+
+    test("renders an option icon before its label", () => {
+        const wrapper = mount(KsSegmented, {
+            props: {
+                modelValue: "user",
+                options: [
+                    {label: "User", value: "user", icon: Account},
+                    {label: "Group", value: "group"},
+                ],
+            },
+            global: globalConfig,
+        })
+        expect(wrapper.findComponent(Account).exists()).toBe(true)
+        expect(wrapper.text()).toContain("User")
+        expect(wrapper.text()).toContain("Group")
+    })
+
+    test("scales the option icon with the control size", () => {
+        const options = [{label: "User", value: "user", icon: Account}]
+        const iconSize = (size?: "large" | "default" | "small") => mount(KsSegmented, {
+            props: {modelValue: "user", options, ...(size ? {size} : {})},
+            global: globalConfig,
+        }).findComponent(Account).element.closest("i")?.getAttribute("style")
+
+        expect(iconSize("large")).toContain("--ks-icon-size-base")
+        expect(iconSize()).toContain("--ks-icon-size-sm")
+        expect(iconSize("small")).toContain("--ks-icon-size-xs")
     })
 
     test("selected item gets is-selected class", () => {

@@ -2,6 +2,7 @@
     <DocIdDisplay />
     <ErrorToast v-if="coreStore.message" :noAutoHide="true" :message="coreStore.message" />
     <component :is="SdkDriftBanner" v-if="SdkDriftBanner" />
+    <VersionUpgradeNotice v-if="loaded && route?.name && !route.meta?.anonymous" />
     <div id="app-shell">
         <AppTopNavBar  v-if="loaded && route?.name && !route.meta?.anonymous"  />
         <div id="app-body">
@@ -10,7 +11,7 @@
             </component>
         </div>
     </div>
-    <OnboardingOverlay v-if="loaded && route?.name && !route.meta?.anonymous" />
+    <TourOverlay v-if="loaded && route?.name && !route.meta?.anonymous" />
     <UnsavedChangesDialog />
     <DrillDownDrawer />
     <PwaInstallPrompt v-if="loaded && route?.name && !route.meta?.anonymous" />
@@ -33,11 +34,12 @@
     import {initPosthogIfEnabled} from "./utils/posthog"
     import {SAVED_FILTER_ANALYTICS_INJECTION_KEY, trackSavedFilter} from "./utils/savedFilterTracking"
     import ErrorToast from "./components/ErrorToast.vue"
-    import OnboardingOverlay from "./components/onboarding/OnboardingOverlay.vue"
+    import TourOverlay from "./components/onboarding/tour/TourOverlay.vue"
     import DefaultLayout from "override/components/layout/DefaultLayout.vue"
     import AppTopNavBar from "./components/layout/AppTopNavBar.vue"
     import DocIdDisplay from "./components/DocIdDisplay.vue"
     import UnsavedChangesDialog from "./components/UnsavedChangesDialog.vue"
+    import VersionUpgradeNotice from "./components/VersionUpgradeNotice.vue"
     import DrillDownDrawer from "./components/dashboard/DrillDownDrawer.vue"
     import PwaInstallPrompt from "./components/PwaInstallPrompt.vue"
     import {useThemeCycle} from "./composables/useThemeCycle"
@@ -46,7 +48,9 @@
     // Dev-only, dynamically imported so the component is entirely absent from production bundles:
     // `import.meta.env.DEV` is statically replaced with `false` by Vite in prod builds, so this
     // branch (and the import() it guards) is dead-code eliminated rather than merely hidden by v-if.
-    const SdkDriftBanner = import.meta.env.DEV
+    // Also excluded under Vitest (`MODE === "test"`, its documented default): there's no live
+    // backend to compare against there, so the banner has nothing meaningful to show.
+    const SdkDriftBanner = import.meta.env.DEV && import.meta.env.MODE !== "test"
         ? defineAsyncComponent(() => import("./components/SdkDriftBanner.vue"))
         : null
 

@@ -57,9 +57,10 @@ public final class JacksonMapper {
         );
     }
 
-    private static final ObjectMapper MAPPER = JacksonMapper.configure(
-        new ObjectMapper()
-    );
+    // Registered the KestraDateTimeModule only for the JSON mapper.
+    // YAML should not change the date format as it would break compatibility, and ION has its own date format.
+    private static final ObjectMapper MAPPER = JacksonMapper.configure(new ObjectMapper())
+        .registerModule(new KestraDateTimeModule());
 
     private static final ObjectMapper NON_STRICT_MAPPER = MAPPER
         .copy()
@@ -99,6 +100,19 @@ public final class JacksonMapper {
 
     public static Map<String, Object> toMap(Object object) {
         return MAPPER.convertValue(object, MAP_TYPE_REFERENCE);
+    }
+
+    /**
+     * Keeps null map entries and collection elements ({@code ALWAYS} content inclusion) while still omitting null
+     * bean properties ({@code NON_NULL} value inclusion). The single-argument {@code setDefaultPropertyInclusion}
+     * used by the other mappers sets both, which is why they drop null map entries.
+     */
+    private static final ObjectMapper MAPPER_WITH_NULL = MAPPER
+        .copy()
+        .setDefaultPropertyInclusion(JsonInclude.Value.construct(JsonInclude.Include.NON_NULL, JsonInclude.Include.ALWAYS));
+
+    public static ObjectMapper ofJsonWithNullValues() {
+        return MAPPER_WITH_NULL;
     }
 
     public static <T> T toMap(Object map, Class<T> cls) {

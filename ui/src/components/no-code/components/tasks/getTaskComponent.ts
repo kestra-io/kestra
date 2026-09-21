@@ -17,13 +17,15 @@ export interface Schema{
     items?: Schema;
     const?: string;
     format?: string;
+    enum?: unknown[];
+    pattern?: string;
     $language: string;
     $secret?: boolean;
 }
 
 export const LIST_FIELDS = SECTIONS_IDS.filter(id => id !== "outputs")
 
-function getType(property: any, definitions: Record<string, any>, key?: string, siblingKeys?: string[]): string {
+export function getType(property: any, definitions: Record<string, any>, key?: string, siblingKeys?: string[]): string {
 
     if (property.enum !== undefined) {
         return "enum"
@@ -62,7 +64,6 @@ function getType(property: any, definitions: Record<string, any>, key?: string, 
             return "dict"
         }
 
-        // for dag tasks
         if (property.anyOf.length > 10 || key === "taskRunner") {
             return "task"
         }

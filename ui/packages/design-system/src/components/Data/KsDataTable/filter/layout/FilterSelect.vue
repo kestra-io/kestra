@@ -37,6 +37,7 @@
                 <KsDatePicker
                     v-model="local.startDateValue"
                     type="datetime"
+                    :disabledDate="isAfterEndDate"
                     :placeholder="$t('filter.select_start_date')"
                 />
             </div>
@@ -45,6 +46,8 @@
                 <KsDatePicker
                     v-model="local.endDateValue"
                     type="datetime"
+                    :defaultTime="endDateDefaultTime"
+                    :disabledDate="isBeforeStartDate"
                     :placeholder="$t('filter.select_end_date')"
                 />
             </div>
@@ -95,6 +98,19 @@
 
     const {modelValue, timeRangeMode, startDateValue, endDateValue, dateFilterMode} = toRefs(props)
 
+    // The day panels only offer days that keep start <= end; the same-day time case is caught by the
+    // caller before it reaches the API.
+    const startOfDay = (date: Date) => new Date(date.getFullYear(), date.getMonth(), date.getDate())
+
+    const isAfterEndDate = (date: Date) =>
+        local.endDateValue ? startOfDay(date) > startOfDay(local.endDateValue) : false
+
+    const isBeforeStartDate = (date: Date) =>
+        local.startDateValue ? startOfDay(date) < startOfDay(local.startDateValue) : false
+
+    // Without a default time, picking a day in the end date panel pre-fills 00:00:00, which excludes the whole selected day; default the time part to now so picking today covers up to the current time.
+    const endDateDefaultTime = new Date()
+
     const local = reactive({
         value: modelValue.value,
         endDateValue: endDateValue.value ?? null,
@@ -143,7 +159,7 @@
     }
 
     .date-filter-section {
-        border-top: 1px solid var(--ks-border-primary);
+        border-top: 1px solid var(--ks-border-default);
         padding-top: 0.75rem;
 
         .form-label {
@@ -161,9 +177,9 @@
         }
 
         .date-filter-option {
-            background: var(--ks-background-body);
-            border: 1px solid var(--ks-border-primary);
-            border-radius: var(--ks-border-radius-sm);
+            background: var(--ks-bg-surface);
+            border: 1px solid var(--ks-border-default);
+            border-radius: var(--ks-radius-sm);
             color: var(--ks-text-primary);
             cursor: pointer;
             font-size: var(--ks-font-size-xs);
@@ -172,24 +188,19 @@
             transition: background 0.15s, border-color 0.15s;
 
             &:hover {
-                background: var(--ks-background-card);
+                background: var(--ks-bg-hover);
             }
 
             &.active {
-                background: var(--ks-background-card);
-                border-color: var(--ks-primary);
-                color: var(--ks-primary);
+                background: var(--ks-bg-tag-active);
+                border-color: var(--ks-border-focus);
+                color: var(--ks-text-link);
             }
         }
     }
 }
 
 :deep(.kel-date-editor) {
-    .kel-input__inner::placeholder {
-        color: var(--ks-text-dim);
-        font-size: var(--ks-font-size-sm);
-    }
-
     .kel-input__prefix .kel-input__icon {
         color: var(--ks-text-dim);
         font-size: var(--ks-font-size-base);

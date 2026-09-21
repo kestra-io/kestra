@@ -1,6 +1,6 @@
 package io.kestra.core.models.executions.statistics;
 
-import java.util.HashMap;
+import java.util.EnumMap;
 import java.util.Map;
 
 import io.kestra.core.models.flows.State;
@@ -42,7 +42,7 @@ public record ExecutionCountStatistics(
     }
 
     private static Map<State.Type, Long> withAllStatesZero(final Map<State.Type, Long> counts) {
-        Map<State.Type, Long> map = new HashMap<>(DEFAULT_COUNTS);
+        Map<State.Type, Long> map = new EnumMap<>(DEFAULT_COUNTS);
         map.putAll(counts);
         return map;
     }

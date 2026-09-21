@@ -77,7 +77,6 @@
                             <DynamicScrollerItem
                                 :item="item"
                                 :active="active"
-                                :sizeDependencies="[item.message, item.image, item.isGroup, item.isGroup && isGroupExpanded(currentTaskRunIndex, item)]"
                                 :data-index="item.index"
                             >
                                 <template v-if="item.isGroup">
@@ -101,11 +100,11 @@
                                         :aria-expanded="isGroupExpanded(currentTaskRunIndex, item)"
                                         @click="toggleGroup(currentTaskRunIndex, item)"
                                     >
-                                        <KsIcon class="log-group-chevron" :class="{collapsed: !isGroupExpanded(currentTaskRunIndex, item)}" size="s">
+                                        <KsIcon class="log-group-chevron" :class="{collapsed: !isGroupExpanded(currentTaskRunIndex, item)}">
                                             <ChevronDown />
                                         </KsIcon>
                                         <span class="log-group-count">×{{ item.members.length }}</span>
-                                        <span class="log-group-label">{{ isGroupExpanded(currentTaskRunIndex, item) ? t("collapse") : t("similar lines") }}</span>
+                                        <span class="log-group-label">{{ isGroupExpanded(currentTaskRunIndex, item) ? $t("collapse") : $t("similar lines") }}</span>
                                     </button>
                                 </template>
                                 <template v-else>
@@ -120,7 +119,7 @@
                                                 :icon="Download"
                                                 rel="noopener noreferrer"
                                             >
-                                                {{ t("download") }}
+                                                {{ $t("download") }}
                                             </KsButton>
                                             <FilePreview
                                                 :value="item.logFile"
@@ -241,19 +240,19 @@
                         :to="{
                             name: 'executions/list',
                             query: {
-                                'filters[parentId][EQUALS]': asTaskRun(currentTaskRun).executionId,
+                                'filters[parentId][EQUALS]': followedExecution.id,
                                 'filters[kind][EQUALS]': 'LOOP',
                                 'filters[taskId][EQUALS]': asTaskRun(currentTaskRun).taskId,
                             }
                         }"
                         size="small"
                     >
-                        {{ t("iterations") }}
+                        {{ $t("iterations") }}
                     </KsButton>
                     <TaskRunLoopProgress
                         :currentTaskRunId="asTaskRun(currentTaskRun).id"
                         :loopOutputsByTaskRunId="loopOutputsByTaskRunId"
-                        :executionId="asTaskRun(currentTaskRun).executionId"
+                        :executionId="followedExecution.id"
                         :taskId="asTaskRun(currentTaskRun).taskId"
                     />
                 </div>
@@ -271,10 +270,7 @@
     import ChevronDown from "vue-material-design-icons/ChevronDown.vue"
     import * as OutputsAPI from "@kestra-io/kestra-sdk/outputs"
     import LogLine from "./LogLine.vue"
-    import {State, levelToRequestParams, type LevelFilterValue} from "@kestra-io/design-system"
-    import _xor from "lodash/xor"
-    import _groupBy from "lodash/groupBy"
-    import moment from "moment"
+    import {State, levelToRequestParams, type LevelFilterValue, groupBy, throttle, dayjs} from "@kestra-io/design-system"
     import "vue-virtual-scroller/dist/vue-virtual-scroller.css"
     import {logDisplayTypes} from "../../utils/constants"
     import {DynamicScroller, DynamicScrollerItem} from "vue-virtual-scroller"
@@ -287,7 +283,6 @@
     import * as Utils from "../../utils/utils"
     import * as LogUtils from "../../utils/logs"
     import {buildTaskRunHierarchy} from "../../utils/taskRunHierarchy"
-    import throttle from "lodash/throttle"
     import {useClient, type TaskRun, type TaskRunAttempt} from "@kestra-io/kestra-sdk"
 
     // Recursive component - self reference
@@ -356,11 +351,14 @@
     // Reactive state
     const shownAttemptsUid = ref<string[]>([])
     const rawLogs = ref<any[]>([]) // FIXME: any
-    const timer = ref<ReturnType<typeof moment> | undefined>(undefined)
+    const timer = ref<ReturnType<typeof dayjs> | undefined>(undefined)
     const timeout = ref<ReturnType<typeof setTimeout> | undefined>(undefined)
     const selectedAttemptNumberByTaskRunId = ref<Record<string, number>>({})
     const executionSSE = ref<any>(undefined) // FIXME: any
     const logsSSE = ref<any>(undefined) // FIXME: any
+    // Execution `rawLogs` and any open logs SSE belong to, so both can be dropped on a change.
+    const logsExecutionId = ref<string | undefined>(undefined)
+    const logsCloseTimeout = ref<ReturnType<typeof setTimeout> | undefined>(undefined)
     const flow = ref<any>(undefined) // FIXME: any
     const logsBuffer = ref<any[]>([]) // FIXME: any
     const shownSubflowsIds = ref<{subflowExecutionId: string; taskRunIndex: number}[]>([])
@@ -429,7 +427,7 @@
             )
             .map((logLine: any, index: number) => ({...logLine, index})) // FIXME: any
 
-        return _groupBy(indexedLogs, (indexedLog: any) => // FIXME: any
+        return groupBy(indexedLogs, (indexedLog: any) => // FIXME: any
             attemptUid(indexedLog.taskRunId, indexedLog.attemptNumber),
         )
     })
@@ -634,6 +632,13 @@
                 return
             }
 
+            // Closed here so the `!logsSSE.value` guards below cannot read a stream still following the previous execution as "already covered" (kestra-io/kestra#14018).
+            if (logsExecutionId.value !== undefined && logsExecutionId.value !== newExecution.id) {
+                closeLogsSSE()
+                rawLogs.value = []
+                logsBuffer.value = []
+            }
+
             if (!oldExecution) {
                 nextTick(() => {
                     const parentScroller =
@@ -667,7 +672,8 @@
 
             if (!State.isRunning(followedExecution.value.state.current)) {
                 // wait a bit to make sure we don't miss logs as log indexer is asynchronous
-                setTimeout(() => {
+                cancelLogsSSEClose()
+                logsCloseTimeout.value = setTimeout(() => {
                     closeLogsSSE()
                 }, 2000)
 
@@ -760,7 +766,15 @@
         )
     }
 
+    function cancelLogsSSEClose() {
+        if (logsCloseTimeout.value) {
+            clearTimeout(logsCloseTimeout.value)
+            logsCloseTimeout.value = undefined
+        }
+    }
+
     function closeLogsSSE() {
+        cancelLogsSSEClose()
         if (logsSSE.value) {
             logsSSE.value.close()
             logsSSE.value = undefined
@@ -833,13 +847,16 @@
     }
 
     function refreshLogs() {
-        timer.value = moment()
+        timer.value = dayjs()
         rawLogs.value = deduplicateLogs(rawLogs.value.concat(logsBuffer.value))
         logsBuffer.value = []
         scrollToBottomFailedTask()
     }
 
     function followLogs(executionId: string) {
+        // A replay is RESTARTED, not a running state, so the grace-period close is armed before RUNNING and would otherwise close this stream mid-execution.
+        cancelLogsSSEClose()
+        logsExecutionId.value = executionId
         executionsStore.followLogs({id: executionId, params: buildLogParams()}).then((sse: any) => { // FIXME: any
             logsSSE.value = sse
 
@@ -857,7 +874,7 @@
                 }, 100)
 
                 // force at least 1 logs refresh / 500ms
-                if (moment().diff(timer.value, "seconds") > 0.5) {
+                if (dayjs().diff(timer.value, "second") > 0.5) {
                     clearTimeout(timeout.value)
                     refreshLogs()
                 }
@@ -867,7 +884,7 @@
                 coreStore.message = {
                     variant: "error",
                     title: t("error"),
-                    message: t(
+                    content: t(
                         "something_went_wrong.loading_execution",
                     ),
                 }
@@ -989,13 +1006,22 @@
     }
 
     function loadLogs(executionId?: string) {
+        const id = executionId ?? followedExecution.value?.id
+        if (!id) {
+            return
+        }
+        logsExecutionId.value = id
         const p = buildLogParams()
         executionsStore
             .loadLogs({
-                executionId: executionId!,
+                executionId: id,
                 params: p,
             })
             .then((logs: any) => { // FIXME: any
+                // A response for an execution the view has since left would overwrite the current one's logs.
+                if (logsExecutionId.value !== id) {
+                    return
+                }
                 // `loadLogs` returns a paginated response `{ results, total }`, and `rawLogs` must be an array of log lines.
                 rawLogs.value = logs?.results ?? logs ?? []
                 // Discard any buffered SSE logs to prevent duplicates after the full REST fetch replaces `rawLogs`.
@@ -1023,7 +1049,9 @@
     }
 
     function toggleShowAttempt(uid: string) {
-        shownAttemptsUid.value = _xor(shownAttemptsUid.value, [uid])
+        shownAttemptsUid.value = shownAttemptsUid.value.includes(uid)
+            ? shownAttemptsUid.value.filter((shown) => shown !== uid)
+            : [...shownAttemptsUid.value, uid]
     }
 
     function swapDisplayedAttempt(event: {taskRunId: string; attemptNumber: number}) {

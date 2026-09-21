@@ -10,6 +10,7 @@ import org.jooq.*;
 import org.jooq.Record;
 import org.jooq.impl.DSL;
 
+import io.kestra.core.annotations.RequiresExecutor;
 import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.jdbc.JdbcTableConfig;
 import io.kestra.jdbc.JooqDSLContextWrapper;
@@ -25,6 +26,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Singleton
 @JdbcQueueEnabled
+@RequiresExecutor
 @Slf4j
 public class JdbcQueueCleaner {
     private static final Field<Object> CREATED_FIELD = AbstractJdbcRepository.field("created");

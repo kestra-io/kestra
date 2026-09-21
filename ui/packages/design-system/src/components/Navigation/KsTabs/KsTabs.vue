@@ -5,6 +5,7 @@
         :class="{
             'kel-tabs--box': props.type === 'box',
             'kel-tabs--segmented': props.type === 'segmented',
+            'kel-tabs--pane-scroll': paneScroll,
         }"
         v-bind="({...filteredProps(), ...$attrs} as any)"
     >
@@ -25,6 +26,7 @@
 
     const props = defineProps<{
         type?: "" | "card" | "border-card" | "box" | "segmented"
+        paneScroll?: boolean
     }>()
 
     defineSlots<{
@@ -35,7 +37,7 @@
         (props.type === "box" || props.type === "segmented" ? "" : props.type),
     )
 
-    const filteredProps = useFilteredProps(props, ["type"])
+    const filteredProps = useFilteredProps(props, ["type", "paneScroll"])
 </script>
 
 <style lang="scss">
@@ -45,6 +47,18 @@
     .kel-tabs {
         a {
             color: currentColor;
+        }
+
+        &.kel-tabs--pane-scroll {
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+
+            .kel-tabs__content {
+                flex: 1;
+                min-height: 0;
+                overflow-y: auto;
+            }
         }
 
         .kel-tabs__active-bar {
@@ -132,7 +146,7 @@
 
         &.kel-tabs--box {
             position: sticky;
-            z-index: 1000;
+            z-index: var(--ks-z-dropdown);
 
             .kel-tabs__nav-scroll {
                 display: flex;

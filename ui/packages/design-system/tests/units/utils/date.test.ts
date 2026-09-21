@@ -47,3 +47,9 @@ describe("timezonesWithOffset", () => {
         expect(zones.filter((z) => z.zone === "Asia/Tokyo")).toHaveLength(1)
     })
 })
+
+describe("dayjs instance", () => {
+    test("should render the ordinal day token offered by the date format setting", () => {
+        expect(dayjs("2026-07-24T13:16:00.000Z").utc().format("dddd, MMMM Do YYYY")).toBe("Friday, July 24th 2026")
+    })
+})

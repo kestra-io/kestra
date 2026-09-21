@@ -213,7 +213,6 @@
     "executionProgress": {
       "title": "Прогресс выполнения",
       "estimatedRemaining": "Осталось примерно: {duration}",
-      "noBaseline": "Нет исторических данных — невозможно оценить оставшееся время",
       "pastEstimate": "Выполнение занимает больше времени, чем обычно"
     },
     "launch execution": "Выполнить",

@@ -41,7 +41,7 @@
         useDashboardFilter,
         useNamespaceDashboardFilter,
         useFlowDashboardFilter,
-    } from "../filter/configurations"
+    } from "../filter/configurations/dashboardFilters"
     import useRestoreUrl from "../../composables/useRestoreUrl"
 
     useRestoreUrl()

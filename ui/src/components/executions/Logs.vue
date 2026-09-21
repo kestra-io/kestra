@@ -100,7 +100,7 @@
     import {computed, nextTick, ref, watch, useTemplateRef, onUnmounted} from "vue"
     import {useRoute} from "vue-router"
     import {useI18n} from "vue-i18n"
-    import {useLogExecutionsFilter} from "../filter/configurations"
+    import {useLogExecutionsFilter} from "../filter/configurations/logExecutionsFilter"
     import TaskRunDetails from "../logs/TaskRunDetails.vue"
     import LogDisplaySettings from "../logs/LogDisplaySettings.vue"
     import Download from "vue-material-design-icons/Download.vue"

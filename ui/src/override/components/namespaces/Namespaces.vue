@@ -83,7 +83,7 @@
     import Action from "../../../components/namespaces/components/buttons/Action.vue"
     import {KsFilter as KSFilter} from "@kestra-io/design-system"
     import {routeQueryToQueryFilters} from "../../../utils/queryFilters"
-    import {useNamespacesFilter} from "../../../components/filter/configurations"
+    import {useNamespacesFilter} from "../../../components/filter/configurations/namespacesFilter"
     import resource from "../../../models/resource"
     import action from "../../../models/action"
 

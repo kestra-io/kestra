@@ -215,7 +215,7 @@
     import {useToast} from "../../utils/toast"
     import {useExecutionsStore, type Execution} from "../../stores/executions"
     import {usePluginsStore} from "../../stores/plugins"
-    import {useGanttExecutionFilter} from "../filter/configurations"
+    import {useGanttExecutionFilter} from "../filter/configurations/ganttExecutionFilter"
     import TaskRunDetails from "../logs/TaskRunDetails.vue"
     import TaskRunActions from "./TaskRunActions.vue"
     import ExecutionPending from "./ExecutionPending.vue"

@@ -376,7 +376,7 @@
     import {WEBHOOK_TRIGGER_TYPE} from "../../utils/webhook"
 
     import {useTableColumns, type ColumnConfig} from "@kestra-io/design-system"
-    import {useTriggerFilter} from "../filter/configurations"
+    import {useTriggerFilter} from "../filter/configurations/triggerFilter"
 
     const triggerFilter = useTriggerFilter()
 

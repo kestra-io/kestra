@@ -61,6 +61,7 @@
                     v-if="isReadOnly && taskProps.execution && taskProps.taskRun"
                     class="node-action-button"
                     :taskRun="taskProps.taskRun"
+                    :taskType="taskProps.task?.type"
                     :taskRuns="taskProps.taskRuns"
                     :execution="taskProps.execution"
                     :flow="flowStore.flow"
@@ -601,9 +602,9 @@
     const defaultTopologyOrientation = localStorage.getItem(storageKeys.DEFAULT_TOPOLOGY_ORIENTATION)
     const isHorizontal = ref(
         props.horizontalDefault ??
-        (isHorizontalLS.value !== undefined
-            ? isHorizontalLS.value?.toString() === "true"
-            : defaultTopologyOrientation === topologyOrientations.HORIZONTAL),
+            (isHorizontalLS.value !== undefined
+                ? isHorizontalLS.value?.toString() === "true"
+                : defaultTopologyOrientation === topologyOrientations.HORIZONTAL),
     )
 
     watch(() => props.horizontalDefault, (value) => {

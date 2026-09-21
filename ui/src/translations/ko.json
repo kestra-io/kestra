@@ -213,7 +213,6 @@
     "executionProgress": {
       "title": "실행 진행률",
       "estimatedRemaining": "예상 남은 시간: {duration}",
-      "noBaseline": "이력 데이터가 없어 남은 시간을 추정할 수 없습니다",
       "pastEstimate": "평소보다 오래 실행되고 있습니다"
     },
     "launch execution": "실행",
@@ -1061,6 +1060,7 @@
       },
       "revisions": {
         "history": "수정 기록",
+        "load_error": "리비전 {revision}을(를) 불러올 수 없습니다. 삭제되었을 수 있습니다.",
         "restore": {
           "success": "파일 수정이 성공적으로 복원되었습니다."
         }
@@ -2434,8 +2434,8 @@
       "next_match": "다음 일치",
       "no_results_description": "namespace를 확장하거나, 범위를 '모든 소스'로 다시 전환하거나, '대소문자 일치' 및 '단어 전체 일치'를 끄십시오.",
       "no_results_hidden_type": "선택하지 않은 {type}에서 {count}개의 일치 항목을 찾았습니다. | 선택하지 않은 {type}에서 {count}개의 일치 항목을 찾았습니다.",
-      "no_results_in_types": "{types}에서 {query}와 일치하는 항목이 없습니다",
       "no_results_title": "\"{query}\"에 대한 일치 항목 없음",
+      "did_you_mean": "{suggestion}을(를) 말씀하시는 건가요?",
       "open_flow": "flow 열기",
       "open_in_editor": "에디터에서 열기",
       "open_in_kv": "KV Store에서 열기",

@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 
 import io.kestra.core.exceptions.InvalidQueryFiltersException;
 import io.kestra.core.models.QueryFilter;
+import io.kestra.core.utils.QueryFilterTestUtils;
 import io.kestra.webserver.utils.RequestUtils;
 
 import io.micronaut.http.HttpRequest;
@@ -372,5 +373,42 @@ class QueryFilterFormatBinderTest {
         assertEquals(1, filters.size());
         assertEquals(QueryFilter.Logical.OR, filters.getFirst().logical());
         assertEquals(2, filters.getFirst().children().size());
+    }
+
+    @Test
+    void shouldRoundTripNestedFiltersSerializedByTheTestUtils() {
+        // GIVEN — the nested OR/AND tree that controller tests feed through QueryFilterTestUtils
+        QueryFilter nested = QueryFilter.builder()
+            .logical(QueryFilter.Logical.OR)
+            .children(
+                List.of(
+                    QueryFilter.builder()
+                        .field(QueryFilter.Field.NAMESPACE).operation(QueryFilter.Op.EQUALS).value("io.kestra.test")
+                        .build(),
+                    QueryFilter.builder()
+                        .logical(QueryFilter.Logical.AND)
+                        .children(
+                            List.of(
+                                QueryFilter.builder()
+                                    .field(QueryFilter.Field.ID).operation(QueryFilter.Op.EQUALS).value("io.kestra.test")
+                                    .build(),
+                                QueryFilter.builder()
+                                    .field(QueryFilter.Field.RESOURCES).operation(QueryFilter.Op.IN).value(List.of("NAMESPACE"))
+                                    .build()
+                            )
+                        )
+                        .build()
+                )
+            )
+            .build();
+
+        // WHEN
+        Map<String, List<String>> queryParams = QueryFilterTestUtils.toQueryParams(List.of(nested))
+            .entrySet().stream()
+            .collect(Collectors.toMap(Map.Entry::getKey, e -> List.of(e.getValue())));
+        List<QueryFilter> filters = QueryFilterFormatBinder.getQueryFilters(queryParams);
+
+        // THEN — the tree survives the URL round-trip unchanged
+        assertEquals(List.of(nested), filters);
     }
 }

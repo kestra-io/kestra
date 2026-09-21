@@ -1,5 +1,5 @@
 import axios from "axios"
-import cloneDeep from "lodash/cloneDeep"
+import {cloneDeep} from "@kestra-io/design-system"
 import {defineStore} from "pinia"
 import {ref} from "vue"
 import {useMiscStore} from "override/stores/misc"

@@ -213,7 +213,6 @@
     "executionProgress": {
       "title": "Progreso de la ejecución",
       "estimatedRemaining": "Tiempo restante estimado: {duration}",
-      "noBaseline": "Sin datos históricos — no se puede estimar el tiempo restante",
       "pastEstimate": "Se está ejecutando más de lo habitual"
     },
     "launch execution": "Ejecutar",
@@ -1061,6 +1060,7 @@
       },
       "revisions": {
         "history": "Historial de revisiones",
+        "load_error": "No se pudo cargar la revisión {revision}; es posible que se haya eliminado.",
         "restore": {
           "success": "Revisión del archivo restaurada con éxito"
         }
@@ -2434,8 +2434,8 @@
       "next_match": "Siguiente coincidencia",
       "no_results_description": "Intenta ampliar el namespace, cambiar el ámbito a \"All source\" o desactivar \"Match case\" y \"Match whole word\".",
       "no_results_hidden_type": "Se encontró {count} coincidencia en {type}, que no has seleccionado. | Se encontraron {count} coincidencias en {type}, que no has seleccionado.",
-      "no_results_in_types": "Sin coincidencias para {query} en {types}",
       "no_results_title": "No hay coincidencias para \"{query}\"",
+      "did_you_mean": "¿Te referías a {suggestion}?",
       "open_flow": "Abrir flow",
       "open_in_editor": "Abrir en el editor",
       "open_in_kv": "Abrir en el KV Store",

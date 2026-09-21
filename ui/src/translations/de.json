@@ -213,7 +213,6 @@
     "executionProgress": {
       "title": "Execution-Fortschritt",
       "estimatedRemaining": "Geschätzte Restzeit: {duration}",
-      "noBaseline": "Keine historischen Daten, die Restzeit kann nicht geschätzt werden",
       "pastEstimate": "Läuft länger als üblich"
     },
     "launch execution": "Ausführen",
@@ -1061,6 +1060,7 @@
       },
       "revisions": {
         "history": "Revisionsverlauf",
+        "load_error": "Revision {revision} konnte nicht geladen werden; sie wurde möglicherweise gelöscht.",
         "restore": {
           "success": "Dateirevision erfolgreich wiederhergestellt"
         }
@@ -2434,8 +2434,8 @@
       "next_match": "Nächste Übereinstimmung",
       "no_results_description": "Versuche, den Namespace zu erweitern, den Bereich auf „Alle Quellen“ zurückzustellen oder „Groß-/Kleinschreibung beachten“ und „Ganzes Wort“ zu deaktivieren.",
       "no_results_hidden_type": "{count} Treffer in {type} gefunden, das du nicht ausgewählt hast. | {count} Treffer in {type} gefunden, das du nicht ausgewählt hast.",
-      "no_results_in_types": "Keine Treffer für {query} in {types}",
       "no_results_title": "Keine Übereinstimmungen für „{query}“",
+      "did_you_mean": "Meintest du {suggestion}?",
       "open_flow": "Flow öffnen",
       "open_in_editor": "Im Editor öffnen",
       "open_in_kv": "Im KV Store öffnen",

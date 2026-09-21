@@ -213,7 +213,6 @@
     "executionProgress": {
       "title": "निष्पादन प्रगति",
       "estimatedRemaining": "अनुमानित शेष समय: {duration}",
-      "noBaseline": "कोई ऐतिहासिक डेटा नहीं — शेष समय का अनुमान नहीं लगाया जा सकता",
       "pastEstimate": "सामान्य से अधिक समय ले रहा है"
     },
     "launch execution": "निष्पादित करें",
@@ -1061,6 +1060,7 @@
       },
       "revisions": {
         "history": "संशोधन इतिहास",
+        "load_error": "रिवीज़न {revision} लोड नहीं किया जा सका; हो सकता है इसे हटा दिया गया हो।",
         "restore": {
           "success": "फ़ाइल संशोधन सफलतापूर्वक पुनर्स्थापित किया गया"
         }
@@ -2434,8 +2434,8 @@
       "next_match": "अगला मिलान",
       "no_results_description": "namespace को विस्तृत करने का प्रयास करें, स्कोप को वापस All source पर स्विच करें, या Match case और Match whole word को बंद करें।",
       "no_results_hidden_type": "आपके द्वारा न चुने गए {type} में {count} मिलान मिला। | आपके द्वारा न चुने गए {type} में {count} मिलान मिले।",
-      "no_results_in_types": "{types} में {query} के लिए कोई मिलान नहीं",
       "no_results_title": "“{query}” के लिए कोई मिलान नहीं मिला",
+      "did_you_mean": "क्या आपका मतलब {suggestion} था?",
       "open_flow": "flow खोलें",
       "open_in_editor": "एडिटर में खोलें",
       "open_in_kv": "KV Store में खोलें",

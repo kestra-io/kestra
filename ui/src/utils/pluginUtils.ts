@@ -3,6 +3,7 @@ export type PluginElement = {
     deprecated?: boolean;
     title?: string;
     description?: string;
+    aliases?: string[];
 };
 
 export type PluginAuthor = {

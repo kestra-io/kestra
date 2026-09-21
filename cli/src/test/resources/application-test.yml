@@ -1,7 +1,3 @@
-endpoints:
-  env:
-    enabled: true
-
 kestra:
   repository:
     type: h2

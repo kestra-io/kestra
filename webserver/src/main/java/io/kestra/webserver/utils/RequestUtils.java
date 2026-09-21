@@ -7,8 +7,10 @@ import java.util.stream.Stream;
 import io.kestra.core.models.flows.FlowScope;
 import io.kestra.core.utils.TypeConverter;
 
+import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.exceptions.HttpStatusException;
+import io.micronaut.http.server.util.ProxyHeaderParser;
 
 public class RequestUtils {
     private static final String QUERY_STRING_SEPARATOR = ":";
@@ -65,6 +67,18 @@ public class RequestUtils {
                 }
             })
             .collect(Collectors.toList());
+    }
+
+    /**
+     * Whether the request reached Kestra over HTTPS, either directly or via a TLS-terminating reverse proxy that
+     * forwarded it as plain HTTP. A forwarded scheme can only make the result more secure, never less, so trusting
+     * it needs no allow-list of proxies: {@code request.isSecure()} already covers the direct-HTTPS case.
+     *
+     * @param request the request
+     * @return {@code true} if the request is secure, directly or per a {@code Forwarded}/{@code X-Forwarded-Proto} header
+     */
+    public static boolean isSecure(HttpRequest<?> request) {
+        return request.isSecure() || "https".equalsIgnoreCase(new ProxyHeaderParser(request).getScheme());
     }
 
 }

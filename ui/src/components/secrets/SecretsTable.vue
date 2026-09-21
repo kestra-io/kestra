@@ -141,7 +141,7 @@
             v-if="addSecretDrawerVisible"
             v-model="addSecretDrawerVisible"
             :title="secretModalTitle"
-            :beforeClose="beforeSecretClose"
+            :dirty="isSecretDirty"
             formLayout
             scrollable
         >
@@ -198,10 +198,10 @@
                             </KsButton>
                         </div>
                     </template>
-                    <div class="secret-tag-row" v-for="(tag, index) in secret.tags" :key="index">
+                    <div class="secret-tag-row" v-for="(tag, index) in secret.tags" :key="rowKey(tag)">
                         <KsInput class="tag-key" required v-model="tag.key" :placeholder="$t('key')" />
                         <KsInput class="tag-value" required v-model="tag.value" :placeholder="$t('value')" />
-                        <KsButton :icon="Delete" @click="removeSecretTag(index)" />
+                        <KsButton :aria-label="$t('delete')" :icon="Delete" @click="removeSecretTag(index)" />
                     </div>
                 </KsFormItem>
             </KsForm>
@@ -223,7 +223,6 @@
     import {useRoute, useRouter} from "vue-router"
     import type {FormInstance} from "@kestra-io/design-system"
     import {ref, computed, watch, nextTick, useTemplateRef} from "vue"
-    import _merge from "lodash/merge"
 
     import Lock from "vue-material-design-icons/Lock.vue"
     import Plus from "vue-material-design-icons/Plus.vue"
@@ -232,7 +231,7 @@
     import ContentSave from "vue-material-design-icons/ContentSave.vue"
     import FileDocumentEdit from "vue-material-design-icons/FileDocumentEdit.vue"
 
-    import {KsId, KsIconButton, KsPassword} from "@kestra-io/design-system"
+    import {KsId, KsIconButton, KsPassword, rowKey, deepMerge} from "@kestra-io/design-system"
     import Labels from "../layout/Labels.vue"
     import {KsFilter as KSFilter} from "@kestra-io/design-system"
     import {routeQueryToQueryFilters} from "../../utils/queryFilters"
@@ -247,9 +246,8 @@
     import {useAuthStore} from "override/stores/auth"
     import {useNamespacesStore} from "override/stores/namespaces"
     import {useApiStore} from "../../stores/api"
-    import {useSecretsFilter} from "../filter/configurations"
-    import {useTableColumns} from "../../composables/useTableColumns"
-    import {useDiscardGuard} from "../../composables/useDiscardGuard"
+    import {useSecretsFilter} from "../filter/configurations/secretsFilter"
+    import {useTableColumns} from "@kestra-io/design-system"
 
     const secretsFilter = useSecretsFilter()
 
@@ -320,8 +318,7 @@
     })
 
     const secretBaseline = ref("")
-    const {guardedClose: guardSecretClose} = useDiscardGuard(() => JSON.stringify(secret.value) !== secretBaseline.value)
-    const beforeSecretClose = (done: () => void) => guardSecretClose(() => done())
+    const isSecretDirty = computed(() => JSON.stringify(secret.value) !== secretBaseline.value)
 
     const hasNamespaceColumn = props.namespace === undefined || props.namespaceColumn
 
@@ -457,7 +454,7 @@
         const nonFilterRest = Object.fromEntries(
             Object.entries(rest).filter(([key]) => !key.startsWith("filters[")),
         )
-        return _merge(base, nonFilterRest)
+        return deepMerge(base, nonFilterRest)
     }
 
     const namespaceFilter = (namespace: string) =>

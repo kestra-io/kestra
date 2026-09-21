@@ -15,6 +15,7 @@ import org.jooq.*;
 import org.jooq.Record;
 import org.jooq.impl.DSL;
 
+import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.dashboards.ColumnDescriptor;
 import io.kestra.core.models.dashboards.DataFilter;
 import io.kestra.core.models.dashboards.DataFilterKPI;
@@ -187,7 +188,7 @@ public abstract class AbstractJdbcMetricRepository extends AbstractJdbcCrudRepos
 
     @Override
     protected Condition defaultFilter(String tenantId) {
-        return buildTenantCondition(tenantId);
+        return buildTenantCondition(tenantId).and(aclCondition(QueryFilter.Resource.EXECUTION));
     }
 
     @Override

@@ -42,7 +42,9 @@
             </span>
         </template>
         <template #title-actions>
-            <NodeMenu :actions="actions" />
+            <slot name="taskActions" :task="data.node.task" :actions="actions" :execution="taskExecution" :taskRuns="taskRunsWithDynamicChildren" :taskRun="taskRuns[0]">
+                <NodeMenu :actions="actions" />
+            </slot>
         </template>
     </BasicNode>
     <Handle type="target" :position="targetPosition" />
@@ -50,10 +52,9 @@
 
 <script setup lang="ts">
     import {computed, inject} from "vue"
-    import moment from "moment"
     import {useI18n} from "vue-i18n"
     import {Handle, Position} from "@vue-flow/core"
-    import {State, KsTooltip, SECTIONS} from "@kestra-io/design-system"
+    import {State, KsTooltip, SECTIONS, dayjs} from "@kestra-io/design-system"
     import {type CustomActionConfig, type ShowDetailsConfig, EVENTS} from "../utils/constants"
     import Duration from "../misc/Duration.vue"
     import * as Utils from "../utils/utils"
@@ -212,7 +213,7 @@
             return executionId === execution?.value?.id
                 ? execution?.value
                 : Object.values(subflowsExecutions?.value || {})
-                    .find((exec: any) => exec.id === executionId)
+                    .find(exec => exec.id === executionId)
         }
         return undefined
     })
@@ -284,7 +285,7 @@
         const run = taskRuns.value?.[0]
         if (!run?.state?.histories?.length) return []
         return run.state.histories.map((h: {date: string; state: string}) => ({
-            date: moment(h.date),
+            date: dayjs(h.date),
             state: h.state,
         }))
     })

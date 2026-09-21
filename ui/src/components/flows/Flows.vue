@@ -212,14 +212,17 @@
                     className="row-graph"
                 >
                     <template #default="scope">
-                        <TimeSeries
-                            :chart="mappedChart(scope.row.id, scope.row.namespace)"
-                            :filters="chartFilters()"
-                            showDefault
-                            short
-                            :flow="scope.row.id"
-                            :namespace="scope.row.namespace"
-                        />
+                        <div :ref="(el) => observeChartBlock(el, chartKey(scope.row))" class="row-graph-cell">
+                            <TimeSeries
+                                v-if="activatedCharts.has(chartKey(scope.row))"
+                                :chart="mappedChart(scope.row.id, scope.row.namespace)"
+                                :filters="chartFilters()"
+                                showDefault
+                                short
+                                :flow="scope.row.id"
+                                :namespace="scope.row.namespace"
+                            />
+                        </div>
                     </template>
                 </KsTableColumn>
 
@@ -303,10 +306,9 @@
     import {ref, computed, useTemplateRef, watch} from "vue"
     import {useRoute, useRouter} from "vue-router"
     import {useI18n} from "vue-i18n"
-    import _merge from "lodash/merge"
     import BreakableText from "../BreakableText"
     import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
-    import {useFlowFilter} from "../filter/configurations"
+    import {useFlowFilter} from "../filter/configurations/flowFilter"
     import useRestoreUrl from "../../composables/useRestoreUrl"
 
     const {loadInit} = useRestoreUrl()
@@ -324,7 +326,7 @@
     import FileDocumentRemoveOutline from "vue-material-design-icons/FileDocumentRemoveOutline.vue"
     import Play from "vue-material-design-icons/Play.vue"
 
-    import {KsExecutionStatus, KsIconButton} from "@kestra-io/design-system"
+    import {KsExecutionStatus, KsIconButton, deepMerge} from "@kestra-io/design-system"
     import Labels from "../layout/Labels.vue"
     import TriggerAvatar from "./TriggerAvatar.vue"
 
@@ -333,6 +335,7 @@
     import {KsFilter as KSFilter, type FilterConfiguration} from "@kestra-io/design-system"
     import MarkdownTooltip from "../layout/MarkdownTooltip.vue"
     import TimeSeries from "../dashboard/sections/TimeSeries.vue"
+    import {useLazyChartBlocks} from "../dashboard/composables/useLazyChartBlocks"
     import type {Chart} from "../dashboard/types"
     import TopNavBar from "../../components/layout/TopNavBar.vue"
 
@@ -347,7 +350,7 @@
     import {useMiscStore} from "override/stores/misc"
     import {useExecutionsStore} from "../../stores/executions"
 
-    import {useTableColumns, type ColumnConfig} from "../../composables/useTableColumns"
+    import {useTableColumns, type ColumnConfig} from "@kestra-io/design-system"
     import useRouteContext from "../../composables/useRouteContext"
     import {useFlowsTableExtension} from "override/components/flows/flowsTableExtension"
     import {QueryFilter} from "@kestra-io/kestra-sdk"
@@ -633,7 +636,7 @@
         if (props.namespace) {
             queryFilter["filters[namespace][PREFIX]"] = route.params.id || props.namespace
         }
-        return _merge(base, queryFilter)
+        return deepMerge(base, queryFilter)
     }
 
     function refresh() {
@@ -647,6 +650,12 @@
         if (row.row.draft) classes.push("draft")
         return classes.join(" ")
     }
+
+    // One chart per row means one preview request per row on arrival. Rows only load once their cell
+    // nears the viewport, and are never recycled: remounting would re-issue the request we are saving.
+    const {activatedCharts, observeChartBlock} = useLazyChartBlocks(() => false)
+
+    const chartKey = (row: {id: string; namespace: string}) => `${row.namespace}/${row.id}`
 
     function mappedChart(id: string, namespace: string) {
         let MAPPED_CHARTS = JSON.parse(JSON.stringify(CHART_DEFINITION))

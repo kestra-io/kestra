@@ -13,7 +13,7 @@ import static java.lang.annotation.ElementType.*;
 
 /**
  * Constrains a string to a RFC 1123 hostname label: lowercase alphanumerics
- * and hyphens, must start and end with an alphanumeric, max 64 characters.
+ * and hyphens, must start and end with an alphanumeric, max 63 characters.
  *
  * <p>
  * Used as a single source of truth for label-like identifiers such as
@@ -24,7 +24,7 @@ import static java.lang.annotation.ElementType.*;
 @Target({ METHOD, FIELD, ANNOTATION_TYPE, CONSTRUCTOR, PARAMETER, TYPE_USE })
 public @interface Rfc1123Label {
     String message() default "must be an RFC 1123 label (lowercase alphanumerics and hyphens, "
-        + "must start and end with alphanumeric, max 64 chars), got '${validatedValue}'";
+        + "must start and end with alphanumeric, max 63 chars), got '${validatedValue}'";
 
     Class<?>[] groups() default {};
 

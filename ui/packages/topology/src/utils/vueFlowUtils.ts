@@ -3,14 +3,19 @@ import type {GraphNode, GraphEdge, Elements} from "@vue-flow/core"
 import * as dagre from "dagre"
 import * as Utils from "./utils"
 import {CLUSTER_PREFIX, NODE_SIZES} from "./constants"
-import isEqual from "lodash/isEqual"
+import {isDeepEqual} from "@kestra-io/design-system"
 
 const TRIGGERS_NODE_UID = "root.Triggers"
 
-enum BranchType {
+export enum BranchType {
     ERROR = "ERROR",
     FINALLY = "FINALLY",
     AFTER_EXECUTION = "AFTER_EXECUTION",
+}
+
+/** Only what the graph reads off an execution; the package has no `@kestra-io/kestra-sdk` dependency. */
+export interface GraphExecution {
+    id?: string;
 }
 
 interface MinimalNode {
@@ -758,7 +763,7 @@ export function areTasksIdenticalInGraphUntilTask(
             ) {
                 return false
             }
-            if (!isEqual(prevTaskValue, currentTaskValue)) return false
+            if (!isDeepEqual(prevTaskValue, currentTaskValue)) return false
         }
     } while (previousRootTaskNodes.length && currentRootTaskNodes.length && failIndex-- > 0)
 

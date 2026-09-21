@@ -20,6 +20,11 @@
     import {useDocStore} from "../../stores/doc"
     import ContextDocsLink from "../docs/ContextDocsLink.vue"
 
+    interface ChildMetadata {
+        title?: string
+        description?: string
+    }
+
     const docStore = useDocStore()
 
     const props = defineProps<{
@@ -27,7 +32,7 @@
         title: string
     }>()
 
-    let navigation = await docStore.children(props.directory) as Record<string, any>
+    let navigation = await docStore.children(props.directory) as Record<string, ChildMetadata>
 
     // avoid null values in navigation
     const protectedNavigation = computed(() => {

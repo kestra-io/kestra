@@ -106,19 +106,18 @@ export function useFilesPanels(panels: Ref<Panel[]>, namespace: Ref<string | und
 
             if (tabIndex > -1) {
                 closed = true
-                // if the closed tab is the active one,
-                // we need to set a new active tab
+                const wasActive = panel.activeTab?.uid === uid
                 panel.tabs.splice(tabIndex, 1)
-                if (panel.tabs.length === 0) {
-                    // if no tabs left, remove the panel
-                    continue
+                // Only move the active tab when the one just closed was active; closing a
+                // background tab must leave the user's current tab in place.
+                if (wasActive && panel.tabs.length > 0) {
+                    panel.activeTab = panel.tabs[
+                        Math.min(
+                            tabIndex,
+                            panel.tabs.length - 1,
+                        )
+                    ]
                 }
-                panel.activeTab = panel.tabs[
-                    Math.min(
-                        tabIndex,
-                        panel.tabs.length - 1,
-                    )
-                ]
             }
         }
         return closed

@@ -1,7 +1,5 @@
 import {describe, expect, it} from "vitest"
 import {computed, ref} from "vue"
-import {mount} from "@vue/test-utils"
-import {createI18n} from "vue-i18n"
 import TaskNode from "../../../src/nodes/TaskNode.vue"
 import NodeMenu from "../../../src/nodes/NodeMenu.vue"
 import {
@@ -10,13 +8,7 @@ import {
     SHOW_EXTRA_DETAILS_INJECTION_KEY,
 } from "../../../src/injectionKeys"
 
-const i18n = createI18n({
-    legacy: false,
-    locale: "en",
-    messages: {en: {}},
-    missingWarn: false,
-    fallbackWarn: false,
-})
+import {i18nMount} from "../../../../../tests/unit/i18nMount"
 
 const TASK = {
     id: "my-task",
@@ -46,7 +38,7 @@ function mountTaskNode({execution, taskRuns = [], replayEnabled = false, task = 
     isReadOnly?: boolean,
     isFlowable?: boolean,
 }) {
-    return mount(TaskNode, {
+    return i18nMount(TaskNode, {
         props: {
             id: "root.my-task",
             data: {
@@ -65,7 +57,6 @@ function mountTaskNode({execution, taskRuns = [], replayEnabled = false, task = 
             replayEnabled,
         },
         global: {
-            plugins: [i18n],
             stubs: {
                 Handle: true,
                 NodeMenu: true,
@@ -189,5 +180,64 @@ describe("TaskNode actions", () => {
         const emitted = wrapper.emitted("replayTask")
         expect(emitted).toHaveLength(1)
         expect(emitted![0][0]).toMatchObject({id: "my-task", taskRuns: runs})
+    })
+
+    it("should replace NodeMenu when the taskActions slot is provided, and support filtering actions", () => {
+        const wrapper = i18nMount(TaskNode, {
+            props: {
+                id: "root.my-task",
+                data: {
+                    node: {
+                        uid: "root.my-task",
+                        type: "io.kestra.core.models.hierarchies.GraphTask",
+                        task: TASK,
+                        taskRun: taskRun({result: "value"}),
+                    },
+                    executionId: EXECUTION_ID,
+                    isReadOnly: true,
+                },
+                playgroundEnabled: false,
+                playgroundReadyToStart: false,
+                replayEnabled: true,
+            },
+            global: {
+                stubs: {
+                    Handle: true,
+                    NodeMenu: true,
+                    BasicNode: {
+                        template: "<div><slot name='title-actions'/></div>",
+                    },
+                },
+                provide: {
+                    [EXECUTION_INJECTION_KEY as symbol]: computed(() => ({
+                        id: EXECUTION_ID,
+                        taskRunList: [taskRun({result: "value"})],
+                        state: {current: "SUCCESS"},
+                    })),
+                    [SUBFLOWS_EXECUTIONS_INJECTION_KEY as symbol]: computed(() => ({})),
+                    [SHOW_EXTRA_DETAILS_INJECTION_KEY as symbol]: ref(false),
+                },
+            },
+            slots: {
+                taskActions: `
+                    <template #default="{actions}">
+                        <div id="custom-menu">
+                            <span v-for="action in actions.filter(a => !['outputs', 'replay', 'edit'].includes(a.key))" :key="action.key" class="filtered-action">
+                                {{ action.key }}
+                            </span>
+                        </div>
+                    </template>
+                `,
+            },
+        })
+
+        expect(wrapper.findComponent(NodeMenu).exists()).toBe(false)
+        expect(wrapper.find("#custom-menu").exists()).toBe(true)
+
+        const actionKeys = wrapper.findAll(".filtered-action").map((w) => w.text())
+        expect(actionKeys).toContain("logs") // Not filtered out
+        expect(actionKeys).not.toContain("outputs") // Filtered out
+        expect(actionKeys).not.toContain("replay") // Filtered out
+        expect(actionKeys).not.toContain("edit") // Filtered out
     })
 })

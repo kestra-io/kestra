@@ -1,11 +1,9 @@
 import {describe, test, expect, vi, afterEach} from "vitest"
-import {mount} from "@vue/test-utils"
 import {computed, ref} from "vue"
-import {createI18n} from "vue-i18n"
-import KestraDesignSystem from "../../../../src/index"
 import AdvancedFilterBuilder from "../../../../src/components/Data/KsDataTable/filter/AdvancedFilterBuilder.vue"
 import {FILTER_CONTEXT_INJECTION_KEY} from "../../../../src/components/Data/KsDataTable/filter/utils/filterInjectionKeys"
 import type {FilterContext} from "../../../../src/components/Data/KsDataTable/filter/utils/filterInjectionKeys"
+import {i18nMount} from "../../i18nMount"
 
 const makeCtx = (): FilterContext => ({
     groups: computed(() => []),
@@ -58,7 +56,6 @@ const makeCtx = (): FilterContext => ({
 })
 
 const globalConfig = {
-    plugins: [createI18n({legacy: false, locale: "en"}), KestraDesignSystem],
     provide: {[FILTER_CONTEXT_INJECTION_KEY as symbol]: makeCtx()},
 }
 
@@ -68,7 +65,7 @@ afterEach(() => {
 
 describe("AdvancedFilterBuilder", () => {
     test("panel has role=dialog when open", async () => {
-        mount(AdvancedFilterBuilder, {
+        i18nMount(AdvancedFilterBuilder, {
             props: {modelValue: true},
             global: globalConfig,
             attachTo: document.body,
@@ -79,7 +76,7 @@ describe("AdvancedFilterBuilder", () => {
     })
 
     test("panel has aria-modal=true when open", async () => {
-        mount(AdvancedFilterBuilder, {
+        i18nMount(AdvancedFilterBuilder, {
             props: {modelValue: true},
             global: globalConfig,
             attachTo: document.body,
@@ -89,7 +86,7 @@ describe("AdvancedFilterBuilder", () => {
     })
 
     test("panel has an accessible label when open", async () => {
-        mount(AdvancedFilterBuilder, {
+        i18nMount(AdvancedFilterBuilder, {
             props: {modelValue: true},
             global: globalConfig,
             attachTo: document.body,
@@ -99,7 +96,7 @@ describe("AdvancedFilterBuilder", () => {
     })
 
     test("Escape key closes the panel", async () => {
-        const wrapper = mount(AdvancedFilterBuilder, {
+        const wrapper = i18nMount(AdvancedFilterBuilder, {
             props: {modelValue: true},
             global: globalConfig,
             attachTo: document.body,
@@ -111,7 +108,7 @@ describe("AdvancedFilterBuilder", () => {
 
     test("adds resize listener to window when panel opens", async () => {
         const addSpy = vi.spyOn(window, "addEventListener")
-        const wrapper = mount(AdvancedFilterBuilder, {
+        const wrapper = i18nMount(AdvancedFilterBuilder, {
             props: {modelValue: false},
             global: globalConfig,
             attachTo: document.body,
@@ -123,7 +120,7 @@ describe("AdvancedFilterBuilder", () => {
 
     test("removes resize listener from window when panel closes", async () => {
         const removeSpy = vi.spyOn(window, "removeEventListener")
-        const wrapper = mount(AdvancedFilterBuilder, {
+        const wrapper = i18nMount(AdvancedFilterBuilder, {
             props: {modelValue: true},
             global: globalConfig,
             attachTo: document.body,

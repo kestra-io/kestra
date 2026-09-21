@@ -86,7 +86,7 @@
 
     const options = computed(() => {
         return namespacesStore.autocomplete === undefined ? [] : namespacesStore.autocomplete
-            .map((value: any) => {
+            .map((value) => {
                 return {id: value, label: value}
             })
     })

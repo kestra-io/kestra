@@ -150,6 +150,10 @@ export const useFlowStore = defineStore("flow", () => {
     const flowYaml = ref<string>("")
     const flowYamlOrigin = ref<string>("")
     const previewSource = ref<string | undefined>(undefined)
+    /** Registered by `CopilotChat.vue` (mirrors `filesSaveAll`'s pattern) so `FlowFileEditorTab.vue`'s
+     *  read-only-preview banner can decline the active `previewSource` without depending on the AI
+     *  dock's internal state directly. */
+    const declinePreview = ref<(() => void) | null>(null)
     const expandedSubflows = ref<string[]>([])
     const creationId = ref<string>()
 
@@ -247,10 +251,16 @@ export const useFlowStore = defineStore("flow", () => {
         return save(false)
     }
 
-    async function onEdit({source, topologyVisible}: {
+    async function onEdit({source, topologyVisible, metadataGuarded}: {
         source: string,
         editorViewType?: string,
-        topologyVisible?: boolean
+        topologyVisible?: boolean,
+        /**
+         * Set by an editor that already prevents id/namespace from being edited.
+         * There the warning would explain a change the user was never able to
+         * make; every other caller still needs it.
+         */
+        metadataGuarded?: boolean
     }): Promise<FlowValidations | undefined> {
         const flowBeforeEdit = flow.value
         const flowOnValidation = flowParsed.value
@@ -267,7 +277,7 @@ export const useFlowStore = defineStore("flow", () => {
                         (flowOnValidation.id !== flowBeforeEdit.id ||
                             flowOnValidation.namespace !== flowBeforeEdit.namespace)) {
 
-                    if (!readonlyToastShown.value) {
+                    if (!metadataGuarded && !readonlyToastShown.value) {
                         readonlyToastShown.value = true
                         coreStore.message = {
                             variant: "warning",
@@ -1049,6 +1059,7 @@ function deleteFlowAndDependencies() {
         flowYaml,
         flowYamlOrigin,
         previewSource,
+        declinePreview,
         haveChange,
         expandedSubflows,
         addTrigger,

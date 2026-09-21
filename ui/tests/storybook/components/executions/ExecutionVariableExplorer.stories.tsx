@@ -10,11 +10,18 @@ import ExecutionVariableExplorer from "../../../../src/components/executions/out
 // `vi.mock("@kestra-io/kestra-sdk/outputs")` would be a silent no-op here, because the SDK is a
 // pre-bundled dependency the vitest browser mocker cannot intercept.
 const OUTPUTS_INFORMATION = [
+    {taskId: "extract", taskRunId: "run-extract", value: null, iteration: null, inline: false},
     {taskId: "http_request", taskRunId: "run-http", value: null, iteration: null, inline: false},
     {taskId: "check_status", taskRunId: "run-check", value: null, iteration: null, inline: false},
 ];
 
 const OUTPUTS_BY_TASK_RUN_ID: Record<string, Record<string, unknown>> = {
+    "run-extract": {
+        uri: "kestra:///company/team/executions/test-exec-id/file.json",
+        code: 201,
+        length: 44090,
+        headers: {"content-type": "application/json"},
+    },
     "run-http": {code: 200, body: "healthy"},
     "run-check": {passed: true},
 };
@@ -31,6 +38,7 @@ const FAKE_EXECUTION = {
     namespace: "company.team",
     state: {current: "SUCCESS", startDate: "2025-01-01T00:00:00Z", duration: "PT1S"},
     taskRunList: [
+        {id: "run-extract", taskId: "extract"},
         {id: "run-http", taskId: "http_request"},
         {id: "run-check", taskId: "check_status"},
     ],
@@ -83,8 +91,10 @@ const meta: Meta<typeof ExecutionVariableExplorer> = {
     beforeEach() {
         mockStoryApiRoutes({
             [`GET /outputs/tasks/${FAKE_EXECUTION.id}`]: OUTPUTS_INFORMATION,
+            [`GET /outputs/tasks/${FAKE_EXECUTION.id}/run-extract`]: OUTPUTS_BY_TASK_RUN_ID["run-extract"],
             [`GET /outputs/tasks/${FAKE_EXECUTION.id}/run-http`]: OUTPUTS_BY_TASK_RUN_ID["run-http"],
             [`GET /outputs/tasks/${FAKE_EXECUTION.id}/run-check`]: OUTPUTS_BY_TASK_RUN_ID["run-check"],
+            [`GET /executions/${FAKE_EXECUTION.id}/file/metas`]: {size: 44090},
         });
     },
 };
@@ -165,5 +175,18 @@ export const SearchFiltersTaskOutputs: Story = {
             },
             {timeout: 5000},
         );
+    },
+};
+
+export const FileTaskOutputDetails: Story = {
+    play: async ({canvasElement}: {canvasElement: HTMLElement}) => {
+        const canvas = within(canvasElement);
+        await userEvent.click(await waitFor(() => canvas.getByText("extract"), {timeout: 5000}));
+
+        await waitFor(() => {
+            expect(canvas.getByText(/"length"/)).toBeTruthy();
+            expect(canvas.getByText(/44090/)).toBeTruthy();
+            expect(canvas.getByText(/"headers"/)).toBeTruthy();
+        }, {timeout: 5000});
     },
 };

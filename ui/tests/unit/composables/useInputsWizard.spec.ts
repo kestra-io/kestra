@@ -1,7 +1,8 @@
 import {describe, test, expect, afterEach} from "vitest"
 import {defineComponent, ref, reactive} from "vue"
-import {mount, flushPromises} from "@vue/test-utils"
-import {createI18n} from "vue-i18n"
+import {flushPromises} from "@vue/test-utils"
+import {i18nMount} from "../i18nMount"
+
 import {useInputsWizard} from "../../../src/composables/useInputsWizard"
 import {executeFormValuesStorageKey} from "../../../src/utils/inputs"
 import type {InputMetaData} from "../../../src/stores/executions"
@@ -32,7 +33,7 @@ function mountWizard(meta: InputMetaData[], flow?: {tenantId?: string; namespace
             return () => null
         },
     })
-    mount(Comp, {global: {plugins: [createI18n({legacy: false, locale: "en"})]}})
+    i18nMount(Comp)
     return {api, inputsValues, inputsMetaData}
 }
 

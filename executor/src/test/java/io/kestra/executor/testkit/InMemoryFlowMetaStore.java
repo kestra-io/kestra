@@ -1,0 +1,68 @@
+package io.kestra.executor.testkit;
+
+import java.util.Collection;
+import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
+
+import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.flows.FlowInterface;
+import io.kestra.core.models.flows.FlowWithSource;
+import io.kestra.core.runners.FlowMetaStoreInterface;
+import io.kestra.core.runners.ProcessedFlow;
+
+/**
+ * Map-backed {@link FlowMetaStoreInterface}. Flows must be registered up-front with
+ * {@link #register(FlowWithSource)}; they are returned as-is (no plugin-defaults injection).
+ */
+public class InMemoryFlowMetaStore implements FlowMetaStoreInterface {
+    private final Map<String, FlowWithSource> flows = new ConcurrentHashMap<>();
+
+    public void register(FlowWithSource flow) {
+        flows.put(key(flow.getTenantId(), flow.getNamespace(), flow.getId()), flow);
+    }
+
+    @Override
+    public boolean isNamespaceExists(String tenant, String namespace) {
+        return flows.values().stream()
+            .anyMatch(flow -> flow.getTenantId().equals(tenant) && flow.getNamespace().startsWith(namespace));
+    }
+
+    @Override
+    public Collection<FlowWithSource> allLastVersion() {
+        return flows.values();
+    }
+
+    @Override
+    public Optional<FlowInterface> findById(String tenantId, String namespace, String id, Optional<Integer> revision) {
+        return Optional.ofNullable(flows.get(key(tenantId, namespace, id)));
+    }
+
+    @Override
+    public Optional<FlowInterface> findByExecution(Execution execution) {
+        // unlike the interface default, does not require a flow revision on the execution:
+        // fixture flows are registered as single latest versions
+        return Optional.ofNullable(flows.get(key(execution.getTenantId(), execution.getNamespace(), execution.getFlowId())));
+    }
+
+    @Override
+    public Optional<FlowWithSource> findByExecutionForRuntime(Execution execution) {
+        return Optional.ofNullable(flows.get(key(execution.getTenantId(), execution.getNamespace(), execution.getFlowId())));
+    }
+
+    @Override
+    public Optional<ProcessedFlow> findByIdForRuntime(String tenantId, String namespace, String id, Optional<Integer> revision) {
+        return Optional.ofNullable(flows.get(key(tenantId, namespace, id)))
+            .map(flow -> new ProcessedFlow(flow, null));
+    }
+
+    @Override
+    public Optional<FlowWithSource> findByIdFromTaskForRuntime(String tenantId, String namespace, String id, Optional<Integer> revision, String fromTenant, String fromNamespace,
+        String fromId) {
+        return Optional.ofNullable(flows.get(key(tenantId, namespace, id)));
+    }
+
+    private static String key(String tenantId, String namespace, String id) {
+        return tenantId + "|" + namespace + "|" + id;
+    }
+}

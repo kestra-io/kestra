@@ -3,7 +3,7 @@ import type {GraphNode, GraphEdge, Elements} from "@vue-flow/core"
 import * as dagre from "dagre"
 import * as Utils from "./utils"
 import {CLUSTER_PREFIX, NODE_SIZES} from "./constants"
-import isEqual from "lodash/isEqual"
+import {isDeepEqual} from "@kestra-io/design-system"
 
 const TRIGGERS_NODE_UID = "root.Triggers"
 
@@ -763,7 +763,7 @@ export function areTasksIdenticalInGraphUntilTask(
             ) {
                 return false
             }
-            if (!isEqual(prevTaskValue, currentTaskValue)) return false
+            if (!isDeepEqual(prevTaskValue, currentTaskValue)) return false
         }
     } while (previousRootTaskNodes.length && currentRootTaskNodes.length && failIndex-- > 0)
 

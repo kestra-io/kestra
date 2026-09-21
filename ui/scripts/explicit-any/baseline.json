@@ -265,7 +265,6 @@
   "src/utils/logs.ts": 2,
   "src/utils/multiPanelTypes.ts": 2,
   "src/utils/pluginUtils.ts": 4,
-  "src/utils/posthog.ts": 11,
   "src/utils/scheme.ts": 2,
   "src/utils/submitTask.ts": 7,
   "src/utils/tabTracking.ts": 4,

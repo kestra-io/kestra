@@ -116,6 +116,22 @@ class NamespaceFileControllerTest {
     }
 
     @Test
+    void shouldListOnlyTheRevisionsWrittenAfterADeletion() throws IOException, URISyntaxException {
+        String namespace = TestsUtils.randomNamespace();
+        Namespace namespaceStorage = namespaceFactory.of(TENANT_ID, namespace, storageInterface);
+        namespaceStorage.putFile(Path.of("/test.txt"), new ByteArrayInputStream("Hello World".getBytes()));
+        namespaceStorage.putFile(Path.of("/test.txt"), new ByteArrayInputStream("Hello World 2".getBytes()));
+
+        client.toBlocking().exchange(HttpRequest.DELETE("/api/v1/main/namespaces/" + namespace + "/files?path=/test.txt", null));
+        namespaceStorage.putFile(Path.of("/test.txt"), new ByteArrayInputStream("Hello World 3".getBytes()));
+
+        // The listing must not advertise revisions the read endpoint refuses to serve
+        List<NamespaceFileRevision> res = client.toBlocking()
+            .retrieve(HttpRequest.GET("/api/v1/main/namespaces/" + namespace + "/files/revisions?path=/test.txt"), Argument.of(List.class, NamespaceFileRevision.class));
+        assertThat(res).containsExactly(new NamespaceFileRevision(3));
+    }
+
+    @Test
     void shouldNotReturnContentOfADeletedFileGivenARevision() throws IOException, URISyntaxException {
         String namespace = TestsUtils.randomNamespace();
         Namespace namespaceStorage = namespaceFactory.of(TENANT_ID, namespace, storageInterface);

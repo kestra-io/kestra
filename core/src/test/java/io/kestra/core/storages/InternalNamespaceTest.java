@@ -398,38 +398,51 @@ class InternalNamespaceTest {
     }
 
     @Test
-    void shouldRemoveEveryRevisionObjectWhenDeletingFile() throws IOException, URISyntaxException {
-        // Given a file with two revisions
+    void shouldNotServeRevisionsThatPredateADeletionOnceThePathIsRecreated() throws IOException, URISyntaxException {
+        // Given a file with two revisions, deleted, then re-created at the same path
         final String namespaceId = TestsUtils.randomNamespace();
         final InternalNamespace namespace = new InternalNamespace(log, MAIN_TENANT, namespaceId, storageInterface, namespaceFileMetadataStateStore);
 
         namespace.putFile(Path.of("/file.txt"), new ByteArrayInputStream("v1".getBytes()));
         namespace.putFile(Path.of("/file.txt"), new ByteArrayInputStream("v2".getBytes())); // OVERWRITE -> revision 2
-
-        // When
         namespace.delete(Path.of("/file.txt"));
 
-        // Then the objects of both revisions are gone from storage, not just the current one
-        assertThat(revisionObjectExists(namespaceId, Path.of("/file.txt"), 1)).as("revision 1 object").isFalse();
-        assertThat(revisionObjectExists(namespaceId, Path.of("/file.txt"), 2)).as("revision 2 object").isFalse();
+        // When
+        namespace.putFile(Path.of("/file.txt"), new ByteArrayInputStream("v3".getBytes())); // revision 3
+
+        // Then the revisions that predate the deletion stay unreadable, and only the new one is served
+        assertThatThrownBy(() -> namespace.getFileContent(Path.of("/file.txt"), 1)).isInstanceOf(FileNotFoundException.class);
+        assertThatThrownBy(() -> namespace.getFileContent(Path.of("/file.txt"), 2)).isInstanceOf(FileNotFoundException.class);
+
+        try (InputStream is = namespace.getFileContent(Path.of("/file.txt"), 3)) {
+            assertThat(new String(is.readAllBytes())).isEqualTo("v3");
+        }
+        try (InputStream is = namespace.getFileContent(Path.of("/file.txt"), null)) {
+            assertThat(new String(is.readAllBytes())).isEqualTo("v3");
+        }
     }
 
     @Test
-    void shouldRemoveEveryRevisionObjectOfChildrenWhenDeletingDirectory() throws IOException, URISyntaxException {
-        // Given a directory holding a file with two revisions
+    void shouldNotResolveADeletedFileToARevisionThatStillHasAnObject() throws IOException, URISyntaxException {
+        // Given a file with two revisions, then deleted
         final String namespaceId = TestsUtils.randomNamespace();
         final InternalNamespace namespace = new InternalNamespace(log, MAIN_TENANT, namespaceId, storageInterface, namespaceFileMetadataStateStore);
 
-        namespace.putFile(Path.of("/sub/dir/file.txt"), new ByteArrayInputStream("v1".getBytes()));
-        namespace.putFile(Path.of("/sub/dir/file.txt"), new ByteArrayInputStream("v2".getBytes())); // OVERWRITE -> revision 2
+        namespace.putFile(Path.of("/file.txt"), new ByteArrayInputStream("v1".getBytes()));
+        namespace.putFile(Path.of("/file.txt"), new ByteArrayInputStream("v2".getBytes())); // OVERWRITE -> revision 2
+        namespace.delete(Path.of("/file.txt"));
 
-        // When the parent directory is deleted
-        namespace.delete(Path.of("/sub"));
+        // Then resolving it does not fall back to a revision whose object is still in storage
+        assertThatThrownBy(() -> namespace.get(Path.of("/file.txt"))).isInstanceOf(FileNotFoundException.class);
+    }
 
-        // Then the children's revision objects are reclaimed too, and nothing is readable any more
-        assertThat(revisionObjectExists(namespaceId, Path.of("/sub/dir/file.txt"), 1)).as("revision 1 object").isFalse();
-        assertThat(revisionObjectExists(namespaceId, Path.of("/sub/dir/file.txt"), 2)).as("revision 2 object").isFalse();
-        assertThatThrownBy(() -> namespace.getFileContent(Path.of("/sub/dir/file.txt"), 1)).isInstanceOf(FileNotFoundException.class);
+    @Test
+    void shouldResolveAPathThatHoldsNoFileToItsFirstRevision() throws IOException, URISyntaxException {
+        // Callers build the URI of a file still to be written from a path that holds nothing yet
+        final String namespaceId = TestsUtils.randomNamespace();
+        final InternalNamespace namespace = new InternalNamespace(log, MAIN_TENANT, namespaceId, storageInterface, namespaceFileMetadataStateStore);
+
+        assertThat(namespace.get(Path.of("/never-written.txt")).revision()).isEqualTo(1);
     }
 
     @Test
@@ -580,10 +593,6 @@ class InternalNamespaceTest {
             assertThat(new String(is.readAllBytes())).isEqualTo(COLLIDING_FILE_CONTENT);
         }
         assertThat(namespace.getFileMetadata(COLLIDING_FILE).getType()).isEqualTo(FileAttributes.FileType.File);
-    }
-
-    private boolean revisionObjectExists(String namespaceId, Path path, int revision) throws IOException {
-        return storageInterface.exists(MAIN_TENANT, namespaceId, NamespaceFile.of(namespaceId, path, revision).storagePath().toUri());
     }
 
     private boolean collidingFileObjectExists(String namespaceId, int revision) throws IOException {

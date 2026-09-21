@@ -237,8 +237,16 @@ public class InternalNamespace implements Namespace {
     @Override
     public NamespaceFile get(Path path) throws IOException {
         final Path normalizedPath = NamespaceFile.normalize(path);
+        Optional<NamespaceFileMetadata> metadata = findByPath(normalizedPath, true);
 
-        int revision = findByPath(normalizedPath).map(NamespaceFileMetadata::getRevision).orElse(1);
+        if (metadata.map(NamespaceFileMetadata::isDeleted).orElse(false)) {
+            // A path that has never held a file still resolves, which is what callers building the URI of a
+            // file still to be written rely on. A deleted one must not: its revisions are backed by objects
+            // that are still in storage, so resolving to one hands back content the file no longer has.
+            throw fileNotFound(normalizedPath, null);
+        }
+
+        int revision = metadata.map(NamespaceFileMetadata::getRevision).orElse(1);
 
         return NamespaceFile.of(namespace, normalizedPath, revision);
     }
@@ -264,7 +272,7 @@ public class InternalNamespace implements Namespace {
     public InputStream getFileContent(Path path, @Nullable Integer revision) throws IOException {
         final Path normalizedPath = NamespaceFile.normalize(path);
 
-        if (revision != null && !exists(normalizedPath)) {
+        if (revision != null && revision <= deletedFloor(normalizedPath)) {
             throw fileNotFound(normalizedPath, revision);
         }
 
@@ -278,6 +286,17 @@ public class InternalNamespace implements Namespace {
         }
 
         return storage.get(tenant, namespace, resolveExistingRevisionUri(normalizedPath, namespaceFileMetadata.getRevision()));
+    }
+
+    /**
+     * Returns the highest revision of the given path that has been deleted, or {@code 0} when none has.
+     *
+     * @see NamespaceFileMetadata#deletedFloor(Collection)
+     */
+    private int deletedFloor(Path normalizedPath) {
+        return NamespaceFileMetadata.deletedFloor(
+            stateStore.findAllVersionsByPaths(tenant, namespace, List.of(normalizedPath.toString()))
+        );
     }
 
     /**
@@ -568,41 +587,6 @@ public class InternalNamespace implements Namespace {
 
         toDelete.forEach(stateStore::save);
 
-        purgeObjectsOfEveryRevision(toDelete);
-
         return toDelete.stream().map(NamespaceFile::fromMetadata).toList();
-    }
-
-    /**
-     * Removes the stored object of every revision of the given entries.
-     * <p>
-     * The entries themselves stay soft-deleted, since re-creating a path relies on them to keep numbering
-     * revisions forward, so removing the objects is what reclaims the data. Every revision has to be
-     * covered rather than just the current one, as a superseded revision keeps an entry of its own and
-     * nothing else ever reclaims the object it points at.
-     * <p>
-     * Callers soft-delete the entries first, so that an interrupted purge fails safe the same way
-     * {@link #purge(NamespaceFile)} does.
-     *
-     * @param entries The soft-deleted entries whose revisions should be reclaimed.
-     */
-    private void purgeObjectsOfEveryRevision(List<NamespaceFileMetadata> entries) throws IOException {
-        stateStore
-            .findAllVersionsByPaths(tenant, namespace, entries.stream().map(NamespaceFileMetadata::getPath).toList())
-            .stream()
-            .sorted(childrenBeforeParents())
-            .forEach(throwConsumer(this::deleteObject));
-    }
-
-    private static Comparator<NamespaceFileMetadata> childrenBeforeParents() {
-        return Comparator.comparing((NamespaceFileMetadata metadata) -> metadata.getPath().length()).reversed();
-    }
-
-    private void deleteObject(NamespaceFileMetadata metadata) throws IOException {
-        storage.delete(
-            tenant,
-            namespace,
-            NamespaceFile.of(namespace, Path.of(metadata.getPath()), metadata.getRevision()).storagePath().toUri()
-        );
     }
 }

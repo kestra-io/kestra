@@ -32,6 +32,8 @@ import io.kestra.core.models.flows.input.FileInput;
 import io.kestra.core.models.flows.input.InputAndValue;
 import io.kestra.core.models.flows.input.ItemTypeInterface;
 import io.kestra.core.models.flows.input.SecretInput;
+import io.kestra.core.models.flows.input.TableInput;
+import io.kestra.core.models.validations.ManualConstraintViolation;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.property.PropertyContext;
 import io.kestra.core.models.property.URIFetcher;
@@ -50,6 +52,7 @@ import io.micronaut.http.multipart.CompletedPart;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
+import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.constraints.NotNull;
 import reactor.core.publisher.Flux;
@@ -456,13 +459,31 @@ public class FlowInputOutput {
                     resolvable.resolveWithError(exceptions);
                 }
             }
-        } catch (IllegalArgumentException | ConstraintViolationException e) {
+        } catch (ConstraintViolationException e) {
+            Input<?> finalInput = input;
+            resolvable.resolveWithError(
+                e.getConstraintViolations().stream()
+                    .map(violation -> toValidationException(violation, finalInput))
+                    .collect(Collectors.toSet())
+            );
+        } catch (IllegalArgumentException e) {
             resolvable.resolveWithError(InputOutputValidationException.of(e.getMessage(), input));
         } catch (Exception e) {
             resolvable.resolveWithError(InputOutputValidationException.of(e.getMessage()));
         }
 
         return resolvable.get();
+    }
+
+    /**
+     * A violation raised on a structured input's inner value (a {@code TABLE} cell) carries that value's path as its
+     * property path, which is kept on the exception so the UI can flag the offending cell rather than the whole input.
+     */
+    private static InputOutputValidationException toValidationException(ConstraintViolation<?> violation, Input<?> input) {
+        String path = violation.getPropertyPath() == null ? null : violation.getPropertyPath().toString();
+        return path == null || path.equals(input.getId())
+            ? InputOutputValidationException.of(violation.getMessage(), input)
+            : InputOutputValidationException.ofPath(violation.getMessage(), path);
     }
 
     public static Object resolveDefaultValue(Input<?> input, PropertyContext renderer) throws IllegalVariableEvaluationException {
@@ -477,7 +498,7 @@ public class FlowInputOutput {
             case DURATION -> resolveDefaultPropertyAs(input, renderer, Duration.class);
             case FILE, URI -> resolveDefaultPropertyAs(input, renderer, URI.class);
             case JSON, ION, YAML -> resolveDefaultPropertyAs(input, renderer, Object.class);
-            case ARRAY -> resolveDefaultPropertyAsList(input, renderer, Object.class);
+            case ARRAY, TABLE -> resolveDefaultPropertyAsList(input, renderer, Object.class);
             case MULTISELECT -> resolveDefaultPropertyAsList(input, renderer, String.class);
             case FORM, REUSABLE_INPUTS -> throw new IllegalStateException("FORM and REUSABLE_INPUTS inputs must be expanded before resolution");
         };
@@ -592,8 +613,8 @@ public class FlowInputOutput {
 
     /**
      * Coerces a scalar input value to its typed form for {@code type}, returning empty for types whose parsing needs
-     * execution-time infrastructure (FILE, SECRET) or structural/document handling (URI, ARRAY, MULTISELECT, JSON,
-     * ION, YAML, FORM, REUSABLE_INPUTS). Shared by input resolution ({@link #parseType}) and save-time flow validation
+     * execution-time infrastructure (FILE, SECRET) or structural/document handling (URI, ARRAY, MULTISELECT, TABLE,
+     * JSON, ION, YAML, FORM, REUSABLE_INPUTS). Shared by input resolution ({@link #parseType}) and save-time flow validation
      * so both coerce a literal identically.
      */
     public static Optional<Object> parseScalarInputValue(Type type, Object current) {
@@ -617,7 +638,7 @@ public class FlowInputOutput {
             case DATE -> TypeConverter.toLocalDate(current);
             case TIME -> TypeConverter.toLocalTime(current);
             case DURATION -> TypeConverter.toDuration(current);
-            case FILE, URI, SECRET, JSON, ION, YAML, ARRAY, MULTISELECT, FORM, REUSABLE_INPUTS -> null;
+            case FILE, URI, SECRET, JSON, ION, YAML, ARRAY, MULTISELECT, TABLE, FORM, REUSABLE_INPUTS -> null;
         });
     }
 
@@ -691,6 +712,7 @@ public class FlowInputOutput {
                         yield asList;
                     }
                 }
+                case TABLE -> parseTable(execution, id, current, data);
                 case FORM, REUSABLE_INPUTS -> throw new IllegalStateException("FORM and REUSABLE_INPUTS inputs must be expanded before resolution");
             };
         } catch (IllegalArgumentException | ConstraintViolationException e) {
@@ -698,6 +720,62 @@ public class FlowInputOutput {
         } catch (Throwable e) {
             throw new Exception(" errors:\n```\n" + e.getMessage() + "\n```");
         }
+    }
+
+    /**
+     * Parses a {@code TABLE} value into a list of rows, each cell parsed and validated against its column
+     * declaration. Every offending cell is collected before throwing, so the UI can flag them all at once, and each
+     * violation carries the cell path ({@code disks[2].size_gb}) as its property path.
+     */
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    private List<Map<String, Object>> parseTable(Execution execution, String id, Object current, Data data) throws Exception {
+        List<?> rows = current instanceof List<?> list ? list : JacksonMapper.toList(current.toString());
+        List<Input<?>> columns = data instanceof TableInput table ? table.getColumns() : List.of();
+
+        Set<ConstraintViolation<?>> violations = new LinkedHashSet<>();
+        List<Map<String, Object>> parsedRows = new ArrayList<>(rows.size());
+
+        for (int index = 0; index < rows.size(); index++) {
+            if (!(rows.get(index) instanceof Map<?, ?> row)) {
+                violations.add(cellViolation(data, "%s[%d]".formatted(id, index), rows.get(index), "a row must be an object"));
+                continue;
+            }
+
+            Map<String, Object> parsedRow = new LinkedHashMap<>(columns.size());
+            for (Input<?> column : columns) {
+                String path = "%s[%d].%s".formatted(id, index, column.getId());
+                Object cell = row.get(column.getId());
+
+                if (cell == null || (cell instanceof String s && s.isEmpty())) {
+                    if (Boolean.TRUE.equals(column.getRequired())) {
+                        violations.add(cellViolation(data, path, null, "it is required"));
+                    }
+                    parsedRow.put(column.getId(), null);
+                    continue;
+                }
+
+                try {
+                    Object parsedCell = parseType(execution, column.getType(), path, null, cell, column);
+                    ((Input) column).validate(parsedCell);
+                    parsedRow.put(column.getId(), parsedCell);
+                } catch (ConstraintViolationException e) {
+                    e.getConstraintViolations().forEach(violation -> violations.add(cellViolation(data, path, cell, violation.getMessage())));
+                } catch (Exception e) {
+                    violations.add(cellViolation(data, path, cell, e.getMessage()));
+                }
+            }
+            parsedRows.add(parsedRow);
+        }
+
+        if (!violations.isEmpty()) {
+            throw ManualConstraintViolation.toConstraintViolationException(violations);
+        }
+
+        return parsedRows;
+    }
+
+    private static ConstraintViolation<Data> cellViolation(Data data, String path, Object value, String message) {
+        return ManualConstraintViolation.of(message, data, Data.class, path, value);
     }
 
     private static Execution minimalExecution(FlowInterface flow, String executionId, @Nullable List<Label> contributed) {

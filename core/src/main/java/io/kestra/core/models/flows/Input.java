@@ -48,6 +48,7 @@ import lombok.experimental.SuperBuilder;
         @JsonSubTypes.Type(value = YamlInput.class, name = "YAML"),
         @JsonSubTypes.Type(value = EmailInput.class, name = "EMAIL"),
         @JsonSubTypes.Type(value = FormInput.class, name = "FORM"),
+        @JsonSubTypes.Type(value = TableInput.class, name = "TABLE"),
         @JsonSubTypes.Type(value = ReusableInputsInput.class, name = "REUSABLE_INPUTS"),
     }
 )

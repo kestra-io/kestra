@@ -26,13 +26,10 @@ export function isIon(value: unknown): boolean {
     return isFile(value) && typeof value === "string" && value.toLowerCase().endsWith(".ion")
 }
 
-export function flatten(object: Record<string, any>) {
-    const result: Record<string, any> = {}
+export function flatten(object: Record<string, unknown>) {
+    const result: Record<string, unknown> = {}
 
-    // Accumulate into one object: the previous `concat(...keys.map())` and
-    // `Object.assign({}, ...leaves)` spread one argument per key, which threw RangeError
-    // above ~100k leaves and left the outputs table unrenderable (kestra-io/kestra#19316).
-    function _flatten(child: Record<string, any> | null, path: string[]): void {
+    function _flatten(child: Record<string, unknown> | null, path: string[]): void {
         if (child === null) {
             result[path.join(".")] = null
             return
@@ -48,19 +45,21 @@ export function flatten(object: Record<string, any>) {
         }
 
         for (const key of keys) {
-            if (typeof child[key] === "object") {
-                _flatten(child[key], path.concat([key]))
-            } else {
-                result[path.concat([key]).join(".")] = child[key]
-            }
-        }
+    const value = child[key]
+
+    if (value !== null && typeof value === "object") {
+        _flatten(value as Record<string, unknown>, path.concat([key]))
+    } else {
+        result[path.concat([key]).join(".")] = value
+    }
+}
     }
 
     _flatten(object, [])
     return result
 }
 
-export function executionVars(data: Record<string, any>) {
+export function executionVars(data: Record<string, unknown> | undefined) {
     if (data === undefined) {
         return []
     }
@@ -271,15 +270,22 @@ export function number(n: number) {
 }
 
 export function hexToRgba(hex: string, opacity: number) {
-    let c: any
     if (/^#([A-Fa-f0-9]{3}){1,2}$/.test(hex)) {
-        c = hex.substring(1).split("")
+        let c = hex.substring(1).split("")
+
         if (c.length === 3) {
             c = [c[0], c[0], c[1], c[1], c[2], c[2]]
         }
-        c = "0x" + c.join("")
-        return "rgba(" + [(c >> 16) & 255, (c >> 8) & 255, c & 255].join(",") + "," + (opacity || 1) + ")"
+
+        const value = Number.parseInt(c.join(""), 16)
+
+        return "rgba(" + [
+            (value >> 16) & 255,
+            (value >> 8) & 255,
+            value & 255
+        ].join(",") + "," + (opacity || 1) + ")"
     }
+
     throw new Error("Bad Hex")
 }
 
@@ -403,7 +409,7 @@ export function splitFirst(str: string, separator: string) {
     return str.split(separator).slice(1).join(separator)
 }
 
-export function asArray(objOrArray: any | any[]) {
+export function asArray<T>(objOrArray: T | T[]): T[] {
     if (objOrArray === undefined) {
         return []
     }
@@ -415,14 +421,17 @@ export async function copy(text: string) {
     await copyToClipboard(text)
 }
 
-export function toFormData(obj: FormData | Record<string, any>) {
+export function toFormData(obj: FormData | Record<string, string | Blob>) {
     if (!(obj instanceof FormData)) {
         const formData = new FormData()
+
         for (const key in obj) {
             formData.append(key, obj[key])
         }
+
         return formData
     }
+
     return obj
 }
 
@@ -474,17 +483,25 @@ export const useTheme = () => {
     })
 }
 
-export function resolve$ref(fullSchema: Record<string, any>, obj: Record<string, any>) {
+export function resolve$ref(
+    fullSchema: Record<string, unknown>,
+    obj: Record<string, unknown> | null | undefined,
+) {
     if (obj === undefined || obj === null) {
         return obj
     }
-    if (obj.$ref) {
+
+    if (typeof obj.$ref === "string") {
         return getValueAtJsonPath(fullSchema, obj.$ref)
     }
+
     return obj
 }
 
-export function getValueAtJsonPath(fullSchema: Record<string, any>, path: string): any {
+export function getValueAtJsonPath(
+    fullSchema: Record<string, unknown>,
+    path: string,
+): unknown {
     if (!fullSchema || !path || typeof path !== "string") {
         return undefined
     }
@@ -503,10 +520,23 @@ export function getValueAtJsonPath(fullSchema: Record<string, any>, path: string
     return current
 }
 
-export function deepEqual(x: any, y: any): boolean {
-    const ok = Object.keys, tx = typeof x, ty = typeof y
-    return x && y && tx === "object" && tx === ty ? (
-        ok(x).length === ok(y).length &&
-        ok(x).every(key => deepEqual(x[key], y[key]))
-    ) : (x === y)
+export function deepEqual(x: unknown, y: unknown): boolean {
+    const ok = Object.keys
+
+    if (
+        x !== null &&
+        y !== null &&
+        typeof x === "object" &&
+        typeof y === "object"
+    ) {
+        const xRecord = x as Record<string, unknown>
+        const yRecord = y as Record<string, unknown>
+
+        return (
+            ok(xRecord).length === ok(yRecord).length &&
+            ok(xRecord).every(key => deepEqual(xRecord[key], yRecord[key]))
+        )
+    }
+
+    return x === y
 }

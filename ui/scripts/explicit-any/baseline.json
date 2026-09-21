@@ -272,7 +272,6 @@
   "src/utils/toast.ts": 6,
   "src/utils/triggers.ts": 3,
   "src/utils/unsavedChange.ts": 1,
-  "src/utils/utils.ts": 14,
   "tests/storybook/components/MultiPanelTabs.stories.tsx": 5,
   "tests/storybook/components/SourceSearchPreview.stories.tsx": 1,
   "tests/storybook/components/admin/Triggers.stories.tsx": 1,

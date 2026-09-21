@@ -4,7 +4,7 @@ import {expect, userEvent, waitFor, within} from "storybook/test";
 import {vueRouter} from "storybook-vue3-router";
 import {KsForm} from "@kestra-io/design-system";
 import InputsForm from "../../../../src/components/inputs/InputsForm.vue";
-import {flattenInputs, unflattenToForms, type FlowInput} from "../../../../src/utils/inputs";
+import {flattenInputs, unflattenToForms} from "../../../../src/utils/inputs";
 import type {InputMetaData, ValidationEventPayload} from "../../../../src/stores/executions";
 import type {Flow} from "../../../../src/stores/flow";
 import {setMockClient} from "@kestra-io/kestra-sdk"
@@ -166,7 +166,7 @@ export const InputTypes: Story = {
 
 // Wizard harness: the validate mock expands FORM groups to dotted leaves, exactly like the
 // backend, so InputsForm receives the same flat-by-dotted-id metadata it does in production.
-const WizardSut = defineComponent((props: {inputs: FlowInput[]}) => {
+const WizardSut = defineComponent((props: {inputs: InputMetaData[]}) => {
     const axios: any = {}
     axios.post = (uri: string) => {
         if (!uri.endsWith("/validate")) {
@@ -187,7 +187,7 @@ const WizardSut = defineComponent((props: {inputs: FlowInput[]}) => {
     const values = ref<Record<string, unknown> | undefined>({})
     return () => (<>
         <ks-form label-position="top">
-            <InputsForm initialInputs={props.inputs as InputMetaData[]} modelValue={values.value} mode="wizard"
+            <InputsForm initialInputs={props.inputs} modelValue={values.value} mode="wizard"
                         flow={FLOW}
                         onUpdate:modelValue={(value) => values.value = value}
                         onUpdate:onRecap={(value) => onRecap.value = value}
@@ -267,14 +267,14 @@ export const Wizard: Story = {
 // from flat dotted leaves + formGroups before handing it to InputsForm — we mirror both here. The
 // validate callback is DEFERRED into a queue the play function releases manually, so we can observe
 // the Next button reading "Loading…" mid-round-trip and prove goNext awaits it.
-const AppsWizardSut = defineComponent((props: {inputs: FlowInput[]; formGroups: Record<string, {displayName?: string; description?: string}>}) => {
+const AppsWizardSut = defineComponent((props: {inputs: InputMetaData[]; formGroups: Record<string, {displayName?: string; description?: string}>}) => {
     const initial = unflattenToForms(props.inputs, props.formGroups)
 
     const queue: (() => void)[] = []
     function onValidation(event: ValidationEventPayload) {
         // hold the callback; the play function releases it via window.__appsWizardFlush()
         queue.push(() => event.callback({
-            inputs: props.inputs.map(x => ({input: x as InputMetaData, enabled: true, isDefault: false, errors: []})),
+            inputs: props.inputs.map(x => ({input: x, enabled: true, isDefault: false, errors: []})),
         }))
     }
     window.__appsWizardPending = () => queue.length

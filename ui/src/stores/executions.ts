@@ -84,6 +84,8 @@ export interface InputMetaData {
     // validate response strips `expression`, keeping `dependsOn` at most
     expression?: string;
     dependsOn?: unknown;
+    /** Set on a FORM input only: the children it groups, mirroring the backend `FormInput.inputs`. */
+    inputs?: InputMetaData[];
 }
 
 /** Mirrors the backend `FilePreview`: `content` is renderer-specific (text, rows, base64, ...). */

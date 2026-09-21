@@ -477,7 +477,8 @@
     import {Label, useExecutionsStore} from "../../stores/executions"
     import {getExtraColumns, cellComponents, bulkActionComponents} from "override/components/executions/executionsExtensions"
 
-    import {useExecutionFilter, useFlowExecutionFilter} from "../filter/configurations"
+    import {useExecutionFilter} from "../filter/configurations/executionFilter"
+    import {useFlowExecutionFilter} from "../filter/configurations/flowExecutionFilter"
     import {useStateFilter} from "../filter/composables/useStateFilter"
     import YAML_CHART from "../dashboard/assets/executions_timeseries_chart.yaml?raw"
     import {DEFAULT_DASHBOARD} from "../../stores/dashboard"

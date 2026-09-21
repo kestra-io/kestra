@@ -41,9 +41,11 @@
 
     const MAX_CELL_CHARS = 2000
 
+    type PreviewCell = string | number | boolean | null | PreviewCell[] | {[key: string]: PreviewCell}
+
     const props = defineProps({
         value: {
-            type: Array as () => Record<string, unknown>[],
+            type: Array as () => PreviewCell[],
             required: true,
         },
     })
@@ -81,7 +83,7 @@
     })
 
 
-    const isComplex = (data: unknown): boolean => {
+    const isComplex = (data: PreviewCell): boolean => {
         return data !== null && typeof data === "object"
     }
 
@@ -89,12 +91,12 @@
         return `${rowIndex}-${column}`
     }
 
-    const needsExpansion = (data: unknown): boolean => {
+    const needsExpansion = (data: PreviewCell): boolean => {
         const stringified = JSON.stringify(data, null, 2)
         return stringified.length > MAX_CELL_CHARS
     }
 
-    const getTruncatedContent = (data: unknown, rowIndex: number, column: string): string => {
+    const getTruncatedContent = (data: PreviewCell, rowIndex: number, column: string): string => {
         const cellKey = getCellKey(rowIndex, column)
         const stringified = JSON.stringify(data, null, 2)
 

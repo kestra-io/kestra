@@ -228,6 +228,7 @@
     flex-shrink: 0;
 }
 
+.timeline-row-label:focus-within .open-icon,
 .timeline-row-label:hover .open-icon {
     opacity: 1;
 }

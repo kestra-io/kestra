@@ -8,8 +8,8 @@ import {resolveDefaultTab} from "./routeTabs"
 
 export const normalizeInputValues = (
     inputsList: {id:string, type?: string}[] | undefined,
-    values: Record<string, any>,
-): Record<string, any> | undefined => {
+    values: Record<string, unknown>,
+): Record<string, unknown> | undefined => {
 
     let inputValuesCloned = cloneDeep(values)
 
@@ -23,7 +23,7 @@ export const normalizeInputValues = (
         return undefined
     }
 
-    const normalized: Record<string, any> = {}
+    const normalized: Record<string, unknown> = {}
 
     for (let input of inputsList || []) {
         const inputName = input.id
@@ -50,7 +50,7 @@ export const normalizeInputValues = (
 // ExecutionsAPI.createExecution()'s multipart body serializer.
 export const inputsToFormData = (
     inputsList: {id:string, type?: string}[] | undefined,
-    values: Record<string, any>,
+    values: Record<string, unknown>,
 ) => {
     const normalized = normalizeInputValues(inputsList, values)
     if (!normalized) {
@@ -69,11 +69,11 @@ export const executeTask = (
         $router: Router, 
         $route: ReturnType<typeof useRoute>, 
         $toast: () => { success: (message: string) => void }, 
-        $t: (key: string, params?: Record<string, any>) => string,
+        $t: (key: string, params?: Record<string, unknown>) => string,
     }, 
     flow: Flow, 
-    values: Record<string, any>,
-    options: Omit<Parameters<ReturnType<typeof useExecutionsStore>["triggerExecution"]>[0], "formData" | "kind"> & { redirect?: boolean; newTab?: boolean; query?: Record<string, any>; nextStep?: boolean },
+    values: Record<string, unknown>,
+    options: Omit<Parameters<ReturnType<typeof useExecutionsStore>["triggerExecution"]>[0], "formData" | "kind"> & { redirect?: boolean; newTab?: boolean; query?: Record<string, string>; nextStep?: boolean },
 ): Promise<Execution> => {
     const formData = normalizeInputValues(flattenInputs(flow.inputs), values)
     const executionsStore = useExecutionsStore()

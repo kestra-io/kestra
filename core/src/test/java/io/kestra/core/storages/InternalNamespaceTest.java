@@ -380,6 +380,59 @@ class InternalNamespaceTest {
     }
 
     @Test
+    void shouldNotServeDeletedFileContentGivenAnEarlierRevision() throws IOException, URISyntaxException {
+        // Given a file that was overwritten once, so revision 1 has an entry of its own, then deleted
+        final String namespaceId = TestsUtils.randomNamespace();
+        final InternalNamespace namespace = new InternalNamespace(log, MAIN_TENANT, namespaceId, storageInterface, namespaceFileMetadataStateStore);
+
+        namespace.putFile(Path.of("/file.txt"), new ByteArrayInputStream("v1".getBytes()));
+        namespace.putFile(Path.of("/file.txt"), new ByteArrayInputStream("v2".getBytes())); // OVERWRITE -> revision 2
+
+        // When
+        namespace.delete(Path.of("/file.txt"));
+
+        // Then no revision the file ever held returns any content
+        assertThatThrownBy(() -> namespace.getFileContent(Path.of("/file.txt"), null)).isInstanceOf(FileNotFoundException.class);
+        assertThatThrownBy(() -> namespace.getFileContent(Path.of("/file.txt"), 1)).isInstanceOf(FileNotFoundException.class);
+        assertThatThrownBy(() -> namespace.getFileContent(Path.of("/file.txt"), 2)).isInstanceOf(FileNotFoundException.class);
+    }
+
+    @Test
+    void shouldRemoveEveryRevisionObjectWhenDeletingFile() throws IOException, URISyntaxException {
+        // Given a file with two revisions
+        final String namespaceId = TestsUtils.randomNamespace();
+        final InternalNamespace namespace = new InternalNamespace(log, MAIN_TENANT, namespaceId, storageInterface, namespaceFileMetadataStateStore);
+
+        namespace.putFile(Path.of("/file.txt"), new ByteArrayInputStream("v1".getBytes()));
+        namespace.putFile(Path.of("/file.txt"), new ByteArrayInputStream("v2".getBytes())); // OVERWRITE -> revision 2
+
+        // When
+        namespace.delete(Path.of("/file.txt"));
+
+        // Then the objects of both revisions are gone from storage, not just the current one
+        assertThat(revisionObjectExists(namespaceId, Path.of("/file.txt"), 1)).as("revision 1 object").isFalse();
+        assertThat(revisionObjectExists(namespaceId, Path.of("/file.txt"), 2)).as("revision 2 object").isFalse();
+    }
+
+    @Test
+    void shouldRemoveEveryRevisionObjectOfChildrenWhenDeletingDirectory() throws IOException, URISyntaxException {
+        // Given a directory holding a file with two revisions
+        final String namespaceId = TestsUtils.randomNamespace();
+        final InternalNamespace namespace = new InternalNamespace(log, MAIN_TENANT, namespaceId, storageInterface, namespaceFileMetadataStateStore);
+
+        namespace.putFile(Path.of("/sub/dir/file.txt"), new ByteArrayInputStream("v1".getBytes()));
+        namespace.putFile(Path.of("/sub/dir/file.txt"), new ByteArrayInputStream("v2".getBytes())); // OVERWRITE -> revision 2
+
+        // When the parent directory is deleted
+        namespace.delete(Path.of("/sub"));
+
+        // Then the children's revision objects are reclaimed too, and nothing is readable any more
+        assertThat(revisionObjectExists(namespaceId, Path.of("/sub/dir/file.txt"), 1)).as("revision 1 object").isFalse();
+        assertThat(revisionObjectExists(namespaceId, Path.of("/sub/dir/file.txt"), 2)).as("revision 2 object").isFalse();
+        assertThatThrownBy(() -> namespace.getFileContent(Path.of("/sub/dir/file.txt"), 1)).isInstanceOf(FileNotFoundException.class);
+    }
+
+    @Test
     void shouldCreateReadableFirstRevisionWhenNothingCollides() throws IOException, URISyntaxException {
         // Given
         final String namespaceId = TestsUtils.randomNamespace();
@@ -527,6 +580,10 @@ class InternalNamespaceTest {
             assertThat(new String(is.readAllBytes())).isEqualTo(COLLIDING_FILE_CONTENT);
         }
         assertThat(namespace.getFileMetadata(COLLIDING_FILE).getType()).isEqualTo(FileAttributes.FileType.File);
+    }
+
+    private boolean revisionObjectExists(String namespaceId, Path path, int revision) throws IOException {
+        return storageInterface.exists(MAIN_TENANT, namespaceId, NamespaceFile.of(namespaceId, path, revision).storagePath().toUri());
     }
 
     private boolean collidingFileObjectExists(String namespaceId, int revision) throws IOException {

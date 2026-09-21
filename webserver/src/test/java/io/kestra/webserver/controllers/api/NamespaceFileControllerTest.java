@@ -116,6 +116,25 @@ class NamespaceFileControllerTest {
     }
 
     @Test
+    void shouldNotReturnContentOfADeletedFileGivenARevision() throws IOException, URISyntaxException {
+        String namespace = TestsUtils.randomNamespace();
+        Namespace namespaceStorage = namespaceFactory.of(TENANT_ID, namespace, storageInterface);
+        namespaceStorage.putFile(Path.of("/test.txt"), new ByteArrayInputStream("Hello World".getBytes()));
+        namespaceStorage.putFile(Path.of("/test.txt"), new ByteArrayInputStream("Hello World 2".getBytes()));
+
+        client.toBlocking().exchange(HttpRequest.DELETE("/api/v1/main/namespaces/" + namespace + "/files?path=/test.txt", null));
+
+        // Every revision the file ever held must read as gone, not just the one it was deleted at
+        for (int revision : new int[]{ 1, 2 }) {
+            HttpClientResponseException e = assertThrows(
+                HttpClientResponseException.class,
+                () -> client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/namespaces/" + namespace + "/files?path=/test.txt&revision=" + revision))
+            );
+            assertThat(e.getStatus().getCode()).as("revision %s", revision).isEqualTo(HttpStatus.NOT_FOUND.getCode());
+        }
+    }
+
+    @Test
     void getFileMetadatas() throws IOException, URISyntaxException {
         String namespace = TestsUtils.randomNamespace();
         Namespace namespaceStorage = namespaceFactory.of(TENANT_ID, namespace, storageInterface);

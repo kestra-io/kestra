@@ -264,6 +264,10 @@ public class InternalNamespace implements Namespace {
     public InputStream getFileContent(Path path, @Nullable Integer revision) throws IOException {
         final Path normalizedPath = NamespaceFile.normalize(path);
 
+        if (revision != null && !exists(normalizedPath)) {
+            throw fileNotFound(normalizedPath, revision);
+        }
+
         // Throw if file not found OR if it's deleted
         NamespaceFileMetadata namespaceFileMetadata = findByPath(normalizedPath, revision).orElseThrow(() -> fileNotFound(normalizedPath, revision));
 
@@ -564,6 +568,41 @@ public class InternalNamespace implements Namespace {
 
         toDelete.forEach(stateStore::save);
 
+        purgeObjectsOfEveryRevision(toDelete);
+
         return toDelete.stream().map(NamespaceFile::fromMetadata).toList();
+    }
+
+    /**
+     * Removes the stored object of every revision of the given entries.
+     * <p>
+     * The entries themselves stay soft-deleted, since re-creating a path relies on them to keep numbering
+     * revisions forward, so removing the objects is what reclaims the data. Every revision has to be
+     * covered rather than just the current one, as a superseded revision keeps an entry of its own and
+     * nothing else ever reclaims the object it points at.
+     * <p>
+     * Callers soft-delete the entries first, so that an interrupted purge fails safe the same way
+     * {@link #purge(NamespaceFile)} does.
+     *
+     * @param entries The soft-deleted entries whose revisions should be reclaimed.
+     */
+    private void purgeObjectsOfEveryRevision(List<NamespaceFileMetadata> entries) throws IOException {
+        stateStore
+            .findAllVersionsByPaths(tenant, namespace, entries.stream().map(NamespaceFileMetadata::getPath).toList())
+            .stream()
+            .sorted(childrenBeforeParents())
+            .forEach(throwConsumer(this::deleteObject));
+    }
+
+    private static Comparator<NamespaceFileMetadata> childrenBeforeParents() {
+        return Comparator.comparing((NamespaceFileMetadata metadata) -> metadata.getPath().length()).reversed();
+    }
+
+    private void deleteObject(NamespaceFileMetadata metadata) throws IOException {
+        storage.delete(
+            tenant,
+            namespace,
+            NamespaceFile.of(namespace, Path.of(metadata.getPath()), metadata.getRevision()).storagePath().toUri()
+        );
     }
 }

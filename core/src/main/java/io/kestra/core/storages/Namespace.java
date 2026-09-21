@@ -107,11 +107,16 @@ public interface Namespace {
 
     /**
      * Retrieves the content of the namespace file at the given path.
+     * <p>
+     * A revision is only readable while the file itself exists: once a file is deleted, every revision it
+     * ever held stops serving its content.
      *
      * @param path the file path.
      * @param revision optionally a file revision, otherwise will retrieve the latest.
      * @return the {@link InputStream}.
      * @throws IllegalArgumentException if the given {@link Path} is {@code null} or invalid.
+     * @throws java.io.FileNotFoundException if the file does not exist, has been deleted, or never held the
+     *         given revision.
      * @throws IOException if an error happens while accessing the file.
      */
     InputStream getFileContent(Path path, @Nullable Integer revision) throws IOException;

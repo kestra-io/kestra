@@ -5,21 +5,39 @@
         </KsButton>
         <template #dropdown>
             <KsDropdownMenu>
-                <li role="presentation" v-if="currentTaskRuns.length > 1" class="iteration-selector">
-                    <KsSelect
-                        v-model="selectedTaskRunId"
-                        :teleported="false"
-                        filterable
-                        :aria-label="$t('iteration')"
-                    >
-                        <KsOption
-                            v-for="(run, index) in currentTaskRuns"
-                            :key="run.id"
-                            :value="run.id"
-                            :label="iterationLabel(run, index)"
-                        />
-                    </KsSelect>
-                </li>
+                <template v-if="currentTaskRuns.length > 1">
+                    <div class="iteration-selector">
+                        <div class="search">
+                            <KsSearch
+                                v-model="iterationQuery"
+                                :placeholder="$t('search')"
+                                :aria-label="$t('iteration')"
+                            />
+                        </div>
+                        <KsScrollbar :maxHeight="240">
+                            <KsDropdownItem
+                                v-for="(run, index) in filteredTaskRuns"
+                                :key="run.id"
+                                @click.stop="selectedTaskRunId = run.id"
+                            >
+                                <span :class="['row', {active: run.id === selectedTaskRunId}]">
+                                    <KsIcon size="xs" class="check">
+                                        <Check />
+                                    </KsIcon>
+                                    <span class="name" :title="iterationLabel(run, index)">{{ iterationLabel(run, index) }}</span>
+                                </span>
+                            </KsDropdownItem>
+
+                            <KsText
+                                v-if="!filteredTaskRuns.length"
+                                size="small"
+                                class="empty"
+                            >
+                                {{ $t("dependency.search.no_results", {term: iterationQuery}) }}
+                            </KsText>
+                        </KsScrollbar>
+                    </div>
+                </template>
 
                 <KsDropdownItem
                     v-if="selectedAttempt?.state.current === 'FAILED'"
@@ -122,15 +140,15 @@
 </template>
 
 <script setup lang="ts">
-    import {computed} from "vue"
+    import {computed, ref} from "vue"
     import {useI18n} from "vue-i18n"
     import {useRoute, useRouter} from "vue-router"
-
     import DotsVertical from "vue-material-design-icons/DotsVertical.vue"
     import Copy from "vue-material-design-icons/ContentCopy.vue"
     import Delete from "vue-material-design-icons/Delete.vue"
     import Download from "vue-material-design-icons/Download.vue"
     import Repeat from "vue-material-design-icons/Repeat.vue"
+    import Check from "vue-material-design-icons/Check.vue"
 
     import {State} from "@kestra-io/design-system"
 
@@ -192,6 +210,14 @@
 
     const selectionKey = computed(() => `${props.execution.id}|${props.taskRun?.taskId}`)
 
+    const iterationQuery = ref("")
+
+    const filteredTaskRuns = computed(() => {
+        const needle = iterationQuery.value.trim().toLowerCase()
+        if (!needle) return currentTaskRuns.value
+        return currentTaskRuns.value.filter((r, index) => iterationLabel(r, index).toLowerCase().includes(needle))
+    })
+
     const selectedTaskRunId = computed({
         get: () => executionsStore.taskRunSelections.get(selectionKey.value) || props.taskRun?.id || currentTaskRuns.value[0]?.id,
         set: (val: string) => executionsStore.taskRunSelections.set(selectionKey.value, val),
@@ -200,8 +226,6 @@
     const currentTaskRun = computed(() => {
         return currentTaskRuns.value.find((r) => r.id === selectedTaskRunId.value) || props.taskRun
     })
-
-
 
     function attempts(taskRun: any): any[] {
         if (props.execution.state.current === State.RUNNING || props.forcedAttemptNumber === undefined) {
@@ -271,8 +295,8 @@
     }
 
     function iterationLabel(run: { id?: string; value?: unknown }, index?: number) {
-        return run.value !== undefined && run.value !== null
-            ? String(run.value)
+        return run.value
+            ? Utils.capForDisplay(String(run.value))
             : t("iteration_number", {number: index !== undefined ? index + 1 : currentTaskRuns.value.findIndex(r => r.id === run.id) + 1})
     }
 
@@ -327,8 +351,43 @@
         }
     }
 
-    .iteration-selector {
-        border-bottom: 1px solid var(--ks-border-primary);
+        .iteration-selector {
+        border-bottom: var(--ks-border-block-primary);
         padding: var(--ks-spacing-2);
+
+        .search {
+            padding-bottom: var(--ks-spacing-2);
+        }
+
+        .row {
+            display: flex;
+            align-items: center;
+            gap: var(--ks-spacing-2);
+            width: 100%;
+            min-width: 0;
+
+            .check {
+                visibility: hidden;
+                color: var(--ks-text-link);
+                flex: 0 0 auto;
+            }
+
+            &.active .check {
+                visibility: visible;
+            }
+
+            .name {
+                flex: 1 1 auto;
+                min-width: 0;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+        }
+
+        .empty {
+            display: block;
+            color: var(--ks-text-muted);
+        }
     }
 </style>

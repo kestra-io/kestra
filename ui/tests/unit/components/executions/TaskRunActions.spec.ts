@@ -45,13 +45,15 @@ function mountActions(propsData: Partial<TaskRunActionsProps>) {
                 KsDropdownMenu: {
                     template: "<div><slot /></div>",
                 },
-                KsSelect: {
-                    template: "<select @change=\"$emit('update:modelValue', $event.target.value)\" :value=\"modelValue\"><slot /></select>",
-                    props: ["modelValue"],
+                KsSearch: true,
+                KsScrollbar: {
+                    template: "<div><slot /></div>",
                 },
-                KsOption: {
-                    template: "<option :value=\"value\">{{ label }}</option>",
-                    props: ["value", "label"],
+                KsIcon: {
+                    template: "<span><slot /></span>",
+                },
+                KsText: {
+                    template: "<span><slot /></span>",
                 },
                 KsDropdownItem: {
                     template: "<div class=\"ks-dropdown-item\" @click=\"$emit('click', $event)\"><slot /></div>",
@@ -96,7 +98,7 @@ describe("TaskRunActions", () => {
             execution,
         })
 
-        const options = wrapper.findAll("option")
+        const options = wrapper.findAll(".iteration-selector .ks-dropdown-item")
         expect(options).toHaveLength(2)
         expect(options[0].text()).toBe("Iteration 1")
         expect(options[1].text()).toBe("iteration_number")
@@ -116,7 +118,8 @@ describe("TaskRunActions", () => {
             execution: execution2,
         })
 
-        await wrapper.find("select").setValue("tr-2")
+        const iter2 = wrapper.findAll(".iteration-selector .ks-dropdown-item").find(w => w.text().includes("Iter 2") || w.text().includes("iteration_number"))
+        await iter2!.trigger("click")
         const deleteBtn = wrapper.findAll(".ks-dropdown-item").find(w => w.text().includes("delete_log") || w.text().includes("delete logs"))
         await deleteBtn!.trigger("click")
 
@@ -140,7 +143,8 @@ describe("TaskRunActions", () => {
             execution: execution3,
         })
 
-        await wrapper.find("select").setValue("tr-2")
+        const iter2 = wrapper.findAll(".iteration-selector .ks-dropdown-item").find(w => w.text().includes("Iter 2") || w.text().includes("iteration_number"))
+        await iter2!.trigger("click")
         const downloadBtn = wrapper.findAll(".ks-dropdown-item").find(w => w.text().includes("download"))
         await downloadBtn!.trigger("click")
 
@@ -164,7 +168,8 @@ describe("TaskRunActions", () => {
             execution: execution4,
         })
 
-        await wrapper.find("select").setValue("tr-2")
+        const iter2 = wrapper.findAll(".iteration-selector .ks-dropdown-item").find(w => w.text().includes("Iter 2") || w.text().includes("iteration_number"))
+        await iter2!.trigger("click")
         const copyBtn = wrapper.findAll(".ks-dropdown-item").find(w => w.text().includes("copy"))
         await copyBtn!.trigger("click")
 
@@ -179,19 +184,22 @@ describe("TaskRunActions", () => {
             taskRun: {
                 id: "tr-1",
                 taskId: "task-1",
-                state: {current: "FAILED"},
-                attempts: [{state: {current: "FAILED"}}, {state: {current: "SUCCESS"}}],
+                    value: "Iter 1",
+                    state: {current: "FAILED"},
+                    attempts: [{state: {current: "FAILED"}}, {state: {current: "SUCCESS"}}],
             },
             taskRuns: [
                 {
                     id: "tr-1",
                     taskId: "task-1",
+                    value: "Iter 1",
                     state: {current: "FAILED"},
                     attempts: [{state: {current: "FAILED"}}, {state: {current: "SUCCESS"}}],
                 },
                 {
                     id: "tr-2",
                     taskId: "task-1",
+                    value: "Iter 2",
                     state: {current: "SUCCESS"},
                     attempts: [{state: {current: "SUCCESS"}}],
                 },
@@ -202,7 +210,8 @@ describe("TaskRunActions", () => {
 
         expect((wrapper.vm as unknown as { currentAttemptIndex: number }).currentAttemptIndex).toBe(1)
 
-        await wrapper.find("select").setValue("tr-2")
+        const iter2 = wrapper.findAll(".iteration-selector .ks-dropdown-item").find(w => w.text().includes("Iter 2") || w.text().includes("iteration_number"))
+        await iter2!.trigger("click")
         expect((wrapper.vm as unknown as { currentAttemptIndex: number }).currentAttemptIndex).toBe(0)
     })
     it("hides selector for single-iteration tasks", () => {
@@ -214,6 +223,59 @@ describe("TaskRunActions", () => {
             execution,
         })
 
-        expect(wrapper.find("select").exists()).toBe(false)
+        expect(wrapper.find(".iteration-selector").exists()).toBe(false)
+    })
+
+    it("persists selection across unmount and remount for the same execution", async () => {
+        const props = {
+            taskRun: {id: "tr-1", taskId: "task-1", state: {current: "SUCCESS"}},
+            taskRuns: [
+                {id: "tr-1", taskId: "task-1", value: "Iter 1", state: {current: "SUCCESS"}},
+                {id: "tr-2", taskId: "task-1", value: "Iter 2", state: {current: "SUCCESS"}},
+            ],
+            execution: {id: "ex-store-test", flowId: "flow-1", namespace: "ns-1", state: {current: "SUCCESS"}},
+        }
+
+        let wrapper = mountActions(props)
+
+        const iter2 = wrapper.findAll(".iteration-selector .ks-dropdown-item").find(w => w.text().includes("Iter 2"))
+        await iter2!.trigger("click")
+        expect((wrapper.vm as unknown as { selectedTaskRunId: string }).selectedTaskRunId).toBe("tr-2")
+
+        wrapper.unmount()
+
+        // Remount with same props
+        wrapper = mountActions(props)
+        expect((wrapper.vm as unknown as { selectedTaskRunId: string }).selectedTaskRunId).toBe("tr-2")
+    })
+
+    it("starts clean for a different execution id", async () => {
+        const props1 = {
+            taskRun: {id: "tr-1", taskId: "task-1", state: {current: "SUCCESS"}},
+            taskRuns: [
+                {id: "tr-1", taskId: "task-1", value: "Iter 1", state: {current: "SUCCESS"}},
+                {id: "tr-2", taskId: "task-1", value: "Iter 2", state: {current: "SUCCESS"}},
+            ],
+            execution: {id: "ex-diff-1", flowId: "flow-1", namespace: "ns-1", state: {current: "SUCCESS"}},
+        }
+
+        const wrapper1 = mountActions(props1)
+        const iter2 = wrapper1.findAll(".iteration-selector .ks-dropdown-item").find(w => w.text().includes("Iter 2"))
+        await iter2!.trigger("click")
+        expect((wrapper1.vm as unknown as { selectedTaskRunId: string }).selectedTaskRunId).toBe("tr-2")
+
+        // Use a new execution id, but same task
+        const props2 = {
+            taskRun: {id: "tr-1", taskId: "task-1", state: {current: "SUCCESS"}},
+            taskRuns: [
+                {id: "tr-1", taskId: "task-1", value: "Iter 1", state: {current: "SUCCESS"}},
+                {id: "tr-2", taskId: "task-1", value: "Iter 2", state: {current: "SUCCESS"}},
+            ],
+            execution: {id: "ex-diff-2", flowId: "flow-1", namespace: "ns-1", state: {current: "SUCCESS"}},
+        }
+
+        const wrapper2 = mountActions(props2)
+        // Defaults to the first task run since it's a clean execution id
+        expect((wrapper2.vm as unknown as { selectedTaskRunId: string }).selectedTaskRunId).toBe("tr-1")
     })
 })

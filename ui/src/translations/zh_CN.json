@@ -213,7 +213,6 @@
     "executionProgress": {
       "title": "执行进度",
       "estimatedRemaining": "预计剩余：{duration}",
-      "noBaseline": "没有历史数据 — 无法估算剩余时间",
       "pastEstimate": "运行时间比平常更长"
     },
     "launch execution": "执行",
@@ -1061,6 +1060,7 @@
       },
       "revisions": {
         "history": "修订历史",
+        "load_error": "无法加载修订 {revision}，它可能已被删除。",
         "restore": {
           "success": "文件修订已成功恢复"
         }
@@ -1381,6 +1381,7 @@
     "onboarding": {
       "tour": {
         "menu": "产品导览",
+        "menu_resume": "继续导览",
         "menu_description": "搭建、运行并修复一个 flow，然后从事件启动它",
         "step_of": "第 {current} / {total} 步",
         "actions": {
@@ -2433,8 +2434,8 @@
       "next_match": "下一个匹配项",
       "no_results_description": "尝试扩大 namespace 范围，将作用域切换回“所有来源”，或关闭“区分大小写”和“全字匹配”。",
       "no_results_hidden_type": "在未选择的 {type} 中找到 {count} 个匹配项。 | 在未选择的 {type} 中找到 {count} 个匹配项。",
-      "no_results_in_types": "在 {types} 中没有找到 {query} 的匹配项",
       "no_results_title": "“{query}” 无匹配项",
+      "did_you_mean": "您是指 {suggestion} 吗？",
       "open_flow": "打开 flow",
       "open_in_editor": "在编辑器中打开",
       "open_in_kv": "在 KV 存储中打开",

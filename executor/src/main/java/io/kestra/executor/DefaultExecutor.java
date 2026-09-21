@@ -1,52 +1,32 @@
 package io.kestra.executor;
 
+import java.time.Clock;
 import java.time.Duration;
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.slf4j.event.Level;
-
 import io.kestra.core.contexts.KestraContext;
 import io.kestra.core.exceptions.DeserializationException;
-import io.kestra.core.exceptions.FlowNotFoundException;
-import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.executor.command.ExecutionCommand;
-import io.kestra.core.killswitch.EvaluationType;
-import io.kestra.core.killswitch.KillSwitchService;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.*;
-import io.kestra.core.models.executions.statistics.ExecutionStatistic;
-import io.kestra.core.models.flows.FlowWithSource;
-import io.kestra.core.models.flows.State;
-import io.kestra.core.models.flows.sla.ExecutionMonitoringSLA;
-import io.kestra.core.models.triggers.AbstractTrigger;
-import io.kestra.core.models.triggers.TriggerId;
 import io.kestra.core.models.triggers.multipleflows.MultipleConditionStateStore;
 import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.DispatchQueueInterface;
-import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueSubscriber;
 import io.kestra.core.runners.*;
 import io.kestra.core.runners.Executor;
-import io.kestra.core.scheduler.events.TriggerExecutionTerminated;
-import io.kestra.core.scheduler.model.TriggerType;
-import io.kestra.core.scheduler.queue.TriggerEventQueue;
 import io.kestra.core.server.AbstractService;
 import io.kestra.core.server.Metric;
 import io.kestra.core.server.ServiceStateChangeEvent;
 import io.kestra.core.server.ServiceType;
-import io.kestra.core.services.ExecutionService;
 import io.kestra.core.services.MaintenanceService;
 import io.kestra.core.utils.*;
 import io.kestra.executor.configuration.ExecutorConfiguration;
 import io.kestra.executor.handler.*;
-import io.kestra.plugin.core.flow.Loop;
-import io.kestra.plugin.core.trigger.Webhook;
 
 import io.micrometer.core.instrument.Timer;
 import io.micronaut.context.event.ApplicationEventPublisher;
@@ -64,32 +44,17 @@ public class DefaultExecutor extends AbstractService implements Executor {
 
     private final DispatchQueueInterface<Execution> executionQueue;
     private final DispatchQueueInterface<ExecutionCommand> executionCommandQueue;
-    private final KillSwitchService killSwitchService;
-    private final KillSwitchActionService killSwitchActionService;
     private final DispatchQueueInterface<ExecutionEvent> executionEventQueue;
-    private final BroadcastQueueInterface<FollowExecutionEvent> followExecutionEventQueue;
     private final DispatchQueueInterface<WorkerTaskResult> workerTaskResultQueue;
     private final BroadcastQueueInterface<ExecutionKilled> killQueue;
     private final DispatchQueueInterface<SubflowExecutionResult> subflowExecutionResultQueue;
     private final DispatchQueueInterface<SubflowExecutionEnd> subflowExecutionEndQueue;
     private final DispatchQueueInterface<MultipleConditionEvent> multipleConditionEventQueue;
     private final DispatchQueueInterface<LoopExecutionEvent> loopExecutionEventQueue;
-    private final DispatchQueueInterface<ExecutionStatistic> executionStatisticQueue;
-    private final ExecutionTerminatedNotifier executionTerminatedNotifier;
 
-    private final ExecutorService executorService;
-    private final ExecutionService executionService;
-    private final FlowTriggerService flowTriggerService;
     private final MaintenanceService maintenanceService;
-    private final FlowMetaStoreInterface flowMetaStore;
 
-    private final ExecutionStateStore executionStateStore;
-    private final ExecutionDelayProcessor executionDelayProcessor;
-    private final SLAMonitorStateStore slaMonitorStateStore;
     private final MultipleConditionStateStore multipleConditionStateStore;
-    private final SLAMonitorProcessor slaMonitorProcessor;
-    private final ConcurrencySlotReleaseProcessor concurrencySlotReleaseProcessor;
-    private final TriggerEventQueue triggerEventQueue;
 
     private final MetricRegistry metricRegistry;
 
@@ -98,19 +63,10 @@ public class DefaultExecutor extends AbstractService implements Executor {
     // which can occur at least in tests.
     private final KestraContext kestraContext;
 
-    private final RunContextFactory runContextFactory;
-
-    private final ExecutionCommandMessageHandler executionCommandMessageHandler;
-    private final ExecutionEventMessageHandler executionEventMessageHandler;
-    private final WorkerTaskResultMessageHandler workerTaskResultMessageHandler;
-    private final ExecutionKilledExecutionMessageHandler executionKilledExecutionMessageHandler;
-    private final SubflowExecutionResultMessageHandler subflowExecutionResultMessageHandler;
-    private final SubflowExecutionEndMessageHandler subflowExecutionEndMessageHandler;
-    private final MultipleConditionEventMessageHandler multipleConditionEventMessageHandler;
-    private final LoopExecutionEventMessageHandler loopExecutionEventMessageHandler;
-
-    private final ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
+    private final ScheduledExecutorService scheduledExecutorService;
+    private final Clock clock;
     private final ExecutorConfiguration executorConfiguration;
+    private final ExecutorCore executorCore;
     private ScheduledFuture<?> executionDelayFuture;
     private ScheduledFuture<?> monitorSLAFuture;
     private ScheduledFuture<?> multipleConditionPurgeFuture;
@@ -124,7 +80,6 @@ public class DefaultExecutor extends AbstractService implements Executor {
     private final java.util.concurrent.ExecutorService executionExecutorService;
     private final int numberOfThreads;
 
-    private Timer flowTriggerProcessingTimer;
     private Timer slaMonitorLoopTimer;
     private Timer executionDelayLoopTimer;
     private Timer multipleConditionPurgeLoopTimer;
@@ -133,84 +88,41 @@ public class DefaultExecutor extends AbstractService implements Executor {
     public DefaultExecutor(
         ApplicationEventPublisher<ServiceStateChangeEvent> eventPublisher,
         ExecutorsUtils executorsUtils,
+        Clock clock,
         ExecutorConfiguration executorConfiguration,
         KestraContext kestraContext,
         DispatchQueueInterface<Execution> executionQueue,
         DispatchQueueInterface<ExecutionCommand> executionCommandQueue,
-        KillSwitchService killSwitchService,
-        KillSwitchActionService killSwitchActionService,
         DispatchQueueInterface<ExecutionEvent> executionEventQueue,
-        BroadcastQueueInterface<FollowExecutionEvent> followExecutionEventQueue,
         DispatchQueueInterface<WorkerTaskResult> workerTaskResultQueue,
         BroadcastQueueInterface<ExecutionKilled> killQueue,
         DispatchQueueInterface<SubflowExecutionResult> subflowExecutionResultQueue,
         DispatchQueueInterface<SubflowExecutionEnd> subflowExecutionEndQueue,
         DispatchQueueInterface<MultipleConditionEvent> multipleConditionEventQueue,
         DispatchQueueInterface<LoopExecutionEvent> loopExecutionEventQueue,
-        DispatchQueueInterface<ExecutionStatistic> executionStatisticQueue,
-        ExecutionTerminatedNotifier executionTerminatedNotifier,
-        ExecutorService executorService,
-        ExecutionService executionService,
-        FlowTriggerService flowTriggerService,
+        ExecutorCore executorCore,
         MaintenanceService maintenanceService,
-        FlowMetaStoreInterface flowMetaStore,
-        ExecutionStateStore executionStateStore,
-        ExecutionDelayProcessor executionDelayProcessor,
-        SLAMonitorStateStore slaMonitorStateStore,
         MultipleConditionStateStore multipleConditionStateStore,
-        SLAMonitorProcessor slaMonitorProcessor,
-        ConcurrencySlotReleaseProcessor concurrencySlotReleaseProcessor,
-        TriggerEventQueue triggerEventQueue,
-        MetricRegistry metricRegistry,
-        RunContextFactory runContextFactory,
-        ExecutionCommandMessageHandler executionCommandMessageHandler,
-        ExecutionEventMessageHandler executionEventMessageHandler,
-        WorkerTaskResultMessageHandler workerTaskResultMessageHandler,
-        ExecutionKilledExecutionMessageHandler executionKilledExecutionMessageHandler,
-        SubflowExecutionResultMessageHandler subflowExecutionResultMessageHandler,
-        SubflowExecutionEndMessageHandler subflowExecutionEndMessageHandler,
-        MultipleConditionEventMessageHandler multipleConditionEventMessageHandler,
-        LoopExecutionEventMessageHandler loopExecutionEventMessageHandler) {
+        MetricRegistry metricRegistry) {
         super(ServiceType.EXECUTOR, eventPublisher);
+        this.clock = clock;
+        this.scheduledExecutorService = executorsUtils.singleThreadScheduledExecutor("executor-loops");
 
         this.executorConfiguration = executorConfiguration;
         this.kestraContext = kestraContext;
         this.executionQueue = executionQueue;
         this.executionCommandQueue = executionCommandQueue;
-        this.killSwitchService = killSwitchService;
-        this.killSwitchActionService = killSwitchActionService;
         this.executionEventQueue = executionEventQueue;
-        this.followExecutionEventQueue = followExecutionEventQueue;
         this.workerTaskResultQueue = workerTaskResultQueue;
         this.killQueue = killQueue;
         this.subflowExecutionResultQueue = subflowExecutionResultQueue;
         this.subflowExecutionEndQueue = subflowExecutionEndQueue;
         this.multipleConditionEventQueue = multipleConditionEventQueue;
         this.loopExecutionEventQueue = loopExecutionEventQueue;
-        this.executionStatisticQueue = executionStatisticQueue;
-        this.executionTerminatedNotifier = executionTerminatedNotifier;
-        this.executorService = executorService;
-        this.executionService = executionService;
-        this.flowTriggerService = flowTriggerService;
+        this.executorCore = executorCore;
         this.maintenanceService = maintenanceService;
-        this.flowMetaStore = flowMetaStore;
-        this.executionStateStore = executionStateStore;
-        this.executionDelayProcessor = executionDelayProcessor;
-        this.slaMonitorStateStore = slaMonitorStateStore;
         this.multipleConditionStateStore = multipleConditionStateStore;
-        this.slaMonitorProcessor = slaMonitorProcessor;
-        this.concurrencySlotReleaseProcessor = concurrencySlotReleaseProcessor;
-        this.triggerEventQueue = triggerEventQueue;
         this.metricRegistry = metricRegistry;
-        this.runContextFactory = runContextFactory;
-        this.executionCommandMessageHandler = executionCommandMessageHandler;
-        this.executionEventMessageHandler = executionEventMessageHandler;
-        this.workerTaskResultMessageHandler = workerTaskResultMessageHandler;
-        this.executionKilledExecutionMessageHandler = executionKilledExecutionMessageHandler;
-        this.subflowExecutionResultMessageHandler = subflowExecutionResultMessageHandler;
-        this.subflowExecutionEndMessageHandler = subflowExecutionEndMessageHandler;
-        this.multipleConditionEventMessageHandler = multipleConditionEventMessageHandler;
-        this.loopExecutionEventMessageHandler = loopExecutionEventMessageHandler;
 
         // By default, we start available processors count threads with a minimum of 4 by executor service
         // for the worker task result queue and the execution queue.
@@ -224,13 +136,11 @@ public class DefaultExecutor extends AbstractService implements Executor {
     }
 
     @PostConstruct
-    void initMetrics() {
+    public void initMetrics() {
         // create metrics to store thread count
         this.metricRegistry.gauge(MetricRegistry.METRIC_EXECUTOR_THREAD_COUNT, MetricRegistry.METRIC_EXECUTOR_THREAD_COUNT_DESCRIPTION, numberOfThreads);
 
         // init internal timers
-        this.flowTriggerProcessingTimer = this.metricRegistry
-            .timer(MetricRegistry.METRIC_EXECUTOR_FLOW_TRIGGER_PROCESSING_DURATION, MetricRegistry.METRIC_EXECUTOR_FLOW_TRIGGER_PROCESSING_DURATION_DESCRIPTION);
         this.slaMonitorLoopTimer = this.metricRegistry.timer(MetricRegistry.METRIC_EXECUTOR_SLA_MONITOR_LOOP_DURATION, MetricRegistry.METRIC_EXECUTOR_SLA_MONITOR_LOOP_DURATION_DESCRIPTION);
         this.executionDelayLoopTimer = this.metricRegistry
             .timer(MetricRegistry.METRIC_EXECUTOR_EXECUTION_DELAY_LOOP_DURATION, MetricRegistry.METRIC_EXECUTOR_EXECUTION_DELAY_LOOP_DURATION_DESCRIPTION);
@@ -356,7 +266,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
         monitorSLAFuture = scheduledExecutorService.scheduleAtFixedRate(
             this::executionSLAMonitorLoop,
             0,
-            executorConfiguration.monitorSLALoopPeriodicityMs(),
+            executorConfiguration.monitorSlaLoopPeriodicityMs(),
             TimeUnit.MILLISECONDS
         );
         multipleConditionPurgeFuture = scheduledExecutorService.scheduleAtFixedRate(
@@ -439,20 +349,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
             log.error(UNABLE_TO_DESERIALIZE_AN_EXECUTION, either.getRight().getMessage());
             return;
         }
-        Execution execution = either.getLeft();
-        // Always persist first so the execution is present in the DB even if kill-switched.
-        try {
-            executionStateStore.create(execution);
-        } catch (Exception e) {
-            log.error("Unable to create execution {}", execution.getId(), e);
-        }
-        EvaluationType evaluationType = killSwitchService.evaluate(execution);
-        if (evaluationType.isKillSwitched(execution)) {
-            killSwitchActionService.handle(evaluationType, execution.getTenantId(), execution.getId());
-            return;
-        }
-        var eventType = execution.getState().isCreated() ? ExecutionEventType.CREATED : ExecutionEventType.UPDATED;
-        executionEventMessageHandler.handle(new ExecutionEvent(execution, eventType)).ifPresent(this::toExecution);
+        executorCore.onExecution(either.getLeft());
     }
 
     private void executionCommandQueue(Either<ExecutionCommand, DeserializationException> either) {
@@ -460,8 +357,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
             log.error(UNABLE_TO_DESERIALIZE_AN_EXECUTION, either.getRight().getMessage());
             return;
         }
-
-        executionCommandMessageHandler.handle(either.getLeft()).ifPresent(this::toExecution);
+        executorCore.onExecutionCommand(either.getLeft());
     }
 
     private void executionEventQueue(Either<ExecutionEvent, DeserializationException> either) {
@@ -469,7 +365,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
             log.error(UNABLE_TO_DESERIALIZE_AN_EXECUTION, either.getRight().getMessage());
             return;
         }
-        executionEventMessageHandler.handle(either.getLeft()).ifPresent(this::toExecution);
+        executorCore.onExecutionEvent(either.getLeft());
     }
 
     private void workerTaskResultQueue(Either<WorkerTaskResult, DeserializationException> either) {
@@ -477,7 +373,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
             log.error("Unable to deserialize a worker task result: {}", either.getRight().getMessage(), either.getRight());
             return;
         }
-        workerTaskResultMessageHandler.handle(either.getLeft()).ifPresent(this::toExecution);
+        executorCore.onWorkerTaskResult(either.getLeft());
     }
 
     private void killQueue(Either<ExecutionKilled, DeserializationException> either) {
@@ -485,23 +381,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
             log.error("Unable to deserialize a killed execution: {}", either.getRight().getMessage());
             return;
         }
-
-        final ExecutionKilled event = either.getLeft();
-
-        // Check whether the event should be handled by the executor.
-        if (event.getState() == ExecutionKilled.State.EXECUTED) {
-            // Event was already handled by the Executor. Ignore it.
-            return;
-        }
-
-        if (!(event instanceof ExecutionKilledExecution killedExecution)) {
-            return;
-        }
-
-        // Transmit the new execution state. Note that the execution
-        // will eventually transition to KILLED state before sub-flow executions are actually killed.
-        // This behavior is acceptable due to the fire-and-forget nature of the killing event.
-        executionKilledExecutionMessageHandler.handle(killedExecution).ifPresent(executor -> this.toExecution(executor, true));
+        executorCore.onExecutionKilled(either.getLeft());
     }
 
     private void subflowExecutionResultQueue(Either<SubflowExecutionResult, DeserializationException> either) {
@@ -509,7 +389,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
             log.error("Unable to deserialize a subflow execution result: {}", either.getRight().getMessage());
             return;
         }
-        subflowExecutionResultMessageHandler.handle(either.getLeft()).ifPresent(this::toExecution);
+        executorCore.onSubflowExecutionResult(either.getLeft());
     }
 
     private void subflowExecutionEndQueue(Either<SubflowExecutionEnd, DeserializationException> either) {
@@ -517,7 +397,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
             log.error("Unable to deserialize a subflow execution end: {}", either.getRight().getMessage());
             return;
         }
-        subflowExecutionEndMessageHandler.handle(either.getLeft());
+        executorCore.onSubflowExecutionEnd(either.getLeft());
     }
 
     private void multipleConditionEventQueue(Either<MultipleConditionEvent, DeserializationException> either) {
@@ -525,7 +405,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
             log.error("Unable to deserialize a multiple condition event: {}", either.getRight().getMessage());
             return;
         }
-        multipleConditionEventMessageHandler.handle(either.getLeft());
+        executorCore.onMultipleConditionEvent(either.getLeft());
     }
 
     private void loopExecutionEventQueue(Either<LoopExecutionEvent, DeserializationException> either) {
@@ -533,7 +413,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
             log.error("Unable to deserialize a loop execution event: {}", either.getRight().getMessage());
             return;
         }
-        loopExecutionEventMessageHandler.handle(either.getLeft()).ifPresent(this::toExecution);
+        executorCore.onLoopExecutionEvent(either.getLeft());
     }
 
     /**
@@ -548,14 +428,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
             return;
         }
 
-        executionDelayLoopTimer.record(() ->
-        {
-            // Transactional outbox: the processor collects the contexts inside the state-store
-            // transaction; events are emitted only here, after processExpired() has committed.
-            // Emitting inside the transaction lets brokers with their own transactionality (Kafka)
-            // deliver an event before its execution row is committed, and the consumer drops it.
-            executionDelayProcessor.processExpired(Instant.now()).forEach(this::toExecution);
-        });
+        executionDelayLoopTimer.record(() -> executorCore.onExpiredExecutionDelays(clock.instant()));
     }
 
     private void executionSLAMonitorLoop() {
@@ -563,13 +436,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
             return;
         }
 
-        slaMonitorLoopTimer.record(() ->
-        {
-            // Transactional outbox: the processor evaluates the violations inside the SLA-monitor
-            // state-store transaction; events are emitted only here, after processExpired() has
-            // committed (same rule as executionDelayLoop).
-            slaMonitorProcessor.processExpired(Instant.now()).forEach(this::toExecution);
-        });
+        slaMonitorLoopTimer.record(() -> executorCore.onExpiredSLAMonitors(clock.instant()));
     }
 
     private void multipleConditionPurgeLoop() {
@@ -577,7 +444,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
             return;
         }
 
-        multipleConditionPurgeLoopTimer.record(() -> multipleConditionStateStore.purgeExpired(Instant.now()));
+        multipleConditionPurgeLoopTimer.record(() -> multipleConditionStateStore.purgeExpired(clock.instant()));
     }
 
     private void enterMaintenance() {
@@ -592,260 +459,6 @@ public class DefaultExecutor extends AbstractService implements Executor {
 
         this.isPaused.set(false);
         this.setState(ServiceState.RUNNING);
-    }
-
-    private void toExecution(ExecutorContext executor) {
-        toExecution(executor, false);
-    }
-
-    private void toExecution(ExecutorContext executor, boolean ignoreFailure) {
-        try {
-            boolean shouldSend = false;
-
-            if (executor.getException() != null) {
-                executor = executorService.handleFailedExecutionFromExecutor(executor, executor.getException());
-                shouldSend = true;
-            } else if (executor.isExecutionUpdated()) {
-                shouldSend = true;
-            }
-
-            if (!shouldSend) {
-                Execution execution = executor.getExecution();
-
-                // purge the trigger: reset scheduler trigger at end
-                // IMPORTANT: this is to cover an edge case, execution created for failed trigger didn't have any taskrun so they will arrive directly here.
-                // We need to detect that and reset them as they will never reach the reset code later on this method.
-                if (
-                    execution.getTrigger() != null &&
-                        (execution.getState().isFailed() || execution.getState().getCurrent().isKilled() || execution.getState().getCurrent().isCancelled()) &&
-                        ListUtils.isEmpty(execution.getTaskRunList())
-                ) {
-                    sendTriggerExecutionTerminated(execution);
-                    this.followExecutionEventQueue.emit(new FollowExecutionEvent(execution, ExecutionEventType.TERMINATED));
-                    emitExecutionStatistic(execution);
-                    notifyExecutionTerminated(execution);
-                }
-
-                return;
-            }
-
-            if (log.isDebugEnabled()) {
-                executorService.log(log, false, executor);
-            }
-
-            // the terminated state can come from the execution queue, in this case we always have a flow in the executor
-            // or from a worker task in an afterExecution block, in this case we need to load the flow
-            if (executor.getFlow() == null && executor.getExecution().getState().isTerminated()) {
-                var execution = executor.getExecution();
-                FlowWithSource flow = flowMetaStore.findByExecutionForRuntime(execution).orElseThrow(() -> new FlowNotFoundException(execution));
-                executor = executor.withFlow(flow);
-            }
-            boolean isTerminated = executor.getFlow() != null && executionService.isTerminated(executor.getFlow(), executor.getExecution());
-
-            Execution execution = executor.getExecution();
-            // Fire flow triggers for every distinct state transition that occurred in this cycle.
-            // A single cycle can advance through multiple states (e.g. PAUSED → RUNNING → SUCCESS
-            // when a pause-resume delay fires and the executor immediately completes the next task).
-            // Iterating stateTransitions[1..n] ensures each intermediate state reaches the trigger
-            // pipeline, regardless of how many transitions collapsed into one executor cycle.
-            List<State.Type> transitions = executor.getStateTransitions();
-            for (int i = 1; i < transitions.size(); i++) {
-                State.Type transitionState = transitions.get(i);
-                processFlowTriggers(transitionState == execution.getState().getCurrent() ? execution : execution.withState(transitions.get(i)));
-            }
-
-            // IMPORTANT: this must be done before emitting the last execution message so that all consumers are notified that the execution ends.
-            if (isTerminated) {
-                // release the concurrency slots (a no-op when no limit applies to the flow),
-                // then check if there exists a queued execution and submit it to the execution queue.
-                // Transactional outbox: the processor pops inside the concurrency-limit
-                // store's transaction and only returns the execution; it is emitted here,
-                // after releaseThenPop() has committed (same rule as executionDelayLoop).
-                // This runs first in the terminal block on purpose: only the cycle that terminated
-                // the execution may release.
-                // An execution that was not already terminal when this cycle started cannot have
-                // been over before it: afterExecution tasks run once the execution state is already terminal,
-                // and the cycle completing them is the one that really terminates the execution.
-                Execution executionAtEntry = executor.getTerminalExecutionAtEntry();
-                boolean terminatedByThisCycle = executionAtEntry == null
-                    || !executionService.isTerminated(executor.getFlow(), executionAtEntry);
-                Optional<Execution> popped = concurrencySlotReleaseProcessor.release(executor, terminatedByThisCycle);
-                if (popped.isPresent()) {
-                    executionQueue.emit(popped.get());
-
-                    // process flow triggers to allow listening on RUNNING state after a QUEUED state
-                    processFlowTriggers(popped.get());
-                }
-
-                // if there is a parent, we send a subflow execution result to it
-                if (ExecutableUtils.isSubflow(execution)) {
-                    // locate the parent execution to find the parent task run
-                    String parentExecutionId = (String) execution.getTrigger().getVariables().get("executionId");
-                    String taskRunId = (String) execution.getTrigger().getVariables().get("taskRunId");
-                    String taskId = (String) execution.getTrigger().getVariables().get("taskId");
-                    SubflowExecutionEnd subflowExecutionEnd = new SubflowExecutionEnd(executor.getExecution(), parentExecutionId, taskRunId, taskId, execution.getState().getCurrent());
-                    this.subflowExecutionEndQueue.emit(subflowExecutionEnd);
-                }
-
-                // if it was a loop execution, we send a terminated loop execution message to the parent execution
-                if (executor.getExecution().getKind() == ExecutionKind.LOOP) {
-                    var loop = (Loop) executor.getFlow().findTaskByTaskId(executor.getExecution().getLoopRun().taskId());
-                    Map<String, Object> outputs = null;
-                    if (!ListUtils.isEmpty(loop.getOutputs())) {
-                        RunContext runContext = runContextFactory.of(executor.getFlow(), executor.getExecution());
-                        try {
-                            outputs = loop.computeIterationOutput(runContext, execution);
-                        } catch (Exception e) {
-                            Logs.logExecution(
-                                executor.getExecution(),
-                                Level.ERROR,
-                                "Failed to render output values",
-                                e
-                            );
-                            runContext.logger().error("Failed to render output values: {}", e.getMessage(), e);
-                            execution = execution.withState(State.Type.FAILED);
-                            // Persist the FAILED state so the sub-execution is correctly reflected in the DB.
-                            try {
-                                executionStateStore.lock(
-                                    execution.getId(), exec -> new ExecutorContext(exec).withExecution(exec.withState(State.Type.FAILED), "failedOutputRender")
-                                );
-                            } catch (Exception persistException) {
-                                log.error("Failed to persist FAILED state for loop sub-execution {}", execution.getId(), persistException);
-                            }
-                            executor = executor.withExecution(execution, "failedOutputRender");
-                        }
-
-                    }
-                    loopExecutionEventQueue.emit(new LoopExecutionEvent(execution.getLoopRun(), execution.getId(), execution.getState().getCurrent(), outputs));
-                }
-
-                // purge SLA monitors
-                if (!ListUtils.isEmpty(executor.getFlow().getSla()) && executor.getFlow().getSla().stream().anyMatch(ExecutionMonitoringSLA.class::isInstance)) {
-                    slaMonitorStateStore.purge(executor.getExecution().getId());
-                }
-
-                // purge the trigger: reset scheduler trigger at end
-                if (execution.getTrigger() != null && !isRealtimeTriggerExecution(executor.getFlow(), execution)) {
-                    sendTriggerExecutionTerminated(execution);
-                }
-
-                ExecutionEvent event = new ExecutionEvent(executor.getExecution(), ExecutionEventType.TERMINATED);
-                this.executionEventQueue.emit(event);
-
-                // update all execution followers
-                // Note that we must use 'emit' here and not emitAsync as we need to emit it inside the same transaction to avoid races,
-                // and transactions are bound to a thread. This is true for all emission of the follow execution event inside an execution lock.
-                this.followExecutionEventQueue.emit(new FollowExecutionEvent(executor.getExecution(), ExecutionEventType.TERMINATED));
-
-                emitExecutionStatistic(execution);
-                notifyExecutionTerminated(execution);
-            } else {
-                ExecutionEvent event = new ExecutionEvent(executor.getExecution(), ExecutionEventType.UPDATED);
-                this.executionEventQueue.emit(event);
-
-                // update all execution followers
-                this.followExecutionEventQueue.emit(new FollowExecutionEvent(executor.getExecution(), ExecutionEventType.UPDATED));
-            }
-        } catch (QueueException | FlowNotFoundException | InternalException e) {
-            if (!ignoreFailure) {
-                // If we cannot add the new worker task result to the execution, we fail it.
-                // Persist the FAILED state first, then emit the queue events
-                // only after the transaction commits to avoid potential race conditions inside the follow endpoint.
-                Optional<ExecutorContext> failedExecutorOpt = executionStateStore.lock(
-                    executor.getExecution().getId(), execution ->
-                    {
-                        Execution failed = execution.failedExecutionFromExecutor(e).execution().withState(State.Type.FAILED);
-                        return new ExecutorContext(execution).withExecution(failed, "toExecutionFailure");
-                    }
-                );
-
-                if (failedExecutorOpt.isPresent()) {
-                    Execution failedExecution = failedExecutorOpt.get().getExecution();
-                    try {
-                        this.executionEventQueue.emit(new ExecutionEvent(failedExecution, ExecutionEventType.TERMINATED));
-
-                        // update all execution followers
-                        this.followExecutionEventQueue.emit(new FollowExecutionEvent(failedExecution, ExecutionEventType.TERMINATED));
-
-                        emitExecutionStatistic(failedExecution);
-                        notifyExecutionTerminated(failedExecution);
-                    } catch (QueueException ex) {
-                        log.error("Unable to emit the execution {}", failedExecution.getId(), ex);
-                    }
-                }
-            }
-        }
-    }
-
-    /**
-     * Asynchronously emits a raw execution-statistic row for the indexer to persist for every terminal NORMAL-kind execution.
-     */
-    private void emitExecutionStatistic(Execution execution) {
-        if (ExecutionKind.isNormal(execution)) {
-            // An end date should always be set, but use the current date as a safety belt
-            Instant bucket = execution.getState().getEndDate().orElse(Instant.now()).truncatedTo(ChronoUnit.MINUTES);
-            this.executionStatisticQueue.emitAsync(new ExecutionStatistic(execution, bucket));
-        }
-    }
-
-    private void notifyExecutionTerminated(Execution execution) {
-        try {
-            this.executionTerminatedNotifier.executionTerminated(execution);
-        } catch (Exception e) {
-            log.warn("Unable to notify execution terminated for execution '{}'", execution.getId(), e);
-        }
-    }
-
-    private void sendTriggerExecutionTerminated(Execution execution) {
-        // The scheduler didn't manage states for the WebHook and the Flow trigger
-        if (
-            !execution.getTrigger().getType().equals(Webhook.class.getName()) &&
-                !execution.getTrigger().getType().equals(io.kestra.plugin.core.trigger.Flow.class.getName()) &&
-                !execution.getTrigger().getType().equals(io.kestra.plugin.core.flow.Subflow.class.getName())
-        ) {
-            TriggerId triggerId = TriggerId.of(execution.getTenantId(), execution.getNamespace(), execution.getFlowId(), execution.getTrigger().getId());
-            triggerEventQueue.send(new TriggerExecutionTerminated(triggerId, execution.getId(), execution.getState().getCurrent()));
-        }
-    }
-
-    /**
-     * A realtime trigger's lock spans the trigger's whole lifetime on the worker, not a single execution.
-     * Terminations of the executions it emits must not send {@link TriggerExecutionTerminated}, otherwise the
-     * scheduler would unlock and resubmit a trigger that is still running. The trigger-creation failure path
-     * (FAILED execution with no task run) bypasses this check and remains the termination signal.
-     */
-    static boolean isRealtimeTriggerExecution(FlowWithSource flow, Execution execution) {
-        if (flow == null || flow.getTriggers() == null) {
-            return false;
-        }
-        for (AbstractTrigger trigger : flow.getTriggers()) {
-            if (trigger.getId().equals(execution.getTrigger().getId())) {
-                return TriggerType.REALTIME.equals(TriggerType.from(trigger));
-            }
-        }
-        return false;
-    }
-
-    private void processFlowTriggers(Execution execution) throws QueueException {
-        flowTriggerProcessingTimer.record(throwRunnable(() ->
-        {
-            Collection<FlowWithSource> allFlows = flowMetaStore.allLastVersion();
-
-            // directly process simple conditions
-            flowTriggerService.withFlowTriggersOnly(allFlows.stream())
-                .filter(f -> ListUtils.isEmpty(f.getTrigger().getDependsOn()))
-                .map(f -> f.getFlow())
-                .distinct() // as computeExecutionsFromFlowTriggers is based on flow, we must map FlowWithFlowTrigger to a flow and distinct to avoid multiple execution for the same flow
-                .flatMap(f -> flowTriggerService.computeExecutionsFromFlowTriggerConditions(execution, f).stream())
-                .forEach(throwConsumer(exec -> executionQueue.emit(exec)));
-
-            // send multiple conditions to the multiple condition queue for later processing
-            flowTriggerService.withFlowTriggersOnly(allFlows.stream())
-                .filter(f -> !ListUtils.isEmpty(f.getTrigger().getDependsOn()))
-                .map(f -> new MultipleConditionEvent(f.getFlow(), execution))
-                .distinct() // we can have multiple MultipleConditionEvent if a flow contains multiple triggers as it would lead to multiple FlowWithFlowTrigger
-                .forEach(throwConsumer(multipleCondition -> multipleConditionEventQueue.emit(multipleCondition)));
-        }));
     }
 
     @Override

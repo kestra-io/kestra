@@ -8,7 +8,6 @@ import java.nio.charset.IllegalCharsetNameException;
 import java.nio.charset.StandardCharsets;
 import java.nio.charset.UnsupportedCharsetException;
 import java.nio.file.Path;
-import java.security.MessageDigest;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZonedDateTime;
@@ -25,7 +24,6 @@ import org.reactivestreams.Publisher;
 import org.slf4j.event.Level;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SequenceWriter;
 
 import io.kestra.core.async.AsyncOperationProcessedEvent;
@@ -72,7 +70,6 @@ import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.runners.*;
 import io.kestra.core.runners.configuration.LocalFilesConfiguration;
 import io.kestra.core.serializers.FileSerde;
-import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.server.ServerConfig;
 import io.kestra.core.services.*;
 import io.kestra.core.storages.Namespace;
@@ -147,6 +144,7 @@ import lombok.experimental.SuperBuilder;
 import lombok.extern.slf4j.Slf4j;
 import reactor.core.Exceptions;
 import reactor.core.publisher.Flux;
+import tools.jackson.databind.ObjectMapper;
 import reactor.core.publisher.FluxSink;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
@@ -501,33 +499,14 @@ public class ExecutionController {
     @Operation(tags = { "Executions" }, summary = "Delete a list of executions")
     @ApiResponse(responseCode = "200", description = "On success", content = { @Content(schema = @Schema(implementation = BulkResponse.class)) })
     @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = ProblemDetail.class)) })
-    public MutableHttpResponse<?> deleteExecutionsByIds(
+    public HttpResponse<?> deleteExecutionsByIds(
         @RequestBody(description = "The execution id") @Body List<String> executionsId,
         @Parameter(description = "Whether to delete non-terminated executions") @Nullable @QueryValue(defaultValue = "false") Boolean includeNonTerminated,
         @Parameter(description = "Whether to delete execution logs", required = false) @QueryValue(defaultValue = "true") Boolean deleteLogs,
         @Parameter(description = "Whether to delete execution metrics", required = false) @QueryValue(defaultValue = "true") Boolean deleteMetrics,
         @Parameter(description = "Whether to delete execution files in the internal storage", required = false) @QueryValue(defaultValue = "true") Boolean deleteStorage) throws IOException {
-        List<Execution> executions = new ArrayList<>();
-        List<ProblemError> invalids = new ArrayList<>();
-
-        for (String executionId : executionsId) {
-            Optional<Execution> execution = executionRepository.findById(tenantService.resolveTenant(), executionId);
-            if (execution.isPresent() && (execution.get().getState().isTerminated() || includeNonTerminated)) {
-                executions.add(execution.get());
-            } else {
-                invalids.add(
-                    executionProblem(executionId, "execution not found", ProblemTypes.NOT_FOUND)
-                );
-            }
-        }
-        if (!invalids.isEmpty()) {
-            throw new BulkValidationException("One or more executions could not be deleted.", invalids);
-        }
-
-        executions
-            .forEach(throwConsumer(execution -> executionService.delete(execution, deleteLogs, deleteMetrics, deleteStorage)));
-
-        return HttpResponse.ok(BulkResponse.builder().count(executions.size()).build());
+        List<Execution> executions = getExecutionsByIds(executionsId, "be deleted");
+        return deleteExecutions(executions, includeNonTerminated, deleteLogs, deleteMetrics, deleteStorage);
     }
 
     @Delete(uri = "/by-query")
@@ -545,9 +524,30 @@ public class ExecutionController {
         @Parameter(description = "Whether to delete execution logs", required = false) @QueryValue(defaultValue = "true") Boolean deleteLogs,
         @Parameter(description = "Whether to delete execution metrics", required = false) @QueryValue(defaultValue = "true") Boolean deleteMetrics,
         @Parameter(description = "Whether to delete execution files in the internal storage", required = false) @QueryValue(defaultValue = "true") Boolean deleteStorage) throws IOException {
-        var ids = getExecutionIds(QueryFilterUtils.replaceTimeRangeWithComputedStartDateFilter(filters));
+        var executions = getExecutions(QueryFilterUtils.replaceTimeRangeWithComputedStartDateFilter(filters));
+        return deleteExecutions(executions, includeNonTerminated, deleteLogs, deleteMetrics, deleteStorage);
+    }
 
-        return deleteExecutionsByIds(ids, includeNonTerminated, deleteLogs, deleteMetrics, deleteStorage);
+    private HttpResponse<?> deleteExecutions(List<Execution> executions, Boolean includeNonTerminated, Boolean deleteLogs, Boolean deleteMetrics, Boolean deleteStorage) throws IOException {
+        validateBulkExecutionACL(executions, BulkOperation.DELETE);
+
+        List<ProblemError> invalids = new ArrayList<>();
+
+        for (Execution execution : executions) {
+            if (!includeNonTerminated && !execution.getState().isTerminated()) {
+                invalids.add(
+                    executionProblem(execution.getId(), "execution not found", ProblemTypes.NOT_FOUND)
+                );
+            }
+        }
+        if (!invalids.isEmpty()) {
+            throw new BulkValidationException("One or more executions could not be deleted.", invalids);
+        }
+
+        executions
+            .forEach(throwConsumer(execution -> executionService.delete(execution, deleteLogs, deleteMetrics, deleteStorage)));
+
+        return HttpResponse.ok(BulkResponse.builder().count(executions.size()).build());
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -1404,23 +1404,39 @@ public class ExecutionController {
     public MutableHttpResponse<ApiAsyncOperationResponse> restartExecutionsByIds(
         @RequestBody(description = "The list of executions id") @Body List<String> executionsId,
         @Parameter(description = "If latest revision should be used") @Nullable @QueryValue(defaultValue = "false") Boolean latestRevision) throws Exception {
-        List<Execution> executions = new ArrayList<>();
+        List<Execution> executions = getExecutionsByIds(executionsId, "be restarted");
+
+        return restartExecutions(latestRevision, executions);
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Post(uri = "/restart/by-query")
+    @Operation(tags = { "Executions" }, summary = "Restart executions filter by query parameters asynchronously")
+    @ApiResponse(responseCode = "202", description = "Accepted", content = { @Content(schema = @Schema(implementation = ApiAsyncOperationResponse.class)) })
+    @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = ProblemDetail.class)) })
+    public MutableHttpResponse<ApiAsyncOperationResponse> restartExecutionsByQuery(
+        @Parameter(
+            description = "Filters. PHP-style nested query is used - examples: `filters[timeRange][EQUALS]=PT168H`, `filters[scope][EQUALS]=USER`, `filters[state][IN]=FAILED,CANCELLED`, `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`",
+            in = ParameterIn.QUERY
+        ) @QueryFilterFormat(Resource.EXECUTION) List<QueryFilter> filters,
+
+        @Parameter(description = "If latest revision should be used") @Nullable @QueryValue(defaultValue = "false") Boolean latestRevision) throws Exception {
+        var executions = getExecutions(QueryFilterUtils.replaceTimeRangeWithComputedStartDateFilter(filters));
+        return restartExecutions(latestRevision, executions);
+    }
+
+    private MutableHttpResponse<ApiAsyncOperationResponse> restartExecutions(Boolean latestRevision, List<Execution> executions) throws QueueException {
+        validateBulkExecutionACL(executions, BulkOperation.RESTART);
+
         List<ProblemError> invalids = new ArrayList<>();
-
-        for (String executionId : executionsId) {
-            Optional<Execution> execution = executionRepository.findById(tenantService.resolveTenant(), executionId);
-
-            if (execution.isPresent() && !execution.get().getState().canBeRestarted()) {
-                invalids.add(
-                    executionProblem(executionId, "Execution '" + execution.get().getId() + "' must be terminated to be restarted, " +
-                            "current state is '" + execution.get().getState().getCurrent() + "' !", ProblemTypes.CONFLICT)
-                );
-            } else if (execution.isEmpty()) {
-                invalids.add(
-                    executionProblem(executionId, "execution not found", ProblemTypes.NOT_FOUND)
-                );
-            } else {
-                executions.add(execution.get());
+        for (Execution execution : executions) {
+            if (!execution.getState().canBeRestarted()) {
+                invalids.add(executionProblem(
+                    execution.getId(),
+                    "Execution '%s' must be terminated to be restarted, current state is '%s' !"
+                        .formatted(execution.getId(), execution.getState().getCurrent()),
+                    ProblemTypes.CONFLICT
+                ));
             }
         }
         if (!invalids.isEmpty()) {
@@ -1441,22 +1457,6 @@ public class ExecutionController {
                 executionCommandQueue.emit(Restart.from(execution, revision).withOperationId(opId));
             }
         );
-    }
-
-    @ExecuteOn(TaskExecutors.IO)
-    @Post(uri = "/restart/by-query")
-    @Operation(tags = { "Executions" }, summary = "Restart executions filter by query parameters asynchronously")
-    @ApiResponse(responseCode = "202", description = "Accepted", content = { @Content(schema = @Schema(implementation = ApiAsyncOperationResponse.class)) })
-    @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = ProblemDetail.class)) })
-    public MutableHttpResponse<ApiAsyncOperationResponse> restartExecutionsByQuery(
-        @Parameter(
-            description = "Filters. PHP-style nested query is used - examples: `filters[timeRange][EQUALS]=PT168H`, `filters[scope][EQUALS]=USER`, `filters[state][IN]=FAILED,CANCELLED`, `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`",
-            in = ParameterIn.QUERY
-        ) @QueryFilterFormat(Resource.EXECUTION) List<QueryFilter> filters,
-
-        @Parameter(description = "If latest revision should be used") @Nullable @QueryValue(defaultValue = "false") Boolean latestRevision) throws Exception {
-        var ids = getExecutionIds(QueryFilterUtils.replaceTimeRangeWithComputedStartDateFilter(filters));
-        return restartExecutionsByIds(ids, latestRevision);
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -1686,25 +1686,40 @@ public class ExecutionController {
     public MutableHttpResponse<ApiAsyncOperationResponse> updateExecutionsStatusByIds(
         @RequestBody(description = "The list of executions id") @Body List<String> executionsId,
         @Parameter(description = "The new state of the executions") @NotNull @QueryValue State.Type newStatus) throws QueueException {
+        List<Execution> executions = getExecutionsByIds(executionsId, "have their state changed");
+        return updateExecutionsStatus(newStatus, executions);
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Post(uri = "/change-status/by-query")
+    @Operation(tags = { "Executions" }, summary = "Change executions state by query parameters asynchronously")
+    @ApiResponse(responseCode = "202", description = "Accepted", content = { @Content(schema = @Schema(implementation = ApiAsyncOperationResponse.class)) })
+    @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = ProblemDetail.class)) })
+    public MutableHttpResponse<ApiAsyncOperationResponse> updateExecutionsStatusByQuery(
+        @Parameter(
+            description = "Filters. PHP-style nested query is used - examples: `filters[timeRange][EQUALS]=PT168H`, `filters[scope][EQUALS]=USER`, `filters[state][IN]=FAILED,CANCELLED`, `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`",
+            in = ParameterIn.QUERY
+        ) @QueryFilterFormat(Resource.EXECUTION) List<QueryFilter> filters,
+
+        @Parameter(description = "The new state of the executions") @NotNull @QueryValue State.Type newStatus) throws QueueException {
+        var executions = getExecutions(QueryFilterUtils.replaceTimeRangeWithComputedStartDateFilter(filters));
+        return updateExecutionsStatus(newStatus, executions);
+    }
+
+    private MutableHttpResponse<ApiAsyncOperationResponse> updateExecutionsStatus(State.Type newStatus, List<Execution> executions) throws QueueException {
         if (!newStatus.isTerminated()) {
             throw new IllegalArgumentException("You can only change the state of an execution to a terminal state.");
         }
 
-        List<Execution> executions = new ArrayList<>();
+        validateBulkExecutionACL(executions, BulkOperation.CHANGE_STATUS);
+
         List<ProblemError> invalids = new ArrayList<>();
 
-        for (String executionId : executionsId) {
-            Optional<Execution> execution = executionRepository.findById(tenantService.resolveTenant(), executionId);
-            if (execution.isPresent() && !execution.get().getState().canChangeStatus()) {
+        for (Execution execution : executions) {
+            if (!execution.getState().canChangeStatus()) {
                 invalids.add(
-                    executionProblem(executionId, "execution not in a terminated state or is killed", ProblemTypes.CONFLICT)
+                    executionProblem(execution.getId(), "execution not in a terminated state or is killed", ProblemTypes.CONFLICT)
                 );
-            } else if (execution.isEmpty()) {
-                invalids.add(
-                    executionProblem(executionId, "execution not found", ProblemTypes.NOT_FOUND)
-                );
-            } else {
-                executions.add(execution.get());
             }
         }
 
@@ -1721,23 +1736,6 @@ public class ExecutionController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Post(uri = "/change-status/by-query")
-    @Operation(tags = { "Executions" }, summary = "Change executions state by query parameters asynchronously")
-    @ApiResponse(responseCode = "202", description = "Accepted", content = { @Content(schema = @Schema(implementation = ApiAsyncOperationResponse.class)) })
-    @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = ProblemDetail.class)) })
-    public MutableHttpResponse<ApiAsyncOperationResponse> updateExecutionsStatusByQuery(
-        @Parameter(
-            description = "Filters. PHP-style nested query is used - examples: `filters[timeRange][EQUALS]=PT168H`, `filters[scope][EQUALS]=USER`, `filters[state][IN]=FAILED,CANCELLED`, `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`",
-            in = ParameterIn.QUERY
-        ) @QueryFilterFormat(Resource.EXECUTION) List<QueryFilter> filters,
-
-        @Parameter(description = "The new state of the executions") @NotNull @QueryValue State.Type newStatus) throws QueueException {
-        var ids = getExecutionIds(QueryFilterUtils.replaceTimeRangeWithComputedStartDateFilter(filters));
-
-        return updateExecutionsStatusByIds(ids, newStatus);
-    }
-
-    @ExecuteOn(TaskExecutors.IO)
     @Delete(uri = "/{executionId}/actions/kill{?isOnKillCascade}", produces = MediaType.TEXT_JSON)
     @Operation(tags = { "Executions" }, summary = "Kill an execution")
     @ApiResponse(responseCode = "200", description = "On success", content = { @Content(schema = @Schema(implementation = Execution.class)) })
@@ -1745,8 +1743,7 @@ public class ExecutionController {
     @ApiResponse(responseCode = "404", description = "if the executions is not found")
     public Mono<HttpResponse<?>> killExecution(
         @Parameter(description = "The execution id") @PathVariable String executionId,
-        @Parameter(description = "Specifies whether killing the execution also kill all subflow executions.") @QueryValue(defaultValue = "true") Boolean isOnKillCascade)
-        throws QueueException {
+        @Parameter(description = "Specifies whether killing the execution also kill all subflow executions.") @QueryValue(defaultValue = "true") Boolean isOnKillCascade) {
 
         Optional<Execution> maybeExecution = executionRepository.findById(tenantService.resolveTenant(), executionId);
         if (maybeExecution.isEmpty()) {
@@ -1781,57 +1778,6 @@ public class ExecutionController {
                     .build()
             )
         ).map(r -> (HttpResponse<?>) r);
-    }
-
-    @ExecuteOn(TaskExecutors.IO)
-    @Delete(uri = "/kill/by-ids")
-    @Operation(tags = { "Executions" }, summary = "Kill a list of executions asynchronously")
-    @ApiResponse(responseCode = "202", description = "Accepted", content = { @Content(schema = @Schema(implementation = ApiAsyncOperationResponse.class)) })
-    @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = ProblemDetail.class)) })
-    public MutableHttpResponse<ApiAsyncOperationResponse> killExecutionsByIds(
-        @RequestBody(description = "The list of executions id") @Body List<String> executionsId) throws QueueException {
-        List<Execution> executions = new ArrayList<>();
-        List<ProblemError> invalids = new ArrayList<>();
-
-        for (String executionId : executionsId) {
-            Optional<Execution> execution = executionRepository.findById(tenantService.resolveTenant(), executionId);
-            if (execution.isPresent() && execution.get().getState().isTerminated()) {
-                invalids.add(
-                    executionProblem(executionId, "execution already finished", ProblemTypes.CONFLICT)
-                );
-            } else if (execution.isEmpty()) {
-                invalids.add(
-                    executionProblem(executionId, "execution not found", ProblemTypes.NOT_FOUND)
-                );
-            } else if (!validateExecutionACL(execution.get())) {
-                invalids.add(
-                    executionProblem(executionId, "user don't have the authorisation to kill this execution", ProblemTypes.FORBIDDEN)
-                );
-            } else {
-                executions.add(execution.get());
-            }
-        }
-
-        if (!invalids.isEmpty()) {
-            throw new BulkValidationException("One or more executions could not be killed.", invalids);
-        }
-
-        this.killCounter.increment(executions.size());
-
-        return submitBatchAction(executions, (execution, opId) ->
-        {
-            eventPublisher.publishEvent(CrudEvent.of(execution, execution.withState(State.Type.KILLING)));
-            killQueue.emit(
-                ExecutionKilledExecution
-                    .builder()
-                    .state(ExecutionKilled.State.REQUESTED)
-                    .executionId(execution.getId())
-                    .isOnKillCascade(false) // Explicitly force cascade to false.
-                    .tenantId(tenantService.resolveTenant())
-                    .operationId(opId)
-                    .build()
-            );
-        });
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -1924,25 +1870,38 @@ public class ExecutionController {
     @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = ProblemDetail.class)) })
     public MutableHttpResponse<ApiAsyncOperationResponse> resumeExecutionsByIds(
         @RequestBody(description = "The list of executions id") @Body List<String> executionsId) throws Exception {
-        List<Execution> executions = new ArrayList<>();
+        List<Execution> executions = getExecutionsByIds(executionsId, "be resumed");
+        return resumeExecutions(executions);
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Post(uri = "/resume/by-query")
+    @Operation(tags = { "Executions" }, summary = "Resume executions filter by query parameters asynchronously")
+    @ApiResponse(responseCode = "202", description = "Accepted", content = { @Content(schema = @Schema(implementation = ApiAsyncOperationResponse.class)) })
+    @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = ProblemDetail.class)) })
+    public MutableHttpResponse<ApiAsyncOperationResponse> resumeExecutionsByQuery(
+        @Parameter(
+            description = "Filters. PHP-style nested query is used - examples: `filters[timeRange][EQUALS]=PT168H`, `filters[scope][EQUALS]=USER`, `filters[state][IN]=FAILED,CANCELLED`, `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`",
+            in = ParameterIn.QUERY
+        ) @QueryFilterFormat(Resource.EXECUTION) List<QueryFilter> filters) throws Exception {
+        var executions = getExecutions(QueryFilterUtils.replaceTimeRangeWithComputedStartDateFilter(filters));
+        return resumeExecutions(executions);
+    }
+
+    private MutableHttpResponse<ApiAsyncOperationResponse> resumeExecutions(List<Execution> executions) throws QueueException {
+        validateBulkExecutionACL(executions, BulkOperation.RESUME);
+
         List<ProblemError> invalids = new ArrayList<>();
 
-        for (String executionId : executionsId) {
-            Optional<Execution> execution = executionRepository.findById(tenantService.resolveTenant(), executionId);
-            if (execution.isPresent() && !execution.get().getState().isPaused()) {
+        for (Execution execution : executions) {
+            if (!execution.getState().isPaused()) {
                 invalids.add(
-                    executionProblem(executionId, "execution not in state PAUSED", ProblemTypes.CONFLICT)
+                    executionProblem(execution.getId(), "execution not in state PAUSED", ProblemTypes.CONFLICT)
                 );
-            } else if (execution.isEmpty()) {
+            } else if (!validateExecutionACL(execution)) {
                 invalids.add(
-                    executionProblem(executionId, "execution not found", ProblemTypes.NOT_FOUND)
+                    executionProblem(execution.getId(), "user don't have the authorisation to resume this execution", ProblemTypes.FORBIDDEN)
                 );
-            } else if (!validateExecutionACL(execution.get())) {
-                invalids.add(
-                    executionProblem(executionId, "user don't have the authorisation to resume this execution", ProblemTypes.FORBIDDEN)
-                );
-            } else {
-                executions.add(execution.get());
             }
         }
 
@@ -1956,21 +1915,6 @@ public class ExecutionController {
             executions,
             (execution, opId) -> executionCommandQueue.emit(Resume.from(execution, createResumed()).withOperationId(opId))
         );
-    }
-
-    @ExecuteOn(TaskExecutors.IO)
-    @Post(uri = "/resume/by-query")
-    @Operation(tags = { "Executions" }, summary = "Resume executions filter by query parameters asynchronously")
-    @ApiResponse(responseCode = "202", description = "Accepted", content = { @Content(schema = @Schema(implementation = ApiAsyncOperationResponse.class)) })
-    @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = ProblemDetail.class)) })
-    public MutableHttpResponse<ApiAsyncOperationResponse> resumeExecutionsByQuery(
-        @Parameter(
-            description = "Filters. PHP-style nested query is used - examples: `filters[timeRange][EQUALS]=PT168H`, `filters[scope][EQUALS]=USER`, `filters[state][IN]=FAILED,CANCELLED`, `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`",
-            in = ParameterIn.QUERY
-        ) @QueryFilterFormat(Resource.EXECUTION) List<QueryFilter> filters) throws Exception {
-        var ids = getExecutionIds(QueryFilterUtils.replaceTimeRangeWithComputedStartDateFilter(filters));
-
-        return resumeExecutionsByIds(ids);
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -2000,21 +1944,34 @@ public class ExecutionController {
     @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = ProblemDetail.class)) })
     public MutableHttpResponse<ApiAsyncOperationResponse> pauseExecutionsByIds(
         @RequestBody(description = "The list of executions id") @Body List<String> executionsId) throws Exception {
-        List<Execution> executions = new ArrayList<>();
+        List<Execution> executions = getExecutionsByIds(executionsId, "be paused");
+        return pauseExecutions(executions);
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Post(uri = "/pause/by-query")
+    @Operation(tags = { "Executions" }, summary = "Pause executions filter by query parameters asynchronously")
+    @ApiResponse(responseCode = "202", description = "Accepted", content = { @Content(schema = @Schema(implementation = ApiAsyncOperationResponse.class)) })
+    @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = ProblemDetail.class)) })
+    public MutableHttpResponse<ApiAsyncOperationResponse> pauseExecutionsByQuery(
+        @Parameter(
+            description = "Filters. PHP-style nested query is used - examples: `filters[timeRange][EQUALS]=PT168H`, `filters[scope][EQUALS]=USER`, `filters[state][IN]=FAILED,CANCELLED`, `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`",
+            in = ParameterIn.QUERY
+        ) @QueryFilterFormat(Resource.EXECUTION) List<QueryFilter> filters) throws Exception {
+        var executions = getExecutions(QueryFilterUtils.replaceTimeRangeWithComputedStartDateFilter(filters));
+        return pauseExecutions(executions);
+    }
+
+    private MutableHttpResponse<ApiAsyncOperationResponse> pauseExecutions(List<Execution> executions) throws QueueException {
+        validateBulkExecutionACL(executions, BulkOperation.PAUSE);
+
         List<ProblemError> invalids = new ArrayList<>();
 
-        for (String executionId : executionsId) {
-            Optional<Execution> execution = executionRepository.findById(tenantService.resolveTenant(), executionId);
-            if (execution.isPresent() && !execution.get().getState().isRunning()) {
+        for (Execution execution : executions) {
+            if (!execution.getState().isRunning()) {
                 invalids.add(
-                    executionProblem(executionId, "execution not in state RUNNING", ProblemTypes.CONFLICT)
+                    executionProblem(execution.getId(), "execution not in state RUNNING", ProblemTypes.CONFLICT)
                 );
-            } else if (execution.isEmpty()) {
-                invalids.add(
-                    executionProblem(executionId, "execution not found", ProblemTypes.NOT_FOUND)
-                );
-            } else {
-                executions.add(execution.get());
             }
         }
 
@@ -2031,18 +1988,14 @@ public class ExecutionController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Post(uri = "/pause/by-query")
-    @Operation(tags = { "Executions" }, summary = "Pause executions filter by query parameters asynchronously")
+    @Delete(uri = "/kill/by-ids")
+    @Operation(tags = { "Executions" }, summary = "Kill a list of executions asynchronously")
     @ApiResponse(responseCode = "202", description = "Accepted", content = { @Content(schema = @Schema(implementation = ApiAsyncOperationResponse.class)) })
     @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = ProblemDetail.class)) })
-    public MutableHttpResponse<ApiAsyncOperationResponse> pauseExecutionsByQuery(
-        @Parameter(
-            description = "Filters. PHP-style nested query is used - examples: `filters[timeRange][EQUALS]=PT168H`, `filters[scope][EQUALS]=USER`, `filters[state][IN]=FAILED,CANCELLED`, `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`",
-            in = ParameterIn.QUERY
-        ) @QueryFilterFormat(Resource.EXECUTION) List<QueryFilter> filters) throws Exception {
-        var ids = getExecutionIds(QueryFilterUtils.replaceTimeRangeWithComputedStartDateFilter(filters));
-
-        return pauseExecutionsByIds(ids);
+    public MutableHttpResponse<ApiAsyncOperationResponse> killExecutionsByIds(
+        @RequestBody(description = "The list of executions id") @Body List<String> executionsId) throws QueueException {
+        List<Execution> executions = getExecutionsByIds(executionsId, "be killed");
+        return killExecutions(executions);
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -2055,9 +2008,47 @@ public class ExecutionController {
             description = "Filters. PHP-style nested query is used - examples: `filters[timeRange][EQUALS]=PT168H`, `filters[scope][EQUALS]=USER`, `filters[state][IN]=FAILED,CANCELLED`, `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`",
             in = ParameterIn.QUERY
         ) @QueryFilterFormat(Resource.EXECUTION) List<QueryFilter> filters) throws QueueException {
-        var ids = getExecutionIds(QueryFilterUtils.replaceTimeRangeWithComputedStartDateFilter(filters));
+        var executions = getExecutions(QueryFilterUtils.replaceTimeRangeWithComputedStartDateFilter(filters));
+        return killExecutions(executions);
+    }
 
-        return killExecutionsByIds(ids);
+    private MutableHttpResponse<ApiAsyncOperationResponse> killExecutions(List<Execution> executions) throws QueueException {
+        validateBulkExecutionACL(executions, BulkOperation.KILL);
+
+        List<ProblemError> invalids = new ArrayList<>();
+
+        for (Execution execution : executions) {
+            if (execution.getState().isTerminated()) {
+                invalids.add(
+                    executionProblem(execution.getId(), "execution already finished", ProblemTypes.CONFLICT)
+                );
+            } else if (!validateExecutionACL(execution)) {
+                invalids.add(
+                    executionProblem(execution.getId(), "user don't have the authorisation to kill this execution", ProblemTypes.FORBIDDEN)
+                );
+            }
+        }
+
+        if (!invalids.isEmpty()) {
+            throw new BulkValidationException("One or more executions could not be killed.", invalids);
+        }
+
+        this.killCounter.increment(executions.size());
+
+        return submitBatchAction(executions, (execution, opId) ->
+        {
+            eventPublisher.publishEvent(CrudEvent.of(execution, execution.withState(State.Type.KILLING)));
+            killQueue.emit(
+                ExecutionKilledExecution
+                    .builder()
+                    .state(ExecutionKilled.State.REQUESTED)
+                    .executionId(execution.getId())
+                    .isOnKillCascade(false) // Explicitly force cascade to false.
+                    .tenantId(tenantService.resolveTenant())
+                    .operationId(opId)
+                    .build()
+            );
+        });
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -2072,9 +2063,9 @@ public class ExecutionController {
         ) @QueryFilterFormat(Resource.EXECUTION) List<QueryFilter> filters,
 
         @Parameter(description = "If latest revision should be used") @Nullable @QueryValue(defaultValue = "false") Boolean latestRevision) throws Exception {
-        var ids = getExecutionIds(QueryFilterUtils.replaceTimeRangeWithComputedStartDateFilter(filters));
+        var executions = getExecutions(QueryFilterUtils.replaceTimeRangeWithComputedStartDateFilter(filters));
 
-        return replayExecutionsByIds(ids, latestRevision);
+        return replayExecutions(latestRevision, executions);
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -2085,23 +2076,12 @@ public class ExecutionController {
     public MutableHttpResponse<ApiAsyncOperationResponse> replayExecutionsByIds(
         @RequestBody(description = "The list of executions id") @Body List<String> executionsId,
         @Parameter(description = "If latest revision should be used") @Nullable @QueryValue(defaultValue = "false") Boolean latestRevision) throws Exception {
-        List<Execution> executions = new ArrayList<>();
-        List<ProblemError> invalids = new ArrayList<>();
+        List<Execution> executions = getExecutionsByIds(executionsId, "be replayed");
+        return replayExecutions(latestRevision, executions);
+    }
 
-        for (String executionId : executionsId) {
-            Optional<Execution> execution = executionRepository.findById(tenantService.resolveTenant(), executionId);
-            if (execution.isEmpty()) {
-                invalids.add(
-                    executionProblem(executionId, "execution not found", ProblemTypes.NOT_FOUND)
-                );
-            } else {
-                executions.add(execution.get());
-            }
-        }
-
-        if (!invalids.isEmpty()) {
-            throw new BulkValidationException("One or more executions could not be replayed.", invalids);
-        }
+    private MutableHttpResponse<ApiAsyncOperationResponse> replayExecutions(Boolean latestRevision, List<Execution> executions) throws QueueException {
+        validateBulkExecutionACL(executions, BulkOperation.REPLAY);
 
         this.replayCounter.increment(executions.size());
 
@@ -2274,7 +2254,7 @@ public class ExecutionController {
     @ApiResponse(responseCode = "409", description = "If labels cannot be applied")
     public Mono<HttpResponse<?>> setLabelsOnTerminatedExecution(
         @Parameter(description = "The execution id") @PathVariable String executionId,
-        @RequestBody(description = "The labels to add to the execution") @Body @NotNull @Valid List<Label> labels) throws QueueException {
+        @RequestBody(description = "The labels to add to the execution") @Body @NotNull List<@Valid Label> labels) throws QueueException {
         Execution execution = executionRepository.findById(tenantService.resolveTenant(), executionId)
             .orElseThrow(() -> new io.kestra.core.exceptions.NotFoundException("Execution '%s' was not found.".formatted(executionId)));
 
@@ -2326,44 +2306,11 @@ public class ExecutionController {
     @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = ProblemDetail.class)) })
     public MutableHttpResponse<ApiAsyncOperationResponse> setLabelsOnTerminatedExecutionsByIds(
         @RequestBody(description = "The request containing a list of labels and a list of executions") @Body @Valid SetLabelsByIdsRequest setLabelsByIds) throws QueueException {
-        List<Execution> executions = new ArrayList<>();
-        List<ProblemError> invalids = new ArrayList<>();
-
-        for (String executionId : setLabelsByIds.executionsId()) {
-            Optional<Execution> execution = executionRepository.findById(tenantService.resolveTenant(), executionId);
-            if (execution.isPresent() && !execution.get().getState().isTerminated()) {
-                invalids.add(
-                    executionProblem(executionId, "execution is not terminated", ProblemTypes.CONFLICT)
-                );
-            } else if (execution.isEmpty()) {
-                invalids.add(
-                    executionProblem(executionId, "execution not found", ProblemTypes.NOT_FOUND)
-                );
-            } else {
-                executions.add(execution.get());
-            }
-        }
-
-        if (!invalids.isEmpty()) {
-            throw new BulkValidationException("One or more executions could not have their labels set.", invalids);
-        }
-
-        // merge and validate every execution's labels before emitting anything, so a rejected
-        // batch (e.g. a system label in the payload) never applies to some executions but not others
-        Map<String, List<Label>> mergedLabelsByExecutionId = new HashMap<>(executions.size());
-        for (Execution execution : executions) {
-            List<Label> deduplicated = Label.deduplicate(ListUtils.concat(execution.getLabels(), setLabelsByIds.executionLabels()));
-            mergedLabelsByExecutionId.put(execution.getId(), mergeSystemLabels(execution, deduplicated));
-        }
-
-        this.updateLabelsCounter.increment(executions.size());
-
-        return submitBatchAction(executions, (execution, opId) ->
-            executionCommandQueue.emit(UpdateLabels.from(execution, mergedLabelsByExecutionId.get(execution.getId())).withOperationId(opId))
-        );
+        List<Execution> executions = getExecutionsByIds(setLabelsByIds.executionsId(), "have their labels set");
+        return setLabelsOnTerminatedExecutions(setLabelsByIds.executionLabels(), executions);
     }
 
-    public record SetLabelsByIdsRequest(@NotNull List<String> executionsId, @NotNull @Valid List<Label> executionLabels) {
+    public record SetLabelsByIdsRequest(@NotNull List<String> executionsId, @NotNull List<@Valid Label> executionLabels) {
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -2377,11 +2324,43 @@ public class ExecutionController {
             in = ParameterIn.QUERY
         ) @QueryFilterFormat(Resource.EXECUTION) List<QueryFilter> filters,
 
-        @RequestBody(description = "The labels to add to the execution") @Body @NotNull @Valid List<Label> setLabels) throws QueueException {
-        var ids = getExecutionIds(QueryFilterUtils.replaceTimeRangeWithComputedStartDateFilter(filters));
-
-        return setLabelsOnTerminatedExecutionsByIds(new SetLabelsByIdsRequest(ids, setLabels));
+        @RequestBody(description = "The labels to add to the execution") @Body @NotNull List<@Valid Label> setLabels) throws QueueException {
+        var executions = getExecutions(QueryFilterUtils.replaceTimeRangeWithComputedStartDateFilter(filters));
+        return setLabelsOnTerminatedExecutions(setLabels, executions);
     }
+
+    private MutableHttpResponse<ApiAsyncOperationResponse> setLabelsOnTerminatedExecutions(List<Label> setLabels, List<Execution> executions) throws QueueException {
+        validateBulkExecutionACL(executions, BulkOperation.SET_LABELS);
+
+        List<ProblemError> invalids = new ArrayList<>();
+
+        for (Execution execution : executions) {
+            if (!execution.getState().isTerminated()) {
+                invalids.add(
+                    executionProblem(execution.getId(), "execution is not terminated", ProblemTypes.CONFLICT)
+                );
+            }
+        }
+
+        if (!invalids.isEmpty()) {
+            throw new BulkValidationException("One or more executions could not have their labels set.", invalids);
+        }
+
+        // merge and validate every execution's labels before emitting anything, so a rejected
+        // batch (e.g. a system label in the payload) never applies to some executions but not others
+        Map<String, List<Label>> mergedLabelsByExecutionId = new HashMap<>(executions.size());
+        for (Execution execution : executions) {
+            List<Label> deduplicated = Label.deduplicate(ListUtils.concat(execution.getLabels(), setLabels));
+            mergedLabelsByExecutionId.put(execution.getId(), mergeSystemLabels(execution, deduplicated));
+        }
+
+        this.updateLabelsCounter.increment(executions.size());
+
+        return submitBatchAction(executions, (execution, opId) ->
+            executionCommandQueue.emit(UpdateLabels.from(execution, mergedLabelsByExecutionId.get(execution.getId())).withOperationId(opId))
+        );
+    }
+
 
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "/{executionId}/actions/unqueue")
@@ -2413,22 +2392,36 @@ public class ExecutionController {
     public MutableHttpResponse<ApiAsyncOperationResponse> unqueueExecutionsByIds(
         @RequestBody(description = "The list of executions id") @Body List<String> executionsId,
         @Parameter(description = "The new state of the unqueued executions") @Nullable @QueryValue State.Type state) throws Exception {
-        List<Execution> executions = new ArrayList<>();
+        List<Execution> executions = getExecutionsByIds(executionsId, "be unqueued");
+        return unqueueExecutions(state, executions);
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Post(uri = "/unqueue/by-query")
+    @Operation(tags = { "Executions" }, summary = "Unqueue executions filter by query parameters asynchronously")
+    @ApiResponse(responseCode = "202", description = "Accepted", content = { @Content(schema = @Schema(implementation = ApiAsyncOperationResponse.class)) })
+    @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = ProblemDetail.class)) })
+    public MutableHttpResponse<ApiAsyncOperationResponse> unqueueExecutionsByQuery(
+        @Parameter(
+            description = "Filters. PHP-style nested query is used - examples: `filters[timeRange][EQUALS]=PT168H`, `filters[scope][EQUALS]=USER`, `filters[state][IN]=FAILED,CANCELLED`, `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`",
+            in = ParameterIn.QUERY
+        ) @QueryFilterFormat(Resource.EXECUTION) List<QueryFilter> filters,
+
+        @Parameter(description = "The new state of the unqueued executions") @Nullable @QueryValue State.Type newState) throws Exception {
+        var executions = getExecutions(QueryFilterUtils.replaceTimeRangeWithComputedStartDateFilter(filters));
+        return unqueueExecutions(newState, executions);
+    }
+
+    private MutableHttpResponse<ApiAsyncOperationResponse> unqueueExecutions(State.Type state, List<Execution> executions) throws QueueException {
+        validateBulkExecutionACL(executions, BulkOperation.UNQUEUE);
+
         List<ProblemError> invalids = new ArrayList<>();
 
-        for (String executionId : executionsId) {
-            Optional<Execution> execution = executionRepository.findById(tenantService.resolveTenant(), executionId);
-
-            if (execution.isPresent() && execution.get().getState().getCurrent() != State.Type.QUEUED) {
+        for (Execution execution : executions) {
+            if (execution.getState().getCurrent() != State.Type.QUEUED) {
                 invalids.add(
-                    executionProblem(executionId, "execution not in state QUEUED", ProblemTypes.CONFLICT)
+                    executionProblem(execution.getId(), "execution not in state QUEUED", ProblemTypes.CONFLICT)
                 );
-            } else if (execution.isEmpty()) {
-                invalids.add(
-                    executionProblem(executionId, "execution not found", ProblemTypes.NOT_FOUND)
-                );
-            } else {
-                executions.add(execution.get());
             }
         }
         if (!invalids.isEmpty()) {
@@ -2444,29 +2437,12 @@ public class ExecutionController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Post(uri = "/unqueue/by-query")
-    @Operation(tags = { "Executions" }, summary = "Unqueue executions filter by query parameters asynchronously")
-    @ApiResponse(responseCode = "202", description = "Accepted", content = { @Content(schema = @Schema(implementation = ApiAsyncOperationResponse.class)) })
-    @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = ProblemDetail.class)) })
-    public MutableHttpResponse<ApiAsyncOperationResponse> unqueueExecutionsByQuery(
-        @Parameter(
-            description = "Filters. PHP-style nested query is used - examples: `filters[timeRange][EQUALS]=PT168H`, `filters[scope][EQUALS]=USER`, `filters[state][IN]=FAILED,CANCELLED`, `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`",
-            in = ParameterIn.QUERY
-        ) @QueryFilterFormat(Resource.EXECUTION) List<QueryFilter> filters,
-
-        @Parameter(description = "The new state of the unqueued executions") @Nullable @QueryValue State.Type newState) throws Exception {
-        var ids = getExecutionIds(QueryFilterUtils.replaceTimeRangeWithComputedStartDateFilter(filters));
-
-        return unqueueExecutionsByIds(ids, newState);
-    }
-
-    @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "/{executionId}/actions/force-run")
     @Operation(tags = { "Executions" }, summary = "Force run an execution")
     @ApiResponse(responseCode = "200", description = "On success", content = { @Content(schema = @Schema(implementation = Execution.class)) })
     @ApiResponse(responseCode = "409", description = "if the execution cannot be force-run")
     public Mono<HttpResponse<Execution>> forceRunExecution(
-        @Parameter(description = "The execution id") @PathVariable String executionId) throws Exception {
+        @Parameter(description = "The execution id") @PathVariable String executionId) {
         Execution execution = executionRepository.findById(tenantService.resolveTenant(), executionId).orElseThrow(NotFoundException::new);
 
         if (execution.getState().isTerminated()) {
@@ -2488,26 +2464,38 @@ public class ExecutionController {
     @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = ProblemDetail.class)) })
     public MutableHttpResponse<ApiAsyncOperationResponse> forceRunByIds(
         @RequestBody(description = "The list of executions id") @Body List<String> executionsId) throws Exception {
-        List<Execution> executions = new ArrayList<>();
+        List<Execution> executions = getExecutionsByIds(executionsId, "be force-run");
+        return forceRunExecutions(executions);
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Post(uri = "/force-run/by-query")
+    @Operation(tags = { "Executions" }, summary = "Force run executions filter by query parameters asynchronously")
+    @ApiResponse(responseCode = "202", description = "Accepted", content = { @Content(schema = @Schema(implementation = ApiAsyncOperationResponse.class)) })
+    @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = ProblemDetail.class)) })
+    public MutableHttpResponse<ApiAsyncOperationResponse> forceRunExecutionsByQuery(
+        @Parameter(
+            description = "Filters. PHP-style nested query is used - examples: `filters[timeRange][EQUALS]=PT168H`, `filters[scope][EQUALS]=USER`, `filters[state][IN]=FAILED,CANCELLED`, `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`",
+            in = ParameterIn.QUERY
+        ) @QueryFilterFormat(Resource.EXECUTION) List<QueryFilter> filters) throws Exception {
+        var executions = getExecutions(QueryFilterUtils.replaceTimeRangeWithComputedStartDateFilter(filters));
+        return forceRunExecutions(executions);
+    }
+
+    private MutableHttpResponse<ApiAsyncOperationResponse> forceRunExecutions(List<Execution> executions) throws QueueException {
+        validateBulkExecutionACL(executions, BulkOperation.FORCE_RUN);
+
         List<ProblemError> invalids = new ArrayList<>();
 
-        for (String executionId : executionsId) {
-            Optional<Execution> execution = executionRepository.findById(tenantService.resolveTenant(), executionId);
-
-            if (execution.isPresent() && execution.get().getState().isTerminated()) {
+        for (Execution execution : executions) {
+            if (execution.getState().isTerminated()) {
                 invalids.add(
-                    executionProblem(executionId, "execution in a terminated state", ProblemTypes.CONFLICT)
+                    executionProblem(execution.getId(), "execution in a terminated state", ProblemTypes.CONFLICT)
                 );
-            } else if (execution.isEmpty()) {
+            } else if (!validateExecutionACL(execution)) {
                 invalids.add(
-                    executionProblem(executionId, "execution not found", ProblemTypes.NOT_FOUND)
+                    executionProblem(execution.getId(), "user don't have the authorisation to force run this execution", ProblemTypes.FORBIDDEN)
                 );
-            } else if (!validateExecutionACL(execution.get())) {
-                invalids.add(
-                    executionProblem(executionId, "user don't have the authorisation to force run this execution", ProblemTypes.FORBIDDEN)
-                );
-            } else {
-                executions.add(execution.get());
             }
         }
         if (!invalids.isEmpty()) {
@@ -2522,28 +2510,33 @@ public class ExecutionController {
         );
     }
 
-    @ExecuteOn(TaskExecutors.IO)
-    @Post(uri = "/force-run/by-query")
-    @Operation(tags = { "Executions" }, summary = "Force run executions filter by query parameters asynchronously")
-    @ApiResponse(responseCode = "202", description = "Accepted", content = { @Content(schema = @Schema(implementation = ApiAsyncOperationResponse.class)) })
-    @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = ProblemDetail.class)) })
-    public MutableHttpResponse<ApiAsyncOperationResponse> forceRunExecutionsByQuery(
-        @Parameter(
-            description = "Filters. PHP-style nested query is used - examples: `filters[timeRange][EQUALS]=PT168H`, `filters[scope][EQUALS]=USER`, `filters[state][IN]=FAILED,CANCELLED`, `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`",
-            in = ParameterIn.QUERY
-        ) @QueryFilterFormat(Resource.EXECUTION) List<QueryFilter> filters) throws Exception {
-        var ids = getExecutionIds(QueryFilterUtils.replaceTimeRangeWithComputedStartDateFilter(filters));
-
-        return forceRunByIds(ids);
-    }
-
-    private List<String> getExecutionIds(List<QueryFilter> filters) {
+    private List<Execution> getExecutions(List<QueryFilter> filters) {
         return executionRepository
             .find(
                 Pageable.UNPAGED,
                 tenantService.resolveTenant(),
                 filters
-            ).map(Execution::getId);
+            );
+    }
+
+    private List<Execution> getExecutionsByIds(List<String> executionsId, String action) {
+        List<Execution> executions = new ArrayList<>();
+        List<ProblemError> invalids = new ArrayList<>();
+
+        for (String executionId : executionsId) {
+            Optional<Execution> execution = executionRepository.findById(tenantService.resolveTenant(), executionId);
+            if (execution.isPresent()) {
+                executions.add(execution.get());
+            } else {
+                invalids.add(
+                    executionProblem(executionId, "execution not found", ProblemTypes.NOT_FOUND)
+                );
+            }
+        }
+        if (!invalids.isEmpty()) {
+            throw new BulkValidationException("One or more executions could not " + action + ".", invalids);
+        }
+        return executions;
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -2775,8 +2768,8 @@ public class ExecutionController {
 
         return HttpResponse.ok(
             CSVUtils.toCSVFlux(
-                executionRepository.findAsync(this.tenantService.resolveTenant(), QueryFilterUtils.replaceTimeRangeWithComputedStartDateFilter(filters))
-                    .map(log -> objectMapper.convertValue(log, JacksonMapper.MAP_TYPE_REFERENCE))
+                executionRepository.findAsync(this.tenantService.resolveTenant(), QueryFilterUtils.replaceTimeRangeWithComputedStartDateFilter(filters)),
+                objectMapper
             )
         )
             .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=executions.csv");
@@ -2863,13 +2856,41 @@ public class ExecutionController {
     }
 
     /**
-     * For override purpose.
+     * Overridden in EE.
      *
      * @param execution
      * @return true if the user has the authorization, false else.
      */
     protected boolean validateExecutionACL(Execution execution) {
         return true;
+    }
+
+    /**
+     * Bulk counterpart of {@link #validateExecutionACL(Execution)}, called by every bulk endpoint once the
+     * executions are loaded, for both the by-ids and the by-query variants.
+     * <p>
+     * Overridden in EE.
+     * <p>
+     * Throws if the user is not allowed to run the operation on one of the executions.
+     */
+    protected void validateBulkExecutionACL(List<Execution> executions, BulkOperation operation) {
+        // no-op in OSS
+    }
+
+    /**
+     * The bulk operations that {@link #validateBulkExecutionACL(List, BulkOperation)} discriminates on.
+     */
+    public enum BulkOperation {
+        CHANGE_STATUS,
+        DELETE,
+        FORCE_RUN,
+        KILL,
+        PAUSE,
+        REPLAY,
+        RESTART,
+        RESUME,
+        SET_LABELS,
+        UNQUEUE
     }
 
     /**

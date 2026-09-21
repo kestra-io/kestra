@@ -361,6 +361,10 @@
         }
     }
 
+    /** Coalesces same-tick load triggers into one post-flush load, never with a stale page size. */
+    const loadRequest = ref(0)
+    const requestLoad = () => { loadRequest.value++ }
+
     const showEmpty = computed(() => props.data.length === 0 && !isLoading.value && !loadError.value)
 
     const showPagination = computed(() => {
@@ -376,7 +380,7 @@
             emit("update:currentPage", 1)
             emit("page-changed", {page: 1, size: currentSizeValue.value})
         } else {
-            callLoad()
+            requestLoad()
         }
     }
 
@@ -413,7 +417,7 @@
 
     watch(() => props.loading, (val) => { isLoading.value = val })
 
-    watch([currentPageValue, currentSizeValue], () => callLoad(), {flush: "post"})
+    watch([currentPageValue, currentSizeValue, loadRequest], () => callLoad(), {flush: "post"})
 
     const onPageChange = (page: number) => {
         emit("update:currentPage", page)
@@ -434,7 +438,7 @@
             internalSort.value = undefined
         }
         emit("sort-change", sort)
-        callLoad()
+        requestLoad()
     }
 
     defineExpose({

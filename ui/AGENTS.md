@@ -277,6 +277,7 @@ Install the repo hooks once with `.github/.hooks/setup_hooks.sh` and the second 
 ### Testing UI
 
 - Unit tests with **Vitest** + `@vue/test-utils`, colocated next to the component.
+- Mount through `i18nMount` or `i18nShallowMount` rather than calling `mount` with your own `createI18n`. Pass `messages` for the keys the spec asserts on, or `locales: en` when it needs the real `en.json`; with neither, `t("key")` renders the key. Missing-key warnings are off in both helpers, so a spec asserting on raw keys stays quiet. Two copies exist and behave the same: specs under `tests/unit/` and `packages/topology/tests/` import `tests/unit/i18nMount.ts`, and specs under `packages/design-system/tests/units/` import the one next to them. Both install the design system, as the app does at bootstrap, so a mounted `Ks*` component resolves instead of warning; a spec that mocks `@kestra-io/design-system` away has to keep a `default` export for that install, such as `default: {install: () => {}}`. Only a spec that never mounts anything, such as one testing pluralisation on the instance itself, builds its own i18n.
 - Use `data-test="..."` selectors for E2E tests with **Playwright**. Never select on `.el-*` or `.ks-*` class names — those are not stable contracts and will break on Element Plus / DS upgrades.
 - Storybook stories cover: each variant prop, dark mode, edge cases (empty content, very long text, error state). A `*.stories.ts` file with one default story is not enough.
 - Visual regressions caught in Storybook are cheaper to fix than caught in production.
@@ -447,10 +448,11 @@ If your `<style>` block needs to exist:
 
 - `State`, `STATES`, `LOG_LEVELS` — execution state constants, icons, and colors
 - `cssVar(name, opacity?)` — read a `--ks-*` CSS custom property at runtime (use this in JS / chart configs instead of hardcoding hex)
-- `dayjs` — the one configured dayjs instance (utc, timezone, duration, calendar, isoWeek, localizedFormat, minMax, relativeTime, weekOfYear, isSameOrBefore). Never `import dayjs from "dayjs"` in feature code: plugins are registered on this instance, so a bare import silently lacks them
+- `dayjs` — the one configured dayjs instance (utc, timezone, duration, advancedFormat, calendar, isoWeek, localizedFormat, minMax, relativeTime, weekOfYear, isSameOrBefore). Never `import dayjs from "dayjs"` in feature code: plugins are registered on this instance, so a bare import silently lacks them
 - `dateUtils` — `dateFilter()`, `parseIso()`, `toIsoKeepOffset()`, `currentTimezone()`, `timezonesWithOffset()`, `currentLocale()`, `setLocale()`, `DATE_FORMAT_STORAGE_KEY`, `TIMEZONE_STORAGE_KEY`
 - `durationUtils` — `duration()`, `isValidDuration()`, `humanDuration()` — ISO 8601 ↔ ms and human-readable
 - `stringUtils` — `afterLastDot()`
+- `escapeHtml()`, `cloneDeep()`, `deepMerge()`, `isDeepEqual()`, `isPlainObject()`, `getPath()`, `setPath()`, `groupBy()`, `mapValues()`, `debounce()`, `throttle()` — the general-purpose helpers that replaced lodash. `debounce`/`throttle` return a function carrying `cancel()` and `flush()`. Do not add `lodash` back for any of these
 - `fileUtils` — `isFileUri()`, `fileName()`, `fileExtension()`, `fileIcon()` — storage-URI detection and the file symbol used by `KsFileTag`
 - `flowYamlUtils` — YAML parsing / manipulation for flow definitions
 - `Comparators` — enum of filter comparison operators

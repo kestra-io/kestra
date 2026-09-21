@@ -77,7 +77,7 @@
     import {cssVar, dayjs, KsBar, KsLine, KsSegmented} from "@kestra-io/design-system"
     import type {KsChartSeriesItem} from "@kestra-io/design-system"
     import {KsFilter as KSFilter} from "@kestra-io/design-system"
-    import {useFlowMetricFilter} from "../filter/configurations"
+    import {useFlowMetricFilter} from "../filter/configurations/metricFilters"
 
     defineOptions({
         name: "FlowMetrics",

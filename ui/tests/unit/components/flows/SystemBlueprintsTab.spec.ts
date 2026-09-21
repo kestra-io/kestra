@@ -1,6 +1,7 @@
 import {describe, test, expect, vi, beforeEach, afterAll} from "vitest"
-import {mount, RouterLinkStub} from "@vue/test-utils"
-import {createI18n} from "vue-i18n"
+import {RouterLinkStub} from "@vue/test-utils"
+import {i18nMount} from "../../i18nMount"
+
 import {createPinia} from "pinia"
 import {RECIPE_PRESET_KEY} from "../../../../src/utils/storageKeys"
 
@@ -28,7 +29,7 @@ const messages = {
 
 const globalConfig = {
     global: {
-        plugins: [createI18n({legacy: false, locale: "en", messages}), createPinia()],
+        plugins: [createPinia()],
         stubs: {
             RouterLink: RouterLinkStub,
             KsText: {template: "<span><slot /></span>"},
@@ -53,7 +54,7 @@ describe("SystemBlueprintsTab", () => {
 
     test("scopes the recipe builder to the configured system namespace", () => {
         // Given / When
-        const wrapper = mount(SystemBlueprintsTab, globalConfig)
+        const wrapper = i18nMount(SystemBlueprintsTab, {locales: messages, ...globalConfig})
 
         // Then
         expect(wrapper.findComponent({name: "FlowRecipe"}).props("namespace")).toBe("kestra.system")
@@ -61,7 +62,7 @@ describe("SystemBlueprintsTab", () => {
 
     test("prefers an explicit namespace prop over the configured one", () => {
         // Given / When
-        const wrapper = mount(SystemBlueprintsTab, {...globalConfig, props: {namespace: "kestra.other"}})
+        const wrapper = i18nMount(SystemBlueprintsTab, {locales: messages, ...globalConfig, props: {namespace: "kestra.other"}})
 
         // Then
         expect(wrapper.findComponent({name: "FlowRecipe"}).props("namespace")).toBe("kestra.other")
@@ -69,7 +70,7 @@ describe("SystemBlueprintsTab", () => {
 
     test("hands the generated flow to the editor through sessionStorage", async () => {
         // Given
-        const wrapper = mount(SystemBlueprintsTab, globalConfig)
+        const wrapper = i18nMount(SystemBlueprintsTab, {locales: messages, ...globalConfig})
         const yaml = "id: system-flow-alert\nnamespace: kestra.system\n"
 
         // When
@@ -86,7 +87,7 @@ describe("SystemBlueprintsTab", () => {
 
     test("links out to the community blueprint catalog", () => {
         // Given / When
-        const wrapper = mount(SystemBlueprintsTab, globalConfig)
+        const wrapper = i18nMount(SystemBlueprintsTab, {locales: messages, ...globalConfig})
 
         // Then
         const link = wrapper.findAllComponents(RouterLinkStub)
@@ -97,7 +98,7 @@ describe("SystemBlueprintsTab", () => {
 
     test("offers an escape hatch that skips the wizard for a blank flow", () => {
         // Given / When — the guided steps must not be the only way out
-        const wrapper = mount(SystemBlueprintsTab, globalConfig)
+        const wrapper = i18nMount(SystemBlueprintsTab, {locales: messages, ...globalConfig})
 
         // Then — the link opens the flow editor on the system namespace
         const link = wrapper.findAllComponents(RouterLinkStub)

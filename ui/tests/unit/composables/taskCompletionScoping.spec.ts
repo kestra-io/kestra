@@ -3,6 +3,7 @@ import {
     taskIdentityAtCursor,
     taskTypeAtCursor,
     scopePropertySuggestionsToTaskType,
+    filterMissingRequiredTaskProperties,
 } from "../../../src/composables/monaco/languages/taskCompletionScoping"
 
 const FLOW = `id: myflow
@@ -86,6 +87,131 @@ tasks:
             type: "io.kestra.plugin.core.log.Log",
             version: "1.2.3",
         })
+    })
+
+    it("resolves the task even if its id matches a flow input", () => {
+        const flow = `id: myflow
+namespace: my.ns
+inputs:
+  - id: same
+    type: STRING
+tasks:
+  - id: same
+    type: io.kestra.plugin.core.log.Log
+    mes`
+        expect(taskTypeAtCursor({source: flow, cursorIndex: flow.length})).toBe("io.kestra.plugin.core.log.Log")
+    })
+
+    it("returns undefined for flow inputs/outputs because they are isolated via YAML path", () => {
+        const inputFlow = `id: myflow
+namespace: my.ns
+inputs:
+  - id: myinput
+    type: STRING
+    defa`
+        expect(taskTypeAtCursor({source: inputFlow, cursorIndex: inputFlow.length})).toBeUndefined()
+
+        const outputFlow = `id: myflow
+namespace: my.ns
+outputs:
+  - id: myoutput
+    type: STRING
+    val`
+        expect(taskTypeAtCursor({source: outputFlow, cursorIndex: outputFlow.length})).toBeUndefined()
+    })
+
+    it("returns undefined for flow triggers because they are isolated via YAML path", () => {
+        const triggerFlow = `id: myflow
+namespace: my.ns
+triggers:
+  - id: mytrigger
+    type: io.kestra.plugin.aws.s3.Trigger
+    cro`
+        expect(taskTypeAtCursor({source: triggerFlow, cursorIndex: triggerFlow.length})).toBeUndefined()
+    })
+
+    it("returns undefined for nested maps inside a trigger (e.g. conditions:)", () => {
+        const nestedTrigger = `id: myflow
+namespace: my.ns
+triggers:
+  - id: mytrigger
+    type: io.kestra.plugin.aws.s3.Trigger
+    conditions:
+      - id: cond
+        type: io.kestra.plugin.core.condition.ExecutionStatus
+        in`
+        expect(taskTypeAtCursor({source: nestedTrigger, cursorIndex: nestedTrigger.length})).toBeUndefined()
+    })
+
+    it("resolves tasks nested inside DAGs with tasks: - task: shape", () => {
+        const dagFlow = `id: myflow
+namespace: my.ns
+tasks:
+  - id: dag
+    type: io.kestra.plugin.core.dag.Dag
+    tasks:
+      - task:
+          id: inner
+          type: io.kestra.plugin.core.log.Log
+          mess`
+        expect(taskTypeAtCursor({source: dagFlow, cursorIndex: dagFlow.length})).toBe("io.kestra.plugin.core.log.Log")
+    })
+
+    it("resolves tasks inside errors: and finally: blocks", () => {
+        const errorFlow = `id: myflow
+namespace: my.ns
+errors:
+  - id: err
+    type: io.kestra.plugin.core.log.Log
+    mess`
+        expect(taskTypeAtCursor({source: errorFlow, cursorIndex: errorFlow.length})).toBe("io.kestra.plugin.core.log.Log")
+
+        const finallyFlow = `id: myflow
+namespace: my.ns
+finally:
+  - id: fin
+    type: io.kestra.plugin.core.log.Log
+    mess`
+        expect(taskTypeAtCursor({source: finallyFlow, cursorIndex: finallyFlow.length})).toBe("io.kestra.plugin.core.log.Log")
+    })
+
+    it("returns undefined on unparsable documents", () => {
+        const badFlow = "id: myflow\n::::unparsable!!!!"
+        expect(taskTypeAtCursor({source: badFlow, cursorIndex: badFlow.length})).toBeUndefined()
+    })
+})
+
+describe("filterMissingRequiredTaskProperties", () => {
+    it("works for trigger bodies since they are still identified as task-like", () => {
+        const triggerFlow = `id: myflow
+namespace: my.ns
+triggers:
+  - id: mytrigger
+    type: io.kestra.plugin.aws.s3.Trigger
+    cro`
+        expect(
+            filterMissingRequiredTaskProperties({
+                source: triggerFlow,
+                cursorIndex: triggerFlow.length,
+                requiredProperties: ["id", "type", "bucket"],
+            }),
+        ).toEqual(["bucket"])
+    })
+
+    it("works for input bodies since they are still identified as task-like", () => {
+        const inputFlow = `id: myflow
+namespace: my.ns
+inputs:
+  - id: myinput
+    type: STRING
+    defa`
+        expect(
+            filterMissingRequiredTaskProperties({
+                source: inputFlow,
+                cursorIndex: inputFlow.length,
+                requiredProperties: ["id", "type", "required"],
+            }),
+        ).toEqual(["required"])
     })
 })
 

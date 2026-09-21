@@ -51,6 +51,7 @@ import io.kestra.core.http.HttpRequest;
 import io.kestra.core.http.HttpResponse;
 import io.kestra.core.http.HttpService;
 import io.kestra.core.http.HttpSseEvent;
+import io.kestra.core.http.KestraMediaTypes;
 import io.kestra.core.http.client.apache.*;
 import io.kestra.core.http.client.configurations.DigestAuthConfiguration;
 import io.kestra.core.http.client.configurations.HttpConfiguration;
@@ -667,7 +668,7 @@ public class HttpClient implements Closeable {
             return (T) EntityUtils.toString(entity);
         } else if (Byte[].class.isAssignableFrom(cls)) {
             return (T) ArrayUtils.toObject(EntityUtils.toByteArray(entity));
-        } else if (MediaType.APPLICATION_YAML.equals(entity.getContentType()) || "application/yaml".equals(entity.getContentType())) {
+        } else if (MediaType.APPLICATION_YAML.equals(entity.getContentType()) || KestraMediaTypes.APPLICATION_X_YAML.equals(entity.getContentType())) {
             return (T) JacksonMapper.ofYaml().readValue(entity.getContent(), cls);
         } else {
             return (T) JacksonMapper.ofJson(false).readValue(entity.getContent(), cls);

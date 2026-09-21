@@ -792,7 +792,7 @@
             return undefined
         }
 
-        if (["BOOLEAN", "BOOL"].includes(input.type)) {
+        if (input.type === "BOOL") {
             return [{
                 validator: (_rule, val: unknown, callback: (error?: Error) => void) => {
                     if (typeof val === "undefined") {
@@ -803,7 +803,7 @@
             }]
         }
 
-        if (["ENUM", "SELECT", "MULTISELECT"].includes(input.type)) {
+        if (input.type === "SELECT" || input.type === "MULTISELECT") {
             return [{
                 required: true,
                 validator: (_rule, _val: unknown, callback: (error?: Error) => void) => {

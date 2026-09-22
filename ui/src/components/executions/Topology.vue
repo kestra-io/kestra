@@ -263,7 +263,10 @@
 </script>
 <style scoped lang="scss">
     .kel-card {
-        height: var(--topology-height, calc(100vh - 174px));
+        // Fill whatever box the parent gives us instead of a fixed height: on a tall screen a
+        // capped graph wastes most of the viewport, and a wide flow then only fits at a zoom
+        // level nothing is readable at (kestra-io/kestra#19685).
+        height: 100%;
         position: relative;
         background-color: var(--ks-bg-base);
 

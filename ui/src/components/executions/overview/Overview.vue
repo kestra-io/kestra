@@ -82,8 +82,10 @@
     }
 
     .topology {
-        flex-shrink: 0;
-        --topology-height: 650px;
+        // Take every pixel the banner and the prev/next bar leave behind, with a floor so a short
+        // viewport still gets a usable graph (the page scrolls from there).
+        flex: 1;
+        min-height: 400px;
     }
 
     #empty {

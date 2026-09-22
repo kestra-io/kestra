@@ -2,7 +2,12 @@ export const CLUSTER_PREFIX = "cluster_"
 
 // Low enough that zoom-to-fit really fits a large graph. Shared so the topology and the
 // dependencies DAG cannot drift apart on how far out a user may zoom.
-export const MIN_ZOOM = 0.1
+//
+// 0.1 was not low enough: a flow of ~30 tasks laid out horizontally is already wider than ten
+// screens, so `fitView` clamped here and left the graph overflowing on both sides with no way to
+// zoom out any further (kestra-io/kestra#19686). This floor fits roughly 200 chained tasks in a
+// 1300px canvas, which is past the point where one more step out shows anything new.
+export const MIN_ZOOM = 0.02
 
 // The dot grid every graph canvas paints, and that the image export reproduces. `color` is a
 // design-system token, resolved with `cssVar` where it is used.

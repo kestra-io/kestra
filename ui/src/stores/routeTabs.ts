@@ -18,6 +18,12 @@ export interface RouteTab {
     maximized?: boolean;
     noOverflow?: boolean;
     /**
+     * Stretches the content section to the height `main` leaves it, keeping the page gutters
+     * `maximized` strips. For a tab whose body is a canvas that should grow with the viewport
+     * rather than sit at a fixed height.
+     */
+    fullHeight?: boolean;
+    /**
      * Optional override for the navigation target. When set, RouteTabsSidebar
      * uses this directly instead of building one from the current route + tab.name.
      * Use this when the tabs span routes with different params (e.g. different

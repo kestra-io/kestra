@@ -1,4 +1,5 @@
 import {describe, expect, it} from "vitest"
+import moment from "moment"
 import {flattenInputs, unflattenToForms, formChildName, buildWizardSteps} from "../../../src/utils/inputs"
 // @ts-expect-error no types for it yet (submitTask is plain JS on this release)
 import {inputsToFormData} from "../../../src/utils/submitTask"
@@ -232,5 +233,25 @@ describe("inputsToFormData over flattened FORM inputs (submit contract)", () => 
 
         expect(formData?.get("environment.region")).toBe("EU")
         expect(formData?.get("environment.data_center")).toBeNull()
+    })
+})
+
+// The submitted value itself was wrong here, not just a display: `format("hh:mm:ss")` is 12-hour, so
+// a picked 14:30:00 reached the API as 02:30:00 and 00:30:00 as 12:30:00, while the picker and the
+// backend `LocalTime` are both 24-hour. See https://github.com/kestra-io/kestra/issues/19367.
+describe("inputsToFormData submits TIME in 24-hour format", () => {
+    it("keeps the picked wall-clock time", () => {
+        for (const [hour, minute, second, expected] of [
+            [14, 30, 0, "14:30:00"],
+            [0, 30, 0, "00:30:00"],
+            [23, 5, 3, "23:05:03"],
+            [9, 5, 3, "09:05:03"],
+        ] as const) {
+            const picked = moment().startOf("day").hour(hour).minute(minute).second(second).toDate()
+
+            const formData = inputsToFormData({$moment: moment}, [{id: "start", type: "TIME"}], {start: picked})
+
+            expect(formData?.get("start")).toBe(expected)
+        }
     })
 })

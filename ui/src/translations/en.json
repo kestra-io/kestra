@@ -2639,6 +2639,9 @@
       "open_in_tabs": "Open in tabs",
       "open_mode_hint": "Tasks open in a modal by default. You can make tabs the default in {settings}."
     },
+    "table_input": {
+      "add_row": "Click here to add a new line"
+    },
     "blocks": "Blocks",
     "split_horizontal": "Split horizontally",
     "split_vertical": "Split vertically",

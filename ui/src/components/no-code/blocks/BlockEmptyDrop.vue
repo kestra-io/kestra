@@ -8,7 +8,7 @@
     >
         <span class="block-empty-drop-lead">
             <PlusCircleOutline class="block-empty-drop-ico" />
-            {{ variant === "empty" ? $t("block_editor.empty_add_lead", {label}) : $t("block_editor.inline_add", {label}) }}
+            <slot>{{ variant === "empty" ? $t("block_editor.empty_add_lead", {label}) : $t("block_editor.inline_add", {label}) }}</slot>
         </span>
 
         <span v-if="hint" class="block-empty-drop-hint">{{ hint }}</span>
@@ -20,12 +20,16 @@
 
 
     withDefaults(defineProps<{
-        label: string
+        /** The thing being added, interpolated into the default lead text. Not needed with the slot. */
+        label?: string
         variant?: "empty" | "inline"
         hint?: string
         dataTest?: string
     }>(), {
+        label: "",
         variant: "inline",
+        hint: undefined,
+        dataTest: undefined,
     })
 
     const emit = defineEmits<{

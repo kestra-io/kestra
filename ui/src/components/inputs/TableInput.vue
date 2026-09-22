@@ -77,22 +77,22 @@
                 </template>
             </KsTableColumn>
         </KsTable>
-        <KsButton
+        <BlockEmptyDrop
             class="add-row"
-            :icon="Plus"
+            variant="empty"
             :disabled="maxRows !== undefined && rows.length >= maxRows"
-            :data-test="`table-row-add-${input.id}`"
-            @click="addRow"
+            :dataTest="`table-row-add-${input.id}`"
+            @add="addRow"
         >
-            {{ $t('add_new_item') }}
-        </KsButton>
+            {{ $t('table_input.add_row') }}
+        </BlockEmptyDrop>
     </div>
 </template>
 
 <script setup lang="ts">
     import {computed, markRaw, ref, watch, type Component} from "vue"
     import DeleteOutlineIcon from "vue-material-design-icons/DeleteOutline.vue"
-    import PlusIcon from "vue-material-design-icons/Plus.vue"
+    import BlockEmptyDrop from "../no-code/blocks/BlockEmptyDrop.vue"
     import type {InputError, InputMetaData, ValueOptionLike} from "../../stores/executions"
 
     type Row = Record<string, unknown>
@@ -105,7 +105,6 @@
     const modelValue = defineModel<string | undefined>()
 
     const DeleteOutline = markRaw(DeleteOutlineIcon) as Component
-    const Plus = markRaw(PlusIcon) as Component
 
     const columns = computed<InputMetaData[]>(() => props.input.columns ?? [])
     const minRows = computed(() => props.input.rows?.min ?? 0)
@@ -216,6 +215,15 @@
     }
 
     .add-row {
+        width: 100%;
         margin-top: var(--ks-spacing-2);
+
+        &:disabled,
+        &:disabled:hover {
+            cursor: not-allowed;
+            color: var(--ks-text-inactive);
+            border-color: var(--ks-border-default);
+            background: transparent;
+        }
     }
 </style>

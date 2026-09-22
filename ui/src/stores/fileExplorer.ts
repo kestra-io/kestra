@@ -4,6 +4,7 @@ import * as Utils from "../utils/utils"
 import {useNamespacesStore} from "override/stores/namespaces"
 import {useToast} from "../utils/toast"
 import {useI18n} from "vue-i18n"
+import type {KestraHttpError} from "../utils/kestraHttp"
 
 export interface TreeNodeBase {
     id: string;
@@ -151,7 +152,7 @@ export const useFileExplorerStore = defineStore("fileExplorer", () => {
             }
             try {
                 await namespacesStore.createDirectory({namespace: namespaceId.value, path})
-                toast.success(`Folder "${name}" created successfully.`)
+                toast.success(t("namespace files.create.folder_success", {name}))
             } catch (error) {
                 console.error(`Failed to create folder: ${name}`, error)
                 toast.error(t("namespace files.create.folder_error"))
@@ -228,7 +229,7 @@ export const useFileExplorerStore = defineStore("fileExplorer", () => {
                     path,
                     content,
                 })
-                toast.success(`File "${NAME}" created successfully.`)
+                toast.success(t("namespace files.create.file_success", {name: NAME}))
             } catch (error) {
                 console.error(`Failed to create file: ${NAME}`, error)
                 toast.error(t("namespace files.create.file_error"))
@@ -267,22 +268,51 @@ export const useFileExplorerStore = defineStore("fileExplorer", () => {
     async function loadNodes(
         node: ElTreeNode | {level: 0} = {level: 0},
         resolve?: (children: TreeNode[]) => void,
+        reject?: () => void,
     ) {
         if (namespaceId.value === undefined) return
         if (node.level === 0) {
             rootLoaded.value = false
             const payload = {namespace: namespaceId.value}
-            const rootTreeNodes = await namespacesStore.readDirectory<TreeNode>(payload)
-            renderNodes(rootTreeNodes)
-            fileTree.value = sorted(fileTree.value)
-            rootLoaded.value = true
-            resolve?.(fileTree.value)
+            try {
+                const rootTreeNodes = await namespacesStore.readDirectory<TreeNode>(payload)
+                renderNodes(rootTreeNodes)
+                fileTree.value = sorted(fileTree.value)
+            } catch (e) {
+                // Defensive: the backend self-heals the root directory, so a 404 here is not
+                // expected, and any non-404 has already been toasted centrally. Swallow either way
+                // so this fire-and-forget call cannot raise an unhandled rejection; the finally
+                // still releases the spinner (see below). Drop the tree too: `renderNodes` never ran,
+                // so anything left in it belongs to the namespace the user was on before.
+                fileTree.value = []
+                console.error(e)
+            } finally {
+                // Always resolve and clear the loading flag: a rejected read (e.g. a 404 after the
+                // directory was deleted server-side) must not pin the whole file browser on an
+                // indefinite spinner (NamespaceFilesEditorView gates the view on `rootLoaded`).
+                rootLoaded.value = true
+                resolve?.(fileTree.value ?? [])
+            }
         } else if (isNotRootTreeNode(node)) {
             const payload = {
-                namespace: namespaceId.value, 
+                namespace: namespaceId.value,
                 path: getPath(node.data.id),
             }
-            let children = await namespacesStore.readDirectory<TreeNode>(payload)
+            let children: TreeNode[]
+            try {
+                children = await namespacesStore.readDirectory<TreeNode>(payload)
+            } catch (e) {
+                // Only a 404 means the folder was deleted server-side: render it empty rather than
+                // leaving the el-tree node stuck loading. Anything else still propagates and is toasted
+                // centrally, but el-tree clears its own `loading` flag only through the `reject` callback
+                // it passes here, and a node left loading is never re-fetched on a later expand.
+                if ((e as KestraHttpError)?.status !== 404) {
+                    reject?.()
+                    throw e
+                }
+                resolve?.([])
+                return
+            }
             children = sorted(
                 children.map((item) => ({
                     ...item,
@@ -303,7 +333,7 @@ export const useFileExplorerStore = defineStore("fileExplorer", () => {
             const rootNodePath = getPath(node.data.id)
             if(rootNodePath){
                 updateChildren(fileTree.value!, rootNodePath, children)
-            } 
+            }
             resolve?.(children)
         }
     }

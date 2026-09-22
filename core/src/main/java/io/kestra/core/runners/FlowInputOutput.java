@@ -3,7 +3,9 @@ package io.kestra.core.runners;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
+import java.nio.file.NoSuchFileException;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -13,6 +15,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.reactivestreams.Publisher;
 
@@ -68,17 +71,20 @@ public class FlowInputOutput {
     private final Optional<String> secretKey;
     private final Provider<RunContextFactory> runContextFactory; // Lazy init: avoid circular dependency error.
     private final ReusableInputsExpander reusableInputsExpander;
+    private final LocalPathFactory localPathFactory;
 
     @Inject
     public FlowInputOutput(
         StorageInterface storageInterface,
         Provider<RunContextFactory> runContextFactory,
         EncryptionConfig encryptionConfig,
-        ReusableInputsExpander reusableInputsExpander) {
+        ReusableInputsExpander reusableInputsExpander,
+        LocalPathFactory localPathFactory) {
         this.storageInterface = storageInterface;
         this.runContextFactory = runContextFactory;
         this.secretKey = encryptionConfig.asOptional();
         this.reusableInputsExpander = reusableInputsExpander;
+        this.localPathFactory = localPathFactory;
     }
 
     /**
@@ -167,7 +173,8 @@ public class FlowInputOutput {
     private Mono<Map<String, Object>> readData(List<Input<?>> rawInputs, Execution execution, Publisher<CompletedPart> data, boolean uploadFiles) {
         // Inline reusable-inputs references, then flatten FORMs so FILE part matching works against dotted leaf ids.
         final List<Input<?>> inputs = Input.expandToLeaves(reusableInputsExpander.expand(execution.getTenantId(), execution.getNamespace(), rawInputs));
-        return Flux.from(data)
+        // Micronaut 5 passes a literal null, rather than an empty publisher, when the multipart body is absent.
+        return (data == null ? Flux.<CompletedPart> empty() : Flux.from(data))
             .publishOn(Schedulers.boundedElastic()).<Map.Entry<String, Object>> handle((input, sink) ->
             {
                 if (input instanceof CompletedFileUpload fileUpload) {
@@ -197,7 +204,8 @@ public class FlowInputOutput {
                                 .forInput(execution, inputId, fileName)
                                 .getContextStorageURI()
                         );
-                        fileUpload.discard();
+                        // Releases the part now it has been read.
+                        IOUtils.closeQuietly(fileUpload);
                         sink.next(Map.entry(inputId, new UploadedFile(from.toString())));
                     } else {
                         try {
@@ -218,7 +226,7 @@ public class FlowInputOutput {
                                 }
                             }
                         } catch (IOException e) {
-                            fileUpload.discard();
+                            IOUtils.closeQuietly(fileUpload);
                             sink.error(e);
                         }
                     }
@@ -593,7 +601,18 @@ public class FlowInputOutput {
             case STRING, EMAIL, SELECT -> current.toString();
             case INT -> TypeConverter.toInteger(current);
             case FLOAT -> TypeConverter.toFloat(current);
-            case BOOL -> TypeConverter.toBoolean(current);
+            case BOOL -> {
+                if (current instanceof Boolean b) {
+                    yield b;
+                }
+
+                if (!(current instanceof String s &&
+                    (s.equalsIgnoreCase("true") || s.equalsIgnoreCase("false")))) {
+                    throw new IllegalArgumentException("Unable to parse `" + current + "` as a boolean");
+                }
+
+                yield TypeConverter.toBoolean(current);
+            }
             case DATETIME -> TypeConverter.toInstant(current);
             case DATE -> TypeConverter.toLocalDate(current);
             case TIME -> TypeConverter.toLocalTime(current);
@@ -623,7 +642,19 @@ public class FlowInputOutput {
                     if (URIFetcher.supports(uri)) {
                         yield uri;
                     } else {
-                        yield storageInterface.from(execution, id, current.toString().substring(current.toString().lastIndexOf("/") + 1), new File(current.toString()));
+                        File requestedFile = new File(current.toString());
+                        // Read through LocalPath so allowed-paths is enforced and the stream is opened on the
+                        // path it validated, not on the one we were given, which a symlink swap could re-point.
+                        try (InputStream authorized = localPathFactory.createLocalPath().get(requestedFile.toURI())) {
+                            yield storageInterface.put(
+                                execution.getTenantId(),
+                                execution.getNamespace(),
+                                StorageContext.forInput(execution, id, requestedFile.getName()).getContextStorageURI(),
+                                authorized
+                            );
+                        } catch (NoSuchFileException e) {
+                            throw new IllegalArgumentException("The file '" + requestedFile + "' does not exist.", e);
+                        }
                     }
                 }
                 case JSON -> (current instanceof Map || current instanceof Collection<?>) ? current : JacksonMapper.toObject(current.toString());

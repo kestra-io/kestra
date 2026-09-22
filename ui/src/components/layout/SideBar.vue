@@ -3,7 +3,7 @@
         <template #header>
             <KsIconButton
                 class="header-toggle"
-                aria-label="Toggle menu"
+                :aria-label="$t('toggle menu')"
                 @click="onCollapse(true)"
             >
                 <DockLeft />
@@ -45,7 +45,7 @@
 
         <KsSideBarSection
             v-if="bookmarksStore.pages?.length"
-            title="Favourites"
+            :title="$t('favourites')"
             collapsible
             :collapsed="getCollapsedById(FAVOURITES_SECTION_ID, false)"
             @update:collapsed="(value: boolean) => layoutStore.setMenuSectionCollapsed(FAVOURITES_SECTION_ID, value)"
@@ -325,7 +325,7 @@
 
 .sidebar-context-menu {
     position: fixed;
-    z-index: 9999;
+    z-index: var(--ks-z-top);
     min-width: 12rem;
     padding: var(--ks-spacing-1);
     background: var(--ks-bg-elevated);

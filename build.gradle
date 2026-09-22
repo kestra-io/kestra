@@ -20,7 +20,7 @@ plugins {
     id "application"
 
     // test
-    id "org.sonarqube" version "7.4.0.8496"
+    id "org.sonarqube" version "7.5.0.8588"
     id 'jacoco-report-aggregation'
 
     // release
@@ -141,7 +141,7 @@ allprojects {
             // OTEL
             implementation "io.opentelemetry:opentelemetry-exporter-otlp"
 
-            // jackson
+            // jackson 2 - Kestra's own serialization (JacksonMapper: storage, queue, YAML flow parsing)
             implementation "com.fasterxml.jackson.core:jackson-core"
             implementation "com.fasterxml.jackson.core:jackson-databind"
             implementation "com.fasterxml.jackson.core:jackson-annotations"
@@ -149,6 +149,11 @@ allprojects {
             implementation "com.fasterxml.jackson.module:jackson-module-parameter-names"
             implementation "com.fasterxml.jackson.datatype:jackson-datatype-guava"
             implementation "com.fasterxml.jackson.datatype:jackson-datatype-jsr310"
+
+            // jackson 3 (tools.jackson) - used by Micronaut 5's HTTP/Jackson integration.
+            implementation "tools.jackson.core:jackson-core"
+            implementation "tools.jackson.core:jackson-databind"
+
             implementation "com.fasterxml.uuid:java-uuid-generator"
 
             // kestra

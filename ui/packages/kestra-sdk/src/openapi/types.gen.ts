@@ -14,6 +14,11 @@ export type AbstractFlow = {
     updated?: string;
     description?: string;
     inputs?: Array<InputObject>;
+    /**
+     * Output values available and exposes to other flows.
+     *
+     * Output values make information about the execution of your Flow available and expose for other Kestra flows to use. Output values are similar to return values in programming languages.
+     */
     outputs?: Array<Output>;
     /**
      * Whether the flow is disabled.
@@ -27,7 +32,7 @@ export type AbstractFlow = {
     draft: boolean;
     labels?: Array<Label>;
     variables?: {
-        [key: string]: never;
+        [key: string]: unknown;
     };
     /**
      * Routing requirements (tags + fallback) for this flow.
@@ -413,6 +418,9 @@ export type ArtefactDraft = {
 export type ArtefactKind = 'FLOW' | 'DASHBOARD' | 'APP';
 
 export type Asset = {
+    status?: string;
+    ttl?: string;
+    owner?: string;
     namespace?: string;
     id: string;
     type: string;
@@ -423,6 +431,10 @@ export type Asset = {
             [key: string]: unknown;
         };
     };
+    /**
+     * The day-2 actions offered on this asset, each backing onto a flow.
+     */
+    assetActions?: Array<FlowAction>;
 };
 
 export type AssetFailureBehavior = 'IGNORE' | 'FAIL' | 'WARN';
@@ -666,37 +678,37 @@ export type DocumentationWithSchema = {
 export type EditionProviderEdition = 'OSS' | 'EE';
 
 export type EventExecutionStatusEvent = {
-    data?: ExecutionStatusEvent;
-    id?: string;
-    name?: string;
-    comment?: string;
-    retry?: string;
+    data: ExecutionStatusEvent;
+    id?: string | null;
+    name?: string | null;
+    comment?: string | null;
+    retry?: string | null;
 };
 
 export type EventExecution = {
-    data?: Execution;
-    id?: string;
-    name?: string;
-    comment?: string;
-    retry?: string;
+    data: Execution;
+    id?: string | null;
+    name?: string | null;
+    comment?: string | null;
+    retry?: string | null;
 };
 
 export type EventFollowLogEvent = {
-    data?: FollowLogEvent;
-    id?: string;
-    name?: string;
-    comment?: string;
-    retry?: string;
+    data: FollowLogEvent;
+    id?: string | null;
+    name?: string | null;
+    comment?: string | null;
+    retry?: string | null;
 };
 
 export type EventObject = {
-    data?: {
+    data: {
         [key: string]: unknown;
     };
-    id?: string;
-    name?: string;
-    comment?: string;
-    retry?: string;
+    id?: string | null;
+    name?: string | null;
+    comment?: string | null;
+    retry?: string | null;
 };
 
 export type ExecutableTaskSubflowId = {
@@ -911,6 +923,12 @@ export type Flow = AbstractFlow & {
     description?: string;
     inputs?: Array<InputObject>;
     /**
+     * Output values available and exposes to other flows.
+     *
+     * Output values make information about the execution of your Flow available and expose for other Kestra flows to use. Output values are similar to return values in programming languages.
+     */
+    outputs?: Array<Output>;
+    /**
      * Whether the flow is disabled.
      *
      * A disabled flow does not run: its triggers are paused and new executions are rejected.
@@ -927,7 +945,9 @@ export type Flow = AbstractFlow & {
     workerSelector?: WorkerSelector;
     deleted: boolean;
     finally?: Array<Task>;
-    variables?: {};
+    variables?: {
+        [key: string]: unknown;
+    };
     tasks: Array<Task>;
     errors?: Array<Task>;
     afterExecution?: Array<Task>;
@@ -944,12 +964,6 @@ export type Flow = AbstractFlow & {
      * Limits the number of concurrent executions of the flow.
      */
     concurrency?: Concurrency;
-    /**
-     * Output values available and exposes to other flows.
-     *
-     * Output values make information about the execution of your Flow available and expose for other Kestra flows to use. Output values are similar to return values in programming languages.
-     */
-    outputs?: Array<Output>;
     /**
      * Retry
      *
@@ -974,6 +988,21 @@ export type Flow = AbstractFlow & {
     quotas?: Array<Quota>;
 };
 
+export type FlowAction = {
+    /**
+     * The namespace of the flow backing this action.
+     */
+    namespace: string;
+    /**
+     * The id of the flow backing this action.
+     */
+    flowId: string;
+    /**
+     * The label displayed on this action.
+     */
+    label?: string | null;
+};
+
 export type FlowControllerFlowWithDeprecatedTasks = {
     namespace?: string;
     flowId?: string;
@@ -987,6 +1016,11 @@ export type FlowForExecution = AbstractFlow & {
     revision?: number;
     description?: string;
     inputs?: Array<InputObject>;
+    /**
+     * Output values available and exposes to other flows.
+     *
+     * Output values make information about the execution of your Flow available and expose for other Kestra flows to use. Output values are similar to return values in programming languages.
+     */
     outputs?: Array<Output>;
     /**
      * Whether the flow is disabled.
@@ -1002,7 +1036,9 @@ export type FlowForExecution = AbstractFlow & {
      * Labels as a list of Label (key/value pairs) or as a map of string to string.
      */
     labels?: MapObjectObject;
-    variables?: {};
+    variables?: {
+        [key: string]: unknown;
+    };
     /**
      * Routing requirements (tags + fallback) for this flow.
      */
@@ -1160,6 +1196,12 @@ export type FlowWithSource = Flow & AbstractFlow & {
     description?: string;
     inputs?: Array<InputObject>;
     /**
+     * Output values available and exposes to other flows.
+     *
+     * Output values make information about the execution of your Flow available and expose for other Kestra flows to use. Output values are similar to return values in programming languages.
+     */
+    outputs?: Array<Output>;
+    /**
      * Whether the flow is disabled.
      *
      * A disabled flow does not run: its triggers are paused and new executions are rejected.
@@ -1175,19 +1217,15 @@ export type FlowWithSource = Flow & AbstractFlow & {
      */
     workerSelector?: WorkerSelector;
     deleted: boolean;
-    variables?: {};
+    variables?: {
+        [key: string]: unknown;
+    };
     /**
      * Concurrency
      *
      * Limits the number of concurrent executions of the flow.
      */
     concurrency?: Concurrency;
-    /**
-     * Output values available and exposes to other flows.
-     *
-     * Output values make information about the execution of your Flow available and expose for other Kestra flows to use. Output values are similar to return values in programming languages.
-     */
-    outputs?: Array<Output>;
     sla?: Array<Sla>;
     /**
      * Quotas evaluated before the flow is executed (EE only).
@@ -1461,6 +1499,7 @@ export type MiscControllerConfiguration = {
     chartDefaultDuration?: string;
     flowTemplate?: string;
     commitDate?: string;
+    versionUpgrade?: VersionServiceVersionUpgrade;
     isCustomDashboardsEnabled?: boolean;
     isAnonymousUsageEnabled?: boolean;
     isUiAnonymousUsageEnabled?: boolean;
@@ -1682,6 +1721,7 @@ export type Plugin = {
     storages?: Array<PluginPluginElementMetadata>;
     secrets?: Array<PluginPluginElementMetadata>;
     taskRunners?: Array<PluginPluginElementMetadata>;
+    assets?: Array<PluginPluginElementMetadata>;
     apps?: Array<PluginPluginElementMetadata>;
     appBlocks?: Array<PluginPluginElementMetadata>;
     charts?: Array<PluginPluginElementMetadata>;
@@ -1947,7 +1987,7 @@ export type QueryFilter = {
     children?: Array<QueryFilter>;
 };
 
-export type QueryFilterField = 'q' | 'scope' | 'namespace' | 'kind' | 'POLICY_SCOPE' | 'ENFORCEMENT' | 'labels' | 'tags' | 'metadata' | 'flowId' | 'flowRevision' | 'id' | 'assetId' | 'type' | 'action' | 'created' | 'updated' | 'startDate' | 'endDate' | 'expirationDate' | 'state' | 'status' | 'SEVERITY' | 'ASSIGNEE' | 'email' | 'timeRange' | 'parentId' | 'triggerExecutionId' | 'triggerId' | 'triggerState' | 'executionId' | 'taskId' | 'taskRunId' | 'attemptNumber' | 'childFilter' | 'workerId' | 'existingOnly' | 'userId' | 'resources' | 'details' | 'level' | 'path' | 'parentPath' | 'version' | 'enabled' | 'username' | 'name' | 'groupList' | 'external_id' | 'expired_at' | 'instance_owner' | 'source' | 'locked' | 'lastTriggeredDate' | 'nextExecutionDate' | 'artifactId';
+export type QueryFilterField = 'q' | 'scope' | 'namespace' | 'kind' | 'POLICY_SCOPE' | 'ENFORCEMENT' | 'labels' | 'tags' | 'metadata' | 'assetExpiry' | 'flowId' | 'flowRevision' | 'id' | 'assetId' | 'type' | 'action' | 'created' | 'updated' | 'startDate' | 'endDate' | 'expirationDate' | 'state' | 'status' | 'SEVERITY' | 'ASSIGNEE' | 'email' | 'timeRange' | 'parentId' | 'triggerExecutionId' | 'triggerId' | 'triggerState' | 'executionId' | 'taskId' | 'taskRunId' | 'attemptNumber' | 'childFilter' | 'workerId' | 'existingOnly' | 'userId' | 'resources' | 'details' | 'level' | 'path' | 'parentPath' | 'version' | 'enabled' | 'username' | 'name' | 'groupList' | 'external_id' | 'expired_at' | 'instance_owner' | 'source' | 'locked' | 'lastTriggeredDate' | 'nextExecutionDate' | 'artifactId';
 
 export type QueryFilterLogical = 'and' | 'or';
 
@@ -2331,6 +2371,12 @@ export type ValidateConstraintViolation = {
     infos?: Array<string>;
 };
 
+export type VersionServiceVersionUpgrade = {
+    from?: string;
+    to?: string;
+    at?: string;
+};
+
 export type WebhookResponse = {
     tenantId?: string;
     id?: string;
@@ -2462,19 +2508,19 @@ export type ApiTaskRunWritable = {
 };
 
 export type EventExecutionStatusEventWritable = {
-    data?: ExecutionStatusEventWritable;
-    id?: string;
-    name?: string;
-    comment?: string;
-    retry?: string;
+    data: ExecutionStatusEventWritable;
+    id?: string | null;
+    name?: string | null;
+    comment?: string | null;
+    retry?: string | null;
 };
 
 export type EventExecutionWritable = {
-    data?: ExecutionWritable;
-    id?: string;
-    name?: string;
-    comment?: string;
-    retry?: string;
+    data: ExecutionWritable;
+    id?: string | null;
+    name?: string | null;
+    comment?: string | null;
+    retry?: string | null;
 };
 
 export type ExecutionWritable = {
@@ -3143,7 +3189,7 @@ export type GetPluginIconSvgResponses = {
     /**
      * getPluginIconSvg 200 response
      */
-    200: string;
+    200: Blob | File;
 };
 
 export type GetPluginIconSvgResponse = GetPluginIconSvgResponses[keyof GetPluginIconSvgResponses];
@@ -4308,7 +4354,7 @@ export type ExportChartResponses = {
     /**
      * exportChart 200 response
      */
-    200: string;
+    200: Blob | File;
 };
 
 export type ExportChartResponse = ExportChartResponses[keyof ExportChartResponses];
@@ -4470,7 +4516,7 @@ export type ExportDashboardChartResponses = {
     /**
      * exportDashboardChart 200 response
      */
-    200: string;
+    200: Blob | File;
 };
 
 export type ExportDashboardChartResponse = ExportDashboardChartResponses[keyof ExportDashboardChartResponses];
@@ -7851,7 +7897,7 @@ export type ExportFlowsByIdsResponses = {
     /**
      * exportFlowsByIds 200 response
      */
-    200: string;
+    200: Blob | File;
 };
 
 export type ExportFlowsByIdsResponse = ExportFlowsByIdsResponses[keyof ExportFlowsByIdsResponses];
@@ -7891,7 +7937,7 @@ export type ExportFlowsByQueryResponses = {
     /**
      * exportFlowsByQuery 200 response
      */
-    200: string;
+    200: Blob | File;
 };
 
 export type ExportFlowsByQueryResponse = ExportFlowsByQueryResponses[keyof ExportFlowsByQueryResponses];
@@ -10391,7 +10437,7 @@ export type ExportNamespaceFilesResponses = {
     /**
      * exportNamespaceFiles 200 response
      */
-    200: string;
+    200: Blob | File;
 };
 
 export type ExportNamespaceFilesResponse = ExportNamespaceFilesResponses[keyof ExportNamespaceFilesResponses];
@@ -10979,6 +11025,10 @@ export type CreateBackfillErrors = {
      * If the backfill cannot be created
      */
     409: ProblemDetail;
+    /**
+     * If the backfill end date is not after its start date
+     */
+    422: ProblemDetail;
     /**
      * Internal server error
      */

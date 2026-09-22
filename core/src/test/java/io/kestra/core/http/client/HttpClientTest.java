@@ -246,6 +246,28 @@ class HttpClientTest {
         }
     }
 
+    @Test
+    void shouldDenyUrlFromConfigWhenHostHasATrailingDot() throws IllegalVariableEvaluationException, IOException {
+        try (HttpClient client = client()) {
+            var exception = assertThrows(IllegalArgumentException.class, () -> client.request(
+                HttpRequest.of(URI.create("http://dangerous-url.com./")),
+                String.class
+            ));
+            assertThat(exception.getMessage()).isEqualTo("The URI http://dangerous-url.com./ is in the configured denied list (kestra.tasks.http.denied-list).");
+        }
+    }
+
+    @Test
+    void shouldDenyUrlFromConfigWhenReachedThroughARedirect() throws IllegalVariableEvaluationException, IOException {
+        try (HttpClient client = client()) {
+            var exception = assertThrows(IllegalArgumentException.class, () -> client.request(
+                HttpRequest.of(URI.create(embeddedServerUri + "/http/redirect-to-denied")),
+                String.class
+            ));
+            assertThat(exception.getMessage()).isEqualTo("The URI http://dangerous-url.com/ is in the configured denied list (kestra.tasks.http.denied-list).");
+        }
+    }
+
     private static final String UUID = IdUtils.create();
 
     static Stream<Arguments> postJsonSource() throws JsonProcessingException {
@@ -623,6 +645,11 @@ class HttpClientTest {
             return io.micronaut.http.HttpResponse.noContent();
         }
 
+        @Get("redirect-to-denied")
+        public io.micronaut.http.HttpResponse<Object> redirectToDenied() {
+            return io.micronaut.http.HttpResponse.temporaryRedirect(URI.create("http://dangerous-url.com/"));
+        }
+
         @Get("no-content")
         public io.micronaut.http.HttpResponse<Void> noContent() {
             return io.micronaut.http.HttpResponse.noContent();
@@ -658,7 +685,7 @@ class HttpClientTest {
                             );
                         }
                     } catch (IOException e) {
-                        fileUpload.discard();
+                        IOUtils.closeQuietly(fileUpload);
                         sink.error(e);
                     }
                 } else {

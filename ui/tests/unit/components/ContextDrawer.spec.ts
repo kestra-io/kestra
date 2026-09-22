@@ -26,8 +26,19 @@ vi.mock("override/stores/misc", () => ({
 
 import ContextDrawer from "../../../src/components/ContextDrawer.vue"
 
+const passthrough = (name: string) => ({name, template: "<div><slot /></div>"})
+
 function mountComponent() {
-    return mount(ContextDrawer)
+    return mount(ContextDrawer, {
+        global: {
+            stubs: {
+                KsSplitter: passthrough("KsSplitter"),
+                KsSplitterPanel: passthrough("KsSplitterPanel"),
+                KsTabs: passthrough("KsTabs"),
+                KsTabPane: passthrough("KsTabPane"),
+            },
+        },
+    })
 }
 
 describe("ContextDrawer", () => {

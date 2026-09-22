@@ -26,6 +26,11 @@ public abstract class AbstractJdbcKvMetadataRepository extends AbstractJdbcCrudR
         super(jdbcRepository);
     }
 
+    @Override
+    protected Condition defaultFilter(String tenantId, boolean allowDeleted) {
+        return super.defaultFilter(tenantId, allowDeleted).and(aclCondition(QueryFilter.Resource.KV_METADATA));
+    }
+
     private static Condition lastCondition(boolean isLast) {
         return field("last").eq(isLast);
     }

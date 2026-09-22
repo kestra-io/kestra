@@ -9,6 +9,7 @@
             <KsButton
                 link
                 size="small"
+                :aria-label="$t('filter.close')"
                 :icon="Close"
                 @click="emits('close')"
             />

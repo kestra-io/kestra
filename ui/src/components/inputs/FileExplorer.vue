@@ -113,7 +113,7 @@
         >
             <template #empty>
                 <div class="m-4 empty">
-                    <img alt="Empty icon" :src="FileExplorerEmpty">
+                    <img alt="" :src="FileExplorerEmpty">
                     <h3>{{ $t("namespace files.no_items.heading") }}</h3>
                     <p>{{ $t("namespace files.no_items.paragraph") }}</p>
                 </div>
@@ -131,11 +131,11 @@
                         @click.stop="(e) => { if(!selectionMode) onRowClickWrapper(data, node, e) }"
                     >
                         <div class="item-line">
-                            <Checkbox
+                            <KsCheckbox
                                 v-if="selectionMode"
                                 class="me-2"
                                 :modelValue="selectedNodes.includes(data.id)"
-                                @update-model-value="checked => toggleCheckboxSelection(checked, node)"
+                                @change="checked => toggleCheckboxSelection(checked, node)"
                                 @mousedown.stop
                                 @click.stop
                             />
@@ -386,7 +386,7 @@
     import PlusBox from "vue-material-design-icons/PlusBox.vue"
     import FolderDownloadOutline from "vue-material-design-icons/FolderDownloadOutline.vue"
     import TypeIcon from "../utils/icons/Type.vue"
-    import escape from "lodash/escape"
+    import {escapeHtml} from "@kestra-io/design-system"
     import {useI18n} from "vue-i18n"
     import {useRestrictDropTo} from "../../composables/useRestrictDropTo"
     import {useToast} from "../../utils/toast"
@@ -401,7 +401,6 @@
     import Revisions, {Revision} from "../layout/Revisions.vue"
     import {FILES_REFRESH_CONTENT_INJECTION_KEY} from "./FlowFileEditorTab.vue"
     import Crud from "override/components/auth/Crud.vue"
-    import Checkbox from "../layout/Checkbox.vue"
     import {useAuthStore} from "override/stores/auth"
     import resource from "../../models/resource"
     import action from "../../models/action"
@@ -519,8 +518,8 @@
         const folders = confirmation.value.nodes?.filter(n => n.type === "Directory")
         const foldersCount = folders?.length ?? 0
         const labels = {title: t("namespace files.dialog.deletion.title"), message: ""}
-        if (foldersCount === 1) labels.message = t("namespace files.dialog.deletion.folder_single", {name: escape(folders?.[0].fileName)})
-        else if (filesCount === 1) labels.message = t("namespace files.dialog.deletion.file_single", {name: escape(files?.[0].fileName)})
+        if (foldersCount === 1) labels.message = t("namespace files.dialog.deletion.folder_single", {name: escapeHtml(folders?.[0].fileName)})
+        else if (filesCount === 1) labels.message = t("namespace files.dialog.deletion.file_single", {name: escapeHtml(files?.[0].fileName)})
         else if (foldersCount > 0 && filesCount > 0) labels.message = t("namespace files.dialog.deletion.mixed", {folders: foldersCount, files: filesCount})
         else if (foldersCount > 0) labels.message = t("namespace files.dialog.deletion.folders", {count: foldersCount})
         else labels.message = t("namespace files.dialog.deletion.files", {count: filesCount})
@@ -686,7 +685,13 @@
     }
 
     async function fetchRevisionSource(revision: number): Promise<string> {
-        return (await namespacesStore.readFile({namespace: namespaceId.value, path: revisionsHistory.value.path, revision})).content ?? ""
+        const {content, notFound} = await namespacesStore.readFile({namespace: namespaceId.value, path: revisionsHistory.value.path, revision})
+        // readFile silences the global 404 toast, so surface the missing revision here rather than
+        // rendering a silent empty diff.
+        if (notFound) {
+            toast.error(t("namespace files.revisions.load_error", {revision}))
+        }
+        return content ?? ""
     }
 
     async function restore(source: string) {
@@ -1023,11 +1028,11 @@
                 })
             } catch (error) {
                 console.error(`Failed to delete file: ${node.fileName}`, error)
-                toast.error(`Failed to delete file: ${node.fileName}`)
+                toast.error(t("namespace files.delete.file_error", {name: node.fileName}))
             }
         }))
         confirmation.value = {visible: false, nodes: []}
-        toast.success("Selected files deleted successfully.")
+        toast.success(t("namespace files.delete.bulk_success"))
     }
 
     async function addFolder(folder?: {fileName: string, children?: TreeNode[]}, creation?: boolean) {
@@ -1171,7 +1176,7 @@
 
     ul.tabs-context {
         position: fixed;
-        z-index: 9999;
+        z-index: var(--ks-z-top);
         border: 1px solid var(--ks-border-default);
 
         & li {

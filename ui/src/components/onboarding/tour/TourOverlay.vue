@@ -1,18 +1,18 @@
 <template>
-    <TourFinale v-model="showFinale" @restart="restartTour" />
+    <component :is="variant.finale" v-model="showFinale" @restart="restartTour" />
 
     <div
         v-if="tourStore.isGuidedActive && !showFinale"
         class="tour-overlay"
+        :style="{zIndex: topLayer}"
         aria-live="polite"
     >
         <template v-if="spotlight">
-            <template v-if="spotlight.scrim">
-                <div class="tour-scrim" :style="spotlight.scrim.top" />
-                <div class="tour-scrim" :style="spotlight.scrim.bottom" />
-                <div class="tour-scrim" :style="spotlight.scrim.left" />
-                <div class="tour-scrim" :style="spotlight.scrim.right" />
-            </template>
+            <div
+                v-if="spotlight.scrim"
+                class="tour-scrim"
+                :style="spotlight.scrim"
+            />
             <div
                 v-for="(ring, index) in spotlight.rings"
                 :key="index"
@@ -30,33 +30,33 @@
         >
             <template v-if="showIntro">
                 <div class="guide-top">
-                    <span class="guide-step">{{ $t("onboarding.tour.intro.kicker") }}</span>
+                    <span class="guide-step">{{ $t(translationKey("intro.kicker")) }}</span>
                     <KsButton link class="guide-skip" @click="skipTour">
-                        {{ $t("onboarding.tour.intro.skip") }}
+                        {{ $t(translationKey("intro.skip")) }}
                     </KsButton>
                 </div>
 
                 <h3 class="guide-title">
-                    {{ $t("onboarding.tour.intro.title") }}
+                    {{ $t(translationKey("intro.title")) }}
                 </h3>
                 <div class="guide-body">
-                    {{ $t("onboarding.tour.intro.body") }}
+                    {{ $t(translationKey("intro.body")) }}
                 </div>
 
                 <ul class="guide-plan">
-                    <li v-for="group in TOUR_STEP_GROUPS" :key="group.step">
-                        {{ $t(`onboarding.tour.steps.${group.step}`) }}
+                    <li v-for="group in stepGroups" :key="group.step">
+                        {{ $t(translationKey(`steps.${group.step}`)) }}
                     </li>
                 </ul>
 
                 <p class="guide-note">
-                    {{ $t("onboarding.tour.intro.note") }}
+                    {{ $t(translationKey("intro.note")) }}
                 </p>
 
                 <div class="guide-actions">
                     <span class="guide-spacer" />
                     <KsButton type="primary" @click="beginTour">
-                        {{ $t("onboarding.tour.intro.start") }}
+                        {{ $t(translationKey("intro.start")) }}
                     </KsButton>
                 </div>
             </template>
@@ -64,17 +64,17 @@
             <template v-else>
                 <div class="guide-top">
                     <span class="guide-step">
-                        {{ $t("onboarding.tour.step_of", {current: sceneIndex + 1, total: TOUR_TOTAL_STEPS}) }}
-                        <span class="guide-step-name">{{ $t(`onboarding.tour.steps.${scene.step}`) }}</span>
+                        {{ $t(translationKey("step_of"), {current: sceneIndex + 1, total: totalSteps}) }}
+                        <span class="guide-step-name">{{ $t(translationKey(`steps.${scene.step}`)) }}</span>
                     </span>
                     <KsButton link class="guide-skip" @click="skipTour">
-                        {{ $t("onboarding.tour.actions.skip") }}
+                        {{ $t(translationKey("actions.skip")) }}
                     </KsButton>
                 </div>
 
                 <div class="guide-progress">
                     <span
-                        v-for="group in TOUR_STEP_GROUPS"
+                        v-for="group in stepGroups"
                         :key="group.step"
                         class="guide-progress-group"
                         :style="{flexGrow: group.scenes.length}"
@@ -121,7 +121,7 @@
 
                 <div class="guide-actions">
                     <KsButton v-if="sceneIndex > 0" :disabled="isBusy" @click="back">
-                        {{ $t("onboarding.tour.actions.back") }}
+                        {{ $t(translationKey("actions.back")) }}
                     </KsButton>
                     <span class="guide-spacer" />
                     <KsButton
@@ -129,7 +129,7 @@
                         :disabled="isWorking"
                         @click="finishTour"
                     >
-                        {{ $t("onboarding.tour.actions.finish_now") }}
+                        {{ $t(translationKey("actions.finish_now")) }}
                     </KsButton>
                     <KsButton
                         type="primary"
@@ -148,20 +148,12 @@
 
 <script setup lang="ts">
     import {computed, onBeforeUnmount, onMounted, ref, watch} from "vue"
+    import {useTopLayer} from "@kestra-io/design-system"
     import {useI18n} from "vue-i18n"
     import {useRoute, useRouter} from "vue-router"
     import CheckCircle from "vue-material-design-icons/CheckCircle.vue"
-    import TourFinale from "./TourFinale.vue"
-    import {
-        TOUR_SCENES,
-        TOUR_SCENE_IDS,
-        TOUR_STEP_GROUPS,
-        TOUR_TOTAL_STEPS,
-        TourSceneError,
-        tourSceneIndex,
-    } from "./tourScenes"
-    import {useTourActions} from "./useTourActions"
-    import {shouldShowWelcome} from "../../../utils/welcomeGuard"
+    import {TourSceneError, sceneIdsOf, sceneIndexOf, stepGroupsOf} from "./tourScenes"
+    import {useTourVariant} from "override/components/onboarding/tour/useTourVariant"
     import {useProductTourStore} from "../../../stores/productTour"
     import {useMiscStore} from "override/stores/misc"
     import {useOnboardingAnalytics, type OnboardingTourEvent} from "../../../composables/useOnboardingAnalytics"
@@ -171,10 +163,21 @@
     const route = useRoute()
     const router = useRouter()
     const tourStore = useProductTourStore()
+    const topLayer = useTopLayer()
     const miscStore = useMiscStore()
-    const actions = useTourActions()
-    const {trackOnboarding} = useOnboardingAnalytics()
+
+    // Resolved once: remount the overlay if the resolution can change under it.
+    const variant = useTourVariant()
+    const actions = variant.useActions()
+    const scenes = variant.scenes
+    const sceneIds = sceneIdsOf(scenes)
+    const stepGroups = stepGroupsOf(scenes)
+    const totalSteps = scenes.length
+
+    const {trackOnboarding} = useOnboardingAnalytics({sceneIds, guideId: variant.id})
     const toast = useToast()
+
+    const translationKey = (suffix: string) => `${variant.i18nPrefix}.${suffix}`
 
     const consumeStartQuery = async () => {
         if (route.query.tour !== "start") {
@@ -183,30 +186,37 @@
         const query = {...route.query}
         delete query.tour
         await router.replace({name: route.name ?? undefined, params: route.params, query})
-        tourStore.startGuided()
+        tourStore.startGuided(variant)
         return true
+    }
+
+    const syncTourScope = () => {
+        const uuid = miscStore.configs?.uuid
+        if (uuid) {
+            tourStore.syncScope([uuid, route.params.tenant ?? "", variant.id].join(":"))
+        }
     }
 
     let autoStartChecked = false
 
-    const autoStartOnCopilot = async () => {
-        if (autoStartChecked || route.name !== "ai") {
+    const autoStartOnEntryRoute = async () => {
+        if (autoStartChecked || route.name !== variant.autoStartRoute) {
             return false
         }
-        tourStore.syncInstance(miscStore.configs?.uuid)
+        syncTourScope()
         if (tourStore.state.status !== "not_started" || tourStore.isDismissed) {
             return false
         }
         try {
-            const isNewInstance = await shouldShowWelcome()
+            const isEligible = await variant.eligible()
             autoStartChecked = true
-            if (!isNewInstance) {
+            if (!isEligible) {
                 return false
             }
         } catch {
             return false
         }
-        tourStore.startGuided()
+        tourStore.startGuided(variant)
         return true
     }
 
@@ -219,15 +229,15 @@
 
     const isWorking = computed(() => isBusy.value || !isReady.value)
 
-    const sceneIndex = computed(() => tourSceneIndex(tourStore.state.currentStepId))
-    const scene = computed(() => TOUR_SCENES[sceneIndex.value])
+    const sceneIndex = computed(() => sceneIndexOf(scenes, tourStore.state.currentStepId))
+    const scene = computed(() => scenes[sceneIndex.value])
     const context = computed(() => ({actions, store: tourStore}))
 
     const showIntro = computed(
         () => tourStore.isGuidedActive && !tourStore.state.tour.introSeen,
     )
 
-    const sceneKey = (suffix: string) => `onboarding.tour.scenes.${scene.value.id}.${suffix}`
+    const sceneKey = (suffix: string) => translationKey(`scenes.${scene.value.id}.${suffix}`)
 
     const isTickFilled = (step: number, tickIndex: number) => {
         if (step < scene.value.step) {
@@ -236,11 +246,11 @@
         if (step > scene.value.step) {
             return false
         }
-        const group = TOUR_STEP_GROUPS.find((candidate) => candidate.step === step)
+        const group = stepGroups.find((candidate) => candidate.step === step)
         return tickIndex <= (group?.scenes.indexOf(scene.value.id) ?? 0)
     }
     const nextLabel = computed(() =>
-        isWorking.value ? t("onboarding.tour.actions.running") : t(sceneKey("next")),
+        isWorking.value ? t(translationKey("actions.running")) : t(sceneKey("next")),
     )
 
     const track = (event: OnboardingTourEvent, additional: Record<string, unknown> = {}) => {
@@ -251,7 +261,7 @@
             additional: {
                 step_group: scene.value?.step,
                 step_number: sceneIndex.value + 1,
-                step_total: TOUR_TOTAL_STEPS,
+                step_total: totalSteps,
                 ...additional,
             },
         })
@@ -264,8 +274,10 @@
 
     const RING_PADDING = 6
 
+    type Hole = {top: number; left: number; bottom: number; right: number};
+
     const spotlight = ref<{
-        scrim: Record<"top" | "bottom" | "left" | "right", Record<string, string>> | null;
+        scrim: Record<string, string> | null;
         rings: Record<string, string>[];
     } | null>(null)
 
@@ -273,7 +285,16 @@
     let lastSpotlightKey = ""
     let activeSelector = ""
 
-    const px = (value: number) => `${Math.round(value)}px`
+    const px = (value: number) => `${value}px`
+
+    const scrimClipPath = (hole: Hole) => [
+        "0 0", "100% 0", "100% 100%", "0 100%", "0 0",
+        `${px(hole.left)} ${px(hole.top)}`,
+        `${px(hole.left)} ${px(hole.bottom)}`,
+        `${px(hole.right)} ${px(hole.bottom)}`,
+        `${px(hole.right)} ${px(hole.top)}`,
+        `${px(hole.left)} ${px(hole.top)}`,
+    ].join(", ")
 
     const dialogOpen = () =>
         Array.from(document.querySelectorAll(".kel-overlay-dialog, .kel-overlay")).some((element) => {
@@ -317,24 +338,23 @@
             return
         }
 
-        const top = Math.max(0, Math.min(...rects.map((rect) => rect.top)) - RING_PADDING)
-        const left = Math.max(0, Math.min(...rects.map((rect) => rect.left)) - RING_PADDING)
-        const bottom = Math.min(window.innerHeight, Math.max(...rects.map((rect) => rect.bottom)) + RING_PADDING)
-        const right = Math.min(window.innerWidth, Math.max(...rects.map((rect) => rect.right)) + RING_PADDING)
+        const hole: Hole = {
+            top: Math.max(0, Math.min(...rects.map((rect) => rect.top)) - RING_PADDING),
+            left: Math.max(0, Math.min(...rects.map((rect) => rect.left)) - RING_PADDING),
+            bottom: Math.min(window.innerHeight, Math.max(...rects.map((rect) => rect.bottom)) + RING_PADDING),
+            right: Math.min(window.innerWidth, Math.max(...rects.map((rect) => rect.right)) + RING_PADDING),
+        }
 
-        const key = [top, left, bottom, right, rects.length].map(Math.round).join(":")
+        const key = [hole.top, hole.left, hole.bottom, hole.right, rects.length].map(Math.round).join(":")
         if (key === lastSpotlightKey) {
             return
         }
         lastSpotlightKey = key
 
         spotlight.value = {
-            scrim: scene.value?.dim === false ? null : {
-                top: {top: "0", left: "0", right: "0", height: px(top)},
-                bottom: {top: px(bottom), left: "0", right: "0", bottom: "0"},
-                left: {top: px(top), left: "0", width: px(left), height: px(bottom - top)},
-                right: {top: px(top), left: px(right), right: "0", height: px(bottom - top)},
-            },
+            // A ranked selector matches nested elements, so the scrim keeps one union hole:
+            // overlapping holes cancel each other out and re-dim what the step points at.
+            scrim: scene.value?.dim === false ? null : {clipPath: `polygon(${scrimClipPath(hole)})`},
             rings: rects.map((rect) => ({
                 top: px(rect.top - RING_PADDING),
                 left: px(rect.left - RING_PADDING),
@@ -479,6 +499,7 @@
             piece.className = "tour-confetti-piece"
             piece.style.left = `${20 + Math.random() * 60}vw`
             piece.style.background = `var(${CONFETTI_TOKENS[index % CONFETTI_TOKENS.length]})`
+            piece.style.zIndex = String(topLayer.value + 1)
             piece.style.animationDelay = `${Math.random() * 0.3}s`
             piece.style.animationDuration = `${1.6 + Math.random() * 1.2}s`
             document.body.appendChild(piece)
@@ -513,7 +534,7 @@
     }
 
     const goTo = async (index: number) => {
-        const id = TOUR_SCENE_IDS[index]
+        const id = sceneIds[index]
         if (!id) {
             return
         }
@@ -530,7 +551,7 @@
         track("tour_continued")
         try {
             await scene.value?.action?.(context.value)
-            if (sceneIndex.value + 1 < TOUR_SCENES.length) {
+            if (sceneIndex.value + 1 < scenes.length) {
                 await goTo(sceneIndex.value + 1)
             } else {
                 finishTour()
@@ -565,29 +586,31 @@
         track("tour_closed")
         clearHighlight()
         stopPolling()
-        actions.restoreEditorPanels()
+        variant.cleanup?.(actions)
         tourStore.skip()
-        toast.success(t("onboarding.tour.actions.skipped_hint"), t("onboarding.tour.menu"))
+        toast.success(t(translationKey("actions.skipped_hint")), t(translationKey("menu")))
     }
 
     const finishTour = () => {
         track("tour_completed")
         clearHighlight()
         stopPolling()
-        actions.restoreEditorPanels()
+        variant.cleanup?.(actions)
         tourStore.complete()
         showFinale.value = true
     }
 
     const restartTour = async () => {
         showFinale.value = false
-        tourStore.startGuided()
+        tourStore.startGuided(variant)
         tourStore.setTourState({introSeen: true})
         track("tour_started", {restarted: true})
         await runScene()
     }
 
     watch(() => scene.value?.id, () => applyHighlight())
+
+    watch(() => scene.value?.placement, () => (dragOffset.value = {x: 0, y: 0}))
 
     watch(showIntro, (visible) => {
         if (visible) {
@@ -608,7 +631,7 @@
     }
 
     watch(
-        [() => route.fullPath, () => tourStore.state.tour],
+        [() => route.fullPath, () => tourStore.state.tour, () => tourStore.state.data],
         () => void followUserStep(),
         {deep: true},
     )
@@ -640,10 +663,16 @@
 
     watch(() => route.query.tour, () => void consumeStartQuery())
 
-    watch(() => route.name, () => void autoStartOnCopilot())
+    watch(() => route.name, () => void autoStartOnEntryRoute())
+
+    watch(
+        () => [miscStore.configs?.uuid, route.params.tenant],
+        () => syncTourScope(),
+        {immediate: true},
+    )
 
     onMounted(async () => {
-        const started = (await consumeStartQuery()) || (await autoStartOnCopilot())
+        const started = (await consumeStartQuery()) || (await autoStartOnEntryRoute())
         if (!started && tourStore.isGuidedActive && tourStore.state.tour.introSeen) {
             await runScene()
         }
@@ -661,7 +690,6 @@
         position: fixed;
         inset: 0;
         pointer-events: none;
-        z-index: 5000;
     }
 
     .guide-card {
@@ -721,7 +749,7 @@
     }
 
     .guide-note {
-        margin: var(--ks-spacing-3) 0 0;
+        margin: var(--ks-spacing-3) 0 var(--ks-spacing-4);
         color: var(--ks-text-secondary);
         font-size: var(--ks-font-size-xs);
     }
@@ -824,6 +852,7 @@
     // Position is set every frame; a transition would make the ring trail behind its target.
     .tour-scrim {
         position: fixed;
+        inset: 0;
         background: var(--kel-overlay-color-lighter);
         pointer-events: none;
     }
@@ -869,7 +898,6 @@
         height: 14px;
         border-radius: 2px;
         pointer-events: none;
-        z-index: 6000;
         animation-name: tourConfettiFall;
         animation-timing-function: linear;
         animation-fill-mode: forwards;

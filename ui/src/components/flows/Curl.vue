@@ -14,7 +14,7 @@
     import {computed, ref} from "vue"
     import {baseUrl, basePath, apiUrl} from "override/utils/route"
     import CopyToClipboard from "../layout/CopyToClipboard.vue"
-    import moment from "moment"
+    import {dayjs} from "@kestra-io/design-system"
     import {Flow} from "../../stores/flow"
     import {Label} from "../../stores/executions"
 
@@ -53,10 +53,10 @@
                 inputValue = props.inputs?.[input.id] ? "******" : undefined
                 break
             case "DATE":
-                inputValue = moment(props.inputs?.[input.id]).format("YYYY-MM-DD")
+                inputValue = dayjs(props.inputs?.[input.id]).format("YYYY-MM-DD")
                 break
             case "TIME":
-                inputValue = moment(props.inputs?.[input.id]).format("hh:mm:ss")
+                inputValue = dayjs(props.inputs?.[input.id]).format("HH:mm:ss")
                 break
             default:
                 inputValue = props.inputs?.[input.id]

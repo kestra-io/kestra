@@ -3,12 +3,13 @@
         :id="id"
         :defaultMarkerColor="cssVariable('--ks-topology-dash')"
         fitViewOnInit
+        :minZoom="MIN_ZOOM"
         :nodesDraggable="false"
         :nodesConnectable="false"
         :elevateNodesOnSelect="false"
         :elevateEdgesOnSelect="false"
     >
-        <Background :patternColor="cssVariable('--ks-topology-bg')" />
+        <Background :color="cssVariable(GRAPH_BACKGROUND.color)" :gap="GRAPH_BACKGROUND.gap" :size="GRAPH_BACKGROUND.size" />
 
         <Panel v-if="showDetailsToggle" position="top-right">
             <KsSwitch v-model="showExtraDetails" :activeText="$t('show more details')" size="small"/>
@@ -57,6 +58,9 @@
                 <template #details>
                     <slot name="taskDetails" v-bind="taskProps" />
                 </template>
+                <template #taskActions="taskActionProps">
+                    <slot name="taskActions" v-bind="{...taskProps, ...taskActionProps}" />
+                </template>
             </TaskNode>
         </template>
 
@@ -98,7 +102,7 @@
             />
         </template>
 
-        <Controls v-if="controlsShown" :showZoom="false" :showInteractive="false" :showFitView="false">
+        <Controls :showZoom="false" :showInteractive="false" :showFitView="false">
             <KsTooltip :content="$t('topology-graph.zoom-in')" placement="right">
                 <ControlButton @click.stop="zoomIn()">
                     <Plus />
@@ -143,7 +147,7 @@
 
 <script lang="ts" setup>
     import {computed, nextTick, onMounted, provide, ref, watch} from "vue"
-    import {useVueFlow, VueFlow, Panel} from "@vue-flow/core"
+    import {getRectOfNodes, useVueFlow, VueFlow, Panel} from "@vue-flow/core"
     import {ControlButton, Controls} from "@vue-flow/controls"
     import {Background} from "@vue-flow/background"
     import ClusterNode from "./nodes/ClusterNode.vue"
@@ -160,10 +164,10 @@
     import Download from "vue-material-design-icons/Download.vue"
     import ArrowExpandAll from "vue-material-design-icons/ArrowExpandAll.vue"
     import {cssVar as cssVariable, State, KsSwitch, KsTooltip} from "@kestra-io/design-system"
-    import {CLUSTER_PREFIX} from "./utils/constants"
+    import {CLUSTER_PREFIX, GRAPH_BACKGROUND, MIN_ZOOM} from "./utils/constants"
     import {type CustomActionConfig, type ShowDetailsConfig, EVENTS, NODE_SIZES} from "./utils/constants"
     import * as VueFlowUtils from "./utils/vueFlowUtils"
-    import {useScreenshot} from "./composables/useScreenshot"
+    import {untilNodesMeasured, useScreenshot} from "./composables/useScreenshot"
     import {EXECUTION_INJECTION_KEY, SUBFLOWS_EXECUTIONS_INJECTION_KEY, SHOW_EXTRA_DETAILS_INJECTION_KEY} from "./injectionKeys"
     import BasicNode from "./nodes/BasicNode.vue"
 
@@ -184,7 +188,7 @@
         loadIcon?: (cls: string) => Promise<any>;
         enableSubflowInteraction?: boolean;
         execution?: any;
-        subflowsExecutions?: Record<string, any[]>;
+        subflowsExecutions?: Record<string, VueFlowUtils.GraphExecution>;
         playgroundEnabled?: boolean;
         playgroundReadyToStart?: boolean;
         replayEnabled?: boolean;
@@ -197,7 +201,7 @@
         // slot content is only re-evaluated when a node's graph data is regenerated.
         taskDetailsVersion?: number;
     }>(), {
-        isHorizontal: true,
+        isHorizontal: false,
         isReadOnly: true,
         isAllowedEdit: false,
         toggleOrientationButton: false,
@@ -434,19 +438,24 @@
         generateGraph()
     }
 
-    const controlsShown = ref(true)
     const isDropdownOpen = ref(false)
     const toggleDropdown = () => isDropdownOpen.value = !isDropdownOpen.value
-    function exportAsImage(type: "jpeg" | "png") {
+    // Always the whole graph, whichever way it is laid out and wherever the viewport sits: the
+    // capture covers the bounding box of every rendered node, so there is nothing to crop it to.
+    async function exportAsImage(type: "jpeg" | "png") {
         if (!vueFlowRef.value) {
             console.warn("Flow not found")
             return
         }
 
-        controlsShown.value = false
-        capture(vueFlowRef.value, {type, shouldDownload: true})
-            .then(() => controlsShown.value = true)
-            .finally(() => isDropdownOpen.value = false)
+        const renderedNodes = () => getNodes.value.filter(node => !node.hidden)
+
+        try {
+            await untilNodesMeasured(renderedNodes)
+            await capture(vueFlowRef.value, {type, bounds: getRectOfNodes(renderedNodes()), shouldDownload: true})
+        } finally {
+            isDropdownOpen.value = false
+        }
     }
 </script>
 
@@ -461,10 +470,10 @@
         left: 40px;
         padding: 0;
         margin: 0;
-        z-index: 1000;
+        z-index: var(--ks-z-dropdown);
         list-style-type: none;
         background: var(--ks-bg-surface);
-        border: 1px solid var(--ks-border-primary);
+        border: 1px solid var(--ks-border-default);
         box-shadow: 0 12px 12px rgba(130, 103, 158, 0.1019607843);
         border-radius: 5px;
         text-align:left;
@@ -477,11 +486,11 @@
             width: 110px;
 
             &:first-child{
-                border-bottom: 1px solid var(--ks-border-primary);
+                border-bottom: 1px solid var(--ks-border-default);
             }
 
             &:hover {
-                background: var(--ks-button-background-secondary-hover);;
+                background: var(--ks-btn-secondary-bg-hover);
             }
         }
     }

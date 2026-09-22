@@ -112,6 +112,16 @@
                 box-shadow: none;
             }
 
+            &.is-danger:not(.is-disabled):hover,
+            &.is-danger:not(.is-disabled):focus {
+                background-color: var(--ks-bg-error);
+                color: var(--ks-text-error);
+
+                i {
+                    color: var(--ks-icon-error);
+                }
+            }
+
             > a,
             > button {
                 color: inherit;

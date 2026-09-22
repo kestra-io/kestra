@@ -734,6 +734,8 @@ export const TableInputCellError: Story = {
         await waitFor(function cellErrorRendered() {
             expect(canvasElement.textContent).toContain("it must be more than `10`");
         });
+        // Once: the cell renders the cause, and the form item around it lends only its error state.
+        expect((canvasElement.innerText.match(/it must be more than/g) || []).length).toBe(1);
         // The cell carries the cause alone, and the whole-input error slot stays empty.
         expect(canvasElement.textContent).not.toContain("Invalid value for input");
         expect(canvasElement.querySelector(".kel-form-item__error")).toBeNull();

@@ -12,7 +12,7 @@
                 class="table-input-row"
                 :data-test="`table-row-${input.id}-${index}`"
             >
-                <KsFormItem v-for="column in columns" :key="column.id" class="table-input-field" :error="cellError(index, column.id)">
+                <KsFormItem v-for="column in columns" :key="column.id" class="table-input-field" :error="cellError(index, column.id)" :showMessage="false">
                     <KsInputNumber
                         v-if="column.type === 'INT' || column.type === 'FLOAT'"
                         v-bind="cellAttrs(column, index)"

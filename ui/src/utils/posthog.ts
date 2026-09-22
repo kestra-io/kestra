@@ -152,9 +152,9 @@ export function capturePosthogEvent(
 }
 
 export function capturePosthogException(
-    configs: Record<string, any> | undefined,
+    configs: Record<string, unknown> | undefined,
     error: unknown,
-    properties?: Record<string, any>,
+    properties?: Record<string, unknown>,
 ) {
     if (isPosthogDisabled(configs)) return
 

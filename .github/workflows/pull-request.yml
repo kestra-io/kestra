@@ -12,9 +12,9 @@ jobs:
   # Kestra webhook) and trigger the EE OpenAPI spec check.
   trigger-ee:
     runs-on: ubuntu-latest
-    # Dispatch only: the build runs on the Kestra instance and reports back on a
-    # commit status, so this job is seconds rather than the length of a build.
-    timeout-minutes: 10
+    # Still sized for the synchronous fallback below; drop it to 10 once the
+    # async webhook secret exists and dispatch is the only path.
+    timeout-minutes: 50
     # A job-level block resets every other permission, so contents is restated
     # for the checkout below. statuses is what posts the pending EE status.
     permissions:
@@ -25,6 +25,10 @@ jobs:
     # gate the steps on that instead.
     env:
       GH_BOT_APP_ID: ${{ secrets.GH_BOT_APP_ID }}
+      # Async until the instance exposes a wait:false webhook. Falling back to
+      # the synchronous URL keeps this mergeable before that secret exists, and
+      # switches over on its own once it does, with no flag day.
+      ASYNC_WEBHOOK_URL: ${{ secrets.KESTRA_CI_EEBUILD_WEBHOOK_URL_ASYNC }}
     steps:
     - name: Checkout  # required so the local composite action below can resolve
       if: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false && env.GH_BOT_APP_ID != '' }}
@@ -55,9 +59,9 @@ jobs:
         && env.GH_BOT_APP_ID != '' }}
       uses: ./.github/actions/ee-compile-check
       with:
-        mode: async
+        mode: ${{ env.ASYNC_WEBHOOK_URL != '' && 'async' || 'sync' }}
         github-token: ${{ secrets.GITHUB_TOKEN }}
-        webhook-url: ${{ secrets.KESTRA_CI_EEBUILD_WEBHOOK_URL_ASYNC }}
+        webhook-url: ${{ env.ASYNC_WEBHOOK_URL != '' && env.ASYNC_WEBHOOK_URL || secrets.KESTRA_CI_EEBUILD_WEBHOOK_URL }}
         ref: ${{ github.event.pull_request.head.ref }}
         commit-sha: ${{ github.event.pull_request.head.sha }}
         pr-number: ${{ github.event.pull_request.number }}

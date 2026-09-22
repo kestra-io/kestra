@@ -20,7 +20,6 @@ import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.SystemUtils;
 import org.apache.hc.core5.http.ConnectionClosedException;
 import org.slf4j.Logger;
 
@@ -358,45 +357,6 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
             .shmSize(dockerOptions.getShmSize())
             .privileged(dockerOptions.getPrivileged())
             .build();
-    }
-
-    /**
-     * Best-effort check whether the Docker daemon is likely reachable.
-     * <p>
-     * When no explicit {@code host} is configured, this replicates the same socket-resolution
-     * logic as {@link DockerService#findHost} and verifies that the resolved socket path exists
-     * on the local filesystem. If the host <em>is</em> user-configured it may contain Pebble
-     * template expressions that cannot be evaluated without a {@link RunContext}, so we skip
-     * the check and return no warning.
-     */
-    @Override
-    public Optional<String> unavailabilityWarning() {
-        if (this.host != null) {
-            // User configured a custom host — we cannot evaluate templated expressions
-            // without a RunContext, so assume it is intentional and skip the check.
-            return Optional.empty();
-        }
-
-        // Replicate DockerService.findHost() fallback logic without RunContext
-        if (Files.exists(Path.of("/var/run/docker.sock"))) {
-            return Optional.empty();
-        }
-
-        if (SystemUtils.IS_OS_WINDOWS) {
-            // Named-pipe availability cannot be cheaply checked with Files.exists();
-            // skip the check on Windows.
-            return Optional.empty();
-        }
-
-        // Fallback: DinD socket
-        Path dindSocket = Path.of("/dind/docker.sock");
-        if (Files.exists(dindSocket)) {
-            return Optional.empty();
-        }
-
-        // Neither socket exists — Docker daemon is unreachable
-        String resolvedHost = "unix:///dind/docker.sock";
-        return Optional.of(dockerSocketNotAccessibleMessage(resolvedHost));
     }
 
     @Override

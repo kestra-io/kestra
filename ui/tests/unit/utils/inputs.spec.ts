@@ -42,6 +42,11 @@ describe("normalize for ION uses the structured-data editor contract", () => {
     })
 })
 
+// Regression guard for the moment -> dayjs move: `moment.add(value, unit)` routes a string through
+// `moment.duration()`, so `add("14:30:00", "seconds")` meant 14h30m and landed on the right wall
+// clock; `dayjs.add()` coerces with `Number()` instead, so the same call is `NaN`. Do not fold the
+// explicit hour/minute/second back into `add()`. `LocalTime.toString()` drops the seconds when they
+// are zero, so "14:30" is a real wire shape too. See https://github.com/kestra-io/kestra/issues/19367.
 describe("normalize for TIME hydrates the wall-clock time", () => {
     it("keeps the hour, minute and second of a LocalTime default", () => {
         for (const [value, hour, minute, second] of [

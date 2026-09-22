@@ -1,8 +1,11 @@
 /**
  * hey-api prefers a declared `application/json` request-body variant, mislabeling raw YAML source bodies (#340).
- * For string-schema YAML bodies, drop the JSON variant and put `application/x-yaml` first so the parser picks it.
+ * For string-schema YAML bodies, drop the JSON variant and put the YAML one first so the parser picks it.
  */
-const YAML_MEDIA_TYPE = "application/x-yaml"
+// A spec advertises `application/yaml` since the backend Micronaut migration and `application/x-yaml`
+// before it; match both, emit the one every Kestra server and every other SDK accepts (client-sdk #444).
+const YAML_MEDIA_TYPES = ["application/x-yaml", "application/yaml"] as const
+const CANONICAL_YAML_MEDIA_TYPE = "application/x-yaml"
 const JSON_MEDIA_TYPE = "application/json"
 const EVENT_STREAM_MEDIA_TYPE = "text/event-stream"
 
@@ -19,17 +22,14 @@ export function fixYamlSourceRequestBodyContentType(_method: string, _path: stri
     const content = requestBody?.content
     if (!content || typeof content !== "object") return
 
-    if (!isPlainString(content[YAML_MEDIA_TYPE]?.schema)) return
-    if (!isPlainString(content[JSON_MEDIA_TYPE]?.schema)) return
+    const declaredYamlMediaType = YAML_MEDIA_TYPES.find((mediaType) => isPlainString(content[mediaType]?.schema))
+    if (!declaredYamlMediaType) return
 
-    delete content[JSON_MEDIA_TYPE]
+    const yamlBody = content[declaredYamlMediaType]
+    if (isPlainString(content[JSON_MEDIA_TYPE]?.schema)) delete content[JSON_MEDIA_TYPE]
+    for (const mediaType of YAML_MEDIA_TYPES) delete content[mediaType]
 
-    const reordered: Record<string, unknown> = {[YAML_MEDIA_TYPE]: content[YAML_MEDIA_TYPE]}
-    for (const [mediaType, value] of Object.entries(content)) {
-        if (mediaType !== YAML_MEDIA_TYPE) reordered[mediaType] = value
-    }
-    requestBody.content = reordered
-
+    requestBody.content = {[CANONICAL_YAML_MEDIA_TYPE]: yamlBody, ...content}
 }
 
 /**

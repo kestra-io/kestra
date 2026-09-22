@@ -213,7 +213,6 @@
     "executionProgress": {
       "title": "Progression de l'exécution",
       "estimatedRemaining": "Temps restant estimé : {duration}",
-      "noBaseline": "Aucune donnée historique — impossible d'estimer le temps restant",
       "pastEstimate": "L'exécution dure plus longtemps que d'habitude"
     },
     "launch execution": "Déclencher",

@@ -35,6 +35,10 @@ public abstract class MultipleConditionStateStoreContract {
     /** The {@link MultipleConditionStateStore} implementation under contract. */
     protected abstract MultipleConditionStateStore store();
 
+    private void purgeExpired(String tenant) {
+        store().expired(tenant).forEach(store()::delete);
+    }
+
     @Test
     void allDefault() {
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
@@ -151,12 +155,12 @@ public abstract class MultipleConditionStateStoreContract {
 
         assertThat(window.getResults().get("a")).isTrue();
 
-        store().purgeExpired(Instant.now());
+        purgeExpired(tenant);
         assertThat(store().get(pair.getKey(), pair.getRight().getId())).isPresent();
 
         Thread.sleep(2005);
 
-        store().purgeExpired(Instant.now());
+        purgeExpired(tenant);
         assertThat(store().get(pair.getKey(), pair.getRight().getId())).isEmpty();
     }
 
@@ -179,12 +183,12 @@ public abstract class MultipleConditionStateStoreContract {
         assertThat(window.getResults().get("a")).isTrue();
         assertThat(window.getEnd().toInstant()).isEqualTo(expectedEnd);
 
-        store().purgeExpired(Instant.now());
+        purgeExpired(tenant);
         assertThat(store().get(pair.getKey(), pair.getRight().getId())).isPresent();
 
         Thread.sleep(2005);
 
-        store().purgeExpired(Instant.now());
+        purgeExpired(tenant);
         assertThat(store().get(pair.getKey(), pair.getRight().getId())).isEmpty();
     }
 
@@ -202,7 +206,7 @@ public abstract class MultipleConditionStateStoreContract {
 
         assertThat(window.getResults()).isEmpty();
 
-        store().purgeExpired(Instant.now());
+        purgeExpired(tenant);
         assertThat(store().get(pair.getKey(), pair.getRight().getId())).isEmpty();
     }
 
@@ -219,12 +223,12 @@ public abstract class MultipleConditionStateStoreContract {
 
         assertThat(window.getResults().get("a")).isTrue();
 
-        store().purgeExpired(Instant.now());
+        purgeExpired(tenant);
         assertThat(store().get(pair.getKey(), pair.getRight().getId())).isPresent();
 
         Thread.sleep(2005);
 
-        store().purgeExpired(Instant.now());
+        purgeExpired(tenant);
         assertThat(store().get(pair.getKey(), pair.getRight().getId())).isEmpty();
     }
 
@@ -241,7 +245,7 @@ public abstract class MultipleConditionStateStoreContract {
 
         assertThat(window.getResults()).isEmpty();
 
-        store().purgeExpired(Instant.now());
+        purgeExpired(tenant);
         assertThat(store().get(pair.getKey(), pair.getRight().getId())).isEmpty();
     }
 
@@ -259,7 +263,7 @@ public abstract class MultipleConditionStateStoreContract {
 
         assertThat(window.getResults().get("a")).isTrue();
 
-        store().purgeExpired(Instant.now());
+        purgeExpired(tenant);
         assertThat(store().get(pair.getKey(), pair.getRight().getId())).isPresent();
     }
 
@@ -276,7 +280,7 @@ public abstract class MultipleConditionStateStoreContract {
 
         assertThat(window.getResults().get("a")).isTrue();
 
-        store().purgeExpired(Instant.now());
+        purgeExpired(tenant);
         assertThat(store().get(pair.getKey(), pair.getRight().getId())).isPresent();
     }
 
@@ -396,12 +400,12 @@ public abstract class MultipleConditionStateStoreContract {
 
         assertThat(window.getResults().get("a")).isTrue();
 
-        store().purgeExpired(Instant.now());
+        purgeExpired(tenant);
         assertThat(store().get(pair.getKey(), pair.getRight().getId())).isPresent();
 
         Thread.sleep(2005);
 
-        store().purgeExpired(Instant.now());
+        purgeExpired(tenant);
         assertThat(store().get(pair.getKey(), pair.getRight().getId())).isEmpty();
     }
 
@@ -418,12 +422,12 @@ public abstract class MultipleConditionStateStoreContract {
 
         assertThat(window.getResults().get("a")).isTrue();
 
-        store().purgeExpired(Instant.now());
+        purgeExpired(tenant);
         assertThat(store().get(pair.getKey(), pair.getRight().getId())).isPresent();
 
         Thread.sleep(2005);
 
-        store().purgeExpired(Instant.now());
+        purgeExpired(tenant);
         assertThat(store().get(pair.getKey(), pair.getRight().getId())).isEmpty();
     }
 
@@ -440,7 +444,7 @@ public abstract class MultipleConditionStateStoreContract {
 
         assertThat(window.getResults()).isEmpty();
 
-        store().purgeExpired(Instant.now());
+        purgeExpired(tenant);
         assertThat(store().get(pair.getKey(), pair.getRight().getId())).isEmpty();
     }
 
@@ -458,7 +462,7 @@ public abstract class MultipleConditionStateStoreContract {
 
         assertThat(window.getResults().get("a")).isTrue();
 
-        store().purgeExpired(Instant.now());
+        purgeExpired(tenant);
         assertThat(store().get(pair.getKey(), pair.getRight().getId())).isPresent();
     }
 
@@ -475,7 +479,7 @@ public abstract class MultipleConditionStateStoreContract {
 
         assertThat(window.getResults().get("a")).isTrue();
 
-        store().purgeExpired(Instant.now());
+        purgeExpired(tenant);
         assertThat(store().get(pair.getKey(), pair.getRight().getId())).isPresent();
     }
 

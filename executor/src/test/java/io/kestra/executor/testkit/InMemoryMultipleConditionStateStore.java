@@ -4,6 +4,7 @@ import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.BiFunction;
 
@@ -30,8 +31,11 @@ public class InMemoryMultipleConditionStateStore implements MultipleConditionSta
     }
 
     @Override
-    public synchronized void purgeExpired(Instant now) {
-        windows.values().removeIf(window -> window.getEnd().toInstant().isBefore(now));
+    public synchronized List<MultipleConditionWindow> expired(String tenantId) {
+        Instant now = Instant.now();
+        return windows.values().stream()
+            .filter(window -> Objects.equals(window.getTenantId(), tenantId) && window.getEnd().toInstant().isBefore(now))
+            .toList();
     }
 
     @Override

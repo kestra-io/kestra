@@ -16,6 +16,8 @@ import io.kestra.core.models.Label;
 /**
  * This deserializer is for historical purpose, labels was first a map but has been updated to a List of Label so
  * this deserializer allows using both types.
+ * <p>
+ * Jackson 3 counterpart: {@link Jackson3ListOrMapOfLabelDeserializer}.
  */
 public class ListOrMapOfLabelDeserializer extends JsonDeserializer<List<Label>> implements ResolvableDeserializer {
     @SuppressWarnings("unchecked")

@@ -506,6 +506,21 @@ class ExecutionControllerRunnerTest {
     }
 
     @Test
+    @LoadFlows(value = { "flows/valids/inputs-small-files.yaml" }, tenantId = "triggerexecutioninputzerobyte")
+    void shouldTriggerExecutionWhenRequiredFileInputIsZeroBytes() {
+        String tenantId = "triggerexecutioninputzerobyte";
+        when(tenantService.resolveTenant()).thenReturn(tenantId);
+
+        MultipartBody requestBody = MultipartBody.builder()
+            .addPart("files", "f", MediaType.TEXT_PLAIN_TYPE, new byte[0])
+            .build();
+
+        Execution execution = triggerExecutionExecution(tenantId, TESTS_FLOW_NS, "inputs-small-files", requestBody, true);
+
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+    }
+
+    @Test
     @LoadFlows(value = { "flows/valids/inputs.yaml" }, tenantId = "invalidinputs")
     void invalidInputs() {
         String tenantId = "invalidinputs";
@@ -3656,6 +3671,7 @@ class ExecutionControllerRunnerTest {
         assertThat(response.getHeaders().get("Content-Disposition")).contains("attachment; filename=executions.csv");
         String csv = new String(response.body());
         assertThat(csv).contains(execution.getId());
+        assertThat(csv).doesNotContain("tenantId");
     }
 
     @Test

@@ -4,6 +4,13 @@ import {flushPromises} from "@vue/test-utils"
 import {mount} from "@vue/test-utils"
 import KestraDesignSystem from "../../../../src/index"
 import KsMarkdown from "../../../../src/components/Data/KsMarkdown/KsMarkdown.vue"
+import {loadLanguageOnDemand} from "../../../../src/components/Data/KsMarkdown/shikiHighlighter"
+
+// Spied, not stubbed: every other test in this file keeps the real on-demand loader.
+vi.mock("../../../../src/components/Data/KsMarkdown/shikiHighlighter", async (importOriginal) => {
+    const actual = await importOriginal<typeof import("../../../../src/components/Data/KsMarkdown/shikiHighlighter")>()
+    return {...actual, loadLanguageOnDemand: vi.fn(actual.loadLanguageOnDemand)}
+})
 
 const globalConfig = {plugins: [KestraDesignSystem]}
 
@@ -505,6 +512,62 @@ describe("KsMarkdown", () => {
         if (shikiDiv.exists()) {
             expect(shikiDiv.text()).toContain("greeting")
         }
+    })
+
+    // ─── Concurrent grammar loading ─────────────────────────────────────────
+
+    test("loads the grammars of a multi-language document concurrently", async () => {
+        const calls: string[] = []
+        vi.mocked(loadLanguageOnDemand).mockImplementation(async (_hl, lang) => {
+            calls.push(`enter:${lang}`)
+            await new Promise((resolve) => setTimeout(resolve, 20))
+            calls.push(`exit:${lang}`)
+            return true
+        })
+
+        mount(KsMarkdown, {
+            props: {content: "```rust\nfn a() {}\n```\n\n```go\nfunc b() {}\n```"},
+            global: globalConfig,
+        })
+
+        await vi.waitFor(() => expect(calls).toHaveLength(4), {timeout: 5000, interval: 10})
+
+        // Awaiting each load inside the per-block loop gives enter, exit, enter, exit.
+        expect(calls.slice(0, 2).sort()).toEqual(["enter:go", "enter:rust"])
+    })
+
+    test("a pending grammar load does not discard a highlight rendered while it waited", async () => {
+        let releaseRust = () => {}
+        let rustSettled = false
+        const rustPending = new Promise<void>((resolve) => {
+            releaseRust = resolve
+        })
+        vi.mocked(loadLanguageOnDemand).mockImplementation(async (_hl, lang) => {
+            if (lang !== "rust") return true
+            await rustPending
+            rustSettled = true
+            // Reported as unavailable so the continuation stays synchronous from here.
+            return false
+        })
+
+        const wrapper = mount(KsMarkdown, {
+            props: {content: "```rust\nfn a() {}\n```"},
+            global: globalConfig,
+        })
+        await flushPromises()
+
+        // json is pre-registered, so this render completes while the rust load is still pending.
+        await wrapper.setProps({content: "```json\n{\"a\": 1}\n```"})
+        await vi.waitFor(
+            () => expect(wrapper.find(".ks-markdown__code-shiki").exists()).toBe(true),
+            {timeout: 5000, interval: 20},
+        )
+
+        releaseRust()
+        await vi.waitFor(() => expect(rustSettled).toBe(true), {timeout: 5000, interval: 10})
+        await flushPromises()
+
+        expect(wrapper.find(".ks-markdown__code-shiki").exists()).toBe(true)
     })
 
     // ─── XSS protection ──────────────────────────────────────────────────────

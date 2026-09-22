@@ -365,7 +365,7 @@
     import * as TriggersAPI from "@kestra-io/kestra-sdk/triggers"
     import {searchTriggers, type TriggerDeleteOptions} from "../../../utils/triggers"
     import {useExecutionsStore} from "../../../stores/executions"
-    import {useTriggerFilter} from "../../filter/configurations"
+    import {useTriggerFilter} from "../../filter/configurations/triggerFilter"
     import {useTableColumns, type ColumnConfig} from "@kestra-io/design-system"
     import useRestoreUrl from "../../../composables/useRestoreUrl"
 

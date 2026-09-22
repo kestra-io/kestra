@@ -448,7 +448,7 @@ If your `<style>` block needs to exist:
 
 - `State`, `STATES`, `LOG_LEVELS` — execution state constants, icons, and colors
 - `cssVar(name, opacity?)` — read a `--ks-*` CSS custom property at runtime (use this in JS / chart configs instead of hardcoding hex)
-- `dayjs` — the one configured dayjs instance (utc, timezone, duration, calendar, isoWeek, localizedFormat, minMax, relativeTime, weekOfYear, isSameOrBefore). Never `import dayjs from "dayjs"` in feature code: plugins are registered on this instance, so a bare import silently lacks them
+- `dayjs` — the one configured dayjs instance (utc, timezone, duration, advancedFormat, calendar, isoWeek, localizedFormat, minMax, relativeTime, weekOfYear, isSameOrBefore). Never `import dayjs from "dayjs"` in feature code: plugins are registered on this instance, so a bare import silently lacks them
 - `dateUtils` — `dateFilter()`, `parseIso()`, `toIsoKeepOffset()`, `currentTimezone()`, `timezonesWithOffset()`, `currentLocale()`, `setLocale()`, `DATE_FORMAT_STORAGE_KEY`, `TIMEZONE_STORAGE_KEY`
 - `durationUtils` — `duration()`, `isValidDuration()`, `humanDuration()` — ISO 8601 ↔ ms and human-readable
 - `stringUtils` — `afterLastDot()`

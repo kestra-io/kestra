@@ -1,7 +1,7 @@
 jackson:
-  serialization:
-    writeDatesAsTimestamps: false
-    writeDurationsAsTimestamps: false
+  date-time-features:
+    WRITE_DATES_AS_TIMESTAMPS: false
+    WRITE_DURATIONS_AS_TIMESTAMPS: false
   serialization-inclusion: non_null
 
 micronaut:

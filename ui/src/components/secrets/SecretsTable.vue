@@ -246,7 +246,7 @@
     import {useAuthStore} from "override/stores/auth"
     import {useNamespacesStore} from "override/stores/namespaces"
     import {useApiStore} from "../../stores/api"
-    import {useSecretsFilter} from "../filter/configurations"
+    import {useSecretsFilter} from "../filter/configurations/secretsFilter"
     import {useTableColumns} from "@kestra-io/design-system"
 
     const secretsFilter = useSecretsFilter()

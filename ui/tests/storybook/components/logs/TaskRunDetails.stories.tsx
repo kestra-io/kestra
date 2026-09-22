@@ -108,6 +108,11 @@ export const KeepsTaskHeadersCompactAndAligned: Story = {
     args: {
         taskRunId: undefined,
         targetFlow: {
+            id: "test-flow",
+            namespace: "company.team",
+            disabled: false,
+            draft: false,
+            deleted: false,
             tasks: [
                 {id: "my-task", type: "io.kestra.plugin.core.log.Log"},
                 {id: "my-longer-task", type: "io.kestra.plugin.core.log.Log"},

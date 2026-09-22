@@ -445,8 +445,17 @@ export type AssetIdentifier = {
 };
 
 export type AssetsDeclaration = {
+    /**
+     * Whether to auto-register assets referenced dynamically at runtime that are not statically declared in inputs or outputs.
+     */
     enableAuto?: PropertyBoolean;
+    /**
+     * The assets consumed as inputs.
+     */
     inputs?: PropertyListAssetIdentifier;
+    /**
+     * The assets produced as outputs.
+     */
     outputs?: PropertyListAsset;
     /**
      * Asset failure behavior
@@ -2223,6 +2232,9 @@ export type Task = {
     runIf?: string;
     allowWarning?: boolean;
     taskCache?: Cache;
+    /**
+     * Assets this task consumes as inputs or produces as outputs, for lineage tracking and the asset graph (Enterprise Edition). A flow declaring this property on a task is rejected in the open-source edition.
+     */
     assets?: AssetsDeclaration | null;
 };
 

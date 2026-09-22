@@ -204,7 +204,7 @@
     const canSwitchVersion = computed<boolean>(() => Boolean(routeCls.value))
 
     const installedVersions = computed<string[]>(() =>
-        versionProbeCls.value ? [...(pluginsStore.versions ?? [])].sort(sortVersionsDesc) : [],
+        versionProbeCls.value ? [...(pluginsStore.versions?.[versionProbeCls.value] ?? [])].sort(sortVersionsDesc) : [],
     )
 
     const publicVersions = computed(() => enrichmentStore.getVersions(versionProbeCls.value))
@@ -231,7 +231,7 @@
 
     const currentVersion = computed<string | undefined>(() => {
         const fromRoute = route.params.version as string | undefined
-        return fromRoute ?? installedVersions.value[0] ?? publicVersions.value[0]?.version
+        return fromRoute ?? publicVersions.value[0]?.version ?? installedVersions.value[0]
     })
 
     const isLatestVersion = computed<boolean>(() => {

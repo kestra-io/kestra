@@ -38,6 +38,15 @@ function argValue(flag) {
 // No explicit root: assume the standard side-by-side checkout, EE beside OSS.
 const eeRoot = path.resolve(argValue("--ee-root") ?? path.join(path.dirname(ossRoot), "kestra-ee"))
 const eeTranslationsDir = path.join(eeRoot, "ui-ee/src/translations/ee_translations")
+
+/**
+ * A tenant type keeps its own language folder, whose keys the app roots under `tenantTypes.<type>`
+ * at runtime (`ui-ee/src/translations/tenantTypeMessages.ts`). The prefix is therefore the folder
+ * name, and the files themselves carry no trace of it.
+ */
+const eeTenantTypeTranslations = () =>
+    fs.globSync(path.join(eeRoot, "ui-ee/src/tenantTypes/*/translations"))
+        .map(dir => ({dir, prefix: `tenantTypes.${path.basename(path.dirname(dir))}`}))
 const scope = argValue("--scope") ?? "all"
 const reportPath = argValue("--report")
 const unusedCandidatesOnly = process.argv.includes("--unused-candidates")
@@ -297,6 +306,10 @@ function checkEe() {
     // EE code reaches OSS and design-system keys too: its locale files are merged over OSS's.
     const definedKeys = ossDefinedKeys()
     for (const key of allKeys(eeEn)) definedKeys.add(key)
+    for (const {dir, prefix} of eeTenantTypeTranslations()) {
+        definedKeys.add(prefix)
+        for (const key of allKeys(readLanguage(dir, "en"))) definedKeys.add(`${prefix}.${key}`)
+    }
     const scan = scanSources(eeRoot, eeSourceRoots)
     checkUsedKeys(result, "EE", scan, definedKeys)
 
@@ -308,6 +321,10 @@ function checkEe() {
             return result
         }
         checkUnusedKeys(result, "EE", eeEnKeys, scan.evidence, "ui-ee/src/translations/ee_translations/en.json")
+        for (const {dir, prefix} of eeTenantTypeTranslations()) {
+            const leaves = leafKeys(readLanguage(dir, "en")).map(key => `${prefix}.${key}`)
+            checkUnusedKeys(result, "EE", leaves, scan.evidence, path.relative(eeRoot, path.join(dir, "en.json")))
+        }
     } else {
         annotate("warning", `OSS sources not found at ${ossSourceRoots[0]} - skipping the unused-key check for EE keys, which OSS code may render.`)
         if (unusedCandidatesOnly) return result

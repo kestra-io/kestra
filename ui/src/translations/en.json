@@ -2148,6 +2148,7 @@
         "draft": {
           "openInEditor": "Open in editor",
           "apply": "Apply",
+          "applied": "Applied",
           "applyTitle": "Apply flow",
           "applyConfirm": "Apply the flow {namespace}.{id}? It will be created, or overwritten if it already exists.",
           "applyConfirmDashboard": "Apply the dashboard {id}? It will be created, or overwritten if it already exists.",

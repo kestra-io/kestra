@@ -59,7 +59,8 @@ const problem = (detail: string) => ({
 const alreadyExists = problem("A flow with id 'my-flow' already exists in namespace 'company.team'.")
 const dashboardExists = problem("A dashboard with id 'my-dash' already exists.")
 
-import {useApplyDraft} from "../../../../../src/components/ai/copilot/useApplyDraft"
+import type {RouteLocationNormalizedLoaded} from "vue-router"
+import {useApplyDraft, isViewingFlow} from "../../../../../src/components/ai/copilot/useApplyDraft"
 
 const draft = (over = {}) => ({draftId: "d1", kind: "FLOW" as const, yaml: "id: my-flow\nnamespace: company.team", valid: true, constraints: null, ...over})
 
@@ -107,11 +108,12 @@ describe("useApplyDraft", () => {
     })
 
     it("apply refreshes the flow in place (no navigation) when already viewing it", async () => {
-        routeName = "flows/update"
+        // The nested tab name the flow editor actually carries, not the flat family name.
+        routeName = "flows/update/edit"
         routeParams = {tenant: "main", namespace: "company.team", id: "my-flow"}
         confirm.mockResolvedValueOnce(undefined)
         createFlow.mockRejectedValueOnce(alreadyExists) // existing flow → update in place
-        await useApplyDraft().apply(draft())
+        expect(await useApplyDraft().apply(draft())).toBe(true)
         expect(updateFlow).toHaveBeenCalled()
         // Stays on the current tab and refreshes the store like a save — no bounce to overview.
         expect(loadFlow).toHaveBeenCalledWith({namespace: "company.team", id: "my-flow"})
@@ -166,6 +168,12 @@ describe("useApplyDraft", () => {
         expect(updateFlow).not.toHaveBeenCalled()
         expect(alert).toHaveBeenCalled()
         expect(push).not.toHaveBeenCalled()
+    })
+
+    it("apply reports failure so a spent draft card is not marked applied", async () => {
+        confirm.mockResolvedValueOnce(undefined)
+        createFlow.mockRejectedValueOnce(new Error("boom"))
+        expect(await useApplyDraft().apply(draft())).toBe(false)
     })
 
     it("apply does nothing when the confirm is cancelled", async () => {
@@ -234,5 +242,34 @@ describe("useApplyDraft", () => {
         expect(appSupported).toBe(false) // EE shadows override/…/appDraftActions to enable this
         openInEditor({draftId: "da", kind: "APP", yaml: "id: my-app", valid: true, constraints: null})
         expect(push).not.toHaveBeenCalled()
+    })
+
+    describe("isViewingFlow", () => {
+        // `flows/update` migrated from a flat `:tab?` param to vue-router children (routeFamily.ts), so
+        // the real route name on the flow-editor page is nested, e.g. `flows/update/edit`, never the flat
+        // `flows/update` alone — an exact match against the flat name never fired on the page the copilot
+        // is actually used from, leaving the editor showing the pre-apply source.
+        const route = (name: string, namespace: string, id: string) =>
+            ({name, params: {namespace, id}}) as unknown as RouteLocationNormalizedLoaded
+
+        it("matches the default nested edit tab", () => {
+            expect(isViewingFlow(route("flows/update/edit", "company.team", "my-flow"), "company.team", "my-flow")).toBe(true)
+        })
+
+        it("matches another nested tab", () => {
+            expect(isViewingFlow(route("flows/update/topology", "company.team", "my-flow"), "company.team", "my-flow")).toBe(true)
+        })
+
+        it("matches the flat pre-migration route name", () => {
+            expect(isViewingFlow(route("flows/update", "company.team", "my-flow"), "company.team", "my-flow")).toBe(true)
+        })
+
+        it("does not match a different route family", () => {
+            expect(isViewingFlow(route("flows/list", "company.team", "my-flow"), "company.team", "my-flow")).toBe(false)
+        })
+
+        it("does not match when the namespace or id differs", () => {
+            expect(isViewingFlow(route("flows/update/edit", "other.team", "my-flow"), "company.team", "my-flow")).toBe(false)
+        })
     })
 })

@@ -1,5 +1,6 @@
 import {computed, ref} from "vue"
 import {useRoute, useRouter} from "vue-router"
+import type {RouteLocationNormalizedLoaded} from "vue-router"
 import {useI18n} from "vue-i18n"
 import {KsMessageBox} from "@kestra-io/design-system"
 import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
@@ -10,7 +11,20 @@ import {apiUrl} from "override/utils/route"
 import {useAppDraftActions} from "override/components/ai/copilot/appDraftActions"
 import {useMiscStore} from "override/stores/misc"
 import {useFlowStore} from "../../../stores/flow"
+import {routeFamily} from "../../../utils/routeFamily"
 import type {ArtefactDraftEvent} from "./types"
+
+/**
+ * True when the given flow is the one currently open in the editor. Goes through `routeFamily`
+ * because the flow page's tabs are vue-router children: on the Edit tab the active route name is
+ * `flows/update/edit`, so an exact match against `flows/update` never fires where the copilot is
+ * actually used.
+ */
+export function isViewingFlow(route: RouteLocationNormalizedLoaded, namespace: string, id: string): boolean {
+    return routeFamily(route.name) === "flows/update"
+        && String(route.params.namespace) === namespace
+        && String(route.params.id) === id
+}
 
 /**
  * Actions for an AI-drafted artefact:
@@ -66,24 +80,25 @@ export function useApplyDraft() {
         })
     }
 
-    /** (B) Create (or update) the artefact directly. Confirms first; dispatches on the draft kind. */
-    async function apply(draft: ArtefactDraftEvent): Promise<void> {
+    /** (B) Create (or update) the artefact directly. Confirms first; dispatches on the draft kind.
+     *  Resolves `true` once the artefact was actually written (not merely confirmed) — the caller uses
+     *  this to stop offering Apply on a draft that already landed. */
+    async function apply(draft: ArtefactDraftEvent): Promise<boolean> {
         if (draft.kind === "DASHBOARD") {
-            await applyDashboard(draft)
-            return
+            return applyDashboard(draft)
         }
-        await applyFlow(draft)
+        return applyFlow(draft)
     }
 
-    async function applyFlow(draft: ArtefactDraftEvent): Promise<void> {
+    async function applyFlow(draft: ArtefactDraftEvent): Promise<boolean> {
         const {namespace, id} = parseYaml(draft.yaml)
         if (!namespace || !id) {
             await KsMessageBox.alert(t("ai.copilot.draft.applyNoTarget"), t("ai.copilot.draft.applyTitle"), {type: "error"})
-            return
+            return false
         }
 
         const confirmed = await confirmApply(t("ai.copilot.draft.applyConfirm", {namespace, id}), t("ai.copilot.draft.applyTitle"))
-        if (!confirmed) return
+        if (!confirmed) return false
 
         applying.value = true
         try {
@@ -105,10 +120,7 @@ export function useApplyDraft() {
             // the store (source buffer + graph) in place and stay on the current tab, instead of
             // bouncing to the flow overview and forcing a hard refresh to see the change. Otherwise
             // open the flow so the result is visible.
-            const onThisFlow = route.name === "flows/update"
-                && String(route.params.namespace) === namespace
-                && String(route.params.id) === id
-            if (onThisFlow) {
+            if (isViewingFlow(route, namespace, id)) {
                 // Resolve the store lazily (only when we actually refresh an open flow) so merely
                 // rendering a draft card doesn't require Pinia to be set up.
                 const flowStore = useFlowStore()
@@ -117,23 +129,25 @@ export function useApplyDraft() {
             } else {
                 router.push({name: "flows/update", params: {namespace, id, ...tenantParam()}})
             }
+            return true
         } catch (e) {
             await alertError(e, t("ai.copilot.draft.applyError"), t("ai.copilot.draft.applyTitle"))
+            return false
         } finally {
             applying.value = false
         }
     }
 
-    async function applyDashboard(draft: ArtefactDraftEvent): Promise<void> {
+    async function applyDashboard(draft: ArtefactDraftEvent): Promise<boolean> {
         // Dashboards are tenant-scoped and identified by `id` alone (no namespace).
         const {id} = parseYaml(draft.yaml)
         if (!id) {
             await KsMessageBox.alert(t("ai.copilot.draft.applyNoTarget"), t("ai.copilot.draft.applyTitleDashboard"), {type: "error"})
-            return
+            return false
         }
 
         const confirmed = await confirmApply(t("ai.copilot.draft.applyConfirmDashboard", {id}), t("ai.copilot.draft.applyTitleDashboard"))
-        if (!confirmed) return
+        if (!confirmed) return false
 
         applying.value = true
         try {
@@ -147,8 +161,10 @@ export function useApplyDraft() {
                 await useClient().put(`${apiUrl()}/dashboards/${id}`, draft.yaml, yaml)
             }
             router.push({name: "dashboards/update", params: {dashboard: id, ...tenantParam()}})
+            return true
         } catch (e) {
             await alertError(e, t("ai.copilot.draft.applyErrorDashboard"), t("ai.copilot.draft.applyTitleDashboard"))
+            return false
         } finally {
             applying.value = false
         }

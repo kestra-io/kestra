@@ -2148,6 +2148,7 @@
         "draft": {
           "openInEditor": "에디터에서 열기",
           "apply": "적용",
+          "applied": "적용됨",
           "applyTitle": "flow 적용",
           "applyConfirm": "flow {namespace}.{id}를 적용하시겠습니까? 생성되거나, 이미 존재하는 경우 덮어쓰여집니다.",
           "applyConfirmDashboard": "대시보드 {id}를 적용하시겠습니까? 생성되거나, 이미 존재하는 경우 덮어쓰여집니다.",

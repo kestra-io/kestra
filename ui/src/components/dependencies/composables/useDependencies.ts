@@ -39,20 +39,24 @@ const EDGE_COLOR = {
     hovered:  "--ks-dependencies-edge-hovered",
 } as const
 
-// Material Design "package-variant-closed" glyph: ECharts symbols are drawn on a canvas and
-// cannot mount a Vue component, so the icon is embedded as an SVG `image://` symbol.
+// Material Design glyphs: ECharts symbols are drawn on a canvas and cannot mount a Vue
+// component, so each icon is embedded as an SVG `image://` symbol instead.
 const ASSET_ICON_PATH =
     "M21,16.5C21,16.88 20.79,17.21 20.47,17.38L12.57,21.82C12.41,21.94 12.21,22 12,22C11.79,22 11.59,21.94 11.43,21.82L3.53,17.38C3.21,17.21 3,16.88 3,16.5V7.5C3,7.12 3.21,6.79 3.53,6.62L11.43,2.18C11.59,2.06 11.79,2 12,2C12.21,2 12.41,2.06 12.57,2.18L20.47,6.62C20.79,6.79 21,7.12 21,7.5V16.5M12,4.15L10.11,5.22L16,8.61L17.96,7.5L12,4.15M6.04,7.5L12,10.85L13.96,9.75L8.08,6.35L6.04,7.5M5,15.91L11,19.29V12.58L5,9.21V15.91M19,15.91V9.21L13,12.58V19.29L19,15.91Z"
 
+// "sitemap" glyph, matching the icon DagCanvas uses for a flow node.
+const FLOW_ICON_PATH =
+    "M9,2V8H11V11H5C3.89,11 3,11.89 3,13V16H1V22H7V16H5V13H11V16H9V22H15V16H13V13H19V16H17V22H23V16H21V13C21,11.89 20.11,11 19,11H13V8H15V2H9Z"
+
 /**
- * ECharts `image://` symbol for an asset node. Colours are baked into the SVG because ECharts
+ * ECharts `image://` symbol for a node. Colours are baked into the SVG because ECharts
  * ignores itemStyle for image symbols; graphNodes rebuilds it on every state or theme change.
  */
-function assetNodeSymbol(bgColor: string, borderColor: string, iconColor: string): string {
+function nodeSymbol(path: string, bgColor: string, borderColor: string, iconColor: string): string {
     const svg =
         "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\">" +
         `<circle cx="12" cy="12" r="11" fill="${bgColor}" stroke="${borderColor}" stroke-width="1.5"/>` +
-        `<path transform="translate(12 12) scale(0.55) translate(-12 -12)" fill="${iconColor}" d="${ASSET_ICON_PATH}"/>` +
+        `<path transform="translate(12 12) scale(0.55) translate(-12 -12)" fill="${iconColor}" d="${path}"/>` +
         "</svg>"
     return `image://data:image/svg+xml;utf8,${encodeURIComponent(svg)}`
 }
@@ -207,7 +211,7 @@ export function useDependencies(
         const edgeCounts   = buildEdgeCounts(elements.value.data)
         const hasSelection = selectedNodeID.value !== undefined
         const hasFilter    = shownNodeIDs.value !== null
-        const assetIconColor = cssVar("--ks-text-primary")
+        const iconColor = cssVar("--ks-text-primary")
 
         return nodesOf(elements.value.data)
             .map((node) => {
@@ -257,7 +261,7 @@ export function useDependencies(
                     id:         node.id,
                     name:       node.id,
                     symbolSize: nodeSize(node.id, edgeCounts),
-                    ...(isAsset ? {symbol: assetNodeSymbol(bgColor, borderColor, assetIconColor)} : {}),
+                    symbol:     nodeSymbol(isAsset ? ASSET_ICON_PATH : FLOW_ICON_PATH, bgColor, borderColor, iconColor),
                     itemStyle:  baseItemStyle,
                     emphasis: {
                         itemStyle: {
@@ -311,7 +315,7 @@ export function useDependencies(
                     color   = cssVar(EDGE_COLOR.faded)
                     opacity = 0.1
                 } else if (isSelected) {
-                    color   = execColor ?? cssVar(EDGE_COLOR.selected)
+                    color   = execColor ?? cssVar(edgeKindToken(edge.kind) ?? EDGE_COLOR.selected)
                 } else if (isFaded) {
                     color   = cssVar(EDGE_COLOR.faded)
                     opacity = 0.35

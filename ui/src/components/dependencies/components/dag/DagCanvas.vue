@@ -162,7 +162,7 @@
             const source = positions.get(edge.source)
             const target = positions.get(edge.target)
             const backwards = !!source && !!target && source.x > target.x
-            const stroke = cssVar(onPath ? "--ks-text-link" : edgeKindToken(edge.kind) ?? "--ks-border-default")
+            const stroke = cssVar(edgeKindToken(edge.kind) ?? "--ks-border-default")
 
             return {
                 id: edge.id,

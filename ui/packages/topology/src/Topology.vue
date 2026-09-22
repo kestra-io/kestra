@@ -388,12 +388,6 @@
             [cluster.end]: nodeId,
         }
 
-        for (let child of cluster.nodes) {
-            if (props.flowGraph.clusters.map(c => c.cluster.uid).includes(child)) {
-                collapseCluster(child, false)
-            }
-        }
-
         if (regenerate) {
             generateGraph()
         }

@@ -169,13 +169,13 @@ export function generateDagreGraph(
             const dimensions = getNodeDimensions(node, getNodeWidth, getNodeHeight)
             dagreGraph.setNode(nodeUid, dimensions)
             clusterToNode.push(node)
-            continue
-        }
-        if (!edgeReplacer[cluster.cluster.uid]) {
-            dagreGraph.setNode(cluster.cluster.uid, {clusterLabelPos: "top"})
-            for (const node of cluster.nodes || []) {
-                if (!hiddenNodes.includes(node)) {
-                    dagreGraph.setParent(node, cluster.cluster.uid)
+        } else {
+            if (!edgeReplacer[cluster.cluster.uid]) {
+                dagreGraph.setNode(cluster.cluster.uid, {clusterLabelPos: "top"})
+                for (const node of cluster.nodes || []) {
+                    if (!hiddenNodes.includes(node)) {
+                        dagreGraph.setParent(node, cluster.cluster.uid)
+                    }
                 }
             }
         }
@@ -490,6 +490,15 @@ export function generateGraph(
     )
 
     for (const cluster of clusters) {
+        const nodeUid = cluster.cluster.uid.replace(CLUSTER_PREFIX, "")
+        if (collapsed.has(nodeUid) && cluster.parents?.length) {
+            const parentClusterUid = cluster.parents[cluster.parents.length - 1]
+            const parentClusterDef = rawClusters.find((c) => c.uid === parentClusterUid)
+            if (parentClusterDef) {
+                clusterByNodeUid[nodeUid] = parentClusterDef
+            }
+        }
+
         if (!edgeReplacer[cluster.cluster.uid] && !collapsed.has(cluster.cluster.uid)) {
             if (
                 cluster.cluster.taskNode?.task?.type === "io.kestra.core.tasks.flows.Dag"
@@ -541,7 +550,7 @@ export function generateGraph(
     }
 
     for (const node of flowGraph.nodes.concat(clusterToNode)) {
-        if (!hiddenNodes.includes(node.uid) || node.type === "collapsedcluster") {
+        if (!hiddenNodes.includes(node.uid)) {
             const dagreNode = dagreGraph.node(node.uid)
             let nodeType = "task"
             if (isClusterRootOrEnd(node)) {

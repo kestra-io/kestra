@@ -334,4 +334,97 @@ describe("generateGraph CHOICE edge labels", () => {
         expect(edge?.data?.value).toBeUndefined()
         expect(edge?.data?.relationType).toBeUndefined()
     })
+
+    test("handles nested cluster collapse positioning and visibility", () => {
+        const nestedClusterFlowGraph = {
+            nodes: [
+                {uid: "outer_loop.start", type: "io.kestra.core.models.hierarchies.GraphClusterRoot"},
+                {uid: "inner_loop.start", type: "io.kestra.core.models.hierarchies.GraphClusterRoot"},
+                {uid: "inner_task", type: "io.kestra.core.models.hierarchies.GraphTask", task: {id: "inner_task", type: "io.kestra.plugin.core.debug.Return"}},
+                {uid: "inner_loop.end", type: "io.kestra.core.models.hierarchies.GraphClusterEnd"},
+                {uid: "outer_loop.end", type: "io.kestra.core.models.hierarchies.GraphClusterEnd"},
+            ],
+            edges: [
+                {source: "outer_loop.start", target: "inner_loop.start"},
+                {source: "inner_loop.start", target: "inner_task"},
+                {source: "inner_task", target: "inner_loop.end"},
+                {source: "inner_loop.end", target: "outer_loop.end"},
+            ],
+            clusters: [
+                {
+                    cluster: {
+                        uid: "Cluster.outer_loop",
+                        type: "io.kestra.core.models.hierarchies.GraphCluster",
+                        taskNode: {uid: "outer_loop", task: {id: "outer_loop", type: "io.kestra.plugin.core.flow.Loop"}},
+                    },
+                    nodes: ["outer_loop.start", "inner_loop.start", "inner_task", "inner_loop.end", "outer_loop.end"],
+                    parents: [],
+                    start: "outer_loop.start",
+                    end: "outer_loop.end",
+                },
+                {
+                    cluster: {
+                        uid: "Cluster.inner_loop",
+                        type: "io.kestra.core.models.hierarchies.GraphCluster",
+                        taskNode: {uid: "inner_loop", task: {id: "inner_loop", type: "io.kestra.plugin.core.flow.Loop"}},
+                    },
+                    nodes: ["inner_loop.start", "inner_task", "inner_loop.end"],
+                    parents: ["Cluster.outer_loop"],
+                    start: "inner_loop.start",
+                    end: "inner_loop.end",
+                },
+            ],
+        } as any
+
+        const collapsedInner = new Set<string>(["inner_loop"])
+        const hiddenInner = ["inner_loop.start", "inner_task", "inner_loop.end", "Cluster.inner_loop"]
+        const edgeReplacerInner = {
+            "Cluster.inner_loop": "inner_loop",
+            "inner_loop.start": "inner_loop",
+            "inner_loop.end": "inner_loop",
+        }
+        const clusterToNodeInner: any[] = []
+
+        const elementsInner = VueFlowUtils.generateGraph(
+            "test_flow",
+            "flow_id",
+            "namespace",
+            nestedClusterFlowGraph,
+            "",
+            hiddenInner,
+            true,
+            edgeReplacerInner,
+            collapsedInner,
+            clusterToNodeInner,
+        )
+
+        const innerCollapsedNode = elementsInner.find((e: any) => e.id === "inner_loop")
+        expect(innerCollapsedNode).toBeDefined()
+        expect(innerCollapsedNode.parentNode).toBe("Cluster.outer_loop")
+
+        const collapsedBoth = new Set<string>(["inner_loop", "outer_loop"])
+        const hiddenBoth = ["outer_loop.start", "inner_loop.start", "inner_task", "inner_loop.end", "outer_loop.end", "Cluster.outer_loop", "inner_loop", "Cluster.inner_loop"]
+        const edgeReplacerBoth = {
+            "Cluster.outer_loop": "outer_loop",
+            "outer_loop.start": "outer_loop",
+            "outer_loop.end": "outer_loop",
+        }
+        const clusterToNodeBoth: any[] = []
+
+        const elementsBoth = VueFlowUtils.generateGraph(
+            "test_flow",
+            "flow_id",
+            "namespace",
+            nestedClusterFlowGraph,
+            "",
+            hiddenBoth,
+            true,
+            edgeReplacerBoth,
+            collapsedBoth,
+            clusterToNodeBoth,
+        )
+
+        const innerNodeWhenOuterCollapsed = elementsBoth.find((e: any) => e.id === "inner_loop")
+        expect(innerNodeWhenOuterCollapsed).toBeUndefined()
+    })
 })

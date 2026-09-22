@@ -45,12 +45,12 @@ export const Default = Template.bind({})
 Default.args = {input: disks}
 Default.play = async ({canvasElement}) => {
     const addRow = canvasElement.querySelector("[data-test='table-row-add-disks']")!
-    await expect(canvasElement.querySelectorAll("tbody tr").length).toBe(1)
+    await expect(canvasElement.querySelectorAll("[data-test^='table-row-disks-']").length).toBe(1)
     await expect(canvasElement.querySelector("[data-test='table-row-remove-disks-0']")).toBeDisabled()
 
     await userEvent.click(addRow)
     await userEvent.click(addRow)
-    await waitFor(() => expect(canvasElement.querySelectorAll("tbody tr").length).toBe(3))
+    await waitFor(() => expect(canvasElement.querySelectorAll("[data-test^='table-row-disks-']").length).toBe(3))
     await expect(addRow).toBeDisabled()
 }
 
@@ -84,7 +84,7 @@ CellErrors.args = {
     ],
 }
 CellErrors.play = async ({canvasElement}) => {
-    const rows = canvasElement.querySelectorAll("tbody tr")
+    const rows = canvasElement.querySelectorAll("[data-test^='table-row-disks-']")
     await expect(rows[1].textContent).toContain("it must be less than `2048`")
     await expect(rows[1].textContent).toContain("it must match")
     await expect(rows[0].textContent).not.toContain("Cause")
@@ -114,6 +114,6 @@ ColumnTypes.args = {
 }
 ColumnTypes.play = async ({canvasElement}) => {
     // Seven declared columns plus the remove-row one.
-    await expect(canvasElement.querySelectorAll("thead th").length).toBe(8)
-    await expect(canvasElement.querySelector("tbody tr")!.textContent).toContain("eu-west-1")
+    await expect(canvasElement.querySelectorAll(".table-input-header").length).toBe(8)
+    await expect(canvasElement.querySelector("[data-test='table-row-settings-0']")!.textContent).toContain("eu-west-1")
 }

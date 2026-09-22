@@ -710,7 +710,7 @@ export const TableInputRows: Story = {
         await waitFor(function seededRowRendered() {
             expect(canvasElement.querySelector("[data-test='table-cell-disks-0-size_gb']")).toBeTruthy();
         });
-        expect(canvasElement.querySelectorAll("tbody tr").length).toBe(1);
+        expect(canvasElement.querySelectorAll("[data-test^='table-row-disks-']").length).toBe(1);
         expect(canvasElement.querySelector("[data-test='table-row-remove-disks-0']")).toBeDisabled();
 
         await userEvent.type(canvasElement.querySelector("[data-test='table-cell-disks-0-mountpoint']")!, "/dev/sda");
@@ -720,7 +720,7 @@ export const TableInputRows: Story = {
 
         await userEvent.click(canvasElement.querySelector("[data-test='table-row-add-disks']")!);
         await waitFor(function rowAdded() {
-            expect(canvasElement.querySelectorAll("tbody tr").length).toBe(2);
+            expect(canvasElement.querySelectorAll("[data-test^='table-row-disks-']").length).toBe(2);
         });
     },
     render() {

@@ -1,14 +1,24 @@
 <template>
     <div class="table-input">
-        <KsTable v-if="rows.length" :data="rows" size="small">
-            <KsTableColumn v-for="column in columns" :key="column.id" :label="columnLabel(column)" minWidth="170" className="table-input-cell">
-                <template #default="{$index}">
-                    <KsFormItem class="table-input-field" :error="cellError($index, column.id)">
+        <div v-if="rows.length" class="table-input-scroll">
+            <div class="table-input-grid" :style="{gridTemplateColumns: `repeat(${columns.length}, minmax(170px, 1fr)) auto`}">
+                <span v-for="column in columns" :key="column.id" class="table-input-header">
+                    {{ columnLabel(column) }}
+                </span>
+                <span class="table-input-header" />
+
+                <div
+                    v-for="(row, index) in rows"
+                    :key="index"
+                    class="table-input-row"
+                    :data-test="`table-row-${input.id}-${index}`"
+                >
+                    <KsFormItem v-for="column in columns" :key="column.id" class="table-input-field" :error="cellError(index, column.id)">
                         <KsInputNumber
                             v-if="column.type === 'INT' || column.type === 'FLOAT'"
-                            :data-test="`table-cell-${input.id}-${$index}-${column.id}`"
-                            :modelValue="rows[$index][column.id] as number"
-                            @update:modelValue="setCell($index, column, $event)"
+                            v-bind="cellAttrs(column, index)"
+                            :modelValue="row[column.id] as number"
+                            @update:modelValue="setCell(index, column, $event)"
                             :min="column.min"
                             :max="column.max ?? Infinity"
                             :step="column.type === 'INT' ? 1 : 0.001"
@@ -16,15 +26,15 @@
                         />
                         <KsSwitch
                             v-else-if="column.type === 'BOOL'"
-                            :data-test="`table-cell-${input.id}-${$index}-${column.id}`"
-                            :modelValue="rows[$index][column.id] as boolean"
-                            @update:modelValue="setCell($index, column, $event)"
+                            v-bind="cellAttrs(column, index)"
+                            :modelValue="row[column.id] as boolean"
+                            @update:modelValue="setCell(index, column, $event)"
                         />
                         <KsSelect
                             v-else-if="column.type === 'SELECT' || column.type === 'MULTISELECT'"
-                            :data-test="`table-cell-${input.id}-${$index}-${column.id}`"
-                            :modelValue="rows[$index][column.id] as string"
-                            @update:modelValue="setCell($index, column, $event)"
+                            v-bind="cellAttrs(column, index)"
+                            :modelValue="row[column.id] as string"
+                            @update:modelValue="setCell(index, column, $event)"
                             :multiple="column.type === 'MULTISELECT'"
                             :allowCreate="column.allowCustomValue"
                             filterable
@@ -39,44 +49,42 @@
                         </KsSelect>
                         <KsDatePicker
                             v-else-if="column.type === 'DATE' || column.type === 'DATETIME'"
-                            :data-test="`table-cell-${input.id}-${$index}-${column.id}`"
-                            :modelValue="rows[$index][column.id] as string"
-                            @update:modelValue="setCell($index, column, $event)"
+                            v-bind="cellAttrs(column, index)"
+                            :modelValue="row[column.id] as string"
+                            @update:modelValue="setCell(index, column, $event)"
                             :type="column.type === 'DATE' ? 'date' : 'datetime'"
                             :valueFormat="column.type === 'DATE' ? 'YYYY-MM-DD' : 'YYYY-MM-DDTHH:mm:ss[Z]'"
                         />
                         <KsTimePicker
                             v-else-if="column.type === 'TIME'"
-                            :data-test="`table-cell-${input.id}-${$index}-${column.id}`"
-                            :modelValue="rows[$index][column.id] as string"
-                            @update:modelValue="setCell($index, column, $event)"
+                            v-bind="cellAttrs(column, index)"
+                            :modelValue="row[column.id] as string"
+                            @update:modelValue="setCell(index, column, $event)"
                             valueFormat="HH:mm:ss"
                         />
                         <KsInput
                             v-else
-                            :data-test="`table-cell-${input.id}-${$index}-${column.id}`"
-                            :modelValue="rows[$index][column.id] as string"
-                            @update:modelValue="setCell($index, column, $event)"
+                            v-bind="cellAttrs(column, index)"
+                            :modelValue="row[column.id] as string"
+                            @update:modelValue="setCell(index, column, $event)"
                         />
-                        <KsText v-if="cellError($index, column.id)" type="danger" size="small" class="cell-error">
-                            {{ cellError($index, column.id) }}
+                        <KsText v-if="cellError(index, column.id)" type="danger" size="small" class="cell-error">
+                            {{ cellError(index, column.id) }}
                         </KsText>
                     </KsFormItem>
-                </template>
-            </KsTableColumn>
-            <KsTableColumn width="72" align="center" className="table-input-cell">
-                <template #default="{$index}">
-                    <KsIconButton
-                        :tooltip="$t('remove this item')"
-                        :data-test="`table-row-remove-${input.id}-${$index}`"
-                        :disabled="rows.length <= minRows"
-                        @click="removeRow($index)"
-                    >
-                        <DeleteOutline />
-                    </KsIconButton>
-                </template>
-            </KsTableColumn>
-        </KsTable>
+                    <div class="table-input-action">
+                        <KsIconButton
+                            :tooltip="$t('remove this item')"
+                            :data-test="`table-row-remove-${input.id}-${index}`"
+                            :disabled="rows.length <= minRows"
+                            @click="removeRow(index)"
+                        >
+                            <DeleteOutline />
+                        </KsIconButton>
+                    </div>
+                </div>
+            </div>
+        </div>
         <BlockEmptyDrop
             class="add-row"
             variant="empty"
@@ -163,6 +171,13 @@
         commit()
     }
 
+    function cellAttrs(column: InputMetaData, index: number): Record<string, string> {
+        return {
+            "data-test": `table-cell-${props.input.id}-${index}-${column.id}`,
+            "aria-label": column.displayName || column.id,
+        }
+    }
+
     function columnLabel(column: InputMetaData): string {
         return `${column.displayName || column.id} · ${column.type}`
     }
@@ -197,11 +212,25 @@
         width: 100%;
     }
 
-    /* Not scoped: the class is on the table cell element, which the column renders for us. Top
-       alignment keeps the controls of a row on one line when one cell carries a wrapped error, and
-       the class is repeated to out-specify the table's own cell rule without naming it. */
-    :global(td.table-input-cell.table-input-cell) {
-        vertical-align: top;
+    .table-input-scroll {
+        overflow-x: auto;
+    }
+
+    .table-input-grid {
+        display: grid;
+        gap: var(--ks-spacing-2) var(--ks-spacing-3);
+        align-items: start;
+    }
+
+    /* The row element exists for its key and its data-test; the grid lays out the cells inside it. */
+    .table-input-row {
+        display: contents;
+    }
+
+    .table-input-header {
+        color: var(--ks-text-secondary);
+        font-size: var(--ks-font-size-sm);
+        font-weight: var(--ks-font-weight-bold);
     }
 
     .table-input-field {
@@ -212,6 +241,14 @@
         display: block;
         margin-top: var(--ks-spacing-1);
         line-height: 1.3;
+    }
+
+    .table-input-action {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        /* The height of a control, which no token carries, so the action lines up with its row. */
+        min-height: 2rem;
     }
 
     .add-row {

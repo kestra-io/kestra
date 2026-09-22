@@ -42,6 +42,20 @@ describe("normalize for ION uses the structured-data editor contract", () => {
     })
 })
 
+describe("normalize for TIME hydrates the wall-clock time", () => {
+    it("keeps the hour, minute and second of a LocalTime default", () => {
+        for (const [value, hour, minute, second] of [
+            ["14:30:00", 14, 30, 0],
+            ["00:30:00", 0, 30, 0],
+            ["09:05:03", 9, 5, 3],
+            ["14:30", 14, 30, 0],
+        ] as const) {
+            const hydrated = dayjs(normalize("TIME", value))
+            expect([hydrated.hour(), hydrated.minute(), hydrated.second()]).toEqual([hour, minute, second])
+        }
+    })
+})
+
 describe("flattenInputs", () => {
     it("returns [] for undefined", () => {
         expect(flattenInputs(undefined)).toEqual([])

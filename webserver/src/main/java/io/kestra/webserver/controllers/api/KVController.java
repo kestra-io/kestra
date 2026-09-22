@@ -55,10 +55,12 @@ public class KVController {
      * so an unmapped sort resolved to nothing and failed the query with a 500 — {@code updateDate}
      * being the one the UI exposes.
      *
-     * <p>{@code key} is the exception: {@code kv_metadata."key"} is a real column, the primary key
+     * <p>
+     * {@code key} is the exception: {@code kv_metadata."key"} is a real column, the primary key
      * holding the uid, so that mapping prevents an ordering on the wrong data rather than a failure.
      *
-     * <p>Both spellings are accepted. {@link KVEntry} field names are the documented contract, but
+     * <p>
+     * Both spellings are accepted. {@link KVEntry} field names are the documented contract, but
      * the KV table has always sorted on the properties directly — its default sort is
      * {@code name:asc} — so rejecting those would break every existing client. Anything outside
      * both sets yields {@code null}, which {@link PageableUtils} answers with a 422 rather than
@@ -82,7 +84,7 @@ public class KVController {
     );
 
     private String sortMapper(String key) {
-	return key == null ? null :SORT_FIELDS.get(key);
+        return key == null ? null : SORT_FIELDS.get(key);
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -147,6 +149,7 @@ public class KVController {
             value = new String(bytesValue);
         }
 
+        // Should never throw as the above verifies the KV entry existence
         KVEntry kvEntry = nsKvStore.get(key).orElseThrow();
 
         return new KvDetail(KVType.from(value), value, kvEntry.revision(), kvEntry.updateDate());

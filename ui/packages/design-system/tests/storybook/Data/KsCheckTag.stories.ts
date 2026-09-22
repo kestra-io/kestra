@@ -121,7 +121,7 @@ export const Pill: Story = {
     },
 }
 
-/** Icon without the pill variant — the combination the default variant's baseline alignment applies to */
+/** Icon, default variant */
 export const DefaultWithIcon: Story = {
     render: () => ({
         components: {KsCheckTag},

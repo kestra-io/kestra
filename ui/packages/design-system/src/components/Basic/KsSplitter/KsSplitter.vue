@@ -20,7 +20,7 @@
     @use '../../../assets/styles/el-ns';
     @use 'element-plus/theme-chalk/src/splitter';
 
-    // Element Plus inlines the dragger size; px, not rem, to stay matched to Monaco's verticalScrollbarSize.
+    // Element Plus inlines the dragger size; px, not rem, to stay matched to Monaco's verticalScrollbarSize (useKsEditor.ts).
     .kel-splitter-bar__dragger-horizontal {
         width: 8px !important;
     }

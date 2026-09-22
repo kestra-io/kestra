@@ -389,6 +389,10 @@ export type ApiTriggerAndState = {
  * Excludes internal scheduler fields (`tenantId`, `vnode`, `lastEventId`). The
  * scheduler's `type` is exposed as `kind` to not clash with the trigger definition's
  * `type` (the plugin class) when both are merged by API consumers.
+ *
+ *
+ * `disabled` is the runtime disable alone; a consumer deciding whether a trigger will fire has
+ * to read `sourceDisabled` as well, which mirrors the flow definition's own flag.
  */
 export type ApiTriggerState = {
     namespace: string;
@@ -400,6 +404,7 @@ export type ApiTriggerState = {
     backfill?: Backfill;
     stopAfter?: Array<StateType>;
     disabled?: boolean;
+    sourceDisabled?: boolean;
     locked?: boolean;
     workerId?: string;
     lastTriggeredDate?: string;

@@ -47,6 +47,9 @@ export const Default: Story = {
         const canvas = within(canvasElement)
         await expect(canvas.getByText("Left Panel")).toBeTruthy()
         await expect(canvas.getByText("Right Panel")).toBeTruthy()
+
+        const dragger = canvasElement.querySelector(".kel-splitter-bar__dragger-horizontal")!
+        await expect(getComputedStyle(dragger).width).toBe("8px")
     },
 }
 
@@ -73,6 +76,10 @@ export const Vertical: Story = {
             </div>
         `,
     }),
+    async play({canvasElement}) {
+        const dragger = canvasElement.querySelector(".kel-splitter-bar__dragger-vertical")!
+        await expect(getComputedStyle(dragger).height).toBe("8px")
+    },
 }
 
 /** Three-panel layout */

@@ -263,9 +263,8 @@
 </script>
 <style scoped lang="scss">
     .kel-card {
-        // Fill whatever box the parent gives us instead of a fixed height: on a tall screen a
-        // capped graph wastes most of the viewport, and a wide flow then only fits at a zoom
-        // level nothing is readable at (kestra-io/kestra#19685).
+        // A fixed height left most of a tall viewport unused:
+        // https://github.com/kestra-io/kestra/issues/19685.
         height: 100%;
         position: relative;
         background-color: var(--ks-bg-base);

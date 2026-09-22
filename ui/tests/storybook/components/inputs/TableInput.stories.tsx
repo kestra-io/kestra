@@ -32,7 +32,7 @@ const Template: StoryFn<typeof TableInput> = (args) => ({
     setup() {
         const model = ref(args.modelValue)
         return () => (
-            <div style="padding:24px;max-width:720px">
+            <div style="padding:24px">
                 <TableInput {...args} modelValue={model.value} onUpdate:modelValue={(value: string | undefined) => model.value = value} />
                 <pre data-test="story-payload" style="margin-top:16px">{model.value ?? "undefined"}</pre>
             </div>
@@ -73,7 +73,7 @@ Prefilled.play = async ({canvasElement}) => {
  */
 export const CellErrors = Template.bind({})
 CellErrors.args = {
-    input: disks,
+    input: {...disks, columns: [{id: "size_gb", type: "INT"}, ...disks.columns!.slice(1)]},
     modelValue: JSON.stringify([
         {size_gb: 10, name: "root", mountpoint: "/dev/sda"},
         {size_gb: 4096, name: "logs", mountpoint: "var/log"},

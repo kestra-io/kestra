@@ -1,9 +1,9 @@
 <template>
     <div class="table-input">
         <KsTable v-if="rows.length" :data="rows" size="small">
-            <KsTableColumn v-for="column in columns" :key="column.id" :label="columnLabel(column)">
+            <KsTableColumn v-for="column in columns" :key="column.id" :label="columnLabel(column)" minWidth="170" className="table-input-cell">
                 <template #default="{$index}">
-                    <div class="cell">
+                    <KsFormItem class="cell" :error="cellError($index, column.id)">
                         <KsInputNumber
                             v-if="column.type === 'INT' || column.type === 'FLOAT'"
                             :data-test="`table-cell-${input.id}-${$index}-${column.id}`"
@@ -52,12 +52,6 @@
                             @update:modelValue="setCell($index, column, $event)"
                             valueFormat="HH:mm:ss"
                         />
-                        <KsDurationPicker
-                            v-else-if="column.type === 'DURATION'"
-                            :data-test="`table-cell-${input.id}-${$index}-${column.id}`"
-                            :modelValue="rows[$index][column.id] as string"
-                            @update:modelValue="setCell($index, column, $event)"
-                        />
                         <KsInput
                             v-else
                             :data-test="`table-cell-${input.id}-${$index}-${column.id}`"
@@ -67,10 +61,10 @@
                         <KsText v-if="cellError($index, column.id)" type="danger" size="small" class="cell-error">
                             {{ cellError($index, column.id) }}
                         </KsText>
-                    </div>
+                    </KsFormItem>
                 </template>
             </KsTableColumn>
-            <KsTableColumn width="56" align="center">
+            <KsTableColumn width="56" align="center" className="table-input-cell">
                 <template #default="{$index}">
                     <KsIconButton
                         :tooltip="$t('remove this item')"
@@ -128,7 +122,7 @@
     }
 
     function emptyRow(): Row {
-        return Object.fromEntries(columns.value.map((column) => [column.id, undefined]))
+        return Object.fromEntries(columns.value.map((column) => [column.id, null]))
     }
 
     // `rows.min` is what the grid opens on, so the user is not asked to add the row the flow requires.
@@ -204,14 +198,21 @@
         width: 100%;
     }
 
+    /* Not scoped: the class is on the table cell element, which the column renders for us. Top
+       alignment keeps the controls of a row on one line when one cell carries a wrapped error, and
+       the class is repeated to out-specify the table's own cell rule without naming it. */
+    :global(td.table-input-cell.table-input-cell) {
+        vertical-align: top;
+    }
+
     .cell {
-        display: flex;
-        flex-direction: column;
-        gap: var(--ks-spacing-1);
+        margin-bottom: 0;
     }
 
     .cell-error {
-        text-align: left;
+        display: block;
+        margin-top: var(--ks-spacing-1);
+        line-height: 1.3;
     }
 
     .add-row {

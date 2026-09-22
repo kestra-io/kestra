@@ -8,6 +8,7 @@ import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
@@ -149,7 +150,9 @@ public class InternalNamespace implements Namespace {
         }
 
         // Get all metadata for source and its descendants, all versions
-        List<NamespaceFileMetadata> sourceMetas = stateStore.findAllVersionsByPaths(tenant, namespace, List.of(normalizedSource.toString(), normalizedSource + "/"));
+        List<NamespaceFileMetadata> sourceMetas = withoutRevisionsUpToDeletion(
+            stateStore.findAllVersionsByPaths(tenant, namespace, List.of(normalizedSource.toString(), normalizedSource + "/"))
+        );
 
         List<NamespaceFileMetadata> allMetas = new ArrayList<>(sourceMetas);
         boolean isDirectory = sourceMetas.stream().anyMatch(NamespaceFileMetadata::isDirectory);
@@ -220,6 +223,31 @@ public class InternalNamespace implements Namespace {
             .forEach(throwConsumer(pair -> this.purge(pair.getLeft())));
 
         return results;
+    }
+
+    /**
+     * Drops the entries whose revision is at or below the most recent deletion of their own path.
+     * <p>
+     * Copying an entry to another path makes it live again there, under a destination that carries no
+     * deletion of its own. The revisions a deletion covers must therefore not travel with a move, or
+     * renaming a path would serve and list content that was deleted at it.
+     *
+     * @param entries Entries of one or more paths, in any order.
+     * @return Those entries that postdate the most recent deletion of their path.
+     * @see NamespaceFileMetadata#deletedFloor(Collection)
+     */
+    private static List<NamespaceFileMetadata> withoutRevisionsUpToDeletion(List<NamespaceFileMetadata> entries) {
+        Map<String, Integer> deletedFloors = entries.stream()
+            .collect(
+                Collectors.groupingBy(
+                    NamespaceFileMetadata::getPath,
+                    Collectors.collectingAndThen(Collectors.toList(), NamespaceFileMetadata::deletedFloor)
+                )
+            );
+
+        return entries.stream()
+            .filter(entry -> entry.getRevision() > deletedFloors.get(entry.getPath()))
+            .toList();
     }
 
     private void purge(NamespaceFile nsFile) throws IOException {

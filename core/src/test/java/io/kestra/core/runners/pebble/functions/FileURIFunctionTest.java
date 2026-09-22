@@ -117,7 +117,7 @@ class FileURIFunctionTest {
     }
 
     @Test
-    void fileURIFunctionForDeletedFile() throws IllegalVariableEvaluationException, IOException, URISyntaxException {
+    void shouldThrowWhenBuildingTheUriGivenADeletedFile() throws IllegalVariableEvaluationException, IOException, URISyntaxException {
         String namespace = TestsUtils.randomNamespace();
         String filePath = "deleted_file.txt";
         upsertNsFile(filePath, namespace, "Version 1");

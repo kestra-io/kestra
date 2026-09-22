@@ -642,6 +642,10 @@
       "tooltip": "Reiniciar el trigger"
     },
     "trigger disabled": "El trigger está deshabilitado dentro del Flow source",
+    "disabled trigger removed": {
+      "title": "Trigger deshabilitado eliminado",
+      "message": "Estos trigger fueron deshabilitados desde la UI y ya no están en el flow: {triggers}. Cada nuevo id de trigger está habilitado de forma predeterminada, así que asegúrate de que sea intencional."
+    },
     "flow source not found": "Fuente de flow no encontrada",
     "date format": "Formato de fecha",
     "timezone": "Zona horaria",

@@ -642,6 +642,10 @@
       "tooltip": "重新启动trigger"
     },
     "trigger disabled": "在Flow源中触发器已禁用",
+    "disabled trigger removed": {
+      "title": "已删除被禁用的 trigger",
+      "message": "这些 trigger 曾在 UI 中被禁用，但已不在该 flow 中：{triggers}。新的 trigger id 默认处于启用状态，请确认这是预期的更改。"
+    },
     "flow source not found": "未找到flow源",
     "date format": "日期格式",
     "timezone": "时区",

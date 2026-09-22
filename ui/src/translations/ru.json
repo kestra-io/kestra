@@ -642,6 +642,10 @@
       "tooltip": "Перезапустить trigger"
     },
     "trigger disabled": "Триггер отключен в источнике Flow",
+    "disabled trigger removed": {
+      "title": "Отключённый trigger удалён",
+      "message": "Эти trigger были отключены в UI и больше не присутствуют во flow: {triggers}. Каждый новый id trigger по умолчанию включён, поэтому убедитесь, что это сделано намеренно."
+    },
     "flow source not found": "Источник flow не найден",
     "date format": "Формат даты",
     "timezone": "Часовой пояс",

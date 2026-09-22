@@ -642,6 +642,10 @@
             "tooltip": "Restart the trigger"
         },
         "trigger disabled": "Trigger is disabled within Flow source",
+        "disabled trigger removed": {
+            "title": "Disabled trigger removed",
+            "message": "These triggers were disabled from the UI and are not in the flow anymore: {triggers}. Every new trigger id is enabled by default, so make sure this is intended."
+        },
         "flow source not found": "Flow source not found",
         "date format": "Date format",
         "timezone": "Timezone",

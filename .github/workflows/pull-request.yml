@@ -12,8 +12,14 @@ jobs:
   # Kestra webhook) and trigger the EE OpenAPI spec check.
   trigger-ee:
     runs-on: ubuntu-latest
-    # Above the curl ceiling in ee-compile-check, so curl's own error wins.
-    timeout-minutes: 50
+    # Dispatch only: the build runs on the Kestra instance and reports back on a
+    # commit status, so this job is seconds rather than the length of a build.
+    timeout-minutes: 10
+    # A job-level block resets every other permission, so contents is restated
+    # for the checkout below. statuses is what posts the pending EE status.
+    permissions:
+      contents: read
+      statuses: write
     # The `secrets` context is not allowed in `if:` conditions, so expose the
     # app-id as a job-level env var (the `env` context IS allowed in `if:`) and
     # gate the steps on that instead.
@@ -49,7 +55,9 @@ jobs:
         && env.GH_BOT_APP_ID != '' }}
       uses: ./.github/actions/ee-compile-check
       with:
-        webhook-url: ${{ secrets.KESTRA_CI_EEBUILD_WEBHOOK_URL }}
+        mode: async
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        webhook-url: ${{ secrets.KESTRA_CI_EEBUILD_WEBHOOK_URL_ASYNC }}
         ref: ${{ github.event.pull_request.head.ref }}
         commit-sha: ${{ github.event.pull_request.head.sha }}
         pr-number: ${{ github.event.pull_request.number }}

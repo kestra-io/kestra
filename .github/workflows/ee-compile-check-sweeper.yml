@@ -1,0 +1,76 @@
+name: EE compile check - fail stale pending statuses
+
+# The EE compile check is dispatched asynchronously: the PR job posts a pending
+# `kestra-ee/backend-tests` status and the Kestra flow resolves it when the build
+# ends. A dropped callback would otherwise leave that status pending for ever,
+# which reads as "not failed" and is the false green the check exists to prevent.
+
+on:
+  schedule:
+    - cron: "*/30 * * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: ee-compile-check-sweeper
+  cancel-in-progress: false
+
+jobs:
+  sweep:
+    name: Fail EE statuses pending for too long
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    if: github.repository == 'kestra-io/kestra'
+    steps:
+      - name: Generate GitHub App token
+        id: token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          app-id: ${{ secrets.GH_BOT_APP_ID }}
+          private-key: ${{ secrets.GH_BOT_PRIVATE_KEY }}
+          owner: kestra-io
+          repositories: kestra
+
+      - name: Resolve stale pending statuses
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        with:
+          github-token: ${{ steps.token.outputs.token }}
+          script: |
+            // A compile-only run is 5 to 14 minutes and the flow retries once,
+            // so 45 gives a slow retried build room before we call it lost.
+            const STALE_MINUTES = 45;
+            const CONTEXT = 'kestra-ee/backend-tests';
+            const cutoff = Date.now() - STALE_MINUTES * 60 * 1000;
+
+            const prs = await github.paginate(github.rest.pulls.list, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              per_page: 100,
+            });
+
+            let swept = 0;
+            for (const pr of prs) {
+              const {data: statuses} = await github.rest.repos.listCommitStatusesForRef({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                ref: pr.head.sha,
+                per_page: 100,
+              });
+              // Newest first, so the first entry for the context is its current state.
+              const latest = statuses.find(s => s.context === CONTEXT);
+              if (!latest || latest.state !== 'pending') continue;
+              if (Date.parse(latest.created_at) > cutoff) continue;
+
+              await github.rest.repos.createCommitStatus({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                sha: pr.head.sha,
+                state: 'failure',
+                context: CONTEXT,
+                target_url: latest.target_url,
+                description: `No verdict after ${STALE_MINUTES} minutes`,
+              });
+              core.info(`#${pr.number} ${pr.head.sha}: pending since ${latest.created_at}, marked failed`);
+              swept++;
+            }
+            core.info(`${prs.length} open PRs checked, ${swept} stale status(es) failed`);

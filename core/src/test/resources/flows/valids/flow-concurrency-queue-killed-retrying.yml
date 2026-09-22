@@ -1,0 +1,21 @@
+id: flow-concurrency-queue-killed-retrying
+namespace: io.kestra.tests
+
+inputs:
+  - id: shouldFail
+    type: BOOL
+    defaults: true
+
+concurrency:
+  behavior: QUEUE
+  limit: 1
+
+tasks:
+  - id: fail
+    type: io.kestra.plugin.core.execution.Fail
+    condition: "{{ inputs.shouldFail }}"
+    retry:
+      behavior: RETRY_FAILED_TASK
+      type: constant
+      interval: PT5S
+      maxAttempts: 3

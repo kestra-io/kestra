@@ -107,6 +107,12 @@ public abstract class AbstractRunnerConcurrencyTest {
     }
 
     @Test
+    @LoadFlows(value = { "flows/valids/flow-concurrency-queue-killed-retrying.yml" }, tenantId = "flow-concurrency-queue-killed-retrying")
+    void flowConcurrencyQueueKilledWhileRetrying() throws Exception {
+        flowConcurrencyCaseTest.flowConcurrencyQueueKilledWhileRetrying("flow-concurrency-queue-killed-retrying");
+    }
+
+    @Test
     @LoadFlows(value = { "flows/valids/flow-concurrency-queue.yml" }, tenantId = "flow-concurrency-queued-protection")
     void flowConcurrencyQueuedProtection() throws QueueException, InterruptedException {
         flowConcurrencyCaseTest.flowConcurrencyQueuedProtection("flow-concurrency-queued-protection");

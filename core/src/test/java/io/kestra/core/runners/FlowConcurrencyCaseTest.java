@@ -2,6 +2,7 @@ package io.kestra.core.runners;
 
 import java.time.Duration;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -393,6 +394,38 @@ public class FlowConcurrencyCaseTest {
             runnerUtils.killExecution(execution1);
             runnerUtils.killExecution(execution3);
         }
+    }
+
+    public void flowConcurrencyQueueKilledWhileRetrying(String tenantId) throws QueueException {
+        Flow flow = flowRepository
+            .findById(tenantId, NAMESPACE, "flow-concurrency-queue-killed-retrying", Optional.empty())
+            .orElseThrow();
+        Execution retryingExecution = runnerUtils.runOneUntil(
+            tenantId, NAMESPACE, "flow-concurrency-queue-killed-retrying", null, null, Duration.ofSeconds(30),
+            e -> e.findTaskRunsByTaskId("fail").stream().anyMatch(t -> t.getState().getCurrent() == Type.RETRYING)
+        );
+        Execution queuedExecution = runnerUtils.emitAndAwaitExecution(
+            e -> e.getState().getCurrent() == Type.QUEUED,
+            Execution.newExecution(flow, (f, e) -> Map.of("shouldFail", false), null, Optional.empty())
+        );
+
+        Execution killed = runnerUtils.killExecution(retryingExecution);
+        assertThat(killed.getState().getCurrent())
+            .as("a kill during the retry wait ends the execution instead of leaving it KILLING")
+            .isEqualTo(Type.KILLED);
+
+        Execution popped = runnerUtils.awaitExecution(e -> e.getState().getCurrent() == Type.SUCCESS, queuedExecution);
+        assertThat(popped.getState().getHistories().get(1).getState())
+            .as("the queued execution was popped once the killed one released its concurrency slot")
+            .isEqualTo(Type.QUEUED);
+
+        Await.await()
+            .alias("an expired retry delay must not revive the killed execution")
+            .during(Duration.ofSeconds(6))
+            .atMost(Duration.ofSeconds(8))
+            .until(() -> executionRepository.findById(killed.getTenantId(), killed.getId())
+                .map(e -> e.getState().getCurrent() == Type.KILLED)
+                .orElse(false));
     }
 
     public void flowConcurrencyQueuedProtection(String tenantId) throws QueueException, InterruptedException {

@@ -83,7 +83,11 @@
     </div>
 
     <div v-else-if="message.type === 'ARTEFACT_DRAFT' && message.draft" class="copilot-msg copilot-msg-assistant">
-        <CopilotArtefactDraft :draft="message.draft" />
+        <CopilotArtefactDraft
+            :draft="message.draft"
+            :applied="isDraftApplied"
+            @applied="emit('draftApplied', $event)"
+        />
     </div>
 
     <!-- A past proposal, read-only in the transcript. The still-pending one is rendered by the
@@ -117,7 +121,17 @@
         isPending?: boolean
         /** True when this TOOL_CALL is still executing (no result yet) — drives the running spinner. */
         isRunning?: boolean
+        /** Drafts already applied in this conversation, owned by `CopilotChat.vue`. */
+        appliedDraftIds?: Set<string>
     }>()
+
+    const emit = defineEmits<{
+        (e: "draftApplied", draftId: string): void
+    }>()
+
+    const isDraftApplied = computed(
+        () => Boolean(props.message.draft && props.appliedDraftIds?.has(props.message.draft.draftId)),
+    )
 
     // The user prompt rendered literally, split on ``` fences only — full markdown would mangle
     // pasted code (a YAML `# comment` must not become a heading) (kestra-io/kestra-ee#10420).

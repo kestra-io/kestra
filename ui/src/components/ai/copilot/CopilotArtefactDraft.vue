@@ -24,10 +24,15 @@
              KsMarkdown provides its own copy-to-clipboard control, so no separate copy button. -->
         <KsMarkdown class="copilot-draft-yaml" data-test="copilot-draft-yaml" :content="yamlBlock" />
 
+        <!-- Once applied, the footer no longer offers actions — a quiet status line instead, so the
+             same draft cannot be written a second time from a card that is already spent. -->
+        <div v-if="applied" class="copilot-draft-footer" data-test="copilot-draft-applied">
+            <KsText size="small" class="copilot-draft-status-label">{{ $t("ai.copilot.draft.applied") }}</KsText>
+        </div>
         <!-- Apply actions: flows + dashboards open in the editor or apply directly. Apps are EE-only —
              open in the app editor only (no direct apply), and only when the EE app path is present, so
              OSS shows no actions. -->
-        <div v-if="showActions" class="copilot-draft-footer">
+        <div v-else-if="showActions" class="copilot-draft-footer">
             <KsButton size="small" data-test="copilot-draft-open" @click="openInEditor(draft)">
                 {{ $t("ai.copilot.draft.openInEditor") }}
             </KsButton>
@@ -37,7 +42,7 @@
                 type="primary"
                 :disabled="!draft.valid || applying"
                 data-test="copilot-draft-apply"
-                @click="apply(draft)"
+                @click="onApply"
             >
                 {{ $t("ai.copilot.draft.apply") }}
             </KsButton>
@@ -51,9 +56,21 @@
     import {useApplyDraft} from "./useApplyDraft"
     import type {ArtefactDraftEvent} from "./types"
 
-    const props = defineProps<{draft: ArtefactDraftEvent}>()
+    const props = defineProps<{
+        draft: ArtefactDraftEvent
+        /** True once this draft was applied (tracked by `CopilotChat.vue`) — hides the actions. */
+        applied?: boolean
+    }>()
+
+    const emit = defineEmits<{
+        (e: "applied", draftId: string): void
+    }>()
 
     const {applying, appSupported, dashboardSupported, openInEditor, apply} = useApplyDraft()
+
+    async function onApply(): Promise<void> {
+        if (await apply(props.draft)) emit("applied", props.draft.draftId)
+    }
 
     // Flow drafts always have actions; dashboard drafts only when the backend serves custom
     // dashboards, app drafts only when the EE app path is present.
@@ -116,5 +133,9 @@
         gap: var(--ks-spacing-2);
         padding: var(--ks-spacing-2) var(--ks-spacing-3);
         background: var(--ks-bg-elevated);
+    }
+
+    .copilot-draft-status-label {
+        --kel-text-color: var(--ks-text-muted);
     }
 </style>

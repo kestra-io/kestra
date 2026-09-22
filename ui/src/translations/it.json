@@ -2148,6 +2148,7 @@
         "draft": {
           "openInEditor": "Apri nell'editor",
           "apply": "Applica",
+          "applied": "Applicato",
           "applyTitle": "Applica flow",
           "applyConfirm": "Applica il flow {namespace}.{id}? Verrà creato, o sovrascritto se esiste già.",
           "applyConfirmDashboard": "Applicare la dashboard {id}? Verrà creata o sovrascritta se esiste già.",

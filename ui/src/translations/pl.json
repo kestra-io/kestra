@@ -2148,6 +2148,7 @@
         "draft": {
           "openInEditor": "Otwórz w edytorze",
           "apply": "Zastosuj",
+          "applied": "Zastosowano",
           "applyTitle": "Zastosuj Flow",
           "applyConfirm": "Zastosować Flow {namespace}.{id}? Zostanie utworzony lub nadpisany, jeśli już istnieje.",
           "applyConfirmDashboard": "Zastosować Dashboard {id}? Zostanie utworzony lub nadpisany, jeśli już istnieje.",

@@ -3,7 +3,7 @@
         <!-- Thread controls: start a new chat; the Recents list (switch / rename / delete) is EE-only,
              rendered by the CopilotThreadControls override (a no-op in OSS). -->
         <div class="copilot-topbar">
-            <KsButton v-if="!isFreshChat" size="small" class="copilot-topbar-pill" data-test="copilot-new-chat" @click="reset">
+            <KsButton v-if="!isFreshChat" size="small" class="copilot-topbar-pill" data-test="copilot-new-chat" @click="onNewChat">
                 {{ $t("ai.copilot.newChat") }}
                 <Plus :size="16" />
             </KsButton>
@@ -87,6 +87,8 @@
                         :message="message"
                         :isPending="message.id === pendingProposalMessageId"
                         :isRunning="message.id === runningToolCallId"
+                        :appliedDraftIds="appliedDraftIds"
+                        @draftApplied="markDraftApplied"
                     />
 
                     <CopilotThinking v-if="working" :phase="workPhase" />
@@ -289,9 +291,30 @@
     // Restore the last conversation on open (threads are persisted server-side); harmless no-op if none.
     onMounted(() => { restoreThread() })
 
+    // Drafts already applied in this conversation: their card drops its actions so the same draft
+    // cannot be written twice. Local to this component's lifetime; reset per-thread below.
+    const appliedDraftIds = ref(new Set<string>())
+
+    /** Mark a drafted artefact as applied once `useApplyDraft.ts` confirms the write succeeded. */
+    function markDraftApplied(draftId: string): void {
+        appliedDraftIds.value.add(draftId)
+    }
+
+    /** Applied tracking is per-conversation — called everywhere a new/different thread starts. */
+    function resetDraftTracking(): void {
+        appliedDraftIds.value.clear()
+    }
+
     /** Switch to a thread picked from the (EE) Recents list — rehydrates its transcript + pending action. */
     function onSelectThread(threadId: string): void {
+        resetDraftTracking()
         loadThread(threadId)
+    }
+
+    /** "New chat": drop the applied-draft tracking with the transcript it belonged to. */
+    function onNewChat(): void {
+        resetDraftTracking()
+        reset()
     }
 
     // `status` gates the composer via `canSend`; keep the lints happy that we read it.
@@ -431,7 +454,10 @@
         // the Recents list) and title the thread the seeded turn will create. Never set in OSS,
         // where resetting would discard the only conversation for good.
         if (miscStore.copilotNewThread) {
-            if (thread.value || messages.value.length > 0) reset()
+            if (thread.value || messages.value.length > 0) {
+                resetDraftTracking()
+                reset()
+            }
             nextThreadTitle.value = miscStore.copilotThreadTitle
         }
         composerText.value = seeded

@@ -2148,6 +2148,7 @@
         "draft": {
           "openInEditor": "Im Editor öffnen",
           "apply": "Anwenden",
+          "applied": "Angewendet",
           "applyTitle": "Flow anwenden",
           "applyConfirm": "Den Flow {namespace}.{id} anwenden? Er wird erstellt oder überschrieben, falls er bereits existiert.",
           "applyConfirmDashboard": "Das Dashboard {id} anwenden? Es wird erstellt oder überschrieben, falls es bereits existiert.",

@@ -2148,6 +2148,7 @@
         "draft": {
           "openInEditor": "在编辑器中打开",
           "apply": "应用",
+          "applied": "已应用",
           "applyTitle": "应用 flow",
           "applyConfirm": "应用 flow {namespace}.{id}？它将被创建，如果已存在则会被覆盖。",
           "applyConfirmDashboard": "应用仪表盘 {id}？它将被创建，如果已存在则会覆盖。",

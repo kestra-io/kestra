@@ -91,4 +91,30 @@ describe("CopilotArtefactDraft", () => {
         expect(w.find("[data-test=\"copilot-draft-apply\"]").exists()).toBe(false)
         appSupported.value = false
     })
+
+    it("hides the actions and shows a quiet status once applied", () => {
+        const w = mount(CopilotArtefactDraft, {
+            props: {draft: {draftId: "d10", kind: "FLOW", yaml: "id: f", valid: true, constraints: null}, applied: true},
+            global: mountGlobal,
+        })
+        expect(w.find("[data-test=\"copilot-draft-open\"]").exists()).toBe(false)
+        expect(w.find("[data-test=\"copilot-draft-apply\"]").exists()).toBe(false)
+        expect(w.find("[data-test=\"copilot-draft-applied\"]").text()).toContain("Applied")
+    })
+
+    it("emits applied with the draft id once apply resolves true", async () => {
+        apply.mockResolvedValueOnce(true)
+        const w = mountDraft({draftId: "d11", kind: "FLOW", yaml: "id: f", valid: true, constraints: null})
+        await w.find("[data-test=\"copilot-draft-apply\"]").trigger("click")
+        await Promise.resolve()
+        expect(w.emitted("applied")).toEqual([["d11"]])
+    })
+
+    it("does not emit applied when apply resolves false (cancelled or failed)", async () => {
+        apply.mockResolvedValueOnce(false)
+        const w = mountDraft({draftId: "d12", kind: "FLOW", yaml: "id: f", valid: true, constraints: null})
+        await w.find("[data-test=\"copilot-draft-apply\"]").trigger("click")
+        await Promise.resolve()
+        expect(w.emitted("applied")).toBeUndefined()
+    })
 })

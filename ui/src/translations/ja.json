@@ -2148,6 +2148,7 @@
         "draft": {
           "openInEditor": "エディターで開く",
           "apply": "適用",
+          "applied": "適用済み",
           "applyTitle": "flow を適用",
           "applyConfirm": "flow {namespace}.{id} を適用しますか？作成されるか、既に存在する場合は上書きされます。",
           "applyConfirmDashboard": "ダッシュボード {id} を適用しますか？作成されます。既に存在する場合は上書きされます。",

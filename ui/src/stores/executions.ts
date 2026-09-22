@@ -166,6 +166,7 @@ export const useExecutionsStore = defineStore("executions", () => {
     const progressEvents = ref<{taskId: string; taskRunId: string; step: string; timestamp: string}[]>([])
     const flow = ref<FlowForExecution | undefined>(undefined)
     const flowGraph = ref<FlowGraph | undefined>(undefined)
+    const taskRunSelections = ref<Map<string, string>>(new Map())
     const namespaces = ref<string[]>([])
     const flowsExecutable = ref<FlowForExecution[]>([])
 
@@ -175,6 +176,7 @@ export const useExecutionsStore = defineStore("executions", () => {
         if(!newExecution){
             flowGraph.value = undefined
             flow.value = undefined
+            taskRunSelections.value.clear()
         }
     })
 
@@ -884,6 +886,7 @@ export const useExecutionsStore = defineStore("executions", () => {
 
     return {
         // State
+        taskRunSelections,
         executions,
         execution,
         total,

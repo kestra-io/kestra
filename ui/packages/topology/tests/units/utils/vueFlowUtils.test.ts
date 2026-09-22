@@ -398,9 +398,9 @@ describe("generateGraph CHOICE edge labels", () => {
             clusterToNodeInner,
         )
 
-        const innerCollapsedNode = elementsInner.find((e: any) => e.id === "inner_loop")
+        const innerCollapsedNode = elementsInner.find((e: any) => e.id === "inner_loop") as any
         expect(innerCollapsedNode).toBeDefined()
-        expect(innerCollapsedNode.parentNode).toBe("Cluster.outer_loop")
+        expect(innerCollapsedNode?.parentNode).toBe("Cluster.outer_loop")
 
         const collapsedBoth = new Set<string>(["inner_loop", "outer_loop"])
         const hiddenBoth = ["outer_loop.start", "inner_loop.start", "inner_task", "inner_loop.end", "outer_loop.end", "Cluster.outer_loop", "inner_loop", "Cluster.inner_loop"]

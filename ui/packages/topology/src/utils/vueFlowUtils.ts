@@ -57,9 +57,7 @@ export interface FlowGraph {
     clusters: {
         cluster: Cluster;
         nodes: string[];
-        parents: {
-            uid: string;
-        }[];
+        parents: (string | { uid: string })[];
     }[];
     edges: FlowGraphEdge[];
 }

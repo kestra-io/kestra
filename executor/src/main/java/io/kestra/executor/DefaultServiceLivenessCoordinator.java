@@ -19,6 +19,7 @@ import io.kestra.core.killswitch.KillSwitchService;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
+import io.kestra.core.models.flows.State;
 import io.kestra.core.models.triggers.TriggerId;
 import io.kestra.core.queues.KeyedDispatchQueueInterface;
 import io.kestra.core.queues.QueueException;
@@ -491,9 +492,9 @@ public class DefaultServiceLivenessCoordinator extends AbstractServiceLivenessTa
     }
 
     private void resubmitWorkerTask(TransactionContext txContext, WorkerTaskRunning workerTaskRunning) {
-        if (isTaskRunTerminated(workerTaskRunning.getTaskRun())) {
+        if (isTaskRunOver(workerTaskRunning.getTaskRun())) {
             log.warn(
-                "Discarding the running entry of task run '{}' of execution '{}' instead of resubmitting it, because the task run has already ended or its execution no longer exists.",
+                "Discarding the running entry of task run '{}' of execution '{}' instead of resubmitting it, because the task run has already ended, its execution was killed, or its execution no longer exists.",
                 workerTaskRunning.getTaskRun().getId(),
                 workerTaskRunning.getTaskRun().getExecutionId()
             );
@@ -537,10 +538,24 @@ public class DefaultServiceLivenessCoordinator extends AbstractServiceLivenessTa
      * purged or deleted and none of its tasks can still be in flight. An execution that cannot be read is not
      * taken as proof that the task run ended, so the entry is resubmitted rather than risking to lose a task.
      */
-    private boolean isTaskRunTerminated(TaskRun taskRun) {
+    private boolean isTaskRunOver(TaskRun taskRun) {
         try {
             Execution execution = executionStateStore.findByIdWithoutAcl(taskRun.getExecutionId());
-            return execution == null || execution.findTaskRunByTaskRunIdIfPresent(taskRun.getId())
+            if (execution == null) {
+                return true;
+            }
+
+            // A kill only reaches workers that are still alive, so a dead worker's task run is still
+            // RUNNING inside an execution that was already killed, and resubmitting it would run the
+            // task — with its real side effects — for an execution nobody can act on any more. Only
+            // the states that mean "stop working" count here: FAILED or SUCCESS can themselves be
+            // the consequence of losing the worker, and those task runs still deserve recovery.
+            State.Type executionState = execution.getState().getCurrent();
+            if (State.Type.KILLING == executionState || State.Type.KILLED == executionState || State.Type.CANCELLED == executionState) {
+                return true;
+            }
+
+            return execution.findTaskRunByTaskRunIdIfPresent(taskRun.getId())
                 .map(current -> current.getState().isTerminated())
                 .orElse(false);
         } catch (Exception e) {

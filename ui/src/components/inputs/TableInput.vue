@@ -3,7 +3,7 @@
         <KsTable v-if="rows.length" :data="rows" size="small">
             <KsTableColumn v-for="column in columns" :key="column.id" :label="columnLabel(column)" minWidth="170" className="table-input-cell">
                 <template #default="{$index}">
-                    <KsFormItem class="cell" :error="cellError($index, column.id)">
+                    <KsFormItem class="table-input-field" :error="cellError($index, column.id)">
                         <KsInputNumber
                             v-if="column.type === 'INT' || column.type === 'FLOAT'"
                             :data-test="`table-cell-${input.id}-${$index}-${column.id}`"
@@ -64,7 +64,7 @@
                     </KsFormItem>
                 </template>
             </KsTableColumn>
-            <KsTableColumn width="56" align="center" className="table-input-cell">
+            <KsTableColumn width="72" align="center" className="table-input-cell">
                 <template #default="{$index}">
                     <KsIconButton
                         :tooltip="$t('remove this item')"
@@ -204,7 +204,7 @@
         vertical-align: top;
     }
 
-    .cell {
+    .table-input-field {
         margin-bottom: 0;
     }
 

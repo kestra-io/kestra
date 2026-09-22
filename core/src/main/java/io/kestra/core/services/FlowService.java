@@ -673,33 +673,6 @@ public class FlowService {
             }
         }
 
-        if (pebbleExpressionService != null && flow.getSource() != null) {
-            Map<String, PebbleFunction> deprecatedFunctions = pebbleExpressionService.functions().stream()
-                .filter(PebbleFunction::deprecated)
-                .collect(Collectors.toMap(PebbleFunction::name, f -> f));
-            if (!deprecatedFunctions.isEmpty()) {
-                PebbleUtil.replaceInBlock(flow.getSource(), block ->
-                {
-                    Matcher matcher = PEBBLE_FUNCTION_PATTERN.matcher(block);
-                    while (matcher.find()) {
-                        String fnName = matcher.group(1);
-                        PebbleFunction pf = deprecatedFunctions.get(fnName);
-                        if (pf != null) {
-                            String msg = pf.replacement() != null && !pf.replacement().isBlank()
-                                ? "Pebble function '%s' is deprecated. Use '%s' instead.".formatted(fnName, pf.replacement())
-                                : "Pebble function '%s' is deprecated.".formatted(fnName);
-                            if (!warnings.contains(msg)) {
-                                warnings.add(msg);
-                            }
-                        }
-                    }
-                    return block;
-                });
-            }
-        }
-        return warnings;
-    }
-
         return warnings;
     }
 

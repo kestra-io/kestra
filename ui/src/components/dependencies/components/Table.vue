@@ -248,7 +248,6 @@
 .kel-table.nodes {
     outline: none;
     border-radius: 0;
-    border-top: 1px solid var(--ks-border-default);
 
     :deep(.kel-table__empty-text) {
         width: 100%;

@@ -47,8 +47,6 @@ import {consolidateChunks} from "./plugins/consolidateChunks.js"
 import {VitePWA} from "vite-plugin-pwa"
 import {loaderFragment} from "./plugins/loaderFragment.js"
 
-import {exports as kestraSdkExports} from "@kestra-io/kestra-sdk/package.json"
-
 export default defineConfig(({mode}) => {
     process.env = {...process.env, ...loadEnv(mode, process.cwd())}
 
@@ -105,24 +103,7 @@ export default defineConfig(({mode}) => {
                 shared: {
                     vue: {
                         singleton: true,
-
                     },
-                    "@kestra-io/kestra-sdk": {
-                        singleton: true,
-                    },
-                    // every @kestra-io/kestra-sdk export as a shared singleton, "./all" included:
-                    // a plugin importing it must get the host's shared.gen, not a second tenant state
-                    ...Object.fromEntries(Object.keys(kestraSdkExports)
-                        .filter((key) => key !== "." && !key.endsWith(".json"))
-                        .map((key) => {
-                            const name = key.replace(/^\.\//, "").replace(/\/index\.js$/, "")
-                            return [`@kestra-io/kestra-sdk/${name}`, {
-                                singleton: true,
-                                // every operation imports shared.gen's tenant state statically
-                                eager: name === "shared",
-                            }]
-                        }),
-                    ),
                 },
             }),
             !process.env.STORYBOOK && consolidateChunks(),

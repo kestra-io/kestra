@@ -57,7 +57,10 @@
             </KsCol>
         </KsRow>
         <KsCard v-else-if="!isLoading">
-            <KsAlert type="info" :closable="false">
+            <KsAlert v-if="hasAnyMetrics" type="warning" :closable="false">
+                {{ $t("metric filter no match", {term: filterTerm}) }}
+            </KsAlert>
+            <KsAlert v-else type="info" :closable="false">
                 {{ $t("metric choice") }}
             </KsAlert>
         </KsCard>
@@ -149,6 +152,11 @@
 
         return metrics
     })
+
+    // Distinguishes "this flow genuinely has no metrics" (info) from "your filter matched none of them"
+    const hasAnyMetrics = computed(() => ((flowStore.metrics as string[] | undefined)?.length ?? 0) > 0)
+
+    const filterTerm = computed(() => selectedMetric.value ?? selectedTextSearch.value ?? "")
 
     function getTimeRangeParams(): {startDate?: string; endDate?: string} {
         const timeRange = route.query["filters[timeRange][EQUALS]"] as string | undefined

@@ -818,6 +818,13 @@ pluginDefaults:
 `,
 )
 
+// Schema defaults render a hint on every field carrying one, so a bare text
+// match on "default: …" hits several fields at once — scope each hint to the
+// field that owns it.
+function defaultHintFor(taskEdit: HTMLElement, field: string) {
+    return taskEdit.querySelector(`[data-test='field-${field}'] [data-test='field-default-hint']`)
+}
+
 export const F9PluginDefaultsHint: Story = {
     decorators: editModeDecorators,
     render: makeEditHostRender(CICD_PIPELINE_WITH_PLUGIN_DEFAULTS_YAML, {initialParentPath: "tasks[3].errors", initialRefPath: 0}),
@@ -835,8 +842,8 @@ export const F9PluginDefaultsHint: Story = {
             return el
         }, {timeout: 15000})
         await waitFor(() => {
-            expect(within(taskEdit).getByText("default: DEBUG", {exact: false})).toBeInTheDocument()
-            expect(within(taskEdit).getByText("default: true", {exact: false})).toBeInTheDocument()
+            expect(defaultHintFor(taskEdit, "level")).toHaveTextContent("default: DEBUG")
+            expect(defaultHintFor(taskEdit, "allowFailure")).toHaveTextContent("default: true")
         }, {timeout: 15000})
     },
 }
@@ -858,8 +865,8 @@ export const F9PluginDefaultsOnAnotherTaskInstance: Story = {
             return el
         }, {timeout: 15000})
         await waitFor(() => {
-            expect(within(taskEdit).getByText("default: DEBUG", {exact: false})).toBeInTheDocument()
-            expect(within(taskEdit).getByText("default: true", {exact: false})).toBeInTheDocument()
+            expect(defaultHintFor(taskEdit, "level")).toHaveTextContent("default: DEBUG")
+            expect(defaultHintFor(taskEdit, "allowFailure")).toHaveTextContent("default: true")
         }, {timeout: 15000})
     },
 }

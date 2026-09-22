@@ -15,6 +15,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 
 import io.kestra.cli.AbstractCommand;
+import io.kestra.cli.commands.NoDatabaseCommandInterface;
 import io.kestra.core.docs.JsonSchemaGenerator;
 import io.kestra.core.docs.SchemaType;
 import io.kestra.core.models.dashboards.Dashboard;
@@ -70,7 +71,7 @@ import picocli.CommandLine;
     mixinStandardHelpOptions = true
 )
 @Slf4j
-public class PluginsSchemaCommand extends AbstractCommand {
+public class PluginsSchemaCommand extends AbstractCommand implements NoDatabaseCommandInterface {
 
     private static final ObjectMapper MAPPER = new ObjectMapper()
         .enable(SerializationFeature.INDENT_OUTPUT);

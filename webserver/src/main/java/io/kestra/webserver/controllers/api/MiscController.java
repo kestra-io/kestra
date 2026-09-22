@@ -17,7 +17,6 @@ import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.reporter.Reportable;
 import io.kestra.core.reporter.UsageReportConfig;
 import io.kestra.core.reporter.reports.FeatureUsageReport;
-import io.kestra.core.repositories.DashboardRepositoryInterface;
 import io.kestra.core.runners.pebble.PebbleExpressionService;
 import io.kestra.core.runners.pebble.PebbleFunction;
 import io.kestra.core.services.InstanceService;
@@ -59,9 +58,6 @@ public class MiscController {
 
     @Inject
     VersionProvider versionProvider;
-
-    @Inject
-    DashboardRepositoryInterface dashboardRepository;
 
     @Inject
     InstanceService instanceService;
@@ -141,7 +137,7 @@ public class MiscController {
             .version(versionProvider.getVersion())
             .commitId(versionProvider.getRevision())
             .commitDate(versionProvider.getDate())
-            .isCustomDashboardsEnabled(dashboardRepository.isEnabled())
+            .isCustomDashboardsEnabled(this.isCustomDashboardsEnabled())
             .isAnonymousUsageEnabled(this.usageReportConfig.enabled())
             .isUiAnonymousUsageEnabled(this.isUiAnonymousUsageEnabled)
             .preview(
@@ -185,6 +181,14 @@ public class MiscController {
 
     private boolean isBasicAuthInitialized() {
         return basicAuthService.map(BasicAuthService::isBasicAuthInitialized).orElse(false);
+    }
+
+    /**
+     * Whether the instance can store dashboards of the user's own. Enterprise-only, so this edition
+     * always answers {@code false} and the UI falls back to the dashboards bundled with it.
+     */
+    protected boolean isCustomDashboardsEnabled() {
+        return false;
     }
 
     @Get("/{tenant}/usages/all")

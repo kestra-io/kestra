@@ -103,8 +103,21 @@ public class KestraBeansFactory {
     @Requires(property = "kestra.server-type", notEquals = "WORKER")
     @Singleton
     public LogDataStoreInterface logDataStore(final LogDataStoreInterfaceFactory logDataStoreInterfaceFactory) {
+        ensureLogDataStoreAllowed();
         String pluginId = getLogDataStorePluginId(logDataStoreInterfaceFactory);
         return logDataStoreInterfaceFactory.make(pluginId, logsConfig.getLogConfig(pluginId));
+    }
+
+    /**
+     * Guards the external log store, which is an Enterprise Edition feature; the Enterprise Edition
+     * overrides this to allow it, gated by its license instead.
+     */
+    protected void ensureLogDataStoreAllowed() {
+        logsConfig.type().ifPresent(type -> {
+            throw new IllegalArgumentException(
+                "Configuring an external log store ('%s=%s') requires Kestra Enterprise Edition.".formatted(KESTRA_LOGS_TYPE_CONFIG, type)
+            );
+        });
     }
 
     /**

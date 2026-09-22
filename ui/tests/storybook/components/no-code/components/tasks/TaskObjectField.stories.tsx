@@ -109,6 +109,40 @@ export const EnumField: Story = {
     args: {modelValue: "INFO"},
 };
 
+export const EnumFieldWithSchemaDefault: Story = {
+    render: (args) => ({
+        setup() {
+            provide(SCHEMA_DEFINITIONS_INJECTION_KEY, computed(() => ({})));
+            const model = ref(args.modelValue);
+            return () => <div style={{display: "flex", gap: "16px"}}>
+                <div style={{width: "500px"}}>
+                    <TaskObjectField
+                        modelValue={model.value}
+                        onUpdate:modelValue={(val) => model.value = val}
+                        schema={{
+                            type: "string",
+                            title: "Concurrency behavior",
+                            enum: ["QUEUE", "CANCEL", "FAIL"],
+                            default: "QUEUE",
+                        }}
+                        fieldKey="behavior"
+                        task={{}}
+                    />
+                </div>
+                <pre data-testid="result">{JSON.stringify(model.value)}</pre>
+            </div>
+        },
+    }),
+    args: {modelValue: undefined},
+    async play({canvasElement}) {
+        const canvas = within(canvasElement);
+        const hint = await canvas.findByText("default: QUEUE");
+        expect(hint).toHaveAttribute("data-test", "field-default-hint");
+        // The default stays a hint: the control itself holds no value.
+        expect(canvas.getByTestId("result").textContent).toBe("");
+    },
+};
+
 export const RequiredField: Story = {
     render: (args) => ({
         setup() {

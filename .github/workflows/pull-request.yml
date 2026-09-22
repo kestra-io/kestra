@@ -205,11 +205,15 @@ jobs:
   # English value being edited without the other twelve languages following, which is how
   # kestra-io/kestra#10656 accumulated a year of drift.
   #
+  # Runs on any UI change, not only on translation files: a `t("new.key")` added to a component
+  # without the key is exactly what the used-key rule exists to catch, and that PR touches no
+  # locale file.
+  #
   # Runs for forks too, where nothing was generated above, which is exactly when it matters most.
   translations:
     name: 'Translations - Key parity, placeholders and drift'
     needs: [file-changes, translations-generate]
-    if: "always() && needs.file-changes.outputs.translations == 'true'"
+    if: "always() && (needs.file-changes.outputs.translations == 'true' || needs.file-changes.outputs.ui == 'true')"
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -298,6 +302,30 @@ jobs:
     with:
       java-version: 25
       skip-build: ${{ needs.build-artifacts.result == 'success' }}
+
+  # Single gate for "require status checks to pass". The test jobs above are
+  # path-gated with `if:`, and several are reusable workflows (`uses:`) whose
+  # nested checks are never reported when the caller job is skipped — so a
+  # branch-protection rule on them individually would wait forever for a status
+  # that never arrives. This job always runs, and fails only when a required job
+  # actually failed or was cancelled; skipped and successful jobs both pass.
+  # Require only this check in branch protection instead of the individual jobs.
+  required-checks:
+    name: Required checks
+    if: always()
+    needs: [file-changes, frontend, design-system-frontend, backend, build-artifacts, e2e-tests]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fail if any required job failed or was cancelled
+        if: >-
+          contains(needs.*.result, 'failure') ||
+          contains(needs.*.result, 'cancelled')
+        run: |
+          echo "A required job failed or was cancelled:"
+          echo '${{ toJSON(needs) }}'
+          exit 1
+      - name: Success
+        run: echo "All required jobs passed or were legitimately skipped."
 
   otel-export-trace:
     name: OpenTelemetry - Export Trace

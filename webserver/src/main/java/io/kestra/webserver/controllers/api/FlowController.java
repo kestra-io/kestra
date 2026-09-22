@@ -825,7 +825,10 @@ public class FlowController {
     public HttpResponse<byte[]> exportFlowsByQuery(
         @Parameter(description = "Filters. PHP-style nested query is used - examples: `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`", in = ParameterIn.QUERY)
         @QueryFilterFormat(Resource.FLOW) List<QueryFilter> filters) throws IOException {
-        var flows = flowRepository.findWithSource(Pageable.UNPAGED, tenantService.resolveTenant(), filters);
+        // Drafts are not exportable: a draft-headed flow falls back to its last saved revision, and a
+        // flow that has only ever been a draft is omitted. Consumers such as the Git sync plugin read
+        // this ZIP as the authoritative set of saved flows.
+        var flows = flowRepository.findWithSourceExcludingDrafts(Pageable.UNPAGED, tenantService.resolveTenant(), filters);
         var bytes = HasSource.asZipFile(flows, flow -> flow.getNamespace() + "-" + flow.getId() + ".yml");
 
         return HttpResponse.ok(bytes).header("Content-Disposition", "attachment; filename=\"flows.zip\"");

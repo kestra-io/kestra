@@ -14,6 +14,7 @@ import io.kestra.core.utils.ExecutorsUtils;
 
 import io.grpc.EquivalentAddressGroup;
 import io.grpc.NameResolver;
+import io.grpc.ProxyDetector;
 import io.grpc.StatusOr;
 import io.grpc.SynchronizationContext;
 import lombok.extern.slf4j.Slf4j;
@@ -25,6 +26,9 @@ import lombok.extern.slf4j.Slf4j;
  * using the configured interval. Each tick queries the supplier and notifies the listener only
  * when the resolved set of addresses actually changes, to avoid churning the gRPC load-balancing
  * pool.
+ * <p>
+ * Each address is passed through the channel's {@link ProxyDetector}, so that the standard JVM proxy
+ * configuration is honoured as it is by gRPC's own {@code dns:///} resolver.
  */
 @Slf4j
 public class StorageNameResolver extends NameResolver {
@@ -34,6 +38,7 @@ public class StorageNameResolver extends NameResolver {
     private final Supplier<List<EquivalentAddressGroup>> addressSupplier;
     private final Duration refreshInterval;
     private final SynchronizationContext syncContext;
+    private final ProxyDetector proxyDetector;
 
     private volatile Listener2 listener;
     private volatile ScheduledExecutorService scheduler;
@@ -47,14 +52,17 @@ public class StorageNameResolver extends NameResolver {
      * @param refreshInterval how often to poll the supplier.
      * @param syncContext the channel's synchronization context; all listener notifications
      *        must be delivered on it (see {@link #resolve()}).
+     * @param proxyDetector the channel's proxy detector.
      */
     public StorageNameResolver(
         final Supplier<List<EquivalentAddressGroup>> addressSupplier,
         final Duration refreshInterval,
-        final SynchronizationContext syncContext) {
+        final SynchronizationContext syncContext,
+        final ProxyDetector proxyDetector) {
         this.addressSupplier = Objects.requireNonNull(addressSupplier);
         this.refreshInterval = Objects.requireNonNull(refreshInterval);
         this.syncContext = Objects.requireNonNull(syncContext);
+        this.proxyDetector = Objects.requireNonNull(proxyDetector);
     }
 
     /**
@@ -120,7 +128,7 @@ public class StorageNameResolver extends NameResolver {
         if (listener == null) {
             return;
         }
-        List<EquivalentAddressGroup> addresses = addressSupplier.get();
+        List<EquivalentAddressGroup> addresses = ProxiedAddresses.proxied(proxyDetector, addressSupplier.get());
         Set<EquivalentAddressGroup> next = Set.copyOf(addresses);
         if (next.equals(lastAddresses)) {
             return;

@@ -52,6 +52,7 @@
         z-index: 10;
         padding: var(--ks-spacing-4);
         background-color: var(--ks-bg-input);
+        border-bottom: 1px solid var(--ks-border-default);
 
         :deep(.kel-input__wrapper), :deep(.kel-select__wrapper) {
             margin-bottom: var(--ks-spacing-2);

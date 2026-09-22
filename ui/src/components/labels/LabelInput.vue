@@ -13,28 +13,33 @@
         </div>
 
         <div
-            class="label-input-row"
+            class="label-input-item"
             v-for="(label, index) in locals"
             :key="index"
         >
-            <KsInput
-                class="label-input-field"
-                :placeholder="$t('key')"
-                :modelValue="(label.key as string | undefined)"
-                :disabled="existingRows.has(label)"
-                @update:model-value="update(index, $event, 'key')"
-            />
-            <KsInput
-                class="label-input-field"
-                :placeholder="$t('value')"
-                :modelValue="(label.value as string | undefined)"
-                @update:model-value="update(index, $event, 'value')"
-            />
-            <KsButton
-                :icon="Minus"
-                :tooltip="$t('remove label')"
-                @click="removeItem(index)"
-            />
+            <div class="label-input-row">
+                <KsInput
+                    class="label-input-field"
+                    :placeholder="$t('key')"
+                    :modelValue="(label.key as string | undefined)"
+                    :disabled="existingRows.has(label)"
+                    @update:model-value="update(index, $event, 'key')"
+                />
+                <KsInput
+                    class="label-input-field"
+                    :placeholder="$t('value')"
+                    :modelValue="(label.value as string | undefined)"
+                    @update:model-value="update(index, $event, 'value')"
+                />
+                <KsButton
+                    :icon="Minus"
+                    :tooltip="$t('remove label')"
+                    @click="removeItem(index)"
+                />
+            </div>
+            <KsText v-if="label.key && !isValidLabelKey(label.key)" type="danger" size="small" data-test="label-key-error">
+                {{ $t("invalid label key") }}
+            </KsText>
         </div>
     </div>
 </template>
@@ -43,6 +48,7 @@
     import {ref, onMounted, watch} from "vue"
     import Plus from "vue-material-design-icons/Plus.vue"
     import Minus from "vue-material-design-icons/Minus.vue"
+    import {isValidLabelKey} from "../../utils/executionLabels"
 
     interface Label {
         key: string | null;
@@ -142,6 +148,12 @@
         align-items: center;
         gap: var(--ks-spacing-2);
         flex-shrink: 0;
+    }
+
+    .label-input-item {
+        display: flex;
+        flex-direction: column;
+        gap: var(--ks-spacing-1);
     }
 
     .label-input-row {

@@ -50,7 +50,7 @@ jobs:
 
     # Set up JDK
     - name: Set up JDK
-      uses: actions/setup-java@v5
+      uses: actions/setup-java@v6
       if: ${{ matrix.language == 'java' }}
       with:
         distribution: 'temurin'

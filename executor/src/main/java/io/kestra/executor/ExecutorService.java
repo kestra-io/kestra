@@ -764,7 +764,12 @@ public class ExecutorService {
                                     // re-initializing from scratch.
                                     Optional<Execution> failingSubExecution = executionService.findLastFailingLoopSubExecution(executor.getExecution(), taskRun);
                                     if (failingSubExecution.isPresent()) {
-                                        Execution restarted = executionService.restart(failingSubExecution.get(), executor.getFlow(), null);
+                                        Execution subExecution = failingSubExecution.get();
+                                        // The failing iteration's terminal state was recorded in terminatedIterations
+                                        // when the loop terminated; undo it now so the retry's real outcome
+                                        // (recorded once it reaches a new terminal state) isn't double-counted.
+                                        revertLoopIterationTermination(taskRun, subExecution.getState().getCurrent());
+                                        Execution restarted = executionService.restart(subExecution, executor.getFlow(), null);
                                         executor.withLoopExecution(restarted, "restartLoopExecution");
                                         executor.withExecution(
                                             executor.getExecution()
@@ -870,6 +875,29 @@ public class ExecutorService {
     }
 
     /**
+     * Undoes the terminal-state bookkeeping {@link io.kestra.executor.handler.LoopExecutionEventMessageHandler}
+     * recorded for a loop iteration that terminated the loop in error, before that iteration is restarted.
+     * Without this, the retry's own terminal event would be merged on top of the stale one, double-counting
+     * the iteration in {@link Loop#TERMINATED_ITERATIONS_OUTPUT} and corrupting the running-iteration count
+     * used to compute the next iteration index.
+     */
+    private void revertLoopIterationTermination(TaskRun loopTaskRun, State.Type terminatedState) throws InternalException {
+        Map<String, Object> outputs = taskOutputService.getOutputs(loopTaskRun);
+        if (!outputs.containsKey(Loop.RUNNING_ITERATIONS_OUTPUT) || !outputs.containsKey(Loop.TERMINATED_ITERATIONS_OUTPUT)) {
+            return;
+        }
+
+        int runningIterations = (Integer) outputs.get(Loop.RUNNING_ITERATIONS_OUTPUT);
+        @SuppressWarnings("unchecked")
+        Map<String, Integer> terminatedByState = new HashMap<>((Map<String, Integer>) outputs.get(Loop.TERMINATED_ITERATIONS_OUTPUT));
+        terminatedByState.computeIfPresent(terminatedState.name(), (state, count) -> count > 1 ? count - 1 : null);
+
+        outputs.put(Loop.RUNNING_ITERATIONS_OUTPUT, runningIterations + 1);
+        outputs.put(Loop.TERMINATED_ITERATIONS_OUTPUT, terminatedByState);
+        taskOutputService.saveOutputs(loopTaskRun, outputs);
+    }
+
+    /**
      * Interrupts every still-running task run in the task subtree so they don't keep executing on an already-failed branch.
      * Send an {@link ExecutionKilledTaskRuns} event to the Worker to interrupt the non-terminated task runs.
      */
@@ -877,7 +905,7 @@ public class ExecutorService {
         OnChildFailureInterface.OnChildFailure config = runContext.render(onChildFailure.getOnChildFailure())
             .as(OnChildFailureInterface.OnChildFailure.class)
             .orElse(OnChildFailureInterface.OnChildFailure.CONTINUE);
-        if (config == OnChildFailureInterface.OnChildFailure.CONTINUE || config == OnChildFailureInterface.OnChildFailure.UNKNOWN) {
+        if (config == OnChildFailureInterface.OnChildFailure.CONTINUE) {
             return;
         }
 

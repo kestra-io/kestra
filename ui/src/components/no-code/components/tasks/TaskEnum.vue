@@ -1,9 +1,9 @@
 <template>
     <KsSelect
-        :modelValue="values"
+        :modelValue="modelValue"
         @update:model-value="onInput"
         filterable
-        clearable
+        :clearable="!required"
         :placeholder="$t('no_code.choose_placeholder', {field: root?.split('.').pop() || 'value'})"
     >
         <KsOption
@@ -16,10 +16,9 @@
 </template>
 
 <script setup lang="ts">
-    import {computed} from "vue"
     import {collapseEmptyValues} from "../utils/collapseEmptyValues"
 
-    const props = withDefaults(defineProps<{
+    withDefaults(defineProps<{
         modelValue?: object | string | number | boolean | unknown[]
         schema?: Record<string, unknown>
         required?: boolean
@@ -38,8 +37,6 @@
     const emit = defineEmits<{
         "update:modelValue": [value: unknown]
     }>()
-
-    const values = computed(() => props.modelValue ?? (props.schema as Record<string, unknown> | undefined)?.default)
 
     function onInput(value: unknown) {
         emit("update:modelValue", collapseEmptyValues(value))

@@ -12,6 +12,8 @@ export interface FunctionArgument {
 export interface PebbleFunctionDef {
     name: string;
     arguments: FunctionArgument[];
+    deprecated?: boolean;
+    replacement?: string | null;
 }
 
 let cachedFilters: string[] | null = null

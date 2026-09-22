@@ -19,11 +19,13 @@ interface MinimalNode {
     branchType?: BranchType;
     uid: string;
     type: string;
+    disabled?: boolean;
     task?: {
         id?: string;
         type: string;
         namespace: string;
         flowId: string;
+        disabled?: boolean;
     };
 }
 

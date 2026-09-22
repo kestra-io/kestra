@@ -172,7 +172,6 @@
 
     import LightningBolt from "vue-material-design-icons/LightningBolt.vue"
     import ClockOutline from "vue-material-design-icons/ClockOutline.vue"
-    import FolderMultipleOutline from "vue-material-design-icons/FolderMultipleOutline.vue"
     import Webhook from "vue-material-design-icons/Webhook.vue"
     import DotsHorizontal from "vue-material-design-icons/DotsHorizontal.vue"
 
@@ -267,14 +266,6 @@
             title: t("recipe.trigger.schedule_title"),
             sub: t("recipe.trigger.schedule_sub"),
             disabled: false,
-        },
-        {
-            key: "case",
-            type: null,
-            icon: FolderMultipleOutline,
-            title: t("recipe.trigger.case_title"),
-            sub: t("recipe.trigger.case_sub"),
-            disabled: true,
         },
         {
             key: "webhook",

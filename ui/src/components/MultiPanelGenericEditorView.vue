@@ -14,10 +14,10 @@
         </MultiPanelEditorTabs>
         <div class="editor-wrapper">
             <KsSplitter class="default-theme editor-panels" :layout="splitOrientation">
-                <KsSplitterPanel>
+                <KsSplitterPanel min="100">
                     <MultiPanelTabs v-model="panels" @remove-tab="onRemoveTab" />
                 </KsSplitterPanel>
-                <KsSplitterPanel v-if="bottomVisible && slots['bottom-panel']">
+                <KsSplitterPanel v-if="bottomVisible && slots['bottom-panel']" size="30%" min="100">
                     <slot name="bottom-panel" />
                 </KsSplitterPanel>
             </KsSplitter>
@@ -65,7 +65,7 @@
         }
     }
 
-    function getPanelFromValue(value: string): {panel: Panel, prepend: boolean} | undefined {
+    function getPanelFromValue(value: string): {panel: Panel, prepend: boolean, preferredSize?: number} | undefined {
         for (const element of props.editorElements) {
             const deserializedTab = element.deserialize(value, true)
             if (deserializedTab) {
@@ -73,13 +73,25 @@
                     panel: {
                         activeTab: deserializedTab,
                         tabs: [deserializedTab],
-                        size: defaultPanelSize.value,
+                        size: element.preferredSize ?? defaultPanelSize.value,
                     },
                     prepend: element.prepend ?? false,
+                    preferredSize: element.preferredSize,
                 }
             }
         }
     };
+
+    // Panel sizes are shares the splitter normalizes, so inserting a 25 next to two 50s yields 20.
+    // The existing panels give up exactly the requested share, keeping their ratio to each other.
+    function makeRoomFor(preferredSize: number) {
+        const currentTotal = panels.value.reduce((acc, p) => acc + p.size, 0)
+        if (currentTotal <= 0) return
+        const remaining = 100 - preferredSize
+        panels.value.forEach(p => {
+            p.size = (p.size / currentTotal) * remaining
+        })
+    }
 
     const {panels, saveState} = useStoredPanels(
         props.saveKey,
@@ -109,6 +121,9 @@
 
         const panel = getPanelFromValue(tabValue)
         if(panel){
+            if(panel.preferredSize !== undefined){
+                makeRoomFor(panel.preferredSize)
+            }
             if(panel.prepend){
                 panels.value.unshift(panel.panel)
             } else {
@@ -163,11 +178,18 @@
     :deep(.editor-panels){
         position: absolute;
     }
-    :deep(.kel-splitter-bar){
-        width: 2px !important;
-    }
 
     .default-theme{
+        :deep(.kel-splitter__horizontal > .kel-splitter-bar){
+            width: 2px !important;
+        }
+
+        :deep(.kel-splitter__vertical > .kel-splitter-bar){
+            height: 4px !important;
+            width: 100% !important;
+            cursor: ns-resize;
+        }
+
         :deep(.kel-splitter-panel) {
             background-color: var(--ks-bg-surface);
         }

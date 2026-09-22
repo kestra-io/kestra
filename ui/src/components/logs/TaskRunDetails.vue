@@ -240,7 +240,7 @@
                         :to="{
                             name: 'executions/list',
                             query: {
-                                'filters[parentId][EQUALS]': asTaskRun(currentTaskRun).executionId,
+                                'filters[parentId][EQUALS]': followedExecution.id,
                                 'filters[kind][EQUALS]': 'LOOP',
                                 'filters[taskId][EQUALS]': asTaskRun(currentTaskRun).taskId,
                             }
@@ -252,7 +252,7 @@
                     <TaskRunLoopProgress
                         :currentTaskRunId="asTaskRun(currentTaskRun).id"
                         :loopOutputsByTaskRunId="loopOutputsByTaskRunId"
-                        :executionId="asTaskRun(currentTaskRun).executionId"
+                        :executionId="followedExecution.id"
                         :taskId="asTaskRun(currentTaskRun).taskId"
                     />
                 </div>

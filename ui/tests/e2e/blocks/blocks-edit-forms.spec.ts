@@ -99,9 +99,11 @@ test.describe("Block editor — form editing", () => {
         // context" section, whose accessible name also matches /Execution/.
         const form = pane.locator(".task-edit-col-params")
 
-        // Enum: the Log task's "level" select, inside the collapsed Logging group
+        // Enum: the Log task's "level" select, inside the collapsed Logging group.
+        // An unset enum shows its schema default only as a hint, so the control
+        // is empty — reach it by its field hook rather than by a displayed value.
         await form.getByRole("button", {name: /Logging/}).click()
-        await form.locator(".kel-select").filter({hasText: "INFO"}).first().click()
+        await form.locator("[data-test='field-level']").getByRole("combobox").click()
         await page.getByRole("option", {name: "DEBUG"}).click()
 
         // Boolean: the task-level "disabled" switch, inside the Execution group.

@@ -13,6 +13,7 @@ import io.kestra.core.async.AsyncOperation;
 import io.kestra.core.async.AsyncOperationProcessedEvent;
 import io.kestra.core.async.AsyncOperationService;
 import io.kestra.core.events.EventId;
+import io.kestra.core.exceptions.ConflictException;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.executions.ExecutionKilled;
@@ -153,6 +154,14 @@ public class TriggerEventHandler {
     void onCreateBackfill(Clock clock, CreateBackfillTrigger event) {
         findTriggerState(event).ifPresent(state ->
         {
+            // A second backfill would capture the running backfill's cursor as the pre-backfill schedule
+            // date, so deleting it would rewind the trigger and replay every schedule from that cursor.
+            if (state.getBackfill() != null) {
+                throw new ConflictException(
+                    "A backfill is already running on trigger '%s'. Delete it before creating a new one.".formatted(event.uid())
+                );
+            }
+
             state = state
                 .lastEventId(clock, event.eventId())
                 .backfill(

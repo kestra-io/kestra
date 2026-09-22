@@ -427,6 +427,36 @@ describe("KsDataTable", () => {
         expect(lastLoad(loads)).toEqual({page: 3, size: 50, sort: undefined})
     })
 
+    const mountWithSortSpy = (props: Record<string, any>) => {
+        const loads: Load[] = []
+        const wrapper = mount(KsDataTable, {
+            props: {
+                data: SAMPLE_DATA,
+                total: 100,
+                loadData: async (p: Load) => { loads.push(p) },
+                ...props,
+            },
+            global: globalConfig,
+        })
+        return {loads, wrapper}
+    }
+
+    test("passes the raw column prop as sort key to loadData when no sortKeyMapper is set", async () => {
+        const {loads, wrapper} = mountWithSortSpy({})
+        wrapper.findComponent(KsTable).vm.$emit("sortChange", {column: {}, prop: "id", order: "descending"})
+        await tick()
+        expect(lastLoad(loads).sort).toBe("id:desc")
+    })
+
+    test("applies sortKeyMapper to the column prop before calling loadData", async () => {
+        const {loads, wrapper} = mountWithSortSpy({
+            sortKeyMapper: (key: string) => key.replace(/^auditLog\./, ""),
+        })
+        wrapper.findComponent(KsTable).vm.$emit("sortChange", {column: {}, prop: "auditLog.detail.resourceType", order: "ascending"})
+        await tick()
+        expect(lastLoad(loads).sort).toBe("detail.resourceType:asc")
+    })
+
     test("applies ks-data-table-body--fit modifier class when fitHeight is true", () => {
         const wrapper = mount(KsDataTable, {
             props: {data: SAMPLE_DATA, total: 3, fitHeight: true},

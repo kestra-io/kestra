@@ -470,7 +470,7 @@ export function useDependencies(
                 // the initial focus below, rather than under the user's first click.
                 applyStylesToChart()
                 requestAnimationFrame(() => {
-                    if (id) focusNode(id)
+                    if (id && !dagView) focusNode(id)
                     else fitGraph()
                 })
                 return
@@ -583,16 +583,17 @@ export function useDependencies(
         if (!chart || positions.size === 0) { graphRef.value?.fit(); return }
         const xs = [...positions.values()].map(p => p.x)
         const ys = [...positions.values()].map(p => p.y)
-        const padding = 20
+
+        const padding = 60
         const W = chart.getWidth()  as number
         const H = chart.getHeight() as number
-        const spreadX = Math.max(...xs) - Math.min(...xs)
-        const spreadY = Math.max(...ys) - Math.min(...ys)
+        const spreadX = (Math.max(...xs) - Math.min(...xs)) || 2
+        const spreadY = (Math.max(...ys) - Math.min(...ys)) || 2
 
+        const scale = Math.min(W / spreadX, H / spreadY)
         const zoom = Math.min(
-            1,
-            (W - padding * 2) / (spreadX || 1),
-            (H - padding * 2) / (spreadY || 1),
+            (W - padding * 2) / (scale * spreadX),
+            (H - padding * 2) / (scale * spreadY),
         )
         const cx = (Math.min(...xs) + Math.max(...xs)) / 2
         const cy = (Math.min(...ys) + Math.max(...ys)) / 2

@@ -166,6 +166,7 @@
     import TaskEditPanes from "./TaskEditPanes.vue"
     import TaskEditData from "./TaskEditData.vue"
     import {canSaveFlowTemplate} from "../../utils/flowTemplate"
+    import {splitValidationErrors} from "../../utils/validationErrors"
     import ValidationError from "./ValidationError.vue"
     import {usePluginsStore} from "../../stores/plugins"
     import {useAuthStore} from "override/stores/auth"
@@ -291,7 +292,10 @@
 
     const flowStore = useFlowStore()
     const localTaskError = ref<string | undefined>()
-    const errors = computed(() => localTaskError.value?.split(/, ?/))
+    const errors = computed(() => {
+        const split = splitValidationErrors(localTaskError.value)
+        return split.length === 0 ? undefined : split
+    })
     const pluginMarkdown = computed(() => {
         if (pluginsStore?.plugin?.markdown && YAML_UTILS.parse(taskYaml.value)?.type) {
             return pluginsStore?.plugin.markdown

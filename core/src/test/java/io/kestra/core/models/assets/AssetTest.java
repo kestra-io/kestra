@@ -6,9 +6,29 @@ import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+
+import io.kestra.core.serializers.JacksonMapper;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 class AssetTest {
+    @Test
+    void shouldDeserializeAssetWithoutTypeAsExternal() throws JsonProcessingException {
+        Asset asset = JacksonMapper.ofYaml().readValue(
+            """
+                id: my-asset
+                metadata:
+                    owner: infra-team""",
+            Asset.class
+        );
+
+        assertThat(asset).isInstanceOf(External.class);
+        assertThat(asset.getType()).isEqualTo(External.ASSET_TYPE);
+        assertThat(asset.getId()).isEqualTo("my-asset");
+        assertThat(asset.getMetadata()).containsEntry("owner", "infra-team");
+    }
+
     @Test
     void shouldKeepPreviousTypeWhenTypeChangeIsNotAllowed() {
         // Given
@@ -79,5 +99,31 @@ class AssetTest {
 
         // Then
         assertThat(created.getType()).isEqualTo("EC2");
+    }
+
+    @Test
+    void shouldKeepPreviousNamespaceWhenNotDeclared() {
+        // Given an existing asset referenced by its id alone, so deserialized as External
+        Custom previous = Custom.builder().namespace("io.kestra").id("my-asset").type("EC2").build();
+        External incoming = External.builder().id("my-asset").build();
+
+        // When
+        Asset updated = incoming.toUpdated(previous, false);
+
+        // Then
+        assertThat(updated.getNamespace()).isEqualTo("io.kestra");
+    }
+
+    @Test
+    void shouldKeepPreviousNamespaceWhenAnotherOneIsDeclared() {
+        // Given
+        Custom previous = Custom.builder().namespace("io.kestra").id("my-asset").type("EC2").build();
+        Custom incoming = Custom.builder().namespace("io.kestra.other").id("my-asset").type("EC2").build();
+
+        // When
+        Custom updated = incoming.toUpdated(previous, false);
+
+        // Then
+        assertThat(updated.getNamespace()).isEqualTo("io.kestra");
     }
 }

@@ -10,6 +10,7 @@ import {
     displayTaskOf,
     duplicateBlock,
     duplicateBlockAtPath,
+    errorsLaneTarget,
     groupValidationIssuesByTask,
     isFlowableType,
     isWrappedLaneItem,
@@ -1198,6 +1199,47 @@ afterExecution:
 
             // Then
             expect(trigger.id).toBe("webhook_1")
+        })
+    })
+
+    describe("errorsLaneTarget", () => {
+        it("should target the task errors lane with refIndex -1 when the task has no errors", () => {
+            expect(errorsLaneTarget(FLOW_WITH_FLOWABLE, "if_task")).toEqual({
+                parentPath: "tasks[1].errors",
+                refIndex: -1,
+            })
+        })
+
+        it("should target the last handler when the task already has errors", () => {
+            const source = `
+tasks:
+  - id: if_task
+    type: io.kestra.plugin.core.flow.If
+    condition: "{{ true }}"
+    then:
+      - id: nested_a
+        type: io.kestra.plugin.core.log.Log
+    errors:
+      - id: handler_one
+        type: io.kestra.plugin.core.log.Log
+      - id: handler_two
+        type: io.kestra.plugin.core.log.Log
+`.trim()
+            expect(errorsLaneTarget(source, "if_task")).toEqual({
+                parentPath: "tasks[0].errors",
+                refIndex: 1,
+            })
+        })
+
+        it("should resolve a task nested in a flowable branch", () => {
+            expect(errorsLaneTarget(FLOW_WITH_FLOWABLE, "nested_a")).toEqual({
+                parentPath: "tasks[1].then[0].errors",
+                refIndex: -1,
+            })
+        })
+
+        it("should return undefined for an unknown task id", () => {
+            expect(errorsLaneTarget(FLOW_WITH_FLOWABLE, "nope")).toBeUndefined()
         })
     })
 

@@ -720,7 +720,7 @@ class ExecutionControllerRunnerTest {
 
         assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.CONFLICT.getCode());
         assertThat(e.getResponse().getBody(String.class).isPresent()).isTrue();
-        assertThat(e.getResponse().getBody(String.class).get()).contains("Cannot restart execution: current state is 'SUCCESS', expected terminated or paused.");
+        assertThat(e.getResponse().getBody(String.class).get()).contains("Cannot restart execution: current state is 'SUCCESS', expected terminated.");
     }
 
     @Test
@@ -3346,6 +3346,60 @@ class ExecutionControllerRunnerTest {
 
     @Test
     @LoadFlowsWithTenant({ "flows/valids/pause-test.yaml" })
+    void shouldReturnConflictWhenRestartExecutionCalledOnPausedExecution(String tenantId) throws QueueException {
+        when(tenantService.resolveTenant()).thenReturn(tenantId);
+        Execution pausedExecution = runnerUtils.runOneUntilPaused(tenantId, TESTS_FLOW_NS, "pause-test");
+        assertThat(pausedExecution.getState().isPaused()).isTrue();
+
+        HttpClientResponseException e = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().retrieve(
+                POST(
+                    "/api/v1/%s/executions/%s/actions/restart".formatted(tenantId, pausedExecution.getId()),
+                    List.of(pausedExecution.getId())
+                ),
+                Execution.class
+            )
+        );
+
+        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.CONFLICT.getCode());
+        assertThat(e.getMessage()).contains("Cannot restart execution: current state is 'PAUSED', expected terminated.");
+
+        e = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().retrieve(
+                POST(
+                    "/api/v1/%s/executions/restart/by-ids".formatted(tenantId),
+                    List.of(pausedExecution.getId())
+                ),
+                MutableHttpResponse.class
+            )
+        );
+
+        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.BAD_REQUEST.getCode());
+        Optional<String> bulkErrorResponse = e.getResponse().getBody(String.class);
+        assertThat(bulkErrorResponse).isPresent();
+        assertThat(bulkErrorResponse.get()).contains("must be terminated to be restarted, current state is 'PAUSED'");
+
+        e = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().retrieve(
+                POST(
+                    "/api/v1/%s/executions/restart/by-query?filters[q][EQUALS]=%s".formatted(tenantId, pausedExecution.getId()),
+                    List.of(pausedExecution.getId())
+                ),
+                MutableHttpResponse.class
+            )
+        );
+
+        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.BAD_REQUEST.getCode());
+        bulkErrorResponse = e.getResponse().getBody(String.class);
+        assertThat(bulkErrorResponse).isPresent();
+        assertThat(bulkErrorResponse.get()).contains("must be terminated to be restarted, current state is 'PAUSED'");
+    }
+
+    @Test
+    @LoadFlowsWithTenant({ "flows/valids/pause-test.yaml" })
     void shouldReturnConflictWhenRestartExecutionCalledOnKilledExecution(String tenantId) throws QueueException {
         when(tenantService.resolveTenant()).thenReturn(tenantId);
         Execution pausedExecution = runnerUtils.runOneUntilPaused(tenantId, TESTS_FLOW_NS, "pause-test");
@@ -3369,7 +3423,7 @@ class ExecutionControllerRunnerTest {
         );
 
         assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.CONFLICT.getCode());
-        assertThat(e.getMessage()).contains("Cannot restart execution: current state is 'KILLED', expected terminated or paused.");
+        assertThat(e.getMessage()).contains("Cannot restart execution: current state is 'KILLED', expected terminated.");
 
         e = assertThrows(
             HttpClientResponseException.class,
@@ -3385,7 +3439,7 @@ class ExecutionControllerRunnerTest {
         assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.BAD_REQUEST.getCode());
         Optional<String> bulkErrorResponse = e.getResponse().getBody(String.class);
         assertThat(bulkErrorResponse).isPresent();
-        assertThat(bulkErrorResponse.get()).contains("must be terminated or paused to be restarted, current state is 'KILLED'");
+        assertThat(bulkErrorResponse.get()).contains("must be terminated to be restarted, current state is 'KILLED'");
 
         e = assertThrows(
             HttpClientResponseException.class,
@@ -3401,7 +3455,7 @@ class ExecutionControllerRunnerTest {
         assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.BAD_REQUEST.getCode());
         bulkErrorResponse = e.getResponse().getBody(String.class);
         assertThat(bulkErrorResponse).isPresent();
-        assertThat(bulkErrorResponse.get()).contains("must be terminated or paused to be restarted, current state is 'KILLED'");
+        assertThat(bulkErrorResponse.get()).contains("must be terminated to be restarted, current state is 'KILLED'");
     }
 
     @Test

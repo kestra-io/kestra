@@ -69,6 +69,9 @@ public class DefaultSchedulableTriggerFetcher implements SchedulableTriggerFetch
 
         return triggers.stream()
             .filter(triggerState -> !triggerState.isDisabled())
+            // A paused backfill freezes the trigger's next evaluation date, so the trigger stays eligible on
+            // every loop: evaluating it would re-create an execution for the same date about once per second.
+            .filter(triggerState -> !triggerState.hasPausedBackfill())
             .map(triggerState ->
             {
                 Optional<FlowWithSource> maybeFlowTrigger = flowMetaStore.find(

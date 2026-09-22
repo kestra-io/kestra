@@ -796,7 +796,7 @@
                 }
 
                 .task-label {
-                    flex: 1;
+                    flex: 1 1 12rem;
                     min-width: 0;
                     display: flex;
                     align-items: center;

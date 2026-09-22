@@ -79,7 +79,7 @@
     }
 
     function isValidVariable(key: string): boolean {
-        return /^[a-zA-Z][a-zA-Z0-9_]*$/.test(key)
+        return /^[a-zA-Z_][a-zA-Z0-9_]*$/.test(key)
     }
 
     function formatStep(key: string): string {

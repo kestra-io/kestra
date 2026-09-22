@@ -7,6 +7,7 @@ import Utils from "../utils/utils";
 import {apiUrl} from "override/utils/route";
 import {useCoreStore} from "./core";
 import {useUnsavedChangesStore} from "./unsavedChanges";
+import {useTriggerStore} from "./trigger";
 import {defineStore} from "pinia";
 import {FlowGraph} from "@kestra-io/ui-libs/vue-flow-utils";
 import {makeToast} from "../utils/toast";
@@ -27,6 +28,8 @@ const textYamlHeader = {
 }
 
 const VALIDATE = {validateStatus: (status: number) => status === 200 || status === 401};
+
+const TRIGGERS_PAGE_SIZE = 100;
 
 interface Trigger {
     id: string;
@@ -116,6 +119,7 @@ export const useFlowStore = defineStore("flow", () => {
 
     const coreStore = useCoreStore();
     const unsavedChangesStore = useUnsavedChangesStore();
+    const triggerStore = useTriggerStore();
 
     const t = (key: string, values?: Record<string, any>) => {
         if (!globalI18n.value) {
@@ -165,6 +169,56 @@ export const useFlowStore = defineStore("flow", () => {
             cancelButtonText: t("cancel"),
             center: false,
             showClose: false,
+        }).then(() => true).catch(() => false);
+    }
+
+    function sourceTriggerIds(source: string | undefined): string[] {
+        try {
+            return (YAML_UTILS.parse(source ?? "")?.triggers ?? [])
+                .map((trigger: Trigger) => trigger.id)
+                .filter(Boolean);
+        } catch {
+            return [];
+        }
+    }
+
+    // A trigger disabled from the UI carries that state on its trigger row, not in the flow source, so dropping
+    // or renaming its id silently loses the pause: https://github.com/kestra-io/kestra/issues/19672.
+    async function confirmRemovedDisabledTriggers(source: string): Promise<boolean> {
+        if (isCreating.value || !flow.value) return true;
+
+        const savedIds = sourceTriggerIds(flowYamlOrigin.value || flow.value.source);
+        if (!savedIds.length) return true;
+
+        const nextIds = new Set(sourceTriggerIds(source));
+        const removedIds = savedIds.filter(id => !nextIds.has(id));
+        if (!removedIds.length) return true;
+
+        let results: {triggerId: string, disabled?: boolean}[] = [];
+        try {
+            // The prompt is a courtesy, so a failing lookup must not block the save.
+            ({results = []} = await triggerStore.find({
+                namespace: flow.value.namespace,
+                flowId: flow.value.id,
+                size: TRIGGERS_PAGE_SIZE,
+            }) as {results?: {triggerId: string, disabled?: boolean}[]});
+        } catch {
+            return true;
+        }
+
+        const disabledIds = results
+            .filter(trigger => trigger.disabled && removedIds.includes(trigger.triggerId))
+            .map(trigger => trigger.triggerId);
+        if (!disabledIds.length) return true;
+
+        const key = "disabled trigger removed";
+        return ElMessageBox({
+            title: t(`${key}.title`),
+            message: () => h(Markdown, {source: t(`${key}.message`, {triggers: disabledIds.map(id => `\`${id}\``).join(", ")})}),
+            type: "warning",
+            showCancelButton: true,
+            confirmButtonText: t("ok"),
+            cancelButtonText: t("cancel"),
         }).then(() => true).catch(() => false);
     }
 
@@ -264,6 +318,10 @@ export const useFlowStore = defineStore("flow", () => {
             };
 
             return "blocked";
+        }
+
+        if (!(await confirmRemovedDisabledTriggers(flowSource))) {
+            return "no_op";
         }
 
         let overrideFlow = false;

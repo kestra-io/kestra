@@ -642,6 +642,10 @@
       "tooltip": "Redémarrer le trigger"
     },
     "trigger disabled": "Le trigger est désactivé dans la source du flow",
+    "disabled trigger removed": {
+      "title": "Trigger désactivé supprimé",
+      "message": "Ces trigger ont été désactivés depuis l'UI et ne sont plus présents dans le flow : {triggers}. Chaque nouvel id de trigger est activé par défaut, assurez-vous que c'est bien voulu."
+    },
     "flow source not found": "Source du flow introuvable",
     "date format": "Format de date",
     "timezone": "Fuseau horaire",

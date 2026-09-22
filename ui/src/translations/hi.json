@@ -642,6 +642,10 @@
       "tooltip": "ट्रिगर को पुनः प्रारंभ करें"
     },
     "trigger disabled": "Flow स्रोत के भीतर Trigger अक्षम है",
+    "disabled trigger removed": {
+      "title": "अक्षम trigger हटाया गया",
+      "message": "ये trigger UI से अक्षम किए गए थे और अब इस flow में नहीं हैं: {triggers}। हर नया trigger id डिफ़ॉल्ट रूप से सक्षम होता है, इसलिए सुनिश्चित करें कि यह जानबूझकर किया गया है।"
+    },
     "flow source not found": "Flow source नहीं मिला",
     "date format": "दिनांक प्रारूप",
     "timezone": "समय क्षेत्र",

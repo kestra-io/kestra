@@ -642,6 +642,10 @@
       "tooltip": "トリガーを再起動する"
     },
     "trigger disabled": "Flowソース内でTriggerが無効になっています",
+    "disabled trigger removed": {
+      "title": "無効化された trigger が削除されました",
+      "message": "これらの trigger は UI で無効化されていましたが、この flow にはもう存在しません: {triggers}。新しい trigger の id はデフォルトで有効になるため、意図した変更か確認してください。"
+    },
     "flow source not found": "フローソースが見つかりません",
     "date format": "日付形式",
     "timezone": "タイムゾーン",

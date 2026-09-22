@@ -642,6 +642,10 @@
       "tooltip": "트리거 재시작"
     },
     "trigger disabled": "Flow 소스 내에서 Trigger가 비활성화되었습니다.",
+    "disabled trigger removed": {
+      "title": "비활성화된 trigger 제거됨",
+      "message": "다음 trigger는 UI에서 비활성화되었지만 더 이상 이 flow에 없습니다: {triggers}. 새로운 trigger id는 기본적으로 활성화되므로 의도한 변경인지 확인하세요."
+    },
     "flow source not found": "Flow source를 찾을 수 없음",
     "date format": "날짜 형식",
     "timezone": "시간대",

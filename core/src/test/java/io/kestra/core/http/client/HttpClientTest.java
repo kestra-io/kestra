@@ -685,7 +685,7 @@ class HttpClientTest {
                             );
                         }
                     } catch (IOException e) {
-                        fileUpload.discard();
+                        IOUtils.closeQuietly(fileUpload);
                         sink.error(e);
                     }
                 } else {

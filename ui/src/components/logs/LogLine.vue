@@ -21,7 +21,7 @@
         >{{ levelLabel }}</span>
         <div class="log-content">
             <div class="log-header">
-                <time class="log-time" :title="Filters.date(log.timestamp, 'iso')">{{ Filters.date(log.timestamp, "iso") }}</time>
+                <time v-if="log.timestamp" class="log-time" :title="Filters.date(log.timestamp, 'iso')">{{ Filters.date(log.timestamp, "iso") }}</time>
                 <span v-if="title" class="log-source">{{ log.taskId ?? log.flowId ?? "" }}</span>
                 <span v-for="(meta, x) in metaWithValue" :key="x" class="log-meta">
                     <span class="log-meta-key">{{ meta.key }}</span>
@@ -64,7 +64,7 @@
     // Props
     const props = defineProps<{
         cursor?: boolean,
-        log: Log,
+        log: Partial<Log>,
         filter?: string,
         level?: LevelKey,
         excludeMetas?: (keyof Log)[],

@@ -542,10 +542,11 @@ export const useExecutionsStore = defineStore("executions", () => {
             .then(async ({stream}) => {
                 for await (const event of stream) {
                     if (closed) break
+                    const executionEvent = event as unknown as Execution
                     // The server emits a first "fake" event carrying only an id to force the
                     // connection open; skip it as it has no state to display.
-                    if (!(event as Execution).state) continue
-                    handlers.onExecution(event as Execution)
+                    if (!executionEvent.state) continue
+                    handlers.onExecution(executionEvent)
                 }
                 finish(!receivedEnd)
             })

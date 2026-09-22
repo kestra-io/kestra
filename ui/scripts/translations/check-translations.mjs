@@ -40,13 +40,29 @@ const eeRoot = path.resolve(argValue("--ee-root") ?? path.join(path.dirname(ossR
 const eeTranslationsDir = path.join(eeRoot, "ui-ee/src/translations/ee_translations")
 
 /**
- * A tenant type keeps its own language folder, whose keys the app roots under `tenantTypes.<type>`
- * at runtime (`ui-ee/src/translations/tenantTypeMessages.ts`). The prefix is therefore the folder
- * name, and the files themselves carry no trace of it.
+ * Every EE dictionary: the shared one, then one per tenant type. A tenant type keeps its own
+ * language folder, whose keys the app roots under `tenantTypes.<type>` at runtime
+ * (`ui-ee/src/translations/tenantTypeMessages.ts`). The prefix is therefore the folder name, and
+ * the files themselves carry no trace of it. All of them are held to the same rules.
  */
-const eeTenantTypeTranslations = () =>
-    fs.globSync(path.join(eeRoot, "ui-ee/src/tenantTypes/*/translations"))
-        .map(dir => ({dir, prefix: `tenantTypes.${path.basename(path.dirname(dir))}`}))
+const eeDictionaries = () => [
+    {
+        dir: eeTranslationsDir,
+        fixPath: "ui-ee/src/translations/ee_translations/{lang}.json",
+        fingerprintsFile: path.join(eeRoot, "ui-ee/scripts/translations/fingerprints.json"),
+        prefix: "",
+    },
+    ...fs.globSync(path.join(eeRoot, "ui-ee/src/tenantTypes/*/translations")).map(dir => ({
+        dir,
+        fixPath: path.relative(eeRoot, path.join(dir, "{lang}.json")),
+        fingerprintsFile: path.join(dir, "fingerprints.json"),
+        prefix: `tenantTypes.${path.basename(path.dirname(dir))}.`,
+    })),
+]
+
+/** Every leaf an EE dictionary defines, under the prefix the app will root it at. */
+const eeLeafKeys = ({dir, prefix}) => leafKeys(readLanguage(dir, "en")).map(key => prefix + key)
+
 const scope = argValue("--scope") ?? "all"
 const reportPath = argValue("--report")
 const unusedCandidatesOnly = process.argv.includes("--unused-candidates")
@@ -76,7 +92,8 @@ function listLanguages(dir) {
     return fs.readdirSync(dir)
         .filter(file => file.endsWith(".json"))
         .map(file => file.replace(/\.json$/, ""))
-        .filter(lang => lang !== "en")
+        // A tenant type keeps its fingerprints beside its languages; it is not one of them.
+        .filter(lang => lang !== "en" && lang !== "fingerprints")
 }
 
 /** Adds `result.placeholders[lang]` for every language whose messages break the placeholder rules. */
@@ -297,18 +314,36 @@ function shadowMessage(key, ossKey, kind) {
 /** EE languages must match EE's own en.json, and no EE key may shadow one OSS defines. */
 function checkEe() {
     const result = {missing: {}, duplicates: [], placeholders: {}, stale: [], untranslated: {}, undefinedKeys: [], unusedKeys: []}
-    checkPlaceholders(result, "EE", eeTranslationsDir, "ui-ee/src/translations/ee_translations/{lang}.json")
-    checkUntranslated(result, "EE", eeTranslationsDir, "ui-ee/src/translations/ee_translations/{lang}.json")
-    checkStaleJson(result, "EE", eeTranslationsDir, path.join(eeRoot, "ui-ee/scripts/translations/fingerprints.json"), "run `npm run translations:generate` in ui-ee/ and commit the result")
-    const eeEn = readLanguage(eeTranslationsDir, "en")
-    const eeEnKeys = leafKeys(eeEn)
+    const dictionaries = eeDictionaries()
+    for (const {dir, fixPath, fingerprintsFile} of dictionaries) {
+        checkPlaceholders(result, "EE", dir, fixPath)
+        checkUntranslated(result, "EE", dir, fixPath)
+        checkStaleJson(result, "EE", dir, fingerprintsFile, "run `npm run translations:generate` in ui-ee/ and commit the result")
+    }
+    const eeEnKeys = dictionaries.flatMap(eeLeafKeys)
+
+    // The dictionaries are merged in order, so a key two of them define resolves to the last one
+    // silently. Whichever is the duplicate, it has to go.
+    const owner = new Map()
+    for (const dictionary of dictionaries) {
+        const source = dictionary.fixPath.replace("{lang}", "en")
+        for (const key of eeLeafKeys(dictionary)) {
+            const first = owner.get(key)
+            if (first === undefined) {
+                owner.set(key, source)
+                continue
+            }
+            result.duplicates.push(key)
+            annotate("error", `[EE] Translation key "${key}" is defined both in ${first} and in ${source}: the second silently wins at runtime - keep it in one of them`)
+        }
+    }
 
     // EE code reaches OSS and design-system keys too: its locale files are merged over OSS's.
     const definedKeys = ossDefinedKeys()
-    for (const key of allKeys(eeEn)) definedKeys.add(key)
-    for (const {dir, prefix} of eeTenantTypeTranslations()) {
-        definedKeys.add(prefix)
-        for (const key of allKeys(readLanguage(dir, "en"))) definedKeys.add(`${prefix}.${key}`)
+    for (const {dir, prefix} of dictionaries) {
+        // The prefix's own segments are namespaces the merged dictionary really has.
+        for (let at = prefix.indexOf("."); at !== -1; at = prefix.indexOf(".", at + 1)) definedKeys.add(prefix.slice(0, at))
+        for (const key of allKeys(readLanguage(dir, "en"))) definedKeys.add(prefix + key)
     }
     const scan = scanSources(eeRoot, eeSourceRoots)
     checkUsedKeys(result, "EE", scan, definedKeys)
@@ -320,24 +355,26 @@ function checkEe() {
             printUnusedCandidates("EE", eeEnKeys, scan.evidence)
             return result
         }
-        checkUnusedKeys(result, "EE", eeEnKeys, scan.evidence, "ui-ee/src/translations/ee_translations/en.json")
-        for (const {dir, prefix} of eeTenantTypeTranslations()) {
-            const leaves = leafKeys(readLanguage(dir, "en")).map(key => `${prefix}.${key}`)
-            checkUnusedKeys(result, "EE", leaves, scan.evidence, path.relative(eeRoot, path.join(dir, "en.json")))
+        for (const dictionary of dictionaries) {
+            checkUnusedKeys(result, "EE", eeLeafKeys(dictionary), scan.evidence, dictionary.fixPath.replace("{lang}", "en"))
         }
     } else {
         annotate("warning", `OSS sources not found at ${ossSourceRoots[0]} - skipping the unused-key check for EE keys, which OSS code may render.`)
         if (unusedCandidatesOnly) return result
     }
 
-    for (const lang of listLanguages(eeTranslationsDir)) {
-        const langKeys = new Set(leafKeys(readLanguage(eeTranslationsDir, lang)))
-        const missing = eeEnKeys.filter(key => !langKeys.has(key))
-        if (missing.length === 0) continue
+    for (const dictionary of dictionaries) {
+        const {dir, fixPath, prefix} = dictionary
+        const englishKeys = eeLeafKeys(dictionary)
+        for (const lang of listLanguages(dir)) {
+            const langKeys = new Set(leafKeys(readLanguage(dir, lang)).map(key => prefix + key))
+            const missing = englishKeys.filter(key => !langKeys.has(key))
+            if (missing.length === 0) continue
 
-        result.missing[lang] = missing
-        for (const key of missing) {
-            annotate("error", `[EE] Translation "${lang}" is missing key "${key}" - fix in ui-ee/src/translations/ee_translations/${lang}.json`)
+            result.missing[lang] = [...(result.missing[lang] ?? []), ...missing]
+            for (const key of missing) {
+                annotate("error", `[EE] Translation "${lang}" is missing key "${key}" - fix in ${fixPath.replace("{lang}", lang)}`)
+            }
         }
     }
 

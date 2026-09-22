@@ -57,13 +57,13 @@ if (eeReport && Object.keys(eeReport.missing).length > 0) {
 
 if (eeReport && eeReport.duplicates.length > 0) {
     sections.push(
-        "### ❌ EE translations - keys colliding with OSS\n\n" +
+        "### ❌ EE translations - colliding keys\n\n" +
         eeReport.duplicates.map(key => `- \`${key}\``).join("\n") + "\n\n" +
-        "**What to do:** each of these EE keys collides with a key OSS already owns - as an exact duplicate, " +
-        "or by sitting above or below an OSS message in the key tree, which the EE-over-OSS merge turns into a raw " +
-        "key rendered in the UI. Remove the duplicate (the OSS key already covers it) or rename the EE key or namespace in " +
-        "`ui-ee/src/translations/ee_translations/en.json`, then regenerate the other languages. The CI annotations " +
-        "name the exact OSS key each one collides with.",
+        "**What to do:** each of these EE keys collides with another one - a key OSS already owns, as an exact " +
+        "duplicate or by sitting above or below an OSS message in the key tree, which the EE-over-OSS merge turns " +
+        "into a raw key rendered in the UI; or a key another EE dictionary already defines, in which case the merge " +
+        "silently keeps one of the two. Remove the duplicate or rename the EE key or namespace, then regenerate the " +
+        "other languages. The CI annotations name the exact key each one collides with, and the file to fix it in.",
     )
 }
 

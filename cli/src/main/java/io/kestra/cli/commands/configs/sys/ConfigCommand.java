@@ -24,4 +24,9 @@ public class ConfigCommand extends AbstractCommand implements NoDatabaseCommandI
 
         return Kestra.runCli(new String[] { "configs", "--help" });
     }
+
+    @Override
+    protected boolean loadExternalPlugins() {
+        return false;
+    }
 }

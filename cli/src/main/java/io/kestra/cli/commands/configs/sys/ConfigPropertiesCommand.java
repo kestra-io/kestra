@@ -68,4 +68,9 @@ public class ConfigPropertiesCommand extends AbstractCommand implements NoDataba
         info.put("properties", properties);
         return info;
     }
+
+    @Override
+    protected boolean loadExternalPlugins() {
+        return false;
+    }
 }

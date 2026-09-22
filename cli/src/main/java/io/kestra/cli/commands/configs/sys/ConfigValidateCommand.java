@@ -74,4 +74,9 @@ public class ConfigValidateCommand extends AbstractCommand implements NoDatabase
             throw new CommandLine.ParameterException(this.spec.commandLine(), e.getMessage());
         }
     }
+
+    @Override
+    protected boolean loadExternalPlugins() {
+        return false;
+    }
 }

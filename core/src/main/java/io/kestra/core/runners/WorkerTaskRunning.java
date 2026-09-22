@@ -33,6 +33,14 @@ public class WorkerTaskRunning extends WorkerJobRunning {
      * {@inheritDoc}
      */
     @Override
+    public boolean isLegacy() {
+        return data == null;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public String uid() {
         return this.taskRun.getId();
     }

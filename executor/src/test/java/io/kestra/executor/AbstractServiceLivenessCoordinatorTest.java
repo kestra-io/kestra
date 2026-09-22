@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -93,6 +94,9 @@ public abstract class AbstractServiceLivenessCoordinatorTest {
 
     @Inject
     private IgnoreExecutionService ignoreExecutionService;
+
+    @Inject
+    private ExecutionStateStore executionStateStore;
 
     @BeforeAll
     void init() {
@@ -221,6 +225,60 @@ public abstract class AbstractServiceLivenessCoordinatorTest {
         }
     }
 
+    @Test
+    void shouldNotResubmitTaskWhenExecutionIsAlreadyTerminated() throws Exception {
+        // holdLatch keeps the task blocked, guaranteeing it is still running when the worker stops.
+        CountDownLatch holdLatch = new CountDownLatch(1);
+        CountDownLatch runningLatch = new CountDownLatch(1);
+
+        Worker worker = newWorker();
+        worker.start(1);
+
+        CountDownLatchTask task = latchTask(holdLatch, null);
+        Execution execution = TestsUtils.mockExecution(flowForTask(task), ImmutableMap.of());
+        WorkerTask workerTask = workerTaskFor(task, execution);
+
+        // written by the queue listener thread and read by this one once the sweep window has elapsed
+        var taskResults = new CopyOnWriteArrayList<WorkerTaskResult>();
+        workerTaskResultQueue.addListener(item ->
+        {
+            if (!item.uid().equals(workerTask.uid())) {
+                return;
+            }
+            taskResults.add(item);
+            if (State.Type.RUNNING == item.getTaskRun().getState().getCurrent()) {
+                runningLatch.countDown();
+            }
+        });
+
+        workerJobEventQueue.emit(null, WorkerJobEvent.of(workerTask, null));
+        assertThat(runningLatch.await(30, TimeUnit.SECONDS)).isTrue();
+
+        // An SLA (or a manual kill) terminates the execution while the task is still held on the worker,
+        // which never gets the kill because it is about to die.
+        executionStateStore.create(execution.withState(State.Type.KILLED));
+
+        // Task is held by holdLatch, guaranteed still running when we stop the worker.
+        worker.close();
+
+        Worker newWorker = newWorker();
+        newWorker.start(1);
+
+        // Wait long enough to cover the worker termination grace period (1s) and the full
+        // liveness-detection window (timeout 3s + interval 1s + jitter 0.5s), so the coordinator has
+        // had time to sweep the dead worker and we can confirm it did not resubmit.
+        Thread.sleep(8000);
+        try {
+            assertThat(taskResults)
+                .filteredOn(result -> State.Type.RUNNING == result.getTaskRun().getState().getCurrent())
+                .as("the task of a terminated execution must not be picked up by a worker again")
+                .hasSize(1);
+        } finally {
+            holdLatch.countDown();
+            newWorker.close();
+        }
+    }
+
     @ParameterizedTest
     @ValueSource(strings = { WORKER_QUEUE_UID, "<null>" })
     public void shouldNotifyTriggerWorkerLostWhenWorkerIsStopped(String workerQueueId) throws Exception {
@@ -266,18 +324,24 @@ public abstract class AbstractServiceLivenessCoordinatorTest {
     }
 
     private WorkerTask workerTaskWithLatch(CountDownLatch holdLatch, String workerQueueId) {
+        CountDownLatchTask task = latchTask(holdLatch, workerQueueId);
+        return workerTaskFor(task, TestsUtils.mockExecution(flowForTask(task), ImmutableMap.of()));
+    }
+
+    private CountDownLatchTask latchTask(CountDownLatch holdLatch, String workerQueueId) {
         WorkerSelector workerSelector = workerQueueId != null
             ? new WorkerSelector(java.util.List.of(workerQueueId), null)
             : null;
         // signalLatch satisfies the @NotNull countDownLatchKey constraint; not used in assertions.
-        CountDownLatchTask task = CountDownLatchTask.getTaskForCountDownLatch(
+        return CountDownLatchTask.getTaskForCountDownLatch(
             new CountDownLatch(1),
             holdLatch,
             Duration.ofSeconds(30),
             workerSelector
         );
+    }
 
-        Execution execution = TestsUtils.mockExecution(flowForTask(task), ImmutableMap.of());
+    private WorkerTask workerTaskFor(CountDownLatchTask task, Execution execution) {
         ResolvedTask resolvedTask = ResolvedTask.of(task);
 
         return WorkerTask.builder()

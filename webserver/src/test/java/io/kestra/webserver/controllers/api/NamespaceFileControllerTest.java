@@ -28,6 +28,7 @@ import io.kestra.plugin.core.flow.Subflow;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.HttpRequest;
+import io.micronaut.http.HttpStatus;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.client.annotation.Client;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
@@ -109,6 +110,41 @@ class NamespaceFileControllerTest {
 
         res = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/namespaces/" + namespace + "/files?path=/test.txt"));
         assertThat(res).isEqualTo(content2);
+    }
+
+    @Test
+    void shouldListOnlyTheRevisionsWrittenAfterADeletion() throws IOException, URISyntaxException {
+        String namespace = TestsUtils.randomNamespace();
+        Namespace namespaceStorage = namespaceFactory.of(TENANT_ID, namespace, storageInterface);
+        namespaceStorage.putFile(Path.of("/test.txt"), new ByteArrayInputStream("Hello World".getBytes()));
+        namespaceStorage.putFile(Path.of("/test.txt"), new ByteArrayInputStream("Hello World 2".getBytes()));
+
+        client.toBlocking().exchange(HttpRequest.DELETE("/api/v1/main/namespaces/" + namespace + "/files?path=/test.txt", null));
+        namespaceStorage.putFile(Path.of("/test.txt"), new ByteArrayInputStream("Hello World 3".getBytes()));
+
+        // The listing must not advertise revisions the read endpoint refuses to serve
+        List<NamespaceFileRevision> res = client.toBlocking()
+            .retrieve(HttpRequest.GET("/api/v1/main/namespaces/" + namespace + "/files/revisions?path=/test.txt"), Argument.of(List.class, NamespaceFileRevision.class));
+        assertThat(res).containsExactly(new NamespaceFileRevision(3));
+    }
+
+    @Test
+    void shouldNotReturnContentOfADeletedFileGivenARevision() throws IOException, URISyntaxException {
+        String namespace = TestsUtils.randomNamespace();
+        Namespace namespaceStorage = namespaceFactory.of(TENANT_ID, namespace, storageInterface);
+        namespaceStorage.putFile(Path.of("/test.txt"), new ByteArrayInputStream("Hello World".getBytes()));
+        namespaceStorage.putFile(Path.of("/test.txt"), new ByteArrayInputStream("Hello World 2".getBytes()));
+
+        client.toBlocking().exchange(HttpRequest.DELETE("/api/v1/main/namespaces/" + namespace + "/files?path=/test.txt", null));
+
+        // Every revision the file ever held must read as gone, not just the one it was deleted at
+        for (int revision : new int[]{ 1, 2 }) {
+            HttpClientResponseException e = assertThrows(
+                HttpClientResponseException.class,
+                () -> client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/namespaces/" + namespace + "/files?path=/test.txt&revision=" + revision))
+            );
+            assertThat(e.getStatus().getCode()).as("revision %s", revision).isEqualTo(HttpStatus.NOT_FOUND.getCode());
+        }
     }
 
     @Test

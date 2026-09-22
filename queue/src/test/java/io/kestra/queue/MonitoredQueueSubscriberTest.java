@@ -32,8 +32,7 @@ class MonitoredQueueSubscriberTest {
 
     private MeterRegistry meterRegistry;
     private MetricRegistry metricRegistry;
-    @SuppressWarnings("rawtypes")
-    private AbstractQueue queue;
+    private AbstractQueue<TestEvent> queue;
     @SuppressWarnings("unchecked")
     private QueueSubscriber<TestEvent> delegate;
     private MonitoredQueueSubscriber<TestEvent> monitored;

@@ -990,6 +990,7 @@ class WorkerJobDispatcherTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     void shouldRegisterGlobalGaugesOnConstruction() {
         // Then - global gauges should have been registered during setUp()
         verify(mockMetricRegistry).gauge(
@@ -1005,6 +1006,7 @@ class WorkerJobDispatcherTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     void shouldRegisterPerGroupGaugesOnFirstWorkerRegistration() {
         // Given
         WorkerStreamContext<WorkerJobResponse> context = createWorkerContext("worker-1", WORKER_GROUP_A, 10);

@@ -12,7 +12,7 @@ public class MapUtils {
 
     /**
      * Merge map a with map b.
-     * 
+     *
      * @see #deepMerge(Map, Map) that perform a deep merge which is more costly but safer for some use cases.
      */
     public static Map<String, Object> merge(Map<String, Object> a, Map<String, Object> b) {
@@ -154,6 +154,7 @@ public class MapUtils {
      * @return the merged Map.
      */
     @SafeVarargs
+    @SuppressWarnings("varargs")
     public static Map<String, Object> mergeWithNullableValues(final Map<String, Object>... maps) {
         return Arrays.stream(maps)
             .flatMap(map -> map.entrySet().stream())

@@ -136,6 +136,7 @@ class LogControllerTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     void searchLogsSortsByTimestamp() {
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
         when(tenantService.resolveTenant()).thenReturn(tenant);
@@ -270,6 +271,7 @@ class LogControllerTest {
         assertThat(logs.size()).isZero();
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     void deleteLogsFromExecutionByQuery() {
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
@@ -293,6 +295,7 @@ class LogControllerTest {
         assertThat(logs.size()).isZero();
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     void searchLogsFilteredByDate() {
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());

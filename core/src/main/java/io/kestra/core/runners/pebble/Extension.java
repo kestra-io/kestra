@@ -58,7 +58,7 @@ public class Extension extends AbstractExtension {
     private ErrorLogsFunction errorLogsFunction;
 
     @Inject
-    private HttpFunction httpFunction;
+    private HttpFunction<?> httpFunction;
 
     @Inject
     @Nullable

@@ -56,6 +56,7 @@ class PluginControllerTest {
         Helpers.loadExternalPluginsFromClasspath();
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     void plugins() {
         PagedResults<Plugin> page = client.toBlocking().retrieve(
@@ -372,6 +373,7 @@ class PluginControllerTest {
         assertThat(conditional.getStatus().getCode()).isEqualTo(HttpStatus.NOT_MODIFIED.getCode());
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     void flowProperties() {
         Map<String, Object> doc = client.toBlocking().retrieve(
@@ -398,8 +400,8 @@ class PluginControllerTest {
 
     @Test
     void catalogMergedSchemaRevalidatesViaEtagLikeTheLocalOnlySchema() {
-        HttpResponse<Map> local = client.toBlocking().exchange(HttpRequest.GET(PATH + "/schemas/task"), Map.class);
-        HttpResponse<Map> merged = client.toBlocking().exchange(HttpRequest.GET(PATH + "/schemas/task?includeCatalog=true"), Map.class);
+        HttpResponse<?> local = client.toBlocking().exchange(HttpRequest.GET(PATH + "/schemas/task"), Map.class);
+        HttpResponse<?> merged = client.toBlocking().exchange(HttpRequest.GET(PATH + "/schemas/task?includeCatalog=true"), Map.class);
 
         // Both variants revalidate on every use via ETag (no-cache, see #12102); the merged tag also
         // covers the bundle fingerprint so it changes when a different bundle is loaded.
@@ -513,6 +515,7 @@ class PluginControllerTest {
         assertThat(exception.code()).isEqualTo(HttpStatus.NOT_FOUND.getCode());
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     void should_list_plugins() {
         PagedResults<ApiTriggerPlugin> result = client.toBlocking().retrieve(
@@ -570,6 +573,7 @@ class PluginControllerTest {
     }
 
     @SafeVarargs
+    @SuppressWarnings("varargs")
     private static RegisteredPlugin pluginWithTriggers(Class<? extends AbstractTrigger>... triggers) {
         Manifest manifest = new Manifest();
         manifest.getMainAttributes().putValue("X-Kestra-Title", "Core");

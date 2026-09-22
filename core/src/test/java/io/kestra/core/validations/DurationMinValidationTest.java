@@ -43,12 +43,12 @@ class DurationMinValidationTest {
 
         assertThat(
             validator.forExecutables()
-                .validateConstructorParameters(introspection, new Object[] { Duration.ofMinutes(1) }, new Class[0])
+                .validateConstructorParameters(introspection, new Object[] { Duration.ofMinutes(1) }, new Class<?>[0])
         )
             .isEmpty();
         assertThat(
             validator.forExecutables()
-                .validateConstructorParameters(introspection, new Object[] { Duration.ofSeconds(59) }, new Class[0])
+                .validateConstructorParameters(introspection, new Object[] { Duration.ofSeconds(59) }, new Class<?>[0])
         )
             .anyMatch(v -> v.getMessage().contains("must be at least PT1M"));
     }

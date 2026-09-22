@@ -305,6 +305,7 @@ public abstract class AiService<T extends AiConfiguration> implements AiServiceI
         return result;
     }
 
+    @SuppressWarnings("rawtypes")
     public List<PluginMetadata<ReverseOrderVersion>> allPluginsMetadata() {
         return pluginRegistry.plugins().stream().flatMap(
             parentPlugin ->

@@ -1,3 +1,10 @@
+configurations {
+    // javac reads the @DurationMin members off core's compiled classes, so hibernate-validator has to be on the
+    // compile classpath; unlike the other modules this one keeps it off the runtime classpath
+    compileOnly.extendsFrom(micronaut)
+    testCompileOnly.extendsFrom(micronaut)
+}
+
 dependencies {
     // Kestra
     implementation project(':core')

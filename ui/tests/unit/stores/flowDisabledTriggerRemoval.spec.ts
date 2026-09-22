@@ -1,6 +1,5 @@
 import {beforeEach, describe, expect, it, vi} from "vitest";
 import {createPinia, setActivePinia} from "pinia";
-import {ElMessageBox} from "element-plus";
 
 const axiosPost = vi.fn();
 const axiosPut = vi.fn();
@@ -36,8 +35,15 @@ vi.mock("../../../src/utils/axios", () => ({
 vi.mock("element-plus", async (importOriginal) => {
     const actual = await importOriginal<typeof import("element-plus")>();
     const ElNotification = Object.assign(vi.fn(), {closeAll: vi.fn()});
-    return {...actual, ElMessageBox: vi.fn(), ElNotification};
+    return {...actual, ElNotification};
 });
+
+type FlowStore = Awaited<ReturnType<typeof setupStore>>;
+
+async function answerDialog(store: FlowStore, confirmed: boolean) {
+    await vi.waitUntil(() => store.removedDisabledTriggers.length > 0);
+    store.answerRemovedDisabledTriggers(confirmed);
+}
 
 const flowYaml = (triggerId: string) => [
     "id: my-flow",
@@ -77,7 +83,6 @@ function mockTriggerRows(rows: {triggerId: string, disabled: boolean}[]) {
 describe("flow store disabled trigger removal confirmation", () => {
     beforeEach(() => {
         vi.resetModules();
-        vi.mocked(ElMessageBox).mockReset();
         axiosPost.mockReset();
         axiosPut.mockReset();
         axiosGet.mockReset();
@@ -94,25 +99,26 @@ describe("flow store disabled trigger removal confirmation", () => {
     });
 
     it("prompts and aborts on cancel when a disabled trigger id leaves the flow", async () => {
-        vi.mocked(ElMessageBox).mockRejectedValue(new Error("cancel"));
-
         const store = await setupStore(RENAMED_YAML);
-        const outcome = await store.saveAll();
+        const saving = store.saveAll();
+        await answerDialog(store, false);
 
-        expect(ElMessageBox).toHaveBeenCalledTimes(1);
+        expect(await saving).toBe("no_op");
         expect(axiosPut).not.toHaveBeenCalled();
-        expect(outcome).toBe("no_op");
     });
 
-    it("saves when the prompt is confirmed", async () => {
-        vi.mocked(ElMessageBox).mockResolvedValue("confirm" as any);
-
+    it("names the disabled triggers it asks about and saves once confirmed", async () => {
         const store = await setupStore(RENAMED_YAML);
-        const outcome = await store.saveAll();
+        const saving = store.saveAll();
 
-        expect(ElMessageBox).toHaveBeenCalledTimes(1);
+        await vi.waitUntil(() => store.removedDisabledTriggers.length > 0);
+        expect(store.removedDisabledTriggers).toEqual(["daily"]);
+
+        store.answerRemovedDisabledTriggers(true);
+
+        expect(await saving).toBe("saved");
         expect(axiosPut).toHaveBeenCalledTimes(1);
-        expect(outcome).toBe("saved");
+        expect(store.removedDisabledTriggers).toEqual([]);
     });
 
     it("does not prompt when the removed trigger was not disabled", async () => {
@@ -121,7 +127,7 @@ describe("flow store disabled trigger removal confirmation", () => {
         const store = await setupStore(RENAMED_YAML);
         const outcome = await store.saveAll();
 
-        expect(ElMessageBox).not.toHaveBeenCalled();
+        expect(store.removedDisabledTriggers).toEqual([]);
         expect(axiosPut).toHaveBeenCalledTimes(1);
         expect(outcome).toBe("saved");
     });
@@ -132,7 +138,7 @@ describe("flow store disabled trigger removal confirmation", () => {
         const store = await setupStore(editedYaml);
         const outcome = await store.saveAll();
 
-        expect(ElMessageBox).not.toHaveBeenCalled();
+        expect(store.removedDisabledTriggers).toEqual([]);
         expect(axiosPut).toHaveBeenCalledTimes(1);
         expect(outcome).toBe("saved");
     });

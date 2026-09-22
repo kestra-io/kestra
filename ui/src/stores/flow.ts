@@ -172,6 +172,9 @@ export const useFlowStore = defineStore("flow", () => {
         }).then(() => true).catch(() => false);
     }
 
+    const removedDisabledTriggers = ref<string[]>([]);
+    let resolveRemovedDisabledTriggers: ((confirmed: boolean) => void) | null = null;
+
     function sourceTriggerIds(source: string | undefined): string[] {
         try {
             return (YAML_UTILS.parse(source ?? "")?.triggers ?? [])
@@ -211,15 +214,16 @@ export const useFlowStore = defineStore("flow", () => {
             .map(trigger => trigger.triggerId);
         if (!disabledIds.length) return true;
 
-        const key = "disabled trigger removed";
-        return ElMessageBox({
-            title: t(`${key}.title`),
-            message: () => h(Markdown, {source: t(`${key}.message`, {triggers: disabledIds.map(id => `\`${id}\``).join(", ")})}),
-            type: "warning",
-            showCancelButton: true,
-            confirmButtonText: t("ok"),
-            cancelButtonText: t("cancel"),
-        }).then(() => true).catch(() => false);
+        return new Promise<boolean>(resolve => {
+            removedDisabledTriggers.value = disabledIds;
+            resolveRemovedDisabledTriggers = resolve;
+        });
+    }
+
+    function answerRemovedDisabledTriggers(confirmed: boolean): void {
+        removedDisabledTriggers.value = [];
+        resolveRemovedDisabledTriggers?.(confirmed);
+        resolveRemovedDisabledTriggers = null;
     }
 
     const route = useRoute();
@@ -1047,6 +1051,8 @@ function deleteFlowAndDependencies() {
         onSaveMetadata,
         saveAll,
         save,
+        removedDisabledTriggers,
+        answerRemovedDisabledTriggers,
         onEdit,
         initYamlSource,
         findFlows,

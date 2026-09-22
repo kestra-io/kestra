@@ -8,6 +8,7 @@ import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
@@ -142,7 +143,9 @@ public class InternalNamespace implements Namespace {
         }
 
         // Get all metadata for source and its descendants, all versions
-        List<NamespaceFileMetadata> sourceMetas = stateStore.findAllVersionsByPaths(tenant, namespace, List.of(normalizedSource.toString(), normalizedSource + "/"));
+        List<NamespaceFileMetadata> sourceMetas = withoutRevisionsUpToDeletion(
+            stateStore.findAllVersionsByPaths(tenant, namespace, List.of(normalizedSource.toString(), normalizedSource + "/"))
+        );
 
         List<NamespaceFileMetadata> allMetas = new ArrayList<>(sourceMetas);
         boolean isDirectory = sourceMetas.stream().anyMatch(NamespaceFileMetadata::isDirectory);
@@ -215,6 +218,31 @@ public class InternalNamespace implements Namespace {
         return results;
     }
 
+    /**
+     * Drops the entries whose revision is at or below the most recent deletion of their own path.
+     * <p>
+     * Copying an entry to another path makes it live again there, under a destination that carries no
+     * deletion of its own. The revisions a deletion covers must therefore not travel with a move, or
+     * renaming a path would serve and list content that was deleted at it.
+     *
+     * @param entries Entries of one or more paths, in any order.
+     * @return Those entries that postdate the most recent deletion of their path.
+     * @see NamespaceFileMetadata#deletedFloor(Collection)
+     */
+    private static List<NamespaceFileMetadata> withoutRevisionsUpToDeletion(List<NamespaceFileMetadata> entries) {
+        Map<String, Integer> deletedFloors = entries.stream()
+            .collect(
+                Collectors.groupingBy(
+                    NamespaceFileMetadata::getPath,
+                    Collectors.collectingAndThen(Collectors.toList(), NamespaceFileMetadata::deletedFloor)
+                )
+            );
+
+        return entries.stream()
+            .filter(entry -> entry.getRevision() > deletedFloors.get(entry.getPath()))
+            .toList();
+    }
+
     private void purge(NamespaceFile nsFile) throws IOException {
         // Mark the metadata entry deleted before removing the object, so an interrupted purge can never
         // leave a live index entry pointing at a missing object (which would surface as a 404 on read).
@@ -230,8 +258,16 @@ public class InternalNamespace implements Namespace {
     @Override
     public NamespaceFile get(Path path) throws IOException {
         final Path normalizedPath = NamespaceFile.normalize(path);
+        Optional<NamespaceFileMetadata> metadata = findByPath(normalizedPath, true);
 
-        int revision = findByPath(normalizedPath).map(NamespaceFileMetadata::getRevision).orElse(1);
+        if (metadata.map(NamespaceFileMetadata::isDeleted).orElse(false)) {
+            // A path that has never held a file still resolves, which is what callers building the URI of a
+            // file still to be written rely on. A deleted one must not: its revisions are backed by objects
+            // that are still in storage, so resolving to one hands back content the file no longer has.
+            throw fileNotFound(normalizedPath, null);
+        }
+
+        int revision = metadata.map(NamespaceFileMetadata::getRevision).orElse(1);
 
         return NamespaceFile.of(namespace, normalizedPath, revision);
     }
@@ -257,6 +293,10 @@ public class InternalNamespace implements Namespace {
     public InputStream getFileContent(Path path, @Nullable Integer revision) throws IOException {
         final Path normalizedPath = NamespaceFile.normalize(path);
 
+        if (revision != null && revision <= deletedFloor(normalizedPath)) {
+            throw fileNotFound(normalizedPath, revision);
+        }
+
         // Throw if file not found OR if it's deleted
         NamespaceFileMetadata namespaceFileMetadata = findByPath(normalizedPath, revision).orElseThrow(() -> fileNotFound(normalizedPath, revision));
 
@@ -267,6 +307,17 @@ public class InternalNamespace implements Namespace {
         }
 
         return storage.get(tenant, namespace, resolveExistingRevisionUri(normalizedPath, namespaceFileMetadata.getRevision()));
+    }
+
+    /**
+     * Returns the highest revision of the given path that has been deleted, or {@code 0} when none has.
+     *
+     * @see NamespaceFileMetadata#deletedFloor(Collection)
+     */
+    private int deletedFloor(Path normalizedPath) {
+        return NamespaceFileMetadata.deletedFloor(
+            stateStore.findAllVersionsByPaths(tenant, namespace, List.of(normalizedPath.toString()))
+        );
     }
 
     /**

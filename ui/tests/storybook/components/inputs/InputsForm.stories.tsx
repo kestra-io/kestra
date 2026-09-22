@@ -728,12 +728,21 @@ export const TableInputRows: Story = {
     }
 };
 
-/** A cell error belongs to its cell: the form item under the grid must not repeat it. */
+/**
+ * A cell error belongs to its cell: the form item under the grid must not repeat it. It also waits
+ * for the user to have touched the grid, so an untouched one does not open with every cell flagged.
+ */
 export const TableInputCellError: Story = {
     async play({canvasElement}) {
+        await waitFor(function gridRendered() {
+            expect(canvasElement.querySelector("[data-test='table-cell-disks-0-size_gb']")).toBeTruthy();
+        });
+        expect(canvasElement.textContent).not.toContain("it must be more than");
+
+        await userEvent.type(canvasElement.querySelector("[data-test='table-cell-disks-0-mountpoint']")!, "/dev/sda");
         await waitFor(function cellErrorRendered() {
             expect(canvasElement.textContent).toContain("it must be more than `10`");
-        });
+        }, {timeout: 8000});
         // Once: the cell renders the cause, and the form item around it lends only its error state.
         expect((canvasElement.innerText.match(/it must be more than/g) || []).length).toBe(1);
         // The cell carries the cause alone, and the whole-input error slot stays empty.

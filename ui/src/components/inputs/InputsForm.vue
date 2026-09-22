@@ -527,8 +527,13 @@
     }
 
     function cellErrors(id: string): InputError[] {
+        if (isLoadingInput(id)) {
+            return []
+        }
         const meta = inputsMetaData.value.find((it) => it.id === id)
-        return meta?.errors?.filter(err => err.path) ?? []
+        // Gated like inputError: a grid of untouched cells would otherwise open with every required
+        // one already flagged, since the backend answers about the whole value from the first call.
+        return meta?.errors?.filter(err => err.path && (err.renderError || inputsValidated.value.has(id))) ?? []
     }
 
     function updateDefaults(): void {

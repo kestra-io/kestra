@@ -2639,6 +2639,9 @@
       "open_in_tabs": "Abrir em abas",
       "open_mode_hint": "As tasks abrem em um modal por padrão. Você pode tornar as abas o padrão em {settings}."
     },
+    "table_input": {
+      "add_row": "Clique aqui para adicionar uma nova linha"
+    },
     "blocks": "Blocos",
     "split_horizontal": "Dividir horizontalmente",
     "split_vertical": "Dividir verticalmente",

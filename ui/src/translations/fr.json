@@ -2639,6 +2639,9 @@
       "open_in_tabs": "Ouvrir dans des onglets",
       "open_mode_hint": "Les tasks s'ouvrent dans une modale par défaut. Vous pouvez définir les onglets par défaut dans les {settings}."
     },
+    "table_input": {
+      "add_row": "Clique ici pour ajouter une nouvelle ligne"
+    },
     "blocks": "Blocs",
     "split_horizontal": "Diviser horizontalement",
     "split_vertical": "Diviser verticalement",

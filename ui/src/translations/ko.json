@@ -2639,6 +2639,9 @@
       "open_in_tabs": "탭에서 열기",
       "open_mode_hint": "Task는 기본적으로 모달에서 열립니다. {settings}에서 탭을 기본값으로 설정할 수 있습니다."
     },
+    "table_input": {
+      "add_row": "새 줄을 추가하려면 여기를 클릭하세요."
+    },
     "blocks": "블록",
     "split_horizontal": "수평으로 분할",
     "split_vertical": "세로로 분할",

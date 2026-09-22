@@ -2639,6 +2639,9 @@
       "open_in_tabs": "Abrir en pestañas",
       "open_mode_hint": "Las tasks se abren en un modal por defecto. Puedes hacer que las pestañas sean el valor por defecto en {settings}."
     },
+    "table_input": {
+      "add_row": "Haz clic aquí para añadir una nueva línea"
+    },
     "blocks": "Bloques",
     "split_horizontal": "Dividir horizontalmente",
     "split_vertical": "Dividir verticalmente",

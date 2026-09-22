@@ -185,8 +185,8 @@ export const useFlowStore = defineStore("flow", () => {
         }
     }
 
-    // A trigger disabled from the UI carries that state on its trigger row, not in the flow source, so dropping
-    // or renaming its id silently loses the pause: https://github.com/kestra-io/kestra/issues/19672.
+    // The UI pause lives on the trigger row, keyed by trigger id, not in the flow source, so dropping or
+    // renaming that id silently loses it: https://github.com/kestra-io/kestra/issues/19672.
     async function confirmRemovedDisabledTriggers(source: string): Promise<boolean> {
         if (isCreating.value || !flow.value) return true;
 

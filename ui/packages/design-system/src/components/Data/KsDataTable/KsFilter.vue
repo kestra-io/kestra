@@ -30,6 +30,9 @@
                     <template #extra>
                         <slot name="extra" />
                     </template>
+                    <template v-if="$slots['data-options']" #data-options>
+                        <slot name="data-options" />
+                    </template>
                 </RightFilter>
             </template>
         </div>
@@ -329,7 +332,7 @@
             border-color: var(--ks-btn-secondary-border-active);
 
             :deep(svg) {
-                color: var(--ks-content-link, var(--ks-text-link)) !important;
+                color: var(--ks-text-link) !important;
             }
         }
     }

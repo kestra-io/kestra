@@ -56,7 +56,7 @@
         </template>
 
         <div class="p-3 pt-0">
-            <p class="mb-0" v-html="$t('restart confirm', {id: escape(execution.id)})" />
+            <p class="mb-0" v-html="$t('restart confirm', {id: escapeHtml(execution.id)})" />
         </div>
 
         <template #footer>
@@ -164,8 +164,8 @@
         <template #header>
             <span
                 v-html="$t('replay the execution', {
-                    executionId: escape(execution.id),
-                    flowId: escape(execution.flowId)
+                    executionId: escapeHtml(execution.id),
+                    flowId: escapeHtml(execution.flowId)
                 })"
             />
         </template>
@@ -181,11 +181,10 @@
 
 <script setup lang="ts">
     import {ref, computed, watch, inject} from "vue"
-    import escape from "lodash/escape"
     import {useRouter} from "vue-router"
     import {useI18n} from "vue-i18n"
     import {useToast} from "../../../../../utils/toast"
-    import {State} from "@kestra-io/design-system"
+    import {State, escapeHtml} from "@kestra-io/design-system"
     import {useFlowStore} from "../../../../../stores/flow"
     import {useAuthStore} from "override/stores/auth"
     import {useExecutionsStore} from "../../../../../stores/executions"
@@ -429,19 +428,19 @@
         font-size: var(--ks-font-size-base);
         font-weight: 600;
         margin: 0;
-        color: var(--ks-color-text-primary);
+        color: var(--ks-text-primary);
     }
 }
 .execution-description {
     font-size: var(--ks-font-size-xs);
-    color: var(--ks-color-text-secondary);
+    color: var(--ks-text-secondary);
 }
 
 .section-title {
     font-size: var(--ks-font-size-sm);
     font-weight: 600;
     margin: 20px 0 12px 0;
-    color: var(--ks-color-text-primary);
+    color: var(--ks-text-primary);
 }
 
 .radio-vertical {

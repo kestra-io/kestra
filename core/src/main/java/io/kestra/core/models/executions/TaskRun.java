@@ -14,6 +14,7 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.core.models.tasks.retrys.AbstractRetry;
 import io.kestra.core.utils.IdUtils;
+import io.kestra.core.utils.ListUtils;
 import io.kestra.core.validations.TenantId;
 
 import io.swagger.v3.oas.annotations.Hidden;
@@ -161,10 +162,32 @@ public class TaskRun implements TenantInterface {
         );
     }
 
+    /**
+     * Fail a task run: set its state to FAILED and create a new attempt.
+     * <p>
+     * If there is an already running attempt, it will be failed. Otherwise, a new attempt will be created.
+     */
     public TaskRun fail() {
-        var attempt = TaskRunAttempt.builder().state(new State(State.Type.FAILED)).build();
-        // Copy defensively: this.attempts may be immutable (e.g. after deserialization), and fail()
-        // must return a new TaskRun without mutating the caller's list in place.
+        TaskRunAttempt attempt;
+        if (!ListUtils.isEmpty(this.attempts) && this.attempts.getLast().getState().isRunning()) {
+            attempt = this.attempts.getLast().withState(State.Type.FAILED);
+        } else {
+            attempt = TaskRunAttempt.builder().state(new State().withState(State.Type.FAILED)).build();
+        }
+
+        return this.withNewStateAndAttempt(State.Type.FAILED, attempt);
+    }
+
+    /**
+     * Start running a task run: set its state to RUNNING and create a new attempt.
+     */
+    public TaskRun run() {
+        var attempt = TaskRunAttempt.builder().state(new State().withState(State.Type.RUNNING)).build();
+        return this.withNewStateAndAttempt(State.Type.RUNNING, attempt);
+    }
+
+    private TaskRun withNewStateAndAttempt(State.Type newState, TaskRunAttempt attempt) {
+        // Copy defensively: this.attempts may be immutable (e.g. after deserialization).
         List<TaskRunAttempt> newAttempts = this.attempts == null ? new ArrayList<>(1) : new ArrayList<>(this.attempts);
         newAttempts.add(attempt);
 
@@ -179,7 +202,7 @@ public class TaskRun implements TenantInterface {
             this.value,
             newAttempts,
             this.assetEmits,
-            this.state.withState(State.Type.FAILED),
+            this.state.withState(newState),
             this.iteration,
             this.dynamic,
             this.forceExecution,

@@ -165,6 +165,12 @@
         background-color: rgba(#3991ff, .2);
     }
 
+    /* Lines a consumer has locked via useReadOnlyYamlKeys. Styled here because the
+       selector reaches into Monaco's own DOM, which a scoped feature style cannot. */
+    .ks-readonly-yaml-line {
+        background-color: var(--ks-bg-inactive);
+    }
+
     .editor-content-widget-content {
         display: flex;
         align-items: center;
@@ -178,7 +184,7 @@
     :not(.namespace-defaults, .kel-drawer__body) > .ks-editor {
         flex-direction: column;
         height: 100%;
-        z-index: 1001;
+        z-index: calc(var(--ks-z-dropdown) + 1);
     }
 
     :not(.blueprint-container) .ks-editor {

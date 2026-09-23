@@ -1,9 +1,8 @@
 import {afterEach, beforeEach, describe, expect, test, vi} from "vitest"
-import {mount} from "@vue/test-utils"
 import {createPinia, setActivePinia} from "pinia"
-import {createI18n} from "vue-i18n"
 import KestraDesignSystem from "@kestra-io/design-system"
 import MultiPanelGenericEditorView from "../../../src/components/MultiPanelGenericEditorView.vue"
+import {i18nMount} from "../i18nMount"
 
 vi.mock("vue-router", () => ({
     useRoute: () => ({query: {}, params: {}, name: "flow"}),
@@ -23,10 +22,7 @@ vi.mock("../../../src/components/MultiPanelEditorTabs.vue", () => ({
 }))
 
 const globalConfig = {
-    plugins: [
-        createI18n({legacy: false, locale: "en", fallbackWarn: false, missingWarn: false}),
-        KestraDesignSystem,
-    ],
+    plugins: [KestraDesignSystem],
 }
 
 const editorElements = [
@@ -39,7 +35,7 @@ const editorElements = [
 ]
 
 function mountEditor({withBottomPanel = true} = {}) {
-    return mount(MultiPanelGenericEditorView, {
+    return i18nMount(MultiPanelGenericEditorView, {
         global: globalConfig,
         props: {
             editorElements,

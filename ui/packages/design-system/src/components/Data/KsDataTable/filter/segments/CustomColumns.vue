@@ -8,12 +8,26 @@
             <KsButton link :aria-label="$t('filter.close')" :icon="Close" @click="$emit('close')" size="small" class="close-icon" />
         </div>
 
+        <div v-if="showSearch" class="search">
+            <KsInput
+                v-model="search"
+                size="small"
+                clearable
+                :placeholder="$t('filter.search columns')"
+            >
+                <template #prefix>
+                    <Magnify :size="16" />
+                </template>
+            </KsInput>
+        </div>
+
         <div class="list">
             <DraggableTableColumns
                 v-if="columns.length"
                 :columns="columns"
                 :visibleColumns="currentVisibleColumns"
                 :storageKey="storageKey"
+                :search="search"
                 @resolved="currentVisibleColumns = $event"
                 @update-columns="handleUpdateColumns"
             />
@@ -27,9 +41,11 @@
 
 <script setup lang="ts">
     import {computed, ref, watch} from "vue"
-    import {Close} from "../utils/icons"
+    import {Close, Magnify} from "../utils/icons"
     import type {ColumnConfig} from "../composables/useTableColumns"
     import DraggableTableColumns from "../DraggableTableColumns.vue"
+
+    const SEARCH_THRESHOLD = 12
 
     const props = defineProps<{
         storageKey: string;
@@ -45,6 +61,9 @@
     // `useTableColumns` captures its column list at setup, so building the list before the page's
     // columns arrive leaves it resolving against nothing; the `v-if` above defers that.
     const currentVisibleColumns = ref<string[]>(props.visibleColumns)
+    const search = ref("")
+
+    const showSearch = computed(() => props.columns.length > SEARCH_THRESHOLD)
 
     watch(() => props.visibleColumns, (columns) => {
         currentVisibleColumns.value = columns
@@ -106,6 +125,13 @@
         }
     }
 
+    .search {
+        padding: var(--ks-spacing-2) var(--ks-spacing-4);
+        border-bottom: 1px solid var(--ks-border-default);
+        background-color: var(--ks-bg-surface);
+        flex-shrink: 0;
+    }
+
     .list {
         flex: 1;
         overflow-y: auto;
@@ -119,6 +145,7 @@
 
     .footer {
         border-top: 1px solid var(--ks-border-default);
+        background-color: var(--ks-bg-surface);
         flex-shrink: 0;
         position: sticky;
         bottom: 0;

@@ -34,11 +34,9 @@ These rules are what keep the UI maintainable as it grows. Treat any deviation a
 8. **Don't fork — extend.** If a `Ks*` component is *almost* what you need, add a prop or a slot to the component in `ui/packages/design-system/`. Copy-pasting the component into your feature folder is forbidden.
 9. **Every new `Ks*` component needs a Storybook story and a unit test.** Stories double as living documentation for design and product reviewers.
 10. **i18n keys live with the design system component**, not inside feature code, when they belong to the component (e.g. `KsEmpty`, `KsDurationPicker`). Register them via `registerDesignSystemI18n`.
-11. **Check that a token exists before using it.** With an invalid `var(--ks-…)` and no fallback, the property is silently inherited instead, so the mistake remains invisible until the computed style is measured. The cases feature was released using `--ks-font-size-medium`, `--ks-font-size-small`, `--ks-radius-2` and `--ks-border-active`, none of which are declared anywhere. One grep is enough:
+11. **Check that a token exists before using it.** With an invalid `var(--ks-…)` and no fallback, the property is silently inherited instead, so the mistake remains invisible until the computed style is measured. The cases feature was released using `--ks-font-size-medium`, `--ks-font-size-small`, `--ks-radius-2` and `--ks-border-active`, none of which are declared anywhere, and the interval filter's Apply-to row shipped with no visible selection for the same reason (kestra-io/kestra#18777).
 
-    ```bash
-    grep -rn -- "--ks-your-token" packages/design-system/src/assets/styles/
-    ```
+    Your editor underlines it: `ks/no-undeclared-custom-property` (stylelint) covers `<style>` blocks and `.scss`, `kestra-tokens/no-undeclared-ks-token` (eslint) covers `cssVar("--ks-…")` and tokens written inside strings, and both propose a replacement. `npm run lint` runs both. See [scripts/tokens/README.md](scripts/tokens/README.md), which also has the one setting the Stylelint extension needs for `.vue` files.
 12. **Copying an existing rule is not proof that it is correct.** Several hundred `:deep()` selectors, some hex codes and some raw pixel values are older than these rules and are being removed over time. Treat them as debt rather than as precedent: don't add more, and clean up the ones in the component you are already editing.
 
 ## Best practices for keeping the design system healthy
@@ -97,8 +95,11 @@ Reject (or ask to fix) anything that:
 
 - No hardcoded user-facing strings. Always go through i18n.
 - **In `<template>`, always use the global `$t(...)`** — never the `t` from `useI18n()`. Only call `useI18n()` (`const {t} = useI18n()`) when you need `t` in `<script>` (computed labels, toasts, etc.); if a component needs i18n **only** in its template, use `$t` and don't import `useI18n` at all.
-- Use `<i18n-t>` for plurals and interpolation — never string-concatenate.
+- Pass plurals and interpolation as named arguments to `$t(...)`, never string-concatenate. `<i18n-t>` is not used, and `tests/unit/i18n/i18nGuard.spec.ts` fails on it.
+- A string that embeds a component (`router-link`, `KsId`) renders through `splitTranslation(t, key, slot)` from `src/utils/splitTranslation`, which returns the text on each side of the placeholder. Keep the two halves and the component on one physical line: Vue turns a line break between an interpolation and an element into a space.
+- A string that embeds static markup (a `<code>` fragment) passes the markup as a named argument and renders with `v-html`.
 - Format dates and times via `dateUtils` (which respects `TIMEZONE_STORAGE_KEY` and `DATE_FORMAT_STORAGE_KEY`); format durations via `durationUtils.humanDuration()`. Don't reach for `Intl.DateTimeFormat` directly.
+- Date arithmetic goes through the `dayjs` re-exported by the design system. `dayjs` objects are **immutable**, so `d.add(1, "day")` returns a new instance and mutating idioms (`cursor.add(...)` in a loop) silently no-op — reassign instead. Parse untrusted input with `dateUtils.parseIso()`: bare `dayjs()` happily reads an epoch number or a bare year as a date.
 - Strings owned by a `Ks*` component live in the design system's locale files and are registered via `registerDesignSystemI18n`. Strings owned by a feature live in that feature's locale files.
 
 ### Loading, empty, and error states
@@ -192,6 +193,18 @@ watch(filterQueryKey, () => dataTable.value?.resetAndReload())
 
 The general rule: **if you find yourself reaching for `{deep: true}` on a computed source, the source should probably return a primitive (string / number) instead of an object.** Strings compare by value; references compare by identity. Picking the right primitive is the fix.
 
+### Router guards and `initApp`
+
+Guards are wired through `initApp`, and three things about that are easy to get wrong.
+
+**Register before the router installs.** `app.use(router)` starts the first navigation, and `vue-router` reads `beforeGuards.list()` once that navigation reaches its guard phase. A guard registered synchronously after `app.use(router)` is still picked up; one registered after an `await` is not, and `initApp` awaits i18n and the moment locale between installing the router and returning. A guard added in `initApp(...).then(...)` therefore misses the first navigation, which on a cold load is the only navigation there is. Pass it through the `guards` argument instead.
+
+`afterEach` is in the same window, for a less obvious reason: `afterGuards.list()` is read when a navigation *finishes*, and the first navigation can finish while `initApp` is still awaiting. An `afterEach` registered after those awaits therefore never sees it either, which silently costs anything keyed on the first navigation (`eventsRouter` attributes the landing page to `document.referrer` on exactly that hop).
+
+**A guard's arity decides how `vue-router` reads it.** `initApp` registers guards as `guards.beforeEach.bind(null, router)`, so a `(router, to, from)` guard arrives bound with `length` 2 and stays in return-value mode, where returning a route object redirects. Add a fourth parameter and the bound length becomes 3, which flips `vue-router` into `next()`-callback mode: the returned redirect is ignored and the navigation hangs with no error. Keep guards at `(router, to, from)`.
+
+**There is one `beforeEach` slot.** OSS spends it on `tenantGuard` and can only do so because its auth guard is a `beforeResolve`; EE spends it on `authGuard`. A second `beforeEach` has to be composed into the existing one, or `initApp` has to grow to accept a list, rather than being registered afterwards, since "afterwards" is exactly the case that misses the first navigation.
+
 ### Unsaved input in modals (discard guard)
 
 Any modal/drawer where the user **enters data** must not silently lose it on an accidental dismissal. `KsDialog` and `KsDrawer` take a `dirty` prop and ask for confirmation themselves; never reimplement the confirm-before-discard logic per modal.
@@ -232,7 +245,7 @@ Rules:
 
 ### Types
 
-**Never write `any`.** TypeScript stops checking a value the moment it is typed `any`, so a typo or a renamed field is found by whoever opens the page instead of by the compiler. The rule covers every spelling: `(row: any)`, `x as any`, `any[]`, `Record<string, any>`.
+**Never write `any`.** TypeScript stops checking a value the moment it is typed `any`, so a typo or a renamed field is found by whoever opens the page instead of by the compiler. The rule covers every spelling: `(row: any)`, `x as any`, `any[]`, `Record<string, any>`, in the `<script>` block and in template expressions alike.
 
 Where the type comes from, in this order:
 
@@ -243,18 +256,26 @@ Where the type comes from, in this order:
 
 For a value whose shape really is not known yet, `unknown` with a narrowing check is the honest escape hatch. `any` is not.
 
-**A legitimate `any`, or a package with no types?** Give the package a small `.d.ts` shim next to `src/material-icons.d.ts`. For an `any` that truly cannot be avoided, record it with `npm run check:ts-any -- --write` and commit the changed baseline, so the decision shows up in the diff and gets reviewed instead of slipping through.
+**A legitimate `any`, or a package with no types?** Give the package a small `.d.ts` shim next to `src/material-icons.d.ts`. An `any` that truly cannot be avoided is a conversation with a maintainer, not a number you change on your own.
 
-**The check.** `npm run check:ts-any` counts the explicit `any` per file and compares the counts with `scripts/explicit-any/baseline.json`, which records what was already in the tree when the rule came in. The same check runs on every PR, as `Npm - check ts-any`. It fails in two directions and the message says which:
+**MANDATORY — never raise the baseline to make the check pass.** A bigger number hides the new `any` from every later run, which is the one thing the baseline exists to prevent, and it will be treated as a bug in review. Specifically, and this applies to coding agents as much as to people:
 
-- ``New `any` in 1 file(s)`` with a line like `src/utils/filters.ts: 1 -> 2`. Your change added one. Type it with the order above. When that is genuinely impossible, say why in the PR and run `npm run check:ts-any -- --write` to record the new number.
-- `1 file(s) improved` with `src/utils/filters.ts: 3 -> 2`. Your change removed one, which is the point, and the baseline has to come down with it. Run `npm run check:ts-any -- --write` and commit the changed `baseline.json` alongside your code.
+- Do not hand-edit `scripts/explicit-any/baseline.json`. The only writes to it come from the check itself.
+- Do not run `--accept-new-any`. A maintainer who has already agreed to a raise records it with `npm run check:ts-any -- --write --accept-new-any`; it is never a way to get a green check.
+- A red `check:ts-any` is fixed by typing the value, not by making the check agree with the code.
+- When you cannot type it, stop. Leave the check red, say in the PR which value defeated you and why, and let a maintainer decide. An unfinished PR is fine; a silently raised baseline is not.
+
+**The check.** `npm run check:ts-any` counts the explicit `any` per file, oxlint for the `<script>` block and the Vue compiler for template expressions, and compares the counts with `scripts/explicit-any/baseline.json`, which records what was already in the tree when the rule came in. The same check runs on every PR, as `Npm - check ts-any`. It fails in two directions and the message says which:
+
+- ``New `any` in 1 file(s)`` with a line like `src/utils/filters.ts: 1 -> 2`. Your change added one. Type it with the order above.
+- `The baseline is out of date` with `src/utils/filters.ts: 3 -> 2`, or `moved from …` when you renamed a file. Nothing got worse, the baseline just has to follow the code. Run `npm run check:ts-any -- --write` and commit it alongside your change. A rename is followed whether it is staged or already committed on your branch, so the count travels with the file either way.
 
 Install the repo hooks once with `.github/.hooks/setup_hooks.sh` and the second case stops happening: the pre-commit hook lowers the baseline and stages it with the rest of your commit.
 
 ### Testing UI
 
 - Unit tests with **Vitest** + `@vue/test-utils`, colocated next to the component.
+- Mount through `i18nMount` or `i18nShallowMount` rather than calling `mount` with your own `createI18n`. Pass `messages` for the keys the spec asserts on, or `locales: en` when it needs the real `en.json`; with neither, `t("key")` renders the key. Missing-key warnings are off in both helpers, so a spec asserting on raw keys stays quiet. Two copies exist and behave the same: specs under `tests/unit/` and `packages/topology/tests/` import `tests/unit/i18nMount.ts`, and specs under `packages/design-system/tests/units/` import the one next to them. Both install the design system, as the app does at bootstrap, so a mounted `Ks*` component resolves instead of warning; a spec that mocks `@kestra-io/design-system` away has to keep a `default` export for that install, such as `default: {install: () => {}}`. Only a spec that never mounts anything, such as one testing pluralisation on the instance itself, builds its own i18n.
 - Use `data-test="..."` selectors for E2E tests with **Playwright**. Never select on `.el-*` or `.ks-*` class names — those are not stable contracts and will break on Element Plus / DS upgrades.
 - Storybook stories cover: each variant prop, dark mode, edge cases (empty content, very long text, error state). A `*.stories.ts` file with one default story is not enough.
 - Visual regressions caught in Storybook are cheaper to fix than caught in production.
@@ -268,7 +289,7 @@ npm run check:types && npm run test:unit && npm run lint
 
 `npm run lint` is not optional. Without it, one PR comment per eslint violation is posted by reviewdog (missing trailing commas, mostly) and the human review is buried underneath them.
 
-`npm run check:ts-any` compares the explicit `any` per file against `scripts/explicit-any/baseline.json`. It fails when a file gains one, so type it instead. It also fails when a file loses one, because the baseline has to come down with the code. With the repo's git hooks installed (`.github/.hooks/setup_hooks.sh`) the pre-commit hook does that for you through `check:ts-any -- --lock`, which only ever lowers numbers; without hooks, run `npm run check:ts-any -- --write` and commit the smaller numbers.
+`npm run check:ts-any` compares the explicit `any` per file against `scripts/explicit-any/baseline.json`. It fails when a file gains one, so type it instead of raising the number. It also fails when a file loses one, because the baseline has to come down with the code: run `npm run check:ts-any -- --write` and commit the smaller numbers, or install the repo's git hooks (`.github/.hooks/setup_hooks.sh`) and the pre-commit hook does it for you. `--write` only ever lowers; it refuses to raise a count.
 
 Then read your own diff for the design-system violations that no linter catches:
 
@@ -321,7 +342,7 @@ If your `<style>` block needs to exist:
 .my-feature {
     background: var(--ks-bg-surface);
     color: var(--ks-text-primary);
-    border: 1px solid var(--ks-border-primary);
+    border: 1px solid var(--ks-border-default);
 }
 ```
 
@@ -425,16 +446,18 @@ If your `<style>` block needs to exist:
 
 - `State`, `STATES`, `LOG_LEVELS` — execution state constants, icons, and colors
 - `cssVar(name, opacity?)` — read a `--ks-*` CSS custom property at runtime (use this in JS / chart configs instead of hardcoding hex)
-- `dateUtils` — `dateFilter()`, `DATE_FORMAT_STORAGE_KEY`, `TIMEZONE_STORAGE_KEY`
-- `durationUtils` — `duration()`, `humanDuration()` — ISO 8601 ↔ ms and human-readable
+- `dayjs` — the one configured dayjs instance (utc, timezone, duration, advancedFormat, calendar, isoWeek, localizedFormat, minMax, relativeTime, weekOfYear, isSameOrBefore). Never `import dayjs from "dayjs"` in feature code: plugins are registered on this instance, so a bare import silently lacks them
+- `dateUtils` — `dateFilter()`, `parseIso()`, `toIsoKeepOffset()`, `currentTimezone()`, `timezonesWithOffset()`, `currentLocale()`, `setLocale()`, `DATE_FORMAT_STORAGE_KEY`, `TIMEZONE_STORAGE_KEY`
+- `durationUtils` — `duration()`, `isValidDuration()`, `humanDuration()` — ISO 8601 ↔ ms and human-readable
 - `stringUtils` — `afterLastDot()`
+- `escapeHtml()`, `cloneDeep()`, `deepMerge()`, `isDeepEqual()`, `isPlainObject()`, `getPath()`, `setPath()`, `groupBy()`, `mapValues()`, `debounce()`, `throttle()` — the general-purpose helpers that replaced lodash. `debounce`/`throttle` return a function carrying `cancel()` and `flush()`. Do not add `lodash` back for any of these
 - `fileUtils` — `isFileUri()`, `fileName()`, `fileExtension()`, `fileIcon()` — storage-URI detection and the file symbol used by `KsFileTag`
 - `flowYamlUtils` — YAML parsing / manipulation for flow definitions
 - `Comparators` — enum of filter comparison operators
 - Filter helpers — `decodeSearchParams()`, `encodeFiltersToQuery()`, `getUniqueFilters()`, etc.
 - `applyDefaultFilters()`, `useRouteFilterPolicy()` — filter composables
-- `setMomentInstance()`, `setDateFormatter()` — date library configuration
 - `designSystemLocale`, `setDesignSystemLocale`, `registerDesignSystemI18n` — i18n
+- `designSystemI18nReady()` — the locale registration the plugin's `install` started, to await instead of leaving it in flight (the unit setup awaits it after each test)
 
 ## Composables
 

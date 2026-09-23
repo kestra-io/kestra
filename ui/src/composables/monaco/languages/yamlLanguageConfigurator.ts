@@ -38,6 +38,7 @@ import {
     scopePropertySuggestionsToTaskType,
     taskIdentityAtCursor,
 } from "./taskCompletionScoping"
+import {splitPluginTypeLabel} from "./pluginTypeCompletionLabel"
 import type {IPosition, IDisposable, CancellationToken} from "monaco-editor/editor/editor.api"
 import IModel = monaco.editor.IModel;
 import ProviderResult = monaco.languages.ProviderResult;
@@ -334,11 +335,12 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
                     source: model.getValue(),
                     cursorIndex: model.getOffsetAt(position),
                 })
-                // Only a plugin FQCN resolves to a schema. `inputs:`/`outputs:` entries share the
-                // task shape but carry types like `STRING`, which would 404 on every keystroke.
-                const scopeKey = task && task.type.includes(".")
-                    ? `${task.type}@${task.version ?? ""}`
-                    : undefined
+                // Monaco YAML requests the union of every plugin property for a bare task.
+                // Re-scoping hits the backend to fetch the specific plugin's properties, but
+                // the flow root has other id+type lists that are task-shaped (e.g. sla:).
+                // Guard on dotted FQCNs to skip 404s for enum types like MAX_DURATION.
+                const isPluginType = task?.type.includes(".")
+                const scopeKey = task && isPluginType ? `${task.type}@${task.version ?? ""}` : undefined
                 if (task && scopeKey && !unscopableTaskTypes.has(scopeKey)) {
                     try {
                         // `all` is required: without it the endpoint omits every inherited `Task`
@@ -363,10 +365,25 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
                 }
             }
 
+            // Done last: every step above reads `label` as the fully qualified string.
+            const labelledSuggestions = scopedSuggestions.map((suggestion) => {
+                const split = splitPluginTypeLabel(suggestion.label)
+                if (split === undefined) {
+                    return suggestion
+                }
+
+                return {
+                    ...suggestion,
+                    label: split,
+                    // Keeps package segments searchable now that the label is only the class name.
+                    filterText: suggestion.filterText ?? suggestion.label,
+                }
+            })
+
             return {
                 ...defaultCompletion,
                 incomplete: true,
-                suggestions: scopedSuggestions,
+                suggestions: labelledSuggestions,
             }
         }
     }
@@ -409,7 +426,7 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
                     const parentStartLine = model.getPositionAt(
                         elementUnderCursor.range![0],
                     ).lineNumber
-                    
+
                     let autoCompletions = []
                     try {
                         autoCompletions = await yamlAutoCompletion.valueAutoCompletion(

@@ -5,11 +5,12 @@ import {
     YAMLMap,
     YAMLSeq,
     isMap,
-    isNode,
+    isNode, isPair,
     isSeq,
     parseDocument,
     visit,
     type Node,
+    type Pair,
 } from "yaml"
 import {parseDocumentTyped, scalarKey} from "./document.ts"
 import {extractFieldFromMaps} from "./fields.ts"
@@ -116,8 +117,10 @@ function extractIndentAndMaybeYamlKey(stringToTest: string): {
 
 export type YamlElement = {
     key?: string;
-    value: Record<string, any>;
-    parents: Record<string, any>[];
+    /** Whatever `toJS` produced for the node: a scalar, a sequence or a map. */
+    value: unknown;
+    parents: Record<string, unknown>[];
+    path?: string[];
     range?: [number, number, number];
 };
 
@@ -155,10 +158,15 @@ export function localizeElementAtIndex(source: string, indexInSource: number): Y
             }
             const range = value.range
             const beforeElement = source.substring(0, range[0])
+            const path = parents
+                .filter((p) => isPair(p))
+                .map((p) => scalarKey(p as Pair<unknown, unknown>))
+                .filter((k) => k !== undefined) as string[]
             elements.push({
                 parents: parents
                     .filter((p) => isMap(p))
                     .map((p) => p.toJS(yamlDoc)),
+                path: path,
                 key: yamlKey,
                 value: value.toJS(yamlDoc),
                 range: [

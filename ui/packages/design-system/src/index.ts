@@ -50,6 +50,7 @@ import KsNewBadge from "./components/Data/KsNewBadge.vue"
 import KsBreadcrumb from "./components/Navigation/KsBreadcrumb/KsBreadcrumb.vue"
 import KsDrillRow from "./components/Navigation/KsDrillRow/KsDrillRow.vue"
 import KsButton from "./components/Basic/KsButton/KsButton.vue"
+export type {KsButtonType} from "./components/Basic/KsButton/KsButton.vue"
 import KsButtonGroup from "./components/Basic/KsButton/KsButtonGroup.vue"
 import KsCard from "./components/Data/KsCard.vue"
 import KsTopologyDetails from "./components/Data/KsTopologyDetails.vue"
@@ -180,18 +181,38 @@ export * as stringUtils from "./utils/string"
 export {rowKey} from "./utils/rowKey"
 export * as fileUtils from "./utils/file"
 export * as durationUtils from "./utils/duration"
+export {
+    cloneDeep,
+    debounce,
+    deepMerge,
+    escapeHtml,
+    getPath,
+    groupBy,
+    isDeepEqual,
+    isPlainObject,
+    mapValues,
+    setPath,
+    throttle,
+} from "./utils/lang"
+export type {PathSegments, Scheduled} from "./utils/lang"
 export * as State from "./utils/state"
 export {LOG_LEVELS, STATES} from "./utils/state"
 export {SECTIONS, CLUSTER_PREFIX} from "./utils/constants"
-export {setMomentInstance, setDateFormatter} from "./date/index"
+export {dayjs, type Dayjs} from "./date/index"
 export type {KsChartSeriesItem} from "./components/Charts/KsEchart.vue"
 export type {KsGraphNode, KsGraphEdge} from "./components/Charts/KsGraph.vue"
 export type {KsBreadcrumbItem} from "./components/Navigation/KsBreadcrumb/types"
 export {Comparators} from "./components/Data/KsDataTable/filter/utils/filterTypes"
 export type {InputInstance, FormItemRule, FormRules, FormInstance, CascaderOption, CascaderProps} from "element-plus"
-export {TooltipType, ChartRenderer, ChartFeature} from "./utils/chart"
+export {TooltipType, ChartRenderer, ChartFeature, categoryLabel} from "./utils/chart"
 export {designSystemLocale, setDesignSystemLocale, registerDesignSystemI18n} from "./i18n"
+
+let i18nRegistration: Promise<void> = Promise.resolve()
+
+/** The registration `install` started, so a caller can await it rather than leave it in flight. */
+export const designSystemI18nReady = (): Promise<void> => i18nRegistration
 export {useDiscardGuard} from "./composables/useDiscardGuard"
+export {useTopLayer} from "./composables/useTopLayer"
 export type {FilterContext} from "./components/Data/KsDataTable/filter/utils/filterInjectionKeys"
 export {SAVED_FILTER_ANALYTICS_INJECTION_KEY} from "./components/Data/KsDataTable/filter/utils/filterAnalytics"
 export type {SavedFilterAction, SavedFilterAnalyticsEvent, SavedFilterAnalyticsTracker} from "./components/Data/KsDataTable/filter/utils/filterAnalytics"
@@ -226,6 +247,7 @@ export {
     validStructureSignature,
     parseFilterKey,
     decodeFilterValue,
+    type DecodedParam,
     type ParsedFilterKey,
     type PrefixSegment,
 } from "./components/Data/KsDataTable/filter/utils/helpers"
@@ -508,7 +530,12 @@ const KestraDesignSystem = {
 
         const symbol = (app as unknown as {__VUE_I18N_SYMBOL__?: symbol}).__VUE_I18N_SYMBOL__
         const i18n = symbol ? (app._context.provides[symbol] as I18n | undefined) : undefined
-        if (i18n) void registerDesignSystemI18n(i18n)
+        // Chained rather than replaced, so a second install cannot drop a pending registration and
+        // leave its locale imports unawaitable; settled either way, so one failure blocks no other.
+        if (i18n) {
+            const register = () => registerDesignSystemI18n(i18n)
+            i18nRegistration = i18nRegistration.then(register, register)
+        }
     },
 }
 

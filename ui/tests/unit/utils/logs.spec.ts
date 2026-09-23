@@ -23,7 +23,7 @@ function log(message: string, over: Partial<Log> = {}): Log {
         thread: "t",
         index: 0,
         attemptNumber: 0,
-        executionKind: "flow",
+        executionKind: "NORMAL",
         timestamp: "2026-06-04T13:33:56.680Z",
         message,
         ...over,

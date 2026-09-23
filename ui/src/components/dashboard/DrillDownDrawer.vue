@@ -17,7 +17,7 @@
                 :currentPage="page"
                 :pageSize="size"
                 :loadData="loadData"
-                :rowKey="(row: any) => `${row.namespace}-${row.id}`"
+                :rowKey="(row: Record<string, unknown>) => `${row.namespace}-${row.id}`"
                 @page-changed="onPageChanged"
                 @row-dblclick="onRowDblClick"
             >
@@ -28,10 +28,10 @@
                     :label="column.label"
                 >
                     <template #default="{row}">
-                        <KsExecutionStatus v-if="column.type === 'status'" :status="get(row, column.prop)" size="small" />
-                        <KsDateAgo v-else-if="column.type === 'date'" :inverted="true" :date="get(row, column.prop)" />
-                        <Labels v-else-if="column.type === 'labels'" :labels="get(row, column.prop)" />
-                        <template v-else>{{ get(row, column.prop) }}</template>
+                        <KsExecutionStatus v-if="column.type === 'status'" :status="getPath<string>(row, column.prop)!" size="small" />
+                        <KsDateAgo v-else-if="column.type === 'date'" :inverted="true" :date="getPath(row, column.prop)" />
+                        <Labels v-else-if="column.type === 'labels'" :labels="getPath(row, column.prop)" />
+                        <template v-else>{{ getPath(row, column.prop) }}</template>
                     </template>
                 </KsTableColumn>
             </KsDataTable>
@@ -48,8 +48,7 @@
 <script lang="ts" setup>
     import {computed, defineAsyncComponent, ref, watch} from "vue"
     import {useRoute, useRouter} from "vue-router"
-    import get from "lodash/get"
-    import {KsExecutionStatus} from "@kestra-io/design-system"
+    import {KsExecutionStatus, getPath} from "@kestra-io/design-system"
     import Labels from "../layout/Labels.vue"
     import {useDrillDownStore} from "../../stores/drillDown"
     import {getDrillDownPreview} from "./composables/drillDownPreview"
@@ -71,7 +70,7 @@
     })
 
     const dataTable = ref<{resetAndReload: () => void} | null>(null)
-    const rows = ref<any[]>([])
+    const rows = ref<Record<string, unknown>[]>([])
     const total = ref(0)
     const loading = ref(false)
     const page = ref(1)
@@ -107,7 +106,7 @@
         if (value) dataTable.value?.resetAndReload()
     })
 
-    const onRowDblClick = (row: any) => {
+    const onRowDblClick = (row: Record<string, unknown>) => {
         const currentPreview = preview.value
         if (currentPreview?.mode !== "table") return
 

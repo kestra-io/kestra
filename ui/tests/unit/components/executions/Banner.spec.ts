@@ -1,26 +1,15 @@
 import {beforeEach, describe, expect, test} from "vitest"
 import {reactive} from "vue"
-import {mount} from "@vue/test-utils"
 import {createPinia, setActivePinia} from "pinia"
-import {createI18n} from "vue-i18n"
-
 import ChevronDown from "vue-material-design-icons/ChevronDown.vue"
 import ChevronUp from "vue-material-design-icons/ChevronUp.vue"
-
 import Banner from "../../../../src/components/executions/overview/components/Banner.vue"
 import type {Execution} from "../../../../src/stores/executions"
-
-const i18n = createI18n({
-    legacy: false,
-    locale: "en",
-    missingWarn: false,
-    fallbackWarn: false,
-})
+import {i18nMount} from "../../i18nMount"
 
 const triggerScope = reactive({visible: false, enabled: false})
 
 const globalConfig = {
-    plugins: [i18n],
     stubs: {
         RouterLink: {props: ["to"], template: "<a><slot /></a>"},
         KsTooltip: {template: "<div><slot /></div>"},
@@ -62,7 +51,7 @@ function buildExecution(): Execution {
 }
 
 function mountBanner() {
-    return mount(Banner, {
+    return i18nMount(Banner, {
         props: {execution: buildExecution()},
         global: globalConfig,
     })

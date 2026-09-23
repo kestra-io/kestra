@@ -121,6 +121,38 @@ export const Pill: Story = {
     },
 }
 
+/** Icon, default variant */
+export const DefaultWithIcon: Story = {
+    render: () => ({
+        components: {KsCheckTag},
+        setup() {
+            const selected = ref<string>("variables")
+            return {selected}
+        },
+        template: `
+            <div style="padding:24px;display:flex;gap:8px;flex-wrap:wrap">
+                <ks-check-tag :checked="selected === 'inputs'" @change="selected = 'inputs'">
+                    <template #icon>
+                        <svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M5 3h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Zm0 2v14h14V5H5Z"/></svg>
+                    </template>
+                    Inputs
+                </ks-check-tag>
+                <ks-check-tag :checked="selected === 'variables'" @change="selected = 'variables'">
+                    <template #icon>
+                        <svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z"/></svg>
+                    </template>
+                    Variables
+                </ks-check-tag>
+                <ks-check-tag :checked="false">No icon</ks-check-tag>
+            </div>
+        `,
+    }),
+    async play({canvasElement}) {
+        const icon = canvasElement.querySelector(".kel-check-tag:not(.kel-check-tag--pill) .kel-check-tag__icon")
+        await expect(icon).toBeTruthy()
+    },
+}
+
 /** Multi-select group */
 export const MultiSelectGroup: Story = {
     render: () => ({

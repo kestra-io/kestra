@@ -113,7 +113,7 @@
         return schema?.properties?.title ?? schema?.title ?? null
     })
 
-    const sidebarPlugins = computed<Plugin[]>(() => pluginsStore.sidebarPluginsFor({cls: routeCls.value}))
+    const sidebarPlugins = computed<Plugin[]>(() => pluginsStore.sidebarPluginsFor({cls: routeCls.value, owner: owningPlugin.value}))
 
     const backTo = computed(() => {
         const grp = owningPlugin.value

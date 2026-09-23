@@ -12,8 +12,8 @@ export type PreviewConfig =
     | {
         mode: "table";
         columns: PreviewColumn[];
-        fetch: (params: Record<string, any>) => Promise<{results: any[]; total: number}>;
-        rowDetail: (row: any, tenant: string | undefined) => RouteLocationRaw;
+        fetch: (params: Record<string, unknown>) => Promise<{results: Record<string, unknown>[]; total: number}>;
+        rowDetail: (row: Record<string, unknown>, tenant: string | undefined) => RouteLocationRaw;
     }
     | {mode: "logs"}
     | {mode: "none"} // explicit opt-out: no drawer preview, keep the full-page redirect
@@ -31,7 +31,7 @@ const previewRegistry: Record<string, PreviewConfig> = {
         fetch: (params) => useExecutionsStore().findExecutions({...params, commit: false}),
         rowDetail: (row, tenant) => ({
             name: "executions/update",
-            params: {tenant, namespace: row.namespace, flowId: row.flowId, id: row.id},
+            params: {tenant, namespace: String(row.namespace), flowId: String(row.flowId), id: String(row.id)},
         }),
     },
     "flows/list": {
@@ -44,7 +44,7 @@ const previewRegistry: Record<string, PreviewConfig> = {
         fetch: (params) => useFlowStore().findFlows({...params, commit: false}),
         rowDetail: (row, tenant) => ({
             name: "flows/update",
-            params: {tenant, namespace: row.namespace, id: row.id},
+            params: {tenant, namespace: String(row.namespace), id: String(row.id)},
         }),
     },
     "logs/list": {mode: "logs"},

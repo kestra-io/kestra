@@ -79,7 +79,7 @@
                                 :active="active"
                                 :data-index="item.index"
                             >
-                                <template v-if="item.isGroup">
+                                <template v-if="isLogGroup(item)">
                                     <LogLine
                                         v-for="member in (isGroupExpanded(currentTaskRunIndex, item) ? item.members : item.members.slice(0, 1))"
                                         :key="member.index"
@@ -89,14 +89,14 @@
                                             ['log-bg-' + levelToHighlight?.toLowerCase()]: levelToHighlight === member.level,
                                             'opacity-40': levelToHighlight && levelToHighlight !== member.level,
                                         }"
-                                        :level="level as any"
+                                        :level="level"
                                         :log="member"
-                                        :excludeMetas="excludeMetas as any"
+                                        :excludeMetas="excludeMetas"
                                     />
                                     <button
                                         type="button"
                                         class="log-group-more"
-                                        :style="{borderLeftColor: `var(--ks-log-border-${item.level.toLowerCase()})`, fontSize: `${logsFontSize}px`}"
+                                        :style="{borderLeftColor: `var(--ks-log-border-${item.level?.toLowerCase()})`, fontSize: `${logsFontSize}px`}"
                                         :aria-expanded="isGroupExpanded(currentTaskRunIndex, item)"
                                         @click="toggleGroup(currentTaskRunIndex, item)"
                                     >
@@ -154,9 +154,9 @@
                                                 levelToHighlight !== item.level,
                                         }"
                                         :key="item.index"
-                                        :level="level as any"
+                                        :level="level"
                                         :log="item"
-                                        :excludeMetas="excludeMetas as any"
+                                        :excludeMetas="excludeMetas"
                                         v-else-if="
                                             filter === '' ||
                                                 item.message
@@ -206,7 +206,7 @@
                                             )
                                         "
                                         :levelToHighlight="levelToHighlight"
-                                        :level="level as any"
+                                        :level="level"
                                         :excludeMetas="[
                                             'namespace',
                                             'flowId',
@@ -262,7 +262,7 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, ref, watch, onMounted, onBeforeUnmount, nextTick, useTemplateRef} from "vue"
+    import {computed, ref, watch, onMounted, onBeforeUnmount, nextTick, useTemplateRef, type ComponentPublicInstance} from "vue"
     import {logsFontSize} from "../../composables/useLogDisplay"
     import {useI18n} from "vue-i18n"
     import {RouterLink} from "vue-router"
@@ -270,15 +270,13 @@
     import ChevronDown from "vue-material-design-icons/ChevronDown.vue"
     import * as OutputsAPI from "@kestra-io/kestra-sdk/outputs"
     import LogLine from "./LogLine.vue"
-    import {State, levelToRequestParams, type LevelFilterValue} from "@kestra-io/design-system"
-    import _xor from "lodash/xor"
-    import _groupBy from "lodash/groupBy"
-    import moment from "moment"
+    import {State, levelToRequestParams, type LevelFilterValue, type Scheduled, groupBy, throttle, dayjs} from "@kestra-io/design-system"
     import "vue-virtual-scroller/dist/vue-virtual-scroller.css"
     import {logDisplayTypes} from "../../utils/constants"
-    import {DynamicScroller, DynamicScrollerItem} from "vue-virtual-scroller"
+    import {DynamicScroller, DynamicScrollerItem, type DynamicScrollerExposed} from "vue-virtual-scroller"
     import {useCoreStore} from "../../stores/core"
-    import {useExecutionsStore} from "../../stores/executions"
+    import {useExecutionsStore, type Execution} from "../../stores/executions"
+    import type {Log} from "../../stores/logs"
     import TaskRunLine from "../executions/TaskRunLine.vue"
     import * as FlowUtils from "../../utils/flowUtils"
     import FilePreview from "../executions/FilePreviewDrawer.vue"
@@ -286,8 +284,7 @@
     import * as Utils from "../../utils/utils"
     import * as LogUtils from "../../utils/logs"
     import {buildTaskRunHierarchy} from "../../utils/taskRunHierarchy"
-    import throttle from "lodash/throttle"
-    import {useClient, type TaskRun, type TaskRunAttempt} from "@kestra-io/kestra-sdk"
+    import {useClient, type FlowForExecution, type LogEntry, type TaskRunAttempt} from "@kestra-io/kestra-sdk"
 
     // Recursive component - self reference
     import TaskRunDetails from "./TaskRunDetails.vue"
@@ -297,13 +294,43 @@
 
     const $http = useClient()
 
+    type ExecutionTaskRun = NonNullable<Execution["taskRunList"]>[number]
+
     // The UI taskrun carries a computed `depth` (for nesting) and subflow `outputs`,
     // neither of which the SDK TaskRun type models.
-    type TaskRunWithDepth = TaskRun & { depth: number; outputs?: Record<string, any> }
+    type TaskRunWithDepth = ExecutionTaskRun & {depth: number; outputs?: {executionId?: string; [key: string]: unknown}}
 
     // Cast helper for DynamicScroller slot items which lose type info
     function asTaskRun(item: unknown): TaskRunWithDepth {
         return item as TaskRunWithDepth
+    }
+
+    // A log file wrapper only carries the attempt it belongs to, so the log fields are optional here.
+    type LogLineSource = Partial<Log> & {logFile?: string}
+    type LogLineItem = LogLineSource & {index: number}
+    type LogGroup = {isGroup: true; index: number; level?: Log["level"]; members: LogLineItem[]}
+    type DisplayItem = LogLineItem | LogGroup
+
+    function isLogGroup(item: DisplayItem): item is LogGroup {
+        return "isGroup" in item
+    }
+
+    type LogsScroller = Pick<DynamicScrollerExposed, "scrollToItem" | "scrollToBottom">
+
+    function isLogsScroller(el: unknown): el is LogsScroller {
+        return typeof el === "object" && el !== null && "scrollToItem" in el && "scrollToBottom" in el
+    }
+
+    type SubflowLogs = {expandAll: () => void; scrollToLog: (logId: string) => void}
+
+    function isSubflowLogs(el: unknown): el is SubflowLogs {
+        return typeof el === "object" && el !== null && "expandAll" in el && "scrollToLog" in el
+    }
+
+    type LoopOutputs = {iterationCount: number; terminatedIterations?: Record<string, number>}
+
+    function isLoopOutputs(outputs: Record<string, unknown> | null): outputs is LoopOutputs {
+        return outputs !== null && typeof outputs.iterationCount === "number"
     }
 
     const coreStore = useCoreStore()
@@ -316,13 +343,13 @@
         levelFilter?: LevelFilterValue
         filter?: string
         taskRunId?: string
-        excludeMetas?: string[]
+        excludeMetas?: (keyof Log)[]
         forcedAttemptNumber?: number
         targetExecutionId?: string
-        targetFlow?: any // FIXME: any
+        targetFlow?: FlowForExecution
         allowAutoExpandSubflows?: boolean
         showProgressBar?: boolean
-        level?: string
+        level?: LogUtils.LevelKey
         showLogs?: boolean
         hideTaskHeader?: boolean
     }
@@ -354,28 +381,28 @@
 
     // Reactive state
     const shownAttemptsUid = ref<string[]>([])
-    const rawLogs = ref<any[]>([]) // FIXME: any
-    const timer = ref<ReturnType<typeof moment> | undefined>(undefined)
+    const rawLogs = ref<LogEntry[]>([])
+    const timer = ref<ReturnType<typeof dayjs> | undefined>(undefined)
     const timeout = ref<ReturnType<typeof setTimeout> | undefined>(undefined)
     const selectedAttemptNumberByTaskRunId = ref<Record<string, number>>({})
-    const executionSSE = ref<any>(undefined) // FIXME: any
-    const logsSSE = ref<any>(undefined) // FIXME: any
+    const executionSSE = ref<{close: () => void} | undefined>(undefined)
+    const logsSSE = ref<EventSource | undefined>(undefined)
     // Execution `rawLogs` and any open logs SSE belong to, so both can be dropped on a change.
     const logsExecutionId = ref<string | undefined>(undefined)
     const logsCloseTimeout = ref<ReturnType<typeof setTimeout> | undefined>(undefined)
-    const flow = ref<any>(undefined) // FIXME: any
-    const logsBuffer = ref<any[]>([]) // FIXME: any
+    const flow = ref<FlowForExecution | undefined>(undefined)
+    const logsBuffer = ref<LogEntry[]>([])
     const shownSubflowsIds = ref<{subflowExecutionId: string; taskRunIndex: number}[]>([])
     const logFileSizeByPath = ref<Record<string, string>>({})
     const childrenLogIndicesByLevelByChildUid = ref<Record<string, Record<string, string[]>>>({})
-    const logsScrollerRefs = ref<Record<string | number, any>>({}) // FIXME: any
-    const subflowTaskRunDetailsRefs = ref<Record<string, any>>({}) // FIXME: any
-    const throttledExecutionUpdate = ref<ReturnType<typeof throttle> | undefined>(undefined)
-    const targetExecution = ref<any>(undefined) // FIXME: any
-    const loopOutputsByTaskRunId = ref<Record<string, any>>({}) // FIXME: any
+    const logsScrollerRefs = ref<Record<string | number, LogsScroller | undefined>>({})
+    const subflowTaskRunDetailsRefs = ref<Record<string, SubflowLogs | undefined>>({})
+    const throttledExecutionUpdate = ref<Scheduled<[Execution]> | undefined>(undefined)
+    const targetExecution = ref<Execution | undefined>(undefined)
+    const loopOutputsByTaskRunId = ref<Record<string, LoopOutputs>>({})
 
     // Template ref
-    const taskRunScroller = useTemplateRef<any>("taskRunScroller") // FIXME: any
+    const taskRunScroller = useTemplateRef<ComponentPublicInstance & LogsScroller>("taskRunScroller")
 
     // Computed
     const followedExecution = computed(() =>
@@ -385,7 +412,7 @@
     )
 
     const currentTaskRuns = computed<TaskRunWithDepth[]>(() => {
-        const taskRunList: TaskRun[] = followedExecution.value?.taskRunList ?? []
+        const taskRunList = followedExecution.value?.taskRunList ?? []
 
         if (props.taskRunId) {
             return taskRunList
@@ -406,32 +433,31 @@
 
     const logsWithIndexByAttemptUid = computed(() => {
         const logFilesWrappers = currentTaskRuns.value.flatMap((taskRun) =>
-            attempts(taskRun)
-                .filter((attempt) => attempt.logFile !== undefined)
-                .map((attempt, attemptNumber: number) => ({
-                    logFile: attempt.logFile,
-                    taskRunId: taskRun.id,
-                    attemptNumber,
-                })),
+            attempts(taskRun).flatMap((attempt, attemptNumber) =>
+                attempt.logFile
+                    ? [{logFile: attempt.logFile, taskRunId: taskRun.id, attemptNumber}]
+                    : [],
+            ),
         )
 
-        logFilesWrappers.forEach((logFileWrapper: any) => // FIXME: any
+        logFilesWrappers.forEach((logFileWrapper) =>
             fetchAndStoreLogFileSize(logFileWrapper.logFile),
         )
 
-        const indexedLogs = [...filteredLogs.value, ...logFilesWrappers]
+        const lines: LogLineSource[] = [...filteredLogs.value, ...logFilesWrappers]
+        const indexedLogs = lines
             .filter(
-                (logLine: any) => // FIXME: any
+                (logLine) =>
                     logLine.logFile !== undefined ||
                     props.filter === "" ||
-                    logLine?.message
+                    (logLine.message ?? "")
                         .toLowerCase()
                         .includes(props.filter.toLowerCase()) ||
-                    isSubflow(taskRunById.value[logLine.taskRunId]),
+                    isSubflow(taskRunOf(logLine)),
             )
-            .map((logLine: any, index: number) => ({...logLine, index})) // FIXME: any
+            .map((logLine, index): LogLineItem => ({...logLine, index}))
 
-        return _groupBy(indexedLogs, (indexedLog: any) => // FIXME: any
+        return groupBy(indexedLogs, (indexedLog) =>
             attemptUid(indexedLog.taskRunId, indexedLog.attemptNumber),
         )
     })
@@ -442,17 +468,21 @@
         expandedGroups.value = new Set()
     })
 
-    function isCollapsibleLine(item: any): boolean { // FIXME: any
+    function taskRunOf(log: LogLineSource): TaskRunWithDepth | undefined {
+        return log.taskRunId ? taskRunById.value[log.taskRunId] : undefined
+    }
+
+    function isCollapsibleLine(item: LogLineItem): boolean {
         return !!item.message
             && item.logFile === undefined
             && item.level !== "ERROR"
             && item.level !== "WARN"
-            && !isSubflow(taskRunById.value[item.taskRunId])
+            && !isSubflow(taskRunOf(item))
     }
 
-    function buildDisplayItems(items: any[]): any[] { // FIXME: any
-        const result: any[] = []
-        let run: any[] = []
+    function buildDisplayItems(items: LogLineItem[]): DisplayItem[] {
+        const result: DisplayItem[] = []
+        let run: LogLineItem[] = []
         let runKey: string | null = null
         const flushRun = () => {
             if (run.length >= LogUtils.COLLAPSE_THRESHOLD) {
@@ -484,22 +514,22 @@
 
     const displayItemsByAttemptUid = computed(() => {
         const source = logsWithIndexByAttemptUid.value
-        const result: Record<string, any[]> = {}
+        const result: Record<string, DisplayItem[]> = {}
         for (const uid in source) {
             result[uid] = buildDisplayItems(source[uid])
         }
         return result
     })
 
-    function groupKey(taskRunIndex: number, item: any): string { // FIXME: any
+    function groupKey(taskRunIndex: number, item: LogGroup): string {
         return `${taskRunIndex}:${item.index}`
     }
 
-    function isGroupExpanded(taskRunIndex: number, item: any): boolean { // FIXME: any
+    function isGroupExpanded(taskRunIndex: number, item: LogGroup): boolean {
         return expandedGroups.value.has(groupKey(taskRunIndex, item))
     }
 
-    function toggleGroup(taskRunIndex: number, item: any) { // FIXME: any
+    function toggleGroup(taskRunIndex: number, item: LogGroup) {
         const key = groupKey(taskRunIndex, item)
         const next = new Set(expandedGroups.value)
         if (next.has(key)) {
@@ -510,7 +540,7 @@
         expandedGroups.value = next
     }
 
-    const autoExpandTaskRunStates = computed(() => {
+    const autoExpandTaskRunStates = computed<string[]>(() => {
         switch (
             localStorage.getItem("logDisplay") ||
             logDisplayTypes.DEFAULT
@@ -518,11 +548,11 @@
         case logDisplayTypes.ERROR:
             return [State.FAILED, State.RUNNING, State.PAUSED]
         case logDisplayTypes.ALL:
-            return State.arrayAllStates().map((s: any) => s.name) // FIXME: any
+            return State.arrayAllStates().map((s) => s.name)
         case logDisplayTypes.HIDDEN:
             return []
         default:
-            return State.arrayAllStates().map((s: any) => s.name) // FIXME: any
+            return State.arrayAllStates().map((s) => s.name)
         }
     })
 
@@ -537,10 +567,12 @@
                                 selectedAttemptNumberByTaskRunId.value[taskRun.id],
                             )
                         ]
-                    currentTaskRunLogs?.forEach((log: any) => { // FIXME: any
-                        ;(indicesByLevel[log.level] ??= []).push(
-                            taskRunIndex + "/" + log.index,
-                        )
+                    currentTaskRunLogs?.forEach((log) => {
+                        if (log.level) {
+                            ;(indicesByLevel[log.level] ??= []).push(
+                                taskRunIndex + "/" + log.index,
+                            )
+                        }
                     })
                 }
                 return indicesByLevel
@@ -569,13 +601,14 @@
         )
     })
 
+    // Without a level every level is kept, which is what the lowest level yields.
     const levelOrLower = computed(() =>
-        LogUtils.levelOrLower(props.level as any), // FIXME: any
+        LogUtils.levelOrLower(props.level ?? "TRACE"),
     )
 
     const filteredLogs = computed(() =>
-        rawLogs.value.filter((log: any) => // FIXME: any
-            levelOrLower.value.includes(log.level),
+        rawLogs.value.filter((log) =>
+            log.level !== undefined && levelOrLower.value.includes(log.level),
         ),
     )
 
@@ -645,14 +678,14 @@
 
             if (!oldExecution) {
                 nextTick(() => {
-                    const parentScroller =
-                        (taskRunScroller.value as any)?.$el?.parentNode?.closest( // FIXME: any
-                            ".vue-recycle-scroller",
-                        )
+                    const scrollerElement = taskRunScroller.value?.$el
+                    const parentScroller = scrollerElement?.parentNode?.closest(
+                        ".vue-recycle-scroller",
+                    )
                     if (parentScroller) {
                         const scrollerStyles =
                             window.getComputedStyle(parentScroller)
-                        ;(taskRunScroller.value as any).$el.style.maxHeight = `${parseFloat(scrollerStyles.getPropertyValue("max-height")) - parentScroller.clientHeight}px` // FIXME: any
+                        scrollerElement.style.maxHeight = `${parseFloat(scrollerStyles.getPropertyValue("max-height")) - parentScroller.clientHeight}px`
                     }
                 })
             }
@@ -674,7 +707,7 @@
                 }
             }
 
-            if (!State.isRunning(followedExecution.value.state.current)) {
+            if (!State.isRunning(newExecution.state.current)) {
                 // wait a bit to make sure we don't miss logs as log indexer is asynchronous
                 cancelLogsSSEClose()
                 logsCloseTimeout.value = setTimeout(() => {
@@ -711,7 +744,7 @@
 
     // Lifecycle
     onMounted(() => {
-        throttledExecutionUpdate.value = throttle((targetExecutionEvent: any) => { // FIXME: any
+        throttledExecutionUpdate.value = throttle((targetExecutionEvent: Execution) => {
             targetExecution.value = targetExecutionEvent
         }, 500)
 
@@ -740,7 +773,7 @@
                 executionId: followedExecution.value.id,
                 taskRunId,
             })
-            if (outputs === null || !outputs.iterationCount) {
+            if (!isLoopOutputs(outputs) || !outputs.iterationCount) {
                 return
             }
             loopOutputsByTaskRunId.value[taskRunId] = outputs
@@ -750,7 +783,7 @@
     }
 
     function fileUrl(path: string): string {
-        return `${apiUrl()}/executions/${followedExecution.value.id}/file?path=${path}`
+        return `${apiUrl()}/executions/${followedExecution.value?.id}/file?path=${path}`
     }
 
     async function fetchAndStoreLogFileSize(path: string) {
@@ -759,7 +792,7 @@
         }
 
         const axiosResponse = await $http.get(
-            `${apiUrl()}/executions/${followedExecution.value.id}/file/metas?path=${path}`,
+            `${apiUrl()}/executions/${followedExecution.value?.id}/file/metas?path=${path}`,
             {
                 validateStatus: (status: number) =>
                     status === 200 || status === 404 || status === 422,
@@ -821,7 +854,7 @@
         })
     }
 
-    function shouldDisplayLogs(taskRun: TaskRun): boolean {
+    function shouldDisplayLogs(taskRun: TaskRunWithDepth): boolean {
         const uid = attemptUid(
             taskRun.id,
             selectedAttemptNumberByTaskRunId.value[taskRun.id],
@@ -851,7 +884,7 @@
     }
 
     function refreshLogs() {
-        timer.value = moment()
+        timer.value = dayjs()
         rawLogs.value = deduplicateLogs(rawLogs.value.concat(logsBuffer.value))
         logsBuffer.value = []
         scrollToBottomFailedTask()
@@ -861,15 +894,14 @@
         // A replay is RESTARTED, not a running state, so the grace-period close is armed before RUNNING and would otherwise close this stream mid-execution.
         cancelLogsSSEClose()
         logsExecutionId.value = executionId
-        executionsStore.followLogs({id: executionId, params: buildLogParams()}).then((sse: any) => { // FIXME: any
+        executionsStore.followLogs({id: executionId, params: buildLogParams()}).then((sse) => {
             logsSSE.value = sse
 
-            logsSSE.value.onmessage = (event: any) => { // FIXME: any
+            logsSSE.value.onmessage = (event: MessageEvent<string>) => {
                 // we are receiving a first "fake" event to force initializing the connection: ignoring it
                 if (event.lastEventId !== "start") {
-                    logsBuffer.value = logsBuffer.value.concat(
-                        JSON.parse(event.data),
-                    )
+                    const entries: LogEntry[] = JSON.parse(event.data)
+                    logsBuffer.value = logsBuffer.value.concat(entries)
                 }
 
                 clearTimeout(timeout.value)
@@ -878,13 +910,13 @@
                 }, 100)
 
                 // force at least 1 logs refresh / 500ms
-                if (moment().diff(timer.value, "seconds") > 0.5) {
+                if (dayjs().diff(timer.value, "second") > 0.5) {
                     clearTimeout(timeout.value)
                     refreshLogs()
                 }
             }
 
-            logsSSE.value.onerror = (_: unknown) => {
+            logsSSE.value.onerror = () => {
                 coreStore.message = {
                     variant: "error",
                     title: t("error"),
@@ -896,12 +928,15 @@
         })
     }
 
-    function isSubflow(taskRun: TaskRunWithDepth): boolean {
-        return taskRun?.outputs?.executionId
+    function isSubflow(taskRun: TaskRunWithDepth | undefined): boolean {
+        return !!taskRun?.outputs?.executionId
     }
 
     function shouldDisplaySubflow(taskRunIndex: number, taskRun: TaskRunWithDepth): boolean {
         const subflowExecutionId = taskRun.outputs?.executionId
+        if (!subflowExecutionId) {
+            return false
+        }
         const index = shownSubflowsIds.value.findIndex(
             (item) => item.subflowExecutionId === subflowExecutionId,
         )
@@ -931,7 +966,7 @@
             ),
         )
         shownAttemptsUid.value.forEach((uid) =>
-            logsScrollerRefs.value?.[uid]?.[0]?.scrollToBottom(),
+            logsScrollerRefs.value[uid]?.scrollToBottom(),
         )
 
         expandSubflows()
@@ -948,8 +983,8 @@
                 setTimeout(() => expandSubflows(), 50)
             }
 
-            subflowLogsElements?.forEach((subflowLogs: any) => // FIXME: any
-                subflowLogs.expandAll(),
+            subflowLogsElements.forEach((subflowLogs) =>
+                subflowLogs?.expandAll(),
             )
         }
     }
@@ -958,15 +993,15 @@
         shownAttemptsUid.value = []
     }
 
-    function attemptUid(taskRunId: string, attemptNumber: number): string {
+    function attemptUid(taskRunId: LogEntry["taskRunId"], attemptNumber: LogEntry["attemptNumber"]): string {
         return `${taskRunId}-${attemptNumber}`
     }
 
     function scrollToBottomFailedTask() {
+        const currentState = followedExecution.value?.state.current
         if (
-            autoExpandTaskRunStates.value.includes(
-                followedExecution.value?.state?.current,
-            )
+            currentState !== undefined &&
+            autoExpandTaskRunStates.value.includes(currentState)
         ) {
             currentTaskRuns.value.forEach((taskRun) => {
                 if (
@@ -981,7 +1016,7 @@
                             `${taskRun.id}-${attemptNumber}`,
                         )
                     ) {
-                        logsScrollerRefs.value?.[
+                        logsScrollerRefs.value[
                             `${taskRun.id}-${attemptNumber}`
                         ]?.scrollToBottom()
                     }
@@ -990,7 +1025,7 @@
         }
     }
 
-    function uniqueTaskRunDisplayFilter(currentTaskRun: TaskRun): boolean {
+    function uniqueTaskRunDisplayFilter(currentTaskRun: TaskRunWithDepth): boolean {
         return !(props.taskRunId && props.taskRunId !== currentTaskRun.id)
     }
 
@@ -1021,21 +1056,20 @@
                 executionId: id,
                 params: p,
             })
-            .then((logs: any) => { // FIXME: any
+            .then((logs) => {
                 // A response for an execution the view has since left would overwrite the current one's logs.
                 if (logsExecutionId.value !== id) {
                     return
                 }
-                // `loadLogs` returns a paginated response `{ results, total }`, and `rawLogs` must be an array of log lines.
-                rawLogs.value = logs?.results ?? logs ?? []
+                rawLogs.value = logs
                 // Discard any buffered SSE logs to prevent duplicates after the full REST fetch replaces `rawLogs`.
                 logsBuffer.value = []
             })
     }
 
-    function attempts(taskRun: TaskRun): TaskRunAttempt[] {
+    function attempts(taskRun: TaskRunWithDepth): TaskRunAttempt[] {
         if (
-            followedExecution.value.state.current === State.RUNNING ||
+            followedExecution.value?.state.current === State.RUNNING ||
             props.forcedAttemptNumber === undefined
         ) {
             return taskRun.attempts ?? [{state: taskRun.state}]
@@ -1053,7 +1087,9 @@
     }
 
     function toggleShowAttempt(uid: string) {
-        shownAttemptsUid.value = _xor(shownAttemptsUid.value, [uid])
+        shownAttemptsUid.value = shownAttemptsUid.value.includes(uid)
+            ? shownAttemptsUid.value.filter((shown) => shown !== uid)
+            : [...shownAttemptsUid.value, uid]
     }
 
     function swapDisplayedAttempt(event: {taskRunId: string; attemptNumber: number}) {
@@ -1068,15 +1104,15 @@
             newDisplayedAttemptNumber
     }
 
-    function taskType(taskRun: TaskRun | undefined): string | undefined {
+    function taskType(taskRun: TaskRunWithDepth | undefined): string | undefined {
         if (!taskRun) return undefined
 
-        const task = FlowUtils.findTaskById(flow.value, taskRun?.taskId)
+        const task = FlowUtils.findTaskById(flow.value, taskRun.taskId)
         const parentTaskRunId = taskRun.parentTaskRunId
         if (task === undefined && parentTaskRunId) {
             return taskType(taskRunById.value[parentTaskRunId])
         }
-        return task ? (task as any).type : undefined // FIXME: any
+        return task?.type
     }
 
     function emitLogCursor(cursor: string) {
@@ -1089,31 +1125,32 @@
         ] = logIndicesByLevel
     }
 
-    function logsScrollerRef(el: any, ...ids: Array<string | number>) { // FIXME: any
-        ids.forEach((id) => (logsScrollerRefs.value[id] = el))
+    function logsScrollerRef(el: Element | ComponentPublicInstance | null, ...ids: Array<string | number>) {
+        const scroller = isLogsScroller(el) ? el : undefined
+        ids.forEach((id) => (logsScrollerRefs.value[id] = scroller))
     }
 
-    function subflowTaskRunDetailsRef(el: any, id: string) { // FIXME: any
-        subflowTaskRunDetailsRefs.value[id] = el
+    function subflowTaskRunDetailsRef(el: Element | ComponentPublicInstance | null, id: string) {
+        subflowTaskRunDetailsRefs.value[id] = isSubflowLogs(el) ? el : undefined
     }
 
     function scrollToLog(logId: string) {
         const split = logId.split("/")
         const taskRunIndex = Number(split[0])
         const globalIndex = Number(split[1])
-        ;(taskRunScroller.value as any)?.scrollToItem(taskRunIndex) // FIXME: any
+        taskRunScroller.value?.scrollToItem(taskRunIndex)
 
         const taskRun = currentTaskRuns.value[taskRunIndex]
         const uid = taskRun
-            ? attemptUid(asTaskRun(taskRun).id, selectedAttemptNumberByTaskRunId.value[asTaskRun(taskRun).id])
+            ? attemptUid(taskRun.id, selectedAttemptNumberByTaskRunId.value[taskRun.id])
             : undefined
-        const items: any[] = (uid && displayItemsByAttemptUid.value[uid]) || [] // FIXME: any
+        const items: DisplayItem[] = (uid && displayItemsByAttemptUid.value[uid]) || []
 
         let position = -1
         for (let i = 0; i < items.length; i++) {
             const item = items[i]
-            if (item.isGroup) {
-                if (item.members.some((member: any) => member.index === globalIndex)) { // FIXME: any
+            if (isLogGroup(item)) {
+                if (item.members.some((member) => member.index === globalIndex)) {
                     position = i
                     if (!isGroupExpanded(taskRunIndex, item)) {
                         toggleGroup(taskRunIndex, item)
@@ -1127,23 +1164,20 @@
         }
 
         nextTick(() => {
-            ;(logsScrollerRefs.value?.[taskRunIndex] as any)?.scrollToItem(position >= 0 ? position : 0) // FIXME: any
+            logsScrollerRefs.value[taskRunIndex]?.scrollToItem(position >= 0 ? position : 0)
             if (split.length > 2) {
-                subflowTaskRunDetailsRefs.value?.[
+                subflowTaskRunDetailsRefs.value[
                     taskRunIndex + "/" + globalIndex
                 ]?.scrollToLog(split.slice(2).join("/"))
             }
         })
     }
 
-    function deduplicateLogs(logs: any[]): any[] { // FIXME: any
+    function deduplicateLogs(logs: LogEntry[]): LogEntry[] {
         const list = new Set<string>()
 
         return logs.filter((log) => {
-            // Use the server-assigned index when present as it is the most stable unique identifier per log line per attempt.
-            const key = log.index !== undefined
-                ? `${log.taskRunId}-${log.attemptNumber}-${log.index}`
-                : `${log.taskRunId}-${log.attemptNumber}-${log.timestamp}-${log.message}`
+            const key = `${log.taskRunId}-${log.attemptNumber}-${log.timestamp}-${log.message}`
 
             if (list.has(key)) return false
 

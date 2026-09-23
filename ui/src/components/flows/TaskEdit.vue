@@ -242,7 +242,7 @@
     const isStacked = ref(false)
     const panelHasFocus = ref(false)
 
-    const ARMED_FIELD_CLASS = "task-edit-chip-armed"
+    const ARMED_FIELD_CLASS = "task-edit-chip-insert-target"
     const armedField = ref<HTMLInputElement | HTMLTextAreaElement | null>(null)
 
     const onPanelFocusIn = (event: FocusEvent) => {
@@ -255,10 +255,11 @@
     }
     const onPanelFocusOut = (event: FocusEvent) => {
         const next = event.relatedTarget as Node | null
-        if (!next || !panelRef.value?.contains(next)) {
+        const leavingPanel = !next || !panelRef.value?.contains(next)
+        if (leavingPanel) {
             panelHasFocus.value = false
         }
-        if (armedField.value && event.target === armedField.value && !isArmableField(next)) {
+        if (armedField.value && event.target === armedField.value && leavingPanel) {
             armedField.value.classList.remove(ARMED_FIELD_CLASS)
             armedField.value = null
         }
@@ -441,6 +442,7 @@
 
     watch(currentTaskId, () => {
         outputUserOverridden.value = false
+        outputCollapsed.value = !hasDeclaredOutputs.value
     })
 
     const authStore = useAuthStore()
@@ -762,7 +764,7 @@
         align-items: center;
     }
 
-    :global(.task-edit-chip-armed) {
+    :global(.task-edit-chip-insert-target) {
         outline: 2px solid var(--ks-border-focus);
         outline-offset: -1px;
     }

@@ -130,4 +130,50 @@ describe("TaskEdit", () => {
         const output = wrapper.findAllComponents({name: "TaskEditData"}).find((c) => c.props("kind") === "output")
         expect(output).toBeUndefined()
     })
+
+    it("re-expands the Output column when switching to another task that also declares outputs", async () => {
+        // Regression: switching tasks only reset the "user collapsed it" flag, it never
+        // re-derived the collapsed state — so a task the user had collapsed left every
+        // later task (declaring outputs or not) stuck in whatever state the first left it.
+        pluginsStoreState.plugin = {schema: {outputs: {properties: {uri: {type: "string"}}}}}
+        const wrapper = mountTaskEdit()
+        await wrapper.vm.$nextTick()
+
+        const output = () => wrapper.findAllComponents({name: "TaskEditData"}).find((c) => c.props("kind") === "output")
+        expect(output()?.props("isCollapsed")).toBe(false)
+
+        output()?.vm.$emit("toggle")
+        await wrapper.vm.$nextTick()
+        expect(output()?.props("isCollapsed")).toBe(true)
+
+        await wrapper.setProps({task: {id: "second_task", type: "io.kestra.plugin.core.log.Log", message: "hi"}})
+        await wrapper.vm.$nextTick()
+
+        expect(output()?.props("isCollapsed")).toBe(false)
+
+        pluginsStoreState.plugin = undefined
+    })
+
+    it("keeps the armed field when focus moves to a chip control instead of leaving the panel", async () => {
+        // Regression: disarming whenever focus left the field for any non-armable target
+        // fired on every Tab into a chip button, so a keyboard user could never Tab onto a
+        // chip and press Enter/Space to insert — the field was already disarmed by then.
+        const wrapper = mountTaskEdit()
+        await wrapper.vm.$nextTick()
+
+        const panel = wrapper.get("[data-test='task-edit-panel']").element as HTMLElement
+        const field = document.createElement("input")
+        const chip = document.createElement("button")
+        chip.className = "task-edit-data-chip"
+        panel.appendChild(field)
+        panel.appendChild(chip)
+
+        field.dispatchEvent(new FocusEvent("focusin", {bubbles: true}))
+        expect(field.classList.contains("task-edit-chip-insert-target")).toBe(true)
+
+        field.dispatchEvent(new FocusEvent("focusout", {bubbles: true, relatedTarget: chip}))
+        chip.dispatchEvent(new FocusEvent("focusin", {bubbles: true}))
+
+        expect(field.classList.contains("task-edit-chip-insert-target")).toBe(true)
+    })
 })

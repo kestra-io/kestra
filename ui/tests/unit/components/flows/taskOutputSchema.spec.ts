@@ -10,6 +10,11 @@ describe("resolveDeclaredOutputProperties", () => {
     it("returns undefined when every candidate is missing", () => {
         expect(resolveDeclaredOutputProperties([undefined, undefined])).toBeUndefined()
     })
+
+    it("skips an empty candidate instead of treating it as a match", () => {
+        const properties = {uri: {type: "string"}}
+        expect(resolveDeclaredOutputProperties([{}, properties])).toBe(properties)
+    })
 })
 
 describe("hasDeclaredOutputs", () => {

@@ -1,15 +1,19 @@
 export const CHIP_DRAG_MIME = "application/x-kestra-chip"
 
 export function isArmableField(el: EventTarget | null): el is HTMLInputElement | HTMLTextAreaElement {
+    if (!(el instanceof HTMLTextAreaElement) && !(el instanceof HTMLInputElement)) {
+        return false
+    }
+
+    if (el.closest(".monaco-editor") || el.closest(".task-edit-data-filter")) {
+        return false
+    }
+
     if (el instanceof HTMLTextAreaElement) {
         return !el.disabled && !el.readOnly
     }
 
-    if (el instanceof HTMLInputElement) {
-        return !el.disabled && !el.readOnly && (el.type === "text" || el.type === "search" || el.type === "")
-    }
-
-    return false
+    return !el.disabled && !el.readOnly && (el.type === "text" || el.type === "search" || el.type === "")
 }
 
 export function insertAtCaret(field: HTMLInputElement | HTMLTextAreaElement, text: string): void {

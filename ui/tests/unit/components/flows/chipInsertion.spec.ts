@@ -98,4 +98,22 @@ describe("isArmableField", () => {
     it("rejects null", () => {
         expect(isArmableField(null)).toBe(false)
     })
+
+    it("rejects Monaco's internal input textarea", () => {
+        const monacoRoot = document.createElement("div")
+        monacoRoot.className = "monaco-editor"
+        const textarea = document.createElement("textarea")
+        monacoRoot.appendChild(textarea)
+
+        expect(isArmableField(textarea)).toBe(false)
+    })
+
+    it("rejects the chip search filter input", () => {
+        const filter = document.createElement("div")
+        filter.className = "task-edit-data-filter"
+        const input = document.createElement("input")
+        filter.appendChild(input)
+
+        expect(isArmableField(input)).toBe(false)
+    })
 })

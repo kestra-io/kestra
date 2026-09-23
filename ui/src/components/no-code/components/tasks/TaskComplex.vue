@@ -3,7 +3,7 @@
         <TaskObject
             v-bind="$attrs"
             :properties="computedProperties"
-            :schema
+            :schema="computedSchema"
             merge
         />
     </div>
@@ -28,26 +28,34 @@
 
     const fullSchema = inject(FULL_SCHEMA_INJECTION_KEY, ref({}))
 
+    const resolvedAllOfSchemas = computed(() => {
+        if (!props.schema?.allOf && !props.schema?.$ref) return []
+        const schemas = props.schema.allOf ?? [props.schema]
+        return schemas.map((item: {$ref?: string; properties?: Record<string, any>; required?: string[]}) =>
+            resolve$ref(fullSchema.value, item),
+        )
+    })
+
     const computedProperties = computed(() => {
-        if(!props.schema?.allOf && !props.schema?.$ref) {
+        if (!resolvedAllOfSchemas.value.length) {
             return props.schema?.properties || {}
         }
-        const schemas = props.schema.allOf ?? [props.schema]
-        return schemas.reduce((
-            acc: Record<string, any>,
-            item: {
-                $ref?: string;
-                properties?: Record<string, any>
-            }) => {
-
-            const i = resolve$ref(fullSchema.value, item)
-            return {
-                ...acc,
-                ...i?.properties,
-            }
-
-        }, {})
+        return resolvedAllOfSchemas.value.reduce((acc: Record<string, any>, item: {properties?: Record<string, any>}) => ({
+            ...acc,
+            ...item?.properties,
+        }), {})
     })
+
+    const computedRequired = computed(() =>
+        resolvedAllOfSchemas.value.reduce((acc: string[], item: {required?: string[]}) => [
+            ...acc,
+            ...(item?.required ?? []),
+        ], [] as string[]),
+    )
+
+    const computedSchema = computed(() =>
+        computedRequired.value.length ? {...props.schema, required: computedRequired.value} : props.schema,
+    )
 </script>
 
 <style scoped lang="scss">

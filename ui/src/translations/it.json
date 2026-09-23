@@ -2602,6 +2602,9 @@
       "plugin_default": "default: {value}",
       "plugin_default_tooltip": "Valore predefinito da pluginDefaults del flow",
       "required_missing": "Campo obbligatorio non impostato",
+      "required_unset_jump": "Vai al primo",
+      "required_unset_plural": "{count} campi obbligatori non sono ancora impostati",
+      "required_unset_singular": "1 campo obbligatorio non è ancora impostato",
       "save_blocked": {
         "message": "Correggi gli errori prima di salvare.",
         "title": "Impossibile salvare il flow"

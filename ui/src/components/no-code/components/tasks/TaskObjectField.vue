@@ -51,7 +51,13 @@
             />
         </div>
     </div>
-    <KsFormItem v-else-if="fieldKey" :required="isRequired" for="" :data-test="`field-${fieldKey}`">
+    <KsFormItem
+        v-else-if="fieldKey"
+        :required="isRequired"
+        for=""
+        :data-test="`field-${fieldKey}`"
+        :data-required-path="isMissingRequired ? fieldPath : undefined"
+    >
         <template #label>
             <div class="inline-wrapper">
                 <div class="inline-start">
@@ -140,9 +146,9 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, inject, ref, useTemplateRef} from "vue"
+    import {computed, inject, onUnmounted, ref, useTemplateRef, watchEffect} from "vue"
     import {useBlockComponent} from "./useBlockComponent"
-    import {FIELD_NAV_INJECTION_KEY, PLUGIN_DEFAULTS_INJECTION_KEY} from "../../injectionKeys"
+    import {FIELD_NAV_INJECTION_KEY, PLUGIN_DEFAULTS_INJECTION_KEY, REQUIRED_FIELDS_TRACKER_INJECTION_KEY} from "../../injectionKeys"
 
     import ClearButton from "./ClearButton.vue"
     import {KsMarkdown} from "@kestra-io/design-system"
@@ -171,11 +177,35 @@
         return !props.disabled && props.required?.includes(props.fieldKey)// && props.schema.$required;
     })
 
+    const pluginDefaults = inject(PLUGIN_DEFAULTS_INJECTION_KEY, undefined)
+    const pluginDefault = computed(() => {
+        const value = pluginDefaults?.value?.[props.fieldKey]
+        return value === undefined || value === null || typeof value === "object" ? undefined : String(value)
+    })
+
     const isMissingRequired = computed(() => {
         if (!isRequired.value) return false
         const value = modelValue.value
-        return value === undefined || value === null || value === "" || (Array.isArray(value) && value.length === 0)
+        const isUnset = value === undefined || value === null || value === "" || (Array.isArray(value) && value.length === 0)
+        return isUnset && pluginDefault.value === undefined
     })
+
+    const fieldPath = computed(() =>
+        props.rootOverride ?? (props.root ? `${props.root}.${props.fieldKey}` : props.fieldKey),
+    )
+
+    const requiredFieldsTracker = inject(REQUIRED_FIELDS_TRACKER_INJECTION_KEY, undefined)
+
+    watchEffect(() => {
+        if (!requiredFieldsTracker) return
+        if (isMissingRequired.value) {
+            requiredFieldsTracker.set(fieldPath.value, props.fieldKey)
+        } else {
+            requiredFieldsTracker.delete(fieldPath.value)
+        }
+    })
+
+    onUnmounted(() => requiredFieldsTracker?.delete(fieldPath.value))
 
     const hasSelectedASchema = ref(false)
 
@@ -195,7 +225,7 @@
                 pebbleState.value = value
             },
             task: props.task,
-            root: props.rootOverride ?? (props.root ? `${props.root}.${props.fieldKey}` : props.fieldKey),
+            root: fieldPath.value,
             schema: props.schema,
             required: isRequired.value,
         }
@@ -244,12 +274,6 @@
         return getBlockComponent.value(props.schema ?? {}, props.fieldKey, props.siblingKeys)
     })
 
-
-    const pluginDefaults = inject(PLUGIN_DEFAULTS_INJECTION_KEY, undefined)
-    const pluginDefault = computed(() => {
-        const value = pluginDefaults?.value?.[props.fieldKey]
-        return value === undefined || value === null || typeof value === "object" ? undefined : String(value)
-    })
 
     const schemaDefault = computed(() => {
         const value = props.schema?.default

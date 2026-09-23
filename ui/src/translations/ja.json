@@ -2602,6 +2602,9 @@
       "plugin_default": "デフォルト: {value}",
       "plugin_default_tooltip": "flowのpluginDefaultsからのデフォルト値",
       "required_missing": "必須フィールドが設定されていません",
+      "required_unset_jump": "最初へ移動",
+      "required_unset_plural": "{count} 件の必須フィールドがまだ設定されていません",
+      "required_unset_singular": "1 件の必須フィールドがまだ設定されていません",
       "save_blocked": {
         "message": "保存する前にエラーを修正してください。",
         "title": "flowを保存できません"

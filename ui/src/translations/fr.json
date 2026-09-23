@@ -2602,6 +2602,9 @@
       "plugin_default": "par défaut : {value}",
       "plugin_default_tooltip": "Valeur par défaut des pluginDefaults du flow",
       "required_missing": "Champ obligatoire non défini",
+      "required_unset_jump": "Aller au premier",
+      "required_unset_plural": "{count} champs obligatoires ne sont pas encore renseignés",
+      "required_unset_singular": "1 champ obligatoire n'est pas encore renseigné",
       "save_blocked": {
         "message": "Corrigez les erreurs avant d'enregistrer.",
         "title": "Impossible d'enregistrer le flow"

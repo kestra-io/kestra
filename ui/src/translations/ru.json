@@ -2602,6 +2602,9 @@
       "plugin_default": "по умолчанию: {value}",
       "plugin_default_tooltip": "Значение по умолчанию из pluginDefaults flow",
       "required_missing": "Обязательное поле не заполнено",
+      "required_unset_jump": "Перейти к первому",
+      "required_unset_plural": "{count} обязательных полей ещё не заполнено",
+      "required_unset_singular": "1 обязательное поле ещё не заполнено",
       "save_blocked": {
         "message": "Исправьте ошибки перед сохранением.",
         "title": "Невозможно сохранить flow"

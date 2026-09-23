@@ -47,3 +47,5 @@ export const TENANTS_INJECTION_KEY = Symbol("tenants-injection-key") as Injectio
 export const FIELD_NAV_INJECTION_KEY = Symbol("field-nav-injection-key") as InjectionKey<FieldNavigation>
 
 export const BLOCK_VALIDATION_ISSUES_INJECTION_KEY = Symbol("block-validation-issues-injection-key") as InjectionKey<ComputedRef<Map<string, string[]>>>
+
+export const REQUIRED_FIELDS_TRACKER_INJECTION_KEY = Symbol("required-fields-tracker-injection-key") as InjectionKey<Map<string, string>>

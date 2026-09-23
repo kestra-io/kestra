@@ -14,6 +14,7 @@ import io.kestra.core.runners.LocalPathFactory;
 import io.kestra.core.runners.configuration.LocalFilesConfiguration;
 import io.kestra.core.services.NamespaceService;
 import io.kestra.core.storages.*;
+import io.kestra.core.utils.FileUtils;
 import io.kestra.core.utils.Slugify;
 
 import io.pebbletemplates.pebble.error.PebbleException;
@@ -24,7 +25,6 @@ import jakarta.inject.Provider;
 
 abstract class AbstractFileFunction implements KestraFunction {
     static final String SCHEME_NOT_SUPPORTED_ERROR = "Cannot process the URI %s: scheme not supported.";
-    static final String KESTRA_SCHEME = "kestra:///";
     static final String TRIGGER = "trigger";
     static final String NAMESPACE = "namespace";
     static final String TENANT_ID = "tenantId";
@@ -77,7 +77,7 @@ abstract class AbstractFileFunction implements KestraFunction {
                 fileUri = uri;
                 namespace = checkAllowedFileAndReturnNamespace(context, fileUri);
             } else if (path instanceof String str) {
-                if (str.startsWith(KESTRA_SCHEME)) {
+                if (str.regionMatches(true, 0, StorageContext.KESTRA_SCHEME + ":", 0, StorageContext.KESTRA_SCHEME.length() + 1)) {
                     fileUri = URI.create(str);
                     namespace = checkAllowedFileAndReturnNamespace(context, fileUri);
                 } else if (str.startsWith(LocalPath.FILE_PROTOCOL)) {
@@ -121,20 +121,27 @@ abstract class AbstractFileFunction implements KestraFunction {
     protected abstract Object fileFunction(EvaluationContext context, URI path, String namespace, String tenantId, Map<String, Object> args) throws IOException;
 
     boolean isFileUriValid(String namespace, String flowId, String executionId, URI path) {
-        // Internal storage URI should be: kestra:///$namespace/$flowId/executions/$executionId/tasks/$taskName/$taskRunId/$random.ion or kestra:///$namespace/$flowId/executions/$executionId/trigger/$triggerName/$random.ion
-        // Namespace file URI should be: kestra:///$namespace/_files/$random'
-        // We check that the file is for the given flow execution
+        // Internal storage path is /<namespace>/<flow>/executions/<id>/... or /<namespace>/_files/...
+        // Legacy kestra:/// and canonical kestra:// URIs share that path.
         if (namespace == null || flowId == null || executionId == null) {
             return false;
         }
 
-        String executionAuthorizedBasePath = KESTRA_SCHEME + namespace.replace(".", "/") + "/" + Slugify.of(flowId) + "/executions/" + executionId + "/";
-        String nsFileAuthorizedBasePath = KESTRA_SCHEME + namespace.replace(".", "/") + "/_files/";
-        return path.toString().startsWith(executionAuthorizedBasePath) || path.toString().startsWith(nsFileAuthorizedBasePath);
+        String internal = StorageContext.logicalPath(path);
+        // Decoded "%2F" can place ".." after the execution prefix. startsWith would still match.
+        if (FileUtils.isParentTraversal(internal)) {
+            return false;
+        }
+        String executionAuthorizedBasePath = "/" + namespace.replace(".", "/") + "/" + Slugify.of(flowId) + "/executions/" + executionId + "/";
+        String nsFileAuthorizedBasePath = "/" + namespace.replace(".", "/") + "/_files/";
+        return internal.startsWith(executionAuthorizedBasePath) || internal.startsWith(nsFileAuthorizedBasePath);
     }
 
     @SuppressWarnings("unchecked")
     private String checkAllowedFileAndReturnNamespace(EvaluationContext context, URI path) {
+        if (FileUtils.isParentTraversal(path)) {
+            throw new IllegalArgumentException("File should be accessed with their full path and not using relative '..' path.");
+        }
         Map<String, String> flow = (Map<String, String>) context.getVariable("flow");
         Map<String, String> execution = (Map<String, String>) context.getVariable("execution");
 
@@ -193,9 +200,15 @@ abstract class AbstractFileFunction implements KestraFunction {
 
     @VisibleForTesting
     String extractNamespace(URI path) {
-        // Extract namespace from the path, it should be of the form: kestra:///{namespace}/{flowId}/executions/{executionId}/tasks/{taskId}/{taskRunId}/{fileName}'
-        // To extract the namespace, we must do it step by step as namespace and taskId can contain the words 'executions' and 'tasks'
-        String namespace = path.toString().substring(KESTRA_SCHEME.length());
+        // Path is /{namespace}/{flowId}/executions/{executionId}/tasks/{taskId}/{taskRunId}/{fileName}.
+        // Namespace and task id can themselves contain the words 'executions' and 'tasks'.
+        String namespace = StorageContext.logicalPath(path);
+        if (FileUtils.isParentTraversal(namespace)) {
+            throw new IllegalArgumentException("File should be accessed with their full path and not using relative '..' path.");
+        }
+        if (namespace.startsWith("/")) {
+            namespace = namespace.substring(1);
+        }
         if (!EXECUTION_FILE.matcher(namespace).matches()) {
             throw new IllegalArgumentException("Unable to read the file '" + path + "' as it is not an execution file");
         }

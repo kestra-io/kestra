@@ -2645,6 +2645,9 @@
       "install_description": "Installiere Kestra als App für schnelleren Zugriff und eine Vollbild-Ansicht.",
       "install": "Installieren",
       "dismiss": "Nicht jetzt"
-    }
+    },
+    "iteration": "Iteration",
+    "iteration_number": "Iteration {number}",
+    "delete_log_iteration": "Sind Sie sicher, dass Sie das Protokoll für {iteration} löschen möchten?"
   }
 }

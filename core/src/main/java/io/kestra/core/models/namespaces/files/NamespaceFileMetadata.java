@@ -1,6 +1,7 @@
 package io.kestra.core.models.namespaces.files;
 
 import java.time.Instant;
+import java.util.Collection;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -115,6 +116,26 @@ public class NamespaceFileMetadata implements SoftDeletable<NamespaceFileMetadat
             .size(fileAttributes.getSize())
             .revision(1)
             .build();
+    }
+
+    /**
+     * Returns the highest revision of the given entries that has been deleted, or {@code 0} when none has.
+     * <p>
+     * Deleting a file flags the entry of its current revision in place, leaving the entries of earlier
+     * revisions untouched, and re-creating the path adds a live entry above them. The deleted entry is
+     * therefore a floor rather than a state of the whole file: everything up to and including it was part
+     * of what the user deleted, whatever happened at the path afterwards, so no revision at or below it may
+     * be served again.
+     *
+     * @param revisions Every entry held for one path, in any order.
+     * @return The highest deleted revision, or {@code 0} if the path has never been deleted.
+     */
+    public static int deletedFloor(Collection<NamespaceFileMetadata> revisions) {
+        return revisions.stream()
+            .filter(NamespaceFileMetadata::isDeleted)
+            .mapToInt(NamespaceFileMetadata::getRevision)
+            .max()
+            .orElse(0);
     }
 
     public NamespaceFileMetadata asLast() {

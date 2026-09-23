@@ -5,7 +5,10 @@ import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+
 import io.kestra.core.models.property.Property;
+import io.kestra.core.serializers.JacksonMapper;
 
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import io.micronaut.validation.validator.Validator;
@@ -58,6 +61,17 @@ public class PropertyValueExtractorTest {
         );
 
         assertThat(validator.validate(dto)).isEmpty();
+    }
+
+    // The state a saved flow is validated in: the deserializer keeps the literal as the expression
+    // and leaves the value unset, so a constraint that rejects null failed on a value the user had
+    // written. `ofExpression` cannot stand in here -- it requires a Pebble expression.
+    @Test
+    public void should_not_reject_an_unrendered_value_as_blank() throws Exception {
+        Property<String> parsed = JacksonMapper.ofYaml()
+            .readValue("Text to be reverted", new TypeReference<Property<String>>() {});
+
+        assertThat(validator.validate(new NotBlankPropertyDto(parsed))).isEmpty();
     }
 
 }

@@ -56,7 +56,7 @@
                 inputValue = dayjs(props.inputs?.[input.id]).format("YYYY-MM-DD")
                 break
             case "TIME":
-                inputValue = dayjs(props.inputs?.[input.id]).format("hh:mm:ss")
+                inputValue = dayjs(props.inputs?.[input.id]).format("HH:mm:ss")
                 break
             default:
                 inputValue = props.inputs?.[input.id]

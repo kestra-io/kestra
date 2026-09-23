@@ -305,6 +305,41 @@ describe("useDependencies composable", () => {
     })
   })
 
+  describe("edge arrow symbol", () => {
+    function mountWithEdgeKinds() {
+      const graphRef = makeGraphRef()
+      const fetchAssetDependencies = vi.fn().mockResolvedValue({
+        data: [
+          {data: {id: "A", type: "NODE", flow: "flow-a", namespace: "ns", metadata: {subtype: "FLOW"}}},
+          {data: {id: "B", type: "NODE", flow: "flow-b", namespace: "ns", metadata: {subtype: "FLOW"}}},
+          {data: {id: "C", type: "NODE", flow: "flow-c", namespace: "ns", metadata: {subtype: "FLOW"}}},
+          {data: {id: "e1", type: "EDGE", source: "A", target: "B", kind: "UPSTREAM_OF", directed: true}},
+          {data: {id: "e2", type: "EDGE", source: "A", target: "C", kind: "RELATED", directed: false}},
+        ],
+        count: 3,
+      })
+      return mount({
+        template: "<div></div>",
+        setup() {
+          const composable = useDependencies(graphRef, FLOW, "A", {}, fetchAssetDependencies)
+          return {composable}
+        },
+      })
+    }
+
+    it("suppresses the arrowhead only for the undirected (RELATED) edge", async () => {
+      const wrapper = mountWithEdgeKinds()
+      await nextTick()
+      const {graphEdges} = wrapper.vm.composable as ReturnType<typeof useDependencies>
+
+      const toDirected = graphEdges.value.find((e) => e.target === "B")
+      const toUndirected = graphEdges.value.find((e) => e.target === "C")
+
+      expect((toDirected?.symbol as string[] | undefined)?.[1]).toBe("arrow")
+      expect((toUndirected?.symbol as string[] | undefined)?.[1]).toBe("none")
+    })
+  })
+
   describe("focusNode", () => {
     // Known layout:
     //   A(100,200)  B(300,400)  C(200,100)

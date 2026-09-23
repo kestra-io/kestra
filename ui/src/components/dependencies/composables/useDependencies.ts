@@ -333,6 +333,8 @@ export function useDependencies(
                 return {
                     source:    edge.source,
                     target:    edge.target,
+                    // Undirected (RELATED) edges draw no arrowhead; every other kind keeps the series default.
+                    symbol:    edge.directed === false ? ["none", "none"] : ["none", "arrow"],
                     lineStyle: baseLineStyle,
                     emphasis:  {lineStyle: {color: cssVar(EDGE_COLOR.hovered), opacity: 1, type: "solid", width: 2}},
                     blur:      {lineStyle: baseLineStyle},

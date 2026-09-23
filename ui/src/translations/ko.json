@@ -2229,6 +2229,13 @@
           "failed": "실패함",
           "unknown": "추적되지 않음"
         },
+        "kind": {
+          "produces": "생성",
+          "consumed_by": "사용됨",
+          "upstream_of": "상위의",
+          "part_of": "일부",
+          "related": "관련 항목"
+        },
         "summary": {
           "fresh": "모든 {n} Asset이 최신입니다.",
           "issues": "{n} 고정",

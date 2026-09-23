@@ -12,13 +12,14 @@ import java.util.Map;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
-import io.kestra.core.exceptions.KestraRuntimeException;
 import org.apache.commons.io.FileUtils;
 
+import io.kestra.core.exceptions.KestraRuntimeException;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.storages.FileAttributes;
+import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.storages.StorageObject;
 
@@ -72,7 +73,8 @@ public class LocalStorage implements StorageInterface {
         // Canonicalize Windows-style separators *before* validating. Otherwise a backslash
         // payload ("..\..\\") slips past the traversal guard and is only rewritten to "../../"
         // afterwards, escaping the storage directory (GHSA-qw4v-6w32-xx9h).
-        String relativePath = windowsToUnixPath(uri.getPath());
+        // logicalPath joins a Kestra authority, so kestra://../secret is not a path of "/secret".
+        String relativePath = windowsToUnixPath(StorageContext.logicalPath(uri));
         if (isParentTraversal(relativePath)) {
             throw new IllegalArgumentException("File should be accessed with their full path and not using relative '..' path.");
         }
@@ -154,7 +156,7 @@ public class LocalStorage implements StorageInterface {
             .filter(Predicate.not(String::isEmpty))
             .map(path ->
             {
-                String prefixPath = prefix.getPath();
+                String prefixPath = StorageContext.logicalPath(prefix);
                 return kestraUri(prefixPath + (prefixPath.endsWith("/") ? "" : "/") + path);
             })
             .toList();
@@ -268,7 +270,7 @@ public class LocalStorage implements StorageInterface {
             }
         }
 
-        return kestraUri(uri.getPath());
+        return kestraUri(StorageContext.logicalPath(uri));
     }
 
     @Override
@@ -307,14 +309,14 @@ public class LocalStorage implements StorageInterface {
     }
 
     private static URI createDirectoryFromPath(Path path, URI uri) {
-        if (uri == null || uri.getPath().isEmpty()) {
+        if (uri == null || StorageContext.logicalPath(uri).isEmpty()) {
             throw new IllegalArgumentException("Unable to create a directory with empty url.");
         }
         File file = path.toFile();
         if (!file.exists() && !file.mkdirs()) {
             throw new KestraRuntimeException("Cannot create directory for URI: " + uri);
         }
-        return kestraUri(uri.getPath());
+        return kestraUri(StorageContext.logicalPath(uri));
     }
 
     @Override
@@ -328,7 +330,7 @@ public class LocalStorage implements StorageInterface {
         } catch (NoSuchFileException e) {
             throw newFileNotFound(from, e);
         }
-        return kestraUri(to.getPath());
+        return kestraUri(StorageContext.logicalPath(to));
     }
 
     @Override
@@ -391,10 +393,6 @@ public class LocalStorage implements StorageInterface {
     }
 
     private static URI kestraUri(String path) {
-        try {
-            return new URI("kestra", "", windowsToUnixPath(path), null, null);
-        } catch (URISyntaxException e) {
-            throw new IllegalArgumentException("Invalid Kestra storage path: " + path, e);
-        }
+        return StorageContext.toKestraUri(windowsToUnixPath(path));
     }
 }

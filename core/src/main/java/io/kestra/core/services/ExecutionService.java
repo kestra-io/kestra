@@ -222,9 +222,18 @@ public class ExecutionService {
         return false;
     }
 
+    /**
+     * Pause a flowable task: set both the taskrun and the execution to {@link State.Type#PAUSED}.
+     */
     public Execution pauseFlowable(Execution execution, TaskRun updateFlowableTaskRun) throws InternalException {
+        return execution.withTaskRun(updateFlowableTaskRun.withStateAndAttempt(State.Type.PAUSED)).withState(State.Type.PAUSED);
+    }
 
-        return execution.withTaskRun(updateFlowableTaskRun.withState(State.Type.PAUSED)).withState(State.Type.PAUSED);
+    /**
+     * Resume a flowable task: set both the taskrun and the execution to {@link State.Type#RUNNING}.
+     */
+    public Execution resumeFlowable(Execution execution, TaskRun updateFlowableTaskRun) throws InternalException {
+        return execution.withTaskRun(updateFlowableTaskRun.withStateAndAttempt(State.Type.RUNNING)).withState(State.Type.RUNNING);
     }
 
     public Execution create(Create createCommand, ProcessedFlow processedFlow) {
@@ -669,7 +678,7 @@ public class ExecutionService {
                 }
                 newTaskRun = originalTaskRun.withState(targetState);
 
-                if (originalTaskRun.getAttempts() != null && !originalTaskRun.getAttempts().isEmpty()) {
+                if (!ListUtils.isEmpty(originalTaskRun.getAttempts())) {
                     List<TaskRunAttempt> attempts = new ArrayList<>(originalTaskRun.getAttempts());
                     attempts.set(attempts.size() - 1, attempts.getLast().withState(targetState));
                     newTaskRun = newTaskRun.withAttempts(attempts);

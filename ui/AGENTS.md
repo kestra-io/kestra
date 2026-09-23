@@ -376,7 +376,7 @@ If your `<style>` block needs to exist:
 
 | Component | Purpose |
 |-----------|---------|
-| `KsAlert` | Alert banner for messages and status feedback |
+| `KsAlert` | Alert banner for messages and status feedback. Pass `banner` for a full-width system bar (licence, impersonation): square, bottom rule only, body text in `--ks-text-primary` so it reads at AA on the tint |
 | `KsDialog` | Modal dialog (handles focus trap + Escape); `dirty` asks before an accidental close |
 | `KsDrawer` | Side drawer / panel; `dirty` asks before an accidental close |
 | `KsTooltip` | Hover tooltip |

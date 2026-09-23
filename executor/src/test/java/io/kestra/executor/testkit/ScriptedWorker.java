@@ -2,6 +2,7 @@ package io.kestra.executor.testkit;
 
 import java.time.Instant;
 
+import io.kestra.core.models.executions.Execution;
 import io.kestra.core.runners.WorkerTask;
 import io.kestra.core.runners.WorkerTaskResult;
 
@@ -16,6 +17,11 @@ public interface ScriptedWorker {
     /** Every task succeeds, with the given attempt end so retry arithmetic stays deterministic. */
     static ScriptedWorker succeeding(Instant attemptEnd) {
         return task -> Results.success(task, attemptEnd);
+    }
+
+    /** Every task of {@code execution} comes back KILLED, as a worker answers a kill; everything else succeeds. */
+    static ScriptedWorker killedFor(Execution execution, Instant attemptEnd) {
+        return task -> execution.getId().equals(task.getTaskRun().getExecutionId()) ? Results.killed(task, attemptEnd) : Results.success(task, attemptEnd);
     }
 
     /** The task with {@code taskId} fails, everything else succeeds. */

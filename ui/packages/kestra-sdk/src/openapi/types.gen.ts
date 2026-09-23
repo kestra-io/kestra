@@ -11043,7 +11043,7 @@ export type CreateBackfillErrors = {
      */
     409: ProblemDetail;
     /**
-     * If the backfill end date is not after its start date
+     * If the backfill end date is not after its start date, or if the trigger is not a schedule trigger
      */
     422: ProblemDetail;
     /**

@@ -73,7 +73,7 @@ export async function openBlockEditor(page: Page, flowId: string) {
         localStorage.setItem("taskEditDefaultMode", "TAB")
     })
     await page.goto(`/ui/${TENANT}/flows/edit/${shared.namespace}/${flowId}/edit`)
-    await page.getByRole("button", {name: "No-code", exact: true}).click()
+    await page.getByRole("button", {name: "No-Code", exact: true}).click()
     await expect(page.locator("[data-test='block-editor']")).toBeVisible()
     await expect(page.locator("[data-block-id]").first()).toBeVisible()
 }
@@ -164,10 +164,10 @@ export async function pickTask(page: Page, search: string, optionTitle: string) 
 
 // Opening a block lands it as a same-place tab in the shared dock (the
 // intended default — see "opening blocks by default lands them as same-place
-// tabs"), hiding the canvas behind its own "No-code" tab. This returns the
+// tabs"), hiding the canvas behind its own "No-Code" tab. This returns the
 // user to the canvas, like clicking that tab for real.
 export async function backToCanvas(page: Page) {
-    await page.getByRole("tab", {name: /No-code/}).click()
+    await page.getByRole("tab", {name: /No-Code/}).click()
     await expect(page.locator("[data-test='block-editor-canvas']")).toBeVisible()
 }
 

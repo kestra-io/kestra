@@ -160,7 +160,7 @@ to.
 ## Suite-hardening lessons (2026-07-13)
 
 - **Opening a block lands it as a same-place tab** (the intended default,
-  asserted by its own test) — the canvas hides behind its own "No-code" tab.
+  asserted by its own test) — the canvas hides behind its own "No-Code" tab.
   Any assertion about the canvas after opening/editing a block must go through
   `backToCanvas()` first; the pre-merge tests assumed a permanently visible
   canvas and rotted silently.

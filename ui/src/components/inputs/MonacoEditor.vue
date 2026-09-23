@@ -406,11 +406,26 @@
         tempContainer.remove();
     }
 
+    const PLUGIN_PACKAGE = /^[a-z][\w$]*(?:\.[\w$]+)+$/;
+
+    // Rejoins what `splitPluginTypeLabel` split apart, so the icon resolves from the fully qualified name.
+    const suggestionLabel = (row: HTMLElement): string | null => {
+        const ariaLabel = row.getAttribute("aria-label");
+        if (row.classList.contains("string-label")) {
+            return ariaLabel;
+        }
+
+        const name = row.querySelector(".monaco-icon-name-container")?.textContent?.trim();
+        const packageName = row.querySelector(".details-label")?.textContent?.trim();
+
+        return name && packageName && PLUGIN_PACKAGE.test(packageName) ? `${packageName}.${name}` : ariaLabel;
+    };
+
     const replaceRowsIcons = (nodes: HTMLElement[]) => {
         nodes = uniqBy(nodes, node => node.id);
 
         for (let node of nodes) {
-            const completionValue = node?.getAttribute("aria-label");
+            const completionValue = suggestionLabel(node);
             if (!completionValue || node.getAttribute("data-index") === null) {
                 continue;
             }

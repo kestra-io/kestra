@@ -2,7 +2,7 @@ import type {Page} from "@playwright/test"
 
 /**
  * There is no `login()` here: the session comes from the `setup` project's
- * `storageState` (see `tests/e2e/auth.setup.ts`).
+ * `storageState` (see `auth.setup.ts`).
  */
 export class BasePage {
     constructor(public readonly page: Page) { }

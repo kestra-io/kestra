@@ -518,8 +518,10 @@
 
         const rows = flowTriggers.map(trigger => ({
             ...trigger,
-            sourceDisabled: trigger.disabled ?? false,
             ...triggers.value.find(state => state.triggerId === trigger.id),
+            // After the state spread: the live flow is authoritative for the definition flag, while the
+            // state carries a mirror of it that is only refreshed when a trigger event is processed.
+            sourceDisabled: trigger.disabled ?? false,
         }))
 
         const search = query.value

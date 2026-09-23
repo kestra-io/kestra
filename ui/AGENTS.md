@@ -34,11 +34,9 @@ These rules are what keep the UI maintainable as it grows. Treat any deviation a
 8. **Don't fork — extend.** If a `Ks*` component is *almost* what you need, add a prop or a slot to the component in `ui/packages/design-system/`. Copy-pasting the component into your feature folder is forbidden.
 9. **Every new `Ks*` component needs a Storybook story and a unit test.** Stories double as living documentation for design and product reviewers.
 10. **i18n keys live with the design system component**, not inside feature code, when they belong to the component (e.g. `KsEmpty`, `KsDurationPicker`). Register them via `registerDesignSystemI18n`.
-11. **Check that a token exists before using it.** With an invalid `var(--ks-…)` and no fallback, the property is silently inherited instead, so the mistake remains invisible until the computed style is measured. The cases feature was released using `--ks-font-size-medium`, `--ks-font-size-small`, `--ks-radius-2` and `--ks-border-active`, none of which are declared anywhere. One grep is enough:
+11. **Check that a token exists before using it.** With an invalid `var(--ks-…)` and no fallback, the property is silently inherited instead, so the mistake remains invisible until the computed style is measured. The cases feature was released using `--ks-font-size-medium`, `--ks-font-size-small`, `--ks-radius-2` and `--ks-border-active`, none of which are declared anywhere, and the interval filter's Apply-to row shipped with no visible selection for the same reason (kestra-io/kestra#18777).
 
-    ```bash
-    grep -rn -- "--ks-your-token" packages/design-system/src/assets/styles/
-    ```
+    Your editor underlines it: `ks/no-undeclared-custom-property` (stylelint) covers `<style>` blocks and `.scss`, `kestra-tokens/no-undeclared-ks-token` (eslint) covers `cssVar("--ks-…")` and tokens written inside strings, and both propose a replacement. `npm run lint` runs both. See [scripts/tokens/README.md](scripts/tokens/README.md), which also has the one setting the Stylelint extension needs for `.vue` files.
 12. **Copying an existing rule is not proof that it is correct.** Several hundred `:deep()` selectors, some hex codes and some raw pixel values are older than these rules and are being removed over time. Treat them as debt rather than as precedent: don't add more, and clean up the ones in the component you are already editing.
 
 ## Best practices for keeping the design system healthy
@@ -277,6 +275,7 @@ Install the repo hooks once with `.github/.hooks/setup_hooks.sh` and the second 
 ### Testing UI
 
 - Unit tests with **Vitest** + `@vue/test-utils`, colocated next to the component.
+- Mount through `i18nMount` or `i18nShallowMount` rather than calling `mount` with your own `createI18n`. Pass `messages` for the keys the spec asserts on, or `locales: en` when it needs the real `en.json`; with neither, `t("key")` renders the key. Missing-key warnings are off in both helpers, so a spec asserting on raw keys stays quiet. Two copies exist and behave the same: specs under `tests/unit/` and `packages/topology/tests/` import `tests/unit/i18nMount.ts`, and specs under `packages/design-system/tests/units/` import the one next to them. Both install the design system, as the app does at bootstrap, so a mounted `Ks*` component resolves instead of warning; a spec that mocks `@kestra-io/design-system` away has to keep a `default` export for that install, such as `default: {install: () => {}}`. Only a spec that never mounts anything, such as one testing pluralisation on the instance itself, builds its own i18n.
 - Use `data-test="..."` selectors for E2E tests with **Playwright**. Never select on `.el-*` or `.ks-*` class names — those are not stable contracts and will break on Element Plus / DS upgrades.
 - Storybook stories cover: each variant prop, dark mode, edge cases (empty content, very long text, error state). A `*.stories.ts` file with one default story is not enough.
 - Visual regressions caught in Storybook are cheaper to fix than caught in production.
@@ -343,7 +342,7 @@ If your `<style>` block needs to exist:
 .my-feature {
     background: var(--ks-bg-surface);
     color: var(--ks-text-primary);
-    border: 1px solid var(--ks-border-primary);
+    border: 1px solid var(--ks-border-default);
 }
 ```
 
@@ -447,7 +446,7 @@ If your `<style>` block needs to exist:
 
 - `State`, `STATES`, `LOG_LEVELS` — execution state constants, icons, and colors
 - `cssVar(name, opacity?)` — read a `--ks-*` CSS custom property at runtime (use this in JS / chart configs instead of hardcoding hex)
-- `dayjs` — the one configured dayjs instance (utc, timezone, duration, calendar, isoWeek, localizedFormat, minMax, relativeTime, weekOfYear, isSameOrBefore). Never `import dayjs from "dayjs"` in feature code: plugins are registered on this instance, so a bare import silently lacks them
+- `dayjs` — the one configured dayjs instance (utc, timezone, duration, advancedFormat, calendar, isoWeek, localizedFormat, minMax, relativeTime, weekOfYear, isSameOrBefore). Never `import dayjs from "dayjs"` in feature code: plugins are registered on this instance, so a bare import silently lacks them
 - `dateUtils` — `dateFilter()`, `parseIso()`, `toIsoKeepOffset()`, `currentTimezone()`, `timezonesWithOffset()`, `currentLocale()`, `setLocale()`, `DATE_FORMAT_STORAGE_KEY`, `TIMEZONE_STORAGE_KEY`
 - `durationUtils` — `duration()`, `isValidDuration()`, `humanDuration()` — ISO 8601 ↔ ms and human-readable
 - `stringUtils` — `afterLastDot()`

@@ -14,7 +14,10 @@ import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
 import java.util.function.Consumer;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLHandshakeException;
@@ -51,6 +54,7 @@ import io.kestra.core.http.HttpRequest;
 import io.kestra.core.http.HttpResponse;
 import io.kestra.core.http.HttpService;
 import io.kestra.core.http.HttpSseEvent;
+import io.kestra.core.http.KestraMediaTypes;
 import io.kestra.core.http.client.apache.*;
 import io.kestra.core.http.client.configurations.DigestAuthConfiguration;
 import io.kestra.core.http.client.configurations.HttpConfiguration;
@@ -70,6 +74,11 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class HttpClient implements Closeable {
+    /**
+     * Matches a {@code network/prefixLength} allow/deny-list entry, e.g. {@code 169.254.0.0/16}.
+     */
+    private static final Pattern CIDR_ENTRY = Pattern.compile("^(?:(https?)://)?([^/]+)/(\\d{1,3})$");
+
     private transient CloseableHttpClient client;
     private transient BasicCredentialsProvider defaultCredentialsProvider;
     private final RunContext runContext;
@@ -562,6 +571,16 @@ public class HttpClient implements Closeable {
         List<String> allowedList = (List<String>) ((DefaultRunContext) runContext).getTaskProperty("kestra.tasks.http.allowed-list", List.class).orElse(Collections.emptyList());
         List<String> deniedList = (List<String>) ((DefaultRunContext) runContext).getTaskProperty("kestra.tasks.http.denied-list", List.class).orElse(Collections.emptyList());
 
+        if (allowedList.isEmpty() && deniedList.isEmpty()) {
+            return;
+        }
+
+        if (resolveAuthority(uri) == null) {
+            // A list is configured but the URI carries no authority at all, so there is no host to check it
+            // against: fail closed on both directions instead of silently letting an unmatchable URI through.
+            throw new IllegalArgumentException("The URI %s has no resolvable host to check against the configured allow/deny lists (kestra.tasks.http.allowed-list / kestra.tasks.http.denied-list).".formatted(uri));
+        }
+
         // first check that if there is an allow list, it matches one
         if (!allowedList.isEmpty()) {
             if (allowedList.stream().noneMatch(entry -> isListEntryMatch(entry, uri))) {
@@ -576,20 +595,153 @@ public class HttpClient implements Closeable {
     }
 
     /**
+     * The host and raw port ({@code -1} when none was given, same convention as {@link URI#getPort()}) Kestra is
+     * actually about to connect to, as resolved by {@link #resolveAuthority(URI)}.
+     */
+    private record ResolvedAuthority(String host, int port) {
+    }
+
+    /**
+     * Resolves the host and port of the URI Kestra is actually about to connect to, falling back to a manual
+     * parse of the raw authority when {@link URI#getHost()} returns {@code null}. That happens for an authority
+     * containing an underscore, or a partial dotted-decimal IPv4 literal such as {@code 169.254.43518}: strings
+     * {@code java.net.URI}'s hostname grammar rejects, but that Apache HttpClient still connects to verbatim via
+     * {@code URIUtils.extractHost}. Returns {@code null} only when the URI carries no authority at all.
+     */
+    private static ResolvedAuthority resolveAuthority(URI uri) {
+        if (uri.getHost() != null) {
+            return new ResolvedAuthority(uri.getHost(), uri.getPort());
+        }
+
+        String authority = uri.getAuthority();
+        if (authority == null) {
+            return null;
+        }
+
+        String hostAndPort = authority.substring(authority.lastIndexOf('@') + 1);
+        int colon = hostAndPort.lastIndexOf(':');
+        if (colon == -1) {
+            return new ResolvedAuthority(hostAndPort, -1);
+        }
+
+        try {
+            return new ResolvedAuthority(hostAndPort.substring(0, colon), Integer.parseInt(hostAndPort.substring(colon + 1)));
+        } catch (NumberFormatException e) {
+            return new ResolvedAuthority(hostAndPort, -1);
+        }
+    }
+
+    /**
+     * Parses {@code host} as an IP literal, stripping IPv6 brackets and a trailing dot first. Never resolves a
+     * hostname: {@link InetAddress#ofLiteral} parses syntax only and never performs a DNS lookup, so this is safe
+     * to call on every allow/deny comparison.
+     */
+    private static Optional<InetAddress> parseIpLiteral(String host) {
+        String candidate = stripTrailingDot(host);
+        if (candidate.startsWith("[") && candidate.endsWith("]")) {
+            candidate = candidate.substring(1, candidate.length() - 1);
+        }
+
+        try {
+            return Optional.of(InetAddress.ofLiteral(candidate));
+        } catch (IllegalArgumentException e) {
+            return Optional.empty();
+        }
+    }
+
+    /**
+     * Returns the canonical dotted-quad / compressed-IPv6 form when {@code host} is any textual IP literal —
+     * decimal, partial dotted-decimal, hex, or IPv4-mapped IPv6 — so that every spelling of the same address
+     * matches the same allow/deny entry. Falls back to a lowercased, trailing-dot-stripped hostname otherwise.
+     */
+    private static String canonicalHost(String host) {
+        return parseIpLiteral(host)
+            .map(InetAddress::getHostAddress)
+            .orElseGet(() -> stripTrailingDot(host).toLowerCase(Locale.ROOT));
+    }
+
+    /**
+     * A {@code network/prefixLength} allow/deny-list entry, e.g. {@code 169.254.0.0/16}, so an entire range can
+     * be denied without enumerating every textual spelling of every address in it.
+     */
+    private record Cidr(InetAddress network, int prefixLength, String scheme) {
+        static Cidr parsed(String entry) {
+            Matcher matcher = CIDR_ENTRY.matcher(entry);
+            if (!matcher.matches()) {
+                return null;
+            }
+
+            Optional<InetAddress> network = parseIpLiteral(matcher.group(2));
+            if (network.isEmpty()) {
+                return null;
+            }
+
+            int prefixLength;
+            try {
+                prefixLength = Integer.parseInt(matcher.group(3));
+            } catch (NumberFormatException e) {
+                return null;
+            }
+
+            if (prefixLength > network.get().getAddress().length * 8) {
+                return null;
+            }
+
+            return new Cidr(network.get(), prefixLength, matcher.group(1));
+        }
+
+        boolean contains(String host) {
+            Optional<InetAddress> address = parseIpLiteral(host);
+            if (address.isEmpty()) {
+                return false;
+            }
+
+            byte[] addressBytes = address.get().getAddress();
+            byte[] networkBytes = network.getAddress();
+            if (addressBytes.length != networkBytes.length) {
+                return false;
+            }
+
+            int fullBytes = prefixLength / 8;
+            for (int i = 0; i < fullBytes; i++) {
+                if (addressBytes[i] != networkBytes[i]) {
+                    return false;
+                }
+            }
+
+            int remainingBits = prefixLength % 8;
+            if (remainingBits == 0) {
+                return true;
+            }
+
+            int mask = 0xFF << (8 - remainingBits);
+            return (addressBytes[fullBytes] & mask) == (networkBytes[fullBytes] & mask);
+        }
+    }
+
+    /**
      * Matches a {@code kestra.tasks.http.allowed-list} / {@code denied-list} entry against the URI Kestra is
-     * actually about to connect to. Matching is done on the parsed authority (host, and scheme/port when the
+     * actually about to connect to. Matching is done on the resolved authority (host, and scheme/port when the
      * entry specifies them) rather than on the raw URI string, so that URL-encoded userinfo
      * (e.g. {@code https://api.trusted.com@169.254.169.254/}, whose host is {@code 169.254.169.254}) or a
      * subdomain suffix (e.g. {@code https://api.trusted.com.attacker.example/}) cannot impersonate an entry
-     * they merely start with.
+     * they merely start with. An IP-literal host is compared on its canonical form, so {@code 2852039166} and
+     * {@code 169.254.169.254} match the same entry.
      * <p>
-     * An entry matches its host exactly. Write it as {@code *.api.trusted.com} to also match every subdomain
-     * of {@code api.trusted.com} (not {@code api.trusted.com} itself, which needs its own entry).
+     * An entry matches its host exactly. Write it as {@code *.api.trusted.com} to also match every subdomain of
+     * {@code api.trusted.com} (not {@code api.trusted.com} itself, which needs its own entry), or as a
+     * {@code network/prefixLength} CIDR range (e.g. {@code 169.254.0.0/16}) to match every address in it.
      */
     private static boolean isListEntryMatch(String entry, URI uri) {
-        String host = uri.getHost();
-        if (host == null) {
+        ResolvedAuthority requestAuthority = resolveAuthority(uri);
+        if (requestAuthority == null) {
             return false;
+        }
+
+        Cidr cidr = Cidr.parsed(entry);
+        if (cidr != null) {
+            return cidr.contains(requestAuthority.host())
+                && (cidr.scheme() == null || cidr.scheme().equalsIgnoreCase(uri.getScheme()));
         }
 
         boolean matchSubdomains = entry.startsWith("*.") || entry.contains("://*.");
@@ -602,16 +754,16 @@ public class HttpClient implements Closeable {
             return false;
         }
 
-        String entryHost = entryUri.getHost();
-        if (entryHost == null) {
+        ResolvedAuthority entryAuthority = resolveAuthority(entryUri);
+        if (entryAuthority == null) {
             return false;
         }
 
-        String lowerHost = stripTrailingDot(host).toLowerCase(Locale.ROOT);
-        String lowerEntryHost = stripTrailingDot(entryHost).toLowerCase(Locale.ROOT);
-        boolean hostMatches = matchSubdomains
-            ? lowerHost.endsWith("." + lowerEntryHost)
-            : lowerHost.equals(lowerEntryHost);
+        String host = canonicalHost(requestAuthority.host());
+        String lowerEntryHost = canonicalHost(entryAuthority.host());
+        boolean hostMatches = matchSubdomains && parseIpLiteral(host).isEmpty()
+            ? host.endsWith("." + lowerEntryHost)
+            : host.equals(lowerEntryHost);
         if (!hostMatches) {
             return false;
         }
@@ -620,7 +772,7 @@ public class HttpClient implements Closeable {
             return false;
         }
 
-        if (entryUri.getPort() != -1 && entryUri.getPort() != defaultedPort(uri)) {
+        if (entryAuthority.port() != -1 && entryAuthority.port() != defaultedPort(uri.getScheme(), requestAuthority.port())) {
             return false;
         }
 
@@ -644,15 +796,15 @@ public class HttpClient implements Closeable {
     }
 
     /**
-     * Returns the URI's explicit port, or the scheme's default port when none is given, so that an
+     * Returns {@code port}, or the scheme's default port when {@code port} is {@code -1}, so that an
      * allow/deny-list entry with an explicit default port still matches a request that omits it.
      */
-    private static int defaultedPort(URI uri) {
-        if (uri.getPort() != -1) {
-            return uri.getPort();
+    private static int defaultedPort(String scheme, int port) {
+        if (port != -1) {
+            return port;
         }
 
-        return switch (uri.getScheme() == null ? "" : uri.getScheme().toLowerCase(Locale.ROOT)) {
+        return switch (scheme == null ? "" : scheme.toLowerCase(Locale.ROOT)) {
             case "https" -> 443;
             case "http" -> 80;
             default -> -1;
@@ -667,7 +819,7 @@ public class HttpClient implements Closeable {
             return (T) EntityUtils.toString(entity);
         } else if (Byte[].class.isAssignableFrom(cls)) {
             return (T) ArrayUtils.toObject(EntityUtils.toByteArray(entity));
-        } else if (MediaType.APPLICATION_YAML.equals(entity.getContentType()) || "application/yaml".equals(entity.getContentType())) {
+        } else if (MediaType.APPLICATION_YAML.equals(entity.getContentType()) || KestraMediaTypes.APPLICATION_X_YAML.equals(entity.getContentType())) {
             return (T) JacksonMapper.ofYaml().readValue(entity.getContent(), cls);
         } else {
             return (T) JacksonMapper.ofJson(false).readValue(entity.getContent(), cls);

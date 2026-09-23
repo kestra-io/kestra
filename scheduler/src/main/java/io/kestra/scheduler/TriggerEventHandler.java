@@ -24,7 +24,6 @@ import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.Backfill;
-import io.kestra.core.models.triggers.PollingTriggerInterface;
 import io.kestra.core.models.triggers.RecoverMissedSchedules;
 import io.kestra.core.models.triggers.Schedulable;
 import io.kestra.core.models.triggers.TriggerContext;
@@ -183,7 +182,7 @@ public class TriggerEventHandler {
                 return;
             }
 
-            if (trigger instanceof PollingTriggerInterface) {
+            if (trigger instanceof Schedulable) {
                 state = state.updateForNextEvaluationDate(clock, nextEvaluationDate(clock, flow, trigger, state.context()));
             }
 
@@ -445,7 +444,7 @@ public class TriggerEventHandler {
         TriggerState state = maybeState.get();
         // The trigger was disabled while its worker job was in flight: the kill broadcast
         // found no holder at that time, so kill the instance now that a worker reports it.
-        if (state.isDisabled()) {
+        if (state.isDisabled() || isDisabledInDefinition(event)) {
             maySendExecutionKilled(state);
         }
         triggerStateStore.save(
@@ -589,7 +588,7 @@ public class TriggerEventHandler {
             Flow flow = data.getLeft();
             AbstractTrigger trigger = data.getRight();
             TriggerState state = TriggerState
-                .of(event.id(), TriggerType.from(trigger), trigger.getStopAfter(), trigger.isDisabled(), vNode)
+                .of(event.id(), trigger, vNode)
                 .lastEventId(clock, event.eventId());
             state = state.updateForNextEvaluationDate(clock, nextEvaluationDate(clock, flow, trigger, state.context()));
             triggerStateStore.save(state);
@@ -604,6 +603,11 @@ public class TriggerEventHandler {
         RunContext runContext = runContextFactory.of(flow, trigger);
         ConditionContext conditionContext = conditionService.conditionContext(runContext, flow, null);
         return NextEvaluationDate.get(clock, trigger, triggerContext, conditionContext);
+    }
+
+    private boolean isDisabledInDefinition(TriggerEvent event) {
+        AbstractTrigger trigger = findTrigger(event, null).getRight();
+        return trigger != null && trigger.isDisabled();
     }
 
     private Pair<Flow, AbstractTrigger> findTrigger(TriggerEvent event, Integer revision) {

@@ -213,7 +213,6 @@
     "executionProgress": {
       "title": "Progresso da execução",
       "estimatedRemaining": "Tempo restante estimado: {duration}",
-      "noBaseline": "Sem dados históricos — não é possível estimar o tempo restante",
       "pastEstimate": "A execução está demorando mais do que o normal"
     },
     "launch execution": "Executar",
@@ -872,7 +871,7 @@
     "flow delete": "Tem certeza de que deseja excluir <code>{flowCount}</code> flow(s)?",
     "delete flow error": "Não foi possível excluir o flow {id}",
     "flows deleted": "<code>{count}</code> Flow(s) deletado(s)",
-    "flow disable": "Tem certeza de que deseja desativar <code>{flowCount}</code> flow(s)?",
+    "flow disable": "Tem certeza de que deseja desabilitar {flowCount} Flow(s)?<br/><br/>Desabilitar um Flow escreve <code>disabled: true</code> no Flow e cria uma nova revisão. Uma sincronização de uma fonte externa que não inclui <code>disabled: true</code> habilitará o Flow novamente.",
     "flow enable": "Tem certeza de que deseja ativar <code>{flowCount}</code> flow(s)?",
     "flows disabled": "<code>{count}</code> Flow(s) desativado(s)",
     "flows enabled": "<code>{count}</code> Flow(s) ativado(s)",
@@ -2435,8 +2434,8 @@
       "next_match": "Próxima correspondência",
       "no_results_description": "Tente ampliar o namespace, alternar o escopo de volta para Todas as fontes ou desativar Diferenciar maiúsculas de minúsculas e Coincidir palavra inteira.",
       "no_results_hidden_type": "Encontrada {count} correspondência em {type}, que não selecionou. | Encontradas {count} correspondências em {type}, que não selecionou.",
-      "no_results_in_types": "Sem correspondências para {query} em {types}",
       "no_results_title": "Nenhum resultado para \"{query}\"",
+      "did_you_mean": "Você quis dizer {suggestion}?",
       "open_flow": "Abrir flow",
       "open_in_editor": "Abrir no editor",
       "open_in_kv": "Abrir no KV Store",
@@ -2646,6 +2645,9 @@
       "install_description": "Instale o Kestra como um aplicativo para acesso mais rápido e uma experiência em tela cheia.",
       "install": "Instalar",
       "dismiss": "Agora não"
-    }
+    },
+    "iteration": "Iteração",
+    "iteration_number": "Iteração {number}",
+    "delete_log_iteration": "Tem certeza de que deseja excluir o log de {iteration}?"
   }
 }

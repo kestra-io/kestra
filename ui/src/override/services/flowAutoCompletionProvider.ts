@@ -4,7 +4,7 @@ import type {YamlElement} from "@kestra-io/topology/flow-yaml-utils"
 import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
 import {QUOTE, YamlAutoCompletion, functionToSnippet, type RootCompletionContext} from "../../services/autoCompletionProvider"
 import RegexProvider from "../../utils/regex"
-import {State} from "@kestra-io/design-system"
+import {isPlainObject, State} from "@kestra-io/design-system"
 import {usePluginsStore} from "../../stores/plugins"
 import {useFlowStore} from "../../stores/flow"
 import {useMcpStore} from "../../stores/mcp"
@@ -31,11 +31,21 @@ interface ParsedFlow {
 // webserver). Suggested only in that context; the backend rejects them anywhere else.
 const INPUT_ONLY_FUNCTIONS = ["subflow"]
 
+/**
+ * Only the namespaces-store members the completion reads. Typing the dependency this way keeps the
+ * Enterprise store, which is a superset by content, assignable: the full Pinia `Store` types are
+ * mutually incompatible through `$onAction` alone, even when every member lines up.
+ */
+export type NamespacesStoreLike = Pick<
+    ReturnType<typeof useNamespacesStore>,
+    "autocomplete" | "loadAutocomplete" | "usableSecrets" | "kvsList" | "loadInheritedSecrets" | "listSecrets"
+>
+
 export class FlowAutoCompletion extends YamlAutoCompletion {
     flowsInputsCache: Record<string, string[]> = {}
     pluginsStore: ReturnType<typeof usePluginsStore>
     flowStore: ReturnType<typeof useFlowStore>
-    namespacesStore: ReturnType<typeof useNamespacesStore>
+    namespacesStore: NamespacesStoreLike
     mcpStore: ReturnType<typeof useMcpStore>
     dashboardStore: ReturnType<typeof useDashboardStore>
     private mcpServerIdsCache: string[] | undefined
@@ -44,7 +54,7 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
     constructor(
         flowStore: ReturnType<typeof useFlowStore>,
         pluginsStore: ReturnType<typeof usePluginsStore>,
-        namespacesStore: ReturnType<typeof useNamespacesStore>,
+        namespacesStore: NamespacesStoreLike,
         mcpStore: ReturnType<typeof useMcpStore>,
         dashboardStore: ReturnType<typeof useDashboardStore>,
         completionSource?: ComputedRef<string | undefined>,
@@ -166,7 +176,9 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
         try {
             for (const probeIndex of probeIndexes) {
                 const localized = YAML_UTILS.localizeElementAtIndex(source, probeIndex)
-                const candidates = [...(localized?.parents ?? []), localized?.value]
+                // `value` is whatever the YAML node held, so only a map can carry a task id.
+                const value = localized?.value
+                const candidates = [...(localized?.parents ?? []), isPlainObject(value) ? value : undefined]
 
                 const taskId = this.taskIdFromCandidates(candidates)
                 if (taskId) {
@@ -313,7 +325,7 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
                     : Promise.resolve(availableNamespaces)
             }
             case "flowId": {
-                if (parentTask !== undefined && parentTask.namespace !== undefined) {
+                if (typeof parentTask?.namespace === "string") {
                     let flowIds: string[] = (await this.flowStore.flowsByNamespace(parentTask.namespace))
                         .map((flow: {id: string}) => flow.id)
                     if (parsed?.id !== undefined && parsed?.namespace === parentTask.namespace) {
@@ -325,8 +337,9 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
                 break
             }
             case "inputs": {
-                if (parentTask !== undefined && parentTask.namespace !== undefined && parentTask.flowId !== undefined) {
-                    return await this.subflowInputsAutoCompletion(parentTask.namespace, parentTask.flowId, parentTask.revision, Object.keys(yamlElement.value ?? {}))
+                if (typeof parentTask?.namespace === "string" && typeof parentTask.flowId === "string") {
+                    const revision = parentTask.revision == null ? undefined : String(parentTask.revision)
+                    return await this.subflowInputsAutoCompletion(parentTask.namespace, parentTask.flowId, revision, Object.keys(yamlElement.value ?? {}))
                 }
                 break
             }
@@ -348,7 +361,7 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
             }
             case "chartId": {
                 // stays live even when dashboardId is empty: falls back to the "_default" sentinel dashboard.
-                const dashboardId = parentTask?.dashboardId ?? "_default"
+                const dashboardId = typeof parentTask?.dashboardId === "string" ? parentTask.dashboardId : "_default"
                 const charts = await this.dashboardStore.chartsById(dashboardId)
                 return charts.filter(chart => isExportableChart(chart.type)).map(chart => chart.id)
             }

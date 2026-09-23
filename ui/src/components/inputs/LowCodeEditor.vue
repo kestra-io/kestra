@@ -61,12 +61,13 @@
                     v-if="isReadOnly && taskProps.execution && taskProps.taskRun"
                     class="node-action-button"
                     :taskRun="taskProps.taskRun"
+                    :taskType="taskProps.task?.type"
                     :taskRuns="taskProps.taskRuns"
                     :execution="taskProps.execution"
                     :flow="flowStore.flow"
                     :nodeActions="taskProps.actions
-                        .filter(a => taskProps.taskRuns?.length > 1 ? !['edit'].includes(a.key) : !EXCLUDED_NODE_ACTIONS.includes(a.key))
-                        .map((a, i) => i === 0 && !(taskProps.taskRuns?.length > 1) ? {...a, divided: true} : a)
+                        .filter(a => !EXCLUDED_NODE_ACTIONS.includes(a.key))
+                        .map((a, i) => i === 0 ? {...a, divided: true} : a)
                     "
                     @follow="$emit('follow', $event)"
                 />
@@ -250,7 +251,8 @@
     import PlayBoxMultiple from "vue-material-design-icons/PlayBoxMultiple.vue"
 
     import {Topology, NodeMenu} from "@kestra-io/topology"
-    import {SECTIONS, State, KsMarkdown, KsEditor, KsDialog, vKsLoading} from "@kestra-io/design-system"
+    import {LOG_LEVELS, SECTIONS, State, KsMarkdown, KsEditor, KsDialog, vKsLoading} from "@kestra-io/design-system"
+    import type {LevelKey} from "../../utils/logs"
     import {Execution} from "@kestra-io/kestra-sdk"
     import * as MetricsAPI from "@kestra-io/kestra-sdk/metrics"
     import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
@@ -281,7 +283,7 @@
     const route = useRoute()
 
     const vueflowId = ref(Math.random().toString())
-    const {fitView, setMinZoom} = useVueFlow(vueflowId.value)
+    const {fitView} = useVueFlow(vueflowId.value)
 
     const topologyClick = inject(TOPOLOGY_CLICK_INJECTION_KEY, ref())
 
@@ -615,7 +617,8 @@
     const vueFlow = ref<HTMLDivElement>()
     const timer = ref<ReturnType<typeof setTimeout>>()
     const logFilter = ref("")
-    const logLevel = ref(localStorage.getItem("defaultLogLevel") || "INFO")
+    const toLevelKey = (value: string | null): LevelKey => LOG_LEVELS.find((level) => level === value) ?? "INFO"
+    const logLevel = ref<LevelKey>(toLevelKey(localStorage.getItem("defaultLogLevel")))
     const isDrawerOpen = ref(false)
     const isShowDescriptionOpen = ref(false)
     const isShowConditionOpen = ref(false)
@@ -647,7 +650,6 @@
         // Regenerate graph on window resize
         observeWidth()
         pluginsStore.fetchIcons()
-        setMinZoom(0.1)
     })
 
     watch(() => executionsStore.execution?.id, (id) => {
@@ -895,7 +897,7 @@
     }
 
     const onLevelChange = (level: string) => {
-        logLevel.value = level
+        logLevel.value = toLevelKey(level)
     }
 
     const showDescription = (event: string) => {

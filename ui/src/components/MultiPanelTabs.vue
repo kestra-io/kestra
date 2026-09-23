@@ -227,7 +227,7 @@
 </template>
 
 <script setup lang="ts">
-    import {nextTick, ref, watch, provide, computed, defineComponent, h, markRaw, onMounted, onBeforeUnmount} from "vue"
+    import {nextTick, ref, watch, provide, computed, defineComponent, h, markRaw, onMounted, onBeforeUnmount, type Component} from "vue"
 
     import {VISIBLE_PANELS_INJECTION_KEY, PANEL_MAXIMIZED_INJECTION_KEY} from "./no-code/injectionKeys"
     import {useKeyShortcuts} from "../utils/useKeyShortcuts"
@@ -249,11 +249,12 @@
 
     const {showKeyShortcuts} = useKeyShortcuts()
 
-    const ComponentCache = new Map<string, any>()
+    const ComponentCache = new Map<string, Component>()
 
-    const createUniqueComponent = (component: any, key: string) => {
-        if(ComponentCache.has(key)){
-            return ComponentCache.get(key)
+    const createUniqueComponent = (component: Component, key: string) => {
+        const cached = ComponentCache.get(key)
+        if(cached){
+            return cached
         }
         const uniqueComponent = markRaw(
             defineComponent({
@@ -712,7 +713,7 @@
         if(!container){
             return
         }
-        const safeId = (globalThis as any).CSS?.escape ? (globalThis as any).CSS.escape(tabId) : tabId.replace(/[^a-zA-Z0-9_-]/g, "\\$&")
+        const safeId = globalThis.CSS?.escape ? globalThis.CSS.escape(tabId) : tabId.replace(/[^a-zA-Z0-9_-]/g, "\\$&")
         const el = container.querySelector(`.editor-tab[data-tab-id="${safeId}"]`) as HTMLElement | null
         if(!el){
             return
@@ -799,7 +800,7 @@
         background: var(--ks-bg-surface);
         border-left: 1px solid var(--ks-border-default);
         border-right: 1px solid var(--ks-border-default);
-        box-shadow: var(--ks-shadow-md);
+        box-shadow: var(--ks-shadow-base);
     }
 
     .panel-maximized--left-sliver .editor-tabs-container,
@@ -874,7 +875,7 @@
         right: 0;
         bottom: 0;
         background-color: rgba(0, 0, 0, 0.1);
-        z-index: 100;
+        z-index: var(--ks-z-sticky);
         &.dragover{
             background-color: rgba(0, 0, 0, 0.3);
         }
@@ -1035,7 +1036,7 @@
         right: 0;
         bottom: 0;
         pointer-events: none;
-        z-index: 100;
+        z-index: var(--ks-z-sticky);
         display: flex;
         justify-content: space-between;
     }

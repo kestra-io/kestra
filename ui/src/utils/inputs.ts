@@ -1,38 +1,11 @@
 import {dayjs} from "@kestra-io/design-system"
 import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
 import {storageKeys} from "./constants"
+import type {Type} from "@kestra-io/kestra-sdk"
+import type {InputMetaData} from "../stores/executions"
 
-export type InputType = "STRING"
-    | "NUMBER"
-    | "BOOLEAN"
-    | "BOOL"
-    | "DATE"
-    | "DATETIME"
-    | "TIME"
-    | "ARRAY"
-    | "MULTISELECT"
-    | "JSON"
-    | "ION"
-    | "YAML"
-    | "SECRET"
-    | "FILE"
-    | "DURATION"
-    | "INT"
-    | "FLOAT"
-    | "ENUM"
-    | "SELECT"
-    | "URI"
-    | "EMAIL"
-    | "FORM";
-
-export interface FlowInput {
-    id: string;
-    type?: InputType | string;
-    displayName?: string;
-    description?: string;
-    inputs?: FlowInput[];
-    [key: string]: any;
-}
+/** The backend's `Type` enum, so the union can never drift from what the API sends. */
+export type InputType = Type
 
 /**
  * Mirrors the backend `Input.expandToLeaves`: replaces each FORM group with copies of its
@@ -40,7 +13,7 @@ export interface FlowInput {
  * FORMs never nest (rejected by backend validation), so expansion is single-level.
  * Returns the flat leaf list keyed by dotted id, which the submission/validation paths consume.
  */
-export function flattenInputs(inputs: FlowInput[] | undefined): FlowInput[] {
+export function flattenInputs(inputs: InputMetaData[] | undefined): InputMetaData[] {
     if (!inputs) return []
     return inputs.flatMap((input) =>
         input.type === "FORM"
@@ -81,15 +54,15 @@ export function formChildName(id: string, formIds: string[]): string {
  * the backend emits them). Used by EE Apps, which receives flat leaves with no FORM nodes.
  */
 export function unflattenToForms(
-    leaves: FlowInput[] | undefined,
+    leaves: InputMetaData[] | undefined,
     formGroups: Record<string, {displayName?: string; description?: string}> | undefined,
-): FlowInput[] {
+): InputMetaData[] {
     if (!leaves) return []
     const formIds = Object.keys(formGroups ?? {})
     if (!formIds.length) return leaves
 
-    const result: FlowInput[] = []
-    const nodes = new Map<string, FlowInput>()
+    const result: InputMetaData[] = []
+    const nodes = new Map<string, InputMetaData>()
     for (const leaf of leaves) {
         const owner = longestFormPrefix(leaf.id, formIds)
         if (!owner) {
@@ -136,7 +109,7 @@ export interface WizardStep {
  * `STRING, FORM(STRING), DATE` yields `[STRING] [FORM child] [DATE]` then a final recap step.
  * Empty FORMs are skipped. Leaf ids are dotted for FORM children (mirrors `flattenInputs`).
  */
-export function buildWizardSteps(inputs: FlowInput[] | undefined): WizardStep[] {
+export function buildWizardSteps(inputs: InputMetaData[] | undefined): WizardStep[] {
     const result: WizardStep[] = []
     let run: string[] = []
     const flushRun = () => {
@@ -164,13 +137,11 @@ export function buildWizardSteps(inputs: FlowInput[] | undefined): WizardStep[] 
 export function normalize(type: InputType | undefined, value: any) {
     let res = value
 
-    if (type === "BOOLEAN" && value === undefined) {
-        res = "undefined"
-    } else if (type === "BOOL") {
+    if (type === "BOOL") {
         // `defaults` is a Property, which serialises as its expression string, so `defaults: true`
         // reaches the form as the string "true". KsSwitch (el-switch) only accepts a real boolean:
         // given anything else it emits `update:modelValue` = false during setup, which both turns the
-        // toggle off and marks the input as user-edited — so the validate response can no longer
+        // toggle off and marks the input as user-edited, so the validate response can no longer
         // restore the default. Coerce here.
         res = value === true || value === "true"
     } else if (value === null || value === undefined) {
@@ -178,7 +149,13 @@ export function normalize(type: InputType | undefined, value: any) {
     } else if (type === "DATE" || type === "DATETIME") {
         res = dayjs(res).toISOString()
     } else if (type === "TIME") {
-        res = dayjs().startOf("day").add(res, "seconds").toString()
+        const [hours, minutes, seconds = "0"] = String(res).split(":")
+        res = dayjs()
+            .startOf("day")
+            .hour(Number(hours))
+            .minute(Number(minutes))
+            .second(Number(seconds))
+            .toString()
     } else if (type === "ARRAY" || type === "MULTISELECT" || type === "JSON" || type === "ION") {
         if (typeof res !== "string") {
             res = JSON.stringify(res).toString()

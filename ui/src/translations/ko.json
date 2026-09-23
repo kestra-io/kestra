@@ -213,7 +213,6 @@
     "executionProgress": {
       "title": "실행 진행률",
       "estimatedRemaining": "예상 남은 시간: {duration}",
-      "noBaseline": "이력 데이터가 없어 남은 시간을 추정할 수 없습니다",
       "pastEstimate": "평소보다 오래 실행되고 있습니다"
     },
     "launch execution": "실행",
@@ -872,7 +871,7 @@
     "flow delete": "<code>{flowCount}</code> 개의 flow를 삭제하시겠습니까?",
     "delete flow error": "flow {id}을(를) 삭제하지 못했습니다",
     "flows deleted": "<code>{count}</code> 개의 flow가 삭제되었습니다",
-    "flow disable": "<code>{flowCount}</code> 개의 flow를 비활성화하시겠습니까?",
+    "flow disable": "<code>{flowCount}</code>개의 Flow를 비활성화하시겠습니까?<br/><br/>Flow를 비활성화하면 Flow에 <code>disabled: true</code>가 작성되고 새 버전이 생성됩니다. <code>disabled: true</code>를 포함하지 않는 외부 소스에서 동기화하면 Flow가 다시 활성화됩니다.",
     "flow enable": "<code>{flowCount}</code> 개의 flow를 활성화하시겠습니까?",
     "flows disabled": "<code>{count}</code> 개의 flow가 비활성화되었습니다",
     "flows enabled": "<code>{count}</code> 개의 flow가 활성화되었습니다",
@@ -2435,8 +2434,8 @@
       "next_match": "다음 일치",
       "no_results_description": "namespace를 확장하거나, 범위를 '모든 소스'로 다시 전환하거나, '대소문자 일치' 및 '단어 전체 일치'를 끄십시오.",
       "no_results_hidden_type": "선택하지 않은 {type}에서 {count}개의 일치 항목을 찾았습니다. | 선택하지 않은 {type}에서 {count}개의 일치 항목을 찾았습니다.",
-      "no_results_in_types": "{types}에서 {query}와 일치하는 항목이 없습니다",
       "no_results_title": "\"{query}\"에 대한 일치 항목 없음",
+      "did_you_mean": "{suggestion}을(를) 말씀하시는 건가요?",
       "open_flow": "flow 열기",
       "open_in_editor": "에디터에서 열기",
       "open_in_kv": "KV Store에서 열기",
@@ -2646,6 +2645,9 @@
       "install_description": "더 빠른 접근과 전체 화면 경험을 위해 Kestra를 앱으로 설치하세요.",
       "install": "설치",
       "dismiss": "나중에"
-    }
+    },
+    "iteration": "반복",
+    "iteration_number": "반복 {number}",
+    "delete_log_iteration": "{iteration}의 로그를 삭제하시겠습니까?"
   }
 }

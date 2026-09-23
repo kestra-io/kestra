@@ -213,7 +213,6 @@
     "executionProgress": {
       "title": "Progression de l'exécution",
       "estimatedRemaining": "Temps restant estimé : {duration}",
-      "noBaseline": "Aucune donnée historique — impossible d'estimer le temps restant",
       "pastEstimate": "L'exécution dure plus longtemps que d'habitude"
     },
     "launch execution": "Déclencher",
@@ -872,7 +871,7 @@
     "flow delete": "Êtes vous sûr de vouloir supprimer <code>{flowCount}</code> flow(s)?",
     "delete flow error": "Impossible de supprimer le flow {id}",
     "flows deleted": "<code>{count}</code> Flow(s) supprimé(s)",
-    "flow disable": "Êtes vous sûr de vouloir désactiver <code>{flowCount}</code> flow(s)?",
+    "flow disable": "Voulez-vous vraiment désactiver {flowCount} Flow(s) ?<br/><br/>La désactivation d'un Flow écrit <code>disabled: true</code> dans le Flow et crée une nouvelle révision. Une synchronisation depuis une source externe qui n'inclut pas <code>disabled: true</code> réactivera le Flow.",
     "flow enable": "Êtes vous sûr de vouloir activer <code>{flowCount}</code> flow(s)?",
     "flows disabled": "<code>{count}</code> Flow(s) désactivé(s)",
     "flows enabled": "<code>{count}</code> Flow(s) activé(s)",
@@ -2435,8 +2434,8 @@
       "next_match": "Prochaine correspondance",
       "no_results_description": "Essayez d'élargir le namespace, de revenir à la portée \"Toutes les sources\" ou de désactiver \"Respecter la casse\" et \"Mot entier\".",
       "no_results_hidden_type": "{count} correspondance trouvée dans {type}, que vous n'avez pas sélectionné. | {count} correspondances trouvées dans {type}, que vous n'avez pas sélectionné.",
-      "no_results_in_types": "Aucune correspondance pour {query} dans {types}",
       "no_results_title": "Aucun résultat pour « {query} »",
+      "did_you_mean": "Vouliez-vous dire {suggestion} ?",
       "open_flow": "Ouvrir le flow",
       "open_in_editor": "Ouvrir dans l'éditeur",
       "open_in_kv": "Ouvrir dans le stockage de clés/valeurs",
@@ -2646,6 +2645,9 @@
       "install_description": "Installez Kestra comme application pour un accès plus rapide et une expérience plein écran.",
       "install": "Installer",
       "dismiss": "Pas maintenant"
-    }
+    },
+    "iteration": "Itération",
+    "iteration_number": "Itération {number}",
+    "delete_log_iteration": "Êtes-vous sûr de vouloir supprimer le journal pour {iteration} ?"
   }
 }

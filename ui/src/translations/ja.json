@@ -213,7 +213,6 @@
     "executionProgress": {
       "title": "実行の進行状況",
       "estimatedRemaining": "残り時間の目安: {duration}",
-      "noBaseline": "履歴データがないため、残り時間を推定できません",
       "pastEstimate": "通常より時間がかかっています"
     },
     "launch execution": "実行",
@@ -872,7 +871,7 @@
     "flow delete": "<code>{flowCount}</code>件のflowを削除してもよろしいですか？",
     "delete flow error": "flow {id} を削除できませんでした",
     "flows deleted": "<code>{count}</code>件のflowが削除されました",
-    "flow disable": "<code>{flowCount}</code>件のflowを無効化してもよろしいですか？",
+    "flow disable": "<code>{flowCount}</code>個のFlowを無効にしますか？<br/><br/>Flowを無効にすると、Flowに<code>disabled: true</code>が書き込まれ、新しいRevisionが作成されます。<code>disabled: true</code>を含まない外部ソースからの同期は、Flowを再度有効にします。",
     "flow enable": "<code>{flowCount}</code>件のflowを有効化してもよろしいですか？",
     "flows disabled": "<code>{count}</code>件のflowが無効化されました",
     "flows enabled": "<code>{count}</code>件のflowが有効化されました",
@@ -2435,8 +2434,8 @@
       "next_match": "次の一致",
       "no_results_description": "namespaceを広げるか、スコープを「すべてのソース」に戻すか、「大文字と小文字を区別する」と「単語全体に一致」をオフにしてみてください。",
       "no_results_hidden_type": "選択していない{type}で{count}件の一致が見つかりました。 | 選択していない{type}で{count}件の一致が見つかりました。",
-      "no_results_in_types": "{query} に一致する結果は{types}にありません",
       "no_results_title": "「{query}」に一致する項目はありません",
+      "did_you_mean": "もしかして {suggestion} のことですか？",
       "open_flow": "flow を開く",
       "open_in_editor": "エディターで開く",
       "open_in_kv": "KV Storeで開く",
@@ -2646,6 +2645,9 @@
       "install_description": "より高速なアクセスとフルスクリーン体験のために、Kestra をアプリとしてインストールします。",
       "install": "インストール",
       "dismiss": "後で"
-    }
+    },
+    "iteration": "反復",
+    "iteration_number": "反復 {number}",
+    "delete_log_iteration": "{iteration} のログを削除してもよろしいですか？"
   }
 }

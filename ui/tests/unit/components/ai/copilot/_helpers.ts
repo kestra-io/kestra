@@ -34,6 +34,7 @@ export const ksStubs = {
     },
     KsDropdown: {name: "KsDropdown", props: ["trigger"], template: "<div class=\"ks-dropdown\"><slot /><slot name=\"dropdown\" /></div>"},
     KsDropdownMenu: {name: "KsDropdownMenu", template: "<div class=\"ks-dropdown-menu\"><slot /></div>"},
+    KsId: {name: "KsId", props: ["value", "shrink"], template: "<span>{{ value }}<slot /></span>"},
     KsDropdownItem: {name: "KsDropdownItem", emits: ["click"], template: "<button class=\"ks-dropdown-item\" @click=\"$emit('click')\"><slot /></button>"},
     KsCard: {name: "KsCard", template: "<div><slot /></div>"},
     KsText: {name: "KsText", props: ["size", "type"], template: "<span><slot /></span>"},

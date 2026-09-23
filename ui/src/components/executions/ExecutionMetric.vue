@@ -31,7 +31,7 @@
     import {useI18n} from "vue-i18n"
     import {useRoute} from "vue-router"
     import {useExecutionsStore} from "../../stores/executions"
-    import {useMetricFilter} from "../filter/configurations"
+    import {useMetricFilter} from "../filter/configurations/metricFilters"
     import MetricsTable from "../executions/MetricsTable.vue"
     import {KsFilter as KSFilter} from "@kestra-io/design-system"
 

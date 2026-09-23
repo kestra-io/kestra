@@ -14,6 +14,11 @@ export type AbstractFlow = {
     updated?: string;
     description?: string;
     inputs?: Array<InputObject>;
+    /**
+     * Output values available and exposes to other flows.
+     *
+     * Output values make information about the execution of your Flow available and expose for other Kestra flows to use. Output values are similar to return values in programming languages.
+     */
     outputs?: Array<Output>;
     /**
      * Whether the flow is disabled.
@@ -413,6 +418,9 @@ export type ArtefactDraft = {
 export type ArtefactKind = 'FLOW' | 'DASHBOARD' | 'APP';
 
 export type Asset = {
+    status?: string;
+    ttl?: string;
+    owner?: string;
     namespace?: string;
     id: string;
     type: string;
@@ -670,37 +678,37 @@ export type DocumentationWithSchema = {
 export type EditionProviderEdition = 'OSS' | 'EE';
 
 export type EventExecutionStatusEvent = {
-    data?: ExecutionStatusEvent;
-    id?: string;
-    name?: string;
-    comment?: string;
-    retry?: string;
+    data: ExecutionStatusEvent;
+    id?: string | null;
+    name?: string | null;
+    comment?: string | null;
+    retry?: string | null;
 };
 
 export type EventExecution = {
-    data?: Execution;
-    id?: string;
-    name?: string;
-    comment?: string;
-    retry?: string;
+    data: Execution;
+    id?: string | null;
+    name?: string | null;
+    comment?: string | null;
+    retry?: string | null;
 };
 
 export type EventFollowLogEvent = {
-    data?: FollowLogEvent;
-    id?: string;
-    name?: string;
-    comment?: string;
-    retry?: string;
+    data: FollowLogEvent;
+    id?: string | null;
+    name?: string | null;
+    comment?: string | null;
+    retry?: string | null;
 };
 
 export type EventObject = {
-    data?: {
+    data: {
         [key: string]: unknown;
     };
-    id?: string;
-    name?: string;
-    comment?: string;
-    retry?: string;
+    id?: string | null;
+    name?: string | null;
+    comment?: string | null;
+    retry?: string | null;
 };
 
 export type ExecutableTaskSubflowId = {
@@ -915,6 +923,12 @@ export type Flow = AbstractFlow & {
     description?: string;
     inputs?: Array<InputObject>;
     /**
+     * Output values available and exposes to other flows.
+     *
+     * Output values make information about the execution of your Flow available and expose for other Kestra flows to use. Output values are similar to return values in programming languages.
+     */
+    outputs?: Array<Output>;
+    /**
      * Whether the flow is disabled.
      *
      * A disabled flow does not run: its triggers are paused and new executions are rejected.
@@ -950,12 +964,6 @@ export type Flow = AbstractFlow & {
      * Limits the number of concurrent executions of the flow.
      */
     concurrency?: Concurrency;
-    /**
-     * Output values available and exposes to other flows.
-     *
-     * Output values make information about the execution of your Flow available and expose for other Kestra flows to use. Output values are similar to return values in programming languages.
-     */
-    outputs?: Array<Output>;
     /**
      * Retry
      *
@@ -1008,6 +1016,11 @@ export type FlowForExecution = AbstractFlow & {
     revision?: number;
     description?: string;
     inputs?: Array<InputObject>;
+    /**
+     * Output values available and exposes to other flows.
+     *
+     * Output values make information about the execution of your Flow available and expose for other Kestra flows to use. Output values are similar to return values in programming languages.
+     */
     outputs?: Array<Output>;
     /**
      * Whether the flow is disabled.
@@ -1183,6 +1196,12 @@ export type FlowWithSource = Flow & AbstractFlow & {
     description?: string;
     inputs?: Array<InputObject>;
     /**
+     * Output values available and exposes to other flows.
+     *
+     * Output values make information about the execution of your Flow available and expose for other Kestra flows to use. Output values are similar to return values in programming languages.
+     */
+    outputs?: Array<Output>;
+    /**
      * Whether the flow is disabled.
      *
      * A disabled flow does not run: its triggers are paused and new executions are rejected.
@@ -1207,12 +1226,6 @@ export type FlowWithSource = Flow & AbstractFlow & {
      * Limits the number of concurrent executions of the flow.
      */
     concurrency?: Concurrency;
-    /**
-     * Output values available and exposes to other flows.
-     *
-     * Output values make information about the execution of your Flow available and expose for other Kestra flows to use. Output values are similar to return values in programming languages.
-     */
-    outputs?: Array<Output>;
     sla?: Array<Sla>;
     /**
      * Quotas evaluated before the flow is executed (EE only).
@@ -1708,6 +1721,7 @@ export type Plugin = {
     storages?: Array<PluginPluginElementMetadata>;
     secrets?: Array<PluginPluginElementMetadata>;
     taskRunners?: Array<PluginPluginElementMetadata>;
+    assets?: Array<PluginPluginElementMetadata>;
     apps?: Array<PluginPluginElementMetadata>;
     appBlocks?: Array<PluginPluginElementMetadata>;
     charts?: Array<PluginPluginElementMetadata>;
@@ -2494,19 +2508,19 @@ export type ApiTaskRunWritable = {
 };
 
 export type EventExecutionStatusEventWritable = {
-    data?: ExecutionStatusEventWritable;
-    id?: string;
-    name?: string;
-    comment?: string;
-    retry?: string;
+    data: ExecutionStatusEventWritable;
+    id?: string | null;
+    name?: string | null;
+    comment?: string | null;
+    retry?: string | null;
 };
 
 export type EventExecutionWritable = {
-    data?: ExecutionWritable;
-    id?: string;
-    name?: string;
-    comment?: string;
-    retry?: string;
+    data: ExecutionWritable;
+    id?: string | null;
+    name?: string | null;
+    comment?: string | null;
+    retry?: string | null;
 };
 
 export type ExecutionWritable = {

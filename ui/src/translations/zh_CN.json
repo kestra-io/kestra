@@ -213,7 +213,6 @@
     "executionProgress": {
       "title": "执行进度",
       "estimatedRemaining": "预计剩余：{duration}",
-      "noBaseline": "没有历史数据 — 无法估算剩余时间",
       "pastEstimate": "运行时间比平常更长"
     },
     "launch execution": "执行",
@@ -872,7 +871,7 @@
     "flow delete": "确定要删除 <code>{flowCount}</code> 个流程吗？",
     "delete flow error": "无法删除 flow {id}",
     "flows deleted": "<code>{count}</code> 个流程已删除",
-    "flow disable": "确定要禁用 <code>{flowCount}</code> 个流程吗？",
+    "flow disable": "您确定要禁用 <code>{flowCount}</code> 个 Flow 吗？<br/><br/>禁用 Flow 会在 Flow 中写入 <code>disabled: true</code> 并创建一个新版本。来自不包含 <code>disabled: true</code> 的外部源的同步将再次启用该 Flow。",
     "flow enable": "确定要启用 <code>{flowCount}</code> 个流程吗？",
     "flows disabled": "<code>{count}</code> 个流程已禁用",
     "flows enabled": "<code>{count}</code> 个流程已启用",
@@ -2435,8 +2434,8 @@
       "next_match": "下一个匹配项",
       "no_results_description": "尝试扩大 namespace 范围，将作用域切换回“所有来源”，或关闭“区分大小写”和“全字匹配”。",
       "no_results_hidden_type": "在未选择的 {type} 中找到 {count} 个匹配项。 | 在未选择的 {type} 中找到 {count} 个匹配项。",
-      "no_results_in_types": "在 {types} 中没有找到 {query} 的匹配项",
       "no_results_title": "“{query}” 无匹配项",
+      "did_you_mean": "您是指 {suggestion} 吗？",
       "open_flow": "打开 flow",
       "open_in_editor": "在编辑器中打开",
       "open_in_kv": "在 KV 存储中打开",
@@ -2646,6 +2645,9 @@
       "install_description": "将 Kestra 安装为应用,以获得更快的访问速度和全屏体验。",
       "install": "安装",
       "dismiss": "暂不"
-    }
+    },
+    "iteration": "迭代",
+    "iteration_number": "迭代 {number}",
+    "delete_log_iteration": "确定要删除 {iteration} 的日志吗？"
   }
 }

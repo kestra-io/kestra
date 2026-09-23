@@ -213,7 +213,6 @@
     "executionProgress": {
       "title": "Execution progress",
       "estimatedRemaining": "Est. remaining: {duration}",
-      "noBaseline": "No historical data — cannot estimate the remaining time",
       "pastEstimate": "Running longer than usual"
     },
     "launch execution": "Execute",
@@ -872,7 +871,7 @@
     "flow delete": "Are you sure you want to delete <code>{flowCount}</code> flow(s)?",
     "delete flow error": "Failed to delete flow {id}",
     "flows deleted": "<code>{count}</code> Flow(s) deleted",
-    "flow disable": "Are you sure you want to disable <code>{flowCount}</code> flow(s)?",
+    "flow disable": "Are you sure you want to disable <code>{flowCount}</code> flow(s)?<br/><br/>Disabling a flow writes <code>disabled: true</code> into the flow and creates a new revision. A sync from an external source that does not include <code>disabled: true</code> will enable the flow again.",
     "flow enable": "Are you sure you want to enable <code>{flowCount}</code> flow(s)?",
     "flows disabled": "<code>{count}</code> Flow(s) disabled",
     "flows enabled": "<code>{count}</code> Flow(s) enabled",
@@ -2435,8 +2434,8 @@
       "next_match": "Next match",
       "no_results_description": "Try widening the namespace, switching scope back to All source, or turning off Match case and Match whole word.",
       "no_results_hidden_type": "{count} match found in {type}, which you haven't selected. | {count} matches found in {type}, which you haven't selected.",
-      "no_results_in_types": "No matches for {query} in {types}",
       "no_results_title": "No matches for “{query}”",
+      "did_you_mean": "Did you mean {suggestion}?",
       "open_flow": "Open flow",
       "open_in_editor": "Open in editor",
       "open_in_kv": "Open in KV store",
@@ -2646,6 +2645,9 @@
       "install_description": "Install Kestra as an app for quicker access and a full-screen experience.",
       "install": "Install",
       "dismiss": "Not now"
-    }
+    },
+    "iteration": "Iteration",
+    "iteration_number": "Iteration {number}",
+    "delete_log_iteration": "Are you sure you want to delete the log for {iteration}?"
   }
 }

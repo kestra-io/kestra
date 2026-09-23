@@ -213,7 +213,6 @@
     "executionProgress": {
       "title": "Progreso de la ejecución",
       "estimatedRemaining": "Tiempo restante estimado: {duration}",
-      "noBaseline": "Sin datos históricos — no se puede estimar el tiempo restante",
       "pastEstimate": "Se está ejecutando más de lo habitual"
     },
     "launch execution": "Ejecutar",
@@ -872,7 +871,7 @@
     "flow delete": "¿Estás seguro de que quieres eliminar <code>{flowCount}</code> flow(s)?",
     "delete flow error": "No se pudo eliminar el flow {id}",
     "flows deleted": "<code>{count}</code> Flow(s) eliminados",
-    "flow disable": "¿Estás seguro de que quieres deshabilitar <code>{flowCount}</code> flow(s)?",
+    "flow disable": "¿Estás seguro de que quieres deshabilitar {flowCount} Flow(s)?<br/><br/>Deshabilitar un Flow escribe <code>disabled: true</code> en el Flow y crea una nueva revisión. Una sincronización desde una fuente externa que no incluya <code>disabled: true</code> habilitará el Flow de nuevo.",
     "flow enable": "¿Estás seguro de que quieres habilitar <code>{flowCount}</code> flow(s)?",
     "flows disabled": "<code>{count}</code> Flow(s) deshabilitados",
     "flows enabled": "<code>{count}</code> Flow(s) habilitados",
@@ -2435,8 +2434,8 @@
       "next_match": "Siguiente coincidencia",
       "no_results_description": "Intenta ampliar el namespace, cambiar el ámbito a \"All source\" o desactivar \"Match case\" y \"Match whole word\".",
       "no_results_hidden_type": "Se encontró {count} coincidencia en {type}, que no has seleccionado. | Se encontraron {count} coincidencias en {type}, que no has seleccionado.",
-      "no_results_in_types": "Sin coincidencias para {query} en {types}",
       "no_results_title": "No hay coincidencias para \"{query}\"",
+      "did_you_mean": "¿Te referías a {suggestion}?",
       "open_flow": "Abrir flow",
       "open_in_editor": "Abrir en el editor",
       "open_in_kv": "Abrir en el KV Store",
@@ -2646,6 +2645,9 @@
       "install_description": "Instala Kestra como una aplicación para un acceso más rápido y una experiencia a pantalla completa.",
       "install": "Instalar",
       "dismiss": "Ahora no"
-    }
+    },
+    "iteration": "Iteración",
+    "iteration_number": "Iteración {number}",
+    "delete_log_iteration": "¿Estás seguro de que quieres eliminar el registro de {iteration}?"
   }
 }

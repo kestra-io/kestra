@@ -213,7 +213,6 @@
     "executionProgress": {
       "title": "Postęp egzekucji",
       "estimatedRemaining": "Szacowany pozostały czas: {duration}",
-      "noBaseline": "Brak danych historycznych — nie można oszacować pozostałego czasu",
       "pastEstimate": "Trwa dłużej niż zwykle"
     },
     "launch execution": "Wykonaj",
@@ -872,7 +871,7 @@
     "flow delete": "Czy na pewno chcesz usunąć <code>{flowCount}</code> Flowów?",
     "delete flow error": "Nie udało się usunąć flow {id}",
     "flows deleted": "Usunięto <code>{count}</code> Flowów",
-    "flow disable": "Czy na pewno chcesz wyłączyć <code>{flowCount}</code> Flowów?",
+    "flow disable": "Czy na pewno chcesz wyłączyć {flowCount} Flow | {flowCount} Flowy | {flowCount} Flowów?<br/><br/>Wyłączenie Flow zapisuje <code>disabled: true</code> w Flow i tworzy nową wersję. Synchronizacja z zewnętrznego źródła, która nie zawiera <code>disabled: true</code>, ponownie włączy Flow.",
     "flow enable": "Czy na pewno chcesz włączyć <code>{flowCount}</code> Flowów?",
     "flows disabled": "Wyłączono <code>{count}</code> Flowów",
     "flows enabled": "Włączono <code>{count}</code> Flowów",
@@ -2435,8 +2434,8 @@
       "next_match": "Następne dopasowanie",
       "no_results_description": "Spróbuj rozszerzyć namespace, przełączyć zakres z powrotem na „Cały kod źródłowy” lub wyłączyć „Uwzględnij wielkość liter” i „Dopasuj całe słowo”.",
       "no_results_hidden_type": "Znaleziono {count} dopasowanie w {type}, którego nie wybrano. | Znaleziono {count} dopasowania w {type}, którego nie wybrano. | Znaleziono {count} dopasowań w {type}, którego nie wybrano.",
-      "no_results_in_types": "Brak dopasowań dla {query} w {types}",
       "no_results_title": "Brak wyników dla „{query}”",
+      "did_you_mean": "Czy chodziło ci o {suggestion}?",
       "open_flow": "Otwórz Flow",
       "open_in_editor": "Otwórz w edytorze",
       "open_in_kv": "Otwórz w KV Store",
@@ -2646,6 +2645,9 @@
       "install_description": "Zainstaluj Kestrę jako aplikację, aby mieć szybszy dostęp i pełnoekranowy widok.",
       "install": "Zainstaluj",
       "dismiss": "Nie teraz"
-    }
+    },
+    "iteration": "Iteracja",
+    "iteration_number": "Iteracja {number}",
+    "delete_log_iteration": "Czy na pewno chcesz usunąć dziennik dla {iteration}?"
   }
 }

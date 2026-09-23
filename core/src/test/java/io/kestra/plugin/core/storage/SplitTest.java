@@ -60,7 +60,7 @@ class SplitTest {
         Split.Output run = result.run(runContext);
 
         assertThat(run.getUris().size()).isEqualTo(8);
-        assertThat(run.getUris().getFirst().getPath()).endsWith(".yml");
+        assertThat(StorageContext.logicalPath(run.getUris().getFirst())).endsWith(".yml");
         assertThat(StringUtils.countMatches(readAll(run.getUris()), "\n")).isEqualTo(1000);
     }
 
@@ -129,7 +129,7 @@ class SplitTest {
         Split.Output run = result.run(runContext);
 
         assertThat(run.getUris().size()).isEqualTo(8);
-        assertThat(run.getUris().getFirst().getPath()).endsWith(".ion");
+        assertThat(StorageContext.logicalPath(run.getUris().getFirst())).endsWith(".ion");
         assertThat(readAllIon(run.getUris())).hasSize(1000);
     }
 

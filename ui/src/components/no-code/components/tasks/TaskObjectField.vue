@@ -146,9 +146,9 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, inject, onUnmounted, ref, useTemplateRef, watchEffect} from "vue"
+    import {computed, inject, ref, useTemplateRef} from "vue"
     import {useBlockComponent} from "./useBlockComponent"
-    import {FIELD_NAV_INJECTION_KEY, PLUGIN_DEFAULTS_INJECTION_KEY, REQUIRED_FIELDS_TRACKER_INJECTION_KEY} from "../../injectionKeys"
+    import {FIELD_NAV_INJECTION_KEY, PLUGIN_DEFAULTS_INJECTION_KEY} from "../../injectionKeys"
 
     import ClearButton from "./ClearButton.vue"
     import {KsMarkdown} from "@kestra-io/design-system"
@@ -186,19 +186,6 @@
     const fieldPath = computed(() =>
         props.rootOverride ?? (props.root ? `${props.root}.${props.fieldKey}` : props.fieldKey),
     )
-
-    const requiredFieldsTracker = inject(REQUIRED_FIELDS_TRACKER_INJECTION_KEY, undefined)
-
-    watchEffect(() => {
-        if (!requiredFieldsTracker) return
-        if (isMissingRequired.value) {
-            requiredFieldsTracker.set(fieldPath.value, props.fieldKey)
-        } else {
-            requiredFieldsTracker.delete(fieldPath.value)
-        }
-    })
-
-    onUnmounted(() => requiredFieldsTracker?.delete(fieldPath.value))
 
     const hasSelectedASchema = ref(false)
 

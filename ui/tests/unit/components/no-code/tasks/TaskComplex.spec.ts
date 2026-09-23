@@ -54,4 +54,26 @@ describe("TaskComplex (allOf $ref merge)", () => {
         expect(taskObject.exists()).toBe(true)
         expect(taskObject.props("schema")?.required).toEqual(expect.arrayContaining(["message", "when"]))
     })
+
+    test("concatenates (and de-duplicates) required across two distinct allOf branches", () => {
+        const wrapper = i18nMount(TaskComplex, {
+            props: {
+                schema: {
+                    allOf: [
+                        {type: "object", properties: {a: {type: "string"}}, required: ["a"]},
+                        {type: "object", properties: {b: {type: "string"}}, required: ["a", "b"]},
+                    ],
+                },
+            },
+            global: {
+                plugins: [KestraDesignSystem],
+                provide: {
+                    [FULL_SCHEMA_INJECTION_KEY as symbol]: ref({}),
+                },
+            },
+        })
+        const taskObject = wrapper.findComponent(TaskObject)
+
+        expect(taskObject.props("schema")?.required).toEqual(["a", "b"])
+    })
 })

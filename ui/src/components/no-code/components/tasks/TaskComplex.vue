@@ -45,12 +45,9 @@
         }), {})
     })
 
-    const computedRequired = computed(() =>
-        resolvedAllOfSchemas.value.reduce<string[]>((acc, item) => [
-            ...acc,
-            ...(item?.required ?? []),
-        ], []),
-    )
+    const computedRequired = computed(() => [
+        ...new Set(resolvedAllOfSchemas.value.flatMap((item) => item?.required ?? [])),
+    ])
 
     const computedSchema = computed(() =>
         computedRequired.value.length ? {...props.schema, required: computedRequired.value} : props.schema,

@@ -76,7 +76,6 @@ public class DefaultExecutor extends AbstractService implements Executor {
     private final MultipleConditionEventMessageHandler multipleConditionEventMessageHandler;
     private final LoopExecutionEventMessageHandler loopExecutionEventMessageHandler;
 
-    private final ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
     private final ScheduledExecutorService scheduledExecutorService;
     private final Clock clock;
     private final ExecutorConfiguration executorConfiguration;
@@ -131,7 +130,6 @@ public class DefaultExecutor extends AbstractService implements Executor {
         SubflowExecutionEndMessageHandler subflowExecutionEndMessageHandler,
         MultipleConditionEventMessageHandler multipleConditionEventMessageHandler,
         LoopExecutionEventMessageHandler loopExecutionEventMessageHandler) {
-        MetricRegistry metricRegistry) {
         super(ServiceType.EXECUTOR, eventPublisher);
         this.clock = clock;
         this.scheduledExecutorService = executorsUtils.singleThreadScheduledExecutor("executor-loops");

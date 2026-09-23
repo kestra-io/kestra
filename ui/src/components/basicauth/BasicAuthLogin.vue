@@ -124,7 +124,40 @@
         return response.data?.isBasicAuthInitialized
     }
 
-    const handleNetworkError = (error: any) => {
+    interface BasicAuthError {
+        code?: string
+        response?: {
+            status?: number
+        }
+    }
+
+    const isBasicAuthError = (error: unknown): error is BasicAuthError => {
+        if (typeof error !== "object" || error === null) return false
+
+        if ("code" in error && error.code !== undefined && typeof error.code !== "string") {
+            return false
+        }
+
+        if ("response" in error && error.response !== undefined) {
+            if (typeof error.response !== "object" || error.response === null) {
+                return false
+            }
+
+            if (
+                "status" in error.response &&
+                error.response.status !== undefined &&
+                typeof error.response.status !== "number"
+            ) {
+                return false
+            }
+        }
+
+        return true
+    }
+
+    const handleNetworkError = (error: unknown) => {
+        if (!isBasicAuthError(error)) return false
+
         return error.code === "ERR_NETWORK" ||
             error.code === "ECONNREFUSED" ||
             (!error.response && error instanceof TypeError)
@@ -173,12 +206,20 @@
             } else {
                 router.push({name: "home", params: {tenant: route.params.tenant}})
             }
-        } catch (error: any) {
-            if (handleNetworkError(error)) { router.push({name: "setup"}); return }
-            if (error?.response?.status === 401) {
-                await loadAuthConfigErrors()
-            } else if (error?.response?.status === 404) {
+        } catch (error: unknown) {
+            if (handleNetworkError(error)) {
                 router.push({name: "setup"})
+                return
+            }
+
+            if (isBasicAuthError(error)) {
+                if (error.response?.status === 401) {
+                    await loadAuthConfigErrors()
+                } else if (error.response?.status === 404) {
+                    router.push({name: "setup"})
+                } else {
+                    KsMessage.error(t("setup.validation.incorrect_creds"))
+                }
             } else {
                 KsMessage.error(t("setup.validation.incorrect_creds"))
             }

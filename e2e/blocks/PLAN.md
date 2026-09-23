@@ -15,7 +15,7 @@ backend actually persisted — not just the DOM.
 
 ## Fixtures
 
-`tests/e2e/fixtures/flows/blocks-canvas.yaml` — one flow exercising every
+`fixtures/flows/blocks-canvas.yaml` — one flow exercising every
 canvas shape the suite needs to walk and mutate:
 - a disabled Schedule trigger
 - a `Sequential` flowable with two child tasks and its own empty
@@ -23,7 +23,7 @@ canvas shape the suite needs to walk and mutate:
 - two top-level leaf tasks
 - empty top-level errors/finally sections (covers empty-state insertion)
 
-`tests/e2e/fixtures/flows/blocks-tall.yaml` — sixteen leaf tasks plus one
+`fixtures/flows/blocks-tall.yaml` — sixteen leaf tasks plus one
 block in each of errors, finally and afterExecution, used only by the
 scrolling spec. Scrolling only exists once the canvas overflows the
 viewport. Every section is populated deliberately: `buildSectionLanes`
@@ -132,7 +132,7 @@ cd ui
 E2E_BASE_URL=http://localhost:5174 \
 E2E_USERNAME=<your dev login> \
 E2E_PASSWORD=<your dev password> \
-npx playwright test --config=tests/e2e/playwright.config.ts tests/e2e/blocks/
+npx playwright test blocks/
 ```
 
 Each spec creates its fixture flow via the API in `beforeEach` and deletes

@@ -108,8 +108,9 @@ function qualifyAmbiguousLabels(entries: (PickerEntry & {subGroup?: string})[]):
             if (!entry.subGroup) continue
             const shortName = getShortName(entry.subGroup)
             // Two subGroups can still share their last segment (aws/storage vs gcp/storage) — fall
-            // back to the full subGroup so the qualifier itself does not re-introduce the collision.
-            qualifierByEntry.set(entry, (shortNameCounts.get(shortName) ?? 0) > 1 ? entry.subGroup : shortName)
+            // back to the last two segments so the qualifier itself does not re-introduce the collision.
+            const parts = entry.subGroup.split(".")
+            qualifierByEntry.set(entry, (shortNameCounts.get(shortName) ?? 0) > 1 ? parts.slice(-2).join(".") : shortName)
         }
     }
 

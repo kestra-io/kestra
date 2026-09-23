@@ -1696,7 +1696,7 @@
       "clearSelection": "Wyczyść zaznaczenie",
       "labels": {
         "yaml": "Edytor YAML",
-        "no_code": "Edytor No-Code"
+        "no_code": "Edytor No-code"
       },
       "sections": {
         "deprecated": "Właściwości przestarzałe",

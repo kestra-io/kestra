@@ -1,15 +1,12 @@
 import {describe, test, expect} from "vitest"
 import {nextTick} from "vue"
-import {mount} from "@vue/test-utils"
-import {createI18n} from "vue-i18n"
-import KestraDesignSystem from "../../../../src/index"
 import ConditionRow from "../../../../src/components/Data/KsDataTable/filter/ConditionRow.vue"
 import FilterMultiSelect from "../../../../src/components/Data/KsDataTable/filter/layout/FilterMultiSelect.vue"
 import {Comparators, type AppliedFilter, type FilterKeyConfig} from "../../../../src/components/Data/KsDataTable/filter/utils/filterTypes"
+import {i18nMount} from "../../i18nMount"
 
-const i18n = createI18n({legacy: false, locale: "en", messages: {en: {}}})
 const popoverStub = {template: "<div><slot name=\"reference\" /><slot /></div>"}
-const globalConfig = {plugins: [i18n, KestraDesignSystem], stubs: {KsPopover: popoverStub}}
+const globalConfig = {stubs: {KsPopover: popoverStub}}
 
 const multiKey: FilterKeyConfig = {
     key: "state",
@@ -33,7 +30,7 @@ const baseFilter: AppliedFilter = {
 }
 
 const mountRow = (filter: AppliedFilter) =>
-    mount(ConditionRow, {props: {filter, allKeys: [multiKey]}, global: globalConfig})
+    i18nMount(ConditionRow, {props: {filter, allKeys: [multiKey]}, global: globalConfig})
 
 const rangeAndSetKey: FilterKeyConfig = {
     key: "level",
@@ -52,7 +49,14 @@ const rangeAndSetKey: FilterKeyConfig = {
 }
 
 const mountLevelRow = (filter: AppliedFilter) =>
-    mount(ConditionRow, {props: {filter, allKeys: [rangeAndSetKey]}, global: globalConfig})
+    i18nMount(ConditionRow, {props: {filter, allKeys: [rangeAndSetKey]}, global: globalConfig})
+
+const labelsKey: FilterKeyConfig = {
+    key: "labels",
+    label: "Labels",
+    valueType: "key-value",
+    comparators: [Comparators.EQUALS, Comparators.NOT_EQUALS, Comparators.IN, Comparators.NOT_IN],
+}
 
 describe("ConditionRow range comparators on a multi-select field", () => {
     test("renders a plain select (not the multi-select popover) for GREATER_THAN_OR_EQUAL_TO", () => {
@@ -180,5 +184,47 @@ describe("ConditionRow multi-select commit on close", () => {
         wrapper.unmount()
 
         expect(wrapper.emitted("update")).toBeFalsy()
+    })
+})
+
+describe("ConditionRow key-value comparator changes", () => {
+    test("normalizes repeated keys without mounting the lazy value popover", async () => {
+        const wrapper = i18nMount(ConditionRow, {
+            props: {
+                filter: {
+                    id: "f1",
+                    key: "labels",
+                    keyLabel: "Labels",
+                    comparator: Comparators.IN,
+                    comparatorLabel: "In",
+                    value: [
+                        "invalid",
+                        ":missing-key",
+                        "empty-value:",
+                        "environment:production",
+                        "environment:staging",
+                        "team:core",
+                        "team:platform",
+                    ],
+                    valueLabel: "environment:production",
+                },
+                allKeys: [labelsKey],
+            },
+            global: {
+                ...globalConfig,
+                stubs: {KsPopover: {template: "<div><slot name=\"reference\" /></div>"}},
+            },
+        })
+
+        const opSelect: any = wrapper.findComponent(".cond-op")
+        opSelect.vm.$emit("update:modelValue", Comparators.EQUALS)
+        await nextTick()
+
+        const updates = wrapper.emitted("update") as Array<[AppliedFilter]> | undefined
+        expect(updates!.at(-1)![0]).toMatchObject({
+            comparator: Comparators.EQUALS,
+            value: ["environment:staging", "team:platform"],
+            valueLabel: "environment:staging",
+        })
     })
 })

@@ -7,6 +7,7 @@
             </div>
             <KsButton
                 link
+                :aria-label="$t('filter.close')"
                 :icon="Close"
                 @click="$emit('close')"
                 size="small"
@@ -29,6 +30,7 @@
                 <KsButton
                     link
                     size="default"
+                    :aria-label="$t('filter.add_filter_for', {label: key.label})"
                     :icon="Plus"
                     class="unselected"
                     @click.stop="addFilterForKey(key)"
@@ -41,6 +43,7 @@
             <KsButton
                 link
                 size="default"
+                :aria-label="$t('filter.add_advanced_filter')"
                 :icon="Plus"
                 class="advanced-add"
                 @click.stop="$emit('open-advanced')"
@@ -195,7 +198,7 @@
         .label {
             font-size: var(--ks-font-size-sm);
             font-weight: 600;
-            color: var(--ks-content-link, var(--ks-text-link));
+            color: var(--ks-text-link);
         }
     }
 

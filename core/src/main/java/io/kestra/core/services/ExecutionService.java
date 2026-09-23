@@ -277,6 +277,12 @@ public class ExecutionService {
             newExecution = newExecution.toBuilder().fixtures(createCommand.fixtures()).build();
         }
 
+        // Carries the depth a Flow trigger's evaluate() computed before the dependsOn route rebuilt this
+        // execution from the Create command; Execution.newExecution() above reset it via prebuild().
+        if (createCommand.executionDepth() != null) {
+            newExecution = newExecution.withMetadata(newExecution.getMetadata().withExecutionDepth(createCommand.executionDepth()));
+        }
+
         if (createCommand.variables() != null) {
             newExecution = newExecution.withVariables(createCommand.variables());
         }
@@ -296,8 +302,9 @@ public class ExecutionService {
     public Execution restart(final Execution execution, Flow flow, @Nullable Integer revision, boolean emitEvent) throws Exception {
         if (!execution.getState().canBeRestarted()) {
             throw new IllegalStateException(
-                "Execution must be terminated or paused and not killed to be restarted, " +
-                    "current state is '" + execution.getState().getCurrent() + "' !"
+                "Execution must be terminated and not killed to be restarted, " +
+                    "current state is '" + execution.getState().getCurrent() + "' ! " +
+                    "A paused execution can only be resumed or killed."
             );
         }
 
@@ -424,12 +431,19 @@ public class ExecutionService {
         String newExecutionId) throws Exception {
         List<TaskRun> newTaskRuns = new ArrayList<>();
         if (taskRunId != null) {
-            GraphCluster graphCluster = GraphUtils.of(flow, execution);
-
             Set<String> taskRunToRestart = this.taskRunToRestart(
                 execution,
                 taskRun -> taskRun.getId().equals(taskRunId)
             );
+
+            GraphCluster graphCluster = GraphUtils.of(flow, execution);
+            if (!GraphUtils.hasTaskRun(graphCluster, taskRunId)) {
+                TaskRun replayedTaskRun = execution.findTaskRunByTaskRunId(taskRunId);
+                throw new IllegalArgumentException(
+                    "Cannot replay execution '%s' from task run '%s': task '%s' does not exist at the same position in revision %s of flow '%s'."
+                        .formatted(execution.getId(), taskRunId, replayedTaskRun.getTaskId(), flow.getRevision(), flow.getId())
+                );
+            }
 
             Map<String, String> mappingTaskRunId = this.mapTaskRunId(execution, false);
 

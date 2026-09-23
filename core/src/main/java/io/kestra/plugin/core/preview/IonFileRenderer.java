@@ -7,6 +7,7 @@ import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.preview.FilePreview;
@@ -36,6 +37,11 @@ public class IonFileRenderer implements FileRenderer {
     @Override
     public boolean supports(String extension) {
         return "ion".equalsIgnoreCase(extension);
+    }
+
+    @Override
+    public Set<String> extensions() {
+        return Set.of("ion");
     }
 
     @Override

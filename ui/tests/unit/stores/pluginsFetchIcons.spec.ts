@@ -72,6 +72,37 @@ describe("plugins store fetchIcons", () => {
         })
     })
 
+    it("derives hasIcon from the hash when the index carries no icon bytes", async () => {
+        getMock.mockResolvedValueOnce({
+            data: {
+                "io.kestra.plugin.core.log.Log": {icon: null, flowable: false, monochrome: false, hash: "abc123"},
+            },
+        })
+
+        await store.fetchIcons()
+
+        expect(store.icons["io.kestra.plugin.core.log.Log"]).toEqual({
+            flowable: false,
+            monochrome: false,
+            hasIcon: true,
+            hash: "abc123",
+        })
+    })
+
+    it("drops iconless groups so they keep falling back to the ecosystem catalog", async () => {
+        getMock.mockResolvedValueOnce({
+            data: {
+                "io.kestra.plugin.aws": {icon: null, flowable: false, monochrome: false, hash: "abc123"},
+                "io.kestra.storage.seaweedfs": {icon: null, flowable: false, monochrome: false},
+            },
+        })
+
+        await store.ensureGroupIcons()
+
+        expect(store.groupIcons["io.kestra.plugin.aws"].hasIcon).toBe(true)
+        expect(store.groupIcons["io.kestra.storage.seaweedfs"]).toBeUndefined()
+    })
+
     it("only fetches the local catalog once and caches the result", async () => {
         getMock.mockResolvedValueOnce({data: {}})
 
@@ -79,5 +110,21 @@ describe("plugins store fetchIcons", () => {
         await store.fetchIcons()
 
         expect(getMock).toHaveBeenCalledTimes(1)
+    })
+
+    it("retries on a later call when the catalog request failed", async () => {
+        // Given a first attempt that fails
+        getMock.mockRejectedValueOnce(new Error("network error"))
+        await store.fetchIcons()
+
+        // When something asks for the catalog again
+        getMock.mockResolvedValueOnce({
+            data: {"io.kestra.plugin.core.log.Log": {icon: "base64svg", flowable: false, monochrome: false}},
+        })
+        await store.fetchIcons()
+
+        // Then the failure wasn't memoized: the retry happened and its icons landed
+        expect(getMock).toHaveBeenCalledTimes(2)
+        expect(store.icons["io.kestra.plugin.core.log.Log"].hasIcon).toBe(true)
     })
 })

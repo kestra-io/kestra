@@ -1,4 +1,5 @@
 import type {Meta, StoryObj} from "@storybook/vue3-vite"
+import {expect, waitFor, within} from "storybook/test"
 import KsJsonTree from "../../../src/components/Data/KsJsonTree.vue"
 import {KsCard} from "@kestra-io/design-system"
 
@@ -134,4 +135,105 @@ export const RowsWithGutter: Story = {
             )
         },
     }),
+}
+
+/** Empty containers used to render as `[object Object]` and as a blank. */
+export const EmptyContainers: Story = {
+    args: {
+        value: {outputFiles: {}, tags: [], nested: {inner: {}}, populated: {a: 1}},
+        defaultExpanded: true,
+    },
+    render: (args) => ({
+        setup() {
+            return () => (
+                <KsCard style="font-size:13px;padding:1rem">
+                    <KsJsonTree {...args} />
+                </KsCard>
+            )
+        },
+    }),
+    play: async ({canvasElement}: {canvasElement: HTMLElement}) => {
+        const canvas = within(canvasElement)
+
+        // Keys render quoted, so match the quoted form the component actually writes.
+        await waitFor(() => expect(canvas.getByText("\"outputFiles\"")).toBeTruthy())
+        expect(canvasElement.textContent).not.toContain("[object Object]")
+
+        // One `{}` per empty object, and the empty array reads as `[]` rather than as a blank.
+        expect(canvas.getAllByText("{}")).toHaveLength(2)
+        expect(canvas.getByText("[]")).toBeTruthy()
+    },
+}
+
+/** An empty root rendered nothing at all, which hid a log line whose message was `{}`. */
+export const EmptyRoot: Story = {
+    args: {value: {}, defaultExpanded: true},
+    render: (args) => ({
+        setup() {
+            return () => (
+                <KsCard style="font-size:13px;padding:1rem">
+                    <KsJsonTree {...args} />
+                </KsCard>
+            )
+        },
+    }),
+    play: async ({canvasElement}: {canvasElement: HTMLElement}) => {
+        await waitFor(() => expect(within(canvasElement).getByText("{}")).toBeTruthy())
+    },
+}
+
+export const EmptyRootArray: Story = {
+    args: {value: [], defaultExpanded: true},
+    render: (args) => ({
+        setup() {
+            return () => (
+                <KsCard style="font-size:13px;padding:1rem">
+                    <KsJsonTree {...args} />
+                </KsCard>
+            )
+        },
+    }),
+    play: async ({canvasElement}: {canvasElement: HTMLElement}) => {
+        await waitFor(() => expect(within(canvasElement).getByText("[]")).toBeTruthy())
+    },
+}
+
+/** A leaf holding a storage URI reads as a file: a symbol for its type, named by its key. */
+export const FileOutputs: Story = {
+    args: {
+        value: {
+            outputFiles: {
+                abc: "kestra:///company/team/6Yd2A/outputs/8f2c1d",
+                "report.csv": "kestra:///company/team/6Yd2A/outputs/3a71bc.csv",
+            },
+            attachments: [
+                "kestra:///company/team/6Yd2A/outputs/chart.png",
+                "kestra:///company/team/6Yd2A/outputs/run.log",
+            ],
+            exitCode: 0,
+        },
+        defaultExpanded: true,
+    },
+    render: (args) => ({
+        setup() {
+            return () => (
+                <KsCard style="font-size:13px;padding:1rem">
+                    <KsJsonTree {...args} />
+                </KsCard>
+            )
+        },
+    }),
+    play: async ({canvasElement}: {canvasElement: HTMLElement}) => {
+        const canvas = within(canvasElement)
+
+        // The key names the file, and the raw URI is left to the tooltip.
+        await waitFor(() => expect(canvas.getByText("abc")).toBeTruthy())
+        expect(canvasElement.textContent).not.toContain("kestra:///company")
+
+        // An array index is no name, so those rows fall back to the URI's own segment.
+        expect(canvas.getByText("chart.png")).toBeTruthy()
+
+        expect(canvasElement.querySelector(".file-delimited-outline-icon")).toBeTruthy()
+        expect(canvasElement.querySelector(".file-image-outline-icon")).toBeTruthy()
+    },
 }

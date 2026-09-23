@@ -10,10 +10,10 @@ vi.mock("../../../src/stores/flow", () => ({
     }),
 }))
 
-let mockLimits: Record<string, any>[] = []
+const getMock = vi.fn()
 vi.mock("@kestra-io/kestra-sdk", () => ({
     useClient: () => ({
-        get: vi.fn(async () => ({data: {results: mockLimits}})),
+        get: getMock,
     }),
 }))
 
@@ -51,25 +51,31 @@ async function mountComponent() {
 describe("FlowConcurrency", () => {
     beforeEach(() => {
         mockFlow = undefined
-        mockLimits = []
+        getMock.mockReset()
     })
 
     it("shows the running ratio when the flow declares a concurrency block", async () => {
         mockFlow = {namespace: "io.kestra.tests", id: "flow", concurrency: {limit: 2, behavior: "QUEUE"}}
-        mockLimits = [{tenantId: "main", namespace: "io.kestra.tests", flowId: "flow", running: 1}]
+        getMock.mockResolvedValue({data: {tenantId: "main", namespace: "io.kestra.tests", flowId: "flow", running: 1}})
 
         const wrapper = await mountComponent()
 
         expect(wrapper.find("[data-test=\"concurrency-limit\"]").exists()).toBe(true)
         expect(wrapper.text()).toContain("1/2")
         expect(wrapper.find("[data-test=\"concurrency-stale-limit\"]").exists()).toBe(false)
+        // The regression this endpoint fixes: reading a flow-scoped record instead of the
+        // instance-owner-only /search, which 403s for any other user on a QUEUED execution.
+        expect(getMock).toHaveBeenCalledWith(
+            "/api/v1/main/concurrency-limit/io.kestra.tests/flow",
+            {ignoreNotFound: true, showMessageOnError: false},
+        )
     })
 
     it("surfaces a leftover limit still holding slots for a flow without a concurrency block", async () => {
         // The reported symptom of kestra-ee#9200: the stuck counter was only visible to a
         // superadmin because this tab used to render nothing without a concurrency block.
         mockFlow = {namespace: "io.kestra.tests", id: "flow"}
-        mockLimits = [{tenantId: "main", namespace: "io.kestra.tests", flowId: "flow", running: 1}]
+        getMock.mockResolvedValue({data: {tenantId: "main", namespace: "io.kestra.tests", flowId: "flow", running: 1}})
 
         const wrapper = await mountComponent()
 
@@ -79,7 +85,7 @@ describe("FlowConcurrency", () => {
 
     it("stays quiet when a leftover limit holds no slot", async () => {
         mockFlow = {namespace: "io.kestra.tests", id: "flow"}
-        mockLimits = [{tenantId: "main", namespace: "io.kestra.tests", flowId: "flow", running: 0}]
+        getMock.mockResolvedValue({data: {tenantId: "main", namespace: "io.kestra.tests", flowId: "flow", running: 0}})
 
         const wrapper = await mountComponent()
 
@@ -89,10 +95,19 @@ describe("FlowConcurrency", () => {
 
     it("keeps the empty state when the flow has a limit but no record yet", async () => {
         mockFlow = {namespace: "io.kestra.tests", id: "flow", concurrency: {limit: 1, behavior: "CANCEL"}}
-        mockLimits = []
+        getMock.mockRejectedValue({status: 404, response: {status: 404}})
 
         const wrapper = await mountComponent()
 
         expect(wrapper.find(".empty").attributes("data-type")).toBe("concurrency_executions")
+    })
+
+    it("shows an error when the request fails for a reason other than a missing record", async () => {
+        mockFlow = {namespace: "io.kestra.tests", id: "flow", concurrency: {limit: 1, behavior: "CANCEL"}}
+        getMock.mockRejectedValue({status: 500, response: {status: 500}})
+
+        const wrapper = await mountComponent()
+
+        expect(wrapper.find(".alert").attributes("data-type")).toBe("error")
     })
 })

@@ -9,6 +9,7 @@ import {
 } from "./filterTypes"
 import {type DecodedParam, keyOfComparator} from "./helpers"
 import {TIME_RANGE_KEY} from "./constants"
+import {normalizeRelativeDate} from "./relativeDates"
 
 export const buildNewFilter = (key: FilterKeyConfig): AppliedFilter | null => {
     const comparator = key.comparators?.[0]
@@ -77,6 +78,7 @@ export const createCustomRangeFilter = (
     startDate: Date,
     endDate: Date,
     comparator = Comparators.GREATER_THAN_OR_EQUAL_TO,
+    meta?: Record<string, string>,
 ): AppliedFilter =>
     createAppliedFilter(
         key,
@@ -85,6 +87,7 @@ export const createCustomRangeFilter = (
         {startDate, endDate},
         `${startDate.toLocaleDateString()} - ${endDate.toLocaleDateString()}`,
         keyOfComparator(comparator),
+        meta,
     )
 
 export const processFieldValue = (
@@ -98,7 +101,7 @@ export const processFieldValue = (
     const isSingleValueOp = isTextOp || RANGE_COMPARATORS.includes(comparator)
 
     if (config?.valueType === "key-value" && KV_COMPARATORS.includes(comparator)) {
-        const combinedValue = params.map(p => p?.value as string)
+        const combinedValue = params.flatMap(p => Array.isArray(p?.value) ? p.value : [p?.value as string])
         return {
             value: combinedValue,
             valueLabel: combinedValue.length > 1
@@ -123,10 +126,10 @@ export const processFieldValue = (
 
     if (config?.valueType === "date" && typeof value === "string") {
         value = new Date(value)
-    } else if (config?.valueType === "time-range" && typeof value === "string" && !/^P/i.test(value)) {
-        // A custom single absolute date for a time-range field. Predefined relative durations
-        // (PT24H, P30D, …) start with "P" and must stay as the raw duration string.
-        value = new Date(value)
+    } else if (config?.valueType === "time-range" && typeof value === "string") {
+        // Predefined relative durations start with "P" and stay durations, normalized to the
+        // spelling the option lists and the API use; anything else is a custom absolute date.
+        value = /^P/i.test(value) ? normalizeRelativeDate(value) : new Date(value)
     }
 
     return {

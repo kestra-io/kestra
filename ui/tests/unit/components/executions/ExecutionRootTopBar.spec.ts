@@ -1,6 +1,4 @@
 import {beforeEach, describe, expect, it, vi} from "vitest"
-import {mount} from "@vue/test-utils"
-import {createI18n} from "vue-i18n"
 import KestraDesignSystem from "@kestra-io/design-system"
 
 const executionState = {current: "SUCCESS"}
@@ -18,6 +16,15 @@ vi.mock("../../../../src/stores/executions", () => ({
     }),
 }))
 
+// Hoisted: the mock factory below reads it eagerly, before plain top-level consts exist.
+const extraOverflowAction = vi.hoisted(() => ({template: "<button>Create case</button>"}))
+vi.mock("override/components/executions/executionsExtensions", () => ({
+    getExtraColumns: () => [],
+    cellComponents: {},
+    bulkActionComponents: [],
+    overflowActionComponents: [extraOverflowAction],
+}))
+
 vi.mock("override/stores/auth", () => ({
     useAuthStore: () => ({
         user: {isAllowed: (_resource: string, act: string) => (act === "EXECUTE" ? permissions.execute : true)},
@@ -25,20 +32,14 @@ vi.mock("override/stores/auth", () => ({
 }))
 
 import ExecutionRootTopBar from "../../../../src/components/executions/ExecutionRootTopBar.vue"
-
-const i18n = createI18n({
-    legacy: false,
-    locale: "en",
-    missingWarn: false,
-    fallbackWarn: false,
-    messages: {en: {actions: "Actions"}},
-})
+import {i18nMount} from "../../i18nMount"
 
 function mountTopBar() {
-    return mount(ExecutionRootTopBar, {
+    return i18nMount(ExecutionRootTopBar, {
+        messages: {actions: "Actions"},
         props: {routeInfo: {title: "e", breadcrumb: []}},
         global: {
-            plugins: [i18n, KestraDesignSystem],
+            plugins: [KestraDesignSystem],
             stubs: {
                 TopNavBar: {template: "<div><slot name=\"actions\" /></div>"},
                 TriggerFlow: {template: "<button>Execute</button>"},
@@ -110,5 +111,27 @@ describe("ExecutionRootTopBar — Execute is the primary on every execution stat
 
         expect(buttons).not.toContain("Execute")
         expect(buttons).toContain("Replay")
+    })
+})
+
+describe("ExecutionRootTopBar — the overflow menu", () => {
+    beforeEach(() => {
+        executionState.current = "SUCCESS"
+        permissions.execute = true
+    })
+
+    it("keeps Delete last, after any edition-specific action contributed to the menu", async () => {
+        const wrapper = mountTopBar()
+
+        await wrapper.find("button[aria-label=\"Actions\"]").trigger("click")
+        await new Promise(resolve => setTimeout(resolve))
+
+        const labels = Array.from(document.querySelectorAll("button"))
+            .map(button => button.textContent?.trim())
+            .filter((label): label is string => Boolean(label))
+
+        expect(labels).toContain("Create case")
+        expect(labels.indexOf("Create case")).toBeLessThan(labels.indexOf("Delete"))
+        expect(labels.at(-1)).toBe("Delete")
     })
 })

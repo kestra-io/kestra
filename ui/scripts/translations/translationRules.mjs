@@ -42,7 +42,7 @@ export function leafKeys(obj, prefix = "") {
 /**
  * EE keys that collide with an OSS key, with the collision described.
  *
- * EE's locale files are layered over OSS's with `lodash.merge`, so a key defined on both sides
+ * EE's locale files are layered over OSS's with a deep merge, so a key defined on both sides
  * resolves to EE's value. Three shapes of that are all bugs, and only the first is visible when
  * leaf keys are compared to leaf keys:
  *
@@ -186,7 +186,9 @@ const NEVER_TRANSLATED_WORDS = new Set([
     "outputs", "port", "ports", "worker", "workers", "backfill", "backfills", "healthcheck",
     "min", "max",
     // Terms of the same kind the model declines to translate in every locale, so an English value
-    // for them is a deliberate choice rather than a skipped translation.
+    // for them is a deliberate choice rather than a skipped translation. Execution and asset are
+    // Kestra entity nouns the German and Polish glossaries in the prompt already keep in English.
+    "execution", "executions", "asset", "assets", "vsphere",
     "secret", "secrets", "token", "tokens", "payload", "payloads", "context", "email", "webhook",
     "webhooks", "true", "false",
     // Brands, product and format names.
@@ -235,6 +237,16 @@ const ALLOWED_ENGLISH_KEYS = new Set([
     // which the model keeps verbatim on every reroll.
     "recipe.notify.slack_channel_placeholder",
     "recipe.notify.email_to_placeholder",
+    // Plugin-doc section label that Hindi keeps in English on every reroll, matching its sibling
+    // nav labels ("Outputs", "Tasks") that stay English through the reserved-terms rule.
+    "plugins.nav_metrics",
+    // EE tenant wizard, infrastructure nav and asset filters. A full generator pass translated their
+    // sibling "Tenant identity" but returned these three unchanged: "Secrets manager" names the feature
+    // being configured, "Flavor" is the cloud instance-size term, and the metadata-key label wraps a
+    // quoted interpolation the model keeps verbatim.
+    "tenant.create.steps.secret",
+    "tenant.type.infraNav.mappingsPage.flavor",
+    "assets.filter.table_column.assets.metadata_key",
 ])
 
 /**
@@ -280,7 +292,7 @@ export function untranslatedKeys(lang, messages, englishMessages) {
         .filter(([key, message]) => {
             const english = englishMessages[key]
             return english !== undefined
-                && message === english
+                && message.trim() === english.trim()
                 && !ALLOWED_ENGLISH_KEYS.has(key)
                 && !isNotProse(english)
                 && translatableWords(english).length > 0

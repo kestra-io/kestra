@@ -1,9 +1,8 @@
 import {afterEach, beforeEach, describe, expect, test, vi} from "vitest"
-import {mount} from "@vue/test-utils"
 import {createPinia, setActivePinia} from "pinia"
-import {createI18n} from "vue-i18n"
 import KestraDesignSystem from "@kestra-io/design-system"
 import MultiPanelGenericEditorView from "../../../src/components/MultiPanelGenericEditorView.vue"
+import {i18nMount} from "../i18nMount"
 
 vi.mock("vue-router", () => ({
     useRoute: () => ({query: {}, params: {}, name: "flow"}),
@@ -23,10 +22,7 @@ vi.mock("../../../src/components/MultiPanelEditorTabs.vue", () => ({
 }))
 
 const globalConfig = {
-    plugins: [
-        createI18n({legacy: false, locale: "en", fallbackWarn: false, missingWarn: false}),
-        KestraDesignSystem,
-    ],
+    plugins: [KestraDesignSystem],
 }
 
 const editorElements = [
@@ -38,13 +34,15 @@ const editorElements = [
     },
 ]
 
-function mountEditor() {
-    return mount(MultiPanelGenericEditorView, {
+function mountEditor({withBottomPanel = true} = {}) {
+    return i18nMount(MultiPanelGenericEditorView, {
         global: globalConfig,
         props: {
             editorElements,
             defaultActiveTabs: ["code"],
+            bottomVisible: withBottomPanel,
         },
+        slots: withBottomPanel ? {"bottom-panel": "<div />"} : {},
     })
 }
 
@@ -65,6 +63,14 @@ describe("MultiPanelGenericEditorView split orientation", () => {
 
         // Then: splitOrientation is "vertical"
         expect((wrapper.vm as any).splitOrientation).toBe("vertical")
+    })
+
+    test("hides the toggle button when there is no bottom panel", () => {
+        // Given: the component is mounted without a bottom panel
+        const wrapper = mountEditor({withBottomPanel: false})
+
+        // Then: the orientation toggle is not rendered
+        expect(wrapper.find(".orientation-toggle").exists()).toBe(false)
     })
 
     test("toggle button exists with accessible aria-label", () => {

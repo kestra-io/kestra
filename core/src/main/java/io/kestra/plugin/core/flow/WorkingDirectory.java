@@ -8,6 +8,7 @@ import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
@@ -33,10 +34,13 @@ import io.kestra.core.models.tasks.VoidOutput;
 import io.kestra.core.runners.*;
 import io.kestra.core.serializers.FileSerde;
 import io.kestra.core.utils.IdUtils;
+import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.NamespaceFilesUtils;
 import io.kestra.core.validations.WorkingDirectoryTaskValidation;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import org.hibernate.validator.constraints.time.DurationMin;
+
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -242,6 +246,16 @@ public class WorkingDirectory extends Sequential implements NamespaceFilesInterf
         return Collections.emptyList();
     }
 
+    @Override
+    public Optional<State.Type> resolveState(RunContext runContext, Execution execution, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
+        // subtasks run inside the Worker and each reports through its own queue message, so a failed
+        // subtask must not terminate the WorkingDirectory while a sibling's terminal result is still in flight
+        boolean hasInFlightSubtask = ListUtils.emptyOnNull(execution.getTaskRunList()).stream()
+            .anyMatch(taskRun -> parentTaskRun.getId().equals(taskRun.getParentTaskRunId()) && !taskRun.getState().isTerminated());
+
+        return hasInFlightSubtask ? Optional.empty() : super.resolveState(runContext, execution, parentTaskRun);
+    }
+
     public WorkerTask workerTask(TaskRun parent, Task task, RunContext runContext) {
         return WorkerTask.builder()
             .task(task)
@@ -406,7 +420,7 @@ public class WorkingDirectory extends Sequential implements NamespaceFilesInterf
     @NoArgsConstructor
     public static class Cache {
         @Schema(title = "Cache TTL (Time To Live), after this duration the cache will be deleted.")
-        private Property<Duration> ttl;
+        private Property<@DurationMin(millis = 1, message = "must be a positive duration") Duration> ttl;
 
         @Schema(
             title = "List of file [glob](https://en.wikipedia.org/wiki/Glob_(programming)) patterns to include in the cache",

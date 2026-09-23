@@ -34,7 +34,7 @@
                                 <KsText class="trigger-card-title">{{ card.title }}</KsText>
                                 <span class="trigger-card-sub">{{ card.sub }}</span>
                             </div>
-                            <KsTooltip v-if="card.disabled" :content="$t('ee-tooltip.features-blocked')">
+                            <KsTooltip v-if="card.disabled" :content="$t('ee_feature_tooltip')">
                                 <KsTag size="small" class="ee-badge">EE</KsTag>
                             </KsTooltip>
                         </SelectableTile>
@@ -53,18 +53,21 @@
                     <div class="trigger-config">
                         <ExecutionPanel
                             v-if="recipe.triggerType === 'execution'"
-                            :recipe="recipe"
+                            v-model:watchNamespace="recipe.watchNamespace"
+                            v-model:includeSub="recipe.includeSub"
+                            :states="recipe.states"
                             :namespaceOptions="namespaceOptions"
                             :namespacesLoading="namespacesLoading"
                             :toggleState="toggleState"
                         />
                         <SchedulePanel
                             v-else-if="recipe.triggerType === 'schedule'"
-                            :recipe="recipe"
+                            v-model:cron="recipe.cron"
+                            v-model:timezone="recipe.timezone"
                         />
                         <WebhookPanel
                             v-else-if="recipe.triggerType === 'webhook'"
-                            :recipe="recipe"
+                            v-model:webhookKey="recipe.webhookKey"
                             :systemNamespace="systemNamespace"
                             :flowId="flowId"
                         />
@@ -81,7 +84,11 @@
                     <span class="wizard-sub">{{ $t("recipe.then.subtitle") }}</span>
 
                     <NotifyGrid
-                        :recipe="recipe"
+                        v-model:slackChannel="recipe.slackChannel"
+                        v-model:teamsWebhook="recipe.teamsWebhook"
+                        v-model:emailTo="recipe.emailTo"
+                        :notify="recipe.notify"
+                        :triggerType="recipe.triggerType"
                         :channelAvailability="channelAvailability"
                         :toggleNotify="toggleNotify"
                     />
@@ -155,7 +162,7 @@
 <script setup lang="ts">
     import {computed, ref, watch, type Component} from "vue"
     import {useI18n} from "vue-i18n"
-    import {useMiscStore} from "override/stores/misc"
+    import {useSystemNamespace} from "../../../composables/useSystemNamespace"
     import {useFlowRecipe} from "../../../composables/useFlowRecipe"
     import {recipeToYaml, SYSTEM_FLOW_RECIPE_ID} from "../../../utils/recipeToYaml"
     import {useNamespaceOptions} from "../../../composables/useNamespaceOptions"
@@ -172,7 +179,6 @@
 
     import LightningBolt from "vue-material-design-icons/LightningBolt.vue"
     import ClockOutline from "vue-material-design-icons/ClockOutline.vue"
-    import FolderMultipleOutline from "vue-material-design-icons/FolderMultipleOutline.vue"
     import Webhook from "vue-material-design-icons/Webhook.vue"
     import DotsHorizontal from "vue-material-design-icons/DotsHorizontal.vue"
 
@@ -187,9 +193,9 @@
     }>()
 
     const {t} = useI18n()
-    const miscStore = useMiscStore()
 
-    const systemNamespace = computed(() => props.namespace ?? miscStore.configs?.systemNamespace ?? "system")
+    const instanceSystemNamespace = useSystemNamespace()
+    const systemNamespace = computed(() => props.namespace ?? instanceSystemNamespace.value)
 
     const flowId = `${SYSTEM_FLOW_RECIPE_ID}-${getRandomID()}`
 
@@ -267,14 +273,6 @@
             title: t("recipe.trigger.schedule_title"),
             sub: t("recipe.trigger.schedule_sub"),
             disabled: false,
-        },
-        {
-            key: "case",
-            type: null,
-            icon: FolderMultipleOutline,
-            title: t("recipe.trigger.case_title"),
-            sub: t("recipe.trigger.case_sub"),
-            disabled: true,
         },
         {
             key: "webhook",

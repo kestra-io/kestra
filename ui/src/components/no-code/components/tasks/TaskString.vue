@@ -45,8 +45,7 @@
 
 <script lang="ts" setup>
     import {computed, inject, onMounted, ref} from "vue"
-    import $moment from "moment"
-    import {KsEditor} from "@kestra-io/design-system"
+    import {durationUtils, KsEditor} from "@kestra-io/design-system"
     import {useEditorBindings} from "../../../../composables/useEditorBindings"
     import InputText from "../inputs/InputText.vue"
     import TaskDuration from "./TaskDuration.vue"
@@ -99,7 +98,7 @@
         if (!["duration", "date-time"].includes(schema.format ?? "") || !props.modelValue) {
             pebble.value = false
         } else if (schema.format === "duration" && values.value) {
-            pebble.value = !$moment.duration(props.modelValue as string).isValid()
+            pebble.value = !durationUtils.isValidDuration(props.modelValue as string)
         } else if (schema.format === "date-time" && values.value) {
             pebble.value = isNaN(Date.parse(props.modelValue as string))
         }
@@ -129,11 +128,6 @@
 </script>
 
 <style scoped lang="scss">
-:deep(.kel-input__inner) {
-    &::placeholder {
-        color: var(--ks-text-inactive) !important;
-    }
-}
 :deep(.placeholder) {
     top: -7px !important;
 }

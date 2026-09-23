@@ -19,6 +19,7 @@ export const storageKeys = {
     DISPLAY_FLOW_EXECUTIONS_COLUMNS: "displayFlowExecutionsColumns",
     DISPLAY_KV_COLUMNS: "displayKvColumns",
     DISPLAY_SECRETS_COLUMNS: "displaySecretsColumns",
+    DISPLAY_NAMESPACE_SECRETS_COLUMNS: "displayNamespaceSecretsColumns",
     DISPLAY_TRIGGERS_COLUMNS: "displayTriggersColumns",
     DISPLAY_MCP_TOOLS_COLUMNS: "displayMcpToolsColumns",
     DISPLAY_ASSETS_COLUMNS: "displayAssetsColumns",
@@ -32,6 +33,7 @@ export const storageKeys = {
     SHOW_FLOWS_CHART: "showFlowsChart",
     SHOW_LOGS_CHART: "showLogsChart",
     DEFAULT_NAMESPACE: "defaultNamespace",
+    FLOW_TEMPLATE: "flowTemplate",
     LATEST_NAMESPACE: "latestNamespace",
     PAGINATION_SIZE: "paginationSize",
     IMPERSONATE: "impersonate",
@@ -49,6 +51,8 @@ export const storageKeys = {
     FILTER_ORDER_PREFIX: "filter-order",
     LOGS_VIEW_TYPE: "logsViewType",
     SCROLL_MEMORY_PREFIX: "scroll",
+    TOPOLOGY_ORIENTATION: "topology-orientation",
+    DEFAULT_TOPOLOGY_ORIENTATION: "defaultTopologyOrientation",
 } as const
 
 export const executeFlowBehaviours = {
@@ -59,6 +63,11 @@ export const executeFlowBehaviours = {
 export const taskEditDefaultModes = {
     MODAL: "MODAL",
     TAB: "TAB",
+} as const
+
+export const topologyOrientations = {
+    VERTICAL: "VERTICAL",
+    HORIZONTAL: "HORIZONTAL",
 } as const
 
 export const stateDisplayValues = {

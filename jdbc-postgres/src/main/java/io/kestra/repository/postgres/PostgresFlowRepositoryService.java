@@ -9,6 +9,7 @@ import org.jooq.Condition;
 import org.jooq.Field;
 import org.jooq.impl.DSL;
 
+import io.kestra.core.exceptions.InvalidQueryFiltersException;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.jdbc.AbstractJdbcRepository;
@@ -66,7 +67,7 @@ public abstract class PostgresFlowRepositoryService {
                 case NOT_CONTAINS -> conditions.add(labelContainsCondition(label).not());
                 case IS_NULL -> conditions.add(labelKeyCondition(label).not());
                 case IS_NOT_NULL -> conditions.add(labelKeyCondition(label));
-                default -> throw new UnsupportedOperationException("Unsupported operation: " + operation);
+                default -> throw new InvalidQueryFiltersException("Unsupported operation: " + operation);
             }
         } else if (labels instanceof Map<?, ?> labelValues) {
             labelValues.forEach((key, value) ->
@@ -85,12 +86,16 @@ public abstract class PostgresFlowRepositoryService {
                     conditions.add(labelMatches.isFalse());
                 } else if (operation.equals(QueryFilter.Op.NOT_EQUALS)) {
                     conditions.add(labelMatches.isFalse());
+                } else if (operation.equals(QueryFilter.Op.CONTAINS)) {
+                    conditions.add(labelValueContainsCondition((String) key, (String) value));
+                } else if (operation.equals(QueryFilter.Op.NOT_CONTAINS)) {
+                    conditions.add(labelValueContainsCondition((String) key, (String) value).not());
                 } else if (operation.equals(QueryFilter.Op.IS_NULL)) {
                     conditions.add(labelKeyCondition((String) key).not());
                 } else if (operation.equals(QueryFilter.Op.IS_NOT_NULL)) {
                     conditions.add(labelKeyCondition((String) key));
                 } else {
-                    throw new UnsupportedOperationException("Unsupported operation: " + operation);
+                    throw new InvalidQueryFiltersException("Unsupported operation: " + operation);
                 }
             });
         }
@@ -107,6 +112,15 @@ public abstract class PostgresFlowRepositoryService {
             "    OR lower(lbl ->> 'key') LIKE lower('%' || ? || '%')" +
             ")";
         return DSL.condition(sql, query, query);
+    }
+
+    private static Condition labelValueContainsCondition(String key, String value) {
+        String sql = "EXISTS (" +
+            " SELECT 1 FROM jsonb_array_elements(COALESCE(value -> 'labels', '[]'::jsonb)) AS lbl" +
+            " WHERE lbl ->> 'key' = ?" +
+            "   AND lower(lbl ->> 'value') LIKE lower('%' || ? || '%')" +
+            ")";
+        return DSL.condition(sql, key, value);
     }
 
     private static Condition labelKeyCondition(String key) {

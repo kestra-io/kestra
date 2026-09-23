@@ -33,7 +33,7 @@
 <script setup lang="ts">
     import {computed, onActivated, provide, ref, watch} from "vue"
 
-    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
+    import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
     import {removeNullAndUndefined} from "./utils/cleanUp"
 
     import Task from "./segments/Task.vue"
@@ -61,7 +61,7 @@
         UPDATE_YAML_FUNCTION_INJECTION_KEY,
     } from "./injectionKeys"
     import {useFlowFields} from "./utils/useFlowFields"
-    import debounce from "lodash/debounce"
+    import {debounce} from "@kestra-io/design-system"
     import {NoCodeProps} from "../flows/noCodeTypes"
     import {useFlowStore} from "../../stores/flow"
     import {usePluginsStore} from "../../stores/plugins"

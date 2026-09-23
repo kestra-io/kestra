@@ -8,9 +8,13 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 import io.kestra.core.models.Label;
+import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.tasks.WorkerSelector;
+import io.kestra.core.serializers.Jackson3ListOrMapOfLabelDeserializer;
+import io.kestra.core.serializers.Jackson3ListOrMapOfLabelSerializer;
 import io.kestra.core.serializers.ListOrMapOfLabelDeserializer;
 import io.kestra.core.serializers.ListOrMapOfLabelSerializer;
+import io.kestra.core.validations.TenantId;
 
 import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -45,11 +49,14 @@ public abstract class AbstractFlow implements FlowInterface {
 
     String description;
 
-    @Valid
-    List<Input<?>> inputs;
+    List<@Valid Input<?>> inputs;
 
-    @Valid
-    List<Output> outputs;
+    @Schema(
+        title = "Output values available and exposes to other flows.",
+        description = "Output values make information about the execution of your Flow available and expose for other Kestra flows to use. Output values are similar to return values in programming languages."
+    )
+    @PluginProperty(dynamic = true)
+    List<@Valid Output> outputs;
 
     @NotNull
     @Builder.Default
@@ -72,11 +79,13 @@ public abstract class AbstractFlow implements FlowInterface {
     boolean draft = false;
 
     @Hidden
-    @Pattern(regexp = "^[a-z0-9][a-z0-9_-]*")
+    @TenantId
     String tenantId;
 
     @JsonSerialize(using = ListOrMapOfLabelSerializer.class)
     @JsonDeserialize(using = ListOrMapOfLabelDeserializer.class)
+    @tools.jackson.databind.annotation.JsonSerialize(using = Jackson3ListOrMapOfLabelSerializer.class)
+    @tools.jackson.databind.annotation.JsonDeserialize(using = Jackson3ListOrMapOfLabelDeserializer.class)
     @Schema(
         description = "Labels as a list of Label (key/value pairs) or as a map of string to string.",
         implementation = Object.class,
@@ -85,8 +94,7 @@ public abstract class AbstractFlow implements FlowInterface {
             Map.class
         }
     )
-    @Valid
-    List<Label> labels;
+    List<@Valid Label> labels;
 
     @Schema(
         type = "object",

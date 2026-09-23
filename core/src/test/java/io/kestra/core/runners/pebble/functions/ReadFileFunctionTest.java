@@ -63,7 +63,7 @@ class ReadFileFunctionTest {
         URI nsFile = upsertNsFile(false, namespace, "Hello from version 1");
         upsertNsFile(nsFile.getPath(), false, namespace, "Hello from version 2");
 
-        // Version 2 will be deleted and should not be usable
+        // Deleting the file takes every revision it holds at this point with it
         Namespace namespaceStorage = namespaceFactory.of(MAIN_TENANT, namespace, storageInterface);
         namespaceStorage.delete(Path.of(nsFile.getPath()));
 
@@ -78,8 +78,16 @@ class ReadFileFunctionTest {
         );
         assertThat(illegalVariableEvaluationException.getCause().getCause()).isInstanceOf(FileNotFoundException.class);
 
-        render = variableRenderer.render("{{ render(read('" + nsFile.getPath() + "', revision=1)) }}", getVariables(namespace));
-        assertThat(render).isEqualTo("Hello from version 1");
+        // Revision 1 predates the deletion, so it goes with it: deleting the file deletes every revision it
+        // held at that point, and re-creating the path does not bring them back.
+        illegalVariableEvaluationException = assertThrows(
+            IllegalVariableEvaluationException.class, () -> variableRenderer.render("{{ render(read('" + nsFile.getPath() + "', revision=1)) }}", getVariables(namespace))
+        );
+        assertThat(illegalVariableEvaluationException.getCause().getCause()).isInstanceOf(FileNotFoundException.class);
+
+        // The revision written after the deletion is readable
+        render = variableRenderer.render("{{ render(read('" + nsFile.getPath() + "', revision=3)) }}", getVariables(namespace));
+        assertThat(render).isEqualTo("Hello from version 3");
     }
 
     @Test
@@ -93,6 +101,19 @@ class ReadFileFunctionTest {
         );
         assertThat(exception.getCause()).isInstanceOf(PebbleException.class);
         assertThat(exception.getCause().getMessage()).contains("The following named argument does not exist: version");
+    }
+
+    @Test
+    void readNamespaceFileRejectsNonIntegerRevision() throws IOException, URISyntaxException {
+        String namespace = TestsUtils.randomNamespace();
+        URI nsFile = upsertNsFile(false, namespace, "Hello from version 1");
+
+        IllegalVariableEvaluationException exception = assertThrows(
+            IllegalVariableEvaluationException.class,
+            () -> variableRenderer.render("{{ read('" + nsFile.getPath() + "', revision='not-a-number') }}", getVariables(namespace))
+        );
+        assertThat(exception.getCause().getCause()).isInstanceOf(IllegalArgumentException.class);
+        assertThat(exception.getCause().getCause().getMessage()).isEqualTo("The 'read' function expects the 'revision' argument to be a valid integer.");
     }
 
     @Test

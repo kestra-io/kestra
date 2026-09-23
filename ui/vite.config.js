@@ -46,8 +46,7 @@ import {stripDeadPrebuildDefault} from "./plugins/stripDeadPrebuildDefault.js"
 import {consolidateChunks} from "./plugins/consolidateChunks.js"
 import {VitePWA} from "vite-plugin-pwa"
 import {loaderFragment} from "./plugins/loaderFragment.js"
-
-import {exports as kestraSdkExports} from "@kestra-io/kestra-sdk/package.json"
+import {pwaShortcuts} from "./plugins/pwaShortcuts"
 
 export default defineConfig(({mode}) => {
     process.env = {...process.env, ...loadEnv(mode, process.cwd())}
@@ -66,7 +65,7 @@ export default defineConfig(({mode}) => {
             },
             proxy: {
                 "^/api": {
-                    target: process.env.VITE_APP_LOGIN_URL || "http://localhost:8080",
+                    target: process.env.VITE_PROXY_URL || "http://localhost:8080",
                     ws: true,
                     changeOrigin: true,
                 },
@@ -74,7 +73,7 @@ export default defineConfig(({mode}) => {
                 // OpenAPI spec (${context-path}/swagger/kestra.yml) to compare its hash. Dev-only;
                 // the check itself is tree-shaken from production builds.
                 "^/swagger": {
-                    target: process.env.VITE_APP_LOGIN_URL || "http://localhost:8080",
+                    target: process.env.VITE_PROXY_URL || "http://localhost:8080",
                     changeOrigin: true,
                 },
             },
@@ -103,21 +102,7 @@ export default defineConfig(({mode}) => {
                 shared: {
                     vue: {
                         singleton: true,
-
                     },
-                    "@kestra-io/kestra-sdk": {
-                        singleton: true,
-                    },
-                    // add all exports of @kestra-io/kestra-sdk as shared singletons
-                    ...Object.fromEntries(Object.keys(kestraSdkExports)
-                        .filter((key) => key !== "." && !key.endsWith(".json"))
-                        .map((key) => {
-                            const name = key.replace(/^\.\//, "").replace(/\/index\.js$/, "")
-                            return [`@kestra-io/kestra-sdk/${name}`, {
-                                singleton: true,
-                            }]
-                        }),
-                    ),
                 },
             }),
             !process.env.STORYBOOK && consolidateChunks(),
@@ -148,6 +133,7 @@ export default defineConfig(({mode}) => {
                         {src: "pwa-512x512.png", sizes: "512x512", type: "image/png", purpose: "any"},
                         {src: "maskable-icon-512x512.png", sizes: "512x512", type: "image/png", purpose: "maskable"},
                     ],
+                    shortcuts: pwaShortcuts,
                 },
                 workbox: {
                     // shell-only precache: JS/CSS stays network-fetched (the assets/ graph is tens of MB)
@@ -179,14 +165,14 @@ export default defineConfig(({mode}) => {
         },
         optimizeDeps: {
             entries: [
-                "tests/storybook/**/*.stories.{js,jsx,ts,tsx}",
+                "tests/storybook/**/*.stories.{ts,tsx}",
                 "packages/design-system/src/**/*.{ts,vue}",
                 "node_modules/@kestra-io/design-system/src/**/*.{ts,vue}",
             ],
             include: [
-                "lodash",
                 "debug",
                 "@braintree/sanitize-url",
+                // still pulled in by element-plus and mermaid, not by our own code
                 "lodash-es",
                 "nprogress",
                 // CJS-only packages imported as ESM defaults by unified, fault, @kestra-io/ui-libs, etc.
@@ -194,27 +180,24 @@ export default defineConfig(({mode}) => {
                 "extend",
                 "format",
                 "humanize-duration",
-                "moment",
-                "moment-timezone",
-                "moment-range",
                 "vue-gtag",
-                // Locales are lazy-loaded per language in src/utils/init.ts (only the active
+                // Locales are lazy-loaded per language by the design system (only the active
                 // locale reaches the browser). They are listed here so Vite pre-bundles them on
                 // the FIRST optimize pass — otherwise it discovers each dynamic import at runtime
                 // and triggers a page-reloading re-optimization at startup. This does NOT ship
                 // every locale to the client; it only affects dev-server pre-bundling.
-                "moment/dist/locale/de",
-                "moment/dist/locale/es",
-                "moment/dist/locale/fr",
-                "moment/dist/locale/hi",
-                "moment/dist/locale/it",
-                "moment/dist/locale/ja",
-                "moment/dist/locale/ko",
-                "moment/dist/locale/pl",
-                "moment/dist/locale/pt",
-                "moment/dist/locale/pt-br",
-                "moment/dist/locale/ru",
-                "moment/dist/locale/zh-cn",
+                "dayjs/locale/de",
+                "dayjs/locale/es",
+                "dayjs/locale/fr",
+                "dayjs/locale/hi",
+                "dayjs/locale/it",
+                "dayjs/locale/ja",
+                "dayjs/locale/ko",
+                "dayjs/locale/pl",
+                "dayjs/locale/pt",
+                "dayjs/locale/pt-br",
+                "dayjs/locale/ru",
+                "dayjs/locale/zh-cn",
                 "dagre",
                 "@vue-flow/background",
                 "@vue-flow/controls",
@@ -225,6 +208,8 @@ export default defineConfig(({mode}) => {
                 "@module-federation/dts-plugin/dynamic-remote-type-hints-plugin",
                 "js-yaml",
                 "path-browserify",
+                // Dev-only: optimizeDeps does not reach the production build, so the lazy chunk
+                // stands, but without this /setup triggers a re-optimization and a full reload.
                 "mailchecker",
                 "rapidoc",
                 // The AI Copilot stories/components import the SDK's `ai` subpath. Pre-bundle it so

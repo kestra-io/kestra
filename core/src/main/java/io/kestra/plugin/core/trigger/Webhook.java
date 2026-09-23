@@ -15,6 +15,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.kestra.core.exceptions.InternalException;
+import io.kestra.core.queues.MessageTooBigException;
 import io.kestra.core.http.HttpRequest;
 import io.kestra.core.http.HttpResponse;
 import io.kestra.core.models.annotations.Example;
@@ -32,6 +33,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
+import reactor.core.Exceptions;
 import reactor.core.publisher.Mono;
 
 @SuperBuilder
@@ -275,7 +277,16 @@ public class Webhook extends AbstractWebhookTrigger implements TriggerOutput<Web
                         }
                     });
             })
-            .onErrorReturn(HttpResponse.of(HttpResponse.Status.INTERNAL_SERVER_ERROR));
+            .onErrorResume(e ->
+            {
+                // A body too large to enqueue is propagated so the ErrorController handler maps it to 413; any
+                // other error becomes a 500.
+                Throwable unwrapped = Exceptions.unwrap(e);
+                if (unwrapped instanceof MessageTooBigException) {
+                    return Mono.error(unwrapped);
+                }
+                return Mono.just(HttpResponse.of(HttpResponse.Status.INTERNAL_SERVER_ERROR));
+            });
     }
 
     private HttpResponse<?> buildOutputResponse(Object body, String responseContentType, HttpResponse.Status responseCode) {

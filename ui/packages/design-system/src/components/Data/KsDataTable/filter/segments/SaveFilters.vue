@@ -241,7 +241,7 @@
 
     .filter-summary {
         padding: 0.5rem 0.75rem;
-        background-color: var(--ks-surface-secondary);
+        background-color: var(--ks-bg-base);
         border-radius: var(--ks-radius-base);
         border: 1px solid var(--ks-border-default);
         min-height: 2rem;
@@ -310,12 +310,6 @@
 
 .kel-button-group .kel-button--primary:last-child {
     border: none;
-}
-
-:deep(.kel-input__inner::placeholder),
-:deep(.kel-textarea__inner::placeholder) {
-    color: var(--ks-text-dim);
-    font-size: var(--ks-font-size-sm);
 }
 
 :deep(footer.kel-dialog__footer) {

@@ -100,6 +100,16 @@
                         @click="toggleVoiceInput"
                     />
                     <KsButton
+                        v-if="streaming"
+                        circle
+                        type="primary"
+                        :icon="Stop"
+                        :aria-label="$t('ai.copilot.stop')"
+                        data-test="copilot-stop"
+                        @click="emit('stop')"
+                    />
+                    <KsButton
+                        v-else
                         circle
                         type="primary"
                         :icon="ArrowUp"
@@ -118,6 +128,7 @@
     import {ref, computed, nextTick, watch, onMounted, onBeforeUnmount, type Component} from "vue"
     import {useI18n} from "vue-i18n"
     import ArrowUp from "vue-material-design-icons/ArrowUp.vue"
+    import Stop from "vue-material-design-icons/Stop.vue"
     import ChevronDown from "vue-material-design-icons/ChevronDown.vue"
     import Microphone from "vue-material-design-icons/Microphone.vue"
     import Check from "vue-material-design-icons/Check.vue"
@@ -133,6 +144,8 @@
         mode: AgentMode
         /** Disables input while a turn is streaming or awaiting confirmation. */
         disabled?: boolean
+        /** Replaces send with stop while a turn is streaming. */
+        streaming?: boolean
         /** Overrides the placeholder (e.g. the descriptive helper text in the empty state). */
         placeholder?: string
         /** Initial visible rows (empty state uses more so the helper text wraps); collapses on input. */
@@ -145,6 +158,7 @@
 
     const emit = defineEmits<{
         (e: "submit", prompt: string): void
+        (e: "stop"): void
         (e: "update:mode", mode: AgentMode): void
         (e: "update:provider", provider: string): void
     }>()
@@ -177,6 +191,9 @@
         const el = textareaEl.value
         if (!el) return
         el.style.height = "auto"
+        // A composer that is mounted but not laid out yet (dock still opening) measures zero and would
+        // collapse the box - leave the rows-based height, the observer below re-runs once it has one.
+        if (el.scrollHeight === 0) return
         el.style.height = `${el.scrollHeight}px`
     }
 
@@ -196,6 +213,31 @@
     // Keep the height in sync when the draft is cleared (e.g. after submit).
     watch(draft, () => nextTick(autosize))
 
+    /*
+        `input` and the draft watcher only cover text that arrives once the composer is on screen. A
+        seeded prompt ("Fix with AI", the editor shortcut) is already in the model by the time the
+        composer mounts - the chat swaps from the empty state to the footer composer, or the dock opens
+        on a rehydrated thread - so the box stayed one row tall around a multiline prompt. Size it on
+        mount, and again whenever the box gets a new width: a narrower dock rewraps the draft onto more
+        lines, and a mount inside a panel that is not laid out yet first measures a width of zero.
+    */
+    let lastWidth = 0
+    const resizeObserver = new ResizeObserver((entries) => {
+        const width = entries[0]?.contentRect.width ?? 0
+        if (width === lastWidth) return
+        lastWidth = width
+        autosize()
+    })
+
+    // Re-runs whenever the textarea is (re)created too - dictation swaps it out for the waveform.
+    watch(textareaEl, (el, previous) => {
+        if (previous) resizeObserver.unobserve(previous)
+        if (!el) return
+        lastWidth = el.clientWidth
+        autosize()
+        resizeObserver.observe(el)
+    }, {flush: "post"})
+
     // Enter submits; Shift+Enter inserts a newline.
     function onKeydown(event: KeyboardEvent): void {
         if (event.key === "Enter" && !event.shiftKey) {
@@ -210,7 +252,7 @@
     // Transcript captured before this dictation started, so interim results append cleanly.
     const baseDraft = ref("")
     const draftBeforeListening = ref("")
-    let recognition: any = null
+    let recognition: SpeechRecognition | null = null
 
     // Waveform visualizer.
     const wavesContainer = ref<HTMLElement | null>(null)
@@ -237,7 +279,7 @@
             volumeBuffer.value = Array(barCount).fill(0)
 
             stream = await navigator.mediaDevices.getUserMedia({audio: true})
-            audioContext = new (window.AudioContext || (window as any).webkitAudioContext)()
+            audioContext = new (window.AudioContext || window.webkitAudioContext)()
             analyser = audioContext.createAnalyser()
             analyser.fftSize = 256
             analyser.smoothingTimeConstant = 0.3
@@ -330,13 +372,13 @@
     })
 
     onMounted(() => {
-        const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
+        const SR = window.SpeechRecognition || window.webkitSpeechRecognition
         if (!SR) return
         speechSupported.value = true
         recognition = new SR()
         recognition.continuous = true
         recognition.interimResults = true
-        recognition.onresult = (event: any) => {
+        recognition.onresult = (event: SpeechRecognitionEvent) => {
             let interim = ""
             for (let i = event.resultIndex; i < event.results.length; i++) {
                 const result = event.results[i]
@@ -357,6 +399,7 @@
             // ignore
         }
         stopAudioAnalysis()
+        resizeObserver.disconnect()
     })
 </script>
 
@@ -379,6 +422,8 @@
         border: none;
         outline: none;
         resize: none;
+        /* Safari renders a horizontal scrollbar track on auto-overflow textareas even though wrapped text never overflows. */
+        overflow-x: hidden;
         padding: 0;
         background: transparent;
         color: var(--ks-text-primary);
@@ -387,7 +432,9 @@
     }
 
     .copilot-textarea::placeholder {
-        color: var(--ks-text-secondary);
+        color: var(--ks-placeholder-color);
+        font-size: var(--ks-placeholder-font-size);
+        font-weight: var(--ks-placeholder-font-weight);
     }
 
     /* Live dictation waveform — occupies the textarea's slot. */

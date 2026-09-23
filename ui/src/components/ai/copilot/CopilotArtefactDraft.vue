@@ -24,23 +24,44 @@
              KsMarkdown provides its own copy-to-clipboard control, so no separate copy button. -->
         <KsMarkdown class="copilot-draft-yaml" data-test="copilot-draft-yaml" :content="yamlBlock" />
 
+        <!-- Once dismissed or applied, the card stops locking the editor (CopilotChat.vue excludes it
+             from the pending-draft scan) and the footer no longer offers actions — a quiet status line
+             instead, matching the cancelled-turn treatment in CopilotMessage.vue. -->
+        <div v-if="dismissed" class="copilot-draft-footer" data-test="copilot-draft-dismissed">
+            <KsText size="small" class="copilot-draft-status-label">{{ $t("ai.copilot.draft.dismissed") }}</KsText>
+        </div>
+        <div v-else-if="applied" class="copilot-draft-footer" data-test="copilot-draft-applied">
+            <KsText size="small" class="copilot-draft-status-label">{{ $t("ai.copilot.draft.applied") }}</KsText>
+        </div>
         <!-- Apply actions: flows + dashboards open in the editor or apply directly. Apps are EE-only —
              open in the app editor only (no direct apply), and only when the EE app path is present, so
-             OSS shows no actions. -->
-        <div v-if="showActions" class="copilot-draft-footer">
-            <KsButton size="small" data-test="copilot-draft-open" @click="openInEditor(draft)">
-                {{ $t("ai.copilot.draft.openInEditor") }}
-            </KsButton>
+             OSS shows no actions. Dismiss is always offered, even when there's nothing else to do with
+             the draft, since it's the only way to decline it. -->
+        <div v-else class="copilot-draft-footer">
             <KsButton
-                v-if="draft.kind !== 'APP'"
+                text
                 size="small"
-                type="primary"
-                :disabled="!draft.valid || applying"
-                data-test="copilot-draft-apply"
-                @click="apply(draft)"
+                class="copilot-draft-dismiss"
+                data-test="copilot-draft-dismiss"
+                @click="emit('dismiss', draft.draftId)"
             >
-                {{ $t("ai.copilot.draft.apply") }}
+                {{ $t("ai.copilot.draft.dismiss") }}
             </KsButton>
+            <template v-if="showActions">
+                <KsButton size="small" data-test="copilot-draft-open" @click="openInEditor(draft)">
+                    {{ $t("ai.copilot.draft.openInEditor") }}
+                </KsButton>
+                <KsButton
+                    v-if="draft.kind !== 'APP'"
+                    size="small"
+                    type="primary"
+                    :disabled="!draft.valid || applying"
+                    data-test="copilot-draft-apply"
+                    @click="onApply"
+                >
+                    {{ $t("ai.copilot.draft.apply") }}
+                </KsButton>
+            </template>
         </div>
     </div>
 </template>
@@ -51,7 +72,18 @@
     import {useApplyDraft} from "./useApplyDraft"
     import type {ArtefactDraftEvent} from "./types"
 
-    const props = defineProps<{draft: ArtefactDraftEvent}>()
+    const props = defineProps<{
+        draft: ArtefactDraftEvent
+        /** True once this draft was dismissed (tracked by `CopilotChat.vue`) — hides the actions. */
+        dismissed?: boolean
+        /** True once this draft was applied (tracked by `CopilotChat.vue`) — hides the actions. */
+        applied?: boolean
+    }>()
+
+    const emit = defineEmits<{
+        (e: "dismiss", draftId: string): void
+        (e: "applied", draftId: string): void
+    }>()
 
     const {applying, appSupported, dashboardSupported, openInEditor, apply} = useApplyDraft()
 
@@ -63,6 +95,10 @@
             || (props.draft.kind === "APP" && appSupported),
     )
 
+    async function onApply(): Promise<void> {
+        if (await apply(props.draft)) emit("applied", props.draft.draftId)
+    }
+
     // Render the YAML as a fenced code block so KsMarkdown syntax-highlights it (matching the
     // assistant transcript), rather than showing it as flat monospace text.
     const yamlBlock = computed(() => "```yaml\n" + props.draft.yaml + "\n```")
@@ -70,10 +106,9 @@
 
 <style scoped>
     .copilot-draft {
-        /* Fill the assistant column (up to the 90% gutter) so the YAML preview uses the available
-           width instead of shrinking to its longest line. */
+        /* Fill the transcript column so the YAML preview uses the available width instead of
+           shrinking to its longest line. */
         width: 100%;
-        max-width: 90%;
         /* --ks-border-default, not -subtle: in light theme -subtle is the same gray as the card's
            --ks-bg-base, so a -subtle border is invisible (it shows fine in dark). */
         border: 1px solid var(--ks-border-default);
@@ -117,5 +152,17 @@
         gap: var(--ks-spacing-2);
         padding: var(--ks-spacing-2) var(--ks-spacing-3);
         background: var(--ks-bg-elevated);
+    }
+
+    /* "Dismiss" reads as a subdued secondary link next to the primary Apply, matching
+       ProposedActionCard's "Reply to revise" treatment. */
+    .copilot-draft-dismiss {
+        --ks-button-text-color: var(--ks-text-secondary);
+        color: var(--ks-text-secondary);
+    }
+
+    .copilot-draft-status-label {
+        --kel-text-color: var(--ks-text-muted);
+        font-style: italic;
     }
 </style>

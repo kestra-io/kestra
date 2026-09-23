@@ -34,7 +34,8 @@
         <p class="resources-title">
             {{ $t("onboarding.tour.finale.keep_going") }}
         </p>
-        <OnboardingResourceList :items="resources" />
+        <!-- An in-app link navigated the page underneath while this dialog stayed on top of it. -->
+        <OnboardingResourceList :items="resources" @navigate="isOpen = false" />
 
         <template #footer>
             <KsButton @click="emit('restart')">
@@ -100,14 +101,12 @@
         {key: "chain", docs: ["flowTrigger", "namespace"]},
     ] as const
 
-    // `blank` skips the creation funnel: the tour has just guided the user for twenty
-    // minutes and ends on "now build one yourself", so a chooser here is a step backwards.
     const startBuilding = async () => {
         isOpen.value = false
         await router.push({
             name: "flows/create",
             params: {tenant: route.params.tenant},
-            query: {namespace: TOUR_NAMESPACE, blank: "true"},
+            query: {namespace: TOUR_NAMESPACE},
         })
     }
 </script>

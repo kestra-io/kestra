@@ -25,7 +25,7 @@
             </router-link>
 
             <router-link
-                :to="{name: 'flows/create', params: {tenant: route.params.tenant}, query: {blank: 'true', namespace: systemNamespace}}"
+                :to="{name: 'flows/create', params: {tenant: route.params.tenant}, query: {namespace: systemNamespace}}"
                 class="blueprint-link"
                 data-test="system-blank-flow-link"
             >
@@ -46,7 +46,7 @@
 <script setup lang="ts">
     import {computed} from "vue"
     import {useRouter, useRoute} from "vue-router"
-    import {useMiscStore} from "override/stores/misc"
+    import {useSystemNamespace} from "../../composables/useSystemNamespace"
     import FlowRecipe from "./recipe/FlowRecipe.vue"
     import ViewGridOutline from "vue-material-design-icons/ViewGridOutline.vue"
     import Plus from "vue-material-design-icons/Plus.vue"
@@ -59,11 +59,11 @@
         namespace: undefined,
     })
 
-    const miscStore = useMiscStore()
     const router = useRouter()
     const route = useRoute()
 
-    const systemNamespace = computed(() => props.namespace ?? miscStore.configs?.systemNamespace ?? "system")
+    const instanceSystemNamespace = useSystemNamespace()
+    const systemNamespace = computed(() => props.namespace ?? instanceSystemNamespace.value)
 
     const handleRecipeSubmit = ({yaml}: {id: string; namespace: string; yaml: string}) => {
         sessionStorage.setItem(RECIPE_PRESET_KEY, yaml)

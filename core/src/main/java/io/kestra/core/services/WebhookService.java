@@ -44,6 +44,7 @@ import io.opentelemetry.context.propagation.ContextPropagators;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
+import reactor.core.Exceptions;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -235,7 +236,9 @@ public class WebhookService {
                     executionCommandQueue.emit(command.withOperationId(operationId));
                     eventPublisher.publishEvent(CrudEvent.create(execution));
                 } catch (Exception e) {
-                    throw new RuntimeException(e);
+                    // Exceptions.propagate rethrows a runtime as-is and wraps a checked one, so a MessageTooBigException
+                    // stays its real type and the ErrorController handler can map it to 413.
+                    throw Exceptions.propagate(e);
                 }
             },
             asyncOperationsConfiguration.waitTimeout()

@@ -50,12 +50,14 @@
     import {KsMarkdown, KsAlert, KsSkeleton, type KsBreadcrumbItem} from "@kestra-io/design-system"
     import PluginLayout from "./PluginLayout.vue"
     import {usePluginsStore} from "../../stores/plugins"
+    import {usePluginsEnrichmentStore} from "../../stores/pluginsEnrichment"
     import {useMiscStore} from "override/stores/misc"
     import {isEntryAPluginElementPredicate, isEnterpriseEditionPlugin, type Plugin} from "../../utils/pluginUtils"
     import {getTheme} from "../../utils/utils"
     import useRouteContext from "../../composables/useRouteContext"
 
     const pluginsStore = usePluginsStore()
+    const enrichmentStore = usePluginsEnrichmentStore()
     const miscStore = useMiscStore()
     const isDarkTheme = computed(() => {
         void miscStore.theme
@@ -111,7 +113,7 @@
         return schema?.properties?.title ?? schema?.title ?? null
     })
 
-    const sidebarPlugins = computed<Plugin[]>(() => pluginsStore.sidebarPluginsFor({cls: routeCls.value}))
+    const sidebarPlugins = computed<Plugin[]>(() => pluginsStore.sidebarPluginsFor({cls: routeCls.value, owner: owningPlugin.value}))
 
     const backTo = computed(() => {
         const grp = owningPlugin.value
@@ -131,13 +133,13 @@
         if (grp) {
             if (grp.subGroup && parentGroup.value?.title) {
                 crumbs.push({
-                    label: parentGroup.value.title,
+                    label: enrichmentStore.getEnrichment(parentGroup.value)?.title ?? parentGroup.value.title,
                     link: {name: "plugins/group", params: {name: parentGroup.value.name}},
                 })
             }
             if (grp.title) {
                 crumbs.push({
-                    label: grp.title,
+                    label: enrichmentStore.getEnrichment(grp)?.title ?? grp.title,
                     link: {
                         name: "plugins/group",
                         params: {name: grp.name, subGroup: grp.subGroup},

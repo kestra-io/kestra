@@ -1,9 +1,11 @@
 package io.kestra.core.utils;
 
 import java.time.Duration;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 import com.google.common.annotations.VisibleForTesting;
 
@@ -215,6 +217,26 @@ public final class RegexUtils {
         }
         return !NESTED_QUANTIFIER.matcher(pattern).find()
             && !ALTERNATION_WITH_REPETITION.matcher(pattern).find();
+    }
+
+    /**
+     * Checks whether a user-supplied regex pattern compiles under Java's regex engine, which is the
+     * only compile-time gate available before the pattern is handed to a database engine (e.g. via
+     * Postgres {@code ~} or MySQL {@code REGEXP}). Java's dialect and a database's are close but not
+     * identical, so a pattern accepted here may still be rejected by the engine, and vice versa.
+     *
+     * @param pattern the user-supplied regex pattern; must not be {@code null}.
+     * @return empty if the pattern compiles, otherwise the syntax error description.
+     */
+    public static Optional<String> syntaxError(String pattern) {
+        try {
+            Pattern.compile(pattern);
+            return Optional.empty();
+        } catch (PatternSyntaxException e) {
+            return Optional.of(e.getIndex() >= 0
+                ? "%s near index %d".formatted(e.getDescription(), e.getIndex())
+                : e.getDescription());
+        }
     }
 
     /**

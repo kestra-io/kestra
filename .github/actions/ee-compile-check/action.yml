@@ -66,7 +66,7 @@ runs:
         STATUS=$(curl -sS -o "$BODY" -w '%{http_code}' \
           -X POST "$WEBHOOK_URL" \
           -H 'Content-Type: application/json' \
-          --max-time 1800 \
+          --max-time 2700 \
           -d "$PAYLOAD" || echo "000")
 
         echo "Webhook HTTP status: $STATUS"
@@ -83,17 +83,14 @@ runs:
         COMPILE_FAILED=$(jq -r '.compileFailed // ""' "$BODY")
         COMPILE_ERROR=$(jq -r '.compileError // ""' "$BODY")
 
-        # The flow always sets compileFailed to "true"/"false". An empty value
-        # means the Kestra flow terminated BEFORE producing a verdict (e.g. a
-        # transient Kubernetes pod-scheduling timeout, or a clone/auth error).
-        # That is inconclusive, NOT a pass — fail the check so it isn't a false
-        # green, and surface the raw response + status for debugging.
+        # The flow always sets compileFailed to "true"/"false". An empty value means
+        # it produced no verdict, which is inconclusive rather than a pass.
         if [ "$COMPILE_FAILED" != "true" ] && [ "$COMPILE_FAILED" != "false" ]; then
           {
             echo "## :warning: EE compile check inconclusive for \`$REF\`"
             echo ""
             echo "The Kestra flow did not return a compile verdict (HTTP $STATUS)."
-            echo "This is usually a transient infra error (e.g. a runner pod failed to schedule). Re-run the job."
+            echo "The EE CI flow ran and produced no verdict, after its own retry. Open the execution before re-running this job."
             echo ""
             echo "<details><summary>Raw webhook response</summary>"
             echo ""
@@ -106,7 +103,7 @@ runs:
           echo "::group::Raw webhook response (HTTP $STATUS)"
           cat "$BODY"
           echo "::endgroup::"
-          echo "::error::EE compile check inconclusive for ref $REF (no compile verdict; HTTP $STATUS). Likely a transient runner error — re-run the job."
+          echo "::error::EE compile check inconclusive for ref $REF (no compile verdict; HTTP $STATUS). The flow produced no verdict after its own retry, so open the execution before re-running this job."
           exit 1
         fi
 

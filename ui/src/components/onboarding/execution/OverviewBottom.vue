@@ -34,7 +34,7 @@
             : {
                 title: t("execution_guide.get_started.title"),
                 description: t("execution_guide.get_started.text"),
-                link: "",
+                link: "https://kestra.io/docs/quickstart?utm_source=app&utm_medium=referral&utm_campaign=onboarding-welcome",
                 icon: RocketLaunchOutline,
             },
         {

@@ -13,7 +13,8 @@
     },
     "exports": {
         ".": "./src/index.ts",
-        "./vue-flow-utils": "./src/vue-flow-utils.ts"
+        "./vue-flow-utils": "./src/vue-flow-utils.ts",
+        "./flow-yaml-utils": "./src/utils/flowYamlUtils.ts"
     },
     "main": "./dist/index.js",
     "types": "./dist/index.d.ts",
@@ -32,12 +33,12 @@
     "scripts": {
         "build": "tsdown",
         "dev": "tsdown --watch",
-        "typecheck": "vue-tsc --noEmit",
-        "test": "npm run unit:test",
-        "unit:test": "vitest run --config vitest.unit.config.ts",
-        "unit:watch": "vitest --config vitest.unit.config.ts",
-        "lint:fix": "eslint --fix",
-        "lint:test": "eslint",
+        "check:types": "vue-tsc --noEmit",
+        "test": "npm run test:unit",
+        "test:unit": "vitest run --config vitest.unit.config.ts",
+        "test:unit:watch": "vitest --config vitest.unit.config.ts",
+        "lint": "eslint --fix",
+        "test:lint": "eslint",
         "prepublishOnly": "npm run build"
     },
     "dependencies": {
@@ -52,9 +53,6 @@
         "@vue-flow/background": "^1.3.2",
         "@vue-flow/controls": "^1.1.3",
         "@vue-flow/core": "^1.48.2",
-        "lodash": "^4",
-        "moment": "^2.30.1",
-        "moment-timezone": "^0.6.2",
         "vue": "^3.5.0",
         "vue-i18n": "^11.4.4"
     },
@@ -66,7 +64,6 @@
     "devDependencies": {
         "@types/dagre": "^0.7.52",
         "@types/js-yaml": "^4.0.9",
-        "@types/lodash": "^4",
         "@types/node": "^25.9.1",
         "@vitejs/plugin-vue": "^6.0.7",
         "sass-embedded": "^1.99.0",

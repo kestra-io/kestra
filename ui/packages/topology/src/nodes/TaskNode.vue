@@ -6,6 +6,7 @@
         :state="state"
         :class="classes"
         :icons="icons"
+        :loadIcon="loadIcon"
         @mouseover="emit(EVENTS.MOUSE_OVER, $event)"
         @mouseleave="emit(EVENTS.MOUSE_LEAVE)"
     >
@@ -36,12 +37,14 @@
                 <component :is="statusStyle.icon" class="status-tag__icon" />
                 <span v-if="statusStyle.label" class="status-tag__text">{{ $t(statusStyle.label) }}</span>
                 <span v-else class="status-tag__text">
-                    <Duration :histories="histories" :interval="100" />
+                    <Duration :histories="histories" :interval="100" :attemptCount="taskRuns[0]?.attempts?.length" :subject="taskId" />
                 </span>
             </span>
         </template>
         <template #title-actions>
-            <NodeMenu :actions="actions" />
+            <slot name="taskActions" :task="data.node.task" :actions="actions" :execution="taskExecution" :taskRuns="taskRunsWithDynamicChildren" :taskRun="taskRuns[0]">
+                <NodeMenu :actions="actions" />
+            </slot>
         </template>
     </BasicNode>
     <Handle type="target" :position="targetPosition" />
@@ -49,10 +52,9 @@
 
 <script setup lang="ts">
     import {computed, inject} from "vue"
-    import moment from "moment"
     import {useI18n} from "vue-i18n"
     import {Handle, Position} from "@vue-flow/core"
-    import {State, KsTooltip, SECTIONS} from "@kestra-io/design-system"
+    import {State, KsTooltip, SECTIONS, dayjs} from "@kestra-io/design-system"
     import {type CustomActionConfig, type ShowDetailsConfig, EVENTS} from "../utils/constants"
     import Duration from "../misc/Duration.vue"
     import * as Utils from "../utils/utils"
@@ -85,6 +87,7 @@
         default: null;
         description?: string;
         runIf?: unknown;
+        errors?: unknown[];
         taskRunner?: {
             type?: string;
         };
@@ -142,6 +145,7 @@
         targetPosition?: Position;
         id: string;
         icons?: Record<string, unknown>;
+        loadIcon?: (cls: string) => Promise<unknown>;
         enableSubflowInteraction?: boolean;
         playgroundEnabled: boolean;
         playgroundReadyToStart: boolean;
@@ -153,6 +157,7 @@
         targetPosition: Position.Left,
         enableSubflowInteraction: true,
         icons: undefined,
+        loadIcon: undefined,
         replayEnabled: false,
         customActions: () => ({}),
         showDetails: () => ({}),
@@ -208,7 +213,7 @@
             return executionId === execution?.value?.id
                 ? execution?.value
                 : Object.values(subflowsExecutions?.value || {})
-                    .find((exec: any) => exec.id === executionId)
+                    .find(exec => exec.id === executionId)
         }
         return undefined
     })
@@ -280,7 +285,7 @@
         const run = taskRuns.value?.[0]
         if (!run?.state?.histories?.length) return []
         return run.state.histories.map((h: {date: string; state: string}) => ({
-            date: moment(h.date),
+            date: dayjs(h.date),
             state: h.state,
         }))
     })
@@ -376,7 +381,7 @@
                 onClick: () => emit(EVENTS.EXPAND, expandData.value),
             })
         }
-        if (!taskExecution.value && !readOnly && props.data.isFlowable) {
+        if (!taskExecution.value && !readOnly && props.data.isFlowable && !task?.errors?.length) {
             list.push({
                 key: "add-error",
                 label: t("add error handler"),
@@ -452,7 +457,7 @@
 
 button.playground-button {
     color: var(--ks-white);
-    background-color: var(--ks-playground-bg-color);
+    background-color: var(--ks-toggle-playground);
 }
 
 .status-tag {

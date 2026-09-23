@@ -10,6 +10,7 @@ import io.kestra.core.async.AsyncOperationProcessedEvent;
 import io.kestra.core.async.AsyncOperationsConfiguration;
 import io.kestra.core.exceptions.ConflictException;
 import io.kestra.core.exceptions.NotFoundException;
+import io.kestra.core.exceptions.ValidationErrorException;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.executions.ExecutionKilled;
 import io.kestra.core.models.executions.ExecutionKilledTrigger;
@@ -109,7 +110,7 @@ public class TriggerStateService {
      */
     public ApiAsyncOperationResponse unlockAllByIds(List<TriggerId> triggers) {
         List<TriggerId> lockedIds = triggers.stream()
-            .filter(id -> triggerRepository.findById(id).map(TriggerStateService::isUnlockable).orElse(false))
+            .filter(id -> triggerRepository.findByIdWithoutAcl(id).map(TriggerStateService::isUnlockable).orElse(false))
             .filter(this::isFlowBackedTrigger)
             .toList();
         return submitBatch(
@@ -175,11 +176,14 @@ public class TriggerStateService {
     /**
      * Creates a backfill and waits for the scheduler to acknowledge.
      *
+     * @throws ValidationErrorException if the backfill window is empty, which the scheduler would otherwise
+     *                                  accept and then immediately discard, or if the trigger cannot be backfilled.
      * @throws NotFoundException if the trigger does not exist.
      * @throws ConflictException if the backfill cannot be created.
      */
     public TriggerState createBackfill(TriggerId triggerId, CreateBackfillTrigger.Backfill backfill) throws NotFoundException, ConflictException {
-        getTriggerState(triggerId);
+        validateBackfillWindow(backfill);
+        validateBackfillable(triggerId, getTriggerState(triggerId));
         awaitBlockingAction(
             triggerId.uid(),
             operationId -> triggerEventQueue.send(new CreateBackfillTrigger(triggerId, backfill).withOperationId(operationId)),
@@ -368,17 +372,49 @@ public class TriggerStateService {
         return new ApiAsyncOperationResponse(operationId, count);
     }
 
+    /**
+     * Rejects a backfill whose window holds no schedule date: the scheduler seeds the backfill cursor just
+     * before {@code start} and clears the backfill as soon as the cursor passes {@code end}, so such a
+     * backfill would be created and dropped again without ever running.
+     */
+    private static void validateBackfillWindow(CreateBackfillTrigger.Backfill backfill) {
+        if (backfill.start() == null) {
+            throw new ValidationErrorException(List.of("The backfill start date is required."));
+        }
+
+        if (backfill.end() != null && !backfill.end().isAfter(backfill.start())) {
+            throw new ValidationErrorException(List.of(
+                "The backfill end date must be after its start date, but got start '%s' and end '%s'."
+                    .formatted(backfill.start(), backfill.end())
+            ));
+        }
+    }
+
+    /**
+     * Rejects a backfill on a trigger the scheduler cannot replay: only a schedule trigger walks the backfill
+     * cursor, so on any other type the backfill would be stored and never run. A state saved before the trigger
+     * type was recorded carries none, and is left to the scheduler rather than rejected here.
+     */
+    private static void validateBackfillable(TriggerId triggerId, TriggerState state) {
+        if (TriggerType.POLLING.equals(state.getType()) || TriggerType.REALTIME.equals(state.getType())) {
+            throw new ValidationErrorException(List.of(
+                "Backfills are only supported on schedule triggers, but trigger %s is '%s'."
+                    .formatted(triggerId, state.getType())
+            ));
+        }
+    }
+
     private static boolean isUnlockable(TriggerState state) {
         return state.isLocked() && !TriggerType.REALTIME.equals(state.getType());
     }
 
     private TriggerState getTriggerState(TriggerId triggerId) throws NotFoundException {
-        return triggerRepository.findById(triggerId)
+        return triggerRepository.findByIdWithoutAcl(triggerId)
             .orElseThrow(() -> new NotFoundException("Trigger %s not found".formatted(triggerId)));
     }
 
     private TriggerState refresh(TriggerId triggerId, String action) {
-        return triggerRepository.findById(triggerId)
+        return triggerRepository.findByIdWithoutAcl(triggerId)
             .orElseThrow(() -> new NoSuchElementException("Trigger disappeared after " + action + ": " + triggerId));
     }
 
@@ -406,7 +442,7 @@ public class TriggerStateService {
 
     private ApiAsyncOperationResponse submitExistingBatch(List<TriggerId> triggers, java.util.function.BiConsumer<TriggerId, String> emit) {
         List<TriggerId> existing = triggers.stream()
-            .filter(id -> triggerRepository.findById(id).isPresent())
+            .filter(id -> triggerRepository.findByIdWithoutAcl(id).isPresent())
             .toList();
         return submitBatch(existing, emit);
     }

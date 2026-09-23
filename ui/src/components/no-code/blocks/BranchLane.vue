@@ -110,13 +110,13 @@
     import TagOutline from "vue-material-design-icons/TagOutline.vue"
 
     import {KsTag, KsAlert} from "@kestra-io/design-system"
+    import FlowableClusterCard from "./FlowableClusterCard.vue"
+    import LeafBlockCard from "./LeafBlockCard.vue"
 
     import type {PluginIconData} from "../../../stores/plugins"
     import {displayTaskOf, isFlowableType, isWrappedLaneItem, resolveBlockDomId} from "../../../utils/flowableBlockOps"
     import {useDragAndDrop} from "../../../composables/useDragAndDrop"
 
-    const FlowableClusterCard = defineAsyncComponent(() => import("./FlowableClusterCard.vue"))
-    const LeafBlockCard = defineAsyncComponent(() => import("./LeafBlockCard.vue"))
     const DagDependsOnEditor = defineAsyncComponent(() => import("./DagDependsOnEditor.vue"))
 
     const {t} = useI18n()

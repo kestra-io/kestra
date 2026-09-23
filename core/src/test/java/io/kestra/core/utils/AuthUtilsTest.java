@@ -113,4 +113,28 @@ class AuthUtilsTest {
         assertThat(AuthUtils.matches(SALT, PASSWORD, migratedHash)).isTrue();
         assertThat(AuthUtils.matches(SALT, "WrongPassword1", migratedHash)).isFalse();
     }
+
+    // --- constantTimeEquals ---
+
+    @Test
+    void shouldReturnTrueForEqualStrings() {
+        assertThat(AuthUtils.constantTimeEquals("admin@kestra.io", "admin@kestra.io")).isTrue();
+    }
+
+    @Test
+    void shouldReturnFalseForDifferentStrings() {
+        assertThat(AuthUtils.constantTimeEquals("admin@kestra.io", "other@kestra.io")).isFalse();
+    }
+
+    @Test
+    void shouldReturnFalseForDifferentLengthStrings() {
+        assertThat(AuthUtils.constantTimeEquals("admin@kestra.io", "admin@kestra.io.longer")).isFalse();
+    }
+
+    @Test
+    void shouldReturnFalseWhenEitherArgumentIsNull() {
+        assertThat(AuthUtils.constantTimeEquals(null, "admin@kestra.io")).isFalse();
+        assertThat(AuthUtils.constantTimeEquals("admin@kestra.io", null)).isFalse();
+        assertThat(AuthUtils.constantTimeEquals(null, null)).isFalse();
+    }
 }

@@ -56,7 +56,7 @@
         </template>
 
         <div class="p-3 pt-0">
-            <p class="mb-0" v-html="$t('restart confirm', {id: escape(execution.id)})" />
+            <p class="mb-0" v-html="$t('restart confirm', {id: escapeHtml(execution.id)})" />
         </div>
 
         <template #footer>
@@ -164,8 +164,8 @@
         <template #header>
             <span
                 v-html="$t('replay the execution', {
-                    executionId: escape(execution.id),
-                    flowId: escape(execution.flowId)
+                    executionId: escapeHtml(execution.id),
+                    flowId: escapeHtml(execution.flowId)
                 })"
             />
         </template>
@@ -181,17 +181,17 @@
 
 <script setup lang="ts">
     import {ref, computed, watch, inject} from "vue"
-    import escape from "lodash/escape"
     import {useRouter} from "vue-router"
     import {useI18n} from "vue-i18n"
     import {useToast} from "../../../../../utils/toast"
-    import {State} from "@kestra-io/design-system"
+    import {State, escapeHtml} from "@kestra-io/design-system"
     import {useFlowStore} from "../../../../../stores/flow"
     import {useAuthStore} from "override/stores/auth"
     import {useExecutionsStore} from "../../../../../stores/executions"
     import action from "../../../../../models/action"
     import resource from "../../../../../models/resource"
     import ReplayWithInputs from "../../../ReplayWithInputs.vue"
+    import {EXECUTION_PARENT_ROUTE} from "../../../executionTabs"
     import RestartIcon from "vue-material-design-icons/Restart.vue"
     import PlayBoxMultiple from "vue-material-design-icons/PlayBoxMultiple.vue"
     import {KsId} from "@kestra-io/design-system"
@@ -377,8 +377,9 @@
         toast.success(t(props.isReplay ? "replayed" : "restarted"))
 
         if (newExecution.id !== props.execution.id) {
+            // The parent route resolves the default tab; the full page load runs the redirect.
             window.location.href = router.resolve({
-                name: "executions/update/gantt",
+                name: EXECUTION_PARENT_ROUTE,
                 params: {
                     namespace: newExecution.namespace,
                     flowId: newExecution.flowId,
@@ -427,19 +428,19 @@
         font-size: var(--ks-font-size-base);
         font-weight: 600;
         margin: 0;
-        color: var(--ks-color-text-primary);
+        color: var(--ks-text-primary);
     }
 }
 .execution-description {
     font-size: var(--ks-font-size-xs);
-    color: var(--ks-color-text-secondary);
+    color: var(--ks-text-secondary);
 }
 
 .section-title {
     font-size: var(--ks-font-size-sm);
     font-weight: 600;
     margin: 20px 0 12px 0;
-    color: var(--ks-color-text-primary);
+    color: var(--ks-text-primary);
 }
 
 .radio-vertical {

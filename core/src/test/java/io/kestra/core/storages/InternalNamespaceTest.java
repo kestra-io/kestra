@@ -242,6 +242,36 @@ class InternalNamespaceTest {
     }
 
     @Test
+    void shouldRejectMoveWhenTargetIsSourceDescendant() throws Exception {
+        final String namespaceId = TestsUtils.randomNamespace();
+        final InternalNamespace namespace = new InternalNamespace(log, MAIN_TENANT, namespaceId, storageInterface, namespaceFileMetadataStateStore);
+        final Path source = Path.of("/work");
+        final Path target = Path.of("/work/nested");
+
+        namespace.putFile(Path.of("/work/file.txt"), new ByteArrayInputStream("content".getBytes()));
+
+        assertThatThrownBy(() -> namespace.move(source, target))
+            .isInstanceOf(ConflictException.class)
+            .hasMessageContaining(source.toString())
+            .hasMessageContaining(target.toString());
+
+        assertThat(namespace.exists(source)).isTrue();
+        assertThat(namespace.exists(Path.of("/work/file.txt"))).isTrue();
+        try (InputStream is = namespace.getFileContent(Path.of("/work/file.txt"))) {
+            assertThat(new String(is.readAllBytes())).isEqualTo("content");
+        }
+        assertThat(namespace.exists(target)).isFalse();
+        assertThat(namespace.exists(Path.of("/work/nested/file.txt"))).isFalse();
+
+        namespace.move(source, Path.of("/work2"));
+
+        assertThat(namespace.exists(Path.of("/work2/file.txt"))).isTrue();
+        try (InputStream is = namespace.getFileContent(Path.of("/work2/file.txt"))) {
+            assertThat(new String(is.readAllBytes())).isEqualTo("content");
+        }
+    }
+
+    @Test
     void shouldRollbackMoveWhenCopyFails() throws Exception {
         // Given: folder1 with 2 files, folder2 with 2 files
         final String namespaceId = TestsUtils.randomNamespace();
@@ -296,6 +326,22 @@ class InternalNamespaceTest {
     }
 
     @Test
+    void shouldCreateMissingParentDirectoriesWhenCreatingANestedDirectory() throws IOException {
+        // Given
+        final String namespaceId = TestsUtils.randomNamespace();
+        final InternalNamespace namespace = new InternalNamespace(log, MAIN_TENANT, namespaceId, storageInterface, namespaceFileMetadataStateStore);
+
+        // When
+        NamespaceFile directory = namespace.createDirectory(Path.of("parent/child"));
+
+        // Then the parent is listed at the root, so the new directory is reachable instead of being
+        // orphaned under an ancestor that was never created.
+        assertThat(directory.path()).isEqualTo("parent/child/");
+        assertThat(namespace.children("/", false).stream().map(NamespaceFileMetadata::getPath)).containsExactly("/parent/");
+        assertThat(namespace.children("/parent/", false).stream().map(NamespaceFileMetadata::getPath)).containsExactly("/parent/child/");
+    }
+
+    @Test
     void shouldServeLatestAvailableRevisionWhenLatestRevisionObjectIsMissing() throws IOException, URISyntaxException {
         // Given a file with two revisions whose latest-revision object has been removed from storage
         // out-of-band, leaving the metadata index ahead of storage (the drift that produced 404s).
@@ -331,6 +377,116 @@ class InternalNamespaceTest {
 
         // When / Then
         Assertions.assertThrows(FileNotFoundException.class, () -> namespace.getFileContent(Path.of("/a.txt"), null));
+    }
+
+    @Test
+    void shouldNotServeDeletedFileContentGivenAnEarlierRevision() throws IOException, URISyntaxException {
+        // Given a file that was overwritten once, so revision 1 has an entry of its own, then deleted
+        final String namespaceId = TestsUtils.randomNamespace();
+        final InternalNamespace namespace = new InternalNamespace(log, MAIN_TENANT, namespaceId, storageInterface, namespaceFileMetadataStateStore);
+
+        namespace.putFile(Path.of("/file.txt"), new ByteArrayInputStream("v1".getBytes()));
+        namespace.putFile(Path.of("/file.txt"), new ByteArrayInputStream("v2".getBytes())); // OVERWRITE -> revision 2
+
+        // When
+        namespace.delete(Path.of("/file.txt"));
+
+        // Then no revision the file ever held returns any content
+        assertThatThrownBy(() -> namespace.getFileContent(Path.of("/file.txt"), null)).isInstanceOf(FileNotFoundException.class);
+        assertThatThrownBy(() -> namespace.getFileContent(Path.of("/file.txt"), 1)).isInstanceOf(FileNotFoundException.class);
+        assertThatThrownBy(() -> namespace.getFileContent(Path.of("/file.txt"), 2)).isInstanceOf(FileNotFoundException.class);
+    }
+
+    @Test
+    void shouldNotServeRevisionsThatPredateADeletionOnceThePathIsRecreated() throws IOException, URISyntaxException {
+        // Given a file with two revisions, deleted, then re-created at the same path
+        final String namespaceId = TestsUtils.randomNamespace();
+        final InternalNamespace namespace = new InternalNamespace(log, MAIN_TENANT, namespaceId, storageInterface, namespaceFileMetadataStateStore);
+
+        namespace.putFile(Path.of("/file.txt"), new ByteArrayInputStream("v1".getBytes()));
+        namespace.putFile(Path.of("/file.txt"), new ByteArrayInputStream("v2".getBytes())); // OVERWRITE -> revision 2
+        namespace.delete(Path.of("/file.txt"));
+
+        // When
+        namespace.putFile(Path.of("/file.txt"), new ByteArrayInputStream("v3".getBytes())); // revision 3
+
+        // Then the revisions that predate the deletion stay unreadable, and only the new one is served
+        assertThatThrownBy(() -> namespace.getFileContent(Path.of("/file.txt"), 1)).isInstanceOf(FileNotFoundException.class);
+        assertThatThrownBy(() -> namespace.getFileContent(Path.of("/file.txt"), 2)).isInstanceOf(FileNotFoundException.class);
+
+        try (InputStream is = namespace.getFileContent(Path.of("/file.txt"), 3)) {
+            assertThat(new String(is.readAllBytes())).isEqualTo("v3");
+        }
+        try (InputStream is = namespace.getFileContent(Path.of("/file.txt"), null)) {
+            assertThat(new String(is.readAllBytes())).isEqualTo("v3");
+        }
+    }
+
+    @Test
+    void shouldNotResolveADeletedFileToARevisionThatStillHasAnObject() throws IOException, URISyntaxException {
+        // Given a file with two revisions, then deleted
+        final String namespaceId = TestsUtils.randomNamespace();
+        final InternalNamespace namespace = new InternalNamespace(log, MAIN_TENANT, namespaceId, storageInterface, namespaceFileMetadataStateStore);
+
+        namespace.putFile(Path.of("/file.txt"), new ByteArrayInputStream("v1".getBytes()));
+        namespace.putFile(Path.of("/file.txt"), new ByteArrayInputStream("v2".getBytes())); // OVERWRITE -> revision 2
+        namespace.delete(Path.of("/file.txt"));
+
+        // Then resolving it does not fall back to a revision whose object is still in storage
+        assertThatThrownBy(() -> namespace.get(Path.of("/file.txt"))).isInstanceOf(FileNotFoundException.class);
+    }
+
+    @Test
+    void shouldResolveAPathThatHoldsNoFileToItsFirstRevision() throws IOException, URISyntaxException {
+        // Callers build the URI of a file still to be written from a path that holds nothing yet
+        final String namespaceId = TestsUtils.randomNamespace();
+        final InternalNamespace namespace = new InternalNamespace(log, MAIN_TENANT, namespaceId, storageInterface, namespaceFileMetadataStateStore);
+
+        assertThat(namespace.get(Path.of("/never-written.txt")).revision()).isEqualTo(1);
+    }
+
+    @Test
+    void shouldNotCopyRevisionsThatPredateADeletionWhenMovingAFile() throws Exception {
+        // Given a file deleted and then re-created at the same path
+        final String namespaceId = TestsUtils.randomNamespace();
+        final InternalNamespace namespace = new InternalNamespace(log, MAIN_TENANT, namespaceId, storageInterface, namespaceFileMetadataStateStore);
+
+        namespace.putFile(Path.of("/source.txt"), new ByteArrayInputStream("v1".getBytes()));
+        namespace.putFile(Path.of("/source.txt"), new ByteArrayInputStream("v2".getBytes()));
+        namespace.delete(Path.of("/source.txt"));
+        namespace.putFile(Path.of("/source.txt"), new ByteArrayInputStream("v3".getBytes()));
+
+        // When it is renamed
+        namespace.move(Path.of("/source.txt"), Path.of("/target.txt"));
+
+        // Then only what was written after the deletion travels with it: the destination carries no
+        // deletion of its own, so anything copied into it would be readable and listed again
+        try (InputStream is = namespace.getFileContent(Path.of("/target.txt"), null)) {
+            assertThat(new String(is.readAllBytes())).isEqualTo("v3");
+        }
+        assertThat(namespaceFileMetadataStateStore.findAllVersionsByPaths(MAIN_TENANT, namespaceId, List.of("/target.txt")))
+            .as("only the revision written after the deletion is copied")
+            .hasSize(1);
+        assertThatThrownBy(() -> namespace.getFileContent(Path.of("/target.txt"), 2)).isInstanceOf(FileNotFoundException.class);
+        assertThatThrownBy(() -> namespace.getFileContent(Path.of("/target.txt"), 3)).isInstanceOf(FileNotFoundException.class);
+    }
+
+    @Test
+    void shouldNotReviveADeletedFileWhenMovingIt() throws Exception {
+        // Given a file that is currently deleted
+        final String namespaceId = TestsUtils.randomNamespace();
+        final InternalNamespace namespace = new InternalNamespace(log, MAIN_TENANT, namespaceId, storageInterface, namespaceFileMetadataStateStore);
+
+        namespace.putFile(Path.of("/gone.txt"), new ByteArrayInputStream("v1".getBytes()));
+        namespace.delete(Path.of("/gone.txt"));
+
+        // When it is renamed
+        namespace.move(Path.of("/gone.txt"), Path.of("/revived.txt"));
+
+        // Then nothing is copied, and the destination does not hold the deleted content
+        assertThat(namespace.exists(Path.of("/revived.txt"))).isFalse();
+        assertThatThrownBy(() -> namespace.getFileContent(Path.of("/revived.txt"), null)).isInstanceOf(FileNotFoundException.class);
+        assertThatThrownBy(() -> namespace.getFileContent(Path.of("/revived.txt"), 1)).isInstanceOf(FileNotFoundException.class);
     }
 
     @Test

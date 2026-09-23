@@ -18,6 +18,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.exc.InvalidTypeIdException;
 import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException;
 
+import io.kestra.core.exceptions.InvalidTypeConstraintViolationException;
 import io.kestra.core.models.validations.ManualConstraintViolation;
 
 import jakarta.validation.ConstraintViolationException;
@@ -122,8 +123,9 @@ public final class YamlParser {
             return constraintViolationException;
         } else if (e instanceof InvalidTypeIdException invalidTypeIdException) {
             // This error is thrown when a non-existing task is used
-            return new ConstraintViolationException(
+            return new InvalidTypeConstraintViolationException(
                 "Invalid type: " + invalidTypeIdException.getTypeId(),
+                invalidTypeIdException.getTypeId(),
                 Set.of(
                     ManualConstraintViolation.of(
                         "Invalid type: " + invalidTypeIdException.getTypeId(),

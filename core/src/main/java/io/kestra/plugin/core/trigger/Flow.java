@@ -116,7 +116,7 @@ import static io.kestra.core.topologies.FlowTopologyService.SIMULATED_EXECUTION;
         @Example(
             full = true,
             title = """
-                2) Trigger the `silver_layer` flow once the `bronze_layer` flow finishes successfully by 9 AM.
+                2) Trigger the `silver_layer` flow once the `bronze_layer` flow finishes successfully by 9 AM Paris time.
 
                 ```yaml
                 id: bronze_layer
@@ -141,6 +141,7 @@ import static io.kestra.core.topologies.FlowTopologyService.SIMULATED_EXECUTION;
                     type: io.kestra.plugin.core.trigger.Flow
                     window:
                       deadline: "09:00:00"
+                      timezone: Europe/Paris
                     dependsOn:
                       - namespace: company.team
                         flowId: bronze_layer
@@ -263,13 +264,12 @@ public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> 
     @Builder.Default
     private List<State.Type> states = ListUtils.concat(State.Type.terminatedTypes(), List.of(PAUSED));
 
-    @Valid
     @Schema(
         title = "Dependencies on upstream flow executions",
         description = "Express dependencies on upstream flow executions, which must be met for the flow trigger to be evaluated."
     )
     @PluginProperty
-    private List<Dependency> dependsOn;
+    private List<@Valid Dependency> dependsOn;
 
     @Valid
     @Schema(
@@ -302,8 +302,8 @@ public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> 
      * Evaluates this trigger against a terminated execution.
      *
      * @param executionOutputs the flow-level outputs of the terminated execution, they are stored outside of the
-     *                         execution so they must be loaded by the caller via the
-     *                         {@link io.kestra.core.services.ExecutionOutputService}.
+     *        execution so they must be loaded by the caller via the
+     *        {@link io.kestra.core.services.ExecutionOutputService}.
      */
     public Optional<Execution> evaluate(Optional<MultipleConditionWindow> multipleConditionWindow, RunContext runContext, io.kestra.core.models.flows.Flow flow, Execution current,
         Map<String, Object> executionOutputs) {
@@ -341,6 +341,7 @@ public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> 
         // the execution snapshots the flow labels and variables, so it is built through the same factory as
         // every other creation path rather than field by field, which is how flow variables went missing here
         Execution execution = Execution.newExecution(flow, labels).withTrigger(executionTrigger);
+        execution = execution.withMetadata(execution.getMetadata().withExecutionDepth(current.getMetadata().executionDepthOrZero() + 1));
 
         try {
             Map<String, Object> renderedInputs;
@@ -466,11 +467,6 @@ public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> 
         @Override
         public TimeWindow getTimeWindow() {
             return window == null ? TimeWindow.builder().build() : window.toTimeWindow();
-        }
-
-        @Override
-        public Boolean getResetOnSuccess() {
-            return window == null ? Boolean.TRUE : window.isFireOnce();
         }
 
         @Override

@@ -1,8 +1,10 @@
 import type {Meta, StoryObj} from "@storybook/vue3-vite"
 import {within, userEvent, expect} from "storybook/test"
 import {ref} from "vue"
+import {h} from "vue"
 import {KsMessageBox} from "../../../src/components/Feedback/KsMessageBox"
 import KsButton from "../../../src/components/Basic/KsButton/KsButton.vue"
+import KsMarkdown from "../../../src/components/Data/KsMarkdown/KsMarkdown.vue"
 
 const meta: Meta = {
     title: "Components/Feedback/KsMessageBox",
@@ -126,6 +128,40 @@ export const WithCallbackPattern: Story = {
             <div style="padding:24px;display:flex;flex-direction:column;gap:12px">
                 <ks-button type="warning" @click="open">Bulk operation</ks-button>
                 <span v-if="result">Result: {{ result }}</span>
+            </div>
+        `,
+    }),
+}
+
+export const MarkdownMessage: Story = {
+    name: "With markdown message",
+    render: () => ({
+        components: {KsButton},
+        setup() {
+            const message = [
+                "Are you sure you want to force run `4` execution(s)?",
+                "",
+                "WARNING: force running an execution is not guaranteed and may create duplicate task executions.",
+                "",
+                "The following transitions will be done:",
+                "",
+                "- CREATED tasks will be moved to the running state.",
+                "- RUNNING tasks will be re-submitted.",
+                "- QUEUED tasks will be un-queued.",
+                "- PAUSED tasks will be resumed.",
+            ].join("\n")
+
+            const open = () =>
+                KsMessageBox.confirm(h(KsMarkdown, {content: message}), "Confirmation", {
+                    type: "warning",
+                    showCancelButton: true,
+                })
+
+            return {open}
+        },
+        template: `
+            <div style="padding:24px">
+                <ks-button type="warning" @click="open">Force run</ks-button>
             </div>
         `,
     }),

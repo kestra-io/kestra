@@ -5,6 +5,7 @@ import type {KsBreadcrumbItem} from "@kestra-io/design-system"
 export const useTopNavStore = defineStore("topNav", () => {
     const title = ref<string>("")
     const breadcrumb = ref<KsBreadcrumbItem[]>([])
+    const bookmarkLabel = ref<string | undefined>(undefined)
     const description = ref<string | undefined>(undefined)
     const beta = ref<boolean>(false)
     const hasTitleSlot = ref<boolean>(false)
@@ -15,6 +16,7 @@ export const useTopNavStore = defineStore("topNav", () => {
     return {
         title,
         breadcrumb,
+        bookmarkLabel,
         description,
         beta,
         hasTitleSlot,

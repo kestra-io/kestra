@@ -10,7 +10,7 @@
                     :shouldShowComparator
                     :selectedComparator="state.selectedComparator"
                     :filterKey="filterKey"
-                    @update:selected-comparator="state.selectedComparator = $event"
+                    @update:selected-comparator="changeComparator"
                 />
             </template>
         </FilterHeader>
@@ -38,6 +38,7 @@
         type AppliedFilter,
         type FilterKeyConfig,
         type FilterValue,
+        Comparators,
         COMPARATOR_LABELS,
         RANGE_COMPARATORS,
         TEXT_COMPARATORS,
@@ -45,6 +46,7 @@
         NULL_COMPARATORS,
     } from "../utils/filterTypes"
     import {FILTER_CONTEXT_INJECTION_KEY} from "../utils/filterInjectionKeys"
+    import {resolveDefaultVisibleValue} from "../utils/filterChipFactory"
     import FilterText from "./FilterText.vue"
     import FilterRadio from "./FilterRadio.vue"
     import FilterFooter from "./FilterFooter.vue"
@@ -65,7 +67,7 @@
         {label: t("datepicker.last24hours"), value: "PT24H"},
         {label: t("datepicker.last48hours"), value: "PT48H"},
         {label: t("datepicker.last7days"), value: "PT168H"},
-        {label: t("datepicker.last30days"), value: "P30D"},
+        {label: t("datepicker.last30days"), value: "PT720H"},
         {label: t("datepicker.last365days"), value: "PT8760H"},
     ]
 
@@ -135,6 +137,25 @@
         return type
     })
 
+    const normalizeKeyValuePairs = (values: string[]) => {
+        const pairByKey = new Map<string, string>()
+        values.forEach(pair => {
+            const separatorIndex = pair.indexOf(":")
+            if (separatorIndex <= 0 || separatorIndex === pair.length - 1) return
+            pairByKey.set(pair.slice(0, separatorIndex), pair)
+        })
+        return [...pairByKey.values()]
+    }
+
+    const changeComparator = (comparator: AppliedFilter["comparator"]) => {
+        if (props.filterKey?.valueType === "key-value"
+            && comparator !== Comparators.IN
+            && comparator !== Comparators.NOT_IN) {
+            state.keyValuePair = normalizeKeyValuePairs(state.keyValuePair)
+        }
+        state.selectedComparator = comparator
+    }
+
     const valueComponent = computed(() => {
         if (isTextOp.value) {
             return {
@@ -148,7 +169,7 @@
         if (isKVPairFilter.value) {
             return {
                 component: FilterKVPairs,
-                props: {modelValue: state.keyValuePair},
+                props: {modelValue: state.keyValuePair, comparator: state.selectedComparator},
                 events: {"update:modelValue": (value: string[]) => (state.keyValuePair = value)},
             }
         }
@@ -265,10 +286,14 @@
             return
         }
 
+        // Falling back to a blank value left the filter with nothing selected, rather than with
+        // the default the page configured (the executions view's 24h interval, for instance).
+        const defaultValue = resolveDefaultVisibleValue(props.filterKey)
+
         Object.assign(state, {
-            textValue: "",
-            selectValue: "",
-            keyValuePair: [],
+            textValue: typeof defaultValue === "string" ? defaultValue : "",
+            selectValue: typeof defaultValue === "string" ? defaultValue : "",
+            keyValuePair: Array.isArray(defaultValue) ? [...defaultValue] : [],
             radioValue: "ALL",
             dateValue: null,
             timeRangeMode: "predefined",
@@ -294,12 +319,11 @@
             return {value: state.textValue, label: state.textValue}
         case "select":
             if (props.filterKey?.key === "timeRange" && state.timeRangeMode === "custom") {
+                const startDate = state.startDateValue ?? new Date()
+                const endDate = state.endDateValue ?? new Date()
                 return {
-                    value: {
-                        startDate: state.startDateValue!,
-                        endDate: state.endDateValue!,
-                    },
-                    label: `${state.startDateValue!.toLocaleDateString()} - ${state.endDateValue!.toLocaleDateString()}`,
+                    value: {startDate, endDate},
+                    label: `${startDate.toLocaleDateString()} - ${endDate.toLocaleDateString()}`,
                     meta: state.dateFilterMode ? {dateFilter: state.dateFilterMode} : undefined,
                 }
             }
@@ -314,12 +338,11 @@
             }
         case "time-range":
             if (state.timeRangeMode === "custom") {
+                const startDate = state.startDateValue ?? new Date()
+                const endDate = state.endDateValue ?? new Date()
                 return {
-                    value: {
-                        startDate: state.startDateValue!,
-                        endDate: state.endDateValue!,
-                    },
-                    label: `${state.startDateValue!.toLocaleDateString()} - ${state.endDateValue!.toLocaleDateString()}`,
+                    value: {startDate, endDate},
+                    label: `${startDate.toLocaleDateString()} - ${endDate.toLocaleDateString()}`,
                 }
             }
             return {
@@ -361,9 +384,20 @@
     const applyLive = () => {
         if (!ready.value || !state.selectedComparator) return
 
+        // A custom range needs at least one bound to be worth applying; the other bound
+        // defaults to now (getFilterValue) so typing just a Start or End date applies immediately.
         if (isTimeRange.value && state.timeRangeMode === "custom"
-            && (!state.startDateValue || !state.endDateValue)) {
+            && !state.startDateValue && !state.endDateValue) {
             return
+        }
+
+        // An inverted range is rejected by the API with a 422, so it is never applied. It compares
+        // the bounds getFilterValue will send, since an end left unset still defaults to now.
+        if (isTimeRange.value && state.timeRangeMode === "custom") {
+            const now = new Date()
+            if ((state.startDateValue ?? now) > (state.endDateValue ?? now)) {
+                return
+            }
         }
 
         const filterData = getFilterValue()

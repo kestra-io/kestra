@@ -1,5 +1,22 @@
 import {describe, expect, it} from "vitest"
+import {parseQuery, stringifyQuery} from "vue-router"
+import {Comparators, encodeFilterGroupsToQuery, keyOfComparator} from "@kestra-io/design-system"
+import type {QueryFilter} from "@kestra-io/kestra-sdk"
+import {createConfigureClient} from "../../../packages/hey-api-plugin/src/runtime"
 import {routeQueryToQueryFilters} from "../../../src/utils/queryFilters"
+
+const serializeQuery = (query: Record<string, any>) => {
+    let config: any
+    const slot = {clear() {}, use() {}}
+    const client = {
+        setConfig(value: any) { config = value },
+        interceptors: {request: slot, response: slot, error: slot},
+    }
+    createConfigureClient(client, {bodySerializer() {}})()
+    return config.querySerializer(query) as string
+}
+
+const serializeQueryFilters = (filters: QueryFilter[]) => serializeQuery({filters})
 
 describe("routeQueryToQueryFilters", () => {
     it("builds a simple leaf filter", () => {
@@ -30,6 +47,611 @@ describe("routeQueryToQueryFilters", () => {
         })).toEqual([
             {field: "labels", operation: "EQUALS", value: {env: "prod", team: "backend"}},
         ])
+    })
+
+    it("builds an OR group for repeated IN values of the same label", () => {
+        expect(routeQueryToQueryFilters({
+            "filters[labels][IN][environment]": ["production", "staging"],
+        })).toEqual([
+            {
+                logical: "or",
+                children: [
+                    {field: "labels", operation: "IN", value: {environment: "production"}},
+                    {field: "labels", operation: "IN", value: {environment: "staging"}},
+                ],
+            },
+        ])
+    })
+
+    it("builds an AND group for repeated NOT_IN values of the same label", () => {
+        expect(routeQueryToQueryFilters({
+            "filters[labels][NOT_IN][environment]": ["production", "staging"],
+        })).toEqual([
+            {
+                logical: "and",
+                children: [
+                    {field: "labels", operation: "NOT_IN", value: {environment: "production"}},
+                    {field: "labels", operation: "NOT_IN", value: {environment: "staging"}},
+                ],
+            },
+        ])
+    })
+
+    it.each(["constructor", "toString", "__proto__"])(
+        "preserves repeated values for the reserved label key %s",
+        (labelKey) => {
+            expect(routeQueryToQueryFilters({
+                [`filters[labels][IN][${labelKey}]`]: ["production", "staging"],
+            })).toEqual([
+                {
+                    logical: "or",
+                    children: [
+                        {field: "labels", operation: "IN", value: {[labelKey]: "production"}},
+                        {field: "labels", operation: "IN", value: {[labelKey]: "staging"}},
+                    ],
+                },
+            ])
+        },
+    )
+
+    it.each([
+        ["a single empty value", [""]],
+        ["repeated empty values", ["", ""]],
+        ["a null value", [null]],
+    ])("drops label filters containing only %s", (_, value) => {
+        expect(routeQueryToQueryFilters({
+            "filters[labels][IN][environment]": value,
+        })).toEqual([])
+    })
+
+    it("keeps valid label values while dropping empty route values", () => {
+        expect(routeQueryToQueryFilters({
+            "filters[labels][IN][environment]": [null, "", "production", ""],
+        })).toEqual([
+            {field: "labels", operation: "IN", value: {environment: "production"}},
+        ])
+    })
+
+    it.each([
+        ["CONTAINS", "team"],
+        ["NOT_CONTAINS", "legacy"],
+        ["IS_NULL", "deprecated"],
+        ["IS_NOT_NULL", "owner"],
+    ] as const)("preserves a scalar labels %s filter through the HTTP wire", (operation, value) => {
+        const filters = routeQueryToQueryFilters({[`filters[labels][${operation}]`]: value})
+        const params = new URLSearchParams(serializeQueryFilters(filters))
+
+        expect(filters).toEqual([{field: "labels", operation, value}])
+        expect(params.get(`filters[labels][${operation}]`)).toBe(value)
+    })
+
+    it("preserves scalar label filters inside mixed nested groups", () => {
+        const filters = routeQueryToQueryFilters({
+            "filters[tenantId][EQUALS]": "tenant-1",
+            "filters[or][0][labels][CONTAINS]": "team",
+            "filters[or][1][labels][IS_NULL]": "deprecated",
+        })
+        const params = new URLSearchParams(serializeQueryFilters(filters))
+
+        expect(params.get("filters[tenantId][EQUALS]")).toBe("tenant-1")
+        expect(params.get("filters[or][0][labels][CONTAINS]")).toBe("team")
+        expect(params.get("filters[or][1][labels][IS_NULL]")).toBe("deprecated")
+    })
+
+    it("drops a label filter with an empty sub-key", () => {
+        expect(routeQueryToQueryFilters({"filters[labels][IN][]": "production"})).toEqual([])
+    })
+
+    it.each([
+        ["IN", "or"],
+        ["NOT_IN", "and"],
+    ] as const)("serializes repeated label %s values as grouped URL parameters", (operation, logical) => {
+        const filters = routeQueryToQueryFilters({
+            [`filters[labels][${operation}][environment]`]: ["production", "staging"],
+        })
+        const params = new URLSearchParams(serializeQueryFilters(filters))
+
+        expect(params.getAll(`filters[${logical}][0][labels][${operation}][environment]`)).toEqual(["production"])
+        expect(params.getAll(`filters[${logical}][1][labels][${operation}][environment]`)).toEqual(["staging"])
+    })
+
+    it.each([
+        [Comparators.IN, "or"],
+        [Comparators.NOT_IN, "and"],
+    ] as const)("preserves colons through repeated label %s route and wire serialization", (comparator, logical) => {
+        const query = encodeFilterGroupsToQuery([{
+            id: "g1",
+            kind: "leaf",
+            filters: [{
+                id: "f1",
+                key: "labels",
+                keyLabel: "Labels",
+                comparator,
+                comparatorLabel: comparator,
+                value: ["url:https://prod:8443/a", "url:https://stage:9443/b"],
+                valueLabel: "url:https://prod:8443/a, url:https://stage:9443/b",
+            }],
+        }], keyOfComparator)
+        const params = new URLSearchParams(serializeQueryFilters(routeQueryToQueryFilters(query)))
+        const operation = keyOfComparator(comparator)
+
+        expect(params.get(`filters[${logical}][0][labels][${operation}][url]`)).toBe("https://prod:8443/a")
+        expect(params.get(`filters[${logical}][1][labels][${operation}][url]`)).toBe("https://stage:9443/b")
+    })
+
+    it("preserves percent characters through the real router and HTTP wire", () => {
+        const query = encodeFilterGroupsToQuery([{
+            id: "g1",
+            kind: "leaf",
+            filters: [{
+                id: "f1",
+                key: "labels",
+                keyLabel: "Labels",
+                comparator: Comparators.IN,
+                comparatorLabel: Comparators.IN,
+                value: ["discount:50%", "discount:literal%2Fpath", "discount:literal%25value"],
+                valueLabel: "50%, literal%2Fpath, literal%25value",
+            }],
+        }], keyOfComparator)
+        const routed = parseQuery(stringifyQuery(query))
+        const params = new URLSearchParams(serializeQueryFilters(routeQueryToQueryFilters(routed)))
+
+        expect(params.get("filters[or][0][labels][IN][discount]")).toBe("50%")
+        expect(params.get("filters[or][1][labels][IN][discount]")).toBe("literal%2Fpath")
+        expect(params.get("filters[or][2][labels][IN][discount]")).toBe("literal%25value")
+    })
+
+    it("serializes a leaf alongside a nested logical group", () => {
+        const filters = routeQueryToQueryFilters({
+            "filters[tenantId][EQUALS]": "tenant-1",
+            "filters[or][0][and][0][namespace][EQUALS]": "io.kestra",
+            "filters[or][0][and][1][state][EQUALS]": "RUNNING",
+            "filters[or][1][state][EQUALS]": "FAILED",
+        })
+        const params = new URLSearchParams(serializeQueryFilters(filters))
+
+        expect(params.get("filters[tenantId][EQUALS]")).toBe("tenant-1")
+        expect(params.get("filters[or][0][and][0][namespace][EQUALS]")).toBe("io.kestra")
+        expect(params.get("filters[or][0][and][1][state][EQUALS]")).toBe("RUNNING")
+        expect(params.get("filters[or][1][state][EQUALS]")).toBe("FAILED")
+    })
+
+    it.each(["IS_NULL", "IS_NOT_NULL"] as const)(
+        "serializes a comparator-only %s leaf with an empty wire value",
+        (operation) => {
+            const params = new URLSearchParams(serializeQueryFilters([{field: "state", operation}]))
+
+            expect(params.has(`filters[state][${operation}]`)).toBe(true)
+            expect(params.get(`filters[state][${operation}]`)).toBe("")
+        },
+    )
+
+    it("serializes comparator-only leaves before and after valued leaves", () => {
+        const filters: QueryFilter[] = [
+            {field: "state", operation: "IS_NULL"},
+            {field: "namespace", operation: "EQUALS", value: "io.kestra"},
+            {field: "status", operation: "IS_NOT_NULL", value: null},
+        ]
+        const params = new URLSearchParams(serializeQueryFilters(filters))
+
+        expect(params.get("filters[state][IS_NULL]")).toBe("")
+        expect(params.get("filters[namespace][EQUALS]")).toBe("io.kestra")
+        expect(params.get("filters[status][IS_NOT_NULL]")).toBe("")
+    })
+
+    it("serializes comparator-only leaves inside logical groups", () => {
+        const filters: QueryFilter[] = [{
+            logical: "or",
+            children: [
+                {field: "state", operation: "IS_NULL"},
+                {field: "status", operation: "IS_NOT_NULL", value: null},
+            ],
+        }]
+        const params = new URLSearchParams(serializeQueryFilters(filters))
+
+        expect(params.get("filters[or][0][state][IS_NULL]")).toBe("")
+        expect(params.get("filters[or][1][status][IS_NOT_NULL]")).toBe("")
+    })
+
+    it("keeps non-empty array values compatible with the existing filter wire format", () => {
+        const params = new URLSearchParams(serializeQueryFilters([
+            {field: "state", operation: "IN", value: ["RUNNING", "FAILED"]},
+        ]))
+
+        expect(params.get("filters[state][IN]")).toBe("RUNNING,FAILED")
+        expect(params.has("filters")).toBe(false)
+    })
+
+    it.each([
+        ["a sparse array", (() => {
+            const value = Array(2)
+            value[1] = "RUNNING"
+            return value
+        })()],
+        ["a null member", ["RUNNING", null]],
+        ["a self-cycle", (() => {
+            const value: any[] = []
+            value.push(value)
+            return value
+        })()],
+    ])("rejects %s as an array-valued filter leaf", (_, value) => {
+        expect(() => serializeQuery({
+            filters: [{field: "state", operation: "IN", value}],
+        })).toThrow("Invalid QueryFilter array")
+    })
+
+    it("rejects an accessor-backed filter without invoking it when a later filter is invalid", () => {
+        let reads = 0
+        const firstFilter = {field: "namespace", operation: "EQUALS"}
+        Object.defineProperty(firstFilter, "value", {
+            enumerable: true,
+            get: () => ++reads === 1 ? "io.kestra" : "mutated",
+        })
+        const filters = [firstFilter, {logical: "or", children: []}]
+
+        expect(() => serializeQuery({filters})).toThrow("Invalid QueryFilter array")
+        expect(reads).toBe(0)
+    })
+
+    it("rejects an accessor-backed custom-prototype filter without invoking it", () => {
+        let reads = 0
+        const firstFilter = Object.assign(Object.create({kind: "custom"}), {
+            field: "namespace",
+            operation: "EQUALS",
+        })
+        Object.defineProperty(firstFilter, "value", {
+            enumerable: true,
+            get: () => ++reads === 1 ? "io.kestra" : undefined,
+        })
+        const filters = [firstFilter, {logical: "or", children: []}]
+
+        expect(() => serializeQuery({filters})).toThrow("Invalid QueryFilter array")
+        expect(reads).toBe(0)
+    })
+
+    it("rejects an invalid root filter after an accessor truncates the source array", () => {
+        const filters = [null]
+        Object.defineProperty(filters, 0, {
+            enumerable: true,
+            get: () => {
+                filters.length = 0
+                return null
+            },
+        })
+
+        expect(() => serializeQuery({filters})).toThrow("Invalid QueryFilter array")
+        expect(filters).toHaveLength(1)
+    })
+
+    it("rejects atomically when a valid leaf accessor truncates a later invalid filter", () => {
+        const filters: any[] = []
+        const firstFilter = {field: "namespace", operation: "EQUALS"}
+        Object.defineProperty(firstFilter, "value", {
+            enumerable: true,
+            get: () => {
+                filters.length = 0
+                return "io.kestra"
+            },
+        })
+        filters.push(firstFilter, null)
+
+        expect(() => serializeQuery({filters})).toThrow("Invalid QueryFilter array")
+        expect(filters).toHaveLength(2)
+    })
+
+    it("rejects a custom logical node whose child accessor truncates a later invalid child", () => {
+        class LogicalFilter {
+            logical = "and"
+            children: any[] = []
+        }
+
+        const filter = new LogicalFilter()
+        const firstChild = {field: "namespace", operation: "EQUALS"}
+        Object.defineProperty(firstChild, "value", {
+            enumerable: true,
+            get: () => {
+                filter.children.length = 1
+                return "io.kestra"
+            },
+        })
+        filter.children.push(firstChild, null)
+
+        expect(() => serializeQuery({filters: [filter]})).toThrow("Invalid QueryFilter array")
+        expect(filter.children).toHaveLength(2)
+    })
+
+    it.each([
+        ["after", [{field: "namespace", operation: "EQUALS", value: "io.kestra"}, null]],
+        ["before", [null, {field: "namespace", operation: "EQUALS", value: "io.kestra"}]],
+    ])("rejects a null filter %s a valid leaf instead of sending an unbound by-query filter", (_, filters) => {
+        expect(() => serializeQuery({filters})).toThrow("Invalid QueryFilter array")
+    })
+
+    it("preserves a custom class value with private state", () => {
+        class FilterValue {
+            readonly #value = "RUNNING"
+
+            toString() {
+                return this.#value
+            }
+        }
+
+        const params = new URLSearchParams(serializeQueryFilters([
+            {field: "state", operation: "EQUALS", value: new FilterValue()},
+        ]))
+
+        expect(params.get("filters[state][EQUALS]")).toBe("RUNNING")
+    })
+
+    it("serializes a stateful custom class value exactly once", () => {
+        let calls = 0
+        class FilterValue {
+            toString() {
+                calls++
+                return calls === 1 ? "FIRST" : "SECOND"
+            }
+        }
+
+        const params = new URLSearchParams(serializeQueryFilters([
+            {field: "state", operation: "EQUALS", value: new FilterValue()},
+        ]))
+
+        expect(params.get("filters[state][EQUALS]")).toBe("FIRST")
+        expect(calls).toBe(1)
+    })
+
+    it("rejects an array proxy that hides an invalid sibling", () => {
+        const target = [
+            {field: "namespace", operation: "EQUALS", value: "io.kestra"},
+            null,
+        ]
+        const filters = new Proxy(target, {
+            get: (source, property, receiver) => property === "length"
+                ? 1
+                : Reflect.get(source, property, receiver),
+            ownKeys: source => Reflect.ownKeys(source).filter(key => key !== "1"),
+            getOwnPropertyDescriptor: (source, property) => property === "1"
+                ? undefined
+                : Reflect.getOwnPropertyDescriptor(source, property),
+        })
+
+        expect(() => serializeQuery({filters})).toThrow("Invalid QueryFilter array")
+    })
+
+    it("rejects an array proxy whose length descriptor hides an invalid sibling", () => {
+        const target = [
+            {field: "namespace", operation: "EQUALS", value: "io.kestra"},
+            null,
+        ]
+        const filters = new Proxy(target, {
+            getOwnPropertyDescriptor: (source, property) => property === "length"
+                ? {...Reflect.getOwnPropertyDescriptor(source, property)!, value: 1}
+                : Reflect.getOwnPropertyDescriptor(source, property),
+        })
+
+        expect(() => serializeQuery({filters})).toThrow("Invalid QueryFilter array")
+    })
+
+    it("rejects an array proxy whose length descriptor hides an invalid leaf value", () => {
+        const target = ["RUNNING", null]
+        const value = new Proxy(target, {
+            getOwnPropertyDescriptor: (source, property) => property === "length"
+                ? {...Reflect.getOwnPropertyDescriptor(source, property)!, value: 1}
+                : Reflect.getOwnPropertyDescriptor(source, property),
+        })
+
+        expect(() => serializeQuery({
+            filters: [{field: "state", operation: "IN", value}],
+        })).toThrow("Invalid QueryFilter array")
+    })
+
+    it.each([
+        ["root", new Proxy([
+            {field: "namespace", operation: "EQUALS", value: "io.kestra"},
+            null,
+        ], {
+            get: (source, property, receiver) => property === "length" ? 1 : Reflect.get(source, property, receiver),
+            getOwnPropertyDescriptor: (source, property) => property === "length"
+                ? {...Reflect.getOwnPropertyDescriptor(source, property)!, value: 1}
+                : Reflect.getOwnPropertyDescriptor(source, property),
+        })],
+        ["leaf value", [{
+            field: "state",
+            operation: "IN",
+            value: new Proxy(["RUNNING", null], {
+                get: (source, property, receiver) => property === "length" ? 1 : Reflect.get(source, property, receiver),
+                getOwnPropertyDescriptor: (source, property) => property === "length"
+                    ? {...Reflect.getOwnPropertyDescriptor(source, property)!, value: 1}
+                    : Reflect.getOwnPropertyDescriptor(source, property),
+            }),
+        }]],
+        ["logical children", [{
+            logical: "or",
+            children: new Proxy([
+                {field: "namespace", operation: "EQUALS", value: "io.kestra"},
+                null,
+            ], {
+                get: (source, property, receiver) => property === "length" ? 1 : Reflect.get(source, property, receiver),
+                getOwnPropertyDescriptor: (source, property) => property === "length"
+                    ? {...Reflect.getOwnPropertyDescriptor(source, property)!, value: 1}
+                    : Reflect.getOwnPropertyDescriptor(source, property),
+            }),
+        }]],
+    ])("rejects a %s proxy that consistently hides an invalid sibling", (_, filters) => {
+        expect(() => serializeQuery({filters})).toThrow("Invalid QueryFilter array")
+    })
+
+    it.each([
+        ["a string", "bad"],
+        ["a number", 1],
+        ["a plain object", {field: "state", operation: "EQUALS", value: "RUNNING"}],
+        ["a custom class", new class FilterRoot { field = "state" }()],
+    ])("rejects %s as a non-array filters root", (_, filters) => {
+        expect(() => serializeQuery({filters})).toThrow("Invalid QueryFilter array")
+    })
+
+    it("keeps null filters compatible with the generated optional no-filter contract", () => {
+        expect(serializeQuery({filters: null})).toBe("")
+    })
+
+    it("rejects a custom filter class with private state before an invalid sibling", () => {
+        class CustomFilter {
+            readonly #value = "RUNNING"
+            field = "state"
+            operation = "EQUALS"
+            value = this.#value
+
+            toJSON() {
+                return {field: this.field, operation: this.operation, value: this.#value}
+            }
+        }
+
+        expect(() => serializeQuery({filters: [new CustomFilter(), null]})).toThrow("Invalid QueryFilter array")
+    })
+
+    it("snapshots a custom-prototype filter without invoking its constructor accessor", () => {
+        let reads = 0
+        const prototype = {}
+        Object.defineProperty(prototype, "constructor", {
+            get: () => {
+                reads++
+                return Object
+            },
+        })
+        const filter = Object.assign(Object.create(prototype), {
+            field: "namespace",
+            operation: "EQUALS",
+            value: "io.kestra",
+        })
+
+        const params = new URLSearchParams(serializeQueryFilters([filter]))
+
+        expect(params.get("filters[namespace][EQUALS]")).toBe("io.kestra")
+        expect(reads).toBe(0)
+    })
+
+    it("rejects atomically when a comparator-only leaf has an empty object value", () => {
+        const filters = [
+            {field: "labels", operation: "IS_NULL", value: {}},
+            {field: "namespace", operation: "EQUALS", value: "io.kestra"},
+        ]
+
+        expect(() => serializeQuery({filters})).toThrow("Invalid QueryFilter array")
+    })
+
+    it("rejects atomically when a logical group contains a comparator-only leaf with an empty object value", () => {
+        const filters = [{
+            logical: "or",
+            children: [
+                {field: "labels", operation: "IS_NULL", value: {}},
+                {field: "namespace", operation: "EQUALS", value: "io.kestra"},
+            ],
+        }]
+
+        expect(() => serializeQuery({filters})).toThrow("Invalid QueryFilter array")
+    })
+
+    it.each(["IN", "IS_NULL"])("rejects atomically when a %s leaf has an empty array value", (operation) => {
+        const filters = [{
+            logical: "or",
+            children: [
+                {field: "labels", operation, value: []},
+                {field: "namespace", operation: "EQUALS", value: "io.kestra"},
+            ],
+        }]
+
+        expect(() => serializeQuery({filters})).toThrow("Invalid QueryFilter array")
+    })
+
+    it("rejects atomically when a map value has no toString method", () => {
+        const valueWithoutToString = Object.assign(Object.create(null), {value: "production"})
+        const filters = [{
+            logical: "or",
+            children: [
+                {field: "labels", operation: "IN", value: {environment: valueWithoutToString}},
+                {field: "state", operation: "EQUALS", value: "RUNNING"},
+            ],
+        }]
+
+        expect(() => serializeQuery({filters})).toThrow("Invalid QueryFilter array")
+    })
+
+    it("rejects accessor-backed filter values without invoking the accessor", () => {
+        let reads = 0
+        const filter = {field: "namespace", operation: "EQUALS"}
+        Object.defineProperty(filter, "value", {
+            enumerable: true,
+            get: () => {
+                reads++
+                return "io.kestra"
+            },
+        })
+
+        expect(() => serializeQuery({filters: [filter]})).toThrow("Invalid QueryFilter array")
+        expect(reads).toBe(0)
+    })
+
+    it("rejects an accessor-backed map without invoking it", () => {
+        let reads = 0
+        const labels = {}
+        Object.defineProperty(labels, "environment", {
+            enumerable: true,
+            get: () => {
+                reads++
+                return "production"
+            },
+        })
+        const filters = [{
+            logical: "or",
+            children: [
+                {field: "labels", operation: "IN", value: labels},
+                {field: "state", operation: "EQUALS", value: "RUNNING"},
+            ],
+        }]
+
+        expect(() => serializeQuery({filters})).toThrow("Invalid QueryFilter array")
+        expect(reads).toBe(0)
+    })
+
+    it.each([
+        ["a null logical child", {logical: "or", children: [null, {field: "state", operation: "EQUALS", value: "RUNNING"}]}],
+        ["a string logical child", {logical: "or", children: ["invalid", {field: "state", operation: "EQUALS", value: "RUNNING"}]}],
+        ["an empty logical group", {logical: "or", children: []}],
+        ["an unsupported logical operator", {logical: "xor", children: [{field: "state", operation: "EQUALS", value: "RUNNING"}]}],
+        ["an ambiguous leaf and logical node", {field: "state", operation: "EQUALS", logical: "or", children: [{field: "state", operation: "EQUALS", value: "RUNNING"}]}],
+    ])("rejects an invalid QueryFilter array containing %s", (_, invalidFilter) => {
+        expect(() => serializeQuery({filters: [invalidFilter]})).toThrow("Invalid QueryFilter array")
+    })
+
+    it("rejects a sparse filter array", () => {
+        const filters = Array(2) as QueryFilter[]
+        filters[1] = {field: "state", operation: "EQUALS", value: "RUNNING"}
+
+        expect(() => serializeQueryFilters(filters)).toThrow("Invalid QueryFilter array")
+    })
+
+    it("keeps ordinary non-filter array serialization unchanged", () => {
+        const query = serializeQuery({sort: ["state:asc", "id:desc"]})
+
+        expect(new URLSearchParams(query).getAll("sort")).toEqual(["state:asc", "id:desc"])
+    })
+
+    it.each([
+        ["a leaf-shaped object", {field: "state", operation: "IS_NULL"}],
+        ["a logical-shaped object", {logical: "or", children: [{field: "state", operation: "IS_NULL"}]}],
+    ])("keeps ordinary object arrays under non-filter keys unchanged for %s", (_, value) => {
+        const query = serializeQuery({items: [value]})
+
+        expect(new URLSearchParams(query).getAll("items")).toEqual([JSON.stringify(value)])
+    })
+
+    it("rejects a value-required filter leaf with no value", () => {
+        const filters = [
+            {field: "state", operation: "EQUALS"},
+            {field: "namespace", operation: "EQUALS", value: "io.kestra"},
+        ]
+
+        expect(() => serializeQuery({filters})).toThrow("Invalid QueryFilter array")
     })
 
     it("builds a top-level OR group", () => {

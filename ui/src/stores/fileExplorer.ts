@@ -4,6 +4,7 @@ import * as Utils from "../utils/utils"
 import {useNamespacesStore} from "override/stores/namespaces"
 import {useToast} from "../utils/toast"
 import {useI18n} from "vue-i18n"
+import type {KestraHttpError} from "../utils/kestraHttp"
 
 export interface TreeNodeBase {
     id: string;
@@ -58,16 +59,9 @@ export function getFileNameWithExtension(fileNameWithExtension: string): [string
         : [fileNameWithExtension, ""]
 }
 
-function readFile(file: File): Promise<ArrayBuffer> {
-    return new Promise((resolve, reject) => {
-        const reader = new FileReader()
-        reader.onload = () => resolve(reader.result as ArrayBuffer)
-        reader.onerror = reject
-        reader.readAsArrayBuffer(file)
-    })
+function pathSegments(path: string): string[] {
+    return path.split("/").filter(Boolean)
 }
-
-
 
 function isNotRootTreeNode(node: ElTreeNode | {level: 0}): node is ElTreeNode {
     return node.level > 0
@@ -95,23 +89,26 @@ export const useFileExplorerStore = defineStore("fileExplorer", () => {
         }
     }
 
-    function pushToParentFolder(parentPath: string, newNode: TreeNode) {
-        const traverseAndInsert = (basePath = "", array: TreeNode[]) => {
-            for (const item of array) {
-                const folderPath = `${basePath}${item.fileName}`
-                if (folderPath === parentPath && isDirectory(item) && Array.isArray(item.children)) {
-                    if (!item.children.find((child) => child.fileName === newNode.fileName)) {
-                        item.children.push(newNode)
-                        item.children = sorted(item.children)
-                    }
-                    return true
-                } else if (isDirectory(item) && Array.isArray(item.children)) {
-                    if (traverseAndInsert(`${folderPath}/`, item.children)) return true
-                }
+    /**
+     * Creates the folder nodes missing along `segments`
+     * and returns the deepest one's children, or
+     * undefined when a file already holds one of those names.
+     */
+    function ensureFolderPath(segments: string[]): TreeNode[] | undefined {
+        let children = fileTree.value
+        for (const segment of segments) {
+            const existing = children.find((item) => item.fileName === segment)
+            if (existing && !isDirectory(existing)) {
+                return undefined
             }
-            return false
+            const folder = existing ?? folderNode(segment, [])
+            if (!existing) {
+                children.push(folder)
+                sorted(children)
+            }
+            children = folder.children
         }
-        traverseAndInsert("", fileTree.value)
+        return children
     }
 
     function getSiblingsAtPath(parentPath: string): TreeNode[] {
@@ -137,11 +134,14 @@ export const useFileExplorerStore = defineStore("fileExplorer", () => {
     }, creation?: boolean) {
         if(!namespaceId.value) return
         const {fileName, parentPath = ""} = folder
-        const NEW = folderNode(fileName, folder?.children ?? [])
-        const path = parentPath ? `${parentPath}/${fileName}` : fileName
+        const segments = [...pathSegments(parentPath), ...pathSegments(fileName)]
+        const name = segments.pop()
+        if (!name) {
+            return
+        }
+        const path = [...segments, name].join("/")
         if (creation) {
-            const siblings = getSiblingsAtPath(parentPath)
-            const conflict = siblings.find(item => item.fileName === fileName)
+            const conflict = getSiblingsAtPath(segments.join("/")).find(item => item.fileName === name)
             if (conflict) {
                 if (isDirectory(conflict)) {
                     toast.error(t("namespace files.create.folder_already_exists"))
@@ -152,31 +152,19 @@ export const useFileExplorerStore = defineStore("fileExplorer", () => {
             }
             try {
                 await namespacesStore.createDirectory({namespace: namespaceId.value, path})
-                if (!parentPath) {
-                    fileTree.value.push(NEW)
-                    fileTree.value = sorted(fileTree.value)
-                } else {
-                    pushToParentFolder(parentPath, NEW)
-                }
-                toast.success(`Folder "${fileName}" created successfully.`)
+                toast.success(t("namespace files.create.folder_success", {name}))
             } catch (error) {
-                console.error(`Failed to create folder: ${fileName}`, error)
+                console.error(`Failed to create folder: ${name}`, error)
                 toast.error(t("namespace files.create.folder_error"))
                 return
             }
-
+        }
+        const parent = ensureFolderPath(segments)
+        if (!parent || parent.find(item => item.fileName === name)) {
             return
         }
-        if (!parentPath) {
-            const firstFolder = NEW.fileName.split("/")[0]
-            if (!fileTree.value.find(item => item.fileName === firstFolder)) {
-                NEW.fileName = firstFolder
-                fileTree.value.push(NEW)
-                fileTree.value = sorted(fileTree.value)
-            }
-        } else {
-            pushToParentFolder(parentPath, NEW)
-        }
+        parent.push(folderNode(name, folder?.children ?? []))
+        sorted(parent)
     }
 
     async function searchFilesList(value: string) {
@@ -209,19 +197,23 @@ export const useFileExplorerStore = defineStore("fileExplorer", () => {
     async function addFile(file: Omit<TreeNodeFile, "id" | "type">, parentPath?: string, creation: boolean = false): Promise<{ path?: string; file?: TreeNodeFile; }> {
         if(!namespaceId.value) return {}
         const {fileName, extension, content = "", leaf} = file
-        const NAME = `${fileName}${extension ? `.${extension}` : ""}`
+        const segments = [...pathSegments(parentPath ?? ""), ...pathSegments(`${fileName}${extension ? `.${extension}` : ""}`)]
+        const NAME = segments.pop()
+        if (!NAME) {
+            return {}
+        }
+        const path = [...segments, NAME].join("/")
 
         const NEW: TreeNodeFile = {
             id: Utils.uid(),
             fileName: NAME,
-            extension,
+            extension: getFileNameWithExtension(NAME)[1],
             content,
             type: "File",
             leaf,
         }
-        const path = `${parentPath ? `${parentPath}/` : ""}${NAME}`
         if (creation) {
-            const siblings = getSiblingsAtPath(parentPath ?? "")
+            const siblings = getSiblingsAtPath(segments.join("/"))
             const conflict = siblings.find(item => item.fileName === NAME)
             if (conflict) {
                 if (!isDirectory(conflict)) {
@@ -237,18 +229,17 @@ export const useFileExplorerStore = defineStore("fileExplorer", () => {
                     path,
                     content,
                 })
-                toast.success(`File "${NAME}" created successfully.`)
+                toast.success(t("namespace files.create.file_success", {name: NAME}))
             } catch (error) {
                 console.error(`Failed to create file: ${NAME}`, error)
                 toast.error(t("namespace files.create.file_error"))
                 return {}
             }
         }
-        if (!parentPath) {
-            fileTree.value.push(NEW)
-            fileTree.value = sorted(fileTree.value)
-        } else {
-            pushToParentFolder(parentPath, NEW)
+        const parent = ensureFolderPath(segments)
+        if (parent && !parent.find(item => item.fileName === NAME)) {
+            parent.push(NEW)
+            sorted(parent)
         }
         return {path, file: NEW}
     }
@@ -277,22 +268,51 @@ export const useFileExplorerStore = defineStore("fileExplorer", () => {
     async function loadNodes(
         node: ElTreeNode | {level: 0} = {level: 0},
         resolve?: (children: TreeNode[]) => void,
+        reject?: () => void,
     ) {
         if (namespaceId.value === undefined) return
         if (node.level === 0) {
             rootLoaded.value = false
             const payload = {namespace: namespaceId.value}
-            const rootTreeNodes = await namespacesStore.readDirectory<TreeNode>(payload)
-            renderNodes(rootTreeNodes)
-            fileTree.value = sorted(fileTree.value)
-            rootLoaded.value = true
-            resolve?.(fileTree.value)
+            try {
+                const rootTreeNodes = await namespacesStore.readDirectory<TreeNode>(payload)
+                renderNodes(rootTreeNodes)
+                fileTree.value = sorted(fileTree.value)
+            } catch (e) {
+                // Defensive: the backend self-heals the root directory, so a 404 here is not
+                // expected, and any non-404 has already been toasted centrally. Swallow either way
+                // so this fire-and-forget call cannot raise an unhandled rejection; the finally
+                // still releases the spinner (see below). Drop the tree too: `renderNodes` never ran,
+                // so anything left in it belongs to the namespace the user was on before.
+                fileTree.value = []
+                console.error(e)
+            } finally {
+                // Always resolve and clear the loading flag: a rejected read (e.g. a 404 after the
+                // directory was deleted server-side) must not pin the whole file browser on an
+                // indefinite spinner (NamespaceFilesEditorView gates the view on `rootLoaded`).
+                rootLoaded.value = true
+                resolve?.(fileTree.value ?? [])
+            }
         } else if (isNotRootTreeNode(node)) {
             const payload = {
-                namespace: namespaceId.value, 
+                namespace: namespaceId.value,
                 path: getPath(node.data.id),
             }
-            let children = await namespacesStore.readDirectory<TreeNode>(payload)
+            let children: TreeNode[]
+            try {
+                children = await namespacesStore.readDirectory<TreeNode>(payload)
+            } catch (e) {
+                // Only a 404 means the folder was deleted server-side: render it empty rather than
+                // leaving the el-tree node stuck loading. Anything else still propagates and is toasted
+                // centrally, but el-tree clears its own `loading` flag only through the `reject` callback
+                // it passes here, and a node left loading is never re-fetched on a later expand.
+                if ((e as KestraHttpError)?.status !== 404) {
+                    reject?.()
+                    throw e
+                }
+                resolve?.([])
+                return
+            }
             children = sorted(
                 children.map((item) => ({
                     ...item,
@@ -313,7 +333,7 @@ export const useFileExplorerStore = defineStore("fileExplorer", () => {
             const rootNodePath = getPath(node.data.id)
             if(rootNodePath){
                 updateChildren(fileTree.value!, rootNodePath, children)
-            } 
+            }
             resolve?.(children)
         }
     }
@@ -352,68 +372,19 @@ export const useFileExplorerStore = defineStore("fileExplorer", () => {
         return null
     }
 
+    /** The tree is reloaded rather than updated in place: a zip is expanded server-side. */
     async function importFiles(importedFiles: FileList) {
         if(!namespaceId.value) return
-        for (const file of Array.from(importedFiles)) {
-            if ((file as any).webkitRelativePath) {
-                const filePath: string = (file as any).webkitRelativePath
-                const pathParts = filePath.split("/")
-                let currentFolder: TreeNode[] | undefined = fileTree.value
-                const folderPath: string[] = []
-                for (let i = 0; i < pathParts.length - 1; i++) {
-                    const folderName = pathParts[i]
-                    folderPath.push(folderName)
-                    if(!currentFolder) continue
-                    const folderIndex = currentFolder.findIndex(
-                        (item: any) => typeof item === "object" && item.fileName === folderName,
-                    )
-                    if (folderIndex === -1) {
-                        const newFolder: TreeNodeDirectory = {
-                            id: Utils.uid(),
-                            fileName: folderName,
-                            children: [],
-                            type: "Directory",
-                            leaf: false,
-                        }
-                        currentFolder.push(newFolder)
-                        sorted(currentFolder)
-                        currentFolder = newFolder.children
-                    } else {
-                        currentFolder = (currentFolder[folderIndex] as TreeNodeDirectory).children
-                    }
-                }
-                const fileName = pathParts[pathParts.length - 1]
-                const [name, extension] = getFileNameWithExtension(fileName)
-                const content = await readFile(file)
+        try {
+            for (const file of Array.from(importedFiles)) {
                 await namespacesStore.importFileDirectory({
                     namespace: namespaceId.value,
-                    content,
-                    path: `${folderPath}/${fileName}`,
-                })
-                currentFolder?.push({
-                    id: Utils.uid(),
-                    fileName: `${name}${extension ? `.${extension}` : ""}`,
-                    extension,
-                    type: "File",
-                    leaf: true,
-                })
-            } else {
-                const content = await readFile(file)
-                const [name, extension] = getFileNameWithExtension(file.name)
-                await namespacesStore.importFileDirectory({
-                    namespace: namespaceId.value,
-                    content,
-                    path: file.name,
-                })
-
-                fileTree.value.push({
-                    id: Utils.uid(),
-                    fileName: `${name}${extension ? `.${extension}` : ""}`,
-                    extension,
-                    type: "File",
-                    leaf: true,
+                    path: file.webkitRelativePath || file.name,
+                    file,
                 })
             }
+        } finally {
+            await loadNodes()
         }
     }
 

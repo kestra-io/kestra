@@ -1,4 +1,4 @@
-import {flowYamlUtils} from "@kestra-io/topology"
+import * as flowYamlUtils from "@kestra-io/topology/flow-yaml-utils"
 import type {BlockSection} from "../../../utils/flowableBlockOps"
 
 type Translate = (key: string, named?: Record<string, unknown>) => string

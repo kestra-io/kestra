@@ -23,6 +23,7 @@
     import {useRouter} from "vue-router"
     const router = useRouter()
 
+    import type {ApiLightExecution} from "@kestra-io/kestra-sdk"
     import {
         Execution,
         useExecutionsStore,
@@ -36,10 +37,11 @@
 
     const props = defineProps<{ execution: Execution }>()
 
+    // The search endpoint returns light executions; only the routing fields are read here.
     const results = ref<{
-        previous: Execution | null;
+        previous: ApiLightExecution | null;
         current: Execution;
-        next: Execution | null;
+        next: ApiLightExecution | null;
     }>({
         previous: null,
         current: props.execution,

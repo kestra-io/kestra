@@ -51,7 +51,7 @@
             />
         </div>
     </div>
-    <KsFormItem v-else-if="fieldKey" :required="isRequired" for="">
+    <KsFormItem v-else-if="fieldKey" :required="isRequired" for="" :data-test="`field-${fieldKey}`">
         <template #label>
             <div class="inline-wrapper">
                 <div class="inline-start">
@@ -60,11 +60,12 @@
                     </span>
 
                     <span
-                        v-if="pluginDefault !== undefined"
+                        v-if="defaultHint !== undefined"
                         class="plugin-default-hint"
-                        :title="$t('block_editor.plugin_default_tooltip')"
+                        data-test="field-default-hint"
+                        :title="$t(pluginDefault !== undefined ? 'block_editor.plugin_default_tooltip' : 'block_editor.schema_default_tooltip')"
                     >
-                        {{ $t("block_editor.plugin_default", {value: pluginDefault}) }}
+                        {{ $t("block_editor.plugin_default", {value: defaultHint}) }}
                     </span>
 
                     <ClearButton
@@ -249,6 +250,14 @@
         const value = pluginDefaults?.value?.[props.fieldKey]
         return value === undefined || value === null || typeof value === "object" ? undefined : String(value)
     })
+
+    const schemaDefault = computed(() => {
+        const value = props.schema?.default
+        return value === undefined || value === null || typeof value === "object" ? undefined : String(value)
+    })
+
+    // The flow's pluginDefaults override the schema default at runtime, so they win the hint too.
+    const defaultHint = computed(() => pluginDefault.value ?? schemaDefault.value)
 
     const fieldNav = inject(FIELD_NAV_INJECTION_KEY, undefined)
 

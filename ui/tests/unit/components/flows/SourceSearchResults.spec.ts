@@ -1,6 +1,7 @@
-import {describe, test, expect, vi} from "vitest"
-import {mount, flushPromises} from "@vue/test-utils"
-import {createI18n} from "vue-i18n"
+import {describe, test, expect, vi, beforeEach} from "vitest"
+import {flushPromises} from "@vue/test-utils"
+import {i18nMount} from "../../i18nMount"
+
 import KestraDesignSystem from "@kestra-io/design-system"
 import SourceSearchResults from "../../../../src/components/flows/SourceSearchResults.vue"
 import type {SearchResourceType, SearchStatus} from "../../../../src/utils/crossResourceSearch"
@@ -8,19 +9,27 @@ import type {NamespaceFileState, KvMatchEntry, SecretMatchEntry, ResourceGroup} 
 import type {SourceSearchResult} from "../../../../src/utils/sourceSearchDiff"
 import en from "../../../../src/translations/en.json"
 
+const {mockRoute} = vi.hoisted(() => ({
+    mockRoute: {query: {} as Record<string, unknown>, params: {} as Record<string, unknown>},
+}))
+
 vi.mock("vue-router", () => ({
     useRouter: () => ({push: vi.fn()}),
-    useRoute: () => ({query: {}, params: {}}),
+    useRoute: () => mockRoute,
     RouterLink: {
         template: "<a><slot /></a>",
         props: ["to"],
     },
 }))
 
-const i18n = createI18n({legacy: false, locale: "en", messages: en})
+const RouterLinkProbe = {
+    props: ["to"],
+    template: "<a :data-to=\"JSON.stringify(to)\"><slot /></a>",
+}
 
 const globalConfig = {
-    plugins: [i18n, KestraDesignSystem],
+    plugins: [KestraDesignSystem],
+    stubs: {RouterLink: RouterLinkProbe},
 }
 
 const makeFlowResult = (namespace: string, id: string, snippets: string[], editable = true) => ({
@@ -51,13 +60,18 @@ function baseProps(overrides: Record<string, unknown> = {}) {
 }
 
 function mountResults(overrides: Record<string, unknown> = {}) {
-    return mount(SourceSearchResults, {
+    return i18nMount(SourceSearchResults, {
+        locales: en,
         props: baseProps(overrides) as InstanceType<typeof SourceSearchResults>["$props"],
         global: globalConfig,
     })
 }
 
 describe("SourceSearchResults", () => {
+    beforeEach(() => {
+        mockRoute.params = {}
+    })
+
     test("renders a flow group for each result", async () => {
         const flowsResults = [
             makeFlowResult("company.data", "flow-one", ["line [mark]match[/mark] here"]),
@@ -190,7 +204,7 @@ describe("SourceSearchResults", () => {
             ],
         })
 
-        expect(wrapper.text()).toContain("company.platform")
+        expect(wrapper.find(".type-fail-text").findAll("span")[0].text()).toBe("company.platform couldn't be searched")
         expect(wrapper.text()).toContain("Timed out")
 
         await wrapper.find(".type-fail button").trigger("click")
@@ -203,8 +217,7 @@ describe("SourceSearchResults", () => {
             filesNamespaces: [{namespace: "company.ml", status: "pending", paths: []}],
         })
 
-        expect(wrapper.find(".type-pending").exists()).toBe(true)
-        expect(wrapper.text()).toContain("company.ml")
+        expect(wrapper.find(".type-pending").text()).toBe("Searching company.ml")
     })
 
     test("renders kv rows grouped by namespace with highlighted keys", () => {
@@ -239,5 +252,30 @@ describe("SourceSearchResults", () => {
         const vm = wrapper.vm as unknown as {collapseAll: () => void; expandAll: () => void}
         expect(() => vm.collapseAll()).not.toThrow()
         expect(() => vm.expandAll()).not.toThrow()
+    })
+
+    test("points the group's open link at the flow's edit tab route with the current tenant", () => {
+        mockRoute.params = {tenant: "acme"}
+        const flowsResults = [makeFlowResult("ns", "flow-id", ["frag"])]
+
+        const wrapper = mountResults({flowsResults})
+
+        const link = wrapper.find("[data-test='source-search-open-link']")
+        expect(JSON.parse(link.attributes("data-to")!)).toEqual({
+            name: "flows/update/edit",
+            params: {tenant: "acme", namespace: "ns", id: "flow-id"},
+        })
+    })
+
+    test("resolves the group's open link without a tenant in OSS single-tenant mode", () => {
+        const flowsResults = [makeFlowResult("ns", "flow-id", ["frag"])]
+
+        const wrapper = mountResults({flowsResults})
+
+        const link = wrapper.find("[data-test='source-search-open-link']")
+        expect(JSON.parse(link.attributes("data-to")!)).toEqual({
+            name: "flows/update/edit",
+            params: {tenant: undefined, namespace: "ns", id: "flow-id"},
+        })
     })
 })

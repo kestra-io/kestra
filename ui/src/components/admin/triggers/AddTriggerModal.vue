@@ -128,7 +128,7 @@
     import {useRouter} from "vue-router"
 
     import {KsEditor, copyToClipboard} from "@kestra-io/design-system"
-    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
+    import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
     import CheckIcon from "vue-material-design-icons/Check.vue"
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
 
@@ -136,7 +136,6 @@
     import {usePluginsStore, type TriggerPluginDto, type PluginComponent} from "../../../stores/plugins"
     import {useTriggerDraftStore} from "../../../stores/triggerDraft"
     import {useEditorBindings} from "../../../composables/useEditorBindings"
-    import {triggerDisplayName} from "./triggerCatalog"
 
     import NamespaceSelect from "../../namespaces/components/NamespaceSelect.vue"
     import PluginDocumentation from "../../plugins/PluginDocumentation.vue"
@@ -148,7 +147,7 @@
     } from "../../no-code/injectionKeys"
 
     const visible = defineModel<boolean>("visible", {required: true})
-    const props = defineProps<{trigger: TriggerPluginDto}>()
+    const props = defineProps<{trigger: TriggerPluginDto; displayName: string}>()
     defineEmits<{cancel: []}>()
 
     const COPY_FEEDBACK_MS = 1600
@@ -172,7 +171,11 @@
 
     // Provide schema injection context so TaskObject can resolve $ref fields
     // (e.g. inherited labels, workerSelector from parent trigger types).
-    provide(FULL_SCHEMA_INJECTION_KEY, computed(() => (triggerPlugin.value?.schema ?? {}) as any))
+    provide(FULL_SCHEMA_INJECTION_KEY, computed(() => ({
+        ...(triggerPlugin.value?.schema ?? {}),
+        definitions: triggerPlugin.value?.schema?.definitions ?? {},
+        $ref: "",
+    })))
     provide(SCHEMA_DEFINITIONS_INJECTION_KEY, computed(() => triggerPlugin.value?.schema?.definitions ?? {}))
     provide(BLOCK_SCHEMA_PATH_INJECTION_KEY, computed(() => {
         return props.trigger.type ? `#/definitions/${props.trigger.type}` : ""
@@ -184,12 +187,10 @@
         flowId: "",
         triggerId: generateId(),
     })
-    const triggerPropertiesModel = ref<Record<string, any>>({})
+    const triggerPropertiesModel = ref<Record<string, unknown>>({})
 
     // Fields handled by the modal itself, not rendered through the no-code form.
     const RESERVED_FIELDS = new Set(["id", "type", "description"])
-
-    const displayName = computed(() => triggerDisplayName(props.trigger))
 
     // `triggerPlugin.value.schema` is a JSON Schema wrapper (top-level keys:
     // $schema, properties, required, title…). The actual class fields live at
@@ -204,7 +205,8 @@
 
     const triggerSchema = computed<{required?: string[]}>(() => {
         const wrapper = triggerPlugin.value?.schema?.properties as unknown as {required?: string[]} | undefined
-        return wrapper?.required ? {required: wrapper.required} : {}
+        const required = wrapper?.required?.filter(key => !RESERVED_FIELDS.has(key))
+        return required?.length ? {required} : {}
     })
 
     const hasTriggerProperties = computed(() => Object.keys(triggerProperties.value).length > 0)
@@ -226,7 +228,7 @@
     const getTriggerId = () => formModel.value.triggerId.trim() || "mytrigger"
 
     const triggerBlock = computed(() => {
-        const trigger: Record<string, any> = {
+        const trigger: Record<string, unknown> = {
             id: getTriggerId(),
             type: props.trigger.type,
             ...triggerPropertiesModel.value,
@@ -250,7 +252,7 @@
         flowsLoading.value = true
         try {
             const response = await flowStore.findFlows({"filters[namespace][EQUALS]": namespace, sort: "id:asc"})
-            flowOptions.value = (response?.results ?? []).map((f: any) => ({id: f.id, namespace: f.namespace}))
+            flowOptions.value = (response?.results ?? []).map((f) => ({id: f.id, namespace: f.namespace}))
         } finally {
             flowsLoading.value = false
         }
@@ -261,7 +263,7 @@
         loadFlows(typeof ns === "string" ? ns : "")
     }
 
-    const onPropertiesUpdate = (value: Record<string, any> | undefined) => {
+    const onPropertiesUpdate = (value: Record<string, unknown> | undefined) => {
         triggerPropertiesModel.value = value ?? {}
     }
 

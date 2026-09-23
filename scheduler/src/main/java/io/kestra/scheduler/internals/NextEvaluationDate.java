@@ -7,7 +7,8 @@ import java.util.Optional;
 import io.kestra.core.exceptions.InvalidTriggerConfigurationException;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.triggers.AbstractTrigger;
-import io.kestra.core.models.triggers.PollingTriggerInterface;
+import io.kestra.core.models.triggers.RealtimeTriggerInterface;
+import io.kestra.core.models.triggers.WorkerTriggerInterface;
 import io.kestra.core.models.triggers.TriggerContext;
 
 /**
@@ -26,7 +27,7 @@ public abstract class NextEvaluationDate {
      * @throws InvalidTriggerConfigurationException if something bad happens while computing next evaluation date.
      */
     public static ZonedDateTime get(Clock clock, AbstractTrigger trigger, TriggerContext triggerContext, ConditionContext conditionContext) throws InvalidTriggerConfigurationException {
-        if (!(trigger instanceof PollingTriggerInterface pollingTrigger)) {
+        if (!(trigger instanceof WorkerTriggerInterface workerTrigger) || trigger instanceof RealtimeTriggerInterface) {
             return ZonedDateTime.now(clock); // real-time trigger
         }
         // Seed date=now when the context has neither a prior evaluation date nor a backfill, so
@@ -38,7 +39,7 @@ public abstract class NextEvaluationDate {
                 .date(ZonedDateTime.now(clock))
                 .build();
         }
-        return pollingTrigger.nextEvaluationDate(conditionContext, Optional.of(effectiveContext));
+        return workerTrigger.nextEvaluationDate(conditionContext, Optional.of(effectiveContext));
     }
 
     /**
@@ -55,13 +56,10 @@ public abstract class NextEvaluationDate {
      * @throws InvalidTriggerConfigurationException if something bad happens while computing next evaluation date.
      */
     public static ZonedDateTime get(Clock clock, AbstractTrigger trigger) throws InvalidTriggerConfigurationException {
-        ZonedDateTime nextExecutionDate;
-        if (trigger instanceof PollingTriggerInterface pollingTrigger) {
-            nextExecutionDate = pollingTrigger.nextEvaluationDate();
-        } else {
-            nextExecutionDate = ZonedDateTime.now(clock); // real-time trigger
+        if (!(trigger instanceof WorkerTriggerInterface workerTrigger) || trigger instanceof RealtimeTriggerInterface) {
+            return ZonedDateTime.now(clock); // real-time trigger
         }
 
-        return nextExecutionDate;
+        return workerTrigger.nextEvaluationDate();
     }
 }

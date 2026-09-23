@@ -29,7 +29,7 @@
     import * as Utils from "../../utils/utils"
     import {usePlaygroundStore} from "../../stores/playground"
 
-    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
+    import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
     import FlowPlayground from "./FlowPlayground.vue"
     import FlowEditorStats from "override/components/flows/FlowEditorStats.vue"
     import KeyShortcuts from "../inputs/KeyShortcuts.vue"
@@ -109,7 +109,7 @@
                     "triggers",
                     "items",
                 ].join("/")
-                actions.openAddTaskTab({panelIndex, tabIndex: 0}, "triggers", blockSchemaPath)
+                noCodeHandlers.onCreateTask({panelIndex, tabIndex: 0}, "triggers", blockSchemaPath)
             }
         }
     })
@@ -169,7 +169,7 @@
         }))
     }
 
-    const {panels, actions} = useNoCodePanelsFull({
+    const {panels, actions, noCodeHandlers} = useNoCodePanelsFull({
         RawNoCode,
         editorView,
         editorElements: EDITOR_ELEMENTS,

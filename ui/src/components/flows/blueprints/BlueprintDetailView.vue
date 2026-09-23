@@ -52,6 +52,7 @@
                         :flowGraph="flowGraph"
                         :source="blueprint.source"
                         :horizontalDefault="stacked"
+                        :showDetailsToggle="false"
                     />
                 </KsSplitterPanel>
             </KsSplitter>
@@ -76,7 +77,7 @@
     import {useMediaQuery} from "@vueuse/core"
 
     import {KsEditor} from "@kestra-io/design-system"
-    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
+    import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
     import ChevronLeft from "vue-material-design-icons/ChevronLeft.vue"
 
     import LowCodeEditor from "../../inputs/LowCodeEditor.vue"

@@ -119,7 +119,7 @@
     }>()
 
     const itemUrl = (value: string): string => {
-        return `${apiUrl()}/executions/${props.executionId}/file?path=${encodeURI(value)}`
+        return `${apiUrl()}/executions/${props.executionId}/file?path=${encodeURIComponent(value)}`
     }
 
     const maxRows = ref<number>()
@@ -275,7 +275,7 @@
     const miscStore = useMiscStore()
 
     const configPreviewInitialRows = computed((): number => {
-        return  miscStore.configs?.preview.initial || 500
+        return  miscStore.configs?.preview?.initial || 500
     })
 
     onMounted(() => {

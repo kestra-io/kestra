@@ -57,6 +57,10 @@
     @use '../../../assets/styles/el-ns';
     @use 'element-plus/theme-chalk/src/form-item';
     .kel-form-item {
+        &:has(.kel-switch:not(.is-disabled)) .kel-form-item__label {
+            cursor: pointer;
+        }
+
         .kel-form-item__error {
             &.kel-form-item__error--inline {
                 margin-top: 3px;

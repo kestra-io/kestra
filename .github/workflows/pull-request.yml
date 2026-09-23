@@ -12,6 +12,8 @@ jobs:
   # Kestra webhook) and trigger the EE OpenAPI spec check.
   trigger-ee:
     runs-on: ubuntu-latest
+    # Above the curl ceiling in ee-compile-check, so curl's own error wins.
+    timeout-minutes: 50
     # The `secrets` context is not allowed in `if:` conditions, so expose the
     # app-id as a job-level env var (the `env` context IS allowed in `if:`) and
     # gate the steps on that instead.
@@ -20,7 +22,7 @@ jobs:
     steps:
     - name: Checkout  # required so the local composite action below can resolve
       if: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false && env.GH_BOT_APP_ID != '' }}
-      uses: actions/checkout@v7
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       # Dependabot PRs are not forks, but GitHub still withholds repo secrets from
       # workflow runs it triggers, so create-github-app-token would fail with an
@@ -30,7 +32,7 @@ jobs:
     - name: Generate GitHub App token for kestra-ee dispatch
       id: ee-token
       if: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false && env.GH_BOT_APP_ID != '' }}
-      uses: actions/create-github-app-token@v3
+      uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
       with:
         app-id: ${{ secrets.GH_BOT_APP_ID }}
         private-key: ${{ secrets.GH_BOT_PRIVATE_KEY }}
@@ -55,7 +57,7 @@ jobs:
 
       # Always trigger EE OpenAPI check on non-fork PRs where secrets are available
     - name: Trigger EE OpenAPI spec check
-      uses: peter-evans/repository-dispatch@28959ce8df70de7be546dd1250a005dd32156697
+      uses: peter-evans/repository-dispatch@28959ce8df70de7be546dd1250a005dd32156697 # v4.0.1
       if: ${{ github.event_name == 'pull_request'
         && github.event.pull_request.number != ''
         && github.event.pull_request.head.repo.fork == false
@@ -78,7 +80,7 @@ jobs:
     - name: Check EE repo for branch with same name
       if: ${{ false && (github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false) }}
       id: check-ee-branch
-      uses: actions/github-script@v9
+      uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
       with:
         github-token: ${{ steps.ee-token.outputs.token }}
         script: |
@@ -101,7 +103,7 @@ jobs:
           }
 
     - name: Trigger EE Workflow (pull request, with payload)
-      uses: peter-evans/repository-dispatch@28959ce8df70de7be546dd1250a005dd32156697
+      uses: peter-evans/repository-dispatch@28959ce8df70de7be546dd1250a005dd32156697 # v4.0.1
       if: ${{ false && (github.event_name == 'pull_request'
         && github.event.pull_request.number != ''
         && github.event.pull_request.head.repo.fork == false
@@ -123,8 +125,9 @@ jobs:
       ui-design-system: ${{ steps.changes.outputs.ui-design-system }}
       translations: ${{ steps.changes.outputs.translations }}
       backend: ${{ steps.changes.outputs.backend }}
+      e2e: ${{ steps.changes.outputs.e2e }}
     steps:
-      - uses: dorny/paths-filter@v4
+      - uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
         id: changes
         with:
           filters: |
@@ -136,8 +139,10 @@ jobs:
               - 'ui/src/translations/**'
               - 'ui/scripts/translations/**'
               - 'ui/packages/design-system/**/*.locale.ts'
+            e2e:
+              - 'e2e/**'
             backend:
-              - '!{ui,.github}/**'
+              - '!{ui,e2e,.github}/**'
           token: ${{ secrets.GITHUB_TOKEN }}
 
   # Fills in whatever the PR left missing or stale and commits it straight onto the branch, so the
@@ -163,14 +168,14 @@ jobs:
     env:
       GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         name: Checkout
         if: env.GEMINI_API_KEY != ''
         with:
           # The branch itself, not the PR's merge commit, so the generated commit can be pushed back.
           ref: ${{ github.head_ref }}
 
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         if: env.GEMINI_API_KEY != ''
         with:
           node-version-file: 'ui/.nvmrc'
@@ -205,23 +210,101 @@ jobs:
   # English value being edited without the other twelve languages following, which is how
   # kestra-io/kestra#10656 accumulated a year of drift.
   #
+  # Runs on any UI change, not only on translation files: a `t("new.key")` added to a component
+  # without the key is exactly what the used-key rule exists to catch, and that PR touches no
+  # locale file.
+  #
   # Runs for forks too, where nothing was generated above, which is exactly when it matters most.
   translations:
     name: 'Translations - Key parity, placeholders and drift'
     needs: [file-changes, translations-generate]
-    if: "always() && needs.file-changes.outputs.translations == 'true'"
+    if: "always() && (needs.file-changes.outputs.translations == 'true' || needs.file-changes.outputs.ui == 'true')"
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    # The `secrets` context is not allowed in `if:`, so the app id is mirrored into env for the guards below.
+    env:
+      GH_BOT_APP_ID: ${{ secrets.GH_BOT_APP_ID }}
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         name: Checkout
 
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version-file: 'ui/.nvmrc'
 
+      # EE renders OSS keys too, so the unused-key rule can only decide with the EE tree in view. Check
+      # EE out sparsely when the bot app can mint a token. A fork PR gets no secrets: there the rule skips
+      # with a warning and the EE run this merge dispatches is the enforcing one.
+      - name: Generate GitHub App token for kestra-ee
+        id: ee-token
+        if: github.event.pull_request.head.repo.fork == false && env.GH_BOT_APP_ID != ''
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          app-id: ${{ secrets.GH_BOT_APP_ID }}
+          private-key: ${{ secrets.GH_BOT_PRIVATE_KEY }}
+          owner: kestra-io
+          repositories: kestra-ee
+
+      # The same-name EE branch when the PR has a companion, otherwise the branch it targets.
+      - name: Resolve the EE branch
+        id: ee-branch
+        if: steps.ee-token.outputs.token != ''
+        env:
+          GH_TOKEN: ${{ steps.ee-token.outputs.token }}
+          HEAD_REF: ${{ github.head_ref }}
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          if gh api "repos/kestra-io/kestra-ee/branches/$HEAD_REF" --silent 2>/dev/null; then
+            echo "ref=$HEAD_REF" >> "$GITHUB_OUTPUT"
+          else
+            echo "ref=$BASE_REF" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        name: Checkout - EE sources
+        if: steps.ee-token.outputs.token != ''
+        with:
+          repository: kestra-io/kestra-ee
+          ref: ${{ steps.ee-branch.outputs.ref }}
+          token: ${{ steps.ee-token.outputs.token }}
+          path: kestra-ee
+          sparse-checkout: |
+            ui-ee/src/
+          sparse-checkout-cone-mode: false
+
+      # The report and the PR context are kept as an artifact for the "Translations - PR comment" workflow:
+      # this job cannot comment itself, since a pull request from a fork runs with a read-only token.
       - name: Check translations
-        run: node ui/scripts/translations/check-translations.mjs --scope oss
+        id: check
+        continue-on-error: true
+        run: |
+          if [ -d kestra-ee/ui-ee/src ]; then
+            node ui/scripts/translations/check-translations.mjs --scope oss --ee-root kestra-ee --report "$RUNNER_TEMP/translations-report/report.json"
+          else
+            node ui/scripts/translations/check-translations.mjs --scope oss --report "$RUNNER_TEMP/translations-report/report.json"
+          fi
+
+      - name: Record the pull request context for the comment workflow
+        if: always()
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          FORK: ${{ github.event.pull_request.head.repo.fork }}
+          OUTCOME: ${{ steps.check.outcome }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/translations-report"
+          printf '{"pr": %s, "fork": %s, "outcome": "%s"}\n' "$PR_NUMBER" "$FORK" "$OUTCOME" > "$RUNNER_TEMP/translations-report/meta.json"
+
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        name: Upload the translation report
+        if: always()
+        with:
+          name: translations-report
+          path: ${{ runner.temp }}/translations-report
+          retention-days: 1
+
+      - name: Fail if the check failed
+        if: steps.check.outcome == 'failure'
+        run: exit 1
 
   frontend:
     name: Frontend - Tests
@@ -239,6 +322,32 @@ jobs:
     uses: kestra-io/actions/.github/workflows/kestra-oss-designsystem-tests.yml@main
     secrets:
       GITHUB_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  e2e-checks:
+    name: E2E - Checks
+    needs: [file-changes]
+    if: "needs.file-changes.outputs.e2e == 'true'"
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24.x'
+          cache: npm
+          cache-dependency-path: e2e/package-lock.json
+
+      # No browsers and no product build: this is the static half of what the frontend job used to
+      # cover for the specs, and it is the only check an e2e-only PR gets before the suite itself.
+      - working-directory: e2e
+        run: npm ci
+
+      - working-directory: e2e
+        run: npm run check:types
+
+      - working-directory: e2e
+        run: npm run test:lint
 
   backend:
     name: Backend - Tests
@@ -263,7 +372,7 @@ jobs:
     # build; drafts are filtered by file-changes' own if. Fork PRs can't
     # share artifacts (their runs hold no repo write token), so they keep
     # the E2E build-from-source fallback below.
-    if: "(needs.file-changes.outputs.ui == 'true' || needs.file-changes.outputs.backend == 'true') && github.event.pull_request.head.repo.fork == false"
+    if: "(needs.file-changes.outputs.ui == 'true' || needs.file-changes.outputs.backend == 'true' || needs.file-changes.outputs.e2e == 'true') && github.event.pull_request.head.repo.fork == false"
     uses: kestra-io/actions/.github/workflows/kestra-oss-build-artifacts.yml@main
     secrets:
       OTLP_ENDPOINT: ${{ secrets.OTLP_ENDPOINT }}
@@ -276,7 +385,7 @@ jobs:
     needs: [file-changes, build-artifacts]
     # Runs when build-artifacts succeeded (prebuilt exe) or was skipped for a
     # fork (falls back to building from source); not when the build failed.
-    if: "!cancelled() && needs.build-artifacts.result != 'failure' && (needs.file-changes.outputs.ui == 'true' || needs.file-changes.outputs.backend == 'true')"
+    if: "!cancelled() && needs.build-artifacts.result != 'failure' && (needs.file-changes.outputs.ui == 'true' || needs.file-changes.outputs.backend == 'true' || needs.file-changes.outputs.e2e == 'true')"
     uses: kestra-io/actions/.github/workflows/kestra-oss-e2e-tests.yml@main
     secrets:
       OTLP_ENDPOINT: ${{ secrets.OTLP_ENDPOINT }}
@@ -299,16 +408,40 @@ jobs:
       java-version: 25
       skip-build: ${{ needs.build-artifacts.result == 'success' }}
 
+  # Single gate for "require status checks to pass". The test jobs above are
+  # path-gated with `if:`, and several are reusable workflows (`uses:`) whose
+  # nested checks are never reported when the caller job is skipped — so a
+  # branch-protection rule on them individually would wait forever for a status
+  # that never arrives. This job always runs, and fails only when a required job
+  # actually failed or was cancelled; skipped and successful jobs both pass.
+  # Require only this check in branch protection instead of the individual jobs.
+  required-checks:
+    name: Required checks
+    if: always()
+    needs: [file-changes, frontend, design-system-frontend, e2e-checks, backend, build-artifacts, e2e-tests]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fail if any required job failed or was cancelled
+        if: >-
+          contains(needs.*.result, 'failure') ||
+          contains(needs.*.result, 'cancelled')
+        run: |
+          echo "A required job failed or was cancelled:"
+          echo '${{ toJSON(needs) }}'
+          exit 1
+      - name: Success
+        run: echo "All required jobs passed or were legitimately skipped."
+
   otel-export-trace:
     name: OpenTelemetry - Export Trace
     runs-on: ubuntu-latest
     if: always()
-    needs: [ trigger-ee, file-changes, frontend, design-system-frontend, backend, build-artifacts, e2e-tests, generate-pull-request-docker-image ]
+    needs: [ trigger-ee, file-changes, frontend, design-system-frontend, e2e-checks, backend, build-artifacts, e2e-tests, generate-pull-request-docker-image ]
     env:
       OTLP_ENDPOINT: ${{ secrets.OTLP_ENDPOINT }}
     steps:
       - name: OpenTelemetry - Export trace
-        uses: kestra-io/actions/actions/otel-collect@main
+        uses: kestra-io/actions/actions/otel-export-trace@main
         if: ${{ env.OTLP_ENDPOINT != '' }}
         with:
           mode: export-all

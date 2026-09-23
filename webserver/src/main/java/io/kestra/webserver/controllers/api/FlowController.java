@@ -5,15 +5,17 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.apache.commons.io.IOUtils;
 import org.reactivestreams.Publisher;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.kestra.core.exceptions.FlowNotFoundException;
 import io.kestra.core.exceptions.FlowProcessingException;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.exceptions.InternalException;
+import io.kestra.core.exceptions.InvalidException;
+import io.kestra.core.http.KestraMediaTypes;
 import io.kestra.core.models.HasSource;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.QueryFilter.Resource;
@@ -78,6 +80,7 @@ import jakarta.validation.constraints.NotEmpty;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Flux;
+import tools.jackson.databind.ObjectMapper;
 
 import static io.kestra.core.utils.Rethrow.throwConsumer;
 import static io.kestra.core.utils.Rethrow.throwFunction;
@@ -147,9 +150,10 @@ public class FlowController {
         }
 
         if (flow instanceof FlowWithException fwe) {
-            throw new IllegalStateException(
-                "Unable to generate graph for flow " + flowUid +
-                    " because of exception " + fwe.getException()
+            throw new InvalidException(
+                fwe,
+                "Cannot generate a graph for flow '%s': the flow itself is invalid. Cause: %s"
+                    .formatted(flowUid, fwe.getException())
             );
         }
 
@@ -165,7 +169,7 @@ public class FlowController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Post(uri = "graph", consumes = MediaType.APPLICATION_YAML)
+    @Post(uri = "graph", consumes = { KestraMediaTypes.APPLICATION_X_YAML, MediaType.APPLICATION_YAML })
     @Operation(tags = { "Flows" }, summary = "Generate a graph for a flow source")
     public FlowGraph generateFlowGraphFromSource(
         @RequestBody(description = "The flow source code") @Body String flow,
@@ -173,6 +177,7 @@ public class FlowController {
         throws ConstraintViolationException, IllegalVariableEvaluationException, FlowProcessingException {
         try {
             FlowWithSource flowParsed = flowParsingService.parse(tenantService.resolveTenant(), flow, false);
+            modelValidator.validate(flowParsingService.parseForValidation(flowParsed));
             return graphService.flowGraph(flowParsed, subflows);
         } catch (FlowProcessingException e) {
             if (e.getCause() instanceof ConstraintViolationException cve) {
@@ -280,22 +285,28 @@ public class FlowController {
         @Parameter(description = "Whether the query must match on word boundaries only") @QueryValue(defaultValue = "false") boolean wholeWord,
         @Parameter(description = "Whether the query is a regular expression rather than a literal string") @QueryValue(defaultValue = "false") boolean regex,
         @Parameter(description = "Restricts matches to a top-level section of the flow YAML") @QueryValue(defaultValue = "all") SourceSearchScope scope) throws HttpStatusException {
-        return PagedResults.of(sourceSearchService.search(
-            PageableUtils.from(page, size, sort),
-            tenantService.resolveTenant(),
-            namespace,
-            query,
-            caseSensitive,
-            wholeWord,
-            regex,
-            scope
-        ));
+        return PagedResults.of(
+            sourceSearchService.search(
+                PageableUtils.from(page, size, sort),
+                tenantService.resolveTenant(),
+                namespace,
+                query,
+                caseSensitive,
+                wholeWord,
+                regex,
+                scope
+            )
+        );
     }
 
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "/source/replace/preview")
-    @Operation(tags = { "Flows" }, summary = "Preview a Source Search replace-all operation", description = "Computes the matched lines and their proposed replacement for every matching flow, without persisting anything.")
-    public SourceSearchReplacePreviewResponse previewReplaceBySourceCode(@RequestBody(description = "The search query and replacement") @Body @Valid SourceSearchReplacePreviewRequest request) {
+    @Operation(
+        tags = { "Flows" }, summary = "Preview a Source Search replace-all operation",
+        description = "Computes the matched lines and their proposed replacement for every matching flow, without persisting anything."
+    )
+    public SourceSearchReplacePreviewResponse previewReplaceBySourceCode(
+        @RequestBody(description = "The search query and replacement") @Body @Valid SourceSearchReplacePreviewRequest request) {
         return sourceSearchService.preview(
             tenantService.resolveTenant(),
             request.namespace(),
@@ -310,8 +321,12 @@ public class FlowController {
 
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "/source/replace/apply")
-    @Operation(tags = { "Flows" }, summary = "Apply a Source Search replace-all operation", description = "Replaces every match in the given flows and persists the new revisions. Flows the caller is not allowed to edit are skipped.")
-    public SourceSearchReplaceApplyResponse applyReplaceBySourceCode(@RequestBody(description = "The search query, replacement and target flows") @Body @Valid SourceSearchReplaceApplyRequest request) throws QueueException {
+    @Operation(
+        tags = { "Flows" }, summary = "Apply a Source Search replace-all operation",
+        description = "Replaces every match in the given flows and persists the new revisions. Flows the caller is not allowed to edit are skipped."
+    )
+    public SourceSearchReplaceApplyResponse applyReplaceBySourceCode(
+        @RequestBody(description = "The search query, replacement and target flows") @Body @Valid SourceSearchReplaceApplyRequest request) throws QueueException {
         return sourceSearchService.apply(
             tenantService.resolveTenant(),
             request.query(),
@@ -326,8 +341,12 @@ public class FlowController {
 
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "/source/replace/line")
-    @Operation(tags = { "Flows" }, summary = "Apply a Source Search replace on a single match line", description = "Replaces the matches on one line of one flow and persists the new revision. Returns the flow as skipped if it is not editable or fails validation.")
-    public SourceSearchReplaceApplyResponse replaceLineBySourceCode(@RequestBody(description = "The search query, replacement and target match line") @Body @Valid SourceSearchReplaceLineRequest request) throws QueueException {
+    @Operation(
+        tags = { "Flows" }, summary = "Apply a Source Search replace on a single match line",
+        description = "Replaces the matches on one line of one flow and persists the new revision. Returns the flow as skipped if it is not editable or fails validation."
+    )
+    public SourceSearchReplaceApplyResponse replaceLineBySourceCode(
+        @RequestBody(description = "The search query, replacement and target match line") @Body @Valid SourceSearchReplaceLineRequest request) throws QueueException {
         return sourceSearchService.applyLine(
             tenantService.resolveTenant(),
             request.query(),
@@ -343,7 +362,7 @@ public class FlowController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Post(consumes = MediaType.APPLICATION_YAML)
+    @Post(consumes = { KestraMediaTypes.APPLICATION_X_YAML, MediaType.APPLICATION_YAML })
     @Operation(tags = { "Flows" }, summary = "Create a flow from yaml source")
     public HttpResponse<FlowWithSource> createFlow(
         @RequestBody(description = "The flow source code") @Body String flow,
@@ -404,7 +423,7 @@ public class FlowController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Post(uri = "{namespace}", consumes = MediaType.APPLICATION_YAML)
+    @Post(uri = "{namespace}", consumes = { KestraMediaTypes.APPLICATION_X_YAML, MediaType.APPLICATION_YAML })
     @Operation(
         tags = { "Flows" },
         summary = "Update a complete namespace from yaml source",
@@ -462,10 +481,15 @@ public class FlowController {
             // control namespace to update
             Set<ManualConstraintViolation<GenericFlow>> invalids = flows
                 .stream()
-                .filter(flow -> !flow.getNamespace().equals(namespace) && (!flow.getNamespace().startsWith(namespace) || !allowNamespaceChild))
+                .filter(
+                    flow -> flow.getNamespace() == null
+                        || (!flow.getNamespace().equals(namespace) && (!flow.getNamespace().startsWith(namespace) || !allowNamespaceChild))
+                )
                 .map(
                     flow -> ManualConstraintViolation.of(
-                        String.format("%s - flow namespace is invalid", flow.uid()),
+                        flow.getNamespace() == null
+                            ? String.format("%s - flow namespace is required", flow.getId())
+                            : String.format("%s - flow namespace is invalid", flow.uid()),
                         flow,
                         GenericFlow.class,
                         "flow.namespace",
@@ -535,7 +559,7 @@ public class FlowController {
         return Stream.concat(deleted.stream(), updatedOrCreated.stream()).toList();
     }
 
-    @Put(uri = "{namespace}/{id}", consumes = MediaType.APPLICATION_YAML)
+    @Put(uri = "{namespace}/{id}", consumes = { KestraMediaTypes.APPLICATION_X_YAML, MediaType.APPLICATION_YAML })
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = { "Flows" }, summary = "Update a flow") // force deprecated = false otherwise it is marked as deprecated, dont know why
     @ApiResponse(responseCode = "200", description = "On success", content = { @Content(schema = @Schema(implementation = FlowWithSource.class)) })
@@ -582,7 +606,7 @@ public class FlowController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Post(uri = "bulk", consumes = MediaType.APPLICATION_YAML)
+    @Post(uri = "bulk", consumes = { KestraMediaTypes.APPLICATION_X_YAML, MediaType.APPLICATION_YAML })
     @Operation(
         tags = { "Flows" },
         summary = "Update from multiples yaml sources",
@@ -660,6 +684,7 @@ public class FlowController {
     @ExecuteOn(TaskExecutors.IO)
     @Post(
         uri = "validate", consumes = {
+            KestraMediaTypes.APPLICATION_X_YAML,
             MediaType.APPLICATION_YAML,
             MediaType.MULTIPART_FORM_DATA
         }
@@ -766,7 +791,7 @@ public class FlowController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Post(uri = "/validate/task", consumes = MediaType.APPLICATION_YAML)
+    @Post(uri = "/validate/task", consumes = { KestraMediaTypes.APPLICATION_X_YAML, MediaType.APPLICATION_YAML })
     @Operation(tags = { "Flows" }, summary = "Validate a task")
     public ValidateConstraintViolation validateTask(
         @RequestBody(description = "A task definition that can be from tasks or triggers") @Schema(implementation = Object.class) @Body String task,
@@ -794,7 +819,6 @@ public class FlowController {
         return validateConstraintViolationBuilder.build();
     }
 
-
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "/export/by-query", produces = MediaType.APPLICATION_OCTET_STREAM)
     @Operation(
@@ -804,7 +828,10 @@ public class FlowController {
     public HttpResponse<byte[]> exportFlowsByQuery(
         @Parameter(description = "Filters. PHP-style nested query is used - examples: `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`", in = ParameterIn.QUERY)
         @QueryFilterFormat(Resource.FLOW) List<QueryFilter> filters) throws IOException {
-        var flows = flowRepository.findWithSource(Pageable.UNPAGED, tenantService.resolveTenant(), filters);
+        // Drafts are not exportable: a draft-headed flow falls back to its last saved revision, and a
+        // flow that has only ever been a draft is omitted. Consumers such as the Git sync plugin read
+        // this ZIP as the authoritative set of saved flows.
+        var flows = flowRepository.findWithSourceExcludingDrafts(Pageable.UNPAGED, tenantService.resolveTenant(), filters);
         var bytes = HasSource.asZipFile(flows, flow -> flow.getNamespace() + "-" + flow.getId() + ".yml");
 
         return HttpResponse.ok(bytes).header("Content-Disposition", "attachment; filename=\"flows.zip\"");
@@ -942,7 +969,7 @@ public class FlowController {
             });
         } catch (IOException e) {
             log.error("Unexpected error while importing flows", e);
-            fileUpload.discard();
+            IOUtils.closeQuietly(fileUpload);
             return HttpResponse.badRequest();
         }
         if (failOnError && !wrongFiles.isEmpty()) {
@@ -960,15 +987,15 @@ public class FlowController {
         @QueryFilterFormat(Resource.FLOW) List<QueryFilter> filters) {
         return HttpResponse.ok(
             CSVUtils.toCSVFlux(
-                flowRepository.findAsync(this.tenantService.resolveTenant(), filters)
-                    .map(log -> objectMapper.convertValue(log, JacksonMapper.MAP_TYPE_REFERENCE))
+                flowRepository.findAsync(this.tenantService.resolveTenant(), filters),
+                objectMapper
             )
         )
             .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=flows.csv");
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Post(uri = "expressions", consumes = MediaType.APPLICATION_YAML)
+    @Post(uri = "expressions", consumes = { KestraMediaTypes.APPLICATION_X_YAML, MediaType.APPLICATION_YAML })
     @Operation(
         tags = { "Flows" },
         summary = "Get available Pebble expressions for a flow",

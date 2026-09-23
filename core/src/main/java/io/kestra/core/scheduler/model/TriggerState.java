@@ -40,6 +40,7 @@ public final class TriggerState implements TriggerId {
     private final Backfill backfill;
     private final List<State.Type> stopAfter;
     private final boolean disabled;
+    private final boolean sourceDisabled;
     private final int vnode;
     private final boolean locked;
     private final String workerId;
@@ -77,7 +78,16 @@ public final class TriggerState implements TriggerId {
      * @return a new {@link TriggerState}
      */
     public static TriggerState of(FlowId flowId, AbstractTrigger trigger, Integer vnode) {
-        return of(TriggerId.of(flowId, trigger), TriggerType.from(trigger), trigger.getStopAfter(), trigger.isDisabled(), vnode);
+        return of(TriggerId.of(flowId, trigger), trigger, vnode);
+    }
+
+    /**
+     * Factory method for constructing a new {@link TriggerState} from a trigger definition.
+     *
+     * @return a new {@link TriggerState}
+     */
+    public static TriggerState of(TriggerId id, AbstractTrigger trigger, Integer vnode) {
+        return of(id, TriggerType.from(trigger), trigger.getStopAfter(), trigger.isDisabled(), vnode);
     }
 
     /**
@@ -85,7 +95,11 @@ public final class TriggerState implements TriggerId {
      *
      * @return a new {@link TriggerState}
      */
-    public static TriggerState of(TriggerId id, TriggerType type, List<State.Type> stopAfter, Boolean disabled, Integer vnode) {
+    public static TriggerState of(TriggerId id, TriggerType type, List<State.Type> stopAfter, Integer vnode) {
+        return of(id, type, stopAfter, false, vnode);
+    }
+
+    private static TriggerState of(TriggerId id, TriggerType type, List<State.Type> stopAfter, boolean sourceDisabled, Integer vnode) {
         return new TriggerState(
             id.getTenantId(),
             id.getNamespace(),
@@ -96,7 +110,8 @@ public final class TriggerState implements TriggerId {
             null,
             null,
             stopAfter,
-            disabled,
+            false,
+            sourceDisabled,
             vnode,
             false,
             null,
@@ -117,7 +132,7 @@ public final class TriggerState implements TriggerId {
     public TriggerState update(Clock clock, AbstractTrigger trigger) {
         return update(clock)
             .stopAfter(trigger.getStopAfter())
-            .disabled(trigger.isDisabled())
+            .sourceDisabled(trigger.isDisabled())
             .type(TriggerType.from(trigger))
             .build();
     }
@@ -160,6 +175,16 @@ public final class TriggerState implements TriggerId {
      */
     public TriggerState disabled(final Clock clock, boolean disabled) {
         return update(clock).disabled(disabled).build();
+    }
+
+    /**
+     * Updates the definition mirror of this trigger state.
+     *
+     * @param clock the scheduler clock.
+     * @return a new {@link TriggerState}
+     */
+    public TriggerState sourceDisabled(final Clock clock, boolean sourceDisabled) {
+        return update(clock).sourceDisabled(sourceDisabled).build();
     }
 
     /**
@@ -231,7 +256,9 @@ public final class TriggerState implements TriggerId {
             backfill = backfill
                 .toBuilder()
                 .end(backfill.getEnd() != null ? backfill.getEnd() : ZonedDateTime.now(clock))
-                .currentDate(backfill.getCurrentDate() != null ? backfill.getCurrentDate() : backfill.getStart())
+                // Exclusive nextExecution(start) skips a cron tick that falls on start.
+                // Seed just before start so the first evaluation is at-or-after start.
+                .currentDate(backfill.getCurrentDate() != null ? backfill.getCurrentDate() : backfill.getStart().minusNanos(1))
                 // captured once, on backfill creation: pausing re-enters this method while
                 // nextEvaluationDate points inside the backfill window.
                 .previousNextExecutionDate(backfill.getPreviousNextExecutionDate() != null ? backfill.getPreviousNextExecutionDate() : toZonedDateTime(nextEvaluationDate))
@@ -335,9 +362,21 @@ public final class TriggerState implements TriggerId {
             .build();
     }
 
+    /**
+     * Checks whether this state carries a backfill that is currently paused.
+     * <p>
+     * A paused backfill freezes its {@code currentDate}, hence the trigger's next evaluation date, so such a
+     * trigger must not be evaluated until the backfill is resumed.
+     *
+     * @return {@code true} if the backfill is paused.
+     */
+    public boolean hasPausedBackfill() {
+        return backfill != null && Boolean.TRUE.equals(backfill.getPaused());
+    }
+
     private Backfill getBackFillForNextEvaluationDate(final Instant nextEvaluationDate) {
         final ZonedDateTime localNextEvaluationDate = toZonedDateTime(nextEvaluationDate);
-        if (backfill != null && !backfill.getPaused()) {
+        if (backfill != null && !hasPausedBackfill()) {
             if (localNextEvaluationDate.isAfter(backfill.getEnd())) {
                 return null;
             } else {
@@ -366,6 +405,7 @@ public final class TriggerState implements TriggerId {
             .workerId(workerId)
             .vnode(vnode)
             .disabled(disabled)
+            .sourceDisabled(sourceDisabled)
             .type(type)
             .lastEventId(lastEventId)
             .lastTriggeredDate(lastTriggeredDate)

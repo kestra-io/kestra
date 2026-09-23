@@ -1,6 +1,7 @@
 import {describe, it, expect, vi, afterAll, beforeEach} from "vitest"
 import {ref, nextTick} from "vue"
-import {useDependencies, transformResponse} from "../../../../src/components/dependencies/composables/useDependencies"
+import {useDependencies} from "../../../../src/components/dependencies/composables/useDependencies"
+import {transformResponse} from "../../../../src/components/dependencies/utils/transform"
 import {type Node, type Edge, FLOW, EXECUTION, NAMESPACE} from "../../../../src/components/dependencies/utils/types"
 import {setActivePinia, createPinia} from "pinia"
 import {mount} from "@vue/test-utils"
@@ -315,7 +316,10 @@ describe("useDependencies composable", () => {
     const CANVAS_W = 600
     const CANVAS_H = 400
 
-    async function mountWithChart() {
+    /** Calls that move the camera, i.e. the ones carrying a zoom on the series. */
+    const cameraCalls = (calls: any[][]) => calls.filter((args) => args[0]?.series?.[0]?.zoom !== undefined)
+
+    async function mountWithChart(initialNodeID = "X", dagView = false) {
         const chartMock = makeChartMock(NODE_POSITIONS, CANVAS_W, CANVAS_H)
         const graphRef = ref({
             fit:                vi.fn(),
@@ -337,9 +341,9 @@ describe("useDependencies composable", () => {
         const wrapper = mount({
             template: "<div></div>",
             setup() {
-                // Use initialNodeID="X" (nonexistent) so no node is preselected,
+                // Defaults to initialNodeID="X" (nonexistent) so no node is preselected,
                 // leaving selectedNodeID undefined and letting tests control selection.
-                const composable = useDependencies(graphRef as any, FLOW, "X", {}, fetchAssetDependencies)
+                const composable = useDependencies(graphRef as any, FLOW, initialNodeID, {}, fetchAssetDependencies, undefined, dagView)
                 return {composable}
             },
         })
@@ -351,41 +355,59 @@ describe("useDependencies composable", () => {
         await vi.runAllTimersAsync()
         await nextTick()
         vi.useRealTimers()
+        const mountCalls = [...chartMock.setOption.mock.calls]
         chartMock.setOption.mockClear()
-        const {selectNode} = wrapper.vm.composable as ReturnType<typeof useDependencies>
-        return {selectNode, chartMock}
+        const {selectNode, selectedNodeID} = wrapper.vm.composable as ReturnType<typeof useDependencies>
+        return {selectNode, selectedNodeID, chartMock, mountCalls}
     }
 
-    it("calls setOption with zoom=1.8 and correct center when node A is selected", async () => {
-        // center = [pos.x, pos.y] — ECharts graph center is in data coordinates
-        const {selectNode, chartMock} = await mountWithChart()
+    it("centres on the initially selected node at zoom=1.8 on mount", async () => {
+        // center = [pos.x, pos.y] — ECharts graph center is in data coordinates.
+        // The initial auto-selection is the only path that still moves the viewport.
+        const {mountCalls} = await mountWithChart("A")
+
+        expect(cameraCalls(mountCalls)).toEqual([
+            [
+                expect.objectContaining({
+                    series: [expect.objectContaining({zoom: 1.8, center: [100, 200]})],
+                }),
+                false,
+            ],
+        ])
+    })
+
+    it("fits the graph on mount instead of centring when the view is the asset view", async () => {
+        // center=[200, 250] is the extent midpoint of A/B/C, not the focus path's zoom=1.8 on A.
+        // zoom=0.7 pads the constraining dimension: (H - 2*60) / H with the 300-unit y spread
+        // contain-fitted to the 400px canvas.
+        const {mountCalls} = await mountWithChart("A", true)
+
+        expect(cameraCalls(mountCalls)).toEqual([
+            [
+                expect.objectContaining({
+                    series: [expect.objectContaining({zoom: expect.closeTo(0.7, 5), center: [200, 250]})],
+                }),
+                false,
+            ],
+        ])
+    })
+
+    it("does not move the viewport when the selection changes", async () => {
+        // Selecting never re-centres: the canvas jumping under the cursor costs the user
+        // their bearings. Only the initial auto-selection centres the graph.
+        const {selectNode, selectedNodeID, chartMock} = await mountWithChart()
 
         selectNode("A")
         await nextTick()
         await nextTick()
-
-        expect(chartMock.setOption).toHaveBeenCalledWith(
-            expect.objectContaining({
-                series: [expect.objectContaining({zoom: 1.8, center: [100, 200]})],
-            }),
-            false,
-        )
-    })
-
-    it("centers on the correct node when selection changes to B", async () => {
-        // center = [pos.x, pos.y] — ECharts graph center is in data coordinates
-        const {selectNode, chartMock} = await mountWithChart()
-
         selectNode("B")
         await nextTick()
         await nextTick()
 
-        expect(chartMock.setOption).toHaveBeenCalledWith(
-            expect.objectContaining({
-                series: [expect.objectContaining({zoom: 1.8, center: [300, 400]})],
-            }),
-            false,
-        )
+        // Assert the selection landed, so this cannot pass by selection being broken outright.
+        expect(selectedNodeID.value).toBe("B")
+        expect(chartMock.setOption).toHaveBeenCalled()
+        expect(cameraCalls(chartMock.setOption.mock.calls)).toEqual([])
     })
 
     it("does not call setOption for centering when node has no stored position", async () => {

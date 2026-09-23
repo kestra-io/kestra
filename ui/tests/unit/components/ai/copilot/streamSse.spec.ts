@@ -4,18 +4,24 @@ import {describe, it, expect, vi, beforeEach} from "vitest"
 // progress) apply — mock it at the SDK boundary; the facade's own behavior is covered
 // by the client-facade spec.
 const streamMock = vi.fn()
-vi.mock("@kestra-io/kestra-sdk", () => ({useClient: () => ({stream: streamMock})}))
+vi.mock("@kestra-io/kestra-sdk", async () => {
+    // parseProblem is a pure function with no transport dependency, so use the real one: the point of
+    // these tests is that a problem body reaches SseHttpError.detail as prose, not as raw JSON.
+    const {parseProblem} = await import("../../../../../packages/hey-api-plugin/src/problem")
+    return {useClient: () => ({stream: streamMock}), parseProblem}
+})
 
 import {parseFrame, streamSse, SseHttpError} from "../../../../../src/components/ai/copilot/streamSse"
 
 /** Builds a Response-like whose body streams `chunks` as separate reads. */
-function sseResponse(chunks: string[], {ok = true, status = 200} = {}) {
+function sseResponse(chunks: string[], {ok = true, status = 200, body = "", contentType = ""} = {}) {
     const encoder = new TextEncoder()
     let i = 0
     return {
         ok,
         status,
-        text: async () => "",
+        headers: {get: (name: string) => (name.toLowerCase() === "content-type" ? contentType : null)},
+        text: async () => body,
         body: {
             getReader() {
                 return {
@@ -112,5 +118,33 @@ describe("streamSse", () => {
         streamMock.mockResolvedValue(sseResponse([], {ok: false, status: 409}))
         await expect(streamSse({url: "/x", body: {}, onFrame: () => {}}))
             .rejects.toBeInstanceOf(SseHttpError)
+    })
+
+    it("surfaces a problem document's detail rather than the raw JSON", async () => {
+        // Without this, the Copilot would render the serialized problem body verbatim to the user.
+        const problem = {
+            type: "https://kestra.io/docs/api-reference/problems/conflict",
+            title: "Conflict",
+            status: 409,
+            detail: "A turn is already in flight for this thread.",
+        }
+        streamMock.mockResolvedValue(sseResponse([], {
+            ok: false,
+            status: 409,
+            body: JSON.stringify(problem),
+            contentType: "application/problem+json",
+        }))
+
+        await expect(streamSse({url: "/x", body: {}, onFrame: () => {}})).rejects.toMatchObject({
+            status: 409,
+            detail: "A turn is already in flight for this thread.",
+            problemType: problem.type,
+        })
+    })
+
+    it("falls back to the raw body when the failure is not a problem document", async () => {
+        streamMock.mockResolvedValue(sseResponse([], {ok: false, status: 502, body: "upstream is down"}))
+        await expect(streamSse({url: "/x", body: {}, onFrame: () => {}}))
+            .rejects.toMatchObject({status: 502, detail: "upstream is down"})
     })
 })

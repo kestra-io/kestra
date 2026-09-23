@@ -8,7 +8,7 @@ import {useI18n} from "vue-i18n"
 
 import {decodeSearchParams} from "@kestra-io/design-system"
 
-import {Chart} from "../types.ts"
+import {Chart, type ChartResults} from "../types.ts"
 import {chartLoadQueue} from "./chartLoadQueue"
 import {ChartFiltersOverrides, QueryFilter} from "@kestra-io/kestra-sdk"
 
@@ -18,11 +18,25 @@ export const isKPIChart = (type: string): boolean => type === "io.kestra.plugin.
 
 export const isMarkdownChart = (type: string): boolean => type === "io.kestra.plugin.core.dashboard.chart.Markdown"
 
+/**
+ * Charts backed by an ECharts canvas. These dominate a dashboard's memory - a canvas backing store is sized by the
+ * chart's box times the device pixel ratio squared - so they are the ones worth unmounting when scrolled out of view.
+ */
+export const isCanvasChart = (type: string): boolean => [
+    "io.kestra.plugin.core.dashboard.chart.Bar",
+    "io.kestra.plugin.core.dashboard.chart.Pie",
+    "io.kestra.plugin.core.dashboard.chart.TimeSeries",
+].includes(type)
+
 export const isExportableChart = (type: string): boolean => !isMarkdownChart(type)
 
 export const getChartTitle = (chart: Chart): string => chart.chartOptions?.displayName ?? chart.id
 
-export const getPropertyValue = (data: Record<string, any>, property: "value" | "description"): string => data.results?.[0]?.[property]
+/** `data` is undefined when the chart went away before its request answered, or when the request 404ed. */
+export const getPropertyValue = (data: ChartResults | undefined, property: "value" | "description"): string | undefined => {
+    const value = data?.results?.[0]?.[property]
+    return value == null ? undefined : String(value)
+}
 
 export const isPaginationEnabled = (chart: Chart): boolean => chart.chartOptions?.pagination?.enabled ?? false
 
@@ -40,7 +54,7 @@ export function useChartGenerator(dashboardId: string | undefined, props: {chart
     const {t} = useI18n({useScope: "global"})
     const EMPTY_TEXT = t("dashboards.empty")
 
-    const data = ref()
+    const data = ref<ChartResults>()
     const loading = ref(false)
     let isMounted = true
     onBeforeUnmount(() => {

@@ -1,7 +1,7 @@
 import {describe, expect, it, vi, beforeAll, beforeEach} from "vitest"
 import {FlowAutoCompletion} from "override/services/flowAutoCompletionProvider"
 import {fillExpressionCache, functionToSnippet} from "../../../src/services/autoCompletionProvider"
-import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
+import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
 
 const defaultFlow = `inputs:
   - id: input1
@@ -97,7 +97,7 @@ const pluginsStore = {
 
 const flowStore = {
     loadFlow: vi.fn(({namespace, id, revision}) => {
-        if (namespace === "another.namespace" && id === "flow-other-namespace" && revision === 2) {
+        if (namespace === "another.namespace" && id === "flow-other-namespace" && revision === "2") {
             return Promise.resolve({
                 inputs: [
                     {id: "first-input"},
@@ -204,6 +204,7 @@ describe("FlowAutoCompletionProvider", () => {
         expect(result).toContain("outputs")
         expect(result).toContain("inputs")
         expect(result).toContain("kestra")
+        expect(result).toContain("item")
 
         // Function snippets are generated from functionsWithDefaults
         for (const fn of mockFunctions.filter(fn => fn.name !== "subflow")) {

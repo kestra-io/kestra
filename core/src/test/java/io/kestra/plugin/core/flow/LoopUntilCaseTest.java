@@ -72,6 +72,12 @@ public class LoopUntilCaseTest {
         assertThat((Integer) taskOutputService.getOutputs(execution.getTaskRunList().getFirst()).get("iterationCount")).isEqualTo(3);
         Map<String, Object> values = (Map<String, Object>) taskOutputService.getOutputs(execution.getTaskRunList().getLast()).get("values");
         assertThat(values.get("count")).isEqualTo("4");
+
+        // taskRunList only keeps the last of the 3 iterations (2 tasks each); the other 2 iterations'
+        // 4 task runs are accumulated on the execution metadata instead of being lost from statistics
+        assertThat(execution.getTaskRunList()).hasSize(3);
+        assertThat(execution.getMetadata().getTaskRunStatistic()).isNotNull();
+        assertThat(execution.getMetadata().getTaskRunStatistic().count()).isEqualTo(4);
     }
 
     public void waitforMultipleTasksFailed(String tenantId) throws TimeoutException, QueueException {

@@ -13,13 +13,10 @@ const PLUGIN_FQCN = /^[a-z][\w$]*(?:\.[\w$]+)+$/
 // Monaco suffixes the row aria-label with ", <kind>" (and ", docs: …" once resolved), so read the rendered label.
 export function suggestionLabel(row: HTMLElement): string | undefined {
     const rendered = row.querySelector(".monaco-icon-name-container")?.textContent?.trim()
-    // A plugin type is offered class name first with its package as the row's description (see the app's
-    // `splitPluginTypeLabel`), so put the two back together - the icon is resolved from the fully qualified name.
-    // Monaco drops `string-label` on those rows, and only there does the description hold a package rather than an
-    // arbitrary `detail`.
+    // Rejoins what the app's `splitPluginTypeLabel` split apart, so the icon resolves from the fully qualified name.
     if (rendered && !row.classList.contains("string-label")) {
         const packageName = row.querySelector(".details-label")?.textContent?.trim()
-        if (packageName) {
+        if (packageName && PLUGIN_FQCN.test(packageName)) {
             return `${packageName}.${rendered}`
         }
     }

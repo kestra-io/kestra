@@ -364,8 +364,7 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
                 }
             }
 
-            // Render plugin types class name first, so a long shared package prefix can no longer push the class
-            // name out of the row. Done last: every step above reads `label` as the fully qualified string.
+            // Done last: every step above reads `label` as the fully qualified string.
             const labelledSuggestions = scopedSuggestions.map((suggestion) => {
                 const split = splitPluginTypeLabel(suggestion.label)
                 if (split === undefined) {
@@ -375,8 +374,7 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
                 return {
                     ...suggestion,
                     label: split,
-                    // Monaco falls back to the label when `filterText` is unset, and the label is now only the class
-                    // name - pin the fully qualified name so typing a package segment still matches.
+                    // Keeps package segments searchable now that the label is only the class name.
                     filterText: suggestion.filterText ?? suggestion.label,
                 }
             })

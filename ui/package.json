@@ -148,12 +148,17 @@
         "dompurify": "^3.4.13"
     },
     "lint-staged": {
-        "**/*.{vue,scss,css}": [
+        "**/*.{scss,css}": [
             "stylelint"
         ],
-        "**/*.{js,mjs,cjs,ts,vue}": [
+        "**/*.{js,mjs,cjs,ts}": [
             "oxlint --fix",
             "eslint --fix"
+        ],
+        "**/*.vue": [
+            "oxlint --fix",
+            "eslint --fix",
+            "stylelint"
         ]
     },
     "allowScripts": {

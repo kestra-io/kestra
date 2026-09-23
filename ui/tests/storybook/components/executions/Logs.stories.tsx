@@ -379,7 +379,9 @@ export const CompactFullscreenVirtualizedTasks: Story = {
         fullscreenTaskScroller.dispatchEvent(new Event("scroll"));
         const recycledFirstTaskScroller = await waitFor(() => {
             const element = dialog.querySelector<HTMLElement>("[data-scroll-key='virtual-task-run-1']");
-            if (!element) throw new Error("recycled first task log scroller not ready");
+            if (!element || !element.clientHeight || element.scrollHeight <= element.clientHeight) {
+                throw new Error("recycled first task log scroller not ready");
+            }
             return element;
         });
         recycledFirstTaskScroller.scrollTop = 50;

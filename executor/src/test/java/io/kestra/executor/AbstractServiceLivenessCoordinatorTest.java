@@ -90,6 +90,8 @@ public abstract class AbstractServiceLivenessCoordinatorTest {
 
     public static final String WORKER_QUEUE_UID = "worker-queue-id";
 
+    private static final String ORPHAN_WORKER_QUEUE_ID = "orphan-worker-queue-id";
+
     @Inject
     private ApplicationContext applicationContext;
 
@@ -320,6 +322,115 @@ public abstract class AbstractServiceLivenessCoordinatorTest {
         assertThat(resubmitted).doesNotContain(workerTask.uid());
     }
 
+    @Test
+    void shouldResubmitOrphanedWorkerJobOnceWhenWorkerInstanceIsInactive() throws Exception {
+        // Given a job left in the running state store by a worker the liveness state machine is done
+        // with — the controller dispatched it but the worker never ran it — alongside one held by a
+        // worker that is still running. Both are routed to a Worker Queue no worker serves, so the
+        // resubmitted job stays in the queue instead of being picked up by another test's worker.
+        ServiceInstance inactive = saveWorkerInstance(Service.ServiceState.INACTIVE);
+        ServiceInstance running = saveWorkerInstance(Service.ServiceState.RUNNING);
+
+        WorkerTaskRunning orphaned = workerTaskRunning(inactive.uid());
+        WorkerTaskRunning stillOwned = workerTaskRunning(running.uid());
+        workerJobRunningStateStore.save(NoTransactionContext.INSTANCE, orphaned);
+        workerJobRunningStateStore.save(NoTransactionContext.INSTANCE, stillOwned);
+
+        List<String> resubmitted = Collections.synchronizedList(new ArrayList<>());
+        workerJobEventQueue.addListener(event -> resubmitted.add(event.job().uid()));
+
+        // When the coordinator sweeps — repeatedly, because a freshly saved instance is not
+        // immediately searchable on every backend.
+        Await.until(
+            () ->
+            {
+                jdbcServiceLivenessHandler.handleAllOrphanedWorkerJobs(afterTerminationGracePeriod());
+                return resubmitted.contains(orphaned.uid());
+            },
+            Duration.ofMillis(200),
+            Duration.ofSeconds(30)
+        );
+        jdbcServiceLivenessHandler.handleAllOrphanedWorkerJobs(afterTerminationGracePeriod());
+
+        // Then the entry is gone, so the following sweeps do not re-emit it, and the job of the
+        // still-running worker is left for that worker to finish.
+        assertThat(resubmitted.stream().filter(orphaned.uid()::equals)).hasSize(1);
+        assertThat(resubmitted).doesNotContain(stillOwned.uid());
+    }
+
+    @Test
+    void shouldNotResubmitOrphanedWorkerJobWhenTheWorkerRestartStrategyIsNever() {
+        // Given an inactive worker configured never to have its tasks restarted — the setting that
+        // exists to keep a non-idempotent task from running twice.
+        ServiceInstance inactive = saveWorkerInstance(Service.ServiceState.INACTIVE, WorkerTaskRestartStrategy.NEVER);
+        WorkerTaskRunning orphaned = workerTaskRunning(inactive.uid());
+        workerJobRunningStateStore.save(NoTransactionContext.INSTANCE, orphaned);
+
+        List<String> resubmitted = Collections.synchronizedList(new ArrayList<>());
+        workerJobEventQueue.addListener(event -> resubmitted.add(event.job().uid()));
+
+        // When
+        jdbcServiceLivenessHandler.handleAllOrphanedWorkerJobs(afterTerminationGracePeriod());
+        jdbcServiceLivenessHandler.handleAllOrphanedWorkerJobs(afterTerminationGracePeriod());
+
+        // Then
+        assertThat(resubmitted).doesNotContain(orphaned.uid());
+    }
+
+    @Test
+    void shouldReclaimOrphanedWorkerJobOnlyOnceTheTerminationGracePeriodElapsed() throws Exception {
+        // Given a worker that has just become INACTIVE, whose last results the executor may not have applied yet
+        ServiceInstance inactive = saveWorkerInstance(Service.ServiceState.INACTIVE);
+        WorkerTaskRunning orphaned = workerTaskRunning(inactive.uid());
+        workerJobRunningStateStore.save(NoTransactionContext.INSTANCE, orphaned);
+
+        List<String> resubmitted = Collections.synchronizedList(new ArrayList<>());
+        workerJobEventQueue.addListener(event -> resubmitted.add(event.job().uid()));
+
+        // When the sweep runs within its termination grace period
+        jdbcServiceLivenessHandler.handleAllOrphanedWorkerJobs(inactive.updatedAt());
+
+        // Then the job is left alone
+        assertThat(resubmitted).doesNotContain(orphaned.uid());
+        assertThat(leasesHeldBy(inactive.uid())).contains(orphaned.uid());
+
+        // And it is reclaimed once the grace period has elapsed
+        Await.until(
+            () ->
+            {
+                jdbcServiceLivenessHandler.handleAllOrphanedWorkerJobs(afterTerminationGracePeriod());
+                return resubmitted.contains(orphaned.uid());
+            },
+            Duration.ofMillis(200),
+            Duration.ofSeconds(30)
+        );
+    }
+
+    @Test
+    void shouldDiscardOrphanedWorkerJobWhenItsExecutionNoLongerExists() throws Exception {
+        // Given an entry whose execution was purged, as the ones leaked before an upgrade
+        ServiceInstance inactive = saveWorkerInstance(Service.ServiceState.INACTIVE);
+        WorkerTaskRunning orphaned = workerTaskRunning(inactive.uid(), IdUtils.create());
+        workerJobRunningStateStore.save(NoTransactionContext.INSTANCE, orphaned);
+
+        List<String> resubmitted = Collections.synchronizedList(new ArrayList<>());
+        workerJobEventQueue.addListener(event -> resubmitted.add(event.job().uid()));
+
+        // When
+        Await.until(
+            () ->
+            {
+                jdbcServiceLivenessHandler.handleAllOrphanedWorkerJobs(afterTerminationGracePeriod());
+                return !leasesHeldBy(inactive.uid()).contains(orphaned.uid());
+            },
+            Duration.ofMillis(200),
+            Duration.ofSeconds(30)
+        );
+
+        // Then
+        assertThat(resubmitted).doesNotContain(orphaned.uid());
+    }
+
     @MockBean(WorkerQueueService.class)
     WorkerQueueService workerGroupService() {
         return new WorkerQueueService.Default();
@@ -352,6 +463,10 @@ public abstract class AbstractServiceLivenessCoordinatorTest {
         return executionRepository.save(execution);
     }
 
+    private static Instant afterTerminationGracePeriod() {
+        return Instant.now().plus(Duration.ofMinutes(1));
+    }
+
     private List<String> leasesHeldBy(String workerUid) {
         List<String> leases = new ArrayList<>();
         workerJobRunningStateStore.processWorkerJobsForDeadWorker(
@@ -363,6 +478,10 @@ public abstract class AbstractServiceLivenessCoordinatorTest {
     }
 
     private ServiceInstance saveWorkerInstance(Service.ServiceState state) {
+        return saveWorkerInstance(state, WorkerTaskRestartStrategy.AFTER_TERMINATION_GRACE_PERIOD);
+    }
+
+    private ServiceInstance saveWorkerInstance(Service.ServiceState state, WorkerTaskRestartStrategy restartStrategy) {
         return serviceInstanceRepository.save(
             new ServiceInstance(
                 IdUtils.create(),
@@ -372,19 +491,37 @@ public abstract class AbstractServiceLivenessCoordinatorTest {
                 Instant.now(),
                 Instant.now(),
                 List.of(),
-                new ServerConfig(
-                    Duration.ofSeconds(1),
-                    WorkerTaskRestartStrategy.AFTER_TERMINATION_GRACE_PERIOD,
-                    new ServerConfig.Liveness(false, Duration.ofSeconds(1), Duration.ofSeconds(3), Duration.ZERO, Duration.ofSeconds(1)),
-                    null,
-                    null,
-                    null
-                ),
+                // Liveness disabled: this instance has no process behind it, and letting the
+                // coordinator declare it non-responding would resubmit its job from the unclean
+                // path and defeat what this test asserts.
+                new ServerConfig(Duration.ofSeconds(1), restartStrategy, new ServerConfig.Liveness(false, Duration.ofSeconds(1), Duration.ofSeconds(3), Duration.ZERO, Duration.ofSeconds(1)), null, null, null),
                 Map.of(),
                 Set.of(),
                 0L
             )
         );
+    }
+
+    private WorkerTaskRunning workerTaskRunning(String workerUid) {
+        return workerTaskRunning(workerUid, saveExecution(Log.builder().id("log").type(Log.class.getName()).message("test").build()).getId());
+    }
+
+    private static WorkerTaskRunning workerTaskRunning(String workerUid, String executionId) {
+        return WorkerTaskRunning.builder()
+            .workerInstance(new WorkerInstance(workerUid, ORPHAN_WORKER_QUEUE_ID))
+            .taskRun(
+                TaskRun.builder()
+                    .id(IdUtils.create())
+                    .executionId(executionId)
+                    .namespace("io.kestra.unittest")
+                    .flowId("orphaned-worker-job")
+                    .taskId("log")
+                    .state(new State().withState(State.Type.SUBMITTED))
+                    .build()
+            )
+            .task(Log.builder().id("log").type(Log.class.getName()).message("test").build())
+            .data(new WorkerTaskData(Map.of(), null))
+            .build();
     }
 
     private WorkerTrigger workerTrigger(Duration sleep, String workerQueueId) {

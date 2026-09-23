@@ -2043,6 +2043,15 @@
       "success": {
         "title": "Félicitations !",
         "subtitle": "Vous êtes prêt !"
+      },
+      "change_password": {
+        "title": "Changer le mot de passe",
+        "menu": "Changer le mot de passe",
+        "current_password": "Mot de passe actuel",
+        "new_password": "Nouveau mot de passe",
+        "username_hint": "Saisissez votre nom d’utilisateur actuel (e-mail) pour identifier votre compte.",
+        "incorrect_current": "Le mot de passe actuel est incorrect.",
+        "success": "Mot de passe modifié avec succès."
       }
     },
     "ai": {

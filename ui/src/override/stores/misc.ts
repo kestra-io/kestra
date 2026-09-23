@@ -74,6 +74,7 @@ export const useMiscStore = defineStore("misc", () => {
     async function addBasicAuth(options: {
         username: string;
         password: string;
+        currentPassword?: string;
     }) {
         const email = options.username
         const uid = ensureUid()
@@ -82,6 +83,7 @@ export const useMiscStore = defineStore("misc", () => {
             uid,
             username: email,
             password: options.password,
+            ...(options.currentPassword !== undefined ? {currentPassword: options.currentPassword} : {}),
         })
 
         // The call above logs the caller in (it sets the auth cookie on success), so the

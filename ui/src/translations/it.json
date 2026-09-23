@@ -2043,6 +2043,15 @@
       "success": {
         "title": "Congratulazioni!",
         "subtitle": "Sei pronto!"
+      },
+      "change_password": {
+        "title": "Cambia password",
+        "menu": "Cambia password",
+        "current_password": "Password attuale",
+        "new_password": "Nuova password",
+        "username_hint": "Inserisci il tuo nome utente attuale (email) per identificare il tuo account.",
+        "incorrect_current": "La password attuale non è corretta.",
+        "success": "Password modificata con successo."
       }
     },
     "ai": {

@@ -2043,6 +2043,15 @@
       "success": {
         "title": "Parabéns!",
         "subtitle": "Você está pronto!"
+      },
+      "change_password": {
+        "title": "Alterar senha",
+        "menu": "Alterar senha",
+        "current_password": "Senha atual",
+        "new_password": "Nova senha",
+        "username_hint": "Introduza o seu nome de usuário atual (email) para identificar a sua conta.",
+        "incorrect_current": "A senha atual está incorreta.",
+        "success": "Senha alterada com sucesso."
       }
     },
     "ai": {

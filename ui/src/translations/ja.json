@@ -2043,6 +2043,15 @@
       "success": {
         "title": "おめでとうございます！",
         "subtitle": "準備完了です！"
+      },
+      "change_password": {
+        "title": "パスワードを変更",
+        "menu": "パスワードを変更",
+        "current_password": "現在のパスワード",
+        "new_password": "新しいパスワード",
+        "username_hint": "アカウントを識別するため、現在のユーザー名（メール）を入力してください。",
+        "incorrect_current": "現在のパスワードが正しくありません。",
+        "success": "パスワードが正常に変更されました。"
       }
     },
     "ai": {

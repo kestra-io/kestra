@@ -406,11 +406,26 @@
         tempContainer.remove();
     }
 
+    // A plugin type is offered class name first with its package as the row's description (see
+    // `splitPluginTypeLabel`), so put the two back together - the icon is looked up by the fully qualified name.
+    // Monaco drops `string-label` on those rows, and only there does the description hold a package.
+    const suggestionLabel = (row: HTMLElement): string | null => {
+        const ariaLabel = row.getAttribute("aria-label");
+        if (row.classList.contains("string-label")) {
+            return ariaLabel;
+        }
+
+        const name = row.querySelector(".monaco-icon-name-container")?.textContent?.trim();
+        const packageName = row.querySelector(".details-label")?.textContent?.trim();
+
+        return name && packageName ? `${packageName}.${name}` : ariaLabel;
+    };
+
     const replaceRowsIcons = (nodes: HTMLElement[]) => {
         nodes = uniqBy(nodes, node => node.id);
 
         for (let node of nodes) {
-            const completionValue = node?.getAttribute("aria-label");
+            const completionValue = suggestionLabel(node);
             if (!completionValue || node.getAttribute("data-index") === null) {
                 continue;
             }

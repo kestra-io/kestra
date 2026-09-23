@@ -3,6 +3,7 @@ package io.kestra.jdbc.runner;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -164,6 +165,44 @@ public abstract class JdbcWorkerJobRunningStateStoreTest {
 
         // Then it is released
         assertThat(existsByKey(workerTaskRunning.uid())).isFalse();
+    }
+
+    @Test
+    void shouldProcessOnlyEntriesOfGivenWorkersWhenProcessingOrphans() {
+        // Given
+        WorkerTaskRunning orphaned = workerTaskRunning("inactive-worker");
+        WorkerTaskRunning stillOwned = workerTaskRunning("running-worker");
+        workerJobRunningStateStore.save(NoTransactionContext.INSTANCE, orphaned);
+        workerJobRunningStateStore.save(NoTransactionContext.INSTANCE, stillOwned);
+
+        // When
+        List<WorkerJobRunning> consumed = new ArrayList<>();
+        workerJobRunningStateStore.processOrphanWorkerJobs(
+            NoTransactionContext.INSTANCE,
+            Set.of("inactive-worker"),
+            (txContext, workerJobRunning) -> consumed.add(workerJobRunning)
+        );
+
+        // Then
+        assertThat(consumed).hasSize(1);
+        assertThat(consumed.getFirst().uid()).isEqualTo(orphaned.uid());
+    }
+
+    @Test
+    void shouldProcessNothingWhenNoWorkerIsGivenForOrphans() {
+        // Given
+        workerJobRunningStateStore.save(NoTransactionContext.INSTANCE, workerTaskRunning());
+
+        // When
+        List<WorkerJobRunning> consumed = new ArrayList<>();
+        workerJobRunningStateStore.processOrphanWorkerJobs(
+            NoTransactionContext.INSTANCE,
+            Set.of(),
+            (txContext, workerJobRunning) -> consumed.add(workerJobRunning)
+        );
+
+        // Then
+        assertThat(consumed).isEmpty();
     }
 
     private void insertRawEntry(String key, String json) {

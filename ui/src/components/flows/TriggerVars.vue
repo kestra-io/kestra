@@ -38,11 +38,11 @@
     const {t, te} = useI18n()
 
     defineProps<{
-        data: Record<string, any>;
+        data: Record<string, unknown>;
         execution?: Execution;
     }>()
 
-    const emit = defineEmits<{ (e: "on-copy", event: any): void }>()
+    const emit = defineEmits<{ (e: "on-copy", event: null): void }>()
 
     const getHumanizeLabel = (key: string): string => {
         const mappings: Record<string, string> = {

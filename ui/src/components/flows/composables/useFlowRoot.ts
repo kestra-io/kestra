@@ -45,10 +45,11 @@ export function useFlowRoot() {
         // so fetching it again here would double every flow page open.
         if (!isFlowLoaded()) {
             await flowStore.loadFlow({
-                ...route.params,
-                ...route.query,
+                namespace: String(route.params.namespace),
+                id: String(route.params.id),
+                revision: route.query.revision ? String(route.query.revision) : undefined,
                 allowDeleted: true,
-            } as any)
+            })
         }
 
         if (flowStore.flow) {
@@ -101,7 +102,7 @@ export function useFlowRoot() {
                 link: {name: "flows/list"},
             },
             {
-                label: route.params.namespace,
+                label: String(route.params.namespace),
                 link: {
                     name: "namespaces/update/flows",
                     params: {id: route.params.namespace},

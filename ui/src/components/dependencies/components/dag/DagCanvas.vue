@@ -51,11 +51,11 @@
     import {useTheme} from "../../../../utils/utils"
     import AssetNode from "./AssetNode.vue"
     import {computeDagLayout} from "../../utils/dagLayout"
-    import {computeTrace, traceEdgeKey} from "../../utils/dagTrace"
+    import {computeTrace, extendTraceWithDirectEdges, traceEdgeKey} from "../../utils/dagTrace"
     import {DAG_CARD, DAG_SELECTED, DAG_HOVERED, DAG_TRACED, DAG_SHOWN} from "../../utils/dagConstants"
     import {ASSET, nodesOf, edgesOf} from "../../utils/types"
     import type {Element} from "../../utils/types"
-    import {edgeKindToken} from "../../utils/relationKind"
+    import {edgeKindToken, isLineageEdge} from "../../utils/relationKind"
 
     const props = defineProps<{
         elements: Element[];
@@ -93,12 +93,16 @@
         nodes.value.filter((node) => node.metadata.subtype !== ASSET).map((node) => node.id),
     ))
 
+    // PART_OF and RELATED join two assets without describing a data-flow step; ranking the DAG
+    // through them would place a related-but-unrelated-in-pipeline-stage asset in the wrong column.
+    const lineageEdges = computed(() => edges.value.filter((edge) => isLineageEdge(edge.kind)))
+
     const layout = computed(() => {
-        const produced = new Set(edges.value.map((edge) => edge.source))
+        const produced = new Set(lineageEdges.value.map((edge) => edge.source))
 
         return computeDagLayout(
             nodes.value.map((node) => node.id),
-            edges.value.map(({source, target}) => ({source, target})),
+            lineageEdges.value.map(({source, target}) => ({source, target})),
             {
                 columnGap: DAG_CARD.width + 120,
                 rowGap: DAG_CARD.height + 32,
@@ -143,10 +147,15 @@
         }]
     }))
 
-    const trace = computed(() => computeTrace(
+    const focusID = computed(() => props.hovered ?? props.selected)
+
+    // Trace walks transitively, so it stays lineage-only; a direct PART_OF/RELATED edge (and its
+    // far-end node) is folded back in afterwards, one hop only, without pulling in its own lineage.
+    const trace = computed(() => extendTraceWithDirectEdges(
+        computeTrace(lineageEdges.value, focusID.value, (id) => flowNodeIDs.value.has(id)),
         edges.value,
-        props.hovered ?? props.selected,
-        (id) => flowNodeIDs.value.has(id),
+        focusID.value,
+        isLineageEdge,
     ))
 
     const vfEdges = computed(() => {
@@ -161,7 +170,10 @@
                 : false
             const source = positions.get(edge.source)
             const target = positions.get(edge.target)
-            const backwards = !!source && !!target && source.x > target.x
+            // Column order for a PART_OF/RELATED edge is arbitrary (its endpoint may rank
+            // low simply for having no lineage of its own), so "backwards" only means anything
+            // for a lineage edge.
+            const backwards = isLineageEdge(edge.kind) && !!source && !!target && source.x > target.x
             const stroke = cssVar(edgeKindToken(edge.kind) ?? "--ks-border-default")
 
             return {
@@ -169,7 +181,7 @@
                 source: edge.source,
                 target: edge.target,
                 type: "smoothstep",
-                markerEnd: {type: MarkerType.ArrowClosed, color: stroke},
+                markerEnd: edge.directed === false ? undefined : {type: MarkerType.ArrowClosed, color: stroke},
                 style: {
                     stroke,
                     strokeWidth: onPath ? 2 : 1,

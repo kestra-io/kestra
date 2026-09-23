@@ -6,10 +6,16 @@ vi.mock("vue-router", () => ({
     useRouter: () => ({replace: () => Promise.resolve(), push: () => Promise.resolve()}),
 }))
 
+const {pluginsStoreState} = vi.hoisted(() => ({
+    pluginsStoreState: {plugin: undefined as {schema?: {outputs?: {properties?: Record<string, unknown>}}} | undefined},
+}))
+
 vi.mock("../../../../src/stores/plugins", () => ({
     usePluginsStore: () => ({
         icons: {},
-        plugin: undefined,
+        get plugin() {
+            return pluginsStoreState.plugin
+        },
         editorPlugin: undefined,
         load: vi.fn(() => Promise.resolve()),
     }),
@@ -103,5 +109,25 @@ describe("TaskEdit", () => {
         expect(emitted![0][0]).toContain("message: edited")
 
         vi.useRealTimers()
+    })
+
+    it("starts the Output column expanded when the task type declares outputs", async () => {
+        pluginsStoreState.plugin = {schema: {outputs: {properties: {uri: {type: "string"}}}}}
+        const wrapper = mountTaskEdit()
+        await wrapper.vm.$nextTick()
+
+        const output = wrapper.findAllComponents({name: "TaskEditData"}).find((c) => c.props("kind") === "output")
+        expect(output?.props("isCollapsed")).toBe(false)
+
+        pluginsStoreState.plugin = undefined
+    })
+
+    it("does not render an Output column when the task type declares no outputs", async () => {
+        pluginsStoreState.plugin = undefined
+        const wrapper = mountTaskEdit()
+        await wrapper.vm.$nextTick()
+
+        const output = wrapper.findAllComponents({name: "TaskEditData"}).find((c) => c.props("kind") === "output")
+        expect(output).toBeUndefined()
     })
 })

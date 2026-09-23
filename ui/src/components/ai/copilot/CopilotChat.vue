@@ -632,8 +632,7 @@
         flex: 1 1 auto;
         min-height: 0;
         display: flex;
-        align-items: center;
-        justify-content: center;
+        overflow-y: auto;
         padding: var(--ks-spacing-6) var(--ks-spacing-4);
     }
 
@@ -671,6 +670,7 @@
         gap: var(--ks-spacing-4);
         width: 100%;
         max-width: 30rem;
+        margin: auto;
     }
 
     /* The full-page home gives the hero + composer + help more room than the narrow dock. */

@@ -231,7 +231,7 @@
 
     const currentVersion = computed<string | undefined>(() => {
         const fromRoute = route.params.version as string | undefined
-        return fromRoute ?? publicVersions.value[0]?.version ?? installedVersions.value[0]
+        return fromRoute ?? installedVersions.value[0] ?? publicVersions.value[0]?.version
     })
 
     const isLatestVersion = computed<boolean>(() => {

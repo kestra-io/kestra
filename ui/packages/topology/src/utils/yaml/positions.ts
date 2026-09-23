@@ -117,7 +117,8 @@ function extractIndentAndMaybeYamlKey(stringToTest: string): {
 
 export type YamlElement = {
     key?: string;
-    value: Record<string, any>;
+    /** Whatever `toJS` produced for the node: a scalar, a sequence or a map. */
+    value: unknown;
     parents: Record<string, any>[];
     path?: string[];
     range?: [number, number, number];

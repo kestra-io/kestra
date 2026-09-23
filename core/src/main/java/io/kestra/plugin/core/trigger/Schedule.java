@@ -31,7 +31,6 @@ import org.hibernate.validator.constraints.time.DurationMin;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Null;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 import lombok.extern.slf4j.Slf4j;
@@ -189,7 +188,8 @@ public class Schedule extends AbstractTrigger implements Schedulable, TriggerOut
     // Caps the when-condition tick walk below so a frequent cron (e.g. per-second) paired with a
     // rarely-matching `when` can't pin the scheduling-loop thread rendering millions of ticks
     // synchronously. 10 years of even a daily cron (~3650 ticks) stays well under this.
-    private static final int MAX_WHEN_CONDITION_ITERATIONS = 10_000;
+    @VisibleForTesting
+    static final int MAX_WHEN_CONDITION_ITERATIONS = 10_000;
 
     @NotNull
     @Schema(
@@ -227,11 +227,6 @@ public class Schedule extends AbstractTrigger implements Schedulable, TriggerOut
     @TimezoneId
     @Builder.Default
     private String timezone = ZoneId.systemDefault().toString();
-
-    @Schema(hidden = true)
-    @Builder.Default
-    @Null
-    private final Duration interval = null;
 
     private Map<String, Object> inputs;
 

@@ -6,6 +6,7 @@ import java.time.ZonedDateTime;
 import java.util.Optional;
 
 import io.kestra.core.exceptions.InvalidTriggerConfigurationException;
+import io.kestra.core.models.WorkerJobLifecycle;
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.executions.Execution;
@@ -13,7 +14,7 @@ import io.kestra.core.scheduler.SchedulerClock;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
-public interface PollingTriggerInterface extends WorkerTriggerInterface {
+public interface PollingTriggerInterface extends WorkerTriggerInterface, WorkerJobLifecycle {
     @Schema(
         title = "Interval between polling.",
         description = "The interval between 2 different polls of schedule, this can avoid to overload the remote system " +
@@ -45,26 +46,10 @@ public interface PollingTriggerInterface extends WorkerTriggerInterface {
     }
 
     /**
-     * Compute the next evaluation date of the trigger based on the existing trigger context: by default, it uses the current date and the interval.
-     * Schedulable triggers must override this method.
+     * Compute the next evaluation date of the trigger using the configured interval.
      */
-    default ZonedDateTime nextEvaluationDate(ConditionContext conditionContext, Optional<? extends TriggerContext> last) throws InvalidTriggerConfigurationException {
-        return computeNextEvaluationDate();
-    }
-
-    /**
-     * Compute the next evaluation date of the trigger: by default, it uses the current date and the interval.
-     * Schedulable triggers must override this method as it's used to init them when there is no evaluation date.
-     */
+    @Override
     default ZonedDateTime nextEvaluationDate() throws InvalidTriggerConfigurationException {
-        return computeNextEvaluationDate();
-    }
-
-    /**
-     * computes the next evaluation date using the configured interval.
-     * Throw InvalidTriggerConfigurationException, if the interval causes date overflow.
-     */
-    private ZonedDateTime computeNextEvaluationDate() throws InvalidTriggerConfigurationException {
         Duration interval = this.getInterval();
 
         try {

@@ -10,10 +10,13 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.jupiter.api.Test;
 
 import io.kestra.core.exceptions.InvalidTriggerConfigurationException;
+import com.cronutils.model.time.ExecutionTime;
+
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.conditions.ConditionContext;
@@ -417,18 +420,50 @@ class ScheduleTest {
             .when("{{ false }}")
             .build();
 
-        long start = System.nanoTime();
+        AtomicInteger tickCount = new AtomicInteger();
         Optional<ZonedDateTime> next = trigger.findNextDateMatchingConditions(
-            trigger.executionTime(),
+            countingExecutionTime(trigger.executionTime(), tickCount),
             conditionContext(trigger),
             ZonedDateTime.now()
         );
-        long elapsed = Duration.ofNanos(System.nanoTime() - start).toSeconds();
 
         assertThat(next).isEmpty();
-        assertThat(elapsed)
+        // A 10-year lookahead on a per-second cron would otherwise walk ~315M ticks (3 calls/tick
+        // internally): bounding against the cap, with margin for that internal call count, proves
+        // the iteration bound kicked in rather than the year bound.
+        assertThat(tickCount.get())
             .as("the tick walk must be bounded by an iteration cap, not just a 10-year lookahead")
-            .isLessThan(10);
+            .isBetween(Schedule.MAX_WHEN_CONDITION_ITERATIONS, Schedule.MAX_WHEN_CONDITION_ITERATIONS * 10);
+    }
+
+    private static ExecutionTime countingExecutionTime(ExecutionTime delegate, AtomicInteger counter) {
+        return new ExecutionTime() {
+            @Override
+            public Optional<ZonedDateTime> nextExecution(ZonedDateTime date) {
+                counter.incrementAndGet();
+                return delegate.nextExecution(date);
+            }
+
+            @Override
+            public Optional<Duration> timeToNextExecution(ZonedDateTime date) {
+                return delegate.timeToNextExecution(date);
+            }
+
+            @Override
+            public Optional<ZonedDateTime> lastExecution(ZonedDateTime date) {
+                return delegate.lastExecution(date);
+            }
+
+            @Override
+            public Optional<Duration> timeFromLastExecution(ZonedDateTime date) {
+                return delegate.timeFromLastExecution(date);
+            }
+
+            @Override
+            public boolean isMatch(ZonedDateTime date) {
+                return delegate.isMatch(date);
+            }
+        };
     }
 
     @Test

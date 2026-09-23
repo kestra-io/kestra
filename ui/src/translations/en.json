@@ -871,7 +871,7 @@
     "flow delete": "Are you sure you want to delete <code>{flowCount}</code> flow(s)?",
     "delete flow error": "Failed to delete flow {id}",
     "flows deleted": "<code>{count}</code> Flow(s) deleted",
-    "flow disable": "Are you sure you want to disable <code>{flowCount}</code> flow(s)?",
+    "flow disable": "Are you sure you want to disable <code>{flowCount}</code> flow(s)?<br/><br/>Disabling a flow writes <code>disabled: true</code> into the flow and creates a new revision. A sync from an external source that does not include <code>disabled: true</code> will enable the flow again.",
     "flow enable": "Are you sure you want to enable <code>{flowCount}</code> flow(s)?",
     "flows disabled": "<code>{count}</code> Flow(s) disabled",
     "flows enabled": "<code>{count}</code> Flow(s) enabled",

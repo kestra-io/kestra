@@ -871,7 +871,7 @@
     "flow delete": "Вы уверены, что хотите удалить <code>{flowCount}</code> flow(ы)?",
     "delete flow error": "Не удалось удалить flow {id}",
     "flows deleted": "<code>{count}</code> Flow(ы) удалены",
-    "flow disable": "Вы уверены, что хотите отключить <code>{flowCount}</code> flow(ы)?",
+    "flow disable": "Вы уверены, что хотите отключить {flowCount} Flow? <br/><br/>Отключение Flow записывает <code>disabled: true</code> в Flow и создает новую версию. Синхронизация из внешнего источника, которая не включает <code>disabled: true</code>, снова включит Flow.",
     "flow enable": "Вы уверены, что хотите включить <code>{flowCount}</code> flow(ы)?",
     "flows disabled": "<code>{count}</code> Flow(ы) отключены",
     "flows enabled": "<code>{count}</code> Flow(ы) включены",

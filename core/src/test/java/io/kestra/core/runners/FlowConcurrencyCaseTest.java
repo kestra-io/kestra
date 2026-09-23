@@ -422,6 +422,19 @@ public class FlowConcurrencyCaseTest {
         concurrencyLimitRepository.update(concurrencyLimit.withRunning(concurrencyLimit.getRunning() - 1));
     }
 
+    public void flowConcurrencyLoop(String tenantId) throws QueueException, TimeoutException {
+        // #19705: with a flow concurrency limit of 1, the LOOP child executions must not
+        // compete for the parent flow's only slot — the parent already holds it while the
+        // loop runs, so gating them deadlocks the execution.
+        Execution execution = runnerUtils.runOne(tenantId, NAMESPACE, "flow-concurrency-loop");
+
+        assertThat(execution.getState().getCurrent()).isEqualTo(Type.SUCCESS);
+
+        List<Execution> subExecutions = executionRepository.findLoopSubExecutions(tenantId, execution.getId(), null);
+        assertThat(subExecutions).hasSize(3);
+        assertThat(subExecutions).allMatch(sub -> sub.getState().getCurrent() == State.Type.SUCCESS);
+    }
+
     void flowConcurrencyScheduled(String tenantId) throws QueueException {
         Execution execution1 = runnerUtils.runOneUntilRunning(tenantId, NAMESPACE, "flow-concurrency-queue", null, null, Duration.ofSeconds(30));
         assertThat(execution1.getState().isRunning()).isTrue();

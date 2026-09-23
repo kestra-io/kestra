@@ -210,8 +210,13 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
 
                             // handle concurrency limits — flow, namespace and tenant scoped; an execution that
                             // runs claims one slot in every scope, the first limit reached defines the behavior
-                            List<ScopedConcurrencyLimit> concurrencyLimits = concurrencyLimitResolver.resolveLimits(flow);
-                            if (!concurrencyLimits.isEmpty()) {
+                            // LOOP executions are virtual iterations of the parent flow; they must not consume
+                            // a separate FLOW concurrency slot since the parent already holds it
+                            if (execution.getKind() == ExecutionKind.LOOP) {
+                                // Skip concurrency admission for LOOP virtual executions
+                            } else {
+                                List<ScopedConcurrencyLimit> concurrencyLimits = concurrencyLimitResolver.resolveLimits(flow);
+                                if (!concurrencyLimits.isEmpty()) {
                                 ExecutionRunning executionRunning = ExecutionRunning.builder()
                                     .tenantId(executor.getFlow().getTenantId())
                                     .namespace(executor.getFlow().getNamespace())
@@ -248,6 +253,7 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
                                     );
                                 }
                             }
+                        }
                         }
 
                         // handle execution changed SLA

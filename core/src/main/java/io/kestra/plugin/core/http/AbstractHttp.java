@@ -143,6 +143,7 @@ public abstract class AbstractHttp extends Task implements HttpInterface {
                 request.body(
                     HttpRequest.UrlEncodedRequestBody.builder()
                         .content(renderedFormData)
+                        .charset(this.options != null && this.options.getDefaultCharset() != null ? runContext.render(this.options.getDefaultCharset()).as(Charset.class).orElse(null) : null)
                         .build()
                 );
             }

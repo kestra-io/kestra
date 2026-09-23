@@ -4,6 +4,7 @@ import {fileExtension, fileIcon, fileName, isFileUri} from "../../../src/utils/f
 describe("isFileUri", () => {
     test("accepts the internal storage schemes", () => {
         expect(isFileUri("kestra:///company/flow/outputs/abc.txt")).toBe(true)
+        expect(isFileUri("kestra://company/flow/outputs/abc.txt")).toBe(true)
         expect(isFileUri("file:///tmp/abc.txt")).toBe(true)
         expect(isFileUri("nsfile:///scripts/main.py")).toBe(true)
     })

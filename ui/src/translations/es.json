@@ -871,7 +871,7 @@
     "flow delete": "¿Estás seguro de que quieres eliminar <code>{flowCount}</code> flow(s)?",
     "delete flow error": "No se pudo eliminar el flow {id}",
     "flows deleted": "<code>{count}</code> Flow(s) eliminados",
-    "flow disable": "¿Estás seguro de que quieres deshabilitar <code>{flowCount}</code> flow(s)?",
+    "flow disable": "¿Estás seguro de que quieres deshabilitar {flowCount} Flow(s)?<br/><br/>Deshabilitar un Flow escribe <code>disabled: true</code> en el Flow y crea una nueva revisión. Una sincronización desde una fuente externa que no incluya <code>disabled: true</code> habilitará el Flow de nuevo.",
     "flow enable": "¿Estás seguro de que quieres habilitar <code>{flowCount}</code> flow(s)?",
     "flows disabled": "<code>{count}</code> Flow(s) deshabilitados",
     "flows enabled": "<code>{count}</code> Flow(s) habilitados",

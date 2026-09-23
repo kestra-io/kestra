@@ -74,6 +74,12 @@
         visible?: boolean
     }
 
+    interface SurveyEventData {
+        company_size?: string
+        use_cases?: string[]
+        newsletter_subscribed?: boolean
+    }
+
     const props = withDefaults(defineProps<Props>(), {
         visible: false,
     })
@@ -149,7 +155,7 @@
         emit("close")
     }
 
-    const trackSurveyEvent = (eventName: string, additionalData: Record<string, any> = {}) => {
+    const trackSurveyEvent = (eventName: string, additionalData: SurveyEventData = {}) => {
         const configs = miscStore.configs
 
         apiStore.posthogEvents({

@@ -198,7 +198,7 @@
         .label {
             font-size: var(--ks-font-size-sm);
             font-weight: 600;
-            color: var(--ks-content-link, var(--ks-text-link));
+            color: var(--ks-text-link);
         }
     }
 

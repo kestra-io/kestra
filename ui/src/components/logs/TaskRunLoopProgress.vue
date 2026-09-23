@@ -44,7 +44,7 @@
         executionId: string;
         currentTaskRunId: string;
         taskId: string;
-        loopOutputsByTaskRunId: Record<string, { iterationCount: number; terminatedIterations: Record<string, number> }>;
+        loopOutputsByTaskRunId: Record<string, { iterationCount: number; terminatedIterations?: Record<string, number> }>;
     }>()
 
     const loopIterationCount = computed(() => {

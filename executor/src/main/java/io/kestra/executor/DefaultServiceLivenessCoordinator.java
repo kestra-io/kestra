@@ -139,22 +139,41 @@ public class DefaultServiceLivenessCoordinator extends AbstractServiceLivenessTa
             return;
         }
 
+        // Each step is isolated: they are independent sweeps, and letting one failure abort the tick
+        // silently disables every step after it — including the vNode rebalance below, without which
+        // no scheduler is ever assigned a vNode and all trigger scheduling stops cluster-wide.
+        // The tick runs again on the next interval, so a step that failed is simply retried.
+
         // Update all RUNNING but non-responding services to DISCONNECTED.
-        handleAllNonRespondingServices(now);
+        runStep("handleAllNonRespondingServices", () -> handleAllNonRespondingServices(now));
 
         // Handle all workers which are not in a RUNNING state.
-        handleAllWorkersForUncleanShutdown(now);
+        runStep("handleAllWorkersForUncleanShutdown", () -> handleAllWorkersForUncleanShutdown(now));
 
         // Update all services in one of the TERMINATED states to NOT_RUNNING.
-        handleAllServicesForTerminatedStates(now);
+        runStep("handleAllServicesForTerminatedStates", () -> handleAllServicesForTerminatedStates(now));
 
         // Update all services in NOT_RUNNING to EMPTY (a.k.a soft delete).
-        handleAllServiceInNotRunningState();
+        runStep("handleAllServiceInNotRunningState", this::handleAllServiceInNotRunningState);
 
-        maybeDetectAndLogNewConnectedServices();
+        runStep("maybeDetectAndLogNewConnectedServices", this::maybeDetectAndLogNewConnectedServices);
 
         // May reassign scheduler VNodes
-        vNodeController.checkServicesAndRebalanceVNodes();
+        runStep("checkServicesAndRebalanceVNodes", vNodeController::checkServicesAndRebalanceVNodes);
+    }
+
+    /**
+     * Runs one step of the liveness tick, reporting a failure without letting it skip the steps after it.
+     *
+     * @param name the step name, used for reporting.
+     * @param step the step to run.
+     */
+    private void runStep(final String name, final Runnable step) {
+        try {
+            step.run();
+        } catch (Exception e) {
+            log.error("Liveness coordination step '{}' failed. It will be retried on the next interval.", name, e);
+        }
     }
 
     /**

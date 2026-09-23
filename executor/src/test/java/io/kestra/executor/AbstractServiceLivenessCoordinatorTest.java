@@ -1,10 +1,12 @@
 package io.kestra.executor;
 
 import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -18,6 +20,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 import com.google.common.collect.ImmutableMap;
 
 import io.kestra.core.context.TestRunContextFactory;
+import io.kestra.core.executor.WorkerJobRunningStateStore;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.conditions.ConditionContext;
@@ -28,15 +31,21 @@ import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.ResolvedTask;
+import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.WorkerSelector;
 import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.queues.KeyedDispatchQueueInterface;
 import io.kestra.core.queues.VNodeDispatchQueueInterface;
+import io.kestra.core.repositories.ExecutionRepositoryInterface;
+import io.kestra.core.repositories.ServiceInstanceRepositoryInterface;
+import io.kestra.core.runners.NoTransactionContext;
 import io.kestra.core.runners.Worker;
+import io.kestra.core.runners.WorkerInstance;
 import io.kestra.core.runners.WorkerJobEvent;
 import io.kestra.core.runners.WorkerTask;
 import io.kestra.core.runners.WorkerTaskData;
 import io.kestra.core.runners.WorkerTaskResult;
+import io.kestra.core.runners.WorkerTaskRunning;
 import io.kestra.core.runners.WorkerTrigger;
 import io.kestra.core.runners.WorkerTriggerData;
 import io.kestra.core.scheduler.events.TriggerEvent;
@@ -44,15 +53,23 @@ import io.kestra.core.scheduler.events.TriggerReceived;
 import io.kestra.core.scheduler.events.TriggerWorkerLost;
 import io.kestra.core.scheduler.model.TriggerState;
 import io.kestra.core.server.ServerConfig;
+import io.kestra.core.server.ServerInstance;
+import io.kestra.core.server.Service;
+import io.kestra.core.server.ServiceInstance;
 import io.kestra.core.server.ServiceStateChangeEvent;
+import io.kestra.core.server.ServiceType;
+import io.kestra.core.server.WorkerTaskRestartStrategy;
 import io.kestra.core.services.IgnoreExecutionService;
 import io.kestra.core.services.MaintenanceService;
 import io.kestra.core.services.WorkerQueueService;
 import io.kestra.core.tasks.test.SleepTrigger;
+import io.kestra.core.tenant.TenantService;
+import io.kestra.core.utils.Await;
 import io.kestra.core.utils.CountDownLatchTask;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
 import io.kestra.core.worker.models.WorkerTriggerResult;
+import io.kestra.plugin.core.log.Log;
 import io.kestra.worker.WorkerAgent;
 import io.kestra.worker.WorkerJobExecutor;
 import io.kestra.worker.fetchers.WorkerJobFetcher;
@@ -93,6 +110,15 @@ public abstract class AbstractServiceLivenessCoordinatorTest {
 
     @Inject
     private IgnoreExecutionService ignoreExecutionService;
+
+    @Inject
+    private WorkerJobRunningStateStore workerJobRunningStateStore;
+
+    @Inject
+    private ExecutionRepositoryInterface executionRepository;
+
+    @Inject
+    private ServiceInstanceRepositoryInterface serviceInstanceRepository;
 
     @BeforeAll
     void init() {
@@ -260,6 +286,40 @@ public abstract class AbstractServiceLivenessCoordinatorTest {
         newWorker.close();
     }
 
+    @Test
+    void shouldDiscardInsteadOfResubmittingTaskRunThatAlreadyEnded() throws Exception {
+        // Given
+        Log task = Log.builder().id("log").type(Log.class.getName()).message("test").build();
+        Execution execution = TestsUtils.mockExecution(flowForTask(task), ImmutableMap.of()).toBuilder().tenantId(TenantService.MAIN_TENANT).build();
+        TaskRun taskRun = TaskRun.of(execution, ResolvedTask.of(task));
+        executionRepository.save(execution.toBuilder().taskRunList(List.of(taskRun.withState(State.Type.SUCCESS))).build().withState(State.Type.SUCCESS));
+
+        ServiceInstance deadWorker = saveWorkerInstance(Service.ServiceState.DISCONNECTED);
+        WorkerTask workerTask = WorkerTask.builder()
+            .data(WorkerTaskData.from(runContextFactory.of(ImmutableMap.of("key", "value"))))
+            .task(task)
+            .taskRun(taskRun)
+            .build();
+        workerJobRunningStateStore.save(NoTransactionContext.INSTANCE, WorkerTaskRunning.of(workerTask, new WorkerInstance(deadWorker.uid(), null)));
+
+        List<String> resubmitted = Collections.synchronizedList(new ArrayList<>());
+        workerJobEventQueue.addListener(event -> resubmitted.add(event.job().uid()));
+
+        // When
+        Await.until(
+            () ->
+            {
+                jdbcServiceLivenessHandler.handleAllWorkersForUncleanShutdown(Instant.now().plus(Duration.ofMinutes(1)));
+                return !leasesHeldBy(deadWorker.uid()).contains(workerTask.uid());
+            },
+            Duration.ofMillis(200),
+            Duration.ofSeconds(30)
+        );
+
+        // Then
+        assertThat(resubmitted).doesNotContain(workerTask.uid());
+    }
+
     @MockBean(WorkerQueueService.class)
     WorkerQueueService workerGroupService() {
         return new WorkerQueueService.Default();
@@ -277,7 +337,7 @@ public abstract class AbstractServiceLivenessCoordinatorTest {
             workerSelector
         );
 
-        Execution execution = TestsUtils.mockExecution(flowForTask(task), ImmutableMap.of());
+        Execution execution = saveExecution(task);
         ResolvedTask resolvedTask = ResolvedTask.of(task);
 
         return WorkerTask.builder()
@@ -285,6 +345,46 @@ public abstract class AbstractServiceLivenessCoordinatorTest {
             .task(task)
             .taskRun(TaskRun.of(execution, resolvedTask))
             .build();
+    }
+
+    private Execution saveExecution(Task task) {
+        Execution execution = TestsUtils.mockExecution(flowForTask(task), ImmutableMap.of()).toBuilder().tenantId(TenantService.MAIN_TENANT).build();
+        return executionRepository.save(execution);
+    }
+
+    private List<String> leasesHeldBy(String workerUid) {
+        List<String> leases = new ArrayList<>();
+        workerJobRunningStateStore.processWorkerJobsForDeadWorker(
+            NoTransactionContext.INSTANCE,
+            workerUid,
+            (txContext, workerJobRunning) -> leases.add(workerJobRunning.uid())
+        );
+        return leases;
+    }
+
+    private ServiceInstance saveWorkerInstance(Service.ServiceState state) {
+        return serviceInstanceRepository.save(
+            new ServiceInstance(
+                IdUtils.create(),
+                ServiceType.WORKER,
+                state,
+                new ServerInstance(ServerInstance.Type.STANDALONE, "unit-test", "localhost", null, null),
+                Instant.now(),
+                Instant.now(),
+                List.of(),
+                new ServerConfig(
+                    Duration.ofSeconds(1),
+                    WorkerTaskRestartStrategy.AFTER_TERMINATION_GRACE_PERIOD,
+                    new ServerConfig.Liveness(false, Duration.ofSeconds(1), Duration.ofSeconds(3), Duration.ZERO, Duration.ofSeconds(1)),
+                    null,
+                    null,
+                    null
+                ),
+                Map.of(),
+                Set.of(),
+                0L
+            )
+        );
     }
 
     private WorkerTrigger workerTrigger(Duration sleep, String workerQueueId) {
@@ -303,7 +403,7 @@ public abstract class AbstractServiceLivenessCoordinatorTest {
             .build();
     }
 
-    private Flow flowForTask(CountDownLatchTask task) {
+    private Flow flowForTask(Task task) {
         return Flow.builder()
             .id(IdUtils.create())
             .namespace("io.kestra.unit-test")

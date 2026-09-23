@@ -147,6 +147,25 @@ public abstract class JdbcWorkerJobRunningStateStoreTest {
         assertThat(rawKeys()).containsExactly(current.uid());
     }
 
+    @Test
+    void shouldDeleteEntryOnlyWhenTheGivenWorkerStillHoldsIt() {
+        // Given
+        WorkerTaskRunning workerTaskRunning = workerTaskRunning("worker-a");
+        workerJobRunningStateStore.save(NoTransactionContext.INSTANCE, workerTaskRunning);
+
+        // When the lease has moved on to another worker
+        workerJobRunningStateStore.deleteByKeyAndWorker(NoTransactionContext.INSTANCE, workerTaskRunning.uid(), "worker-b");
+
+        // Then it is left alone
+        assertThat(existsByKey(workerTaskRunning.uid())).isTrue();
+
+        // When it is still held by the same worker
+        workerJobRunningStateStore.deleteByKeyAndWorker(NoTransactionContext.INSTANCE, workerTaskRunning.uid(), "worker-a");
+
+        // Then it is released
+        assertThat(existsByKey(workerTaskRunning.uid())).isFalse();
+    }
+
     private void insertRawEntry(String key, String json) {
         dslContextWrapper.transaction(
             configuration -> DSL.using(configuration)

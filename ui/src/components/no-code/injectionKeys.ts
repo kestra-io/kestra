@@ -2,6 +2,7 @@ import type {ComputedRef, InjectionKey, Ref} from "vue"
 import {NoCodeElement, TopologyClickParams} from "./utils/types"
 import {Panel} from "../../utils/multiPanelTypes"
 import type {FieldNavigation} from "./utils/useFieldNavigation"
+import type {UnsetRequiredField} from "./utils/requiredFields"
 
 export const BLOCK_SCHEMA_PATH_INJECTION_KEY = Symbol("block-schema-path-injection-key") as InjectionKey<ComputedRef<string>>
 export const FULL_SOURCE_INJECTION_KEY = Symbol("flow-injection-key") as InjectionKey<ComputedRef<string>>
@@ -48,4 +49,4 @@ export const FIELD_NAV_INJECTION_KEY = Symbol("field-nav-injection-key") as Inje
 
 export const BLOCK_VALIDATION_ISSUES_INJECTION_KEY = Symbol("block-validation-issues-injection-key") as InjectionKey<ComputedRef<Map<string, string[]>>>
 
-export const REQUIRED_FIELDS_TRACKER_INJECTION_KEY = Symbol("required-fields-tracker-injection-key") as InjectionKey<Map<string, string>>
+export const UNSET_REQUIRED_FIELDS_INJECTION_KEY = Symbol("unset-required-fields-injection-key") as InjectionKey<Ref<UnsetRequiredField[]>>

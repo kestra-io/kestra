@@ -20,6 +20,7 @@ export function scrollThenFocus(el: HTMLElement, focusTarget?: HTMLElement | nul
     let frame = 0
 
     function check() {
+        if (!el.isConnected) return
         frame += 1
         const top = el.getBoundingClientRect().top
         stableFrames = Math.abs(top - lastTop) < 0.5 ? stableFrames + 1 : 0
@@ -34,6 +35,20 @@ export function scrollThenFocus(el: HTMLElement, focusTarget?: HTMLElement | nul
 
     el.scrollIntoView({behavior: "smooth", block: "center"})
     requestAnimationFrame(check)
+}
+
+/**
+ * Opens every collapsed TaskObject group (`.group:not(.is-open)`) between el and the form root, so
+ * a jump target hidden behind a collapsed section is actually visible before scrollThenFocus runs.
+ */
+export function openCollapsedGroups(el: HTMLElement) {
+    let current: HTMLElement | null = el
+    while (current) {
+        if (current.classList.contains("group") && !current.classList.contains("is-open")) {
+            current.querySelector<HTMLElement>(":scope > .group-head")?.click()
+        }
+        current = current.parentElement
+    }
 }
 
 export function useFieldNavigation() {

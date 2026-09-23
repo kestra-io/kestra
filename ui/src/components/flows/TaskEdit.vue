@@ -173,7 +173,7 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, provide, reactive, watch, onMounted, onBeforeUnmount, onDeactivated} from "vue"
+    import {ref, computed, nextTick, provide, watch, onMounted, onBeforeUnmount, onDeactivated} from "vue"
     import {useI18n} from "vue-i18n"
     import {SECTIONS, KsIconButton, KsDrawer, KsMessage, copyToClipboard} from "@kestra-io/design-system"
     import TaskIcon from "../plugins/TaskIcon.vue"
@@ -185,8 +185,9 @@
     import AlertCircleOutline from "vue-material-design-icons/AlertCircleOutline.vue"
     import TaskEditPanes from "./TaskEditPanes.vue"
     import TaskEditData from "./TaskEditData.vue"
-    import {REQUIRED_FIELDS_TRACKER_INJECTION_KEY} from "../no-code/injectionKeys"
-    import {scrollThenFocus} from "../no-code/utils/useFieldNavigation"
+    import {UNSET_REQUIRED_FIELDS_INJECTION_KEY} from "../no-code/injectionKeys"
+    import type {UnsetRequiredField} from "../no-code/utils/requiredFields"
+    import {openCollapsedGroups, scrollThenFocus} from "../no-code/utils/useFieldNavigation"
     import {canSaveFlowTemplate} from "../../utils/flowTemplate"
     import {splitValidationErrors} from "../../utils/validationErrors"
     import ValidationError from "./ValidationError.vue"
@@ -266,13 +267,16 @@
     const ARMED_FIELD_CLASS = "task-edit-chip-insert-target"
     const armedField = ref<HTMLInputElement | HTMLTextAreaElement | null>(null)
 
-    const requiredFieldsTracker = reactive(new Map<string, string>())
-    provide(REQUIRED_FIELDS_TRACKER_INJECTION_KEY, requiredFieldsTracker)
-    const unsetRequiredCount = computed(() => requiredFieldsTracker.size)
+    const unsetRequiredFields = ref<UnsetRequiredField[]>([])
+    provide(UNSET_REQUIRED_FIELDS_INJECTION_KEY, unsetRequiredFields)
+    const unsetRequiredCount = computed(() => unsetRequiredFields.value.length)
 
-    function jumpToFirstUnsetRequired() {
+    async function jumpToFirstUnsetRequired() {
         const el = panelRef.value?.querySelector<HTMLElement>("[data-required-path]")
-        if (el) scrollThenFocus(el)
+        if (!el) return
+        openCollapsedGroups(el)
+        await nextTick()
+        scrollThenFocus(el)
     }
 
     const onPanelFocusIn = (event: FocusEvent) => {

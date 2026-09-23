@@ -58,6 +58,7 @@
     import PluginSelect from "../../plugins/PluginSelect.vue"
     import FieldNavBreadcrumb from "./FieldNavBreadcrumb.vue"
     import {useFieldNavigation} from "../utils/useFieldNavigation"
+    import {countUnsetRequiredFields} from "../utils/requiredFields"
     import {NoCodeElement, Schemas} from "../utils/types"
     import {getPath, setPath, cloneDeep, isDeepEqual} from "@kestra-io/design-system"
     import {
@@ -70,6 +71,7 @@
         FIELD_NAV_INJECTION_KEY,
         FULL_SOURCE_INJECTION_KEY,
         PLUGIN_DEFAULTS_INJECTION_KEY,
+        UNSET_REQUIRED_FIELDS_INJECTION_KEY,
     } from "../injectionKeys"
     import {removeNullAndUndefined} from "../utils/cleanUp"
     import {removeRefPrefix, usePluginsStore} from "../../../stores/plugins"
@@ -448,6 +450,19 @@
             pluginsStore.updateDocumentation()
         }
     })
+
+    const unsetRequiredFields = computed(() =>
+        countUnsetRequiredFields(
+            taskModel.value,
+            {...schema.value, properties: schema.value?.properties ?? properties.value},
+            definitions.value,
+        ),
+    )
+
+    const unsetRequiredFieldsState = inject(UNSET_REQUIRED_FIELDS_INJECTION_KEY, undefined)
+    watch(unsetRequiredFields, (value) => {
+        if (unsetRequiredFieldsState) unsetRequiredFieldsState.value = value
+    }, {immediate: true})
 </script>
 
 <style scoped lang="scss">

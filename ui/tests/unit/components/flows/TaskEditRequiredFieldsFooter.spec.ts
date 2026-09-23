@@ -1,7 +1,8 @@
 import {describe, it, expect, vi} from "vitest"
 import {h, inject} from "vue"
+import {flushPromises} from "@vue/test-utils"
 import KestraDesignSystem from "@kestra-io/design-system"
-import {REQUIRED_FIELDS_TRACKER_INJECTION_KEY} from "../../../../src/components/no-code/injectionKeys"
+import {UNSET_REQUIRED_FIELDS_INJECTION_KEY} from "../../../../src/components/no-code/injectionKeys"
 
 vi.mock("vue-router", () => ({
     useRoute: () => ({query: {}}),
@@ -39,14 +40,14 @@ vi.mock("../../../../src/composables/playground/usePlaygroundRun", () => ({
     }),
 }))
 
-// Stands in for the real TaskObjectField tree: it registers a single unset required
-// field into the injected tracker, the same way TaskObjectField does deep in the form.
+// Stands in for the real TaskEditor tree: it writes a single unset required field into
+// the injected ref, the same way TaskEditor computes it from the task model and schema.
 const FakeFormWithOneMissingRequiredField = {
     name: "TaskEditPanes",
     props: ["modelValue", "activeTab", "section", "readOnly", "pluginMarkdown", "editorPath"],
     setup() {
-        const tracker = inject(REQUIRED_FIELDS_TRACKER_INJECTION_KEY, undefined)
-        tracker?.set("message", "message")
+        const unsetRequiredFields = inject(UNSET_REQUIRED_FIELDS_INJECTION_KEY, undefined)
+        if (unsetRequiredFields) unsetRequiredFields.value = [{path: "message", label: "message"}]
         return () => h("div", {"data-test": "task-edit-panes"}, [
             h("div", {"data-required-path": "message"}, [h("input")]),
         ])
@@ -100,6 +101,7 @@ describe("TaskEdit required-fields footer", () => {
         input.focus = vi.fn()
 
         await wrapper.find("[data-test='task-edit-required-jump']").trigger("click")
+        await flushPromises()
 
         expect(target.scrollIntoView).toHaveBeenCalledWith({behavior: "smooth", block: "center"})
     })

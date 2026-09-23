@@ -1,5 +1,5 @@
 import {describe, it, expect, vi, afterEach} from "vitest"
-import {scrollThenFocus, useFieldNavigation, type NavFrame} from "../../../src/components/no-code/utils/useFieldNavigation"
+import {openCollapsedGroups, scrollThenFocus, useFieldNavigation, type NavFrame} from "../../../src/components/no-code/utils/useFieldNavigation"
 
 const frame = (path: string): NavFrame => ({path, label: path, schema: {}})
 
@@ -74,5 +74,71 @@ describe("scrollThenFocus", () => {
         }
 
         expect(input.focus).toHaveBeenCalledWith({preventScroll: true})
+    })
+
+    it("stops the rAF loop once the target is unmounted, instead of focusing a detached node", () => {
+        document.body.innerHTML = "<div id='field'><input id='inp' /></div>"
+        const el = document.getElementById("field") as HTMLElement
+        const input = document.getElementById("inp") as HTMLInputElement
+        el.scrollIntoView = vi.fn()
+        input.focus = vi.fn()
+
+        const rafCallbacks: FrameRequestCallback[] = []
+        vi.stubGlobal("requestAnimationFrame", (cb: FrameRequestCallback) => {
+            rafCallbacks.push(cb)
+            return rafCallbacks.length
+        })
+
+        scrollThenFocus(el)
+        el.remove()
+
+        while (rafCallbacks.length) {
+            rafCallbacks.shift()!(0)
+        }
+
+        expect(input.focus).not.toHaveBeenCalled()
+    })
+})
+
+describe("openCollapsedGroups", () => {
+    afterEach(() => {
+        document.body.innerHTML = ""
+    })
+
+    it("clicks open every collapsed ancestor group between the target and the form root", () => {
+        document.body.innerHTML = `
+            <div class="group">
+                <button type="button" class="group-head"></button>
+                <div class="group-body">
+                    <div id="target"><input /></div>
+                </div>
+            </div>
+        `
+        const group = document.querySelector(".group") as HTMLElement
+        const groupHead = document.querySelector(".group-head") as HTMLElement
+        groupHead.addEventListener("click", () => group.classList.add("is-open"))
+        const target = document.getElementById("target") as HTMLElement
+
+        expect(group.classList.contains("is-open")).toBe(false)
+
+        openCollapsedGroups(target)
+
+        expect(group.classList.contains("is-open")).toBe(true)
+    })
+
+    it("does nothing when no ancestor group is collapsed", () => {
+        document.body.innerHTML = `
+            <div class="group is-open">
+                <button type="button" class="group-head"></button>
+                <div id="target"></div>
+            </div>
+        `
+        const groupHead = document.querySelector(".group-head") as HTMLElement
+        const clicked = vi.fn()
+        groupHead.addEventListener("click", clicked)
+
+        openCollapsedGroups(document.getElementById("target") as HTMLElement)
+
+        expect(clicked).not.toHaveBeenCalled()
     })
 })

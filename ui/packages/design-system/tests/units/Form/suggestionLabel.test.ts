@@ -29,6 +29,10 @@ describe("suggestionLabel", () => {
         expect(suggestionLabel(row({name: "SUCCESS", stringLabel: false}))).toBe("SUCCESS")
     })
 
+    it("keeps the rendered label when the description is not a package", () => {
+        expect(suggestionLabel(row({name: "SUCCESS", description: "state", stringLabel: false}))).toBe("SUCCESS")
+    })
+
     it("falls back to the aria-label when nothing is rendered yet", () => {
         const element = document.createElement("div")
         element.className = "monaco-list-row"

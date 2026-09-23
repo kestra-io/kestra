@@ -10,10 +10,10 @@
             :defaultSort="{prop: 'key', order: 'ascending'}"
             :selectable="false"
             @page-changed="({page, size}: {page: number; size: number}) => router.push({query: {...route.query, page: String(page), size: String(size)}})"
-            @sort-change="({prop, order}: {column: any; prop: string | null; order: string | null}) => router.push({query: {...route.query, sort: `${prop}:${order === 'ascending' ? 'asc' : 'desc'}`}})"
+            @sort-change="({prop, order}: {prop: string | null; order: string | null}) => router.push({query: {...route.query, sort: `${prop}:${order === 'ascending' ? 'asc' : 'desc'}`}})"
             :no-data-text="$t('no_results.secrets')"
             :fitHeight="!paneView && !keyOnly"
-            :rowKey="(row: any) => `${row.namespace}-${row.key}`"
+            :rowKey="(row: NamespaceSecret) => `${row.namespace}-${row.key}`"
         >
             <template v-if="$slots.empty && showEmptyState" #empty>
                 <slot name="empty" />
@@ -243,6 +243,7 @@
     import {useToast} from "../../utils/toast"
     import {storageKeys} from "../../utils/constants"
     import * as SecretsAPI from "@kestra-io/kestra-sdk/secrets"
+    import type {ListSecretsData} from "@kestra-io/kestra-sdk"
     import {useAuthStore} from "override/stores/auth"
     import {useNamespacesStore} from "override/stores/namespaces"
     import {useApiStore} from "../../stores/api"
@@ -266,6 +267,13 @@
         namespace?: string;
         description?: string;
         tags?: {key?: string; value?: string}[];
+    }
+
+    interface SecretPayload {
+        key?: string;
+        description?: string;
+        tags?: {key?: string; value?: string}[];
+        value?: string;
     }
 
     const props = withDefaults(defineProps<{
@@ -364,7 +372,7 @@
     const visibleColumns = computed(() =>
         displayColumns.value
             ?.map(prop => optionalColumns.value?.find(c => c.prop === prop))
-            ?.filter(Boolean) as any[],
+            ?.filter((column): column is NonNullable<typeof column> => column !== undefined),
     )
 
     const secretModalTitle = computed(() => {
@@ -382,7 +390,7 @@
         },
     })
 
-    const checkSecretValue = (_rule: any, _value: any, callback: any) => {
+    const checkSecretValue = (_rule: unknown, _value: unknown, callback: (error?: Error) => void) => {
         if (secret.value?.updateValue && (secret.value.value === undefined || secret.value.value.length === 0)) {
             callback(new Error("Value must not be empty."))
         } else {
@@ -390,7 +398,7 @@
         }
     }
 
-    const checkSecretTags = (_rule: any, _value: any, callback: any) => {
+    const checkSecretTags = (_rule: unknown, _value: unknown, callback: (error?: Error) => void) => {
         const keys = secret.value?.tags?.map((it) => it.key)
 
         if (secret.value?.tags?.length === 1) {
@@ -449,7 +457,9 @@
 
     const dataTable = useTemplateRef("dataTable")
 
-    const loadQuery = (base: any) => {
+    type SecretsQuery = NonNullable<ListSecretsData["query"]>
+
+    const loadQuery = (base: SecretsQuery): SecretsQuery => {
         const {page: _p, size: _s, sort: _so, ...rest} = route.query
         const nonFilterRest = Object.fromEntries(
             Object.entries(rest).filter(([key]) => !key.startsWith("filters[")),
@@ -465,7 +475,7 @@
         const secretsResponse = await SecretsAPI.listSecrets(loadQuery({
             size,
             page,
-            sort: sort ?? String(route.query.sort ?? "key:asc"),
+            sort: [sort ?? String(route.query.sort ?? "key:asc")],
             filters: [
                 ...activeFilters,
                 ...(props.namespace === undefined ? [] : namespaceFilter(props.namespace)),
@@ -486,9 +496,9 @@
 
                 const parentSecrets = parentSecretsResponse?.results ?? []
                 if (parentSecrets.length > 0) {
-                    const currentKeys = new Set(allSecrets.map((s: any) => s?.key).filter(Boolean))
+                    const currentKeys = new Set(allSecrets.map(s => s?.key).filter(Boolean))
                     const newSecrets = parentSecrets.filter(
-                        (s: any) => s?.key && !currentKeys.has(s.key),
+                        s => s?.key && !currentKeys.has(s.key),
                     )
                     allSecrets.push(...newSecrets)
                 }
@@ -532,14 +542,14 @@
         secret.value.namespace = secretData?.namespace
         secret.value.key = secretData?.key
         secret.value.description = secretData?.description
-        secret.value.tags = secretData?.tags?.map((x: any) => ({...x})) ?? [{key: undefined, value: undefined}]
+        secret.value.tags = secretData?.tags?.map(x => ({...x})) ?? [{key: undefined, value: undefined}]
         secret.value.update = true
         secret.value.updateValue = false
         addSecretDrawerVisible.value = true
     }
 
     const addSecretTag = () => {
-        secret.value?.tags?.push({key: "" as any, value: "" as any})
+        secret.value?.tags?.push({key: "", value: ""})
     }
 
     const removeSecretTag = (index: number) => {
@@ -574,7 +584,7 @@
                 return
             }
 
-            const secretData: any = {
+            const secretData: SecretPayload = {
                 key: secret.value?.key,
                 description: secret.value?.description,
                 tags: secret.value?.tags

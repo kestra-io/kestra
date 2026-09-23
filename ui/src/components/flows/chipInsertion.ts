@@ -23,7 +23,7 @@ export function insertAtCaret(field: HTMLInputElement | HTMLTextAreaElement, tex
     try {
         field.setSelectionRange(caret, caret)
     } catch {
-        // input types that don't support text selection (e.g. number) simply skip caret placement
+        // setSelectionRange throws on some input types (e.g. number)
     }
 
     field.dispatchEvent(new Event("input", {bubbles: true}))

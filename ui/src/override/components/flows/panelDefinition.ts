@@ -36,7 +36,7 @@ export const EDITOR_ELEMENTS: EditorElement[] = [
     {
         button: {
             icon: markRaw(MouseRightClickIcon),
-            label: "No-Code",
+            label: "No-code",
         },
         uid: "nocode",
         component: markRaw(NoCode),

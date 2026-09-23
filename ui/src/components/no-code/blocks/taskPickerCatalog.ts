@@ -86,12 +86,37 @@ export function buildPickerEntries(
 }
 
 function qualifyAmbiguousLabels(entries: (PickerEntry & {subGroup?: string})[]): PickerEntry[] {
-    const countByLabel = new Map<string, number>()
-    for (const entry of entries) countByLabel.set(entry.label, (countByLabel.get(entry.label) ?? 0) + 1)
+    const groupsByLabel = new Map<string, (PickerEntry & {subGroup?: string})[]>()
+    for (const entry of entries) {
+        const group = groupsByLabel.get(entry.label)
+        if (group) group.push(entry)
+        else groupsByLabel.set(entry.label, [entry])
+    }
 
-    return entries.map(({subGroup, ...entry}) => {
-        if ((countByLabel.get(entry.label) ?? 0) <= 1 || !subGroup) return entry
-        return {...entry, label: `${entry.label} (${getShortName(subGroup)})`}
+    const qualifierByEntry = new Map<PickerEntry & {subGroup?: string}, string>()
+    for (const group of groupsByLabel.values()) {
+        if (group.length <= 1) continue
+
+        const shortNameCounts = new Map<string, number>()
+        for (const entry of group) {
+            if (!entry.subGroup) continue
+            const shortName = getShortName(entry.subGroup)
+            shortNameCounts.set(shortName, (shortNameCounts.get(shortName) ?? 0) + 1)
+        }
+
+        for (const entry of group) {
+            if (!entry.subGroup) continue
+            const shortName = getShortName(entry.subGroup)
+            // Two subGroups can still share their last segment (aws/storage vs gcp/storage) — fall
+            // back to the full subGroup so the qualifier itself does not re-introduce the collision.
+            qualifierByEntry.set(entry, (shortNameCounts.get(shortName) ?? 0) > 1 ? entry.subGroup : shortName)
+        }
+    }
+
+    return entries.map((entry) => {
+        const {subGroup: _subGroup, ...rest} = entry
+        const qualifier = qualifierByEntry.get(entry)
+        return qualifier ? {...rest, label: `${rest.label} (${qualifier})`} : rest
     })
 }
 

@@ -35,6 +35,18 @@ describe("buildPickerEntries", () => {
         expect(entries.map(entry => entry.label)).toEqual(["Trigger", "Trigger"])
     })
 
+    it("falls back to the full subgroup when the short qualifier itself collides", () => {
+        const entries = buildPickerEntries([
+            plugin({subGroup: "io.kestra.plugin.aws.storage", tasks: [{cls: "io.kestra.plugin.aws.storage.Trigger"}]}),
+            plugin({subGroup: "io.kestra.plugin.gcp.storage", name: "gcp", title: "GCP", tasks: [{cls: "io.kestra.plugin.gcp.storage.Trigger"}]}),
+        ], "tasks")
+
+        expect(entries.map(entry => entry.label)).toEqual([
+            "Trigger (io.kestra.plugin.aws.storage)",
+            "Trigger (io.kestra.plugin.gcp.storage)",
+        ])
+    })
+
     it("prefers an explicit title over the qualified fallback", () => {
         const entries = buildPickerEntries([
             plugin({subGroup: "io.kestra.plugin.aws.s3", tasks: [{cls: "io.kestra.plugin.aws.s3.Trigger", title: "S3 Trigger"}]}),

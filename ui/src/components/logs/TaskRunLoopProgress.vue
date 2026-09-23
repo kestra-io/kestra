@@ -2,7 +2,7 @@
     <div style="flex:1">
         <KsProgress
             v-if="loopIterationCount > 0"
-            :percentage="consolidatedTerminalStates / loopIterationCount * 100"
+            :percentage="Math.round((consolidatedTerminalStates / loopIterationCount) * 1000) / 10"
             :strokeWidth="7"
             :radius="81"
             class="progress-bar"
@@ -11,8 +11,8 @@
         <div class="pill-list">
             <KsButton 
                 :tag="RouterLink" 
-                v-for="loopTerminatedSegment in loopTerminatedSegments" 
-                :key="loopTerminatedSegment.state" 
+                v-for="segment in loopSegments" 
+                :key="segment.state" 
                 size="small"
                 :to="{
                     // execution list filtered by Parent execution, Loop task and state
@@ -21,12 +21,12 @@
                         'filters[parentId][EQUALS]': executionId,
                         'filters[kind][EQUALS]': 'LOOP',
                         'filters[taskId][EQUALS]': taskId,
-                        'filters[state][IN]': loopTerminatedSegment.state
+                        'filters[state][IN]': segment.state
                     }
                 }"
             >
-                <span :style="{backgroundColor: loopTerminatedSegment.color}" class="colored-dot"/>
-                {{ loopTerminatedSegment.count }} {{ loopTerminatedSegment.state.toLowerCase().capitalize() }}
+                <span :style="{backgroundColor: segment.color}" class="colored-dot"/>
+                {{ segment.count }} {{ segment.state.toLowerCase().capitalize() }}
             </KsButton>
         </div>
     </div>
@@ -44,29 +44,53 @@
         executionId: string;
         currentTaskRunId: string;
         taskId: string;
-        loopOutputsByTaskRunId: Record<string, { iterationCount: number; terminatedIterations?: Record<string, number> }>;
+        loopOutputsByTaskRunId: Record<string, { iterationCount: number; terminatedIterations?: Record<string, number>; runningIterations?: number }>;
     }>()
 
     const loopIterationCount = computed(() => {
         return props.loopOutputsByTaskRunId[props.currentTaskRunId]?.iterationCount ?? 0
     })
 
-    // One colored segment per terminal state reached by the Loop's sub-executions.
-    const loopTerminatedSegments = computed(() => {
-        const terminatedIterations: Record<string, number> = props.loopOutputsByTaskRunId[props.currentTaskRunId]?.terminatedIterations ?? {}
+    const consolidatedTerminalStates = computed(() => {
+        const terminatedIterations = props.loopOutputsByTaskRunId[props.currentTaskRunId]?.terminatedIterations ?? {}
+        return Object.values(terminatedIterations).reduce((acc, count) => acc + count, 0)
+    })
 
-        return Object.entries(terminatedIterations).map(([state, count]) => ({
+    // One colored segment per terminal state reached by the Loop's sub-executions.
+    const loopSegments = computed(() => {
+        const loopOutputs = props.loopOutputsByTaskRunId[props.currentTaskRunId] ?? {}
+        const terminatedIterations = loopOutputs.terminatedIterations ?? {}
+        const runningIterations = loopOutputs.runningIterations ?? 0
+        const iterationCount = loopOutputs.iterationCount ?? 0
+
+        const segments = Object.entries(terminatedIterations).map(([state, count]) => ({
             state,
             count,
             color: loopStateColors[state],
             tooltip: `${count} ${state}`,
         }))
-    })
 
-    const consolidatedTerminalStates = computed(() => {
-        return loopTerminatedSegments.value.reduce((acc, segment) => {
-            return acc + segment.count
-        }, 0)
+        if (runningIterations > 0) {
+            segments.push({
+                state: "RUNNING",
+                count: runningIterations,
+                color: loopStateColors["RUNNING"],
+                tooltip: `${runningIterations} RUNNING`,
+            })
+        }
+
+        const createdIterations = iterationCount - consolidatedTerminalStates.value - runningIterations
+        
+        if (createdIterations > 0) {
+            segments.push({
+                state: "CREATED",
+                count: createdIterations,
+                color: loopStateColors["CREATED"],
+                tooltip: `${createdIterations} CREATED`,
+            })
+        }
+
+        return segments
     })
 </script>
 

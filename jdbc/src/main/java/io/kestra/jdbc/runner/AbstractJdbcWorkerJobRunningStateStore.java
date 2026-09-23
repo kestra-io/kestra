@@ -96,6 +96,30 @@ public abstract class AbstractJdbcWorkerJobRunningStateStore extends AbstractJdb
     }
 
     @Override
+    public void deleteByKeyAndWorker(TransactionContext txContext, String key, String workerUid) {
+        // if both queue and repository support the same transaction type, we participate in the transaction, otherwise, not
+        if (txContext.supports(JdbcTransactionContext.class)) {
+            deleteByKeyAndWorker(txContext.unwrap(JdbcTransactionContext.class).getDslContext(), key, workerUid);
+        } else {
+            this.jdbcRepository
+                .getDslContextWrapper()
+                .transaction(configuration -> deleteByKeyAndWorker(DSL.using(configuration), key, workerUid));
+        }
+    }
+
+    private void deleteByKeyAndWorker(DSLContext dslContext, String key, String workerUid) {
+        dslContext
+            .transaction(
+                configuration -> DSL
+                    .using(configuration)
+                    .deleteFrom(this.jdbcRepository.getTable())
+                    .where(field("key").eq(key))
+                    .and(field("worker_uid").eq(workerUid))
+                    .execute()
+            );
+    }
+
+    @Override
     public void processWorkerJobsForDeadWorker(TransactionContext txContext, String workerUid, BiConsumer<TransactionContext, WorkerJobRunning> consumer) {
         // if both queue and repository support the same transaction type, we participate in the transaction, otherwise, not
         if (txContext.supports(JdbcTransactionContext.class)) {

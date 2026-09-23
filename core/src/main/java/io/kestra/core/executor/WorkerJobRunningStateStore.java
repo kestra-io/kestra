@@ -37,6 +37,17 @@ public interface WorkerJobRunningStateStore {
     void deleteByKey(TransactionContext txContext, String key);
 
     /**
+     * Deletes a running worker job for the given key, but only while it is still held by the given worker.
+     * <p>
+     * A job can be resubmitted and dispatched to another worker, which then writes a fresh entry under the
+     * same key: releasing the entry of the former holder must not drop the lease of the worker now running it.
+     *
+     * @param key the key of the worker job to be deleted.
+     * @param workerUid the worker the entry must still belong to.
+     */
+    void deleteByKeyAndWorker(TransactionContext txContext, String key, String workerUid);
+
+    /**
      * Save a running worker job.
      *
      * @implNote Implementors that support transaction must use the provided {@link TransactionContext} to attach to the current transaction.

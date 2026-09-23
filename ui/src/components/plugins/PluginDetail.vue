@@ -10,6 +10,7 @@
         :isEnterpriseEdition
         :shortDescription="pluginShortDescription"
         :backTo
+        flat
         @router-change="onRouterChange"
     >
         <KsAlert v-if="loadError" type="error" :closable="false">

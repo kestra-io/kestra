@@ -127,7 +127,7 @@
         shortDescription: null,
         longDescription: null,
         backTo: () => ({name: "plugins/list"}),
-        flat: false,
+        flat: true,
     })
 
     defineEmits<{

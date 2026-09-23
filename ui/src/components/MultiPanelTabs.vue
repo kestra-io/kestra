@@ -227,7 +227,7 @@
 </template>
 
 <script setup lang="ts">
-    import {nextTick, ref, watch, provide, computed, defineComponent, h, markRaw, onMounted, onBeforeUnmount} from "vue"
+    import {nextTick, ref, watch, provide, computed, defineComponent, h, markRaw, onMounted, onBeforeUnmount, type Component} from "vue"
 
     import {VISIBLE_PANELS_INJECTION_KEY, PANEL_MAXIMIZED_INJECTION_KEY} from "./no-code/injectionKeys"
     import {useKeyShortcuts} from "../utils/useKeyShortcuts"
@@ -249,11 +249,12 @@
 
     const {showKeyShortcuts} = useKeyShortcuts()
 
-    const ComponentCache = new Map<string, any>()
+    const ComponentCache = new Map<string, Component>()
 
-    const createUniqueComponent = (component: any, key: string) => {
-        if(ComponentCache.has(key)){
-            return ComponentCache.get(key)
+    const createUniqueComponent = (component: Component, key: string) => {
+        const cached = ComponentCache.get(key)
+        if(cached){
+            return cached
         }
         const uniqueComponent = markRaw(
             defineComponent({
@@ -712,7 +713,7 @@
         if(!container){
             return
         }
-        const safeId = (globalThis as any).CSS?.escape ? (globalThis as any).CSS.escape(tabId) : tabId.replace(/[^a-zA-Z0-9_-]/g, "\\$&")
+        const safeId = globalThis.CSS?.escape ? globalThis.CSS.escape(tabId) : tabId.replace(/[^a-zA-Z0-9_-]/g, "\\$&")
         const el = container.querySelector(`.editor-tab[data-tab-id="${safeId}"]`) as HTMLElement | null
         if(!el){
             return

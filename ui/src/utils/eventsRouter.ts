@@ -4,7 +4,7 @@ import type {RouteLocationNormalized} from "vue-router"
 import {useApiStore} from "../stores/api"
 import {routeSection} from "./analytics/activation"
 
-interface PageInfo {
+export interface PageInfo {
     origin: string
     path: string
     fullPath: string

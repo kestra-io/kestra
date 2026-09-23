@@ -39,11 +39,11 @@ describe("TaskObjectField required-field tracking", () => {
         expect(tracker.get("level")).toBe("level")
     })
 
-    test("does not flag a required field already satisfied by a flow pluginDefault", () => {
+    test("still flags an unset required field even when a flow pluginDefault would supply it, since pluginDefaults is a removed OSS keyword that injects nothing", () => {
         const {wrapper, tracker} = mountField({level: "WARN"})
 
-        expect(wrapper.find("[data-test='field-required-missing']").exists()).toBe(false)
-        expect(wrapper.find("[data-required-path='level']").exists()).toBe(false)
-        expect(tracker.has("level")).toBe(false)
+        expect(wrapper.find("[data-test='field-required-missing']").exists()).toBe(true)
+        expect(wrapper.find("[data-required-path='level']").exists()).toBe(true)
+        expect(tracker.get("level")).toBe("level")
     })
 })

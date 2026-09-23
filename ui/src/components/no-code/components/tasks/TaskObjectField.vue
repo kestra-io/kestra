@@ -177,17 +177,10 @@
         return !props.disabled && props.required?.includes(props.fieldKey)// && props.schema.$required;
     })
 
-    const pluginDefaults = inject(PLUGIN_DEFAULTS_INJECTION_KEY, undefined)
-    const pluginDefault = computed(() => {
-        const value = pluginDefaults?.value?.[props.fieldKey]
-        return value === undefined || value === null || typeof value === "object" ? undefined : String(value)
-    })
-
     const isMissingRequired = computed(() => {
         if (!isRequired.value) return false
         const value = modelValue.value
-        const isUnset = value === undefined || value === null || value === "" || (Array.isArray(value) && value.length === 0)
-        return isUnset && pluginDefault.value === undefined
+        return value === undefined || value === null || value === "" || (Array.isArray(value) && value.length === 0)
     })
 
     const fieldPath = computed(() =>
@@ -274,6 +267,12 @@
         return getBlockComponent.value(props.schema ?? {}, props.fieldKey, props.siblingKeys)
     })
 
+
+    const pluginDefaults = inject(PLUGIN_DEFAULTS_INJECTION_KEY, undefined)
+    const pluginDefault = computed(() => {
+        const value = pluginDefaults?.value?.[props.fieldKey]
+        return value === undefined || value === null || typeof value === "object" ? undefined : String(value)
+    })
 
     const schemaDefault = computed(() => {
         const value = props.schema?.default

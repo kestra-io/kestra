@@ -150,7 +150,7 @@ class WorkerTaskProcessorTest {
     }
 
     @Test
-    void shouldDefaultAssetNamespaceToTheFlowNamespaceWhenNotDeclared() throws Exception {
+    void shouldDefaultInputNamespaceButLeaveOutputNamespaceNullWhenNotDeclared() throws Exception {
         // Given a task declaring an input and an output that carry no namespace
         InMemoryWorkerQueue<WorkerTaskResult> resultQueue = new InMemoryWorkerQueue<>(100);
         WorkerTaskProcessor processor = newProcessor(resultQueue);
@@ -158,7 +158,8 @@ class WorkerTaskProcessorTest {
         // When the task runs
         processor.process(namespacelessAssetsWorkerTask());
 
-        // Then both inherit the namespace of the flow
+        // Then the input inherits the flow's namespace, but the output namespace is left null so
+        // Asset#toUpdated can keep the stored asset's own namespace instead of defaulting it here
         List<WorkerTaskResult> results = drain(resultQueue);
         TaskRun taskRun = results.getLast().getTaskRun();
         assertThat(taskRun.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
@@ -167,7 +168,7 @@ class WorkerTaskProcessorTest {
             .satisfies(bundle ->
             {
                 assertThat(bundle.getInputs()).extracting(AssetIdentifier::namespace).containsExactly("io.kestra.unit-test");
-                assertThat(bundle.getOutputs()).extracting(Asset::getNamespace).containsExactly("io.kestra.unit-test");
+                assertThat(bundle.getOutputs()).extracting(Asset::getNamespace).containsExactly((String) null);
             });
     }
 

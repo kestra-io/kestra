@@ -5,6 +5,40 @@
         </KsButton>
         <template #dropdown>
             <KsDropdownMenu>
+                <template v-if="currentTaskRuns.length > 1">
+                    <div class="iteration-selector">
+                        <div class="search">
+                            <KsSearch
+                                v-model="iterationQuery"
+                                :placeholder="$t('search')"
+                                :aria-label="$t('iteration')"
+                            />
+                        </div>
+                        <KsScrollbar :maxHeight="240">
+                            <KsDropdownItem
+                                v-for="(run, index) in filteredTaskRuns"
+                                :key="run.id"
+                                @click.stop="selectedTaskRunId = run.id"
+                            >
+                                <span :class="['row', {active: run.id === selectedTaskRunId}]">
+                                    <KsIcon size="xs" class="check">
+                                        <Check />
+                                    </KsIcon>
+                                    <span class="name" :title="iterationLabel(run, index)">{{ iterationLabel(run, index) }}</span>
+                                </span>
+                            </KsDropdownItem>
+
+                            <KsText
+                                v-if="!filteredTaskRuns.length"
+                                size="small"
+                                class="empty"
+                            >
+                                {{ $t("dependency.search.no_results", {term: iterationQuery}) }}
+                            </KsText>
+                        </KsScrollbar>
+                    </div>
+                </template>
+
                 <KsDropdownItem
                     v-if="selectedAttempt?.state.current === 'FAILED'"
                     @click="fixErrorWithAi"
@@ -18,7 +52,7 @@
                     v-if="isSubflow"
                     component="KsDropdownItem"
                     tabExecution="logs"
-                    :executionId="taskRun.outputs.executionId"
+                    :executionId="currentTaskRun.outputs?.executionId"
                 />
                 <KsDropdownItem
                     v-if="isLoop"
@@ -28,71 +62,73 @@
                     {{ $t("iterations") }}
                 </KsDropdownItem>
 
-                <template v-if="!(taskRuns && taskRuns.length > 1)">
-                    <Metrics :taskRun="taskRun" :execution="execution" />
+                <Metrics
+                    :taskRun="currentTaskRun"
+                    :execution="execution"
+                />
 
-                    <Outputs
-                        :taskRun="taskRun"
-                        :executionId="execution.id"
-                        :execution="execution"
-                    />
+                <Outputs
+                    :taskRun="currentTaskRun"
+                    :executionId="execution.id"
+                    :execution="execution"
+                />
 
-                    <Restart
-                        component="KsDropdownItem"
-                        :key="`restart-${attemptIndex}-${selectedAttempt?.state.startDate}`"
-                        isReplay
-                        tooltipPosition="left"
-                        :execution="execution"
-                        :taskRun="taskRun"
-                        :attemptIndex="attemptIndex"
-                        @follow="emit('follow', $event)"
-                    />
+                <Restart
+                    component="KsDropdownItem"
+                    :key="`restart-${currentTaskRun.id}-${currentAttemptIndex}-${selectedAttempt?.state.startDate}`"
+                    isReplay
+                    tooltipPosition="left"
+                    :execution="execution"
+                    :taskRun="currentTaskRun"
+                    :attemptIndex="currentAttemptIndex"
+                    @follow="emit('follow', $event)"
+                />
 
-                    <ChangeStatus
-                        component="KsDropdownItem"
-                        :key="`change-status-${attemptIndex}-${selectedAttempt?.state.startDate}`"
-                        :execution="execution"
-                        :taskRun="taskRun"
-                        :attemptIndex="attemptIndex"
-                        @follow="emit('follow', $event)"
-                    />
+                <ChangeStatus
+                    component="KsDropdownItem"
+                    :key="`change-status-${currentTaskRun.id}-${currentAttemptIndex}-${selectedAttempt?.state.startDate}`"
+                    :execution="execution"
+                    :taskRun="currentTaskRun"
+                    :attemptIndex="currentAttemptIndex"
+                    @follow="emit('follow', $event)"
+                />
 
-                    <TaskEdit
-                        v-if="canReadFlow"
-                        :readOnly="true"
-                        component="KsDropdownItem"
-                        :taskId="taskRun.taskId"
-                        section="tasks"
-                        :flowId="execution.flowId"
-                        :namespace="execution.namespace"
-                        :revision="execution.flowRevision"
-                        :flowSource="flow?.source"
-                    />
-                    <KsDropdownItem
-                        :icon="Download"
-                        @click="downloadContent(taskRun.id)"
-                    >
-                        {{ $t("download logs") }}
-                    </KsDropdownItem>
-                    <KsDropdownItem
-                        :icon="Copy"
-                        @click="copyContent(taskRun.id)"
-                    >
-                        {{ $t("copy logs") }}
-                    </KsDropdownItem>
-                    <KsDropdownItem
-                        :icon="Delete"
-                        @click="deleteLogs(taskRun.id)"
-                    >
-                        {{ $t("delete logs") }}
-                    </KsDropdownItem>
-                    <WorkerInfo
-                        component="KsDropdownItem"
-                        v-if="hasWorkerId !== null"
-                        :taskRun="taskRun"
-                        @follow="emit('follow', $event)"
-                    />
-                </template>
+                <TaskEdit
+                    v-if="canReadFlow"
+                    :readOnly="true"
+                    component="KsDropdownItem"
+                    :taskId="currentTaskRun.taskId"
+                    section="tasks"
+                    :flowId="execution.flowId"
+                    :namespace="execution.namespace"
+                    :revision="execution.flowRevision"
+                    :flowSource="flow?.source"
+                />
+                <KsDropdownItem
+                    :icon="Download"
+                    @click="downloadContent(currentTaskRun.id)"
+                >
+                    {{ $t("download logs") }}
+                </KsDropdownItem>
+                <KsDropdownItem
+                    :icon="Copy"
+                    @click="copyContent(currentTaskRun.id)"
+                >
+                    {{ $t("copy logs") }}
+                </KsDropdownItem>
+                <KsDropdownItem
+                    :icon="Delete"
+                    @click="deleteLogs(currentTaskRun)"
+                >
+                    {{ $t("delete logs") }}
+                </KsDropdownItem>
+                <WorkerInfo
+                    component="KsDropdownItem"
+                    v-if="hasWorkerId"
+                    :taskRun="currentTaskRun"
+                    @follow="emit('follow', $event)"
+                />
+
                 <NodeMenuItem
                     v-for="action in nodeActions"
                     :key="action.key"
@@ -104,15 +140,15 @@
 </template>
 
 <script setup lang="ts">
-    import {computed} from "vue"
+    import {computed, ref} from "vue"
     import {useI18n} from "vue-i18n"
     import {useRoute, useRouter} from "vue-router"
-
     import DotsVertical from "vue-material-design-icons/DotsVertical.vue"
     import Copy from "vue-material-design-icons/ContentCopy.vue"
     import Delete from "vue-material-design-icons/Delete.vue"
     import Download from "vue-material-design-icons/Download.vue"
     import Repeat from "vue-material-design-icons/Repeat.vue"
+    import Check from "vue-material-design-icons/Check.vue"
 
     import {State} from "@kestra-io/design-system"
 
@@ -125,6 +161,7 @@
     import {useExecutionsStore} from "../../stores/executions"
     import {useAuthStore} from "override/stores/auth"
     import {useMiscStore} from "override/stores/misc"
+    
     import Restart from "./overview/components/actions/Restart.vue"
     import Metrics from "./Metrics.vue"
     import ChangeStatus from "./ChangeStatus.vue"
@@ -167,6 +204,29 @@
     const executionsStore = useExecutionsStore()
     const authStore = useAuthStore()
 
+    const currentTaskRuns = computed(() => {
+        return (props.taskRuns || []).filter((r) => r.taskId === props.taskRun?.taskId)
+    })
+
+    const selectionKey = computed(() => `${props.execution.id}|${props.taskRun?.taskId}`)
+
+    const iterationQuery = ref("")
+
+    const filteredTaskRuns = computed(() => {
+        const needle = iterationQuery.value.trim().toLowerCase()
+        if (!needle) return currentTaskRuns.value
+        return currentTaskRuns.value.filter((r, index) => iterationLabel(r, index).toLowerCase().includes(needle))
+    })
+
+    const selectedTaskRunId = computed({
+        get: () => executionsStore.taskRunSelections.get(selectionKey.value) || props.taskRun?.id || currentTaskRuns.value[0]?.id,
+        set: (val: string) => executionsStore.taskRunSelections.set(selectionKey.value, val),
+    })
+
+    const currentTaskRun = computed(() => {
+        return currentTaskRuns.value.find((r) => r.id === selectedTaskRunId.value) || props.taskRun
+    })
+
     function attempts(taskRun: any): any[] {
         if (props.execution.state.current === State.RUNNING || props.forcedAttemptNumber === undefined) {
             return taskRun.attempts ?? [{state: taskRun.state}]
@@ -174,13 +234,18 @@
         return taskRun.attempts ? [taskRun.attempts[props.forcedAttemptNumber]] : []
     }
 
-    const selectedAttempt = computed(() => attempts(props.taskRun)[props.attemptIndex ?? 0])
+    const currentAttemptIndex = computed(() => {
+        const attemptCount = attempts(currentTaskRun.value).length
+        return Math.min(props.attemptIndex ?? 0, Math.max(0, attemptCount - 1))
+    })
 
-    const isSubflow = computed<boolean>(() => props.taskRun?.outputs?.executionId)
+    const selectedAttempt = computed(() => attempts(currentTaskRun.value)[currentAttemptIndex.value])
+
+    const isSubflow = computed<boolean>(() => !!currentTaskRun.value?.outputs?.executionId)
     const isLoop = computed(() => (props.taskType ?? findTaskById(props.flow, props.taskRun.taskId)?.type) === "io.kestra.plugin.core.flow.Loop")
 
-    const hasWorkerId = computed<boolean | null>(() =>
-        props.taskRun.attempts?.find((attempt: any) => attempt.workerId !== null) !== null,
+    const hasWorkerId = computed<boolean>(() =>
+        currentTaskRun.value.attempts?.find((attempt: { workerId?: string | null }) => attempt.workerId != null) !== undefined,
     )
 
     const canReadFlow = computed(() =>
@@ -229,14 +294,22 @@
         })
     }
 
-    function deleteLogs(currentTaskRunId: string) {
+    function iterationLabel(run: { id?: string; value?: unknown }, index?: number) {
+        return run.value
+            ? Utils.capForDisplay(String(run.value))
+            : t("iteration_number", {number: index !== undefined ? index + 1 : currentTaskRuns.value.findIndex(r => r.id === run.id) + 1})
+    }
+
+    function deleteLogs(run: { id: string; value?: unknown }) {
+        const label = iterationLabel(run)
+
         toast.confirm(
-            t("delete_log"),
+            currentTaskRuns.value.length > 1 ? t("delete_log_iteration", {iteration: label}) : t("delete_log"),
             async () => {
                 await executionsStore.deleteLogs({
                     executionId: props.execution.id,
-                    params: {taskRunId: currentTaskRunId},
-                }).then((_: unknown) => {
+                    params: {taskRunId: run.id},
+                }).then(() => {
                     emit("update-logs", props.execution.id)
                 })
             },
@@ -244,12 +317,12 @@
     }
 
     async function fixErrorWithAi() {
-        let taskRunLogs = props.attemptLogs ?? []
+        let taskRunLogs = currentTaskRun.value.id === props.taskRun.id ? props.attemptLogs ?? [] : []
         if (taskRunLogs.length === 0) {
             taskRunLogs = await executionsStore.loadLogs({
                 store: false,
                 executionId: props.execution.id,
-                params: {taskRunId: props.taskRun.id, minLevel: "ERROR"},
+                params: {taskRunId: currentTaskRun.value.id, minLevel: "ERROR"},
                 showMessageOnError: false,
             }).catch(() => [])
         }
@@ -262,8 +335,8 @@
             const last = [...taskRunLogs].reverse().find((l: any) => (l.message ?? "").length > 0)
             return last?.message ?? ""
         })()
-        const prompt = `Fix the task ${props.taskRun.taskId} as it generated the following error:\n${errorLines}`
-        miscStore.promptCopilot(prompt, {title: t("ai.copilot.fixThread.task", {id: props.taskRun.taskId}), newThread: true})
+        const prompt = `Fix the task ${currentTaskRun.value.taskId} as it generated the following error:\n${errorLines}`
+        miscStore.promptCopilot(prompt, {title: t("ai.copilot.fixThread.task", {id: currentTaskRun.value.taskId}), newThread: true})
     }
 </script>
 
@@ -278,4 +351,43 @@
         }
     }
 
+        .iteration-selector {
+        border-bottom: var(--ks-border-block-primary);
+        padding: var(--ks-spacing-2);
+
+        .search {
+            padding-bottom: var(--ks-spacing-2);
+        }
+
+        .row {
+            display: flex;
+            align-items: center;
+            gap: var(--ks-spacing-2);
+            width: 100%;
+            min-width: 0;
+
+            .check {
+                visibility: hidden;
+                color: var(--ks-text-link);
+                flex: 0 0 auto;
+            }
+
+            &.active .check {
+                visibility: visible;
+            }
+
+            .name {
+                flex: 1 1 auto;
+                min-width: 0;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+        }
+
+        .empty {
+            display: block;
+            color: var(--ks-text-muted);
+        }
+    }
 </style>

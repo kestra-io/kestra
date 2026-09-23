@@ -69,9 +69,13 @@ public interface Namespace {
 
     /**
      * Gets a {@link NamespaceFile} for the given path and the current namespace.
+     * <p>
+     * A path that holds no file resolves to its first revision, so that callers can build the URI of a file
+     * that is still to be written. A path whose file has been deleted does not resolve at all.
      *
      * @param path the file path.
      * @return a new {@link NamespaceFile}
+     * @throws java.io.FileNotFoundException if the file at the given path has been deleted.
      */
     NamespaceFile get(Path path) throws IOException;
 
@@ -107,11 +111,17 @@ public interface Namespace {
 
     /**
      * Retrieves the content of the namespace file at the given path.
+     * <p>
+     * Deleting a file deletes every revision it held at that point, so no revision at or below the most
+     * recent deletion of the path is ever served again — not even once the path has been re-created, which
+     * only makes the revisions written after that deletion readable.
      *
      * @param path the file path.
      * @param revision optionally a file revision, otherwise will retrieve the latest.
      * @return the {@link InputStream}.
      * @throws IllegalArgumentException if the given {@link Path} is {@code null} or invalid.
+     * @throws java.io.FileNotFoundException if the file does not exist or has been deleted, or if it never
+     *         held the given revision or held it only before a deletion.
      * @throws IOException if an error happens while accessing the file.
      */
     InputStream getFileContent(Path path, @Nullable Integer revision) throws IOException;

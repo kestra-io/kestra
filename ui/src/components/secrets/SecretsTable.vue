@@ -372,7 +372,7 @@
     const visibleColumns = computed(() =>
         displayColumns.value
             ?.map(prop => optionalColumns.value?.find(c => c.prop === prop))
-            ?.filter((column): column is NonNullable<typeof column> => column !== undefined),
+            ?.filter(column => column !== undefined),
     )
 
     const secretModalTitle = computed(() => {

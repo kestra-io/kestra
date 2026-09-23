@@ -48,7 +48,7 @@ class ScriptServiceTest {
 
         Path path = createFile(tenant, "file");
 
-        String internalStorageUri = "kestra://some/file.txt";
+        String internalStorageUri = "kestra:///file.txt";
         File localFile = null;
         try {
             command = ScriptService.replaceInternalStorage(runContext, "my command with an internal storage file: " + internalStorageUri, false);
@@ -78,7 +78,7 @@ class ScriptServiceTest {
 
         Path path = createFile(tenant, "file-龍");
 
-        String internalStorageUri = "kestra://some/file-龍.txt";
+        String internalStorageUri = "kestra:///file-龍.txt";
         File localFile = null;
         try {
             var command = ScriptService.replaceInternalStorage(runContext, "my command with an internal storage file: " + internalStorageUri, false);
@@ -130,12 +130,13 @@ class ScriptServiceTest {
     void shouldMatchPercentEncodedUriWithInternalStoragePattern() {
         // After the InternalStorage fix, '#' in a filename is percent-encoded to '%23' in the URI.
         // INTERNAL_STORAGE_PATTERN must match such URIs so replaceInternalStorage can resolve them.
-        Pattern pattern = Pattern.compile("(kestra:\\/\\/[" + "-\\p{Alnum}\\p{IsExtended_Pictographic}._\\+~%=/,:;" + "]*)",
-            Pattern.UNICODE_CHARACTER_CLASS);
+        Pattern pattern = Pattern.compile(
+            "(kestra:\\/\\/[" + "-\\p{Alnum}\\p{IsExtended_Pictographic}._\\+~%=/,:;" + "]*)",
+            Pattern.UNICODE_CHARACTER_CLASS
+        );
         String encodedUri = "kestra:///ns/exec/task/report%231.csv";
         assertThat(pattern.matcher(encodedUri).find()).isTrue();
     }
-
 
     @Test
     void uploadInputFiles() throws IOException {
@@ -149,7 +150,7 @@ class ScriptServiceTest {
         Path path = createFile(tenant, "file");
 
         List<File> filesToDelete = new ArrayList<>();
-        String internalStorageUri = "kestra://some/file.txt";
+        String internalStorageUri = "kestra:///file.txt";
 
         try {
             String wdir = "/my/wd";
@@ -191,13 +192,13 @@ class ScriptServiceTest {
     void shouldReplaceInternalStorageWithSpecialChars() throws IOException {
         String tenant = IdUtils.create();
         var runContext = runContextFactory.of("id", "namespace", tenant);
-        
+
         // Colon (:) is also supported by the regex but can't be tested here:
         // WindowsUtils.windowsToUnixPath strips colons in LocalStorage path resolution,
         // which is consistent between read/write in production but breaks test files created directly on disk.
         Map<String, String> specialCharFiles = Map.of(
-            "file,name", "kestra://some/file,name.txt",
-            "file;name", "kestra://some/file;name.txt"
+            "file,name", "kestra:///file,name.txt",
+            "file;name", "kestra:///file;name.txt"
         );
 
         for (var entry : specialCharFiles.entrySet()) {
@@ -234,7 +235,7 @@ class ScriptServiceTest {
 
         var outputFiles = ScriptService.uploadOutputFiles(runContext, Path.of("/tmp/unittest/%s".formatted(tenant)));
         assertThat(outputFiles, not(anEmptyMap()));
-        assertThat(outputFiles.get("file.txt")).isEqualTo(URI.create("kestra:///file.txt"));
+        assertThat(outputFiles.get("file.txt")).isEqualTo(URI.create("kestra://file.txt"));
 
         path.toFile().delete();
     }

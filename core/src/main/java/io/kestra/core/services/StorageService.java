@@ -33,6 +33,7 @@ import io.kestra.core.runners.RunContext;
 import io.kestra.core.serializers.FileSerde;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.storages.StorageSplitInterface;
+import io.kestra.core.utils.FileUtils;
 import io.kestra.core.utils.RegexUtils;
 
 import io.micronaut.core.convert.format.ReadableBytesTypeConverter;
@@ -85,11 +86,9 @@ public abstract class StorageService {
     }
 
     private static String extensionOf(URI from) {
-        String fromPath = from.getPath();
-        if (fromPath.indexOf('.') >= 0) {
-            return fromPath.substring(fromPath.lastIndexOf('.'));
-        }
-        return ".tmp";
+        // getPath() is empty when the file name is the authority, as in kestra://report.ion.
+        String extension = FileUtils.getExtension(from);
+        return extension == null ? ".tmp" : extension;
     }
 
     private static long parseBytes(RunContext runContext, StorageSplitInterface storageSplitInterface) throws IllegalVariableEvaluationException {

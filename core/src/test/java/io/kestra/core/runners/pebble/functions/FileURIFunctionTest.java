@@ -49,7 +49,7 @@ class FileURIFunctionTest {
             "fileA", "test"
         );
         String render = variableRenderer.render("{{ fileURI(fileA) }}", variables);
-        assertThat(render).isEqualTo("kestra:///my/namespace/_files/test");
+        assertThat(render).isEqualTo("kestra://my/namespace/_files/test");
     }
 
     @Test
@@ -82,7 +82,7 @@ class FileURIFunctionTest {
         Map<String, Object> variables = getVariables(namespace);
 
         String render = variableRenderer.render("{{ fileURI('" + filePath + "') }}", variables);
-        assertThat(render).isEqualTo("kestra:///" + namespace.replace(".", "/") + "/_files/" + filePath + ".v2");
+        assertThat(render).isEqualTo("kestra://" + namespace.replace(".", "/") + "/_files/" + filePath + ".v2");
 
         String readContent = variableRenderer.render("{{ read('" + filePath + "') }}", variables);
         assertThat(readContent).isEqualTo("Version 2");
@@ -99,7 +99,7 @@ class FileURIFunctionTest {
         Map<String, Object> variables = getVariables(namespace);
 
         String render = variableRenderer.render("{{ fileURI('" + filePath + "', revision=1) }}", variables);
-        assertThat(render).isEqualTo("kestra:///" + namespace.replace(".", "/") + "/_files/" + filePath);
+        assertThat(render).isEqualTo("kestra://" + namespace.replace(".", "/") + "/_files/" + filePath);
 
         String readContent = variableRenderer.render("{{ read('" + filePath + "', revision=1) }}", variables);
         assertThat(readContent).isEqualTo("Version 1");
@@ -113,7 +113,7 @@ class FileURIFunctionTest {
         Map<String, Object> variables = getVariables(namespace);
 
         String render = variableRenderer.render("{{ fileURI('" + filePath + "') }}", variables);
-        assertThat(render).isEqualTo("kestra:///" + namespace.replace(".", "/") + "/_files/" + filePath);
+        assertThat(render).isEqualTo("kestra://" + namespace.replace(".", "/") + "/_files/" + filePath);
     }
 
     @Test

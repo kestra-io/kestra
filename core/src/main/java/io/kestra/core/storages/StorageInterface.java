@@ -2,6 +2,7 @@ package io.kestra.core.storages;
 
 import java.io.*;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.file.NoSuchFileException;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -369,18 +370,45 @@ public interface StorageInterface extends AutoCloseable, Plugin {
         } catch (FileNotFoundException | NoSuchFileException e) {
             return;
         }
-        String base = uri.toString();
-        String parent = base.endsWith("/") ? base : base + "/";
+        // child names are raw segments. Appending them to uri.toString() rejects a space and parses '#' as a fragment.
+        String parentPath = directoryPath(uri);
         for (FileAttributes child : children) {
-            URI childUri = URI.create(parent + child.getFileName());
-            if (child.getType() == FileAttributes.FileType.Directory) {
-                collectFilesInWindow(tenantId, namespace, URI.create(childUri + "/"), startMillis, endMillis, out);
+            boolean directory = child.getType() == FileAttributes.FileType.Directory;
+            URI childUri = childUri(uri, parentPath, child.getFileName(), directory);
+            if (directory) {
+                collectFilesInWindow(tenantId, namespace, childUri, startMillis, endMillis, out);
             } else if (
                 (startMillis == null || child.getLastModifiedTime() >= startMillis)
                     && (endMillis == null || child.getLastModifiedTime() <= endMillis)
             ) {
                 out.add(childUri);
             }
+        }
+    }
+
+    private static String directoryPath(URI uri) {
+        String parentPath = StorageContext.logicalPath(uri);
+        if (parentPath.isEmpty()) {
+            parentPath = "/";
+        }
+        if (!parentPath.endsWith("/")) {
+            parentPath = parentPath + "/";
+        }
+        return parentPath;
+    }
+
+    private static URI childUri(URI parent, String parentPath, String childName, boolean directory) {
+        String childPath = parentPath + childName;
+        if (directory) {
+            childPath = childPath + "/";
+        }
+        if (StorageContext.isKestraScheme(parent)) {
+            return StorageContext.toKestraUri(childPath);
+        }
+        try {
+            return new URI(parent.getScheme(), parent.getAuthority(), childPath, null, null);
+        } catch (URISyntaxException e) {
+            throw new IllegalArgumentException("Invalid storage URI '" + childPath + "'.", e);
         }
     }
 
@@ -414,6 +442,8 @@ public interface StorageInterface extends AutoCloseable, Plugin {
 
     /**
      * Builds the internal storage path based on the URI.
+     * For a Kestra URI the authority is part of the key, so {@code kestra://namespace/file}
+     * and {@code kestra:///namespace/file} yield the same path.
      *
      * @param uri the URI of the object
      * @return a normalized internal path
@@ -424,7 +454,7 @@ public interface StorageInterface extends AutoCloseable, Plugin {
         }
 
         parentTraversalGuard(uri);
-        String path = uri.getPath();
+        String path = StorageContext.logicalPath(uri);
         path = path.replaceFirst("^/", "");
         return path;
     }
@@ -458,7 +488,11 @@ public interface StorageInterface extends AutoCloseable, Plugin {
             return null;
         }
 
-        String path = uri.getPath();
+        boolean kestra = StorageContext.isKestraScheme(uri);
+        String path = kestra ? StorageContext.logicalPath(uri) : uri.getPath();
+        if (path == null) {
+            return uri;
+        }
         String objectName = path.contains("/") ? path.substring(path.lastIndexOf("/") + 1) : path;
         if (objectName.length() > maxObjectNameLength) {
             objectName = objectName.substring(objectName.length() - maxObjectNameLength + 6);
@@ -470,6 +504,9 @@ public interface StorageInterface extends AutoCloseable, Plugin {
                 + prefix + "-" + objectName;
 
             try {
+                if (kestra) {
+                    return StorageContext.toKestraUri(newPath);
+                }
                 return new URI(uri.getScheme(), uri.getHost(), newPath, uri.getFragment());
             } catch (java.net.URISyntaxException e) {
                 throw new IOException(e);

@@ -4,12 +4,14 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
+import io.kestra.core.junit.annotations.FlakyTest;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.Setting;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.repositories.SettingRepositoryInterface;
 import io.kestra.core.utils.IdUtils;
+import io.kestra.webserver.filter.TestAuthFilter;
 import io.kestra.webserver.services.BasicAuthCredentials;
 import io.kestra.webserver.services.BasicAuthService;
 import io.kestra.webserver.services.BasicAuthService.BasicAuthConfiguration;
@@ -126,7 +128,7 @@ class MiscControllerTest {
             () -> client.toBlocking().exchange(
                 HttpRequest.POST(
                     "/api/v1/main/basicAuth",
-                    new BasicAuthCredentials("uid", "invalid", "invalid")
+                    new BasicAuthCredentials("uid", "invalid", "invalid", basicAuthConfiguration.getPassword())
                 )
             )
         );
@@ -138,6 +140,72 @@ class MiscControllerTest {
         );
     }
 
+    @FlakyTest(description = "BasicAuth state from other tests leaks; needs full security lifecycle isolation")
+    @Test
+    void changeBasicAuth_shouldRejectWrongCurrentPassword_whenAlreadyInitialized() {
+        // GHSA-94pv-f379-3gp3: changing Basic Authentication credentials must re-check the
+        // current password directly against the stored value, not rely on isAuthenticated()
+        // alone, which can be satisfied by a token cached before a peer node's password rotation.
+        String uid = "requireCurrentPasswordUid";
+        String username = "require.current.password@kestra.io";
+        String password = "newSecurePassword1";
+
+        try {
+            HttpClientResponseException e = assertThrows(
+                HttpClientResponseException.class,
+                () -> client.toBlocking().exchange(
+                    HttpRequest.POST("/api/v1/main/basicAuth", new BasicAuthCredentials(uid, username, password, "WrongCurrentPassword1"))
+                )
+            );
+            assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.BAD_REQUEST.getCode());
+
+            // the rejected attempt must not have changed anything
+            assertThatCode(
+                () -> client.toBlocking().retrieve(
+                    GET("/api/v1/main/dashboards").basicAuth(basicAuthConfiguration.getUsername(), basicAuthConfiguration.getPassword()),
+                    MiscController.Configuration.class
+                )
+            ).as("original credentials must still work after a rejected change").doesNotThrowAnyException();
+
+            // the correct current password is accepted
+            client.toBlocking().exchange(
+                HttpRequest.POST("/api/v1/main/basicAuth", new BasicAuthCredentials(uid, username, password, basicAuthConfiguration.getPassword()))
+            );
+            assertThatCode(
+                () -> client.toBlocking().retrieve(
+                    GET("/api/v1/main/dashboards").basicAuth(username, password),
+                    MiscController.Configuration.class
+                )
+            ).as("new credentials must work after a change with the correct current password").doesNotThrowAnyException();
+        } finally {
+            basicAuthService.save(new BasicAuthCredentials(null, basicAuthConfiguration.getUsername(), basicAuthConfiguration.getPassword()));
+        }
+    }
+
+    @Test
+    void changeBasicAuth_shouldNotRequireCurrentPassword_beforeInitialization() {
+        // TestAuthFilter transparently re-initializes Basic Authentication before every outgoing
+        // test request whenever credentials are absent, which would silently undo the delete
+        // below before the request even reaches the server; disable it to genuinely exercise
+        // the not-yet-initialized path.
+        TestAuthFilter.ENABLED = false;
+        try {
+            settingRepository.delete(Setting.builder().key(BasicAuthService.BASIC_AUTH_SETTINGS_KEY).build());
+            assertThat(basicAuthService.isBasicAuthInitialized()).isFalse();
+
+            assertThatCode(
+                () -> client.toBlocking().exchange(
+                    HttpRequest.POST("/api/v1/main/basicAuth", new BasicAuthCredentials("initUid", "first.setup@kestra.io", "FirstSetupPassword1"))
+                )
+            ).as("initial setup must not require a current password").doesNotThrowAnyException();
+
+            assertThat(basicAuthService.isBasicAuthInitialized()).isTrue();
+        } finally {
+            TestAuthFilter.ENABLED = true;
+            basicAuthService.save(new BasicAuthCredentials(null, basicAuthConfiguration.getUsername(), basicAuthConfiguration.getPassword()));
+        }
+    }
+
     @Test
     void basicAuth() {
         assertThatCode(() -> client.toBlocking().retrieve("/api/v1/configs", MiscController.Configuration.class)).doesNotThrowAnyException();
@@ -145,7 +213,7 @@ class MiscControllerTest {
         String uid = "someUid";
         String username = "my.email@kestra.io";
         String password = "myPassword1";
-        client.toBlocking().exchange(HttpRequest.POST("/api/v1/main/basicAuth", new BasicAuthCredentials(uid, username, password)));
+        client.toBlocking().exchange(HttpRequest.POST("/api/v1/main/basicAuth", new BasicAuthCredentials(uid, username, password, basicAuthConfiguration.getPassword())));
         try {
             assertThatThrownBy(
                 () -> client.toBlocking().retrieve("/api/v1/main/dashboards", MiscController.Configuration.class)
@@ -184,7 +252,7 @@ class MiscControllerTest {
         String uid = "someUid2";
         String username = "my.email2@kestra.io";
         String password = "myPassword2";
-        client.toBlocking().exchange(HttpRequest.POST("/api/v1/main/basicAuth", new BasicAuthCredentials(uid, username, password)));
+        client.toBlocking().exchange(HttpRequest.POST("/api/v1/main/basicAuth", new BasicAuthCredentials(uid, username, password, basicAuthConfiguration.getPassword())));
 
         try {
             var namespace = "namespace1";

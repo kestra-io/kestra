@@ -108,6 +108,9 @@ public class StandAloneCommand extends AbstractServerCommand {
 
         KestraContext.getContext().injectWorkerConfigs(workerThread);
 
+        // Flows must load after super.call(): it registers external plugins, without which their task types fail to resolve (https://github.com/kestra-io/kestra/issues/19736).
+        super.call();
+
         if (tenantId != null) {
             tenantIdSelectorService.get().createTenant(tenantId);
         }
@@ -119,8 +122,6 @@ public class StandAloneCommand extends AbstractServerCommand {
                 throw new CommandLine.ParameterException(this.spec.commandLine(), "Invalid flow path", e);
             }
         }
-
-        super.call();
 
         try (StandAloneRunner standAloneRunner = standAloneRunnerProvider.get()) {
 

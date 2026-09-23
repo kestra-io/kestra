@@ -103,7 +103,7 @@ runs:
           echo "::group::Raw webhook response (HTTP $STATUS)"
           cat "$BODY"
           echo "::endgroup::"
-          echo "::error::EE compile check inconclusive for ref $REF (no compile verdict; HTTP $STATUS). The flow produced no verdict after its own retry — open the execution before re-running this job."
+          echo "::error::EE compile check inconclusive for ref $REF (no compile verdict; HTTP $STATUS). The flow produced no verdict after its own retry, so open the execution before re-running this job."
           exit 1
         fi
 

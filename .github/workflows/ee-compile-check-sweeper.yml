@@ -8,7 +8,7 @@ name: EE compile check - fail stale pending statuses
 on:
   schedule:
     # Off the top of the hour, where GitHub delays scheduled runs the most.
-    - cron: "7-59/10 * * * *"
+    - cron: "7,37 * * * *"
   workflow_dispatch:
 
 concurrency:

@@ -5,7 +5,7 @@ import {fileURLToPath} from "url"
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 /** Where the `setup` project parks the authenticated browser state (absolute
- *  so it resolves the same from `ui/` or the repo root). */
+ *  so it resolves the same whatever the working directory). */
 export const STORAGE_STATE = path.resolve(__dirname, "../.auth/user.json")
 
 /** Mirrors `AUTH_FLAG_KEY` in `ui/src/utils/basicAuth.ts`. */

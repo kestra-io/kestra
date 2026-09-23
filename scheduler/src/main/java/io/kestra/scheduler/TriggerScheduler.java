@@ -472,8 +472,14 @@ public class TriggerScheduler {
             return Optional.of(currentTriggerState.updateForNextEvaluationDate(clock, nextEvaluationDate));
         } catch (Exception e) {
             if (e instanceof InvalidTriggerConfigurationException) {
-                // disable trigger on invalid configuration
                 triggerStateStore.save(currentTriggerState.disabled(clock, true));
+                Logs.logTrigger(
+                    currentTriggerState,
+                    logger,
+                    Level.WARN,
+                    "Disabled: the trigger configuration is invalid ({}). Fix the flow, then enable the trigger again.",
+                    e.getMessage()
+                );
             }
             Logs.logTrigger(
                 lastTriggerEvaluationContext.triggerState(),

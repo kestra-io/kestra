@@ -2645,6 +2645,9 @@
       "install_description": "Установите Kestra как приложение для более быстрого доступа и полноэкранного режима.",
       "install": "Установить",
       "dismiss": "Не сейчас"
-    }
+    },
+    "iteration": "Итерация",
+    "iteration_number": "Итерация {number}",
+    "delete_log_iteration": "Вы уверены, что хотите удалить журнал для {iteration}?"
   }
 }

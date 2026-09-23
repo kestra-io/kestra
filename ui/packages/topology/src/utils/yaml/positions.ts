@@ -119,7 +119,7 @@ export type YamlElement = {
     key?: string;
     /** Whatever `toJS` produced for the node: a scalar, a sequence or a map. */
     value: unknown;
-    parents: Record<string, any>[];
+    parents: Record<string, unknown>[];
     path?: string[];
     range?: [number, number, number];
 };

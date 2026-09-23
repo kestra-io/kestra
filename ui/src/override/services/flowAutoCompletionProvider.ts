@@ -325,7 +325,7 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
                     : Promise.resolve(availableNamespaces)
             }
             case "flowId": {
-                if (parentTask !== undefined && parentTask.namespace !== undefined) {
+                if (typeof parentTask?.namespace === "string") {
                     let flowIds: string[] = (await this.flowStore.flowsByNamespace(parentTask.namespace))
                         .map((flow: {id: string}) => flow.id)
                     if (parsed?.id !== undefined && parsed?.namespace === parentTask.namespace) {
@@ -337,8 +337,9 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
                 break
             }
             case "inputs": {
-                if (parentTask !== undefined && parentTask.namespace !== undefined && parentTask.flowId !== undefined) {
-                    return await this.subflowInputsAutoCompletion(parentTask.namespace, parentTask.flowId, parentTask.revision, Object.keys(yamlElement.value ?? {}))
+                if (typeof parentTask?.namespace === "string" && typeof parentTask.flowId === "string") {
+                    const revision = parentTask.revision == null ? undefined : String(parentTask.revision)
+                    return await this.subflowInputsAutoCompletion(parentTask.namespace, parentTask.flowId, revision, Object.keys(yamlElement.value ?? {}))
                 }
                 break
             }
@@ -360,7 +361,7 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
             }
             case "chartId": {
                 // stays live even when dashboardId is empty: falls back to the "_default" sentinel dashboard.
-                const dashboardId = parentTask?.dashboardId ?? "_default"
+                const dashboardId = typeof parentTask?.dashboardId === "string" ? parentTask.dashboardId : "_default"
                 const charts = await this.dashboardStore.chartsById(dashboardId)
                 return charts.filter(chart => isExportableChart(chart.type)).map(chart => chart.id)
             }

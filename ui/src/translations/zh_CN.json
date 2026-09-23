@@ -2645,6 +2645,9 @@
       "install_description": "将 Kestra 安装为应用,以获得更快的访问速度和全屏体验。",
       "install": "安装",
       "dismiss": "暂不"
-    }
+    },
+    "iteration": "迭代",
+    "iteration_number": "迭代 {number}",
+    "delete_log_iteration": "确定要删除 {iteration} 的日志吗？"
   }
 }

@@ -51,6 +51,8 @@ jobs:
 
             let swept = 0;
             for (const pr of prs) {
+              // trigger-ee never runs on forks; a deleted fork leaves head.repo null.
+              if (pr.head.repo?.fork !== false) continue;
               const {data: statuses} = await github.rest.repos.listCommitStatusesForRef({
                 owner: context.repo.owner,
                 repo: context.repo.repo,

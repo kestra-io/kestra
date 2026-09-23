@@ -1,5 +1,6 @@
 package io.kestra.executor.testkit;
 
+import java.lang.reflect.Field;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -257,8 +258,9 @@ public final class ExecutorTestHarness {
         runContextFactoryRef[0] = runContextFactory;
         WorkerQueueService workerQueueService = new WorkerQueueService.Default();
 
-        // the executor-facing ExecutionService methods are pure and never touch its injected fields
+        // the executor-facing ExecutionService methods are pure, except that resuming a Pause saves its outputs
         this.executionService = Mockito.mock(ExecutionService.class, Mockito.CALLS_REAL_METHODS);
+        injectField(ExecutionService.class, executionService, "taskOutputService", taskOutputService);
         // every evaluate overload defaults to PASS; tests re-stub the overload they exercise
         this.killSwitchService = Mockito.mock(
             KillSwitchService.class,
@@ -612,6 +614,16 @@ public final class ExecutorTestHarness {
             case ExecutionCommand c -> put(executionCommandQueue, c);
             default -> throw new IllegalArgumentException("Not an executor message: " + message.getClass().getName());
         };
+    }
+
+    private static <T> void injectField(Class<T> declaringClass, T target, String name, Object value) {
+        try {
+            Field field = declaringClass.getDeclaredField(name);
+            field.setAccessible(true);
+            field.set(target, value);
+        } catch (ReflectiveOperationException e) {
+            throw new IllegalStateException("Cannot inject " + name + " into " + declaringClass.getName(), e);
+        }
     }
 
     private static <T extends Event> RecordingQueue<T> put(RecordingQueue<T> queue, T message) {

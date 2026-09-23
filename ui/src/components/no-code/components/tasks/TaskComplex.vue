@@ -13,6 +13,7 @@
     import {computed, inject, ref} from "vue"
     import TaskObject from "./TaskObject.vue"
     import {resolve$ref} from "../../../../utils/utils"
+    import type {Schema} from "./getTaskComponent"
     import {FULL_SCHEMA_INJECTION_KEY} from "../../injectionKeys"
 
     defineOptions({inheritAttrs: false})
@@ -28,29 +29,27 @@
 
     const fullSchema = inject(FULL_SCHEMA_INJECTION_KEY, ref({}))
 
-    const resolvedAllOfSchemas = computed(() => {
+    const resolvedAllOfSchemas = computed<Schema[]>(() => {
         if (!props.schema?.allOf && !props.schema?.$ref) return []
-        const schemas = props.schema.allOf ?? [props.schema]
-        return schemas.map((item: {$ref?: string; properties?: Record<string, any>; required?: string[]}) =>
-            resolve$ref(fullSchema.value, item),
-        )
+        const schemas: Schema[] = props.schema.allOf ?? [props.schema]
+        return schemas.map((item) => resolve$ref(fullSchema.value, item))
     })
 
     const computedProperties = computed(() => {
         if (!resolvedAllOfSchemas.value.length) {
             return props.schema?.properties || {}
         }
-        return resolvedAllOfSchemas.value.reduce((acc: Record<string, any>, item: {properties?: Record<string, any>}) => ({
+        return resolvedAllOfSchemas.value.reduce<Record<string, Schema>>((acc, item) => ({
             ...acc,
             ...item?.properties,
         }), {})
     })
 
     const computedRequired = computed(() =>
-        resolvedAllOfSchemas.value.reduce((acc: string[], item: {required?: string[]}) => [
+        resolvedAllOfSchemas.value.reduce<string[]>((acc, item) => [
             ...acc,
             ...(item?.required ?? []),
-        ], [] as string[]),
+        ], []),
     )
 
     const computedSchema = computed(() =>

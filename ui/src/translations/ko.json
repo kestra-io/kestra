@@ -871,7 +871,7 @@
     "flow delete": "<code>{flowCount}</code> 개의 flow를 삭제하시겠습니까?",
     "delete flow error": "flow {id}을(를) 삭제하지 못했습니다",
     "flows deleted": "<code>{count}</code> 개의 flow가 삭제되었습니다",
-    "flow disable": "<code>{flowCount}</code> 개의 flow를 비활성화하시겠습니까?",
+    "flow disable": "<code>{flowCount}</code>개의 Flow를 비활성화하시겠습니까?<br/><br/>Flow를 비활성화하면 Flow에 <code>disabled: true</code>가 작성되고 새 버전이 생성됩니다. <code>disabled: true</code>를 포함하지 않는 외부 소스에서 동기화하면 Flow가 다시 활성화됩니다.",
     "flow enable": "<code>{flowCount}</code> 개의 flow를 활성화하시겠습니까?",
     "flows disabled": "<code>{count}</code> 개의 flow가 비활성화되었습니다",
     "flows enabled": "<code>{count}</code> 개의 flow가 활성화되었습니다",

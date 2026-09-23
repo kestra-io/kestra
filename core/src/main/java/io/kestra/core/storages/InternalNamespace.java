@@ -282,7 +282,7 @@ public class InternalNamespace implements Namespace {
     public Path relativize(final URI uri) {
         return NamespaceFile.of(namespace)
             .storagePath()
-            .relativize(Path.of(uri.getPath()));
+            .relativize(Path.of(StorageContext.logicalPath(uri)));
     }
 
     /**

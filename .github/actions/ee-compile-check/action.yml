@@ -1,11 +1,14 @@
 name: "EE compile check via Kestra webhook"
 description: >-
-  Run the kestra-ee compileJava check for an OSS ref on a Kestra instance via a
-  synchronous webhook, and surface the result inline (job summary + log group).
+  Run the kestra-ee compileJava check for an OSS ref on a Kestra instance.
   Because kestra-ee extends OSS via Micronaut @Replaces/@Override, an OSS change
-  can compile in OSS yet break EE — this catches that at PR time. The step fails
-  on a compile failure, a non-JSON response, or an inconclusive verdict, so it
-  never reports a false green.
+  can compile in OSS yet break EE — this catches that at PR time.
+  In `sync` mode the call blocks for the whole build and the step reports the
+  verdict inline, failing on a compile failure, a non-JSON response or an
+  inconclusive verdict so it never reports a false green.
+  In `async` mode the call returns as soon as the execution is created: the step
+  posts a pending commit status and exits, and the flow posts the verdict onto
+  the same status when the build ends. No runner is held for the build.
 
 inputs:
   webhook-url:
@@ -26,6 +29,22 @@ inputs:
     description: "OSS repo 'owner/name' for the commit-status callback."
     required: false
     default: ""
+  mode:
+    description: "`sync` blocks for the build and reports the verdict inline. `async` dispatches, posts a pending status and returns."
+    required: false
+    default: "sync"
+  github-token:
+    description: "Token with `statuses: write` on pr-repo. Required by `async`, which posts the pending status itself."
+    required: false
+    default: ""
+  status-context:
+    description: "Commit-status context the flow reports on, so the pending status async posts resolves rather than piling up."
+    required: false
+    default: "kestra-ee/backend-tests"
+  execution-base-url:
+    description: "Kestra UI base URL, used to build the execution link when the instance does not set `kestra.url`."
+    required: false
+    default: "https://prod.kestra-tech.kestra.cloud"
 
 runs:
   using: "composite"
@@ -38,6 +57,10 @@ runs:
         COMMIT_SHA: ${{ inputs.commit-sha }}
         PR_NUMBER: ${{ inputs.pr-number }}
         PR_REPO: ${{ inputs.pr-repo }}
+        MODE: ${{ inputs.mode }}
+        GH_TOKEN: ${{ inputs.github-token }}
+        STATUS_CONTEXT: ${{ inputs.status-context }}
+        EXECUTION_BASE_URL: ${{ inputs.execution-base-url }}
       run: |
         set -uo pipefail
 
@@ -61,6 +84,67 @@ runs:
         echo "::group::Webhook payload"
         echo "$PAYLOAD" | jq .
         echo "::endgroup::"
+
+        # --- async: dispatch, post a pending status, and leave the runner ---
+        # The flow answers as soon as the execution exists, then posts the verdict
+        # onto the same commit-status context when the build ends. The pending
+        # status is what makes a dispatched-but-unfinished check visible; the
+        # sweeper workflow fails any that never resolve.
+        if [ "${MODE:-sync}" = "async" ]; then
+          if [ -n "${COMMIT_SHA:-}" ] && [ -z "${GH_TOKEN:-}" ]; then
+            echo "::error::async mode needs github-token to post the pending commit status."
+            exit 1
+          fi
+
+          BODY=$(mktemp)
+          STATUS=$(curl -sS -o "$BODY" -w '%{http_code}' \
+            -X POST "$WEBHOOK_URL" \
+            -H 'Content-Type: application/json' \
+            --max-time 60 --retry 3 --retry-connrefused --retry-all-errors \
+            -d "$PAYLOAD" || echo "000")
+
+          echo "Webhook HTTP status: $STATUS"
+          if ! jq -e . "$BODY" >/dev/null 2>&1; then
+            echo "::error::Webhook did not return a JSON result (HTTP $STATUS). Raw response:"
+            cat "$BODY"
+            exit 1
+          fi
+
+          EXECUTION_ID=$(jq -r '.id // ""' "$BODY")
+          if [ -z "$EXECUTION_ID" ]; then
+            echo "::error::Webhook answered without an execution id (HTTP $STATUS), so nothing was started. Raw response:"
+            cat "$BODY"
+            exit 1
+          fi
+
+          EXECUTION_URL=$(jq -r '.url // ""' "$BODY")
+          if [ -z "$EXECUTION_URL" ] || [ "$EXECUTION_URL" = "null" ]; then
+            TENANT=$(jq -r '.tenantId // "main"' "$BODY")
+            NAMESPACE=$(jq -r '.namespace // ""' "$BODY")
+            FLOW_ID=$(jq -r '.flowId // ""' "$BODY")
+            EXECUTION_URL="$EXECUTION_BASE_URL/ui/$TENANT/executions/$NAMESPACE/$FLOW_ID/$EXECUTION_ID"
+          fi
+
+          {
+            echo "## EE compile check dispatched for \`$REF\`"
+            echo ""
+            echo "[Execution $EXECUTION_ID]($EXECUTION_URL) is running. The verdict lands on the \`$STATUS_CONTEXT\` commit status."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          if [ -n "${COMMIT_SHA:-}" ]; then
+            curl -sS -f -X POST \
+              -H "Authorization: Bearer $GH_TOKEN" \
+              -H "Accept: application/vnd.github+json" \
+              "https://api.github.com/repos/$PR_REPO/statuses/$COMMIT_SHA" \
+              -d "$(jq -n --arg url "$EXECUTION_URL" --arg ctx "$STATUS_CONTEXT" \
+                    '{state: "pending", context: $ctx, description: "EE backend tests running", target_url: $url}')" \
+              > /dev/null || { echo "::error::Could not post the pending commit status on $COMMIT_SHA."; exit 1; }
+            echo "Pending status posted on $COMMIT_SHA, context $STATUS_CONTEXT."
+          fi
+
+          echo "Dispatched: $EXECUTION_URL"
+          exit 0
+        fi
 
         BODY=$(mktemp)
         STATUS=$(curl -sS -o "$BODY" -w '%{http_code}' \

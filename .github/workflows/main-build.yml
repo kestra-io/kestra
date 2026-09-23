@@ -26,6 +26,8 @@ jobs:
   # synchronous EE compile gate via the Kestra webhook.
   trigger-ee:
     runs-on: ubuntu-latest
+    # Above the curl ceiling in ee-compile-check, so curl's own error wins.
+    timeout-minutes: 50
     steps:
       # Targeting develop branch from develop — async, fire-and-forget full EE CI
       - name: Trigger EE Workflow (develop push, no payload)

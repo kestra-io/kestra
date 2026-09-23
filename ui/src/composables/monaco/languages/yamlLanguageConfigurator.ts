@@ -38,6 +38,7 @@ import {
     scopePropertySuggestionsToTaskType,
     taskIdentityAtCursor,
 } from "./taskCompletionScoping"
+import {splitPluginTypeLabel} from "./pluginTypeCompletionLabel"
 import type {IPosition, IDisposable, CancellationToken} from "monaco-editor/editor/editor.api"
 import IModel = monaco.editor.IModel;
 import ProviderResult = monaco.languages.ProviderResult;
@@ -364,10 +365,27 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
                 }
             }
 
+            // Render plugin types class name first, so a long shared package prefix can no longer push the class
+            // name out of the row. Done last: every step above reads `label` as the fully qualified string.
+            const labelledSuggestions = scopedSuggestions.map((suggestion) => {
+                const split = splitPluginTypeLabel(suggestion.label)
+                if (split === undefined) {
+                    return suggestion
+                }
+
+                return {
+                    ...suggestion,
+                    label: split,
+                    // Monaco falls back to the label when `filterText` is unset, and the label is now only the class
+                    // name - pin the fully qualified name so typing a package segment still matches.
+                    filterText: suggestion.filterText ?? suggestion.label,
+                }
+            })
+
             return {
                 ...defaultCompletion,
                 incomplete: true,
-                suggestions: scopedSuggestions,
+                suggestions: labelledSuggestions,
             }
         }
     }

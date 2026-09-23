@@ -1696,7 +1696,7 @@
       "clearSelection": "Очистить выбор",
       "labels": {
         "yaml": "Редактор YAML",
-        "no_code": "Редактор No Code"
+        "no_code": "Редактор No-Code"
       },
       "sections": {
         "deprecated": "Устаревшие свойства",

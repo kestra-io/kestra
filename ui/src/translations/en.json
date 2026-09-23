@@ -1696,7 +1696,7 @@
       "clearSelection": "Clear selection",
       "labels": {
         "yaml": "YAML Editor",
-        "no_code": "No Code Editor"
+        "no_code": "No-Code Editor"
       },
       "sections": {
         "deprecated": "Deprecated properties",

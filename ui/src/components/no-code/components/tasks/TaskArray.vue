@@ -175,7 +175,7 @@
     const emits = defineEmits(["update:modelValue"])
     const props = withDefaults(defineProps<{
         schema?: any;
-        modelValue?: (string | number | boolean | undefined)[] | string | number | boolean;
+        modelValue?: (string | number | boolean | undefined)[] | string | number | boolean | null;
         required?: boolean;
         root?: string;
     }>(), {
@@ -242,7 +242,7 @@
             localEdit.value = false
             return
         }
-        items.value = value === undefined && !props.required
+        items.value = (value === undefined || value === null) && !props.required
             ? []
             : !Array.isArray(value) ? [value] : [...value]
     }, {immediate: true, deep: true})

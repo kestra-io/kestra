@@ -1,5 +1,6 @@
 import {isEntryAPluginElementPredicate, type PluginElement} from "../../../utils/pluginUtils"
 import type {BlockSection} from "../../../utils/flowableBlockOps"
+import {getShortName} from "../../../utils/global"
 
 export interface PickerEntry {
     fqcn: string
@@ -61,11 +62,13 @@ export function buildPickerEntries(
     kind: PickerEntryKind,
 ): PickerEntry[] {
     if (!plugins) return []
-    const entries: PickerEntry[] = []
+    const entries: (PickerEntry & {subGroup?: string})[] = []
     const seen = new Set<string>()
     for (const plugin of plugins) {
         const value = plugin[kind]
         if (!isEntryAPluginElementPredicate(kind, value)) continue
+        const group = (plugin.title as string) ?? (plugin.name as string) ?? ""
+        const subGroup = plugin.subGroup as string | undefined
         for (const el of value as PluginElement[]) {
             if (el.deprecated || seen.has(el.cls)) continue
             seen.add(el.cls)
@@ -74,11 +77,22 @@ export function buildPickerEntries(
                 fqcn: el.cls,
                 name: parts[parts.length - 1] ?? el.cls,
                 label: el.title ?? parts[parts.length - 1] ?? el.cls,
-                group: (plugin.title as string) ?? (plugin.name as string) ?? "",
+                group,
+                subGroup: subGroup && subGroup !== group ? subGroup : undefined,
             })
         }
     }
-    return entries
+    return qualifyAmbiguousLabels(entries)
+}
+
+function qualifyAmbiguousLabels(entries: (PickerEntry & {subGroup?: string})[]): PickerEntry[] {
+    const countByLabel = new Map<string, number>()
+    for (const entry of entries) countByLabel.set(entry.label, (countByLabel.get(entry.label) ?? 0) + 1)
+
+    return entries.map(({subGroup, ...entry}) => {
+        if ((countByLabel.get(entry.label) ?? 0) <= 1 || !subGroup) return entry
+        return {...entry, label: `${entry.label} (${getShortName(subGroup)})`}
+    })
 }
 
 export function filterPickerEntries(entries: PickerEntry[], search: string): PickerEntry[] {

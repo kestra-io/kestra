@@ -31,6 +31,104 @@ public class StorageContext {
     public static final String KESTRA_PROTOCOL = KESTRA_SCHEME + "://";
     public static final String PREFIX_MESSAGES = "/_messages";
 
+    /**
+     * Whether {@code uri} uses the Kestra storage scheme.
+     */
+    public static boolean isKestraScheme(URI uri) {
+        return uri != null && uri.getScheme() != null && uri.getScheme().equalsIgnoreCase(KESTRA_SCHEME);
+    }
+
+    /**
+     * Storage path of {@code uri}. A Kestra authority is the first path segment, so
+     * {@code kestra://namespace/file} and legacy {@code kestra:///namespace/file} are the same key.
+     * Any other scheme keeps {@link URI#getPath()}.
+     *
+     * @throws IllegalArgumentException when a Kestra URI is opaque, or has a user-info, a port, or {@code :} or {@code @} in its authority
+     */
+    public static String logicalPath(URI uri) {
+        if (uri == null) {
+            return "/";
+        }
+        if (!isKestraScheme(uri)) {
+            return uri.getPath() == null ? "" : uri.getPath();
+        }
+        if (uri.isOpaque() || uri.getPath() == null) {
+            throw new IllegalArgumentException("Invalid Kestra storage URI '%s'.".formatted(uri));
+        }
+        if (uri.getRawUserInfo() != null || uri.getPort() != -1) {
+            throw new IllegalArgumentException("Invalid Kestra storage URI '%s'.".formatted(uri));
+        }
+        String authority = uri.getAuthority();
+        if (authority != null && !authority.isEmpty()) {
+            if (authority.indexOf(':') >= 0 || authority.indexOf('@') >= 0) {
+                throw new IllegalArgumentException("Invalid Kestra storage URI '%s'.".formatted(uri));
+            }
+            return "/" + authority + uri.getPath();
+        }
+        return uri.getPath();
+    }
+
+    /**
+     * Canonical Kestra URI {@code kestra://<first-segment>/<rest>}. A path with no first segment stays {@code kestra:///<path>}.
+     *
+     * @param absolutePath decoded absolute storage path, with or without a leading slash
+     * @throws IllegalArgumentException when the path is not a legal URI
+     */
+    public static URI toKestraUri(String absolutePath) {
+        if (absolutePath == null || absolutePath.isEmpty()) {
+            absolutePath = "/";
+        }
+        absolutePath = absolutePath.replace('\\', '/');
+        if (!absolutePath.startsWith("/")) {
+            absolutePath = "/" + absolutePath;
+        }
+        String rest = absolutePath.substring(1);
+        int slash = rest.indexOf('/');
+        String first = slash < 0 ? rest : rest.substring(0, slash);
+        try {
+            if (first.isEmpty()) {
+                // Root and extra leading slashes have no segment to put in the authority.
+                // An empty authority keeps the whole path in getPath(), which is kestra:///<path>.
+                return new URI(KESTRA_SCHEME, "", absolutePath, null, null);
+            }
+            String tail = slash < 0 ? null : rest.substring(slash);
+            // Five-argument constructor: a namespace segment may contain '_' or a trailing '-',
+            // which the host constructor rejects.
+            return new URI(KESTRA_SCHEME, first, tail, null, null);
+        } catch (URISyntaxException e) {
+            throw new IllegalArgumentException("Invalid Kestra storage path '%s'.".formatted(absolutePath), e);
+        }
+    }
+
+    /**
+     * {@link #toKestraUri(String)} of {@link #logicalPath(URI)}, or {@code uri} when it is not a Kestra URI.
+     */
+    public static URI toKestraUri(URI uri) {
+        if (!isKestraScheme(uri)) {
+            return uri;
+        }
+        return toKestraUri(logicalPath(uri));
+    }
+
+    /**
+     * Legacy {@code kestra:///} form whose {@link URI#getPath()} is the full storage key.
+     * Released storage plugins still resolve objects from {@link URI#getPath()} alone.
+     */
+    public static URI legacyKestraUri(URI uri) {
+        if (!isKestraScheme(uri)) {
+            return uri;
+        }
+        String path = logicalPath(uri);
+        if (path.isEmpty()) {
+            path = "/";
+        }
+        try {
+            return new URI(KESTRA_SCHEME, "", path, null, null);
+        } catch (URISyntaxException e) {
+            throw new IllegalArgumentException("Invalid Kestra storage path '%s'.".formatted(path), e);
+        }
+    }
+
     /** Per-flow subdir that holds execution storage. */
     public static final String EXECUTIONS_DIR_NAME = "executions";
 
@@ -57,18 +155,18 @@ public class StorageContext {
     static final String PREFIX_FORMAT_CACHE = "/%s/%s/%s/cache/cache.zip";
 
     /**
-     * {@code kestra:///<namespace-as-path>/} — namespace root, flow dirs as direct children.
+     * {@code kestra://<namespace-as-path>/} — namespace root, flow dirs as direct children.
      */
     public static URI namespaceRootUri(@NotNull String namespace) {
-        return URI.create(KESTRA_PROTOCOL + "/" + namespaceAsPath(namespace) + "/");
+        return toKestraUri("/" + namespaceAsPath(namespace) + "/");
     }
 
     /**
-     * {@code kestra:///<namespace-as-path>/<flow-slug>/executions/} — a flow's executions subdir.
+     * {@code kestra://<namespace-as-path>/<flow-slug>/executions/} — a flow's executions subdir.
      */
     public static URI executionsRootUri(@NotNull String namespace, @NotNull String flowId) {
         Objects.requireNonNull(flowId, "flowId");
-        return URI.create(KESTRA_PROTOCOL + "/" + namespaceAsPath(namespace) + "/" + Slugify.of(flowId) + "/" + EXECUTIONS_DIR_NAME + "/");
+        return toKestraUri("/" + namespaceAsPath(namespace) + "/" + Slugify.of(flowId) + "/" + EXECUTIONS_DIR_NAME + "/");
     }
 
     /**
@@ -185,7 +283,7 @@ public class StorageContext {
 
     public static Optional<String> extractExecutionId(URI path) {
         Pattern pattern = Pattern.compile("^/(.+)/executions/([^/]+)/", Pattern.CASE_INSENSITIVE);
-        Matcher matcher = pattern.matcher(path.getPath());
+        Matcher matcher = pattern.matcher(logicalPath(path));
 
         if (!matcher.find() || matcher.group(2).isEmpty()) {
             return Optional.empty();
@@ -287,17 +385,24 @@ public class StorageContext {
      * @return the {@link URI}.
      */
     public URI getExecutionStorageURI(@Nullable String scheme) {
+        var prefix = String.format(
+            PREFIX_FORMAT_EXECUTIONS,
+            getNamespaceAsPath(),
+            Slugify.of(flowId),
+            executionId
+        );
+        if (scheme == null) {
+            try {
+                return new URI("//" + prefix);
+            } catch (URISyntaxException e) {
+                throw new IllegalArgumentException(e);
+            }
+        }
+        String schemePrefix = scheme.endsWith("://") ? scheme : scheme + "://";
+        if (KESTRA_PROTOCOL.equals(schemePrefix) || KESTRA_SCHEME.equalsIgnoreCase(scheme)) {
+            return toKestraUri(prefix);
+        }
         try {
-            var schemePrefix = Optional.ofNullable(scheme)
-                .map(s -> s.endsWith("://") ? s : s + "://")
-                .orElse("//");
-
-            var prefix = String.format(
-                PREFIX_FORMAT_EXECUTIONS,
-                getNamespaceAsPath(),
-                Slugify.of(flowId),
-                executionId
-            );
             return new URI(schemePrefix + prefix);
         } catch (URISyntaxException e) {
             throw new IllegalArgumentException(e);

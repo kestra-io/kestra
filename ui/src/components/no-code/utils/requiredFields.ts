@@ -28,26 +28,19 @@ function mergeAllOf(schema: PartialSchema, definitions: Definitions): PartialSch
         const resolved = resolveRef(branch, definitions) ?? branch
         return {
             ...acc,
+            type: acc.type ?? resolved.type,
             properties: {...acc.properties, ...resolved.properties},
             required: [...new Set([...(acc.required ?? []), ...(resolved.required ?? [])])],
         }
     }, {...schema, allOf: undefined, properties: schema.properties ?? {}, required: schema.required ?? []})
 }
 
-function normalizeAnyOfBranch(branch: PartialSchema): PartialSchema {
-    if (branch.allOf?.length === 2 && branch.allOf[0].$ref && !branch.allOf[1].properties) {
-        return {...branch.allOf[1], $ref: branch.allOf[0].$ref}
-    }
-    return branch
-}
-
 function resolveAnyOfBranch(value: unknown, schema: PartialSchema, definitions: Definitions): PartialSchema | undefined {
     if (!schema.anyOf?.length) return undefined
 
-    const resolvedBranches = schema.anyOf.map((branch) => {
-        const normalized = normalizeAnyOfBranch(branch)
-        return mergeAllOf(resolveRef(normalized, definitions) ?? normalized, definitions)
-    })
+    const resolvedBranches = schema.anyOf.map((branch) =>
+        mergeAllOf(resolveRef(branch, definitions) ?? branch, definitions),
+    )
 
     if (value && typeof value === "object" && !Array.isArray(value) && "type" in value) {
         const discriminator = (value as {type?: unknown}).type
@@ -96,11 +89,15 @@ export function countUnsetRequiredFields(
         )
     }
 
-    if (!resolved.properties) return []
+    // A map-shaped schema (additionalProperties, no fixed `properties`) is not walked: its keys
+    // are runtime data, not schema, so there is no required list to check them against.
+    if (!resolved.properties && !resolved.required?.length) return []
 
     const value = model && typeof model === "object" && !Array.isArray(model) ? model as Record<string, unknown> : {}
+    const keys = new Set([...Object.keys(resolved.properties ?? {}), ...(resolved.required ?? [])])
 
-    return Object.entries(resolved.properties).flatMap(([key, childSchema]) => {
+    return [...keys].flatMap((key) => {
+        const childSchema = resolved.properties?.[key]
         const childValue = value[key]
         const childPath = path ? `${path}.${key}` : key
 
@@ -108,7 +105,7 @@ export function countUnsetRequiredFields(
             return [{path: childPath, label: key}]
         }
 
-        return childValue !== undefined
+        return childValue !== undefined && childSchema
             ? countUnsetRequiredFields(childValue, childSchema, definitions, childPath)
             : []
     })

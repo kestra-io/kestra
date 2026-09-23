@@ -1,19 +1,22 @@
 import {describe, it, expect} from "vitest"
 import {countUnsetRequiredFields, type PartialSchema} from "../../../src/components/no-code/utils/requiredFields"
+import {shouldDrillItem} from "../../../src/components/no-code/components/tasks/fieldNesting"
 
 describe("countUnsetRequiredFields", () => {
     it("counts a required subfield left unset inside a drillable array item, without drilling into it", () => {
-        const schema = {
-            type: "array",
-            items: {
-                type: "object",
-                properties: {
-                    when: {type: "string"},
-                    message: {type: "string"},
-                },
-                required: ["when", "message"],
+        const itemSchema = {
+            type: "object",
+            properties: {
+                when: {type: "string"},
+                message: {type: "string"},
+                metadata: {type: "object", properties: {note: {type: "string"}}},
             },
+            required: ["when", "message"],
         }
+        // Guards the premise: a scalar-only item never drills (TaskArray renders it inline already).
+        expect(shouldDrillItem(itemSchema, {})).toBe(true)
+
+        const schema = {type: "array", items: itemSchema}
 
         const model = [
             {when: "{{ true }}", message: "ok"},
@@ -92,6 +95,23 @@ describe("countUnsetRequiredFields", () => {
         const result = countUnsetRequiredFields({type: "B"}, schema, {})
 
         expect(result).toEqual([{path: "bar", label: "bar"}])
+    })
+
+    it("carries the required from an anyOf branch shaped as allOf: [{$ref}, {required}]", () => {
+        const definitions = {A: {type: "object", properties: {a: {type: "string"}, extra: {type: "string"}}, required: ["a"]}}
+        const schema = {anyOf: [{allOf: [{$ref: "#/definitions/A"}, {required: ["extra"]}]}]}
+
+        const result = countUnsetRequiredFields({a: "set"}, schema, definitions)
+
+        expect(result).toEqual([{path: "extra", label: "extra"}])
+    })
+
+    it("flags a required key that has no matching entry in properties", () => {
+        const schema = {type: "object", properties: {a: {type: "string"}}, required: ["a", "b"]}
+
+        const result = countUnsetRequiredFields({a: "set"}, schema, {})
+
+        expect(result).toEqual([{path: "b", label: "b"}])
     })
 
     it("returns nothing for a schema-less or model-less input", () => {

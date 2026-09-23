@@ -50,3 +50,4 @@ export const FIELD_NAV_INJECTION_KEY = Symbol("field-nav-injection-key") as Inje
 export const BLOCK_VALIDATION_ISSUES_INJECTION_KEY = Symbol("block-validation-issues-injection-key") as InjectionKey<ComputedRef<Map<string, string[]>>>
 
 export const BLOCK_DRAG_INJECTION_KEY = Symbol("block-drag-injection-key") as InjectionKey<BlockDragContext>
+export const REQUIRED_FIELDS_TRACKER_INJECTION_KEY = Symbol("required-fields-tracker-injection-key") as InjectionKey<Map<string, string>>

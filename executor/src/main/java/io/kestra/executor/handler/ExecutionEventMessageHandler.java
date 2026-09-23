@@ -269,7 +269,6 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
                         // worker task
                         if (!executor.getWorkerTasks().isEmpty()) {
                             List<WorkerTaskResult> workerTaskResults = new ArrayList<>();
-                            final List<TaskRun> currentTaskRuns = executor.getExecution().getTaskRunList();
                             executor
                                 .getWorkerTasks()
                                 .forEach(throwConsumer(executorTask ->

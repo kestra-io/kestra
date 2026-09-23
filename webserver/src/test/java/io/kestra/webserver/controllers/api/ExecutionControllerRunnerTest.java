@@ -169,6 +169,9 @@ class ExecutionControllerRunnerTest {
     @Inject
     private TaskOutputService taskOutputService;
 
+    @Inject
+    private ExecutionRepositoryInterface executionRepository;
+
     public static final String TESTS_FLOW_NS = "io.kestra.tests";
     public static final String TENANT_ID = "main";
 
@@ -1891,6 +1894,59 @@ class ExecutionControllerRunnerTest {
             )
         );
         assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.BAD_REQUEST.getCode());
+    }
+
+    @Test
+    @LoadFlows({ "flows/valids/loop-pause-resume.yaml" })
+    void shouldResumeLoopFromMainExecution() throws QueueException {
+        // Run execution until it is paused
+        Execution pausedExecution = runnerUtils.runOneUntilPaused(TENANT_ID, TESTS_FLOW_NS, "loop-pause-resume");
+        assertThat(pausedExecution.getState().isPaused()).isTrue();
+
+        // resume the execution two times as there are two iterations
+        HttpResponse<?> resumeResponse = client.toBlocking().exchange(
+            HttpRequest.POST("/api/v1/main/executions/" + pausedExecution.getId() + "/actions/resume", null)
+        );
+        assertThat(resumeResponse.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
+        awaitExecution(pausedExecution.getId(), exec -> exec.getState().isPaused());
+        resumeResponse = client.toBlocking().exchange(
+            HttpRequest.POST("/api/v1/main/executions/" + pausedExecution.getId() + "/actions/resume", null)
+        );
+        assertThat(resumeResponse.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
+
+        // check that the execution is no more paused
+        Execution execution = awaitExecution(pausedExecution.getId(), exec -> !exec.getState().isPaused());
+    }
+
+    @Test
+    @LoadFlows({ "flows/valids/loop-pause-resume.yaml" })
+    @SuppressWarnings("unchecked")
+    void shouldResumeLoopFromSubExecution() throws QueueException, InternalException {
+        // Run execution until it is paused
+        Execution pausedExecution = runnerUtils.runOneUntilPaused(TENANT_ID, TESTS_FLOW_NS, "loop-pause-resume");
+        assertThat(pausedExecution.getState().isPaused()).isTrue();
+
+        // resume each loop sub-execution
+        List<Execution> subExecutions = executionRepository.findLoopSubExecutions(pausedExecution.getTenantId(), pausedExecution.getId(), null);
+        assertThat(subExecutions).hasSize(1);
+        Execution iteration1 = subExecutions.getFirst();
+        HttpResponse<?> resumeResponse = client.toBlocking().exchange(
+            HttpRequest.POST("/api/v1/main/executions/" + iteration1.getId() + "/actions/resume", null)
+        );
+        assertThat(resumeResponse.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
+
+        awaitExecution(pausedExecution.getId(), exec -> exec.getState().getHistories().stream().filter(h -> h.getState().isPaused()).count() == 2);
+
+        subExecutions = executionRepository.findLoopSubExecutions(pausedExecution.getTenantId(), pausedExecution.getId(), null);
+        assertThat(subExecutions).hasSize(2);
+        Execution iteration2 = subExecutions.get(1);
+        resumeResponse = client.toBlocking().exchange(
+            HttpRequest.POST("/api/v1/main/executions/" + iteration2.getId() + "/actions/resume", null)
+        );
+        assertThat(resumeResponse.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
+
+        // check that the execution terminates successfully
+        awaitExecution(pausedExecution.getId(), exec -> exec.getState().isSuccess());
     }
 
     @Test

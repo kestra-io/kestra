@@ -3,7 +3,6 @@ package io.kestra.cli.commands.configs.sys;
 import java.util.ArrayList;
 import java.util.List;
 
-import io.kestra.cli.AbstractCommand;
 import io.kestra.cli.commands.NoDatabaseCommandInterface;
 import io.kestra.core.models.ServerType;
 import io.kestra.core.utils.Enums;
@@ -21,7 +20,7 @@ import picocli.CommandLine;
     description = { "Validate the current configuration." }
 )
 @Slf4j
-public class ConfigValidateCommand extends AbstractCommand implements NoDatabaseCommandInterface {
+public class ConfigValidateCommand extends AbstractConfigCommand implements NoDatabaseCommandInterface {
     @Inject
     private Environment environment;
 
@@ -73,10 +72,5 @@ public class ConfigValidateCommand extends AbstractCommand implements NoDatabase
         } catch (IllegalArgumentException e) {
             throw new CommandLine.ParameterException(this.spec.commandLine(), e.getMessage());
         }
-    }
-
-    @Override
-    protected boolean loadExternalPlugins() {
-        return false;
     }
 }

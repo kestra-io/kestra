@@ -1,6 +1,5 @@
 package io.kestra.cli.commands.configs.sys;
 
-import io.kestra.cli.AbstractCommand;
 import io.kestra.cli.Kestra;
 import io.kestra.cli.commands.NoDatabaseCommandInterface;
 
@@ -17,16 +16,11 @@ import picocli.CommandLine;
     }
 )
 @Slf4j
-public class ConfigCommand extends AbstractCommand implements NoDatabaseCommandInterface {
+public class ConfigCommand extends AbstractConfigCommand implements NoDatabaseCommandInterface {
     @Override
     public Integer call() throws Exception {
         super.call();
 
         return Kestra.runCli(new String[] { "configs", "--help" });
-    }
-
-    @Override
-    protected boolean loadExternalPlugins() {
-        return false;
     }
 }

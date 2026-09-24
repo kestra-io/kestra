@@ -378,6 +378,7 @@
     import {apiUrl} from "override/utils/route"
     import {useNamespacesStore} from "override/stores/namespaces"
     import {safePath} from "../../composables/useBaseNamespaces"
+    import {handled} from "../../utils/kestraHttp"
     import * as Utils from "../../utils/utils"
     import FileExplorerEmpty from "../../assets/icons/file_explorer_empty.svg"
     import Magnify from "vue-material-design-icons/Magnify.vue"
@@ -834,6 +835,7 @@
                 new: newPath,
             })
         } catch (error) {
+            handled(error)
             // The tree is left untouched on purpose: it used to be renamed before the response
             // arrived, so a refused rename (an existing name answers 500) still looked applied.
             console.error(`Failed to rename ${oldPath} to ${newPath}`, error)

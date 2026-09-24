@@ -2,6 +2,7 @@ import {computed, ref} from "vue"
 import {defineStore} from "pinia"
 
 import {useClient, type BlueprintControllerApiBlueprintItemWithSource} from "@kestra-io/kestra-sdk"
+import {handled} from "../utils/kestraHttp"
 import {apiUrl} from "override/utils/route"
 
 import {useMiscStore} from "override/stores/misc"
@@ -172,11 +173,21 @@ export const useBlueprintsStore = defineStore("blueprints", () => {
     }
 
     const validateFlowBlueprint = async (source: string): Promise<void> => {
-        const {data} = await axios.post<{constraints?: string}>(`${apiUrl()}/blueprints/flows/validate`, source, {
-            headers: {"Content-Type": "application/x-yaml"},
-            showMessageOnError: false,
-        })
-        validation.value = data
+        try {
+            const {data} = await axios.post<{constraints?: string}>(`${apiUrl()}/blueprints/flows/validate`, source, {
+                headers: {"Content-Type": "application/x-yaml"},
+            })
+            validation.value = data
+        } catch (e: unknown) {
+            const err = e as {status?: number; response?: {status?: number}}
+            const status = err?.status || err?.response?.status
+            if (status === 422) {
+                handled(e)
+                validation.value = undefined
+                return
+            }
+            throw e
+        }
     }
 
     const deleteFlowBlueprint = async (idToDelete: string) => {

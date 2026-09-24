@@ -42,6 +42,7 @@
 
     import {Execution, useExecutionsStore} from "../../../../../stores/executions"
     import {Log} from "../../../../../stores/logs"
+    import {handled} from "../../../../../utils/kestraHttp"
     import LogLine from "../../../../logs/LogLine.vue"
 
     const MAX_PREVIEW_LOGS = 4
@@ -82,11 +83,15 @@
                     "filters[level][GREATER_THAN_OR_EQUAL_TO]": "ERROR",
                     "filters[kind][IN]": props.execution.kind,
                 },
-                showMessageOnError: false,
             })
 
             if (response.length) logs.value = response as any
-        } catch {
+        } catch (e: unknown) {
+            const err = e as {status?: number; response?: {status?: number}}
+            const status = err?.status || err?.response?.status
+            if (status === 403 || status === 404) {
+                handled(e)
+            }
             // User may not have ACCESS_LOGS permission — silently skip
         }
     })

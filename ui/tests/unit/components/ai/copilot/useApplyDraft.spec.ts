@@ -108,7 +108,6 @@ describe("useApplyDraft", () => {
         // is saved for review rather than going live unattended.
         expect(createFlow).toHaveBeenCalledWith(
             expect.objectContaining({body: "id: my-flow\nnamespace: company.team", draft: true}),
-            expect.objectContaining({showMessageOnError: false}),
         )
         expect(updateFlow).not.toHaveBeenCalled()
         // On success it navigates to the applied flow.
@@ -137,7 +136,6 @@ describe("useApplyDraft", () => {
         await useApplyDraft().apply(draft())
         expect(updateFlow).toHaveBeenCalledWith(
             expect.objectContaining({namespace: "company.team", id: "my-flow", body: "id: my-flow\nnamespace: company.team"}),
-            expect.objectContaining({showMessageOnError: false}),
         )
         expect(push).toHaveBeenCalledWith(expect.objectContaining({name: "flows/update"}))
     })
@@ -245,7 +243,6 @@ describe("useApplyDraft", () => {
         await useApplyDraft().apply(draft())
         expect(loadFlow).toHaveBeenCalledWith(
             {namespace: "company.team", id: "my-flow", store: false},
-            expect.objectContaining({ignoreNotFound: true, showMessageOnError: false}),
         )
     })
 
@@ -268,7 +265,7 @@ describe("useApplyDraft", () => {
 
     it("still shows the confirm (before-source falls back to empty) when the persisted-flow fetch fails", async () => {
         messageBox.mockResolvedValueOnce(undefined)
-        loadFlow.mockRejectedValueOnce(new Error("not found"))
+        loadFlow.mockRejectedValueOnce(Object.assign(new Error("not found"), {status: 404}))
         await useApplyDraft().apply(draft())
         expect(messageBox).toHaveBeenCalled()
         expect(createFlow).toHaveBeenCalled()
@@ -292,7 +289,7 @@ describe("useApplyDraft", () => {
         expect(clientPost).toHaveBeenCalledWith(
             "/api/v1/main/dashboards",
             "id: my-dash\ntitle: My dash",
-            expect.objectContaining({showMessageOnError: false, headers: {"Content-Type": "application/x-yaml"}}),
+            expect.objectContaining({headers: {"Content-Type": "application/x-yaml"}}),
         )
         expect(clientPut).not.toHaveBeenCalled()
         expect(push).toHaveBeenCalledWith(expect.objectContaining({name: "dashboards/update", params: {dashboard: "my-dash", tenant: "main"}}))
@@ -306,7 +303,7 @@ describe("useApplyDraft", () => {
         expect(clientPut).toHaveBeenCalledWith(
             "/api/v1/main/dashboards/my-dash",
             "id: my-dash\ntitle: My dash",
-            expect.objectContaining({showMessageOnError: false, headers: {"Content-Type": "application/x-yaml"}}),
+            expect.objectContaining({headers: {"Content-Type": "application/x-yaml"}}),
         )
     })
 

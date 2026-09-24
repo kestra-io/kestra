@@ -155,6 +155,7 @@
     import * as Utils from "../../utils/utils"
     import {findTaskById} from "../../utils/flowUtils"
     import {useToast} from "../../utils/toast"
+    import {handled} from "../../utils/kestraHttp"
     import resource from "../../models/resource"
     import action from "../../models/action"
     import {useCoreStore} from "../../stores/core"
@@ -322,6 +323,13 @@
             taskRunLogs = await executionsStore.loadLogs({
                 store: false,
                 executionId: props.execution.id,
+                params: {taskRunId: props.taskRun.id, minLevel: "ERROR"},
+            }).catch((e) => {
+                if (e?.status === 404 || e?.response?.status === 404) {
+                    handled(e)
+                }
+                return []
+            })
                 params: {taskRunId: currentTaskRun.value.id, minLevel: "ERROR"},
                 showMessageOnError: false,
             }).catch(() => [])

@@ -30,7 +30,7 @@ vi.mock("nprogress", () => ({
     default: {start: nprogressStart, set: nprogressSet, done: nprogressDone},
 }))
 
-import {isReportedCentrally, setupKestraHttp} from "../../../src/utils/kestraHttp"
+import {isReportedCentrally, setupKestraHttp, handled} from "../../../src/utils/kestraHttp"
 
 describe("setupKestraHttp router NProgress hooks", () => {
     let beforeEachCb: () => void
@@ -124,15 +124,30 @@ describe("setupKestraHttp central 404 handling", () => {
         })
         onErrorInterceptor(notFound, notFoundResponse, request, opts)
 
-        return coreStore
+        return {coreStore, notFound}
     }
 
+    it("does not report to the global store if handled(error) is called by the local catch block", async () => {
+        const {coreStore, notFound} = triggerNotFound()
+        handled(notFound) // The caller's synchronous catch block executes and flags it
+        
+        await Promise.resolve() // wait for queueMicrotask to fire
+        expect(coreStore.message).toBeUndefined()
+    })
+
+    it("reports to the global store if handled(error) is NOT called", async () => {
+        const {coreStore} = triggerNotFound()
+        
+        await Promise.resolve() // wait for queueMicrotask to fire
+        expect(coreStore.message).not.toBeUndefined()
+    })
     beforeEach(() => {
         vi.spyOn(console, "error").mockImplementation(() => {})
     })
 
-    it("shows the failed request as a toast and logs it, instead of swapping the page for the not-found screen", () => {
-        const coreStore = triggerNotFound()
+    it("shows the failed request as a toast and logs it, instead of swapping the page for the not-found screen", async () => {
+        const {coreStore} = triggerNotFound()
+        await Promise.resolve()
 
         expect(coreStore.message).toMatchObject({
             variant: "error",
@@ -148,10 +163,6 @@ describe("setupKestraHttp central 404 handling", () => {
         )
     })
 
-    it("stays silent for callers that opted out with ignoreNotFound or showMessageOnError", () => {
-        expect(triggerNotFound({ignoreNotFound: true}).message).toBeUndefined()
-        expect(triggerNotFound({showMessageOnError: false}).message).toBeUndefined()
-    })
 })
 
 describe("isReportedCentrally", () => {
@@ -169,8 +180,6 @@ describe("isReportedCentrally", () => {
 
         expect(isReportedCentrally(failure(400))).toBe(false)
         expect(isReportedCentrally(failure(401))).toBe(false)
-        expect(isReportedCentrally(failure(404, {ignoreNotFound: true}))).toBe(false)
-        expect(isReportedCentrally(failure(500, {showMessageOnError: false}))).toBe(false)
         expect(isReportedCentrally({status: 0} as any)).toBe(false)
     })
 })

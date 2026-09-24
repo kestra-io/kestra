@@ -235,7 +235,7 @@
   "src/stores/blueprints.ts": 5,
   "src/stores/core.ts": 1,
   "src/stores/crossResourceSearch.ts": 7,
-  "src/stores/dashboard.ts": 16,
+  "src/stores/dashboard.ts": 15,
   "src/stores/doc.ts": 4,
   "src/stores/layout.ts": 2,
   "src/stores/playground.ts": 3,

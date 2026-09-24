@@ -27,7 +27,6 @@ import {InputType} from "../utils/inputs"
 import {Optional} from "../utils/utils"
 import {useApiStore} from "./api"
 import {executionLocation, isExampleFlow} from "../utils/analytics/activation"
-import type {KestraRequestOptions} from "../utils/kestraHttp"
 
 export interface Check {
     message: string
@@ -318,9 +317,9 @@ export const useExecutionsStore = defineStore("executions", () => {
 
     let latestExecutionLoad = 0
 
-    const loadExecution = (options: { id: string }, requestOptions?: KestraRequestOptions) => {
+    const loadExecution = (options: { id: string }) => {
         const load = ++latestExecutionLoad
-        return ExecutionsAPI.execution({executionId: options.id}, requestOptions).then(data => {
+        return ExecutionsAPI.execution({executionId: options.id}).then(data => {
             // A load the user has navigated away from must neither become the execution on screen
             // nor drop the pending update for the one that is, the same way a superseded search is
             // dropped in `stores/logs.ts`.
@@ -607,11 +606,9 @@ export const useExecutionsStore = defineStore("executions", () => {
         return Promise.resolve(new EventSource(`${apiUrl()}/logs/${options.id}/follow${query ? `?${query}` : ""}`, {withCredentials: true}))
     }
 
-    const loadLogs = (options: { executionId: string; params?: FilterQuery; store?: boolean; showMessageOnError?: boolean }) => {
-        const requestOptions: KestraRequestOptions | undefined = options.showMessageOnError === false ? {showMessageOnError: false} : undefined
+    const loadLogs = (options: { executionId: string; params?: FilterQuery; store?: boolean }) => {
         return LogsAPI.listLogsFromExecution(
             {executionId: options.executionId, filters: routeQueryToQueryFilters(options.params ?? {})},
-            requestOptions,
         ).then(data => {
             if (options.store === false) {
                 return data

@@ -7,6 +7,7 @@ import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
 import {asProblem, isProblemType, ProblemTypes, useClient} from "@kestra-io/kestra-sdk"
 import type {AxiosLikeConfig} from "@kestra-io/kestra-sdk"
 import * as FlowsAPI from "@kestra-io/kestra-sdk/flows"
+import {handled} from "../../../utils/kestraHttp"
 import {apiUrl} from "override/utils/route"
 import {useAppDraftActions} from "override/components/ai/copilot/appDraftActions"
 import {useMiscStore} from "override/stores/misc"
@@ -65,11 +66,6 @@ export function useApplyDraft() {
 
     const tenantParam = (): Record<string, string | string[]> => (route.params.tenant ? {tenant: route.params.tenant} : {})
 
-    // Per-request client option (the SDK endpoints' SECOND arg, spread into the request options and
-    // read by the global error interceptor). `showMessageOnError: false` opts this call out of the
-    // global error toast — we handle failures locally: a create that hits "already exists" is an
-    // expected step of the create→update fallback, and any real failure gets our own alert.
-    const silent = {showMessageOnError: false} as Parameters<typeof FlowsAPI.createFlow>[1]
 
     /** (A) Open the drafted YAML in the matching creation editor to review + save there. */
     function openInEditor(draft: ArtefactDraftEvent): void {
@@ -126,13 +122,12 @@ export function useApplyDraft() {
             try {
                 await FlowsAPI.createFlow(
                     {body: draft.yaml, draft: true} as Parameters<typeof FlowsAPI.createFlow>[0],
-                    silent,
                 )
             } catch (e) {
                 if (!isAlreadyExists(e)) throw e
+                handled(e)
                 await FlowsAPI.updateFlow(
                     {namespace, id, body: draft.yaml, draft: true} as Parameters<typeof FlowsAPI.updateFlow>[0],
-                    silent,
                 )
             }
             // When the user is already viewing this flow, apply transparently — like a save: refresh
@@ -190,10 +185,16 @@ export function useApplyDraft() {
             // A brand-new flow (the primary path — nothing persisted yet) 404s here by design; ignore
             // it like the fallback below does, rather than letting the global interceptor raise its own
             // error toast before the confirm dialog even opens.
-            const data = await flowStore.loadFlow({namespace, id, store: false}, {...silent, ignoreNotFound: true})
+            const data = await flowStore.loadFlow({namespace, id, store: false})
             return data?.source ?? ""
-        } catch {
-            return ""
+        } catch (e: unknown) {
+            const err = e as {status?: number; response?: {status?: number}}
+            const status = err?.status || err?.response?.status
+            if (status === 404) {
+                handled(e)
+                return ""
+            }
+            throw e
         }
     }
 
@@ -212,11 +213,12 @@ export function useApplyDraft() {
         try {
             // Create, falling back to update if the id already exists — same no-probe rationale as flows.
             /** Raw client because dashboard writes are Enterprise-only routes, absent from the OSS SDK; see the dashboard store. */
-            const yaml = {...silent, headers: {"Content-Type": "application/x-yaml"}} as AxiosLikeConfig
+            const yaml = {headers: {"Content-Type": "application/x-yaml"}} as AxiosLikeConfig
             try {
                 await useClient().post(`${apiUrl()}/dashboards`, draft.yaml, yaml)
             } catch (e) {
                 if (!isAlreadyExists(e)) throw e
+                handled(e)
                 await useClient().put(`${apiUrl()}/dashboards/${id}`, draft.yaml, yaml)
             }
             router.push({name: "dashboards/update", params: {dashboard: id, ...tenantParam()}})

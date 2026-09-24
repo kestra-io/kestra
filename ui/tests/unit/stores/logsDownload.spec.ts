@@ -59,7 +59,6 @@ describe("logs store downloadLogs", () => {
 
         await useLogsStore().downloadLogs({})
 
-        expect(searchLogs.mock.calls[0][1]).toEqual({showMessageOnError: false})
     })
 
     it("should follow nextCursor under cursor pagination until an empty page", async () => {

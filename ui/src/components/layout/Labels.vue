@@ -42,7 +42,7 @@
 <script setup lang="ts">
     import {computed, watch} from "vue"
 
-    import {useRouter, useRoute} from "vue-router"
+    import {useRouter, useRoute, type LocationQueryRaw} from "vue-router"
     const router = useRouter()
     const route = useRoute()
 
@@ -83,8 +83,8 @@
         return label.key && label.keyPrefix !== false ? `${label.key}:${value}` : value
     }
 
-    import {decodeSearchParams} from "@kestra-io/design-system"
-    let query: any[] = []
+    import {decodeSearchParams, type DecodedParam} from "@kestra-io/design-system"
+    let query: DecodedParam[] = []
     watch(
         () => route.query,
         (q) => (query = decodeSearchParams(q)),
@@ -110,12 +110,12 @@
             : `filters[${props.filterType}][EQUALS][${key}]`)
 
         if (isChecked(label)) {
-            const replacementQuery = {...route.query} as Record<string, any>
+            const replacementQuery: LocationQueryRaw = {...route.query}
             delete replacementQuery[props.filterType === "type" ? getKey() : getKey(label.key)]
             replacementQuery.page = "1"
             router.replace({query: replacementQuery})
         } else {
-            const newQuery = {...route.query, page: "1"} as Record<string, any>
+            const newQuery: LocationQueryRaw = {...route.query, page: "1"}
             if (props.filterType === "type") {
                 newQuery[getKey()] = label.value
             } else {

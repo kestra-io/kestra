@@ -88,11 +88,10 @@
                 height: var(--kel-alert-icon-size);
                 width: var(--kel-alert-icon-size);
             }
+        }
 
-            .material-design-icon > .material-design-icon__svg {
-                /* Raise the glyph by half its overhang so it centres on line one, not on its own taller box. */
-                bottom: calc((var(--kel-alert-icon-size) - var(--ks-line-height-base) * var(--ks-alert-first-line-font-size)) / 2);
-            }
+        &:has(.kel-alert__icon) .kel-alert__content {
+            padding-block: max(0px, calc((var(--kel-alert-icon-size) - var(--ks-line-height-base) * var(--ks-alert-first-line-font-size)) / 2));
         }
 
         .kel-alert__close-btn {

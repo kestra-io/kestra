@@ -7,6 +7,7 @@ import java.util.Map;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.executions.TaskRunAttempt;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.runners.WorkerTask;
 import io.kestra.core.runners.WorkerTaskResult;
 import io.kestra.executor.ExecutorContext;
 
@@ -59,8 +60,24 @@ public final class Results {
         return terminated(emitted, State.Type.SUCCESS, attemptEnd, outputs);
     }
 
+    public static WorkerTaskResult success(WorkerTask workerTask, Instant attemptEnd) {
+        return terminated(workerTask, State.Type.SUCCESS, attemptEnd, null);
+    }
+
+    public static WorkerTaskResult failed(WorkerTask workerTask, Instant attemptEnd) {
+        return terminated(workerTask, State.Type.FAILED, attemptEnd, null);
+    }
+
+    public static WorkerTaskResult killed(WorkerTask workerTask, Instant attemptEnd) {
+        return terminated(workerTask, State.Type.KILLED, attemptEnd, null);
+    }
+
     private static WorkerTaskResult terminated(ExecutorContext.ExecutorWorkerTask emitted, State.Type state, Instant attemptEnd, Map<String, Object> outputs) {
-        TaskRun taskRun = emitted.workerTask().getTaskRun();
+        return terminated(emitted.workerTask(), state, attemptEnd, outputs);
+    }
+
+    private static WorkerTaskResult terminated(WorkerTask taskRunSource, State.Type state, Instant attemptEnd, Map<String, Object> outputs) {
+        TaskRun taskRun = taskRunSource.getTaskRun();
 
         TaskRunAttempt attempt = TaskRunAttempt.builder()
             .state(

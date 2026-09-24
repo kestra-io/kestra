@@ -1,5 +1,5 @@
 import {describe, test, expect, vi} from "vitest"
-import {loadLanguageOnDemand} from "../../../../src/components/Data/KsMarkdown/shikiHighlighter"
+import {getShiki, loadLanguageOnDemand} from "../../../../src/components/Data/KsMarkdown/shikiHighlighter"
 
 let attempts = 0
 
@@ -28,5 +28,13 @@ describe("loadLanguageOnDemand", () => {
         await expect(loadLanguageOnDemand(highlighter, "ansi")).resolves.toBe(true)
 
         expect(attempts).toBe(before)
+    })
+})
+
+describe("getShiki", () => {
+    test("pre-registers only the grammars the app renders itself, so the rest stay out of the chunk", async () => {
+        const shiki = await getShiki()
+
+        expect(shiki.getLoadedLanguages().sort()).toEqual(["json", "py", "python", "yaml", "yml"])
     })
 })

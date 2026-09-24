@@ -1,18 +1,13 @@
-import {onActivated, onDeactivated, onMounted, onUnmounted, type Ref} from "vue"
+import {onActivated, onDeactivated, onMounted, onUnmounted} from "vue"
 
-const ALWAYS_GLOBAL_IDS = new Set(["save", "undo", "command-menu", "clear"])
+const ALWAYS_GLOBAL_IDS = new Set(["save", "command-menu", "clear"])
 const IGNORES_OVERLAY_GUARD_IDS = new Set(["help"])
-
-function isCodeEditorTarget(target: EventTarget | null): boolean {
-    const el = target as HTMLElement | null
-    return Boolean(el?.closest?.(".monaco-editor"))
-}
 
 function isTypingTarget(target: EventTarget | null): boolean {
     const el = target as HTMLElement | null
     if (!el) return false
     if (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.isContentEditable) return true
-    return isCodeEditorTarget(el)
+    return Boolean(el.closest?.(".monaco-editor"))
 }
 
 function matchesKey(event: KeyboardEvent, key: string): boolean {
@@ -41,7 +36,6 @@ export interface UseBlockEditorKeyboardOptions {
     keymap: BlockEditorKeyBindingLike[]
     dispatch: (id: string, event: KeyboardEvent) => void | boolean
     isOverlayOpen?: () => boolean
-    root?: Ref<HTMLElement | undefined | null>
 }
 
 export function resolveBlockEditorBinding(
@@ -60,12 +54,6 @@ export function useBlockEditorKeyboard(options: UseBlockEditorKeyboardOptions) {
         const typing = isTypingTarget(event.target)
         const isGlobal = ALWAYS_GLOBAL_IDS.has(binding.id)
         const ignoresOverlayGuard = IGNORES_OVERLAY_GUARD_IDS.has(binding.id)
-        const rivalCodeEditor =
-            options.root !== undefined &&
-            isCodeEditorTarget(event.target) &&
-            !options.root.value?.contains(event.target as Node)
-
-        if (event.key !== "Escape" && rivalCodeEditor) return
         if (event.key !== "Escape" && !isGlobal && typing) return
         if (event.key !== "Escape" && !isGlobal && !ignoresOverlayGuard && overlayOpen) return
 

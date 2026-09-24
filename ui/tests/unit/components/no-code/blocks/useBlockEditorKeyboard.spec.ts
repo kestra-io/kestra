@@ -1,5 +1,5 @@
 import {describe, it, expect, vi, afterEach} from "vitest"
-import {defineComponent, ref, type Ref} from "vue"
+import {defineComponent} from "vue"
 import {mount} from "@vue/test-utils"
 
 import {useBlockEditorKeyboard, type BlockEditorKeyBindingLike} from "../../../../../src/components/no-code/blocks/useBlockEditorKeyboard"
@@ -17,14 +17,10 @@ const KEYMAP: BlockEditorKeyBindingLike[] = [
     {id: "insert-before", keys: ["Shift+a"]},
 ]
 
-function mountWithKeyboard(
-    dispatch: (id: string, event: KeyboardEvent) => void | boolean,
-    isOverlayOpen?: () => boolean,
-    root?: Ref<HTMLElement | undefined | null>,
-) {
+function mountWithKeyboard(dispatch: (id: string, event: KeyboardEvent) => void | boolean, isOverlayOpen?: () => boolean) {
     const Comp = defineComponent({
         setup() {
-            useBlockEditorKeyboard({keymap: KEYMAP, dispatch, isOverlayOpen, root})
+            useBlockEditorKeyboard({keymap: KEYMAP, dispatch, isOverlayOpen})
             return () => null
         },
     })
@@ -164,12 +160,26 @@ describe("useBlockEditorKeyboard", () => {
         document.body.removeChild(input)
     })
 
-    it("stands down on a global shortcut typed outside the surface it belongs to", () => {
-        // Given — the Flow Code panel sits next to the canvas, so Monaco keeps its own Ctrl+Z
+    it("leaves Ctrl+Z to a field inside the surface, so typing undoes the characters", () => {
+        // Given
         const dispatch = vi.fn()
-        const surfaceRoot = document.createElement("div")
-        document.body.appendChild(surfaceRoot)
-        wrapper = mountWithKeyboard(dispatch, undefined, ref(surfaceRoot))
+        wrapper = mountWithKeyboard(dispatch)
+        const input = document.createElement("input")
+        document.body.appendChild(input)
+
+        // When
+        const event = dispatchKeydown(input, {key: "z", ctrlKey: true})
+
+        // Then — the field's own undo runs, the canvas does not rewind the flow
+        expect(dispatch).not.toHaveBeenCalled()
+        expect(event.defaultPrevented).toBe(false)
+        document.body.removeChild(input)
+    })
+
+    it("leaves Ctrl+Z to a Monaco editor", () => {
+        // Given — the Flow Code panel beside the canvas
+        const dispatch = vi.fn()
+        wrapper = mountWithKeyboard(dispatch)
         const monacoRoot = document.createElement("div")
         monacoRoot.className = "monaco-editor"
         const textarea = document.createElement("textarea")
@@ -183,33 +193,24 @@ describe("useBlockEditorKeyboard", () => {
         expect(dispatch).not.toHaveBeenCalled()
         expect(event.defaultPrevented).toBe(false)
         document.body.removeChild(monacoRoot)
-        document.body.removeChild(surfaceRoot)
     })
 
-    it("still dispatches a global shortcut typed inside the surface's own input", () => {
+    it("still dispatches Ctrl+Z from the canvas itself", () => {
         // Given
         const dispatch = vi.fn()
-        const surfaceRoot = document.createElement("div")
-        const input = document.createElement("input")
-        surfaceRoot.appendChild(input)
-        document.body.appendChild(surfaceRoot)
-        wrapper = mountWithKeyboard(dispatch, undefined, ref(surfaceRoot))
+        wrapper = mountWithKeyboard(dispatch)
 
         // When
-        dispatchKeydown(input, {key: "z", ctrlKey: true})
+        dispatchKeydown(window, {key: "z", ctrlKey: true})
 
         // Then
         expect(dispatch).toHaveBeenCalledWith("undo", expect.any(KeyboardEvent))
-        document.body.removeChild(surfaceRoot)
     })
 
-    it("still dispatches a global shortcut typed in the surface's own teleported modal", () => {
-        // Given — TaskEditModal renders through KsDialog with appendToBody, so element-plus
-        // teleports it to document.body and it is never a DOM descendant of the surface root
+    it("still dispatches Cmd+S from a field, including the surface's teleported modal", () => {
+        // Given — TaskEditModal is appendToBody, so it is never a DOM descendant of the canvas
         const dispatch = vi.fn()
-        const surfaceRoot = document.createElement("div")
-        document.body.appendChild(surfaceRoot)
-        wrapper = mountWithKeyboard(dispatch, undefined, ref(surfaceRoot))
+        wrapper = mountWithKeyboard(dispatch)
         const teleported = document.createElement("div")
         const input = document.createElement("input")
         teleported.appendChild(input)
@@ -218,25 +219,9 @@ describe("useBlockEditorKeyboard", () => {
         // When
         dispatchKeydown(input, {key: "s", metaKey: true})
 
-        // Then
+        // Then — saving is app-level; standing down here would hand the key to the browser
         expect(dispatch).toHaveBeenCalledWith("save", expect.any(KeyboardEvent))
         document.body.removeChild(teleported)
-        document.body.removeChild(surfaceRoot)
-    })
-
-    it("still dispatches a global shortcut while the surface root is not mounted", () => {
-        // Given — BlockEditor swaps its canvas out for the inline task form, so editorEl is unset
-        const dispatch = vi.fn()
-        wrapper = mountWithKeyboard(dispatch, undefined, ref(undefined))
-        const input = document.createElement("input")
-        document.body.appendChild(input)
-
-        // When
-        dispatchKeydown(input, {key: "s", metaKey: true})
-
-        // Then
-        expect(dispatch).toHaveBeenCalledWith("save", expect.any(KeyboardEvent))
-        document.body.removeChild(input)
     })
 
     it("does not preventDefault when undo reports an empty history", () => {

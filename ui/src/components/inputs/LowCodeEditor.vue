@@ -1163,7 +1163,6 @@
         keymap: BLOCK_EDITOR_KEYMAP,
         dispatch: (id, event) => (authoringSurface.isActive() ? dispatchTopologyShortcut(id, event) : false),
         isOverlayOpen: isAuthoringOverlayOpen,
-        root: vueFlow,
     })
 
 

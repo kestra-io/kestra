@@ -439,7 +439,9 @@
       "zoom-fit": "맞춤",
       "invalid": "그래프 오류",
       "invalid_description": "그래프를 로드하는 중 오류가 발생했습니다. 소스 코드에서 오류를 확인하세요.",
-      "load_error": "토폴로지 그래프를 로드할 수 없습니다. 다시 시도하세요."
+      "load_error": "토폴로지 그래프를 로드할 수 없습니다. 다시 시도하세요.",
+      "add-task": "Task 추가",
+      "add-trigger": "Trigger 추가"
     },
     "show task logs": "Task Logs 보기",
     "show task condition": "작업 상태 표시",
@@ -2191,7 +2193,7 @@
     "playground": {
       "title": "플레이그라운드",
       "run_task_info": "Flow Code 편집기에서 어떤 task 위에 마우스를 올리고 \"Run task\" 버튼을 클릭하여 task를 테스트하세요.",
-      "play_icon_info": "또한 No-Code 또는 Topology 보기에서 Play 아이콘을 클릭할 수 있습니다.",
+      "play_icon_info": "또한 No-code 또는 Topology 보기에서 Play 아이콘을 클릭할 수 있습니다.",
       "toggle": "플레이그라운드",
       "run_task": "Task 실행",
       "run_this_task": "이 task 실행",

@@ -215,7 +215,7 @@
     function applyHighlight() {
         if (!flowSelection.value) return
         const editor = editorRef.value?.getEditor?.()
-        if (!editor || !("createDecorationsCollection" in editor)) return
+        if (!editor) return
         const line = flowSelection.value.line
         activeDecoration?.clear()
         activeDecoration = editor.createDecorationsCollection([

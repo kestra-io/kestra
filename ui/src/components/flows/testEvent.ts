@@ -44,12 +44,12 @@ export async function sendWebhookTestEvent(options: {
 
         return {status: 200, ok: true, executionId: response?.id, url}
     } catch (error) {
-        const {status, response, message} = error as KestraHttpError
+        const httpError = error as KestraHttpError | undefined
         return {
-            status: status ?? response?.status ?? 0,
+            status: httpError?.status ?? httpError?.response?.status ?? 0,
             ok: false,
             url,
-            error: message,
+            error: httpError?.message,
         }
     }
 }

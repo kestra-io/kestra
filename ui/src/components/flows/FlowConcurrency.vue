@@ -96,8 +96,8 @@
 
             concurrencyLimit.value = response.data
         } catch (err) {
-            const {status, response} = err as KestraHttpError
-            if (status === 404 || response?.status === 404) {
+            const httpError = err as KestraHttpError | undefined
+            if (httpError?.status === 404 || httpError?.response?.status === 404) {
                 concurrencyLimit.value = undefined
             } else {
                 error.value = true

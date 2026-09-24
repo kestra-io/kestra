@@ -304,8 +304,8 @@ export function useFlowEditorActions() {
                     params: {tenant: tenant.value},
                 })
             })
-            .catch((error: KestraHttpError) => {
-                if (!isReportedCentrally(error)) toast.error(t("delete flow error", {id: flowId}))
+            .catch((error: unknown) => {
+                if (!isReportedCentrally(error as KestraHttpError)) toast.error(t("delete flow error", {id: flowId}))
             })
     }
 

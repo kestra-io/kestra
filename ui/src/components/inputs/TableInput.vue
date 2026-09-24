@@ -85,16 +85,16 @@
                     </div>
                 </template>
             </div>
+            <BlockEmptyDrop
+                class="add-row"
+                variant="empty"
+                :disabled="maxRows !== undefined && rows.length >= maxRows"
+                :dataTest="`table-row-add-${input.id}`"
+                @add="addRow"
+            >
+                {{ $t('table_input.add_row') }}
+            </BlockEmptyDrop>
         </div>
-        <BlockEmptyDrop
-            class="add-row"
-            variant="empty"
-            :disabled="maxRows !== undefined && rows.length >= maxRows"
-            :dataTest="`table-row-add-${input.id}`"
-            @add="addRow"
-        >
-            {{ $t('table_input.add_row') }}
-        </BlockEmptyDrop>
     </div>
 </template>
 
@@ -224,6 +224,9 @@
         border: 1px solid var(--ks-border-default);
         border-radius: var(--ks-radius-lg);
         overflow: hidden;
+        &:focus-within {
+            border-color: var(--ks-border-focus);
+        }
     }
 
     /* The inline padding has to match on both, or their subgrid tracks inset by different amounts
@@ -270,7 +273,7 @@
     }
 
     .add-row {
-        width: stretch;
+        grid-column: 1 / calc(var(--table-input-number-of-columns) + 2);
         margin: var(--ks-spacing-2);
     }
 </style>

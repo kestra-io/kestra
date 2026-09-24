@@ -3,6 +3,7 @@
         <div
             v-if="taskPickerVisible"
             class="block-editor-picker-overlay"
+            data-authoring-overlay
             :class="{'block-editor-picker-overlay--modal': modal}"
             @click="taskPickerVisible = false"
         >

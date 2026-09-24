@@ -634,6 +634,7 @@
         keymap: BLOCK_EDITOR_KEYMAP,
         dispatch: (id, event) => (authoringSurface.isActive() ? dispatchBlockEditorAction(id, event) : false),
         isOverlayOpen: isAnyOverlayOpen,
+        root: editorEl,
     })
 
     const {

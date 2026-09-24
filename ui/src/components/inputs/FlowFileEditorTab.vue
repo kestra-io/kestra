@@ -1,5 +1,5 @@
 <template>
-    <div class="h-100 d-flex flex-column">
+    <div ref="tabRootEl" class="h-100 d-flex flex-column">
         <img
             v-if="['jpg', 'jpeg', 'png', 'gif', 'webp', 'webm', 'avif'].includes(extension)"
             :src="`${apiUrl()}/namespaces/${namespace}/files?path=/${path}`"
@@ -118,6 +118,7 @@
     import {useToast} from "../../utils/toast"
     import PlaygroundRunTaskButton from "./PlaygroundRunTaskButton.vue"
     import {FILES_CLOSE_TAB_INJECTION_KEY} from "./FileExplorer.vue"
+    import {hasActiveAuthoringSurface} from "../no-code/blocks/useAuthoringSurface"
 
     const route = useRoute()
     const {t} = useI18n()
@@ -406,14 +407,18 @@
         savedSourceNS.value = source.value
     }
 
+    const tabRootEl = ref<HTMLElement>()
+
     const handleGlobalSave = (event: KeyboardEvent) => {
-        if ((event.ctrlKey || event.metaKey) && event.key === "s") {
-            event.preventDefault()
-            if (props.flow) {
-                saveFlowYaml()
-            } else if (isDirty.value) {
-                saveFileContent()
-            }
+        if (!((event.ctrlKey || event.metaKey) && event.key === "s")) return
+        // An authoring surface answers this chord for everything outside this editor, so without
+        // standing down both listeners would run their own save against the same flow.
+        if (hasActiveAuthoringSurface() && !tabRootEl.value?.contains(event.target as Node)) return
+        event.preventDefault()
+        if (props.flow) {
+            saveFlowYaml()
+        } else if (isDirty.value) {
+            saveFileContent()
         }
     }
 

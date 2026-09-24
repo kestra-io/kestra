@@ -2,7 +2,7 @@ import {describe, it, expect} from "vitest"
 import {defineComponent, h, KeepAlive, ref, type Ref} from "vue"
 import {mount} from "@vue/test-utils"
 
-import {useAuthoringSurface} from "../../../../../src/components/no-code/blocks/useAuthoringSurface"
+import {hasActiveAuthoringSurface, useAuthoringSurface} from "../../../../../src/components/no-code/blocks/useAuthoringSurface"
 
 interface Surface {
     isActive: () => boolean
@@ -35,6 +35,17 @@ function surface(label: string): Surface {
 }
 
 describe("useAuthoringSurface", () => {
+    // The Flow Code editor yields Ctrl+S to an authoring surface, so it needs to know one is up.
+    it("reports whether any surface is mounted", () => {
+        expect(hasActiveAuthoringSurface()).toBe(false)
+
+        const wrapper = mountSurface("ownership")
+        expect(hasActiveAuthoringSurface()).toBe(true)
+
+        wrapper.unmount()
+        expect(hasActiveAuthoringSurface()).toBe(false)
+    })
+
     it("stays active while it is the only surface", () => {
         const only = mountSurface("only")
         expect(surface("only").isActive()).toBe(true)

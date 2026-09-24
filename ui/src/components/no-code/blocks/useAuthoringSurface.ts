@@ -3,6 +3,10 @@ import {onActivated, onDeactivated, onMounted, onUnmounted, ref, type Ref} from 
 const active = ref<symbol[]>([])
 const engaged = ref<symbol | undefined>(undefined)
 
+export function hasActiveAuthoringSurface(): boolean {
+    return active.value.length > 0
+}
+
 export function useAuthoringSurface(root: Ref<HTMLElement | undefined | null>) {
     const id = Symbol("authoring-surface")
 

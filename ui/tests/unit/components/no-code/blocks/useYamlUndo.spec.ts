@@ -38,6 +38,30 @@ describe("useYamlUndo", () => {
         expect(noCode.performUndo()).toBe(false)
     })
 
+    it("clears the delete toast when another surface edits, so it cannot undo a different change", () => {
+        const store = makeStore()
+        const noCode = useYamlUndo(store, label)
+        const topology = useYamlUndo(store, label)
+
+        noCode.deleteWithUndo("log_task", () => noCode.applyYaml("tasks: []"))
+        expect(noCode.undoState.value).toEqual({label: "deleted log_task"})
+
+        topology.applyYaml("tasks: [a]")
+
+        expect(noCode.undoState.value).toBeNull()
+        expect(topology.undoState.value).toBeNull()
+    })
+
+    it("shows the delete toast on every surface, not only the one that deleted", () => {
+        const store = makeStore()
+        const noCode = useYamlUndo(store, label)
+        const topology = useYamlUndo(store, label)
+
+        noCode.deleteWithUndo("log_task", () => noCode.applyYaml("tasks: []"))
+
+        expect(topology.undoState.value).toEqual({label: "deleted log_task"})
+    })
+
     it("drops the history when the flow changes, so an undo cannot cross flows", () => {
         const first = makeStore("company.team", "flow_a")
         const surface = useYamlUndo(first, label)

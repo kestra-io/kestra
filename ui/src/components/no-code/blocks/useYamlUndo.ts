@@ -12,23 +12,24 @@ interface FlowStoreLike {
 
 const undoHistory = ref<string[]>([])
 const historyScope = ref<string | undefined>(undefined)
+const undoState = ref<{label: string} | null>(null)
+let undoTimer: ReturnType<typeof setTimeout> | undefined
+
+function dismissDeleteBadge() {
+    undoState.value = null
+    clearTimeout(undoTimer)
+}
 
 export function useYamlUndo(flowStore: FlowStoreLike, deletedLabel: (name: string) => string) {
     const onEditTimeout = ref<ReturnType<typeof setTimeout>>()
-    const undoState = ref<{label: string} | null>(null)
-    let undoTimer: ReturnType<typeof setTimeout> | undefined
     let applyingUndo = false
-
-    function dismissDeleteBadge() {
-        undoState.value = null
-        clearTimeout(undoTimer)
-    }
 
     function enterCurrentScope() {
         const scope = `${flowStore.flow?.namespace ?? ""}/${flowStore.flow?.id ?? ""}`
         if (historyScope.value === scope) return
         historyScope.value = scope
         undoHistory.value = []
+        dismissDeleteBadge()
     }
 
     function applyYaml(newYaml: string) {

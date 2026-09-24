@@ -12,6 +12,8 @@ jobs:
   # Kestra webhook) and trigger the EE OpenAPI spec check.
   trigger-ee:
     runs-on: ubuntu-latest
+    # Above the curl ceiling in ee-compile-check, so curl's own error wins.
+    timeout-minutes: 50
     # The `secrets` context is not allowed in `if:` conditions, so expose the
     # app-id as a job-level env var (the `env` context IS allowed in `if:`) and
     # gate the steps on that instead.
@@ -123,6 +125,7 @@ jobs:
       ui-design-system: ${{ steps.changes.outputs.ui-design-system }}
       translations: ${{ steps.changes.outputs.translations }}
       backend: ${{ steps.changes.outputs.backend }}
+      e2e: ${{ steps.changes.outputs.e2e }}
     steps:
       - uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
         id: changes
@@ -136,8 +139,10 @@ jobs:
               - 'ui/src/translations/**'
               - 'ui/scripts/translations/**'
               - 'ui/packages/design-system/**/*.locale.ts'
+            e2e:
+              - 'e2e/**'
             backend:
-              - '!{ui,.github}/**'
+              - '!{ui,e2e,.github}/**'
           token: ${{ secrets.GITHUB_TOKEN }}
 
   # Fills in whatever the PR left missing or stale and commits it straight onto the branch, so the
@@ -318,6 +323,32 @@ jobs:
     secrets:
       GITHUB_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+  e2e-checks:
+    name: E2E - Checks
+    needs: [file-changes]
+    if: "needs.file-changes.outputs.e2e == 'true'"
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24.x'
+          cache: npm
+          cache-dependency-path: e2e/package-lock.json
+
+      # No browsers and no product build: this is the static half of what the frontend job used to
+      # cover for the specs, and it is the only check an e2e-only PR gets before the suite itself.
+      - working-directory: e2e
+        run: npm ci
+
+      - working-directory: e2e
+        run: npm run check:types
+
+      - working-directory: e2e
+        run: npm run test:lint
+
   backend:
     name: Backend - Tests
     needs: file-changes
@@ -341,7 +372,7 @@ jobs:
     # build; drafts are filtered by file-changes' own if. Fork PRs can't
     # share artifacts (their runs hold no repo write token), so they keep
     # the E2E build-from-source fallback below.
-    if: "(needs.file-changes.outputs.ui == 'true' || needs.file-changes.outputs.backend == 'true') && github.event.pull_request.head.repo.fork == false"
+    if: "(needs.file-changes.outputs.ui == 'true' || needs.file-changes.outputs.backend == 'true' || needs.file-changes.outputs.e2e == 'true') && github.event.pull_request.head.repo.fork == false"
     uses: kestra-io/actions/.github/workflows/kestra-oss-build-artifacts.yml@main
     secrets:
       OTLP_ENDPOINT: ${{ secrets.OTLP_ENDPOINT }}
@@ -354,7 +385,7 @@ jobs:
     needs: [file-changes, build-artifacts]
     # Runs when build-artifacts succeeded (prebuilt exe) or was skipped for a
     # fork (falls back to building from source); not when the build failed.
-    if: "!cancelled() && needs.build-artifacts.result != 'failure' && (needs.file-changes.outputs.ui == 'true' || needs.file-changes.outputs.backend == 'true')"
+    if: "!cancelled() && needs.build-artifacts.result != 'failure' && (needs.file-changes.outputs.ui == 'true' || needs.file-changes.outputs.backend == 'true' || needs.file-changes.outputs.e2e == 'true')"
     uses: kestra-io/actions/.github/workflows/kestra-oss-e2e-tests.yml@main
     secrets:
       OTLP_ENDPOINT: ${{ secrets.OTLP_ENDPOINT }}
@@ -387,7 +418,7 @@ jobs:
   required-checks:
     name: Required checks
     if: always()
-    needs: [file-changes, frontend, design-system-frontend, backend, build-artifacts, e2e-tests]
+    needs: [file-changes, frontend, design-system-frontend, e2e-checks, backend, build-artifacts, e2e-tests]
     runs-on: ubuntu-latest
     steps:
       - name: Fail if any required job failed or was cancelled
@@ -405,7 +436,7 @@ jobs:
     name: OpenTelemetry - Export Trace
     runs-on: ubuntu-latest
     if: always()
-    needs: [ trigger-ee, file-changes, frontend, design-system-frontend, backend, build-artifacts, e2e-tests, generate-pull-request-docker-image ]
+    needs: [ trigger-ee, file-changes, frontend, design-system-frontend, e2e-checks, backend, build-artifacts, e2e-tests, generate-pull-request-docker-image ]
     env:
       OTLP_ENDPOINT: ${{ secrets.OTLP_ENDPOINT }}
     steps:

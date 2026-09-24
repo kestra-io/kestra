@@ -871,7 +871,7 @@
     "flow delete": "确定要删除 <code>{flowCount}</code> 个流程吗？",
     "delete flow error": "无法删除 flow {id}",
     "flows deleted": "<code>{count}</code> 个流程已删除",
-    "flow disable": "确定要禁用 <code>{flowCount}</code> 个流程吗？",
+    "flow disable": "您确定要禁用 <code>{flowCount}</code> 个 Flow 吗？<br/><br/>禁用 Flow 会在 Flow 中写入 <code>disabled: true</code> 并创建一个新版本。来自不包含 <code>disabled: true</code> 的外部源的同步将再次启用该 Flow。",
     "flow enable": "确定要启用 <code>{flowCount}</code> 个流程吗？",
     "flows disabled": "<code>{count}</code> 个流程已禁用",
     "flows enabled": "<code>{count}</code> 个流程已启用",
@@ -1619,7 +1619,9 @@
       "raw": "时间视图",
       "raw_details": "以原始、按时间戳排序的格式显示完整的 task logs 和 flow logs",
       "compact": "默认视图",
-      "compact_details": "按任务分组显示任务日志"
+      "compact_details": "按任务分组显示任务日志",
+      "fullscreen": "全屏日志",
+      "exit_fullscreen": "退出全屏"
     },
     "execution_deletion": {
       "logs": "删除日志",
@@ -2645,6 +2647,9 @@
       "install_description": "将 Kestra 安装为应用,以获得更快的访问速度和全屏体验。",
       "install": "安装",
       "dismiss": "暂不"
-    }
+    },
+    "iteration": "迭代",
+    "iteration_number": "迭代 {number}",
+    "delete_log_iteration": "确定要删除 {iteration} 的日志吗？"
   }
 }

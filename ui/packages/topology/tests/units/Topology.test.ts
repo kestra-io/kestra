@@ -1,9 +1,10 @@
 import {describe, expect, it} from "vitest"
 import Topology from "../../src/Topology.vue"
+import type {FlowGraph} from "../../src/utils/vueFlowUtils"
 
 import {i18nMount} from "../../../../tests/unit/i18nMount"
 
-const EMPTY_GRAPH = {nodes: [], edges: [], clusters: []} as any
+const EMPTY_GRAPH: FlowGraph = {nodes: [], edges: [], clusters: []}
 
 function mountTopology(isReadOnly: boolean, isAllowedEdit: boolean) {
     return i18nMount(Topology, {

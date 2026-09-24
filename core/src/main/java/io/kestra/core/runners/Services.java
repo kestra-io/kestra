@@ -5,6 +5,7 @@ import java.util.Optional;
 import io.kestra.core.docs.JsonSchemaGenerator;
 import io.kestra.core.models.ServerType;
 import io.kestra.core.models.tasks.runners.TaskLogLineMatcher;
+import io.kestra.core.services.KVStoreService;
 import io.kestra.core.trace.TracerFactory;
 import io.kestra.core.utils.UriProvider;
 
@@ -51,6 +52,13 @@ public class Services {
      */
     public Optional<ObservationRegistry> observationRegistry() {
         return applicationContext.findBean(ObservationRegistry.class);
+    }
+
+    /**
+     * Provides access to the {@link KVStoreService} bean.
+     */
+    public KVStoreService kvStoreService() {
+        return applicationContext.getBean(KVStoreService.class);
     }
 
     /**

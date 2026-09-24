@@ -106,7 +106,7 @@
             @created="resolveCreatedTarget"
         />
 
-        <UndoToast :state="undoState" @undo="performUndo" />
+        <UndoToast :state="visibleUndoState" @undo="performUndo" />
 
         <BlockShortcutsDialog v-model:open="shortcutsOpen" :groups="shortcutGroups" />
 
@@ -1158,6 +1158,10 @@
     }
 
     const authoringSurface = useAuthoringSurface(vueFlow)
+
+    // The history is shared with No-code, so both surfaces hold the same badge: only the one the
+    // user is on should show it, or a delete raises two identical toasts side by side.
+    const visibleUndoState = computed(() => (authoringSurface.isActive() ? undoState.value : null))
 
     useBlockEditorKeyboard({
         keymap: BLOCK_EDITOR_KEYMAP,

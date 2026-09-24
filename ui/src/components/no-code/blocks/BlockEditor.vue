@@ -106,7 +106,7 @@
             :shortcutGroups="shortcutGroups"
             :footerContext="footerContext"
             :footerHints="footerHints"
-            :undoState="undoState"
+            :undoState="visibleUndoState"
             @undo="performUndo"
         />
 
@@ -629,6 +629,8 @@
     }
 
     const authoringSurface = useAuthoringSurface(editorEl)
+
+    const visibleUndoState = computed(() => (authoringSurface.isActive() ? undoState.value : null))
 
     useBlockEditorKeyboard({
         keymap: BLOCK_EDITOR_KEYMAP,

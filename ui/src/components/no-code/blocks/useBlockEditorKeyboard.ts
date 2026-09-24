@@ -1,7 +1,10 @@
 import {onActivated, onDeactivated, onMounted, onUnmounted, type Ref} from "vue"
 
-const ALWAYS_GLOBAL_IDS = new Set(["save", "command-menu", "clear"])
+const ALWAYS_GLOBAL_IDS = new Set(["save", "command-menu", "clear", "redo"])
 const IGNORES_OVERLAY_GUARD_IDS = new Set(["help"])
+// A clipboard shortcut yields to a real text selection, so `⌘C` over selected card text still
+// copies the text instead of the block; `isTypingTarget` only covers inputs and Monaco.
+const TEXT_SELECTION_GUARDED_IDS = new Set(["copy", "cut", "paste"])
 export const AUTHORING_OVERLAY_ATTRIBUTE = "data-authoring-overlay"
 
 export function isTypingTarget(target: EventTarget | null): boolean {
@@ -9,6 +12,11 @@ export function isTypingTarget(target: EventTarget | null): boolean {
     if (!el) return false
     if (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.isContentEditable) return true
     return Boolean(el.closest?.(".monaco-editor"))
+}
+
+function hasNonEmptyTextSelection(): boolean {
+    const selection = window.getSelection?.()
+    return Boolean(selection && !selection.isCollapsed && selection.toString().length > 0)
 }
 
 function matchesKey(event: KeyboardEvent, key: string): boolean {
@@ -51,6 +59,8 @@ export function useBlockEditorKeyboard(options: UseBlockEditorKeyboardOptions) {
     function handleKeydown(event: KeyboardEvent) {
         const binding = resolveBlockEditorBinding(event, options.keymap)
         if (!binding) return
+
+        if (TEXT_SELECTION_GUARDED_IDS.has(binding.id) && hasNonEmptyTextSelection()) return
 
         const overlayOpen = options.isOverlayOpen?.() ?? false
         const typing = isTypingTarget(event.target)

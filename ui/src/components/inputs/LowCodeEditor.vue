@@ -767,7 +767,7 @@
 
     // Topology renders the whole graph, so every graph-originated mutation needs the graph
     // regenerated from the new YAML — unlike the No-code canvas, which never reads flowGraph.
-    const {undoState, applyYaml: applyYamlWithUndo, deleteWithUndo, performUndo} = useYamlUndo(
+    const {undoState, applyYaml: applyYamlWithUndo, deleteWithUndo, performUndo, performRedo} = useYamlUndo(
         flowStore,
         (name: string) => t("block_editor.block_deleted", {name}),
     )
@@ -1094,6 +1094,8 @@
             return reorderFocusedTask(event.key === "ArrowDown" ? "down" : "up") ? undefined : false
         case "undo":
             return performUndo()
+        case "redo":
+            return performRedo()
         case "save":
             saveFlow()
             return

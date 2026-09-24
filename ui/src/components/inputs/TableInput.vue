@@ -2,16 +2,14 @@
     <div class="table-input">
         <div
             v-if="rows.length"
-            class="table-input-grid"
+            class="table-input-blocks"
             role="grid"
             :aria-label="input.displayName || input.id"
             :aria-rowcount="rows.length + 1"
-            :style="{gridTemplateColumns: `repeat(${columns.length}, minmax(0, 1fr)) auto`}"
+            :style="{'--table-input-number-of-columns': columns.length}"
         >
-            <div class="table-input-row" role="row" :aria-rowindex="1">
-                <span v-for="column in columns" :key="column.id" class="table-input-header" role="columnheader">
-                    {{ columnLabel(column) }}
-                </span>
+            <div class="table-input-row table-input-row-header" role="row" :aria-rowindex="1">
+                <TableInputColumnLabel v-for="column in columns" :key="column.id" v-bind="column" />
                 <span class="table-input-header" role="columnheader" />
             </div>
 
@@ -111,6 +109,7 @@
     import DeleteOutlineIcon from "vue-material-design-icons/DeleteOutline.vue"
     import BlockEmptyDrop from "../no-code/blocks/BlockEmptyDrop.vue"
     import type {InputError, InputMetaData, ValueOptionLike} from "../../stores/executions"
+    import TableInputColumnLabel from "./TableInputColumnLabel.vue"
 
     type Row = Record<string, unknown>
 
@@ -192,9 +191,7 @@
         }
     }
 
-    function columnLabel(column: InputMetaData): string {
-        return `${column.displayName || column.id} · ${column.type}`
-    }
+
 
     function options(column: InputMetaData): {label: string; value: string}[] {
         return ((column.values ?? column.options) ?? []).map((option: ValueOptionLike) =>
@@ -223,26 +220,24 @@
 <style lang="scss" scoped>
     .table-input {
         width: 100%;
+        border: 1px solid var(--ks-border-default);
+        border-radius: var(--ks-radius-lg);
     }
 
-    .table-input-grid {
-        display: grid;
-        gap: var(--ks-spacing-2) var(--ks-spacing-3);
-        align-items: start;
+    .table-input-blocks {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
     }
 
     .table-input-row {
         display: grid;
-        grid-column: 1 / -1;
-        grid-template-columns: subgrid;
-        gap: inherit;
+        grid-template-columns: repeat(var(--table-input-number-of-columns), 1fr) 20px;
+        gap: var(--ks-spacing-2) var(--ks-spacing-3);
+        margin: 0 var(--ks-spacing-2) var(--ks-spacing-2);
     }
 
-    .table-input-header {
-        color: var(--ks-text-secondary);
-        font-size: var(--ks-font-size-sm);
-        font-weight: var(--ks-font-weight-bold);
-    }
+
 
     /* A column shares whatever width there is rather than forcing the form to scroll sideways. */
     .table-input-field {
@@ -259,14 +254,15 @@
 
     .table-input-action {
         display: flex;
-        align-items: center;
+        align-items: flex-start;
+        padding-block: var(--ks-spacing-1);
         justify-content: center;
         /* The height of a control, which no token carries. */
         min-height: 2rem;
     }
 
     .add-row {
-        width: 100%;
-        margin-top: var(--ks-spacing-2);
+        width: stretch;
+        margin: var(--ks-spacing-2);
     }
 </style>

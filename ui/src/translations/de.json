@@ -2234,7 +2234,18 @@
           "issues": "{n} veraltet",
           "failed": "{n} fehlgeschlagen",
           "last_run": "letzter Run {ago}",
-          "unknown": "{n} nicht getrackt"
+          "unknown": "{n} nicht getrackt",
+          "tests_failed": "{n} mit fehlgeschlagenen Tests"
+        },
+        "tests": {
+          "pass": "{count} Test | {count} Tests",
+          "warn": "{count} Test · Warnung | {count} Tests · Warnung",
+          "fail": "{failed}/{total} fehlgeschlagen",
+          "tooltip": {
+            "pass": "Der {count} dbt Test ist bestanden | Alle {count} dbt Tests sind bestanden",
+            "warn": "{count} dbt Test mit Warnungen bestanden | {count} dbt Tests bestanden, einige mit Warnungen",
+            "fail": "{failed} von {total} dbt-Tests fehlgeschlagen"
+          }
         },
         "recent_runs": "Letzte Runs",
         "group_by": "Gruppieren nach",

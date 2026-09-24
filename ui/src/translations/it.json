@@ -2234,7 +2234,18 @@
           "issues": "{n} obsoleto",
           "failed": "{n} fallito",
           "last_run": "ultima esecuzione {ago}",
-          "unknown": "{n} non tracciato"
+          "unknown": "{n} non tracciato",
+          "tests_failed": "{n} con test falliti"
+        },
+        "tests": {
+          "pass": "{count} test | {count} test",
+          "warn": "{count} test · avviso | {count} test · avvisi",
+          "fail": "{failed}/{total} falliti",
+          "tooltip": {
+            "pass": "Il test dbt è stato superato | Tutti i {count} test dbt sono stati superati",
+            "warn": "{count} test dbt superato con avvisi | {count} test dbt superati, alcuni con avvisi",
+            "fail": "{failed} di {total} test dbt non riusciti"
+          }
         },
         "recent_runs": "Esecuzioni recenti",
         "group_by": "Raggruppa per",

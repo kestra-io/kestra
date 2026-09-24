@@ -2234,7 +2234,18 @@
           "issues": "{n} 고정",
           "failed": "{n} 실패함",
           "last_run": "마지막 실행 {ago}",
-          "unknown": "{n} 추적되지 않음"
+          "unknown": "{n} 추적되지 않음",
+          "tests_failed": "실패한 테스트가 있는 {n}개"
+        },
+        "tests": {
+          "pass": "{count} 테스트 | {count} 테스트",
+          "warn": "{count} 테스트 · 경고 | {count} 테스트 · 경고",
+          "fail": "{failed}/{total} 실패",
+          "tooltip": {
+            "pass": "{count} dbt 테스트 통과 | 모든 {count} dbt 테스트 통과",
+            "warn": "{count} dbt 테스트 경고와 함께 통과 | {count} dbt 테스트 통과, 일부 경고 포함",
+            "fail": "{total}개의 dbt 테스트 중 {failed}개가 실패했습니다."
+          }
         },
         "recent_runs": "최근 실행",
         "group_by": "그룹화 기준",

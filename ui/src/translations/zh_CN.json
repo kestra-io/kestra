@@ -2234,7 +2234,18 @@
           "issues": "{n} 过时",
           "failed": "{n} 失败",
           "last_run": "上次运行 {ago}",
-          "unknown": "{n} 未追踪"
+          "unknown": "{n} 未追踪",
+          "tests_failed": "{n} 个测试失败"
+        },
+        "tests": {
+          "pass": "{count} 个测试",
+          "warn": "{count} 测试 · 警告",
+          "fail": "{failed}/{total} 失败",
+          "tooltip": {
+            "pass": "{count} 个 dbt 测试通过 | 所有 {count} 个 dbt 测试通过",
+            "warn": "{count} 个 dbt 测试通过，部分带有警告",
+            "fail": "{failed} / {total} 个 dbt 测试失败"
+          }
         },
         "recent_runs": "最近运行",
         "group_by": "分组依据",

@@ -15,6 +15,7 @@ import io.kestra.core.executor.WorkerJobRunningStateStore;
 import io.kestra.core.killswitch.EvaluationType;
 import io.kestra.core.killswitch.KillSwitchService;
 import io.kestra.core.metrics.MetricRegistry;
+import io.kestra.core.models.flows.State;
 import io.kestra.core.models.triggers.TriggerId;
 import io.kestra.core.queues.KeyedDispatchQueueInterface;
 import io.kestra.core.queues.QueueException;
@@ -63,6 +64,7 @@ public class DefaultServiceLivenessCoordinator extends AbstractServiceLivenessTa
     private final Duration purgeRetention;
 
     private final KillSwitchService killSwitchService;
+    private final ExecutionStateStore executionStateStore;
     private final KeyedDispatchQueueInterface<WorkerJobEvent> workerJobEventQueue;
     private final WorkerJobRunningStateStore workerJobRunningStateStore;
     private final TriggerEventQueue triggerEventQueue;
@@ -91,6 +93,7 @@ public class DefaultServiceLivenessCoordinator extends AbstractServiceLivenessTa
         final ServiceLivenessUpdater serviceLivenessUpdater,
         final ServiceInstanceRepositoryInterface serviceInstanceRepository,
         final KillSwitchService killSwitchService,
+        final ExecutionStateStore executionStateStore,
         final KeyedDispatchQueueInterface<WorkerJobEvent> workerJobEventQueue,
         final WorkerJobRunningStateStore workerJobRunningStateStore,
         final TriggerEventQueue triggerEventQueue,
@@ -104,6 +107,7 @@ public class DefaultServiceLivenessCoordinator extends AbstractServiceLivenessTa
         this.serviceInstanceRepository = serviceInstanceRepository;
         this.store = store;
         this.killSwitchService = killSwitchService;
+        this.executionStateStore = executionStateStore;
         this.workerJobEventQueue = workerJobEventQueue;
         this.workerJobRunningStateStore = workerJobRunningStateStore;
         this.triggerEventQueue = triggerEventQueue;
@@ -421,33 +425,47 @@ public class DefaultServiceLivenessCoordinator extends AbstractServiceLivenessTa
     }
 
     private void resubmitWorkerTask(TransactionContext txContext, WorkerTaskRunning workerTaskRunning) {
+        String executionId = workerTaskRunning.getTaskRun().getExecutionId();
+
         if (killSwitchService.evaluate(workerTaskRunning.getTaskRun()) != EvaluationType.PASS) {
             // if the execution is switch-killed, we remove the workerTaskRunning and skip its resubmission
-            log.warn("Ignoring worker job resubmission for execution {} because there is a kill switch for it", workerTaskRunning.getTaskRun().getExecutionId());
+            log.warn("Ignoring worker job resubmission for execution {} because there is a kill switch for it", executionId);
             workerJobRunningStateStore.deleteByKey(txContext, workerTaskRunning.uid());
-        } else {
-            try {
-                String raw = workerTaskRunning.getWorkerInstance().workerQueueId();
-                String workerQueueId = (raw == null || raw.isEmpty()) ? null : raw;
-                WorkerTask workerTask = WorkerTask.builder()
-                    .taskRun(workerTaskRunning.getTaskRun().onRunningResend())
-                    .task(workerTaskRunning.getTask())
-                    .data(workerTaskRunning.getData())
-                    .build();
-                workerJobEventQueue.emit(workerQueueId, WorkerJobEvent.of(workerTask, workerQueueId));
-                Logs.logTaskRun(
-                    workerTaskRunning.getTaskRun(),
-                    Level.WARN,
-                    "Resubmit WorkerTask."
-                );
-            } catch (QueueException e) {
-                Logs.logTaskRun(
-                    workerTaskRunning.getTaskRun(),
-                    Level.ERROR,
-                    "Unable to resubmit WorkerTask.",
-                    e
-                );
-            }
+            return;
+        }
+
+        // A kill only reaches workers that are still alive, so the running job of a dead worker outlives the
+        // execution it belongs to, and resubmitting it would run the task — with its real side effects — for
+        // an execution that is already over.
+        Optional<State.Type> executionState = Optional.ofNullable(executionStateStore.findByIdWithoutAcl(executionId))
+            .map(execution -> execution.getState().getCurrent());
+        if (executionState.filter(state -> state.isTerminated() || State.Type.KILLING == state).isPresent()) {
+            log.warn("Ignoring worker job resubmission for execution {} because it is already in the {} state", executionId, executionState.get());
+            workerJobRunningStateStore.deleteByKey(txContext, workerTaskRunning.uid());
+            return;
+        }
+
+        try {
+            String raw = workerTaskRunning.getWorkerInstance().workerQueueId();
+            String workerQueueId = (raw == null || raw.isEmpty()) ? null : raw;
+            WorkerTask workerTask = WorkerTask.builder()
+                .taskRun(workerTaskRunning.getTaskRun().onRunningResend())
+                .task(workerTaskRunning.getTask())
+                .data(workerTaskRunning.getData())
+                .build();
+            workerJobEventQueue.emit(workerQueueId, WorkerJobEvent.of(workerTask, workerQueueId));
+            Logs.logTaskRun(
+                workerTaskRunning.getTaskRun(),
+                Level.WARN,
+                "Resubmit WorkerTask."
+            );
+        } catch (QueueException e) {
+            Logs.logTaskRun(
+                workerTaskRunning.getTaskRun(),
+                Level.ERROR,
+                "Unable to resubmit WorkerTask.",
+                e
+            );
         }
     }
 

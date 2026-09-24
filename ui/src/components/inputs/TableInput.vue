@@ -274,6 +274,7 @@
 
     .add-row {
         grid-column: 1 / calc(var(--table-input-number-of-columns) + 2);
-        margin: var(--ks-spacing-2);
+        margin: var(--ks-spacing-3);
+        margin-top: var(--ks-spacing-1);
     }
 </style>

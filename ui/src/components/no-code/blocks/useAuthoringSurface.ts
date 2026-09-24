@@ -1,5 +1,5 @@
 import {onActivated, onDeactivated, onMounted, onUnmounted, ref, type Ref} from "vue"
-import {AUTHORING_OVERLAY_ATTRIBUTE} from "./useBlockEditorKeyboard"
+import {AUTHORING_OVERLAY_ATTRIBUTE, isTypingTarget} from "./useBlockEditorKeyboard"
 
 const active = ref<symbol[]>([])
 const engaged = ref<symbol | undefined>(undefined)
@@ -12,9 +12,13 @@ const roots = new Map<symbol, Ref<HTMLElement | undefined | null>>()
  * neither is one the surface stands down for.
  */
 export function authoringSurfaceAnswersKeyFor(target: Node | null): boolean {
-    if (!target) return active.value.length > 0
+    if (active.value.length === 0) return false
+    if (!target) return true
     if ((target as HTMLElement).closest?.(`[${AUTHORING_OVERLAY_ATTRIBUTE}]`)) return true
-    return active.value.some(id => roots.get(id)?.value?.contains(target))
+    if (active.value.some(id => roots.get(id)?.value?.contains(target))) return true
+    // Mirrors the rule in useBlockEditorKeyboard: a surface only stands down for a *typing*
+    // target it does not own. A chord raised on nothing in particular belongs to the canvas.
+    return !isTypingTarget(target)
 }
 
 export function useAuthoringSurface(root: Ref<HTMLElement | undefined | null>) {

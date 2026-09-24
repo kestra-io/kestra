@@ -4,7 +4,7 @@ const ALWAYS_GLOBAL_IDS = new Set(["save", "command-menu", "clear"])
 const IGNORES_OVERLAY_GUARD_IDS = new Set(["help"])
 export const AUTHORING_OVERLAY_ATTRIBUTE = "data-authoring-overlay"
 
-function isTypingTarget(target: EventTarget | null): boolean {
+export function isTypingTarget(target: EventTarget | null): boolean {
     const el = target as HTMLElement | null
     if (!el) return false
     if (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.isContentEditable) return true

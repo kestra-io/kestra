@@ -1415,6 +1415,17 @@ afterExecution:
     type: io.kestra.plugin.core.log.Log
 `.trim()) as Record<string, unknown>
 
+            it("keeps a message carrying several brackets on the right task", () => {
+                const grouped = groupValidationIssuesByTask(
+                    ["tasks[0].commands: got [a] wanted [b]: nope"],
+                    flow,
+                )
+
+                expect(grouped.has("a")).toBe(false)
+                expect(grouped.has("b")).toBe(false)
+                expect(grouped.get("if_task")).toEqual(["commands: got [a] wanted [b]: nope"])
+            })
+
             it("does not mine a bracket out of the message itself", () => {
                 // The path is matched up to a `]`, and a message can carry its own bracket.
                 const grouped = groupValidationIssuesByTask(

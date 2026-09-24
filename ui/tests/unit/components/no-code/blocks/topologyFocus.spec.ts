@@ -211,6 +211,48 @@ tasks:
         expect(parentOf(order, "legacy_path")).toBe("router")
     })
 
+    it("reaches a Switch case keyed by anything the path grammar has to quote", () => {
+        const flow = `id: hostile
+namespace: company.team
+tasks:
+  - id: router
+    type: io.kestra.plugin.core.flow.Switch
+    value: "{{ trigger.value }}"
+    cases:
+      'a.b[0]':
+        - id: bracketed
+          type: io.kestra.plugin.core.log.Log
+      'with space':
+        - id: spaced
+          type: io.kestra.plugin.core.log.Log
+`
+        const order = buildTopologyFocusOrder(flow)
+        const byId = Object.fromEntries(order.map(entry => [entry.id, entry]))
+
+        expect(order.map(entry => entry.id)).toEqual(["router", "bracketed", "spaced"])
+        for (const id of ["bracketed", "spaced"]) {
+            expect(duplicateBlockAtPath(flow, byId[id].path), `duplicate ${id}`).not.toBe(flow)
+        }
+    })
+
+    it("skips an empty branch rather than counting it as a lane", () => {
+        const flow = `id: empty
+namespace: company.team
+tasks:
+  - id: gate
+    type: io.kestra.plugin.core.flow.If
+    condition: "true"
+    then: []
+    else:
+      - id: only_else
+        type: io.kestra.plugin.core.log.Log
+`
+        const order = buildTopologyFocusOrder(flow)
+
+        expect(order.map(entry => entry.id)).toEqual(["gate", "only_else"])
+        expect(firstChildOf(order, "gate")).toBe("only_else")
+    })
+
     it("returns nothing for a source that does not parse into a flow", () => {
         expect(buildTopologyFocusOrder("")).toEqual([])
     })

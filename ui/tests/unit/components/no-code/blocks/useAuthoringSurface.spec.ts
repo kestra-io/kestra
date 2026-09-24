@@ -64,6 +64,16 @@ describe("useAuthoringSurface", () => {
 
         // The gap this closes: a field belonging to neither has to be left to its own owner, or
         // the two window listeners both stand down and the chord reaches the browser.
+        // The canvas has no tabindex, so clicking it and pressing the chord targets `body`, which
+        // is an ancestor of every root rather than a descendant — `contains` alone says "not mine".
+        it("answers for a chord raised on nothing in particular", () => {
+            const wrapper = mountSurface("owner-body")
+
+            expect(authoringSurfaceAnswersKeyFor(document.body)).toBe(true)
+
+            wrapper.unmount()
+        })
+
         it("stands down for a field in an unrelated panel", () => {
             const wrapper = mountSurface("owner-foreign")
             const foreign = document.createElement("input")

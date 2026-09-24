@@ -128,6 +128,6 @@ ColumnTypes.args = {
 }
 ColumnTypes.play = async ({canvasElement}) => {
     // Seven declared columns plus the remove-row one.
-    await expect(canvasElement.querySelectorAll(".table-input-header").length).toBe(8)
+    await expect(canvasElement.querySelectorAll("[role='columnheader']").length).toBe(8)
     await expect(canvasElement.querySelector("[data-test='table-row-settings-0']")!.textContent).toContain("eu-west-1")
 }

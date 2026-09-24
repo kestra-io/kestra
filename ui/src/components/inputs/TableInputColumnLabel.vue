@@ -1,7 +1,7 @@
 <template>
-    <div>
-        <span class="table-input-header" role="columnheader">
-            {{ columnLabel }} 
+    <div role="columnheader">
+        <span class="table-input-header">
+            {{ columnLabel }}
         </span>
         <span class="table-input-type">
             {{ column.type }}

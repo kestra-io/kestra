@@ -2,8 +2,10 @@ import {onBeforeUnmount, onMounted, nextTick, watch, ref, computed} from "vue"
 import type {Ref, ComputedRef} from "vue"
 import type {RouteParams} from "vue-router"
 import {useI18n} from "vue-i18n"
+import type {EChartsType, ECElementEvent} from "echarts"
 import {State, cssVar} from "@kestra-io/design-system"
 import type {KsGraphNode, KsGraphEdge} from "@kestra-io/design-system"
+import type {ExecutionStatusEvent, FlowTopologyGraph} from "@kestra-io/kestra-sdk"
 import {useCoreStore} from "../../../stores/core"
 import {useFlowStore} from "../../../stores/flow"
 import {useExecutionsStore} from "../../../stores/executions"
@@ -58,12 +60,15 @@ function assetNodeSymbol(bgColor: string, borderColor: string, iconColor: string
 /** Which canvas the asset view shows. The chart only ever renders "force"; DagCanvas owns "dag". */
 export type LayoutMode = "force" | "dag"
 
+/** Tracks which ZRender instances have already had canvas-click handlers bound. */
+const boundZrInstances = new WeakSet<object>()
+
 interface KsGraphRef {
     zoomIn(): void;
     zoomOut(): void;
     fit(): void;
     exportAsImage(type: "jpeg" | "png", filename?: string): void;
-    getEchartsInstance(): unknown;
+    getEchartsInstance(): EChartsType | null;
 }
 
 function buildEdgeCounts(elements: Element[]): Map<string, number> {
@@ -105,8 +110,8 @@ export function useDependencies(
 
     const selectedNodeID: Ref<Node["id"] | undefined> = ref(undefined)
 
-    const getChart = (): Record<string, any> | null =>
-        graphRef.value?.getEchartsInstance?.() as Record<string, any> | null
+    const getChart = (): EChartsType | null =>
+        graphRef.value?.getEchartsInstance?.() ?? null
 
     // chartNodes/chartEdges are frozen after the initial render; applyStylesToChart() then updates
     // styles imperatively with layout:"none" so ECharts never re-runs the force simulation.
@@ -375,10 +380,11 @@ export function useDependencies(
         requestAnimationFrame(() => {
             const chart = getChart()
             const zr = chart?.getZr?.()
-            if (!zr || zr.ksDependenciesBound) return
-            zr.ksDependenciesBound = true
+            if (!zr || boundZrInstances.has(zr)) return
+            boundZrInstances.add(zr)
             chart?.on?.("graphRoam", () => {
-                const series = (chart.getOption?.() as Record<string, any> | undefined)?.series?.[0]
+                const opts = chart.getOption?.()
+                const series = (opts?.series as Array<{zoom?: number; center?: [number, number]}> | undefined)?.[0]
                 if (series?.zoom !== undefined) viewState.value = {zoom: series.zoom, center: series.center}
             })
             if (!dagView) return
@@ -390,8 +396,8 @@ export function useDependencies(
                     clearGroup()
                 }
             })
-            chart?.on?.("dblclick", (event: Record<string, any>) => {
-                if (event?.dataType === "node") openedNodeID.value = event.data?.id as string
+            chart?.on?.("dblclick", (event: ECElementEvent) => {
+                if (event?.dataType === "node") openedNodeID.value = (event.data as {id?: string})?.id as string
             })
         })
     }
@@ -401,7 +407,11 @@ export function useDependencies(
         const chart = getChart()
         if (!chart) return
         try {
-            const data = chart.getModel?.()?.getSeriesByIndex?.(0)?.getData?.()
+            // Private ECharts API: read post-simulation positions from the internal model.
+            // Guarded by try/catch — see "Internal ECharts API unavailable" below.
+            type SeriesData = {count(): number; getName(i: number): string; getItemLayout(i: number): unknown}
+            type InternalChart = {getModel?(): {getSeriesByIndex?(i: number): {getData?(): SeriesData | undefined} | undefined} | undefined}
+            const data = (chart as unknown as InternalChart).getModel?.()?.getSeriesByIndex?.(0)?.getData?.()
             if (!data) return
             const positions = new Map<string, {x: number; y: number}>()
             for (let i = 0; i < data.count(); i++) {
@@ -420,7 +430,7 @@ export function useDependencies(
         }
     }
 
-    const applyView = (chart: Record<string, any>): void => {
+    const applyView = (chart: EChartsType): void => {
         chart.setOption({series: [{
             type: "graph",
             zoom: viewState.value.zoom,
@@ -490,7 +500,7 @@ export function useDependencies(
                 const {data} = await namespacesStore.loadDependencies({namespace: params.id as string})
                 const nodes = data.nodes ?? []
                 elements.value = {
-                    data:  transformResponse(data as any, NAMESPACE),
+                    data:  transformResponse(data as FlowTopologyGraph, NAMESPACE),
                     count: new Set(nodes.map((r: {uid: string}) => r.uid)).size,
                 }
             } else {
@@ -527,7 +537,7 @@ export function useDependencies(
     const sse = ref()
 
     /** Applies a live execution-state update to its node, replacing the element so Vue picks up the change. */
-    const applyExecutionUpdate = (message: Record<string, any>): void => {
+    const applyExecutionUpdate = (message: ExecutionStatusEvent): void => {
         const nodeId = `${message.tenantId}_${message.namespace}_${message.flowId}`
         const idx = elements.value.data.findIndex(
             (el): el is {data: Node} => el.data.type === NODE && el.data.id === nodeId,
@@ -538,7 +548,7 @@ export function useDependencies(
         const updated = {
             data: {
                 ...el.data,
-                metadata: {...el.data.metadata, id: message.executionId, state: message.state.current as string},
+                metadata: {...el.data.metadata, id: message.executionId, state: message.state.current},
             },
         }
         elements.value.data.splice(idx, 1, updated)

@@ -119,8 +119,13 @@ const VIRTUALIZED_EXECUTION = {
     })),
 };
 
+// 20 entries per task, not more: CompactFullscreenVirtualizedTasks opens, closes and reopens the
+// fullscreen dialog, so every log line here is rendered three times over and the play function is
+// the most expensive in this file. At 50 it took 16.6s against the 15s test timeout and failed. 20
+// still leaves each task pane scrollable by a comfortable margin (1080px of content in 402px), which
+// is what the "first task log scroller not ready" gates below need.
 const VIRTUALIZED_LOGS = VIRTUALIZED_EXECUTION.taskRunList.flatMap(taskRun =>
-    Array.from({length: 50}, (_, index) => ({
+    Array.from({length: 20}, (_, index) => ({
         ...BASE,
         taskRunId: taskRun.id,
         taskId: taskRun.taskId,

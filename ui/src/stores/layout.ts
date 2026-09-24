@@ -15,7 +15,7 @@ function readObject<T>(key: string): T {
 }
 
 export const useLayoutStore = defineStore("layout", () => {
-    const topNavbar = ref<any | undefined>(undefined)
+    const topNavbar = ref<unknown>()
     const envName = ref<string | undefined>(localStorage.getItem("envName") || undefined)
     const envColor = ref<string | undefined>(localStorage.getItem("envColor") || undefined)
     const sideMenuCollapsed = ref<boolean>((() => {
@@ -29,7 +29,7 @@ export const useLayoutStore = defineStore("layout", () => {
     const menuItemVisibility = ref<Record<string, boolean>>(readObject<Record<string, boolean>>(MENU_ITEM_VISIBILITY_KEY))
     const menuItemOrder = ref<Record<string, string[]>>(readObject<Record<string, string[]>>(MENU_ITEM_ORDER_KEY))
 
-    function setTopNavbar(value: any) {
+    function setTopNavbar(value: unknown) {
         topNavbar.value = value
     }
 

@@ -348,7 +348,7 @@
     .node-footer {
         padding: 0 var(--ks-spacing-2) var(--ks-spacing-2);
         box-sizing: border-box;
-        height: 24px;
+        height: var(--ks-spacing-5);
         display: flex;
         align-items: flex-end;
     }

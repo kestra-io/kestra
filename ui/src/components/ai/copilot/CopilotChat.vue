@@ -633,10 +633,14 @@
         min-height: 0;
         display: flex;
         overflow-y: auto;
-        /* `ui/src/styles/app.scss` themes only the WebKit scrollbar, so Firefox needs this to avoid
-           a default scrollbar on the copilot surface. */
-        scrollbar-color: var(--ks-border-default) transparent;
         padding: var(--ks-spacing-6) var(--ks-spacing-4);
+
+        /* `ui/src/styles/app.scss` themes only the WebKit scrollbar, so Firefox needs this to avoid
+           a default scrollbar on the copilot surface. Scoped to engines without `::-webkit-scrollbar`
+           because Chromium ignores those rules as soon as `scrollbar-color` is set. */
+        @supports not selector(::-webkit-scrollbar) {
+            scrollbar-color: var(--ks-border-default) transparent;
+        }
     }
 
     /* AI-unavailable state (no provider configured): centered message + docs link, no composer. */

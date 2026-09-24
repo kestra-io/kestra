@@ -286,7 +286,10 @@
         v-model="namespacesStore.inheritedKVModalVisible"
         :title="$t('kv.inherited')"
     >
-    <InheritedKVs :namespace="namespacesStore.namespace?.id ?? ''" />
+        <InheritedKVs
+            v-if="namespacesStore.namespace?.id"
+            :namespace="namespacesStore.namespace.id"
+        />
     </KsDrawer>
 </template>
 

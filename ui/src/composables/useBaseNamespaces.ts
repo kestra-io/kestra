@@ -1,7 +1,7 @@
 import {ref} from "vue"
 import {apiUrl} from "override/utils/route"
 import * as Utils from "../utils/utils"
-import {useClient, type Namespace, type PagedResultsNamespace, type QueryFilter} from "@kestra-io/kestra-sdk"
+import {useClient, type ApiSecretListResponseApiSecretMeta, type KvEntry, type Namespace, type PagedResultsNamespace, type QueryFilter} from "@kestra-io/kestra-sdk"
 import * as NamespaceAPI from "@kestra-io/kestra-sdk/namespaces"
 import * as FlowsAPI from "@kestra-io/kestra-sdk/flows"
 import * as KvAPI from "@kestra-io/kestra-sdk/kv"
@@ -13,7 +13,6 @@ export {PagedResultsNamespace}
 
 type NamespaceSearchParameters = NonNullable<Parameters<typeof NamespaceAPI.searchNamespaces>[0]>
 type NamespaceSearchOptions = Omit<NamespaceSearchParameters, "sort"> & {commit?: boolean; sort?: string}
-type SecretList = Awaited<ReturnType<typeof SecretsAPI.listSecrets>>
 type DeleteKvsRequest = Omit<Parameters<typeof KvAPI.deleteKeyValues>[0], "namespace">
 
 function base(namespace: string) {
@@ -27,7 +26,7 @@ export const VALIDATE = {validateStatus: (status: number) => status === 200 || s
 export const useBaseNamespacesStore = () => {
     const namespace = ref<Namespace | undefined>(undefined)
     const inheritedSecrets = ref<Record<string, string[]> | undefined>(undefined)
-    const inheritedKVs = ref<Awaited<ReturnType<typeof KvAPI.listKeysWithInheritence>> | undefined>(undefined)
+    const inheritedKVs = ref<KvEntry[] | undefined>(undefined)
     const inheritedKVModalVisible = ref(false)
     const addKvModalVisible = ref(false)
     const autocomplete = ref<string[]>()
@@ -101,6 +100,7 @@ export const useBaseNamespacesStore = () => {
     }
 
     async function createKv(payload: {namespace: string; key: string; value: string; contentType: string; description: string; ttl?: string}) {
+        // The generated SDK omits these headers from its options type because they are absent from the OpenAPI spec.
         const headers = {"Content-Type": payload.contentType, "description": payload.description, ...(payload.ttl ? {ttl: payload.ttl} : {})}
         await KvAPI.setKeyValue(
             {namespace: payload.namespace, key: payload.key, body: payload.value},
@@ -133,7 +133,7 @@ export const useBaseNamespacesStore = () => {
         return data
     }
 
-    async function listSecrets({id}: {id: string; commit: boolean | undefined; [key: string]: unknown}): Promise<SecretList> {
+    async function listSecrets({id}: {id: string; commit: boolean | undefined; [key: string]: unknown}): Promise<ApiSecretListResponseApiSecretMeta> {
         try {
             const filters: QueryFilter[] = [{field: "namespace", operation: "EQUALS", value: id}]
             const data = await SecretsAPI.listSecrets({filters})

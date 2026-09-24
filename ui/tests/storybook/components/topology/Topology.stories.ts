@@ -370,9 +370,7 @@ function taskRunWithHistory(taskId: string, histories: {date: string; state: str
     }
 }
 
-// quick_query and transform_data are single, terminal runs; load_warehouse mirrors the mockup's
-// two-attempt retry (its inter-attempt backoff is billed as queued, not running); notify_team
-// never started at all. transform_data is the longest run, so every other bar is scaled against it.
+// load_warehouse's inter-attempt backoff is billed as queued, not running, matching bucketOf().
 const DURATION_BAR_EXECUTION = {
     id: "story-execution-duration-bar",
     state: {current: "SUCCESS"},

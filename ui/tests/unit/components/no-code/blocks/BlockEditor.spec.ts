@@ -1235,6 +1235,97 @@ describe("BlockEditor", () => {
             offsetParentSpy.mockRestore()
         })
 
+        it("Cmd+C then Cmd+V pastes a copy of the focused task after itself", async () => {
+            // Given
+            const wrapper = mountBlockEditor()
+            const vm = wrapper.vm as unknown as {focusedId?: string}
+            vm.focusedId = "log_task"
+            await wrapper.vm.$nextTick()
+
+            // When
+            windowKeydown({key: "c", metaKey: true})
+            windowKeydown({key: "v", metaKey: true})
+            await flushPromises()
+            await wrapper.vm.$nextTick()
+
+            // Then — the pasted copy collides with the original id and is disambiguated
+            const flowYamlUtils = await import("@kestra-io/topology/flow-yaml-utils")
+            const parsed = flowYamlUtils.parse(mockFlowYaml.value) as {tasks: {id: string}[]}
+            expect(parsed.tasks).toHaveLength(3)
+            expect(parsed.tasks[0].id).toBe("log_task")
+            expect(parsed.tasks[1].id).not.toBe("log_task")
+            expect(parsed.tasks[2].id).toBe("http_task")
+        })
+
+        it("Cmd+X cuts the focused task without a confirm prompt", async () => {
+            // Given — a cut is not a delete: it must not go through confirmDelete
+            const wrapper = mountBlockEditor()
+            const vm = wrapper.vm as unknown as {focusedId?: string}
+            vm.focusedId = "log_task"
+            await wrapper.vm.$nextTick()
+
+            // When
+            windowKeydown({key: "x", metaKey: true})
+            await flushPromises()
+            await wrapper.vm.$nextTick()
+
+            // Then
+            expect(confirmMock).not.toHaveBeenCalled()
+            const flowYamlUtils = await import("@kestra-io/topology/flow-yaml-utils")
+            const parsed = flowYamlUtils.parse(mockFlowYaml.value) as {tasks: {id: string}[]}
+            expect(parsed.tasks).toHaveLength(1)
+            expect(parsed.tasks[0].id).toBe("http_task")
+        })
+
+        it("refuses to paste a cut task into the empty Triggers section", async () => {
+            // Given — a task copied to the clipboard, then the empty Triggers sentinel focused
+            const wrapper = mountBlockEditor()
+            const vm = wrapper.vm as unknown as {focusedId?: string}
+            vm.focusedId = "log_task"
+            await wrapper.vm.$nextTick()
+            windowKeydown({key: "c", metaKey: true})
+
+            // When
+            vm.focusedId = "__section:triggers"
+            await wrapper.vm.$nextTick()
+            windowKeydown({key: "v", metaKey: true})
+            await flushPromises()
+            await wrapper.vm.$nextTick()
+
+            // Then — nothing landed in Triggers, and Tasks is unaffected
+            const flowYamlUtils = await import("@kestra-io/topology/flow-yaml-utils")
+            const parsed = flowYamlUtils.parse(mockFlowYaml.value) as {tasks: unknown[]; triggers?: unknown[]}
+            expect(parsed.triggers).toBeUndefined()
+            expect(parsed.tasks).toHaveLength(2)
+        })
+
+        it("Cmd+Shift+Z redoes an edit that Cmd+Z just undid", async () => {
+            // Given
+            const wrapper = mountBlockEditor()
+            const vm = wrapper.vm as unknown as {focusedId?: string}
+            vm.focusedId = "log_task"
+            await wrapper.vm.$nextTick()
+            windowKeydown({key: "x", metaKey: true})
+            await flushPromises()
+            await wrapper.vm.$nextTick()
+
+            // When
+            windowKeydown({key: "z", metaKey: true})
+            await flushPromises()
+            await wrapper.vm.$nextTick()
+            const flowYamlUtils = await import("@kestra-io/topology/flow-yaml-utils")
+            expect((flowYamlUtils.parse(mockFlowYaml.value) as {tasks: unknown[]}).tasks).toHaveLength(2)
+
+            windowKeydown({key: "z", metaKey: true, shiftKey: true})
+            await flushPromises()
+            await wrapper.vm.$nextTick()
+
+            // Then — back to the cut state
+            const parsed = flowYamlUtils.parse(mockFlowYaml.value) as {tasks: {id: string}[]}
+            expect(parsed.tasks).toHaveLength(1)
+            expect(parsed.tasks[0].id).toBe("http_task")
+        })
+
         describe("native Tab harmony (roving tabindex)", () => {
             let offsetParentSpy: ReturnType<typeof vi.spyOn>
 
@@ -1468,8 +1559,11 @@ tasks:
             // When
             const keys = wrapper.findAll("[data-test='block-editor-footer'] kbd").map(k => k.text())
 
-            // Then — Meta+Shift+p and Control+Shift+p collapse to a single symbol
-            expect(keys).toEqual(["?", "↑", "↓", "↵", "a", "⌘⇧P"])
+            // Then — Meta+Shift+p and Control+Shift+p collapse to a single symbol, whichever the
+            // platform renders (jsdom's own UA string does not identify as macOS)
+            expect(keys.slice(0, 5)).toEqual(["?", "↑", "↓", "↵", "a"])
+            expect(keys).toHaveLength(6)
+            expect(keys[5]).toMatch(/^(⌘⇧P|Ctrl\+Shift\+P)$/)
         })
 
         it("offers insert-before and reorder once a real block is focused", async () => {
@@ -1946,6 +2040,39 @@ tasks:
             const parsed = flowYamlUtils.parse(mockFlowYaml.value) as {tasks: {type: string}[]}
             expect(parsed.tasks).toHaveLength(3)
             expect(parsed.tasks[1].type).toBe("io.kestra.plugin.core.flow.If")
+        })
+
+        it("hides copy/cut and renders paste disabled when nothing is focused or copied", async () => {
+            // Given
+            wrapper = i18nMount(BlockEditor, {locales: messages, ...makeConfig()})
+
+            // When
+            const menu = await openCommandMenu()
+
+            // Then
+            const items = menu.props("items") as {id: string; disabled?: boolean}[]
+            expect(items.some(item => item.id === "copy")).toBe(false)
+            expect(items.some(item => item.id === "cut")).toBe(false)
+            expect(items.find(item => item.id === "paste")?.disabled).toBe(true)
+        })
+
+        it("renders paste enabled once a matching-section task is on the clipboard", async () => {
+            // Given
+            wrapper = i18nMount(BlockEditor, {locales: messages, ...makeConfig()})
+            const vm = wrapper.vm as unknown as {focusedId?: string}
+            vm.focusedId = "log_task"
+            let menu = await openCommandMenu()
+            const copyItem = (menu.props("items") as {id: string; run: () => void}[]).find(item => item.id === "copy")
+            copyItem!.run()
+            vm.focusedId = "http_task"
+            await wrapper.vm.$nextTick()
+
+            // When
+            menu = await openCommandMenu()
+
+            // Then
+            const items = menu.props("items") as {id: string; disabled?: boolean}[]
+            expect(items.find(item => item.id === "paste")?.disabled).toBe(false)
         })
     })
 })

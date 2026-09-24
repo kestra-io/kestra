@@ -131,7 +131,7 @@ export function duplicateBlock(source: string, section: BlockSection, id: string
     const existingIds = collectAllIds(source)
     const newId = uniqueId(String(parsed.id), existingIds)
     existingIds.add(newId)
-    const duplicate = renameNestedIds({...parsed, id: newId}, existingIds)
+    const duplicate = renameNestedIds({...parsed, id: newId}, existingIds, uniqueId)
 
     const path = flowYamlUtils.getPathFromSectionAndId({source, section, id})
     const match = path?.match(/\[(\d+)\]$/)
@@ -158,8 +158,8 @@ export function duplicateBlockAtPath(source: string, path: string): string {
     const newId = uniqueId(String(displayItem.id), existingIds)
     existingIds.add(newId)
     const duplicate = isWrappedLaneItem(parsed)
-        ? {...parsed, task: renameNestedIds({...displayItem, id: newId}, existingIds)}
-        : renameNestedIds({...parsed, id: newId}, existingIds)
+        ? {...parsed, task: renameNestedIds({...displayItem, id: newId}, existingIds, uniqueId)}
+        : renameNestedIds({...parsed, id: newId}, existingIds, uniqueId)
 
     const parentPath = pathParent(path)
     const match = path.match(/\[(\d+)\]$/)
@@ -190,16 +190,19 @@ function uniqueId(baseId: string, existingIds: Set<string>): string {
     return `${candidate}_${counter}`
 }
 
+type IdRenamer = (id: string, takenIds: Set<string>) => string
+
 function renameNestedIds(
     node: Record<string, unknown>,
     takenIds: Set<string>,
+    renameId: IdRenamer,
 ): Record<string, unknown> {
     const result: Record<string, unknown> = {...node}
     for (const key of FLOWABLE_BRANCH_KEYS) {
         const val = node[key]
         if (Array.isArray(val)) {
             result[key] = (val as Record<string, unknown>[]).map(item =>
-                renameTaskNode(item, takenIds),
+                renameTaskNode(item, takenIds, renameId),
             )
         } else if (key === "cases" && val && typeof val === "object" && !Array.isArray(val)) {
             const casesObj = val as Record<string, unknown>
@@ -207,7 +210,7 @@ function renameNestedIds(
             for (const [caseKey, caseVal] of Object.entries(casesObj)) {
                 if (Array.isArray(caseVal)) {
                     newCases[caseKey] = (caseVal as Record<string, unknown>[]).map(item =>
-                        renameTaskNode(item, takenIds),
+                        renameTaskNode(item, takenIds, renameId),
                     )
                 } else {
                     newCases[caseKey] = caseVal
@@ -222,14 +225,47 @@ function renameNestedIds(
 function renameTaskNode(
     node: Record<string, unknown>,
     takenIds: Set<string>,
+    renameId: IdRenamer,
 ): Record<string, unknown> {
     if (!node || typeof node !== "object") return node
-    if (isWrappedLaneItem(node)) return {...node, task: renameTaskNode(node.task, takenIds)}
+    if (isWrappedLaneItem(node)) return {...node, task: renameTaskNode(node.task, takenIds, renameId)}
     const originalId = typeof node.id === "string" ? node.id : undefined
-    if (originalId === undefined) return renameNestedIds(node, takenIds)
-    const newId = uniqueId(originalId, takenIds)
+    if (originalId === undefined) return renameNestedIds(node, takenIds, renameId)
+    const newId = renameId(originalId, takenIds)
     takenIds.add(newId)
-    return renameNestedIds({...node, id: newId}, takenIds)
+    return renameNestedIds({...node, id: newId}, takenIds, renameId)
+}
+
+function keepIdOrRename(id: string, takenIds: Set<string>): string {
+    return takenIds.has(id) ? nextAvailableId(id, takenIds) : id
+}
+
+/**
+ * Renames only the ids of `block` (and its nested Flowable lanes) that collide with
+ * `existingIds`, so a task pasted into another flow keeps its ids where it can and only
+ * disambiguates where it must — unlike `duplicateBlock`, which always mints a new id.
+ */
+export function withFreeIds(
+    block: Record<string, unknown>,
+    existingIds: Set<string>,
+): Record<string, unknown> {
+    return renameTaskNode(block, new Set(existingIds), keepIdOrRename)
+}
+
+/** Collects every task id under `tasks`, walking nested Flowable lanes, for the Inputs panel and paste. */
+export function flattenTaskIds(tasks: unknown, acc: string[]): void {
+    if (!Array.isArray(tasks)) return
+    for (const rawTask of tasks) {
+        const task = rawTask as Record<string, unknown> | undefined
+        if (task?.id) acc.push(String(task.id))
+        for (const key of FLOWABLE_BRANCH_KEYS) {
+            if (key === "cases") continue
+            flattenTaskIds(task?.[key], acc)
+        }
+        if (task?.cases && typeof task.cases === "object") {
+            for (const branch of Object.values(task.cases as Record<string, unknown>)) flattenTaskIds(branch, acc)
+        }
+    }
 }
 
 function collectAllIds(source: string): Set<string> {
@@ -370,7 +406,7 @@ export function buildMinimalTask(fqcn: string, existingIds?: Set<string>): Recor
     return {id, type: fqcn}
 }
 
-function nextAvailableId(baseId: string, existingIds: Set<string>): string {
+export function nextAvailableId(baseId: string, existingIds: Set<string>): string {
     if (!existingIds.has(baseId)) return baseId
     let counter = 1
     while (existingIds.has(`${baseId}_${counter}`)) counter++

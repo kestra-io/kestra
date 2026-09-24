@@ -73,4 +73,51 @@ describe("useYamlUndo", () => {
         expect(other.performUndo()).toBe(false)
         expect(second.flowYaml).toBe("tasks: []")
     })
+
+    it("redo restores exactly the edit undo just took back", () => {
+        const store = makeStore()
+        const surface = useYamlUndo(store, label)
+
+        surface.applyYaml("tasks: [a]")
+        surface.applyYaml("tasks: [a, b]")
+
+        expect(surface.performUndo()).toBe(true)
+        expect(store.flowYaml).toBe("tasks: [a]")
+
+        expect(surface.performRedo()).toBe(true)
+        expect(store.flowYaml).toBe("tasks: [a, b]")
+    })
+
+    it("reports an empty redo history so the shortcut leaves the browser's own redo alone", () => {
+        const surface = useYamlUndo(makeStore(), label)
+
+        expect(surface.performRedo()).toBe(false)
+    })
+
+    it("clears the redo history on a real edit, so redo cannot resurrect an abandoned branch", () => {
+        const store = makeStore()
+        const surface = useYamlUndo(store, label)
+
+        surface.applyYaml("tasks: [a]")
+        surface.performUndo()
+
+        surface.applyYaml("tasks: [c]")
+
+        expect(surface.performRedo()).toBe(false)
+        expect(store.flowYaml).toBe("tasks: [c]")
+    })
+
+    it("caps the undo history at 100 entries, so at most that many edits are recoverable", () => {
+        const store = makeStore()
+        const surface = useYamlUndo(store, label)
+
+        for (let i = 0; i < 105; i++) surface.applyYaml(`tasks: [v${i}]`)
+
+        let undone = 0
+        while (surface.performUndo()) undone++
+
+        expect(undone).toBe(100)
+        // The oldest 5 edits (the scope's initial "tasks: []" plus v0-v3) fell off the cap.
+        expect(store.flowYaml).toBe("tasks: [v4]")
+    })
 })

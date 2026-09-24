@@ -11,17 +11,20 @@ import {
     duplicateBlock,
     duplicateBlockAtPath,
     errorsLaneTarget,
+    flattenTaskIds,
     groupValidationIssuesByTask,
     rewireDagDependency,
     isFlowableType,
     isWrappedLaneItem,
     isWrapperLane,
     moveBlockAtPath,
+    nextAvailableId,
     reorderAtPath,
     resolveBlockDomId,
     taskEditPathFor,
     updateBlock,
     updateBlockAtPath,
+    withFreeIds,
     wrapAsDagTask,
 } from "../../../src/utils/flowableBlockOps"
 
@@ -1107,6 +1110,104 @@ afterExecution:
 
             // Then
             expect(ids).toEqual(new Set(["my_flow", "sw", "prod_log", "dev_log", "default_log"]))
+        })
+    })
+
+    describe("withFreeIds", () => {
+        function ifBlock(): Record<string, unknown> {
+            return {
+                id: "if_task",
+                type: "io.kestra.plugin.core.flow.If",
+                then: [{id: "nested_a", type: "io.kestra.plugin.core.log.Log"}],
+                else: [{id: "nested_b", type: "io.kestra.plugin.core.log.Log"}],
+            }
+        }
+
+        it("keeps every id unchanged when none collides with the destination flow", () => {
+            // Given
+            const existingIds = new Set(["unrelated_task"])
+
+            // When
+            const result = withFreeIds(ifBlock(), existingIds)
+
+            // Then
+            expect(result.id).toBe("if_task")
+            expect((result.then as Record<string, unknown>[])[0].id).toBe("nested_a")
+            expect((result.else as Record<string, unknown>[])[0].id).toBe("nested_b")
+        })
+
+        it("renames only the colliding ids, walking the nested then/else lanes of an If", () => {
+            // Given — the top-level id and the "then" child both collide, the "else" child does not
+            const existingIds = new Set(["if_task", "nested_a"])
+
+            // When
+            const result = withFreeIds(ifBlock(), existingIds)
+
+            // Then
+            const thenId = (result.then as Record<string, unknown>[])[0].id
+            const elseId = (result.else as Record<string, unknown>[])[0].id
+            expect(result.id).not.toBe("if_task")
+            expect(thenId).not.toBe("nested_a")
+            expect(elseId).toBe("nested_b")
+            expect(new Set([result.id, thenId, elseId]).size).toBe(3)
+        })
+
+        it("does not mutate the existingIds set passed in by the caller", () => {
+            // Given
+            const existingIds = new Set(["task_a"])
+
+            // When
+            withFreeIds({id: "task_a", type: "io.kestra.plugin.core.log.Log"}, existingIds)
+
+            // Then
+            expect(existingIds).toEqual(new Set(["task_a"]))
+        })
+    })
+
+    describe("nextAvailableId", () => {
+        it("returns the base id untouched when it is free", () => {
+            // Given
+
+            // When
+            const id = nextAvailableId("log", new Set(["other"]))
+
+            // Then
+            expect(id).toBe("log")
+        })
+
+        it("appends an incrementing suffix until a free id is found", () => {
+            // Given
+
+            // When
+            const id = nextAvailableId("log", new Set(["log", "log_1", "log_2"]))
+
+            // Then
+            expect(id).toBe("log_3")
+        })
+    })
+
+    describe("flattenTaskIds", () => {
+        it("collects ids from nested Flowable lanes, matching the Inputs panel and paste", () => {
+            // Given
+            const parsed = flowYamlUtils.parse<{tasks: Record<string, unknown>[]}>(FLOW_WITH_FLOWABLE)
+            const ids: string[] = []
+
+            // When
+            flattenTaskIds(parsed?.tasks, ids)
+
+            // Then
+            expect(new Set(ids)).toEqual(new Set(["leaf_task", "if_task", "nested_a", "nested_b"]))
+        })
+
+        it("returns no ids for a non-array input", () => {
+            // Given
+            const ids: string[] = []
+
+            // When
+            flattenTaskIds(undefined, ids)
+
+            // Then
+            expect(ids).toEqual([])
         })
     })
 

@@ -20,6 +20,7 @@ import io.kestra.controller.config.ControllerConfiguration;
 import io.kestra.controller.config.GrpcConfiguration;
 import io.kestra.controller.grpc.InternalCallServerInterceptor;
 import io.kestra.controller.grpc.WorkerControllerService;
+import io.kestra.controller.grpc.auth.BasicAuthServerInterceptor;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.server.AbstractService;
 import io.kestra.core.server.Metric;
@@ -38,6 +39,7 @@ import io.grpc.health.v1.HealthCheckResponse.ServingStatus;
 import io.grpc.protobuf.services.HealthStatusManager;
 import io.grpc.protobuf.services.ProtoReflectionServiceV1;
 import io.micronaut.context.event.ApplicationEventPublisher;
+import io.micronaut.core.annotation.Nullable;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
@@ -78,18 +80,23 @@ public class DefaultController extends AbstractService implements Controller {
 
     protected final MetricRegistry metricRegistry;
 
+    @Nullable
+    private final BasicAuthServerInterceptor basicAuthServerInterceptor;
+
     @Inject
     public DefaultController(
         List<WorkerControllerService> workerControllerServices,
         GrpcConfiguration grpcConfiguration,
         ControllerConfiguration controllerConfiguration,
         MetricRegistry metricRegistry,
-        ApplicationEventPublisher<ServiceStateChangeEvent> eventPublisher) {
+        ApplicationEventPublisher<ServiceStateChangeEvent> eventPublisher,
+        @Nullable BasicAuthServerInterceptor basicAuthServerInterceptor) {
         super(ServiceType.CONTROLLER, eventPublisher);
         this.grpcConfiguration = grpcConfiguration;
         this.workerControllerServices = workerControllerServices;
         this.controllerConfiguration = controllerConfiguration;
         this.metricRegistry = metricRegistry;
+        this.basicAuthServerInterceptor = basicAuthServerInterceptor;
         this.healthStatusManager = new HealthStatusManager();
         setState(ServiceState.CREATED);
     }
@@ -164,6 +171,11 @@ public class DefaultController extends AbstractService implements Controller {
             .executor(serverExecutor)
             .intercept(new InternalCallServerInterceptor())
             .addService(healthStatusManager.getHealthService());
+
+        if (basicAuthServerInterceptor != null) {
+            serverBuilder.intercept(basicAuthServerInterceptor);
+            LOG.info("gRPC basic authentication is enabled");
+        }
 
         if (grpcConfiguration.reflectionEnabled()) {
             LOG.info("gRPC proto reflection is enabled");

@@ -122,7 +122,7 @@
     import {useRoute, useRouter} from "vue-router"
     import {routeFamily} from "../../utils/routeFamily"
     import {useI18n} from "vue-i18n"
-    import {useLogFilter} from "../filter/configurations"
+    import {useLogFilter} from "../filter/configurations/logFilter"
     import {useValues} from "../filter/composables/useValues"
     import QuickFilters from "../filter/QuickFilters.vue"
     import useRestoreUrl from "../../composables/useRestoreUrl"

@@ -50,6 +50,13 @@
     @use 'element-plus/theme-chalk/src/check-tag';
 
     .kel-check-tag {
+        --kel-color-info-light-9: var(--ks-bg-tag);
+        --kel-color-info-light-7: var(--ks-bg-tag-hover);
+        --kel-color-info: var(--ks-text-secondary);
+        --kel-color-primary-light-8: var(--ks-bg-tag-active);
+        --kel-color-primary-light-7: var(--ks-bg-tag-active);
+        --kel-color-primary: var(--ks-text-primary);
+
         &--small {
             --kel-font-size-base: var(--ks-font-size-xs);
             padding: 3px 8px;
@@ -70,7 +77,13 @@
             align-items: center;
             justify-content: center;
             flex-shrink: 0;
+            vertical-align: middle;
         }
+    }
+
+    .kel-check-tag.is-disabled {
+        --kel-color-info-light-9: var(--ks-bg-tag-inactive);
+        --kel-color-primary-light-8: var(--ks-bg-tag-inactive);
     }
 
     .kel-check-tag.kel-check-tag--pill {

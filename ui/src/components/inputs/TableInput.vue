@@ -226,13 +226,14 @@
         overflow: hidden;
     }
 
-    /* Identical padding on both, so their subgrid tracks inset by the same amount and stay aligned. */
+    /* The inline padding has to match on both, or their subgrid tracks inset by different amounts
+       and the header stops lining up with the cells. The block padding is free to differ. */
     .table-input-head,
     .table-input-body {
         display: grid;
         grid-column: 1 / -1;
         grid-template-columns: subgrid;
-        padding: var(--ks-spacing-2) var(--ks-spacing-3);
+        padding-inline: var(--ks-spacing-3);
         row-gap: var(--ks-spacing-2);
         align-items: start;
     }
@@ -240,6 +241,10 @@
     .table-input-head {
         background: var(--ks-bg-base);
         border-bottom: 1px solid var(--ks-border-default);
+    }
+
+    .table-input-body {
+        padding-block: var(--ks-spacing-2);
     }
 
     /* A column shares whatever width there is rather than forcing the form to scroll sideways. */

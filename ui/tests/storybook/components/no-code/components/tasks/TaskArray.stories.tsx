@@ -170,6 +170,46 @@ export const RequiredNullArray: Story = {
     },
 };
 
+export const RequiredUndefinedArray: Story = {
+    render: (args) => ({
+        setup() {
+            provide(SCHEMA_DEFINITIONS_INJECTION_KEY, computed(() => ({})));
+            const model = ref(args.modelValue);
+            return () => <div style={{display: "flex", gap: "16px"}}>
+                <div style={{width: "500px"}}>
+                    <Wrapper>
+                        {{
+                            tasks: () => <TaskArray
+                                modelValue={model.value}
+                                onUpdate:modelValue={(val) => model.value = val}
+                                schema={args.schema}
+                                required
+                                root="commands"
+                            />
+                        }}
+                    </Wrapper>
+                </div>
+                <pre data-testid="result">{JSON.stringify(model.value, null, 2)}</pre>
+            </div>
+        },
+    }),
+    args: {
+        modelValue: undefined,
+        schema: {
+            type: "array",
+            items: {type: "string"},
+        },
+    },
+    async play({canvasElement}) {
+        const canvas = within(canvasElement);
+        // Unlike `null`, an `undefined` required array keeps the one pre-seeded empty row develop
+        // already showed — the user is obliged to fill this field, so it should not start looking
+        // exactly like an unset optional one. Only `null` (the actual #8766 bug) is unconditionally emptied.
+        await canvas.findByText("+ Add to commands", undefined, {timeout: 4000});
+        expect(canvasElement.querySelectorAll(".array-value-col").length).toBe(1);
+    },
+};
+
 export const ObjectArray: Story = {
     render: (args) => ({
         setup() {

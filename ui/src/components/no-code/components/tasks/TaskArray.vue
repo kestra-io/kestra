@@ -242,7 +242,7 @@
             localEdit.value = false
             return
         }
-        items.value = value === undefined || value === null
+        items.value = (value === undefined && !props.required) || value === null
             ? []
             : !Array.isArray(value) ? [value] : [...value]
     }, {immediate: true, deep: true})

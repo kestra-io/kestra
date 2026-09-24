@@ -546,6 +546,36 @@ triggers:
             const parsed = flowYamlUtils.parse(result)
             expect(parsed.tasks).toHaveLength(2)
         })
+
+        it("rewires dependsOn between two tasks nested inside a duplicated Dag", () => {
+            // Given — step_b depends on step_a, both inside the Dag being duplicated
+            const flowWithNestedDag = `
+id: my_flow
+namespace: company.team
+tasks:
+  - id: my_dag
+    type: io.kestra.plugin.core.flow.Dag
+    tasks:
+      - task:
+          id: step_a
+          type: io.kestra.plugin.core.log.Log
+      - task:
+          id: step_b
+          type: io.kestra.plugin.core.log.Log
+        dependsOn:
+          - step_a
+`.trim()
+
+            // When
+            const result = duplicateBlock(flowWithNestedDag, "tasks", "my_dag")
+
+            // Then — the duplicate's internal ids are new, and dependsOn follows the rename
+            const parsed = flowYamlUtils.parse<DagProbeFlow>(result)
+            const copy = parsed!.tasks[1]
+            const copyStepAId = copy.tasks![0].task.id
+            expect(copyStepAId).not.toBe("step_a")
+            expect(copy.tasks![1].dependsOn).toEqual([copyStepAId])
+        })
     })
 
     describe("duplicateBlockAtPath", () => {
@@ -633,6 +663,36 @@ tasks:
             const parsed = flowYamlUtils.parse(result)
             expect(parsed.tasks[0].cases.prod).toHaveLength(2)
             expect(String(parsed.tasks[0].cases.prod[1].id)).toMatch(/^prod_log_copy/)
+        })
+
+        it("rewires dependsOn between two tasks nested inside a duplicated Dag, addressed by path", () => {
+            // Given — step_b depends on step_a, both inside the Dag being duplicated
+            const flowWithNestedDag = `
+id: my_flow
+namespace: company.team
+tasks:
+  - id: my_dag
+    type: io.kestra.plugin.core.flow.Dag
+    tasks:
+      - task:
+          id: step_a
+          type: io.kestra.plugin.core.log.Log
+      - task:
+          id: step_b
+          type: io.kestra.plugin.core.log.Log
+        dependsOn:
+          - step_a
+`.trim()
+
+            // When
+            const result = duplicateBlockAtPath(flowWithNestedDag, "tasks[0]")
+
+            // Then
+            const parsed = flowYamlUtils.parse<DagProbeFlow>(result)
+            const copy = parsed!.tasks[1]
+            const copyStepAId = copy.tasks![0].task.id
+            expect(copyStepAId).not.toBe("step_a")
+            expect(copy.tasks![1].dependsOn).toEqual([copyStepAId])
         })
     })
 
@@ -1161,6 +1221,44 @@ afterExecution:
 
             // Then
             expect(existingIds).toEqual(new Set(["task_a"]))
+        })
+
+        function dagBlock(): Record<string, unknown> {
+            return {
+                id: "my_dag",
+                type: "io.kestra.plugin.core.flow.Dag",
+                tasks: [
+                    {task: {id: "step_a", type: "io.kestra.plugin.core.log.Log"}},
+                    {task: {id: "step_b", type: "io.kestra.plugin.core.log.Log"}, dependsOn: ["step_a"]},
+                ],
+            }
+        }
+
+        it("rewires an internal dependsOn edge when the referenced id collides and gets renamed", () => {
+            // Given — step_a already exists in the destination flow, so it must be renamed on paste
+            const existingIds = new Set(["step_a"])
+
+            // When
+            const result = withFreeIds(dagBlock(), existingIds)
+
+            // Then — step_b's dependsOn follows step_a's new id rather than dangling
+            const tasks = result.tasks as {task: {id: string}; dependsOn?: string[]}[]
+            const renamedId = tasks[0].task.id
+            expect(renamedId).not.toBe("step_a")
+            expect(tasks[1].dependsOn).toEqual([renamedId])
+        })
+
+        it("leaves dependsOn untouched when nothing in the pasted subtree collides", () => {
+            // Given
+            const existingIds = new Set(["unrelated_task"])
+
+            // When
+            const result = withFreeIds(dagBlock(), existingIds)
+
+            // Then
+            const tasks = result.tasks as {task: {id: string}; dependsOn?: string[]}[]
+            expect(tasks[0].task.id).toBe("step_a")
+            expect(tasks[1].dependsOn).toEqual(["step_a"])
         })
     })
 

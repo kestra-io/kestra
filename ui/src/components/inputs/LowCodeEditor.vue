@@ -970,7 +970,7 @@
     onBeforeUnmount(() => window.removeEventListener("keydown", onPickerEscape))
 
     const shortcutsOpen = ref(false)
-    const shortcutGroups = buildShortcutGroups()
+    const shortcutGroups = buildShortcutGroups({supportsClipboard: false})
     const commandMenuOpen = ref(false)
     const flowPropertiesOpen = ref(false)
 

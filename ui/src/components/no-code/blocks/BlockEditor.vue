@@ -679,7 +679,7 @@
         clipboard,
     })
 
-    const shortcutGroups = computed(buildShortcutGroups)
+    const shortcutGroups = computed(() => buildShortcutGroups())
 
     const footerContext = computed(() => {
         if (commandMenuOpen.value) return t("block_editor.footer.command_menu")

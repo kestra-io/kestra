@@ -249,6 +249,65 @@ class DashboardControllerTest {
     }
 
     @Test
+    void shouldReturnValidationErrorWhenWhereFilterHasNoField() {
+        String chartYaml = """
+            id: table_executions_chart_id
+            type: io.kestra.plugin.core.dashboard.chart.Table
+            data:
+              type: io.kestra.plugin.core.dashboard.data.Executions
+              columns:
+                execution_id:
+                  field: ID
+              where:
+                - labelKey: area
+                  type: EQUAL_TO
+                  value: frontend
+            """;
+
+        var previewRequest = new DashboardController.PreviewRequest(chartYaml, null);
+
+        HttpClientResponseException httpClientResponseException = Assertions.assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking().retrieve(
+                POST(DASHBOARD_PATH + "/charts/preview", previewRequest),
+                PagedResults.class
+            )
+        );
+        assertThat(httpClientResponseException.getStatus().getCode()).isEqualTo(422);
+        assertThat(httpClientResponseException.getResponse().getBody(String.class).orElseThrow()).contains("data.where[0].field: must not be null");
+    }
+
+    @Test
+    void shouldReturnValidationErrorWhenKpiNumeratorFilterHasNoField() {
+        String chartYaml = """
+            id: kpi_chart_id
+            type: io.kestra.plugin.core.dashboard.chart.KPI
+            chartOptions:
+              displayName: KPI
+              numberType: PERCENTAGE
+            data:
+              type: io.kestra.plugin.core.dashboard.data.ExecutionsKPI
+              columns:
+                field: ID
+                agg: COUNT
+              numerator:
+                - labelKey: area
+                  type: EQUAL_TO
+                  value: frontend
+            """;
+
+        var previewRequest = new DashboardController.PreviewRequest(chartYaml, null);
+
+        HttpClientResponseException httpClientResponseException = Assertions.assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking().retrieve(
+                POST(DASHBOARD_PATH + "/charts/preview", previewRequest),
+                PagedResults.class
+            )
+        );
+        assertThat(httpClientResponseException.getStatus().getCode()).isEqualTo(422);
+        assertThat(httpClientResponseException.getResponse().getBody(String.class).orElseThrow()).contains("`data.numerator[0].field` is required.");
+    }
+
+    @Test
     void shouldProcessDashboardIntervalRangeGreaterThanYear() {
         String namespace = TestsUtils.randomNamespace();
         executionRepository.save(

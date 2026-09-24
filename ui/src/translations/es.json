@@ -2193,7 +2193,7 @@
     "playground": {
       "title": "Área de Pruebas",
       "run_task_info": "Pasa el cursor sobre cualquier task en el editor de Flow Code y haz clic en el botón \"Run task\" para probar tu task.",
-      "play_icon_info": "También puedes presionar el ícono de Play en las vistas No-Code o Topology.",
+      "play_icon_info": "También puedes presionar el ícono de Play en las vistas No-code o Topology.",
       "toggle": "Área de pruebas",
       "run_task": "Ejecutar task",
       "run_this_task": "Ejecutar esta task",

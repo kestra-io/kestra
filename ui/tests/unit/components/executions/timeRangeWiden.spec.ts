@@ -33,6 +33,7 @@ describe("timeRangeWidenSequence", () => {
     })
 
     it("does not walk past a start that is already 30 days or longer", () => {
+        expect(timeRangeWidenSequence("PT720H")).toEqual(["PT720H"])
         expect(timeRangeWidenSequence("P30D")).toEqual(["P30D"])
         expect(timeRangeWidenSequence("PT8760H")).toEqual(["PT8760H"])
     })

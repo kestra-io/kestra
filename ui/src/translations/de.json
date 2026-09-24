@@ -1621,7 +1621,9 @@
       "raw": "Zeitliche Ansicht",
       "raw_details": "Vollständige Task-Logs und Flow-Logs im Rohformat nach Zeitstempel sortiert anzeigen",
       "compact": "Standardansicht",
-      "compact_details": "Task-Logs in einer kompakten Ansicht, gruppiert nach Task, anzeigen"
+      "compact_details": "Task-Logs in einer kompakten Ansicht, gruppiert nach Task, anzeigen",
+      "fullscreen": "Logs im Vollbild",
+      "exit_fullscreen": "Vollbild verlassen"
     },
     "execution_deletion": {
       "logs": "Logs löschen",
@@ -2521,6 +2523,9 @@
       "block_deleted": "{name} gelöscht",
       "card_aria_label": "Block {id} vom Typ {type}",
       "canvas_aria": "Canvas für Flow-Blöcke",
+      "chip_copied": "In die Zwischenablage kopiert",
+      "chip_hint": "Klicken Sie auf einen Chip, um ihn in das fokussierte Feld einzufügen, oder ziehen Sie ihn hinein",
+      "chip_inserted": "In das Feld eingefügt",
       "cluster_collapse_aria": "{id} einklappen",
       "cluster_expand_aria": "{id} ({count} Tasks) ausklappen",
       "collapsed_summary": "{count} Tasks",

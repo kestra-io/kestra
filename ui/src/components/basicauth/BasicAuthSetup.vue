@@ -154,6 +154,7 @@
 
 <script setup lang="ts">
     import {ref, computed, watch, onUnmounted, type Ref} from "vue"
+    import type {FormInstance} from "@kestra-io/design-system"
     import {useRouter} from "vue-router"
     import {useI18n} from "vue-i18n"
     import {useMiscStore} from "override/stores/misc"
@@ -191,7 +192,7 @@
     const {storeSurveySkipData} = useSurveySkip()
 
     const activeStep = ref(0)
-    const userForm: Ref<any> = ref(null)
+    const userForm: Ref<FormInstance | null> = ref(null)
 
     const userFormData = ref<UserFormData>({
         username: "",
@@ -265,7 +266,7 @@
         if (email) void disposableEmail.ensureLoaded()
     }, {immediate: true})
 
-    const validateEmail = async (_rule: any, value: string, callback: (error?: Error) => void) => {
+    const validateEmail = async (_rule: unknown, value: string, callback: (error?: Error) => void) => {
         if (!value) {
             callback(new Error(t("setup.validation.email_required")))
             return
@@ -306,9 +307,9 @@
     })
 
     const getFieldError = (fieldName: string) => {
-        if (!userForm.value) return null
-        const field = userForm.value.fields?.find((f: any) => f.prop === fieldName)
-        return field?.validateState === "error" ? field.validateMessage : null
+        if (!userForm.value) return undefined
+        const field = userForm.value.fields?.find((f) => f.prop === fieldName)
+        return field?.validateState === "error" ? field.validateMessage : undefined
     }
 
     const handleUserFormSubmit = async () => {
@@ -330,9 +331,9 @@
             localStorage.setItem("basicAuthUserCreated", "true")
 
             activeStep.value = 1
-        } catch (error: any) {
+        } catch (error: unknown) {
             trackSetupEvent("setup_flow:account_creation_failed", {
-                error_message: error.message || "Unknown error",
+                error_message: error instanceof Error ? error.message : "Unknown error",
             }, userFormData.value)
             console.error("Failed to create basic auth account:", error)
         }
@@ -341,7 +342,7 @@
     const handleSurveyContinue = () => {
         localStorage.setItem("basicAuthSurveyData", JSON.stringify(surveyData.value))
 
-        const surveySelections: Record<string, any> = {
+        const surveySelections: Record<string, unknown> = {
             main_goal: surveyData.value.mainGoal,
             use_cases: surveyData.value.useCases,
             use_cases_count: surveyData.value.useCases.length,
@@ -363,7 +364,7 @@
     }
 
     const handleSurveySkip = () => {
-        const surveySelections: Record<string, any> = {
+        const surveySelections: Record<string, unknown> = {
             main_goal: surveyData.value.mainGoal,
             newsletter_opted_in: surveyData.value.newsletter,
             survey_action: "skipped",
@@ -391,7 +392,7 @@
         const surveySelections = savedSurveyData ? JSON.parse(savedSurveyData) : {}
         const normalizedEmail = userFormData.value.username.trim()
 
-        const completeEventPayload: Record<string, any> = {
+        const completeEventPayload: Record<string, unknown> = {
             user_email: normalizedEmail,
             newsletter_opted_in: surveyData.value.newsletter,
             ...surveySelections,

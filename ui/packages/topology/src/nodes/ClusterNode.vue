@@ -88,7 +88,6 @@
     }
 
     .text-color {
-        color: white;
         font-size: var(--ks-font-size-xs);
         font-weight: 600;
         padding: var(--ks-spacing-1) var(--ks-spacing-2);

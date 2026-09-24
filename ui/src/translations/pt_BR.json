@@ -1621,7 +1621,9 @@
       "raw": "Visualização temporal",
       "raw_details": "Mostrar logs completos de tasks e logs de flow em formato bruto, ordenados por timestamp",
       "compact": "Visualização padrão",
-      "compact_details": "Mostrar logs de task em uma visualização compacta agrupada por cada task"
+      "compact_details": "Mostrar logs de task em uma visualização compacta agrupada por cada task",
+      "fullscreen": "Logs em tela cheia",
+      "exit_fullscreen": "Sair da tela cheia"
     },
     "execution_deletion": {
       "logs": "Excluir logs",
@@ -2521,6 +2523,9 @@
       "block_deleted": "{name} excluído",
       "card_aria_label": "Bloco {id} do tipo {type}",
       "canvas_aria": "Canvas de blocos de flow",
+      "chip_copied": "Copiado para a área de transferência",
+      "chip_hint": "Clique em um chip para inseri-lo no campo focado, ou arraste-o",
+      "chip_inserted": "Inserido no campo",
       "cluster_collapse_aria": "Recolher {id}",
       "cluster_expand_aria": "Expandir {id} ({count} tasks)",
       "collapsed_summary": "{count} tasks",

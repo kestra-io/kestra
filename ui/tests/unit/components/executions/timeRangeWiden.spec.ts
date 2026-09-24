@@ -20,19 +20,20 @@ const widenOpts = {
 
 describe("timeRangeWidenSequence", () => {
     it("starts at 24 hours and then steps to 7 days and 30 days", () => {
-        expect(timeRangeWidenSequence("PT24H")).toEqual(["PT24H", "PT168H", "P30D"])
+        expect(timeRangeWidenSequence("PT24H")).toEqual(["PT24H", "PT168H", "PT720H"])
     })
 
     it("keeps a shorter configured default and then walks 24 hours, 7 days, 30 days", () => {
-        expect(timeRangeWidenSequence("PT1H")).toEqual(["PT1H", "PT24H", "PT168H", "P30D"])
+        expect(timeRangeWidenSequence("PT1H")).toEqual(["PT1H", "PT24H", "PT168H", "PT720H"])
     })
 
     it("skips 7 days when the start is already that long", () => {
-        expect(timeRangeWidenSequence("P7D")).toEqual(["P7D", "P30D"])
-        expect(timeRangeWidenSequence("PT168H")).toEqual(["PT168H", "P30D"])
+        expect(timeRangeWidenSequence("P7D")).toEqual(["P7D", "PT720H"])
+        expect(timeRangeWidenSequence("PT168H")).toEqual(["PT168H", "PT720H"])
     })
 
     it("does not walk past a start that is already 30 days or longer", () => {
+        expect(timeRangeWidenSequence("PT720H")).toEqual(["PT720H"])
         expect(timeRangeWidenSequence("P30D")).toEqual(["P30D"])
         expect(timeRangeWidenSequence("PT8760H")).toEqual(["PT8760H"])
     })
@@ -40,11 +41,11 @@ describe("timeRangeWidenSequence", () => {
 
 describe("remainingWidenWindows", () => {
     it("returns the next bounded windows after the current default", () => {
-        expect(remainingWidenWindows("PT24H", "PT24H")).toEqual(["PT168H", "P30D"])
+        expect(remainingWidenWindows("PT24H", "PT24H")).toEqual(["PT168H", "PT720H"])
     })
 
     it("treats P7D as the same length as PT168H so the next step is 30 days", () => {
-        expect(remainingWidenWindows("P7D", "PT24H")).toEqual(["P30D"])
+        expect(remainingWidenWindows("P7D", "PT24H")).toEqual(["PT720H"])
     })
 
     it("does not widen a relative range the user picked outside the default ladder", () => {
@@ -129,9 +130,9 @@ describe("widenEmptyTimeRange", () => {
             search,
         })
 
-        expect(search.mock.calls.map(call => call[0])).toEqual(["PT168H", "P30D"])
+        expect(search.mock.calls.map(call => call[0])).toEqual(["PT168H", "PT720H"])
         expect(search.mock.calls.every(call => typeof call[0] === "string" && call[0].startsWith("P"))).toBe(true)
-        expect(result).toEqual({timeRange: "P30D", widened: true})
+        expect(result).toEqual({timeRange: "PT720H", widened: true})
     })
 
     it("starts from the configured default rather than a hardcoded 24 hours", async () => {

@@ -1,5 +1,6 @@
 @use "@kestra-io/design-system/src/assets/styles/color-palette" as *;
 
+/* design-system-disable-next-line: the default node blue has no palette entry, and _color-palette.scss is generated from Figma */
 $node-default: #7081b9;
 
 $node-colors: (
@@ -25,7 +26,7 @@ html.dark {
     --ks-node-default: #{$base-gray-neutral-400};
 }
 
-.text-danger { color: $base-red-500; }
+.text-danger { color: var(--ks-text-error); }
 
 .button-icon { font-size: var(--ks-font-size-2xs); }
 
@@ -124,7 +125,7 @@ html.dark {
         display: flex;
         justify-content: center;
         padding-right: 3px;
-        color: white;
+        color: var(--ks-btn-primary-text);
     }
     .vue-flow__node-cluster { pointer-events: none !important; }
     .vue-flow__handle       { opacity: 0 !important; }

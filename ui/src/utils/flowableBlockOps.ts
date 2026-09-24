@@ -289,6 +289,83 @@ export function reorderAtPath(source: string, parentPath: string, fromIndex: num
     }
 }
 
+export type MoveRefusalReason = "cycle" | "section" | "lane"
+
+export type MoveVerdict = {allowed: true} | {allowed: false; reason: MoveRefusalReason}
+
+function sectionOfPath(path: string): string {
+    const [first] = flowYamlUtils.parsePath(path)
+    return String(first)
+}
+
+/** True when `candidatePath` is `ancestorPath` itself, or nested under it. */
+function isDescendantOrSelfPath(candidatePath: string, ancestorPath: string): boolean {
+    const candidateSegments = flowYamlUtils.parsePath(candidatePath)
+    const ancestorSegments = flowYamlUtils.parsePath(ancestorPath)
+    if (candidateSegments.length < ancestorSegments.length) return false
+    return ancestorSegments.every((segment, index) => segment === candidateSegments[index])
+}
+
+export function listLengthAtPath(source: string, path: string): number {
+    try {
+        const parsed = flowYamlUtils.parse<Record<string, unknown>>(source)
+        const list = parsed ? getAtPath(parsed, path) : undefined
+        return Array.isArray(list) ? list.length : 0
+    } catch {
+        return 0
+    }
+}
+
+/**
+ * Tells whether a block at `fromPath` may move under `toParentPath`: refuses a move into the
+ * block's own subtree (a cycle), across the top-level sections a flow is split into (a task
+ * dropped onto `triggers`), and between a Dag's `{task: ...}`-wrapped lane and a plain one, since
+ * that reshaping needs the `dependsOn` rewiring a drag-drop move does not attempt.
+ */
+export function canMoveBlockToPath(source: string, fromPath: string, toParentPath: string): MoveVerdict {
+    if (isDescendantOrSelfPath(toParentPath, fromPath)) return {allowed: false, reason: "cycle"}
+    if (sectionOfPath(fromPath) !== sectionOfPath(toParentPath)) return {allowed: false, reason: "section"}
+
+    const fromParentPath = pathParent(fromPath)
+    if (fromParentPath !== toParentPath && isWrapperLane(source, fromParentPath) !== isWrapperLane(source, toParentPath)) {
+        return {allowed: false, reason: "lane"}
+    }
+
+    return {allowed: true}
+}
+
+/**
+ * Moves the block at `fromPath` to become index `toIndex` of `toParentPath`'s list, as an
+ * extract/delete/insert rather than the in-place splice `reorderAtPath` uses, since the source and
+ * destination may be different arrays entirely. When both paths share the same parent, the removal
+ * shifts every later index down by one, so `toIndex` is corrected to still land on the same target.
+ * Returns `source` unchanged when `canMoveBlockToPath` refuses the move.
+ */
+export function moveBlockToPath(source: string, fromPath: string, toParentPath: string, toIndex: number): string {
+    if (!canMoveBlockToPath(source, fromPath, toParentPath).allowed) return source
+
+    const blockYaml = flowYamlUtils.extractBlockWithPath({source, path: fromPath})
+    if (!blockYaml) return source
+
+    const fromParentPath = pathParent(fromPath)
+    const fromIndexMatch = fromPath.match(/\[(\d+)\]$/)
+    const fromIndex = fromIndexMatch ? parseInt(fromIndexMatch[1], 10) : undefined
+
+    const withoutSource = deleteBlockAtPath(source, fromPath)
+
+    let adjustedIndex = toIndex
+    if (fromParentPath === toParentPath && fromIndex !== undefined && fromIndex < toIndex) {
+        adjustedIndex = toIndex - 1
+    }
+    if (adjustedIndex < 0) adjustedIndex = 0
+
+    const destinationLength = listLengthAtPath(withoutSource, toParentPath)
+
+    return adjustedIndex >= destinationLength
+        ? flowYamlUtils.insertBlockWithPath({source: withoutSource, parentPath: toParentPath, newBlock: blockYaml, position: "after"})
+        : flowYamlUtils.insertBlockWithPath({source: withoutSource, parentPath: toParentPath, newBlock: blockYaml, refPath: adjustedIndex, position: "before"})
+}
+
 export function moveBlockAtPath(source: string, path: string, direction: "up" | "down"): string {
     const match = path.match(/^(.*)\[(\d+)\]$/)
     if (!match) return source

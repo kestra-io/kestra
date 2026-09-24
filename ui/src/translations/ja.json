@@ -2563,6 +2563,7 @@
       "depends_on_placeholder": "タスクを選択…",
       "depth_pill": "深さ {depth}",
       "drag_reorder": "ドラッグして並べ替え",
+      "drop_forbidden": "ここにはドロップできません",
       "duplicate": "複製",
       "empty_add_hint": "または / を押してタスクを検索",
       "empty_add_lead": "クリックして{label}を追加",

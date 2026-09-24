@@ -975,9 +975,9 @@ describe("BlockEditor", () => {
             const vm = wrapper.vm as unknown as {
                 activeSelectedPath: string | undefined
                 activeSelectedId: string | undefined
-                dndFor: (section: string) => {
-                    handleDragStart: (event: DragEvent, index: number) => void
-                    handleDrop: (event: DragEvent, index: number) => void
+                dragContext: {
+                    beginDrag: (path: string) => void
+                    dropAt: (parentPath: string, index: number) => void
                 }
             }
             expect(vm.activeSelectedPath).toBe("tasks[1].then[0]")
@@ -985,9 +985,8 @@ describe("BlockEditor", () => {
 
             // When — prime drag from tasks[0], then drop on tasks[1]
             // This shifts the flowable from [1] to [0], making tasks[1].then[0] stale
-            const mockEvent = {preventDefault: () => undefined, dataTransfer: {effectAllowed: ""}} as unknown as DragEvent
-            vm.dndFor("tasks").handleDragStart(mockEvent, 0)
-            vm.dndFor("tasks").handleDrop(mockEvent, 1)
+            vm.dragContext.beginDrag("tasks[0]")
+            vm.dragContext.dropAt("tasks", 1)
             await wrapper.vm.$nextTick()
 
             // Then — stale path is detected and selection cleared
@@ -1007,6 +1006,10 @@ describe("BlockEditor", () => {
             const vm = wrapper.vm as unknown as {
                 activeSelectedPath: string | undefined
                 activeSelectedId: string | undefined
+                dragContext: {
+                    beginDrag: (path: string) => void
+                    dropAt: (parentPath: string, index: number) => void
+                }
             }
             expect(vm.activeSelectedPath).toBe("tasks[1].then[0]")
             expect(vm.activeSelectedId).toBe("nested_a")
@@ -1014,7 +1017,8 @@ describe("BlockEditor", () => {
             // When — a DIFFERENT lane of the same flowable (else) is reordered.
             // The old index-only check matched the outer tasks[1] and wrongly
             // cleared; keying on the reordered parentPath must leave it alone.
-            cluster.vm.$emit("reorder", "tasks[1].else", 0, 1)
+            vm.dragContext.beginDrag("tasks[1].else[0]")
+            vm.dragContext.dropAt("tasks[1].else", 1)
             await wrapper.vm.$nextTick()
 
             // Then — the then-lane selection is untouched

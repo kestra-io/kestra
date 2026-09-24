@@ -3,8 +3,8 @@ import {FILTER_FIELD_PATTERN} from "./utils"
 
 export const FALLBACK_TIME_RANGE = "PT24H"
 
-// Datepicker chips label PT168H / P30D as 7 / 30 days; P7D would show as the raw ISO string.
-export const TIME_RANGE_WIDEN_STEPS = ["PT24H", "PT168H", "P30D"] as const
+// Filter chips only label PT168H / PT720H as 7 / 30 days; P7D or P30D would show as the raw ISO string.
+export const TIME_RANGE_WIDEN_STEPS = ["PT24H", "PT168H", "PT720H"] as const
 
 const TIME_RANGE_EQUALS_KEY = "filters[timeRange][EQUALS]"
 const TIME_BOUND_KEY = /startDate|endDate|timeRange/

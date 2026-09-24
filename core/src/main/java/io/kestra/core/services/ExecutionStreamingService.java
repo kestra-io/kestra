@@ -61,7 +61,12 @@ public class ExecutionStreamingService {
 
     @PostConstruct
     void startQueueConsumer() {
-        this.scheduler = java.util.concurrent.Executors.newSingleThreadScheduledExecutor(r -> new Thread(r, "execution-streaming-throttle"));
+        this.scheduler = java.util.concurrent.Executors.newSingleThreadScheduledExecutor(r ->
+        {
+            Thread t = new Thread(r, "execution-streaming-throttle");
+            t.setDaemon(true);
+            return t;
+        });
         this.scheduler.scheduleAtFixedRate(this::processPendingEvents, 500, 500, java.util.concurrent.TimeUnit.MILLISECONDS);
 
         // Single queue consumer

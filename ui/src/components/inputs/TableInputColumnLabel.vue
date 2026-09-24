@@ -1,5 +1,5 @@
 <template>
-    <div role="columnheader">
+    <div :data-test="`table-column-${id}`">
         <span class="table-input-header">
             {{ columnLabel }}
         </span>

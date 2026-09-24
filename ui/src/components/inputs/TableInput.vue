@@ -3,28 +3,18 @@
         <div
             v-if="rows.length"
             class="table-input-grid"
-            role="grid"
+            role="group"
             :aria-label="input.displayName || input.id"
-            :aria-rowcount="rows.length + 1"
             :style="{'--table-input-number-of-columns': columns.length}"
         >
-            <div class="table-input-head" role="rowgroup">
-                <div class="table-input-row" role="row" :aria-rowindex="1">
-                    <TableInputColumnLabel v-for="column in columns" :key="column.id" v-bind="column" />
-                    <span role="columnheader" />
-                </div>
+            <div class="table-input-head">
+                <TableInputColumnLabel v-for="column in columns" :key="column.id" v-bind="column" />
+                <span />
             </div>
 
-            <div class="table-input-body" role="rowgroup">
-                <div
-                    v-for="(row, index) in rows"
-                    :key="index"
-                    class="table-input-row"
-                    role="row"
-                    :aria-rowindex="index + 2"
-                    :data-test="`table-row-${input.id}-${index}`"
-                >
-                    <KsFormItem v-for="column in columns" :key="column.id" class="table-input-field" role="gridcell" :error="cellError(index, column.id)" :showMessage="false">
+            <div class="table-input-body">
+                <template v-for="(row, index) in rows" :key="index">
+                    <KsFormItem v-for="column in columns" :key="`${index}-${column.id}`" class="table-input-field" :error="cellError(index, column.id)" :showMessage="false">
                         <KsInputNumber
                             v-if="column.type === 'INT' || column.type === 'FLOAT'"
                             v-bind="cellAttrs(column, index)"
@@ -83,7 +73,7 @@
                             {{ cellError(index, column.id) }}
                         </KsText>
                     </KsFormItem>
-                    <div class="table-input-action" role="gridcell">
+                    <div class="table-input-action">
                         <KsIconButton
                             :tooltip="$t('remove this item')"
                             :data-test="`table-row-remove-${input.id}-${index}`"
@@ -93,7 +83,7 @@
                             <DeleteOutline />
                         </KsIconButton>
                     </div>
-                </div>
+                </template>
             </div>
         </div>
         <BlockEmptyDrop
@@ -236,24 +226,20 @@
         overflow: hidden;
     }
 
+    /* Identical padding on both, so their subgrid tracks inset by the same amount and stay aligned. */
     .table-input-head,
-    .table-input-body,
-    .table-input-row {
+    .table-input-body {
         display: grid;
         grid-column: 1 / -1;
         grid-template-columns: subgrid;
-        column-gap: inherit;
+        padding: var(--ks-spacing-2) var(--ks-spacing-3);
+        row-gap: var(--ks-spacing-2);
+        align-items: start;
     }
 
     .table-input-head {
         background: var(--ks-bg-base);
         border-bottom: 1px solid var(--ks-border-default);
-    }
-
-    /* Padding on the row rather than the grid, so the header band reaches both edges. */
-    .table-input-row {
-        padding: var(--ks-spacing-2) var(--ks-spacing-3);
-        align-items: start;
     }
 
     /* A column shares whatever width there is rather than forcing the form to scroll sideways. */

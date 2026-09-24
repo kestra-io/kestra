@@ -305,7 +305,7 @@ export const useDashboardStore = defineStore("dashboard", () => {
 
     const pluginsStore = usePluginsStore()
 
-    const InitialSchema = {}
+    const InitialSchema = {definitions: {}, $ref: ""}
 
     const schema = computed<{
             definitions: any,

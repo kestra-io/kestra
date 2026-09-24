@@ -2,12 +2,7 @@ import {computed, inject} from "vue"
 import {useDragAndDrop} from "../../../composables/useDragAndDrop"
 import {BLOCK_DRAG_INJECTION_KEY} from "../injectionKeys"
 
-/**
- * The per-item drag/drop wiring a lane (a top-level section or a nested branch) needs to accept a
- * cross-level move: sibling reorder within the lane keeps its own `dragOverIndex` insertion cue,
- * while every accept/refuse decision and the move itself are delegated to the shared
- * `BlockDragContext` so a card dragged out of one lane can land in another.
- */
+/** The drag/drop wiring a lane needs to accept a cross-level move: `dragOverIndex` stays local for the sibling-reorder insertion cue, while every accept/refuse decision and the move itself go through the shared `BlockDragContext` so a card dragged out of this lane can land in another. */
 export function useLaneDrag(parentPath: () => string, itemCount: () => number) {
     const dragContext = inject(BLOCK_DRAG_INJECTION_KEY)
     const {dragOverIndex, handleDragStart, handleDragOver, handleDragEnd} = useDragAndDrop()

@@ -1,7 +1,7 @@
 <template>
     <div
         class="leaf-block-card"
-        :class="{'leaf-block-card--selected': selected, 'leaf-block-card--drag-over': dragOver, 'block-kbd-focused': focused, 'leaf-block-card--error': issues.length > 0}"
+        :class="{'leaf-block-card--selected': selected, 'leaf-block-card--drag-over': dragOver, 'leaf-block-card--drag-forbidden': dragForbidden, 'block-kbd-focused': focused, 'leaf-block-card--error': issues.length > 0}"
         role="button"
         :tabindex="focused ? 0 : -1"
         :aria-pressed="selected"
@@ -118,6 +118,7 @@
         focused?: boolean
         draggable?: boolean
         dragOver?: boolean
+        dragForbidden?: boolean
         runnable?: boolean
         showOpenSplit?: boolean
         showDuplicate?: boolean
@@ -195,6 +196,12 @@
         &--drag-over {
             border-color: var(--ks-text-link);
             border-style: dashed;
+        }
+
+        &--drag-forbidden {
+            border-color: var(--ks-border-error);
+            border-style: dashed;
+            cursor: not-allowed;
         }
 
         &--error,

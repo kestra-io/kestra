@@ -254,4 +254,56 @@ describe("Duration", () => {
         const openButton = wrapper.findAll("button").find((btn) => btn.text() === "state_history.open")
         expect(openButton).toBeUndefined()
     })
+
+    it("should render the compact bar without a popover or trigger button when compact", () => {
+        const wrapper = i18nMount(Duration, {
+            props: {
+                compact: true,
+                histories: [
+                    {date: 0, state: "RUNNING"},
+                    {date: 1_000, state: "SUCCESS"},
+                ],
+            },
+        })
+
+        expect(wrapper.find("button.ks-duration-value").exists()).toBe(false)
+        expect(wrapper.find(".compact-bar").exists()).toBe(true)
+    })
+
+    it("should show no compact bar for a task that never ran", () => {
+        const wrapper = i18nMount(Duration, {
+            props: {
+                compact: true,
+                histories: [{date: 0, state: "SKIPPED"}],
+            },
+        })
+
+        expect(wrapper.find(".compact-bar").exists()).toBe(false)
+    })
+
+    it("should scale compact segments against the provided denominator instead of its own total", () => {
+        const wrapper = i18nMount(Duration, {
+            props: {
+                compact: true,
+                denominator: 4_000,
+                histories: [
+                    {date: 0, state: "RUNNING"},
+                    {date: 1_000, state: "SUCCESS"},
+                ],
+            },
+        })
+
+        const running = wrapper.find(".split-bar-running")
+        expect((running.element as HTMLElement).style.width).toBe("25%")
+    })
+
+    it("should fall back to its own total for the tier-1 split bar when no denominator is provided", () => {
+        const wrapper = mountDuration([
+            {date: 0, state: "RUNNING"},
+            {date: 1_000, state: "SUCCESS"},
+        ])
+
+        const running = wrapper.find(".split-bar-running")
+        expect((running.element as HTMLElement).style.width).toBe("100%")
+    })
 })

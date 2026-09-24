@@ -23,6 +23,9 @@
         <template #details>
             <slot name="details" />
         </template>
+        <template #footer>
+            <Duration compact :histories="histories" :denominator="longestTaskRunDuration" />
+        </template>
         <template #content>
             <button
                 v-if="data.node.task && playgroundEnabled && playgroundReadyToStart"
@@ -63,6 +66,7 @@
     import Duration from "../misc/Duration.vue"
     import * as Utils from "../utils/utils"
     import {getStatusStyle, pickWorstState} from "../utils/status"
+    import {computeLongestTaskRunDuration} from "../misc/durationBreakdown"
     import {buildNodeActions, type NodeActionsContext} from "../utils/nodeActions"
     import type {GraphExecution, GraphTaskRun} from "../utils/vueFlowUtils"
     import BasicNode from "./BasicNode.vue"
@@ -277,6 +281,8 @@
             state: h.state,
         }))
     })
+
+    const longestTaskRunDuration = computed(() => computeLongestTaskRunDuration(taskRunList.value))
 
     const expandData = computed<ExpandData>(() => ({
         id: props.id,

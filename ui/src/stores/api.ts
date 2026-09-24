@@ -195,7 +195,7 @@ export const useApiStore = defineStore("api", () => {
                 }
             })()
             const fullPath = data.page?.fullPath
-            const currentUrl = fullPath ? `${origin}${fullPath}` : `${origin}${path}`;
+            const currentUrl = fullPath ? `${origin}${fullPath}` : `${origin}${path}`
 
             finalData.$current_url = currentUrl
             finalData.$pathname = path

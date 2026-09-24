@@ -798,7 +798,7 @@
                 const section = event.section ? event.section.toLowerCase() : SECTIONS.TASKS.toLowerCase()
                 if (
                     section === SECTIONS.TASKS.toLowerCase() &&
-                    flowParsed.tasks.length === 1 &&
+                    flowParsed?.tasks?.length === 1 &&
                     flowParsed.tasks.map((e: any) => e.id).includes(event.id)
                 ) {
                     coreStore.message = {
@@ -808,7 +808,7 @@
                     }
                     return
                 }
-                const taskType = flowParsed.tasks.find((e: any) => e.id === event.id)?.type as string | undefined
+                const taskType = flowParsed?.tasks?.find((e: any) => e.id === event.id)?.type as string | undefined
                 deleteWithUndo(event.id, () => {
                     const source = flowSource.value ?? ""
                     // A trigger is not a task, so it resolves to no task lane and takes the section path.

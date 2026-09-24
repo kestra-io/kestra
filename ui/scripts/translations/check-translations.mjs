@@ -108,7 +108,7 @@ function checkPlaceholders(result, label, dir, fixPath) {
         )
         if (problems.length === 0) continue
 
-        result.placeholders[lang] = problems
+        result.placeholders[lang] = [...(result.placeholders[lang] ?? []), ...problems]
         for (const problem of problems) {
             annotate("error", `[${label}] Translation "${lang}": ${problem} — fix in ${fixPath.replace("{lang}", lang)}`)
         }
@@ -127,7 +127,7 @@ function checkUntranslated(result, label, dir, fixPath) {
         const keys = untranslatedKeys(lang, flattenStrings(readLanguage(dir, lang)), english)
         if (keys.length === 0) continue
 
-        result.untranslated[lang] = keys
+        result.untranslated[lang] = [...(result.untranslated[lang] ?? []), ...keys]
         annotate("error", `[${label}] Translation "${lang}" still holds the English text for ${keys.length} key(s): ${keys.join(", ")} - re-translate them in ${fixPath.replace("{lang}", lang)} by blanking the values and running \`npm run translations:generate\``)
     }
 }
@@ -148,9 +148,11 @@ function readLanguage(dir, lang) {
  * Key paths are the generator's `a|b|c` form, as they appear in the fingerprints file.
  */
 function checkStaleJson(result, label, dir, fingerprintsFile, fixHint) {
-    if (!fs.existsSync(fingerprintsFile)) return
+    // A tenant type's folder has no fingerprints file until its first generation, and treating that
+    // as "nothing is stale" would exempt the whole dictionary from the check instead of failing it.
+    const fingerprints = fs.existsSync(fingerprintsFile) ? readJson(fingerprintsFile) : {}
 
-    const stale = staleKeys(readLanguage(dir, "en"), readJson(fingerprintsFile))
+    const stale = staleKeys(readLanguage(dir, "en"), fingerprints)
     if (stale.length === 0) return
 
     result.stale.push(...stale)
@@ -363,10 +365,13 @@ function checkEe() {
         if (unusedCandidatesOnly) return result
     }
 
+    // A tenant type's folder is created with `en.json` alone, so its own listing would report the
+    // twelve languages it is missing as nothing to check. The shared dictionary is the expected set.
+    const expectedLanguages = listLanguages(eeTranslationsDir)
     for (const dictionary of dictionaries) {
         const {dir, fixPath, prefix} = dictionary
         const englishKeys = eeLeafKeys(dictionary)
-        for (const lang of listLanguages(dir)) {
+        for (const lang of expectedLanguages) {
             const langKeys = new Set(leafKeys(readLanguage(dir, lang)).map(key => prefix + key))
             const missing = englishKeys.filter(key => !langKeys.has(key))
             if (missing.length === 0) continue
@@ -381,9 +386,9 @@ function checkEe() {
     if (fs.existsSync(path.join(ossTranslationsDir, "en.json"))) {
         const shadowed = shadowedOssKeys(eeEnKeys, leafKeys(readLanguage(ossTranslationsDir, "en")))
         if (shadowed.length > 0) {
-            result.duplicates = shadowed.map(({key}) => key)
+            result.duplicates.push(...shadowed.map(({key}) => key))
             for (const {key, ossKey, kind} of shadowed) {
-                annotate("error", `[EE] ${shadowMessage(key, ossKey, kind)} - fix it in ui-ee/src/translations/ee_translations/en.json`)
+                annotate("error", `[EE] ${shadowMessage(key, ossKey, kind)} - fix it in ${owner.get(key)}`)
             }
         }
     } else {

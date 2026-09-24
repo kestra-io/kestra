@@ -81,7 +81,7 @@ if (Object.keys(placeholdersOf(eeReport)).length > 0) {
     sections.push(
         "### ❌ EE translations - broken interpolation placeholders\n\n" +
         formatPlaceholders(placeholdersOf(eeReport)) + "\n\n" +
-        "**What to do:** fix these in `ui-ee/src/translations/ee_translations/`. vue-i18n interpolates a single pair of " +
+        "**What to do:** fix each one in the file the annotation names. vue-i18n interpolates a single pair of " +
         "braces (`{name}`); `{{name}}` is a compile error, so `t()` throws and the component rendering the key fails outright. " +
         "Rather than hand-editing a non-English string, empty the value and rerun `npm run translations:generate`.",
     )

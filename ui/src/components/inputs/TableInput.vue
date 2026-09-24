@@ -1,18 +1,29 @@
 <template>
     <div class="table-input">
-        <div v-if="rows.length" class="table-input-grid" :style="{gridTemplateColumns: `repeat(${columns.length}, minmax(0, 1fr)) auto`}">
-            <span v-for="column in columns" :key="column.id" class="table-input-header">
-                {{ columnLabel(column) }}
-            </span>
-            <span class="table-input-header" />
+        <div
+            v-if="rows.length"
+            class="table-input-grid"
+            role="grid"
+            :aria-label="input.displayName || input.id"
+            :aria-rowcount="rows.length + 1"
+            :style="{gridTemplateColumns: `repeat(${columns.length}, minmax(0, 1fr)) auto`}"
+        >
+            <div class="table-input-row" role="row" :aria-rowindex="1">
+                <span v-for="column in columns" :key="column.id" class="table-input-header" role="columnheader">
+                    {{ columnLabel(column) }}
+                </span>
+                <span class="table-input-header" role="columnheader" />
+            </div>
 
             <div
                 v-for="(row, index) in rows"
                 :key="index"
                 class="table-input-row"
+                role="row"
+                :aria-rowindex="index + 2"
                 :data-test="`table-row-${input.id}-${index}`"
             >
-                <KsFormItem v-for="column in columns" :key="column.id" class="table-input-field" :error="cellError(index, column.id)" :showMessage="false">
+                <KsFormItem v-for="column in columns" :key="column.id" class="table-input-field" role="gridcell" :error="cellError(index, column.id)" :showMessage="false">
                     <KsInputNumber
                         v-if="column.type === 'INT' || column.type === 'FLOAT'"
                         v-bind="cellAttrs(column, index)"
@@ -67,11 +78,11 @@
                         :modelValue="row[column.id] as string"
                         @update:modelValue="setCell(index, column, $event)"
                     />
-                    <KsText v-if="cellError(index, column.id)" type="danger" size="small" class="cell-error">
+                    <KsText v-if="cellError(index, column.id)" :id="cellErrorId(column, index)" type="danger" size="small" class="cell-error">
                         {{ cellError(index, column.id) }}
                     </KsText>
                 </KsFormItem>
-                <div class="table-input-action">
+                <div class="table-input-action" role="gridcell">
                     <KsIconButton
                         :tooltip="$t('remove this item')"
                         :data-test="`table-row-remove-${input.id}-${index}`"
@@ -130,7 +141,6 @@
         return Object.fromEntries(columns.value.map((column) => [column.id, null]))
     }
 
-    // `rows.min` is what the grid opens on, so the user is not asked to add the row the flow requires.
     function withMinRows(value: Row[]): Row[] {
         while (value.length < minRows.value) {
             value.push(emptyRow())
@@ -169,10 +179,16 @@
         commit()
     }
 
+    function cellErrorId(column: InputMetaData, index: number): string {
+        return `${props.input.id}-${index}-${column.id}-error`
+    }
+
     function cellAttrs(column: InputMetaData, index: number): Record<string, string> {
+        const error = cellError(index, column.id)
         return {
             "data-test": `table-cell-${props.input.id}-${index}-${column.id}`,
             "aria-label": column.displayName || column.id,
+            ...(error ? {"aria-invalid": "true", "aria-describedby": cellErrorId(column, index)} : {}),
         }
     }
 
@@ -186,8 +202,7 @@
         )
     }
 
-    // `disks[2].size_gb` -> `2.size_gb`, keyed that way so a cell lookup is a map hit. The input id is
-    // stripped by length rather than by splitting on `.`, since an input id may itself contain dots.
+    // The input id is stripped by length rather than by splitting on `.`, since an id may contain dots.
     const cellErrors = computed<Record<string, string>>(() => {
         const result: Record<string, string> = {}
         for (const error of props.errors ?? []) {
@@ -216,9 +231,11 @@
         align-items: start;
     }
 
-    /* The row element exists for its key and its data-test; the grid lays out the cells inside it. */
     .table-input-row {
-        display: contents;
+        display: grid;
+        grid-column: 1 / -1;
+        grid-template-columns: subgrid;
+        gap: inherit;
     }
 
     .table-input-header {
@@ -244,20 +261,12 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        /* The height of a control, which no token carries, so the action lines up with its row. */
+        /* The height of a control, which no token carries. */
         min-height: 2rem;
     }
 
     .add-row {
         width: 100%;
         margin-top: var(--ks-spacing-2);
-
-        &:disabled,
-        &:disabled:hover {
-            cursor: not-allowed;
-            color: var(--ks-text-inactive);
-            border-color: var(--ks-border-default);
-            background: transparent;
-        }
     }
 </style>

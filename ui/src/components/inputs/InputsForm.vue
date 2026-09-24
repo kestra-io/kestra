@@ -511,7 +511,8 @@
         if (!meta) {
             return undefined
         }
-        const errors = meta.errors!.filter(err => !err.path)
+        // Anything the grid cannot place on a cell (a row-level or whole-input path) belongs here.
+        const errors = meta.errors!.filter(err => !isCellPath(err.path, id))
         if (errors.length === 0) {
             return undefined
         }
@@ -526,6 +527,15 @@
         return message
     }
 
+    /** A path the grid can place on a cell: `<input id>[<row>].<column>`. Anything else is the input's own. */
+    function isCellPath(path: string | undefined, id: string): boolean {
+        if (path === undefined || !path.startsWith(`${id}[`)) {
+            return false
+        }
+        const closing = path.indexOf("].", id.length)
+        return closing > id.length + 1 && /^\d+$/.test(path.slice(id.length + 1, closing))
+    }
+
     function cellErrors(id: string): InputError[] {
         if (isLoadingInput(id)) {
             return []
@@ -533,7 +543,7 @@
         const meta = inputsMetaData.value.find((it) => it.id === id)
         // Gated like inputError: a grid of untouched cells would otherwise open with every required
         // one already flagged, since the backend answers about the whole value from the first call.
-        return meta?.errors?.filter(err => err.path && (err.renderError || inputsValidated.value.has(id))) ?? []
+        return meta?.errors?.filter(err => isCellPath(err.path, id) && (err.renderError || inputsValidated.value.has(id))) ?? []
     }
 
     function updateDefaults(): void {

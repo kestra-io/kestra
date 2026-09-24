@@ -92,6 +92,20 @@ CellErrors.play = async ({canvasElement}) => {
     await expect(canvasElement.textContent).not.toContain("Invalid value for input")
 }
 
+/**
+ * A row-level path (`disks[1]`, no column) has no cell to sit in. The grid must leave it to the form
+ * item above rather than dropping it, which is what a user would see as a rejected, silent submission.
+ */
+export const RowLevelError = Template.bind({})
+RowLevelError.args = {
+    input: disks,
+    modelValue: JSON.stringify([{size_gb: 10, name: "root", mountpoint: "/dev/sda"}]),
+    errors: [{message: "Invalid value for input `disks[0]`. Cause: a row must be an object", path: "disks[0]"}],
+}
+RowLevelError.play = async ({canvasElement}) => {
+    await expect(canvasElement.textContent).not.toContain("a row must be an object")
+}
+
 /** Every column type a cell can hold, so the control picked per type is reviewable at a glance. */
 export const ColumnTypes = Template.bind({})
 ColumnTypes.args = {

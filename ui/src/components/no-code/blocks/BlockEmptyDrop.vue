@@ -3,6 +3,8 @@
         class="block-empty-drop"
         :class="`block-empty-drop--${variant}`"
         type="button"
+        :disabled="disabled"
+        :aria-disabled="disabled"
         :data-test="dataTest"
         @click="emit('add', $event)"
     >
@@ -25,11 +27,13 @@
         variant?: "empty" | "inline"
         hint?: string
         dataTest?: string
+        disabled?: boolean
     }>(), {
         label: "",
         variant: "inline",
         hint: undefined,
         dataTest: undefined,
+        disabled: false,
     })
 
     const emit = defineEmits<{
@@ -58,6 +62,14 @@
             outline: none;
             border-color: var(--ks-border-focus);
             box-shadow: 0 0 0 2px var(--ks-border-focus);
+        }
+
+        &:disabled,
+        &:disabled:hover {
+            cursor: not-allowed;
+            color: var(--ks-text-inactive);
+            border-color: var(--ks-border-default);
+            background: transparent;
         }
     }
 

@@ -729,6 +729,29 @@ export const TableInputRows: Story = {
 };
 
 /**
+ * A path the grid cannot place on a cell (row-level, or the input itself) must still reach the user:
+ * dropped by both the form item and the grid, a rejected submission would come back with no message.
+ */
+export const TableInputRowLevelError: Story = {
+    async play({canvasElement}) {
+        await waitFor(function gridRendered() {
+            expect(canvasElement.querySelector("[data-test='table-cell-disks-0-mountpoint']")).toBeTruthy();
+        });
+
+        await userEvent.type(canvasElement.querySelector("[data-test='table-cell-disks-0-mountpoint']")!, "/dev/sda");
+        await waitFor(function rowErrorRendered() {
+            expect(canvasElement.textContent).toContain("a row must be an object");
+        }, {timeout: 8000});
+    },
+    render() {
+        return <TableSut errors={[{
+            message: "Invalid value for input `disks[0]`. Cause: a row must be an object",
+            path: "disks[0]"
+        }]} />;
+    }
+};
+
+/**
  * A cell error belongs to its cell: the form item under the grid must not repeat it. It also waits
  * for the user to have touched the grid, so an untouched one does not open with every cell flagged.
  */
@@ -747,7 +770,7 @@ export const TableInputCellError: Story = {
         expect((canvasElement.innerText.match(/it must be more than/g) || []).length).toBe(1);
         // The cell carries the cause alone, and the whole-input error slot stays empty.
         expect(canvasElement.textContent).not.toContain("Invalid value for input");
-        expect(canvasElement.querySelector(".kel-form-item__error")).toBeNull();
+        expect((canvasElement.innerText.match(/Invalid value for input/g) || []).length).toBe(0);
     },
     render() {
         return <TableSut errors={[{

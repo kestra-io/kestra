@@ -81,7 +81,6 @@
                             :icons="pluginsStore.icons"
                             :selectedId="activeSelectedId"
                             :focusedId="focusedId"
-                            :dnd="dndFor(lane.section)"
                             @add="(e) => openTaskPicker(lane.section, e)"
                             @select="(block) => selectBlock(lane.section, block)"
                             @open-split="(block) => selectBlock(lane.section, block, true)"
@@ -94,7 +93,6 @@
                             @duplicate-path="onDuplicateAtPath"
                             @add-at-path="openTaskPickerAtPath"
                             @update-depends-on="onUpdateDependsOn"
-                            @reorder="onNestedReorder"
                         />
                     </div>
                 </div>
@@ -148,7 +146,7 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, ref, watch} from "vue"
+    import {computed, provide, ref, watch} from "vue"
     import {useI18n} from "vue-i18n"
     import FlowIcon from "vue-material-design-icons/FileDocumentOutline.vue"
     import Cog from "vue-material-design-icons/Cog.vue"
@@ -178,6 +176,7 @@
     import type {Crumb} from "../utils/useFieldNavigation"
     import {taskCrumbAt, useEditTarget} from "./useEditTarget"
     import {useBlockDragAndDrop} from "./useBlockDragAndDrop"
+    import {BLOCK_DRAG_INJECTION_KEY} from "../injectionKeys"
     import {useBlockOperations} from "./useBlockOperations"
     import {modalItemPathOf, useBlockSelection} from "./useBlockSelection"
     import {useBlockMutations} from "./useBlockMutations"
@@ -506,7 +505,8 @@
         if (movedIndex >= lo && movedIndex <= hi) deselectIfCurrent(id)
     }
 
-    const {dndFor, reorder: onNestedReorder} = useBlockDragAndDrop(flowYaml, applyYaml, clearSelectionIfPathStale)
+    const dragContext = useBlockDragAndDrop(flowYaml, applyYaml, clearSelectionIfPathStale)
+    provide(BLOCK_DRAG_INJECTION_KEY, dragContext)
 
     const lanes = computed(() => buildSectionLanes(t, {
         triggers: parsedTriggers.value,

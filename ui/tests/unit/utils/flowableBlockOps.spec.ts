@@ -4,6 +4,7 @@ import {
     addBlock,
     addBlockAtPath,
     buildMinimalTask,
+    canMoveBlockToPath,
     collectAllIds,
     deleteBlock,
     deleteBlockAtPath,
@@ -17,6 +18,7 @@ import {
     isWrappedLaneItem,
     isWrapperLane,
     moveBlockAtPath,
+    moveBlockToPath,
     reorderAtPath,
     resolveBlockDomId,
     taskEditPathFor,
@@ -114,6 +116,61 @@ tasks:
       - id: sub_b
         type: io.kestra.plugin.core.log.Log
         message: B
+`.trim()
+
+const FLOW_WITH_IF_AND_SEQUENTIAL = `
+id: my_flow
+namespace: company.team
+tasks:
+  - id: if_task
+    type: io.kestra.plugin.core.flow.If
+    condition: "{{ true }}"
+    then:
+      - id: nested_a
+        type: io.kestra.plugin.core.log.Log
+        message: In then
+  - id: seq_task
+    type: io.kestra.plugin.core.flow.Sequential
+    tasks:
+      - id: seq_a
+        type: io.kestra.plugin.core.log.Log
+        message: Seq A
+`.trim()
+
+const FOUR_TASKS = `
+id: my_flow
+namespace: company.team
+tasks:
+  - id: a
+    type: io.kestra.plugin.core.log.Log
+  - id: b
+    type: io.kestra.plugin.core.log.Log
+  - id: c
+    type: io.kestra.plugin.core.log.Log
+  - id: d
+    type: io.kestra.plugin.core.log.Log
+`.trim()
+
+const FLOW_WITH_DAG_AND_SEQUENTIAL = `
+id: my_flow
+namespace: company.team
+tasks:
+  - id: my_dag
+    type: io.kestra.plugin.core.flow.Dag
+    tasks:
+      - task:
+          id: a
+          type: io.kestra.plugin.core.log.Log
+      - task:
+          id: b
+          type: io.kestra.plugin.core.log.Log
+        dependsOn:
+          - a
+  - id: seq_task
+    type: io.kestra.plugin.core.flow.Sequential
+    tasks:
+      - id: seq_a
+        type: io.kestra.plugin.core.log.Log
 `.trim()
 
 const FLOW_WITH_DAG = `
@@ -1066,6 +1123,81 @@ tasks:
             const parsed = flowYamlUtils.parse(result)
             expect(parsed.tasks[0].id).toBe("task_a")
             expect(parsed.tasks[1].id).toBe("task_b")
+        })
+    })
+
+    describe("moveBlockToPath", () => {
+        it("moves a task out of an If's then lane into a sibling Sequential's tasks lane", () => {
+            // Given — the moved task starts as the only item in the If's then lane
+            const before = flowYamlUtils.parse(FLOW_WITH_IF_AND_SEQUENTIAL)
+            expect(before.tasks[0].then).toHaveLength(1)
+
+            // When
+            const result = moveBlockToPath(FLOW_WITH_IF_AND_SEQUENTIAL, "tasks[0].then[0]", "tasks[1].tasks", 0)
+
+            // Then — the then lane is gone (pruned once empty) and the Sequential gained the task, in front
+            const parsed = flowYamlUtils.parse(result)
+            expect(parsed.tasks[0].then).toBeUndefined()
+            expect(parsed.tasks[1].tasks.map((task: {id: string}) => task.id)).toEqual(["nested_a", "seq_a"])
+        })
+
+        it("appends when the target index is at or past the destination's end", () => {
+            // Given
+            const result = moveBlockToPath(FLOW_WITH_IF_AND_SEQUENTIAL, "tasks[0].then[0]", "tasks[1].tasks", 99)
+
+            // Then
+            const parsed = flowYamlUtils.parse(result)
+            expect(parsed.tasks[1].tasks.map((task: {id: string}) => task.id)).toEqual(["seq_a", "nested_a"])
+        })
+
+        it("adjusts the target index when the removal shifts it within the same parent", () => {
+            // Given — moving "a" (index 0) onto "c", which sits at index 2 before the removal
+            const before = flowYamlUtils.parse(FOUR_TASKS)
+            expect(before.tasks.map((task: {id: string}) => task.id)).toEqual(["a", "b", "c", "d"])
+
+            // When
+            const result = moveBlockToPath(FOUR_TASKS, "tasks[0]", "tasks", 2)
+
+            // Then — "a" lands right before "c", not after it, since "c" shifted down to index 1
+            // once "a" was removed from ahead of it
+            const parsed = flowYamlUtils.parse(result)
+            expect(parsed.tasks.map((task: {id: string}) => task.id)).toEqual(["b", "a", "c", "d"])
+        })
+
+        it("refuses a move into the block's own descendant", () => {
+            // Given — the If's own then lane is a descendant of the If itself
+            const verdict = canMoveBlockToPath(FLOW_WITH_FLOWABLE, "tasks[1]", "tasks[1].then")
+            expect(verdict).toEqual({allowed: false, reason: "cycle"})
+
+            // When
+            const result = moveBlockToPath(FLOW_WITH_FLOWABLE, "tasks[1]", "tasks[1].then", 0)
+
+            // Then
+            expect(result).toBe(FLOW_WITH_FLOWABLE)
+        })
+
+        it("refuses a move across sections", () => {
+            // Given — triggers is a different top-level section than tasks
+            const verdict = canMoveBlockToPath(FLOW_WITH_TRIGGERS, "tasks[0]", "triggers")
+            expect(verdict).toEqual({allowed: false, reason: "section"})
+
+            // When
+            const result = moveBlockToPath(FLOW_WITH_TRIGGERS, "tasks[0]", "triggers", 0)
+
+            // Then
+            expect(result).toBe(FLOW_WITH_TRIGGERS)
+        })
+
+        it("refuses a move between a Dag's wrapped lane and a plain lane", () => {
+            // Given — a Dag's tasks lane wraps each item in `{task: ...}`, a Sequential's does not
+            const verdict = canMoveBlockToPath(FLOW_WITH_DAG_AND_SEQUENTIAL, "tasks[0].tasks[0]", "tasks[1].tasks")
+            expect(verdict).toEqual({allowed: false, reason: "lane"})
+
+            // When
+            const result = moveBlockToPath(FLOW_WITH_DAG_AND_SEQUENTIAL, "tasks[0].tasks[0]", "tasks[1].tasks", 0)
+
+            // Then
+            expect(result).toBe(FLOW_WITH_DAG_AND_SEQUENTIAL)
         })
     })
 

@@ -12,8 +12,13 @@
             :aria-expanded="expanded"
             :aria-selected="focused"
             :aria-label="headerAriaLabel"
+            :draggable="draggable"
             data-test="flowable-cluster-header"
             @click="toggle"
+            @dragstart="emit('drag-start', $event)"
+            @dragover="emit('drag-over', $event)"
+            @drop.prevent="emit('drop', $event)"
+            @dragend="emit('drag-end')"
         >
             <component
                 :is="expanded ? ChevronDown : ChevronRight"
@@ -94,7 +99,6 @@
                 @run="(id) => emit('run', id)"
                 @add-at-path="(p, afterIdx, evt) => emit('add-at-path', p, afterIdx, evt)"
                 @update-depends-on="(p, dependsOn) => emit('update-depends-on', p, dependsOn)"
-                @reorder="(p, from, to) => emit('reorder', p, from, to)"
             />
 
             <div v-if="isSwitchTask" class="flowable-cluster-add-case">
@@ -174,6 +178,7 @@
         focusedId?: string
         depth?: number
         playgroundEnabled?: boolean
+        draggable?: boolean
     }>()
 
     const emit = defineEmits<{
@@ -184,7 +189,10 @@
         (e: "run", taskId: string): void
         (e: "add-at-path", parentPath: string, afterIndex: number, evt?: Event): void
         (e: "update-depends-on", itemPath: string, dependsOn: string[]): void
-        (e: "reorder", parentPath: string, fromIndex: number, toIndex: number): void
+        (e: "drag-start", event: DragEvent): void
+        (e: "drag-over", event: DragEvent): void
+        (e: "drop", event: DragEvent): void
+        (e: "drag-end"): void
     }>()
 
     const depth = computed(() => props.depth ?? 0)

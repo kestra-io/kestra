@@ -10,7 +10,7 @@ const globalConfig = {
         FlowableClusterCard: {
             name: "FlowableClusterCard",
             props: ["block", "path"],
-            emits: ["update-depends-on", "reorder", "add-at-path"],
+            emits: ["update-depends-on", "add-at-path"],
             template: "<div class='cluster-stub' />",
         },
         LeafBlockCard: {name: "LeafBlockCard", props: ["block", "path"], template: "<div class='leaf-stub' />"},

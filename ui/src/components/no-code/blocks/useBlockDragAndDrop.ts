@@ -1,44 +1,77 @@
-import {type Ref} from "vue"
-import {reorderAtPath, type BlockSection} from "../../../utils/flowableBlockOps"
-import {useDragAndDrop} from "../../../composables/useDragAndDrop"
-import {ALL_SECTIONS} from "./blockSections"
+import {ref, type Ref} from "vue"
+import {canMoveBlockToPath, listLengthAtPath, moveBlockToPath, reorderAtPath} from "../../../utils/flowableBlockOps"
 
-export interface SectionDnd {
-    dragOverIndex: Ref<number | null>
-    handleDragStart: (event: DragEvent, index: number) => void
-    handleDragOver: (event: DragEvent, index: number) => void
-    handleDragEnd: () => void
-    handleDrop: (event: DragEvent, targetIndex: number) => void
+/**
+ * A block is draggable from any lane at any depth, so the drag itself has to live above any
+ * single lane component: a `BranchLane` nested three levels down knows nothing about the sibling
+ * lane the pointer is now hovering, only the shared context that both of them are given does.
+ */
+export interface BlockDragContext {
+    draggedPath: Ref<string | null>
+    beginDrag: (path: string) => void
+    endDrag: () => void
+    canDropIn: (parentPath: string) => boolean
+    dropAt: (parentPath: string, index: number) => void
 }
 
 export function useBlockDragAndDrop(
     flowYaml: Ref<string>,
     applyYaml: (yaml: string) => void,
     clearSelectionIfPathStale: (parentPath: string, from: number, to: number) => void,
-) {
-    function reorder(parentPath: string, from: number, to: number) {
-        clearSelectionIfPathStale(parentPath, from, to)
-        applyYaml(reorderAtPath(flowYaml.value, parentPath, from, to))
+): BlockDragContext {
+    const draggedPath = ref<string | null>(null)
+    const allowedByParentPath = new Map<string, boolean>()
+
+    function beginDrag(path: string) {
+        draggedPath.value = path
+        allowedByParentPath.clear()
     }
 
-    function bundleFor(section: BlockSection): SectionDnd {
-        const dnd = useDragAndDrop()
-        return {
-            dragOverIndex: dnd.dragOverIndex,
-            handleDragStart: dnd.handleDragStart,
-            handleDragOver: dnd.handleDragOver,
-            handleDragEnd: dnd.handleDragEnd,
-            handleDrop: (event, targetIndex) => dnd.handleDrop(event, targetIndex, (from, to) => reorder(section, from, to)),
+    function endDrag() {
+        draggedPath.value = null
+        allowedByParentPath.clear()
+    }
+
+    function canDropIn(parentPath: string): boolean {
+        const source = draggedPath.value
+        if (!source) return false
+        const cached = allowedByParentPath.get(parentPath)
+        if (cached !== undefined) return cached
+        const allowed = canMoveBlockToPath(flowYaml.value, source, parentPath).allowed
+        allowedByParentPath.set(parentPath, allowed)
+        return allowed
+    }
+
+    function dropAt(toParentPath: string, toIndex: number) {
+        const source = draggedPath.value
+        if (!source || !canDropIn(toParentPath)) {
+            endDrag()
+            return
         }
+
+        const fromMatch = source.match(/^(.*)\[(\d+)\]$/)
+        if (!fromMatch) {
+            endDrag()
+            return
+        }
+        const [, fromParentPath, fromIndexRaw] = fromMatch
+        const fromIndex = parseInt(fromIndexRaw, 10)
+
+        if (fromParentPath === toParentPath) {
+            // Same lane: keep the exact splice-based arithmetic reorderAtPath already ships with.
+            const length = listLengthAtPath(flowYaml.value, toParentPath)
+            const clampedIndex = Math.min(toIndex, length - 1)
+            if (fromIndex !== clampedIndex) {
+                clearSelectionIfPathStale(toParentPath, fromIndex, clampedIndex)
+                applyYaml(reorderAtPath(flowYaml.value, toParentPath, fromIndex, clampedIndex))
+            }
+        } else {
+            clearSelectionIfPathStale(fromParentPath, fromIndex, fromIndex)
+            applyYaml(moveBlockToPath(flowYaml.value, source, toParentPath, toIndex))
+        }
+
+        endDrag()
     }
 
-    const bundles = new Map<BlockSection, SectionDnd>(
-        ALL_SECTIONS.map(section => [section, bundleFor(section)]),
-    )
-
-    function dndFor(section: BlockSection): SectionDnd {
-        return bundles.get(section) as SectionDnd
-    }
-
-    return {dndFor, reorder}
+    return {draggedPath, beginDrag, endDrag, canDropIn, dropAt}
 }

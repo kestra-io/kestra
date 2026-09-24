@@ -11,7 +11,7 @@
         data-test="block-card"
         @click="emit('select')"
         @dragstart="emit('drag-start', $event)"
-        @dragover.prevent="emit('drag-over', $event)"
+        @dragover="emit('drag-over', $event)"
         @drop.prevent="emit('drop', $event)"
         @dragend="emit('drag-end')"
     >

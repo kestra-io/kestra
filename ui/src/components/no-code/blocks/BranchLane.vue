@@ -31,6 +31,7 @@
                         :focusedId="focusedId"
                         :playgroundEnabled="playgroundEnabled"
                         :domId="resolveBlockDomId(tasks, index)"
+                        :draggable="true"
                         :data-block-id="resolveBlockDomId(tasks, index)"
                         @select="(p) => emit('select', p)"
                         @open-split="(p) => emit('open-split', p)"
@@ -39,7 +40,10 @@
                         @run="(id) => emit('run', id)"
                         @add-at-path="(p, afterIdx, evt) => emit('add-at-path', p, afterIdx, evt)"
                         @update-depends-on="(p, dependsOn) => emit('update-depends-on', p, dependsOn)"
-                        @reorder="(p, from, to) => emit('reorder', p, from, to)"
+                        @drag-start="onItemDragStart($event, index)"
+                        @drag-over="onItemDragOver($event, index)"
+                        @drop="onItemDrop($event, index)"
+                        @drag-end="onDragEnd"
                     />
                     <LeafBlockCard
                         v-else
@@ -58,10 +62,10 @@
                         @delete="emit('delete', `${parentPath}[${index}]`)"
                         @duplicate="emit('duplicate', `${parentPath}[${index}]`)"
                         @run="emit('run', String(displayTaskOf(task).id))"
-                        @drag-start="handleDragStart($event, index)"
-                        @drag-over="handleDragOver($event, index)"
-                        @drop="handleDrop($event, index)"
-                        @drag-end="handleDragEnd"
+                        @drag-start="onItemDragStart($event, index)"
+                        @drag-over="onItemDragOver($event, index)"
+                        @drop="onItemDrop($event, index)"
+                        @drag-end="onDragEnd"
                     />
 
                     <DagDependsOnEditor
@@ -84,15 +88,21 @@
             <button
                 class="branch-lane-add-btn"
                 type="button"
+                :class="{
+                    'block-kbd-focused': tasks.length === 0 && focusedId === `__lane:${parentPath}`,
+                    'branch-lane-add-btn--drop-allowed': trailingDropState === 'allowed',
+                    'branch-lane-add-btn--drop-forbidden': trailingDropState === 'forbidden',
+                }"
                 :data-test="`branch-lane-add-${laneName}`"
                 :data-block-id="tasks.length === 0 ? `__lane:${parentPath}` : undefined"
-                :class="{'block-kbd-focused': tasks.length === 0 && focusedId === `__lane:${parentPath}`}"
                 :tabindex="tasks.length === 0 && focusedId === `__lane:${parentPath}` ? 0 : -1"
-                :aria-label="$t('block_editor.add_to_lane', {lane: laneLabel})"
+                :aria-label="trailingDropState === 'forbidden' ? $t('block_editor.drop_forbidden') : $t('block_editor.add_to_lane', {lane: laneLabel})"
                 @click="emit('add-at-path', parentPath, tasks.length - 1, $event)"
+                @dragover="onTrailingDragOver"
+                @drop="onTrailingDrop"
             >
                 <PlusCircleOutline class="branch-lane-add-icon" />
-                {{ $t("block_editor.add_to_lane", {lane: laneLabel}) }}
+                {{ trailingDropState === 'forbidden' ? $t('block_editor.drop_forbidden') : $t('block_editor.add_to_lane', {lane: laneLabel}) }}
             </button>
         </div>
     </div>
@@ -115,7 +125,7 @@
 
     import type {PluginIconData} from "../../../stores/plugins"
     import {displayTaskOf, isFlowableType, isWrappedLaneItem, resolveBlockDomId} from "../../../utils/flowableBlockOps"
-    import {useDragAndDrop} from "../../../composables/useDragAndDrop"
+    import {useLaneDrag} from "./useLaneDrag"
 
     const DagDependsOnEditor = defineAsyncComponent(() => import("./DagDependsOnEditor.vue"))
 
@@ -141,17 +151,19 @@
         (e: "duplicate", path: string): void
         (e: "run", taskId: string): void
         (e: "add-at-path", parentPath: string, afterIndex: number, evt?: Event): void
-        (e: "reorder", parentPath: string, fromIndex: number, toIndex: number): void
         (e: "update-depends-on", itemPath: string, dependsOn: string[]): void
     }>()
 
-    const {dragOverIndex, handleDragStart, handleDragOver, handleDragEnd, handleDrop: baseDrop} = useDragAndDrop()
-
-    function handleDrop(event: DragEvent, targetIndex: number) {
-        baseDrop(event, targetIndex, (from, to) => {
-            emit("reorder", props.parentPath, from, to)
-        })
-    }
+    const {
+        dragOverIndex,
+        dropState: trailingDropState,
+        onItemDragStart,
+        onItemDragOver,
+        onItemDrop,
+        onDragEnd,
+        onTrailingDragOver,
+        onTrailingDrop,
+    } = useLaneDrag(() => props.parentPath, () => props.tasks.length)
 
     function dagDependsOnOf(item: Record<string, unknown>): string[] {
         const value = (item as {dependsOn?: unknown}).dependsOn
@@ -301,6 +313,18 @@
     .branch-lane-add-btn.block-kbd-focused {
         border-color: var(--ks-border-focus);
         box-shadow: 0 0 0 2px var(--ks-border-focus);
+    }
+
+    .branch-lane-add-btn--drop-allowed {
+        border-color: var(--ks-border-focus);
+        color: var(--ks-text-primary);
+        background: var(--ks-btn-secondary-bg-hover);
+    }
+
+    .branch-lane-add-btn--drop-forbidden {
+        border-color: var(--ks-border-error);
+        color: var(--ks-text-error);
+        cursor: not-allowed;
     }
 
     .branch-lane-add-icon {

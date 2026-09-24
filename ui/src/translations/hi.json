@@ -2563,6 +2563,7 @@
       "depends_on_placeholder": "टास्क चुनें…",
       "depth_pill": "गहराई {depth}",
       "drag_reorder": "पुनः क्रमित करने के लिए खींचें",
+      "drop_forbidden": "यहां छोड़ना संभव नहीं है",
       "duplicate": "डुप्लिकेट",
       "empty_add_hint": "या tasks खोजने के लिए / दबाएँ",
       "empty_add_lead": "{label} जोड़ने के लिए क्लिक करें",

@@ -2563,6 +2563,7 @@
       "depends_on_placeholder": "Seleccionar tasks…",
       "depth_pill": "Profundidad {depth}",
       "drag_reorder": "Arrastrar para reordenar",
+      "drop_forbidden": "No se puede soltar aquí",
       "duplicate": "Duplicar",
       "empty_add_hint": "o presiona / para buscar tasks",
       "empty_add_lead": "Haz clic para añadir {label}",

@@ -1,5 +1,6 @@
 import {test, expect, describe} from "vitest"
 import * as VueFlowUtils from "../../../src/utils/vueFlowUtils.ts"
+import {NODE_SIZES} from "../../../src/utils/constants.ts"
 
 const graph = {
     nodes: [
@@ -607,6 +608,84 @@ describe("generateGraph flowable lane header", () => {
     })
 })
 
+describe("generateGraph lane header height vs a following sibling's clearance", () => {
+    // Same Parallel lane as above, plus a plain sibling task right after it in the same rank
+    // sequence — LANE_HEADER_HEIGHT is added to the cluster's box *after* dagre has already
+    // spaced this sibling using the un-inflated height, so the header eats into that gap.
+    const flowGraph = {
+        nodes: [
+            {uid: "root.root-1", type: "io.kestra.core.models.hierarchies.GraphClusterRoot"},
+            {uid: "root.end-1", type: "io.kestra.core.models.hierarchies.GraphClusterEnd"},
+            {
+                uid: "root.parallel_task",
+                type: "io.kestra.core.models.hierarchies.GraphTask",
+                task: {id: "parallel_task", type: "io.kestra.plugin.core.flow.Parallel", namespace: "ns", flowId: "flow"},
+            },
+            {
+                uid: "root.parallel_task.branch_a",
+                type: "io.kestra.core.models.hierarchies.GraphTask",
+                task: {id: "branch_a", type: "io.kestra.plugin.core.log.Log", namespace: "ns", flowId: "flow"},
+            },
+            {
+                uid: "root.parallel_task.branch_b",
+                type: "io.kestra.core.models.hierarchies.GraphTask",
+                task: {id: "branch_b", type: "io.kestra.plugin.core.log.Log", namespace: "ns", flowId: "flow"},
+            },
+            {
+                uid: "root.after_task",
+                type: "io.kestra.core.models.hierarchies.GraphTask",
+                task: {id: "after_task", type: "io.kestra.plugin.core.log.Log", namespace: "ns", flowId: "flow"},
+            },
+        ],
+        edges: [
+            {source: "root.root-1", target: "root.parallel_task", relation: {}},
+            {source: "root.parallel_task", target: "root.parallel_task.branch_a", relation: {relationType: "PARALLEL"}},
+            {source: "root.parallel_task", target: "root.parallel_task.branch_b", relation: {relationType: "PARALLEL"}},
+            // Every branch feeds the cluster's own end marker — omitting this (as a real backend
+            // graph never does) leaves `end-1` with no incoming edge, so dagre ranks it arbitrarily
+            // instead of after the branches, and any "clearance" measured against it is meaningless.
+            {source: "root.parallel_task.branch_a", target: "root.end-1", relation: {}},
+            {source: "root.parallel_task.branch_b", target: "root.end-1", relation: {}},
+            {source: "root.end-1", target: "root.after_task", relation: {relationType: "SEQUENTIAL"}},
+        ],
+        clusters: [
+            {
+                cluster: {
+                    uid: "cluster_root.parallel_task",
+                    type: "io.kestra.core.models.hierarchies.GraphCluster",
+                    taskNode: {
+                        uid: "root.parallel_task",
+                        task: {id: "parallel_task", type: "io.kestra.plugin.core.flow.Parallel", namespace: "ns", flowId: "flow"},
+                    },
+                },
+                nodes: ["root.root-1", "root.end-1", "root.parallel_task", "root.parallel_task.branch_a", "root.parallel_task.branch_b"],
+                parents: [],
+                start: "root.root-1",
+                end: "root.end-1",
+            },
+        ],
+    } as unknown as VueFlowUtils.FlowGraph
+
+    test("still clears the next sibling — the lane header must not overlap what comes after it", () => {
+        const elements = asElements(VueFlowUtils.generateGraph(
+            "vfid", "flow", "ns", flowGraph, undefined, [], false, {}, new Set(), [], true, false, false,
+        ) ?? [])
+
+        const lane = elements.find((e) => e.id === "cluster_root.parallel_task")
+        const sibling = elements.find((e) => e.id === "root.after_task")
+        expect(lane?.position).toBeDefined()
+        expect(sibling?.position).toBeDefined()
+
+        const laneBottom = (lane!.position!.y) + parseFloat(String(lane!.style!.height))
+        const siblingTop = sibling!.position!.y
+
+        // Dagre's own default ranksep (50) minus LANE_HEADER_HEIGHT (32): 18px left. Pinned exactly
+        // — not just "> 0" — so a bigger header, a smaller ranksep, or nesting that erodes the same
+        // gap further fails loudly here instead of silently overlapping in the browser.
+        expect(siblingTop - laneBottom).toBe(18)
+    })
+})
+
 describe("generateGraph synthetic errors lane", () => {
     const flowWithRootErrors = {
         nodes: [
@@ -659,6 +738,28 @@ describe("generateGraph synthetic errors lane", () => {
         ) ?? [])
 
         expect(elements.some((e) => e.type === "cluster")).toBe(false)
+    })
+})
+
+describe("getNodeWidth / getNodeHeight (per node-kind footprint)", () => {
+    // Regression: TASK_HEIGHT and TRIGGER_HEIGHT used to be numerically equal (56), so a shared
+    // `isTaskNode(node) || isTriggerNode(node)` branch was harmless. Bumping TASK_HEIGHT to 80
+    // without a trigger-specific branch silently reserved a too-tall box for every trigger.
+    const triggerNode = {uid: "root.Triggers.schedule", type: "io.kestra.core.models.hierarchies.GraphTrigger"}
+    const taskNode = {uid: "root.a", type: "io.kestra.core.models.hierarchies.GraphTask"}
+
+    test("sizes a trigger node against TRIGGER_HEIGHT/TRIGGER_WIDTH, not TASK_HEIGHT/TASK_WIDTH", () => {
+        expect(VueFlowUtils.getNodeHeight(triggerNode)).toBe(NODE_SIZES.TRIGGER_HEIGHT)
+        expect(VueFlowUtils.getNodeWidth(triggerNode)).toBe(NODE_SIZES.TRIGGER_WIDTH)
+    })
+
+    test("sizes a task node against TASK_HEIGHT/TASK_WIDTH", () => {
+        expect(VueFlowUtils.getNodeHeight(taskNode)).toBe(NODE_SIZES.TASK_HEIGHT)
+        expect(VueFlowUtils.getNodeWidth(taskNode)).toBe(NODE_SIZES.TASK_WIDTH)
+    })
+
+    test("a task and a trigger no longer share the same footprint", () => {
+        expect(VueFlowUtils.getNodeHeight(triggerNode)).not.toBe(VueFlowUtils.getNodeHeight(taskNode))
     })
 })
 

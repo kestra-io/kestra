@@ -259,19 +259,25 @@ export function buildEffectiveGetNodeDimensions(
 }
 
 export function getNodeWidth(node: MinimalNode) {
-    return isTaskNode(node) || isTriggerNode(node) || isCustomNode(node)
-        ? NODE_SIZES.TASK_WIDTH
-        : isCollapsedCluster(node)
-          ? NODE_SIZES.COLLAPSED_CLUSTER_WIDTH
-          : NODE_SIZES.DOT_WIDTH
+    return isTriggerNode(node)
+        ? NODE_SIZES.TRIGGER_WIDTH
+        : isTaskNode(node) || isCustomNode(node)
+          ? NODE_SIZES.TASK_WIDTH
+          : isCollapsedCluster(node)
+            ? NODE_SIZES.COLLAPSED_CLUSTER_WIDTH
+            : NODE_SIZES.DOT_WIDTH
 }
 
+// A trigger keeps its own, unchanged footprint — TASK_HEIGHT's +24 belongs to the task anatomy
+// this issue adds (type line, reserved duration-bar slot), neither of which a trigger node has.
 export function getNodeHeight(node: MinimalNode) {
-    return isTaskNode(node) || isTriggerNode(node)
-        ? NODE_SIZES.TASK_HEIGHT
-        : isCollapsedCluster(node)
-          ? NODE_SIZES.COLLAPSED_CLUSTER_HEIGHT
-          : NODE_SIZES.DOT_HEIGHT
+    return isTriggerNode(node)
+        ? NODE_SIZES.TRIGGER_HEIGHT
+        : isTaskNode(node)
+          ? NODE_SIZES.TASK_HEIGHT
+          : isCollapsedCluster(node)
+            ? NODE_SIZES.COLLAPSED_CLUSTER_HEIGHT
+            : NODE_SIZES.DOT_HEIGHT
 }
 
 export function isTaskNode(node: MinimalNode) {

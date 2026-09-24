@@ -306,6 +306,21 @@ function isDescendantOrSelfPath(candidatePath: string, ancestorPath: string): bo
     return ancestorSegments.every((segment, index) => segment === candidateSegments[index])
 }
 
+/** Renumbers `path` for the array shrinking by one at `removedParentPath[removedIndex]`, so a path through a later sibling of the removed block still resolves once that sibling has shifted down. */
+function pathAfterRemoval(path: string, removedParentPath: string, removedIndex: number): string {
+    const pathSegments = flowYamlUtils.parsePath(path)
+    const removedSegments = flowYamlUtils.parsePath(removedParentPath)
+    if (pathSegments.length <= removedSegments.length) return path
+    if (!removedSegments.every((segment, index) => segment === pathSegments[index])) return path
+
+    const siblingIndex = pathSegments[removedSegments.length]
+    if (typeof siblingIndex !== "number" || siblingIndex <= removedIndex) return path
+
+    const renumbered = [...pathSegments]
+    renumbered[removedSegments.length] = siblingIndex - 1
+    return flowYamlUtils.joinPath(renumbered)
+}
+
 export function listLengthAtPath(source: string, path: string): number {
     try {
         const parsed = flowYamlUtils.parse<Record<string, unknown>>(source)
@@ -316,7 +331,7 @@ export function listLengthAtPath(source: string, path: string): number {
     }
 }
 
-/** Refuses a cycle (into the block's own subtree), a cross-section move, and any cross-parent move touching a Dag's `{task: ...}`-wrapped lane, since that needs `dependsOn` rewiring a drag-drop move does not attempt — including between two different Dags, where the shapes match but the ids don't. */
+/** Refuses a cycle (into the block's own subtree), a cross-section move (by the path's first segment, so a task-level `errors` lane counts as `tasks` while the flow-level `errors` section does not), and any cross-parent move touching a Dag's `{task: ...}`-wrapped lane, since that needs `dependsOn` rewiring a drag-drop move does not attempt — including between two different Dags, where the shapes match but the ids don't. */
 export function canMoveBlockToPath(source: string, fromPath: string, toParentPath: string): MoveVerdict {
     if (isDescendantOrSelfPath(toParentPath, fromPath)) return {allowed: false, reason: "cycle"}
     if (sectionOfPath(fromPath) !== sectionOfPath(toParentPath)) return {allowed: false, reason: "section"}
@@ -341,6 +356,9 @@ export function moveBlockToPath(source: string, fromPath: string, toParentPath: 
     const fromIndex = fromIndexMatch ? parseInt(fromIndexMatch[1], 10) : undefined
 
     const withoutSource = deleteBlockAtPath(source, fromPath)
+    const renumberedToParentPath = fromIndex !== undefined
+        ? pathAfterRemoval(toParentPath, fromParentPath, fromIndex)
+        : toParentPath
 
     let adjustedIndex = toIndex
     if (fromParentPath === toParentPath && fromIndex !== undefined && fromIndex < toIndex) {
@@ -348,11 +366,11 @@ export function moveBlockToPath(source: string, fromPath: string, toParentPath: 
     }
     if (adjustedIndex < 0) adjustedIndex = 0
 
-    const destinationLength = listLengthAtPath(withoutSource, toParentPath)
+    const destinationLength = listLengthAtPath(withoutSource, renumberedToParentPath)
 
     return adjustedIndex >= destinationLength
-        ? flowYamlUtils.insertBlockWithPath({source: withoutSource, parentPath: toParentPath, newBlock: blockYaml, position: "after"})
-        : flowYamlUtils.insertBlockWithPath({source: withoutSource, parentPath: toParentPath, newBlock: blockYaml, refPath: adjustedIndex, position: "before"})
+        ? flowYamlUtils.insertBlockWithPath({source: withoutSource, parentPath: renumberedToParentPath, newBlock: blockYaml, position: "after"})
+        : flowYamlUtils.insertBlockWithPath({source: withoutSource, parentPath: renumberedToParentPath, newBlock: blockYaml, refPath: adjustedIndex, position: "before"})
 }
 
 export function moveBlockAtPath(source: string, path: string, direction: "up" | "down"): string {

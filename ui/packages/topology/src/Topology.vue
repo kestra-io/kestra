@@ -1,7 +1,7 @@
 <template>
     <div class="topology-shell">
         <FlowSummaryChip
-            v-if="flowId"
+            v-if="flowId && !isReadOnly && isAllowedEdit"
             class="topology-flow-bar"
             :flowId="flowId"
             :namespace="namespace"
@@ -359,6 +359,7 @@
     onUnmounted(() => {
         window.removeEventListener("dragend", onTaskDragEnd)
         window.removeEventListener("blur", onTaskDragEnd)
+        window.removeEventListener("dragover", onGhostMove)
     })
 
     const emit = defineEmits(

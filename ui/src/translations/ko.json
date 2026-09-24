@@ -1619,7 +1619,9 @@
       "raw": "Temporal 보기",
       "raw_details": "원시 타임스탬프 순서 형식으로 전체 task log 및 flow log를 표시합니다.",
       "compact": "기본 보기",
-      "compact_details": "각 task별로 그룹화된 간결한 보기로 task logs 표시"
+      "compact_details": "각 task별로 그룹화된 간결한 보기로 task logs 표시",
+      "fullscreen": "Logs 전체 화면으로 보기",
+      "exit_fullscreen": "전체 화면 종료"
     },
     "execution_deletion": {
       "logs": "Logs 삭제",
@@ -2519,6 +2521,9 @@
       "block_deleted": "{name}이(가) 삭제되었습니다.",
       "card_aria_label": "유형 {type}의 블록 {id}",
       "canvas_aria": "flow 블록 캔버스",
+      "chip_copied": "클립보드에 복사됨",
+      "chip_hint": "칩을 클릭하면 포커스된 필드에 삽입되며, 드래그해도 삽입됩니다",
+      "chip_inserted": "필드에 삽입됨",
       "cluster_collapse_aria": "{id} 접기",
       "cluster_expand_aria": "{id} ({count} tasks) 확장",
       "collapsed_summary": "{count}개 task",

@@ -84,7 +84,7 @@
     "devDependencies": {
         "@codecov/vite-plugin": "^2.0.1",
         "@google/genai": "^2.11.0",
-        "@hey-api/openapi-ts": "0.97.0",
+        "@hey-api/openapi-ts": "0.97.3",
         "@module-federation/vite": "^1.16.14",
         "@playwright/test": "^1.61.1",
         "@storybook/addon-themes": "^10.4.6",

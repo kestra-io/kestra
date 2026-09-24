@@ -1619,7 +1619,9 @@
       "raw": "Vista temporale",
       "raw_details": "Mostra i log completi dei task e i log dei flow in un formato raw, ordinato per timestamp",
       "compact": "Vista predefinita",
-      "compact_details": "Mostra i task logs in una vista compatta raggruppata per ogni task"
+      "compact_details": "Mostra i task logs in una vista compatta raggruppata per ogni task",
+      "fullscreen": "Logs a schermo intero",
+      "exit_fullscreen": "Esci dalla modalità a schermo intero"
     },
     "execution_deletion": {
       "logs": "Elimina logs",
@@ -2519,6 +2521,9 @@
       "block_deleted": "{name} eliminato",
       "card_aria_label": "Blocco {id} di tipo {type}",
       "canvas_aria": "Canvas dei blocchi del flow",
+      "chip_copied": "Copiato negli appunti",
+      "chip_hint": "Fai clic su un chip per inserirlo nel campo attivo, oppure trascinalo",
+      "chip_inserted": "Inserito nel campo",
       "cluster_collapse_aria": "Comprimi {id}",
       "cluster_expand_aria": "Espandi {id} ({count} task)",
       "collapsed_summary": "{count} task",

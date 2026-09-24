@@ -1619,7 +1619,9 @@
       "raw": "Временной вид",
       "raw_details": "Показать полные Task Logs и Flow Logs в необработанном формате, упорядоченном по времени",
       "compact": "Вид по умолчанию",
-      "compact_details": "Показать task логи в компактном виде, сгруппированном по каждой задаче"
+      "compact_details": "Показать task логи в компактном виде, сгруппированном по каждой задаче",
+      "fullscreen": "Логи на весь экран",
+      "exit_fullscreen": "Выйти из полноэкранного режима"
     },
     "execution_deletion": {
       "logs": "Удалить логи",
@@ -2519,6 +2521,9 @@
       "block_deleted": "{name} удален",
       "card_aria_label": "Блок {id} типа {type}",
       "canvas_aria": "Холст блоков flow",
+      "chip_copied": "Скопировано в буфер обмена",
+      "chip_hint": "Нажмите на чип, чтобы вставить его в активное поле, или перетащите его",
+      "chip_inserted": "Вставлено в поле",
       "cluster_collapse_aria": "Свернуть {id}",
       "cluster_expand_aria": "Развернуть {id} ({count} tasks)",
       "collapsed_summary": "{count} задач",

@@ -2,9 +2,11 @@ import {describe, expect, it} from "vitest"
 import {computed} from "vue"
 import TaskNode from "../../../src/nodes/TaskNode.vue"
 import NodeMenu from "../../../src/nodes/NodeMenu.vue"
+import {computeLongestTaskRunDuration} from "../../../src/misc/durationBreakdown"
 import {
     EXECUTION_INJECTION_KEY,
     SUBFLOWS_EXECUTIONS_INJECTION_KEY,
+    LONGEST_TASK_RUN_DURATION_INJECTION_KEY,
 } from "../../../src/injectionKeys"
 
 import {i18nMount} from "../../../../../tests/unit/i18nMount"
@@ -79,6 +81,7 @@ function mountTaskNode({execution, taskRuns = [], replayEnabled = false, task = 
                     execution ? {id: EXECUTION_ID, taskRunList: taskRuns, ...execution} : undefined,
                 ),
                 [SUBFLOWS_EXECUTIONS_INJECTION_KEY as symbol]: computed(() => ({})),
+                [LONGEST_TASK_RUN_DURATION_INJECTION_KEY as symbol]: computed(() => computeLongestTaskRunDuration(taskRuns)),
             },
         },
     })

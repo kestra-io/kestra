@@ -215,7 +215,8 @@
     import * as VueFlowUtils from "./utils/vueFlowUtils"
     import {afterLastDot} from "./utils/utils"
     import {untilNodesMeasured, useScreenshot} from "./composables/useScreenshot"
-    import {EXECUTION_INJECTION_KEY, SUBFLOWS_EXECUTIONS_INJECTION_KEY, LOD_INJECTION_KEY, VALIDATION_ISSUES_INJECTION_KEY, FOCUSED_TASK_INJECTION_KEY, DROP_EDGE_INJECTION_KEY, DRAGGING_NODE_INJECTION_KEY, CANVAS_HOVERED_INJECTION_KEY} from "./injectionKeys"
+    import {EXECUTION_INJECTION_KEY, SUBFLOWS_EXECUTIONS_INJECTION_KEY, LOD_INJECTION_KEY, VALIDATION_ISSUES_INJECTION_KEY, FOCUSED_TASK_INJECTION_KEY, DROP_EDGE_INJECTION_KEY, DRAGGING_NODE_INJECTION_KEY, CANVAS_HOVERED_INJECTION_KEY, LONGEST_TASK_RUN_DURATION_INJECTION_KEY} from "./injectionKeys"
+    import {computeLongestTaskRunDuration} from "./misc/durationBreakdown"
     import BasicNode from "./nodes/BasicNode.vue"
 
     const props = withDefaults(defineProps<{
@@ -307,6 +308,9 @@
     provide(LOD_INJECTION_KEY, lod)
     provide(VALIDATION_ISSUES_INJECTION_KEY, computed(() => props.validationIssuesByTask ?? new Map()))
     provide(FOCUSED_TASK_INJECTION_KEY, computed(() => props.focusedTaskId))
+    // Computed once for the whole graph rather than per node: `taskRunList` is execution-wide, so
+    // every TaskNode reducing over it independently would be N× the same work.
+    provide(LONGEST_TASK_RUN_DURATION_INJECTION_KEY, computed(() => computeLongestTaskRunDuration(props.execution?.taskRunList ?? [])))
 
     const initialFitDone = ref(false)
 

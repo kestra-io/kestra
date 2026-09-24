@@ -7,28 +7,28 @@ export interface TopologyFocusNode {
     path: string
     parentPath: string
     depth: number
-    /** The lane holding this node's own children, when it is a flowable that has any. */
-    childrenPath?: string
+    /** Every lane holding this node's own children — both `If` branches, each `Switch` case, a flowable's `errors`. */
+    childrenPaths: string[]
 }
 
-function laneOf(item: Record<string, unknown>, itemPath: string): {key: string; path: string} | undefined {
+function lanesOf(item: Record<string, unknown>, itemPath: string): {key: string; path: string}[] {
     const task = displayTaskOf(item)
+    const taskPath = task === item ? itemPath : `${itemPath}.task`
+    const lanes: {key: string; path: string}[] = []
     for (const key of NESTED_BLOCK_KEYS) {
         const branch = task[key]
-        if (Array.isArray(branch) && branch.length > 0) {
-            const taskPath = task === item ? itemPath : `${itemPath}.task`
-            return {key, path: `${taskPath}.${key}`}
-        }
+        if (Array.isArray(branch) && branch.length > 0) lanes.push({key, path: `${taskPath}.${key}`})
     }
     const cases = task.cases
     if (cases && typeof cases === "object" && !Array.isArray(cases)) {
-        const firstCase = Object.keys(cases as Record<string, unknown>)[0]
-        if (firstCase !== undefined) {
-            const taskPath = task === item ? itemPath : `${itemPath}.task`
-            return {key: "cases", path: `${taskPath}.cases.${firstCase}`}
+        for (const caseKey of Object.keys(cases as Record<string, unknown>)) {
+            const branch = (cases as Record<string, unknown>)[caseKey]
+            if (Array.isArray(branch) && branch.length > 0) {
+                lanes.push({key: "cases", path: `${taskPath}.cases.${caseKey}`})
+            }
         }
     }
-    return undefined
+    return lanes
 }
 
 function walk(
@@ -45,9 +45,11 @@ function walk(
         const id = task?.id
         if (id == null) return
         const path = `${parentPath}[${index}]`
-        const lane = laneOf(item, path)
-        out.push({id: String(id), path, parentPath, depth, childrenPath: lane?.path})
-        if (lane) walk(getIn(item, lane.path, path), lane.path, depth + 1, out)
+        const lanes = lanesOf(item, path)
+        out.push({id: String(id), path, parentPath, depth, childrenPaths: lanes.map(lane => lane.path)})
+        for (const lane of lanes) {
+            walk(getIn(item, lane.path, path), lane.path, depth + 1, out)
+        }
     })
 }
 
@@ -100,13 +102,13 @@ export function moveWithinSiblings(
 export function firstChildOf(order: TopologyFocusNode[], id: string | undefined): string | undefined {
     if (!id) return undefined
     const node = order.find(entry => entry.id === id)
-    if (!node?.childrenPath) return undefined
-    return order.find(entry => entry.parentPath === node.childrenPath)?.id
+    if (!node?.childrenPaths.length) return undefined
+    return order.find(entry => node.childrenPaths.includes(entry.parentPath))?.id
 }
 
 export function parentOf(order: TopologyFocusNode[], id: string | undefined): string | undefined {
     if (!id) return undefined
     const node = order.find(entry => entry.id === id)
     if (!node || node.depth === 0) return undefined
-    return order.find(entry => entry.childrenPath === node.parentPath)?.id
+    return order.find(entry => entry.childrenPaths.includes(node.parentPath))?.id
 }

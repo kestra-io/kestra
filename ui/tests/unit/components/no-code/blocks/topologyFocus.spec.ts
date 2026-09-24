@@ -96,6 +96,88 @@ errors:
         expect(parentOf(order, "extract")).toBeUndefined()
     })
 
+    const BRANCHED = `id: branched
+namespace: company.team
+tasks:
+  - id: gate
+    type: io.kestra.plugin.core.flow.If
+    condition: "true"
+    then:
+      - id: in_then
+        type: io.kestra.plugin.core.log.Log
+        message: then
+    else:
+      - id: in_else
+        type: io.kestra.plugin.core.log.Log
+        message: else
+  - id: router
+    type: io.kestra.plugin.core.flow.Switch
+    value: "{{ trigger.value }}"
+    cases:
+      a:
+        - id: in_case_a
+          type: io.kestra.plugin.core.log.Log
+          message: a
+      b:
+        - id: in_case_b
+          type: io.kestra.plugin.core.log.Log
+          message: b
+  - id: seq
+    type: io.kestra.plugin.core.flow.Sequential
+    tasks:
+      - id: child
+        type: io.kestra.plugin.core.log.Log
+        message: child
+    errors:
+      - id: recover
+        type: io.kestra.plugin.core.log.Log
+        message: recover
+`
+
+    it("walks every branch of a flowable, not just the first non-empty one", () => {
+        const order = buildTopologyFocusOrder(BRANCHED)
+
+        expect(order.map(entry => entry.id)).toEqual([
+            "gate", "in_then", "in_else",
+            "router", "in_case_a", "in_case_b",
+            "seq", "child", "recover",
+        ])
+    })
+
+    it("keeps each branch its own sibling lane", () => {
+        const order = buildTopologyFocusOrder(BRANCHED)
+        const byId = Object.fromEntries(order.map(entry => [entry.id, entry]))
+
+        expect(byId.in_then).toMatchObject({parentPath: "tasks[0].then", depth: 1})
+        expect(byId.in_else).toMatchObject({parentPath: "tasks[0].else", depth: 1})
+        expect(byId.in_case_a).toMatchObject({parentPath: "tasks[1].cases.a", depth: 1})
+        expect(byId.in_case_b).toMatchObject({parentPath: "tasks[1].cases.b", depth: 1})
+        expect(byId.recover).toMatchObject({parentPath: "tasks[2].errors", depth: 1})
+
+        expect(moveWithinSiblings(order, "in_then", 1)).toBe("in_then")
+        expect(moveWithinSiblings(order, "child", 1)).toBe("child")
+    })
+
+    it("steps out of any branch back to the flowable that owns it", () => {
+        const order = buildTopologyFocusOrder(BRANCHED)
+
+        expect(parentOf(order, "in_else")).toBe("gate")
+        expect(parentOf(order, "in_case_b")).toBe("router")
+        expect(parentOf(order, "recover")).toBe("seq")
+        expect(firstChildOf(order, "gate")).toBe("in_then")
+    })
+
+    // `Duplicate` in the node menu resolves the task through this order, so a task the walk never
+    // reaches gets a menu entry that silently does nothing.
+    it("hands a task in an else, a second case or an errors lane a resolvable path", () => {
+        const order = buildTopologyFocusOrder(BRANCHED)
+        const byId = Object.fromEntries(order.map(entry => [entry.id, entry]))
+
+        for (const id of ["in_else", "in_case_b", "recover"]) {
+            expect(duplicateBlockAtPath(BRANCHED, byId[id].path), `duplicate ${id}`).not.toBe(BRANCHED)
+        }
+    })
+
     it("returns nothing for a source that does not parse into a flow", () => {
         expect(buildTopologyFocusOrder("")).toEqual([])
     })

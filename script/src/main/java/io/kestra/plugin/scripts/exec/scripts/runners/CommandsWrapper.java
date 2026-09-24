@@ -20,6 +20,7 @@ import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunVariables;
 import io.kestra.core.runners.WorkingDir;
 import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.storages.StorageContext;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.NamespaceFilesUtils;
 import io.kestra.plugin.core.runner.Process;
@@ -96,6 +97,12 @@ public class CommandsWrapper implements TaskCommands {
     @With
     private Object inputFiles;
 
+    /**
+     * {@code kestra://} entries split off {@link #inputFiles} for a task runner that opted into
+     * {@link RemoteRunnerInterface#supportsDirectInputFiles()}; populated during {@link #run()}.
+     */
+    private Map<String, URI> directInputFiles = Map.of();
+
     @With
     private List<String> outputFiles;
 
@@ -142,6 +149,7 @@ public class CommandsWrapper implements TaskCommands {
             warningOnStdErr,
             namespaceFiles,
             inputFiles,
+            directInputFiles,
             outputFiles,
             enableOutputDirectory,
             timeout,
@@ -209,7 +217,11 @@ public class CommandsWrapper implements TaskCommands {
         }
 
         if (this.inputFiles != null) {
-            FilesService.inputFiles(runContext, runnerVars, this.inputFiles);
+            if (taskRunner instanceof RemoteRunnerInterface remoteRunner && remoteRunner.supportsDirectInputFiles()) {
+                splitDirectInputFiles(runnerVars);
+            } else {
+                FilesService.inputFiles(runContext, runnerVars, this.inputFiles);
+            }
         }
 
         if (this.executionContext) {
@@ -275,7 +287,7 @@ public class CommandsWrapper implements TaskCommands {
         try {
             TaskRunnerResult<T> taskRunnerResult = (TaskRunnerResult<T>) taskRunner.run(taskRunnerRunContext, this, this.outputFiles);
             scriptOutputBuilder.exitCode(taskRunnerResult.getExitCode())
-                .outputFiles(getOutputFiles(taskRunnerRunContext))
+                .outputFiles(getOutputFiles(taskRunnerRunContext, taskRunnerResult.getOutputFiles()))
                 .taskRunner(taskRunnerResult.getDetails());
 
             if (taskRunnerResult.getLogConsumer() != null) {
@@ -292,7 +304,7 @@ public class CommandsWrapper implements TaskCommands {
                 .stdErrLineCount(e.getStdErrCount())
                 .vars(e.getLogConsumer() != null ? e.getLogConsumer().getOutputs() : null)
                 .taskRunner(e.getDetails())
-                .outputFiles(getOutputFiles(taskRunnerRunContext))
+                .outputFiles(getOutputFiles(taskRunnerRunContext, null))
                 .build();
             throw new RunnableTaskException(e, output);
         } finally {
@@ -317,16 +329,44 @@ public class CommandsWrapper implements TaskCommands {
         }
     }
 
-    private Map<String, URI> getOutputFiles(RunContext taskRunnerRunContext) throws Exception {
-        Map<String, URI> outputFiles = new HashMap<>();
+    /**
+     * Starts from {@code remoteOutputFiles} — output files a remote runner already collected server-side,
+     * see {@link TaskRunnerResult#getOutputFiles()} — and only collects a key from the local working
+     * directory when it isn't already present.
+     */
+    private Map<String, URI> getOutputFiles(RunContext taskRunnerRunContext, Map<String, URI> remoteOutputFiles) throws Exception {
+        Map<String, URI> outputFiles = remoteOutputFiles != null ? new HashMap<>(remoteOutputFiles) : new HashMap<>();
+
         if (this.outputDirectoryEnabled()) {
-            outputFiles.putAll(ScriptService.uploadOutputFiles(taskRunnerRunContext, this.getOutputDirectory()));
+            ScriptService.uploadOutputFiles(taskRunnerRunContext, this.getOutputDirectory()).forEach(outputFiles::putIfAbsent);
         }
 
         if (this.outputFiles != null) {
-            outputFiles.putAll(FilesService.outputFiles(taskRunnerRunContext, this.outputFiles));
+            FilesService.outputFiles(taskRunnerRunContext, this.outputFiles).forEach(outputFiles::putIfAbsent);
         }
         return outputFiles;
+    }
+
+    /**
+     * Splits the rendered {@link #inputFiles} into {@link #directInputFiles} (rendered value starting
+     * with {@code kestra://}) and the rest, which is materialized locally as before. Only called for a
+     * task runner that opted into {@link RemoteRunnerInterface#supportsDirectInputFiles()}.
+     */
+    private void splitDirectInputFiles(Map<String, Object> runnerVars) throws Exception {
+        Map<String, String> transformed = PluginUtilsService.transformInputFiles(runContext, runnerVars, this.inputFiles);
+
+        Map<String, String> localInputFiles = new LinkedHashMap<>();
+        Map<String, URI> directInputFiles = new LinkedHashMap<>();
+        for (Map.Entry<String, String> entry : transformed.entrySet()) {
+            if (entry.getValue() != null && entry.getValue().startsWith(StorageContext.KESTRA_PROTOCOL)) {
+                directInputFiles.put(runContext.render(entry.getKey(), runnerVars), URI.create(entry.getValue()));
+            } else {
+                localInputFiles.put(entry.getKey(), entry.getValue());
+            }
+        }
+
+        this.directInputFiles = directInputFiles;
+        FilesService.materializeInputFiles(runContext, runnerVars, localInputFiles);
     }
 
     public Path getOutputDirectory() {

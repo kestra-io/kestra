@@ -2593,7 +2593,7 @@
       "move_up": "Переместить вверх",
       "namespace_files": "Файлы namespace",
       "namespace_kv": "Ключи KV Store",
-      "namespace_secrets": "Cекреты",
+      "namespace_secrets": "Секреты",
       "no_data_matches": "Ничего не соответствует вашему фильтру",
       "no_recent": "Пока нет недавних типов task'ов",
       "no_task_results": "Нет подходящих типов task.",

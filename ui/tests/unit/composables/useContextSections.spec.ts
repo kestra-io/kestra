@@ -3,8 +3,8 @@ import {defineComponent, h, ref} from "vue"
 import {i18nMount} from "../i18nMount"
 
 const {kvProvider, extraProvider} = vi.hoisted(() => ({
-    kvProvider: vi.fn(async () => ({key: "namespaceKv", label: "KV store keys", chips: [{label: "KEY", expr: "{{ kv('KEY') }}"}]})),
-    extraProvider: vi.fn(async () => ({key: "credentials", label: "Credentials", chips: [{label: "aws_prod", expr: "{{ credential('aws_prod') }}"}]})),
+    kvProvider: vi.fn(async () => ({key: "namespaceKv", labelKey: "block_editor.namespace_kv", chips: [{label: "KEY", expr: "{{ kv('KEY') }}"}]})),
+    extraProvider: vi.fn(async () => ({key: "credentials", labelKey: "block_editor.namespace_credentials", chips: [{label: "aws_prod", expr: "{{ credential('aws_prod') }}"}]})),
 }))
 
 vi.mock("../../../src/components/flows/contextSections/providers", () => ({
@@ -40,6 +40,7 @@ describe("useContextSections", () => {
         await vi.waitFor(() => expect(sections.value).toHaveLength(2))
 
         expect(sections.value.map((section) => section.key)).toEqual(["namespaceKv", "credentials"])
+        expect(sections.value.map((section) => section.label)).toEqual(["block_editor.namespace_kv", "block_editor.namespace_credentials"])
     })
 
     it("clears the sections when the namespace becomes undefined", async () => {

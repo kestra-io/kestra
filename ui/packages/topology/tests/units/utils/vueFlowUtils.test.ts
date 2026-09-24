@@ -489,18 +489,25 @@ describe("generateGraph node draggability", () => {
         }
     })
 
-    // The flow is no longer a node: it is a canvas-anchored chip, so the graph must contain
-    // nothing standing for the flow and no edge leaving one.
-    test("builds no node or edge for the flow itself", () => {
+    // The flow is no longer a node: it is a canvas-anchored chip. Asserting that every element
+    // traces back to a uid the backend sent catches any synthetic node appended to the graph,
+    // whatever it ends up being called.
+    test("emits only the nodes and clusters the backend graph declares", () => {
+        const declaredUids = new Set([
+            ...triggersGraph.nodes.map((node) => node.uid),
+            ...triggersGraph.clusters!.map((entry) => entry.cluster.uid),
+        ])
+
         const elements = VueFlowUtils.generateGraph(
             "vfid", "flow", "ns", triggersGraph, undefined, [], false, {}, new Set(), [], false, true, false,
         ) ?? []
 
-        expect(elements.length).toBeGreaterThan(0)
+        expect(elements.length).toBe(declaredUids.size)
         for (const element of asElements(elements)) {
-            expect(String(element.id)).not.toContain("__flow__")
-            expect(String(element.source ?? "")).not.toContain("__flow__")
-            expect(element.type).not.toBe("flow")
+            expect(declaredUids, `element ${element.id}`).toContain(String(element.id))
+            if (element.source !== undefined) {
+                expect(declaredUids, `edge source ${element.source}`).toContain(String(element.source))
+            }
         }
     })
 })

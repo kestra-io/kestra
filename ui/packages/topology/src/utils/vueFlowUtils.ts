@@ -388,17 +388,20 @@ export function haveAdd(
     }
 
     if (targetNode.type.endsWith("GraphClusterRoot")) {
-        return {refId: clusterRootTaskId ?? "", position: "before"}
+        return clusterRootTaskId ? {refId: clusterRootTaskId, position: "before"} : undefined
     }
     const sourceIsEndOfCluster = nodeByUid[edge.source].type.endsWith("GraphClusterEnd")
     if (!sourceIsEndOfCluster && targetNode.type.endsWith("GraphClusterEnd")) {
-        return withDag({refId: Utils.afterLastDot(edge.source) ?? "", position: "after"})
+        const refId = Utils.afterLastDot(edge.source)
+        return refId ? withDag({refId, position: "after"}) : undefined
     }
     if (sourceIsEndOfCluster) {
         const dotSplitSource = edge.source.split(".")
-        return {refId: dotSplitSource[dotSplitSource.length - 2] ?? "", position: "after"}
+        const refId = dotSplitSource[dotSplitSource.length - 2]
+        return refId ? {refId, position: "after"} : undefined
     }
-    return withDag({refId: Utils.afterLastDot(edge.target) ?? "", position: "before"})
+    const refId = Utils.afterLastDot(edge.target)
+    return refId ? withDag({refId, position: "before"}) : undefined
 }
 
 export function getEdgeColor(

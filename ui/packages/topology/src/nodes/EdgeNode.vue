@@ -32,8 +32,6 @@
             :aria-label="$t('topology-graph.add-task')"
             data-test="topology-edge-add-task"
             @click.stop="emit('add-task', addTarget)"
-            @keydown.enter.stop.prevent="emit('add-task', addTarget)"
-            @keydown.space.stop.prevent="emit('add-task', addTarget)"
             @mouseenter="hovered = true"
             @mouseleave="hovered = false"
             @dragenter.prevent="emit('drag-over-edge', id)"

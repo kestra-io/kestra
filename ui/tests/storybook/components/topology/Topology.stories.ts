@@ -1,4 +1,5 @@
-import type {Meta, StoryFn} from "@storybook/vue3-vite"
+import type {Meta, StoryFn, StoryObj} from "@storybook/vue3-vite"
+import {expect} from "storybook/test"
 import {Topology, type FlowGraph} from "@kestra-io/topology"
 import allowFailureDemo from "../../../fixtures/flowgraphs/allow-failure-demo.json"
 import eachSequential from "../../../fixtures/flowgraphs/each-sequential.json"
@@ -203,4 +204,163 @@ ValidationIssues.args = {
             "timeout: must be a valid ISO 8601 duration",
         ]],
     ]),
+}
+
+// The Parallel's direct children land on purpose-mixed states: the lane header must surface the
+// worst of them (WARNING, ranked above RUNNING) rather than the first or the last child.
+function taskRun(taskId: string, state: string, id = `${taskId}-run`) {
+    return {id, taskId, state: {current: state}}
+}
+
+const MIXED_LANE_EXECUTION = {
+    id: "story-execution-mixed-lane",
+    state: {current: "RUNNING"},
+    taskRunList: [
+        taskRun("log_start", "SUCCESS"),
+        taskRun("parallel_status_showcase", "RUNNING"),
+        taskRun("branch_success", "SUCCESS"),
+        taskRun("branch_warning", "WARNING"),
+        taskRun("branch_loop", "SUCCESS"),
+        taskRun("loop_iteration_log", "SUCCESS", "loop-1"),
+        taskRun("loop_iteration_log", "SUCCESS", "loop-2"),
+        taskRun("loop_iteration_log", "SUCCESS", "loop-3"),
+        taskRun("branch_subflow", "RUNNING"),
+        // branch_paused and branch_long_sleep_kill: no task run yet — still queued behind the
+        // other Parallel branches, so the lane's child count already shows 6 while only 4 ran.
+    ],
+}
+
+// Mirrors the `executionId` the app stamps onto every node once an execution is loaded
+// (executions.ts's loadAugmentedGraph) — without it, TaskNode/ClusterNode never resolve a
+// task run for a node, and the story would render as if no execution existed at all.
+function withExecutionId(flowGraph: typeof STATUS_SHOWCASE_GRAPH, executionId: string) {
+    return {
+        ...flowGraph,
+        nodes: flowGraph.nodes.map((node) => ({...node, executionId})),
+    }
+}
+
+const MIXED_LANE_GRAPH = withExecutionId(STATUS_SHOWCASE_GRAPH, MIXED_LANE_EXECUTION.id)
+
+export const LaneHeaderMixedState = Template.bind({})
+LaneHeaderMixedState.storyName = "Lane Header — Mixed Child State"
+LaneHeaderMixedState.args = {
+    id: "story-lane-header-mixed",
+    source: STATUS_SHOWCASE_SOURCE,
+    flowGraph: MIXED_LANE_GRAPH as unknown as FlowGraph,
+    isReadOnly: true,
+    isHorizontal: true,
+    execution: MIXED_LANE_EXECUTION,
+}
+
+export const ErrorsLane = Template.bind({})
+ErrorsLane.storyName = "Errors Lane"
+ErrorsLane.args = {
+    id: "story-errors-lane",
+    source: STATUS_SHOWCASE_SOURCE,
+    // A flow-level `errors:` task (`error_handler_log`) has no cluster of its own in the graph the
+    // backend sends — this is exactly what makes it render as a labelled lane rather than a
+    // floating dashed line (kestra-io/kestra#19666).
+    flowGraph: STATUS_SHOWCASE_GRAPH as unknown as FlowGraph,
+    isReadOnly: true,
+    isHorizontal: true,
+}
+
+const LodTemplate: StoryFn<typeof Topology> = (args) => ({
+    components: {Topology},
+    setup() {
+        return {args}
+    },
+    template: `<div style="height: 600px; width: 100%;">
+        <Topology v-bind="args">
+            <template #taskDetails="taskProps">
+                <div style="padding: 8px; font-size: 12px; max-width: 16rem;">
+                    Plugin-specific details for {{ taskProps.data.node.task.id }} would render here.
+                </div>
+            </template>
+        </Topology>
+    </div>`,
+})
+
+export const LevelOfDetailPill = LodTemplate.bind({})
+LevelOfDetailPill.storyName = "Level of Detail — Pill (< 50% zoom)"
+LevelOfDetailPill.args = {
+    id: "story-lod-pill",
+    source: STATUS_SHOWCASE_SOURCE,
+    flowGraph: MIXED_LANE_GRAPH as unknown as FlowGraph,
+    isReadOnly: true,
+    isHorizontal: true,
+    execution: MIXED_LANE_EXECUTION,
+    defaultViewport: {x: 0, y: 0, zoom: 0.3},
+}
+
+export const LevelOfDetailDefault = LodTemplate.bind({})
+LevelOfDetailDefault.storyName = "Level of Detail — Default"
+LevelOfDetailDefault.args = {
+    id: "story-lod-default",
+    source: STATUS_SHOWCASE_SOURCE,
+    flowGraph: MIXED_LANE_GRAPH as unknown as FlowGraph,
+    isReadOnly: true,
+    isHorizontal: true,
+    execution: MIXED_LANE_EXECUTION,
+    defaultViewport: {x: 0, y: 0, zoom: 1},
+}
+
+export const LevelOfDetailExpanded = LodTemplate.bind({})
+LevelOfDetailExpanded.storyName = "Level of Detail — Expanded (> 130% zoom)"
+LevelOfDetailExpanded.args = {
+    id: "story-lod-expanded",
+    source: STATUS_SHOWCASE_SOURCE,
+    flowGraph: MIXED_LANE_GRAPH as unknown as FlowGraph,
+    isReadOnly: true,
+    isHorizontal: true,
+    execution: MIXED_LANE_EXECUTION,
+    defaultViewport: {x: 0, y: 0, zoom: 1.5},
+}
+
+// Three independent canvases, the same flow, three different starting zooms — one below the pill
+// threshold, one at rest, one above the expanded threshold. If a level of detail ever changed the
+// laid-out footprint, the same node would measure differently across them; it must not
+// (kestra-io/kestra#19666's hard constraint: crossing a zoom threshold moves no node).
+export const FootprintInvariance: StoryObj<typeof Topology> = {
+    render: () => ({
+        components: {Topology},
+        setup() {
+            return {
+                source: STATUS_SHOWCASE_SOURCE,
+                flowGraph: STATUS_SHOWCASE_GRAPH as unknown as FlowGraph,
+            }
+        },
+        template: `
+            <div style="display: flex; gap: 8px;">
+                <div id="footprint-pill" style="height: 420px; width: 420px;">
+                    <Topology id="story-footprint-pill" :source="source" :flowGraph="flowGraph" isReadOnly :isHorizontal="true" :defaultViewport="{x: 0, y: 0, zoom: 0.3}" />
+                </div>
+                <div id="footprint-default" style="height: 420px; width: 420px;">
+                    <Topology id="story-footprint-default" :source="source" :flowGraph="flowGraph" isReadOnly :isHorizontal="true" :defaultViewport="{x: 0, y: 0, zoom: 1}" />
+                </div>
+                <div id="footprint-expanded" style="height: 420px; width: 420px;">
+                    <Topology id="story-footprint-expanded" :source="source" :flowGraph="flowGraph" isReadOnly :isHorizontal="true" :defaultViewport="{x: 0, y: 0, zoom: 1.6}" />
+                </div>
+            </div>
+        `,
+    }),
+    play: async ({canvasElement}) => {
+        const nodeAt = (containerId: string) =>
+            canvasElement.querySelector(`#${containerId} [data-id="root.log_start"]`) as HTMLElement | null
+
+        const pill = nodeAt("footprint-pill")
+        const atRest = nodeAt("footprint-default")
+        const expanded = nodeAt("footprint-expanded")
+
+        await expect(pill).not.toBeNull()
+        await expect(atRest).not.toBeNull()
+        await expect(expanded).not.toBeNull()
+
+        const dimensionsOf = (el: HTMLElement) => ({width: el.style.width, height: el.style.height})
+
+        expect(dimensionsOf(pill!)).toEqual({width: "218px", height: "80px"})
+        expect(dimensionsOf(atRest!)).toEqual(dimensionsOf(pill!))
+        expect(dimensionsOf(expanded!)).toEqual(dimensionsOf(pill!))
+    },
 }

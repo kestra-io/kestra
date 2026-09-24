@@ -78,3 +78,41 @@ export function getStatusStyle(state?: string | null): StatusStyle | undefined {
     if (!state) return undefined
     return STATUS_STYLES[state.toLowerCase()] ?? NEUTRAL
 }
+
+// Worst-first: a single failure anywhere outweighs any number of successes.
+const SORT_STATUS: string[] = [
+    "FAILED",
+    "KILLED",
+    "WARNING",
+    "SKIPPED",
+    "KILLING",
+    "RUNNING",
+    "SUCCESS",
+    "RESTARTED",
+    "CREATED",
+]
+
+/** An unranked state (not in `SORT_STATUS`) sorts first, same as a real failure — better to
+ *  surface an unknown state than to hide it behind a merely-ranked one. */
+export function pickWorstState(states: string[]): string | undefined {
+    if (!states.length) return undefined
+    return states
+        .map((state) => [SORT_STATUS.indexOf(state), state] as [number, string])
+        .sort((a, b) => a[0] - b[0])[0][1]
+}
+
+export interface AggregateTaskRun {
+    taskId: string;
+    state: {current: string};
+}
+
+/** The worst state among `childTaskIds`' own task runs, or `undefined` when none of them ran yet. */
+export function computeAggregateState(
+    childTaskIds: string[],
+    taskRunList: AggregateTaskRun[],
+): string | undefined {
+    const states = childTaskIds.flatMap((taskId) =>
+        taskRunList.filter((run) => run.taskId === taskId).map((run) => run.state.current),
+    )
+    return pickWorstState(states)
+}

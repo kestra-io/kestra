@@ -130,7 +130,6 @@
     "description": "Description",
     "show description": "Show a description",
     "show details": "Show details",
-    "show more details": "Show more details",
     "skipped": "Skipped",
     "revision": "Revision",
     "theme": "Theme",
@@ -441,7 +440,8 @@
       "invalid_description": "An error occurred while loading the graph. Please check the source code for errors.",
       "load_error": "Could not load the topology graph. Please try again.",
       "add-task": "Add task",
-      "add-trigger": "Add a trigger"
+      "add-trigger": "Add a trigger",
+      "child-count": "{count} task | {count} tasks"
     },
     "show task logs": "Show task logs",
     "show task condition": "Show task condition",

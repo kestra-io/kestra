@@ -103,13 +103,22 @@
                         <KsDateAgo :inverted="true" :date="scope.row.updatedAt" />
                     </template>
                     <template v-else-if="col.prop === 'executionId'">
-                        <router-link
-                            v-if="scope.row.executionId && scope.row.namespace && scope.row.flowId"
-                            :to="{name: 'executions/update', params: {tenant: route.params?.tenant, namespace: scope.row.namespace, flowId: scope.row.flowId, id: scope.row.executionId}}"
-                        >
-                            <KsId :value="scope.row.executionId" :shrink="true" />
-                        </router-link>
-                        <span v-else />
+                        <div class="execution-cell">
+                            <router-link
+                                v-if="scope.row.executionId && scope.row.namespace && scope.row.flowId"
+                                :to="{name: 'executions/update', params: {tenant: route.params?.tenant, namespace: scope.row.namespace, flowId: scope.row.flowId, id: scope.row.executionId}}"
+                            >
+                                <KsId :value="scope.row.executionId" :shrink="true" />
+                            </router-link>
+                            <span v-else />
+                            <KsIconButton
+                                data-test="trigger-executions-link"
+                                :tooltip="$t('executions')"
+                                @click="openTriggerExecutions(scope.row)"
+                            >
+                                <FormatListBulleted />
+                            </KsIconButton>
+                        </div>
                     </template>
                     <template v-else>
                         {{ scope.row[col.prop] }}
@@ -335,9 +344,10 @@
     import Restart from "vue-material-design-icons/Restart.vue"
     import TextSearch from "vue-material-design-icons/TextSearch.vue"
     import FlashOutline from "vue-material-design-icons/FlashOutline.vue"
+    import FormatListBulleted from "vue-material-design-icons/FormatListBulleted.vue"
     import CalendarCollapseHorizontalOutline from "vue-material-design-icons/CalendarCollapseHorizontalOutline.vue"
 
-    import {KsDataTable, KsDropdown, KsDropdownMenu, KsDropdownItem, KsFilter as KSFilter, KsMarkdown, KsTag, KsTooltip, isDeepEqual} from "@kestra-io/design-system"
+    import {KsDataTable, KsDropdown, KsDropdownMenu, KsDropdownItem, KsFilter as KSFilter, KsIconButton, KsMarkdown, KsTag, KsTooltip, isDeepEqual} from "@kestra-io/design-system"
     import FlowRun from "./FlowRun.vue"
     import Vars from "../executions/Vars.vue"
     import BackfillBanner from "./BackfillBanner.vue"
@@ -369,6 +379,7 @@
 
     import {useTableColumns, type ColumnConfig} from "@kestra-io/design-system"
     import {useTriggerFilter} from "../filter/configurations/triggerFilter"
+    import {FLOW_PARENT_ROUTE} from "./flowTabs"
 
     const triggerFilter = useTriggerFilter()
 
@@ -700,6 +711,17 @@
         isOpen.value = true
     }
 
+    // Every execution created by this trigger: the flow executions tab, pre-filtered on the trigger id.
+    const openTriggerExecutions = (row: TriggerRow) => {
+        const flow = flowStore.flow
+        if (!flow) return
+        router.push({
+            name: `${FLOW_PARENT_ROUTE}/executions`,
+            params: {tenant: route.params?.tenant, namespace: flow.namespace, id: flow.id},
+            query: {"filters[triggerId][EQUALS]": row.triggerId ?? row.id},
+        })
+    }
+
     const tourStore = useProductTourStore()
     const testEventTarget = ref<TestEventTarget | null>(null)
     const isTestEventOpen = ref(false)
@@ -850,6 +872,12 @@
     align-items: center;
     justify-content: flex-end;
     gap: var(--ks-spacing-1);
+}
+
+.execution-cell {
+    display: flex;
+    align-items: center;
+    gap: var(--ks-spacing-2);
 }
 
 .pickers {

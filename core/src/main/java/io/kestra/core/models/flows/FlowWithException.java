@@ -2,12 +2,15 @@ package io.kestra.core.models.flows;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.slf4j.Logger;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 
+import io.kestra.core.models.Label;
 import io.kestra.core.serializers.JacksonMapper;
 
 import lombok.EqualsAndHashCode;
@@ -77,6 +80,8 @@ public class FlowWithException extends FlowWithSource {
                 .disabled(jsonNode.hasNonNull("disabled") && jsonNode.get("disabled").asBoolean())
                 .exception(exception.getMessage())
                 .tasks(List.of())
+                .labels(extractLabels(jsonNode))
+                .variables(extractVariables(jsonNode))
                 .source(jsonNode.hasNonNull("source") ? jsonNode.get("source").asText() : null)
                 .build();
             return Optional.of(flow);
@@ -84,6 +89,41 @@ public class FlowWithException extends FlowWithSource {
 
         // if there is no id and namespace, we return null as we cannot create a meaningful FlowWithException
         return Optional.empty();
+    }
+
+    private static List<Label> extractLabels(final JsonNode jsonNode) {
+        try {
+            if (!jsonNode.hasNonNull("labels")) {
+                return null;
+            }
+            JsonNode labelsNode = jsonNode.get("labels");
+            if (labelsNode.isArray()) {
+                return JacksonMapper.ofJson().convertValue(labelsNode, new TypeReference<List<Label>>() {
+                });
+            }
+            if (labelsNode.isObject()) {
+                Map<String, Object> map = JacksonMapper.ofJson().convertValue(labelsNode, JacksonMapper.MAP_TYPE_REFERENCE);
+                return map.entrySet().stream()
+                    .filter(entry -> entry.getKey() != null && !entry.getKey().isEmpty() && entry.getValue() != null
+                        && !String.valueOf(entry.getValue()).isEmpty())
+                    .map(entry -> new Label(entry.getKey(), String.valueOf(entry.getValue())))
+                    .toList();
+            }
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
+        return null;
+    }
+
+    private static Map<String, Object> extractVariables(final JsonNode jsonNode) {
+        try {
+            if (!jsonNode.hasNonNull("variables")) {
+                return null;
+            }
+            return JacksonMapper.ofJson().convertValue(jsonNode.get("variables"), JacksonMapper.MAP_TYPE_REFERENCE);
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
     }
 
     /** {@inheritDoc} **/

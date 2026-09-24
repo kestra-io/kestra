@@ -22,7 +22,16 @@ type Namespace = {
     subtype: typeof NAMESPACE;
 };
 
-type Asset = {
+export type DbtTestFields = {
+    /** dbt test roll-up for the asset: pass, warn or fail. Absent when no test ran. */
+    dbtTestStatus?: string;
+    /** Executed dbt tests targeting the asset; skipped ones are excluded. */
+    dbtTestsTotal?: number;
+    /** How many of `dbtTestsTotal` failed outright. */
+    dbtTestsFailed?: number;
+};
+
+type Asset = DbtTestFields & {
     subtype: typeof ASSET;
     /** Source system of the asset, e.g. `bigquery`. */
     system?: string;

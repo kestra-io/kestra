@@ -2234,7 +2234,18 @@
           "issues": "{n} stale",
           "failed": "{n} failed",
           "last_run": "last run {ago}",
-          "unknown": "{n} not tracked"
+          "unknown": "{n} not tracked",
+          "tests_failed": "{n} with failing tests"
+        },
+        "tests": {
+          "pass": "{count} test | {count} tests",
+          "warn": "{count} test · warn | {count} tests · warn",
+          "fail": "{failed}/{total} failed",
+          "tooltip": {
+            "pass": "The {count} dbt test passed | All {count} dbt tests passed",
+            "warn": "{count} dbt test passed with warnings | {count} dbt tests passed, some with warnings",
+            "fail": "{failed} of {total} dbt tests failed"
+          }
         },
         "recent_runs": "Recent runs",
         "group_by": "Group by",

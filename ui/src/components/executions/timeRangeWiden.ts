@@ -3,7 +3,9 @@ import {FILTER_FIELD_PATTERN} from "./utils"
 
 export const FALLBACK_TIME_RANGE = "PT24H"
 
-// Filter chips only label PT168H / PT720H as 7 / 30 days; P7D or P30D would show as the raw ISO string.
+// The chip labels relative ranges by exact string (FilterChip.vue's RELATIVE_DATE), and the executions
+// `timeRange` key is a plain "select", so it skips the P30D -> PT720H aliasing filterChipFactory applies
+// only to "time-range" fields. Emit the canonical spellings PT168H / PT720H, or the chip shows raw ISO.
 export const TIME_RANGE_WIDEN_STEPS = ["PT24H", "PT168H", "PT720H"] as const
 
 const TIME_RANGE_EQUALS_KEY = "filters[timeRange][EQUALS]"

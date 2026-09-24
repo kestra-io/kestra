@@ -39,6 +39,10 @@ public class ExecutionStreamingService {
     private final Map<String, Map<String, Pair<FluxSink<Event<Execution>>, Flow>>> subscribers = new ConcurrentHashMap<>();
     private final Object subscriberLock = new Object();
 
+    private final Map<String, FollowExecutionEvent> pendingEvents = new ConcurrentHashMap<>();
+    private final Map<String, Long> lastEmissions = new ConcurrentHashMap<>();
+    private java.util.concurrent.ScheduledExecutorService scheduler;
+
     private final BroadcastQueueInterface<FollowExecutionEvent> executionQueue;
     private final ExecutionService executionService;
     private final ExecutionRepositoryInterface executionRepository;
@@ -57,10 +61,40 @@ public class ExecutionStreamingService {
 
     @PostConstruct
     void startQueueConsumer() {
+        this.scheduler = java.util.concurrent.Executors.newSingleThreadScheduledExecutor(r -> new Thread(r, "execution-streaming-throttle"));
+        this.scheduler.scheduleAtFixedRate(this::processPendingEvents, 500, 500, java.util.concurrent.TimeUnit.MILLISECONDS);
+
         // Single queue consumer
         this.queueSubscriber = executionQueue.subscriber();
         this.queueSubscriber.pause();
         this.queueSubscriber.subscribe(this::dispatch);
+    }
+
+    private void processPendingEvents() {
+        long now = System.currentTimeMillis();
+        for (Map.Entry<String, FollowExecutionEvent> entry : pendingEvents.entrySet()) {
+            String executionId = entry.getKey();
+            FollowExecutionEvent event = entry.getValue();
+
+            boolean[] shouldProcess = { false };
+            lastEmissions.compute(executionId, (id, last) ->
+            {
+                if (last == null)
+                    last = 0L;
+                if (event.eventType() == io.kestra.core.runners.ExecutionEventType.TERMINATED || (now - last) >= 500) {
+                    // Only process if the pending event is still the one we grabbed
+                    if (pendingEvents.remove(id, event)) {
+                        shouldProcess[0] = true;
+                        return event.eventType() == io.kestra.core.runners.ExecutionEventType.TERMINATED ? null : now;
+                    }
+                }
+                return last;
+            });
+
+            if (shouldProcess[0]) {
+                processEvent(event);
+            }
+        }
     }
 
     /**
@@ -85,6 +119,35 @@ public class ExecutionStreamingService {
             Map<String, Pair<FluxSink<Event<Execution>>, Flow>> executionSubscribers = subscribers.get(event.executionId());
 
             if (!MapUtils.isEmpty(executionSubscribers)) {
+                boolean[] shouldProcess = { false };
+                lastEmissions.compute(event.executionId(), (id, last) ->
+                {
+                    long now = System.currentTimeMillis();
+                    if (last == null)
+                        last = 0L;
+                    if (event.eventType() == io.kestra.core.runners.ExecutionEventType.TERMINATED || (now - last) >= 500) {
+                        pendingEvents.remove(id);
+                        shouldProcess[0] = true;
+                        return event.eventType() == io.kestra.core.runners.ExecutionEventType.TERMINATED ? null : now;
+                    } else {
+                        pendingEvents.put(id, event);
+                        return last;
+                    }
+                });
+
+                if (shouldProcess[0]) {
+                    processEvent(event);
+                }
+            }
+        } catch (Exception e) {
+            log.error("Unable to dispatch the execution event to its subscribers", e);
+        }
+    }
+
+    private void processEvent(FollowExecutionEvent event) {
+        try {
+            Map<String, Pair<FluxSink<Event<Execution>>, Flow>> executionSubscribers = subscribers.get(event.executionId());
+            if (!MapUtils.isEmpty(executionSubscribers)) {
                 // This fan-out runs on the queue-polling thread, which has no authenticated principal,
                 // so the ACL-enforcing findById would always deny authorization on EE.
                 Optional<Execution> execution = executionRepository.findByIdWithoutAcl(event.tenantId(), event.executionId());
@@ -98,7 +161,7 @@ public class ExecutionStreamingService {
                 );
             }
         } catch (Exception e) {
-            log.error("Unable to dispatch the execution event to its subscribers", e);
+            log.error("Unable to process the execution event", e);
         }
     }
 
@@ -186,6 +249,8 @@ public class ExecutionStreamingService {
                 executionSubscribers.remove(subscriberId);
                 if (executionSubscribers.isEmpty()) {
                     subscribers.remove(executionId);
+                    pendingEvents.remove(executionId);
+                    lastEmissions.remove(executionId);
                 }
             }
 
@@ -206,6 +271,9 @@ public class ExecutionStreamingService {
 
     @PreDestroy
     void shutdown() {
+        if (scheduler != null) {
+            scheduler.shutdownNow();
+        }
         if (queueSubscriber != null) {
             queueSubscriber.close();
         }

@@ -7,6 +7,7 @@ import {
     duplicateBlockAtPath,
     type BlockSection,
 } from "../../../utils/flowableBlockOps"
+import {trackAuthoringAction} from "../../../utils/tabTracking"
 
 export interface BlockMutationsContext {
     flowYaml: Ref<string>
@@ -18,10 +19,13 @@ export interface BlockMutationsContext {
 export function useBlockMutations(ctx: BlockMutationsContext) {
     function deleteInSection(section: BlockSection, id: unknown) {
         if (typeof id !== "string") return
+        const blockYaml = flowYamlUtils.extractBlock({source: ctx.flowYaml.value, section, key: id})
+        const taskType = blockYaml ? flowYamlUtils.parse<Record<string, unknown>>(blockYaml)?.type as string | undefined : undefined
         ctx.deleteWithUndo(id, () => {
             const newYaml = deleteBlock(ctx.flowYaml.value, section, id)
             ctx.deselectIfCurrent(id)
             ctx.applyYaml(newYaml)
+            trackAuthoringAction("task_deleted", "no_code", {task_type: taskType})
         })
     }
 
@@ -33,6 +37,7 @@ export function useBlockMutations(ctx: BlockMutationsContext) {
             const newYaml = deleteBlockAtPath(ctx.flowYaml.value, path)
             if (parsed?.id) ctx.deselectIfCurrent(String(parsed.id))
             ctx.applyYaml(newYaml)
+            trackAuthoringAction("task_deleted", "no_code", {task_type: parsed?.type as string | undefined})
         })
     }
 

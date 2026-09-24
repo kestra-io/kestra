@@ -1547,9 +1547,9 @@ tasks:
             await wrapper.vm.$nextTick()
 
             // Then — the badge names the block that went away
-            const badge = wrapper.find("[data-test='block-editor-undo']")
+            const badge = wrapper.find("[data-test='undo-toast-button']")
             expect(badge.exists()).toBe(true)
-            expect(wrapper.find(".block-editor-undo-label").text()).toBe("log_task deleted")
+            expect(wrapper.find(".undo-toast-label").text()).toBe("log_task deleted")
             expect(mockFlowYaml.value).not.toBe(before)
 
             // When
@@ -1558,7 +1558,7 @@ tasks:
 
             // Then
             expect(mockFlowYaml.value).toBe(before)
-            expect(wrapper.find("[data-test='block-editor-undo']").exists()).toBe(false)
+            expect(wrapper.find("[data-test='undo-toast-button']").exists()).toBe(false)
         })
 
         it("dismisses the badge on the next edit instead of leaving it stale", async () => {
@@ -1566,7 +1566,7 @@ tasks:
             wrapper = i18nMount(BlockEditor, {locales: messages, ...makeConfig()})
             await wrapper.find("[data-test='block-card-delete']").trigger("click")
             await wrapper.vm.$nextTick()
-            expect(wrapper.find("[data-test='block-editor-undo']").exists()).toBe(true)
+            expect(wrapper.find("[data-test='undo-toast-button']").exists()).toBe(true)
 
             // When — any further edit supersedes the pending undo
             const vm = wrapper.vm as unknown as {picker: {insertTask: (fqcn: string) => void}}
@@ -1574,7 +1574,7 @@ tasks:
             await wrapper.vm.$nextTick()
 
             // Then
-            expect(wrapper.find("[data-test='block-editor-undo']").exists()).toBe(false)
+            expect(wrapper.find("[data-test='undo-toast-button']").exists()).toBe(false)
         })
 
         it("keeps undoing back through several edits", async () => {

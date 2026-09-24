@@ -14,6 +14,7 @@ import io.kestra.core.assets.AssetService;
 import io.kestra.core.async.AsyncOperationService;
 import io.kestra.core.contexts.KestraContext;
 import io.kestra.core.encryption.EncryptionConfig;
+import io.kestra.core.executor.WorkerJobRunningStateStore;
 import io.kestra.core.executor.command.ExecutionCommand;
 import io.kestra.core.killswitch.EvaluationType;
 import io.kestra.core.killswitch.KillSwitchService;
@@ -149,6 +150,7 @@ public final class ExecutorTestHarness {
     private final KillSwitchService killSwitchService;
     private final KillSwitchActionService killSwitchActionService;
     private final WorkerTaskResultListener workerTaskResultListener;
+    private final WorkerJobRunningStateStore workerJobRunningStateStore;
     private final ConcurrencyLimitResolver concurrencyLimitResolver;
     private final QuotaService quotaService;
     private final AsyncOperationService asyncOperationService;
@@ -264,6 +266,7 @@ public final class ExecutorTestHarness {
         );
         this.killSwitchActionService = Mockito.mock(KillSwitchActionService.class);
         this.workerTaskResultListener = Mockito.mock(WorkerTaskResultListener.class);
+        this.workerJobRunningStateStore = Mockito.mock(WorkerJobRunningStateStore.class);
         // a spy so tests can stub namespace/tenant limits while the OSS flow-scope default stays real
         this.concurrencyLimitResolver = Mockito.spy(new ConcurrencyLimitResolver());
         this.quotaService = Mockito.mock(QuotaService.class);
@@ -423,6 +426,7 @@ public final class ExecutorTestHarness {
             executionStatisticQueue,
             triggerEventQueue,
             execution -> journal.add(new Trace.Emission(journal.size(), "executionTerminated", execution)),
+            workerJobRunningStateStore,
             executionCommandMessageHandler,
             executionEventMessageHandler,
             workerTaskResultMessageHandler,
@@ -772,6 +776,10 @@ public final class ExecutorTestHarness {
 
     public WorkerTaskResultListener workerTaskResultListener() {
         return workerTaskResultListener;
+    }
+
+    public WorkerJobRunningStateStore workerJobRunningStateStore() {
+        return workerJobRunningStateStore;
     }
 
     public ConcurrencyLimitResolver concurrencyLimitResolver() {

@@ -308,6 +308,12 @@ public class RestartCaseTest {
         // we must have 3 loop sub-executions at the end — one per iteration, each restarted in place
         subExecutions = executionRepository.findLoopSubExecutions(firstExecution.getTenantId(), firstExecution.getId(), null);
         assertThat(subExecutions).hasSize(3);
+        assertThat(subExecutions).allMatch(sub -> sub.getTaskRunList().size() == 3);
+
+        // each of the 3 iterations runs 3 tasks: the failed attempts must not be counted twice
+        assertThat(finishedRestarted3.getTaskRunList()).hasSize(1);
+        assertThat(finishedRestarted3.getMetadata().getTaskRunStatistic()).isNotNull();
+        assertThat(finishedRestarted3.getMetadata().getTaskRunStatistic().count()).isEqualTo(9);
     }
 
     public void restartMultiple() throws Exception {

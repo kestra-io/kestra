@@ -70,6 +70,30 @@ public record TaskRunStatistic(long count, long durationSumMs, @Nullable Long du
     }
 
     /**
+     * Returns this accumulator with {@code other} removed.
+     * Count and duration sum subtract exactly; min/max keep this accumulator's extremes.
+     * Keeping the extremes is exact when the removed contribution does not hold the extreme,
+     * and a conservative over-approximation otherwise — exact rollback would require retaining
+     * every contribution, which this accumulator deliberately does not do.
+     * Removing everything (or more) returns {@link #EMPTY} with null min/max, which is exact.
+     */
+    public TaskRunStatistic minus(TaskRunStatistic other) {
+        if (other == null || other.count == 0) {
+            return this;
+        }
+        if (this.count == 0 || other.count >= this.count) {
+            return EMPTY;
+        }
+
+        return new TaskRunStatistic(
+            this.count - other.count,
+            Math.max(0, this.durationSumMs - other.durationSumMs),
+            this.durationMinMs,
+            this.durationMaxMs
+        );
+    }
+
+    /**
      * Serializes this accumulator as a plain map so it can be carried inside a task run's JSON
      * outputs (see {@link io.kestra.plugin.core.flow.Loop#TASK_RUN_STATISTIC_OUTPUT}).
      */

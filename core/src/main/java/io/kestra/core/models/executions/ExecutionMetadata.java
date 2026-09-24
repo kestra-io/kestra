@@ -60,6 +60,20 @@ public class ExecutionMetadata {
         return this.withTaskRunStatistic(this.taskRunStatistic == null ? other : this.taskRunStatistic.plus(other));
     }
 
+    /**
+     * Returns a copy with {@code other} removed from {@link #taskRunStatistic}.
+     * A no-op when {@code other} is null or empty, or when there is nothing accumulated.
+     * Removes the accumulator entirely (back to null) when nothing remains.
+     */
+    public ExecutionMetadata withTaskRunStatisticMinus(TaskRunStatistic other) {
+        if (other == null || other.count() == 0 || this.taskRunStatistic == null || this.taskRunStatistic.count() == 0) {
+            return this;
+        }
+
+        TaskRunStatistic reverted = this.taskRunStatistic.minus(other);
+        return this.withTaskRunStatistic(reverted.count() == 0 ? null : reverted);
+    }
+
     public ExecutionMetadata nextAttempt() {
         return this.toBuilder()
             .attemptNumber(this.attemptNumber + 1)

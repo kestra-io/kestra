@@ -1424,7 +1424,7 @@
             "title": "flow 像代码一样编辑",
             "body": "我们为您添加了一个 `notify` task，没有使用 AI Copilot，这样您就可以看到直接编辑 YAML 是什么样子。它会将最终结果发布到 Slack。",
             "next": "查看 task 文档",
-            "callout": "来自 AI Copilot 的初稿只是一个起点；编辑器是您在 Code 或 No-code 编辑器选项卡中迭代它的地方，它们都生成相同的 YAML，因此，无论您的 flow 如何构建，它都保持为代码。"
+            "callout": "来自 AI Copilot 的初稿只是一个起点；编辑器是您在 Code 或 No Code 编辑器选项卡中迭代它的地方，它们都生成相同的 YAML，因此，无论您的 flow 如何构建，它都保持为代码。"
           },
           "editor_help": {
             "title": "文档在 flow 旁边",

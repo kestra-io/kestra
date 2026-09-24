@@ -130,7 +130,6 @@
     "description": "Описание",
     "show description": "Показать описание",
     "show details": "Показать детали",
-    "show more details": "Показать больше деталей",
     "skipped": "Пропущено",
     "revision": "Редакция",
     "theme": "Тема",
@@ -441,7 +440,8 @@
       "invalid_description": "Произошла ошибка при загрузке графа. Пожалуйста, проверьте исходный код на наличие ошибок.",
       "load_error": "Не удалось загрузить граф топологии. Повторите попытку.",
       "add-task": "Добавить task",
-      "add-trigger": "Добавить trigger"
+      "add-trigger": "Добавить trigger",
+      "child-count": "{count} task | {count} tasks"
     },
     "show task logs": "Показать логи задачи",
     "show task condition": "Показать условие task",

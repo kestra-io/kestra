@@ -1,11 +1,10 @@
 import {describe, expect, it} from "vitest"
-import {computed, ref} from "vue"
+import {computed} from "vue"
 import TaskNode from "../../../src/nodes/TaskNode.vue"
 import NodeMenu from "../../../src/nodes/NodeMenu.vue"
 import {
     EXECUTION_INJECTION_KEY,
     SUBFLOWS_EXECUTIONS_INJECTION_KEY,
-    SHOW_EXTRA_DETAILS_INJECTION_KEY,
 } from "../../../src/injectionKeys"
 
 import {i18nMount} from "../../../../../tests/unit/i18nMount"
@@ -61,7 +60,7 @@ function mountTaskNode({execution, taskRuns = [], replayEnabled = false, task = 
                 Handle: true,
                 NodeMenu: true,
                 BasicNode: {
-                    template: "<div><slot name='badge'/><slot name='details'/><slot name='content'/><slot name='title-status'/><slot name='title-actions'/></div>",
+                    template: "<div><slot name='badge'/><slot name='subtitle'/><slot name='details'/><slot name='content'/><slot name='footer'/><slot name='title-status'/><slot name='title-actions'/></div>",
                 },
             },
             provide: {
@@ -69,7 +68,6 @@ function mountTaskNode({execution, taskRuns = [], replayEnabled = false, task = 
                     execution ? {id: EXECUTION_ID, taskRunList: taskRuns, ...execution} : undefined,
                 ),
                 [SUBFLOWS_EXECUTIONS_INJECTION_KEY as symbol]: computed(() => ({})),
-                [SHOW_EXTRA_DETAILS_INJECTION_KEY as symbol]: ref(false),
             },
         },
     })
@@ -215,7 +213,6 @@ describe("TaskNode actions", () => {
                         state: {current: "SUCCESS"},
                     })),
                     [SUBFLOWS_EXECUTIONS_INJECTION_KEY as symbol]: computed(() => ({})),
-                    [SHOW_EXTRA_DETAILS_INJECTION_KEY as symbol]: ref(false),
                 },
             },
             slots: {
@@ -239,5 +236,19 @@ describe("TaskNode actions", () => {
         expect(actionKeys).not.toContain("outputs") // Filtered out
         expect(actionKeys).not.toContain("replay") // Filtered out
         expect(actionKeys).not.toContain("edit") // Filtered out
+    })
+})
+
+describe("TaskNode anatomy", () => {
+    it("should show the task's type alongside its id", () => {
+        const wrapper = mountTaskNode({task: {...TASK, type: "io.kestra.plugin.core.log.Log"}})
+
+        expect(wrapper.text()).toContain("core.log.Log")
+    })
+
+    it("should reserve the duration-bar slot kestra-io/kestra#19665 will fill", () => {
+        const wrapper = mountTaskNode({})
+
+        expect(wrapper.find(".duration-bar-placeholder").exists()).toBe(true)
     })
 })

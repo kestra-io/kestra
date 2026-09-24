@@ -1,8 +1,7 @@
 <template>
     <div
         class="node-wrapper"
-        :style="nodeStyle"
-        :class="[classes, {'node-wrapper--execution': isExecution, 'node-wrapper--focused': focused, 'node-wrapper--dragging': dragging}]"
+        :class="{'node-wrapper--dragging': dragging, 'node-wrapper--pill': lod === 'pill'}"
         :draggable="movable"
         @mouseover="mouseover"
         @mouseleave="mouseleave"
@@ -10,30 +9,53 @@
         @dragstart="onDragStart"
         @dragend="emit(EVENTS.TASK_DRAG_END)"
     >
-        <div class="main-content">
-            <DragVertical v-if="movable" class="node-grip" aria-hidden="true" />
-            <div class="icon" :class="{'icon--dimmed': statusStyle?.dimIcon}">
-                <KsTooltip v-if="shortType" :content="shortType" placement="bottom" :showAfter="600">
-                    <component :is="taskIconComponent" :cls="cls" :class="taskIconBg" variable="--ks-topology-icon-color" :icons="icons" :loadIcon="loadIcon" onlyIcon />
-                </KsTooltip>
-                <component v-else :is="taskIconComponent" :cls="cls" :class="taskIconBg" variable="--ks-topology-icon-color" :icons="icons" :loadIcon="loadIcon" onlyIcon />
-            </div>
-            <div class="node-content">
-                <slot name="badge" />
-                <div class="node-title">
-                    <div class="task-title">
-                        <KsTooltip v-if="extraTooltip" :content="extraTooltip">
-                            {{ displayTitle }}
-                        </KsTooltip>
-                        <template v-else>{{ displayTitle }}</template>
-                    </div>
-                </div>
-                <slot name="content" />
-            </div>
-            <slot name="title-status" />
-            <slot name="title-actions" />
+        <div v-if="lod === 'pill'" class="node-pill" :style="nodeStyle">
+            <KsTooltip :content="displayTitle" placement="bottom" :showAfter="600">
+                <component :is="taskIconComponent" :cls="cls" :class="taskIconBg" variable="--ks-topology-icon-color" :icons="icons" :loadIcon="loadIcon" onlyIcon />
+            </KsTooltip>
         </div>
-        <slot name="details" />
+        <template v-else>
+            <div
+                class="node-core"
+                :style="nodeStyle"
+                :class="[classes, {'node-core--focused': focused}]"
+            >
+                <div class="main-content">
+                    <DragVertical v-if="movable" class="node-grip" aria-hidden="true" />
+                    <div class="icon" :class="{'icon--dimmed': statusStyle?.dimIcon}">
+                        <KsTooltip v-if="shortType" :content="shortType" placement="bottom" :showAfter="600">
+                            <component :is="taskIconComponent" :cls="cls" :class="taskIconBg" variable="--ks-topology-icon-color" :icons="icons" :loadIcon="loadIcon" onlyIcon />
+                        </KsTooltip>
+                        <component v-else :is="taskIconComponent" :cls="cls" :class="taskIconBg" variable="--ks-topology-icon-color" :icons="icons" :loadIcon="loadIcon" onlyIcon />
+                    </div>
+                    <div class="node-content">
+                        <slot name="badge" />
+                        <div class="node-title">
+                            <div class="task-title">
+                                <KsTooltip v-if="extraTooltip" :content="extraTooltip">
+                                    {{ displayTitle }}
+                                </KsTooltip>
+                                <template v-else>{{ displayTitle }}</template>
+                            </div>
+                        </div>
+                        <div v-if="$slots.subtitle" class="node-subtitle">
+                            <slot name="subtitle" />
+                        </div>
+                        <slot name="content" />
+                    </div>
+                    <slot name="title-status" />
+                    <slot name="title-actions" />
+                </div>
+                <div v-if="$slots.footer" class="node-footer">
+                    <slot name="footer" />
+                </div>
+            </div>
+            <Transition name="node-details-overlay">
+                <div v-if="lod === 'expanded' && $slots.details" class="node-details-overlay">
+                    <slot name="details" />
+                </div>
+            </Transition>
+        </template>
     </div>
 </template>
 
@@ -42,6 +64,7 @@
     import {KsTooltip, useTaskIcon} from "@kestra-io/design-system"
     import DragVertical from "vue-material-design-icons/DragVertical.vue"
     import {EVENTS} from "../utils/constants"
+    import type {LodLevel} from "../utils/constants"
     import {getStatusStyle} from "../utils/status"
     import {EXECUTION_INJECTION_KEY} from "../injectionKeys"
     import * as Utils from "../utils/utils"
@@ -94,7 +117,7 @@
         inheritAttrs: false,
     })
 
-    const props = defineProps<{
+    const props = withDefaults(defineProps<{
         id?: string;
         title?: string;
         type?: string;
@@ -108,7 +131,12 @@
         class?: string | string[] | Record<string, boolean>;
         focused?: boolean;
         dragging?: boolean;
-    }>()
+        // Only a card that opts in (TaskNode) reacts to zoom; a card that doesn't pass it (e.g.
+        // TriggerNode) always renders at its one fixed size.
+        lod?: LodLevel;
+    }>(), {
+        lod: "default",
+    })
 
     const taskIconComponent = useTaskIcon()
 
@@ -148,6 +176,7 @@
         return [
             {
                 "unused-path": props.data.unused,
+                "node-core--execution": isExecution.value,
                 disabled: node.value?.disabled
                     || props.data.node?.disabled
                     || props.data.parent?.taskNode?.task?.disabled
@@ -175,9 +204,7 @@
 
     const displayTitle = computed(() => props.title ?? trimmedId.value)
 
-    // The full class is what made the old hover box wide; every core and plugin task shares the
-    // same `io.kestra.plugin.` prefix, so dropping it leaves the part that identifies the task.
-    const shortType = computed(() => cls.value?.replace(/^io\.kestra\.plugin\./, ""))
+    const shortType = computed(() => Utils.shortPluginType(cls.value))
 
     // On a plain task the tooltip only repeated the label already on the card, in a second box on
     // top of the native one; a subflow is the only node whose tooltip says something else.
@@ -187,6 +214,32 @@
 </script>
 
 <style lang="scss" scoped>
+    .node-wrapper {
+        position: relative;
+        margin: 0;
+        z-index: 150000;
+
+        &.node-wrapper--pill {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+        }
+    }
+
+    .node-pill {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 2.5rem;
+        height: 2.5rem;
+        border-radius: 50%;
+        background-color: var(--ks-bg-surface);
+        border: 1px solid var(--ks-border-strong);
+        box-shadow: 0 2px 4px var(--ks-shadow-surface);
+    }
+
     .node-grip {
         display: flex;
         align-items: center;
@@ -206,22 +259,22 @@
         }
     }
 
-    .node-wrapper--focused {
+    .node-core--focused {
         outline: 2px solid var(--ks-border-focus);
         outline-offset: 2px;
     }
 
     /* The card the user picked up: it stays in the layout as the hole the task came out of. */
-    .node-wrapper--dragging {
+    .node-wrapper--dragging .node-core {
         opacity: 0.35;
     }
 
-    .node-wrapper {
+    .node-core {
+        display: flex;
+        flex-direction: column;
         background-color: var(--ks-bg-surface);
         border-radius: var(--ks-radius-base);
         overflow: hidden;
-        margin: 0;
-        z-index: 150000;
         box-shadow: 0 2px 4px var(--ks-shadow-surface);
         border: 1px solid var(--ks-border-strong);
 
@@ -233,10 +286,6 @@
             gap: var(--ks-spacing-1);
             width: 218px;
             height: 56px;
-        }
-
-        &--execution .main-content {
-            width: 273px;
         }
 
         &.execution-no-taskrun, &.disabled {
@@ -251,6 +300,7 @@
         }
 
         .icon {
+            flex-shrink: 0;
             border-radius: var(--ks-radius-lg);
             width: 40px;
             height: 40px;
@@ -267,6 +317,18 @@
         }
     }
 
+    .node-core--execution .main-content {
+        width: 273px;
+    }
+
+    .node-footer {
+        padding: 0 var(--ks-spacing-2) var(--ks-spacing-2);
+        box-sizing: border-box;
+        height: 24px;
+        display: flex;
+        align-items: flex-end;
+    }
+
     .node-content {
         display: flex;
         flex-direction: column;
@@ -281,6 +343,14 @@
             min-width: 0;
             gap: var(--ks-spacing-1);
         }
+    }
+
+    .node-subtitle {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-size: var(--ks-font-size-2xs);
+        color: var(--ks-text-secondary);
     }
 
     .material-design-icon.icon-rounded {
@@ -303,4 +373,35 @@
         flex-grow: 1;
     }
 
+    .node-details-overlay {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        z-index: var(--ks-z-dropdown);
+        margin-top: var(--ks-spacing-1);
+        background: var(--ks-bg-surface);
+        border: 1px solid var(--ks-border-default);
+        border-radius: var(--ks-radius-base);
+        box-shadow: 0 0.5rem 1rem var(--ks-shadow-elevated);
+        max-height: 20rem;
+        overflow: auto;
+    }
+
+    .node-details-overlay-enter-active,
+    .node-details-overlay-leave-active {
+        transition: opacity var(--ks-duration-fast) var(--ks-ease-standard);
+    }
+
+    .node-details-overlay-enter-from,
+    .node-details-overlay-leave-to {
+        opacity: 0;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .node-details-overlay-enter-active,
+        .node-details-overlay-leave-active {
+            transition: none;
+        }
+    }
 </style>

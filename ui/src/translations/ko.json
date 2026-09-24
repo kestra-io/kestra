@@ -130,7 +130,6 @@
     "description": "설명",
     "show description": "설명 표시",
     "show details": "세부 정보 표시",
-    "show more details": "자세한 정보 보기",
     "skipped": "건너뜀",
     "revision": "수정본",
     "theme": "테마",
@@ -441,7 +440,8 @@
       "invalid_description": "그래프를 로드하는 중 오류가 발생했습니다. 소스 코드에서 오류를 확인하세요.",
       "load_error": "토폴로지 그래프를 로드할 수 없습니다. 다시 시도하세요.",
       "add-task": "Task 추가",
-      "add-trigger": "Trigger 추가"
+      "add-trigger": "Trigger 추가",
+      "child-count": "task {count}개 | task {count}개"
     },
     "show task logs": "Task Logs 보기",
     "show task condition": "작업 상태 표시",

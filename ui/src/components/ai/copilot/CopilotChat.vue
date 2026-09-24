@@ -633,6 +633,9 @@
         min-height: 0;
         display: flex;
         overflow-y: auto;
+        /* `ui/src/styles/app.scss` themes only the WebKit scrollbar, so Firefox needs this to avoid
+           a default scrollbar on the copilot surface. */
+        scrollbar-color: var(--ks-border-default) transparent;
         padding: var(--ks-spacing-6) var(--ks-spacing-4);
     }
 
@@ -670,6 +673,9 @@
         gap: var(--ks-spacing-4);
         width: 100%;
         max-width: 30rem;
+        /* Safe centering: auto margins center the column while free space is positive and collapse
+           to 0 once the content overflows, so the top never lands above the scroller's origin the
+           way `align-items: center` did (https://github.com/kestra-io/kestra/issues/19777). */
         margin: auto;
     }
 

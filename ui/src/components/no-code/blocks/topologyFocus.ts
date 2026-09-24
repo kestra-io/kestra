@@ -1,5 +1,5 @@
 import * as flowYamlUtils from "@kestra-io/topology/flow-yaml-utils"
-import {displayTaskOf} from "../../../utils/flowableBlockOps"
+import {displayTaskOf, taskEditPathFor} from "../../../utils/flowableBlockOps"
 import {NESTED_BLOCK_KEYS, TASK_SECTIONS} from "./blockSections"
 
 export interface TopologyFocusNode {
@@ -13,7 +13,7 @@ export interface TopologyFocusNode {
 
 function lanesOf(item: Record<string, unknown>, itemPath: string): {key: string; path: string}[] {
     const task = displayTaskOf(item)
-    const taskPath = task === item ? itemPath : `${itemPath}.task`
+    const taskPath = taskEditPathFor(itemPath, item)
     const lanes: {key: string; path: string}[] = []
     for (const key of NESTED_BLOCK_KEYS) {
         const branch = task[key]

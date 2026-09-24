@@ -203,6 +203,42 @@ describe("useBlockEditorKeyboard", () => {
         document.body.removeChild(surfaceRoot)
     })
 
+    it("still dispatches a global shortcut typed in the surface's own teleported modal", () => {
+        // Given — TaskEditModal renders through KsDialog with appendToBody, so element-plus
+        // teleports it to document.body and it is never a DOM descendant of the surface root
+        const dispatch = vi.fn()
+        const surfaceRoot = document.createElement("div")
+        document.body.appendChild(surfaceRoot)
+        wrapper = mountWithKeyboard(dispatch, undefined, ref(surfaceRoot))
+        const teleported = document.createElement("div")
+        const input = document.createElement("input")
+        teleported.appendChild(input)
+        document.body.appendChild(teleported)
+
+        // When
+        dispatchKeydown(input, {key: "s", metaKey: true})
+
+        // Then
+        expect(dispatch).toHaveBeenCalledWith("save", expect.any(KeyboardEvent))
+        document.body.removeChild(teleported)
+        document.body.removeChild(surfaceRoot)
+    })
+
+    it("still dispatches a global shortcut while the surface root is not mounted", () => {
+        // Given — BlockEditor swaps its canvas out for the inline task form, so editorEl is unset
+        const dispatch = vi.fn()
+        wrapper = mountWithKeyboard(dispatch, undefined, ref(undefined))
+        const input = document.createElement("input")
+        document.body.appendChild(input)
+
+        // When
+        dispatchKeydown(input, {key: "s", metaKey: true})
+
+        // Then
+        expect(dispatch).toHaveBeenCalledWith("save", expect.any(KeyboardEvent))
+        document.body.removeChild(input)
+    })
+
     it("does not preventDefault when undo reports an empty history", () => {
         // Given
         const dispatch = vi.fn().mockReturnValue(false)

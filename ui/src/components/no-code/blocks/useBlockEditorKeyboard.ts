@@ -3,11 +3,16 @@ import {onActivated, onDeactivated, onMounted, onUnmounted, type Ref} from "vue"
 const ALWAYS_GLOBAL_IDS = new Set(["save", "undo", "command-menu", "clear"])
 const IGNORES_OVERLAY_GUARD_IDS = new Set(["help"])
 
+function isCodeEditorTarget(target: EventTarget | null): boolean {
+    const el = target as HTMLElement | null
+    return Boolean(el?.closest?.(".monaco-editor"))
+}
+
 function isTypingTarget(target: EventTarget | null): boolean {
     const el = target as HTMLElement | null
     if (!el) return false
     if (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.isContentEditable) return true
-    return Boolean(el.closest?.(".monaco-editor"))
+    return isCodeEditorTarget(el)
 }
 
 function matchesKey(event: KeyboardEvent, key: string): boolean {
@@ -55,10 +60,12 @@ export function useBlockEditorKeyboard(options: UseBlockEditorKeyboardOptions) {
         const typing = isTypingTarget(event.target)
         const isGlobal = ALWAYS_GLOBAL_IDS.has(binding.id)
         const ignoresOverlayGuard = IGNORES_OVERLAY_GUARD_IDS.has(binding.id)
-        const typingOutsideRoot =
-            typing && options.root !== undefined && !options.root.value?.contains(event.target as Node)
+        const rivalCodeEditor =
+            options.root !== undefined &&
+            isCodeEditorTarget(event.target) &&
+            !options.root.value?.contains(event.target as Node)
 
-        if (event.key !== "Escape" && typingOutsideRoot) return
+        if (event.key !== "Escape" && rivalCodeEditor) return
         if (event.key !== "Escape" && !isGlobal && typing) return
         if (event.key !== "Escape" && !isGlobal && !ignoresOverlayGuard && overlayOpen) return
 

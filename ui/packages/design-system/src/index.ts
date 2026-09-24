@@ -247,6 +247,7 @@ export {
     validStructureSignature,
     parseFilterKey,
     decodeFilterValue,
+    type DecodedParam,
     type ParsedFilterKey,
     type PrefixSegment,
 } from "./components/Data/KsDataTable/filter/utils/helpers"

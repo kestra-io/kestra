@@ -871,7 +871,7 @@
     "flow delete": "<code>{flowCount}</code>件のflowを削除してもよろしいですか？",
     "delete flow error": "flow {id} を削除できませんでした",
     "flows deleted": "<code>{count}</code>件のflowが削除されました",
-    "flow disable": "<code>{flowCount}</code>件のflowを無効化してもよろしいですか？",
+    "flow disable": "<code>{flowCount}</code>個のFlowを無効にしますか？<br/><br/>Flowを無効にすると、Flowに<code>disabled: true</code>が書き込まれ、新しいRevisionが作成されます。<code>disabled: true</code>を含まない外部ソースからの同期は、Flowを再度有効にします。",
     "flow enable": "<code>{flowCount}</code>件のflowを有効化してもよろしいですか？",
     "flows disabled": "<code>{count}</code>件のflowが無効化されました",
     "flows enabled": "<code>{count}</code>件のflowが有効化されました",
@@ -2645,6 +2645,9 @@
       "install_description": "より高速なアクセスとフルスクリーン体験のために、Kestra をアプリとしてインストールします。",
       "install": "インストール",
       "dismiss": "後で"
-    }
+    },
+    "iteration": "反復",
+    "iteration_number": "反復 {number}",
+    "delete_log_iteration": "{iteration} のログを削除してもよろしいですか？"
   }
 }

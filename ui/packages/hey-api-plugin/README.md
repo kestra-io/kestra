@@ -43,7 +43,7 @@ import { formDataBodySerializer } from "./openapi/client"
 export const configureClient = createConfigureClient(client, formDataBodySerializer)
 ```
 
-### Signaling Enterprise-only routes (`EnterpriseFeatureError`)
+### Signaling Enterprise-only routes (`EnterpriseFeatureError` / `SdkVersionMismatchError`)
 
 `client-sdk` is the **one published SDK** and it ships every method — OSS and Enterprise Edition
 alike — because it can't know at publish time which kind of server a consumer will point it at. A
@@ -51,11 +51,15 @@ call to an EE-only method (e.g. `listAuditLogs`) against an OSS server 404s, ind
 first glance from an ordinary "resource not found" 404.
 
 `createConfigureClient` takes an optional third argument, `enterpriseFeature`, so that consumer can
-turn that 404 into a typed, actionable `EnterpriseFeatureError` instead of the generic normalized
-`Error`:
+turn that 404 into a typed, actionable error instead of the generic normalized `Error` —
+`EnterpriseFeatureError` when the server is OSS, `SdkVersionMismatchError` when it reports itself as EE:
 
 ```ts
-import { createConfigureClient, EnterpriseFeatureError } from "@kestra-io/hey-api-plugin/runtime"
+import {
+    createConfigureClient,
+    EnterpriseFeatureError,
+    SdkVersionMismatchError,
+} from "@kestra-io/hey-api-plugin/runtime"
 import { client } from "./openapi/client.gen"
 import { formDataBodySerializer } from "./openapi/client"
 
@@ -77,8 +81,24 @@ try {
         // e.feature, e.docsUrl, e.contactSalesUrl are structured data — build your own
         // "Upgrade to unlock X" UI instead of parsing e.message.
     }
+    if (e instanceof SdkVersionMismatchError) {
+        // The server confirmed it is EE (X-Kestra-Edition: EE) yet the route is missing:
+        // an SDK/server version skew, not a licensing problem. e.feature is the route's
+        // feature id. Prompt to align versions — never "upgrade to Enterprise".
+    }
 }
 ```
+
+Which of the two you get is decided by the `X-Kestra-Edition` and `X-Kestra-Route-Matched` headers Kestra
+sets on every 404 (server side: `NotFoundHeadersFilter`). A 404 carrying `X-Kestra-Route-Matched: true` came
+from application code running a real lookup, so it is always a genuine not-found and is never turned into
+either error, regardless of what `matchRoute` says. Servers predating these headers fall back to the
+`matchRoute`-plus-edition heuristic, so behavior against them is unchanged.
+
+`SdkVersionMismatchError` deliberately does **not** extend `EnterpriseFeatureError`: the two call for opposite
+advice ("align your versions" vs "upgrade to Enterprise"), so conflating them would send an EE customer to
+sales over a version skew. A consumer matching only `EnterpriseFeatureError` therefore stops catching the
+EE-server case and needs the second branch above.
 
 `ENTERPRISE_ONLY_ROUTES` is deliberately **not** built by this package: computing it (e.g. diffing
 the EE spec's operations against the OSS spec at generation time) is a `client-sdk`-only concern —

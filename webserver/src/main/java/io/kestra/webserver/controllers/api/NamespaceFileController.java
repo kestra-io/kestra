@@ -149,7 +149,12 @@ public class NamespaceFileController {
             throw new FileNotFoundException("File not found: " + encodedPath.getPath());
         }
 
-        return namespaceFileMetadata.map(metadata -> new NamespaceFileRevision(metadata.getRevision()));
+        int deletedFloor = NamespaceFileMetadata.deletedFloor(namespaceFileMetadata);
+
+        return namespaceFileMetadata.stream()
+            .filter(metadata -> metadata.getRevision() > deletedFloor)
+            .map(metadata -> new NamespaceFileRevision(metadata.getRevision()))
+            .toList();
     }
 
     @ExecuteOn(TaskExecutors.IO)

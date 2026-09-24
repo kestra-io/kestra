@@ -100,28 +100,46 @@ public abstract class AbstractJdbcWorkerJobRunningStateStore extends AbstractJdb
         // if both queue and repository support the same transaction type, we participate in the transaction, otherwise, not
         if (txContext.supports(JdbcTransactionContext.class)) {
             var dslContext = txContext.unwrap(JdbcTransactionContext.class).getDslContext();
-            dslContext
-                .select(field("value"))
-                .from(this.jdbcRepository.getTable())
-                .where(field("worker_uid").eq(workerUid))
-                .forUpdate()
-                .fetch()
-                .map(r -> this.jdbcRepository.deserialize(r.get("value", String.class)))
-                .forEach(it -> consumer.accept(txContext, it));
+            processWorkerJobsForDeadWorker(dslContext, txContext, workerUid, consumer);
         } else {
             this.jdbcRepository
                 .getDslContextWrapper()
-                .transaction(configuration ->
-                {
-                    DSL.using(configuration)
-                        .select(field("value"))
-                        .from(this.jdbcRepository.getTable())
-                        .where(field("worker_uid").eq(workerUid))
-                        .forUpdate()
-                        .fetch()
-                        .map(r -> this.jdbcRepository.deserialize(r.get("value", String.class)))
-                        .forEach(it -> consumer.accept(txContext, it));
-                });
+                .transaction(configuration -> processWorkerJobsForDeadWorker(DSL.using(configuration), txContext, workerUid, consumer));
         }
+    }
+
+    private void processWorkerJobsForDeadWorker(DSLContext dslContext,
+        TransactionContext txContext,
+        String workerUid,
+        BiConsumer<TransactionContext, WorkerJobRunning> consumer) {
+        dslContext
+            .select(field("key"), field("value"))
+            .from(this.jdbcRepository.getTable())
+            .where(field("worker_uid").eq(workerUid))
+            .forUpdate()
+            .fetch()
+            .forEach(record ->
+            {
+                String key = record.get("key", String.class);
+                WorkerJobRunning workerJobRunning = this.jdbcRepository.deserialize(record.get("value", String.class));
+
+                if (workerJobRunning.isLegacy()) {
+                    // Written by a worker of a previous major version: every consumer reads fields this
+                    // entry does not carry, and a failure here aborts the whole liveness sweep — including
+                    // the vNode rebalance that runs after it, which silently stops all trigger scheduling.
+                    // The worker holding this lease is gone, so drop it on the same connection that holds
+                    // the row lock rather than hand it to a consumer that cannot use it.
+                    log.warn(
+                        "Discarding running entry '{}' of type '{}' for worker '{}': it was written by a previous version and cannot be processed by this one.",
+                        key,
+                        workerJobRunning.getType(),
+                        workerUid
+                    );
+                    deleteByKey(dslContext, key);
+                    return;
+                }
+
+                consumer.accept(txContext, workerJobRunning);
+            });
     }
 }

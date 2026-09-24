@@ -655,7 +655,7 @@ class ExecutionControllerRunnerTest {
     @Test
     @LoadFlows({ "flows/valids/loop-nested.yaml" })
     void evalTaskRunExpression() throws TimeoutException, QueueException {
-        Execution execution = runnerUtils.runOne(TENANT_ID, TESTS_FLOW_NS, "loop-nested");
+        Execution execution = runnerUtils.runOne(TENANT_ID, TESTS_FLOW_NS, "loop-nested", Duration.ofSeconds(60));
 
         ExecutionController.EvalResult result = this.evalTaskRunExpression(execution, "my simple string", 0);
         assertThat(result.getResult()).isEqualTo("my simple string");

@@ -871,7 +871,7 @@
     "flow delete": "Möchtest du <code>{flowCount}</code> Flow(s) wirklich löschen?",
     "delete flow error": "Flow {id} konnte nicht gelöscht werden",
     "flows deleted": "<code>{count}</code> Flow(s) gelöscht",
-    "flow disable": "Möchtest du <code>{flowCount}</code> Flow(s) wirklich deaktivieren?",
+    "flow disable": "Möchtest du wirklich {flowCount} Flow(s) deaktivieren?<br/><br/>Das Deaktivieren eines Flows schreibt <code>disabled: true</code> in den Flow und erstellt eine neue Revision. Eine Synchronisierung von einer externen Quelle, die <code>disabled: true</code> nicht enthält, aktiviert den Flow wieder.",
     "flow enable": "Möchtest du <code>{flowCount}</code> Flow(s) wirklich aktivieren?",
     "flows disabled": "<code>{count}</code> Flow(s) deaktiviert",
     "flows enabled": "<code>{count}</code> Flow(s) aktiviert",
@@ -2645,6 +2645,9 @@
       "install_description": "Installiere Kestra als App für schnelleren Zugriff und eine Vollbild-Ansicht.",
       "install": "Installieren",
       "dismiss": "Nicht jetzt"
-    }
+    },
+    "iteration": "Iteration",
+    "iteration_number": "Iteration {number}",
+    "delete_log_iteration": "Sind Sie sicher, dass Sie das Protokoll für {iteration} löschen möchten?"
   }
 }

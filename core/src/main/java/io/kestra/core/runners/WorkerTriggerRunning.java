@@ -32,6 +32,14 @@ public class WorkerTriggerRunning extends WorkerJobRunning {
      * {@inheritDoc}
      */
     @Override
+    public boolean isLegacy() {
+        return data == null;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public String uid() {
         return IdUtils.fromParts(
             data.tenantId(),

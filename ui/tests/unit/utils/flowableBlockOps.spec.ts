@@ -1415,6 +1415,17 @@ afterExecution:
     type: io.kestra.plugin.core.log.Log
 `.trim()) as Record<string, unknown>
 
+            it("does not mine a bracket out of the message itself", () => {
+                // The path is matched up to a `]`, and a message can carry its own bracket.
+                const grouped = groupValidationIssuesByTask(
+                    ["tasks[0].commands: invalid value [x]: not allowed"],
+                    flow,
+                )
+
+                expect(grouped.has("x")).toBe(false)
+                expect(grouped.get("if_task")).toEqual(["commands: invalid value [x]: not allowed"])
+            })
+
             it("resolves an errors-section path to the task id", () => {
                 const grouped = groupValidationIssuesByTask(["errors[0].message: must not be null"], flow)
                 expect(grouped.get("on_error")).toEqual(["message: must not be null"])

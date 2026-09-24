@@ -1104,8 +1104,7 @@
         case "reorder":
             return reorderFocusedTask(event.key === "ArrowDown" ? "down" : "up") ? undefined : false
         case "undo":
-            performUndo()
-            return
+            return performUndo()
         case "save":
             saveFlow()
             return
@@ -1164,6 +1163,7 @@
         keymap: BLOCK_EDITOR_KEYMAP,
         dispatch: (id, event) => (authoringSurface.isActive() ? dispatchTopologyShortcut(id, event) : false),
         isOverlayOpen: isAuthoringOverlayOpen,
+        root: vueFlow,
     })
 
 

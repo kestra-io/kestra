@@ -571,8 +571,7 @@
             return
         }
         if (id === "undo") {
-            performUndo()
-            return
+            return performUndo()
         }
         if (id === "command-menu") {
             openCommandMenu()
@@ -635,6 +634,7 @@
         keymap: BLOCK_EDITOR_KEYMAP,
         dispatch: (id, event) => (authoringSurface.isActive() ? dispatchBlockEditorAction(id, event) : false),
         isOverlayOpen: isAnyOverlayOpen,
+        root: editorEl,
     })
 
     const {

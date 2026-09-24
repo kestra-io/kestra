@@ -1,10 +1,20 @@
 import {onActivated, onDeactivated, onMounted, onUnmounted, ref, type Ref} from "vue"
+import {AUTHORING_OVERLAY_ATTRIBUTE} from "./useBlockEditorKeyboard"
 
 const active = ref<symbol[]>([])
 const engaged = ref<symbol | undefined>(undefined)
+const roots = new Map<symbol, Ref<HTMLElement | undefined | null>>()
 
-export function hasActiveAuthoringSurface(): boolean {
-    return active.value.length > 0
+/**
+ * Whether an authoring surface will answer a shortcut raised on this target. Another window
+ * listener for the same chord has to ask rather than infer: a surface's root and its
+ * `[data-authoring-overlay]` dialogs are not visible from outside, and a target belonging to
+ * neither is one the surface stands down for.
+ */
+export function authoringSurfaceAnswersKeyFor(target: Node | null): boolean {
+    if (!target) return active.value.length > 0
+    if ((target as HTMLElement).closest?.(`[${AUTHORING_OVERLAY_ATTRIBUTE}]`)) return true
+    return active.value.some(id => roots.get(id)?.value?.contains(target))
 }
 
 export function useAuthoringSurface(root: Ref<HTMLElement | undefined | null>) {
@@ -16,12 +26,14 @@ export function useAuthoringSurface(root: Ref<HTMLElement | undefined | null>) {
 
     const enter = () => {
         if (active.value.includes(id)) return
+        roots.set(id, root)
         active.value = [...active.value, id]
         window.addEventListener("pointerdown", engage, true)
         window.addEventListener("focusin", engage, true)
     }
 
     const leave = () => {
+        roots.delete(id)
         active.value = active.value.filter(entry => entry !== id)
         if (engaged.value === id) engaged.value = undefined
         window.removeEventListener("pointerdown", engage, true)

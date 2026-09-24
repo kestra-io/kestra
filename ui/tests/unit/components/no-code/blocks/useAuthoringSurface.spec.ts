@@ -2,7 +2,7 @@ import {describe, it, expect} from "vitest"
 import {defineComponent, h, KeepAlive, ref, type Ref} from "vue"
 import {mount} from "@vue/test-utils"
 
-import {hasActiveAuthoringSurface, useAuthoringSurface} from "../../../../../src/components/no-code/blocks/useAuthoringSurface"
+import {authoringSurfaceAnswersKeyFor, useAuthoringSurface} from "../../../../../src/components/no-code/blocks/useAuthoringSurface"
 
 interface Surface {
     isActive: () => boolean
@@ -35,15 +35,54 @@ function surface(label: string): Surface {
 }
 
 describe("useAuthoringSurface", () => {
-    // The Flow Code editor yields Ctrl+S to an authoring surface, so it needs to know one is up.
-    it("reports whether any surface is mounted", () => {
-        expect(hasActiveAuthoringSurface()).toBe(false)
+    // The Flow Code editor shares the window listener for Ctrl+S, so it asks whether this surface
+    // answers for a target rather than guessing from its own containment.
+    describe("authoringSurfaceAnswersKeyFor", () => {
+        it("answers for its own canvas", () => {
+            const wrapper = mountSurface("owner-canvas")
+            const child = document.createElement("span")
+            wrapper.element.appendChild(child)
 
-        const wrapper = mountSurface("ownership")
-        expect(hasActiveAuthoringSurface()).toBe(true)
+            expect(authoringSurfaceAnswersKeyFor(child)).toBe(true)
 
-        wrapper.unmount()
-        expect(hasActiveAuthoringSurface()).toBe(false)
+            wrapper.unmount()
+        })
+
+        it("answers for a field in one of its teleported overlays", () => {
+            const wrapper = mountSurface("owner-overlay")
+            const overlay = document.createElement("div")
+            overlay.setAttribute("data-authoring-overlay", "")
+            const input = document.createElement("input")
+            overlay.appendChild(input)
+            document.body.appendChild(overlay)
+
+            expect(authoringSurfaceAnswersKeyFor(input)).toBe(true)
+
+            document.body.removeChild(overlay)
+            wrapper.unmount()
+        })
+
+        // The gap this closes: a field belonging to neither has to be left to its own owner, or
+        // the two window listeners both stand down and the chord reaches the browser.
+        it("stands down for a field in an unrelated panel", () => {
+            const wrapper = mountSurface("owner-foreign")
+            const foreign = document.createElement("input")
+            document.body.appendChild(foreign)
+
+            expect(authoringSurfaceAnswersKeyFor(foreign)).toBe(false)
+
+            document.body.removeChild(foreign)
+            wrapper.unmount()
+        })
+
+        it("stands down entirely once no surface is mounted", () => {
+            const wrapper = mountSurface("owner-gone")
+            const child = document.createElement("span")
+            wrapper.element.appendChild(child)
+            wrapper.unmount()
+
+            expect(authoringSurfaceAnswersKeyFor(child)).toBe(false)
+        })
     })
 
     it("stays active while it is the only surface", () => {

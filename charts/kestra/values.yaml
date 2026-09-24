@@ -166,6 +166,8 @@ common:
       enabled: false
       count: 'auto' # 'auto' or 'value'
       value: 2 # used if count is 'value'
+    # -- Extra JVM options, injected through `_JAVA_OPTIONS` so they override the image defaults (`-XX:MaxRAMPercentage=50.0` and `-XX:MaxDirectMemorySize=256M`). Raise `-XX:MaxDirectMemorySize` here if a component needs more direct memory than the 256M default.
+    # @section -- common settings
     # extraOpts is empty to keep the value deterministic
     extraOpts: ""
 ### -------------------------------

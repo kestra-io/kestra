@@ -1,11 +1,7 @@
 import {ref, type Ref} from "vue"
 import {canMoveBlockToPath, listLengthAtPath, moveBlockToPath, reorderAtPath} from "../../../utils/flowableBlockOps"
 
-/**
- * A block is draggable from any lane at any depth, so the drag itself has to live above any
- * single lane component: a `BranchLane` nested three levels down knows nothing about the sibling
- * lane the pointer is now hovering, only the shared context that both of them are given does.
- */
+/** Lives above any single lane component, since a block dragged out of a `BranchLane` nested three levels down needs a sibling lane it knows nothing about to see it too. */
 export interface BlockDragContext {
     draggedPath: Ref<string | null>
     beginDrag: (path: string) => void

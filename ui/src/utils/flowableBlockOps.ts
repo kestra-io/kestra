@@ -316,31 +316,20 @@ export function listLengthAtPath(source: string, path: string): number {
     }
 }
 
-/**
- * Tells whether a block at `fromPath` may move under `toParentPath`: refuses a move into the
- * block's own subtree (a cycle), across the top-level sections a flow is split into (a task
- * dropped onto `triggers`), and between a Dag's `{task: ...}`-wrapped lane and a plain one, since
- * that reshaping needs the `dependsOn` rewiring a drag-drop move does not attempt.
- */
+/** Refuses a cycle (into the block's own subtree), a cross-section move, and any cross-parent move touching a Dag's `{task: ...}`-wrapped lane, since that needs `dependsOn` rewiring a drag-drop move does not attempt — including between two different Dags, where the shapes match but the ids don't. */
 export function canMoveBlockToPath(source: string, fromPath: string, toParentPath: string): MoveVerdict {
     if (isDescendantOrSelfPath(toParentPath, fromPath)) return {allowed: false, reason: "cycle"}
     if (sectionOfPath(fromPath) !== sectionOfPath(toParentPath)) return {allowed: false, reason: "section"}
 
     const fromParentPath = pathParent(fromPath)
-    if (fromParentPath !== toParentPath && isWrapperLane(source, fromParentPath) !== isWrapperLane(source, toParentPath)) {
+    if (fromParentPath !== toParentPath && (isWrapperLane(source, fromParentPath) || isWrapperLane(source, toParentPath))) {
         return {allowed: false, reason: "lane"}
     }
 
     return {allowed: true}
 }
 
-/**
- * Moves the block at `fromPath` to become index `toIndex` of `toParentPath`'s list, as an
- * extract/delete/insert rather than the in-place splice `reorderAtPath` uses, since the source and
- * destination may be different arrays entirely. When both paths share the same parent, the removal
- * shifts every later index down by one, so `toIndex` is corrected to still land on the same target.
- * Returns `source` unchanged when `canMoveBlockToPath` refuses the move.
- */
+/** Extracts the block at `fromPath` and re-inserts it at index `toIndex` of `toParentPath`'s list, correcting for the same-parent case where the removal shifts every later index down by one; returns `source` unchanged when `canMoveBlockToPath` refuses the move. */
 export function moveBlockToPath(source: string, fromPath: string, toParentPath: string, toIndex: number): string {
     if (!canMoveBlockToPath(source, fromPath, toParentPath).allowed) return source
 

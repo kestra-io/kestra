@@ -1,7 +1,7 @@
 <template>
     <div
         class="flowable-cluster"
-        :class="{'flowable-cluster--expanded': expanded, 'flowable-cluster--error': issues.length > 0}"
+        :class="{'flowable-cluster--expanded': expanded, 'flowable-cluster--error': issues.length > 0, 'flowable-cluster--drag-forbidden': dragForbidden}"
         :data-test="`flowable-cluster-${String(displayBlock.id ?? '')}`"
     >
         <div
@@ -20,6 +20,13 @@
             @drop.prevent="emit('drop', $event)"
             @dragend="emit('drag-end')"
         >
+            <DragVertical
+                v-if="draggable"
+                class="flowable-cluster-grip"
+                :aria-label="$t('block_editor.drag_reorder')"
+                @mousedown.stop
+            />
+
             <component
                 :is="expanded ? ChevronDown : ChevronRight"
                 class="flowable-cluster-chevron"
@@ -138,6 +145,7 @@
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
     import Cog from "vue-material-design-icons/CogOutline.vue"
     import DeleteOutline from "vue-material-design-icons/DeleteOutline.vue"
+    import DragVertical from "vue-material-design-icons/DragVertical.vue"
     import PlusCircleOutline from "vue-material-design-icons/PlusCircleOutline.vue"
 
     import {KsTag, KsIconButton, KsInput} from "@kestra-io/design-system"
@@ -179,6 +187,7 @@
         depth?: number
         playgroundEnabled?: boolean
         draggable?: boolean
+        dragForbidden?: boolean
     }>()
 
     const emit = defineEmits<{
@@ -328,6 +337,31 @@
     .flowable-cluster--error {
         border-color: var(--ks-border-error);
         border-left-color: var(--ks-border-error);
+    }
+
+    .flowable-cluster--drag-forbidden {
+        border-color: var(--ks-border-error);
+        border-left-color: var(--ks-border-error);
+        border-style: dashed;
+        cursor: not-allowed;
+    }
+
+    .flowable-cluster-grip {
+        flex-shrink: 0;
+        color: var(--ks-icon-inactive);
+        cursor: grab;
+        display: flex;
+        font-size: var(--ks-font-size-sm);
+        opacity: 0;
+        transition: opacity 0.15s;
+
+        .flowable-cluster-header:hover & {
+            opacity: 1;
+        }
+
+        &:active {
+            cursor: grabbing;
+        }
     }
 
     .flowable-cluster-header {

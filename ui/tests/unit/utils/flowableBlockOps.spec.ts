@@ -192,6 +192,29 @@ tasks:
           - a
 `.trim()
 
+const FLOW_WITH_TWO_DAGS = `
+id: my_flow
+namespace: company.team
+tasks:
+  - id: dag_a
+    type: io.kestra.plugin.core.flow.Dag
+    tasks:
+      - task:
+          id: a1
+          type: io.kestra.plugin.core.log.Log
+      - task:
+          id: a2
+          type: io.kestra.plugin.core.log.Log
+        dependsOn:
+          - a1
+  - id: dag_b
+    type: io.kestra.plugin.core.flow.Dag
+    tasks:
+      - task:
+          id: b1
+          type: io.kestra.plugin.core.log.Log
+`.trim()
+
 describe("flowableBlockOps", () => {
     describe("addBlock", () => {
         it("appends a task to the end of the tasks section", () => {
@@ -1198,6 +1221,18 @@ tasks:
 
             // Then
             expect(result).toBe(FLOW_WITH_DAG_AND_SEQUENTIAL)
+        })
+
+        it("refuses a move between two different Dags, even though both lanes are wrapped", () => {
+            // Given — a2 depends on a1, which only exists in dag_a's lane
+            const verdict = canMoveBlockToPath(FLOW_WITH_TWO_DAGS, "tasks[0].tasks[1]", "tasks[1].tasks")
+            expect(verdict).toEqual({allowed: false, reason: "lane"})
+
+            // When
+            const result = moveBlockToPath(FLOW_WITH_TWO_DAGS, "tasks[0].tasks[1]", "tasks[1].tasks", 0)
+
+            // Then — a2 keeps its (now-dangling) dependsOn rather than landing in dag_b
+            expect(result).toBe(FLOW_WITH_TWO_DAGS)
         })
     })
 

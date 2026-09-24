@@ -776,28 +776,19 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
         List<AbstractFilter<F>> filters,
         SelectConditionStep<Record> selectConditionStep) {
 
-        List<String> stateFilters = filters.stream()
-            .flatMap(descriptor ->
-            {
-                if (descriptor.getField().equals(Executions.Fields.STATE)) {
-                    if (descriptor instanceof In inFilter) {
-                        return inFilter.getValues().stream();
-                    } else if (descriptor instanceof EqualTo equalToFilter) {
-                        return Stream.of(equalToFilter.getValue());
-                    }
-                }
-                return Stream.empty();
-            })
-            .toList();
+        for (AbstractFilter<F> descriptor : filters) {
+            if (!descriptor.getField().equals(Executions.Fields.STATE)) {
+                continue;
+            }
 
-        if (!stateFilters.isEmpty()) {
-            selectConditionStep = selectConditionStep.and(
-                statesFilter(
-                    stateFilters.stream()
-                        .map(State.Type::valueOf)
-                        .toList()
-                )
-            );
+            Stream<?> values = descriptor instanceof In inFilter ? inFilter.getValues().stream()
+                : descriptor instanceof EqualTo equalToFilter ? Stream.of(equalToFilter.getValue())
+                : Stream.empty();
+            List<State.Type> states = values.map(value -> State.Type.valueOf(value.toString())).toList();
+
+            if (!states.isEmpty()) {
+                selectConditionStep = selectConditionStep.and(statesFilter(states));
+            }
         }
 
         List<String> stateNotFilters = filters.stream()

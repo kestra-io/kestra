@@ -1,4 +1,4 @@
-import {ref, type Ref} from "vue"
+import {ref, watch, type Ref} from "vue"
 
 const UNDO_HISTORY_LIMIT = 100
 const UNDO_BADGE_TIMEOUT = 6000
@@ -15,6 +15,11 @@ const redoHistory = ref<string[]>([])
 const historyScope = ref<string | undefined>(undefined)
 const undoState = ref<{label: string} | null>(null)
 let undoTimer: ReturnType<typeof setTimeout> | undefined
+// Several call sites (the Code panel, the trigger picker, the guided tour, `flow.ts` itself) write
+// `flowStore.flowYaml` directly rather than through `applyYaml` below. A redo built on the yaml before
+// one of those writes would silently discard it, so any write we did not make ourselves invalidates
+// the redo stack — the same way a real edit through `applyYaml` already does.
+let lastAppliedYaml: string | undefined
 
 function dismissDeleteBadge() {
     undoState.value = null
@@ -24,6 +29,12 @@ function dismissDeleteBadge() {
 export function useYamlUndo(flowStore: FlowStoreLike, deletedLabel: (name: string) => string) {
     const onEditTimeout = ref<ReturnType<typeof setTimeout>>()
     let applyingHistory = false
+
+    watch(() => flowStore.flowYaml, (current) => {
+        if (current === lastAppliedYaml) return
+        lastAppliedYaml = current
+        redoHistory.value = []
+    })
 
     function enterCurrentScope() {
         const scope = `${flowStore.flow?.namespace ?? ""}/${flowStore.flow?.id ?? ""}`
@@ -46,6 +57,7 @@ export function useYamlUndo(flowStore: FlowStoreLike, deletedLabel: (name: strin
             dismissDeleteBadge()
         }
         flowStore.flowYaml = newYaml
+        lastAppliedYaml = newYaml
         clearTimeout(onEditTimeout.value)
         onEditTimeout.value = setTimeout(() => {
             flowStore.onEdit({source: newYaml, topologyVisible: true})

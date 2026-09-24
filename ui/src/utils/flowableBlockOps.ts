@@ -131,7 +131,9 @@ export function duplicateBlock(source: string, section: BlockSection, id: string
     const existingIds = collectAllIds(source)
     const newId = uniqueId(String(parsed.id), existingIds)
     existingIds.add(newId)
-    const duplicate = renameNestedIds({...parsed, id: newId}, existingIds, uniqueId)
+    const idMap = new Map<string, string>()
+    const renamed = renameNestedIds({...parsed, id: newId}, existingIds, uniqueId, idMap)
+    const duplicate = rewireDependsOnInSubtree(renamed, idMap)
 
     const path = flowYamlUtils.getPathFromSectionAndId({source, section, id})
     const match = path?.match(/\[(\d+)\]$/)
@@ -157,9 +159,14 @@ export function duplicateBlockAtPath(source: string, path: string): string {
     const displayItem = displayTaskOf(parsed)
     const newId = uniqueId(String(displayItem.id), existingIds)
     existingIds.add(newId)
+    const idMap = new Map<string, string>()
+    const renamedTask = rewireDependsOnInSubtree(
+        renameNestedIds({...displayItem, id: newId}, existingIds, uniqueId, idMap),
+        idMap,
+    )
     const duplicate = isWrappedLaneItem(parsed)
-        ? {...parsed, task: renameNestedIds({...displayItem, id: newId}, existingIds, uniqueId)}
-        : renameNestedIds({...parsed, id: newId}, existingIds, uniqueId)
+        ? {...parsed, task: renamedTask}
+        : renamedTask
 
     const parentPath = pathParent(path)
     const match = path.match(/\[(\d+)\]$/)
@@ -196,13 +203,14 @@ function renameNestedIds(
     node: Record<string, unknown>,
     takenIds: Set<string>,
     renameId: IdRenamer,
+    idMap: Map<string, string>,
 ): Record<string, unknown> {
     const result: Record<string, unknown> = {...node}
     for (const key of FLOWABLE_BRANCH_KEYS) {
         const val = node[key]
         if (Array.isArray(val)) {
             result[key] = (val as Record<string, unknown>[]).map(item =>
-                renameTaskNode(item, takenIds, renameId),
+                renameTaskNode(item, takenIds, renameId, idMap),
             )
         } else if (key === "cases" && val && typeof val === "object" && !Array.isArray(val)) {
             const casesObj = val as Record<string, unknown>
@@ -210,7 +218,7 @@ function renameNestedIds(
             for (const [caseKey, caseVal] of Object.entries(casesObj)) {
                 if (Array.isArray(caseVal)) {
                     newCases[caseKey] = (caseVal as Record<string, unknown>[]).map(item =>
-                        renameTaskNode(item, takenIds, renameId),
+                        renameTaskNode(item, takenIds, renameId, idMap),
                     )
                 } else {
                     newCases[caseKey] = caseVal
@@ -226,14 +234,16 @@ function renameTaskNode(
     node: Record<string, unknown>,
     takenIds: Set<string>,
     renameId: IdRenamer,
+    idMap: Map<string, string>,
 ): Record<string, unknown> {
     if (!node || typeof node !== "object") return node
-    if (isWrappedLaneItem(node)) return {...node, task: renameTaskNode(node.task, takenIds, renameId)}
+    if (isWrappedLaneItem(node)) return {...node, task: renameTaskNode(node.task, takenIds, renameId, idMap)}
     const originalId = typeof node.id === "string" ? node.id : undefined
-    if (originalId === undefined) return renameNestedIds(node, takenIds, renameId)
+    if (originalId === undefined) return renameNestedIds(node, takenIds, renameId, idMap)
     const newId = renameId(originalId, takenIds)
     takenIds.add(newId)
-    return renameNestedIds({...node, id: newId}, takenIds, renameId)
+    if (newId !== originalId) idMap.set(originalId, newId)
+    return renameNestedIds({...node, id: newId}, takenIds, renameId, idMap)
 }
 
 function keepIdOrRename(id: string, takenIds: Set<string>): string {
@@ -241,15 +251,61 @@ function keepIdOrRename(id: string, takenIds: Set<string>): string {
 }
 
 /**
+ * Rewrites a Dag lane item's `dependsOn` entries through `idMap`, so renaming a task does not
+ * dangle the edges that pointed at its old id. `dependsOn` lives on the wrapper (sibling to
+ * `task`), which `renameTaskNode` never touches since it only ever renames a node's own `id`.
+ */
+function rewireDependsOnInSubtree(
+    node: Record<string, unknown>,
+    idMap: Map<string, string>,
+): Record<string, unknown> {
+    if (!node || typeof node !== "object") return node
+    if (isWrappedLaneItem(node)) {
+        const task = rewireDependsOnInSubtree(node.task, idMap)
+        if (!Array.isArray(node.dependsOn)) return {...node, task}
+        return {
+            ...node,
+            task,
+            dependsOn: (node.dependsOn as unknown[]).map(dep =>
+                typeof dep === "string" ? (idMap.get(dep) ?? dep) : dep,
+            ),
+        }
+    }
+
+    const result: Record<string, unknown> = {...node}
+    for (const key of FLOWABLE_BRANCH_KEYS) {
+        const val = node[key]
+        if (Array.isArray(val)) {
+            result[key] = (val as Record<string, unknown>[]).map(item => rewireDependsOnInSubtree(item, idMap))
+        } else if (key === "cases" && val && typeof val === "object" && !Array.isArray(val)) {
+            const casesObj = val as Record<string, unknown>
+            const newCases: Record<string, unknown> = {}
+            for (const [caseKey, caseVal] of Object.entries(casesObj)) {
+                newCases[caseKey] = Array.isArray(caseVal)
+                    ? (caseVal as Record<string, unknown>[]).map(item => rewireDependsOnInSubtree(item, idMap))
+                    : caseVal
+            }
+            result[key] = newCases
+        }
+    }
+    return result
+}
+
+/**
  * Renames only the ids of `block` (and its nested Flowable lanes) that collide with
  * `existingIds`, so a task pasted into another flow keeps its ids where it can and only
- * disambiguates where it must — unlike `duplicateBlock`, which always mints a new id.
+ * disambiguates where it must — unlike `duplicateBlock`, which always mints a new id. Any
+ * `dependsOn` inside the same subtree is rewired to follow. A Pebble expression referencing a
+ * renamed id (e.g. `{{ outputs.<oldId>.value }}`) is not: matching that safely without a real
+ * Pebble parser is out of scope here, so such a reference is left pointing at the old id.
  */
 export function withFreeIds(
     block: Record<string, unknown>,
     existingIds: Set<string>,
 ): Record<string, unknown> {
-    return renameTaskNode(block, new Set(existingIds), keepIdOrRename)
+    const idMap = new Map<string, string>()
+    const renamed = renameTaskNode(block, new Set(existingIds), keepIdOrRename, idMap)
+    return rewireDependsOnInSubtree(renamed, idMap)
 }
 
 /** Collects every task id under `tasks`, walking nested Flowable lanes, for the Inputs panel and paste. */

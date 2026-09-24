@@ -48,6 +48,7 @@ function displayForKey(key: string): string {
 const SHORTCUT_GROUP_ORDER: BlockEditorKeymapGroup[] = ["navigate", "insert", "edit", "global"]
 
 const HIDDEN_SHORTCUT_IDS = new Set(["clear"])
+const CLIPBOARD_SHORTCUT_IDS = new Set(["copy", "cut", "paste"])
 
 export function displayKeys(keys: string[]): string[] {
     const seen = new Set<string>()
@@ -61,10 +62,20 @@ export function displayKeys(keys: string[]): string[] {
     return result
 }
 
-export function buildShortcutGroups(): {group: BlockEditorKeymapGroup; bindings: BlockEditorKeyBinding[]}[] {
+/**
+ * The topology canvas shares this keymap but does not (yet) wire clipboard actions into its own
+ * dispatcher, so `supportsClipboard: false` keeps its `?` overlay from advertising a shortcut that
+ * silently does nothing there.
+ */
+export function buildShortcutGroups(
+    options: {supportsClipboard?: boolean} = {},
+): {group: BlockEditorKeymapGroup; bindings: BlockEditorKeyBinding[]}[] {
+    const supportsClipboard = options.supportsClipboard ?? true
     return SHORTCUT_GROUP_ORDER.map(group => ({
         group,
-        bindings: blockEditorKeymapByGroup(group).filter(binding => !HIDDEN_SHORTCUT_IDS.has(binding.id)),
+        bindings: blockEditorKeymapByGroup(group).filter(binding =>
+            !HIDDEN_SHORTCUT_IDS.has(binding.id) && (supportsClipboard || !CLIPBOARD_SHORTCUT_IDS.has(binding.id)),
+        ),
     }))
 }
 

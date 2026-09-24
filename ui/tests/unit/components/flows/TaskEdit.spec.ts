@@ -1,4 +1,4 @@
-import {describe, it, expect, vi} from "vitest"
+import {beforeEach, describe, it, expect, vi} from "vitest"
 import KestraDesignSystem from "@kestra-io/design-system"
 
 vi.mock("vue-router", () => ({
@@ -51,6 +51,11 @@ vi.mock("../../../../src/components/flows/TaskEditData.vue", () => ({
     default: {name: "TaskEditData", props: ["kind", "title", "subtitle", "sections", "filterable", "collapsible", "isCollapsed", "side"], template: "<div />"},
 }))
 
+const useContextSections = vi.fn((_namespace: {value: string | undefined}) => ({sections: {value: []}}))
+vi.mock("../../../../src/composables/useContextSections", () => ({
+    useContextSections: (namespace: {value: string | undefined}) => useContextSections(namespace),
+}))
+
 import TaskEdit from "../../../../src/components/flows/TaskEdit.vue"
 import {i18nMount} from "../../i18nMount"
 
@@ -71,6 +76,10 @@ function mountTaskEdit() {
 }
 
 describe("TaskEdit", () => {
+    beforeEach(() => {
+        useContextSections.mockClear()
+    })
+
     it("emits close when the per-pane tabstrip's close button is clicked", async () => {
         // Given — regression: this button used to only flip a local isModalOpen flag,
         // so clicking it in a tiled split-view pane left a stale entry in the parent's
@@ -175,5 +184,33 @@ describe("TaskEdit", () => {
         chip.dispatchEvent(new FocusEvent("focusin", {bubbles: true}))
 
         expect(field.classList.contains("task-edit-chip-insert-target")).toBe(true)
+    })
+
+    it("never fetches the KV/secrets/files context sections on the read-only execution surface", async () => {
+        const wrapper = i18nMount(TaskEdit, {
+            messages: {close: "Close"},
+            props: {
+                task: {id: "verify_backups", type: "io.kestra.plugin.core.log.Log", message: "hi"},
+                section: "tasks",
+                flowId: "my_flow",
+                namespace: "company.team",
+                presentation: "panel",
+                readOnly: true,
+            },
+            global: {plugins: [KestraDesignSystem]},
+        })
+        await wrapper.vm.$nextTick()
+
+        expect(useContextSections).toHaveBeenCalled()
+        const namespace = useContextSections.mock.calls[0][0] as {value: string | undefined}
+        expect(namespace.value).toBeUndefined()
+    })
+
+    it("fetches the context sections for an editable (non read-only) task", async () => {
+        const wrapper = mountTaskEdit()
+        await wrapper.vm.$nextTick()
+
+        const namespace = useContextSections.mock.calls[0][0] as {value: string | undefined}
+        expect(namespace.value).toBe("company.team")
     })
 })

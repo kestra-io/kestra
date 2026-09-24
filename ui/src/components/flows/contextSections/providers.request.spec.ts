@@ -2,8 +2,6 @@ import {afterEach, beforeAll, describe, expect, it, vi} from "vitest"
 import {configureClient} from "@kestra-io/kestra-sdk"
 import {kvContextSectionProvider, secretsContextSectionProvider, namespaceFilesContextSectionProvider} from "./providers"
 
-const t = (key: string) => key
-
 // Node's native fetch/Request (used under Vitest) has no browsing-context base URL to resolve a
 // relative path against, unlike a real browser — an absolute baseUrl makes the resulting Request
 // constructible so its .url can be asserted on.
@@ -35,7 +33,7 @@ afterEach(() => {
 describe("context section providers build a real, tenant-resolved request URL", () => {
     it("kvContextSectionProvider never leaves an unresolved {tenant} placeholder, on either call", async () => {
         const fetchMock = stubFetch([])
-        await kvContextSectionProvider({namespace: "team.a", t})
+        await kvContextSectionProvider({namespace: "team.a"})
 
         const urls = fetchMock.mock.calls.map(([request]) => (request as Request).url)
         expect(urls).toHaveLength(2)
@@ -49,7 +47,7 @@ describe("context section providers build a real, tenant-resolved request URL", 
 
     it("secretsContextSectionProvider never leaves an unresolved {tenant} placeholder", async () => {
         const fetchMock = stubFetch({})
-        await secretsContextSectionProvider({namespace: "team.a", t})
+        await secretsContextSectionProvider({namespace: "team.a"})
 
         const url = (fetchMock.mock.calls[0][0] as Request).url
         expect(url).not.toContain("{tenant}")
@@ -59,7 +57,7 @@ describe("context section providers build a real, tenant-resolved request URL", 
 
     it("namespaceFilesContextSectionProvider searches with the match-all query and never leaves an unresolved {tenant} placeholder", async () => {
         const fetchMock = stubFetch([])
-        await namespaceFilesContextSectionProvider({namespace: "team.a", t})
+        await namespaceFilesContextSectionProvider({namespace: "team.a"})
 
         const url = (fetchMock.mock.calls[0][0] as Request).url
         expect(url).not.toContain("{tenant}")
@@ -79,7 +77,7 @@ describe("context section providers build a section from a realistic, non-empty 
             {when: url => url.includes("/kv/inheritance"), body: []},
         ])
 
-        const section = await kvContextSectionProvider({namespace: "qa.nocode", t})
+        const section = await kvContextSectionProvider({namespace: "qa.nocode"})
 
         expect(section?.chips).toEqual([
             {label: "LAST_RUN_DATE", expr: "{{ kv('LAST_RUN_DATE') }}"},
@@ -90,7 +88,7 @@ describe("context section providers build a section from a realistic, non-empty 
     it("secretsContextSectionProvider builds a chip per inherited secret name", async () => {
         stubFetch({"qa.nocode": ["SLACK_WEBHOOK"]})
 
-        const section = await secretsContextSectionProvider({namespace: "qa.nocode", t})
+        const section = await secretsContextSectionProvider({namespace: "qa.nocode"})
 
         expect(section?.chips).toEqual([{label: "SLACK_WEBHOOK", expr: "{{ secret('SLACK_WEBHOOK') }}"}])
     })
@@ -98,7 +96,7 @@ describe("context section providers build a section from a realistic, non-empty 
     it("namespaceFilesContextSectionProvider builds a chip per file, escaping a quote in a real path", async () => {
         stubFetch(["/fixtures/sample_response.json", "/queries/idle_ec2.sql", "/queries/o'brien report.sql"])
 
-        const section = await namespaceFilesContextSectionProvider({namespace: "qa.nocode", t})
+        const section = await namespaceFilesContextSectionProvider({namespace: "qa.nocode"})
 
         expect(section?.chips).toEqual([
             {label: "fileURI('fixtures/sample_response.json')", expr: "{{ fileURI('fixtures/sample_response.json') }}"},

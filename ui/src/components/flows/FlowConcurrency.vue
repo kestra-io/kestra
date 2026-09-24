@@ -21,7 +21,7 @@
                 </span>
             </div>
             <div class="progressbar mb-3">
-                <KsProgress :stroke-width="16" color="#5BB8FF" :percentage="progress" :showText="false" />
+                <KsProgress :stroke-width="16" color="var(--ks-status-info)" :percentage="progress" :showText="false" />
             </div>
         </KsCard>
         <Executions

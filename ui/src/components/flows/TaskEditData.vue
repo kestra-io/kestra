@@ -48,15 +48,16 @@
                 <button
                     class="task-edit-data-section-head"
                     type="button"
-                    :aria-expanded="!collapsed.has(section.key)"
+                    :aria-expanded="isExpanded(section.key)"
                     @click="toggle(section.key)"
                 >
-                    <ChevronRight class="task-edit-data-chevron" :class="{'task-edit-data-chevron--open': !collapsed.has(section.key)}" />
+                    <ChevronRight class="task-edit-data-chevron" :class="{'task-edit-data-chevron--open': isExpanded(section.key)}" />
                     <span class="task-edit-data-section-label">{{ section.label }}</span>
+                    <KsNewBadge v-if="section.isNew">{{ $t("new") }}</KsNewBadge>
                     <span class="task-edit-data-count">{{ section.chips.length }}</span>
                 </button>
 
-                <div v-if="!collapsed.has(section.key)" class="task-edit-data-chips">
+                <div v-if="isExpanded(section.key)" class="task-edit-data-chips">
                     <template v-for="chip in section.chips" :key="chip.label">
                         <button
                             v-if="interactive"
@@ -65,8 +66,9 @@
                             draggable="true"
                             :title="chip.expr"
                             @mousedown.prevent
-                            @click="chip.expr && emit('chip-activate', chip.expr)"
+                            @click="chip.expr && emit('chip-activate', chip.expr, section.key)"
                             @dragstart="chip.expr && onDragStart($event, chip.expr)"
+                            @dragend="onDragEnd($event, section.key)"
                         >
                             <span class="task-edit-data-chip-label">{{ chip.label }}</span>
                         </button>
@@ -88,22 +90,14 @@
 <script setup lang="ts">
     import {computed, ref} from "vue"
     import {CHIP_DRAG_MIME} from "./chipInsertion"
+    import {KsNewBadge} from "@kestra-io/design-system"
     import Magnify from "vue-material-design-icons/Magnify.vue"
     import ChevronRight from "vue-material-design-icons/ChevronRight.vue"
     import ChevronLeft from "vue-material-design-icons/ChevronLeft.vue"
     import ChevronUp from "vue-material-design-icons/ChevronUp.vue"
     import ChevronDown from "vue-material-design-icons/ChevronDown.vue"
-
-    interface DataChip {
-        label: string
-        expr?: string
-        type?: string
-    }
-    interface DataSection {
-        key: string
-        label: string
-        chips: DataChip[]
-    }
+    import type {DataSection} from "./contextSections/types"
+    import {trackChipInserted, trackContextSectionExpanded} from "../../utils/analytics/taskEditorEvents"
 
     const props = withDefaults(defineProps<{
         kind: string
@@ -116,6 +110,7 @@
         side?: "left" | "right"
         stacked?: boolean
         interactive?: boolean
+        defaultCollapsedKeys?: string[]
     }>(), {
         filterable: false,
         collapsible: false,
@@ -123,12 +118,15 @@
         side: "left",
         stacked: false,
         interactive: true,
+        defaultCollapsedKeys: () => [],
     })
 
-    const emit = defineEmits<{(e: "toggle"): void; (e: "chip-activate", expr: string): void}>()
+    const emit = defineEmits<{(e: "toggle"): void; (e: "chip-activate", expr: string, sectionKey: string): void}>()
 
     const filter = ref("")
-    const collapsed = ref(new Set<string>())
+    const collapsed = ref(new Set<string>(props.defaultCollapsedKeys))
+
+    const isFiltering = computed(() => filter.value.trim() !== "")
 
     const visibleSections = computed<DataSection[]>(() => {
         const q = filter.value.trim().toLowerCase()
@@ -139,9 +137,17 @@
             .filter(section => section.chips.length > 0)
     })
 
+    function isExpanded(key: string) {
+        return isFiltering.value || !collapsed.value.has(key)
+    }
+
     function toggle(key: string) {
-        if (collapsed.value.has(key)) collapsed.value.delete(key)
-        else collapsed.value.add(key)
+        if (collapsed.value.has(key)) {
+            collapsed.value.delete(key)
+            trackContextSectionExpanded(`${props.kind}.${key}`)
+        } else {
+            collapsed.value.add(key)
+        }
         collapsed.value = new Set(collapsed.value)
     }
 
@@ -149,6 +155,12 @@
         event.dataTransfer?.setData("text/plain", expr)
         event.dataTransfer?.setData(CHIP_DRAG_MIME, expr)
         if (event.dataTransfer) event.dataTransfer.effectAllowed = "copy"
+    }
+
+    function onDragEnd(event: DragEvent, sectionKey: string) {
+        if (event.dataTransfer?.dropEffect !== "none") {
+            trackChipInserted(`${props.kind}.${sectionKey}`)
+        }
     }
 </script>
 

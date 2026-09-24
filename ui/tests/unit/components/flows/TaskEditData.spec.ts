@@ -1,10 +1,17 @@
-import {describe, it, expect} from "vitest"
+import {beforeEach, describe, it, expect, vi} from "vitest"
 import TaskEditData from "../../../../src/components/flows/TaskEditData.vue"
+import type {DataSection} from "../../../../src/components/flows/contextSections/types"
 import {i18nMount} from "../../i18nMount"
+
+const posthogEvents = vi.fn()
+vi.mock("../../../../src/stores/api", () => ({
+    useApiStore: () => ({posthogEvents}),
+}))
 
 const messages = {
     expand: "Expand",
     collapse: "Collapse",
+    new: "New",
     block_editor: {filter_data: "Filter", no_data_matches: "No data matches", chip_hint: "Click a chip to insert it, or drag it in"},
 }
 
@@ -18,10 +25,10 @@ const sections = [
     ]},
 ]
 
-function render() {
+function render(overrideProps: Partial<{sections: DataSection[], defaultCollapsedKeys: string[]}> = {}) {
     return i18nMount(TaskEditData, {
         messages,
-        props: {kind: "inputs", title: "Inputs", subtitle: "data you can use", sections, filterable: true},
+        props: {kind: "inputs", title: "Inputs", subtitle: "data you can use", sections, filterable: true, ...overrideProps},
     })
 }
 
@@ -66,11 +73,11 @@ describe("TaskEditData chip activation", () => {
         expect(render().text()).toContain("Click a chip to insert it, or drag it in")
     })
 
-    it("emits chip-activate with the expression when an interactive chip is clicked", async () => {
+    it("emits chip-activate with the expression and section key when an interactive chip is clicked", async () => {
         const wrapper = render()
         await wrapper.get("[title='{{ flow.id }}']").trigger("click")
 
-        expect(wrapper.emitted("chip-activate")).toEqual([["{{ flow.id }}"]])
+        expect(wrapper.emitted("chip-activate")).toEqual([["{{ flow.id }}", "up"]])
     })
 
     it("does not render a hint or interactive chips for a non-interactive column", () => {
@@ -81,5 +88,104 @@ describe("TaskEditData chip activation", () => {
 
         expect(wrapper.text()).not.toContain("Click a chip to insert it, or drag it in")
         expect(wrapper.find("button.task-edit-data-chip").exists()).toBe(false)
+    })
+})
+
+describe("TaskEditData collapsing", () => {
+    it("starts every section expanded when no defaultCollapsedKeys is given", () => {
+        expect(render().text()).toContain("taskrun.id")
+    })
+
+    it("starts a section collapsed when its key is in defaultCollapsedKeys", () => {
+        const wrapper = render({defaultCollapsedKeys: ["ctx"]})
+
+        expect(wrapper.text()).toContain("flow.id")
+        expect(wrapper.text()).not.toContain("taskrun.id")
+    })
+
+    it("force-expands a collapsed section once the filter matches one of its chips", async () => {
+        const wrapper = render({defaultCollapsedKeys: ["ctx"]})
+        expect(wrapper.text()).not.toContain("taskrun.id")
+
+        await wrapper.get("input").setValue("taskrun")
+
+        expect(wrapper.text()).toContain("taskrun.id")
+    })
+
+    it("re-collapses once the matching filter is cleared", async () => {
+        const wrapper = render({defaultCollapsedKeys: ["ctx"]})
+        await wrapper.get("input").setValue("taskrun")
+        expect(wrapper.text()).toContain("taskrun.id")
+
+        await wrapper.get("input").setValue("")
+
+        expect(wrapper.text()).not.toContain("taskrun.id")
+    })
+})
+
+describe("TaskEditData new-section badge", () => {
+    it("shows a New badge only for a section flagged isNew", () => {
+        const wrapper = render({sections: [{...sections[0], isNew: true}, sections[1]]})
+        const text = wrapper.text()
+
+        expect(text).toContain("New")
+    })
+
+    it("shows no New badge when no section is flagged", () => {
+        expect(render().text()).not.toContain("New")
+    })
+})
+
+describe("TaskEditData analytics", () => {
+    beforeEach(() => posthogEvents.mockClear())
+
+    it("tracks a section expansion, scoped to the panel kind", async () => {
+        const wrapper = render({defaultCollapsedKeys: ["ctx"]})
+        const headers = wrapper.findAll(".task-edit-data-section-head")
+        await headers[1].trigger("click")
+
+        expect(posthogEvents).toHaveBeenCalledWith({type: "CONTEXT_SECTION_EXPANDED", section: "inputs.ctx"})
+    })
+
+    it("does not track a collapse", async () => {
+        const wrapper = render()
+        const headers = wrapper.findAll(".task-edit-data-section-head")
+        await headers[0].trigger("click")
+
+        expect(posthogEvents).not.toHaveBeenCalledWith(expect.objectContaining({type: "CONTEXT_SECTION_EXPANDED"}))
+    })
+
+    it("does not track anything on click — the outcome (insert vs copy) is decided by the parent", async () => {
+        const wrapper = render()
+        await wrapper.get(".task-edit-data-chip").trigger("click")
+
+        expect(posthogEvents).not.toHaveBeenCalled()
+    })
+
+    it("does not track a chip insertion just from starting a drag", async () => {
+        const wrapper = render()
+        await wrapper.get(".task-edit-data-chip").trigger("dragstart", {dataTransfer: {setData: vi.fn(), effectAllowed: ""}})
+
+        expect(posthogEvents).not.toHaveBeenCalledWith(expect.objectContaining({type: "CHIP_INSERTED"}))
+    })
+
+    it("tracks a chip insertion only once the drag actually completes as a drop, by section — never the chip's own expression", async () => {
+        const wrapper = render()
+        const chip = wrapper.get(".task-edit-data-chip")
+        await chip.trigger("dragstart", {dataTransfer: {setData: vi.fn(), effectAllowed: ""}})
+        await chip.trigger("dragend", {dataTransfer: {dropEffect: "copy"}})
+
+        expect(posthogEvents).toHaveBeenCalledWith({type: "CHIP_INSERTED", section: "inputs.up"})
+        const payloads = posthogEvents.mock.calls.map(([payload]) => JSON.stringify(payload))
+        expect(payloads.some(payload => payload.includes("flow.id"))).toBe(false)
+    })
+
+    it("does not track a chip insertion when the drag is cancelled (dropped outside a valid target)", async () => {
+        const wrapper = render()
+        const chip = wrapper.get(".task-edit-data-chip")
+        await chip.trigger("dragstart", {dataTransfer: {setData: vi.fn(), effectAllowed: ""}})
+        await chip.trigger("dragend", {dataTransfer: {dropEffect: "none"}})
+
+        expect(posthogEvents).not.toHaveBeenCalledWith(expect.objectContaining({type: "CHIP_INSERTED"}))
     })
 })

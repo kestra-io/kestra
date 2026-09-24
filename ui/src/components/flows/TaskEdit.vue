@@ -97,6 +97,7 @@
                 :collapsible="true"
                 :isCollapsed="inputsCollapsed"
                 :stacked="isStacked"
+                :defaultCollapsedKeys="['context']"
                 side="left"
                 @toggle="inputsCollapsed = !inputsCollapsed"
                 @chip-activate="onChipActivate"
@@ -175,6 +176,9 @@
     import {usePlaygroundRun} from "../../composables/playground/usePlaygroundRun"
     import {CHIP_DRAG_MIME, isArmableField, insertAtCaret} from "./chipInsertion"
     import {resolveDeclaredOutputProperties, hasDeclaredOutputs as computeHasDeclaredOutputs} from "./taskOutputSchema"
+    import {useContextSections} from "../../composables/useContextSections"
+    import type {DataSection} from "./contextSections/types"
+    import {trackChipInserted, trackChipCopied} from "../../utils/analytics/taskEditorEvents"
 
     interface Props {
         component?: string;
@@ -271,12 +275,14 @@
         KsMessage.success(t("block_editor.chip_inserted"))
     }
 
-    function onChipActivate(expr: string) {
+    function onChipActivate(expr: string, sectionKey: string) {
         if (armedField.value) {
             insertAndNotify(armedField.value, expr)
+            trackChipInserted(`inputs.${sectionKey}`)
         } else {
             copyToClipboard(expr)
             KsMessage.success(t("block_editor.chip_copied"))
+            trackChipCopied(`inputs.${sectionKey}`)
         }
     }
 
@@ -336,6 +342,7 @@
     })
 
     const flowStore = useFlowStore()
+    const {sections: contextDataSections} = useContextSections(computed(() => props.readOnly ? undefined : props.namespace))
     const localTaskError = ref<string | undefined>()
     const errors = computed(() => {
         const split = splitValidationErrors(localTaskError.value)
@@ -365,7 +372,7 @@
 
     const inputSections = computed(() => {
         const flow: ParsedFlow = flowStore.flowParsed ?? {}
-        const sections: {key: string; label: string; chips: {label: string; expr: string}[]}[] = []
+        const sections: DataSection[] = []
 
         const inputs = Array.isArray(flow.inputs) ? flow.inputs : []
         if (inputs.length) {
@@ -383,6 +390,8 @@
         if (upstream.length) {
             sections.push({key: "outputs", label: t("block_editor.upstream_outputs"), chips: upstream.map(id => ({label: id, expr: `{{ outputs.${id} }}`}))})
         }
+
+        sections.push(...contextDataSections.value)
 
         const CONTEXT_FIELDS: Record<string, string[]> = {
             flow: ["id", "namespace", "revision", "tenantId"],

@@ -871,7 +871,7 @@
     "flow delete": "Are you sure you want to delete <code>{flowCount}</code> flow(s)?",
     "delete flow error": "Failed to delete flow {id}",
     "flows deleted": "<code>{count}</code> Flow(s) deleted",
-    "flow disable": "Are you sure you want to disable <code>{flowCount}</code> flow(s)?",
+    "flow disable": "Are you sure you want to disable <code>{flowCount}</code> flow(s)?<br/><br/>Disabling a flow writes <code>disabled: true</code> into the flow and creates a new revision. A sync from an external source that does not include <code>disabled: true</code> will enable the flow again.",
     "flow enable": "Are you sure you want to enable <code>{flowCount}</code> flow(s)?",
     "flows disabled": "<code>{count}</code> Flow(s) disabled",
     "flows enabled": "<code>{count}</code> Flow(s) enabled",
@@ -1619,7 +1619,9 @@
       "raw": "Temporal view",
       "raw_details": "Show full task logs and flow logs in a raw, timestamp-ordered format",
       "compact": "Default view",
-      "compact_details": "Show task logs in a compact view grouped by each task"
+      "compact_details": "Show task logs in a compact view grouped by each task",
+      "fullscreen": "Full screen logs",
+      "exit_fullscreen": "Exit fullscreen"
     },
     "execution_deletion": {
       "logs": "Delete logs",
@@ -2645,6 +2647,9 @@
       "install_description": "Install Kestra as an app for quicker access and a full-screen experience.",
       "install": "Install",
       "dismiss": "Not now"
-    }
+    },
+    "iteration": "Iteration",
+    "iteration_number": "Iteration {number}",
+    "delete_log_iteration": "Are you sure you want to delete the log for {iteration}?"
   }
 }

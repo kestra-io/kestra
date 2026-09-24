@@ -871,7 +871,7 @@
     "flow delete": "Sei sicuro di voler eliminare <code>{flowCount}</code> flow?",
     "delete flow error": "Eliminazione del flow {id} non riuscita",
     "flows deleted": "<code>{count}</code> Flow eliminati",
-    "flow disable": "Sei sicuro di voler disabilitare <code>{flowCount}</code> flow?",
+    "flow disable": "Sei sicuro di voler disabilitare {flowCount} Flow?<br/><br/>La disabilitazione di un Flow scrive <code>disabled: true</code> nel Flow e crea una nuova revisione. Una sincronizzazione da una fonte esterna che non include <code>disabled: true</code> abiliterà nuovamente il Flow.",
     "flow enable": "Sei sicuro di voler abilitare <code>{flowCount}</code> flow?",
     "flows disabled": "<code>{count}</code> Flow disabilitati",
     "flows enabled": "<code>{count}</code> Flow abilitati",
@@ -1619,7 +1619,9 @@
       "raw": "Vista temporale",
       "raw_details": "Mostra i log completi dei task e i log dei flow in un formato raw, ordinato per timestamp",
       "compact": "Vista predefinita",
-      "compact_details": "Mostra i task logs in una vista compatta raggruppata per ogni task"
+      "compact_details": "Mostra i task logs in una vista compatta raggruppata per ogni task",
+      "fullscreen": "Logs a schermo intero",
+      "exit_fullscreen": "Esci dalla modalità a schermo intero"
     },
     "execution_deletion": {
       "logs": "Elimina logs",
@@ -2645,6 +2647,9 @@
       "install_description": "Installa Kestra come app per un accesso più rapido e un'esperienza a schermo intero.",
       "install": "Installa",
       "dismiss": "Non ora"
-    }
+    },
+    "iteration": "Iterazione",
+    "iteration_number": "Iterazione {number}",
+    "delete_log_iteration": "Sei sicuro di voler eliminare il registro per {iteration}?"
   }
 }

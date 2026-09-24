@@ -26,9 +26,7 @@
             <slot name="details" />
         </template>
         <template #footer>
-            <!-- Reserved for kestra-io/kestra#19665's segmented duration bar — the box already
-                 accounts for its height, so that PR fills the slot instead of renegotiating it. -->
-            <div class="duration-bar-placeholder" />
+            <Duration compact :histories="histories" :denominator="longestTaskRunDuration" />
         </template>
         <template #content>
             <button
@@ -70,6 +68,7 @@
     import Duration from "../misc/Duration.vue"
     import * as Utils from "../utils/utils"
     import {getStatusStyle, pickWorstState} from "../utils/status"
+    import {computeLongestTaskRunDuration} from "../misc/durationBreakdown"
     import {buildNodeActions, type NodeActionsContext} from "../utils/nodeActions"
     import BasicNode from "./BasicNode.vue"
     import NodeMenu, {type NodeAction} from "./NodeMenu.vue"
@@ -296,6 +295,8 @@
         }))
     })
 
+    const longestTaskRunDuration = computed(() => computeLongestTaskRunDuration(taskRunList.value))
+
     const expandData = computed<ExpandData>(() => ({
         id: props.id,
         type: String(props.data.node.task.type),
@@ -395,13 +396,6 @@ button.playground-button {
 .status-tag__text {
     font-size: var(--ks-font-size-2xs);
     white-space: nowrap;
-}
-
-.duration-bar-placeholder {
-    width: 100%;
-    height: var(--ks-spacing-1);
-    border-radius: var(--ks-radius-xs);
-    background: var(--ks-bg-tag);
 }
 
 .runner-badge {

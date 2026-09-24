@@ -29,6 +29,17 @@ function taskRun(outputs?: Record<string, unknown>) {
     }
 }
 
+function taskRunWithHistory(taskId: string, histories: {date: number; state: string}[]) {
+    return {
+        id: `${taskId}-run`,
+        taskId,
+        state: {
+            current: histories[histories.length - 1].state,
+            histories,
+        },
+    }
+}
+
 function mountTaskNode({execution, taskRuns = [], replayEnabled = false, task = TASK, isReadOnly = true, isFlowable = false}: {
     execution?: Record<string, unknown>,
     taskRuns?: Record<string, unknown>[],
@@ -246,9 +257,44 @@ describe("TaskNode anatomy", () => {
         expect(wrapper.text()).toContain("core.log.Log")
     })
 
-    it("should reserve the duration-bar slot kestra-io/kestra#19665 will fill", () => {
+    it("should show no duration bar outside of an execution context", () => {
         const wrapper = mountTaskNode({})
 
-        expect(wrapper.find(".duration-bar-placeholder").exists()).toBe(true)
+        expect(wrapper.find(".compact-bar").exists()).toBe(false)
+    })
+
+    it("should show no duration bar for a task that never ran", () => {
+        const wrapper = mountTaskNode({
+            execution: {state: {current: "SUCCESS"}},
+            taskRuns: [taskRunWithHistory("my-task", [{date: 0, state: "SKIPPED"}])],
+        })
+
+        expect(wrapper.find(".compact-bar").exists()).toBe(false)
+    })
+
+    it("should fill its own duration bar when it is the execution's longest task run", () => {
+        const wrapper = mountTaskNode({
+            execution: {state: {current: "SUCCESS"}},
+            taskRuns: [
+                taskRunWithHistory("my-task", [{date: 0, state: "RUNNING"}, {date: 2_000, state: "SUCCESS"}]),
+            ],
+        })
+
+        const running = wrapper.find(".split-bar-running")
+        expect(running.exists()).toBe(true)
+        expect((running.element as HTMLElement).style.width).toBe("100%")
+    })
+
+    it("should scale its bar against the longest task run of the execution, not its own duration", () => {
+        const wrapper = mountTaskNode({
+            execution: {state: {current: "SUCCESS"}},
+            taskRuns: [
+                taskRunWithHistory("my-task", [{date: 0, state: "RUNNING"}, {date: 1_000, state: "SUCCESS"}]),
+                taskRunWithHistory("other-task", [{date: 0, state: "RUNNING"}, {date: 4_000, state: "SUCCESS"}]),
+            ],
+        })
+
+        const running = wrapper.find(".split-bar-running")
+        expect((running.element as HTMLElement).style.width).toBe("25%")
     })
 })

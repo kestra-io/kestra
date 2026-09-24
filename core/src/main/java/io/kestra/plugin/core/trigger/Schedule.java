@@ -187,7 +187,8 @@ public class Schedule extends AbstractTrigger implements Schedulable, TriggerOut
     // Caps the when-condition tick walk below so a frequent cron (e.g. per-second) paired with a
     // rarely-matching `when` can't pin the scheduling-loop thread rendering millions of ticks
     // synchronously. 10 years of even a daily cron (~3650 ticks) stays well under this.
-    private static final int MAX_WHEN_CONDITION_ITERATIONS = 10_000;
+    @VisibleForTesting
+    static final int MAX_WHEN_CONDITION_ITERATIONS = 10_000;
 
     @NotNull
     @Schema(

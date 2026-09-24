@@ -11,20 +11,24 @@ export interface TopologyFocusNode {
     childrenPaths: string[]
 }
 
-function lanesOf(item: Record<string, unknown>, itemPath: string): {key: string; path: string}[] {
+function lanesOf(item: Record<string, unknown>, itemPath: string): {key: string; path: string; items: unknown[]}[] {
     const task = displayTaskOf(item)
     const taskPath = taskEditPathFor(itemPath, item)
-    const lanes: {key: string; path: string}[] = []
+    const lanes: {key: string; path: string; items: unknown[]}[] = []
     for (const key of NESTED_BLOCK_KEYS) {
         const branch = task[key]
-        if (Array.isArray(branch) && branch.length > 0) lanes.push({key, path: `${taskPath}.${key}`})
+        if (Array.isArray(branch) && branch.length > 0) lanes.push({key, path: `${taskPath}.${key}`, items: branch})
     }
     const cases = task.cases
     if (cases && typeof cases === "object" && !Array.isArray(cases)) {
         for (const caseKey of Object.keys(cases as Record<string, unknown>)) {
             const branch = (cases as Record<string, unknown>)[caseKey]
             if (Array.isArray(branch) && branch.length > 0) {
-                lanes.push({key: "cases", path: `${taskPath}.cases.${caseKey}`})
+                lanes.push({
+                    key: "cases",
+                    path: flowYamlUtils.appendKeyToPath(`${taskPath}.cases`, caseKey),
+                    items: branch,
+                })
             }
         }
     }
@@ -48,19 +52,9 @@ function walk(
         const lanes = lanesOf(item, path)
         out.push({id: String(id), path, parentPath, depth, childrenPaths: lanes.map(lane => lane.path)})
         for (const lane of lanes) {
-            walk(getIn(item, lane.path, path), lane.path, depth + 1, out)
+            walk(lane.items, lane.path, depth + 1, out)
         }
     })
-}
-
-function getIn(item: Record<string, unknown>, lanePath: string, itemPath: string): unknown {
-    const relative = lanePath.slice(itemPath.length).replace(/^\./, "")
-    let cur: unknown = item
-    for (const segment of relative.split(".")) {
-        if (!cur || typeof cur !== "object") return undefined
-        cur = (cur as Record<string, unknown>)[segment]
-    }
-    return cur
 }
 
 /**

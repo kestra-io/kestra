@@ -178,6 +178,39 @@ tasks:
         }
     })
 
+    const DOTTED_CASES = `id: dotted
+namespace: company.team
+tasks:
+  - id: router
+    type: io.kestra.plugin.core.flow.Switch
+    value: "{{ trigger.version }}"
+    cases:
+      "1.0":
+        - id: legacy_path
+          type: io.kestra.plugin.core.log.Log
+          message: legacy
+      "2.0":
+        - id: current_path
+          type: io.kestra.plugin.core.log.Log
+          message: current
+`
+
+    it("reaches a Switch case whose key contains a dot", () => {
+        const order = buildTopologyFocusOrder(DOTTED_CASES)
+
+        expect(order.map(entry => entry.id)).toEqual(["router", "legacy_path", "current_path"])
+    })
+
+    it("hands a dotted-case task a path the block operations can resolve", () => {
+        const order = buildTopologyFocusOrder(DOTTED_CASES)
+        const byId = Object.fromEntries(order.map(entry => [entry.id, entry]))
+
+        for (const id of ["legacy_path", "current_path"]) {
+            expect(duplicateBlockAtPath(DOTTED_CASES, byId[id].path), `duplicate ${id}`).not.toBe(DOTTED_CASES)
+        }
+        expect(parentOf(order, "legacy_path")).toBe("router")
+    })
+
     it("returns nothing for a source that does not parse into a flow", () => {
         expect(buildTopologyFocusOrder("")).toEqual([])
     })

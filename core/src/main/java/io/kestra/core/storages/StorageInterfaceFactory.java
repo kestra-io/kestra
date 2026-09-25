@@ -46,7 +46,7 @@ public class StorageInterfaceFactory extends AbstractPluginInterfaceFactory<Stor
                 ), e
             );
         }
-        return plugin;
+        return new KestraStorageUriAdapter(plugin);
     }
 
     protected StorageInterface init(final StorageConfiguration storageConfiguration,

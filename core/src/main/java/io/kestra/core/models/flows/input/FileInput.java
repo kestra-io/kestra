@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Set;
 
 import io.kestra.core.models.flows.Input;
+import io.kestra.core.utils.FileUtils;
 import io.kestra.core.validations.FileInputValidation;
 
 import jakarta.validation.ConstraintViolationException;
@@ -27,12 +28,12 @@ public class FileInput extends Input<URI> {
     private List<String> allowedFileExtensions;
 
     /**
-     * Gets the file extension from the URI's path
+     * Extension of the last path segment, lowercased. A dot in an earlier segment is not an extension:
+     * {@code kestra://v1.2/README} has none, {@code kestra://report.ion} is {@code .ion}.
      */
     private String getFileExtension(URI uri) {
-        String path = uri.getPath();
-        int lastDotIndex = path.lastIndexOf(".");
-        return lastDotIndex >= 0 ? path.substring(lastDotIndex).toLowerCase() : "";
+        String extension = FileUtils.getExtension(uri);
+        return extension == null ? "" : extension.toLowerCase();
     }
 
     @Override

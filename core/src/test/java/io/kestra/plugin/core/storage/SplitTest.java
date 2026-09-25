@@ -29,6 +29,7 @@ import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.serializers.FileSerde;
+import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.Rethrow;
@@ -59,7 +60,7 @@ class SplitTest {
         Split.Output run = result.run(runContext);
 
         assertThat(run.getUris().size()).isEqualTo(8);
-        assertThat(run.getUris().getFirst().getPath()).endsWith(".yml");
+        assertThat(StorageContext.logicalPath(run.getUris().getFirst())).endsWith(".yml");
         assertThat(StringUtils.countMatches(readAll(run.getUris()), "\n")).isEqualTo(1000);
     }
 
@@ -128,8 +129,29 @@ class SplitTest {
         Split.Output run = result.run(runContext);
 
         assertThat(run.getUris().size()).isEqualTo(8);
-        assertThat(run.getUris().getFirst().getPath()).endsWith(".ion");
+        assertThat(StorageContext.logicalPath(run.getUris().getFirst())).endsWith(".ion");
         assertThat(readAllIon(run.getUris())).hasSize(1000);
+    }
+
+    @Test
+    void shouldKeepIonExtensionWhenTheSourceIsASingleSegmentKestraUri() throws Exception {
+        RunContext runContext = runContextFactory.of();
+        URI put = storageInterface.put(
+            MAIN_TENANT,
+            null,
+            URI.create("/report.ion"),
+            new FileInputStream(ionFile(ionContent(2)))
+        );
+        assertThat(put).isEqualTo(URI.create("kestra://report.ion"));
+
+        Split.Output run = Split.builder()
+            .from(Property.ofValue(put.toString()))
+            .rows(Property.ofValue(1))
+            .build()
+            .run(runContext);
+
+        assertThat(run.getUris()).hasSize(2);
+        assertThat(run.getUris()).allSatisfy(uri -> assertThat(StorageContext.logicalPath(uri)).endsWith(".ion"));
     }
 
     @Test
@@ -259,8 +281,18 @@ class SplitTest {
     }
 
     URI storageUploadIon(List<Map<String, Object>> records) throws URISyntaxException, IOException {
-        File tempFile = File.createTempFile("unit", ".ion");
+        File tempFile = ionFile(records);
 
+        return storageInterface.put(
+            MAIN_TENANT,
+            null,
+            new URI("/file/storage/%s/get.ion".formatted(IdUtils.create())),
+            new FileInputStream(tempFile)
+        );
+    }
+
+    private File ionFile(List<Map<String, Object>> records) throws IOException {
+        File tempFile = File.createTempFile("unit", ".ion");
         try (
             OutputStream outputStream = new BufferedOutputStream(new FileOutputStream(tempFile));
             SequenceWriter writer = FileSerde.createBinarySequenceWriter(outputStream, new TypeReference<Object>() {
@@ -270,13 +302,7 @@ class SplitTest {
                 writer.write(record);
             }
         }
-
-        return storageInterface.put(
-            MAIN_TENANT,
-            null,
-            new URI("/file/storage/%s/get.ion".formatted(IdUtils.create())),
-            new FileInputStream(tempFile)
-        );
+        return tempFile;
     }
 
     private List<Object> readAllIon(List<URI> uris) throws IOException {

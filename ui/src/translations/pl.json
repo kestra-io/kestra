@@ -2047,6 +2047,15 @@
       "success": {
         "title": "Gratulacje!",
         "subtitle": "Wszystko gotowe!"
+      },
+      "change_password": {
+        "title": "Zmień hasło",
+        "menu": "Zmień hasło",
+        "current_password": "Aktualne hasło",
+        "new_password": "Nowe hasło",
+        "username_hint": "Wprowadź swoją aktualną nazwę użytkownika (e-mail), aby zidentyfikować konto.",
+        "incorrect_current": "Aktualne hasło jest nieprawidłowe.",
+        "success": "Hasło zostało pomyślnie zmienione."
       }
     },
     "ai": {

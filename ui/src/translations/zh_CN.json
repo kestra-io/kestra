@@ -2047,6 +2047,15 @@
       "success": {
         "title": "恭喜！",
         "subtitle": "一切准备就绪！"
+      },
+      "change_password": {
+        "title": "更改密码",
+        "menu": "更改密码",
+        "current_password": "当前密码",
+        "new_password": "新密码",
+        "username_hint": "输入您当前的用户名（电子邮件）以识别您的账户。",
+        "incorrect_current": "当前密码不正確。",
+        "success": "密码已成功更改。"
       }
     },
     "ai": {

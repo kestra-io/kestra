@@ -2047,6 +2047,15 @@
       "success": {
         "title": "Congratulations!",
         "subtitle": "You’re all set!"
+      },
+      "change_password": {
+        "title": "Change password",
+        "menu": "Change password",
+        "current_password": "Current password",
+        "new_password": "New password",
+        "username_hint": "Enter your current username (email) so your account can be identified.",
+        "incorrect_current": "The current password is incorrect.",
+        "success": "Password changed successfully."
       }
     },
     "ai": {

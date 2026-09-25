@@ -77,4 +77,39 @@ describe("misc store addBasicAuth", () => {
         expect(disablePosthog).toHaveBeenCalledTimes(1)
         expect(capturePosthogEvent).not.toHaveBeenCalled()
     })
+
+    it("omits currentPassword during initial setup", async () => {
+        axiosGet.mockResolvedValue({
+            data: {isBasicAuthInitialized: true, isUiAnonymousUsageEnabled: false, uuid: "instance-uuid-3"},
+        })
+
+        const {useMiscStore} = await import("override/stores/misc")
+        const miscStore = useMiscStore()
+
+        await miscStore.addBasicAuth({username: "admin@kestra.io", password: "StrongPass1"})
+
+        expect(axiosPost).toHaveBeenCalledTimes(1)
+        const body = axiosPost.mock.calls[0][1]
+        expect(body).toMatchObject({uid: "uid-123", username: "admin@kestra.io", password: "StrongPass1"})
+        expect(body).not.toHaveProperty("currentPassword")
+    })
+
+    it("sends currentPassword when changing credentials", async () => {
+        axiosGet.mockResolvedValue({
+            data: {isBasicAuthInitialized: true, isUiAnonymousUsageEnabled: false, uuid: "instance-uuid-4"},
+        })
+
+        const {useMiscStore} = await import("override/stores/misc")
+        const miscStore = useMiscStore()
+
+        await miscStore.addBasicAuth({username: "admin@kestra.io", password: "NewStrongPass1", currentPassword: "OldStrongPass1"})
+
+        expect(axiosPost).toHaveBeenCalledTimes(1)
+        expect(axiosPost.mock.calls[0][1]).toMatchObject({
+            uid: "uid-123",
+            username: "admin@kestra.io",
+            password: "NewStrongPass1",
+            currentPassword: "OldStrongPass1",
+        })
+    })
 })

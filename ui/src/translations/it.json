@@ -2644,6 +2644,9 @@
       "open_in_tabs": "Apri in schede",
       "open_mode_hint": "I task si aprono in una modale per impostazione predefinita. Puoi impostare le schede come predefinite in {settings}."
     },
+    "table_input": {
+      "add_row": "Clicca qui per aggiungere una nuova riga"
+    },
     "blocks": "Blocchi",
     "split_horizontal": "Dividi orizzontalmente",
     "split_vertical": "Dividi verticalmente",

@@ -2644,6 +2644,9 @@
       "open_in_tabs": "टैब में खोलें",
       "open_mode_hint": "Tasks डिफ़ॉल्ट रूप से एक modal में खुलते हैं। आप {settings} में tabs को डिफ़ॉल्ट बना सकते हैं।"
     },
+    "table_input": {
+      "add_row": "नई लाइन जोड़ने के लिए यहां क्लिक करें"
+    },
     "blocks": "ब्लॉक",
     "split_horizontal": "क्षैतिज रूप से विभाजित करें",
     "split_vertical": "लंबवत विभाजित करें",

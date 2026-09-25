@@ -778,6 +778,7 @@ export type ExecutionControllerApiValidateExecutionInputsResponseApiInputAndValu
 export type ExecutionControllerApiValidateExecutionInputsResponseApiInputError = {
     message: string;
     renderError?: boolean;
+    path?: string;
 };
 
 export type ExecutionControllerEvalResult = {
@@ -2374,7 +2375,7 @@ export type TriggerPluginCategory = 'core' | 'realtime' | 'app';
 
 export type TriggerType = 'SCHEDULE' | 'POLLING' | 'REALTIME';
 
-export type Type = 'STRING' | 'SELECT' | 'INT' | 'FLOAT' | 'BOOL' | 'DATETIME' | 'DATE' | 'TIME' | 'DURATION' | 'FILE' | 'JSON' | 'ION' | 'URI' | 'SECRET' | 'ARRAY' | 'MULTISELECT' | 'YAML' | 'EMAIL' | 'FORM' | 'REUSABLE_INPUTS';
+export type Type = 'STRING' | 'SELECT' | 'INT' | 'FLOAT' | 'BOOL' | 'DATETIME' | 'DATE' | 'TIME' | 'DURATION' | 'FILE' | 'JSON' | 'ION' | 'URI' | 'SECRET' | 'ARRAY' | 'MULTISELECT' | 'YAML' | 'EMAIL' | 'FORM' | 'TABLE' | 'REUSABLE_INPUTS';
 
 export type ValidateConstraintViolation = {
     index: number;

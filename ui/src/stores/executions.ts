@@ -37,6 +37,9 @@ export interface Check {
 
 export interface InputError {
     message: string;
+    // the path of the offending value inside a structured input (`disks[2].size_gb` for a TABLE cell),
+    // absent when the error is about the input as a whole
+    path?: string;
     // true when the error is a render/resolution failure (broken field: e.g. a SELECT `expression` or an
     // input `defaults` Pebble expression that threw) rather than a value validation error
     renderError?: boolean;
@@ -86,6 +89,9 @@ export interface InputMetaData {
     dependsOn?: unknown;
     /** Set on a FORM input only: the children it groups, mirroring the backend `FormInput.inputs`. */
     inputs?: InputMetaData[];
+    /** Set on a TABLE input only: the declaration of one row, mirroring the backend `TableInput`. */
+    columns?: InputMetaData[];
+    rows?: {min?: number; max?: number};
 }
 
 /** Mirrors the backend `FilePreview`: `content` is renderer-specific (text, rows, base64, ...). */

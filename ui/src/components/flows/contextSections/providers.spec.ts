@@ -159,7 +159,7 @@ describe("namespaceFilesContextSectionProvider", () => {
 
         const section = await namespaceFilesContextSectionProvider({namespace: "team.a"})
 
-        expect(section?.chips).toEqual([{label: "read('queries/idle_ec2.sql')", expr: "{{ read('queries/idle_ec2.sql') }}"}])
+        expect(section?.chips).toEqual([{label: "read('queries/idle_ec2.sql')", expr: "{{ read('queries/idle_ec2.sql') }}", groupKey: "queries/idle_ec2.sql"}])
     })
 
     it("returns null when the namespace has no files", async () => {

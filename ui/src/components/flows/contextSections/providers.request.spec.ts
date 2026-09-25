@@ -99,9 +99,9 @@ describe("context section providers build a section from a realistic, non-empty 
         const section = await namespaceFilesContextSectionProvider({namespace: "qa.nocode"})
 
         expect(section?.chips).toEqual([
-            {label: "fileURI('fixtures/sample_response.json')", expr: "{{ fileURI('fixtures/sample_response.json') }}"},
-            {label: "read('queries/idle_ec2.sql')", expr: "{{ read('queries/idle_ec2.sql') }}"},
-            {label: "read('queries/o'brien report.sql')", expr: "{{ read('queries/o\\'brien report.sql') }}"},
+            {label: "fileURI('fixtures/sample_response.json')", expr: "{{ fileURI('fixtures/sample_response.json') }}", groupKey: "fixtures/sample_response.json"},
+            {label: "read('queries/idle_ec2.sql')", expr: "{{ read('queries/idle_ec2.sql') }}", groupKey: "queries/idle_ec2.sql"},
+            {label: "read('queries/o'brien report.sql')", expr: "{{ read('queries/o\\'brien report.sql') }}", groupKey: "queries/o'brien report.sql"},
         ])
     })
 })

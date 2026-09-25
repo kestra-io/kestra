@@ -6,13 +6,13 @@ import {useContextSectionsExtension} from "override/components/flows/contextSect
 import type {DataSection} from "../components/flows/contextSections/types"
 
 export function useContextSections(namespace: Ref<string | undefined>) {
-    const {t} = useI18n()
+    const {t, locale} = useI18n()
     const sections = ref<DataSection[]>([])
 
     const providers = [...OSS_CONTEXT_SECTION_PROVIDERS, ...useContextSectionsExtension()]
 
     let latestRequest = 0
-    watch(namespace, async (ns) => {
+    watch([namespace, locale], async ([ns]) => {
         const requestId = ++latestRequest
         if (!ns) {
             sections.value = []

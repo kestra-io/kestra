@@ -1,5 +1,6 @@
 import {beforeEach, describe, expect, it, vi} from "vitest"
 import {defineComponent, h, ref} from "vue"
+import {useI18n} from "vue-i18n"
 import {i18nMount} from "../i18nMount"
 
 const {kvProvider, extraProvider} = vi.hoisted(() => ({
@@ -50,5 +51,26 @@ describe("useContextSections", () => {
 
         namespace.value = undefined
         await vi.waitFor(() => expect(sections.value).toHaveLength(0))
+    })
+
+    it("relabels the cached sections when the UI locale changes, instead of stranding them in the old language", async () => {
+        let api!: ReturnType<typeof useContextSections>
+        let locale!: ReturnType<typeof useI18n<Record<string, unknown>, string>>["locale"]
+        const namespace = ref<string | undefined>("team.a")
+        const Comp = defineComponent({setup() {
+            api = useContextSections(namespace)
+            locale = useI18n<Record<string, unknown>, string>().locale
+            return () => h("div")
+        }})
+        i18nMount(Comp, {locales: {
+            en: {block_editor: {namespace_kv: "KV keys", namespace_credentials: "Credentials"}},
+            fr: {block_editor: {namespace_kv: "Clés KV", namespace_credentials: "Identifiants"}},
+        }})
+        await vi.waitFor(() => expect(api.sections.value).toHaveLength(2))
+        expect(api.sections.value[0].label).toBe("KV keys")
+
+        locale.value = "fr"
+        await vi.waitFor(() => expect(api.sections.value[0].label).toBe("Clés KV"))
+        expect(kvProvider).toHaveBeenCalledTimes(1)
     })
 })

@@ -27,7 +27,7 @@ export function namespaceFileChips(path: string): DataChip[] {
     const escapedPath = escapePebbleLiteral(displayPath)
 
     const chips: DataChip[] = []
-    if (offerRead) chips.push({label: `read('${displayPath}')`, expr: `{{ read('${escapedPath}') }}`})
-    if (offerFileUri) chips.push({label: `fileURI('${displayPath}')`, expr: `{{ fileURI('${escapedPath}') }}`})
+    if (offerRead) chips.push({label: `read('${displayPath}')`, expr: `{{ read('${escapedPath}') }}`, groupKey: displayPath})
+    if (offerFileUri) chips.push({label: `fileURI('${displayPath}')`, expr: `{{ fileURI('${escapedPath}') }}`, groupKey: displayPath})
     return chips
 }

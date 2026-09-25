@@ -54,7 +54,7 @@
                     <ChevronRight class="task-edit-data-chevron" :class="{'task-edit-data-chevron--open': isExpanded(section.key)}" />
                     <span class="task-edit-data-section-label">{{ section.label }}</span>
                     <KsNewBadge v-if="section.isNew">{{ $t("new") }}</KsNewBadge>
-                    <span class="task-edit-data-count">{{ section.chips.length }}</span>
+                    <span class="task-edit-data-count">{{ chipCount(section) }}</span>
                 </button>
 
                 <div v-if="isExpanded(section.key)" class="task-edit-data-chips">
@@ -67,8 +67,7 @@
                             :title="chip.expr"
                             @mousedown.prevent
                             @click="chip.expr && emit('chip-activate', chip.expr, section.key)"
-                            @dragstart="chip.expr && onDragStart($event, chip.expr)"
-                            @dragend="onDragEnd($event, section.key)"
+                            @dragstart="chip.expr && onDragStart($event, chip.expr, section.key)"
                         >
                             <span class="task-edit-data-chip-label">{{ chip.label }}</span>
                         </button>
@@ -89,7 +88,7 @@
 
 <script setup lang="ts">
     import {computed, ref} from "vue"
-    import {CHIP_DRAG_MIME} from "./chipInsertion"
+    import {CHIP_DRAG_MIME, CHIP_SECTION_DRAG_MIME} from "./chipInsertion"
     import {KsNewBadge} from "@kestra-io/design-system"
     import Magnify from "vue-material-design-icons/Magnify.vue"
     import ChevronRight from "vue-material-design-icons/ChevronRight.vue"
@@ -97,7 +96,7 @@
     import ChevronUp from "vue-material-design-icons/ChevronUp.vue"
     import ChevronDown from "vue-material-design-icons/ChevronDown.vue"
     import type {DataSection} from "./contextSections/types"
-    import {trackChipInserted, trackContextSectionExpanded} from "../../utils/analytics/taskEditorEvents"
+    import {trackContextSectionExpanded} from "../../utils/analytics/taskEditorEvents"
 
     const props = withDefaults(defineProps<{
         kind: string
@@ -142,6 +141,7 @@
     }
 
     function toggle(key: string) {
+        if (isFiltering.value) return
         if (collapsed.value.has(key)) {
             collapsed.value.delete(key)
             trackContextSectionExpanded(`${props.kind}.${key}`)
@@ -151,16 +151,15 @@
         collapsed.value = new Set(collapsed.value)
     }
 
-    function onDragStart(event: DragEvent, expr: string) {
-        event.dataTransfer?.setData("text/plain", expr)
-        event.dataTransfer?.setData(CHIP_DRAG_MIME, expr)
-        if (event.dataTransfer) event.dataTransfer.effectAllowed = "copy"
+    function chipCount(section: DataSection) {
+        return new Set(section.chips.map(chip => chip.groupKey ?? chip.label)).size
     }
 
-    function onDragEnd(event: DragEvent, sectionKey: string) {
-        if (event.dataTransfer?.dropEffect !== "none") {
-            trackChipInserted(`${props.kind}.${sectionKey}`)
-        }
+    function onDragStart(event: DragEvent, expr: string, sectionKey: string) {
+        event.dataTransfer?.setData("text/plain", expr)
+        event.dataTransfer?.setData(CHIP_DRAG_MIME, expr)
+        event.dataTransfer?.setData(CHIP_SECTION_DRAG_MIME, sectionKey)
+        if (event.dataTransfer) event.dataTransfer.effectAllowed = "copy"
     }
 </script>
 

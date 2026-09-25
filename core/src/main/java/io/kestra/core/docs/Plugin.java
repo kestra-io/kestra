@@ -90,19 +90,19 @@ public class Plugin {
         plugin.subGroup = subgroup;
 
         Predicate<Class<?>> packagePredicate = c -> subgroup == null || c.getPackageName().equals(subgroup);
-        plugin.tasks = filterAndGetTypeWithMetadata(registeredPlugin.getTasks(), packagePredicate);
-        plugin.triggers = filterAndGetTypeWithMetadata(registeredPlugin.getTriggers(), packagePredicate);
-        plugin.storages = filterAndGetTypeWithMetadata(registeredPlugin.getStorages(), packagePredicate);
-        plugin.secrets = filterAndGetTypeWithMetadata(registeredPlugin.getSecrets(), packagePredicate);
-        plugin.taskRunners = filterAndGetTypeWithMetadata(registeredPlugin.getTaskRunners(), packagePredicate);
-        plugin.assets = filterAndGetTypeWithMetadata(registeredPlugin.getAssets(), packagePredicate);
-        plugin.apps = filterAndGetTypeWithMetadata(registeredPlugin.getApps(), packagePredicate);
-        plugin.appBlocks = filterAndGetTypeWithMetadata(registeredPlugin.getAppBlocks(), packagePredicate);
-        plugin.charts = filterAndGetTypeWithMetadata(registeredPlugin.getCharts(), packagePredicate);
-        plugin.dataFilters = filterAndGetTypeWithMetadata(registeredPlugin.getDataFilters(), packagePredicate);
-        plugin.dataFiltersKPI = filterAndGetTypeWithMetadata(registeredPlugin.getDataFiltersKPI(), packagePredicate);
-        plugin.logExporters = filterAndGetTypeWithMetadata(registeredPlugin.getLogExporters(), packagePredicate);
-        plugin.additionalPlugins = filterAndGetTypeWithMetadata(registeredPlugin.getAdditionalPlugins(), packagePredicate);
+        plugin.tasks = filterAndGetTypeWithMetadata(registeredPlugin.getTasks(), packagePredicate, registeredPlugin);
+        plugin.triggers = filterAndGetTypeWithMetadata(registeredPlugin.getTriggers(), packagePredicate, registeredPlugin);
+        plugin.storages = filterAndGetTypeWithMetadata(registeredPlugin.getStorages(), packagePredicate, registeredPlugin);
+        plugin.secrets = filterAndGetTypeWithMetadata(registeredPlugin.getSecrets(), packagePredicate, registeredPlugin);
+        plugin.taskRunners = filterAndGetTypeWithMetadata(registeredPlugin.getTaskRunners(), packagePredicate, registeredPlugin);
+        plugin.assets = filterAndGetTypeWithMetadata(registeredPlugin.getAssets(), packagePredicate, registeredPlugin);
+        plugin.apps = filterAndGetTypeWithMetadata(registeredPlugin.getApps(), packagePredicate, registeredPlugin);
+        plugin.appBlocks = filterAndGetTypeWithMetadata(registeredPlugin.getAppBlocks(), packagePredicate, registeredPlugin);
+        plugin.charts = filterAndGetTypeWithMetadata(registeredPlugin.getCharts(), packagePredicate, registeredPlugin);
+        plugin.dataFilters = filterAndGetTypeWithMetadata(registeredPlugin.getDataFilters(), packagePredicate, registeredPlugin);
+        plugin.dataFiltersKPI = filterAndGetTypeWithMetadata(registeredPlugin.getDataFiltersKPI(), packagePredicate, registeredPlugin);
+        plugin.logExporters = filterAndGetTypeWithMetadata(registeredPlugin.getLogExporters(), packagePredicate, registeredPlugin);
+        plugin.additionalPlugins = filterAndGetTypeWithMetadata(registeredPlugin.getAdditionalPlugins(), packagePredicate, registeredPlugin);
 
         return plugin;
     }
@@ -145,7 +145,7 @@ public class Plugin {
      * @param list The list of classes?
      * @return a filtered streams.
      */
-    private static List<PluginElementMetadata> filterAndGetTypeWithMetadata(final List<? extends Class<?>> list, Predicate<Class<?>> clazzFilter) {
+    private static List<PluginElementMetadata> filterAndGetTypeWithMetadata(final List<? extends Class<?>> list, Predicate<Class<?>> clazzFilter, RegisteredPlugin registeredPlugin) {
         return list
             .stream()
             .filter(not(io.kestra.core.models.Plugin::isInternal))
@@ -158,12 +158,21 @@ public class Plugin {
                 var title = Optional.ofNullable(schema).map(Schema::title).filter(t -> !t.isEmpty()).orElse(null);
                 var description = Optional.ofNullable(schema).map(Schema::description).filter(d -> !d.isEmpty()).orElse(null);
                 var deprecated = io.kestra.core.models.Plugin.isDeprecated(c) ? true : null;
+                List<String> aliases = registeredPlugin.getAliases() == null ? null : registeredPlugin.getAliases()
+                    .values()
+                    .stream()
+                    .filter(entry -> entry.getValue().equals(c))
+                    .map(Map.Entry::getKey)
+                    .toList();
 
-                return new PluginElementMetadata(c.getName(), deprecated, title, description);
+                return new PluginElementMetadata(c.getName(), deprecated, title, description, (aliases == null || aliases.isEmpty()) ? null : aliases);
             })
             .toList();
     }
 
-    public record PluginElementMetadata(String cls, Boolean deprecated, String title, String description) {
+    public record PluginElementMetadata(String cls, Boolean deprecated, String title, String description, List<String> aliases) {
+        public PluginElementMetadata(String cls, Boolean deprecated, String title, String description) {
+            this(cls, deprecated, title, description, null);
+        }
     }
 }

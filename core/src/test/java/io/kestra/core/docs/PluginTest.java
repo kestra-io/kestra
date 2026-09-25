@@ -1,10 +1,13 @@
 package io.kestra.core.docs;
 
+import java.util.List;
+import java.util.Map;
 import java.util.jar.Manifest;
 
 import org.junit.jupiter.api.Test;
 
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.plugins.PluginScanner;
 import io.kestra.core.plugins.RegisteredPlugin;
 import io.kestra.plugin.core.dashboard.data.Flows;
 import io.kestra.plugin.core.storage.Delete;
@@ -47,6 +50,22 @@ class PluginTest {
 
         // io.kestra.plugin.core.storage declares @PluginSubGroup(categories = CORE) with no title.
         assertThat(Plugin.titleFor(core, Delete.class)).isEqualTo("storage");
+    }
+
+    @Test
+    void ofExposesAliasesOnPluginElementMetadata() {
+        RegisteredPlugin core = new PluginScanner(PluginTest.class.getClassLoader()).scan();
+        Plugin result = Plugin.of(core, null);
+
+        // Core plugin registers aliases; verify that elements whose classes are aliased expose them
+        assertThat(result.getAliases()).isNotEmpty();
+        List<Plugin.PluginElementMetadata> elementsWithAliases = result.getTasks().stream()
+            .filter(t -> t.aliases() != null && !t.aliases().isEmpty())
+            .toList();
+        assertThat(elementsWithAliases).isNotEmpty();
+        for (Plugin.PluginElementMetadata el : elementsWithAliases) {
+            assertThat(result.getAliases()).containsAll(el.aliases());
+        }
     }
 
     private static RegisteredPlugin pluginWithTitle(String title) {

@@ -3488,63 +3488,41 @@ class ExecutionControllerRunnerTest {
     }
 
     @Test
-    @LoadFlowsWithTenant({ "flows/valids/pause-test.yaml" })
-    void shouldReturnConflictWhenRestartExecutionCalledOnKilledExecution(String tenantId) throws QueueException {
+    @LoadFlowsWithTenant({"flows/valids/pause-test.yaml"})
+    void shouldRestartKilledExecution(String tenantId) throws QueueException {
         when(tenantService.resolveTenant()).thenReturn(tenantId);
-        Execution pausedExecution = runnerUtils.runOneUntilPaused(tenantId, TESTS_FLOW_NS, "pause-test");
+
+        Execution pausedExecution = runnerUtils.runOneUntilPaused(
+            tenantId,
+            TESTS_FLOW_NS,
+            "pause-test"
+        );
         assertThat(pausedExecution.getState().isPaused()).isTrue();
 
         HttpResponse<?> killResponse = client.toBlocking().exchange(
-            HttpRequest.DELETE("/api/v1/%s/executions/%s/actions/kill".formatted(tenantId, pausedExecution.getId()))
+            HttpRequest.DELETE(
+                "/api/v1/%s/executions/%s/actions/kill"
+                    .formatted(tenantId, pausedExecution.getId())
+            )
         );
         assertThat(killResponse.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
 
-        Execution killedExecution = awaitExecution(pausedExecution.getId(), exec -> exec.getState().getCurrent().isKilled());
-        HttpClientResponseException e = assertThrows(
-            HttpClientResponseException.class,
-            () -> client.toBlocking().retrieve(
-                POST(
-                    "/api/v1/%s/executions/%s/actions/restart".formatted(tenantId, killedExecution.getId()),
-                    List.of(killedExecution.getId())
-                ),
-                Execution.class
-            )
+        Execution killedExecution = awaitExecution(
+            pausedExecution.getId(),
+            exec -> exec.getState().getCurrent().isKilled()
         );
 
-        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.CONFLICT.getCode());
-        assertThat(e.getMessage()).contains("Cannot restart execution: current state is 'KILLED', expected terminated.");
-
-        e = assertThrows(
-            HttpClientResponseException.class,
-            () -> client.toBlocking().retrieve(
-                POST(
-                    "/api/v1/%s/executions/restart/by-ids".formatted(tenantId),
-                    List.of(killedExecution.getId())
-                ),
-                MutableHttpResponse.class
-            )
+        Execution restartedExecution = client.toBlocking().retrieve(
+            POST(
+                "/api/v1/%s/executions/%s/actions/restart"
+                    .formatted(tenantId, killedExecution.getId()),
+                List.of(killedExecution.getId())
+            ),
+            Execution.class
         );
 
-        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.BAD_REQUEST.getCode());
-        Optional<String> bulkErrorResponse = e.getResponse().getBody(String.class);
-        assertThat(bulkErrorResponse).isPresent();
-        assertThat(bulkErrorResponse.get()).contains("must be terminated to be restarted, current state is 'KILLED'");
-
-        e = assertThrows(
-            HttpClientResponseException.class,
-            () -> client.toBlocking().retrieve(
-                POST(
-                    "/api/v1/%s/executions/restart/by-query?filters[q][EQUALS]=%s".formatted(tenantId, killedExecution.getId()),
-                    List.of(killedExecution.getId())
-                ),
-                MutableHttpResponse.class
-            )
-        );
-
-        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.BAD_REQUEST.getCode());
-        bulkErrorResponse = e.getResponse().getBody(String.class);
-        assertThat(bulkErrorResponse).isPresent();
-        assertThat(bulkErrorResponse.get()).contains("must be terminated to be restarted, current state is 'KILLED'");
+        assertThat(restartedExecution.getState().getCurrent())
+            .isEqualTo(State.Type.RESTARTED);
     }
 
     @Test

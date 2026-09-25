@@ -783,4 +783,34 @@ class ExecutionServiceTest {
         assertThat(restarted.getOriginalId()).isEqualTo(newExecution.getId());
         assertThat(restarted.getTaskRunList()).isEmpty();
     }
+
+    @Test
+    @LoadFlows("flows/valids/minimal.yaml")
+    void restartShouldSucceedWhenKilledWithRunningTaskRun() throws Exception {
+        Flow flow = flowRepository
+            .findById(MAIN_TENANT, "io.kestra.tests", "minimal")
+            .orElseThrow();
+
+        Execution execution = Execution.newExecution(flow, Collections.emptyList())
+            .withTaskRunList(
+                List.of(
+                    TaskRun.builder()
+                        .id("taskrun")
+                        .taskId("date")
+                        .state(new State(State.Type.RUNNING))
+                        .build()
+                )
+            )
+            .withState(State.Type.KILLED);
+
+        Execution restarted = executionService.restart(execution, flow, null);
+
+        assertThat(restarted.getState().getCurrent())
+            .isEqualTo(State.Type.RESTARTED);
+
+        assertThat(restarted.getTaskRunList()).hasSize(1);
+
+        assertThat(restarted.getTaskRunList().getFirst().getState().getCurrent())
+            .isEqualTo(State.Type.RESTARTED);
+    }
 }

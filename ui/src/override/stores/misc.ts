@@ -27,6 +27,8 @@ export const useMiscStore = defineStore("misc", () => {
     // Never set in OSS: without the EE thread list there is no way back to the previous
     // conversation, so a reset would silently discard it. The EE store override honours it.
     const copilotNewThread = ref(false)
+    // Sends this one seeded prompt straight away, for entry points the user already committed to by clicking.
+    const copilotSendInitialMessage = ref(false)
 
     /** Opens the AI Copilot context-dock tab. */
     function openCopilot() {
@@ -34,10 +36,11 @@ export const useMiscStore = defineStore("misc", () => {
         contextInfoBarOpenTab.value = "ai"
     }
 
-    /** Opens the AI Copilot context-dock tab and seeds its composer with `prompt`. */
-    function promptCopilot(prompt: string, options?: {title?: string, newThread?: boolean}) {
+    /** Opens the AI Copilot context-dock tab and hands it `prompt`, seeded into the composer or sent as the first turn. */
+    function promptCopilot(prompt: string, options?: {title?: string, newThread?: boolean, sendInitialMessage?: boolean}) {
         copilotPrompt.value = prompt
         copilotThreadTitle.value = options?.title ?? null
+        copilotSendInitialMessage.value = options?.sendInitialMessage === true
         openCopilot()
     }
 
@@ -112,6 +115,7 @@ export const useMiscStore = defineStore("misc", () => {
         copilotPrompt,
         copilotThreadTitle,
         copilotNewThread,
+        copilotSendInitialMessage,
         openCopilot,
         promptCopilot,
         loadConfigs,

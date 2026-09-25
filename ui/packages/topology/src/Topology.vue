@@ -498,24 +498,38 @@
             })
     }
 
-    const collapseCluster = (clusterUid: string, regenerate: boolean) => {
+    const collapseCluster = (clusterUid: string, regenerate: boolean, targetNodeId?: string) => {
         const cluster: any = props.flowGraph.clusters.find(c => c.cluster.uid.endsWith(clusterUid))
         if (!cluster) return
         const nodeId = clusterUid.replace(CLUSTER_PREFIX, "")
-        collapsed.value.add(nodeId)
+        
+        const isRootCall = targetNodeId === undefined
+        const effectiveNodeId = targetNodeId || nodeId
+
+        if (isRootCall) {
+            collapsed.value.add(nodeId)
+        } else {
+            hiddenNodes.value.push(nodeId)
+        }
 
         hiddenNodes.value = hiddenNodes.value.concat(cluster.nodes)
         hiddenNodes.value = hiddenNodes.value.concat([cluster.cluster.uid] as string[])
         edgeReplacer.value = {
             ...edgeReplacer.value,
-            [cluster.cluster.uid]: nodeId,
-            [cluster.start]: nodeId,
-            [cluster.end]: nodeId,
+            [nodeId]: effectiveNodeId,
+            [cluster.cluster.uid]: effectiveNodeId,
+            [cluster.start]: effectiveNodeId,
+            [cluster.end]: effectiveNodeId,
         }
 
         for (let child of cluster.nodes) {
             if (props.flowGraph.clusters.map(c => c.cluster.uid).includes(child)) {
-                collapseCluster(child, false)
+                collapseCluster(child, false, effectiveNodeId)
+            } else {
+                edgeReplacer.value = {
+                    ...edgeReplacer.value,
+                    [child]: effectiveNodeId,
+                }
             }
         }
 
@@ -538,7 +552,7 @@
         clusterToNode.value = []
         collapsed.value.delete(expandData.id)
 
-        collapsed.value.forEach(n => collapseCluster(n, false))
+        collapsed.value.forEach(n => collapseCluster(CLUSTER_PREFIX + n, false))
 
         generateGraph()
     }

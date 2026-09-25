@@ -14,9 +14,11 @@ import io.kestra.core.models.dashboards.Dashboard;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.serializers.JacksonMapper;
+import com.fasterxml.jackson.databind.JsonNode;
 import io.kestra.core.services.ExpressionContextService;
 import io.kestra.core.services.FlowParsingService;
 import io.kestra.core.services.InstanceService;
+import io.kestra.core.utils.ToonUtils;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.Version;
 import io.kestra.core.utils.VersionProvider;
@@ -175,7 +177,10 @@ public abstract class AiService<T extends AiConfiguration> implements AiServiceI
         String generatedFlow = flowAiCopilot.generateFlow(
             this.pluginFinder(flowGenerationPrompt.getConversationId()),
             this.flowYamlBuilder(flowGenerationPrompt.getConversationId()),
-            (plugins) -> JacksonMapper.ofJson().writeValueAsString(jsonSchemaGenerator.schemas(Flow.class, false, plugins, true)),
+            (plugins) -> {
+                JsonNode node = JacksonMapper.ofJson().valueToTree(jsonSchemaGenerator.schemas(Flow.class, false, plugins, true));
+                return ToonUtils.jsonToToon(node);
+            },
             allPluginsMetadata(),
             flowGenerationPrompt,
             tenantId,
@@ -197,7 +202,10 @@ public abstract class AiService<T extends AiConfiguration> implements AiServiceI
         String generatedDashboard = dashboardAiCopilot.generateDashboard(
             this.pluginFinder(dashboardGenerationPrompt.getConversationId()),
             this.dashboardYamlBuilder(dashboardGenerationPrompt.getConversationId()),
-            (plugins) -> JacksonMapper.ofJson().writeValueAsString(jsonSchemaGenerator.schemas(Dashboard.class, false, plugins, true)),
+            (plugins) -> {
+                JsonNode node = JacksonMapper.ofJson().valueToTree(jsonSchemaGenerator.schemas(Dashboard.class, false, plugins, true));
+                return ToonUtils.jsonToToon(node);
+            },
             allPluginsMetadata(),
             dashboardGenerationPrompt
         );

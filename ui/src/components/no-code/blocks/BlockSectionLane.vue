@@ -12,6 +12,8 @@
         <div
             class="block-section-list"
             :data-test="listTest"
+            @dragover.prevent
+            @dragleave="onLaneDragLeave"
             @dragend="onDragEnd"
         >
             <template v-for="(block, index) in blocks" :key="resolveBlockDomId(blocks, index)">
@@ -26,7 +28,8 @@
                     :depth="0"
                     :playgroundEnabled="playgroundEnabled"
                     :draggable="true"
-                    :dragForbidden="trailingDropState === 'forbidden'"
+                    :dragOver="dragOverIndex === index"
+                    :dragForbidden="laneDropState === 'forbidden'"
                     :data-block-id="resolveBlockDomId(blocks, index)"
                     data-test="block-card"
                     @select="(path: string) => emit('selectPath', path)"
@@ -48,7 +51,7 @@
                     :focused="focusedId === resolveBlockDomId(blocks, index)"
                     :draggable="true"
                     :dragOver="dragOverIndex === index"
-                    :dragForbidden="trailingDropState === 'forbidden'"
+                    :dragForbidden="laneDropState === 'forbidden'"
                     :runnable="playgroundEnabled"
                     :icons="icons"
                     :data-block-id="resolveBlockDomId(blocks, index)"
@@ -70,7 +73,7 @@
                 :dataTest="endDropTest"
                 :label="emptyLabel"
                 :hint="emptyHint"
-                :dropState="trailingDropState"
+                :dropState="laneDropState"
                 :data-block-id="sentinelId"
                 :class="{'block-kbd-focused': focusedId === sentinelId}"
                 :tabindex="focusedId === sentinelId ? 0 : -1"
@@ -86,7 +89,7 @@
                 :dataTest="endDropTest"
                 :label="emptyLabel"
                 :hint="emptyHint"
-                :dropState="trailingDropState"
+                :dropState="laneDropState"
                 @add="(e: Event) => emit('add', e)"
                 @dragover="onTrailingDragOver"
                 @drop="onTrailingDrop"
@@ -142,11 +145,12 @@
 
     const {
         dragOverIndex,
-        dropState: trailingDropState,
+        dropState: laneDropState,
         onItemDragStart,
         onItemDragOver,
         onItemDrop,
         onDragEnd,
+        onLaneDragLeave,
         onTrailingDragOver,
         onTrailingDrop,
     } = useLaneDrag(() => props.section, () => props.blocks.length)

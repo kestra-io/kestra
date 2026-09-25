@@ -62,7 +62,8 @@ export function useBlockDragAndDrop(
                 applyYaml(reorderAtPath(flowYaml.value, toParentPath, fromIndex, clampedIndex))
             }
         } else {
-            clearSelectionIfPathStale(fromParentPath, fromIndex, fromIndex)
+            clearSelectionIfPathStale(fromParentPath, fromIndex, Math.max(fromIndex, listLengthAtPath(flowYaml.value, fromParentPath) - 1))
+            clearSelectionIfPathStale(toParentPath, toIndex, listLengthAtPath(flowYaml.value, toParentPath))
             applyYaml(moveBlockToPath(flowYaml.value, source, toParentPath, toIndex))
         }
 

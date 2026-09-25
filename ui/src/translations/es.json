@@ -1083,6 +1083,7 @@
     "execute backfill": "Ejecutar backfill",
     "relative": "Relativo",
     "relative start date": "Fecha de inicio relativa",
+    "now": "Ahora",
     "absolute": "Absoluto",
     "backfill": "Backfill",
     "Set labels": "Establecer etiquetas",
@@ -2655,6 +2656,52 @@
     },
     "iteration": "Iteración",
     "iteration_number": "Iteración {number}",
-    "delete_log_iteration": "¿Estás seguro de que quieres eliminar el registro de {iteration}?"
+    "delete_log_iteration": "¿Estás seguro de que quieres eliminar el registro de {iteration}?",
+    "executionsTimeline": {
+      "breadcrumb": {
+        "all": "Todos",
+        "total": "{count} ejecución | {count} ejecuciones",
+        "failed": "{count} fallidas"
+      },
+      "toolbar": {
+        "panBack": "Desplazar hacia atrás",
+        "panForward": "Desplazar hacia adelante",
+        "zoomIn": "Acercar",
+        "zoomOut": "Alejar",
+        "range": "{start} → {end} ({duration})",
+        "rangePicker": "Cambiar rango de tiempo"
+      },
+      "row": {
+        "openOwnPage": "Abrir esta página",
+        "runsCount": "{count} ejecución | {count} ejecuciones",
+        "failedCount": "{count} fallidas"
+      },
+      "bucket": {
+        "hint": "Agregado: acerca el zoom para ver el detalle de cada ejecución"
+      },
+      "popover": {
+        "openExecution": "Abrir ejecución",
+        "showOnlyFlow": "Mostrar solo este flow"
+      },
+      "empty": {
+        "description": "No hay ejecuciones en el rango y los filtros seleccionados.",
+        "resetFilters": "Restablecer filtros",
+        "widenRange": "Ampliar a 7 días"
+      },
+      "error": {
+        "title": "No se pudo cargar la cronología",
+        "description": "Se produjo un error al cargar las ejecuciones de este rango."
+      },
+      "truncated": {
+        "description": "Mostrando las últimas {shown} de {total} ejecuciones — reduce el rango de tiempo o los filtros para ver todas."
+      },
+      "scrubber": {
+        "label": "Densidad de Execution a lo largo del tiempo, arrastra para seleccionar un rango"
+      }
+    },
+    "chart mode": {
+      "counts": "Recuentos",
+      "timeline": "Cronología"
+    }
   }
 }

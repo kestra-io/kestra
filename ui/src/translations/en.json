@@ -303,19 +303,19 @@
     "steps": "Steps",
     "state": "State",
     "state_history": {
-        "title": "State history",
-        "open": "State history",
-        "aria_open": "Show the state history",
-        "aria_open_for": "Show the state history for {subject}",
-        "started_at": "Started {time}",
-        "failed_at": "Failed at {time}",
-        "skipped_at": "Skipped at {time}",
-        "created_at": "Created {time}",
-        "did_not_run": "This task did not run",
-        "waiting_to_start": "Waiting to start",
-        "attempt_n": "Attempt {index}",
-        "attempt_count": "{count} attempts",
-        "copy": "Copy state history"
+      "title": "State history",
+      "open": "State history",
+      "aria_open": "Show the state history",
+      "aria_open_for": "Show the state history for {subject}",
+      "started_at": "Started {time}",
+      "failed_at": "Failed at {time}",
+      "skipped_at": "Skipped at {time}",
+      "created_at": "Created {time}",
+      "did_not_run": "This task did not run",
+      "waiting_to_start": "Waiting to start",
+      "attempt_n": "Attempt {index}",
+      "attempt_count": "{count} attempts",
+      "copy": "Copy state history"
     },
     "search": "Search",
     "source search": "Source search",
@@ -1083,6 +1083,7 @@
     "execute backfill": "Execute backfill",
     "relative": "Relative",
     "relative start date": "Relative start date",
+    "now": "Now",
     "absolute": "Absolute",
     "backfill": "Backfill",
     "Set labels": "Set labels",
@@ -2655,6 +2656,52 @@
     },
     "iteration": "Iteration",
     "iteration_number": "Iteration {number}",
-    "delete_log_iteration": "Are you sure you want to delete the log for {iteration}?"
+    "delete_log_iteration": "Are you sure you want to delete the log for {iteration}?",
+    "executionsTimeline": {
+      "breadcrumb": {
+        "all": "All",
+        "total": "{count} run | {count} runs",
+        "failed": "{count} failed"
+      },
+      "toolbar": {
+        "panBack": "Pan back",
+        "panForward": "Pan forward",
+        "zoomIn": "Zoom in",
+        "zoomOut": "Zoom out",
+        "range": "{start} → {end} ({duration})",
+        "rangePicker": "Change time range"
+      },
+      "row": {
+        "openOwnPage": "Open this page",
+        "runsCount": "{count} run | {count} runs",
+        "failedCount": "{count} failed"
+      },
+      "bucket": {
+        "hint": "Aggregated: zoom in for execution-level detail"
+      },
+      "popover": {
+        "openExecution": "Open execution",
+        "showOnlyFlow": "Show only this flow"
+      },
+      "empty": {
+        "description": "No executions in the selected range and filters.",
+        "resetFilters": "Reset filters",
+        "widenRange": "Widen to 7 days"
+      },
+      "error": {
+        "title": "Couldn't load the timeline",
+        "description": "Something went wrong while loading executions for this range."
+      },
+      "truncated": {
+        "description": "Showing the latest {shown} of {total} executions — narrow the time range or filters to see all."
+      },
+      "scrubber": {
+        "label": "Execution density over time, drag to select a range"
+      }
+    },
+    "chart mode": {
+      "counts": "Counts",
+      "timeline": "Timeline"
+    }
   }
 }

@@ -1083,6 +1083,7 @@
     "execute backfill": "Выполнить заполнение",
     "relative": "Относительный",
     "relative start date": "Относительная дата начала",
+    "now": "Сейчас",
     "absolute": "Абсолютный",
     "backfill": "Заполнение",
     "Set labels": "Установить метки",
@@ -2655,6 +2656,52 @@
     },
     "iteration": "Итерация",
     "iteration_number": "Итерация {number}",
-    "delete_log_iteration": "Вы уверены, что хотите удалить журнал для {iteration}?"
+    "delete_log_iteration": "Вы уверены, что хотите удалить журнал для {iteration}?",
+    "executionsTimeline": {
+      "breadcrumb": {
+        "all": "Все",
+        "total": "{count} запуск | {count} запуска | {count} запусков",
+        "failed": "{count} неудачных"
+      },
+      "toolbar": {
+        "panBack": "Прокрутить назад",
+        "panForward": "Прокрутить вперёд",
+        "zoomIn": "Увеличить",
+        "zoomOut": "Уменьшить",
+        "range": "{start} → {end} ({duration})",
+        "rangePicker": "Изменить диапазон времени"
+      },
+      "row": {
+        "openOwnPage": "Открыть эту страницу",
+        "runsCount": "{count} запуск | {count} запуска | {count} запусков",
+        "failedCount": "{count} неудачных"
+      },
+      "bucket": {
+        "hint": "Агрегировано: увеличьте масштаб для просмотра деталей выполнения"
+      },
+      "popover": {
+        "openExecution": "Открыть выполнение",
+        "showOnlyFlow": "Показать только этот flow"
+      },
+      "empty": {
+        "description": "Нет выполнений в выбранном диапазоне и фильтрах.",
+        "resetFilters": "Сбросить фильтры",
+        "widenRange": "Расширить до 7 дней"
+      },
+      "error": {
+        "title": "Не удалось загрузить временную шкалу",
+        "description": "Произошла ошибка при загрузке выполнений за этот период."
+      },
+      "truncated": {
+        "description": "Отображаются последние {shown} из {total} выполнений — сузьте период времени или фильтры, чтобы увидеть все."
+      },
+      "scrubber": {
+        "label": "Плотность Execution с течением времени, перетащите, чтобы выбрать диапазон"
+      }
+    },
+    "chart mode": {
+      "counts": "Счётчики",
+      "timeline": "Временная шкала"
+    }
   }
 }

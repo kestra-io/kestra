@@ -1,4 +1,4 @@
-import {computed, inject} from "vue"
+import {computed, inject, watch} from "vue"
 import {useDragAndDrop} from "../../../composables/useDragAndDrop"
 import {BLOCK_DRAG_INJECTION_KEY} from "../injectionKeys"
 
@@ -10,6 +10,10 @@ export function useLaneDrag(parentPath: () => string, itemCount: () => number) {
     const dropState = computed<"idle" | "allowed" | "forbidden">(() => {
         if (!dragContext?.draggedPath.value) return "idle"
         return dragContext.canDropIn(parentPath()) ? "allowed" : "forbidden"
+    })
+
+    watch(() => dragContext?.draggedPath.value, (path) => {
+        if (!path) dragOverIndex.value = null
     })
 
     function onItemDragStart(event: DragEvent, index: number) {

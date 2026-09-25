@@ -1424,7 +1424,7 @@
             "title": "Flows are edited like code",
             "body": "We added a <code>notify</code> task for you without the AI Copilot, so you can see what editing the YAML directly looks like. It posts the final result to Slack.",
             "next": "See the task docs",
-            "callout": "A first draft from AI Copilot is only a starting point; the editor is where you iterate on it in a Code or No-code editor tab, which both produce the same YAML, so your flow stays as code however it was built."
+            "callout": "A first draft from AI Copilot is only a starting point; the editor is where you iterate on it in a Code or No Code editor tab, which both produce the same YAML, so your flow stays as code however it was built."
           },
           "editor_help": {
             "title": "The docs are next to the flow",
@@ -1700,7 +1700,7 @@
       "clearSelection": "Clear selection",
       "labels": {
         "yaml": "YAML Editor",
-        "no_code": "No-code Editor"
+        "no_code": "No Code Editor"
       },
       "sections": {
         "deprecated": "Deprecated properties",
@@ -2193,7 +2193,7 @@
     "playground": {
       "title": "Playground",
       "run_task_info": "Hover over any task in the Flow Code editor and click the \"Run task\" button to test your task.",
-      "play_icon_info": "You can also hit the Play icon in the No-code or Topology views.",
+      "play_icon_info": "You can also hit the Play icon in the No Code or Topology views.",
       "toggle": "Playground",
       "run_task": "Run task",
       "run_this_task": "Run this task",

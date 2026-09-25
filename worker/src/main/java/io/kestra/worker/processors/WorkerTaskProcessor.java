@@ -189,13 +189,16 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
             .increment();
 
         if (workerTask.getTaskRun().getState().getCurrent() == CREATED || workerTask.getTaskRun().getState().getCurrent() == SUBMITTED) {
+            // In retry scenarios, histories contain multiple CREATED entries;
+            // use the last one as the actual enqueue time.
+            Instant queuedSince = workerTask.getTaskRun().getState().getHistories().stream()
+                .filter(h -> h.getState() == CREATED)
+                .reduce((first, second) -> second)
+                .map(State.History::getDate)
+                .orElse(workerTask.getTaskRun().getState().getStartDate());
             this.metricRegistry
                 .timer(MetricRegistry.METRIC_WORKER_QUEUED_DURATION, MetricRegistry.METRIC_WORKER_QUEUED_DURATION_DESCRIPTION, metricTags)
-                .record(
-                    Duration.between(
-                        workerTask.getTaskRun().getState().getStartDate(), Instant.now()
-                    )
-                );
+                .record(Duration.between(queuedSince, Instant.now()));
         }
 
         RunContext runContext = null;

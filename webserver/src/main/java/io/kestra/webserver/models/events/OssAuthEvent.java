@@ -27,5 +27,7 @@ public class OssAuthEvent extends Event {
     @Builder
     public static class OssAuth {
         private final String email;
+        /** Null until the onboarding survey step completes; the account-creation event fires before that choice is known. */
+        private final Boolean newsletterOptedIn;
     }
 }

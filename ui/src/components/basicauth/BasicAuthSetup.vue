@@ -339,6 +339,16 @@
         }
     }
 
+    // Never let a failure here block the user from finishing setup: the newsletter
+    // preference is best-effort telemetry, not a precondition for completing the wizard.
+    const submitNewsletterOptIn = async () => {
+        try {
+            await miscStore.updateNewsletterOptIn(surveyData.value.newsletter)
+        } catch (error) {
+            console.error("Failed to record newsletter opt-in:", error)
+        }
+    }
+
     const handleSurveyContinue = () => {
         localStorage.setItem("basicAuthSurveyData", JSON.stringify(surveyData.value))
 
@@ -359,6 +369,8 @@
         trackSetupEvent("setup_flow:marketing_survey_submitted", {
             ...surveySelections,
         }, userFormData.value)
+
+        void submitNewsletterOptIn()
 
         activeStep.value = 2
     }
@@ -383,6 +395,8 @@
         trackSetupEvent("setup_flow:marketing_survey_skipped", {
             ...surveySelections,
         }, userFormData.value)
+
+        void submitNewsletterOptIn()
 
         activeStep.value = 2
     }

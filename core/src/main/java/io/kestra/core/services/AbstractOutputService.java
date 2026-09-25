@@ -28,7 +28,7 @@ import io.kestra.core.storages.StorageInterface;
 public abstract class AbstractOutputService {
     protected static final ObjectMapper ION_MAPPER = JacksonMapper.ofIon();
 
-    private final StorageInterface storageInterface;
+    protected final StorageInterface storageInterface;
     private final NamespaceFactory namespaceFactory;
     private final int limit;
 

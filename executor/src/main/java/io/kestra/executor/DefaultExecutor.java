@@ -24,6 +24,7 @@ import io.kestra.core.server.Metric;
 import io.kestra.core.server.ServiceStateChangeEvent;
 import io.kestra.core.server.ServiceType;
 import io.kestra.core.services.MaintenanceService;
+import io.kestra.core.services.TaskOutputService;
 import io.kestra.core.utils.*;
 import io.kestra.executor.configuration.ExecutorConfiguration;
 import io.kestra.executor.handler.*;
@@ -62,6 +63,18 @@ public class DefaultExecutor extends AbstractService implements Executor {
     // The static context returned by KestraContext.getContext() might change if the context is restarted inside the same JVM
     // which can occur at least in tests.
     private final KestraContext kestraContext;
+
+    private final RunContextFactory runContextFactory;
+    private final TaskOutputService taskOutputService;
+
+    private final ExecutionCommandMessageHandler executionCommandMessageHandler;
+    private final ExecutionEventMessageHandler executionEventMessageHandler;
+    private final WorkerTaskResultMessageHandler workerTaskResultMessageHandler;
+    private final ExecutionKilledExecutionMessageHandler executionKilledExecutionMessageHandler;
+    private final SubflowExecutionResultMessageHandler subflowExecutionResultMessageHandler;
+    private final SubflowExecutionEndMessageHandler subflowExecutionEndMessageHandler;
+    private final MultipleConditionEventMessageHandler multipleConditionEventMessageHandler;
+    private final LoopExecutionEventMessageHandler loopExecutionEventMessageHandler;
 
     private final ScheduledExecutorService scheduledExecutorService;
     private final Clock clock;
@@ -103,7 +116,20 @@ public class DefaultExecutor extends AbstractService implements Executor {
         ExecutorCore executorCore,
         MaintenanceService maintenanceService,
         MultipleConditionStateStore multipleConditionStateStore,
-        MetricRegistry metricRegistry) {
+        SLAMonitorProcessor slaMonitorProcessor,
+        ConcurrencySlotReleaseProcessor concurrencySlotReleaseProcessor,
+        TriggerEventQueue triggerEventQueue,
+        MetricRegistry metricRegistry,
+        RunContextFactory runContextFactory,
+        TaskOutputService taskOutputService,
+        ExecutionCommandMessageHandler executionCommandMessageHandler,
+        ExecutionEventMessageHandler executionEventMessageHandler,
+        WorkerTaskResultMessageHandler workerTaskResultMessageHandler,
+        ExecutionKilledExecutionMessageHandler executionKilledExecutionMessageHandler,
+        SubflowExecutionResultMessageHandler subflowExecutionResultMessageHandler,
+        SubflowExecutionEndMessageHandler subflowExecutionEndMessageHandler,
+        MultipleConditionEventMessageHandler multipleConditionEventMessageHandler,
+        LoopExecutionEventMessageHandler loopExecutionEventMessageHandler) {
         super(ServiceType.EXECUTOR, eventPublisher);
         this.clock = clock;
         this.scheduledExecutorService = executorsUtils.singleThreadScheduledExecutor("executor-loops");
@@ -123,6 +149,16 @@ public class DefaultExecutor extends AbstractService implements Executor {
         this.maintenanceService = maintenanceService;
         this.multipleConditionStateStore = multipleConditionStateStore;
         this.metricRegistry = metricRegistry;
+        this.runContextFactory = runContextFactory;
+        this.taskOutputService = taskOutputService;
+        this.executionCommandMessageHandler = executionCommandMessageHandler;
+        this.executionEventMessageHandler = executionEventMessageHandler;
+        this.workerTaskResultMessageHandler = workerTaskResultMessageHandler;
+        this.executionKilledExecutionMessageHandler = executionKilledExecutionMessageHandler;
+        this.subflowExecutionResultMessageHandler = subflowExecutionResultMessageHandler;
+        this.subflowExecutionEndMessageHandler = subflowExecutionEndMessageHandler;
+        this.multipleConditionEventMessageHandler = multipleConditionEventMessageHandler;
+        this.loopExecutionEventMessageHandler = loopExecutionEventMessageHandler;
 
         // By default, we start available processors count threads with a minimum of 4 by executor service
         // for the worker task result queue and the execution queue.

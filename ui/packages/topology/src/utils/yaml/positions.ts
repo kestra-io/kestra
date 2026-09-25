@@ -199,7 +199,7 @@ function chartItemsOf(map: YAMLMap<unknown, unknown>): Node[] {
 
 export function getAllCharts(source: string) {
     const yamlDoc = parseDocumentTyped(source)
-    const charts: string[] = []
+    const charts: unknown[] = []
 
     visit(yamlDoc, {
         Map(_, map) {

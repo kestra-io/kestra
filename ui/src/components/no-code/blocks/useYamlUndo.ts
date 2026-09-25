@@ -6,22 +6,34 @@ const EDIT_DEBOUNCE = 1000
 
 interface FlowStoreLike {
     flowYaml: string | undefined
+    flow?: {namespace?: string; id?: string} | undefined
     onEdit: (payload: {source: string; topologyVisible: boolean}) => void
+}
+
+const undoHistory = ref<string[]>([])
+const historyScope = ref<string | undefined>(undefined)
+const undoState = ref<{label: string} | null>(null)
+let undoTimer: ReturnType<typeof setTimeout> | undefined
+
+function dismissDeleteBadge() {
+    undoState.value = null
+    clearTimeout(undoTimer)
 }
 
 export function useYamlUndo(flowStore: FlowStoreLike, deletedLabel: (name: string) => string) {
     const onEditTimeout = ref<ReturnType<typeof setTimeout>>()
-    const undoHistory = ref<string[]>([])
-    const undoState = ref<{label: string} | null>(null)
-    let undoTimer: ReturnType<typeof setTimeout> | undefined
     let applyingUndo = false
 
-    function dismissDeleteBadge() {
-        undoState.value = null
-        clearTimeout(undoTimer)
+    function enterCurrentScope() {
+        const scope = `${flowStore.flow?.namespace ?? ""}/${flowStore.flow?.id ?? ""}`
+        if (historyScope.value === scope) return
+        historyScope.value = scope
+        undoHistory.value = []
+        dismissDeleteBadge()
     }
 
     function applyYaml(newYaml: string) {
+        enterCurrentScope()
         if (!applyingUndo) {
             const previous = flowStore.flowYaml
             if (typeof previous === "string" && previous !== newYaml) {
@@ -44,8 +56,9 @@ export function useYamlUndo(flowStore: FlowStoreLike, deletedLabel: (name: strin
         undoTimer = setTimeout(dismissDeleteBadge, UNDO_BADGE_TIMEOUT)
     }
 
-    function performUndo() {
-        if (!undoHistory.value.length) return
+    function performUndo(): boolean {
+        enterCurrentScope()
+        if (!undoHistory.value.length) return false
         const previous = undoHistory.value.pop() as string
         applyingUndo = true
         try {
@@ -54,6 +67,7 @@ export function useYamlUndo(flowStore: FlowStoreLike, deletedLabel: (name: strin
             applyingUndo = false
         }
         dismissDeleteBadge()
+        return true
     }
 
     return {onEditTimeout, undoState, applyYaml, deleteWithUndo, performUndo, dismissDeleteBadge}

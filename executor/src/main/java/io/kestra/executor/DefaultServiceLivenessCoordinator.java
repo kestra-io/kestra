@@ -2,10 +2,12 @@ package io.kestra.executor;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.slf4j.event.Level;
 
@@ -15,6 +17,8 @@ import io.kestra.core.executor.WorkerJobRunningStateStore;
 import io.kestra.core.killswitch.EvaluationType;
 import io.kestra.core.killswitch.KillSwitchService;
 import io.kestra.core.metrics.MetricRegistry;
+import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.triggers.TriggerId;
 import io.kestra.core.queues.KeyedDispatchQueueInterface;
 import io.kestra.core.queues.QueueException;
@@ -65,12 +69,14 @@ public class DefaultServiceLivenessCoordinator extends AbstractServiceLivenessTa
     private final KillSwitchService killSwitchService;
     private final KeyedDispatchQueueInterface<WorkerJobEvent> workerJobEventQueue;
     private final WorkerJobRunningStateStore workerJobRunningStateStore;
+    private final ExecutionStateStore executionStateStore;
     private final TriggerEventQueue triggerEventQueue;
     private final MetricRegistry metricRegistry;
     private final VNodeController vNodeController;
     private final List<ServiceResourceReleaser> serviceResourceReleasers;
 
     private Counter workerJobResubmitCounter;
+    private Counter workerJobOrphanCounter;
     // mutable for testing purpose
     String serverId = ServerInstance.INSTANCE_ID;
 
@@ -93,6 +99,7 @@ public class DefaultServiceLivenessCoordinator extends AbstractServiceLivenessTa
         final KillSwitchService killSwitchService,
         final KeyedDispatchQueueInterface<WorkerJobEvent> workerJobEventQueue,
         final WorkerJobRunningStateStore workerJobRunningStateStore,
+        final ExecutionStateStore executionStateStore,
         final TriggerEventQueue triggerEventQueue,
         final ServerConfig serverConfig,
         final MetricRegistry metricRegistry,
@@ -106,6 +113,7 @@ public class DefaultServiceLivenessCoordinator extends AbstractServiceLivenessTa
         this.killSwitchService = killSwitchService;
         this.workerJobEventQueue = workerJobEventQueue;
         this.workerJobRunningStateStore = workerJobRunningStateStore;
+        this.executionStateStore = executionStateStore;
         this.triggerEventQueue = triggerEventQueue;
         this.metricRegistry = metricRegistry;
         this.purgeRetention = serverConfig.service() != null && serverConfig.service().purge() != null
@@ -120,6 +128,10 @@ public class DefaultServiceLivenessCoordinator extends AbstractServiceLivenessTa
         this.workerJobResubmitCounter = metricRegistry.counter(
             MetricRegistry.METRIC_EXECUTOR_WORKER_JOB_RESUBMIT_COUNT,
             MetricRegistry.METRIC_EXECUTOR_WORKER_JOB_RESUBMIT_COUNT_DESCRIPTION
+        );
+        this.workerJobOrphanCounter = metricRegistry.counter(
+            MetricRegistry.METRIC_EXECUTOR_WORKER_JOB_ORPHAN_COUNT,
+            MetricRegistry.METRIC_EXECUTOR_WORKER_JOB_ORPHAN_COUNT_DESCRIPTION
         );
     }
 
@@ -155,6 +167,9 @@ public class DefaultServiceLivenessCoordinator extends AbstractServiceLivenessTa
 
         // Update all services in NOT_RUNNING to EMPTY (a.k.a soft delete).
         runStep("handleAllServiceInNotRunningState", this::handleAllServiceInNotRunningState);
+
+        // Reclaim the worker jobs left behind by the workers the steps above are done with.
+        runStep("handleAllOrphanedWorkerJobs", () -> handleAllOrphanedWorkerJobs(now));
 
         runStep("maybeDetectAndLogNewConnectedServices", this::maybeDetectAndLogNewConnectedServices);
 
@@ -265,6 +280,61 @@ public class DefaultServiceLivenessCoordinator extends AbstractServiceLivenessTa
     public void purgeEmptyInstances() {
         int purged = serviceInstanceRepository.purgeEmptyInstances(Instant.now().minus(purgeRetention));
         log.info("Purged {} service instances", purged);
+    }
+
+    /**
+     * Reclaims the running worker jobs held by workers that have left the cluster.
+     * <p>
+     * A job the controller dispatched but the worker never ran leaves an entry that no other step
+     * reclaims: {@link #handleAllWorkersForUncleanShutdown} re-emits tasks for unclean workers only,
+     * so an entry left by a worker that terminated gracefully keeps its task run {@code SUBMITTED}
+     * forever. Only {@code INACTIVE} workers are considered, so a worker that is merely disconnected
+     * keeps its jobs until the termination grace period has decided its fate, and a worker configured
+     * with {@link WorkerTaskRestartStrategy#NEVER} keeps them for good.
+     * <p>
+     * A worker is only reclaimed from once its termination grace period has elapsed since it became
+     * {@code INACTIVE}: a worker that terminated gracefully gets there in the same tick, while the executor
+     * may not have applied its last results yet, and a {@code WorkingDirectory} keeps its lease until it has.
+     */
+    protected void handleAllOrphanedWorkerJobs(Instant now) {
+        Set<String> liveWorkerUids = store.findAllInstancesInStates(Set.of(CREATED, RUNNING))
+            .stream()
+            .map(ServiceInstance::uid)
+            .collect(Collectors.toSet());
+
+        // Every worker still running holds its own jobs, so the candidates are what is left once they
+        // are out. On a healthy cluster nothing is, and the state of no instance has to be read at all.
+        Set<String> candidateWorkerUids = new HashSet<>(workerJobRunningStateStore.findWorkerUidsWithRunningJobs());
+        candidateWorkerUids.removeAll(liveWorkerUids);
+
+        if (candidateWorkerUids.isEmpty()) {
+            return;
+        }
+
+        Set<String> reclaimableWorkerUids = candidateWorkerUids
+            .stream()
+            .map(serviceInstanceRepository::findById)
+            .flatMap(Optional::stream)
+            .filter(instance -> instance.is(INACTIVE))
+            .filter(instance -> instance.config() != null && instance.config().workerTaskRestartStrategy().isRestartable())
+            .filter(instance -> instance.isTerminationGracePeriodElapsed(now))
+            .map(ServiceInstance::uid)
+            .collect(Collectors.toSet());
+
+        if (reclaimableWorkerUids.isEmpty()) {
+            return;
+        }
+
+        workerJobRunningStateStore.processOrphanWorkerJobs(NoTransactionContext.INSTANCE, reclaimableWorkerUids, (txContext, workerJobRunning) ->
+        {
+            log.warn(
+                "Reclaiming the worker job '{}' left by the worker '{}': the worker is no longer part of the cluster.",
+                workerJobRunning.uid(),
+                workerJobRunning.getWorkerInstance().uid()
+            );
+            workerJobOrphanCounter.increment();
+            resubmitWorkerJobRunning(txContext, workerJobRunning);
+        });
     }
 
     private void reEmitWorkerJobsForWorker(final TransactionContext txContext, final String id) {
@@ -421,10 +491,17 @@ public class DefaultServiceLivenessCoordinator extends AbstractServiceLivenessTa
     }
 
     private void resubmitWorkerTask(TransactionContext txContext, WorkerTaskRunning workerTaskRunning) {
-        if (killSwitchService.evaluate(workerTaskRunning.getTaskRun()) != EvaluationType.PASS) {
+        if (isTaskRunTerminated(workerTaskRunning.getTaskRun())) {
+            log.warn(
+                "Discarding the running entry of task run '{}' of execution '{}' instead of resubmitting it, because the task run has already ended or its execution no longer exists.",
+                workerTaskRunning.getTaskRun().getId(),
+                workerTaskRunning.getTaskRun().getExecutionId()
+            );
+            workerJobRunningStateStore.deleteByKeyAndWorker(txContext, workerTaskRunning.uid(), workerTaskRunning.getWorkerInstance().uid());
+        } else if (killSwitchService.evaluate(workerTaskRunning.getTaskRun()) != EvaluationType.PASS) {
             // if the execution is switch-killed, we remove the workerTaskRunning and skip its resubmission
             log.warn("Ignoring worker job resubmission for execution {} because there is a kill switch for it", workerTaskRunning.getTaskRun().getExecutionId());
-            workerJobRunningStateStore.deleteByKey(txContext, workerTaskRunning.uid());
+            workerJobRunningStateStore.deleteByKeyAndWorker(txContext, workerTaskRunning.uid(), workerTaskRunning.getWorkerInstance().uid());
         } else {
             try {
                 String raw = workerTaskRunning.getWorkerInstance().workerQueueId();
@@ -435,6 +512,9 @@ public class DefaultServiceLivenessCoordinator extends AbstractServiceLivenessTa
                     .data(workerTaskRunning.getData())
                     .build();
                 workerJobEventQueue.emit(workerQueueId, WorkerJobEvent.of(workerTask, workerQueueId));
+                // The lease is released only once the job is back on the queue: left in place it is
+                // picked up by the next orphan sweep and the task is resubmitted a second time.
+                workerJobRunningStateStore.deleteByKeyAndWorker(txContext, workerTaskRunning.uid(), workerTaskRunning.getWorkerInstance().uid());
                 Logs.logTaskRun(
                     workerTaskRunning.getTaskRun(),
                     Level.WARN,
@@ -452,6 +532,24 @@ public class DefaultServiceLivenessCoordinator extends AbstractServiceLivenessTa
     }
 
     /**
+     * Whether the task run of a running entry has already ended in its execution, in which case resubmitting
+     * the entry would run it a second time. An execution that no longer exists counts as ended, since it was
+     * purged or deleted and none of its tasks can still be in flight. An execution that cannot be read is not
+     * taken as proof that the task run ended, so the entry is resubmitted rather than risking to lose a task.
+     */
+    private boolean isTaskRunTerminated(TaskRun taskRun) {
+        try {
+            Execution execution = executionStateStore.findByIdWithoutAcl(taskRun.getExecutionId());
+            return execution == null || execution.findTaskRunByTaskRunIdIfPresent(taskRun.getId())
+                .map(current -> current.getState().isTerminated())
+                .orElse(false);
+        } catch (Exception e) {
+            log.warn("Unable to read execution '{}' to check whether task run '{}' has already ended.", taskRun.getExecutionId(), taskRun.getId(), e);
+            return false;
+        }
+    }
+
+    /**
      * The worker holding the trigger is gone: delete its running entry and notify the scheduler,
      * which owns resubmission. Re-emitting the persisted job from here would replay a stale
      * trigger definition and ignore a disabled or deleted state.
@@ -463,7 +561,7 @@ public class DefaultServiceLivenessCoordinator extends AbstractServiceLivenessTa
             workerTriggerRunning.getData().flowId(),
             workerTriggerRunning.getTrigger().getId()
         );
-        workerJobRunningStateStore.deleteByKey(txContext, workerTriggerRunning.uid());
+        workerJobRunningStateStore.deleteByKeyAndWorker(txContext, workerTriggerRunning.uid(), workerTriggerRunning.getWorkerInstance().uid());
         triggerEventQueue.send(new TriggerWorkerLost(triggerId, workerTriggerRunning.getWorkerInstance().uid(), workerTriggerRunning.getDispatchEpoch()));
         Logs.logTrigger(
             triggerId,

@@ -2,10 +2,10 @@ import {onBeforeUnmount, onMounted, nextTick, watch, ref, computed} from "vue"
 import type {Ref, ComputedRef} from "vue"
 import type {RouteParams} from "vue-router"
 import {useI18n} from "vue-i18n"
-import type {EChartsType, ECElementEvent} from "echarts"
+import type {EChartsType, ECElementEvent} from "echarts/core"
 import {State, cssVar} from "@kestra-io/design-system"
 import type {KsGraphNode, KsGraphEdge} from "@kestra-io/design-system"
-import type {ExecutionStatusEvent, FlowTopologyGraph} from "@kestra-io/kestra-sdk"
+import type {ExecutionStatusEvent} from "@kestra-io/kestra-sdk"
 import {useCoreStore} from "../../../stores/core"
 import {useFlowStore} from "../../../stores/flow"
 import {useExecutionsStore} from "../../../stores/executions"
@@ -397,7 +397,7 @@ export function useDependencies(
                 }
             })
             chart?.on?.("dblclick", (event: ECElementEvent) => {
-                if (event?.dataType === "node") openedNodeID.value = (event.data as {id?: string})?.id as string
+                if (event?.dataType === "node") openedNodeID.value = (event.data as {id?: string} | undefined)?.id
             })
         })
     }
@@ -408,7 +408,6 @@ export function useDependencies(
         if (!chart) return
         try {
             // Private ECharts API: read post-simulation positions from the internal model.
-            // Guarded by try/catch — see "Internal ECharts API unavailable" below.
             type SeriesData = {count(): number; getName(i: number): string; getItemLayout(i: number): unknown}
             type InternalChart = {getModel?(): {getSeriesByIndex?(i: number): {getData?(): SeriesData | undefined} | undefined} | undefined}
             const data = (chart as unknown as InternalChart).getModel?.()?.getSeriesByIndex?.(0)?.getData?.()
@@ -500,7 +499,7 @@ export function useDependencies(
                 const {data} = await namespacesStore.loadDependencies({namespace: params.id as string})
                 const nodes = data.nodes ?? []
                 elements.value = {
-                    data:  transformResponse(data as FlowTopologyGraph, NAMESPACE),
+                    data:  transformResponse(data, NAMESPACE),
                     count: new Set(nodes.map((r: {uid: string}) => r.uid)).size,
                 }
             } else {

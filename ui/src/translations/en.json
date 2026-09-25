@@ -2248,7 +2248,12 @@
         "groups": "Groups ({n})",
         "group_none": "No grouping",
         "group_dataset": "Dataset",
-        "ungrouped": "Ungrouped"
+        "ungrouped": "Ungrouped",
+        "hub": {
+          "notice": "This node has {count} relations — only the most recent ones are shown to keep the graph readable.",
+          "expand": "Load more relations"
+        },
+        "truncated": "This graph was too large to show in full; some relations were left out."
       },
       "search": {
         "placeholders": {

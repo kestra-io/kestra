@@ -2,18 +2,20 @@ import {describe, it, expect, vi, afterEach, beforeEach} from "vitest"
 import {defineComponent, h} from "vue"
 import {flushPromises, type VueWrapper} from "@vue/test-utils"
 
-// Shared across calls so the navigation tests can assert on it; a fresh spy per
-// useRouter() call would be unreachable from the test body.
-const routerPush = vi.hoisted(() => vi.fn())
-
-vi.mock("vue-router", () => ({
-    useRoute: () => ({
+// The component watches the route, so the stub has to be reactive - a plain object
+// makes Vue warn about an invalid watch source on every mount.
+vi.mock("vue-router", async () => {
+    const {reactive} = await import("vue")
+    const route = reactive({
         name: "flows/update/triggers",
         params: {namespace: "company.team", id: "my-flow"},
         query: {},
-    }),
-    useRouter: () => ({push: routerPush}),
-}))
+    })
+    return {
+        useRoute: () => route,
+        useRouter: () => ({push: vi.fn()}),
+    }
+})
 
 const flowStore = vi.hoisted(() => ({
     flow: {
@@ -30,8 +32,14 @@ vi.mock("../../../../src/stores/flow", () => ({
     useFlowStore: () => flowStore,
 }))
 
+// Shared so a test can revoke a permission; the executions link is gated on EXECUTION:VIEW,
+// which is all this suite grants - the trigger actions stay hidden, as with no user at all.
+const permissions = vi.hoisted(() => ({
+    isAllowed: (resource: string, action: string) => resource === "EXECUTION" && action === "VIEW",
+}))
+
 vi.mock("override/stores/auth", () => ({
-    useAuthStore: () => ({user: undefined}),
+    useAuthStore: () => ({user: {isAllowed: (...args: [string, string]) => permissions.isAllowed(...args)}}),
 }))
 
 vi.mock("override/stores/misc", () => ({
@@ -71,7 +79,6 @@ const RouterLinkStub = defineComponent({
 })
 
 function mountTriggersTab() {
-    routerPush.mockClear()
     const wrapper = i18nMount(FlowTriggers, {
         props: {embed: true},
         // TestEventDialog pulls editor bindings (real Pinia stores) even while
@@ -88,6 +95,7 @@ const mounted: VueWrapper[] = []
 beforeEach(() => {
     vi.useFakeTimers()
     localStorage.clear()
+    permissions.isAllowed = (resource: string, action: string) => resource === "EXECUTION" && action === "VIEW"
 })
 afterEach(() => {
     while (mounted.length) mounted.pop()?.unmount()
@@ -97,16 +105,19 @@ afterEach(() => {
 
 // Issue #12784: each trigger row links to the flow executions tab pre-filtered
 // on that trigger, so the list shows every execution the trigger created.
-describe("FlowTriggers — executions link", () => {
-    it("navigates to the flow executions tab filtered on the clicked row's trigger", async () => {
+describe("FlowTriggers - executions link", () => {
+    const executionsLinks = (wrapper: VueWrapper) =>
+        wrapper.findAllComponents(RouterLinkStub)
+            .filter(link => link.attributes("data-test") === "trigger-executions-link")
+
+    it("links to the flow executions tab filtered on the row's trigger", async () => {
         const wrapper = mountTriggersTab()
         await flushPromises()
 
-        const links = wrapper.findAll("[data-test=\"trigger-executions-link\"]")
+        const links = executionsLinks(wrapper)
         expect(links).toHaveLength(2)
 
-        await links[1].trigger("click")
-        expect(routerPush).toHaveBeenCalledWith({
+        expect(links[1].props("to")).toEqual({
             name: "flows/update/executions",
             params: {tenant: undefined, namespace: "company.team", id: "my-flow"},
             query: {"filters[triggerId][EQUALS]": "trigger-b"},
@@ -117,10 +128,7 @@ describe("FlowTriggers — executions link", () => {
         const wrapper = mountTriggersTab()
         await flushPromises()
 
-        const links = wrapper.findAll("[data-test=\"trigger-executions-link\"]")
-
-        await links[0].trigger("click")
-        expect(routerPush).toHaveBeenCalledWith({
+        expect(executionsLinks(wrapper)[0].props("to")).toEqual({
             name: "flows/update/executions",
             params: {tenant: undefined, namespace: "company.team", id: "my-flow"},
             query: {"filters[triggerId][EQUALS]": "trigger-a"},
@@ -139,17 +147,21 @@ describe("FlowTriggers — executions link", () => {
         })
     })
 
-    it("renders the executions button as a natively keyboard-activatable button", async () => {
+    it("renders a labelled anchor, so the executions list opens in a new tab like any link", async () => {
         const wrapper = mountTriggersTab()
         await flushPromises()
 
-        // Enter/Space activation is platform behavior for a native button, which
-        // jsdom does not synthesize, so this pins the structural facts it depends on:
-        // a real, enabled, labelled submit-neutral button in normal tab order.
-        const button = wrapper.find("[data-test=\"trigger-executions-link\"]")
-        expect(button.element.tagName).toBe("BUTTON")
-        expect(button.attributes("type")).toBe("button")
-        expect(button.attributes("disabled")).toBeUndefined()
-        expect(button.attributes("aria-label")).toBe("executions")
+        const link = executionsLinks(wrapper)[0]
+        expect(link.element.tagName).toBe("A")
+        expect(link.attributes("aria-label")).toBe("executions")
+    })
+
+    it("hides the link from a user who cannot read the flow's executions", async () => {
+        permissions.isAllowed = () => false
+
+        const wrapper = mountTriggersTab()
+        await flushPromises()
+
+        expect(executionsLinks(wrapper)).toHaveLength(0)
     })
 })

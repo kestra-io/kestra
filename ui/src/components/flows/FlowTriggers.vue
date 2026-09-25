@@ -110,11 +110,11 @@
                             >
                                 <KsId :value="scope.row.executionId" :shrink="true" />
                             </router-link>
-                            <span v-else />
                             <KsIconButton
+                                v-if="canViewExecutions"
                                 data-test="trigger-executions-link"
                                 :tooltip="$t('executions')"
-                                @click="openTriggerExecutions(scope.row)"
+                                :to="triggerExecutionsRoute(scope.row)"
                             >
                                 <FormatListBulleted />
                             </KsIconButton>
@@ -585,6 +585,11 @@
         return authStore.user?.isAllowed(resource.TRIGGER, act ? act : action.VIEW, flowStore.flow?.namespace)
     }
 
+    // The Executions tab itself is gated on EXECUTION:VIEW (isFlowTabAllowed), so the link to it is too.
+    const canViewExecutions = computed(() =>
+        Boolean(authStore.user?.isAllowed(resource.EXECUTION, action.VIEW, flowStore.flow?.namespace)),
+    )
+
     const loadData = () => {
         const flow = flowStore.flow
         if(!triggersWithType.value.length || !flow) return
@@ -712,14 +717,13 @@
     }
 
     // Every execution created by this trigger: the flow executions tab, pre-filtered on the trigger id.
-    const openTriggerExecutions = (row: TriggerRow) => {
-        const flow = flowStore.flow
-        if (!flow) return
-        router.push({
+    const triggerExecutionsRoute = (row: TriggerRow) => {
+        const identity = triggerIdentity(row)
+        return {
             name: `${FLOW_PARENT_ROUTE}/executions`,
-            params: {tenant: route.params?.tenant, namespace: flow.namespace, id: flow.id},
-            query: {"filters[triggerId][EQUALS]": row.triggerId ?? row.id},
-        })
+            params: {tenant: route.params?.tenant, namespace: identity.namespace, id: identity.flowId},
+            query: {"filters[triggerId][EQUALS]": identity.triggerId},
+        }
     }
 
     const tourStore = useProductTourStore()

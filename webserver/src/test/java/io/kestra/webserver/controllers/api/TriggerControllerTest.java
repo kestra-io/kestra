@@ -95,8 +95,7 @@ class TriggerControllerTest {
     void shouldFindTriggersGivenQueryOnIdPrefix() throws FlowProcessingException, QueueException {
         // GIVEN
         Flow flow = generateFlow();
-        flowService.create(GenericFlow.of(flow));
-        createTriggersFromFlow(flow).forEach(jdbcTriggerRepository::save);
+        createFlowAndAwaitTriggers(flow);
 
         // WHEN
         PagedResults<ApiTriggerAndState> triggers = client.toBlocking().retrieve(
@@ -124,8 +123,7 @@ class TriggerControllerTest {
     void shouldFindTriggersGivenQueryOnNamespace() throws FlowProcessingException, QueueException {
         // GIVEN
         Flow flow = generateFlow();
-        flowService.create(GenericFlow.of(flow));
-        createTriggersFromFlow(flow).forEach(jdbcTriggerRepository::save);
+        createFlowAndAwaitTriggers(flow);
 
         // WHEN
         PagedResults<ApiTriggerAndState> triggers = client.toBlocking().retrieve(
@@ -169,8 +167,7 @@ class TriggerControllerTest {
     void searchTriggersSortsByNextExecutionDateAlias() throws FlowProcessingException, QueueException {
         // nextExecutionDate is a pre-2.0 alias of the real column next_evaluation_date
         Flow flow = generateFlow();
-        flowService.create(GenericFlow.of(flow));
-        createTriggersFromFlow(flow).forEach(jdbcTriggerRepository::save);
+        createFlowAndAwaitTriggers(flow);
 
         PagedResults<ApiTriggerAndState> triggers = client.toBlocking().retrieve(
             HttpRequest.GET(TRIGGER_PATH + "/search?filters[namespace][STARTS_WITH]=%s&sort=nextExecutionDate:asc".formatted(flow.getNamespace())),
@@ -185,9 +182,7 @@ class TriggerControllerTest {
     void shouldFindTriggersGivenFilterOnNamespace() throws FlowProcessingException, QueueException {
         // GIVEN
         Flow flow = generateFlow();
-        flowService.create(GenericFlow.of(flow));
-        List<TriggerState> states = createTriggersFromFlow(flow);
-        states.forEach(jdbcTriggerRepository::save);
+        createFlowAndAwaitTriggers(flow);
 
         // WHEN
         PagedResults<ApiTriggerAndState> triggers = client.toBlocking().retrieve(
@@ -809,6 +804,47 @@ class TriggerControllerTest {
     }
 
     @Test
+    void shouldReturnUnprocessableEntityWhenCreatingBackfillOnNonScheduleTrigger() {
+        for (TriggerType type : List.of(TriggerType.POLLING, TriggerType.REALTIME)) {
+            // GIVEN
+            TriggerState trigger = newRandomTriggerState(type);
+            jdbcTriggerRepository.save(trigger);
+
+            // WHEN
+            HttpClientResponseException e = assertThrows(
+                HttpClientResponseException.class,
+                () -> client.toBlocking().retrieve(
+                    HttpRequest.PUT(
+                        TRIGGER_PATH + "/backfill/create",
+                        new ApiCreateBackfillRequest(
+                            trigger.getNamespace(),
+                            trigger.getFlowId(),
+                            trigger.getTriggerId(),
+                            new ApiCreateBackfillRequest.Backfill(
+                                ZonedDateTime.parse("2026-06-10T00:00:00Z"),
+                                ZonedDateTime.parse("2026-06-11T00:00:00Z"),
+                                Map.of(),
+                                List.of()
+                            )
+                        )
+                    ),
+                    ApiTriggerState.class
+                )
+            );
+
+            // THEN
+            Problems.assertProblem(e, ProblemTypes.VALIDATION_FAILED);
+            Problems.assertErrors(e)
+                .extracting(ProblemError::detail)
+                .containsExactly(
+                    "Backfills are only supported on schedule triggers, but trigger [tenant=%s, namespace=%s, flow=%s, trigger=%s] is '%s'."
+                        .formatted(trigger.getTenantId(), trigger.getNamespace(), trigger.getFlowId(), trigger.getTriggerId(), type)
+                );
+            assertThat(jdbcTriggerRepository.findByIdWithoutAcl(trigger).orElseThrow().getBackfill()).isNull();
+        }
+    }
+
+    @Test
     void shouldReturnBadRequestWhenDisableByTriggersMissingBody() {
         HttpClientResponseException e = assertThrows(
             HttpClientResponseException.class, () -> client.toBlocking().retrieve(
@@ -924,6 +960,13 @@ class TriggerControllerTest {
         ).toList();
     }
 
+    private void createFlowAndAwaitTriggers(Flow flow) throws FlowProcessingException, QueueException {
+        flowService.create(GenericFlow.of(flow));
+        Awaitility.await().atMost(Duration.ofSeconds(30)).pollInterval(Duration.ofMillis(100))
+            .until(() -> createTriggersFromFlow(flow).stream()
+                .allMatch(state -> jdbcTriggerRepository.findByIdWithoutAcl(state).isPresent()));
+    }
+
     private TriggerState createTriggerFromFlow(Flow flow, Boolean disabled) {
         return TriggerState.builder()
             .flowId(flow.getId())
@@ -938,8 +981,7 @@ class TriggerControllerTest {
     @Test
     void shouldExportTriggersWithoutTenantId() throws FlowProcessingException, QueueException {
         Flow flow = generateFlow();
-        flowService.create(GenericFlow.of(flow));
-        createTriggersFromFlow(flow).forEach(jdbcTriggerRepository::save);
+        createFlowAndAwaitTriggers(flow);
 
         byte[] csvBytes = client.toBlocking().retrieve(
             HttpRequest.GET(TRIGGER_PATH + "/export/by-query/csv"),

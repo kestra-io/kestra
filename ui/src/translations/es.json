@@ -439,7 +439,9 @@
       "zoom-fit": "Ajustar",
       "invalid": "Error de gráfico",
       "invalid_description": "Ocurrió un error al cargar el gráfico. Por favor, verifica el código fuente en busca de errores.",
-      "load_error": "No se pudo cargar el gráfico de topología. Inténtalo de nuevo."
+      "load_error": "No se pudo cargar el gráfico de topología. Inténtalo de nuevo.",
+      "add-task": "Añadir task",
+      "add-trigger": "Añadir trigger"
     },
     "show task logs": "Mostrar task logs",
     "show task condition": "Mostrar condición de task",
@@ -871,7 +873,7 @@
     "flow delete": "¿Estás seguro de que quieres eliminar <code>{flowCount}</code> flow(s)?",
     "delete flow error": "No se pudo eliminar el flow {id}",
     "flows deleted": "<code>{count}</code> Flow(s) eliminados",
-    "flow disable": "¿Estás seguro de que quieres deshabilitar <code>{flowCount}</code> flow(s)?",
+    "flow disable": "¿Estás seguro de que quieres deshabilitar {flowCount} Flow(s)?<br/><br/>Deshabilitar un Flow escribe <code>disabled: true</code> en el Flow y crea una nueva revisión. Una sincronización desde una fuente externa que no incluya <code>disabled: true</code> habilitará el Flow de nuevo.",
     "flow enable": "¿Estás seguro de que quieres habilitar <code>{flowCount}</code> flow(s)?",
     "flows disabled": "<code>{count}</code> Flow(s) deshabilitados",
     "flows enabled": "<code>{count}</code> Flow(s) habilitados",
@@ -1619,7 +1621,9 @@
       "raw": "Vista temporal",
       "raw_details": "Mostrar logs completos de tasks y logs de flows en formato raw, ordenados por timestamp",
       "compact": "Vista predeterminada",
-      "compact_details": "Mostrar task logs en una vista compacta agrupada por cada task"
+      "compact_details": "Mostrar task logs en una vista compacta agrupada por cada task",
+      "fullscreen": "Logs a pantalla completa",
+      "exit_fullscreen": "Salir de pantalla completa"
     },
     "execution_deletion": {
       "logs": "Eliminar logs",
@@ -2189,7 +2193,7 @@
     "playground": {
       "title": "Área de Pruebas",
       "run_task_info": "Pasa el cursor sobre cualquier task en el editor de Flow Code y haz clic en el botón \"Run task\" para probar tu task.",
-      "play_icon_info": "También puedes presionar el ícono de Play en las vistas No-Code o Topology.",
+      "play_icon_info": "También puedes presionar el ícono de Play en las vistas No-code o Topology.",
       "toggle": "Área de pruebas",
       "run_task": "Ejecutar task",
       "run_this_task": "Ejecutar esta task",
@@ -2519,6 +2523,9 @@
       "block_deleted": "{name} eliminado",
       "card_aria_label": "Bloque {id} de tipo {type}",
       "canvas_aria": "Canvas de bloques de flow",
+      "chip_copied": "Copiado al portapapeles",
+      "chip_hint": "Haz clic en un chip para insertarlo en el campo activo, o arrástralo",
+      "chip_inserted": "Insertado en el campo",
       "cluster_collapse_aria": "Colapsar {id}",
       "cluster_expand_aria": "Expandir {id} ({count} tasks)",
       "collapsed_summary": "{count} tasks",
@@ -2645,6 +2652,9 @@
       "install_description": "Instala Kestra como una aplicación para un acceso más rápido y una experiencia a pantalla completa.",
       "install": "Instalar",
       "dismiss": "Ahora no"
-    }
+    },
+    "iteration": "Iteración",
+    "iteration_number": "Iteración {number}",
+    "delete_log_iteration": "¿Estás seguro de que quieres eliminar el registro de {iteration}?"
   }
 }

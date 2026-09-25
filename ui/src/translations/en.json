@@ -439,7 +439,9 @@
       "zoom-fit": "Fit",
       "invalid": "Graph error",
       "invalid_description": "An error occurred while loading the graph. Please check the source code for errors.",
-      "load_error": "Could not load the topology graph. Please try again."
+      "load_error": "Could not load the topology graph. Please try again.",
+      "add-task": "Add task",
+      "add-trigger": "Add a trigger"
     },
     "show task logs": "Show task logs",
     "show task condition": "Show task condition",
@@ -871,7 +873,7 @@
     "flow delete": "Are you sure you want to delete <code>{flowCount}</code> flow(s)?",
     "delete flow error": "Failed to delete flow {id}",
     "flows deleted": "<code>{count}</code> Flow(s) deleted",
-    "flow disable": "Are you sure you want to disable <code>{flowCount}</code> flow(s)?",
+    "flow disable": "Are you sure you want to disable <code>{flowCount}</code> flow(s)?<br/><br/>Disabling a flow writes <code>disabled: true</code> into the flow and creates a new revision. A sync from an external source that does not include <code>disabled: true</code> will enable the flow again.",
     "flow enable": "Are you sure you want to enable <code>{flowCount}</code> flow(s)?",
     "flows disabled": "<code>{count}</code> Flow(s) disabled",
     "flows enabled": "<code>{count}</code> Flow(s) enabled",
@@ -1422,7 +1424,7 @@
             "title": "Flows are edited like code",
             "body": "We added a <code>notify</code> task for you without the AI Copilot, so you can see what editing the YAML directly looks like. It posts the final result to Slack.",
             "next": "See the task docs",
-            "callout": "A first draft from AI Copilot is only a starting point; the editor is where you iterate on it in a Code or No-Code editor tab, which both produce the same YAML, so your flow stays as code however it was built."
+            "callout": "A first draft from AI Copilot is only a starting point; the editor is where you iterate on it in a Code or No-code editor tab, which both produce the same YAML, so your flow stays as code however it was built."
           },
           "editor_help": {
             "title": "The docs are next to the flow",
@@ -1619,7 +1621,9 @@
       "raw": "Temporal view",
       "raw_details": "Show full task logs and flow logs in a raw, timestamp-ordered format",
       "compact": "Default view",
-      "compact_details": "Show task logs in a compact view grouped by each task"
+      "compact_details": "Show task logs in a compact view grouped by each task",
+      "fullscreen": "Full screen logs",
+      "exit_fullscreen": "Exit fullscreen"
     },
     "execution_deletion": {
       "logs": "Delete logs",
@@ -1696,7 +1700,7 @@
       "clearSelection": "Clear selection",
       "labels": {
         "yaml": "YAML Editor",
-        "no_code": "No Code Editor"
+        "no_code": "No-code Editor"
       },
       "sections": {
         "deprecated": "Deprecated properties",
@@ -2189,7 +2193,7 @@
     "playground": {
       "title": "Playground",
       "run_task_info": "Hover over any task in the Flow Code editor and click the \"Run task\" button to test your task.",
-      "play_icon_info": "You can also hit the Play icon in the No-Code or Topology views.",
+      "play_icon_info": "You can also hit the Play icon in the No-code or Topology views.",
       "toggle": "Playground",
       "run_task": "Run task",
       "run_this_task": "Run this task",
@@ -2519,6 +2523,9 @@
       "block_deleted": "{name} deleted",
       "card_aria_label": "Block {id} of type {type}",
       "canvas_aria": "Flow blocks canvas",
+      "chip_copied": "Copied to clipboard",
+      "chip_hint": "Click a chip to insert it into the focused field, or drag it in",
+      "chip_inserted": "Inserted into the field",
       "cluster_collapse_aria": "Collapse {id}",
       "cluster_expand_aria": "Expand {id} ({count} tasks)",
       "collapsed_summary": "{count} tasks",
@@ -2645,6 +2652,9 @@
       "install_description": "Install Kestra as an app for quicker access and a full-screen experience.",
       "install": "Install",
       "dismiss": "Not now"
-    }
+    },
+    "iteration": "Iteration",
+    "iteration_number": "Iteration {number}",
+    "delete_log_iteration": "Are you sure you want to delete the log for {iteration}?"
   }
 }

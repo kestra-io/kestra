@@ -9,6 +9,11 @@
         :loadIcon="loadIcon"
         @mouseover="emit(EVENTS.MOUSE_OVER, $event)"
         @mouseleave="emit(EVENTS.MOUSE_LEAVE)"
+        :focused="isKeyboardFocused"
+        @cardClick="onCardClick"
+        @taskDragStart="emit(EVENTS.TASK_DRAG_START, $event)"
+        :dragging="props.dragging"
+        @taskDragEnd="emit(EVENTS.TASK_DRAG_END)"
     >
         <template #badge>
             <span v-if="runnerLabel" class="runner-badge" :title="runnerLabel">{{ runnerLabel }}</span>
@@ -40,6 +45,29 @@
                     <Duration :histories="histories" :interval="100" :attemptCount="taskRuns[0]?.attempts?.length" :subject="taskId" />
                 </span>
             </span>
+            <KsTooltip v-if="validationIssues.length" :persistent="false">
+                <template #content>
+                    <div class="task-validation-tooltip">
+                        <div class="task-validation-tooltip-head">
+                            <AlertCircle :size="14" />
+                            <span>{{ $t("error detected") }}</span>
+                        </div>
+                        <ul class="task-validation-tooltip-list">
+                            <li v-for="issue in validationIssues" :key="issue">{{ issue }}</li>
+                        </ul>
+                    </div>
+                </template>
+                <span
+                    class="task-validation-badge"
+                    data-test="topology-task-validation-badge"
+                    role="img"
+                    tabindex="0"
+                    :aria-label="$t('flow_editor_stats.errors.label', {count: validationIssues.length})"
+                >
+                    <AlertCircle :size="14" />
+                    <span v-if="validationIssues.length > 1" class="task-validation-badge-count">{{ validationIssues.length }}</span>
+                </span>
+            </KsTooltip>
         </template>
         <template #title-actions>
             <slot name="taskActions" :task="data.node.task" :actions="actions" :execution="taskExecution" :taskRuns="taskRunsWithDynamicChildren" :taskRun="taskRuns[0]">
@@ -65,16 +93,20 @@
         EXECUTION_INJECTION_KEY,
         SUBFLOWS_EXECUTIONS_INJECTION_KEY,
         SHOW_EXTRA_DETAILS_INJECTION_KEY,
+        VALIDATION_ISSUES_INJECTION_KEY,
+        FOCUSED_TASK_INJECTION_KEY,
+        DRAGGING_NODE_INJECTION_KEY,
     } from "../injectionKeys"
 
+    import AlertCircle from "vue-material-design-icons/AlertCircle.vue"
     import TextBoxSearch from "vue-material-design-icons/TextBoxSearch.vue"
     import LocationExit from "vue-material-design-icons/LocationExit.vue"
     import PlayBoxMultiple from "vue-material-design-icons/PlayBoxMultiple.vue"
     import AlertOutline from "vue-material-design-icons/AlertOutline.vue"
     import SendLock from "vue-material-design-icons/SendLock.vue"
     import InformationOutline from "vue-material-design-icons/InformationOutline.vue"
-    import Pencil from "vue-material-design-icons/Pencil.vue"
     import Delete from "vue-material-design-icons/Delete.vue"
+    import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
     import OpenInNew from "vue-material-design-icons/OpenInNew.vue"
     import UnfoldMoreHorizontal from "vue-material-design-icons/UnfoldMoreHorizontal.vue"
     import EyeOutline from "vue-material-design-icons/EyeOutline.vue"
@@ -152,6 +184,7 @@
         replayEnabled?: boolean;
         customActions?: Record<string, CustomActionConfig>;
         showDetails?: Record<string, ShowDetailsConfig>;
+        dragging?: boolean;
     }>(), {
         sourcePosition: Position.Right,
         targetPosition: Position.Left,
@@ -161,6 +194,7 @@
         replayEnabled: false,
         customActions: () => ({}),
         showDetails: () => ({}),
+        dragging: false,
     })
 
     defineOptions({
@@ -179,19 +213,38 @@
         (event: typeof EVENTS.ADD_ERROR, data: { task: any }): void;
         (event: typeof EVENTS.EDIT, data: any) :void;
         (event: typeof EVENTS.DELETE, data: any) :void;
+        (event: typeof EVENTS.DUPLICATE, data: {id?: string}) :void;
         (event: typeof EVENTS.ADD_TASK, data: any) :void;
         (event: typeof EVENTS.SHOW_CONDITION, data: any) :void;
         (event: typeof EVENTS.SHOW_DESCRIPTION, data: any) :void;
         (event: typeof EVENTS.RUN_TASK, data: { task: any }) :void;
         (event: typeof EVENTS.SHOW_CUSTOM_ACTION, data: { task: any; customAction: CustomActionConfig }) :void;
         (event: typeof EVENTS.SHOW_DETAILS, data: { task: any; showDetails: ShowDetailsConfig }) :void;
+        (event: typeof EVENTS.TASK_DRAG_START, payload: {nodeId: string; label: string; cls?: string}) :void;
+        (event: typeof EVENTS.TASK_DRAG_END) :void;
     }>()
 
     const execution = inject(EXECUTION_INJECTION_KEY)
     const subflowsExecutions = inject(SUBFLOWS_EXECUTIONS_INJECTION_KEY)
     const globalShowExtraDetails = inject(SHOW_EXTRA_DETAILS_INJECTION_KEY)
+    const isDraggingNode = inject(DRAGGING_NODE_INJECTION_KEY, undefined)
+
+    function onCardClick() {
+        const task = props.data.node.task
+        if (props.data.isReadOnly || !task || isDraggingNode?.value) return
+        emit(EVENTS.EDIT, {task, section: SECTIONS.TASKS})
+    }
+
+    const focusedTaskId = inject(FOCUSED_TASK_INJECTION_KEY, undefined)
+    const isKeyboardFocused = computed(() => Boolean(taskId.value) && focusedTaskId?.value === taskId.value)
+
+    const validationIssuesByTask = inject(VALIDATION_ISSUES_INJECTION_KEY, undefined)
 
     const taskId = computed(() => Utils.afterLastDot(props.id))
+
+    const validationIssues = computed<string[]>(() =>
+        validationIssuesByTask?.value?.get(taskId.value ?? "") ?? [],
+    )
 
     const runnerType = computed(() => props.data.node?.task?.taskRunner?.type)
 
@@ -389,14 +442,6 @@
                 onClick: () => emit(EVENTS.ADD_ERROR, {task}),
             })
         }
-        if (!readOnly) {
-            list.push({
-                key: "edit",
-                label: t("edit"),
-                icon: Pencil,
-                onClick: () => emit(EVENTS.EDIT, {task, section: SECTIONS.TASKS}),
-            })
-        }
         if (actionConfig.value && task) {
             list.push({
                 key: "show-details",
@@ -406,6 +451,13 @@
             })
         }
         if (!readOnly) {
+            list.push({
+                key: "duplicate",
+                label: t("block_editor.duplicate"),
+                icon: ContentCopy,
+                divided: true,
+                onClick: () => emit(EVENTS.DUPLICATE, {id: taskId.value}),
+            })
             list.push({
                 key: "delete",
                 label: t("delete"),
@@ -457,7 +509,7 @@
 
 button.playground-button {
     color: var(--ks-white);
-    background-color: var(--ks-playground-bg-color);
+    background-color: var(--ks-toggle-playground);
 }
 
 .status-tag {
@@ -510,5 +562,51 @@ button.playground-button {
 .details-slide-leave-to {
     max-height: 0;
     opacity: 0;
+}
+
+.task-validation-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--ks-spacing-1);
+    padding: 0 var(--ks-spacing-1);
+    height: 1.125rem;
+    border-radius: var(--ks-radius-sm);
+    background: var(--ks-bg-error);
+    color: var(--ks-text-error);
+    cursor: help;
+}
+
+.task-validation-badge-count {
+    font-size: var(--ks-font-size-xs);
+    font-weight: 600;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+}
+
+.task-validation-tooltip {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ks-spacing-2);
+    max-width: 22rem;
+}
+
+.task-validation-tooltip-head {
+    display: flex;
+    align-items: center;
+    gap: var(--ks-spacing-1);
+    color: var(--ks-text-error);
+    font-weight: 600;
+    font-size: var(--ks-font-size-sm);
+}
+
+.task-validation-tooltip-list {
+    margin: 0;
+    padding-left: var(--ks-spacing-4);
+    display: flex;
+    flex-direction: column;
+    gap: var(--ks-spacing-1);
+    font-size: var(--ks-font-size-xs);
+    color: var(--ks-text-secondary);
+    font-family: var(--ks-font-family-mono);
 }
 </style>

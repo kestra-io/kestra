@@ -1,6 +1,7 @@
 import * as ExecutionsAPI from "@kestra-io/kestra-sdk/executions"
 
 import {webhookUrl} from "../../utils/webhook"
+import type {KestraHttpError} from "../../utils/kestraHttp"
 
 // Labels the created execution `system.from: testEvent` so it can be filtered out of metrics.
 export const TEST_EVENT_HEADER = "X-Kestra-Test-Event"
@@ -42,12 +43,13 @@ export async function sendWebhookTestEvent(options: {
         ) as {id?: string} | undefined
 
         return {status: 200, ok: true, executionId: response?.id, url}
-    } catch (error: any) {
+    } catch (error) {
+        const httpError = error as KestraHttpError | undefined
         return {
-            status: error?.status ?? error?.response?.status ?? 0,
+            status: httpError?.status ?? httpError?.response?.status ?? 0,
             ok: false,
             url,
-            error: error?.message,
+            error: httpError?.message,
         }
     }
 }

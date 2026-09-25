@@ -439,7 +439,9 @@
       "zoom-fit": "Dopasuj",
       "invalid": "Błąd grafu",
       "invalid_description": "Wystąpił błąd podczas ładowania grafu. Proszę sprawdzić kod źródłowy pod kątem błędów.",
-      "load_error": "Nie udało się załadować grafu topologii. Spróbuj ponownie."
+      "load_error": "Nie udało się załadować grafu topologii. Spróbuj ponownie.",
+      "add-task": "Dodaj task",
+      "add-trigger": "Dodaj trigger"
     },
     "show task logs": "Pokaż logi Taska",
     "show task condition": "Pokaż warunek Taska",
@@ -871,7 +873,7 @@
     "flow delete": "Czy na pewno chcesz usunąć <code>{flowCount}</code> Flowów?",
     "delete flow error": "Nie udało się usunąć flow {id}",
     "flows deleted": "Usunięto <code>{count}</code> Flowów",
-    "flow disable": "Czy na pewno chcesz wyłączyć <code>{flowCount}</code> Flowów?",
+    "flow disable": "Czy na pewno chcesz wyłączyć {flowCount} Flow | {flowCount} Flowy | {flowCount} Flowów?<br/><br/>Wyłączenie Flow zapisuje <code>disabled: true</code> w Flow i tworzy nową wersję. Synchronizacja z zewnętrznego źródła, która nie zawiera <code>disabled: true</code>, ponownie włączy Flow.",
     "flow enable": "Czy na pewno chcesz włączyć <code>{flowCount}</code> Flowów?",
     "flows disabled": "Wyłączono <code>{count}</code> Flowów",
     "flows enabled": "Włączono <code>{count}</code> Flowów",
@@ -1422,7 +1424,7 @@
             "title": "Flowy edytuje się jak kod",
             "body": "Dodaliśmy dla Ciebie Taska <code>notify</code> bez AI Copilota, abyś zobaczył, jak wygląda bezpośrednia edycja YAML. Wysyła on końcowy wynik na Slacka.",
             "next": "Zobacz dokumentację Taska",
-            "callout": "Pierwszy szkic z AI Copilota jest tylko punktem wyjścia. W edytorze rozwijasz go w zakładce Code lub No-Code, a obie generują ten sam YAML, dzięki czemu Twój Flow pozostaje kodem niezależnie od tego, jak powstał."
+            "callout": "Pierwszy szkic z AI Copilota jest tylko punktem wyjścia. W edytorze rozwijasz go w zakładce Code lub No-code, a obie generują ten sam YAML, dzięki czemu Twój Flow pozostaje kodem niezależnie od tego, jak powstał."
           },
           "editor_help": {
             "title": "Dokumentacja jest obok Flow",
@@ -1619,7 +1621,9 @@
       "raw": "Widok czasowy",
       "raw_details": "Pokaż pełne logi Tasków i logi Flow w surowym formacie, uporządkowane po znaczniku czasu",
       "compact": "Widok domyślny",
-      "compact_details": "Pokaż logi Tasków w kompaktowym widoku pogrupowanym według Taska"
+      "compact_details": "Pokaż logi Tasków w kompaktowym widoku pogrupowanym według Taska",
+      "fullscreen": "Logs na pełnym ekranie",
+      "exit_fullscreen": "Wyjdź z trybu pełnoekranowego"
     },
     "execution_deletion": {
       "logs": "Usuń logi",
@@ -1696,7 +1700,7 @@
       "clearSelection": "Wyczyść zaznaczenie",
       "labels": {
         "yaml": "Edytor YAML",
-        "no_code": "Edytor No-Code"
+        "no_code": "Edytor No-code"
       },
       "sections": {
         "deprecated": "Właściwości przestarzałe",
@@ -2189,7 +2193,7 @@
     "playground": {
       "title": "Playground",
       "run_task_info": "Najedź kursorem na dowolny Task w edytorze Flow Code i kliknij „Run task”, aby przetestować swój Task.",
-      "play_icon_info": "Możesz też kliknąć ikonę Play w widoku No-Code lub Topology.",
+      "play_icon_info": "Możesz też kliknąć ikonę Play w widoku No-code lub Topology.",
       "toggle": "Playground",
       "run_task": "Uruchom Task",
       "run_this_task": "Uruchom ten Task",
@@ -2519,6 +2523,9 @@
       "block_deleted": "Usunięto {name}",
       "card_aria_label": "Blok {id} typu {type}",
       "canvas_aria": "Canvas bloków Flow",
+      "chip_copied": "Skopiowano do schowka",
+      "chip_hint": "Kliknij chip, aby wstawić go do aktywnego pola, lub przeciągnij go",
+      "chip_inserted": "Wstawiono do pola",
       "cluster_collapse_aria": "Zwiń {id}",
       "cluster_expand_aria": "Rozwiń {id} ({count} Tasków)",
       "collapsed_summary": "{count} Tasków",
@@ -2645,6 +2652,9 @@
       "install_description": "Zainstaluj Kestrę jako aplikację, aby mieć szybszy dostęp i pełnoekranowy widok.",
       "install": "Zainstaluj",
       "dismiss": "Nie teraz"
-    }
+    },
+    "iteration": "Iteracja",
+    "iteration_number": "Iteracja {number}",
+    "delete_log_iteration": "Czy na pewno chcesz usunąć dziennik dla {iteration}?"
   }
 }

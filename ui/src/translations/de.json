@@ -439,7 +439,9 @@
       "zoom-fit": "Anpassen",
       "invalid": "Graph-Fehler",
       "invalid_description": "Beim Laden des Graphen ist ein Fehler aufgetreten. Bitte prüfe den Quellcode auf Fehler.",
-      "load_error": "Der Topologiegraph konnte nicht geladen werden. Bitte versuche es erneut."
+      "load_error": "Der Topologiegraph konnte nicht geladen werden. Bitte versuche es erneut.",
+      "add-task": "Task hinzufügen",
+      "add-trigger": "Trigger hinzufügen"
     },
     "show task logs": "Task-Logs anzeigen",
     "show task condition": "Task-Bedingung anzeigen",
@@ -871,7 +873,7 @@
     "flow delete": "Möchtest du <code>{flowCount}</code> Flow(s) wirklich löschen?",
     "delete flow error": "Flow {id} konnte nicht gelöscht werden",
     "flows deleted": "<code>{count}</code> Flow(s) gelöscht",
-    "flow disable": "Möchtest du <code>{flowCount}</code> Flow(s) wirklich deaktivieren?",
+    "flow disable": "Möchtest du wirklich {flowCount} Flow(s) deaktivieren?<br/><br/>Das Deaktivieren eines Flows schreibt <code>disabled: true</code> in den Flow und erstellt eine neue Revision. Eine Synchronisierung von einer externen Quelle, die <code>disabled: true</code> nicht enthält, aktiviert den Flow wieder.",
     "flow enable": "Möchtest du <code>{flowCount}</code> Flow(s) wirklich aktivieren?",
     "flows disabled": "<code>{count}</code> Flow(s) deaktiviert",
     "flows enabled": "<code>{count}</code> Flow(s) aktiviert",
@@ -1619,7 +1621,9 @@
       "raw": "Zeitliche Ansicht",
       "raw_details": "Vollständige Task-Logs und Flow-Logs im Rohformat nach Zeitstempel sortiert anzeigen",
       "compact": "Standardansicht",
-      "compact_details": "Task-Logs in einer kompakten Ansicht, gruppiert nach Task, anzeigen"
+      "compact_details": "Task-Logs in einer kompakten Ansicht, gruppiert nach Task, anzeigen",
+      "fullscreen": "Logs im Vollbild",
+      "exit_fullscreen": "Vollbild verlassen"
     },
     "execution_deletion": {
       "logs": "Logs löschen",
@@ -2519,6 +2523,9 @@
       "block_deleted": "{name} gelöscht",
       "card_aria_label": "Block {id} vom Typ {type}",
       "canvas_aria": "Canvas für Flow-Blöcke",
+      "chip_copied": "In die Zwischenablage kopiert",
+      "chip_hint": "Klicken Sie auf einen Chip, um ihn in das fokussierte Feld einzufügen, oder ziehen Sie ihn hinein",
+      "chip_inserted": "In das Feld eingefügt",
       "cluster_collapse_aria": "{id} einklappen",
       "cluster_expand_aria": "{id} ({count} Tasks) ausklappen",
       "collapsed_summary": "{count} Tasks",
@@ -2645,6 +2652,9 @@
       "install_description": "Installiere Kestra als App für schnelleren Zugriff und eine Vollbild-Ansicht.",
       "install": "Installieren",
       "dismiss": "Nicht jetzt"
-    }
+    },
+    "iteration": "Iteration",
+    "iteration_number": "Iteration {number}",
+    "delete_log_iteration": "Sind Sie sicher, dass Sie das Protokoll für {iteration} löschen möchten?"
   }
 }

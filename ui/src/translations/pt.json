@@ -439,7 +439,9 @@
       "zoom-fit": "Ajustar",
       "invalid": "Erro no gráfico",
       "invalid_description": "Ocorreu um erro ao carregar o gráfico. Por favor, verifique o código-fonte para erros.",
-      "load_error": "Não foi possível carregar o gráfico de topologia. Tente novamente."
+      "load_error": "Não foi possível carregar o gráfico de topologia. Tente novamente.",
+      "add-task": "Adicionar task",
+      "add-trigger": "Adicionar trigger"
     },
     "show task logs": "Mostrar task logs",
     "show task condition": "Exibir condição da task",
@@ -871,7 +873,7 @@
     "flow delete": "Tem certeza de que deseja deletar <code>{flowCount}</code> flow(s)?",
     "delete flow error": "Não foi possível eliminar o flow {id}",
     "flows deleted": "<code>{count}</code> Flow(s) deletado(s)",
-    "flow disable": "Tem certeza de que deseja desativar <code>{flowCount}</code> flow(s)?",
+    "flow disable": "Tem certeza de que deseja desabilitar {flowCount} Flow(s)?<br/><br/>Desabilitar um Flow escreve <code>disabled: true</code> no Flow e cria uma nova revisão. Uma sincronização de uma fonte externa que não inclui <code>disabled: true</code> habilitará o Flow novamente.",
     "flow enable": "Tem certeza de que deseja ativar <code>{flowCount}</code> flow(s)?",
     "flows disabled": "<code>{count}</code> Flow(s) desativado(s)",
     "flows enabled": "<code>{count}</code> Flow(s) ativado(s)",
@@ -1422,7 +1424,7 @@
             "title": "Flows são editados como código",
             "body": "Adicionamos uma task `notify` para você sem o AI Copilot, para que você possa ver como é editar o YAML diretamente. Ele publica o resultado final no Slack.",
             "next": "Ver a documentação da task",
-            "callout": "Um primeiro rascunho do AI Copilot é apenas um ponto de partida; o editor é onde você itera sobre ele em uma aba de editor Code ou No-Code, os quais ambos produzem o mesmo YAML, assim, seu flow permanece como código, independentemente de como foi construído."
+            "callout": "Um primeiro rascunho do AI Copilot é apenas um ponto de partida; o editor é onde você itera sobre ele em uma aba de editor Code ou No-code, os quais ambos produzem o mesmo YAML, assim, seu flow permanece como código, independentemente de como foi construído."
           },
           "editor_help": {
             "title": "A documentação está ao lado do flow",
@@ -1619,7 +1621,9 @@
       "raw": "Visualização temporal",
       "raw_details": "Mostrar logs de task e logs de flow completos em um formato bruto e ordenado por timestamp",
       "compact": "Visualização padrão",
-      "compact_details": "Mostrar logs de task em uma visualização compacta agrupada por cada task"
+      "compact_details": "Mostrar logs de task em uma visualização compacta agrupada por cada task",
+      "fullscreen": "Logs em ecrã inteiro",
+      "exit_fullscreen": "Sair do modo de tela cheia"
     },
     "execution_deletion": {
       "logs": "Excluir logs",
@@ -2189,7 +2193,7 @@
     "playground": {
       "title": "Playground",
       "run_task_info": "Passe o cursor sobre qualquer task no editor de Flow Code e clique no botão \"Run task\" para testar sua task.",
-      "play_icon_info": "Você também pode clicar no ícone de Play nas visualizações No-Code ou Topology.",
+      "play_icon_info": "Você também pode clicar no ícone de Play nas visualizações No-code ou Topology.",
       "toggle": "Playground",
       "run_task": "Executar task",
       "run_this_task": "Execute esta task",
@@ -2519,6 +2523,9 @@
       "block_deleted": "{name} excluído",
       "card_aria_label": "Bloco {id} do tipo {type}",
       "canvas_aria": "Tela de blocos de flow",
+      "chip_copied": "Copiado para a área de transferência",
+      "chip_hint": "Clique num chip para o inserir no campo focado, ou arraste-o",
+      "chip_inserted": "Inserido no campo",
       "cluster_collapse_aria": "Recolher {id}",
       "cluster_expand_aria": "Expandir {id} ({count} tasks)",
       "collapsed_summary": "{count} tasks",
@@ -2645,6 +2652,9 @@
       "install_description": "Instale o Kestra como uma aplicação para um acesso mais rápido e uma experiência em ecrã inteiro.",
       "install": "Instalar",
       "dismiss": "Agora não"
-    }
+    },
+    "iteration": "Iteração",
+    "iteration_number": "Iteração {number}",
+    "delete_log_iteration": "Tem certeza de que deseja excluir o log de {iteration}?"
   }
 }

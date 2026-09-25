@@ -45,6 +45,7 @@ public interface ITriggers extends IData<ITriggers.Fields> {
         TRIGGER_ID,
         EXECUTION_ID,
         NEXT_EXECUTION_DATE,
-        WORKER_ID
+        WORKER_ID, 
+        DISABLED
     }
 }

@@ -439,7 +439,9 @@
       "zoom-fit": "Подогнать",
       "invalid": "Ошибка графа",
       "invalid_description": "Произошла ошибка при загрузке графа. Пожалуйста, проверьте исходный код на наличие ошибок.",
-      "load_error": "Не удалось загрузить граф топологии. Повторите попытку."
+      "load_error": "Не удалось загрузить граф топологии. Повторите попытку.",
+      "add-task": "Добавить task",
+      "add-trigger": "Добавить trigger"
     },
     "show task logs": "Показать логи задачи",
     "show task condition": "Показать условие task",
@@ -871,7 +873,7 @@
     "flow delete": "Вы уверены, что хотите удалить <code>{flowCount}</code> flow(ы)?",
     "delete flow error": "Не удалось удалить flow {id}",
     "flows deleted": "<code>{count}</code> Flow(ы) удалены",
-    "flow disable": "Вы уверены, что хотите отключить <code>{flowCount}</code> flow(ы)?",
+    "flow disable": "Вы уверены, что хотите отключить {flowCount} Flow? <br/><br/>Отключение Flow записывает <code>disabled: true</code> в Flow и создает новую версию. Синхронизация из внешнего источника, которая не включает <code>disabled: true</code>, снова включит Flow.",
     "flow enable": "Вы уверены, что хотите включить <code>{flowCount}</code> flow(ы)?",
     "flows disabled": "<code>{count}</code> Flow(ы) отключены",
     "flows enabled": "<code>{count}</code> Flow(ы) включены",
@@ -1422,7 +1424,7 @@
             "title": "flow редактируются как код",
             "body": "Мы добавили `notify` task для вас без AI Copilot, чтобы вы увидели, как выглядит прямое редактирование YAML. Он публикует конечный результат в Slack.",
             "next": "Просмотреть документацию task",
-            "callout": "Первый черновик от AI Copilot — это лишь отправная точка; редактор — это место, где вы дорабатываете его на вкладке редактора Code или No-Code, которые обе генерируют один и тот же YAML, поэтому ваш flow остаётся кодом, независимо от способа его создания."
+            "callout": "Первый черновик от AI Copilot — это лишь отправная точка; редактор — это место, где вы дорабатываете его на вкладке редактора Code или No-code, которые обе генерируют один и тот же YAML, поэтому ваш flow остаётся кодом, независимо от способа его создания."
           },
           "editor_help": {
             "title": "Документация рядом с flow",
@@ -1619,7 +1621,9 @@
       "raw": "Временной вид",
       "raw_details": "Показать полные Task Logs и Flow Logs в необработанном формате, упорядоченном по времени",
       "compact": "Вид по умолчанию",
-      "compact_details": "Показать task логи в компактном виде, сгруппированном по каждой задаче"
+      "compact_details": "Показать task логи в компактном виде, сгруппированном по каждой задаче",
+      "fullscreen": "Логи на весь экран",
+      "exit_fullscreen": "Выйти из полноэкранного режима"
     },
     "execution_deletion": {
       "logs": "Удалить логи",
@@ -1696,7 +1700,7 @@
       "clearSelection": "Очистить выбор",
       "labels": {
         "yaml": "Редактор YAML",
-        "no_code": "Редактор No Code"
+        "no_code": "Редактор No-code"
       },
       "sections": {
         "deprecated": "Устаревшие свойства",
@@ -2189,7 +2193,7 @@
     "playground": {
       "title": "Песочница",
       "run_task_info": "Наведите курсор на любую task в редакторе Flow Code и нажмите кнопку \"Run task\", чтобы протестировать вашу task.",
-      "play_icon_info": "Вы также можете нажать на значок Play в представлениях No-Code или Topology.",
+      "play_icon_info": "Вы также можете нажать на значок Play в представлениях No-code или Topology.",
       "toggle": "Песочница",
       "run_task": "Запустить task",
       "run_this_task": "Запустить этот task",
@@ -2519,6 +2523,9 @@
       "block_deleted": "{name} удален",
       "card_aria_label": "Блок {id} типа {type}",
       "canvas_aria": "Холст блоков flow",
+      "chip_copied": "Скопировано в буфер обмена",
+      "chip_hint": "Нажмите на чип, чтобы вставить его в активное поле, или перетащите его",
+      "chip_inserted": "Вставлено в поле",
       "cluster_collapse_aria": "Свернуть {id}",
       "cluster_expand_aria": "Развернуть {id} ({count} tasks)",
       "collapsed_summary": "{count} задач",
@@ -2645,6 +2652,9 @@
       "install_description": "Установите Kestra как приложение для более быстрого доступа и полноэкранного режима.",
       "install": "Установить",
       "dismiss": "Не сейчас"
-    }
+    },
+    "iteration": "Итерация",
+    "iteration_number": "Итерация {number}",
+    "delete_log_iteration": "Вы уверены, что хотите удалить журнал для {iteration}?"
   }
 }

@@ -439,7 +439,9 @@
       "zoom-fit": "फिट",
       "invalid": "ग्राफ़ त्रुटि",
       "invalid_description": "ग्राफ़ लोड करते समय एक त्रुटि हुई। कृपया त्रुटियों के लिए स्रोत कोड की जाँच करें।",
-      "load_error": "टोपोलॉजी ग्राफ़ लोड नहीं किया जा सका। कृपया पुनः प्रयास करें।"
+      "load_error": "टोपोलॉजी ग्राफ़ लोड नहीं किया जा सका। कृपया पुनः प्रयास करें।",
+      "add-task": "Task जोड़ें",
+      "add-trigger": "Trigger जोड़ें"
     },
     "show task logs": "Task Logs दिखाएं",
     "show task condition": "कार्य की स्थिति दिखाएं",
@@ -871,7 +873,7 @@
     "flow delete": "क्या आप वाकई <code>{flowCount}</code> flow(s) को हटाना चाहते हैं?",
     "delete flow error": "flow {id} को हटाया नहीं जा सका",
     "flows deleted": "<code>{count}</code> Flow(s) हटाए गए",
-    "flow disable": "क्या आप वाकई <code>{flowCount}</code> flow(s) को अक्षम करना चाहते हैं?",
+    "flow disable": "क्या आप वाकई <code>{flowCount}</code> flow(s) को अक्षम करना चाहते हैं?<br/><br/>किसी flow को अक्षम करने से flow में <code>disabled: true</code> लिखा जाता है और एक नया revision बनता है। किसी बाहरी स्रोत से एक sync जिसमें <code>disabled: true</code> शामिल नहीं है, flow को फिर से सक्षम कर देगा।",
     "flow enable": "क्या आप वाकई <code>{flowCount}</code> flow(s) को सक्षम करना चाहते हैं?",
     "flows disabled": "<code>{count}</code> Flow(s) अक्षम किए गए",
     "flows enabled": "<code>{count}</code> Flow(s) सक्षम किए गए",
@@ -1619,7 +1621,9 @@
       "raw": "Temporal दृश्य",
       "raw_details": "सभी task logs और flow logs को कच्चे, टाइमस्टैम्प-क्रमबद्ध फ़ॉर्मैट में दिखाएँ",
       "compact": "पूर्व-निर्धारित दृश्य",
-      "compact_details": "प्रत्येक task द्वारा समूहीकृत कॉम्पैक्ट दृश्य में task logs दिखाएं"
+      "compact_details": "प्रत्येक task द्वारा समूहीकृत कॉम्पैक्ट दृश्य में task logs दिखाएं",
+      "fullscreen": "Logs पूर्ण स्क्रीन में",
+      "exit_fullscreen": "फ़ुलस्क्रीन से बाहर निकलें"
     },
     "execution_deletion": {
       "logs": "Logs हटाएं",
@@ -2189,7 +2193,7 @@
     "playground": {
       "title": "प्लेग्राउंड",
       "run_task_info": "Flow Code संपादक में किसी भी task पर होवर करें और अपने task का परीक्षण करने के लिए \"Run task\" बटन पर क्लिक करें।",
-      "play_icon_info": "आप No-Code या Topology दृश्य में Play आइकन पर भी क्लिक कर सकते हैं।",
+      "play_icon_info": "आप No-code या Topology दृश्य में Play आइकन पर भी क्लिक कर सकते हैं।",
       "toggle": "प्लेग्राउंड",
       "run_task": "Task चलाएँ",
       "run_this_task": "इस task को चलाएं",
@@ -2519,6 +2523,9 @@
       "block_deleted": "{name} हटा दिया गया",
       "card_aria_label": "ब्लॉक {id} प्रकार का {type}",
       "canvas_aria": "flow ब्लॉक्स कैनवास",
+      "chip_copied": "क्लिपबोर्ड पर कॉपी किया गया",
+      "chip_hint": "फ़ोकस किए गए फ़ील्ड में सम्मिलित करने के लिए किसी चिप पर क्लिक करें, या उसे खींचें",
+      "chip_inserted": "फ़ील्ड में सम्मिलित किया गया",
       "cluster_collapse_aria": "{id} को संक्षिप्त करें",
       "cluster_expand_aria": "{id} ({count} tasks) का विस्तार करें",
       "collapsed_summary": "{count} tasks",
@@ -2645,6 +2652,9 @@
       "install_description": "तेज़ पहुंच और पूर्ण-स्क्रीन अनुभव के लिए Kestra को ऐप के रूप में इंस्टॉल करें।",
       "install": "इंस्टॉल करें",
       "dismiss": "अभी नहीं"
-    }
+    },
+    "iteration": "पुनरावृत्ति",
+    "iteration_number": "पुनरावृत्ति {number}",
+    "delete_log_iteration": "क्या आप वाकई {iteration} के लिए लॉग हटाना चाहते हैं?"
   }
 }

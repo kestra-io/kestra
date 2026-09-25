@@ -8,8 +8,8 @@
             @change="updateLabel(label)"
             class="me-0 el-tag label"
         >
-            <template v-if="!label.key">{{ label.value }}</template>
-            <template v-else>{{ label.key }}:{{ label.value }}</template>
+            <template v-if="!label.key">{{ label.display ?? label.value }}</template>
+            <template v-else>{{ label.key }}:{{ label.display ?? label.value }}</template>
         </el-check-tag>
     </span>
 </template>
@@ -24,6 +24,7 @@
     interface Label {
         key?: string;
         value: string;
+        display?: string;
     }
 
     const props = withDefaults(

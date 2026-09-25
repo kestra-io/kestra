@@ -3,7 +3,10 @@ interface DagEdge {
     target: string;
 }
 
-/** Deterministic left-to-right layout: ranks by longest path from a root and returns the centre position per node id. */
+/**
+ * Deterministic left-to-right layout: ranks by longest path from a root and returns the centre position per node id.
+ * `ownColumn` nodes lead the graph; the edges that would cycle back into them are dropped from the ranking.
+ */
 export function computeDagLayout(
     nodeIDs: string[],
     edges: DagEdge[],
@@ -25,10 +28,23 @@ export function computeDagLayout(
     const ids = [...new Set(nodeIDs)].sort()
     const known = new Set(ids)
 
+    const candidates = options.ownColumn ? ids.filter(options.ownColumn) : []
+    const pinned = candidates.length < ids.length ? candidates : []
+    const pinnedSet = new Set(pinned)
+
+    // A node in its own column that both consumes and produces the same neighbour — a flow reading and
+    // writing one asset — closes a two-node cycle, and the cut below would then rank everything around it
+    // by id rather than by lineage. Drop the edge into it, never the one out of it: its column is fixed
+    // either way, so lineage running only through it keeps its depth.
+    const edgeKeys = new Set(edges.map(({source, target}) => `${source} ${target}`))
+    const closesPinnedCycle = ({source, target}: DagEdge): boolean =>
+        pinnedSet.has(target) && edgeKeys.has(`${target} ${source}`)
+
     const links = [
         ...new Map(
             edges
                 .filter((edge) => known.has(edge.source) && known.has(edge.target) && edge.source !== edge.target)
+                .filter((edge) => !closesPinnedCycle(edge))
                 .map((edge) => [`${edge.source} ${edge.target}`, edge]),
         ).values(),
     ]
@@ -81,9 +97,7 @@ export function computeDagLayout(
         columns[index] = sorted
     })
 
-    const pinned = options.ownColumn ? ids.filter(options.ownColumn) : []
-    if (pinned.length && pinned.length < ids.length) {
-        const pinnedSet = new Set(pinned)
+    if (pinned.length) {
         const remaining = columns
             .map((column) => column.filter((id) => !pinnedSet.has(id)))
             .filter((column) => column.length)

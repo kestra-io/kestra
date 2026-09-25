@@ -1,7 +1,7 @@
 <template>
     <div
         class="flowable-cluster"
-        :class="{'flowable-cluster--expanded': expanded, 'flowable-cluster--error': issues.length > 0, 'flowable-cluster--drag-forbidden': dragForbidden}"
+        :class="{'flowable-cluster--expanded': expanded, 'flowable-cluster--error': issues.length > 0, 'flowable-cluster--drag-over': dragOver, 'flowable-cluster--drag-forbidden': dragForbidden}"
         :data-test="`flowable-cluster-${String(displayBlock.id ?? '')}`"
     >
         <div
@@ -187,6 +187,7 @@
         depth?: number
         playgroundEnabled?: boolean
         draggable?: boolean
+        dragOver?: boolean
         dragForbidden?: boolean
     }>()
 
@@ -337,6 +338,11 @@
     .flowable-cluster--error {
         border-color: var(--ks-border-error);
         border-left-color: var(--ks-border-error);
+    }
+
+    .flowable-cluster--drag-over {
+        border-color: var(--ks-text-link);
+        border-style: dashed;
     }
 
     .flowable-cluster--drag-forbidden {

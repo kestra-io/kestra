@@ -18,7 +18,12 @@
             </KsTag>
         </div>
 
-        <div class="branch-lane-body" :style="indentStyle">
+        <div
+            class="branch-lane-body"
+            :style="indentStyle"
+            @dragover.prevent
+            @dragleave="onLaneDragLeave"
+        >
             <template v-if="tasks.length > 0">
                 <template v-for="(task, index) in tasks" :key="resolveBlockDomId(tasks, index)">
                     <FlowableClusterCard
@@ -32,7 +37,8 @@
                         :playgroundEnabled="playgroundEnabled"
                         :domId="resolveBlockDomId(tasks, index)"
                         :draggable="true"
-                        :dragForbidden="trailingDropState === 'forbidden'"
+                        :dragOver="dragOverIndex === index"
+                        :dragForbidden="laneDropState === 'forbidden'"
                         :data-block-id="resolveBlockDomId(tasks, index)"
                         @select="(p) => emit('select', p)"
                         @open-split="(p) => emit('open-split', p)"
@@ -55,7 +61,7 @@
                         :focused="focusedId !== undefined && focusedId === resolveBlockDomId(tasks, index)"
                         :draggable="true"
                         :dragOver="dragOverIndex === index"
-                        :dragForbidden="trailingDropState === 'forbidden'"
+                        :dragForbidden="laneDropState === 'forbidden'"
                         :runnable="playgroundEnabled"
                         :data-block-id="resolveBlockDomId(tasks, index)"
                         :data-test="`nested-block-card`"
@@ -92,19 +98,19 @@
                 type="button"
                 :class="{
                     'block-kbd-focused': tasks.length === 0 && focusedId === `__lane:${parentPath}`,
-                    'branch-lane-add-btn--drop-allowed': trailingDropState === 'allowed',
-                    'branch-lane-add-btn--drop-forbidden': trailingDropState === 'forbidden',
+                    'branch-lane-add-btn--drop-allowed': laneDropState === 'allowed',
+                    'branch-lane-add-btn--drop-forbidden': laneDropState === 'forbidden',
                 }"
                 :data-test="`branch-lane-add-${laneName}`"
                 :data-block-id="tasks.length === 0 ? `__lane:${parentPath}` : undefined"
                 :tabindex="tasks.length === 0 && focusedId === `__lane:${parentPath}` ? 0 : -1"
-                :aria-label="trailingDropState === 'forbidden' ? $t('block_editor.drop_forbidden') : $t('block_editor.add_to_lane', {lane: laneLabel})"
+                :aria-label="laneDropState === 'forbidden' ? $t('block_editor.drop_forbidden') : $t('block_editor.add_to_lane', {lane: laneLabel})"
                 @click="emit('add-at-path', parentPath, tasks.length - 1, $event)"
                 @dragover="onTrailingDragOver"
                 @drop="onTrailingDrop"
             >
                 <PlusCircleOutline class="branch-lane-add-icon" />
-                {{ trailingDropState === 'forbidden' ? $t('block_editor.drop_forbidden') : $t('block_editor.add_to_lane', {lane: laneLabel}) }}
+                {{ laneDropState === 'forbidden' ? $t('block_editor.drop_forbidden') : $t('block_editor.add_to_lane', {lane: laneLabel}) }}
             </button>
         </div>
     </div>
@@ -158,11 +164,12 @@
 
     const {
         dragOverIndex,
-        dropState: trailingDropState,
+        dropState: laneDropState,
         onItemDragStart,
         onItemDragOver,
         onItemDrop,
         onDragEnd,
+        onLaneDragLeave,
         onTrailingDragOver,
         onTrailingDrop,
     } = useLaneDrag(() => props.parentPath, () => props.tasks.length)

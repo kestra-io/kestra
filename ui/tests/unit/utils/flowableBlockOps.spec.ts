@@ -1,5 +1,6 @@
 import {describe, it, expect} from "vitest"
 import * as flowYamlUtils from "@kestra-io/topology/flow-yaml-utils"
+import {parseFlowFixture, requireFixtureValue} from "./parseFlowFixture"
 import {
     addBlock,
     addBlockAtPath,
@@ -145,9 +146,9 @@ describe("flowableBlockOps", () => {
             const result = addBlock(SIMPLE_FLOW, "tasks", newTask)
 
             // Then
-            const parsed = flowYamlUtils.parse(result)
+            const parsed = parseFlowFixture(result)
             expect(parsed.tasks).toHaveLength(3)
-            expect(parsed.tasks[2].id).toBe("task_c")
+            expect(parsed.tasks?.[2].id).toBe("task_c")
         })
 
         it("appends after a specific task when afterId is provided", () => {
@@ -158,10 +159,10 @@ describe("flowableBlockOps", () => {
             const result = addBlock(SIMPLE_FLOW, "tasks", newTask, "task_a")
 
             // Then
-            const parsed = flowYamlUtils.parse(result)
+            const parsed = parseFlowFixture(result)
             expect(parsed.tasks).toHaveLength(3)
-            expect(parsed.tasks[1].id).toBe("task_between")
-            expect(parsed.tasks[2].id).toBe("task_b")
+            expect(parsed.tasks?.[1].id).toBe("task_between")
+            expect(parsed.tasks?.[2].id).toBe("task_b")
         })
 
         it("creates the tasks section if it does not exist", () => {
@@ -173,9 +174,9 @@ describe("flowableBlockOps", () => {
             const result = addBlock(emptyFlow, "tasks", newTask)
 
             // Then
-            const parsed = flowYamlUtils.parse(result)
+            const parsed = parseFlowFixture(result)
             expect(parsed.tasks).toHaveLength(1)
-            expect(parsed.tasks[0].id).toBe("first")
+            expect(parsed.tasks?.[0].id).toBe("first")
         })
     })
 
@@ -188,9 +189,9 @@ describe("flowableBlockOps", () => {
             const result = addBlockAtPath(FLOW_WITH_FLOWABLE, "tasks[1].then", newTask)
 
             // Then
-            const parsed = flowYamlUtils.parse(result)
-            expect(parsed.tasks[1].then).toHaveLength(2)
-            expect(parsed.tasks[1].then[1].id).toBe("then_new")
+            const parsed = parseFlowFixture(result)
+            expect(parsed.tasks?.[1].then).toHaveLength(2)
+            expect(parsed.tasks?.[1].then?.[1].id).toBe("then_new")
         })
 
         it("adds a task into If.else branch", () => {
@@ -201,9 +202,9 @@ describe("flowableBlockOps", () => {
             const result = addBlockAtPath(FLOW_WITH_FLOWABLE, "tasks[1].else", newTask)
 
             // Then
-            const parsed = flowYamlUtils.parse(result)
-            expect(parsed.tasks[1].else).toHaveLength(2)
-            expect(parsed.tasks[1].else[1].id).toBe("else_new")
+            const parsed = parseFlowFixture(result)
+            expect(parsed.tasks?.[1].else).toHaveLength(2)
+            expect(parsed.tasks?.[1].else?.[1].id).toBe("else_new")
         })
 
         it("auto-creates the else branch when adding the first task to an empty else", () => {
@@ -225,9 +226,9 @@ tasks:
             const result = addBlockAtPath(flowNoElse, "tasks[0].else", newTask)
 
             // Then
-            const parsed = flowYamlUtils.parse(result)
-            expect(parsed.tasks[0].else).toHaveLength(1)
-            expect(parsed.tasks[0].else[0].id).toBe("else_first")
+            const parsed = parseFlowFixture(result)
+            expect(parsed.tasks?.[0].else).toHaveLength(1)
+            expect(parsed.tasks?.[0].else?.[0].id).toBe("else_first")
         })
 
         it("adds a task into a Switch case lane", () => {
@@ -238,9 +239,9 @@ tasks:
             const result = addBlockAtPath(FLOW_WITH_SWITCH, "tasks[0].cases.prod", newTask)
 
             // Then
-            const parsed = flowYamlUtils.parse(result)
-            expect(parsed.tasks[0].cases.prod).toHaveLength(2)
-            expect(parsed.tasks[0].cases.prod[1].id).toBe("prod_second")
+            const parsed = parseFlowFixture(result)
+            expect(parsed.tasks?.[0].cases?.prod).toHaveLength(2)
+            expect(parsed.tasks?.[0].cases?.prod[1].id).toBe("prod_second")
         })
 
         it("auto-creates a new Switch case lane when adding the first task to cases.X", () => {
@@ -251,11 +252,11 @@ tasks:
             const result = addBlockAtPath(FLOW_WITH_SWITCH, "tasks[0].cases.staging", newTask)
 
             // Then
-            const parsed = flowYamlUtils.parse(result)
-            expect(parsed.tasks[0].cases.staging).toHaveLength(1)
-            expect(parsed.tasks[0].cases.staging[0].id).toBe("staging_log")
-            expect(parsed.tasks[0].cases.prod).toHaveLength(1)
-            expect(parsed.tasks[0].cases.dev).toHaveLength(1)
+            const parsed = parseFlowFixture(result)
+            expect(parsed.tasks?.[0].cases?.staging).toHaveLength(1)
+            expect(parsed.tasks?.[0].cases?.staging[0].id).toBe("staging_log")
+            expect(parsed.tasks?.[0].cases?.prod).toHaveLength(1)
+            expect(parsed.tasks?.[0].cases?.dev).toHaveLength(1)
         })
 
         it("adds a task into Parallel.tasks branch", () => {
@@ -266,9 +267,9 @@ tasks:
             const result = addBlockAtPath(FLOW_WITH_PARALLEL, "tasks[0].tasks", newTask)
 
             // Then
-            const parsed = flowYamlUtils.parse(result)
-            expect(parsed.tasks[0].tasks).toHaveLength(3)
-            expect(parsed.tasks[0].tasks[2].id).toBe("sub_c")
+            const parsed = parseFlowFixture(result)
+            expect(parsed.tasks?.[0].tasks).toHaveLength(3)
+            expect(parsed.tasks?.[0].tasks?.[2].id).toBe("sub_c")
         })
 
         it("adds a task into flow-level errors lane", () => {
@@ -289,9 +290,9 @@ errors:
             const result = addBlockAtPath(flowWithErrors, "errors", newTask)
 
             // Then
-            const parsed = flowYamlUtils.parse(result)
+            const parsed = parseFlowFixture(result)
             expect(parsed.errors).toHaveLength(2)
-            expect(parsed.errors[1].id).toBe("err_notify")
+            expect(parsed.errors?.[1].id).toBe("err_notify")
         })
     })
 
@@ -303,9 +304,9 @@ errors:
             const result = deleteBlock(SIMPLE_FLOW, "tasks", "task_a")
 
             // Then
-            const parsed = flowYamlUtils.parse(result)
+            const parsed = parseFlowFixture(result)
             expect(parsed.tasks).toHaveLength(1)
-            expect(parsed.tasks[0].id).toBe("task_b")
+            expect(parsed.tasks?.[0].id).toBe("task_b")
         })
 
         it("removes a trigger by id", () => {
@@ -315,7 +316,7 @@ errors:
             const result = deleteBlock(FLOW_WITH_TRIGGERS, "triggers", "webhook")
 
             // Then
-            const parsed = flowYamlUtils.parse(result)
+            const parsed = parseFlowFixture(result)
             expect(parsed.triggers).toBeUndefined()
         })
 
@@ -326,7 +327,7 @@ errors:
             const result = deleteBlock(SIMPLE_FLOW, "tasks", "nonexistent")
 
             // Then
-            const parsed = flowYamlUtils.parse(result)
+            const parsed = parseFlowFixture(result)
             expect(parsed.tasks).toHaveLength(2)
         })
     })
@@ -339,8 +340,8 @@ errors:
             const result = deleteBlockAtPath(FLOW_WITH_FLOWABLE, "tasks[1].then[0]")
 
             // Then — the item is removed and the empty then key is stripped
-            const parsed = flowYamlUtils.parse(result)
-            expect(parsed.tasks[1].then).toBeUndefined()
+            const parsed = parseFlowFixture(result)
+            expect(requireFixtureValue(parsed.tasks?.[1]).then).toBeUndefined()
         })
 
         it("removes a task from a Switch case lane and cleans up empty case array", () => {
@@ -350,9 +351,9 @@ errors:
             const result = deleteBlockAtPath(FLOW_WITH_SWITCH, "tasks[0].cases.prod[0]")
 
             // Then — prod case was the only item, its array is cleaned; dev is untouched
-            const parsed = flowYamlUtils.parse(result)
-            expect(parsed.tasks[0].cases.prod).toBeUndefined()
-            expect(parsed.tasks[0].cases.dev).toHaveLength(1)
+            const parsed = parseFlowFixture(result)
+            expect(requireFixtureValue(requireFixtureValue(parsed.tasks?.[0]).cases).prod).toBeUndefined()
+            expect(parsed.tasks?.[0].cases?.dev).toHaveLength(1)
         })
 
         it("preserves sibling branches when deleting from one, cleans up the emptied branch", () => {
@@ -362,10 +363,10 @@ errors:
             const result = deleteBlockAtPath(FLOW_WITH_FLOWABLE, "tasks[1].then[0]")
 
             // Then
-            const parsed = flowYamlUtils.parse(result)
-            expect(parsed.tasks[1].then).toBeUndefined()
-            expect(parsed.tasks[1].else).toHaveLength(1)
-            expect(parsed.tasks[1].else[0].id).toBe("nested_b")
+            const parsed = parseFlowFixture(result)
+            expect(requireFixtureValue(parsed.tasks?.[1]).then).toBeUndefined()
+            expect(parsed.tasks?.[1].else).toHaveLength(1)
+            expect(parsed.tasks?.[1].else?.[0].id).toBe("nested_b")
         })
 
         it("keeps unrelated comments when deleting a nested task", () => {
@@ -396,9 +397,9 @@ tasks:
 
             // Then — the empty branch is cleaned AND the unrelated comment survives
             expect(result).toContain("# keep me: an unrelated reminder")
-            const parsed = flowYamlUtils.parse(result)
-            expect(parsed.tasks[1].then).toBeUndefined()
-            expect(parsed.tasks[0].id).toBe("leaf_task")
+            const parsed = parseFlowFixture(result)
+            expect(requireFixtureValue(parsed.tasks?.[1]).then).toBeUndefined()
+            expect(parsed.tasks?.[0].id).toBe("leaf_task")
         })
     })
 
@@ -410,9 +411,9 @@ tasks:
             const result = duplicateBlock(SIMPLE_FLOW, "tasks", "task_a")
 
             // Then
-            const parsed = flowYamlUtils.parse(result)
+            const parsed = parseFlowFixture(result)
             expect(parsed.tasks).toHaveLength(3)
-            const copy = parsed.tasks.find((t: Record<string, unknown>) => String(t.id).startsWith("task_a_copy"))
+            const copy = requireFixtureValue(parsed.tasks?.find((t: Record<string, unknown>) => String(t.id).startsWith("task_a_copy")))
             expect(copy).toBeDefined()
             expect(copy.type).toBe("io.kestra.plugin.core.log.Log")
         })
@@ -424,10 +425,10 @@ tasks:
             const result = duplicateBlock(SIMPLE_FLOW, "tasks", "task_a")
 
             // Then
-            const parsed = flowYamlUtils.parse(result)
-            expect(parsed.tasks[0].id).toBe("task_a")
-            expect(String(parsed.tasks[1].id)).toMatch(/^task_a_copy/)
-            expect(parsed.tasks[2].id).toBe("task_b")
+            const parsed = parseFlowFixture(result)
+            expect(parsed.tasks?.[0].id).toBe("task_a")
+            expect(String(parsed.tasks?.[1].id)).toMatch(/^task_a_copy/)
+            expect(parsed.tasks?.[2].id).toBe("task_b")
         })
 
         it("avoids id collision by incrementing suffix", () => {
@@ -446,8 +447,8 @@ tasks:
             const result = duplicateBlock(flowWithCopy, "tasks", "task_a")
 
             // Then
-            const parsed = flowYamlUtils.parse(result)
-            const ids = parsed.tasks.map((t: Record<string, unknown>) => t.id)
+            const parsed = parseFlowFixture(result)
+            const ids = parsed.tasks?.map((t: Record<string, unknown>) => t.id)
             expect(ids).toContain("task_a")
             expect(ids).toContain("task_a_copy")
             expect(ids).toContain("task_a_copy_2")
@@ -472,8 +473,8 @@ triggers:
             const result = duplicateBlock(flowWithCrossCollision, "triggers", "webhook")
 
             // Then — "webhook_copy" is taken by the task so the trigger copy must get a different id
-            const parsed = flowYamlUtils.parse(result)
-            const triggerIds = parsed.triggers.map((t: Record<string, unknown>) => String(t.id))
+            const parsed = parseFlowFixture(result)
+            const triggerIds = requireFixtureValue(parsed.triggers).map((t: Record<string, unknown>) => String(t.id))
             expect(triggerIds).toContain("webhook")
             expect(triggerIds).not.toContain("webhook_copy")
             expect(triggerIds.some((id: string) => id.startsWith("webhook_copy_"))).toBe(true)
@@ -487,27 +488,28 @@ triggers:
             const result = duplicateBlock(FLOW_WITH_FLOWABLE, "tasks", "if_task")
 
             // Then — the duplicate has unique IDs for itself and all nested tasks
-            const parsed = flowYamlUtils.parse(result)
+            const parsed = parseFlowFixture(result)
             expect(parsed.tasks).toHaveLength(3)
-            const copy = parsed.tasks[2]
+            const tasks = requireFixtureValue(parsed.tasks)
+            const copy = requireFixtureValue(tasks[2])
             expect(String(copy.id)).toMatch(/^if_task_copy/)
 
-            const copyThenId = String(copy.then[0].id)
-            const copyElseId = String(copy.else[0].id)
+            const copyThenId = String(requireFixtureValue(copy.then?.[0]).id)
+            const copyElseId = String(requireFixtureValue(copy.else?.[0]).id)
             expect(originalIds.has(copyThenId)).toBe(false)
             expect(originalIds.has(copyElseId)).toBe(false)
             expect(copyThenId).not.toBe(copyElseId)
 
             const allIds = new Set([
-                ...parsed.tasks.map((t: Record<string, unknown>) => String(t.id)),
-                ...parsed.tasks.flatMap((t: Record<string, unknown>) =>
+                ...tasks.map((t: Record<string, unknown>) => String(t.id)),
+                ...tasks.flatMap((t: Record<string, unknown>) =>
                     Array.isArray(t.then) ? (t.then as Record<string, unknown>[]).map(n => String(n.id)) : [],
                 ),
-                ...parsed.tasks.flatMap((t: Record<string, unknown>) =>
+                ...tasks.flatMap((t: Record<string, unknown>) =>
                     Array.isArray(t.else) ? (t.else as Record<string, unknown>[]).map(n => String(n.id)) : [],
                 ),
             ])
-            expect(allIds.size).toBe(parsed.tasks.length + copy.then.length + copy.else.length + 2)
+            expect(allIds.size).toBe(tasks.length + requireFixtureValue(copy.then).length + requireFixtureValue(copy.else).length + 2)
         })
 
         it("renames nested IDs in a Switch block when duplicating, preserving all cases", () => {
@@ -518,15 +520,16 @@ triggers:
             const result = duplicateBlock(FLOW_WITH_SWITCH, "tasks", "sw")
 
             // Then — copy top-level ID is new
-            const parsed = flowYamlUtils.parse(result)
+            const parsed = parseFlowFixture(result)
             expect(parsed.tasks).toHaveLength(2)
-            const copy = parsed.tasks[1]
+            const copy = requireFixtureValue(parsed.tasks?.[1])
             expect(String(copy.id)).toMatch(/^sw_copy/)
 
             // All nested IDs are renamed and unique vs originals
-            const copyProdId = String(copy.cases.prod[0].id)
-            const copyDevId = String(copy.cases.dev[0].id)
-            const copyDefaultId = String(copy.defaults[0].id)
+            const cases = requireFixtureValue(copy.cases)
+            const copyProdId = String(cases.prod[0].id)
+            const copyDevId = String(cases.dev[0].id)
+            const copyDefaultId = String(requireFixtureValue(copy.defaults)[0].id)
             expect(originalIds.has(copyProdId)).toBe(false)
             expect(originalIds.has(copyDevId)).toBe(false)
             expect(originalIds.has(copyDefaultId)).toBe(false)
@@ -540,7 +543,7 @@ triggers:
             const result = duplicateBlock(SIMPLE_FLOW, "tasks", "nonexistent")
 
             // Then
-            const parsed = flowYamlUtils.parse(result)
+            const parsed = parseFlowFixture(result)
             expect(parsed.tasks).toHaveLength(2)
         })
     })
@@ -553,9 +556,9 @@ triggers:
             const result = duplicateBlockAtPath(FLOW_WITH_FLOWABLE, "tasks[1].then[0]")
 
             // Then
-            const parsed = flowYamlUtils.parse(result)
-            expect(parsed.tasks[1].then).toHaveLength(2)
-            expect(String(parsed.tasks[1].then[1].id)).toMatch(/^nested_a_copy/)
+            const parsed = parseFlowFixture(result)
+            expect(parsed.tasks?.[1].then).toHaveLength(2)
+            expect(String(parsed.tasks?.[1].then?.[1].id)).toMatch(/^nested_a_copy/)
         })
 
         it("avoids id collisions across nested branches when duplicating", () => {
@@ -579,9 +582,9 @@ tasks:
             const result = duplicateBlockAtPath(flowWithCopy, "tasks[0].then[0]")
 
             // Then
-            const parsed = flowYamlUtils.parse(result)
-            expect(parsed.tasks[0].then).toHaveLength(2)
-            const copyId = String(parsed.tasks[0].then[1].id)
+            const parsed = parseFlowFixture(result)
+            expect(parsed.tasks?.[0].then).toHaveLength(2)
+            const copyId = String(parsed.tasks?.[0].then?.[1].id)
             expect(copyId).toMatch(/^nested_a_copy/)
             expect(copyId).not.toBe("nested_a_copy")
         })
@@ -609,13 +612,13 @@ tasks:
             const result = duplicateBlockAtPath(deepFlow, "tasks[0]")
 
             // Then — the copy and all its nested IDs are unique vs originals
-            const parsed = flowYamlUtils.parse(result)
+            const parsed = parseFlowFixture(result)
             expect(parsed.tasks).toHaveLength(2)
-            const copy = parsed.tasks[1]
+            const copy = requireFixtureValue(parsed.tasks?.[1])
             expect(originalIds.has(String(copy.id))).toBe(false)
-            const copyInner = copy.then[0]
+            const copyInner = requireFixtureValue(copy.then?.[0])
             expect(originalIds.has(String(copyInner.id))).toBe(false)
-            const copyDeep = copyInner.then[0]
+            const copyDeep = requireFixtureValue(copyInner.then?.[0])
             expect(originalIds.has(String(copyDeep.id))).toBe(false)
             expect(new Set([String(copy.id), String(copyInner.id), String(copyDeep.id)]).size).toBe(3)
         })
@@ -627,9 +630,9 @@ tasks:
             const result = duplicateBlockAtPath(FLOW_WITH_SWITCH, "tasks[0].cases.prod[0]")
 
             // Then
-            const parsed = flowYamlUtils.parse(result)
-            expect(parsed.tasks[0].cases.prod).toHaveLength(2)
-            expect(String(parsed.tasks[0].cases.prod[1].id)).toMatch(/^prod_log_copy/)
+            const parsed = parseFlowFixture(result)
+            expect(parsed.tasks?.[0].cases?.prod).toHaveLength(2)
+            expect(String(parsed.tasks?.[0].cases?.prod[1].id)).toMatch(/^prod_log_copy/)
         })
     })
 
@@ -642,11 +645,11 @@ tasks:
             const result = updateBlock(SIMPLE_FLOW, "tasks", "task_a", updatedYaml)
 
             // Then
-            const parsed = flowYamlUtils.parse(result)
+            const parsed = parseFlowFixture(result)
             expect(parsed.tasks).toHaveLength(2)
-            expect(parsed.tasks[0].message).toBe("Updated")
-            expect(parsed.tasks[1].id).toBe("task_b")
-            expect(parsed.tasks[1].message).toBe("World")
+            expect(parsed.tasks?.[0].message).toBe("Updated")
+            expect(parsed.tasks?.[1].id).toBe("task_b")
+            expect(parsed.tasks?.[1].message).toBe("World")
         })
 
         it("preserves nested branches of sibling flowable tasks when updating a leaf", () => {
@@ -657,13 +660,13 @@ tasks:
             const result = updateBlock(FLOW_WITH_FLOWABLE, "tasks", "leaf_task", updatedYaml)
 
             // Then
-            const parsed = flowYamlUtils.parse(result)
-            expect(parsed.tasks[0].message).toBe("Changed")
-            const ifTask = parsed.tasks.find((t: Record<string, unknown>) => t.id === "if_task")
+            const parsed = parseFlowFixture(result)
+            expect(parsed.tasks?.[0].message).toBe("Changed")
+            const ifTask = requireFixtureValue(parsed.tasks?.find((t: Record<string, unknown>) => t.id === "if_task"))
             expect(ifTask.then).toHaveLength(1)
             expect(ifTask.else).toHaveLength(1)
-            expect(ifTask.then[0].id).toBe("nested_a")
-            expect(ifTask.else[0].id).toBe("nested_b")
+            expect(ifTask.then?.[0].id).toBe("nested_a")
+            expect(ifTask.else?.[0].id).toBe("nested_b")
         })
 
         it("updates a trigger without affecting tasks", () => {
@@ -674,9 +677,9 @@ tasks:
             const result = updateBlock(FLOW_WITH_TRIGGERS, "triggers", "webhook", updatedYaml)
 
             // Then
-            const parsed = flowYamlUtils.parse(result)
-            expect(parsed.triggers[0].key).toBe("new-key")
-            expect(parsed.tasks[0].id).toBe("log")
+            const parsed = parseFlowFixture(result)
+            expect(parsed.triggers?.[0].key).toBe("new-key")
+            expect(parsed.tasks?.[0].id).toBe("log")
         })
 
         it("renames the block id when new content has a different id, preserving position and siblings", () => {
@@ -687,10 +690,10 @@ tasks:
             const result = updateBlock(SIMPLE_FLOW, "tasks", "task_a", renamedYaml)
 
             // Then
-            const parsed = flowYamlUtils.parse(result)
+            const parsed = parseFlowFixture(result)
             expect(parsed.tasks).toHaveLength(2)
-            expect(parsed.tasks[0].id).toBe("task_renamed")
-            expect(parsed.tasks[1].id).toBe("task_b")
+            expect(parsed.tasks?.[0].id).toBe("task_renamed")
+            expect(parsed.tasks?.[1].id).toBe("task_b")
         })
 
         it("returns source unchanged when id is not found", () => {
@@ -700,7 +703,7 @@ tasks:
             const result = updateBlock(SIMPLE_FLOW, "tasks", "nonexistent", "id: nonexistent\ntype: io.kestra.plugin.core.log.Log")
 
             // Then
-            const parsed = flowYamlUtils.parse(result)
+            const parsed = parseFlowFixture(result)
             expect(parsed.tasks).toHaveLength(2)
         })
     })
@@ -714,9 +717,9 @@ tasks:
             const result = updateBlockAtPath(FLOW_WITH_FLOWABLE, "tasks[1].then[0]", updatedYaml)
 
             // Then
-            const parsed = flowYamlUtils.parse(result)
-            expect(parsed.tasks[1].then[0].message).toBe("Updated nested")
-            expect(parsed.tasks[1].else[0].id).toBe("nested_b")
+            const parsed = parseFlowFixture(result)
+            expect(parsed.tasks?.[1].then?.[0].message).toBe("Updated nested")
+            expect(parsed.tasks?.[1].else?.[0].id).toBe("nested_b")
         })
     })
 
@@ -725,16 +728,16 @@ tasks:
             // Given
 
             // When
-            const parsed1 = flowYamlUtils.parse(FLOW_WITH_SWITCH)
+            const parsed1 = parseFlowFixture(FLOW_WITH_SWITCH)
             const stringified = flowYamlUtils.stringify(parsed1)
-            const parsed2 = flowYamlUtils.parse(stringified)
+            const parsed2 = parseFlowFixture(stringified)
 
             // Then
-            expect(parsed2.tasks[0].cases.prod).toHaveLength(1)
-            expect(parsed2.tasks[0].cases.prod[0].id).toBe("prod_log")
-            expect(parsed2.tasks[0].cases.dev).toHaveLength(1)
-            expect(parsed2.tasks[0].cases.dev[0].id).toBe("dev_log")
-            expect(parsed2.tasks[0].defaults[0].id).toBe("default_log")
+            expect(parsed2.tasks?.[0].cases?.prod).toHaveLength(1)
+            expect(parsed2.tasks?.[0].cases?.prod[0].id).toBe("prod_log")
+            expect(parsed2.tasks?.[0].cases?.dev).toHaveLength(1)
+            expect(parsed2.tasks?.[0].cases?.dev[0].id).toBe("dev_log")
+            expect(parsed2.tasks?.[0].defaults?.[0].id).toBe("default_log")
         })
 
         it("adding a case to Switch preserves all other cases", () => {
@@ -745,11 +748,11 @@ tasks:
             const result = addBlockAtPath(FLOW_WITH_SWITCH, "tasks[0].cases.staging", newTask)
 
             // Then
-            const parsed = flowYamlUtils.parse(result)
-            expect(parsed.tasks[0].cases.prod).toHaveLength(1)
-            expect(parsed.tasks[0].cases.dev).toHaveLength(1)
-            expect(parsed.tasks[0].cases.staging).toHaveLength(1)
-            expect(parsed.tasks[0].cases.staging[0].id).toBe("staging_log")
+            const parsed = parseFlowFixture(result)
+            expect(parsed.tasks?.[0].cases?.prod).toHaveLength(1)
+            expect(parsed.tasks?.[0].cases?.dev).toHaveLength(1)
+            expect(parsed.tasks?.[0].cases?.staging).toHaveLength(1)
+            expect(parsed.tasks?.[0].cases?.staging[0].id).toBe("staging_log")
         })
     })
 
@@ -783,12 +786,12 @@ tasks:
             const result = addBlockAtPath(FLOW_WITH_SWITCH, "tasks[0].cases[\"eu.prod\"]", newTask)
 
             // Then
-            const parsed = flowYamlUtils.parse(result)
-            expect(parsed.tasks[0].cases["eu.prod"]).toHaveLength(1)
-            expect(parsed.tasks[0].cases["eu.prod"][0].id).toBe("eu_log")
+            const parsed = parseFlowFixture(result)
+            expect(parsed.tasks?.[0].cases?.["eu.prod"]).toHaveLength(1)
+            expect(parsed.tasks?.[0].cases?.["eu.prod"][0].id).toBe("eu_log")
             // the dot must not have created a nested `eu: { prod: ... }`
-            expect(parsed.tasks[0].cases.eu).toBeUndefined()
-            expect(parsed.tasks[0].cases.prod).toHaveLength(1)
+            expect(requireFixtureValue(requireFixtureValue(parsed.tasks?.[0]).cases).eu).toBeUndefined()
+            expect(parsed.tasks?.[0].cases?.prod).toHaveLength(1)
         })
 
         it("reorders tasks inside a dotted-key case lane", () => {
@@ -796,8 +799,8 @@ tasks:
             const result = reorderAtPath(FLOW_WITH_DOTTED_CASE, "tasks[0].cases[\"1.0\"]", 0, 1)
 
             // Then
-            const parsed = flowYamlUtils.parse(result)
-            expect(parsed.tasks[0].cases["1.0"].map((t: {id: string}) => t.id)).toEqual(["second", "first"])
+            const parsed = parseFlowFixture(result)
+            expect(parsed.tasks?.[0].cases?.["1.0"].map((t) => t.id)).toEqual(["second", "first"])
         })
 
         it("moves a task inside a dotted-key case lane", () => {
@@ -805,8 +808,8 @@ tasks:
             const result = moveBlockAtPath(FLOW_WITH_DOTTED_CASE, "tasks[0].cases[\"1.0\"][1]", "up")
 
             // Then
-            const parsed = flowYamlUtils.parse(result)
-            expect(parsed.tasks[0].cases["1.0"].map((t: {id: string}) => t.id)).toEqual(["second", "first"])
+            const parsed = parseFlowFixture(result)
+            expect(parsed.tasks?.[0].cases?.["1.0"].map((t) => t.id)).toEqual(["second", "first"])
         })
     })
 
@@ -818,10 +821,10 @@ tasks:
             const result = moveBlockAtPath(SIMPLE_FLOW, "tasks[1]", "up")
 
             // Then
-            const parsed = flowYamlUtils.parse(result)
+            const parsed = parseFlowFixture(result)
             expect(parsed.tasks).toHaveLength(2)
-            expect(parsed.tasks[0].id).toBe("task_b")
-            expect(parsed.tasks[1].id).toBe("task_a")
+            expect(parsed.tasks?.[0].id).toBe("task_b")
+            expect(parsed.tasks?.[1].id).toBe("task_a")
         })
 
         it("moves a task down by one position", () => {
@@ -831,10 +834,10 @@ tasks:
             const result = moveBlockAtPath(SIMPLE_FLOW, "tasks[0]", "down")
 
             // Then
-            const parsed = flowYamlUtils.parse(result)
+            const parsed = parseFlowFixture(result)
             expect(parsed.tasks).toHaveLength(2)
-            expect(parsed.tasks[0].id).toBe("task_b")
-            expect(parsed.tasks[1].id).toBe("task_a")
+            expect(parsed.tasks?.[0].id).toBe("task_b")
+            expect(parsed.tasks?.[1].id).toBe("task_a")
         })
 
         it("is a no-op when moving the first item up", () => {
@@ -844,9 +847,9 @@ tasks:
             const result = moveBlockAtPath(SIMPLE_FLOW, "tasks[0]", "up")
 
             // Then
-            const parsed = flowYamlUtils.parse(result)
-            expect(parsed.tasks[0].id).toBe("task_a")
-            expect(parsed.tasks[1].id).toBe("task_b")
+            const parsed = parseFlowFixture(result)
+            expect(parsed.tasks?.[0].id).toBe("task_a")
+            expect(parsed.tasks?.[1].id).toBe("task_b")
         })
 
         it("is a no-op when moving the last item down", () => {
@@ -856,9 +859,9 @@ tasks:
             const result = moveBlockAtPath(SIMPLE_FLOW, "tasks[1]", "down")
 
             // Then
-            const parsed = flowYamlUtils.parse(result)
-            expect(parsed.tasks[0].id).toBe("task_a")
-            expect(parsed.tasks[1].id).toBe("task_b")
+            const parsed = parseFlowFixture(result)
+            expect(parsed.tasks?.[0].id).toBe("task_a")
+            expect(parsed.tasks?.[1].id).toBe("task_b")
         })
 
         it("moves a nested task within a lane", () => {
@@ -873,9 +876,9 @@ tasks:
             const result = moveBlockAtPath(withTwo, "tasks[1].then[1]", "up")
 
             // Then
-            const parsed = flowYamlUtils.parse(result)
-            expect(parsed.tasks[1].then[0].id).toBe("nested_c")
-            expect(parsed.tasks[1].then[1].id).toBe("nested_a")
+            const parsed = parseFlowFixture(result)
+            expect(parsed.tasks?.[1].then?.[0].id).toBe("nested_c")
+            expect(parsed.tasks?.[1].then?.[1].id).toBe("nested_a")
         })
 
         it("preserves the full content of the moved blocks (round-trip safety)", () => {
@@ -885,11 +888,11 @@ tasks:
             const result = moveBlockAtPath(FLOW_WITH_FLOWABLE, "tasks[0]", "down")
 
             // Then
-            const parsed = flowYamlUtils.parse(result)
-            expect(parsed.tasks[0].id).toBe("if_task")
-            expect(parsed.tasks[0].then[0].id).toBe("nested_a")
-            expect(parsed.tasks[0].else[0].id).toBe("nested_b")
-            expect(parsed.tasks[1].id).toBe("leaf_task")
+            const parsed = parseFlowFixture(result)
+            expect(parsed.tasks?.[0].id).toBe("if_task")
+            expect(parsed.tasks?.[0].then?.[0].id).toBe("nested_a")
+            expect(parsed.tasks?.[0].else?.[0].id).toBe("nested_b")
+            expect(parsed.tasks?.[1].id).toBe("leaf_task")
         })
 
         it("returns source unchanged when path has no bracket index", () => {
@@ -899,8 +902,8 @@ tasks:
             const result = moveBlockAtPath(SIMPLE_FLOW, "tasks", "up")
 
             // Then
-            const parsed = flowYamlUtils.parse(result)
-            expect(parsed.tasks[0].id).toBe("task_a")
+            const parsed = parseFlowFixture(result)
+            expect(parsed.tasks?.[0].id).toBe("task_a")
         })
 
         it("moves a task up within a Switch.cases lane, preserving the full cases map", () => {
@@ -915,12 +918,12 @@ tasks:
             const result = moveBlockAtPath(withTwo, "tasks[0].cases.prod[1]", "up")
 
             // Then — order swapped, other cases intact
-            const parsed = flowYamlUtils.parse(result)
-            expect(parsed.tasks[0].cases.prod[0].id).toBe("prod_second")
-            expect(parsed.tasks[0].cases.prod[1].id).toBe("prod_log")
-            expect(parsed.tasks[0].cases.dev).toHaveLength(1)
-            expect(parsed.tasks[0].cases.dev[0].id).toBe("dev_log")
-            expect(parsed.tasks[0].defaults[0].id).toBe("default_log")
+            const parsed = parseFlowFixture(result)
+            expect(parsed.tasks?.[0].cases?.prod[0].id).toBe("prod_second")
+            expect(parsed.tasks?.[0].cases?.prod[1].id).toBe("prod_log")
+            expect(parsed.tasks?.[0].cases?.dev).toHaveLength(1)
+            expect(parsed.tasks?.[0].cases?.dev[0].id).toBe("dev_log")
+            expect(parsed.tasks?.[0].defaults?.[0].id).toBe("default_log")
         })
 
         it("moves a task down within a Switch.cases lane, preserving the full cases map", () => {
@@ -935,10 +938,10 @@ tasks:
             const result = moveBlockAtPath(withTwo, "tasks[0].cases.prod[0]", "down")
 
             // Then — swapped, siblings untouched
-            const parsed = flowYamlUtils.parse(result)
-            expect(parsed.tasks[0].cases.prod[0].id).toBe("prod_second")
-            expect(parsed.tasks[0].cases.prod[1].id).toBe("prod_log")
-            expect(parsed.tasks[0].cases.dev[0].id).toBe("dev_log")
+            const parsed = parseFlowFixture(result)
+            expect(parsed.tasks?.[0].cases?.prod[0].id).toBe("prod_second")
+            expect(parsed.tasks?.[0].cases?.prod[1].id).toBe("prod_log")
+            expect(parsed.tasks?.[0].cases?.dev[0].id).toBe("dev_log")
         })
     })
 
@@ -969,9 +972,9 @@ tasks:
             const result = reorderAtPath(SIMPLE_FLOW, "tasks", 0, 1)
 
             // Then
-            const parsed = flowYamlUtils.parse(result)
-            expect(parsed.tasks[0].id).toBe("task_b")
-            expect(parsed.tasks[1].id).toBe("task_a")
+            const parsed = parseFlowFixture(result)
+            expect(parsed.tasks?.[0].id).toBe("task_b")
+            expect(parsed.tasks?.[1].id).toBe("task_a")
         })
 
         it("moves an item from index 1 to index 0 (reverse)", () => {
@@ -981,9 +984,9 @@ tasks:
             const result = reorderAtPath(SIMPLE_FLOW, "tasks", 1, 0)
 
             // Then
-            const parsed = flowYamlUtils.parse(result)
-            expect(parsed.tasks[0].id).toBe("task_b")
-            expect(parsed.tasks[1].id).toBe("task_a")
+            const parsed = parseFlowFixture(result)
+            expect(parsed.tasks?.[0].id).toBe("task_b")
+            expect(parsed.tasks?.[1].id).toBe("task_a")
         })
 
         it("is a no-op when fromIndex equals toIndex", () => {
@@ -1003,9 +1006,9 @@ tasks:
             const result = reorderAtPath(FLOW_WITH_PARALLEL, "tasks[0].tasks", 0, 1)
 
             // Then
-            const parsed = flowYamlUtils.parse(result)
-            expect(parsed.tasks[0].tasks[0].id).toBe("sub_b")
-            expect(parsed.tasks[0].tasks[1].id).toBe("sub_a")
+            const parsed = parseFlowFixture(result)
+            expect(parsed.tasks?.[0].tasks?.[0].id).toBe("sub_b")
+            expect(parsed.tasks?.[0].tasks?.[1].id).toBe("sub_a")
         })
 
         it("preserves nested content of moved items (round-trip safety)", () => {
@@ -1030,11 +1033,11 @@ tasks:
             const result = reorderAtPath(threeItems, "tasks", 1, 0)
 
             // Then — nested content intact
-            const parsed = flowYamlUtils.parse(result)
-            expect(parsed.tasks[0].id).toBe("if_task")
-            expect(parsed.tasks[0].then[0].id).toBe("nested_a")
-            expect(parsed.tasks[1].id).toBe("task_a")
-            expect(parsed.tasks[2].id).toBe("task_c")
+            const parsed = parseFlowFixture(result)
+            expect(parsed.tasks?.[0].id).toBe("if_task")
+            expect(parsed.tasks?.[0].then?.[0].id).toBe("nested_a")
+            expect(parsed.tasks?.[1].id).toBe("task_a")
+            expect(parsed.tasks?.[2].id).toBe("task_c")
         })
 
         it("reorders within a Switch.cases lane, preserving all other cases", () => {
@@ -1049,11 +1052,11 @@ tasks:
             const result = reorderAtPath(withTwo, "tasks[0].cases.prod", 0, 1)
 
             // Then — order swapped, other cases intact
-            const parsed = flowYamlUtils.parse(result)
-            expect(parsed.tasks[0].cases.prod[0].id).toBe("prod_second")
-            expect(parsed.tasks[0].cases.prod[1].id).toBe("prod_log")
-            expect(parsed.tasks[0].cases.dev[0].id).toBe("dev_log")
-            expect(parsed.tasks[0].defaults[0].id).toBe("default_log")
+            const parsed = parseFlowFixture(result)
+            expect(parsed.tasks?.[0].cases?.prod[0].id).toBe("prod_second")
+            expect(parsed.tasks?.[0].cases?.prod[1].id).toBe("prod_log")
+            expect(parsed.tasks?.[0].cases?.dev[0].id).toBe("dev_log")
+            expect(parsed.tasks?.[0].defaults?.[0].id).toBe("default_log")
         })
 
         it("returns source unchanged when indices are out of bounds", () => {
@@ -1063,9 +1066,9 @@ tasks:
             const result = reorderAtPath(SIMPLE_FLOW, "tasks", 0, 99)
 
             // Then
-            const parsed = flowYamlUtils.parse(result)
-            expect(parsed.tasks[0].id).toBe("task_a")
-            expect(parsed.tasks[1].id).toBe("task_b")
+            const parsed = parseFlowFixture(result)
+            expect(parsed.tasks?.[0].id).toBe("task_a")
+            expect(parsed.tasks?.[1].id).toBe("task_b")
         })
     })
 
@@ -1150,10 +1153,10 @@ afterExecution:
             const result = addBlock(SIMPLE_FLOW, "tasks", task)
 
             // Then
-            const parsed = flowYamlUtils.parse(result)
+            const parsed = parseFlowFixture(result)
             expect(parsed.tasks).toHaveLength(3)
-            expect(parsed.tasks[2].type).toBe("io.kestra.plugin.core.flow.If")
-            expect(typeof parsed.tasks[2].id).toBe("string")
+            expect(parsed.tasks?.[2].type).toBe("io.kestra.plugin.core.flow.If")
+            expect(typeof parsed.tasks?.[2].id).toBe("string")
         })
 
         it("avoids id collisions against existing flow ids when existingIds is provided", () => {
@@ -1176,8 +1179,8 @@ tasks:
 
             // And the resulting flow has no duplicate ids
             const result = addBlock(collisionFlow, "tasks", task)
-            const parsed = flowYamlUtils.parse(result)
-            const ids = parsed.tasks.map((t: Record<string, unknown>) => String(t.id))
+            const parsed = parseFlowFixture(result)
+            const ids = requireFixtureValue(parsed.tasks).map((t: Record<string, unknown>) => String(t.id))
             expect(new Set(ids).size).toBe(ids.length)
         })
 
@@ -1395,7 +1398,7 @@ tasks:
         })
 
         describe("path-addressed constraints (errors / finally / afterExecution / nested)", () => {
-            const flow = flowYamlUtils.parse(`
+            const flow = parseFlowFixture(`
 id: probe
 namespace: qa
 tasks:
@@ -1505,26 +1508,26 @@ afterExecution:
             const result = deleteBlock(FLOW_WITH_FLOWABLE, "tasks", "leaf_task")
 
             // Then
-            const parsed = flowYamlUtils.parse(result)
-            const ifTask = parsed.tasks.find((t: Record<string, unknown>) => t.id === "if_task")
+            const parsed = parseFlowFixture(result)
+            const ifTask = requireFixtureValue(parsed.tasks?.find((t: Record<string, unknown>) => t.id === "if_task"))
             expect(ifTask).toBeDefined()
             expect(ifTask.then).toHaveLength(1)
             expect(ifTask.else).toHaveLength(1)
-            expect(ifTask.then[0].id).toBe("nested_a")
-            expect(ifTask.else[0].id).toBe("nested_b")
+            expect(ifTask.then?.[0].id).toBe("nested_a")
+            expect(ifTask.else?.[0].id).toBe("nested_b")
         })
 
         it("parse(stringify(x)) round-trip produces stable output", () => {
             // Given
 
             // When
-            const parsed1 = flowYamlUtils.parse(FLOW_WITH_FLOWABLE)
+            const parsed1 = parseFlowFixture(FLOW_WITH_FLOWABLE)
             const stringified = flowYamlUtils.stringify(parsed1)
-            const parsed2 = flowYamlUtils.parse(stringified)
+            const parsed2 = parseFlowFixture(stringified)
 
             // Then
-            expect(parsed2.tasks[1].then[0].id).toBe("nested_a")
-            expect(parsed2.tasks[1].else[0].id).toBe("nested_b")
+            expect(parsed2.tasks?.[1].then?.[0].id).toBe("nested_a")
+            expect(parsed2.tasks?.[1].else?.[0].id).toBe("nested_b")
         })
 
         it("deeply nested structure is preserved through multiple ops", () => {
@@ -1551,9 +1554,9 @@ tasks:
             const result = addBlockAtPath(deepFlow, "tasks[0].then[0].then", newTask)
 
             // Then
-            const parsed = flowYamlUtils.parse(result)
-            expect(parsed.tasks[0].then[0].then).toHaveLength(2)
-            expect(parsed.tasks[0].then[0].then[1].id).toBe("deep_task_2")
+            const parsed = parseFlowFixture(result)
+            expect(parsed.tasks?.[0].then?.[0].then).toHaveLength(2)
+            expect(parsed.tasks?.[0].then?.[0].then?.[1].id).toBe("deep_task_2")
         })
     })
 

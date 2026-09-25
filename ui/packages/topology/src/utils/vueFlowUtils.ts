@@ -16,37 +16,93 @@ export enum BranchType {
 /** Only what the graph reads off an execution; the package has no `@kestra-io/kestra-sdk` dependency. */
 export interface GraphExecution {
     id?: string;
+    state?: {current: string};
+    taskRunList?: GraphTaskRun[];
 }
 
-interface MinimalNode {
+export interface GraphTaskRun {
+    id: string;
+    taskId: string;
+    parentTaskRunId?: string;
+    state: {
+        current: string;
+        histories?: {date: string; state: string}[];
+    };
+    outputs?: {executionId?: string} & Record<string, unknown>;
+    attempts?: unknown[];
+}
+
+export interface GraphTask {
+    id?: string;
+    type: string;
+    description?: string;
+    runIf?: unknown;
+    errors?: unknown[];
+    taskRunner?: {type?: string};
+    subflowId?: {namespace: string; flowId: string};
+    namespace?: string;
+    flowId?: string;
+    disabled?: boolean;
+}
+
+export interface TopologyIcon {
+    flowable: boolean;
+    monochrome: boolean;
+    hasIcon: boolean;
+    iconUrl?: string;
+    hash?: string;
+}
+
+export type TopologyIcons = Record<string, TopologyIcon>;
+export type LoadTopologyIcon = (cls: string) => Promise<TopologyIcon | undefined>;
+
+export interface BasicNodeData {
+    node: {
+        uid: string;
+        type?: string;
+        plugin?: GraphTask;
+        task?: GraphTask;
+        trigger?: GraphTask;
+        triggerDeclaration?: GraphTask;
+        disabled?: boolean;
+    };
+    parent?: {taskNode?: {task?: {disabled?: boolean}; disabled?: boolean}};
+    unused?: boolean;
+    isMovable?: boolean;
+    executionId?: string;
+    color?: string;
+    isReadOnly?: boolean;
+    isFlowable?: boolean;
+    expandable?: boolean;
+    link?: {namespace: string; id: string; executionId?: string};
+}
+
+export interface TaskNodeData extends BasicNodeData {
+    node: BasicNodeData["node"] & {
+        task: GraphTask;
+        taskRun?: GraphTaskRun;
+    };
+}
+
+export interface MinimalNode {
     unused?: boolean;
     executionId?: string;
     branchType?: BranchType;
     uid: string;
     type: string;
     disabled?: boolean;
-    task?: {
-        id?: string;
-        type: string;
-        namespace: string;
-        flowId: string;
-        disabled?: boolean;
-    };
+    task?: GraphTask;
 }
 
 interface Cluster {
     uid: string;
     type: string;
-    nodes: MinimalNode[];
-    taskNode: {
+    taskNode?: {
         uid: string;
-        task: {
-            type: string;
-            namespace: string;
-            flowId: string;
-        };
+        type?: string;
+        task: GraphTask;
     };
-    branchType: BranchType;
+    branchType?: BranchType;
 }
 
 interface FlowGraphEdge {
@@ -64,9 +120,9 @@ export interface FlowGraph {
     clusters: {
         cluster: Cluster;
         nodes: string[];
-        parents: {
-            uid: string;
-        }[];
+        parents: string[];
+        start?: string;
+        end?: string;
     }[];
     edges: FlowGraphEdge[];
 }
@@ -144,7 +200,7 @@ export function linkedElements(vueFlowId: string, nodeUid: string) {
 }
 
 export function generateDagreGraph(
-    flowGraph: {nodes: any; clusters: any; edges: any},
+    flowGraph: FlowGraph,
     hiddenNodes: string[],
     isHorizontal: boolean,
     edgeReplacer: EdgeReplacer,
@@ -517,8 +573,7 @@ export function generateGraph(
     const clusters = flowGraph.clusters || []
     const rawClusters = clusters.map((c) => c.cluster)
     const readOnlyUidPrefixes = rawClusters
-        .filter((c) => c.type.endsWith("SubflowGraphCluster"))
-        .map((c) => c.taskNode.uid)
+        .flatMap((c) => c.type.endsWith("SubflowGraphCluster") && c.taskNode ? [c.taskNode.uid] : [])
 
     const nodeByUid = Object.fromEntries(
         flowGraph.nodes.concat(clusterToNode).map((node) => [node.uid, node]),
@@ -526,10 +581,9 @@ export function generateGraph(
 
     for (const cluster of clusters) {
         if (!edgeReplacer[cluster.cluster.uid] && !collapsed.has(cluster.cluster.uid)) {
-            if (
-                cluster.cluster.taskNode?.task?.type === "io.kestra.core.tasks.flows.Dag"
-            ) {
-                readOnlyUidPrefixes.push(cluster.cluster.taskNode.uid)
+            const taskNode = cluster.cluster.taskNode
+            if (taskNode?.task?.type === "io.kestra.core.tasks.flows.Dag") {
+                readOnlyUidPrefixes.push(taskNode.uid)
             }
             for (const nodeUid of cluster.nodes) {
                 clusterByNodeUid[nodeUid] = cluster.cluster
@@ -580,7 +634,7 @@ export function generateGraph(
                         : false,
                 },
                 class: `ks-topology-${clusterColor}-border`,
-            } as any)
+            })
         }
     }
 
@@ -656,7 +710,7 @@ export function generateGraph(
         }
     }
 
-    const clusterRootTaskNodeUids = rawClusters.filter((c) => c.taskNode).map((c) => c.taskNode.uid)
+    const clusterRootTaskNodeUids = rawClusters.flatMap((c) => c.taskNode ? [c.taskNode.uid] : [])
     const edges = flowGraph.edges ?? []
 
     for (const edge of edges) {
@@ -792,7 +846,7 @@ export function areTasksIdenticalInGraphUntilTask(
         currentRootTaskNodes = currentRootTaskNodes.flatMap((node) =>
             getNextTaskNodes(currentGraph, node),
         )
-        if (currentRootTaskNodes.some((node: any) => node.task.id === taskId)) return true
+        if (currentRootTaskNodes.some((node) => node.task?.id === taskId)) return true
 
         previousRootTaskNodes = previousRootTaskNodes.flatMap((node) =>
             getNextTaskNodes(previousGraph, node),
@@ -803,8 +857,8 @@ export function areTasksIdenticalInGraphUntilTask(
             const prevTaskNode = previousRootTaskNodes.find(
                 (taskNode) => taskNode.task?.id === currentTaskNode.task?.id,
             )
-            const prevTaskValue = (prevTaskNode?.task as Record<string, any>) ?? {}
-            const currentTaskValue = (currentTaskNode.task as Record<string, any>) ?? {}
+            const prevTaskValue = prevTaskNode?.task ?? {}
+            const currentTaskValue = currentTaskNode.task ?? {}
             if (
                 !prevTaskNode ||
                 Object.keys(prevTaskValue).length !== Object.keys(currentTaskValue).length

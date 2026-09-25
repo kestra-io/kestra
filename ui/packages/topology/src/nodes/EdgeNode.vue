@@ -14,7 +14,7 @@
                 transform: `${labelAnchor} translate(${caseLabelX}px, ${caseLabelY}px)`,
             }"
         >
-            {{ data.value }}
+            {{ data?.value }}
         </div>
     </EdgeLabelRenderer>
 
@@ -57,8 +57,8 @@
 
 <script lang="ts" setup>
     import {computed, inject, ref} from "vue"
-    import type {PropType} from "vue"
     import {getSmoothStepPath, EdgeLabelRenderer} from "@vue-flow/core"
+    import type {Position} from "@vue-flow/core"
     import Plus from "vue-material-design-icons/Plus.vue"
     import type {AddTaskTarget} from "../utils/vueFlowUtils"
     import {
@@ -67,17 +67,23 @@
         DROP_EDGE_INJECTION_KEY,
     } from "../injectionKeys"
 
-    const props = defineProps({
-        id: {type: String, default: undefined},
-        data: {type: Object as PropType<any>, default: undefined},
-        sourceX: {type: Number, default: undefined},
-        sourceY: {type: Number, default: undefined},
-        targetX: {type: Number, default: undefined},
-        targetY: {type: Number, default: undefined},
-        markerEnd: {type: String, default: undefined},
-        sourcePosition: {type: String, default: undefined},
-        targetPosition: {type: String, default: undefined},
-    })
+    const props = defineProps<{
+        id: string;
+        data?: {
+            haveAdd?: AddTaskTarget;
+            color?: string;
+            unused?: boolean;
+            relationType?: string;
+            value?: string;
+        };
+        sourceX: number;
+        sourceY: number;
+        targetX: number;
+        targetY: number;
+        markerEnd?: string;
+        sourcePosition?: Position;
+        targetPosition?: Position;
+    }>()
 
     const emit = defineEmits<{
         (event: "add-task", data: AddTaskTarget): void
@@ -120,7 +126,7 @@
             : {}
     })
 
-    const path = computed(() => getSmoothStepPath(props as any))
+    const path = computed(() => getSmoothStepPath(props))
 
     const showCaseLabel = computed(
         () => props.data?.relationType === "CHOICE" && Boolean(props.data?.value),

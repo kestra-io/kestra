@@ -405,7 +405,7 @@
     const TASK_SECTIONS = ["tasks", "errors", "finally", "afterExecution"]
 
     const indexTasks = (source: string | undefined): Record<string, any> => {
-        const parsed = YAML_UTILS.parse(source, false)
+        const parsed = YAML_UTILS.parse<Record<string, unknown>>(source, false)
         const result: Record<string, any> = {}
         TASK_SECTIONS.forEach((section) => collectTasksById(parsed?.[section], result))
         return result
@@ -635,7 +635,7 @@
         async (flowGraph) => {
             if (flowStore.flowParsed?.tasks?.length) return
             // props.source has taskRunner intact; graph nodes may have it stripped (forExecution)
-            const sourceParsed = props.source ? YAML_UTILS.parse(props.source) : null
+            const sourceParsed = props.source ? YAML_UTILS.parse<{tasks?: {type?: string; taskRunner?: {type?: string}}[]}>(props.source) : null
             const tasks = sourceParsed?.tasks?.length
                 ? sourceParsed.tasks
                 : (flowGraph?.nodes ?? [])
@@ -652,11 +652,11 @@
         () => props.source,
         async (source) => {
             if (!source) return
-            const parsed = YAML_UTILS.parse(source)
+            const parsed = YAML_UTILS.parse<{tasks?: {type?: string; taskRunner?: {type?: string}}[]}>(source)
             const sourceHasRunners = (parsed?.tasks ?? []).some((t: any) => t?.taskRunner?.type)
             const flowParsedHasRunners = (flowStore.flowParsed?.tasks ?? []).some((t: any) => t?.taskRunner?.type)
             if (sourceHasRunners && !flowParsedHasRunners) {
-                await resolveTaskTopologyDetails(parsed.tasks)
+                await resolveTaskTopologyDetails(parsed?.tasks ?? [])
             }
         },
         {immediate: true},
@@ -791,7 +791,7 @@
     }
 
     const onDelete = (event: any) => {
-        const flowParsed = YAML_UTILS.parse(flowSource.value)
+        const flowParsed = YAML_UTILS.parse<{tasks?: {id?: string; type?: string}[]}>(flowSource.value)
         toast.confirm(
             t("delete task confirm", {taskId: event.id}),
             async () => {

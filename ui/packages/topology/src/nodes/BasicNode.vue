@@ -45,6 +45,7 @@
     import {getStatusStyle} from "../utils/status"
     import {EXECUTION_INJECTION_KEY} from "../injectionKeys"
     import * as Utils from "../utils/utils"
+    import type {BasicNodeData, LoadTopologyIcon, TopologyIcons} from "../utils/vueFlowUtils"
 
 
     const emit = defineEmits([
@@ -100,11 +101,11 @@
         type?: string;
         disabled?: boolean;
         state?: string;
-        data: any;
-        icons: any;
+        data: BasicNodeData;
+        icons?: TopologyIcons;
         // Resolves an icon the `icons` index doesn't carry; without it a node whose plugin isn't
         // in the index has no way to ever get an icon (kestra-io/kestra#18129).
-        loadIcon?: (cls: string) => Promise<any>;
+        loadIcon?: LoadTopologyIcon;
         class?: string | string[] | Record<string, boolean>;
         focused?: boolean;
         dragging?: boolean;
@@ -141,7 +142,7 @@
     const trimmedId = computed(() => Utils.afterLastDot(props.id ?? ""))
 
     const taskIconBg = computed(() => {
-        return !["default", "danger"].includes(props.data.color) ? props.data.color : ""
+        return props.data.color && !["default", "danger"].includes(props.data.color) ? props.data.color : ""
     })
 
     const classes = computed(() => {

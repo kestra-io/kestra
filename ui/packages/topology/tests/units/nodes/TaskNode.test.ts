@@ -102,6 +102,15 @@ describe("TaskNode actions", () => {
         expect(keys).toContain("replay")
     })
 
+    it("shows the highest priority state when a task has multiple runs", () => {
+        const wrapper = mountTaskNode({
+            execution: {state: {current: "SUCCESS"}},
+            taskRuns: [taskRun(), {...taskRun(), id: "skipped-run", state: {current: "SKIPPED", histories: []}}],
+        })
+
+        expect(wrapper.text()).toContain("skipped")
+    })
+
     it("should offer outputs in an execution context even when the run has none (empty state lives in the drawer)", () => {
         const wrapper = mountTaskNode({
             execution: {state: {current: "SUCCESS"}},

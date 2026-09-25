@@ -46,7 +46,7 @@ export function useFlowFields(flowSource: ComputedRef<string>){
 
     const parsedFlow = computed(() => {
         try {
-            return YAML_UTILS.parse(flowSource.value) ?? {}
+            return YAML_UTILS.parse<Record<string, unknown>>(flowSource.value) ?? {}
         } catch (e) {
             console.error("Error parsing flow YAML", e)
             return {}

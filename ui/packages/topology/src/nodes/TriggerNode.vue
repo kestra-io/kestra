@@ -1,5 +1,5 @@
 <template>
-    <Handle type="source" :position="sourcePosition" />
+    <Handle type="source" :position="sourcePosition ?? Position.Right" />
     <BasicNode
         :id="id"
         :data="formattedData"
@@ -11,7 +11,7 @@
             <NodeMenu :actions="actions" />
         </template>
     </BasicNode>
-    <Handle type="target" :position="targetPosition" />
+    <Handle type="target" :position="targetPosition ?? Position.Left" />
 </template>
 
 <script setup lang="ts">
@@ -26,16 +26,17 @@
     import NodeMenu, {type NodeAction} from "./NodeMenu.vue"
     import {EVENTS} from "../utils/constants"
     import * as Utils from "../utils/utils"
+    import type {BasicNodeData, LoadTopologyIcon, TopologyIcons} from "../utils/vueFlowUtils"
 
     defineOptions({name: "Task", inheritAttrs: false})
 
     const {data, sourcePosition, targetPosition, id, icons, loadIcon} = defineProps<{
-        data: any;
-        sourcePosition: Position;
-        targetPosition: Position;
+        data: BasicNodeData;
+        sourcePosition?: Position;
+        targetPosition?: Position;
         id: string;
-        icons?: Record<string, any>;
-        loadIcon?: (cls: string) => Promise<any>;
+        icons?: TopologyIcons;
+        loadIcon?: LoadTopologyIcon;
     }>()
 
     const emit = defineEmits([EVENTS.DELETE, EVENTS.EDIT, EVENTS.SHOW_DESCRIPTION, EVENTS.EXPAND])

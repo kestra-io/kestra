@@ -481,6 +481,7 @@
     import {useFlowExecutionFilter} from "../filter/configurations/flowExecutionFilter"
     import {useStateFilter} from "../filter/composables/useStateFilter"
     import YAML_CHART from "../dashboard/assets/executions_timeseries_chart.yaml?raw"
+    import type {Chart} from "../dashboard/types"
     import {DEFAULT_DASHBOARD} from "../../stores/dashboard"
     import type {QueryFilter} from "@kestra-io/kestra-sdk"
 
@@ -835,9 +836,8 @@
     })
 
     const charts = computed(() => {
-        return [
-            {...YAML_UTILS.parse(YAML_CHART), content: YAML_CHART},
-        ]
+        const chart = YAML_UTILS.parse<Chart>(YAML_CHART)
+        return chart ? [{...chart, content: YAML_CHART}] : []
     })
 
     const lockedFilters = computed<QueryFilter[]>(() =>

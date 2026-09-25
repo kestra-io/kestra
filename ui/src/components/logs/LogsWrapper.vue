@@ -151,6 +151,7 @@
     import type {LevelFilterValue} from "@kestra-io/design-system"
     import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
     import YAML_CHART from "../dashboard/assets/logs_timeseries_chart.yaml?raw"
+    import type {Chart} from "../dashboard/types"
     import {useLogsStore} from "../../stores/logs"
     import useRouteContext from "../../composables/useRouteContext"
     import * as Utils from "../../utils/utils"
@@ -269,9 +270,10 @@
     })
     const flowId = computed(() => route.params.id)
     const routeNamespace = computed(() => route.params.namespace ?? route.params.id)
-    const charts = computed(() => [
-        {...YAML_UTILS.parse(YAML_CHART), content: YAML_CHART},
-    ])
+    const charts = computed(() => {
+        const chart = YAML_UTILS.parse<Chart>(YAML_CHART)
+        return chart ? [{...chart, content: YAML_CHART}] : []
+    })
 
     const loadQuery = (base: any) => {
         const {page: _p, size: _s, sort: _so, logsPage: _lp, logsSize: _ls, ...routeFilters} = route.query

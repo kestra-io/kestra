@@ -2,6 +2,7 @@ import {describe, it, expect, vi, beforeEach, afterEach} from "vitest"
 import {ref} from "vue"
 import {flushPromises} from "@vue/test-utils"
 import {i18nMount} from "../../../i18nMount"
+import {parseFlowFixture} from "../../../utils/parseFlowFixture"
 
 import {createPinia} from "pinia"
 
@@ -685,11 +686,10 @@ describe("BlockEditor", () => {
             await wrapper.vm.$nextTick()
 
             // Then
-            const flowYamlUtils = await import("@kestra-io/topology/flow-yaml-utils")
-            const parsed = flowYamlUtils.parse(mockFlowYaml.value)
+            const parsed = parseFlowFixture(mockFlowYaml.value)
             expect(parsed.tasks).toHaveLength(2)
-            expect(parsed.tasks[0].message).toBe("Updated message")
-            expect(parsed.tasks[1].id).toBe("http_task")
+            expect(parsed.tasks?.[0].message).toBe("Updated message")
+            expect(parsed.tasks?.[1].id).toBe("http_task")
         })
 
         it("emits closeTask when TaskEdit emits close", async () => {
@@ -721,8 +721,7 @@ describe("BlockEditor", () => {
             await wrapper.vm.$nextTick()
 
             // Then
-            const flowYamlUtils = await import("@kestra-io/topology/flow-yaml-utils")
-            const parsed = flowYamlUtils.parse(mockFlowYaml.value)
+            const parsed = parseFlowFixture(mockFlowYaml.value)
             expect(parsed.tasks).toHaveLength(1)
         })
 
@@ -737,11 +736,10 @@ describe("BlockEditor", () => {
             await wrapper.vm.$nextTick()
 
             // Then
-            const flowYamlUtils = await import("@kestra-io/topology/flow-yaml-utils")
-            const parsed = flowYamlUtils.parse(mockFlowYaml.value)
-            const thenLen = Array.isArray(parsed.tasks[1].then) ? parsed.tasks[1].then.length : 0
+            const parsed = parseFlowFixture(mockFlowYaml.value)
+            const thenLen = Array.isArray(parsed.tasks?.[1].then) ? parsed.tasks?.[1].then.length : 0
             expect(thenLen).toBe(0)
-            expect(parsed.tasks[1].else[0].id).toBe("nested_b")
+            expect(parsed.tasks?.[1].else?.[0].id).toBe("nested_b")
         })
     })
 
@@ -756,10 +754,9 @@ describe("BlockEditor", () => {
             await wrapper.vm.$nextTick()
 
             // Then
-            const flowYamlUtils = await import("@kestra-io/topology/flow-yaml-utils")
-            const parsed = flowYamlUtils.parse(mockFlowYaml.value)
+            const parsed = parseFlowFixture(mockFlowYaml.value)
             expect(parsed.tasks).toHaveLength(3)
-            expect(parsed.tasks.some((t: Record<string, unknown>) =>
+            expect(parsed.tasks?.some((t: Record<string, unknown>) =>
                 String(t.id).startsWith("log_task_copy"),
             )).toBe(true)
         })
@@ -775,10 +772,9 @@ describe("BlockEditor", () => {
             await wrapper.vm.$nextTick()
 
             // Then
-            const flowYamlUtils = await import("@kestra-io/topology/flow-yaml-utils")
-            const parsed = flowYamlUtils.parse(mockFlowYaml.value)
-            expect(parsed.tasks[1].then).toHaveLength(2)
-            expect(String(parsed.tasks[1].then[1].id)).toMatch(/^nested_a_copy/)
+            const parsed = parseFlowFixture(mockFlowYaml.value)
+            expect(parsed.tasks?.[1].then).toHaveLength(2)
+            expect(String(parsed.tasks?.[1].then?.[1].id)).toMatch(/^nested_a_copy/)
         })
     })
 
@@ -808,9 +804,8 @@ describe("BlockEditor", () => {
             vm.picker.insertTask("io.kestra.plugin.core.log.Log")
             await wrapper.vm.$nextTick()
 
-            const flowYamlUtils = await import("@kestra-io/topology/flow-yaml-utils")
-            const parsed = flowYamlUtils.parse(mockFlowYaml.value)
-            expect(parsed.tasks[1].then).toHaveLength(2)
+            const parsed = parseFlowFixture(mockFlowYaml.value)
+            expect(parsed.tasks?.[1].then).toHaveLength(2)
         })
 
         function createBlockInList(wrapper: ReturnType<typeof i18nMount>) {
@@ -961,10 +956,9 @@ describe("BlockEditor", () => {
             await wrapper.vm.$nextTick()
 
             // Then — the order is reversed in the store YAML
-            const flowYamlUtils = await import("@kestra-io/topology/flow-yaml-utils")
-            const parsed = flowYamlUtils.parse(mockFlowYaml.value)
-            expect(parsed.tasks[0].id).toBe("http_task")
-            expect(parsed.tasks[1].id).toBe("log_task")
+            const parsed = parseFlowFixture(mockFlowYaml.value)
+            expect(parsed.tasks?.[0].id).toBe("http_task")
+            expect(parsed.tasks?.[1].id).toBe("log_task")
         })
 
         it("clears selection when a nested-child edit is open and the parent task is drag-reordered", async () => {
@@ -1075,8 +1069,7 @@ describe("BlockEditor", () => {
 
             // Then
             expect(confirmMock).toHaveBeenCalledTimes(1)
-            const flowYamlUtils = await import("@kestra-io/topology/flow-yaml-utils")
-            const parsed = flowYamlUtils.parse(mockFlowYaml.value)
+            const parsed = parseFlowFixture(mockFlowYaml.value)
             expect(parsed.tasks).toHaveLength(1)
         })
 
@@ -1092,8 +1085,7 @@ describe("BlockEditor", () => {
             await wrapper.vm.$nextTick()
 
             // Then
-            const flowYamlUtils = await import("@kestra-io/topology/flow-yaml-utils")
-            const parsed = flowYamlUtils.parse(mockFlowYaml.value)
+            const parsed = parseFlowFixture(mockFlowYaml.value)
             expect(parsed.tasks).toHaveLength(1)
         })
 
@@ -1110,8 +1102,7 @@ describe("BlockEditor", () => {
             await wrapper.vm.$nextTick()
 
             // Then
-            const flowYamlUtils = await import("@kestra-io/topology/flow-yaml-utils")
-            const parsed = flowYamlUtils.parse(mockFlowYaml.value)
+            const parsed = parseFlowFixture(mockFlowYaml.value)
             expect(parsed.tasks).toHaveLength(2)
         })
 
@@ -1187,8 +1178,7 @@ describe("BlockEditor", () => {
             expect(vm.taskPickerVisible).toBe(true)
             vm.picker.insertTask("io.kestra.plugin.core.log.Log")
             await wrapper.vm.$nextTick()
-            const flowYamlUtils = await import("@kestra-io/topology/flow-yaml-utils")
-            const parsed = flowYamlUtils.parse(mockFlowYaml.value) as {tasks: {errors?: unknown[]}[]; errors?: unknown[]}
+            const parsed = parseFlowFixture(mockFlowYaml.value) as {tasks: {errors?: unknown[]}[]; errors?: unknown[]}
             expect(parsed.tasks[1].errors).toHaveLength(1)
             expect(parsed.errors).toBeUndefined()
         })
@@ -1331,8 +1321,7 @@ describe("BlockEditor", () => {
 
             // Then — no deletion
             expect(confirmMock).not.toHaveBeenCalled()
-            const flowYamlUtils = await import("@kestra-io/topology/flow-yaml-utils")
-            const parsed = flowYamlUtils.parse(mockFlowYaml.value)
+            const parsed = parseFlowFixture(mockFlowYaml.value)
             expect(parsed.tasks).toHaveLength(originalLength)
         })
 
@@ -1347,11 +1336,10 @@ describe("BlockEditor", () => {
             await wrapper.vm.$nextTick()
 
             // Then
-            const flowYamlUtils = await import("@kestra-io/topology/flow-yaml-utils")
-            const parsed = flowYamlUtils.parse(mockFlowYaml.value)
+            const parsed = parseFlowFixture(mockFlowYaml.value)
             expect(parsed.tasks).toHaveLength(2)
-            expect(parsed.tasks[0].id).toBe("http_task")
-            expect(parsed.tasks[1].id).toBe("log_task")
+            expect(parsed.tasks?.[0].id).toBe("http_task")
+            expect(parsed.tasks?.[1].id).toBe("log_task")
         })
 
         it("Alt+ArrowUp reorders the selected task to the first position", async () => {
@@ -1366,10 +1354,9 @@ describe("BlockEditor", () => {
             await wrapper.vm.$nextTick()
 
             // Then
-            const flowYamlUtils = await import("@kestra-io/topology/flow-yaml-utils")
-            const parsed = flowYamlUtils.parse(mockFlowYaml.value)
-            expect(parsed.tasks[0].id).toBe("http_task")
-            expect(parsed.tasks[1].id).toBe("log_task")
+            const parsed = parseFlowFixture(mockFlowYaml.value)
+            expect(parsed.tasks?.[0].id).toBe("http_task")
+            expect(parsed.tasks?.[1].id).toBe("log_task")
         })
 
         it("Alt+ArrowDown reorders the canvas-focused task without opening it in the dock", async () => {
@@ -1388,10 +1375,9 @@ describe("BlockEditor", () => {
             await wrapper.vm.$nextTick()
 
             // Then
-            const flowYamlUtils = await import("@kestra-io/topology/flow-yaml-utils")
-            const parsed = flowYamlUtils.parse(mockFlowYaml.value)
-            expect(parsed.tasks[0].id).toBe("http_task")
-            expect(parsed.tasks[1].id).toBe("log_task")
+            const parsed = parseFlowFixture(mockFlowYaml.value)
+            expect(parsed.tasks?.[0].id).toBe("http_task")
+            expect(parsed.tasks?.[1].id).toBe("log_task")
             offsetParentSpy.mockRestore()
         })
 
@@ -1430,11 +1416,10 @@ tasks:
             await wrapper.vm.$nextTick()
 
             // Then — then_a has moved twice and is now at index 2
-            const flowYamlUtils = await import("@kestra-io/topology/flow-yaml-utils")
-            const parsed = flowYamlUtils.parse(mockFlowYaml.value)
-            expect(parsed.tasks[0].then[0].id).toBe("then_b")
-            expect(parsed.tasks[0].then[1].id).toBe("then_c")
-            expect(parsed.tasks[0].then[2].id).toBe("then_a")
+            const parsed = parseFlowFixture(mockFlowYaml.value)
+            expect(parsed.tasks?.[0].then?.[0].id).toBe("then_b")
+            expect(parsed.tasks?.[0].then?.[1].id).toBe("then_c")
+            expect(parsed.tasks?.[0].then?.[2].id).toBe("then_a")
         })
     })
 
@@ -1727,8 +1712,7 @@ tasks:
             await wrapper.vm.$nextTick()
 
             // Then
-            const flowYamlUtils = await import("@kestra-io/topology/flow-yaml-utils")
-            const parsed = flowYamlUtils.parse(mockFlowYaml.value) as {tasks: {type: string}[]}
+            const parsed = parseFlowFixture(mockFlowYaml.value) as {tasks: {type: string}[]}
             expect(parsed.tasks).toHaveLength(3)
             expect(parsed.tasks[2].type).toBe("io.kestra.plugin.core.flow.If")
             expect(pickerEl()).toBeNull()
@@ -1942,8 +1926,7 @@ tasks:
             await flushPromises()
 
             // Then
-            const flowYamlUtils = await import("@kestra-io/topology/flow-yaml-utils")
-            const parsed = flowYamlUtils.parse(mockFlowYaml.value) as {tasks: {type: string}[]}
+            const parsed = parseFlowFixture(mockFlowYaml.value) as {tasks: {type: string}[]}
             expect(parsed.tasks).toHaveLength(3)
             expect(parsed.tasks[1].type).toBe("io.kestra.plugin.core.flow.If")
         })

@@ -171,14 +171,14 @@ export function generateDagreGraph(
 
     for (const cluster of flowGraph.clusters || []) {
         const nodeUid = cluster.cluster.uid.replace(CLUSTER_PREFIX, "")
-        if (collapsed.has(nodeUid)) {
+        const absorbedByParent = edgeReplacer[cluster.cluster.uid] && edgeReplacer[cluster.cluster.uid] !== nodeUid
+        
+        if (collapsed.has(nodeUid) && !absorbedByParent) {
             const node = {uid: nodeUid, type: "collapsedcluster"}
             const dimensions = getNodeDimensions(node, getNodeWidth, getNodeHeight)
             dagreGraph.setNode(nodeUid, dimensions)
             clusterToNode.push(node)
-            continue
-        }
-        if (!edgeReplacer[cluster.cluster.uid]) {
+        } else if (!edgeReplacer[cluster.cluster.uid]) {
             dagreGraph.setNode(cluster.cluster.uid, {clusterLabelPos: "top"})
             for (const node of cluster.nodes || []) {
                 if (!hiddenNodes.includes(node)) {
@@ -186,7 +186,7 @@ export function generateDagreGraph(
                 }
             }
         }
-        if (cluster.parents) {
+        if (cluster.parents && !absorbedByParent) {
             const nodeChild = edgeReplacer[cluster.cluster.uid]
                 ? edgeReplacer[cluster.cluster.uid]
                 : cluster.cluster.uid
@@ -525,7 +525,8 @@ export function generateGraph(
     )
 
     for (const cluster of clusters) {
-        if (!edgeReplacer[cluster.cluster.uid] && !collapsed.has(cluster.cluster.uid)) {
+        const clusterNodeUid = cluster.cluster.uid.replace(CLUSTER_PREFIX, "")
+        if (!edgeReplacer[cluster.cluster.uid] && !collapsed.has(clusterNodeUid)) {
             if (
                 cluster.cluster.taskNode?.task?.type === "io.kestra.core.tasks.flows.Dag"
             ) {

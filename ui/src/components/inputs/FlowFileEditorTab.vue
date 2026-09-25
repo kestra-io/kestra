@@ -384,7 +384,7 @@
     function updatePluginDocumentation(event: {position: monaco.Position, model: monaco.editor.ITextModel}) {
         const cls = YAML_UTILS.getTypeAtPosition(source.value, event.position, pluginsStore.allTypes)
         const version = YAML_UTILS.getVersionAtPosition(source.value, event.position)
-        pluginsStore.updateDocumentation({cls, version, hash: hash.value})
+        pluginsStore.updateDocumentation({cls: cls ?? "", version: version ?? undefined, hash: hash.value})
     }
 
     // Delegate to the shared save action so Ctrl+S / the editor's save event go through the same

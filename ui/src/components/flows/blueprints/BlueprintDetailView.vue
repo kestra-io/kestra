@@ -114,9 +114,9 @@
     const editorBindings = useEditorBindings()
     const stacked = useMediaQuery("(max-width: 1400px)")
 
-    const parsedFlow = computed(() =>
+    const parsedFlow = computed<{id?: string; namespace?: string; source?: string}>(() =>
         props.blueprint.source
-            ? {...YAML_UTILS.parse(props.blueprint.source), source: props.blueprint.source}
+            ? {...(YAML_UTILS.parse<{id?: string; namespace?: string}>(props.blueprint.source) ?? {}), source: props.blueprint.source}
             : {},
     )
 

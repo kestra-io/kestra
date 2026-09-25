@@ -89,6 +89,7 @@
     import {getStatusStyle} from "../utils/status"
     import BasicNode from "./BasicNode.vue"
     import NodeMenu, {type NodeAction} from "./NodeMenu.vue"
+    import type {BasicNodeData, GraphExecution, GraphTask, GraphTaskRun as TaskRun, LoadTopologyIcon, TaskNodeData, TopologyIcons} from "../utils/vueFlowUtils"
     import {
         EXECUTION_INJECTION_KEY,
         SUBFLOWS_EXECUTIONS_INJECTION_KEY,
@@ -113,71 +114,18 @@
     import PlayIcon from "vue-material-design-icons/Play.vue"
     
 
-    interface TaskType {
-        id: string;
-        type: string;
-        default: null;
-        description?: string;
-        runIf?: unknown;
-        errors?: unknown[];
-        taskRunner?: {
-            type?: string;
-        };
-        subflowId?: {
-            namespace: string;
-            flowId: string;
-        };
-        namespace?: string;
-        flowId?: string;
-    }
-
-    interface NodeData {
-        node: {
-            uid: string;
-            type?: string;
-            task: TaskType;
-            taskRun: TaskRun
-        };
-        executionId?: string;
-        color?: string;
-        isReadOnly?: boolean;
-        isFlowable?: boolean;
-        expandable?: boolean;
-        link?: {
-            namespace: string;
-            id: string;
-            executionId?: string;
-        };
-    }
-
-    interface TaskRun {
-        id: string
-        taskId: string;
-        parentTaskRunId?: string;
-        state: {
-            current: [string, string];
-            duration?: string;
-            histories?: {date: string; state: string}[];
-        };
-        outputs?: {
-            executionId?: string;
-        } & Record<string, unknown>;
-        attempts?: unknown[];
-        value?: string;
-    }
-
     interface ExpandData {
         id: string;
         type: string;
     }
 
     const props = withDefaults(defineProps<{
-        data: NodeData;
+        data: TaskNodeData;
         sourcePosition?: Position;
         targetPosition?: Position;
         id: string;
-        icons?: Record<string, unknown>;
-        loadIcon?: (cls: string) => Promise<unknown>;
+        icons?: TopologyIcons;
+        loadIcon?: LoadTopologyIcon;
         enableSubflowInteraction?: boolean;
         playgroundEnabled: boolean;
         playgroundReadyToStart: boolean;
@@ -203,23 +151,22 @@
     })
 
     const emit = defineEmits<{
-        (event: typeof EVENTS.EXPAND, data: any): void;
-        (event: typeof EVENTS.OPEN_LINK, data: any): void;
-        (event: typeof EVENTS.SHOW_LOGS, data: any): void;
-        (event: typeof EVENTS.SHOW_OUTPUTS, data: any): void;
-        (event: typeof EVENTS.REPLAY_TASK, data: any): void;
-        (event: typeof EVENTS.MOUSE_OVER, data: any): void;
+        (event: typeof EVENTS.EXPAND, data: {id: string; type: string}): void;
+        (event: typeof EVENTS.OPEN_LINK, data: {link: NonNullable<TaskNodeData["link"]>}): void;
+        (event: typeof EVENTS.SHOW_LOGS, data: {id: string; execution: GraphExecution; taskRuns: TaskRun[]}): void;
+        (event: typeof EVENTS.SHOW_OUTPUTS, data: {id: string; execution: GraphExecution; taskRuns: TaskRun[]}): void;
+        (event: typeof EVENTS.REPLAY_TASK, data: {id: string; execution: GraphExecution; taskRuns: TaskRun[]}): void;
+        (event: typeof EVENTS.MOUSE_OVER, data: BasicNodeData["node"]): void;
         (event: typeof EVENTS.MOUSE_LEAVE): void;
-        (event: typeof EVENTS.ADD_ERROR, data: { task: any }): void;
-        (event: typeof EVENTS.EDIT, data: any) :void;
-        (event: typeof EVENTS.DELETE, data: any) :void;
+        (event: typeof EVENTS.ADD_ERROR, data: {task: GraphTask}): void;
+        (event: typeof EVENTS.EDIT, data: {task: GraphTask; section: string}): void;
+        (event: typeof EVENTS.DELETE, data: {id: string; section: string}): void;
         (event: typeof EVENTS.DUPLICATE, data: {id?: string}) :void;
-        (event: typeof EVENTS.ADD_TASK, data: any) :void;
-        (event: typeof EVENTS.SHOW_CONDITION, data: any) :void;
-        (event: typeof EVENTS.SHOW_DESCRIPTION, data: any) :void;
-        (event: typeof EVENTS.RUN_TASK, data: { task: any }) :void;
-        (event: typeof EVENTS.SHOW_CUSTOM_ACTION, data: { task: any; customAction: CustomActionConfig }) :void;
-        (event: typeof EVENTS.SHOW_DETAILS, data: { task: any; showDetails: ShowDetailsConfig }) :void;
+        (event: typeof EVENTS.SHOW_CONDITION, data: {id: string; task: GraphTask; section: string}): void;
+        (event: typeof EVENTS.SHOW_DESCRIPTION, data: {id: string; description: string}): void;
+        (event: typeof EVENTS.RUN_TASK, data: {task: GraphTask}): void;
+        (event: typeof EVENTS.SHOW_CUSTOM_ACTION, data: {task: GraphTask; customAction: CustomActionConfig}): void;
+        (event: typeof EVENTS.SHOW_DETAILS, data: {task: GraphTask; showDetails: ShowDetailsConfig}): void;
         (event: typeof EVENTS.TASK_DRAG_START, payload: {nodeId: string; label: string; cls?: string}) :void;
         (event: typeof EVENTS.TASK_DRAG_END) :void;
     }>()
@@ -240,7 +187,7 @@
 
     const validationIssuesByTask = inject(VALIDATION_ISSUES_INJECTION_KEY, undefined)
 
-    const taskId = computed(() => Utils.afterLastDot(props.id))
+    const taskId = computed(() => Utils.afterLastDot(props.id) ?? props.id)
 
     const validationIssues = computed<string[]>(() =>
         validationIssuesByTask?.value?.get(taskId.value ?? "") ?? [],
@@ -295,7 +242,7 @@
 
     const state = computed(() => {
         if (!taskRuns.value?.length) {
-            return null
+            return undefined
         }
 
         if (taskRuns.value.length === 1) {
@@ -316,15 +263,7 @@
             State.CREATED,
         ]
 
-        const result = allStates
-            .map((item: [string, string]) => {
-                const n = SORT_STATUS.indexOf(item[1])
-                return [n, item] as [number, [string, string]]
-            })
-            .sort()
-            .map((j: [number, [string, string]]) => j[1])
-
-        return result[0]
+        return allStates.sort((a, b) => SORT_STATUS.indexOf(a) - SORT_STATUS.indexOf(b))[0]
     })
 
     const classes = computed(() => ({
@@ -351,16 +290,16 @@
     const dataWithLink = computed(() => {
         if (props.data.node.type?.endsWith("SubflowGraphTask") && props.enableSubflowInteraction) {
             const subflowIdContainer = props.data.node.task.subflowId ?? props.data.node.task
+            if (!subflowIdContainer.namespace || !subflowIdContainer.flowId) return props.data
             return {
                 ...props.data,
                 link: {
                     namespace: subflowIdContainer.namespace,
                     id: subflowIdContainer.flowId,
-                    executionId: taskExecution.value?.taskRunList
-                        .filter((taskRun: TaskRun) =>
-                            taskRun.id === props.data.node.taskRun.id &&
-                            taskRun.outputs?.executionId,
-                        )
+                    executionId: taskExecution.value?.taskRunList?.filter((taskRun: TaskRun) =>
+                        taskRun.id === props.data.node.taskRun?.id &&
+                        taskRun.outputs?.executionId,
+                    )
                         ?.[0]?.outputs?.executionId,
                 },
             }
@@ -369,10 +308,10 @@
     })
 
     const actionConfig = computed(() => {
-        const taskType = props.data.node.task?.type as string | undefined
-        const runnerType = (props.data.node.task as any)?.taskRunner?.type as string | undefined
+        const taskType = props.data.node.task.type
+        const actionRunnerType = props.data.node.task.taskRunner?.type
         if (!taskType) return undefined
-        const customAction = props.customActions?.[taskType] ?? (runnerType ? props.customActions?.[runnerType] : undefined)
+        const customAction = props.customActions?.[taskType] ?? (actionRunnerType ? props.customActions?.[actionRunnerType] : undefined)
         if (customAction) return {config: customAction, eventName: EVENTS.SHOW_CUSTOM_ACTION} as const
         const showDetail = props.showDetails?.[taskType]
         if (showDetail) return {config: showDetail, eventName: EVENTS.SHOW_DETAILS} as const
@@ -386,12 +325,13 @@
         const readOnly = props.data.isReadOnly
         const list: NodeAction[] = []
 
-        if (task?.description) {
+        const description = task?.description
+        if (description) {
             list.push({
                 key: "description",
                 label: t("show description"),
                 icon: InformationOutline,
-                onClick: () => emit(EVENTS.SHOW_DESCRIPTION, {id: taskId.value, description: task.description}),
+                onClick: () => emit(EVENTS.SHOW_DESCRIPTION, {id: taskId.value, description}),
             })
         }
         if (task?.runIf) {
@@ -402,28 +342,30 @@
                 onClick: () => emit(EVENTS.SHOW_CONDITION, {id: taskId.value, task, section: SECTIONS.TASKS}),
             })
         }
-        if (taskExecution.value) {
+        const currentExecution = taskExecution.value
+        if (currentExecution) {
             list.push({
                 key: "logs",
                 label: t("show task logs"),
                 icon: TextBoxSearch,
-                onClick: () => emit(EVENTS.SHOW_LOGS, {id: taskId.value, execution: taskExecution.value, taskRuns: taskRunsWithDynamicChildren.value}),
+                onClick: () => emit(EVENTS.SHOW_LOGS, {id: taskId.value, execution: currentExecution, taskRuns: taskRunsWithDynamicChildren.value}),
             })
         }
-        if (taskExecution.value) {
+        if (currentExecution) {
             list.push({
                 key: "outputs",
                 label: t("show task outputs"),
                 icon: LocationExit,
-                onClick: () => emit(EVENTS.SHOW_OUTPUTS, {id: taskId.value, execution: taskExecution.value, taskRuns: taskRuns.value}),
+                onClick: () => emit(EVENTS.SHOW_OUTPUTS, {id: taskId.value, execution: currentExecution, taskRuns: taskRuns.value}),
             })
         }
-        if (dataWithLink.value.link) {
+        const link = dataWithLink.value.link
+        if (link) {
             list.push({
                 key: "open",
                 label: t("open"),
                 icon: OpenInNew,
-                onClick: () => emit(EVENTS.OPEN_LINK, {link: dataWithLink.value.link}),
+                onClick: () => emit(EVENTS.OPEN_LINK, {link}),
             })
         }
         if (props.data.expandable) {
@@ -467,13 +409,13 @@
                 onClick: () => emit(EVENTS.DELETE, {id: taskId.value, section: SECTIONS.TASKS}),
             })
         }
-        if (props.replayEnabled && taskExecution.value && taskRuns.value.length > 0) {
+        if (props.replayEnabled && currentExecution && taskRuns.value.length > 0) {
             list.push({
                 key: "replay",
                 label: t("replay"),
                 icon: PlayBoxMultiple,
                 divided: true,
-                onClick: () => emit(EVENTS.REPLAY_TASK, {id: taskId.value, execution: taskExecution.value, taskRuns: taskRuns.value}),
+                onClick: () => emit(EVENTS.REPLAY_TASK, {id: taskId.value, execution: currentExecution, taskRuns: taskRuns.value}),
             })
         }
 

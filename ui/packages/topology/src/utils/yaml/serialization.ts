@@ -3,14 +3,15 @@
 import {
     YAMLMap,
     isPair,
+    type Pair,
 } from "yaml"
 import {dump, load} from "js-yaml"
 
-export function parse<T = any>(item?: string, throwIfError = true): T | undefined {
+export function parse<T = unknown>(item?: string, throwIfError = true): T | undefined {
     if (item === undefined) return undefined
 
     try {
-        return load(item) as any
+        return load(item) as T
     } catch (e) {
         if (throwIfError) throw e
         return undefined
@@ -45,7 +46,7 @@ function preserveCronQuotes(yamlContent: string) {
     )
 }
 
-export function stringify(item: any) {
+export function stringify(item: unknown) {
     if (item === undefined) return ""
 
     // transform() rebuilds every node and skips undefined values, so a shallow copy drops `deleted`
@@ -86,12 +87,12 @@ export function sortPredicate(a: string, b: string) {
     return aIndexProtected - bIndexProtected
 }
 
-function sort(value: Record<string, any>) {
+function sort(value: Record<string, unknown>) {
     return Object.keys(value)
         .sort(sortPredicate)
 }
 
-export function pairsToMap(pairs?: any[]) {
+export function pairsToMap(pairs?: Pair[]) {
     const map = new YAMLMap()
     if (!isPair(pairs?.[0])) {
         return map
@@ -103,17 +104,18 @@ export function pairsToMap(pairs?: any[]) {
     return map
 }
 
-function transform(value: any): any {
+function transform(value: unknown): unknown {
     if (value instanceof Array) {
         return value.map((r) => {
             return transform(r)
         })
     } else if (typeof value === "string" || value instanceof String) {
         return value
-    } else if (value instanceof Object) {
-        return sort(value).reduce((accumulator, r) => {
-            if (value[r] !== undefined) {
-                accumulator[r] = transform(value[r])
+    } else if (value && typeof value === "object") {
+        const record: Record<string, unknown> = value as Record<string, unknown>
+        return sort(record).reduce((accumulator: Record<string, unknown>, r) => {
+            if (record[r] !== undefined) {
+                accumulator[r] = transform(record[r])
             }
 
             return accumulator

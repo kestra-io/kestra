@@ -11,7 +11,7 @@ import {useMcpStore} from "../../stores/mcp"
 import {useDashboardStore} from "../../stores/dashboard"
 import {isExportableChart} from "../../components/dashboard/composables/useDashboards"
 import {useNamespacesStore} from "override/stores/namespaces"
-import {isMap, type YAMLMap} from "yaml"
+import {isMap, isPair, type YAMLMap} from "yaml"
 
 function distinct<T>(val: T[] | undefined): T[] {
     return Array.from(new Set(val ?? []))
@@ -131,7 +131,7 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
             .flatMap(allTasks => allTasks.tasks ?? [])
         const tasksFromTaskProp = YAML_UTILS.extractFieldFromMaps(source, "task")
             .map(task => task.task)
-            .flatMap(task => YAML_UTILS.pairsToMap(task) ?? [])
+            .flatMap(task => Array.isArray(task) && task.every(isPair) ? YAML_UTILS.pairsToMap(task) : [])
 
         return [...tasksFromTasksProp, ...tasksFromTaskProp]
             .filter((task): task is YAMLMap => isMap(task) && Boolean(task.get("id")))

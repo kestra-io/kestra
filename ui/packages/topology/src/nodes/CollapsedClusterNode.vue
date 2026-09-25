@@ -1,5 +1,5 @@
 <template>
-    <Handle type="source" :position="sourcePosition" />
+    <Handle type="source" :position="sourcePosition ?? Position.Right" />
     <div class="collapsed-cluster-node">
         <span
             class="cluster-badge"
@@ -18,7 +18,7 @@
             </span>
         </div>
     </div>
-    <Handle type="target" :position="targetPosition" />
+    <Handle type="target" :position="targetPosition ?? Position.Left" />
 </template>
 
 <script setup lang="ts">
@@ -33,9 +33,9 @@
 
     const {id, sourcePosition, targetPosition, data} = defineProps<{
         id?: string;
-        sourcePosition: Position;
-        targetPosition: Position;
-        data: any;
+        sourcePosition?: Position;
+        targetPosition?: Position;
+        data: {color: string; expandable?: boolean};
     }>()
 
     const emit = defineEmits([EVENTS.EXPAND])

@@ -274,8 +274,8 @@ export const useFlowStore = defineStore("flow", () => {
         if (!isCreating.value) {
             try{
                 if (flowBeforeEdit &&
-                        (flowOnValidation.id !== flowBeforeEdit.id ||
-                            flowOnValidation.namespace !== flowBeforeEdit.namespace)) {
+                        (flowOnValidation?.id !== flowBeforeEdit.id ||
+                            flowOnValidation?.namespace !== flowBeforeEdit.namespace)) {
 
                     if (!metadataGuarded && !readonlyToastShown.value) {
                         readonlyToastShown.value = true
@@ -576,9 +576,9 @@ export const useFlowStore = defineStore("flow", () => {
         let namespace: string
         let id: string
         try {
-            const flowData = YAML_UTILS.parse(options.flow)
-            namespace = flowData.namespace
-            id = flowData.id
+            const flowData = YAML_UTILS.parse<Pick<Flow, "id" | "namespace">>(options.flow)
+            namespace = flowData?.namespace ?? flow.value?.namespace ?? ""
+            id = flowData?.id ?? flow.value?.id ?? ""
         } catch {
             namespace = flow.value?.namespace ?? ""
             id = flow.value?.id ?? ""
@@ -676,8 +676,11 @@ export const useFlowStore = defineStore("flow", () => {
 
 function deleteFlowAndDependencies() {
     const metadataForDelete = flowYamlMetadata.value
+    const namespace = metadataForDelete.namespace ?? flow.value?.namespace
+    const id = metadataForDelete.id ?? flow.value?.id
+    if (!namespace || !id) return Promise.reject(new Error("Cannot delete the flow because its namespace or ID is missing."))
 
-    return FlowsAPI.flowDependencies({namespace: metadataForDelete.namespace, id: metadataForDelete.id, destinationOnly: true})
+    return FlowsAPI.flowDependencies({namespace, id, destinationOnly: true})
         .then((data) => {
             let warning = ""
             if (data && data.nodes) {
@@ -685,8 +688,8 @@ function deleteFlowAndDependencies() {
                     .filter(
                         (n) =>
                             !(
-                                n.namespace === metadataForDelete.namespace &&
-                                n.id === metadataForDelete.id
+                                n.namespace === namespace &&
+                                n.id === id
                             ),
                     )
                     .map(
@@ -711,12 +714,12 @@ function deleteFlowAndDependencies() {
                         "</div>"
                 }
             }
-            return t("delete confirm", {name: metadataForDelete.id}) + warning
+            return t("delete confirm", {name: id}) + warning
         })
         .then((message) => {
             return new Promise((resolve, reject) => {
                 toast.confirm(message, () => {
-                    return deleteFlow({namespace: metadataForDelete.namespace, id: metadataForDelete.id}).then(resolve).catch(reject)
+                    return deleteFlow({namespace, id}).then(resolve).catch(reject)
                 }, "warning")
             })
         })
@@ -751,9 +754,9 @@ function deleteFlowAndDependencies() {
         const subflows: string[] | undefined = options.config?.params?.subflows
             ? String(options.config.params.subflows).split(",").filter(Boolean)
             : undefined
-        const flowParsed = YAML_UTILS.parse(options.flow)
+        const flowParsed = YAML_UTILS.parse<Pick<Flow, "id" | "namespace">>(options.flow)
         let flowSource = options.flow
-        if (!flowParsed.id || !flowParsed.namespace) {
+        if (!flowParsed?.id || !flowParsed.namespace) {
             flowSource = YAML_UTILS.updateMetadata(flowSource, {id: "default", namespace: "default"})
         }
         return FlowsAPI.generateFlowGraphFromSource(
@@ -764,12 +767,18 @@ function deleteFlowAndDependencies() {
                 invalidGraph.value = false
                 flowGraph.value = data as unknown as FlowGraph
 
-                const flowVar = YAML_UTILS.parse(options.flow)
-                flowVar.id = flow.value?.id ?? flowVar.id
-                flowVar.namespace = flow.value?.namespace ?? flowVar.namespace
-                flowVar.source = options.flow
-                flowVar.revision = flow.value?.revision
-                flowVar.draft = flow.value?.draft
+                const parsedFlow = YAML_UTILS.parse<Partial<Flow>>(options.flow)
+                if (!parsedFlow || typeof parsedFlow !== "object" || Array.isArray(parsedFlow)) {
+                    throw new Error("Cannot load the flow from an empty YAML document.")
+                }
+                const flowVar: Flow = {
+                    ...parsedFlow,
+                    id: flow.value?.id ?? parsedFlow.id ?? "default",
+                    namespace: flow.value?.namespace ?? parsedFlow.namespace ?? "default",
+                    source: options.flow,
+                    revision: flow.value?.revision,
+                    draft: flow.value?.draft,
+                }
                 flow.value = flowVar
 
                 return data
@@ -797,9 +806,9 @@ function deleteFlowAndDependencies() {
         const subflows: string[] | undefined = options.config?.params?.subflows
             ? String(options.config.params.subflows).split(",").filter(Boolean)
             : undefined
-        const flowParsed = YAML_UTILS.parse(options.flow)
+        const flowParsed = YAML_UTILS.parse<Pick<Flow, "id" | "namespace">>(options.flow)
         let flowSource = options.flow
-        if (!flowParsed.id || !flowParsed.namespace) {
+        if (!flowParsed?.id || !flowParsed.namespace) {
             flowSource = YAML_UTILS.updateMetadata(flowSource, {id: "default", namespace: "default"})
         }
         return FlowsAPI.generateFlowGraphFromSource({subflows, body: flowSource})
@@ -1021,7 +1030,7 @@ function deleteFlowAndDependencies() {
 
     const flowParsed = computed(() => {
         try {
-            return YAML_UTILS.parse(flowYaml.value)
+            return YAML_UTILS.parse<Partial<Flow> & Record<string, unknown>>(flowYaml.value)
         } catch {
             return undefined
         }

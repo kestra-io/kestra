@@ -171,14 +171,14 @@
     import ValidationError from "./ValidationError.vue"
     import {usePluginsStore} from "../../stores/plugins"
     import {useAuthStore} from "override/stores/auth"
-    import {useFlowStore} from "../../stores/flow"
+    import {useFlowStore, type FlowRevision} from "../../stores/flow"
     import {usePlaygroundRun} from "../../composables/playground/usePlaygroundRun"
     import {CHIP_DRAG_MIME, isArmableField, insertAtCaret} from "./chipInsertion"
     import {resolveDeclaredOutputProperties, hasDeclaredOutputs as computeHasDeclaredOutputs} from "./taskOutputSchema"
 
     interface Props {
         component?: string;
-        task?: Record<string, any>;
+        task?: Record<string, unknown>;
         taskRaw?: string;
         taskId?: string;
         flowId: string;
@@ -307,14 +307,17 @@
         inputsCollapsed.value = stacked
     })
     const type = ref<string>()
-    const revisions = ref<any[]>()
+    const revisions = ref<FlowRevision[]>()
     const timer = ref<ReturnType<typeof setTimeout>>()
     const lastValidatedValue = ref<string | null>(null)
 
     const {runTask, playgroundStore} = usePlaygroundRun()
 
+    const propTaskId = computed(() => typeof props.task?.id === "string" ? props.task.id : undefined)
+    const propTaskType = computed(() => typeof props.task?.type === "string" ? props.task.type : undefined)
+
     const runnableTaskId = computed<string | undefined>(() =>
-        props.taskId ?? props.task?.id ?? YAML_UTILS.parse(taskYaml.value)?.id,
+        props.taskId ?? propTaskId.value ?? YAML_UTILS.parse(taskYaml.value)?.id,
     )
 
     const isRunnable = computed(() =>
@@ -326,9 +329,9 @@
 
     const taskType = computed(() => {
         try {
-            return YAML_UTILS.parse(taskYaml.value)?.type ?? props.task?.type ?? ""
+            return YAML_UTILS.parse(taskYaml.value)?.type ?? propTaskType.value ?? ""
         } catch {
-            return props.task?.type ?? ""
+            return propTaskType.value ?? ""
         }
     })
 
@@ -345,7 +348,7 @@
         return null
     })
 
-    function flattenTaskIds(tasks: any, acc: string[]) {
+    function flattenTaskIds(tasks: unknown, acc: string[]) {
         if (!Array.isArray(tasks)) return
         for (const task of tasks) {
             if (task?.id) acc.push(String(task.id))
@@ -366,7 +369,7 @@
 
         const inputs = Array.isArray(flow.inputs) ? flow.inputs : []
         if (inputs.length) {
-            sections.push({key: "inputs", label: t("block_editor.flow_inputs"), chips: inputs.map((i: any) => {
+            sections.push({key: "inputs", label: t("block_editor.flow_inputs"), chips: inputs.map((i: {id?: unknown; name?: unknown}) => {
                 const id = String(i.id ?? i.name ?? "")
                 return {label: id, expr: `{{ inputs.${id} }}`}
             })})
@@ -409,10 +412,8 @@
     })
 
     const declaredOutputProperties = computed(() => resolveDeclaredOutputProperties([
-        (pluginsStore.plugin as any)?.schema?.outputs?.properties,
-        (pluginsStore.plugin as any)?.outputs?.properties,
-        (pluginsStore.editorPlugin as any)?.schema?.outputs?.properties,
-        (pluginsStore.editorPlugin as any)?.outputs?.properties,
+        pluginsStore.plugin?.schema?.outputs?.properties,
+        pluginsStore.editorPlugin?.schema?.outputs?.properties,
     ]))
 
     const outputSections = computed(() => {
@@ -477,7 +478,7 @@
         }
         return YAML_UTILS.extractBlock({
             section: props.section,
-            source: source.value,
+            source: source.value ?? "",
             key: taskId,
         })
     }
@@ -500,15 +501,15 @@
     const onShow = async () => {
         isModalOpen.value = true
         if (props.taskId) {
-            taskYaml.value = await load(props.taskId ? props.taskId : props.task?.id) ?? ""
+            taskYaml.value = await load(props.taskId) ?? ""
         } else if (props.taskRaw != null) {
             taskYaml.value = props.taskRaw
         } else if (props.task) {
             taskYaml.value = YAML_UTILS.stringify(props.task)
         }
         taskBaseline.value = taskYaml.value
-        if (props.task?.type) {
-            pluginsStore.load({cls: props.task.type}).catch(() => {})
+        if (propTaskType.value) {
+            pluginsStore.load({cls: propTaskType.value}).catch(() => {})
         }
         if (taskYaml.value) {
             lastValidatedValue.value = taskYaml.value
@@ -539,13 +540,13 @@
         }
     }
 
-    const onInput = (value?: string | Record<string, any>) => {
+    const onInput = (value: string) => {
         if (timer.value) {
             clearTimeout(timer.value)
         }
 
-        taskYaml.value = typeof value === "string" ? value : YAML_UTILS.stringify(value ?? "")
-        timer.value = setTimeout(commitEdit, 500) as any
+        taskYaml.value = value
+        timer.value = setTimeout(commitEdit, 500)
     }
 
     const flushPendingEdit = () => {

@@ -9,6 +9,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 import io.kestra.core.contexts.KestraConfig;
+import io.kestra.core.exceptions.ValidationErrorException;
 import io.kestra.core.models.collectors.ExecutionUsage;
 import io.kestra.core.models.collectors.FlowUsage;
 import io.kestra.core.plugins.PluginRegistry;
@@ -178,12 +179,26 @@ public class MiscController {
 
     @Post(uri = "/{tenant}/basicAuth")
     @ExecuteOn(TaskExecutors.IO)
-    @Operation(tags = { "Misc" }, summary = "Configure basic authentication for the instance.", description = "Sets up basic authentication credentials.")
+    @Operation(
+        tags = { "Misc" }, summary = "Configure basic authentication for the instance.",
+        description = "Sets up basic authentication credentials. Once credentials already exist, the request must also carry the current password."
+    )
     public HttpResponse<Void> createBasicAuth(
         @RequestBody @Valid @Body BasicAuthCredentials basicAuthCredentials) {
-        basicAuthService
-            .orElseThrow(() -> new IllegalStateException("basicAuthService bean is required in OSS"))
-            .save(basicAuthCredentials);
+        BasicAuthService service = basicAuthService
+            .orElseThrow(() -> new IllegalStateException("basicAuthService bean is required in OSS"));
+
+        // Being authenticated is not enough to prove the caller still knows the *current*
+        // password: isAuthenticated() caches verified tokens, so a password already rotated on
+        // another webserver node sharing this settings store can still pass it here. Re-checking
+        // directly against the stored credentials closes that window.
+        if (service.isBasicAuthInitialized() && !service.validateCurrentPassword(basicAuthCredentials.getCurrentPassword())) {
+            throw new ValidationErrorException(List.of(
+                "The current password is required and must be correct to change Basic Authentication credentials."
+            ));
+        }
+
+        service.save(basicAuthCredentials);
 
         return HttpResponse.noContent();
     }

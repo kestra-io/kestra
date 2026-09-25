@@ -202,6 +202,7 @@
     import {useContextSections} from "../../composables/useContextSections"
     import type {DataSection} from "./contextSections/types"
     import {trackChipInserted, trackChipCopied} from "../../utils/analytics/taskEditorEvents"
+    import {FOCUSED_EXPRESSION_EDITOR_INJECTION_KEY} from "../no-code/injectionKeys"
 
     interface Props {
         component?: string;
@@ -271,6 +272,8 @@
 
     const ARMED_FIELD_CLASS = "task-edit-chip-insert-target"
     const armedField = ref<HTMLInputElement | HTMLTextAreaElement | null>(null)
+    const focusedExpressionEditorInsert = ref<((text: string) => void) | null>(null)
+    provide(FOCUSED_EXPRESSION_EDITOR_INJECTION_KEY, focusedExpressionEditorInsert)
 
     const unsetRequiredFields = ref<UnsetRequiredField[]>([])
     provide(UNSET_REQUIRED_FIELDS_INJECTION_KEY, unsetRequiredFields)
@@ -325,6 +328,10 @@
     function onChipActivate(expr: string, sectionKey: string) {
         if (armedField.value) {
             insertAndNotify(armedField.value, expr)
+            trackChipInserted(`inputs.${sectionKey}`)
+        } else if (focusedExpressionEditorInsert.value) {
+            focusedExpressionEditorInsert.value(expr)
+            KsMessage.success(t("block_editor.chip_inserted"))
             trackChipInserted(`inputs.${sectionKey}`)
         } else {
             copyToClipboard(expr)

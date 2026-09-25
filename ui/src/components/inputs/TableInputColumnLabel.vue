@@ -1,5 +1,5 @@
 <template>
-    <div :data-test="`table-column-${id}`" style="line-height:32px">
+    <div class="table-input-column-label" :data-test="`table-column-${id}`">
         <span class="table-input-header">
             {{ columnLabel }}
         </span>
@@ -19,6 +19,11 @@
 </script>
 
 <style lang="scss" scoped>
+    /* The height of a control, so a header sits on the same baseline as the cells under it. */
+    .table-input-column-label {
+        line-height: 2rem;
+    }
+
     .table-input-header {
         color: var(--ks-text-primary);
         font-size: var(--ks-font-size-sm);

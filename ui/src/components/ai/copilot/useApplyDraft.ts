@@ -47,8 +47,7 @@ export function useApplyDraft() {
     /** True while a direct apply is in flight (disables the button). */
     const applying = ref(false)
 
-    // App and unit-test drafts are EE-only; OSS reports them unsupported (no-op). EE shadows these
-    // via `override/`.
+    // App and unit-test drafts are EE-only; OSS reports them unsupported and EE shadows these via `override/`.
     const appActions = useAppDraftActions()
     const appSupported = appActions.supported
     const testSuiteActions = useTestSuiteDraftActions()
@@ -64,7 +63,6 @@ export function useApplyDraft() {
 
     const silent = SILENT_REQUEST as Parameters<typeof FlowsAPI.createFlow>[1]
 
-    /** The shared confirm dialog, bound to this component's translator. */
     const confirmApply = (message: string, title: string): Promise<boolean> => confirmApplyDialog(t, message, title)
 
     /** (A) Open the drafted YAML in the matching creation editor to review + save there. */
@@ -98,8 +96,7 @@ export function useApplyDraft() {
             return applyDashboard(draft)
         }
         if (draft.kind === "TEST_SUITE") {
-            // EE owns the whole path (its own API, confirm copy and post-apply navigation); the
-            // in-flight flag still lives here so the card's Apply button disables while it runs.
+            // EE owns this path; the flag stays here so the card's Apply button disables while it runs.
             applying.value = true
             try {
                 return await testSuiteActions.apply(draft)

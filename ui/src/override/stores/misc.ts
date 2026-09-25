@@ -18,8 +18,8 @@ export const useMiscStore = defineStore("misc", () => {
     const lastContextTab = ref("ai")
     const theme = ref<SelectedTheme>("syncWithSystem")
     // A prompt to seed into the AI Copilot composer the next time it renders. Set by entry
-    // points ("Fix with AI", "Generate a unit test", the editor shortcut, …) via `promptCopilot`;
-    // consumed and cleared by CopilotChat. `null` means nothing pending.
+    // points ("Fix with AI", the editor shortcut, …) via `promptCopilot`; consumed and cleared
+    // by CopilotChat. `null` means nothing pending.
     const copilotPrompt = ref<string | null>(null)
     // Title for the thread the seeded prompt should start; only used when `copilotNewThread` is set.
     const copilotThreadTitle = ref<string | null>(null)
@@ -27,9 +27,7 @@ export const useMiscStore = defineStore("misc", () => {
     // Never set in OSS: without the EE thread list there is no way back to the previous
     // conversation, so a reset would silently discard it. The EE store override honours it.
     const copilotNewThread = ref(false)
-    // When true, this one seeded prompt is sent as a turn straight away instead of being left in
-    // the composer to review — only ever that first message, never a standing mode. Set by
-    // single-purpose entry points ("Generate a unit test") the user already committed to by clicking.
+    // Sends this one seeded prompt straight away, for entry points the user already committed to by clicking.
     const copilotSendInitialMessage = ref(false)
 
     /** Opens the AI Copilot context-dock tab. */

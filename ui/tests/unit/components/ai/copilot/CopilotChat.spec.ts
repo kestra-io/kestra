@@ -59,9 +59,7 @@ import CopilotChat from "../../../../../src/components/ai/copilot/CopilotChat.vu
 import CopilotThreadControls from "override/components/ai/copilot/CopilotThreadControls.vue"
 import {providers as providersMock} from "@kestra-io/kestra-sdk/ai"
 
-// Tracked and unmounted after each test: a live instance keeps watching `miscStore.copilotPrompt`,
-// so a leaked one from an earlier test would consume the next test's seeded prompt before its own
-// instance mounts.
+// Unmounted after each test, or a leaked instance's watcher would consume the next test's seeded prompt.
 const mounted: ReturnType<typeof mount>[] = []
 
 const mountChat = (props = {}) => {
@@ -210,9 +208,7 @@ describe("CopilotChat", () => {
     })
 
     it("waits for the provider list before sending, so the turn carries a providerId", async () => {
-        // The thread restore and the provider fetch are independent calls. Sending as soon as the
-        // restore lands would drop providerId and silently take the server default instead.
-        // Held open so the restore lands first, the way a slower provider fetch would.
+        // Providers held open so the restore lands first: sending then would drop providerId.
         let resolveProviders: (list: unknown) => void = () => {}
         ;(providersMock as any).mockReturnValueOnce(new Promise((resolve) => { resolveProviders = resolve }))
         miscStore.copilotPrompt = "Generate a unit test"
@@ -257,6 +253,76 @@ describe("CopilotChat", () => {
         resolveProviders([{id: "gemini", isDefault: true}])
         await flushPromises()
         expect(state.sendChat).not.toHaveBeenCalled()
+    })
+
+    it("keeps the user's edit rather than sending the stale seeded prompt when they edit during the wait", async () => {
+        let resolveProviders: (list: unknown) => void = () => {}
+        ;(providersMock as any).mockReturnValueOnce(new Promise((resolve) => { resolveProviders = resolve }))
+        miscStore.copilotPrompt = "Generate a unit test"
+        miscStore.copilotSendInitialMessage = true
+        const w = mountChat()
+        await flushPromises()
+        const input = w.find("[data-test=\"copilot-composer-input\"]")
+        await input.setValue("Generate a unit test covering the error branch")
+        resolveProviders([{id: "gemini", isDefault: true}])
+        await flushPromises()
+        expect(state.sendChat).not.toHaveBeenCalled()
+        expect((input.element as HTMLTextAreaElement).value).toBe("Generate a unit test covering the error branch")
+    })
+
+    it("does not re-seed the prompt the user already sent during the wait", async () => {
+        // Re-seeding a prompt the user already sent would invite a duplicate send.
+        let resolveProviders: (list: unknown) => void = () => {}
+        ;(providersMock as any).mockReturnValueOnce(new Promise((resolve) => { resolveProviders = resolve }))
+        state.sendChat.mockImplementation(() => { state.canSend.value = false })
+        miscStore.copilotPrompt = "Generate a unit test"
+        miscStore.copilotSendInitialMessage = true
+        const w = mountChat()
+        await flushPromises()
+        const input = w.find("[data-test=\"copilot-composer-input\"]")
+        await input.trigger("keydown", {key: "Enter"})
+        expect(state.sendChat).toHaveBeenCalledTimes(1)
+        resolveProviders([{id: "gemini", isDefault: true}])
+        await flushPromises()
+        expect(state.sendChat).toHaveBeenCalledTimes(1)
+        expect((input.element as HTMLTextAreaElement).value).toBe("")
+    })
+
+    it("sends once when the same prompt is seeded again while the first send is still waiting", async () => {
+        // A double-click: the second seed lands while the first run is parked on the provider wait.
+        let resolveProviders: (list: unknown) => void = () => {}
+        ;(providersMock as any).mockReturnValueOnce(new Promise((resolve) => { resolveProviders = resolve }))
+        state.sendChat.mockImplementation(() => { state.canSend.value = false })
+        miscStore.copilotPrompt = "Generate a unit test"
+        miscStore.copilotSendInitialMessage = true
+        const w = mountChat()
+        await flushPromises()
+        miscStore.copilotPrompt = "Generate a unit test"
+        miscStore.copilotSendInitialMessage = true
+        await flushPromises()
+        resolveProviders([{id: "gemini", isDefault: true}])
+        await flushPromises()
+        expect(state.sendChat).toHaveBeenCalledTimes(1)
+        expect((w.find("[data-test=\"copilot-composer-input\"]").element as HTMLTextAreaElement).value).toBe("")
+        expect(miscStore.copilotPrompt).toBeNull()
+    })
+
+    it("seeds a different prompt handed over while the first send is still waiting", async () => {
+        // A different prompt isn't dropped: with the first turn in flight it lands in the composer.
+        let resolveProviders: (list: unknown) => void = () => {}
+        ;(providersMock as any).mockReturnValueOnce(new Promise((resolve) => { resolveProviders = resolve }))
+        state.sendChat.mockImplementation(() => { state.canSend.value = false })
+        miscStore.copilotPrompt = "Generate a unit test"
+        miscStore.copilotSendInitialMessage = true
+        const w = mountChat()
+        await flushPromises()
+        miscStore.copilotPrompt = "Fix the task extract"
+        await flushPromises()
+        resolveProviders([{id: "gemini", isDefault: true}])
+        await flushPromises()
+        expect(state.sendChat).toHaveBeenCalledTimes(1)
+        expect(state.sendChat).toHaveBeenCalledWith(expect.objectContaining({prompt: "Generate a unit test"}))
+        expect((w.find("[data-test=\"copilot-composer-input\"]").element as HTMLTextAreaElement).value).toBe("Fix the task extract")
     })
 
     it("forwards a composer submit to sendChat with the current mode (no scope off a plain route)", async () => {

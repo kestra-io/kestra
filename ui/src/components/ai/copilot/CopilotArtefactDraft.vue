@@ -33,11 +33,7 @@
         <div v-else-if="applied" class="copilot-draft-footer" data-test="copilot-draft-applied">
             <KsText size="small" class="copilot-draft-status-label">{{ $t("ai.copilot.draft.applied") }}</KsText>
         </div>
-        <!-- Apply actions: flows + dashboards open in the editor or apply directly. Apps and unit
-             tests are EE-only, and only render when the matching EE path is present, so OSS shows no
-             actions. Apps are open-in-editor only (no direct apply); unit tests apply like flows.
-             Dismiss is always offered, even when there's nothing else to do with the draft, since
-             it's the only way to decline it. -->
+        <!-- Dismiss is always offered: it's the only way to decline a draft, even one with no other actions. -->
         <div v-else class="copilot-draft-footer">
             <KsButton
                 text
@@ -88,8 +84,7 @@
 
     const {applying, appSupported, dashboardSupported, testSuiteSupported, openInEditor, apply} = useApplyDraft()
 
-    // Flow drafts always have actions; dashboard drafts only when the backend serves custom
-    // dashboards, app and unit-test drafts only when the matching EE path is present.
+    // Flow drafts always have actions; the others only when their backend or EE path is present.
     const showActions = computed(
         () => props.draft.kind === "FLOW"
             || (props.draft.kind === "DASHBOARD" && dashboardSupported.value)

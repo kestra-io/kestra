@@ -29,8 +29,7 @@ vi.mock("@kestra-io/design-system", () => ({
     ),
 }))
 
-// The drafted YAML goes through topology's real parser (parseTarget reads the target out of it),
-// so each test states its target in its own source rather than in a stubbed parse result.
+// The YAML goes through topology's real parser, so each test states its target in its own source.
 
 const createFlow = vi.fn().mockResolvedValue({})
 const updateFlow = vi.fn().mockResolvedValue({})
@@ -69,8 +68,7 @@ const problem = (detail: string) => ({
 const alreadyExists = problem("A flow with id 'my-flow' already exists in namespace 'company.team'.")
 const dashboardExists = problem("A dashboard with id 'my-dash' already exists.")
 
-// Unit-test drafts are EE-only: OSS delegates to the `override/` actions (a no-op stub there).
-// Mock the override so both the "unsupported in OSS" default and the EE-present path are testable.
+// The EE override is mocked so both the unsupported-in-OSS default and the EE-present path are testable.
 const testSuiteOpenInEditor = vi.fn()
 const testSuiteApply = vi.fn().mockResolvedValue(true)
 const testSuiteSupported = {value: false}

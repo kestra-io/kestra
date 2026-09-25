@@ -97,7 +97,7 @@
                 :collapsible="true"
                 :isCollapsed="inputsCollapsed"
                 :stacked="isStacked"
-                :defaultCollapsedKeys="['context']"
+                :defaultCollapsedKeys="['context', 'namespaceFiles']"
                 side="left"
                 @toggle="inputsCollapsed = !inputsCollapsed"
                 @chip-activate="onChipActivate"
@@ -174,7 +174,7 @@
     import {useAuthStore} from "override/stores/auth"
     import {useFlowStore} from "../../stores/flow"
     import {usePlaygroundRun} from "../../composables/playground/usePlaygroundRun"
-    import {CHIP_DRAG_MIME, isArmableField, insertAtCaret} from "./chipInsertion"
+    import {CHIP_DRAG_MIME, CHIP_SECTION_DRAG_MIME, isArmableField, insertAtCaret} from "./chipInsertion"
     import {resolveDeclaredOutputProperties, hasDeclaredOutputs as computeHasDeclaredOutputs} from "./taskOutputSchema"
     import {useContextSections} from "../../composables/useContextSections"
     import type {DataSection} from "./contextSections/types"
@@ -294,9 +294,11 @@
 
         event.preventDefault()
         const expr = event.dataTransfer.getData(CHIP_DRAG_MIME)
+        const sectionKey = event.dataTransfer.getData(CHIP_SECTION_DRAG_MIME)
         const target = (event.target as HTMLElement | null)?.closest("input, textarea") ?? null
         if (expr && isArmableField(target)) {
             insertAndNotify(target, expr)
+            trackChipInserted(`inputs.${sectionKey}`)
         }
     }
 

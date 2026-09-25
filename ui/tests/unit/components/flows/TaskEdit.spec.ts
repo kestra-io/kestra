@@ -1,9 +1,14 @@
-import {beforeEach, describe, it, expect, vi} from "vitest"
+import {afterEach, beforeEach, describe, it, expect, vi} from "vitest"
 import KestraDesignSystem from "@kestra-io/design-system"
 
 vi.mock("vue-router", () => ({
     useRoute: () => ({query: {}}),
     useRouter: () => ({replace: () => Promise.resolve(), push: () => Promise.resolve()}),
+}))
+
+const posthogEvents = vi.fn()
+vi.mock("../../../../src/stores/api", () => ({
+    useApiStore: () => ({posthogEvents}),
 }))
 
 const {pluginsStoreState} = vi.hoisted(() => ({
@@ -57,7 +62,21 @@ vi.mock("../../../../src/composables/useContextSections", () => ({
 }))
 
 import TaskEdit from "../../../../src/components/flows/TaskEdit.vue"
+import {CHIP_DRAG_MIME, CHIP_SECTION_DRAG_MIME} from "../../../../src/components/flows/chipInsertion"
 import {i18nMount} from "../../i18nMount"
+
+function dropEvent(sectionKey: string): Event {
+    const event = new Event("drop", {bubbles: true, cancelable: true})
+    Object.defineProperty(event, "dataTransfer", {value: {
+        types: [CHIP_DRAG_MIME, CHIP_SECTION_DRAG_MIME],
+        getData: (type: string) => {
+            if (type === CHIP_DRAG_MIME) return "{{ kv('KEY') }}"
+            if (type === CHIP_SECTION_DRAG_MIME) return sectionKey
+            return ""
+        },
+    }})
+    return event
+}
 
 function mountTaskEdit() {
     return i18nMount(TaskEdit, {
@@ -212,5 +231,38 @@ describe("TaskEdit", () => {
 
         const namespace = useContextSections.mock.calls[0][0] as {value: string | undefined}
         expect(namespace.value).toBe("company.team")
+    })
+
+    describe("chip drop telemetry", () => {
+        beforeEach(() => posthogEvents.mockClear())
+        // insertAndNotify calls the real KsMessage.success, which teleports a toast straight onto
+        // document.body outside the mounted wrapper — unmounting the wrapper never removes it.
+        afterEach(() => { document.body.innerHTML = "" })
+
+        it("tracks a chip insertion, by section, only when the drop lands on an armable field", async () => {
+            const wrapper = mountTaskEdit()
+            await wrapper.vm.$nextTick()
+
+            const panel = wrapper.get("[data-test='task-edit-panel']").element as HTMLElement
+            const field = document.createElement("input")
+            panel.appendChild(field)
+
+            field.dispatchEvent(dropEvent("namespaceKv"))
+
+            expect(posthogEvents).toHaveBeenCalledWith({type: "CHIP_INSERTED", section: "inputs.namespaceKv"})
+        })
+
+        it("does not track a chip insertion when the drop lands elsewhere in the panel, since nothing was inserted", async () => {
+            const wrapper = mountTaskEdit()
+            await wrapper.vm.$nextTick()
+
+            const panel = wrapper.get("[data-test='task-edit-panel']").element as HTMLElement
+            const nonArmableTarget = document.createElement("div")
+            panel.appendChild(nonArmableTarget)
+
+            nonArmableTarget.dispatchEvent(dropEvent("namespaceKv"))
+
+            expect(posthogEvents).not.toHaveBeenCalledWith(expect.objectContaining({type: "CHIP_INSERTED"}))
+        })
     })
 })

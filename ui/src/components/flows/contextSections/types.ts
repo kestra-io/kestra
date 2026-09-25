@@ -2,6 +2,9 @@ export interface DataChip {
     label: string
     expr?: string
     type?: string
+    // Shared by every chip derived from the same underlying entry (e.g. read()/fileURI() for one
+    // file), so the section header can count entries instead of chips.
+    groupKey?: string
 }
 
 export interface DataSection {

@@ -4,20 +4,25 @@ import {namespaceFileChips} from "./namespaceFileExpression"
 describe("namespaceFileChips", () => {
     it("offers only read() for a text file", () => {
         const chips = namespaceFileChips("queries/idle_ec2.sql")
-        expect(chips).toEqual([{label: "read('queries/idle_ec2.sql')", expr: "{{ read('queries/idle_ec2.sql') }}"}])
+        expect(chips).toEqual([{label: "read('queries/idle_ec2.sql')", expr: "{{ read('queries/idle_ec2.sql') }}", groupKey: "queries/idle_ec2.sql"}])
     })
 
     it("offers only fileURI() for a data file", () => {
         const chips = namespaceFileChips("fixtures/sample_response.json")
-        expect(chips).toEqual([{label: "fileURI('fixtures/sample_response.json')", expr: "{{ fileURI('fixtures/sample_response.json') }}"}])
+        expect(chips).toEqual([{label: "fileURI('fixtures/sample_response.json')", expr: "{{ fileURI('fixtures/sample_response.json') }}", groupKey: "fixtures/sample_response.json"}])
     })
 
     it("offers both expressions when the file type is ambiguous", () => {
         const chips = namespaceFileChips("notes.txt")
         expect(chips).toEqual([
-            {label: "read('notes.txt')", expr: "{{ read('notes.txt') }}"},
-            {label: "fileURI('notes.txt')", expr: "{{ fileURI('notes.txt') }}"},
+            {label: "read('notes.txt')", expr: "{{ read('notes.txt') }}", groupKey: "notes.txt"},
+            {label: "fileURI('notes.txt')", expr: "{{ fileURI('notes.txt') }}", groupKey: "notes.txt"},
         ])
+    })
+
+    it("shares one groupKey between both chips of an ambiguous file, so the section header counts one file, not two chips", () => {
+        const chips = namespaceFileChips("notes.txt")
+        expect(chips.map(c => c.groupKey)).toEqual(["notes.txt", "notes.txt"])
     })
 
     it("offers both expressions for a file with no extension", () => {

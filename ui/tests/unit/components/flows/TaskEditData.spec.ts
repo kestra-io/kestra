@@ -162,30 +162,48 @@ describe("TaskEditData analytics", () => {
         expect(posthogEvents).not.toHaveBeenCalled()
     })
 
-    it("does not track a chip insertion just from starting a drag", async () => {
+    it("does not track a chip insertion just from starting a drag — only a successful drop, tracked by the parent, counts", async () => {
         const wrapper = render()
         await wrapper.get(".task-edit-data-chip").trigger("dragstart", {dataTransfer: {setData: vi.fn(), effectAllowed: ""}})
 
         expect(posthogEvents).not.toHaveBeenCalledWith(expect.objectContaining({type: "CHIP_INSERTED"}))
     })
 
-    it("tracks a chip insertion only once the drag actually completes as a drop, by section — never the chip's own expression", async () => {
+    it("carries the section key alongside the chip expression when a drag starts", async () => {
+        const setData = vi.fn()
         const wrapper = render()
-        const chip = wrapper.get(".task-edit-data-chip")
-        await chip.trigger("dragstart", {dataTransfer: {setData: vi.fn(), effectAllowed: ""}})
-        await chip.trigger("dragend", {dataTransfer: {dropEffect: "copy"}})
+        await wrapper.get(".task-edit-data-chip").trigger("dragstart", {dataTransfer: {setData, effectAllowed: ""}})
 
-        expect(posthogEvents).toHaveBeenCalledWith({type: "CHIP_INSERTED", section: "inputs.up"})
-        const payloads = posthogEvents.mock.calls.map(([payload]) => JSON.stringify(payload))
-        expect(payloads.some(payload => payload.includes("flow.id"))).toBe(false)
+        expect(setData).toHaveBeenCalledWith("application/x-kestra-chip-section", "up")
     })
+})
 
-    it("does not track a chip insertion when the drag is cancelled (dropped outside a valid target)", async () => {
+describe("TaskEditData toggle", () => {
+    it("does not collapse or track a section while a filter is active", async () => {
         const wrapper = render()
-        const chip = wrapper.get(".task-edit-data-chip")
-        await chip.trigger("dragstart", {dataTransfer: {setData: vi.fn(), effectAllowed: ""}})
-        await chip.trigger("dragend", {dataTransfer: {dropEffect: "none"}})
+        await wrapper.get("input").setValue("flow")
 
-        expect(posthogEvents).not.toHaveBeenCalledWith(expect.objectContaining({type: "CHIP_INSERTED"}))
+        const header = wrapper.get(".task-edit-data-section-head")
+        await header.trigger("click")
+
+        expect(wrapper.text()).toContain("flow.id")
+        posthogEvents.mockClear()
+        await header.trigger("click")
+        expect(posthogEvents).not.toHaveBeenCalled()
+    })
+})
+
+describe("TaskEditData section count", () => {
+    it("counts distinct entries, not chips, when several chips share the same groupKey", () => {
+        const wrapper = render({sections: [
+            {key: "files", label: "Namespace files", chips: [
+                {label: "read('a.sql')", expr: "{{ read('a.sql') }}", groupKey: "a.sql"},
+                {label: "fileURI('a.sql')", expr: "{{ fileURI('a.sql') }}", groupKey: "a.sql"},
+                {label: "fileURI('b.json')", expr: "{{ fileURI('b.json') }}", groupKey: "b.json"},
+            ]},
+        ]})
+
+        const count = wrapper.get(".task-edit-data-count")
+        expect(count.text()).toBe("2")
     })
 })

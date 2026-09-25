@@ -120,15 +120,17 @@
         runs?: AssetRun[];
         collapsed?: boolean;
         totalDegree?: number;
+        expandable?: boolean;
     })
 
     const shortName = computed(() => stringUtils.afterLastDot(props.node.flow) || props.node.flow)
 
     const isCollapsed = computed(() => Boolean(metadata.value.collapsed))
     const totalDegree = computed(() => metadata.value.totalDegree ?? 0)
-    // Only an ASSET with a real id has its own `{id}/dependencies` route to re-fetch; an anonymized
-    // node (id stripped outside the caller's view grant) or a non-asset hub shows the count with no button.
-    const canExpand = computed(() => metadata.value.subtype === ASSET && Boolean(props.node.id))
+    // Only an ASSET whose own id survived anonymization has a `{id}/dependencies` route to re-fetch; an
+    // anonymized node (id stripped outside the caller's view grant) or a non-asset hub shows the count with
+    // no button. `props.node.id` is not the test: it falls back to the graph uid even once anonymized.
+    const canExpand = computed(() => metadata.value.subtype === ASSET && Boolean(metadata.value.expandable))
 
     const status = computed(() =>
         (metadata.value.subtype === ASSET ? normalizeStatus(metadata.value.status) : undefined),

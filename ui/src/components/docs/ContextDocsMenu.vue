@@ -131,7 +131,7 @@
         background: var(--ks-btn-secondary-bg-default);
         box-shadow: 0px 1px 4px 0px var(--ks-shadow-element);
         font-weight: 600;
-        transition: all 0.2s ease;
+        transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease;
 
         &.is-open {
             position: relative;
@@ -175,7 +175,7 @@
             display: block;
             padding: 0.25rem 0.5rem;
             border-radius: $link-radius;
-            transition: all 0.2s ease;
+            transition: background-color 150ms ease, color 150ms ease;
             margin-bottom: 2px;
             cursor: pointer;
             width: 100%;

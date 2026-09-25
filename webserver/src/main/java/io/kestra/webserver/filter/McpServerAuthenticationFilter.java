@@ -7,6 +7,7 @@ import org.reactivestreams.Publisher;
 import io.kestra.core.mcp.models.McpServer;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.mcp.McpServerCache;
+import io.kestra.webserver.controllers.api.McpToolController;
 import io.kestra.webserver.services.BasicAuthService;
 
 import io.micronaut.context.annotation.Requires;
@@ -17,6 +18,9 @@ import io.micronaut.http.annotation.Filter;
 import io.micronaut.http.filter.HttpServerFilter;
 import io.micronaut.http.filter.ServerFilterChain;
 import io.micronaut.http.filter.ServerFilterPhase;
+import io.micronaut.web.router.MethodBasedRouteMatch;
+import io.micronaut.web.router.RouteMatch;
+import io.micronaut.web.router.RouteMatchUtils;
 import jakarta.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Flux;
@@ -53,7 +57,11 @@ public class McpServerAuthenticationFilter implements HttpServerFilter {
 
     @Override
     public Publisher<MutableHttpResponse<?>> doFilter(HttpRequest<?> request, ServerFilterChain chain) {
-        return Mono.fromCallable(() -> resolveServer(request))
+        Optional<String> serverId = mcpServerId(request);
+        if (serverId.isEmpty()) {
+            return chain.proceed(request);
+        }
+        return Mono.fromCallable(() -> mcpServerCache.get(tenantService.resolveTenant(), serverId.get()))
             .subscribeOn(Schedulers.boundedElastic())
             .flatMapMany(
                 optMcpServer -> optMcpServer.isEmpty()
@@ -62,12 +70,22 @@ public class McpServerAuthenticationFilter implements HttpServerFilter {
             );
     }
 
-    private Optional<McpServer> resolveServer(HttpRequest<?> request) {
-        String[] parts = request.getPath().split("/");
-        if (parts.length < 6) {
-            return Optional.empty();
+    /**
+     * Resolves the {@code id} path variable of a matched {@link McpToolController} route instead of splitting
+     * {@link HttpRequest#getPath()}, which is the raw, still-percent-encoded request target and can
+     * disagree with the controller on a request whose id is percent-encoded.
+     */
+    @SuppressWarnings("rawtypes")
+    private Optional<String> mcpServerId(HttpRequest<?> request) {
+        Optional<RouteMatch> routeMatch = RouteMatchUtils.findRouteMatch(request);
+        if (
+            routeMatch.isPresent() && routeMatch.get() instanceof MethodBasedRouteMatch<?, ?> method
+                && McpToolController.class.isAssignableFrom(method.getDeclaringType())
+                && method.getVariableValues().get("id") instanceof String id
+        ) {
+            return Optional.of(id);
         }
-        return mcpServerCache.get(tenantService.resolveTenant(), parts[5]);
+        return Optional.empty();
     }
 
     private Publisher<MutableHttpResponse<?>> authenticate(

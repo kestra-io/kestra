@@ -26,9 +26,7 @@
             <slot name="details" />
         </template>
         <template #footer>
-            <!-- Reserved for kestra-io/kestra#19665's segmented duration bar — the box already
-                 accounts for its height, so that PR fills the slot instead of renegotiating it. -->
-            <div class="duration-bar-placeholder" />
+            <Duration compact :histories="histories" :denominator="longestTaskRunDuration" />
         </template>
         <template #content>
             <button
@@ -81,6 +79,7 @@
         VALIDATION_ISSUES_INJECTION_KEY,
         FOCUSED_TASK_INJECTION_KEY,
         DRAGGING_NODE_INJECTION_KEY,
+        LONGEST_TASK_RUN_DURATION_INJECTION_KEY,
     } from "../injectionKeys"
 
     import PlayIcon from "vue-material-design-icons/Play.vue"
@@ -200,6 +199,7 @@
     const subflowsExecutions = inject(SUBFLOWS_EXECUTIONS_INJECTION_KEY)
     const lod = inject(LOD_INJECTION_KEY, computed(() => "default"))
     const isDraggingNode = inject(DRAGGING_NODE_INJECTION_KEY, undefined)
+    const longestTaskRunDuration = inject(LONGEST_TASK_RUN_DURATION_INJECTION_KEY, computed(() => 0))
 
     function onCardClick() {
         const task = props.data.node.task
@@ -395,13 +395,6 @@ button.playground-button {
 .status-tag__text {
     font-size: var(--ks-font-size-2xs);
     white-space: nowrap;
-}
-
-.duration-bar-placeholder {
-    width: 100%;
-    height: var(--ks-spacing-1);
-    border-radius: var(--ks-radius-xs);
-    background: var(--ks-bg-tag);
 }
 
 .runner-badge {

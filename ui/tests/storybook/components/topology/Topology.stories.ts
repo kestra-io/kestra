@@ -318,6 +318,142 @@ LevelOfDetailExpanded.args = {
     defaultViewport: {x: 0, y: 0, zoom: 1.5},
 }
 
+const DURATION_BAR_SOURCE = `
+id: duration_bar_showcase
+namespace: qa.topology
+tasks:
+  - id: quick_query
+    type: io.kestra.plugin.core.log.Log
+    message: "Quick query"
+  - id: transform_data
+    type: io.kestra.plugin.core.log.Log
+    message: "Transform data"
+  - id: load_warehouse
+    type: io.kestra.plugin.core.log.Log
+    message: "Load warehouse"
+  - id: notify_team
+    type: io.kestra.plugin.core.log.Log
+    message: "Notify team"
+`.trim()
+
+function logTask(id: string, message: string) {
+    return {id, type: "io.kestra.plugin.core.log.Log", message}
+}
+
+const DURATION_BAR_GRAPH = {
+    nodes: [
+        {uid: "root.root-durationbar", type: "io.kestra.core.models.hierarchies.GraphClusterRoot"},
+        {uid: "root.end-durationbar", type: "io.kestra.core.models.hierarchies.GraphClusterEnd"},
+        {uid: "root.quick_query", type: "io.kestra.core.models.hierarchies.GraphTask", task: logTask("quick_query", "Quick query"), relationType: "SEQUENTIAL"},
+        {uid: "root.transform_data", type: "io.kestra.core.models.hierarchies.GraphTask", task: logTask("transform_data", "Transform data"), relationType: "SEQUENTIAL"},
+        {uid: "root.load_warehouse", type: "io.kestra.core.models.hierarchies.GraphTask", task: logTask("load_warehouse", "Load warehouse"), relationType: "SEQUENTIAL"},
+        {uid: "root.notify_team", type: "io.kestra.core.models.hierarchies.GraphTask", task: logTask("notify_team", "Notify team"), relationType: "SEQUENTIAL"},
+    ],
+    edges: [
+        {source: "root.root-durationbar", target: "root.quick_query", relation: {}},
+        {source: "root.quick_query", target: "root.transform_data", relation: {relationType: "SEQUENTIAL"}},
+        {source: "root.transform_data", target: "root.load_warehouse", relation: {relationType: "SEQUENTIAL"}},
+        {source: "root.load_warehouse", target: "root.notify_team", relation: {relationType: "SEQUENTIAL"}},
+        {source: "root.notify_team", target: "root.end-durationbar", relation: {}},
+    ],
+    clusters: [],
+}
+
+function taskRunWithHistory(taskId: string, histories: {date: string; state: string}[]) {
+    return {
+        id: `${taskId}-run`,
+        taskId,
+        state: {
+            current: histories[histories.length - 1].state,
+            histories,
+        },
+    }
+}
+
+// load_warehouse's inter-attempt backoff is billed as queued, not running, matching bucketOf().
+const DURATION_BAR_EXECUTION = {
+    id: "story-execution-duration-bar",
+    state: {current: "SUCCESS"},
+    taskRunList: [
+        taskRunWithHistory("quick_query", [
+            {date: "2026-01-01T00:00:00.000Z", state: "CREATED"},
+            {date: "2026-01-01T00:00:00.050Z", state: "RUNNING"},
+            {date: "2026-01-01T00:00:01.250Z", state: "SUCCESS"},
+        ]),
+        taskRunWithHistory("transform_data", [
+            {date: "2026-01-01T00:00:00.000Z", state: "CREATED"},
+            {date: "2026-01-01T00:00:00.080Z", state: "RUNNING"},
+            {date: "2026-01-01T00:00:04.500Z", state: "SUCCESS"},
+        ]),
+        taskRunWithHistory("load_warehouse", [
+            {date: "2026-01-01T00:00:00.000Z", state: "CREATED"},
+            {date: "2026-01-01T00:00:00.040Z", state: "RUNNING"},
+            {date: "2026-01-01T00:00:01.440Z", state: "FAILED"},
+            {date: "2026-01-01T00:00:01.440Z", state: "RETRYING"},
+            {date: "2026-01-01T00:00:02.140Z", state: "RUNNING"},
+            {date: "2026-01-01T00:00:03.440Z", state: "SUCCESS"},
+        ]),
+        taskRunWithHistory("notify_team", [
+            {date: "2026-01-01T00:00:00.000Z", state: "SKIPPED"},
+        ]),
+    ],
+}
+
+const DURATION_BAR_FLOWGRAPH = withExecutionId(DURATION_BAR_GRAPH, DURATION_BAR_EXECUTION.id)
+
+export const DurationBarComparison = Template.bind({})
+DurationBarComparison.storyName = "Duration Bar — Several Durations Side By Side"
+DurationBarComparison.args = {
+    id: "story-duration-bar-comparison",
+    source: DURATION_BAR_SOURCE,
+    flowGraph: DURATION_BAR_FLOWGRAPH as unknown as FlowGraph,
+    isReadOnly: true,
+    isHorizontal: false,
+    execution: DURATION_BAR_EXECUTION,
+}
+
+// A running task's bar keeps updating every tick — the node's laid-out box must not move as a
+// result (kestra-io/kestra#19666's hard constraint, the reason this issue's slot was reserved).
+export const DurationBarRunningFootprint: StoryObj<typeof Topology> = {
+    render: () => ({
+        components: {Topology},
+        setup() {
+            const runningExecution = {
+                id: "story-execution-duration-bar-running",
+                state: {current: "RUNNING"},
+                taskRunList: [
+                    taskRunWithHistory("quick_query", [
+                        {date: new Date(Date.now() - 5_000).toISOString(), state: "CREATED"},
+                        {date: new Date(Date.now() - 4_800).toISOString(), state: "RUNNING"},
+                    ]),
+                ],
+            }
+            return {
+                source: DURATION_BAR_SOURCE,
+                flowGraph: withExecutionId(DURATION_BAR_GRAPH, runningExecution.id) as unknown as FlowGraph,
+                execution: runningExecution,
+            }
+        },
+        template: `
+            <div style="height: 300px; width: 300px;">
+                <Topology id="story-duration-bar-running" :source="source" :flowGraph="flowGraph" :execution="execution" isReadOnly :isHorizontal="false" />
+            </div>
+        `,
+    }),
+    play: async ({canvasElement}) => {
+        const node = () => canvasElement.querySelector("[data-id=\"root.quick_query\"]") as HTMLElement | null
+
+        await expect(node()).not.toBeNull()
+        const dimensionsOf = (el: HTMLElement) => ({width: el.style.width, height: el.style.height})
+        const before = dimensionsOf(node()!)
+
+        await new Promise((resolve) => setTimeout(resolve, 350))
+
+        expect(dimensionsOf(node()!)).toEqual(before)
+        expect(dimensionsOf(node()!)).toEqual({width: "273px", height: "80px"})
+    },
+}
+
 // Three independent canvases, the same flow, three different starting zooms — one below the pill
 // threshold, one at rest, one above the expanded threshold. If a level of detail ever changed the
 // laid-out footprint, the same node would measure differently across them; it must not

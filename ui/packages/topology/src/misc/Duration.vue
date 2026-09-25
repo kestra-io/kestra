@@ -1,5 +1,26 @@
 <template>
+    <template v-if="compact">
+        <div v-if="showCompactBar" class="split-bar compact-bar" aria-hidden="true">
+            <span
+                v-if="breakdown.queued > 0"
+                class="split-bar-seg split-bar-queued"
+                :style="{width: shareOf(breakdown.queued) + '%'}"
+            />
+            <span
+                v-if="breakdown.running > 0"
+                class="split-bar-seg split-bar-running"
+                :class="{'split-bar-running-live': isActivelyRunning}"
+                :style="{width: shareOf(breakdown.running) + '%'}"
+            />
+            <span
+                v-if="breakdown.paused > 0"
+                class="split-bar-seg split-bar-paused"
+                :style="{width: shareOf(breakdown.paused) + '%'}"
+            />
+        </div>
+    </template>
     <KsPopover
+        v-else
         v-model:visible="visible"
         :trigger="trigger"
         :enterable="true"
@@ -175,11 +196,21 @@
         /** What this duration belongs to (e.g. a task id), used to disambiguate the trigger's
          *  aria-label when several are rendered on the same page (e.g. the Logs tab). */
         subject?: string;
+        /** Scales each segment against this value (e.g. the longest task run of an execution)
+         *  instead of the breakdown's own total, so bars across several instances are comparable.
+         *  Absent or non-positive falls back to the unscaled, per-instance behavior. */
+        denominator?: number;
+        /** Renders only the segmented bar, outside the popover, with no trigger button — the
+         *  always-visible comparison bar a task node's footer fills instead of the tier-1/tier-2
+         *  detail card. */
+        compact?: boolean;
     }>(), {
         histories: undefined,
         interval: 100,
         attemptCount: undefined,
         subject: undefined,
+        denominator: undefined,
+        compact: false,
     })
 
     const {t} = useI18n()
@@ -214,6 +245,7 @@
     const isActivelyRunning = computed(() => breakdown.value.isRunning && lastState.value === State.RUNNING)
     const waitingToStart = computed(() => breakdown.value.isRunning && breakdown.value.running === 0)
     const neverRan = computed(() => hasHistory.value && !breakdown.value.isRunning && breakdown.value.total === 0)
+    const showCompactBar = computed(() => breakdown.value.total > 0)
 
     const derivedAttemptGroupCount = computed(() => {
         if (!hasHistory.value) return 0
@@ -284,8 +316,9 @@
     })
 
     function shareOf(part: number): number {
-        if (breakdown.value.total <= 0) return 0
-        return Math.min(100, (part / breakdown.value.total) * 100)
+        const denominator = props.denominator && props.denominator > 0 ? props.denominator : breakdown.value.total
+        if (denominator <= 0) return 0
+        return Math.min(100, (part / denominator) * 100)
     }
 
     function shareLabel(part: number): string {
@@ -492,6 +525,11 @@
     .split-bar-seg {
         height: 100%;
         min-width: 3px;
+    }
+
+    .compact-bar {
+        width: 100%;
+        height: var(--ks-spacing-1);
     }
 
     .split-bar-queued {

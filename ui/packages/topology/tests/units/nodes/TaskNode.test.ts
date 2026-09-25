@@ -2,9 +2,11 @@ import {describe, expect, it} from "vitest"
 import {computed} from "vue"
 import TaskNode from "../../../src/nodes/TaskNode.vue"
 import NodeMenu from "../../../src/nodes/NodeMenu.vue"
+import {computeLongestTaskRunDuration} from "../../../src/misc/durationBreakdown"
 import {
     EXECUTION_INJECTION_KEY,
     SUBFLOWS_EXECUTIONS_INJECTION_KEY,
+    LONGEST_TASK_RUN_DURATION_INJECTION_KEY,
 } from "../../../src/injectionKeys"
 
 import {i18nMount} from "../../../../../tests/unit/i18nMount"
@@ -26,6 +28,17 @@ function taskRun(outputs?: Record<string, unknown>) {
             histories: [],
         },
         outputs,
+    }
+}
+
+function taskRunWithHistory(taskId: string, histories: {date: number; state: string}[]) {
+    return {
+        id: `${taskId}-run`,
+        taskId,
+        state: {
+            current: histories[histories.length - 1].state,
+            histories,
+        },
     }
 }
 
@@ -68,6 +81,7 @@ function mountTaskNode({execution, taskRuns = [], replayEnabled = false, task = 
                     execution ? {id: EXECUTION_ID, taskRunList: taskRuns, ...execution} : undefined,
                 ),
                 [SUBFLOWS_EXECUTIONS_INJECTION_KEY as symbol]: computed(() => ({})),
+                [LONGEST_TASK_RUN_DURATION_INJECTION_KEY as symbol]: computed(() => computeLongestTaskRunDuration(taskRuns)),
             },
         },
     })
@@ -246,9 +260,44 @@ describe("TaskNode anatomy", () => {
         expect(wrapper.text()).toContain("core.log.Log")
     })
 
-    it("should reserve the duration-bar slot kestra-io/kestra#19665 will fill", () => {
+    it("should show no duration bar outside of an execution context", () => {
         const wrapper = mountTaskNode({})
 
-        expect(wrapper.find(".duration-bar-placeholder").exists()).toBe(true)
+        expect(wrapper.find(".compact-bar").exists()).toBe(false)
+    })
+
+    it("should show no duration bar for a task that never ran", () => {
+        const wrapper = mountTaskNode({
+            execution: {state: {current: "SUCCESS"}},
+            taskRuns: [taskRunWithHistory("my-task", [{date: 0, state: "SKIPPED"}])],
+        })
+
+        expect(wrapper.find(".compact-bar").exists()).toBe(false)
+    })
+
+    it("should fill its own duration bar when it is the execution's longest task run", () => {
+        const wrapper = mountTaskNode({
+            execution: {state: {current: "SUCCESS"}},
+            taskRuns: [
+                taskRunWithHistory("my-task", [{date: 0, state: "RUNNING"}, {date: 2_000, state: "SUCCESS"}]),
+            ],
+        })
+
+        const running = wrapper.find(".split-bar-running")
+        expect(running.exists()).toBe(true)
+        expect((running.element as HTMLElement).style.width).toBe("100%")
+    })
+
+    it("should scale its bar against the longest task run of the execution, not its own duration", () => {
+        const wrapper = mountTaskNode({
+            execution: {state: {current: "SUCCESS"}},
+            taskRuns: [
+                taskRunWithHistory("my-task", [{date: 0, state: "RUNNING"}, {date: 1_000, state: "SUCCESS"}]),
+                taskRunWithHistory("other-task", [{date: 0, state: "RUNNING"}, {date: 4_000, state: "SUCCESS"}]),
+            ],
+        })
+
+        const running = wrapper.find(".split-bar-running")
+        expect((running.element as HTMLElement).style.width).toBe("25%")
     })
 })

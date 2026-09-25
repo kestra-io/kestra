@@ -10,6 +10,7 @@ import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.DefaultRunContext;
 import io.kestra.core.runners.RunContext;
+import io.kestra.core.services.KVService;
 import io.kestra.core.services.KVStoreService;
 import io.kestra.core.storages.kv.KVEntry;
 import io.kestra.plugin.core.purge.PurgeTask;
@@ -100,9 +101,10 @@ public class PurgeKV extends Task implements PurgeTask<KVEntry>, RunnableTask<Pu
         String namespace = runContext.flowInfo().namespace();
         for (String targetNamespace : kvNamespaces) {
             KVStoreService kvStoreService = ((DefaultRunContext) runContext).services().additionalService(KVStoreService.class);
+            KVService kvService = ((DefaultRunContext) runContext).services().additionalService(KVService.class);
             kvStoreService.checkAccessNamespaceIsAllowed(tenantId, targetNamespace, namespace);
-            List<KVEntry> toPurge = filterItems(runContext, renderedBehavior.entriesToPurge(tenantId, targetNamespace, kvStoreService));
-            count.addAndGet(kvStoreService.purge(tenantId, targetNamespace, toPurge));
+            List<KVEntry> toPurge = filterItems(runContext, renderedBehavior.entriesToPurge(tenantId, targetNamespace, kvService));
+            count.addAndGet(kvService.purge(tenantId, targetNamespace, toPurge));
         }
         runContext.logger().info("purged {} keys", count.get());
 

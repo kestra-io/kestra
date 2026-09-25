@@ -14,7 +14,7 @@ import io.kestra.core.storages.StorageContext;
  * Service interface for accessing the files attached to a namespace Key-Value store.
  * <p>
  * This interface exposes only worker-safe operations. For server-only operations
- * (paginated listing, listing all entries, purging), see {@link io.kestra.core.kv.services.KVService}.
+ * (paginated listing, listing all entries, purging), see {@link io.kestra.core.services.KVService}.
  */
 public interface KVStore {
 

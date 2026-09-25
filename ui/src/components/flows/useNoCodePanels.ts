@@ -1,4 +1,4 @@
-import {computed, ComputedRef, h, markRaw, Ref, Suspense} from "vue"
+import {computed, type Component, ComputedRef, h, markRaw, Ref, Suspense} from "vue"
 import {useI18n} from "vue-i18n"
 import MouseRightClickIcon from "vue-material-design-icons/MouseRightClick.vue"
 import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
@@ -67,10 +67,10 @@ interface NoCodeTabWithAction extends NoCodeProps {
 
 let keepAliveCacheBuster = 0
 
-function getTabFromNoCodeTab(Comp: any, tab: NoCodeTabWithAction, t: (key: string) => string, handlers: Handlers, flow: string, te: (key: string) => boolean): Tab {
+function getTabFromNoCodeTab(Comp: Component, tab: NoCodeTabWithAction, t: (key: string) => string, handlers: Handlers, flow: string, te: (key: string) => boolean): Tab {
     function getTabValues(_innerTab: NoCodeTabWithAction) {
         // FIXME optimize by avoiding to stringify then parse again the yaml object.
-        const parentBlock: any = tab.parentPath ? YAML_UTILS.parse(YAML_UTILS.extractBlockWithPath({
+        const parentBlock = tab.parentPath ? YAML_UTILS.parse<Record<string, unknown>>(YAML_UTILS.extractBlockWithPath({
             source: flow,
             path: tab.parentPath.replace(/\.[^.]+$/, ""),
         })) : {}
@@ -93,7 +93,7 @@ function getTabFromNoCodeTab(Comp: any, tab: NoCodeTabWithAction, t: (key: strin
                 ? `${tab.parentPath}[${tab.refPath}]`
                 : tab.parentPath ?? ""
 
-            const rawBlock: any = tab.parentPath ? YAML_UTILS.parse(YAML_UTILS.extractBlockWithPath({
+            const rawBlock = tab.parentPath ? YAML_UTILS.parse<Record<string, unknown>>(YAML_UTILS.extractBlockWithPath({
                 source: flow,
                 path,
             })) : {}
@@ -139,7 +139,7 @@ function getTabFromNoCodeTab(Comp: any, tab: NoCodeTabWithAction, t: (key: strin
     }
 }
 
-export function setupInitialNoCodeTabIfExists(Comp: any, tab: string, handlers: Handlers, flowYaml: string, t: (key: string) => string, te: (key: string) => boolean) {
+export function setupInitialNoCodeTabIfExists(Comp: Component, tab: string, handlers: Handlers, flowYaml: string, t: (key: string) => string, te: (key: string) => boolean) {
     if (tab === NOCODE_PREFIX) {
         return getTabFromNoCodeTab(Comp, parseTabId(tab), t, handlers, flowYaml, te)
     }
@@ -168,7 +168,7 @@ function parseTabId(tabId: string) {
     }
 }
 
-export function setupInitialNoCodeTab(Comp: any, tab: string, handlers: Handlers, flowYaml: string, t: (key: string) => string, te: (key: string) => boolean) {
+export function setupInitialNoCodeTab(Comp: Component, tab: string, handlers: Handlers, flowYaml: string, t: (key: string) => string, te: (key: string) => boolean) {
     if (!tab.startsWith(NOCODE_PREFIX)) {
         return undefined
     }
@@ -231,7 +231,7 @@ export function useNoCodeHandlers(openTabs: Ref<string[]>, focusTab: (tab: strin
     return noCodeHandlers
 }
 
-export function useNoCodePanels(component: any, panels: Ref<Panel[]>, openTabs: Ref<string[]>, focusTab: (tab: string) => void) {
+export function useNoCodePanels(component: Component, panels: Ref<Panel[]>, openTabs: Ref<string[]>, focusTab: (tab: string) => void) {
     const {t, te} = useI18n()
     const flowStore = useFlowStore()
 
@@ -340,7 +340,7 @@ export function useNoCodePanels(component: any, panels: Ref<Panel[]>, openTabs: 
 }
 
 export function useNoCodePanelsFull(options: {
-    RawNoCode: any,
+    RawNoCode: Component,
     editorView: Ref<{openTabs: string[], panels: Panel<TabLive>[], focusTab: (tab: string) => void} | undefined | null>,
     editorElements: EditorElement[],
     source: ComputedRef<string>

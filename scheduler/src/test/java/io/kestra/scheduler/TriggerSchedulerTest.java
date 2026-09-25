@@ -785,6 +785,40 @@ class TriggerSchedulerTest {
     }
 
     @Test
+    void shouldDisableScheduleTriggerWhenCronHasNoValidCalendarDate() {
+        FlowWithSource flow = Fixtures.flowWithSchedulePT15M(TEST_TZ, builder -> builder.cron("0 0 30 2 *").build());
+        TriggerScheduler scheduler = newTriggerScheduler(List.of(flow));
+
+        TriggerState existing = TriggerState.of(flow, flow.getTriggers().getFirst(), 0)
+            .updateForNextEvaluationDate(SchedulerClock.getClock(), SchedulerClock.now());
+        triggerStateStore.save(existing);
+
+        scheduler.onSchedule(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS);
+
+        TriggerState state = triggerStateStore.findByIdWithoutAcl(Fixtures.triggerId()).orElse(null);
+        assertThat(state).isNotNull();
+        assertThat(state.isDisabled()).isTrue();
+        assertThat(triggerExecutionPublisher.executions().size()).isEqualTo(0);
+
+        scheduler.onSchedule(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS);
+
+        assertThat(triggerStateStore.findByIdWithoutAcl(Fixtures.triggerId()).orElseThrow().isDisabled()).isTrue();
+        assertThat(triggerExecutionPublisher.executions().size()).isEqualTo(0);
+    }
+
+    @Test
+    void shouldDisableUnsatisfiableScheduleOnStart() {
+        FlowWithSource flow = Fixtures.flowWithSchedulePT15M(TEST_TZ, builder -> builder.cron("0 0 30 2 *").build());
+        TriggerScheduler scheduler = newTriggerScheduler(List.of(flow));
+
+        scheduler.onStart(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS);
+
+        TriggerState state = triggerStateStore.findByIdWithoutAcl(Fixtures.triggerId()).orElse(null);
+        assertThat(state).isNotNull();
+        assertThat(state.isDisabled()).isTrue();
+    }
+
+    @Test
     void shouldFailInitMissingScheduleTriggerGivenInvalidTimeZone() {
         // region [GIVEN]
         FlowWithSource flow = Fixtures.flowWithSchedulePT15M("Asia/Delhi");

@@ -7,7 +7,6 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.queues.event.DispatchEvent;
 import io.kestra.core.utils.IdUtils;
-import io.kestra.core.utils.ListUtils;
 
 import jakarta.annotation.Nullable;
 
@@ -63,19 +62,39 @@ public record ExecutionStatistic(
             execution.getState().getDurationOrComputeIt().toMillis(),
             execution.getState().getDurationOrComputeIt().toMillis(),
             execution.getState().getDurationOrComputeIt().toMillis(),
-            ListUtils.emptyOnNull(execution.getTaskRunList()).size(),
-            ListUtils.emptyOnNull(execution.getTaskRunList()).stream()
-                .mapToLong(taskRun -> taskRun.getState().getDurationOrComputeIt().toMillis())
-                .sum(),
-            ListUtils.emptyOnNull(execution.getTaskRunList()).stream()
-                .mapToLong(taskRun -> taskRun.getState().getDurationOrComputeIt().toMillis())
-                .min()
-                .stream().boxed().findFirst().orElse(null),
-            ListUtils.emptyOnNull(execution.getTaskRunList()).stream()
-                .mapToLong(taskRun -> taskRun.getState().getDurationOrComputeIt().toMillis())
-                .max()
-                .stream().boxed().findFirst().orElse(null),
+            // aggregate taskrun statistics from these taskRuns and any other additional taskrun statistics from the metadata
+            TaskRunStatistic.of(execution.getTaskRunList()).plus(execution.getMetadata().getTaskRunStatistic()),
             execution.getId()
+        );
+    }
+
+    private ExecutionStatistic(
+        String tenantId,
+        String namespace,
+        String flowId,
+        Instant date,
+        State.Type state,
+        long count,
+        long durationSumMs,
+        long durationMinMs,
+        long durationMaxMs,
+        TaskRunStatistic taskRunStatistic,
+        @Nullable String executionId) {
+        this(
+            tenantId,
+            namespace,
+            flowId,
+            date,
+            state,
+            count,
+            durationSumMs,
+            durationMinMs,
+            durationMaxMs,
+            taskRunStatistic.count(),
+            taskRunStatistic.durationSumMs(),
+            taskRunStatistic.durationMinMs(),
+            taskRunStatistic.durationMaxMs(),
+            executionId
         );
     }
 

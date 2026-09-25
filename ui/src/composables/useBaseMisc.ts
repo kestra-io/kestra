@@ -13,13 +13,13 @@ export const useBaseMiscStore = () => {
     const contextInfoBarOpenTab = ref("")
     const lastContextTab = ref("ai")
     const theme = ref<SelectedTheme>("syncWithSystem")
-    /** Seeded by entry points such as "Fix with AI" or "Generate a unit test", then consumed and cleared by CopilotChat. */
+    /** Seeded by entry points such as "Fix with AI", then consumed and cleared by CopilotChat. */
     const copilotPrompt = ref<string | null>(null)
     /** Only read when `copilotNewThread` is set. */
     const copilotThreadTitle = ref<string | null>(null)
     /** Never set in OSS: without the EE thread list, a fresh thread would discard the previous conversation. */
     const copilotNewThread = ref(false)
-    /** Sends this one seeded prompt as the first turn rather than a standing mode; set by single-purpose entry points the user already committed to by clicking. */
+    /** Sends this one seeded prompt straight away, for entry points the user already committed to by clicking. */
     const copilotSendInitialMessage = ref(false)
 
     function openCopilot() {

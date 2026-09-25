@@ -2,12 +2,7 @@ import {KsMessageBox} from "@kestra-io/design-system"
 import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
 import {asProblem, isProblemType, ProblemTypes} from "@kestra-io/kestra-sdk"
 
-/**
- * The mechanics shared by every artefact-draft apply path — confirm, report, read the target out of
- * the YAML, recognise a create that should have been an update. `useApplyDraft` uses them for flows
- * and dashboards; the EE-only draft actions (`override/`) use the same ones so an EE artefact
- * confirms and fails exactly like an OSS one.
- */
+/** Shared with the EE `override/` draft actions, so an EE artefact confirms and fails exactly like an OSS one. */
 
 /** Minimal shape of vue-i18n's `t`, so callers pass their own bound translator. */
 type Translate = (key: string, named?: Record<string, unknown>) => string

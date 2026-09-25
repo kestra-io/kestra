@@ -551,33 +551,43 @@
     /** How long the first message waits on the provider list before going out on the backend default. */
     const PROVIDERS_WAIT_MS = 2000
 
-    /** Set on unmount: anything resuming after an await must stop rather than act on a dead component. */
+    /** Set on unmount only: `KeepAlive` deactivation deliberately isn't disposal, so a parked send still goes out. */
     let disposed = false
 
-    // Seeded prompts: an entry point (e.g. "Fix with AI") stashes text via miscStore, which opens
-    // this tab. Prefill the composer with it and focus, then clear the store so it doesn't re-seed —
-    // run on mount (drawer just opened) and via a watcher (already open / kept alive).
-    // A `sendInitialMessage` entry point ("Generate a unit test") sends that first message itself
-    // instead: the user already committed to it by picking the action, so the agent starts working
-    // on open. If a turn is in flight (`canSend` false) we fall back to seeding rather than dropping it.
-    // A `newThread` entry point drops the restored conversation first, so its turn starts clean
-    // instead of inheriting an unrelated transcript.
+    /** A seed arriving while one is parked on an await is handled once that one finishes, never alongside it. */
+    let consuming = false
+
+    // Entry points stash a prompt in miscStore; it's seeded into the composer, or sent straight away when `sendInitialMessage` is set and no turn is in flight.
     async function consumeSeededPrompt(): Promise<void> {
+        if (consuming) return
         const seeded = miscStore.copilotPrompt
         if (!seeded) return
-        const newThread = miscStore.copilotNewThread
-        const threadTitle = miscStore.copilotThreadTitle
-        const sendInitialMessage = miscStore.copilotSendInitialMessage
+        consuming = true
+        try {
+            await consumeSeeded(seeded)
+        } finally {
+            consuming = false
+        }
+
+        if (miscStore.copilotPrompt === seeded) clearSeededPrompt()
+        else if (miscStore.copilotPrompt) consumeSeededPrompt()
+    }
+
+    function clearSeededPrompt(): void {
         miscStore.copilotPrompt = null
         miscStore.copilotThreadTitle = null
         miscStore.copilotNewThread = false
         miscStore.copilotSendInitialMessage = false
+    }
 
-        // Settle the in-flight restore before acting on either flag: resetting ahead of it would be
-        // undone when it lands, and sending without it would fork a second thread.
+    async function consumeSeeded(seeded: string): Promise<void> {
+        const newThread = miscStore.copilotNewThread
+        const threadTitle = miscStore.copilotThreadTitle
+        const sendInitialMessage = miscStore.copilotSendInitialMessage
+        clearSeededPrompt()
+
+        // Resetting before the restore lands would be undone by it, and sending before it would fork a second thread.
         if (newThread || sendInitialMessage) await restored
-        // The dock can close while the awaits above are pending, and resuming past that point
-        // would start a turn `onBeforeUnmount(cancel)` has already missed.
         if (disposed) return
 
         // EE seeds each fix as its own conversation: drop the active thread (still reachable from
@@ -591,15 +601,20 @@
             nextThreadTitle.value = threadTitle
         }
 
+        // Seeded before the provider wait, so a slow `/ai/providers` never hides the prompt.
+        composerText.value = seeded
+
         if (sendInitialMessage) {
-            // Shown before the wait below, so a slow `/ai/providers` can't leave the prompt
-            // neither sent nor visible; the send path clears it again.
-            composerText.value = seeded
-            // The turn carries `providerId` only once the list is in hand, otherwise the backend
-            // picks its own default — bounded, so a hanging fetch degrades to that rather than
-            // never sending.
-            await Promise.race([providersLoaded, new Promise((resolve) => setTimeout(resolve, PROVIDERS_WAIT_MS))])
+            // Bounded, so a hanging `/ai/providers` falls back to the backend's default provider instead of never sending.
+            let timer: ReturnType<typeof setTimeout> | undefined
+            try {
+                await Promise.race([providersLoaded, new Promise((resolve) => { timer = setTimeout(resolve, PROVIDERS_WAIT_MS) })])
+            } finally {
+                clearTimeout(timer)
+            }
             if (disposed) return
+
+            if (composerText.value !== seeded) return
             if (canSend.value) {
                 composerText.value = ""
                 onSubmit(seeded)
@@ -607,7 +622,6 @@
             }
         }
 
-        composerText.value = seeded
         await nextTick()
         focusActiveComposer()
     }

@@ -1,9 +1,10 @@
-import {onActivated, onDeactivated, onMounted, onUnmounted} from "vue"
+import {onActivated, onDeactivated, onMounted, onUnmounted, type Ref} from "vue"
 
-const ALWAYS_GLOBAL_IDS = new Set(["save", "undo", "command-menu", "clear"])
+const ALWAYS_GLOBAL_IDS = new Set(["save", "command-menu", "clear"])
 const IGNORES_OVERLAY_GUARD_IDS = new Set(["help"])
+export const AUTHORING_OVERLAY_ATTRIBUTE = "data-authoring-overlay"
 
-function isTypingTarget(target: EventTarget | null): boolean {
+export function isTypingTarget(target: EventTarget | null): boolean {
     const el = target as HTMLElement | null
     if (!el) return false
     if (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.isContentEditable) return true
@@ -36,6 +37,7 @@ export interface UseBlockEditorKeyboardOptions {
     keymap: BlockEditorKeyBindingLike[]
     dispatch: (id: string, event: KeyboardEvent) => void | boolean
     isOverlayOpen?: () => boolean
+    root?: Ref<HTMLElement | undefined | null>
 }
 
 export function resolveBlockEditorBinding(
@@ -54,7 +56,15 @@ export function useBlockEditorKeyboard(options: UseBlockEditorKeyboardOptions) {
         const typing = isTypingTarget(event.target)
         const isGlobal = ALWAYS_GLOBAL_IDS.has(binding.id)
         const ignoresOverlayGuard = IGNORES_OVERLAY_GUARD_IDS.has(binding.id)
+        // A field belongs to whoever owns it. The surface's own dialogs are appended to the body,
+        // so they are claimed by a marker rather than by DOM containment.
+        const foreignTypingTarget =
+            typing &&
+            options.root?.value != null &&
+            !options.root.value.contains(event.target as Node) &&
+            !(event.target as HTMLElement | null)?.closest?.(`[${AUTHORING_OVERLAY_ATTRIBUTE}]`)
 
+        if (event.key !== "Escape" && foreignTypingTarget) return
         if (event.key !== "Escape" && !isGlobal && typing) return
         if (event.key !== "Escape" && !isGlobal && !ignoresOverlayGuard && overlayOpen) return
 

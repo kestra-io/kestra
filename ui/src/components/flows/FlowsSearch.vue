@@ -315,7 +315,7 @@
 <script setup lang="ts">
     import {ref, computed, watch, type Component} from "vue"
     import {useI18n} from "vue-i18n"
-    import {useRoute, useRouter} from "vue-router"
+    import {useRoute, useRouter, type LocationQuery} from "vue-router"
     import {debounce, escapeHtml} from "@kestra-io/design-system"
     import TopNavBar from "../layout/TopNavBar.vue"
     import NamespaceSelect from "../namespaces/components/NamespaceSelect.vue"
@@ -411,7 +411,7 @@
 
     useRouteContext(routeInfo)
 
-    function pushQuery(mutate: (query: Record<string, any>) => void, options?: {replace?: boolean}) {
+    function pushQuery(mutate: (query: LocationQuery) => void, options?: {replace?: boolean}) {
         const routeQuery = {...route.query}
         mutate(routeQuery)
         if (options?.replace) router.replace({query: routeQuery})
@@ -470,7 +470,7 @@
         selectedTypes.value = [...SEARCH_RESOURCE_TYPES]
     }
 
-    function onNamespaceChange(val: any) {
+    function onNamespaceChange(val: string | string[] | undefined) {
         pushQuery((q) => {
             if (val === undefined || val === "" || val === null || (Array.isArray(val) && val.length === 0)) {
                 delete q.namespace
@@ -646,7 +646,7 @@
                 namespace: namespaceFilter.value,
                 replacement: replacement.value,
             })
-        } catch (e: any) {
+        } catch (e) {
             toast.error(asProblem(e)?.detail ?? t("source_search.replace_preview_failed"))
         } finally {
             previewLoading.value = false
@@ -676,7 +676,7 @@
                 replacement: replacement.value,
                 flows,
             }))
-        } catch (e: any) {
+        } catch (e) {
             toast.error(asProblem(e)?.detail ?? t("source_search.replace_apply_failed"))
         }
     }
@@ -695,7 +695,7 @@
                 line: value.line,
                 column: value.column,
             }))
-        } catch (e: any) {
+        } catch (e) {
             toast.error(asProblem(e)?.detail ?? t("source_search.replace_apply_failed"))
         }
     }

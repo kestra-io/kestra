@@ -1,4 +1,4 @@
-id: cache
+id: cache-short-ttl
 namespace: io.kestra.tests
 
 tasks:
@@ -7,5 +7,4 @@ tasks:
     workingDir: "{{workingDir}}"
     taskCache:
       enabled: true
-      # Long enough that a loaded CI runner cannot expire the entry between the two executions the cache-hit test runs.
-      ttl: PT1H
+      ttl: PT1S

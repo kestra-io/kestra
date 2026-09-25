@@ -4,7 +4,6 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import io.kestra.core.junit.annotations.KestraTest;
@@ -56,10 +55,9 @@ public class TaskCacheTest {
     }
 
     @Test
-    @LoadFlows("flows/valids/cache.yaml")
-    @Disabled("Expiration didn't work on CI for an unknown reason")
+    @LoadFlows("flows/valids/cache-short-ttl.yaml")
     void shouldExpireCacheTaskRunOutputAfterTtl() throws Exception {
-        Execution execution = runnerUtils.runOne("main", "io.kestra.tests", "cache");
+        Execution execution = runnerUtils.runOne("main", "io.kestra.tests", "cache-short-ttl");
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(execution.getTaskRunList().size()).isEqualTo(1);
         assertThat(taskOutputService.getOutputs(execution.getTaskRunList().getFirst()).get("counter")).isEqualTo(1);
@@ -67,8 +65,8 @@ public class TaskCacheTest {
         // Wait for the cache TTL expiration
         Thread.sleep(1100);
 
-        // as the task is cached, it should return the same result
-        Execution notCached = runnerUtils.runOne("main", "io.kestra.tests", "cache");
+        // the cache entry has expired, so the task runs again and the counter moves on
+        Execution notCached = runnerUtils.runOne("main", "io.kestra.tests", "cache-short-ttl");
         assertThat(notCached.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(notCached.getTaskRunList().size()).isEqualTo(1);
         assertThat(taskOutputService.getOutputs(notCached.getTaskRunList().getFirst()).get("counter")).isEqualTo(2);

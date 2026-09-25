@@ -18,6 +18,8 @@ jobs:
 
     steps:
       - name: Checkout
+        with:
+          persist-credentials: false
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Annotate locations with typos
         uses: codespell-project/codespell-problem-matcher@9ba2c57125d4908eade4308f32c4ff814c184633 # v1.2.0

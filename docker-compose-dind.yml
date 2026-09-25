@@ -24,7 +24,7 @@ services:
       POSTGRES_PASSWORD: k3str4
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}"]
-      interval: 30s
+      interval: 5s
       timeout: 10s
       retries: 10
 
@@ -44,6 +44,7 @@ services:
   kestra:
     image: kestra/kestra:latest
     pull_policy: always
+    restart: unless-stopped
     # Kestra, by default, has a termination grace period of 5m. We need to wait a little more to be sure no active tasks are running.
     stop_grace_period: 6m
     # Note that this is meant for development only. Refer to the documentation for production deployments of Kestra which runs without a root user.
@@ -79,6 +80,6 @@ services:
       - "8081:8081"
     depends_on:
       postgres:
-        condition: service_started
+        condition: service_healthy
       dind:
         condition: service_started

@@ -2248,7 +2248,12 @@
         "groups": "分组（{n}）",
         "group_none": "无分组",
         "group_dataset": "数据集",
-        "ungrouped": "未分组"
+        "ungrouped": "未分组",
+        "hub": {
+          "notice": "此节点有 {count} 个关系 — 仅显示最新的关系以保持图表可读。",
+          "expand": "加载更多关联"
+        },
+        "truncated": "此图过大，无法完整显示；部分关联已被省略。"
       },
       "search": {
         "placeholders": {

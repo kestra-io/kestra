@@ -2248,7 +2248,12 @@
         "groups": "Gruppen ({n})",
         "group_none": "Keine Gruppierung",
         "group_dataset": "Dataset",
-        "ungrouped": "Ungruppiert"
+        "ungrouped": "Ungruppiert",
+        "hub": {
+          "notice": "Dieser Knoten hat {count} Relationen – nur die jüngsten werden angezeigt, um den Graphen lesbar zu halten.",
+          "expand": "Weitere Relationen laden"
+        },
+        "truncated": "Dieser Graph war zu groß, um vollständig angezeigt zu werden; einige Beziehungen wurden weggelassen."
       },
       "search": {
         "placeholders": {

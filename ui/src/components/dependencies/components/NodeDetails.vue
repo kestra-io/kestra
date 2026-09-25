@@ -28,6 +28,21 @@
 
         <Link :node :subtype="node.metadata.subtype" />
 
+        <section v-if="isCollapsed" class="hub">
+            <KsAlert type="warning" :closable="false">
+                {{ $t("dependency.dag.hub.notice", {count: totalDegree}) }}
+            </KsAlert>
+            <KsButton
+                v-if="canExpand"
+                size="small"
+                :loading="loading"
+                data-test="expand-hub"
+                @click="emit('expand')"
+            >
+                {{ $t("dependency.dag.hub.expand") }}
+            </KsButton>
+        </section>
+
         <dl class="grid">
             <template v-for="row in rows" :key="row.label">
                 <dt class="label">
@@ -86,9 +101,11 @@
 
     const props = defineProps<{
         node: Node;
+        /** True while this node's expand request is in flight; disables a second click. */
+        loading?: boolean;
     }>()
 
-    const emit = defineEmits<{close: []}>()
+    const emit = defineEmits<{close: []; expand: []}>()
 
     const {t} = useI18n({useScope: "global"})
     const route = useRoute()
@@ -101,9 +118,19 @@
         updated?: string;
         status?: string;
         runs?: AssetRun[];
+        collapsed?: boolean;
+        totalDegree?: number;
+        expandable?: boolean;
     })
 
     const shortName = computed(() => stringUtils.afterLastDot(props.node.flow) || props.node.flow)
+
+    const isCollapsed = computed(() => Boolean(metadata.value.collapsed))
+    const totalDegree = computed(() => metadata.value.totalDegree ?? 0)
+    // Only an ASSET whose own id survived anonymization has a `{id}/dependencies` route to re-fetch; an
+    // anonymized node (id stripped outside the caller's view grant) or a non-asset hub shows the count with
+    // no button. `props.node.id` is not the test: it falls back to the graph uid even once anonymized.
+    const canExpand = computed(() => metadata.value.subtype === ASSET && Boolean(metadata.value.expandable))
 
     const status = computed(() =>
         (metadata.value.subtype === ASSET ? normalizeStatus(metadata.value.status) : undefined),
@@ -240,6 +267,14 @@
                 font-family: var(--ks-font-family-mono);
                 font-size: var(--ks-font-size-xs);
             }
+        }
+
+        .hub {
+            display: flex;
+            flex-direction: column;
+            gap: var(--ks-spacing-2);
+            padding-top: var(--ks-spacing-3);
+            border-top: 1px solid var(--ks-border-subtle);
         }
 
         .runs {

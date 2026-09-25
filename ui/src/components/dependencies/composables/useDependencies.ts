@@ -14,7 +14,7 @@ import {useMiscStore} from "override/stores/misc"
 import {NODE, FLOW, EXECUTION, NAMESPACE, ASSET, nodesOf, edgesOf} from "../utils/types"
 import {transformResponse} from "../utils/transform"
 import {edgeKindToken} from "../utils/relationKind"
-import type {Types, Node, Element} from "../utils/types"
+import type {Types, Node, Element, ElementsResult} from "../utils/types"
 
 const NODE_BG = {
     default:  "--ks-dependencies-node-background-default",
@@ -96,11 +96,13 @@ export function useDependencies(
     subtype: Types = FLOW,
     initialNodeID: string,
     params: RouteParams,
-    fetchAssetDependencies?: () => Promise<{data: Element[]; count: number}>,
+    fetchAssetDependencies?: () => Promise<ElementsResult>,
     /** Field the graph is grouped by; returns undefined for nodes it says nothing about. */
     groupOf: Ref<((node: Node) => string | undefined) | undefined> = ref(undefined),
     /** True only for the asset view: click-to-clear and dblclick-to-open are asset-only. */
     dagView = false,
+    /** Re-fetches one node's own sub-graph, for expanding a collapsed hub; asset view only. */
+    expandAssetNode?: (nodeID: string) => Promise<ElementsResult>,
 ) {
     const coreStore = useCoreStore()
     const flowStore = useFlowStore()
@@ -166,7 +168,9 @@ export function useDependencies(
         return new Set([...table].filter((id) => isolated.has(id)))
     })
 
-    const elements = ref<{data: Element[]; count: number}>({data: [], count: 0})
+    const elements = ref<ElementsResult>({data: [], count: 0})
+    const graphTruncated = computed(() => elements.value.truncated ?? false)
+    const expandingNodeID = ref<string | undefined>(undefined)
 
     /** Node ids to their group, when a grouping field is selected. */
     const laneOf = computed(() => {
@@ -501,7 +505,7 @@ export function useDependencies(
         try {
             if (fetchAssetDependencies) {
                 const result = await fetchAssetDependencies()
-                elements.value = {data: result.data, count: result.count}
+                elements.value = {data: result.data, count: result.count, truncated: result.truncated}
             } else if (subtype === NAMESPACE) {
                 const {data} = await namespacesStore.loadDependencies({namespace: params.id as string})
                 const nodes = data.nodes ?? []
@@ -617,6 +621,36 @@ export function useDependencies(
         applyView(chart)
     }
 
+    /** Pulls a collapsed hub node's own relations and merges them into the graph already on screen. */
+    const expandNode = async (nodeID: string): Promise<void> => {
+        if (!expandAssetNode || expandingNodeID.value) return
+        expandingNodeID.value = nodeID
+        try {
+            const result = await expandAssetNode(nodeID)
+            const known = new Set(elements.value.data.map((el) => el.data.id))
+            const additions = result.data.filter((el) => !known.has(el.data.id))
+            // Refreshed even when nothing new was added, so the expanded node's own metadata (e.g. exhausted) still updates.
+            const refreshed = elements.value.data.map((el) => result.data.find((fresh) => fresh.data.id === el.data.id) ?? el)
+
+            elements.value = {
+                data: [...refreshed, ...additions],
+                count: elements.value.count + nodesOf(additions).length,
+                truncated: elements.value.truncated,
+            }
+
+            // The force ("Tree") view freezes its snapshot after the first render; a merge has to
+            // re-freeze it too, or the new nodes only ever reach the live DAG canvas.
+            if (additions.length > 0 && chartNodes.value !== null) {
+                await nextTick()
+                chartNodes.value = graphNodes.value
+                chartEdges.value = graphEdges.value
+                captureAndFocusWhenReady()
+            }
+        } finally {
+            expandingNodeID.value = undefined
+        }
+    }
+
     return {
         /** Returns the raw Element[] used by the Table component. */
         getElements: () => elements.value.data,
@@ -648,6 +682,9 @@ export function useDependencies(
         handleNodeClick: (node: KsGraphNode) => {
             selectNode(node.id as string)
         },
+        expandNode,
+        expandingNodeID,
+        graphTruncated,
         handlers: {
             zoomIn:        () => graphRef.value?.zoomIn(),
             zoomOut:       () => graphRef.value?.zoomOut(),

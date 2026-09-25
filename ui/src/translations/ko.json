@@ -2248,7 +2248,12 @@
         "groups": "그룹 ({n})",
         "group_none": "그룹화 없음",
         "group_dataset": "데이터셋",
-        "ungrouped": "그룹 해제됨"
+        "ungrouped": "그룹 해제됨",
+        "hub": {
+          "notice": "이 노드에는 {count}개의 관계가 있습니다. 그래프를 읽기 쉽게 하기 위해 가장 최근 관계만 표시됩니다.",
+          "expand": "더 많은 관계 로드"
+        },
+        "truncated": "이 그래프는 너무 커서 전체를 표시할 수 없습니다. 일부 관계는 생략되었습니다."
       },
       "search": {
         "placeholders": {

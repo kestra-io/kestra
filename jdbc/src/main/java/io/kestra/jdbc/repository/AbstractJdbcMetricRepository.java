@@ -337,7 +337,7 @@ public abstract class AbstractJdbcMetricRepository extends AbstractJdbcCrudRepos
         boolean numeratorFilter) {
         return this.jdbcRepository.getDslContextWrapper().transactionResult(configuration ->
         {
-            DSLContext context = DSL.using(configuration);
+            DSLContext context = QueryTimeout.apply(configuration, dataFilter.getQueryTimeout());
             ColumnDescriptor<Metrics.Fields> columnDescriptor = dataFilter.getColumns();
             Field<?> field = columnToField(columnDescriptor, getFieldsMapping());
             if (columnDescriptor.getAgg() != null) {
@@ -381,7 +381,7 @@ public abstract class AbstractJdbcMetricRepository extends AbstractJdbcCrudRepos
             .getDslContextWrapper()
             .transactionResult(configuration ->
             {
-                DSLContext context = DSL.using(configuration);
+                DSLContext context = QueryTimeout.apply(configuration, descriptors.getQueryTimeout());
 
                 Map<String, ? extends ColumnDescriptor<Metrics.Fields>> columnsWithoutDate = descriptors.getColumns().entrySet().stream()
                     .filter(entry -> entry.getValue().getField() == null || !dateFields().contains(entry.getValue().getField()))

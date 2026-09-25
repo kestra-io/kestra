@@ -29,6 +29,7 @@ import io.kestra.core.exceptions.KilledException;
 import io.kestra.core.exceptions.MigrationRequiredException;
 import io.kestra.core.exceptions.NoMatchingWorkerQueueException;
 import io.kestra.core.exceptions.NotFoundException;
+import io.kestra.core.exceptions.QueryTimeoutException;
 import io.kestra.core.exceptions.ResourceAccessDeniedException;
 import io.kestra.core.exceptions.ResourceExpiredException;
 import io.kestra.core.exceptions.TimeoutExceededException;
@@ -140,6 +141,7 @@ public class KestraProblemMappings extends ExceptionTypeProblemMapper {
         to.accept(MigrationPendingException.class, ProblemTypes.MIGRATION_REQUIRED);
         to.accept(MigrationLockedException.class, ProblemTypes.MIGRATION_REQUIRED);
         to.accept(TimeoutExceededException.class, ProblemTypes.TIMEOUT);
+        to.accept(QueryTimeoutException.class, ProblemTypes.TIMEOUT);
         to.accept(SecretException.class, ProblemTypes.INTERNAL_ERROR);
         to.accept(InternalException.class, ProblemTypes.INTERNAL_ERROR);
         to.accept(FlowProcessingException.class, ProblemTypes.INTERNAL_ERROR);

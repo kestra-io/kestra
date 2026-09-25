@@ -210,7 +210,7 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcCrudRepo
             .getDslContextWrapper()
             .transactionResult(configuration ->
             {
-                DSLContext context = DSL.using(configuration);
+                DSLContext context = QueryTimeout.apply(configuration, descriptors.getQueryTimeout());
 
                 Map<String, ? extends ColumnDescriptor<Triggers.Fields>> columnsWithoutDate = descriptors.getColumns().entrySet().stream()
                     .filter(entry -> entry.getValue().getField() == null || !dateFields().contains(entry.getValue().getField()))
@@ -260,7 +260,7 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcCrudRepo
         boolean numeratorFilter) {
         return this.jdbcRepository.getDslContextWrapper().transactionResult(configuration ->
         {
-            DSLContext context = DSL.using(configuration);
+            DSLContext context = QueryTimeout.apply(configuration, dataFilter.getQueryTimeout());
             ColumnDescriptor<ITriggers.Fields> columnDescriptor = dataFilter.getColumns();
             Field<?> field = columnToField(columnDescriptor, getFieldsMapping());
             if (columnDescriptor.getAgg() != null) {

@@ -68,7 +68,7 @@ h2.big-title {
     background: linear-gradient(180deg, var(--ks-bg-elevated) 0%, var(--ks-bg-base) 100%);
     color: var(--ks-text-primary);
     border: 1px solid var(--ks-border-default);
-    transition: all 0.3s;
+    transition: background-color 200ms ease;
     padding: 1rem;
     h4.card-title {
         padding-top: 0;

@@ -107,6 +107,7 @@ export const useCrossResourceSearchStore = defineStore("crossResourceSearch", ()
     const files = ref<FilesTypeState>({status: "idle", namespaces: []})
     const kv = ref<KvTypeState>({status: "idle", groups: []})
     const secrets = ref<SecretsTypeState>({status: "idle", groups: []})
+    const suggestedQuery = ref<string | null>(null)
 
     /**
      * Every search run gets a generation; a resolution only writes to the shared state while its
@@ -116,6 +117,7 @@ export const useCrossResourceSearchStore = defineStore("crossResourceSearch", ()
     let generation = 0
     const nextGeneration = () => ++generation
     const isCurrent = (gen: number) => gen === generation
+    const isSearchCurrent = (gen: number) => isCurrent(gen)
 
     function reset() {
         nextGeneration()
@@ -123,6 +125,7 @@ export const useCrossResourceSearchStore = defineStore("crossResourceSearch", ()
         files.value = {status: "idle", namespaces: []}
         kv.value = {status: "idle", groups: []}
         secrets.value = {status: "idle", groups: []}
+        suggestedQuery.value = null
     }
 
     async function searchFlows(params: FlowsSearchParams, gen: number = nextGeneration()) {
@@ -151,11 +154,16 @@ export const useCrossResourceSearchStore = defineStore("crossResourceSearch", ()
         }
     }
 
-    async function searchFlowSuggestion(params: FlowsSearchParams, gen: number): Promise<string | null | undefined> {
-        if (!params.query || params.regex) return null
+    async function searchFlowSuggestion(params: FlowsSearchParams, gen: number): Promise<void> {
+        if (!isCurrent(gen)) return
+
+        suggestedQuery.value = null
+
+        if (!params.query || params.regex) return
+
         const alternativeQuery = getSeparatorVariant(params.query)
 
-        if (!alternativeQuery) return null
+        if (!alternativeQuery) return
 
         try {
             const response = await FlowsAPI.searchFlowsBySourceCode({
@@ -169,12 +177,13 @@ export const useCrossResourceSearchStore = defineStore("crossResourceSearch", ()
                 namespace: params.namespace,
             })
 
-            if (!isCurrent(gen)) return undefined
-            if ((response.results ?? []).length === 0) return null
+            if (!isCurrent(gen)) return
+            if ((response.results ?? []).length === 0) return
 
-            return alternativeQuery
+            suggestedQuery.value = alternativeQuery
         } catch {
-            return isCurrent(gen) ? null : undefined
+            if (!isCurrent(gen)) return
+            suggestedQuery.value = null
         }
     }
 
@@ -454,6 +463,8 @@ export const useCrossResourceSearchStore = defineStore("crossResourceSearch", ()
         search,
         searchFlows,
         searchFlowSuggestion,
+        suggestedQuery,
+        isSearchCurrent,
         searchFiles,
         searchKv,
         searchSecrets,

@@ -354,6 +354,7 @@
     const toast = useToast()
     const didYouMeanTranslation = computed(() => splitTranslation(t, "source_search.did_you_mean", "suggestion"))
     const crossResourceSearchStore = useCrossResourceSearchStore()
+    const suggestedQuery = computed(() => crossResourceSearchStore.suggestedQuery)
 
     const resultsRef = ref<InstanceType<typeof SourceSearchResults> | null>(null)
 
@@ -479,9 +480,6 @@
             }
         })
     }
-
-    const suggestedQuery = ref<string | null>(null)
-
     const selectedKey = computed(() => selection.value ? crossSearchResultKey(selection.value) : null)
 
     const showDiffPreview = computed(() => previewResponse.value !== null)
@@ -709,6 +707,7 @@
 
     async function fetchResults() {
         if (!loadInit.value) return
+        searchPending.value = true
         if (!query.value) {
             searchPending.value = false
             crossResourceSearchStore.reset()
@@ -717,10 +716,11 @@
         const currentQuery = query.value
 
         previewResponse.value = null
-        suggestedQuery.value = null
+
+        let gen: number | undefined
 
         try {
-            const gen = await crossResourceSearchStore.search({
+            gen = await crossResourceSearchStore.search({
                 types: SEARCH_RESOURCE_TYPES,
                 query: currentQuery,
                 namespace: namespaceFilter.value,
@@ -732,18 +732,16 @@
                 !anyCountingSelected.value &&
                 summaryMatchCount.value === 0
             ) {
-                const suggestion = await crossResourceSearchStore.searchFlowSuggestion({
+                await crossResourceSearchStore.searchFlowSuggestion({
                     query: currentQuery,
                     namespace: namespaceFilter.value,
                     ...searchFilters.value,
                 }, gen)
-
-                if (suggestion !== undefined) {
-                    suggestedQuery.value = suggestion
-                }
             }
         } finally {
-            searchPending.value = false
+            if (gen !== undefined && crossResourceSearchStore.isSearchCurrent(gen)) {
+                searchPending.value = false
+            }
         }
     }
 

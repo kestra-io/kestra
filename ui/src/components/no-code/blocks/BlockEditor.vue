@@ -196,6 +196,7 @@
         sectionSentinelId,
     } from "./blockSections"
     import {useYamlUndo} from "./useYamlUndo"
+    import {useBlockClipboard} from "./useBlockClipboard"
     import {useCanvasFocus} from "./useCanvasFocus"
     import {useTaskPicker} from "./useTaskPicker"
     import {buildFooterHints, buildShortcutGroups, type FooterHint} from "./shortcutHints"
@@ -457,10 +458,12 @@
         onCloseTask: () => emit("closeTask"),
     })
 
-    const {undoState, applyYaml, deleteWithUndo, performUndo} = useYamlUndo(
+    const {undoState, applyYaml, deleteWithUndo, performUndo, performRedo} = useYamlUndo(
         flowStore,
         (name: string) => t("block_editor.block_deleted", {name}),
     )
+
+    const clipboard = useBlockClipboard()
 
     const {
         deleteInSection: onDelete,
@@ -573,6 +576,9 @@
         if (id === "undo") {
             return performUndo()
         }
+        if (id === "redo") {
+            return performRedo()
+        }
         if (id === "command-menu") {
             openCommandMenu()
             return
@@ -615,6 +621,12 @@
             } else if (activeSelectedId.value) {
                 duplicateSelected()
             }
+        } else if (id === "copy") {
+            copyFocusedOrSelected()
+        } else if (id === "cut") {
+            cutFocusedOrSelected()
+        } else if (id === "paste") {
+            return pasteRelative()
         } else if (id === "delete") {
             if (focusedId.value) {
                 requestDeleteFocused()
@@ -645,6 +657,10 @@
         requestDeleteFocused,
         requestDeleteSelected,
         duplicateSelected,
+        copyFocusedOrSelected,
+        cutFocusedOrSelected,
+        canPasteHere,
+        pasteRelative,
         moveFocused,
         moveSelected,
     } = useBlockOperations({
@@ -660,9 +676,10 @@
         deleteAtPath: onDeleteAtPath,
         duplicateInSection: onDuplicate,
         duplicateAtPath: onDuplicateAtPath,
+        clipboard,
     })
 
-    const shortcutGroups = computed(buildShortcutGroups)
+    const shortcutGroups = computed(() => buildShortcutGroups())
 
     const footerContext = computed(() => {
         if (commandMenuOpen.value) return t("block_editor.footer.command_menu")
@@ -695,6 +712,10 @@
         openFocused,
         duplicateFocused: () => actionInFocused("[data-test='block-card-duplicate']"),
         deleteFocused: requestDeleteFocused,
+        copyFocused: copyFocusedOrSelected,
+        cutFocused: cutFocusedOrSelected,
+        pasteRelative,
+        canPaste: canPasteHere(),
         goToSection: (section) => {
             const list = sectionList(section)
             // A palette jump crosses the whole canvas, unlike an arrow-key step

@@ -6,36 +6,55 @@ export interface FooterHint {
     i18nKey: string
 }
 
-const KEY_DISPLAY: Record<string, string> = {
+/** Keys with no modifier: shown verbatim, exactly as the binding declares them. */
+const SIMPLE_KEY_DISPLAY: Record<string, string> = {
     ArrowUp: "↑",
     ArrowDown: "↓",
     ArrowLeft: "←",
     ArrowRight: "→",
     Enter: "↵",
-    "Meta+Enter": "⌘↵",
-    "Control+Enter": "⌘↵",
     " ": "Space",
     Backspace: "⌫",
     Delete: "⌦",
-    "Meta+Shift+p": "⌘⇧P",
-    "Control+Shift+p": "⌘⇧P",
-    "Meta+s": "⌘S",
-    "Control+s": "⌘S",
-    "Meta+z": "⌘Z",
-    "Control+z": "⌘Z",
-    "Alt+ArrowUp": "⌥↑",
-    "Alt+ArrowDown": "⌥↓",
+}
+
+const isMac = typeof navigator !== "undefined" && /Mac|iPhone|iPod|iPad/i.test(navigator.platform || navigator.userAgent || "")
+
+/**
+ * `Meta` and `Control` are never two distinct bindings in this keymap — they are the same
+ * shortcut written once per OS convention — so both resolve to the platform's own primary
+ * modifier rather than always to `⌘`, which was wrong on Windows and Linux.
+ */
+const MODIFIER_DISPLAY: Record<string, string> = {
+    Meta: isMac ? "⌘" : "Ctrl+",
+    Control: isMac ? "⌘" : "Ctrl+",
+    Shift: isMac ? "⇧" : "Shift+",
+    Alt: isMac ? "⌥" : "Alt+",
+}
+
+function comboMainKeyDisplay(key: string): string {
+    if (key in SIMPLE_KEY_DISPLAY) return SIMPLE_KEY_DISPLAY[key]
+    return key.length === 1 ? key.toUpperCase() : key
+}
+
+function displayForKey(key: string): string {
+    if (!key.includes("+")) return SIMPLE_KEY_DISPLAY[key] ?? key
+    const parts = key.split("+")
+    const mainKey = comboMainKeyDisplay(parts[parts.length - 1])
+    const prefix = parts.slice(0, -1).map(mod => MODIFIER_DISPLAY[mod] ?? `${mod}+`).join("")
+    return `${prefix}${mainKey}`
 }
 
 const SHORTCUT_GROUP_ORDER: BlockEditorKeymapGroup[] = ["navigate", "insert", "edit", "global"]
 
 const HIDDEN_SHORTCUT_IDS = new Set(["clear"])
+const CLIPBOARD_SHORTCUT_IDS = new Set(["copy", "cut", "paste"])
 
 export function displayKeys(keys: string[]): string[] {
     const seen = new Set<string>()
     const result: string[] = []
     for (const key of keys) {
-        const display = KEY_DISPLAY[key] ?? key
+        const display = displayForKey(key)
         if (seen.has(display)) continue
         seen.add(display)
         result.push(display)
@@ -43,10 +62,20 @@ export function displayKeys(keys: string[]): string[] {
     return result
 }
 
-export function buildShortcutGroups(): {group: BlockEditorKeymapGroup; bindings: BlockEditorKeyBinding[]}[] {
+/**
+ * The topology canvas shares this keymap but does not (yet) wire clipboard actions into its own
+ * dispatcher, so `supportsClipboard: false` keeps its `?` overlay from advertising a shortcut that
+ * silently does nothing there.
+ */
+export function buildShortcutGroups(
+    options: {supportsClipboard?: boolean} = {},
+): {group: BlockEditorKeymapGroup; bindings: BlockEditorKeyBinding[]}[] {
+    const supportsClipboard = options.supportsClipboard ?? true
     return SHORTCUT_GROUP_ORDER.map(group => ({
         group,
-        bindings: blockEditorKeymapByGroup(group).filter(binding => !HIDDEN_SHORTCUT_IDS.has(binding.id)),
+        bindings: blockEditorKeymapByGroup(group).filter(binding =>
+            !HIDDEN_SHORTCUT_IDS.has(binding.id) && (supportsClipboard || !CLIPBOARD_SHORTCUT_IDS.has(binding.id)),
+        ),
     }))
 }
 

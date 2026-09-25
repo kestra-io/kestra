@@ -1,4 +1,4 @@
-import {ref} from "vue"
+import {ref, watch, type Ref} from "vue"
 
 const UNDO_HISTORY_LIMIT = 100
 const UNDO_BADGE_TIMEOUT = 6000
@@ -11,9 +11,15 @@ interface FlowStoreLike {
 }
 
 const undoHistory = ref<string[]>([])
+const redoHistory = ref<string[]>([])
 const historyScope = ref<string | undefined>(undefined)
 const undoState = ref<{label: string} | null>(null)
 let undoTimer: ReturnType<typeof setTimeout> | undefined
+// Several call sites (the Code panel, the trigger picker, the guided tour, `flow.ts` itself) write
+// `flowStore.flowYaml` directly rather than through `applyYaml` below. A redo built on the yaml before
+// one of those writes would silently discard it, so any write we did not make ourselves invalidates
+// the redo stack — the same way a real edit through `applyYaml` already does.
+let lastAppliedYaml: string | undefined
 
 function dismissDeleteBadge() {
     undoState.value = null
@@ -22,27 +28,36 @@ function dismissDeleteBadge() {
 
 export function useYamlUndo(flowStore: FlowStoreLike, deletedLabel: (name: string) => string) {
     const onEditTimeout = ref<ReturnType<typeof setTimeout>>()
-    let applyingUndo = false
+    let applyingHistory = false
+
+    watch(() => flowStore.flowYaml, (current) => {
+        if (current === lastAppliedYaml) return
+        lastAppliedYaml = current
+        redoHistory.value = []
+    })
 
     function enterCurrentScope() {
         const scope = `${flowStore.flow?.namespace ?? ""}/${flowStore.flow?.id ?? ""}`
         if (historyScope.value === scope) return
         historyScope.value = scope
         undoHistory.value = []
+        redoHistory.value = []
         dismissDeleteBadge()
     }
 
     function applyYaml(newYaml: string) {
         enterCurrentScope()
-        if (!applyingUndo) {
+        if (!applyingHistory) {
             const previous = flowStore.flowYaml
             if (typeof previous === "string" && previous !== newYaml) {
                 undoHistory.value.push(previous)
                 if (undoHistory.value.length > UNDO_HISTORY_LIMIT) undoHistory.value.shift()
+                redoHistory.value = []
             }
             dismissDeleteBadge()
         }
         flowStore.flowYaml = newYaml
+        lastAppliedYaml = newYaml
         clearTimeout(onEditTimeout.value)
         onEditTimeout.value = setTimeout(() => {
             flowStore.onEdit({source: newYaml, topologyVisible: true})
@@ -56,19 +71,36 @@ export function useYamlUndo(flowStore: FlowStoreLike, deletedLabel: (name: strin
         undoTimer = setTimeout(dismissDeleteBadge, UNDO_BADGE_TIMEOUT)
     }
 
+    function applyFromHistory(pushCurrentTo: Ref<string[]>, yaml: string) {
+        const current = flowStore.flowYaml
+        if (typeof current === "string") {
+            pushCurrentTo.value.push(current)
+            if (pushCurrentTo.value.length > UNDO_HISTORY_LIMIT) pushCurrentTo.value.shift()
+        }
+        applyingHistory = true
+        try {
+            applyYaml(yaml)
+        } finally {
+            applyingHistory = false
+        }
+        dismissDeleteBadge()
+    }
+
     function performUndo(): boolean {
         enterCurrentScope()
         if (!undoHistory.value.length) return false
         const previous = undoHistory.value.pop() as string
-        applyingUndo = true
-        try {
-            applyYaml(previous)
-        } finally {
-            applyingUndo = false
-        }
-        dismissDeleteBadge()
+        applyFromHistory(redoHistory, previous)
         return true
     }
 
-    return {onEditTimeout, undoState, applyYaml, deleteWithUndo, performUndo, dismissDeleteBadge}
+    function performRedo(): boolean {
+        enterCurrentScope()
+        if (!redoHistory.value.length) return false
+        const next = redoHistory.value.pop() as string
+        applyFromHistory(undoHistory, next)
+        return true
+    }
+
+    return {onEditTimeout, undoState, applyYaml, deleteWithUndo, performUndo, performRedo, dismissDeleteBadge}
 }

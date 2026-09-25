@@ -778,7 +778,7 @@
 
     // Topology renders the whole graph, so every graph-originated mutation needs the graph
     // regenerated from the new YAML — unlike the No-code canvas, which never reads flowGraph.
-    const {undoState, applyYaml: applyYamlWithUndo, deleteWithUndo, performUndo} = useYamlUndo(
+    const {undoState, applyYaml: applyYamlWithUndo, deleteWithUndo, performUndo, performRedo} = useYamlUndo(
         flowStore,
         (name: string) => t("block_editor.block_deleted", {name}),
     )
@@ -970,7 +970,7 @@
     onBeforeUnmount(() => window.removeEventListener("keydown", onPickerEscape))
 
     const shortcutsOpen = ref(false)
-    const shortcutGroups = buildShortcutGroups()
+    const shortcutGroups = buildShortcutGroups({supportsClipboard: false})
     const commandMenuOpen = ref(false)
     const flowPropertiesOpen = ref(false)
 
@@ -1105,6 +1105,8 @@
             return reorderFocusedTask(event.key === "ArrowDown" ? "down" : "up") ? undefined : false
         case "undo":
             return performUndo()
+        case "redo":
+            return performRedo()
         case "save":
             saveFlow()
             return

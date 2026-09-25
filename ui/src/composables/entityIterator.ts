@@ -1,19 +1,19 @@
 export type FetchResult<T> = { total: number, results: T[] };
 
-export abstract class EntityIterator<T> {
+export abstract class EntityIterator<T, TOptions extends Record<string, unknown> = Record<string, unknown>> {
     readonly fetchSize: number
     private privateTotal: number | undefined
     private page = 0
     private alreadyFetched: T[] = []
     private buffered: T[] = []
-    readonly options: any
+    readonly options: TOptions
 
-    protected constructor(fetchSize: number, options?: any) {
+    protected constructor(fetchSize: number, options?: TOptions) {
         if (fetchSize <= 0) {
             throw new Error("fetchSize must be greater than 0")
         }
         this.fetchSize = fetchSize
-        this.options = options ?? {}
+        this.options = options ?? ({} as TOptions)
     }
 
     get total(): number | undefined {

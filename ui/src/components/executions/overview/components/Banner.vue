@@ -93,6 +93,8 @@
                     </span>
                 </router-link>
 
+                <ParentExecutionLink :execution />
+
                 <component
                     :is="relation"
                     v-for="(relation, index) in executionBannerRelations"
@@ -166,6 +168,7 @@
     import SetLabels from "../../SetLabels.vue"
     import {Duration} from "@kestra-io/topology"
     import RunTimeline from "./RunTimeline.vue"
+    import ParentExecutionLink from "./ParentExecutionLink.vue"
 
     import AccountOutline from "vue-material-design-icons/AccountOutline.vue"
     import CalendarMonth from "vue-material-design-icons/CalendarMonth.vue"

@@ -7,7 +7,7 @@ import {Flow} from "./flow"
 
 export const useCoreStore = defineStore("core", () => {
     const message = ref<ToastMessage>()
-    const error = ref<any>()
+    const error = ref<number | string>()
 
     async function readTutorialFlows() {
         const flows = await FlowsAPI.listFlowsByNamespace({namespace: TUTORIAL_NAMESPACE}) as Flow[]

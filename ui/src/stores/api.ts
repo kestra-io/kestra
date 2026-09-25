@@ -7,6 +7,8 @@ import {capturePosthogEvent, disablePosthog} from "../utils/posthog"
 import {ensureUid} from "../utils/uid"
 import {PendingEventsBuffer} from "../utils/analytics/pendingEvents"
 import {resolvePosthogEventName} from "../utils/analytics/eventNaming"
+import type {MiscControllerConfiguration} from "@kestra-io/kestra-sdk"
+import type {PageInfo} from "../utils/eventsRouter"
 
 export const API_URL = "https://api.kestra.io"
 
@@ -28,20 +30,14 @@ interface FeedResponse {
 
 interface EventData {
     type: string;
-    page?: {
-        origin?: string;
-        path?: string;
-        fullPath?: string;
-        [key: string]: any;
-    };
-    [key: string]: any;
+    page?: Partial<PageInfo>;
 }
 
 interface EventsOptions {
     posthog?: boolean;
 }
 
-type Configs = Record<string, any>;
+type Configs = MiscControllerConfiguration;
 
 let counter = 0
 
@@ -62,19 +58,21 @@ function buildEventPayload(data: EventData, configs: Configs, uid: string) {
         counter: counter++,
     }
 
-    const mergeData = {
+    const mergeData: EventData & Record<string, unknown> = {
         ...data,
         ...additionalData,
     }
 
-    const backendData: Partial<EventData> = cloneDeep(mergeData)
-    if (backendData.page) {
-        delete backendData.page.origin
-        delete backendData.page.path
-        delete backendData.page.fullPath
+    const backendData: Record<string, unknown> = {...cloneDeep(mergeData)}
+    if (data.page) {
+        const backendPage: Partial<PageInfo> = cloneDeep(data.page)
+        delete backendPage.origin
+        delete backendPage.path
+        delete backendPage.fullPath
+        backendData.page = backendPage
     }
-    delete (backendData as any).$referrer
-    delete (backendData as any).$referring_domain
+    delete backendData.$referrer
+    delete backendData.$referring_domain
 
     return {mergeData, backendData}
 }
@@ -131,7 +129,7 @@ export const useApiStore = defineStore("api", () => {
         }
     }
 
-    async function events(data: EventData, options: EventsOptions = {}) {
+    async function events<T extends EventData>(data: T, options: EventsOptions = {}) {
         const miscStore = useMiscStore()
         const configs = miscStore.configs
 
@@ -168,7 +166,7 @@ export const useApiStore = defineStore("api", () => {
         })
     }
 
-    function posthogEvents(data: EventData & { date?: string; counter?: number }) {
+    function posthogEvents<T extends EventData>(data: T & {date?: string; counter?: number}) {
         const miscStore = useMiscStore()
         const configs = miscStore.configs
         if (configs?.isUiAnonymousUsageEnabled === false) {
@@ -177,13 +175,14 @@ export const useApiStore = defineStore("api", () => {
         }
 
         const type = data.type
-        const finalData: Partial<EventData> = cloneDeep(data)
+        const finalData: Record<string, unknown> = {}
+        Object.assign(finalData, cloneDeep(data))
 
         delete finalData.type
         delete finalData.date
         delete finalData.counter
 
-        const eventName = type === "PAGE" ? "$pageview" : resolvePosthogEventName(data.type, finalData as Record<string, any>)
+        const eventName = type === "PAGE" ? "$pageview" : resolvePosthogEventName(data.type, finalData)
 
         if (type === "PAGE") {
             const origin = data.page?.origin ?? window.location.origin
@@ -196,15 +195,15 @@ export const useApiStore = defineStore("api", () => {
                 }
             })()
             const fullPath = data.page?.fullPath
-            const currentUrl = fullPath ? `${origin}${fullPath}` : `${origin}${path}`;
+            const currentUrl = fullPath ? `${origin}${fullPath}` : `${origin}${path}`
 
-            (finalData as any).$current_url = currentUrl;
-            (finalData as any).$pathname = path;
-            (finalData as any).$host = host;
-            (finalData as any).$title = document.title
+            finalData.$current_url = currentUrl
+            finalData.$pathname = path
+            finalData.$host = host
+            finalData.$title = document.title
         }
 
-        capturePosthogEvent(configs, eventName, finalData as Record<string, any>)
+        capturePosthogEvent(configs, eventName, finalData)
     }
 
     async function pluginsInformation() {

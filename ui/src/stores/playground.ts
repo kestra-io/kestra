@@ -11,6 +11,7 @@ import {useI18n} from "vue-i18n"
 import {Flow, useFlowStore} from "./flow"
 import type {FlowForExecution} from "@kestra-io/kestra-sdk"
 import {useFileExplorerStore} from "./fileExplorer"
+import type {KestraHttpError} from "../utils/kestraHttp"
 
 // Loaded on demand: this store is reachable from the top nav bar, and statically
 // its graph helpers put Vue Flow and dagre in the bundle every page loads.
@@ -114,7 +115,7 @@ export const usePlaygroundStore = defineStore("playground", () => {
         })
     }
 
-    async function checkCanReplay(taskId?: string, graph?: any) {
+    async function checkCanReplay(taskId?: string, graph?: FlowGraph) {
         const lastExecution = executions.value.length ? executions.value[0] : undefined
 
         if(lastExecution && lastExecution.flowRevision && flowStore.flow?.revision
@@ -142,7 +143,7 @@ export const usePlaygroundStore = defineStore("playground", () => {
         return false
     }
 
-    async function replayOrTriggerExecution(taskId?: string, breakpoints?: string[], graph?: any, customFormData?: Record<string, unknown>) {
+    async function replayOrTriggerExecution(taskId?: string, breakpoints?: string[], graph?: FlowGraph, customFormData?: Record<string, unknown>) {
         const canReplay = await checkCanReplay(taskId, graph)
         const lastExecution = executions.value.length ? executions.value[0] : undefined
 
@@ -313,8 +314,8 @@ export const usePlaygroundStore = defineStore("playground", () => {
         let execution: Execution | undefined = undefined
         try {
             execution = await replayOrTriggerExecution(taskId, runDownstreamTasks ? undefined : nextTasksIds, graph, customFormData)
-        } catch (error: any) {
-            if (error?.response?.status === 422) {
+        } catch (error: unknown) {
+            if ((error as KestraHttpError).response?.status === 422) {
                 readyToStart.value = true
                 if (!customFormData && flowStore.flow && flowStore.flow.inputs?.length) {
                     actionOptions.value = {taskId, runDownstreamTasks}

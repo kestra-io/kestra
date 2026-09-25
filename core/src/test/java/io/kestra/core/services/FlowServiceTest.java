@@ -40,6 +40,7 @@ import io.kestra.core.utils.IdUtils;
 import io.kestra.plugin.core.debug.Return;
 import io.kestra.plugin.core.flow.Subflow;
 import io.kestra.plugin.core.trigger.Schedule;
+import io.kestra.plugin.core.trigger.Webhook;
 
 import io.micronaut.context.annotation.Replaces;
 import io.micronaut.test.annotation.MockBean;
@@ -1356,6 +1357,28 @@ class FlowServiceTest {
         verify(triggerEventQueue).send(captor.capture());
         assertThat(captor.getValue()).isInstanceOf(TriggerCreated.class);
         assertThat(captor.getValue().id().getTriggerId()).isEqualTo("schedule");
+    }
+
+    @Test
+    void shouldEmitTriggerCreatedWhenCreatingFlowWithWebhookTrigger() throws FlowProcessingException, QueueException {
+        // Given — a trigger the scheduler does not evaluate, which still needs a state to be listed
+        Flow flow = Flow.builder()
+            .id(IdUtils.create())
+            .tenantId(TenantService.MAIN_TENANT)
+            .namespace(TEST_NAMESPACE)
+            .tasks(List.of(Return.builder().id("task").type(Return.class.getName()).format(Property.ofValue("test")).build()))
+            .triggers(List.of(Webhook.builder().id("webhook").type(Webhook.class.getName()).key("a-key").build()))
+            .build();
+        reset(triggerEventQueue);
+
+        // When
+        flowService.create(GenericFlow.of(flow));
+
+        // Then
+        var captor = org.mockito.ArgumentCaptor.forClass(TriggerEvent.class);
+        verify(triggerEventQueue).send(captor.capture());
+        assertThat(captor.getValue()).isInstanceOf(TriggerCreated.class);
+        assertThat(captor.getValue().id().getTriggerId()).isEqualTo("webhook");
     }
 
     @Test

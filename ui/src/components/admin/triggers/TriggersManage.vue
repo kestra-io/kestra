@@ -204,8 +204,8 @@
                 <template #default="scope">
                     <KsTooltip
                         v-if="!scope.row.missingSource"
-                        :content="$t('trigger disabled')"
-                        :disabled="!scope.row.codeDisabled"
+                        :content="notToggleableReason(scope.row)"
+                        :disabled="!notToggleableReason(scope.row)"
                         effect="light"
                     >
                         <!-- update:modelValue (not change) keeps the switch prop-controlled: the knob only
@@ -213,7 +213,7 @@
                         <KsSwitch
                             :modelValue="!(scope.row.disabled || scope.row.codeDisabled)"
                             @update:modelValue="(value: string | number | boolean | undefined) => setDisabled(scope.row, Boolean(value))"
-                            :disabled="scope.row.codeDisabled"
+                            :disabled="!!notToggleableReason(scope.row)"
                         />
                     </KsTooltip>
                     <KsTooltip v-else :content="$t('flow source not found')" effect="light">
@@ -337,11 +337,14 @@
 
         <TriggerEnableDialog
             v-model="isEnableDialogOpen"
-            :count="enableDialogTrigger ? undefined : (queryBulkAction ? total : selection?.length)"
+            :count="enableDialogTrigger ? undefined : (queryBulkAction ? total : toggleableSelectionCount)"
             @confirm="onEnableDialogConfirm"
         >
             <p v-if="!enableDialogTrigger">
                 {{ $t("bulk action async warning") }}
+            </p>
+            <p v-if="!enableDialogTrigger && notToggleableSelectionCount">
+                {{ $t("bulk not toggleable warning", {count: notToggleableSelectionCount}) }}
             </p>
         </TriggerEnableDialog>
     </div>
@@ -545,6 +548,14 @@
     })
 
     const isSchedule = (type?: string) => type === "io.kestra.plugin.core.trigger.Schedule"
+
+    // A trigger the scheduler does not evaluate never reads the stored disabled flag, so the API refuses to
+    // toggle it: it can only be disabled in the flow source.
+    const notToggleableReason = (row: TriggerRow): string | undefined => {
+        if (row.codeDisabled) return t("trigger disabled")
+        if (row.kind === "UNSCHEDULED") return t("trigger not toggleable")
+        return undefined
+    }
 
     const triggersMerged = computed<TriggerRow[]>(() =>
         triggers.value.map(tr => ({
@@ -813,6 +824,7 @@
                 "setDisabled",
                 "bulk success disabled status.false",
                 {disabled: false, recoverMissedSchedules},
+                queryBulkAction.value ? undefined : toggleableSelectionCount.value,
             )
         }
     }
@@ -845,8 +857,8 @@
         )
     }
 
-    const genericConfirmAction = (toastKey: string, actionName: BulkActionName, success: string, data?: BulkDisableData, extraWarning?: string) => {
-        let message = t(toastKey, {"count": queryBulkAction.value ? total.value : selection.value?.length}) + ". " + t("bulk action async warning")
+    const genericConfirmAction = (toastKey: string, actionName: BulkActionName, success: string, data?: BulkDisableData, extraWarning?: string, count?: number) => {
+        let message = t(toastKey, {"count": count ?? (queryBulkAction.value ? total.value : selection.value?.length)}) + ". " + t("bulk action async warning")
 
         if (extraWarning) {
             message += "<br><br><strong>" + extraWarning + "</strong>"
@@ -854,7 +866,7 @@
 
         toast.confirm(
             message,
-            () => genericConfirmCallback(actionName, success, data),
+            () => genericConfirmCallback(actionName, success, data, count),
         )
     }
 
@@ -905,28 +917,42 @@
 
     type BulkActionName = keyof typeof BULK_ACTIONS
 
-    const genericConfirmCallback = (actionName: BulkActionName, success: string, data?: BulkDisableData) => {
+    const genericConfirmCallback = (actionName: BulkActionName, success: string, data?: BulkDisableData, expected?: number) => {
         const action = BULK_ACTIONS[actionName]
+        const target = expected ?? (queryBulkAction.value ? total.value : selection.value.length)
+
+        // totalItems is what the API actually submitted, which is short of the target whenever it skipped rows
+        // it cannot act on. Reporting that as a plain success is how a bulk action that did nothing at all
+        // still looked like it had worked.
         const onSubmitted = (response: ApiAsyncOperationResponse) => {
-            toast.success(t(success, {count: response.totalItems}))
+            const submitted = response.totalItems ?? 0
+            if (submitted === 0) {
+                toast.warning(t("bulk none applied"))
+            } else if (submitted < target) {
+                toast.warning(t("bulk partially applied", {count: submitted, requested: target}))
+            } else {
+                toast.success(t(success, {count: submitted}))
+            }
             toggleAllUnselected()
             triggerLoadDataAfterBulkEditAction()
         }
 
+        const onFailed = (e: unknown) => {
+            const problem = asProblem(e)
+            toast.error(
+                problemBulkBody(problem, t, te),
+                problemTitle(problem, t, te),
+            )
+        }
+
         if (queryBulkAction.value) {
             const query = loadQuery({filters: routeQueryToQueryFilters(route.query)})
-            return action.byQuery({...query, ...data}).then(onSubmitted)
+            return action.byQuery({...query, ...data}).then(onSubmitted).catch(onFailed)
         }
 
         return action.byIds(selection.value, data)
             .then(onSubmitted)
-            .catch((e: unknown) => {
-                const problem = asProblem(e)
-                toast.error(
-                    problemBulkBody(problem, t, te),
-                    problemTitle(problem, t, te),
-                )
-            })
+            .catch(onFailed)
     }
 
     const unpauseBackfills = () => {
@@ -959,8 +985,25 @@
             "setDisabled",
             `bulk success disabled status.${bool}`,
             {disabled: bool},
+            notToggleableSelectionCount.value
+                ? t("bulk not toggleable warning", {count: notToggleableSelectionCount.value})
+                : undefined,
+            queryBulkAction.value ? undefined : toggleableSelectionCount.value,
         )
     }
+
+    /**
+     * The API skips the triggers the scheduler does not evaluate on a bulk enable/disable, so counting the
+     * whole selection would announce a change to rows that will not be touched. Only knowable in selection
+     * mode: a query-mode action targets rows this page has not loaded.
+     */
+    const notToggleableSelectionCount = computed<number>(() =>
+        queryBulkAction.value
+            ? 0
+            : selection.value.filter(sel => findRowBySelection(sel)?.kind === "UNSCHEDULED").length,
+    )
+
+    const toggleableSelectionCount = computed<number>(() => selection.value.length - notToggleableSelectionCount.value)
 
     const findRowBySelection = (sel: TriggerControllerApiTriggerId) => triggersMerged.value.find(row =>
         (row.triggerId ?? row.id) === sel.triggerId && row.flowId === sel.flowId && row.namespace === sel.namespace)

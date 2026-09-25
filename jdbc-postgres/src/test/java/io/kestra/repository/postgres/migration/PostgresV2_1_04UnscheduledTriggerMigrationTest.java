@@ -1,0 +1,6 @@
+package io.kestra.repository.postgres.migration;
+
+import io.kestra.jdbc.migration.AbstractV2_1_04UnscheduledTriggerMigrationTest;
+
+class PostgresV2_1_04UnscheduledTriggerMigrationTest extends AbstractV2_1_04UnscheduledTriggerMigrationTest {
+}

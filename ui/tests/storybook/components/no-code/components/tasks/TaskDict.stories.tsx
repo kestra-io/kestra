@@ -71,7 +71,7 @@ export const TestDoubleKey: Story = {
         // find the monaco editor and type in the value
         const monacoEditor = await waitFor(async function monacoInit() {
             const line = await canvas.findByTestId("task-dict-item-key2-3")
-            const mon = line?.querySelector(".ks-monaco-editor") as any;
+            const mon = line?.querySelector(".ks-monaco-editor") as HTMLElement & {__setValueInTests?: (value: string) => void};
             if (!mon?.__setValueInTests) {
                 if(!line)
                     throw new Error("Dict line not found");

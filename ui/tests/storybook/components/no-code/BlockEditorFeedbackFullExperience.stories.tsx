@@ -3,7 +3,7 @@ import {within, expect, waitFor} from "storybook/test"
 import {vueRouter} from "storybook-vue3-router"
 
 import MultiPanelFlowEditorView from "../../../../src/components/flows/MultiPanelFlowEditorView.vue"
-import {useFlowStore} from "../../../../src/stores/flow"
+import {useFlowStore, type Flow} from "../../../../src/stores/flow"
 import {CICD_PIPELINE_YAML, mockNoCodeTransport} from "./blockEditorFeedbackFixtures"
 
 const meta: Meta = {
@@ -37,7 +37,7 @@ export const FullExperienceMultiPanelFlowEditor: Story = {
         setup() {
             mockNoCodeTransport()
             const flowStore = useFlowStore()
-            flowStore.flow = {id: "deploy_service", namespace: "company.platform", source: CICD_PIPELINE_YAML} as any
+            flowStore.flow = {id: "deploy_service", namespace: "company.platform", source: CICD_PIPELINE_YAML} as Partial<Flow>
             flowStore.flowYaml = CICD_PIPELINE_YAML
             return () => (
                 <div style="height: 100vh;">

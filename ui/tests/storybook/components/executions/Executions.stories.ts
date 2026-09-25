@@ -38,7 +38,7 @@ function getDecorators(data: PagedResultsApiLightExecution) {
                     }
                     mockState.data = data
 
-                    const axios: any = {}
+                    const axios: {get: () => Promise<{data: unknown}>} = {}
                     axios.get = function() {
                         return Promise.resolve({data: []})
                     }

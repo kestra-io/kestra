@@ -30,7 +30,7 @@ export default {
 
 const Template: StoryFn<{flow: string}> = (args) => ({
     setup() {
-        const axios: any = {}
+        const axios: {get: (uri: string) => Promise<{data: unknown}>, post: (uri: string, data?: unknown) => Promise<{data: unknown}>} = {}
         const flowStore = useFlowStore()
         axios.get = async (uri: string) => {
             if (uri.endsWith("/plugins")) {

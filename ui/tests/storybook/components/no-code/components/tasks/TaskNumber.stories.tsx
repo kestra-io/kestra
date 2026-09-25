@@ -3,6 +3,7 @@ import TaskNumber from "../../../../../../src/components/no-code/components/task
 import {Meta, StoryObj} from "@storybook/vue3-vite";
 import {vueRouter} from "storybook-vue3-router";
 import {SCHEMA_DEFINITIONS_INJECTION_KEY} from "../../../../../../src/components/no-code/injectionKeys";
+import type {Schema} from "../../../../../../src/components/no-code/components/tasks/getTaskComponent";
 
 const meta: Meta<typeof TaskNumber> = {
     title: "Components/NoCode/TaskNumber",
@@ -16,7 +17,7 @@ export default meta;
 
 type Story = StoryObj<typeof TaskNumber>;
 
-const render: Story["render"] = (args: any) => ({
+const render: Story["render"] = (args: {modelValue?: number, schema?: Schema}) => ({
     setup() {
         provide(SCHEMA_DEFINITIONS_INJECTION_KEY, computed(() => ({})));
         const model = ref<number | undefined>(args.modelValue);
@@ -24,8 +25,8 @@ const render: Story["render"] = (args: any) => ({
             <div style={{width: "400px"}}>
                 <TaskNumber
                     modelValue={model.value}
-                    onUpdate:modelValue={(val: any) => model.value = val}
-                    schema={args.schema ?? {type: "number"}}
+                    onUpdate:modelValue={(val: number | undefined) => model.value = val}
+                    schema={args.schema ?? {type: "number"} satisfies Schema}
                 />
             </div>
             <pre data-testid="result">{JSON.stringify(model.value)}</pre>

@@ -52,7 +52,7 @@ function story(overrides: Record<string, unknown> = {}): StoryObj<typeof SourceS
 function withLoadedFlow(flow: Record<string, unknown> | null): Decorator {
     return (storyFn) => ({
         setup() {
-            (useFlowStore() as any).loadFlow = () => flow === null ? new Promise(() => {}) : Promise.resolve(flow)
+            (useFlowStore() as Partial<ReturnType<typeof useFlowStore>>).loadFlow = () => flow === null ? new Promise(() => {}) : Promise.resolve(flow)
         },
         components: {story: storyFn},
         template: "<story />",

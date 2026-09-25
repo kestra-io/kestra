@@ -43,7 +43,7 @@ export const SimpleTypes: Story = {
                 {type: "number"},
                 {type: "boolean"},
             ],
-        } as Schema,
+        } satisfies Schema,
     },
 };
 
@@ -71,7 +71,7 @@ export const ArrayVariants: Story = {
                 {type: "array", items: {type: "string"}},
                 {type: "array", items: {type: "number"}},
             ],
-        } as Schema,
+        } satisfies Schema,
     },
 };
 
@@ -108,7 +108,7 @@ export const EnumAndPatternBranches: Story = {
                 {enum: ["UTC", "Europe/Paris", "Asia/Tokyo"]},
                 {pattern: "^(Z|[+-]\\d{2}(:?\\d{2})?)$"},
             ],
-        } as Schema,
+        } satisfies Schema,
     },
     async play({canvasElement}) {
         const canvas = within(canvasElement);
@@ -141,7 +141,7 @@ export const PatternOnlyBranches: Story = {
                 {pattern: "^[a-z]+$"},
                 {pattern: "^[0-9]+$"},
             ],
-        } as Schema,
+        } satisfies Schema,
     },
     async play({canvasElement}) {
         const canvas = within(canvasElement);

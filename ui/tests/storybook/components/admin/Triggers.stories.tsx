@@ -124,7 +124,7 @@ const Template: StoryFn<{triggers: ApiTriggerAndState[]}> = (args) => ({
     setup() {
         mockState.triggers = args.triggers
 
-        const store: any = {}
+        const store: {get: (uri: string) => Promise<{data: unknown}>, post: (uri: string, data?: unknown) => Promise<{data: unknown}>, put: (uri: string, data?: unknown) => Promise<{data: unknown}>} = {}
         store.get = async function (uri: string) {
             if (uri.includes("/distinct-namespaces")) {
                 return {

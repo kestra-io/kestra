@@ -4,6 +4,7 @@ import {Meta, StoryObj} from "@storybook/vue3-vite";
 import {expect} from "storybook/test";
 import {vueRouter} from "storybook-vue3-router";
 import {SCHEMA_DEFINITIONS_INJECTION_KEY} from "../../../../../../src/components/no-code/injectionKeys";
+import type {Schema} from "../../../../../../src/components/no-code/components/tasks/getTaskComponent";
 
 const meta: Meta<typeof TaskString> = {
     title: "Components/NoCode/TaskString",
@@ -40,7 +41,7 @@ export const Default: Story = {
     render,
     args: {
         modelValue: undefined,
-        schema: {type: "string"} as any,
+        schema: {type: "string"} satisfies Schema,
         root: "description",
     },
 };
@@ -49,7 +50,7 @@ export const WithValue: Story = {
     render,
     args: {
         modelValue: "Hello, World!",
-        schema: {type: "string"} as any,
+        schema: {type: "string"} satisfies Schema,
         root: "description",
     },
 };
@@ -58,7 +59,7 @@ export const DateTimePicker: Story = {
     render,
     args: {
         modelValue: undefined,
-        schema: {type: "string", format: "date-time"} as any,
+        schema: {type: "string", format: "date-time"} satisfies Schema,
         root: "startDate",
     },
 };
@@ -67,7 +68,7 @@ export const DurationPicker: Story = {
     render,
     args: {
         modelValue: "PT1H30M",
-        schema: {type: "string", format: "duration"} as any,
+        schema: {type: "string", format: "duration"} satisfies Schema,
         root: "timeout",
     },
 };
@@ -76,7 +77,7 @@ export const Disabled: Story = {
     render,
     args: {
         modelValue: "Read-only value",
-        schema: {type: "string"} as any,
+        schema: {type: "string"} satisfies Schema,
         root: "locked",
         disabled: true,
     },

@@ -75,7 +75,7 @@ export const SimpleExecutionsCase: StoryObj<typeof Table> = {
             // which goes through the SDK's own internal client rather than the axios instance
             // setMockClient() swaps - so the store method itself is stubbed instead (same
             // pattern as KSFilter.stories.tsx's useNamespacesStore().loadAutocomplete override).
-            useDashboardStore().generate = async () => ({results: MOCK_RESULTS, total: MOCK_RESULTS.length}) as any;
+            useDashboardStore().generate = async () => ({results: MOCK_RESULTS, total: MOCK_RESULTS.length}) as {results: typeof MOCK_RESULTS, total: number};
 
             const chart: Chart = {
                 "id": "executions_finished",
@@ -106,7 +106,7 @@ export const SimpleExecutionsCase: StoryObj<typeof Table> = {
                         }
                     }
                 },
-            } as any;
+            } satisfies Chart;
             return () => (
                 <div style="padding: 20px; background: #f5f5f5; border-radius: 8px;">
                     <Table chart={chart} dashboardId="default" />

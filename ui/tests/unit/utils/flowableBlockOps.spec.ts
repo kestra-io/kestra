@@ -1268,6 +1268,41 @@ tasks:
             expect(result).toBe(FLOW_WITH_TRIGGERS)
         })
 
+        it("treats a task-level errors lane as part of tasks, so a handler can move up into the task list", () => {
+            const flow = `
+id: my_flow
+namespace: company.team
+tasks:
+  - id: worker
+    type: io.kestra.plugin.core.log.Log
+    errors:
+      - id: handler
+        type: io.kestra.plugin.core.log.Log
+`.trim()
+
+            expect(canMoveBlockToPath(flow, "tasks[0].errors[0]", "tasks")).toEqual({allowed: true})
+
+            const result = moveBlockToPath(flow, "tasks[0].errors[0]", "tasks", 1)
+            const parsed = flowYamlUtils.parse<{tasks: {id: string}[]}>(result)!
+            expect(parsed.tasks.map((task) => task.id)).toEqual(["worker", "handler"])
+        })
+
+        it("keeps the flow-level errors section separate from tasks", () => {
+            const flow = `
+id: my_flow
+namespace: company.team
+tasks:
+  - id: worker
+    type: io.kestra.plugin.core.log.Log
+errors:
+  - id: notify
+    type: io.kestra.plugin.core.log.Log
+`.trim()
+
+            expect(canMoveBlockToPath(flow, "errors[0]", "tasks")).toEqual({allowed: false, reason: "section"})
+            expect(moveBlockToPath(flow, "errors[0]", "tasks", 1)).toBe(flow)
+        })
+
         it("refuses a move between a Dag's wrapped lane and a plain lane", () => {
             // Given — a Dag's tasks lane wraps each item in `{task: ...}`, a Sequential's does not
             const verdict = canMoveBlockToPath(FLOW_WITH_DAG_AND_SEQUENTIAL, "tasks[0].tasks[0]", "tasks[1].tasks")

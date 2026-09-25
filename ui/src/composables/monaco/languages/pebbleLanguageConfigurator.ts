@@ -216,6 +216,15 @@ export function registerFilterAutoCompletion(
 
 const registeredLanguages = new Set<string>()
 
+/**
+ * Monaco's public {@link languages.ILanguageExtensionPoint} does not expose the internal `loader`
+ * callback that lazy-loads the Monarch tokenizer for built-in languages. This extension interface
+ * documents the property this code actually reads so it breaks visibly if Monaco ever removes it.
+ */
+interface ILanguageExtensionPointWithLoader extends languages.ILanguageExtensionPoint {
+    loader?: () => Promise<{ language: monaco.languages.IMonarchLanguage }>;
+}
+
 function registerPebbleLanguage(language: string) {
     if(registeredLanguages.has(language)) return
     registeredLanguages.add(language)
@@ -236,7 +245,7 @@ function registerPebbleLanguage(language: string) {
     }
 
     // Get the tokenizer from the root language
-    const rootLanguageDefinition: any = monaco.languages.getLanguages().find(l => l.id === rootLanguage)
+    const rootLanguageDefinition = monaco.languages.getLanguages().find(l => l.id === rootLanguage) as ILanguageExtensionPointWithLoader | undefined
     // Load the parent language to ensure its tokenizer is available
     if (rootLanguageDefinition?.loader) {
         rootLanguageDefinition.loader().then((loaded: {language: monaco.languages.IMonarchLanguage}) => {

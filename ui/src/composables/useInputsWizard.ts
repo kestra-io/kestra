@@ -17,8 +17,8 @@ interface UseInputsWizardDeps {
         formGroups?: Record<string, {displayName?: string; description?: string}>;
     };
     inputsMetaData: Ref<InputMetaData[]>;
-    inputsValues: Record<string, any>;
-    multiSelectInputs: Record<string, any>;
+    inputsValues: Record<string, unknown>;
+    multiSelectInputs: Record<string, unknown>;
     inputsValidated: Ref<Set<string>>;
     validateInputs: () => Promise<void>;
     onRecapChange: (value: boolean) => void;

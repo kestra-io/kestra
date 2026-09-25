@@ -26,6 +26,7 @@ import io.kestra.core.models.tasks.logs.LogExporter;
 import io.kestra.core.models.tasks.runners.TaskRunner;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.ui.PluginUiModule;
+import io.kestra.core.plugins.endpoint.PluginEndpoint;
 import io.kestra.core.preview.FileRenderer;
 import io.kestra.core.repositories.LogDataStoreInterface;
 import io.kestra.core.secret.SecretPluginInterface;
@@ -79,6 +80,9 @@ public class RegisteredPlugin {
     private final List<Class<? extends RulePluginInterface>> rules;
     private final List<Class<? extends AdditionalPlugin>> additionalPlugins;
     private final List<Class<? extends FileRenderer>> fileRenderers;
+    // stateless singleton instances, not documented plugin types, so excluded from equality
+    @EqualsAndHashCode.Exclude
+    private final List<PluginEndpoint> endpoints;
     private final List<String> guides;
     // Map<lowercasealias, <Alias, Class>>
     private final Map<String, Map.Entry<String, Class<?>>> aliases;
@@ -102,7 +106,8 @@ public class RegisteredPlugin {
             !logExporters.isEmpty() ||
             !rules.isEmpty() ||
             !additionalPlugins.isEmpty() ||
-            !fileRenderers.isEmpty();
+            !fileRenderers.isEmpty() ||
+            (endpoints != null && !endpoints.isEmpty());
     }
 
     public boolean hasClass(String cls) {

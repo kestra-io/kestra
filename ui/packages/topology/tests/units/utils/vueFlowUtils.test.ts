@@ -1,5 +1,6 @@
 import {test, expect, describe} from "vitest"
 import * as VueFlowUtils from "../../../src/utils/vueFlowUtils.ts"
+import {NODE_SIZES} from "../../../src/utils/constants.ts"
 
 const graph = {
     nodes: [
@@ -509,5 +510,283 @@ describe("generateGraph node draggability", () => {
                 expect(declaredUids, `edge source ${element.source}`).toContain(String(element.source))
             }
         }
+    })
+})
+
+describe("generateGraph flowable lane header", () => {
+    // A root-level Parallel with 3 branches — mirrors the real shape GraphUtils sends: the
+    // flowable's own gate node (`root.parallel_task`) is both a plain node in `nodes` and its own
+    // cluster's `taskNode`, and the cluster's `nodes` list carries root/end plus every child.
+    const parallelFlowGraph = {
+        nodes: [
+            {uid: "root.root-1", type: "io.kestra.core.models.hierarchies.GraphClusterRoot"},
+            {uid: "root.end-1", type: "io.kestra.core.models.hierarchies.GraphClusterEnd"},
+            {
+                uid: "root.parallel_task",
+                type: "io.kestra.core.models.hierarchies.GraphTask",
+                task: {id: "parallel_task", type: "io.kestra.plugin.core.flow.Parallel", namespace: "ns", flowId: "flow"},
+            },
+            {
+                uid: "root.parallel_task.branch_a",
+                type: "io.kestra.core.models.hierarchies.GraphTask",
+                task: {id: "branch_a", type: "io.kestra.plugin.core.log.Log", namespace: "ns", flowId: "flow"},
+            },
+            {
+                uid: "root.parallel_task.branch_b",
+                type: "io.kestra.core.models.hierarchies.GraphTask",
+                task: {id: "branch_b", type: "io.kestra.plugin.core.log.Log", namespace: "ns", flowId: "flow"},
+            },
+        ],
+        edges: [
+            {source: "root.parallel_task", target: "root.parallel_task.branch_a", relation: {relationType: "PARALLEL"}},
+            {source: "root.parallel_task", target: "root.parallel_task.branch_b", relation: {relationType: "PARALLEL"}},
+        ],
+        clusters: [
+            {
+                cluster: {
+                    uid: "cluster_root.parallel_task",
+                    type: "io.kestra.core.models.hierarchies.GraphCluster",
+                    taskNode: {
+                        uid: "root.parallel_task",
+                        task: {id: "parallel_task", type: "io.kestra.plugin.core.flow.Parallel", namespace: "ns", flowId: "flow"},
+                    },
+                },
+                nodes: ["root.root-1", "root.end-1", "root.parallel_task", "root.parallel_task.branch_a", "root.parallel_task.branch_b"],
+                parents: [],
+                start: "root.root-1",
+                end: "root.end-1",
+            },
+        ],
+    } as unknown as VueFlowUtils.FlowGraph
+
+    const generate = () =>
+        asElements(VueFlowUtils.generateGraph(
+            "vfid", "flow", "ns", parallelFlowGraph, undefined, [], false, {}, new Set(), [], true, false, false,
+        ) ?? [])
+
+    test("renders the flowable's own gate node as an invisible connector, not a second task box", () => {
+        const gate = generate().find((e) => e.id === "root.parallel_task")
+
+        expect(gate?.type).toBe("dot")
+    })
+
+    test("gives the cluster its lane-header data: type, id and child count come from one place", () => {
+        const cluster = generate().find((e) => e.id === "cluster_root.parallel_task")
+
+        expect(cluster?.data?.isFlowableLane).toBe(true)
+        expect(cluster?.data?.taskNode).toMatchObject({uid: "root.parallel_task"})
+        expect(cluster?.data?.childTaskIds).toEqual(["branch_a", "branch_b"])
+    })
+
+    test("does not lay the gate node out at the task footprint — dagre sees a dot, not a box", () => {
+        const gate = generate().find((e) => e.id === "root.parallel_task")
+
+        expect(gate?.style).toMatchObject({width: "5px", height: "5px"})
+    })
+
+    // Regression: the collapsed placeholder shares the flowable's own uid, so the dot-sizing
+    // override for a hidden gate node must not also catch it and shrink it to a 5x5 dot.
+    test("still sizes a collapsed lane as a collapsed cluster, not as a hidden gate dot", () => {
+        // Mirrors Topology.vue's collapseCluster(): the cluster's own children plus its uid go
+        // into hiddenNodes so the ordinary node entry is suppressed and only the placeholder shows.
+        const hiddenNodes = [
+            "root.root-1", "root.end-1", "root.parallel_task", "root.parallel_task.branch_a", "root.parallel_task.branch_b",
+            "cluster_root.parallel_task",
+        ]
+        const edgeReplacer = {
+            "cluster_root.parallel_task": "root.parallel_task",
+            "root.root-1": "root.parallel_task",
+            "root.end-1": "root.parallel_task",
+        }
+        const elements = asElements(VueFlowUtils.generateGraph(
+            "vfid", "flow", "ns", parallelFlowGraph, undefined, hiddenNodes, false, edgeReplacer, new Set(["root.parallel_task"]), [], true, false, false,
+        ) ?? [])
+
+        const collapsed = elements.find((e) => e.id === "root.parallel_task")
+        expect(collapsed?.type).toBe("collapsedcluster")
+        expect(collapsed?.style).toMatchObject({width: "150px", height: "40px"})
+    })
+})
+
+describe("generateGraph lane header height vs a following sibling's clearance", () => {
+    // Same Parallel lane as above, plus a plain sibling task right after it in the same rank
+    // sequence — LANE_HEADER_HEIGHT is added to the cluster's box *after* dagre has already
+    // spaced this sibling using the un-inflated height, so the header eats into that gap.
+    const flowGraph = {
+        nodes: [
+            {uid: "root.root-1", type: "io.kestra.core.models.hierarchies.GraphClusterRoot"},
+            {uid: "root.end-1", type: "io.kestra.core.models.hierarchies.GraphClusterEnd"},
+            {
+                uid: "root.parallel_task",
+                type: "io.kestra.core.models.hierarchies.GraphTask",
+                task: {id: "parallel_task", type: "io.kestra.plugin.core.flow.Parallel", namespace: "ns", flowId: "flow"},
+            },
+            {
+                uid: "root.parallel_task.branch_a",
+                type: "io.kestra.core.models.hierarchies.GraphTask",
+                task: {id: "branch_a", type: "io.kestra.plugin.core.log.Log", namespace: "ns", flowId: "flow"},
+            },
+            {
+                uid: "root.parallel_task.branch_b",
+                type: "io.kestra.core.models.hierarchies.GraphTask",
+                task: {id: "branch_b", type: "io.kestra.plugin.core.log.Log", namespace: "ns", flowId: "flow"},
+            },
+            {
+                uid: "root.after_task",
+                type: "io.kestra.core.models.hierarchies.GraphTask",
+                task: {id: "after_task", type: "io.kestra.plugin.core.log.Log", namespace: "ns", flowId: "flow"},
+            },
+        ],
+        edges: [
+            {source: "root.root-1", target: "root.parallel_task", relation: {}},
+            {source: "root.parallel_task", target: "root.parallel_task.branch_a", relation: {relationType: "PARALLEL"}},
+            {source: "root.parallel_task", target: "root.parallel_task.branch_b", relation: {relationType: "PARALLEL"}},
+            // Every branch feeds the cluster's own end marker — omitting this (as a real backend
+            // graph never does) leaves `end-1` with no incoming edge, so dagre ranks it arbitrarily
+            // instead of after the branches, and any "clearance" measured against it is meaningless.
+            {source: "root.parallel_task.branch_a", target: "root.end-1", relation: {}},
+            {source: "root.parallel_task.branch_b", target: "root.end-1", relation: {}},
+            {source: "root.end-1", target: "root.after_task", relation: {relationType: "SEQUENTIAL"}},
+        ],
+        clusters: [
+            {
+                cluster: {
+                    uid: "cluster_root.parallel_task",
+                    type: "io.kestra.core.models.hierarchies.GraphCluster",
+                    taskNode: {
+                        uid: "root.parallel_task",
+                        task: {id: "parallel_task", type: "io.kestra.plugin.core.flow.Parallel", namespace: "ns", flowId: "flow"},
+                    },
+                },
+                nodes: ["root.root-1", "root.end-1", "root.parallel_task", "root.parallel_task.branch_a", "root.parallel_task.branch_b"],
+                parents: [],
+                start: "root.root-1",
+                end: "root.end-1",
+            },
+        ],
+    } as unknown as VueFlowUtils.FlowGraph
+
+    test("still clears the next sibling — the lane header must not overlap what comes after it", () => {
+        const elements = asElements(VueFlowUtils.generateGraph(
+            "vfid", "flow", "ns", flowGraph, undefined, [], false, {}, new Set(), [], true, false, false,
+        ) ?? [])
+
+        const lane = elements.find((e) => e.id === "cluster_root.parallel_task")
+        const sibling = elements.find((e) => e.id === "root.after_task")
+        expect(lane?.position).toBeDefined()
+        expect(sibling?.position).toBeDefined()
+
+        const laneBottom = (lane!.position!.y) + parseFloat(String(lane!.style!.height))
+        const siblingTop = sibling!.position!.y
+
+        // Dagre's own default ranksep (50) minus LANE_HEADER_HEIGHT (32): 18px left. Pinned exactly
+        // — not just "> 0" — so a bigger header, a smaller ranksep, or nesting that erodes the same
+        // gap further fails loudly here instead of silently overlapping in the browser.
+        expect(siblingTop - laneBottom).toBe(18)
+    })
+})
+
+describe("generateGraph synthetic errors lane", () => {
+    const flowWithRootErrors = {
+        nodes: [
+            {
+                uid: "root.log_start",
+                type: "io.kestra.core.models.hierarchies.GraphTask",
+                task: {id: "log_start", type: "io.kestra.plugin.core.log.Log", namespace: "ns", flowId: "flow"},
+            },
+            {
+                uid: "root.error_handler",
+                type: "io.kestra.core.models.hierarchies.GraphTask",
+                branchType: "ERROR",
+                task: {id: "error_handler", type: "io.kestra.plugin.core.log.Log", namespace: "ns", flowId: "flow"},
+            },
+        ],
+        edges: [
+            {source: "root.log_start", target: "root.error_handler", relation: {relationType: "ERROR"}},
+        ],
+        clusters: [],
+    } as unknown as VueFlowUtils.FlowGraph
+
+    test("wraps a flow-level errors: task in its own labelled lane instead of leaving it floating", () => {
+        const elements = asElements(VueFlowUtils.generateGraph(
+            "vfid", "flow", "ns", flowWithRootErrors, undefined, [], false, {}, new Set(), [], true, false, false,
+        ) ?? [])
+
+        const errorsLane = elements.find((e) => e.type === "cluster" && e.id === "cluster_root.Errors")
+        expect(errorsLane).toBeDefined()
+        expect(errorsLane?.class).toBe("ks-topology-errors-border")
+
+        const errorTask = elements.find((e) => e.id === "root.error_handler")
+        expect(errorTask?.parentNode).toBe("cluster_root.Errors")
+    })
+
+    test("does not synthesize an errors lane when there is nothing to wrap", () => {
+        const flowGraph = {
+            nodes: [
+                {
+                    uid: "root.log_start",
+                    type: "io.kestra.core.models.hierarchies.GraphTask",
+                    task: {id: "log_start", type: "io.kestra.plugin.core.log.Log", namespace: "ns", flowId: "flow"},
+                },
+            ],
+            edges: [],
+            clusters: [],
+        } as unknown as VueFlowUtils.FlowGraph
+
+        const elements = asElements(VueFlowUtils.generateGraph(
+            "vfid", "flow", "ns", flowGraph, undefined, [], false, {}, new Set(), [], true, false, false,
+        ) ?? [])
+
+        expect(elements.some((e) => e.type === "cluster")).toBe(false)
+    })
+})
+
+describe("getNodeWidth / getNodeHeight (per node-kind footprint)", () => {
+    // Regression: TASK_HEIGHT and TRIGGER_HEIGHT used to be numerically equal (56), so a shared
+    // `isTaskNode(node) || isTriggerNode(node)` branch was harmless. Bumping TASK_HEIGHT to 80
+    // without a trigger-specific branch silently reserved a too-tall box for every trigger.
+    const triggerNode = {uid: "root.Triggers.schedule", type: "io.kestra.core.models.hierarchies.GraphTrigger"}
+    const taskNode = {uid: "root.a", type: "io.kestra.core.models.hierarchies.GraphTask"}
+
+    test("sizes a trigger node against TRIGGER_HEIGHT/TRIGGER_WIDTH, not TASK_HEIGHT/TASK_WIDTH", () => {
+        expect(VueFlowUtils.getNodeHeight(triggerNode)).toBe(NODE_SIZES.TRIGGER_HEIGHT)
+        expect(VueFlowUtils.getNodeWidth(triggerNode)).toBe(NODE_SIZES.TRIGGER_WIDTH)
+    })
+
+    test("sizes a task node against TASK_HEIGHT/TASK_WIDTH", () => {
+        expect(VueFlowUtils.getNodeHeight(taskNode)).toBe(NODE_SIZES.TASK_HEIGHT)
+        expect(VueFlowUtils.getNodeWidth(taskNode)).toBe(NODE_SIZES.TASK_WIDTH)
+    })
+
+    test("a task and a trigger no longer share the same footprint", () => {
+        expect(VueFlowUtils.getNodeHeight(triggerNode)).not.toBe(VueFlowUtils.getNodeHeight(taskNode))
+    })
+})
+
+describe("buildEffectiveGetNodeDimensions (footprint invariance)", () => {
+    const taskNode = {uid: "root.a", type: "io.kestra.core.models.hierarchies.GraphTask"}
+
+    test("returns the constant task footprint with no execution", () => {
+        const getDimensions = VueFlowUtils.buildEffectiveGetNodeDimensions(false)
+        const dimensions = getDimensions(taskNode, VueFlowUtils.getNodeWidth, VueFlowUtils.getNodeHeight)
+
+        expect(dimensions).toEqual({width: 218, height: 80})
+    })
+
+    // The only thing this function ever varies by is whether an execution is loaded — never a
+    // zoom level, since it has no zoom parameter to read one from in the first place.
+    test("varies only the width when an execution is loaded, never the height", () => {
+        const withoutExecution = VueFlowUtils.buildEffectiveGetNodeDimensions(false)(taskNode, VueFlowUtils.getNodeWidth, VueFlowUtils.getNodeHeight)
+        const withExecution = VueFlowUtils.buildEffectiveGetNodeDimensions(true)(taskNode, VueFlowUtils.getNodeWidth, VueFlowUtils.getNodeHeight)
+
+        expect(withExecution.height).toBe(withoutExecution.height)
+        expect(withExecution.width).toBe(273)
+    })
+
+    test("is deterministic: calling it repeatedly for the same node never drifts", () => {
+        const getDimensions = VueFlowUtils.buildEffectiveGetNodeDimensions(false)
+        const results = Array.from({length: 5}, () => getDimensions(taskNode, VueFlowUtils.getNodeWidth, VueFlowUtils.getNodeHeight))
+
+        expect(new Set(results.map((r) => JSON.stringify(r))).size).toBe(1)
     })
 })

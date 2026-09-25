@@ -130,7 +130,6 @@
     "description": "描述",
     "show description": "显示描述",
     "show details": "显示详情",
-    "show more details": "显示更多详情",
     "skipped": "跳过",
     "revision": "修订版",
     "theme": "主题",
@@ -441,7 +440,8 @@
       "invalid_description": "加载图表时发生错误。请检查源代码中的错误。",
       "load_error": "无法加载拓扑图。请重试。",
       "add-task": "添加 task",
-      "add-trigger": "添加 trigger"
+      "add-trigger": "添加 trigger",
+      "child-count": "{count} 个 task | {count} 个 task"
     },
     "show task logs": "显示任务日志",
     "show task condition": "显示任务条件",

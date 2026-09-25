@@ -130,7 +130,6 @@
     "description": "Beschreibung",
     "show description": "Beschreibung anzeigen",
     "show details": "Details anzeigen",
-    "show more details": "Mehr Details anzeigen",
     "skipped": "Übersprungen",
     "revision": "Revision",
     "theme": "Theme",
@@ -441,7 +440,8 @@
       "invalid_description": "Beim Laden des Graphen ist ein Fehler aufgetreten. Bitte prüfe den Quellcode auf Fehler.",
       "load_error": "Der Topologiegraph konnte nicht geladen werden. Bitte versuche es erneut.",
       "add-task": "Task hinzufügen",
-      "add-trigger": "Trigger hinzufügen"
+      "add-trigger": "Trigger hinzufügen",
+      "child-count": "{count} Task | {count} Tasks"
     },
     "show task logs": "Task-Logs anzeigen",
     "show task condition": "Task-Bedingung anzeigen",

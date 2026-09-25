@@ -6,6 +6,10 @@ import {CLUSTER_PREFIX, NODE_SIZES} from "./constants"
 import {isDeepEqual} from "@kestra-io/design-system"
 
 const TRIGGERS_NODE_UID = "root.Triggers"
+// Never a real backend uid — a flow-level `errors:` section has no cluster of its own (unlike
+// `Triggers`, which the backend already synthesizes), so the frontend synthesizes this one to
+// give it a labelled lane instead of a floating dashed line (kestra-io/kestra#19666).
+const ERRORS_NODE_UID = "root.Errors"
 
 export enum BranchType {
     ERROR = "ERROR",
@@ -37,15 +41,14 @@ interface MinimalNode {
 interface Cluster {
     uid: string;
     type: string;
-    nodes: MinimalNode[];
     taskNode: {
         uid: string;
         task: {
             type: string;
-            namespace: string;
-            flowId: string;
-        };
-    };
+            namespace?: string;
+            flowId?: string;
+        } & Record<string, unknown>;
+    } | null;
     branchType: BranchType;
 }
 
@@ -64,12 +67,14 @@ export interface FlowGraph {
     clusters: {
         cluster: Cluster;
         nodes: string[];
-        parents: {
-            uid: string;
-        }[];
+        parents: string[];
+        start: string;
+        end: string;
     }[];
     edges: FlowGraphEdge[];
 }
+
+export type FlowGraphCluster = FlowGraph["clusters"][number];
 
 type EdgeReplacer = Record<string, string>;
 
@@ -158,6 +163,7 @@ export function generateDagreGraph(
         width: widthFn(node),
         height: heightFn(node),
     }),
+    flowableGateUids: Set<string> = new Set(),
 ) {
     const dagreGraph = new dagre.graphlib.Graph({compound: true})
     dagreGraph.setDefaultEdgeLabel(() => ({}))
@@ -165,7 +171,10 @@ export function generateDagreGraph(
 
     for (const node of flowGraph.nodes) {
         if (!hiddenNodes.includes(node.uid)) {
-            dagreGraph.setNode(node.uid, getNodeDimensions(node, getNodeWidth, getNodeHeight))
+            const dimensions = flowableGateUids.has(node.uid)
+                ? {width: NODE_SIZES.DOT_WIDTH, height: NODE_SIZES.DOT_HEIGHT}
+                : getNodeDimensions(node, getNodeWidth, getNodeHeight)
+            dagreGraph.setNode(node.uid, dimensions)
         }
     }
 
@@ -220,20 +229,55 @@ export function getNodePosition(
     return position
 }
 
-export function getNodeWidth(node: MinimalNode) {
-    return isTaskNode(node) || isTriggerNode(node) || isCustomNode(node)
-        ? NODE_SIZES.TASK_WIDTH
-        : isCollapsedCluster(node)
-          ? NODE_SIZES.COLLAPSED_CLUSTER_WIDTH
-          : NODE_SIZES.DOT_WIDTH
+/** The dimensions dagre lays a node out at. Deliberately has no zoom/LOD parameter: only
+ *  `execution` presence (entering/leaving an execution, already its own graph regeneration
+ *  point) ever changes what this returns — crossing a zoom threshold never does
+ *  (kestra-io/kestra#19666). */
+export function buildEffectiveGetNodeDimensions(
+    hasExecution: boolean,
+    override?: (
+        node: MinimalNode,
+        widthFn: (node: MinimalNode) => number,
+        heightFn: (node: MinimalNode) => number,
+    ) => {width: number; height: number},
+) {
+    return (
+        node: MinimalNode,
+        getNodeWidthFn: (node: MinimalNode) => number,
+        getNodeHeightFn: (node: MinimalNode) => number,
+    ) => {
+        const dimensions = override
+            ? override(node, getNodeWidthFn, getNodeHeightFn)
+            : {width: getNodeWidthFn(node), height: getNodeHeightFn(node)}
+
+        if (hasExecution && (isTaskNode(node) || isTriggerNode(node) || isCustomNode(node))) {
+            dimensions.width = NODE_SIZES.TASK_WIDTH_EXECUTION
+        }
+
+        return dimensions
+    }
 }
 
+export function getNodeWidth(node: MinimalNode) {
+    return isTriggerNode(node)
+        ? NODE_SIZES.TRIGGER_WIDTH
+        : isTaskNode(node) || isCustomNode(node)
+          ? NODE_SIZES.TASK_WIDTH
+          : isCollapsedCluster(node)
+            ? NODE_SIZES.COLLAPSED_CLUSTER_WIDTH
+            : NODE_SIZES.DOT_WIDTH
+}
+
+// A trigger keeps its own, unchanged footprint — TASK_HEIGHT's +24 belongs to the task anatomy
+// this issue adds (type line, reserved duration-bar slot), neither of which a trigger node has.
 export function getNodeHeight(node: MinimalNode) {
-    return isTaskNode(node) || isTriggerNode(node)
-        ? NODE_SIZES.TASK_HEIGHT
-        : isCollapsedCluster(node)
-          ? NODE_SIZES.COLLAPSED_CLUSTER_HEIGHT
-          : NODE_SIZES.DOT_HEIGHT
+    return isTriggerNode(node)
+        ? NODE_SIZES.TRIGGER_HEIGHT
+        : isTaskNode(node)
+          ? NODE_SIZES.TASK_HEIGHT
+          : isCollapsedCluster(node)
+            ? NODE_SIZES.COLLAPSED_CLUSTER_HEIGHT
+            : NODE_SIZES.DOT_HEIGHT
 }
 
 export function isTaskNode(node: MinimalNode) {
@@ -327,6 +371,45 @@ export function nodeColor(node: MinimalNode, collapsed: Set<string>) {
     if (node.branchType == BranchType.FINALLY) return "warning"
     if (collapsed.has(node.uid)) return "blue"
     return "default"
+}
+
+/** A flowable's own gate node (e.g. the `Parallel` task itself) is a real graph node — edges fan
+ *  out of it or chain through it — but it must render once, as its cluster's lane header, not
+ *  again as a duplicate task box inside that same cluster (kestra-io/kestra#19666). Excludes
+ *  `Triggers` (no lane header) and subflow clusters (still their own expandable task node). */
+export function isTrueFlowableCluster(cluster: Cluster): boolean {
+    return Boolean(cluster.taskNode)
+        && !cluster.type.endsWith("SubflowGraphCluster")
+        && cluster.uid !== CLUSTER_PREFIX + TRIGGERS_NODE_UID
+}
+
+export function getFlowableGateUids(clusters: FlowGraph["clusters"]): Set<string> {
+    const uids = new Set<string>()
+    for (const entry of clusters) {
+        if (isTrueFlowableCluster(entry.cluster) && entry.cluster.taskNode) {
+            uids.add(entry.cluster.taskNode.uid)
+        }
+    }
+    return uids
+}
+
+/** The task ids of a lane's direct children — real tasks and nested lanes alike, each counted
+ *  once — for the lane header's child count and aggregate state. Excludes the lane's own gate
+ *  node and the structural root/end/finally/afterExecution markers. */
+export function getClusterChildTaskIds(
+    clusterEntry: {cluster: Cluster; nodes: string[]},
+    nodeByUid: Record<string, MinimalNode>,
+): string[] {
+    const taskNodeUid = clusterEntry.cluster.taskNode?.uid
+    return clusterEntry.nodes
+        .filter((uid) => {
+            if (uid === taskNodeUid) return false
+            const node = nodeByUid[uid]
+            // A nested lane's own uid (`cluster_...`) never has an entry in `nodeByUid`: it is a
+            // real child, just not a plain task.
+            return !node || !isClusterRootOrEnd(node)
+        })
+        .map((uid) => Utils.afterLastDot(uid.replace(CLUSTER_PREFIX, "")) ?? uid)
 }
 
 export interface AddTaskTarget {
@@ -429,6 +512,35 @@ export function getEdgeColor(
           : null
 }
 
+/** A flow-level `errors:` task has no cluster of its own — unlike a nested flowable's own error
+ *  branch, it hangs directly off the (invisible) root — so the frontend synthesizes one lane
+ *  wrapping every such task, the same way the backend already synthesizes the `Triggers` cluster
+ *  (kestra-io/kestra#19666). Returns `flowGraph.clusters` unchanged when there is nothing to wrap. */
+export function withSyntheticErrorsLane(flowGraph: {nodes: MinimalNode[]; clusters?: FlowGraph["clusters"]}): FlowGraph["clusters"] {
+    const clusters = flowGraph.clusters ?? []
+    const clusteredUids = new Set(clusters.flatMap((c) => c.nodes))
+    const rootErrorUids = flowGraph.nodes
+        .filter((node) => node.branchType === BranchType.ERROR && !clusteredUids.has(node.uid))
+        .map((node) => node.uid)
+
+    if (!rootErrorUids.length) return clusters
+
+    const errorsLane: FlowGraph["clusters"][number] = {
+        cluster: {
+            uid: CLUSTER_PREFIX + ERRORS_NODE_UID,
+            type: "io.kestra.core.models.hierarchies.GraphCluster",
+            taskNode: null,
+            branchType: BranchType.ERROR,
+        },
+        nodes: rootErrorUids,
+        parents: [],
+        start: rootErrorUids[0],
+        end: rootErrorUids[rootErrorUids.length - 1],
+    }
+
+    return [...clusters, errorsLane]
+}
+
 export function getEdgeColorToken(edgeColor: string | null): string {
     switch (edgeColor) {
         case "danger":
@@ -503,22 +615,32 @@ export function generateGraph(
         return
     }
 
+    const clusters = withSyntheticErrorsLane(flowGraph)
+    const flowableGateUids = getFlowableGateUids(clusters)
+
     const dagreGraph = generateDagreGraph(
-        flowGraph,
+        {...flowGraph, clusters},
         hiddenNodes,
         isHorizontal,
         edgeReplacer,
         collapsed,
         clusterToNode,
         getNodeDimensions,
+        flowableGateUids,
     )
 
     const clusterByNodeUid: Record<string, Cluster> = {}
-    const clusters = flowGraph.clusters || []
     const rawClusters = clusters.map((c) => c.cluster)
     const readOnlyUidPrefixes = rawClusters
-        .filter((c) => c.type.endsWith("SubflowGraphCluster"))
-        .map((c) => c.taskNode.uid)
+        .filter((c) => c.type.endsWith("SubflowGraphCluster") && c.taskNode)
+        .map((c) => c.taskNode!.uid)
+
+    // dagre lays every cluster out tightly around its children; a flowable lane's header claims
+    // `LANE_HEADER_HEIGHT` of the box instead, so its own height grows by that much and every
+    // direct child — task, dot, or nested lane — is nudged down by the same amount.
+    const flowableLaneClusterUids = new Set(
+        clusters.filter((c) => isTrueFlowableCluster(c.cluster)).map((c) => c.cluster.uid),
+    )
 
     const nodeByUid = Object.fromEntries(
         flowGraph.nodes.concat(clusterToNode).map((node) => [node.uid, node]),
@@ -542,6 +664,14 @@ export function generateGraph(
                 : undefined
             const clusterColor = computeClusterColor(cluster.cluster)
 
+            const clusterPosition = getNodePosition(
+                dagreNode,
+                parentNode ? dagreGraph.node(parentNode) : undefined,
+            )
+            if (parentNode && flowableLaneClusterUids.has(parentNode)) {
+                clusterPosition.y += NODE_SIZES.LANE_HEADER_HEIGHT
+            }
+
             elements.push({
                 id: clusterUid,
                 type: "cluster",
@@ -549,10 +679,7 @@ export function generateGraph(
                 // Without this the cluster falls back to vue-flow's global `nodesDraggable`, and
                 // dropping one on an edge emits a move for whatever its uid ends with.
                 draggable: false,
-                position: getNodePosition(
-                    dagreNode,
-                    parentNode ? dagreGraph.node(parentNode) : undefined,
-                ),
+                position: clusterPosition,
                 style: {
                     width:
                         clusterUid === TRIGGERS_NODE_UID && isHorizontal
@@ -561,7 +688,7 @@ export function generateGraph(
                     height:
                         clusterUid === TRIGGERS_NODE_UID && !isHorizontal
                             ? NODE_SIZES.TRIGGER_CLUSTER_HEIGHT + "px"
-                            : dagreNode.height + "px",
+                            : dagreNode.height + (flowableLaneClusterUids.has(clusterUid) ? NODE_SIZES.LANE_HEADER_HEIGHT : 0) + "px",
                     borderRadius: "var(--ks-radius-base)",
                     padding: "0.5rem",
                 },
@@ -576,8 +703,20 @@ export function generateGraph(
                         !isReadOnly,
                     taskNode: cluster.cluster.taskNode,
                     unused: cluster.cluster.taskNode
-                        ? nodeByUid[cluster.cluster.taskNode.uid].unused
+                        ? nodeByUid[cluster.cluster.taskNode.uid]?.unused
                         : false,
+                    // A flowable renders once — as this lane's own header — only for a real
+                    // Parallel/Sequential/If/… lane; `Triggers` and a subflow call keep their own
+                    // node and menu.
+                    isFlowableLane: isTrueFlowableCluster(cluster.cluster),
+                    childTaskIds: getClusterChildTaskIds(cluster, nodeByUid),
+                    executionId: cluster.cluster.taskNode
+                        ? nodeByUid[cluster.cluster.taskNode.uid]?.executionId
+                        : undefined,
+                    isReadOnly:
+                        isReadOnly ||
+                        Boolean(cluster.cluster.taskNode?.task?.type?.includes("$")) ||
+                        readOnlyUidPrefixes.some((prefix) => cluster.cluster.taskNode?.uid.startsWith(prefix + ".")),
                 },
                 class: `ks-topology-${clusterColor}-border`,
             } as any)
@@ -596,6 +735,9 @@ export function generateGraph(
                 nodeType = "trigger"
             } else if (node.type === "collapsedcluster") {
                 nodeType = "collapsedcluster"
+            } else if (flowableGateUids.has(node.uid)) {
+                // Rendered once already, as this lane's own header — see `isFlowableLane` above.
+                nodeType = "dot"
             }
 
             let color = nodeColor(node, collapsed)
@@ -609,15 +751,26 @@ export function generateGraph(
                 readOnlyUidPrefixes.some((prefix) => node.uid.startsWith(prefix + "."))
 
             const cluster = clusterByNodeUid[node.uid]
-            const nodeDimensions = getNodeDimensions(node, getNodeWidth, getNodeHeight)
+            // A hidden gate node is a fixed-size connector, same as a cluster root/end dot — never
+            // a footprint driven by `getNodeDimensions` (execution mode, zoom, …). Guarded to the
+            // uncollapsed case: collapsed, that same uid instead identifies the synthetic
+            // "collapsedcluster" placeholder, sized like any other collapsed cluster.
+            const nodeDimensions = nodeType !== "collapsedcluster" && flowableGateUids.has(node.uid)
+                ? {width: NODE_SIZES.DOT_WIDTH, height: NODE_SIZES.DOT_HEIGHT}
+                : getNodeDimensions(node, getNodeWidth, getNodeHeight)
+
+            const nodePosition = getNodePosition(
+                dagreNode,
+                cluster ? dagreGraph.node(cluster.uid) : undefined,
+            )
+            if (cluster && flowableLaneClusterUids.has(cluster.uid)) {
+                nodePosition.y += NODE_SIZES.LANE_HEADER_HEIGHT
+            }
 
             elements.push({
                 id: node.uid,
                 type: nodeType,
-                position: getNodePosition(
-                    dagreNode,
-                    cluster ? dagreGraph.node(cluster.uid) : undefined,
-                ),
+                position: nodePosition,
                 style: {
                     width: nodeDimensions.width + "px",
                     height: nodeDimensions.height + "px",
@@ -656,7 +809,7 @@ export function generateGraph(
         }
     }
 
-    const clusterRootTaskNodeUids = rawClusters.filter((c) => c.taskNode).map((c) => c.taskNode.uid)
+    const clusterRootTaskNodeUids = rawClusters.filter((c) => c.taskNode).map((c) => c.taskNode!.uid)
     const edges = flowGraph.edges ?? []
 
     for (const edge of edges) {

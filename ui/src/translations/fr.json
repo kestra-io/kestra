@@ -130,7 +130,6 @@
     "description": "Description",
     "show description": "Afficher une description",
     "show details": "Afficher les détails",
-    "show more details": "Afficher plus de détails",
     "skipped": "Ignoré",
     "revision": "Révision",
     "theme": "Thème",
@@ -441,7 +440,8 @@
       "invalid_description": "Une erreur s'est produite lors du chargement du graphique. Veuillez vérifier le code source pour les erreurs.",
       "load_error": "Impossible de charger le graphe de topologie. Veuillez réessayer.",
       "add-task": "Ajouter une task",
-      "add-trigger": "Ajouter un trigger"
+      "add-trigger": "Ajouter un trigger",
+      "child-count": "{count} task | {count} tasks"
     },
     "show task logs": "Afficher les journaux de la tâche",
     "show task condition": "Afficher la condition de la task",

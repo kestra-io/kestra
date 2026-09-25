@@ -16,6 +16,7 @@
             @mouseleave="canvasHovered = false"
             :defaultMarkerColor="cssVariable('--ks-topology-dash')"
             :minZoom="MIN_ZOOM"
+            :defaultViewport="defaultViewport"
             :nodesDraggable="false"
             :nodesConnectable="false"
             :elevateNodesOnSelect="false"
@@ -23,15 +24,20 @@
         >
             <Background :color="cssVariable(GRAPH_BACKGROUND.color)" :gap="GRAPH_BACKGROUND.gap" :size="GRAPH_BACKGROUND.size" />
 
-            <Panel v-if="showDetailsToggle" position="top-right">
-                <KsSwitch v-model="showExtraDetails" :activeText="$t('show more details')" size="small"/>
-            </Panel>
-
             <template #node-cluster="clusterProps">
                 <ClusterNode
                     v-bind="clusterProps"
                     @collapse="collapseCluster($event, true)"
                     @addTrigger="emit(EVENTS.ADD_TRIGGER)"
+                    @edit="emit(EVENTS.EDIT, $event)"
+                    @delete="emit(EVENTS.DELETE, $event)"
+                    @duplicate="emit(EVENTS.DUPLICATE, $event)"
+                    @show-description="emit(EVENTS.SHOW_DESCRIPTION, $event)"
+                    @show-condition="emit(EVENTS.SHOW_CONDITION, $event)"
+                    @show-logs="emit(EVENTS.SHOW_LOGS, $event)"
+                    @show-outputs="emit(EVENTS.SHOW_OUTPUTS, $event)"
+                    @replay-task="emit(EVENTS.REPLAY_TASK, $event)"
+                    @add-error="emit('on-add-flowable-error', $event)"
                 />
             </template>
 
@@ -185,7 +191,8 @@
 
 <script lang="ts" setup>
     import {computed, nextTick, onMounted, onUnmounted, provide, ref, watch} from "vue"
-    import {getRectOfNodes, useVueFlow, VueFlow, Panel} from "@vue-flow/core"
+    import {getRectOfNodes, useVueFlow, VueFlow} from "@vue-flow/core"
+    import type {ViewportTransform} from "@vue-flow/core"
     import {ControlButton, Controls} from "@vue-flow/controls"
     import {Background} from "@vue-flow/background"
     import ClusterNode from "./nodes/ClusterNode.vue"
@@ -202,13 +209,13 @@
     import AlignVerticalCenter from "vue-material-design-icons/AlignVerticalCenter.vue"
     import Download from "vue-material-design-icons/Download.vue"
     import ArrowExpandAll from "vue-material-design-icons/ArrowExpandAll.vue"
-    import {cssVar as cssVariable, State, KsSwitch, KsTooltip, useTaskIcon} from "@kestra-io/design-system"
-    import {CLUSTER_PREFIX, GRAPH_BACKGROUND, MIN_ZOOM} from "./utils/constants"
-    import {type CustomActionConfig, type ShowDetailsConfig, EVENTS, NODE_SIZES} from "./utils/constants"
+    import {cssVar as cssVariable, State, KsTooltip, useTaskIcon} from "@kestra-io/design-system"
+    import {CLUSTER_PREFIX, GRAPH_BACKGROUND, MIN_ZOOM, ZOOM_LOD} from "./utils/constants"
+    import {type CustomActionConfig, type ShowDetailsConfig, type LodLevel, EVENTS} from "./utils/constants"
     import * as VueFlowUtils from "./utils/vueFlowUtils"
     import {afterLastDot} from "./utils/utils"
     import {untilNodesMeasured, useScreenshot} from "./composables/useScreenshot"
-    import {EXECUTION_INJECTION_KEY, SUBFLOWS_EXECUTIONS_INJECTION_KEY, SHOW_EXTRA_DETAILS_INJECTION_KEY, VALIDATION_ISSUES_INJECTION_KEY, FOCUSED_TASK_INJECTION_KEY, DROP_EDGE_INJECTION_KEY, DRAGGING_NODE_INJECTION_KEY, CANVAS_HOVERED_INJECTION_KEY} from "./injectionKeys"
+    import {EXECUTION_INJECTION_KEY, SUBFLOWS_EXECUTIONS_INJECTION_KEY, LOD_INJECTION_KEY, VALIDATION_ISSUES_INJECTION_KEY, FOCUSED_TASK_INJECTION_KEY, DROP_EDGE_INJECTION_KEY, DRAGGING_NODE_INJECTION_KEY, CANVAS_HOVERED_INJECTION_KEY} from "./injectionKeys"
     import BasicNode from "./nodes/BasicNode.vue"
 
     const props = withDefaults(defineProps<{
@@ -237,13 +244,14 @@
         getNodeDimensions?: (node: any, getNodeWidth: (node: any) => number, getNodeHeight: (node: any) => number) => { width: number, height: number };
         customActions?: Record<string, CustomActionConfig>;
         showDetails?: Record<string, ShowDetailsConfig>;
-        showDetailsToggle?: boolean;
         // Bump this from the caller whenever data rendered *inside* the taskDetails slot (e.g.
         // live metrics or progress) changes but isn't itself part of `execution`/`flowGraph` — the
         // slot content is only re-evaluated when a node's graph data is regenerated.
         taskDetailsVersion?: number;
         validationIssuesByTask?: Map<string, string[]>;
         focusedTaskId?: string;
+        // For Storybook / tests only, to start the canvas pre-zoomed at a given level of detail.
+        defaultViewport?: Partial<ViewportTransform>;
     }>(), {
         isHorizontal: false,
         isReadOnly: true,
@@ -265,44 +273,38 @@
         getNodeDimensions: undefined,
         customActions: () => ({}),
         showDetails: () => ({}),
-        showDetailsToggle: true,
         taskDetailsVersion: undefined,
         validationIssuesByTask: undefined,
         focusedTaskId: undefined,
+        defaultViewport: undefined,
     })
 
     const isRunning = computed(() => State.isRunning(props.execution?.state?.current) === true)
 
-    const showExtraDetails = ref(false)
-    const {getNodes, getEdges, getElements, onNodesInitialized, fitView, zoomIn, zoomOut, setElements, removeEdges, removeNodes, removeSelectedElements, vueFlowRef} = useVueFlow(props.id)
+    const vueFlowStore = useVueFlow(props.id)
+    const {getNodes, getEdges, getElements, onNodesInitialized, fitView, zoomIn, zoomOut, setElements, removeEdges, removeNodes, removeSelectedElements, vueFlowRef} = vueFlowStore
     const edgeReplacer = ref({})
     const hiddenNodes = ref<string[]>([])
     const collapsed = ref(new Set<string>())
     const clusterToNode = ref([])
     const {capture} = useScreenshot()
 
-    const effectiveGetNodeDimensions = computed(() => {
-        return (node: any, getNodeWidth: (node: any) => number, getNodeHeight: (node: any) => number) => {
-            const baseHeight = getNodeHeight(node)
-            const dimensions = props.getNodeDimensions
-                ? props.getNodeDimensions(node, getNodeWidth, getNodeHeight)
-                : {width: getNodeWidth(node), height: baseHeight}
-
-            if (props.execution && (VueFlowUtils.isTaskNode(node) || VueFlowUtils.isTriggerNode(node) || VueFlowUtils.isCustomNode(node))) {
-                dimensions.width = NODE_SIZES.TASK_WIDTH_EXECUTION
-            }
-
-            if (VueFlowUtils.isTaskNode(node) && !showExtraDetails.value) {
-                return {...dimensions, height: baseHeight}
-            }
-
-            return dimensions
-        }
+    // Driven by zoom, never by state: crossing PILL/EXPANDED only changes what a node draws
+    // inside its (constant) footprint — see NODE_SIZES.TASK_HEIGHT in constants.ts.
+    const lod = computed<LodLevel>(() => {
+        const zoom = vueFlowStore.viewport.value.zoom
+        if (zoom < ZOOM_LOD.PILL) return "pill"
+        if (zoom > ZOOM_LOD.EXPANDED) return "expanded"
+        return "default"
     })
+
+    const effectiveGetNodeDimensions = computed(() =>
+        VueFlowUtils.buildEffectiveGetNodeDimensions(Boolean(props.execution), props.getNodeDimensions),
+    )
 
     provide(EXECUTION_INJECTION_KEY, computed(() => props.execution))
     provide(SUBFLOWS_EXECUTIONS_INJECTION_KEY, computed(() => props.subflowsExecutions))
-    provide(SHOW_EXTRA_DETAILS_INJECTION_KEY, showExtraDetails)
+    provide(LOD_INJECTION_KEY, lod)
     provide(VALIDATION_ISSUES_INJECTION_KEY, computed(() => props.validationIssuesByTask ?? new Map()))
     provide(FOCUSED_TASK_INJECTION_KEY, computed(() => props.focusedTaskId))
 
@@ -399,10 +401,6 @@
         generateGraph()
     })
 
-    watch(showExtraDetails, () => {
-        generateGraph()
-    })
-
     watch(isRunning, () => {
         generateGraph()
     })
@@ -411,7 +409,9 @@
     onNodesInitialized(() => {
         if (!initialFitDone.value) {
             initialFitDone.value = true
-            fitView()
+            // A caller passing its own starting zoom (Storybook, tests) means fitView() would
+            // immediately discard it.
+            if (!props.defaultViewport) fitView()
             return
         }
         if (refitOnNodesInitialized.value) {

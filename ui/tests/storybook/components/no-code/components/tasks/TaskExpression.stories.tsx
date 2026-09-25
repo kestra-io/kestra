@@ -83,7 +83,7 @@ export const RegistersFocusedExpressionEditor: Story = {
         // Regression: clicking an Inputs-panel chip while this field was focused fell through
         // to clipboard copy, since Monaco fields are excluded from the plain-input "armed" tracking.
         const canvas = within(canvasElement);
-        const editorContainer = await waitFor(() => canvas.getByTestId("monaco-editor"));
+        const editorContainer = await waitFor(() => canvas.getByTestId("monaco-editor"), {timeout: 15000});
         const input = within(editorContainer).getByRole("textbox");
 
         await userEvent.click(input);

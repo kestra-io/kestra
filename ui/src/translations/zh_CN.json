@@ -2602,6 +2602,9 @@
       "plugin_default": "默认值: {value}",
       "plugin_default_tooltip": "来自 flow 的 pluginDefaults 的默认 value",
       "required_missing": "必填字段未设置",
+      "required_unset_jump": "跳转到第一个",
+      "required_unset_plural": "还有 {count} 个必填字段未设置",
+      "required_unset_singular": "还有 1 个必填字段未设置",
       "save_blocked": {
         "message": "保存前请修正错误。",
         "title": "无法保存 flow"

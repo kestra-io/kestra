@@ -190,7 +190,7 @@
   "src/components/no-code/components/tasks/MixinTask.ts": 1,
   "src/components/no-code/components/tasks/TaskAnyOf.vue": 11,
   "src/components/no-code/components/tasks/TaskArray.vue": 6,
-  "src/components/no-code/components/tasks/TaskComplex.vue": 4,
+  "src/components/no-code/components/tasks/TaskComplex.vue": 2,
   "src/components/no-code/components/tasks/TaskDict.vue": 5,
   "src/components/no-code/components/tasks/TaskExpression.vue": 1,
   "src/components/no-code/components/tasks/TaskLabelWithBoolean.vue": 1,

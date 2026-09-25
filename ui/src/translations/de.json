@@ -2602,6 +2602,9 @@
       "plugin_default": "Standard: {value}",
       "plugin_default_tooltip": "Standardwert aus den pluginDefaults des Flows",
       "required_missing": "Erforderliches Feld nicht gesetzt",
+      "required_unset_jump": "Zum ersten springen",
+      "required_unset_plural": "{count} Pflichtfelder sind noch nicht gesetzt",
+      "required_unset_singular": "1 Pflichtfeld ist noch nicht gesetzt",
       "save_blocked": {
         "message": "Behebe die Fehler vor dem Speichern.",
         "title": "Der Flow kann nicht gespeichert werden"

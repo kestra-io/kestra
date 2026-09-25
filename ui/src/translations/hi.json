@@ -2602,6 +2602,9 @@
       "plugin_default": "डिफ़ॉल्ट: {value}",
       "plugin_default_tooltip": "flow के pluginDefaults से डिफ़ॉल्ट मान",
       "required_missing": "आवश्यक फ़ील्ड सेट नहीं है",
+      "required_unset_jump": "पहले पर जाएं",
+      "required_unset_plural": "{count} आवश्यक फ़ील्ड अभी तक सेट नहीं हैं",
+      "required_unset_singular": "1 आवश्यक फ़ील्ड अभी तक सेट नहीं है",
       "save_blocked": {
         "message": "सेव करने से पहले त्रुटियों को ठीक करें।",
         "title": "flow को सहेजा नहीं जा सकता"

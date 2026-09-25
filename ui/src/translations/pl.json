@@ -2602,6 +2602,9 @@
       "plugin_default": "domyślny: {value}",
       "plugin_default_tooltip": "Wartość domyślna z pluginDefaults Flow",
       "required_missing": "Wymagane pole nieustawione",
+      "required_unset_jump": "Przejdź do pierwszego",
+      "required_unset_plural": "{count} wymaganych pól nie jest jeszcze ustawionych",
+      "required_unset_singular": "1 wymagane pole nie jest jeszcze ustawione",
       "save_blocked": {
         "message": "Napraw błędy przed zapisaniem.",
         "title": "Nie można zapisać Flow"

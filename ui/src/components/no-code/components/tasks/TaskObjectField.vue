@@ -51,7 +51,13 @@
             />
         </div>
     </div>
-    <KsFormItem v-else-if="fieldKey" :required="isRequired" for="" :data-test="`field-${fieldKey}`">
+    <KsFormItem
+        v-else-if="fieldKey"
+        :required="isRequired"
+        for=""
+        :data-test="`field-${fieldKey}`"
+        :data-required-path="isMissingRequired ? fieldPath : undefined"
+    >
         <template #label>
             <div class="inline-wrapper">
                 <div class="inline-start">
@@ -177,6 +183,10 @@
         return value === undefined || value === null || value === "" || (Array.isArray(value) && value.length === 0)
     })
 
+    const fieldPath = computed(() =>
+        props.rootOverride ?? (props.root ? `${props.root}.${props.fieldKey}` : props.fieldKey),
+    )
+
     const hasSelectedASchema = ref(false)
 
     const pebbleState = ref(false)
@@ -195,7 +205,7 @@
                 pebbleState.value = value
             },
             task: props.task,
-            root: props.rootOverride ?? (props.root ? `${props.root}.${props.fieldKey}` : props.fieldKey),
+            root: fieldPath.value,
             schema: props.schema,
             required: isRequired.value,
         }

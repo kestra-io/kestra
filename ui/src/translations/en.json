@@ -2602,6 +2602,9 @@
       "plugin_default": "default: {value}",
       "plugin_default_tooltip": "Default value from the flow's pluginDefaults",
       "required_missing": "Required field not set",
+      "required_unset_jump": "Jump to first",
+      "required_unset_plural": "{count} required fields are not set yet",
+      "required_unset_singular": "1 required field is not set yet",
       "save_blocked": {
         "message": "Fix the errors before saving.",
         "title": "Cannot save the flow"

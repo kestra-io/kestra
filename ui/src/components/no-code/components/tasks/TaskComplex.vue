@@ -3,7 +3,7 @@
         <TaskObject
             v-bind="$attrs"
             :properties="computedProperties"
-            :schema
+            :schema="computedSchema"
             merge
         />
     </div>
@@ -13,6 +13,7 @@
     import {computed, inject, ref} from "vue"
     import TaskObject from "./TaskObject.vue"
     import {resolve$ref} from "../../../../utils/utils"
+    import type {Schema} from "./getTaskComponent"
     import {FULL_SCHEMA_INJECTION_KEY} from "../../injectionKeys"
 
     defineOptions({inheritAttrs: false})
@@ -28,26 +29,29 @@
 
     const fullSchema = inject(FULL_SCHEMA_INJECTION_KEY, ref({}))
 
+    const resolvedAllOfSchemas = computed<Schema[]>(() => {
+        if (!props.schema?.allOf && !props.schema?.$ref) return []
+        const schemas: Schema[] = props.schema.allOf ?? [props.schema]
+        return schemas.map((item) => resolve$ref(fullSchema.value, item))
+    })
+
     const computedProperties = computed(() => {
-        if(!props.schema?.allOf && !props.schema?.$ref) {
+        if (!resolvedAllOfSchemas.value.length) {
             return props.schema?.properties || {}
         }
-        const schemas = props.schema.allOf ?? [props.schema]
-        return schemas.reduce((
-            acc: Record<string, any>,
-            item: {
-                $ref?: string;
-                properties?: Record<string, any>
-            }) => {
-
-            const i = resolve$ref(fullSchema.value, item)
-            return {
-                ...acc,
-                ...i?.properties,
-            }
-
-        }, {})
+        return resolvedAllOfSchemas.value.reduce<Record<string, Schema>>((acc, item) => ({
+            ...acc,
+            ...item?.properties,
+        }), {})
     })
+
+    const computedRequired = computed(() => [
+        ...new Set(resolvedAllOfSchemas.value.flatMap((item) => item?.required ?? [])),
+    ])
+
+    const computedSchema = computed(() =>
+        computedRequired.value.length ? {...props.schema, required: computedRequired.value} : props.schema,
+    )
 </script>
 
 <style scoped lang="scss">

@@ -183,6 +183,138 @@ describe("useCrossResourceSearchStore", () => {
         expect(store.flows.results).toHaveLength(1)
         expect(store.flows.results[0].id).toBe("newer")
     })
+    it("returns a separator suggestion when the alternative query has results", async () => {
+        mockSearchFlowsBySourceCode
+            .mockResolvedValueOnce({results: []})
+            .mockResolvedValueOnce({
+                results: [{namespace: "ns", id: "flow", editable: true, matches: []}],
+            })
+
+        const store = useCrossResourceSearchStore()
+        const gen = await store.search({
+            types: ["flows"],
+            query: "my-flow",
+            ...flowFilters,
+        })
+
+        const suggestion = await store.searchFlowSuggestion(
+            {
+                query: "my-flow",
+                ...flowFilters,
+            },
+            gen,
+        )
+
+        expect(suggestion).toBe("my_flow")
+        expect(mockSearchFlowsBySourceCode).toHaveBeenLastCalledWith(
+            expect.objectContaining({
+                q: "my_flow",
+                page: 1,
+                size: 1,
+            }),
+        )
+    })
+
+    it("returns null when the alternative query has no results", async () => {
+        mockSearchFlowsBySourceCode
+            .mockResolvedValueOnce({results: []})
+            .mockResolvedValueOnce({results: []})
+
+        const store = useCrossResourceSearchStore()
+        const gen = await store.search({
+            types: ["flows"],
+            query: "my-flow",
+            ...flowFilters,
+        })
+
+        const suggestion = await store.searchFlowSuggestion(
+            {
+                query: "my-flow",
+                ...flowFilters,
+            },
+            gen,
+        )
+
+        expect(suggestion).toBeNull()
+    })
+
+    it("returns null without searching when the query has no separator", async () => {
+        const store = useCrossResourceSearchStore()
+
+        const gen = await store.search({
+            types: ["flows"],
+            query: "myflow",
+            ...flowFilters,
+        })
+
+        mockSearchFlowsBySourceCode.mockClear()
+
+        const suggestion = await store.searchFlowSuggestion({
+                query: "myflow",
+                ...flowFilters,
+        }, gen)
+
+        expect(suggestion).toBeNull()
+        expect(mockSearchFlowsBySourceCode).not.toHaveBeenCalled()
+    })
+
+    it("returns null without searching for regex queries", async () => {
+        const store = useCrossResourceSearchStore()
+
+        const gen = await store.search({
+            types: ["flows"],
+            query: "my-flow",
+            ...flowFilters,
+        })
+
+        mockSearchFlowsBySourceCode.mockClear()
+
+        const suggestion = await store.searchFlowSuggestion({
+                query: "my-flow",
+                ...flowFilters,
+                regex: true,
+        }, gen)
+
+        expect(suggestion).toBeNull()
+        expect(mockSearchFlowsBySourceCode).not.toHaveBeenCalled()
+    })
+
+    it("returns undefined when the suggestion request becomes stale", async () => {
+        const suggestionRequest = deferred<{results: unknown[]}>()
+
+        mockSearchFlowsBySourceCode
+            .mockResolvedValueOnce({results: []})
+            .mockReturnValueOnce(suggestionRequest.promise)
+            .mockResolvedValueOnce({results: []})
+
+        const store = useCrossResourceSearchStore()
+
+        const gen = await store.search({
+            types: ["flows"],
+            query: "my-flow",
+            ...flowFilters,
+        })
+
+        const suggestionPromise = store.searchFlowSuggestion(
+            {
+                query: "my-flow",
+                ...flowFilters,
+            },
+            gen,
+        )
+
+        await store.search({
+            types: ["flows"],
+            query: "new-flow",
+            ...flowFilters,
+        })
+
+        suggestionRequest.resolve({
+            results: [{namespace: "ns", id: "flow", editable: true, matches: []}],
+        })
+
+        expect(await suggestionPromise).toBeUndefined()
+    })
 
     it("discards a namespace-file retry once the query has moved on", async () => {
         mockAutocompleteNamespaces.mockResolvedValue(["ns"])

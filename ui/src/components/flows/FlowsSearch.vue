@@ -709,6 +709,7 @@
 
     async function fetchResults() {
         if (!loadInit.value) return
+        searchPending.value = true
         if (!query.value) {
             searchPending.value = false
             crossResourceSearchStore.reset()

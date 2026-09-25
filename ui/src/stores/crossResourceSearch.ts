@@ -152,10 +152,10 @@ export const useCrossResourceSearchStore = defineStore("crossResourceSearch", ()
     }
 
     async function searchFlowSuggestion(params: FlowsSearchParams, gen: number): Promise<string | null | undefined> {
-        if (!params.query || params.regex) return null
+        if (!params.query || params.regex) return isCurrent(gen) ? null : undefined
         const alternativeQuery = getSeparatorVariant(params.query)
 
-        if (!alternativeQuery) return null
+        if (!alternativeQuery) return isCurrent(gen) ? null : undefined
 
         try {
             const response = await FlowsAPI.searchFlowsBySourceCode({

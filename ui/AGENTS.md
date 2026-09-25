@@ -34,11 +34,9 @@ These rules are what keep the UI maintainable as it grows. Treat any deviation a
 8. **Don't fork — extend.** If a `Ks*` component is *almost* what you need, add a prop or a slot to the component in `ui/packages/design-system/`. Copy-pasting the component into your feature folder is forbidden.
 9. **Every new `Ks*` component needs a Storybook story and a unit test.** Stories double as living documentation for design and product reviewers.
 10. **i18n keys live with the design system component**, not inside feature code, when they belong to the component (e.g. `KsEmpty`, `KsDurationPicker`). Register them via `registerDesignSystemI18n`.
-11. **Check that a token exists before using it.** With an invalid `var(--ks-…)` and no fallback, the property is silently inherited instead, so the mistake remains invisible until the computed style is measured. The cases feature was released using `--ks-font-size-medium`, `--ks-font-size-small`, `--ks-radius-2` and `--ks-border-active`, none of which are declared anywhere. One grep is enough:
+11. **Check that a token exists before using it.** With an invalid `var(--ks-…)` and no fallback, the property is silently inherited instead, so the mistake remains invisible until the computed style is measured. The cases feature was released using `--ks-font-size-medium`, `--ks-font-size-small`, `--ks-radius-2` and `--ks-border-active`, none of which are declared anywhere, and the interval filter's Apply-to row shipped with no visible selection for the same reason (kestra-io/kestra#18777).
 
-    ```bash
-    grep -rn -- "--ks-your-token" packages/design-system/src/assets/styles/
-    ```
+    Your editor underlines it: `ks/no-undeclared-custom-property` (stylelint) covers `<style>` blocks and `.scss`, `kestra-tokens/no-undeclared-ks-token` (eslint) covers `cssVar("--ks-…")` and tokens written inside strings, and both propose a replacement. `npm run lint` runs both. See [scripts/tokens/README.md](scripts/tokens/README.md), which also has the one setting the Stylelint extension needs for `.vue` files.
 12. **Copying an existing rule is not proof that it is correct.** Several hundred `:deep()` selectors, some hex codes and some raw pixel values are older than these rules and are being removed over time. Treat them as debt rather than as precedent: don't add more, and clean up the ones in the component you are already editing.
 
 ## Best practices for keeping the design system healthy
@@ -293,14 +291,25 @@ npm run check:types && npm run test:unit && npm run lint
 
 `npm run check:ts-any` compares the explicit `any` per file against `scripts/explicit-any/baseline.json`. It fails when a file gains one, so type it instead of raising the number. It also fails when a file loses one, because the baseline has to come down with the code: run `npm run check:ts-any -- --write` and commit the smaller numbers, or install the repo's git hooks (`.github/.hooks/setup_hooks.sh`) and the pre-commit hook does it for you. `--write` only ever lowers; it refuses to raise a count.
 
-Then read your own diff for the design-system violations that no linter catches:
+Colour is gated automatically. `tests/unit/designSystem/colorGuard.spec.ts` fails on any hex, `rgb()`, `hsl()`, `oklch()`, `--el-*`, `--bs-*`, SCSS colour variable or bare keyword colour reaching a colour property anywhere under `ui/src` and `ui/packages/topology/src`, and prints `path:line (colours)` for every offending line. It runs with `npm run test:unit` and on every PR. Replace what it reports with a `--ks-*` token, a `Ks*` prop, or a change in the design system.
+
+Two escape hatches exist, each taking a reason, for the case the guard cannot judge: artwork whose colours **are** the asset (a brand mark, a third-party logo) rather than a themed surface. Nothing else qualifies, and a hardcoded colour that a token could carry is a bug whether or not the guard is silenced. There is deliberately no whole-file opt-out, and a `-start` with no `-end` is reported instead of muting the rest of the file.
+
+```scss
+/* design-system-disable-next-line: the Kestra mark is fixed artwork */
+/* design-system-disable-start: … */  /* … */  /* design-system-disable-end */
+```
+
+The guard reads `.vue`, `.scss`, `.css`, `.ts` and `.js`; in a `.vue` file it reads `<style>` blocks plus `fill=` / `stroke=` attributes, and in a script it reads a hex under a colour-named key (`colorHex: "#…"`), so a `//`, `/* */` or `<!-- -->` comment all work.
+
+Spacing, radii and `:deep()` are not gated, so still read your own diff for those:
 
 ```bash
 git diff -U0 develop... -- '*.vue' '*.scss' \
-  | grep -nE '^\+.*(#[0-9a-fA-F]{3,8}\b|rgba?\(|--el-|--bs-|:deep\(|(padding|margin|gap|border-radius|font-size)[[:space:]]*:[[:space:]]*[0-9]+px)'
+  | grep -nE '^\+.*(:deep\(|(padding|margin|gap|border-radius|font-size)[[:space:]]*:[[:space:]]*[0-9]+px)'
 ```
 
-Every match has to be replaced with a `--ks-*` token, a `Ks*` prop, or a change in the design system. For a user-visible change, also check it in light **and** dark mode, and attach a screenshot to the PR.
+For a user-visible change, also check it in light **and** dark mode, and attach a screenshot to the PR.
 
 ### Deprecation contract
 
@@ -344,7 +353,7 @@ If your `<style>` block needs to exist:
 .my-feature {
     background: var(--ks-bg-surface);
     color: var(--ks-text-primary);
-    border: 1px solid var(--ks-border-primary);
+    border: 1px solid var(--ks-border-default);
 }
 ```
 
@@ -367,7 +376,7 @@ If your `<style>` block needs to exist:
 
 | Component | Purpose |
 |-----------|---------|
-| `KsAlert` | Alert banner for messages and status feedback |
+| `KsAlert` | Alert banner for messages and status feedback. Pass `banner` for a full-width system bar (licence, impersonation): square, bottom rule only, body text in `--ks-text-primary` so it reads at AA on the tint |
 | `KsDialog` | Modal dialog (handles focus trap + Escape); `dirty` asks before an accidental close |
 | `KsDrawer` | Side drawer / panel; `dirty` asks before an accidental close |
 | `KsTooltip` | Hover tooltip |
@@ -389,6 +398,7 @@ If your `<style>` block needs to exist:
 | `KsRadio` / `KsRadioGroup` / `KsRadioButton` | Radio button variants |
 | `KsRadioCardGroup` | Single-select radio group rendered as option cards (title + optional hint/icon/disabled); options-driven via `:options` + `v-model` |
 | `KsSwitch` | Toggle switch |
+| `KsThemePicker` | Theme chooser, one miniature of the app per theme painted in that theme's own colours; options-driven via `:options` + `v-model` |
 | `KsDatePicker` / `KsTimePicker` | Date and time pickers |
 | `KsColorPicker` | Color picker |
 | `KsDurationPicker` | ISO 8601 duration picker |
@@ -446,7 +456,7 @@ If your `<style>` block needs to exist:
 
 ## Utilities (import from the design system)
 
-- `State`, `STATES`, `LOG_LEVELS` — execution state constants, icons, and colors
+- `State`, `STATES`, `LOG_LEVELS` — execution state constants and icons. A state's colour is not a property of the state: read it with `State.getStateColor(name)`, which resolves `--ks-status-*`
 - `cssVar(name, opacity?)` — read a `--ks-*` CSS custom property at runtime (use this in JS / chart configs instead of hardcoding hex)
 - `dayjs` — the one configured dayjs instance (utc, timezone, duration, advancedFormat, calendar, isoWeek, localizedFormat, minMax, relativeTime, weekOfYear, isSameOrBefore). Never `import dayjs from "dayjs"` in feature code: plugins are registered on this instance, so a bare import silently lacks them
 - `dateUtils` — `dateFilter()`, `parseIso()`, `toIsoKeepOffset()`, `currentTimezone()`, `timezonesWithOffset()`, `currentLocale()`, `setLocale()`, `DATE_FORMAT_STORAGE_KEY`, `TIMEZONE_STORAGE_KEY`

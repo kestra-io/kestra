@@ -49,7 +49,7 @@ const AppTableBlockRender = () => ({
             <div style={{width: "500px"}}>
                 <h2>Resulting object</h2>
                 <pre style={{
-                    border: "1px solid var(--ks-border-primary)",
+                    border: "1px solid var(--ks-border-default)",
                     borderRadius: "4px",
                     padding: "2px",
                     background: "var(--ks-bg-surface)"

@@ -1,5 +1,15 @@
 <template>
     <div id="topologyWrapper" v-ks-loading="isLoading" class="vue-flow">
+        <KsAlert
+            v-if="flowGraph && invalidGraph"
+            :title="$t('topology-graph.invalid')"
+            type="error"
+            class="stale-graph"
+            :closable="false"
+            data-test="topology-stale-graph"
+        >
+            {{ $t('topology-graph.invalid_description') }}
+        </KsAlert>
         <LowCodeEditor
             v-if="flowGraph"
             :flowGraph="flowGraph"
@@ -9,7 +19,6 @@
             :source="flowYaml"
             :isAllowedEdit="isAllowedEdit"
             :expandedSubflows="expandedSubflows"
-            @on-edit="onEdit"
             @loading="loadingState"
             @expand-subflow="onExpandSubflow"
         />
@@ -69,30 +78,20 @@
             isLoading.value = false
         }
     }
-
-    const onEdit = async (source: string, currentIsFlow = false) => {
-        flowStore.flowYaml = source
-        const result = await flowStore.onEdit({
-            source,
-            editorViewType: "YAML",
-            topologyVisible: true,
-        })
-
-        if (currentIsFlow && source) {
-            await flowStore.loadGraphFromSource({
-                flow: source,
-            }).catch((error) => {
-                console.error("Error loading graph:", error)
-            })
-        }
-
-        return result
-    }
 </script>
 
 <style scoped>
     .vue-flow {
         height: 100%;
+        position: relative;
+    }
+    .stale-graph {
+        position: absolute;
+        z-index: 2;
+        top: var(--ks-spacing-2);
+        left: var(--ks-spacing-2);
+        right: var(--ks-spacing-2);
+        width: auto;
     }
     :deep(.vue-flow__panel.bottom) {
         bottom: 2rem !important;

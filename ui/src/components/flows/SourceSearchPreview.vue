@@ -214,7 +214,7 @@
 
     function applyHighlight() {
         if (!flowSelection.value) return
-        const editor = editorRef.value?.getEditor?.() as any
+        const editor = editorRef.value?.getEditor?.()
         if (!editor) return
         const line = flowSelection.value.line
         activeDecoration?.clear()

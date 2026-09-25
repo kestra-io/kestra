@@ -258,6 +258,50 @@ class HttpClientTest {
     }
 
     @Test
+    void shouldDenyUrlFromConfigWhenIpLiteralUsesAPartialInetAtonForm() throws IllegalVariableEvaluationException, IOException {
+        try (HttpClient client = client()) {
+            var exception = assertThrows(IllegalArgumentException.class, () -> client.request(
+                HttpRequest.of(URI.create("http://169.254.43518/latest/meta-data/")),
+                String.class
+            ));
+            assertThat(exception.getMessage()).isEqualTo("The URI http://169.254.43518/latest/meta-data/ is in the configured denied list (kestra.tasks.http.denied-list).");
+        }
+    }
+
+    @Test
+    void shouldDenyUrlFromConfigWhenAuthorityContainsAnUnderscore() throws IllegalVariableEvaluationException, IOException {
+        try (HttpClient client = client()) {
+            var exception = assertThrows(IllegalArgumentException.class, () -> client.request(
+                HttpRequest.of(URI.create("http://kestra_internal_db/x")),
+                String.class
+            ));
+            assertThat(exception.getMessage()).isEqualTo("The URI http://kestra_internal_db/x is in the configured denied list (kestra.tasks.http.denied-list).");
+        }
+    }
+
+    @Test
+    void shouldDenyUrlFromConfigWhenHostIsADecimalIpLiteral() throws IllegalVariableEvaluationException, IOException {
+        try (HttpClient client = client()) {
+            var exception = assertThrows(IllegalArgumentException.class, () -> client.request(
+                HttpRequest.of(URI.create("http://2852039166/latest/meta-data/")),
+                String.class
+            ));
+            assertThat(exception.getMessage()).isEqualTo("The URI http://2852039166/latest/meta-data/ is in the configured denied list (kestra.tasks.http.denied-list).");
+        }
+    }
+
+    @Test
+    void shouldDenyUrlFromConfigWhenHostIsInADeniedCidrRange() throws IllegalVariableEvaluationException, IOException {
+        try (HttpClient client = client()) {
+            var exception = assertThrows(IllegalArgumentException.class, () -> client.request(
+                HttpRequest.of(URI.create("http://10.1.2.3/x")),
+                String.class
+            ));
+            assertThat(exception.getMessage()).isEqualTo("The URI http://10.1.2.3/x is in the configured denied list (kestra.tasks.http.denied-list).");
+        }
+    }
+
+    @Test
     void shouldDenyUrlFromConfigWhenReachedThroughARedirect() throws IllegalVariableEvaluationException, IOException {
         try (HttpClient client = client()) {
             var exception = assertThrows(IllegalArgumentException.class, () -> client.request(

@@ -2,6 +2,7 @@
     <Teleport to="body">
         <div
             class="block-command-menu-overlay"
+            data-authoring-overlay
             data-test="block-command-menu"
             @click="emit('close')"
         >

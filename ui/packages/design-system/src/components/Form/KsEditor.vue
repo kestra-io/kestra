@@ -162,7 +162,7 @@
 
 <style lang="scss">
     .highlight-lines {
-        background-color: rgba(#3991ff, .2);
+        background-color: color-mix(in srgb, var(--ks-status-info) 20%, transparent);
     }
 
     /* Lines a consumer has locked via useReadOnlyYamlKeys. Styled here because the
@@ -332,14 +332,15 @@
     .highlight-text {
         cursor: pointer;
         font-weight: 700;
-        box-shadow: 0 19px 44px rgba(157, 29, 236, 0.31);
+        box-shadow: 0 19px 44px var(--ks-shadow-elevated);
 
         html.dark & {
-            background-color: rgba(255, 255, 255, 0.2);
+            background-color: color-mix(in srgb, var(--ks-text-primary) 20%, transparent);
         }
     }
 
     .highlight-pebble {
+        /* Not `--ks-editor-pabble`: Dark 2.0 maps that token to green, so it stays hardcoded until the token is corrected. */
         color: #977100 !important;
 
         html.dark & {

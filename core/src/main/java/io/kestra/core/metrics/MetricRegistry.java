@@ -137,6 +137,8 @@ public class MetricRegistry {
     public static final String METRIC_EXECUTOR_EXECUTION_DELAY_ENDED_COUNT_DESCRIPTION = "The total number of execution delays ended (resumed) by the Executor";
     public static final String METRIC_EXECUTOR_WORKER_JOB_RESUBMIT_COUNT = "executor.worker.job.resubmit.count";
     public static final String METRIC_EXECUTOR_WORKER_JOB_RESUBMIT_COUNT_DESCRIPTION = "The total number of worker jobs resubmitted to the Worker by the Executor";
+    public static final String METRIC_EXECUTOR_WORKER_JOB_ORPHAN_COUNT = "executor.worker.job.orphan.count";
+    public static final String METRIC_EXECUTOR_WORKER_JOB_ORPHAN_COUNT_DESCRIPTION = "The total number of running worker jobs reclaimed by the Executor from a worker that left the cluster";
     public static final String METRIC_EXECUTOR_EXECUTION_QUEUED_COUNT = "executor.execution.queued.count";
     public static final String METRIC_EXECUTOR_EXECUTION_QUEUED_COUNT_DESCRIPTION = "The total number of executions queued by the Executor";
     public static final String METRIC_EXECUTOR_EXECUTION_POPPED_COUNT = "executor.execution.popped.count";

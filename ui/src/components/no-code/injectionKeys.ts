@@ -26,6 +26,7 @@ export const PANEL_MAXIMIZED_INJECTION_KEY = Symbol("panel-maximized-injection-k
 export const EDITOR_CURSOR_INJECTION_KEY = Symbol("editor-cursor-injection-key") as InjectionKey<Ref<number | undefined>>
 export const EDITOR_HIGHLIGHT_INJECTION_KEY = Symbol("editor-highlight-injection-key") as InjectionKey<Ref<number | undefined>>
 export const EDITOR_WRAPPER_INJECTION_KEY = Symbol("editor-wrapper-injection-key") as InjectionKey<boolean>
+export const FOCUSED_EXPRESSION_EDITOR_INJECTION_KEY = Symbol("focused-expression-editor-injection-key") as InjectionKey<Ref<((text: string) => void) | null>>
 
 export const ROOT_SCHEMA_INJECTION_KEY = Symbol("root-schema-injection-key") as InjectionKey<Ref<Record<string, any>>>
 

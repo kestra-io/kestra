@@ -39,3 +39,18 @@ describe("execution filter configurations declare taskId", () => {
         expect(config.value.keys.map((k: {key: string}) => k.key)).toContain("taskId")
     })
 })
+
+// Issue #12784: the Trigger tab links to the executions list pre-filtered on the
+// trigger id, but `triggerId` was never declared here, so keepSupportedFilters would
+// silently drop filters[triggerId][EQUALS] before the search request reached the API.
+describe("execution filter configurations declare triggerId", () => {
+    it("useExecutionFilter", () => {
+        const config = setup(() => useExecutionFilter())
+        expect(config.value.keys.map((k: {key: string}) => k.key)).toContain("triggerId")
+    })
+
+    it("useFlowExecutionFilter", () => {
+        const config = setup(() => useFlowExecutionFilter())
+        expect(config.value.keys.map((k: {key: string}) => k.key)).toContain("triggerId")
+    })
+})

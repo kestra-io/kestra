@@ -60,7 +60,7 @@
             ? await ExecutionUtils.waitForState(axios, replayed) as Execution
             : replayed
 
-        executionsStore.execution = execution
+        executionsStore.applyLocalExecutionUpdate(execution)
         // The parent route resolves the user's default execution tab; naming a tab here ignored it.
         await router.push({
             name: EXECUTION_PARENT_ROUTE,

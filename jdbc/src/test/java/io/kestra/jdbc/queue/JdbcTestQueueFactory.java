@@ -4,6 +4,7 @@ import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.queues.KeyedDispatchQueueInterface;
 import io.kestra.core.queues.VNodeDispatchQueueInterface;
+import io.kestra.core.queues.factory.QueueBean;
 import io.kestra.queue.*;
 import io.kestra.queue.jdbc.*;
 

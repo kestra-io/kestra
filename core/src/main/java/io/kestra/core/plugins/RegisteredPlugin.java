@@ -8,6 +8,7 @@ import java.util.jar.Manifest;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import io.kestra.core.queues.factory.QueueFactoryInterface;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.ObjectUtils;
@@ -58,6 +59,7 @@ public class RegisteredPlugin {
     public static final String RULES_GROUP_NAME = "rules";
     public static final String ADDITIONAL_PLUGINS_GROUP_NAME = "additional-plugins";
     public static final String FILE_RENDERERS_GROUP_NAME = "file-renderers";
+    public static final String QUEUE_FACTORIES_GROUP_NAME = "queue-factories";
 
     private final ExternalPlugin externalPlugin;
     private final Manifest manifest;
@@ -79,6 +81,7 @@ public class RegisteredPlugin {
     private final List<Class<? extends RulePluginInterface>> rules;
     private final List<Class<? extends AdditionalPlugin>> additionalPlugins;
     private final List<Class<? extends FileRenderer>> fileRenderers;
+    private final List<Class<? extends QueueFactoryInterface>> queueFactories;
     private final List<String> guides;
     // Map<lowercasealias, <Alias, Class>>
     private final Map<String, Map.Entry<String, Class<?>>> aliases;
@@ -102,7 +105,8 @@ public class RegisteredPlugin {
             !logExporters.isEmpty() ||
             !rules.isEmpty() ||
             !additionalPlugins.isEmpty() ||
-            !fileRenderers.isEmpty();
+            !fileRenderers.isEmpty() ||
+            !queueFactories.isEmpty();
     }
 
     public boolean hasClass(String cls) {
@@ -190,6 +194,10 @@ public class RegisteredPlugin {
             return FileRenderer.class;
         }
 
+        if (this.getQueueFactories().stream().anyMatch(r -> r.getName().equals(cls))) {
+            return QueueFactoryInterface.class;
+        }
+
         if (this.getAliases().containsKey(cls.toLowerCase())) {
             // This is a quick-win, but it may trigger an infinite loop ... or not ...
             return baseClass(this.getAliases().get(cls.toLowerCase()).getValue().getName());
@@ -228,6 +236,7 @@ public class RegisteredPlugin {
         result.put(RULES_GROUP_NAME, Arrays.asList(this.getRules().toArray(Class[]::new)));
         result.put(ADDITIONAL_PLUGINS_GROUP_NAME, Arrays.asList(this.getAdditionalPlugins().toArray(Class[]::new)));
         result.put(FILE_RENDERERS_GROUP_NAME, Arrays.asList(this.getFileRenderers().toArray(Class[]::new)));
+        result.put(QUEUE_FACTORIES_GROUP_NAME, Arrays.asList(this.getQueueFactories().toArray(Class[]::new)));
 
         return result;
     }
@@ -473,6 +482,12 @@ public class RegisteredPlugin {
         if (!this.getFileRenderers().isEmpty()) {
             b.append("[File Renderers: ");
             b.append(this.getFileRenderers().stream().map(Class::getName).collect(Collectors.joining(", ")));
+            b.append("] ");
+        }
+
+        if (!this.getQueueFactories().isEmpty()) {
+            b.append("[Queue Factories: ");
+            b.append(this.getQueueFactories().stream().map(Class::getName).collect(Collectors.joining(", ")));
             b.append("] ");
         }
 

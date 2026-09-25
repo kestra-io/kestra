@@ -6,6 +6,7 @@ import java.util.function.Consumer;
 
 import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.metrics.MetricRegistry;
+import io.kestra.core.queues.QueueService;
 import io.kestra.core.queues.QueueSubscriber;
 import io.kestra.core.queues.event.Event;
 import io.kestra.core.services.IgnoreExecutionService;

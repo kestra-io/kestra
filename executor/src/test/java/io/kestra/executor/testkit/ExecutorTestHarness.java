@@ -382,7 +382,8 @@ public final class ExecutorTestHarness {
             flowMetaStore,
             executionService,
             executorService,
-            metricRegistry
+            metricRegistry,
+            loopExecutionEventQueue
         );
         this.concurrencySlotReleaseProcessor = new ConcurrencySlotReleaseProcessor(
             concurrencyLimitStateStore,

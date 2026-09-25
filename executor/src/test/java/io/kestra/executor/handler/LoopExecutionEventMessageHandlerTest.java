@@ -73,6 +73,9 @@ class LoopExecutionEventMessageHandlerTest {
     @Inject
     private StorageInterface storageInterface;
 
+    @Inject
+    private DispatchQueueInterface<Execution> executionQueue;
+
     @MockBean(KillSwitchService.class)
     KillSwitchService killSwitchService() {
         return mock(KillSwitchService.class);
@@ -125,6 +128,54 @@ class LoopExecutionEventMessageHandlerTest {
         assertThat(taskRun.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(taskOutputService.getOutputs(loopTaskRun))
             .containsEntry(Loop.TERMINATED_ITERATIONS_OUTPUT, Map.of("SUCCESS", 3));
+    }
+
+    @Test
+    void shouldFinalizeLoopAsKilledOnceStartedIterationsTerminateDuringKill() throws InternalException {
+        // Given — a loop of 10 values with only 2 iterations ever started (concurrencyLimit),
+        // whose parent execution is being killed; transmitFailed defaults to true
+        var flow = flowRepository.create(GenericFlow.of(loopFlow()));
+        var execution = Execution.newExecution(flow, Collections.emptyList()).withState(State.Type.KILLING);
+        String loopTaskRunId = IdUtils.create();
+        var loopTaskRun = loopTaskRun(loopTaskRunId, execution);
+        executionRepository.save(execution.withTaskRunList(List.of(loopTaskRun)));
+        taskOutputService.saveOutputs(
+            loopTaskRun, Map.of(
+                Loop.ITERATION_COUNT_OUTPUT, 10,
+                Loop.RUNNING_ITERATIONS_OUTPUT, 2,
+                Loop.TERMINATED_ITERATIONS_OUTPUT, Collections.emptyMap()
+            )
+        );
+        List<Execution> emitted = new CopyOnWriteArrayList<>();
+        executionQueue.addListener(emitted::add);
+
+        // When — the first started iteration is killed
+        var firstRun = new LoopRun(execution, "loop", loopTaskRunId, 0, null, "a", null);
+        var maybeExecutor = handler.handle(new LoopExecutionEvent(firstRun, "sub-exec-0", State.Type.KILLED, null));
+
+        // Then — not finalized: waits for the other in-flight iteration without starting a new one,
+        // despite transmitFailed being enabled
+        assertThat(maybeExecutor).isEmpty();
+        assertThat(emitted).isEmpty();
+        assertThat(taskOutputService.getOutputs(loopTaskRun))
+            .containsEntry(Loop.RUNNING_ITERATIONS_OUTPUT, 1)
+            .containsEntry(Loop.TERMINATED_ITERATIONS_OUTPUT, Map.of("KILLED", 1));
+
+        // When — the last started iteration is killed
+        var secondRun = new LoopRun(execution, "loop", loopTaskRunId, 1, null, "b", null);
+        maybeExecutor = handler.handle(new LoopExecutionEvent(secondRun, "sub-exec-1", State.Type.KILLED, null));
+
+        // Then — finalized as KILLED without waiting for the 8 never-started iterations
+        assertThat(maybeExecutor).isPresent();
+        var taskRun = maybeExecutor.get().getExecution().findTaskRunByTaskRunId(loopTaskRunId);
+        assertThat(taskRun.getState().getCurrent()).isEqualTo(State.Type.KILLED);
+        assertThat(taskRun.getAttempts().getLast().getState().getCurrent()).isEqualTo(State.Type.KILLED);
+        assertThat(taskRun.getAttempts().getLast().getState().getEndDate()).isPresent();
+        assertThat(taskOutputService.getOutputs(loopTaskRun))
+            .containsEntry(Loop.ITERATION_COUNT_OUTPUT, 10)
+            .containsEntry(Loop.RUNNING_ITERATIONS_OUTPUT, 0)
+            .containsEntry(Loop.TERMINATED_ITERATIONS_OUTPUT, Map.of("KILLED", 2));
+        assertThat(emitted).isEmpty();
     }
 
     @Test

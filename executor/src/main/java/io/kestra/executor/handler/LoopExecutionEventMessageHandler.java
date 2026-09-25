@@ -116,7 +116,17 @@ public class LoopExecutionEventMessageHandler implements ExecutorMessageHandler<
                     taskOutputs.add(buildIterationOutput(message));
                 }
 
-                if (loop.getTransmitFailed() && message.state().isTerminatedInError()) {
+                if (isKillPath(execution)) {
+                    // The parent execution is being killed: iterations that were never started
+                    // can never emit a termination event, so never start new ones and finalize
+                    // once every started iteration has terminated instead of waiting for iterationCount.
+                    computeOutputs(parentTaskRun, taskOutputs, iterationCount, runningIteration, terminatedByState, null);
+                    if (runningIteration == 0) {
+                        return terminateLoop(parentTaskRun, loop, executor, State.Type.KILLED);
+                    }
+                    followExecutionEventQueue.emit(new FollowExecutionEvent(execution, ExecutionEventType.UPDATED));
+                    return null;
+                } else if (loop.getTransmitFailed() && message.state().isTerminatedInError()) {
                     // the failure happened inside an isolated loop sub-execution: log inside the parent exec
                     computeOutputs(parentTaskRun, taskOutputs, iterationCount, runningIteration, terminatedByState, null);
                     logLoopIterationFailure(parentTaskRun, loop, executor, message);
@@ -202,6 +212,12 @@ public class LoopExecutionEventMessageHandler implements ExecutorMessageHandler<
         });
     }
 
+    // KILLED covers late events arriving after the parent already finalized: they must neither start new iterations nor revive the loop.
+    private boolean isKillPath(Execution execution) {
+        return execution.getState().getCurrent() == State.Type.KILLING
+            || execution.getState().getCurrent() == State.Type.KILLED;
+    }
+
     private Optional<ExecutorContext> handlePaused(LoopExecutionEvent message) {
         return executionStateStore.lock(message.loopRun().parent().getId(), execution ->
         {
@@ -262,7 +278,11 @@ public class LoopExecutionEventMessageHandler implements ExecutorMessageHandler<
 
     // terminate the loop and its attempts
     private ExecutorContext terminateLoop(TaskRun parentTaskRun, Task task, final ExecutorContext executor, State.Type state) throws InternalException {
-        State.Type finalState = state == State.Type.FAILED ? stateFailure(task) : State.Type.SUCCESS;
+        State.Type finalState = switch (state) {
+            case FAILED -> stateFailure(task);
+            case KILLED -> State.Type.KILLED;
+            default -> State.Type.SUCCESS;
+        };
         List<TaskRunAttempt> attempts = Optional.ofNullable(parentTaskRun.getAttempts())
             .map(ArrayList::new)
             .orElseGet(ArrayList::new);

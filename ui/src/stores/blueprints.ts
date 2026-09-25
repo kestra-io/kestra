@@ -36,7 +36,7 @@ export type FlowBlueprint = BlueprintControllerApiBlueprintItemWithSource & {
     // A flow blueprint may carry a template definition (EE feature): its source plus the arguments
     // the UI renders as inputs when instantiating it. Kept structural (not tied to an EE-only SDK
     // type) so the shared store compiles against the OSS SDK too.
-    template?: { source?: string; templateArguments?: Record<string, unknown> };
+    template?: { source?: string; templateArguments?: Record<string, unknown>; templateArgumentsOrder?: string[] };
     includedFlows?: string[];
 };
 

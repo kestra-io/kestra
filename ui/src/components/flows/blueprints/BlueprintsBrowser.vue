@@ -259,7 +259,7 @@
         const data = await blueprintsStore.getBlueprintTags({
             type: props.blueprintType,
             kind: props.blueprintKind,
-            ...query,
+            params: query,
         })
         if (props.blueprintType === beforeLoadBlueprintType) {
             tags.value = props.tagsResponseMapper(data)

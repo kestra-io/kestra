@@ -7,12 +7,16 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 
 import io.kestra.core.models.property.Property;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 
 @Getter
 public class AssetsDeclaration {
+    @Schema(description = "Whether to auto-register assets referenced dynamically at runtime that are not statically declared in inputs or outputs.")
     private Property<Boolean> enableAuto;
+    @Schema(description = "The assets consumed as inputs.")
     private Property<List<AssetIdentifier>> inputs;
+    @Schema(description = "The assets produced as outputs.")
     private Property<List<Asset>> outputs;
 
     @JsonCreator

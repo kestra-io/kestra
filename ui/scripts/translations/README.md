@@ -20,6 +20,7 @@ This directory holds the tooling that keeps the Kestra UI translated. This READM
 | [`fingerprints.json`](fingerprints.json) | English text each translation was generated from |
 | [`fingerprints-design-system.json`](fingerprints-design-system.json) | Same, for the `*.locale.ts` files |
 | `kestra-ee: ui-ee/src/translations/ee_translations/en.json` | EE English source (merged on top of OSS at runtime; must never redefine an OSS key) |
+| `kestra-ee: ui-ee/src/tenantTypes/*/translations/` | One folder per tenant type, its own `fingerprints.json` included; keys are unprefixed and rooted under `tenantTypes.<folder>` at runtime |
 | `kestra-ee: ui-ee/scripts/translations/` | Thin entry points + EE's own `fingerprints.json` |
 
 ## Who owns what

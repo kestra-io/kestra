@@ -378,6 +378,15 @@ class KVControllerTest {
         assertThat(kvEntry.description()).isEqualTo(myDescription);
     }
 
+    @ParameterizedTest
+    @ValueSource(strings = {"hello world", "hello-world-123", "John Doe Smith", "a description with several words"})
+    void setKeyValueShouldPreserveUnquotedPlainTextValue(String value) throws IOException, ResourceExpiredException {
+        client.toBlocking()
+            .exchange(HttpRequest.PUT("/api/v1/main/namespaces/" + NAMESPACE + "/kv/my-key", value).contentType(MediaType.TEXT_PLAIN));
+
+        assertThat(kvStore().getValue("my-key").get().value()).isEqualTo(value);
+    }
+
     private InternalKVStore kvStore() {
         return this.kvStore(NAMESPACE);
     }

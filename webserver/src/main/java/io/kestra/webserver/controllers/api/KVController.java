@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.time.Instant;
 import java.util.*;
 
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 
@@ -53,10 +55,12 @@ public class KVController {
      * so an unmapped sort resolved to nothing and failed the query with a 500 — {@code updateDate}
      * being the one the UI exposes.
      *
-     * <p>{@code key} is the exception: {@code kv_metadata."key"} is a real column, the primary key
+     * <p>
+     * {@code key} is the exception: {@code kv_metadata."key"} is a real column, the primary key
      * holding the uid, so that mapping prevents an ordering on the wrong data rather than a failure.
      *
-     * <p>Both spellings are accepted. {@link KVEntry} field names are the documented contract, but
+     * <p>
+     * Both spellings are accepted. {@link KVEntry} field names are the documented contract, but
      * the KV table has always sorted on the properties directly — its default sort is
      * {@code name:asc} — so rejecting those would break every existing client. Anything outside
      * both sets yields {@code null}, which {@link PageableUtils} answers with a 422 rather than
@@ -163,9 +167,13 @@ public class KVController {
         String ttl = httpHeaders.get("ttl");
         KVMetadata metadata = new KVMetadata(description, TypeConverter.toDuration(ttl));
         try {
-            // use ION mapper to properly handle timestamp
-            JsonNode jsonNode = JacksonMapper.ofIon().readTree(value);
-            kvStore(namespace).put(key, new KVValueAndMetadata(metadata, jsonNode));
+            try (JsonParser parser = JacksonMapper.ofIon().createParser(value)) {
+                JsonNode jsonNode = JacksonMapper.ofIon().readTree(parser);
+                if (parser.nextToken() != null) {
+                    throw new JsonParseException(parser, "Trailing content after the first Ion value");
+                }
+                kvStore(namespace).put(key, new KVValueAndMetadata(metadata, jsonNode));
+            }
         } catch (JsonProcessingException e) {
             kvStore(namespace).put(key, new KVValueAndMetadata(metadata, value));
         }

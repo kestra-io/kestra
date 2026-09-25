@@ -35,6 +35,23 @@ public abstract class FilesService {
                 )
         );
 
+        materializeInputFiles(runContext, additionalVars, inputFiles);
+
+        if (logger.isTraceEnabled()) {
+            logger.trace("Provided {} input(s).", inputFiles.size());
+        }
+
+        return inputFiles;
+    }
+
+    /**
+     * Writes already-rendered {@code fileName -> value} input files into the working directory.
+     * <p>
+     * Split out of {@link #inputFiles(RunContext, Map, Object)} so a caller that already ran
+     * {@link PluginUtilsService#transformInputFiles} once (e.g. to split off {@code kestra://} entries for
+     * a task runner supporting direct input files) can materialize the rest without rendering them again.
+     */
+    public static void materializeInputFiles(RunContext runContext, Map<String, Object> additionalVars, Map<String, String> inputFiles) throws Exception {
         inputFiles
             .forEach(throwBiConsumer((fileName, input) ->
             {
@@ -63,12 +80,30 @@ public abstract class FilesService {
                     }
                 }
             }));
+    }
 
-        if (logger.isTraceEnabled()) {
-            logger.trace("Provided {} input(s).", inputFiles.size());
+    /**
+     * Downloads already-resolved {@code kestra://} input files into the working directory, keyed by the
+     * relative path they should end up at. Used by a task runner supporting direct input files
+     * ({@link io.kestra.core.models.tasks.runners.RemoteRunnerInterface#supportsDirectInputFiles()}) as the
+     * fallback path when it can't (or decided not to) grant direct access to internal storage for this run.
+     */
+    public static void materializeInputFiles(RunContext runContext, Map<String, URI> directInputFiles) throws Exception {
+        for (var entry : Optional.ofNullable(directInputFiles).orElse(Map.of()).entrySet()) {
+            File file = runContext.workingDir().resolve(Path.of(entry.getKey())).toFile();
+
+            if (!file.getParentFile().exists()) {
+                //noinspection ResultOfMethodCallIgnored
+                file.getParentFile().mkdirs();
+            }
+
+            try (
+                var is = new BufferedInputStream(runContext.storage().getFile(entry.getValue()), FileSerde.BUFFER_SIZE);
+                var out = new FileOutputStream(file)
+            ) {
+                IOUtils.copyLarge(is, out);
+            }
         }
-
-        return inputFiles;
     }
 
     public static Map<String, URI> outputFiles(RunContext runContext, List<String> outputs) throws Exception {

@@ -162,6 +162,12 @@ public class KVController {
         String description = httpHeaders.get("description");
         String ttl = httpHeaders.get("ttl");
         KVMetadata metadata = new KVMetadata(description, TypeConverter.toDuration(ttl));
+        // A quoted body is an explicit string. ION parses `PT30M` and `\"PT30M\"` to the same node, so
+        // without recording the intent here the store cannot tell a duration from a string that looks
+        // like one, and reads back both as a duration.
+        if (value != null && value.stripLeading().startsWith("\"")) {
+            metadata = metadata.withType(KVType.STRING);
+        }
         try {
             // use ION mapper to properly handle timestamp
             JsonNode jsonNode = JacksonMapper.ofIon().readTree(value);

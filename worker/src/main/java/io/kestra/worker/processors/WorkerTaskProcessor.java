@@ -36,6 +36,7 @@ import io.kestra.core.models.tasks.AssetFailureBehavior;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.*;
+import io.kestra.core.runners.WorkerTaskResult.WorkerTaskResultPayload;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.server.ServerConfig;
 import io.kestra.core.server.WorkerTaskRestartStrategy;
@@ -111,6 +112,7 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
     private void runWorkingDirectory(WorkerTask workerTask, WorkingDirectory workingDirectory) {
         DefaultRunContext runContext = runContextInitializer.forWorkingDirectory(workerTask);
         final RunContext workingDirectoryRunContext = runContext.clone();
+        List<WorkerTaskResultPayload> precedingResults = new ArrayList<>();
 
         try {
             // preExecuteTasks
@@ -153,7 +155,13 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
                 } catch (IllegalVariableEvaluationException e) {
                     RunContextLogger contextLogger = runContextLoggerFactory.create(currentWorkerTask);
                     contextLogger.logger().error("Failed evaluating runIf: {}", e.getMessage(), e);
-                    workerTaskResultQueue.put(new WorkerTaskResult(workerTask.fail()));
+                    workerTaskResultQueue.put(
+                        new WorkerTaskResult(workerTask.fail(), new ArrayList<>(1), null, List.copyOf(precedingResults))
+                    );
+                }
+
+                if (workerTaskResult != null) {
+                    precedingResults.add(WorkerTaskResultPayload.from(workerTaskResult));
                 }
 
                 if (workerTaskResult == null || workerTaskResult.getTaskRun().getState().isFailed() && !currentWorkerTask.getTask().isAllowFailure()) {
@@ -169,7 +177,9 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
                 workingDirectory.postExecuteTasks(workingDirectoryRunContext, workerTask.getTaskRun());
             } catch (Exception e) {
                 workingDirectoryRunContext.logger().error("Failed postExecuteTasks on WorkingDirectory: {}", e.getMessage(), e);
-                workerTaskResultQueue.put(new WorkerTaskResult(workerTask.fail()));
+                workerTaskResultQueue.put(
+                    new WorkerTaskResult(workerTask.fail(), new ArrayList<>(1), null, List.copyOf(precedingResults))
+                );
             }
             this.logTerminated(workerTask, workerTask.getTaskRun());
         } finally {

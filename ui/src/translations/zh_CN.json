@@ -2229,6 +2229,13 @@
           "failed": "失败",
           "unknown": "未跟踪"
         },
+        "kind": {
+          "produces": "生成",
+          "consumed_by": "被消耗",
+          "upstream_of": "上游",
+          "part_of": "部分",
+          "related": "相关"
+        },
         "summary": {
           "fresh": "所有 {n} 个 Asset 都是最新的",
           "issues": "{n} 过时",

@@ -2,7 +2,7 @@
     <div class="namespace-files-empty">
         <KsEmptyState
             :title="$t('empty.namespaceFiles.title')"
-            :image="images.namespaceFiles"
+            :image="namespaceFilesEmptyImage"
             :learnMore="links.namespaceFiles"
         >
             <template #description>
@@ -22,12 +22,14 @@
     import {KsButton, KsEmptyState} from "@kestra-io/design-system"
     import FilePlus from "vue-material-design-icons/FilePlus.vue"
 
-    import {images} from "../../layout/empty/images"
+    import {useEmptyImage} from "../../layout/empty/images"
     import {links} from "../../layout/empty/links"
 
     const emit = defineEmits<{
         newFile: [];
     }>()
+
+    const namespaceFilesEmptyImage = useEmptyImage("namespaceFiles")
 </script>
 
 <style lang="scss" scoped>

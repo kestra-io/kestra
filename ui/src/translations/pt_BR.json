@@ -2229,6 +2229,13 @@
           "failed": "Falha",
           "unknown": "Não rastreado"
         },
+        "kind": {
+          "produces": "Produz",
+          "consumed_by": "Consumido por",
+          "upstream_of": "Precedente a",
+          "part_of": "Parte de",
+          "related": "Relacionado"
+        },
         "summary": {
           "fresh": "Todos os {n} Assets atualizados",
           "issues": "{n} obsoleto",

@@ -2229,6 +2229,13 @@
           "failed": "Niepowodzenie",
           "unknown": "Nieśledzone"
         },
+        "kind": {
+          "produces": "Produkuje",
+          "consumed_by": "Zużyte przez",
+          "upstream_of": "Upstream od",
+          "part_of": "Część",
+          "related": "Powiązane"
+        },
         "summary": {
           "fresh": "Wszystkie {n} Assety są aktualne",
           "issues": "{n} stałych",

@@ -629,17 +629,18 @@ export function useDependencies(
             const result = await expandAssetNode(nodeID)
             const known = new Set(elements.value.data.map((el) => el.data.id))
             const additions = result.data.filter((el) => !known.has(el.data.id))
-            if (additions.length === 0) return
+            // Refreshed even when nothing new was added, so the expanded node's own metadata (e.g. exhausted) still updates.
+            const refreshed = elements.value.data.map((el) => result.data.find((fresh) => fresh.data.id === el.data.id) ?? el)
 
             elements.value = {
-                data: [...elements.value.data, ...additions],
+                data: [...refreshed, ...additions],
                 count: elements.value.count + nodesOf(additions).length,
                 truncated: elements.value.truncated,
             }
 
             // The force ("Tree") view freezes its snapshot after the first render; a merge has to
             // re-freeze it too, or the new nodes only ever reach the live DAG canvas.
-            if (chartNodes.value !== null) {
+            if (additions.length > 0 && chartNodes.value !== null) {
                 await nextTick()
                 chartNodes.value = graphNodes.value
                 chartEdges.value = graphEdges.value

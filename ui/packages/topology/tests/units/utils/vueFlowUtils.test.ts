@@ -50,7 +50,7 @@ const graph = {
         {source: "5", target: "6", id: "e6", type: "default"},
     ],
     clusters: [],
-} as any
+} as VueFlowUtils.FlowGraph
 
 describe("VueFlowUtils", () => {
     test("getRootNodes should return nodes with no incoming edges", () => {
@@ -67,7 +67,7 @@ describe("VueFlowUtils", () => {
     })
 
     test("getNextTaskNodes should return next task nodes", () => {
-        const nextTaskNodes = VueFlowUtils.getNextTaskNodes(graph, {uid: "1"} as any)
+        const nextTaskNodes = VueFlowUtils.getNextTaskNodes(graph, {uid: "1", type: "task"})
         expect(nextTaskNodes).toEqual([
             {
                 uid: "2",
@@ -207,7 +207,7 @@ triggers:
 })
 
 describe("generateGraph CHOICE edge labels", () => {
-    const generate = (flowGraph: any) =>
+    const generate = (flowGraph: VueFlowUtils.FlowGraph) =>
         VueFlowUtils.generateGraph(
             "vfid",
             "flow",
@@ -265,20 +265,20 @@ describe("generateGraph CHOICE edge labels", () => {
             },
         ],
         clusters: [],
-    } as any
+    } as VueFlowUtils.FlowGraph
 
     test("propagates each case key from the issue flow to its CHOICE edge", () => {
-        const edges = generate(issueFlowGraph).filter((e: any) => e.type === "edge")
+        const edges = asElements(generate(issueFlowGraph)).filter((e) => e.type === "edge")
 
-        const frenchEdge = edges.find((e: any) => e.target === "root.render-language.french") as any
+        const frenchEdge = edges.find((e) => e.target === "root.render-language.french")
         expect(frenchEdge?.data?.value).toBe("French")
         expect(frenchEdge?.data?.relationType).toBe("CHOICE")
 
-        const germanEdge = edges.find((e: any) => e.target === "root.render-language.german") as any
+        const germanEdge = edges.find((e) => e.target === "root.render-language.german")
         expect(germanEdge?.data?.value).toBe("German")
         expect(germanEdge?.data?.relationType).toBe("CHOICE")
 
-        const englishEdge = edges.find((e: any) => e.target === "root.render-language.english") as any
+        const englishEdge = edges.find((e) => e.target === "root.render-language.english")
         expect(englishEdge?.data?.value).toBe("defaults")
         expect(englishEdge?.data?.relationType).toBe("CHOICE")
     })
@@ -305,9 +305,9 @@ describe("generateGraph CHOICE edge labels", () => {
                 },
             ],
             clusters: [],
-        } as any
+        } as VueFlowUtils.FlowGraph
 
-        const edge = generate(sequentialFlowGraph).filter((e: any) => e.type === "edge")[0] as any
+        const edge = asElements(generate(sequentialFlowGraph)).find((e) => e.type === "edge")
         expect(edge?.data?.value).toBeUndefined()
         expect(edge?.data?.relationType).toBe("SEQUENTIAL")
     })
@@ -328,9 +328,9 @@ describe("generateGraph CHOICE edge labels", () => {
             ],
             edges: [{source: "root.a", target: "root.b"}],
             clusters: [],
-        } as any
+        } as VueFlowUtils.FlowGraph
 
-        const edge = generate(minimalFlowGraph).filter((e: any) => e.type === "edge")[0] as any
+        const edge = asElements(generate(minimalFlowGraph)).find((e) => e.type === "edge")
         expect(edge?.data?.value).toBeUndefined()
         expect(edge?.data?.relationType).toBeUndefined()
     })
@@ -343,6 +343,7 @@ interface GeneratedElement {
     class?: string
     draggable?: boolean
     source?: string
+    target?: string
     parentNode?: string
     position?: {x: number; y: number}
     data?: Record<string, unknown>

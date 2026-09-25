@@ -35,7 +35,7 @@ export function getTypeAtPosition(
 
     for (const type of types.reverse()) {
         if (cursorIndex >= type.range[0]) {
-            return type.type
+            return typeof type.type === "string" ? type.type : null
         }
     }
     return null
@@ -53,7 +53,7 @@ export function getVersionAtPosition(
 
     for (const version of versions.reverse()) {
         if (cursorIndex >= version.range[0]) {
-            return version.version
+            return typeof version.version === "string" ? version.version : null
         }
     }
     return null

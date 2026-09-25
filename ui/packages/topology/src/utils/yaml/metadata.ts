@@ -34,7 +34,7 @@ export function replaceIdAndNamespace(source: string, id: string, namespace: str
     return yamlDoc.toString(TOSTRING_OPTIONS)
 }
 
-export function updateMetadata(source: string, metadata: Record<string, any>) {
+export function updateMetadata(source: string, metadata: Record<string, unknown>) {
     // TODO: check how to keep comments
     const yamlDoc = parseDocumentTyped(source)
 
@@ -44,11 +44,12 @@ export function updateMetadata(source: string, metadata: Record<string, any>) {
 
     for (const property in metadata) {
         const existing = yamlDoc.contents.items.find((item) => scalarKey(item) === property)
+        const value = yamlDoc.createNode(metadata[property])
         if (existing) {
-            existing.value = metadata[property]
+            existing.value = value
         } else {
             yamlDoc.contents.items.push(
-                new Pair(new Scalar(property), metadata[property]),
+                new Pair(new Scalar(property), value),
             )
         }
     }
@@ -116,22 +117,27 @@ function cleanMetadataDocument(yamlDoc: Document<YAMLMap<Scalar<string>, Node | 
     return yamlDoc
 }
 
-export function getMetadata(source: string): Record<string, any> {
+export function getMetadata(source: string): Record<string, unknown> & {id?: string; namespace?: string} {
     const contents = parseDocumentTyped(source).contents
     if (!isMap(contents)) return {}
-    const metadata: Record<string, any> = {}
+    const metadata: Record<string, unknown> & {id?: string; namespace?: string} = {}
 
     for (const item of contents.items) {
         const key = scalarKey(item)
         if (key === undefined || (FLOW_SECTION_KEYS as readonly string[]).includes(key)) {
             continue
         }
-        metadata[key] =
+        const value =
             isMap(item.value) || isSeq(item.value)
                 ? item.value.toJSON()
                 : isScalar(item.value)
                     ? item.value.value
                     : undefined
+        if (key === "id" || key === "namespace") {
+            if (typeof value === "string") metadata[key] = value
+        } else {
+            metadata[key] = value
+        }
     }
     return metadata
 }

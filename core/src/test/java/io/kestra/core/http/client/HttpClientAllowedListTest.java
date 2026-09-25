@@ -70,4 +70,15 @@ class HttpClientAllowedListTest {
             assertThat(exception.getMessage()).isEqualTo("The URI http://sub.localhost/ is not in the configured allowed list (kestra.tasks.http.allowed-list).");
         }
     }
+
+    @Test
+    void shouldRejectUriWhenAuthorityHasNoParsableHost() throws IllegalVariableEvaluationException, IOException {
+        try (HttpClient client = client()) {
+            var exception = assertThrows(IllegalArgumentException.class, () -> client.request(
+                HttpRequest.of(URI.create("http:///path")),
+                String.class
+            ));
+            assertThat(exception.getMessage()).isEqualTo("The URI http:///path has no resolvable host to check against the configured allow/deny lists (kestra.tasks.http.allowed-list / kestra.tasks.http.denied-list).");
+        }
+    }
 }

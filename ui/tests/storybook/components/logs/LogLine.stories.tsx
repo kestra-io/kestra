@@ -184,7 +184,7 @@ export const MultipleLogLinesWithAllLevels: StoryFn<typeof LogLine> = () => {
         <ks-card>
             {
                 ALLOWED_LEVELS.map((level, index) => {
-                    return <LogLine {...Info.args} cursor={false} level={level} log={{...Info.args!.log, level} as Log} style={{borderTop: index===0 ? "none" : "1px solid var(--ks-border-primary)"}} />
+                    return <LogLine {...Info.args} cursor={false} level={level} log={{...Info.args!.log, level} as Log} style={{borderTop: index===0 ? "none" : "1px solid var(--ks-border-default)"}} />
                 })
             }
         </ks-card>

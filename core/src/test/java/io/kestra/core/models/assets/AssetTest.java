@@ -32,20 +32,7 @@ class AssetTest {
     }
 
     @Test
-    void shouldKeepPreviousTypeWhenTypeChangeIsNotAllowed() {
-        // Given
-        Custom previous = Custom.builder().namespace("io.kestra").id("my-asset").type("EC2").build();
-        Custom incoming = Custom.builder().namespace("io.kestra").id("my-asset").type("VM").build();
-
-        // When
-        Custom updated = incoming.toUpdated(previous, false);
-
-        // Then
-        assertThat(updated.getType()).isEqualTo("EC2");
-    }
-
-    @Test
-    void shouldReplaceTypeWhenTypeChangeIsAllowed() {
+    void shouldReplaceTypeWhenANewOneIsDeclared() {
         // Given
         Custom previous = Custom.builder()
             .namespace("io.kestra")
@@ -56,11 +43,24 @@ class AssetTest {
         Custom incoming = Custom.builder().namespace("io.kestra").id("my-asset").type("EC2").build();
 
         // When
-        Custom updated = incoming.toUpdated(previous, true);
+        Custom updated = incoming.toUpdated(previous);
 
         // Then
         assertThat(updated.getType()).isEqualTo("EC2");
         assertThat(updated.getMetadata()).containsEntry("provider", "aws");
+    }
+
+    @Test
+    void shouldKeepPreviousTypeWhenDeclaredAsExternal() {
+        // Given an asset that already has a real type, re-referenced by id alone (deserialized as External)
+        Custom previous = Custom.builder().namespace("io.kestra").id("my-asset").type("Custom").build();
+        External incoming = External.builder().id("my-asset").build();
+
+        // When
+        Asset updated = incoming.toUpdated(previous);
+
+        // Then
+        assertThat(updated.getType()).isEqualTo("Custom");
     }
 
     @Test
@@ -70,7 +70,7 @@ class AssetTest {
         Custom incoming = Custom.builder().namespace("io.kestra").id("my-asset").build();
 
         // When
-        Custom updated = incoming.toUpdated(previous, true);
+        Custom updated = incoming.toUpdated(previous);
 
         // Then
         assertThat(updated.getType()).isEqualTo("EC2");
@@ -84,7 +84,7 @@ class AssetTest {
         Custom incoming = Custom.builder().namespace("io.kestra").id("my-asset").type("EC2").build();
 
         // When
-        Custom updated = incoming.toUpdated(previous, false);
+        Custom updated = incoming.toUpdated(previous);
 
         // Then
         assertThat(updated.getCreated()).isEqualTo(createdAt);
@@ -96,8 +96,8 @@ class AssetTest {
         // Given
         Custom incoming = Custom.builder().namespace("io.kestra").id("my-asset").type("EC2").build();
 
-        // When creating, no previous asset can supply a type whatever the flag
-        Custom created = incoming.toUpdated(null, false);
+        // When creating, there is no previous asset to supply a type either way
+        Custom created = incoming.toUpdated(null);
 
         // Then
         assertThat(created.getType()).isEqualTo("EC2");
@@ -110,14 +110,14 @@ class AssetTest {
         External incoming = External.builder().id("my-asset").build();
 
         // When
-        Asset updated = incoming.toUpdated(previous, false);
+        Asset updated = incoming.toUpdated(previous);
 
         // Then
         assertThat(updated.getNamespace()).isEqualTo("io.kestra");
     }
 
     @Test
-    void shouldKeepPreviousNamespaceWhenAnotherOneIsDeclared() {
+    void shouldKeepPreviousNamespaceWhenNotDeclaredEvenIfIncomingIsNonNull() {
         // Given
         Custom previous = Custom.builder().namespace("io.kestra").id("my-asset").type("EC2").build();
         Custom incoming = Custom.builder().namespace("io.kestra.other").id("my-asset").type("EC2").build();
@@ -130,6 +130,45 @@ class AssetTest {
     }
 
     @Test
+    void shouldUseDeclaredNamespaceOverPrevious() {
+        // Given
+        Custom previous = Custom.builder().namespace("io.kestra").id("my-asset").type("EC2").build();
+        Custom incoming = Custom.builder().namespace("io.kestra.other").id("my-asset").type("EC2").build();
+
+        // When
+        Custom updated = incoming.toUpdated(previous, true);
+
+        // Then
+        assertThat(updated.getNamespace()).isEqualTo("io.kestra.other");
+    }
+
+    @Test
+    void shouldUseDeclaredNamespaceOverPreviousViaConvenienceOverload() {
+        // Given
+        Custom previous = Custom.builder().namespace("io.kestra").id("my-asset").type("EC2").build();
+        Custom incoming = Custom.builder().namespace("io.kestra.other").id("my-asset").type("EC2").build();
+
+        // When
+        Custom updated = incoming.toUpdated(previous);
+
+        // Then
+        assertThat(updated.getNamespace()).isEqualTo("io.kestra.other");
+    }
+
+    @Test
+    void shouldClearNamespaceWhenExplicitlyDeclaredNull() {
+        // Given
+        Custom previous = Custom.builder().namespace("io.kestra").id("my-asset").type("EC2").build();
+        Custom incoming = Custom.builder().namespace(null).id("my-asset").type("EC2").build();
+
+        // When
+        Custom updated = incoming.toUpdated(previous, true);
+
+        // Then
+        assertThat(updated.getNamespace()).isNull();
+    }
+
+    @Test
     void shouldDeleteAMetadataKeyWithAnExplicitNullOnCreation() {
         // Given
         Map<String, Object> metadata = new HashMap<>();
@@ -138,7 +177,7 @@ class AssetTest {
         Custom incoming = Custom.builder().namespace("io.kestra").id("my-asset").type("EC2").metadata(metadata).build();
 
         // When
-        Custom created = incoming.toUpdated(null, false);
+        Custom created = incoming.toUpdated(null);
 
         // Then
         assertThat(created.getMetadata()).containsEntry("keep", "value");
@@ -154,7 +193,7 @@ class AssetTest {
             .metadata(Map.of(Asset.TTL_METADATA_KEY, "")).build();
 
         // When
-        Custom updated = incoming.toUpdated(previous, false);
+        Custom updated = incoming.toUpdated(previous);
 
         // Then
         assertThat(updated.getMetadata()).containsEntry(Asset.TTL_METADATA_KEY, "");
@@ -171,7 +210,7 @@ class AssetTest {
             .metadata(Map.of("m", nested)).build();
 
         // When
-        Custom updated = incoming.toUpdated(previous, false);
+        Custom updated = incoming.toUpdated(previous);
 
         // Then
         assertThat(updated.getMetadata()).extracting("m").isEqualTo(Map.of("x", 1, "y", 2));
@@ -205,7 +244,8 @@ class AssetTest {
 
         Map<String, Object> json = JacksonMapper.ofJson().readValue(
             JacksonMapper.ofJson().writeValueAsString(asset),
-            new TypeReference<>() {}
+            new TypeReference<>() {
+            }
         );
 
         assertThat(json).containsEntry("status", "active");

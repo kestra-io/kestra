@@ -56,6 +56,7 @@
     import {KsMessage, KsIcon} from "@kestra-io/design-system"
     import type {FormInstance} from "@kestra-io/design-system"
     import {useClient} from "@kestra-io/kestra-sdk"
+    import type {KestraHttpError} from "../../utils/kestraHttp"
 
     import AccountOutline from "vue-material-design-icons/AccountOutline.vue"
     import LockOutline from "vue-material-design-icons/LockOutline.vue"
@@ -124,11 +125,15 @@
         return response.data?.isBasicAuthInitialized
     }
 
-    const handleNetworkError = (error: any) => {
-        return error.code === "ERR_NETWORK" ||
-            error.code === "ECONNREFUSED" ||
-            (!error.response && error instanceof TypeError)
-    }
+    /**
+     * `useClient()` is a fetch-based facade, not axios. A network-level failure rejects with the raw
+     * fetch `TypeError`, before the interceptors in `kestraHttp` can attach a `response`; the axios-only
+     * `ERR_NETWORK` and `ECONNREFUSED` codes this used to also test for are never set by the facade.
+     */
+    const handleNetworkError = (error: unknown) => error instanceof TypeError
+
+    /** Every other rejection is a `KestraHttpError`: the parsed error body those same interceptors decorate. */
+    const responseStatus = (error: unknown) => (error as KestraHttpError | null)?.response?.status
 
     const loadAuthConfigErrors = async () => {
         try {
@@ -173,11 +178,17 @@
             } else {
                 router.push({name: "home", params: {tenant: route.params.tenant}})
             }
-        } catch (error: any) {
-            if (handleNetworkError(error)) { router.push({name: "setup"}); return }
-            if (error?.response?.status === 401) {
+        } catch (error: unknown) {
+            if (handleNetworkError(error)) {
+                router.push({name: "setup"})
+                return
+            }
+
+            const status = responseStatus(error)
+
+            if (status === 401) {
                 await loadAuthConfigErrors()
-            } else if (error?.response?.status === 404) {
+            } else if (status === 404) {
                 router.push({name: "setup"})
             } else {
                 KsMessage.error(t("setup.validation.incorrect_creds"))

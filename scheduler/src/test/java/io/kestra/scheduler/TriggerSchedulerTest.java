@@ -373,7 +373,7 @@ class TriggerSchedulerTest {
         );
         // Create an initial state with a prior evaluation date
         TriggerState initialState = TriggerState
-            .of(Fixtures.triggerId(), TriggerType.SCHEDULE, List.of(), false, 0)
+            .of(Fixtures.triggerId(), TriggerType.SCHEDULE, List.of(), 0)
             .evaluatedAt(SchedulerClock.getClock(), SchedulerClock.now().minusMinutes(15))
             .updateForNextEvaluationDate(SchedulerClock.getClock(), SchedulerClock.now());
         triggerStateStore.save(initialState);
@@ -435,7 +435,7 @@ class TriggerSchedulerTest {
         );
         // Create an initial state with a prior evaluation date
         TriggerState initialState = TriggerState
-            .of(Fixtures.triggerId(), TriggerType.SCHEDULE, List.of(), false, 0)
+            .of(Fixtures.triggerId(), TriggerType.SCHEDULE, List.of(), 0)
             .evaluatedAt(SchedulerClock.getClock(), SchedulerClock.now().minusMinutes(15))
             .updateForNextEvaluationDate(SchedulerClock.getClock(), SchedulerClock.now());
         triggerStateStore.save(initialState);
@@ -499,7 +499,7 @@ class TriggerSchedulerTest {
         );
         // Create an initial state with a prior evaluation date
         TriggerState initialState = TriggerState
-            .of(Fixtures.triggerId(), TriggerType.SCHEDULE, List.of(), false, 0)
+            .of(Fixtures.triggerId(), TriggerType.SCHEDULE, List.of(), 0)
             .evaluatedAt(SchedulerClock.getClock(), SchedulerClock.now().minusMinutes(15))
             .updateForNextEvaluationDate(SchedulerClock.getClock(), SchedulerClock.now());
         triggerStateStore.save(initialState);
@@ -622,7 +622,7 @@ class TriggerSchedulerTest {
         FlowWithSource deletedFlow = Fixtures.flowWithSchedulePT15M(TEST_TZ).toDeleted();
 
         TriggerState initialState = TriggerState
-            .of(Fixtures.triggerId(), TriggerType.SCHEDULE, List.of(), false, 0)
+            .of(Fixtures.triggerId(), TriggerType.SCHEDULE, List.of(), 0)
             .updateForNextEvaluationDate(SchedulerClock.getClock(), SchedulerClock.now());
         triggerStateStore.save(initialState);
 

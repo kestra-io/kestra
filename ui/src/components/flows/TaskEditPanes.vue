@@ -62,7 +62,7 @@
     })
 
     const emit = defineEmits<{
-        "input": [value: string | Record<string, any>]
+        "input": [value: string]
         "update:activeTab": [value: string]
         "save": []
     }>()

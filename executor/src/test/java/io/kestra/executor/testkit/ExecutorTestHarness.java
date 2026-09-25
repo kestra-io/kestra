@@ -1,7 +1,10 @@
 package io.kestra.executor.testkit;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.Map;
 import java.util.Optional;
 
@@ -9,7 +12,9 @@ import org.mockito.Mockito;
 
 import io.kestra.core.assets.AssetService;
 import io.kestra.core.async.AsyncOperationService;
+import io.kestra.core.contexts.KestraContext;
 import io.kestra.core.encryption.EncryptionConfig;
+import io.kestra.core.executor.WorkerJobRunningStateStore;
 import io.kestra.core.executor.command.ExecutionCommand;
 import io.kestra.core.killswitch.EvaluationType;
 import io.kestra.core.killswitch.KillSwitchService;
@@ -19,6 +24,8 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionKilled;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.LoopExecutionEvent;
+import io.kestra.core.models.executions.statistics.ExecutionStatistic;
+import io.kestra.core.queues.event.Event;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.triggers.multipleflows.MultipleConditionStateStore;
@@ -29,21 +36,26 @@ import io.kestra.core.runners.ExecutionEventType;
 import io.kestra.core.runners.FlowInputOutput;
 import io.kestra.core.runners.FollowExecutionEvent;
 import io.kestra.core.runners.LocalPathFactory;
+import io.kestra.core.runners.MultipleConditionEvent;
 import io.kestra.core.runners.PausedTaskNotifier;
 import io.kestra.core.runners.RunContextInitializer;
 import io.kestra.core.runners.RunContextLoggerFactory;
+import io.kestra.core.runners.SubflowExecutionEnd;
 import io.kestra.core.runners.SubflowExecutionResult;
 import io.kestra.core.runners.VariableRenderer;
 import io.kestra.core.runners.WorkerJobEvent;
+import io.kestra.core.runners.WorkerTask;
 import io.kestra.core.runners.WorkerTaskResult;
 import io.kestra.core.runners.configuration.ExecutionDepthConfiguration;
 import io.kestra.core.runners.configuration.LocalFilesConfiguration;
 import io.kestra.core.runners.configuration.LoggingConfiguration;
 import io.kestra.core.runners.configuration.VariableConfiguration;
 import io.kestra.core.runners.pebble.PebbleEngineFactory;
+import io.kestra.core.server.ServiceStateChangeEvent;
 import io.kestra.core.services.ConcurrencyLimitResolver;
 import io.kestra.core.services.ExecutionOutputService;
 import io.kestra.core.services.ExecutionService;
+import io.kestra.core.services.MaintenanceService;
 import io.kestra.core.services.QuotaService;
 import io.kestra.core.services.TaskOutputService;
 import io.kestra.core.services.WorkerQueueService;
@@ -52,14 +64,19 @@ import io.kestra.core.services.configuration.TaskOutputConfiguration;
 import io.kestra.core.storages.NamespaceFactory;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.trace.TracerFactory;
+import io.kestra.core.scheduler.queue.TriggerEventQueue;
+import io.kestra.core.utils.ExecutorsUtils;
 import io.kestra.executor.ConcurrencySlotReleaseProcessor;
+import io.kestra.executor.DefaultExecutor;
 import io.kestra.executor.ExecutionDelayProcessor;
 import io.kestra.executor.ExecutorContext;
+import io.kestra.executor.ExecutorCore;
 import io.kestra.executor.ExecutorService;
 import io.kestra.executor.FlowTriggerService;
 import io.kestra.executor.KillSwitchActionService;
 import io.kestra.executor.SLAMonitorProcessor;
 import io.kestra.executor.SLAService;
+import io.kestra.executor.configuration.ExecutorConfiguration;
 import io.kestra.executor.handler.ExecutionCommandMessageHandler;
 import io.kestra.executor.handler.ExecutionEventMessageHandler;
 import io.kestra.executor.handler.ExecutionKilledExecutionMessageHandler;
@@ -70,26 +87,21 @@ import io.kestra.executor.handler.SubflowExecutionResultMessageHandler;
 import io.kestra.executor.handler.WorkerTaskResultListener;
 import io.kestra.executor.handler.WorkerTaskResultMessageHandler;
 
+import com.google.common.util.concurrent.MoreExecutors;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.micronaut.context.ApplicationContext;
+import io.micronaut.context.event.ApplicationEventPublisher;
 import jakarta.validation.Validator;
 
 /**
- * Composition root for executor unit tests: wires the real {@link ExecutorService} and all
- * message handlers over in-memory fakes — no Micronaut context, no database, no queues, no threads.
- * <p>
- * The harness exposes the executor as a function: feed a (flow, execution) pair, a
- * {@link WorkerTaskResult}, or call a handler directly, and assert on the returned
- * {@link ExecutorContext} command object plus the recorded side-effect channels.
- * {@link #process} mirrors the production {@code ExecutionEventMessageHandler} cycle:
- * a fresh {@code ExecutorContext} per event, {@code process()} then {@code onNexts()}, repeated
- * until the executor asks for external work (worker tasks, delays, subflows) or goes quiet.
- * <p>
- * Cross-cutting collaborators without executor logic ({@link KillSwitchService} — stubbed to
- * PASS, {@link QuotaService}, {@link AsyncOperationService}, {@link FlowTriggerService},
+ * Composition root for executor unit tests: the real {@link ExecutorService}, message handlers,
+ * processors and {@link DefaultExecutor} wired over in-memory fakes — no Micronaut context, no
+ * database, no threads. Collaborators without executor logic ({@link KillSwitchService},
+ * {@link QuotaService}, {@link AsyncOperationService}, {@link FlowTriggerService},
  * {@link KillSwitchActionService}) are Mockito mocks exposed for per-test stubbing.
  */
 public final class ExecutorTestHarness {
+    private static final int MAX_STEPS = 500;
     private static final int MAX_CYCLES = 100;
 
     // real production objects
@@ -105,6 +117,9 @@ public final class ExecutorTestHarness {
     private final ExecutionDelayProcessor executionDelayProcessor;
     private final ConcurrencySlotReleaseProcessor concurrencySlotReleaseProcessor;
     private final SLAMonitorProcessor slaMonitorProcessor;
+    private final List<Runnable> loops = new ArrayList<>();
+    private final List<Trace.Emission> journal = new ArrayList<>();
+    private int workerJobsAnswered = 0;
 
     // in-memory fakes
     private final InMemoryFlowMetaStore flowMetaStore;
@@ -123,12 +138,19 @@ public final class ExecutorTestHarness {
     private final RecordingDispatchQueue<Execution> executionQueue;
     private final RecordingBroadcastQueue<FollowExecutionEvent> followExecutionEventQueue;
     private final RecordingDispatchQueue<ExecutionCommand> executionCommandQueue;
+    private final RecordingDispatchQueue<ExecutionEvent> executionEventQueue;
+    private final RecordingDispatchQueue<WorkerTaskResult> workerTaskResultQueue;
+    private final RecordingDispatchQueue<SubflowExecutionEnd> subflowExecutionEndQueue;
+    private final RecordingDispatchQueue<MultipleConditionEvent> multipleConditionEventQueue;
+    private final RecordingDispatchQueue<ExecutionStatistic> executionStatisticQueue;
+    private final List<RecordingQueue<?>> queues;
     private final RecordingLogEntryEmitter logEmitter;
 
     // mocks exposed for per-test stubbing
     private final KillSwitchService killSwitchService;
     private final KillSwitchActionService killSwitchActionService;
     private final WorkerTaskResultListener workerTaskResultListener;
+    private final WorkerJobRunningStateStore workerJobRunningStateStore;
     private final ConcurrencyLimitResolver concurrencyLimitResolver;
     private final QuotaService quotaService;
     private final AsyncOperationService asyncOperationService;
@@ -152,13 +174,24 @@ public final class ExecutorTestHarness {
         this.concurrencyLimitStateStore = new InMemoryConcurrencyLimitStateStore();
         this.taskOutputRepository = new InMemoryTaskOutputRepository();
         this.executionOutputRepository = new InMemoryExecutionOutputRepository();
-        this.killQueue = new RecordingBroadcastQueue<>("kill");
-        this.loopExecutionEventQueue = new RecordingDispatchQueue<>("loopExecutionEvent");
-        this.workerJobEventQueue = new RecordingKeyedDispatchQueue<>("workerJobEvent");
-        this.subflowExecutionResultQueue = new RecordingDispatchQueue<>("subflowExecutionResult");
-        this.executionQueue = new RecordingDispatchQueue<>("execution");
-        this.followExecutionEventQueue = new RecordingBroadcastQueue<>("followExecutionEvent");
-        this.executionCommandQueue = new RecordingDispatchQueue<>("executionCommand");
+        this.killQueue = new RecordingBroadcastQueue<>("kill", journal);
+        this.loopExecutionEventQueue = new RecordingDispatchQueue<>("loopExecutionEvent", journal);
+        this.workerJobEventQueue = new RecordingKeyedDispatchQueue<>("workerJobEvent", journal);
+        this.subflowExecutionResultQueue = new RecordingDispatchQueue<>("subflowExecutionResult", journal);
+        this.executionQueue = new RecordingDispatchQueue<>("execution", journal);
+        this.followExecutionEventQueue = new RecordingBroadcastQueue<>("followExecutionEvent", journal);
+        this.executionCommandQueue = new RecordingDispatchQueue<>("executionCommand", journal);
+        this.executionEventQueue = new RecordingDispatchQueue<>("executionEvent", journal);
+        this.workerTaskResultQueue = new RecordingDispatchQueue<>("workerTaskResult", journal);
+        this.subflowExecutionEndQueue = new RecordingDispatchQueue<>("subflowExecutionEnd", journal);
+        this.multipleConditionEventQueue = new RecordingDispatchQueue<>("multipleConditionEvent", journal);
+        this.executionStatisticQueue = new RecordingDispatchQueue<>("executionStatistic", journal);
+        TriggerEventQueue triggerEventQueue = Mockito.mock(TriggerEventQueue.class);
+        Mockito.doAnswer(invocation -> journal.add(new Trace.Emission(journal.size(), "triggerEvent", invocation.getArgument(0)))).when(triggerEventQueue).send(Mockito.any());
+        this.queues = List.of(
+            executionQueue, executionEventQueue, workerTaskResultQueue, executionCommandQueue, subflowExecutionResultQueue,
+            subflowExecutionEndQueue, multipleConditionEventQueue, loopExecutionEventQueue, killQueue
+        );
         this.logEmitter = new RecordingLogEntryEmitter();
 
         MetricRegistry metricRegistry = new MetricRegistry(new SimpleMeterRegistry(), new MetricConfig(null, null, null, Map.of()));
@@ -233,6 +266,7 @@ public final class ExecutorTestHarness {
         );
         this.killSwitchActionService = Mockito.mock(KillSwitchActionService.class);
         this.workerTaskResultListener = Mockito.mock(WorkerTaskResultListener.class);
+        this.workerJobRunningStateStore = Mockito.mock(WorkerJobRunningStateStore.class);
         // a spy so tests can stub namespace/tenant limits while the OSS flow-scope default stays real
         this.concurrencyLimitResolver = Mockito.spy(new ConcurrencyLimitResolver());
         this.quotaService = Mockito.mock(QuotaService.class);
@@ -367,6 +401,77 @@ public final class ExecutorTestHarness {
             runContextFactory,
             metricRegistry
         );
+
+        ExecutorCore executorCore = new ExecutorCore(
+            executorService,
+            executionService,
+            flowTriggerService,
+            flowMetaStore,
+            executionStateStore,
+            slaMonitorStateStore,
+            concurrencySlotReleaseProcessor,
+            executionDelayProcessor,
+            slaMonitorProcessor,
+            runContextFactory,
+            killSwitchService,
+            killSwitchActionService,
+            metricRegistry,
+            clock,
+            executionQueue,
+            executionEventQueue,
+            followExecutionEventQueue,
+            subflowExecutionEndQueue,
+            multipleConditionEventQueue,
+            loopExecutionEventQueue,
+            executionStatisticQueue,
+            triggerEventQueue,
+            execution -> journal.add(new Trace.Emission(journal.size(), "executionTerminated", execution)),
+            workerJobRunningStateStore,
+            executionCommandMessageHandler,
+            executionEventMessageHandler,
+            workerTaskResultMessageHandler,
+            executionKilledExecutionMessageHandler,
+            subflowExecutionResultMessageHandler,
+            subflowExecutionEndMessageHandler,
+            multipleConditionEventMessageHandler,
+            loopExecutionEventMessageHandler
+        );
+
+        // the production DefaultExecutor over same-thread pools and hand-ticked loops
+        ScheduledExecutorService scheduledExecutorService = Mockito.mock(ScheduledExecutorService.class);
+        Mockito.when(scheduledExecutorService.scheduleAtFixedRate(Mockito.any(), Mockito.anyLong(), Mockito.anyLong(), Mockito.any())).thenAnswer(invocation -> {
+            loops.add(invocation.getArgument(0));
+            return Mockito.mock(ScheduledFuture.class);
+        });
+        ExecutorsUtils executorsUtils = Mockito.mock(ExecutorsUtils.class);
+        Mockito.when(executorsUtils.maxCachedThreadPool(Mockito.anyInt(), Mockito.anyString())).thenAnswer(invocation -> MoreExecutors.newDirectExecutorService());
+        Mockito.when(executorsUtils.singleThreadScheduledExecutor(Mockito.anyString())).thenReturn(scheduledExecutorService);
+        KestraContext kestraContext = Mockito.mock(KestraContext.class);
+        Mockito.when(kestraContext.getAllocatedCpuCores()).thenReturn(1);
+        @SuppressWarnings("unchecked")
+        ApplicationEventPublisher<ServiceStateChangeEvent> eventPublisher = Mockito.mock(ApplicationEventPublisher.class);
+        DefaultExecutor executor = new DefaultExecutor(
+            eventPublisher,
+            executorsUtils,
+            clock,
+            new ExecutorConfiguration(1, 1000, 1000, 60000),
+            kestraContext,
+            executionQueue,
+            executionCommandQueue,
+            executionEventQueue,
+            workerTaskResultQueue,
+            killQueue,
+            subflowExecutionResultQueue,
+            subflowExecutionEndQueue,
+            multipleConditionEventQueue,
+            loopExecutionEventQueue,
+            executorCore,
+            new MaintenanceService.NoopMaintenanceService(),
+            multipleConditionStateStore,
+            metricRegistry
+        );
+        executor.initMetrics();
+        executor.run();
     }
 
     /**
@@ -437,6 +542,80 @@ public final class ExecutorTestHarness {
         }
 
         return context;
+    }
+
+    // --- the whole machine: the real DefaultExecutor, one delivery at a time
+
+    /** Puts {@code message} on its queue and delivers it to the executor; returns what the executor emitted in return. */
+    public List<Trace.Emission> step(Object message) {
+        RecordingQueue<?> queue = enqueue(message);
+        int from = journal.size();
+        queue.deliverNext();
+        return emittedSince(from);
+    }
+
+    /** Fires the execution-delay loop at {@code now}. */
+    public List<Trace.Emission> tickExecutionDelays(Instant now) {
+        clock.set(now);
+        int from = journal.size();
+        loops.getFirst().run();
+        return emittedSince(from);
+    }
+
+    public Trace run(Execution execution, ScriptedWorker worker) {
+        return run(List.of(execution), worker);
+    }
+
+    /**
+     * Drains every queue the executor subscribed to, one delivery at a time in subscription order,
+     * while {@code worker} answers each dispatched task. Stops when nothing is pending.
+     */
+    public Trace run(List<?> messages, ScriptedWorker worker) {
+        messages.forEach(this::enqueue);
+        List<Trace.Step> steps = new ArrayList<>();
+        for (int i = 0; i < MAX_STEPS; i++) {
+            answerWorkerJobs(worker);
+            RecordingQueue<?> queue = queues.stream().filter(RecordingQueue::isSubscribed).filter(RecordingQueue::hasPending).findFirst().orElse(null);
+            if (queue == null) {
+                return new Trace(steps);
+            }
+            Object message = queue.peekPending();
+            int from = journal.size();
+            queue.deliverNext();
+            steps.add(new Trace.Step(queue.queueName(), message, emittedSince(from)));
+        }
+        throw new IllegalStateException("Executor did not quiesce after " + MAX_STEPS + " deliveries — possible execution loop");
+    }
+
+    private List<Trace.Emission> emittedSince(int from) {
+        return List.copyOf(journal.subList(from, journal.size()));
+    }
+
+    private void answerWorkerJobs(ScriptedWorker worker) {
+        List<WorkerJobEvent> jobs = workerJobEventQueue.emittedMessages();
+        for (; workerJobsAnswered < jobs.size(); workerJobsAnswered++) {
+            workerTaskResultQueue.emit(worker.run((WorkerTask) jobs.get(workerJobsAnswered).job()));
+        }
+    }
+
+    private RecordingQueue<?> enqueue(Object message) {
+        return switch (message) {
+            case Execution e -> put(executionQueue, e);
+            case ExecutionEvent e -> put(executionEventQueue, e);
+            case WorkerTaskResult r -> put(workerTaskResultQueue, r);
+            case ExecutionKilled k -> put(killQueue, k);
+            case SubflowExecutionResult r -> put(subflowExecutionResultQueue, r);
+            case SubflowExecutionEnd e -> put(subflowExecutionEndQueue, e);
+            case LoopExecutionEvent e -> put(loopExecutionEventQueue, e);
+            case MultipleConditionEvent e -> put(multipleConditionEventQueue, e);
+            case ExecutionCommand c -> put(executionCommandQueue, c);
+            default -> throw new IllegalArgumentException("Not an executor message: " + message.getClass().getName());
+        };
+    }
+
+    private static <T extends Event> RecordingQueue<T> put(RecordingQueue<T> queue, T message) {
+        queue.emit(message);
+        return queue;
     }
 
     // --- saga verbs
@@ -597,6 +776,10 @@ public final class ExecutorTestHarness {
 
     public WorkerTaskResultListener workerTaskResultListener() {
         return workerTaskResultListener;
+    }
+
+    public WorkerJobRunningStateStore workerJobRunningStateStore() {
+        return workerJobRunningStateStore;
     }
 
     public ConcurrencyLimitResolver concurrencyLimitResolver() {

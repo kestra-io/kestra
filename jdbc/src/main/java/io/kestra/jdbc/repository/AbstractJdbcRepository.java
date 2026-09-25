@@ -837,11 +837,17 @@ public abstract class AbstractJdbcRepository {
         if (isDisabled == null) {
             return DSL.noCondition();
         }
-        return switch (operation) {
-            case EQUALS -> field("disabled").eq(isDisabled);
-            case NOT_EQUALS -> field("disabled").ne(isDisabled);
+        // A trigger is off for the user when either its runtime flag or its flow definition disables it,
+        // so both have to be read here: `disabled` holds only the runtime one.
+        Condition disabled = field("disabled", Boolean.class).isTrue()
+            .or(field("source_disabled", Boolean.class).isTrue());
+
+        boolean matchesDisabled = switch (operation) {
+            case EQUALS -> isDisabled;
+            case NOT_EQUALS -> !isDisabled;
             default -> throw new InvalidQueryFiltersException("Unsupported operation for Trigger State: " + operation);
         };
+        return matchesDisabled ? disabled : DSL.not(disabled);
     }
 
     protected Field<Date> formatDateField(String dateField, DateUtils.GroupType groupType) {

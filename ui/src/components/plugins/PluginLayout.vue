@@ -204,7 +204,7 @@
     const canSwitchVersion = computed<boolean>(() => Boolean(routeCls.value))
 
     const installedVersions = computed<string[]>(() =>
-        versionProbeCls.value ? [...(pluginsStore.versions ?? [])].sort(sortVersionsDesc) : [],
+        versionProbeCls.value ? [...(pluginsStore.versions?.[versionProbeCls.value] ?? [])].sort(sortVersionsDesc) : [],
     )
 
     const publicVersions = computed(() => enrichmentStore.getVersions(versionProbeCls.value))
@@ -354,7 +354,7 @@
         display: flex;
         height: 100%;
         min-height: 0;
-        background-color: var(--ks-bg-body);
+        background-color: var(--ks-bg-base);
         container-type: inline-size;
         container-name: plugin-page;
 

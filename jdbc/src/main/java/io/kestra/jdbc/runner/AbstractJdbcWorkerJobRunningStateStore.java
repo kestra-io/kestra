@@ -1,8 +1,10 @@
 package io.kestra.jdbc.runner;
 
 import java.util.List;
+import java.util.Set;
 import java.util.function.BiConsumer;
 
+import org.jooq.Condition;
 import org.jooq.DSLContext;
 import org.jooq.impl.DSL;
 
@@ -96,26 +98,76 @@ public abstract class AbstractJdbcWorkerJobRunningStateStore extends AbstractJdb
     }
 
     @Override
-    public void processWorkerJobsForDeadWorker(TransactionContext txContext, String workerUid, BiConsumer<TransactionContext, WorkerJobRunning> consumer) {
+    public void deleteByKeyAndWorker(TransactionContext txContext, String key, String workerUid) {
         // if both queue and repository support the same transaction type, we participate in the transaction, otherwise, not
         if (txContext.supports(JdbcTransactionContext.class)) {
-            var dslContext = txContext.unwrap(JdbcTransactionContext.class).getDslContext();
-            processWorkerJobsForDeadWorker(dslContext, txContext, workerUid, consumer);
+            deleteByKeyAndWorker(txContext.unwrap(JdbcTransactionContext.class).getDslContext(), key, workerUid);
         } else {
             this.jdbcRepository
                 .getDslContextWrapper()
-                .transaction(configuration -> processWorkerJobsForDeadWorker(DSL.using(configuration), txContext, workerUid, consumer));
+                .transaction(configuration -> deleteByKeyAndWorker(DSL.using(configuration), key, workerUid));
         }
     }
 
-    private void processWorkerJobsForDeadWorker(DSLContext dslContext,
+    private void deleteByKeyAndWorker(DSLContext dslContext, String key, String workerUid) {
+        dslContext
+            .transaction(
+                configuration -> DSL
+                    .using(configuration)
+                    .deleteFrom(this.jdbcRepository.getTable())
+                    .where(field("key").eq(key))
+                    .and(field("worker_uid").eq(workerUid))
+                    .execute()
+            );
+    }
+
+    @Override
+    public Set<String> findWorkerUidsWithRunningJobs() {
+        return this.jdbcRepository
+            .getDslContextWrapper()
+            .transactionResult(
+                configuration -> DSL
+                    .using(configuration)
+                    .selectDistinct(field("worker_uid"))
+                    .from(this.jdbcRepository.getTable())
+                    .fetchSet(field("worker_uid"), String.class)
+            );
+    }
+
+    @Override
+    public void processOrphanWorkerJobs(TransactionContext txContext, Set<String> inactiveWorkerUids, BiConsumer<TransactionContext, WorkerJobRunning> consumer) {
+        if (inactiveWorkerUids.isEmpty()) {
+            return;
+        }
+
+        process(txContext, field("worker_uid").in(inactiveWorkerUids), consumer);
+    }
+
+    @Override
+    public void processWorkerJobsForDeadWorker(TransactionContext txContext, String workerUid, BiConsumer<TransactionContext, WorkerJobRunning> consumer) {
+        process(txContext, field("worker_uid").eq(workerUid), consumer);
+    }
+
+    private void process(TransactionContext txContext, Condition condition, BiConsumer<TransactionContext, WorkerJobRunning> consumer) {
+        // if both queue and repository support the same transaction type, we participate in the transaction, otherwise, not
+        if (txContext.supports(JdbcTransactionContext.class)) {
+            var dslContext = txContext.unwrap(JdbcTransactionContext.class).getDslContext();
+            process(dslContext, txContext, condition, consumer);
+        } else {
+            this.jdbcRepository
+                .getDslContextWrapper()
+                .transaction(configuration -> process(DSL.using(configuration), txContext, condition, consumer));
+        }
+    }
+
+    private void process(DSLContext dslContext,
         TransactionContext txContext,
-        String workerUid,
+        Condition condition,
         BiConsumer<TransactionContext, WorkerJobRunning> consumer) {
         dslContext
             .select(field("key"), field("value"))
             .from(this.jdbcRepository.getTable())
-            .where(field("worker_uid").eq(workerUid))
+            .where(condition)
             .forUpdate()
             .fetch()
             .forEach(record ->
@@ -130,10 +182,9 @@ public abstract class AbstractJdbcWorkerJobRunningStateStore extends AbstractJdb
                     // The worker holding this lease is gone, so drop it on the same connection that holds
                     // the row lock rather than hand it to a consumer that cannot use it.
                     log.warn(
-                        "Discarding running entry '{}' of type '{}' for worker '{}': it was written by a previous version and cannot be processed by this one.",
+                        "Discarding running entry '{}' of type '{}': it was written by a previous version and cannot be processed by this one.",
                         key,
-                        workerJobRunning.getType(),
-                        workerUid
+                        workerJobRunning.getType()
                     );
                     deleteByKey(dslContext, key);
                     return;

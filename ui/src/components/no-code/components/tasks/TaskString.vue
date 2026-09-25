@@ -27,6 +27,7 @@
         />
         <KsEditor
             v-else-if="pebble || (!schema?.format && schema?.type !== 'boolean')"
+            ref="editorRef"
             class="string-editor"
             v-bind="editorBindings"
             :modelValue="editorValue"
@@ -38,6 +39,8 @@
             inline
             @update:model-value="onInput"
             @save="saveFlow"
+            @focus="onFocus"
+            @focusout="onBlur"
             style="z-index: 1;"
         />
     </div>
@@ -45,8 +48,9 @@
 
 <script lang="ts" setup>
     import {computed, inject, onMounted, ref} from "vue"
-    import {durationUtils, KsEditor} from "@kestra-io/design-system"
+    import {durationUtils, KsEditor, type KsEditorExposes} from "@kestra-io/design-system"
     import {useEditorBindings} from "../../../../composables/useEditorBindings"
+    import {useFocusedExpressionEditor} from "./useFocusedExpressionEditor"
     import InputText from "../inputs/InputText.vue"
     import TaskDuration from "./TaskDuration.vue"
     import TaskBoolean from "./TaskBoolean.vue"
@@ -60,6 +64,9 @@
     // Monaco binds Ctrl/Cmd+S itself, so the field swallows the shortcut before the editor
     // shell ever sees it — without this the whole form silently ignores it.
     const saveFlow = inject(SAVE_FLOW_FUNCTION_INJECTION_KEY, () => {})
+
+    const editorRef = ref<KsEditorExposes>()
+    const {onFocus, onBlur} = useFocusedExpressionEditor(editorRef)
 
     const props = defineProps<{
         disabled?: boolean;

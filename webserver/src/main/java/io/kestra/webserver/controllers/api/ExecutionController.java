@@ -701,7 +701,9 @@ public class ExecutionController {
         String path,
         MultipartBody parts,
         HttpRequest<?> request) {
-        Flow flow = resolveWebhook(maybeFlow, key).flow();
+        ResolvedWebhook resolved = resolveWebhook(maybeFlow, key);
+        Flow flow = resolved.flow();
+        webhookBodyService.validateMultipartSignature(processedForRuntime(flow, resolved.trigger()));
 
         // Minted before the parts are read, so that they are stored under the execution that will carry them.
         String executionId = IdUtils.create();
@@ -758,7 +760,7 @@ public class ExecutionController {
 
         // Minted before the body is read, so that a stored body lives under the execution that will carry it.
         String executionId = IdUtils.create();
-        WebhookBodyService.Body body = webhookBodyService.read(request, flow, executionId, webhook.getFetchType());
+        WebhookBodyService.Body body = webhookBodyService.read(request, flow, executionId, webhook, webhookService.runContext(flow, webhook));
 
         try {
             return this.webhook(

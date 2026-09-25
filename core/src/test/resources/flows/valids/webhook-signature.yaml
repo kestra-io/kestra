@@ -1,0 +1,19 @@
+id: webhook-signature
+namespace: io.kestra.tests
+
+variables:
+  signingSecret: test-secret
+
+tasks:
+  - id: log
+    type: io.kestra.plugin.core.log.Log
+    message: Verified webhook
+
+triggers:
+  - id: webhook
+    type: io.kestra.plugin.core.trigger.Webhook
+    key: testkey
+    signature:
+      header: X-Hub-Signature-256
+      secret: "{{ vars.signingSecret }}"
+      prefix: sha256=

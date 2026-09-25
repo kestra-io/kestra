@@ -1,13 +1,20 @@
 package io.kestra.plugin.core.runner;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.SystemUtils;
 import org.slf4j.Logger;
 
 import io.kestra.core.models.annotations.Example;
@@ -131,7 +138,18 @@ public class Process extends TaskRunner<TaskRunnerDetailResult> {
 
         List<String> renderedCommands = runContext.render(taskCommands.getCommands()).asList(String.class);
 
-        processBuilder.command(renderedCommands);
+        Path cmdScript = null;
+        List<String> commandsToRun = renderedCommands;
+        if (SystemUtils.IS_OS_WINDOWS) {
+            Optional<Path> script = writeWindowsCmdScript(renderedCommands, taskCommands.getWorkingDirectory());
+            if (script.isPresent()) {
+                cmdScript = script.get();
+                commandsToRun = new ArrayList<>(renderedCommands);
+                commandsToRun.set(commandsToRun.size() - 1, cmdScript.toString());
+            }
+        }
+
+        processBuilder.command(commandsToRun);
 
         java.lang.Process process = processBuilder.start();
         long pid = process.pid();
@@ -165,6 +183,47 @@ public class Process extends TaskRunner<TaskRunnerDetailResult> {
         } finally {
             stdOut.join();
             stdErr.join();
+            deleteQuietly(cmdScript, logger);
+        }
+    }
+
+    /**
+     * Writes a multi-line script to a temporary batch file when cmd.exe is the interpreter, as
+     * cmd.exe does not execute a multi-line string passed as a {@code /c} argument
+     * (see <a href="https://github.com/kestra-io/kestra/issues/12989">issue #12989</a>).
+     */
+    static Optional<Path> writeWindowsCmdScript(List<String> commands, Path workingDirectory) throws IOException {
+        if (commands.size() < 2 || !isCmdExe(commands.getFirst()) || !containsLineSeparator(commands.getLast())) {
+            return Optional.empty();
+        }
+
+        String script = commands.getLast().replace("\r\n", "\n").replace("\n", "\r\n");
+        Path scriptPath = Files.createTempFile(workingDirectory, "kestra-", ".bat");
+        Files.writeString(scriptPath, script);
+        return Optional.of(scriptPath);
+    }
+
+    private static boolean isCmdExe(String interpreter) {
+        String name = StringUtils.strip(interpreter, "\"");
+        int lastSeparator = Math.max(name.lastIndexOf('/'), name.lastIndexOf('\\'));
+        if (lastSeparator >= 0) {
+            name = name.substring(lastSeparator + 1);
+        }
+        return "cmd".equalsIgnoreCase(name) || "cmd.exe".equalsIgnoreCase(name);
+    }
+
+    private static boolean containsLineSeparator(String command) {
+        return command.indexOf('\n') >= 0 || command.indexOf('\r') >= 0;
+    }
+
+    private static void deleteQuietly(Path path, Logger logger) {
+        if (path == null) {
+            return;
+        }
+        try {
+            Files.deleteIfExists(path);
+        } catch (IOException e) {
+            logger.debug("Unable to delete the temporary Windows command script", e);
         }
     }
 

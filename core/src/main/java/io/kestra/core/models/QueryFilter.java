@@ -591,7 +591,7 @@ public record QueryFilter(
             public List<Field> supportedField() {
                 return List.of(
                     Field.QUERY, Field.SCOPE, Field.FLOW_ID, Field.START_DATE, Field.END_DATE,
-                    Field.STATE, Field.LABELS, Field.TRIGGER_EXECUTION_ID, Field.CHILD_FILTER,
+                    Field.STATE, Field.LABELS, Field.TRIGGER_EXECUTION_ID, Field.TRIGGER_ID, Field.CHILD_FILTER,
                     Field.NAMESPACE, Field.KIND, Field.PARENT_ID, Field.TASK_ID
                 );
             }

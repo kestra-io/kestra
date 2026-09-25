@@ -13,7 +13,7 @@ import {useCoreStore} from "../../stores/core"
 import {useToast} from "../../utils/toast"
 import {KsNotification} from "@kestra-io/design-system"
 import {asProblem} from "@kestra-io/kestra-sdk"
-import {isReportedCentrally} from "../../utils/kestraHttp"
+import {isReportedCentrally, type KestraHttpError} from "../../utils/kestraHttp"
 import PluginInstallToast from "../plugins/PluginInstallToast.vue"
 
 export function useFlowEditorActions() {
@@ -163,10 +163,11 @@ export function useFlowEditorActions() {
         })
     }
 
-    function reportSaveError(error: any) {
-        if (error?.status === 401) {
+    function reportSaveError(error: unknown) {
+        const httpError = error as KestraHttpError
+        if (httpError?.status === 401) {
             toast.error("401 Unauthorized", undefined, {duration: 2000})
-        } else if (!isReportedCentrally(error)) {
+        } else if (!isReportedCentrally(httpError)) {
             // A validation error and a lost connection reach here unreported; anything the
             // interceptor toasted, a 404 on a flow deleted under the editor included, is on screen
             // already with its problem title and its own remedies.
@@ -181,7 +182,7 @@ export function useFlowEditorActions() {
             const outcome = await triggerPluginInstallIfNeeded()
             if (outcome === "failed" || outcome === "timeout") return
             await persistAll(false)
-        } catch (error: any) {
+        } catch (error) {
             reportSaveError(error)
         }
     }
@@ -189,7 +190,7 @@ export function useFlowEditorActions() {
     async function saveAsDraft() {
         try {
             await persistAll(true)
-        } catch (error: any) {
+        } catch (error) {
             reportSaveError(error)
         }
     }
@@ -198,8 +199,8 @@ export function useFlowEditorActions() {
         try {
             await flowStore.publishDraft()
             await flushDirtyFiles()
-        } catch (error: any) {
-            if (error?.status === 401) {
+        } catch (error) {
+            if ((error as KestraHttpError)?.status === 401) {
                 toast.error("401 Unauthorized", undefined, {duration: 2000})
             }
         }
@@ -273,7 +274,7 @@ export function useFlowEditorActions() {
             }
 
             await flushDirtyFiles()
-        } catch (error: any) {
+        } catch (error) {
             reportSaveError(error)
         }
     }
@@ -303,8 +304,8 @@ export function useFlowEditorActions() {
                     params: {tenant: tenant.value},
                 })
             })
-            .catch((error: any) => {
-                if (!isReportedCentrally(error)) toast.error(t("delete flow error", {id: flowId}))
+            .catch((error: unknown) => {
+                if (!isReportedCentrally(error as KestraHttpError)) toast.error(t("delete flow error", {id: flowId}))
             })
     }
 

@@ -111,13 +111,22 @@
                         <KsDateAgo :inverted="true" :date="scope.row.updatedAt" />
                     </template>
                     <template v-else-if="col.prop === 'executionId'">
-                        <router-link
-                            v-if="scope.row.executionId && scope.row.namespace && scope.row.flowId"
-                            :to="{name: 'executions/update', params: {tenant: route.params?.tenant, namespace: scope.row.namespace, flowId: scope.row.flowId, id: scope.row.executionId}}"
-                        >
-                            <KsId :value="scope.row.executionId" :shrink="true" />
-                        </router-link>
-                        <span v-else />
+                        <div class="execution-cell">
+                            <router-link
+                                v-if="scope.row.executionId && scope.row.namespace && scope.row.flowId"
+                                :to="{name: 'executions/update', params: {tenant: route.params?.tenant, namespace: scope.row.namespace, flowId: scope.row.flowId, id: scope.row.executionId}}"
+                            >
+                                <KsId :value="scope.row.executionId" :shrink="true" />
+                            </router-link>
+                            <KsIconButton
+                                v-if="canViewExecutions"
+                                data-test="trigger-executions-link"
+                                :tooltip="$t('executions')"
+                                :to="triggerExecutionsRoute(scope.row)"
+                            >
+                                <FormatListBulleted />
+                            </KsIconButton>
+                        </div>
                     </template>
                     <template v-else>
                         {{ scope.row[col.prop] }}
@@ -343,9 +352,10 @@
     import Restart from "vue-material-design-icons/Restart.vue"
     import TextSearch from "vue-material-design-icons/TextSearch.vue"
     import FlashOutline from "vue-material-design-icons/FlashOutline.vue"
+    import FormatListBulleted from "vue-material-design-icons/FormatListBulleted.vue"
     import CalendarCollapseHorizontalOutline from "vue-material-design-icons/CalendarCollapseHorizontalOutline.vue"
 
-    import {KsDataTable, KsDropdown, KsDropdownMenu, KsDropdownItem, KsFilter as KSFilter, KsMarkdown, KsTag, KsTooltip, isDeepEqual} from "@kestra-io/design-system"
+    import {KsDataTable, KsDropdown, KsDropdownMenu, KsDropdownItem, KsFilter as KSFilter, KsIconButton, KsMarkdown, KsTag, KsTooltip, isDeepEqual} from "@kestra-io/design-system"
     import FlowRun from "./FlowRun.vue"
     import Vars from "../executions/Vars.vue"
     import BackfillBanner from "./BackfillBanner.vue"
@@ -377,6 +387,7 @@
 
     import {useTableColumns, type ColumnConfig} from "@kestra-io/design-system"
     import {useTriggerFilter} from "../filter/configurations/triggerFilter"
+    import {FLOW_PARENT_ROUTE} from "./flowTabs"
 
     const triggerFilter = useTriggerFilter()
 
@@ -582,6 +593,11 @@
         return authStore.user?.isAllowed(resource.TRIGGER, act ? act : action.VIEW, flowStore.flow?.namespace)
     }
 
+    // The Executions tab itself is gated on EXECUTION:VIEW (isFlowTabAllowed), so the link to it is too.
+    const canViewExecutions = computed(() =>
+        Boolean(authStore.user?.isAllowed(resource.EXECUTION, action.VIEW, flowStore.flow?.namespace)),
+    )
+
     const loadData = () => {
         const flow = flowStore.flow
         if(!triggersWithType.value.length || !flow) return
@@ -706,6 +722,16 @@
     const openDetails = (row: TriggerRow) => {
         triggerId.value = row.id
         isOpen.value = true
+    }
+
+    // Every execution created by this trigger: the flow executions tab, pre-filtered on the trigger id.
+    const triggerExecutionsRoute = (row: TriggerRow) => {
+        const identity = triggerIdentity(row)
+        return {
+            name: `${FLOW_PARENT_ROUTE}/executions`,
+            params: {tenant: route.params?.tenant, namespace: identity.namespace, id: identity.flowId},
+            query: {"filters[triggerId][EQUALS]": identity.triggerId},
+        }
     }
 
     const tourStore = useProductTourStore()
@@ -858,6 +884,12 @@
     align-items: center;
     justify-content: flex-end;
     gap: var(--ks-spacing-1);
+}
+
+.execution-cell {
+    display: flex;
+    align-items: center;
+    gap: var(--ks-spacing-2);
 }
 
 .pickers {

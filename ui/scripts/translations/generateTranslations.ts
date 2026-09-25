@@ -19,7 +19,7 @@
  * This module has no side effects beyond sizing the shared request gate: it never chdirs, never
  * reads `process.argv` and never writes a file unless a caller asks it to.
  */
-import {readFileSync} from "node:fs"
+import {existsSync, readFileSync} from "node:fs"
 import {dirname, relative, resolve} from "node:path"
 import {writeIfChanged} from "./files.ts"
 import {
@@ -333,7 +333,10 @@ export async function generateTranslations(options: GenerateTranslationsOptions)
     // request gate, which bounds how many translations are in flight at once.
     await Promise.all(languages.map(async ([languageCode, targetLanguage]) => {
         const targetPath = filePathFor(languageCode)
-        const targetFlat = flattenDict(JSON.parse(readFileSync(targetPath, "utf-8"))[languageCode] as NestedDict)
+        // A tenant type's folder is created with `en.json` alone, so its first generation has no file to read.
+        const targetFlat = flattenDict(
+            existsSync(targetPath) ? JSON.parse(readFileSync(targetPath, "utf-8"))[languageCode] as NestedDict : {},
+        )
 
         // Only strings are sent to the model; other leaves (numbers, booleans) are copied verbatim,
         // since "translating" them would just corrupt them.

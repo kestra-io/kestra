@@ -7,7 +7,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
-import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -34,7 +33,6 @@ import io.kestra.core.runners.pebble.PebbleEngineFactory;
 import io.kestra.core.services.KVStoreService;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.storages.kv.InternalKVStore;
-import io.kestra.core.storages.kv.KVStore;
 import io.kestra.core.storages.kv.KVValue;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.core.utils.IdUtils;
@@ -61,17 +59,15 @@ class RunVariablesTest {
 
     @MockBean(KVStoreService.class)
     KVStoreService testKVStoreService() {
-        return new KVStoreService() {
+        KVStoreService kvStoreService = Mockito.mock(KVStoreService.class, Mockito.CALLS_REAL_METHODS);
+        Mockito.doAnswer(invocation -> new InternalKVStore(invocation.getArgument(0), invocation.getArgument(1), storageInterface, kvMetadataStateStore) {
             @Override
-            public KVStore get(String tenant, String namespace, @Nullable String fromNamespace) {
-                return new InternalKVStore(tenant, namespace, storageInterface, kvMetadataStateStore) {
-                    @Override
-                    public Optional<KVValue> getValue(String key) {
-                        return Optional.of(new KVValue("value"));
-                    }
-                };
+            public Optional<KVValue> getValue(String key) {
+                return Optional.of(new KVValue("value"));
             }
-        };
+        }
+        ).when(kvStoreService).get(Mockito.any(), Mockito.any(), Mockito.any());
+        return kvStoreService;
     }
 
     @Test

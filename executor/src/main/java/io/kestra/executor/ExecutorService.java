@@ -24,6 +24,7 @@ import io.kestra.core.models.assets.AssetUser;
 import io.kestra.core.models.assets.AssetsDeclaration;
 import io.kestra.core.models.assets.AssetsInOut;
 import io.kestra.core.models.executions.*;
+import io.kestra.core.models.executions.statistics.TaskRunStatistic;
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.State;
@@ -698,7 +699,8 @@ public class ExecutorService {
                                         // The failing iteration's terminal state was recorded in terminatedIterations
                                         // when the loop terminated; undo it now so the retry's real outcome
                                         // (recorded once it reaches a new terminal state) isn't double-counted.
-                                        revertLoopIterationTermination(taskRun, subExecution.getState().getCurrent());
+                                        // This also reverts the failed iteration's already-folded task-run statistics.
+                                        revertLoopIterationTermination(executor, taskRun, subExecution);
                                         Execution restarted = executionService.restart(subExecution, executor.getFlow(), null);
                                         executor.withLoopExecution(restarted, "restartLoopExecution");
                                         executor.withExecution(
@@ -895,13 +897,18 @@ public class ExecutorService {
      * Without this, the retry's own terminal event would be merged on top of the stale one, double-counting
      * the iteration in {@link Loop#TERMINATED_ITERATIONS_OUTPUT} and corrupting the running-iteration count
      * used to compute the next iteration index.
+     * It also reverts the failed iteration's task-run statistics: the Loop task run's running total
+     * ({@link Loop#TASK_RUN_STATISTIC_OUTPUT}) has the failed iteration removed, and the parent
+     * execution's metadata accumulator has the whole Loop contribution folded at termination removed,
+     * so the retry's termination folds the Loop total exactly once.
      */
-    private void revertLoopIterationTermination(TaskRun loopTaskRun, State.Type terminatedState) throws InternalException {
+    private void revertLoopIterationTermination(ExecutorContext executor, TaskRun loopTaskRun, Execution failingSubExecution) throws InternalException {
         Map<String, Object> outputs = taskOutputService.getOutputs(loopTaskRun);
         if (!outputs.containsKey(Loop.RUNNING_ITERATIONS_OUTPUT) || !outputs.containsKey(Loop.TERMINATED_ITERATIONS_OUTPUT)) {
             return;
         }
 
+        State.Type terminatedState = failingSubExecution.getState().getCurrent();
         int runningIterations = (Integer) outputs.get(Loop.RUNNING_ITERATIONS_OUTPUT);
         @SuppressWarnings("unchecked")
         Map<String, Integer> terminatedByState = new HashMap<>((Map<String, Integer>) outputs.get(Loop.TERMINATED_ITERATIONS_OUTPUT));
@@ -909,7 +916,28 @@ public class ExecutorService {
 
         outputs.put(Loop.RUNNING_ITERATIONS_OUTPUT, runningIterations + 1);
         outputs.put(Loop.TERMINATED_ITERATIONS_OUTPUT, terminatedByState);
+
+        @SuppressWarnings("unchecked")
+        TaskRunStatistic totalLoopStatistic = TaskRunStatistic.fromMap((Map<String, Object>) outputs.get(Loop.TASK_RUN_STATISTIC_OUTPUT));
+        if (totalLoopStatistic.count() > 0) {
+            TaskRunStatistic failedIterationStatistic = TaskRunStatistic.of(failingSubExecution.getTaskRunList())
+                .plus(failingSubExecution.getMetadata() == null ? null : failingSubExecution.getMetadata().getTaskRunStatistic());
+            TaskRunStatistic remaining = totalLoopStatistic.minus(failedIterationStatistic);
+            if (remaining.count() == 0) {
+                outputs.remove(Loop.TASK_RUN_STATISTIC_OUTPUT);
+            } else {
+                outputs.put(Loop.TASK_RUN_STATISTIC_OUTPUT, remaining.toMap());
+            }
+        }
         taskOutputService.saveOutputs(loopTaskRun, outputs);
+
+        if (totalLoopStatistic.count() > 0 && executor.getExecution().getMetadata() != null) {
+            Execution execution = executor.getExecution();
+            ExecutionMetadata reverted = execution.getMetadata().withTaskRunStatisticMinus(totalLoopStatistic);
+            if (reverted != execution.getMetadata()) {
+                executor.withExecution(execution.withMetadata(reverted), "revertLoopTaskRunStatistic");
+            }
+        }
     }
 
     /**
@@ -1098,7 +1126,7 @@ public class ExecutorService {
             if (executor.getExecution().getKind() == ExecutionKind.LOOP) {
                 loopExecutionEventQueue.emit(
                     new LoopExecutionEvent(
-                        executor.getExecution().getLoopRun(), executor.getExecution().getId(), State.Type.PAUSED, null
+                        executor.getExecution().getLoopRun(), executor.getExecution().getId(), State.Type.PAUSED, null, null
                     )
                 );
             }

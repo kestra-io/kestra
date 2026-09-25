@@ -21,6 +21,7 @@ import io.kestra.core.executor.command.Create;
 import io.kestra.core.executor.command.ExecutionCommand;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.*;
+import io.kestra.core.models.executions.statistics.TaskRunStatistic;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.FlowWithSource;
@@ -192,6 +193,7 @@ public class ExecutionService {
 
         // Remove all descendants (not just direct children) of the iterating LoopUntil so that nested
         // LoopUntil tasks start the next iteration with a clean state and don't inherit stale outputs.
+        List<TaskRun> discarded = new ArrayList<>();
         List<TaskRun> newTaskRuns = execution
             .getTaskRunList()
             .stream()
@@ -201,6 +203,7 @@ public class ExecutionService {
                     return taskRun.resetAttempts().incrementIteration();
                 }
                 if (isDescendantOf(taskRun, flowableTaskRunId, byId)) {
+                    discarded.add(taskRun);
                     return null;
                 }
                 return taskRun;
@@ -208,7 +211,9 @@ public class ExecutionService {
             .filter(Objects::nonNull)
             .toList();
 
-        return execution.withTaskRunList(newTaskRuns).withState(State.Type.RUNNING);
+        ExecutionMetadata metadata = execution.getMetadata().withTaskRunStatisticPlus(TaskRunStatistic.of(discarded));
+
+        return execution.withTaskRunList(newTaskRuns).withMetadata(metadata).withState(State.Type.RUNNING);
     }
 
     private boolean isDescendantOf(TaskRun taskRun, String ancestorId, Map<String, TaskRun> byId) {

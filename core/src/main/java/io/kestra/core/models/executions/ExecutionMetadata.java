@@ -3,6 +3,8 @@ package io.kestra.core.models.executions;
 import java.time.Instant;
 import java.util.List;
 
+import io.kestra.core.models.executions.statistics.TaskRunStatistic;
+
 import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.Getter;
@@ -36,6 +38,41 @@ public class ExecutionMetadata {
      */
     @With
     Integer executionDepth;
+
+    /**
+     * Task runs that ran as part of this execution but are no longer reachable from its
+     * {@code taskRunList} by the time it terminates: a LoopUntil task's discarded iterations,
+     * and Loop sub-executions.
+     */
+    @With
+    TaskRunStatistic taskRunStatistic;
+
+    /**
+     * Returns a copy with {@code other} folded into {@link #taskRunStatistic}. A no-op (returns
+     * {@code this}) when {@code other} is null or empty, so an execution that never accumulates
+     * anything keeps {@link #taskRunStatistic} null rather than an empty instance.
+     */
+    public ExecutionMetadata withTaskRunStatisticPlus(TaskRunStatistic other) {
+        if (other == null || other.count() == 0) {
+            return this;
+        }
+
+        return this.withTaskRunStatistic(this.taskRunStatistic == null ? other : this.taskRunStatistic.plus(other));
+    }
+
+    /**
+     * Returns a copy with {@code other} removed from {@link #taskRunStatistic}.
+     * A no-op when {@code other} is null or empty, or when there is nothing accumulated.
+     * Removes the accumulator entirely (back to null) when nothing remains.
+     */
+    public ExecutionMetadata withTaskRunStatisticMinus(TaskRunStatistic other) {
+        if (other == null || other.count() == 0 || this.taskRunStatistic == null || this.taskRunStatistic.count() == 0) {
+            return this;
+        }
+
+        TaskRunStatistic reverted = this.taskRunStatistic.minus(other);
+        return this.withTaskRunStatistic(reverted.count() == 0 ? null : reverted);
+    }
 
     public ExecutionMetadata nextAttempt() {
         return this.toBuilder()

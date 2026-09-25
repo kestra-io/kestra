@@ -31,6 +31,7 @@ import io.kestra.core.scheduler.model.TriggerType;
 import io.kestra.core.scheduler.queue.TriggerEventQueue;
 import io.kestra.core.services.AsyncOperationWaiter;
 import io.kestra.core.utils.IdUtils;
+import io.kestra.core.utils.ListUtils;
 import io.kestra.webserver.models.api.ApiAsyncOperationResponse;
 
 import io.micronaut.http.HttpStatus;
@@ -279,13 +280,17 @@ public class TriggerStateService {
     }
 
     /**
-     * Deletes the trigger and waits for the scheduler to acknowledge.
+     * Deletes the trigger state and waits for the scheduler to acknowledge.
+     * <p>
+     * Only orphan state can be deleted. If the flow still declares this trigger, deletion is
+     * refused so the schedule is not silently dropped until Kestra restarts.
      *
-     * @throws NotFoundException if the trigger does not exist.
-     * @throws ConflictException if the trigger cannot be deleted.
+     * @throws NotFoundException if the trigger state does not exist.
+     * @throws ConflictException if the flow still declares the trigger, or the delete failed.
      */
     public void deleteById(TriggerId trigger) throws NotFoundException, ConflictException {
         getTriggerState(trigger);
+        rejectIfStillDeclared(trigger);
         awaitBlockingAction(
             trigger.uid(),
             operationId -> triggerEventQueue.send(new TriggerDeleted(trigger).withOperationId(operationId)),
@@ -294,20 +299,31 @@ public class TriggerStateService {
     }
 
     /**
-     * Deletes all triggers for the given identifiers. Non-existing triggers are silently skipped.
+     * Deletes orphan trigger state for the given identifiers. Non-existing and still-declared
+     * triggers are silently skipped.
      */
     public ApiAsyncOperationResponse deleteAllByIds(List<TriggerId> triggers) {
-        return submitExistingBatch(
-            triggers, (id, operationId) -> triggerEventQueue.send(new TriggerDeleted(id).withOperationId(operationId))
+        List<TriggerId> orphans = triggers.stream()
+            .filter(id -> triggerRepository.findByIdWithoutAcl(id).isPresent())
+            .filter(id -> !isFlowBackedTrigger(id))
+            .toList();
+        return submitBatch(
+            orphans, (id, operationId) -> triggerEventQueue.send(new TriggerDeleted(id).withOperationId(operationId))
         );
     }
 
     /**
-     * Deletes all triggers matching the given filters.
+     * Deletes orphan trigger state matching the given filters. Still-declared triggers are skipped.
      */
     public ApiAsyncOperationResponse deleteAllMatching(String tenant, List<QueryFilter> filters) {
-        return submitMatching(
-            tenant, filters, (id, operationId) -> triggerEventQueue.send(new TriggerDeleted(id).withOperationId(operationId))
+        List<TriggerId> orphans = triggerRepository.find(tenant, filters)
+            .map(TriggerId::of)
+            .filter(id -> !isFlowBackedTrigger(id))
+            .collectList()
+            .blockOptional()
+            .orElse(List.of());
+        return submitBatch(
+            orphans, (id, operationId) -> triggerEventQueue.send(new TriggerDeleted(id).withOperationId(operationId))
         );
     }
 
@@ -422,7 +438,7 @@ public class TriggerStateService {
         Flow flow = flowRepository.findById(triggerId.getTenantId(), triggerId.getNamespace(), triggerId.getFlowId())
             .orElseThrow(() -> new NotFoundException("Flow not found for trigger: %s".formatted(triggerId)));
 
-        flow.getTriggers().stream()
+        ListUtils.emptyOnNull(flow.getTriggers()).stream()
             .filter(t -> t.getId().equals(triggerId.getTriggerId()))
             .findFirst()
             .orElseThrow(() -> new NotFoundException("Trigger not found: %s".formatted(triggerId)));
@@ -437,6 +453,18 @@ public class TriggerStateService {
             return true;
         } catch (NotFoundException e) {
             return false;
+        }
+    }
+
+    /**
+     * Deleting state for a trigger the flow still declares unschedules it until Kestra restarts.
+     */
+    private void rejectIfStillDeclared(TriggerId triggerId) throws ConflictException {
+        if (isFlowBackedTrigger(triggerId)) {
+            throw new ConflictException(
+                "Cannot delete trigger state [tenant=%s, namespace=%s, flow=%s, trigger=%s]: the flow still declares it. Remove it from the flow or restart the trigger."
+                    .formatted(triggerId.getTenantId(), triggerId.getNamespace(), triggerId.getFlowId(), triggerId.getTriggerId())
+            );
         }
     }
 

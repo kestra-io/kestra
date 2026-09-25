@@ -12,7 +12,7 @@
         <div
             class="block-section-list"
             :data-test="listTest"
-            @dragover.prevent
+            @dragover="onLaneContainerDragOver"
             @dragleave="onLaneDragLeave"
             @dragend="onDragEnd"
         >
@@ -150,6 +150,7 @@
         onItemDragOver,
         onItemDrop,
         onDragEnd,
+        onLaneContainerDragOver,
         onLaneDragLeave,
         onTrailingDragOver,
         onTrailingDrop,

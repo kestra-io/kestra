@@ -39,6 +39,11 @@ export function useLaneDrag(parentPath: () => string, itemCount: () => number) {
         dragContext?.endDrag()
     }
 
+    function onLaneContainerDragOver(event: DragEvent) {
+        if (dragContext?.draggedPath.value) return
+        event.preventDefault()
+    }
+
     /** Clears the insertion cue when the drag leaves this lane's container entirely, so it does not linger while the pointer hovers another lane. `relatedTarget` is null for a drag that leaves the window, which counts as leaving the lane too. */
     function onLaneDragLeave(event: DragEvent) {
         const container = event.currentTarget as Node | null
@@ -67,6 +72,7 @@ export function useLaneDrag(parentPath: () => string, itemCount: () => number) {
         onItemDragOver,
         onItemDrop,
         onDragEnd,
+        onLaneContainerDragOver,
         onLaneDragLeave,
         onTrailingDragOver,
         onTrailingDrop,

@@ -21,7 +21,7 @@
         <div
             class="branch-lane-body"
             :style="indentStyle"
-            @dragover.prevent
+            @dragover="onLaneContainerDragOver"
             @dragleave="onLaneDragLeave"
         >
             <template v-if="tasks.length > 0">
@@ -169,6 +169,7 @@
         onItemDragOver,
         onItemDrop,
         onDragEnd,
+        onLaneContainerDragOver,
         onLaneDragLeave,
         onTrailingDragOver,
         onTrailingDrop,

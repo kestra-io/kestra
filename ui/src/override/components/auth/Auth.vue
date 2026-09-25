@@ -32,6 +32,13 @@
 
                     <VersionMenuItem />
 
+                    <KsDropdownItem v-if="showChangePassword" command="change-password">
+                        <KsIcon size="base">
+                            <LockOutline />
+                        </KsIcon>
+                        {{ $t("setup.change_password.menu") }}
+                    </KsDropdownItem>
+
                     <KsDropdownItem danger command="logout">
                         <KsIcon size="base">
                             <Logout />
@@ -42,25 +49,35 @@
             </div>
         </template>
     </KsDropdown>
+    <BasicAuthChangePassword v-model="isChangePasswordOpen" />
 </template>
 
 <script setup lang="ts">
-    import {computed} from "vue"
+    import {computed, ref} from "vue"
     import {useRoute, useRouter} from "vue-router"
     import {useClient} from "@kestra-io/kestra-sdk"
     import ChevronRight from "vue-material-design-icons/ChevronRight.vue"
+    import LockOutline from "vue-material-design-icons/LockOutline.vue"
     import Logout from "vue-material-design-icons/Logout.vue"
     import RocketLaunchOutline from "vue-material-design-icons/RocketLaunchOutline.vue"
     import Slack from "vue-material-design-icons/Slack.vue"
     import KS_LOGO from "../../../assets/ks-logo-small.svg"
     import * as BasicAuth from "../../../utils/basicAuth"
+    import {useMiscStore} from "override/stores/misc"
     import VersionMenuItem from "../../../components/layout/VersionMenuItem.vue"
+    import BasicAuthChangePassword from "../../../components/basicauth/BasicAuthChangePassword.vue"
 
     const SLACK_URL = "https://kestra.io/slack?utm_source=app&utm_medium=referral&utm_campaign=top-auth"
 
     const route = useRoute()
     const router = useRouter()
     const axios = useClient()
+    const miscStore = useMiscStore()
+    const isChangePasswordOpen = ref(false)
+
+    const showChangePassword = computed(() =>
+        miscStore.configs?.isBasicAuthInitialized === true && BasicAuth.isLoggedIn(),
+    )
 
     const startTutorial = computed(() => ({
         name: "ai",
@@ -73,6 +90,8 @@
             router.push(startTutorial.value)
         } else if (command === "slack") {
             window.open(SLACK_URL, "_blank", "noopener")
+        } else if (command === "change-password") {
+            isChangePasswordOpen.value = true
         } else if (command === "logout") {
             logout()
         }

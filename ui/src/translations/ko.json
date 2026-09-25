@@ -2047,6 +2047,15 @@
       "success": {
         "title": "축하합니다!",
         "subtitle": "모두 준비되었습니다!"
+      },
+      "change_password": {
+        "title": "비밀번호 변경",
+        "menu": "비밀번호 변경",
+        "current_password": "현재 비밀번호",
+        "new_password": "새 비밀번호",
+        "username_hint": "계정을 식별할 수 있도록 현재 사용자 이름(이메일)을 입력하세요.",
+        "incorrect_current": "현재 비밀번호가 올바르지 않습니다.",
+        "success": "비밀번호가 성공적으로 변경되었습니다."
       }
     },
     "ai": {

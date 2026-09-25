@@ -37,6 +37,7 @@ export interface KsEditorExposes {
     clearLinesRangeHighlights: () => void
     addContentWidget: (widget: {id: string, position: monaco.IPosition, height: number, right: string}) => Promise<void>
     removeContentWidget: (id: string) => void
+    insertTextAtCursor: (text: string) => void
     monaco: typeof monaco
     getEditor: () => monaco.editor.IStandaloneCodeEditor | monaco.editor.IStandaloneDiffEditor | undefined
 }
@@ -65,6 +66,7 @@ export type ResolvedKsEditorProps = KsEditorProps & Required<Pick<KsEditorProps,
 export interface KsEditorEmit {
     (e: "save", value?: string): void
     (e: "execute", value?: string): void
+    (e: "focus"): void
     (e: "focusout", value?: string): void
     (e: "update:modelValue", value: string): void
     (e: "cursor", payload: {position: monaco.Position, model: monaco.editor.ITextModel}): void

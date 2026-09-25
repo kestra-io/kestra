@@ -155,7 +155,7 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, watch, onMounted, onBeforeUnmount, onDeactivated} from "vue"
+    import {ref, computed, watch, onMounted, onBeforeUnmount, onDeactivated, provide} from "vue"
     import {useI18n} from "vue-i18n"
     import {SECTIONS, KsIconButton, KsDrawer, KsMessage, copyToClipboard} from "@kestra-io/design-system"
     import TaskIcon from "../plugins/TaskIcon.vue"
@@ -175,6 +175,7 @@
     import {usePlaygroundRun} from "../../composables/playground/usePlaygroundRun"
     import {CHIP_DRAG_MIME, isArmableField, insertAtCaret} from "./chipInsertion"
     import {resolveDeclaredOutputProperties, hasDeclaredOutputs as computeHasDeclaredOutputs} from "./taskOutputSchema"
+    import {FOCUSED_EXPRESSION_EDITOR_INJECTION_KEY} from "../no-code/injectionKeys"
 
     interface Props {
         component?: string;
@@ -244,6 +245,8 @@
 
     const ARMED_FIELD_CLASS = "task-edit-chip-insert-target"
     const armedField = ref<HTMLInputElement | HTMLTextAreaElement | null>(null)
+    const focusedExpressionEditorInsert = ref<((text: string) => void) | null>(null)
+    provide(FOCUSED_EXPRESSION_EDITOR_INJECTION_KEY, focusedExpressionEditorInsert)
 
     const onPanelFocusIn = (event: FocusEvent) => {
         panelHasFocus.value = true
@@ -274,6 +277,9 @@
     function onChipActivate(expr: string) {
         if (armedField.value) {
             insertAndNotify(armedField.value, expr)
+        } else if (focusedExpressionEditorInsert.value) {
+            focusedExpressionEditorInsert.value(expr)
+            KsMessage.success(t("block_editor.chip_inserted"))
         } else {
             copyToClipboard(expr)
             KsMessage.success(t("block_editor.chip_copied"))

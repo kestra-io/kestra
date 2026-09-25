@@ -1,5 +1,7 @@
 import {describe, it, expect, vi} from "vitest"
-import KestraDesignSystem from "@kestra-io/design-system"
+import {inject, ref} from "vue"
+import KestraDesignSystem, {KsMessage} from "@kestra-io/design-system"
+import {FOCUSED_EXPRESSION_EDITOR_INJECTION_KEY} from "../../../../src/components/no-code/injectionKeys"
 
 vi.mock("vue-router", () => ({
     useRoute: () => ({query: {}}),
@@ -44,7 +46,20 @@ vi.mock("../../../../src/composables/playground/usePlaygroundRun", () => ({
 }))
 
 vi.mock("../../../../src/components/flows/TaskEditPanes.vue", () => ({
-    default: {name: "TaskEditPanes", props: ["modelValue", "activeTab", "section", "readOnly", "pluginMarkdown", "editorPath"], template: "<div data-test='task-edit-panes' />"},
+    default: {
+        name: "TaskEditPanes",
+        props: ["modelValue", "activeTab", "section", "readOnly", "pluginMarkdown", "editorPath"],
+        setup() {
+            const focusedExpressionEditorInsert = inject(FOCUSED_EXPRESSION_EDITOR_INJECTION_KEY, ref(null))
+            function fakeFocusExpressionEditor() {
+                focusedExpressionEditorInsert.value = (text: string) => {
+                    (window as unknown as {insertedChipTextForTest?: string}).insertedChipTextForTest = text
+                }
+            }
+            return {fakeFocusExpressionEditor}
+        },
+        template: "<div data-test='task-edit-panes'><button data-test='fake-editor-focus' @click='fakeFocusExpressionEditor' /></div>",
+    },
 }))
 
 vi.mock("../../../../src/components/flows/TaskEditData.vue", () => ({
@@ -152,6 +167,24 @@ describe("TaskEdit", () => {
         expect(output()?.props("isCollapsed")).toBe(false)
 
         pluginsStoreState.plugin = undefined
+    })
+
+    it("inserts into the focused expression editor when no plain field is armed", async () => {
+        // Regression: clicking a chip while a Monaco expression field is focused fell through
+        // to clipboard copy, since Monaco fields are intentionally excluded from the plain-field
+        // "armed" tracking (isArmableField). TaskEdit must also try the focused expression editor.
+        delete (window as unknown as {insertedChipTextForTest?: string}).insertedChipTextForTest
+        const messageSpy = vi.spyOn(KsMessage, "success").mockImplementation(() => ({close: () => {}}))
+        const wrapper = mountTaskEdit()
+        await wrapper.vm.$nextTick()
+
+        await wrapper.get("[data-test='fake-editor-focus']").trigger("click")
+
+        const inputs = wrapper.findAllComponents({name: "TaskEditData"}).find((c) => c.props("kind") === "inputs")
+        inputs?.vm.$emit("chip-activate", "{{ inputs.myInput }}")
+
+        expect((window as unknown as {insertedChipTextForTest?: string}).insertedChipTextForTest).toBe("{{ inputs.myInput }}")
+        messageSpy.mockRestore()
     })
 
     it("keeps the armed field when focus moves to a chip control instead of leaving the panel", async () => {

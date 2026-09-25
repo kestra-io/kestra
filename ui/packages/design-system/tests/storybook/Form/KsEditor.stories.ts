@@ -137,8 +137,13 @@ type EditorHandle = {
     clearLinesRangeHighlights: () => void
     addContentWidget: (widget: {id: string; position: {lineNumber: number; column: number}; height: number; right: string}) => Promise<void>
     removeContentWidget: (id: string) => void
+    insertTextAtCursor: (text: string) => void
     monaco: unknown
-    getEditor: () => {getValue?: () => string; getOriginalEditor?: () => unknown} | undefined
+    getEditor: () => {
+        getValue?: () => string
+        getOriginalEditor?: () => unknown
+        setPosition?: (position: {lineNumber: number; column: number}) => void
+    } | undefined
 }
 
 const handles: Record<string, EditorHandle | undefined> = {}
@@ -188,7 +193,7 @@ export const ExposedApi: Story = {
         await settled("api")
         const api = handles["api"]!
 
-        for (const method of ["focus", "destroy", "highlightLinesRange", "clearLinesRangeHighlights", "addContentWidget", "removeContentWidget", "getEditor"] as const) {
+        for (const method of ["focus", "destroy", "highlightLinesRange", "clearLinesRangeHighlights", "addContentWidget", "removeContentWidget", "insertTextAtCursor", "getEditor"] as const) {
             if (typeof api[method] !== "function") throw new Error(`KsEditor no longer exposes ${method}`)
         }
         if (!api.monaco) throw new Error("KsEditor no longer exposes monaco")
@@ -215,6 +220,46 @@ export const HighlightsAndDestroy: Story = {
         })
         if (api.getEditor() !== undefined) throw new Error("getEditor() still resolves after destroy()")
     },
+}
+
+export const EmitsFocusEvent: Story = {
+    render: () => ({
+        components: {KsEditor},
+        setup() {
+            const value = ref(YAML_SAMPLE)
+            const editor = ref<EditorHandle>()
+            const focusCount = ref(0)
+            watchEffect(() => { handles["focus-event"] = editor.value })
+            return {value, editor, focusCount, onFocus: () => { focusCount.value++ }}
+        },
+        template: "<div style=\"padding:24px;height:300px\"><ks-editor ref=\"editor\" v-model=\"value\" lang=\"yaml\" @focus=\"onFocus\" /><span data-testid=\"focus-count\">{{ focusCount }}</span></div>",
+    }),
+    play: async ({canvasElement}) => {
+        await settled("focus-event")
+        handles["focus-event"]!.focus()
+        await new Promise(resolve => setTimeout(resolve, 100))
+
+        const count = canvasElement.querySelector("[data-testid='focus-count']")?.textContent
+        if (count !== "1") throw new Error("KsEditor did not emit 'focus' when the editor gained focus")
+    },
+    parameters: {docs: {description: {story: "The 'focus' event fires whenever the Monaco editor gains focus — consumers (e.g. the block editor's Inputs chip panel) use it to know which expression field to insert a clicked chip into."}}},
+}
+
+export const InsertTextAtCursor: Story = {
+    render: handleStory("insert-at-cursor", "<div style=\"padding:24px;height:300px\"><ks-editor ref=\"editor\" v-model=\"value\" lang=\"yaml\" /></div>", "id: hello-world\n"),
+    play: async () => {
+        await settled("insert-at-cursor")
+        const api = handles["insert-at-cursor"]!
+        const editor = api.getEditor()
+
+        editor?.setPosition?.({lineNumber: 1, column: 1})
+        api.insertTextAtCursor("{{ flow.id }} ")
+
+        if (editor?.getValue?.() !== "{{ flow.id }} id: hello-world\n") {
+            throw new Error("insertTextAtCursor did not insert the text at the cursor position")
+        }
+    },
+    parameters: {docs: {description: {story: "insertTextAtCursor() inserts arbitrary text at the current cursor position — used to insert an Inputs-panel chip into a focused expression field via click, mirroring the existing drag-and-drop insertion."}}},
 }
 
 export const DiffResolvesDiffEditor: Story = {

@@ -1,8 +1,9 @@
 import {computed, provide, ref} from "vue";
 import TaskExpression from "../../../../../../src/components/no-code/components/tasks/TaskExpression.vue";
 import {Meta, StoryObj} from "@storybook/vue3-vite";
+import {expect, userEvent, waitFor, within} from "storybook/test";
 import {vueRouter} from "storybook-vue3-router";
-import {SCHEMA_DEFINITIONS_INJECTION_KEY} from "../../../../../../src/components/no-code/injectionKeys";
+import {FOCUSED_EXPRESSION_EDITOR_INJECTION_KEY, SCHEMA_DEFINITIONS_INJECTION_KEY} from "../../../../../../src/components/no-code/injectionKeys";
 
 const meta: Meta<typeof TaskExpression> = {
     title: "Components/NoCode/TaskExpression",
@@ -54,5 +55,41 @@ export const WithObjectValue: Story = {
     args: {
         modelValue: {key: "value", nested: {a: 1}},
         root: "config",
+    },
+};
+
+export const RegistersFocusedExpressionEditor: Story = {
+    render: (args) => ({
+        setup() {
+            provide(SCHEMA_DEFINITIONS_INJECTION_KEY, computed(() => ({})));
+            const focusedExpressionEditorInsert = ref<((text: string) => void) | null>(null);
+            provide(FOCUSED_EXPRESSION_EDITOR_INJECTION_KEY, focusedExpressionEditorInsert);
+            const model = ref(args.modelValue);
+            return () => <div style={{width: "500px"}}>
+                <TaskExpression
+                    modelValue={model.value}
+                    onUpdate:modelValue={(val) => model.value = val}
+                    root={args.root}
+                />
+                <span data-testid="focused-state">{focusedExpressionEditorInsert.value ? "registered" : "cleared"}</span>
+            </div>
+        },
+    }),
+    args: {
+        modelValue: "{{ outputs.myTask.uri }}",
+        root: "expression",
+    },
+    play: async ({canvasElement}) => {
+        // Regression: clicking an Inputs-panel chip while this field was focused fell through
+        // to clipboard copy, since Monaco fields are excluded from the plain-input "armed" tracking.
+        const canvas = within(canvasElement);
+        const editorContainer = await waitFor(() => canvas.getByTestId("monaco-editor"), {timeout: 15000});
+        const input = within(editorContainer).getByRole("textbox");
+
+        await userEvent.click(input);
+        await waitFor(() => expect(canvas.getByTestId("focused-state")).toHaveTextContent("registered"));
+
+        await userEvent.click(document.body);
+        await waitFor(() => expect(canvas.getByTestId("focused-state")).toHaveTextContent("cleared"));
     },
 };

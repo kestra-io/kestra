@@ -2234,7 +2234,18 @@
           "issues": "{n} बासी",
           "failed": "{n} विफल",
           "last_run": "अंतिम रन {ago}",
-          "unknown": "{n} ट्रैक नहीं किया गया"
+          "unknown": "{n} ट्रैक नहीं किया गया",
+          "tests_failed": "{n} विफल परीक्षणों के साथ"
+        },
+        "tests": {
+          "pass": "{count} परीक्षण | {count} परीक्षण",
+          "warn": "{count} टेस्ट · चेतावनी | {count} टेस्ट · चेतावनी",
+          "fail": "{failed}/{total} विफल",
+          "tooltip": {
+            "pass": "{count} dbt टेस्ट पास हुआ | सभी {count} dbt टेस्ट पास हुए",
+            "warn": "{count} dbt test चेतावनी के साथ पास हुआ | {count} dbt tests पास हुए, कुछ चेतावनी के साथ",
+            "fail": "{total} dbt परीक्षणों में से {failed} विफल रहे"
+          }
         },
         "recent_runs": "हाल की रन",
         "group_by": "द्वारा समूहबद्ध करें",

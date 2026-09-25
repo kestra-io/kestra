@@ -2563,6 +2563,7 @@
       "depends_on_placeholder": "Wybierz Taski…",
       "depth_pill": "Głębokość {depth}",
       "drag_reorder": "Przeciągnij, aby zmienić kolejność",
+      "drop_forbidden": "Nie można tu upuścić",
       "duplicate": "Duplikuj",
       "empty_add_hint": "lub naciśnij /, aby wyszukać Taski",
       "empty_add_lead": "Kliknij, aby dodać {label}",

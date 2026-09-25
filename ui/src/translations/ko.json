@@ -2563,6 +2563,7 @@
       "depends_on_placeholder": "task 선택…",
       "depth_pill": "깊이 {depth}",
       "drag_reorder": "드래그하여 순서 변경",
+      "drop_forbidden": "여기에는 놓을 수 없습니다",
       "duplicate": "복제",
       "empty_add_hint": "또는 /를 눌러 task 검색",
       "empty_add_lead": "{label}을(를) 추가하려면 클릭하세요",

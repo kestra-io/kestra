@@ -72,6 +72,30 @@ triggers:
 
 const EMPTY_YAML = "id: my_flow\nnamespace: company.team"
 
+const YAML_WITH_TWO_SEQUENTIALS = `
+id: my_flow
+namespace: company.team
+tasks:
+  - id: outer_seq
+    type: io.kestra.plugin.core.flow.Sequential
+    tasks:
+      - id: n0
+        type: io.kestra.plugin.core.log.Log
+        message: n0
+      - id: n1
+        type: io.kestra.plugin.core.log.Log
+        message: n1
+      - id: n2
+        type: io.kestra.plugin.core.log.Log
+        message: n2
+  - id: target_seq
+    type: io.kestra.plugin.core.flow.Sequential
+    tasks:
+      - id: t0
+        type: io.kestra.plugin.core.log.Log
+        message: t0
+`.trim()
+
 const YAML_WITH_DUPLICATE_IDS = `
 id: my_flow
 namespace: company.team
@@ -981,9 +1005,9 @@ describe("BlockEditor", () => {
             const vm = wrapper.vm as unknown as {
                 activeSelectedPath: string | undefined
                 activeSelectedId: string | undefined
-                dndFor: (section: string) => {
-                    handleDragStart: (event: DragEvent, index: number) => void
-                    handleDrop: (event: DragEvent, index: number) => void
+                dragContext: {
+                    beginDrag: (path: string) => void
+                    dropAt: (parentPath: string, index: number) => void
                 }
             }
             expect(vm.activeSelectedPath).toBe("tasks[1].then[0]")
@@ -991,9 +1015,8 @@ describe("BlockEditor", () => {
 
             // When — prime drag from tasks[0], then drop on tasks[1]
             // This shifts the flowable from [1] to [0], making tasks[1].then[0] stale
-            const mockEvent = {preventDefault: () => undefined, dataTransfer: {effectAllowed: ""}} as unknown as DragEvent
-            vm.dndFor("tasks").handleDragStart(mockEvent, 0)
-            vm.dndFor("tasks").handleDrop(mockEvent, 1)
+            vm.dragContext.beginDrag("tasks[0]")
+            vm.dragContext.dropAt("tasks", 1)
             await wrapper.vm.$nextTick()
 
             // Then — stale path is detected and selection cleared
@@ -1013,6 +1036,10 @@ describe("BlockEditor", () => {
             const vm = wrapper.vm as unknown as {
                 activeSelectedPath: string | undefined
                 activeSelectedId: string | undefined
+                dragContext: {
+                    beginDrag: (path: string) => void
+                    dropAt: (parentPath: string, index: number) => void
+                }
             }
             expect(vm.activeSelectedPath).toBe("tasks[1].then[0]")
             expect(vm.activeSelectedId).toBe("nested_a")
@@ -1020,12 +1047,75 @@ describe("BlockEditor", () => {
             // When — a DIFFERENT lane of the same flowable (else) is reordered.
             // The old index-only check matched the outer tasks[1] and wrongly
             // cleared; keying on the reordered parentPath must leave it alone.
-            cluster.vm.$emit("reorder", "tasks[1].else", 0, 1)
+            vm.dragContext.beginDrag("tasks[1].else[0]")
+            vm.dragContext.dropAt("tasks[1].else", 1)
             await wrapper.vm.$nextTick()
 
             // Then — the then-lane selection is untouched
             expect(vm.activeSelectedPath).toBe("tasks[1].then[0]")
             expect(vm.activeSelectedId).toBe("nested_a")
+        })
+
+        it("clears a source-lane selection made stale by a cross-parent move", async () => {
+            // Given — outer_seq holds n0, n1, n2; n2 is selected at tasks[0].tasks[2]
+            mockFlowYaml.value = YAML_WITH_TWO_SEQUENTIALS
+            wrapper = i18nMount(BlockEditor, {locales: messages, ...makeConfig()})
+            const cluster = wrapper.findComponent({name: "FlowableClusterCard"})
+            await cluster.vm.$emit("select", "tasks[0].tasks[2]")
+            await wrapper.vm.$nextTick()
+            await wrapper.vm.$nextTick()
+
+            const vm = wrapper.vm as unknown as {
+                activeSelectedPath: string | undefined
+                activeSelectedId: string | undefined
+                dragContext: {
+                    beginDrag: (path: string) => void
+                    dropAt: (parentPath: string, index: number) => void
+                }
+            }
+            expect(vm.activeSelectedPath).toBe("tasks[0].tasks[2]")
+            expect(vm.activeSelectedId).toBe("n2")
+
+            // When — n0 is dragged out of outer_seq into target_seq: n2 shifts from
+            // index 2 to index 1 in outer_seq's tasks lane
+            vm.dragContext.beginDrag("tasks[0].tasks[0]")
+            vm.dragContext.dropAt("tasks[1].tasks", 0)
+            await wrapper.vm.$nextTick()
+
+            // Then — the stale selection on n2 is cleared, not left pointing at a shifted sibling
+            expect(vm.activeSelectedId).toBeUndefined()
+            expect(vm.activeSelectedPath).toBeUndefined()
+        })
+
+        it("clears a destination-lane selection made stale by a cross-parent move", async () => {
+            // Given — target_seq holds only t0, selected at tasks[1].tasks[0]
+            mockFlowYaml.value = YAML_WITH_TWO_SEQUENTIALS
+            wrapper = i18nMount(BlockEditor, {locales: messages, ...makeConfig()})
+            const cluster = wrapper.findComponent({name: "FlowableClusterCard"})
+            await cluster.vm.$emit("select", "tasks[1].tasks[0]")
+            await wrapper.vm.$nextTick()
+            await wrapper.vm.$nextTick()
+
+            const vm = wrapper.vm as unknown as {
+                activeSelectedPath: string | undefined
+                activeSelectedId: string | undefined
+                dragContext: {
+                    beginDrag: (path: string) => void
+                    dropAt: (parentPath: string, index: number) => void
+                }
+            }
+            expect(vm.activeSelectedPath).toBe("tasks[1].tasks[0]")
+            expect(vm.activeSelectedId).toBe("t0")
+
+            // When — n0 is dropped in front of t0: t0 shifts from index 0 to index 1
+            vm.dragContext.beginDrag("tasks[0].tasks[0]")
+            vm.dragContext.dropAt("tasks[1].tasks", 0)
+            await wrapper.vm.$nextTick()
+
+            // Then — the stale selection is cleared rather than left resolving to n0,
+            // the block that was just dropped in
+            expect(vm.activeSelectedId).toBeUndefined()
+            expect(vm.activeSelectedPath).toBeUndefined()
         })
 
         it("emits update:selectedId when selectedId changes via v-model", async () => {

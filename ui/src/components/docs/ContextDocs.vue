@@ -225,7 +225,7 @@
         border-radius: 8px;
         width: 30px;
         height: 32px;
-        transition: all 0.2s ease;
+        transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease;
         padding: 4px 8px;
         flex-shrink: 0;
 

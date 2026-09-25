@@ -24,8 +24,8 @@ const meta: Meta<typeof ResumeFromBreakpoint> = {
         (story) => ({
             setup() {
                 const executionsStore = useExecutionsStore()
-                ;(executionsStore as any).loadFlowForExecution = () => Promise.resolve(undefined)
-                ;(executionsStore as any).resumeFromBreakpoint = () => Promise.resolve({})
+                ;(executionsStore as Partial<ReturnType<typeof useExecutionsStore>>).loadFlowForExecution = () => Promise.resolve(undefined)
+                ;(executionsStore as Partial<ReturnType<typeof useExecutionsStore>>).resumeFromBreakpoint = () => Promise.resolve({})
             },
             components: {story},
             plugins: [i18n, KestraDesignSystem, pinia],

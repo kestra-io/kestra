@@ -3,6 +3,7 @@ import type {Meta, StoryObj} from "@storybook/vue3";
 import {userEvent, waitFor, within} from "storybook/test";
 import {useExecutionsStore} from "../../../../src/stores/executions";
 import {storageKeys} from "../../../../src/utils/constants";
+import type {LogEntry, Execution} from "@kestra-io/kestra-sdk";
 // @ts-ignore — Logs.vue is a JS component without a declaration file
 import Logs from "../../../../src/components/executions/Logs.vue";
 import {expect} from "storybook/test";
@@ -28,7 +29,7 @@ const BASE = {
     taskId: "my-task",
 };
 
-const FAKE_LOGS = [
+const FAKE_LOGS: LogEntry[] = [
     {...BASE, index: 0, level: "ERROR", timestamp: "2025-01-01T00:00:00.000Z", message: "Task failed: NullPointerException at step 3"},
     {...BASE, index: 1, level: "WARN",  timestamp: "2025-01-01T00:00:01.000Z", message: "Retry attempt 1/3 for task my-task"},
     {...BASE, index: 2, level: "WARN",  timestamp: "2025-01-01T00:00:02.000Z", message: "Connection timeout, retrying in 5s"},
@@ -46,7 +47,7 @@ const FAKE_LOGS = [
     },
 ];
 
-const FAKE_EXECUTION = {
+const FAKE_EXECUTION: Partial<Execution> = {
     id: "test-exec-id",
     flowId: "test-flow",
     namespace: "company.team",
@@ -150,23 +151,23 @@ function makeDecorators(rawView = true, sourceLogs = FAKE_LOGS, execution = FAKE
                 localStorage.setItem(storageKeys.LOGS_VIEW_TYPE, String(rawView));
 
                 const executionsStore = useExecutionsStore();
-                executionsStore.logs = filteredByMinLevel(sourceLogs, "INFO") as any;
-                executionsStore.execution = execution as any;
+                executionsStore.logs = filteredByMinLevel(sourceLogs, "INFO") as LogEntry[];
+                executionsStore.execution = execution as Partial<Execution>;
                 executionsStore.flow = {
                     tasks: execution.taskRunList.map(task => ({id: task.taskId, type: "io.kestra.plugin.core.log.Log"})),
                 } as typeof executionsStore.flow;
 
-                (executionsStore as any).loadLogs = async ({params}: {executionId: string; params?: Record<string, any>}) => {
+                (executionsStore as Partial<ReturnType<typeof useExecutionsStore>>).loadLogs = async ({params}: {executionId: string; params?: Record<string, unknown>}) => {
                     const gte = params?.["filters[level][GREATER_THAN_OR_EQUAL_TO]"];
                     const lte = params?.["filters[level][LESS_THAN_OR_EQUAL_TO]"];
-                    let filtered: typeof sourceLogs;
+                    let filtered: LogEntry[];
                     if (lte) {
                         const maxIdx = LEVEL_ORDER.indexOf(lte as Level);
                         filtered = sourceLogs.filter(log => LEVEL_ORDER.indexOf(log.level as Level) >= maxIdx);
                     } else {
                         filtered = filteredByMinLevel(sourceLogs, (gte as string) ?? "TRACE");
                     }
-                    executionsStore.logs = filtered as any;
+                    executionsStore.logs = filtered as LogEntry[];
                     return filtered;
                 };
             },
@@ -471,7 +472,7 @@ export const LevelFilterUpdatesRoute: Story = {
         await waitFor(
             () => {
                 const store = useExecutionsStore();
-                const count = (store.logs as unknown as any[])?.length ?? -1;
+                const count = (store.logs as LogEntry[])?.length ?? -1;
                 if (count !== 3) {
                     throw new Error(`expected 3 logs in store after WARN filter, got ${count}`);
                 }

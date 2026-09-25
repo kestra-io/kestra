@@ -8,22 +8,22 @@ import {vi} from "vitest";
 // FILTER_MAP/filterExecutions logic unchanged. Everything the mock factory below needs to close
 // over must live inside vi.hoisted(), since vi.mock() factories run before any other module code.
 const {mockState, filterExecutions} = vi.hoisted(() => {
-    const state = {data: [] as any[]};
+    const state = {data: [] as import("@kestra-io/kestra-sdk").ApiLightExecution[]};
 
     const SEARCHABLE_FIELDS = ["id", "namespace", "flowId"] as const;
     const LABEL_FILTER_PATTERN = /filters\[labels]\[(\w+)]\[(.+)]/;
 
-    const toArray = (value: any) => Array.isArray(value)
+    const toArray = (value: unknown) => Array.isArray(value)
         ? value
-        : value.split(",");
+        : typeof value === "string" ? value.split(",") : [];
 
-    const FILTER_MAP: {[key: string]: (e: any, value: any) => boolean} = {
+    const FILTER_MAP: {[key: string]: (e: import("@kestra-io/kestra-sdk").ApiLightExecution, value: unknown) => boolean} = {
         "filters[namespace][IN]": (e, value) => toArray(value).includes(e.namespace),
         "filters[namespace][NOT_IN]": (e, value) => !toArray(value).includes(e.namespace),
-        "filters[namespace][CONTAINS]": (e, value) => e.namespace?.toLowerCase().includes(value.toLowerCase()),
-        "filters[flowId][EQUALS]": (e, value) => e.flowId?.toLowerCase() === value.toLowerCase(),
-        "filters[flowId][NOT_EQUALS]": (e, value) => e.flowId?.toLowerCase() !== value.toLowerCase(),
-        "filters[flowId][CONTAINS]": (e, value) => e.flowId?.toLowerCase().includes(value.toLowerCase()),
+        "filters[namespace][CONTAINS]": (e, value) => e.namespace?.toLowerCase().includes(String(value).toLowerCase()),
+        "filters[flowId][EQUALS]": (e, value) => e.flowId?.toLowerCase() === String(value).toLowerCase(),
+        "filters[flowId][NOT_EQUALS]": (e, value) => e.flowId?.toLowerCase() !== String(value).toLowerCase(),
+        "filters[flowId][CONTAINS]": (e, value) => e.flowId?.toLowerCase().includes(String(value).toLowerCase()),
         "filters[state][IN]": (e, value) => toArray(value).includes(e.state?.current),
         "filters[state][NOT_IN]": (e, value) => !toArray(value).includes(e.state?.current),
         "filters[kind][EQUALS]": (e, value) => e.kind === value,
@@ -35,17 +35,17 @@ const {mockState, filterExecutions} = vi.hoisted(() => {
         "filters[timeRange][EQUALS]": () => true,
     };
 
-    const hasLabel = (e: any, key: string, value: string) =>
-        e.labels?.some((l: any) => l.key === key && l.value === value);
+    const hasLabel = (e: import("@kestra-io/kestra-sdk").ApiLightExecution, key: string, value: string) =>
+        e.labels?.some((l: {key: string, value: string}) => l.key === key && l.value === value);
 
-    const filterFn = (executions: any[], params: any): any[] =>
+    const filterFn = (executions: import("@kestra-io/kestra-sdk").ApiLightExecution[], params: Record<string, unknown>): import("@kestra-io/kestra-sdk").ApiLightExecution[] =>
         Object.entries(params).reduce((filtered, [key, value]) => {
             if (!value) return filtered;
 
             if (key === "filters[q][EQUALS]") {
-                return filtered.filter((e: any) =>
+                return filtered.filter((e: import("@kestra-io/kestra-sdk").ApiLightExecution) =>
                     SEARCHABLE_FIELDS.some(field =>
-                        e[field]?.toLowerCase().includes((value as string).toLowerCase())
+                        e[field as keyof typeof e]?.toString().toLowerCase().includes(String(value).toLowerCase())
                     )
                 );
             }
@@ -60,8 +60,8 @@ const {mockState, filterExecutions} = vi.hoisted(() => {
 
                 return filtered.filter(e =>
                     match[1] === "EQUALS"
-                        ? hasLabel(e, match[2], value as string)
-                        : !hasLabel(e, match[2], value as string)
+                        ? hasLabel(e, match[2], String(value))
+                        : !hasLabel(e, match[2], String(value))
                 );
             }
 
@@ -75,8 +75,8 @@ const ENUM_FIELD_TO_KEY: Record<string, string> = {QUERY: "q"};
 function enumFieldToKey(field: string): string {
     return ENUM_FIELD_TO_KEY[field] ?? field.toLowerCase().replace(/_([a-z])/g, (_, c) => c.toUpperCase());
 }
-function queryFiltersToFlatParams(filters: {field: string, operation: string, value: unknown}[]): Record<string, any> {
-    const flat: Record<string, any> = {};
+function queryFiltersToFlatParams(filters: {field: string, operation: string, value: unknown}[]): Record<string, unknown> {
+    const flat: Record<string, unknown> = {};
     for (const f of filters ?? []) {
         const key = enumFieldToKey(f.field);
         if (key === "labels" && f.value && typeof f.value === "object") {
@@ -91,7 +91,7 @@ function queryFiltersToFlatParams(filters: {field: string, operation: string, va
 }
 
 vi.mock("@kestra-io/kestra-sdk/executions", () => ({
-    searchExecutions: async (params: {page?: number, size?: number, filters?: any[]}) => {
+    searchExecutions: async (params: {page?: number, size?: number, filters?: {field: string, operation: string, value: unknown}[]}) => {
         const {page = 1, size = 25} = params;
         const flatParams = queryFiltersToFlatParams(params.filters ?? []);
         const filtered = filterExecutions(mockState.data, flatParams);
@@ -108,7 +108,7 @@ import {useNamespacesStore} from "override/stores/namespaces";
 import fixture from "../executions/Executions.fixture.json";
 import Executions from "../../../../src/components/executions/Executions.vue";
 
-const getNamespaces = (data: any[]): string[] => (
+const getNamespaces = (data: import("@kestra-io/kestra-sdk").ApiLightExecution[]): string[] => (
     Array.from(new Set(data
         .map(item => item.namespace).filter(Boolean)))
         .sort()
@@ -117,12 +117,12 @@ const getNamespaces = (data: any[]): string[] => (
 const MOCK_USER = {
     isAllowed: () => true,
     hasAnyActionOnAnyNamespace: () => true,
-} as any;
+} as {isAllowed: () => boolean, hasAnyActionOnAnyNamespace: () => boolean};
 
 const MOCK_CONFIGS = {
     hiddenLabelsPrefixes: ["system_"],
     edition: "OSS"
-} as any;
+} as {hiddenLabelsPrefixes: string[], edition: string};
 
 const ROUTER_ROUTES = [
     {
@@ -146,7 +146,7 @@ const ROUTER_ROUTES = [
     }
 ];
 
-function getDecorators(data: any[]) {
+function getDecorators(data: import("@kestra-io/kestra-sdk").ApiLightExecution[]) {
     const FIXTURE_NAMESPACES = getNamespaces(data);
 
     return [

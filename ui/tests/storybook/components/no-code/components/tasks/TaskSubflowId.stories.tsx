@@ -17,7 +17,7 @@ export default meta;
 type Story = StoryObj<typeof TaskSubflowId>;
 
 export const Default: Story = {
-    render: (args: any) => ({
+    render: (args: {modelValue?: string}) => ({
         setup() {
             provide(SCHEMA_DEFINITIONS_INJECTION_KEY, computed(() => ({})));
             const model = ref(args.modelValue);
@@ -25,7 +25,7 @@ export const Default: Story = {
                 <div style={{width: "400px"}}>
                     <TaskSubflowId
                         modelValue={model.value}
-                        onUpdate:modelValue={(val: any) => model.value = val}
+                        onUpdate:modelValue={(val: string | undefined) => model.value = val}
                         schema={{type: "string"}}
                         task={{namespace: "io.kestra.demo"}}
                     />
@@ -40,7 +40,7 @@ export const Default: Story = {
 };
 
 export const WithoutNamespace: Story = {
-    render: (args: any) => ({
+    render: (args: {modelValue?: string}) => ({
         setup() {
             provide(SCHEMA_DEFINITIONS_INJECTION_KEY, computed(() => ({})));
             const model = ref(args.modelValue);
@@ -48,7 +48,7 @@ export const WithoutNamespace: Story = {
                 <div style={{width: "400px"}}>
                     <TaskSubflowId
                         modelValue={model.value}
-                        onUpdate:modelValue={(val: any) => model.value = val}
+                        onUpdate:modelValue={(val: string | undefined) => model.value = val}
                         schema={{type: "string"}}
                         task={{}}
                     />

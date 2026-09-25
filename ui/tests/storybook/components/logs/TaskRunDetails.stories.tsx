@@ -3,6 +3,7 @@ import type {Meta, StoryObj} from "@storybook/vue3";
 import {expect, userEvent, waitFor} from "storybook/test";
 import {useExecutionsStore} from "../../../../src/stores/executions";
 import TaskRunDetails from "../../../../src/components/logs/TaskRunDetails.vue";
+import type {Execution, LogEntry} from "@kestra-io/kestra-sdk";
 
 const TASK_RUN_ID = "task-run-1";
 const SECOND_TASK_RUN_ID = "task-run-2";
@@ -23,7 +24,7 @@ const BASE_LOG = {
 // (src/utils/logs.ts) masks any run of 3+ digits, so they share a template key, and 4 consecutive
 // matches is over COLLAPSE_THRESHOLD (3). The surrounding lines have distinct templates and stay
 // ungrouped, which is what makes the group's boundaries observable.
-const FAKE_LOGS = [
+const FAKE_LOGS: LogEntry[] = [
     {...BASE_LOG, index: 0, timestamp: "2025-01-01T00:00:00.000Z", message: "Starting my-task"},
     {...BASE_LOG, index: 1, timestamp: "2025-01-01T00:00:01.000Z", message: "Processed record 100"},
     {...BASE_LOG, index: 2, timestamp: "2025-01-01T00:00:02.000Z", message: "Processed record 200"},
@@ -56,7 +57,7 @@ const SECOND_TASK_RUN_STATE = {
     ],
 };
 
-const FAKE_EXECUTION = {
+const FAKE_EXECUTION: Partial<Execution> = {
     id: "test-exec-id",
     flowId: "test-flow",
     namespace: "company.team",
@@ -82,8 +83,8 @@ const decorators = [
     () => ({
         setup() {
             const executionsStore = useExecutionsStore();
-            executionsStore.execution = FAKE_EXECUTION as any;
-            (executionsStore as any).loadLogs = async () => FAKE_LOGS;
+            executionsStore.execution = FAKE_EXECUTION as Partial<Execution>;
+            (executionsStore as Partial<ReturnType<typeof useExecutionsStore>>).loadLogs = async () => FAKE_LOGS;
         },
         template: "<div style='padding:1rem'><story /></div>",
     }),

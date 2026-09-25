@@ -44,7 +44,7 @@ const PLUGINS_RESPONSE = [{
 const Template: StoryFn<{flow: string; props?: Partial<InstanceType<typeof NoCode>["$props"]>}> = (args) => ({
     setup() {
         const flowStore = useFlowStore()
-        const axios: any = {}
+        const axios: {get: (url: string) => Promise<{data: unknown}>, post: (url: string) => Promise<{data: unknown}>} = {}
 
         flowStore.flowYaml = args.flow
         const props = {

@@ -16,7 +16,7 @@ const meta: Meta<typeof LogValueActions> = {
 export default meta
 type Story = StoryObj<typeof meta>
 
-const Wrap = (args: any, slotContent: string) => ({
+const Wrap = (args: Record<string, unknown>, slotContent: string) => ({
     components: {LogValueActions},
     setup: () => () => (
         <LogValueActions {...args}>

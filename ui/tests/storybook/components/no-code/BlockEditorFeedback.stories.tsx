@@ -582,8 +582,7 @@ const HTTP_REQUEST_OUTPUTS_SCHEMA = {
                 code: {type: "integer"},
             },
         },
-    } as any,
-} as any
+    } satisfies {cls: string, schema: {outputs: {properties: Record<string, {type: string}>}}}
 
 const seedHttpRequestOutputsSchema = () => {
     const pluginsStore = usePluginsStore()
@@ -725,7 +724,7 @@ export const F5SourceFidelity: Story = {
 export const F6DocumentationCurrentState: Story = {
     render: () => ({
         setup() {
-            const axios: any = {get: () => Promise.resolve({data: [], status: 200, headers: {}})}
+            const axios: {get: () => Promise<{data: unknown, status: number, headers: Record<string, string>}>} = {get: () => Promise.resolve({data: [], status: 200, headers: {}})}
             setMockClient(axios)
             return () => <PluginDocumentation overrideIntro="This is the documentation panel's current implementation." />
         },

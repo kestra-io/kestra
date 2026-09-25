@@ -41,7 +41,7 @@ const GraphWrapper = defineComponent({
             if (props.subtype === EXECUTION) {
                 // mock the followExecutionDependencies method to prevent actual API calls 
                 // and WebSocket connections during testing
-                const executionsStore = useExecutionsStore() as any;
+                const executionsStore = useExecutionsStore() as Partial<ReturnType<typeof useExecutionsStore>>;
                 executionsStore.followExecutionDependencies = () => {
                     return {
                         close: () => void 0,

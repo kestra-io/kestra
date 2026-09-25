@@ -5,6 +5,7 @@ import {waitFor, within, userEvent, expect} from "storybook/test";
 import {mockStoryApiRoutes} from "../../../../.storybook/apiMock";
 import {useExecutionsStore} from "../../../../src/stores/executions";
 import ExecutionVariableExplorer from "../../../../src/components/executions/outputs/ExecutionVariableExplorer.vue";
+import type {Execution} from "@kestra-io/kestra-sdk";
 
 // Task-output payloads served through the fetch-layer API double (see meta.beforeEach below):
 // `vi.mock("@kestra-io/kestra-sdk/outputs")` would be a silent no-op here, because the SDK is a
@@ -74,7 +75,7 @@ function makeDecorators() {
         () => ({
             setup() {
                 const executionsStore = useExecutionsStore();
-                executionsStore.execution = FAKE_EXECUTION as any;
+                executionsStore.execution = FAKE_EXECUTION as Partial<import("@kestra-io/kestra-sdk").Execution>;
             },
             template: "<div style='height:600px'><story /></div>",
         }),

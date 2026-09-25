@@ -39,8 +39,8 @@ const render: Story["render"] = ({modelValue}) => ({
             <div style={{...labelStyle, background: "red", width: "250px"}}>This is an example of 250px wide element.</div>
             <div style={{...labelStyle, background: "blue", width: "800px", top: "20px"}}>This is an example of 800px wide element.</div>
             <MultiPanelTabs modelValue={modelValueRef.value} />
-            <pre>{JSON.stringify(modelValueRef.value.map((p:any) => ({
-                tabs:p.tabs.map((t:any) => t.value),
+            <pre>{JSON.stringify(modelValueRef.value.map((p: Panel) => ({
+                tabs:p.tabs.map((t: Tab) => t.uid),
                 size: p.size ? Math.round(p.size) : "<undefined>",
             })))}</pre>
         </div>
@@ -223,7 +223,7 @@ export const TabReorderTest: Story = {
     render: render.bind({}),
     args: argGenerator(0),
     play: async ({mount}) => {
-        const canvas = await mount(render(argGenerator(0), {} as any));
+        const canvas = await mount(render(argGenerator(0), {}));
 
         const dropBetweenTabs = async () => {
             // Find the tab elements in the first panel
@@ -306,7 +306,7 @@ export const TabMoveBetweenPanelsTest: Story = {
     render: render.bind({}),
     args,
     play: async ({mount}) => {
-        const canvas = await mount(render(argGenerator(), {} as any));
+        const canvas = await mount(render(argGenerator(), {}));
 
         // Wait for the component to render
         await new Promise(resolve => setTimeout(resolve, 100));
@@ -376,7 +376,7 @@ export const SplitPanel: Story = {
     render: render.bind({}),
     args: argGenerator(0),
     play: async ({mount}) => {
-        const canvas = await mount(render(argGenerator(0), {} as any));
+        const canvas = await mount(render(argGenerator(0), {}));
 
         expect(canvas.getAllByRole("tablist")).toHaveLength(1)
 

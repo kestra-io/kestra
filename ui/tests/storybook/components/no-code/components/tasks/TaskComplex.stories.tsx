@@ -6,6 +6,7 @@ import {
     SCHEMA_DEFINITIONS_INJECTION_KEY,
     FULL_SCHEMA_INJECTION_KEY,
 } from "../../../../../../src/components/no-code/injectionKeys";
+import type {Schema} from "../../../../../../src/components/no-code/components/tasks/getTaskComponent";
 
 const meta: Meta<typeof TaskComplex> = {
     title: "Components/NoCode/TaskComplex",
@@ -20,11 +21,11 @@ export default meta;
 type Story = StoryObj<typeof TaskComplex>;
 
 export const WithProperties: Story = {
-    render: (args) => ({
+    render: (args: {schema?: Schema}) => ({
         setup() {
             provide(SCHEMA_DEFINITIONS_INJECTION_KEY, computed(() => ({})));
             provide(FULL_SCHEMA_INJECTION_KEY, ref({definitions: {}, $ref: ""}));
-            const model = ref({} as Record<string, any>);
+            const model = ref({} as Record<string, unknown>);
             return () => <div style={{display: "flex", gap: "16px"}}>
                 <div style={{width: "500px"}}>
                     <TaskComplex
@@ -44,12 +45,12 @@ export const WithProperties: Story = {
                 ssl: {type: "boolean", title: "Use SSL"},
             },
             required: ["host"],
-        },
+        } satisfies Schema,
     },
 };
 
 export const WithRefSchema: Story = {
-    render: (args) => ({
+    render: (args: {schema?: Schema}) => ({
         setup() {
             const definitions = {
                 ConnectionConfig: {
@@ -63,7 +64,7 @@ export const WithRefSchema: Story = {
             };
             provide(SCHEMA_DEFINITIONS_INJECTION_KEY, computed(() => definitions));
             provide(FULL_SCHEMA_INJECTION_KEY, ref({definitions, $ref: ""}));
-            const model = ref({host: "localhost"} as Record<string, any>);
+            const model = ref({host: "localhost"} as Record<string, unknown>);
             return () => <div style={{display: "flex", gap: "16px"}}>
                 <div style={{width: "500px"}}>
                     <TaskComplex
@@ -77,6 +78,6 @@ export const WithRefSchema: Story = {
     args: {
         schema: {
             $ref: "#/definitions/ConnectionConfig",
-        },
+        } satisfies Schema,
     },
 };

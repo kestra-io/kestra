@@ -35,7 +35,7 @@ export default meta;
 export const Default: StoryObj<typeof FileExplorer> = {
     render: () => ({
         setup() {
-            const axios: any = {}
+            const axios: {get: () => Promise<{data: unknown}>} = {}
 
             provide(FILES_OPEN_TAB_INJECTION_KEY, () => {})
             provide(FILES_CLOSE_TAB_INJECTION_KEY, () => false)

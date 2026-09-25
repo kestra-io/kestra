@@ -335,7 +335,7 @@
     const state1 = ref("")
 
     const restaurants = ref<RestaurantItem[]>([])
-    const querySearch = (queryString: string, cb: any) => {
+    const querySearch = (queryString: string, cb: (results: RestaurantItem[]) => void) => {
         const results = queryString
             ? restaurants.value.filter(createFilter(queryString))
             : restaurants.value

@@ -17,7 +17,7 @@ export default meta;
 
 type Story = StoryObj<typeof TaskEnum>;
 
-const render: Story["render"] = (args: any) => ({
+const render: Story["render"] = (args: {modelValue?: string, schema?: Schema, root?: string}) => ({
     setup() {
         provide(SCHEMA_DEFINITIONS_INJECTION_KEY, computed(() => ({})));
         const model = ref(args.modelValue);
@@ -25,7 +25,7 @@ const render: Story["render"] = (args: any) => ({
             <div style={{width: "400px"}}>
                 <TaskEnum
                     modelValue={model.value}
-                    onUpdate:modelValue={(val: any) => model.value = val}
+                    onUpdate:modelValue={(val: string | undefined) => model.value = val}
                     schema={args.schema}
                     root={args.root}
                 />

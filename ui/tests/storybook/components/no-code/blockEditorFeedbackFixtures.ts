@@ -99,7 +99,7 @@ const PLUGINS_RESPONSE = [{
 }]
 
 export function mockNoCodeTransport() {
-    const axios: any = {}
+    const axios: {get: (url: string) => Promise<{data: unknown}>, post: (url: string) => Promise<{data: unknown}>} = {}
     axios.get = (url: string) => {
         if (url.endsWith("plugins")) return Promise.resolve({data: PLUGINS_RESPONSE})
         if (url.endsWith("/flow")) return Promise.resolve({data: InitialSchema})

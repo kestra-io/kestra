@@ -41,7 +41,7 @@ export default meta;
 type Story = StoryObj<typeof InputsForm>;
 
 const Sut = defineComponent((props: {inputs: InputMetaData[]}) => {
-    const axios: any = {}
+    const axios: {post: (uri: string) => Promise<{data: unknown}>} = {}
 
     axios.post = (uri: string) => {
         if (!uri.endsWith("/validate")) {
@@ -167,7 +167,7 @@ export const InputTypes: Story = {
 // Wizard harness: the validate mock expands FORM groups to dotted leaves, exactly like the
 // backend, so InputsForm receives the same flat-by-dotted-id metadata it does in production.
 const WizardSut = defineComponent((props: {inputs: InputMetaData[]}) => {
-    const axios: any = {}
+    const axios: {post: (uri: string) => Promise<{data: unknown}>} = {}
     axios.post = (uri: string) => {
         if (!uri.endsWith("/validate")) {
             return {data: []}
@@ -381,7 +381,7 @@ export const InputSelect: Story = {
 // Replay harness: mirrors FlowRun.fillInputsFromExecution — once the form signals ready, every leaf
 // is prefilled from a previous execution's `inputs` through the component's prefillInputValue.
 const PrefillSut = defineComponent((props: {inputs: InputMetaData[]; executionInputs: Record<string, unknown>}) => {
-    const axios: any = {}
+    const axios: {post: (uri: string) => Promise<{data: unknown}>} = {}
     axios.post = (uri: string) => {
         if (!uri.endsWith("/validate")) {
             return {data: []}
@@ -573,7 +573,7 @@ export const ClearedDefault: Story = {
 // The other two paths that seed MULTISELECT state: a trigger's stored inputs (a real array), and a
 // `defaults` value, which crosses the wire JSON-encoded as a string because Property serialises so.
 const StatePathSut = defineComponent((props: {inputs: InputMetaData[]; selectedTrigger?: SelectedTrigger}) => {
-    const axios: any = {}
+    const axios: {post: (uri: string) => Promise<{data: unknown}>} = {}
     axios.post = (uri: string) => {
         if (!uri.endsWith("/validate")) {
             return {data: []}

@@ -25,7 +25,7 @@ export default meta;
 type Story = StoryObj<typeof TaskTask>;
 
 export const Default: Story = {
-    render: (args: any) => ({
+    render: (args: {modelValue?: Record<string, unknown>}) => ({
         setup() {
             const sampleSchema = {definitions: {}, $ref: ""};
             provide(SCHEMA_DEFINITIONS_INJECTION_KEY, computed(() => ({})));
@@ -39,7 +39,7 @@ export const Default: Story = {
             return () => <div style={{width: "600px"}}>
                 <TaskTask
                     modelValue={model.value}
-                    onUpdate:modelValue={(val: any) => model.value = val}
+                    onUpdate:modelValue={(val: Record<string, unknown>) => model.value = val}
                     root="task"
                 />
             </div>
@@ -54,7 +54,7 @@ export const Default: Story = {
 };
 
 export const EmptyTask: Story = {
-    render: (args: any) => ({
+    render: (args: {modelValue?: Record<string, unknown>}) => ({
         setup() {
             const sampleSchema = {definitions: {}, $ref: ""};
             provide(SCHEMA_DEFINITIONS_INJECTION_KEY, computed(() => ({})));
@@ -68,7 +68,7 @@ export const EmptyTask: Story = {
             return () => <div style={{width: "600px"}}>
                 <TaskTask
                     modelValue={model.value}
-                    onUpdate:modelValue={(val: any) => model.value = val}
+                    onUpdate:modelValue={(val: Record<string, unknown>) => model.value = val}
                     root="task"
                 />
             </div>

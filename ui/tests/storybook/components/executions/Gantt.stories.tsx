@@ -5,6 +5,7 @@ import { configureClient } from "@kestra-io/kestra-sdk";
 import { useExecutionsStore } from "../../../../src/stores/executions";
 import { useFlowStore } from "../../../../src/stores/flow";
 import Gantt from "../../../../src/components/executions/Gantt.vue";
+import type {Execution, Flow} from "@kestra-io/kestra-sdk";
 
 const NAMESPACE = "company.team.qa";
 const FLOW_ID = "qa_flow_concurrency";
@@ -15,7 +16,7 @@ const STATE_OPTIONS = ["CREATED", "RUNNING", "PAUSED", "CANCELLED", "FAILED", "K
 
 const AVERAGE_DURATION_MS = 20 * 60 * 1000;
 
-const FLOW = {
+const FLOW: Partial<Flow> = {
     id: FLOW_ID,
     namespace: NAMESPACE,
     tasks: [{ id: "hold", type: "io.kestra.plugin.core.flow.Sleep" }],
@@ -37,7 +38,7 @@ function stubAverageDuration() {
     });
 }
 
-function executionWithState(current: string) {
+function executionWithState(current: string): Partial<Execution> {
     return {
         id: EXECUTION_ID,
         flowId: FLOW_ID,
@@ -92,14 +93,14 @@ const meta = {
                 const state = context.args.state ?? "CANCELLED";
 
                 const executionsStore = useExecutionsStore();
-                executionsStore.execution = executionWithState(state) as any;
-                executionsStore.flow = FLOW as any;
+                executionsStore.execution = executionWithState(state) as Partial<Execution>;
+                executionsStore.flow = FLOW as Partial<Flow>;
 
                 const flowStore = useFlowStore();
                 flowStore.flow = {
                     ...FLOW,
                     concurrency: { limit: 1, behavior: "QUEUE" },
-                } as any;
+                } as Partial<Flow>;
             },
             template: "<div style='height: 100vh'><story /></div>",
         }),

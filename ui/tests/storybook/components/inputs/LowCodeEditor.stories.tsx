@@ -22,7 +22,7 @@ export default {
 
 const Template: StoryFn<typeof LowCodeEditor> = (args) => ({
     setup() {
-        const axios: any = {}
+        const axios: {get: (uri: string) => Promise<{data: unknown}>} = {}
         provide(TOPOLOGY_CLICK_INJECTION_KEY, ref())
         axios.get = async (uri: string) => mockClientFallback("GET", uri)
         setMockClient(axios);

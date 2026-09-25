@@ -13,7 +13,7 @@ export default {
 
 const Template: StoryFn<typeof PluginDocumentation> = (args) => ({
     setup() {
-        const axios: any = {}
+        const axios: {get: (url?: string) => Promise<{data: unknown[]}>} = {}
         axios.get = () =>{
                 return  Promise.resolve({data: []})
             }

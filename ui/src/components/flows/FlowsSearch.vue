@@ -355,6 +355,11 @@
     const didYouMeanTranslation = computed(() => splitTranslation(t, "source_search.did_you_mean", "suggestion"))
     const crossResourceSearchStore = useCrossResourceSearchStore()
     const suggestedQuery = computed(() => crossResourceSearchStore.suggestedQuery)
+<<<<<<< HEAD
+=======
+
+    let searchPendingToken = 0
+>>>>>>> 1dab350b61 (fix(ui): search alternate separators across resources)
 
     const resultsRef = ref<InstanceType<typeof SourceSearchResults> | null>(null)
 
@@ -707,9 +712,17 @@
 
     async function fetchResults() {
         if (!loadInit.value) return
+<<<<<<< HEAD
+=======
+
+        const currentSearchPendingToken = searchPendingToken
+
+>>>>>>> 1dab350b61 (fix(ui): search alternate separators across resources)
         searchPending.value = true
         if (!query.value) {
-            searchPending.value = false
+            if (currentSearchPendingToken === searchPendingToken) {
+                searchPending.value = false
+            }
             crossResourceSearchStore.reset()
             return
         }
@@ -739,7 +752,11 @@
                 }, gen)
             }
         } finally {
+<<<<<<< HEAD
             if (gen !== undefined && crossResourceSearchStore.isSearchCurrent(gen)) {
+=======
+            if (currentSearchPendingToken === searchPendingToken) {
+>>>>>>> 1dab350b61 (fix(ui): search alternate separators across resources)
                 searchPending.value = false
             }
         }
@@ -751,6 +768,7 @@
         () => [query.value, namespaceFilter.value, JSON.stringify(searchFilters.value)].join("|"),
         () => {
             // Synchronous, so the debounce window is already covered by the loading state.
+            searchPendingToken++
             searchPending.value = Boolean(query.value)
             debouncedFetch()
         },

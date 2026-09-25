@@ -716,14 +716,36 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
     }
 
     private static String dockerSocketNotAccessibleMessage(final String resolvedHost) {
-        return "Docker execution failed because Docker socket is not accessible.\n\n" +
-            "Fix:\n" +
-            "- Mount docker socket:\n" +
-            "  -v /var/run/docker.sock:/var/run/docker.sock\n" +
-            "- OR use Process runner:\n" +
-            "  taskRunner:\n" +
-            "    type: io.kestra.plugin.core.runner.Process\n\n" +
-            "Tried Docker host: " + resolvedHost;
+        StringBuilder message = new StringBuilder("Docker execution failed because Docker socket is not accessible.\n\n");
+        message.append("Fix:\n");
+
+        String socketPath = socketPathFromHost(resolvedHost);
+        if (socketPath != null) {
+            message.append("- Mount docker socket:\n");
+            message.append("  -v ").append(socketPath).append(":").append(socketPath).append("\n");
+        }
+
+        message.append("- OR use Process runner:\n");
+        message.append("  taskRunner:\n");
+        message.append("    type: io.kestra.plugin.core.runner.Process\n\n");
+        message.append("Tried Docker host: ").append(resolvedHost);
+
+        return message.toString();
+    }
+
+    /**
+     * Extracts the filesystem path from a Docker host URI (e.g. {@code unix:///var/run/docker.sock}
+     * becomes {@code /var/run/docker.sock}). Returns {@code null} for non-unix schemes (named pipes, TCP, etc.)
+     * where a {@code -v} mount suggestion would not make sense.
+     */
+    static String socketPathFromHost(final String host) {
+        if (host == null) {
+            return null;
+        }
+        if (host.startsWith("unix://")) {
+            return host.substring("unix://".length());
+        }
+        return null;
     }
 
     /**

@@ -22,7 +22,7 @@ import lombok.extern.slf4j.Slf4j;
  * Creates the missing {@link TriggerState} of the triggers the scheduler does not evaluate — webhook,
  * MCP-tool, flow and asset event triggers — of the flows that already exist.
  * <p>
- * Until 2.0.26 only the triggers the scheduler evaluates held a state, so the others could not be listed on
+ * Until 2.1.04 only the triggers the scheduler evaluates held a state, so the others could not be listed on
  * the triggers page. The scheduler now creates their state on every flow mutation; this back-fills the
  * flows that already exist, so an upgrade does not require re-saving them.
  *
@@ -33,20 +33,20 @@ import lombok.extern.slf4j.Slf4j;
  * needs a state, which has to give the same answer on both.
  */
 @Slf4j
-public abstract class AbstractV2_0_26UnscheduledTriggerMigration implements MigrationScript {
+public abstract class AbstractV2_1_04UnscheduledTriggerMigration implements MigrationScript {
 
     private static final TypeReference<RawFlow> RAW_FLOW_TYPE = new TypeReference<>() {
     };
 
     private final int vnodes;
 
-    protected AbstractV2_0_26UnscheduledTriggerMigration(final SchedulerConfiguration schedulerConfiguration) {
+    protected AbstractV2_1_04UnscheduledTriggerMigration(final SchedulerConfiguration schedulerConfiguration) {
         this.vnodes = schedulerConfiguration.vnodes();
     }
 
     @Override
     public String scriptId() {
-        return "2.0.26-unscheduled-triggers";
+        return "2.1.04-unscheduled-triggers";
     }
 
     @Override
@@ -109,7 +109,7 @@ public abstract class AbstractV2_0_26UnscheduledTriggerMigration implements Migr
         }
 
         try {
-            Class<?> clazz = Class.forName(type, false, AbstractV2_0_26UnscheduledTriggerMigration.class.getClassLoader());
+            Class<?> clazz = Class.forName(type, false, AbstractV2_1_04UnscheduledTriggerMigration.class.getClassLoader());
             return AbstractTrigger.class.isAssignableFrom(clazz) && !WorkerTriggerInterface.class.isAssignableFrom(clazz);
         } catch (ClassNotFoundException | LinkageError e) {
             log.debug("Skipping trigger of type '{}': it cannot be resolved at migration time.", type);

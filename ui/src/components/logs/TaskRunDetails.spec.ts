@@ -2,6 +2,7 @@ import {afterAll, afterEach, beforeEach, describe, expect, it, vi} from "vitest"
 import {flushPromises, mount} from "@vue/test-utils"
 import {createI18n} from "vue-i18n"
 import {nextTick, reactive} from "vue"
+import KestraDesignSystem from "@kestra-io/design-system"
 
 const store = vi.hoisted(() => ({
     executions: {} as Record<string, any>,
@@ -36,12 +37,12 @@ const execution = (id: string, state: string) => ({
     taskRunList: [],
 })
 
-const logsFor = (id: string) => ({results: [{level: "INFO", message: `log of ${id}`}], total: 1})
+const logsFor = (id: string) => [{level: "INFO", message: `log of ${id}`}]
 
 function mountDetails() {
     return mount(TaskRunDetails, {
-        props: {targetFlow: {id: "simple-dag", namespace: "company.team"}},
-        global: {plugins: [i18n]},
+        props: {targetFlow: {id: "simple-dag", namespace: "company.team", disabled: false, draft: false, deleted: false, tasks: []}},
+        global: {plugins: [i18n, KestraDesignSystem]},
     })
 }
 

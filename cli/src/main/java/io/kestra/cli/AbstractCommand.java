@@ -13,6 +13,7 @@ import java.util.concurrent.Callable;
 
 import com.google.common.collect.ImmutableMap;
 
+import io.kestra.cli.commands.NoDatabaseCommandInterface;
 import io.kestra.cli.commands.servers.ServerCommandInterface;
 import io.kestra.cli.services.StartupHookInterface;
 import io.kestra.core.plugins.ExternalPluginsPath;
@@ -111,12 +112,15 @@ public abstract class AbstractCommand extends BaseCommand implements Callable<In
     /**
      * Specifies whether the {@link PluginManager} service must be initialized.
      * <p>
-     * This method can be overridden by concrete commands.
+     * Defaults to {@code false} for a {@link NoDatabaseCommandInterface} command: such a command
+     * owns no repository, and Enterprise Edition's {@code PluginManager} needs internal storage and
+     * the cluster-event queue to install or reload plugins, neither of which such a context builds.
+     * Overridable for a command that needs neither flavour of plugin management.
      *
      * @return {@code true} if the {@link PluginManager} service must be initialized.
      */
     protected boolean isPluginManagerEnabled() {
-        return true;
+        return !(this instanceof NoDatabaseCommandInterface);
     }
 
     @Override
@@ -168,7 +172,7 @@ public abstract class AbstractCommand extends BaseCommand implements Callable<In
                             .build();
                         healthEndpoint = managementEndpoint.resolve("./health");
                     } catch (URISyntaxException e) {
-                        e.printStackTrace();
+                        log.error("Failed to build the management or health endpoint URI", e);
                     }
                     log.info("Management server running at {}", managementEndpoint);
                     log.info("Health endpoint is available at {}", healthEndpoint);
@@ -215,7 +219,7 @@ public abstract class AbstractCommand extends BaseCommand implements Callable<In
             try {
                 return yamlPropertySourceLoader.read("cli", new FileInputStream(this.config.toFile()));
             } catch (IOException e) {
-                e.printStackTrace();
+                log.error("Failed to read the CLI configuration file '{}'", this.config, e);
             }
         }
 

@@ -23,7 +23,7 @@ import io.kestra.core.models.dashboards.filters.StartsWith;
 import io.kestra.core.serializers.JacksonMapper;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
 public class QueryFilterTest {
@@ -164,6 +164,19 @@ public class QueryFilterTest {
 
             buildQueryFiltersForOperations(
                 Field.TRIGGER_EXECUTION_ID, Resource.EXECUTION,
+                Set.of(
+                    Op.EQUALS,
+                    Op.NOT_EQUALS,
+                    Op.IN,
+                    Op.NOT_IN,
+                    Op.STARTS_WITH,
+                    Op.ENDS_WITH,
+                    Op.CONTAINS
+                )
+            ),
+
+            buildQueryFiltersForOperations(
+                Field.TRIGGER_ID, Resource.EXECUTION,
                 Set.of(
                     Op.EQUALS,
                     Op.NOT_EQUALS,

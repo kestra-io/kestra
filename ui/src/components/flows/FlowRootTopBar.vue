@@ -7,7 +7,7 @@
             <Lock v-else-if="!isAllowedToEdit" class="me-2 gray-700" />
             <span :class="{'body-color': isDeleted}">
                 {{ routeInfo.title }}
-                <Badge v-if="routeInfo.beta" label="Beta" />
+                <Badge v-if="routeInfo.beta" :label="$t('plugins.beta')" />
                 <Badge v-if="isDraft" :label="$t('draft')" />
             </span>
         </template>
@@ -24,6 +24,7 @@
     import Badge from "../global/Badge.vue"
     import Actions from "override/components/flows/Actions.vue"
     import NavBar from "../layout/TopNavBar.vue"
+    import type {KsBreadcrumbItem} from "@kestra-io/design-system"
     import resource from "../../models/resource"
     import action from "../../models/action"
     import {useAuthStore} from "override/stores/auth"
@@ -32,7 +33,7 @@
     defineProps<{
         routeInfo: {
             title: string;
-            breadcrumb: Array<any>;
+            breadcrumb: KsBreadcrumbItem[];
             beta?: boolean;
         };
     }>()

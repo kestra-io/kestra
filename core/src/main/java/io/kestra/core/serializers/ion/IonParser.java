@@ -2,8 +2,6 @@ package io.kestra.core.serializers.ion;
 
 import java.io.IOException;
 import java.time.*;
-import java.time.temporal.ChronoUnit;
-import java.util.Calendar;
 
 import com.amazon.ion.IonReader;
 import com.amazon.ion.IonType;
@@ -50,19 +48,19 @@ public class IonParser extends com.fasterxml.jackson.dataformat.ion.IonParser {
         if (_currToken == JsonToken.VALUE_EMBEDDED_OBJECT) {
             if (_reader.getType() == IonType.TIMESTAMP) {
                 Timestamp timestamp = _reader.timestampValue();
-                Calendar calendar = timestamp.calendarValue();
-                Instant instant = calendar.toInstant();
-                ZoneOffset zoneOffset = timestamp.getLocalOffset() == null ? null : ZoneOffset.ofTotalSeconds(timestamp.getLocalOffset() * 60);
+                Instant instant = timestamp.calendarValue().toInstant();
 
-                if (zoneOffset == null || zoneOffset.getId().equals("Z")) {
-                    if (instant.truncatedTo(ChronoUnit.DAYS) == instant) {
-                        return LocalDate.ofInstant(instant, ZoneId.of("UTC"));
-                    }
+                // Only a date-precision timestamp is a date: forDateZ keeps the time, so a midnight instant is not one.
+                if (!timestamp.getPrecision().includes(Timestamp.Precision.MINUTE)) {
+                    return LocalDate.ofInstant(instant, ZoneOffset.UTC);
+                }
 
+                Integer offsetMinutes = timestamp.getLocalOffset();
+                if (offsetMinutes == null || offsetMinutes == 0) {
                     return instant;
                 }
 
-                return instant.atOffset(zoneOffset).toZonedDateTime();
+                return instant.atOffset(ZoneOffset.ofTotalSeconds(offsetMinutes * 60)).toZonedDateTime();
             }
         }
 

@@ -14,13 +14,15 @@
     import {computed, ref} from "vue"
     import {baseUrl, basePath, apiUrl} from "override/utils/route"
     import CopyToClipboard from "../layout/CopyToClipboard.vue"
-    import moment from "moment"
+    import {dayjs} from "@kestra-io/design-system"
     import {Flow} from "../../stores/flow"
     import {Label} from "../../stores/executions"
 
+    type DateInput = Parameters<typeof dayjs>[0]
+
     const props = withDefaults(defineProps<{
         flow: Flow;
-        inputs?: Record<string, any>;
+        inputs?: Record<string, unknown>;
         executionLabels?: Label[];
         verbose?: boolean;
     }>(),{
@@ -44,22 +46,23 @@
 
         props.flow.inputs.forEach((input) => {
             let inputValue: string | undefined
+            const value = props.inputs?.[input.id]
 
             switch (input.type) {
             case "FILE":
                 inputValue = exampleFileName.value
                 break
             case "SECRET":
-                inputValue = props.inputs?.[input.id] ? "******" : undefined
+                inputValue = value ? "******" : undefined
                 break
             case "DATE":
-                inputValue = moment(props.inputs?.[input.id]).format("YYYY-MM-DD")
+                inputValue = dayjs(value as DateInput).format("YYYY-MM-DD")
                 break
             case "TIME":
-                inputValue = moment(props.inputs?.[input.id]).format("hh:mm:ss")
+                inputValue = dayjs(value as DateInput).format("HH:mm:ss")
                 break
             default:
-                inputValue = props.inputs?.[input.id]
+                inputValue = value === undefined ? undefined : String(value)
             }
 
             if (inputValue === undefined) return

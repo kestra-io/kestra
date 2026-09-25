@@ -52,7 +52,14 @@
                     <KsTableColumn v-if="selectable && showSelection" type="selection" reserveSelection :selectable="rowSelectable" />
                     <slot />
                     <template #empty>
-                        <KsNoData :title="noDataText" :description="noDataDescription" />
+                        <slot v-if="loadError" name="error" :error="loadError" :retry="reload">
+                            <div class="load-error">
+                                <AlertCircleOutlineIcon class="load-error-icon" />
+                                <strong>{{ $t("ks_data_table.load_failed") }}</strong>
+                                <KsButton size="small" @click="reload">{{ $t("ks_data_table.retry") }}</KsButton>
+                            </div>
+                        </slot>
+                        <KsNoData v-else :title="noDataText" :description="noDataDescription" />
                     </template>
                 </KsTable>
             </div>
@@ -82,6 +89,8 @@
     import KsPagination from "../KsPagination.vue"
     import KsBulkSelect from "./KsBulkSelect.vue"
     import KsNoData from "../KsNoData.vue"
+    import KsButton from "../../Basic/KsButton/KsButton.vue"
+    import AlertCircleOutlineIcon from "vue-material-design-icons/AlertCircleOutline.vue"
 
     defineOptions({inheritAttrs: false})
 
@@ -152,6 +161,7 @@
         "row-dblclick": [row: any, column: any, event: Event]
         "ready": []
         "loaded": []
+        "load-error": [error: unknown]
     }>()
 
     defineSlots<{
@@ -160,6 +170,7 @@
         top?(): unknown
         table?(): unknown
         empty?(): unknown
+        error?(props: {error: unknown; retry: () => void}): unknown
         "bulk-actions"?(): unknown
         "select-actions"?(): unknown
     }>()
@@ -196,6 +207,7 @@
     })
 
     const isLoading = ref(props.loading)
+    const loadError = ref<unknown>()
     const isReady = ref(false)
 
     const normalizePage = (value: number | undefined): number => {
@@ -328,12 +340,16 @@
     const callLoad = async () => {
         if (!props.loadData) return
         isLoading.value = true
+        loadError.value = undefined
         try {
             await props.loadData({
                 page: currentPageValue.value,
                 size: currentSizeValue.value,
                 sort: internalSort.value,
             })
+        } catch (error) {
+            loadError.value = error ?? new Error("loadData failed")
+            emit("load-error", error)
         } finally {
             isLoading.value = false
             if (!isReady.value) {
@@ -345,7 +361,11 @@
         }
     }
 
-    const showEmpty = computed(() => props.data.length === 0 && !isLoading.value)
+    /** Coalesces same-tick load triggers into one post-flush load, never with a stale page size. */
+    const loadRequest = ref(0)
+    const requestLoad = () => { loadRequest.value++ }
+
+    const showEmpty = computed(() => props.data.length === 0 && !isLoading.value && !loadError.value)
 
     const showPagination = computed(() => {
         if (!props.total || props.total <= 0) return false
@@ -360,7 +380,7 @@
             emit("update:currentPage", 1)
             emit("page-changed", {page: 1, size: currentSizeValue.value})
         } else {
-            callLoad()
+            requestLoad()
         }
     }
 
@@ -397,7 +417,7 @@
 
     watch(() => props.loading, (val) => { isLoading.value = val })
 
-    watch([currentPageValue, currentSizeValue], () => callLoad(), {flush: "post"})
+    watch([currentPageValue, currentSizeValue, loadRequest], () => callLoad(), {flush: "post"})
 
     const onPageChange = (page: number) => {
         emit("update:currentPage", page)
@@ -418,7 +438,7 @@
             internalSort.value = undefined
         }
         emit("sort-change", sort)
-        callLoad()
+        requestLoad()
     }
 
     defineExpose({
@@ -439,6 +459,35 @@
 </script>
 
 <style lang="scss">
+    // Registered rather than declared on the wrapper: a plain declaration there would shadow a value
+    // an ancestor sets, which is the opposite of the override hook this is meant to be.
+    @property --ks-data-table-navbar-padding-block-start {
+        syntax: "<length>";
+        inherits: true;
+        initial-value: 0;
+    }
+
+    .load-error {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        line-height: 1.4;
+        gap: var(--ks-spacing-2);
+        text-align: center;
+
+        strong {
+            color: var(--ks-text-primary);
+            font-size: var(--ks-font-size-md);
+            font-weight: var(--ks-font-weight-bold);
+        }
+    }
+
+    .load-error-icon {
+        height: 24px;
+        width: 24px;
+        color: var(--ks-icon-error);
+    }
+
     .ks-data-table-wrapper {
         --ks-data-table-gutter: 2rem;
         height: 100%;
@@ -451,7 +500,7 @@
         }
 
         > .ks-data-table-navbar {
-            padding-block-start: var(--ks-data-table-navbar-padding-block-start, 0px);
+            padding-block-start: var(--ks-data-table-navbar-padding-block-start);
         }
 
         .kel-pagination {

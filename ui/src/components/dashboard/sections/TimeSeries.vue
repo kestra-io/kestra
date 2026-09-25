@@ -2,7 +2,7 @@
     <KsSkeleton v-if="loading && !generated && !props.short" animated :rows="3" class="empty" />
 
     <div
-        v-else-if="generated?.total > 0"
+        v-else-if="(generated?.total ?? 0) > 0"
         class="chart"
         :class="{short: props.short, execution: props.execution}"
     >
@@ -35,14 +35,13 @@
     import {computed, ref, watch} from "vue"
     import {useRoute} from "vue-router"
 
-    import moment from "moment"
     import {use, graphic} from "echarts/core"
     import {BarChart, LineChart} from "echarts/charts"
     import {useBreakpoints, breakpointsElement} from "@vueuse/core"
-    import {KsEchart, KsSkeleton, TooltipType, cssVar, durationUtils} from "@kestra-io/design-system"
+    import {KsEchart, KsSkeleton, TooltipType, cssVar, dateUtils, dayjs, durationUtils} from "@kestra-io/design-system"
 
     import {Chart, useChartGenerator} from "../composables/useDashboards"
-    import {DASHBOARD_CHART_MAX_PIXEL_RATIO, fillTimeBucketLabels, getConsistentHEXColor, useLegendToggle} from "../composables/charts"
+    import {DASHBOARD_CHART_MAX_PIXEL_RATIO, fillTimeBucketLabels, getConsistentHEXColor, useLegendToggle, type EchartsParams} from "../composables/charts"
     import {useChartDrillDown} from "../composables/chartDrillDown"
     import ChartLegend from "./ChartLegend.vue"
     import {getDateGrouping, useTheme} from "../../../utils/utils"
@@ -51,6 +50,33 @@
     use([BarChart, LineChart])
 
     defineOptions({inheritAttrs: false})
+
+    /** Per-stack accumulator built while grouping raw rows into bar series; flattened into `number[]` data before being handed to ECharts. */
+    interface BarAccumulatorEntry {
+        type: "bar";
+        yAxisID: string;
+        data: {x: unknown; y: number}[];
+        tooltip: string;
+        label: string | undefined;
+        backgroundColor: string;
+        unique: Set<unknown>;
+    }
+
+    /** `BarAccumulatorEntry` once `data` has been flattened from `{x,y}[]` onto the shared x-axis as `number[]`. */
+    type FlattenedBarDataset = Omit<BarAccumulatorEntry, "data"> & {data: number[]}
+
+    /** The duration line series added alongside the bar datasets when a second (duration) aggregator is present. */
+    interface LineDataset {
+        type: "line";
+        yAxisID: string;
+        data: number[];
+        label: string | undefined;
+        borderColor: string;
+        smooth: boolean;
+        areaStyle?: unknown;
+    }
+
+    type TimeSeriesDataset = FlattenedBarDataset | LineDataset
 
     const props = withDefaults(defineProps<{
         dashboardId?: string;
@@ -114,7 +140,7 @@
     })
 
     const parseValue = (value: unknown): unknown => {
-        const date = moment(value as moment.MomentInput, moment.ISO_8601, true)
+        const date = dateUtils.parseIso(value)
         return date.isValid() ? date.format(grouping.value.format) : value
     }
 
@@ -126,42 +152,40 @@
         return segments.length === 3 ? segments.slice(1).join("-") : datePart
     }
 
-    const parsedData = computed(() => {
-        const rawData = generated.value.results as Record<string, any>[] | undefined
+    const parsedData = computed((): {labels: string[]; datasets: TimeSeriesDataset[]} => {
+        const rawData = generated.value?.results
         // fill the buckets between the earliest and latest returned dates so gaps stay visible on the axis
         const xAxis = fillTimeBucketLabels(
-            rawData?.map((v: Record<string, any>) => v[chartOptions?.column ?? ""]) ?? [],
+            rawData?.map((v: Record<string, unknown>) => v[chartOptions?.column ?? ""]) ?? [],
             grouping.value,
         )
 
         const aggregatorKeys = aggregator.value.map(([key]) => key)
 
-        const reducer = (array: Record<string, any>[] | undefined, field: string, yAxisID: string) => {
+        const reducer = (array: Record<string, unknown>[] | undefined, field: string, yAxisID: string) => {
             if (!array?.length) return
 
             const columns = data?.columns ?? {}
             const column = chartOptions?.column ?? ""
-            const colorByColumn = (chartOptions as Record<string, any>)?.colorByColumn as string | undefined
+            const colorByColumn = chartOptions?.colorByColumn
 
             // Get the fields for stacks (columns without `agg` and not the xAxis column)
             const fields = Object.keys(columns)
                 .filter(key => !aggregatorKeys.includes(key))
                 .filter(key => key !== column)
 
-            return array.reduce((acc: any, {...params}) => {
+            return array.reduce<Record<string, BarAccumulatorEntry>>((acc, {...params}) => {
                 const stack = fields.map((f) => params[f]).join(", ")
 
                 if (!acc[stack]) {
+                    const stackLabel = colorByColumn ? params[colorByColumn] as string | undefined : undefined
                     acc[stack] = {
                         type: "bar",
                         yAxisID,
                         data: [],
                         tooltip: stack,
-                        label: colorByColumn ? params[colorByColumn] : undefined,
-                        backgroundColor: getConsistentHEXColor(
-                            theme.value,
-                            colorByColumn ? params[colorByColumn] : undefined,
-                        ),
+                        label: stackLabel,
+                        backgroundColor: getConsistentHEXColor(theme.value, stackLabel),
                         unique: new Set(),
                     }
                 }
@@ -174,22 +198,22 @@
                     current.unique.add(parsedDate)
                     current.data.push({
                         x: parsedDate,
-                        y: params[field],
+                        y: params[field] as number,
                     })
                 } else {
                     // Update existing stack value for the same date
-                    const existing = current.data.find((v: {x: unknown; y: number}) => v.x === parsedDate)
-                    if (existing) existing.y += params[field]
+                    const existing = current.data.find((v) => v.x === parsedDate)
+                    if (existing) existing.y += params[field] as number
                 }
 
                 return acc
             }, {})
         }
 
-        const getData = (_field: string, object: Record<string, any> = {}) => {
-            return Object.values(object).map((dataset: any) => {
+        const getData = (_field: string, object: Record<string, BarAccumulatorEntry> = {}) => {
+            return Object.values(object).map((dataset) => {
                 const datasetData = xAxis.map((xAxisLabel) => {
-                    const temp = dataset.data.find((v: {x: unknown; y: number}) => v.x === xAxisLabel)
+                    const temp = dataset.data.find((v) => v.x === xAxisLabel)
                     return temp ? temp.y : 0
                 })
 
@@ -200,7 +224,7 @@
         const yDataset = reducer(rawData, aggregator.value[0][0], "y")
 
         // Sorts the dataset array alphabetically by label for a consistent order across time ranges.
-        const yDatasetData = Object.values(getData(aggregator.value[0][0], yDataset)).sort((a: any, b: any) =>
+        const yDatasetData = Object.values(getData(aggregator.value[0][0], yDataset)).sort((a, b) =>
             (a.label ?? "").localeCompare(b.label ?? ""),
         )
 
@@ -213,9 +237,9 @@
 
             // Step 1: Group durations by formatted date
             const groupedDurations: Record<string, number> = {}
-            rawData?.forEach((item: Record<string, any>) => {
+            rawData?.forEach((item: Record<string, unknown>) => {
                 const formattedDate = parseValue(item[column]) as string
-                groupedDurations[formattedDate] = (groupedDurations[formattedDate] || 0) + item[durationKey]
+                groupedDurations[formattedDate] = (groupedDurations[formattedDate] || 0) + (item[durationKey] as number)
             })
 
             // Step 2: Map onto the x-axis labels so the line stays aligned with the bars
@@ -254,11 +278,11 @@
 
     const echartsOption = computed((): Record<string, unknown> => {
         const pd = parsedData.value
-        const xAxisData = pd.labels as string[]
+        const xAxisData = pd.labels
         const isCompact = props.short || props.execution
         const showAxes = !isCompact && !verticalLayout.value
 
-        const barDatasets = (pd.datasets as any[]).filter((ds) => ds.type !== "line")
+        const barDatasets = pd.datasets.filter((ds): ds is FlattenedBarDataset => ds.type !== "line")
         const radius = props.short ? 0.5 : 2
 
         // format duration values in the tooltip as human durations instead of raw seconds
@@ -276,7 +300,7 @@
             name: ds.label,
             stack: "total",
             yAxisIndex: 0,
-            data: (ds.data as number[]).map((value, x) => ({
+            data: ds.data.map((value, x) => ({
                 value,
                 itemStyle: {
                     borderRadius: index === barDatasets.findIndex((d) => (d.data[x] ?? 0) > 0)
@@ -294,8 +318,8 @@
             ...durationTooltip(0),
         }))
 
-        const lineSeries = (pd.datasets as any[])
-            .filter((ds) => ds.type === "line")
+        const lineSeries = pd.datasets
+            .filter((ds): ds is LineDataset => ds.type === "line")
             .map((ds) => ({
                 type: "line",
                 name: ds.label,
@@ -362,34 +386,57 @@
     const showLegend = computed(() => !props.short && !props.execution && !!chartOptions?.legend?.enabled)
 
     const legendStatuses = computed(() =>
-        (parsedData.value.datasets as any[])
-            .filter((ds) => ds.type !== "line")
+        parsedData.value.datasets
+            .filter((ds): ds is FlattenedBarDataset => ds.type !== "line")
             .map((ds) => ({
-                label: ds.label as string,
-                color: ds.backgroundColor as string,
-                count: (ds.data as number[]).reduce((sum, n) => sum + (n || 0), 0),
+                label: ds.label ?? "",
+                color: ds.backgroundColor,
+                count: ds.data.reduce((sum, n) => sum + (n || 0), 0),
             })),
     )
 
     const durationLabel = computed(() =>
-        (parsedData.value.datasets as any[]).find((ds) => ds.type === "line")?.label ?? "Duration",
+        parsedData.value.datasets.find((ds): ds is LineDataset => ds.type === "line")?.label ?? "Duration",
     )
 
     const ksEchartRef = ref<InstanceType<typeof KsEchart> | null>(null)
 
     const dimensionColumn = computed(() => {
-        const key = (chartOptions as Record<string, any>)?.colorByColumn as string | undefined
-        return (key ? data?.columns?.[key] : undefined) as {field?: string; key?: string} | undefined
+        const key = chartOptions?.colorByColumn
+        return key ? data?.columns?.[key] : undefined
     })
 
-    function onChartClick(params: any) {
+    // The row's date is already the boundary the backend truncated to: re-snapping it with `startOf`
+    // would re-anchor the window to the browser's calendar and to dayjs's Sunday-based week.
+    function bucketDateRange(dataIndex: number): {startDate: string; endDate: string} | undefined {
+        const label = parsedData.value.labels[dataIndex]
+        const column = chartOptions?.column ?? ""
+
+        const dates = generated.value?.results
+            ?.map((row) => dateUtils.parseIso(row[column]))
+            .filter((date) => date.isValid() && date.format(grouping.value.format) === label) ?? []
+        if (!dates.length) return undefined
+
+        const bucket = dayjs.min(dates)!
+
+        return {
+            startDate: bucket.toISOString(),
+            endDate: bucket.add(1, grouping.value.unit).subtract(1, "millisecond").toISOString(),
+        }
+    }
+
+    function onChartClick(rawParams: unknown) {
+        const params = rawParams as EchartsParams
         if (params.seriesType !== "bar" || props.execution) return
 
-        drillDown([
-            {column: dimensionColumn.value, value: params.seriesName},
-            ...(props.namespace ? [{column: {field: "NAMESPACE"}, value: props.namespace}] : []),
-            ...(props.flow ? [{column: {field: "FLOW_ID"}, value: props.flow}] : []),
-        ])
+        drillDown(
+            [
+                {column: dimensionColumn.value, value: params.seriesName ?? ""},
+                ...(props.namespace ? [{column: {field: "NAMESPACE"}, value: props.namespace}] : []),
+                ...(props.flow ? [{column: {field: "FLOW_ID"}, value: props.flow}] : []),
+            ],
+            {dateRange: params.dataIndex === undefined ? undefined : bucketDateRange(params.dataIndex)},
+        )
     }
 
     function refresh(customFilters?: QueryFilter[]) {

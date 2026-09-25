@@ -1,6 +1,6 @@
 import path from "path"
 import {fileURLToPath} from "url"
-import {compareTranslations, DEFAULT_LANGUAGES} from "./compareTranslations"
+import {compareTranslations, DEFAULT_LANGUAGES} from "./compareTranslations.ts"
 
 const here = path.dirname(fileURLToPath(import.meta.url))
 

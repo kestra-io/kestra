@@ -24,7 +24,6 @@ import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.Backfill;
-import io.kestra.core.models.triggers.PollingTriggerInterface;
 import io.kestra.core.models.triggers.RecoverMissedSchedules;
 import io.kestra.core.models.triggers.Schedulable;
 import io.kestra.core.models.triggers.TriggerContext;
@@ -52,6 +51,7 @@ import io.kestra.core.scheduler.model.TriggerType;
 import io.kestra.core.scheduler.service.TriggerExecutionPublisher;
 import io.kestra.core.scheduler.store.TriggerStateStore;
 import io.kestra.core.services.ConditionService;
+import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.Logs;
 import io.kestra.scheduler.internals.NextEvaluationDate;
 import io.kestra.scheduler.stores.FlowMetaStore;
@@ -182,7 +182,7 @@ public class TriggerEventHandler {
                 return;
             }
 
-            if (trigger instanceof PollingTriggerInterface) {
+            if (trigger instanceof Schedulable) {
                 state = state.updateForNextEvaluationDate(clock, nextEvaluationDate(clock, flow, trigger, state.context()));
             }
 
@@ -331,7 +331,7 @@ public class TriggerEventHandler {
      * @param event the event.
      */
     void onTriggerExecutionTerminated(Clock clock, TriggerExecutionTerminated event) {
-        Optional<TriggerState> maybeState = triggerStateStore.findById(event.id());
+        Optional<TriggerState> maybeState = triggerStateStore.findByIdWithoutAcl(event.id());
         if (maybeState.isEmpty()) {
             Logs.logTrigger(event.id(), Level.WARN, "Cannot process event {}. Cause: Trigger state not found.", event.type());
             return;
@@ -436,7 +436,7 @@ public class TriggerEventHandler {
             // The trigger was deleted while its worker job was in flight: kill the instance
             // the worker just started. Only do so when the state is truly missing, not when
             // the event was de-duplicated.
-            if (triggerStateStore.findById(event.id()).isEmpty()) {
+            if (triggerStateStore.findByIdWithoutAcl(event.id()).isEmpty()) {
                 sendExecutionKilled(event.id());
             }
             return;
@@ -444,7 +444,7 @@ public class TriggerEventHandler {
         TriggerState state = maybeState.get();
         // The trigger was disabled while its worker job was in flight: the kill broadcast
         // found no holder at that time, so kill the instance now that a worker reports it.
-        if (state.isDisabled()) {
+        if (state.isDisabled() || isDisabledInDefinition(event)) {
             maySendExecutionKilled(state);
         }
         triggerStateStore.save(
@@ -463,7 +463,7 @@ public class TriggerEventHandler {
      * @param event the event.
      */
     void onTriggerWorkerLost(Clock clock, TriggerWorkerLost event) {
-        triggerStateStore.findById(event.id()).ifPresent(state ->
+        triggerStateStore.findByIdWithoutAcl(event.id()).ifPresent(state ->
         {
             if (state.getWorkerId() != null && !state.getWorkerId().equals(event.workerUid())) {
                 // The trigger is already held by another worker.
@@ -541,7 +541,7 @@ public class TriggerEventHandler {
      * @param event the event.
      */
     void onTriggerDeleted(TriggerDeleted event) {
-        triggerStateStore.findById(event.id()).ifPresent(state ->
+        triggerStateStore.findByIdWithoutAcl(event.id()).ifPresent(state ->
         {
             triggerStateStore.delete(event.id());
             maySendExecutionKilled(state);
@@ -588,7 +588,7 @@ public class TriggerEventHandler {
             Flow flow = data.getLeft();
             AbstractTrigger trigger = data.getRight();
             TriggerState state = TriggerState
-                .of(event.id(), TriggerType.from(trigger), trigger.getStopAfter(), trigger.isDisabled(), vNode)
+                .of(event.id(), trigger, vNode)
                 .lastEventId(clock, event.eventId());
             state = state.updateForNextEvaluationDate(clock, nextEvaluationDate(clock, flow, trigger, state.context()));
             triggerStateStore.save(state);
@@ -605,13 +605,18 @@ public class TriggerEventHandler {
         return NextEvaluationDate.get(clock, trigger, triggerContext, conditionContext);
     }
 
+    private boolean isDisabledInDefinition(TriggerEvent event) {
+        AbstractTrigger trigger = findTrigger(event, null).getRight();
+        return trigger != null && trigger.isDisabled();
+    }
+
     private Pair<Flow, AbstractTrigger> findTrigger(TriggerEvent event, Integer revision) {
         FlowWithSource flow = findFlow(event, revision);
         if (flow == null) {
             return Pair.of(null, null);
         }
 
-        AbstractTrigger trigger = flow.getTriggers().stream()
+        AbstractTrigger trigger = ListUtils.emptyOnNull(flow.getTriggers()).stream()
             .filter(it -> it.getId().equals(event.id().getTriggerId()))
             .findFirst()
             .orElse(null);
@@ -634,7 +639,7 @@ public class TriggerEventHandler {
     }
 
     private Optional<TriggerState> findTriggerState(final TriggerEvent event) {
-        Optional<TriggerState> state = triggerStateStore.findById(event.id());
+        Optional<TriggerState> state = triggerStateStore.findByIdWithoutAcl(event.id());
         if (state.isEmpty()) {
             Logs.logTrigger(event.id(), Level.WARN, "Cannot process event {}. Cause: Trigger state not found.", event.type());
             return Optional.empty();

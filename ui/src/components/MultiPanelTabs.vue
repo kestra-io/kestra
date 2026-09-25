@@ -61,7 +61,6 @@
                         class="editor-tabs"
                         role="tablist"
                         @dragover.prevent="dragover"
-                        @dragleave.prevent="throttle(removeAllPotentialTabs, 300)"
                         @drop="drop"
                         @wheel.passive="onWheelTabScroll"
                         :data-panel-index="panelIndex"
@@ -228,7 +227,7 @@
 </template>
 
 <script setup lang="ts">
-    import {nextTick, ref, watch, provide, computed, defineComponent, h, markRaw, onMounted, onBeforeUnmount} from "vue"
+    import {nextTick, ref, watch, provide, computed, defineComponent, h, markRaw, onMounted, onBeforeUnmount, type Component} from "vue"
 
     import {VISIBLE_PANELS_INJECTION_KEY, PANEL_MAXIMIZED_INJECTION_KEY} from "./no-code/injectionKeys"
     import {useKeyShortcuts} from "../utils/useKeyShortcuts"
@@ -250,24 +249,12 @@
 
     const {showKeyShortcuts} = useKeyShortcuts()
 
-    function throttle(callback: () => void, limit: number): () => void {
-        let waiting = false
-        return function () {
-            if (!waiting) {
-                callback()
-                waiting = true
-                setTimeout(function () {
-                    waiting = false
-                }, limit)
-            }
-        }
-    }
+    const ComponentCache = new Map<string, Component>()
 
-    const ComponentCache = new Map<string, any>()
-
-    const createUniqueComponent = (component: any, key: string) => {
-        if(ComponentCache.has(key)){
-            return ComponentCache.get(key)
+    const createUniqueComponent = (component: Component, key: string) => {
+        const cached = ComponentCache.get(key)
+        if(cached){
+            return cached
         }
         const uniqueComponent = markRaw(
             defineComponent({
@@ -726,7 +713,7 @@
         if(!container){
             return
         }
-        const safeId = (globalThis as any).CSS?.escape ? (globalThis as any).CSS.escape(tabId) : tabId.replace(/[^a-zA-Z0-9_-]/g, "\\$&")
+        const safeId = globalThis.CSS?.escape ? globalThis.CSS.escape(tabId) : tabId.replace(/[^a-zA-Z0-9_-]/g, "\\$&")
         const el = container.querySelector(`.editor-tab[data-tab-id="${safeId}"]`) as HTMLElement | null
         if(!el){
             return
@@ -813,7 +800,7 @@
         background: var(--ks-bg-surface);
         border-left: 1px solid var(--ks-border-default);
         border-right: 1px solid var(--ks-border-default);
-        box-shadow: var(--ks-shadow-md);
+        box-shadow: var(--ks-shadow-base);
     }
 
     .panel-maximized--left-sliver .editor-tabs-container,
@@ -887,10 +874,10 @@
         left: 0;
         right: 0;
         bottom: 0;
-        background-color: rgba(0, 0, 0, 0.1);
-        z-index: 100;
+        background-color: color-mix(in srgb, var(--ks-border-focus) 10%, transparent);
+        z-index: var(--ks-z-sticky);
         &.dragover{
-            background-color: rgba(0, 0, 0, 0.3);
+            background-color: color-mix(in srgb, var(--ks-border-focus) 30%, transparent);
         }
     }
 
@@ -1049,7 +1036,7 @@
         right: 0;
         bottom: 0;
         pointer-events: none;
-        z-index: 100;
+        z-index: var(--ks-z-sticky);
         display: flex;
         justify-content: space-between;
     }
@@ -1060,9 +1047,9 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        background-color: rgba(30, 30, 30, 0.5);
+        background-color: color-mix(in srgb, var(--ks-border-focus) 15%, transparent);
         transition: all 0.2s ease;
-        border: 2px dashed var(--ks-border-default, #444);
+        border: 2px dashed var(--ks-border-default);
         border-radius: 4px;
         margin: 8px;
         pointer-events: auto;
@@ -1071,8 +1058,8 @@
 
     .new-panel-drop-zone:hover,
     .new-panel-drop-zone.panel-dragover {
-        background-color: rgba(40, 40, 40, 0.8);
-        border-color: var(--ks-border-focus, #888);
+        background-color: color-mix(in srgb, var(--ks-border-focus) 35%, transparent);
+        border-color: var(--ks-border-focus);
     }
 
     .left-drop-zone {

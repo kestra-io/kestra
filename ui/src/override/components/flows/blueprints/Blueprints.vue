@@ -22,7 +22,7 @@
                 :embed
                 :blueprintKind="kind"
                 blueprintType="community"
-                @loaded="emit('loaded', $event)"
+                @loaded="emit('loaded')"
                 @go-to-detail="(id: string) => (selectedBlueprintId = id)"
             />
         </section>
@@ -56,7 +56,7 @@
         embed: false,
     })
 
-    const emit = defineEmits<{loaded: [value: any]}>()
+    const emit = defineEmits<{loaded: []}>()
 
     const {t} = useI18n()
     const routeTabsStore = useRouteTabsStore()

@@ -1,20 +1,12 @@
 import {describe, it, expect} from "vitest"
-import {mount} from "@vue/test-utils"
-import {createI18n} from "vue-i18n"
 import TaskEditData from "../../../../src/components/flows/TaskEditData.vue"
+import {i18nMount} from "../../i18nMount"
 
-const i18n = createI18n({
-    legacy: false,
-    locale: "en",
-    missingWarn: false,
-    fallbackWarn: false,
-    messages: {en: {
-        expand: "Expand",
-        collapse: "Collapse",
-        copied: "Copied",
-        block_editor: {filter_data: "Filter", no_data_matches: "No data matches"},
-    }},
-})
+const messages = {
+    expand: "Expand",
+    collapse: "Collapse",
+    block_editor: {filter_data: "Filter", no_data_matches: "No data matches", chip_hint: "Click a chip to insert it, or drag it in"},
+}
 
 const sections = [
     {key: "up", label: "Upstream outputs", chips: [
@@ -27,9 +19,9 @@ const sections = [
 ]
 
 function render() {
-    return mount(TaskEditData, {
+    return i18nMount(TaskEditData, {
+        messages,
         props: {kind: "inputs", title: "Inputs", subtitle: "data you can use", sections, filterable: true},
-        global: {plugins: [i18n]},
     })
 }
 
@@ -66,5 +58,28 @@ describe("TaskEditData filtering", () => {
 
         expect(wrapper.text()).toContain("No data matches")
         expect(wrapper.text()).not.toContain("flow.id")
+    })
+})
+
+describe("TaskEditData chip activation", () => {
+    it("shows a permanent hint that clicking inserts and dragging still works", () => {
+        expect(render().text()).toContain("Click a chip to insert it, or drag it in")
+    })
+
+    it("emits chip-activate with the expression when an interactive chip is clicked", async () => {
+        const wrapper = render()
+        await wrapper.get("[title='{{ flow.id }}']").trigger("click")
+
+        expect(wrapper.emitted("chip-activate")).toEqual([["{{ flow.id }}"]])
+    })
+
+    it("does not render a hint or interactive chips for a non-interactive column", () => {
+        const wrapper = i18nMount(TaskEditData, {
+            messages,
+            props: {kind: "output", title: "Output", subtitle: "what this task produces", sections, interactive: false},
+        })
+
+        expect(wrapper.text()).not.toContain("Click a chip to insert it, or drag it in")
+        expect(wrapper.find("button.task-edit-data-chip").exists()).toBe(false)
     })
 })

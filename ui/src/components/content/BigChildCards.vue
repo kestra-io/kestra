@@ -20,6 +20,11 @@
     import {useDocStore} from "../../stores/doc"
     import ContextDocsLink from "../docs/ContextDocsLink.vue"
 
+    interface ChildMetadata {
+        title?: string
+        description?: string
+    }
+
     const docStore = useDocStore()
 
     const props = defineProps<{
@@ -27,7 +32,7 @@
         title: string
     }>()
 
-    let navigation = await docStore.children(props.directory) as Record<string, any>
+    let navigation = await docStore.children(props.directory) as Record<string, ChildMetadata>
 
     // avoid null values in navigation
     const protectedNavigation = computed(() => {
@@ -60,10 +65,9 @@ h2.big-title {
 .big-card{
     border-radius: 0.5rem;
     text-decoration: none;
-    background: linear-gradient(180deg, #3a4051 0%, #272a36 100%);
-    color: var(--ks-white);
-    border: 1px solid #21242E;
-    border-image-source: linear-gradient(180deg, #2B313E 0%, #131725 100%);
+    background: linear-gradient(180deg, var(--ks-bg-elevated) 0%, var(--ks-bg-base) 100%);
+    color: var(--ks-text-primary);
+    border: 1px solid var(--ks-border-default);
     transition: all 0.3s;
     padding: 1rem;
     h4.card-title {
@@ -76,7 +80,8 @@ h2.big-title {
         line-height: var(--ks-font-size-xl);
     }
     &:hover{
-        background: linear-gradient(180deg, rgba(#3a4051, .9) 0%, rgba(#272a36,.9) 100%), #9ca4ce;
+        background: linear-gradient(180deg, var(--ks-bg-hover-elevated) 0%, var(--ks-bg-elevated) 100%);
+        border-color: var(--ks-border-strong);
     }
 }
 </style>

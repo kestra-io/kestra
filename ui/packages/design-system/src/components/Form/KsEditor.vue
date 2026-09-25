@@ -4,20 +4,18 @@
             <slot name="nav">
                 <div class="text-nowrap">
                     <KsButtonGroup>
-                        <KsTooltip :content="$t('Fold content lines')">
-                            <KsButton
-                                :icon="icon.UnfoldLessHorizontal"
-                                @click="autoFold(true)"
-                                size="small"
-                            />
-                        </KsTooltip>
-                        <KsTooltip :content="$t('Unfold content lines')">
-                            <KsButton
-                                :icon="icon.UnfoldMoreHorizontal"
-                                @click="unfoldAll"
-                                size="small"
-                            />
-                        </KsTooltip>
+                        <KsButton
+                            :tooltip="$t('Fold content lines')"
+                            :icon="icon.UnfoldLessHorizontal"
+                            @click="autoFold(true)"
+                            size="small"
+                        />
+                        <KsButton
+                            :tooltip="$t('Unfold content lines')"
+                            :icon="icon.UnfoldMoreHorizontal"
+                            @click="unfoldAll"
+                            size="small"
+                        />
                     </KsButtonGroup>
                     <slot name="extends-navbar" />
                 </div>
@@ -85,7 +83,6 @@
     import KsDatePicker from "./KsDatePicker.vue"
     import KsButton from "../Basic/KsButton/KsButton.vue"
     import KsButtonGroup from "../Basic/KsButton/KsButtonGroup.vue"
-    import KsTooltip from "../Feedback/KsTooltip.vue"
     import * as monaco from "monaco-editor/editor/editor.api"
     import {useKsEditor} from "../../composables/useKsEditor"
     import type {KsEditorExposes, KsEditorProps} from "../../utils/editorTypes"
@@ -165,7 +162,13 @@
 
 <style lang="scss">
     .highlight-lines {
-        background-color: rgba(#3991ff, .2);
+        background-color: color-mix(in srgb, var(--ks-status-info) 20%, transparent);
+    }
+
+    /* Lines a consumer has locked via useReadOnlyYamlKeys. Styled here because the
+       selector reaches into Monaco's own DOM, which a scoped feature style cannot. */
+    .ks-readonly-yaml-line {
+        background-color: var(--ks-bg-inactive);
     }
 
     .editor-content-widget-content {
@@ -181,7 +184,7 @@
     :not(.namespace-defaults, .kel-drawer__body) > .ks-editor {
         flex-direction: column;
         height: 100%;
-        z-index: 1001;
+        z-index: calc(var(--ks-z-dropdown) + 1);
     }
 
     :not(.blueprint-container) .ks-editor {
@@ -329,14 +332,15 @@
     .highlight-text {
         cursor: pointer;
         font-weight: 700;
-        box-shadow: 0 19px 44px rgba(157, 29, 236, 0.31);
+        box-shadow: 0 19px 44px var(--ks-shadow-elevated);
 
         html.dark & {
-            background-color: rgba(255, 255, 255, 0.2);
+            background-color: color-mix(in srgb, var(--ks-text-primary) 20%, transparent);
         }
     }
 
     .highlight-pebble {
+        /* Not `--ks-editor-pabble`: Dark 2.0 maps that token to green, so it stays hardcoded until the token is corrected. */
         color: #977100 !important;
 
         html.dark & {

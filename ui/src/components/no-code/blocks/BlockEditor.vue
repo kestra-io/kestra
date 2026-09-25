@@ -40,7 +40,7 @@
     >
         <KsSplitter class="block-editor-split">
             <KsSplitterPanel min="18%">
-                <div class="block-editor-main">
+                <div class="block-editor-main" data-test="block-editor-scrollport">
                     <div
                         class="block-editor-canvas"
                         data-test="block-editor-canvas"
@@ -106,7 +106,7 @@
             :shortcutGroups="shortcutGroups"
             :footerContext="footerContext"
             :footerHints="footerHints"
-            :undoState="undoState"
+            :undoState="visibleUndoState"
             @undo="performUndo"
         />
 
@@ -199,9 +199,12 @@
     import {useCanvasFocus} from "./useCanvasFocus"
     import {useTaskPicker} from "./useTaskPicker"
     import {buildFooterHints, buildShortcutGroups, type FooterHint} from "./shortcutHints"
+    import {flowDescriptionOf, flowLabelEntriesOf} from "./flowSummary"
     import {BLOCK_EDITOR_KEYMAP} from "./keymap"
+    import {useAuthoringSurface} from "./useAuthoringSurface"
     import type {NoCodeProps} from "../../flows/noCodeTypes"
     import {usePlaygroundRun} from "../../../composables/playground/usePlaygroundRun"
+    import {trackAuthoringAction} from "../../../utils/tabTracking"
 
     const {t} = useI18n()
     const flowStore = useFlowStore()
@@ -278,23 +281,9 @@
         }
     })
 
-    const flowDescription = computed<string | undefined>(() => {
-        const description = parsedFlow.value?.description
-        return typeof description === "string" ? description : undefined
-    })
+    const flowDescription = computed(() => flowDescriptionOf(parsedFlow.value))
 
-    const flowLabelEntries = computed<[string, string][]>(() => {
-        const labels = parsedFlow.value?.labels
-        if (Array.isArray(labels)) {
-            return labels
-                .filter((label): label is {key: string; value: unknown} => Boolean(label) && typeof label === "object" && "key" in label)
-                .map((label) => [String(label.key), String(label.value ?? "")])
-        }
-        if (labels && typeof labels === "object") {
-            return Object.entries(labels).map(([key, value]) => [key, String(value ?? "")])
-        }
-        return []
-    })
+    const flowLabelEntries = computed(() => flowLabelEntriesOf(parsedFlow.value))
 
     const editingItemPath = computed<string>(() => {
         if (!props.editingTask) return props.parentPath ?? ""
@@ -323,6 +312,7 @@
     function onInlineTaskEdited(newContent: string) {
         if (!editingPath.value) return
         applyYaml(updateBlockAtPath(flowYaml.value, editingPath.value, newContent))
+        trackAuthoringAction("task_edited", "no_code", {task_type: editingTaskData.value?.type as string | undefined})
     }
 
     // The entry now exists, so hand the tab over to the edit surface pointed at it.
@@ -352,6 +342,7 @@
     function onModalTaskEdited(newContent: string) {
         if (!modalPath.value) return
         applyYaml(updateBlockAtPath(flowYaml.value, modalPath.value, newContent))
+        trackAuthoringAction("task_edited", "no_code", {task_type: modalTaskData.value?.type as string | undefined})
     }
 
     function onModalOpenInTabs() {
@@ -491,6 +482,7 @@
         laneDisplayLabel: laneDisplayLabelFromPath,
         flowYaml,
         applyYaml,
+        surface: "no_code",
     })
 
     const {
@@ -579,8 +571,7 @@
             return
         }
         if (id === "undo") {
-            performUndo()
-            return
+            return performUndo()
         }
         if (id === "command-menu") {
             openCommandMenu()
@@ -637,10 +628,15 @@
         }
     }
 
+    const authoringSurface = useAuthoringSurface(editorEl)
+
+    const visibleUndoState = computed(() => (authoringSurface.isActive() ? undoState.value : null))
+
     useBlockEditorKeyboard({
         keymap: BLOCK_EDITOR_KEYMAP,
-        dispatch: dispatchBlockEditorAction,
+        dispatch: (id, event) => (authoringSurface.isActive() ? dispatchBlockEditorAction(id, event) : false),
         isOverlayOpen: isAnyOverlayOpen,
+        root: editorEl,
     })
 
     const {
@@ -701,7 +697,13 @@
         deleteFocused: requestDeleteFocused,
         goToSection: (section) => {
             const list = sectionList(section)
-            focusCanvasCard(list.length ? String(list[0].id ?? 0) : sectionSentinelId(section))
+            // A palette jump crosses the whole canvas, unlike an arrow-key step
+            // between neighbours, so centre the destination — `nearest` would
+            // leave it flush against the edge of the viewport.
+            focusCanvasCard(
+                list.length ? String(list[0].id ?? 0) : sectionSentinelId(section),
+                {align: "center"},
+            )
         },
         saveFlow: saveFlowWithPendingEdits,
         taskEntries: picker.focusedContextEntries.value,
@@ -719,6 +721,8 @@
         height: 100%;
         overflow: hidden;
         background: var(--ks-bg-base);
+
+        --status-bar-height: 2.25rem;
     }
 
     .block-editor-split {
@@ -728,7 +732,9 @@
     .block-editor-main {
         height: 100%;
         overflow-y: auto;
-        padding: var(--ks-spacing-6) var(--ks-spacing-4) calc(2.25rem + var(--ks-spacing-6));
+        padding: var(--ks-spacing-6) var(--ks-spacing-4) calc(var(--status-bar-height) + var(--ks-spacing-6));
+        /* The status bar is painted over this scroll container, so scrollIntoView has to stop short of it. */
+        scroll-padding-bottom: calc(var(--status-bar-height) + var(--ks-spacing-6));
     }
 
     .block-editor-inline-edit {

@@ -125,7 +125,7 @@ class ExecutionControllerTest {
             )
         );
         assertThat(exception.getStatus().getCode()).isEqualTo(HttpStatus.NOT_FOUND.getCode());
-        assertThat(Problems.detail(exception)).isEqualTo("Flow not found");
+        assertThat(Problems.detail(exception)).isEqualTo("Webhook not found");
 
         exception = assertThrows(
             HttpClientResponseException.class,
@@ -139,7 +139,7 @@ class ExecutionControllerTest {
             )
         );
         assertThat(exception.getStatus().getCode()).isEqualTo(HttpStatus.NOT_FOUND.getCode());
-        assertThat(Problems.detail(exception)).isEqualTo("Flow not found");
+        assertThat(Problems.detail(exception)).isEqualTo("Webhook not found");
 
         exception = assertThrows(
             HttpClientResponseException.class,
@@ -153,7 +153,7 @@ class ExecutionControllerTest {
             )
         );
         assertThat(exception.getStatus().getCode()).isEqualTo(HttpStatus.NOT_FOUND.getCode());
-        assertThat(Problems.detail(exception)).isEqualTo("Flow not found");
+        assertThat(Problems.detail(exception)).isEqualTo("Webhook not found");
 
         exception = assertThrows(
             HttpClientResponseException.class,
@@ -163,7 +163,7 @@ class ExecutionControllerTest {
             )
         );
         assertThat(exception.getStatus().getCode()).isEqualTo(HttpStatus.NOT_FOUND.getCode());
-        assertThat(Problems.detail(exception)).isEqualTo("Flow not found");
+        assertThat(Problems.detail(exception)).isEqualTo("Webhook not found");
 
         exception = assertThrows(
             HttpClientResponseException.class,
@@ -177,7 +177,7 @@ class ExecutionControllerTest {
             )
         );
         assertThat(exception.getStatus().getCode()).isEqualTo(HttpStatus.NOT_FOUND.getCode());
-        assertThat(Problems.detail(exception)).isEqualTo("Flow not found");
+        assertThat(Problems.detail(exception)).isEqualTo("Webhook not found");
     }
 
     @Test
@@ -213,8 +213,8 @@ class ExecutionControllerTest {
             .as("a webhook on a draft-only flow is treated as non-existent (404) and must not fire an execution")
             .isEqualTo(HttpStatus.NOT_FOUND.getCode());
         assertThat(exception.getMessage())
-            .as("the 404 message explains the flow was not found")
-            .contains("Flow not found");
+            .as("the 404 message must not distinguish a draft-only flow from a wrong webhook key (GHSA-6wcq-4vx6-rx53)")
+            .contains("Webhook not found");
     }
 
     @Test
@@ -388,13 +388,13 @@ class ExecutionControllerTest {
         HttpClientResponseException exception = assertThrows(
             HttpClientResponseException.class, () -> client.toBlocking().retrieve(
                 GET(
-                    "/api/v1/main/executions/search?filters[triggerId][EQUALS]=test"
+                    "/api/v1/main/executions/search?filters[workerId][EQUALS]=test"
                 ), PagedResults.class
             )
         );
         Problems.assertProblem(exception, ProblemTypes.INVALID_QUERY_FILTERS);
         assertThat(Problems.detail(exception)).isEqualTo(
-            "Provided query filters are invalid: Field TRIGGER_ID is not supported for resource EXECUTION. Supported fields are QUERY, SCOPE, FLOW_ID, START_DATE, END_DATE, STATE, LABELS, TRIGGER_EXECUTION_ID, CHILD_FILTER, NAMESPACE, KIND, PARENT_ID, TASK_ID"
+            "Provided query filters are invalid: Field WORKER_ID is not supported for resource EXECUTION. Supported fields are QUERY, SCOPE, FLOW_ID, START_DATE, END_DATE, STATE, LABELS, TRIGGER_EXECUTION_ID, TRIGGER_ID, CHILD_FILTER, NAMESPACE, KIND, PARENT_ID, TASK_ID"
         );
 
         exception = assertThrows(

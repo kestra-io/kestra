@@ -1,16 +1,12 @@
 import {describe, it, expect, vi} from "vitest"
 import {defineComponent, h} from "vue"
-import {mount} from "@vue/test-utils"
-import {createI18n} from "vue-i18n"
-
 vi.mock("vue-router", () => ({
     useRoute: () => ({name: "executions/list", query: {}}),
 }))
 
 import {useExecutionFilter} from "../../../../../src/components/filter/configurations/executionFilter"
 import {useFlowExecutionFilter} from "../../../../../src/components/filter/configurations/flowExecutionFilter"
-
-const i18n = createI18n({legacy: false, locale: "en", missingWarn: false, fallbackWarn: false, messages: {en: {}}})
+import {i18nMount} from "../../../i18nMount"
 
 function setup<T>(useComposable: () => T): T {
     let api!: T
@@ -20,7 +16,7 @@ function setup<T>(useComposable: () => T): T {
             return () => h("div")
         },
     })
-    mount(Comp, {global: {plugins: [i18n]}})
+    i18nMount(Comp)
     return api
 }
 
@@ -37,5 +33,20 @@ describe("execution filter configurations declare taskId", () => {
     it("useFlowExecutionFilter", () => {
         const config = setup(() => useFlowExecutionFilter())
         expect(config.value.keys.map((k: {key: string}) => k.key)).toContain("taskId")
+    })
+})
+
+// Issue #12784: the Trigger tab links to the executions list pre-filtered on the
+// trigger id, but `triggerId` was never declared here, so keepSupportedFilters would
+// silently drop filters[triggerId][EQUALS] before the search request reached the API.
+describe("execution filter configurations declare triggerId", () => {
+    it("useExecutionFilter", () => {
+        const config = setup(() => useExecutionFilter())
+        expect(config.value.keys.map((k: {key: string}) => k.key)).toContain("triggerId")
+    })
+
+    it("useFlowExecutionFilter", () => {
+        const config = setup(() => useFlowExecutionFilter())
+        expect(config.value.keys.map((k: {key: string}) => k.key)).toContain("triggerId")
     })
 })

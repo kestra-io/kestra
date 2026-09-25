@@ -17,8 +17,8 @@
 
 <script lang="ts" setup>
     import {ref, watch, onMounted, onUnmounted} from "vue"
-    import {useRoute, useRouter} from "vue-router"
-    import debounce from "lodash/debounce"
+    import {useRoute, useRouter, type LocationQueryRaw} from "vue-router"
+    import {debounce} from "@kestra-io/design-system"
 
     const props = withDefaults(defineProps<{
         router?: boolean;
@@ -48,7 +48,7 @@
         searchDebounce = debounce(() => {
             emit("search", search.value)
             if (props.router !== false) {
-                const query: Record<string, any> = {
+                const query: LocationQueryRaw = {
                     ...route.query,
                     q: search.value,
                     page: 1,

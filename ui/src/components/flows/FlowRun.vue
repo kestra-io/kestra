@@ -27,6 +27,7 @@
                         :initialInputs="flow.inputs"
                         :selectedTrigger="selectedTrigger"
                         :flow="flow"
+                        :renderLabels="renderLabels"
                         mode="wizard"
                         v-model="inputs"
                         :executeClicked="executeClicked"
@@ -54,6 +55,7 @@
                         <KsDatePicker
                             v-model="scheduleDate"
                             type="datetime"
+                            :disabledDate="isScheduleDayDisabled"
                         />
                     </KsFormItem>
                     <KsFormItem
@@ -117,11 +119,14 @@
     import {useRouter, useRoute} from "vue-router"
     import {useI18n} from "vue-i18n"
     import {useToast} from "../../utils/toast"
-    import moment from "moment-timezone"
+    import type {KestraHttpError} from "../../utils/kestraHttp"
+    import {buildScheduleDateParam, isPastScheduleDate, isScheduleDayDisabled} from "../../utils/scheduleDate"
+    import {dateUtils} from "@kestra-io/design-system"
     import {useCoreStore} from "../../stores/core"
     import {useApiStore} from "../../stores/api"
     import {useMiscStore} from "override/stores/misc"
     import {useExecutionsStore} from "../../stores/executions"
+    import {usePlaygroundStore} from "../../stores/playground"
     import {useFlowStore, isSuccessfulFlowSaveOutcome} from "../../stores/flow"
     import {useAuthStore} from "override/stores/auth"
     import resource from "../../models/resource"
@@ -129,12 +134,12 @@
     import type {Label, Execution, Check} from "../../stores/executions"
     import type {Flow} from "../../stores/flow"
     import {buildExecutionLabelStrings, hasForbiddenUserSystemLabels, hasInvalidLabelKeys} from "../../utils/executionLabels"
-    import {executeTask} from "../../utils/submitTask"
+    import {executeTask, normalizeInputValues} from "../../utils/submitTask"
     import {getAllTaskIds} from "../../utils/flowUtils"
     import {executeFlowBehaviours, storageKeys} from "../../utils/constants"
     import {WEBHOOK_TRIGGER_TYPE} from "../../utils/webhook"
     import {flattenInputs} from "../../utils/inputs"
-    import get from "lodash/get"
+    import {getPath} from "@kestra-io/design-system"
     import type {FormInstance} from "@kestra-io/design-system"
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
     import Play from "vue-material-design-icons/Play.vue"
@@ -173,6 +178,7 @@
         buttonIcon?: Component
         buttonTestId?: string
         autoPrefill?: boolean
+        renderLabels?: string[]
     }>(), {
         redirect: true,
         embed: false,
@@ -182,6 +188,7 @@
         buttonIcon: () => Play as Component,
         buttonTestId: "execute-dialog-button",
         autoPrefill: false,
+        renderLabels: undefined,
     })
 
     const emit = defineEmits<{
@@ -199,6 +206,7 @@
     const coreStore = useCoreStore()
     const miscStore = useMiscStore()
     const executionsStore = useExecutionsStore()
+    const playgroundStore = usePlaygroundStore()
     const flowStore = useFlowStore()
     const authStore = useAuthStore()
 
@@ -237,8 +245,8 @@
             if (isSuccessfulFlowSaveOutcome(outcome)) {
                 await executionsStore.loadFlowForExecution({namespace, flowId: id, store: true})
             }
-        } catch (error: any) {
-            if (error?.status === 401) {
+        } catch (error) {
+            if ((error as KestraHttpError)?.status === 401) {
                 toast.error("401 Unauthorized", undefined, {duration: 2000})
             }
         } finally {
@@ -261,6 +269,12 @@
         hasInvalidLabelKeys(executionLabels.value),
     )
 
+    const validationClock = ref(Date.now())
+
+    const hasPastScheduleDate = computed(() =>
+        isPastScheduleDate(scheduleDate.value, new Date(validationClock.value)),
+    )
+
     const validationMessages = computed(() => {
         const messages: string[] = []
         if (haveBadLabels.value) {
@@ -272,11 +286,14 @@
         if (haveInvalidLabelKeys.value) {
             messages.push(t("invalid label key"))
         }
+        if (hasPastScheduleDate.value) {
+            messages.push(t("scheduleDateInPast"))
+        }
         return messages
     })
 
     const flowCanBeExecuted = computed(() =>
-        Boolean(flow.value && !flow.value.disabled && !haveBadLabels.value && !haveForbiddenSystemLabels.value && !haveInvalidLabelKeys.value),
+        Boolean(flow.value && !flow.value.disabled && !haveBadLabels.value && !haveForbiddenSystemLabels.value && !haveInvalidLabelKeys.value && !hasPastScheduleDate.value),
     )
 
     const isDirty = computed(() =>
@@ -370,7 +387,7 @@
         const executionInputs = execution.value?.inputs ?? {}
         flattenInputs(flow.value.inputs)
             .forEach(leaf => {
-                const value = get(executionInputs, leaf.id)
+                const value = getPath(executionInputs, leaf.id)
                 if (value === undefined) {
                     return
                 }
@@ -380,7 +397,6 @@
 
     // Adapter object for the legacy executeTask utility
     const submitor = {
-        $moment: moment,
         $router: router,
         $route: route,
         $toast: () => toast,
@@ -388,6 +404,8 @@
     }
 
     function onSubmit() {
+        validationClock.value = Date.now()
+
         if (form.value && flowCanBeExecuted.value) {
             checks.value = []
             executeClicked.value = false
@@ -424,20 +442,32 @@
                         })
                     } else {
                         if (flow.value) {
-                            await executeTask(submitor, flow.value, mergedInputs, {
-                                redirect: props.redirect,
-                                newTab: newTab.value,
-                                id: flow.value.id,
-                                namespace: flow.value.namespace,
-                                // Drafts are playground-only: omit the revision so the backend runs the latest published one.
-                                revision: flow.value.draft ? undefined : flow.value.revision,
-                                labels: labelStrings,
-                                scheduleDate: moment(scheduleDate.value)
-                                    .tz(localStorage.getItem(storageKeys.TIMEZONE_STORAGE_KEY) ?? moment.tz.guess())
-                                    .toISOString(true),
-                                nextStep: true,
-                                breakpoints: breakpoints.value,
-                            })
+                            if (playgroundStore.enabled) {
+                                const formData = normalizeInputValues(flattenInputs(flow.value.inputs), inputs.value)
+                                await playgroundStore.runUntilTask(
+                                    playgroundStore.actionOptions?.taskId, 
+                                    playgroundStore.actionOptions?.runDownstreamTasks || false, 
+                                    formData,
+                                )
+                                playgroundStore.showInputPrompt = false
+                                playgroundStore.actionOptions = undefined
+                            } else {
+                                await executeTask(submitor, flow.value, mergedInputs, {
+                                    redirect: props.redirect,
+                                    newTab: newTab.value,
+                                    id: flow.value.id,
+                                    namespace: flow.value.namespace,
+                                    // Drafts are playground-only: omit the revision so the backend runs the latest published one.
+                                    revision: flow.value.draft ? undefined : flow.value.revision,
+                                    labels: labelStrings,
+                                    scheduleDate: buildScheduleDateParam(
+                                        scheduleDate.value,
+                                        dateUtils.currentTimezone(),
+                                    ),
+                                    nextStep: true,
+                                    breakpoints: breakpoints.value,
+                                })
+                            }
                         }
                     }
                     executeClicked.value = true
@@ -448,6 +478,10 @@
             })
         }
     }
+
+    watch(scheduleDate, () => {
+        validationClock.value = Date.now()
+    })
 
     watch(inputs, () => {
         emit("updateInputs", inputs.value)
@@ -491,19 +525,6 @@
                 border-bottom-left-radius: var(--kel-border-radius-round);
                 border-bottom-right-radius: var(--kel-border-radius-round);
             }
-        }
-    }
-
-    .onboarding-glow {
-        animation: glowAnimation 1s infinite alternate;
-    }
-
-    @keyframes glowAnimation {
-        0% {
-            box-shadow: 0px 0px 0px 0px #8405FF;
-        }
-        100% {
-            box-shadow: 0px 0px 50px 2px #8405FF;
         }
     }
 

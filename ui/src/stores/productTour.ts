@@ -27,17 +27,17 @@ export interface TourProgress {
 interface ProductTourState {
     status: ProductTourStatus;
     mode: ProductTourMode;
-    instanceUuid: string | null;
-    guideId: "product_tour" | null;
+    scope: string | null;
+    guideId: string | null;
     currentStepId: string | null;
     startedAt: string | null;
     completedAt: string | null;
     tour: TourProgress;
+    /** Free-form progress owned by the active variant, which knows its own shape. */
+    data: Record<string, unknown>;
 }
 
 const STORAGE_KEY = "kestra.productTour.state"
-
-const TOUR_START_SCENE = "copilot"
 
 const defaultTourState = (): TourProgress => ({
     namespace: TOUR_NAMESPACE,
@@ -60,12 +60,13 @@ const defaultTourState = (): TourProgress => ({
 const defaultState = (): ProductTourState => ({
     status: "not_started",
     mode: null,
-    instanceUuid: null,
+    scope: null,
     guideId: null,
     currentStepId: null,
     startedAt: null,
     completedAt: null,
     tour: defaultTourState(),
+    data: {},
 })
 
 export const useProductTourStore = defineStore("productTour", () => {
@@ -87,14 +88,18 @@ export const useProductTourStore = defineStore("productTour", () => {
         state.value.tour = {...state.value.tour, blueprintsNudgeDismissed: true}
     }
 
-    const syncInstance = (uuid?: string | null) => {
-        if (!uuid) {
+    /**
+     * There is a single persisted state, so a scope change resets it rather than resuming someone
+     * else's tour halfway through. A null scope adopts the new one, so an upgrade keeps live progress.
+     */
+    const syncScope = (scope?: string | null) => {
+        if (!scope) {
             return
         }
-        if (state.value.instanceUuid && state.value.instanceUuid !== uuid) {
+        if (state.value.scope && state.value.scope !== scope) {
             state.value = defaultState()
         }
-        state.value.instanceUuid = uuid
+        state.value.scope = scope
     }
 
     const load = () => {
@@ -108,6 +113,7 @@ export const useProductTourStore = defineStore("productTour", () => {
                 ...defaultState(),
                 ...parsed,
                 tour: {...defaultTourState(), ...(parsed?.tour ?? {})},
+                data: {...(parsed?.data ?? {})},
             }
         } catch {
             state.value = defaultState()
@@ -122,15 +128,15 @@ export const useProductTourStore = defineStore("productTour", () => {
         state.value = defaultState()
     }
 
-    const startGuided = () => {
+    const startGuided = (variant: {id: string; scenes: {id: string}[]}) => {
         const {menuDismissed, blueprintsNudgeDismissed} = state.value.tour
         state.value = {
             ...defaultState(),
-            instanceUuid: state.value.instanceUuid,
+            scope: state.value.scope,
             status: "in_progress",
             mode: "guided",
-            guideId: "product_tour",
-            currentStepId: TOUR_START_SCENE,
+            guideId: variant.id,
+            currentStepId: variant.scenes[0]?.id ?? null,
             startedAt: new Date().toISOString(),
             tour: {...defaultTourState(), menuDismissed, blueprintsNudgeDismissed},
         }
@@ -154,6 +160,10 @@ export const useProductTourStore = defineStore("productTour", () => {
         state.value.tour = {...state.value.tour, ...patch}
     }
 
+    const setData = (patch: Record<string, unknown>) => {
+        state.value.data = {...state.value.data, ...patch}
+    }
+
     load()
     watch(state, persist, {deep: true})
 
@@ -167,7 +177,8 @@ export const useProductTourStore = defineStore("productTour", () => {
         complete,
         setStep,
         setTourState,
-        syncInstance,
+        setData,
+        syncScope,
         dismissMenuEntry,
         dismissBlueprintsNudge,
     }

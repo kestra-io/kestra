@@ -1,10 +1,13 @@
 {
   "en": {
+    "versionUpgradeNotice": {
+      "message": "Kestra was upgraded to {version} and it may include breaking changes that require updates to your flows.",
+      "cta": "See what changed"
+    },
     "loading": "Loading...",
     "more actions": "More actions",
     "recipe": {
       "create_flow": "Create flow",
-      "email": "Email",
       "execution": {
         "include_sub": "Include sub-namespaces",
         "include_sub_hint_off": "Only flows in the exact namespace will trigger this alert.",
@@ -52,7 +55,6 @@
       "section_title": "Create a system flow",
       "summary": {
         "any_namespace": "any namespace",
-        "empty": "Configure the trigger and at least one notification channel to preview your flow.",
         "exact_match": "exact match",
         "execution": "When a flow in {ns} ({scope}) reaches state {states}, notify via {channels}.",
         "including_sub": "and sub-namespaces",
@@ -62,7 +64,6 @@
         "other": "When the {trigger} trigger fires, notify via {channels}.",
         "schedule": "On schedule \"{cron}\", notify via {channels}.",
         "selected_trigger": "selected",
-        "title": "Summary",
         "webhook": "When a webhook is received, notify via {channels}.",
         "preview_title": "Preview",
         "live": "LIVE"
@@ -70,7 +71,6 @@
       "then": {
         "no_channel_warning": "Select at least one notification channel.",
         "subtitle": "Select how to notify your team.",
-        "title": "Then notify",
         "unavailable_channels_warning": "{channels}: plugin not installed for this trigger type, no notification will be sent."
       },
       "trigger": {
@@ -91,7 +91,6 @@
       },
       "when": {
         "subtitle": "Choose what triggers this system flow.",
-        "title": "When this happens",
         "trigger_type": "Trigger type"
       },
       "hero_eyebrow": "Your system flow",
@@ -111,6 +110,10 @@
       }
     },
     "toggle menu": "Toggle menu",
+    "favourites": "Favourites",
+    "to close": "to close",
+    "tabs": "Tabs",
+    "select": "Select",
     "panel actions": "Panel actions",
     "playground actions": "Playground actions",
     "bulk actions": "Bulk actions",
@@ -210,7 +213,6 @@
     "executionProgress": {
       "title": "Execution progress",
       "estimatedRemaining": "Est. remaining: {duration}",
-      "noBaseline": "No historical data — cannot estimate the remaining time",
       "pastEstimate": "Running longer than usual"
     },
     "launch execution": "Execute",
@@ -223,6 +225,7 @@
       "invalid duration": "Invalid duration format. Please use ISO 8601 (e.g., PT30M, P1D).",
       "leave empty for infinite": "Leave empty for infinite duration or type an ISO 8601 duration (e.g., 'P1DT1H1M1S')",
       "duration example": "Example: 'P1DT1H1M1S'",
+      "examples": "Examples:",
       "error": "Invalid duration format, must be an ISO 8601 duration (e.g., P1DT1H1M1S)",
       "custom": "Custom",
       "last5minutes": "Last 5 minutes",
@@ -280,6 +283,7 @@
     "expiration date": "Expiration date",
     "healthcheck date": "HealthCheck Date",
     "last execution status": "Last execution status",
+    "jump to": "Jump to",
     "jump to...": "Jump to...",
     "contextBar": {
       "ai": "AI",
@@ -291,7 +295,6 @@
       "star": "Star us"
     },
     "source": "Source",
-    "source only": "Source only",
     "home": "Home",
     "create": "Create",
     "create_flow": "Create Flow",
@@ -436,7 +439,9 @@
       "zoom-fit": "Fit",
       "invalid": "Graph error",
       "invalid_description": "An error occurred while loading the graph. Please check the source code for errors.",
-      "load_error": "Could not load the topology graph. Please try again."
+      "load_error": "Could not load the topology graph. Please try again.",
+      "add-task": "Add task",
+      "add-trigger": "Add a trigger"
     },
     "show task logs": "Show task logs",
     "show task condition": "Show task condition",
@@ -478,12 +483,16 @@
       "big_file_download_only": "This file is {size}. It is too large to open in the editor, download it instead.",
       "load_anyway": "Load anyway",
       "load_error": "Failed to load the file preview. This may be a temporary issue or a permissions problem.",
+      "image_alt": "Image output preview",
       "retry": "Retry",
       "html_asset_warning": "This preview renders the HTML in a sandboxed frame. Local assets such as images and stylesheets referenced by relative paths will not load.",
       "html_preview_title": "HTML file preview"
     },
     "download": "Download",
     "jsonl": "JSONL",
+    "large_outputs": {
+      "value_truncated": "Showing a truncated preview of this {size} value."
+    },
     "concurrency_limit": {
       "dialog_title": "Concurrency Limits",
       "warning": "Changing the running counter may corrupt concurrency, so executions may exceed the allowed limit."
@@ -498,6 +507,8 @@
     "docsPage": {
       "notFound": "This documentation page does not exist. It may have been moved or renamed.",
       "loadError": "Could not load this documentation page. Please try again.",
+      "close_menu": "Close menu",
+      "open_menu": "Open menu",
       "backToDocs": "Back to docs"
     },
     "documentation": {
@@ -554,8 +565,10 @@
       "names": "Plugins",
       "release": "Release notes",
       "beta": "Beta",
+      "beta_notice": "This plugin is currently in beta. While it is considered safe for use, please be aware that its API could change in ways that are not compatible with earlier versions in future releases, or it might become unsupported.",
       "copy_type": "Copy type",
       "deprecated": "Deprecated",
+      "documentation_sections": "Documentation sections",
       "dynamic": "dynamic",
       "filter_all": "All",
       "filter_properties": "Filter properties…",
@@ -597,6 +610,8 @@
       "nav_overview": "Overview",
       "nav_properties": "Properties",
       "non_dynamic": "non-dynamic",
+      "possible_values": "Possible Values",
+      "sub_type": "SubType",
       "required": "Required"
     },
     "last execution date": "Last execution date",
@@ -666,7 +681,6 @@
     "open in new tab": "In a new tab",
     "execute the flow": "Execute the flow <code>{id}</code>",
     "discard execution confirmation": "You have unsaved inputs. Are you sure you want to discard this execution?",
-    "discard changes confirmation": "You have unsaved changes. Are you sure you want to discard them?",
     "unsaved changed ?": "You have unsaved changes, do you want to leave this page?",
     "unsaved changes": "Unsaved Changes",
     "unsaved changes warning": "You have unsaved changes. If you leave this page, your changes will be lost.",
@@ -835,9 +849,6 @@
     "bulk kill": "Are you sure you want to kill <code>{executionCount}</code> execution(s)?",
     "cancel": "Cancel",
     "errorLogs": "Error logs",
-    "welcome_page": {
-      "guide": "Need guidance to execute your first flow?"
-    },
     "product_tour": "Product Tour",
     "executions replayed": "<code>{executionCount}</code> execution(s) replayed",
     "executions state changed": "The state of <code>{executionCount}</code> execution(s) has been changed",
@@ -848,20 +859,9 @@
     "executions restarted": "<code>{executionCount}</code> execution(s) restarted",
     "executions killed": "<code>{executionCount}</code> execution(s) killed",
     "executions deleted": "<code>{executionCount}</code> execution(s) deleted",
-    "invalid bulk replay": "Could not replay executions",
-    "invalid bulk resume": "Could not resume executions",
-    "invalid bulk pause": "Could not pause executions",
-    "invalid bulk unqueue": "Could not unqueue executions",
-    "invalid bulk force run": "Could not force run executions",
-    "invalid bulk restart": "Could not restart executions",
-    "invalid bulk kill": "Could not kill executions",
-    "invalid bulk delete": "Could not delete executions",
     "execution not found": "Execution {executionId} is not found.",
-    "execution not in state PAUSED": "Execution <code>{executionId}</code> not in state PAUSED",
-    "execution already finished": "Execution <code>{executionId}</code> already finished",
     "seeing old revision": "You are seeing an old revision: {revision}",
     "export": "Export",
-    "exports": "Exports",
     "export_csv": "Export as CSV",
     "flow_export": "Export flow",
     "flow export": "Are you sure you want to export <code>{flowCount}</code> flow(s)?",
@@ -871,8 +871,9 @@
     "enable": "Enable",
     "enabled": "Enabled",
     "flow delete": "Are you sure you want to delete <code>{flowCount}</code> flow(s)?",
+    "delete flow error": "Failed to delete flow {id}",
     "flows deleted": "<code>{count}</code> Flow(s) deleted",
-    "flow disable": "Are you sure you want to disable <code>{flowCount}</code> flow(s)?",
+    "flow disable": "Are you sure you want to disable <code>{flowCount}</code> flow(s)?<br/><br/>Disabling a flow writes <code>disabled: true</code> into the flow and creates a new revision. A sync from an external source that does not include <code>disabled: true</code> will enable the flow again.",
     "flow enable": "Are you sure you want to enable <code>{flowCount}</code> flow(s)?",
     "flows disabled": "<code>{count}</code> Flow(s) disabled",
     "flows enabled": "<code>{count}</code> Flow(s) enabled",
@@ -887,9 +888,7 @@
     "disabled": "Disabled",
     "before": "before",
     "after": "after",
-    "dynamic": "Dynamic",
     "choice": "Choice",
-    "sequential": "Sequential",
     "can not delete": "Cannot delete this task",
     "can not have less than 1 task": "A flow must have at least one task. Add another task before deleting this one.",
     "task id": "Task ID",
@@ -901,6 +900,7 @@
     "flow creation denied in namespace": "You don't have permission to create flows in the namespace `{namespace}`.",
     "readonly property": "Read-only property",
     "namespace and id readonly": "The properties `namespace` and `id` cannot be changed — they are now set to their initial values. If you want to rename a flow or change its namespace, you can create a new flow and remove the old one.",
+    "flow metadata locked": "`id` and `namespace` cannot be changed after a flow is created.",
     "avg": "Average",
     "sum": "Sum",
     "min": "Min",
@@ -908,7 +908,6 @@
     "bar": "Bar",
     "line": "Line",
     "metric": "Metric",
-    "aggregation": "Aggregation",
     "metric choice": "No metrics available for this flow",
     "metric filter no match": "No metric matches \"{term}\"",
     "of": "of",
@@ -974,7 +973,6 @@
     "version": "Version",
     "services": "Services",
     "hostname": "Hostname",
-    "port": "Port",
     "file preview truncated": "Displayed content has been truncated",
     "file unavailable": "File unavailable",
     "file unavailable description": "This file is no longer available — it may have been purged or expired.",
@@ -1009,9 +1007,11 @@
         "file_already_exists": "A file with this name already exists",
         "file_conflicts_with_folder": "A folder with this name already exists",
         "file_error": "Error occurred while creating the file",
+        "file_success": "File \"{name}\" created successfully.",
         "folder": "Create folder",
         "folder_already_exists": "A folder with this name already exists",
         "folder_conflicts_with_file": "A file with this name already exists",
+        "folder_success": "Folder \"{name}\" created successfully.",
         "folder_error": "Error occurred while creating the folder"
       },
       "rename": {
@@ -1025,8 +1025,10 @@
       "delete": {
         "label": "Delete",
         "file": "Delete file",
+        "file_error": "Failed to delete file: {name}",
         "folder": "Delete folder",
         "files": "Delete {count} selected files",
+        "bulk_success": "Selected files deleted successfully.",
         "folders": "Delete {count} selected folders"
       },
       "move": {
@@ -1060,6 +1062,7 @@
       },
       "revisions": {
         "history": "Revision history",
+        "load_error": "Revision {revision} could not be loaded; it may have been deleted.",
         "restore": {
           "success": "File revision restored successfully"
         }
@@ -1080,7 +1083,6 @@
     "execute backfill": "Execute backfill",
     "relative": "Relative",
     "relative start date": "Relative start date",
-    "now": "Now",
     "absolute": "Absolute",
     "backfill": "Backfill",
     "Set labels": "Set labels",
@@ -1155,6 +1157,7 @@
             "log_level": "Default Log Level",
             "log_display": "Default Log Display",
             "editor_type": "Default Editor Type",
+            "topology_orientation": "Default Topology Orientation",
             "execute_flow": "Execute the Flow",
             "execute_default_tab": "Default Execution Tab",
             "flow_default_tab": "Default Flow Tab",
@@ -1169,6 +1172,7 @@
             "log_level": "Minimum log level shown in execution logs.",
             "log_display": "How logs are presented when opening an execution.",
             "editor_type": "Editor shown when opening a flow for the first time.",
+            "topology_orientation": "Default orientation of the Topology panel in the flow editor.",
             "execute_flow": "Where execution results open after triggering a run.",
             "execute_default_tab": "Tab selected when navigating to an execution.",
             "flow_default_tab": "Tab selected when navigating to a flow.",
@@ -1181,6 +1185,10 @@
           "task_edit_default_mode_options": {
             "modal": "Modal",
             "tab": "Tab"
+          },
+          "topology_orientation_options": {
+            "vertical": "Vertical",
+            "horizontal": "Horizontal"
           },
           "flow_template_reset": "Reset to default",
           "flow_template_error": {
@@ -1257,7 +1265,6 @@
       "label": "Promote"
     },
     "demos": {
-      "enterprise_edition": "Enterprise Edition",
       "get_a_demo_button": "Get a Demo",
       "contact_sales": "Contact Sales",
       "secrets": {
@@ -1376,6 +1383,7 @@
     "onboarding": {
       "tour": {
         "menu": "Product tour",
+        "menu_resume": "Resume tour",
         "menu_description": "Build, run, and fix a flow, then start it from an event",
         "step_of": "Step {current} of {total}",
         "actions": {
@@ -1416,7 +1424,7 @@
             "title": "Flows are edited like code",
             "body": "We added a <code>notify</code> task for you without the AI Copilot, so you can see what editing the YAML directly looks like. It posts the final result to Slack.",
             "next": "See the task docs",
-            "callout": "A first draft from AI Copilot is only a starting point; the editor is where you iterate on it in a Code or No-Code editor tab, which both produce the same YAML, so your flow stays as code however it was built."
+            "callout": "A first draft from AI Copilot is only a starting point; the editor is where you iterate on it in a Code or No-code editor tab, which both produce the same YAML, so your flow stays as code however it was built."
           },
           "editor_help": {
             "title": "The docs are next to the flow",
@@ -1613,7 +1621,9 @@
       "raw": "Temporal view",
       "raw_details": "Show full task logs and flow logs in a raw, timestamp-ordered format",
       "compact": "Default view",
-      "compact_details": "Show task logs in a compact view grouped by each task"
+      "compact_details": "Show task logs in a compact view grouped by each task",
+      "fullscreen": "Full screen logs",
+      "exit_fullscreen": "Exit fullscreen"
     },
     "execution_deletion": {
       "logs": "Delete logs",
@@ -1630,6 +1640,7 @@
     "webhook link copied": "Webhook link copied.",
     "copy url": "Copy URL",
     "scheduleDate": "Schedule date",
+    "scheduleDateInPast": "Schedule date must be in the future",
     "warning": "Warning",
     "trigger_check_warning": "Using trigger variables won't work with manual flow execution. Add the `??` coalesce operator to solve the issue. For example, instead of `trigger.date`, use `trigger.date ?? execution.startDate`.",
     "docs": "Docs",
@@ -1640,7 +1651,6 @@
       "title": "Start automating with Kestra",
       "sub_title": "Click on the Execute button to start your first workflow execution.",
       "namespace_sub_title": "Execute one or more flows from this namespace to populate this dashboard.",
-      "namespace_guidance_desc": "Need guidance to manage your Namespace?",
       "need_help": "Need Help?"
     },
     "execution_guide": {
@@ -1682,18 +1692,15 @@
     "flows not imported": "Flows not imported",
     "custom value": "Custom value",
     "chart": "Chart",
-    "chart preview": "Chart preview",
     "no_code": {
       "toggle_pebble": "Toggle Pebble editor",
       "version_oss_placeholder": "Unlock Plugin Versioning with Enterprise Edition",
-      "unnamed": "No Name",
       "adding": "+ Add a {what}",
       "adding_default": "+ Add a new value",
-      "add_field": "Add {field}",
       "clearSelection": "Clear selection",
       "labels": {
         "yaml": "YAML Editor",
-        "no_code": "No Code Editor"
+        "no_code": "No-code Editor"
       },
       "sections": {
         "deprecated": "Deprecated properties",
@@ -1962,6 +1969,9 @@
         "label": "Edit Dashboard",
         "chart": "Edit this chart"
       },
+      "creation": {
+        "label": "Create Dashboard"
+      },
       "no_description": "No description",
       "no_description_hint": "Add a description to this flow to document what it does.<br>Markdown is supported.",
       "others": "Others",
@@ -1972,6 +1982,7 @@
         "csv": "Export to CSV",
         "ion": "Export to ION"
       },
+      "show_all_statuses": "Show all statuses",
       "quick_filters": {
         "all": "All",
         "running": "Running",
@@ -2046,6 +2057,7 @@
         "title": "AI Copilot",
         "placeholder": "Tell me what to build…",
         "send": "Send",
+        "stop": "Stop",
         "mode": {
           "ask": "Ask",
           "edit": "Edit",
@@ -2118,7 +2130,7 @@
         },
         "unavailable": {
           "title": "AI Copilot isn't available",
-          "detail": "No AI provider is configured. Ask an administrator to set one up.",
+          "detail": "No AI provider is configured for this instance. Configure one in your Kestra configuration file to enable AI Copilot.",
           "docs": "View documentation"
         },
         "thinkingWords": [
@@ -2157,8 +2169,12 @@
         "draft": {
           "openInEditor": "Open in editor",
           "apply": "Apply",
+          "dismiss": "Dismiss",
+          "dismissed": "Dismissed",
+          "applied": "Applied",
+          "previewBanner": "Reviewing an AI-suggested change — the editor is read-only until you apply or dismiss it.",
           "applyTitle": "Apply flow",
-          "applyConfirm": "Apply the flow {namespace}.{id}? It will be created, or overwritten if it already exists.",
+          "applyConfirm": "Save {namespace}.{id} as a draft revision for review? It will be created, or a new draft revision added if it already exists — drafts aren't picked up by triggers or subflows until published.",
           "applyConfirmDashboard": "Apply the dashboard {id}? It will be created, or overwritten if it already exists.",
           "applyError": "Couldn't apply the flow. Please try again.",
           "applyErrorDashboard": "Couldn't apply the dashboard. Please try again.",
@@ -2177,7 +2193,7 @@
     "playground": {
       "title": "Playground",
       "run_task_info": "Hover over any task in the Flow Code editor and click the \"Run task\" button to test your task.",
-      "play_icon_info": "You can also hit the Play icon in the No-Code or Topology views.",
+      "play_icon_info": "You can also hit the Play icon in the No-code or Topology views.",
       "toggle": "Playground",
       "run_task": "Run task",
       "run_this_task": "Run this task",
@@ -2191,7 +2207,6 @@
     "submit": "Submit",
     "accept": "Accept",
     "reject": "Reject",
-    "draft_available": "Draft change is available in the editor",
     "last modified": "Last modified",
     "run task in playground": "Run task in playground",
     "defaultsToNamespaceFile": "Defaults to namespace file: <code>{name}</code>",
@@ -2423,8 +2438,8 @@
       "next_match": "Next match",
       "no_results_description": "Try widening the namespace, switching scope back to All source, or turning off Match case and Match whole word.",
       "no_results_hidden_type": "{count} match found in {type}, which you haven't selected. | {count} matches found in {type}, which you haven't selected.",
-      "no_results_in_types": "No matches for {query} in {types}",
       "no_results_title": "No matches for “{query}”",
+      "did_you_mean": "Did you mean {suggestion}?",
       "open_flow": "Open flow",
       "open_in_editor": "Open in editor",
       "open_in_kv": "Open in KV store",
@@ -2498,7 +2513,6 @@
     "pricing": "Pricing",
     "license": "License",
     "block_editor": {
-      "add_error_task": "Add error task",
       "add_switch_case": "Add case",
       "adding_to": "New entry in {section}",
       "add_task": "Add task",
@@ -2509,7 +2523,9 @@
       "block_deleted": "{name} deleted",
       "card_aria_label": "Block {id} of type {type}",
       "canvas_aria": "Flow blocks canvas",
-      "close_all": "Close all tabs",
+      "chip_copied": "Copied to clipboard",
+      "chip_hint": "Click a chip to insert it into the focused field, or drag it in",
+      "chip_inserted": "Inserted into the field",
       "cluster_collapse_aria": "Collapse {id}",
       "cluster_expand_aria": "Expand {id} ({count} tasks)",
       "collapsed_summary": "{count} tasks",
@@ -2548,19 +2564,14 @@
       "depth_pill": "Depth {depth}",
       "drag_reorder": "Drag to reorder",
       "duplicate": "Duplicate",
-      "empty": "No tasks or triggers yet. Add your first task to get started.",
       "empty_add_hint": "or press / to search tasks",
       "empty_add_lead": "Click to add {label}",
-      "error_task_noun": "an error task",
       "execution_context": "Execution context",
       "filter_data": "Filter available data…",
       "flow_inputs": "Flow inputs",
-      "flowable_todo": "Nested tasks (editing coming soon)",
       "footer": {
         "canvas": "Canvas",
-        "close_panel": "Close panel",
         "command_menu": "Command menu",
-        "editing": "Editing block",
         "inserting": "Inserting",
         "selected": "Selected · {name}"
       },
@@ -2574,22 +2585,15 @@
       "lane_case": "Case: {key}",
       "lane_defaults": "Default",
       "lane_else": "Else",
-      "lane_empty": "No tasks in {lane}",
       "lane_errors": "Errors",
       "lane_finally": "Finally",
       "lane_tasks": "Tasks",
       "lane_then": "Then",
-      "loading_plugins": "Loading plugins...",
       "move_down": "Move down",
       "move_up": "Move up",
-      "nav_rail_empty": "No tasks or triggers yet.",
-      "nav_rail_title": "Outline",
-      "nested_count": "{count} nested tasks",
       "no_data_matches": "Nothing matches your filter",
-      "no_documentation": "No documentation for this task",
       "no_recent": "No recent task types yet",
       "no_task_results": "No matching task types.",
-      "open_details": "Open details",
       "open_in_split": "Open in split",
       "output": "Output",
       "output_sub": "what this task produces",
@@ -2627,8 +2631,6 @@
         "toggle": "This help",
         "undo": "Undo"
       },
-      "split_into": "{count}-column view",
-      "split_view": "Split view",
       "switch_case_key_placeholder": "New case key",
       "switch_case_key_taken": "Case {key} already exists",
       "tab_apps": "By app",
@@ -2643,8 +2645,6 @@
       "open_mode_hint": "Tasks open in a modal by default. You can make tabs the default in {settings}."
     },
     "blocks": "Blocks",
-    "flow_description": "Flow Description",
-    "flow_no_description": "No description. Add a description to your flow YAML to document what it does.",
     "split_horizontal": "Split horizontally",
     "split_vertical": "Split vertically",
     "pwa": {
@@ -2652,6 +2652,9 @@
       "install_description": "Install Kestra as an app for quicker access and a full-screen experience.",
       "install": "Install",
       "dismiss": "Not now"
-    }
+    },
+    "iteration": "Iteration",
+    "iteration_number": "Iteration {number}",
+    "delete_log_iteration": "Are you sure you want to delete the log for {iteration}?"
   }
 }

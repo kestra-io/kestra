@@ -1,7 +1,7 @@
 <template>
     <div>
         <teleport to="body">
-            <div v-if="isOpen" class="search-overlay" @click="closeSearch">
+            <div v-if="isOpen" class="search-overlay" :style="{zIndex: topLayer}" @click="closeSearch">
                 <div class="search-modal" role="dialog" aria-modal="true" @click.stop>
                     <div class="search-container" :aria-label="$t('jump to...')">
                         <KsSearch
@@ -18,7 +18,7 @@
                             </template>
                             <template v-if="!query" #suffix>
                                 <span class="d-none d-sm-block">
-                                    <kbd>ESC</kbd> to close
+                                    <kbd>ESC</kbd> {{ $t("to close") }}
                                 </span>
                             </template>
                         </KsSearch>
@@ -54,7 +54,7 @@
                                                 v-if="index === activeIndex"
                                                 class="result-hint d-none d-sm-flex align-items-center"
                                             >
-                                                <span>Jump to</span>
+                                                <span>{{ $t("jump to") }}</span>
                                             </span>
                                         </component>
                                     </li>
@@ -73,6 +73,7 @@
 
 <script setup lang="ts">
     import {ref, computed, onMounted, onUnmounted, nextTick, watch} from "vue"
+    import {useTopLayer} from "@kestra-io/design-system"
     import {useRouter} from "vue-router"
     import {useLeftMenu} from "override/components/useLeftMenu"
     import type {MenuItem} from "override/components/useLeftMenu"
@@ -99,6 +100,7 @@
 
     const query = ref("")
     const isOpen = ref(false)
+    const topLayer = useTopLayer()
     const searchInput = ref<{ focus?: () => void } | null>(null)
     const activeIndex = ref(0)
     const scopeStack = ref<ScopeNode[]>([])
@@ -331,8 +333,8 @@
         left: 0;
         width: 100vw;
         height: 100vh;
-        background: var(--kel-overlay-color-lighter);
-        z-index: 10000;
+        background: var(--ks-bg-scrim);
+        z-index: var(--ks-z-overlay);
         display: flex;
         justify-content: center;
         align-items: flex-start;
@@ -347,8 +349,7 @@
             background: var(--ks-bg-surface);
             border: 1px solid var(--ks-border-default);
             border-radius: var(--kel-input-border-radius, var(--kel-border-radius-base));
-            box-shadow:
-                0 8px 24px rgba(0,0,0,0.35);
+            box-shadow: 0 8px 24px var(--ks-shadow-elevated);
             overflow: hidden;
             font-size: var(--ks-font-size-sm);
         }

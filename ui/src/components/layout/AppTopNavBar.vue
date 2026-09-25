@@ -35,6 +35,18 @@
             <div id="topnav-actions-slot" class="d-flex gap-2 align-items-center" />
         </template>
         <template #panel-toggle>
+            <KsIconButton
+                v-if="showCopilotButton"
+                class="copilot-button"
+                :class="{'is-open': isCopilotOpen}"
+                data-testid="topnav-copilot-button"
+                :tooltip="$t('ai.copilot.title')"
+                placement="bottom"
+                :aria-pressed="isCopilotOpen"
+                @click="toggleCopilot"
+            >
+                <AiMenuIcon />
+            </KsIconButton>
             <slot name="panel-toggle" />
         </template>
     </KsTopNavBar>
@@ -43,7 +55,9 @@
 <script setup lang="ts">
     import {computed, ref, watch} from "vue"
     import {useRoute, useRouter} from "vue-router"
+    import {KsIconButton} from "@kestra-io/design-system"
     import GlobalSearch from "./GlobalSearch.vue"
+    import AiMenuIcon from "../ai/AiMenuIcon.vue"
     import {useBookmarksStore} from "../../stores/bookmarks"
     import {useLayoutStore} from "../../stores/layout"
     import {useTopNavStore} from "../../stores/topNav"
@@ -66,6 +80,16 @@
 
     function togglePanel() {
         miscStore.contextInfoBarOpenTab = miscStore.contextInfoBarOpenTab ? "" : miscStore.lastContextTab
+    }
+
+    const isCopilotOpen = computed(() => miscStore.contextInfoBarOpenTab === "ai")
+
+    function toggleCopilot() {
+        if (isCopilotOpen.value) {
+            miscStore.contextInfoBarOpenTab = ""
+            return
+        }
+        miscStore.openCopilot()
     }
 
     const selectTabs = computed(() =>
@@ -117,6 +141,20 @@
     })
 
     const activeMenuIcon = computed(() => activeMenuItem.value?.icon?.element)
+
+    // The menu resolves its hrefs to path strings, so match on where the item leads rather than
+    // on the shape of its href.
+    const isCopilotMenuItem = (item: MenuItem) =>
+        !item.child && !!item.href && router.resolve(item.href).name === "ai"
+
+    // The top bar entry follows the left-menu copilot item, so whatever hides that item (EE hides
+    // it for users without the COPILOT permission) hides this button too, with no second copy of
+    // the rule. It also stays out of the way on the full-page copilot, where the dock tab it opens
+    // is hidden.
+    const showCopilotButton = computed(() => {
+        const item = flattenMenu(menu.value).find(isCopilotMenuItem)
+        return !!item && !item.hidden && route.name !== "ai"
+    })
 
     const hideBookmark = computed(() => {
         const href = activeMenuItem.value?.href
@@ -179,20 +217,39 @@
 </script>
 
 <style scoped lang="scss">
+    // :deep because the tooltip wrapper renders a Fragment root, so this component's scope id
+    // reaches the nav ancestor but not the button itself.
+    :deep(.copilot-button) {
+        flex-shrink: 0;
+        color: var(--ks-icon-muted);
+
+        // :hover is covered so this matches KsIconButton's own hover rule on specificity; without it
+        // the open state is repainted while the pointer is on the button.
+        &.is-open,
+        &.is-open:hover {
+            color: var(--ks-text-link);
+        }
+
+        // Same breakpoint as the dock toggle it sits next to: the dock it opens is desktop-only.
+        @media (max-width: 767px) {
+            display: none;
+        }
+    }
+
     .playgroundMode {
         background:
             linear-gradient(
                 to right,
-                rgba(23, 97, 253, 0.22) 0%,
-                rgba(23, 97, 253, 0.08) 45%,
+                color-mix(in srgb, var(--ks-toggle-playground) 22%, transparent) 0%,
+                color-mix(in srgb, var(--ks-toggle-playground) 8%, transparent) 45%,
                 transparent 80%
             ),
             var(--ks-bg-overlay);
 
         .dark & {
             background:
-                linear-gradient(0deg, rgba(23, 97, 253, 0.15) 0%, rgba(23, 97, 253, 0.15) 100%),
-                var(--ks-bg-overlay, #1A1C22);
+                linear-gradient(color-mix(in srgb, var(--ks-toggle-playground) 15%, transparent), color-mix(in srgb, var(--ks-toggle-playground) 15%, transparent)),
+                var(--ks-bg-overlay);
         }
     }
 </style>

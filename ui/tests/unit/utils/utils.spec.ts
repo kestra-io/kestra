@@ -1,5 +1,5 @@
-import {afterAll, beforeEach, describe, expect, it, vi} from "vitest"
-import {getTheme, getSelectedTheme, switchTheme, type SelectedTheme, flatten, executionVars, getDateGrouping} from "../../../src/utils/utils"
+import {afterAll, afterEach, beforeEach, describe, expect, it, vi} from "vitest"
+import {getTheme, getSelectedTheme, switchTheme, type SelectedTheme, flatten, executionVars, getDateGrouping, downloadUrl} from "../../../src/utils/utils"
 
 function mockSystemPrefersDark(prefersDark: boolean) {
     vi.stubGlobal("matchMedia", vi.fn().mockImplementation((query: string) => ({
@@ -13,6 +13,21 @@ function mockSystemPrefersDark(prefersDark: boolean) {
         dispatchEvent: () => false,
     })))
 }
+
+describe("downloadUrl()", () => {
+    afterEach(() => vi.restoreAllMocks())
+
+    // https://github.com/kestra-io/kestra/issues/17322
+    it("does not set a target attribute", () => {
+        const createElementSpy = vi.spyOn(document, "createElement")
+
+        downloadUrl("blob:http://localhost/fake", "flow.yaml")
+
+        const link = createElementSpy.mock.results[0]?.value as HTMLAnchorElement
+        expect(link.getAttribute("download")).toBe("flow.yaml")
+        expect(link.getAttribute("target")).toBeNull()
+    })
+})
 
 describe("theme utils", () => {
     beforeEach(() => {
@@ -124,31 +139,31 @@ describe("flatten()", () => {
 
 describe("getDateGrouping()", () => {
     it("returns a date-only day grouping when no dates and no time range are provided", () => {
-        expect(getDateGrouping(undefined, undefined, undefined)).toEqual({format: "yyyy-MM-DD", unit: "day"})
+        expect(getDateGrouping(undefined, undefined, undefined)).toEqual({format: "YYYY-MM-DD", unit: "day"})
     })
 
     it("returns a month grouping for ranges over a year", () => {
-        expect(getDateGrouping(undefined, undefined, "P400D")).toEqual({format: "yyyy-MM", unit: "month"})
+        expect(getDateGrouping(undefined, undefined, "P400D")).toEqual({format: "YYYY-MM", unit: "month"})
     })
 
     it("returns a week grouping for ranges over 180 days", () => {
-        expect(getDateGrouping(undefined, undefined, "P200D")).toEqual({format: "yyyy-'W'ww", unit: "week"})
+        expect(getDateGrouping(undefined, undefined, "P200D")).toEqual({format: "YYYY-[W]ww", unit: "week"})
     })
 
     it("returns a day grouping for ranges over a day", () => {
-        expect(getDateGrouping(undefined, undefined, "P7D")).toEqual({format: "yyyy-MM-DD", unit: "day"})
+        expect(getDateGrouping(undefined, undefined, "P7D")).toEqual({format: "YYYY-MM-DD", unit: "day"})
     })
 
     it("returns an hour grouping, date and hour separated with a space, for ranges over an hour", () => {
-        expect(getDateGrouping(undefined, undefined, "PT24H")).toEqual({format: "yyyy-MM-DD HH:00", unit: "hour"})
+        expect(getDateGrouping(undefined, undefined, "PT24H")).toEqual({format: "YYYY-MM-DD HH:00", unit: "hour"})
     })
 
     it("returns a minute grouping, date and time separated with a space, for ranges up to an hour", () => {
-        expect(getDateGrouping(undefined, undefined, "PT30M")).toEqual({format: "yyyy-MM-DD HH:mm", unit: "minute"})
+        expect(getDateGrouping(undefined, undefined, "PT30M")).toEqual({format: "YYYY-MM-DD HH:mm", unit: "minute"})
     })
 
     it("derives the duration from start and end dates when no time range is provided", () => {
-        expect(getDateGrouping("2026-08-17T00:00:00Z", "2026-08-17T12:00:00Z", undefined)).toEqual({format: "yyyy-MM-DD HH:00", unit: "hour"})
+        expect(getDateGrouping("2026-08-17T00:00:00Z", "2026-08-17T12:00:00Z", undefined)).toEqual({format: "YYYY-MM-DD HH:00", unit: "hour"})
     })
 })
 

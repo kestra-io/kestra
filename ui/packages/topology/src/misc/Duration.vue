@@ -528,6 +528,7 @@
     }
 
     .compact-bar {
+        width: 100%;
         height: var(--ks-spacing-1);
     }
 

@@ -118,6 +118,7 @@
     import {useToast} from "../../utils/toast"
     import PlaygroundRunTaskButton from "./PlaygroundRunTaskButton.vue"
     import {FILES_CLOSE_TAB_INJECTION_KEY} from "./FileExplorer.vue"
+    import {authoringSurfaceAnswersKeyFor} from "../no-code/blocks/useAuthoringSurface"
 
     const route = useRoute()
     const {t} = useI18n()
@@ -407,13 +408,15 @@
     }
 
     const handleGlobalSave = (event: KeyboardEvent) => {
-        if ((event.ctrlKey || event.metaKey) && event.key === "s") {
-            event.preventDefault()
-            if (props.flow) {
-                saveFlowYaml()
-            } else if (isDirty.value) {
-                saveFileContent()
-            }
+        if (!((event.ctrlKey || event.metaKey) && event.key === "s")) return
+        // Both listeners are on the window, so without standing down for what the authoring
+        // surface answers, one chord would run two saves against the same flow.
+        if (authoringSurfaceAnswersKeyFor(event.target as Node)) return
+        event.preventDefault()
+        if (props.flow) {
+            saveFlowYaml()
+        } else if (isDirty.value) {
+            saveFileContent()
         }
     }
 

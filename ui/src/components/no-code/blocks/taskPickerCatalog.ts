@@ -1,5 +1,6 @@
 import {isEntryAPluginElementPredicate, type PluginElement} from "../../../utils/pluginUtils"
 import type {BlockSection} from "../../../utils/flowableBlockOps"
+import {getShortName} from "../../../utils/global"
 
 export interface PickerEntry {
     fqcn: string
@@ -61,11 +62,12 @@ export function buildPickerEntries(
     kind: PickerEntryKind,
 ): PickerEntry[] {
     if (!plugins) return []
-    const entries: PickerEntry[] = []
+    const entries: (PickerEntry & {subGroup: string})[] = []
     const seen = new Set<string>()
     for (const plugin of plugins) {
         const value = plugin[kind]
         if (!isEntryAPluginElementPredicate(kind, value)) continue
+        const group = (plugin.title as string) ?? (plugin.name as string) ?? ""
         for (const el of value as PluginElement[]) {
             if (el.deprecated || seen.has(el.cls)) continue
             seen.add(el.cls)
@@ -74,11 +76,52 @@ export function buildPickerEntries(
                 fqcn: el.cls,
                 name: parts[parts.length - 1] ?? el.cls,
                 label: el.title ?? parts[parts.length - 1] ?? el.cls,
-                group: (plugin.title as string) ?? (plugin.name as string) ?? "",
+                group,
+                // The API's plugin-level `subGroup` is null on the entry every class is actually taken
+                // from (`GET /plugins/groups/subgroups` lists each plugin once with subGroup null before
+                // its per-subgroup copies, and dedup-by-class always keeps that first one) - and it would
+                // be the wrong granularity anyway, since one plugin aggregates several subgroups. Derive
+                // it from the class's own package instead, which every entry actually carries.
+                subGroup: parts.slice(0, -1).join("."),
             })
         }
     }
-    return entries
+    return qualifyAmbiguousLabels(entries)
+}
+
+function qualifyAmbiguousLabels(entries: (PickerEntry & {subGroup: string})[]): PickerEntry[] {
+    const groupsByLabel = new Map<string, (PickerEntry & {subGroup: string})[]>()
+    for (const entry of entries) {
+        const group = groupsByLabel.get(entry.label)
+        if (group) group.push(entry)
+        else groupsByLabel.set(entry.label, [entry])
+    }
+
+    const qualifierByEntry = new Map<PickerEntry & {subGroup: string}, string>()
+    for (const group of groupsByLabel.values()) {
+        if (group.length <= 1) continue
+
+        const shortNameCounts = new Map<string, number>()
+        for (const entry of group) {
+            const shortName = getShortName(entry.subGroup)
+            shortNameCounts.set(shortName, (shortNameCounts.get(shortName) ?? 0) + 1)
+        }
+
+        for (const entry of group) {
+            const shortName = getShortName(entry.subGroup)
+            // Two subGroups can still share their last segment (aws/storage vs gcp/storage) — fall back
+            // to the last two segments so the qualifier itself does not re-introduce the collision. Two
+            // classes colliding *inside the same subGroup* still collide here too, just with a longer label.
+            const parts = entry.subGroup.split(".")
+            qualifierByEntry.set(entry, (shortNameCounts.get(shortName) ?? 0) > 1 ? parts.slice(-2).join(".") : shortName)
+        }
+    }
+
+    return entries.map((entry) => {
+        const {subGroup: _subGroup, ...rest} = entry
+        const qualifier = qualifierByEntry.get(entry)
+        return qualifier ? {...rest, label: `${rest.label} (${qualifier})`} : rest
+    })
 }
 
 export function filterPickerEntries(entries: PickerEntry[], search: string): PickerEntry[] {

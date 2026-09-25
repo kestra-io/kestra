@@ -285,6 +285,11 @@ public abstract class AbstractWorker extends AbstractService {
         }
 
         stopAllWorkerIOThreads();
+
+        if (terminatedGracefully && workerIOSenders.stream().anyMatch(WorkerIOSender::hasUndeliveredResults)) {
+            log.warn("Some job results may not have reached the controller, so the worker reports a forced termination rather than a graceful one.");
+            return TERMINATED_FORCED;
+        }
         return terminatedGracefully ? TERMINATED_GRACEFULLY : TERMINATED_FORCED;
     }
 

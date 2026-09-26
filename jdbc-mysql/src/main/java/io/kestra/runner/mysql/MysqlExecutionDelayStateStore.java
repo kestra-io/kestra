@@ -1,8 +1,8 @@
 package io.kestra.runner.mysql;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
 import java.time.temporal.Temporal;
 
 import io.kestra.core.runners.ExecutionDelay;
@@ -22,8 +22,7 @@ public class MysqlExecutionDelayStateStore extends AbstractJdbcExecutionDelaySta
 
     @Override
     protected Temporal getNow(Instant now) {
-        // 'date' column in the table is in UTC
-        // convert 'now' to UTC LocalDateTime to avoid any timezone/offset interpretation by the database.
-        return ZonedDateTime.now().withZoneSameInstant(ZoneOffset.UTC).toLocalDateTime();
+        // MySQL stores 'date' as a naive DATETIME holding UTC, so the bind must be a zone-less UTC wall clock (kestra-io/kestra#14056).
+        return LocalDateTime.ofInstant(now, ZoneOffset.UTC);
     }
 }

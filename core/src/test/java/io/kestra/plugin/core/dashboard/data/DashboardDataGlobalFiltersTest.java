@@ -109,6 +109,29 @@ class DashboardDataGlobalFiltersTest {
     }
 
     @Test
+    void shouldKeepChartFilterWhenGlobalFilterTargetsTheSameField() {
+        EqualTo<IExecutions.Fields> chartFilter = EqualTo.<IExecutions.Fields>builder()
+            .field(IExecutions.Fields.NAMESPACE)
+            .value("company.a")
+            .build();
+        QueryFilter globalFilter = QueryFilter.builder()
+            .field(QueryFilter.Field.NAMESPACE)
+            .operation(QueryFilter.Op.EQUALS)
+            .value("company.b")
+            .build();
+
+        IExecutions iExecutions = new IExecutions() {
+        };
+
+        var where = iExecutions.whereWithGlobalFilters(List.of(globalFilter), null, null, List.of(chartFilter));
+
+        assertThat(where).hasSize(2);
+        assertThat(where.get(0)).isSameAs(chartFilter);
+        assertThat(where.get(1)).isInstanceOf(EqualTo.class);
+        assertThat(((EqualTo<?>) where.get(1)).getValue()).isEqualTo("company.b");
+    }
+
+    @Test
     void shouldMapNamespaceInFilterForTriggers() {
         QueryFilter namespaceInFilter = QueryFilter.builder()
             .field(QueryFilter.Field.NAMESPACE)
@@ -296,7 +319,7 @@ class DashboardDataGlobalFiltersTest {
     }
 
     @Test
-    void shouldReplaceExistingLevelFilterInWhereClauseForLogs() {
+    void shouldKeepExistingLevelFilterNextToTheGlobalOneForLogs() {
         QueryFilter levelFilter = QueryFilter.builder()
             .field(QueryFilter.Field.LEVEL)
             .operation(QueryFilter.Op.GREATER_THAN_OR_EQUAL_TO)
@@ -313,8 +336,9 @@ class DashboardDataGlobalFiltersTest {
 
         var where = iLogs.whereWithGlobalFilters(List.of(levelFilter), null, null, List.of(existingLevelFilter));
 
-        assertThat(where).hasSize(1);
-        In<?> inFilter = (In<?>) where.get(0);
+        assertThat(where).hasSize(2);
+        assertThat(where.get(0)).isSameAs(existingLevelFilter);
+        In<?> inFilter = (In<?>) where.get(1);
         assertThat(inFilter.getValues()).containsExactly("ERROR");
     }
 }

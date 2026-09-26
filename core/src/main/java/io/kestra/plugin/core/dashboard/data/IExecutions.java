@@ -35,7 +35,6 @@ public interface IExecutions extends IData<IExecutions.Fields> {
         if (filters != null) {
             List<QueryFilter> namespaceFilters = filters.stream().filter(f -> f.field().equals(QueryFilter.Field.NAMESPACE)).toList();
             if (!namespaceFilters.isEmpty()) {
-                updatedWhere.removeIf(filter -> filter.getField().equals(Fields.NAMESPACE));
                 namespaceFilters.forEach(f ->
                 {
                     updatedWhere.add(f.toDashboardFilterBuilder(Fields.NAMESPACE, f.value()));
@@ -44,7 +43,6 @@ public interface IExecutions extends IData<IExecutions.Fields> {
 
             List<QueryFilter> labelFilters = filters.stream().filter(f -> f.field().equals(QueryFilter.Field.LABELS)).toList();
             if (!labelFilters.isEmpty()) {
-                updatedWhere.removeIf(filter -> filter.getField().equals(Fields.LABELS));
                 labelFilters.forEach(f ->
                 {
                     if (f.value() instanceof Map<?, ?> m) {
@@ -66,7 +64,6 @@ public interface IExecutions extends IData<IExecutions.Fields> {
 
             List<QueryFilter> flowFilters = filters.stream().filter(f -> f.field().equals(QueryFilter.Field.FLOW_ID)).toList();
             if (!flowFilters.isEmpty()) {
-                updatedWhere.removeIf(filter -> filter.getField().equals(Fields.FLOW_ID));
                 flowFilters.forEach(f ->
                 {
                     updatedWhere.add(f.toDashboardFilterBuilder(Fields.FLOW_ID, f.value()));
@@ -75,7 +72,6 @@ public interface IExecutions extends IData<IExecutions.Fields> {
 
             List<QueryFilter> stateFilters = filters.stream().filter(f -> f.field().equals(QueryFilter.Field.STATE)).toList();
             if (!stateFilters.isEmpty()) {
-                updatedWhere.removeIf(filter -> filter.getField().equals(Fields.STATE));
                 stateFilters.forEach(f ->
                 {
                     updatedWhere.add(f.toDashboardFilterBuilder(Fields.STATE, f.value()));
@@ -84,7 +80,6 @@ public interface IExecutions extends IData<IExecutions.Fields> {
 
             List<QueryFilter> scopeFilters = filters.stream().filter(f -> f.field().equals(QueryFilter.Field.SCOPE)).toList();
             if (!scopeFilters.isEmpty()) {
-                updatedWhere.removeIf(filter -> filter.getField().equals(Fields.SCOPE));
                 scopeFilters.forEach(f -> updatedWhere.add(f.toDashboardFilterBuilder(Fields.SCOPE, f.value())));
             }
         }

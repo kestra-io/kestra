@@ -19,13 +19,22 @@ public class Concurrency {
     @Builder.Default
     private Behavior behavior = Behavior.QUEUE;
 
-    @Min(0)
-    private Integer queueSize;
+    @Min(1)
+    private Integer queueLimit;
 
     public enum Behavior {
         QUEUE,
         CANCEL,
         FAIL;
+    }
+
+    @com.fasterxml.jackson.annotation.JsonIgnore
+    @jakarta.validation.constraints.AssertTrue(message = "queueLimit is only valid with QUEUE behavior")
+    public boolean isValidQueueLimit() {
+        if (queueLimit != null) {
+            return behavior == Behavior.QUEUE;
+        }
+        return true;
     }
 
     public static boolean possibleTransitions(State.Type type) {

@@ -472,14 +472,14 @@ export const useExecutionsStore = defineStore("executions", () => {
             parsedExecution.namespace !== flowValue.namespace ||
             parsedExecution.flowRevision !== flowValue.revision)
         ) {
-            loadFlowForExecutionByExecutionId(
+            // This request outlives the update, and writing parsedExecution when it
+            // resolves rewinds a newer event back to RUNNING (kestra-io/kestra#19371).
+            void loadFlowForExecutionByExecutionId(
                 {
                     id: parsedExecution.id,
                     revision: route.query.revision?.toString(),
                 },
-            ).then(() => {
-                execution.value = parsedExecution
-            })
+            )
         }
 
         execution.value = parsedExecution

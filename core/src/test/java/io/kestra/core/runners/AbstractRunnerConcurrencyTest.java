@@ -34,9 +34,9 @@ public abstract class AbstractRunnerConcurrencyTest {
     }
 
     @Test
-    @LoadFlows(value = { "flows/valids/flow-concurrency-queue-size.yml" }, tenantId = "concurrency-queue-size")
-    void concurrencyQueueSize() throws Exception {
-        flowConcurrencyCaseTest.flowConcurrencyQueueSize("concurrency-queue-size");
+    @LoadFlows(value = { "flows/valids/flow-concurrency-queue-limit.yml" }, tenantId = "concurrency-queue-limit")
+    void concurrencyQueueLimit() throws Exception {
+        flowConcurrencyCaseTest.flowConcurrencyQueueLimit("concurrency-queue-limit");
     }
 
     @Test

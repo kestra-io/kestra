@@ -34,7 +34,6 @@ import io.kestra.core.trace.Tracer;
 import io.kestra.core.trace.TracerFactory;
 import io.kestra.core.utils.DateUtils;
 import io.kestra.core.utils.ListUtils;
-import io.kestra.core.utils.Logs;
 import io.kestra.core.utils.TruthUtils;
 import io.kestra.core.worker.WorkerQueues;
 import io.kestra.executor.*;
@@ -199,28 +198,7 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
                                     }
                                     case CANCEL -> execution.withState(State.Type.CANCELLED);
                                 };
-
-                            ExecutionRunning processed = concurrencyLimitStateStore.countThenProcess(flow, (txContext, concurrencyLimit) ->
-                            {
-                                Integer queueSize = flow.getConcurrency().getQueueSize();
-                                int queuedCount = queueSize == null ? 0 : executionQueuedStateStore.count(txContext, flow.getTenantId(), flow.getNamespace(), flow.getId());
-                                ExecutionRunning computed = executorService.processExecutionRunning(flow, concurrencyLimit.getRunning(), queuedCount, executionRunning.withExecution(execution)); // be sure that the execution running contains the latest value of the execution
-                                if (computed.getConcurrencyState() == ExecutionRunning.ConcurrencyState.RUNNING && !computed.getExecution().getState().isTerminated()) {
-                                    return Pair.of(computed, concurrencyLimit.withRunning(concurrencyLimit.getRunning() + 1));
-                                }
-                                if (computed.getConcurrencyState() == ExecutionRunning.ConcurrencyState.QUEUED) {
-                                    executionQueuedStateStore.save(txContext, ExecutionQueued.fromExecutionRunning(computed));
-                                    metricRegistry
-                                        .counter(
-                                            MetricRegistry.METRIC_EXECUTOR_QUOTA_EXCEEDED_COUNT, MetricRegistry.METRIC_EXECUTOR_QUOTA_EXCEEDED_COUNT_DESCRIPTION, metricRegistry.tags(execution)
-                                        )
-                                        .increment();
-                                metricRegistry
-                                    .counter(
-                                        MetricRegistry.METRIC_EXECUTOR_QUOTA_EXCEEDED_COUNT, MetricRegistry.METRIC_EXECUTOR_QUOTA_EXCEEDED_COUNT_DESCRIPTION, metricRegistry.tags(execution)
-                                    )
-                                    .increment();
-
+                            
                                 return executor.withExecution(newExecution, "processQuotas");
                             }
 
@@ -253,12 +231,13 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
                                 ExecutionRunning processed = concurrencyLimitStateStore.countThenProcess(
                                     flow,
                                     concurrencyLimits,
-                                    (txContext, runningCounts) -> {
-                                        Integer queueSize = flow.getConcurrency() == null
+                                    (txContext, runningCounts) ->
+                                    {
+                                        Integer queueLimit = flow.getConcurrency() == null
                                             ? null
-                                            : flow.getConcurrency().getQueueSize();
+                                            : flow.getConcurrency().getQueueLimit();
 
-                                        int queuedCount = queueSize == null
+                                        int queuedCount = queueLimit == null
                                             ? 0
                                             : executionQueuedStateStore.count(
                                                 txContext,
@@ -274,8 +253,10 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
                                             executionRunning.withExecution(execution)
                                         );
 
-                                        if (computed.getConcurrencyState() == ExecutionRunning.ConcurrencyState.RUNNING
-                                            && !computed.getExecution().getState().isTerminated()) {
+                                        if (
+                                            computed.getConcurrencyState() == ExecutionRunning.ConcurrencyState.RUNNING
+                                                && !computed.getExecution().getState().isTerminated()
+                                        ) {
                                             return Pair.of(computed, true);
                                         }
 

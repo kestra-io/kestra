@@ -95,10 +95,10 @@ public class FlowConcurrencyCaseTest {
         assertThat(executionResult2.getState().getHistories().get(2).getState()).isEqualTo(State.Type.RUNNING);
     }
 
-    public void flowConcurrencyQueueSize(String tenantId) throws QueueException {
-        Execution execution1 = runnerUtils.runOneUntilRunning(tenantId, NAMESPACE, "flow-concurrency-queue-size", null, null, Duration.ofSeconds(30));
+    public void flowConcurrencyQueueLimit(String tenantId) throws QueueException {
+        Execution execution1 = runnerUtils.runOneUntilRunning(tenantId, NAMESPACE, "flow-concurrency-queue-limit", null, null, Duration.ofSeconds(30));
         Flow flow = flowRepository
-            .findById(tenantId, NAMESPACE, "flow-concurrency-queue-size", Optional.empty())
+            .findById(tenantId, NAMESPACE, "flow-concurrency-queue-limit", Optional.empty())
             .orElseThrow();
         Execution execution2 = runnerUtils.emitAndAwaitExecution(e -> e.getState().getCurrent().equals(Type.QUEUED), Execution.newExecution(flow, null, null, Optional.empty()));
         Execution execution3 = runnerUtils.emitAndAwaitExecution(e -> e.getState().getCurrent().equals(Type.CANCELLED), Execution.newExecution(flow, null, null, Optional.empty()));
@@ -305,7 +305,8 @@ public class FlowConcurrencyCaseTest {
         try {
             Await.await()
                 .atMost(Duration.ofSeconds(10))
-                .until(() -> {
+                .until(() ->
+                {
                     ConcurrencyLimit concurrencyLimit = concurrencyLimitRepository
                         .findById(tenantId, NAMESPACE, flowId)
                         .orElseThrow(() -> new AssertionError("ConcurrencyLimit record must exist after executions ran"));

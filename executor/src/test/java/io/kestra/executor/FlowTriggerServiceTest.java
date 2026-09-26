@@ -30,6 +30,7 @@ import io.kestra.core.services.ConditionService;
 import io.kestra.core.services.ExecutionOutputService;
 import io.kestra.core.services.FlowService;
 import io.kestra.core.utils.IdUtils;
+import io.kestra.executor.testkit.InMemoryMultipleConditionStateStore;
 import io.kestra.plugin.core.log.Log;
 
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
@@ -39,6 +40,7 @@ import static io.kestra.core.repositories.AbstractFlowRepositoryTest.TEST_NAMESP
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -362,6 +364,60 @@ class FlowTriggerServiceTest {
     }
 
     @Test
+    void shouldExposeTheOutputsOfEveryDependsOnExecutionScopedByNamespaceAndFlowId() throws Exception {
+        // Given a listener depending on two upstream flows, each producing a flow output
+        var upstreamA = aSimpleFlow().toBuilder().id("upstream-a").build();
+        var upstreamB = aSimpleFlow().toBuilder().id("upstream-b").build();
+        var listener = flowWithFlowTriggerSource().toBuilder()
+            .triggers(List.of(flowTriggerDependingOnBoth(upstreamA, upstreamB)))
+            .build();
+        var executionA = successfulExecutionWithOutputs(upstreamA, Map.of("value", "from_a"));
+        var executionB = successfulExecutionWithOutputs(upstreamB, Map.of("value", "from_b"));
+        var service = flowTriggerServiceReturningOutputsOf(executionA, executionB);
+        var store = new InMemoryMultipleConditionStateStore();
+
+        // When both upstream executions terminate
+        assertThat(service.computeExecutionsFromFlowTriggerDependsOn(executionA, listener, store)).isEmpty();
+        var triggered = service.computeExecutionsFromFlowTriggerDependsOn(executionB, listener, store);
+
+        // Then the outputs of both are exposed, not only the ones of the last execution
+        assertThat(triggered).hasSize(1);
+        assertThat(triggerOutputs(triggered.getFirst())).containsEntry(
+            TEST_NAMESPACE, Map.of(
+                "upstream-a", Map.of("value", "from_a"),
+                "upstream-b", Map.of("value", "from_b")
+            )
+        );
+    }
+
+    @Test
+    void shouldNotExposeTheOutputsOfAnExecutionThatIsNotInDependsOn() throws Exception {
+        // Given a listener depending on one upstream flow, and an unrelated flow in another namespace
+        var upstream = aSimpleFlow().toBuilder().id("upstream").build();
+        var unrelatedFlow = aSimpleFlow().toBuilder().namespace("io.kestra.other").id("unrelated").build();
+        var listener = flowWithFlowTriggerSource().toBuilder()
+            .triggers(List.of(flowTriggerDependingOn(upstream)))
+            .build();
+        var unrelated = successfulExecutionWithOutputs(unrelatedFlow, Map.of("secret", "do_not_leak"));
+        var upstreamExecution = successfulExecutionWithOutputs(upstream, Map.of("value", "from_upstream"));
+        var service = flowTriggerServiceReturningOutputsOf(unrelated, upstreamExecution);
+        var store = new InMemoryMultipleConditionStateStore();
+
+        // When the unrelated execution terminates first, so it is the one that opens the window
+        assertThat(service.computeExecutionsFromFlowTriggerDependsOn(unrelated, listener, store)).isEmpty();
+        var triggered = service.computeExecutionsFromFlowTriggerDependsOn(upstreamExecution, listener, store);
+
+        // Then its outputs never reach the listener
+        assertThat(triggered).hasSize(1);
+        Map<String, Object> outputs = triggerOutputs(triggered.getFirst());
+        assertThat(outputs).doesNotContainKey("io.kestra.other");
+        assertThat(outputs.toString()).doesNotContain("do_not_leak");
+        // while the single dependency stays reachable scoped, and through the unscoped shorthand
+        assertThat(outputs).containsEntry(TEST_NAMESPACE, Map.of("upstream", Map.of("value", "from_upstream")));
+        assertThat(outputs).containsEntry("value", "from_upstream");
+    }
+
+    @Test
     void shouldAssignCorrelationIdOnExecutionsComputedFromFlowTriggersWhenUpstreamCarriesNone() {
         // Given an upstream execution stripped of its correlation id
         var upstream = Execution.newExecution(aSimpleFlow(), EMPTY_LABELS)
@@ -558,6 +614,38 @@ class FlowTriggerServiceTest {
             .id("flowTrigger")
             .type(io.kestra.plugin.core.trigger.Flow.class.getName())
             .when(when)
+            .build();
+    }
+
+    private FlowTriggerService flowTriggerServiceReturningOutputsOf(Execution... executions) throws Exception {
+        var outputService = mock(ExecutionOutputService.class);
+        for (Execution execution : executions) {
+            when(outputService.getOutputs(argThat(e -> e != null && execution.getId().equals(e.getId()))))
+                .thenReturn(execution.getOutputs());
+        }
+        return new FlowTriggerService(conditionService, runContextFactory, flowService, flowMetaStore, outputService, executionDepthConfiguration);
+    }
+
+    @SuppressWarnings("removal")
+    private static Execution successfulExecutionWithOutputs(Flow flow, Map<String, Object> outputs) {
+        return Execution.newExecution(flow, EMPTY_LABELS).withState(State.Type.SUCCESS).withOutputs(outputs);
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Map<String, Object> triggerOutputs(Execution execution) {
+        return (Map<String, Object>) execution.getTrigger().getVariables().get("outputs");
+    }
+
+    private static io.kestra.plugin.core.trigger.Flow flowTriggerDependingOnBoth(Flow first, Flow second) {
+        return io.kestra.plugin.core.trigger.Flow.builder()
+            .id("flowTrigger")
+            .type(io.kestra.plugin.core.trigger.Flow.class.getName())
+            .dependsOn(
+                List.of(
+                    io.kestra.plugin.core.trigger.Flow.Dependency.builder().namespace(first.getNamespace()).flowId(first.getId()).build(),
+                    io.kestra.plugin.core.trigger.Flow.Dependency.builder().namespace(second.getNamespace()).flowId(second.getId()).build()
+                )
+            )
             .build();
     }
 

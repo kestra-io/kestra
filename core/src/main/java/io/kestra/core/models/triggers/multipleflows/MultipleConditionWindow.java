@@ -81,4 +81,38 @@ public class MultipleConditionWindow implements HasUID {
             this.outputs
         );
     }
+
+    /**
+     * Stores the outputs of an execution that satisfied a condition of this window, under its namespace and flow ID,
+     * replacing the ones of a previous execution of the same flow.
+     */
+    @SuppressWarnings("unchecked")
+    public MultipleConditionWindow withOutputs(String executionNamespace, String executionFlowId, Map<String, Object> executionOutputs) {
+        if (executionOutputs == null || executionOutputs.isEmpty()) {
+            return this;
+        }
+
+        Map<String, Object> finalOutputs = new HashMap<>();
+        if (outputs != null) {
+            finalOutputs.putAll(outputs);
+        }
+
+        Map<String, Object> namespaceOutputs = new HashMap<>();
+        if (finalOutputs.get(executionNamespace) instanceof Map<?, ?> existing) {
+            namespaceOutputs.putAll((Map<String, Object>) existing);
+        }
+        namespaceOutputs.put(executionFlowId, executionOutputs);
+        finalOutputs.put(executionNamespace, namespaceOutputs);
+
+        return new MultipleConditionWindow(
+            this.tenantId,
+            this.namespace,
+            this.flowId,
+            this.conditionId,
+            this.start,
+            this.end,
+            this.results,
+            finalOutputs
+        );
+    }
 }

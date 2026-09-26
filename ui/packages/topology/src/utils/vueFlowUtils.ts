@@ -329,12 +329,19 @@ export function nodeColor(node: MinimalNode, collapsed: Set<string>) {
     return "default"
 }
 
+export interface AddTaskTarget {
+    refId: string
+    position: "before" | "after"
+    /** Both ends of the edge, when it is a `dependsOn` relation inside a Dag. */
+    dagDependency?: {fromId?: string; toId?: string}
+}
+
 export function haveAdd(
     edge: FlowGraphEdge,
     nodeByUid: Record<string, MinimalNode>,
     clustersRootTaskUids: string[],
     readOnlyUidPrefixes: string[],
-) {
+): AddTaskTarget | undefined {
     if (
         readOnlyUidPrefixes.some(
             (prefix) => edge.source.startsWith(prefix) && edge.target.startsWith(prefix),
@@ -362,18 +369,39 @@ export function haveAdd(
     ) {
         return undefined
     }
+    // A Dag orders its tasks through `dependsOn`, so an insertion there has to know both ends of
+    // the edge it landed on, not just the neighbour it is placed next to.
+    const isDagLane = nodeByUid[targetNodeClusterUid]?.task?.type?.endsWith(".Dag") === true
+    const dagTaskIdAt = (uid: string): string | undefined => {
+        const node = nodeByUid[uid]
+        if (!node) return undefined
+        if (node.type.endsWith("GraphClusterRoot") || node.type.endsWith("GraphClusterEnd")) return undefined
+        const parts = uid.split(".")
+        parts.pop()
+        return parts.join(".") === targetNodeClusterUid ? Utils.afterLastDot(uid) : undefined
+    }
+    const withDag = (target: AddTaskTarget): AddTaskTarget => {
+        if (!isDagLane) return target
+        const fromId = dagTaskIdAt(edge.source)
+        const toId = dagTaskIdAt(edge.target)
+        return fromId || toId ? {...target, dagDependency: {fromId, toId}} : target
+    }
+
     if (targetNode.type.endsWith("GraphClusterRoot")) {
-        return [clusterRootTaskId, "before"]
+        return clusterRootTaskId ? {refId: clusterRootTaskId, position: "before"} : undefined
     }
     const sourceIsEndOfCluster = nodeByUid[edge.source].type.endsWith("GraphClusterEnd")
     if (!sourceIsEndOfCluster && targetNode.type.endsWith("GraphClusterEnd")) {
-        return [Utils.afterLastDot(edge.source), "after"]
+        const refId = Utils.afterLastDot(edge.source)
+        return refId ? withDag({refId, position: "after"}) : undefined
     }
     if (sourceIsEndOfCluster) {
         const dotSplitSource = edge.source.split(".")
-        return [dotSplitSource[dotSplitSource.length - 2], "after"]
+        const refId = dotSplitSource[dotSplitSource.length - 2]
+        return refId ? {refId, position: "after"} : undefined
     }
-    return [Utils.afterLastDot(edge.target), "before"]
+    const refId = Utils.afterLastDot(edge.target)
+    return refId ? withDag({refId, position: "before"}) : undefined
 }
 
 export function getEdgeColor(
@@ -518,6 +546,9 @@ export function generateGraph(
                 id: clusterUid,
                 type: "cluster",
                 parentNode: parentNode,
+                // Without this the cluster falls back to vue-flow's global `nodesDraggable`, and
+                // dropping one on an edge emits a move for whatever its uid ends with.
+                draggable: false,
                 position: getNodePosition(
                     dagreNode,
                     parentNode ? dagreGraph.node(parentNode) : undefined,
@@ -537,6 +568,12 @@ export function generateGraph(
                 data: {
                     collaspsible: true,
                     color: clusterColor,
+                    // The triggers box is the only place a trigger can be added from the canvas:
+                    // triggers are not tasks, so no edge `+` ever targets them.
+                    canAddTrigger:
+                        clusterUid === CLUSTER_PREFIX + TRIGGERS_NODE_UID &&
+                        Boolean(isAllowedEdit) &&
+                        !isReadOnly,
                     taskNode: cluster.cluster.taskNode,
                     unused: cluster.cluster.taskNode
                         ? nodeByUid[cluster.cluster.taskNode.uid].unused
@@ -589,6 +626,8 @@ export function generateGraph(
                 sourcePosition: isHorizontal ? Position.Right : Position.Bottom,
                 targetPosition: isHorizontal ? Position.Left : Position.Top,
                 parentNode: cluster ? cluster.uid : undefined,
+                // The drag is the browser's own (HTML5), like the No-code block cards, so vue-flow
+                // must not also reposition the node under the pointer.
                 draggable: false,
                 data: {
                     node: node,
@@ -603,8 +642,16 @@ export function generateGraph(
                     isReadOnly: isReadOnlyTask,
                     executionId: node.executionId,
                     unused: node.unused,
+                    isMovable: Boolean(isAllowedEdit) && !isReadOnlyTask && isTaskNode(node),
                 },
-                class: node.type === "collapsedcluster" ? `ks-topology-${color}-border` : "",
+                class: [
+                    node.type === "collapsedcluster" ? `ks-topology-${color}-border` : "",
+                    // vue-flow adds `nopan` to nodes it drags itself; it no longer does, and without
+                    // it a drag starting on a card pans the canvas instead.
+                    Boolean(isAllowedEdit) && !isReadOnlyTask && isTaskNode(node) ? "nopan" : "",
+                ]
+                    .filter(Boolean)
+                    .join(" "),
             })
         }
     }
@@ -666,6 +713,7 @@ export function generateGraph(
 
     return elements
 }
+
 
 export function isClusterRootOrEnd(node: MinimalNode) {
     return [

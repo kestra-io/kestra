@@ -78,6 +78,7 @@
     import type {KsChartSeriesItem} from "@kestra-io/design-system"
     import {KsFilter as KSFilter} from "@kestra-io/design-system"
     import {useFlowMetricFilter} from "../filter/configurations/metricFilters"
+    import type {MetricAggregations} from "@kestra-io/kestra-sdk"
 
     defineOptions({
         name: "FlowMetrics",
@@ -92,12 +93,7 @@
     const flowStore = useFlowStore()
 
     const isLoading = ref(false)
-    const metricsData = ref<Record<string, any>>({})
-
-    interface MetricAggregation {
-        date: string;
-        value?: number;
-    }
+    const metricsData = ref<Record<string, MetricAggregations>>({})
 
     const currentAggregation = computed(() => {
         return (route.query.aggregation as string) ?? "sum"
@@ -168,14 +164,14 @@
     function getCategories(metric: string): string[] {
         const data = metricsData.value[metric]
         if (!data) return []
-        const aggregations = (data.aggregations ?? []) as MetricAggregation[]
+        const aggregations = data.aggregations ?? []
         return aggregations.map((e) => dateFilter(e.date, getFormat(data.groupBy)))
     }
 
     function getSeriesData(metric: string): KsChartSeriesItem[] {
         const data = metricsData.value[metric]
         if (!data) return []
-        const aggregations = (data.aggregations ?? []) as MetricAggregation[]
+        const aggregations = data.aggregations ?? []
         const aggregationLabel = currentAggregation.value.toLowerCase()
         return [
             {
@@ -200,7 +196,7 @@
         const aggregation = currentAggregation.value
         const timeRangeParams = getTimeRangeParams()
 
-        const newData: Record<string, any> = {}
+        const newData: Record<string, MetricAggregations> = {}
 
         await Promise.all(
             metrics.map(async (metric) => {

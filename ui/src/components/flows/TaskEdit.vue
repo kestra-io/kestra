@@ -62,7 +62,7 @@
         @focusin="onPanelFocusIn"
         @focusout="onPanelFocusOut"
         @dragover.prevent
-        @drop="emit('tab-drop')"
+        @drop="onPanelDrop"
     >
         <div v-if="!hideTabstrip" class="task-edit-tabstrip">
             <div
@@ -99,6 +99,7 @@
                 :stacked="isStacked"
                 side="left"
                 @toggle="inputsCollapsed = !inputsCollapsed"
+                @chip-activate="onChipActivate"
             />
 
             <div class="task-edit-col task-edit-col-params">
@@ -140,7 +141,7 @@
                 :stacked="isStacked"
                 :interactive="false"
                 side="right"
-                @toggle="outputCollapsed = !outputCollapsed"
+                @toggle="toggleOutput"
             />
 
         </div>
@@ -156,7 +157,7 @@
 <script setup lang="ts">
     import {ref, computed, watch, onMounted, onBeforeUnmount, onDeactivated} from "vue"
     import {useI18n} from "vue-i18n"
-    import {SECTIONS, KsIconButton, KsDrawer} from "@kestra-io/design-system"
+    import {SECTIONS, KsIconButton, KsDrawer, KsMessage, copyToClipboard} from "@kestra-io/design-system"
     import TaskIcon from "../plugins/TaskIcon.vue"
     import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
     import CodeTags from "vue-material-design-icons/CodeTags.vue"
@@ -170,12 +171,14 @@
     import ValidationError from "./ValidationError.vue"
     import {usePluginsStore} from "../../stores/plugins"
     import {useAuthStore} from "override/stores/auth"
-    import {useFlowStore} from "../../stores/flow"
+    import {useFlowStore, type FlowRevision} from "../../stores/flow"
     import {usePlaygroundRun} from "../../composables/playground/usePlaygroundRun"
+    import {CHIP_DRAG_MIME, isArmableField, insertAtCaret} from "./chipInsertion"
+    import {resolveDeclaredOutputProperties, hasDeclaredOutputs as computeHasDeclaredOutputs} from "./taskOutputSchema"
 
     interface Props {
         component?: string;
-        task?: Record<string, any>;
+        task?: Record<string, unknown>;
         taskRaw?: string;
         taskId?: string;
         flowId: string;
@@ -239,13 +242,55 @@
     const isStacked = ref(false)
     const panelHasFocus = ref(false)
 
-    const onPanelFocusIn = () => {
+    const ARMED_FIELD_CLASS = "task-edit-chip-insert-target"
+    const armedField = ref<HTMLInputElement | HTMLTextAreaElement | null>(null)
+
+    const onPanelFocusIn = (event: FocusEvent) => {
         panelHasFocus.value = true
+        if (isArmableField(event.target)) {
+            armedField.value?.classList.remove(ARMED_FIELD_CLASS)
+            armedField.value = event.target
+            event.target.classList.add(ARMED_FIELD_CLASS)
+        }
     }
     const onPanelFocusOut = (event: FocusEvent) => {
         const next = event.relatedTarget as Node | null
-        if (!next || !panelRef.value?.contains(next)) {
+        const leavingPanel = !next || !panelRef.value?.contains(next)
+        if (leavingPanel) {
             panelHasFocus.value = false
+        }
+        if (armedField.value && event.target === armedField.value && leavingPanel) {
+            armedField.value.classList.remove(ARMED_FIELD_CLASS)
+            armedField.value = null
+        }
+    }
+
+    function insertAndNotify(field: HTMLInputElement | HTMLTextAreaElement, expr: string) {
+        insertAtCaret(field, expr)
+        field.focus()
+        KsMessage.success(t("block_editor.chip_inserted"))
+    }
+
+    function onChipActivate(expr: string) {
+        if (armedField.value) {
+            insertAndNotify(armedField.value, expr)
+        } else {
+            copyToClipboard(expr)
+            KsMessage.success(t("block_editor.chip_copied"))
+        }
+    }
+
+    function onPanelDrop(event: DragEvent) {
+        if (!event.dataTransfer?.types.includes(CHIP_DRAG_MIME)) {
+            emit("tab-drop")
+            return
+        }
+
+        event.preventDefault()
+        const expr = event.dataTransfer.getData(CHIP_DRAG_MIME)
+        const target = (event.target as HTMLElement | null)?.closest("input, textarea") ?? null
+        if (expr && isArmableField(target)) {
+            insertAndNotify(target, expr)
         }
     }
 
@@ -260,17 +305,19 @@
 
     watch(isStacked, (stacked) => {
         inputsCollapsed.value = stacked
-        outputCollapsed.value = stacked
     })
     const type = ref<string>()
-    const revisions = ref<any[]>()
+    const revisions = ref<FlowRevision[]>()
     const timer = ref<ReturnType<typeof setTimeout>>()
     const lastValidatedValue = ref<string | null>(null)
 
     const {runTask, playgroundStore} = usePlaygroundRun()
 
+    const propTaskId = computed(() => typeof props.task?.id === "string" ? props.task.id : undefined)
+    const propTaskType = computed(() => typeof props.task?.type === "string" ? props.task.type : undefined)
+
     const runnableTaskId = computed<string | undefined>(() =>
-        props.taskId ?? props.task?.id ?? YAML_UTILS.parse(taskYaml.value)?.id,
+        props.taskId ?? propTaskId.value ?? YAML_UTILS.parse(taskYaml.value)?.id,
     )
 
     const isRunnable = computed(() =>
@@ -282,9 +329,9 @@
 
     const taskType = computed(() => {
         try {
-            return YAML_UTILS.parse(taskYaml.value)?.type ?? props.task?.type ?? ""
+            return YAML_UTILS.parse(taskYaml.value)?.type ?? propTaskType.value ?? ""
         } catch {
-            return props.task?.type ?? ""
+            return propTaskType.value ?? ""
         }
     })
 
@@ -301,7 +348,7 @@
         return null
     })
 
-    function flattenTaskIds(tasks: any, acc: string[]) {
+    function flattenTaskIds(tasks: unknown, acc: string[]) {
         if (!Array.isArray(tasks)) return
         for (const task of tasks) {
             if (task?.id) acc.push(String(task.id))
@@ -322,7 +369,7 @@
 
         const inputs = Array.isArray(flow.inputs) ? flow.inputs : []
         if (inputs.length) {
-            sections.push({key: "inputs", label: t("block_editor.flow_inputs"), chips: inputs.map((i: any) => {
+            sections.push({key: "inputs", label: t("block_editor.flow_inputs"), chips: inputs.map((i: {id?: unknown; name?: unknown}) => {
                 const id = String(i.id ?? i.name ?? "")
                 return {label: id, expr: `{{ inputs.${id} }}`}
             })})
@@ -364,21 +411,39 @@
         return sections
     })
 
+    const declaredOutputProperties = computed(() => resolveDeclaredOutputProperties([
+        pluginsStore.plugin?.schema?.outputs?.properties,
+        pluginsStore.editorPlugin?.schema?.outputs?.properties,
+    ]))
+
     const outputSections = computed(() => {
-        const candidates = [
-            (pluginsStore.plugin as any)?.schema?.outputs?.properties,
-            (pluginsStore.plugin as any)?.outputs?.properties,
-            (pluginsStore.editorPlugin as any)?.schema?.outputs?.properties,
-            (pluginsStore.editorPlugin as any)?.outputs?.properties,
-        ]
-        const properties = candidates.find(c => c && typeof c === "object")
-        const names = properties ? Object.keys(properties) : []
+        const properties = declaredOutputProperties.value
+        if (!properties) return []
+        const names = Object.keys(properties)
         if (!names.length) return []
         const chips = names.map(name => ({
             label: name,
-            type: String((properties as Record<string, {type?: string}>)[name]?.type ?? "") || undefined,
+            type: String(properties[name]?.type ?? "") || undefined,
         }))
         return [{key: "out", label: t("block_editor.declared_outputs"), chips}]
+    })
+
+    const hasDeclaredOutputs = computed(() => computeHasDeclaredOutputs(declaredOutputProperties.value))
+    const outputUserOverridden = ref(false)
+
+    watch(hasDeclaredOutputs, (has) => {
+        if (outputUserOverridden.value) return
+        outputCollapsed.value = !has
+    }, {immediate: true})
+
+    function toggleOutput() {
+        outputUserOverridden.value = true
+        outputCollapsed.value = !outputCollapsed.value
+    }
+
+    watch(currentTaskId, () => {
+        outputUserOverridden.value = false
+        outputCollapsed.value = !hasDeclaredOutputs.value
     })
 
     const authStore = useAuthStore()
@@ -413,7 +478,7 @@
         }
         return YAML_UTILS.extractBlock({
             section: props.section,
-            source: source.value,
+            source: source.value ?? "",
             key: taskId,
         })
     }
@@ -436,15 +501,15 @@
     const onShow = async () => {
         isModalOpen.value = true
         if (props.taskId) {
-            taskYaml.value = await load(props.taskId ? props.taskId : props.task?.id) ?? ""
+            taskYaml.value = await load(props.taskId) ?? ""
         } else if (props.taskRaw != null) {
             taskYaml.value = props.taskRaw
         } else if (props.task) {
             taskYaml.value = YAML_UTILS.stringify(props.task)
         }
         taskBaseline.value = taskYaml.value
-        if (props.task?.type) {
-            pluginsStore.load({cls: props.task.type}).catch(() => {})
+        if (propTaskType.value) {
+            pluginsStore.load({cls: propTaskType.value}).catch(() => {})
         }
         if (taskYaml.value) {
             lastValidatedValue.value = taskYaml.value
@@ -475,13 +540,13 @@
         }
     }
 
-    const onInput = (value?: string | Record<string, any>) => {
+    const onInput = (value: string) => {
         if (timer.value) {
             clearTimeout(timer.value)
         }
 
-        taskYaml.value = typeof value === "string" ? value : YAML_UTILS.stringify(value ?? "")
-        timer.value = setTimeout(commitEdit, 500) as any
+        taskYaml.value = value
+        timer.value = setTimeout(commitEdit, 500)
     }
 
     const flushPendingEdit = () => {
@@ -698,5 +763,10 @@
     .task-edit-validation-status {
         display: flex;
         align-items: center;
+    }
+
+    :global(.task-edit-chip-insert-target) {
+        outline: 2px solid var(--ks-border-focus);
+        outline-offset: -1px;
     }
 </style>

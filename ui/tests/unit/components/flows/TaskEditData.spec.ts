@@ -5,8 +5,7 @@ import {i18nMount} from "../../i18nMount"
 const messages = {
     expand: "Expand",
     collapse: "Collapse",
-    copied: "Copied",
-    block_editor: {filter_data: "Filter", no_data_matches: "No data matches"},
+    block_editor: {filter_data: "Filter", no_data_matches: "No data matches", chip_hint: "Click a chip to insert it, or drag it in"},
 }
 
 const sections = [
@@ -59,5 +58,28 @@ describe("TaskEditData filtering", () => {
 
         expect(wrapper.text()).toContain("No data matches")
         expect(wrapper.text()).not.toContain("flow.id")
+    })
+})
+
+describe("TaskEditData chip activation", () => {
+    it("shows a permanent hint that clicking inserts and dragging still works", () => {
+        expect(render().text()).toContain("Click a chip to insert it, or drag it in")
+    })
+
+    it("emits chip-activate with the expression when an interactive chip is clicked", async () => {
+        const wrapper = render()
+        await wrapper.get("[title='{{ flow.id }}']").trigger("click")
+
+        expect(wrapper.emitted("chip-activate")).toEqual([["{{ flow.id }}"]])
+    })
+
+    it("does not render a hint or interactive chips for a non-interactive column", () => {
+        const wrapper = i18nMount(TaskEditData, {
+            messages,
+            props: {kind: "output", title: "Output", subtitle: "what this task produces", sections, interactive: false},
+        })
+
+        expect(wrapper.text()).not.toContain("Click a chip to insert it, or drag it in")
+        expect(wrapper.find("button.task-edit-data-chip").exists()).toBe(false)
     })
 })

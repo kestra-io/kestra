@@ -24,6 +24,7 @@
     import Badge from "../global/Badge.vue"
     import Actions from "override/components/flows/Actions.vue"
     import NavBar from "../layout/TopNavBar.vue"
+    import type {KsBreadcrumbItem} from "@kestra-io/design-system"
     import resource from "../../models/resource"
     import action from "../../models/action"
     import {useAuthStore} from "override/stores/auth"
@@ -32,7 +33,7 @@
     defineProps<{
         routeInfo: {
             title: string;
-            breadcrumb: Array<any>;
+            breadcrumb: KsBreadcrumbItem[];
             beta?: boolean;
         };
     }>()

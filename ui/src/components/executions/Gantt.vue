@@ -226,6 +226,7 @@
 
     // Explicit 24-hour format: the scale has no room for AM/PM, so a 12-hour clock would be ambiguous.
     const TICK_FORMAT = "HH:mm:ss"
+    const PRECISE_TICK_FORMAT = "HH:mm:ss.SSS"
 
     interface TaskRun {
         id: string;
@@ -532,14 +533,17 @@
             return
         }
 
+        const duration = delta()
         const ticks = 5
-        const formatDate = (timestamp: number): string => dateFilter(timestamp, TICK_FORMAT)
         const startVal = start.value
-        const deltaVal = delta() / ticks
+        const deltaVal = duration / ticks
+        const tickFormat = deltaVal < 1000 ? PRECISE_TICK_FORMAT : TICK_FORMAT
         const newDates: string[] = []
+
         for (let i = 0; i < ticks; i++) {
-            newDates.push(formatDate(startVal + i * deltaVal))
+            newDates.push(dateFilter(startVal + i * deltaVal, tickFormat))
         }
+
         dates.value = newDates
     }
 

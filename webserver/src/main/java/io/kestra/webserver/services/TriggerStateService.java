@@ -177,13 +177,13 @@ public class TriggerStateService {
      * Creates a backfill and waits for the scheduler to acknowledge.
      *
      * @throws ValidationErrorException if the backfill window is empty, which the scheduler would otherwise
-     *                                  accept and then immediately discard.
+     *                                  accept and then immediately discard, or if the trigger cannot be backfilled.
      * @throws NotFoundException if the trigger does not exist.
      * @throws ConflictException if the backfill cannot be created.
      */
     public TriggerState createBackfill(TriggerId triggerId, CreateBackfillTrigger.Backfill backfill) throws NotFoundException, ConflictException {
         validateBackfillWindow(backfill);
-        getTriggerState(triggerId);
+        validateBackfillable(triggerId, getTriggerState(triggerId));
         awaitBlockingAction(
             triggerId.uid(),
             operationId -> triggerEventQueue.send(new CreateBackfillTrigger(triggerId, backfill).withOperationId(operationId)),
@@ -386,6 +386,20 @@ public class TriggerStateService {
             throw new ValidationErrorException(List.of(
                 "The backfill end date must be after its start date, but got start '%s' and end '%s'."
                     .formatted(backfill.start(), backfill.end())
+            ));
+        }
+    }
+
+    /**
+     * Rejects a backfill on a trigger the scheduler cannot replay: only a schedule trigger walks the backfill
+     * cursor, so on any other type the backfill would be stored and never run. A state saved before the trigger
+     * type was recorded carries none, and is left to the scheduler rather than rejected here.
+     */
+    private static void validateBackfillable(TriggerId triggerId, TriggerState state) {
+        if (TriggerType.POLLING.equals(state.getType()) || TriggerType.REALTIME.equals(state.getType())) {
+            throw new ValidationErrorException(List.of(
+                "Backfills are only supported on schedule triggers, but trigger %s is '%s'."
+                    .formatted(triggerId, state.getType())
             ));
         }
     }

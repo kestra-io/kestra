@@ -271,7 +271,6 @@
   "tests/storybook/theme/ShowCase.vue": 1,
   "tests/unit/components/FlowConcurrency.spec.ts": 1,
   "tests/unit/components/MultiPanelGenericEditorView.spec.ts": 6,
-  "tests/unit/components/ai/copilot/CopilotChat.spec.ts": 6,
   "tests/unit/components/dashboard/Header.spec.ts": 1,
   "tests/unit/components/dashboard/Markdown.spec.ts": 1,
   "tests/unit/components/dashboard/Sections.spec.ts": 2,

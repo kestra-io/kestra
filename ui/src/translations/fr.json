@@ -439,7 +439,9 @@
       "zoom-fit": "Voir tout",
       "invalid": "Erreur de graphe",
       "invalid_description": "Une erreur s'est produite lors du chargement du graphique. Veuillez vérifier le code source pour les erreurs.",
-      "load_error": "Impossible de charger le graphe de topologie. Veuillez réessayer."
+      "load_error": "Impossible de charger le graphe de topologie. Veuillez réessayer.",
+      "add-task": "Ajouter une task",
+      "add-trigger": "Ajouter un trigger"
     },
     "show task logs": "Afficher les journaux de la tâche",
     "show task condition": "Afficher la condition de la task",
@@ -871,7 +873,7 @@
     "flow delete": "Êtes vous sûr de vouloir supprimer <code>{flowCount}</code> flow(s)?",
     "delete flow error": "Impossible de supprimer le flow {id}",
     "flows deleted": "<code>{count}</code> Flow(s) supprimé(s)",
-    "flow disable": "Êtes vous sûr de vouloir désactiver <code>{flowCount}</code> flow(s)?",
+    "flow disable": "Voulez-vous vraiment désactiver {flowCount} Flow(s) ?<br/><br/>La désactivation d'un Flow écrit <code>disabled: true</code> dans le Flow et crée une nouvelle révision. Une synchronisation depuis une source externe qui n'inclut pas <code>disabled: true</code> réactivera le Flow.",
     "flow enable": "Êtes vous sûr de vouloir activer <code>{flowCount}</code> flow(s)?",
     "flows disabled": "<code>{count}</code> Flow(s) désactivé(s)",
     "flows enabled": "<code>{count}</code> Flow(s) activé(s)",
@@ -1422,7 +1424,7 @@
             "title": "Les Flows sont édités comme du code",
             "body": "Nous avons ajouté une task `notify` pour vous sans l'AI Copilot, afin que vous puissiez voir à quoi ressemble l'édition directe du YAML. Elle publie le résultat final sur Slack.",
             "next": "Consulter la documentation de la task",
-            "callout": "Un premier brouillon de l'IA Copilot n'est qu'un point de départ ; l'éditeur est l'endroit où vous l'itérerez dans un onglet d'éditeur Code ou No-Code, qui produisent tous deux le même YAML, ainsi votre flow reste sous forme de code quelle que soit la manière dont il a été construit."
+            "callout": "Un premier brouillon de l'IA Copilot n'est qu'un point de départ ; l'éditeur est l'endroit où vous l'itérerez dans un onglet d'éditeur Code ou No-code, qui produisent tous deux le même YAML, ainsi votre flow reste sous forme de code quelle que soit la manière dont il a été construit."
           },
           "editor_help": {
             "title": "La documentation se trouve à côté du flow",
@@ -1619,7 +1621,9 @@
       "raw": "Vue temporelle",
       "raw_details": "Afficher les logs complets des tasks et des flows dans un format brut, trié par horodatage",
       "compact": "Vue par défaut",
-      "compact_details": "Affiche les logs dans un format compacte regroupé par tâche"
+      "compact_details": "Affiche les logs dans un format compacte regroupé par tâche",
+      "fullscreen": "Logs en plein écran",
+      "exit_fullscreen": "Quitter le mode plein écran"
     },
     "execution_deletion": {
       "logs": "Supprimer les journaux",
@@ -2189,7 +2193,7 @@
     "playground": {
       "title": "Aire de jeu",
       "run_task_info": "Survolez n'importe quelle task dans l'éditeur de Flow Code et cliquez sur le bouton \"Run task\" pour tester votre task.",
-      "play_icon_info": "Vous pouvez également cliquer sur l'icône Play dans les vues No-Code ou Topology.",
+      "play_icon_info": "Vous pouvez également cliquer sur l'icône Play dans les vues No-code ou Topology.",
       "toggle": "Terrain de jeu",
       "run_task": "Exécuter la task",
       "run_this_task": "Exécuter cette task",
@@ -2519,6 +2523,9 @@
       "block_deleted": "{name} supprimé",
       "card_aria_label": "Bloc {id} de type {type}",
       "canvas_aria": "Canevas des blocs de flow",
+      "chip_copied": "Copié dans le presse-papiers",
+      "chip_hint": "Cliquez sur une puce pour l'insérer dans le champ actif, ou faites-la glisser",
+      "chip_inserted": "Inséré dans le champ",
       "cluster_collapse_aria": "Réduire {id}",
       "cluster_expand_aria": "Développer {id} ({count} tasks)",
       "collapsed_summary": "{count} tâches",

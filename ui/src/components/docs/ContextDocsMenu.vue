@@ -156,7 +156,7 @@
         background-color: var(--ks-bg-surface);
         border-radius: 8px;
         border: 1px solid var(--ks-border-default);
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+        box-shadow: 0 10px 30px var(--ks-shadow-elevated);
         margin-top: 4px;
     }
 

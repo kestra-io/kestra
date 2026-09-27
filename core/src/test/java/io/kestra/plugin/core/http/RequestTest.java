@@ -373,6 +373,27 @@ class RequestTest {
     }
 
     @Test
+    void formPreservesCharsetAndEncodesNonAsciiValues() throws Exception {
+        Request task = Request.builder()
+            .id(RequestTest.class.getSimpleName())
+            .type(RequestTest.class.getName())
+            .method(Property.ofValue("POST"))
+            .contentType(Property.ofValue(MediaType.APPLICATION_FORM_URLENCODED))
+            .uri(Property.ofValue(serverUrl() + "/post/url-encoded"))
+            .options(HttpConfiguration.builder().defaultCharset(Property.ofValue(StandardCharsets.UTF_8)).build())
+            .formData(Property.ofValue(ImmutableMap.of("hello", "café")))
+            .build();
+
+        RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of());
+
+        io.kestra.core.http.HttpRequest request = task.request(runContext);
+        HttpEntity entity = request.getBody().to();
+
+        assertThat(IOUtils.toString(entity.getContent(), StandardCharsets.US_ASCII)).isEqualTo("hello=caf%C3%A9");
+        assertThat(entity.getContentType()).isEqualTo("application/x-www-form-urlencoded; charset=UTF-8");
+    }
+
+    @Test
     void multipart() throws Exception {
         File file = new File(Objects.requireNonNull(RequestTest.class.getClassLoader().getResource("application-test.yml")).toURI());
 

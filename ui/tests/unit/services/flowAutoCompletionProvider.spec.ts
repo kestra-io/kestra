@@ -97,7 +97,7 @@ const pluginsStore = {
 
 const flowStore = {
     loadFlow: vi.fn(({namespace, id, revision}) => {
-        if (namespace === "another.namespace" && id === "flow-other-namespace" && revision === 2) {
+        if (namespace === "another.namespace" && id === "flow-other-namespace" && revision === "2") {
             return Promise.resolve({
                 inputs: [
                     {id: "first-input"},

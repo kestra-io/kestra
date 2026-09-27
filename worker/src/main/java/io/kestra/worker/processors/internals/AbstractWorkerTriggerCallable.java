@@ -3,7 +3,7 @@ package io.kestra.worker.processors.internals;
 import java.time.Duration;
 
 import io.kestra.core.models.flows.State;
-import io.kestra.core.models.triggers.WorkerTriggerInterface;
+import io.kestra.core.models.WorkerJobLifecycle;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.WorkerTrigger;
 
@@ -24,7 +24,7 @@ abstract class AbstractWorkerTriggerCallable extends AbstractWorkerCallable {
     @Override
     public void signalStop() {
         try {
-            ((WorkerTriggerInterface) workerTrigger.getTrigger()).stop();
+            ((WorkerJobLifecycle) workerTrigger.getTrigger()).stop();
         } catch (Exception e) {
             logger.warn("Error while stopping trigger: '{}'", getType(), e);
         }
@@ -33,7 +33,7 @@ abstract class AbstractWorkerTriggerCallable extends AbstractWorkerCallable {
     @Override
     public void kill(final State.Type state) {
         try {
-            ((WorkerTriggerInterface) workerTrigger.getTrigger()).kill();
+            ((WorkerJobLifecycle) workerTrigger.getTrigger()).kill();
             if (state != null) {
                 // Let some time for the target thread to end, so we have a chance to not have to interrupt it.
                 // Killing a trigger is part of normal operations (updating a flow, disabling it, restarting Kestra),

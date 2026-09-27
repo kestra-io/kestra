@@ -185,3 +185,22 @@ SwitchCaseLabels.args = {
     isReadOnly: true,
     isHorizontal: false,
 }
+
+export const ValidationIssues = Template.bind({})
+ValidationIssues.storyName = "Validation Issues"
+ValidationIssues.args = {
+    id: "story-validation-issues",
+    source: ALLOW_FAILURE_SOURCE,
+    flowGraph: allowFailureDemo as unknown as FlowGraph,
+    isReadOnly: true,
+    isHorizontal: true,
+    // allow_failure: no entry, so no badge. fail_silently: a single issue. print_to_console: several.
+    validationIssuesByTask: new Map([
+        ["fail_silently", ["commands: must not be empty"]],
+        ["print_to_console", [
+            "commands: must not be empty",
+            "runner: unsupported task runner type",
+            "timeout: must be a valid ISO 8601 duration",
+        ]],
+    ]),
+}

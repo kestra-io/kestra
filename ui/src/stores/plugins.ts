@@ -243,7 +243,7 @@ export const usePluginsStore = defineStore("plugins", () => {
     const axios = useClient()
 
     const plugin = ref<PluginComponent>()
-    const versions = ref<string[]>()
+    const versions = ref<Record<string, string[]>>({})
     const plugins = ref<Plugin[]>()
 
     const pluginsDocumentation = ref<Record<string, PluginComponent>>({})
@@ -412,8 +412,9 @@ export const usePluginsStore = defineStore("plugins", () => {
 
     async function loadVersions(options: {cls: string; commit?: boolean}): Promise<{type: string, versions: string[]}> {
         const data = await PluginsAPI.pluginVersions({cls: options.cls}) as {type: string, versions: string[]}
+        
         if (options.commit !== false) {
-            versions.value = data.versions
+            versions.value[options.cls] = data.versions
         }
 
         return data

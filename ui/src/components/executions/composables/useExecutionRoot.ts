@@ -103,6 +103,7 @@ export function useExecutionRoot() {
                 if (!flowMatchesTarget()) {
                     flowStore.flow = undefined
                     flowStore.flowGraph = undefined
+                    flowStore.invalidGraph = false
                 }
                 follow()
             }
@@ -116,6 +117,7 @@ export function useExecutionRoot() {
             if (!flowMatchesTarget()) {
                 flowStore.flow = undefined
                 flowStore.flowGraph = undefined
+                flowStore.invalidGraph = false
             }
         })
     }

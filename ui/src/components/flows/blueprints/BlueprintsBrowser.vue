@@ -103,7 +103,7 @@
 
 <script setup lang="ts">
     import {computed, onActivated, onMounted, ref, useTemplateRef, watch} from "vue"
-    import {useRoute, useRouter} from "vue-router"
+    import {useRoute, useRouter, type LocationQueryValue} from "vue-router"
 
     import Errors from "../../../components/errors/Errors.vue"
     import BlueprintCard from "./BlueprintCard.vue"
@@ -121,24 +121,26 @@
     import {editorViewTypes} from "../../../utils/constants"
     import * as Utils from "../../../utils/utils"
 
-    import type {BlueprintTag, FlowBlueprint} from "../../../stores/blueprints"
+    import type {BlueprintTag, BlueprintType, FlowBlueprint} from "../../../stores/blueprints"
 
     const SELECTED_TAG_QUERY_KEY = "filters[tags][IN]"
     const SEARCH_QUERY_KEY = "filters[q][EQUALS]"
+
+    type SearchQuery = LocationQueryValue | LocationQueryValue[]
 
     const props = withDefaults(defineProps<{
         blueprintType?: "community" | "custom";
         blueprintKind?: "flow" | "dashboard" | "app";
         embed?: boolean;
         system?: boolean;
-        tagsResponseMapper?: (tagsResponse: any[]) => Record<string, any>;
+        tagsResponseMapper?: (tagsResponse: BlueprintTag[]) => Record<string, BlueprintTag>;
     }>(), {
         blueprintType: "community",
         blueprintKind: "flow",
         embed: false,
         system: false,
-        tagsResponseMapper: (tagsResponse: any[]) =>
-            Object.fromEntries(tagsResponse.map((tag: any) => [tag.id, tag])),
+        tagsResponseMapper: (tagsResponse: BlueprintTag[]) =>
+            Object.fromEntries(tagsResponse.map((tag) => [tag.id, tag])),
     })
 
     const emit = defineEmits<{
@@ -207,7 +209,7 @@
     }
 
     function editorRoute(blueprintId: string) {
-        const additionalQuery: Record<string, any> = {}
+        const additionalQuery: {blueprintSource?: BlueprintType} = {}
         if (props.blueprintKind === "flow") {
             additionalQuery.blueprintSource = props.blueprintType
         }
@@ -250,7 +252,7 @@
     }
 
     async function loadTags(beforeLoadBlueprintType: string) {
-        const query: Record<string, any> = {}
+        const query: {q?: SearchQuery} = {}
         if (route.query[SEARCH_QUERY_KEY] ?? searchText.value) {
             query.q = route.query[SEARCH_QUERY_KEY] ?? searchText.value
         }
@@ -265,7 +267,7 @@
     }
 
     async function loadBlueprints(beforeLoadBlueprintType: string, page: number, size: number) {
-        const query: Record<string, any> = {}
+        const query: {page?: number; size?: number; q?: SearchQuery; tags?: string | string[]} = {}
         if (page) query.page = page
         if (size) query.size = size
         if (route.query[SEARCH_QUERY_KEY] || searchText.value) {

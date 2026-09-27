@@ -266,7 +266,7 @@ public class TriggerEventHandler {
      * By default (no recovery requested), missed schedules are skipped by re-computing the next evaluation date.
      */
     private TriggerState updateForReEnabledTrigger(Clock clock, TriggerState state, Flow flow,
-            AbstractTrigger trigger, @Nullable Boolean recoverMissedSchedules) {
+        AbstractTrigger trigger, @Nullable Boolean recoverMissedSchedules) {
         return switch (resolveRecoverMissedSchedules(flow, trigger, recoverMissedSchedules)) {
             // Keep the frozen past nextEvaluationDate so the scheduling loop replays each missed tick.
             case ALL -> state.getNextEvaluationDate() != null
@@ -281,7 +281,7 @@ public class TriggerEventHandler {
     }
 
     private RecoverMissedSchedules resolveRecoverMissedSchedules(Flow flow, AbstractTrigger trigger,
-            @Nullable Boolean recoverMissedSchedules) {
+        @Nullable Boolean recoverMissedSchedules) {
         if (!Boolean.TRUE.equals(recoverMissedSchedules) || !(trigger instanceof Schedulable schedulable)) {
             return RecoverMissedSchedules.NONE;
         }

@@ -153,6 +153,22 @@ export type Execution = Omit<Optional<SDKExecution, "deleted">, "taskRunList"> &
     variables?: Record<string, unknown>;
 }
 
+/** Minimum delay between two SSE snapshots applied to `execution`. */
+export const EXECUTION_UPDATE_THROTTLE_MS = 500
+
+// State history entries of the execution, its task runs and their attempts. The executor only
+// ever appends to these, so a snapshot emitted later never has fewer. There is no server-side
+// version or update timestamp on an execution to compare instead.
+function executionProgress(data: Execution): number {
+    return (data.state?.histories?.length ?? 0) + (data.taskRunList ?? []).reduce(
+        (total, taskRun) => total + (taskRun.state?.histories?.length ?? 0) + (taskRun.attempts ?? []).reduce(
+            (attempts, attempt) => attempts + (attempt.state?.histories?.length ?? 0),
+            0,
+        ),
+        0,
+    )
+}
+
 export const useExecutionsStore = defineStore("executions", () => {
     // State
     const executions = ref<Execution[] | undefined>(undefined)
@@ -316,14 +332,14 @@ export const useExecutionsStore = defineStore("executions", () => {
         return ExecutionsAPI.pauseExecutionsByQuery({filters: routeQueryToQueryFilters(options)})
     }
 
-    // Every write to `execution.value` - from a fetch, a local save response, an SSE push
-    // or a clear - goes through here and bumps this counter. A write that started
-    // asynchronously (the flow-reload branch of `throttledExecutionUpdate` below) can
-    // compare the generation it captured right after its own write against the current
-    // one to tell whether something newer landed while it was in flight, and skip if so -
-    // the one check `.cancel()` cannot provide, since `.cancel()` only stops a throttled
-    // call that has not started yet, not a promise chain already running inside one.
+    // Bumped by every write to `execution.value`, so the async flow-reload branch of
+    // throttledExecutionUpdate can tell that something else was written while it was in flight.
     let executionWriteGeneration = 0
+
+    // The server response of the last local action (a label save, a status change...). An SSE
+    // snapshot of the same execution that has not moved past it was emitted before that action
+    // and would revert it, so throttledExecutionUpdate drops it.
+    let lastLocalWrite: {id: string; progress: number} | undefined
 
     function applyExecution(data: Execution | undefined) {
         executionWriteGeneration++
@@ -348,14 +364,11 @@ export const useExecutionsStore = defineStore("executions", () => {
         })
     }
 
-    // Same hazard as loadExecution above, for a caller that already has a fresher
-    // execution in hand (e.g. SetLabels.vue's save response) rather than needing to
-    // fetch one: without cancelling it first, a throttled SSE update already queued
-    // from before this write - carrying whatever the backend had already pushed,
-    // possibly still missing what this write just applied - would land on top of it
-    // once its 500ms window elapses, silently reverting a save the user just made.
+    // For a server response to a local action (e.g. SetLabels.vue's save): a queued or late SSE
+    // snapshot from before that action must not land on top of it.
     const applyLocalExecutionUpdate = (data: Execution) => {
         throttledExecutionUpdate.cancel()
+        lastLocalWrite = {id: data.id, progress: executionProgress(data)}
         applyExecution(data)
     }
 
@@ -364,6 +377,7 @@ export const useExecutionsStore = defineStore("executions", () => {
     // execution.value right after something deliberately emptied it.
     const clearExecution = () => {
         throttledExecutionUpdate.cancel()
+        lastLocalWrite = undefined
         applyExecution(undefined)
     }
 
@@ -498,6 +512,10 @@ export const useExecutionsStore = defineStore("executions", () => {
     const route = useRoute()
 
     const throttledExecutionUpdate = throttle((parsedExecution: Execution) => {
+        if (lastLocalWrite?.id === parsedExecution.id && executionProgress(parsedExecution) <= lastLocalWrite.progress) {
+            return
+        }
+
         const flowValue = flow.value
         const needsFlowReload = !flowValue ||
             parsedExecution.flowId !== flowValue.id ||

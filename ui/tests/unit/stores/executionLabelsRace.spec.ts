@@ -11,7 +11,7 @@ vi.mock("@kestra-io/kestra-sdk/executions", () => ({
 }))
 
 import * as ExecutionsAPI from "@kestra-io/kestra-sdk/executions"
-import {useExecutionsStore, type Execution} from "../../../src/stores/executions"
+import {EXECUTION_UPDATE_THROTTLE_MS, useExecutionsStore, type Execution} from "../../../src/stores/executions"
 
 // A minimal controllable stand-in for the SDK follow stream's async iterable, so a test
 // can push events and let them settle before pushing the next one - `subscribeToExecution`
@@ -87,7 +87,7 @@ describe("executions store: SSE live-follow vs. a local write (#18766)", () => {
         await vi.advanceTimersByTimeAsync(0)
         expect(store.execution?.labels).toEqual([])
 
-        // Second SSE push, still within the same 500ms throttle window: this one
+        // Second SSE push, still within the same throttle window: this one
         // is queued for the trailing edge rather than applied right away - exactly
         // the "already queued" SSE update the fix needs to discard.
         stream.push(buildExecution())
@@ -101,7 +101,7 @@ describe("executions store: SSE live-follow vs. a local write (#18766)", () => {
 
         // Let the throttle window fully elapse. Without the fix, the queued
         // second push (no labels) would land on top of the save here.
-        await vi.advanceTimersByTimeAsync(500)
+        await vi.advanceTimersByTimeAsync(EXECUTION_UPDATE_THROTTLE_MS)
 
         expect(store.execution?.labels).toEqual([{key: "env", value: "prod"}])
     })
@@ -146,5 +146,62 @@ describe("executions store: SSE live-follow vs. a local write (#18766)", () => {
         await vi.advanceTimersByTimeAsync(0)
 
         expect(store.execution?.labels).toEqual([{key: "env", value: "prod"}])
+    })
+    test("an SSE snapshot emitted before the save but delivered after it does not revert the save", async () => {
+        const store = useExecutionsStore()
+        const stream = createControlledStream()
+        vi.mocked(ExecutionsAPI.followExecution).mockResolvedValue(
+            {stream} as unknown as Awaited<ReturnType<typeof ExecutionsAPI.followExecution>>,
+        )
+        const histories = [
+            {state: "RUNNING", date: "2026-01-01T00:00:00Z"},
+            {state: "SUCCESS", date: "2026-01-01T00:00:01Z"},
+        ]
+
+        store.followExecution({id: "execution-id"}, (s: string) => s)
+        await vi.advanceTimersByTimeAsync(0)
+
+        stream.push(buildExecution({state: {current: "SUCCESS", histories}}))
+        await vi.advanceTimersByTimeAsync(EXECUTION_UPDATE_THROTTLE_MS)
+
+        store.applyLocalExecutionUpdate(buildExecution({
+            state: {current: "SUCCESS", histories},
+            labels: [{key: "env", value: "prod"}],
+        }))
+
+        // The save cancelled the throttle, so this push takes the leading edge and is
+        // handled right away: it has to be rejected as older than the save.
+        stream.push(buildExecution({state: {current: "SUCCESS", histories}}))
+        await vi.advanceTimersByTimeAsync(0)
+        expect(store.execution?.labels).toEqual([{key: "env", value: "prod"}])
+
+        await vi.advanceTimersByTimeAsync(EXECUTION_UPDATE_THROTTLE_MS)
+        expect(store.execution?.labels).toEqual([{key: "env", value: "prod"}])
+    })
+
+    test("an SSE snapshot that moved past the save is still applied", async () => {
+        const store = useExecutionsStore()
+        const stream = createControlledStream()
+        vi.mocked(ExecutionsAPI.followExecution).mockResolvedValue(
+            {stream} as unknown as Awaited<ReturnType<typeof ExecutionsAPI.followExecution>>,
+        )
+        const running = [{state: "RUNNING", date: "2026-01-01T00:00:00Z"}]
+        const done = [...running, {state: "SUCCESS", date: "2026-01-01T00:00:01Z"}]
+
+        store.followExecution({id: "execution-id"}, (s: string) => s)
+        await vi.advanceTimersByTimeAsync(0)
+
+        store.applyLocalExecutionUpdate(buildExecution({
+            state: {current: "RUNNING", histories: running},
+            labels: [{key: "env", value: "prod"}],
+        }))
+
+        stream.push(buildExecution({
+            state: {current: "SUCCESS", histories: done},
+            labels: [{key: "env", value: "prod"}],
+        }))
+        await vi.advanceTimersByTimeAsync(0)
+
+        expect(store.execution?.state.current).toBe("SUCCESS")
     })
 })

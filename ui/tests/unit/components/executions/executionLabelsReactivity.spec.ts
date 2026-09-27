@@ -128,13 +128,13 @@ describe("execution labels stay in sync with the Overview banner after a save (#
         )
         // The bug this test guards against wasn't the label save itself - it was
         // SetLabels.vue writing the response straight to `executionsStore.execution`
-        // instead of through this action, which is what makes the write safe against
-        // a throttled SSE update already queued when the save lands (see
-        // stores/executions.ts's applyLocalExecutionUpdate). Asserting on this call is
+        // instead of through this action, which is what keeps an SSE snapshot sent
+        // before the save from reverting it (see
+        // stores/executions.ts's applySavedExecution). Asserting on this call is
         // what actually distinguishes "goes through the guarded path" from "happens to
         // render the same text" - reverting SetLabels.vue to the raw assignment fails
         // only this expectation, not the render assertion below.
-        const applyLocalExecutionUpdateSpy = vi.spyOn(store, "applyLocalExecutionUpdate")
+        const applySavedExecutionSpy = vi.spyOn(store, "applySavedExecution")
 
         const wrapper = mount(Overview, {global: globalConfig})
 
@@ -152,7 +152,7 @@ describe("execution labels stay in sync with the Overview banner after a save (#
             labels: [{key: "env", value: "prod"}],
             executionId: "execution-id",
         })
-        expect(applyLocalExecutionUpdateSpy).toHaveBeenCalledWith(updatedExecution)
+        expect(applySavedExecutionSpy).toHaveBeenCalledWith(updatedExecution)
         expect(wrapper.text()).toContain("env: prod")
     })
 })

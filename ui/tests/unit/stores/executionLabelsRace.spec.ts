@@ -60,6 +60,14 @@ function buildExecution(overrides: Record<string, unknown> = {}) {
     } as unknown as Execution
 }
 
+function followWith() {
+    const stream = createControlledStream()
+    vi.mocked(ExecutionsAPI.followExecution).mockResolvedValue(
+        {stream} as unknown as Awaited<ReturnType<typeof ExecutionsAPI.followExecution>>,
+    )
+    return stream
+}
+
 describe("executions store: SSE live-follow vs. a local write (#18766)", () => {
     beforeEach(() => {
         setActivePinia(createPinia())
@@ -147,12 +155,10 @@ describe("executions store: SSE live-follow vs. a local write (#18766)", () => {
 
         expect(store.execution?.labels).toEqual([{key: "env", value: "prod"}])
     })
+
     test("an SSE snapshot emitted before the save but delivered after it does not revert the save", async () => {
         const store = useExecutionsStore()
-        const stream = createControlledStream()
-        vi.mocked(ExecutionsAPI.followExecution).mockResolvedValue(
-            {stream} as unknown as Awaited<ReturnType<typeof ExecutionsAPI.followExecution>>,
-        )
+        const stream = followWith()
         const histories = [
             {state: "RUNNING", date: "2026-01-01T00:00:00Z"},
             {state: "SUCCESS", date: "2026-01-01T00:00:01Z"},
@@ -164,7 +170,7 @@ describe("executions store: SSE live-follow vs. a local write (#18766)", () => {
         stream.push(buildExecution({state: {current: "SUCCESS", histories}}))
         await vi.advanceTimersByTimeAsync(EXECUTION_UPDATE_THROTTLE_MS)
 
-        store.applyLocalExecutionUpdate(buildExecution({
+        store.applySavedExecution(buildExecution({
             state: {current: "SUCCESS", histories},
             labels: [{key: "env", value: "prod"}],
         }))
@@ -179,19 +185,16 @@ describe("executions store: SSE live-follow vs. a local write (#18766)", () => {
         expect(store.execution?.labels).toEqual([{key: "env", value: "prod"}])
     })
 
-    test("an SSE snapshot that moved past the save is still applied", async () => {
+    test("an SSE snapshot that moved past the save is applied, and so is everything after it", async () => {
         const store = useExecutionsStore()
-        const stream = createControlledStream()
-        vi.mocked(ExecutionsAPI.followExecution).mockResolvedValue(
-            {stream} as unknown as Awaited<ReturnType<typeof ExecutionsAPI.followExecution>>,
-        )
+        const stream = followWith()
         const running = [{state: "RUNNING", date: "2026-01-01T00:00:00Z"}]
         const done = [...running, {state: "SUCCESS", date: "2026-01-01T00:00:01Z"}]
 
         store.followExecution({id: "execution-id"}, (s: string) => s)
         await vi.advanceTimersByTimeAsync(0)
 
-        store.applyLocalExecutionUpdate(buildExecution({
+        store.applySavedExecution(buildExecution({
             state: {current: "RUNNING", histories: running},
             labels: [{key: "env", value: "prod"}],
         }))
@@ -201,7 +204,68 @@ describe("executions store: SSE live-follow vs. a local write (#18766)", () => {
             labels: [{key: "env", value: "prod"}],
         }))
         await vi.advanceTimersByTimeAsync(0)
-
         expect(store.execution?.state.current).toBe("SUCCESS")
+
+        // The save threshold is gone once a snapshot passed it.
+        stream.push(buildExecution({
+            state: {current: "RUNNING", histories: running},
+            labels: [{key: "env", value: "dev"}],
+        }))
+        await vi.advanceTimersByTimeAsync(EXECUTION_UPDATE_THROTTLE_MS)
+        expect(store.execution?.labels).toEqual([{key: "env", value: "dev"}])
+    })
+
+    test("a newer SSE snapshot with fewer task runs than the save is applied", async () => {
+        const store = useExecutionsStore()
+        const stream = followWith()
+        const taskRun = (id: string, histories: {state: string; date: string}[]) => ({
+            id,
+            taskId: id,
+            state: {current: histories[histories.length - 1].state, histories},
+        })
+
+        store.followExecution({id: "execution-id"}, (s: string) => s)
+        await vi.advanceTimersByTimeAsync(0)
+
+        // A loop iteration or a retry removes task runs, and adds a new state entry.
+        store.applySavedExecution(buildExecution({
+            state: {current: "RUNNING", histories: [{state: "RUNNING", date: "2026-01-01T00:00:00Z"}]},
+            taskRunList: [
+                taskRun("a", [{state: "RUNNING", date: "2026-01-01T00:00:01Z"}, {state: "SUCCESS", date: "2026-01-01T00:00:02Z"}]),
+                taskRun("b", [{state: "RUNNING", date: "2026-01-01T00:00:02Z"}, {state: "SUCCESS", date: "2026-01-01T00:00:03Z"}]),
+                taskRun("c", [{state: "RUNNING", date: "2026-01-01T00:00:03Z"}, {state: "SUCCESS", date: "2026-01-01T00:00:04Z"}]),
+            ],
+        }))
+
+        stream.push(buildExecution({
+            state: {current: "RUNNING", histories: [{state: "RUNNING", date: "2026-01-01T00:00:00Z"}]},
+            taskRunList: [
+                taskRun("a", [{state: "RUNNING", date: "2026-01-01T00:00:01Z"}, {state: "RUNNING", date: "2026-01-01T00:00:05Z"}]),
+            ],
+        }))
+        await vi.advanceTimersByTimeAsync(0)
+
+        expect(store.execution?.taskRunList).toHaveLength(1)
+    })
+
+    test("an execution applied without a save does not drop the next SSE snapshot", async () => {
+        const store = useExecutionsStore()
+        const stream = followWith()
+        const histories = [{state: "SUCCESS", date: "2026-01-01T00:00:01Z"}]
+
+        // A→B→A: a save threshold on A must not outlive leaving A.
+        store.followExecution({id: "execution-id"}, (s: string) => s)
+        store.applySavedExecution(buildExecution({state: {current: "SUCCESS", histories}, labels: [{key: "env", value: "prod"}]}))
+        store.followExecution({id: "other-execution"}, (s: string) => s)
+        store.followExecution({id: "execution-id"}, (s: string) => s)
+        await vi.advanceTimersByTimeAsync(0)
+
+        // A plain read (SubFlowLink, PlaygroundLog, waitForStateChange) sets no threshold.
+        store.applyLocalExecutionUpdate(buildExecution({state: {current: "SUCCESS", histories}}))
+
+        stream.push(buildExecution({state: {current: "SUCCESS", histories}, labels: [{key: "env", value: "dev"}]}))
+        await vi.advanceTimersByTimeAsync(0)
+
+        expect(store.execution?.labels).toEqual([{key: "env", value: "dev"}])
     })
 })

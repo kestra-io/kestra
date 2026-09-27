@@ -156,17 +156,24 @@ export type Execution = Omit<Optional<SDKExecution, "deleted">, "taskRunList"> &
 /** Minimum delay between two SSE snapshots applied to `execution`. */
 export const EXECUTION_UPDATE_THROTTLE_MS = 500
 
-// State history entries of the execution, its task runs and their attempts. The executor only
-// ever appends to these, so a snapshot emitted later never has fewer. There is no server-side
-// version or update timestamp on an execution to compare instead.
-function executionProgress(data: Execution): number {
-    return (data.state?.histories?.length ?? 0) + (data.taskRunList ?? []).reduce(
-        (total, taskRun) => total + (taskRun.state?.histories?.length ?? 0) + (taskRun.attempts ?? []).reduce(
-            (attempts, attempt) => attempts + (attempt.state?.histories?.length ?? 0),
-            0,
-        ),
-        0,
-    )
+// Newest state-history date across the execution, its task runs and their attempts. Task runs can
+// be removed (retries, restarts, loop iterations) but every such change also adds a new state
+// entry, so this only moves forward. There is no server-side version or update timestamp on an
+// execution to compare instead. Dates come from executor and worker clocks, so skew between
+// nodes can make a newer snapshot look older; the guard below only acts right after a save.
+function latestStateDate(data: Execution): number {
+    const histories = [
+        ...(data.state?.histories ?? []),
+        ...(data.taskRunList ?? []).flatMap(taskRun => [
+            ...(taskRun.state?.histories ?? []),
+            ...(taskRun.attempts ?? []).flatMap(attempt => attempt.state?.histories ?? []),
+        ]),
+    ]
+    // reduce, not Math.max(...): a large execution can hold more entries than a call takes arguments.
+    return histories.reduce((latest, history) => {
+        const date = Date.parse(history.date)
+        return date > latest ? date : latest
+    }, Number.NEGATIVE_INFINITY)
 }
 
 export const useExecutionsStore = defineStore("executions", () => {
@@ -336,13 +343,15 @@ export const useExecutionsStore = defineStore("executions", () => {
     // throttledExecutionUpdate can tell that something else was written while it was in flight.
     let executionWriteGeneration = 0
 
-    // The server response of the last local action (a label save, a status change...). An SSE
-    // snapshot of the same execution that has not moved past it was emitted before that action
-    // and would revert it, so throttledExecutionUpdate drops it.
-    let lastLocalWrite: {id: string; progress: number} | undefined
+    // Set by applySavedExecution. An SSE snapshot of the same execution that has not moved past the
+    // save was emitted before it and would revert it, so throttledExecutionUpdate drops it. Cleared
+    // by any other write and by the first snapshot that passes: the follow stream is ordered, so
+    // nothing older can come after it.
+    let lastSave: {id: string; latestStateDate: number} | undefined
 
     function applyExecution(data: Execution | undefined) {
         executionWriteGeneration++
+        lastSave = undefined
         execution.value = data
     }
 
@@ -364,12 +373,18 @@ export const useExecutionsStore = defineStore("executions", () => {
         })
     }
 
-    // For a server response to a local action (e.g. SetLabels.vue's save): a queued or late SSE
-    // snapshot from before that action must not land on top of it.
+    // For an execution the caller already has in hand: a throttled SSE update queued before it
+    // must not land on top of it.
     const applyLocalExecutionUpdate = (data: Execution) => {
         throttledExecutionUpdate.cancel()
-        lastLocalWrite = {id: data.id, progress: executionProgress(data)}
         applyExecution(data)
+    }
+
+    // For the server response to a change made on this page (e.g. SetLabels.vue's save): on top of
+    // the above, an SSE snapshot emitted before the save but delivered after it is dropped.
+    const applySavedExecution = (data: Execution) => {
+        applyLocalExecutionUpdate(data)
+        lastSave = {id: data.id, latestStateDate: latestStateDate(data)}
     }
 
     // Counterpart to applyLocalExecutionUpdate for the "nothing to show" case (route left,
@@ -377,7 +392,6 @@ export const useExecutionsStore = defineStore("executions", () => {
     // execution.value right after something deliberately emptied it.
     const clearExecution = () => {
         throttledExecutionUpdate.cancel()
-        lastLocalWrite = undefined
         applyExecution(undefined)
     }
 
@@ -512,7 +526,7 @@ export const useExecutionsStore = defineStore("executions", () => {
     const route = useRoute()
 
     const throttledExecutionUpdate = throttle((parsedExecution: Execution) => {
-        if (lastLocalWrite?.id === parsedExecution.id && executionProgress(parsedExecution) <= lastLocalWrite.progress) {
+        if (lastSave?.id === parsedExecution.id && latestStateDate(parsedExecution) <= lastSave.latestStateDate) {
             return
         }
 
@@ -543,7 +557,7 @@ export const useExecutionsStore = defineStore("executions", () => {
                 }
             })
         }
-    }, 500)
+    }, EXECUTION_UPDATE_THROTTLE_MS)
 
     /**
      * Subscribe to an execution's live updates through the SDK follow stream.
@@ -984,6 +998,7 @@ export const useExecutionsStore = defineStore("executions", () => {
         queryPauseExecution,
         loadExecution,
         applyLocalExecutionUpdate,
+        applySavedExecution,
         clearExecution,
         findExecutions,
         findDistinctFieldValues,

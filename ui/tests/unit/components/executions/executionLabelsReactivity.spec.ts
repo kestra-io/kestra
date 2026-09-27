@@ -1,18 +1,27 @@
 import {beforeEach, describe, expect, test, vi} from "vitest"
-import {computed, defineComponent, h, reactive} from "vue"
+import {reactive} from "vue"
 import {mount, flushPromises} from "@vue/test-utils"
 import {createPinia, setActivePinia} from "pinia"
 import {createI18n} from "vue-i18n"
 
-import Banner from "../../../../src/components/executions/overview/components/Banner.vue"
+import Overview from "../../../../src/components/executions/overview/Overview.vue"
 import {useExecutionsStore} from "../../../../src/stores/executions"
 import type {Execution} from "../../../../src/stores/executions"
 
 // https://github.com/kestra-io/kestra/issues/18766 - "Modifying execution labels
-// doesn't reload Overview". This exercises the exact chain the bug report describes:
-// SetLabels' save handler -> executionsStore.execution reassignment -> the Overview
-// tab's `computed(() => store.execution)` -> the `execution` prop into Banner -> the
-// rendered label list - with no manual page refresh in between.
+// doesn't reload Overview". Drives the real Overview.vue: SetLabels' save handler ->
+// the executions store -> Overview's Banner -> the rendered label list, with no
+// manual page refresh in between.
+
+vi.mock("vue-router", async (importOriginal) => ({
+    ...await importOriginal<typeof import("vue-router")>(),
+    useRoute: () => ({params: {id: "execution-id"}, query: {}}),
+}))
+
+// The graph, the error alert and the prev/next navigation are not part of this chain.
+vi.mock("../../../../src/components/executions/Topology.vue", () => ({default: {template: "<div />"}}))
+vi.mock("../../../../src/components/executions/overview/components/main/ErrorAlert.vue", () => ({default: {template: "<div />"}}))
+vi.mock("../../../../src/components/executions/overview/components/main/PrevNext.vue", () => ({default: {template: "<div />"}}))
 
 vi.mock("override/stores/auth", () => ({
     useAuthStore: () => ({user: {isAllowed: () => true}}),
@@ -42,6 +51,8 @@ const globalConfig = {
         KsTooltip: {template: "<div><slot /></div>"},
         KsIconButton: {template: "<button v-bind=\"$attrs\"><slot /></button>"},
         KsButton: {template: "<button v-bind=\"$attrs\"><slot /></button>"},
+        KsCard: {template: "<div><slot /></div>"},
+        KsNoData: true,
         RunTimeline: true,
         Duration: true,
         ChangeExecutionStatus: {
@@ -100,17 +111,6 @@ function buildExecution(labels: {key: string; value: string}[] = []): Execution 
     } as Execution
 }
 
-// Mirrors ui/src/components/executions/overview/Overview.vue's own
-// `const execution = computed(() => store.execution)` -> `<Banner :execution />` -
-// i.e. the exact reactive path between the store and the rendered banner.
-const OverviewLike = defineComponent({
-    setup() {
-        const store = useExecutionsStore()
-        const execution = computed(() => store.execution)
-        return () => (execution.value ? h(Banner, {execution: execution.value}) : null)
-    },
-})
-
 describe("execution labels stay in sync with the Overview banner after a save (#18766)", () => {
     beforeEach(() => {
         setActivePinia(createPinia())
@@ -136,7 +136,7 @@ describe("execution labels stay in sync with the Overview banner after a save (#
         // only this expectation, not the render assertion below.
         const applyLocalExecutionUpdateSpy = vi.spyOn(store, "applyLocalExecutionUpdate")
 
-        const wrapper = mount(OverviewLike, {global: globalConfig})
+        const wrapper = mount(Overview, {global: globalConfig})
 
         expect(wrapper.text()).not.toContain("env: prod")
 

@@ -3,7 +3,9 @@ package io.kestra.webserver.services;
 import java.time.Duration;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Optional;
 import java.util.concurrent.TimeoutException;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 import io.kestra.core.async.AsyncOperationProcessedEvent;
@@ -14,7 +16,7 @@ import io.kestra.core.exceptions.ValidationErrorException;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.executions.ExecutionKilled;
 import io.kestra.core.models.executions.ExecutionKilledTrigger;
-import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.TriggerId;
 import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.QueueException;
@@ -29,6 +31,8 @@ import io.kestra.core.scheduler.events.TriggerDeleted;
 import io.kestra.core.scheduler.model.TriggerState;
 import io.kestra.core.scheduler.model.TriggerType;
 import io.kestra.core.scheduler.queue.TriggerEventQueue;
+import io.kestra.core.server.AsyncOperationListener;
+import io.kestra.core.server.AsyncOperationType;
 import io.kestra.core.services.AsyncOperationWaiter;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.webserver.models.api.ApiAsyncOperationResponse;
@@ -56,6 +60,7 @@ public class TriggerStateService {
     private final BroadcastQueueInterface<ExecutionKilled> executionKilledQueue;
     private final AsyncOperationWaiter asyncOperationWaiter;
     private final Duration asyncWaitTimeout;
+    private final List<AsyncOperationListener> asyncOperationListeners;
 
     @Inject
     public TriggerStateService(final TriggerRepositoryInterface triggerRepository,
@@ -63,13 +68,15 @@ public class TriggerStateService {
         final TriggerEventQueue triggerEventQueue,
         final BroadcastQueueInterface<ExecutionKilled> executionKilledQueue,
         final AsyncOperationWaiter asyncOperationWaiter,
-        final AsyncOperationsConfiguration asyncOperationsConfiguration) {
+        final AsyncOperationsConfiguration asyncOperationsConfiguration,
+        final List<AsyncOperationListener> asyncOperationListeners) {
         this.triggerRepository = triggerRepository;
         this.flowRepository = flowRepository;
         this.triggerEventQueue = triggerEventQueue;
         this.executionKilledQueue = executionKilledQueue;
         this.asyncOperationWaiter = asyncOperationWaiter;
         this.asyncWaitTimeout = asyncOperationsConfiguration.waitTimeout();
+        this.asyncOperationListeners = asyncOperationListeners;
     }
 
     /**
@@ -114,7 +121,8 @@ public class TriggerStateService {
             .filter(this::isFlowBackedTrigger)
             .toList();
         return submitBatch(
-            lockedIds, (id, operationId) -> triggerEventQueue.send(new ResetTrigger(id).withOperationId(operationId))
+            lockedIds, (id, operationId) -> triggerEventQueue.send(new ResetTrigger(id).withOperationId(operationId)),
+            AsyncOperationType.TRIGGER_UNLOCK
         );
     }
 
@@ -135,7 +143,8 @@ public class TriggerStateService {
             .blockOptional()
             .orElse(List.of());
         return submitBatch(
-            lockedIds, (id, operationId) -> triggerEventQueue.send(new ResetTrigger(id).withOperationId(operationId))
+            lockedIds, (id, operationId) -> triggerEventQueue.send(new ResetTrigger(id).withOperationId(operationId)),
+            AsyncOperationType.TRIGGER_UNLOCK
         );
     }
 
@@ -177,7 +186,7 @@ public class TriggerStateService {
      * Creates a backfill and waits for the scheduler to acknowledge.
      *
      * @throws ValidationErrorException if the backfill window is empty, which the scheduler would otherwise
-     *                                  accept and then immediately discard, or if the trigger cannot be backfilled.
+     *         accept and then immediately discard, or if the trigger cannot be backfilled.
      * @throws NotFoundException if the trigger does not exist.
      * @throws ConflictException if the backfill cannot be created.
      */
@@ -213,7 +222,8 @@ public class TriggerStateService {
      */
     public ApiAsyncOperationResponse pauseAllBackfillsByIds(List<TriggerId> triggers) {
         return submitExistingBatch(
-            triggers, (id, operationId) -> triggerEventQueue.send(new SetPauseBackfillTrigger(id, true).withOperationId(operationId))
+            triggers, (id, operationId) -> triggerEventQueue.send(new SetPauseBackfillTrigger(id, true).withOperationId(operationId)),
+            AsyncOperationType.BACKFILL_PAUSE
         );
     }
 
@@ -222,7 +232,8 @@ public class TriggerStateService {
      */
     public ApiAsyncOperationResponse pauseAllBackfillsMatching(String tenant, List<QueryFilter> filters) {
         return submitMatching(
-            tenant, filters, (id, operationId) -> triggerEventQueue.send(new SetPauseBackfillTrigger(id, true).withOperationId(operationId))
+            tenant, filters, (id, operationId) -> triggerEventQueue.send(new SetPauseBackfillTrigger(id, true).withOperationId(operationId)),
+            AsyncOperationType.BACKFILL_PAUSE
         );
     }
 
@@ -231,7 +242,8 @@ public class TriggerStateService {
      */
     public ApiAsyncOperationResponse resumeAllBackfillsByIds(List<TriggerId> triggers) {
         return submitExistingBatch(
-            triggers, (id, operationId) -> triggerEventQueue.send(new SetPauseBackfillTrigger(id, false).withOperationId(operationId))
+            triggers, (id, operationId) -> triggerEventQueue.send(new SetPauseBackfillTrigger(id, false).withOperationId(operationId)),
+            AsyncOperationType.BACKFILL_RESUME
         );
     }
 
@@ -240,7 +252,8 @@ public class TriggerStateService {
      */
     public ApiAsyncOperationResponse resumeAllBackfillsMatching(String tenant, List<QueryFilter> filters) {
         return submitMatching(
-            tenant, filters, (id, operationId) -> triggerEventQueue.send(new SetPauseBackfillTrigger(id, false).withOperationId(operationId))
+            tenant, filters, (id, operationId) -> triggerEventQueue.send(new SetPauseBackfillTrigger(id, false).withOperationId(operationId)),
+            AsyncOperationType.BACKFILL_RESUME
         );
     }
 
@@ -265,7 +278,8 @@ public class TriggerStateService {
      */
     public ApiAsyncOperationResponse deleteAllBackfillsByIds(List<TriggerId> triggers) {
         return submitExistingBatch(
-            triggers, (id, operationId) -> triggerEventQueue.send(new DeleteBackfillTrigger(id).withOperationId(operationId))
+            triggers, (id, operationId) -> triggerEventQueue.send(new DeleteBackfillTrigger(id).withOperationId(operationId)),
+            AsyncOperationType.BACKFILL_DELETE
         );
     }
 
@@ -274,7 +288,8 @@ public class TriggerStateService {
      */
     public ApiAsyncOperationResponse deleteAllBackfillsMatching(String tenant, List<QueryFilter> filters) {
         return submitMatching(
-            tenant, filters, (id, operationId) -> triggerEventQueue.send(new DeleteBackfillTrigger(id).withOperationId(operationId))
+            tenant, filters, (id, operationId) -> triggerEventQueue.send(new DeleteBackfillTrigger(id).withOperationId(operationId)),
+            AsyncOperationType.BACKFILL_DELETE
         );
     }
 
@@ -298,7 +313,8 @@ public class TriggerStateService {
      */
     public ApiAsyncOperationResponse deleteAllByIds(List<TriggerId> triggers) {
         return submitExistingBatch(
-            triggers, (id, operationId) -> triggerEventQueue.send(new TriggerDeleted(id).withOperationId(operationId))
+            triggers, (id, operationId) -> triggerEventQueue.send(new TriggerDeleted(id).withOperationId(operationId)),
+            AsyncOperationType.TRIGGER_DELETE
         );
     }
 
@@ -307,7 +323,8 @@ public class TriggerStateService {
      */
     public ApiAsyncOperationResponse deleteAllMatching(String tenant, List<QueryFilter> filters) {
         return submitMatching(
-            tenant, filters, (id, operationId) -> triggerEventQueue.send(new TriggerDeleted(id).withOperationId(operationId))
+            tenant, filters, (id, operationId) -> triggerEventQueue.send(new TriggerDeleted(id).withOperationId(operationId)),
+            AsyncOperationType.TRIGGER_DELETE
         );
     }
 
@@ -315,7 +332,7 @@ public class TriggerStateService {
      * Enables or disables a trigger and waits for the scheduler to acknowledge.
      *
      * @param recoverMissedSchedules when {@code true}, missed schedules are recovered on enable according to the
-     *                               trigger's own configuration; {@code null} or {@code false} means they are skipped.
+     *        trigger's own configuration; {@code null} or {@code false} means they are skipped.
      * @throws NotFoundException if the flow or trigger does not exist.
      * @throws ConflictException if the change failed.
      */
@@ -345,7 +362,8 @@ public class TriggerStateService {
             })
             .toList();
         return submitBatch(
-            toggleable, (id, operationId) -> triggerEventQueue.send(new SetDisableTrigger(id, disabled, recoverMissedSchedules).withOperationId(operationId))
+            toggleable, (id, operationId) -> triggerEventQueue.send(new SetDisableTrigger(id, disabled, recoverMissedSchedules).withOperationId(operationId)),
+            disabled ? AsyncOperationType.TRIGGER_DISABLE : AsyncOperationType.TRIGGER_ENABLE
         );
     }
 
@@ -369,6 +387,7 @@ public class TriggerStateService {
             .reduce(Integer::sum)
             .blockOptional()
             .orElse(0);
+        asyncOperationListeners.forEach(listener -> listener.onAsyncOperationCreated(operationId, disabled ? AsyncOperationType.TRIGGER_DISABLE : AsyncOperationType.TRIGGER_ENABLE, count));
         return new ApiAsyncOperationResponse(operationId, count);
     }
 
@@ -383,10 +402,12 @@ public class TriggerStateService {
         }
 
         if (backfill.end() != null && !backfill.end().isAfter(backfill.start())) {
-            throw new ValidationErrorException(List.of(
-                "The backfill end date must be after its start date, but got start '%s' and end '%s'."
-                    .formatted(backfill.start(), backfill.end())
-            ));
+            throw new ValidationErrorException(
+                List.of(
+                    "The backfill end date must be after its start date, but got start '%s' and end '%s'."
+                        .formatted(backfill.start(), backfill.end())
+                )
+            );
         }
     }
 
@@ -397,10 +418,12 @@ public class TriggerStateService {
      */
     private static void validateBackfillable(TriggerId triggerId, TriggerState state) {
         if (TriggerType.POLLING.equals(state.getType()) || TriggerType.REALTIME.equals(state.getType())) {
-            throw new ValidationErrorException(List.of(
-                "Backfills are only supported on schedule triggers, but trigger %s is '%s'."
-                    .formatted(triggerId, state.getType())
-            ));
+            throw new ValidationErrorException(
+                List.of(
+                    "Backfills are only supported on schedule triggers, but trigger %s is '%s'."
+                        .formatted(triggerId, state.getType())
+                )
+            );
         }
     }
 
@@ -419,13 +442,17 @@ public class TriggerStateService {
     }
 
     private void validateToggleable(TriggerId triggerId) throws NotFoundException {
-        Flow flow = flowRepository.findById(triggerId.getTenantId(), triggerId.getNamespace(), triggerId.getFlowId())
-            .orElseThrow(() -> new NotFoundException("Flow not found for trigger: %s".formatted(triggerId)));
-
-        flow.getTriggers().stream()
-            .filter(t -> t.getId().equals(triggerId.getTriggerId()))
-            .findFirst()
+        findTriggerDefinition(triggerId)
             .orElseThrow(() -> new NotFoundException("Trigger not found: %s".formatted(triggerId)));
+    }
+
+    private Optional<AbstractTrigger> findTriggerDefinition(TriggerId triggerId) {
+        return flowRepository.findById(triggerId.getTenantId(), triggerId.getNamespace(), triggerId.getFlowId())
+            .flatMap(
+                flow -> flow.getTriggers().stream()
+                    .filter(t -> t.getId().equals(triggerId.getTriggerId()))
+                    .findFirst()
+            );
     }
 
     /**
@@ -440,28 +467,29 @@ public class TriggerStateService {
         }
     }
 
-    private ApiAsyncOperationResponse submitExistingBatch(List<TriggerId> triggers, java.util.function.BiConsumer<TriggerId, String> emit) {
+    private ApiAsyncOperationResponse submitExistingBatch(List<TriggerId> triggers, BiConsumer<TriggerId, String> emit, AsyncOperationType operationType) {
         List<TriggerId> existing = triggers.stream()
             .filter(id -> triggerRepository.findByIdWithoutAcl(id).isPresent())
             .toList();
-        return submitBatch(existing, emit);
+        return submitBatch(existing, emit, operationType);
     }
 
-    private ApiAsyncOperationResponse submitBatch(List<TriggerId> triggers, java.util.function.BiConsumer<TriggerId, String> emit) {
+    private ApiAsyncOperationResponse submitBatch(List<TriggerId> triggers, BiConsumer<TriggerId, String> emit, AsyncOperationType operationType) {
         String operationId = IdUtils.create();
+        asyncOperationListeners.forEach(listener -> listener.onAsyncOperationCreated(operationId, operationType, triggers.size()));
         for (TriggerId id : triggers) {
             emit.accept(id, operationId);
         }
         return new ApiAsyncOperationResponse(operationId, triggers.size());
     }
 
-    private ApiAsyncOperationResponse submitMatching(String tenant, List<QueryFilter> filters, java.util.function.BiConsumer<TriggerId, String> emit) {
+    private ApiAsyncOperationResponse submitMatching(String tenant, List<QueryFilter> filters, BiConsumer<TriggerId, String> emit, AsyncOperationType operationType) {
         List<TriggerId> ids = triggerRepository.find(tenant, filters)
             .map(TriggerId::of)
             .collectList()
             .blockOptional()
             .orElse(List.of());
-        return submitBatch(ids, emit);
+        return submitBatch(ids, emit, operationType);
     }
 
     /**

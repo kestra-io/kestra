@@ -6,6 +6,8 @@ import {Meta, StoryObj} from "@storybook/vue3-vite";
 import {vueRouter} from "storybook-vue3-router";
 import {SCHEMA_DEFINITIONS_INJECTION_KEY} from "../../../../../../src/components/no-code/injectionKeys";
 
+type TestableEditor = Element & {__setValueInTests: (value: string) => void};
+
 const meta: Meta<typeof TaskDict> = {
     title: "components/nocode/TaskDict",
     component: TaskDict,
@@ -71,7 +73,7 @@ export const TestDoubleKey: Story = {
         // find the monaco editor and type in the value
         const monacoEditor = await waitFor(async function monacoInit() {
             const line = await canvas.findByTestId("task-dict-item-key2-3")
-            const mon = line?.querySelector(".ks-monaco-editor") as any;
+            const mon = line?.querySelector<TestableEditor>(".ks-monaco-editor");
             if (!mon?.__setValueInTests) {
                 if(!line)
                     throw new Error("Dict line not found");

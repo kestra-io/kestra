@@ -17,10 +17,9 @@
     defineOptions({name: "Dot", inheritAttrs: false})
 
     const {data, sourcePosition, targetPosition} = defineProps<{
-        data: any;
-        sourcePosition: Position;
-        targetPosition: Position;
-        label?: string;
+        data: {unused?: boolean; node: {type: string; branchType?: string}};
+        sourcePosition?: Position;
+        targetPosition?: Position;
     }>()
 
     const classes = computed(() => ({

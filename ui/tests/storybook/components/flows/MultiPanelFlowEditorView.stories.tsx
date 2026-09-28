@@ -4,8 +4,8 @@ import MultiPanelFlowEditorView from "../../../../src/components/flows/MultiPane
 import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils";
 import allowFailureDemo from "../../../fixtures/flowgraphs/allow-failure-demo.json";
 import flowSchema from "../../../../src/stores/flow-schema.json";
-import {setMockClient} from "@kestra-io/kestra-sdk"
-import {mockClientFallback} from "../../../../.storybook/apiMock";
+import {setMockClient, type AxiosLikeClient} from "@kestra-io/kestra-sdk"
+import {mockClientFallback, mockResponse} from "../../../../.storybook/apiMock";
 import {useFlowStore} from "../../../../src/stores/flow";
 
 
@@ -30,30 +30,30 @@ export default {
 
 const Template: StoryFn<{flow: string}> = (args) => ({
     setup() {
-        const axios: any = {}
+        const axios: Partial<AxiosLikeClient> = {}
         const flowStore = useFlowStore()
-        axios.get = async (uri: string) => {
+        axios.get = async <T,>(uri: string) => {
             if (uri.endsWith("/plugins")) {
-                return {data: []}
+                return mockResponse<T>([])
             }
             if (uri.endsWith("/flow")) {
-                return {data: flowSchema}
+                return mockResponse<T>(flowSchema)
             }
             if (uri.endsWith("/distinct-namespaces")) {
-                return {data: ["sanitychecks.flows.blueprints", "tutorial"]}
+                return mockResponse<T>(["sanitychecks.flows.blueprints", "tutorial"])
             }
             // Anything this story doesn't answer itself falls back to the shared table in
             // .storybook/apiMock.ts, which reports the route if nothing there covers it either.
-            return mockClientFallback("GET", uri)
+            return mockClientFallback<T>("GET", uri)
         }
-        axios.post = async (uri: string, data?: unknown) => {
+        axios.post = async <T,>(uri: string, data?: unknown) => {
             if (uri.endsWith("/graph")) {
-                return {data: allowFailureDemo}
+                return mockResponse<T>(allowFailureDemo)
             }
             if (uri.endsWith("/validate")) {
-                return {data: {}}
+                return mockResponse<T>({})
             }
-            return mockClientFallback("POST", uri, data)
+            return mockClientFallback<T>("POST", uri, data)
         }
         setMockClient(axios);
 

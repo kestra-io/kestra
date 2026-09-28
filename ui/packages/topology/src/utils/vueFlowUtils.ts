@@ -2,7 +2,7 @@ import {MarkerType, Position, useVueFlow} from "@vue-flow/core"
 import type {GraphNode, GraphEdge, Elements} from "@vue-flow/core"
 import * as dagre from "dagre"
 import * as Utils from "./utils"
-import {CLUSTER_PREFIX, NODE_SIZES} from "./constants"
+import {CLUSTER_PREFIX, DAGRE_RANK_SEP, NODE_SIZES} from "./constants"
 import {isDeepEqual} from "@kestra-io/design-system"
 
 const TRIGGERS_NODE_UID = "root.Triggers"
@@ -40,6 +40,7 @@ export interface GraphExecution {
 
 export interface MinimalNode {
     unused?: boolean;
+    isFlowableLane?: boolean;
     executionId?: string;
     branchType?: BranchType;
     uid: string;
@@ -181,27 +182,29 @@ export function generateDagreGraph(
         width: widthFn(node),
         height: heightFn(node),
     }),
-    flowableGateUids: Set<string> = new Set(),
 ) {
     const dagreGraph = new dagre.graphlib.Graph({compound: true})
     dagreGraph.setDefaultEdgeLabel(() => ({}))
-    dagreGraph.setGraph({rankdir: isHorizontal ? "LR" : "TB"})
+    const laneHeaders = (flowGraph.clusters ?? []).length > 0
+    dagreGraph.setGraph({
+        rankdir: isHorizontal ? "LR" : "TB",
+        ranksep: laneHeaders && !isHorizontal
+            ? DAGRE_RANK_SEP + NODE_SIZES.LANE_HEADER_HEIGHT
+            : DAGRE_RANK_SEP,
+    })
 
     for (const node of flowGraph.nodes) {
         if (!hiddenNodes.includes(node.uid)) {
-            const dimensions = flowableGateUids.has(node.uid)
-                ? {width: NODE_SIZES.DOT_WIDTH, height: NODE_SIZES.DOT_HEIGHT}
-                : getNodeDimensions(node, getNodeWidth, getNodeHeight)
-            dagreGraph.setNode(node.uid, dimensions)
+            dagreGraph.setNode(node.uid, getNodeDimensions(node, getNodeWidth, getNodeHeight))
         }
     }
 
     for (const cluster of flowGraph.clusters || []) {
         const nodeUid = cluster.cluster.uid.replace(CLUSTER_PREFIX, "")
         const absorbedByParent = edgeReplacer[cluster.cluster.uid] && edgeReplacer[cluster.cluster.uid] !== nodeUid
-        
+
         if (collapsed.has(nodeUid) && !absorbedByParent) {
-            const node = {uid: nodeUid, type: "collapsedcluster"}
+            const node = {uid: nodeUid, type: "collapsedcluster", isFlowableLane: isTrueFlowableCluster(cluster.cluster)}
             const dimensions = getNodeDimensions(node, getNodeWidth, getNodeHeight)
             dagreGraph.setNode(nodeUid, dimensions)
             clusterToNode.push(node)
@@ -268,7 +271,7 @@ export function buildEffectiveGetNodeDimensions(
             ? override(node, getNodeWidthFn, getNodeHeightFn)
             : {width: getNodeWidthFn(node), height: getNodeHeightFn(node)}
 
-        if (hasExecution && (isTaskNode(node) || isTriggerNode(node) || isCustomNode(node))) {
+        if (hasExecution && (isTaskNode(node) || isTriggerNode(node) || isCustomNode(node) || isCollapsedLane(node))) {
             dimensions.width = NODE_SIZES.TASK_WIDTH_EXECUTION
         }
 
@@ -281,21 +284,23 @@ export function getNodeWidth(node: MinimalNode) {
         ? NODE_SIZES.TRIGGER_WIDTH
         : isTaskNode(node) || isCustomNode(node)
           ? NODE_SIZES.TASK_WIDTH
-          : isCollapsedCluster(node)
-            ? NODE_SIZES.COLLAPSED_CLUSTER_WIDTH
-            : NODE_SIZES.DOT_WIDTH
+          : isCollapsedLane(node)
+            ? NODE_SIZES.TASK_WIDTH
+            : isCollapsedCluster(node)
+              ? NODE_SIZES.COLLAPSED_CLUSTER_WIDTH
+              : NODE_SIZES.DOT_WIDTH
 }
 
-// A trigger keeps its own, unchanged footprint — TASK_HEIGHT's +24 belongs to the task anatomy
-// this issue adds (type line, reserved duration-bar slot), neither of which a trigger node has.
 export function getNodeHeight(node: MinimalNode) {
     return isTriggerNode(node)
         ? NODE_SIZES.TRIGGER_HEIGHT
         : isTaskNode(node)
           ? NODE_SIZES.TASK_HEIGHT
-          : isCollapsedCluster(node)
-            ? NODE_SIZES.COLLAPSED_CLUSTER_HEIGHT
-            : NODE_SIZES.DOT_HEIGHT
+          : isCollapsedLane(node)
+            ? NODE_SIZES.TASK_HEIGHT
+            : isCollapsedCluster(node)
+              ? NODE_SIZES.COLLAPSED_CLUSTER_HEIGHT
+              : NODE_SIZES.DOT_HEIGHT
 }
 
 export function isTaskNode(node: MinimalNode) {
@@ -312,6 +317,10 @@ export function isCustomNode(node: MinimalNode) {
 
 export function isCollapsedCluster(node: MinimalNode) {
     return node.type === "collapsedcluster"
+}
+
+export function isCollapsedLane(node: MinimalNode) {
+    return isCollapsedCluster(node) && Boolean(node.isFlowableLane)
 }
 
 export function replaceIfCollapsed(
@@ -401,14 +410,22 @@ export function isTrueFlowableCluster(cluster: Cluster): boolean {
         && cluster.uid !== CLUSTER_PREFIX + TRIGGERS_NODE_UID
 }
 
-export function getFlowableGateUids(clusters: FlowGraph["clusters"]): Set<string> {
-    const uids = new Set<string>()
+/** Maps each flowable's gate node onto its lane's own root dot, so the gate — already drawn as
+ *  the lane header — stops rendering as a second blank dot in the same gap. A collapsed lane is
+ *  excluded: there that uid is what the "collapsedcluster" placeholder renders as. */
+export function getFlowableGateAliases(
+    clusters: FlowGraph["clusters"],
+    collapsed: Set<string> = new Set(),
+    edgeReplacer: EdgeReplacer = {},
+): Record<string, string> {
+    const aliases: Record<string, string> = {}
     for (const entry of clusters) {
-        if (isTrueFlowableCluster(entry.cluster) && entry.cluster.taskNode) {
-            uids.add(entry.cluster.taskNode.uid)
-        }
+        const gateUid = entry.cluster.taskNode?.uid
+        if (!gateUid || !entry.start || !isTrueFlowableCluster(entry.cluster)) continue
+        if (collapsed.has(gateUid) || edgeReplacer[entry.cluster.uid]) continue
+        aliases[gateUid] = entry.start
     }
-    return uids
+    return aliases
 }
 
 /** The task ids of a lane's direct children — real tasks and nested lanes alike, each counted
@@ -559,6 +576,28 @@ export function withSyntheticErrorsLane(flowGraph: {nodes: MinimalNode[]; cluste
     return [...clusters, errorsLane]
 }
 
+/** A Parallel fans out to siblings whose order carries no meaning, so one add button on the split
+ *  point says "add a branch" where one per branch reads as "insert before this one". Returns, per
+ *  fanning-out source, the single target whose edge keeps the button. Ordered fan-outs — a Switch's
+ *  cases, a Dag's dependencies — keep one button each, since there the position is the meaning. */
+export function pickFanOutAddEdges(
+    edges: FlowGraphEdge[],
+    clusterByNodeUid: Record<string, Cluster>,
+): Map<string, string> {
+    const targetsBySource = new Map<string, string[]>()
+    for (const edge of edges) {
+        const lane = clusterByNodeUid[edge.source]
+        if (!lane?.taskNode?.task?.type?.endsWith("Parallel")) continue
+        targetsBySource.set(edge.source, (targetsBySource.get(edge.source) ?? []).concat(edge.target))
+    }
+
+    const owners = new Map<string, string>()
+    for (const [source, targets] of targetsBySource) {
+        if (targets.length > 1) owners.set(source, targets[0])
+    }
+    return owners
+}
+
 export function getEdgeColorToken(edgeColor: string | null): string {
     switch (edgeColor) {
         case "danger":
@@ -630,17 +669,26 @@ export function generateGraph(
     }
 
     const clusters = withSyntheticErrorsLane(flowGraph)
-    const flowableGateUids = getFlowableGateUids(clusters)
+    const gateAliases = getFlowableGateAliases(clusters, collapsed, edgeReplacer)
+    const hiddenOrAliased = Object.keys(gateAliases).length
+        ? hiddenNodes.concat(Object.keys(gateAliases))
+        : hiddenNodes
+    const edges = (flowGraph.edges ?? [])
+        .map((edge) => ({
+            ...edge,
+            source: gateAliases[edge.source] ?? edge.source,
+            target: gateAliases[edge.target] ?? edge.target,
+        }))
+        .filter((edge) => edge.source !== edge.target)
 
     const dagreGraph = generateDagreGraph(
-        {...flowGraph, clusters},
-        hiddenNodes,
+        {...flowGraph, clusters, edges},
+        hiddenOrAliased,
         isHorizontal,
         edgeReplacer,
         collapsed,
         clusterToNode,
         getNodeDimensions,
-        flowableGateUids,
     )
 
     const clusterByNodeUid: Record<string, Cluster> = {}
@@ -649,16 +697,16 @@ export function generateGraph(
         .filter((c) => c.type.endsWith("SubflowGraphCluster") && c.taskNode)
         .map((c) => c.taskNode!.uid)
 
-    // dagre lays every cluster out tightly around its children; a flowable lane's header claims
-    // `LANE_HEADER_HEIGHT` of the box instead, so its own height grows by that much and every
-    // direct child — task, dot, or nested lane — is nudged down by the same amount.
-    const flowableLaneClusterUids = new Set(
-        clusters.filter((c) => isTrueFlowableCluster(c.cluster)).map((c) => c.cluster.uid),
-    )
-
     const nodeByUid = Object.fromEntries(
         flowGraph.nodes.concat(clusterToNode).map((node) => [node.uid, node]),
     )
+
+    // How far a node sits from its lane's own borders, along the axis the graph flows in. An edge
+    // crossing a border is drawn to the node, not to the border, so without these it turns level
+    // with the border, and neither the turn nor the add button on it reads as being outside the
+    // lane (kestra-io/kestra#19787).
+    const laneSpan: Record<string, number> = {}
+    const laneInset: Record<string, {before: number; after: number}> = {}
 
     for (const cluster of clusters) {
         const clusterNodeUid = cluster.cluster.uid.replace(CLUSTER_PREFIX, "")
@@ -683,7 +731,7 @@ export function generateGraph(
                 dagreNode,
                 parentNode ? dagreGraph.node(parentNode) : undefined,
             )
-            if (parentNode && flowableLaneClusterUids.has(parentNode)) {
+            if (parentNode) {
                 clusterPosition.y += NODE_SIZES.LANE_HEADER_HEIGHT
             }
 
@@ -703,7 +751,7 @@ export function generateGraph(
                     height:
                         clusterUid === TRIGGERS_NODE_UID && !isHorizontal
                             ? NODE_SIZES.TRIGGER_CLUSTER_HEIGHT + "px"
-                            : dagreNode.height + (flowableLaneClusterUids.has(clusterUid) ? NODE_SIZES.LANE_HEADER_HEIGHT : 0) + "px",
+                            : dagreNode.height + NODE_SIZES.LANE_HEADER_HEIGHT + "px",
                     borderRadius: "var(--ks-radius-base)",
                     padding: "0.5rem",
                 },
@@ -735,11 +783,15 @@ export function generateGraph(
                 },
                 class: `ks-topology-${clusterColor}-border`,
             })
+
+            laneSpan[clusterUid] = isHorizontal
+                ? dagreNode.width
+                : dagreNode.height + NODE_SIZES.LANE_HEADER_HEIGHT
         }
     }
 
     for (const node of flowGraph.nodes.concat(clusterToNode)) {
-        if (!hiddenNodes.includes(node.uid) || node.type === "collapsedcluster") {
+        if (!hiddenOrAliased.includes(node.uid) || node.type === "collapsedcluster") {
             const dagreNode = dagreGraph.node(node.uid)
             let nodeType = "task"
             if (isClusterRootOrEnd(node)) {
@@ -750,36 +802,34 @@ export function generateGraph(
                 nodeType = "trigger"
             } else if (node.type === "collapsedcluster") {
                 nodeType = "collapsedcluster"
-            } else if (flowableGateUids.has(node.uid)) {
-                // Rendered once already, as this lane's own header — see `isFlowableLane` above.
-                nodeType = "dot"
             }
 
+            const collapsedEntry = node.type === "collapsedcluster"
+                ? clusters.find((c) => c.cluster.uid === CLUSTER_PREFIX + node.uid)
+                : undefined
+
             let color = nodeColor(node, collapsed)
-            if (node.type === "collapsedcluster") {
-                const clusterDef = rawClusters.find((c) => c.uid === CLUSTER_PREFIX + node.uid)
-                if (clusterDef) color = computeClusterColor(clusterDef)
-            }
+            if (collapsedEntry) color = computeClusterColor(collapsedEntry.cluster)
             const isReadOnlyTask =
                 isReadOnly ||
                 node.task?.type?.includes("$") ||
                 readOnlyUidPrefixes.some((prefix) => node.uid.startsWith(prefix + "."))
 
             const cluster = clusterByNodeUid[node.uid]
-            // A hidden gate node is a fixed-size connector, same as a cluster root/end dot — never
-            // a footprint driven by `getNodeDimensions` (execution mode, zoom, …). Guarded to the
-            // uncollapsed case: collapsed, that same uid instead identifies the synthetic
-            // "collapsedcluster" placeholder, sized like any other collapsed cluster.
-            const nodeDimensions = nodeType !== "collapsedcluster" && flowableGateUids.has(node.uid)
-                ? {width: NODE_SIZES.DOT_WIDTH, height: NODE_SIZES.DOT_HEIGHT}
-                : getNodeDimensions(node, getNodeWidth, getNodeHeight)
+            const nodeDimensions = getNodeDimensions(node, getNodeWidth, getNodeHeight)
 
             const nodePosition = getNodePosition(
                 dagreNode,
                 cluster ? dagreGraph.node(cluster.uid) : undefined,
             )
-            if (cluster && flowableLaneClusterUids.has(cluster.uid)) {
+            if (cluster) {
                 nodePosition.y += NODE_SIZES.LANE_HEADER_HEIGHT
+            }
+
+            if (cluster && laneSpan[cluster.uid] !== undefined) {
+                const before = isHorizontal ? nodePosition.x : nodePosition.y
+                const size = isHorizontal ? nodeDimensions.width : nodeDimensions.height
+                laneInset[node.uid] = {before, after: laneSpan[cluster.uid] - before - size}
             }
 
             elements.push({
@@ -811,6 +861,18 @@ export function generateGraph(
                     executionId: node.executionId,
                     unused: node.unused,
                     isMovable: Boolean(isAllowedEdit) && !isReadOnlyTask && isTaskNode(node),
+                    // A collapsed lane still says what it is: the placeholder renders the very
+                    // same header the expanded lane does.
+                    ...(collapsedEntry
+                        ? {
+                            isFlowableLane: isTrueFlowableCluster(collapsedEntry.cluster),
+                            taskNode: collapsedEntry.cluster.taskNode,
+                            childTaskIds: getClusterChildTaskIds(collapsedEntry, nodeByUid),
+                            executionId: collapsedEntry.cluster.taskNode
+                                ? nodeByUid[collapsedEntry.cluster.taskNode.uid]?.executionId
+                                : undefined,
+                        }
+                        : {}),
                 },
                 class: [
                     node.type === "collapsedcluster" ? `ks-topology-${color}-border` : "",
@@ -825,23 +887,26 @@ export function generateGraph(
     }
 
     const clusterRootTaskNodeUids = rawClusters.filter((c) => c.taskNode).map((c) => c.taskNode!.uid)
-    const edges = flowGraph.edges ?? []
+    const fanOutAddEdge = pickFanOutAddEdges(edges, clusterByNodeUid)
 
     for (const edge of edges) {
-        const newEdge = replaceIfCollapsed(edge.source, edge.target, edgeReplacer, hiddenNodes, collapsed)
+        const newEdge = replaceIfCollapsed(edge.source, edge.target, edgeReplacer, hiddenOrAliased, collapsed)
         if (newEdge) {
             const edgeColor = getEdgeColor(edge, nodeByUid, clusterByNodeUid)
-            const targetNodeType = nodeByUid[newEdge.target]?.type ?? ""
-            const sourceNodeType = nodeByUid[newEdge.source]?.type ?? ""
-            let edgeBoundary: "top" | "bottom" | undefined = undefined
-            if (typeof targetNodeType === "string" && targetNodeType.endsWith("GraphClusterRoot")) {
-                edgeBoundary = "top"
-            } else if (
-                typeof sourceNodeType === "string" &&
-                sourceNodeType.endsWith("GraphClusterEnd")
-            ) {
-                edgeBoundary = "bottom"
-            }
+            const sourceLane = clusterByNodeUid[newEdge.source]
+            const targetLane = clusterByNodeUid[newEdge.target]
+            const leaving = sourceLane && sourceLane !== targetLane ? laneInset[newEdge.source]?.after ?? 0 : 0
+            const entering = targetLane && targetLane !== sourceLane ? laneInset[newEdge.target]?.before ?? 0 : 0
+            // An error branch runs alongside the main flow, not through it: turning level with the
+            // endpoint that stays in the main column keeps its long run in its own column, instead
+            // of straight across whatever lane happens to sit between the two.
+            const sourceIsError = sourceLane?.branchType === BranchType.ERROR
+            const targetIsError = targetLane?.branchType === BranchType.ERROR
+            const bypass = sourceIsError === targetIsError ? undefined : targetIsError ? "source" : "target"
+            const fanOutOwner = fanOutAddEdge.get(newEdge.source)
+            const fansOut = fanOutOwner !== undefined
+            const carriesAdd = !fansOut || fanOutOwner === newEdge.target
+
             elements.push({
                 id: newEdge.source + "|" + newEdge.target,
                 source: newEdge.source,
@@ -859,11 +924,14 @@ export function generateGraph(
                           color: getEdgeColorToken(edgeColor),
                       },
                 data: {
+                    fansOut,
                     haveAdd:
+                        carriesAdd &&
                         !isReadOnly &&
                         isAllowedEdit &&
                         haveAdd(edge, nodeByUid, clusterRootTaskNodeUids, readOnlyUidPrefixes),
-                    edgeBoundary: edgeBoundary,
+                    laneGap: leaving || entering ? {leaving, entering} : undefined,
+                    bypass,
                     haveDashArray:
                         nodeByUid[edge.source].type.endsWith("GraphTrigger") ||
                         nodeByUid[edge.target].type.endsWith("GraphTrigger") ||

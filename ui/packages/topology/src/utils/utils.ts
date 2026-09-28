@@ -14,10 +14,15 @@ export function shortPluginType(cls?: string): string {
     return (cls ?? "").replace(/^io\.kestra\.plugin\./, "")
 }
 
+export function flowableName(cls?: string): string {
+    return (afterLastDot(cls ?? "") ?? "").replace(/([a-z0-9])([A-Z])/g, "$1 $2")
+}
+
 export default {
     dateFilter,
     afterLastDot,
     humanDuration,
     duration,
     shortPluginType,
+    flowableName,
 }

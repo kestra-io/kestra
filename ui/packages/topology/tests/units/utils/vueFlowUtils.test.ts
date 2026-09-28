@@ -1,6 +1,6 @@
 import {test, expect, describe} from "vitest"
 import * as VueFlowUtils from "../../../src/utils/vueFlowUtils.ts"
-import {NODE_SIZES} from "../../../src/utils/constants.ts"
+import {DAGRE_RANK_SEP, NODE_SIZES} from "../../../src/utils/constants.ts"
 
 const graph = {
     nodes: [
@@ -645,10 +645,8 @@ describe("generateGraph flowable lane header", () => {
             "vfid", "flow", "ns", parallelFlowGraph, undefined, [], false, {}, new Set(), [], true, false, false,
         ) ?? [])
 
-    test("renders the flowable's own gate node as an invisible connector, not a second task box", () => {
-        const gate = generate().find((e) => e.id === "root.parallel_task")
-
-        expect(gate?.type).toBe("dot")
+    test("does not render the flowable's own gate node — the lane header is its one rendering", () => {
+        expect(generate().some((e) => e.id === "root.parallel_task")).toBe(false)
     })
 
     test("gives the cluster its lane-header data: type, id and child count come from one place", () => {
@@ -659,15 +657,20 @@ describe("generateGraph flowable lane header", () => {
         expect(cluster?.data?.childTaskIds).toEqual(["branch_a", "branch_b"])
     })
 
-    test("does not lay the gate node out at the task footprint — dagre sees a dot, not a box", () => {
-        const gate = generate().find((e) => e.id === "root.parallel_task")
+    // The gate used to render as a second blank dot right under the lane's own root dot, so
+    // entering a flowable drew dot → arrow → dot, both filling the same gap (kestra-io/kestra#19787).
+    test("re-anchors the gate's edges on the lane's root dot, leaving a single connector", () => {
+        const edges = generate().filter((e) => e.source && e.target)
 
-        expect(gate?.style).toMatchObject({width: "5px", height: "5px"})
+        expect(edges.map((e) => `${e.source}|${e.target}`)).toEqual([
+            "root.root-1|root.parallel_task.branch_a",
+            "root.root-1|root.parallel_task.branch_b",
+        ])
     })
 
     // Regression: the collapsed placeholder shares the flowable's own uid, so the dot-sizing
     // override for a hidden gate node must not also catch it and shrink it to a 5x5 dot.
-    test("still sizes a collapsed lane as a collapsed cluster, not as a hidden gate dot", () => {
+    test("sizes a collapsed lane like an ordinary task node", () => {
         // Mirrors Topology.vue's collapseCluster(): the cluster's own children plus its uid go
         // into hiddenNodes so the ordinary node entry is suppressed and only the placeholder shows.
         const hiddenNodes = [
@@ -685,7 +688,60 @@ describe("generateGraph flowable lane header", () => {
 
         const collapsed = elements.find((e) => e.id === "root.parallel_task")
         expect(collapsed?.type).toBe("collapsedcluster")
-        expect(collapsed?.style).toMatchObject({width: "150px", height: "40px"})
+        expect(collapsed?.style).toMatchObject({width: "218px", height: "56px"})
+        expect(collapsed?.data).toMatchObject({
+            isFlowableLane: true,
+            taskNode: {uid: "root.parallel_task"},
+            childTaskIds: ["branch_a", "branch_b"],
+        })
+    })
+})
+
+describe("pickFanOutAddEdges", () => {
+    const parallelLane = {
+        uid: "cluster_root.in_parallel",
+        type: "io.kestra.core.models.hierarchies.GraphCluster",
+        taskNode: {uid: "root.in_parallel", task: {type: "io.kestra.plugin.core.flow.Parallel"}},
+    } as any
+    const switchLane = {
+        uid: "cluster_root.pick",
+        type: "io.kestra.core.models.hierarchies.GraphCluster",
+        taskNode: {uid: "root.pick", task: {type: "io.kestra.plugin.core.flow.Switch"}},
+    } as any
+
+    test("keeps one add button for a Parallel's branches", () => {
+        const owners = VueFlowUtils.pickFanOutAddEdges(
+            [
+                {source: "root.in_parallel.root-1", target: "root.in_parallel.branch_a"},
+                {source: "root.in_parallel.root-1", target: "root.in_parallel.branch_b"},
+            ],
+            {"root.in_parallel.root-1": parallelLane},
+        )
+
+        expect(owners.get("root.in_parallel.root-1")).toBe("root.in_parallel.branch_a")
+    })
+
+    // A Switch's cases are not interchangeable, so which edge the button sits on is the choice
+    // the user is making — collapsing them would throw that away.
+    test("leaves an ordered fan-out with a button per branch", () => {
+        const owners = VueFlowUtils.pickFanOutAddEdges(
+            [
+                {source: "root.pick.root-1", target: "root.pick.french"},
+                {source: "root.pick.root-1", target: "root.pick.german"},
+            ],
+            {"root.pick.root-1": switchLane},
+        )
+
+        expect(owners.size).toBe(0)
+    })
+
+    test("leaves a Parallel with a single child alone", () => {
+        const owners = VueFlowUtils.pickFanOutAddEdges(
+            [{source: "root.in_parallel.root-1", target: "root.in_parallel.branch_a"}],
+            {"root.in_parallel.root-1": parallelLane},
+        )
+
+        expect(owners.size).toBe(0)
     })
 })
 
@@ -747,7 +803,7 @@ describe("generateGraph lane header height vs a following sibling's clearance", 
         ],
     } as unknown as VueFlowUtils.FlowGraph
 
-    test("still clears the next sibling — the lane header must not overlap what comes after it", () => {
+    test("leaves a full rank separation below the lane, header included", () => {
         const elements = asElements(VueFlowUtils.generateGraph(
             "vfid", "flow", "ns", flowGraph, undefined, [], false, {}, new Set(), [], true, false, false,
         ) ?? [])
@@ -760,10 +816,11 @@ describe("generateGraph lane header height vs a following sibling's clearance", 
         const laneBottom = (lane!.position!.y) + parseFloat(String(lane!.style!.height))
         const siblingTop = sibling!.position!.y
 
-        // Dagre's own default ranksep (50) minus LANE_HEADER_HEIGHT (32): 18px left. Pinned exactly
-        // — not just "> 0" — so a bigger header, a smaller ranksep, or nesting that erodes the same
-        // gap further fails loudly here instead of silently overlapping in the browser.
-        expect(siblingTop - laneBottom).toBe(18)
+        // The separation is widened by LANE_HEADER_HEIGHT precisely so the header the cluster box
+        // grows by afterwards costs the gap nothing. Pinned exactly — not just "> 0" — so a bigger
+        // header, or nesting that erodes the same gap, fails loudly here instead of crowding the
+        // edge's add button against a lane border in the browser.
+        expect(siblingTop - laneBottom).toBe(DAGRE_RANK_SEP)
     })
 })
 
@@ -823,9 +880,6 @@ describe("generateGraph synthetic errors lane", () => {
 })
 
 describe("getNodeWidth / getNodeHeight (per node-kind footprint)", () => {
-    // Regression: TASK_HEIGHT and TRIGGER_HEIGHT used to be numerically equal (56), so a shared
-    // `isTaskNode(node) || isTriggerNode(node)` branch was harmless. Bumping TASK_HEIGHT to 80
-    // without a trigger-specific branch silently reserved a too-tall box for every trigger.
     const triggerNode = {uid: "root.Triggers.schedule", type: "io.kestra.core.models.hierarchies.GraphTrigger"}
     const taskNode = {uid: "root.a", type: "io.kestra.core.models.hierarchies.GraphTask"}
 
@@ -838,10 +892,6 @@ describe("getNodeWidth / getNodeHeight (per node-kind footprint)", () => {
         expect(VueFlowUtils.getNodeHeight(taskNode)).toBe(NODE_SIZES.TASK_HEIGHT)
         expect(VueFlowUtils.getNodeWidth(taskNode)).toBe(NODE_SIZES.TASK_WIDTH)
     })
-
-    test("a task and a trigger no longer share the same footprint", () => {
-        expect(VueFlowUtils.getNodeHeight(triggerNode)).not.toBe(VueFlowUtils.getNodeHeight(taskNode))
-    })
 })
 
 describe("buildEffectiveGetNodeDimensions (footprint invariance)", () => {
@@ -851,7 +901,7 @@ describe("buildEffectiveGetNodeDimensions (footprint invariance)", () => {
         const getDimensions = VueFlowUtils.buildEffectiveGetNodeDimensions(false)
         const dimensions = getDimensions(taskNode, VueFlowUtils.getNodeWidth, VueFlowUtils.getNodeHeight)
 
-        expect(dimensions).toEqual({width: 218, height: 80})
+        expect(dimensions).toEqual({width: NODE_SIZES.TASK_WIDTH, height: NODE_SIZES.TASK_HEIGHT})
     })
 
     // The only thing this function ever varies by is whether an execution is loaded — never a

@@ -16,19 +16,12 @@
         :dragging="props.dragging"
         @taskDragEnd="emit(EVENTS.TASK_DRAG_END)"
     >
-        <template #badge>
-            <span v-if="runnerLabel" class="runner-badge" :title="runnerLabel">{{ runnerLabel }}</span>
-        </template>
         <template #subtitle>
-            {{ typeLabel }}
+            <span class="type-label">{{ typeLabel }}</span>
+            <span v-if="runnerLabel" class="runner-badge" :title="runnerLabel">{{ runnerLabel }}</span>
         </template>
         <template #details>
             <slot name="details" />
-        </template>
-        <template #footer>
-            <!-- Reserved for kestra-io/kestra#19665's segmented duration bar — the box already
-                 accounts for its height, so that PR fills the slot instead of renegotiating it. -->
-            <div class="duration-bar-placeholder" />
         </template>
         <template #content>
             <button
@@ -385,22 +378,18 @@ button.playground-button {
     white-space: nowrap;
 }
 
-.duration-bar-placeholder {
-    width: 100%;
-    height: var(--ks-spacing-1);
-    border-radius: var(--ks-radius-xs);
-    background: var(--ks-bg-tag);
+.type-label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .runner-badge {
-    align-self: flex-start;
-    max-width: 100%;
-    margin-bottom: var(--ks-spacing-1);
-    padding: 0 var(--ks-spacing-2);
-    border-radius: var(--ks-radius-base);
+    flex-shrink: 0;
+    padding: 0 var(--ks-spacing-1);
+    border-radius: var(--ks-radius-xs);
     background-color: var(--ks-bg-tag);
     color: var(--ks-text-info);
-    font-size: var(--ks-font-size-2xs);
     font-weight: 600;
     overflow: hidden;
     text-overflow: ellipsis;

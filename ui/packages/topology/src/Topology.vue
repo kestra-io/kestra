@@ -27,6 +27,8 @@
             <template #node-cluster="clusterProps">
                 <ClusterNode
                     v-bind="clusterProps"
+                    :icons="icons"
+                    :loadIcon="loadIcon"
                     @collapse="collapseCluster($event, true)"
                     @addTrigger="emit(EVENTS.ADD_TRIGGER)"
                     @edit="emit(EVENTS.EDIT, $event)"
@@ -111,7 +113,18 @@
             <template #node-collapsedcluster="CollapsedProps">
                 <CollapsedClusterNode
                     v-bind="CollapsedProps"
+                    :icons="icons"
+                    :loadIcon="loadIcon"
                     @expand="expand($event)"
+                    @edit="emit(EVENTS.EDIT, $event)"
+                    @delete="emit(EVENTS.DELETE, $event)"
+                    @duplicate="emit(EVENTS.DUPLICATE, $event)"
+                    @show-description="emit(EVENTS.SHOW_DESCRIPTION, $event)"
+                    @show-condition="emit(EVENTS.SHOW_CONDITION, $event)"
+                    @show-logs="emit(EVENTS.SHOW_LOGS, $event)"
+                    @show-outputs="emit(EVENTS.SHOW_OUTPUTS, $event)"
+                    @replay-task="emit(EVENTS.REPLAY_TASK, $event)"
+                    @add-error="emit('on-add-flowable-error', $event)"
                 />
             </template>
 
@@ -501,8 +514,12 @@
             })
     }
 
+    // The flow-level `errors:` lane is synthesized by the frontend, so it is absent from
+    // `flowGraph.clusters` and collapsing it silently did nothing (kestra-io/kestra#19787).
+    const collapsibleClusters = computed(() => VueFlowUtils.withSyntheticErrorsLane(props.flowGraph))
+
     const collapseCluster = (clusterUid: string, regenerate: boolean, targetNodeId?: string) => {
-        const cluster = props.flowGraph.clusters.find(c => c.cluster.uid.endsWith(clusterUid))
+        const cluster = collapsibleClusters.value.find(c => c.cluster.uid.endsWith(clusterUid))
         if (!cluster) return
         const nodeId = clusterUid.replace(CLUSTER_PREFIX, "")
         
@@ -526,7 +543,7 @@
         }
 
         for (let child of cluster.nodes) {
-            if (props.flowGraph.clusters.map(c => c.cluster.uid).includes(child)) {
+            if (collapsibleClusters.value.some(c => c.cluster.uid === child)) {
                 collapseCluster(child, false, effectiveNodeId)
             } else {
                 edgeReplacer.value = {

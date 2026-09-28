@@ -73,6 +73,9 @@
         unused?: boolean;
         value?: string;
         relationType?: string;
+        fansOut?: boolean;
+        laneGap?: {leaving: number; entering: number};
+        bypass?: "source" | "target";
     }
 
     const props = defineProps({
@@ -128,11 +131,39 @@
             : {}
     })
 
-    const path = computed(() => getSmoothStepPath(props))
+    const flowsHorizontally = computed(() => props.targetPosition === "left" || props.targetPosition === "right")
+
+    // Where the edge turns. Left to itself it turns level with the border it just crossed, so the
+    // run — and the add button sitting on it — reads as neither inside the lane nor outside it.
+    // Centred on the gap the user actually sees, it is unambiguously between the two boxes.
+    const laneTurn = computed<number | undefined>(() => {
+        const gap = props.data?.laneGap
+        const bypass = props.data?.bypass
+        if (!gap && !bypass) return undefined
+        const from = flowsHorizontally.value ? props.sourceX ?? 0 : props.sourceY ?? 0
+        const to = flowsHorizontally.value ? props.targetX ?? 0 : props.targetY ?? 0
+        const low = Math.min(from, to) + SMOOTH_STEP_OFFSET
+        const high = Math.max(from, to) - SMOOTH_STEP_OFFSET
+        if (low > high) return undefined
+        if (bypass) return bypass === "source" ? (from < to ? low : high) : (from < to ? high : low)
+        if (!gap) return undefined
+        const centre = ((from + Math.sign(to - from) * (gap.leaving ?? 0)) + (to - Math.sign(to - from) * (gap.entering ?? 0))) / 2
+        return Math.min(Math.max(centre, low), high)
+    })
+
+    const path = computed(() => getSmoothStepPath({
+        ...props,
+        centerX: flowsHorizontally.value ? laneTurn.value : undefined,
+        centerY: flowsHorizontally.value ? undefined : laneTurn.value,
+    }))
 
     const showCaseLabel = computed(
         () => props.data?.relationType === "CHOICE" && Boolean(props.data?.value),
     )
+
+    // vue-flow's own default: how far a smooth-step path runs straight out of a handle before it
+    // may turn, so a turn placed inside it would be ignored.
+    const SMOOTH_STEP_OFFSET = 20
 
     const CASE_LABEL_GAP = 18
     const caseLabelX = computed(() => {
@@ -148,8 +179,19 @@
         return ty
     })
 
-    const addButtonX = computed(() => path.value?.[1] ?? 0)
-    const addButtonY = computed(() => path.value?.[2] ?? 0)
+    // A fan-out's one button belongs on the run every branch still shares — between the lane's own
+    // marker and the split — rather than on the drop into whichever branch happens to carry it.
+    const splitPoint = computed(() => {
+        const from = flowsHorizontally.value ? props.sourceX ?? 0 : props.sourceY ?? 0
+        const turn = laneTurn.value ?? (((flowsHorizontally.value ? props.targetX ?? 0 : props.targetY ?? 0) + from) / 2)
+        const middle = (from + turn) / 2
+        return flowsHorizontally.value
+            ? {x: middle, y: props.sourceY ?? 0}
+            : {x: props.sourceX ?? 0, y: middle}
+    })
+
+    const addButtonX = computed(() => (props.data?.fansOut ? splitPoint.value.x : path.value?.[1] ?? 0))
+    const addButtonY = computed(() => (props.data?.fansOut ? splitPoint.value.y : path.value?.[2] ?? 0))
 
     const labelAnchor = computed(() => {
         switch (props.targetPosition) {

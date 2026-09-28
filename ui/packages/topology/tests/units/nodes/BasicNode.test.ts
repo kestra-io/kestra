@@ -62,16 +62,16 @@ describe("BasicNode icons", () => {
 
 describe("BasicNode layout", () => {
     const slots = {
-        badge: "<span class='badge-marker'>badge</span>",
+        subtitle: "<span class='subtitle-marker'>Log</span>",
         "title-status": "<span class='status-marker'>status</span>",
         "title-actions": "<span class='actions-marker'>actions</span>",
     }
 
-    it("should render the badge above the title, outside the title row", () => {
+    it("should render the subtitle under the title, inside the content column", () => {
         const wrapper = mountBasicNode({}, slots)
 
-        expect(wrapper.find(".node-content > .badge-marker").exists()).toBe(true)
-        expect(wrapper.find(".node-title .badge-marker").exists()).toBe(false)
+        expect(wrapper.find(".node-content > .node-subtitle > .subtitle-marker").exists()).toBe(true)
+        expect(wrapper.find(".node-title .subtitle-marker").exists()).toBe(false)
     })
 
     it("should render the status and actions as direct children of the main content", () => {
@@ -87,11 +87,9 @@ describe("BasicNode layout", () => {
 
 describe("BasicNode levels of detail (kestra-io/kestra#19666)", () => {
     const slots = {
-        badge: "<span class='badge-marker'>badge</span>",
         subtitle: "<span class='subtitle-marker'>Log</span>",
         "title-status": "<span class='status-marker'>status</span>",
         "title-actions": "<span class='actions-marker'>actions</span>",
-        footer: "<div class='footer-marker'>bar</div>",
         details: "<div class='details-marker'>details</div>",
     }
 
@@ -99,10 +97,9 @@ describe("BasicNode levels of detail (kestra-io/kestra#19666)", () => {
         const wrapper = mountBasicNode({lod: "pill"}, slots)
 
         expect(wrapper.find(".node-pill").exists()).toBe(true)
-        expect(wrapper.find(".badge-marker").exists()).toBe(false)
+        expect(wrapper.find(".subtitle-marker").exists()).toBe(false)
         expect(wrapper.find(".status-marker").exists()).toBe(false)
         expect(wrapper.find(".actions-marker").exists()).toBe(false)
-        expect(wrapper.find(".footer-marker").exists()).toBe(false)
     })
 
     it("should render the full card at the default level, with no details overlay", () => {
@@ -110,7 +107,7 @@ describe("BasicNode levels of detail (kestra-io/kestra#19666)", () => {
 
         expect(wrapper.find(".node-pill").exists()).toBe(false)
         expect(wrapper.find(".status-marker").exists()).toBe(true)
-        expect(wrapper.find(".footer-marker").exists()).toBe(true)
+        expect(wrapper.find(".subtitle-marker").exists()).toBe(true)
         expect(wrapper.find(".details-marker").exists()).toBe(false)
     })
 

@@ -43,6 +43,18 @@ function mountClusterNode({childTaskIds = [], taskRuns = [], isReadOnly = false,
     })
 }
 
+describe("ClusterNode lane header labels", () => {
+    it("should stack the flowable's id under its type", () => {
+        const wrapper = mountClusterNode({})
+
+        const labels = wrapper.find(".lane-labels")
+        expect(labels.find(".lane-type").text()).toBe("Parallel")
+        expect(labels.find(".lane-type").attributes("title")).toBe("core.flow.Parallel")
+        expect(labels.find(".lane-id").text()).toBe("parallel_task")
+        expect(labels.findAll("span").map((span) => span.attributes("class"))).toEqual(["lane-type", "lane-id"])
+    })
+})
+
 describe("ClusterNode lane header aggregate state", () => {
     it("should show no aggregate state when none of the children have run yet", () => {
         const wrapper = mountClusterNode({childTaskIds: ["branch_a", "branch_b"], taskRuns: []})

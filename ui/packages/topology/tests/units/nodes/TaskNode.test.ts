@@ -260,10 +260,4 @@ describe("TaskNode anatomy", () => {
 
         expect(wrapper.text()).toContain("core.log.Log")
     })
-
-    it("should reserve the duration-bar slot kestra-io/kestra#19665 will fill", () => {
-        const wrapper = mountTaskNode({})
-
-        expect(wrapper.find(".duration-bar-placeholder").exists()).toBe(true)
-    })
 })

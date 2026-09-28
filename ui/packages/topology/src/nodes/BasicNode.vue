@@ -29,7 +29,6 @@
                         <component v-else :is="taskIconComponent" :cls="cls" :class="taskIconBg" variable="--ks-topology-icon-color" :icons="icons" :loadIcon="loadIcon" onlyIcon />
                     </div>
                     <div class="node-content">
-                        <slot name="badge" />
                         <div class="node-title">
                             <div class="task-title">
                                 <KsTooltip v-if="extraTooltip" :content="extraTooltip">
@@ -45,9 +44,6 @@
                     </div>
                     <slot name="title-status" />
                     <slot name="title-actions" />
-                </div>
-                <div v-if="$slots.footer" class="node-footer">
-                    <slot name="footer" />
                 </div>
             </div>
             <Transition name="node-details-overlay">
@@ -345,14 +341,6 @@
         width: 273px;
     }
 
-    .node-footer {
-        padding: 0 var(--ks-spacing-2) var(--ks-spacing-2);
-        box-sizing: border-box;
-        height: var(--ks-spacing-5);
-        display: flex;
-        align-items: flex-end;
-    }
-
     .node-content {
         display: flex;
         flex-direction: column;
@@ -370,9 +358,10 @@
     }
 
     .node-subtitle {
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
+        display: flex;
+        align-items: center;
+        gap: var(--ks-spacing-1);
+        min-width: 0;
         font-size: var(--ks-font-size-2xs);
         color: var(--ks-text-secondary);
     }

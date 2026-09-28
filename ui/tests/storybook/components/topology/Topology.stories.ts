@@ -359,7 +359,7 @@ export const FootprintInvariance: StoryObj<typeof Topology> = {
 
         const dimensionsOf = (el: HTMLElement) => ({width: el.style.width, height: el.style.height})
 
-        expect(dimensionsOf(pill!)).toEqual({width: "218px", height: "80px"})
+        expect(dimensionsOf(pill!)).toEqual({width: "218px", height: "56px"})
         expect(dimensionsOf(atRest!)).toEqual(dimensionsOf(pill!))
         expect(dimensionsOf(expanded!)).toEqual(dimensionsOf(pill!))
     },

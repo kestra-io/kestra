@@ -845,6 +845,7 @@
     "restore": "復元",
     "restore confirm": "リビジョン <code>{revision}</code> を復元してもよろしいですか？",
     "bulk delete": "<code>{executionCount}</code>件の実行を削除してもよろしいですか？",
+    "bulk delete logs": "<code>{count}</code>件のログを削除してもよろしいですか？",
     "bulk replay": "<code>{executionCount}</code>件の実行を再実行してもよろしいですか？",
     "bulk change state": "以下の実行の状態を変更してもよろしいですか？<code>{executionCount}</code> 実行。",
     "bulk resume": "<code>{executionCount}</code>件の実行を再開してもよろしいですか？",

@@ -845,6 +845,7 @@
     "restore": "Wiederherstellen",
     "restore confirm": "Möchtest du die Revision <code>{revision}</code> wirklich wiederherstellen?",
     "bulk delete": "Möchtest du <code>{executionCount}</code> Execution(s) wirklich löschen?",
+    "bulk delete logs": "Möchtest du wirklich <code>{count}</code> Log(s) löschen?",
     "bulk replay": "Möchtest du für <code>{executionCount}</code> Execution(s) wirklich einen Replay starten?",
     "bulk change state": "Möchtest du den Status von <code>{executionCount}</code> Execution(s) wirklich ändern?",
     "bulk resume": "Möchtest du <code>{executionCount}</code> Execution(s) wirklich fortsetzen?",

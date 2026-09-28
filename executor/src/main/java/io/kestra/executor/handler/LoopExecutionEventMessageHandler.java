@@ -3,6 +3,7 @@ package io.kestra.executor.handler;
 import java.io.IOException;
 import java.util.*;
 
+import io.kestra.core.utils.TruthUtils;
 import org.apache.commons.lang3.tuple.Pair;
 
 import io.kestra.core.exceptions.FlowNotFoundException;
@@ -127,6 +128,27 @@ public class LoopExecutionEventMessageHandler implements ExecutorMessageHandler<
                     int nextIndex = runningIteration + terminatedIteration;
                     if (nextIndex < iterationCount) {
                         RunContext runContext = runContextFactory.of(executor.getFlow(), loop, executor.getExecution(), parentTaskRun);
+
+                        // decide if we should continue to iterate or not
+                        if (loop.getBreakWhen() != null) {
+                            Map<String, Object> iterationVariables = Map.of(
+                                "item", RunVariables.of(message.loopRun()),
+                                "iteration", Map.of(
+                                    "executionId", message.executionId(),
+                                    "state", message.state(),
+                                    "outputs", MapUtils.emptyOnNull(message.outputs())
+                                    )
+                            );
+                            boolean shouldBreak = runContext.render(loop.getBreakWhen()).skipCache().as(String.class, iterationVariables).map(s -> TruthUtils.isTruthy(s)).orElse(false);
+                            if (shouldBreak) {
+                                // update the outputs with SKIPPED iterations
+                                terminatedByState.put(State.Type.SKIPPED.name(), iterationCount - nextIndex);
+                                computeOutputs(parentTaskRun, taskOutputs, iterationCount, runningIteration, terminatedByState, null, taskRunStatistic);
+                                var state = loop.getTransmitFailed() && message.state().isTerminatedInError() ? message.state() : State.Type.SUCCESS;
+                                return terminateLoop(parentTaskRun, loop, executor, state, taskRunStatistic);
+                            }
+                        }
+
                         if (outputs.containsKey(Loop.NEXT_OFFSET_OUTPUT)) {
                             // URI mode: seek to stored offset and read the next value
                             long nextOffset = ((Number) outputs.get(Loop.NEXT_OFFSET_OUTPUT)).longValue();

@@ -30,7 +30,7 @@ export function isViewingFlow(route: RouteLocationNormalizedLoaded, namespace: s
 /** Parse an artefact's namespace + id out of its YAML; empty strings when they can't be read. */
 export function parseArtefactYaml(yaml: string): {namespace: string; id: string} {
     try {
-        const parsed = YAML_UTILS.parse(yaml)
+        const parsed = YAML_UTILS.parse<{namespace?: string; id?: string}>(yaml)
         return {namespace: parsed?.namespace ?? "", id: parsed?.id ?? ""}
     } catch {
         return {namespace: "", id: ""}

@@ -24,6 +24,7 @@ import {
     updateBlockAtPath,
     wrapAsDagTask,
 } from "../../../src/utils/flowableBlockOps"
+import {parseBlock} from "./parsedBlock"
 
 interface DagLaneItem {
     task: {id: string}
@@ -145,7 +146,7 @@ describe("flowableBlockOps", () => {
             const result = addBlock(SIMPLE_FLOW, "tasks", newTask)
 
             // Then
-            const parsed = flowYamlUtils.parse(result)
+            const parsed = parseBlock(result)
             expect(parsed.tasks).toHaveLength(3)
             expect(parsed.tasks[2].id).toBe("task_c")
         })
@@ -158,7 +159,7 @@ describe("flowableBlockOps", () => {
             const result = addBlock(SIMPLE_FLOW, "tasks", newTask, "task_a")
 
             // Then
-            const parsed = flowYamlUtils.parse(result)
+            const parsed = parseBlock(result)
             expect(parsed.tasks).toHaveLength(3)
             expect(parsed.tasks[1].id).toBe("task_between")
             expect(parsed.tasks[2].id).toBe("task_b")
@@ -173,7 +174,7 @@ describe("flowableBlockOps", () => {
             const result = addBlock(emptyFlow, "tasks", newTask)
 
             // Then
-            const parsed = flowYamlUtils.parse(result)
+            const parsed = parseBlock(result)
             expect(parsed.tasks).toHaveLength(1)
             expect(parsed.tasks[0].id).toBe("first")
         })
@@ -188,7 +189,7 @@ describe("flowableBlockOps", () => {
             const result = addBlockAtPath(FLOW_WITH_FLOWABLE, "tasks[1].then", newTask)
 
             // Then
-            const parsed = flowYamlUtils.parse(result)
+            const parsed = parseBlock(result)
             expect(parsed.tasks[1].then).toHaveLength(2)
             expect(parsed.tasks[1].then[1].id).toBe("then_new")
         })
@@ -201,7 +202,7 @@ describe("flowableBlockOps", () => {
             const result = addBlockAtPath(FLOW_WITH_FLOWABLE, "tasks[1].else", newTask)
 
             // Then
-            const parsed = flowYamlUtils.parse(result)
+            const parsed = parseBlock(result)
             expect(parsed.tasks[1].else).toHaveLength(2)
             expect(parsed.tasks[1].else[1].id).toBe("else_new")
         })
@@ -225,7 +226,7 @@ tasks:
             const result = addBlockAtPath(flowNoElse, "tasks[0].else", newTask)
 
             // Then
-            const parsed = flowYamlUtils.parse(result)
+            const parsed = parseBlock(result)
             expect(parsed.tasks[0].else).toHaveLength(1)
             expect(parsed.tasks[0].else[0].id).toBe("else_first")
         })
@@ -238,7 +239,7 @@ tasks:
             const result = addBlockAtPath(FLOW_WITH_SWITCH, "tasks[0].cases.prod", newTask)
 
             // Then
-            const parsed = flowYamlUtils.parse(result)
+            const parsed = parseBlock(result)
             expect(parsed.tasks[0].cases.prod).toHaveLength(2)
             expect(parsed.tasks[0].cases.prod[1].id).toBe("prod_second")
         })
@@ -251,7 +252,7 @@ tasks:
             const result = addBlockAtPath(FLOW_WITH_SWITCH, "tasks[0].cases.staging", newTask)
 
             // Then
-            const parsed = flowYamlUtils.parse(result)
+            const parsed = parseBlock(result)
             expect(parsed.tasks[0].cases.staging).toHaveLength(1)
             expect(parsed.tasks[0].cases.staging[0].id).toBe("staging_log")
             expect(parsed.tasks[0].cases.prod).toHaveLength(1)
@@ -266,7 +267,7 @@ tasks:
             const result = addBlockAtPath(FLOW_WITH_PARALLEL, "tasks[0].tasks", newTask)
 
             // Then
-            const parsed = flowYamlUtils.parse(result)
+            const parsed = parseBlock(result)
             expect(parsed.tasks[0].tasks).toHaveLength(3)
             expect(parsed.tasks[0].tasks[2].id).toBe("sub_c")
         })
@@ -289,7 +290,7 @@ errors:
             const result = addBlockAtPath(flowWithErrors, "errors", newTask)
 
             // Then
-            const parsed = flowYamlUtils.parse(result)
+            const parsed = parseBlock(result)
             expect(parsed.errors).toHaveLength(2)
             expect(parsed.errors[1].id).toBe("err_notify")
         })
@@ -303,7 +304,7 @@ errors:
             const result = deleteBlock(SIMPLE_FLOW, "tasks", "task_a")
 
             // Then
-            const parsed = flowYamlUtils.parse(result)
+            const parsed = parseBlock(result)
             expect(parsed.tasks).toHaveLength(1)
             expect(parsed.tasks[0].id).toBe("task_b")
         })
@@ -315,7 +316,7 @@ errors:
             const result = deleteBlock(FLOW_WITH_TRIGGERS, "triggers", "webhook")
 
             // Then
-            const parsed = flowYamlUtils.parse(result)
+            const parsed = parseBlock(result)
             expect(parsed.triggers).toBeUndefined()
         })
 
@@ -326,7 +327,7 @@ errors:
             const result = deleteBlock(SIMPLE_FLOW, "tasks", "nonexistent")
 
             // Then
-            const parsed = flowYamlUtils.parse(result)
+            const parsed = parseBlock(result)
             expect(parsed.tasks).toHaveLength(2)
         })
     })
@@ -339,7 +340,7 @@ errors:
             const result = deleteBlockAtPath(FLOW_WITH_FLOWABLE, "tasks[1].then[0]")
 
             // Then — the item is removed and the empty then key is stripped
-            const parsed = flowYamlUtils.parse(result)
+            const parsed = parseBlock(result)
             expect(parsed.tasks[1].then).toBeUndefined()
         })
 
@@ -350,7 +351,7 @@ errors:
             const result = deleteBlockAtPath(FLOW_WITH_SWITCH, "tasks[0].cases.prod[0]")
 
             // Then — prod case was the only item, its array is cleaned; dev is untouched
-            const parsed = flowYamlUtils.parse(result)
+            const parsed = parseBlock(result)
             expect(parsed.tasks[0].cases.prod).toBeUndefined()
             expect(parsed.tasks[0].cases.dev).toHaveLength(1)
         })
@@ -362,7 +363,7 @@ errors:
             const result = deleteBlockAtPath(FLOW_WITH_FLOWABLE, "tasks[1].then[0]")
 
             // Then
-            const parsed = flowYamlUtils.parse(result)
+            const parsed = parseBlock(result)
             expect(parsed.tasks[1].then).toBeUndefined()
             expect(parsed.tasks[1].else).toHaveLength(1)
             expect(parsed.tasks[1].else[0].id).toBe("nested_b")
@@ -396,7 +397,7 @@ tasks:
 
             // Then — the empty branch is cleaned AND the unrelated comment survives
             expect(result).toContain("# keep me: an unrelated reminder")
-            const parsed = flowYamlUtils.parse(result)
+            const parsed = parseBlock(result)
             expect(parsed.tasks[1].then).toBeUndefined()
             expect(parsed.tasks[0].id).toBe("leaf_task")
         })
@@ -410,11 +411,11 @@ tasks:
             const result = duplicateBlock(SIMPLE_FLOW, "tasks", "task_a")
 
             // Then
-            const parsed = flowYamlUtils.parse(result)
+            const parsed = parseBlock(result)
             expect(parsed.tasks).toHaveLength(3)
             const copy = parsed.tasks.find((t: Record<string, unknown>) => String(t.id).startsWith("task_a_copy"))
             expect(copy).toBeDefined()
-            expect(copy.type).toBe("io.kestra.plugin.core.log.Log")
+            expect(copy?.type).toBe("io.kestra.plugin.core.log.Log")
         })
 
         it("appends the copy after the original", () => {
@@ -424,7 +425,7 @@ tasks:
             const result = duplicateBlock(SIMPLE_FLOW, "tasks", "task_a")
 
             // Then
-            const parsed = flowYamlUtils.parse(result)
+            const parsed = parseBlock(result)
             expect(parsed.tasks[0].id).toBe("task_a")
             expect(String(parsed.tasks[1].id)).toMatch(/^task_a_copy/)
             expect(parsed.tasks[2].id).toBe("task_b")
@@ -446,7 +447,7 @@ tasks:
             const result = duplicateBlock(flowWithCopy, "tasks", "task_a")
 
             // Then
-            const parsed = flowYamlUtils.parse(result)
+            const parsed = parseBlock(result)
             const ids = parsed.tasks.map((t: Record<string, unknown>) => t.id)
             expect(ids).toContain("task_a")
             expect(ids).toContain("task_a_copy")
@@ -472,7 +473,7 @@ triggers:
             const result = duplicateBlock(flowWithCrossCollision, "triggers", "webhook")
 
             // Then — "webhook_copy" is taken by the task so the trigger copy must get a different id
-            const parsed = flowYamlUtils.parse(result)
+            const parsed = parseBlock(result)
             const triggerIds = parsed.triggers.map((t: Record<string, unknown>) => String(t.id))
             expect(triggerIds).toContain("webhook")
             expect(triggerIds).not.toContain("webhook_copy")
@@ -487,7 +488,7 @@ triggers:
             const result = duplicateBlock(FLOW_WITH_FLOWABLE, "tasks", "if_task")
 
             // Then — the duplicate has unique IDs for itself and all nested tasks
-            const parsed = flowYamlUtils.parse(result)
+            const parsed = parseBlock(result)
             expect(parsed.tasks).toHaveLength(3)
             const copy = parsed.tasks[2]
             expect(String(copy.id)).toMatch(/^if_task_copy/)
@@ -518,7 +519,7 @@ triggers:
             const result = duplicateBlock(FLOW_WITH_SWITCH, "tasks", "sw")
 
             // Then — copy top-level ID is new
-            const parsed = flowYamlUtils.parse(result)
+            const parsed = parseBlock(result)
             expect(parsed.tasks).toHaveLength(2)
             const copy = parsed.tasks[1]
             expect(String(copy.id)).toMatch(/^sw_copy/)
@@ -540,7 +541,7 @@ triggers:
             const result = duplicateBlock(SIMPLE_FLOW, "tasks", "nonexistent")
 
             // Then
-            const parsed = flowYamlUtils.parse(result)
+            const parsed = parseBlock(result)
             expect(parsed.tasks).toHaveLength(2)
         })
     })
@@ -553,7 +554,7 @@ triggers:
             const result = duplicateBlockAtPath(FLOW_WITH_FLOWABLE, "tasks[1].then[0]")
 
             // Then
-            const parsed = flowYamlUtils.parse(result)
+            const parsed = parseBlock(result)
             expect(parsed.tasks[1].then).toHaveLength(2)
             expect(String(parsed.tasks[1].then[1].id)).toMatch(/^nested_a_copy/)
         })
@@ -579,7 +580,7 @@ tasks:
             const result = duplicateBlockAtPath(flowWithCopy, "tasks[0].then[0]")
 
             // Then
-            const parsed = flowYamlUtils.parse(result)
+            const parsed = parseBlock(result)
             expect(parsed.tasks[0].then).toHaveLength(2)
             const copyId = String(parsed.tasks[0].then[1].id)
             expect(copyId).toMatch(/^nested_a_copy/)
@@ -609,7 +610,7 @@ tasks:
             const result = duplicateBlockAtPath(deepFlow, "tasks[0]")
 
             // Then — the copy and all its nested IDs are unique vs originals
-            const parsed = flowYamlUtils.parse(result)
+            const parsed = parseBlock(result)
             expect(parsed.tasks).toHaveLength(2)
             const copy = parsed.tasks[1]
             expect(originalIds.has(String(copy.id))).toBe(false)
@@ -627,7 +628,7 @@ tasks:
             const result = duplicateBlockAtPath(FLOW_WITH_SWITCH, "tasks[0].cases.prod[0]")
 
             // Then
-            const parsed = flowYamlUtils.parse(result)
+            const parsed = parseBlock(result)
             expect(parsed.tasks[0].cases.prod).toHaveLength(2)
             expect(String(parsed.tasks[0].cases.prod[1].id)).toMatch(/^prod_log_copy/)
         })
@@ -642,7 +643,7 @@ tasks:
             const result = updateBlock(SIMPLE_FLOW, "tasks", "task_a", updatedYaml)
 
             // Then
-            const parsed = flowYamlUtils.parse(result)
+            const parsed = parseBlock(result)
             expect(parsed.tasks).toHaveLength(2)
             expect(parsed.tasks[0].message).toBe("Updated")
             expect(parsed.tasks[1].id).toBe("task_b")
@@ -657,13 +658,13 @@ tasks:
             const result = updateBlock(FLOW_WITH_FLOWABLE, "tasks", "leaf_task", updatedYaml)
 
             // Then
-            const parsed = flowYamlUtils.parse(result)
+            const parsed = parseBlock(result)
             expect(parsed.tasks[0].message).toBe("Changed")
             const ifTask = parsed.tasks.find((t: Record<string, unknown>) => t.id === "if_task")
-            expect(ifTask.then).toHaveLength(1)
-            expect(ifTask.else).toHaveLength(1)
-            expect(ifTask.then[0].id).toBe("nested_a")
-            expect(ifTask.else[0].id).toBe("nested_b")
+            expect(ifTask?.then).toHaveLength(1)
+            expect(ifTask?.else).toHaveLength(1)
+            expect(ifTask?.then[0].id).toBe("nested_a")
+            expect(ifTask?.else[0].id).toBe("nested_b")
         })
 
         it("updates a trigger without affecting tasks", () => {
@@ -674,7 +675,7 @@ tasks:
             const result = updateBlock(FLOW_WITH_TRIGGERS, "triggers", "webhook", updatedYaml)
 
             // Then
-            const parsed = flowYamlUtils.parse(result)
+            const parsed = parseBlock(result)
             expect(parsed.triggers[0].key).toBe("new-key")
             expect(parsed.tasks[0].id).toBe("log")
         })
@@ -687,7 +688,7 @@ tasks:
             const result = updateBlock(SIMPLE_FLOW, "tasks", "task_a", renamedYaml)
 
             // Then
-            const parsed = flowYamlUtils.parse(result)
+            const parsed = parseBlock(result)
             expect(parsed.tasks).toHaveLength(2)
             expect(parsed.tasks[0].id).toBe("task_renamed")
             expect(parsed.tasks[1].id).toBe("task_b")
@@ -700,7 +701,7 @@ tasks:
             const result = updateBlock(SIMPLE_FLOW, "tasks", "nonexistent", "id: nonexistent\ntype: io.kestra.plugin.core.log.Log")
 
             // Then
-            const parsed = flowYamlUtils.parse(result)
+            const parsed = parseBlock(result)
             expect(parsed.tasks).toHaveLength(2)
         })
     })
@@ -714,7 +715,7 @@ tasks:
             const result = updateBlockAtPath(FLOW_WITH_FLOWABLE, "tasks[1].then[0]", updatedYaml)
 
             // Then
-            const parsed = flowYamlUtils.parse(result)
+            const parsed = parseBlock(result)
             expect(parsed.tasks[1].then[0].message).toBe("Updated nested")
             expect(parsed.tasks[1].else[0].id).toBe("nested_b")
         })
@@ -725,9 +726,9 @@ tasks:
             // Given
 
             // When
-            const parsed1 = flowYamlUtils.parse(FLOW_WITH_SWITCH)
+            const parsed1 = parseBlock(FLOW_WITH_SWITCH)
             const stringified = flowYamlUtils.stringify(parsed1)
-            const parsed2 = flowYamlUtils.parse(stringified)
+            const parsed2 = parseBlock(stringified)
 
             // Then
             expect(parsed2.tasks[0].cases.prod).toHaveLength(1)
@@ -745,7 +746,7 @@ tasks:
             const result = addBlockAtPath(FLOW_WITH_SWITCH, "tasks[0].cases.staging", newTask)
 
             // Then
-            const parsed = flowYamlUtils.parse(result)
+            const parsed = parseBlock(result)
             expect(parsed.tasks[0].cases.prod).toHaveLength(1)
             expect(parsed.tasks[0].cases.dev).toHaveLength(1)
             expect(parsed.tasks[0].cases.staging).toHaveLength(1)
@@ -783,7 +784,7 @@ tasks:
             const result = addBlockAtPath(FLOW_WITH_SWITCH, "tasks[0].cases[\"eu.prod\"]", newTask)
 
             // Then
-            const parsed = flowYamlUtils.parse(result)
+            const parsed = parseBlock(result)
             expect(parsed.tasks[0].cases["eu.prod"]).toHaveLength(1)
             expect(parsed.tasks[0].cases["eu.prod"][0].id).toBe("eu_log")
             // the dot must not have created a nested `eu: { prod: ... }`
@@ -796,7 +797,7 @@ tasks:
             const result = reorderAtPath(FLOW_WITH_DOTTED_CASE, "tasks[0].cases[\"1.0\"]", 0, 1)
 
             // Then
-            const parsed = flowYamlUtils.parse(result)
+            const parsed = parseBlock(result)
             expect(parsed.tasks[0].cases["1.0"].map((t: {id: string}) => t.id)).toEqual(["second", "first"])
         })
 
@@ -805,7 +806,7 @@ tasks:
             const result = moveBlockAtPath(FLOW_WITH_DOTTED_CASE, "tasks[0].cases[\"1.0\"][1]", "up")
 
             // Then
-            const parsed = flowYamlUtils.parse(result)
+            const parsed = parseBlock(result)
             expect(parsed.tasks[0].cases["1.0"].map((t: {id: string}) => t.id)).toEqual(["second", "first"])
         })
     })
@@ -818,7 +819,7 @@ tasks:
             const result = moveBlockAtPath(SIMPLE_FLOW, "tasks[1]", "up")
 
             // Then
-            const parsed = flowYamlUtils.parse(result)
+            const parsed = parseBlock(result)
             expect(parsed.tasks).toHaveLength(2)
             expect(parsed.tasks[0].id).toBe("task_b")
             expect(parsed.tasks[1].id).toBe("task_a")
@@ -831,7 +832,7 @@ tasks:
             const result = moveBlockAtPath(SIMPLE_FLOW, "tasks[0]", "down")
 
             // Then
-            const parsed = flowYamlUtils.parse(result)
+            const parsed = parseBlock(result)
             expect(parsed.tasks).toHaveLength(2)
             expect(parsed.tasks[0].id).toBe("task_b")
             expect(parsed.tasks[1].id).toBe("task_a")
@@ -844,7 +845,7 @@ tasks:
             const result = moveBlockAtPath(SIMPLE_FLOW, "tasks[0]", "up")
 
             // Then
-            const parsed = flowYamlUtils.parse(result)
+            const parsed = parseBlock(result)
             expect(parsed.tasks[0].id).toBe("task_a")
             expect(parsed.tasks[1].id).toBe("task_b")
         })
@@ -856,7 +857,7 @@ tasks:
             const result = moveBlockAtPath(SIMPLE_FLOW, "tasks[1]", "down")
 
             // Then
-            const parsed = flowYamlUtils.parse(result)
+            const parsed = parseBlock(result)
             expect(parsed.tasks[0].id).toBe("task_a")
             expect(parsed.tasks[1].id).toBe("task_b")
         })
@@ -873,7 +874,7 @@ tasks:
             const result = moveBlockAtPath(withTwo, "tasks[1].then[1]", "up")
 
             // Then
-            const parsed = flowYamlUtils.parse(result)
+            const parsed = parseBlock(result)
             expect(parsed.tasks[1].then[0].id).toBe("nested_c")
             expect(parsed.tasks[1].then[1].id).toBe("nested_a")
         })
@@ -885,7 +886,7 @@ tasks:
             const result = moveBlockAtPath(FLOW_WITH_FLOWABLE, "tasks[0]", "down")
 
             // Then
-            const parsed = flowYamlUtils.parse(result)
+            const parsed = parseBlock(result)
             expect(parsed.tasks[0].id).toBe("if_task")
             expect(parsed.tasks[0].then[0].id).toBe("nested_a")
             expect(parsed.tasks[0].else[0].id).toBe("nested_b")
@@ -899,7 +900,7 @@ tasks:
             const result = moveBlockAtPath(SIMPLE_FLOW, "tasks", "up")
 
             // Then
-            const parsed = flowYamlUtils.parse(result)
+            const parsed = parseBlock(result)
             expect(parsed.tasks[0].id).toBe("task_a")
         })
 
@@ -915,7 +916,7 @@ tasks:
             const result = moveBlockAtPath(withTwo, "tasks[0].cases.prod[1]", "up")
 
             // Then — order swapped, other cases intact
-            const parsed = flowYamlUtils.parse(result)
+            const parsed = parseBlock(result)
             expect(parsed.tasks[0].cases.prod[0].id).toBe("prod_second")
             expect(parsed.tasks[0].cases.prod[1].id).toBe("prod_log")
             expect(parsed.tasks[0].cases.dev).toHaveLength(1)
@@ -935,7 +936,7 @@ tasks:
             const result = moveBlockAtPath(withTwo, "tasks[0].cases.prod[0]", "down")
 
             // Then — swapped, siblings untouched
-            const parsed = flowYamlUtils.parse(result)
+            const parsed = parseBlock(result)
             expect(parsed.tasks[0].cases.prod[0].id).toBe("prod_second")
             expect(parsed.tasks[0].cases.prod[1].id).toBe("prod_log")
             expect(parsed.tasks[0].cases.dev[0].id).toBe("dev_log")
@@ -969,7 +970,7 @@ tasks:
             const result = reorderAtPath(SIMPLE_FLOW, "tasks", 0, 1)
 
             // Then
-            const parsed = flowYamlUtils.parse(result)
+            const parsed = parseBlock(result)
             expect(parsed.tasks[0].id).toBe("task_b")
             expect(parsed.tasks[1].id).toBe("task_a")
         })
@@ -981,7 +982,7 @@ tasks:
             const result = reorderAtPath(SIMPLE_FLOW, "tasks", 1, 0)
 
             // Then
-            const parsed = flowYamlUtils.parse(result)
+            const parsed = parseBlock(result)
             expect(parsed.tasks[0].id).toBe("task_b")
             expect(parsed.tasks[1].id).toBe("task_a")
         })
@@ -1003,7 +1004,7 @@ tasks:
             const result = reorderAtPath(FLOW_WITH_PARALLEL, "tasks[0].tasks", 0, 1)
 
             // Then
-            const parsed = flowYamlUtils.parse(result)
+            const parsed = parseBlock(result)
             expect(parsed.tasks[0].tasks[0].id).toBe("sub_b")
             expect(parsed.tasks[0].tasks[1].id).toBe("sub_a")
         })
@@ -1030,7 +1031,7 @@ tasks:
             const result = reorderAtPath(threeItems, "tasks", 1, 0)
 
             // Then — nested content intact
-            const parsed = flowYamlUtils.parse(result)
+            const parsed = parseBlock(result)
             expect(parsed.tasks[0].id).toBe("if_task")
             expect(parsed.tasks[0].then[0].id).toBe("nested_a")
             expect(parsed.tasks[1].id).toBe("task_a")
@@ -1049,7 +1050,7 @@ tasks:
             const result = reorderAtPath(withTwo, "tasks[0].cases.prod", 0, 1)
 
             // Then — order swapped, other cases intact
-            const parsed = flowYamlUtils.parse(result)
+            const parsed = parseBlock(result)
             expect(parsed.tasks[0].cases.prod[0].id).toBe("prod_second")
             expect(parsed.tasks[0].cases.prod[1].id).toBe("prod_log")
             expect(parsed.tasks[0].cases.dev[0].id).toBe("dev_log")
@@ -1063,7 +1064,7 @@ tasks:
             const result = reorderAtPath(SIMPLE_FLOW, "tasks", 0, 99)
 
             // Then
-            const parsed = flowYamlUtils.parse(result)
+            const parsed = parseBlock(result)
             expect(parsed.tasks[0].id).toBe("task_a")
             expect(parsed.tasks[1].id).toBe("task_b")
         })
@@ -1150,7 +1151,7 @@ afterExecution:
             const result = addBlock(SIMPLE_FLOW, "tasks", task)
 
             // Then
-            const parsed = flowYamlUtils.parse(result)
+            const parsed = parseBlock(result)
             expect(parsed.tasks).toHaveLength(3)
             expect(parsed.tasks[2].type).toBe("io.kestra.plugin.core.flow.If")
             expect(typeof parsed.tasks[2].id).toBe("string")
@@ -1176,7 +1177,7 @@ tasks:
 
             // And the resulting flow has no duplicate ids
             const result = addBlock(collisionFlow, "tasks", task)
-            const parsed = flowYamlUtils.parse(result)
+            const parsed = parseBlock(result)
             const ids = parsed.tasks.map((t: Record<string, unknown>) => String(t.id))
             expect(new Set(ids).size).toBe(ids.length)
         })
@@ -1395,7 +1396,7 @@ tasks:
         })
 
         describe("path-addressed constraints (errors / finally / afterExecution / nested)", () => {
-            const flow = flowYamlUtils.parse(`
+            const flow = parseBlock(`
 id: probe
 namespace: qa
 tasks:
@@ -1505,22 +1506,22 @@ afterExecution:
             const result = deleteBlock(FLOW_WITH_FLOWABLE, "tasks", "leaf_task")
 
             // Then
-            const parsed = flowYamlUtils.parse(result)
+            const parsed = parseBlock(result)
             const ifTask = parsed.tasks.find((t: Record<string, unknown>) => t.id === "if_task")
             expect(ifTask).toBeDefined()
-            expect(ifTask.then).toHaveLength(1)
-            expect(ifTask.else).toHaveLength(1)
-            expect(ifTask.then[0].id).toBe("nested_a")
-            expect(ifTask.else[0].id).toBe("nested_b")
+            expect(ifTask?.then).toHaveLength(1)
+            expect(ifTask?.else).toHaveLength(1)
+            expect(ifTask?.then[0].id).toBe("nested_a")
+            expect(ifTask?.else[0].id).toBe("nested_b")
         })
 
         it("parse(stringify(x)) round-trip produces stable output", () => {
             // Given
 
             // When
-            const parsed1 = flowYamlUtils.parse(FLOW_WITH_FLOWABLE)
+            const parsed1 = parseBlock(FLOW_WITH_FLOWABLE)
             const stringified = flowYamlUtils.stringify(parsed1)
-            const parsed2 = flowYamlUtils.parse(stringified)
+            const parsed2 = parseBlock(stringified)
 
             // Then
             expect(parsed2.tasks[1].then[0].id).toBe("nested_a")
@@ -1551,7 +1552,7 @@ tasks:
             const result = addBlockAtPath(deepFlow, "tasks[0].then[0].then", newTask)
 
             // Then
-            const parsed = flowYamlUtils.parse(result)
+            const parsed = parseBlock(result)
             expect(parsed.tasks[0].then[0].then).toHaveLength(2)
             expect(parsed.tasks[0].then[0].then[1].id).toBe("deep_task_2")
         })

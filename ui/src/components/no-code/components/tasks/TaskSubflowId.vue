@@ -21,8 +21,10 @@
     import {collapseEmptyValues} from "../utils/collapseEmptyValues"
     import {useFlowStore} from "../../../../stores/flow"
 
+    type ModelValue = object | string | number | boolean | unknown[]
+
     const props = withDefaults(defineProps<{
-        modelValue?: object | string | number | boolean | unknown[]
+        modelValue?: ModelValue
         schema?: Record<string, unknown>
         required?: boolean
         task?: Record<string, unknown>
@@ -38,7 +40,7 @@
     })
 
     const emit = defineEmits<{
-        "update:modelValue": [value: unknown]
+        "update:modelValue": [value: ModelValue | undefined]
     }>()
 
     const flowStore = useFlowStore()
@@ -61,7 +63,7 @@
         }
     }, {immediate: true})
 
-    function onInput(value: unknown) {
+    function onInput(value: ModelValue) {
         emit("update:modelValue", collapseEmptyValues(value))
     }
 </script>

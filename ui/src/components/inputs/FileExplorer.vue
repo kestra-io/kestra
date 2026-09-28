@@ -454,11 +454,6 @@
         filesStore.namespaceId = props.currentNS
     }
 
-    interface FileExplorerNode {
-        data: TreeNode;
-        parent: ElTreeNode;
-    }
-
     interface Dialog{
         visible: boolean;
         type: "file" | "folder";
@@ -861,11 +856,11 @@
         }
     }
 
-    function onNodeDragStart(draggingNode: FileExplorerNode) {
+    function onNodeDragStart(draggingNode: ElTreeNode) {
         startRestrictDrop()
 
         nodeBeforeDrag.value = {
-            parent: draggingNode.parent.data.id,
+            parent: draggingNode.parent?.data.id,
             path: filesStore.getPath(draggingNode.data.id) ?? "",
         }
     

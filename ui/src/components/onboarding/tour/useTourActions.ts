@@ -1,5 +1,6 @@
 import {useRoute, useRouter} from "vue-router"
 import * as FlowsAPI from "@kestra-io/kestra-sdk/flows"
+import type {Flow} from "@kestra-io/kestra-sdk"
 import {State} from "@kestra-io/design-system"
 
 import {useFlowStore} from "../../../stores/flow"
@@ -18,7 +19,6 @@ import {
     TOUR_REPORT_FLOW,
     tourFlowSource,
 } from "./tourFlows"
-import type {Flow} from "@kestra-io/kestra-sdk"
 
 const ONBOARDING_FLOW_PRESET_KEY = "kestra.onboarding.flowPreset"
 

@@ -3,13 +3,16 @@ package io.kestra.webserver.controllers.api;
 import java.io.*;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
@@ -42,6 +45,7 @@ import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import jakarta.inject.Inject;
+import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 
 import static io.kestra.core.utils.Rethrow.throwConsumer;
@@ -53,6 +57,7 @@ public class NamespaceFileController {
 
     // Maximum length of a single file-name component on common filesystems (e.g. 255 bytes on ext4).
     private static final int MAX_FILE_NAME_LENGTH = 255;
+    private static final int MAX_REPORTED_INVALID_ENTRIES = 10;
 
     @Inject
     private StorageInterface storageInterface;
@@ -211,36 +216,62 @@ public class NamespaceFileController {
 
     protected List<NamespaceFile> innerCreateNamespaceFile(String namespace, String path, CompletedFileUpload fileContent) throws Exception {
         String tenantId = tenantService.resolveTenant();
-        List<NamespaceFile> createdFiles = new ArrayList<>();
         if (fileContent.getFilename().toLowerCase().endsWith(".zip")) {
-            try (ZipInputStream archive = ProtectedZipInputStream.of(fileContent.getInputStream(), securityConfiguration.zipBombProtection())) {
-                ZipEntry entry;
-                while ((entry = archive.getNextEntry()) != null) {
-                    if (entry.isDirectory()) {
-                        continue;
-                    }
-
-                    try (BufferedInputStream inputStream = new BufferedInputStream(new ByteArrayInputStream(archive.readAllBytes()))) {
-                        createdFiles.addAll(putNamespaceFile(tenantId, namespace, toFileUri("/" + entry.getName()), inputStream));
-                    }
-                }
-            }
-        } else {
-            try (BufferedInputStream inputStream = new BufferedInputStream(fileContent.getInputStream()) {
-                // Done to bypass the wrong available() output of the CompletedFileUpload InputStream
-                @Override
-                public synchronized int available() {
-                    return (int) fileContent.getSize();
-                }
-            }) {
-                createdFiles.addAll(putNamespaceFile(tenantId, namespace, toFileUri(path), inputStream));
+            // The upload can only be read once, so it is spooled to disk: the dry run rejects the whole
+            // archive when any entry is invalid, and only then is it read again and written.
+            Path archive = Files.createTempFile("namespace-files-", ".zip");
+            try (InputStream upload = fileContent.getInputStream()) {
+                Files.copy(upload, archive, StandardCopyOption.REPLACE_EXISTING);
+                importArchive(tenantId, namespace, archive, true);
+                return importArchive(tenantId, namespace, archive, false);
+            } finally {
+                Files.deleteIfExists(archive);
             }
         }
 
+        try (BufferedInputStream inputStream = new BufferedInputStream(fileContent.getInputStream()) {
+            // Done to bypass the wrong available() output of the CompletedFileUpload InputStream
+            @Override
+            public synchronized int available() {
+                return (int) fileContent.getSize();
+            }
+        }) {
+            return putNamespaceFile(tenantId, namespace, toFileUri(path), inputStream, false);
+        }
+    }
+
+    private List<NamespaceFile> importArchive(String tenantId, String namespace, Path archive, boolean dryRun) throws Exception {
+        List<NamespaceFile> createdFiles = new ArrayList<>();
+        List<String> invalidEntries = new ArrayList<>();
+        try (ZipInputStream zip = ProtectedZipInputStream.of(new BufferedInputStream(Files.newInputStream(archive)), securityConfiguration.zipBombProtection())) {
+            ZipEntry entry;
+            while ((entry = zip.getNextEntry()) != null) {
+                if (entry.isDirectory()) {
+                    continue;
+                }
+
+                try (BufferedInputStream inputStream = new BufferedInputStream(new ByteArrayInputStream(zip.readAllBytes()))) {
+                    createdFiles.addAll(putNamespaceFile(tenantId, namespace, toFileUri("/" + entry.getName()), inputStream, dryRun));
+                } catch (IllegalArgumentException | ConstraintViolationException | FlowProcessingException e) {
+                    if (!dryRun || e instanceof ProtectedZipInputStream.ZipBombDetectedException) {
+                        throw e;
+                    }
+                    invalidEntries.add("'%s' (%s)".formatted(entry.getName(), e.getMessage()));
+                }
+            }
+        }
+
+        if (!invalidEntries.isEmpty()) {
+            throw new IllegalArgumentException("The archive was not imported because %s invalid: %s%s.".formatted(
+                invalidEntries.size() == 1 ? "1 entry is" : "%d entries are".formatted(invalidEntries.size()),
+                invalidEntries.stream().limit(MAX_REPORTED_INVALID_ENTRIES).collect(Collectors.joining("; ")),
+                invalidEntries.size() > MAX_REPORTED_INVALID_ENTRIES ? "; and %d more".formatted(invalidEntries.size() - MAX_REPORTED_INVALID_ENTRIES) : ""
+            ));
+        }
         return createdFiles;
     }
 
-    private List<NamespaceFile> putNamespaceFile(String tenantId, String namespace, URI path, BufferedInputStream inputStream) throws Exception {
+    private List<NamespaceFile> putNamespaceFile(String tenantId, String namespace, URI path, BufferedInputStream inputStream, boolean dryRun) throws Exception {
         String filePath = path.getPath();
         if (filePath.matches("/" + FLOWS_FOLDER + "/.*")) {
             if (filePath.split("/").length != 3) {
@@ -249,27 +280,31 @@ public class NamespaceFileController {
 
             String flowSource = new String(inputStream.readAllBytes());
             flowSource = flowSource.replaceFirst("(?m)^namespace: .*$", "namespace: " + namespace);
-            this.importFlow(tenantId, flowSource);
+            this.importFlow(tenantId, flowSource, dryRun);
             return Collections.emptyList();
         }
         forbiddenPathsGuard(path);
+        Path normalizedPath = NamespaceFile.normalize(Path.of(filePath));
 
         // Reject over-long names before writing: otherwise the filesystem raises ENAMETOOLONG, which
         // surfaces as a 500 leaking the absolute internal-storage path. The limit is per path component
         // (255 bytes on common filesystems), so we check each segment rather than the whole path — a
         // valid multi-component path must not be rejected. Return a clean 4xx instead.
-        for (Path component : Path.of(filePath)) {
+        for (Path component : normalizedPath) {
             if (component.toString().length() > MAX_FILE_NAME_LENGTH) {
                 throw new IllegalArgumentException("A file or folder name exceeds the maximum length of " + MAX_FILE_NAME_LENGTH + " characters.");
             }
         }
 
+        if (dryRun) {
+            return Collections.emptyList();
+        }
         Namespace namespaceStorage = namespaceFactory.of(tenantId, namespace, storageInterface);
-        return namespaceStorage.putFile(Path.of(path.getPath()), inputStream);
+        return namespaceStorage.putFile(normalizedPath, inputStream);
     }
 
-    protected void importFlow(String tenantId, String source) throws FlowProcessingException {
-        flowService.importFlow(tenantId, source);
+    protected void importFlow(String tenantId, String source, boolean dryRun) throws FlowProcessingException {
+        flowService.importFlow(tenantId, source, dryRun);
     }
 
     @ExecuteOn(TaskExecutors.IO)

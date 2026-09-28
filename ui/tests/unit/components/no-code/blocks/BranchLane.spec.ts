@@ -2,11 +2,11 @@ import {describe, test, expect, beforeEach} from "vitest"
 import {createPinia, setActivePinia} from "pinia"
 import {computed, defineComponent, ref} from "vue"
 import KestraDesignSystem from "@kestra-io/design-system"
-import * as flowYamlUtils from "@kestra-io/topology/flow-yaml-utils"
 import BranchLane from "../../../../../src/components/no-code/blocks/BranchLane.vue"
 import {useBlockDragAndDrop} from "../../../../../src/components/no-code/blocks/useBlockDragAndDrop"
 import {BLOCK_DRAG_INJECTION_KEY} from "../../../../../src/components/no-code/injectionKeys"
 import {i18nMount} from "../../../i18nMount"
+import {parseBlock} from "../../../utils/parsedBlock"
 
 const globalConfig = {
     plugins: [KestraDesignSystem],
@@ -104,8 +104,8 @@ describe("BranchLane drag across lanes", () => {
         const Host = defineComponent({
             components: {BranchLane},
             setup() {
-                const thenTasks = computed(() => flowYamlUtils.parse(flowYaml.value).tasks[0].then ?? [])
-                const seqTasks = computed(() => flowYamlUtils.parse(flowYaml.value).tasks[1].tasks ?? [])
+                const thenTasks = computed(() => parseBlock(flowYaml.value).tasks[0].then ?? [])
+                const seqTasks = computed(() => parseBlock(flowYaml.value).tasks[1].tasks ?? [])
                 return {thenTasks, seqTasks}
             },
             template: `
@@ -133,7 +133,7 @@ describe("BranchLane drag across lanes", () => {
         await wrapper.vm.$nextTick()
 
         // Then — the "then" lane is pruned once empty, and the task landed in the Sequential
-        const parsed = flowYamlUtils.parse(flowYaml.value)
+        const parsed = parseBlock(flowYaml.value)
         expect(parsed.tasks[0].then).toBeUndefined()
         expect(parsed.tasks[1].tasks.map((task: {id: string}) => task.id)).toEqual(["nested_a", "seq_a"])
     })

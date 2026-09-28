@@ -1153,14 +1153,14 @@ tasks:
     describe("moveBlockToPath", () => {
         it("moves a task out of an If's then lane into a sibling Sequential's tasks lane", () => {
             // Given — the moved task starts as the only item in the If's then lane
-            const before = flowYamlUtils.parse(FLOW_WITH_IF_AND_SEQUENTIAL)
+            const before = parseBlock(FLOW_WITH_IF_AND_SEQUENTIAL)
             expect(before.tasks[0].then).toHaveLength(1)
 
             // When
             const result = moveBlockToPath(FLOW_WITH_IF_AND_SEQUENTIAL, "tasks[0].then[0]", "tasks[1].tasks", 0)
 
             // Then — the then lane is gone (pruned once empty) and the Sequential gained the task, in front
-            const parsed = flowYamlUtils.parse(result)
+            const parsed = parseBlock(result)
             expect(parsed.tasks[0].then).toBeUndefined()
             expect(parsed.tasks[1].tasks.map((task: {id: string}) => task.id)).toEqual(["nested_a", "seq_a"])
         })
@@ -1170,7 +1170,7 @@ tasks:
             const result = moveBlockToPath(FLOW_WITH_IF_AND_SEQUENTIAL, "tasks[0].then[0]", "tasks[1].tasks", 99)
 
             // Then
-            const parsed = flowYamlUtils.parse(result)
+            const parsed = parseBlock(result)
             expect(parsed.tasks[1].tasks.map((task: {id: string}) => task.id)).toEqual(["seq_a", "nested_a"])
         })
 
@@ -1189,14 +1189,14 @@ tasks:
       - id: seq_a
         type: io.kestra.plugin.core.log.Log
 `.trim()
-            const before = flowYamlUtils.parse(flow)
+            const before = parseBlock(flow)
             expect(before.tasks.map((task: {id: string}) => task.id)).toEqual(["leaf_task", "seq_task"])
 
             // When
             const result = moveBlockToPath(flow, "tasks[0]", "tasks[1].tasks", 0)
 
             // Then — no stray root key, and the Sequential now holds both tasks
-            const parsed = flowYamlUtils.parse(result)
+            const parsed = parseBlock(result)
             expect(Object.keys(parsed)).toEqual(["id", "namespace", "tasks"])
             expect(parsed.tasks).toHaveLength(1)
             expect(parsed.tasks[0].tasks.map((task: {id: string}) => task.id)).toEqual(["leaf_task", "seq_a"])
@@ -1225,7 +1225,7 @@ tasks:
             const result = moveBlockToPath(flow, "tasks[0]", "tasks[1].tasks[0].tasks", 0)
 
             // Then — no stray root key, and the inner Sequential now holds both tasks
-            const parsed = flowYamlUtils.parse(result)
+            const parsed = parseBlock(result)
             expect(Object.keys(parsed)).toEqual(["id", "namespace", "tasks"])
             expect(parsed.tasks).toHaveLength(1)
             expect(parsed.tasks[0].tasks[0].tasks.map((task: {id: string}) => task.id)).toEqual(["leaf_task", "inner_a"])
@@ -1233,7 +1233,7 @@ tasks:
 
         it("adjusts the target index when the removal shifts it within the same parent", () => {
             // Given — moving "a" (index 0) onto "c", which sits at index 2 before the removal
-            const before = flowYamlUtils.parse(FOUR_TASKS)
+            const before = parseBlock(FOUR_TASKS)
             expect(before.tasks.map((task: {id: string}) => task.id)).toEqual(["a", "b", "c", "d"])
 
             // When
@@ -1241,7 +1241,7 @@ tasks:
 
             // Then — "a" lands right before "c", not after it, since "c" shifted down to index 1
             // once "a" was removed from ahead of it
-            const parsed = flowYamlUtils.parse(result)
+            const parsed = parseBlock(result)
             expect(parsed.tasks.map((task: {id: string}) => task.id)).toEqual(["b", "a", "c", "d"])
         })
 

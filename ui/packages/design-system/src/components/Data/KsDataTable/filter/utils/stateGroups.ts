@@ -10,7 +10,7 @@ export const STATE_GROUPS: StateGroup[] = [
         key: "running",
         labelKey: "filter.state_group.running",
         token: "--ks-status-running",
-        states: ["SUBMITTED", "CREATED", "RESTARTED", "QUEUED", "RUNNING", "RETRYING"],
+        states: ["SUBMITTED", "CREATED", "RESTARTED", "QUEUED", "RUNNING", "PAUSING", "RETRYING"],
     },
     {
         key: "paused",

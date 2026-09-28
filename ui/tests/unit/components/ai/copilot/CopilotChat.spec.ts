@@ -1,18 +1,22 @@
 import {describe, it, expect, vi, beforeEach} from "vitest"
 import {mount, flushPromises} from "@vue/test-utils"
 import {reactive, ref} from "vue"
+import type {RouteParams} from "vue-router"
+import type {MiscControllerConfiguration} from "@kestra-io/kestra-sdk"
+import type {ChatMessage} from "../../../../../src/components/ai/copilot/useAiChat"
+import type {ProposedActionEvent, ThreadSummary} from "../../../../../src/components/ai/copilot/types"
 import {mountGlobal} from "./_helpers"
 
 // Drive the composable from the test so we can assert how CopilotChat renders each
 // state and forwards user intent, without a backend.
 const state = {
-    thread: ref(null),
-    messages: ref<any[]>([]),
+    thread: ref<ThreadSummary | null>(null),
+    messages: ref<ChatMessage[]>([]),
     status: ref("IDLE"),
     streaming: ref(false),
     error: ref<string | null>(null),
     notice: ref<string | null>(null),
-    pendingConfirmation: ref<any>(null),
+    pendingConfirmation: ref<ProposedActionEvent | null>(null),
     unavailable: ref(false),
     canSend: ref(true),
     nextThreadTitle: ref<string | null>(null),
@@ -32,7 +36,7 @@ vi.mock("../../../../../src/composables/useEditorBindings", () => ({useEditorBin
 // CopilotChat derives the page scope from the current route — mock a mutable route so tests control it.
 // `useRouter` is needed too: a rendered ARTEFACT_DRAFT message mounts the real `CopilotArtefactDraft.vue`,
 // which calls `useApplyDraft()`.
-let routeStub: {name?: string; params: Record<string, any>} = {name: undefined, params: {}}
+let routeStub: {name?: string; params: RouteParams} = {name: undefined, params: {}}
 vi.mock("vue-router", () => ({useRoute: () => routeStub, useRouter: () => ({push: vi.fn()})}))
 // The provider list is fetched on mount — stub the SDK so no real request fires.
 vi.mock("@kestra-io/kestra-sdk/ai", () => ({providers: vi.fn().mockResolvedValue([])}))
@@ -43,7 +47,7 @@ const miscStore = reactive({
     copilotPrompt: null as string | null,
     copilotThreadTitle: null as string | null,
     copilotNewThread: false,
-    configs: {isAiApiKeyConfigured: true} as Record<string, any> | undefined,
+    configs: {isAiApiKeyConfigured: true} as MiscControllerConfiguration | undefined,
     openCopilot: vi.fn(),
     promptCopilot: vi.fn(),
 })
@@ -122,7 +126,7 @@ describe("CopilotChat", () => {
 
     // kestra-io/kestra-ee#10424: a seeded fix must not stack onto the active conversation.
     it("drops the active conversation and titles the next thread when the seeded prompt asks for a new thread", async () => {
-        state.thread.value = {uid: "t-1"} as any
+        state.thread.value = {uid: "t-1", mode: "EDIT", status: "IDLE", createdAt: "", updatedAt: ""}
         state.messages.value = [{id: "1", role: "USER", type: "TEXT", content: "unrelated"}]
         miscStore.copilotPrompt = "Fix the task extract"
         miscStore.copilotThreadTitle = "Fix task extract"
@@ -264,7 +268,7 @@ describe("CopilotChat", () => {
 
     it("renders the proposed-action card and confirms on approve, forwarding the selected provider", async () => {
         // The resumed turn needs the same provider as the chat turn, so approve must pass it through.
-        ;(providersMock as any).mockResolvedValueOnce([{id: "gemini-legacy", isDefault: true}])
+        vi.mocked(providersMock).mockResolvedValueOnce([{id: "gemini-legacy", isDefault: true}])
         state.pendingConfirmation.value = {confirmationId: "c1", tool: "restart-execution", family: "MUTATE", summary: "Restart"}
         const w = mountChat()
         await flushPromises() // let the provider list resolve so selectedProvider is set
@@ -318,7 +322,7 @@ describe("CopilotChat", () => {
     // The main "Flow Code" editor mirrors the same diff live via `flowStore.previewSource`
     // (kestra-io/kestra#19330), so it reads as an in-IDE diff rather than only a chat aside.
     describe("editor diff preview (flowStore.previewSource)", () => {
-        const flowDraftMessage = (yaml: string) => ({id: "d1", role: "ASSISTANT", type: "ARTEFACT_DRAFT", draft: {draftId: "d1", kind: "FLOW", yaml, valid: true, constraints: null}})
+        const flowDraftMessage = (yaml: string): ChatMessage => ({id: "d1", role: "ASSISTANT", type: "ARTEFACT_DRAFT", draft: {draftId: "d1", kind: "FLOW", yaml, valid: true, constraints: null}})
 
         it("mirrors the pending mutate confirmation's proposed source when it targets the open flow", () => {
             routeStub = {name: "flows/update", params: {namespace: "company.team", id: "my-flow"}}
@@ -663,7 +667,7 @@ describe("CopilotChat", () => {
     it("spins the in-flight tool call while streaming, and stops once its result arrives", async () => {
         state.messages.value = [
             {id: "u1", role: "USER", type: "TEXT", content: "make a flow"},
-            {id: "t1", role: "TOOL", type: "TOOL_CALL", toolCall: {tool: "author-flow", family: "AUTHOR", arguments: {}}},
+            {id: "t1", role: "TOOL", type: "TOOL_CALL", toolCall: {tool: "author-flow", kind: "AUTHORING", arguments: {}}},
         ]
         state.streaming.value = true
         const w = mountChat()

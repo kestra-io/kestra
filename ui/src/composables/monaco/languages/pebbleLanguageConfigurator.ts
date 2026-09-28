@@ -104,7 +104,7 @@ export function registerFunctionParametersAutoCompletion(
         triggerCharacters: ["("],
         async provideCompletionItems(model, position) {
             const source = model.getValue()
-            const parsed = YAML_UTILS.parse(source, false)
+            const parsed = YAML_UTILS.parse<Record<string, unknown>>(source, false)
 
             const functionMatcher = model.findPreviousMatch(RegexProvider.capturePebbleFunction + "$", position, true, false, null, true)
             if (functionMatcher === null || functionMatcher.matches === null) {
@@ -155,7 +155,7 @@ export function registerNestedValueAutoCompletion(
         triggerCharacters: ["."],
         async provideCompletionItems(model, position) {
             const source = model.getValue()
-            const parsed = YAML_UTILS.parse(completionSource?.value ?? source, false)
+            const parsed = YAML_UTILS.parse<Record<string, unknown>>(completionSource?.value ?? source, false)
 
             const parentFieldMatcher = model.findPreviousMatch(RegexProvider.capturePebbleVarParent + "$", position, true, false, null, true)
             if (parentFieldMatcher === null || parentFieldMatcher.matches === null) {

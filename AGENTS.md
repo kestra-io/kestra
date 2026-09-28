@@ -493,7 +493,7 @@ cd ui && npm run translations:check
 
 A clean run reports `No missing keys.`, `No extra keys.` and `No stale keys.` for every language. Anything listed must be fixed before merging — the same check runs as a PR gate.
 
-> **Enterprise Edition:** EE-only keys live in `ui-ee/src/translations/ee_translations/en.json` and are checked separately — run `npm run translations:check` in `ui-ee` as well (see `kestra-ee/AGENTS.md` → "Frontend i18n").
+> **Enterprise Edition:** EE-only keys live in `ui-ee/src/translations/ee_translations/en.json`, and a tenant type's own keys in `ui-ee/src/tenantTypes/<type>/translations/`, unprefixed and rooted under `tenantTypes.<type>` at runtime. Both are checked separately — run `npm run translations:check` in `ui-ee` as well (see `kestra-ee/AGENTS.md` → "Frontend i18n").
 
 ### Editing English strings
 

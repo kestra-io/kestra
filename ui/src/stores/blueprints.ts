@@ -7,16 +7,19 @@ import {apiUrl} from "override/utils/route"
 import {useMiscStore} from "override/stores/misc"
 
 import {trackBlueprintSelection} from "../utils/tabTracking"
+import type {KestraHttpError} from "../utils/kestraHttp"
 import {Input} from "./flow.ts"
 
 export type BlueprintType = "community" | "custom";
 export type BlueprintKind = "flow" | "dashboard" | "app";
+type BlueprintQueryValue = string | number | boolean | (string | null)[] | null | undefined;
+type BlueprintQueryParams = Record<string, BlueprintQueryValue>;
 
 interface Options {
     type: BlueprintType;
     kind?: BlueprintKind;
     id?: string;
-    params?: Record<string, any>;
+    params?: BlueprintQueryParams;
 }
 
 interface Blueprint {
@@ -36,7 +39,7 @@ export type FlowBlueprint = BlueprintControllerApiBlueprintItemWithSource & {
     // A flow blueprint may carry a template definition (EE feature): its source plus the arguments
     // the UI renders as inputs when instantiating it. Kept structural (not tied to an EE-only SDK
     // type) so the shared store compiles against the OSS SDK too.
-    template?: { source?: string; templateArguments?: Record<string, unknown> };
+    template?: { source?: string; templateArguments?: Record<string, unknown>; templateArgumentsOrder?: string[] };
     includedFlows?: string[];
 };
 
@@ -75,15 +78,15 @@ export const useBlueprintsStore = defineStore("blueprints", () => {
         try {
             const {data} = await axios.get(`${apiUrl()}/blueprints/custom`, {params: toCustomBlueprintParams(options.params)})
             return data
-        } catch (e: any) {
-            if (e.status === 401) return {results: [], total: 0}
+        } catch (e: unknown) {
+            if ((e as KestraHttpError).status === 401) return {results: [], total: 0}
             throw e
         }
     }
 
-    function toCustomBlueprintParams(params?: Record<string, any>) {
+    function toCustomBlueprintParams(params?: BlueprintQueryParams) {
         const {q, tags, ...rest} = params ?? {}
-        const converted: Record<string, any> = {...rest}
+        const converted: BlueprintQueryParams = {...rest}
         if (q !== undefined && q !== null) {
             converted["filters[q][EQUALS]"] = q
         }
@@ -144,8 +147,8 @@ export const useBlueprintsStore = defineStore("blueprints", () => {
         try {
             const {data} = await axios.get<BlueprintTag[]>(`${apiUrl()}/blueprints/custom/tags`, {params: toCustomBlueprintParams(options.params)})
             return data
-        } catch (e: any) {
-            if (e.status === 401) return []
+        } catch (e: unknown) {
+            if ((e as KestraHttpError).status === 401) return []
             throw e
         }
     }

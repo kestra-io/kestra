@@ -9,7 +9,7 @@ import io.kestra.core.models.kv.PersistedKvMetadata;
 import jakarta.annotation.Nullable;
 
 /**
- * Abstraction layer for KV metadata operations, used by {@link io.kestra.core.storages.kv.InternalKVStore}
+ * Abstraction layer for KV metadata operations, used by {@link io.kestra.core.storages.kv.StorageKVBackend}
  * and {@link io.kestra.core.services.KVStoreService}.
  * <p>
  * On controller/webserver/standalone servers, the default implementation delegates directly to

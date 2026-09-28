@@ -1,17 +1,19 @@
 import {computed, ref, watch} from "vue"
 import {defineStore} from "pinia"
 
-import type {AxiosLikeConfig, AxiosLikeResponse} from "@kestra-io/kestra-sdk"
+import type {AxiosLikeConfig, AxiosLikeResponse, ExportFormat} from "@kestra-io/kestra-sdk"
 
 const response: AxiosLikeConfig = {responseType: "blob" as const}
 const validateStatus = (status: number) => status === 200 || status === 404
-/** Returns false when the export carried no rows: the backend answers 200 with an empty body,
- *  and writing that out hands the user a 0 byte file with no clue anything went wrong. */
-const downloadHandler = (res: AxiosLikeResponse, filename: string, extension: string): boolean => {
+/** Returns false when the export carried nothing the user can open. Only ION can end up that way:
+ *  a CSV export always carries its header row, so an empty chart is still a valid file, while ION
+ *  has no header concept and an empty chart really is a 0 byte body that looks like a failed
+ *  download. */
+const downloadHandler = (res: AxiosLikeResponse, filename: string, format: ExportFormat): boolean => {
     const blob = new Blob([res.data], {type: "application/octet-stream"})
-    if (blob.size === 0) return false
+    if (format === "ION" && blob.size === 0) return false
 
-    Utils.downloadUrl(window.URL.createObjectURL(blob), `${filename}.${extension}`)
+    Utils.downloadUrl(window.URL.createObjectURL(blob), `${filename}.${format.toLowerCase()}`)
     return true
 }
 
@@ -288,9 +290,9 @@ export const useDashboardStore = defineStore("dashboard", () => {
         return DashboardsAPI.previewChart(request)
     }
 
-    /** Resolves to false when the chart had nothing to export, so the caller can tell the user
-     *  instead of silently downloading an empty file. */
-    async function exportDashboard(dashboard: Dashboard, chart: Chart, parameters: ChartFiltersOverrides, format: "CSV" | "ION" = "CSV"): Promise<boolean> {
+    /** Resolves to false when the export carried nothing the user can open, so the caller can tell
+     *  them instead of silently downloading an empty file. Only ION resolves that way. */
+    async function exportDashboard(dashboard: Dashboard, chart: Chart, parameters: ChartFiltersOverrides, format: ExportFormat = "CSV"): Promise<boolean> {
         const isDefault = dashboard.id === "default"
 
         const path = isDefault ? "/charts/export" : `/${dashboard.id}/charts/${chart.id}/export`
@@ -300,7 +302,7 @@ export const useDashboardStore = defineStore("dashboard", () => {
 
         return axios
             .post(`${apiUrl()}/dashboards${path}?format=${format}`, payload, response)
-            .then((res) => downloadHandler(res, filename, format.toLowerCase()))
+            .then((res) => downloadHandler(res, filename, format))
     }
 
     const pluginsStore = usePluginsStore()

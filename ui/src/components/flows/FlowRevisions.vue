@@ -90,7 +90,7 @@
 
     async function restoreRevision(revisionSource: string) {
         return flowStore.saveFlow({flow: revisionSource})
-            .then((response:any) => {
+            .then((response) => {
                 toast.saved(response.id)
             })
             .then(() => {
@@ -118,7 +118,7 @@
     async function onRevisionDeleted(revision: number) {
         const updatedQuery = {...route.query}
         for (const key of ["revisionLeft", "revisionRight"]) {
-            if ((updatedQuery as any)[key]?.toString() === `${revision}`) delete (updatedQuery)[key]
+            if (updatedQuery[key]?.toString() === `${revision}`) delete updatedQuery[key]
         }
         await router.push({query: updatedQuery})
         await fetchRevisions()

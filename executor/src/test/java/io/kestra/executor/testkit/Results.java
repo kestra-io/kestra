@@ -68,6 +68,10 @@ public final class Results {
         return terminated(workerTask, State.Type.FAILED, attemptEnd, null);
     }
 
+    public static WorkerTaskResult killed(WorkerTask workerTask, Instant attemptEnd) {
+        return terminated(workerTask, State.Type.KILLED, attemptEnd, null);
+    }
+
     private static WorkerTaskResult terminated(ExecutorContext.ExecutorWorkerTask emitted, State.Type state, Instant attemptEnd, Map<String, Object> outputs) {
         return terminated(emitted.workerTask(), state, attemptEnd, outputs);
     }

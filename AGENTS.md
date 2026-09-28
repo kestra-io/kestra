@@ -166,6 +166,7 @@ See [Comments](#comments) for when a Javadoc block is worth writing at all. Once
 - Unit tests must assert that a user can only access a given API if authorized to do so, and that access is denied otherwise
 - APIs must be documented with OpenAPI annotations
 - Use DTOs for requests/responses
+- A dashboard chart export must use the chart's declared columns for its header, in declaration order, whether or not there are rows
 - Always validate input parameters with `@Valid`
 - Use `@ExecuteOn(TaskExecutors.IO)` for blocking operations
 - Return meaningful error responses in controllers
@@ -492,7 +493,7 @@ cd ui && npm run translations:check
 
 A clean run reports `No missing keys.`, `No extra keys.` and `No stale keys.` for every language. Anything listed must be fixed before merging — the same check runs as a PR gate.
 
-> **Enterprise Edition:** EE-only keys live in `ui-ee/src/translations/ee_translations/en.json` and are checked separately — run `npm run translations:check` in `ui-ee` as well (see `kestra-ee/AGENTS.md` → "Frontend i18n").
+> **Enterprise Edition:** EE-only keys live in `ui-ee/src/translations/ee_translations/en.json`, and a tenant type's own keys in `ui-ee/src/tenantTypes/<type>/translations/`, unprefixed and rooted under `tenantTypes.<type>` at runtime. Both are checked separately — run `npm run translations:check` in `ui-ee` as well (see `kestra-ee/AGENTS.md` → "Frontend i18n").
 
 ### Editing English strings
 

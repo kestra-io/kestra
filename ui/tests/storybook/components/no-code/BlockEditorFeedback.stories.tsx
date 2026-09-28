@@ -564,12 +564,13 @@ export const F3ConfigureFlowableProperties: Story = {
 }
 
 // F4 — Task Outputs panel, inside the real task-edit panel: read-only,
-// collapsed by default, type-annotated, and hidden entirely when a task
-// declares no outputs. Storybook has no backend to fetch the plugin schema
-// from, so the Request type's documentation cache is pre-seeded with its
-// real output shape — `pluginsStore.load()` checks this cache before ever
-// reaching the (mocked, empty) network call, and TaskEditor calls `load()`
-// on mount, which would otherwise clobber a value assigned after setup().
+// expanded by default for a task that declares outputs, collapsible to a
+// rail, type-annotated, and hidden entirely when a task declares no outputs.
+// Storybook has no backend to fetch the plugin schema from, so the Request
+// type's documentation cache is pre-seeded with its real output shape —
+// `pluginsStore.load()` checks this cache before ever reaching the (mocked,
+// empty) network call, and TaskEditor calls `load()` on mount, which would
+// otherwise clobber a value assigned after setup().
 const HTTP_REQUEST_OUTPUTS_SCHEMA = {
     cls: "io.kestra.plugin.core.http.Request",
     schema: {
@@ -590,7 +591,7 @@ const seedHttpRequestOutputsSchema = () => {
     pluginsStore.plugin = HTTP_REQUEST_OUTPUTS_SCHEMA
 }
 
-export const F4OutputsCollapsedByDefault: Story = {
+export const F4OutputsExpandedByDefault: Story = {
     decorators: editModeDecorators,
     render: () => ({
         setup() {
@@ -604,7 +605,7 @@ export const F4OutputsCollapsedByDefault: Story = {
     parameters: {
         docs: {
             description: {
-                story: "Problem: outputs were rendered as clickable, expanded chips even though a task's outputs are read-only and not always relevant. Fix: inside the real task-edit panel for `notify_release_channel` (an HTTP Request with four declared outputs — `body`, `encryptedBody`, `headers`, `code`), the Outputs column is now collapsed by default and shown as a rail — click it to expand.",
+                story: "Problem: the Outputs column was always collapsed on open, even for a task that declares outputs, so the fastest-looking gesture (opening the panel) surfaced nothing. Fix: inside the real task-edit panel for `notify_release_channel` (an HTTP Request with four declared outputs — `body`, `encryptedBody`, `headers`, `code`), the Outputs column is expanded by default — click its collapse button to rail it.",
             },
         },
     },
@@ -614,42 +615,10 @@ export const F4OutputsCollapsedByDefault: Story = {
             expect(el).toBeInTheDocument()
             return el
         }, {timeout: 15000})
-        const outputsRail = taskEdit.querySelector("[data-test='task-edit-data-output']") as HTMLElement
-        expect(outputsRail).toBeInTheDocument()
-        expect(outputsRail.tagName).toBe("BUTTON")
-    },
-}
-
-export const F4OutputsExpandedReadOnly: Story = {
-    decorators: editModeDecorators,
-    render: () => ({
-        setup() {
-            mockNoCodeTransport()
-            seedHttpRequestOutputsSchema()
-            const flowStore = useFlowStore()
-            flowStore.flowYaml = CICD_PIPELINE_YAML
-            return () => <BlockEditorHost initialParentPath="tasks[3].then" initialRefPath={0} />
-        },
-    }),
-    parameters: {
-        docs: {
-            description: {
-                story: "Problem: output chips were clickable/draggable as if they inserted an expression, which is misleading since outputs are read-only, declared fields. Fix: expanded, every declared output of `notify_release_channel` (`body` — string, `encryptedBody` — string, `headers` — object, `code` — integer) renders as a static, non-interactive chip showing its name and type.",
-            },
-        },
-    },
-    play: async ({canvasElement}) => {
-        const taskEdit = await waitFor(() => {
-            const el = canvasElement.querySelector("[data-test='block-editor-task-edit']") as HTMLElement
-            expect(el).toBeInTheDocument()
-            return el
-        }, {timeout: 15000})
-
-        const collapseRail = taskEdit.querySelector("[data-test='task-edit-data-output']") as HTMLElement
-        await userEvent.click(collapseRail)
 
         const outputsPanel = await waitFor(() => {
             const el = taskEdit.querySelector("[data-test='task-edit-data-output']") as HTMLElement
+            expect(el).toBeInTheDocument()
             expect(el.tagName).toBe("DIV")
             return el
         }, {timeout: 15000})
@@ -659,6 +628,16 @@ export const F4OutputsExpandedReadOnly: Story = {
             expect(chip?.classList.contains("task-edit-data-chip--static")).toBe(true)
             expect(chip?.tagName).toBe("DIV")
         }
+
+        const collapseButton = within(outputsPanel).getByRole("button", {name: "Collapse"})
+        await userEvent.click(collapseButton)
+
+        const outputsRail = await waitFor(() => {
+            const el = taskEdit.querySelector("[data-test='task-edit-data-output']") as HTMLElement
+            expect(el.tagName).toBe("BUTTON")
+            return el
+        }, {timeout: 15000})
+        expect(outputsRail).toBeInTheDocument()
     },
 }
 

@@ -60,6 +60,13 @@ export const EXECUTION_STATUSES: Record<string, ExecutionStatusModel> = Object.f
         isKillable: true,
         isFailed: false,
     },
+    PAUSING: {
+        name: "PAUSING",
+        icon: Pause,
+        isRunning: true,
+        isKillable: true,
+        isFailed: false,
+    },
     KILLING: {
         name: "KILLING",
         icon: StopCircleOutline,

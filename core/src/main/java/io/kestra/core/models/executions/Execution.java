@@ -449,7 +449,7 @@ public class Execution implements SoftDeletable<Execution>, TenantInterface, Has
             null, // same for the outputs, the RunVariables get them from the parent execution
             this.labels,
             this.variables,
-            this.state,
+            this.state.isPaused() ? this.state.withState(State.Type.RUNNING) : this.state, // the parent is paused while another iteration is
             this.id,
             null,
             null, // we don't copy triggers to reduce the size, the RunVariables must get them from the parent execution

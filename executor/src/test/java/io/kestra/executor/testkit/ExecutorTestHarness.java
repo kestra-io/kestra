@@ -258,9 +258,10 @@ public final class ExecutorTestHarness {
         runContextFactoryRef[0] = runContextFactory;
         WorkerQueueService workerQueueService = new WorkerQueueService.Default();
 
-        // the executor-facing ExecutionService methods are pure, except that resuming a Pause saves its outputs
+        // the executor-facing ExecutionService methods are pure, except that resuming a Pause saves its outputs and publishes a CRUD event
         this.executionService = Mockito.mock(ExecutionService.class, Mockito.CALLS_REAL_METHODS);
         injectField(ExecutionService.class, executionService, "taskOutputService", taskOutputService);
+        injectField(ExecutionService.class, executionService, "eventPublisher", ApplicationEventPublisher.noOp());
         // every evaluate overload defaults to PASS; tests re-stub the overload they exercise
         this.killSwitchService = Mockito.mock(
             KillSwitchService.class,
@@ -324,7 +325,8 @@ public final class ExecutorTestHarness {
             asyncOperationService,
             executionEventMessageHandler,
             killSwitchService,
-            killSwitchActionService
+            killSwitchActionService,
+            executionCommandQueue
         );
         this.workerTaskResultMessageHandler = new WorkerTaskResultMessageHandler(
             executionStateStore,
@@ -384,8 +386,7 @@ public final class ExecutorTestHarness {
             flowMetaStore,
             executionService,
             executorService,
-            metricRegistry,
-            loopExecutionEventQueue
+            metricRegistry
         );
         this.concurrencySlotReleaseProcessor = new ConcurrencySlotReleaseProcessor(
             concurrencyLimitStateStore,

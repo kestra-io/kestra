@@ -12,10 +12,9 @@
         <div class="pill-list">
             <template v-for="segment in loopSegments" :key="segment.key">
                 <KsButton
-                    v-if="segment.filterStates"
-                    :tag="RouterLink"
+                    :tag="segment.filterStates ? RouterLink : 'div'"
                     size="small"
-                    :to="{
+                    :to="segment.filterStates ? {
                         name: 'executions/list',
                         query: {
                             'filters[parentId][EQUALS]': executionId,
@@ -23,12 +22,8 @@
                             'filters[taskId][EQUALS]': taskId,
                             'filters[state][IN]': segment.filterStates.join(',')
                         }
-                    }"
+                    } : undefined"
                 >
-                    <span :style="{backgroundColor: segment.color}" class="colored-dot" />
-                    {{ segment.count }} {{ segment.label }}
-                </KsButton>
-                <KsButton v-else size="small" disabled>
                     <span :style="{backgroundColor: segment.color}" class="colored-dot" />
                     {{ segment.count }} {{ segment.label }}
                 </KsButton>
@@ -41,12 +36,10 @@
     import {computed} from "vue"
     import {State} from "@kestra-io/design-system"
     import {RouterLink} from "vue-router"
+    import {useI18n} from "vue-i18n"
 
+    const {t} = useI18n({useScope: "global"})
     const loopStateColors = State.color()
-
-    const IN_FLIGHT_FILTER_STATES = ["CREATED", "SUBMITTED", "RESTARTED", "RUNNING", "KILLING", "PAUSED", "QUEUED", "RETRYING", "BREAKPOINT"]
-
-    const TERMINAL_STATE_ORDER = ["SUCCESS", "WARNING", "FAILED", "KILLED", "CANCELLED", "RETRIED", "SKIPPED"]
 
     type LoopSegment = {
         key: string;
@@ -60,6 +53,7 @@
         executionId: string;
         currentTaskRunId: string;
         taskId: string;
+        loopTaskState?: string;
         loopOutputsByTaskRunId: Record<string, {iterationCount: number; terminatedIterations?: Record<string, number>; runningIterations?: number}>;
     }>()
 
@@ -78,13 +72,18 @@
     })
 
     function formatPercentage(percentage: number): string {
-        return `${percentage.toFixed(1)}%`
+        if (loopIterationCount.value > 0 && consolidatedTerminalStates.value === loopIterationCount.value) {
+            return "100.0%"
+        }
+        return `${(Math.floor(percentage * 10) / 10).toFixed(1)}%`
     }
 
     const loopSegments = computed<LoopSegment[]>(() => {
         const outputs = props.loopOutputsByTaskRunId[props.currentTaskRunId]
         const terminatedIterations = outputs?.terminatedIterations ?? {}
-        const inFlightCount = Math.max(0, Math.min(outputs?.runningIterations ?? 0, loopIterationCount.value - consolidatedTerminalStates.value))
+                const inFlightCount = Math.max(0, Math.min(outputs?.runningIterations ?? 0, loopIterationCount.value - consolidatedTerminalStates.value))
+
+        const allStates = State.arrayAllStates().map(s => s.name)
 
         const terminalSegments: LoopSegment[] = Object.entries(terminatedIterations)
             .filter(([, count]) => count > 0)
@@ -96,20 +95,24 @@
                 filterStates: [state],
             }))
             .sort((a, b) => {
-                const ai = TERMINAL_STATE_ORDER.indexOf(a.key)
-                const bi = TERMINAL_STATE_ORDER.indexOf(b.key)
-                return (ai === -1 ? TERMINAL_STATE_ORDER.length : ai) - (bi === -1 ? TERMINAL_STATE_ORDER.length : bi)
+                const ai = allStates.indexOf(a.key)
+                const bi = allStates.indexOf(b.key)
+                return (ai === -1 ? allStates.length : ai) - (bi === -1 ? allStates.length : bi)
             })
 
         const segments: LoopSegment[] = [...terminalSegments]
 
+        if (props.loopTaskState && State.isTerminated(props.loopTaskState)) {
+            return segments
+        }
+
         if (inFlightCount > 0) {
             segments.push({
                 key: "IN_FLIGHT",
-                label: "In flight",
+                label: t("in flight"),
                 count: inFlightCount,
                 color: loopStateColors.RUNNING,
-                filterStates: IN_FLIGHT_FILTER_STATES,
+                filterStates: State.arrayAllStates().map(s => s.name).filter(s => !State.isTerminated(s)),
             })
         }
 
@@ -117,9 +120,9 @@
         if (notStartedCount > 0) {
             segments.push({
                 key: "NOT_STARTED",
-                label: "Not started",
+                label: t("not started"),
                 count: notStartedCount,
-                color: "var(--ks-border-primary)",
+                color: "var(--ks-border-default)",
             })
         }
 

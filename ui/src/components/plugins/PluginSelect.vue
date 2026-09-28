@@ -70,7 +70,7 @@
 
     onBeforeMount(() => {
         if (isPluginBlock) {
-            pluginsStore.listWithSubgroup({includeDeprecated: false})
+            pluginsStore.listWithSubgroup()
         }
         pluginsStore.fetchIcons()
     })

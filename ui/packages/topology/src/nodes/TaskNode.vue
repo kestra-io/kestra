@@ -9,6 +9,11 @@
         :loadIcon="loadIcon"
         @mouseover="emit(EVENTS.MOUSE_OVER, $event)"
         @mouseleave="emit(EVENTS.MOUSE_LEAVE)"
+        :focused="isKeyboardFocused"
+        @cardClick="onCardClick"
+        @taskDragStart="emit(EVENTS.TASK_DRAG_START, $event)"
+        :dragging="props.dragging"
+        @taskDragEnd="emit(EVENTS.TASK_DRAG_END)"
     >
         <template #badge>
             <span v-if="runnerLabel" class="runner-badge" :title="runnerLabel">{{ runnerLabel }}</span>
@@ -40,6 +45,29 @@
                     <Duration :histories="histories" :interval="100" :attemptCount="taskRuns[0]?.attempts?.length" :subject="taskId" />
                 </span>
             </span>
+            <KsTooltip v-if="validationIssues.length" :persistent="false">
+                <template #content>
+                    <div class="task-validation-tooltip">
+                        <div class="task-validation-tooltip-head">
+                            <AlertCircle :size="14" />
+                            <span>{{ $t("error detected") }}</span>
+                        </div>
+                        <ul class="task-validation-tooltip-list">
+                            <li v-for="issue in validationIssues" :key="issue">{{ issue }}</li>
+                        </ul>
+                    </div>
+                </template>
+                <span
+                    class="task-validation-badge"
+                    data-test="topology-task-validation-badge"
+                    role="img"
+                    tabindex="0"
+                    :aria-label="$t('flow_editor_stats.errors.label', {count: validationIssues.length})"
+                >
+                    <AlertCircle :size="14" />
+                    <span v-if="validationIssues.length > 1" class="task-validation-badge-count">{{ validationIssues.length }}</span>
+                </span>
+            </KsTooltip>
         </template>
         <template #title-actions>
             <slot name="taskActions" :task="data.node.task" :actions="actions" :execution="taskExecution" :taskRuns="taskRunsWithDynamicChildren" :taskRun="taskRuns[0]">
@@ -59,29 +87,34 @@
     import Duration from "../misc/Duration.vue"
     import * as Utils from "../utils/utils"
     import {getStatusStyle} from "../utils/status"
+    import type {GraphExecution, GraphTaskRun} from "../utils/vueFlowUtils"
     import BasicNode from "./BasicNode.vue"
     import NodeMenu, {type NodeAction} from "./NodeMenu.vue"
     import {
         EXECUTION_INJECTION_KEY,
         SUBFLOWS_EXECUTIONS_INJECTION_KEY,
         SHOW_EXTRA_DETAILS_INJECTION_KEY,
+        VALIDATION_ISSUES_INJECTION_KEY,
+        FOCUSED_TASK_INJECTION_KEY,
+        DRAGGING_NODE_INJECTION_KEY,
     } from "../injectionKeys"
 
+    import AlertCircle from "vue-material-design-icons/AlertCircle.vue"
     import TextBoxSearch from "vue-material-design-icons/TextBoxSearch.vue"
     import LocationExit from "vue-material-design-icons/LocationExit.vue"
     import PlayBoxMultiple from "vue-material-design-icons/PlayBoxMultiple.vue"
     import AlertOutline from "vue-material-design-icons/AlertOutline.vue"
     import SendLock from "vue-material-design-icons/SendLock.vue"
     import InformationOutline from "vue-material-design-icons/InformationOutline.vue"
-    import Pencil from "vue-material-design-icons/Pencil.vue"
     import Delete from "vue-material-design-icons/Delete.vue"
+    import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
     import OpenInNew from "vue-material-design-icons/OpenInNew.vue"
     import UnfoldMoreHorizontal from "vue-material-design-icons/UnfoldMoreHorizontal.vue"
     import EyeOutline from "vue-material-design-icons/EyeOutline.vue"
     import PlayIcon from "vue-material-design-icons/Play.vue"
     
 
-    interface TaskType {
+    export interface TaskType {
         id: string;
         type: string;
         default: null;
@@ -104,7 +137,7 @@
             uid: string;
             type?: string;
             task: TaskType;
-            taskRun: TaskRun
+            taskRun: GraphTaskRun
         };
         executionId?: string;
         color?: string;
@@ -112,31 +145,21 @@
         isFlowable?: boolean;
         expandable?: boolean;
         link?: {
-            namespace: string;
-            id: string;
+            namespace?: string;
+            id?: string;
             executionId?: string;
         };
-    }
-
-    interface TaskRun {
-        id: string
-        taskId: string;
-        parentTaskRunId?: string;
-        state: {
-            current: [string, string];
-            duration?: string;
-            histories?: {date: string; state: string}[];
-        };
-        outputs?: {
-            executionId?: string;
-        } & Record<string, unknown>;
-        attempts?: unknown[];
-        value?: string;
     }
 
     interface ExpandData {
         id: string;
         type: string;
+    }
+
+    interface TaskRunsPayload {
+        id: string | undefined;
+        execution: GraphExecution | undefined;
+        taskRuns: GraphTaskRun[];
     }
 
     const props = withDefaults(defineProps<{
@@ -152,6 +175,7 @@
         replayEnabled?: boolean;
         customActions?: Record<string, CustomActionConfig>;
         showDetails?: Record<string, ShowDetailsConfig>;
+        dragging?: boolean;
     }>(), {
         sourcePosition: Position.Right,
         targetPosition: Position.Left,
@@ -161,6 +185,7 @@
         replayEnabled: false,
         customActions: () => ({}),
         showDetails: () => ({}),
+        dragging: false,
     })
 
     defineOptions({
@@ -169,29 +194,47 @@
     })
 
     const emit = defineEmits<{
-        (event: typeof EVENTS.EXPAND, data: any): void;
-        (event: typeof EVENTS.OPEN_LINK, data: any): void;
-        (event: typeof EVENTS.SHOW_LOGS, data: any): void;
-        (event: typeof EVENTS.SHOW_OUTPUTS, data: any): void;
-        (event: typeof EVENTS.REPLAY_TASK, data: any): void;
-        (event: typeof EVENTS.MOUSE_OVER, data: any): void;
+        (event: typeof EVENTS.EXPAND, data: ExpandData): void;
+        (event: typeof EVENTS.OPEN_LINK, data: {link: NodeData["link"]}): void;
+        (event: typeof EVENTS.SHOW_LOGS, data: TaskRunsPayload): void;
+        (event: typeof EVENTS.SHOW_OUTPUTS, data: TaskRunsPayload): void;
+        (event: typeof EVENTS.REPLAY_TASK, data: TaskRunsPayload): void;
+        (event: typeof EVENTS.MOUSE_OVER, data: NodeData["node"]): void;
         (event: typeof EVENTS.MOUSE_LEAVE): void;
-        (event: typeof EVENTS.ADD_ERROR, data: { task: any }): void;
-        (event: typeof EVENTS.EDIT, data: any) :void;
-        (event: typeof EVENTS.DELETE, data: any) :void;
-        (event: typeof EVENTS.ADD_TASK, data: any) :void;
-        (event: typeof EVENTS.SHOW_CONDITION, data: any) :void;
-        (event: typeof EVENTS.SHOW_DESCRIPTION, data: any) :void;
-        (event: typeof EVENTS.RUN_TASK, data: { task: any }) :void;
-        (event: typeof EVENTS.SHOW_CUSTOM_ACTION, data: { task: any; customAction: CustomActionConfig }) :void;
-        (event: typeof EVENTS.SHOW_DETAILS, data: { task: any; showDetails: ShowDetailsConfig }) :void;
+        (event: typeof EVENTS.ADD_ERROR, data: {task: TaskType}): void;
+        (event: typeof EVENTS.EDIT, data: {task: TaskType; section: string}) :void;
+        (event: typeof EVENTS.DELETE, data: {id: string | undefined; section: string}) :void;
+        (event: typeof EVENTS.DUPLICATE, data: {id?: string}) :void;
+        (event: typeof EVENTS.SHOW_CONDITION, data: {id: string | undefined; task: TaskType; section: string}) :void;
+        (event: typeof EVENTS.SHOW_DESCRIPTION, data: {id: string | undefined; description: string}) :void;
+        (event: typeof EVENTS.RUN_TASK, data: {task: TaskType}) :void;
+        (event: typeof EVENTS.SHOW_CUSTOM_ACTION, data: {task: TaskType; customAction: CustomActionConfig}) :void;
+        (event: typeof EVENTS.SHOW_DETAILS, data: {task: TaskType; showDetails: ShowDetailsConfig}) :void;
+        (event: typeof EVENTS.TASK_DRAG_START, payload: {nodeId: string; label: string; cls?: string}) :void;
+        (event: typeof EVENTS.TASK_DRAG_END) :void;
     }>()
 
     const execution = inject(EXECUTION_INJECTION_KEY)
     const subflowsExecutions = inject(SUBFLOWS_EXECUTIONS_INJECTION_KEY)
     const globalShowExtraDetails = inject(SHOW_EXTRA_DETAILS_INJECTION_KEY)
+    const isDraggingNode = inject(DRAGGING_NODE_INJECTION_KEY, undefined)
+
+    function onCardClick() {
+        const task = props.data.node.task
+        if (props.data.isReadOnly || !task || isDraggingNode?.value) return
+        emit(EVENTS.EDIT, {task, section: SECTIONS.TASKS})
+    }
+
+    const focusedTaskId = inject(FOCUSED_TASK_INJECTION_KEY, undefined)
+    const isKeyboardFocused = computed(() => Boolean(taskId.value) && focusedTaskId?.value === taskId.value)
+
+    const validationIssuesByTask = inject(VALIDATION_ISSUES_INJECTION_KEY, undefined)
 
     const taskId = computed(() => Utils.afterLastDot(props.id))
+
+    const validationIssues = computed<string[]>(() =>
+        validationIssuesByTask?.value?.get(taskId.value ?? "") ?? [],
+    )
 
     const runnerType = computed(() => props.data.node?.task?.taskRunner?.type)
 
@@ -226,30 +269,28 @@
 
     const taskRuns = computed(() => {
         return taskRunList.value.filter(
-            (t: TaskRun) => t.taskId === Utils.afterLastDot(props.data.node.uid),
+            (t) => t.taskId === Utils.afterLastDot(props.data.node.uid),
         )
     })
 
     // The task's own taskruns plus any dynamically-generated child taskruns (e.g. Ansible
     // plays/tasks) so "show task logs" surfaces their logs too, not just the task's root logs.
     const taskRunsWithDynamicChildren = computed(() => {
-        const ids = new Set(taskRuns.value.map((t: TaskRun) => t.id))
+        const ids = new Set(taskRuns.value.map((t) => t.id))
         const children = taskRunList.value.filter(
-            (t: TaskRun) => t.parentTaskRunId && ids.has(t.parentTaskRunId),
+            (t) => t.parentTaskRunId && ids.has(t.parentTaskRunId),
         )
         return [...taskRuns.value, ...children]
     })
 
     const state = computed(() => {
         if (!taskRuns.value?.length) {
-            return null
+            return undefined
         }
 
         if (taskRuns.value.length === 1) {
             return taskRuns.value[0].state.current
         }
-
-        const allStates = taskRuns.value.map((t: TaskRun) => t.state.current)
 
         const SORT_STATUS: string[] = [
             State.FAILED,
@@ -263,15 +304,9 @@
             State.CREATED,
         ]
 
-        const result = allStates
-            .map((item: [string, string]) => {
-                const n = SORT_STATUS.indexOf(item[1])
-                return [n, item] as [number, [string, string]]
-            })
-            .sort()
-            .map((j: [number, [string, string]]) => j[1])
-
-        return result[0]
+        return taskRuns.value
+            .map((t) => t.state.current)
+            .sort((a, b) => SORT_STATUS.indexOf(a) - SORT_STATUS.indexOf(b))[0]
     })
 
     const classes = computed(() => ({
@@ -304,7 +339,7 @@
                     namespace: subflowIdContainer.namespace,
                     id: subflowIdContainer.flowId,
                     executionId: taskExecution.value?.taskRunList
-                        .filter((taskRun: TaskRun) =>
+                        ?.filter((taskRun) =>
                             taskRun.id === props.data.node.taskRun.id &&
                             taskRun.outputs?.executionId,
                         )
@@ -317,9 +352,8 @@
 
     const actionConfig = computed(() => {
         const taskType = props.data.node.task?.type as string | undefined
-        const runnerType = (props.data.node.task as any)?.taskRunner?.type as string | undefined
         if (!taskType) return undefined
-        const customAction = props.customActions?.[taskType] ?? (runnerType ? props.customActions?.[runnerType] : undefined)
+        const customAction = props.customActions?.[taskType] ?? (runnerType.value ? props.customActions?.[runnerType.value] : undefined)
         if (customAction) return {config: customAction, eventName: EVENTS.SHOW_CUSTOM_ACTION} as const
         const showDetail = props.showDetails?.[taskType]
         if (showDetail) return {config: showDetail, eventName: EVENTS.SHOW_DETAILS} as const
@@ -333,12 +367,13 @@
         const readOnly = props.data.isReadOnly
         const list: NodeAction[] = []
 
-        if (task?.description) {
+        const description = task?.description
+        if (description) {
             list.push({
                 key: "description",
                 label: t("show description"),
                 icon: InformationOutline,
-                onClick: () => emit(EVENTS.SHOW_DESCRIPTION, {id: taskId.value, description: task.description}),
+                onClick: () => emit(EVENTS.SHOW_DESCRIPTION, {id: taskId.value, description}),
             })
         }
         if (task?.runIf) {
@@ -389,14 +424,6 @@
                 onClick: () => emit(EVENTS.ADD_ERROR, {task}),
             })
         }
-        if (!readOnly) {
-            list.push({
-                key: "edit",
-                label: t("edit"),
-                icon: Pencil,
-                onClick: () => emit(EVENTS.EDIT, {task, section: SECTIONS.TASKS}),
-            })
-        }
         if (actionConfig.value && task) {
             list.push({
                 key: "show-details",
@@ -406,6 +433,13 @@
             })
         }
         if (!readOnly) {
+            list.push({
+                key: "duplicate",
+                label: t("block_editor.duplicate"),
+                icon: ContentCopy,
+                divided: true,
+                onClick: () => emit(EVENTS.DUPLICATE, {id: taskId.value}),
+            })
             list.push({
                 key: "delete",
                 label: t("delete"),
@@ -510,5 +544,51 @@ button.playground-button {
 .details-slide-leave-to {
     max-height: 0;
     opacity: 0;
+}
+
+.task-validation-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--ks-spacing-1);
+    padding: 0 var(--ks-spacing-1);
+    height: 1.125rem;
+    border-radius: var(--ks-radius-sm);
+    background: var(--ks-bg-error);
+    color: var(--ks-text-error);
+    cursor: help;
+}
+
+.task-validation-badge-count {
+    font-size: var(--ks-font-size-xs);
+    font-weight: 600;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+}
+
+.task-validation-tooltip {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ks-spacing-2);
+    max-width: 22rem;
+}
+
+.task-validation-tooltip-head {
+    display: flex;
+    align-items: center;
+    gap: var(--ks-spacing-1);
+    color: var(--ks-text-error);
+    font-weight: 600;
+    font-size: var(--ks-font-size-sm);
+}
+
+.task-validation-tooltip-list {
+    margin: 0;
+    padding-left: var(--ks-spacing-4);
+    display: flex;
+    flex-direction: column;
+    gap: var(--ks-spacing-1);
+    font-size: var(--ks-font-size-xs);
+    color: var(--ks-text-secondary);
+    font-family: var(--ks-font-family-mono);
 }
 </style>

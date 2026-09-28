@@ -4,7 +4,8 @@ import {createI18n} from "vue-i18n"
 import {createPinia} from "pinia"
 import KestraDesignSystem from "@kestra-io/design-system"
 import Resume from "../../../../../../../src/components/executions/overview/components/actions/Resume.vue"
-import {useExecutionsStore} from "../../../../../../../src/stores/executions"
+import type {FlowForExecution} from "@kestra-io/kestra-sdk"
+import {useExecutionsStore, type Execution} from "../../../../../../../src/stores/executions"
 import en from "../../../../../../../src/translations/en.json"
 
 const i18n = createI18n({legacy: false, locale: "en", fallbackWarn: false, missingWarn: false, messages: {en}})
@@ -17,6 +18,15 @@ const execution = {
     state: {current: "PAUSED"},
 }
 
+const flow: FlowForExecution = {
+    id: "flow-id",
+    namespace: "io.kestra.tests",
+    disabled: false,
+    draft: false,
+    deleted: false,
+    tasks: [],
+}
+
 const meta: Meta<typeof Resume> = {
     title: "executions/actions/Resume",
     component: Resume,
@@ -24,8 +34,8 @@ const meta: Meta<typeof Resume> = {
         (story) => ({
             setup() {
                 const executionsStore = useExecutionsStore()
-                ;(executionsStore as any).loadFlowForExecution = () => Promise.resolve(undefined)
-                ;(executionsStore as any).resume = () => Promise.resolve({})
+                executionsStore.loadFlowForExecution = async () => flow
+                executionsStore.resume = async () => execution as Execution
             },
             components: {story},
             plugins: [i18n, KestraDesignSystem, pinia],

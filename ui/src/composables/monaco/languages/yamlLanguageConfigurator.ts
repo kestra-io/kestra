@@ -38,6 +38,7 @@ import {
     scopePropertySuggestionsToTaskType,
     taskIdentityAtCursor,
 } from "./taskCompletionScoping"
+import {splitPluginTypeLabel} from "./pluginTypeCompletionLabel"
 import type {IPosition, IDisposable, CancellationToken} from "monaco-editor/editor/editor.api"
 import IModel = monaco.editor.IModel;
 import ProviderResult = monaco.languages.ProviderResult;
@@ -364,10 +365,25 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
                 }
             }
 
+            // Done last: every step above reads `label` as the fully qualified string.
+            const labelledSuggestions = scopedSuggestions.map((suggestion) => {
+                const split = splitPluginTypeLabel(suggestion.label)
+                if (split === undefined) {
+                    return suggestion
+                }
+
+                return {
+                    ...suggestion,
+                    label: split,
+                    // Keeps package segments searchable now that the label is only the class name.
+                    filterText: suggestion.filterText ?? suggestion.label,
+                }
+            })
+
             return {
                 ...defaultCompletion,
                 incomplete: true,
-                suggestions: scopedSuggestions,
+                suggestions: labelledSuggestions,
             }
         }
     }
@@ -388,7 +404,7 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
                 async provideCompletionItems(model, position) {
                     const source = model.getValue()
                     const cursorPosition = model.getOffsetAt(position)
-                    const parsed = YAML_UTILS.parse(source, false)
+                    const parsed = YAML_UTILS.parse<Record<string, unknown>>(source, false)
 
                     const currentWord = model.findPreviousMatch(
                         RegexProvider.beforeSeparator(),

@@ -60,7 +60,7 @@
     import type {PropType} from "vue"
     import {getSmoothStepPath, EdgeLabelRenderer, Position} from "@vue-flow/core"
     import Plus from "vue-material-design-icons/Plus.vue"
-    import type {AddTaskTarget} from "../utils/vueFlowUtils"
+    import {edgeTurnPosition, fanOutSplitPosition, type AddTaskTarget} from "../utils/vueFlowUtils"
     import {
         CANVAS_HOVERED_INJECTION_KEY,
         DRAGGING_NODE_INJECTION_KEY,
@@ -132,24 +132,17 @@
     })
 
     const flowsHorizontally = computed(() => props.targetPosition === "left" || props.targetPosition === "right")
+    const along = computed(() => ({
+        from: flowsHorizontally.value ? props.sourceX ?? 0 : props.sourceY ?? 0,
+        to: flowsHorizontally.value ? props.targetX ?? 0 : props.targetY ?? 0,
+    }))
 
-    // Where the edge turns. Left to itself it turns level with the border it just crossed, so the
-    // run — and the add button sitting on it — reads as neither inside the lane nor outside it.
-    // Centred on the gap the user actually sees, it is unambiguously between the two boxes.
-    const laneTurn = computed<number | undefined>(() => {
-        const gap = props.data?.laneGap
-        const bypass = props.data?.bypass
-        if (!gap && !bypass) return undefined
-        const from = flowsHorizontally.value ? props.sourceX ?? 0 : props.sourceY ?? 0
-        const to = flowsHorizontally.value ? props.targetX ?? 0 : props.targetY ?? 0
-        const low = Math.min(from, to) + SMOOTH_STEP_OFFSET
-        const high = Math.max(from, to) - SMOOTH_STEP_OFFSET
-        if (low > high) return undefined
-        if (bypass) return bypass === "source" ? (from < to ? low : high) : (from < to ? high : low)
-        if (!gap) return undefined
-        const centre = ((from + Math.sign(to - from) * (gap.leaving ?? 0)) + (to - Math.sign(to - from) * (gap.entering ?? 0))) / 2
-        return Math.min(Math.max(centre, low), high)
-    })
+    const laneTurn = computed(() =>
+        edgeTurnPosition(along.value.from, along.value.to, {
+            gap: props.data?.laneGap,
+            bypass: props.data?.bypass,
+        }),
+    )
 
     const path = computed(() => getSmoothStepPath({
         ...props,
@@ -161,9 +154,6 @@
         () => props.data?.relationType === "CHOICE" && Boolean(props.data?.value),
     )
 
-    // vue-flow's own default: how far a smooth-step path runs straight out of a handle before it
-    // may turn, so a turn placed inside it would be ignored.
-    const SMOOTH_STEP_OFFSET = 20
 
     const CASE_LABEL_GAP = 18
     const caseLabelX = computed(() => {
@@ -182,9 +172,7 @@
     // A fan-out's one button belongs on the run every branch still shares — between the lane's own
     // marker and the split — rather than on the drop into whichever branch happens to carry it.
     const splitPoint = computed(() => {
-        const from = flowsHorizontally.value ? props.sourceX ?? 0 : props.sourceY ?? 0
-        const turn = laneTurn.value ?? (((flowsHorizontally.value ? props.targetX ?? 0 : props.targetY ?? 0) + from) / 2)
-        const middle = (from + turn) / 2
+        const middle = fanOutSplitPosition(along.value.from, along.value.to, laneTurn.value)
         return flowsHorizontally.value
             ? {x: middle, y: props.sourceY ?? 0}
             : {x: props.sourceX ?? 0, y: middle}

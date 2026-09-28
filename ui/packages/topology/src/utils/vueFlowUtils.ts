@@ -2,7 +2,7 @@ import {MarkerType, Position, useVueFlow} from "@vue-flow/core"
 import type {GraphNode, GraphEdge, Elements} from "@vue-flow/core"
 import * as dagre from "dagre"
 import * as Utils from "./utils"
-import {CLUSTER_PREFIX, DAGRE_RANK_SEP, NODE_SIZES} from "./constants"
+import {CLUSTER_PREFIX, DAGRE_NODE_SEP, DAGRE_RANK_SEP, NODE_SIZES, SMOOTH_STEP_OFFSET} from "./constants"
 import {isDeepEqual} from "@kestra-io/design-system"
 
 const TRIGGERS_NODE_UID = "root.Triggers"
@@ -182,20 +182,28 @@ export function generateDagreGraph(
         width: widthFn(node),
         height: heightFn(node),
     }),
+    laneStartUids: Set<string> = new Set(),
 ) {
     const dagreGraph = new dagre.graphlib.Graph({compound: true})
     dagreGraph.setDefaultEdgeLabel(() => ({}))
-    const laneHeaders = (flowGraph.clusters ?? []).length > 0
+    // Vertically, a lane's own first node carries the header's height, so dagre grows the cluster
+    // around it and still leaves a full rank apart from whatever sits above. Horizontally the
+    // header is across the flow, on the axis `nodesep` governs, where no node can carry it.
     dagreGraph.setGraph({
         rankdir: isHorizontal ? "LR" : "TB",
-        ranksep: laneHeaders && !isHorizontal
-            ? DAGRE_RANK_SEP + NODE_SIZES.LANE_HEADER_HEIGHT
-            : DAGRE_RANK_SEP,
+        ranksep: DAGRE_RANK_SEP,
+        ...(isHorizontal && laneStartUids.size
+            ? {nodesep: DAGRE_NODE_SEP + NODE_SIZES.LANE_HEADER_HEIGHT}
+            : {}),
     })
 
     for (const node of flowGraph.nodes) {
         if (!hiddenNodes.includes(node.uid)) {
-            dagreGraph.setNode(node.uid, getNodeDimensions(node, getNodeWidth, getNodeHeight))
+            const dimensions = getNodeDimensions(node, getNodeWidth, getNodeHeight)
+            if (!isHorizontal && laneStartUids.has(node.uid)) {
+                dimensions.height += NODE_SIZES.LANE_HEADER_HEIGHT
+            }
+            dagreGraph.setNode(node.uid, dimensions)
         }
     }
 
@@ -598,6 +606,47 @@ export function pickFanOutAddEdges(
     return owners
 }
 
+export interface EdgeTurnOptions {
+    /** How far each end sits inside the lane it crosses out of / into. */
+    gap?: {leaving: number; entering: number};
+    /** An error branch keeps its long run out of the main column: turn level with the end that
+     *  stays in it — `"source"` entering the branch, `"target"` leaving it. */
+    bypass?: "source" | "target";
+    offset?: number;
+}
+
+/** Where a stepped edge should turn, along the axis the graph flows in. `undefined` leaves the
+ *  turn to vue-flow's own midpoint. Both ends are measured from the node, not from the lane border
+ *  it crossed, so a plain midpoint sits off-centre in the gap a reader actually sees. */
+export function edgeTurnPosition(
+    from: number,
+    to: number,
+    {gap, bypass, offset = SMOOTH_STEP_OFFSET}: EdgeTurnOptions,
+): number | undefined {
+    if (!gap && !bypass) return undefined
+
+    const low = Math.min(from, to) + offset
+    const high = Math.max(from, to) - offset
+    if (low > high) return undefined
+
+    if (bypass) {
+        const atSource = bypass === "source"
+        const forward = from < to
+        return atSource === forward ? low : high
+    }
+    if (!gap) return undefined
+
+    const towards = Math.sign(to - from)
+    const centre = ((from + towards * gap.leaving) + (to - towards * gap.entering)) / 2
+    return Math.min(Math.max(centre, low), high)
+}
+
+/** A fan-out's single add button belongs on the run every branch still shares — between the lane's
+ *  own marker and the split — rather than on the drop into whichever branch happens to carry it. */
+export function fanOutSplitPosition(from: number, to: number, turn?: number): number {
+    return (from + (turn ?? (from + to) / 2)) / 2
+}
+
 export function getEdgeColorToken(edgeColor: string | null): string {
     switch (edgeColor) {
         case "danger":
@@ -681,6 +730,16 @@ export function generateGraph(
         }))
         .filter((edge) => edge.source !== edge.target)
 
+    // Vertically dagre holds the header's height itself (see `generateDagreGraph`), so the cluster
+    // box and its children need no adjustment afterwards — only the node carrying it renders lower.
+    const laneStartUids = new Set(
+        clusters
+            .filter((c) => !edgeReplacer[c.cluster.uid] && !collapsed.has(c.cluster.uid.replace(CLUSTER_PREFIX, "")) && c.start)
+            .map((c) => c.start),
+    )
+    const headerHeldByLayout = !isHorizontal
+    const clusterHeaderHeight = headerHeldByLayout ? 0 : NODE_SIZES.LANE_HEADER_HEIGHT
+
     const dagreGraph = generateDagreGraph(
         {...flowGraph, clusters, edges},
         hiddenOrAliased,
@@ -689,6 +748,7 @@ export function generateGraph(
         collapsed,
         clusterToNode,
         getNodeDimensions,
+        laneStartUids,
     )
 
     const clusterByNodeUid: Record<string, Cluster> = {}
@@ -732,7 +792,7 @@ export function generateGraph(
                 parentNode ? dagreGraph.node(parentNode) : undefined,
             )
             if (parentNode) {
-                clusterPosition.y += NODE_SIZES.LANE_HEADER_HEIGHT
+                clusterPosition.y += clusterHeaderHeight
             }
 
             elements.push({
@@ -751,7 +811,7 @@ export function generateGraph(
                     height:
                         clusterUid === TRIGGERS_NODE_UID && !isHorizontal
                             ? NODE_SIZES.TRIGGER_CLUSTER_HEIGHT + "px"
-                            : dagreNode.height + NODE_SIZES.LANE_HEADER_HEIGHT + "px",
+                            : dagreNode.height + clusterHeaderHeight + "px",
                     borderRadius: "var(--ks-radius-base)",
                     padding: "0.5rem",
                 },
@@ -786,7 +846,7 @@ export function generateGraph(
 
             laneSpan[clusterUid] = isHorizontal
                 ? dagreNode.width
-                : dagreNode.height + NODE_SIZES.LANE_HEADER_HEIGHT
+                : dagreNode.height
         }
     }
 
@@ -823,6 +883,11 @@ export function generateGraph(
                 cluster ? dagreGraph.node(cluster.uid) : undefined,
             )
             if (cluster) {
+                nodePosition.y += clusterHeaderHeight
+            }
+            // Its dagre box is a header taller than the node; the node itself sits at the bottom
+            // of it, leaving the header the space above.
+            if (headerHeldByLayout && laneStartUids.has(node.uid)) {
                 nodePosition.y += NODE_SIZES.LANE_HEADER_HEIGHT
             }
 

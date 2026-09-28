@@ -1,5 +1,6 @@
 import {test, expect, describe} from "vitest"
 import * as VueFlowUtils from "../../../src/utils/vueFlowUtils.ts"
+import {edgeTurnPosition, fanOutSplitPosition} from "../../../src/utils/vueFlowUtils.ts"
 import {DAGRE_RANK_SEP, NODE_SIZES} from "../../../src/utils/constants.ts"
 
 const graph = {
@@ -697,6 +698,47 @@ describe("generateGraph flowable lane header", () => {
     })
 })
 
+describe("edgeTurnPosition", () => {
+    // Both ends are measured from the node, not from the border it crossed, so a plain midpoint
+    // sits half of those insets away from the middle of the gap a reader sees.
+    test("centres the turn on the visible gap, not on the path", () => {
+        expect(edgeTurnPosition(100, 300, {gap: {leaving: 0, entering: 40}})).toBe(180)
+        expect(edgeTurnPosition(100, 300, {gap: {leaving: 20, entering: 40}})).toBe(190)
+    })
+
+    test("keeps the turn clear of the straight run out of each handle", () => {
+        expect(edgeTurnPosition(100, 300, {gap: {leaving: 0, entering: 400}})).toBe(120)
+        expect(edgeTurnPosition(100, 300, {gap: {leaving: 400, entering: 0}})).toBe(280)
+    })
+
+    test("gives up when the two ends are too close to turn between", () => {
+        expect(edgeTurnPosition(100, 130, {gap: {leaving: 0, entering: 10}})).toBeUndefined()
+    })
+
+    // An error branch turns level with the end that stays in the main column, so its long run
+    // happens in its own column instead of across whatever lane sits between the two.
+    test("turns at the main-column end of an error branch, whichever way it runs", () => {
+        expect(edgeTurnPosition(100, 900, {bypass: "source"})).toBe(120)
+        expect(edgeTurnPosition(100, 900, {bypass: "target"})).toBe(880)
+        expect(edgeTurnPosition(900, 100, {bypass: "source"})).toBe(880)
+        expect(edgeTurnPosition(900, 100, {bypass: "target"})).toBe(120)
+    })
+
+    test("leaves an ordinary edge to vue-flow's own midpoint", () => {
+        expect(edgeTurnPosition(100, 300, {})).toBeUndefined()
+    })
+})
+
+describe("fanOutSplitPosition", () => {
+    test("sits halfway between the lane's marker and the split", () => {
+        expect(fanOutSplitPosition(100, 300, 200)).toBe(150)
+    })
+
+    test("falls back to the path's own midpoint when the edge does not turn", () => {
+        expect(fanOutSplitPosition(100, 300, undefined)).toBe(150)
+    })
+})
+
 describe("pickFanOutAddEdges", () => {
     const parallelLane = {
         uid: "cluster_root.in_parallel",
@@ -856,6 +898,20 @@ describe("generateGraph synthetic errors lane", () => {
 
         const errorTask = elements.find((e) => e.id === "root.error_handler")
         expect(errorTask?.parentNode).toBe("cluster_root.Errors")
+    })
+
+    // The two halves the edge geometry relies on: an edge crossing a lane border carries how far
+    // each of its ends sits inside that lane, and an edge into the error branch is marked so its
+    // long run keeps out of the main column.
+    test("marks the edge into the errors lane with the insets and the bypass it needs", () => {
+        const elements = asElements(VueFlowUtils.generateGraph(
+            "vfid", "flow", "ns", flowWithRootErrors, undefined, [], false, {}, new Set(), [], true, false, false,
+        ) ?? [])
+
+        const intoErrors = elements.find((e) => e.target === "root.error_handler")
+        expect(intoErrors?.data?.bypass).toBe("source")
+        expect(intoErrors?.data?.laneGap?.entering).toBeGreaterThan(0)
+        expect(intoErrors?.data?.laneGap?.leaving).toBe(0)
     })
 
     test("does not synthesize an errors lane when there is nothing to wrap", () => {

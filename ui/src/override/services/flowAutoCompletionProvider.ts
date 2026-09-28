@@ -11,7 +11,6 @@ import {useMcpStore} from "../../stores/mcp"
 import {useDashboardStore} from "../../stores/dashboard"
 import {isExportableChart} from "../../components/dashboard/composables/useDashboards"
 import {useNamespacesStore} from "override/stores/namespaces"
-import {isMap, type YAMLMap} from "yaml"
 
 function distinct<T>(val: T[] | undefined): T[] {
     return Array.from(new Set(val ?? []))
@@ -21,7 +20,6 @@ interface ParsedFlow {
     id?: string;
     namespace?: string;
     inputs?: {id?: string; type?: string; inputs?: {id?: string}[]}[];
-    tasks?: {id?: string}[];
     variables?: Record<string, unknown>;
     labels?: Record<string, unknown>;
     triggers?: {type: string}[];
@@ -30,6 +28,9 @@ interface ParsedFlow {
 // Pebble functions only valid inside a flow-root input's `values`/`expression` (rendered on the
 // webserver). Suggested only in that context; the backend rejects them anywhere else.
 const INPUT_ONLY_FUNCTIONS = ["subflow"]
+
+// Root keys holding tasks; `inputs`, `outputs`, `sla` and `triggers` also carry `id` + `type` maps.
+const TASK_ROOT_KEYS = new Set(["tasks", "errors", "finally", "afterExecution"])
 
 /**
  * Only the namespaces-store members the completion reads. Typing the dependency this way keeps the
@@ -126,15 +127,10 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
         }
     }
 
-    private tasks(source: string): YAMLMap[] {
-        const tasksFromTasksProp = YAML_UTILS.extractFieldFromMaps(source, "tasks")
-            .flatMap(allTasks => allTasks.tasks ?? [])
-        const tasksFromTaskProp = YAML_UTILS.extractFieldFromMaps(source, "task")
-            .map(task => task.task)
-            .flatMap(task => YAML_UTILS.pairsToMap(task) ?? [])
-
-        return [...tasksFromTasksProp, ...tasksFromTaskProp]
-            .filter((task): task is YAMLMap => isMap(task) && Boolean(task.get("id")))
+    private tasks(source: string): {id: string; type: string}[] {
+        return YAML_UTILS.extractTypedBlocks(source)
+            .filter(block => TASK_ROOT_KEYS.has(block.path.split(".")[0]) && typeof block.value.id === "string")
+            .map(block => ({id: block.value.id, type: block.type}))
     }
 
     private cursorProbeIndexes(source: string, cursorIndex: number): number[] {
@@ -193,9 +189,7 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
     }
 
     private async outputsFor(taskId: string, source: string): Promise<string[]> {
-        const taskType = this.tasks(this.completionSource?.value ?? source).filter(task => task.get("id") === taskId)
-            .map(task => task.get("type"))
-            ?.[0] as string | undefined
+        const taskType = this.tasks(this.completionSource?.value ?? source).find(task => task.id === taskId)?.type
 
         if (!taskType) {
             return []
@@ -232,11 +226,8 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
                 return Promise.resolve(parsed?.inputs?.map(input => input.id).filter((id): id is string => id !== undefined) ?? [])
             case "outputs": {
                 const currentTaskId = this.currentTaskIdAtCursor(source, cursorIndex)
-                return Promise.resolve(
-                    parsed?.tasks
-                        ?.map(task => task.id)
-                        .filter((taskId): taskId is string => !!taskId && taskId !== currentTaskId) ?? [],
-                )
+                return distinct(this.tasks(this.completionSource?.value ?? source).map(task => task.id))
+                    .filter(taskId => taskId !== currentTaskId)
             }
             case "labels":
                 return Promise.resolve(Object.keys(parsed?.labels ?? {}))

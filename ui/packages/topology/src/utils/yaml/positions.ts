@@ -35,7 +35,7 @@ export function getTypeAtPosition(
 
     for (const type of types.reverse()) {
         if (cursorIndex >= type.range[0]) {
-            return type.type
+            return typeof type.type === "string" ? type.type : null
         }
     }
     return null
@@ -53,7 +53,7 @@ export function getVersionAtPosition(
 
     for (const version of versions.reverse()) {
         if (cursorIndex >= version.range[0]) {
-            return version.version
+            return version.version == null ? undefined : String(version.version)
         }
     }
     return null
@@ -199,7 +199,7 @@ function chartItemsOf(map: YAMLMap<unknown, unknown>): Node[] {
 
 export function getAllCharts(source: string) {
     const yamlDoc = parseDocumentTyped(source)
-    const charts: string[] = []
+    const charts: unknown[] = []
 
     visit(yamlDoc, {
         Map(_, map) {

@@ -33,9 +33,9 @@
 
     const {id, sourcePosition, targetPosition, data} = defineProps<{
         id?: string;
-        sourcePosition: Position;
-        targetPosition: Position;
-        data: any;
+        sourcePosition?: Position;
+        targetPosition?: Position;
+        data: {color: string; expandable?: boolean};
     }>()
 
     const emit = defineEmits([EVENTS.EXPAND])

@@ -1,6 +1,7 @@
 import {describe, it, expect, vi, afterAll, beforeEach} from "vitest"
 import {mount} from "@vue/test-utils"
 import type {AiSseFrame} from "../../../../../src/components/ai/copilot/types"
+import type {ChatMessage} from "../../../../../src/components/ai/copilot/useAiChat"
 import {mountGlobal} from "./_helpers"
 
 // Mock the axios client (thread create) and the SSE reader so we can drive frames
@@ -64,7 +65,7 @@ function catalogFrames(): AiSseFrame[] {
     return frames
 }
 
-const mountMessage = (message: any) => mount(CopilotMessage, {props: {message}, global: mountGlobal})
+const mountMessage = (message: ChatMessage) => mount(CopilotMessage, {props: {message}, global: mountGlobal})
 
 describe("AI Copilot v2 — full tool catalog", () => {
     beforeEach(() => {

@@ -11,14 +11,15 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionKind;
 import io.kestra.core.models.executions.LoopExecutionEvent;
 import io.kestra.core.models.executions.TaskRun;
-import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.queues.DispatchQueueInterface;
+import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.ExecutionDelay;
 import io.kestra.core.runners.FlowMetaStoreInterface;
 import io.kestra.core.services.ExecutionService;
 import io.kestra.core.services.ExecutionService.ExecutionWithTaskRun;
+import io.kestra.plugin.core.flow.Approval;
 
 import io.kestra.executor.handler.LoopExecutionEventMessageHandler;
 import jakarta.inject.Inject;
@@ -114,9 +115,8 @@ public class ExecutionDelayProcessor {
                         // wipe them, so we skip the delay unless the task run is still paused.
                         // The task run is resolved the same way markAs() does below — it may live in a loop
                         // sub-execution — so the guard cannot drop a delay and leave its task run paused forever.
-                        Optional<TaskRun> pausedTaskRun = executionService.findExecutionWithTaskRun(execution, executionDelay.getTaskRunId())
-                            .map(ExecutionWithTaskRun::taskRun);
-                        if (pausedTaskRun.isEmpty() || pausedTaskRun.get().getState().getCurrent() != State.Type.PAUSED) {
+                        Optional<ExecutionWithTaskRun> pausedTaskRun = executionService.findExecutionWithTaskRun(execution, executionDelay.getTaskRunId());
+                        if (pausedTaskRun.isEmpty() || pausedTaskRun.get().taskRun().getState().getCurrent() != State.Type.PAUSED) {
                             log.debug(
                                 "Skipping the expired pause delay of the task run '{}' of the execution '{}': it is no longer paused.",
                                 executionDelay.getTaskRunId(),
@@ -125,13 +125,24 @@ public class ExecutionDelayProcessor {
                             return null;
                         }
 
-                        FlowInterface flow = flowMetaStore.findByExecution(execution).orElseThrow();
-                        Execution markAsExecution = executionService.markAs(
-                            execution,
-                            flow,
-                            executionDelay.getTaskRunId(),
-                            executionDelay.getState()
-                        );
+                        FlowWithSource flow = flowMetaStore.findByExecutionForRuntime(execution).orElseThrow(() -> new FlowNotFoundException(execution));
+                        Task task = flow.findTaskByTaskId(pausedTaskRun.get().taskRun().getTaskId());
+
+                        Execution markAsExecution = task instanceof Approval
+                            ? executionService.decide(
+                                execution,
+                                flow,
+                                executionDelay.getTaskRunId(),
+                                new Approval.Decision(Approval.Decision.Type.EXPIRED, null),
+                                null,
+                                null
+                            )
+                            : executionService.markAs(
+                                execution,
+                                flow,
+                                executionDelay.getTaskRunId(),
+                                executionDelay.getState()
+                            );
 
                         if (markAsExecution.getKind() == ExecutionKind.LOOP) {
                             // notify the parent execution

@@ -34,6 +34,7 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionId;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.runners.FlowMetaStoreInterface;
 import io.kestra.core.runners.ProcessedFlow;
 import io.kestra.core.services.ExecutionOutputService;
@@ -77,6 +78,8 @@ class ExecutionCommandMessageHandlerTest {
     KillSwitchService killSwitchService;
     @Mock
     KillSwitchActionService killSwitchActionService;
+    @Mock
+    DispatchQueueInterface<ExecutionCommand> executionCommandQueue;
 
     ExecutionCommandMessageHandler handler;
     Create createCommand;
@@ -94,7 +97,8 @@ class ExecutionCommandMessageHandlerTest {
             asyncOperationService,
             executionEventMessageHandler,
             killSwitchService,
-            killSwitchActionService
+            killSwitchActionService,
+            executionCommandQueue
         );
         createCommand = Create.of(new ExecutionId("tenant", "ns", "flow-id", "exec-1", null))
             .withOperationId("op-1");

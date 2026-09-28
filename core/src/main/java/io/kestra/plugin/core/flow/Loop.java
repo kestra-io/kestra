@@ -3,6 +3,7 @@ package io.kestra.plugin.core.flow;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -200,8 +201,17 @@ public class Loop extends AbstractBranch<Loop.Output> {
     public static final String TERMINATED_ITERATIONS_OUTPUT = "terminatedIterations";
     public static final String NEXT_OFFSET_OUTPUT = "nextOffset";
     public static final String OUTPUTS_OUTPUT = "outputs";
+    public static final String PAUSED_ITERATIONS_OUTPUT = "pausedIterations";
 
     private static final ObjectMapper ION_MAPPER = JacksonMapper.ofIon();
+
+    /**
+     * The ids of the iteration sub-executions currently paused, from the internal outputs of a Loop task run.
+     */
+    @SuppressWarnings("unchecked")
+    public static List<String> pausedIterations(Map<String, Object> outputs) {
+        return outputs.containsKey(PAUSED_ITERATIONS_OUTPUT) ? new ArrayList<>((List<String>) outputs.get(PAUSED_ITERATIONS_OUTPUT)) : new ArrayList<>();
+    }
 
     @NotNull
     @PluginProperty(dynamic = true)

@@ -1,9 +1,12 @@
 package io.kestra.executor.handler;
 
+import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 
 import io.kestra.core.async.AsyncOperationProcessedEvent;
 import io.kestra.core.async.AsyncOperationService;
+import io.kestra.core.events.EventId;
 import io.kestra.core.exceptions.FlowNotFoundException;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.executor.command.*;
@@ -14,6 +17,8 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.queues.DispatchQueueInterface;
+import io.kestra.core.queues.QueueException;
 import io.kestra.core.runners.ExecutionEvent;
 import io.kestra.core.runners.ExecutionEventType;
 import io.kestra.core.runners.FlowMetaStoreInterface;
@@ -26,6 +31,7 @@ import io.kestra.executor.ExecutionStateStore;
 import io.kestra.executor.ExecutorContext;
 import io.kestra.executor.ExecutorMessageHandler;
 import io.kestra.executor.KillSwitchActionService;
+import io.kestra.plugin.core.flow.Loop;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -43,6 +49,7 @@ public class ExecutionCommandMessageHandler implements ExecutorMessageHandler<Ex
     private final ExecutionEventMessageHandler executionEventMessageHandler;
     private final KillSwitchService killSwitchService;
     private final KillSwitchActionService killSwitchActionService;
+    private final DispatchQueueInterface<ExecutionCommand> executionCommandQueue;
 
     @Inject
     public ExecutionCommandMessageHandler(
@@ -54,7 +61,8 @@ public class ExecutionCommandMessageHandler implements ExecutorMessageHandler<Ex
         AsyncOperationService asyncOperationService,
         ExecutionEventMessageHandler executionEventMessageHandler,
         KillSwitchService killSwitchService,
-        KillSwitchActionService killSwitchActionService) {
+        KillSwitchActionService killSwitchActionService,
+        DispatchQueueInterface<ExecutionCommand> executionCommandQueue) {
         this.executionService = executionService;
         this.executionStateStore = executionStateStore;
         this.flowMetaStore = flowMetaStore;
@@ -64,6 +72,7 @@ public class ExecutionCommandMessageHandler implements ExecutorMessageHandler<Ex
         this.executionEventMessageHandler = executionEventMessageHandler;
         this.killSwitchService = killSwitchService;
         this.killSwitchActionService = killSwitchActionService;
+        this.executionCommandQueue = executionCommandQueue;
     }
 
     @Override
@@ -111,8 +120,9 @@ public class ExecutionCommandMessageHandler implements ExecutorMessageHandler<Ex
                         executionService.changeState(execution, updateStatusCommand.state());
                     case ResumeFromBreakpoint resumeFromBreakpointCommand ->
                         executionService.resumeFromBreakpoint(execution, resumeFromBreakpointCommand.breakpoints());
-                    case Resume resumeCommand ->
-                        executionService.resume(execution, flow, State.Type.RUNNING, resumeCommand.resumeInputs(), resumeCommand.resumed());
+                    case Resume resumeCommand -> resumePausedLoopIterations(execution, flow, resumeCommand)
+                        ? null
+                        : executionService.resume(execution, flow, State.Type.RUNNING, resumeCommand.resumeInputs(), resumeCommand.resumed());
                     case ExecutionCommand.Invalid ignored -> {
                         log.error("Invalid command for execution {}: ignoring command with eventId {}", message.executionId(), message.eventId());
                         yield null;
@@ -129,6 +139,37 @@ public class ExecutionCommandMessageHandler implements ExecutorMessageHandler<Ex
                 asyncOperationService.emitProcessedIfAsync(message, message.tenantId(), message.executionId(), outcome, error);
             }
         });
+    }
+
+    /**
+     * A Loop task run is paused because some of its iterations are: resuming the parent resumes those
+     * iterations, and the parent resumes itself once the last of them has.
+     *
+     * @return whether the resume has been forwarded to the paused iterations
+     */
+    private boolean resumePausedLoopIterations(Execution execution, FlowWithSource flow, Resume command) throws InternalException, QueueException {
+        Optional<TaskRun> pausedTaskRun = execution.findFirstByState(State.Type.PAUSED);
+        if (pausedTaskRun.isEmpty() || !(flow.findTaskByTaskId(pausedTaskRun.get().getTaskId()) instanceof Loop)) {
+            return false;
+        }
+
+        List<String> pausedIterations = Loop.pausedIterations(taskOutputService.getOutputs(pausedTaskRun.get()));
+        for (String iterationExecutionId : pausedIterations) {
+            executionCommandQueue.emit(
+                new Resume(
+                    execution.getTenantId(),
+                    execution.getNamespace(),
+                    execution.getFlowId(),
+                    iterationExecutionId,
+                    Instant.now(),
+                    EventId.create(),
+                    command.resumed(),
+                    command.resumeInputs(),
+                    null
+                )
+            );
+        }
+        return !pausedIterations.isEmpty();
     }
 
     private Optional<ExecutorContext> handleCreate(Create command) {

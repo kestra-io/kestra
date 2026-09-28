@@ -88,6 +88,9 @@ public class LoopExecutionEventMessageHandler implements ExecutorMessageHandler<
         if (message.state().isPaused()) {
             return handlePaused(message);
         }
+        if (message.state() == State.Type.RESTARTED) {
+            return handleRestarted(message);
+        }
         return handleTerminated(message);
     }
 
@@ -99,6 +102,12 @@ public class LoopExecutionEventMessageHandler implements ExecutorMessageHandler<
                 ExecutorContext executor = new ExecutorContext(execution, flow);
                 TaskRun parentTaskRun = execution.findTaskRunByTaskRunId(message.loopRun().taskRunId());
                 Loop loop = (Loop) executor.getFlow().findTaskByTaskId(message.loopRun().taskId());
+
+                // an iteration can terminate straight from a pause (killed, or a Pause with a CANCEL behavior)
+                boolean resumed = removePausedIteration(parentTaskRun, message.executionId()) && execution.getState().isPaused();
+                if (resumed) {
+                    executor = executor.withExecution(executionService.resumeFlowable(execution, parentTaskRun), "resumedLoopIteration");
+                }
 
                 // record this iteration's terminal state before deciding whether to keep looping
                 Map<String, Object> outputs = taskOutputService.getOutputs(parentTaskRun);
@@ -172,8 +181,8 @@ public class LoopExecutionEventMessageHandler implements ExecutorMessageHandler<
                         }
 
                         // we don't update the execution itself as the loop is still running, but we send a follow execution event to update the UI
-                        followExecutionEventQueue.emit(new FollowExecutionEvent(execution, ExecutionEventType.UPDATED));
-                        return null;
+                        followExecutionEventQueue.emit(new FollowExecutionEvent(executor.getExecution(), ExecutionEventType.UPDATED));
+                        return resumed ? executor : null;
                     } else {
                         // All iterations have been started — save the decremented counts and either
                         // terminate (if all are done) or wait for the remaining in-flight ones.
@@ -184,8 +193,8 @@ public class LoopExecutionEventMessageHandler implements ExecutorMessageHandler<
                         } else {
                             // Some iterations are still running — wait for them.
                             // we don't update the execution itself as the loop is still running, but we send a follow execution event to update the UI
-                            followExecutionEventQueue.emit(new FollowExecutionEvent(execution, ExecutionEventType.UPDATED));
-                            return null;
+                            followExecutionEventQueue.emit(new FollowExecutionEvent(executor.getExecution(), ExecutionEventType.UPDATED));
+                            return resumed ? executor : null;
                         }
                     }
                 }
@@ -205,18 +214,72 @@ public class LoopExecutionEventMessageHandler implements ExecutorMessageHandler<
     private Optional<ExecutorContext> handlePaused(LoopExecutionEvent message) {
         return executionStateStore.lock(message.loopRun().parent().getId(), execution ->
         {
+            if (execution.getState().isTerminated() || execution.getState().getCurrent() == State.Type.KILLING) {
+                return null;
+            }
+
             try {
-                ExecutorContext executor = new ExecutorContext(execution);
                 // throws InternalException if not found — treated as a hard failure below
                 TaskRun loopTaskRun = execution.findTaskRunByTaskRunId(message.loopRun().taskRunId());
+                addPausedIteration(loopTaskRun, message.executionId());
 
-                Execution pausedExecution = executionService.pauseFlowable(execution, loopTaskRun);
+                if (execution.getState().isPaused()) {
+                    return null;
+                }
 
-                return executor.withExecution(pausedExecution, "pausedLoopIteration");
+                return new ExecutorContext(execution).withExecution(executionService.pauseFlowable(execution, loopTaskRun), "pausedLoopIteration");
             } catch (InternalException e) {
                 return executorService.handleFailedExecutionFromExecutor(new ExecutorContext(execution), e);
             }
         });
+    }
+
+    private Optional<ExecutorContext> handleRestarted(LoopExecutionEvent message) {
+        return executionStateStore.lock(message.loopRun().parent().getId(), execution ->
+        {
+            try {
+                // throws InternalException if not found — treated as a hard failure below
+                TaskRun loopTaskRun = execution.findTaskRunByTaskRunId(message.loopRun().taskRunId());
+
+                // the parent stays paused as long as one of its iterations is
+                if (!removePausedIteration(loopTaskRun, message.executionId()) || !execution.getState().isPaused()) {
+                    return null;
+                }
+
+                return new ExecutorContext(execution).withExecution(executionService.resumeFlowable(execution, loopTaskRun), "resumedLoopIteration");
+            } catch (InternalException e) {
+                return executorService.handleFailedExecutionFromExecutor(new ExecutorContext(execution), e);
+            }
+        });
+    }
+
+    private void addPausedIteration(TaskRun loopTaskRun, String iterationExecutionId) throws InternalException {
+        Map<String, Object> outputs = taskOutputService.getOutputs(loopTaskRun);
+        List<String> paused = Loop.pausedIterations(outputs);
+        if (!paused.contains(iterationExecutionId)) {
+            paused.add(iterationExecutionId);
+            outputs.put(Loop.PAUSED_ITERATIONS_OUTPUT, paused);
+            taskOutputService.saveOutputs(loopTaskRun, outputs);
+        }
+    }
+
+    /**
+     * @return whether the last paused iteration has just been removed
+     */
+    private boolean removePausedIteration(TaskRun loopTaskRun, String iterationExecutionId) throws InternalException {
+        Map<String, Object> outputs = taskOutputService.getOutputs(loopTaskRun);
+        List<String> paused = Loop.pausedIterations(outputs);
+        if (!paused.remove(iterationExecutionId)) {
+            return false;
+        }
+
+        if (paused.isEmpty()) {
+            outputs.remove(Loop.PAUSED_ITERATIONS_OUTPUT);
+        } else {
+            outputs.put(Loop.PAUSED_ITERATIONS_OUTPUT, paused);
+        }
+        taskOutputService.saveOutputs(loopTaskRun, outputs);
+        return paused.isEmpty();
     }
 
     private void logLoopIterationFailure(TaskRun parentTaskRun, Loop loop, ExecutorContext executor, LoopExecutionEvent message) {
@@ -263,13 +326,8 @@ public class LoopExecutionEventMessageHandler implements ExecutorMessageHandler<
     // terminate the loop and its attempts
     private ExecutorContext terminateLoop(TaskRun parentTaskRun, Task task, final ExecutorContext executor, State.Type state) throws InternalException {
         State.Type finalState = state == State.Type.FAILED ? stateFailure(task) : State.Type.SUCCESS;
-        List<TaskRunAttempt> attempts = Optional.ofNullable(parentTaskRun.getAttempts())
-            .map(ArrayList::new)
-            .orElseGet(ArrayList::new);
-        TaskRunAttempt updated = attempts.getLast().withState(finalState);
-        attempts.set(attempts.size() - 1, updated);
-        TaskRun newTaskRun = parentTaskRun.withState(finalState)
-            .withAttempts(attempts);
+        // as loops can run concurrently, the state might already be set by another task run
+        TaskRun newTaskRun = parentTaskRun.getState().getCurrent() == finalState ? parentTaskRun : parentTaskRun.withStateAndAttempt(finalState);
         WorkerTaskResult workerTaskResult = new WorkerTaskResult(newTaskRun);
         executorService.addWorkerTaskResult(executor, () -> executor.getFlow(), workerTaskResult);
         return executor;

@@ -317,6 +317,12 @@ public class ExecutorCore {
                 processFlowTriggers(transitionState == execution.getState().getCurrent() ? execution : execution.withState(transitions.get(i)));
             }
 
+            // a loop iteration resumed from a pause, whatever resumed it: tell the parent so it can resume too.
+            // Only on the cycle that restarted it, the next one starts RESTARTED and could announce it after a later pause.
+            if (execution.getKind() == ExecutionKind.LOOP && transitions.subList(1, transitions.size()).contains(State.Type.RESTARTED)) {
+                loopExecutionEventQueue.emit(new LoopExecutionEvent(execution.getLoopRun(), execution.getId(), State.Type.RESTARTED, null));
+            }
+
             // IMPORTANT: this must be done before emitting the last execution message so that all consumers are notified that the execution ends.
             if (isTerminated) {
                 // release the concurrency slots (a no-op when no limit applies to the flow),

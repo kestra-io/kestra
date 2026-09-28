@@ -1,6 +1,7 @@
 package io.kestra.webserver.controllers.api;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -12,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
+import java.util.zip.ZipOutputStream;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -490,6 +492,64 @@ class NamespaceFileControllerTest {
         assertThat(storageInterface.exists(TENANT_ID, namespace, toNamespacedStorageUri(namespace, URI.create("/empty_folder")))).isFalse();
 
         assertThat(flowRepository.findById(TENANT_ID, namespace, "task-flow").isEmpty()).isTrue();
+    }
+
+    @Test
+    @LoadFlows({ "flows/valids/task-flow.yaml" })
+    void shouldImportTheWholeArchiveWhenEveryEntryIsValid() throws IOException {
+        String namespace = TestsUtils.randomNamespace();
+        String flowSource = flowRepository.findByIdWithSource(TENANT_ID, "io.kestra.tests", "task-flow").get().getSource();
+        MultipartBody body = MultipartBody.builder()
+            .addPart("fileContent", "files.zip", zip(List.of(Map.entry("a.txt", "A"), Map.entry("_flows/task-flow.yml", flowSource))))
+            .build();
+
+        client.toBlocking().exchange(
+            HttpRequest.POST("/api/v1/main/namespaces/" + namespace + "/files?path=/files.zip", body)
+                .contentType(MediaType.MULTIPART_FORM_DATA_TYPE)
+        );
+
+        assertNamespaceGetFileContentContent(namespace, URI.create("/a.txt"), "A");
+        assertThat(flowRepository.findById(TENANT_ID, namespace, "task-flow")).isPresent();
+    }
+
+    @Test
+    void shouldImportNothingFromTheArchiveWhenAnEntryIsInvalid() throws IOException {
+        String namespace = TestsUtils.randomNamespace();
+        MultipartBody body = MultipartBody.builder()
+            .addPart("fileContent", "files.zip", zip(List.of(
+                Map.entry("a.txt", "A"),
+                Map.entry("../escape.txt", "BAD"),
+                Map.entry("_flows/broken.yml", "id: [broken"),
+                Map.entry("c.txt", "C")
+            )))
+            .build();
+
+        HttpClientResponseException e = assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking().exchange(
+                HttpRequest.POST("/api/v1/main/namespaces/" + namespace + "/files?path=/files.zip", body)
+                    .contentType(MediaType.MULTIPART_FORM_DATA_TYPE)
+            )
+        );
+
+        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
+        assertThat(e.getResponse().getBody(String.class).orElse(""))
+            .contains("2 entries are invalid")
+            .contains("'../escape.txt'")
+            .contains("'_flows/broken.yml'");
+        assertThat(storageInterface.exists(TENANT_ID, namespace, toNamespacedStorageUri(namespace, URI.create("/a.txt")))).isFalse();
+        assertThat(storageInterface.exists(TENANT_ID, namespace, toNamespacedStorageUri(namespace, URI.create("/c.txt")))).isFalse();
+    }
+
+    private static byte[] zip(List<Map.Entry<String, String>> entries) throws IOException {
+        ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+        try (ZipOutputStream archive = new ZipOutputStream(bytes)) {
+            for (Map.Entry<String, String> entry : entries) {
+                archive.putNextEntry(new ZipEntry(entry.getKey()));
+                archive.write(entry.getValue().getBytes());
+                archive.closeEntry();
+            }
+        }
+        return bytes.toByteArray();
     }
 
     private void assertNamespaceGetFileContentContent(String namespace, URI fileUri, String expectedContent) throws IOException {

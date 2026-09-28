@@ -91,8 +91,7 @@ public class URIFetcher {
             case LocalPath.FILE_SCHEME -> runContext.localPath().get(uri);
             case Namespace.NAMESPACE_FILE_SCHEME -> {
                 var namespace = uri.getAuthority() == null ? runContext.storage().namespace() : runContext.storage().namespace(uri.getAuthority());
-                var nsFileUri = namespace.get(Path.of(uri.getPath())).uri();
-                yield runContext.storage().getFile(nsFileUri);
+                yield namespace.getFileContent(namespace.get(Path.of(uri.getPath())));
             }
             default -> throw new IllegalArgumentException("Scheme not supported: " + uri.getScheme());
         };

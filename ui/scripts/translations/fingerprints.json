@@ -301,6 +301,7 @@
   "bulk change state": "562ac38be10b",
   "bulk delete": "a440d051f00c",
   "bulk delete backfills": "fb20bedde45c",
+  "bulk delete logs": "3eee6d0fcb73",
   "bulk delete triggers": "593095bac2ba",
   "bulk disabled status|false": "1d8c76e8b7e1",
   "bulk disabled status|true": "2f1c17686519",

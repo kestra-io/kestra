@@ -840,6 +840,7 @@
     "restore": "恢复",
     "restore confirm": "您确定要恢复修订版 <code>{revision}</code> 吗？",
     "bulk delete": "确定要删除 <code>{executionCount}</code> 个执行吗？",
+    "bulk delete logs": "您确定要删除 <code>{count}</code> 条 log 吗？",
     "bulk replay": "确定要重放 <code>{executionCount}</code> 个执行吗？",
     "bulk change state": "您确定要更改<code>{executionCount}</code>次执行的状态吗？",
     "bulk resume": "确定要恢复 <code>{executionCount}</code> 个执行吗？",

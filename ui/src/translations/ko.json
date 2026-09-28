@@ -840,6 +840,7 @@
     "restore": "복원",
     "restore confirm": "리비전 <code>{revision}</code>을(를) 복원하시겠습니까?",
     "bulk delete": "<code>{executionCount}</code> 개의 실행을 삭제하시겠습니까?",
+    "bulk delete logs": "로그 <code>{count}</code>개를 삭제하시겠습니까?",
     "bulk replay": "<code>{executionCount}</code> 개의 실행을 재실행하시겠습니까?",
     "bulk change state": "<code>{executionCount}</code> 실행의 상태를 변경하시겠습니까?",
     "bulk resume": "<code>{executionCount}</code> 개의 실행을 재개하시겠습니까?",

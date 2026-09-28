@@ -840,6 +840,7 @@
     "restore": "Ripristina",
     "restore confirm": "Sei sicuro di voler ripristinare la revisione <code>{revision}</code>?",
     "bulk delete": "Sei sicuro di voler eliminare <code>{executionCount}</code> esecuzione/i?",
+    "bulk delete logs": "Sei sicuro di voler eliminare {count} log?",
     "bulk replay": "Sei sicuro di voler ripetere <code>{executionCount}</code> esecuzione/i?",
     "bulk change state": "Sei sicuro di voler cambiare lo stato di <code>{executionCount}</code> esecuzione/i?",
     "bulk resume": "Sei sicuro di voler riprendere <code>{executionCount}</code> esecuzione/i?",

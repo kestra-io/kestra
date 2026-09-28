@@ -62,6 +62,7 @@ vi.mock("../../../stores/flow", () => ({useFlowStore: () => flowStore}))
 import CopilotChat from "./CopilotChat.vue"
 import CopilotThreadControls from "override/components/ai/copilot/CopilotThreadControls.vue"
 import {providers as providersMock} from "@kestra-io/kestra-sdk/ai"
+import type {AiControllerAiProviderResponse} from "@kestra-io/kestra-sdk"
 
 // Unmounted after each test, or a leaked instance's watcher would consume the next test's seeded prompt.
 const mounted: ReturnType<typeof mount>[] = []
@@ -153,7 +154,7 @@ describe("CopilotChat", () => {
 
     it("starts a fresh thread before sending the seeded prompt", async () => {
         // "Generate a unit test" must not inherit whatever the restored conversation was about.
-        state.thread.value = {uid: "t-1"} as any
+        state.thread.value = {uid: "t-1"}
         state.messages.value = [{id: "1", role: "USER", type: "TEXT", content: "unrelated"}]
         miscStore.copilotPrompt = "Generate a unit test for the flow hello"
         miscStore.copilotSendInitialMessage = true
@@ -213,8 +214,8 @@ describe("CopilotChat", () => {
 
     it("waits for the provider list before sending, so the turn carries a providerId", async () => {
         // Providers held open so the restore lands first: sending then would drop providerId.
-        let resolveProviders: (list: unknown) => void = () => {}
-        ;(providersMock as any).mockReturnValueOnce(new Promise((resolve) => { resolveProviders = resolve }))
+        let resolveProviders: (list: AiControllerAiProviderResponse[]) => void = () => {}
+        vi.mocked(providersMock).mockReturnValueOnce(new Promise<AiControllerAiProviderResponse[]>((resolve) => { resolveProviders = resolve }))
         miscStore.copilotPrompt = "Generate a unit test"
         miscStore.copilotSendInitialMessage = true
         const w = mountChat()
@@ -234,7 +235,7 @@ describe("CopilotChat", () => {
         // `/ai/providers` has no client timeout: the turn goes out once the bounded wait elapses.
         vi.useFakeTimers()
         try {
-            ;(providersMock as any).mockReturnValueOnce(new Promise(() => {}))
+            vi.mocked(providersMock).mockReturnValueOnce(new Promise(() => {}))
             miscStore.copilotPrompt = "Generate a unit test"
             miscStore.copilotSendInitialMessage = true
             mountChat()
@@ -247,8 +248,8 @@ describe("CopilotChat", () => {
 
     it("does not start a turn when the dock closes while the send is still waiting", async () => {
         // Resuming after unmount would stream an SSE turn `onBeforeUnmount(cancel)` already missed.
-        let resolveProviders: (list: unknown) => void = () => {}
-        ;(providersMock as any).mockReturnValueOnce(new Promise((resolve) => { resolveProviders = resolve }))
+        let resolveProviders: (list: AiControllerAiProviderResponse[]) => void = () => {}
+        vi.mocked(providersMock).mockReturnValueOnce(new Promise<AiControllerAiProviderResponse[]>((resolve) => { resolveProviders = resolve }))
         miscStore.copilotPrompt = "Generate a unit test"
         miscStore.copilotSendInitialMessage = true
         const w = mountChat()
@@ -260,8 +261,8 @@ describe("CopilotChat", () => {
     })
 
     it("keeps the user's edit rather than sending the stale seeded prompt when they edit during the wait", async () => {
-        let resolveProviders: (list: unknown) => void = () => {}
-        ;(providersMock as any).mockReturnValueOnce(new Promise((resolve) => { resolveProviders = resolve }))
+        let resolveProviders: (list: AiControllerAiProviderResponse[]) => void = () => {}
+        vi.mocked(providersMock).mockReturnValueOnce(new Promise<AiControllerAiProviderResponse[]>((resolve) => { resolveProviders = resolve }))
         miscStore.copilotPrompt = "Generate a unit test"
         miscStore.copilotSendInitialMessage = true
         const w = mountChat()
@@ -276,8 +277,8 @@ describe("CopilotChat", () => {
 
     it("does not re-seed the prompt the user already sent during the wait", async () => {
         // Re-seeding a prompt the user already sent would invite a duplicate send.
-        let resolveProviders: (list: unknown) => void = () => {}
-        ;(providersMock as any).mockReturnValueOnce(new Promise((resolve) => { resolveProviders = resolve }))
+        let resolveProviders: (list: AiControllerAiProviderResponse[]) => void = () => {}
+        vi.mocked(providersMock).mockReturnValueOnce(new Promise<AiControllerAiProviderResponse[]>((resolve) => { resolveProviders = resolve }))
         state.sendChat.mockImplementation(() => { state.canSend.value = false })
         miscStore.copilotPrompt = "Generate a unit test"
         miscStore.copilotSendInitialMessage = true
@@ -294,8 +295,8 @@ describe("CopilotChat", () => {
 
     it("sends once when the same prompt is seeded again while the first send is still waiting", async () => {
         // A double-click: the second seed lands while the first run is parked on the provider wait.
-        let resolveProviders: (list: unknown) => void = () => {}
-        ;(providersMock as any).mockReturnValueOnce(new Promise((resolve) => { resolveProviders = resolve }))
+        let resolveProviders: (list: AiControllerAiProviderResponse[]) => void = () => {}
+        vi.mocked(providersMock).mockReturnValueOnce(new Promise<AiControllerAiProviderResponse[]>((resolve) => { resolveProviders = resolve }))
         state.sendChat.mockImplementation(() => { state.canSend.value = false })
         miscStore.copilotPrompt = "Generate a unit test"
         miscStore.copilotSendInitialMessage = true
@@ -313,8 +314,8 @@ describe("CopilotChat", () => {
 
     it("seeds a different prompt handed over while the first send is still waiting", async () => {
         // A different prompt isn't dropped: with the first turn in flight it lands in the composer.
-        let resolveProviders: (list: unknown) => void = () => {}
-        ;(providersMock as any).mockReturnValueOnce(new Promise((resolve) => { resolveProviders = resolve }))
+        let resolveProviders: (list: AiControllerAiProviderResponse[]) => void = () => {}
+        vi.mocked(providersMock).mockReturnValueOnce(new Promise<AiControllerAiProviderResponse[]>((resolve) => { resolveProviders = resolve }))
         state.sendChat.mockImplementation(() => { state.canSend.value = false })
         miscStore.copilotPrompt = "Generate a unit test"
         miscStore.copilotSendInitialMessage = true

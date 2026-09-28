@@ -115,7 +115,7 @@ describe("useApplyDraft", () => {
         expect(testSuiteOpenInEditor).toHaveBeenCalled()
         expect(push).not.toHaveBeenCalled()
 
-        await apply(testSuiteDraft())
+        expect(await apply(testSuiteDraft())).toBe(true)
         expect(testSuiteApply).toHaveBeenCalled()
         // Never mistaken for a flow — the flow API stays untouched.
         expect(createFlow).not.toHaveBeenCalled()

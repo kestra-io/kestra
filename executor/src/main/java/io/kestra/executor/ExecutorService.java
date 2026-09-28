@@ -15,6 +15,7 @@ import org.slf4j.event.Level;
 
 import io.kestra.core.assets.AssetService;
 import io.kestra.core.debug.Breakpoint;
+import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.exceptions.NoMatchingWorkerQueueException;
 import io.kestra.core.metrics.MetricRegistry;
@@ -833,6 +834,51 @@ public class ExecutorService {
 
         this.addWorkerTaskResults(executor, list);
 
+        executor = this.handleApprovalBehavior(executor, list);
+
+        return executor;
+    }
+
+    private ExecutorContext handleApprovalBehavior(ExecutorContext executor, List<WorkerTaskResult> workerTaskResults) throws QueueException, IllegalVariableEvaluationException, InternalException {
+        for (WorkerTaskResult workerTaskResult : workerTaskResults) {
+            if (executor.getExecution().getState().isTerminated() || executor.getExecution().getState().getCurrent() == State.Type.KILLING) {
+                break;
+            }
+
+            TaskRun taskRun = workerTaskResult.getTaskRun();
+            if (!taskRun.getState().isTerminated()) {
+                continue;
+            }
+
+            Task task = executor.getFlow().findTaskByTaskIdOrNull(taskRun.getTaskId());
+            if (!(task instanceof Approval approval)) {
+                continue;
+            }
+
+            RunContext runContext = runContextFactory.of(executor.getFlow(), task, executor.getExecution(), taskRun);
+            Optional<State.Type> outcome = approval.executionLevelOutcome(runContext, executor.getExecution(), taskRun);
+            if (outcome.isEmpty()) {
+                continue;
+            }
+
+            if (outcome.get() == State.Type.KILLED) {
+                Execution killing = executionService.kill(executor.getExecution(), executor.getFlow(), Optional.empty());
+                executor.withExecution(killing, "handleApprovalBehavior");
+                killQueue.emit(
+                    ExecutionKilledExecution.builder()
+                        .state(ExecutionKilled.State.REQUESTED)
+                        .executionId(killing.getId())
+                        .isOnKillCascade(true)
+                        .tenantId(killing.getTenantId())
+                        .build()
+                );
+            } else {
+                TaskRun current = executor.getExecution().findTaskRunByTaskRunId(taskRun.getId());
+                Execution terminated = ExecutionTerminator.terminate(executor.getExecution(), current, outcome.get());
+                executor.withExecution(terminated, "handleApprovalBehavior");
+            }
+        }
+
         return executor;
     }
 
@@ -1132,27 +1178,19 @@ public class ExecutorService {
             {
                 Task task = executor.getFlow().findTaskByTaskId(workerTaskResult.getTaskRun().getTaskId());
 
-                if (task instanceof Pause pauseTask) {
-                    if (pauseTask.getPauseDuration() != null || pauseTask.getTimeout() != null) {
-                        RunContext runContext = runContextFactory.of(executor.getFlow(), executor.getExecution());
-                        Duration duration = runContext.render(pauseTask.getPauseDuration()).as(Duration.class).orElse(null);
-                        if (duration != null && (duration.isZero() || duration.isNegative())) {
-                            throw new InternalException("The Pause 'pauseDuration' must be a strictly positive duration but was '%s'.".formatted(duration));
-                        }
-                        Duration timeout = runContext.render(pauseTask.getTimeout()).as(Duration.class).orElse(null);
-                        Pause.Behavior behavior = runContext.render(pauseTask.getBehavior()).as(Pause.Behavior.class).orElse(Pause.Behavior.RESUME);
-                        if (duration != null || timeout != null) { // rendering can lead to null, so we must re-check here
-                            // if duration is set, we use it, and we use the Pause behavior as a state
-                            // if no duration, we use the standard timeout property and use FAILED as the target state
-                            return ExecutionDelay.builder()
-                                .taskRunId(workerTaskResult.getTaskRun().getId())
-                                .executionId(executor.getExecution().getId())
-                                .date(DateUtils.plusOrThrow(workerTaskResult.getTaskRun().getState().maxDate(), duration != null ? duration : timeout))
-                                .state(duration != null ? behavior.mapToState() : State.Type.fail(pauseTask))
-                                .delayType(ExecutionDelay.DelayType.RESUME_FLOW)
-                                .build();
-                        }
+                if (task instanceof PausableTask pausableTask) {
+                    RunContext runContext = runContextFactory.of(executor.getFlow(), executor.getExecution());
+                    Optional<ExecutionDelay> delay = pausableTask.pauseDelay(workerTaskResult.getTaskRun(), runContext);
+
+                    // Approval's `due` output is written from this same date, not re-rendered later,
+                    // so it can't drift from the delay actually scheduled.
+                    if (delay.isPresent() && task instanceof Approval) {
+                        Map<String, Object> current = taskOutputService.getOutputs(workerTaskResult.getTaskRun());
+                        Map<String, Object> merged = MapUtils.merge(current, Map.of("due", delay.get().getDate().toString()));
+                        taskOutputService.saveOutputs(workerTaskResult.getTaskRun(), merged);
                     }
+
+                    return delay.orElse(null);
                 }
 
                 return null;
@@ -1190,7 +1228,7 @@ public class ExecutorService {
         return executor.withWorkerTaskDelays(list, "handlePausedDelay");
     }
 
-    /** Every PAUSED transition must go through here, or a Loop sub-execution's emit is easy to forget. */
+    /** Every PAUSED transition goes through here so a Loop sub-execution always emits its event. */
     private ExecutorContext pauseExecution(ExecutorContext executor, String reason) throws QueueException {
         ExecutorContext updated = executor.withExecution(executor.getExecution().withState(State.Type.PAUSED), reason);
 
@@ -1205,7 +1243,7 @@ public class ExecutorService {
         return updated;
     }
 
-    /** {@code excludedTaskRunIds} covers task runs whose merged state still reads RUNNING for the rest of the pass that just resolved them to PAUSED. */
+    /** {@code excludedTaskRunIds}: task runs resolved to PAUSED in this pass but still merged as RUNNING. */
     private boolean hasWaitingApproval(ExecutorContext executor, Set<String> excludedTaskRunIds) {
         return ListUtils.emptyOnNull(executor.getExecution().getTaskRunList())
             .stream()
@@ -1221,7 +1259,7 @@ public class ExecutorService {
             });
     }
 
-    /** RUNNING &lt;-&gt; PAUSING while any Approval is still in onWait, resolving to PAUSED instead of RUNNING when a sibling Approval already paused. */
+    /** RUNNING and PAUSING toggle while an Approval is in onWait; PAUSING resolves to PAUSED if a sibling already paused. */
     private ExecutorContext handleApprovalPausing(ExecutorContext executor) throws QueueException {
         State.Type current = executor.getExecution().getState().getCurrent();
         if (current != State.Type.RUNNING && current != State.Type.PAUSING) {

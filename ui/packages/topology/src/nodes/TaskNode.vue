@@ -333,17 +333,17 @@
         }
         return buildNodeActions(ctx, t, {
             onShowDescription: (payload) => emit(EVENTS.SHOW_DESCRIPTION, payload),
-            onShowCondition: (payload) => emit(EVENTS.SHOW_CONDITION, payload),
-            onShowLogs: (payload) => emit(EVENTS.SHOW_LOGS, payload),
-            onShowOutputs: (payload) => emit(EVENTS.SHOW_OUTPUTS, payload),
+            onShowCondition: (payload) => emit(EVENTS.SHOW_CONDITION, {...payload, task: props.data.node.task}),
+            onShowLogs: (payload) => emit(EVENTS.SHOW_LOGS, {...payload, execution: taskExecution.value, taskRuns: taskRunsWithDynamicChildren.value}),
+            onShowOutputs: (payload) => emit(EVENTS.SHOW_OUTPUTS, {...payload, execution: taskExecution.value, taskRuns: taskRuns.value}),
             onOpenLink: (payload) => emit(EVENTS.OPEN_LINK, payload),
             onExpand: (payload) => emit(EVENTS.EXPAND, payload),
-            onAddError: (payload) => emit(EVENTS.ADD_ERROR, payload),
-            onShowCustomAction: (payload) => emit(EVENTS.SHOW_CUSTOM_ACTION, payload),
-            onShowDetails: (payload) => emit(EVENTS.SHOW_DETAILS, payload),
+            onAddError: () => emit(EVENTS.ADD_ERROR, {task: props.data.node.task}),
+            onShowCustomAction: (payload) => emit(EVENTS.SHOW_CUSTOM_ACTION, {...payload, task: props.data.node.task}),
+            onShowDetails: (payload) => emit(EVENTS.SHOW_DETAILS, {...payload, task: props.data.node.task}),
             onDuplicate: (payload) => emit(EVENTS.DUPLICATE, payload),
             onDelete: (payload) => emit(EVENTS.DELETE, payload),
-            onReplayTask: (payload) => emit(EVENTS.REPLAY_TASK, payload),
+            onReplayTask: (payload) => emit(EVENTS.REPLAY_TASK, {...payload, execution: taskExecution.value, taskRuns: taskRuns.value}),
         }, expandData.value)
     })
 

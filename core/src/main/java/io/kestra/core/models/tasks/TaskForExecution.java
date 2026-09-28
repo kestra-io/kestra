@@ -3,7 +3,7 @@ package io.kestra.core.models.tasks;
 import java.util.List;
 
 import io.kestra.core.models.flows.Input;
-import io.kestra.plugin.core.flow.Pause;
+import io.kestra.plugin.core.flow.PausableTask;
 
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -28,8 +28,8 @@ public class TaskForExecution implements TaskInterface {
     public static TaskForExecution of(TaskInterface task) {
         List<Input<?>> inputs = null;
 
-        if (task instanceof Pause pauseTask) {
-            inputs = pauseTask.getOnResume();
+        if (task instanceof PausableTask pausableTask) {
+            inputs = pausableTask.resumeInputs();
         }
 
         TaskForExecutionBuilder<?, ?> taskForExecutionBuilder = TaskForExecution.builder()

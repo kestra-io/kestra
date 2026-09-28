@@ -2,11 +2,18 @@ import {useApiStore} from "../stores/api"
 import {usePluginsStore} from "../stores/plugins"
 import {useBlueprintsStore} from "../stores/blueprints"
 import {useMiscStore} from "override/stores/misc"
-import {Tab} from "./multiPanelTypes"
-
+import {Tab} from "./multiPanelTypes"import type {
+    SearchTriggersData,
+    SearchTriggersForFlowData,
+} from "@kestra-io/kestra-sdk/openapi"
 interface TrackedTab extends Tab {
     potential?: boolean
     fromPanel?: boolean
+}
+type TabTrackingEvent = {
+    action: string
+    tab_type: string
+    metadata: Record<string, string>
 }
 
 export function getTabType(tab: TrackedTab): string {
@@ -50,8 +57,8 @@ export function getTabType(tab: TrackedTab): string {
     }
 }
 
-export function getTabMetadata(tab: TrackedTab): Record<string, any> {
-    const metadata: Record<string, any> = {}
+export function getTabMetadata(tab: TrackedTab): Record<string, string> {
+    const metadata: Record<string, string> = {}
     const value = tab.uid
 
     if (value === "doc") {
@@ -82,7 +89,7 @@ export function getTabMetadata(tab: TrackedTab): Record<string, any> {
     return metadata
 }
 
-function sendTrackingEvent(eventData: any) {
+function sendTrackingEvent(eventData: TabTrackingEvent) {
     try {
         const apiStore = useApiStore()
         const miscStore = useMiscStore()
@@ -127,7 +134,7 @@ function sendTrackingEvent(eventData: any) {
     }
 }
 
-function makeEvent(action: string, tab_type: string, metadata?: Record<string, any>) {
+function makeEvent(action: string, tab_type: string, metadata?: Record<string, string>) {
     sendTrackingEvent({
         action,
         tab_type,

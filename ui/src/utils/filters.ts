@@ -1,9 +1,10 @@
 import * as Utils from "./utils"
 import {dateUtils, durationUtils} from "@kestra-io/design-system"
 
-export function humanizeDuration (value:number | string, options?:any) {
-    return durationUtils.humanDuration(value, options)
-}
+export function humanizeDuration(
+    value: number | string,
+    options?: Parameters<typeof durationUtils.humanDuration>[1],
+) {
 export function humanizeNumber (value:string) {
     return parseInt(value).toLocaleString(Utils.getLanguageTag())
 }

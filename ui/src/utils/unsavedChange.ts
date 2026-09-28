@@ -1,7 +1,8 @@
-import {RouteLocation, Router} from "vue-router"
+import type {RouteLocation, Router} from "vue-router"
+import type {App} from "vue"
 import {useUnsavedChangesStore} from "../stores/unsavedChanges"
 
-export default (app: any, router: Router) => {
+export default (app: App, router: Router) => {
     const unsavedChangesStore = useUnsavedChangesStore()
 
     window.addEventListener("beforeunload", (e) => {

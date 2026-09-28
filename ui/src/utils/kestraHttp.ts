@@ -161,8 +161,8 @@ export function setupKestraHttp(
         return error
     }
 
-    function withAuthRetry<F extends (...args: any[]) => Promise<any>>(fn: F): F {
-        return (async (...args: Parameters<F>) => {
+function withAuthRetry<F extends (...args: never[]) => Promise<unknown>>(fn: F): F {
+            return (async (...args: Parameters<F>) => {
             try {
                 return await fn(...args)
             } catch (error) {
@@ -235,7 +235,7 @@ export function setupKestraHttp(
     })
 
     for (const target of [client, useClient()] as const) {
-        const targetAny = target as unknown as Record<string, (...args: any[]) => Promise<any>>
+const targetAny = target as unknown as Record<string, (...args: never[]) => Promise<unknown>>
         for (const method of ["get", "post", "put", "patch", "delete", "request", "stream"]) {
             if (typeof targetAny[method] !== "function") continue
             let fn = targetAny[method].bind(target)

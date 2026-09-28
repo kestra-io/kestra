@@ -39,7 +39,14 @@ const SECRET_OBJECTS: Record<string, string> = {
     secret: "secret",
     token: "token",
 }
-
+type EventProperties = {
+    action?: string
+    secret_type?: string
+    onboarding?: {
+        event?: string
+        action?: string
+    }
+}
 const ONBOARDING_NAMES: Record<string, string> = {
     tour_offered: "app.onboarding-tour.offered",
     tour_started: "app.onboarding-tour.started",
@@ -58,33 +65,33 @@ const ONBOARDING_NAMES: Record<string, string> = {
     flow_executed_during_tutorial: "app.onboarding-step.viewed",
 }
 
-function resolveEditorTabAction(properties: Record<string, any>): string {
+function resolveEditorTabAction(properties: EventProperties): string {
     return EDITOR_TAB_ACTION_NAMES[properties.action] ?? "editor_tab_action"
 }
 
-function resolveOssAuth(properties: Record<string, any>): string {
+function resolveOssAuth(properties: EventProperties): string {
     return OSSAUTH_NAMES[properties.action] ?? "app.oss-auth.completed"
 }
 
-function resolveFlowExecution(properties: Record<string, any>): string {
-    return FLOW_EXECUTION_NAMES[properties.action] ?? "flow_execution"
+function resolveFlowExecution(properties: EventProperties): string {
+        return FLOW_EXECUTION_NAMES[properties.action] ?? "flow_execution"
 }
 
-function resolveOnboarding(properties: Record<string, any>): string {
-    const onboarding = properties.onboarding ?? {}
+function resolveOnboarding(properties: EventProperties): string {
+        const onboarding = properties.onboarding ?? {}
     return ONBOARDING_NAMES[onboarding.event]
         ?? ONBOARDING_NAMES[onboarding.action]
         ?? "onboarding"
 }
 
-function resolveSecret(action: "created" | "updated"): (properties: Record<string, any>) => string {
+function resolveSecret(action: "created" | "updated"): (properties: EventProperties) => string {
     return (properties) => {
         const object = SECRET_OBJECTS[properties.secret_type]
         return object ? `app.${object}.${action}` : `secret_${action}`
     }
 }
 
-const SPLIT_EVENT_RESOLVERS: Record<string, (properties: Record<string, any>) => string> = {
+const SPLIT_EVENT_RESOLVERS: Record<string, (properties: EventProperties) => string> = {
     flow_execution: resolveFlowExecution,
     secret_created: resolveSecret("created"),
     secret_updated: resolveSecret("updated"),
@@ -93,7 +100,7 @@ const SPLIT_EVENT_RESOLVERS: Record<string, (properties: Record<string, any>) =>
     onboarding: resolveOnboarding,
 }
 
-export function resolvePosthogEventName(type: string, properties: Record<string, any>): string {
+export function resolvePosthogEventName(type: string, properties: EventProperties): string {
     const lowerType = type.toLowerCase()
 
     const splitResolver = SPLIT_EVENT_RESOLVERS[lowerType]

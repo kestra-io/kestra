@@ -25,17 +25,19 @@ export type Plugin = {
     storages?: string[];
     aliases?: string[];
     guides?: string[];
-    manifest?: Record<string, any>;
-    [pluginElement: string]: PluginElement[] | string | string[] | Record<string, any> | undefined;
+    manifest?: Record<string, unknown>;
+[pluginElement: string]: PluginElement[] | string | string[] | Record<string, unknown> | undefined;
 };
 
 // Element group names reach $t() as a bare variable in PluginUnified.vue, PluginCatalog.vue and EE's Plugin.vue.
 // i18n-keys: tasks, triggers, taskRunners, apps, appBlocks, charts, dataFilters, logExporters, additionalPlugins
-export function isEntryAPluginElementPredicate(key: string, value: any): value is PluginElement[] {
-    return Array.isArray(value) &&
+export function isEntryAPluginElementPredicate(key: string, value: unknown): value is PluginElement[] {
+        return Array.isArray(value) &&
         !["categories", "controllers", "storages", "aliases", "guides"].includes(key) &&
-        ((value as any[]).length === 0 ||
-        value[0]?.cls !== undefined)
+        (value.length === 0 ||
+    (typeof value[0] === "object" &&
+        value[0] !== null &&
+        "cls" in value[0]))
 }
 
 export function countUniquePluginElements(plugins: Plugin[]): number {

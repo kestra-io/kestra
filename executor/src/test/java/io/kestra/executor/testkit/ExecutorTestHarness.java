@@ -279,6 +279,7 @@ public final class ExecutorTestHarness {
                 Mockito.mock(ConcurrencyLimitService.class),
                 Mockito.mock(FlowParsingService.class),
                 taskOutputService,
+                runContextFactory,
                 executionOutputService,
                 executionCommandQueue,
                 killQueue,

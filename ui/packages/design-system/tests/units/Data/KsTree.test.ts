@@ -1,4 +1,5 @@
 import {describe, test, expect} from "vitest"
+import {h} from "vue"
 import {mount} from "@vue/test-utils"
 import KestraDesignSystem from "../../../src/index"
 import KsTree from "../../../src/components/Data/KsTree.vue"
@@ -52,5 +53,22 @@ describe("KsTree", () => {
             global: globalConfig,
         })
         expect(wrapper.find(".kel-tree-node").exists()).toBe(true)
+    })
+
+    test("hands loaded items to the slot and to nodeClick", async () => {
+        const file = {label: "file.txt", leaf: true}
+        const wrapper = mount(KsTree, {
+            props: {
+                lazy: true,
+                props: {label: "label", isLeaf: "leaf"},
+                load: (_node: unknown, resolve: (data: typeof file[]) => void) => resolve([file]),
+            },
+            slots: {default: ({data}: {data: typeof file}) => h("span", {class: "item"}, data.label)},
+            global: globalConfig,
+        })
+        const item = wrapper.find(".item")
+        expect(item.text()).toBe("file.txt")
+        await item.trigger("click")
+        expect(wrapper.emitted("nodeClick")?.[0][0]).toEqual(file)
     })
 })

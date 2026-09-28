@@ -32,7 +32,7 @@ export interface Chart extends ChartChartOption {
         legend?:{
             enabled?: boolean;
         };
-        column: string;
+        column?: string;
         /** Bar.vue: caps how many stacked-bar categories render before collapsing the rest into "Others". */
         limit?: number;
         /** Bar.vue and TimeSeries.vue: the column whose value colours and labels each stack. */

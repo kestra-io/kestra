@@ -72,7 +72,7 @@ public class PauseTest {
         Pause pause = (Pause) flow.getTasks().getFirst();
 
         assertThat(pause.resumeInputs()).extracting(Input::getId).containsExactly("reason");
-        assertThat(pause.resumeOutputs(Map.of("reason", "ok"), Pause.Resumed.now()))
+        assertThat(pause.resumeOutputs(Map.of("reason", "ok"), Pause.Resumed.now(), null))
             .containsEntry("inputs", Map.of("reason", "ok"))
             .containsEntry("onResume", Map.of("reason", "ok"));
     }

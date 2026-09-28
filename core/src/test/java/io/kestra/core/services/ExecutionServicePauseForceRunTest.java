@@ -13,6 +13,7 @@ import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.LogDataStoreInterface;
 import io.kestra.core.repositories.MetricRepositoryInterface;
 import io.kestra.core.runners.FlowInputOutput;
+import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.scheduler.queue.TriggerEventQueue;
 import io.kestra.core.storages.StorageInterface;
 
@@ -54,6 +55,7 @@ class ExecutionServicePauseForceRunTest {
             concurrencyLimitService,
             mock(FlowParsingService.class),
             mock(TaskOutputService.class),
+            mock(RunContextFactory.class),
             mock(ExecutionOutputService.class),
             mock(DispatchQueueInterface.class),
             mock(BroadcastQueueInterface.class),

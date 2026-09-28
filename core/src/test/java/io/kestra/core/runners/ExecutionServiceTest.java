@@ -665,6 +665,19 @@ class ExecutionServiceTest {
     }
 
     @Test
+    @LoadFlows({ "flows/valids/approval-parallel-loop-pause.yaml" })
+    void parentExecutionIsPausedWhenLoopIterationPausesViaFailingSiblingApproval() throws Exception {
+        // approvalB's onWait fails after approvalA is already PAUSED, routing the PAUSING -> PAUSED transition through handleApprovalPausing instead of handlePausedDelay.
+        Execution execution = runnerUtils.runOneUntilPaused(MAIN_TENANT, "io.kestra.tests", "approval-parallel-loop-pause");
+
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.PAUSED);
+
+        TaskRun loopTaskRun = execution.getTaskRunList().stream()
+            .filter(tr -> tr.getTaskId().equals("each_task")).toList().getFirst();
+        assertThat(loopTaskRun.getState().getCurrent()).isEqualTo(State.Type.PAUSED);
+    }
+
+    @Test
     @LoadFlows({ "flows/valids/minimal.yaml" })
     void shouldResumeFromBreakpoint() {
         Flow flow = flowRepository.findById(MAIN_TENANT, "io.kestra.tests", "minimal").orElseThrow();

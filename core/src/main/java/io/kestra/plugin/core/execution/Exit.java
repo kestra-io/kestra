@@ -3,22 +3,20 @@ package io.kestra.plugin.core.execution;
 import java.util.Optional;
 
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
-import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.ExecutionUpdatableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.RunContext;
+import io.kestra.core.services.ExecutionTerminator;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
-import lombok.extern.slf4j.Slf4j;
 
 @SuperBuilder
 @ToString
@@ -67,7 +65,6 @@ import lombok.extern.slf4j.Slf4j;
         )
     }
 )
-@Slf4j
 public class Exit extends Task implements ExecutionUpdatableTask {
     @NotNull
     @Schema(
@@ -79,33 +76,9 @@ public class Exit extends Task implements ExecutionUpdatableTask {
 
     @Override
     public Execution update(Execution execution, RunContext runContext) throws Exception {
+        // KILLED bypasses findLastNotTerminated; the executor detects it and sends a killing event.
         State.Type exitState = executionState(runContext);
-
-        if (exitState == State.Type.KILLED) {
-            // the executor will detect it and send a killing event
-            return execution.withState(State.Type.KILLED);
-        }
-
-        return execution.findLastNotTerminated()
-            .map(taskRun ->
-            {
-                try {
-                    TaskRun newTaskRun = taskRun.withState(exitState);
-                    Execution newExecution = execution.withTaskRun(newTaskRun);
-                    // ends all parents
-                    while (newTaskRun.getParentTaskRunId() != null) {
-                        newTaskRun = newExecution.findTaskRunByTaskRunId(newTaskRun.getParentTaskRunId()).withStateAndAttempt(exitState);
-                        newExecution = newExecution.withTaskRun(newTaskRun);
-                    }
-                    return newExecution;
-                } catch (InternalException e) {
-                    // in case we cannot update the last not terminated task run, we ignore it
-                    log.warn("Unable to update the taskrun state", e);
-                    return execution.withState(exitState);
-                }
-            })
-            .orElse(execution)
-            .withState(exitState);
+        return ExecutionTerminator.terminate(execution, execution.findLastNotTerminated().orElse(null), exitState);
     }
 
     @Override

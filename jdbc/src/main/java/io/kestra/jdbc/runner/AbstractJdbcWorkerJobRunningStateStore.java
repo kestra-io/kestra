@@ -122,6 +122,22 @@ public abstract class AbstractJdbcWorkerJobRunningStateStore extends AbstractJdb
     }
 
     @Override
+    public boolean existsByKeyAndWorker(String key, String workerUid) {
+        return this.jdbcRepository
+            .getDslContextWrapper()
+            .transactionResult(
+                configuration -> DSL
+                    .using(configuration)
+                    .fetchExists(
+                        DSL.selectOne()
+                            .from(this.jdbcRepository.getTable())
+                            .where(field("key").eq(key))
+                            .and(field("worker_uid").eq(workerUid))
+                    )
+            );
+    }
+
+    @Override
     public Set<String> findWorkerUidsWithRunningJobs() {
         return this.jdbcRepository
             .getDslContextWrapper()

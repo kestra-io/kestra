@@ -168,6 +168,18 @@ public abstract class JdbcWorkerJobRunningStateStoreTest {
     }
 
     @Test
+    void shouldFindEntryOnlyForTheWorkerHoldingIt() {
+        // Given
+        WorkerTaskRunning workerTaskRunning = workerTaskRunning("worker-a");
+        workerJobRunningStateStore.save(NoTransactionContext.INSTANCE, workerTaskRunning);
+
+        // Then
+        assertThat(workerJobRunningStateStore.existsByKeyAndWorker(workerTaskRunning.uid(), "worker-a")).isTrue();
+        assertThat(workerJobRunningStateStore.existsByKeyAndWorker(workerTaskRunning.uid(), "worker-b")).isFalse();
+        assertThat(workerJobRunningStateStore.existsByKeyAndWorker(IdUtils.create(), "worker-a")).isFalse();
+    }
+
+    @Test
     void shouldProcessOnlyEntriesOfGivenWorkersWhenProcessingOrphans() {
         // Given
         WorkerTaskRunning orphaned = workerTaskRunning("inactive-worker");

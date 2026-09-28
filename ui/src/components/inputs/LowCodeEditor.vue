@@ -46,7 +46,7 @@
             @add-task="onCreateNewTask"
             @move-task="onMoveTask"
             @expand-subflow="expandSubflow"
-            @run-task="playgroundStore.runUntilTask($event.task.id)"
+            @run-task="playgroundStore.runUntilTask($event.task.id, Boolean($event.runDownstreamTasks))"
         >
             <template #taskDetails="taskProps">
                 <slot name="taskDetails" v-bind="taskProps">

@@ -30,14 +30,16 @@ function taskRun(outputs?: Record<string, unknown>) {
     }
 }
 
-function mountTaskNode({execution, taskRuns = [], replayEnabled = false, task = TASK, isReadOnly = true, isFlowable = false}: {
+function mountTaskNode({execution, taskRuns = [], replayEnabled = false, task = TASK, isReadOnly = true, isFlowable = false, playgroundEnabled = false, playgroundReadyToStart = false}: {
     execution?: Record<string, unknown>,
     taskRuns?: Record<string, unknown>[],
     replayEnabled?: boolean,
     task?: typeof TASK & {errors?: unknown[]},
     isReadOnly?: boolean,
     isFlowable?: boolean,
-}) {
+    playgroundEnabled?: boolean,
+    playgroundReadyToStart?: boolean,
+} = {}) {
     return i18nMount(TaskNode, {
         props: {
             id: "root.my-task",
@@ -52,8 +54,8 @@ function mountTaskNode({execution, taskRuns = [], replayEnabled = false, task = 
                 isReadOnly,
                 isFlowable,
             },
-            playgroundEnabled: false,
-            playgroundReadyToStart: false,
+            playgroundEnabled,
+            playgroundReadyToStart,
             replayEnabled,
         },
         global: {
@@ -239,5 +241,76 @@ describe("TaskNode actions", () => {
         expect(actionKeys).not.toContain("outputs") // Filtered out
         expect(actionKeys).not.toContain("replay") // Filtered out
         expect(actionKeys).not.toContain("edit") // Filtered out
+    })
+
+    it("should not offer playground actions when playground is disabled", () => {
+        const wrapper = mountTaskNode({
+            playgroundEnabled: false,
+            isReadOnly: false,
+        })
+        const keys = actionKeys(wrapper)
+        expect(keys).not.toContain("run-from-task")
+        expect(keys).not.toContain("run-only-task")
+    })
+
+    it("should not offer playground actions when read only", () => {
+        const wrapper = mountTaskNode({
+            playgroundEnabled: true,
+            isReadOnly: true,
+        })
+        const keys = actionKeys(wrapper)
+        expect(keys).not.toContain("run-from-task")
+        expect(keys).not.toContain("run-only-task")
+    })
+
+    it("should offer playground actions when playground is enabled and not read only, before and after execution", () => {
+        const wrapperBefore = mountTaskNode({
+            playgroundEnabled: true,
+            playgroundReadyToStart: true,
+            isReadOnly: false,
+        })
+        const keysBefore = actionKeys(wrapperBefore)
+        expect(keysBefore).toContain("run-from-task")
+        expect(keysBefore).toContain("run-only-task")
+
+        const wrapperAfter = mountTaskNode({
+            execution: {state: {current: "SUCCESS"}},
+            taskRuns: [taskRun({result: "value"})],
+            playgroundEnabled: true,
+            playgroundReadyToStart: true,
+            isReadOnly: false,
+        })
+        const keysAfter = actionKeys(wrapperAfter)
+        expect(keysAfter).toContain("run-from-task")
+        expect(keysAfter).toContain("run-only-task")
+    })
+
+    it("should disable playground actions when playground is not ready to start", () => {
+        const wrapper = mountTaskNode({
+            playgroundEnabled: true,
+            playgroundReadyToStart: false,
+            isReadOnly: false,
+        })
+        const actions = wrapper.findComponent(NodeMenu).props("actions")
+        const runFrom = actions.find((a: any) => a.key === "run-from-task")
+        const runOnly = actions.find((a: any) => a.key === "run-only-task")
+        expect(runFrom?.disabled).toBe(true)
+        expect(runOnly?.disabled).toBe(true)
+    })
+
+    it("should emit runTask with runDownstreamTasks flag on click", () => {
+        const wrapper = mountTaskNode({
+            playgroundEnabled: true,
+            playgroundReadyToStart: true,
+            isReadOnly: false,
+        })
+        const actions = wrapper.findComponent(NodeMenu).props("actions")
+        actions.find((a: any) => a.key === "run-from-task").onClick()
+        expect(wrapper.emitted("runTask")).toHaveLength(1)
+        expect(wrapper.emitted("runTask")![0][0]).toMatchObject({task: TASK, runDownstreamTasks: true})
+
+        actions.find((a: any) => a.key === "run-only-task").onClick()
+        expect(wrapper.emitted("runTask")).toHaveLength(2)
+        expect(wrapper.emitted("runTask")![1][0]).toMatchObject({task: TASK, runDownstreamTasks: false})
     })
 })

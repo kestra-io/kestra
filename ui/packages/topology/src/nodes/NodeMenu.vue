@@ -42,6 +42,7 @@
         tooltip?: string;
         danger?: boolean;
         divided?: boolean;
+        disabled?: boolean;
         onClick: () => void;
     }
 

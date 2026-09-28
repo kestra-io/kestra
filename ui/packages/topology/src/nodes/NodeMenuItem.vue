@@ -1,6 +1,7 @@
 <template>
     <KsDropdownItem
         :divided="action.divided"
+        :disabled="action.disabled"
         :icon="action.icon"
         :class="{'node-action--danger': action.danger}"
         @click="action.onClick()"

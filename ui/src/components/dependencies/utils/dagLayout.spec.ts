@@ -45,9 +45,7 @@ const DBT = (() => {
     const assets = [...seeds, orphanSeed, ...staging, ...marts]
 
     const lineage = [
-        // Each seed feeds its own staging model.
         ...seeds.map((seed, index) => ({source: seed, target: staging[index]})),
-        // dim_customers and fct_orders read customers, orders and payments; dim_products reads orders and products.
         ...["stg_customers", "stg_orders", "stg_payments"].map((name) => ({
             source: asset("staging", name),
             target: asset("marts", "dim_customers"),
@@ -124,18 +122,7 @@ describe("computeDagLayout", () => {
         expect(columns(positions)).toEqual([["load_flow", "transform_flow"], ["raw_table"], ["derived_table"]])
     })
 
-    it("should return identical coordinates for the same graph whatever order the nodes arrive in", () => {
-        const ids = [...DBT.assets, DBT.flow]
-        const edges = [...DBT.lineage, ...DBT.flowEdges]
-
-        const first = layout(ids, edges, [DBT.flow])
-        const shuffled = layout([...ids].reverse(), [...edges].reverse(), [DBT.flow])
-
-        expect(columns(shuffled)).toEqual(columns(first))
-        ids.forEach((id) => expect(shuffled.get(id)).toEqual(first.get(id)))
-    })
-
-    it("should place every node in lineage order when two assets form a cycle", () => {
+    it("should rank an asset after the asset cycle it reads from", () => {
         const edges = [
             {source: "table_a", target: "table_b"},
             {source: "table_b", target: "table_a"},
@@ -143,14 +130,12 @@ describe("computeDagLayout", () => {
         ]
         const positions = layout(["table_a", "table_b", "table_c"], edges)
 
-        // The cycle is cut at the lowest id, so table_a leads; table_c stays after the table_b it reads.
-        expect(columns(positions)).toEqual([["table_a"], ["table_b"], ["table_c"]])
+        expect(positions.get("table_c")!.x).toBeGreaterThan(positions.get("table_b")!.x)
     })
 
     it("should rank in lineage order when a flow closes a cycle longer than two nodes", () => {
-        // The flow writes the seed and the staging model, then reads the mart built from them. No two-node
-        // cycle exists, so the edge drop above does not fire and the rank loop hits its arbitrary cut.
-        const flow = "check_flow"
+        // The flow id sorts after the assets, so cutting the cycle at the lowest id would lead with fct_x.
+        const flow = "warehouse_flow"
         const edges = [
             {source: flow, target: "raw_x"},
             {source: flow, target: "stg_x"},

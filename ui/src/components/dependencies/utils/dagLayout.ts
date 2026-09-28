@@ -32,13 +32,26 @@ export function computeDagLayout(
     const pinned = candidates.length < ids.length ? candidates : []
     const pinnedSet = new Set(pinned)
 
-    // A node in its own column that both consumes and produces the same neighbour — a flow reading and
-    // writing one asset — closes a two-node cycle, and the cut below would then rank everything around it
-    // by id rather than by lineage. Drop the edge into it, never the one out of it: its column is fixed
-    // either way, so lineage running only through it keeps its depth.
-    const edgeKeys = new Set(edges.map(({source, target}) => `${source} ${target}`))
-    const closesPinnedCycle = ({source, target}: DagEdge): boolean =>
-        pinnedSet.has(target) && edgeKeys.has(`${target} ${source}`)
+    const children = new Map<string, string[]>()
+    edges.forEach(({source, target}) => {
+        if (!children.has(source)) {
+            children.set(source, [])
+        }
+        children.get(source)!.push(target)
+    })
+    const descendants = new Map(pinned.map((root) => {
+        const seen = new Set<string>()
+        const stack = [...(children.get(root) ?? [])]
+        while (stack.length) {
+            const id = stack.pop()!
+            if (!seen.has(id)) {
+                seen.add(id)
+                stack.push(...(children.get(id) ?? []))
+            }
+        }
+        return [root, seen]
+    }))
+    const closesPinnedCycle = ({source, target}: DagEdge): boolean => descendants.get(target)?.has(source) ?? false
 
     const links = [
         ...new Map(

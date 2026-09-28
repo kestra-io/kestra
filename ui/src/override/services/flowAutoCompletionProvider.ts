@@ -129,8 +129,8 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
 
     private tasks(source: string): {id: string; type: string}[] {
         return YAML_UTILS.extractTypedBlocks(source)
-            .filter(block => TASK_ROOT_KEYS.has(block.path.split(".")[0]) && typeof block.value.id === "string")
-            .map(block => ({id: block.value.id, type: block.type}))
+            .flatMap(({path, type, value: {id}}) =>
+                TASK_ROOT_KEYS.has(path.split(".")[0]) && typeof id === "string" ? [{id, type}] : [])
     }
 
     private cursorProbeIndexes(source: string, cursorIndex: number): number[] {

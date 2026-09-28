@@ -98,10 +98,6 @@ export interface RootJsonSchema extends JsonSchemaDef {
     definitions: Record<string, JsonSchemaDef>;
 }
 
-interface ListWithSubgroupOptions {
-    includeDeprecated?: boolean;
-}
-
 export function removeRefPrefix(refStr?: string): string {
     return refStr?.replace(/^#\/definitions\//, "") ?? ""
 }
@@ -373,7 +369,7 @@ export const usePluginsStore = defineStore("plugins", () => {
         })
     }
 
-    async function listWithSubgroup(_options?: ListWithSubgroupOptions) {
+    async function listWithSubgroup() {
         const response = await PluginsAPI.pluginBySubgroups() as Plugin[]
         plugins.value = response
         return response
@@ -383,7 +379,7 @@ export const usePluginsStore = defineStore("plugins", () => {
     async function ensurePlugins(): Promise<Plugin[]> {
         if (plugins.value) return plugins.value
         if (pluginsPending) return pluginsPending
-        pluginsPending = listWithSubgroup({includeDeprecated: false}).finally(() => {
+        pluginsPending = listWithSubgroup().finally(() => {
             pluginsPending = null
         })
         return pluginsPending

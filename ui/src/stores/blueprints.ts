@@ -12,7 +12,7 @@ import {Input} from "./flow.ts"
 
 export type BlueprintType = "community" | "custom";
 export type BlueprintKind = "flow" | "dashboard" | "app";
-type BlueprintQueryValue = string | number | boolean | string[] | null | undefined;
+type BlueprintQueryValue = string | number | boolean | (string | null)[] | null | undefined;
 type BlueprintQueryParams = Record<string, BlueprintQueryValue>;
 
 interface Options {

@@ -35,8 +35,7 @@ import type {KestraHttpError} from "../utils/kestraHttp"
 
 type ParsedDashboardSource = {id?: string} & Record<string, unknown>
 type DashboardListOptions = Omit<NonNullable<Parameters<typeof DashboardsAPI.searchDashboards>[0]>, "sort"> & {sort?: string}
-type EditableChart = Omit<Chart, "chartOptions"> & {chartOptions?: Partial<NonNullable<Chart["chartOptions"]>>}
-type LoadedChart = EditableChart & {raw: EditableChart}
+type LoadedChart = Chart & {raw: Chart}
 
 interface LoadChartResult {
     error: string | null;
@@ -53,7 +52,7 @@ export const DEFAULT_DASHBOARD = {
 
 export const useDashboardStore = defineStore("dashboard", () => {
     const dashboardList = ref<{ id: string; title: string; isDefault: boolean }[]>()
-    const selectedChart = ref<EditableChart>()
+    const selectedChart = ref<Chart>()
     const activeDashboard = ref<Dashboard>()
     const defaultDashboards = ref<DashboardSettings>()
     const defaultDefinitions = ref<{
@@ -345,7 +344,7 @@ export const useDashboardStore = defineStore("dashboard", () => {
         return rootSchema.value?.properties
     })
 
-    async function loadChart(chart: EditableChart): Promise<LoadChartResult> {
+    async function loadChart(chart: Chart): Promise<LoadChartResult> {
         const yamlChart = YAML_UTILS.stringify(chart)
         if(selectedChart.value?.content === yamlChart){
             return {
@@ -371,9 +370,9 @@ export const useDashboardStore = defineStore("dashboard", () => {
             ? {
                 ...result.data,
                 chartOptions: {
-                    ...result.data?.chartOptions,
+                    ...result.data.chartOptions,
                     width: 12,
-                },
+                } as Chart["chartOptions"],
             }
             : undefined
         chartErrors.value = [result.error].filter(e => e !== null)

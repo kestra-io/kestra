@@ -315,7 +315,7 @@ export const usePlaygroundStore = defineStore("playground", () => {
         try {
             execution = await replayOrTriggerExecution(taskId, runDownstreamTasks ? undefined : nextTasksIds, graph, customFormData)
         } catch (error: unknown) {
-            if ((error as KestraHttpError).response?.status === 422) {
+            if ((error as KestraHttpError | undefined)?.response?.status === 422) {
                 readyToStart.value = true
                 if (!customFormData && flowStore.flow && flowStore.flow.inputs?.length) {
                     actionOptions.value = {taskId, runDownstreamTasks}

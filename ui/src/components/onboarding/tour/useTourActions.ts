@@ -148,7 +148,7 @@ export function useTourActions() {
 
     const showTaskDocs = async (cls: string) => {
         if (!pluginsStore.plugins?.length) {
-            await pluginsStore.listWithSubgroup({includeDeprecated: false})
+            await pluginsStore.listWithSubgroup()
         }
         await pluginsStore.updateDocumentation({cls})
     }

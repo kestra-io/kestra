@@ -129,10 +129,12 @@ public class ExecutionDelayProcessor {
                         executor = executor.withExecution(markAsExecution, "pausedRestart");
                     }
                 }
-                // Handle failed task retries — skip if the execution is being killed so the retry does not race the kill
+                // Handle failed task retries — skip if the execution is being killed so the retry does not race
+                // the kill, or is already over (killed while it waited): a retry must never revive a terminated execution
                 else if (
                     executionDelay.getDelayType().equals(ExecutionDelay.DelayType.RESTART_FAILED_TASK)
                         && execution.getState().getCurrent() != State.Type.KILLING
+                        && !execution.getState().isTerminated()
                 ) {
                     FlowWithSource flow = flowMetaStore.findByExecutionForRuntime(execution).orElseThrow(() -> new FlowNotFoundException(execution));
                     Execution newAttempt = executionService.retryTask(

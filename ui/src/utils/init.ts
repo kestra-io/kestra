@@ -114,16 +114,17 @@ export default async (
     await registerDesignSystemI18n(i18n)
 
     if(locale !== "en"){
-        // FIXME: any - loadLocaleMessages/setI18nLanguage expect literal locale types
-await loadLocaleMessages(
-    i18n,
-    locale as Parameters<typeof loadLocaleMessages>[1],
-    additionalTranslations as Parameters<typeof loadLocaleMessages>[2],
-)
+
+        await loadLocaleMessages(
+            i18n,
+            locale as Parameters<typeof loadLocaleMessages>[1],
+            additionalTranslations as Parameters<typeof loadLocaleMessages>[2],
+        )
         await setI18nLanguage(
-    i18n,
-    locale as Parameters<typeof setI18nLanguage>[1],
-) // FIXME: any
+            i18n,
+            locale as Parameters<typeof setI18nLanguage>[1],
+        )
+
     }
     setDesignSystemLocale(locale)
     app.use(i18n)

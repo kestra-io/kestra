@@ -22,20 +22,29 @@
     import InformationOutline from "vue-material-design-icons/InformationOutline.vue"
     import Pencil from "vue-material-design-icons/Pencil.vue"
     import Delete from "vue-material-design-icons/Delete.vue"
-    import BasicNode from "./BasicNode.vue"
+    import BasicNode, {type BasicNodeData} from "./BasicNode.vue"
     import NodeMenu, {type NodeAction} from "./NodeMenu.vue"
     import {EVENTS} from "../utils/constants"
     import * as Utils from "../utils/utils"
 
+    interface TriggerDefinition {
+        type?: string;
+        description?: string;
+        disabled?: boolean;
+    }
+
     defineOptions({name: "Task", inheritAttrs: false})
 
     const {data, sourcePosition, targetPosition, id, icons, loadIcon} = defineProps<{
-        data: any;
-        sourcePosition: Position;
-        targetPosition: Position;
+        data: BasicNodeData & {
+            isReadOnly?: boolean;
+            node: {trigger?: TriggerDefinition; triggerDeclaration?: TriggerDefinition};
+        };
+        sourcePosition?: Position;
+        targetPosition?: Position;
         id: string;
-        icons?: Record<string, any>;
-        loadIcon?: (cls: string) => Promise<any>;
+        icons?: Record<string, unknown>;
+        loadIcon?: (cls: string) => Promise<unknown>;
     }>()
 
     const emit = defineEmits([EVENTS.DELETE, EVENTS.EDIT, EVENTS.SHOW_DESCRIPTION, EVENTS.EXPAND])

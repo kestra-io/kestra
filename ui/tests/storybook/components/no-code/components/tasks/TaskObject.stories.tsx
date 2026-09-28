@@ -36,7 +36,7 @@ const schema = {
 const AppTableBlockRender = () => ({
     setup() {
         provide(SCHEMA_DEFINITIONS_INJECTION_KEY, computed(() => ({})));
-        const model = ref<Record<string, any> | undefined>({})
+        const model = ref<Record<string, unknown> | undefined>({})
         return () => <div style={{display: "flex", gap: "16px"}}>
             <div style={{width: "500px"}}>
                 <TaskObject
@@ -49,7 +49,7 @@ const AppTableBlockRender = () => ({
             <div style={{width: "500px"}}>
                 <h2>Resulting object</h2>
                 <pre style={{
-                    border: "1px solid var(--ks-border-primary)",
+                    border: "1px solid var(--ks-border-default)",
                     borderRadius: "4px",
                     padding: "2px",
                     background: "var(--ks-bg-surface)"

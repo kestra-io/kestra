@@ -566,6 +566,12 @@ public abstract class AbstractRunnerTest {
     }
 
     @Test
+    @ExecuteFlow("flows/valids/loop-with-loop-until.yaml")
+    protected void loopWithLoopUntil(Execution execution) throws Exception {
+        loopCaseTest.loopWithLoopUntil(execution);
+    }
+
+    @Test
     @ExecuteFlow("flows/valids/loop-map.yaml")
     protected void loopMap(Execution execution) throws Exception {
         loopCaseTest.loopMap(execution);

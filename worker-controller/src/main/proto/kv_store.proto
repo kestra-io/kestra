@@ -1,0 +1,51 @@
+syntax = "proto3";
+
+option java_package = "io.kestra.controller.grpc";
+option java_multiple_files = true;
+
+import "request.proto";
+import "metastore.proto";
+
+// Reads and writes KV store entries for workers that do not reach the internal storage.
+service KVStoreService {
+  // The first message carries the entry, the following ones its value.
+  rpc put(stream KVPutRequest) returns (KVPutResponse);
+
+  // NOT_FOUND when there is no value, FAILED_PRECONDITION when it expired.
+  rpc getRawValue(KVKeyRequest) returns (stream StreamChunk);
+
+  rpc get(KVKeyRequest) returns (OpaqueData);
+
+  rpc list(NamespaceRequest) returns (OpaqueData);
+
+  rpc delete(KVKeyRequest) returns (BooleanResponse);
+}
+
+message KVKeyRequest {
+  RequestOrResponseHeader header = 1;
+  string tenant_id = 2;
+  string namespace = 3;
+  string key = 4;
+}
+
+message KVPutRequest {
+  RequestOrResponseHeader header = 1;
+  string tenant_id = 2;
+  oneof payload {
+    KVPutEntry entry = 3;
+    StreamChunk chunk = 4;
+  }
+}
+
+message KVPutEntry {
+  string namespace = 1;
+  string key = 2;
+  bool overwrite = 3;
+  optional string description = 4;
+  // ISO-8601 instant
+  optional string expiration_date = 5;
+}
+
+message KVPutResponse {
+  RequestOrResponseHeader header = 1;
+}

@@ -120,7 +120,7 @@ class FlowTest {
         Optional<ConstraintViolationException> validate = modelValidator.isValid(flow);
 
         assertThat(validate.isPresent()).isTrue();
-        assertThat(validate.get().getConstraintViolations().size()).isEqualTo(9);
+        assertThat(validate.get().getConstraintViolations().size()).isEqualTo(14);
 
         assertThat(validate.get().getMessage()).contains("inputs[file]: inputs of type 'FILE' only support `defaults` as local files using a file URI");
         assertThat(validate.get().getMessage()).contains("inputs[array1]: `itemType` cannot be ARRAY");
@@ -131,6 +131,11 @@ class FlowTest {
         assertThat(validate.get().getMessage()).contains("inputs[multiselect2]: `itemType` cannot be SECRET");
         assertThat(validate.get().getMessage()).contains("inputs[multiselect3]: `itemType` cannot be MULTISELECT");
         assertThat(validate.get().getMessage()).contains("inputs[multiselect4]: `itemType` cannot be SELECT");
+        assertThat(validate.get().getMessage()).contains("inputs[array5]: `itemType` cannot be OBJECT");
+        assertThat(validate.get().getMessage()).contains("inputs[object1]: field `attachment` cannot be of type FILE");
+        assertThat(validate.get().getMessage()).contains("inputs[table1]: `columns` declares the id `size` more than once");
+        assertThat(validate.get().getMessage()).contains("inputs[table2]: field `region` cannot declare `dependsOn`");
+        assertThat(validate.get().getMessage()).contains("inputs[table3]: `rows.min` cannot be greater than `rows.max`");
     }
 
     // This test is done to ensure the equals is checking the right fields and also make sure the Maps orders don't negate the equality even if they are not the same.

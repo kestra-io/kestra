@@ -159,6 +159,34 @@ class FlowToolSchemaMapperTest {
         InputConversionTestCase.builder()
             .input(YamlInput.builder().type(Type.YAML).build())
             .expectedSchema(Map.of("type", "object", "additionalProperties", true))
+            .build(),
+        InputConversionTestCase.builder()
+            .input(ObjectInput.builder().type(Type.OBJECT).properties(List.of(
+                IntInput.builder().id("size_gb").type(Type.INT).build(),
+                StringInput.builder().id("name").type(Type.STRING).required(false).build()
+            )).build())
+            .expectedSchema(Map.of(
+                "type", "object",
+                "properties", Map.of("size_gb", Map.of("type", "integer"), "name", Map.of("type", "string")),
+                "required", List.of("size_gb"),
+                "additionalProperties", false
+            ))
+            .build(),
+        InputConversionTestCase.builder()
+            .input(TableInput.builder().type(Type.TABLE).rows(new TableInput.Rows(1, 8)).columns(List.of(
+                IntInput.builder().id("size_gb").type(Type.INT).build()
+            )).build())
+            .expectedSchema(Map.of(
+                "type", "array",
+                "items", Map.of(
+                    "type", "object",
+                    "properties", Map.of("size_gb", Map.of("type", "integer")),
+                    "required", List.of("size_gb"),
+                    "additionalProperties", false
+                ),
+                "minItems", 1,
+                "maxItems", 8
+            ))
             .build()
     );
 

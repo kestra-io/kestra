@@ -323,16 +323,13 @@
             taskRunLogs = await executionsStore.loadLogs({
                 store: false,
                 executionId: props.execution.id,
-                params: {taskRunId: props.taskRun.id, minLevel: "ERROR"},
+                params: {taskRunId: currentTaskRun.value.id, minLevel: "ERROR"},
             }).catch((e) => {
                 if (e?.status === 404 || e?.response?.status === 404) {
                     handled(e)
                 }
                 return []
             })
-                params: {taskRunId: currentTaskRun.value.id, minLevel: "ERROR"},
-                showMessageOnError: false,
-            }).catch(() => [])
         }
         const errorLines = (() => {
             const errors = taskRunLogs

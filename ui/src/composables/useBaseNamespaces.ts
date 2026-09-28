@@ -8,7 +8,7 @@ import * as KvAPI from "@kestra-io/kestra-sdk/kv"
 import * as FilesAPI from "@kestra-io/kestra-sdk/files"
 import * as SecretsAPI from "@kestra-io/kestra-sdk/secrets"
 import {handled} from "../utils/kestraHttp"
-import type {KestraHttpError, KestraRequestOptions} from "../utils/kestraHttp"
+import type {KestraHttpError} from "../utils/kestraHttp"
 
 export {PagedResultsNamespace}
 
@@ -53,14 +53,11 @@ export const useBaseNamespacesStore = () => {
     async function load(id: string) {
         const current = ++latestLoad
         let data: Namespace
-        try{
+        try {
             data = await NamespaceAPI.loadNamespace({id})
-        }catch (e: any) {
-            if (e.status === 404) {
-                handled(e)
-            data = await NamespaceAPI.loadNamespace({id}, expectNotFound)
         }catch (e: unknown) {
             if ((e as KestraHttpError).status === 404) {
+                handled(e)
                 // A load the user has navigated away from must not report its absence for the
                 // namespace they are on, the same way a superseded search is dropped in
                 // `stores/logs.ts`.
@@ -124,6 +121,7 @@ export const useBaseNamespacesStore = () => {
             data = await NamespaceAPI.inheritedSecrets({namespace: id})
         } catch (e: unknown) {
             if ((e as KestraHttpError).status === 404) {
+                handled(e)
                 data = {[id]: []}
             } else {
                 throw e
@@ -141,7 +139,7 @@ export const useBaseNamespacesStore = () => {
             const data = await SecretsAPI.listSecrets({filters})
             return data
         } catch (e: unknown) {
-            if ((e as KestraHttpError).status === 404) return {total: 0, results: [], readOnly: false}
+            if ((e as KestraHttpError).status === 404) { handled(e); return {total: 0, results: [], readOnly: false} }
             throw e
         }
     }
@@ -181,12 +179,9 @@ export const useBaseNamespacesStore = () => {
             // A directory removed server-side is handled by the caller (see fileExplorer loadNodes), so its 404 must not toast.
             const data = await FilesAPI.listNamespaceDirectoryFiles(payload)
             return (data ?? []) as unknown as T[]
-        } catch (e: any) {
-            if (e.status === 404) {
-                handled(e)
-                const notFoundError: any = new Error("Directory not found")
         } catch (e: unknown) {
             if ((e as KestraHttpError).status === 404) {
+                handled(e)
                 const notFoundError = new Error("Directory not found") as KestraHttpError
                 notFoundError.status = 404
                 throw notFoundError
@@ -233,12 +228,9 @@ export const useBaseNamespacesStore = () => {
             // `notFound` below reports a removed file, so its 404 must not also raise the global toast.
             const blob = await FilesAPI.fileContent(payload)
             return {content: await blob.text() ?? ""}
-        } catch (e: any) {
-            if (e.status === 404) {
-                handled(e)
-                return {notFound: true, error: e.message ?? "File not found"}
         } catch (e: unknown) {
             if ((e as KestraHttpError).status === 404) {
+                handled(e)
                 return {notFound: true, error: e instanceof Error ? e.message : "File not found"}
             }
             throw e

@@ -778,14 +778,13 @@ function deleteFlowAndDependencies() {
                     handled(error)
                 }
                 if (status === 422 && (!subflows || subflows.length === 0)) {
-                if (error.status === 422 && (!subflows || subflows.length === 0)) {
                     // flowGraph is deliberately left on the last good layout rather than cleared,
                     // so invalidGraph is what tells the canvas it is showing stale nodes.
                     invalidGraph.value = true
                     return Promise.resolve(error.response)
                 }
 
-                if ([404, 422].includes(error.status) && subflows && subflows.length > 0) {
+                if ([404, 422].includes(status) && subflows && subflows.length > 0) {
                     coreStore.message = {
                         title: "Couldn't expand subflow",
                         content: asProblem(error)?.detail,

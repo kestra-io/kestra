@@ -469,7 +469,7 @@
 
     :deep(.kel-radio__label) {
         font-size: var(--ks-font-size-xs);
-        color: var(--kel-text-color-regular);
+        color: var(--ks-text-primary);
         padding-left: 8px;
     }
 
@@ -487,7 +487,7 @@
         }
 
         :deep(.kel-radio__label) {
-            color: var(--kel-text-color-regular) !important;
+            color: var(--ks-text-primary) !important;
         }
     }
 }

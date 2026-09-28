@@ -6,11 +6,17 @@ import {API_URL} from "./api"
 const PATH_PLACEHOLDER = "{path}"
 
 interface DocMetadata {
-    [key: string]: any;
+    parsedUrl?: string;
+    title: string;
+    description?: string;
+    release?: string;
+    isHomepage?: boolean;
+    hideSidebar?: boolean;
+    [key: string]: unknown;
 }
 
 interface FetchResourceResponse {
-    content: any;
+    content: string;
     metadata?: DocMetadata;
 }
 
@@ -65,11 +71,11 @@ export const useDocStore = defineStore("doc", () => {
         return undefined
     })
 
-    async function children(prefix?: string): Promise<any> {
+    async function children(prefix?: string): Promise<Record<string, DocMetadata>> {
         const url = resourceUrl.value(prefix)
         if (!url) throw new Error("Resource URL template not initialized")
 
-        const response = await axios.get(url + "/children")
+        const response = await axios.get<Record<string, DocMetadata>>(url + "/children")
         return response.data
     }
 
@@ -77,12 +83,12 @@ export const useDocStore = defineStore("doc", () => {
         const url = resourceUrl.value(path)
         if (!url) throw new Error("Resource URL template not initialized")
 
-        const response = await axios.get(url)
+        const response = await axios.get<string>(url)
 
-        let metadata = response.headers["x-kestra-metadata"]
-        if (metadata !== undefined) {
-            metadata = JSON.parse(metadata)
-        }
+        const metadataHeader = response.headers["x-kestra-metadata"]
+        const metadata = typeof metadataHeader === "string"
+            ? JSON.parse(metadataHeader) as DocMetadata
+            : undefined
 
         return {
             content: response.data,
@@ -94,14 +100,14 @@ export const useDocStore = defineStore("doc", () => {
         const url = resourceUrl.value()
         if (!url) throw new Error("Resource URL template not initialized")
 
-        const response = await axios.get(`${url}/doc/${id}`)
+        const response = await axios.get<string>(`${url}/doc/${id}`)
 
-        let metadata = response.headers["x-kestra-metadata"]
-        if (metadata !== undefined) {
-            metadata = JSON.parse(metadata)
-        }
+        const metadataHeader = response.headers["x-kestra-metadata"]
+        const metadata = typeof metadataHeader === "string"
+            ? JSON.parse(metadataHeader) as DocMetadata
+            : undefined
 
-        docPath.value = metadata.parsedUrl
+        docPath.value = metadata?.parsedUrl
 
         return {
             content: response.data,
@@ -109,12 +115,12 @@ export const useDocStore = defineStore("doc", () => {
         }
     }
 
-    async function search({q, scoredSearch = false}: {q: string; scoredSearch?: boolean}): Promise<any> {
+    async function search({q, scoredSearch = false}: {q: string; scoredSearch?: boolean}): Promise<SearchResult[]> {
         if (scoredSearch) {
             const url = resourceUrl.value(undefined, "search")
             if (!url) throw new Error("Resource URL template not initialized")
 
-            const response = await axios.get(`${url}?q=${q}&type=DOCS`)
+            const response = await axios.get<{results: Array<{url: string; title: string; highlights?: string[]}>}>(`${url}?q=${q}&type=DOCS`)
             return response.data.results.map(({url: itemUrl, title, highlights}: {url: string; title: string; highlights?: string[]}): SearchResult => ({
                 parsedUrl: itemUrl,
                 title,
@@ -125,7 +131,7 @@ export const useDocStore = defineStore("doc", () => {
         const url = resourceUrl.value()
         if (!url) throw new Error("Resource URL template not initialized")
 
-        const response = await axios.get(`${url}/search?q=${q}`)
+        const response = await axios.get<SearchResult[]>(`${url}/search?q=${q}`)
         return response.data
     }
 

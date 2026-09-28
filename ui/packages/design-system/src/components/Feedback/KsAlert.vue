@@ -1,5 +1,5 @@
 <template>
-    <ElAlert v-bind="({...filteredProps(), ...$attrs} as any)">
+    <ElAlert :class="{'is-banner': banner}" v-bind="({...filteredProps(), ...$attrs} as any)">
         <template v-if="$slots.default" #default>
             <slot />
         </template>
@@ -34,11 +34,13 @@
         closable?: boolean
         showIcon?: boolean
         center?: boolean
+        banner?: boolean
     }>(), {
         showIcon: true,
+        banner: false,
     })
 
-    const filteredProps = useFilteredProps(props)
+    const filteredProps = useFilteredProps(props, ["banner"])
 
     defineSlots<{
         default?(): unknown
@@ -109,6 +111,12 @@
                 border: 1px solid var(--ks-border-#{$type});
                 background-color: var(--ks-bg-#{$type});
                 #{--kel-color-#{$type}}: var(--ks-text-#{$type});
+
+                &.is-banner {
+                    border-width: 0 0 1px;
+                    border-radius: 0;
+                    #{--kel-color-#{$type}}: var(--ks-text-primary);
+                }
 
                 .kel-alert__icon {
                     color: var(--ks-icon-#{$type});

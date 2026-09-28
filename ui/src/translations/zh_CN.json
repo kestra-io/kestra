@@ -2722,6 +2722,8 @@
     },
     "iteration": "迭代",
     "iteration_number": "迭代 {number}",
-    "delete_log_iteration": "确定要删除 {iteration} 的日志吗？"
+    "delete_log_iteration": "确定要删除 {iteration} 的日志吗？",
+    "in flight": "In flight",
+    "not started": "Not started"
   }
 }

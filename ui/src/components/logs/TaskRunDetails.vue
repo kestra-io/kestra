@@ -293,6 +293,7 @@
                         :loopOutputsByTaskRunId="loopOutputsByTaskRunId"
                         :executionId="followedExecution.id"
                         :taskId="asTaskRun(currentTaskRun).taskId"
+                        :loopTaskState="asTaskRun(currentTaskRun).state.current"
                     />
                 </div>
             </DynamicScrollerItem>

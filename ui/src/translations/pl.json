@@ -2722,6 +2722,8 @@
     },
     "iteration": "Iteracja",
     "iteration_number": "Iteracja {number}",
-    "delete_log_iteration": "Czy na pewno chcesz usunąć dziennik dla {iteration}?"
+    "delete_log_iteration": "Czy na pewno chcesz usunąć dziennik dla {iteration}?",
+    "in flight": "In flight",
+    "not started": "Not started"
   }
 }

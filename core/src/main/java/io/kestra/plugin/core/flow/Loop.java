@@ -200,6 +200,8 @@ public class Loop extends AbstractBranch<Loop.Output> {
     public static final String TERMINATED_ITERATIONS_OUTPUT = "terminatedIterations";
     public static final String NEXT_OFFSET_OUTPUT = "nextOffset";
     public static final String OUTPUTS_OUTPUT = "outputs";
+    // Internal bookkeeping: sub-execution statistics aggregated as task run statistics
+    public static final String TASK_RUN_STATISTIC_OUTPUT = "taskRunStatistic";
 
     private static final ObjectMapper ION_MAPPER = JacksonMapper.ofIon();
 

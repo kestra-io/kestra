@@ -372,7 +372,7 @@ export const useDashboardStore = defineStore("dashboard", () => {
                 chartOptions: {
                     ...result.data.chartOptions,
                     width: 12,
-                } as Chart["chartOptions"],
+                },
             }
             : undefined
         chartErrors.value = [result.error].filter(e => e !== null)

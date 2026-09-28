@@ -15,6 +15,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.executions.*;
+import io.kestra.core.models.executions.statistics.TaskRunStatistic;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.LogDataStoreInterface;
@@ -83,6 +84,34 @@ public class LoopCaseTest {
         assertThat(subExecutions).hasSize(2);
         assertThat(subExecutions).allMatch(sub -> sub.getState().getCurrent() == State.Type.SUCCESS);
         assertThat(subExecutions).allMatch(sub -> sub.getTaskRunList().size() == 2);
+
+        // the 2 iterations' 4 body task runs never reach the root's taskRunList — only accumulated
+        // on its metadata (also visible in the loop's own outputs, same as it was while running)
+        assertThat(execution.getMetadata().getTaskRunStatistic()).isNotNull();
+        assertThat(execution.getMetadata().getTaskRunStatistic().count()).isEqualTo(4);
+    }
+
+    public void loopWithLoopUntil(Execution execution) throws InternalException {
+        // Then — a LoopUntil nested inside a Loop: each of the 2 Loop iterations runs its own
+        // LoopUntil for 2 iterations of 1 task, discarding the first iteration's task run
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.getTaskRunList()).hasSize(1);
+
+        List<Execution> subExecutions = executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId(), null);
+        assertThat(subExecutions).hasSize(2);
+        assertThat(subExecutions).allMatch(sub -> sub.getState().getCurrent() == State.Type.SUCCESS);
+        assertThat(subExecutions).allMatch(sub ->
+        {
+            // taskRunList = [inner_wait, last LoopUntil iteration's log] (2), plus 1 discarded
+            // iteration's task run folded on this sub-execution's own metadata accumulator
+            TaskRunStatistic subStatistic = sub.getMetadata().getTaskRunStatistic();
+            return sub.getTaskRunList().size() == 2 && subStatistic != null && subStatistic.count() == 1;
+        });
+
+        // each Loop iteration reports its own taskRunList (2) + its accumulated discard (1) = 3,
+        // bubbled up and summed over the 2 Loop iterations: counted exactly once, not lost or doubled
+        assertThat(execution.getMetadata().getTaskRunStatistic()).isNotNull();
+        assertThat(execution.getMetadata().getTaskRunStatistic().count()).isEqualTo(6);
     }
 
     public void loopFailed(Execution execution) throws InternalException {
@@ -174,6 +203,11 @@ public class LoopCaseTest {
             String expectedValue = sub.getLoopRun().index() + " - " + sub.getLoopRun().value();
             return expectedValue.equals(taskOutputService.getOutputs(sub.getTaskRunList().getFirst()).get("value"));
         }));
+
+        // all 3 iterations complete concurrently and fold into the same accumulator under the
+        // parent execution's lock: none of their contributions are lost to the race
+        assertThat(execution.getMetadata().getTaskRunStatistic()).isNotNull();
+        assertThat(execution.getMetadata().getTaskRunStatistic().count()).isEqualTo(3);
     }
 
     public void loopParallelLess(Execution execution) throws InternalException {
@@ -307,6 +341,12 @@ public class LoopCaseTest {
                 }
             }
         }
+
+        // 3x3x3 nested iterations of 3 leaf task runs each (81), plus one loop2 and one loop3 task
+        // run per intermediate sub-execution (3 + 9), bubble up through 3 levels of LoopExecutionEvent
+        // and fold into the root's single metadata accumulator: 81 + 9 + 3 = 93
+        assertThat(execution.getMetadata().getTaskRunStatistic()).isNotNull();
+        assertThat(execution.getMetadata().getTaskRunStatistic().count()).isEqualTo(93);
     }
 
     public void loopMap(Execution execution) throws InternalException {

@@ -34,7 +34,7 @@ public final class QueryTimeout {
             return DSL.using(configuration);
         }
 
-        int seconds = (int) Math.min(Integer.MAX_VALUE, Math.max(1, timeout.toSeconds()));
+        int seconds = Math.clamp(timeout.toSeconds(), 1, Integer.MAX_VALUE);
         return DSL.using(
             configuration
                 .derive(SettingsTools.clone(configuration.settings()).withQueryTimeout(seconds))

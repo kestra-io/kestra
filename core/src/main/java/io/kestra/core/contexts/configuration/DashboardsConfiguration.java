@@ -9,7 +9,7 @@ import io.micronaut.core.bind.annotation.Bindable;
 /**
  * Limits on the queries dashboard charts run against the repositories.
  *
- * @param queryTimeout    how long a chart query may run when its dashboard sets no {@code queryTimeout}; {@code 0} disables the limit
+ * @param queryTimeout how long a chart query may run when its dashboard sets no {@code queryTimeout}; {@code 0} disables the limit
  * @param maxQueryTimeout the longest a dashboard may ask for; a larger value is rejected when the dashboard is saved
  */
 @ConfigurationProperties("kestra.dashboards")
@@ -19,9 +19,7 @@ public record DashboardsConfiguration(
 
     /** The limit to apply to a dashboard that asked for {@code requested}, capped at {@link #maxQueryTimeout()}. */
     public Duration resolveQueryTimeout(@Nullable Duration requested) {
-        if (requested == null) {
-            return queryTimeout;
-        }
-        return requested.compareTo(maxQueryTimeout) > 0 ? maxQueryTimeout : requested;
+        Duration timeout = requested == null ? queryTimeout : requested;
+        return timeout.compareTo(maxQueryTimeout) > 0 ? maxQueryTimeout : timeout;
     }
 }

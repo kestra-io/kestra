@@ -113,6 +113,7 @@ public class KestraProblemMappings extends ExceptionTypeProblemMapper {
         to.accept(WebhookInputRenderException.class, ProblemTypes.INVALID_REQUEST_BODY);
         to.accept(InvalidSourceSearchQueryException.class, ProblemTypes.BAD_REQUEST);
         to.accept(RegexUtils.RegexTimeoutException.class, ProblemTypes.BAD_REQUEST);
+        to.accept(QueryTimeoutException.class, ProblemTypes.BAD_REQUEST);
 
         // Authorization denials. 403 rather than a server error, so they are not recorded as incidents and
         // clients do not retry them.
@@ -141,7 +142,6 @@ public class KestraProblemMappings extends ExceptionTypeProblemMapper {
         to.accept(MigrationPendingException.class, ProblemTypes.MIGRATION_REQUIRED);
         to.accept(MigrationLockedException.class, ProblemTypes.MIGRATION_REQUIRED);
         to.accept(TimeoutExceededException.class, ProblemTypes.TIMEOUT);
-        to.accept(QueryTimeoutException.class, ProblemTypes.TIMEOUT);
         to.accept(SecretException.class, ProblemTypes.INTERNAL_ERROR);
         to.accept(InternalException.class, ProblemTypes.INTERNAL_ERROR);
         to.accept(FlowProcessingException.class, ProblemTypes.INTERNAL_ERROR);

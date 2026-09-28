@@ -26,4 +26,11 @@ class DashboardsConfigurationTest {
         assertThat(configuration.resolveQueryTimeout(Duration.ofSeconds(10))).isEqualTo(Duration.ofSeconds(10));
         assertThat(configuration.resolveQueryTimeout(Duration.ofHours(1))).isEqualTo(Duration.ofMinutes(5));
     }
+
+    @Test
+    void shouldCapTheInstanceDefaultAtTheMaximumWhenConfiguredAboveIt() {
+        DashboardsConfiguration misconfigured = new DashboardsConfiguration(Duration.ofMinutes(10), Duration.ofMinutes(5));
+
+        assertThat(misconfigured.resolveQueryTimeout(null)).isEqualTo(Duration.ofMinutes(5));
+    }
 }

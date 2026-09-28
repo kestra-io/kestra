@@ -336,8 +336,8 @@ public class RegisteredPlugin {
     public Optional<IconAndMonochrome> iconAndMonochrome(Class<?> cls) {
         InputStream resourceAsStream = Stream
             .of(
-                this.getClassLoader().getResourceAsStream("icons/" + cls.getName() + ".svg"),
-                this.getClassLoader().getResourceAsStream("icons/" + cls.getPackageName() + ".svg")
+                getResourceAsStream("icons/" + cls.getName() + ".svg"),
+                getResourceAsStream("icons/" + cls.getPackageName() + ".svg")
             )
             .filter(Objects::nonNull)
             .findFirst()
@@ -348,7 +348,24 @@ public class RegisteredPlugin {
 
     @SneakyThrows
     public Optional<IconAndMonochrome> iconAndMonochrome(String iconName) {
-        return encodeIcon(this.getClassLoader().getResourceAsStream("icons/" + iconName + ".svg"));
+        return encodeIcon(getResourceAsStream("icons/" + iconName + ".svg"));
+    }
+
+    private InputStream getResourceAsStream(String resource) {
+        // Specific core-bundled icons take precedence over plugin JAR placeholders, while preserving the plugin's own branding (plugin-icon.svg).
+        if (!"icons/plugin-icon.svg".equals(resource)) {
+            InputStream coreStream = RegisteredPlugin.class.getClassLoader().getResourceAsStream(resource);
+            if (coreStream != null) {
+                return coreStream;
+            }
+        }
+
+        InputStream resourceAsStream = this.getClassLoader().getResourceAsStream(resource);
+        if (resourceAsStream != null) {
+            return resourceAsStream;
+        }
+
+        return RegisteredPlugin.class.getClassLoader().getResourceAsStream(resource);
     }
 
     @SneakyThrows

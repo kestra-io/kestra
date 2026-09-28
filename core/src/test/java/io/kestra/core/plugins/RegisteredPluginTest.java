@@ -1,5 +1,8 @@
 package io.kestra.core.plugins;
 
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
@@ -35,5 +38,18 @@ class RegisteredPluginTest {
         Optional<RegisteredPlugin.IconAndMonochrome> icon = core().iconAndMonochrome("io.kestra.plugin.unknown.Task");
 
         assertThat(icon).isEmpty();
+    }
+
+    @Test
+    void shouldResolveCoreIconForIsolatedPluginClassLoader() throws Exception {
+        RegisteredPlugin plugin = RegisteredPlugin.builder()
+            .classLoader(PluginClassLoader.of(new URL("file:/missing-plugin.jar"), new URL[0], RegisteredPluginTest.class.getClassLoader()))
+            .build();
+
+        Optional<RegisteredPlugin.IconAndMonochrome> icon = plugin.iconAndMonochrome("io.kestra.plugin.kestra.ee.assets");
+
+        assertThat(icon).isPresent();
+        assertThat(new String(Base64.getDecoder().decode(icon.get().icon()), StandardCharsets.UTF_8))
+            .contains("viewBox=\"0 0 80 80\"");
     }
 }

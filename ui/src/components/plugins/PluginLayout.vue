@@ -26,6 +26,7 @@
                                 onlyIcon
                                 variable="--ks-black"
                                 :icons="icons"
+                                :loadIcon="pluginsStore.loadIcon"
                             />
 
                             <div class="plugin-header__body">

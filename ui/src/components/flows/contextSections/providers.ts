@@ -23,6 +23,10 @@ const SILENT = {showMessageOnError: false, ignoreNotFound: true}
 // while the inherited keys below are unbounded — an asymmetry worth revisiting if it comes up.
 const KV_LIST_PAGE_SIZE = 1000
 
+function asArray<T>(value: unknown): T[] {
+    return Array.isArray(value) ? (value as T[]) : []
+}
+
 export const kvContextSectionProvider: ContextSectionProvider = async ({namespace, tenant}) => {
     // listKeysWithInheritence deliberately excludes the namespace's own keys (it lists what's
     // inherited from ancestors only), so its own keys come from a separate, namespace-filtered call.
@@ -41,8 +45,8 @@ export const kvContextSectionProvider: ContextSectionProvider = async ({namespac
         ),
     ])
     const keys = [...new Set([
-        ...(own?.results ?? []).map(entry => entry.key),
-        ...(inherited ?? []).map(entry => entry.key),
+        ...asArray<{key?: string}>(own?.results).map(entry => entry.key),
+        ...asArray<{key?: string}>(inherited).map(entry => entry.key),
     ].filter((key): key is string => Boolean(key)))]
     if (!keys.length) return null
 
@@ -59,7 +63,9 @@ export const secretsContextSectionProvider: ContextSectionProvider = async ({nam
         namespaceParams(namespace, tenant),
         SILENT as Parameters<typeof NamespaceAPI.inheritedSecrets>[1],
     )
-    const names = [...new Set(Object.values(inherited ?? {}).flat())]
+    const names = [...new Set(
+        Object.values(inherited ?? {}).flat().filter((name): name is string => typeof name === "string"),
+    )]
     if (!names.length) return null
 
     return {
@@ -77,13 +83,14 @@ export const namespaceFilesContextSectionProvider: ContextSectionProvider = asyn
         {...namespaceParams(namespace, tenant), q: "*"},
         SILENT as Parameters<typeof FilesAPI.searchNamespaceFiles>[1],
     )
-    if (!paths?.length) return null
+    const filePaths = asArray<string>(paths)
+    if (!filePaths.length) return null
 
     return {
         key: "namespaceFiles",
         labelKey: "block_editor.namespace_files",
         isNew: true,
-        chips: paths.flatMap(namespaceFileChips),
+        chips: filePaths.flatMap(namespaceFileChips),
     }
 }
 

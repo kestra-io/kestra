@@ -5,29 +5,34 @@ import {kvContextSectionProvider, secretsContextSectionProvider, namespaceFilesC
 // Node's native fetch/Request (used under Vitest) has no browsing-context base URL to resolve a
 // relative path against, unlike a real browser — an absolute baseUrl makes the resulting Request
 // constructible so its .url can be asserted on.
+const BASE_URL = "https://example.test"
+
 beforeAll(() => {
-    configureClient({baseUrl: "https://example.test"})
+    configureClient({baseUrl: BASE_URL})
 })
 
+// The SDK's transport is handed in explicitly rather than stubbed on globalThis: a global stub only
+// intercepts if the client reads `fetch` at call time, which is not a contract it offers.
 function stubFetch(body: unknown) {
-    const fetchMock = vi.fn(async (_request: Request) =>
+    const fetchMock = vi.fn(async (_input: URL | RequestInfo, _init?: RequestInit) =>
         new Response(JSON.stringify(body), {status: 200, headers: {"content-type": "application/json"}}),
     )
-    vi.stubGlobal("fetch", fetchMock)
+    configureClient({baseUrl: BASE_URL, fetch: fetchMock})
     return fetchMock
 }
 
 function stubFetchByUrl(responses: Array<{when: (url: string) => boolean, body: unknown}>) {
-    const fetchMock = vi.fn(async (request: Request) => {
-        const match = responses.find(({when}) => when(request.url))
+    const fetchMock = vi.fn(async (input: URL | RequestInfo, _init?: RequestInit) => {
+        const url = input instanceof Request ? input.url : String(input)
+        const match = responses.find(({when}) => when(url))
         return new Response(JSON.stringify(match?.body ?? null), {status: 200, headers: {"content-type": "application/json"}})
     })
-    vi.stubGlobal("fetch", fetchMock)
+    configureClient({baseUrl: BASE_URL, fetch: fetchMock})
     return fetchMock
 }
 
 afterEach(() => {
-    vi.unstubAllGlobals()
+    configureClient({baseUrl: BASE_URL, fetch: undefined})
 })
 
 describe("context section providers build a real, tenant-resolved request URL", () => {

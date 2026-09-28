@@ -1,5 +1,6 @@
 import {useRoute, useRouter} from "vue-router"
 import * as FlowsAPI from "@kestra-io/kestra-sdk/flows"
+import type {Flow} from "@kestra-io/kestra-sdk"
 import {State} from "@kestra-io/design-system"
 
 import {useFlowStore} from "../../../stores/flow"
@@ -49,7 +50,7 @@ export function useTourActions() {
     const tourFlowExists = async (id: string = TOUR_FLOW_ID) => {
         try {
             const flows = await FlowsAPI.listFlowsByNamespace({namespace: TOUR_NAMESPACE})
-            return (flows ?? []).some((flow: any) => flow?.id === id)
+            return (flows ?? []).some((flow: Flow) => flow?.id === id)
         } catch {
             return false
         }
@@ -290,7 +291,7 @@ export function useTourActions() {
 
         const execution = await executionsStore.loadExecution({id: executionId})
         const failedTaskRun = (execution?.taskRunList ?? []).find(
-            (taskRun: any) => taskRun?.state?.current === "FAILED",
+            (taskRun) => taskRun?.state?.current === "FAILED",
         )
         const revision = await latestRevision()
 

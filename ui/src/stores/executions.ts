@@ -466,23 +466,25 @@ export const useExecutionsStore = defineStore("executions", () => {
 
     const throttledExecutionUpdate = throttle((parsedExecution: Execution) => {
         const flowValue = flow.value
+        execution.value = parsedExecution
+        const currentExecution = execution.value
 
         if ((!flowValue ||
             parsedExecution.flowId !== flowValue.id ||
             parsedExecution.namespace !== flowValue.namespace ||
             parsedExecution.flowRevision !== flowValue.revision)
         ) {
-            // This request outlives the update, and writing parsedExecution when it
-            // resolves rewinds a newer event back to RUNNING (kestra-io/kestra#19371).
-            void loadFlowForExecutionByExecutionId(
+            loadFlowForExecutionByExecutionId(
                 {
                     id: parsedExecution.id,
                     revision: route.query.revision?.toString(),
                 },
-            )
+            ).then(() => {
+                if (execution.value === currentExecution) {
+                    execution.value = parsedExecution
+                }
+            })
         }
-
-        execution.value = parsedExecution
     }, 500)
 
     /**

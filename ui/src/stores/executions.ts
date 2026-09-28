@@ -334,10 +334,6 @@ export const useExecutionsStore = defineStore("executions", () => {
         })
     }
 
-    const fetchExecution = (options: { id: string }, requestOptions?: KestraRequestOptions) => {
-        return ExecutionsAPI.execution({executionId: options.id}, requestOptions) as unknown as Promise<Execution>
-    }
-
     function toExecutionSearchParams(options: ExecutionSearchOptions) {
         return {
             page: options.page,
@@ -927,7 +923,6 @@ export const useExecutionsStore = defineStore("executions", () => {
         bulkPauseExecution,
         queryPauseExecution,
         loadExecution,
-        fetchExecution,
         findExecutions,
         findDistinctFieldValues,
         validateExecution,

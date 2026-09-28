@@ -25,7 +25,9 @@ public enum Type {
     YAML(YamlInput.class.getName()),
     EMAIL(EmailInput.class.getName()),
     FORM(FormInput.class.getName()),
-    REUSABLE_INPUTS(ReusableInputsInput.class.getName());
+    REUSABLE_INPUTS(ReusableInputsInput.class.getName()),
+    OBJECT(ObjectInput.class.getName()),
+    TABLE(TableInput.class.getName());
 
     private final String clsName;
 

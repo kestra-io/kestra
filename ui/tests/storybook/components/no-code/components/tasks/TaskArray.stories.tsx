@@ -233,7 +233,7 @@ export const ObjectArray: Story = {
         },
     }),
     args: {
-        modelValue: [{key: "value"} as any],
+        modelValue: [{key: "value"}],
         schema: {
             type: "array",
             items: {type: "object"},

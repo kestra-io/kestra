@@ -128,6 +128,13 @@ export const STATES:Record<string, StateModel> = Object.freeze({
         isKillable: false,
         isFailed: false,
     },
+    RESUBMITTED: {
+        name: "RESUBMITTED",
+        icon: Refresh,
+        isRunning: false,
+        isKillable: false,
+        isFailed: false,
+    },
     BREAKPOINT: {
         name: "BREAKPOINT",
         icon: PauseCircle,

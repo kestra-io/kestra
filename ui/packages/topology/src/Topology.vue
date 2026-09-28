@@ -37,7 +37,7 @@
 
             <template #node-dot="dotProps">
                 <DotNode
-                    v-bind="dotProps as any"
+                    v-bind="dotProps"
                 />
             </template>
 
@@ -91,7 +91,7 @@
 
             <template #node-trigger="triggerProps">
                 <TriggerNode
-                    v-bind="triggerProps as any"
+                    v-bind="triggerProps"
                     :icons="icons"
                     :loadIcon="loadIcon"
                     :isReadOnly="isReadOnly"
@@ -104,7 +104,7 @@
 
             <template #node-collapsedcluster="CollapsedProps">
                 <CollapsedClusterNode
-                    v-bind="CollapsedProps as any"
+                    v-bind="CollapsedProps"
                     @expand="expand($event)"
                 />
             </template>
@@ -185,7 +185,7 @@
 
 <script lang="ts" setup>
     import {computed, nextTick, onMounted, onUnmounted, provide, ref, watch} from "vue"
-    import {getRectOfNodes, useVueFlow, VueFlow, Panel} from "@vue-flow/core"
+    import {getRectOfNodes, useVueFlow, VueFlow, Panel, type GraphEdge, type GraphNode} from "@vue-flow/core"
     import {ControlButton, Controls} from "@vue-flow/controls"
     import {Background} from "@vue-flow/background"
     import ClusterNode from "./nodes/ClusterNode.vue"
@@ -224,17 +224,17 @@
         flowDescription?: string;
         flowLabels?: [string, string][];
         expandedSubflows?: string[];
-        icons?: Record<string, any>;
+        icons?: Record<string, unknown>;
         // Per-class resolver for icons absent from `icons`, which only indexes the plugins
         // registered on this instance (kestra-io/kestra#18129).
-        loadIcon?: (cls: string) => Promise<any>;
+        loadIcon?: (cls: string) => Promise<unknown>;
         enableSubflowInteraction?: boolean;
-        execution?: any;
+        execution?: VueFlowUtils.GraphExecution;
         subflowsExecutions?: Record<string, VueFlowUtils.GraphExecution>;
         playgroundEnabled?: boolean;
         playgroundReadyToStart?: boolean;
         replayEnabled?: boolean;
-        getNodeDimensions?: (node: any, getNodeWidth: (node: any) => number, getNodeHeight: (node: any) => number) => { width: number, height: number };
+        getNodeDimensions?: VueFlowUtils.NodeDimensionsFn;
         customActions?: Record<string, CustomActionConfig>;
         showDetails?: Record<string, ShowDetailsConfig>;
         showDetailsToggle?: boolean;
@@ -271,18 +271,21 @@
         focusedTaskId: undefined,
     })
 
-    const isRunning = computed(() => State.isRunning(props.execution?.state?.current) === true)
+    const isRunning = computed(() => {
+        const current = props.execution?.state?.current
+        return current !== undefined && State.isRunning(current) === true
+    })
 
     const showExtraDetails = ref(false)
     const {getNodes, getEdges, getElements, onNodesInitialized, fitView, zoomIn, zoomOut, setElements, removeEdges, removeNodes, removeSelectedElements, vueFlowRef} = useVueFlow(props.id)
-    const edgeReplacer = ref({})
+    const edgeReplacer = ref<Record<string, string>>({})
     const hiddenNodes = ref<string[]>([])
     const collapsed = ref(new Set<string>())
-    const clusterToNode = ref([])
+    const clusterToNode = ref<VueFlowUtils.MinimalNode[]>([])
     const {capture} = useScreenshot()
 
-    const effectiveGetNodeDimensions = computed(() => {
-        return (node: any, getNodeWidth: (node: any) => number, getNodeHeight: (node: any) => number) => {
+    const effectiveGetNodeDimensions = computed<VueFlowUtils.NodeDimensionsFn>(() => {
+        return (node, getNodeWidth, getNodeHeight) => {
             const baseHeight = getNodeHeight(node)
             const dimensions = props.getNodeDimensions
                 ? props.getNodeDimensions(node, getNodeWidth, getNodeHeight)
@@ -467,8 +470,8 @@
 
     const HOVERED_NODE_CLASS = "topology-node-hovered"
 
-    function setNodeInteractionClass(node: any, cls: string, add: boolean) {
-        const classes = (node.class || "").split(" ").filter(Boolean)
+    function setNodeInteractionClass(node: GraphNode | GraphEdge, cls: string, add: boolean) {
+        const classes = (typeof node.class === "string" ? node.class : "").split(" ").filter(Boolean)
         if (add) {
             if (!classes.includes(cls)) classes.push(cls)
         } else {
@@ -478,7 +481,7 @@
         node.class = classes.join(" ")
     }
 
-    const onMouseOver = (node: any) => {
+    const onMouseOver = (node: {uid: string}) => {
         VueFlowUtils.linkedElements(props.id, node.uid).forEach((n) => {
             if (n?.type === "task") {
                 setNodeInteractionClass(n, HOVERED_NODE_CLASS, true)
@@ -499,7 +502,7 @@
     }
 
     const collapseCluster = (clusterUid: string, regenerate: boolean) => {
-        const cluster: any = props.flowGraph.clusters.find(c => c.cluster.uid.endsWith(clusterUid))
+        const cluster = props.flowGraph.clusters.find(c => c.cluster.uid.endsWith(clusterUid))
         if (!cluster) return
         const nodeId = clusterUid.replace(CLUSTER_PREFIX, "")
         collapsed.value.add(nodeId)
@@ -509,8 +512,8 @@
         edgeReplacer.value = {
             ...edgeReplacer.value,
             [cluster.cluster.uid]: nodeId,
-            [cluster.start]: nodeId,
-            [cluster.end]: nodeId,
+            ...(cluster.start ? {[cluster.start]: nodeId} : {}),
+            ...(cluster.end ? {[cluster.end]: nodeId} : {}),
         }
 
         for (let child of cluster.nodes) {
@@ -524,12 +527,12 @@
         }
     }
 
-    const expand = (expandData: any) => {
+    const expand = (expandData: {id: string; type?: string}) => {
         const taskTypesWithSubflows = [
             "io.kestra.core.tasks.flows.Flow", "io.kestra.core.tasks.flows.Subflow", "io.kestra.plugin.core.flow.Subflow",
             "io.kestra.core.tasks.flows.ForEachItem$ForEachItemExecutable", "io.kestra.plugin.core.flow.ForEachItem$ForEachItemExecutable",
         ]
-        if (taskTypesWithSubflows.includes(expandData.type) && !props.expandedSubflows.includes(expandData.id)) {
+        if (expandData.type && taskTypesWithSubflows.includes(expandData.type) && !props.expandedSubflows.includes(expandData.id)) {
             emit("expand-subflow", [...props.expandedSubflows, expandData.id])
             return
         }

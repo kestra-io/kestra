@@ -109,7 +109,7 @@ public class ExecutorService {
         this.pausedTaskNotifier = pausedTaskNotifier;
     }
 
-public ExecutionRunning processExecutionRunning(List<ScopedConcurrencyLimit> limits, List<Integer> runningCounts, int queuedCount, ExecutionRunning executionRunning) {
+    public ExecutionRunning processExecutionRunning(List<ScopedConcurrencyLimit> limits, List<Integer> runningCounts, int queuedCount, ExecutionRunning executionRunning) {
         for (int i = 0; i < limits.size(); i++) {
             ScopedConcurrencyLimit limit = limits.get(i);
             int runningCount = runningCounts.get(i);
@@ -124,6 +124,22 @@ public ExecutionRunning processExecutionRunning(List<ScopedConcurrencyLimit> lim
 
             return switch (limit.concurrency().getBehavior()) {
                 case QUEUE -> {
+                    if (limit.scope() == ScopedConcurrencyLimit.Scope.FLOW && concurrency.getQueueLimit() != null && queuedCount >= concurrency.getQueueLimit()) {
+                        Logs.logExecution(
+                            executionRunning.getExecution(),
+                            Level.INFO,
+                            "Execution cancelled: concurrency queue limit reached ({}/{})", queuedCount, concurrency.getQueueLimit()
+                        );
+
+                        yield executionRunning
+                            .withExecution(
+                                executionRunning
+                                    .getExecution()
+                                    .withState(io.kestra.core.models.flows.State.Type.CANCELLED)
+                            )
+                            .withConcurrencyState(ExecutionRunning.ConcurrencyState.CANCELLED);
+                    }
+
                     Logs.logExecution(
                         executionRunning.getExecution(),
                         Level.INFO,
@@ -618,7 +634,8 @@ public ExecutionRunning processExecutionRunning(List<ScopedConcurrencyLimit> lim
                             // The parent's errors/finally tasks (e.g. AllowFailure.errors) must complete before the retry timer is allowed to fire.
                             if (!isErrorOrFinallyHandlingPending(taskRun, parentTaskWithRetry, executor, nextTaskRuns)) {
                                 behavior = retry.getBehavior();
-                                nextRetryDate = behavior.equals(AbstractRetry.Behavior.CREATE_NEW_EXECUTION) ? taskRun.nextRetryDate(retry, executor.getExecution()) : taskRun.nextRetryDate(retry);
+                                nextRetryDate = behavior.equals(AbstractRetry.Behavior.CREATE_NEW_EXECUTION) ? taskRun.nextRetryDate(retry, executor.getExecution())
+                                    : taskRun.nextRetryDate(retry);
                             }
                         }
                         // Case flow has a retry
@@ -1401,8 +1418,10 @@ public ExecutionRunning processExecutionRunning(List<ScopedConcurrencyLimit> lim
         return taskRun.getState().getCurrent().isCreated()
             && !taskRun.getState().isResumingFromBreakpoint()
             && breakpoints.stream()
-                .anyMatch(breakpoint -> taskRun.getTaskId().equals(breakpoint.getId())
-                    && (breakpoint.getValue() == null || Objects.equals(taskRun.getValue(), breakpoint.getValue())));
+                .anyMatch(
+                    breakpoint -> taskRun.getTaskId().equals(breakpoint.getId())
+                        && (breakpoint.getValue() == null || Objects.equals(taskRun.getValue(), breakpoint.getValue()))
+                );
     }
 
     private ExecutorContext handleExecutableTasks(final ExecutorContext executor) {
@@ -1803,8 +1822,10 @@ public ExecutionRunning processExecutionRunning(List<ScopedConcurrencyLimit> lim
      *      WARNING: ATM, only the first violation will update the execution.
      */
     public ExecutorContext handleExecutionChangedSLA(ExecutorContext executor) throws QueueException {
-        if (executor.getFlow() == null || ListUtils.isEmpty(executor.getFlow().getSla()) || executor.getExecution().getState().isTerminated() ||
-            executor.getExecution().getKind() ==  ExecutionKind.LOOP) {
+        if (
+            executor.getFlow() == null || ListUtils.isEmpty(executor.getFlow().getSla()) || executor.getExecution().getState().isTerminated() ||
+                executor.getExecution().getKind() == ExecutionKind.LOOP
+        ) {
             return executor;
         }
 

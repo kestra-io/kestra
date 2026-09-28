@@ -1,9 +1,10 @@
 import {vueRouter} from "storybook-vue3-router";
 import type {Meta, StoryObj} from "@storybook/vue3";
+import type {ExecutionTrigger} from "@kestra-io/kestra-sdk";
 import {waitFor, within, userEvent, expect} from "storybook/test";
 
 import {mockStoryApiRoutes} from "../../../../.storybook/apiMock";
-import {useExecutionsStore} from "../../../../src/stores/executions";
+import {useExecutionsStore, type Execution} from "../../../../src/stores/executions";
 import ExecutionVariableExplorer from "../../../../src/components/executions/outputs/ExecutionVariableExplorer.vue";
 
 // Task-output payloads served through the fetch-layer API double (see meta.beforeEach below):
@@ -32,35 +33,41 @@ const OUTPUTS_BY_TASK_RUN_ID: Record<string, Record<string, unknown>> = {
  * Triggers, `inputs` → Flow Inputs. Task outputs are fetched from the outputs
  * API, which is mocked here so stories can exercise the search flow.
  */
+const VARIABLES: Record<string, unknown> = {
+    Api_endpoint: "http://api.kestra.io/v1",
+    environment: {name: "production", region: "eu-west-1", tier: "gold"},
+    allowedDomains: ["acme.io", "partner.io", "training.acme.io"],
+    smtpHost: "smtp.acme.io",
+    smtpPort: 587,
+    replyTo: "noreply@acme.io",
+    maxRetries: 3,
+    featureFlags: {betaUi: true, newScheduler: false},
+};
+
+const TRIGGER: ExecutionTrigger = {
+    id: "schedule",
+    type: "io.kestra.plugin.core.trigger.Schedule",
+    variables: {cron: "0 9 * * *", timezone: "UTC", next: "2025-01-02T09:00:00Z"},
+};
+
+const INPUTS: Record<string, unknown> = {
+    customerId: "cust-42",
+    sendCopy: true,
+};
+
 const FAKE_EXECUTION = {
     id: "test-exec-id",
     flowId: "notify-customers",
     namespace: "company.team",
-    state: {current: "SUCCESS", startDate: "2025-01-01T00:00:00Z", duration: "PT1S"},
+    state: {current: "SUCCESS" as const, startDate: "2025-01-01T00:00:00Z", duration: "PT1S"},
     taskRunList: [
         {id: "run-extract", taskId: "extract"},
         {id: "run-http", taskId: "http_request"},
         {id: "run-check", taskId: "check_status"},
     ],
-    variables: {
-        Api_endpoint: "http://api.kestra.io/v1",
-        environment: {name: "production", region: "eu-west-1", tier: "gold"},
-        allowedDomains: ["acme.io", "partner.io", "training.acme.io"],
-        smtpHost: "smtp.acme.io",
-        smtpPort: 587,
-        replyTo: "noreply@acme.io",
-        maxRetries: 3,
-        featureFlags: {betaUi: true, newScheduler: false},
-    },
-    trigger: {
-        id: "schedule",
-        type: "io.kestra.plugin.core.trigger.Schedule",
-        variables: {cron: "0 9 * * *", timezone: "UTC", next: "2025-01-02T09:00:00Z"},
-    },
-    inputs: {
-        customerId: "cust-42",
-        sendCopy: true,
-    },
+    variables: VARIABLES,
+    trigger: TRIGGER,
+    inputs: INPUTS,
 };
 
 const ROUTER_ROUTES = [
@@ -74,7 +81,7 @@ function makeDecorators() {
         () => ({
             setup() {
                 const executionsStore = useExecutionsStore();
-                executionsStore.execution = FAKE_EXECUTION as any;
+                executionsStore.execution = FAKE_EXECUTION as Execution;
             },
             template: "<div style='height:600px'><story /></div>",
         }),

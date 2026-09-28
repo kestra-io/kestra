@@ -761,6 +761,7 @@ function deleteFlowAndDependencies() {
             {showMessageOnError: false} as Parameters<typeof FlowsAPI.generateFlowGraphFromSource>[1],
         )
             .then(data => {
+                invalidGraph.value = false
                 flowGraph.value = data as unknown as FlowGraph
 
                 const flowVar = YAML_UTILS.parse(options.flow)
@@ -774,6 +775,9 @@ function deleteFlowAndDependencies() {
                 return data
             }).catch(error => {
                 if (error.status === 422 && (!subflows || subflows.length === 0)) {
+                    // flowGraph is deliberately left on the last good layout rather than cleared,
+                    // so invalidGraph is what tells the canvas it is showing stale nodes.
+                    invalidGraph.value = true
                     return Promise.resolve(error.response)
                 }
 

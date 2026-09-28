@@ -4,7 +4,9 @@ import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.BiConsumer;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -28,6 +30,7 @@ import io.kestra.core.runners.WorkerTaskResult;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.worker.Controller;
 import io.kestra.core.worker.models.WorkerContext;
+import io.kestra.worker.queues.WorkerQueueRegistry;
 
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
@@ -313,6 +316,69 @@ class GrpcWorkerIOSenderTest {
         assertThat(redelivered.getTaskRun().getId()).isEqualTo(result.getTaskRun().getId());
         assertThat(redelivered.getTaskRun().getState().getCurrent()).isEqualTo(State.Type.FAILED);
         assertThat(redelivered.getOutputs()).isNull();
+    }
+
+    @Test
+    void shouldWaitForTheControllerReplyBeforeStopping() throws Exception {
+        // Given
+        List<StreamObserver<OpaqueData>> pendingReplies = new CopyOnWriteArrayList<>();
+        GrpcWorkerIOSender<WorkerTaskResult> sender = stoppedSenderHoldingOneResult((request, observer) -> pendingReplies.add(observer), Duration.ofSeconds(30));
+
+        // When
+        Thread drain = Thread.ofVirtual().start(sender);
+        await().atMost(Duration.ofSeconds(5)).until(() -> pendingReplies.size() == 1);
+
+        // Then
+        assertThat(drain.join(Duration.ofMillis(500))).as("the drain waits for the reply").isFalse();
+        pendingReplies.getFirst().onCompleted();
+        assertThat(drain.join(Duration.ofSeconds(5))).isTrue();
+        assertThat(sender.hasUndeliveredResults()).isFalse();
+    }
+
+    @Test
+    void shouldReportUndeliveredResultsWhenSendFailsDuringShutdown() {
+        // Given
+        GrpcWorkerIOSender<WorkerTaskResult> sender = stoppedSenderHoldingOneResult(
+            (request, observer) -> observer.onError(new StatusRuntimeException(Status.UNAVAILABLE.withDescription("controller unreachable"))),
+            Duration.ofSeconds(30)
+        );
+
+        // When
+        sender.run();
+
+        // Then
+        assertThat(sender.hasUndeliveredResults()).isTrue();
+    }
+
+    @Test
+    void shouldReportUndeliveredResultsWhenControllerNeverReplies() {
+        // Given
+        GrpcWorkerIOSender<WorkerTaskResult> sender = stoppedSenderHoldingOneResult((request, observer) -> {}, Duration.ofMillis(200));
+
+        // When
+        sender.run();
+
+        // Then
+        assertThat(sender.hasUndeliveredResults()).isTrue();
+    }
+
+    private GrpcWorkerIOSender<WorkerTaskResult> stoppedSenderHoldingOneResult(BiConsumer<OpaqueData, StreamObserver<OpaqueData>> grpcSendMethod, Duration replyTimeout) {
+        WorkerQueueRegistry workerQueueRegistry = applicationContext.getBean(WorkerQueueRegistry.class);
+        WorkerContext workerContext = new WorkerContext("worker-" + IdUtils.create(), "", 1);
+        GrpcWorkerIOSender<WorkerTaskResult> sender = new GrpcWorkerIOSender<>(
+            workerQueueRegistry,
+            "test",
+            WorkerTaskResult.class,
+            GrpcWorkerIOSender.SendStrategy.PER_ITEM,
+            grpcSendMethod,
+            null,
+            true,
+            replyTimeout
+        );
+        sender.init(workerContext);
+        workerQueueRegistry.getOrCreate(workerContext, WorkerTaskResult.class).put(buildTaskResult(Map.of()));
+        sender.stop();
+        return sender;
     }
 
     private static WorkerTaskResult buildTaskResult(Map<String, Object> outputs) {

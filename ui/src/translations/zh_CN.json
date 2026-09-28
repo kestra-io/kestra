@@ -439,7 +439,9 @@
       "zoom-fit": "适应屏幕",
       "invalid": "图形错误",
       "invalid_description": "加载图表时发生错误。请检查源代码中的错误。",
-      "load_error": "无法加载拓扑图。请重试。"
+      "load_error": "无法加载拓扑图。请重试。",
+      "add-task": "添加 task",
+      "add-trigger": "添加 trigger"
     },
     "show task logs": "显示任务日志",
     "show task condition": "显示任务条件",
@@ -1422,7 +1424,7 @@
             "title": "flow 像代码一样编辑",
             "body": "我们为您添加了一个 `notify` task，没有使用 AI Copilot，这样您就可以看到直接编辑 YAML 是什么样子。它会将最终结果发布到 Slack。",
             "next": "查看 task 文档",
-            "callout": "来自 AI Copilot 的初稿只是一个起点；编辑器是您在 Code 或 No-Code 编辑器选项卡中迭代它的地方，它们都生成相同的 YAML，因此，无论您的 flow 如何构建，它都保持为代码。"
+            "callout": "来自 AI Copilot 的初稿只是一个起点；编辑器是您在 Code 或 No-code 编辑器选项卡中迭代它的地方，它们都生成相同的 YAML，因此，无论您的 flow 如何构建，它都保持为代码。"
           },
           "editor_help": {
             "title": "文档在 flow 旁边",
@@ -2521,6 +2523,9 @@
       "block_deleted": "{name} 已删除",
       "card_aria_label": "类型为 {type} 的 Block {id}",
       "canvas_aria": "flow 块画布",
+      "chip_copied": "已复制到剪贴板",
+      "chip_hint": "点击标签可插入到当前聚焦的字段，或将其拖拽进去",
+      "chip_inserted": "已插入到字段中",
       "cluster_collapse_aria": "折叠 {id}",
       "cluster_expand_aria": "展开 {id} ({count} 个 task)",
       "collapsed_summary": "{count} 个 task",

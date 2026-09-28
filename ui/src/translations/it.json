@@ -439,7 +439,9 @@
       "zoom-fit": "Adatta",
       "invalid": "Errore del grafico",
       "invalid_description": "Si è verificato un errore durante il caricamento del grafico. Si prega di controllare il codice sorgente per errori.",
-      "load_error": "Impossibile caricare il grafico della topologia. Riprova."
+      "load_error": "Impossibile caricare il grafico della topologia. Riprova.",
+      "add-task": "Aggiungi task",
+      "add-trigger": "Aggiungi trigger"
     },
     "show task logs": "Mostra task logs",
     "show task condition": "Mostra condizione del task",
@@ -1422,7 +1424,7 @@
             "title": "I flow sono modificati come codice",
             "body": "Abbiamo aggiunto un task `notify` per te senza l'AI Copilot, così puoi vedere come appare la modifica diretta del YAML. Pubblica il risultato finale su Slack.",
             "next": "Consulta la documentazione del task",
-            "callout": "Una prima bozza generata da AI Copilot è solo un punto di partenza; l'editor è il luogo dove la si perfeziona in una scheda editor Code o No-Code, le quali producono entrambe lo stesso YAML, garantendo che il tuo flow rimanga come codice, indipendentemente da come sia stato creato."
+            "callout": "Una prima bozza generata da AI Copilot è solo un punto di partenza; l'editor è il luogo dove la si perfeziona in una scheda editor Code o No-code, le quali producono entrambe lo stesso YAML, garantendo che il tuo flow rimanga come codice, indipendentemente da come sia stato creato."
           },
           "editor_help": {
             "title": "La documentazione è accanto al flow",
@@ -2191,7 +2193,7 @@
     "playground": {
       "title": "Playground",
       "run_task_info": "Passa il mouse su qualsiasi task nell'editor del Flow Code e fai clic sul pulsante \"Run task\" per testare il tuo task.",
-      "play_icon_info": "Puoi anche fare clic sull'icona Play nelle viste No-Code o Topology.",
+      "play_icon_info": "Puoi anche fare clic sull'icona Play nelle viste No-code o Topology.",
       "toggle": "Playground",
       "run_task": "Esegui il task",
       "run_this_task": "Esegui questo task",
@@ -2521,6 +2523,9 @@
       "block_deleted": "{name} eliminato",
       "card_aria_label": "Blocco {id} di tipo {type}",
       "canvas_aria": "Canvas dei blocchi del flow",
+      "chip_copied": "Copiato negli appunti",
+      "chip_hint": "Fai clic su un chip per inserirlo nel campo attivo, oppure trascinalo",
+      "chip_inserted": "Inserito nel campo",
       "cluster_collapse_aria": "Comprimi {id}",
       "cluster_expand_aria": "Espandi {id} ({count} task)",
       "collapsed_summary": "{count} task",

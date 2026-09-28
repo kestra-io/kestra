@@ -27,6 +27,10 @@
             </KsIconButton>
         </div>
 
+        <p v-if="interactive" class="task-edit-data-hint">
+            {{ $t("block_editor.chip_hint") }}
+        </p>
+
         <div v-if="filterable" class="task-edit-data-filter">
             <Magnify class="task-edit-data-filter-ico" />
             <input
@@ -60,11 +64,11 @@
                             type="button"
                             draggable="true"
                             :title="chip.expr"
-                            @click="chip.expr && copy(chip.expr)"
+                            @mousedown.prevent
+                            @click="chip.expr && emit('chip-activate', chip.expr)"
                             @dragstart="chip.expr && onDragStart($event, chip.expr)"
                         >
                             <span class="task-edit-data-chip-label">{{ chip.label }}</span>
-                            <span v-if="copied === chip.expr" class="task-edit-data-chip-action">{{ $t("copied") }}</span>
                         </button>
                         <div v-else class="task-edit-data-chip task-edit-data-chip--static">
                             <span class="task-edit-data-chip-label">{{ chip.label }}</span>
@@ -83,7 +87,7 @@
 
 <script setup lang="ts">
     import {computed, ref} from "vue"
-    import {copyToClipboard} from "@kestra-io/design-system"
+    import {CHIP_DRAG_MIME} from "./chipInsertion"
     import Magnify from "vue-material-design-icons/Magnify.vue"
     import ChevronRight from "vue-material-design-icons/ChevronRight.vue"
     import ChevronLeft from "vue-material-design-icons/ChevronLeft.vue"
@@ -121,12 +125,10 @@
         interactive: true,
     })
 
-    const emit = defineEmits<{(e: "toggle"): void}>()
-
+    const emit = defineEmits<{(e: "toggle"): void; (e: "chip-activate", expr: string): void}>()
 
     const filter = ref("")
     const collapsed = ref(new Set<string>())
-    const copied = ref<string | undefined>(undefined)
 
     const visibleSections = computed<DataSection[]>(() => {
         const q = filter.value.trim().toLowerCase()
@@ -145,17 +147,8 @@
 
     function onDragStart(event: DragEvent, expr: string) {
         event.dataTransfer?.setData("text/plain", expr)
+        event.dataTransfer?.setData(CHIP_DRAG_MIME, expr)
         if (event.dataTransfer) event.dataTransfer.effectAllowed = "copy"
-    }
-
-    let copiedTimer: ReturnType<typeof setTimeout> | undefined
-    function copy(expr: string) {
-        copyToClipboard(expr)
-        copied.value = expr
-        clearTimeout(copiedTimer)
-        copiedTimer = setTimeout(() => {
-            copied.value = undefined
-        }, 1200)
     }
 </script>
 
@@ -243,6 +236,12 @@
     }
 
     .task-edit-data-sub {
+        font-size: var(--ks-font-size-xs);
+        color: var(--ks-text-muted);
+    }
+
+    .task-edit-data-hint {
+        margin: 0 var(--ks-spacing-3) var(--ks-spacing-2);
         font-size: var(--ks-font-size-xs);
         color: var(--ks-text-muted);
     }
@@ -372,13 +371,6 @@
         font-family: var(--ks-font-family-mono);
         color: var(--ks-text-muted);
         text-transform: uppercase;
-    }
-
-    .task-edit-data-chip-action {
-        flex-shrink: 0;
-        font-size: var(--ks-font-size-xs);
-        font-family: var(--ks-font-family-mono);
-        color: var(--ks-text-link);
     }
 
     .task-edit-data-empty {

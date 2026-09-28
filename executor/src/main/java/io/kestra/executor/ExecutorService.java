@@ -15,6 +15,7 @@ import org.slf4j.event.Level;
 
 import io.kestra.core.assets.AssetService;
 import io.kestra.core.debug.Breakpoint;
+import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.exceptions.NoMatchingWorkerQueueException;
 import io.kestra.core.metrics.MetricRegistry;
@@ -797,6 +798,54 @@ public class ExecutorService {
 
         this.addWorkerTaskResults(executor, list);
 
+        executor = this.handleApprovalBehavior(executor, list);
+
+        return executor;
+    }
+
+    /** SUCCEED/CANCEL/KILL end the whole execution immediately rather than letting the normal flow-tree propagation reach a not-yet-scheduled sibling. */
+    private ExecutorContext handleApprovalBehavior(ExecutorContext executor, List<WorkerTaskResult> workerTaskResults) throws QueueException, IllegalVariableEvaluationException, InternalException {
+        for (WorkerTaskResult workerTaskResult : workerTaskResults) {
+            // Defensive: don't let a later Approval in this same pass overwrite an outcome one earlier already applied.
+            if (executor.getExecution().getState().isTerminated() || executor.getExecution().getState().getCurrent() == State.Type.KILLING) {
+                break;
+            }
+
+            TaskRun taskRun = workerTaskResult.getTaskRun();
+            if (!taskRun.getState().isTerminated()) {
+                continue;
+            }
+
+            Task task = executor.getFlow().findTaskByTaskIdOrNull(taskRun.getTaskId());
+            if (!(task instanceof Approval approval)) {
+                continue;
+            }
+
+            RunContext runContext = runContextFactory.of(executor.getFlow(), task, executor.getExecution(), taskRun);
+            Optional<State.Type> outcome = approval.executionLevelOutcome(runContext, executor.getExecution(), taskRun);
+            if (outcome.isEmpty()) {
+                continue;
+            }
+
+            if (outcome.get() == State.Type.KILLED) {
+                // Same KILLING transition as an external kill request, so running siblings are actually stopped.
+                Execution killing = executionService.kill(executor.getExecution(), executor.getFlow(), Optional.empty());
+                executor.withExecution(killing, "handleApprovalBehavior");
+                killQueue.emit(
+                    ExecutionKilledExecution.builder()
+                        .state(ExecutionKilled.State.REQUESTED)
+                        .executionId(killing.getId())
+                        .isOnKillCascade(true)
+                        .tenantId(killing.getTenantId())
+                        .build()
+                );
+            } else {
+                TaskRun current = executor.getExecution().findTaskRunByTaskRunId(taskRun.getId());
+                Execution terminated = ExecutionTerminator.terminate(executor.getExecution(), current, outcome.get());
+                executor.withExecution(terminated, "handleApprovalBehavior");
+            }
+        }
+
         return executor;
     }
 
@@ -1051,27 +1100,19 @@ public class ExecutorService {
             {
                 Task task = executor.getFlow().findTaskByTaskId(workerTaskResult.getTaskRun().getTaskId());
 
-                if (task instanceof Pause pauseTask) {
-                    if (pauseTask.getPauseDuration() != null || pauseTask.getTimeout() != null) {
-                        RunContext runContext = runContextFactory.of(executor.getFlow(), executor.getExecution());
-                        Duration duration = runContext.render(pauseTask.getPauseDuration()).as(Duration.class).orElse(null);
-                        if (duration != null && (duration.isZero() || duration.isNegative())) {
-                            throw new InternalException("The Pause 'pauseDuration' must be a strictly positive duration but was '%s'.".formatted(duration));
-                        }
-                        Duration timeout = runContext.render(pauseTask.getTimeout()).as(Duration.class).orElse(null);
-                        Pause.Behavior behavior = runContext.render(pauseTask.getBehavior()).as(Pause.Behavior.class).orElse(Pause.Behavior.RESUME);
-                        if (duration != null || timeout != null) { // rendering can lead to null, so we must re-check here
-                            // if duration is set, we use it, and we use the Pause behavior as a state
-                            // if no duration, we use the standard timeout property and use FAILED as the target state
-                            return ExecutionDelay.builder()
-                                .taskRunId(workerTaskResult.getTaskRun().getId())
-                                .executionId(executor.getExecution().getId())
-                                .date(DateUtils.plusOrThrow(workerTaskResult.getTaskRun().getState().maxDate(), duration != null ? duration : timeout))
-                                .state(duration != null ? behavior.mapToState() : State.Type.fail(pauseTask))
-                                .delayType(ExecutionDelay.DelayType.RESUME_FLOW)
-                                .build();
-                        }
+                if (task instanceof PausableTask pausableTask) {
+                    RunContext runContext = runContextFactory.of(executor.getFlow(), executor.getExecution());
+                    Optional<ExecutionDelay> delay = pausableTask.pauseDelay(workerTaskResult.getTaskRun(), runContext);
+
+                    // Approval's `due` output is written from this same date, not re-rendered later,
+                    // so it can't drift from the delay actually scheduled.
+                    if (delay.isPresent() && task instanceof Approval) {
+                        Map<String, Object> current = taskOutputService.getOutputs(workerTaskResult.getTaskRun());
+                        Map<String, Object> merged = MapUtils.merge(current, Map.of("due", delay.get().getDate().toString()));
+                        taskOutputService.saveOutputs(workerTaskResult.getTaskRun(), merged);
                     }
+
+                    return delay.orElse(null);
                 }
 
                 return null;

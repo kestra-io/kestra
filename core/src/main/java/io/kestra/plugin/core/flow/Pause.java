@@ -9,6 +9,7 @@ import java.util.*;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
+import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
@@ -25,9 +26,11 @@ import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.FlowableTask;
 import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.core.models.tasks.Task;
+import io.kestra.core.runners.ExecutionDelay;
 import io.kestra.core.runners.FlowableUtils;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.utils.DateUtils;
 import io.kestra.core.utils.GraphUtils;
 import io.kestra.core.utils.ListUtils;
 
@@ -319,6 +322,34 @@ public class Pause extends Task implements FlowableTask<Pause.Output>, PausableT
         }
 
         return State.Type.RUNNING;
+    }
+
+    @Override
+    public Optional<ExecutionDelay> pauseDelay(TaskRun taskRun, RunContext runContext) throws IllegalVariableEvaluationException, InternalException {
+        if (this.pauseDuration == null && this.getTimeout() == null) {
+            return Optional.empty();
+        }
+
+        Duration duration = runContext.render(this.pauseDuration).as(Duration.class).orElse(null);
+        if (duration != null && (duration.isZero() || duration.isNegative())) {
+            throw new InternalException("The Pause 'pauseDuration' must be a strictly positive duration but was '%s'.".formatted(duration));
+        }
+        Duration timeout = runContext.render(this.getTimeout()).as(Duration.class).orElse(null);
+        Behavior behavior = runContext.render(this.behavior).as(Behavior.class).orElse(Behavior.RESUME);
+
+        if (duration == null && timeout == null) { // rendering can lead to null, so we must re-check here
+            return Optional.empty();
+        }
+
+        // if duration is set, we use it, and we use the Pause behavior as a state
+        // if no duration, we use the standard timeout property and use FAILED as the target state
+        return Optional.of(ExecutionDelay.builder()
+            .taskRunId(taskRun.getId())
+            .executionId(taskRun.getExecutionId())
+            .date(DateUtils.plusOrThrow(taskRun.getState().maxDate(), duration != null ? duration : timeout))
+            .state(duration != null ? behavior.mapToState() : State.Type.fail(this))
+            .delayType(ExecutionDelay.DelayType.RESUME_FLOW)
+            .build());
     }
 
     @Builder

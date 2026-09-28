@@ -1,0 +1,14 @@
+id: approval-in-loop-expire
+namespace: io.kestra.tests
+
+tasks:
+  - id: each_task
+    type: io.kestra.plugin.core.flow.Loop
+    values: '["a"]'
+    tasks:
+      - id: approval
+        type: io.kestra.plugin.core.flow.Approval
+        timeout: PT1S
+  - id: last
+    type: io.kestra.plugin.core.debug.Return
+    format: "done"

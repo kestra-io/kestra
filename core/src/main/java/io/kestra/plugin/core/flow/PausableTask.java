@@ -1,13 +1,17 @@
 package io.kestra.plugin.core.flow;
 
+import io.kestra.core.exceptions.IllegalVariableEvaluationException;
+import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.runners.ExecutionDelay;
 import io.kestra.core.runners.RunContext;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import jakarta.annotation.Nullable;
 
@@ -36,6 +40,12 @@ public interface PausableTask {
     default State.Type resumedTaskRunState(State.Type newState) {
         return State.Type.RUNNING;
     }
+
+    /**
+     * A scheduled auto-resume for {@code taskRun}, once it reaches PAUSED, or empty when it should stay
+     * paused until manually resumed.
+     */
+    Optional<ExecutionDelay> pauseDelay(TaskRun taskRun, RunContext runContext) throws IllegalVariableEvaluationException, InternalException;
 
     /**
      * Whether the task run is still preparing its pause (e.g. Approval's {@code onWait}), keeping the execution PAUSING rather than PAUSED.

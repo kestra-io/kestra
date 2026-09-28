@@ -16,6 +16,7 @@ import io.kestra.core.models.kv.KVType;
 import io.kestra.core.models.kv.PersistedKvMetadata;
 import io.kestra.core.models.namespaces.NamespaceInterface;
 import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.services.KVService;
 import io.kestra.core.services.KVStoreService;
 import io.kestra.core.storages.kv.*;
 import io.kestra.core.tenant.TenantService;
@@ -44,6 +45,9 @@ public class KVController {
 
     @Inject
     private KVStoreService kvStoreService;
+
+    @Inject
+    private KVService kvService;
 
     @Inject
     protected TenantService tenantService;
@@ -101,7 +105,7 @@ public class KVController {
         ) @Nullable @QueryValue(value = "sort") List<String> sort,
         @Parameter(description = "Filters. PHP-style nested query is used - example: `filters[namespace][IN]=company.team`") @QueryFilterFormat(Resource.KV_METADATA) List<QueryFilter> filters)
         throws IOException {
-        return PagedResults.of(kvStoreService.list(PageableUtils.from(page, size, sort, this::sortMapper), tenantService.resolveTenant(), null, filters));
+        return PagedResults.of(kvService.list(PageableUtils.from(page, size, sort, this::sortMapper), tenantService.resolveTenant(), null, filters));
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -122,7 +126,7 @@ public class KVController {
             .sorted(Comparator.comparingInt(String::length).reversed())
             .toList();
         for (String ns : sortedNamespaces) {
-            List<KVEntry> entries = kvStoreService.list(Pageable.UNPAGED, tenant, ns);
+            List<KVEntry> entries = kvService.list(Pageable.UNPAGED, tenant, ns);
             entries.forEach(key ->
             {
                 if (!keys.contains(key.key())) {

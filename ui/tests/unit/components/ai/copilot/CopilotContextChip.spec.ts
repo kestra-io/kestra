@@ -2,6 +2,7 @@ import {describe, it, expect} from "vitest"
 import {mount} from "@vue/test-utils"
 import {i18n} from "./_helpers"
 import CopilotContextChip from "../../../../../src/components/ai/copilot/CopilotContextChip.vue"
+import type {ScopeBinding} from "../../../../../src/components/ai/copilot/types"
 
 // KsTag stub with a working close button so we can assert the remove emit; `data-test`/listeners
 // fall through to the root.
@@ -15,7 +16,7 @@ const KsIcon = {name: "KsIcon", template: "<i><slot /></i>"}
 // KsId renders the value as a code-styled token; stub it to expose the value + the <code> wrapper.
 const KsId = {name: "KsId", props: {value: {type: String, default: ""}, shrink: {type: Boolean, default: true}}, template: "<code class=\"ks-id\">{{ value }}</code>"}
 
-const mountChip = (scope: any) =>
+const mountChip = (scope: ScopeBinding) =>
     mount(CopilotContextChip, {props: {scope}, global: {plugins: [i18n], stubs: {KsTag, KsIcon, KsId}}})
 
 const ids = (w: ReturnType<typeof mountChip>) => w.findAll("code.ks-id").map((c) => c.text())

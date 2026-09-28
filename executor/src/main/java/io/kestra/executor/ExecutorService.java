@@ -576,6 +576,7 @@ public class ExecutorService {
         List<WorkerTaskResult> list = new ArrayList<>();
         List<ExecutionDelay> executionDelays = new ArrayList<>();
         List<TaskRun> onPauseTaskRuns = new ArrayList<>();
+        Map<String, State.Type> executionLevelOutcomes = new LinkedHashMap<>();
 
         for (TaskRun taskRun : executor.getExecution().getTaskRunList()) {
             Task task = executor.getFlow().findTaskByTaskIdOrNull(taskRun.getTaskId());
@@ -602,6 +603,11 @@ public class ExecutorService {
                             // do NOT add the result: the parent must not terminate
                         } else {
                             list.add(flowableResult.get());
+                            TaskRun resolvedTaskRun = flowableResult.get().getTaskRun();
+                            if (task instanceof PausableTask pausableTask && resolvedTaskRun.getState().isTerminated()) {
+                                pausableTask.executionLevelOutcome(runContext, executor.getExecution(), resolvedTaskRun)
+                                    .ifPresent(outcome -> executionLevelOutcomes.put(resolvedTaskRun.getId(), outcome));
+                            }
                             // fail-fast: a flowable that just resolved to FAILED asks to interrupt its still-running children
                             if (flowableResult.get().getTaskRun().getState().isFailed() && task instanceof OnChildFailureInterface onChildFailure) {
                                 this.interruptOnChildFailure(executor, onChildFailure, taskRun, flowableResult.get().getTaskRun(), runContext);
@@ -830,8 +836,49 @@ public class ExecutorService {
 
         this.addWorkerTaskResults(executor, list);
 
+        executor = this.handleExecutionLevelOutcomes(executor, executionLevelOutcomes);
+
         boolean pausedThisPass = list.stream().anyMatch(workerTaskResult -> workerTaskResult.getTaskRun().getState().getCurrent() == State.Type.PAUSED);
         return this.handlePauseState(executor, pausedThisPass);
+    }
+
+    /** Applied once the results are merged, so the terminating cascade starts from the pausable task run's own terminal state. */
+    private ExecutorContext handleExecutionLevelOutcomes(ExecutorContext executor, Map<String, State.Type> outcomes) throws QueueException, InternalException {
+        for (Map.Entry<String, State.Type> outcome : outcomes.entrySet()) {
+            if (executor.getExecution().getState().isTerminated() || executor.getExecution().getState().getCurrent() == State.Type.KILLING) {
+                break;
+            }
+
+            if (outcome.getValue() == State.Type.KILLED) {
+                Execution killing = executionService.kill(executor.getExecution(), executor.getFlow(), Optional.empty());
+                executor.withExecution(killing, "handleExecutionLevelOutcomes");
+                killQueue.emit(
+                    ExecutionKilledExecution.builder()
+                        .state(ExecutionKilled.State.REQUESTED)
+                        .executionId(killing.getId())
+                        .isOnKillCascade(true)
+                        .tenantId(killing.getTenantId())
+                        .build()
+                );
+            } else {
+                TaskRun current = executor.getExecution().findTaskRunByTaskRunId(outcome.getKey());
+                Execution cascaded = executor.getExecution().withTaskRunStateCascaded(current, outcome.getValue());
+                executor.withExecution(this.withUnfinishedFlowableTaskRuns(cascaded, executor.getFlow(), outcome.getValue()).withState(outcome.getValue()), "handleExecutionLevelOutcomes");
+            }
+        }
+
+        return executor;
+    }
+
+    // A terminated execution is no longer processed, so a flowable left running would never resolve; worker task runs still report their own end.
+    private Execution withUnfinishedFlowableTaskRuns(Execution execution, FlowWithSource flow, State.Type state) throws InternalException {
+        Execution ended = execution;
+        for (TaskRun taskRun : ListUtils.emptyOnNull(execution.getTaskRunList())) {
+            if (!taskRun.getState().isTerminated() && flow.findTaskByTaskIdOrNull(taskRun.getTaskId()) instanceof FlowableTask<?>) {
+                ended = ended.withTaskRun(taskRun.withState(state));
+            }
+        }
+        return ended;
     }
 
     /**
@@ -1142,27 +1189,17 @@ public class ExecutorService {
             {
                 Task task = executor.getFlow().findTaskByTaskId(workerTaskResult.getTaskRun().getTaskId());
 
-                if (task instanceof Pause pauseTask) {
-                    if (pauseTask.getPauseDuration() != null || pauseTask.getTimeout() != null) {
-                        RunContext runContext = runContextFactory.of(executor.getFlow(), executor.getExecution());
-                        Duration duration = runContext.render(pauseTask.getPauseDuration()).as(Duration.class).orElse(null);
-                        if (duration != null && (duration.isZero() || duration.isNegative())) {
-                            throw new InternalException("The Pause 'pauseDuration' must be a strictly positive duration but was '%s'.".formatted(duration));
-                        }
-                        Duration timeout = runContext.render(pauseTask.getTimeout()).as(Duration.class).orElse(null);
-                        Pause.Behavior behavior = runContext.render(pauseTask.getBehavior()).as(Pause.Behavior.class).orElse(Pause.Behavior.RESUME);
-                        if (duration != null || timeout != null) { // rendering can lead to null, so we must re-check here
-                            // if duration is set, we use it, and we use the Pause behavior as a state
-                            // if no duration, we use the standard timeout property and use FAILED as the target state
-                            return ExecutionDelay.builder()
-                                .taskRunId(workerTaskResult.getTaskRun().getId())
-                                .executionId(executor.getExecution().getId())
-                                .date(DateUtils.plusOrThrow(workerTaskResult.getTaskRun().getState().maxDate(), duration != null ? duration : timeout))
-                                .state(duration != null ? behavior.mapToState() : State.Type.fail(pauseTask))
-                                .delayType(ExecutionDelay.DelayType.RESUME_FLOW)
-                                .build();
-                        }
+                if (task instanceof PausableTask pausableTask) {
+                    RunContext runContext = runContextFactory.of(executor.getFlow(), task, executor.getExecution(), workerTaskResult.getTaskRun());
+                    Optional<ExecutionDelay> delay = pausableTask.pauseDelay(workerTaskResult.getTaskRun(), runContext);
+
+                    Map<String, Object> pausedOutputs = pausableTask.pausedOutputs(runContext, delay);
+                    if (!pausedOutputs.isEmpty()) {
+                        Map<String, Object> current = taskOutputService.getOutputs(workerTaskResult.getTaskRun());
+                        taskOutputService.saveOutputs(workerTaskResult.getTaskRun(), MapUtils.merge(current, pausedOutputs));
                     }
+
+                    return delay.orElse(null);
                 }
 
                 return null;

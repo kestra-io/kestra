@@ -1,5 +1,5 @@
 <template>
-    <Handle type="source" :position="sourcePosition ?? Position.Right" />
+    <Handle type="source" :position="sourcePosition" />
     <div class="collapsed-cluster-node">
         <span
             class="cluster-badge"
@@ -18,7 +18,7 @@
             </span>
         </div>
     </div>
-    <Handle type="target" :position="targetPosition ?? Position.Left" />
+    <Handle type="target" :position="targetPosition" />
 </template>
 
 <script setup lang="ts">

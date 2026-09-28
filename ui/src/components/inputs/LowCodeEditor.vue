@@ -357,7 +357,7 @@
     import {usePluginsStore} from "../../stores/plugins"
     import {useExecutionsStore} from "../../stores/executions"
     import {usePlaygroundStore} from "../../stores/playground"
-    import {useFlowStore} from "../../stores/flow"
+    import {useFlowStore, type ParsedFlow} from "../../stores/flow"
     import {useToast} from "../../utils/toast"
     import {useFederatedModule} from "../../remoteComponents/useFederatedModule"
     import {openFlowInNewTab} from "../../utils/openFlow"
@@ -405,7 +405,7 @@
     const TASK_SECTIONS = ["tasks", "errors", "finally", "afterExecution"]
 
     const indexTasks = (source: string | undefined): Record<string, any> => {
-        const parsed = YAML_UTILS.parse<Record<string, unknown>>(source, false)
+        const parsed = YAML_UTILS.parse<ParsedFlow>(source, false)
         const result: Record<string, any> = {}
         TASK_SECTIONS.forEach((section) => collectTasksById(parsed?.[section], result))
         return result
@@ -635,7 +635,7 @@
         async (flowGraph) => {
             if (flowStore.flowParsed?.tasks?.length) return
             // props.source has taskRunner intact; graph nodes may have it stripped (forExecution)
-            const sourceParsed = props.source ? YAML_UTILS.parse<{tasks?: {type?: string; taskRunner?: {type?: string}}[]}>(props.source) : null
+            const sourceParsed = props.source ? YAML_UTILS.parse<ParsedFlow>(props.source) : null
             const tasks = sourceParsed?.tasks?.length
                 ? sourceParsed.tasks
                 : (flowGraph?.nodes ?? [])
@@ -652,7 +652,7 @@
         () => props.source,
         async (source) => {
             if (!source) return
-            const parsed = YAML_UTILS.parse<{tasks?: {type?: string; taskRunner?: {type?: string}}[]}>(source)
+            const parsed = YAML_UTILS.parse<ParsedFlow>(source)
             const sourceHasRunners = (parsed?.tasks ?? []).some((t: any) => t?.taskRunner?.type)
             const flowParsedHasRunners = (flowStore.flowParsed?.tasks ?? []).some((t: any) => t?.taskRunner?.type)
             if (sourceHasRunners && !flowParsedHasRunners) {
@@ -791,7 +791,7 @@
     }
 
     const onDelete = (event: any) => {
-        const flowParsed = YAML_UTILS.parse<{tasks?: {id?: string; type?: string}[]}>(flowSource.value)
+        const flowParsed = YAML_UTILS.parse<ParsedFlow>(flowSource.value)
         toast.confirm(
             t("delete task confirm", {taskId: event.id}),
             async () => {

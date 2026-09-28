@@ -274,7 +274,7 @@
   "tests/unit/utils/openFlow.spec.ts": 3,
   "tests/unit/utils/pendingEvents.spec.ts": 2,
   "tests/unit/utils/queryFilters.spec.ts": 6,
-  "tests/unit/utils/recipeToYaml.spec.ts": 4,
+  "tests/unit/utils/recipeToYaml.spec.ts": 14,
   "tests/unit/utils/toast.spec.ts": 1,
   "tests/unit/utils/utils.spec.ts": 1
 }

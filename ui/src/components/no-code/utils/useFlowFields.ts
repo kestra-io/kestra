@@ -1,6 +1,6 @@
 import {computed, ComputedRef, onMounted} from "vue"
 import {useI18n} from "vue-i18n"
-import {useFlowStore} from "../../../stores/flow"
+import {useFlowStore, type ParsedFlow} from "../../../stores/flow"
 import {usePluginsStore} from "../../../stores/plugins"
 import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
 
@@ -44,9 +44,9 @@ export function useFlowFields(flowSource: ComputedRef<string>){
         pluginsStore.lazyLoadSchemaType({type: "flow"})
     })
 
-    const parsedFlow = computed(() => {
+    const parsedFlow = computed<ParsedFlow>(() => {
         try {
-            return YAML_UTILS.parse<Record<string, unknown>>(flowSource.value) ?? {}
+            return YAML_UTILS.parse<ParsedFlow>(flowSource.value) ?? {}
         } catch (e) {
             console.error("Error parsing flow YAML", e)
             return {}

@@ -171,7 +171,7 @@
     import ValidationError from "./ValidationError.vue"
     import {usePluginsStore} from "../../stores/plugins"
     import {useAuthStore} from "override/stores/auth"
-    import {useFlowStore, type FlowRevision} from "../../stores/flow"
+    import {useFlowStore, type FlowRevision, type ParsedFlow, type Task} from "../../stores/flow"
     import {usePlaygroundRun} from "../../composables/playground/usePlaygroundRun"
     import {CHIP_DRAG_MIME, isArmableField, insertAtCaret} from "./chipInsertion"
     import {resolveDeclaredOutputProperties, hasDeclaredOutputs as computeHasDeclaredOutputs} from "./taskOutputSchema"
@@ -317,7 +317,7 @@
     const propTaskType = computed(() => typeof props.task?.type === "string" ? props.task.type : undefined)
 
     const runnableTaskId = computed<string | undefined>(() =>
-        props.taskId ?? propTaskId.value ?? YAML_UTILS.parse<{id?: string}>(taskYaml.value)?.id,
+        props.taskId ?? propTaskId.value ?? YAML_UTILS.parse<Partial<Task>>(taskYaml.value)?.id,
     )
 
     const isRunnable = computed(() =>
@@ -329,7 +329,7 @@
 
     const taskType = computed(() => {
         try {
-            return YAML_UTILS.parse<{type?: string}>(taskYaml.value)?.type ?? propTaskType.value ?? ""
+            return YAML_UTILS.parse<Partial<Task>>(taskYaml.value)?.type ?? propTaskType.value ?? ""
         } catch {
             return propTaskType.value ?? ""
         }
@@ -342,7 +342,7 @@
         return split.length === 0 ? undefined : split
     })
     const pluginMarkdown = computed(() => {
-        if (pluginsStore?.plugin?.markdown && YAML_UTILS.parse<{type?: string}>(taskYaml.value)?.type) {
+        if (pluginsStore?.plugin?.markdown && YAML_UTILS.parse<Partial<Task>>(taskYaml.value)?.type) {
             return pluginsStore?.plugin.markdown
         }
         return null
@@ -364,10 +364,10 @@
     const editorUri = computed(() => props.editorKey || currentTaskId.value)
 
     const inputSections = computed(() => {
-        const flow = flowStore.flowParsed
+        const flow: ParsedFlow = flowStore.flowParsed ?? {}
         const sections: {key: string; label: string; chips: {label: string; expr: string}[]}[] = []
 
-        const inputs = Array.isArray(flow?.inputs) ? flow.inputs : []
+        const inputs = Array.isArray(flow.inputs) ? flow.inputs : []
         if (inputs.length) {
             sections.push({key: "inputs", label: t("block_editor.flow_inputs"), chips: inputs.map((i: {id?: unknown; name?: unknown}) => {
                 const id = String(i.id ?? i.name ?? "")
@@ -376,9 +376,9 @@
         }
 
         const ids: string[] = []
-        flattenTaskIds(flow?.tasks, ids)
-        flattenTaskIds(flow?.errors, ids)
-        flattenTaskIds(flow?.finally, ids)
+        flattenTaskIds(flow.tasks, ids)
+        flattenTaskIds(flow.errors, ids)
+        flattenTaskIds(flow.finally, ids)
         const upstream = [...new Set(ids)].filter(id => id && id !== currentTaskId.value)
         if (upstream.length) {
             sections.push({key: "outputs", label: t("block_editor.upstream_outputs"), chips: upstream.map(id => ({label: id, expr: `{{ outputs.${id} }}`}))})
@@ -403,7 +403,7 @@
             ctx.push({label: root, expr: `{{ ${root} }}`})
         }
         ctx.push({label: "now()", expr: "{{ now() }}"})
-        if (flow?.variables && typeof flow.variables === "object") {
+        if (flow.variables && typeof flow.variables === "object") {
             for (const key of Object.keys(flow.variables)) ctx.push({label: `vars.${key}`, expr: `{{ vars.${key} }}`})
         }
         sections.push({key: "context", label: t("block_editor.execution_context"), chips: ctx})
@@ -578,20 +578,20 @@
             taskYaml.value = incoming
             taskBaseline.value = incoming
         }
-        const incomingTaskType = typeof newTask?.type === "string" ? newTask.type : YAML_UTILS.parse<{type?: string}>(incoming)?.type
-        if (incomingTaskType) {
-            await pluginsStore.load({cls: incomingTaskType}).catch(() => {})
+        const incomingType = newTask?.type ?? YAML_UTILS.parse<Partial<Task>>(incoming)?.type
+        if (typeof incomingType === "string" && incomingType) {
+            await pluginsStore.load({cls: incomingType}).catch(() => {})
         }
     }, {immediate: true})
 
     const typeLoadTimer = ref<ReturnType<typeof setTimeout>>()
     watch(taskYaml, () => {
-        const task = YAML_UTILS.parse<{type?: string}>(taskYaml.value)
-        if (task?.type && task.type !== type.value) {
-            const updatedTaskType = task.type
-            type.value = updatedTaskType
+        const task = YAML_UTILS.parse<Partial<Task>>(taskYaml.value)
+        const parsedType = task?.type
+        if (parsedType && parsedType !== type.value) {
+            type.value = parsedType
             clearTimeout(typeLoadTimer.value)
-            typeLoadTimer.value = setTimeout(() => pluginsStore.load({cls: updatedTaskType}).catch(() => {}), 500)
+            typeLoadTimer.value = setTimeout(() => pluginsStore.load({cls: parsedType}).catch(() => {}), 500)
         }
     })
 

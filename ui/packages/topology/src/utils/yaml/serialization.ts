@@ -3,7 +3,6 @@
 import {
     YAMLMap,
     isPair,
-    type Pair,
 } from "yaml"
 import {dump, load} from "js-yaml"
 
@@ -92,14 +91,14 @@ function sort(value: Record<string, unknown>) {
         .sort(sortPredicate)
 }
 
-export function pairsToMap(pairs?: Pair[]) {
+export function pairsToMap(pairs?: unknown) {
     const map = new YAMLMap()
-    if (!isPair(pairs?.[0])) {
+    if (!Array.isArray(pairs) || !isPair(pairs[0])) {
         return map
     }
 
-    for (const pair of pairs!) {
-        map.add(pair)
+    for (const pair of pairs) {
+        if (isPair(pair)) map.add(pair)
     };
     return map
 }
@@ -111,9 +110,9 @@ function transform(value: unknown): unknown {
         })
     } else if (typeof value === "string" || value instanceof String) {
         return value
-    } else if (value && typeof value === "object") {
-        const record: Record<string, unknown> = value as Record<string, unknown>
-        return sort(record).reduce((accumulator: Record<string, unknown>, r) => {
+    } else if (value instanceof Object) {
+        const record = value as Record<string, unknown>
+        return sort(record).reduce<Record<string, unknown>>((accumulator, r) => {
             if (record[r] !== undefined) {
                 accumulator[r] = transform(record[r])
             }

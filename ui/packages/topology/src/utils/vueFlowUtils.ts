@@ -13,75 +13,25 @@ export enum BranchType {
     AFTER_EXECUTION = "AFTER_EXECUTION",
 }
 
-/** Only what the graph reads off an execution; the package has no `@kestra-io/kestra-sdk` dependency. */
-export interface GraphExecution {
-    id?: string;
-    state?: {current: string};
-    taskRunList?: GraphTaskRun[];
-}
-
 export interface GraphTaskRun {
     id: string;
     taskId: string;
     parentTaskRunId?: string;
     state: {
         current: string;
+        duration?: string | null;
         histories?: {date: string; state: string}[];
     };
     outputs?: {executionId?: string} & Record<string, unknown>;
     attempts?: unknown[];
+    value?: string;
 }
 
-export interface GraphTask {
+/** Only what the graph reads off an execution; the package has no `@kestra-io/kestra-sdk` dependency. */
+export interface GraphExecution {
     id?: string;
-    type: string;
-    description?: string;
-    runIf?: unknown;
-    errors?: unknown[];
-    taskRunner?: {type?: string};
-    subflowId?: {namespace: string; flowId: string};
-    namespace?: string;
-    flowId?: string;
-    disabled?: boolean;
-}
-
-export interface TopologyIcon {
-    flowable: boolean;
-    monochrome: boolean;
-    hasIcon: boolean;
-    iconUrl?: string;
-    hash?: string;
-}
-
-export type TopologyIcons = Record<string, TopologyIcon>;
-export type LoadTopologyIcon = (cls: string) => Promise<TopologyIcon | undefined>;
-
-export interface BasicNodeData {
-    node: {
-        uid: string;
-        type?: string;
-        plugin?: GraphTask;
-        task?: GraphTask;
-        trigger?: GraphTask;
-        triggerDeclaration?: GraphTask;
-        disabled?: boolean;
-    };
-    parent?: {taskNode?: {task?: {disabled?: boolean}; disabled?: boolean}};
-    unused?: boolean;
-    isMovable?: boolean;
-    executionId?: string;
-    color?: string;
-    isReadOnly?: boolean;
-    isFlowable?: boolean;
-    expandable?: boolean;
-    link?: {namespace: string; id: string; executionId?: string};
-}
-
-export interface TaskNodeData extends BasicNodeData {
-    node: BasicNodeData["node"] & {
-        task: GraphTask;
-        taskRun?: GraphTaskRun;
-    };
+    state?: {current?: string};
+    taskRunList?: GraphTaskRun[];
 }
 
 export interface MinimalNode {
@@ -91,18 +41,28 @@ export interface MinimalNode {
     uid: string;
     type: string;
     disabled?: boolean;
-    task?: GraphTask;
+    task?: {
+        id?: string;
+        type: string;
+        namespace?: string;
+        flowId?: string;
+        disabled?: boolean;
+    };
 }
 
 interface Cluster {
     uid: string;
     type: string;
-    taskNode?: {
+    nodes: MinimalNode[];
+    taskNode: {
         uid: string;
-        type?: string;
-        task: GraphTask;
+        task: {
+            type: string;
+            namespace?: string;
+            flowId?: string;
+        };
     };
-    branchType?: BranchType;
+    branchType: BranchType;
 }
 
 interface FlowGraphEdge {
@@ -120,7 +80,7 @@ export interface FlowGraph {
     clusters: {
         cluster: Cluster;
         nodes: string[];
-        parents: string[];
+        parents?: string[];
         start?: string;
         end?: string;
     }[];
@@ -128,6 +88,12 @@ export interface FlowGraph {
 }
 
 type EdgeReplacer = Record<string, string>;
+
+export type NodeDimensionsFn = (
+    node: MinimalNode,
+    widthFn: (node: MinimalNode) => number,
+    heightFn: (node: MinimalNode) => number,
+) => {width: number; height: number}
 
 export function predecessorsEdge(vueFlowId: string, nodeUid: string): GraphEdge[] {
     const {getEdges} = useVueFlow(vueFlowId)
@@ -206,11 +172,7 @@ export function generateDagreGraph(
     edgeReplacer: EdgeReplacer,
     collapsed: Set<string>,
     clusterToNode: MinimalNode[],
-    getNodeDimensions: (
-        node: MinimalNode,
-        widthFn: (node: MinimalNode) => number,
-        heightFn: (node: MinimalNode) => number,
-    ) => {width: number; height: number} = (node, widthFn, heightFn) => ({
+    getNodeDimensions: NodeDimensionsFn = (node, widthFn, heightFn) => ({
         width: widthFn(node),
         height: heightFn(node),
     }),
@@ -510,11 +472,7 @@ export function generateGraph(
     isReadOnly: boolean,
     isAllowedEdit: boolean,
     enableSubflowInteraction: boolean,
-    getNodeDimensions: (
-        node: MinimalNode,
-        widthFn: (node: MinimalNode) => number,
-        heightFn: (node: MinimalNode) => number,
-    ) => {width: number; height: number} = (node, widthFn, heightFn) => ({
+    getNodeDimensions: NodeDimensionsFn = (node, widthFn, heightFn) => ({
         width: widthFn(node),
         height: heightFn(node),
     }),
@@ -573,7 +531,8 @@ export function generateGraph(
     const clusters = flowGraph.clusters || []
     const rawClusters = clusters.map((c) => c.cluster)
     const readOnlyUidPrefixes = rawClusters
-        .flatMap((c) => c.type.endsWith("SubflowGraphCluster") && c.taskNode ? [c.taskNode.uid] : [])
+        .filter((c) => c.type.endsWith("SubflowGraphCluster"))
+        .map((c) => c.taskNode.uid)
 
     const nodeByUid = Object.fromEntries(
         flowGraph.nodes.concat(clusterToNode).map((node) => [node.uid, node]),
@@ -581,9 +540,10 @@ export function generateGraph(
 
     for (const cluster of clusters) {
         if (!edgeReplacer[cluster.cluster.uid] && !collapsed.has(cluster.cluster.uid)) {
-            const taskNode = cluster.cluster.taskNode
-            if (taskNode?.task?.type === "io.kestra.core.tasks.flows.Dag") {
-                readOnlyUidPrefixes.push(taskNode.uid)
+            if (
+                cluster.cluster.taskNode?.task?.type === "io.kestra.core.tasks.flows.Dag"
+            ) {
+                readOnlyUidPrefixes.push(cluster.cluster.taskNode.uid)
             }
             for (const nodeUid of cluster.nodes) {
                 clusterByNodeUid[nodeUid] = cluster.cluster
@@ -710,7 +670,7 @@ export function generateGraph(
         }
     }
 
-    const clusterRootTaskNodeUids = rawClusters.flatMap((c) => c.taskNode ? [c.taskNode.uid] : [])
+    const clusterRootTaskNodeUids = rawClusters.filter((c) => c.taskNode).map((c) => c.taskNode.uid)
     const edges = flowGraph.edges ?? []
 
     for (const edge of edges) {

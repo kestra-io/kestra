@@ -444,6 +444,7 @@
 
     const {loadInit} = useRestoreUrl()
     import Sections from "../dashboard/sections/Sections.vue"
+    import type {Chart} from "../dashboard/types"
     import TopNavBar from "../../components/layout/TopNavBar.vue"
     import NavBarActionsDropdown from "../../components/layout/NavBarActionsDropdown.vue"
     import NavBarAction from "../../components/layout/NavBarAction.vue"
@@ -481,7 +482,6 @@
     import {useFlowExecutionFilter} from "../filter/configurations/flowExecutionFilter"
     import {useStateFilter} from "../filter/composables/useStateFilter"
     import YAML_CHART from "../dashboard/assets/executions_timeseries_chart.yaml?raw"
-    import type {Chart} from "../dashboard/types"
     import {DEFAULT_DASHBOARD} from "../../stores/dashboard"
     import type {QueryFilter} from "@kestra-io/kestra-sdk"
 

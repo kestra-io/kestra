@@ -36,7 +36,6 @@
     import {KsTooltip} from "@kestra-io/design-system"
     import {EVENTS, CLUSTER_TAG_STATUS} from "../utils/constants"
     import * as Utils from "../utils/utils"
-    import type {GraphTask} from "../utils/vueFlowUtils"
 
     defineOptions({inheritAttrs: false})
 
@@ -47,7 +46,10 @@
             unused?: boolean;
             canAddTrigger?: boolean;
             collaspsible?: boolean;
-            taskNode?: {type?: string; task: GraphTask};
+            taskNode?: {
+                type?: string;
+                task: {namespace?: string; flowId?: string; subflowId?: {namespace?: string; flowId?: string}};
+            };
         };
     }>()
 
@@ -69,9 +71,7 @@
         const taskNode = props.data.taskNode
         if (taskNode?.type?.endsWith("SubflowGraphTask")) {
             const subflowIdContainer = taskNode.task.subflowId ?? taskNode.task
-            if (subflowIdContainer.namespace && subflowIdContainer.flowId) {
-                return subflowIdContainer.namespace + " " + subflowIdContainer.flowId
-            }
+            return subflowIdContainer.namespace + " " + subflowIdContainer.flowId
         }
         return Utils.afterLastDot(props.id ?? "")
     })

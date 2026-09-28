@@ -1,7 +1,7 @@
 import {describe, expect, it} from "vitest"
 import * as flowYamlUtils from "@kestra-io/topology/flow-yaml-utils"
 import {recipeToFlowObject, recipeToYaml, SYSTEM_FLOW_RECIPE_ID, type RecipeState} from "../../../src/utils/recipeToYaml"
-import {parseFlowFixture, requireFixtureValue} from "./parseFlowFixture"
+import {parseBlock} from "./parsedBlock"
 
 const baseState = (): RecipeState => ({
     triggerType: "execution",
@@ -29,14 +29,14 @@ describe("recipeToYaml", () => {
             const yaml = recipeToYaml(state, "system")
 
             // Then
-            const parsed = parseFlowFixture(yaml)
+            const parsed = parseBlock(yaml)
             expect(parsed.namespace).toBe("system")
-            const trigger = requireFixtureValue(parsed.triggers?.[0])
+            const trigger = parsed.triggers[0]
             expect(trigger.type).toBe("io.kestra.plugin.core.trigger.Flow")
             expect(trigger.states).toEqual(["FAILED", "WARNING"])
-            expect(trigger.conditions?.[0].type).toBe("io.kestra.plugin.core.condition.ExecutionNamespace")
-            expect(trigger.conditions?.[0].namespace).toBe("company.team")
-            expect(trigger.conditions?.[0].prefix).toBe(true)
+            expect(trigger.conditions[0].type).toBe("io.kestra.plugin.core.condition.ExecutionNamespace")
+            expect(trigger.conditions[0].namespace).toBe("company.team")
+            expect(trigger.conditions[0].prefix).toBe(true)
         })
 
         it("generates prefix=false when includeSub is false", () => {
@@ -49,8 +49,8 @@ describe("recipeToYaml", () => {
             const yaml = recipeToYaml(state, "system")
 
             // Then
-            const parsed = parseFlowFixture(yaml)
-            expect(parsed.triggers?.[0].conditions?.[0].prefix).toBe(false)
+            const parsed = parseBlock(yaml)
+            expect(parsed.triggers[0].conditions[0].prefix).toBe(false)
         })
 
         it("falls back to FAILED and WARNING when states array is empty", () => {
@@ -63,8 +63,8 @@ describe("recipeToYaml", () => {
             const yaml = recipeToYaml(state, "system")
 
             // Then
-            const parsed = parseFlowFixture(yaml)
-            expect(parsed.triggers?.[0].states).toEqual(["FAILED", "WARNING"])
+            const parsed = parseBlock(yaml)
+            expect(parsed.triggers[0].states).toEqual(["FAILED", "WARNING"])
         })
 
         it("omits conditions when watchNamespace is empty", () => {
@@ -77,8 +77,8 @@ describe("recipeToYaml", () => {
             const yaml = recipeToYaml(state, "system")
 
             // Then
-            const parsed = parseFlowFixture(yaml)
-            expect(requireFixtureValue(parsed.triggers?.[0]).conditions).toBeUndefined()
+            const parsed = parseBlock(yaml)
+            expect(parsed.triggers[0].conditions).toBeUndefined()
         })
 
         it("uses SlackExecution task (not IncomingWebhook) for execution trigger", () => {
@@ -90,10 +90,10 @@ describe("recipeToYaml", () => {
             const yaml = recipeToYaml(state, "system")
 
             // Then
-            const parsed = parseFlowFixture(yaml)
-            const slackTask = requireFixtureValue(parsed.tasks?.find((t) => t.id === "notify_slack"))
-            expect(slackTask.type).toBe("io.kestra.plugin.slack.notifications.SlackExecution")
-            expect(slackTask.executionId).toBe("{{ trigger.executionId }}")
+            const parsed = parseBlock(yaml)
+            const slackTask = parsed.tasks.find((t: any) => t.id === "notify_slack")
+            expect(slackTask?.type).toBe("io.kestra.plugin.slack.notifications.SlackExecution")
+            expect(slackTask?.executionId).toBe("{{ trigger.executionId }}")
         })
 
         it("includes teams and email tasks when enabled", () => {
@@ -107,8 +107,8 @@ describe("recipeToYaml", () => {
             const yaml = recipeToYaml(state, "system")
 
             // Then
-            const parsed = parseFlowFixture(yaml)
-            const taskTypes = parsed.tasks?.map((t: any) => t.type)
+            const parsed = parseBlock(yaml)
+            const taskTypes = parsed.tasks.map((t: any) => t.type)
             expect(taskTypes).toContain("io.kestra.plugin.microsoft365.teams.TeamsExecution")
             expect(taskTypes).toContain("io.kestra.plugin.email.MailExecution")
         })
@@ -122,10 +122,10 @@ describe("recipeToYaml", () => {
             const yaml = recipeToYaml(state, "system")
 
             // Then
-            const parsed = parseFlowFixture(yaml)
-            const emailTask = requireFixtureValue(parsed.tasks?.find((t) => t.id === "notify_email"))
-            expect(emailTask.type).toBe("io.kestra.plugin.email.MailExecution")
-            expect(emailTask.executionId).toContain("trigger.executionId")
+            const parsed = parseBlock(yaml)
+            const emailTask = parsed.tasks.find((t: any) => t.id === "notify_email")
+            expect(emailTask?.type).toBe("io.kestra.plugin.email.MailExecution")
+            expect(emailTask?.executionId).toContain("trigger.executionId")
         })
     })
 
@@ -140,10 +140,10 @@ describe("recipeToYaml", () => {
             const yaml = recipeToYaml(state, "system")
 
             // Then
-            const parsed = parseFlowFixture(yaml)
-            const slackTask = requireFixtureValue(parsed.tasks?.find((t) => t.id === "notify_slack"))
-            expect(slackTask.type).toBe("io.kestra.plugin.slack.notifications.SlackIncomingWebhook")
-            expect(slackTask.executionId).toBeUndefined()
+            const parsed = parseBlock(yaml)
+            const slackTask = parsed.tasks.find((t: any) => t.id === "notify_slack")
+            expect(slackTask?.type).toBe("io.kestra.plugin.slack.notifications.SlackIncomingWebhook")
+            expect(slackTask?.executionId).toBeUndefined()
         })
 
         it("slack IncomingWebhook sends messageText, not a channel it cannot honour", () => {
@@ -156,10 +156,10 @@ describe("recipeToYaml", () => {
             const yaml = recipeToYaml(state, "system")
 
             // Then
-            const parsed = parseFlowFixture(yaml)
-            const slackTask = requireFixtureValue(parsed.tasks?.find((t) => t.id === "notify_slack"))
-            expect(slackTask.messageText).toContain("flow.id")
-            expect(slackTask.channel).toBeUndefined()
+            const parsed = parseBlock(yaml)
+            const slackTask = parsed.tasks.find((t: any) => t.id === "notify_slack")
+            expect(slackTask?.messageText).toContain("flow.id")
+            expect(slackTask?.channel).toBeUndefined()
         })
 
         it("generates schedule trigger with cron and timezone", () => {
@@ -174,8 +174,8 @@ describe("recipeToYaml", () => {
             const yaml = recipeToYaml(state, "system")
 
             // Then
-            const parsed = parseFlowFixture(yaml)
-            const trigger = requireFixtureValue(parsed.triggers?.[0])
+            const parsed = parseBlock(yaml)
+            const trigger = parsed.triggers[0]
             expect(trigger.type).toBe("io.kestra.plugin.core.trigger.Schedule")
             expect(trigger.cron).toBe("0 8 * * 1")
             expect(trigger.timezone).toBe("America/New_York")
@@ -191,11 +191,11 @@ describe("recipeToYaml", () => {
             const yaml = recipeToYaml(state, "system")
 
             // Then
-            const parsed = parseFlowFixture(yaml)
-            const emailTask = requireFixtureValue(parsed.tasks?.find((t) => t.id === "notify_email"))
-            expect(emailTask.type).toBe("io.kestra.plugin.email.MailSend")
-            expect(emailTask.executionId).toBeUndefined()
-            expect(emailTask.htmlTextContent).not.toContain("trigger.executionId")
+            const parsed = parseBlock(yaml)
+            const emailTask = parsed.tasks.find((t: any) => t.id === "notify_email")
+            expect(emailTask?.type).toBe("io.kestra.plugin.email.MailSend")
+            expect(emailTask?.executionId).toBeUndefined()
+            expect(emailTask?.htmlTextContent).not.toContain("trigger.executionId")
         })
 
         it("custom channel adds an editable Log placeholder task", () => {
@@ -207,10 +207,10 @@ describe("recipeToYaml", () => {
             const yaml = recipeToYaml(state, "system")
 
             // Then
-            const parsed = parseFlowFixture(yaml)
-            const customTask = requireFixtureValue(parsed.tasks?.find((t) => t.id === "notify_custom"))
-            expect(customTask.type).toBe("io.kestra.plugin.core.log.Log")
-            expect(customTask.message).toContain("trigger.executionId")
+            const parsed = parseBlock(yaml)
+            const customTask = parsed.tasks.find((t: any) => t.id === "notify_custom")
+            expect(customTask?.type).toBe("io.kestra.plugin.core.log.Log")
+            expect(customTask?.message).toContain("trigger.executionId")
         })
 
         it("custom channel is always emitted even when no plugins are installed", () => {
@@ -223,9 +223,9 @@ describe("recipeToYaml", () => {
             const yaml = recipeToYaml(state, "system", new Set(["io.kestra.plugin.core.log.Log"]))
 
             // Then
-            const parsed = parseFlowFixture(yaml)
-            expect(requireFixtureValue(parsed.tasks).find((t) => t.id === "notify_slack")).toBeUndefined()
-            expect(parsed.tasks?.find((t) => t.id === "notify_custom")).toBeDefined()
+            const parsed = parseBlock(yaml)
+            expect(parsed.tasks.find((t: any) => t.id === "notify_slack")).toBeUndefined()
+            expect(parsed.tasks.find((t: any) => t.id === "notify_custom")).toBeDefined()
         })
     })
 
@@ -241,8 +241,8 @@ describe("recipeToYaml", () => {
             const yaml = recipeToYaml(state, "system")
 
             // Then
-            const parsed = parseFlowFixture(yaml)
-            const trigger = requireFixtureValue(parsed.triggers?.[0])
+            const parsed = parseBlock(yaml)
+            const trigger = parsed.triggers[0]
             expect(trigger.type).toBe("io.kestra.plugin.core.trigger.Webhook")
             expect(trigger.key).toBe("test-key-123")
         })
@@ -257,9 +257,9 @@ describe("recipeToYaml", () => {
             const yaml = recipeToYaml(state, "system")
 
             // Then
-            const parsed = parseFlowFixture(yaml)
-            const teamsTask = requireFixtureValue(parsed.tasks?.find((t) => t.id === "notify_teams"))
-            expect(teamsTask.type).toBe("io.kestra.plugin.microsoft365.teams.TeamsIncomingWebhook")
+            const parsed = parseBlock(yaml)
+            const teamsTask = parsed.tasks.find((t: any) => t.id === "notify_teams")
+            expect(teamsTask?.type).toBe("io.kestra.plugin.microsoft365.teams.TeamsIncomingWebhook")
         })
     })
 
@@ -275,8 +275,8 @@ describe("recipeToYaml", () => {
             const yaml = recipeToYaml(state, "system")
 
             // Then
-            const parsed = parseFlowFixture(yaml)
-            expect(parsed.triggers?.[0].type).toBe("io.kestra.plugin.core.trigger.Polling")
+            const parsed = parseBlock(yaml)
+            expect(parsed.triggers[0].type).toBe("io.kestra.plugin.core.trigger.Polling")
         })
 
         it("produces empty triggers array when otherTriggerType is not set", () => {
@@ -335,13 +335,13 @@ describe("recipeToYaml", () => {
 
             // When
             const yaml = recipeToYaml(state, "system")
-            const reparsed = parseFlowFixture(yaml)
+            const reparsed = parseBlock(yaml)
             const restringified = flowYamlUtils.stringify(reparsed)
 
             // Then
-            const reparsedfinal = parseFlowFixture(restringified)
+            const reparsedfinal = parseBlock(restringified)
             expect(reparsedfinal.namespace).toBe(reparsed.namespace)
-            expect(reparsedfinal.triggers?.[0].type).toBe(reparsed.triggers?.[0].type)
+            expect(reparsedfinal.triggers[0].type).toBe(reparsed.triggers[0].type)
         })
 
         it("uses the provided systemNamespace for the flow namespace", () => {
@@ -353,7 +353,7 @@ describe("recipeToYaml", () => {
             const yaml = recipeToYaml(state, "custom-system")
 
             // Then
-            const parsed = parseFlowFixture(yaml)
+            const parsed = parseBlock(yaml)
             expect(parsed.namespace).toBe("custom-system")
         })
 
@@ -370,8 +370,11 @@ describe("recipeToYaml", () => {
         })
     })
     describe("notify task properties match the plugin schemas", () => {
-        const notifyTask = (state: RecipeState, id: string) =>
-            requireFixtureValue(parseFlowFixture(recipeToYaml(state, "system")).tasks?.find((t) => t.id === id))
+        const notifyTask = (state: RecipeState, id: string) => {
+            const task = parseBlock(recipeToYaml(state, "system")).tasks.find((t: any) => t.id === id)
+            if (!task) throw new Error(`The generated flow has no task "${id}".`)
+            return task
+        }
 
         it("only sets slack channel where SlackTemplate declares it", () => {
             const execution = baseState()
@@ -395,7 +398,7 @@ describe("recipeToYaml", () => {
 
             const task = notifyTask(state, "notify_teams")
             expect(task.message).toBeUndefined()
-            expect(JSON.parse(task.payload!)["@type"]).toBe("MessageCard")
+            expect(JSON.parse(String(task.payload))["@type"]).toBe("MessageCard")
         })
 
         it("sends the teams execution id rather than a payload on execution triggers", () => {

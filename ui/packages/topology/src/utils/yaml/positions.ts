@@ -53,7 +53,7 @@ export function getVersionAtPosition(
 
     for (const version of versions.reverse()) {
         if (cursorIndex >= version.range[0]) {
-            return typeof version.version === "string" ? version.version : null
+            return version.version == null ? undefined : String(version.version)
         }
     }
     return null

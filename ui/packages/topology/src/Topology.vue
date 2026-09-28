@@ -185,8 +185,7 @@
 
 <script lang="ts" setup>
     import {computed, nextTick, onMounted, onUnmounted, provide, ref, watch} from "vue"
-    import {getRectOfNodes, useVueFlow, VueFlow, Panel} from "@vue-flow/core"
-    import type {GraphNode} from "@vue-flow/core"
+    import {getRectOfNodes, useVueFlow, VueFlow, Panel, type GraphEdge, type GraphNode} from "@vue-flow/core"
     import {ControlButton, Controls} from "@vue-flow/controls"
     import {Background} from "@vue-flow/background"
     import ClusterNode from "./nodes/ClusterNode.vue"
@@ -212,12 +211,6 @@
     import {EXECUTION_INJECTION_KEY, SUBFLOWS_EXECUTIONS_INJECTION_KEY, SHOW_EXTRA_DETAILS_INJECTION_KEY, VALIDATION_ISSUES_INJECTION_KEY, FOCUSED_TASK_INJECTION_KEY, DROP_EDGE_INJECTION_KEY, DRAGGING_NODE_INJECTION_KEY, CANVAS_HOVERED_INJECTION_KEY} from "./injectionKeys"
     import BasicNode from "./nodes/BasicNode.vue"
 
-    type GetNodeDimensions = (
-        node: VueFlowUtils.MinimalNode,
-        getNodeWidth: (node: VueFlowUtils.MinimalNode) => number,
-        getNodeHeight: (node: VueFlowUtils.MinimalNode) => number,
-    ) => {width: number; height: number}
-
     const props = withDefaults(defineProps<{
         id: string;
         isHorizontal?: boolean;
@@ -231,17 +224,17 @@
         flowDescription?: string;
         flowLabels?: [string, string][];
         expandedSubflows?: string[];
-        icons?: VueFlowUtils.TopologyIcons;
+        icons?: Record<string, unknown>;
         // Per-class resolver for icons absent from `icons`, which only indexes the plugins
         // registered on this instance (kestra-io/kestra#18129).
-        loadIcon?: VueFlowUtils.LoadTopologyIcon;
+        loadIcon?: (cls: string) => Promise<unknown>;
         enableSubflowInteraction?: boolean;
         execution?: VueFlowUtils.GraphExecution;
         subflowsExecutions?: Record<string, VueFlowUtils.GraphExecution>;
         playgroundEnabled?: boolean;
         playgroundReadyToStart?: boolean;
         replayEnabled?: boolean;
-        getNodeDimensions?: GetNodeDimensions;
+        getNodeDimensions?: VueFlowUtils.NodeDimensionsFn;
         customActions?: Record<string, CustomActionConfig>;
         showDetails?: Record<string, ShowDetailsConfig>;
         showDetailsToggle?: boolean;
@@ -278,7 +271,10 @@
         focusedTaskId: undefined,
     })
 
-    const isRunning = computed(() => State.isRunning(props.execution?.state?.current ?? "") === true)
+    const isRunning = computed(() => {
+        const current = props.execution?.state?.current
+        return current !== undefined && State.isRunning(current) === true
+    })
 
     const showExtraDetails = ref(false)
     const {getNodes, getEdges, getElements, onNodesInitialized, fitView, zoomIn, zoomOut, setElements, removeEdges, removeNodes, removeSelectedElements, vueFlowRef} = useVueFlow(props.id)
@@ -288,8 +284,8 @@
     const clusterToNode = ref<VueFlowUtils.MinimalNode[]>([])
     const {capture} = useScreenshot()
 
-    const effectiveGetNodeDimensions = computed(() => {
-        return (node: VueFlowUtils.MinimalNode, getNodeWidth: (node: VueFlowUtils.MinimalNode) => number, getNodeHeight: (node: VueFlowUtils.MinimalNode) => number) => {
+    const effectiveGetNodeDimensions = computed<VueFlowUtils.NodeDimensionsFn>(() => {
+        return (node, getNodeWidth, getNodeHeight) => {
             const baseHeight = getNodeHeight(node)
             const dimensions = props.getNodeDimensions
                 ? props.getNodeDimensions(node, getNodeWidth, getNodeHeight)
@@ -474,9 +470,8 @@
 
     const HOVERED_NODE_CLASS = "topology-node-hovered"
 
-    function setNodeInteractionClass(node: GraphNode, cls: string, add: boolean) {
-        if (typeof node.class !== "string") return
-        const classes = node.class.split(" ").filter(Boolean)
+    function setNodeInteractionClass(node: GraphNode | GraphEdge, cls: string, add: boolean) {
+        const classes = (typeof node.class === "string" ? node.class : "").split(" ").filter(Boolean)
         if (add) {
             if (!classes.includes(cls)) classes.push(cls)
         } else {
@@ -488,7 +483,7 @@
 
     const onMouseOver = (node: {uid: string}) => {
         VueFlowUtils.linkedElements(props.id, node.uid).forEach((n) => {
-            if (n?.type === "task" && "position" in n) {
+            if (n?.type === "task") {
                 setNodeInteractionClass(n, HOVERED_NODE_CLASS, true)
             }
         })
@@ -532,12 +527,12 @@
         }
     }
 
-    const expand = (expandData: {id: string; type: string}) => {
+    const expand = (expandData: {id: string; type?: string}) => {
         const taskTypesWithSubflows = [
             "io.kestra.core.tasks.flows.Flow", "io.kestra.core.tasks.flows.Subflow", "io.kestra.plugin.core.flow.Subflow",
             "io.kestra.core.tasks.flows.ForEachItem$ForEachItemExecutable", "io.kestra.plugin.core.flow.ForEachItem$ForEachItemExecutable",
         ]
-        if (taskTypesWithSubflows.includes(expandData.type) && !props.expandedSubflows.includes(expandData.id)) {
+        if (expandData.type && taskTypesWithSubflows.includes(expandData.type) && !props.expandedSubflows.includes(expandData.id)) {
             emit("expand-subflow", [...props.expandedSubflows, expandData.id])
             return
         }

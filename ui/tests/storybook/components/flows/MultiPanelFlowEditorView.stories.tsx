@@ -6,8 +6,7 @@ import allowFailureDemo from "../../../fixtures/flowgraphs/allow-failure-demo.js
 import flowSchema from "../../../../src/stores/flow-schema.json";
 import {setMockClient, type AxiosLikeClient} from "@kestra-io/kestra-sdk"
 import {mockClientFallback, mockResponse} from "../../../../.storybook/apiMock";
-import {useFlowStore} from "../../../../src/stores/flow";
-import type {Flow} from "../../../../src/stores/flow";
+import {useFlowStore, type Flow} from "../../../../src/stores/flow";
 
 
 export default {
@@ -59,9 +58,10 @@ const Template: StoryFn<{flow: string}> = (args) => ({
         setMockClient(axios);
 
         const flow = YAML_UTILS.parse<Flow>(args.flow)
-        if (!flow) throw new Error("Cannot parse an empty flow story fixture.")
-        flow.source = args.flow
-        flowStore.flow = flow
+        if (flow) {
+            flow.source = args.flow
+            flowStore.flow = flow
+        }
         flowStore.flowYaml = args.flow
 
         return () =>

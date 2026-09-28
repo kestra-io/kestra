@@ -3,8 +3,6 @@ import {FlowAutoCompletion} from "override/services/flowAutoCompletionProvider"
 import {fillExpressionCache, functionToSnippet} from "../../../src/services/autoCompletionProvider"
 import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
 
-type ParsedFlow = NonNullable<Parameters<FlowAutoCompletion["nestedFieldAutoCompletion"]>[1]>
-
 const defaultFlow = `inputs:
   - id: input1
     type: STRING
@@ -182,9 +180,11 @@ const mockFunctions = [
     {name: "subflow", arguments: [{name: "namespace", defaultValue: null}, {name: "id", defaultValue: null}]},
 ]
 
+type ProviderParsedFlow = NonNullable<Parameters<FlowAutoCompletion["valueAutoCompletion"]>[1]>
+
 let provider: FlowAutoCompletion
-const parsed = YAML_UTILS.parse<ParsedFlow>(defaultFlow)
-const flowWithOutputsAutocompleteInTaskParsed = YAML_UTILS.parse<ParsedFlow>(flowWithOutputsAutocompleteInTask)
+const parsed = YAML_UTILS.parse<ProviderParsedFlow>(defaultFlow)
+const flowWithOutputsAutocompleteInTaskParsed = YAML_UTILS.parse<ProviderParsedFlow>(flowWithOutputsAutocompleteInTask)
 
 describe("FlowAutoCompletionProvider", () => {
     beforeAll(() => {
@@ -209,7 +209,7 @@ describe("FlowAutoCompletionProvider", () => {
         expect(result).toContain("item")
 
         // Function snippets are generated from functionsWithDefaults
-        for (const fn of mockFunctions.filter(fn => fn.name !== "subflow")) {
+        for (const fn of mockFunctions.filter(f => f.name !== "subflow")) {
             expect(result).toContain(functionToSnippet(fn))
         }
 
@@ -308,7 +308,7 @@ tasks:
 
     it("dashboardId/chartId autocompletions", async () => {
         const flow = flowWithDashboardExportTask
-        const parsedFlow = YAML_UTILS.parse<ParsedFlow>(flow)
+        const parsedFlow = YAML_UTILS.parse<ProviderParsedFlow>(flow)
 
         expect(await provider.valueAutoCompletion(flow, parsedFlow, YAML_UTILS.localizeElementAtIndex(flow, flow.indexOf("dashboardId:") + "dashboardId:".length))).toEqual(["my-dashboard", "other-dashboard"])
 

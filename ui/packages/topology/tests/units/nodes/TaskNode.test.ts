@@ -8,6 +8,7 @@ import {
     SHOW_EXTRA_DETAILS_INJECTION_KEY,
 } from "../../../src/injectionKeys"
 
+import type {GraphTaskRun} from "../../../src/utils/vueFlowUtils"
 import {i18nMount} from "../../../../../tests/unit/i18nMount"
 
 const TASK = {
@@ -32,7 +33,7 @@ function taskRun(outputs?: Record<string, unknown>) {
 
 function mountTaskNode({execution, taskRuns = [], replayEnabled = false, task = TASK, isReadOnly = true, isFlowable = false}: {
     execution?: Record<string, unknown>,
-    taskRuns?: Record<string, unknown>[],
+    taskRuns?: GraphTaskRun[],
     replayEnabled?: boolean,
     task?: typeof TASK & {errors?: unknown[]},
     isReadOnly?: boolean,
@@ -102,15 +103,6 @@ describe("TaskNode actions", () => {
         expect(keys).toContain("replay")
     })
 
-    it("shows the highest priority state when a task has multiple runs", () => {
-        const wrapper = mountTaskNode({
-            execution: {state: {current: "SUCCESS"}},
-            taskRuns: [taskRun(), {...taskRun(), id: "skipped-run", state: {current: "SKIPPED", histories: []}}],
-        })
-
-        expect(wrapper.text()).toContain("skipped")
-    })
-
     it("should offer outputs in an execution context even when the run has none (empty state lives in the drawer)", () => {
         const wrapper = mountTaskNode({
             execution: {state: {current: "SUCCESS"}},
@@ -142,7 +134,7 @@ describe("TaskNode actions", () => {
         })
 
         const actions = wrapper.findComponent(NodeMenu).props("actions")
-        actions.find((action: {key: string}) => action.key === "outputs").onClick()
+        actions.find((action: {key: string}) => action.key === "outputs")?.onClick()
 
         const emitted = wrapper.emitted("showOutputs")
         expect(emitted).toHaveLength(1)
@@ -184,7 +176,7 @@ describe("TaskNode actions", () => {
         })
 
         const actions = wrapper.findComponent(NodeMenu).props("actions")
-        actions.find((action: {key: string}) => action.key === "replay").onClick()
+        actions.find((action: {key: string}) => action.key === "replay")?.onClick()
 
         const emitted = wrapper.emitted("replayTask")
         expect(emitted).toHaveLength(1)
@@ -243,10 +235,24 @@ describe("TaskNode actions", () => {
         expect(wrapper.findComponent(NodeMenu).exists()).toBe(false)
         expect(wrapper.find("#custom-menu").exists()).toBe(true)
 
-        const actionKeys = wrapper.findAll(".filtered-action").map((w) => w.text())
-        expect(actionKeys).toContain("logs") // Not filtered out
-        expect(actionKeys).not.toContain("outputs") // Filtered out
-        expect(actionKeys).not.toContain("replay") // Filtered out
-        expect(actionKeys).not.toContain("edit") // Filtered out
+        const filteredKeys = wrapper.findAll(".filtered-action").map((w) => w.text())
+        expect(filteredKeys).toContain("logs") // Not filtered out
+        expect(filteredKeys).not.toContain("outputs") // Filtered out
+        expect(filteredKeys).not.toContain("replay") // Filtered out
+        expect(filteredKeys).not.toContain("edit") // Filtered out
+    })
+})
+
+describe("TaskNode state", () => {
+    it("should show the most severe state when the task ran more than once", () => {
+        const wrapper = mountTaskNode({
+            execution: {state: {current: "WARNING"}},
+            taskRuns: [
+                {id: "run-1", taskId: "my-task", state: {current: "SUCCESS", histories: []}},
+                {id: "run-2", taskId: "my-task", state: {current: "WARNING", histories: []}},
+            ],
+        })
+
+        expect(wrapper.find("div").attributes("state")).toBe("WARNING")
     })
 })

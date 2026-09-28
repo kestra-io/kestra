@@ -44,12 +44,11 @@ export function updateMetadata(source: string, metadata: Record<string, unknown>
 
     for (const property in metadata) {
         const existing = yamlDoc.contents.items.find((item) => scalarKey(item) === property)
-        const value = yamlDoc.createNode(metadata[property])
         if (existing) {
-            existing.value = value
+            existing.value = yamlDoc.createNode(metadata[property])
         } else {
             yamlDoc.contents.items.push(
-                new Pair(new Scalar(property), value),
+                new Pair(new Scalar(property), yamlDoc.createNode(metadata[property])),
             )
         }
     }
@@ -117,29 +116,24 @@ function cleanMetadataDocument(yamlDoc: Document<YAMLMap<Scalar<string>, Node | 
     return yamlDoc
 }
 
-export function getMetadata(source: string): Record<string, unknown> & {id?: string; namespace?: string} {
+export function getMetadata<T extends Record<string, unknown> = Record<string, unknown>>(source: string): T {
     const contents = parseDocumentTyped(source).contents
-    if (!isMap(contents)) return {}
-    const metadata: Record<string, unknown> & {id?: string; namespace?: string} = {}
+    const metadata: Record<string, unknown> = {}
+    if (!isMap(contents)) return metadata as T
 
     for (const item of contents.items) {
         const key = scalarKey(item)
         if (key === undefined || (FLOW_SECTION_KEYS as readonly string[]).includes(key)) {
             continue
         }
-        const value =
+        metadata[key] =
             isMap(item.value) || isSeq(item.value)
                 ? item.value.toJSON()
                 : isScalar(item.value)
                     ? item.value.value
                     : undefined
-        if (key === "id" || key === "namespace") {
-            if (typeof value === "string") metadata[key] = value
-        } else {
-            metadata[key] = value
-        }
     }
-    return metadata
+    return metadata as T
 }
 
 export function deleteMetadata(source: string, metadata: string) {

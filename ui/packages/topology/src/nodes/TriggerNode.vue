@@ -1,5 +1,5 @@
 <template>
-    <Handle type="source" :position="sourcePosition ?? Position.Right" />
+    <Handle type="source" :position="sourcePosition" />
     <BasicNode
         :id="id"
         :data="formattedData"
@@ -11,7 +11,7 @@
             <NodeMenu :actions="actions" />
         </template>
     </BasicNode>
-    <Handle type="target" :position="targetPosition ?? Position.Left" />
+    <Handle type="target" :position="targetPosition" />
 </template>
 
 <script setup lang="ts">
@@ -22,21 +22,29 @@
     import InformationOutline from "vue-material-design-icons/InformationOutline.vue"
     import Pencil from "vue-material-design-icons/Pencil.vue"
     import Delete from "vue-material-design-icons/Delete.vue"
-    import BasicNode from "./BasicNode.vue"
+    import BasicNode, {type BasicNodeData} from "./BasicNode.vue"
     import NodeMenu, {type NodeAction} from "./NodeMenu.vue"
     import {EVENTS} from "../utils/constants"
     import * as Utils from "../utils/utils"
-    import type {BasicNodeData, LoadTopologyIcon, TopologyIcons} from "../utils/vueFlowUtils"
+
+    interface TriggerDefinition {
+        type?: string;
+        description?: string;
+        disabled?: boolean;
+    }
 
     defineOptions({name: "Task", inheritAttrs: false})
 
     const {data, sourcePosition, targetPosition, id, icons, loadIcon} = defineProps<{
-        data: BasicNodeData;
+        data: BasicNodeData & {
+            isReadOnly?: boolean;
+            node: {trigger?: TriggerDefinition; triggerDeclaration?: TriggerDefinition};
+        };
         sourcePosition?: Position;
         targetPosition?: Position;
         id: string;
-        icons?: TopologyIcons;
-        loadIcon?: LoadTopologyIcon;
+        icons?: Record<string, unknown>;
+        loadIcon?: (cls: string) => Promise<unknown>;
     }>()
 
     const emit = defineEmits([EVENTS.DELETE, EVENTS.EDIT, EVENTS.SHOW_DESCRIPTION, EVENTS.EXPAND])

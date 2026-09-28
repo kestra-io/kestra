@@ -87,9 +87,9 @@
     import Duration from "../misc/Duration.vue"
     import * as Utils from "../utils/utils"
     import {getStatusStyle} from "../utils/status"
+    import type {GraphExecution, GraphTaskRun} from "../utils/vueFlowUtils"
     import BasicNode from "./BasicNode.vue"
     import NodeMenu, {type NodeAction} from "./NodeMenu.vue"
-    import type {BasicNodeData, GraphExecution, GraphTask, GraphTaskRun as TaskRun, LoadTopologyIcon, TaskNodeData, TopologyIcons} from "../utils/vueFlowUtils"
     import {
         EXECUTION_INJECTION_KEY,
         SUBFLOWS_EXECUTIONS_INJECTION_KEY,
@@ -114,18 +114,61 @@
     import PlayIcon from "vue-material-design-icons/Play.vue"
     
 
+    export interface TaskType {
+        id: string;
+        type: string;
+        default: null;
+        description?: string;
+        runIf?: unknown;
+        errors?: unknown[];
+        taskRunner?: {
+            type?: string;
+        };
+        subflowId?: {
+            namespace: string;
+            flowId: string;
+        };
+        namespace?: string;
+        flowId?: string;
+    }
+
+    interface NodeData {
+        node: {
+            uid: string;
+            type?: string;
+            task: TaskType;
+            taskRun: GraphTaskRun
+        };
+        executionId?: string;
+        color?: string;
+        isReadOnly?: boolean;
+        isFlowable?: boolean;
+        expandable?: boolean;
+        link?: {
+            namespace?: string;
+            id?: string;
+            executionId?: string;
+        };
+    }
+
     interface ExpandData {
         id: string;
         type: string;
     }
 
+    interface TaskRunsPayload {
+        id: string | undefined;
+        execution: GraphExecution | undefined;
+        taskRuns: GraphTaskRun[];
+    }
+
     const props = withDefaults(defineProps<{
-        data: TaskNodeData;
+        data: NodeData;
         sourcePosition?: Position;
         targetPosition?: Position;
         id: string;
-        icons?: TopologyIcons;
-        loadIcon?: LoadTopologyIcon;
+        icons?: Record<string, unknown>;
+        loadIcon?: (cls: string) => Promise<unknown>;
         enableSubflowInteraction?: boolean;
         playgroundEnabled: boolean;
         playgroundReadyToStart: boolean;
@@ -151,22 +194,22 @@
     })
 
     const emit = defineEmits<{
-        (event: typeof EVENTS.EXPAND, data: {id: string; type: string}): void;
-        (event: typeof EVENTS.OPEN_LINK, data: {link: NonNullable<TaskNodeData["link"]>}): void;
-        (event: typeof EVENTS.SHOW_LOGS, data: {id: string; execution: GraphExecution; taskRuns: TaskRun[]}): void;
-        (event: typeof EVENTS.SHOW_OUTPUTS, data: {id: string; execution: GraphExecution; taskRuns: TaskRun[]}): void;
-        (event: typeof EVENTS.REPLAY_TASK, data: {id: string; execution: GraphExecution; taskRuns: TaskRun[]}): void;
-        (event: typeof EVENTS.MOUSE_OVER, data: BasicNodeData["node"]): void;
+        (event: typeof EVENTS.EXPAND, data: ExpandData): void;
+        (event: typeof EVENTS.OPEN_LINK, data: {link: NodeData["link"]}): void;
+        (event: typeof EVENTS.SHOW_LOGS, data: TaskRunsPayload): void;
+        (event: typeof EVENTS.SHOW_OUTPUTS, data: TaskRunsPayload): void;
+        (event: typeof EVENTS.REPLAY_TASK, data: TaskRunsPayload): void;
+        (event: typeof EVENTS.MOUSE_OVER, data: NodeData["node"]): void;
         (event: typeof EVENTS.MOUSE_LEAVE): void;
-        (event: typeof EVENTS.ADD_ERROR, data: {task: GraphTask}): void;
-        (event: typeof EVENTS.EDIT, data: {task: GraphTask; section: string}): void;
-        (event: typeof EVENTS.DELETE, data: {id: string; section: string}): void;
+        (event: typeof EVENTS.ADD_ERROR, data: {task: TaskType}): void;
+        (event: typeof EVENTS.EDIT, data: {task: TaskType; section: string}) :void;
+        (event: typeof EVENTS.DELETE, data: {id: string | undefined; section: string}) :void;
         (event: typeof EVENTS.DUPLICATE, data: {id?: string}) :void;
-        (event: typeof EVENTS.SHOW_CONDITION, data: {id: string; task: GraphTask; section: string}): void;
-        (event: typeof EVENTS.SHOW_DESCRIPTION, data: {id: string; description: string}): void;
-        (event: typeof EVENTS.RUN_TASK, data: {task: GraphTask}): void;
-        (event: typeof EVENTS.SHOW_CUSTOM_ACTION, data: {task: GraphTask; customAction: CustomActionConfig}): void;
-        (event: typeof EVENTS.SHOW_DETAILS, data: {task: GraphTask; showDetails: ShowDetailsConfig}): void;
+        (event: typeof EVENTS.SHOW_CONDITION, data: {id: string | undefined; task: TaskType; section: string}) :void;
+        (event: typeof EVENTS.SHOW_DESCRIPTION, data: {id: string | undefined; description: string}) :void;
+        (event: typeof EVENTS.RUN_TASK, data: {task: TaskType}) :void;
+        (event: typeof EVENTS.SHOW_CUSTOM_ACTION, data: {task: TaskType; customAction: CustomActionConfig}) :void;
+        (event: typeof EVENTS.SHOW_DETAILS, data: {task: TaskType; showDetails: ShowDetailsConfig}) :void;
         (event: typeof EVENTS.TASK_DRAG_START, payload: {nodeId: string; label: string; cls?: string}) :void;
         (event: typeof EVENTS.TASK_DRAG_END) :void;
     }>()
@@ -187,7 +230,7 @@
 
     const validationIssuesByTask = inject(VALIDATION_ISSUES_INJECTION_KEY, undefined)
 
-    const taskId = computed(() => Utils.afterLastDot(props.id) ?? props.id)
+    const taskId = computed(() => Utils.afterLastDot(props.id))
 
     const validationIssues = computed<string[]>(() =>
         validationIssuesByTask?.value?.get(taskId.value ?? "") ?? [],
@@ -226,16 +269,16 @@
 
     const taskRuns = computed(() => {
         return taskRunList.value.filter(
-            (t: TaskRun) => t.taskId === Utils.afterLastDot(props.data.node.uid),
+            (t) => t.taskId === Utils.afterLastDot(props.data.node.uid),
         )
     })
 
     // The task's own taskruns plus any dynamically-generated child taskruns (e.g. Ansible
     // plays/tasks) so "show task logs" surfaces their logs too, not just the task's root logs.
     const taskRunsWithDynamicChildren = computed(() => {
-        const ids = new Set(taskRuns.value.map((t: TaskRun) => t.id))
+        const ids = new Set(taskRuns.value.map((t) => t.id))
         const children = taskRunList.value.filter(
-            (t: TaskRun) => t.parentTaskRunId && ids.has(t.parentTaskRunId),
+            (t) => t.parentTaskRunId && ids.has(t.parentTaskRunId),
         )
         return [...taskRuns.value, ...children]
     })
@@ -249,8 +292,6 @@
             return taskRuns.value[0].state.current
         }
 
-        const allStates = taskRuns.value.map((t: TaskRun) => t.state.current)
-
         const SORT_STATUS: string[] = [
             State.FAILED,
             State.KILLED,
@@ -263,7 +304,9 @@
             State.CREATED,
         ]
 
-        return allStates.sort((a, b) => SORT_STATUS.indexOf(a) - SORT_STATUS.indexOf(b))[0]
+        return taskRuns.value
+            .map((t) => t.state.current)
+            .sort((a, b) => SORT_STATUS.indexOf(a) - SORT_STATUS.indexOf(b))[0]
     })
 
     const classes = computed(() => ({
@@ -290,16 +333,16 @@
     const dataWithLink = computed(() => {
         if (props.data.node.type?.endsWith("SubflowGraphTask") && props.enableSubflowInteraction) {
             const subflowIdContainer = props.data.node.task.subflowId ?? props.data.node.task
-            if (!subflowIdContainer.namespace || !subflowIdContainer.flowId) return props.data
             return {
                 ...props.data,
                 link: {
                     namespace: subflowIdContainer.namespace,
                     id: subflowIdContainer.flowId,
-                    executionId: taskExecution.value?.taskRunList?.filter((taskRun: TaskRun) =>
-                        taskRun.id === props.data.node.taskRun?.id &&
-                        taskRun.outputs?.executionId,
-                    )
+                    executionId: taskExecution.value?.taskRunList
+                        ?.filter((taskRun) =>
+                            taskRun.id === props.data.node.taskRun.id &&
+                            taskRun.outputs?.executionId,
+                        )
                         ?.[0]?.outputs?.executionId,
                 },
             }
@@ -308,10 +351,9 @@
     })
 
     const actionConfig = computed(() => {
-        const taskType = props.data.node.task.type
-        const actionRunnerType = props.data.node.task.taskRunner?.type
+        const taskType = props.data.node.task?.type as string | undefined
         if (!taskType) return undefined
-        const customAction = props.customActions?.[taskType] ?? (actionRunnerType ? props.customActions?.[actionRunnerType] : undefined)
+        const customAction = props.customActions?.[taskType] ?? (runnerType.value ? props.customActions?.[runnerType.value] : undefined)
         if (customAction) return {config: customAction, eventName: EVENTS.SHOW_CUSTOM_ACTION} as const
         const showDetail = props.showDetails?.[taskType]
         if (showDetail) return {config: showDetail, eventName: EVENTS.SHOW_DETAILS} as const
@@ -342,30 +384,28 @@
                 onClick: () => emit(EVENTS.SHOW_CONDITION, {id: taskId.value, task, section: SECTIONS.TASKS}),
             })
         }
-        const currentExecution = taskExecution.value
-        if (currentExecution) {
+        if (taskExecution.value) {
             list.push({
                 key: "logs",
                 label: t("show task logs"),
                 icon: TextBoxSearch,
-                onClick: () => emit(EVENTS.SHOW_LOGS, {id: taskId.value, execution: currentExecution, taskRuns: taskRunsWithDynamicChildren.value}),
+                onClick: () => emit(EVENTS.SHOW_LOGS, {id: taskId.value, execution: taskExecution.value, taskRuns: taskRunsWithDynamicChildren.value}),
             })
         }
-        if (currentExecution) {
+        if (taskExecution.value) {
             list.push({
                 key: "outputs",
                 label: t("show task outputs"),
                 icon: LocationExit,
-                onClick: () => emit(EVENTS.SHOW_OUTPUTS, {id: taskId.value, execution: currentExecution, taskRuns: taskRuns.value}),
+                onClick: () => emit(EVENTS.SHOW_OUTPUTS, {id: taskId.value, execution: taskExecution.value, taskRuns: taskRuns.value}),
             })
         }
-        const link = dataWithLink.value.link
-        if (link) {
+        if (dataWithLink.value.link) {
             list.push({
                 key: "open",
                 label: t("open"),
                 icon: OpenInNew,
-                onClick: () => emit(EVENTS.OPEN_LINK, {link}),
+                onClick: () => emit(EVENTS.OPEN_LINK, {link: dataWithLink.value.link}),
             })
         }
         if (props.data.expandable) {
@@ -409,13 +449,13 @@
                 onClick: () => emit(EVENTS.DELETE, {id: taskId.value, section: SECTIONS.TASKS}),
             })
         }
-        if (props.replayEnabled && currentExecution && taskRuns.value.length > 0) {
+        if (props.replayEnabled && taskExecution.value && taskRuns.value.length > 0) {
             list.push({
                 key: "replay",
                 label: t("replay"),
                 icon: PlayBoxMultiple,
                 divided: true,
-                onClick: () => emit(EVENTS.REPLAY_TASK, {id: taskId.value, execution: currentExecution, taskRuns: taskRuns.value}),
+                onClick: () => emit(EVENTS.REPLAY_TASK, {id: taskId.value, execution: taskExecution.value, taskRuns: taskRuns.value}),
             })
         }
 

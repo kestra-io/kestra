@@ -3,23 +3,12 @@ import {mount} from "@vue/test-utils"
 import {defineComponent} from "vue"
 import "../../utils/global"
 import TaskRunLoopProgress from "./TaskRunLoopProgress.vue"
+import {State} from "@kestra-io/design-system"
 
 vi.mock("vue-i18n", () => ({
     useI18n: () => ({
-        t: (key: string) => key === "in flight" ? "In flight" : key === "not started" ? "Not started" : key
-    })
-}))
-
-vi.mock("@kestra-io/design-system", () => ({
-    State: {
-        color: () => ({SUCCESS: "green", FAILED: "red", RUNNING: "purple"}),
-        arrayAllStates: () => [
-            {name: "SUCCESS"}, {name: "WARNING"}, {name: "FAILED"},
-            {name: "KILLED"}, {name: "CANCELLED"}, {name: "RETRIED"},
-            {name: "SKIPPED"}, {name: "RESUBMITTED"}, {name: "RUNNING"}, {name: "CREATED"}
-        ],
-        isTerminated: (state: string) => ["SUCCESS", "WARNING", "FAILED", "KILLED", "CANCELLED", "RETRIED", "SKIPPED", "RESUBMITTED"].includes(state)
-    },
+        t: (key: string) => key === "in flight" ? "In flight" : key === "not started" ? "Not started" : key,
+    }),
 }))
 
 const KsProgressStub = defineComponent({
@@ -83,6 +72,22 @@ describe("TaskRunLoopProgress", () => {
         expect(progress.attributes("data-format")).toBe("99.9%")
     })
 
+    it.each([
+        [29, "29.0%"],
+        [57, "57.0%"],
+        [58, "58.0%"],
+    ])("floors %i/100 without float loss", (count, expected) => {
+        const wrapper = mountProgress({
+            "taskrun-1": {
+                iterationCount: 100,
+                terminatedIterations: {SUCCESS: count},
+            },
+        })
+
+        const progress = wrapper.find("[data-test=progress]")
+        expect(progress.attributes("data-format")).toBe(expected)
+    })
+
     it("should display exactly 100.0% only upon full completion", () => {
         const wrapper = mountProgress({
             "taskrun-1": {
@@ -140,7 +145,7 @@ describe("TaskRunLoopProgress", () => {
         expect(pills[2].text()).toBe("5 Not started")
     })
 
-    it("should hide in-flight and not started pills when parent loop is terminal", () => {
+    it("should hide in-flight but keep not started pills when parent loop is terminal", () => {
         const wrapper = mountProgress({
             "taskrun-1": {
                 iterationCount: 100,
@@ -150,9 +155,10 @@ describe("TaskRunLoopProgress", () => {
         }, "KILLED")
 
         const pills = wrapper.findAll("[data-test=pill]")
-        // Active pills should vanish because parent is KILLED
-        expect(pills).toHaveLength(1)
+        // In-flight should vanish because parent is KILLED, but not started remains to show missing iterations
+        expect(pills).toHaveLength(2)
         expect(pills[0].text()).toBe("10 Success")
+        expect(pills[1].text()).toBe("90 Not started")
     })
 
     it("should clamp in-flight count to remaining iterations", () => {
@@ -168,5 +174,47 @@ describe("TaskRunLoopProgress", () => {
         expect(pills).toHaveLength(2)
         expect(pills[0].text()).toBe("4 Success")
         expect(pills[1].text()).toBe("1 In flight")
+    })
+
+    it("should sort terminal state pills according to the real arrayAllStates order", () => {
+        const terminalStates = State.arrayAllStates().map(s => s.name).filter(s => State.isTerminated(s))
+
+        // Pass them all in reverse order to ensure sorting does the work
+        const reversedStates = [...terminalStates].reverse()
+        const terminatedIterations = Object.fromEntries(reversedStates.map(state => [state, 1]))
+
+        const wrapper = mountProgress({
+            "taskrun-1": {
+                iterationCount: terminalStates.length,
+                terminatedIterations,
+            },
+        })
+
+        const pills = wrapper.findAll("[data-test=pill]")
+        expect(pills).toHaveLength(terminalStates.length)
+
+        terminalStates.forEach((state, index) => {
+            expect(pills[index].attributes("data-state")).toBe(state)
+        })
+    })
+
+    it("should count running iterations as not-started when the loop is terminated", () => {
+        const wrapper = mountProgress(
+            {
+                "taskrun-1": {
+                    iterationCount: 10,
+                    runningIterations: 3,
+                    terminatedIterations: {FAILED: 7}, // loop is terminated at 7/10
+                },
+            },
+            "FAILED",
+        )
+
+        const pills = wrapper.findAll("[data-test=pill]")
+        expect(pills).toHaveLength(2)
+        expect(pills[0].attributes("data-state")).toBe("FAILED")
+        expect(pills[0].text()).toMatch(/7\s+Failed/)
+        expect(pills[1].attributes("data-state")).toBe("NOT_STARTED")
+        expect(pills[1].text()).toMatch(/3\s+Not started/)
     })
 })

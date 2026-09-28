@@ -10,24 +10,26 @@
         />
 
         <div class="pill-list">
-            <template v-for="segment in loopSegments" :key="segment.key">
-                <KsButton
-                    :tag="segment.filterStates ? RouterLink : 'div'"
-                    size="small"
-                    :to="segment.filterStates ? {
-                        name: 'executions/list',
-                        query: {
-                            'filters[parentId][EQUALS]': executionId,
-                            'filters[kind][EQUALS]': 'LOOP',
-                            'filters[taskId][EQUALS]': taskId,
-                            'filters[state][IN]': segment.filterStates.join(',')
-                        }
-                    } : undefined"
-                >
-                    <span :style="{backgroundColor: segment.color}" class="colored-dot" />
-                    {{ segment.count }} {{ segment.label }}
-                </KsButton>
-            </template>
+            <KsButton
+                v-for="segment in loopSegments"
+                :key="segment.key"
+                :tag="segment.filterStates ? RouterLink : 'div'"
+                size="small"
+                :data-state="segment.key"
+                :class="{'muted-pill': !segment.filterStates}"
+                :to="segment.filterStates ? {
+                    name: 'executions/list',
+                    query: {
+                        'filters[parentId][EQUALS]': executionId,
+                        'filters[kind][EQUALS]': 'LOOP',
+                        'filters[taskId][EQUALS]': taskId,
+                        'filters[state][IN]': segment.filterStates.join(',')
+                    }
+                } : undefined"
+            >
+                <span :style="{backgroundColor: segment.color}" class="colored-dot" />
+                {{ segment.count }} {{ segment.label }}
+            </KsButton>
         </div>
     </div>
 </template>
@@ -71,17 +73,16 @@
         return Math.min(100, consolidatedTerminalStates.value / loopIterationCount.value * 100)
     })
 
-    function formatPercentage(percentage: number): string {
-        if (loopIterationCount.value > 0 && consolidatedTerminalStates.value === loopIterationCount.value) {
-            return "100.0%"
-        }
-        return `${(Math.floor(percentage * 10) / 10).toFixed(1)}%`
+    function formatPercentage(): string {
+        if (loopIterationCount.value <= 0) return "0.0%"
+        if (consolidatedTerminalStates.value >= loopIterationCount.value) return "100.0%"
+        return `${(Math.floor(consolidatedTerminalStates.value * 1000 / loopIterationCount.value) / 10).toFixed(1)}%`
     }
 
     const loopSegments = computed<LoopSegment[]>(() => {
         const outputs = props.loopOutputsByTaskRunId[props.currentTaskRunId]
         const terminatedIterations = outputs?.terminatedIterations ?? {}
-                const inFlightCount = Math.max(0, Math.min(outputs?.runningIterations ?? 0, loopIterationCount.value - consolidatedTerminalStates.value))
+        const inFlightCount = Math.max(0, Math.min(outputs?.runningIterations ?? 0, loopIterationCount.value - consolidatedTerminalStates.value))
 
         const allStates = State.arrayAllStates().map(s => s.name)
 
@@ -102,21 +103,20 @@
 
         const segments: LoopSegment[] = [...terminalSegments]
 
-        if (props.loopTaskState && State.isTerminated(props.loopTaskState)) {
-            return segments
-        }
+        const isLoopTerminated = !!(props.loopTaskState && State.isTerminated(props.loopTaskState))
 
-        if (inFlightCount > 0) {
+        if (!isLoopTerminated && inFlightCount > 0) {
             segments.push({
                 key: "IN_FLIGHT",
                 label: t("in flight"),
                 count: inFlightCount,
                 color: loopStateColors.RUNNING,
-                filterStates: State.arrayAllStates().map(s => s.name).filter(s => !State.isTerminated(s)),
+                filterStates: allStates.filter(s => !State.isTerminated(s)),
             })
         }
 
-        const notStartedCount = Math.max(0, loopIterationCount.value - consolidatedTerminalStates.value - inFlightCount)
+        const activeInFlightCount = isLoopTerminated ? 0 : inFlightCount
+        const notStartedCount = Math.max(0, loopIterationCount.value - consolidatedTerminalStates.value - activeInFlightCount)
         if (notStartedCount > 0) {
             segments.push({
                 key: "NOT_STARTED",
@@ -154,5 +154,10 @@
     height: 0.5rem;
     border-radius: 50%;
     margin-right: 0.5rem;
+  }
+
+  .muted-pill {
+    pointer-events: none;
+    border-color: var(--ks-border-subtle);
   }
 </style>

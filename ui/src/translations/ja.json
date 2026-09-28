@@ -2656,7 +2656,7 @@
     "iteration": "反復",
     "iteration_number": "反復 {number}",
     "delete_log_iteration": "{iteration} のログを削除してもよろしいですか？",
-    "in flight": "In flight",
-    "not started": "Not started"
+    "in flight": "実行中",
+    "not started": "未開始"
   }
 }

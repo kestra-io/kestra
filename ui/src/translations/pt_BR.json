@@ -2656,7 +2656,7 @@
     "iteration": "Iteração",
     "iteration_number": "Iteração {number}",
     "delete_log_iteration": "Tem certeza de que deseja excluir o log de {iteration}?",
-    "in flight": "In flight",
-    "not started": "Not started"
+    "in flight": "Em andamento",
+    "not started": "Não iniciado"
   }
 }

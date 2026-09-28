@@ -8,6 +8,10 @@ import {State} from "@kestra-io/ui-libs";
 import {usePluginsStore} from "../../stores/plugins";
 import {useFlowStore} from "../../stores/flow";
 import {useNamespacesStore} from "override/stores/namespaces";
+import {isMap, parseDocument, visit} from "yaml";
+
+// Root keys holding tasks; `inputs`, `outputs`, `sla` and `triggers` also carry `id` + `type` maps.
+const TASK_ROOT_KEYS = ["tasks", "errors", "finally", "afterExecution"];
 
 function distinct<T>(val: T[] | undefined): T[] {
     return Array.from(new Set(val ?? []));
@@ -111,15 +115,29 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
         }
     }
 
-    private tasks(source: string): any[] {
-        const tasksFromTasksProp = YAML_UTILS.extractFieldFromMaps(source, "tasks")
-            .flatMap(allTasks => allTasks.tasks);
-        const tasksFromTaskProp = YAML_UTILS.extractFieldFromMaps(source, "task")
-            .map(task => task.task)
-            .flatMap(task => YAML_UTILS.pairsToMap(task) ?? [])
+    private tasks(source: string): {id: string; type: string}[] {
+        const root = parseDocument(source).contents;
+        if (!isMap(root)) {
+            return [];
+        }
 
-        return [...tasksFromTasksProp, ...tasksFromTaskProp]
-            .filter(task => typeof task?.get === "function" && task?.get("id"));
+        const tasks: {id: string; type: string}[] = [];
+        for (const key of TASK_ROOT_KEYS) {
+            const section = root.get(key, true);
+            if (section === undefined) {
+                continue;
+            }
+            visit(section, {
+                Map(_, map) {
+                    const id = map.get("id");
+                    const type = map.get("type");
+                    if (typeof id === "string" && typeof type === "string") {
+                        tasks.push({id, type});
+                    }
+                }
+            });
+        }
+        return tasks;
     }
 
     private cursorProbeIndexes(source: string, cursorIndex: number): number[] {
@@ -176,9 +194,7 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
     }
 
     private async outputsFor(taskId: string, source: string): Promise<string[]> {
-        const taskType = this.tasks(this.completionSource?.value ?? source).filter(task => task.get("id") === taskId)
-            .map(task => task.get("type"))
-            ?.[0];
+        const taskType = this.tasks(this.completionSource?.value ?? source).find(task => task.id === taskId)?.type;
 
         if (!taskType) {
             return [];
@@ -213,11 +229,8 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
                 return Promise.resolve(parsed?.inputs?.map((input: {id?: string}) => input.id) ?? []);
             case "outputs": {
                 const currentTaskId = this.currentTaskIdAtCursor(source, cursorIndex);
-                return Promise.resolve(
-                    parsed?.tasks
-                        ?.map((task: {id?: string}) => task.id)
-                        .filter((taskId: string | undefined) => taskId && taskId !== currentTaskId) ?? []
-                );
+                return distinct(this.tasks(this.completionSource?.value ?? source).map(task => task.id))
+                    .filter(taskId => taskId !== currentTaskId);
             }
             case "labels":
                 return Promise.resolve(Object.keys(parsed?.labels ?? {}));

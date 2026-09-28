@@ -6,6 +6,7 @@ import Errors from "../components/errors/Errors.vue"
 import {EXECUTION_ROUTE} from "../components/executions/executionTabs"
 import {FLOW_ROUTE} from "../components/flows/flowTabs"
 import {NAMESPACE_PARENT_ROUTE, createNamespaceTabRoutes} from "../utils/namespaceTabRoutes"
+import {aiEnabledGuard} from "../composables/useAiEnabled"
 
 /** A route record, plus `ossOnly`: editions layering on this table (EE) drop the flagged records. */
 export type KestraRouteRecord = RouteRecordRaw & {ossOnly?: boolean}
@@ -14,7 +15,7 @@ const routes: KestraRouteRecord[] = [
     //Initial
     {name: "root", path: "/", redirect: {name: "home"}, meta: {layout: {template: "<div />"}, anonymous: true}},
 
-    {name: "ai",path: "/:tenant?/ai", component: () => import("../components/ai/copilot/CopilotPage.vue")},
+    {name: "ai",path: "/:tenant?/ai", component: () => import("../components/ai/copilot/CopilotPage.vue"), beforeEnter: aiEnabledGuard},
 
     //Dashboards
     {

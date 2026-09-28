@@ -34,6 +34,7 @@ import ShieldAccount from "vue-material-design-icons/ShieldAccount.vue"
 import ShieldCheckOutline from "vue-material-design-icons/ShieldCheckOutline.vue"
 import RocketLaunchOutline from "vue-material-design-icons/RocketLaunchOutline.vue"
 import McpIcon from "../../components/McpIcon.vue"
+import {useAiEnabled} from "../../composables/useAiEnabled"
 
 export type MenuItem = {
     id?: string; // Generated at the end of menu computation
@@ -59,6 +60,7 @@ export function useLeftMenu() {
     const $router = useRouter()
 
     const {t} = useI18n({useScope: "global"})
+    const aiEnabled = useAiEnabled()
 
     /**
      * Returns the names of all registered routes whose name starts with the given prefix.
@@ -117,6 +119,7 @@ export function useLeftMenu() {
                         icon: {
                             element: AiMenuIcon,
                         },
+                        hidden: !aiEnabled.value,
                     },
                     {
                         id: "flows",

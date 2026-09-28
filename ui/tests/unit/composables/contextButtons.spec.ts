@@ -1,5 +1,7 @@
 import {describe, it, expect, afterAll, beforeEach, vi} from "vitest"
-import {defineComponent} from "vue"
+import {defineComponent, ref} from "vue"
+const mockAiEnabled = ref(true)
+vi.mock("../../../src/composables/useAiEnabled", () => ({useAiEnabled: () => mockAiEnabled}))
 const mockFeeds: {value: Array<{publicationDate: string}>} = {value: []}
 vi.mock("../../../src/stores/api", () => ({
     useApiStore: () => ({feeds: mockFeeds.value}),
@@ -68,5 +70,15 @@ describe("useContextButtons news unread", () => {
         const {buttons} = mountButtons()
 
         expect(buttons.news.unread?.value).toBe(false)
+    })
+})
+
+describe("useContextButtons AI tab", () => {
+    it("is hidden when the instance has AI disabled", () => {
+        mockAiEnabled.value = false
+
+        const {buttons} = mountButtons()
+
+        expect(buttons.ai.hidden).toBe(true)
     })
 })

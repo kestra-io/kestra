@@ -2103,7 +2103,7 @@ public class ExecutionController {
     }
 
     protected Mono<HttpResponse<?>> resumeFoundExecution(MultipartBody inputs, Execution execution, Flow flow) {
-        io.kestra.plugin.core.flow.Pause.Resumed resumed = createResumed();
+        io.kestra.plugin.core.flow.PausableTask.Resumed resumed = createResumed();
         Actor actor = actorResolver.resolve();
 
         this.resumeCounter.increment();
@@ -2118,8 +2118,8 @@ public class ExecutionController {
             .map(r -> (HttpResponse<?>) r);
     }
 
-    protected io.kestra.plugin.core.flow.Pause.Resumed createResumed() {
-        return io.kestra.plugin.core.flow.Pause.Resumed.now();
+    protected io.kestra.plugin.core.flow.PausableTask.Resumed createResumed() {
+        return io.kestra.plugin.core.flow.PausableTask.Resumed.now();
     }
 
     @ExecuteOn(TaskExecutors.IO)

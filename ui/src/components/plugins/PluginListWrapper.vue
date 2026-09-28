@@ -23,7 +23,7 @@
 
     onMounted(async () => {
         if (!pluginsData.value?.length) {
-            await pluginsStore.listWithSubgroup({includeDeprecated: false})
+            await pluginsStore.listWithSubgroup()
         }
     })
 </script>

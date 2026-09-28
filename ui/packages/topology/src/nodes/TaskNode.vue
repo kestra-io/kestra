@@ -87,6 +87,7 @@
     import Duration from "../misc/Duration.vue"
     import * as Utils from "../utils/utils"
     import {getStatusStyle} from "../utils/status"
+    import type {GraphExecution, GraphTaskRun} from "../utils/vueFlowUtils"
     import BasicNode from "./BasicNode.vue"
     import NodeMenu, {type NodeAction} from "./NodeMenu.vue"
     import {
@@ -113,7 +114,7 @@
     import PlayIcon from "vue-material-design-icons/Play.vue"
     
 
-    interface TaskType {
+    export interface TaskType {
         id: string;
         type: string;
         default: null;
@@ -136,7 +137,7 @@
             uid: string;
             type?: string;
             task: TaskType;
-            taskRun: TaskRun
+            taskRun: GraphTaskRun
         };
         executionId?: string;
         color?: string;
@@ -144,31 +145,21 @@
         isFlowable?: boolean;
         expandable?: boolean;
         link?: {
-            namespace: string;
-            id: string;
+            namespace?: string;
+            id?: string;
             executionId?: string;
         };
-    }
-
-    interface TaskRun {
-        id: string
-        taskId: string;
-        parentTaskRunId?: string;
-        state: {
-            current: [string, string];
-            duration?: string;
-            histories?: {date: string; state: string}[];
-        };
-        outputs?: {
-            executionId?: string;
-        } & Record<string, unknown>;
-        attempts?: unknown[];
-        value?: string;
     }
 
     interface ExpandData {
         id: string;
         type: string;
+    }
+
+    interface TaskRunsPayload {
+        id: string | undefined;
+        execution: GraphExecution | undefined;
+        taskRuns: GraphTaskRun[];
     }
 
     const props = withDefaults(defineProps<{
@@ -203,23 +194,22 @@
     })
 
     const emit = defineEmits<{
-        (event: typeof EVENTS.EXPAND, data: any): void;
-        (event: typeof EVENTS.OPEN_LINK, data: any): void;
-        (event: typeof EVENTS.SHOW_LOGS, data: any): void;
-        (event: typeof EVENTS.SHOW_OUTPUTS, data: any): void;
-        (event: typeof EVENTS.REPLAY_TASK, data: any): void;
-        (event: typeof EVENTS.MOUSE_OVER, data: any): void;
+        (event: typeof EVENTS.EXPAND, data: ExpandData): void;
+        (event: typeof EVENTS.OPEN_LINK, data: {link: NodeData["link"]}): void;
+        (event: typeof EVENTS.SHOW_LOGS, data: TaskRunsPayload): void;
+        (event: typeof EVENTS.SHOW_OUTPUTS, data: TaskRunsPayload): void;
+        (event: typeof EVENTS.REPLAY_TASK, data: TaskRunsPayload): void;
+        (event: typeof EVENTS.MOUSE_OVER, data: NodeData["node"]): void;
         (event: typeof EVENTS.MOUSE_LEAVE): void;
-        (event: typeof EVENTS.ADD_ERROR, data: { task: any }): void;
-        (event: typeof EVENTS.EDIT, data: any) :void;
-        (event: typeof EVENTS.DELETE, data: any) :void;
+        (event: typeof EVENTS.ADD_ERROR, data: {task: TaskType}): void;
+        (event: typeof EVENTS.EDIT, data: {task: TaskType; section: string}) :void;
+        (event: typeof EVENTS.DELETE, data: {id: string | undefined; section: string}) :void;
         (event: typeof EVENTS.DUPLICATE, data: {id?: string}) :void;
-        (event: typeof EVENTS.ADD_TASK, data: any) :void;
-        (event: typeof EVENTS.SHOW_CONDITION, data: any) :void;
-        (event: typeof EVENTS.SHOW_DESCRIPTION, data: any) :void;
-        (event: typeof EVENTS.RUN_TASK, data: { task: any }) :void;
-        (event: typeof EVENTS.SHOW_CUSTOM_ACTION, data: { task: any; customAction: CustomActionConfig }) :void;
-        (event: typeof EVENTS.SHOW_DETAILS, data: { task: any; showDetails: ShowDetailsConfig }) :void;
+        (event: typeof EVENTS.SHOW_CONDITION, data: {id: string | undefined; task: TaskType; section: string}) :void;
+        (event: typeof EVENTS.SHOW_DESCRIPTION, data: {id: string | undefined; description: string}) :void;
+        (event: typeof EVENTS.RUN_TASK, data: {task: TaskType}) :void;
+        (event: typeof EVENTS.SHOW_CUSTOM_ACTION, data: {task: TaskType; customAction: CustomActionConfig}) :void;
+        (event: typeof EVENTS.SHOW_DETAILS, data: {task: TaskType; showDetails: ShowDetailsConfig}) :void;
         (event: typeof EVENTS.TASK_DRAG_START, payload: {nodeId: string; label: string; cls?: string}) :void;
         (event: typeof EVENTS.TASK_DRAG_END) :void;
     }>()
@@ -279,30 +269,28 @@
 
     const taskRuns = computed(() => {
         return taskRunList.value.filter(
-            (t: TaskRun) => t.taskId === Utils.afterLastDot(props.data.node.uid),
+            (t) => t.taskId === Utils.afterLastDot(props.data.node.uid),
         )
     })
 
     // The task's own taskruns plus any dynamically-generated child taskruns (e.g. Ansible
     // plays/tasks) so "show task logs" surfaces their logs too, not just the task's root logs.
     const taskRunsWithDynamicChildren = computed(() => {
-        const ids = new Set(taskRuns.value.map((t: TaskRun) => t.id))
+        const ids = new Set(taskRuns.value.map((t) => t.id))
         const children = taskRunList.value.filter(
-            (t: TaskRun) => t.parentTaskRunId && ids.has(t.parentTaskRunId),
+            (t) => t.parentTaskRunId && ids.has(t.parentTaskRunId),
         )
         return [...taskRuns.value, ...children]
     })
 
     const state = computed(() => {
         if (!taskRuns.value?.length) {
-            return null
+            return undefined
         }
 
         if (taskRuns.value.length === 1) {
             return taskRuns.value[0].state.current
         }
-
-        const allStates = taskRuns.value.map((t: TaskRun) => t.state.current)
 
         const SORT_STATUS: string[] = [
             State.FAILED,
@@ -316,15 +304,9 @@
             State.CREATED,
         ]
 
-        const result = allStates
-            .map((item: [string, string]) => {
-                const n = SORT_STATUS.indexOf(item[1])
-                return [n, item] as [number, [string, string]]
-            })
-            .sort()
-            .map((j: [number, [string, string]]) => j[1])
-
-        return result[0]
+        return taskRuns.value
+            .map((t) => t.state.current)
+            .sort((a, b) => SORT_STATUS.indexOf(a) - SORT_STATUS.indexOf(b))[0]
     })
 
     const classes = computed(() => ({
@@ -357,7 +339,7 @@
                     namespace: subflowIdContainer.namespace,
                     id: subflowIdContainer.flowId,
                     executionId: taskExecution.value?.taskRunList
-                        .filter((taskRun: TaskRun) =>
+                        ?.filter((taskRun) =>
                             taskRun.id === props.data.node.taskRun.id &&
                             taskRun.outputs?.executionId,
                         )
@@ -370,9 +352,8 @@
 
     const actionConfig = computed(() => {
         const taskType = props.data.node.task?.type as string | undefined
-        const runnerType = (props.data.node.task as any)?.taskRunner?.type as string | undefined
         if (!taskType) return undefined
-        const customAction = props.customActions?.[taskType] ?? (runnerType ? props.customActions?.[runnerType] : undefined)
+        const customAction = props.customActions?.[taskType] ?? (runnerType.value ? props.customActions?.[runnerType.value] : undefined)
         if (customAction) return {config: customAction, eventName: EVENTS.SHOW_CUSTOM_ACTION} as const
         const showDetail = props.showDetails?.[taskType]
         if (showDetail) return {config: showDetail, eventName: EVENTS.SHOW_DETAILS} as const
@@ -386,12 +367,13 @@
         const readOnly = props.data.isReadOnly
         const list: NodeAction[] = []
 
-        if (task?.description) {
+        const description = task?.description
+        if (description) {
             list.push({
                 key: "description",
                 label: t("show description"),
                 icon: InformationOutline,
-                onClick: () => emit(EVENTS.SHOW_DESCRIPTION, {id: taskId.value, description: task.description}),
+                onClick: () => emit(EVENTS.SHOW_DESCRIPTION, {id: taskId.value, description}),
             })
         }
         if (task?.runIf) {

@@ -5,6 +5,7 @@ import {useNamespacesStore} from "override/stores/namespaces"
 import {useToast} from "../utils/toast"
 import {useI18n} from "vue-i18n"
 import type {KestraHttpError} from "../utils/kestraHttp"
+import type {KsTreeNode} from "@kestra-io/design-system"
 
 export interface TreeNodeBase {
     id: string;
@@ -29,11 +30,7 @@ export interface TreeNodeDirectory{
     children: TreeNode[];
 }
 
-export interface ElTreeNode {
-    childNodes: ElTreeNode[];
-    data: TreeNode;
-    level: number;
-}
+export type ElTreeNode = KsTreeNode<TreeNode>
 
 export type TreeNode = TreeNodeFile | TreeNodeDirectory;
 

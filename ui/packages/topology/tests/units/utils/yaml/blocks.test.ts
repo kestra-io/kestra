@@ -942,10 +942,10 @@ tasks:
             newBlock: "id: v1_log\ntype: io.kestra.plugin.core.log.Log",
         })
 
-        const parsed = parse(result) as any
-        expect(parsed.tasks[0].cases["1.0"]).toHaveLength(1)
-        expect(parsed.tasks[0].cases["1.0"][0].id).toBe("v1_log")
-        expect(parsed.tasks[0].cases["1"]).toBeUndefined()
-        expect(parsed.tasks[0].cases.stable).toHaveLength(1)
+        const parsed = parse<{tasks: {cases: Record<string, {id: string}[]>}[]}>(result)
+        expect(parsed?.tasks[0].cases["1.0"]).toHaveLength(1)
+        expect(parsed?.tasks[0].cases["1.0"][0].id).toBe("v1_log")
+        expect(parsed?.tasks[0].cases["1"]).toBeUndefined()
+        expect(parsed?.tasks[0].cases.stable).toHaveLength(1)
     })
 })

@@ -1,4 +1,5 @@
 import {vi} from "vitest";
+import type {Execution, MiscControllerConfiguration, QueryFilter} from "@kestra-io/kestra-sdk";
 
 // executionsStore.findExecutions() calls ExecutionsAPI.searchExecutions() directly, which goes
 // through the SDK's own internal client rather than the axios instance setMockClient() swaps -
@@ -7,17 +8,24 @@ import {vi} from "vitest";
 // used to see, so queryFiltersToFlatParams() reconstructs those flat keys to reuse the existing
 // FILTER_MAP/filterExecutions logic unchanged. Everything the mock factory below needs to close
 // over must live inside vi.hoisted(), since vi.mock() factories run before any other module code.
+type FixtureExecution = Pick<Execution, "id" | "namespace" | "flowId"> & {
+    labels?: {key: string; value?: string}[];
+    state: {current: string};
+    kind?: string;
+    scope?: string;
+    childFilter?: string;
+    triggerExecutionId?: string;
+};
+
 const {mockState, filterExecutions} = vi.hoisted(() => {
-    const state = {data: [] as any[]};
+    const state = {data: [] as FixtureExecution[]};
 
     const SEARCHABLE_FIELDS = ["id", "namespace", "flowId"] as const;
     const LABEL_FILTER_PATTERN = /filters\[labels]\[(\w+)]\[(.+)]/;
 
-    const toArray = (value: any) => Array.isArray(value)
-        ? value
-        : value.split(",");
+    const toArray = (value: string) => value.split(",");
 
-    const FILTER_MAP: {[key: string]: (e: any, value: any) => boolean} = {
+    const FILTER_MAP: {[key: string]: (e: FixtureExecution, value: string) => boolean} = {
         "filters[namespace][IN]": (e, value) => toArray(value).includes(e.namespace),
         "filters[namespace][NOT_IN]": (e, value) => !toArray(value).includes(e.namespace),
         "filters[namespace][CONTAINS]": (e, value) => e.namespace?.toLowerCase().includes(value.toLowerCase()),
@@ -35,17 +43,17 @@ const {mockState, filterExecutions} = vi.hoisted(() => {
         "filters[timeRange][EQUALS]": () => true,
     };
 
-    const hasLabel = (e: any, key: string, value: string) =>
-        e.labels?.some((l: any) => l.key === key && l.value === value);
+    const hasLabel = (e: FixtureExecution, key: string, value: string) =>
+        e.labels?.some((l) => l.key === key && l.value === value);
 
-    const filterFn = (executions: any[], params: any): any[] =>
+    const filterFn = (executions: FixtureExecution[], params: Record<string, string>): FixtureExecution[] =>
         Object.entries(params).reduce((filtered, [key, value]) => {
             if (!value) return filtered;
 
             if (key === "filters[q][EQUALS]") {
-                return filtered.filter((e: any) =>
+                return filtered.filter((e) =>
                     SEARCHABLE_FIELDS.some(field =>
-                        e[field]?.toLowerCase().includes((value as string).toLowerCase())
+                        e[field].toLowerCase().includes(value.toLowerCase())
                     )
                 );
             }
@@ -60,8 +68,8 @@ const {mockState, filterExecutions} = vi.hoisted(() => {
 
                 return filtered.filter(e =>
                     match[1] === "EQUALS"
-                        ? hasLabel(e, match[2], value as string)
-                        : !hasLabel(e, match[2], value as string)
+                        ? hasLabel(e, match[2], value)
+                        : !hasLabel(e, match[2], value)
                 );
             }
 
@@ -75,23 +83,27 @@ const ENUM_FIELD_TO_KEY: Record<string, string> = {QUERY: "q"};
 function enumFieldToKey(field: string): string {
     return ENUM_FIELD_TO_KEY[field] ?? field.toLowerCase().replace(/_([a-z])/g, (_, c) => c.toUpperCase());
 }
-function queryFiltersToFlatParams(filters: {field: string, operation: string, value: unknown}[]): Record<string, any> {
-    const flat: Record<string, any> = {};
-    for (const f of filters ?? []) {
-        const key = enumFieldToKey(f.field);
+function toFlatValue(value: unknown): string {
+    return Array.isArray(value) ? value.join(",") : String(value ?? "");
+}
+
+function queryFiltersToFlatParams(filters: QueryFilter[]): Record<string, string> {
+    const flat: Record<string, string> = {};
+    for (const f of filters) {
+        const key = enumFieldToKey(f.field ?? "");
         if (key === "labels" && f.value && typeof f.value === "object") {
-            for (const [subKey, subValue] of Object.entries(f.value as Record<string, unknown>)) {
-                flat[`filters[labels][${f.operation}][${subKey}]`] = subValue;
+            for (const [subKey, subValue] of Object.entries(f.value)) {
+                flat[`filters[labels][${f.operation}][${subKey}]`] = toFlatValue(subValue);
             }
         } else {
-            flat[`filters[${key}][${f.operation}]`] = f.value;
+            flat[`filters[${key}][${f.operation}]`] = toFlatValue(f.value);
         }
     }
     return flat;
 }
 
 vi.mock("@kestra-io/kestra-sdk/executions", () => ({
-    searchExecutions: async (params: {page?: number, size?: number, filters?: any[]}) => {
+    searchExecutions: async (params: {page?: number, size?: number, filters?: QueryFilter[]}) => {
         const {page = 1, size = 25} = params;
         const flatParams = queryFiltersToFlatParams(params.filters ?? []);
         const filtered = filterExecutions(mockState.data, flatParams);
@@ -102,27 +114,22 @@ vi.mock("@kestra-io/kestra-sdk/executions", () => ({
 
 import {vueRouter} from "storybook-vue3-router";
 import type {Meta, StoryObj} from "@storybook/vue3";
-import {useAuthStore} from "override/stores/auth";
+import {Me, useAuthStore} from "override/stores/auth";
 import {useMiscStore} from "override/stores/misc";
 import {useNamespacesStore} from "override/stores/namespaces";
 import fixture from "../executions/Executions.fixture.json";
 import Executions from "../../../../src/components/executions/Executions.vue";
 
-const getNamespaces = (data: any[]): string[] => (
+const getNamespaces = (data: FixtureExecution[]): string[] => (
     Array.from(new Set(data
         .map(item => item.namespace).filter(Boolean)))
         .sort()
 );
 
-const MOCK_USER = {
-    isAllowed: () => true,
-    hasAnyActionOnAnyNamespace: () => true,
-} as any;
-
-const MOCK_CONFIGS = {
+const MOCK_CONFIGS: MiscControllerConfiguration = {
     hiddenLabelsPrefixes: ["system_"],
     edition: "OSS"
-} as any;
+};
 
 const ROUTER_ROUTES = [
     {
@@ -146,13 +153,13 @@ const ROUTER_ROUTES = [
     }
 ];
 
-function getDecorators(data: any[]) {
+function getDecorators(data: FixtureExecution[]) {
     const FIXTURE_NAMESPACES = getNamespaces(data);
 
     return [
         () => ({
             setup() {
-                useAuthStore().user = MOCK_USER;
+                useAuthStore().user = new Me();
                 useMiscStore().configs = MOCK_CONFIGS;
                 useNamespacesStore().loadAutocomplete = () => Promise.resolve(FIXTURE_NAMESPACES);
 

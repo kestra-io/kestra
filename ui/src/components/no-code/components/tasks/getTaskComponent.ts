@@ -19,7 +19,7 @@ export interface Schema{
     format?: string;
     enum?: unknown[];
     pattern?: string;
-    $language: string;
+    $language?: string;
     $secret?: boolean;
 }
 

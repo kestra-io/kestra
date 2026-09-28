@@ -569,6 +569,7 @@
             consuming = false
         }
 
+        // Same text means the entry point was clicked twice while this run was parked: drop the repeat rather than send it again.
         if (miscStore.copilotPrompt === seeded) clearSeededPrompt()
         else if (miscStore.copilotPrompt) consumeSeededPrompt()
     }

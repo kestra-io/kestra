@@ -1,11 +1,12 @@
 import {describe, expect, it} from "vitest"
-import {createMemoryHistory, createRouter} from "vue-router"
+import {mount} from "@vue/test-utils"
+import {createI18n} from "vue-i18n"
+import {RouterLink, createMemoryHistory, createRouter} from "vue-router"
 
-import {i18nMount} from "../../../../../tests/unit/i18nMount"
 import ParentExecutionLink from "./ParentExecutionLink.vue"
 import type {Execution} from "../../../../stores/executions"
 
-const LINK = "[data-test=\'execution-parent-link\']"
+const LINK = "[data-test=\"execution-parent-link\"]"
 
 const execution = (overrides: Record<string, unknown> = {}) =>
     ({
@@ -25,7 +26,7 @@ async function mountLink(value: Execution) {
             {name: "current", path: "/current", component: {template: "<div />"}},
             {
                 name: "executions/update",
-                path: "/:tenant?/executions/:namespace/:flowId/:id",
+                path: "/executions/:namespace/:flowId/:id/:tab?",
                 component: {template: "<div />"},
             },
         ],
@@ -33,10 +34,18 @@ async function mountLink(value: Execution) {
     await router.push({name: "current"})
     await router.isReady()
 
-    return i18nMount(ParentExecutionLink, {
+    return mount(ParentExecutionLink, {
         props: {execution: value},
-        messages: {"parent execution": "Parent execution"},
-        global: {plugins: [router]},
+        global: {
+            plugins: [
+                router,
+                createI18n({
+                    legacy: false,
+                    locale: "en",
+                    messages: {en: {"parent execution": "Parent execution"}},
+                }),
+            ],
+        },
     })
 }
 
@@ -49,7 +58,15 @@ describe("ParentExecutionLink", () => {
 
         expect(parent.exists()).toBe(true)
         expect(parent.text()).toContain("Parent execution: parent-execution")
-        expect(parent.attributes("href")).toContain("/child-namespace/child-flow/parent-execution")
+        expect(wrapper.findComponent(RouterLink).props("to")).toEqual({
+            name: "executions/update",
+            params: {
+                tab: "overview",
+                id: "parent-execution",
+                namespace: "child-namespace",
+                flowId: "child-flow",
+            },
+        })
     })
 
     it("shouldLinkToTheUpstreamExecutionOfAFlowTriggerChild", async () => {

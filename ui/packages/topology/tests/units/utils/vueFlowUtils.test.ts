@@ -514,3 +514,81 @@ describe("generateGraph node draggability", () => {
         }
     })
 })
+
+describe("generateGraph collapsed nested clusters", () => {
+    const nestedClustersGraph = {
+        nodes: [
+            {
+                uid: "root.outer",
+                type: "io.kestra.core.models.hierarchies.GraphTask",
+                task: {id: "outer", type: "io.kestra.plugin.core.flow.Sequential"},
+            },
+            {
+                uid: "root.outer.inner",
+                type: "io.kestra.core.models.hierarchies.GraphTask",
+                task: {id: "inner", type: "io.kestra.plugin.core.flow.Sequential"},
+            },
+            {
+                uid: "root.outer.inner.task",
+                type: "io.kestra.core.models.hierarchies.GraphTask",
+                task: {id: "task", type: "io.kestra.plugin.core.log.Log"},
+            },
+        ],
+        edges: [
+            {source: "root.outer", target: "root.outer.inner", relation: {relationType: "SEQUENTIAL"}},
+            {source: "root.outer.inner", target: "root.outer.inner.task", relation: {relationType: "SEQUENTIAL"}},
+        ],
+        clusters: [
+            {
+                cluster: {
+                    uid: "cluster_root.outer",
+                    type: "io.kestra.core.models.hierarchies.GraphCluster",
+                    taskNode: {uid: "root.outer", task: {id: "outer", type: "io.kestra.plugin.core.flow.Sequential"}},
+                },
+                nodes: ["root.outer.inner"],
+                parents: [],
+            },
+            {
+                cluster: {
+                    uid: "cluster_root.outer.inner",
+                    type: "io.kestra.core.models.hierarchies.GraphCluster",
+                    taskNode: {uid: "root.outer.inner", task: {id: "inner", type: "io.kestra.plugin.core.flow.Sequential"}},
+                },
+                nodes: ["root.outer.inner.task"],
+                parents: ["cluster_root.outer"],
+            },
+        ],
+    } as unknown as VueFlowUtils.FlowGraph
+
+    test("does not render a nested cluster when it is absorbed by a collapsed parent", () => {
+        // Simulates the edge replacer state when the outer cluster is collapsed.
+        // Even if the inner cluster is marked as collapsed in the Set, it should not render
+        // because its edges are replaced to point to the parent collapsed node.
+        const edgeReplacer = {
+            "cluster_root.outer": "root.outer",
+            "cluster_root.outer.inner": "root.outer",
+            "root.outer.inner": "root.outer",
+            "root.outer.inner.task": "root.outer",
+        }
+
+        const hiddenNodes = [
+            "root.outer.inner", "cluster_root.outer.inner", "root.outer.inner.task", "cluster_root.outer",
+        ]
+
+        const collapsed = new Set(["root.outer", "root.outer.inner"])
+
+        const elements = VueFlowUtils.generateGraph(
+            "vfid", "flow", "ns", nestedClustersGraph, undefined, hiddenNodes, false, edgeReplacer, collapsed, [], false, true, false,
+        ) ?? []
+
+
+        const outerCollapsed = asElements(elements).find(e => e.id === "root.outer" && e.type === "collapsedcluster")
+        expect(outerCollapsed).toBeDefined()
+
+        const innerCollapsed = asElements(elements).find(e => e.id === "root.outer.inner" && e.type === "collapsedcluster")
+        expect(innerCollapsed).toBeUndefined()
+
+        const innerCluster = asElements(elements).find(e => e.id === "cluster_root.outer.inner")
+        expect(innerCluster).toBeUndefined()
+    })
+})

@@ -2563,6 +2563,7 @@
       "depends_on_placeholder": "Выберите tasks…",
       "depth_pill": "Глубина {depth}",
       "drag_reorder": "Перетащите для изменения порядка",
+      "drop_forbidden": "Нельзя перетащить сюда",
       "duplicate": "Дублировать",
       "empty_add_hint": "или нажмите /, чтобы найти tasks",
       "empty_add_lead": "Нажмите, чтобы добавить {label}",

@@ -189,6 +189,7 @@
   "block_editor|depends_on_placeholder": "5265a13f95f3",
   "block_editor|depth_pill": "c113889ab5d4",
   "block_editor|drag_reorder": "ef86a0ed9287",
+  "block_editor|drop_forbidden": "ed6d477c4d68",
   "block_editor|duplicate": "02cdaabfca80",
   "block_editor|empty_add_hint": "53b604aab702",
   "block_editor|empty_add_lead": "f29f2c3b6c62",

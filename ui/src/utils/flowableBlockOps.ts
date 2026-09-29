@@ -289,6 +289,90 @@ export function reorderAtPath(source: string, parentPath: string, fromIndex: num
     }
 }
 
+export type MoveRefusalReason = "cycle" | "section" | "lane"
+
+export type MoveVerdict = {allowed: true} | {allowed: false; reason: MoveRefusalReason}
+
+function sectionOfPath(path: string): string {
+    const [first] = flowYamlUtils.parsePath(path)
+    return String(first)
+}
+
+/** True when `candidatePath` is `ancestorPath` itself, or nested under it. */
+function isDescendantOrSelfPath(candidatePath: string, ancestorPath: string): boolean {
+    const candidateSegments = flowYamlUtils.parsePath(candidatePath)
+    const ancestorSegments = flowYamlUtils.parsePath(ancestorPath)
+    if (candidateSegments.length < ancestorSegments.length) return false
+    return ancestorSegments.every((segment, index) => segment === candidateSegments[index])
+}
+
+/** Renumbers `path` for the array shrinking by one at `removedParentPath[removedIndex]`, so a path through a later sibling of the removed block still resolves once that sibling has shifted down. */
+function pathAfterRemoval(path: string, removedParentPath: string, removedIndex: number): string {
+    const pathSegments = flowYamlUtils.parsePath(path)
+    const removedSegments = flowYamlUtils.parsePath(removedParentPath)
+    if (pathSegments.length <= removedSegments.length) return path
+    if (!removedSegments.every((segment, index) => segment === pathSegments[index])) return path
+
+    const siblingIndex = pathSegments[removedSegments.length]
+    if (typeof siblingIndex !== "number" || siblingIndex <= removedIndex) return path
+
+    const renumbered = [...pathSegments]
+    renumbered[removedSegments.length] = siblingIndex - 1
+    return flowYamlUtils.joinPath(renumbered)
+}
+
+export function listLengthAtPath(source: string, path: string): number {
+    try {
+        const parsed = flowYamlUtils.parse<Record<string, unknown>>(source)
+        const list = parsed ? getAtPath(parsed, path) : undefined
+        return Array.isArray(list) ? list.length : 0
+    } catch {
+        return 0
+    }
+}
+
+/** Refuses a cycle (into the block's own subtree), a cross-section move (by the path's first segment, so a task-level `errors` lane counts as `tasks` while the flow-level `errors` section does not), and any cross-parent move touching a Dag's `{task: ...}`-wrapped lane, since that needs `dependsOn` rewiring a drag-drop move does not attempt — including between two different Dags, where the shapes match but the ids don't. */
+export function canMoveBlockToPath(source: string, fromPath: string, toParentPath: string): MoveVerdict {
+    if (isDescendantOrSelfPath(toParentPath, fromPath)) return {allowed: false, reason: "cycle"}
+    if (sectionOfPath(fromPath) !== sectionOfPath(toParentPath)) return {allowed: false, reason: "section"}
+
+    const fromParentPath = pathParent(fromPath)
+    if (fromParentPath !== toParentPath && (isWrapperLane(source, fromParentPath) || isWrapperLane(source, toParentPath))) {
+        return {allowed: false, reason: "lane"}
+    }
+
+    return {allowed: true}
+}
+
+/** Extracts the block at `fromPath` and re-inserts it at index `toIndex` of `toParentPath`'s list, correcting for the same-parent case where the removal shifts every later index down by one; returns `source` unchanged when `canMoveBlockToPath` refuses the move. */
+export function moveBlockToPath(source: string, fromPath: string, toParentPath: string, toIndex: number): string {
+    if (!canMoveBlockToPath(source, fromPath, toParentPath).allowed) return source
+
+    const blockYaml = flowYamlUtils.extractBlockWithPath({source, path: fromPath})
+    if (!blockYaml) return source
+
+    const fromParentPath = pathParent(fromPath)
+    const fromIndexMatch = fromPath.match(/\[(\d+)\]$/)
+    const fromIndex = fromIndexMatch ? parseInt(fromIndexMatch[1], 10) : undefined
+
+    const withoutSource = deleteBlockAtPath(source, fromPath)
+    const renumberedToParentPath = fromIndex !== undefined
+        ? pathAfterRemoval(toParentPath, fromParentPath, fromIndex)
+        : toParentPath
+
+    let adjustedIndex = toIndex
+    if (fromParentPath === toParentPath && fromIndex !== undefined && fromIndex < toIndex) {
+        adjustedIndex = toIndex - 1
+    }
+    if (adjustedIndex < 0) adjustedIndex = 0
+
+    const destinationLength = listLengthAtPath(withoutSource, renumberedToParentPath)
+
+    return adjustedIndex >= destinationLength
+        ? flowYamlUtils.insertBlockWithPath({source: withoutSource, parentPath: renumberedToParentPath, newBlock: blockYaml, position: "after"})
+        : flowYamlUtils.insertBlockWithPath({source: withoutSource, parentPath: renumberedToParentPath, newBlock: blockYaml, refPath: adjustedIndex, position: "before"})
+}
+
 export function moveBlockAtPath(source: string, path: string, direction: "up" | "down"): string {
     const match = path.match(/^(.*)\[(\d+)\]$/)
     if (!match) return source

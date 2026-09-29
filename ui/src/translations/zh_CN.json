@@ -2563,6 +2563,7 @@
       "depends_on_placeholder": "选择 tasks…",
       "depth_pill": "深度 {depth}",
       "drag_reorder": "拖动以重新排序",
+      "drop_forbidden": "无法放置到此处",
       "duplicate": "复制",
       "empty_add_hint": "或按 / 搜索 task",
       "empty_add_lead": "点击添加 {label}",

@@ -43,14 +43,14 @@
             :currentPage="currentPage"
             :pageSize="currentSize"
             @page-changed="onPageChanged"
-            @sort-change="({prop, order}: {column: any; prop: string | null; order: string | null}) => { if (!props.embed) router.push({query: {...route.query, sort: `${prop}:${order === 'ascending' ? 'asc' : 'desc'}`}}) }"
-            @row-dblclick="(row: any) => router.push({name: dblClickRouteName, params: executionParams(row)})"
+            @sort-change="({prop, order}: {prop: string | null; order: string | null}) => { if (!props.embed) router.push({query: {...route.query, sort: `${prop}:${order === 'ascending' ? 'asc' : 'desc'}`}}) }"
+            @row-dblclick="(row: Execution) => router.push({name: dblClickRouteName, params: executionParams(row)})"
             :selectionMapper="selectionMapper"
             @ready="ready = true"
             :defaultSort="{prop: 'state.startDate', order: 'descending'}"
             :selectable="!hidden?.includes('selection') && canCheck"
             :no-data-text="noDataText ?? $t('no_results.executions')"
-            :rowKey="(row: any) => row.id"
+            :rowKey="(row: Execution) => row.id"
             :fitHeight="fitHeightResolved"
         >
             <template #navbar v-if="isDisplayedTop">
@@ -251,7 +251,7 @@
                         </code>
                     </template>
                     <template v-else-if="col.prop === 'trigger'">
-                        <TriggerAvatar :execution="scope.row" />
+                        <TriggerAvatar :execution="(scope.row as Execution)" />
                     </template>
                     <template v-else-if="col.prop === 'trigger.variables.executionId'">
                         <RouterLink
@@ -270,7 +270,7 @@
                         <span v-else>-</span>
                     </template>
                     <template v-else-if="cellComponents[col.prop]">
-                        <component :is="cellComponents[col.prop]" :execution="scope.row" />
+                        <component :is="cellComponents[col.prop]" :execution="(scope.row as Execution)" />
                     </template>
                 </template>
                 <template v-if="col.prop === 'taskRunList.taskId'" #header="scope">
@@ -475,7 +475,7 @@
     import {useFlowStore} from "../../stores/flow"
     import {useAuthStore} from "override/stores/auth"
     import {useMiscStore} from "override/stores/misc"
-    import {Label, useExecutionsStore} from "../../stores/executions"
+    import {Label, useExecutionsStore, type Execution} from "../../stores/executions"
     import {getExtraColumns, cellComponents, bulkActionComponents} from "override/components/executions/executionsExtensions"
 
     import {useExecutionFilter} from "../filter/configurations/executionFilter"
@@ -855,7 +855,7 @@
         })
     }
 
-    const executionParams = (row: any) => {
+    const executionParams = (row: Execution) => {
         return {
             namespace: row?.namespace,
             flowId: row?.flowId,

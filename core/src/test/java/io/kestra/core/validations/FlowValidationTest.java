@@ -448,6 +448,64 @@ class FlowValidationTest {
     }
 
     @Test
+    void outputLiteralNotMatchingType_failValidation() {
+        Flow flow = YamlParser.parse("""
+            id: test
+            namespace: unittest
+            tasks:
+              - id: hello
+                type: io.kestra.plugin.core.log.Log
+                message: hi
+            outputs:
+              - id: answer
+                type: INT
+                value: abc
+            """, Flow.class);
+
+        Optional<ConstraintViolationException> validate = modelValidator.isValid(flow);
+
+        assertThat(validate).isPresent();
+        assertThat(validate.get().getMessage()).contains("Invalid value for output 'answer'");
+        assertThat(validate.get().getMessage()).contains("is not a valid INT value");
+    }
+
+    @Test
+    void outputLiteralMatchingType_valid() {
+        Flow flow = YamlParser.parse("""
+            id: test
+            namespace: unittest
+            tasks:
+              - id: hello
+                type: io.kestra.plugin.core.log.Log
+                message: hi
+            outputs:
+              - id: answer
+                type: INT
+                value: 123
+            """, Flow.class);
+
+        assertThat(modelValidator.isValid(flow)).isEmpty();
+    }
+
+    @Test
+    void outputExpressionNotMatchingType_valid() {
+        Flow flow = YamlParser.parse("""
+            id: test
+            namespace: unittest
+            tasks:
+              - id: hello
+                type: io.kestra.plugin.core.log.Log
+                message: hi
+            outputs:
+              - id: answer
+                type: INT
+                value: "{{ outputs.hello.value }}"
+            """, Flow.class);
+
+        assertThat(modelValidator.isValid(flow)).isEmpty();
+    }
+
+    @Test
     void webhookBlankKey_failValidation() {
         Flow flow = YamlParser.parse("""
             id: test

@@ -9,7 +9,7 @@ const meta: Meta<typeof KsTag> = {
     tags: ["autodocs"],
     argTypes: {
         type: {control: "select", options: ["primary", "success", "info", "warning", "danger"]},
-        size: {control: "select", options: ["large", "default", "small"]},
+        size: {control: "select", options: ["large", "default", "small", "xs"]},
         effect: {control: "select", options: ["dark", "light", "plain"]},
         closable: {control: "boolean"},
         round: {control: "boolean"},
@@ -186,6 +186,7 @@ export const EditDynamically: Story = {
     }),
 }
 
+/** `xs` sits below Element Plus's smallest size, for dense listings where a `small` pill outweighs the row label beside it. */
 export const Sizes: Story = {
     render: () => ({
         components: {KsTag},
@@ -194,6 +195,7 @@ export const Sizes: Story = {
                 <ks-tag type="primary" size="large">Large</ks-tag>
                 <ks-tag type="primary">Default</ks-tag>
                 <ks-tag type="primary" size="small">Small</ks-tag>
+                <ks-tag type="primary" size="xs">Xs</ks-tag>
             </div>
         `,
     }),

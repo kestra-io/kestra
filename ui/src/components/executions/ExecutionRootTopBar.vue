@@ -153,7 +153,7 @@
             return "restart"
         }
 
-        if (State.getTerminatedStates().includes(current)) {
+        if (State.getNonRunningStates().includes(current)) {
             return "replay"
         }
 

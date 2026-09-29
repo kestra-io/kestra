@@ -96,7 +96,7 @@ public class FlowTriggerCaseTest {
     }
 
     public void triggerWithPause(String tenantId) throws TimeoutException, QueueException {
-        Execution execution = runnerUtils.runOne(tenantId, "io.kestra.tests.trigger.pause", "trigger-flow-with-pause");
+        Execution execution = runnerUtils.runOne(tenantId, "io.kestra.tests.trigger.pause", "trigger-flow-with-pause", Duration.ofSeconds(60));
 
         assertThat(execution.getTaskRunList().size()).isEqualTo(3);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);

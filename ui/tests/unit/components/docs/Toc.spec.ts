@@ -1,7 +1,7 @@
 import {describe, it, expect, vi, beforeEach, afterEach} from "vitest"
 import {nextTick, reactive} from "vue"
-import {createI18n} from "vue-i18n"
-import {shallowMount, VueWrapper} from "@vue/test-utils"
+import {VueWrapper} from "@vue/test-utils"
+import {i18nShallowMount} from "../../i18nMount"
 
 // Same fresh-tab-boot race as Docs.vue: Toc.vue used to fetch its sidebar structure
 // onMounted, which can fire before docStore.resourceUrlTemplate is initialized and
@@ -14,12 +14,10 @@ vi.mock("../../../../src/stores/doc", () => ({
 
 import Toc from "../../../../src/components/docs/Toc.vue"
 
-const i18n = createI18n({legacy: false, locale: "en", messages: {en: {search: "Search"}}, missingWarn: false, fallbackWarn: false})
-
 let wrapper: VueWrapper
 
 function mountToc() {
-    wrapper = shallowMount(Toc, {global: {plugins: [i18n], stubs: {KsAutocomplete: true}}})
+    wrapper = i18nShallowMount(Toc, {messages: {search: "Search"}, global: {stubs: {KsAutocomplete: true}}})
     return wrapper
 }
 

@@ -28,10 +28,10 @@
                     :label="column.label"
                 >
                     <template #default="{row}">
-                        <KsExecutionStatus v-if="column.type === 'status'" :status="get(row, column.prop)" size="small" />
-                        <KsDateAgo v-else-if="column.type === 'date'" :inverted="true" :date="get(row, column.prop)" />
-                        <Labels v-else-if="column.type === 'labels'" :labels="get(row, column.prop)" />
-                        <template v-else>{{ get(row, column.prop) }}</template>
+                        <KsExecutionStatus v-if="column.type === 'status'" :status="getPath<string>(row, column.prop)!" size="small" />
+                        <KsDateAgo v-else-if="column.type === 'date'" :inverted="true" :date="getPath(row, column.prop)" />
+                        <Labels v-else-if="column.type === 'labels'" :labels="getPath(row, column.prop)" />
+                        <template v-else>{{ getPath(row, column.prop) }}</template>
                     </template>
                 </KsTableColumn>
             </KsDataTable>
@@ -48,8 +48,7 @@
 <script lang="ts" setup>
     import {computed, defineAsyncComponent, ref, watch} from "vue"
     import {useRoute, useRouter} from "vue-router"
-    import get from "lodash/get"
-    import {KsExecutionStatus} from "@kestra-io/design-system"
+    import {KsExecutionStatus, getPath} from "@kestra-io/design-system"
     import Labels from "../layout/Labels.vue"
     import {useDrillDownStore} from "../../stores/drillDown"
     import {getDrillDownPreview} from "./composables/drillDownPreview"

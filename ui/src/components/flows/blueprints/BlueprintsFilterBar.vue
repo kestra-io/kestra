@@ -44,7 +44,7 @@
 <script setup lang="ts">
     import {computed} from "vue"
     import {KsFilter} from "@kestra-io/design-system"
-    import {useBlueprintFilter} from "../../filter/configurations"
+    import {useBlueprintFilter} from "../../filter/configurations/blueprintFilter"
     import type {BlueprintTag} from "../../../stores/blueprints"
 
     const props = defineProps<{

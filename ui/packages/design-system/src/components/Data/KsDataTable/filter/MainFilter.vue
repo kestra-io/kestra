@@ -385,12 +385,12 @@
     }
 
     .rules-pill-label {
-        color: var(--ks-content-link, var(--ks-text-link));
+        color: var(--ks-text-link);
         font-weight: 600;
     }
 
     :deep(.rules-pill-icon svg) {
-        color: var(--ks-content-link, var(--ks-text-link)) !important;
+        color: var(--ks-text-link) !important;
         font-size: var(--ks-font-size-md);
     }
 

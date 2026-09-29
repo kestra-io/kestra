@@ -14,6 +14,11 @@ export type AbstractFlow = {
     updated?: string;
     description?: string;
     inputs?: Array<InputObject>;
+    /**
+     * Output values available and exposes to other flows.
+     *
+     * Output values make information about the execution of your Flow available and expose for other Kestra flows to use. Output values are similar to return values in programming languages.
+     */
     outputs?: Array<Output>;
     /**
      * Whether the flow is disabled.
@@ -384,6 +389,10 @@ export type ApiTriggerAndState = {
  * Excludes internal scheduler fields (`tenantId`, `vnode`, `lastEventId`). The
  * scheduler's `type` is exposed as `kind` to not clash with the trigger definition's
  * `type` (the plugin class) when both are merged by API consumers.
+ *
+ *
+ * `disabled` is the runtime disable alone; a consumer deciding whether a trigger will fire has
+ * to read `sourceDisabled` as well, which mirrors the flow definition's own flag.
  */
 export type ApiTriggerState = {
     namespace: string;
@@ -395,6 +404,7 @@ export type ApiTriggerState = {
     backfill?: Backfill;
     stopAfter?: Array<StateType>;
     disabled?: boolean;
+    sourceDisabled?: boolean;
     locked?: boolean;
     workerId?: string;
     lastTriggeredDate?: string;
@@ -413,6 +423,9 @@ export type ArtefactDraft = {
 export type ArtefactKind = 'FLOW' | 'DASHBOARD' | 'APP';
 
 export type Asset = {
+    status?: string;
+    ttl?: string;
+    owner?: string;
     namespace?: string;
     id: string;
     type: string;
@@ -423,6 +436,10 @@ export type Asset = {
             [key: string]: unknown;
         };
     };
+    /**
+     * The day-2 actions offered on this asset, each backing onto a flow.
+     */
+    assetActions?: Array<FlowAction>;
 };
 
 export type AssetFailureBehavior = 'IGNORE' | 'FAIL' | 'WARN';
@@ -433,8 +450,17 @@ export type AssetIdentifier = {
 };
 
 export type AssetsDeclaration = {
+    /**
+     * Whether to auto-register assets referenced dynamically at runtime that are not statically declared in inputs or outputs.
+     */
     enableAuto?: PropertyBoolean;
+    /**
+     * The assets consumed as inputs.
+     */
     inputs?: PropertyListAssetIdentifier;
+    /**
+     * The assets produced as outputs.
+     */
     outputs?: PropertyListAsset;
     /**
      * Asset failure behavior
@@ -666,37 +692,37 @@ export type DocumentationWithSchema = {
 export type EditionProviderEdition = 'OSS' | 'EE';
 
 export type EventExecutionStatusEvent = {
-    data?: ExecutionStatusEvent;
-    id?: string;
-    name?: string;
-    comment?: string;
-    retry?: string;
+    data: ExecutionStatusEvent;
+    id?: string | null;
+    name?: string | null;
+    comment?: string | null;
+    retry?: string | null;
 };
 
 export type EventExecution = {
-    data?: Execution;
-    id?: string;
-    name?: string;
-    comment?: string;
-    retry?: string;
+    data: Execution;
+    id?: string | null;
+    name?: string | null;
+    comment?: string | null;
+    retry?: string | null;
 };
 
 export type EventFollowLogEvent = {
-    data?: FollowLogEvent;
-    id?: string;
-    name?: string;
-    comment?: string;
-    retry?: string;
+    data: FollowLogEvent;
+    id?: string | null;
+    name?: string | null;
+    comment?: string | null;
+    retry?: string | null;
 };
 
 export type EventObject = {
-    data?: {
+    data: {
         [key: string]: unknown;
     };
-    id?: string;
-    name?: string;
-    comment?: string;
-    retry?: string;
+    id?: string | null;
+    name?: string | null;
+    comment?: string | null;
+    retry?: string | null;
 };
 
 export type ExecutableTaskSubflowId = {
@@ -911,6 +937,12 @@ export type Flow = AbstractFlow & {
     description?: string;
     inputs?: Array<InputObject>;
     /**
+     * Output values available and exposes to other flows.
+     *
+     * Output values make information about the execution of your Flow available and expose for other Kestra flows to use. Output values are similar to return values in programming languages.
+     */
+    outputs?: Array<Output>;
+    /**
      * Whether the flow is disabled.
      *
      * A disabled flow does not run: its triggers are paused and new executions are rejected.
@@ -947,12 +979,6 @@ export type Flow = AbstractFlow & {
      */
     concurrency?: Concurrency;
     /**
-     * Output values available and exposes to other flows.
-     *
-     * Output values make information about the execution of your Flow available and expose for other Kestra flows to use. Output values are similar to return values in programming languages.
-     */
-    outputs?: Array<Output>;
-    /**
      * Retry
      *
      * Retry policy applied when the flow fails.
@@ -976,6 +1002,21 @@ export type Flow = AbstractFlow & {
     quotas?: Array<Quota>;
 };
 
+export type FlowAction = {
+    /**
+     * The namespace of the flow backing this action.
+     */
+    namespace: string;
+    /**
+     * The id of the flow backing this action.
+     */
+    flowId: string;
+    /**
+     * The label displayed on this action.
+     */
+    label?: string | null;
+};
+
 export type FlowControllerFlowWithDeprecatedTasks = {
     namespace?: string;
     flowId?: string;
@@ -989,6 +1030,11 @@ export type FlowForExecution = AbstractFlow & {
     revision?: number;
     description?: string;
     inputs?: Array<InputObject>;
+    /**
+     * Output values available and exposes to other flows.
+     *
+     * Output values make information about the execution of your Flow available and expose for other Kestra flows to use. Output values are similar to return values in programming languages.
+     */
     outputs?: Array<Output>;
     /**
      * Whether the flow is disabled.
@@ -1164,6 +1210,12 @@ export type FlowWithSource = Flow & AbstractFlow & {
     description?: string;
     inputs?: Array<InputObject>;
     /**
+     * Output values available and exposes to other flows.
+     *
+     * Output values make information about the execution of your Flow available and expose for other Kestra flows to use. Output values are similar to return values in programming languages.
+     */
+    outputs?: Array<Output>;
+    /**
      * Whether the flow is disabled.
      *
      * A disabled flow does not run: its triggers are paused and new executions are rejected.
@@ -1188,12 +1240,6 @@ export type FlowWithSource = Flow & AbstractFlow & {
      * Limits the number of concurrent executions of the flow.
      */
     concurrency?: Concurrency;
-    /**
-     * Output values available and exposes to other flows.
-     *
-     * Output values make information about the execution of your Flow available and expose for other Kestra flows to use. Output values are similar to return values in programming languages.
-     */
-    outputs?: Array<Output>;
     sla?: Array<Sla>;
     /**
      * Quotas evaluated before the flow is executed (EE only).
@@ -1689,6 +1735,7 @@ export type Plugin = {
     storages?: Array<PluginPluginElementMetadata>;
     secrets?: Array<PluginPluginElementMetadata>;
     taskRunners?: Array<PluginPluginElementMetadata>;
+    assets?: Array<PluginPluginElementMetadata>;
     apps?: Array<PluginPluginElementMetadata>;
     appBlocks?: Array<PluginPluginElementMetadata>;
     charts?: Array<PluginPluginElementMetadata>;
@@ -1954,7 +2001,7 @@ export type QueryFilter = {
     children?: Array<QueryFilter>;
 };
 
-export type QueryFilterField = 'q' | 'scope' | 'namespace' | 'kind' | 'POLICY_SCOPE' | 'ENFORCEMENT' | 'labels' | 'tags' | 'metadata' | 'flowId' | 'flowRevision' | 'id' | 'assetId' | 'type' | 'action' | 'created' | 'updated' | 'startDate' | 'endDate' | 'expirationDate' | 'state' | 'status' | 'SEVERITY' | 'ASSIGNEE' | 'email' | 'timeRange' | 'parentId' | 'triggerExecutionId' | 'triggerId' | 'triggerState' | 'executionId' | 'taskId' | 'taskRunId' | 'attemptNumber' | 'childFilter' | 'workerId' | 'existingOnly' | 'userId' | 'resources' | 'details' | 'level' | 'path' | 'parentPath' | 'version' | 'enabled' | 'username' | 'name' | 'groupList' | 'external_id' | 'expired_at' | 'instance_owner' | 'source' | 'locked' | 'lastTriggeredDate' | 'nextExecutionDate' | 'artifactId';
+export type QueryFilterField = 'q' | 'scope' | 'namespace' | 'kind' | 'POLICY_SCOPE' | 'ENFORCEMENT' | 'labels' | 'tags' | 'metadata' | 'assetExpiry' | 'flowId' | 'flowRevision' | 'id' | 'assetId' | 'type' | 'action' | 'created' | 'updated' | 'startDate' | 'endDate' | 'expirationDate' | 'state' | 'status' | 'SEVERITY' | 'ASSIGNEE' | 'email' | 'timeRange' | 'parentId' | 'triggerExecutionId' | 'triggerId' | 'triggerState' | 'executionId' | 'taskId' | 'taskRunId' | 'attemptNumber' | 'childFilter' | 'workerId' | 'existingOnly' | 'userId' | 'resources' | 'details' | 'level' | 'path' | 'parentPath' | 'version' | 'enabled' | 'username' | 'name' | 'groupList' | 'external_id' | 'expired_at' | 'instance_owner' | 'source' | 'locked' | 'lastTriggeredDate' | 'nextExecutionDate' | 'artifactId';
 
 export type QueryFilterLogical = 'and' | 'or';
 
@@ -2190,6 +2237,9 @@ export type Task = {
     runIf?: string;
     allowWarning?: boolean;
     taskCache?: Cache;
+    /**
+     * Assets this task consumes as inputs or produces as outputs, for lineage tracking and the asset graph (Enterprise Edition). A flow declaring this property on a task is rejected in the open-source edition.
+     */
     assets?: AssetsDeclaration | null;
 };
 
@@ -2475,19 +2525,19 @@ export type ApiTaskRunWritable = {
 };
 
 export type EventExecutionStatusEventWritable = {
-    data?: ExecutionStatusEventWritable;
-    id?: string;
-    name?: string;
-    comment?: string;
-    retry?: string;
+    data: ExecutionStatusEventWritable;
+    id?: string | null;
+    name?: string | null;
+    comment?: string | null;
+    retry?: string | null;
 };
 
 export type EventExecutionWritable = {
-    data?: ExecutionWritable;
-    id?: string;
-    name?: string;
-    comment?: string;
-    retry?: string;
+    data: ExecutionWritable;
+    id?: string | null;
+    name?: string | null;
+    comment?: string | null;
+    retry?: string | null;
 };
 
 export type ExecutionWritable = {
@@ -10993,7 +11043,7 @@ export type CreateBackfillErrors = {
      */
     409: ProblemDetail;
     /**
-     * If the backfill end date is not after its start date
+     * If the backfill end date is not after its start date, or if the trigger is not a schedule trigger
      */
     422: ProblemDetail;
     /**

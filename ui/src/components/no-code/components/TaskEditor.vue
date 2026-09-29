@@ -59,9 +59,7 @@
     import FieldNavBreadcrumb from "./FieldNavBreadcrumb.vue"
     import {useFieldNavigation} from "../utils/useFieldNavigation"
     import {NoCodeElement, Schemas} from "../utils/types"
-    import get from "lodash/get"
-    import set from "lodash/set"
-    import cloneDeep from "lodash/cloneDeep"
+    import {getPath, setPath, cloneDeep, isDeepEqual} from "@kestra-io/design-system"
     import {
         FIELDNAME_INJECTION_KEY, PARENT_PATH_INJECTION_KEY,
         BLOCK_SCHEMA_PATH_INJECTION_KEY,
@@ -78,7 +76,6 @@
     import {usePlaygroundStore} from "../../../stores/playground"
     import {getValueAtJsonPath, resolve$ref} from "../../../utils/utils"
     import PlaygroundRunTaskButton from "../../inputs/PlaygroundRunTaskButton.vue"
-    import isEqual from "lodash/isEqual"
     import {useMiscStore} from "override/stores/misc"
 
     defineOptions({
@@ -134,11 +131,11 @@
     )
 
     const frameValue = computed({
-        get: () => (navCurrent.value ? get(taskModel.value, navCurrent.value.path) : undefined),
+        get: () => (navCurrent.value ? getPath(taskModel.value, navCurrent.value.path) : undefined),
         set: (value) => {
             if (!navCurrent.value) return
             const next = cloneDeep(toRaw(taskModel.value) ?? {})
-            set(next as Record<string, any>, navCurrent.value.path, value)
+            setPath(next as Record<string, any>, navCurrent.value.path, value)
             onTaskInput(next)
         },
     })
@@ -385,7 +382,7 @@
                 return schemas.every((s) => s.properties[key] !== undefined)
             }).reduce((acc, key) => {
                 if (schemas.every((s) => {
-                    return isEqual(schemas[0].properties[key], s.properties[key])
+                    return isDeepEqual(schemas[0].properties[key], s.properties[key])
                 })) {
                     acc[key] = schemas[0].properties[key]
                 }
@@ -434,7 +431,10 @@
     }
 
     function onTaskTypeSelect() {
+        // The properties of the old type cannot carry over, but the id is not one of them: dropping
+        // it leaves a task the backend cannot even name in a validation error.
         const value: PartialNoCodeElement = {
+            ...(taskModel.value?.id ? {id: taskModel.value.id} : {}),
             type: selectedTaskType.value ?? "",
         }
 

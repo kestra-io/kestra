@@ -1,26 +1,9 @@
 <template>
-    <KsDialog
-        :modelValue="shortcutsOpen"
-        :title="$t('block_editor.shortcuts.title')"
-        data-test="block-editor-shortcuts"
-        @update:modelValue="(open?: boolean) => emit('update:shortcutsOpen', open ?? false)"
-    >
-        <div class="block-editor-shortcuts">
-            <div v-for="group in shortcutGroups" :key="group.group" class="block-editor-shortcuts-col">
-                <span class="block-editor-shortcuts-heading">{{ $t(`block_editor.shortcuts.group_${group.group}`) }}</span>
-                <div v-for="binding in group.bindings" :key="binding.id" class="block-editor-shortcut">
-                    <span class="block-editor-shortcut-keys">
-                        <kbd v-for="key in displayKeys(binding.keys)" :key="key">{{ key }}</kbd>
-                        <template v-if="binding.alt?.length">
-                            <span class="block-editor-shortcut-or">{{ $t('block_editor.shortcuts.or') }}</span>
-                            <kbd v-for="key in displayKeys(binding.alt)" :key="key">{{ key }}</kbd>
-                        </template>
-                    </span>
-                    <span>{{ $t(binding.i18nKey) }}</span>
-                </div>
-            </div>
-        </div>
-    </KsDialog>
+    <BlockShortcutsDialog
+        :open="shortcutsOpen"
+        :groups="shortcutGroups"
+        @update:open="(open: boolean) => emit('update:shortcutsOpen', open)"
+    />
 
     <button
         type="button"
@@ -42,25 +25,19 @@
         </span>
     </div>
 
-    <Transition name="block-editor-undo">
-        <div v-if="undoState" class="block-editor-undo" role="status" aria-live="polite">
-            <span class="block-editor-undo-label">{{ undoState.label }}</span>
-            <button
-                type="button"
-                class="block-editor-undo-btn"
-                data-test="block-editor-undo"
-                @click="emit('undo')"
-            >
-                {{ $t("block_editor.undo") }}
-            </button>
-        </div>
-    </Transition>
+    <UndoToast
+        :state="undoState"
+        style="--undo-toast-offset: calc(var(--status-bar-height) + var(--ks-spacing-3))"
+        @undo="emit('undo')"
+    />
 </template>
 
 <script setup lang="ts">
     import Keyboard from "vue-material-design-icons/Keyboard.vue"
     import {displayKeys, type FooterHint} from "./shortcutHints"
     import type {BlockEditorKeyBinding, BlockEditorKeymapGroup} from "./keymap"
+    import UndoToast from "./UndoToast.vue"
+    import BlockShortcutsDialog from "./BlockShortcutsDialog.vue"
 
     defineProps<{
         shortcutsOpen: boolean
@@ -78,59 +55,6 @@
 </script>
 
 <style scoped lang="scss">
-    .block-editor-shortcuts {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: var(--ks-spacing-5);
-    }
-
-    .block-editor-shortcuts-col {
-        display: flex;
-        flex-direction: column;
-        gap: var(--ks-spacing-2);
-    }
-
-    .block-editor-shortcuts-heading {
-        font-size: var(--ks-font-size-xs);
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.04em;
-        color: var(--ks-text-secondary);
-    }
-
-    .block-editor-shortcut {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: var(--ks-spacing-3);
-        font-size: var(--ks-font-size-sm);
-        color: var(--ks-text-primary);
-    }
-
-    .block-editor-shortcut-keys {
-        display: inline-flex;
-        gap: var(--ks-spacing-1);
-        flex-shrink: 0;
-    }
-
-    .block-editor-shortcut-keys kbd {
-        font-family: var(--ks-font-family-mono);
-        font-size: var(--ks-font-size-xs);
-        background: var(--ks-bg-tag-inactive);
-        border: 1px solid var(--ks-border-subtle);
-        border-radius: var(--ks-radius-sm);
-        padding: 1px var(--ks-spacing-1);
-        color: var(--ks-text-secondary);
-        min-width: 18px;
-        text-align: center;
-    }
-
-    .block-editor-shortcut-or {
-        font-size: var(--ks-font-size-xs);
-        color: var(--ks-text-muted);
-        padding: 0 1px;
-    }
-
     .block-editor-footer {
         position: absolute;
         left: 0;
@@ -235,64 +159,4 @@
         color: var(--ks-text-secondary);
     }
 
-    .block-editor-undo {
-        position: absolute;
-        bottom: calc(var(--status-bar-height) + var(--ks-spacing-3));
-        left: 50%;
-        transform: translateX(-50%);
-        z-index: 11;
-        display: flex;
-        align-items: center;
-        gap: var(--ks-spacing-3);
-        padding: var(--ks-spacing-2) var(--ks-spacing-2) var(--ks-spacing-2) var(--ks-spacing-4);
-        background: var(--ks-bg-elevated);
-        border: 1px solid var(--ks-border-default);
-        border-radius: var(--ks-radius-lg);
-        box-shadow: var(--ks-shadow-sm);
-        font-size: var(--ks-font-size-sm);
-        color: var(--ks-text-primary);
-    }
-
-    .block-editor-undo-label {
-        white-space: nowrap;
-    }
-
-    .block-editor-undo-btn {
-        border: none;
-        background: transparent;
-        color: var(--ks-text-link);
-        font-weight: 600;
-        font-size: var(--ks-font-size-sm);
-        cursor: pointer;
-        padding: var(--ks-spacing-1) var(--ks-spacing-2);
-        border-radius: var(--ks-radius-sm);
-        transition: background-color 0.12s;
-    }
-
-    .block-editor-undo-btn:hover {
-        background: var(--ks-bg-hover);
-    }
-
-    .block-editor-undo-btn:focus-visible {
-        outline: 2px solid var(--ks-border-focus);
-        outline-offset: 1px;
-    }
-
-    .block-editor-undo-enter-active,
-    .block-editor-undo-leave-active {
-        transition: opacity 0.18s ease, transform 0.18s ease;
-    }
-
-    .block-editor-undo-enter-from,
-    .block-editor-undo-leave-to {
-        opacity: 0;
-        transform: translate(-50%, 8px);
-    }
-
-    @media (prefers-reduced-motion: reduce) {
-        .block-editor-undo-enter-active,
-        .block-editor-undo-leave-active {
-            transition: none;
-        }
-    }
 </style>

@@ -1,6 +1,7 @@
 import {describe, test, expect, vi, beforeEach} from "vitest"
-import {mount, flushPromises} from "@vue/test-utils"
-import {createI18n} from "vue-i18n"
+import {flushPromises} from "@vue/test-utils"
+import {i18nMount} from "../../i18nMount"
+
 import KestraDesignSystem from "@kestra-io/design-system"
 import {loadLanguageOnDemand} from "@kestra-io/design-system/shiki"
 import SchemaToCode from "../../../../src/components/plugins/schema/SchemaToCode.vue"
@@ -10,8 +11,7 @@ vi.mock("@kestra-io/design-system/shiki", async () => ({
     loadLanguageOnDemand: vi.fn(),
 }))
 
-const i18n = createI18n({legacy: false, locale: "en", messages: {en: {}}})
-const globalConfig = {plugins: [i18n, KestraDesignSystem]}
+const globalConfig = {plugins: [KestraDesignSystem]}
 
 const loaded = ["yaml"]
 
@@ -25,7 +25,7 @@ const highlighter = {
     },
 }
 
-const mountCode = (language: string) => mount(SchemaToCode, {
+const mountCode = (language: string) => i18nMount(SchemaToCode, {
     props: {highlighter: highlighter as never, code: "SELECT 1", language},
     global: globalConfig,
 })

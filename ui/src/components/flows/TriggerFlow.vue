@@ -28,7 +28,7 @@
             <template #header>
                 <span v-html="$t('execute the flow', {id: flowId})" />
             </template>
-            <FlowRun ref="flowRunRef" :embed="true" :replaySubmit="submit" @execution-trigger="handleExecutionStart" :redirect="!playgroundStore.enabled" />
+            <FlowRun ref="flowRunRef" :embed="true" :renderLabels="renderLabels" :replaySubmit="submit" @execution-trigger="handleExecutionStart" :redirect="!playgroundStore.enabled" />
             <template #footer>
                 <FlowRunActions :flowRun="flowRunRef" />
             </template>
@@ -111,12 +111,14 @@
         flowSource?: string | null
         submit?: ((options: ReplaySubmitOptions) => void | Promise<void>) | null
         lazy?: boolean
+        renderLabels?: string[]
     }>(), {
         disabled: false,
         type: "primary",
         flowSource: null,
         submit: null,
         lazy: false,
+        renderLabels: undefined,
     })
 
     const {t} = useI18n({useScope: "global"})

@@ -1,11 +1,7 @@
 import {describe, test, expect} from "vitest"
-import {mount} from "@vue/test-utils"
-import {createI18n} from "vue-i18n"
-import KestraDesignSystem from "../../../../src/index"
 import FilterChip from "../../../../src/components/Data/KsDataTable/filter/layout/FilterChip.vue"
 import {Comparators, type AppliedFilter} from "../../../../src/components/Data/KsDataTable/filter/utils/filterTypes"
-
-const i18n = createI18n({legacy: false, locale: "en", messages: {en: {}}})
+import {i18nMount} from "../../i18nMount"
 
 const timeRangeChip = (value: string) => ({
     id: "f1",
@@ -15,9 +11,8 @@ const timeRangeChip = (value: string) => ({
 } as AppliedFilter)
 
 const mountChip = (value: string) =>
-    mount(FilterChip, {
+    i18nMount(FilterChip, {
         props: {filter: timeRangeChip(value)},
-        global: {plugins: [i18n, KestraDesignSystem]},
     })
 
 describe("FilterChip relative date labels", () => {

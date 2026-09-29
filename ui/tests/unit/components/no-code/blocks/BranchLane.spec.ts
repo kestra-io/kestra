@@ -1,15 +1,11 @@
 import {describe, test, expect, beforeEach} from "vitest"
-import {mount} from "@vue/test-utils"
 import {createPinia, setActivePinia} from "pinia"
-import {createI18n} from "vue-i18n"
 import KestraDesignSystem from "@kestra-io/design-system"
 import BranchLane from "../../../../../src/components/no-code/blocks/BranchLane.vue"
+import {i18nMount} from "../../../i18nMount"
 
 const globalConfig = {
-    plugins: [
-        createI18n({legacy: false, locale: "en", fallbackWarn: false, missingWarn: false}),
-        KestraDesignSystem,
-    ],
+    plugins: [KestraDesignSystem],
     stubs: {
         FlowableClusterCard: {
             name: "FlowableClusterCard",
@@ -31,7 +27,7 @@ describe("BranchLane", () => {
     beforeEach(() => setActivePinia(createPinia()))
 
     test("forwards update-depends-on emitted by a nested flowable cluster", async () => {
-        const wrapper = mount(BranchLane, {
+        const wrapper = i18nMount(BranchLane, {
             global: globalConfig,
             props: {
                 laneName: "tasks",
@@ -52,7 +48,7 @@ describe("BranchLane", () => {
     })
 
     test("forwards update-depends-on from a direct DAG dependsOn editor", async () => {
-        const wrapper = mount(BranchLane, {
+        const wrapper = i18nMount(BranchLane, {
             global: globalConfig,
             props: {
                 laneName: "tasks",

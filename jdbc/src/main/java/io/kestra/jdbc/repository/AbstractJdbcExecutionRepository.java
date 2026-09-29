@@ -1,5 +1,6 @@
 package io.kestra.jdbc.repository;
 
+import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.function.Function;
@@ -34,6 +35,7 @@ import io.kestra.executor.ExecutionStateStore;
 import io.kestra.executor.ExecutorContext;
 import io.kestra.jdbc.services.JdbcFilterService;
 import io.kestra.plugin.core.dashboard.data.Executions;
+import io.kestra.plugin.core.dashboard.data.IExecutions;
 
 import io.micronaut.context.event.ApplicationEventPublisher;
 import io.micronaut.data.model.Pageable;
@@ -540,7 +542,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
             .getDslContextWrapper()
             .transactionResult(configuration ->
             {
-                DSLContext context = DSL.using(configuration);
+                DSLContext context = QueryTimeout.apply(configuration, descriptors.getQueryTimeout());
 
                 Map<String, ? extends ColumnDescriptor<Executions.Fields>> columnsWithoutDate = descriptors.getColumns().entrySet().stream()
                     .filter(entry -> entry.getValue().getField() == null || !dateFields().contains(entry.getValue().getField()))
@@ -590,7 +592,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
         boolean numeratorFilter) {
         return this.jdbcRepository.getDslContextWrapper().transactionResult(configuration ->
         {
-            DSLContext context = DSL.using(configuration);
+            DSLContext context = QueryTimeout.apply(configuration, dataFilter.getQueryTimeout());
             ColumnDescriptor<Executions.Fields> columnDescriptor = dataFilter.getColumns();
             String columnKey = this.getFieldsMapping().get(columnDescriptor.getField());
             Field<?> field = columnToField(columnDescriptor, getFieldsMapping());
@@ -648,6 +650,9 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
     protected <F extends Enum<F>> SelectConditionStep<Record> where(SelectConditionStep<Record> selectConditionStep, JdbcFilterService jdbcFilterService, List<AbstractFilter<F>> filters,
         Map<F, String> fieldsMapping) {
         if (!ListUtils.isEmpty(filters)) {
+            // state_duration holds milliseconds, while a DURATION filter carries a duration (`PT1S`, or a number of seconds)
+            filters = DurationFilters.normalize(filters, IExecutions.DURATION_FIELDS, Duration::toMillis);
+
             // Check if descriptors contain a filter of type Executions.Fields.STATE and apply the custom filter "statesFilter" if present
             selectConditionStep = applyStateFilters(filters, selectConditionStep);
 

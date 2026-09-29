@@ -5,6 +5,7 @@ import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 
+import io.kestra.webserver.configuration.CookiesConfiguration;
 import io.kestra.webserver.configuration.WebserverConfiguration;
 
 import io.micronaut.http.HttpHeaders;
@@ -31,7 +32,11 @@ class UiIndexServiceTest {
     private static final String COOKIE_NAME = "CSRF-TOKEN";
 
     private static UiIndexService service(String basePath, WebserverConfiguration configuration) {
-        return new UiIndexService(basePath, configuration, Optional.empty(), Optional.empty(), Optional.empty());
+        return new UiIndexService(basePath, configuration, autoCookiesConfiguration(), Optional.empty(), Optional.empty(), Optional.empty());
+    }
+
+    private static CookiesConfiguration autoCookiesConfiguration() {
+        return new CookiesConfiguration(null);
     }
 
     private static CsrfConfiguration csrfConfiguration() {
@@ -127,7 +132,7 @@ class UiIndexServiceTest {
         @SuppressWarnings("unchecked")
         CsrfTokenGenerator<HttpRequest<?>> generator = mock(CsrfTokenGenerator.class);
         when(generator.generateCsrfToken(any())).thenReturn("to<k>&en");
-        UiIndexService service = new UiIndexService(null, emptyConfiguration(), Optional.of(csrfConfiguration()), Optional.of(generator), Optional.empty());
+        UiIndexService service = new UiIndexService(null, emptyConfiguration(), autoCookiesConfiguration(), Optional.of(csrfConfiguration()), Optional.of(generator), Optional.empty());
 
         // When
         MutableHttpResponse<byte[]> response = service.render(get("/ui/")).orElseThrow();
@@ -143,7 +148,7 @@ class UiIndexServiceTest {
         @SuppressWarnings("unchecked")
         CsrfTokenGenerator<HttpRequest<?>> generator = mock(CsrfTokenGenerator.class);
         when(generator.generateCsrfToken(any())).thenReturn("token");
-        UiIndexService service = new UiIndexService(null, emptyConfiguration(), Optional.of(csrfConfiguration()), Optional.of(generator), Optional.empty());
+        UiIndexService service = new UiIndexService(null, emptyConfiguration(), autoCookiesConfiguration(), Optional.of(csrfConfiguration()), Optional.of(generator), Optional.empty());
 
         // When - the template is rendered twice from the same immutable source
         service.render(get("/ui/")).orElseThrow();
@@ -160,7 +165,7 @@ class UiIndexServiceTest {
         @SuppressWarnings("unchecked")
         CsrfTokenGenerator<HttpRequest<?>> generator = mock(CsrfTokenGenerator.class);
         CsrfTokenValidator<HttpRequest<?>> validator = validatorAccepting(true);
-        UiIndexService service = new UiIndexService(null, emptyConfiguration(), Optional.of(csrfConfiguration()), Optional.of(generator), Optional.of(validator));
+        UiIndexService service = new UiIndexService(null, emptyConfiguration(), autoCookiesConfiguration(), Optional.of(csrfConfiguration()), Optional.of(generator), Optional.of(validator));
 
         // When
         MutableHttpResponse<byte[]> response = service
@@ -179,7 +184,7 @@ class UiIndexServiceTest {
         // Given - the check is skipped when no validator bean exists
         @SuppressWarnings("unchecked")
         CsrfTokenGenerator<HttpRequest<?>> generator = mock(CsrfTokenGenerator.class);
-        UiIndexService service = new UiIndexService(null, emptyConfiguration(), Optional.of(csrfConfiguration()), Optional.of(generator), Optional.empty());
+        UiIndexService service = new UiIndexService(null, emptyConfiguration(), autoCookiesConfiguration(), Optional.of(csrfConfiguration()), Optional.of(generator), Optional.empty());
 
         // When
         MutableHttpResponse<byte[]> response = service
@@ -198,7 +203,7 @@ class UiIndexServiceTest {
         CsrfTokenGenerator<HttpRequest<?>> generator = mock(CsrfTokenGenerator.class);
         when(generator.generateCsrfToken(any())).thenReturn("fresh-token");
         CsrfTokenValidator<HttpRequest<?>> validator = validatorAccepting(false);
-        UiIndexService service = new UiIndexService(null, emptyConfiguration(), Optional.of(csrfConfiguration()), Optional.of(generator), Optional.of(validator));
+        UiIndexService service = new UiIndexService(null, emptyConfiguration(), autoCookiesConfiguration(), Optional.of(csrfConfiguration()), Optional.of(generator), Optional.of(validator));
 
         // When
         MutableHttpResponse<byte[]> response = service

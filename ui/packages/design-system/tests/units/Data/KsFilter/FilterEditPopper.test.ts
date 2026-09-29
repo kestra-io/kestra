@@ -1,7 +1,7 @@
 import {describe, test, expect} from "vitest"
-import {mount, flushPromises} from "@vue/test-utils"
-import {createI18n} from "vue-i18n"
-import KestraDesignSystem from "../../../../src/index"
+import {flushPromises} from "@vue/test-utils"
+import {i18nMount} from "../../i18nMount"
+
 import FilterEditPopper from "../../../../src/components/Data/KsDataTable/filter/layout/FilterEditPopper.vue"
 import FilterSelect from "../../../../src/components/Data/KsDataTable/filter/layout/FilterSelect.vue"
 import FilterMultiSelect from "../../../../src/components/Data/KsDataTable/filter/layout/FilterMultiSelect.vue"
@@ -9,9 +9,6 @@ import FilterDateTime from "../../../../src/components/Data/KsDataTable/filter/l
 import FilterComparatorSelect from "../../../../src/components/Data/KsDataTable/filter/layout/FilterComparatorSelect.vue"
 import FilterFooter from "../../../../src/components/Data/KsDataTable/filter/layout/FilterFooter.vue"
 import {Comparators, type AppliedFilter, type FilterKeyConfig} from "../../../../src/components/Data/KsDataTable/filter/utils/filterTypes"
-
-const i18n = createI18n({legacy: false, locale: "en", messages: {en: {}}})
-const globalConfig = {plugins: [i18n, KestraDesignSystem]}
 
 const levelKey: FilterKeyConfig = {
     key: "level",
@@ -41,9 +38,8 @@ const labelsKey: FilterKeyConfig = {
 }
 
 const mountPopper = async (filter: AppliedFilter) => {
-    const wrapper = mount(FilterEditPopper, {
+    const wrapper = i18nMount(FilterEditPopper, {
         props: {filter, filterKey: levelKey, showComparatorSelection: true},
-        global: globalConfig,
     })
     await flushPromises()
     return wrapper
@@ -118,7 +114,7 @@ describe("FilterEditPopper time range custom mode", () => {
     }
 
     const mountTimeRangePopper = async () => {
-        const wrapper = mount(FilterEditPopper, {
+        const wrapper = i18nMount(FilterEditPopper, {
             props: {
                 filter: {
                     id: "f1",
@@ -131,7 +127,6 @@ describe("FilterEditPopper time range custom mode", () => {
                 },
                 filterKey: timeRangeKey,
             },
-            global: globalConfig,
         })
         await flushPromises()
         return wrapper
@@ -180,7 +175,7 @@ describe("FilterEditPopper date field", () => {
     }
 
     test("emits update when a date is picked (live apply)", async () => {
-        const wrapper = mount(FilterEditPopper, {
+        const wrapper = i18nMount(FilterEditPopper, {
             props: {
                 filter: {
                     id: "f1",
@@ -194,7 +189,6 @@ describe("FilterEditPopper date field", () => {
                 filterKey: expirationKey,
                 showComparatorSelection: true,
             },
-            global: globalConfig,
         })
         await flushPromises()
 
@@ -213,7 +207,7 @@ describe("FilterEditPopper date field", () => {
 
 describe("FilterEditPopper key-value comparator changes", () => {
     test("normalizes repeated keys before emitting a single-value comparator update", async () => {
-        const wrapper = mount(FilterEditPopper, {
+        const wrapper = i18nMount(FilterEditPopper, {
             props: {
                 filter: {
                     id: "f1",
@@ -235,7 +229,6 @@ describe("FilterEditPopper key-value comparator changes", () => {
                 filterKey: labelsKey,
                 showComparatorSelection: true,
             },
-            global: globalConfig,
         })
         await flushPromises()
 
@@ -266,9 +259,8 @@ const timeRangeKey: FilterKeyConfig = {
 }
 
 const mountTimeRange = async (filter: AppliedFilter) => {
-    const wrapper = mount(FilterEditPopper, {
+    const wrapper = i18nMount(FilterEditPopper, {
         props: {filter, filterKey: timeRangeKey},
-        global: globalConfig,
     })
     await flushPromises()
     return wrapper

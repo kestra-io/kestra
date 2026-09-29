@@ -9,10 +9,14 @@ import org.junit.jupiter.params.provider.CsvSource;
 
 import io.kestra.core.models.flows.FlowScope;
 
+import io.micronaut.http.HttpHeaders;
+import io.micronaut.http.HttpRequest;
 import io.micronaut.http.exceptions.HttpStatusException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 class RequestUtilsTest {
     @ParameterizedTest
@@ -94,6 +98,42 @@ class RequestUtilsTest {
         );
 
         assertTrue(exception.getMessage().contains("Invalid FlowScope value"));
+    }
+
+    @Test
+    void isSecureWhenRequestItselfIsSecure() {
+        assertThat(RequestUtils.isSecure(request(true, null, null))).isTrue();
+    }
+
+    @Test
+    void isSecureWhenPlainHttpWithNoForwardedHeader() {
+        assertThat(RequestUtils.isSecure(request(false, null, null))).isFalse();
+    }
+
+    @Test
+    void isSecureWhenXForwardedProtoIsHttps() {
+        assertThat(RequestUtils.isSecure(request(false, "https", null))).isTrue();
+    }
+
+    @Test
+    void isSecureWhenXForwardedProtoIsHttp() {
+        assertThat(RequestUtils.isSecure(request(false, "http", null))).isFalse();
+    }
+
+    @Test
+    void isSecureWhenForwardedHeaderProtoIsHttps() {
+        assertThat(RequestUtils.isSecure(request(false, null, "proto=https"))).isTrue();
+    }
+
+    private static HttpRequest<?> request(boolean secure, String xForwardedProto, String forwarded) {
+        HttpRequest<?> request = mock(HttpRequest.class);
+        when(request.isSecure()).thenReturn(secure);
+        HttpHeaders headers = mock(HttpHeaders.class);
+        when(headers.contains(HttpHeaders.FORWARDED)).thenReturn(forwarded != null);
+        when(headers.getAll(HttpHeaders.FORWARDED)).thenReturn(forwarded != null ? List.of(forwarded) : List.of());
+        when(headers.get("X-Forwarded-Proto")).thenReturn(xForwardedProto);
+        when(request.getHeaders()).thenReturn(headers);
+        return request;
     }
 
 }

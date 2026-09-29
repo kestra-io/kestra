@@ -1,5 +1,5 @@
-import {afterAll, beforeEach, describe, expect, it, vi} from "vitest"
-import {getTheme, getSelectedTheme, switchTheme, type SelectedTheme, flatten, executionVars, getDateGrouping} from "../../../src/utils/utils"
+import {afterAll, afterEach, beforeEach, describe, expect, it, vi} from "vitest"
+import {getTheme, getSelectedTheme, switchTheme, type SelectedTheme, flatten, executionVars, getDateGrouping, downloadUrl} from "../../../src/utils/utils"
 
 function mockSystemPrefersDark(prefersDark: boolean) {
     vi.stubGlobal("matchMedia", vi.fn().mockImplementation((query: string) => ({
@@ -13,6 +13,21 @@ function mockSystemPrefersDark(prefersDark: boolean) {
         dispatchEvent: () => false,
     })))
 }
+
+describe("downloadUrl()", () => {
+    afterEach(() => vi.restoreAllMocks())
+
+    // https://github.com/kestra-io/kestra/issues/17322
+    it("does not set a target attribute", () => {
+        const createElementSpy = vi.spyOn(document, "createElement")
+
+        downloadUrl("blob:http://localhost/fake", "flow.yaml")
+
+        const link = createElementSpy.mock.results[0]?.value as HTMLAnchorElement
+        expect(link.getAttribute("download")).toBe("flow.yaml")
+        expect(link.getAttribute("target")).toBeNull()
+    })
+})
 
 describe("theme utils", () => {
     beforeEach(() => {

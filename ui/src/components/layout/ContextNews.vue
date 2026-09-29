@@ -49,8 +49,8 @@
         lastNewsReadDate.value = feeds.value[0].publicationDate
     })
 
-    const scrollableElement = computed(() => contextInfoRef.value?.contentRef || null)
-    useScrollMemory(ref("context-panel-news"), scrollableElement as any)
+    const scrollableElement = computed<HTMLElement | null>(() => contextInfoRef.value?.contentRef ?? null)
+    useScrollMemory(ref("context-panel-news"), scrollableElement)
 </script>
 
 <style scoped lang="scss">

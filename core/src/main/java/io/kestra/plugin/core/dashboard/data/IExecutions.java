@@ -5,6 +5,7 @@ import java.util.ArrayList;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.dashboards.filters.AbstractFilter;
@@ -21,6 +22,12 @@ import io.kestra.core.models.dashboards.filters.NotIn;
 import io.kestra.core.models.dashboards.filters.Or;
 
 public interface IExecutions extends IData<IExecutions.Fields> {
+    Set<Fields> DURATION_FIELDS = Set.of(Fields.DURATION);
+
+    @Override
+    default Set<Fields> durationFields() {
+        return DURATION_FIELDS;
+    }
 
     default List<AbstractFilter<Fields>> whereWithGlobalFilters(List<QueryFilter> filters, ZonedDateTime startDate, ZonedDateTime endDate, List<AbstractFilter<Fields>> where) {
         List<AbstractFilter<Fields>> updatedWhere = where != null ? new ArrayList<>(where) : new ArrayList<>();

@@ -1,6 +1,5 @@
 import {h, ref, render, watch, type Component, type Ref, type VNode} from "vue"
 import * as monaco from "monaco-editor/editor/editor.api"
-import uniqBy from "lodash/uniqBy"
 import {STATES} from "../utils/state"
 import {OVERFLOW_WIDGETS_ID} from "../utils/monacoSetup"
 import {DATE_PICKER_SUGGESTION_LABEL} from "./useEditorDatePicker"
@@ -11,8 +10,15 @@ const SASH_DRAG_DISTANCE = 80
 const PLUGIN_FQCN = /^[a-z][\w$]*(?:\.[\w$]+)+$/
 
 // Monaco suffixes the row aria-label with ", <kind>" (and ", docs: …" once resolved), so read the rendered label.
-function suggestionLabel(row: HTMLElement): string | undefined {
+export function suggestionLabel(row: HTMLElement): string | undefined {
     const rendered = row.querySelector(".monaco-icon-name-container")?.textContent?.trim()
+    // Rejoins what the app's `splitPluginTypeLabel` split apart, so the icon resolves from the fully qualified name.
+    if (rendered && !row.classList.contains("string-label")) {
+        const packageName = row.querySelector(".details-label")?.textContent?.trim()
+        if (packageName && PLUGIN_FQCN.test(packageName)) {
+            return `${packageName}.${rendered}`
+        }
+    }
     return rendered || row.getAttribute("aria-label")?.split(",")[0].trim()
 }
 
@@ -43,7 +49,11 @@ export function useSuggestWidgetIcons(ctx: SuggestWidgetIconsContext) {
     }
 
     function replaceRowsIcons(nodes: HTMLElement[]) {
-        for (const node of uniqBy(nodes, n => n.id)) {
+        const seenIds = new Set<string>()
+        for (const node of nodes) {
+            if (seenIds.has(node.id)) continue
+            seenIds.add(node.id)
+
             const completionValue = suggestionLabel(node)
             if (!completionValue || node.getAttribute("data-index") === null) continue
 

@@ -72,14 +72,13 @@
 
 <script setup lang="ts">
     import {computed, ref, watch, nextTick} from "vue"
-    import {rowKey} from "@kestra-io/design-system"
+    import {rowKey, debounce} from "@kestra-io/design-system"
     import {useI18n} from "vue-i18n"
     import {DeleteOutline} from "../../utils/icons"
 
     import InputText from "../inputs/InputText.vue"
     import TaskExpression from "./TaskExpression.vue"
     import Add from "../Add.vue"
-    import debounce from "lodash/debounce"
     import Wrapper from "./Wrapper.vue"
     import {useBlockComponent} from "./useBlockComponent"
 

@@ -8,7 +8,7 @@
             @click="toggle(item.label)"
         >
             <span :style="swatchStyle(item.color)" />
-            {{ displayLabel(item.label) }} ({{ formatCount(item.count) }})
+            {{ categoryLabel(item.label) }} ({{ formatCount(item.count) }})
         </span>
 
         <KsTooltip v-if="hidden.length" placement="top">
@@ -21,7 +21,7 @@
                         @click="toggle(item.label)"
                     >
                         <span :style="swatchStyle(item.color)" />
-                        <span style="flex:1;">{{ displayLabel(item.label) }}</span>
+                        <span style="flex:1;">{{ categoryLabel(item.label) }}</span>
                         <span>{{ formatCount(item.count) }}</span>
                     </span>
                 </div>
@@ -36,7 +36,7 @@
             @click="toggle(durationLabel)"
         >
             <span class="line" />
-            {{ displayLabel(durationLabel) }}
+            {{ categoryLabel(durationLabel) }}
         </span>
     </div>
 </template>
@@ -44,7 +44,7 @@
 <script setup lang="ts">
     import {computed, ref} from "vue"
     import type {EChartsType} from "echarts/core"
-    import {KsTooltip} from "@kestra-io/design-system"
+    import {categoryLabel, KsTooltip} from "@kestra-io/design-system"
 
     interface ChartLegendItem {
         label: string;
@@ -94,9 +94,6 @@
     }
 
     const formatCount = (count: number) => props.formatValue?.(count) ?? String(count)
-
-    const displayLabel = (label: string) =>
-        label.replace(/\w\S*/g, (word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
 
     const swatchStyle = (color: string) => ({
         width: "10px",

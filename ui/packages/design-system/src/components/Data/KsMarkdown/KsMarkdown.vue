@@ -422,19 +422,24 @@
         const hl = await getShiki()
         if (!hl) return
 
+        // Fetch every missing grammar at once: awaiting them per block serialized the
+        // requests for a document mixing languages.
+        const loaded = new Set(hl.getLoadedLanguages() as string[])
+        const missing = [...new Set(blocks.map((block) => block.lang))].filter((lang) => lang && !loaded.has(lang))
+        const unavailable = new Set<string>()
+        await Promise.all(missing.map(async (lang) => {
+            if (!await loadLanguageOnDemand(hl, lang)) unavailable.add(lang)
+        }))
+
+        // Snapshot after the awaits above, so the synchronous loop below cannot write back a
+        // map that a concurrent call has already superseded.
         const updated = new Map(codeHighlights.value)
 
         for (const block of blocks) {
             const key = `${block.lang}::${block.value}`
             if (updated.has(key)) continue
 
-            let lang = block.lang
-            if (lang && !(hl.getLoadedLanguages() as string[]).includes(lang)) {
-                // Not pre-registered: fetch it from Shiki's full bundle, or render as plain text.
-                if (!await loadLanguageOnDemand(hl, lang)) {
-                    lang = ""
-                }
-            }
+            const lang = unavailable.has(block.lang) ? "" : block.lang
 
             try {
                 const html = hl.codeToHtml(block.value, {

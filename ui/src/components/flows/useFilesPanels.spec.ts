@@ -97,4 +97,15 @@ describe("useFilesPanels close handler", () => {
 
         expect(panels.value[0].activeTab.uid).toBe("code-b.txt")
     })
+
+    it("should keep the active tab when a background tab is closed", () => {
+        const {panels, closeTab} = mountWithTabs(["a.txt", "b.txt", "c.txt"])
+        // a.txt is active by default; close background tab c.txt.
+
+        closeTab({path: "c.txt"})
+
+        expect(panels.value[0].activeTab.uid).toBe("code-a.txt")
+        expect(openPaths(panels)).toEqual(["code-a.txt", "code-b.txt"])
+    })
+
 })

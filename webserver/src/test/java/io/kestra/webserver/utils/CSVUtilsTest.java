@@ -143,6 +143,68 @@ class CSVUtilsTest {
     }
 
     @Test
+    void shouldWriteTheProvidedHeaderWhenThereIsNoRecord() {
+        // Given
+        List<Map<String, Object>> input = List.of();
+
+        var byteArrayOutputStream = new ByteArrayOutputStream();
+
+        // When
+        toCSV(new OutputStreamWriter(byteArrayOutputStream), input, List.of("a-header", "b-header"));
+
+        // Then
+        assertThat(byteArrayOutputStream.toString()).isEqualTo("a-header,b-header\r\n");
+    }
+
+    @Test
+    void shouldKeepTheProvidedHeaderOrderRatherThanTheRecordOne() {
+        // Given
+        List<Map<String, Object>> input = List.of(
+            new LinkedHashMap<>() {
+                {
+                    put("a-header", "a-value");
+                    put("b-header", "b-value");
+                }
+            }
+        );
+
+        var byteArrayOutputStream = new ByteArrayOutputStream();
+
+        // When
+        toCSV(new OutputStreamWriter(byteArrayOutputStream), input, List.of("b-header", "a-header"));
+
+        // Then
+        assertThat(byteArrayOutputStream.toString()).isEqualTo("b-header,a-header\r\nb-value,a-value\r\n");
+    }
+
+    @Test
+    void shouldAlignValuesWithTheProvidedHeaderWhenRecordsHaveDifferentKeys() {
+        // Given
+        List<Map<String, Object>> input = List.of(
+            new LinkedHashMap<>() {
+                {
+                    put("a-header", "a-value-1");
+                    put("extra-header", "extra-value-1");
+                    put("b-header", "b-value-1");
+                }
+            },
+            new LinkedHashMap<>() {
+                {
+                    put("a-header", "a-value-2");
+                }
+            }
+        );
+
+        var byteArrayOutputStream = new ByteArrayOutputStream();
+
+        // When
+        toCSV(new OutputStreamWriter(byteArrayOutputStream), input, List.of("a-header", "b-header"));
+
+        // Then
+        assertThat(byteArrayOutputStream.toString()).isEqualTo("a-header,b-header\r\na-value-1,b-value-1\r\na-value-2,\r\n");
+    }
+
+    @Test
     void shouldEmitNothingWhenThereIsNoRecord() {
         // Given
         Flux<Map<String, Object>> input = Flux.empty();

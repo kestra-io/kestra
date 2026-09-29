@@ -1,7 +1,8 @@
 import {afterEach, beforeEach, describe, expect, test, vi} from "vitest"
-import {flushPromises, mount} from "@vue/test-utils"
+import {flushPromises} from "@vue/test-utils"
+import {i18nMount} from "../../i18nMount"
+
 import {createPinia, setActivePinia} from "pinia"
-import {createI18n} from "vue-i18n"
 import KestraDesignSystem, {KsMessage} from "@kestra-io/design-system"
 import InputsForm from "../../../../src/components/inputs/InputsForm.vue"
 
@@ -43,23 +44,15 @@ vi.mock("../../../../src/utils/utils", () => ({
 }))
 
 const globalConfig = {
-    plugins: [
-        createI18n({
-            legacy: false,
-            locale: "en",
-            fallbackWarn: false,
-            missingWarn: false,
-            messages: {en: {copied: "Copied", copy_to_clipboard: "Copy to clipboard"}},
-        }),
-        KestraDesignSystem,
-    ],
+    plugins: [KestraDesignSystem],
 }
 
 const flow = {namespace: "io.kestra.tests", id: "my_flow"} as any
 const initialInputs = [{id: "region", type: "STRING", required: false}] as any
 
 function mountForm() {
-    return mount(InputsForm, {
+    return i18nMount(InputsForm, {
+        messages: {copied: "Copied", copy_to_clipboard: "Copy to clipboard"},
         global: globalConfig,
         shallow: true,
         props: {flow, initialInputs},

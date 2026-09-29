@@ -101,7 +101,7 @@
         if (!props.group) return
         groupedElements.value = {}
         elementsData.value = {}
-        const plugins = await pluginsStore.listWithSubgroup({includeDeprecated: false})
+        const plugins = await pluginsStore.listWithSubgroup()
         const matchingPlugin = plugins?.find((p: any) => p.group === props.group)
         if (!matchingPlugin) return
         plugin.value = matchingPlugin

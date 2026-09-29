@@ -3,7 +3,7 @@ import type {GraphNode, GraphEdge, Elements} from "@vue-flow/core"
 import * as dagre from "dagre"
 import * as Utils from "./utils"
 import {CLUSTER_PREFIX, NODE_SIZES} from "./constants"
-import isEqual from "lodash/isEqual"
+import {isDeepEqual} from "@kestra-io/design-system"
 
 const TRIGGERS_NODE_UID = "root.Triggers"
 
@@ -13,12 +13,28 @@ export enum BranchType {
     AFTER_EXECUTION = "AFTER_EXECUTION",
 }
 
+export interface GraphTaskRun {
+    id: string;
+    taskId: string;
+    parentTaskRunId?: string;
+    state: {
+        current: string;
+        duration?: string | null;
+        histories?: {date: string; state: string}[];
+    };
+    outputs?: {executionId?: string} & Record<string, unknown>;
+    attempts?: unknown[];
+    value?: string;
+}
+
 /** Only what the graph reads off an execution; the package has no `@kestra-io/kestra-sdk` dependency. */
 export interface GraphExecution {
     id?: string;
+    state?: {current?: string};
+    taskRunList?: GraphTaskRun[];
 }
 
-interface MinimalNode {
+export interface MinimalNode {
     unused?: boolean;
     executionId?: string;
     branchType?: BranchType;
@@ -28,8 +44,8 @@ interface MinimalNode {
     task?: {
         id?: string;
         type: string;
-        namespace: string;
-        flowId: string;
+        namespace?: string;
+        flowId?: string;
         disabled?: boolean;
     };
 }
@@ -42,8 +58,8 @@ interface Cluster {
         uid: string;
         task: {
             type: string;
-            namespace: string;
-            flowId: string;
+            namespace?: string;
+            flowId?: string;
         };
     };
     branchType: BranchType;
@@ -64,14 +80,20 @@ export interface FlowGraph {
     clusters: {
         cluster: Cluster;
         nodes: string[];
-        parents: {
-            uid: string;
-        }[];
+        parents?: string[];
+        start?: string;
+        end?: string;
     }[];
     edges: FlowGraphEdge[];
 }
 
 type EdgeReplacer = Record<string, string>;
+
+export type NodeDimensionsFn = (
+    node: MinimalNode,
+    widthFn: (node: MinimalNode) => number,
+    heightFn: (node: MinimalNode) => number,
+) => {width: number; height: number}
 
 export function predecessorsEdge(vueFlowId: string, nodeUid: string): GraphEdge[] {
     const {getEdges} = useVueFlow(vueFlowId)
@@ -144,17 +166,13 @@ export function linkedElements(vueFlowId: string, nodeUid: string) {
 }
 
 export function generateDagreGraph(
-    flowGraph: {nodes: any; clusters: any; edges: any},
+    flowGraph: FlowGraph,
     hiddenNodes: string[],
     isHorizontal: boolean,
     edgeReplacer: EdgeReplacer,
     collapsed: Set<string>,
     clusterToNode: MinimalNode[],
-    getNodeDimensions: (
-        node: MinimalNode,
-        widthFn: (node: MinimalNode) => number,
-        heightFn: (node: MinimalNode) => number,
-    ) => {width: number; height: number} = (node, widthFn, heightFn) => ({
+    getNodeDimensions: NodeDimensionsFn = (node, widthFn, heightFn) => ({
         width: widthFn(node),
         height: heightFn(node),
     }),
@@ -171,14 +189,14 @@ export function generateDagreGraph(
 
     for (const cluster of flowGraph.clusters || []) {
         const nodeUid = cluster.cluster.uid.replace(CLUSTER_PREFIX, "")
-        if (collapsed.has(nodeUid)) {
+        const absorbedByParent = edgeReplacer[cluster.cluster.uid] && edgeReplacer[cluster.cluster.uid] !== nodeUid
+        
+        if (collapsed.has(nodeUid) && !absorbedByParent) {
             const node = {uid: nodeUid, type: "collapsedcluster"}
             const dimensions = getNodeDimensions(node, getNodeWidth, getNodeHeight)
             dagreGraph.setNode(nodeUid, dimensions)
             clusterToNode.push(node)
-            continue
-        }
-        if (!edgeReplacer[cluster.cluster.uid]) {
+        } else if (!edgeReplacer[cluster.cluster.uid]) {
             dagreGraph.setNode(cluster.cluster.uid, {clusterLabelPos: "top"})
             for (const node of cluster.nodes || []) {
                 if (!hiddenNodes.includes(node)) {
@@ -186,7 +204,7 @@ export function generateDagreGraph(
                 }
             }
         }
-        if (cluster.parents) {
+        if (cluster.parents && !absorbedByParent) {
             const nodeChild = edgeReplacer[cluster.cluster.uid]
                 ? edgeReplacer[cluster.cluster.uid]
                 : cluster.cluster.uid
@@ -329,12 +347,19 @@ export function nodeColor(node: MinimalNode, collapsed: Set<string>) {
     return "default"
 }
 
+export interface AddTaskTarget {
+    refId: string
+    position: "before" | "after"
+    /** Both ends of the edge, when it is a `dependsOn` relation inside a Dag. */
+    dagDependency?: {fromId?: string; toId?: string}
+}
+
 export function haveAdd(
     edge: FlowGraphEdge,
     nodeByUid: Record<string, MinimalNode>,
     clustersRootTaskUids: string[],
     readOnlyUidPrefixes: string[],
-) {
+): AddTaskTarget | undefined {
     if (
         readOnlyUidPrefixes.some(
             (prefix) => edge.source.startsWith(prefix) && edge.target.startsWith(prefix),
@@ -362,18 +387,39 @@ export function haveAdd(
     ) {
         return undefined
     }
+    // A Dag orders its tasks through `dependsOn`, so an insertion there has to know both ends of
+    // the edge it landed on, not just the neighbour it is placed next to.
+    const isDagLane = nodeByUid[targetNodeClusterUid]?.task?.type?.endsWith(".Dag") === true
+    const dagTaskIdAt = (uid: string): string | undefined => {
+        const node = nodeByUid[uid]
+        if (!node) return undefined
+        if (node.type.endsWith("GraphClusterRoot") || node.type.endsWith("GraphClusterEnd")) return undefined
+        const parts = uid.split(".")
+        parts.pop()
+        return parts.join(".") === targetNodeClusterUid ? Utils.afterLastDot(uid) : undefined
+    }
+    const withDag = (target: AddTaskTarget): AddTaskTarget => {
+        if (!isDagLane) return target
+        const fromId = dagTaskIdAt(edge.source)
+        const toId = dagTaskIdAt(edge.target)
+        return fromId || toId ? {...target, dagDependency: {fromId, toId}} : target
+    }
+
     if (targetNode.type.endsWith("GraphClusterRoot")) {
-        return [clusterRootTaskId, "before"]
+        return clusterRootTaskId ? {refId: clusterRootTaskId, position: "before"} : undefined
     }
     const sourceIsEndOfCluster = nodeByUid[edge.source].type.endsWith("GraphClusterEnd")
     if (!sourceIsEndOfCluster && targetNode.type.endsWith("GraphClusterEnd")) {
-        return [Utils.afterLastDot(edge.source), "after"]
+        const refId = Utils.afterLastDot(edge.source)
+        return refId ? withDag({refId, position: "after"}) : undefined
     }
     if (sourceIsEndOfCluster) {
         const dotSplitSource = edge.source.split(".")
-        return [dotSplitSource[dotSplitSource.length - 2], "after"]
+        const refId = dotSplitSource[dotSplitSource.length - 2]
+        return refId ? {refId, position: "after"} : undefined
     }
-    return [Utils.afterLastDot(edge.target), "before"]
+    const refId = Utils.afterLastDot(edge.target)
+    return refId ? withDag({refId, position: "before"}) : undefined
 }
 
 export function getEdgeColor(
@@ -426,11 +472,7 @@ export function generateGraph(
     isReadOnly: boolean,
     isAllowedEdit: boolean,
     enableSubflowInteraction: boolean,
-    getNodeDimensions: (
-        node: MinimalNode,
-        widthFn: (node: MinimalNode) => number,
-        heightFn: (node: MinimalNode) => number,
-    ) => {width: number; height: number} = (node, widthFn, heightFn) => ({
+    getNodeDimensions: NodeDimensionsFn = (node, widthFn, heightFn) => ({
         width: widthFn(node),
         height: heightFn(node),
     }),
@@ -497,7 +539,8 @@ export function generateGraph(
     )
 
     for (const cluster of clusters) {
-        if (!edgeReplacer[cluster.cluster.uid] && !collapsed.has(cluster.cluster.uid)) {
+        const clusterNodeUid = cluster.cluster.uid.replace(CLUSTER_PREFIX, "")
+        if (!edgeReplacer[cluster.cluster.uid] && !collapsed.has(clusterNodeUid)) {
             if (
                 cluster.cluster.taskNode?.task?.type === "io.kestra.core.tasks.flows.Dag"
             ) {
@@ -518,6 +561,9 @@ export function generateGraph(
                 id: clusterUid,
                 type: "cluster",
                 parentNode: parentNode,
+                // Without this the cluster falls back to vue-flow's global `nodesDraggable`, and
+                // dropping one on an edge emits a move for whatever its uid ends with.
+                draggable: false,
                 position: getNodePosition(
                     dagreNode,
                     parentNode ? dagreGraph.node(parentNode) : undefined,
@@ -537,13 +583,19 @@ export function generateGraph(
                 data: {
                     collaspsible: true,
                     color: clusterColor,
+                    // The triggers box is the only place a trigger can be added from the canvas:
+                    // triggers are not tasks, so no edge `+` ever targets them.
+                    canAddTrigger:
+                        clusterUid === CLUSTER_PREFIX + TRIGGERS_NODE_UID &&
+                        Boolean(isAllowedEdit) &&
+                        !isReadOnly,
                     taskNode: cluster.cluster.taskNode,
                     unused: cluster.cluster.taskNode
                         ? nodeByUid[cluster.cluster.taskNode.uid].unused
                         : false,
                 },
                 class: `ks-topology-${clusterColor}-border`,
-            } as any)
+            })
         }
     }
 
@@ -589,6 +641,8 @@ export function generateGraph(
                 sourcePosition: isHorizontal ? Position.Right : Position.Bottom,
                 targetPosition: isHorizontal ? Position.Left : Position.Top,
                 parentNode: cluster ? cluster.uid : undefined,
+                // The drag is the browser's own (HTML5), like the No-code block cards, so vue-flow
+                // must not also reposition the node under the pointer.
                 draggable: false,
                 data: {
                     node: node,
@@ -603,8 +657,16 @@ export function generateGraph(
                     isReadOnly: isReadOnlyTask,
                     executionId: node.executionId,
                     unused: node.unused,
+                    isMovable: Boolean(isAllowedEdit) && !isReadOnlyTask && isTaskNode(node),
                 },
-                class: node.type === "collapsedcluster" ? `ks-topology-${color}-border` : "",
+                class: [
+                    node.type === "collapsedcluster" ? `ks-topology-${color}-border` : "",
+                    // vue-flow adds `nopan` to nodes it drags itself; it no longer does, and without
+                    // it a drag starting on a card pans the canvas instead.
+                    Boolean(isAllowedEdit) && !isReadOnlyTask && isTaskNode(node) ? "nopan" : "",
+                ]
+                    .filter(Boolean)
+                    .join(" "),
             })
         }
     }
@@ -666,6 +728,7 @@ export function generateGraph(
 
     return elements
 }
+
 
 export function isClusterRootOrEnd(node: MinimalNode) {
     return [
@@ -744,7 +807,7 @@ export function areTasksIdenticalInGraphUntilTask(
         currentRootTaskNodes = currentRootTaskNodes.flatMap((node) =>
             getNextTaskNodes(currentGraph, node),
         )
-        if (currentRootTaskNodes.some((node: any) => node.task.id === taskId)) return true
+        if (currentRootTaskNodes.some((node) => node.task?.id === taskId)) return true
 
         previousRootTaskNodes = previousRootTaskNodes.flatMap((node) =>
             getNextTaskNodes(previousGraph, node),
@@ -755,15 +818,15 @@ export function areTasksIdenticalInGraphUntilTask(
             const prevTaskNode = previousRootTaskNodes.find(
                 (taskNode) => taskNode.task?.id === currentTaskNode.task?.id,
             )
-            const prevTaskValue = (prevTaskNode?.task as Record<string, any>) ?? {}
-            const currentTaskValue = (currentTaskNode.task as Record<string, any>) ?? {}
+            const prevTaskValue = prevTaskNode?.task ?? {}
+            const currentTaskValue = currentTaskNode.task ?? {}
             if (
                 !prevTaskNode ||
                 Object.keys(prevTaskValue).length !== Object.keys(currentTaskValue).length
             ) {
                 return false
             }
-            if (!isEqual(prevTaskValue, currentTaskValue)) return false
+            if (!isDeepEqual(prevTaskValue, currentTaskValue)) return false
         }
     } while (previousRootTaskNodes.length && currentRootTaskNodes.length && failIndex-- > 0)
 

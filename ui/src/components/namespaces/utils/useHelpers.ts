@@ -18,7 +18,7 @@ export interface Tab {
     name: string;
     title: string;
     component: Component;
-    props?: Record<string, any>;
+    props?: Record<string, unknown>;
     count?: number;
     fullContainer?: boolean;
 }

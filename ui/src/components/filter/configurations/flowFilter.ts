@@ -51,7 +51,7 @@ export const useFlowFilter = (): ComputedRef<FilterConfiguration> => {
                         },
                         searchable: true,
                     },
-                ] : []) as any,
+                ] : []) as FilterConfiguration["keys"],
                 {
                     key: "scope",
                     label: t("filter.scope_flow.label"),

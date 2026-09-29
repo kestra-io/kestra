@@ -130,7 +130,7 @@
 
     import {useMcpStore, type McpTool, type McpToolAnnotations} from "../../../../stores/mcp"
 
-    import {useMcpToolsFilter} from "../../../filter/configurations"
+    import {useMcpToolsFilter} from "../../../filter/configurations/mcpToolsFilter"
     import {useTableColumns, type ColumnConfig} from "@kestra-io/design-system"
     import {useToolFlowCreation} from "../useToolFlowCreation"
 

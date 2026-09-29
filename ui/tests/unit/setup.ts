@@ -21,6 +21,18 @@ enableAutoUnmount(afterEach)
 // finishes first is torn down mid-import and the run reports unhandled EnvironmentTeardownErrors.
 afterEach(() => designSystemI18nReady())
 
+// A Vue warning inlines the offending value twice over, in the trace serialising every prop and in
+// a prop type-check message, so a megabyte-sized value costs CI 10 to 24 minutes of log (#19566).
+const WARN_LIMIT = 2000
+const capWarn = (text: string, part: string) =>
+    text.length > WARN_LIMIT ? `${text.slice(0, WARN_LIMIT)}… (${part} truncated)` : text
+config.global.config = {
+    ...config.global.config,
+    warnHandler: (message, _instance, trace) => {
+        console.warn(`[Vue warn]: ${capWarn(message, "message")}${trace ? `\n${capWarn(trace, "trace")}` : ""}`)
+    },
+}
+
 // Most unit tests mount a component in isolation, without installing vue-router,
 // so a literal <router-link> in its template can never resolve and spams
 // "[Vue warn]: Failed to resolve component: router-link" on every mount.

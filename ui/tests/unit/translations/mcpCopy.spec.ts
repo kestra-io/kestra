@@ -3,6 +3,7 @@ import {describe, expect, it} from "vitest"
 
 import en from "../../../src/translations/en.json"
 
+/** Built by hand rather than through `i18nMount`, since this spec never mounts a component and only calls `t()` directly. */
 const i18n = createI18n({
     legacy: false,
     locale: "en",

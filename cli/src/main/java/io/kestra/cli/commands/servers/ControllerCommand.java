@@ -10,6 +10,7 @@ import io.kestra.core.utils.Await;
 import io.kestra.core.worker.Controller;
 
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 
@@ -23,7 +24,7 @@ public class ControllerCommand extends AbstractServerCommand {
     private List<String> ignoreQueueRecords = Collections.emptyList();
 
     @Inject
-    private Controller controller;
+    private Provider<Controller> controller;
 
     @Inject
     private IgnoreExecutionService ignoreExecutionService;
@@ -41,7 +42,7 @@ public class ControllerCommand extends AbstractServerCommand {
 
         super.call();
 
-        controller.start();
+        controller.get().start();
 
         Await.await().forever().until(() -> !this.applicationContext.isRunning());
 

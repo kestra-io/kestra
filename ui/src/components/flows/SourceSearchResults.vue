@@ -298,7 +298,7 @@
 <script setup lang="ts">
     import {ref, computed, watch, nextTick, type Component} from "vue"
     import {useRoute} from "vue-router"
-    import _escape from "lodash/escape"
+    import {escapeHtml} from "@kestra-io/design-system"
     import {splitTranslation} from "../../utils/splitTranslation"
     import Lock from "vue-material-design-icons/Lock.vue"
     import FindReplace from "vue-material-design-icons/FindReplace.vue"
@@ -513,18 +513,18 @@
             .map((part) => {
                 const marked = part.match(/^\[mark\]([\s\S]*)\[\/mark\]$/)
                 if (!marked) {
-                    return _escape(part)
+                    return escapeHtml(part)
                 }
                 const old = marked[1]
                 if (!props.replaceContext) {
-                    return `<mark>${_escape(old)}</mark>`
+                    return `<mark>${escapeHtml(old)}</mark>`
                 }
                 const next = inlineReplacement(old, props.replaceContext)
-                const removed = `<del class="result-match-old">${_escape(old)}</del>`
+                const removed = `<del class="result-match-old">${escapeHtml(old)}</del>`
                 if (next === "") {
                     return removed
                 }
-                return `${removed}<span class="result-match-arrow" aria-hidden="true"> → </span><ins class="result-match-new">${_escape(next)}</ins>`
+                return `${removed}<span class="result-match-arrow" aria-hidden="true"> → </span><ins class="result-match-new">${escapeHtml(next)}</ins>`
             })
             .join("")
     }

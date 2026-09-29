@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.commons.lang3.time.DurationFormatUtils;
@@ -52,6 +53,10 @@ public class WorkerTriggerProcessor extends AbstractWorkerJobProcessor<WorkerTri
     private final RunContextInitializer runContextInitializer;
     private final Duration pollingTriggerTimeout;
 
+    // Whoever gets here first reports the trigger: the evaluation, or the worker giving up on it.
+    private final AtomicBoolean reported = new AtomicBoolean(false);
+    private volatile ConditionContext conditionContext;
+
     public WorkerTriggerProcessor(String workerGroup,
         MetricRegistry metricRegistry,
         WorkerSecurityService workerSecurityService,
@@ -96,6 +101,8 @@ public class WorkerTriggerProcessor extends AbstractWorkerJobProcessor<WorkerTri
                 ConditionContext conditionContext = runContextInitializer.forWorker(workerTrigger);
                 TriggerContext triggerContext = TriggerContext.of(workerTrigger);
                 RunContext runContext = conditionContext.getRunContext();
+                // Published for onTimeout(), which reports the trigger from the worker thread when this one is stuck.
+                this.conditionContext = conditionContext;
                 try {
 
                     Logs.logTrigger(
@@ -107,20 +114,19 @@ public class WorkerTriggerProcessor extends AbstractWorkerJobProcessor<WorkerTri
                     );
 
                     if (workerTrigger.getTrigger() instanceof PollingTriggerInterface pollingTrigger) {
-                        WorkerTriggerCallable workerCallable = new WorkerTriggerCallable(runContext, conditionContext, triggerContext, workerTrigger, pollingTrigger, pollingTriggerTimeout);
+                        WorkerTriggerCallable workerCallable = new WorkerTriggerCallable(runContext, conditionContext, triggerContext, workerTrigger, pollingTrigger);
                         io.kestra.core.models.flows.State.Type state = callJob(workerCallable);
 
-                        if (workerCallable.getException() != null || !state.equals(SUCCESS)) {
-                            if (workerCallable.getException() instanceof TimeoutExceededException) {
-                                metricRegistry
-                                    .counter(MetricRegistry.METRIC_WORKER_TIMEOUT_COUNT, MetricRegistry.METRIC_WORKER_TIMEOUT_COUNT_DESCRIPTION, metricsTags)
-                                    .increment();
+                        // Lost against onTimeout(): reporting here would be a second result for one evaluation.
+                        if (reported.compareAndSet(false, true)) {
+                            Throwable exception = workerCallable.getException();
+                            if (exception != null || !state.equals(SUCCESS)) {
+                                this.handleTriggerError(workerTrigger, triggerContext, conditionContext, exception);
                             }
-                            this.handleTriggerError(workerTrigger, triggerContext, conditionContext, workerCallable.getException());
-                        }
 
-                        if (!state.equals(FAILED)) {
-                            this.publishTriggerExecution(workerTrigger, workerCallable.getEvaluate());
+                            if (!state.equals(FAILED)) {
+                                this.publishTriggerExecution(workerTrigger, workerCallable.getEvaluate());
+                            }
                         }
                     } else if (workerTrigger.getTrigger() instanceof RealtimeTriggerInterface streamingTrigger) {
                         WorkerTriggerRealtimeCallable workerCallable = new WorkerTriggerRealtimeCallable(
@@ -145,7 +151,9 @@ public class WorkerTriggerProcessor extends AbstractWorkerJobProcessor<WorkerTri
                         }
                     }
                 } catch (Exception e) {
-                    this.handleTriggerError(workerTrigger, triggerContext, conditionContext, e);
+                    if (reported.compareAndSet(false, true)) {
+                        this.handleTriggerError(workerTrigger, triggerContext, conditionContext, e);
+                    }
                 } finally {
                     Logs.logTrigger(
                         workerTrigger.triggerId(),
@@ -156,6 +164,9 @@ public class WorkerTriggerProcessor extends AbstractWorkerJobProcessor<WorkerTri
                         DurationFormatUtils.formatDurationHMS(stopWatch.getTime(TimeUnit.MILLISECONDS))
                     );
 
+                    // A timeout kill interrupts from another thread: clear the flag a plugin may have swallowed,
+                    // so it neither breaks cleanup nor follows the pool thread into the next job.
+                    Thread.interrupted();
                     runContext.cleanup();
                 }
 
@@ -166,6 +177,39 @@ public class WorkerTriggerProcessor extends AbstractWorkerJobProcessor<WorkerTri
         metricRegistry
             .counter(MetricRegistry.METRIC_WORKER_TRIGGER_ENDED_COUNT, MetricRegistry.METRIC_WORKER_TRIGGER_ENDED_COUNT_DESCRIPTION, metricsTags)
             .increment();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Duration timeout(WorkerTrigger workerTrigger) {
+        return workerTrigger.getTrigger() instanceof PollingTriggerInterface ? pollingTriggerTimeout : null;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void onTimeout(WorkerTrigger workerTrigger) {
+        if (!reported.compareAndSet(false, true)) {
+            // The evaluation returned just as the deadline passed and reported itself.
+            return;
+        }
+
+        metricRegistry
+            .counter(MetricRegistry.METRIC_WORKER_TIMEOUT_COUNT, MetricRegistry.METRIC_WORKER_TIMEOUT_COUNT_DESCRIPTION, metricRegistry.tags(workerTrigger, workerGroup))
+            .increment();
+
+        try {
+            this.handleTriggerError(workerTrigger, TriggerContext.of(workerTrigger), conditionContext, new TimeoutExceededException(pollingTriggerTimeout));
+        } catch (Exception e) {
+            Logs.logTrigger(workerTrigger.triggerId(), Level.ERROR, "[date: {}] Failed to report the trigger evaluation timeout", workerTrigger.getData().date(), e);
+            this.workerTriggerResultQueue.put(WorkerTriggerResult.of(workerTrigger, null));
+        }
+
+        // Reported first: kill() is plugin code too, so one that blocks must not also cost the trigger its result.
+        killCurrentCallable();
     }
 
     private void handleTriggerError(WorkerTrigger workerTrigger, TriggerContext triggerContext, ConditionContext conditionContext, Throwable e) {

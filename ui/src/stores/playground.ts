@@ -5,13 +5,13 @@ import type {FlowGraph} from "@kestra-io/topology/vue-flow-utils"
 import {Execution, useExecutionsStore} from "./executions"
 import {normalize} from "../utils/inputs"
 import {useRoute, useRouter} from "vue-router"
-import {State} from "@kestra-io/design-system"
+import {State, isDeepEqual} from "@kestra-io/design-system"
 import {useToast} from "../utils/toast"
 import {useI18n} from "vue-i18n"
 import {Flow, useFlowStore} from "./flow"
 import type {FlowForExecution} from "@kestra-io/kestra-sdk"
 import {useFileExplorerStore} from "./fileExplorer"
-import isEqual from "lodash/isEqual"
+import type {KestraHttpError} from "../utils/kestraHttp"
 
 // Loaded on demand: this store is reachable from the top nav bar, and statically
 // its graph helpers put Vue Flow and dagre in the bundle every page loads.
@@ -115,7 +115,7 @@ export const usePlaygroundStore = defineStore("playground", () => {
         })
     }
 
-    async function checkCanReplay(taskId?: string, graph?: any) {
+    async function checkCanReplay(taskId?: string, graph?: FlowGraph) {
         const lastExecution = executions.value.length ? executions.value[0] : undefined
 
         if(lastExecution && lastExecution.flowRevision && flowStore.flow?.revision
@@ -127,8 +127,8 @@ export const usePlaygroundStore = defineStore("playground", () => {
                 store: false,
             })
 
-            if(!isEqual(lastExecutionFlow.inputs, flowStore.flow.inputs)
-                || !isEqual(lastExecutionFlow.labels, flowStore.flow.labels)){
+            if(!isDeepEqual(lastExecutionFlow.inputs, flowStore.flow.inputs)
+                || !isDeepEqual(lastExecutionFlow.labels, flowStore.flow.labels)){
                 return false
             };
         }
@@ -143,7 +143,7 @@ export const usePlaygroundStore = defineStore("playground", () => {
         return false
     }
 
-    async function replayOrTriggerExecution(taskId?: string, breakpoints?: string[], graph?: any, customFormData?: Record<string, unknown>) {
+    async function replayOrTriggerExecution(taskId?: string, breakpoints?: string[], graph?: FlowGraph, customFormData?: Record<string, unknown>) {
         const canReplay = await checkCanReplay(taskId, graph)
         const lastExecution = executions.value.length ? executions.value[0] : undefined
 
@@ -314,8 +314,8 @@ export const usePlaygroundStore = defineStore("playground", () => {
         let execution: Execution | undefined = undefined
         try {
             execution = await replayOrTriggerExecution(taskId, runDownstreamTasks ? undefined : nextTasksIds, graph, customFormData)
-        } catch (error: any) {
-            if (error?.response?.status === 422) {
+        } catch (error: unknown) {
+            if ((error as KestraHttpError | undefined)?.response?.status === 422) {
                 readyToStart.value = true
                 if (!customFormData && flowStore.flow && flowStore.flow.inputs?.length) {
                     actionOptions.value = {taskId, runDownstreamTasks}

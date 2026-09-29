@@ -17,10 +17,9 @@
     defineOptions({name: "Dot", inheritAttrs: false})
 
     const {data, sourcePosition, targetPosition} = defineProps<{
-        data: any;
-        sourcePosition: Position;
-        targetPosition: Position;
-        label?: string;
+        data: {unused?: boolean; node: {type: string; branchType?: string}};
+        sourcePosition?: Position;
+        targetPosition?: Position;
     }>()
 
     const classes = computed(() => ({
@@ -42,10 +41,13 @@
         justify-content: center;
     }
 
+    /* A joint in the line, not something to press: filled at full strength it outweighed the
+       1.5px dashed stroke it punctuates, and read as the affordance the `+` actually is. */
     .dot {
         display: flex;
         flex-direction: column;
         align-items: center;
         color: var(--ks-topology-dash);
+        opacity: 0.4;
     }
 </style>

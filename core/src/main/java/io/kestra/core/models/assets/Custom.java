@@ -12,7 +12,7 @@ import lombok.Builder;
 import lombok.NoArgsConstructor;
 
 @NoArgsConstructor
-@Plugin
+@Plugin(internal = true)
 @Hidden
 public class Custom extends Asset {
     @Builder

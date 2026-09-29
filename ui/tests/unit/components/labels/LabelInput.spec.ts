@@ -15,11 +15,16 @@ const KsInput = {
     template: "<input :value=\"modelValue\" :disabled=\"disabled\" @input=\"$emit('update:modelValue', $event.target.value)\"/>",
 }
 
+const KsText = {
+    name: "KsText",
+    template: "<span><slot/></span>",
+}
+
 const mountInput = async (props = {}, slots = {}) => {
     const wrapper = mount(LabelInput, {
         props: {labels: [], ...props},
         slots,
-        global: {mocks: {$t: (key: string) => key}, stubs: {KsButton, KsInput}},
+        global: {mocks: {$t: (key: string) => key}, stubs: {KsButton, KsInput, KsText}},
     })
     await flushPromises()
     return wrapper

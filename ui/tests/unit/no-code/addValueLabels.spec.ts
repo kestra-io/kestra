@@ -1,33 +1,27 @@
 import {describe, it, expect} from "vitest"
-import {flushPromises, mount} from "@vue/test-utils"
-import {createI18n} from "vue-i18n"
+import {flushPromises} from "@vue/test-utils"
+import {i18nMount} from "../i18nMount"
+
 import Add from "../../../src/components/no-code/components/Add.vue"
 import TaskArray from "../../../src/components/no-code/components/tasks/TaskArray.vue"
 import TaskDict from "../../../src/components/no-code/components/tasks/TaskDict.vue"
 import TaskObjectField from "../../../src/components/no-code/components/tasks/TaskObjectField.vue"
 
-const i18n = createI18n({
-    legacy: false,
-    locale: "en",
-    messages: {
-        en: {
-            no_code: {
-                adding: "+ Add a {what}",
-                adding_to: "+ Add to {what}",
-                adding_default: "+ Add a new value",
-            },
-            block_editor: {
-                delete: "Delete",
-                plugin_default: "default: {value}",
-                plugin_default_tooltip: "Plugin default",
-                required_missing: "Required field not set",
-            },
-        },
+const messages = {
+    no_code: {
+        adding: "+ Add a {what}",
+        adding_to: "+ Add to {what}",
+        adding_default: "+ Add a new value",
     },
-})
+    block_editor: {
+        delete: "Delete",
+        plugin_default: "default: {value}",
+        plugin_default_tooltip: "Plugin default",
+        required_missing: "Required field not set",
+    },
+}
 
 const globalConfig = {
-    plugins: [i18n],
     stubs: {
         KsForm: {template: "<form><slot /></form>"},
         KsFormItem: {template: "<div class='stub-form-item'><slot name='label' /><slot /></div>"},
@@ -42,22 +36,22 @@ const globalConfig = {
 
 describe("Add", () => {
     it("shows the generic label without a target", () => {
-        const wrapper = mount(Add, {global: globalConfig})
+        const wrapper = i18nMount(Add, {messages, global: globalConfig})
         expect(wrapper.text()).toBe("+ Add a new value")
     })
 
     it("names the target field with the to prop", () => {
-        const wrapper = mount(Add, {props: {to: "sla"}, global: globalConfig})
+        const wrapper = i18nMount(Add, {messages, props: {to: "sla"}, global: globalConfig})
         expect(wrapper.text()).toBe("+ Add to sla")
     })
 
     it("keeps the legacy what wording when what is given", () => {
-        const wrapper = mount(Add, {props: {what: "label"}, global: globalConfig})
+        const wrapper = i18nMount(Add, {messages, props: {what: "label"}, global: globalConfig})
         expect(wrapper.text()).toBe("+ Add a label")
     })
 
     it("emits add on click", async () => {
-        const wrapper = mount(Add, {props: {to: "variables"}, global: globalConfig})
+        const wrapper = i18nMount(Add, {messages, props: {to: "variables"}, global: globalConfig})
         await wrapper.find("button").trigger("click")
         expect(wrapper.emitted("add")).toHaveLength(1)
     })
@@ -65,7 +59,8 @@ describe("Add", () => {
 
 describe("TaskArray add label", () => {
     it("names its field from the root path", () => {
-        const wrapper = mount(TaskArray, {
+        const wrapper = i18nMount(TaskArray, {
+            messages,
             props: {root: "sla", schema: {type: "array", items: {type: "string"}}},
             global: globalConfig,
         })
@@ -73,7 +68,8 @@ describe("TaskArray add label", () => {
     })
 
     it("strips the item index from a nested root", () => {
-        const wrapper = mount(TaskArray, {
+        const wrapper = i18nMount(TaskArray, {
+            messages,
             props: {root: "tasks[0].headers", schema: {type: "array", items: {type: "string"}}},
             global: globalConfig,
         })
@@ -81,7 +77,8 @@ describe("TaskArray add label", () => {
     })
 
     it("falls back to the generic label without a root", () => {
-        const wrapper = mount(TaskArray, {
+        const wrapper = i18nMount(TaskArray, {
+            messages,
             props: {schema: {type: "array", items: {type: "string"}}},
             global: globalConfig,
         })
@@ -91,7 +88,8 @@ describe("TaskArray add label", () => {
 
 describe("TaskDict add label", () => {
     it("names its field from the root path", () => {
-        const wrapper = mount(TaskDict, {
+        const wrapper = i18nMount(TaskDict, {
+            messages,
             props: {root: "variables", schema: {type: "object"}},
             global: globalConfig,
         })
@@ -103,7 +101,8 @@ describe("TaskObjectField anyOf containment", () => {
     // The field type resolver loads asynchronously on mount — flush it before
     // asserting which presentation branch rendered.
     async function mountField({schema, fieldKey = "retry"}: {schema: unknown, fieldKey?: string}) {
-        const wrapper = mount(TaskObjectField, {
+        const wrapper = i18nMount(TaskObjectField, {
+            messages,
             props: {schema, fieldKey, task: {}, required: []},
             global: globalConfig,
         })

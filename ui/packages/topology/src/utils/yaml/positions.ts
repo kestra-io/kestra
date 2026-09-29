@@ -5,11 +5,12 @@ import {
     YAMLMap,
     YAMLSeq,
     isMap,
-    isNode,
+    isNode, isPair,
     isSeq,
     parseDocument,
     visit,
     type Node,
+    type Pair,
 } from "yaml"
 import {parseDocumentTyped, scalarKey} from "./document.ts"
 import {extractFieldFromMaps} from "./fields.ts"
@@ -34,7 +35,7 @@ export function getTypeAtPosition(
 
     for (const type of types.reverse()) {
         if (cursorIndex >= type.range[0]) {
-            return type.type
+            return typeof type.type === "string" ? type.type : null
         }
     }
     return null
@@ -52,7 +53,7 @@ export function getVersionAtPosition(
 
     for (const version of versions.reverse()) {
         if (cursorIndex >= version.range[0]) {
-            return version.version
+            return version.version == null ? undefined : String(version.version)
         }
     }
     return null
@@ -116,8 +117,10 @@ function extractIndentAndMaybeYamlKey(stringToTest: string): {
 
 export type YamlElement = {
     key?: string;
-    value: Record<string, any>;
-    parents: Record<string, any>[];
+    /** Whatever `toJS` produced for the node: a scalar, a sequence or a map. */
+    value: unknown;
+    parents: Record<string, unknown>[];
+    path?: string[];
     range?: [number, number, number];
 };
 
@@ -155,10 +158,15 @@ export function localizeElementAtIndex(source: string, indexInSource: number): Y
             }
             const range = value.range
             const beforeElement = source.substring(0, range[0])
+            const path = parents
+                .filter((p) => isPair(p))
+                .map((p) => scalarKey(p as Pair<unknown, unknown>))
+                .filter((k) => k !== undefined) as string[]
             elements.push({
                 parents: parents
                     .filter((p) => isMap(p))
                     .map((p) => p.toJS(yamlDoc)),
+                path: path,
                 key: yamlKey,
                 value: value.toJS(yamlDoc),
                 range: [
@@ -191,7 +199,7 @@ function chartItemsOf(map: YAMLMap<unknown, unknown>): Node[] {
 
 export function getAllCharts(source: string) {
     const yamlDoc = parseDocumentTyped(source)
-    const charts: string[] = []
+    const charts: unknown[] = []
 
     visit(yamlDoc, {
         Map(_, map) {

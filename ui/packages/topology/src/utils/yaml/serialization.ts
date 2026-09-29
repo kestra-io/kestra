@@ -5,13 +5,12 @@ import {
     isPair,
 } from "yaml"
 import {dump, load} from "js-yaml"
-import cloneDeep from "lodash/cloneDeep"
 
-export function parse<T = any>(item?: string, throwIfError = true): T | undefined {
+export function parse<T = unknown>(item?: string, throwIfError = true): T | undefined {
     if (item === undefined) return undefined
 
     try {
-        return load(item) as any
+        return load(item) as T
     } catch (e) {
         if (throwIfError) throw e
         return undefined
@@ -46,13 +45,15 @@ function preserveCronQuotes(yamlContent: string) {
     )
 }
 
-export function stringify(item: any) {
+export function stringify(item: unknown) {
     if (item === undefined) return ""
 
-    const clonedValue = cloneDeep(item)
-    delete clonedValue.deleted
+    // transform() rebuilds every node and skips undefined values, so a shallow copy drops `deleted`
+    const value = item === null || typeof item !== "object" || Array.isArray(item)
+        ? item
+        : {...item, deleted: undefined}
 
-    const yamlContent = dump(transform(clonedValue), {
+    const yamlContent = dump(transform(value), {
         lineWidth: -1,
         noCompatMode: true,
         quotingType: "\"",
@@ -85,24 +86,24 @@ export function sortPredicate(a: string, b: string) {
     return aIndexProtected - bIndexProtected
 }
 
-function sort(value: Record<string, any>) {
+function sort(value: Record<string, unknown>) {
     return Object.keys(value)
         .sort(sortPredicate)
 }
 
-export function pairsToMap(pairs?: any[]) {
+export function pairsToMap(pairs?: unknown) {
     const map = new YAMLMap()
-    if (!isPair(pairs?.[0])) {
+    if (!Array.isArray(pairs) || !isPair(pairs[0])) {
         return map
     }
 
-    for (const pair of pairs!) {
-        map.add(pair)
+    for (const pair of pairs) {
+        if (isPair(pair)) map.add(pair)
     };
     return map
 }
 
-function transform(value: any): any {
+function transform(value: unknown): unknown {
     if (value instanceof Array) {
         return value.map((r) => {
             return transform(r)
@@ -110,9 +111,10 @@ function transform(value: any): any {
     } else if (typeof value === "string" || value instanceof String) {
         return value
     } else if (value instanceof Object) {
-        return sort(value).reduce((accumulator, r) => {
-            if (value[r] !== undefined) {
-                accumulator[r] = transform(value[r])
+        const record = value as Record<string, unknown>
+        return sort(record).reduce<Record<string, unknown>>((accumulator, r) => {
+            if (record[r] !== undefined) {
+                accumulator[r] = transform(record[r])
             }
 
             return accumulator

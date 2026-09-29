@@ -86,6 +86,9 @@
     import {useEditorBindings} from "../../../composables/useEditorBindings"
     import {useBlueprintPlugins} from "../../../composables/useBlueprintPlugins"
     import type {BlueprintTag, FlowBlueprint} from "../../../stores/blueprints"
+    import type {ParsedFlow} from "../../../stores/flow"
+    import type {FlowGraph} from "@kestra-io/topology/vue-flow-utils"
+    import type {PluginIconData} from "../../../stores/plugins"
 
     const EDITOR_OPTIONS = {
         fullHeight: true,
@@ -96,10 +99,10 @@
 
     const props = withDefaults(defineProps<{
         blueprint: FlowBlueprint & {shortDescription?: string};
-        flowGraph?: any;
+        flowGraph?: FlowGraph;
         tags?: Record<string, BlueprintTag>;
-        icons?: Record<string, any>;
-        loadIcon?: (cls: string) => Promise<any>;
+        icons?: Record<string, PluginIconData>;
+        loadIcon?: (cls: string) => Promise<PluginIconData | undefined>;
     }>(), {
         flowGraph: undefined,
         tags: undefined,
@@ -112,9 +115,9 @@
     const editorBindings = useEditorBindings()
     const stacked = useMediaQuery("(max-width: 1400px)")
 
-    const parsedFlow = computed(() =>
+    const parsedFlow = computed<ParsedFlow>(() =>
         props.blueprint.source
-            ? {...YAML_UTILS.parse(props.blueprint.source), source: props.blueprint.source}
+            ? {...YAML_UTILS.parse<ParsedFlow>(props.blueprint.source), source: props.blueprint.source}
             : {},
     )
 

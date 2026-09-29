@@ -170,9 +170,9 @@ export default defineConfig(({mode}) => {
                 "node_modules/@kestra-io/design-system/src/**/*.{ts,vue}",
             ],
             include: [
-                "lodash",
                 "debug",
                 "@braintree/sanitize-url",
+                // still pulled in by element-plus and mermaid, not by our own code
                 "lodash-es",
                 "nprogress",
                 // CJS-only packages imported as ESM defaults by unified, fault, @kestra-io/ui-libs, etc.
@@ -208,6 +208,8 @@ export default defineConfig(({mode}) => {
                 "@module-federation/dts-plugin/dynamic-remote-type-hints-plugin",
                 "js-yaml",
                 "path-browserify",
+                // Dev-only: optimizeDeps does not reach the production build, so the lazy chunk
+                // stands, but without this /setup triggers a re-optimization and a full reload.
                 "mailchecker",
                 "rapidoc",
                 // The AI Copilot stories/components import the SDK's `ai` subpath. Pre-bundle it so

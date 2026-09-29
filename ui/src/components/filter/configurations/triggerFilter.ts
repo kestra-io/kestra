@@ -54,7 +54,7 @@ export const useTriggerFilter = (): ComputedRef<FilterConfiguration> => {
                         },
                         searchable: true,
                     },
-                ] : []) as any,
+                ] : []) as FilterConfiguration["keys"],
                 ...(routeFamily(route.name) !== "flows/update" ? [{
                     key: "flowId",
                     label: t("filter.flowId.label"),
@@ -67,7 +67,7 @@ export const useTriggerFilter = (): ComputedRef<FilterConfiguration> => {
                         Comparators.ENDS_WITH,
                     ],
                     valueType: "text",
-                }] : []) as any,
+                }] : []) as FilterConfiguration["keys"],
                 {
                     key: "timeRange",
                     label: t("filter.timeRange_trigger.label"),
@@ -75,8 +75,8 @@ export const useTriggerFilter = (): ComputedRef<FilterConfiguration> => {
                     comparators: [Comparators.EQUALS],
                     valueType: "select",
                     groupable: false,
-                    valueProvider: async (meta?: FilterMeta) => {
-                        return meta?.dateFilter === "LAST_TRIGGERED_DATE"
+                    valueProvider: async (options?: {meta?: FilterMeta}) => {
+                        return options?.meta?.dateFilter === "LAST_TRIGGERED_DATE"
                             ? VALUES.RELATIVE_DATE
                             : VALUES.RELATIVE_DATE_NEXT
                     },

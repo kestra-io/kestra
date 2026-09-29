@@ -3,9 +3,8 @@ import {ref, watch} from "vue"
 import {apiUrl} from "override/utils/route"
 import * as Utils from "../utils/utils"
 import {useCoreStore} from "./core"
-import throttle from "lodash/throttle"
 import {useRoute, type LocationQuery} from "vue-router"
-import {CLUSTER_PREFIX} from "@kestra-io/design-system"
+import {CLUSTER_PREFIX, throttle} from "@kestra-io/design-system"
 import type {FlowGraph} from "@kestra-io/topology/vue-flow-utils"
 import {routeQueryToQueryFilters} from "../utils/queryFilters"
 import {
@@ -85,6 +84,8 @@ export interface InputMetaData {
     // validate response strips `expression`, keeping `dependsOn` at most
     expression?: string;
     dependsOn?: unknown;
+    /** Set on a FORM input only: the children it groups, mirroring the backend `FormInput.inputs`. */
+    inputs?: InputMetaData[];
 }
 
 /** Mirrors the backend `FilePreview`: `content` is renderer-specific (text, rows, base64, ...). */
@@ -165,6 +166,7 @@ export const useExecutionsStore = defineStore("executions", () => {
     const progressEvents = ref<{taskId: string; taskRunId: string; step: string; timestamp: string}[]>([])
     const flow = ref<FlowForExecution | undefined>(undefined)
     const flowGraph = ref<FlowGraph | undefined>(undefined)
+    const taskRunSelections = ref<Map<string, string>>(new Map())
     const namespaces = ref<string[]>([])
     const flowsExecutable = ref<FlowForExecution[]>([])
 
@@ -174,6 +176,7 @@ export const useExecutionsStore = defineStore("executions", () => {
         if(!newExecution){
             flowGraph.value = undefined
             flow.value = undefined
+            taskRunSelections.value.clear()
         }
     })
 
@@ -541,10 +544,11 @@ export const useExecutionsStore = defineStore("executions", () => {
             .then(async ({stream}) => {
                 for await (const event of stream) {
                     if (closed) break
+                    const executionEvent = event as unknown as Execution
                     // The server emits a first "fake" event carrying only an id to force the
                     // connection open; skip it as it has no state to display.
-                    if (!(event as Execution).state) continue
-                    handlers.onExecution(event as Execution)
+                    if (!executionEvent.state) continue
+                    handlers.onExecution(executionEvent)
                 }
                 finish(!receivedEnd)
             })
@@ -883,6 +887,7 @@ export const useExecutionsStore = defineStore("executions", () => {
 
     return {
         // State
+        taskRunSelections,
         executions,
         execution,
         total,

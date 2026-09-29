@@ -8,11 +8,12 @@ name: Translations - Generate for a pull request
 # head.
 #
 # A pull request from a fork is untrusted, so none of its code runs here. The `generate` job checks
-# out the branch this workflow was dispatched on, installs its dependencies without lifecycle scripts,
-# and copies in only the data files of the pull request (the language JSON files, the fingerprints and
-# the design-system `*.locale.ts` files, which the generator parses without evaluating). It holds the
-# Gemini key and a read-only token. The `publish` job holds the write tokens and never runs anything
-# from the pull request: it checks that the patch touches only those data files, applies it and pushes.
+# out the branch this workflow was dispatched on, which has to be the branch the pull request targets,
+# installs its dependencies without lifecycle scripts, and swaps its data files for the ones of the
+# pull request (the language JSON files, the fingerprints and the design-system `*.locale.ts` files,
+# which the generator parses without evaluating). It holds the Gemini key and a read-only token. The
+# `publish` job holds the write tokens and never runs anything from the pull request: it checks that
+# the patch touches only those data files, applies it and pushes.
 #
 # Pushing to a fork needs a token with write access to the fork (GITHUB_TOKEN never has it). When the
 # PR allows edits from maintainers and the TRANSLATIONS_PUSH_TOKEN secret holds a maintainer token,
@@ -64,6 +65,11 @@ jobs:
       - name: Resolve the pull request head
         id: pr
         run: |
+          BASE_REF=$(gh pr view "$PR" --json baseRefName --jq .baseRefName)
+          if [ "$BASE_REF" != "$GITHUB_REF_NAME" ]; then
+            echo "::error::Pull request #$PR targets $BASE_REF, so run this workflow from $BASE_REF instead of $GITHUB_REF_NAME."
+            exit 1
+          fi
           HEAD_SHA=$(gh pr view "$PR" --json headRefOid --jq .headRefOid)
           echo "head_sha=$HEAD_SHA" >> "$GITHUB_OUTPUT"
           git fetch --no-tags "https://github.com/$GITHUB_REPOSITORY.git" "pull/$PR/head"
@@ -79,12 +85,15 @@ jobs:
           echo "DATA_FILES=$FILES" >> "$GITHUB_ENV"
 
       # Only data goes in: the scripts that run below stay the ones of the dispatched branch. A symlink
-      # would make the generator read or overwrite a file outside the pull request's own data.
+      # would make the generator read or overwrite a file outside the pull request's own data. The
+      # branch's own data files go first, so a locale file the pull request does not have yet is not
+      # translated and pushed into it.
       - name: Take the data files of the pull request
         env:
           HEAD_SHA: ${{ steps.pr.outputs.head_sha }}
         run: |
           read -ra PATHSPECS <<< "$DATA_FILES"
+          git rm -rq --ignore-unmatch -- "${PATHSPECS[@]}"
           git checkout "$HEAD_SHA" -- "${PATHSPECS[@]}"
           if git ls-files -s -- "${PATHSPECS[@]}" | grep -q '^120000'; then
             echo "::error::The pull request adds a symbolic link where a translation file is expected."

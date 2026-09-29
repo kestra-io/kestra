@@ -1,5 +1,6 @@
 import {describe, it, expect, vi, beforeEach} from "vitest"
 import {setActivePinia, createPinia} from "pinia"
+import type * as McpApi from "@kestra-io/kestra-sdk/mcp"
 
 const mockServer = {
     id: "my-server",
@@ -18,13 +19,13 @@ const toggleMcp = vi.fn().mockResolvedValue({...mockServer, disabled: true})
 const listTools = vi.fn().mockResolvedValue([])
 
 vi.mock("@kestra-io/kestra-sdk/mcp", () => ({
-    listMcps: (...args: any[]) => listMcps(...args),
-    mcp: (...args: any[]) => mcp(...args),
-    createMcp: (...args: any[]) => createMcp(...args),
-    updateMcp: (...args: any[]) => updateMcp(...args),
-    deleteMcp: (...args: any[]) => deleteMcp(...args),
-    toggleMcp: (...args: any[]) => toggleMcp(...args),
-    listTools: (...args: any[]) => listTools(...args),
+    listMcps: (...args: Parameters<typeof McpApi.listMcps>) => listMcps(...args),
+    mcp: (...args: Parameters<typeof McpApi.mcp>) => mcp(...args),
+    createMcp: (...args: Parameters<typeof McpApi.createMcp>) => createMcp(...args),
+    updateMcp: (...args: Parameters<typeof McpApi.updateMcp>) => updateMcp(...args),
+    deleteMcp: (...args: Parameters<typeof McpApi.deleteMcp>) => deleteMcp(...args),
+    toggleMcp: (...args: Parameters<typeof McpApi.toggleMcp>) => toggleMcp(...args),
+    listTools: (...args: Parameters<typeof McpApi.listTools>) => listTools(...args),
 }))
 
 describe("mcp store", () => {

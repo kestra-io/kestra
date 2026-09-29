@@ -46,6 +46,29 @@
     import {EXECUTION_INJECTION_KEY} from "../injectionKeys"
     import * as Utils from "../utils/utils"
 
+    interface NodeEntity {
+        id?: string;
+        type?: string;
+        disabled?: boolean;
+        namespace?: string;
+        flowId?: string;
+        subflowId?: {namespace?: string; flowId?: string};
+    }
+
+    export interface BasicNodeData {
+        node: {
+            uid?: string;
+            plugin?: NodeEntity;
+            task?: NodeEntity;
+            trigger?: NodeEntity;
+            triggerDeclaration?: {type?: string};
+            disabled?: boolean;
+        };
+        color?: string;
+        unused?: boolean;
+        isMovable?: boolean;
+        parent?: {taskNode?: {disabled?: boolean; task?: {disabled?: boolean}}};
+    }
 
     const emit = defineEmits([
         EVENTS.EXPAND,
@@ -100,11 +123,11 @@
         type?: string;
         disabled?: boolean;
         state?: string;
-        data: any;
-        icons: any;
+        data: BasicNodeData;
+        icons?: Record<string, unknown>;
         // Resolves an icon the `icons` index doesn't carry; without it a node whose plugin isn't
         // in the index has no way to ever get an icon (kestra-io/kestra#18129).
-        loadIcon?: (cls: string) => Promise<any>;
+        loadIcon?: (cls: string) => Promise<unknown>;
         class?: string | string[] | Record<string, boolean>;
         focused?: boolean;
         dragging?: boolean;
@@ -141,7 +164,8 @@
     const trimmedId = computed(() => Utils.afterLastDot(props.id ?? ""))
 
     const taskIconBg = computed(() => {
-        return !["default", "danger"].includes(props.data.color) ? props.data.color : ""
+        const color = props.data.color
+        return color && !["default", "danger"].includes(color) ? color : ""
     })
 
     const classes = computed(() => {

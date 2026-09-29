@@ -29,7 +29,9 @@ import io.kestra.core.models.QueryFilter.Logical;
 import io.kestra.core.models.QueryFilter.Op;
 import io.kestra.core.models.dashboards.AggregationType;
 import io.kestra.core.models.dashboards.ColumnDescriptor;
+import io.kestra.core.models.dashboards.filters.EqualTo;
 import io.kestra.core.models.dashboards.filters.GreaterThan;
+import io.kestra.core.models.dashboards.filters.In;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionKind;
 import io.kestra.core.models.executions.ExecutionTrigger;
@@ -873,6 +875,48 @@ public abstract class AbstractExecutionRepositoryTest {
 
         assertThat(data).hasSize(1);
         assertThat(data).first().hasFieldOrPropertyWithValue("id", slowExecution.getId());
+    }
+
+    @Test
+    protected void shouldNarrowOnEveryStateFilter() throws IOException {
+        var tenantId = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        var executionCreateDate = Instant.now().minus(Duration.ofMinutes(5));
+
+        Execution succeeded = executionRepository.save(executionWithDuration(tenantId, executionCreateDate, Duration.ofSeconds(1)));
+        executionRepository.save(
+            Execution.builder()
+                .tenantId(tenantId)
+                .id(IdUtils.create())
+                .namespace("io.kestra.unittest")
+                .flowId("some-execution")
+                .flowRevision(1)
+                .state(
+                    new State(
+                        Type.FAILED,
+                        List.of(new State.History(State.Type.CREATED, executionCreateDate), new State.History(Type.FAILED, executionCreateDate.plusSeconds(1)))
+                    )
+                )
+                .taskRunList(List.of())
+                .build()
+        );
+
+        var now = ZonedDateTime.now();
+        ArrayListTotal<Map<String, Object>> data = executionRepository.fetchData(
+            tenantId, Executions.builder()
+                .type(Executions.class.getName())
+                .columns(Map.of("id", ColumnDescriptor.<Executions.Fields> builder().field(Executions.Fields.ID).build()))
+                .where(List.of(
+                    In.<Executions.Fields> builder().field(Executions.Fields.STATE).values(List.of("SUCCESS", "FAILED")).build(),
+                    EqualTo.<Executions.Fields> builder().field(Executions.Fields.STATE).value("SUCCESS").build()
+                ))
+                .build(),
+            now.minusHours(1),
+            now,
+            null
+        );
+
+        assertThat(data).hasSize(1);
+        assertThat(data).first().hasFieldOrPropertyWithValue("id", succeeded.getId());
     }
 
     @Test

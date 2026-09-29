@@ -97,6 +97,7 @@
                 :collapsible="true"
                 :isCollapsed="inputsCollapsed"
                 :stacked="isStacked"
+                :defaultCollapsedKeys="['context', 'namespaceFiles']"
                 side="left"
                 @toggle="inputsCollapsed = !inputsCollapsed"
                 @chip-activate="onChipActivate"
@@ -171,10 +172,13 @@
     import ValidationError from "./ValidationError.vue"
     import {usePluginsStore} from "../../stores/plugins"
     import {useAuthStore} from "override/stores/auth"
-    import {useFlowStore, type FlowRevision} from "../../stores/flow"
+    import {useFlowStore, type FlowRevision, type ParsedFlow, type Task} from "../../stores/flow"
     import {usePlaygroundRun} from "../../composables/playground/usePlaygroundRun"
-    import {CHIP_DRAG_MIME, isArmableField, insertAtCaret} from "./chipInsertion"
+    import {CHIP_DRAG_MIME, CHIP_SECTION_DRAG_MIME, isArmableField, insertAtCaret} from "./chipInsertion"
     import {resolveDeclaredOutputProperties, hasDeclaredOutputs as computeHasDeclaredOutputs} from "./taskOutputSchema"
+    import {useContextSections} from "../../composables/useContextSections"
+    import type {DataSection} from "./contextSections/types"
+    import {trackChipInserted, trackChipCopied} from "../../utils/analytics/taskEditorEvents"
 
     interface Props {
         component?: string;
@@ -271,12 +275,14 @@
         KsMessage.success(t("block_editor.chip_inserted"))
     }
 
-    function onChipActivate(expr: string) {
+    function onChipActivate(expr: string, sectionKey: string) {
         if (armedField.value) {
             insertAndNotify(armedField.value, expr)
+            trackChipInserted(`inputs.${sectionKey}`)
         } else {
             copyToClipboard(expr)
             KsMessage.success(t("block_editor.chip_copied"))
+            trackChipCopied(`inputs.${sectionKey}`)
         }
     }
 
@@ -288,9 +294,11 @@
 
         event.preventDefault()
         const expr = event.dataTransfer.getData(CHIP_DRAG_MIME)
+        const sectionKey = event.dataTransfer.getData(CHIP_SECTION_DRAG_MIME)
         const target = (event.target as HTMLElement | null)?.closest("input, textarea") ?? null
         if (expr && isArmableField(target)) {
             insertAndNotify(target, expr)
+            trackChipInserted(`inputs.${sectionKey}`)
         }
     }
 
@@ -317,7 +325,7 @@
     const propTaskType = computed(() => typeof props.task?.type === "string" ? props.task.type : undefined)
 
     const runnableTaskId = computed<string | undefined>(() =>
-        props.taskId ?? propTaskId.value ?? YAML_UTILS.parse(taskYaml.value)?.id,
+        props.taskId ?? propTaskId.value ?? YAML_UTILS.parse<Partial<Task>>(taskYaml.value)?.id,
     )
 
     const isRunnable = computed(() =>
@@ -329,20 +337,21 @@
 
     const taskType = computed(() => {
         try {
-            return YAML_UTILS.parse(taskYaml.value)?.type ?? propTaskType.value ?? ""
+            return YAML_UTILS.parse<Partial<Task>>(taskYaml.value)?.type ?? propTaskType.value ?? ""
         } catch {
             return propTaskType.value ?? ""
         }
     })
 
     const flowStore = useFlowStore()
+    const {sections: contextDataSections} = useContextSections(computed(() => props.readOnly ? undefined : props.namespace))
     const localTaskError = ref<string | undefined>()
     const errors = computed(() => {
         const split = splitValidationErrors(localTaskError.value)
         return split.length === 0 ? undefined : split
     })
     const pluginMarkdown = computed(() => {
-        if (pluginsStore?.plugin?.markdown && YAML_UTILS.parse(taskYaml.value)?.type) {
+        if (pluginsStore?.plugin?.markdown && YAML_UTILS.parse<Partial<Task>>(taskYaml.value)?.type) {
             return pluginsStore?.plugin.markdown
         }
         return null
@@ -364,8 +373,8 @@
     const editorUri = computed(() => props.editorKey || currentTaskId.value)
 
     const inputSections = computed(() => {
-        const flow = flowStore.flowParsed ?? {}
-        const sections: {key: string; label: string; chips: {label: string; expr: string}[]}[] = []
+        const flow: ParsedFlow = flowStore.flowParsed ?? {}
+        const sections: DataSection[] = []
 
         const inputs = Array.isArray(flow.inputs) ? flow.inputs : []
         if (inputs.length) {
@@ -383,6 +392,8 @@
         if (upstream.length) {
             sections.push({key: "outputs", label: t("block_editor.upstream_outputs"), chips: upstream.map(id => ({label: id, expr: `{{ outputs.${id} }}`}))})
         }
+
+        sections.push(...contextDataSections.value)
 
         const CONTEXT_FIELDS: Record<string, string[]> = {
             flow: ["id", "namespace", "revision", "tenantId"],
@@ -578,19 +589,20 @@
             taskYaml.value = incoming
             taskBaseline.value = incoming
         }
-        const taskType = newTask?.type ?? YAML_UTILS.parse(incoming)?.type
-        if (taskType) {
-            await pluginsStore.load({cls: taskType}).catch(() => {})
+        const incomingType = newTask?.type ?? YAML_UTILS.parse<Partial<Task>>(incoming)?.type
+        if (typeof incomingType === "string" && incomingType) {
+            await pluginsStore.load({cls: incomingType}).catch(() => {})
         }
     }, {immediate: true})
 
     const typeLoadTimer = ref<ReturnType<typeof setTimeout>>()
     watch(taskYaml, () => {
-        const task = YAML_UTILS.parse(taskYaml.value)
-        if (task?.type && task.type !== type.value) {
-            type.value = task.type
+        const task = YAML_UTILS.parse<Partial<Task>>(taskYaml.value)
+        const parsedType = task?.type
+        if (parsedType && parsedType !== type.value) {
+            type.value = parsedType
             clearTimeout(typeLoadTimer.value)
-            typeLoadTimer.value = setTimeout(() => pluginsStore.load({cls: task.type}).catch(() => {}), 500)
+            typeLoadTimer.value = setTimeout(() => pluginsStore.load({cls: parsedType}).catch(() => {}), 500)
         }
     })
 

@@ -1,7 +1,7 @@
 <template>
     <div
         class="block-card"
-        :class="{'block-card--selected': selected, 'block-card--drag-over': dragOver, 'block-kbd-focused': focused, 'block-card--error': issues.length > 0}"
+        :class="{'block-card--selected': selected, 'block-card--drag-over': dragOver, 'block-card--drag-forbidden': dragForbidden, 'block-kbd-focused': focused, 'block-card--error': issues.length > 0}"
         role="button"
         :tabindex="focused ? 0 : -1"
         :aria-pressed="selected"
@@ -11,7 +11,7 @@
         data-test="block-card"
         @click="emit('select')"
         @dragstart="emit('drag-start', $event)"
-        @dragover.prevent="emit('drag-over', $event)"
+        @dragover="emit('drag-over', $event)"
         @drop.prevent="emit('drop', $event)"
         @dragend="emit('drag-end')"
     >
@@ -114,6 +114,7 @@
         focused?: boolean
         draggable?: boolean
         dragOver?: boolean
+        dragForbidden?: boolean
         runnable?: boolean
         icons?: Record<string, PluginIconData>
     }>()
@@ -180,6 +181,12 @@
         &--drag-over {
             border-color: var(--ks-text-link);
             border-style: dashed;
+        }
+
+        &--drag-forbidden {
+            border-color: var(--ks-border-error);
+            border-style: dashed;
+            cursor: not-allowed;
         }
 
         &--error,

@@ -40,7 +40,7 @@ export const Default: Story = {
     render,
     args: {
         modelValue: undefined,
-        schema: {type: "string"} as any,
+        schema: {type: "string"},
         root: "description",
     },
 };
@@ -49,7 +49,7 @@ export const WithValue: Story = {
     render,
     args: {
         modelValue: "Hello, World!",
-        schema: {type: "string"} as any,
+        schema: {type: "string"},
         root: "description",
     },
 };
@@ -58,7 +58,7 @@ export const DateTimePicker: Story = {
     render,
     args: {
         modelValue: undefined,
-        schema: {type: "string", format: "date-time"} as any,
+        schema: {type: "string", format: "date-time"},
         root: "startDate",
     },
 };
@@ -67,7 +67,7 @@ export const DurationPicker: Story = {
     render,
     args: {
         modelValue: "PT1H30M",
-        schema: {type: "string", format: "duration"} as any,
+        schema: {type: "string", format: "duration"},
         root: "timeout",
     },
 };
@@ -76,7 +76,7 @@ export const Disabled: Story = {
     render,
     args: {
         modelValue: "Read-only value",
-        schema: {type: "string"} as any,
+        schema: {type: "string"},
         root: "locked",
         disabled: true,
     },

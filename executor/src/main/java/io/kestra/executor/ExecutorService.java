@@ -863,11 +863,23 @@ public class ExecutorService {
             } else {
                 TaskRun current = executor.getExecution().findTaskRunByTaskRunId(outcome.getKey());
                 Execution cascaded = executor.getExecution().withTaskRunStateCascaded(current, outcome.getValue());
-                executor.withExecution(this.withUnfinishedFlowableTaskRuns(cascaded, executor.getFlow(), outcome.getValue()).withState(outcome.getValue()), "handleExecutionLevelOutcomes");
+                if (this.canRunFlowFinally(executor, cascaded)) {
+                    executor.withExecution(cascaded, "handleExecutionLevelOutcomes");
+                    executor.withTaskRun(this.skippedFlowTaskRuns(cascaded, executor.getFlow()), "handleExecutionLevelOutcomes");
+                } else {
+                    executor.withExecution(this.withUnfinishedFlowableTaskRuns(cascaded, executor.getFlow(), outcome.getValue()).withState(outcome.getValue()), "handleExecutionLevelOutcomes");
+                }
             }
         }
 
         return executor;
+    }
+
+    // With a sibling still running or paused, the flow could not reach its finally, so the execution is terminated directly.
+    private boolean canRunFlowFinally(ExecutorContext executor, Execution cascaded) {
+        return executor.getExecution().getKind() != ExecutionKind.LOOP
+            && !ListUtils.isEmpty(executor.getFlow().getFinally())
+            && ListUtils.emptyOnNull(cascaded.getTaskRunList()).stream().allMatch(t -> t.getState().isTerminated());
     }
 
     // A terminated execution is no longer processed, so a flowable left running would never resolve; worker task runs still report their own end.
@@ -879,6 +891,13 @@ public class ExecutorService {
             }
         }
         return ended;
+    }
+
+    private List<TaskRun> skippedFlowTaskRuns(Execution execution, FlowWithSource flow) {
+        return flow.getTasks().stream()
+            .filter(task -> execution.findTaskRunsByTaskId(task.getId()).isEmpty())
+            .map(task -> TaskRun.of(execution, ResolvedTask.of(task)).withState(State.Type.SKIPPED))
+            .toList();
     }
 
     /**

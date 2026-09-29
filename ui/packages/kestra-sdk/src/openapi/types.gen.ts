@@ -667,6 +667,7 @@ export type DashboardControllerDashboardResponse = {
     title: string;
     description?: string;
     timeWindow?: TimeWindow;
+    queryTimeout?: string;
     charts?: Array<ChartChartOption>;
     deleted: boolean;
     created?: string;

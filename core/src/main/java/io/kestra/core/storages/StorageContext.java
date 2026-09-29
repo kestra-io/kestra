@@ -72,7 +72,7 @@ public class StorageContext {
      * Canonical Kestra URI {@code kestra://<first-segment>/<rest>}. A path with no first segment stays {@code kestra:///<path>}.
      *
      * @param absolutePath decoded absolute storage path, with or without a leading slash
-     * @throws IllegalArgumentException when the path is not a legal URI
+     * @throws IllegalArgumentException when the path is not a legal URI, or its first segment contains {@code :} or {@code @}
      */
     public static URI toKestraUri(String absolutePath) {
         if (absolutePath == null || absolutePath.isEmpty()) {
@@ -85,6 +85,11 @@ public class StorageContext {
         String rest = absolutePath.substring(1);
         int slash = rest.indexOf('/');
         String first = slash < 0 ? rest : rest.substring(0, slash);
+        // ':' and '@' are authority grammar, and the five-argument constructor does not escape them.
+        // logicalPath rejects that URI on read, so refuse it here instead of writing a key that cannot be opened.
+        if (first.indexOf(':') >= 0 || first.indexOf('@') >= 0) {
+            throw new IllegalArgumentException("Invalid Kestra storage path '%s'.".formatted(absolutePath));
+        }
         try {
             if (first.isEmpty()) {
                 // Root and extra leading slashes have no segment to put in the authority.

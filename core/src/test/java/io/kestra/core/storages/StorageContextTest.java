@@ -146,6 +146,8 @@ class StorageContextTest {
         assertThat(StorageContext.logicalPath(spaced)).isEqualTo("/namespace/a b.txt");
         assertThat(StorageContext.toKestraUri("/namespace/a+b.txt").toString()).isEqualTo("kestra://namespace/a+b.txt");
         assertThat(StorageContext.toKestraUri("/namespace/report#1.csv").toString()).isEqualTo("kestra://namespace/report%231.csv");
+        assertThat(StorageContext.logicalPath(StorageContext.toKestraUri("/namespace/report:ion"))).isEqualTo("/namespace/report:ion");
+        assertThat(StorageContext.logicalPath(StorageContext.toKestraUri("/namespace/user@host.txt"))).isEqualTo("/namespace/user@host.txt");
 
         assertThat(StorageContext.toKestraUri("/")).isEqualTo(URI.create("kestra:///"));
         assertThat(StorageContext.toKestraUri("/namespace/")).isEqualTo(URI.create("kestra://namespace/"));
@@ -158,6 +160,10 @@ class StorageContextTest {
         assertThatThrownBy(() -> StorageContext.logicalPath(URI.create("kestra://namespace:80/file")))
             .isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(() -> StorageContext.logicalPath(URI.create("kestra://user@namespace/file")))
+            .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> StorageContext.toKestraUri("/report:ion"))
+            .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> StorageContext.toKestraUri("/user@host/file"))
             .isInstanceOf(IllegalArgumentException.class);
     }
 }

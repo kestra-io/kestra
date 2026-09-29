@@ -263,7 +263,7 @@
                 params: {minLevel: "ERROR"},
             })
             .catch((e) => {
-                if (e?.status === 404 || e?.response?.status === 404) {
+                if ([403, 404].includes(e?.status ?? e?.response?.status)) {
                     handled(e)
                 }
                 return []

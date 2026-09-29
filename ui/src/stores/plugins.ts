@@ -613,8 +613,10 @@ export const usePluginsStore = defineStore("plugins", () => {
         } catch (error: unknown) {
             const err = error as {status?: number; response?: {status?: number}}
             const status = err?.status || err?.response?.status
-            if (status === 403 || status === 404) handled(error)
-            if (status === 404) return null
+            if (status === 403 || status === 404) {
+                handled(error)
+                return null
+            }
             throw error
         }
     }

@@ -25,8 +25,8 @@
                     <span class="row-label">{{ $t('body_line_clamp') }}</span>
                     <div class="clamp-control">
                         <KsInputNumber
-                            v-if="clampEnabled"
-                            v-model="logsBodyClamp"
+                            v-model="clampModel"
+                            :disabled="!clampEnabled"
                             :min="1"
                             :max="50"
                             :step="1"
@@ -42,7 +42,7 @@
 </template>
 
 <script setup lang="ts">
-    import {computed} from "vue"
+    import {computed, ref} from "vue"
     import {useI18n} from "vue-i18n"
     import Cog from "vue-material-design-icons/Cog.vue"
     import {logsFontSize, logsDensity, logsBodyClamp, logsPrettyJson, logsExpandByDefault} from "../../composables/useLogDisplay"
@@ -55,10 +55,22 @@
         {label: t("density_expanded"), value: "expanded"},
     ])
 
+    const lastClampValue = ref(logsBodyClamp.value > 0 ? logsBodyClamp.value : 5)
+
     const clampEnabled = computed({
         get: () => logsBodyClamp.value > 0,
         set: (value: boolean) => {
-            logsBodyClamp.value = value ? (logsBodyClamp.value || 5) : 0
+            logsBodyClamp.value = value ? lastClampValue.value : 0
+        },
+    })
+
+    const clampModel = computed({
+        get: () => (clampEnabled.value ? logsBodyClamp.value : lastClampValue.value),
+        set: (val: number) => {
+            lastClampValue.value = val
+            if (clampEnabled.value) {
+                logsBodyClamp.value = val
+            }
         },
     })
 </script>

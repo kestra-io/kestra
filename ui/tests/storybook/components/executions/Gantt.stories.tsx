@@ -1,9 +1,9 @@
 import { vueRouter } from "storybook-vue3-router";
 import type { Meta, StoryObj } from "@storybook/vue3";
 import { within, expect, waitFor } from "storybook/test";
-import { configureClient } from "@kestra-io/kestra-sdk";
-import { useExecutionsStore } from "../../../../src/stores/executions";
-import { useFlowStore } from "../../../../src/stores/flow";
+import { configureClient, type FlowForExecution, type StateType } from "@kestra-io/kestra-sdk";
+import { useExecutionsStore, type Execution } from "../../../../src/stores/executions";
+import { useFlowStore, type Flow } from "../../../../src/stores/flow";
 import Gantt from "../../../../src/components/executions/Gantt.vue";
 
 const NAMESPACE = "company.team.qa";
@@ -11,7 +11,7 @@ const FLOW_ID = "qa_flow_concurrency";
 const EXECUTION_ID = "12HqIIvMvw5K1k5Zksxgus";
 
 // States the Gantt renders an empty view for (an execution with no task runs).
-const STATE_OPTIONS = ["CREATED", "RUNNING", "PAUSED", "CANCELLED", "FAILED", "KILLED", "WARNING", "QUEUED"];
+const STATE_OPTIONS: StateType[] = ["CREATED", "RUNNING", "PAUSED", "CANCELLED", "FAILED", "KILLED", "WARNING", "QUEUED"];
 
 const AVERAGE_DURATION_MS = 20 * 60 * 1000;
 
@@ -37,7 +37,7 @@ function stubAverageDuration() {
     });
 }
 
-function executionWithState(current: string) {
+function executionWithState(current: StateType) {
     return {
         id: EXECUTION_ID,
         flowId: FLOW_ID,
@@ -46,11 +46,11 @@ function executionWithState(current: string) {
             current,
             startDate: new Date(Date.now() - 5 * 60 * 1000).toISOString(),
             histories: [
-                { state: "CREATED", date: "2025-01-01T00:00:00.000Z" },
+                { state: "CREATED" as const, date: "2025-01-01T00:00:00.000Z" },
                 { state: current, date: "2025-01-01T00:00:01.000Z" },
             ],
         },
-        taskRunList: [],
+        taskRunList: [] as Execution["taskRunList"],
     };
 }
 
@@ -68,7 +68,7 @@ const ROUTER_ROUTES = [
     },
 ];
 
-type GanttStoryArgs = { state: string };
+type GanttStoryArgs = { state: StateType };
 
 const meta = {
     title: "Components/Executions/Gantt",
@@ -92,14 +92,14 @@ const meta = {
                 const state = context.args.state ?? "CANCELLED";
 
                 const executionsStore = useExecutionsStore();
-                executionsStore.execution = executionWithState(state) as any;
-                executionsStore.flow = FLOW as any;
+                executionsStore.execution = executionWithState(state) as Execution;
+                executionsStore.flow = FLOW as FlowForExecution;
 
                 const flowStore = useFlowStore();
                 flowStore.flow = {
                     ...FLOW,
                     concurrency: { limit: 1, behavior: "QUEUE" },
-                } as any;
+                } as Flow;
             },
             template: "<div style='height: 100vh'><story /></div>",
         }),

@@ -232,7 +232,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
         ));
         this.queueSubscribers.addFirst(this.executionCommandQueue.subscriber().subscribe(this::executionCommandQueue));
         this.queueSubscribers.addFirst(this.subflowExecutionResultQueue.subscriber().subscribe(this::subflowExecutionResultQueue));
-        this.queueSubscribers.addFirst(this.subflowExecutionEndQueue.subscriber().subscribe(this::subflowExecutionEndQueue));
+        this.queueSubscribers.addFirst(this.subflowExecutionEndQueue.subscriber().subscribeBatch(this::subflowExecutionEndQueue));
         this.queueSubscribers.addFirst(this.multipleConditionEventQueue.subscriber().subscribe(this::multipleConditionEventQueue));
         this.queueSubscribers.addFirst(this.loopExecutionEventQueue.subscriber().subscribe(this::loopExecutionEventQueue));
         this.queueSubscribers.addFirst(this.killQueue.subscriber().subscribe(this::killQueue));
@@ -392,12 +392,19 @@ public class DefaultExecutor extends AbstractService implements Executor {
         executorCore.onSubflowExecutionResult(either.getLeft());
     }
 
-    private void subflowExecutionEndQueue(Either<SubflowExecutionEnd, DeserializationException> either) {
-        if (either.isRight()) {
-            log.error("Unable to deserialize a subflow execution end: {}", either.getRight().getMessage());
-            return;
+    private void subflowExecutionEndQueue(List<Either<SubflowExecutionEnd, DeserializationException>> eithers) {
+        // Process the batch grouped by parent execution id, in sorted id order: every executor then acquires the
+        // per-parent `executions` FOR UPDATE locks in the same order, so concurrent executors handling overlapping
+        // parents can no longer form a lock cycle under heavy subflow fan-out.
+        Map<String, List<SubflowExecutionEnd>> messagesByParent = new TreeMap<>();
+        for (Either<SubflowExecutionEnd, DeserializationException> either : eithers) {
+            if (either.isRight()) {
+                log.error("Unable to deserialize a subflow execution end: {}", either.getRight().getMessage());
+                continue;
+            }
+            messagesByParent.computeIfAbsent(either.getLeft().parentExecutionId(), ignored -> new ArrayList<>()).add(either.getLeft());
         }
-        executorCore.onSubflowExecutionEnd(either.getLeft());
+        messagesByParent.values().forEach(messages -> messages.forEach(executorCore::onSubflowExecutionEnd));
     }
 
     private void multipleConditionEventQueue(Either<MultipleConditionEvent, DeserializationException> either) {

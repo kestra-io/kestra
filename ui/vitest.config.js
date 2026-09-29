@@ -96,6 +96,7 @@ export default defineConfig({
                     // worker mid-run and surfaces as "[birpc] rpc is closed,
                     // cannot call 'createTesters'" rather than a real test failure.
                     maxWorkers: 2,
+                    sequence: {groupOrder: 1},
                     browser: {
                         enabled: true,
                         headless: true,
@@ -115,7 +116,7 @@ export default defineConfig({
             }),
         ],
         coverage: {
-            reporter: ["text", "html"],
+            reporter: ["text", "html", "lcov"],
             include: [
                 "src/**/*.{ts,vue}",
             ],

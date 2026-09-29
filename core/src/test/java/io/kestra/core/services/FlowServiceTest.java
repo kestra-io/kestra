@@ -294,8 +294,7 @@ class FlowServiceTest {
         List<ValidateConstraintViolation> results = flowService.validate("my-tenant", List.of(new FlowSource(null, source)));
 
         assertThat(results.getFirst().getViolations())
-            .extracting(ValidateConstraintViolation.Violation::path)
-            .containsExactly("/tasks/0/tasks/1/message");
+            .containsExactly(new ValidateConstraintViolation.Violation("/tasks/0/tasks/1/message", "message: must not be null"));
     }
 
     @Test

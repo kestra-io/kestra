@@ -77,6 +77,7 @@ import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
+import jakarta.validation.Path;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -428,8 +429,18 @@ public class FlowService {
             ? e.getConstraintViolations().stream().filter(v -> v.getMessage().equals(e.getMessage()))
             : e.getConstraintViolations().stream();
         return violations
-            .map(v -> new ValidateConstraintViolation.Violation(ViolationPaths.toJsonPointer(v.getPropertyPath()), v.getMessage()))
+            .map(v -> located(v, ViolationPaths.toJsonPointer(v.getPropertyPath())))
             .toList();
+    }
+
+    /** Bean validation messages do not name their property, which a marker placed on the enclosing block needs. */
+    private static ValidateConstraintViolation.Violation located(ConstraintViolation<?> violation, String pointer) {
+        String property = null;
+        for (Path.Node node : violation.getPropertyPath()) {
+            property = node.getName();
+        }
+        boolean named = property != null && !(violation instanceof ManualConstraintViolation<?>);
+        return new ValidateConstraintViolation.Violation(pointer, named ? property + ": " + violation.getMessage() : violation.getMessage());
     }
 
     private static String formatValidationError(String message) {
@@ -544,7 +555,7 @@ public class FlowService {
                     }
                     modelValidator.isValid(parsedFlow).ifPresent(e -> e.getConstraintViolations().forEach(v ->
                         report.toSourcePointer(ViolationPaths.toJsonPointer(v.getPropertyPath())).ifPresent(pointer -> {
-                            violations.add(new ValidateConstraintViolation.Violation(pointer, v.getMessage()));
+                            violations.add(located(v, pointer));
                             lines.add(ViolationPaths.toFriendlyPath(v) + ": " + v.getMessage());
                         })
                     ));

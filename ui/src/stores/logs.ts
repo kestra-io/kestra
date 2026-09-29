@@ -1,7 +1,7 @@
 import {defineStore} from "pinia"
 import {ref, computed} from "vue"
 import * as LogsAPI from "@kestra-io/kestra-sdk/logs"
-import type {QueryFilter} from "@kestra-io/kestra-sdk"
+import type {LogEntry, QueryFilter} from "@kestra-io/kestra-sdk"
 import {routeQueryToQueryFilters} from "../utils/queryFilters"
 import * as Utils from "../utils/utils"
 import {LevelKey, formatLogsAsText, logsDownloadFilename} from "../utils/logs"
@@ -58,21 +58,8 @@ export interface LogsDownloadResult {
     outcome: LogsDownloadOutcome;
 }
 
-export interface Log{
-    level: LevelKey;
-    namespace: string;
-    flowId: string;
-    executionId: string;
-    triggerId?: string;
-    taskId?: string;
-    thread: string;
-    taskRunId?: string;
-    index: number;
-    attemptNumber: number;
-    executionKind: "flow" | "playground";
-    timestamp: string;
-    message: string;
-}
+/** A log line as the UI holds it: the server fields, plus the display index the log views assign. */
+export type Log = LogEntry & {index?: number}
 
 export const useLogsStore = defineStore("logs", () => {
     const logs = ref<Log[]>()

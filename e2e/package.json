@@ -1,0 +1,24 @@
+{
+    "name": "@kestra-io/e2e",
+    "version": "0.0.0",
+    "private": true,
+    "type": "module",
+    "engines": {
+        "node": ">=24"
+    },
+    "scripts": {
+        "test:e2e": "./run-e2e-tests.sh",
+        "test:e2e-without-starting-backend": "playwright test",
+        "check:types": "tsc --noEmit",
+        "test:lint": "oxlint",
+        "lint": "oxlint --fix"
+    },
+    "devDependencies": {
+        "@playwright/test": "^1.61.1",
+        "@types/node": "^26.1.1",
+        "dotenv": "^17.4.2",
+        "oxlint": "^1.73.0",
+        "typescript": "^6.0.3",
+        "uuid": "^14.0.1"
+    }
+}

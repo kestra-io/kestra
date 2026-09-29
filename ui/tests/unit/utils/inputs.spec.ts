@@ -1,4 +1,5 @@
 import {describe, expect, it} from "vitest"
+import {dayjs} from "@kestra-io/design-system"
 import {flattenInputs, unflattenToForms, formChildName, buildWizardSteps, normalize} from "../../../src/utils/inputs"
 import {inputsToFormData} from "../../../src/utils/submitTask"
 import type {InputMetaData} from "../../../src/stores/executions"
@@ -38,6 +39,25 @@ describe("normalize for ION uses the structured-data editor contract", () => {
 
     it("preserves Ion text", () => {
         expect(normalize("ION", "{name:\"Ada\"}")).toBe("{name:\"Ada\"}")
+    })
+})
+
+// Regression guard for the moment -> dayjs move: `moment.add(value, unit)` routes a string through
+// `moment.duration()`, so `add("14:30:00", "seconds")` meant 14h30m and landed on the right wall
+// clock; `dayjs.add()` coerces with `Number()` instead, so the same call is `NaN`. Do not fold the
+// explicit hour/minute/second back into `add()`. `LocalTime.toString()` drops the seconds when they
+// are zero, so "14:30" is a real wire shape too. See https://github.com/kestra-io/kestra/issues/19367.
+describe("normalize for TIME hydrates the wall-clock time", () => {
+    it("keeps the hour, minute and second of a LocalTime default", () => {
+        for (const [value, hour, minute, second] of [
+            ["14:30:00", 14, 30, 0],
+            ["00:30:00", 0, 30, 0],
+            ["09:05:03", 9, 5, 3],
+            ["14:30", 14, 30, 0],
+        ] as const) {
+            const hydrated = dayjs(normalize("TIME", value))
+            expect([hydrated.hour(), hydrated.minute(), hydrated.second()]).toEqual([hour, minute, second])
+        }
     })
 })
 

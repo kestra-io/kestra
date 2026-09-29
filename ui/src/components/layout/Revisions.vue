@@ -126,6 +126,7 @@
     import {computed, ref, watch} from "vue"
     import {useI18n} from "vue-i18n"
     import {useRoute, useRouter} from "vue-router"
+    import * as monaco from "monaco-editor/editor/editor.api"
     import History from "vue-material-design-icons/History.vue"
     import Restore from "vue-material-design-icons/Restore.vue"
     import TrashCanOutline from "vue-material-design-icons/TrashCanOutline.vue"
@@ -178,15 +179,15 @@
         highlight?: string
     }>(), {editRouteQuery: true, canDelete: true})
 
-    const revealHighlight =(editor: any) => {
+    const revealHighlight = (editor: monaco.editor.IStandaloneCodeEditor | monaco.editor.IStandaloneDiffEditor | undefined) => {
         if (!props.highlight) return
 
-        const modified = editor?.getModifiedEditor?.() ?? editor
-        const lines: string[] | undefined = modified?.getModel?.()?.getLinesContent?.()
+        const modified = editor && "getModifiedEditor" in editor ? editor.getModifiedEditor() : editor
+        const lines = modified?.getModel()?.getLinesContent()
         if (!lines) return
 
         const index = lines.findIndex(line => line.includes(props.highlight!))
-        if (index >= 0) modified.revealLineNearTop(index + 1)
+        if (index >= 0) modified?.revealLineNearTop(index + 1)
     }
 
     const sortedRevisions = computed(() => {
@@ -318,10 +319,11 @@
                     id: route.params.id?.toString() || "",
                     revision: revision.toString(),
                 })
-                toast.deleted(t("revision deleted", {revision: revision.toString()}))
+                toast.success(t("revision deleted", {revision: revision.toString()}), t("deleted"))
                 emit("deleted", revision)
-            } catch (error: any) {
-                toast.error(t("delete revision error", {revision, error: error.message || error.toString()}))
+            } catch (error: unknown) {
+                const message = error instanceof Error && error.message ? error.message : String(error)
+                toast.error(t("delete revision error", {revision, error: message}))
             }
         })
     }

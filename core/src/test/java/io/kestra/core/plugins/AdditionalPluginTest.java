@@ -22,6 +22,7 @@ import jakarta.inject.Inject;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
+import tools.jackson.databind.ObjectMapper;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -34,6 +35,9 @@ class AdditionalPluginTest {
     @Inject
     private TaskOutputService taskOutputService;
 
+    @Inject
+    private ObjectMapper micronautMapper;
+
     @Test
     @ExecuteFlow("flows/valids/additional-plugin.yaml")
     void additionalPlugin(Execution execution) throws Exception {
@@ -42,6 +46,30 @@ class AdditionalPluginTest {
         assertThat(execution.getTaskRunList()).hasSize(2);
         assertThat(taskOutputService.getOutputs(execution.getTaskRunList().getFirst()).get("output")).isEqualTo("1 -> Hello");
         assertThat(taskOutputService.getOutputs(execution.getTaskRunList().get(1)).get("output")).isEqualTo("Hello World!");
+    }
+
+    // Only Jackson3PluginModule's assignability match makes this work: see Jackson3PluginDeserializer.
+    @Test
+    void shouldDeserializeAnAdditionalPluginThroughTheMicronautMapper() {
+        String json = """
+            {"type":"%s","baseMessage":"Hello"}""".formatted(AdditionalPluginTest1.class.getName());
+
+        BaseAdditionalPluginTest plugin = micronautMapper.readValue(json, BaseAdditionalPluginTest.class);
+
+        assertThat(plugin).isInstanceOf(AdditionalPluginTest1.class);
+        assertThat(plugin.sayHello()).isEqualTo("1 -> Hello");
+    }
+
+    // Pins the abstract-only gate of that match: claiming concrete types too would make the deserializer
+    // re-invoke itself on the type it just resolved, until the stack runs out.
+    @Test
+    void shouldDeserializeAConcreteAdditionalPluginWithoutRecursing() {
+        String json = """
+            {"type":"%s","baseMessage":"Hello"}""".formatted(AdditionalPluginTest1.class.getName());
+
+        AdditionalPluginTest1 plugin = micronautMapper.readValue(json, AdditionalPluginTest1.class);
+
+        assertThat(plugin.sayHello()).isEqualTo("1 -> Hello");
     }
 
     @Test

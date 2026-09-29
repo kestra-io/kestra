@@ -312,6 +312,17 @@ public abstract class AbstractRunnerTest {
     }
 
     @Test
+    @LoadFlows(
+        { "flows/valids/flow-trigger-depends-on-outputs-flow-a.yaml",
+            "flows/valids/flow-trigger-depends-on-outputs-flow-b.yaml",
+            "flows/valids/flow-trigger-depends-on-outputs-unrelated.yaml",
+            "flows/valids/flow-trigger-depends-on-outputs-flow-listen.yaml" }
+    )
+    void flowTriggerDependsOnOutputs() throws Exception {
+        multipleConditionTriggerCaseTest.flowTriggerDependsOnOutputs();
+    }
+
+    @Test
     @LoadFlows({ "flows/valids/flow-trigger-reset-after-fire-flow-a.yaml", "flows/valids/flow-trigger-reset-after-fire-flow-b.yaml", "flows/valids/flow-trigger-reset-after-fire-flow-unrelated.yaml", "flows/valids/flow-trigger-reset-after-fire-flow-listen.yaml" })
     void flowTriggerDependsOnResetsAfterFiring() throws Exception {
         multipleConditionTriggerCaseTest.flowTriggerDependsOnResetsAfterFiring();
@@ -563,6 +574,12 @@ public abstract class AbstractRunnerTest {
     @ExecuteFlow("flows/valids/loop-nested.yaml")
     protected void loopNested(Execution execution) throws Exception {
         loopCaseTest.loopNested(execution);
+    }
+
+    @Test
+    @ExecuteFlow("flows/valids/loop-with-loop-until.yaml")
+    protected void loopWithLoopUntil(Execution execution) throws Exception {
+        loopCaseTest.loopWithLoopUntil(execution);
     }
 
     @Test

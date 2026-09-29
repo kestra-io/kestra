@@ -42,7 +42,7 @@
 <script setup lang="ts">
     import {computed, watch} from "vue"
 
-    import {useRouter, useRoute} from "vue-router"
+    import {useRouter, useRoute, type LocationQueryRaw} from "vue-router"
     const router = useRouter()
     const route = useRoute()
 
@@ -83,8 +83,8 @@
         return label.key && label.keyPrefix !== false ? `${label.key}:${value}` : value
     }
 
-    import {decodeSearchParams} from "@kestra-io/design-system"
-    let query: any[] = []
+    import {decodeSearchParams, type DecodedParam} from "@kestra-io/design-system"
+    let query: DecodedParam[] = []
     watch(
         () => route.query,
         (q) => (query = decodeSearchParams(q)),
@@ -110,12 +110,12 @@
             : `filters[${props.filterType}][EQUALS][${key}]`)
 
         if (isChecked(label)) {
-            const replacementQuery = {...route.query} as Record<string, any>
+            const replacementQuery: LocationQueryRaw = {...route.query}
             delete replacementQuery[props.filterType === "type" ? getKey() : getKey(label.key)]
             replacementQuery.page = "1"
             router.replace({query: replacementQuery})
         } else {
-            const newQuery = {...route.query, page: "1"} as Record<string, any>
+            const newQuery: LocationQueryRaw = {...route.query, page: "1"}
             if (props.filterType === "type") {
                 newQuery[getKey()] = label.value
             } else {
@@ -129,18 +129,6 @@
 <style scoped lang="scss">
 .label.kel-check-tag,
 .label-more {
-    --ks-bg-tag: #7b7b7e45;
-;
-    --ks-bg-tag-active: #414557;
-    --label-text-active: #ffffff;
-
-    html.dark & {
-        --ks-bg-tag: #FFFFFF1A;
-;
-        --ks-bg-tag-active: #F2F2F2;
-        --label-text-active: var(--ks-text-primary);
-    }
-
     background-color: var(--ks-bg-tag);
     color: var(--ks-text-primary);
     font-size: var(--ks-font-size-xs);
@@ -191,11 +179,7 @@
 
 .label.kel-check-tag.is-checked {
     background-color: var(--ks-bg-tag-active);
-    color: var(--ks-black);
-    font-weight: var( --ks-font-weight-medium);
-
-    html.light & {
-        color: var(--label-text-active);
-    }
+    color: var(--ks-text-primary);
+    font-weight: var(--ks-font-weight-medium);
 }
 </style>

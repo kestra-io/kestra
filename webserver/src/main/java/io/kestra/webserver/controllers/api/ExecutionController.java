@@ -24,7 +24,6 @@ import org.reactivestreams.Publisher;
 import org.slf4j.event.Level;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SequenceWriter;
 
 import io.kestra.core.async.AsyncOperationProcessedEvent;
@@ -71,7 +70,6 @@ import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.runners.*;
 import io.kestra.core.runners.configuration.LocalFilesConfiguration;
 import io.kestra.core.serializers.FileSerde;
-import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.server.ServerConfig;
 import io.kestra.core.services.*;
 import io.kestra.core.storages.Namespace;
@@ -146,6 +144,7 @@ import lombok.experimental.SuperBuilder;
 import lombok.extern.slf4j.Slf4j;
 import reactor.core.Exceptions;
 import reactor.core.publisher.Flux;
+import tools.jackson.databind.ObjectMapper;
 import reactor.core.publisher.FluxSink;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
@@ -1472,6 +1471,7 @@ public class ExecutionController {
         @Parameter(description = "Set a list of breakpoints at specific tasks 'id.value', separated by a coma.") @QueryValue Optional<String> breakpoints) throws Exception {
         Execution execution = executionRepository.findById(tenantService.resolveTenant(), executionId).orElseThrow(NotFoundException::new);
 
+        controlReplayable(execution);
         this.controlRevision(execution, revision);
 
         Flow flow = flowService.getFlowIfExecutableOrThrow(tenantService.resolveTenant(), execution.getNamespace(), execution.getFlowId(), Optional.ofNullable(revision));
@@ -1510,12 +1510,9 @@ public class ExecutionController {
                 )
             )
         ) @Body MultipartBody inputs) {
-        Optional<Execution> execution = executionRepository.findById(tenantService.resolveTenant(), executionId);
-        if (execution.isEmpty()) {
-            return null;
-        }
-        Execution current = execution.get();
+        Execution current = executionRepository.findById(tenantService.resolveTenant(), executionId).orElseThrow(NotFoundException::new);
 
+        controlReplayable(current);
         this.controlRevision(current, revision);
 
         Flow flow = flowService.getFlowIfExecutableOrThrow(tenantService.resolveTenant(), current.getNamespace(), current.getFlowId(), Optional.ofNullable(revision));
@@ -1604,6 +1601,14 @@ public class ExecutionController {
             throw new IllegalArgumentException(
                 "Flow execution blocked: revision " + flow.getRevision() + " of flow " + flow.uid() +
                     " is a draft. Draft revisions can only be executed as playground executions."
+            );
+        }
+    }
+
+    private static void controlReplayable(Execution execution) {
+        if (!execution.getState().isTerminated()) {
+            throw new ConflictException(
+                "Cannot replay execution: current state is '%s', expected terminated.".formatted(execution.getState().getCurrent())
             );
         }
     }
@@ -2084,6 +2089,21 @@ public class ExecutionController {
     private MutableHttpResponse<ApiAsyncOperationResponse> replayExecutions(Boolean latestRevision, List<Execution> executions) throws QueueException {
         validateBulkExecutionACL(executions, BulkOperation.REPLAY);
 
+        List<ProblemError> invalids = new ArrayList<>();
+        for (Execution execution : executions) {
+            if (!execution.getState().isTerminated()) {
+                invalids.add(executionProblem(
+                    execution.getId(),
+                    "Execution '%s' must be terminated to be replayed, current state is '%s' !"
+                        .formatted(execution.getId(), execution.getState().getCurrent()),
+                    ProblemTypes.CONFLICT
+                ));
+            }
+        }
+        if (!invalids.isEmpty()) {
+            throw new BulkValidationException("One or more executions could not be replayed.", invalids);
+        }
+
         this.replayCounter.increment(executions.size());
 
         return submitBatchAction(executions, (execution, opId) ->
@@ -2255,7 +2275,7 @@ public class ExecutionController {
     @ApiResponse(responseCode = "409", description = "If labels cannot be applied")
     public Mono<HttpResponse<?>> setLabelsOnTerminatedExecution(
         @Parameter(description = "The execution id") @PathVariable String executionId,
-        @RequestBody(description = "The labels to add to the execution") @Body @NotNull @Valid List<Label> labels) throws QueueException {
+        @RequestBody(description = "The labels to add to the execution") @Body @NotNull List<@Valid Label> labels) throws QueueException {
         Execution execution = executionRepository.findById(tenantService.resolveTenant(), executionId)
             .orElseThrow(() -> new io.kestra.core.exceptions.NotFoundException("Execution '%s' was not found.".formatted(executionId)));
 
@@ -2311,7 +2331,7 @@ public class ExecutionController {
         return setLabelsOnTerminatedExecutions(setLabelsByIds.executionLabels(), executions);
     }
 
-    public record SetLabelsByIdsRequest(@NotNull List<String> executionsId, @NotNull @Valid List<Label> executionLabels) {
+    public record SetLabelsByIdsRequest(@NotNull List<String> executionsId, @NotNull List<@Valid Label> executionLabels) {
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -2325,7 +2345,7 @@ public class ExecutionController {
             in = ParameterIn.QUERY
         ) @QueryFilterFormat(Resource.EXECUTION) List<QueryFilter> filters,
 
-        @RequestBody(description = "The labels to add to the execution") @Body @NotNull @Valid List<Label> setLabels) throws QueueException {
+        @RequestBody(description = "The labels to add to the execution") @Body @NotNull List<@Valid Label> setLabels) throws QueueException {
         var executions = getExecutions(QueryFilterUtils.replaceTimeRangeWithComputedStartDateFilter(filters));
         return setLabelsOnTerminatedExecutions(setLabels, executions);
     }
@@ -2769,8 +2789,8 @@ public class ExecutionController {
 
         return HttpResponse.ok(
             CSVUtils.toCSVFlux(
-                executionRepository.findAsync(this.tenantService.resolveTenant(), QueryFilterUtils.replaceTimeRangeWithComputedStartDateFilter(filters))
-                    .map(log -> objectMapper.convertValue(log, JacksonMapper.MAP_TYPE_REFERENCE))
+                executionRepository.findAsync(this.tenantService.resolveTenant(), QueryFilterUtils.replaceTimeRangeWithComputedStartDateFilter(filters)),
+                objectMapper
             )
         )
             .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=executions.csv");

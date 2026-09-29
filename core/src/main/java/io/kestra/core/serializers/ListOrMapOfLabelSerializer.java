@@ -11,6 +11,8 @@ import com.fasterxml.jackson.databind.SerializerProvider;
 /**
  * This serializer is for historical purpose, labels was first a map but has been updated to a List of Label so
  * this serializer allows using both types.
+ * <p>
+ * Jackson 3 counterpart: {@link Jackson3ListOrMapOfLabelSerializer}.
  */
 public class ListOrMapOfLabelSerializer extends JsonSerializer<Object> {
     @Override

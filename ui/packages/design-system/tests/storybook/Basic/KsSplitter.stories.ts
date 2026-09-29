@@ -28,7 +28,7 @@ export const Default: Story = {
             <div style="padding:24px;height:300px">
                 <ks-splitter style="height:100%">
                     <ks-splitter-panel size="30%" min="20%">
-                        <div style="padding:16px;background:var(--ks-bg-body,#f5f5f5);height:100%">
+                        <div style="padding:16px;background:var(--ks-bg-base);height:100%">
                             <h4 style="margin:0 0 8px">Left Panel</h4>
                             <p style="margin:0;opacity:0.6;font-size:13px">Sidebar content</p>
                         </div>
@@ -47,6 +47,9 @@ export const Default: Story = {
         const canvas = within(canvasElement)
         await expect(canvas.getByText("Left Panel")).toBeTruthy()
         await expect(canvas.getByText("Right Panel")).toBeTruthy()
+
+        const dragger = canvasElement.querySelector(".kel-splitter-bar__dragger-horizontal")!
+        await expect(getComputedStyle(dragger).width).toBe("8px")
     },
 }
 
@@ -73,6 +76,10 @@ export const Vertical: Story = {
             </div>
         `,
     }),
+    async play({canvasElement}) {
+        const dragger = canvasElement.querySelector(".kel-splitter-bar__dragger-vertical")!
+        await expect(getComputedStyle(dragger).height).toBe("8px")
+    },
 }
 
 /** Three-panel layout */

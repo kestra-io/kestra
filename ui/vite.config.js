@@ -208,6 +208,8 @@ export default defineConfig(({mode}) => {
                 "@module-federation/dts-plugin/dynamic-remote-type-hints-plugin",
                 "js-yaml",
                 "path-browserify",
+                // Dev-only: optimizeDeps does not reach the production build, so the lazy chunk
+                // stands, but without this /setup triggers a re-optimization and a full reload.
                 "mailchecker",
                 "rapidoc",
                 // The AI Copilot stories/components import the SDK's `ai` subpath. Pre-bundle it so

@@ -109,18 +109,15 @@ public class Dag extends Task implements FlowableTask<VoidOutput>, OnChildFailur
     )
     private final Property<OnChildFailure> onChildFailure = Property.ofValue(OnChildFailure.CONTINUE);
 
-    @Valid
     @NotEmpty
-    private List<DagTask> tasks;
+    private List<@Valid DagTask> tasks;
 
-    @Valid
     @PluginProperty
-    protected List<Task> errors;
+    protected List<@Valid Task> errors;
 
-    @Valid
     @JsonProperty("finally")
     @Getter(AccessLevel.NONE)
-    protected List<Task> _finally;
+    protected List<@Valid Task> _finally;
 
     public List<Task> getFinally() {
         return this._finally;

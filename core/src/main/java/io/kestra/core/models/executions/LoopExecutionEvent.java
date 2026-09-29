@@ -2,6 +2,7 @@ package io.kestra.core.models.executions;
 
 import java.util.Map;
 
+import io.kestra.core.models.executions.statistics.TaskRunStatistic;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.queues.event.DispatchEvent;
 
@@ -16,7 +17,8 @@ public record LoopExecutionEvent(
     LoopRun loopRun,
     String executionId,
     State.Type state,
-    @Nullable Map<String, Object> outputs) implements DispatchEvent {
+    @Nullable Map<String, Object> outputs,
+    @Nullable TaskRunStatistic taskRunStatistic) implements DispatchEvent {
 
     @Override
     public String key() {
@@ -30,6 +32,7 @@ public record LoopExecutionEvent(
             ", value=" + this.loopRun.value() +
             ", index=" + this.loopRun.index() +
             ", state=" + state +
+            ", taskRunStatistic=" + taskRunStatistic +
             ")";
     }
 }

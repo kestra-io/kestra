@@ -77,6 +77,7 @@
             align-items: center;
             justify-content: center;
             flex-shrink: 0;
+            vertical-align: middle;
         }
     }
 

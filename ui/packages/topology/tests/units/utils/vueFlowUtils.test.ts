@@ -50,7 +50,7 @@ const graph = {
         {source: "5", target: "6", id: "e6", type: "default"},
     ],
     clusters: [],
-} as any
+}
 
 describe("VueFlowUtils", () => {
     test("getRootNodes should return nodes with no incoming edges", () => {
@@ -67,7 +67,7 @@ describe("VueFlowUtils", () => {
     })
 
     test("getNextTaskNodes should return next task nodes", () => {
-        const nextTaskNodes = VueFlowUtils.getNextTaskNodes(graph, {uid: "1"} as any)
+        const nextTaskNodes = VueFlowUtils.getNextTaskNodes(graph, {uid: "1", type: "task"})
         expect(nextTaskNodes).toEqual([
             {
                 uid: "2",
@@ -107,14 +107,16 @@ describe("VueFlowUtils", () => {
     test("areTasksIdenticalInGraphUntilTask should return false for different tasks", () => {
         const previousGraph = structuredClone(graph)
         const currentGraph = structuredClone(graph)
-        currentGraph.nodes[2].task.id = "task1-modified"
+        const task: Record<string, unknown> | undefined = currentGraph.nodes[2].task
+        if (task) task.id = "task1-modified"
         expect(VueFlowUtils.areTasksIdenticalInGraphUntilTask(previousGraph, currentGraph, "task4")).toBeFalsy()
     })
 
     test("areTasksIdenticalInGraphUntilTask should return false for different tasks", () => {
         const previousGraph = structuredClone(graph)
         const currentGraph = structuredClone(graph)
-        currentGraph.nodes[1].task.outputFiles = ["file1-modified.txt", "file4.txt"]
+        const task: Record<string, unknown> | undefined = currentGraph.nodes[1].task
+        if (task) task.outputFiles = ["file1-modified.txt", "file4.txt"]
         expect(VueFlowUtils.areTasksIdenticalInGraphUntilTask(previousGraph, currentGraph, "task4")).toBeFalsy()
     })
 
@@ -207,8 +209,8 @@ triggers:
 })
 
 describe("generateGraph CHOICE edge labels", () => {
-    const generate = (flowGraph: any) =>
-        VueFlowUtils.generateGraph(
+    const generate = (flowGraph: VueFlowUtils.FlowGraph) =>
+        asElements(VueFlowUtils.generateGraph(
             "vfid",
             "flow",
             "ns",
@@ -222,9 +224,9 @@ describe("generateGraph CHOICE edge labels", () => {
             true,
             false,
             false,
-        ) ?? []
+        ) ?? [])
 
-    const issueFlowGraph = {
+    const issueFlowGraph: VueFlowUtils.FlowGraph = {
         nodes: [
             {
                 uid: "root.render-language",
@@ -265,26 +267,26 @@ describe("generateGraph CHOICE edge labels", () => {
             },
         ],
         clusters: [],
-    } as any
+    }
 
     test("propagates each case key from the issue flow to its CHOICE edge", () => {
-        const edges = generate(issueFlowGraph).filter((e: any) => e.type === "edge")
+        const edges = generate(issueFlowGraph).filter((e) => e.type === "edge")
 
-        const frenchEdge = edges.find((e: any) => e.target === "root.render-language.french") as any
+        const frenchEdge = edges.find((e) => e.target === "root.render-language.french")
         expect(frenchEdge?.data?.value).toBe("French")
         expect(frenchEdge?.data?.relationType).toBe("CHOICE")
 
-        const germanEdge = edges.find((e: any) => e.target === "root.render-language.german") as any
+        const germanEdge = edges.find((e) => e.target === "root.render-language.german")
         expect(germanEdge?.data?.value).toBe("German")
         expect(germanEdge?.data?.relationType).toBe("CHOICE")
 
-        const englishEdge = edges.find((e: any) => e.target === "root.render-language.english") as any
+        const englishEdge = edges.find((e) => e.target === "root.render-language.english")
         expect(englishEdge?.data?.value).toBe("defaults")
         expect(englishEdge?.data?.relationType).toBe("CHOICE")
     })
 
     test("does not set a case value on non-CHOICE edges", () => {
-        const sequentialFlowGraph = {
+        const sequentialFlowGraph: VueFlowUtils.FlowGraph = {
             nodes: [
                 {
                     uid: "root.task1",
@@ -305,15 +307,15 @@ describe("generateGraph CHOICE edge labels", () => {
                 },
             ],
             clusters: [],
-        } as any
+        }
 
-        const edge = generate(sequentialFlowGraph).filter((e: any) => e.type === "edge")[0] as any
+        const edge = generate(sequentialFlowGraph).filter((e) => e.type === "edge")[0]
         expect(edge?.data?.value).toBeUndefined()
         expect(edge?.data?.relationType).toBe("SEQUENTIAL")
     })
 
     test("leaves edge data fields undefined when relation is missing", () => {
-        const minimalFlowGraph = {
+        const minimalFlowGraph: VueFlowUtils.FlowGraph = {
             nodes: [
                 {
                     uid: "root.a",
@@ -328,10 +330,265 @@ describe("generateGraph CHOICE edge labels", () => {
             ],
             edges: [{source: "root.a", target: "root.b"}],
             clusters: [],
-        } as any
+        }
 
-        const edge = generate(minimalFlowGraph).filter((e: any) => e.type === "edge")[0] as any
+        const edge = generate(minimalFlowGraph).filter((e) => e.type === "edge")[0]
         expect(edge?.data?.value).toBeUndefined()
         expect(edge?.data?.relationType).toBeUndefined()
+    })
+})
+/** What the assertions below read off a generated element; the generator's own return type is a
+ *  vue-flow union that would need narrowing at every access. */
+interface GeneratedElement {
+    id?: string
+    type?: string
+    class?: string
+    draggable?: boolean
+    source?: string
+    target?: string
+    parentNode?: string
+    position?: {x: number; y: number}
+    data?: Record<string, unknown>
+}
+
+const asElements = (elements: unknown): GeneratedElement[] => elements as GeneratedElement[]
+
+describe("generateGraph node draggability", () => {
+    const flowGraphWithCluster = {
+        nodes: [
+            {
+                uid: "root.branch",
+                type: "io.kestra.core.models.hierarchies.GraphTask",
+                task: {id: "branch", type: "io.kestra.plugin.core.flow.Sequential", namespace: "ns", flowId: "flow"},
+            },
+            {
+                uid: "root.branch.child",
+                type: "io.kestra.core.models.hierarchies.GraphTask",
+                task: {id: "child", type: "io.kestra.plugin.core.log.Log", namespace: "ns", flowId: "flow"},
+            },
+        ],
+        edges: [
+            {
+                source: "root.branch",
+                target: "root.branch.child",
+                relation: {relationType: "SEQUENTIAL"},
+            },
+        ],
+        clusters: [
+            {
+                cluster: {
+                    uid: "cluster_root.branch",
+                    type: "io.kestra.core.models.hierarchies.GraphCluster",
+                    taskNode: {
+                        uid: "root.branch",
+                        task: {id: "branch", type: "io.kestra.plugin.core.flow.Sequential", namespace: "ns", flowId: "flow"},
+                    },
+                },
+                nodes: ["root.branch.child"],
+                parents: [],
+            },
+        ],
+    } as unknown as VueFlowUtils.FlowGraph
+
+    test("marks a task movable but never the cluster wrapping it", () => {
+        const elements =
+            VueFlowUtils.generateGraph(
+                "vfid",
+                "flow",
+                "ns",
+                flowGraphWithCluster,
+                undefined,
+                [],
+                false,
+                {},
+                new Set(),
+                [],
+                false,
+                true,
+                false,
+            ) ?? []
+
+        // The drag is the browser's own, so vue-flow must never reposition a node itself.
+        const built = asElements(elements)
+        expect(built.every((element) => element.draggable !== true)).toBe(true)
+
+        const cluster = built.find((element) => element.type === "cluster")
+        expect(cluster).toBeDefined()
+        expect(cluster?.data?.isMovable).toBeFalsy()
+
+        const child = built.find((element) => element.id === "root.branch.child")
+        expect(child?.data?.isMovable).toBe(true)
+        // Without `nopan` a drag starting on a card pans the canvas instead.
+        expect(child?.class).toContain("nopan")
+    })
+
+    const triggersGraph = {
+        nodes: [
+            {
+                uid: "root.only_task",
+                type: "io.kestra.core.models.hierarchies.GraphTask",
+                task: {id: "only_task", type: "io.kestra.plugin.core.log.Log", namespace: "ns", flowId: "flow"},
+            },
+            {
+                uid: "root.branch",
+                type: "io.kestra.core.models.hierarchies.GraphTask",
+                task: {id: "branch", type: "io.kestra.plugin.core.flow.Sequential", namespace: "ns", flowId: "flow"},
+            },
+        ],
+        edges: [],
+        clusters: [
+            {
+                cluster: {
+                    uid: "cluster_root.Triggers",
+                    type: "io.kestra.core.models.hierarchies.GraphCluster",
+                },
+                nodes: [],
+                parents: [],
+            },
+            {
+                cluster: {
+                    uid: "cluster_root.branch",
+                    type: "io.kestra.core.models.hierarchies.GraphCluster",
+                    taskNode: {
+                        uid: "root.branch",
+                        task: {id: "branch", type: "io.kestra.plugin.core.flow.Sequential", namespace: "ns", flowId: "flow"},
+                    },
+                },
+                nodes: [],
+                parents: [],
+            },
+        ],
+    } as unknown as VueFlowUtils.FlowGraph
+
+    const clustersOf = (isReadOnly: boolean, isAllowedEdit: boolean) =>
+        (VueFlowUtils.generateGraph(
+            "vfid",
+            "flow",
+            "ns",
+            triggersGraph,
+            undefined,
+            [],
+            false,
+            {},
+            new Set(),
+            [],
+            isReadOnly,
+            isAllowedEdit,
+            false,
+        ) ?? []).filter((element) => asElements([element])[0].type === "cluster")
+
+    test("offers the add-trigger button on the triggers box only, and only when editing", () => {
+        const editable = clustersOf(false, true)
+        const triggers = editable.find((c) => c.id === "cluster_root.Triggers")
+        const flowable = editable.find((c) => c.id === "cluster_root.branch")
+        expect(triggers?.data?.canAddTrigger).toBe(true)
+        expect(flowable?.data?.canAddTrigger).toBe(false)
+
+        // A trigger is still a change to the flow, so read-only and view-only must not offer it.
+        for (const [readOnly, allowedEdit] of [[true, true], [false, false]] as const) {
+            const guarded = clustersOf(readOnly, allowedEdit)
+            const box = guarded.find((c) => c.id === "cluster_root.Triggers")
+            expect(box?.data?.canAddTrigger, `readOnly=${readOnly} allowedEdit=${allowedEdit}`).toBe(false)
+        }
+    })
+
+    // The flow is no longer a node: it is a canvas-anchored chip. Asserting that every element
+    // traces back to a uid the backend sent catches any synthetic node appended to the graph,
+    // whatever it ends up being called.
+    test("emits only the nodes and clusters the backend graph declares", () => {
+        const declaredUids = new Set([
+            ...triggersGraph.nodes.map((node) => node.uid),
+            ...triggersGraph.clusters!.map((entry) => entry.cluster.uid),
+        ])
+
+        const elements = VueFlowUtils.generateGraph(
+            "vfid", "flow", "ns", triggersGraph, undefined, [], false, {}, new Set(), [], false, true, false,
+        ) ?? []
+
+        expect(elements.length).toBe(declaredUids.size)
+        for (const element of asElements(elements)) {
+            expect(declaredUids, `element ${element.id}`).toContain(String(element.id))
+            if (element.source !== undefined) {
+                expect(declaredUids, `edge source ${element.source}`).toContain(String(element.source))
+            }
+        }
+    })
+})
+
+describe("generateGraph collapsed nested clusters", () => {
+    const nestedClustersGraph = {
+        nodes: [
+            {
+                uid: "root.outer",
+                type: "io.kestra.core.models.hierarchies.GraphTask",
+                task: {id: "outer", type: "io.kestra.plugin.core.flow.Sequential"},
+            },
+            {
+                uid: "root.outer.inner",
+                type: "io.kestra.core.models.hierarchies.GraphTask",
+                task: {id: "inner", type: "io.kestra.plugin.core.flow.Sequential"},
+            },
+            {
+                uid: "root.outer.inner.task",
+                type: "io.kestra.core.models.hierarchies.GraphTask",
+                task: {id: "task", type: "io.kestra.plugin.core.log.Log"},
+            },
+        ],
+        edges: [
+            {source: "root.outer", target: "root.outer.inner", relation: {relationType: "SEQUENTIAL"}},
+            {source: "root.outer.inner", target: "root.outer.inner.task", relation: {relationType: "SEQUENTIAL"}},
+        ],
+        clusters: [
+            {
+                cluster: {
+                    uid: "cluster_root.outer",
+                    type: "io.kestra.core.models.hierarchies.GraphCluster",
+                    taskNode: {uid: "root.outer", task: {id: "outer", type: "io.kestra.plugin.core.flow.Sequential"}},
+                },
+                nodes: ["root.outer.inner"],
+                parents: [],
+            },
+            {
+                cluster: {
+                    uid: "cluster_root.outer.inner",
+                    type: "io.kestra.core.models.hierarchies.GraphCluster",
+                    taskNode: {uid: "root.outer.inner", task: {id: "inner", type: "io.kestra.plugin.core.flow.Sequential"}},
+                },
+                nodes: ["root.outer.inner.task"],
+                parents: ["cluster_root.outer"],
+            },
+        ],
+    } as unknown as VueFlowUtils.FlowGraph
+
+    test("does not render a nested cluster when it is absorbed by a collapsed parent", () => {
+        // Simulates the edge replacer state when the outer cluster is collapsed.
+        // Even if the inner cluster is marked as collapsed in the Set, it should not render
+        // because its edges are replaced to point to the parent collapsed node.
+        const edgeReplacer = {
+            "cluster_root.outer": "root.outer",
+            "cluster_root.outer.inner": "root.outer",
+            "root.outer.inner": "root.outer",
+            "root.outer.inner.task": "root.outer",
+        }
+
+        const hiddenNodes = [
+            "root.outer.inner", "cluster_root.outer.inner", "root.outer.inner.task", "cluster_root.outer",
+        ]
+
+        const collapsed = new Set(["root.outer", "root.outer.inner"])
+
+        const elements = VueFlowUtils.generateGraph(
+            "vfid", "flow", "ns", nestedClustersGraph, undefined, hiddenNodes, false, edgeReplacer, collapsed, [], false, true, false,
+        ) ?? []
+
+
+        const outerCollapsed = asElements(elements).find(e => e.id === "root.outer" && e.type === "collapsedcluster")
+        expect(outerCollapsed).toBeDefined()
+
+        const innerCollapsed = asElements(elements).find(e => e.id === "root.outer.inner" && e.type === "collapsedcluster")
+        expect(innerCollapsed).toBeUndefined()
+
+        const innerCluster = asElements(elements).find(e => e.id === "cluster_root.outer.inner")
+        expect(innerCluster).toBeUndefined()
     })
 })

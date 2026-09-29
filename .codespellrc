@@ -5,4 +5,4 @@ check-hidden = true
 # mixed case
 ignore-regex = \b([a-zA-Z]+[A-Z]|[A-Z][a-z])[a-zA-Z_-]*\b
 # some unfortunate choices to not bother about for now
-ignore-words-list = splited,childs,fwe,te,ser,serie
+ignore-words-list = splited,childs,fwe,te,ser,serie,caf

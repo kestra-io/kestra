@@ -263,7 +263,9 @@
 </script>
 <style scoped lang="scss">
     .kel-card {
-        height: var(--topology-height, calc(100vh - 174px));
+        // A fixed height left most of a tall viewport unused:
+        // https://github.com/kestra-io/kestra/issues/19685.
+        height: 100%;
         position: relative;
         background-color: var(--ks-bg-base);
 

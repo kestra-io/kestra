@@ -10,14 +10,20 @@ import io.kestra.core.exceptions.KestraRuntimeException;
 
 import de.siegmar.fastcsv.writer.CsvWriter;
 import reactor.core.publisher.Flux;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Renders records to RFC 4180 compliant CSV.
  *
- * <p>The keys of the first record define the columns: every subsequent record is projected onto them, so a record
+ * <p>
+ * Columns are either provided explicitly or derived from the first record. Every subsequent record is projected onto them, so a record
  * holding extra or missing keys can never shift the remaining values into the wrong columns.
  */
 public final class CSVUtils {
+    private static final TypeReference<Map<String, Object>> ROW_TYPE = new TypeReference<>() {
+    };
+
     private CSVUtils() {
     }
 
@@ -28,12 +34,21 @@ public final class CSVUtils {
      * @param lines the records to render, nothing is written when empty
      */
     public static void toCSV(Writer outWriter, List<Map<String, Object>> lines) {
+        if (lines.isEmpty()) {
+            return;
+        }
+        toCSV(outWriter, lines, headers(lines.getFirst()));
+    }
 
+    /**
+     * Writes all records using the provided headers.
+     *
+     * @param outWriter the writer to render the CSV to
+     * @param lines the records to render
+     * @param headers the columns to render, including when there are no records
+     */
+    public static void toCSV(Writer outWriter, List<Map<String, Object>> lines, List<String> headers) {
         try (var csvWriter = CsvWriter.builder().build(outWriter)) {
-            if (lines.isEmpty()) {
-                return;
-            }
-            List<String> headers = headers(lines.getFirst());
             csvWriter.writeRecord(headers);
             for (Map<String, Object> record : lines) {
                 csvWriter.writeRecord(values(record, headers));
@@ -41,6 +56,20 @@ public final class CSVUtils {
         } catch (IOException e) {
             throw new KestraRuntimeException("could not convert to CSV", e);
         }
+    }
+
+    /**
+     * Convert entities to CSV, one row per entity.
+     *
+     * @param entities The entities to export.
+     * @param mapper   The Micronaut-managed mapper, <em>not</em> {@code JacksonMapper}: it is the one carrying
+     *                 {@link io.kestra.core.serializers.TenantSerializer}, so a {@code TenantInterface} entity has
+     *                 its {@code tenantId} stripped. Since the header below is the first row's key set, using a
+     *                 mapper without it would add a {@code tenantId} column to the exported file.
+     * @return The CSV, as a stream of lines.
+     */
+    public static Flux<String> toCSVFlux(Flux<?> entities, ObjectMapper mapper) {
+        return toCSVFlux(entities.map(entity -> mapper.convertValue(entity, ROW_TYPE)));
     }
 
     /**

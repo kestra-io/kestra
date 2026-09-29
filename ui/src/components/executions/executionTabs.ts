@@ -22,7 +22,7 @@ export const DEFAULT_EXECUTION_TAB = "gantt"
  *   `:tab` param.
  * - `meta.tab` is the tab token (resolved by `useActiveTab`).
  * - `meta.title` is the i18n key resolved to the bar label.
- * - `meta.maximized` / `meta.noOverflow` drive the content section layout.
+ * - `meta.maximized` / `meta.noOverflow` / `meta.fullHeight` drive the content section layout.
  * - `meta.locked` flags an Enterprise-locked tab (lock badge in the bar).
  */
 export const EXECUTION_TAB_ROUTES: RouteRecordRaw[] = [
@@ -30,7 +30,7 @@ export const EXECUTION_TAB_ROUTES: RouteRecordRaw[] = [
         name: `${EXECUTION_PARENT_ROUTE}/overview`,
         path: "overview",
         component: () => import("./overview/Overview.vue"),
-        meta: {tab: "overview", title: "overview"},
+        meta: {tab: "overview", title: "overview", fullHeight: true},
     },
     {
         name: `${EXECUTION_PARENT_ROUTE}/gantt`,

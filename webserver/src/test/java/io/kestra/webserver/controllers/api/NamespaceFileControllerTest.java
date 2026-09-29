@@ -516,12 +516,17 @@ class NamespaceFileControllerTest {
     void shouldImportNothingFromTheArchiveWhenAnEntryIsInvalid() throws IOException {
         String namespace = TestsUtils.randomNamespace();
         MultipartBody body = MultipartBody.builder()
-            .addPart("fileContent", "files.zip", zip(List.of(
-                Map.entry("a.txt", "A"),
-                Map.entry("../escape.txt", "BAD"),
-                Map.entry("_flows/broken.yml", "id: [broken"),
-                Map.entry("c.txt", "C")
-            )))
+            .addPart(
+                "fileContent", "files.zip", zip(
+                    List.of(
+                        Map.entry("a.txt", "A"),
+                        Map.entry("../escape.txt", "BAD"),
+                        Map.entry("_flows/broken.yml", "id: [broken"),
+                        Map.entry("_flows/unknown.yml", "id: unknown\nnamespace: " + namespace + "\ntasks:\n  - id: t\n    type: io.kestra.plugin.core.log.Nope\n"),
+                        Map.entry("c.txt", "C")
+                    )
+                )
+            )
             .build();
 
         HttpClientResponseException e = assertThrows(
@@ -533,11 +538,51 @@ class NamespaceFileControllerTest {
 
         assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
         assertThat(e.getResponse().getBody(String.class).orElse(""))
-            .contains("2 entries are invalid")
+            .contains("3 entries are invalid")
             .contains("'../escape.txt'")
-            .contains("'_flows/broken.yml'");
+            .contains("'_flows/broken.yml'")
+            .contains("'_flows/unknown.yml' (")
+            .contains("Invalid type: io.kestra.plugin.core.log.Nope")
+            .doesNotContain("Exception")
+            .doesNotContain("\\n");
         assertThat(storageInterface.exists(TENANT_ID, namespace, toNamespacedStorageUri(namespace, URI.create("/a.txt")))).isFalse();
         assertThat(storageInterface.exists(TENANT_ID, namespace, toNamespacedStorageUri(namespace, URI.create("/c.txt")))).isFalse();
+    }
+
+    @Test
+    void shouldImportNothingFromTheArchiveWhenAnEntryConflictsWithAFile() throws IOException, URISyntaxException {
+        String namespace = TestsUtils.randomNamespace();
+        namespaceFactory.of(TENANT_ID, namespace, storageInterface).putFile(Path.of("/data"), new ByteArrayInputStream("existing".getBytes()));
+        MultipartBody body = MultipartBody.builder()
+            .addPart(
+                "fileContent", "files.zip", zip(
+                    List.of(
+                        Map.entry("a.txt", "A"),
+                        Map.entry("data/x.txt", "X"),
+                        Map.entry("b", "B"),
+                        Map.entry("b/c.txt", "C"),
+                        Map.entry("d/e.txt", "E"),
+                        Map.entry("d", "D")
+                    )
+                )
+            )
+            .build();
+
+        HttpClientResponseException e = assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking().exchange(
+                HttpRequest.POST("/api/v1/main/namespaces/" + namespace + "/files?path=/files.zip", body)
+                    .contentType(MediaType.MULTIPART_FORM_DATA_TYPE)
+            )
+        );
+
+        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
+        assertThat(e.getResponse().getBody(String.class).orElse(""))
+            .contains("3 entries are invalid")
+            .contains("'data/x.txt'")
+            .contains("'b/c.txt'")
+            .contains("'d'");
+        assertThat(storageInterface.exists(TENANT_ID, namespace, toNamespacedStorageUri(namespace, URI.create("/a.txt")))).isFalse();
+        assertThat(storageInterface.exists(TENANT_ID, namespace, toNamespacedStorageUri(namespace, URI.create("/b")))).isFalse();
     }
 
     private static byte[] zip(List<Map.Entry<String, String>> entries) throws IOException {

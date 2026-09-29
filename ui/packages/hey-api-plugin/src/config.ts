@@ -22,13 +22,13 @@ const defaultConfig: KestraSdkPlugin["Config"] = {
     config: {
         output: "kestra-sdk",
         methodNameBuilder(operation) {
-            const operationId = operation.operationId ? stripGetPrefix(operation.operationId) : undefined
+            const operationId = stripGetPrefix(operation.id)
             // if its the "namespace" typescript reserved name, use
             // load as a prefix to avoid conflict
             if (operationId === "namespace") {
                 return "loadNamespace"
             }
-            if (operationId && ["delete"].includes(operationId.replace(/_\d+$/, ""))) {
+            if (["delete"].includes(operationId.replace(/_\d+$/, ""))) {
                 const tag = operation.tags?.[0] ?? "default"
                 const capitalizedTag = tag.charAt(0).toUpperCase()
                     + tag.slice(1).replace(/[_ ][a-zA-Z0-9]/g, (match: string) =>
@@ -36,7 +36,7 @@ const defaultConfig: KestraSdkPlugin["Config"] = {
                     ).replace(/[^a-zA-Z0-9]/g, "")
                 return operationId.replace(/_\d+$/, "") + capitalizedTag
             }
-            return operationId ?? ""
+            return operationId
         },
     },
     dependencies: ["@hey-api/typescript", "@hey-api/client-fetch", "@hey-api/sdk"],

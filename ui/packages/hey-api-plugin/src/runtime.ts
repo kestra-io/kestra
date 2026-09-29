@@ -56,9 +56,9 @@ interface QueryFilter {
 }
 
 /** Minimal structural shape of a @hey-api/client-fetch interceptor slot. */
-interface FetchInterceptor {
+interface FetchInterceptor<Interceptor> {
     clear: () => void;
-    use: (fn: (...args: any[]) => any) => void;
+    use(fn: Interceptor): void;
 }
 
 /** The subset of a @hey-api/client-fetch client that configureClient touches. */
@@ -69,9 +69,9 @@ export interface ConfigurableFetchClient {
         [key: string]: unknown;
     }) => unknown;
     interceptors: {
-        request: FetchInterceptor;
-        response: FetchInterceptor;
-        error: FetchInterceptor;
+        request: FetchInterceptor<(request: Request, options: ResolvedRequestOptionsLike) => Request | Promise<Request>>;
+        response: FetchInterceptor<(response: Response, request: Request, options: ResolvedRequestOptionsLike) => Response | Promise<Response>>;
+        error: FetchInterceptor<(error: unknown, response: Response | undefined, request: Request | undefined, options: ResolvedRequestOptionsLike) => unknown | Promise<unknown>>;
     };
 }
 
@@ -86,7 +86,7 @@ interface ResolvedRequestOptionsLike {
 
 /** The generated SDK's own multipart body serializer (from its vendored core). */
 interface FormDataBodySerializer {
-    bodySerializer: (...args: any[]) => any;
+    bodySerializer: (body: unknown) => string | undefined;
 }
 
 function serializeQueryValue(val: unknown): string | undefined {
@@ -300,7 +300,7 @@ export function createConfigureClient<TClient extends ConfigurableFetchClient>(
         // set 'Content-Type: null' to let the browser supply the multipart boundary automatically.
         // When no body is provided for those endpoints, we must not inject application/json —
         // Kestra will reject the request with 401 if Content-Type doesn't match multipart/form-data.
-        client.interceptors.request.use((request: Request, opts: ResolvedRequestOptionsLike): Request => {
+        client.interceptors.request.use((request: Request, opts: ResolvedRequestOptionsLike): Request | Promise<Request> => {
             const headers = new Headers(request.headers)
             let modified = false
 
@@ -340,7 +340,7 @@ export function createConfigureClient<TClient extends ConfigurableFetchClient>(
             response: Response | undefined,
             request: Request | undefined,
             opts: ResolvedRequestOptionsLike | undefined,
-        ): unknown => {
+        ): unknown | Promise<unknown> => {
             if (!response) return error
 
             const status = response.status

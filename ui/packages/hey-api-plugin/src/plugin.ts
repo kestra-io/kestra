@@ -1,14 +1,7 @@
 import {createHash} from "node:crypto"
 import {readFileSync} from "node:fs"
-import {$, type TypeTsDsl} from "@hey-api/openapi-ts"
+import {$, type TypeTsDsl, type OpenApiOperationObject} from "@hey-api/openapi-ts"
 import type {KestraSdkPlugin} from "./types"
-import type {IROperationObject, IRParameterObject, IRSchemaObject} from "@hey-api/shared"
-
-/** Local interface for IRResponseObject (not exported from @hey-api/shared) */
-interface IRResponseObject {
-    mediaType?: string;
-    schema: IRSchemaObject;
-}
 
 /**
  * Detects if the operation has a single body parameter whose camelCase name
@@ -22,9 +15,9 @@ interface IRResponseObject {
  * Returns { paramName, typeSymbol } if simplification should be applied, null otherwise.
  */
 function detectBodySimplification(
-    operation: IROperationObject,
-    querySymbol: (filter: Record<string, unknown>) => any,
-): { paramName: string; typeSymbol: any } | null {
+    operation: OpenApiOperationObject.V3_1_X,
+    querySymbol: (filter: Record<string, unknown>) => Parameters<typeof $.type.query>[0],
+): { paramName: string; typeSymbol: Parameters<typeof $.type.query>[0] } | null {
     const bodySchema = operation.body?.schema
     if (!bodySchema?.$ref) return null
 
@@ -45,12 +38,12 @@ function detectBodySimplification(
     return {paramName, typeSymbol}
 }
 
-function computeHasRequiredParams(operation: IROperationObject, excludeTenant = false): boolean {
+function computeHasRequiredParams(operation: OpenApiOperationObject.V3_1_X, excludeTenant = false): boolean {
     const pathParams = operation.parameters?.path ? Object.values(operation.parameters.path) : []
     const queryParams = operation.parameters?.query ? Object.values(operation.parameters.query) : []
     return (
-        pathParams.some((p: IRParameterObject) => p.required && !(excludeTenant && p.name === "tenant")) ||
-        queryParams.some((p: IRParameterObject) => p.required) ||
+        pathParams.some((p) => p.required && !(excludeTenant && p.name === "tenant")) ||
+        queryParams.some((p) => p.required) ||
         (operation.body?.required === true)
     )
 }
@@ -160,7 +153,7 @@ export const handler: KestraSdkPlugin["Handler"] = ({plugin}) => {
     plugin.node($.const(getDataOrThrowSymbol).export().assign(getDataOrThrowNode))
 
     // avoid having to unwrap the outputs
-    const unwrapCallStatementsData = (callNode: any) => [
+    const unwrapCallStatementsData = (callNode: Parameters<typeof $.return>[0]) => [
         $.return($(getDataOrThrowSymbol).call(callNode)),
     ]
 
@@ -251,14 +244,14 @@ export const handler: KestraSdkPlugin["Handler"] = ({plugin}) => {
             // SSE operations return ServerSentEventsResult (not a data-bearing response),
             // so getDataOrThrow does not apply — pass these through unchanged.
             const isSSE = Object.values(operation.responses || {}).some(
-                (resp: unknown) => (resp as IRResponseObject)?.mediaType === "text/event-stream",
+                (resp) => resp?.mediaType === "text/event-stream",
             )
 
             // For application/yaml responses, the fetch client's auto-detection maps
             // application/* Content-Type to 'blob'. We override with parseAs:'text' and
             // inject the correct Accept header into every generated wrapper call.
             const isYamlResponse = Object.values(operation.responses || {}).some(
-                (resp: unknown) => (resp as IRResponseObject)?.mediaType === "application/yaml",
+                (resp) => resp?.mediaType === "application/yaml",
             )
 
             // Some endpoints (e.g. exportPluginDefaults) declare application/octet-stream
@@ -266,10 +259,10 @@ export const handler: KestraSdkPlugin["Handler"] = ({plugin}) => {
             // The schema type "string" (without format: binary) signals that the payload is
             // text. Force parseAs:'text' so the fetch client returns a string instead of a Blob.
             const isOctetStreamTextResponse = Object.values(operation.responses || {}).some(
-                (resp: unknown) =>
-                    (resp as IRResponseObject)?.mediaType === "application/octet-stream" &&
-                    (resp as IRResponseObject)?.schema?.type === "string" &&
-                    (resp as IRResponseObject)?.schema?.format !== "binary",
+                (resp) =>
+                    resp?.mediaType === "application/octet-stream" &&
+                    resp?.schema?.type === "string" &&
+                    resp?.schema?.format !== "binary",
             )
 
             // Builds the options expression passed to the underlying SDK call.
@@ -290,13 +283,13 @@ export const handler: KestraSdkPlugin["Handler"] = ({plugin}) => {
                         .prop("parseAs", $.literal("text"))
                     : $("options")
 
-            const operationOptionsType = (sym: unknown, idx: 0 | 1 = 1) =>
+            const operationOptionsType = (sym: Parameters<typeof $.type.query>[0], idx: 0 | 1 = 1) =>
                 $.type("Omit").generics(
                     $.type("Parameters").generic($.type.query(sym)).idx(idx),
                     $.type.literal("throwOnError"),
                 )
 
-            const returnStatements = (callNode: unknown) =>
+            const returnStatements = (callNode: Parameters<typeof $.return>[0]) =>
                 isSSE ? [$.return(callNode)] : unwrapCallStatementsData(callNode)
 
             if (!hasTenant && !bodySimplification && !isMultipart) {

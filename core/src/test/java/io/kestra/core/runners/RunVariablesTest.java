@@ -16,6 +16,7 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionTrigger;
 import io.kestra.core.models.executions.LoopRun;
 import io.kestra.core.models.executions.TaskRun;
+import io.kestra.core.models.executions.TaskRunAttempt;
 import io.kestra.core.models.flows.DependsOn;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowInterface;
@@ -253,6 +254,51 @@ class RunVariablesTest {
             .build(new RunContextLogger(), PropertyContext.create(renderer));
 
         assertThat(variables.get("labels")).isEqualTo(Map.of("some", "label"));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void shouldExposeNamespaceAndFlowIdOfTheExecution() {
+        Execution execution = Execution.builder()
+            .id("exec-id")
+            .namespace("ns")
+            .flowId("flow")
+            .state(new State())
+            .build();
+
+        Map<String, Object> variables = new RunVariables.DefaultBuilder()
+            .withExecution(execution)
+            .build(new RunContextLogger(), PropertyContext.create(renderer));
+
+        assertThat((Map<String, Object>) variables.get("execution"))
+            .containsEntry("namespace", "ns")
+            .containsEntry("flowId", "flow")
+            .containsEntry("hasRetryAttempt", false);
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void shouldExposeHasRetryAttemptWhenATaskRunWasRetried() {
+        Execution execution = Execution.builder()
+            .id("exec-id")
+            .namespace("ns")
+            .flowId("flow")
+            .state(new State())
+            .taskRunList(List.of(
+                TaskRun.builder()
+                    .id("taskrun-id")
+                    .taskId("task-id")
+                    .attempts(List.of(TaskRunAttempt.builder().build(), TaskRunAttempt.builder().build()))
+                    .build()
+            ))
+            .build();
+
+        Map<String, Object> variables = new RunVariables.DefaultBuilder()
+            .withExecution(execution)
+            .build(new RunContextLogger(), PropertyContext.create(renderer));
+
+        assertThat((Map<String, Object>) variables.get("execution"))
+            .containsEntry("hasRetryAttempt", true);
     }
 
     @Test

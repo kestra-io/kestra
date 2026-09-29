@@ -53,6 +53,8 @@ import static io.kestra.core.topologies.FlowTopologyService.SIMULATED_EXECUTION;
     description = """
         Fires when upstream Flow executions meet `dependsOn` (required) and optional trigger `when` condition. Lets you chain Flows owned by different teams.
 
+        The trigger `when` and each `dependsOn` `when` are evaluated against the upstream execution: `flow` is the upstream flow (use `flow.namespace` and `flow.id`), `execution` the upstream execution (`execution.state`, `execution.namespace`, `execution.flowId`, `execution.hasRetryAttempt`), `labels` its labels and `outputs` its task outputs; its flow outputs are under `execution.outputs`.
+
         Upstream execution outputs are exposed under `trigger.outputs`; you can also pass `inputs` to the downstream Flow."""
 )
 @Plugin(

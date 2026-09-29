@@ -3,9 +3,9 @@ package io.kestra.executor;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.exceptions.KestraRuntimeException;
 import io.kestra.core.models.executions.Execution;
@@ -14,6 +14,7 @@ import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowWithException;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.triggers.AbstractTrigger;
+import io.kestra.core.models.triggers.multipleflows.Condition;
 import io.kestra.core.models.triggers.multipleflows.MultipleCondition;
 import io.kestra.core.models.triggers.multipleflows.MultipleConditionStateStore;
 import io.kestra.core.models.triggers.multipleflows.MultipleConditionWindow;
@@ -181,17 +182,31 @@ public class FlowTriggerService {
         RunContext runContext = runContextFactory.of(null, execution);
 
         // evaluate multiple conditions and accumulate with previously stored results
-        Map<String, Boolean> results = flowWithMultipleCondition.getMultipleCondition()
-            .getConditions()
-            .entrySet()
-            .stream()
-            .map(
-                e -> new AbstractMap.SimpleEntry<>(
-                    e.getKey(),
-                    conditionService.isValid(e.getValue(), flowWithMultipleCondition.getFlow(), execution, runContext)
-                )
-            )
-            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+        Map<String, Boolean> results = new HashMap<>();
+        for (Map.Entry<String, Condition> condition : flowWithMultipleCondition.getMultipleCondition().getConditions().entrySet()) {
+            boolean met;
+            try {
+                met = conditionService.isConditionMet(condition.getValue(), flowWithMultipleCondition.getFlow(), execution, runContext);
+            } catch (InternalException e) {
+                // an unrenderable dependsOn `when` is a misconfiguration: log it on both the evaluated execution
+                // and the flow that owns the trigger, and treat the dependency as not matched
+                logUnrenderableWhen(runContext, flowWithMultipleCondition.getFlow(), flowWithMultipleCondition.getTrigger(), e);
+                met = false;
+            } catch (RuntimeException e) {
+                // any other evaluation error is logged and treated as a non-match, never propagated
+                // (which would otherwise fail and retry the whole multiple-condition message)
+                runContext.logger().warn(
+                    "[namespace: {}] [flow: {}] [condition: {}] Evaluate Condition Failed with error '{}'",
+                    flowWithMultipleCondition.getFlow().getNamespace(),
+                    flowWithMultipleCondition.getFlow().getId(),
+                    condition.getKey(),
+                    e.getMessage(),
+                    e
+                );
+                met = false;
+            }
+            results.put(condition.getKey(), met);
+        }
 
         // merge current results into the window (with() preserves previously true results across executions)
         MultipleConditionWindow updatedWindow = multipleConditionWindow.with(results);
@@ -266,14 +281,42 @@ public class FlowTriggerService {
         return flowTriggers(flow).map(trigger -> new FlowWithFlowTrigger(flow, trigger))
             // filter on the execution state the flow listen to
             .filter(flowWithFlowTrigger -> flowWithFlowTrigger.getTrigger().getStates().contains(execution.getState().getCurrent()))
-            // validate flow triggers conditions excluding multiple conditions
-            .filter(
-                flowWithFlowTrigger -> conditionService.isValid(
-                    flowWithFlowTrigger.getTrigger(),
-                    flowWithFlowTrigger.getFlow(),
-                    runContext
-                )
-            ).toList();
+            // validate flow triggers conditions excluding multiple conditions; an unrenderable `when` is a
+            // misconfiguration, so it is logged on both sides and the trigger does not fire
+            .filter(flowWithFlowTrigger -> {
+                try {
+                    return conditionService.isTriggerConditionMet(flowWithFlowTrigger.getTrigger(), runContext);
+                } catch (IllegalVariableEvaluationException e) {
+                    logUnrenderableWhen(runContext, flowWithFlowTrigger.getFlow(), flowWithFlowTrigger.getTrigger(), e);
+                    return false;
+                }
+            })
+            .toList();
+    }
+
+    /**
+     * Logs an unrenderable trigger {@code when} in both places it matters, since the evaluated execution and the
+     * flow that owns the trigger may belong to different teams:
+     * <ul>
+     *     <li>a WARN on the evaluated (upstream) execution — not its error, but it surfaces that a trigger
+     *     listening to it could not be evaluated;</li>
+     *     <li>an ERROR on the flow that owns the trigger — this is its own misconfiguration.</li>
+     * </ul>
+     */
+    private void logUnrenderableWhen(RunContext upstreamRunContext, Flow flow, AbstractTrigger trigger, InternalException error) {
+        upstreamRunContext.logger().warn(
+            "Could not evaluate the `when` condition of flow trigger '{}' on flow '{}.{}': {}",
+            trigger.getId(),
+            flow.getNamespace(),
+            flow.getId(),
+            error.getMessage()
+        );
+        runContextFactory.of(flow, trigger).logger().error(
+            "The `when` condition of flow trigger '{}' could not be rendered: {}",
+            trigger.getId(),
+            error.getMessage(),
+            error
+        );
     }
 
     @AllArgsConstructor

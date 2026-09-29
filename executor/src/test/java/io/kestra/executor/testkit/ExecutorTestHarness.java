@@ -60,6 +60,8 @@ import io.kestra.core.server.ServiceStateChangeEvent;
 import io.kestra.core.services.AsyncOperationWaiter;
 import io.kestra.core.services.ConcurrencyLimitResolver;
 import io.kestra.core.services.ConcurrencyLimitService;
+import io.kestra.core.services.ConditionService;
+import io.kestra.core.services.FlowService;
 import io.kestra.core.services.ExecutionOutputService;
 import io.kestra.core.services.ExecutionService;
 import io.kestra.core.services.FlowParsingService;
@@ -297,8 +299,20 @@ public final class ExecutorTestHarness {
         this.concurrencyLimitResolver = Mockito.spy(new ConcurrencyLimitResolver());
         this.quotaService = Mockito.mock(QuotaService.class);
         this.asyncOperationService = Mockito.mock(AsyncOperationService.class);
-        this.flowTriggerService = Mockito.mock(FlowTriggerService.class);
-        this.multipleConditionStateStore = Mockito.mock(MultipleConditionStateStore.class);
+        // a real FlowTriggerService so a full executor cycle actually evaluates flow-trigger `when` conditions
+        // and emits the executions they produce; the only dependency the harness cannot provide for real is
+        // FlowService, and the trigger paths only use removeUnwanted() (recursion guard) — stub it to allow processing
+        FlowService flowService = Mockito.mock(FlowService.class);
+        Mockito.when(flowService.removeUnwanted(Mockito.any(), Mockito.any())).thenReturn(true);
+        this.flowTriggerService = new FlowTriggerService(
+            new ConditionService(),
+            runContextFactory,
+            flowService,
+            flowMetaStore,
+            executionOutputService,
+            new ExecutionDepthConfiguration(100)
+        );
+        this.multipleConditionStateStore = new InMemoryMultipleConditionStateStore();
 
         this.executorService = new ExecutorService(
             runContextFactory,

@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
@@ -37,6 +38,7 @@ import io.kestra.core.http.HttpRequest;
 import io.kestra.core.http.HttpResponse;
 import io.kestra.core.http.HttpSseEvent;
 import io.kestra.core.http.client.configurations.HttpConfiguration;
+import io.kestra.core.http.client.configurations.HttpMethod;
 import io.kestra.core.http.client.configurations.ProxyConfiguration;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.executions.Execution;
@@ -93,6 +95,7 @@ class HttpClientTest {
         EmbeddedServer embeddedServer = applicationContext.getBean(EmbeddedServer.class);
         embeddedServer.start();
         embeddedServerUri = embeddedServer.getURI();
+        ClientTestController.retryAttempts.set(0);
     }
 
     HttpClient client() throws IllegalVariableEvaluationException {
@@ -608,8 +611,105 @@ class HttpClientTest {
         }
     }
 
+    @Test
+    void shouldRetryOnConfiguredResponseCode()
+        throws IllegalVariableEvaluationException, HttpClientException, IOException {
+
+        try (
+            HttpClient client = client(
+                b -> b.configuration(
+                    HttpConfiguration.builder()
+                        .retryOnStatusCodes(Property.ofValue(List.of(500)))
+                        .build()
+                )
+            )
+        ) {
+            HttpClientResponseException exception = assertThrows(
+                HttpClientResponseException.class,
+                () -> client.request(
+                    HttpRequest.of(
+                        URI.create(embeddedServerUri + "/http/error?status=500")
+                    )
+                )
+            );
+
+            assertThat(exception.getResponse().getStatus().getCode()).isEqualTo(500);
+        }
+    }
+
+    // --- retryOnStatusCodesByMethod ---
+    //
+    // shouldRetryOnConfiguredResponseCode above only proves the flat retryOnStatusCodes list still applies
+    // when no per-method override is set; it can't distinguish "retried once then failed" from "never
+    // retried at all", since the final thrown status is the same either way. The two tests below make the
+    // retry itself observable via a request-count endpoint, so the per-method override in
+    // resolveRetryableStatusCodes() is actually exercised rather than just inferred.
+
+    @Test
+    void shouldRetryPerMethodOverrideWhenMethodMatches()
+        throws IllegalVariableEvaluationException, HttpClientException, IOException {
+        // Given: retryOnStatusCodes (the fallback) does NOT include 500, but retryOnStatusCodesByMethod
+        // gives GET its own list that does. A GET should therefore retry the 500 the flat list alone
+        // would not have retried, and succeed on the second attempt.
+        try (
+            HttpClient client = client(
+                b -> b.configuration(
+                    HttpConfiguration.builder()
+                        .retryOnStatusCodes(Property.ofValue(List.of(404)))
+                        .retryOnStatusCodesByMethod(Property.ofValue(Map.of(HttpMethod.GET, List.of(500))))
+                        .build()
+                )
+            )
+        ) {
+            HttpResponse<String> response = client.request(
+                HttpRequest.of(URI.create(embeddedServerUri + "/http/retry?failureStatus=500&succeedAfterAttempts=1")),
+                String.class
+            );
+
+            assertThat(response.getStatus().getCode()).isEqualTo(200);
+            assertThat(response.getBody()).isEqualTo("recovered");
+            assertThat(ClientTestController.retryAttempts.get()).isEqualTo(2);
+        }
+    }
+
+    @Test
+    void shouldNotRetryPerMethodOverrideWhenMethodDoesNotMatch()
+        throws IllegalVariableEvaluationException, IOException {
+        // Given: the same configuration as above, but the request is a POST. retryOnStatusCodesByMethod
+        // only names GET, so POST falls back to the flat retryOnStatusCodes list ([404]), which does not
+        // include 500 — the 500 should surface immediately, with no retry attempted.
+        try (
+            HttpClient client = client(
+                b -> b.configuration(
+                    HttpConfiguration.builder()
+                        .retryOnStatusCodes(Property.ofValue(List.of(404)))
+                        .retryOnStatusCodesByMethod(Property.ofValue(Map.of(HttpMethod.GET, List.of(500))))
+                        .build()
+                )
+            )
+        ) {
+            HttpClientResponseException exception = assertThrows(
+                HttpClientResponseException.class,
+                () -> client.request(
+                    HttpRequest.builder()
+                        .uri(URI.create(embeddedServerUri + "/http/retry?failureStatus=500&succeedAfterAttempts=1"))
+                        .method("POST")
+                        .body(HttpRequest.StringRequestBody.builder().content("body").build())
+                        .build()
+                )
+            );
+
+            assertThat(exception.getResponse().getStatus().getCode()).isEqualTo(500);
+            assertThat(ClientTestController.retryAttempts.get()).isEqualTo(1);
+        }
+    }
+
     @Controller("/http/")
     public static class ClientTestController {
+        // Counts attempts against /http/retry across a single test's requests. Reset in @BeforeEach so
+        // tests don't leak state into one another.
+        static final AtomicInteger retryAttempts = new AtomicInteger();
+
         @SuppressWarnings("JsonStandardCompliance")
         @Get("text")
         @Produces(MediaType.TEXT_PLAIN)
@@ -667,6 +767,32 @@ class HttpClientTest {
             return io.micronaut.http.HttpResponse
                 .status(HttpStatus.valueOf(status))
                 .body(Map.of("status", status));
+        }
+
+        // Fails with failureStatus for the first succeedAfterAttempts attempts (per test, via
+        // retryAttempts), then returns 200 "recovered". Used to make an actual retry observable, rather
+        // than only checking the terminal status code as shouldRetryOnConfiguredResponseCode does.
+        @Get("retry")
+        @Produces(MediaType.TEXT_PLAIN)
+        public io.micronaut.http.HttpResponse<String> retryGet(@QueryValue int failureStatus, @QueryValue int succeedAfterAttempts) {
+            return retryResponse(failureStatus, succeedAfterAttempts);
+        }
+
+        @Post(uri = "retry", consumes = MediaType.ALL)
+        @Produces(MediaType.TEXT_PLAIN)
+        public io.micronaut.http.HttpResponse<String> retryPost(
+            @QueryValue int failureStatus,
+            @QueryValue int succeedAfterAttempts,
+            @Body String body) {
+            return retryResponse(failureStatus, succeedAfterAttempts);
+        }
+
+        private static io.micronaut.http.HttpResponse<String> retryResponse(int failureStatus, int succeedAfterAttempts) {
+            int attempt = retryAttempts.incrementAndGet();
+            if (attempt <= succeedAfterAttempts) {
+                return io.micronaut.http.HttpResponse.status(HttpStatus.valueOf(failureStatus)).body("failing");
+            }
+            return io.micronaut.http.HttpResponse.ok("recovered");
         }
 
         @ExecuteOn(TaskExecutors.IO)

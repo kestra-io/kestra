@@ -18,8 +18,9 @@ describe("getStatusStyle", () => {
         expect(style?.border).toBe(border)
     })
 
-    test("handles uppercase states", () => {
-        expect(getStatusStyle("SUCCESS")?.textVar).toBe("--ks-text-success")
+    test("matches states case-insensitively", () => {
+        expect(getStatusStyle("SUCCESS")).toBe(getStatusStyle("success"))
+        expect(getStatusStyle("Skipped")).toBe(getStatusStyle("skipped"))
     })
 
     test("returns the neutral style for an unknown state", () => {

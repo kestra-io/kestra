@@ -40,7 +40,7 @@ import ElementPlus from "element-plus";
 import createUnsavedChanged from "./unsavedChange";
 import createEventsRouter from "./eventsRouter";
 import "./global"
-import {useDocStore} from "../stores/doc";
+import {documentationGuard} from "./documentationGuard";
 
 
 import LeftMenuLink from "../components/LeftMenuLink.vue";
@@ -77,26 +77,7 @@ export default async (app, routes, _stores, translations, additionalTranslations
     const piniaStore = createPinia();
     app.use(piniaStore);
 
-    /**
-     * Manage docId initialization for Contextual docs
-     */
-    router.beforeEach((to, from, next) => {
-        // set the docId from the path
-        // so it has a default
-        const pathArray = to.path.split("/");
-        const docId = pathArray[pathArray.length-1];
-
-        const docStore = useDocStore();
-        docStore.docId = docId;
-
-        // propagate showDocId query param
-        // to the next page to facilitate docs binding
-        if(to.query["showDocId"] === undefined && from.query["showDocId"] !== undefined){
-            next({path: to.path, query: {...to.query, showDocId: from.query["showDocId"]}})
-        }else{
-            next()
-        }
-    })
+    router.beforeEach(documentationGuard);
 
     router.afterEach((to) => {
         window.dispatchEvent(new CustomEvent("KestraRouterAfterEach", to))

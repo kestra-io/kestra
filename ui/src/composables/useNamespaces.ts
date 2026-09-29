@@ -4,9 +4,11 @@ import {storageKeys} from "../utils/constants"
 import {Namespace} from "@kestra-io/kestra-sdk"
 
 
-export class NamespaceIterator extends EntityIterator<Namespace>{
+export type NamespaceSearchOptions = Parameters<ReturnType<typeof useNamespacesStore>["search"]>[0]
+
+export class NamespaceIterator extends EntityIterator<Namespace, NamespaceSearchOptions>{
     // oxlint-disable-next-line no-useless-constructor
-    constructor(fetchSize: number, options?: any) {
+    constructor(fetchSize: number, options?: NamespaceSearchOptions) {
         super(fetchSize, options)
     }
 
@@ -21,6 +23,6 @@ export function defaultNamespace() {
     return localStorage.getItem(storageKeys.DEFAULT_NAMESPACE)
 }
 
-export default function useNamespaces(fetchSize: number, options?: any): NamespaceIterator {
+export default function useNamespaces(fetchSize: number, options?: NamespaceSearchOptions): NamespaceIterator {
     return new NamespaceIterator(fetchSize, options)
 }

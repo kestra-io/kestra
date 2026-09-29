@@ -10,7 +10,7 @@ import {useFlowStore} from "../../stores/flow";
 import {useNamespacesStore} from "override/stores/namespaces";
 import {isMap, parseDocument, visit} from "yaml";
 
-// Root keys holding tasks; `inputs`, `outputs`, `sla` and `triggers` also carry `id` + `type` maps.
+// Root keys holding tasks; `triggers` types are registered plugins too, so they are filtered by key.
 const TASK_ROOT_KEYS = ["tasks", "errors", "finally", "afterExecution"];
 
 function distinct<T>(val: T[] | undefined): T[] {
@@ -115,12 +115,14 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
         }
     }
 
+    // Matching on the plugin registry keeps input definitions such as `Pause.onResume` out.
     private tasks(source: string): {id: string; type: string}[] {
         const root = parseDocument(source).contents;
         if (!isMap(root)) {
             return [];
         }
 
+        const pluginTypes = new Set(this.pluginsStore.allTypes);
         const tasks: {id: string; type: string}[] = [];
         for (const key of TASK_ROOT_KEYS) {
             const section = root.get(key, true);
@@ -131,7 +133,7 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
                 Map(_, map) {
                     const id = map.get("id");
                     const type = map.get("type");
-                    if (typeof id === "string" && typeof type === "string") {
+                    if (typeof id === "string" && typeof type === "string" && pluginTypes.has(type)) {
                         tasks.push({id, type});
                     }
                 }

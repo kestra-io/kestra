@@ -444,6 +444,7 @@
 
     const {loadInit} = useRestoreUrl()
     import Sections from "../dashboard/sections/Sections.vue"
+    import type {Chart} from "../dashboard/types"
     import TopNavBar from "../../components/layout/TopNavBar.vue"
     import NavBarActionsDropdown from "../../components/layout/NavBarActionsDropdown.vue"
     import NavBarAction from "../../components/layout/NavBarAction.vue"
@@ -841,9 +842,8 @@
     })
 
     const charts = computed(() => {
-        return [
-            {...YAML_UTILS.parse(YAML_CHART), content: YAML_CHART},
-        ]
+        const chart = YAML_UTILS.parse<Chart>(YAML_CHART)
+        return chart ? [{...chart, content: YAML_CHART}] : []
     })
 
     const lockedFilters = computed<QueryFilter[]>(() =>

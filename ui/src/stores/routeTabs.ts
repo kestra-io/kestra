@@ -11,7 +11,7 @@ export interface RouteTab {
     count?: number;
     query?: Record<string, unknown>;
     component?: Component;
-    props?: Record<string, any>;
+    props?: Record<string, unknown>;
     locked?: boolean;
     icon?: Component;
     excludeFromScope?: boolean;

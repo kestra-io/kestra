@@ -29,7 +29,7 @@ interface ParsedFlow {
 // webserver). Suggested only in that context; the backend rejects them anywhere else.
 const INPUT_ONLY_FUNCTIONS = ["subflow"]
 
-// Root keys holding tasks; `inputs`, `outputs`, `sla` and `triggers` also carry `id` + `type` maps.
+// Root keys holding tasks; `triggers` types are registered plugins too, so they are filtered by key.
 const TASK_ROOT_KEYS = new Set(["tasks", "errors", "finally", "afterExecution"])
 
 /**
@@ -127,10 +127,12 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
         }
     }
 
+    // Matching on the plugin registry keeps input definitions such as `Pause.onResume` out.
     private tasks(source: string): {id: string; type: string}[] {
+        const pluginTypes = new Set(this.pluginsStore.allTypes)
         return YAML_UTILS.extractTypedBlocks(source)
             .flatMap(({path, type, value: {id}}) =>
-                TASK_ROOT_KEYS.has(path.split(".")[0]) && typeof id === "string" ? [{id, type}] : [])
+                TASK_ROOT_KEYS.has(path.split(".")[0]) && typeof id === "string" && pluginTypes.has(type) ? [{id, type}] : [])
     }
 
     private cursorProbeIndexes(source: string, cursorIndex: number): number[] {

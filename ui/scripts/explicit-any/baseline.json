@@ -31,7 +31,6 @@
   "packages/design-system/src/components/Data/KsDescriptions.vue": 1,
   "packages/design-system/src/components/Data/KsDescriptionsItem.vue": 1,
   "packages/design-system/src/components/Data/KsEmpty.vue": 1,
-  "packages/design-system/src/components/Data/KsMarkdown/KsMarkdown.vue": 23,
   "packages/design-system/src/components/Data/KsMarkdown/shikiHighlighter.ts": 1,
   "packages/design-system/src/components/Data/KsPageHeader.vue": 2,
   "packages/design-system/src/components/Data/KsPagination.vue": 1,

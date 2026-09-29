@@ -312,6 +312,17 @@ public abstract class AbstractRunnerTest {
     }
 
     @Test
+    @LoadFlows(
+        { "flows/valids/flow-trigger-depends-on-outputs-flow-a.yaml",
+            "flows/valids/flow-trigger-depends-on-outputs-flow-b.yaml",
+            "flows/valids/flow-trigger-depends-on-outputs-unrelated.yaml",
+            "flows/valids/flow-trigger-depends-on-outputs-flow-listen.yaml" }
+    )
+    void flowTriggerDependsOnOutputs() throws Exception {
+        multipleConditionTriggerCaseTest.flowTriggerDependsOnOutputs();
+    }
+
+    @Test
     @LoadFlows({ "flows/valids/flow-trigger-reset-after-fire-flow-a.yaml", "flows/valids/flow-trigger-reset-after-fire-flow-b.yaml", "flows/valids/flow-trigger-reset-after-fire-flow-unrelated.yaml", "flows/valids/flow-trigger-reset-after-fire-flow-listen.yaml" })
     void flowTriggerDependsOnResetsAfterFiring() throws Exception {
         multipleConditionTriggerCaseTest.flowTriggerDependsOnResetsAfterFiring();

@@ -542,7 +542,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
             .getDslContextWrapper()
             .transactionResult(configuration ->
             {
-                DSLContext context = DSL.using(configuration);
+                DSLContext context = QueryTimeout.apply(configuration, descriptors.getQueryTimeout());
 
                 Map<String, ? extends ColumnDescriptor<Executions.Fields>> columnsWithoutDate = descriptors.getColumns().entrySet().stream()
                     .filter(entry -> entry.getValue().getField() == null || !dateFields().contains(entry.getValue().getField()))
@@ -592,7 +592,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
         boolean numeratorFilter) {
         return this.jdbcRepository.getDslContextWrapper().transactionResult(configuration ->
         {
-            DSLContext context = DSL.using(configuration);
+            DSLContext context = QueryTimeout.apply(configuration, dataFilter.getQueryTimeout());
             ColumnDescriptor<Executions.Fields> columnDescriptor = dataFilter.getColumns();
             String columnKey = this.getFieldsMapping().get(columnDescriptor.getField());
             Field<?> field = columnToField(columnDescriptor, getFieldsMapping());

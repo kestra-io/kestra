@@ -314,7 +314,7 @@ class LoopExecutionEventMessageHandlerTest {
 
         // When
         var loopRun = new LoopRun(execution, "loop", loopTaskRunId, 0, null, "a", null);
-        var message = new LoopExecutionEvent(loopRun, execution.getId(), State.Type.SUCCESS, null, null);
+        var message = new LoopExecutionEvent(loopRun, execution.getId(), State.Type.SUCCESS, null);
         var maybeExecutor = handler.handle(message);
 
         // Then — fails only this execution, does not throw and crash the whole instance
@@ -342,7 +342,7 @@ class LoopExecutionEventMessageHandlerTest {
 
         // When — the first iteration fails
         var loopRun = new LoopRun(execution, "loop", loopTaskRunId, 0, null, "a", null);
-        var message = new LoopExecutionEvent(loopRun, execution.getId(), State.Type.FAILED, null, null);
+        var message = new LoopExecutionEvent(loopRun, execution.getId(), State.Type.FAILED, null);
         var maybeExecutor = handler.handle(message);
 
         // Then — the loop ends in SUCCESS: 1 sub-execution ran (and failed), the 2 remaining iterations are skipped

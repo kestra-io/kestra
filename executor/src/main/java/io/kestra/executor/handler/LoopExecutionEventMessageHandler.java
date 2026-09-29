@@ -143,9 +143,9 @@ public class LoopExecutionEventMessageHandler implements ExecutorMessageHandler<
                             if (shouldBreak) {
                                 // update the outputs with SKIPPED iterations
                                 terminatedByState.put(State.Type.SKIPPED.name(), iterationCount - nextIndex);
-                                computeOutputs(parentTaskRun, taskOutputs, iterationCount, runningIteration, terminatedByState, null, taskRunStatistic);
+                                computeOutputs(parentTaskRun, taskOutputs, iterationCount, runningIteration, terminatedByState, null);
                                 var state = loop.getTransmitFailed() && message.state().isTerminatedInError() ? message.state() : State.Type.SUCCESS;
-                                return terminateLoop(parentTaskRun, loop, executor, state, taskRunStatistic);
+                                return terminateLoop(parentTaskRun, loop, executor, state);
                             }
                         }
 

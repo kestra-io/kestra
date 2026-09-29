@@ -1,0 +1,17 @@
+id: approval-in-loop
+namespace: io.kestra.tests
+
+tasks:
+  - id: each_task
+    type: io.kestra.plugin.core.flow.Loop
+    values: '["a"]'
+    tasks:
+      - id: approval
+        type: io.kestra.plugin.core.flow.Approval
+        onApprove:
+          - id: approved
+            type: io.kestra.plugin.core.log.Log
+            message: "Approved"
+  - id: last
+    type: io.kestra.plugin.core.debug.Return
+    format: "done"

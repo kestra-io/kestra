@@ -421,6 +421,15 @@ public class Approval extends Task implements FlowableTask<Approval.Output>, Pau
     }
 
     @Override
+    public State.Type resumedTaskRunState(State.Type newState) {
+        return switch (newState) {
+            case CANCELLED -> State.Type.CANCELLED;
+            case KILLING -> State.Type.KILLED;
+            default -> State.Type.RUNNING;
+        };
+    }
+
+    @Override
     public Optional<ExecutionDelay> pauseDelay(TaskRun taskRun, RunContext runContext) throws IllegalVariableEvaluationException, InternalException {
         if (this.getTimeout() == null) {
             return Optional.empty();

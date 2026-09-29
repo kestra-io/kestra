@@ -86,6 +86,10 @@ import static io.kestra.core.utils.Rethrow.*;
 @Singleton
 @Slf4j
 public class ExecutionService {
+    public static final int APPROVAL_COMMENT_MAX_LENGTH = 4096;
+
+    public static final String APPROVAL_RESUME_REFUSED = "Execution '%s' is paused on an Approval task, which can only be decided through the review action.";
+
     private final StorageInterface storageInterface;
     private final ExecutionRepositoryInterface executionRepository;
     private final LogDataStoreInterface logRepository;
@@ -766,23 +770,47 @@ public class ExecutionService {
         return this.decide(execution, flow, taskRunId, decision, inputs, null, true);
     }
 
+    /** Whether every paused task run is an Approval, so that a plain resume has nothing to resume. */
+    public boolean isPausedOnApproval(Execution execution, FlowInterface flow) throws InternalException, FlowProcessingException {
+        Optional<TaskRun> pausedTaskRun = this.findPausedTaskRunToResume(execution, flow);
+        if (pausedTaskRun.isEmpty()) {
+            return false;
+        }
+        final FlowWithSource flowWithSource = flow instanceof FlowWithSource fws ? fws : flowParsingService.parse(flow, false);
+        return flowWithSource.findTaskByTaskId(pausedTaskRun.get().getTaskId()) instanceof Approval;
+    }
+
+    private Optional<TaskRun> findPausedTaskRunToResume(Execution execution, FlowInterface flow) throws InternalException, FlowProcessingException {
+        Optional<TaskRun> firstPaused = execution.findFirstByState(State.Type.PAUSED);
+        if (firstPaused.isEmpty()) {
+            return firstPaused;
+        }
+        final FlowWithSource flowWithSource = flow instanceof FlowWithSource fws ? fws : flowParsingService.parse(flow, false);
+        for (TaskRun taskRun : execution.getTaskRunList()) {
+            if (taskRun.getState().getCurrent() == State.Type.PAUSED && !(flowWithSource.findTaskByTaskId(taskRun.getTaskId()) instanceof Approval)) {
+                return Optional.of(taskRun);
+            }
+        }
+        return firstPaused;
+    }
+
+    /** Throws an {@link IllegalArgumentException} when {@code decide} would refuse the decision, so callers can reject it before emitting a command. */
+    public void validateDecision(final Execution execution, FlowInterface flow, String taskRunId, PausableTask.Decision decision) throws Exception {
+        Approval approval = this.findPausedApproval(execution, flow, taskRunId);
+        final FlowWithSource flowWithSource = flow instanceof FlowWithSource fws ? fws : flowParsingService.parse(flow, false);
+
+        this.validateDecisionComment(flowWithSource, approval, execution, execution.findTaskRunByTaskRunId(taskRunId), decision);
+    }
+
     /**
      * {@code resumed} supplies the reviewer identity; its target state is ignored since a decided Approval always resumes RUNNING.
      * {@code notifyLoopParent} is false for a caller that notifies the Loop parent itself, as the expired-delay path does for a Pause.
      */
     public Execution decide(final Execution execution, FlowInterface flow, String taskRunId, PausableTask.Decision decision, @Nullable Map<String, Object> inputs, @Nullable PausableTask.Resumed resumed, boolean notifyLoopParent) throws Exception {
-        TaskRun taskRun = execution.findTaskRunByTaskRunId(taskRunId);
+        this.validateDecision(execution, flow, taskRunId, decision);
+
         final FlowWithSource flowWithSource = flow instanceof FlowWithSource fws ? fws : flowParsingService.parse(flow, false);
-        if (!(flowWithSource.findTaskByTaskId(taskRun.getTaskId()) instanceof Approval approval)) {
-            throw new IllegalArgumentException("Task run '%s' is not an Approval task.".formatted(taskRunId));
-        }
-        if (taskRun.getState().getCurrent() != State.Type.PAUSED) {
-            throw new IllegalArgumentException("Task run '%s' is not paused.".formatted(taskRunId));
-        }
-
-        Map<String, Object> priorOutputs = taskOutputService.getOutputs(taskRun);
-
-        this.validateDecisionComment(flowWithSource, approval, execution, taskRun, decision);
+        Map<String, Object> priorOutputs = taskOutputService.getOutputs(execution.findTaskRunByTaskRunId(taskRunId));
 
         PausableTask.Resumed _resumed = resumed != null ? resumed : PausableTask.Resumed.now(State.Type.RUNNING);
         Execution decidedExecution = this.markAs(execution, flowWithSource, taskRunId, State.Type.RUNNING, inputs, _resumed, decision);
@@ -792,10 +820,46 @@ public class ExecutionService {
         Map<String, Object> merged = MapUtils.merge(priorOutputs, taskOutputService.getOutputs(decidedTaskRun));
         taskOutputService.saveOutputs(decidedTaskRun, merged);
 
-        if (notifyLoopParent && decidedExecution.getKind() == ExecutionKind.LOOP) {
-            loopExecutionEventQueue.emit(new LoopExecutionEvent(decidedExecution.getLoopRun(), decidedExecution.getId(), decidedExecution.getState().getCurrent(), null, null));
+        this.eventPublisher.publishEvent(CrudEvent.of(execution, decidedExecution));
+        if (notifyLoopParent) {
+            this.notifyLoopParent(decidedExecution, decidedExecution.getState().getCurrent());
         }
         return decidedExecution;
+    }
+
+    /** Throws an {@link IllegalArgumentException} when {@code cancelApproval} would refuse, so callers can reject it before emitting a command. */
+    public void validateCancelApproval(final Execution execution, FlowInterface flow, String taskRunId) throws Exception {
+        this.findPausedApproval(execution, flow, taskRunId);
+    }
+
+    /** Ends an Approval request without a decision: no branch runs and the task run is cancelled. */
+    public Execution cancelApproval(final Execution execution, FlowInterface flow, String taskRunId, @Nullable PausableTask.Resumed resumed) throws Exception {
+        this.findPausedApproval(execution, flow, taskRunId);
+
+        final FlowWithSource flowWithSource = flow instanceof FlowWithSource fws ? fws : flowParsingService.parse(flow, false);
+        Execution cancelled = this.markAs(execution, flowWithSource, taskRunId, State.Type.CANCELLED, null, resumed != null ? resumed : PausableTask.Resumed.now(State.Type.CANCELLED));
+        this.eventPublisher.publishEvent(CrudEvent.of(execution, cancelled));
+        this.notifyLoopParent(cancelled, State.Type.RESTARTED);
+        this.notifyLoopParent(cancelled, cancelled.getState().getCurrent());
+        return cancelled;
+    }
+
+    private void notifyLoopParent(Execution execution, State.Type state) throws QueueException {
+        if (execution.getKind() == ExecutionKind.LOOP) {
+            loopExecutionEventQueue.emit(new LoopExecutionEvent(execution.getLoopRun(), execution.getId(), state, null, null));
+        }
+    }
+
+    private Approval findPausedApproval(final Execution execution, FlowInterface flow, String taskRunId) throws Exception {
+        TaskRun taskRun = execution.findTaskRunByTaskRunId(taskRunId);
+        final FlowWithSource flowWithSource = flow instanceof FlowWithSource fws ? fws : flowParsingService.parse(flow, false);
+        if (!(flowWithSource.findTaskByTaskId(taskRun.getTaskId()) instanceof Approval approval)) {
+            throw new IllegalArgumentException("Task run '%s' is not an Approval task.".formatted(taskRunId));
+        }
+        if (taskRun.getState().getCurrent() != State.Type.PAUSED) {
+            throw new IllegalArgumentException("Task run '%s' is not paused.".formatted(taskRunId));
+        }
+        return approval;
     }
 
     private void validateDecisionComment(FlowInterface flow, Approval approval, Execution execution, TaskRun taskRun, PausableTask.Decision decision) throws IllegalVariableEvaluationException {
@@ -813,6 +877,9 @@ public class ExecutionService {
 
         if (required && (decision.comment() == null || decision.comment().isBlank())) {
             throw new IllegalArgumentException("Task run '%s' requires a comment for a %s decision.".formatted(taskRun.getId(), decision.type()));
+        }
+        if (decision.comment() != null && decision.comment().length() > APPROVAL_COMMENT_MAX_LENGTH) {
+            throw new IllegalArgumentException("The comment of a decision cannot exceed %d characters.".formatted(APPROVAL_COMMENT_MAX_LENGTH));
         }
     }
 
@@ -1079,13 +1146,50 @@ public class ExecutionService {
             });
     }
 
+    /** Validates the reviewer inputs of the Approval task run {@code taskRunId}. */
+    public Mono<List<InputAndValue>> validateForReview(final Execution execution, Flow flow, String taskRunId, @Nullable Publisher<CompletedPart> inputs) {
+        return getTaskOr(execution, flow, taskRunId)
+            .flatMap(task ->
+            {
+                if (task.isPresent() && task.get() instanceof PausableTask pausableTask) {
+                    return flowInputOutput.validateExecutionInputs(pausableTask.resumeInputs(), flow, execution, inputs);
+                } else {
+                    return Mono.just(Collections.emptyList());
+                }
+            });
+    }
+
+    /** Reads the reviewer inputs of the Approval task run {@code taskRunId}. */
+    public Mono<Map<String, Object>> readReviewInputs(final Execution execution, FlowInterface flow, String taskRunId, @Nullable Publisher<CompletedPart> inputs) {
+        return getTaskOr(execution, flow, taskRunId)
+            .flatMap(task ->
+            {
+                if (task.isPresent() && task.get() instanceof PausableTask pausableTask) {
+                    return flowInputOutput.readExecutionInputs(pausableTask.resumeInputs(), flow, execution, inputs);
+                } else {
+                    return Mono.just(Collections.<String, Object> emptyMap());
+                }
+            });
+    }
+
+    private Mono<Optional<Task>> getTaskOr(Execution execution, FlowInterface flow, String taskRunId) {
+        return Mono.create(sink ->
+        {
+            try {
+                final FlowWithSource flowWithSource = flow instanceof FlowWithSource fws ? fws : flowParsingService.parse(flow, false);
+                sink.success(Optional.of(flowWithSource.findTaskByTaskId(execution.findTaskRunByTaskRunId(taskRunId).getTaskId())));
+            } catch (InternalException | FlowProcessingException e) {
+                sink.error(e);
+            }
+        });
+    }
+
     private Mono<Optional<Task>> getFirstPausedTaskOr(Execution execution, FlowInterface flow) {
         return Mono.create(sink ->
         {
             try {
                 final FlowWithSource flowWithSource = flow instanceof FlowWithSource fws ? fws : flowParsingService.parse(flow, false);
-                var runningTaskRun = execution
-                    .findFirstByState(State.Type.PAUSED)
+                var runningTaskRun = this.findPausedTaskRunToResume(execution, flowWithSource)
                     .map(throwFunction(task -> flowWithSource.findTaskByTaskId(task.getTaskId())));
                 sink.success(runningTaskRun);
             } catch (InternalException | FlowProcessingException e) {
@@ -1106,8 +1210,7 @@ public class ExecutionService {
      * @throws Exception if the state of the execution cannot be updated
      */
     public Execution resume(final Execution execution, FlowInterface flow, State.Type newState, @Nullable Map<String, Object> inputs, @Nullable PausableTask.Resumed resumed) throws Exception {
-        var pausedTaskRun = execution
-            .findFirstByState(State.Type.PAUSED);
+        var pausedTaskRun = newState == State.Type.KILLING ? execution.findFirstByState(State.Type.PAUSED) : this.findPausedTaskRunToResume(execution, flow);
 
         Execution unpausedExecution;
         if (pausedTaskRun.isPresent()) {
@@ -1122,6 +1225,9 @@ public class ExecutionService {
                     .orElseThrow(() -> new IllegalArgumentException("No paused loop sub-execution found"));
                 return resume(subExecution, flow, newState, inputs, resumed);
             } else {
+                if (newState != State.Type.KILLING && task instanceof Approval) {
+                    throw new IllegalArgumentException(APPROVAL_RESUME_REFUSED.formatted(execution.getId()));
+                }
                 unpausedExecution = this.markAs(execution, flow, pausedTaskRun.get().getId(), newState, inputs, resumed);
             }
         } else {
@@ -1133,10 +1239,7 @@ public class ExecutionService {
         }
 
         this.eventPublisher.publishEvent(CrudEvent.of(execution, unpausedExecution));
-        if (execution.getKind() == ExecutionKind.LOOP) {
-            // notify the parent execution
-            loopExecutionEventQueue.emit(new LoopExecutionEvent(unpausedExecution.getLoopRun(), unpausedExecution.getId(), unpausedExecution.getState().getCurrent(), null, null));
-        }
+        this.notifyLoopParent(unpausedExecution, unpausedExecution.getState().getCurrent());
         return unpausedExecution;
     }
 

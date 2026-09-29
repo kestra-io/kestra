@@ -2002,6 +2002,7 @@
         "csv": "Esporta in CSV",
         "ion": "Esporta in ION"
       },
+      "ignoredFilters": "Il filtro {filters} non si applica a questo grafico. | I filtri {filters} non si applicano a questo grafico.",
       "show_all_statuses": "Mostra tutti gli stati",
       "quick_filters": {
         "all": "Tutti",

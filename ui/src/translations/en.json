@@ -2002,6 +2002,7 @@
         "csv": "Export to CSV",
         "ion": "Export to ION"
       },
+      "ignoredFilters": "The {filters} filter doesn't apply to this chart. | The {filters} filters don't apply to this chart.",
       "show_all_statuses": "Show all statuses",
       "quick_filters": {
         "all": "All",

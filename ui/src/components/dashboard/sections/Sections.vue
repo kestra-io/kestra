@@ -97,10 +97,10 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, type ComponentPublicInstance} from "vue"
+    import {computed, provide, type ComponentPublicInstance} from "vue"
 
     import type {Dashboard, Chart} from "../composables/useDashboards"
-    import {isKPIChart, isCanvasChart, isExportableChart, getChartTitle} from "../composables/useDashboards"
+    import {IGNORED_FILTERS_INJECTION_KEY, isKPIChart, isCanvasChart, isExportableChart, getChartTitle} from "../composables/useDashboards"
     import {useLazyChartBlocks} from "../composables/useLazyChartBlocks"
     import {TYPES} from "../dashboard-types"
 
@@ -115,7 +115,7 @@
 
     import {useI18n} from "vue-i18n"
     import {useToast} from "../../../utils/toast"
-    const {t} = useI18n({useScope: "global"})
+    const {t, te} = useI18n({useScope: "global"})
     const toast = useToast()
 
     import Download from "vue-material-design-icons/Download.vue"
@@ -158,6 +158,25 @@
     const labels = (chart: Chart) => ({
         title: getChartTitle(chart),
         description: chart?.chartOptions?.description,
+    })
+
+    const notifiedIgnoredFilters = new Map<string, string>()
+
+    provide(IGNORED_FILTERS_INJECTION_KEY, (chartId, fields) => {
+        const notified = fields.join(",")
+
+        if (notifiedIgnoredFilters.get(chartId) === notified) {
+            return
+        }
+
+        notifiedIgnoredFilters.set(chartId, notified)
+
+        if (fields.length > 0) {
+            const chart = props.charts?.find((candidate) => candidate.id === chartId)
+            const filterLabels = fields.map((field) => te(`filter.${field}.label`) ? t(`filter.${field}.label`) : field)
+
+            toast.warning(t("dashboards.ignoredFilters", {filters: filterLabels.join(", ")}, fields.length), chart ? getChartTitle(chart) : undefined)
+        }
     })
 
     // Make the overview of flows/dashboard/namespace specific

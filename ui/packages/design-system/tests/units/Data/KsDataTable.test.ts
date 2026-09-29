@@ -304,7 +304,7 @@ describe("KsDataTable", () => {
 
         const pagination = wrapper.findComponent(KsPagination)
 
-        await pagination.vm.$emit("currentChange", 3)
+        pagination.vm.$emit("currentChange", 3)
         await new Promise<void>((resolve) => setTimeout(resolve, 0))
 
         expect(loadCallCount).toBe(1)

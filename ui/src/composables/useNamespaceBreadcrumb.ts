@@ -3,6 +3,10 @@ import {useI18n} from "vue-i18n"
 import type {KsBreadcrumbItem} from "@kestra-io/design-system"
 import FolderOutline from "vue-material-design-icons/FolderOutline.vue"
 import useNamespaces from "./useNamespaces"
+import {useAuthStore} from "override/stores/auth"
+import {apiUrl} from "override/utils/route"
+import resource from "../models/resource"
+import action from "../models/action"
 import {NAMESPACE_PARENT_ROUTE} from "../utils/namespaceTabRoutes"
 
 interface Options {
@@ -12,10 +16,26 @@ interface Options {
     root?: KsBreadcrumbItem;
 }
 
+const namespaceIdsByTenant = new Map<string, Promise<string[]>>()
+
+// Kept for the session, and fetched again once it lacks the namespace being viewed, which is how one created since shows up.
+async function namespaceIds(current: string | undefined): Promise<string[]> {
+    if (!useAuthStore().user?.hasAnyActionOnAnyNamespace(resource.NAMESPACE, action.LIST)) return []
+
+    const tenant = apiUrl()
+    const cached = namespaceIdsByTenant.get(tenant)
+    if (cached && (!current || (await cached).includes(current))) return cached
+
+    const fetched = useNamespaces(1000).all().then((namespaces) => namespaces.map((entry) => entry.id))
+    namespaceIdsByTenant.set(tenant, fetched)
+    fetched.catch(() => namespaceIdsByTenant.delete(tenant))
+    return fetched
+}
+
 /**
  * The folder path from `root` down to `namespace`, one breadcrumb item per level. A level's menu lists the
  * namespaces under its parent and every entry with children flies them out the same way, all of it served
- * by a single fetch of the namespace tree per path. Flows are deliberately not listed: they would cost one
+ * by one fetch of the namespace tree per tenant. Flows are deliberately not listed: they would cost one
  * request per level for a rarely used shortcut.
  */
 export function useNamespaceBreadcrumb(namespace: MaybeRefOrGetter<string | undefined>, {tab = "overview", root}: Options = {}) {
@@ -32,7 +52,7 @@ export function useNamespaceBreadcrumb(namespace: MaybeRefOrGetter<string | unde
         const parts = current?.split(".") ?? []
 
         let tree: Promise<string[]> | undefined
-        const namespaceIds = () => (tree ??= useNamespaces(1000).all().then((namespaces) => namespaces.map((entry) => entry.id)))
+        const treeIds = () => (tree ??= namespaceIds(current))
 
         const childrenOf = (ids: string[], parent: string) => {
             const prefix = parent ? `${parent}.` : ""
@@ -40,7 +60,7 @@ export function useNamespaceBreadcrumb(namespace: MaybeRefOrGetter<string | unde
         }
 
         const entriesUnder = async (parent: string): Promise<KsBreadcrumbItem[]> => {
-            const ids = await namespaceIds()
+            const ids = await treeIds()
             return childrenOf(ids, parent).map((id) => ({
                 label: id.slice(id.lastIndexOf(".") + 1),
                 link: link(id),

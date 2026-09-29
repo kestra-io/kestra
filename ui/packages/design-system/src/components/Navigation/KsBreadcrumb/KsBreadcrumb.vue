@@ -7,7 +7,7 @@
             <span class="ks-breadcrumb__separator">/</span>
         </template>
 
-        <template v-for="(item, index) in visibleItems" :key="item.label">
+        <template v-for="(item, index) in visibleItems" :key="`${index}-${item.label}`">
             <div class="ks-breadcrumb__item">
                 <KsBreadcrumbMenu
                     v-if="item.ellipsis"
@@ -15,7 +15,7 @@
                     :chevron="false"
                     :ariaLabel="$t('breadcrumb_hidden')"
                 >
-                    <span class="ks-breadcrumb__link ks-breadcrumb__ellipsis">...</span>
+                    <button type="button" class="ks-breadcrumb__link ks-breadcrumb__ellipsis" :aria-label="$t('breadcrumb_hidden')">...</button>
                 </KsBreadcrumbMenu>
                 <KsBreadcrumbMenu
                     v-else
@@ -154,6 +154,10 @@
         }
 
         &__ellipsis {
+            font-size: inherit;
+            background: none;
+            border: 0;
+            padding: 0;
             cursor: pointer;
         }
 

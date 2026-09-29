@@ -57,7 +57,7 @@
         loaded.value = []
         if (!loader) return
 
-        const items = await loader()
+        const items = await loader().catch(() => [])
         if (current === latestLoad) loaded.value = items
     }, {immediate: true})
 </script>

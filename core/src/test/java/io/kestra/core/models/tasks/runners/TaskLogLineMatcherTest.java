@@ -64,6 +64,26 @@ class TaskLogLineMatcherTest {
     }
 
     @Test
+    void shouldHandleMarkerInOtlpLogBodyAsIfPrintedDirectly() throws IOException {
+        var runContext = runContext();
+        var listAppender = appender(runContext);
+
+        Optional<TaskLogMatch> match = matcher.matches(
+            framed(logRecord(
+                "{\"severityNumber\":9,\"body\":{\"stringValue\":\"::{\\\"outputs\\\":{\\\"myKey\\\":\\\"myValue\\\"}}::\"}}," +
+                    "{\"severityNumber\":9,\"body\":{\"stringValue\":\"plain line\"}}"
+            )),
+            runContext.logger(),
+            runContext,
+            FALLBACK_INSTANT
+        );
+
+        assertThat(match).isPresent();
+        assertThat(match.get().outputs()).containsEntry("myKey", "myValue");
+        assertThat(listAppender.list).extracting(ILoggingEvent::getFormattedMessage).containsExactly("plain line");
+    }
+
+    @Test
     void shouldMapSeverityNumberToSlf4jLevel() throws IOException {
         var runContext = runContext();
         var listAppender = appender(runContext);

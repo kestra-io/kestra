@@ -65,6 +65,17 @@ function isUnset(value: unknown): boolean {
 }
 
 /**
+ * Overlays the task-type's `pluginDefaults` onto the model for counting purposes only: a required
+ * property those defaults supply is satisfied at run time, so it must not be reported as missing.
+ */
+export function withPluginDefaults(model: unknown, defaults: Record<string, unknown>): unknown {
+    if (!defaults || !Object.keys(defaults).length) return model
+    const record = (model ?? {}) as Record<string, unknown>
+    const covered = Object.entries(defaults).filter(([key]) => isUnset(record[key]))
+    return covered.length ? {...record, ...Object.fromEntries(covered)} : model
+}
+
+/**
  * Walks a task's data alongside its schema to find required properties left unset, recursing into
  * nested objects, array items and the anyOf branch matching the current value — independent of
  * whatever is currently mounted (drilled array rows and collapsed groups included).

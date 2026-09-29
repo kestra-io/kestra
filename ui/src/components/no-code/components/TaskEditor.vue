@@ -58,7 +58,7 @@
     import PluginSelect from "../../plugins/PluginSelect.vue"
     import FieldNavBreadcrumb from "./FieldNavBreadcrumb.vue"
     import {useFieldNavigation} from "../utils/useFieldNavigation"
-    import {countUnsetRequiredFields} from "../utils/requiredFields"
+    import {countUnsetRequiredFields, withPluginDefaults} from "../utils/requiredFields"
     import {NoCodeElement, Schemas} from "../utils/types"
     import {getPath, setPath, cloneDeep, isDeepEqual} from "@kestra-io/design-system"
     import {
@@ -453,7 +453,7 @@
 
     const unsetRequiredFields = computed(() =>
         countUnsetRequiredFields(
-            taskModel.value,
+            withPluginDefaults(taskModel.value, pluginDefaultsForType.value),
             {...schema.value, properties: schema.value?.properties ?? properties.value},
             definitions.value,
         ),

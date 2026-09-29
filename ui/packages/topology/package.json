@@ -62,6 +62,7 @@
         }
     },
     "devDependencies": {
+        "@tsdown/css": "^0.22.13",
         "@types/dagre": "^0.7.52",
         "@types/js-yaml": "^4.0.9",
         "@types/node": "^25.9.1",

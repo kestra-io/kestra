@@ -304,7 +304,7 @@ describe("KsDataTable", () => {
 
         const pagination = wrapper.findComponent(KsPagination)
 
-        await pagination.vm.$emit("currentChange", 3)
+        pagination.vm.$emit("currentChange", 3)
         await new Promise<void>((resolve) => setTimeout(resolve, 0))
 
         expect(loadCallCount).toBe(1)
@@ -329,7 +329,7 @@ describe("KsDataTable", () => {
         await new Promise<void>((resolve) => setTimeout(resolve, 0))
         loads.length = 0
 
-        ;(wrapper.vm as unknown as {resetAndReload: () => void}).resetAndReload()
+        wrapper.vm.resetAndReload()
         wrapper.setProps({pageSize: 10})
         await new Promise<void>((resolve) => setTimeout(resolve, 0))
 

@@ -8,7 +8,7 @@ tasks:
     type: io.kestra.plugin.core.flow.Sequential
     tasks:
       - id: log
-        type: io.kestra.plugin.core.log.Log
+        type: io.kestra.plugin.core.log.Log   # a comment
         unknownProp: nope
 `
 
@@ -23,10 +23,12 @@ describe("violationMarkers", () => {
         })
     })
 
-    it("marks the whole enclosing block when a key is missing", () => {
-        expect(markerAt("/tasks/0/tasks/0/message")).toMatchObject({
-            startLineNumber: 7, startColumn: 9, endLineNumber: 9, endColumn: 26,
-        })
+    it("marks each line of the enclosing block, leaving indentation, dashes and comments alone", () => {
+        expect(violationMarkers(flow, [{path: "/tasks/0/tasks/0/message", message: "boom"}])).toEqual([
+            {message: "boom", startLineNumber: 7, startColumn: 9, endLineNumber: 7, endColumn: 16},
+            {message: "boom", startLineNumber: 8, startColumn: 9, endLineNumber: 8, endColumn: 44},
+            {message: "boom", startLineNumber: 9, startColumn: 9, endLineNumber: 9, endColumn: 26},
+        ])
     })
 
     it("marks only the key when it holds a block", () => {

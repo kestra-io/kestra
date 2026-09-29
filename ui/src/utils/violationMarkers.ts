@@ -1,4 +1,4 @@
-import {isMap, isPair, isScalar, isSeq, LineCounter, parseDocument, type Node, type Pair} from "yaml"
+import {isMap, isPair, isScalar, isSeq, LineCounter, parseDocument, visit, type Node, type Pair} from "yaml"
 
 export interface LocatedViolation {
     path: string;
@@ -19,43 +19,68 @@ function pointerSegments(pointer: string): string[] {
     return pointer.split("/").slice(1).map(segment => segment.replace(/~1/g, "/").replace(/~0/g, "~"))
 }
 
-function nodeRange(node: Node | null | undefined): Range | undefined {
-    return node?.range ? [node.range[0], node.range[1]] : undefined
-}
-
-/** An existing key is marked from the key through a scalar value, or on the key alone when it holds a block. */
-function pairRange(pair: Pair): Range | undefined {
-    const key = nodeRange(pair.key as Node)
-    if (!key) return undefined
-    const value = isScalar(pair.value) ? nodeRange(pair.value) : undefined
-    return [key[0], value?.[1] ?? key[1]]
+/** An existing key is marked with its scalar value, or alone when it holds a block. */
+function pairTargets(pair: Pair): Node[] {
+    return [pair.key as Node, ...(isScalar(pair.value) ? [pair.value] : [])]
 }
 
 /** A path that stops short of its leaf, a missing key, marks the deepest node that exists, except the document root. */
-function locate(root: Node | null, segments: string[]): Range | undefined {
+function locate(root: Node | null, segments: string[]): Node[] {
     let node: Node | null | undefined = root
     for (const [depth, segment] of segments.entries()) {
         const isLeaf = depth === segments.length - 1
         if (isMap(node)) {
             const pair = node.items.find(item => isScalar(item.key) && String(item.key.value) === segment)
-            if (!pair) return depth === 0 ? undefined : nodeRange(node)
-            if (isLeaf && isPair(pair)) return pairRange(pair)
+            if (!pair) return depth === 0 ? [] : [node]
+            if (isLeaf && isPair(pair)) return pairTargets(pair)
             node = pair.value as Node | null
         } else if (isSeq(node)) {
             const item = node.items[Number(segment)] as Node | undefined
-            if (!item) return depth === 0 ? undefined : nodeRange(node)
+            if (!item) return depth === 0 ? [] : [node]
             node = item
         } else {
-            return depth === 0 ? undefined : nodeRange(node)
+            return depth === 0 || !node ? [] : [node]
         }
     }
-    return segments.length === 0 ? undefined : nodeRange(node)
+    return segments.length === 0 || !node ? [] : [node]
 }
 
-function trimTrailingWhitespace(source: string, [start, end]: Range): Range {
-    let trimmed = end
-    while (trimmed > start && /\s/.test(source[trimmed - 1])) trimmed--
-    return [start, trimmed]
+function scalarRanges(targets: Node[]): Range[] {
+    const ranges: Range[] = []
+    for (const target of targets) {
+        if (isScalar(target)) {
+            if (target.range) ranges.push([target.range[0], target.range[1]])
+            continue
+        }
+        visit(target, {
+            Scalar(_, scalar) {
+                if (scalar.range) ranges.push([scalar.range[0], scalar.range[1]])
+            },
+        })
+    }
+    return ranges
+}
+
+/** Indentation, dashes and comments stay unmarked: each line spans its first to its last key or value. */
+function lineSpans(source: string, ranges: Range[]): Range[] {
+    const spans = new Map<number, Range>()
+    for (const [start, end] of ranges) {
+        let lineStart = source.lastIndexOf("\n", start - 1) + 1
+        while (lineStart < end) {
+            const newline = source.indexOf("\n", lineStart)
+            const lineEnd = newline === -1 ? source.length : newline
+            let from = Math.max(start, lineStart)
+            let to = Math.min(end, lineEnd)
+            while (from < to && /\s/.test(source[from])) from++
+            while (to > from && /\s/.test(source[to - 1])) to--
+            if (from < to) {
+                const span = spans.get(lineStart)
+                spans.set(lineStart, span ? [Math.min(span[0], from), Math.max(span[1], to)] : [from, to])
+            }
+            lineStart = lineEnd + 1
+        }
+    }
+    return [...spans.values()]
 }
 
 export function violationMarkers(source: string, violations: LocatedViolation[] | undefined): ViolationMarker[] {
@@ -65,17 +90,17 @@ export function violationMarkers(source: string, violations: LocatedViolation[] 
     if (doc.errors.length) return []
 
     return violations.flatMap(violation => {
-        const range = locate(doc.contents, pointerSegments(violation.path))
-        if (!range) return []
-        const [start, end] = trimTrailingWhitespace(source, range)
-        const from = lineCounter.linePos(start)
-        const to = lineCounter.linePos(end)
-        return [{
-            message: violation.message,
-            startLineNumber: from.line,
-            startColumn: from.col,
-            endLineNumber: to.line,
-            endColumn: to.col,
-        }]
+        const targets = locate(doc.contents, pointerSegments(violation.path))
+        return lineSpans(source, scalarRanges(targets)).map(([start, end]) => {
+            const from = lineCounter.linePos(start)
+            const to = lineCounter.linePos(end)
+            return {
+                message: violation.message,
+                startLineNumber: from.line,
+                startColumn: from.col,
+                endLineNumber: to.line,
+                endColumn: to.col,
+            }
+        })
     })
 }

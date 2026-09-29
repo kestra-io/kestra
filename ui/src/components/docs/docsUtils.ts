@@ -42,6 +42,15 @@ export const DISABLED_PAGES = [
     "docs/terraform/resources",
 ]
 
+export interface DocsMetadata {
+    title: string;
+    sidebarTitle?: string;
+    description?: string;
+    hideSidebar?: boolean;
+    isHomepage?: boolean;
+    parsedUrl?: string;
+}
+
 export interface DocsTocItem {
     path: string;
     title: string;
@@ -49,7 +58,7 @@ export interface DocsTocItem {
     children?: DocsTocItem[];
 }
 
-export function buildDocsToc(rawStructure: Record<string, any> | undefined): DocsTocItem[] | undefined {
+export function buildDocsToc(rawStructure: Record<string, DocsMetadata> | undefined): DocsTocItem[] | undefined {
     if (rawStructure === undefined) {
         return undefined
     }

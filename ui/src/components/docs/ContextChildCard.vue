@@ -49,13 +49,13 @@
         }
     })
 
-    const resourcesWithMetadata = ref<Record<string, any>>({})
+    const resourcesWithMetadata = ref<Record<string, DocsMetadata>>({})
     onMounted(async () => {
         resourcesWithMetadata.value = await docStore.children(currentPage.value)
     })
 
     const navigation = computed(() => {
-        let parentMetadata: Record<string, any> = {}
+        let parentMetadata: Partial<DocsMetadata> = {}
         if (props.pageUrl) {
             parentMetadata = {...resourcesWithMetadata.value[currentPage.value]}
             delete parentMetadata.description

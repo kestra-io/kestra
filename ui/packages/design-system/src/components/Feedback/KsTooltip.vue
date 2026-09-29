@@ -60,7 +60,7 @@
     @use '../../assets/styles/el-ns';
     @use 'element-plus/theme-chalk/src/tooltip';
 
-    .el-popper.ks-tooltip {
+    .kel-popper.ks-tooltip {
         &.is-light,
         &.is-dark {
             background: var(--ks-bg-input);
@@ -69,8 +69,8 @@
             box-shadow: 0 2px 6px var(--ks-shadow-element);
         }
 
-        &.is-light .el-popper__arrow::before,
-        &.is-dark .el-popper__arrow::before {
+        &.is-light .kel-popper__arrow::before,
+        &.is-dark .kel-popper__arrow::before {
             background: var(--ks-bg-input);
             border: 1px solid var(--ks-border-default);
         }

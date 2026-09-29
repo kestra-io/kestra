@@ -32,6 +32,13 @@
 
                     <VersionMenuItem />
 
+                    <KsDropdownItem command="changePassword" data-test="change-password-menu-item">
+                        <KsIcon size="base">
+                            <LockReset />
+                        </KsIcon>
+                        {{ $t("change_password.title") }}
+                    </KsDropdownItem>
+
                     <KsDropdownItem danger command="logout">
                         <KsIcon size="base">
                             <Logout />
@@ -42,25 +49,31 @@
             </div>
         </template>
     </KsDropdown>
+
+    <ChangePasswordDialog v-model="changePasswordVisible" />
 </template>
 
 <script setup lang="ts">
-    import {computed} from "vue"
+    import {computed, ref} from "vue"
     import {useRoute, useRouter} from "vue-router"
     import {useClient} from "@kestra-io/kestra-sdk"
     import ChevronRight from "vue-material-design-icons/ChevronRight.vue"
+    import LockReset from "vue-material-design-icons/LockReset.vue"
     import Logout from "vue-material-design-icons/Logout.vue"
     import RocketLaunchOutline from "vue-material-design-icons/RocketLaunchOutline.vue"
     import Slack from "vue-material-design-icons/Slack.vue"
     import KS_LOGO from "../../../assets/ks-logo-small.svg"
     import * as BasicAuth from "../../../utils/basicAuth"
     import VersionMenuItem from "../../../components/layout/VersionMenuItem.vue"
+    import ChangePasswordDialog from "../../../components/basicauth/ChangePasswordDialog.vue"
 
     const SLACK_URL = "https://kestra.io/slack?utm_source=app&utm_medium=referral&utm_campaign=top-auth"
 
     const route = useRoute()
     const router = useRouter()
     const axios = useClient()
+
+    const changePasswordVisible = ref(false)
 
     const startTutorial = computed(() => ({
         name: "ai",
@@ -73,6 +86,8 @@
             router.push(startTutorial.value)
         } else if (command === "slack") {
             window.open(SLACK_URL, "_blank", "noopener")
+        } else if (command === "changePassword") {
+            changePasswordVisible.value = true
         } else if (command === "logout") {
             logout()
         }

@@ -1,5 +1,5 @@
 import type {ResolvedRequestOptions} from "./openapi/client"
-import type { BodySerializer } from "./openapi/core/bodySerializer.gen"
+import type {BodySerializer} from "./openapi/core/bodySerializer.gen"
 // App-only half of a Kestra SDK: the axios-like fetch facade + the useClient()/setMockClient()
 // accessors. This is intentionally NOT in the shared @kestra-io/hey-api-plugin package and NOT part
 // of the public generated SDK — only the apps (OSS/EE) expose useClient()/setMockClient().

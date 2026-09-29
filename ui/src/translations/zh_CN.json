@@ -1424,7 +1424,7 @@
             "title": "flow 像代码一样编辑",
             "body": "我们为您添加了一个 `notify` task，没有使用 AI Copilot，这样您就可以看到直接编辑 YAML 是什么样子。它会将最终结果发布到 Slack。",
             "next": "查看 task 文档",
-            "callout": "来自 AI Copilot 的初稿只是一个起点；编辑器是您在 Code 或 No-code 编辑器选项卡中迭代它的地方，它们都生成相同的 YAML，因此，无论您的 flow 如何构建，它都保持为代码。"
+            "callout": "来自 AI Copilot 的初稿只是一个起点；编辑器是您在 Code 或 No Code 编辑器选项卡中迭代它的地方，它们都生成相同的 YAML，因此，无论您的 flow 如何构建，它都保持为代码。"
           },
           "editor_help": {
             "title": "文档在 flow 旁边",
@@ -2563,6 +2563,7 @@
       "depends_on_placeholder": "选择 tasks…",
       "depth_pill": "深度 {depth}",
       "drag_reorder": "拖动以重新排序",
+      "drop_forbidden": "无法放置到此处",
       "duplicate": "复制",
       "empty_add_hint": "或按 / 搜索 task",
       "empty_add_lead": "点击添加 {label}",
@@ -2591,6 +2592,9 @@
       "lane_then": "然后",
       "move_down": "下移",
       "move_up": "上移",
+      "namespace_files": "namespace 文件",
+      "namespace_kv": "键值存储键",
+      "namespace_secrets": "秘密",
       "no_data_matches": "没有匹配您筛选条件的结果",
       "no_recent": "暂无近期 task 类型",
       "no_task_results": "无匹配的 task 类型。",

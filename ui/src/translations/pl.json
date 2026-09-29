@@ -1424,7 +1424,7 @@
             "title": "Flowy edytuje się jak kod",
             "body": "Dodaliśmy dla Ciebie Taska <code>notify</code> bez AI Copilota, abyś zobaczył, jak wygląda bezpośrednia edycja YAML. Wysyła on końcowy wynik na Slacka.",
             "next": "Zobacz dokumentację Taska",
-            "callout": "Pierwszy szkic z AI Copilota jest tylko punktem wyjścia. W edytorze rozwijasz go w zakładce Code lub No-code, a obie generują ten sam YAML, dzięki czemu Twój Flow pozostaje kodem niezależnie od tego, jak powstał."
+            "callout": "Pierwszy szkic z AI Copilota jest tylko punktem wyjścia. W edytorze rozwijasz go w zakładce Code lub No Code, a obie generują ten sam YAML, dzięki czemu Twój Flow pozostaje kodem niezależnie od tego, jak powstał."
           },
           "editor_help": {
             "title": "Dokumentacja jest obok Flow",
@@ -1700,7 +1700,7 @@
       "clearSelection": "Wyczyść zaznaczenie",
       "labels": {
         "yaml": "Edytor YAML",
-        "no_code": "Edytor No-code"
+        "no_code": "Edytor No Code"
       },
       "sections": {
         "deprecated": "Właściwości przestarzałe",
@@ -2193,7 +2193,7 @@
     "playground": {
       "title": "Playground",
       "run_task_info": "Najedź kursorem na dowolny Task w edytorze Flow Code i kliknij „Run task”, aby przetestować swój Task.",
-      "play_icon_info": "Możesz też kliknąć ikonę Play w widoku No-code lub Topology.",
+      "play_icon_info": "Możesz też kliknąć ikonę Play w widoku No Code lub Topology.",
       "toggle": "Playground",
       "run_task": "Uruchom Task",
       "run_this_task": "Uruchom ten Task",
@@ -2563,6 +2563,7 @@
       "depends_on_placeholder": "Wybierz Taski…",
       "depth_pill": "Głębokość {depth}",
       "drag_reorder": "Przeciągnij, aby zmienić kolejność",
+      "drop_forbidden": "Nie można tu upuścić",
       "duplicate": "Duplikuj",
       "empty_add_hint": "lub naciśnij /, aby wyszukać Taski",
       "empty_add_lead": "Kliknij, aby dodać {label}",
@@ -2591,6 +2592,9 @@
       "lane_then": "Then",
       "move_down": "Przenieś w dół",
       "move_up": "Przenieś w górę",
+      "namespace_files": "Pliki namespace'u",
+      "namespace_kv": "KV Store Keys",
+      "namespace_secrets": "Sekrety",
       "no_data_matches": "Brak wyników dla Twojego filtra",
       "no_recent": "Brak ostatnio używanych typów Tasków",
       "no_task_results": "Brak pasujących typów Tasków.",

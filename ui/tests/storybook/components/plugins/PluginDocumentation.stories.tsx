@@ -1,7 +1,8 @@
 import type {Meta, StoryFn} from "@storybook/vue3-vite";
 import PluginDocumentation from "../../../../src/components/plugins/PluginDocumentation.vue";
 import dashboardIntro from "../../../../src/assets/docs/dashboard_home.md?raw"
-import {setMockClient} from "@kestra-io/kestra-sdk"
+import {setMockClient, type AxiosLikeClient} from "@kestra-io/kestra-sdk"
+import {mockResponse} from "../../../../.storybook/apiMock"
 
 export default {
     title: "Components/Plugins/PluginDocumentation",
@@ -13,10 +14,8 @@ export default {
 
 const Template: StoryFn<typeof PluginDocumentation> = (args) => ({
     setup() {
-        const axios: any = {}
-        axios.get = () =>{
-                return  Promise.resolve({data: []})
-            }
+        const axios: Partial<AxiosLikeClient> = {}
+        axios.get = async <T,>() => mockResponse<T>([])
         setMockClient(axios);
 
         return () => <PluginDocumentation {...args} />

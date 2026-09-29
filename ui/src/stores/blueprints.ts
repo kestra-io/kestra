@@ -10,6 +10,7 @@ import {useMiscStore} from "override/stores/misc"
 import {trackBlueprintSelection} from "../utils/tabTracking"
 import type {KestraHttpError} from "../utils/kestraHttp"
 import {Input} from "./flow.ts"
+import type {ValidationResponse} from "./executions"
 
 export type BlueprintType = "community" | "custom";
 export type BlueprintKind = "flow" | "dashboard" | "app";
@@ -202,6 +203,11 @@ export const useBlueprintsStore = defineStore("blueprints", () => {
         return data
     }
 
+    const validateFlowBlueprintTemplateArguments = async (id: string, inputs: Record<string, unknown>): Promise<ValidationResponse> => {
+        const {data} = await axios.post<ValidationResponse>(`${apiUrl()}/blueprints/flows/${id}/use-template/validate`, {templateArgumentsInputs: inputs})
+        return data
+    }
+
     return {
         blueprint,
         validateYAML,
@@ -211,6 +217,7 @@ export const useBlueprintsStore = defineStore("blueprints", () => {
         getBlueprintGraph,
         getBlueprintTags,
         useFlowBlueprintTemplate,
+        validateFlowBlueprintTemplateArguments,
         getFlowBlueprint,
         createFlowBlueprint,
         updateFlowBlueprint,

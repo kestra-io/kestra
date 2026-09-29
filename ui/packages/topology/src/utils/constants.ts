@@ -57,7 +57,9 @@ export interface ShowDetailsConfig {
 export const NODE_SIZES = {
     TASK_WIDTH: 218,
     TASK_WIDTH_EXECUTION: 273,
-    TASK_HEIGHT: 56,
+    // 56 (icon row) + 24 for the type line and the footer slot the duration bar fills — a constant
+    // added once, for every task node, so it never depends on zoom or execution state.
+    TASK_HEIGHT: 80,
     TRIGGER_WIDTH: 218,
     TRIGGER_HEIGHT: 56,
     DOT_WIDTH: 5,

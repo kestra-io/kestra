@@ -689,7 +689,7 @@ describe("generateGraph flowable lane header", () => {
 
         const collapsed = elements.find((e) => e.id === "root.parallel_task")
         expect(collapsed?.type).toBe("collapsedcluster")
-        expect(collapsed?.style).toMatchObject({width: "218px", height: "56px"})
+        expect(collapsed?.style).toMatchObject({width: `${NODE_SIZES.TASK_WIDTH}px`, height: `${NODE_SIZES.TASK_HEIGHT}px`})
         expect(collapsed?.data).toMatchObject({
             isFlowableLane: true,
             taskNode: {uid: "root.parallel_task"},

@@ -483,7 +483,7 @@
     import {useStateFilter} from "../filter/composables/useStateFilter"
     import YAML_CHART from "../dashboard/assets/executions_timeseries_chart.yaml?raw"
     import {DEFAULT_DASHBOARD} from "../../stores/dashboard"
-    import type {QueryFilter} from "@kestra-io/kestra-sdk"
+    import type {ApiAsyncOperationResponse, BulkResponse, QueryFilter} from "@kestra-io/kestra-sdk"
 
     const {t, te} = useI18n()
     const toast = useToast()
@@ -936,37 +936,38 @@
         )
     }
 
-    const affectedCount = (response: unknown) => {
-        if (typeof response === "object" && response !== null) {
-            const result = response as {count?: unknown; totalItems?: unknown}
-            if (typeof result.count === "number") return result.count
-            if (typeof result.totalItems === "number") return result.totalItems
+    const affectedCount = (response: ApiAsyncOperationResponse | BulkResponse) => {
+        if ("totalItems" in response) {
+            return response.totalItems ?? 0
+        }
+        if ("count" in response) {
+            return response.count ?? 0
         }
         return 0
     }
 
-    type BulkActionFn = (options: Record<string, unknown>) => Promise<unknown>
+    type BulkActionFn = (options: Record<string, unknown>) => Promise<ApiAsyncOperationResponse | BulkResponse>
 
     const genericConfirmCallback = (queryAction: string, byIdAction: string, success: string, params?: Record<string, unknown>) => {
-        const actionMap: Record<string, () => BulkActionFn> = {
-            "queryResumeExecution": () => executionsStore.queryResumeExecution as unknown as BulkActionFn,
-            "bulkResumeExecution": () => executionsStore.bulkResumeExecution as unknown as BulkActionFn,
-            "queryPauseExecution": () => executionsStore.queryPauseExecution as unknown as BulkActionFn,
-            "bulkPauseExecution": () => executionsStore.bulkPauseExecution as unknown as BulkActionFn,
-            "queryUnqueueExecution": () => executionsStore.queryUnqueueExecution as unknown as BulkActionFn,
-            "bulkUnqueueExecution": () => executionsStore.bulkUnqueueExecution as unknown as BulkActionFn,
-            "queryForceRunExecution": () => executionsStore.queryForceRunExecution as unknown as BulkActionFn,
-            "bulkForceRunExecution": () => executionsStore.bulkForceRunExecution as unknown as BulkActionFn,
-            "queryRestartExecution": () => executionsStore.queryRestartExecution as unknown as BulkActionFn,
-            "bulkRestartExecution": () => executionsStore.bulkRestartExecution as unknown as BulkActionFn,
-            "queryReplayExecution": () => executionsStore.queryReplayExecution as unknown as BulkActionFn,
-            "bulkReplayExecution": () => executionsStore.bulkReplayExecution as unknown as BulkActionFn,
-            "queryChangeExecutionStatus": () => executionsStore.queryChangeExecutionStatus as unknown as BulkActionFn,
-            "bulkChangeExecutionStatus": () => executionsStore.bulkChangeExecutionStatus as unknown as BulkActionFn,
-            "queryDeleteExecution": () => executionsStore.queryDeleteExecution as unknown as BulkActionFn,
-            "bulkDeleteExecution": () => executionsStore.bulkDeleteExecution as unknown as BulkActionFn,
-            "queryKill": () => executionsStore.queryKill as unknown as BulkActionFn,
-            "bulkKill": () => executionsStore.bulkKill as unknown as BulkActionFn,
+        const actionMap: Record<string, BulkActionFn> = {
+            "queryResumeExecution": executionsStore.queryResumeExecution as BulkActionFn,
+            "bulkResumeExecution": executionsStore.bulkResumeExecution as BulkActionFn,
+            "queryPauseExecution": executionsStore.queryPauseExecution as BulkActionFn,
+            "bulkPauseExecution": executionsStore.bulkPauseExecution as BulkActionFn,
+            "queryUnqueueExecution": executionsStore.queryUnqueueExecution as BulkActionFn,
+            "bulkUnqueueExecution": executionsStore.bulkUnqueueExecution as BulkActionFn,
+            "queryForceRunExecution": executionsStore.queryForceRunExecution as BulkActionFn,
+            "bulkForceRunExecution": executionsStore.bulkForceRunExecution as BulkActionFn,
+            "queryRestartExecution": executionsStore.queryRestartExecution as BulkActionFn,
+            "bulkRestartExecution": executionsStore.bulkRestartExecution as BulkActionFn,
+            "queryReplayExecution": executionsStore.queryReplayExecution as BulkActionFn,
+            "bulkReplayExecution": executionsStore.bulkReplayExecution as BulkActionFn,
+            "queryChangeExecutionStatus": executionsStore.queryChangeExecutionStatus as BulkActionFn,
+            "bulkChangeExecutionStatus": executionsStore.bulkChangeExecutionStatus as BulkActionFn,
+            "queryDeleteExecution": executionsStore.queryDeleteExecution as BulkActionFn,
+            "bulkDeleteExecution": executionsStore.bulkDeleteExecution as BulkActionFn,
+            "queryKill": executionsStore.queryKill as BulkActionFn,
+            "bulkKill": executionsStore.bulkKill as BulkActionFn,
         }
 
         if (queryBulkAction.value) {
@@ -979,9 +980,9 @@
                 options = {...options, ...params}
             }
 
-            const ac = actionMap[queryAction]()
+            const ac = actionMap[queryAction]
             return ac(options)
-                .then((r: unknown) => {
+                .then((r) => {
                     toast.success(t(success, {executionCount: affectedCount(r)}))
                     toggleAllUnselected()
                     dataTable.value?.reload()
@@ -993,9 +994,9 @@
                 options = {...options, ...params}
             }
 
-            const ac = actionMap[byIdAction]()
+            const ac = actionMap[byIdAction]
             return ac(options)
-                .then((r: unknown) => {
+                .then((r) => {
                     toast.success(t(success, {executionCount: affectedCount(r)}))
                     toggleAllUnselected()
                     dataTable.value?.reload()
@@ -1196,7 +1197,7 @@
                         }),
                         data: filtered.labels,
                     })
-                    .then((r: unknown) => {
+                    .then((r) => {
                         toast.success(t("Set labels done", {executionCount: affectedCount(r)}))
                         toggleAllUnselected()
                         dataTable.value?.reload()
@@ -1207,7 +1208,7 @@
                         executionsId: selection.value,
                         executionLabels: filtered.labels,
                     })
-                    .then((r: unknown) => {
+                    .then((r) => {
                         toast.success(t("Set labels done", {executionCount: affectedCount(r)}))
                         toggleAllUnselected()
                         dataTable.value?.reload()

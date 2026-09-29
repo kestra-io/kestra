@@ -1,4 +1,4 @@
-import {describe, test, expect} from "vitest"
+import {describe, test, expect, vi} from "vitest"
 import KsDataTable from "../../../src/components/Data/KsDataTable/KsDataTable.vue"
 import KsBulkSelect from "../../../src/components/Data/KsDataTable/KsBulkSelect.vue"
 import KsTableColumn from "../../../src/components/Data/KsTable/KsTableColumn.vue"
@@ -459,5 +459,45 @@ describe("KsDataTable", () => {
             props: {data: SAMPLE_DATA, total: 3},
         })
         expect(wrapper.find(".ks-data-table-body--fit").exists()).toBe(false)
+    })
+
+    test("keeps rows that are still on the page when part of the selection is stale", async () => {
+        const wrapper = i18nMount(KsDataTable, {
+            props: {data: SAMPLE_DATA, total: 3, selectable: true, rowKey: "id"},
+        })
+        const table = wrapper.findComponent(KsTable)
+        const exposed = table.vm.$.exposed as {
+            getSelectionRows: () => unknown[]
+            toggleRowSelection: (row: unknown, selected?: boolean) => void
+            clearSelection: () => void
+        }
+        const kept = SAMPLE_DATA[0]
+        const gone = {id: "gone", namespace: "company.team", status: "SUCCESS"}
+        vi.spyOn(exposed, "getSelectionRows").mockReturnValue([kept, gone])
+        const toggle = vi.spyOn(exposed, "toggleRowSelection")
+        const clear = vi.spyOn(exposed, "clearSelection")
+
+        await wrapper.setProps({data: [kept, SAMPLE_DATA[1]]})
+
+        expect(clear).toHaveBeenCalled()
+        expect(toggle).toHaveBeenCalledWith(kept, true)
+        expect(wrapper.emitted("selection-change")?.at(-1)?.[0]).toEqual([kept])
+    })
+
+    test("does not toggle a missing row when a shift-click lands off the page", async () => {
+        const wrapper = i18nMount(KsDataTable, {
+            props: {data: SAMPLE_DATA, total: 3, selectable: true, rowKey: "id"},
+        })
+        const table = wrapper.findComponent(KsTable)
+        const exposed = table.vm.$.exposed as {
+            toggleRowSelection: (row: unknown, selected?: boolean) => void
+        }
+        const toggle = vi.spyOn(exposed, "toggleRowSelection")
+
+        table.vm.$emit("select", [SAMPLE_DATA[0]], SAMPLE_DATA[0])
+        await wrapper.find(".ks-data-table-content").trigger("click", {shiftKey: true})
+        table.vm.$emit("select", [], {id: "missing"})
+
+        expect(toggle).not.toHaveBeenCalled()
     })
 })

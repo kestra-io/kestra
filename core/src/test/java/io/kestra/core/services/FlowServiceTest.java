@@ -349,6 +349,33 @@ class FlowServiceTest {
     }
 
     @Test
+    void shouldReportEveryProblemAroundAnInvalidTypeAtItsSourcePosition() {
+        String source = """
+            id: test
+            namespace: io.kestra.unittest
+            tasks:
+              - id: hello
+                type: io.kestra.plugin.core.log.Log
+                message: Hi
+                colour: purple
+              - id: ghost
+                type: io.kestra.plugin.core.log.Nope
+                shade: dark
+              - id: silent
+                type: io.kestra.plugin.core.log.Log
+            triggers:
+              - id: daily
+                type: io.kestra.plugin.core.trigger.Schedule
+            """;
+
+        List<ValidateConstraintViolation> results = flowService.validate("my-tenant", List.of(new FlowSource(null, source)));
+
+        assertThat(results.getFirst().getViolations())
+            .extracting(ValidateConstraintViolation.Violation::path)
+            .containsExactlyInAnyOrder("/tasks/0/colour", "/tasks/1/type", "/tasks/2/message", "/triggers/0/cron");
+    }
+
+    @Test
     void shouldLocateAnInvalidTypeOnItsTypeProperty() {
         String source = """
             id: test

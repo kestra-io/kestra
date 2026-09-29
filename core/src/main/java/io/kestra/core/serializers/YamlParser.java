@@ -36,7 +36,7 @@ public final class YamlParser {
     private static final ObjectMapper STRICT_MAPPER = NON_STRICT_MAPPER.copy()
         .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, true);
 
-    private static final int MAX_UNKNOWN_PROPERTIES = 50;
+    private static final int MAX_PARSE_PROBLEMS = 50;
 
     public static boolean isValidExtension(Path path) {
         return FilenameUtils.getExtension(path.toFile().getAbsolutePath()).equals("yaml") || FilenameUtils.getExtension(path.toFile().getAbsolutePath()).equals("yml");
@@ -65,65 +65,110 @@ public final class YamlParser {
     }
 
     /**
-     * Lists every property of the source unknown to {@code cls}, where a strict parse stops at the first one.
-     * Each unknown key is removed and the parse retried; any other failure ends the scan, the real parse reports it.
+     * Scans the source for unknown properties and unknown plugin types, where a strict parse stops at the first one.
+     * Each is removed and the parse retried; any other failure ends the scan, and the real parse reports it.
      */
     @SuppressWarnings("unchecked")
-    public static List<Violation> unknownProperties(String input, Class<?> cls) {
-        List<Violation> found = new ArrayList<>();
+    public static ParseReport scan(String input, Class<?> cls) {
+        List<Violation> unknownProperties = new ArrayList<>();
+        List<ParseReport.InvalidType> invalidTypes = new ArrayList<>();
+        List<ParseReport.Removal> removals = new ArrayList<>();
         Map<String, Object> map;
         try {
             map = NON_STRICT_MAPPER.readValue(input, Map.class);
         } catch (JsonProcessingException e) {
-            return found;
+            return new ParseReport(unknownProperties, invalidTypes, null, removals);
         }
 
-        while (found.size() < MAX_UNKNOWN_PROPERTIES) {
+        while (unknownProperties.size() + invalidTypes.size() < MAX_PARSE_PROBLEMS) {
             try {
                 STRICT_MAPPER.convertValue(map, cls);
-                return found;
+                break;
             } catch (IllegalArgumentException e) {
-                if (!(e.getCause() instanceof UnrecognizedPropertyException unknown) || !removeAt(map, unknown.getPath())) {
-                    return found;
+                if (e.getCause() instanceof UnrecognizedPropertyException unknown) {
+                    List<String> at = segments(unknown.getPath());
+                    if (removeAt(map, at) == null) {
+                        break;
+                    }
+                    unknownProperties.add(new Violation(sourcePointer(at, removals), unknown.getOriginalMessage()));
+                } else if (e.getCause() instanceof InvalidTypeIdException invalid) {
+                    List<String> at = segments(invalid.getPath());
+                    Integer index = removeAt(map, at);
+                    if (index == null) {
+                        break;
+                    }
+                    List<String> type = new ArrayList<>(at);
+                    type.add("type");
+                    invalidTypes.add(new ParseReport.InvalidType(
+                        new Violation(sourcePointer(type, removals), "Invalid type: " + invalid.getTypeId()),
+                        invalid.getTypeId()
+                    ));
+                    removals.add(new ParseReport.Removal(index < 0 ? at : at.subList(0, at.size() - 1), index));
+                } else {
+                    break;
                 }
-                found.add(new Violation(jsonPointer(unknown.getPath()), unknown.getOriginalMessage()));
             }
         }
-        return found;
+        return new ParseReport(unknownProperties, invalidTypes, map, removals);
     }
 
-    private static boolean removeAt(Object root, List<JsonMappingException.Reference> path) {
-        if (path.isEmpty()) {
-            return false;
-        }
-        Object node = root;
-        for (JsonMappingException.Reference reference : path.subList(0, path.size() - 1)) {
-            if (reference.getFieldName() != null && node instanceof Map<?, ?> map) {
-                node = map.get(reference.getFieldName());
-            } else if (reference.getIndex() >= 0 && node instanceof List<?> list && reference.getIndex() < list.size()) {
-                node = list.get(reference.getIndex());
-            } else {
-                return false;
-            }
-        }
-        String leaf = path.getLast().getFieldName();
-        if (leaf == null || !(node instanceof Map<?, ?> map) || !map.containsKey(leaf)) {
-            return false;
-        }
-        map.remove(leaf);
-        return true;
+    private static String sourcePointer(List<String> segments, List<ParseReport.Removal> removals) {
+        return ParseReport.toPointer(ParseReport.shift(segments, removals, removals.size()));
     }
 
-    private static String jsonPointer(List<JsonMappingException.Reference> path) {
-        StringBuilder pointer = new StringBuilder();
+    private static List<String> segments(List<JsonMappingException.Reference> path) {
+        List<String> segments = new ArrayList<>(path.size());
         for (JsonMappingException.Reference reference : path) {
             if (reference.getFieldName() != null) {
-                pointer.append('/').append(reference.getFieldName().replace("~", "~0").replace("/", "~1"));
+                segments.add(reference.getFieldName());
             } else if (reference.getIndex() >= 0) {
-                pointer.append('/').append(reference.getIndex());
+                segments.add(String.valueOf(reference.getIndex()));
             }
         }
-        return pointer.toString();
+        return segments;
+    }
+
+    /** Removes the node at {@code path}: returns its list index, -1 for a map key, or null when it is not there. */
+    @Nullable
+    private static Integer removeAt(Object root, List<String> path) {
+        if (path.isEmpty()) {
+            return null;
+        }
+        Object parent = root;
+        for (String segment : path.subList(0, path.size() - 1)) {
+            parent = child(parent, segment);
+            if (parent == null) {
+                return null;
+            }
+        }
+        String leaf = path.getLast();
+        if (parent instanceof Map<?, ?> map && map.containsKey(leaf)) {
+            map.remove(leaf);
+            return -1;
+        }
+        Integer index = parent instanceof List<?> list ? listIndex(list, leaf) : null;
+        if (index != null) {
+            ((List<?>) parent).remove(index.intValue());
+        }
+        return index;
+    }
+
+    @Nullable
+    private static Object child(Object node, String segment) {
+        if (node instanceof Map<?, ?> map) {
+            return map.get(segment);
+        }
+        Integer index = node instanceof List<?> list ? listIndex(list, segment) : null;
+        return index == null ? null : ((List<?>) node).get(index);
+    }
+
+    @Nullable
+    private static Integer listIndex(List<?> list, String segment) {
+        if (segment.isEmpty() || !segment.chars().allMatch(Character::isDigit) || segment.length() > 9) {
+            return null;
+        }
+        int index = Integer.parseInt(segment);
+        return index < list.size() ? index : null;
     }
 
     private static <T> String type(Class<T> cls) {

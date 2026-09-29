@@ -61,6 +61,7 @@ import io.kestra.core.scheduler.events.TriggerFlowRevisionUpdated;
 import io.kestra.core.scheduler.events.TriggerUpdated;
 import io.kestra.core.scheduler.queue.TriggerEventQueue;
 import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.serializers.ParseReport;
 import io.kestra.core.serializers.YamlParser;
 import io.kestra.core.topologies.FlowTopologyService;
 import io.kestra.core.utils.ExecutorsUtils;
@@ -84,6 +85,7 @@ import lombok.extern.slf4j.Slf4j;
 @Singleton
 @Slf4j
 public class FlowService {
+    private static final String AUTO_INSTALL_NOTICE = ". The plugin is not installed yet and will be installed automatically when the flow is saved.";
     private static final Pattern PEBBLE_FUNCTION_PATTERN = Pattern.compile("\\b([a-zA-Z0-9_]+)\\s*\\(");
 
     @Inject
@@ -405,6 +407,18 @@ public class FlowService {
         this.triggerEventQueue.send(event);
     }
 
+    private boolean isAutoInstallable(String typeId) {
+        return pluginAutoInstallService.isEnabled() && pluginSchemaBundleService.containsType(typeId);
+    }
+
+    private static String toYaml(Map<String, Object> map, String fallback) {
+        try {
+            return JacksonMapper.ofYaml().writeValueAsString(map);
+        } catch (JsonProcessingException e) {
+            return fallback;
+        }
+    }
+
     private static List<ValidateConstraintViolation.Violation> locatedViolations(ConstraintViolationException e) {
         if (e.getConstraintViolations() == null) {
             return List.of();
@@ -493,9 +507,11 @@ public class FlowService {
 
             try {
                 String source = flowSource.content();
-                // Unknown keys are reported alongside bean violations rather than hiding them behind a strict parse.
-                List<ValidateConstraintViolation.Violation> unknownProperties = YamlParser.unknownProperties(source, FlowWithSource.class);
-                FlowWithSource flow = flowParsingService.parse(tenantId, source, unknownProperties.isEmpty());
+                // Unknown keys and types are reported alongside bean violations rather than hiding them behind a strict parse.
+                ParseReport report = YamlParser.scan(source, FlowWithSource.class);
+                FlowWithSource flow = report.isClean() || report.cleaned() == null
+                    ? flowParsingService.parse(tenantId, source, true)
+                    : flowParsingService.parse(tenantId, toYaml(report.cleaned(), source), false);
 
                 Integer sentRevision = flow.getRevision();
                 if (sentRevision != null) {
@@ -506,20 +522,42 @@ public class FlowService {
                 FlowWithSource parsedFlow = flowParsingService.parseForValidation(flow);
                 constraintsBuilder.deprecationPaths(deprecationPaths(parsedFlow));
                 constraintsBuilder.warnings(warnings(parsedFlow, tenantId));
-                constraintsBuilder.infos(relocations(source).stream().map(relocation -> relocation.from() + " is replaced by " + relocation.to()).toList());
+                List<String> relocationInfos = relocations(source).stream().map(relocation -> relocation.from() + " is replaced by " + relocation.to()).toList();
+                constraintsBuilder.infos(relocationInfos);
                 constraintsBuilder.flow(flow.getId());
                 constraintsBuilder.namespace(flow.getNamespace());
 
-                if (unknownProperties.isEmpty()) {
+                if (report.isClean()) {
                     modelValidator.validate(parsedFlow);
                     throwOnCyclicDependency(parsedFlow);
                 } else {
-                    Optional<ConstraintViolationException> invalid = modelValidator.isValid(parsedFlow);
-                    List<ValidateConstraintViolation.Violation> violations = new ArrayList<>(unknownProperties);
-                    invalid.ifPresent(e -> violations.addAll(locatedViolations(e)));
-                    String unknownMessages = unknownProperties.stream().map(ValidateConstraintViolation.Violation::message).collect(Collectors.joining("\n"));
-                    constraintsBuilder.constraints(formatValidationError(unknownMessages + invalid.map(e -> "\n" + e.getMessage()).orElse("")));
-                    constraintsBuilder.violations(violations);
+                    List<ValidateConstraintViolation.Violation> violations = new ArrayList<>(report.unknownProperties());
+                    List<String> lines = new ArrayList<>(report.unknownProperties().stream().map(ValidateConstraintViolation.Violation::message).toList());
+                    List<String> installNotices = new ArrayList<>();
+                    for (ParseReport.InvalidType invalidType : report.invalidTypes()) {
+                        if (isAutoInstallable(invalidType.typeId())) {
+                            installNotices.add(formatValidationError(invalidType.violation().message()) + AUTO_INSTALL_NOTICE);
+                        } else {
+                            violations.add(invalidType.violation());
+                            lines.add(invalidType.violation().message());
+                        }
+                    }
+                    modelValidator.isValid(parsedFlow).ifPresent(e -> e.getConstraintViolations().forEach(v ->
+                        report.toSourcePointer(ViolationPaths.toJsonPointer(v.getPropertyPath())).ifPresent(pointer -> {
+                            violations.add(new ValidateConstraintViolation.Violation(pointer, v.getMessage()));
+                            lines.add(ViolationPaths.toFriendlyPath(v) + ": " + v.getMessage());
+                        })
+                    ));
+
+                    if (!installNotices.isEmpty()) {
+                        constraintsBuilder.infos(ListUtils.concat(relocationInfos, installNotices));
+                    }
+                    if (violations.isEmpty()) {
+                        throwOnCyclicDependency(parsedFlow);
+                    } else {
+                        constraintsBuilder.constraints(formatValidationError(String.join("\n", lines)));
+                        constraintsBuilder.violations(violations);
+                    }
                 }
             } catch (ConstraintViolationException e) {
                 String friendlyMessage = formatValidationError(e.getMessage());
@@ -531,12 +569,8 @@ public class FlowService {
                     // A missing plugin type is only recoverable when auto-install is on AND the type
                     // exists in the schema bundle: it is then a simple notice (installed on save); a
                     // type unknown to the bundle is a genuine error.
-                    if (
-                        pluginAutoInstallService.isEnabled()
-                            && cve instanceof InvalidTypeConstraintViolationException invalidType
-                            && pluginSchemaBundleService.containsType(invalidType.getTypeId())
-                    ) {
-                        constraintsBuilder.infos(List.of(friendlyMessage + ". The plugin is not installed yet and will be installed automatically when the flow is saved."));
+                    if (cve instanceof InvalidTypeConstraintViolationException invalidType && isAutoInstallable(invalidType.getTypeId())) {
+                        constraintsBuilder.infos(List.of(friendlyMessage + AUTO_INSTALL_NOTICE));
                     } else {
                         constraintsBuilder.constraints(friendlyMessage);
                         constraintsBuilder.violations(locatedViolations(cve));

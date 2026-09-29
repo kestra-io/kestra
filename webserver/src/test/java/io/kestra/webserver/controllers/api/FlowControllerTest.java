@@ -1657,8 +1657,8 @@ class FlowControllerTest {
         // (none in the test env), so even with auto-install enabled it stays a hard constraint.
         assertEquals("invalidFlow2.yaml", violations.get(1).getFilename());
         assertFalse(violations.get(1).isOutdated());
-        assertNull(violations.get(1).getDeprecationPaths());
-        assertNull(violations.get(1).getInfos());
+        assertThat(violations.get(1).getDeprecationPaths()).isEmpty();
+        assertThat(violations.get(1).getInfos()).isEmpty();
 
         assertThat(violations.getFirst().getConstraints()).contains("Unrecognized field \"unknownProp\"");
         assertThat(violations.get(1).getConstraints()).contains("Invalid type: io.kestra.plugin.core.debug.UnknownTask");

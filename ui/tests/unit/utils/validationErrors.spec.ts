@@ -23,13 +23,13 @@ describe("splitValidationErrors", () => {
     })
 
     it("drops blank lines", () => {
-        expect(splitValidationErrors("Message 1\n\nMessage 2\n\nMessage 3"))
+        expect(splitValidationErrors("\nMessage 1\n   \nMessage 2\n\nMessage 3\n"))
             .toEqual(["Message 1", "Message 2", "Message 3"])
     })
 
     it("keeps commas within a message intact", () => {
-        expect(splitValidationErrors('Unrecognized field "name", expected "username"'))
-            .toEqual(['Unrecognized field "name", expected "username"'])
+        expect(splitValidationErrors("Unrecognized field \"name\", expected \"username\""))
+            .toEqual(["Unrecognized field \"name\", expected \"username\""])
     })
 
     it("returns an empty array when the input is undefined", () => {

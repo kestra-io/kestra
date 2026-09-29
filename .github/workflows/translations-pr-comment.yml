@@ -78,7 +78,7 @@ jobs:
 
               It adds or changes English UI text, and the job that generates the other languages does not run on a pull request from a fork (it needs a key the fork does not have), so the translation check stays red until someone generates them. Any one of these does it:
 
-              - **A Kestra maintainer:** open the *Actions* tab, pick **Translations - Generate for a pull request**, click *Run workflow* and enter `PR_NUMBER`. The commit lands on this branch when the pull request allows edits from maintainers; otherwise the run attaches the generated files as a patch artifact and comments here with the command to apply it.
+              - **A Kestra maintainer:** open the *Actions* tab, pick **Translations - Generate for a pull request**, click *Run workflow*, keep *Use workflow from* on the branch this pull request targets and enter `PR_NUMBER`. The commit lands on this branch when the pull request allows edits from maintainers; otherwise the run attaches the generated files as a patch artifact and comments here with the command to apply it.
               - **You, the author:** tick *Allow edits from maintainers* in the sidebar and ask a maintainer to run it, or generate locally with `cd ui && GEMINI_API_KEY=<key> npm run translations:generate && npm run translations:check` and commit `ui/src/translations/*.json` together with `ui/scripts/translations/fingerprints*.json`.
 
               Only `ui/src/translations/en.json` is written by hand; every other language is generated from it.

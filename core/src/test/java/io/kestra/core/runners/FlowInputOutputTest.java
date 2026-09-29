@@ -7,6 +7,8 @@ import java.net.URI;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
+import java.time.Duration;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -268,6 +270,32 @@ class FlowInputOutputTest {
         Assertions.assertEquals(2, values.size());
         Assertions.assertFalse(values.get(1).enabled());
         Assertions.assertNotNull(values.get(1).exceptions());
+    }
+
+    @Test
+    void shouldParseValueToItsScalarTypeWhenGivenAsString() {
+        assertThat(FlowInputOutput.parseScalarInputValue(Type.INT, "42")).contains(42);
+        assertThat(FlowInputOutput.parseScalarInputValue(Type.FLOAT, "1.5")).contains(1.5F);
+        assertThat(FlowInputOutput.parseScalarInputValue(Type.BOOL, "true")).contains(true);
+        assertThat(FlowInputOutput.parseScalarInputValue(Type.BOOLEAN, "true")).contains(true);
+        assertThat(FlowInputOutput.parseScalarInputValue(Type.DATE, "2026-09-28")).contains(LocalDate.of(2026, 9, 28));
+        assertThat(FlowInputOutput.parseScalarInputValue(Type.DURATION, "PT5M")).contains(Duration.ofMinutes(5));
+        assertThat(FlowInputOutput.parseScalarInputValue(Type.ENUM, "b")).contains("b");
+    }
+
+    @Test
+    void shouldReturnEmptyWhenTypeIsNotScalar() {
+        assertThat(FlowInputOutput.parseScalarInputValue(Type.JSON, "{\"a\": 1}")).isEmpty();
+        assertThat(FlowInputOutput.parseScalarInputValue(Type.ARRAY, "[1]")).isEmpty();
+        assertThat(FlowInputOutput.parseScalarInputValue(Type.FILE, "kestra:///file.txt")).isEmpty();
+        assertThat(FlowInputOutput.parseScalarInputValue(Type.SECRET, "value")).isEmpty();
+    }
+
+    @Test
+    void shouldThrowWhenValueDoesNotMatchItsScalarType() {
+        assertThatThrownBy(() -> FlowInputOutput.parseScalarInputValue(Type.INT, "not a number"))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessage("not a valid `INT`");
     }
 
     @Test

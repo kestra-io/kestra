@@ -501,6 +501,43 @@ public class FlowInputOutput {
         );
     }
 
+    /**
+     * Coerces a scalar input value to its typed form for {@code type}, as {@link #parseType} does for an execution input,
+     * returning empty for types whose parsing needs execution-time infrastructure (FILE, SECRET) or structural/document
+     * handling (URI, ARRAY, MULTISELECT, JSON, YAML, FORM).
+     */
+    public static Optional<Object> parseScalarInputValue(Type type, Object current) {
+        return Optional.ofNullable(switch (type) {
+            case SELECT, ENUM, STRING, EMAIL -> current.toString();
+            case INT -> {
+                if (current instanceof Integer) {
+                    yield current;
+                }
+                try {
+                    yield Integer.valueOf(current.toString());
+                } catch (NumberFormatException e) {
+                    throw new IllegalArgumentException("not a valid `INT`");
+                }
+            }
+            case FLOAT -> {
+                if (current instanceof Float) {
+                    yield current;
+                }
+                try {
+                    yield Float.valueOf(current.toString());
+                } catch (NumberFormatException e) {
+                    throw new IllegalArgumentException("not a valid `FLOAT`");
+                }
+            }
+            case BOOLEAN, BOOL -> current instanceof Boolean ? current : Boolean.valueOf(current.toString());
+            case DATETIME -> current instanceof Instant ? current : Instant.parse(current.toString());
+            case DATE -> current instanceof LocalDate ? current : LocalDate.parse(current.toString());
+            case TIME -> current instanceof LocalTime ? current : LocalTime.parse(current.toString());
+            case DURATION -> current instanceof Duration ? current : Duration.parse(current.toString());
+            case FILE, URI, SECRET, JSON, YAML, ARRAY, MULTISELECT, FORM -> null;
+        });
+    }
+
     private Object parseType(Execution execution, Type type, String id, Type elementType, Object current, Data data) throws Exception {
         try {
             return switch (type) {

@@ -30,6 +30,7 @@ export type TemplateArgument = Record<string, Input>;
 export interface BlueprintTemplate {
     source: string;
     templateArguments: Record<string, Input>;
+    templateArgumentsOrder?: string[];
 }
 
 export interface FlowBlueprint {

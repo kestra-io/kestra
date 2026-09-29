@@ -47,10 +47,15 @@ function statsGlobalData(config: Config, uid: string): StatsGlobalData {
 
 const SURVEY_HOOKS_FLAG = "__kestra_posthog_survey_hooks_installed"
 
+declare global {
+    interface Window {
+        [SURVEY_HOOKS_FLAG]?: boolean
+    }
+}
+
 function installSurveyHooksOnce() {
-    const globalFlags = window as unknown as Record<string, boolean>
-    if (globalFlags[SURVEY_HOOKS_FLAG]) return
-    globalFlags[SURVEY_HOOKS_FLAG] = true
+    if (window[SURVEY_HOOKS_FLAG]) return
+    window[SURVEY_HOOKS_FLAG] = true
 
     let surveyVisible = false
     window.addEventListener("PHSurveyShown", () => {

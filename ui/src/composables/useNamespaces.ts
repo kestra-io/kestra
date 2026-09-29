@@ -2,9 +2,7 @@ import {EntityIterator} from "./entityIterator"
 import {useNamespacesStore} from "override/stores/namespaces"
 import {storageKeys} from "../utils/constants"
 import {Namespace} from "@kestra-io/kestra-sdk"
-
-
-export type NamespaceSearchOptions = Parameters<ReturnType<typeof useNamespacesStore>["search"]>[0]
+import type {NamespaceSearchOptions} from "./useBaseNamespaces"
 
 export class NamespaceIterator extends EntityIterator<Namespace, NamespaceSearchOptions>{
     // oxlint-disable-next-line no-useless-constructor

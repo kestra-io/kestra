@@ -12,7 +12,7 @@ import type {KestraHttpError, KestraRequestOptions} from "../utils/kestraHttp"
 export {PagedResultsNamespace}
 
 type NamespaceSearchParameters = NonNullable<Parameters<typeof NamespaceAPI.searchNamespaces>[0]>
-type NamespaceSearchOptions = Omit<NamespaceSearchParameters, "sort"> & {commit?: boolean; sort?: string}
+export type NamespaceSearchOptions = Omit<NamespaceSearchParameters, "sort"> & {commit?: boolean; sort?: string}
 type DeleteKvsRequest = Omit<Parameters<typeof KvAPI.deleteKeyValues>[0], "namespace">
 
 function base(namespace: string) {

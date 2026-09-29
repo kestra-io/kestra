@@ -6,14 +6,14 @@ export abstract class EntityIterator<T, TOptions extends Record<string, unknown>
     private page = 0
     private alreadyFetched: T[] = []
     private buffered: T[] = []
-    readonly options: TOptions
+    readonly options: Partial<TOptions>
 
     protected constructor(fetchSize: number, options?: TOptions) {
         if (fetchSize <= 0) {
             throw new Error("fetchSize must be greater than 0")
         }
         this.fetchSize = fetchSize
-        this.options = options ?? ({} as TOptions)
+        this.options = options ?? {}
     }
 
     get total(): number | undefined {

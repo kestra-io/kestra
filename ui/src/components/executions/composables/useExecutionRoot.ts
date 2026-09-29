@@ -4,6 +4,7 @@ import {useI18n} from "vue-i18n"
 
 import {useFlowStore} from "../../../stores/flow"
 import {useExecutionsStore} from "../../../stores/executions"
+import {useNamespaceBreadcrumb} from "../../../composables/useNamespaceBreadcrumb"
 import {EXECUTION_PARENT_ROUTE, EXECUTION_TAB_ROUTES} from "../executionTabs"
 
 export function useExecutionRoot() {
@@ -16,6 +17,11 @@ export function useExecutionRoot() {
     const dependenciesCount = ref<number>()
     const previousExecutionId = ref<string>()
 
+    const namespaceBreadcrumb = useNamespaceBreadcrumb(() => route.params.namespace?.toString(), {
+        tab: "executions",
+        root: {label: t("executions"), link: {name: "executions/list"}, scope: t("namespaces")},
+    })
+
     const routeInfo = computed(() => {
         const ns = route.params.namespace as string
         const flowId = route.params.flowId as string
@@ -27,14 +33,9 @@ export function useExecutionRoot() {
         return {
             title: route.params.id as string,
             breadcrumb: [
+                ...namespaceBreadcrumb.value,
                 {
-                    label: t("executions"),
-                    link: {
-                        name: "executions/list",
-                    },
-                },
-                {
-                    label: `${ns}.${flowId}`,
+                    label: flowId,
                     link: {
                         name: "flows/update",
                         params: {

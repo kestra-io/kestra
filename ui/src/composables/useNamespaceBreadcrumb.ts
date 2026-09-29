@@ -13,7 +13,7 @@ interface Options {
     /** The namespace tab a level links to. */
     tab?: string;
     /** The first crumb when the page belongs to another section; the namespaces list otherwise. */
-    root?: KsBreadcrumbItem;
+    root?: MaybeRefOrGetter<KsBreadcrumbItem | undefined>;
 }
 
 const namespaceIdsByTenant = new Map<string, Promise<string[]>>()
@@ -78,7 +78,7 @@ export function useNamespaceBreadcrumb(namespace: MaybeRefOrGetter<string | unde
         }
 
         return [
-            root ?? {label: t("namespaces"), link: {name: "namespaces/list"}},
+            toValue(root) ?? {label: t("namespaces"), link: {name: "namespaces/list"}},
             ...parts.map((label, index) => {
                 const id = parts.slice(0, index + 1).join(".")
                 return {

@@ -20,6 +20,9 @@ function distinct<T>(val: T[] | undefined): T[] {
 // webserver). Suggested only in that context; the backend rejects them anywhere else.
 const INPUT_ONLY_FUNCTIONS = ["subflow"]
 
+// Root keys holding tasks; `triggers` types are registered plugins too, so they are filtered by key.
+const TASK_ROOT_KEYS = new Set(["tasks", "errors", "finally", "afterExecution"])
+
 export class FlowAutoCompletion extends YamlAutoCompletion {
     flowsInputsCache: Record<string, string[]> = {}
     pluginsStore: ReturnType<typeof usePluginsStore>
@@ -105,15 +108,12 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
         }
     }
 
-    private tasks(source: string): any[] {
-        const tasksFromTasksProp = YAML_UTILS.extractFieldFromMaps(source, "tasks")
-            .flatMap(allTasks => allTasks.tasks)
-        const tasksFromTaskProp = YAML_UTILS.extractFieldFromMaps(source, "task")
-            .map(task => task.task)
-            .flatMap(task => YAML_UTILS.pairsToMap(task) ?? [])
-
-        return [...tasksFromTasksProp, ...tasksFromTaskProp]
-            .filter(task => typeof task?.get === "function" && task?.get("id"))
+    // Matching on the plugin registry keeps input definitions such as `Pause.onResume` out.
+    private tasks(source: string): {id: string; type: string}[] {
+        const pluginTypes = new Set(this.pluginsStore.allTypes)
+        return YAML_UTILS.extractTypedBlocks(source)
+            .flatMap(({path, type, value: {id}}) =>
+                TASK_ROOT_KEYS.has(path.split(".")[0]) && typeof id === "string" && pluginTypes.has(type) ? [{id, type}] : [])
     }
 
     private cursorProbeIndexes(source: string, cursorIndex: number): number[] {
@@ -170,9 +170,7 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
     }
 
     private async outputsFor(taskId: string, source: string): Promise<string[]> {
-        const taskType = this.tasks(this.completionSource?.value ?? source).filter(task => task.get("id") === taskId)
-            .map(task => task.get("type"))
-            ?.[0]
+        const taskType = this.tasks(this.completionSource?.value ?? source).find(task => task.id === taskId)?.type
 
         if (!taskType) {
             return []
@@ -209,11 +207,8 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
                 return Promise.resolve(parsed?.inputs?.map((input: {id?: string}) => input.id) ?? [])
             case "outputs": {
                 const currentTaskId = this.currentTaskIdAtCursor(source, cursorIndex)
-                return Promise.resolve(
-                    parsed?.tasks
-                        ?.map((task: {id?: string}) => task.id)
-                        .filter((taskId: string | undefined) => taskId && taskId !== currentTaskId) ?? [],
-                )
+                return distinct(this.tasks(this.completionSource?.value ?? source).map(task => task.id))
+                    .filter(taskId => taskId !== currentTaskId)
             }
             case "labels":
                 return Promise.resolve(Object.keys(parsed?.labels ?? {}))

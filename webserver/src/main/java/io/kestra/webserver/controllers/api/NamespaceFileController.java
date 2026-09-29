@@ -8,8 +8,10 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -19,6 +21,7 @@ import java.util.zip.ZipOutputStream;
 
 import org.apache.commons.lang3.tuple.Pair;
 
+import io.kestra.core.exceptions.ConflictException;
 import io.kestra.core.exceptions.FlowProcessingException;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.namespaces.files.NamespaceFileMetadata;
@@ -243,6 +246,8 @@ public class NamespaceFileController {
     private List<NamespaceFile> importArchive(String tenantId, String namespace, Path archive, boolean dryRun) throws Exception {
         List<NamespaceFile> createdFiles = new ArrayList<>();
         List<String> invalidEntries = new ArrayList<>();
+        Set<Path> archivedFiles = new HashSet<>();
+        Set<Path> archivedDirectories = new HashSet<>();
         try (ZipInputStream zip = ProtectedZipInputStream.of(new BufferedInputStream(Files.newInputStream(archive)), securityConfiguration.zipBombProtection())) {
             ZipEntry entry;
             while ((entry = zip.getNextEntry()) != null) {
@@ -251,22 +256,38 @@ public class NamespaceFileController {
                 }
 
                 try (BufferedInputStream inputStream = new BufferedInputStream(new ByteArrayInputStream(zip.readAllBytes()))) {
+                    if (dryRun) {
+                        Path entryPath = NamespaceFile.normalize(Path.of("/" + entry.getName()));
+                        if (archivedDirectories.contains(entryPath)) {
+                            throw new ConflictException("Another entry of the archive puts a directory at '%s'.".formatted(entryPath));
+                        }
+                        for (Path parent = entryPath.getParent(); parent != null; parent = parent.getParent()) {
+                            if (archivedFiles.contains(parent)) {
+                                throw new ConflictException("Another entry of the archive puts a file at '%s', not a directory.".formatted(parent));
+                            }
+                            archivedDirectories.add(parent);
+                        }
+                        archivedFiles.add(entryPath);
+                    }
                     createdFiles.addAll(putNamespaceFile(tenantId, namespace, toFileUri("/" + entry.getName()), inputStream, dryRun));
-                } catch (IllegalArgumentException | ConstraintViolationException | FlowProcessingException e) {
+                } catch (IllegalArgumentException | ConstraintViolationException | ConflictException | FlowProcessingException e) {
                     if (!dryRun || e instanceof ProtectedZipInputStream.ZipBombDetectedException) {
                         throw e;
                     }
-                    invalidEntries.add("'%s' (%s)".formatted(entry.getName(), e.getMessage()));
+                    Throwable reason = e instanceof FlowProcessingException && e.getCause() != null ? e.getCause() : e;
+                    invalidEntries.add("'%s' (%s)".formatted(entry.getName(), reason.getMessage().strip().replaceAll("\\s*\\R\\s*", "; ")));
                 }
             }
         }
 
         if (!invalidEntries.isEmpty()) {
-            throw new IllegalArgumentException("The archive was not imported because %s invalid: %s%s.".formatted(
-                invalidEntries.size() == 1 ? "1 entry is" : "%d entries are".formatted(invalidEntries.size()),
-                invalidEntries.stream().limit(MAX_REPORTED_INVALID_ENTRIES).collect(Collectors.joining("; ")),
-                invalidEntries.size() > MAX_REPORTED_INVALID_ENTRIES ? "; and %d more".formatted(invalidEntries.size() - MAX_REPORTED_INVALID_ENTRIES) : ""
-            ));
+            throw new IllegalArgumentException(
+                "The archive was not imported because %s invalid: %s%s.".formatted(
+                    invalidEntries.size() == 1 ? "1 entry is" : "%d entries are".formatted(invalidEntries.size()),
+                    invalidEntries.stream().limit(MAX_REPORTED_INVALID_ENTRIES).collect(Collectors.joining("; ")),
+                    invalidEntries.size() > MAX_REPORTED_INVALID_ENTRIES ? "; and %d more".formatted(invalidEntries.size() - MAX_REPORTED_INVALID_ENTRIES) : ""
+                )
+            );
         }
         return createdFiles;
     }
@@ -296,10 +317,11 @@ public class NamespaceFileController {
             }
         }
 
+        Namespace namespaceStorage = namespaceFactory.of(tenantId, namespace, storageInterface);
         if (dryRun) {
+            namespaceStorage.ensureCanPutFile(normalizedPath);
             return Collections.emptyList();
         }
-        Namespace namespaceStorage = namespaceFactory.of(tenantId, namespace, storageInterface);
         return namespaceStorage.putFile(normalizedPath, inputStream);
     }
 

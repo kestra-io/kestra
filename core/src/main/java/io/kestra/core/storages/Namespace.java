@@ -10,6 +10,7 @@ import java.util.function.Predicate;
 
 import org.apache.commons.lang3.tuple.Pair;
 
+import io.kestra.core.exceptions.ConflictException;
 import io.kestra.core.models.namespaces.files.NamespaceFileMetadata;
 import io.kestra.core.namespace.NamespaceFileService;
 import io.kestra.core.utils.PathMatcherPredicate;
@@ -135,6 +136,13 @@ public interface Namespace {
     FileAttributes getFileMetadata(Path path) throws IOException;
 
     boolean exists(Path path) throws IOException;
+
+    /**
+     * Checks that a file could be written at the given path, without writing anything.
+     *
+     * @throws ConflictException if a directory already exists at the path, or a file at one of its ancestors.
+     */
+    void ensureCanPutFile(Path path) throws IOException;
 
     default List<NamespaceFile> putFile(Path path, InputStream content) throws IOException, URISyntaxException {
         return putFile(path, content, Conflicts.OVERWRITE);

@@ -1,0 +1,80 @@
+export default {
+    "en": {
+        "breadcrumb_siblings": "Other entries next to {label}",
+        "breadcrumb_hidden": "Show hidden levels",
+        "breadcrumb_in": "In {label}",
+        "breadcrumb_empty": "Nothing here yet",
+    },
+    "de": {
+        "breadcrumb_siblings": "Weitere Einträge neben {label}",
+        "breadcrumb_hidden": "Ausgeblendete Ebenen anzeigen",
+        "breadcrumb_in": "In {label}",
+        "breadcrumb_empty": "Noch nichts hier",
+    },
+    "es": {
+        "breadcrumb_siblings": "Otras entradas junto a {label}",
+        "breadcrumb_hidden": "Mostrar niveles ocultos",
+        "breadcrumb_in": "En {label}",
+        "breadcrumb_empty": "Aún no hay nada aquí",
+    },
+    "fr": {
+        "breadcrumb_siblings": "Autres entrées à côté de {label}",
+        "breadcrumb_hidden": "Afficher les niveaux masqués",
+        "breadcrumb_in": "Dans {label}",
+        "breadcrumb_empty": "Rien ici pour le moment",
+    },
+    "hi": {
+        "breadcrumb_siblings": "{label} के साथ अन्य प्रविष्टियाँ",
+        "breadcrumb_hidden": "छिपे हुए स्तर दिखाएँ",
+        "breadcrumb_in": "{label} में",
+        "breadcrumb_empty": "यहाँ अभी कुछ नहीं है",
+    },
+    "it": {
+        "breadcrumb_siblings": "Altre voci accanto a {label}",
+        "breadcrumb_hidden": "Mostra i livelli nascosti",
+        "breadcrumb_in": "In {label}",
+        "breadcrumb_empty": "Ancora niente qui",
+    },
+    "ja": {
+        "breadcrumb_siblings": "{label} と同じ階層の他の項目",
+        "breadcrumb_hidden": "非表示の階層を表示",
+        "breadcrumb_in": "{label} 内",
+        "breadcrumb_empty": "まだ何もありません",
+    },
+    "ko": {
+        "breadcrumb_siblings": "{label} 옆의 다른 항목",
+        "breadcrumb_hidden": "숨겨진 수준 표시",
+        "breadcrumb_in": "{label} 내",
+        "breadcrumb_empty": "아직 아무것도 없습니다",
+    },
+    "pl": {
+        "breadcrumb_siblings": "Inne wpisy obok {label}",
+        "breadcrumb_hidden": "Pokaż ukryte poziomy",
+        "breadcrumb_in": "W {label}",
+        "breadcrumb_empty": "Na razie nic tu nie ma",
+    },
+    "pt": {
+        "breadcrumb_siblings": "Outras entradas ao lado de {label}",
+        "breadcrumb_hidden": "Mostrar níveis ocultos",
+        "breadcrumb_in": "Em {label}",
+        "breadcrumb_empty": "Ainda não há nada aqui",
+    },
+    "pt_BR": {
+        "breadcrumb_siblings": "Outras entradas ao lado de {label}",
+        "breadcrumb_hidden": "Mostrar níveis ocultos",
+        "breadcrumb_in": "Em {label}",
+        "breadcrumb_empty": "Ainda não há nada aqui",
+    },
+    "ru": {
+        "breadcrumb_siblings": "Другие элементы рядом с {label}",
+        "breadcrumb_hidden": "Показать скрытые уровни",
+        "breadcrumb_in": "В {label}",
+        "breadcrumb_empty": "Здесь пока ничего нет",
+    },
+    "zh_CN": {
+        "breadcrumb_siblings": "{label} 旁的其他条目",
+        "breadcrumb_hidden": "显示隐藏的层级",
+        "breadcrumb_in": "{label} 内",
+        "breadcrumb_empty": "这里还没有内容",
+    },
+}

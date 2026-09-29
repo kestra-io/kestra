@@ -9,47 +9,42 @@
 
         <template v-for="(item, index) in visibleItems" :key="item.label">
             <div class="ks-breadcrumb__item">
-                <KsDropdown
+                <KsBreadcrumbMenu
                     v-if="item.ellipsis"
-                    trigger="click"
-                    :showArrow="false"
-                    size="large"
+                    :entries="collapsedItems"
+                    :chevron="false"
+                    :ariaLabel="$t('breadcrumb_hidden')"
                 >
-                    <button class="ks-breadcrumb__ellipsis" type="button">...</button>
-                    <template #dropdown>
-                        <KsDropdownMenu>
-                            <KsDropdownItem
-                                v-for="(collapsed, i) in collapsedItems"
-                                :key="i"
-                                :disabled="collapsed.disabled"
-                            >
-                                <component
-                                    :is="resolveItem(collapsed).tag"
-                                    v-bind="resolveItem(collapsed).attrs"
-                                >
-                                    {{ collapsed.label }}
-                                </component>
-                            </KsDropdownItem>
-                        </KsDropdownMenu>
-                    </template>
-                </KsDropdown>
-
-                <component
+                    <span class="ks-breadcrumb__link ks-breadcrumb__ellipsis">...</span>
+                </KsBreadcrumbMenu>
+                <KsBreadcrumbMenu
                     v-else
-                    :is="resolveItem(item).tag"
-                    v-bind="resolveItem(item).attrs"
-                    class="ks-breadcrumb__link"
+                    :load="item.siblings ?? item.children"
+                    :heading="$t('breadcrumb_in', {label: scopeOf(item)})"
+                    :ariaLabel="$t('breadcrumb_siblings', {label: item.label})"
                 >
-                    <component :is="mainIcon" v-if="index === 0 && mainIcon" class="ks-breadcrumb__icon" />
-                    {{ item.label }}
-                </component>
+                    <component
+                        :is="resolveItem(item).tag"
+                        v-bind="resolveItem(item).attrs"
+                        class="ks-breadcrumb__link"
+                    >
+                        <component :is="mainIcon" v-if="index === 0 && mainIcon" class="ks-breadcrumb__icon" />
+                        {{ item.label }}
+                    </component>
+                </KsBreadcrumbMenu>
             </div>
             <span class="ks-breadcrumb__separator">/</span>
         </template>
 
         <h1 v-if="hasTitle" class="ks-breadcrumb__current">
-            <component :is="mainIcon" v-if="titleHasIcon" class="ks-breadcrumb__icon" />
-            <slot name="title">{{ title }}</slot>
+            <KsBreadcrumbMenu
+                :load="titleSiblings"
+                :heading="$t('breadcrumb_in', {label: scopeOf()})"
+                :ariaLabel="$t('breadcrumb_siblings', {label: title})"
+            >
+                <component :is="mainIcon" v-if="titleHasIcon" class="ks-breadcrumb__icon" />
+                <slot name="title">{{ title }}</slot>
+            </KsBreadcrumbMenu>
         </h1>
     </div>
 </template>
@@ -57,20 +52,20 @@
 <script setup lang="ts">
     import {computed, type Component} from "vue"
     import {RouterLink} from "vue-router"
-    import KsDropdown from "../KsDropdown/KsDropdown.vue"
-    import KsDropdownMenu from "../KsDropdown/KsDropdownMenu.vue"
-    import KsDropdownItem from "../KsDropdown/KsDropdownItem.vue"
-    import type {KsBreadcrumbItem} from "./types"
+    import KsBreadcrumbMenu from "./KsBreadcrumbMenu.vue"
+    import {resolveItem} from "./resolveItem"
+    import type {KsBreadcrumbItem, KsBreadcrumbLoader} from "./types"
     import monogram from "../../../assets/images/kestra-monogram.svg"
 
     type RouterLinkTo = InstanceType<typeof RouterLink>["$props"]["to"]
 
-    const {items = [], title = "", mainIcon, showLeading = false, leadingTo = "/"} = defineProps<{
+    const {items = [], title = "", mainIcon, showLeading = false, leadingTo = "/", titleSiblings} = defineProps<{
         items?: KsBreadcrumbItem[]
         title?: string
         mainIcon?: Component
         showLeading?: boolean
         leadingTo?: RouterLinkTo
+        titleSiblings?: KsBreadcrumbLoader
     }>()
 
     const slots = defineSlots<{
@@ -96,18 +91,12 @@
     const hasTitle = computed(() => Boolean(slots.title) || title.length > 0)
     const titleHasIcon = computed(() => !visibleItems.value.length && Boolean(mainIcon))
 
-    type Resolved = {tag: typeof RouterLink | "a" | "span"; attrs: Record<string, unknown>}
-
-    function resolveItem(item: KsBreadcrumbItem): Resolved {
-        if (item.disabled) return {tag: "span", attrs: {}}
-        if (item.link) return {tag: RouterLink, attrs: {to: item.link}}
-        if (item.onClick) return {
-            tag: "a",
-            attrs: {href: "#", onClick: (e: Event) => { e.preventDefault(); item.onClick?.() }},
-        }
-        return {tag: "span", attrs: {}}
+    // A siblings menu lists what sits under the previous item (the last one for the title), a children menu
+    // what sits under the item itself.
+    function scopeOf(item?: KsBreadcrumbItem): string {
+        const owner = !item ? items[items.length - 1] : item.siblings ? items[items.indexOf(item) - 1] : item
+        return owner?.scope ?? owner?.label ?? item?.label ?? title
     }
-
 </script>
 
 <style scoped lang="scss">
@@ -164,6 +153,10 @@
             white-space: nowrap;
         }
 
+        &__ellipsis {
+            cursor: pointer;
+        }
+
         &__icon {
             display: inline-flex;
             align-items: center;
@@ -188,19 +181,6 @@
 
             .ks-breadcrumb__icon {
                 color: var(--ks-text-primary);
-            }
-        }
-
-        &__ellipsis {
-            font-size: inherit;
-            color: var(--ks-text-primary);
-            background: none;
-            border: 0;
-            padding: 0;
-            cursor: pointer;
-
-            &:hover {
-                opacity: 0.8;
             }
         }
     }

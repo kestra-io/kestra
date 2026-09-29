@@ -7,6 +7,7 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -135,7 +136,12 @@ public class TaskLogLineMatcher {
         }
 
         if (match.otlp() != null && !match.otlp().isEmpty()) {
-            handleOtlp(logger, runContext, instant, match.otlp(), logData);
+            Map<String, Object> otlpOutputs = handleOtlp(logger, runContext, instant, match.otlp(), logData);
+            if (!otlpOutputs.isEmpty()) {
+                Map<String, Object> outputs = new HashMap<>(match.outputs());
+                outputs.putAll(otlpOutputs);
+                return new TaskLogMatch(outputs, match.metrics(), match.logs(), match.assets(), match.otlp());
+            }
         }
 
         return match;
@@ -205,20 +211,32 @@ public class TaskLogLineMatcher {
 
     /**
      * Forwards the logs and metrics of an OTLP record to the {@link RunContext}; traces are left
-     * untouched as they are only exposed to the caller for now.
+     * untouched as they are only exposed to the caller for now. A log body that is itself a
+     * {@code ::{...}::} marker is handled as if the command had printed it directly.
+     *
+     * @return the outputs carried by markers in the log bodies
      */
-    protected void handleOtlp(Logger logger, RunContext runContext, Instant instant, OtlpRecord record, String data) {
+    protected Map<String, Object> handleOtlp(Logger logger, RunContext runContext, Instant instant, OtlpRecord record, String data) {
+        Map<String, Object> outputs = new HashMap<>();
         ListUtils.emptyOnNull(record.resourceLogs()).stream()
             .flatMap(resourceLogs -> ListUtils.emptyOnNull(resourceLogs.scopeLogs()).stream())
             .flatMap(scopeLogs -> ListUtils.emptyOnNull(scopeLogs.logRecords()).stream())
             .forEach(logRecord ->
             {
                 try {
+                    Instant logInstant = toInstant(logRecord.timeUnixNano(), instant);
+                    String body = logRecord.body() != null ? logRecord.body().asText() : null;
+                    Optional<TaskLogMatch> marker = body != null ? matches(body, logger, runContext, logInstant) : Optional.empty();
+                    if (marker.isPresent()) {
+                        outputs.putAll(marker.get().outputs());
+                        return;
+                    }
+
                     runContext
                         .logger()
                         .atLevel(otlpSeverityToLevel(logRecord))
-                        .addKeyValue(ORIGINAL_TIMESTAMP_KEY, toInstant(logRecord.timeUnixNano(), instant))
-                        .log(logRecord.body() != null ? redactEncryptedOutputs(logRecord.body().asText()) : null);
+                        .addKeyValue(ORIGINAL_TIMESTAMP_KEY, logInstant)
+                        .log(body != null ? redactEncryptedOutputs(body) : null);
                 } catch (Exception e) {
                     logger.warn("Invalid OTLP log '{}'", data, e);
                 }
@@ -235,6 +253,8 @@ public class TaskLogLineMatcher {
                     logger.warn("Invalid OTLP metric '{}'", data, e);
                 }
             });
+
+        return outputs;
     }
 
     /**

@@ -487,6 +487,10 @@ export const usePluginsStore = defineStore("plugins", () => {
             return
         }
 
+        if (currentlyLoading?.cls !== cls || currentlyLoading?.version !== version) {
+            return
+        }
+
         editorPlugin.value = {
             cls,
             version,

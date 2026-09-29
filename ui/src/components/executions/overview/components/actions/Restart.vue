@@ -286,8 +286,9 @@
             return false
         }
 
-        const isRunning = State.isRunning(props.execution.state.current)
-        return props.isReplay ? !isRunning : props.execution.state.current === State.FAILED
+        return props.isReplay
+            ? State.isTerminated(props.execution.state.current)
+            : props.execution.state.current === State.FAILED
     })
 
     const tooltip = computed(() =>

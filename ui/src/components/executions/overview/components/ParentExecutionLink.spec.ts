@@ -16,8 +16,14 @@ const execution = (overrides: Record<string, unknown> = {}) =>
         ...overrides,
     }) as unknown as Execution
 
-const startedBy = (type: string, executionId: string) =>
-    execution({trigger: {id: "upstream", type, variables: {executionId}}})
+const startedBy = (type: string, variables: Record<string, unknown>) =>
+    execution({trigger: {id: "upstream", type, variables}})
+
+const lineage = (executionId: string) => ({
+    executionId,
+    namespace: "parent-namespace",
+    flowId: "parent-flow",
+})
 
 async function mountLink(value: Execution) {
     const router = createRouter({
@@ -50,9 +56,9 @@ async function mountLink(value: Execution) {
 }
 
 describe("ParentExecutionLink", () => {
-    it("shouldLinkToTheUpstreamExecutionOfASubflowChild", async () => {
+    it("shouldLinkToTheUpstreamExecutionInItsOwnFlowForASubflowChild", async () => {
         const wrapper = await mountLink(
-            startedBy("io.kestra.plugin.core.flow.Subflow", "parent-execution"),
+            startedBy("io.kestra.plugin.core.flow.Subflow", lineage("parent-execution")),
         )
         const parent = wrapper.find(LINK)
 
@@ -63,22 +69,82 @@ describe("ParentExecutionLink", () => {
             params: {
                 tab: "overview",
                 id: "parent-execution",
-                namespace: "child-namespace",
-                flowId: "child-flow",
+                namespace: "parent-namespace",
+                flowId: "parent-flow",
             },
         })
     })
 
     it("shouldLinkToTheUpstreamExecutionOfAFlowTriggerChild", async () => {
         const wrapper = await mountLink(
-            startedBy("io.kestra.plugin.core.trigger.Flow", "upstream-execution"),
+            startedBy("io.kestra.plugin.core.trigger.Flow", lineage("upstream-execution")),
         )
 
         expect(wrapper.find(LINK).text()).toContain("Parent execution: upstream-execution")
+        expect(wrapper.findComponent(RouterLink).props("to")).toEqual({
+            name: "executions/update",
+            params: {
+                tab: "overview",
+                id: "upstream-execution",
+                namespace: "parent-namespace",
+                flowId: "parent-flow",
+            },
+        })
     })
 
-    it("shouldFallBackToParentIdForRestartLineage", async () => {
+    it("shouldKeepTheCurrentFlowWhenTheParentComesFromParentId", async () => {
         const wrapper = await mountLink(execution({parentId: "restarted-from"}))
+
+        expect(wrapper.find(LINK).text()).toContain("Parent execution: restarted-from")
+        expect(wrapper.findComponent(RouterLink).props("to")).toEqual({
+            name: "executions/update",
+            params: {
+                tab: "overview",
+                id: "restarted-from",
+                namespace: "child-namespace",
+                flowId: "child-flow",
+            },
+        })
+    })
+
+    it("shouldCarryTheTenantWhenTheExecutionHasOne", async () => {
+        const wrapper = await mountLink(
+            execution({tenantId: "acme", parentId: "restarted-from"}),
+        )
+
+        expect(wrapper.findComponent(RouterLink).props("to")).toEqual({
+            name: "executions/update",
+            params: {
+                tab: "overview",
+                tenant: "acme",
+                id: "restarted-from",
+                namespace: "child-namespace",
+                flowId: "child-flow",
+            },
+        })
+    })
+
+    it("shouldIgnoreATriggerThatExposesAnExecutionIdWithoutItsFlow", async () => {
+        const wrapper = await mountLink(
+            startedBy("io.kestra.plugin.core.trigger.Webhook", {
+                executionId: "unrelated-execution",
+            }),
+        )
+
+        expect(wrapper.find(LINK).exists()).toBe(false)
+    })
+
+    it("shouldFallBackToParentIdWhenTheTriggerIsNotLineage", async () => {
+        const wrapper = await mountLink(
+            execution({
+                parentId: "restarted-from",
+                trigger: {
+                    id: "unrelated",
+                    type: "io.kestra.plugin.core.trigger.Webhook",
+                    variables: {executionId: "unrelated-execution"},
+                },
+            }),
+        )
 
         expect(wrapper.find(LINK).text()).toContain("Parent execution: restarted-from")
     })

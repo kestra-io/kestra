@@ -22,29 +22,67 @@
 
     const props = defineProps<{execution: Execution}>()
 
-    /**
-     * `trigger.variables.executionId` is the upstream execution for children started by a
-     * subflow task or by a flow trigger, which is the lineage #19606 is about. `parentId` is
-     * only set by `Execution.childExecution(...)`, so it covers restart and replay lineage.
-     */
-    const parentId = computed(() => {
-        const triggerParentId = (props.execution.trigger?.variables as Record<string, unknown> | undefined)
-            ?.executionId
+    const text = (value: unknown): string | undefined =>
+        typeof value === "string" && value.length ? value : undefined
 
-        return typeof triggerParentId === "string" && triggerParentId.length
-            ? triggerParentId
-            : props.execution.parentId ?? undefined
+    /**
+     * Two lineages end up here and they do not live in the same flow.
+     *
+     * `trigger.variables` carries the upstream execution for children started by a subflow
+     * task, a ForEachItem or a flow trigger, which is the lineage #19606 is about. The
+     * backend ships `executionId`, `namespace` and `flowId` together in that bag
+     * (`ExecutableUtils.java:222-228`, `trigger/Flow.java:321-324`), so the parent's own
+     * flow is already known and needs no lookup. Requiring all three also keeps an
+     * unrelated plugin trigger that happens to expose an `executionId` from being read as
+     * lineage.
+     *
+     * `parentId` is set only by `Execution.childExecution(...)`, which copies `namespace`,
+     * `flowId` and `tenantId` from the parent (`Execution.java:409-411`), so restart and
+     * replay lineage stays on the current execution's flow.
+     */
+    const parent = computed(() => {
+        const variables = props.execution.trigger?.variables as
+            | Record<string, unknown>
+            | undefined
+
+        const id = text(variables?.executionId)
+        const namespace = text(variables?.namespace)
+        const flowId = text(variables?.flowId)
+
+        if (id && namespace && flowId) return {id, namespace, flowId}
+
+        const parentId = text(props.execution.parentId)
+
+        return parentId
+            ? {
+                id: parentId,
+                namespace: props.execution.namespace,
+                flowId: props.execution.flowId,
+            }
+            : undefined
     })
 
     const parentLink = computed(() => {
-        const id = parentId.value
-        const {id: currentId, originalId} = props.execution
+        const target = parent.value
+        const {id: currentId, originalId, tenantId} = props.execution
 
         // the banner already renders an `original execution` row, and after a first restart
         // `originalId === parentId`, so skip the duplicate rather than showing the same id twice
-        if (!id || id === currentId || id === originalId) return undefined
+        if (!target || target.id === currentId || target.id === originalId) return undefined
 
-        return {id, to: createLink("executions", props.execution, id)}
+        return {
+            id: target.id,
+            to: createLink(
+                "executions",
+                {
+                    id: currentId,
+                    namespace: target.namespace,
+                    flowId: target.flowId,
+                    tenantId,
+                },
+                target.id,
+            ),
+        }
     })
 </script>
 

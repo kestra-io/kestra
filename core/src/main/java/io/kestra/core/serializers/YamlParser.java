@@ -4,7 +4,9 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -21,6 +23,7 @@ import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException;
 
 import io.kestra.core.exceptions.InvalidTypeConstraintViolationException;
 import io.kestra.core.models.validations.ManualConstraintViolation;
+import io.kestra.core.models.validations.ValidateConstraintViolation.Violation;
 
 import jakarta.annotation.Nullable;
 import jakarta.validation.ConstraintViolationException;
@@ -32,6 +35,8 @@ public final class YamlParser {
 
     private static final ObjectMapper STRICT_MAPPER = NON_STRICT_MAPPER.copy()
         .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, true);
+
+    private static final int MAX_UNKNOWN_PROPERTIES = 50;
 
     public static boolean isValidExtension(Path path) {
         return FilenameUtils.getExtension(path.toFile().getAbsolutePath()).equals("yaml") || FilenameUtils.getExtension(path.toFile().getAbsolutePath()).equals("yml");
@@ -57,6 +62,68 @@ public final class YamlParser {
 
             throw e;
         }
+    }
+
+    /**
+     * Lists every property of the source unknown to {@code cls}, where a strict parse stops at the first one.
+     * Each unknown key is removed and the parse retried; any other failure ends the scan, the real parse reports it.
+     */
+    @SuppressWarnings("unchecked")
+    public static List<Violation> unknownProperties(String input, Class<?> cls) {
+        List<Violation> found = new ArrayList<>();
+        Map<String, Object> map;
+        try {
+            map = NON_STRICT_MAPPER.readValue(input, Map.class);
+        } catch (JsonProcessingException e) {
+            return found;
+        }
+
+        while (found.size() < MAX_UNKNOWN_PROPERTIES) {
+            try {
+                STRICT_MAPPER.convertValue(map, cls);
+                return found;
+            } catch (IllegalArgumentException e) {
+                if (!(e.getCause() instanceof UnrecognizedPropertyException unknown) || !removeAt(map, unknown.getPath())) {
+                    return found;
+                }
+                found.add(new Violation(jsonPointer(unknown.getPath()), unknown.getOriginalMessage()));
+            }
+        }
+        return found;
+    }
+
+    private static boolean removeAt(Object root, List<JsonMappingException.Reference> path) {
+        if (path.isEmpty()) {
+            return false;
+        }
+        Object node = root;
+        for (JsonMappingException.Reference reference : path.subList(0, path.size() - 1)) {
+            if (reference.getFieldName() != null && node instanceof Map<?, ?> map) {
+                node = map.get(reference.getFieldName());
+            } else if (reference.getIndex() >= 0 && node instanceof List<?> list && reference.getIndex() < list.size()) {
+                node = list.get(reference.getIndex());
+            } else {
+                return false;
+            }
+        }
+        String leaf = path.getLast().getFieldName();
+        if (leaf == null || !(node instanceof Map<?, ?> map) || !map.containsKey(leaf)) {
+            return false;
+        }
+        map.remove(leaf);
+        return true;
+    }
+
+    private static String jsonPointer(List<JsonMappingException.Reference> path) {
+        StringBuilder pointer = new StringBuilder();
+        for (JsonMappingException.Reference reference : path) {
+            if (reference.getFieldName() != null) {
+                pointer.append('/').append(reference.getFieldName().replace("~", "~0").replace("/", "~1"));
+            } else if (reference.getIndex() >= 0) {
+                pointer.append('/').append(reference.getIndex());
+            }
+        }
+        return pointer.toString();
     }
 
     private static <T> String type(Class<T> cls) {

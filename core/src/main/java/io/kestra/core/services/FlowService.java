@@ -61,6 +61,7 @@ import io.kestra.core.scheduler.events.TriggerFlowRevisionUpdated;
 import io.kestra.core.scheduler.events.TriggerUpdated;
 import io.kestra.core.scheduler.queue.TriggerEventQueue;
 import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.serializers.YamlParser;
 import io.kestra.core.topologies.FlowTopologyService;
 import io.kestra.core.utils.ExecutorsUtils;
 import io.kestra.core.utils.ListUtils;
@@ -492,7 +493,9 @@ public class FlowService {
 
             try {
                 String source = flowSource.content();
-                FlowWithSource flow = flowParsingService.parse(tenantId, source, true);
+                // Unknown keys are reported alongside bean violations rather than hiding them behind a strict parse.
+                List<ValidateConstraintViolation.Violation> unknownProperties = YamlParser.unknownProperties(source, FlowWithSource.class);
+                FlowWithSource flow = flowParsingService.parse(tenantId, source, unknownProperties.isEmpty());
 
                 Integer sentRevision = flow.getRevision();
                 if (sentRevision != null) {
@@ -507,8 +510,17 @@ public class FlowService {
                 constraintsBuilder.flow(flow.getId());
                 constraintsBuilder.namespace(flow.getNamespace());
 
-                modelValidator.validate(parsedFlow);
-                throwOnCyclicDependency(parsedFlow);
+                if (unknownProperties.isEmpty()) {
+                    modelValidator.validate(parsedFlow);
+                    throwOnCyclicDependency(parsedFlow);
+                } else {
+                    Optional<ConstraintViolationException> invalid = modelValidator.isValid(parsedFlow);
+                    List<ValidateConstraintViolation.Violation> violations = new ArrayList<>(unknownProperties);
+                    invalid.ifPresent(e -> violations.addAll(locatedViolations(e)));
+                    String unknownMessages = unknownProperties.stream().map(ValidateConstraintViolation.Violation::message).collect(Collectors.joining("\n"));
+                    constraintsBuilder.constraints(formatValidationError(unknownMessages + invalid.map(e -> "\n" + e.getMessage()).orElse("")));
+                    constraintsBuilder.violations(violations);
+                }
             } catch (ConstraintViolationException e) {
                 String friendlyMessage = formatValidationError(e.getMessage());
                 constraintsBuilder.constraints(friendlyMessage);

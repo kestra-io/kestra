@@ -1606,12 +1606,12 @@ class FlowControllerTest {
         assertTrue(violations.getFirst().getWarnings().isEmpty());
         assertTrue(violations.getFirst().getInfos().isEmpty());
 
-        // Second flow is invalid, so most properties should be null or have default values
+        // An unknown property no longer stops validation, so the rest of the report is still computed
         assertEquals("invalidFlow1.yaml", violations.get(1).getFilename());
         assertFalse(violations.get(1).isOutdated());
-        assertNull(violations.get(1).getDeprecationPaths());
-        assertNull(violations.get(1).getWarnings());
-        assertNull(violations.get(1).getInfos());
+        assertThat(violations.get(1).getDeprecationPaths()).isEmpty();
+        assertThat(violations.get(1).getWarnings()).isEmpty();
+        assertThat(violations.get(1).getInfos()).isEmpty();
 
         assertNull(violations.getFirst().getConstraints());
         assertThat(violations.get(1).getConstraints()).contains("Unrecognized field \"unknownProp\"");
@@ -1646,12 +1646,12 @@ class FlowControllerTest {
         List<ValidateConstraintViolation> violations = response.body();
         assertEquals(2, violations.size());
 
-        // First flow is invalid, so most properties should be null or have default values
+        // An unknown property no longer stops validation, so the rest of the report is still computed
         assertEquals("invalidFlow1.yaml", violations.getFirst().getFilename());
         assertFalse(violations.getFirst().isOutdated());
-        assertNull(violations.getFirst().getDeprecationPaths());
-        assertNull(violations.getFirst().getWarnings());
-        assertNull(violations.getFirst().getInfos());
+        assertThat(violations.getFirst().getDeprecationPaths()).isEmpty();
+        assertThat(violations.getFirst().getWarnings()).isEmpty();
+        assertThat(violations.getFirst().getInfos()).isEmpty();
 
         // Second flow references an unknown task type: it is absent from the schema bundle
         // (none in the test env), so even with auto-install enabled it stays a hard constraint.

@@ -318,6 +318,37 @@ class FlowServiceTest {
     }
 
     @Test
+    void shouldReportUnknownAndMissingPropertiesTogether() {
+        String source = """
+            id: test
+            namespace: io.kestra.unittest
+            tasks:
+              - id: hello
+                type: io.kestra.plugin.core.log.Log
+                message: Hi
+                colour: purple
+              - id: nested
+                type: io.kestra.plugin.core.flow.Sequential
+                tasks:
+                  - id: silent
+                    type: io.kestra.plugin.core.log.Log
+                    shade: dark
+            triggers:
+              - id: daily
+                type: io.kestra.plugin.core.trigger.Schedule
+            """;
+
+        List<ValidateConstraintViolation> results = flowService.validate("my-tenant", List.of(new FlowSource(null, source)));
+
+        assertThat(results.getFirst().getViolations())
+            .extracting(ValidateConstraintViolation.Violation::path)
+            .containsExactlyInAnyOrder("/tasks/0/colour", "/tasks/1/tasks/0/shade", "/tasks/1/tasks/0/message", "/triggers/0/cron");
+        assertThat(results.getFirst().getConstraints())
+            .contains("Unrecognized field \"colour\"")
+            .contains("must not be null");
+    }
+
+    @Test
     void shouldLocateAnInvalidTypeOnItsTypeProperty() {
         String source = """
             id: test

@@ -44,7 +44,7 @@ const SECRET_OBJECTS: Record<string, string> = {
     secret: "secret",
     token: "token",
 }
-type EventProperties = {
+export type EventProperties = {
     action?: string
     secret_type?: string
     onboarding?: {
@@ -71,27 +71,34 @@ const ONBOARDING_NAMES: Record<string, string> = {
 }
 
 function resolveEditorTabAction(properties: EventProperties): string {
-    return EDITOR_TAB_ACTION_NAMES[properties.action] ?? "editor_tab_action"
+    const action = properties.action
+    return action ? EDITOR_TAB_ACTION_NAMES[action] ?? "editor_tab_action" : "editor_tab_action"
 }
 
 function resolveOssAuth(properties: EventProperties): string {
-    return OSSAUTH_NAMES[properties.action] ?? "app.oss-auth.completed"
+    const action = properties.action
+    return action ? OSSAUTH_NAMES[action] ?? "app.oss-auth.completed" : "app.oss-auth.completed"
 }
 
 function resolveFlowExecution(properties: EventProperties): string {
-        return FLOW_EXECUTION_NAMES[properties.action] ?? "flow_execution"
+    const action = properties.action
+    return action ? FLOW_EXECUTION_NAMES[action] ?? "flow_execution" : "flow_execution"
 }
 
 function resolveOnboarding(properties: EventProperties): string {
-        const onboarding = properties.onboarding ?? {}
-    return ONBOARDING_NAMES[onboarding.event]
-        ?? ONBOARDING_NAMES[onboarding.action]
+    const onboarding = properties.onboarding ?? {}
+    const event = onboarding.event
+    const action = onboarding.action
+
+    return (event ? ONBOARDING_NAMES[event] : undefined)
+        ?? (action ? ONBOARDING_NAMES[action] : undefined)
         ?? "onboarding"
 }
 
 function resolveSecret(action: "created" | "updated"): (properties: EventProperties) => string {
     return (properties) => {
-        const object = SECRET_OBJECTS[properties.secret_type]
+        const secretType = properties.secret_type
+        const object = secretType ? SECRET_OBJECTS[secretType] : undefined
         return object ? `app.${object}.${action}` : `secret_${action}`
     }
 }

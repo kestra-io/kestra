@@ -282,7 +282,7 @@ export function hexToRgba(hex: string, opacity: number) {
         return "rgba(" + [
             (value >> 16) & 255,
             (value >> 8) & 255,
-            value & 255
+            value & 255,
         ].join(",") + "," + (opacity || 1) + ")"
     }
 

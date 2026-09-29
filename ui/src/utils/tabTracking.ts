@@ -2,10 +2,8 @@ import {useApiStore} from "../stores/api"
 import {usePluginsStore} from "../stores/plugins"
 import {useBlueprintsStore} from "../stores/blueprints"
 import {useMiscStore} from "override/stores/misc"
-import {Tab} from "./multiPanelTypes"import type {
-    SearchTriggersData,
-    SearchTriggersForFlowData,
-} from "@kestra-io/kestra-sdk/openapi"
+import {Tab} from "./multiPanelTypes"
+
 interface TrackedTab extends Tab {
     potential?: boolean
     fromPanel?: boolean

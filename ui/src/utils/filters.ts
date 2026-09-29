@@ -5,7 +5,10 @@ export function humanizeDuration(
     value: number | string,
     options?: Parameters<typeof durationUtils.humanDuration>[1],
 ) {
-export function humanizeNumber (value:string) {
+    return durationUtils.humanDuration(value, options)
+}
+
+export function humanizeNumber(value:string) {
     return parseInt(value).toLocaleString(Utils.getLanguageTag())
 }
 export function cap (value:string) {

@@ -50,8 +50,8 @@ export interface KestraHttpError extends Error {
         /**
          * The parsed body: the problem document for any API error, an arbitrary body otherwise.
          *
-         * Deliberately `unknown` rather than `any` so it cannot be dereferenced without a narrowing step
-         * — but note that a `catch (e: any)` call site defeats that, so the `noLegacyErrorFields` unit
+* Deliberately `unknown` so it cannot be dereferenced without a narrowing step.
+* A legacy untyped catch site can defeat that, so the `noLegacyErrorFields`
          * test is what actually keeps reads of the removed `message`/`_embedded`/`invalids` fields out.
          * Use `problem`, or the `asProblem` helper, instead of narrowing this by hand.
          */

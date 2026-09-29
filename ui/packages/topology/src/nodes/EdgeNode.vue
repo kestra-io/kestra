@@ -14,7 +14,7 @@
                 transform: `${labelAnchor} translate(${caseLabelX}px, ${caseLabelY}px)`,
             }"
         >
-            {{ data.value }}
+            {{ data?.value }}
         </div>
     </EdgeLabelRenderer>
 
@@ -58,7 +58,7 @@
 <script lang="ts" setup>
     import {computed, inject, ref} from "vue"
     import type {PropType} from "vue"
-    import {getSmoothStepPath, EdgeLabelRenderer} from "@vue-flow/core"
+    import {getSmoothStepPath, EdgeLabelRenderer, Position} from "@vue-flow/core"
     import Plus from "vue-material-design-icons/Plus.vue"
     import type {AddTaskTarget} from "../utils/vueFlowUtils"
     import {
@@ -67,16 +67,24 @@
         DROP_EDGE_INJECTION_KEY,
     } from "../injectionKeys"
 
+    interface EdgeData {
+        haveAdd?: AddTaskTarget | false;
+        color?: string | null;
+        unused?: boolean;
+        value?: string;
+        relationType?: string;
+    }
+
     const props = defineProps({
         id: {type: String, default: undefined},
-        data: {type: Object as PropType<any>, default: undefined},
-        sourceX: {type: Number, default: undefined},
-        sourceY: {type: Number, default: undefined},
-        targetX: {type: Number, default: undefined},
-        targetY: {type: Number, default: undefined},
+        data: {type: Object as PropType<EdgeData>, default: undefined},
+        sourceX: {type: Number, required: true},
+        sourceY: {type: Number, required: true},
+        targetX: {type: Number, required: true},
+        targetY: {type: Number, required: true},
         markerEnd: {type: String, default: undefined},
-        sourcePosition: {type: String, default: undefined},
-        targetPosition: {type: String, default: undefined},
+        sourcePosition: {type: String as PropType<Position>, default: undefined},
+        targetPosition: {type: String as PropType<Position>, default: undefined},
     })
 
     const emit = defineEmits<{
@@ -108,7 +116,7 @@
 
     // The graph already computed where a `+` on this edge should insert and relative to which
     // task — `undefined` when the edge sits on a read-only boundary or a cluster's own wiring.
-    const addTarget = computed<AddTaskTarget | undefined>(() => props.data?.haveAdd)
+    const addTarget = computed<AddTaskTarget | undefined>(() => props.data?.haveAdd || undefined)
 
     const classes = computed(() => {
         return props.data
@@ -120,7 +128,7 @@
             : {}
     })
 
-    const path = computed(() => getSmoothStepPath(props as any))
+    const path = computed(() => getSmoothStepPath(props))
 
     const showCaseLabel = computed(
         () => props.data?.relationType === "CHOICE" && Boolean(props.data?.value),
@@ -128,15 +136,15 @@
 
     const CASE_LABEL_GAP = 18
     const caseLabelX = computed(() => {
-        const tx = props.targetX ?? 0
-        if (props.targetPosition === "left") return tx - CASE_LABEL_GAP
-        if (props.targetPosition === "right") return tx + CASE_LABEL_GAP
+        const tx = props.targetX
+        if (props.targetPosition === Position.Left) return tx - CASE_LABEL_GAP
+        if (props.targetPosition === Position.Right) return tx + CASE_LABEL_GAP
         return tx
     })
     const caseLabelY = computed(() => {
-        const ty = props.targetY ?? 0
-        if (props.targetPosition === "top") return ty - CASE_LABEL_GAP
-        if (props.targetPosition === "bottom") return ty + CASE_LABEL_GAP
+        const ty = props.targetY
+        if (props.targetPosition === Position.Top) return ty - CASE_LABEL_GAP
+        if (props.targetPosition === Position.Bottom) return ty + CASE_LABEL_GAP
         return ty
     })
 
@@ -145,10 +153,10 @@
 
     const labelAnchor = computed(() => {
         switch (props.targetPosition) {
-        case "left": return "translate(-100%, -50%)"
-        case "right": return "translate(0, -50%)"
-        case "top": return "translate(-50%, -100%)"
-        case "bottom": return "translate(-50%, 0)"
+        case Position.Left: return "translate(-100%, -50%)"
+        case Position.Right: return "translate(0, -50%)"
+        case Position.Top: return "translate(-50%, -100%)"
+        case Position.Bottom: return "translate(-50%, 0)"
         default: return "translate(-50%, -50%)"
         }
     })

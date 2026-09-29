@@ -111,7 +111,7 @@ class FlowServiceTest {
 
         // Then
         assertThat(results).hasSize(1);
-        assertThat(results.getFirst()).isEqualTo(new ValidateConstraintViolation(0, null, "io.kestra.unittest", "test", null, false, List.of(), List.of(), List.of()));
+        assertThat(results.getFirst()).isEqualTo(new ValidateConstraintViolation(0, null, "io.kestra.unittest", "test", null, false, List.of(), List.of(), List.of(), null));
     }
 
     @Test
@@ -130,7 +130,7 @@ class FlowServiceTest {
 
         // Then
         assertThat(results).hasSize(1);
-        assertThat(results.getFirst()).isEqualTo(new ValidateConstraintViolation(0, "flow.yaml", "io.kestra.unittest", "test", null, false, List.of(), List.of(), List.of()));
+        assertThat(results.getFirst()).isEqualTo(new ValidateConstraintViolation(0, "flow.yaml", "io.kestra.unittest", "test", null, false, List.of(), List.of(), List.of(), null));
     }
 
     @Test
@@ -273,6 +273,65 @@ class FlowServiceTest {
         FlowWithSource flow = create("findByIdTest", "test", 1);
         FlowWithSource saved = flowRepository.create(GenericFlow.of(flow));
         assertThat(flowService.findById(null, saved.getNamespace(), saved.getId()).isPresent()).isTrue();
+    }
+
+    @Test
+    void shouldLocateAMissingPropertyOfANestedTaskByJsonPointer() {
+        String source = """
+            id: test
+            namespace: io.kestra.unittest
+            tasks:
+              - id: seq
+                type: io.kestra.plugin.core.flow.Sequential
+                tasks:
+                  - id: first
+                    type: io.kestra.plugin.core.log.Log
+                    message: ok
+                  - id: second
+                    type: io.kestra.plugin.core.log.Log
+            """;
+
+        List<ValidateConstraintViolation> results = flowService.validate("my-tenant", List.of(new FlowSource(null, source)));
+
+        assertThat(results.getFirst().getViolations())
+            .extracting(ValidateConstraintViolation.Violation::path)
+            .containsExactly("/tasks/0/tasks/1/message");
+    }
+
+    @Test
+    void shouldLocateAnUnknownPropertyByJsonPointer() {
+        String source = """
+            id: test
+            namespace: io.kestra.unittest
+            tasks:
+              - id: log
+                type: io.kestra.plugin.core.log.Log
+                message: ok
+                unknownProp: nope
+            """;
+
+        List<ValidateConstraintViolation> results = flowService.validate("my-tenant", List.of(new FlowSource(null, source)));
+
+        assertThat(results.getFirst().getViolations())
+            .extracting(ValidateConstraintViolation.Violation::path)
+            .containsExactly("/tasks/0/unknownProp");
+    }
+
+    @Test
+    void shouldLocateAnInvalidTypeOnItsTypeProperty() {
+        String source = """
+            id: test
+            namespace: io.kestra.unittest
+            tasks:
+              - id: log
+                type: io.kestra.plugin.core.debug.UnknownTask
+            """;
+
+        List<ValidateConstraintViolation> results = flowService.validate("my-tenant", List.of(new FlowSource(null, source)));
+
+        assertThat(results.getFirst().getViolations())
+            .singleElement()
+            .isEqualTo(new ValidateConstraintViolation.Violation("/tasks/0/type", "Invalid type: io.kestra.plugin.core.debug.UnknownTask"));
     }
 
     @Test

@@ -30,6 +30,7 @@ import {useApiStore} from "./api"
 import {flowTaskStats, isExampleFlow, primaryTriggerType} from "../utils/analytics/activation"
 import type {KestraHttpError, KestraRequestOptions} from "../utils/kestraHttp"
 import {splitValidationErrors} from "../utils/validationErrors"
+import type {LocatedViolation} from "../utils/violationMarkers"
 
 const textYamlHeader = {
     headers: {
@@ -61,6 +62,7 @@ export interface FlowValidations {
     infos?: string[];
     warnings?: string[];
     deprecationPaths?: string[];
+    violations?: LocatedViolation[];
 }
 
 export type Flow = Omit<FlowWithSource, "disabled" | "draft" | "deleted" | "tasks"> & {

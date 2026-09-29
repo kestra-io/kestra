@@ -29,6 +29,7 @@ public class ValidateConstraintViolation {
     private List<String> deprecationPaths;
     private List<String> warnings;
     private List<String> infos;
+    private List<Violation> violations;
 
     @JsonIgnore
     public String getIdentity() {
@@ -38,5 +39,11 @@ public class ValidateConstraintViolation {
     @JsonIgnore
     public String getFlowId() {
         return namespace + "." + flow;
+    }
+
+    /**
+     * A single violation located by an RFC 6901 JSON Pointer into the submitted source, so an editor can place it.
+     */
+    public record Violation(String path, String message) {
     }
 }

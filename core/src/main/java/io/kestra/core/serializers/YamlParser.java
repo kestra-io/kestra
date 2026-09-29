@@ -14,6 +14,7 @@ import org.apache.commons.io.IOUtils;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.exc.InvalidTypeIdException;
 import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException;
@@ -21,6 +22,7 @@ import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException;
 import io.kestra.core.exceptions.InvalidTypeConstraintViolationException;
 import io.kestra.core.models.validations.ManualConstraintViolation;
 
+import jakarta.annotation.Nullable;
 import jakarta.validation.ConstraintViolationException;
 
 public final class YamlParser {
@@ -98,6 +100,22 @@ public final class YamlParser {
         }
     }
 
+    /** Renders Jackson's reference chain as a document path such as {@code tasks[0].type}. */
+    private static String propertyPath(JsonMappingException e, @Nullable String leaf) {
+        StringBuilder path = new StringBuilder();
+        for (JsonMappingException.Reference reference : e.getPath()) {
+            if (reference.getFieldName() != null) {
+                path.append(path.isEmpty() ? "" : ".").append(reference.getFieldName());
+            } else if (reference.getIndex() >= 0) {
+                path.append('[').append(reference.getIndex()).append(']');
+            }
+        }
+        if (leaf != null) {
+            path.append(path.isEmpty() ? "" : ".").append(leaf);
+        }
+        return path.toString();
+    }
+
     private static String formatYamlErrorMessage(String originalMessage, JsonProcessingException e) {
         StringBuilder friendlyMessage = new StringBuilder();
         if (originalMessage.contains("Expected a field name")) {
@@ -131,14 +149,14 @@ public final class YamlParser {
                         "Invalid type: " + invalidTypeIdException.getTypeId(),
                         target,
                         (Class<T>) target.getClass(),
-                        invalidTypeIdException.getPathReference(),
+                        propertyPath(invalidTypeIdException, "type"),
                         null
                     ),
                     ManualConstraintViolation.of(
                         e.getMessage(),
                         target,
                         (Class<T>) target.getClass(),
-                        invalidTypeIdException.getPathReference(),
+                        propertyPath(invalidTypeIdException, "type"),
                         null
                     )
                 )
@@ -152,7 +170,7 @@ public final class YamlParser {
                         e.getCause() == null ? message : message + "\nCaused by: " + e.getCause().getMessage(),
                         target,
                         (Class<T>) target.getClass(),
-                        unrecognizedPropertyException.getPathReference(),
+                        propertyPath(unrecognizedPropertyException, null),
                         null
                     )
                 )

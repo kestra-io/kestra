@@ -39,6 +39,7 @@ import io.kestra.core.models.triggers.WorkerTriggerInterface;
 import io.kestra.core.models.validations.ManualConstraintViolation;
 import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.models.validations.ValidateConstraintViolation;
+import io.kestra.core.models.validations.ViolationPaths;
 import io.kestra.core.plugins.PluginAutoInstallService;
 import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.plugins.PluginSchemaBundleService;
@@ -72,6 +73,7 @@ import jakarta.annotation.PreDestroy;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
+import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 
@@ -402,6 +404,19 @@ public class FlowService {
         this.triggerEventQueue.send(event);
     }
 
+    private static List<ValidateConstraintViolation.Violation> locatedViolations(ConstraintViolationException e) {
+        if (e.getConstraintViolations() == null) {
+            return List.of();
+        }
+        // The second violation of an invalid type repeats Jackson's raw message on the same path.
+        Stream<? extends ConstraintViolation<?>> violations = e instanceof InvalidTypeConstraintViolationException
+            ? e.getConstraintViolations().stream().filter(v -> v.getMessage().equals(e.getMessage()))
+            : e.getConstraintViolations().stream();
+        return violations
+            .map(v -> new ValidateConstraintViolation.Violation(ViolationPaths.toJsonPointer(v.getPropertyPath()), v.getMessage()))
+            .toList();
+    }
+
     private static String formatValidationError(String message) {
         if (message.startsWith("Illegal flow source:")) {
             // Already formatted by YamlParser, return as-is
@@ -497,6 +512,7 @@ public class FlowService {
             } catch (ConstraintViolationException e) {
                 String friendlyMessage = formatValidationError(e.getMessage());
                 constraintsBuilder.constraints(friendlyMessage);
+                constraintsBuilder.violations(locatedViolations(e));
             } catch (FlowProcessingException e) {
                 if (e.getCause() instanceof ConstraintViolationException cve) {
                     String friendlyMessage = formatValidationError(cve.getMessage());
@@ -511,6 +527,7 @@ public class FlowService {
                         constraintsBuilder.infos(List.of(friendlyMessage + ". The plugin is not installed yet and will be installed automatically when the flow is saved."));
                     } else {
                         constraintsBuilder.constraints(friendlyMessage);
+                        constraintsBuilder.violations(locatedViolations(cve));
                     }
                 } else {
                     Throwable cause = e.getCause() != null ? e.getCause() : e;

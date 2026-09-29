@@ -7,6 +7,7 @@ import io.kestra.core.utils.Enums;
 public enum ExecutionCommandType {
     CREATE,
     REPLAY,
+    CANCEL_APPROVAL,
     CHANGE_TASK_RUN_STATE,
     FORCE_RUN,
     PAUSE,

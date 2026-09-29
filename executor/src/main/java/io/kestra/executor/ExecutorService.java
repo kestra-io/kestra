@@ -841,12 +841,31 @@ public class ExecutorService {
                 );
             } else {
                 TaskRun current = executor.getExecution().findTaskRunByTaskRunId(taskRun.getId());
-                Execution terminated = ExecutionTerminator.terminate(executor.getExecution(), current, outcome.get());
-                executor.withExecution(terminated, "handleApprovalBehavior");
+                Execution cascaded = ExecutionTerminator.cascade(executor.getExecution(), current, outcome.get());
+                if (this.canRunFlowFinally(executor, cascaded)) {
+                    executor.withExecution(cascaded, "handleApprovalBehavior");
+                    executor.withTaskRun(this.skippedFlowTaskRuns(cascaded, executor.getFlow()), "handleApprovalBehavior");
+                } else {
+                    executor.withExecution(ExecutionTerminator.terminate(executor.getExecution(), current, outcome.get()), "handleApprovalBehavior");
+                }
             }
         }
 
         return executor;
+    }
+
+    // With a sibling still running or paused, the flow could not reach its finally, so the execution is terminated directly.
+    private boolean canRunFlowFinally(ExecutorContext executor, Execution cascaded) {
+        return executor.getExecution().getKind() != ExecutionKind.LOOP
+            && !ListUtils.emptyOnNull(executor.getFlow().getFinally()).isEmpty()
+            && ListUtils.emptyOnNull(cascaded.getTaskRunList()).stream().allMatch(t -> t.getState().isTerminated());
+    }
+
+    private List<TaskRun> skippedFlowTaskRuns(Execution execution, FlowWithSource flow) {
+        return flow.getTasks().stream()
+            .filter(task -> execution.findTaskRunsByTaskId(task.getId()).isEmpty())
+            .map(task -> TaskRun.of(execution, ResolvedTask.of(task)).withState(State.Type.SKIPPED))
+            .toList();
     }
 
     /**

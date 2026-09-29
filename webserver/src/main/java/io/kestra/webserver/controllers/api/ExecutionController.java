@@ -1471,6 +1471,7 @@ public class ExecutionController {
         @Parameter(description = "Set a list of breakpoints at specific tasks 'id.value', separated by a coma.") @QueryValue Optional<String> breakpoints) throws Exception {
         Execution execution = executionRepository.findById(tenantService.resolveTenant(), executionId).orElseThrow(NotFoundException::new);
 
+        controlReplayable(execution);
         this.controlRevision(execution, revision);
 
         Flow flow = flowService.getFlowIfExecutableOrThrow(tenantService.resolveTenant(), execution.getNamespace(), execution.getFlowId(), Optional.ofNullable(revision));
@@ -1509,12 +1510,9 @@ public class ExecutionController {
                 )
             )
         ) @Body MultipartBody inputs) {
-        Optional<Execution> execution = executionRepository.findById(tenantService.resolveTenant(), executionId);
-        if (execution.isEmpty()) {
-            return null;
-        }
-        Execution current = execution.get();
+        Execution current = executionRepository.findById(tenantService.resolveTenant(), executionId).orElseThrow(NotFoundException::new);
 
+        controlReplayable(current);
         this.controlRevision(current, revision);
 
         Flow flow = flowService.getFlowIfExecutableOrThrow(tenantService.resolveTenant(), current.getNamespace(), current.getFlowId(), Optional.ofNullable(revision));
@@ -1603,6 +1601,14 @@ public class ExecutionController {
             throw new IllegalArgumentException(
                 "Flow execution blocked: revision " + flow.getRevision() + " of flow " + flow.uid() +
                     " is a draft. Draft revisions can only be executed as playground executions."
+            );
+        }
+    }
+
+    private static void controlReplayable(Execution execution) {
+        if (!execution.getState().isTerminated()) {
+            throw new ConflictException(
+                "Cannot replay execution: current state is '%s', expected terminated.".formatted(execution.getState().getCurrent())
             );
         }
     }
@@ -2082,6 +2088,21 @@ public class ExecutionController {
 
     private MutableHttpResponse<ApiAsyncOperationResponse> replayExecutions(Boolean latestRevision, List<Execution> executions) throws QueueException {
         validateBulkExecutionACL(executions, BulkOperation.REPLAY);
+
+        List<ProblemError> invalids = new ArrayList<>();
+        for (Execution execution : executions) {
+            if (!execution.getState().isTerminated()) {
+                invalids.add(executionProblem(
+                    execution.getId(),
+                    "Execution '%s' must be terminated to be replayed, current state is '%s' !"
+                        .formatted(execution.getId(), execution.getState().getCurrent()),
+                    ProblemTypes.CONFLICT
+                ));
+            }
+        }
+        if (!invalids.isEmpty()) {
+            throw new BulkValidationException("One or more executions could not be replayed.", invalids);
+        }
 
         this.replayCounter.increment(executions.size());
 

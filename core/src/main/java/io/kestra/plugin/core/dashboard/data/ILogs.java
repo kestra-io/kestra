@@ -4,7 +4,7 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Set;
 
 import org.slf4j.event.Level;
 
@@ -16,6 +16,11 @@ import io.kestra.core.models.dashboards.filters.LessThanOrEqualTo;
 import io.kestra.core.models.executions.LogEntry;
 
 public interface ILogs extends IData<ILogs.Fields> {
+
+    @Override
+    default Set<QueryFilter.Field> globalFilterFields() {
+        return Set.of(QueryFilter.Field.NAMESPACE, QueryFilter.Field.FLOW_ID, QueryFilter.Field.LEVEL);
+    }
 
     default List<AbstractFilter<ILogs.Fields>> whereWithGlobalFilters(List<QueryFilter> filters, ZonedDateTime startDate, ZonedDateTime endDate, List<AbstractFilter<ILogs.Fields>> where) {
         List<AbstractFilter<ILogs.Fields>> updatedWhere = where != null ? new ArrayList<>(where) : new ArrayList<>();
@@ -45,7 +50,7 @@ public interface ILogs extends IData<ILogs.Fields> {
                     List<Level> levels;
                     if (f.value() instanceof List<?> list) {
                         levels = list.stream().map(l -> Level.valueOf(l.toString())).toList();
-                    } else if(f.value() instanceof String str && str.indexOf(',') > 0) {
+                    } else if (f.value() instanceof String str && str.indexOf(',') > 0) {
                         levels = Arrays.stream(str.split(",")).map(Level::valueOf).toList();
                     } else {
                         Level level = f.value() instanceof Level l ? l : Level.valueOf((String) f.value());

@@ -1982,6 +1982,7 @@
         "csv": "Eksportuj do CSV",
         "ion": "Eksportuj do ION"
       },
+      "ignoredFilters": "Filtr {filters} nie dotyczy tego wykresu. | Filtry {filters} nie dotyczą tego wykresu.",
       "show_all_statuses": "Pokaż wszystkie statusy",
       "quick_filters": {
         "all": "Wszystkie",

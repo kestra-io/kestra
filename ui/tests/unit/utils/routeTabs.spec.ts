@@ -2,7 +2,8 @@ import {describe, expect, it} from "vitest"
 import type {RouteRecordRaw} from "vue-router"
 import {resolveDefaultTab} from "../../../src/utils/routeTabs"
 
-const tabRoutes = [{meta: {tab: "overview"}}, {meta: {tab: "edit"}}] as RouteRecordRaw[]
+// Plain objects are enough for resolveDefaultTab, which only reads meta.tab.
+const tabRoutes = [{meta: {tab: "overview"}}, {meta: {tab: "edit"}}] as unknown as RouteRecordRaw[]
 
 describe("resolveDefaultTab", () => {
     it("returns the requested tab when a route carries a matching meta.tab", () => {

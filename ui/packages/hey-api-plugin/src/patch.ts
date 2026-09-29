@@ -1,3 +1,5 @@
+import type {IRSchemaObject} from "@hey-api/shared"
+
 /**
  * hey-api prefers a declared `application/json` request-body variant, mislabeling raw YAML source bodies (#340).
  * For string-schema YAML bodies, drop the JSON variant and put the YAML one first so the parser picks it.
@@ -13,23 +15,41 @@ function isRecord(value: unknown): value is Record<string, unknown> {
     return typeof value === "object" && value !== null
 }
 
-function isPlainString(schema: any): boolean {
+function isPlainString(schema: IRSchemaObject): boolean {
     return !!schema && schema.type === "string" && schema.format !== "binary"
 }
 
-export function fixYamlSourceRequestBodyContentType(_method: string, _path: string, operation: any): void {
-    const requestBody = operation?.requestBody
-    const content = requestBody?.content
+/** Local interface for operation with parameters array (for patch hooks) */
+interface OperationWithParameters {
+    parameters?: Array<{
+        in?: string;
+        schema?: {
+            type?: string;
+            items?: {
+                $ref?: string;
+            };
+            nullable?: boolean;
+        };
+        required?: boolean;
+    }>;
+    requestBody?: {
+        content?: Record<string, IRSchemaObject>;
+    };
+}
+
+export function fixYamlSourceRequestBodyContentType(_method: string, _path: string, operation: OperationWithParameters): void {
+    const requestBody = operation?.requestBody as Record<string, unknown> | undefined
+    const content = requestBody?.content as Record<string, unknown> | undefined
     if (!content || typeof content !== "object") return
 
-    const declaredYamlMediaType = YAML_MEDIA_TYPES.find((mediaType) => isPlainString(content[mediaType]?.schema))
+    const declaredYamlMediaType = YAML_MEDIA_TYPES.find((mediaType) => isPlainString((content[mediaType] as Record<string, unknown>)?.schema as IRSchemaObject))
     if (!declaredYamlMediaType) return
 
     const yamlBody = content[declaredYamlMediaType]
-    if (isPlainString(content[JSON_MEDIA_TYPE]?.schema)) delete content[JSON_MEDIA_TYPE]
+    if (isPlainString((content[JSON_MEDIA_TYPE] as Record<string, unknown>)?.schema as IRSchemaObject)) delete content[JSON_MEDIA_TYPE]
     for (const mediaType of YAML_MEDIA_TYPES) delete content[mediaType]
 
-    requestBody.content = {[CANONICAL_YAML_MEDIA_TYPE]: yamlBody, ...content}
+    requestBody!.content = {[CANONICAL_YAML_MEDIA_TYPE]: yamlBody, ...content}
 }
 
 /**
@@ -45,7 +65,7 @@ export function fixYamlSourceRequestBodyContentType(_method: string, _path: stri
  *
  * Use as a `parser.patch.operations` hook (signature `(method, path, operation)`).
  */
-export function normalizeQueryFilterParams(_method: string, _path: string, operation: any): void {
+export function normalizeQueryFilterParams(_method: string, _path: string, operation: OperationWithParameters): void {
     const parameters = operation?.parameters
     if (!Array.isArray(parameters)) return
 
@@ -70,9 +90,9 @@ export function normalizeQueryFilterParams(_method: string, _path: string, opera
  *
  * Use as a `parser.patch.schemas` hook keyed by `QueryFilter` (signature `(schema)`).
  */
-export function widenQueryFilterValue(schema: any): void {
+export function widenQueryFilterValue(schema: IRSchemaObject): void {
     if (schema?.properties?.value) {
-        schema.properties.value = {}
+        schema.properties.value = {} as IRSchemaObject
     }
 }
 
@@ -87,19 +107,25 @@ export function widenQueryFilterValue(schema: any): void {
  * Use as a `parser.patch.schemas` hook keyed by `Flow` / `AbstractFlow` / `FlowWithSource`
  * (signature `(schema)`).
  */
-export function replaceFlowLabels(schema: any): void {
+export function replaceFlowLabels(schema: IRSchemaObject): void {
     if (!schema || typeof schema !== "object") return
 
-    const labelsAsArray = () => ({type: "array", items: {$ref: "#/components/schemas/Label"}})
+    const labelsAsArray = () => {
+        const result: IRSchemaObject = {type: "array"}
+        const resultWithItems = result as Record<string, unknown>
+        resultWithItems.items = {$ref: "#/components/schemas/Label"}
+        return result
+    }
 
     if (schema.properties?.labels) {
         schema.properties.labels = labelsAsArray()
     }
     for (const composition of ["allOf", "anyOf", "oneOf"] as const) {
-        if (Array.isArray(schema[composition])) {
-            for (const part of schema[composition]) {
-                if (part?.properties?.labels) {
-                    part.properties.labels = labelsAsArray()
+        const compositionValue = (schema as Record<string, unknown>)[composition]
+        if (Array.isArray(compositionValue)) {
+            for (const part of compositionValue) {
+                if (part && typeof part === "object" && (part as IRSchemaObject).properties?.labels) {
+                    (part as IRSchemaObject).properties!.labels = labelsAsArray()
                 }
             }
         }

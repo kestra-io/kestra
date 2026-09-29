@@ -1,6 +1,6 @@
 import {test, expect, describe} from "vitest"
 import * as VueFlowUtils from "../../../src/utils/vueFlowUtils.ts"
-import {edgeTurnPosition, fanOutSplitPosition} from "../../../src/utils/vueFlowUtils.ts"
+import {edgeTurnPosition, fanOutSplitPosition, type Cluster} from "../../../src/utils/vueFlowUtils.ts"
 import {DAGRE_RANK_SEP, NODE_SIZES} from "../../../src/utils/constants.ts"
 
 const graph = {
@@ -744,12 +744,12 @@ describe("pickFanOutAddEdges", () => {
         uid: "cluster_root.in_parallel",
         type: "io.kestra.core.models.hierarchies.GraphCluster",
         taskNode: {uid: "root.in_parallel", task: {type: "io.kestra.plugin.core.flow.Parallel"}},
-    } as any
+    } satisfies Cluster
     const switchLane = {
         uid: "cluster_root.pick",
         type: "io.kestra.core.models.hierarchies.GraphCluster",
         taskNode: {uid: "root.pick", task: {type: "io.kestra.plugin.core.flow.Switch"}},
-    } as any
+    } satisfies Cluster
 
     test("keeps one add button for a Parallel's branches", () => {
         const owners = VueFlowUtils.pickFanOutAddEdges(

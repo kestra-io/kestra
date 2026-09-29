@@ -55,7 +55,7 @@ export interface MinimalNode {
     };
 }
 
-interface Cluster {
+export interface Cluster {
     uid: string;
     type: string;
     taskNode: {
@@ -66,7 +66,8 @@ interface Cluster {
             flowId?: string;
         } & Record<string, unknown>;
     } | null;
-    branchType: BranchType;
+    // The backend only sets this on a node inside an error/finally branch, as MinimalNode already reflects.
+    branchType?: BranchType;
 }
 
 interface FlowGraphEdge {

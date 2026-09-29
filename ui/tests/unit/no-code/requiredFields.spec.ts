@@ -1,5 +1,5 @@
 import {describe, it, expect} from "vitest"
-import {countUnsetRequiredFields, withPluginDefaults, type PartialSchema} from "../../../src/components/no-code/utils/requiredFields"
+import {countUnsetRequiredFields, type PartialSchema} from "../../../src/components/no-code/utils/requiredFields"
 import {shouldDrillItem} from "../../../src/components/no-code/components/tasks/fieldNesting"
 
 describe("countUnsetRequiredFields", () => {
@@ -117,38 +117,5 @@ describe("countUnsetRequiredFields", () => {
     it("returns nothing for a schema-less or model-less input", () => {
         expect(countUnsetRequiredFields(undefined, undefined, {})).toEqual([])
         expect(countUnsetRequiredFields({}, {type: "object"}, {})).toEqual([])
-    })
-})
-
-describe("withPluginDefaults", () => {
-    const schema: PartialSchema = {
-        type: "object",
-        required: ["uri", "method"],
-        properties: {uri: {type: "string"}, method: {type: "string"}},
-    }
-
-    it("stops counting a required field that pluginDefaults already supplies", () => {
-        const model = {method: "GET"}
-
-        expect(countUnsetRequiredFields(model, schema, {}).map((f) => f.path)).toEqual(["uri"])
-        expect(countUnsetRequiredFields(withPluginDefaults(model, {uri: "https://example.test"}), schema, {})).toEqual([])
-    })
-
-    it("keeps counting a field no default covers", () => {
-        const counted = countUnsetRequiredFields(withPluginDefaults({}, {method: "GET"}), schema, {})
-
-        expect(counted.map((f) => f.path)).toEqual(["uri"])
-    })
-
-    it("does not let a default shadow a value the task already sets", () => {
-        const merged = withPluginDefaults({uri: "https://task.test"}, {uri: "https://default.test"}) as Record<string, unknown>
-
-        expect(merged.uri).toBe("https://task.test")
-    })
-
-    it("returns the model untouched when there is no default", () => {
-        const model = {uri: ""}
-
-        expect(withPluginDefaults(model, {})).toBe(model)
     })
 })

@@ -149,6 +149,35 @@ public abstract class JdbcWorkerJobRunningStateStoreTest {
     }
 
     @Test
+    void shouldDiscardEntryThatFailsToDeserializeWhenProcessingDeadWorker() {
+        // Given a worker holding a genuine entry whose task type no longer resolves on
+        // this classpath — the same failure mode as a plugin being removed, renamed, or
+        // the value being written by a newer version after a downgrade — alongside a
+        // readable one.
+        String workerUid = "worker-with-poison-entry";
+        WorkerTaskRunning poisoned = workerTaskRunning(workerUid);
+        workerJobRunningStateStore.save(NoTransactionContext.INSTANCE, poisoned);
+        corruptTaskType(poisoned.uid(), Log.class.getName(), "io.kestra.plugin.core.removed.NoLongerOnClasspath");
+
+        WorkerTaskRunning readable = workerTaskRunning(workerUid);
+        workerJobRunningStateStore.save(NoTransactionContext.INSTANCE, readable);
+
+        // When
+        List<WorkerJobRunning> consumed = new ArrayList<>();
+        workerJobRunningStateStore.processWorkerJobsForDeadWorker(
+            NoTransactionContext.INSTANCE,
+            workerUid,
+            (txContext, workerJobRunning) -> consumed.add(workerJobRunning)
+        );
+
+        // Then the unreadable row is discarded rather than aborting the whole batch,
+        // and the readable entry behind it still gets reclaimed.
+        assertThat(consumed).hasSize(1);
+        assertThat(consumed.getFirst().uid()).isEqualTo(readable.uid());
+        assertThat(rawKeys()).containsExactly(readable.uid());
+    }
+
+    @Test
     void shouldDeleteEntryOnlyWhenTheGivenWorkerStillHoldsIt() {
         // Given
         WorkerTaskRunning workerTaskRunning = workerTaskRunning("worker-a");
@@ -211,6 +240,24 @@ public abstract class JdbcWorkerJobRunningStateStoreTest {
                 .insertInto(DSL.table("worker_job_running"))
                 .set(KEY_FIELD, (Object) key)
                 .set(VALUE_FIELD, (Object) JSONB.valueOf(json))
+                .execute()
+        );
+    }
+
+    private void corruptTaskType(String key, String from, String to) {
+        String value = dslContextWrapper.transactionResult(
+            configuration -> DSL.using(configuration)
+                .select(VALUE_FIELD)
+                .from(DSL.table("worker_job_running"))
+                .where(KEY_FIELD.eq(key))
+                .fetchOne(VALUE_FIELD, String.class)
+        );
+
+        dslContextWrapper.transaction(
+            configuration -> DSL.using(configuration)
+                .update(DSL.table("worker_job_running"))
+                .set(VALUE_FIELD, (Object) JSONB.valueOf(value.replace("\"" + from + "\"", "\"" + to + "\"")))
+                .where(KEY_FIELD.eq(key))
                 .execute()
         );
     }

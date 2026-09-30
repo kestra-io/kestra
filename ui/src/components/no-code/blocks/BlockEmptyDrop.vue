@@ -1,36 +1,46 @@
 <template>
     <button
         class="block-empty-drop"
-        :class="`block-empty-drop--${variant}`"
+        :class="[`block-empty-drop--${variant}`, dropState !== 'idle' ? `block-empty-drop--drop-${dropState}` : '']"
         type="button"
         :data-test="dataTest"
         @click="emit('add', $event)"
     >
         <span class="block-empty-drop-lead">
             <PlusCircleOutline class="block-empty-drop-ico" />
-            {{ variant === "empty" ? $t("block_editor.empty_add_lead", {label}) : $t("block_editor.inline_add", {label}) }}
+            {{ leadLabel }}
         </span>
 
-        <span v-if="hint" class="block-empty-drop-hint">{{ hint }}</span>
+        <span v-if="hint && dropState === 'idle'" class="block-empty-drop-hint">{{ hint }}</span>
     </button>
 </template>
 
 <script setup lang="ts">
+    import {computed} from "vue"
+    import {useI18n} from "vue-i18n"
     import PlusCircleOutline from "vue-material-design-icons/PlusCircleOutline.vue"
 
+    const {t} = useI18n()
 
-    withDefaults(defineProps<{
+    const props = withDefaults(defineProps<{
         label: string
         variant?: "empty" | "inline"
         hint?: string
         dataTest?: string
+        dropState?: "idle" | "allowed" | "forbidden"
     }>(), {
         variant: "inline",
+        dropState: "idle",
     })
 
     const emit = defineEmits<{
         (e: "add", evt: MouseEvent): void
     }>()
+
+    const leadLabel = computed(() => {
+        if (props.dropState === "forbidden") return t("block_editor.drop_forbidden")
+        return props.variant === "empty" ? t("block_editor.empty_add_lead", {label: props.label}) : t("block_editor.inline_add", {label: props.label})
+    })
 </script>
 
 <style scoped lang="scss">
@@ -55,6 +65,18 @@
             border-color: var(--ks-border-focus);
             box-shadow: 0 0 0 2px var(--ks-border-focus);
         }
+    }
+
+    .block-empty-drop--drop-allowed {
+        color: var(--ks-text-primary);
+        border-color: var(--ks-border-focus);
+        background: var(--ks-btn-secondary-bg-hover);
+    }
+
+    .block-empty-drop--drop-forbidden {
+        color: var(--ks-text-error);
+        border-color: var(--ks-border-error);
+        cursor: not-allowed;
     }
 
     .block-kbd-focused {

@@ -97,6 +97,7 @@
                 :collapsible="true"
                 :isCollapsed="inputsCollapsed"
                 :stacked="isStacked"
+                :defaultCollapsedKeys="['context', 'namespaceFiles']"
                 side="left"
                 @toggle="inputsCollapsed = !inputsCollapsed"
                 @chip-activate="onChipActivate"
@@ -146,16 +147,34 @@
 
         </div>
 
-        <div v-if="errors && errors.length" v-ks-loading="isLoading" class="task-edit-panel-footer">
-            <div class="task-edit-validation-status" role="status" aria-live="polite">
+        <div
+            v-if="(errors && errors.length) || unsetRequiredCount > 0"
+            v-ks-loading="isLoading"
+            class="task-edit-panel-footer"
+        >
+            <div v-if="errors && errors.length" class="task-edit-validation-status" role="status" aria-live="polite">
                 <ValidationError link :errors="errors" />
+            </div>
+            <div
+                v-if="unsetRequiredCount > 0"
+                class="task-edit-required-status"
+                data-test="task-edit-required-status"
+                role="status"
+                aria-live="polite"
+            >
+                <AlertCircleOutline class="task-edit-required-icon" />
+                <span v-if="unsetRequiredCount === 1">{{ $t("block_editor.required_unset_singular") }}</span>
+                <span v-else>{{ $t("block_editor.required_unset_plural", {count: unsetRequiredCount}) }}</span>
+                <KsButton type="text" size="small" data-test="task-edit-required-jump" @click="jumpToFirstUnsetRequired">
+                    {{ $t("block_editor.required_unset_jump") }}
+                </KsButton>
             </div>
         </div>
     </div>
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, watch, onMounted, onBeforeUnmount, onDeactivated} from "vue"
+    import {ref, computed, nextTick, provide, watch, onMounted, onBeforeUnmount, onDeactivated} from "vue"
     import {useI18n} from "vue-i18n"
     import {SECTIONS, KsIconButton, KsDrawer, KsMessage, copyToClipboard} from "@kestra-io/design-system"
     import TaskIcon from "../plugins/TaskIcon.vue"
@@ -164,8 +183,12 @@
     import ContentSave from "vue-material-design-icons/ContentSave.vue"
     import Close from "vue-material-design-icons/Close.vue"
     import Play from "vue-material-design-icons/Play.vue"
+    import AlertCircleOutline from "vue-material-design-icons/AlertCircleOutline.vue"
     import TaskEditPanes from "./TaskEditPanes.vue"
     import TaskEditData from "./TaskEditData.vue"
+    import {UNSET_REQUIRED_FIELDS_INJECTION_KEY, NAVIGATE_TO_REQUIRED_FIELD_INJECTION_KEY} from "../no-code/injectionKeys"
+    import type {UnsetRequiredField} from "../no-code/utils/requiredFields"
+    import {openCollapsedGroups, scrollThenFocus} from "../no-code/utils/useFieldNavigation"
     import {canSaveFlowTemplate} from "../../utils/flowTemplate"
     import {splitValidationErrors} from "../../utils/validationErrors"
     import ValidationError from "./ValidationError.vue"
@@ -173,8 +196,11 @@
     import {useAuthStore} from "override/stores/auth"
     import {useFlowStore, type FlowRevision, type ParsedFlow, type Task} from "../../stores/flow"
     import {usePlaygroundRun} from "../../composables/playground/usePlaygroundRun"
-    import {CHIP_DRAG_MIME, isArmableField, insertAtCaret} from "./chipInsertion"
+    import {CHIP_DRAG_MIME, CHIP_SECTION_DRAG_MIME, isArmableField, insertAtCaret} from "./chipInsertion"
     import {resolveDeclaredOutputProperties, hasDeclaredOutputs as computeHasDeclaredOutputs} from "./taskOutputSchema"
+    import {useContextSections} from "../../composables/useContextSections"
+    import type {DataSection} from "./contextSections/types"
+    import {trackChipInserted, trackChipCopied} from "../../utils/analytics/taskEditorEvents"
 
     interface Props {
         component?: string;
@@ -245,6 +271,30 @@
     const ARMED_FIELD_CLASS = "task-edit-chip-insert-target"
     const armedField = ref<HTMLInputElement | HTMLTextAreaElement | null>(null)
 
+    const unsetRequiredFields = ref<UnsetRequiredField[]>([])
+    provide(UNSET_REQUIRED_FIELDS_INJECTION_KEY, unsetRequiredFields)
+    const unsetRequiredCount = computed(() => unsetRequiredFields.value.length)
+
+    const navigateToRequiredField = ref<((path: string) => boolean) | undefined>(undefined)
+    provide(NAVIGATE_TO_REQUIRED_FIELD_INJECTION_KEY, navigateToRequiredField)
+
+    async function jumpToFirstUnsetRequired() {
+        const first = unsetRequiredFields.value[0]
+        if (!first) return
+
+        const selector = `[data-required-path="${first.path}"]`
+        let el = panelRef.value?.querySelector<HTMLElement>(selector)
+        if (!el && navigateToRequiredField.value?.(first.path)) {
+            await nextTick()
+            el = panelRef.value?.querySelector<HTMLElement>(selector)
+        }
+        if (!el) return
+
+        openCollapsedGroups(el)
+        await nextTick()
+        scrollThenFocus(el)
+    }
+
     const onPanelFocusIn = (event: FocusEvent) => {
         panelHasFocus.value = true
         if (isArmableField(event.target)) {
@@ -271,12 +321,14 @@
         KsMessage.success(t("block_editor.chip_inserted"))
     }
 
-    function onChipActivate(expr: string) {
+    function onChipActivate(expr: string, sectionKey: string) {
         if (armedField.value) {
             insertAndNotify(armedField.value, expr)
+            trackChipInserted(`inputs.${sectionKey}`)
         } else {
             copyToClipboard(expr)
             KsMessage.success(t("block_editor.chip_copied"))
+            trackChipCopied(`inputs.${sectionKey}`)
         }
     }
 
@@ -288,9 +340,11 @@
 
         event.preventDefault()
         const expr = event.dataTransfer.getData(CHIP_DRAG_MIME)
+        const sectionKey = event.dataTransfer.getData(CHIP_SECTION_DRAG_MIME)
         const target = (event.target as HTMLElement | null)?.closest("input, textarea") ?? null
         if (expr && isArmableField(target)) {
             insertAndNotify(target, expr)
+            trackChipInserted(`inputs.${sectionKey}`)
         }
     }
 
@@ -336,6 +390,7 @@
     })
 
     const flowStore = useFlowStore()
+    const {sections: contextDataSections} = useContextSections(computed(() => props.readOnly ? undefined : props.namespace))
     const localTaskError = ref<string | undefined>()
     const errors = computed(() => {
         const split = splitValidationErrors(localTaskError.value)
@@ -365,7 +420,7 @@
 
     const inputSections = computed(() => {
         const flow: ParsedFlow = flowStore.flowParsed ?? {}
-        const sections: {key: string; label: string; chips: {label: string; expr: string}[]}[] = []
+        const sections: DataSection[] = []
 
         const inputs = Array.isArray(flow.inputs) ? flow.inputs : []
         if (inputs.length) {
@@ -383,6 +438,8 @@
         if (upstream.length) {
             sections.push({key: "outputs", label: t("block_editor.upstream_outputs"), chips: upstream.map(id => ({label: id, expr: `{{ outputs.${id} }}`}))})
         }
+
+        sections.push(...contextDataSections.value)
 
         const CONTEXT_FIELDS: Record<string, string[]> = {
             flow: ["id", "namespace", "revision", "tenantId"],
@@ -754,6 +811,7 @@
         display: flex;
         align-items: center;
         justify-content: flex-start;
+        flex-wrap: wrap;
         gap: var(--ks-spacing-3);
         flex-shrink: 0;
         padding: var(--ks-spacing-3) var(--ks-spacing-4);
@@ -769,5 +827,18 @@
     :global(.task-edit-chip-insert-target) {
         outline: 2px solid var(--ks-border-focus);
         outline-offset: -1px;
+    }
+
+    .task-edit-required-status {
+        display: flex;
+        align-items: center;
+        gap: var(--ks-spacing-2);
+        font-size: var(--ks-font-size-sm);
+        color: var(--ks-text-error);
+    }
+
+    .task-edit-required-icon {
+        display: inline-flex;
+        flex-shrink: 0;
     }
 </style>

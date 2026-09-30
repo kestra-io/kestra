@@ -15,6 +15,7 @@ import io.kestra.core.runners.pebble.functions.DayOfWeekFunction;
 import io.kestra.core.runners.pebble.functions.FromIonFunction;
 import io.kestra.core.runners.pebble.functions.FromJsonFunction;
 import io.kestra.core.runners.pebble.functions.HourOfDayFunction;
+import io.kestra.core.runners.pebble.functions.IsDateBetweenFunction;
 import io.kestra.core.runners.pebble.functions.IsDayWeekInMonthFunction;
 import io.kestra.core.runners.pebble.functions.IsLastWorkingDayFunction;
 import io.kestra.core.runners.pebble.functions.IsPublicHolidayFunction;
@@ -83,6 +84,7 @@ public class PebbleEngineFactory {
         HourOfDayFunction.NAME,
         MonthOfYearFunction.NAME,
         IsWeekendFunction.NAME,
+        IsDateBetweenFunction.NAME,
         IsDayWeekInMonthFunction.NAME,
         IsLastWorkingDayFunction.NAME,
         IsPublicHolidayFunction.NAME

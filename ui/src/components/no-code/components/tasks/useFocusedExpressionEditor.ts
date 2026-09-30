@@ -1,4 +1,4 @@
-import {inject, ref, type Ref} from "vue"
+import {inject, onBeforeUnmount, ref, type Ref} from "vue"
 import type {KsEditorExposes} from "@kestra-io/design-system"
 import {FOCUSED_EXPRESSION_EDITOR_INJECTION_KEY} from "../../injectionKeys"
 
@@ -15,6 +15,8 @@ export function useFocusedExpressionEditor(editorRef: Ref<KsEditorExposes | unde
             focusedExpressionEditorInsert.value = null
         }
     }
+
+    onBeforeUnmount(onBlur)
 
     return {onFocus, onBlur}
 }

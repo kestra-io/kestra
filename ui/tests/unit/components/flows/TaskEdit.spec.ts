@@ -13,8 +13,9 @@ vi.mock("../../../../src/stores/api", () => ({
     useApiStore: () => ({posthogEvents}),
 }))
 
-const {pluginsStoreState} = vi.hoisted(() => ({
+const {pluginsStoreState, insertedChipText} = vi.hoisted(() => ({
     pluginsStoreState: {plugin: undefined as {schema?: {outputs?: {properties?: Record<string, unknown>}}} | undefined},
+    insertedChipText: vi.fn(),
 }))
 
 vi.mock("../../../../src/stores/plugins", () => ({
@@ -57,9 +58,7 @@ vi.mock("../../../../src/components/flows/TaskEditPanes.vue", () => ({
         setup() {
             const focusedExpressionEditorInsert = inject(FOCUSED_EXPRESSION_EDITOR_INJECTION_KEY, ref(null))
             function fakeFocusExpressionEditor() {
-                focusedExpressionEditorInsert.value = (text: string) => {
-                    (window as unknown as {insertedChipTextForTest?: string}).insertedChipTextForTest = text
-                }
+                focusedExpressionEditorInsert.value = insertedChipText
             }
             return {fakeFocusExpressionEditor}
         },
@@ -112,6 +111,7 @@ function mountTaskEdit() {
 describe("TaskEdit", () => {
     beforeEach(() => {
         useContextSections.mockClear()
+        insertedChipText.mockClear()
     })
 
     it("emits close when the per-pane tabstrip's close button is clicked", async () => {
@@ -201,7 +201,6 @@ describe("TaskEdit", () => {
         // Regression: clicking a chip while a Monaco expression field is focused fell through
         // to clipboard copy, since Monaco fields are intentionally excluded from the plain-field
         // "armed" tracking (isArmableField). TaskEdit must also try the focused expression editor.
-        delete (window as unknown as {insertedChipTextForTest?: string}).insertedChipTextForTest
         const messageSpy = vi.spyOn(KsMessage, "success").mockImplementation(() => ({close: () => {}}))
         const wrapper = mountTaskEdit()
         await wrapper.vm.$nextTick()
@@ -211,7 +210,43 @@ describe("TaskEdit", () => {
         const inputs = wrapper.findAllComponents({name: "TaskEditData"}).find((c) => c.props("kind") === "inputs")
         inputs?.vm.$emit("chip-activate", "{{ inputs.myInput }}")
 
-        expect((window as unknown as {insertedChipTextForTest?: string}).insertedChipTextForTest).toBe("{{ inputs.myInput }}")
+        expect(insertedChipText).toHaveBeenCalledWith("{{ inputs.myInput }}")
+        messageSpy.mockRestore()
+    })
+
+    it("disarms a previously armed plain field when focus moves into a Monaco editor, so a chip inserts into the editor instead of the stale field", async () => {
+        // Regression: arming a plain field (TaskDict key/value, TaskString format, TaskVersion) then
+        // focusing a Monaco field left the stale arm in place, since onPanelFocusOut kept it (Monaco is
+        // still inside the panel) and onPanelFocusIn never replaced it (isArmableField rejects Monaco).
+        // A chip click then landed in the old plain field instead of the focused Monaco editor.
+        const messageSpy = vi.spyOn(KsMessage, "success").mockImplementation(() => ({close: () => {}}))
+        const wrapper = mountTaskEdit()
+        await wrapper.vm.$nextTick()
+
+        const panel = wrapper.get("[data-test='task-edit-panel']").element as HTMLElement
+        const plainField = document.createElement("input")
+        panel.appendChild(plainField)
+        plainField.dispatchEvent(new FocusEvent("focusin", {bubbles: true}))
+        expect(plainField.classList.contains("task-edit-chip-insert-target")).toBe(true)
+
+        await wrapper.get("[data-test='fake-editor-focus']").trigger("click")
+
+        const monacoEditor = document.createElement("div")
+        monacoEditor.className = "monaco-editor"
+        const monacoTextarea = document.createElement("textarea")
+        monacoEditor.appendChild(monacoTextarea)
+        panel.appendChild(monacoEditor)
+
+        plainField.dispatchEvent(new FocusEvent("focusout", {bubbles: true, relatedTarget: monacoTextarea}))
+        monacoTextarea.dispatchEvent(new FocusEvent("focusin", {bubbles: true}))
+
+        expect(plainField.classList.contains("task-edit-chip-insert-target")).toBe(false)
+
+        const inputs = wrapper.findAllComponents({name: "TaskEditData"}).find((c) => c.props("kind") === "inputs")
+        inputs?.vm.$emit("chip-activate", "{{ inputs.myInput }}")
+
+        expect(insertedChipText).toHaveBeenCalledWith("{{ inputs.myInput }}")
+        expect(plainField.value).toBe("")
         messageSpy.mockRestore()
     })
 

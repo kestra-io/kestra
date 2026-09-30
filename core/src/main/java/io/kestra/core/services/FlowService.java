@@ -412,6 +412,22 @@ public class FlowService {
         return pluginAutoInstallService.isEnabled() && pluginSchemaBundleService.containsType(typeId);
     }
 
+    /** Parses strictly and scans only a rejected source for its unknown keys and types, so a valid flow is parsed once. */
+    private TolerantParse parseTolerantly(String tenantId, String source) throws FlowProcessingException {
+        try {
+            return new TolerantParse(flowParsingService.parse(tenantId, source, true), ParseReport.clean());
+        } catch (FlowProcessingException e) {
+            if (!(e.getCause() instanceof ConstraintViolationException)) {
+                throw e;
+            }
+            ParseReport report = YamlParser.scan(source, FlowWithSource.class);
+            if (report.isClean() || report.cleaned() == null) {
+                throw e;
+            }
+            return new TolerantParse(flowParsingService.parse(tenantId, toYaml(report.cleaned(), source), false), report);
+        }
+    }
+
     private static String toYaml(Map<String, Object> map, String fallback) {
         try {
             return JacksonMapper.ofYaml().writeValueAsString(map);
@@ -495,11 +511,9 @@ public class FlowService {
 
             try {
                 String source = flowSource.content();
-                // Unknown keys and types are reported alongside bean violations rather than hiding them behind a strict parse.
-                ParseReport report = YamlParser.scan(source, FlowWithSource.class);
-                FlowWithSource flow = report.isClean() || report.cleaned() == null
-                    ? flowParsingService.parse(tenantId, source, true)
-                    : flowParsingService.parse(tenantId, toYaml(report.cleaned(), source), false);
+                TolerantParse parsed = parseTolerantly(tenantId, source);
+                FlowWithSource flow = parsed.flow();
+                ParseReport report = parsed.report();
 
                 Integer sentRevision = flow.getRevision();
                 if (sentRevision != null) {
@@ -1213,5 +1227,8 @@ public class FlowService {
 
     private IllegalStateException noRepositoryException() {
         return new IllegalStateException("No repository found. Make sure the `kestra.repository.type` property is set.");
+    }
+
+    private record TolerantParse(FlowWithSource flow, ParseReport report) {
     }
 }

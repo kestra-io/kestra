@@ -29,4 +29,9 @@ class ValidateConstraintViolationTest {
 
         assertThat(result.getErrors()).containsExactly(located);
     }
+
+    @Test
+    void shouldExposeNoErrorsWhenValid() {
+        assertThat(ValidateConstraintViolation.builder().build().getErrors()).isEmpty();
+    }
 }

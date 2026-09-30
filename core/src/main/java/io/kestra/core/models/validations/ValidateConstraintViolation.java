@@ -36,8 +36,11 @@ public class ValidateConstraintViolation {
 
     /** Producers that only set {@code constraints} still expose one error per line of it. */
     public List<ValidationError> getErrors() {
-        if ((errors != null && !errors.isEmpty()) || constraints == null) {
+        if (errors != null && !errors.isEmpty()) {
             return errors;
+        }
+        if (constraints == null) {
+            return List.of();
         }
         return constraints.lines().map(String::strip).filter(line -> !line.isEmpty()).map(ValidationError::of).toList();
     }

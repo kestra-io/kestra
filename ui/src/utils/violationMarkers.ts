@@ -53,9 +53,16 @@ function scalarRanges(targets: Node[]): Range[] {
             if (target.range) ranges.push([target.range[0], target.range[1]])
             continue
         }
+        // A block's own keys and values only: nested tasks are not what is missing a key.
         visit(target, {
             Scalar(_, scalar) {
                 if (scalar.range) ranges.push([scalar.range[0], scalar.range[1]])
+            },
+            Map(_, map) {
+                if (map !== target) return visit.SKIP
+            },
+            Seq(_, seq) {
+                if (seq !== target) return visit.SKIP
             },
         })
     }

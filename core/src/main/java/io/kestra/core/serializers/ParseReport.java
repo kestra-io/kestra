@@ -28,6 +28,10 @@ public record ParseReport(
     record Removal(List<String> parent, int index) {
     }
 
+    public static ParseReport clean() {
+        return new ParseReport(List.of(), List.of(), null, List.of());
+    }
+
     public boolean isClean() {
         return unknownProperties.isEmpty() && invalidTypes.isEmpty();
     }

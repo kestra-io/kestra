@@ -37,6 +37,22 @@ describe("violationMarkers", () => {
         })
     })
 
+    it("leaves the nested tasks of a block missing a key unmarked", () => {
+        const source = [
+            "tasks:",
+            "  - id: branch",
+            "    type: io.kestra.plugin.core.flow.If",
+            "    then:",
+            "      - id: yes_task",
+            "        type: io.kestra.plugin.core.log.Log",
+            "        message: yes",
+            "",
+        ].join("\n")
+
+        expect(violationMarkers(source, [{pointer: "/tasks/0/condition", detail: "must not be null"}])
+            .map(marker => marker.startLineNumber)).toEqual([2, 3, 4])
+    })
+
     it("resolves the Java name of a renamed key, such as _finally, to its YAML key", () => {
         const source = "finally:\n  - id: cleanup\n    type: io.kestra.plugin.core.log.Log\n"
 

@@ -29,6 +29,7 @@
                     v-bind="clusterProps"
                     :icons="icons"
                     :loadIcon="loadIcon"
+                    :replayEnabled="replayEnabled"
                     @collapse="collapseCluster($event, true)"
                     @addTrigger="emit(EVENTS.ADD_TRIGGER)"
                     @edit="emit(EVENTS.EDIT, $event)"

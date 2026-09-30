@@ -80,20 +80,32 @@ export function getStatusStyle(state?: string | null): StatusStyle | undefined {
 }
 
 // Worst-first: a single failure anywhere outweighs any number of successes.
+// Every `State.Type` value (core/src/main/java/io/kestra/core/models/flows/State.java) is
+// ranked explicitly so a merely-waiting or in-progress state (e.g. PAUSED) can never outrank
+// a real failure by falling through to the unranked bucket.
 const SORT_STATUS: string[] = [
     "FAILED",
     "KILLED",
+    "CANCELLED",
     "WARNING",
     "SKIPPED",
+    "RETRYING",
     "KILLING",
+    "BREAKPOINT",
+    "PAUSED",
+    "QUEUED",
+    "SUBMITTED",
     "RUNNING",
+    "RESUBMITTED",
     "SUCCESS",
     "RESTARTED",
+    "RETRIED",
     "CREATED",
 ]
 
-/** An unranked state (not in `SORT_STATUS`) sorts first, same as a real failure — better to
- *  surface an unknown state than to hide it behind a merely-ranked one. */
+/** A state absent from `SORT_STATUS` (i.e. not a known `State.Type`) sorts first, same as a
+ *  real failure — better to surface a genuinely unknown state than to hide it behind a
+ *  merely-ranked one. */
 export function pickWorstState(states: string[]): string | undefined {
     if (!states.length) return undefined
     return states

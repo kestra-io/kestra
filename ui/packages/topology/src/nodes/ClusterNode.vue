@@ -8,6 +8,7 @@
             :childTaskIds="data.childTaskIds"
             :executionId="data.executionId"
             :isReadOnly="data.isReadOnly"
+            :replayEnabled="replayEnabled"
             :icons="icons"
             :loadIcon="loadIcon"
             @edit="emit(EVENTS.EDIT, $event)"
@@ -28,7 +29,7 @@
                     @click.stop="collapse()"
                 >
                     <KsTooltip :content="$t('collapse')">
-                        <UnfoldLessHorizontal class="button-icon" alt="Collapse lane" />
+                        <UnfoldLessHorizontal class="button-icon" :alt="$t('collapse')" />
                     </KsTooltip>
                 </span>
             </template>
@@ -57,7 +58,7 @@
                     @click="collapse()"
                 >
                     <KsTooltip :content="$t('collapse')">
-                        <UnfoldLessHorizontal class="button-icon" alt="Collapse task" />
+                        <UnfoldLessHorizontal class="button-icon" :alt="$t('collapse')" />
                     </KsTooltip>
                 </span>
             </div>
@@ -90,6 +91,7 @@
     const props = defineProps<{
         id?: string;
         data: ClusterData;
+        replayEnabled?: boolean;
         icons?: Record<string, unknown>;
         loadIcon?: (cls: string) => Promise<unknown>;
     }>()

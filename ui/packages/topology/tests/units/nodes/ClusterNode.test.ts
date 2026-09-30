@@ -14,15 +14,17 @@ function taskRun(taskId: string, state: string) {
     return {taskId, state: {current: state}}
 }
 
-function mountClusterNode({childTaskIds = [], taskRuns = [], isReadOnly = false, isFlowableLane = true}: {
+function mountClusterNode({childTaskIds = [], taskRuns = [], isReadOnly = false, isFlowableLane = true, replayEnabled = false}: {
     childTaskIds?: string[],
     taskRuns?: Record<string, unknown>[],
     isReadOnly?: boolean,
     isFlowableLane?: boolean,
+    replayEnabled?: boolean,
 }) {
     return i18nMount(ClusterNode, {
         props: {
             id: "cluster_root.parallel_task",
+            replayEnabled,
             data: {
                 color: "flowable-task",
                 collaspsible: true,
@@ -145,6 +147,24 @@ describe("ClusterNode actions", () => {
         await wrapper.find(".lane-header").trigger("click")
 
         expect(wrapper.emitted("edit")).toBeUndefined()
+    })
+
+    it("should offer replay for a flowable that has already run, same as a task node", () => {
+        const wrapper = mountClusterNode({
+            replayEnabled: true,
+            taskRuns: [taskRun("parallel_task", "SUCCESS")],
+        })
+
+        expect(actionKeys(wrapper)).toContain("replay")
+    })
+
+    it("should not offer replay when replay is disabled", () => {
+        const wrapper = mountClusterNode({
+            replayEnabled: false,
+            taskRuns: [taskRun("parallel_task", "SUCCESS")],
+        })
+
+        expect(actionKeys(wrapper)).not.toContain("replay")
     })
 })
 

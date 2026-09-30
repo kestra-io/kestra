@@ -95,4 +95,11 @@ describe("computeAggregateState (lane-header aggregate state)", () => {
 
         expect(computeAggregateState(childTaskIds, taskRunList)).toBe("SUCCESS")
     })
+
+    it("should surface a failed sibling over a paused child", () => {
+        const childTaskIds = ["branch_a", "branch_b"]
+        const taskRunList = runsOf({branch_a: "PAUSED", branch_b: "FAILED"})
+
+        expect(computeAggregateState(childTaskIds, taskRunList)).toBe("FAILED")
+    })
 })

@@ -57,6 +57,7 @@
         childTaskIds?: string[];
         executionId?: string;
         isReadOnly?: boolean;
+        replayEnabled?: boolean;
         icons?: Record<string, unknown>;
         loadIcon?: (cls: string) => Promise<unknown>;
     }>()
@@ -140,7 +141,7 @@
             taskExecution: taskExecution.value,
             taskRuns: taskRuns.value,
             taskRunsWithDynamicChildren: taskRuns.value,
-            replayEnabled: false,
+            replayEnabled: Boolean(props.replayEnabled),
             link: undefined,
             actionConfig: undefined,
         }

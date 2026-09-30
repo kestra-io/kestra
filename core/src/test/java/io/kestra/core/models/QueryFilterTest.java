@@ -64,6 +64,12 @@ public class QueryFilterTest {
         assertThat(e.getMessage()).contains("NAMESPACE", "PROMOTION_TARGETS");
     }
 
+    @Test
+    void shouldSupportPrefixOpsOnFlowNamespaceAndParentIdOnAsset() {
+        assertThat(QueryFilter.Field.FLOW_NAMESPACE.supportedOp()).contains(QueryFilter.Op.STARTS_WITH, QueryFilter.Op.PREFIX);
+        assertThat(QueryFilter.Resource.ASSET.supportedField()).contains(QueryFilter.Field.PARENT_ID);
+    }
+
     static Stream<Arguments> validOperationFilters() {
         return Stream.of(
             buildQueryFiltersForOperations(

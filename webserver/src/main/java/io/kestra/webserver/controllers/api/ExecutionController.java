@@ -65,7 +65,6 @@ import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.runners.*;
 import io.kestra.core.runners.configuration.LocalFilesConfiguration;
 import io.kestra.core.serializers.FileSerde;
-import io.kestra.core.server.AsyncOperationListener;
 import io.kestra.core.server.AsyncOperationType;
 import io.kestra.core.server.ServerConfig;
 import io.kestra.core.services.*;
@@ -268,7 +267,7 @@ public class ExecutionController {
     private FileRendererService fileRendererService;
 
     @Inject
-    private List<AsyncOperationListener> asyncOperationListeners;
+    private NotificationService notificationService;
 
     @Inject
     private MetricRegistry metricRegistry;
@@ -2971,7 +2970,7 @@ public class ExecutionController {
         List<Execution> executions,
         ThrowingBiConsumer<Execution, String> emit) throws QueueException {
         String operationId = IdUtils.create();
-        asyncOperationListeners.forEach(listener -> listener.onAsyncOperationCreated(operationId, operationType, executions.size()));
+        notificationService.notifyAsyncOperation(operationId, operationType, executions.size());
         for (Execution execution : executions) {
             emit.accept(execution, operationId);
         }

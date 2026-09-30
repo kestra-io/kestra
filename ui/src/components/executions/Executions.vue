@@ -983,7 +983,8 @@
             const ac = actionMap[queryAction]
             return ac(options)
                 .then((r) => {
-                    toast.success(t(success, {executionCount: affectedCount(r)}))
+                    const count = affectedCount(r)
+                    toast.success(t(success, {executionCount: count}, count))
                     toggleAllUnselected()
                     dataTable.value?.reload()
                 })
@@ -997,7 +998,8 @@
             const ac = actionMap[byIdAction]
             return ac(options)
                 .then((r) => {
-                    toast.success(t(success, {executionCount: affectedCount(r)}))
+                    const count = affectedCount(r)
+                    toast.success(t(success, {executionCount: count}, count))
                     toggleAllUnselected()
                     dataTable.value?.reload()
                 }).catch((e: unknown) => {

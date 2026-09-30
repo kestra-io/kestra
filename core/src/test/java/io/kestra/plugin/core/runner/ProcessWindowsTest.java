@@ -40,7 +40,7 @@ class ProcessWindowsTest {
         TaskRunnerResult<?> result = new Process().run(runContext, commands, List.of());
 
         assertThat(result.getExitCode()).isZero();
-        assertThat(lines).contains("kestra-one", "kestra-two");
+        assertThat(lines).containsExactly("kestra-one", "kestra-two");
         assertThat(runContext.workingDir().path().toFile().listFiles((dir, name) -> name.endsWith(".bat"))).isEmpty();
     }
 

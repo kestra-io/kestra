@@ -24,7 +24,7 @@ class ProcessCmdScriptTest {
         Path path = script.get();
         assertThat(path.getParent()).isEqualTo(workingDirectory);
         assertThat(path.getFileName().toString()).endsWith(".bat");
-        assertThat(Files.readString(path)).isEqualTo("echo one\r\necho two");
+        assertThat(Files.readString(path)).isEqualTo("@echo off\r\necho one\r\necho two");
     }
 
     @Test
@@ -32,7 +32,7 @@ class ProcessCmdScriptTest {
         Optional<Path> script = Process.writeWindowsCmdScript(List.of("cmd.exe", "/c", "echo one\necho two"), workingDirectory);
 
         assertThat(script).isPresent();
-        assertThat(Files.readString(script.get())).isEqualTo("echo one\r\necho two");
+        assertThat(Files.readString(script.get())).isEqualTo("@echo off\r\necho one\r\necho two");
     }
 
     @Test

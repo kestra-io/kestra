@@ -145,7 +145,7 @@ public class Process extends TaskRunner<TaskRunnerDetailResult> {
             if (script.isPresent()) {
                 cmdScript = script.get();
                 commandsToRun = new ArrayList<>(renderedCommands);
-                commandsToRun.set(commandsToRun.size() - 1, cmdScript.toString());
+                commandsToRun.set(commandsToRun.size() - 1, "call \"%s\"".formatted(cmdScript));
             }
         }
 
@@ -191,13 +191,14 @@ public class Process extends TaskRunner<TaskRunnerDetailResult> {
      * Writes a multi-line script to a temporary batch file when cmd.exe is the interpreter, as
      * cmd.exe does not execute a multi-line string passed as a {@code /c} argument
      * (see <a href="https://github.com/kestra-io/kestra/issues/12989">issue #12989</a>).
+     * Command echoing is disabled so rendered commands, which may contain secrets, are not logged.
      */
     static Optional<Path> writeWindowsCmdScript(List<String> commands, Path workingDirectory) throws IOException {
         if (commands.size() < 2 || !isCmdExe(commands.getFirst()) || !containsLineSeparator(commands.getLast())) {
             return Optional.empty();
         }
 
-        String script = commands.getLast().replace("\r\n", "\n").replace("\n", "\r\n");
+        String script = "@echo off\r\n" + commands.getLast().replace("\r\n", "\n").replace("\n", "\r\n");
         Path scriptPath = Files.createTempFile(workingDirectory, "kestra-", ".bat");
         Files.writeString(scriptPath, script);
         return Optional.of(scriptPath);

@@ -393,8 +393,7 @@ export const CompactFullscreenVirtualizedTasks: Story = {
         });
         recycledFirstTaskScroller.scrollTop = 50;
         recycledFirstTaskScroller.dispatchEvent(new Event("scroll"));
-        await new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
-        expect(Math.abs(recycledFirstTaskScroller.scrollTop - 50)).toBeLessThan(2);
+        await waitFor(() => expect(Math.abs(recycledFirstTaskScroller.scrollTop - 50)).toBeLessThan(2));
     },
 };
 

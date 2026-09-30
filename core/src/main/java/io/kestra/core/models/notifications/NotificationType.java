@@ -11,6 +11,8 @@ package io.kestra.core.models.notifications;
 public interface NotificationType {
     /**
      * The stable wire/storage value for this type, persisted as {@link Notification#getType()}.
+     * <p>
+     * Every implementation is an enum, so {@link Enum#name()} satisfies this method with no override needed.
      */
-    String key();
+    String name();
 }

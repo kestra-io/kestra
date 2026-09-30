@@ -66,6 +66,7 @@ import io.kestra.core.runners.*;
 import io.kestra.core.runners.configuration.LocalFilesConfiguration;
 import io.kestra.core.serializers.FileSerde;
 import io.kestra.core.server.AsyncOperationType;
+import io.kestra.core.server.CoreAsyncOperationType;
 import io.kestra.core.server.ServerConfig;
 import io.kestra.core.services.*;
 import io.kestra.core.storages.Namespace;
@@ -1454,7 +1455,7 @@ public class ExecutionController {
         this.restartCounter.increment(executions.size());
 
         return submitNotifiedBatchAction(
-            AsyncOperationType.EXECUTION_RESTART,
+            CoreAsyncOperationType.EXECUTION_RESTART,
             executions,
             (execution, opId) ->
             {
@@ -1739,7 +1740,7 @@ public class ExecutionController {
         this.changeStatusCounter.increment(executions.size());
 
         return submitNotifiedBatchAction(
-            AsyncOperationType.EXECUTION_CHANGE_STATUS,
+            CoreAsyncOperationType.EXECUTION_CHANGE_STATUS,
             executions,
             (execution, opId) -> executionCommandQueue.emit(UpdateStatus.from(execution, newStatus).withOperationId(opId))
         );
@@ -1922,7 +1923,7 @@ public class ExecutionController {
         this.resumeCounter.increment(executions.size());
 
         return submitNotifiedBatchAction(
-            AsyncOperationType.EXECUTION_RESUME,
+            CoreAsyncOperationType.EXECUTION_RESUME,
             executions,
             (execution, opId) -> executionCommandQueue.emit(Resume.from(execution, createResumed()).withOperationId(opId))
         );
@@ -1993,7 +1994,7 @@ public class ExecutionController {
         this.pauseCounter.increment(executions.size());
 
         return submitNotifiedBatchAction(
-            AsyncOperationType.EXECUTION_PAUSE,
+            CoreAsyncOperationType.EXECUTION_PAUSE,
             executions,
             (execution, opId) -> executionCommandQueue.emit(Pause.from(execution).withOperationId(opId))
         );
@@ -2047,7 +2048,7 @@ public class ExecutionController {
 
         this.killCounter.increment(executions.size());
 
-        return submitNotifiedBatchAction(AsyncOperationType.EXECUTION_KILL, executions, (execution, opId) ->
+        return submitNotifiedBatchAction(CoreAsyncOperationType.EXECUTION_KILL, executions, (execution, opId) ->
         {
             eventPublisher.publishEvent(CrudEvent.of(execution, execution.withState(State.Type.KILLING)));
             killQueue.emit(
@@ -2097,7 +2098,7 @@ public class ExecutionController {
 
         this.replayCounter.increment(executions.size());
 
-        return submitNotifiedBatchAction(AsyncOperationType.EXECUTION_REPLAY, executions, (execution, opId) ->
+        return submitNotifiedBatchAction(CoreAsyncOperationType.EXECUTION_REPLAY, executions, (execution, opId) ->
         {
             // When latestRevision is true the replay starts as a new execution against the
             // latest non-draft revision; otherwise it stays bound to the execution's original
@@ -2369,7 +2370,7 @@ public class ExecutionController {
         this.updateLabelsCounter.increment(executions.size());
 
         return submitNotifiedBatchAction(
-            AsyncOperationType.EXECUTION_SET_LABELS, executions,
+            CoreAsyncOperationType.EXECUTION_SET_LABELS, executions,
             (execution, opId) -> executionCommandQueue.emit(UpdateLabels.from(execution, mergedLabelsByExecutionId.get(execution.getId())).withOperationId(opId))
         );
     }
@@ -2443,7 +2444,7 @@ public class ExecutionController {
         this.unqueueCounter.increment(executions.size());
 
         return submitNotifiedBatchAction(
-            AsyncOperationType.EXECUTION_UNQUEUE,
+            CoreAsyncOperationType.EXECUTION_UNQUEUE,
             executions,
             (execution, opId) -> executionCommandQueue.emit(Unqueue.from(execution, state).withOperationId(opId))
         );
@@ -2518,7 +2519,7 @@ public class ExecutionController {
         this.forceRunCounter.increment(executions.size());
 
         return submitNotifiedBatchAction(
-            AsyncOperationType.EXECUTION_FORCE_RUN,
+            CoreAsyncOperationType.EXECUTION_FORCE_RUN,
             executions,
             (execution, opId) -> executionCommandQueue.emit(ForceRun.from(execution).withOperationId(opId))
         );
@@ -2970,12 +2971,20 @@ public class ExecutionController {
         List<Execution> executions,
         ThrowingBiConsumer<Execution, String> emit) throws QueueException {
         String operationId = IdUtils.create();
-        notificationService.notifyAsyncOperation(operationId, operationType, executions.size());
+        notificationService.notifyAsyncOperation(currentUserId(), tenantService.resolveTenant(), operationId, operationType, executions.stream().map(Execution::getId).toList());
         for (Execution execution : executions) {
             emit.accept(execution, operationId);
         }
         return HttpResponse.accepted()
             .body(new ApiAsyncOperationResponse(operationId, executions.size()));
+    }
+
+    /**
+     * The authenticated user's id, or {@code null} when OSS has no real user model. Overridden in EE.
+     */
+    @Nullable
+    protected String currentUserId() {
+        return null;
     }
 
     @FunctionalInterface

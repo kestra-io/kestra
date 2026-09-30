@@ -6,13 +6,16 @@ import io.kestra.core.models.HasUID;
 import io.kestra.core.queues.event.BroadcastEvent;
 import io.kestra.core.utils.IdUtils;
 
-public record NotificationEvent(String uid, NotificationEventType eventType, Notification notification, Instant timestamp) implements HasUID, BroadcastEvent {
+import jakarta.annotation.Nullable;
+
+public record NotificationEvent(String uid, NotificationEventType eventType, @Nullable String notificationId, @Nullable String referenceId, @Nullable String tenantId,
+    Instant timestamp) implements HasUID, BroadcastEvent {
     @Override
     public String key() {
         return uid;
     }
 
-    public static NotificationEvent of(NotificationEventType eventType, Notification notification) {
-        return new NotificationEvent(IdUtils.create(), eventType, notification, Instant.now());
+    public static NotificationEvent of(NotificationEventType eventType, @Nullable String notificationId, String referenceId, @Nullable String tenantId) {
+        return new NotificationEvent(IdUtils.create(), eventType, notificationId, referenceId, tenantId, Instant.now());
     }
 }

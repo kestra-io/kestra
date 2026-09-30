@@ -1285,11 +1285,10 @@ class TriggerEventHandlerTest {
             .paused(false)
             .build();
         // the backfill has progressed, so the next evaluation date now points inside the backfill window
-        triggerStateStore.save(
-            triggerState
-                .updateForNextEvaluationDate(CLOCK, liveNextEvaluationDate)
-                .backfill(CLOCK, backfill)
-                .updateForNextEvaluationDate(CLOCK, backfill.getStart().plusHours(8))
+        triggerStateStore.save(triggerState
+            .updateForNextEvaluationDate(CLOCK, liveNextEvaluationDate)
+            .backfill(CLOCK, backfill)
+            .updateForNextEvaluationDate(CLOCK, backfill.getStart().plusHours(8))
         );
         handler = newTriggerEventHandler(List.of());
 
@@ -1315,11 +1314,10 @@ class TriggerEventHandlerTest {
             .paused(false)
             .build();
         // the running backfill has progressed, so the next evaluation date now points inside its window
-        triggerStateStore.save(
-            triggerState
-                .updateForNextEvaluationDate(CLOCK, liveNextEvaluationDate)
-                .backfill(CLOCK, running)
-                .updateForNextEvaluationDate(CLOCK, running.getStart().plusHours(8))
+        triggerStateStore.save(triggerState
+            .updateForNextEvaluationDate(CLOCK, liveNextEvaluationDate)
+            .backfill(CLOCK, running)
+            .updateForNextEvaluationDate(CLOCK, running.getStart().plusHours(8))
         );
         handler = newTriggerEventHandler(List.of(Fixtures.defaultFlow()));
         CreateBackfillTrigger event = new CreateBackfillTrigger(

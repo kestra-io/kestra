@@ -292,7 +292,22 @@
       "help": "Ayuda",
       "issue": "Problema",
       "demo": "Demo",
-      "star": "Danos una estrella"
+      "star": "Danos una estrella",
+      "notifications": "Notificaciones"
+    },
+    "notifications": {
+      "heading": "Notificaciones",
+      "ongoing": "En curso",
+      "markAllRead": "Marcar todo como leído",
+      "markUnread": "Marcar como no leído",
+      "markRead": "Marcar como leído",
+      "empty": "No hay notificaciones aún",
+      "emptyUnread": "No hay notificaciones sin leer",
+      "tabs": {
+        "all": "Todo",
+        "unread": "No leído"
+      },
+      "bellAriaLabel": "Notificaciones"
     },
     "source": "Fuente",
     "home": "Inicio",

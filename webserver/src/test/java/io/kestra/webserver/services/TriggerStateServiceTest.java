@@ -22,6 +22,7 @@ import io.kestra.core.scheduler.model.TriggerState;
 import io.kestra.core.scheduler.model.TriggerType;
 import io.kestra.core.scheduler.queue.TriggerEventQueue;
 import io.kestra.core.server.AsyncOperationType;
+import io.kestra.core.server.CoreAsyncOperationType;
 import io.kestra.core.services.AsyncOperationWaiter;
 import io.kestra.core.services.NotificationService;
 import io.kestra.core.utils.IdUtils;
@@ -79,9 +80,9 @@ class TriggerStateServiceTest {
         TriggerId triggerId = TriggerId.of(TENANT, NAMESPACE, FLOW_ID, TRIGGER_ID);
         when(triggerRepository.findByIdWithoutAcl(triggerId)).thenReturn(Optional.of(lockedTriggerState(triggerId)));
 
-        triggerStateService.unlockAllByIds(List.of(triggerId));
+        triggerStateService.unlockAllByIds("test-user", TENANT, List.of(triggerId));
 
-        verify(notificationService, times(1)).notifyAsyncOperation(any(), eq(AsyncOperationType.TRIGGER_UNLOCK), eq(1));
+        verify(notificationService, times(1)).notifyAsyncOperation(eq("test-user"), eq(TENANT), any(), eq(CoreAsyncOperationType.TRIGGER_UNLOCK), eq(List.of(triggerId.uid())));
     }
 
     @Test

@@ -5,20 +5,24 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import io.kestra.core.exceptions.NotFoundException;
 import io.kestra.core.models.notifications.CoreNotificationType;
 import io.kestra.core.models.notifications.Notification;
 import io.kestra.core.models.notifications.NotificationEvent;
 import io.kestra.core.models.notifications.NotificationEventType;
+import io.kestra.core.models.notifications.NotificationItem;
+import io.kestra.core.models.notifications.NotificationItemOutcome;
 import io.kestra.core.models.notifications.NotificationType;
 import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.QueueException;
+import io.kestra.core.repositories.NotificationItemRepositoryInterface;
 import io.kestra.core.repositories.NotificationRepositoryInterface;
+import io.kestra.core.repositories.NotificationRepositoryInterface.NotificationCursor;
 import io.kestra.core.server.AsyncOperationType;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.core.utils.IdUtils;
@@ -31,7 +35,8 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
-import reactor.core.scheduler.Schedulers;
+import reactor.core.publisher.Mono;
+import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
 
 /**
@@ -41,7 +46,7 @@ import reactor.util.function.Tuples;
  * queue later with zero caller changes.
  * <p>
  * Every create/update also emits a {@link NotificationEvent} on {@link #notificationQueue}, so
- * consumers (e.g. a live UI bell) don't have to poll — {@link #follow(String)} is the read-path
+ * consumers (e.g. a live UI bell) don't have to poll — {@link #follow} is the read-path
  * counterpart, building the SSE stream on top of {@link NotificationStreamingService}.
  * <p>
  * Retention is flat and identical for every {@link NotificationType} (see {@link #purge()}) — read
@@ -57,59 +62,66 @@ public class NotificationService {
     private static final Duration NOTIFICATION_SAMPLE_INTERVAL = Duration.ofMillis(250);
 
     private final NotificationRepositoryInterface notificationRepository;
+    private final NotificationItemRepositoryInterface notificationItemRepository;
     private final BroadcastQueueInterface<NotificationEvent> notificationQueue;
     private final NotificationStreamingService notificationStreamingService;
-    private final AccessibleTenantsProvider accessibleTenantsProvider;
-    private final CurrentUserProvider currentUserProvider;
-    private final TenantService tenantService;
 
     @Inject
     public NotificationService(
         NotificationRepositoryInterface notificationRepository,
+        NotificationItemRepositoryInterface notificationItemRepository,
         BroadcastQueueInterface<NotificationEvent> notificationQueue,
-        NotificationStreamingService notificationStreamingService,
-        AccessibleTenantsProvider accessibleTenantsProvider,
-        CurrentUserProvider currentUserProvider,
-        TenantService tenantService) {
+        NotificationStreamingService notificationStreamingService) {
         this.notificationRepository = Objects.requireNonNull(notificationRepository, "notificationRepository must not be null");
+        this.notificationItemRepository = Objects.requireNonNull(notificationItemRepository, "notificationItemRepository must not be null");
         this.notificationQueue = Objects.requireNonNull(notificationQueue, "notificationQueue must not be null");
         this.notificationStreamingService = Objects.requireNonNull(notificationStreamingService, "notificationStreamingService must not be null");
-        this.accessibleTenantsProvider = Objects.requireNonNull(accessibleTenantsProvider, "accessibleTenantsProvider must not be null");
-        this.currentUserProvider = Objects.requireNonNull(currentUserProvider, "currentUserProvider must not be null");
-        this.tenantService = Objects.requireNonNull(tenantService, "tenantService must not be null");
     }
 
     /**
-     * Creates a new, unread notification.
+     * Creates a new, unread notification. {@code userId} is {@code null} for OSS's single implicit
+     * user (no real user model).
      */
-    public Notification notify(String userId, @Nullable String tenantId, NotificationType type, String title, @Nullable String referenceId) {
-        return notify(userId, tenantId, type, title, referenceId, null);
-    }
-
-    /**
-     * Creates a new, unread notification tracking progress out of {@code totalItems}, with
-     * {@code succeededItems} and {@code failedItems} initialized to 0.
-     */
-    public Notification notify(String userId, @Nullable String tenantId, NotificationType type, String title, @Nullable String referenceId, @Nullable Integer totalItems) {
-        return notify(userId, tenantId, type, null, title, referenceId, totalItems);
+    public Notification notify(@Nullable String userId, @Nullable String tenantId, NotificationType type, String title, @Nullable String referenceId) {
+        Notification created = createNotification(userId, tenantId, type, null, title, referenceId, false);
+        emit(NotificationEventType.CREATED, created);
+        return created;
     }
 
     /**
      * Notifies the user who submitted an async operation that it was accepted, so they can track
-     * its progress from their notifications.
+     * its progress from their notifications, and records one {@link NotificationItemOutcome#PENDING}
+     * {@link NotificationItem} per targeted resource. {@code userId} is {@code null} for OSS's
+     * single implicit user (no real user model).
      */
-    public void notifyAsyncOperation(String operationId, AsyncOperationType operationType, int itemCount) {
-        currentUserProvider.currentUserId().ifPresent(
-            userId -> notify(
-                userId,
-                tenantService.resolveTenant(),
-                CoreNotificationType.ASYNC_OPERATION,
-                operationType,
-                "%s requested for %d item%s".formatted(humanize(operationType), itemCount, itemCount == 1 ? "" : "s"),
-                operationId,
-                itemCount
-            )
+    public void notifyAsyncOperation(@Nullable String userId, String tenantId, String operationId, AsyncOperationType operationType, List<String> resourceIds) {
+        Notification created = createNotification(
+            userId,
+            tenantId,
+            CoreNotificationType.ASYNC_OPERATION,
+            operationType,
+            "%s requested for %d item%s".formatted(humanize(operationType), resourceIds.size(), resourceIds.size() == 1 ? "" : "s"),
+            operationId,
+            !resourceIds.isEmpty()
         );
+
+        if (!resourceIds.isEmpty()) {
+            Instant now = Instant.now();
+            notificationItemRepository.create(
+                resourceIds.stream()
+                    .map(
+                        resourceId -> NotificationItem.builder()
+                            .operationId(operationId)
+                            .tenantId(tenantId)
+                            .resourceId(resourceId)
+                            .updated(now)
+                            .build()
+                    )
+                    .toList()
+            );
+        }
+
+        emit(NotificationEventType.CREATED, created);
     }
 
     private static String humanize(AsyncOperationType operationType) {
@@ -117,159 +129,185 @@ public class NotificationService {
         return Character.toUpperCase(words.charAt(0)) + words.substring(1);
     }
 
-    /**
-     * Same as {@link #notify(String, String, NotificationType, String, String, Integer)}, additionally tagging
-     * the notification with the specific {@link AsyncOperationType} it reports on.
-     */
-    public Notification notify(
-        String userId,
+    private Notification createNotification(
+        @Nullable String userId,
         @Nullable String tenantId,
         NotificationType type,
         @Nullable AsyncOperationType asyncOperationType,
         String title,
         @Nullable String referenceId,
-        @Nullable Integer totalItems) {
+        boolean read) {
         Instant now = Instant.now();
 
-        // no read/not read for operation progresses
-        boolean isRead = totalItems != null && totalItems > 0;
-
-        Notification created = notificationRepository.create(
+        return notificationRepository.create(
             Notification.builder()
                 .id(IdUtils.create())
                 .userId(userId)
                 .tenantId(tenantId)
-                .type(type.key())
-                .asyncOperationType(asyncOperationType)
+                .type(type.name())
+                .asyncOperationType(asyncOperationType != null ? asyncOperationType.name() : null)
+                .resourceType(asyncOperationType != null ? asyncOperationType.resourceType() : null)
                 .title(title)
                 .referenceId(referenceId)
-                .succeededItems(totalItems != null ? 0 : null)
-                .failedItems(totalItems != null ? 0 : null)
-                .totalItems(totalItems)
-                .read(isRead)
+                .read(read)
                 .createdDate(now)
                 .updatedDate(now)
                 .build()
         );
-        emit(NotificationEventType.CREATED, created);
-        return created;
     }
 
     /**
-     * Upserts progress on an existing notification, found by its correlation key
-     * {@code (userId, type, referenceId)}.
-     *
-     * @throws NotFoundException if no notification matches the correlation key.
+     * Upserts the {@link NotificationItem} tracking {@code (operationId, resourceId)} to {@code outcome}
+     * and pushes an update to SSE followers.
      */
-    public Notification updateProgress(String userId, NotificationType type, String referenceId, int succeeded, int failed, int total) {
-        Notification existing = notificationRepository.findByUserTypeAndReferenceId(userId, type.key(), referenceId)
-            .orElseThrow(() -> new NotFoundException("No notification found for user '" + userId + "', type '" + type.key() + "', referenceId '" + referenceId + "'"));
-
-        Notification updated = notificationRepository.update(
-            existing.toBuilder()
-                .succeededItems(succeeded)
-                .failedItems(failed)
-                .totalItems(total)
-                .updatedDate(Instant.now())
-                .build()
+    public void updateNotificationItemOutcome(String operationId, @Nullable String tenantId, String resourceId, NotificationItemOutcome outcome) {
+        notificationItemRepository.create(
+            List.of(
+                NotificationItem.builder()
+                    .operationId(operationId)
+                    .tenantId(tenantId)
+                    .resourceId(resourceId)
+                    .outcome(outcome)
+                    .updated(Instant.now())
+                    .build()
+            )
         );
-        emit(NotificationEventType.UPDATED, updated);
-        return updated;
+
+        emit(NotificationEventType.UPDATED, null, operationId, tenantId);
     }
 
     /**
-     * Increments the succeeded-items counter of the notification tracking {@code operationId}.
+     * Projects {@code succeededItems}/{@code failedItems}/{@code totalItems} onto the notification
+     * by aggregating its {@link NotificationItem}s — see the Javadoc on those fields. A no-op for
+     * anything but an {@link CoreNotificationType#ASYNC_OPERATION}.
      */
-    public void incrementAsyncOperationSucceededItems(String operationId, int count) {
-        incrementProgress(operationId, count, 0);
+    private Notification withProgress(Notification notification) {
+        if (notification.getAsyncOperationType() == null) {
+            return notification;
+        }
+
+        Map<NotificationItemOutcome, Long> counts = notificationItemRepository.countByOperationId(notification.getTenantId(), notification.getReferenceId());
+        long succeeded = counts.getOrDefault(NotificationItemOutcome.SUCCEEDED, 0L);
+        long failed = counts.getOrDefault(NotificationItemOutcome.FAILED, 0L);
+        long pending = counts.getOrDefault(NotificationItemOutcome.PENDING, 0L);
+
+        return notification.toBuilder()
+            .succeededItems((int) succeeded)
+            .failedItems((int) failed)
+            .totalItems((int) (succeeded + failed + pending))
+            .build();
     }
 
-    /**
-     * Increments the failed-items counter of the notification tracking {@code operationId}.
-     */
-    public void incrementAsyncOperationFailedItems(String operationId, int count) {
-        incrementProgress(operationId, 0, count);
-    }
-
-    private void incrementProgress(String operationId, int succeededDelta, int failedDelta) {
-        Notification existing = notificationRepository.findByOperationId(operationId)
-            .orElseThrow(() -> new NotFoundException("No notification found for operationId '" + operationId + "'"));
-
-        int currentSucceededItems = existing.getSucceededItems() == null ? 0 : existing.getSucceededItems();
-        int currentFailedItems = existing.getFailedItems() == null ? 0 : existing.getFailedItems();
-
-        Notification updated = notificationRepository.update(
-            existing.toBuilder()
-                .succeededItems(currentSucceededItems + succeededDelta)
-                .failedItems(currentFailedItems + failedDelta)
-                .updatedDate(Instant.now())
-                .build()
-        );
-        emit(NotificationEventType.UPDATED, updated);
+    private List<Notification> withProgress(List<Notification> notifications) {
+        return notifications.stream().map(this::withProgress).toList();
     }
 
     private void emit(NotificationEventType eventType, Notification notification) {
+        emit(eventType, notification.getId(), notification.getReferenceId(), notification.getTenantId());
+    }
+
+    private void emit(NotificationEventType eventType, @Nullable String notificationId, @Nullable String referenceId, @Nullable String tenantId) {
         try {
-            notificationQueue.emit(NotificationEvent.of(eventType, notification));
+            notificationQueue.emit(NotificationEvent.of(eventType, notificationId, referenceId, tenantId));
         } catch (QueueException e) {
-            log.error("Failed to emit NotificationEvent for notification '{}'", notification.getId(), e);
+            log.error("Failed to emit NotificationEvent for notification '{}'", notificationId, e);
         }
     }
 
-    public boolean markRead(String userId, String id) {
+    public boolean markRead(@Nullable String userId, String id) {
         boolean updated = notificationRepository.markRead(userId, id);
         if (updated) {
-            notificationRepository.findById(userId, id).ifPresent(notification -> emit(NotificationEventType.UPDATED, notification));
+            notificationRepository.findById(userId, id)
+                .ifPresent(notification -> emit(NotificationEventType.UPDATED, id, notification.getReferenceId(), notification.getTenantId()));
         }
         return updated;
     }
 
-    public boolean markUnread(String userId, String id) {
+    public boolean markUnread(@Nullable String userId, String id) {
         boolean updated = notificationRepository.markUnread(userId, id);
         if (updated) {
-            notificationRepository.findById(userId, id).ifPresent(notification -> emit(NotificationEventType.UPDATED, notification));
+            notificationRepository.findById(userId, id)
+                .ifPresent(notification -> emit(NotificationEventType.UPDATED, id, notification.getReferenceId(), notification.getTenantId()));
         }
         return updated;
     }
 
-    public int markAllRead(String userId, Set<String> accessibleTenantIds) {
-        List<Notification> updated = notificationRepository.markAllRead(userId, accessibleTenantIds);
+    public int markAllRead(@Nullable String userId) {
+        List<Notification> updated = notificationRepository.markAllRead(userId, accessibleTenantIds(userId));
         emit(NotificationEventType.UPDATED, updated);
         return updated.size();
     }
 
+    public long countUnread(@Nullable String userId) {
+        return notificationRepository.countUnread(userId, accessibleTenantIds(userId));
+    }
+
+    /**
+     * History, cursor-based, hydrated with progress (see {@link #withProgress(Notification)}).
+     */
+    public List<Notification> findByUser(@Nullable String userId, @Nullable NotificationCursor cursor, int limit) {
+        return withProgress(notificationRepository.findByUser(userId, accessibleTenantIds(userId), cursor, limit));
+    }
+
+    /**
+     * Polling delta, hydrated with progress (see {@link #withProgress(Notification)}).
+     */
+    public List<Notification> findByUserSince(@Nullable String userId, Instant since) {
+        return withProgress(notificationRepository.findByUserSince(userId, accessibleTenantIds(userId), since));
+    }
+
+    /**
+     * The tenants {@code userId} currently has access to. Overridden in EE with the user's real
+     * RBAC-derived set.
+     */
+    protected Set<String> accessibleTenantIds(@Nullable String userId) {
+        return Set.of(TenantService.MAIN_TENANT);
+    }
+
     /**
      * Follows live notification updates for {@code userId}, restricted to their currently
-     * accessible tenants. Each event is checked against the latest value of {@link #accessibleTenantIds}.
-     * Updates are sampled per notification id, so a fast-changing notification (e.g. progress ticks)
-     * can't flood the stream at the expense of others.
+     * accessible tenants (re-resolved via {@link #accessibleTenantIds(String)} on every refresh
+     * tick so a mid-stream RBAC change is picked up). Updates are sampled per notification id, so a
+     * fast-changing notification (e.g. progress ticks) can't flood the stream at the expense of
+     * others.
      * <p>
      * Callers must invoke {@link FollowSubscription#unregister()} once the stream terminates.
      */
-    public FollowSubscription follow(String userId) {
+    public FollowSubscription follow(@Nullable String userId) {
         String subscriberId = IdUtils.create();
         Set<String> initialAccessibleTenantIds = accessibleTenantIds(userId);
 
         Flux<Event<Notification>> flux = Flux.<NotificationEvent> create(
             emitter -> notificationStreamingService.registerSubscriber(userId, subscriberId, emitter),
-            FluxSink.OverflowStrategy.BUFFER
+            FluxSink.OverflowStrategy.LATEST
         )
             .doFinally(_ -> notificationStreamingService.unregisterSubscriber(userId, subscriberId))
             .withLatestFrom(upToDateAccessibleTenantsIds(userId, initialAccessibleTenantIds), Tuples::of)
-            .filter(notificationAndAllowedTenants -> isAccessible(notificationAndAllowedTenants.getT2(), notificationAndAllowedTenants.getT1().notification()))
-            .map(tuple -> Event.of(tuple.getT1().notification()).id(tuple.getT1().eventType().name().toLowerCase()))
+            .filter(eventAndAllowedTenants -> isAccessible(eventAndAllowedTenants.getT2(), eventAndAllowedTenants.getT1().tenantId()))
+            .map(Tuple2::getT1)
             .buffer(NOTIFICATION_SAMPLE_INTERVAL)
-            .flatMapIterable(NotificationService::latestNotificationUpdateById)
+            .flatMapIterable(this::latestEventByNotification)
+            .flatMap(this::toEvent)
+            .map(this::withProgress)
             .timeout(Duration.ofHours(1));
 
         return new FollowSubscription(flux, () -> notificationStreamingService.unregisterSubscriber(userId, subscriberId));
     }
 
-    private static List<Event<Notification>> latestNotificationUpdateById(List<Event<Notification>> events) {
+    private Mono<Event<Notification>> toEvent(NotificationEvent event) {
+        return Mono.justOrEmpty(notificationRepository.resolve(event.notificationId(), event.referenceId()))
+            .map(notification -> Event.of(notification).id(event.eventType().name().toLowerCase()));
+    }
+
+    private Event<Notification> withProgress(Event<Notification> event) {
+        return Event.of(event, withProgress(event.getData()));
+    }
+
+    private List<NotificationEvent> latestEventByNotification(List<NotificationEvent> events) {
         return events.stream()
             .collect(
                 Collectors.toMap(
-                    event -> event.getData().getId(),
+                    event -> event.notificationId() != null ? event.notificationId() : event.referenceId(),
                     Function.identity(),
                     (first, last) -> last,
                     LinkedHashMap::new
@@ -280,36 +318,38 @@ public class NotificationService {
             .toList();
     }
 
-    private Flux<Set<String>> upToDateAccessibleTenantsIds(String userId, Set<String> initialAccessibleTenantIds) {
-        return Flux.interval(ACCESSIBLE_TENANT_IDS_REFRESH_INTERVAL, Schedulers.boundedElastic())
+    private Flux<Set<String>> upToDateAccessibleTenantsIds(@Nullable String userId, Set<String> initialAccessibleTenantIds) {
+        return Flux.interval(ACCESSIBLE_TENANT_IDS_REFRESH_INTERVAL)
             .map(_ -> accessibleTenantIds(userId))
             .startWith(initialAccessibleTenantIds);
     }
 
-    private static boolean isAccessible(Set<String> accessibleTenantIds, Notification notification) {
-        String tenantId = notification.getTenantId();
+    private static boolean isAccessible(Set<String> accessibleTenantIds, @Nullable String tenantId) {
         return tenantId == null || accessibleTenantIds.contains(tenantId);
-    }
-
-    /**
-     * Gets the accessible tenants for the given user.
-     */
-    public Set<String> accessibleTenantIds(String userId) {
-        return accessibleTenantsProvider.accessibleTenantIds(userId);
     }
 
     /**
      * Flat-TTL retention purge: read notifications older than {@value READ_RETENTION_DAYS} days,
      * and any notification older than {@value UNREAD_RETENTION_DAYS} days regardless of read state.
+     * Cascades to the purged notifications' {@link NotificationItem}s, via each async-operation
+     * notification's {@code (tenantId, referenceId)}.
      *
-     * @return the number of deleted rows.
+     * @return the number of deleted notification rows.
      */
     public int purge() {
         Instant now = Instant.now();
-        return notificationRepository.deleteByQuery(
-            now.minus(READ_RETENTION_DAYS, ChronoUnit.DAYS),
-            now.minus(UNREAD_RETENTION_DAYS, ChronoUnit.DAYS)
-        );
+        Instant readOlderThan = now.minus(READ_RETENTION_DAYS, ChronoUnit.DAYS);
+        Instant createdOlderThan = now.minus(UNREAD_RETENTION_DAYS, ChronoUnit.DAYS);
+
+        List<NotificationItemRepositoryInterface.TenantOperationId> operationIds = notificationRepository.findToPurge(readOlderThan, createdOlderThan).stream()
+            .filter(notification -> notification.getAsyncOperationType() != null)
+            .map(notification -> new NotificationItemRepositoryInterface.TenantOperationId(notification.getTenantId(), notification.getReferenceId()))
+            .toList();
+        if (!operationIds.isEmpty()) {
+            notificationItemRepository.deleteByOperationIds(operationIds);
+        }
+
+        return notificationRepository.deleteByQuery(readOlderThan, createdOlderThan);
     }
 
     @SneakyThrows(QueueException.class)
@@ -317,7 +357,8 @@ public class NotificationService {
         if (notifications.isEmpty()) {
             return;
         }
-        notificationQueue.emit(notifications.stream().map(notification -> NotificationEvent.of(eventType, notification)).toList());
+        notificationQueue
+            .emit(notifications.stream().map(notification -> NotificationEvent.of(eventType, notification.getId(), notification.getReferenceId(), notification.getTenantId())).toList());
     }
 
     /**

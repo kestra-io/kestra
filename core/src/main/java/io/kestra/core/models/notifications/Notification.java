@@ -34,7 +34,7 @@ import lombok.NoArgsConstructor;
 public class Notification implements HasUID {
     private String id;
 
-    @NotNull
+    @Nullable
     private String userId;
 
     @Nullable
@@ -42,14 +42,24 @@ public class Notification implements HasUID {
 
     @NotNull
     @Builder.Default
-    private String type = CoreNotificationType.GENERIC.key();
+    private String type = CoreNotificationType.GENERIC.name();
 
     /**
-     * The specific kind of operation this notification reports on, for {@link CoreNotificationType#ASYNC_OPERATION}.
-     * {@code null} for every other type.
+     * The {@link AsyncOperationType#name()} of the specific operation this notification reports on,
+     * for {@link CoreNotificationType#ASYNC_OPERATION}; {@code null} for every other type. Stored as
+     * the plain name rather than the interface itself, for the same reason {@link #type} is — see
+     * that field's Javadoc.
      */
     @Nullable
-    private AsyncOperationType asyncOperationType;
+    private String asyncOperationType;
+
+    /**
+     * The kind of resource {@link #asyncOperationType} targets, captured at creation time since this
+     * module cannot otherwise recover it from the stored name alone. {@code null} for every type but
+     * {@link CoreNotificationType#ASYNC_OPERATION}.
+     */
+    @Nullable
+    private AsyncOperationType.ResourceType resourceType;
 
     @NotNull
     private String title;
@@ -62,7 +72,12 @@ public class Notification implements HasUID {
     private String referenceId;
 
     /**
-     * Progress indicators, unused until a progress-reporting producer exists.
+     * Progress indicators for {@link CoreNotificationType#ASYNC_OPERATION}, {@code null} for every
+     * other type. These are <strong>not</strong> persisted: the source of truth is the
+     * {@code notification_items} table (see {@link NotificationItem}), one row per targeted
+     * resource. {@link io.kestra.core.services.NotificationService} populates these fields only on
+     * the copy it returns to a caller or emits as a {@link NotificationEvent}, by aggregating that
+     * table — never on a {@code Notification} passed into {@code create}/{@code update}.
      */
     @Nullable
     private Integer succeededItems;

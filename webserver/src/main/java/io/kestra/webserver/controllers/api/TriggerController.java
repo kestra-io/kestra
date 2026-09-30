@@ -181,7 +181,7 @@ public class TriggerController {
         @Parameter(description = "The triggers to unlock") @Body List<ApiTriggerId> triggers) {
         final String tenantId = tenantService.resolveTenant();
         return HttpResponse.accepted().body(
-            triggerStateService.unlockAllByIds(toTriggerIds(triggers, tenantId))
+            triggerStateService.unlockAllByIds(currentUserId(), tenantId, toTriggerIds(triggers, tenantId))
         );
     }
 
@@ -193,7 +193,7 @@ public class TriggerController {
         @Parameter(description = "Filters. PHP-style nested query is used - examples: `filters[flowId][EQUALS]=hello-world`, `filters[namespace][CONTAINS]=test`", in = ParameterIn.QUERY)
         @QueryFilterFormat(Resource.TRIGGER) List<QueryFilter> filters) {
         return HttpResponse.accepted().body(
-            triggerStateService.unlockAllMatching(tenantService.resolveTenant(), QueryFilterUtils.rewriteTriggerDateFilters(filters, null))
+            triggerStateService.unlockAllMatching(currentUserId(), tenantService.resolveTenant(), QueryFilterUtils.rewriteTriggerDateFilters(filters, null))
         );
     }
     // endregion
@@ -251,8 +251,9 @@ public class TriggerController {
     @ApiResponse(responseCode = "202", description = "Accepted", content = { @Content(schema = @Schema(implementation = ApiAsyncOperationResponse.class)) })
     public MutableHttpResponse<ApiAsyncOperationResponse> pauseBackfillByIds(
         @Parameter(description = "The triggers that need the backfill to be paused") @Body List<ApiTriggerId> triggers) {
+        final String tenantId = tenantService.resolveTenant();
         return HttpResponse.accepted().body(
-            triggerStateService.pauseAllBackfillsByIds(toTriggerIds(triggers, tenantService.resolveTenant()))
+            triggerStateService.pauseAllBackfillsByIds(currentUserId(), tenantId, toTriggerIds(triggers, tenantId))
         );
     }
 
@@ -264,7 +265,7 @@ public class TriggerController {
         @Parameter(description = "Filters. PHP-style nested query is used - examples: `filters[flowId][EQUALS]=hello-world`, `filters[namespace][CONTAINS]=test`", in = ParameterIn.QUERY)
         @QueryFilterFormat(Resource.TRIGGER) List<QueryFilter> filters) {
         return HttpResponse.accepted().body(
-            triggerStateService.pauseAllBackfillsMatching(tenantService.resolveTenant(), QueryFilterUtils.rewriteTriggerDateFilters(filters, null))
+            triggerStateService.pauseAllBackfillsMatching(currentUserId(), tenantService.resolveTenant(), QueryFilterUtils.rewriteTriggerDateFilters(filters, null))
         );
     }
 
@@ -285,8 +286,9 @@ public class TriggerController {
     @ApiResponse(responseCode = "202", description = "Accepted", content = { @Content(schema = @Schema(implementation = ApiAsyncOperationResponse.class)) })
     public MutableHttpResponse<ApiAsyncOperationResponse> unpauseBackfillByIds(
         @Parameter(description = "The triggers that need the backfill to be resume") @Body List<ApiTriggerId> triggers) {
+        final String tenantId = tenantService.resolveTenant();
         return HttpResponse.accepted().body(
-            triggerStateService.resumeAllBackfillsByIds(toTriggerIds(triggers, tenantService.resolveTenant()))
+            triggerStateService.resumeAllBackfillsByIds(currentUserId(), tenantId, toTriggerIds(triggers, tenantId))
         );
     }
 
@@ -298,7 +300,7 @@ public class TriggerController {
         @Parameter(description = "Filters. PHP-style nested query is used - examples: `filters[flowId][EQUALS]=hello-world`, `filters[namespace][CONTAINS]=test`", in = ParameterIn.QUERY)
         @QueryFilterFormat(Resource.TRIGGER) List<QueryFilter> filters) {
         return HttpResponse.accepted().body(
-            triggerStateService.resumeAllBackfillsMatching(tenantService.resolveTenant(), QueryFilterUtils.rewriteTriggerDateFilters(filters, null))
+            triggerStateService.resumeAllBackfillsMatching(currentUserId(), tenantService.resolveTenant(), QueryFilterUtils.rewriteTriggerDateFilters(filters, null))
         );
     }
 
@@ -319,8 +321,9 @@ public class TriggerController {
     @ApiResponse(responseCode = "202", description = "Accepted", content = { @Content(schema = @Schema(implementation = ApiAsyncOperationResponse.class)) })
     public MutableHttpResponse<ApiAsyncOperationResponse> deleteBackfillByIds(
         @Parameter(description = "The triggers that need the backfill to be deleted") @Body List<ApiTriggerId> triggers) {
+        final String tenantId = tenantService.resolveTenant();
         return HttpResponse.accepted().body(
-            triggerStateService.deleteAllBackfillsByIds(toTriggerIds(triggers, tenantService.resolveTenant()))
+            triggerStateService.deleteAllBackfillsByIds(currentUserId(), tenantId, toTriggerIds(triggers, tenantId))
         );
     }
 
@@ -332,7 +335,7 @@ public class TriggerController {
         @Parameter(description = "Filters. PHP-style nested query is used - examples: `filters[flowId][EQUALS]=hello-world`, `filters[namespace][CONTAINS]=test`", in = ParameterIn.QUERY)
         @QueryFilterFormat(Resource.TRIGGER) List<QueryFilter> filters) {
         return HttpResponse.accepted().body(
-            triggerStateService.deleteAllBackfillsMatching(tenantService.resolveTenant(), QueryFilterUtils.rewriteTriggerDateFilters(filters, null))
+            triggerStateService.deleteAllBackfillsMatching(currentUserId(), tenantService.resolveTenant(), QueryFilterUtils.rewriteTriggerDateFilters(filters, null))
         );
     }
     //endregion
@@ -356,8 +359,9 @@ public class TriggerController {
     @ApiResponse(responseCode = "202", description = "Accepted", content = { @Content(schema = @Schema(implementation = ApiAsyncOperationResponse.class)) })
     public MutableHttpResponse<ApiAsyncOperationResponse> deleteTriggersByIds(
         @Parameter(description = "The triggers to delete") @Body List<ApiTriggerId> triggers) {
+        final String tenantId = tenantService.resolveTenant();
         return HttpResponse.accepted().body(
-            triggerStateService.deleteAllByIds(toTriggerIds(triggers, tenantService.resolveTenant()))
+            triggerStateService.deleteAllByIds(currentUserId(), tenantId, toTriggerIds(triggers, tenantId))
         );
     }
 
@@ -369,7 +373,7 @@ public class TriggerController {
         @Parameter(description = "Filters. PHP-style nested query is used - examples: `filters[flowId][EQUALS]=hello-world`, `filters[namespace][CONTAINS]=test`")
         @QueryFilterFormat(Resource.TRIGGER) List<QueryFilter> filters) {
         return HttpResponse.accepted().body(
-            triggerStateService.deleteAllMatching(tenantService.resolveTenant(), QueryFilterUtils.rewriteTriggerDateFilters(filters, null))
+            triggerStateService.deleteAllMatching(currentUserId(), tenantService.resolveTenant(), QueryFilterUtils.rewriteTriggerDateFilters(filters, null))
         );
     }
 
@@ -393,8 +397,9 @@ public class TriggerController {
     @ApiResponse(responseCode = "202", description = "Accepted", content = { @Content(schema = @Schema(implementation = ApiAsyncOperationResponse.class)) })
     public MutableHttpResponse<ApiAsyncOperationResponse> disabledTriggersByIds(
         @Parameter(description = "The triggers you want to set the disabled state") @Body @Valid SetDisabledRequest request) {
+        final String tenantId = tenantService.resolveTenant();
         return HttpResponse.accepted().body(
-            triggerStateService.toggleAllByIds(toTriggerIds(request.triggers(), tenantService.resolveTenant()), request.disabled(), request.recoverMissedSchedules())
+            triggerStateService.toggleAllByIds(currentUserId(), tenantId, toTriggerIds(request.triggers(), tenantId), request.disabled(), request.recoverMissedSchedules())
         );
     }
 
@@ -410,7 +415,7 @@ public class TriggerController {
             description = "When true, missed schedules are recovered on enable according to the trigger's recoverMissedSchedules configuration; omitted or false, missed schedules are skipped"
         ) @QueryValue @Nullable Boolean recoverMissedSchedules) {
         return HttpResponse.accepted().body(
-            triggerStateService.toggleAllMatching(tenantService.resolveTenant(), QueryFilterUtils.rewriteTriggerDateFilters(filters, null), disabled, recoverMissedSchedules)
+            triggerStateService.toggleAllMatching(currentUserId(), tenantService.resolveTenant(), QueryFilterUtils.rewriteTriggerDateFilters(filters, null), disabled, recoverMissedSchedules)
         );
     }
     // endregion
@@ -437,6 +442,14 @@ public class TriggerController {
 
     private static List<TriggerId> toTriggerIds(List<ApiTriggerId> triggers, String tenantId) {
         return triggers.stream().map(t -> t.toTriggerId(tenantId)).toList();
+    }
+
+    /**
+     * The authenticated user's id, or {@code null} when OSS has no real user model. Overridden in EE.
+     */
+    @Nullable
+    protected String currentUserId() {
+        return null;
     }
 
     private ApiTriggerAndState toApiTriggerAndState(TriggerState tc) {

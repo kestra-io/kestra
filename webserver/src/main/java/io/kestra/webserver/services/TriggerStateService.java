@@ -3,6 +3,7 @@ package io.kestra.webserver.services;
 import java.time.Duration;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.TimeoutException;
 import java.util.function.BiConsumer;
@@ -32,6 +33,7 @@ import io.kestra.core.scheduler.model.TriggerState;
 import io.kestra.core.scheduler.model.TriggerType;
 import io.kestra.core.scheduler.queue.TriggerEventQueue;
 import io.kestra.core.server.AsyncOperationType;
+import io.kestra.core.server.CoreAsyncOperationType;
 import io.kestra.core.services.AsyncOperationWaiter;
 import io.kestra.core.services.NotificationService;
 import io.kestra.core.utils.IdUtils;
@@ -115,14 +117,14 @@ public class TriggerStateService {
      * @param triggers the trigger identifiers.
      * @return an async-operation response with the count of unlock events emitted.
      */
-    public ApiAsyncOperationResponse unlockAllByIds(List<TriggerId> triggers) {
+    public ApiAsyncOperationResponse unlockAllByIds(@Nullable String userId, String tenantId, List<TriggerId> triggers) {
         List<TriggerId> lockedIds = triggers.stream()
             .filter(id -> triggerRepository.findByIdWithoutAcl(id).map(TriggerStateService::isUnlockable).orElse(false))
             .filter(this::isFlowBackedTrigger)
             .toList();
         return submitBatch(
-            lockedIds, (id, operationId) -> triggerEventQueue.send(new ResetTrigger(id).withOperationId(operationId)),
-            AsyncOperationType.TRIGGER_UNLOCK
+            userId, tenantId, lockedIds, (id, operationId) -> triggerEventQueue.send(new ResetTrigger(id).withOperationId(operationId)),
+            CoreAsyncOperationType.TRIGGER_UNLOCK
         );
     }
 
@@ -134,7 +136,7 @@ public class TriggerStateService {
      * @param filters the query filters.
      * @return an async-operation response with the count of unlock events emitted.
      */
-    public ApiAsyncOperationResponse unlockAllMatching(String tenant, List<QueryFilter> filters) {
+    public ApiAsyncOperationResponse unlockAllMatching(@Nullable String userId, String tenant, List<QueryFilter> filters) {
         List<TriggerId> lockedIds = triggerRepository.find(tenant, filters)
             .filter(TriggerStateService::isUnlockable)
             .map(TriggerId::of)
@@ -143,8 +145,8 @@ public class TriggerStateService {
             .blockOptional()
             .orElse(List.of());
         return submitBatch(
-            lockedIds, (id, operationId) -> triggerEventQueue.send(new ResetTrigger(id).withOperationId(operationId)),
-            AsyncOperationType.TRIGGER_UNLOCK
+            userId, tenant, lockedIds, (id, operationId) -> triggerEventQueue.send(new ResetTrigger(id).withOperationId(operationId)),
+            CoreAsyncOperationType.TRIGGER_UNLOCK
         );
     }
 
@@ -220,40 +222,40 @@ public class TriggerStateService {
     /**
      * Pauses backfills for the given triggers. Non-existing triggers are silently skipped.
      */
-    public ApiAsyncOperationResponse pauseAllBackfillsByIds(List<TriggerId> triggers) {
+    public ApiAsyncOperationResponse pauseAllBackfillsByIds(@Nullable String userId, String tenantId, List<TriggerId> triggers) {
         return submitExistingBatch(
-            triggers, (id, operationId) -> triggerEventQueue.send(new SetPauseBackfillTrigger(id, true).withOperationId(operationId)),
-            AsyncOperationType.BACKFILL_PAUSE
+            userId, tenantId, triggers, (id, operationId) -> triggerEventQueue.send(new SetPauseBackfillTrigger(id, true).withOperationId(operationId)),
+            CoreAsyncOperationType.BACKFILL_PAUSE
         );
     }
 
     /**
      * Pauses backfills for triggers matching the given filters.
      */
-    public ApiAsyncOperationResponse pauseAllBackfillsMatching(String tenant, List<QueryFilter> filters) {
+    public ApiAsyncOperationResponse pauseAllBackfillsMatching(@Nullable String userId, String tenant, List<QueryFilter> filters) {
         return submitMatching(
-            tenant, filters, (id, operationId) -> triggerEventQueue.send(new SetPauseBackfillTrigger(id, true).withOperationId(operationId)),
-            AsyncOperationType.BACKFILL_PAUSE
+            userId, tenant, filters, (id, operationId) -> triggerEventQueue.send(new SetPauseBackfillTrigger(id, true).withOperationId(operationId)),
+            CoreAsyncOperationType.BACKFILL_PAUSE
         );
     }
 
     /**
      * Resumes backfills for the given triggers. Non-existing triggers are silently skipped.
      */
-    public ApiAsyncOperationResponse resumeAllBackfillsByIds(List<TriggerId> triggers) {
+    public ApiAsyncOperationResponse resumeAllBackfillsByIds(@Nullable String userId, String tenantId, List<TriggerId> triggers) {
         return submitExistingBatch(
-            triggers, (id, operationId) -> triggerEventQueue.send(new SetPauseBackfillTrigger(id, false).withOperationId(operationId)),
-            AsyncOperationType.BACKFILL_RESUME
+            userId, tenantId, triggers, (id, operationId) -> triggerEventQueue.send(new SetPauseBackfillTrigger(id, false).withOperationId(operationId)),
+            CoreAsyncOperationType.BACKFILL_RESUME
         );
     }
 
     /**
      * Resumes backfills for triggers matching the given filters.
      */
-    public ApiAsyncOperationResponse resumeAllBackfillsMatching(String tenant, List<QueryFilter> filters) {
+    public ApiAsyncOperationResponse resumeAllBackfillsMatching(@Nullable String userId, String tenant, List<QueryFilter> filters) {
         return submitMatching(
-            tenant, filters, (id, operationId) -> triggerEventQueue.send(new SetPauseBackfillTrigger(id, false).withOperationId(operationId)),
-            AsyncOperationType.BACKFILL_RESUME
+            userId, tenant, filters, (id, operationId) -> triggerEventQueue.send(new SetPauseBackfillTrigger(id, false).withOperationId(operationId)),
+            CoreAsyncOperationType.BACKFILL_RESUME
         );
     }
 
@@ -276,20 +278,20 @@ public class TriggerStateService {
     /**
      * Deletes backfills for the given triggers. Non-existing triggers are silently skipped.
      */
-    public ApiAsyncOperationResponse deleteAllBackfillsByIds(List<TriggerId> triggers) {
+    public ApiAsyncOperationResponse deleteAllBackfillsByIds(@Nullable String userId, String tenantId, List<TriggerId> triggers) {
         return submitExistingBatch(
-            triggers, (id, operationId) -> triggerEventQueue.send(new DeleteBackfillTrigger(id).withOperationId(operationId)),
-            AsyncOperationType.BACKFILL_DELETE
+            userId, tenantId, triggers, (id, operationId) -> triggerEventQueue.send(new DeleteBackfillTrigger(id).withOperationId(operationId)),
+            CoreAsyncOperationType.BACKFILL_DELETE
         );
     }
 
     /**
      * Deletes backfills for triggers matching the given filters.
      */
-    public ApiAsyncOperationResponse deleteAllBackfillsMatching(String tenant, List<QueryFilter> filters) {
+    public ApiAsyncOperationResponse deleteAllBackfillsMatching(@Nullable String userId, String tenant, List<QueryFilter> filters) {
         return submitMatching(
-            tenant, filters, (id, operationId) -> triggerEventQueue.send(new DeleteBackfillTrigger(id).withOperationId(operationId)),
-            AsyncOperationType.BACKFILL_DELETE
+            userId, tenant, filters, (id, operationId) -> triggerEventQueue.send(new DeleteBackfillTrigger(id).withOperationId(operationId)),
+            CoreAsyncOperationType.BACKFILL_DELETE
         );
     }
 
@@ -311,20 +313,20 @@ public class TriggerStateService {
     /**
      * Deletes all triggers for the given identifiers. Non-existing triggers are silently skipped.
      */
-    public ApiAsyncOperationResponse deleteAllByIds(List<TriggerId> triggers) {
+    public ApiAsyncOperationResponse deleteAllByIds(@Nullable String userId, String tenantId, List<TriggerId> triggers) {
         return submitExistingBatch(
-            triggers, (id, operationId) -> triggerEventQueue.send(new TriggerDeleted(id).withOperationId(operationId)),
-            AsyncOperationType.TRIGGER_DELETE
+            userId, tenantId, triggers, (id, operationId) -> triggerEventQueue.send(new TriggerDeleted(id).withOperationId(operationId)),
+            CoreAsyncOperationType.TRIGGER_DELETE
         );
     }
 
     /**
      * Deletes all triggers matching the given filters.
      */
-    public ApiAsyncOperationResponse deleteAllMatching(String tenant, List<QueryFilter> filters) {
+    public ApiAsyncOperationResponse deleteAllMatching(@Nullable String userId, String tenant, List<QueryFilter> filters) {
         return submitMatching(
-            tenant, filters, (id, operationId) -> triggerEventQueue.send(new TriggerDeleted(id).withOperationId(operationId)),
-            AsyncOperationType.TRIGGER_DELETE
+            userId, tenant, filters, (id, operationId) -> triggerEventQueue.send(new TriggerDeleted(id).withOperationId(operationId)),
+            CoreAsyncOperationType.TRIGGER_DELETE
         );
     }
 
@@ -349,7 +351,7 @@ public class TriggerStateService {
     /**
      * Enables or disables the given triggers. Missing triggers are silently skipped.
      */
-    public ApiAsyncOperationResponse toggleAllByIds(List<TriggerId> triggers, boolean disabled, @Nullable Boolean recoverMissedSchedules) {
+    public ApiAsyncOperationResponse toggleAllByIds(@Nullable String userId, String tenantId, List<TriggerId> triggers, boolean disabled, @Nullable Boolean recoverMissedSchedules) {
         List<TriggerId> toggleable = triggers.stream()
             .filter(id ->
             {
@@ -362,33 +364,34 @@ public class TriggerStateService {
             })
             .toList();
         return submitBatch(
-            toggleable, (id, operationId) -> triggerEventQueue.send(new SetDisableTrigger(id, disabled, recoverMissedSchedules).withOperationId(operationId)),
-            disabled ? AsyncOperationType.TRIGGER_DISABLE : AsyncOperationType.TRIGGER_ENABLE
+            userId, tenantId, toggleable, (id, operationId) -> triggerEventQueue.send(new SetDisableTrigger(id, disabled, recoverMissedSchedules).withOperationId(operationId)),
+            disabled ? CoreAsyncOperationType.TRIGGER_DISABLE : CoreAsyncOperationType.TRIGGER_ENABLE
         );
     }
 
     /**
      * Enables or disables triggers matching the given filters.
      */
-    public ApiAsyncOperationResponse toggleAllMatching(String tenant, List<QueryFilter> filters, boolean disabled, @Nullable Boolean recoverMissedSchedules) {
+    public ApiAsyncOperationResponse toggleAllMatching(@Nullable String userId, String tenant, List<QueryFilter> filters, boolean disabled, @Nullable Boolean recoverMissedSchedules) {
         String operationId = IdUtils.create();
-        int count = triggerRepository.find(tenant, filters)
+        List<String> toggledIds = triggerRepository.find(tenant, filters)
             .map(trigger ->
             {
                 TriggerId id = TriggerId.of(trigger);
                 try {
                     validateToggleable(id);
                     triggerEventQueue.send(new SetDisableTrigger(id, disabled, recoverMissedSchedules).withOperationId(operationId));
-                    return 1;
+                    return id.uid();
                 } catch (NotFoundException ignored) {
-                    return 0;
+                    return null;
                 }
             })
-            .reduce(Integer::sum)
+            .filter(Objects::nonNull)
+            .collectList()
             .blockOptional()
-            .orElse(0);
-        notificationService.notifyAsyncOperation(operationId, disabled ? AsyncOperationType.TRIGGER_DISABLE : AsyncOperationType.TRIGGER_ENABLE, count);
-        return new ApiAsyncOperationResponse(operationId, count);
+            .orElse(List.of());
+        notificationService.notifyAsyncOperation(userId, tenant, operationId, disabled ? CoreAsyncOperationType.TRIGGER_DISABLE : CoreAsyncOperationType.TRIGGER_ENABLE, toggledIds);
+        return new ApiAsyncOperationResponse(operationId, toggledIds.size());
     }
 
     /**
@@ -467,29 +470,29 @@ public class TriggerStateService {
         }
     }
 
-    private ApiAsyncOperationResponse submitExistingBatch(List<TriggerId> triggers, BiConsumer<TriggerId, String> emit, AsyncOperationType operationType) {
+    private ApiAsyncOperationResponse submitExistingBatch(@Nullable String userId, String tenantId, List<TriggerId> triggers, BiConsumer<TriggerId, String> emit, AsyncOperationType operationType) {
         List<TriggerId> existing = triggers.stream()
             .filter(id -> triggerRepository.findByIdWithoutAcl(id).isPresent())
             .toList();
-        return submitBatch(existing, emit, operationType);
+        return submitBatch(userId, tenantId, existing, emit, operationType);
     }
 
-    private ApiAsyncOperationResponse submitBatch(List<TriggerId> triggers, BiConsumer<TriggerId, String> emit, AsyncOperationType operationType) {
+    private ApiAsyncOperationResponse submitBatch(@Nullable String userId, String tenantId, List<TriggerId> triggers, BiConsumer<TriggerId, String> emit, AsyncOperationType operationType) {
         String operationId = IdUtils.create();
-        notificationService.notifyAsyncOperation(operationId, operationType, triggers.size());
+        notificationService.notifyAsyncOperation(userId, tenantId, operationId, operationType, triggers.stream().map(TriggerId::uid).toList());
         for (TriggerId id : triggers) {
             emit.accept(id, operationId);
         }
         return new ApiAsyncOperationResponse(operationId, triggers.size());
     }
 
-    private ApiAsyncOperationResponse submitMatching(String tenant, List<QueryFilter> filters, BiConsumer<TriggerId, String> emit, AsyncOperationType operationType) {
+    private ApiAsyncOperationResponse submitMatching(@Nullable String userId, String tenant, List<QueryFilter> filters, BiConsumer<TriggerId, String> emit, AsyncOperationType operationType) {
         List<TriggerId> ids = triggerRepository.find(tenant, filters)
             .map(TriggerId::of)
             .collectList()
             .blockOptional()
             .orElse(List.of());
-        return submitBatch(ids, emit, operationType);
+        return submitBatch(userId, tenant, ids, emit, operationType);
     }
 
     /**

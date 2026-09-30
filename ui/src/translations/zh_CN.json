@@ -292,7 +292,22 @@
       "help": "帮助",
       "issue": "问题",
       "demo": "演示",
-      "star": "点赞我们"
+      "star": "点赞我们",
+      "notifications": "通知"
+    },
+    "notifications": {
+      "heading": "通知",
+      "ongoing": "进行中",
+      "markAllRead": "全部标记为已读",
+      "markUnread": "标记为未读",
+      "markRead": "标记为已读",
+      "empty": "暂无通知",
+      "emptyUnread": "没有未读通知",
+      "tabs": {
+        "all": "全部",
+        "unread": "未读"
+      },
+      "bellAriaLabel": "通知"
     },
     "source": "来源",
     "home": "首页",

@@ -477,6 +477,8 @@ export type AssetsInOut = {
 
 export type AsyncOperationType = 'EXECUTION_KILL' | 'EXECUTION_PAUSE' | 'EXECUTION_RESUME' | 'EXECUTION_RESTART' | 'EXECUTION_REPLAY' | 'EXECUTION_FORCE_RUN' | 'EXECUTION_UNQUEUE' | 'EXECUTION_CHANGE_STATUS' | 'EXECUTION_SET_LABELS' | 'TRIGGER_UNLOCK' | 'TRIGGER_DELETE' | 'TRIGGER_DISABLE' | 'TRIGGER_ENABLE' | 'BACKFILL_PAUSE' | 'BACKFILL_RESUME' | 'BACKFILL_DELETE';
 
+export type AsyncOperationTypeResourceType = 'EXECUTION' | 'TRIGGER';
+
 /**
  * A backfill configuration.
  */
@@ -1570,6 +1572,7 @@ export type NamespaceLight = {
 };
 
 export type Notification = {
+    resourceType?: AsyncOperationTypeResourceType | null;
     outcome?: NotificationOutcome | null;
     ongoing?: boolean;
     id?: string;
@@ -2046,7 +2049,7 @@ export type QueryFilter = {
     children?: Array<QueryFilter>;
 };
 
-export type QueryFilterField = 'q' | 'scope' | 'namespace' | 'kind' | 'POLICY_SCOPE' | 'ENFORCEMENT' | 'labels' | 'tags' | 'metadata' | 'assetExpiry' | 'flowId' | 'flowRevision' | 'id' | 'assetId' | 'type' | 'action' | 'created' | 'updated' | 'startDate' | 'endDate' | 'expirationDate' | 'state' | 'status' | 'SEVERITY' | 'ASSIGNEE' | 'email' | 'timeRange' | 'parentId' | 'triggerExecutionId' | 'triggerId' | 'triggerState' | 'executionId' | 'taskId' | 'taskRunId' | 'attemptNumber' | 'childFilter' | 'workerId' | 'existingOnly' | 'userId' | 'resources' | 'details' | 'level' | 'path' | 'parentPath' | 'version' | 'enabled' | 'username' | 'name' | 'groupList' | 'external_id' | 'expired_at' | 'instance_owner' | 'source' | 'locked' | 'lastTriggeredDate' | 'nextExecutionDate' | 'artifactId';
+export type QueryFilterField = 'q' | 'scope' | 'namespace' | 'kind' | 'POLICY_SCOPE' | 'ENFORCEMENT' | 'labels' | 'tags' | 'metadata' | 'assetExpiry' | 'flowId' | 'flowRevision' | 'id' | 'assetId' | 'type' | 'action' | 'created' | 'updated' | 'startDate' | 'endDate' | 'expirationDate' | 'state' | 'status' | 'SEVERITY' | 'ASSIGNEE' | 'email' | 'timeRange' | 'parentId' | 'triggerExecutionId' | 'triggerId' | 'triggerState' | 'executionId' | 'taskId' | 'operationId' | 'operationOutcome' | 'taskRunId' | 'attemptNumber' | 'childFilter' | 'workerId' | 'existingOnly' | 'userId' | 'resources' | 'details' | 'level' | 'path' | 'parentPath' | 'version' | 'enabled' | 'username' | 'name' | 'groupList' | 'external_id' | 'expired_at' | 'instance_owner' | 'source' | 'locked' | 'lastTriggeredDate' | 'nextExecutionDate' | 'artifactId';
 
 export type QueryFilterLogical = 'and' | 'or';
 

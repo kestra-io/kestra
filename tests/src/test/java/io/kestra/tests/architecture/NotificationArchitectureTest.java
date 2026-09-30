@@ -13,6 +13,7 @@ import com.tngtech.archunit.lang.ArchRule;
 import com.tngtech.archunit.lang.ConditionEvents;
 import com.tngtech.archunit.lang.SimpleConditionEvent;
 
+import io.kestra.core.repositories.NotificationItemRepositoryInterface;
 import io.kestra.core.repositories.NotificationRepositoryInterface;
 import io.kestra.core.services.NotificationService;
 
@@ -28,22 +29,25 @@ public class NotificationArchitectureTest {
     @ArchTest
     public static final ArchRule notification_writes_go_through_the_service = noClasses()
         .that().areNotAssignableTo(NotificationRepositoryInterface.class)
+        .and().areNotAssignableTo(NotificationItemRepositoryInterface.class)
         .and().doNotBelongToAnyOf(NotificationService.class)
         .should().callCodeUnitWhere(
             DescribedPredicate.describe(
-                "a Notification repository write method is called",
-                (JavaAccess<?> access) -> access.getTarget().getOwner().isAssignableTo(NotificationRepositoryInterface.class)
+                "a Notification or NotificationItem repository write method is called",
+                (JavaAccess<?> access) -> (access.getTarget().getOwner().isAssignableTo(NotificationRepositoryInterface.class)
+                    || access.getTarget().getOwner().isAssignableTo(NotificationItemRepositoryInterface.class))
                     && WRITE_METHODS.matcher(access.getTarget().getName()).matches()
             )
         )
         .because(
-            "every Notification write must go through " + NotificationService.class.getName()
+            "every Notification/NotificationItem write must go through " + NotificationService.class.getName()
                 + " (correlation-key upsert and timestamp handling)"
         );
 
     @ArchTest
     public static final ArchRule notification_repository_methods_are_classified = methods()
         .that().areDeclaredIn(NotificationRepositoryInterface.class)
+        .or().areDeclaredIn(NotificationItemRepositoryInterface.class)
         .should(new ArchCondition<>("match a read or write method name pattern") {
             @Override
             public void check(JavaMethod method, ConditionEvents events) {

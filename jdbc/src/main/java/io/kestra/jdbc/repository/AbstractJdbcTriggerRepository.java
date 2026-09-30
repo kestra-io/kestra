@@ -144,8 +144,7 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcCrudRepo
 
     @Override
     public ArrayListTotal<TriggerState> find(Pageable pageable, String tenantId, List<QueryFilter> filters) {
-        var condition = filter(filters, null, Resource.TRIGGER);
-        return findPage(pageable, tenantId, condition);
+        return findPage(pageable, tenantId, this.computeFindCondition(filters, tenantId));
     }
 
     @Override
@@ -169,8 +168,44 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcCrudRepo
 
     @Override
     public Flux<TriggerState> find(String tenantId, List<QueryFilter> filters) {
-        var condition = filter(filters, null, Resource.TRIGGER);
-        return findAsync(tenantId, condition);
+        return findAsync(tenantId, this.computeFindCondition(filters, tenantId));
+    }
+
+    private Condition computeFindCondition(List<QueryFilter> filters, String tenantId) {
+        // Validated here, on the full list, because OPERATION_ID/OPERATION_OUTCOME leaves are
+        // pulled out below before `remainingFilters` ever reaches the nested `filter(...)` call
+        // that would otherwise run this same validation.
+        QueryFilter.validateQueryFilters(filters, Resource.TRIGGER);
+
+        List<QueryFilter> operationFilters = filters == null ? List.of()
+            : filters.stream()
+                .filter(f -> f.isLeaf() && (f.field() == QueryFilter.Field.OPERATION_ID || f.field() == QueryFilter.Field.OPERATION_OUTCOME))
+                .toList();
+        List<QueryFilter> remainingFilters = filters == null ? null
+            : filters.stream()
+                .filter(f -> !operationFilters.contains(f))
+                .toList();
+
+        return filter(remainingFilters, null, Resource.TRIGGER).and(combinedNotificationItemCondition(tenantId, operationFilters));
+    }
+
+    /**
+     * Same pattern as {@code AbstractJdbcExecutionRepository.combinedNotificationItemCondition}:
+     * operationId/operationOutcome must match the same notification_items row, combined into a
+     * single tenant-scoped IN subquery rather than built as two independent conditions.
+     */
+    private static Condition combinedNotificationItemCondition(String tenantId, List<QueryFilter> operationFilters) {
+        if (operationFilters.isEmpty()) {
+            return DSL.noCondition();
+        }
+        Condition combined = operationFilters.stream()
+            .map(f -> AbstractJdbcRepository.notificationItemLeafCondition(f.field(), f.value(), f.operation()))
+            .reduce(AbstractJdbcRepository.TENANT_ID_FIELD.eq(tenantId), Condition::and);
+        return AbstractJdbcRepository.KEY_FIELD.in(
+            DSL.select(AbstractJdbcRepository.notificationItemResourceIdField())
+                .from(AbstractJdbcRepository.NOTIFICATION_ITEMS_TABLE)
+                .where(combined)
+        );
     }
 
     protected Condition fullTextCondition(String query) {

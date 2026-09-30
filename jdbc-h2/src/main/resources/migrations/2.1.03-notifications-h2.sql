@@ -2,7 +2,7 @@ CREATE TABLE IF NOT EXISTS notifications (
     "key"           VARCHAR(250) NOT NULL PRIMARY KEY,
     "value"         TEXT         NOT NULL,
     "id"            VARCHAR(150) NOT NULL GENERATED ALWAYS AS (JQ_STRING("value", '.id')),
-    "user_id"       VARCHAR(150) NOT NULL GENERATED ALWAYS AS (JQ_STRING("value", '.userId')),
+    "user_id"       VARCHAR(150) GENERATED ALWAYS AS (JQ_STRING("value", '.userId')),
     "tenant_id"     VARCHAR(150) GENERATED ALWAYS AS (JQ_STRING("value", '.tenantId')),
     "type"          VARCHAR(50)  NOT NULL GENERATED ALWAYS AS (JQ_STRING("value", '.type')),
     "read"          BOOL         NOT NULL GENERATED ALWAYS AS (JQ_BOOLEAN("value", '.read')),

@@ -161,6 +161,14 @@ export const useTriggerFilter = (): ComputedRef<FilterConfiguration> => {
                     valueType: "select",
                     valueProvider: async () => VALUES.TRIGGER_KINDS,
                 },
+                {
+                    // QueryFilter.Field.OPERATION_ID supports EQUALS only, so there is no comparator to offer.
+                    key: "operationId",
+                    label: t("filter.operationId.label"),
+                    description: t("filter.operationId.description"),
+                    comparators: [Comparators.EQUALS],
+                    valueType: "text",
+                },
             ],
         }
     })

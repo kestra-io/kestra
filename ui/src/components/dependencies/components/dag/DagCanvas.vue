@@ -44,17 +44,19 @@
 <script setup lang="ts">
     import {computed, nextTick, provide, ref, useTemplateRef, watch} from "vue"
     import {useResizeObserver} from "@vueuse/core"
-    import {VueFlow, useVueFlow, Position, MarkerType} from "@vue-flow/core"
+    import {VueFlow, useVueFlow, Position} from "@vue-flow/core"
     import {Background} from "@vue-flow/background"
     import {GRAPH_BACKGROUND, MIN_ZOOM, untilNodesMeasured, useScreenshot} from "@kestra-io/topology"
     import {cssVar, stringUtils} from "@kestra-io/design-system"
     import {useTheme} from "../../../../utils/utils"
     import AssetNode from "./AssetNode.vue"
     import {computeDagLayout} from "../../utils/dagLayout"
-    import {computeTrace, traceEdgeKey} from "../../utils/dagTrace"
+    import {computeTrace, extendTraceWithDirectEdges, traceEdgeKey} from "../../utils/dagTrace"
     import {DAG_CARD, DAG_SELECTED, DAG_HOVERED, DAG_TRACED, DAG_SHOWN} from "../../utils/dagConstants"
     import {ASSET, nodesOf, edgesOf} from "../../utils/types"
     import type {Element} from "../../utils/types"
+    import {isLineageEdge} from "../../utils/relationKind"
+    import {dagEdgeStyle} from "../../utils/dagEdge"
 
     const props = defineProps<{
         elements: Element[];
@@ -92,12 +94,15 @@
         nodes.value.filter((node) => node.metadata.subtype !== ASSET).map((node) => node.id),
     ))
 
+    // PART_OF and RELATED are not data-flow steps, so ranking the DAG through them misplaces assets.
+    const lineageEdges = computed(() => edges.value.filter((edge) => isLineageEdge(edge.kind)))
+
     const layout = computed(() => {
-        const produced = new Set(edges.value.map((edge) => edge.source))
+        const produced = new Set(lineageEdges.value.map((edge) => edge.source))
 
         return computeDagLayout(
             nodes.value.map((node) => node.id),
-            edges.value.map(({source, target}) => ({source, target})),
+            lineageEdges.value.map(({source, target}) => ({source, target})),
             {
                 columnGap: DAG_CARD.width + 120,
                 rowGap: DAG_CARD.height + 32,
@@ -142,10 +147,14 @@
         }]
     }))
 
-    const trace = computed(() => computeTrace(
+    const focusID = computed(() => props.hovered ?? props.selected)
+
+    // The trace stays lineage-only; direct PART_OF/RELATED neighbours are folded in one hop afterwards.
+    const trace = computed(() => extendTraceWithDirectEdges(
+        computeTrace(lineageEdges.value, focusID.value, (id) => flowNodeIDs.value.has(id)),
         edges.value,
-        props.hovered ?? props.selected,
-        (id) => flowNodeIDs.value.has(id),
+        focusID.value,
+        isLineageEdge,
     ))
 
     const vfEdges = computed(() => {
@@ -160,23 +169,16 @@
                 : false
             const source = positions.get(edge.source)
             const target = positions.get(edge.target)
-            const backwards = !!source && !!target && source.x > target.x
-            const stroke = cssVar(onPath ? "--ks-text-link" : "--ks-border-default")
+            // Column order is arbitrary for PART_OF/RELATED, so only lineage edges can run backwards.
+            const backwards = isLineageEdge(edge.kind) && !!source && !!target && source.x > target.x
+            const styled = dagEdgeStyle(edge, {onPath, dimmed: outsideFilter || (!!lit && !onPath), backwards}, cssVar)
 
             return {
                 id: edge.id,
                 source: edge.source,
                 target: edge.target,
                 type: "smoothstep",
-                markerEnd: {type: MarkerType.ArrowClosed, color: stroke},
-                style: {
-                    stroke,
-                    strokeWidth: onPath ? 2 : 1,
-                    strokeDasharray: backwards ? "6 4" : undefined,
-                    opacity: outsideFilter || (lit && !onPath)
-                        ? 0.4
-                        : backwards && !onPath ? 0.65 : 1,
-                },
+                ...styled,
             }
         })
     })

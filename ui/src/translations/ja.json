@@ -2229,6 +2229,13 @@
           "failed": "失敗",
           "unknown": "追跡されていません"
         },
+        "kind": {
+          "produces": "生成",
+          "consumed_by": "消費元",
+          "upstream_of": "アップストリームの",
+          "part_of": "一部",
+          "related": "関連"
+        },
         "summary": {
           "fresh": "すべての {n} Asset は最新です",
           "issues": "{n} ステーブル",

@@ -7,6 +7,13 @@ name: Translations - Generate for a pull request
 # PR number in the Actions tab and the run generates the missing and stale translations for that
 # head.
 #
+# A pull request from a fork is untrusted, so none of its code runs here. The `generate` job checks
+# out the branch this workflow was dispatched on, installs its dependencies without lifecycle scripts,
+# and copies in only the data files of the pull request (the language JSON files, the fingerprints and
+# the design-system `*.locale.ts` files, which the generator parses without evaluating). It holds the
+# Gemini key and a read-only token. The `publish` job holds the write tokens and never runs anything
+# from the pull request: it checks that the patch touches only those data files, applies it and pushes.
+#
 # Pushing to a fork needs a token with write access to the fork (GITHUB_TOKEN never has it). When the
 # PR allows edits from maintainers and the TRANSLATIONS_PUSH_TOKEN secret holds a maintainer token,
 # the commit is pushed straight onto the PR branch; otherwise the run leaves the commit as a patch
@@ -23,101 +30,218 @@ concurrency:
   group: translations-generate-for-pr-${{ inputs.pr_number }}
   cancel-in-progress: false
 
+permissions:
+  contents: read
+
 jobs:
   generate:
     name: 'Translations - Generate for PR #${{ inputs.pr_number }}'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     permissions:
-      contents: write
-      pull-requests: write
+      contents: read
+      pull-requests: read
+    outputs:
+      changed: ${{ steps.patch.outputs.changed }}
+      head_sha: ${{ steps.pr.outputs.head_sha }}
     env:
-      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
       GH_TOKEN: ${{ github.token }}
       PR: ${{ inputs.pr_number }}
     steps:
-      - uses: actions/checkout@v7
+      - name: Validate the pull request number
+        run: |
+          if ! [[ "$PR" =~ ^[0-9]+$ ]]; then
+            echo "::error::The pull request number must be an integer."
+            exit 1
+          fi
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         name: Checkout
         with:
           fetch-depth: 0
+          persist-credentials: false
 
-      - name: Resolve the pull request
+      - name: Resolve the pull request head
         id: pr
         run: |
-          gh pr view "$PR" --json headRefName,headRepositoryOwner,headRepository,isCrossRepository,maintainerCanModify,url \
-            --jq '"head_ref=\(.headRefName)\nhead_repo=\(.headRepositoryOwner.login)/\(.headRepository.name)\ncross=\(.isCrossRepository)\nmaintainer_can_modify=\(.maintainerCanModify)\nurl=\(.url)"' >> "$GITHUB_OUTPUT"
-          cat "$GITHUB_OUTPUT"
+          HEAD_SHA=$(gh pr view "$PR" --json headRefOid --jq .headRefOid)
+          echo "head_sha=$HEAD_SHA" >> "$GITHUB_OUTPUT"
+          git fetch --no-tags "https://github.com/$GITHUB_REPOSITORY.git" "pull/$PR/head"
+          [ "$(git rev-parse FETCH_HEAD)" = "$HEAD_SHA" ]
 
-      - name: Check out the pull request head
+      # A release branch without a design system has no `*.locale.ts` files to take.
+      - name: List the data files of a pull request
         run: |
-          gh pr checkout "$PR"
-          git log --oneline -1
+          FILES="ui/src/translations/*.json ui/scripts/translations/fingerprints*.json"
+          if [ -d ui/packages/design-system ]; then
+            FILES="$FILES :(glob)ui/packages/design-system/**/*.locale.ts"
+          fi
+          echo "DATA_FILES=$FILES" >> "$GITHUB_ENV"
 
-      - uses: actions/setup-node@v7
+      # Only data goes in: the scripts that run below stay the ones of the dispatched branch. A symlink
+      # would make the generator read or overwrite a file outside the pull request's own data.
+      - name: Take the data files of the pull request
+        env:
+          HEAD_SHA: ${{ steps.pr.outputs.head_sha }}
+        run: |
+          read -ra PATHSPECS <<< "$DATA_FILES"
+          git checkout "$HEAD_SHA" -- "${PATHSPECS[@]}"
+          if git ls-files -s -- "${PATHSPECS[@]}" | grep -q '^120000'; then
+            echo "::error::The pull request adds a symbolic link where a translation file is expected."
+            exit 1
+          fi
+          git write-tree > "$RUNNER_TEMP/overlay-tree"
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version-file: 'ui/.nvmrc'
 
       - name: Install Node dependencies
-        run: npm ci
+        run: npm ci --ignore-scripts
         working-directory: ui
 
       - name: Generate missing and stale translations
         run: npm run translations:generate
         working-directory: ui
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+
+      - name: Save what the generator changed as a patch
+        id: patch
+        run: |
+          read -ra PATHSPECS <<< "$DATA_FILES"
+          git add -- "${PATHSPECS[@]}"
+          git diff --cached --binary "$(cat "$RUNNER_TEMP/overlay-tree")" > translations.patch
+          if [ -s translations.patch ]; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "Translations are already up to date."
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: steps.patch.outputs.changed == 'true'
+        with:
+          name: translations-generated-pr-${{ inputs.pr_number }}
+          path: translations.patch
+          retention-days: 1
+
+  publish:
+    name: 'Translations - Publish for PR #${{ inputs.pr_number }}'
+    needs: generate
+    if: needs.generate.outputs.changed == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      pull-requests: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      PR: ${{ inputs.pr_number }}
+      HEAD_SHA: ${{ needs.generate.outputs.head_sha }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        name: Checkout
+        with:
+          persist-credentials: false
+
+      - name: Resolve the pull request
+        id: pr
+        run: |
+          gh pr view "$PR" --json headRefName,headRefOid,headRepositoryOwner,headRepository,isCrossRepository,maintainerCanModify \
+            --jq '"head_ref=\(.headRefName)\nhead_sha=\(.headRefOid)\nhead_repo=\(.headRepositoryOwner.login)/\(.headRepository.name)\ncross=\(.isCrossRepository)\nmaintainer_can_modify=\(.maintainerCanModify)"' >> "$GITHUB_OUTPUT"
+          cat "$GITHUB_OUTPUT"
+
+      - name: Check that the pull request has not moved since the generation
+        env:
+          CURRENT_SHA: ${{ steps.pr.outputs.head_sha }}
+        run: |
+          if [ "$CURRENT_SHA" != "$HEAD_SHA" ]; then
+            echo "::error::The pull request head changed while the translations were generated. Run this workflow again."
+            exit 1
+          fi
+
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: translations-generated-pr-${{ inputs.pr_number }}
+
+      - name: Check out the pull request head without running anything from it
+        run: |
+          git fetch --no-tags "https://github.com/$GITHUB_REPOSITORY.git" "pull/$PR/head"
+          git checkout --detach "$HEAD_SHA"
+
+      - name: Check that the patch only touches translation data
+        run: |
+          git apply --numstat translations.patch | cut -f3 > patched-paths
+          if [ ! -s patched-paths ]; then
+            echo "::error::The patch is empty."
+            exit 1
+          fi
+          if grep -vE '^(ui/src/translations/[A-Za-z_-]+\.json|ui/scripts/translations/fingerprints[A-Za-z-]*\.json|ui/packages/design-system/[A-Za-z0-9_./-]+\.locale\.ts)$' patched-paths | grep -q .; then
+            echo "::error::The patch touches files that are not translation data."
+            exit 1
+          fi
+          if grep -qF '..' patched-paths; then
+            echo "::error::The patch touches a path that leaves the translation directories."
+            exit 1
+          fi
+          if git apply --summary translations.patch | grep -vE '^ create mode 100644 ' | grep -q .; then
+            echo "::error::The patch renames, deletes or changes the mode of a file."
+            exit 1
+          fi
 
       - name: Commit them
-        id: commit
         run: |
           git config user.name "GitHub Action"
           git config user.email "actions@github.com"
-          git add ui/src/translations/*.json ui/scripts/translations/fingerprints*.json
-          # Phase 2 of the generator; a release branch without a design system has nothing to stage here.
-          if [ -d ui/packages/design-system ]; then
-            git add ':(glob)ui/packages/design-system/**/*.locale.ts'
-          fi
-          if git diff --cached --quiet; then
-            echo "Translations are already up to date."
-            echo "changed=false" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-          git commit -m "chore(core): localize to languages other than english"
-          echo "changed=true" >> "$GITHUB_OUTPUT"
+          git apply --index translations.patch
+          git -c core.hooksPath=/dev/null commit -m "chore(core): localize to languages other than english"
 
       # Same-repository branches take GITHUB_TOKEN; a fork takes the maintainer token, and only when
       # the contributor allowed maintainer edits. Anything else falls through to the patch below.
       - name: Push onto the pull request branch
         id: push
-        if: steps.commit.outputs.changed == 'true'
         continue-on-error: true
         env:
           PUSH_TOKEN: ${{ steps.pr.outputs.cross == 'true' && secrets.TRANSLATIONS_PUSH_TOKEN || github.token }}
+          CROSS: ${{ steps.pr.outputs.cross }}
+          MAINTAINER_CAN_MODIFY: ${{ steps.pr.outputs.maintainer_can_modify }}
+          HEAD_REPO: ${{ steps.pr.outputs.head_repo }}
+          HEAD_REF: ${{ steps.pr.outputs.head_ref }}
         run: |
-          if [ "${{ steps.pr.outputs.cross }}" = "true" ] && [ "${{ steps.pr.outputs.maintainer_can_modify }}" != "true" ]; then
+          if [ "$CROSS" = "true" ] && [ "$MAINTAINER_CAN_MODIFY" != "true" ]; then
             echo "::warning::The pull request does not allow edits from maintainers, so the commit cannot be pushed to the fork."
             exit 1
           fi
           if [ -z "$PUSH_TOKEN" ]; then
-            echo "::warning::No token can push to ${{ steps.pr.outputs.head_repo }} (set the TRANSLATIONS_PUSH_TOKEN secret to a maintainer token)."
+            echo "::warning::No token can push to $HEAD_REPO (set the TRANSLATIONS_PUSH_TOKEN secret to a maintainer token)."
             exit 1
           fi
-          git push "https://x-access-token:${PUSH_TOKEN}@github.com/${{ steps.pr.outputs.head_repo }}.git" "HEAD:${{ steps.pr.outputs.head_ref }}"
+          if ! [[ "$HEAD_REPO" =~ ^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$ ]]; then
+            echo "::error::Unexpected head repository name."
+            exit 1
+          fi
+          git -c core.hooksPath=/dev/null push "https://x-access-token:${PUSH_TOKEN}@github.com/${HEAD_REPO}.git" "HEAD:refs/heads/${HEAD_REF}"
 
       - name: Save the commit as a patch instead
-        if: steps.commit.outputs.changed == 'true' && steps.push.outcome == 'failure'
+        if: steps.push.outcome == 'failure'
         run: git format-patch -1 HEAD --output-directory translations-patch
 
-      - uses: actions/upload-artifact@v5
-        if: steps.commit.outputs.changed == 'true' && steps.push.outcome == 'failure'
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: steps.push.outcome == 'failure'
         with:
           name: translations-patch-pr-${{ inputs.pr_number }}
           path: translations-patch
           retention-days: 7
 
       - name: Tell the pull request where the patch is
-        if: steps.commit.outputs.changed == 'true' && steps.push.outcome == 'failure'
+        if: steps.push.outcome == 'failure'
+        env:
+          HEAD_REPO: ${{ steps.pr.outputs.head_repo }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           gh pr comment "$PR" --body "$(cat <<COMMENT
-          The missing and stale translations for this pull request were generated by [this run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}), but the commit could not be pushed to \`${{ steps.pr.outputs.head_repo }}\`. Download the \`translations-patch-pr-$PR\` artifact from the run and apply it on your branch:
+          The missing and stale translations for this pull request were generated by [this run]($RUN_URL), but the commit could not be pushed to \`$HEAD_REPO\`. Download the \`translations-patch-pr-$PR\` artifact from the run and apply it on your branch:
 
           \`\`\`bash
           git am translations-patch/*.patch

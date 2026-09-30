@@ -78,9 +78,11 @@
     import {useMiscStore} from "override/stores/misc"
     import {
         CREATE_TASK_FUNCTION_INJECTION_KEY,
+        FIELD_VALIDATION_ERRORS_INJECTION_KEY,
         FULL_SOURCE_INJECTION_KEY,
         UPDATE_YAML_FUNCTION_INJECTION_KEY,
     } from "../injectionKeys"
+    import {useFieldValidationErrors} from "../utils/useFieldValidationErrors"
 
     const flowStore = useFlowStore()
     const miscStore = useMiscStore()
@@ -94,6 +96,8 @@
     const bubbleCreate = inject(CREATE_TASK_FUNCTION_INJECTION_KEY, () => {})
     const flowYaml = inject(FULL_SOURCE_INJECTION_KEY, ref(""))
     const updateYaml = inject(UPDATE_YAML_FUNCTION_INJECTION_KEY, () => {})
+
+    provide(FIELD_VALIDATION_ERRORS_INJECTION_KEY, useFieldValidationErrors(() => []))
 
     const flowId = computed(() => flowStore.flow?.id ?? "")
     const namespace = computed(() => flowStore.flow?.namespace ?? "")

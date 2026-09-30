@@ -1,7 +1,7 @@
 import SourceSearchPreview from "../../../src/components/flows/SourceSearchPreview.vue"
 import type {Meta, StoryObj, Decorator} from "@storybook/vue3-vite"
 import {vueRouter} from "storybook-vue3-router"
-import {useFlowStore} from "../../../src/stores/flow"
+import {useFlowStore, type Flow} from "../../../src/stores/flow"
 
 // The preview's "open in …" buttons resolve named routes the global preview router
 // does not declare, so each story needs them registered or useLink() throws.
@@ -49,10 +49,10 @@ function story(overrides: Record<string, unknown> = {}): StoryObj<typeof SourceS
 }
 
 /** Stubs flowStore.loadFlow so a story renders a given source without a backend. */
-function withLoadedFlow(flow: Record<string, unknown> | null): Decorator {
+function withLoadedFlow(flow: Pick<Flow, "id" | "namespace" | "source"> | null): Decorator {
     return (storyFn) => ({
         setup() {
-            (useFlowStore() as any).loadFlow = () => flow === null ? new Promise(() => {}) : Promise.resolve(flow)
+            useFlowStore().loadFlow = () => flow === null ? new Promise<never>(() => {}) : Promise.resolve(flow as Flow)
         },
         components: {story: storyFn},
         template: "<story />",

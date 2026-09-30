@@ -15,7 +15,8 @@ import {useMiscStore} from "override/stores/misc"
 import {useAuthStore} from "override/stores/auth"
 import fixture from "./Executions.fixture.json"
 import fixtureS from "./Executions-s.fixture.json"
-import {setMockClient, type PagedResultsApiLightExecution} from "@kestra-io/kestra-sdk"
+import {setMockClient, type AxiosLikeClient, type PagedResultsApiLightExecution} from "@kestra-io/kestra-sdk"
+import {mockResponse} from "../../../../.storybook/apiMock"
 
 function getDecorators(data: PagedResultsApiLightExecution) {
     return [
@@ -38,9 +39,9 @@ function getDecorators(data: PagedResultsApiLightExecution) {
                     }
                     mockState.data = data
 
-                    const axios: any = {}
-                    axios.get = function() {
-                        return Promise.resolve({data: []})
+                    const axios: Partial<AxiosLikeClient> = {}
+                    axios.get = async function<T>() {
+                        return mockResponse<T>([])
                     }
                     setMockClient(axios)
                 },

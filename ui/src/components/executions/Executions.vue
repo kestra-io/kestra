@@ -43,14 +43,14 @@
             :currentPage="currentPage"
             :pageSize="currentSize"
             @page-changed="onPageChanged"
-            @sort-change="({prop, order}: {column: any; prop: string | null; order: string | null}) => { if (!props.embed) router.push({query: {...route.query, sort: `${prop}:${order === 'ascending' ? 'asc' : 'desc'}`}}) }"
-            @row-dblclick="(row: any) => router.push({name: dblClickRouteName, params: executionParams(row)})"
+            @sort-change="({prop, order}: {prop: string | null; order: string | null}) => { if (!props.embed) router.push({query: {...route.query, sort: `${prop}:${order === 'ascending' ? 'asc' : 'desc'}`}}) }"
+            @row-dblclick="(row: Execution) => router.push({name: dblClickRouteName, params: executionParams(row)})"
             :selectionMapper="selectionMapper"
             @ready="ready = true"
             :defaultSort="{prop: 'state.startDate', order: 'descending'}"
             :selectable="!hidden?.includes('selection') && canCheck"
             :no-data-text="noDataText ?? $t('no_results.executions')"
-            :rowKey="(row: any) => row.id"
+            :rowKey="(row: Execution) => row.id"
             :fitHeight="fitHeightResolved"
         >
             <template #navbar v-if="isDisplayedTop">
@@ -444,6 +444,7 @@
 
     const {loadInit} = useRestoreUrl()
     import Sections from "../dashboard/sections/Sections.vue"
+    import type {Chart} from "../dashboard/types"
     import TopNavBar from "../../components/layout/TopNavBar.vue"
     import NavBarActionsDropdown from "../../components/layout/NavBarActionsDropdown.vue"
     import NavBarAction from "../../components/layout/NavBarAction.vue"
@@ -474,7 +475,7 @@
     import {useFlowStore} from "../../stores/flow"
     import {useAuthStore} from "override/stores/auth"
     import {useMiscStore} from "override/stores/misc"
-    import {Label, useExecutionsStore} from "../../stores/executions"
+    import {type Execution, type Label, useExecutionsStore} from "../../stores/executions"
     import {getExtraColumns, cellComponents, bulkActionComponents} from "override/components/executions/executionsExtensions"
 
     import {useExecutionFilter} from "../filter/configurations/executionFilter"
@@ -482,7 +483,7 @@
     import {useStateFilter} from "../filter/composables/useStateFilter"
     import YAML_CHART from "../dashboard/assets/executions_timeseries_chart.yaml?raw"
     import {DEFAULT_DASHBOARD} from "../../stores/dashboard"
-    import type {QueryFilter} from "@kestra-io/kestra-sdk"
+    import type {ApiAsyncOperationResponse, BulkResponse, QueryFilter} from "@kestra-io/kestra-sdk"
 
     const {t, te} = useI18n()
     const toast = useToast()
@@ -558,7 +559,7 @@
     const lastRefreshDate = ref(new Date())
     const unqueueDialogVisible = ref(false)
     const changeStatusDialogVisible = ref(false)
-    const actionOptions = ref<Record<string, any>>({})
+    const actionOptions = ref<Record<string, unknown>>({})
     const dblClickRouteName = ref("executions/update")
     const showChart = ref(localStorage.getItem(storageKeys.SHOW_CHART) !== "false")
 
@@ -658,10 +659,10 @@
     const visibleColumns = computed(() =>
         orderedVisibleColumns.value
             .map(prop => allColumns.value.find(c => c.prop === prop))
-            .filter(c => {
-                const condition = (c as {condition?: () => boolean})?.condition
-                return c && (!condition || condition())
-            }) as any[],
+            .filter((c): c is NonNullable<typeof c> => {
+                const condition = (c as {condition?: () => boolean} | undefined)?.condition
+                return Boolean(c && (!condition || condition()))
+            }),
     )
 
     const isColumnSortable = (prop: string) => {
@@ -669,7 +670,7 @@
         return !["labels", "flowRevision", "inputs", "taskRunList.taskId", "trigger", "trigger.variables.executionId"].includes(prop)
     }
 
-    const selectionMapper = (execution: any) => {
+    const selectionMapper = (execution: Execution) => {
         return execution.id
     }
 
@@ -688,7 +689,13 @@
     }
 
     const ready = ref(false)
-    const dataTable = useTemplateRef<any>("dataTable")
+    const dataTable = useTemplateRef<{
+        resetAndReload: () => void;
+        reload: () => void;
+        toggleAllUnselected: () => void;
+        selection?: string[];
+        queryBulkAction?: boolean;
+    }>("dataTable")
     const chartDefaultDuration = computed(() => miscStore.configs?.chartDefaultDuration ?? FALLBACK_TIME_RANGE)
 
     let hasAttemptedTimeRangeWiden = false
@@ -835,16 +842,15 @@
     })
 
     const charts = computed(() => {
-        return [
-            {...YAML_UTILS.parse(YAML_CHART), content: YAML_CHART},
-        ]
+        const chart = YAML_UTILS.parse<Chart>(YAML_CHART)
+        return chart ? [{...chart, content: YAML_CHART}] : []
     })
 
     const lockedFilters = computed<QueryFilter[]>(() =>
         props.labels ? [{field: "labels", operation: "EQUALS", value: props.labels}] : [],
     )
 
-    const filteredLabels = (labels: any[]) => {
+    const filteredLabels = (labels?: Label[]) => {
         const toIgnore = miscStore.configs?.hiddenLabelsPrefixes || []
 
         const queryLabels = route.query?.labels
@@ -855,7 +861,7 @@
         })
     }
 
-    const executionParams = (row: any) => {
+    const executionParams = (row: Execution) => {
         return {
             namespace: row?.namespace,
             flowId: row?.flowId,
@@ -890,12 +896,12 @@
         return new Set(fields)
     })
 
-    const dropUnsupportedFilters = (query: Record<string, any>): Record<string, any> =>
-        keepSupportedFilters(query, supportedFilterFields.value) as Record<string, any>
+    const dropUnsupportedFilters = (query: Record<string, unknown>): Record<string, unknown> =>
+        keepSupportedFilters(query, supportedFilterFields.value)
 
-    const loadQuery = (base: any) => {
+    const loadQuery = (base?: Record<string, unknown>) => {
         const {page: _p, size: _s, sort: _so, ...restQuery} = route.query
-        let queryFilter: Record<string, any> = dropUnsupportedFilters(restQuery)
+        let queryFilter: Record<string, unknown> = dropUnsupportedFilters(restQuery)
 
         if (props.namespace) {
             queryFilter["filters[namespace][PREFIX]"] = props.namespace
@@ -930,28 +936,38 @@
         )
     }
 
-    const affectedCount = (response: any) => response?.count ?? response?.totalItems ?? 0
+    const affectedCount = (response: ApiAsyncOperationResponse | BulkResponse) => {
+        if ("totalItems" in response) {
+            return response.totalItems ?? 0
+        }
+        if ("count" in response) {
+            return response.count ?? 0
+        }
+        return 0
+    }
 
-    const genericConfirmCallback = (queryAction: string, byIdAction: string, success: string, params?: any) => {
-        const actionMap: Record<string, () => any> = {
-            "queryResumeExecution": () => executionsStore.queryResumeExecution,
-            "bulkResumeExecution": () => executionsStore.bulkResumeExecution,
-            "queryPauseExecution": () => executionsStore.queryPauseExecution,
-            "bulkPauseExecution": () => executionsStore.bulkPauseExecution,
-            "queryUnqueueExecution": () => executionsStore.queryUnqueueExecution,
-            "bulkUnqueueExecution": () => executionsStore.bulkUnqueueExecution,
-            "queryForceRunExecution": () => executionsStore.queryForceRunExecution,
-            "bulkForceRunExecution": () => executionsStore.bulkForceRunExecution,
-            "queryRestartExecution": () => executionsStore.queryRestartExecution,
-            "bulkRestartExecution": () => executionsStore.bulkRestartExecution,
-            "queryReplayExecution": () => executionsStore.queryReplayExecution,
-            "bulkReplayExecution": () => executionsStore.bulkReplayExecution,
-            "queryChangeExecutionStatus": () => executionsStore.queryChangeExecutionStatus,
-            "bulkChangeExecutionStatus": () => executionsStore.bulkChangeExecutionStatus,
-            "queryDeleteExecution": () => executionsStore.queryDeleteExecution,
-            "bulkDeleteExecution": () => executionsStore.bulkDeleteExecution,
-            "queryKill": () => executionsStore.queryKill,
-            "bulkKill": () => executionsStore.bulkKill,
+    type BulkActionFn = (options: Record<string, unknown>) => Promise<ApiAsyncOperationResponse | BulkResponse>
+
+    const genericConfirmCallback = (queryAction: string, byIdAction: string, success: string, params?: Record<string, unknown>) => {
+        const actionMap: Record<string, BulkActionFn> = {
+            "queryResumeExecution": executionsStore.queryResumeExecution as BulkActionFn,
+            "bulkResumeExecution": executionsStore.bulkResumeExecution as BulkActionFn,
+            "queryPauseExecution": executionsStore.queryPauseExecution as BulkActionFn,
+            "bulkPauseExecution": executionsStore.bulkPauseExecution as BulkActionFn,
+            "queryUnqueueExecution": executionsStore.queryUnqueueExecution as BulkActionFn,
+            "bulkUnqueueExecution": executionsStore.bulkUnqueueExecution as BulkActionFn,
+            "queryForceRunExecution": executionsStore.queryForceRunExecution as BulkActionFn,
+            "bulkForceRunExecution": executionsStore.bulkForceRunExecution as BulkActionFn,
+            "queryRestartExecution": executionsStore.queryRestartExecution as BulkActionFn,
+            "bulkRestartExecution": executionsStore.bulkRestartExecution as BulkActionFn,
+            "queryReplayExecution": executionsStore.queryReplayExecution as BulkActionFn,
+            "bulkReplayExecution": executionsStore.bulkReplayExecution as BulkActionFn,
+            "queryChangeExecutionStatus": executionsStore.queryChangeExecutionStatus as BulkActionFn,
+            "bulkChangeExecutionStatus": executionsStore.bulkChangeExecutionStatus as BulkActionFn,
+            "queryDeleteExecution": executionsStore.queryDeleteExecution as BulkActionFn,
+            "bulkDeleteExecution": executionsStore.bulkDeleteExecution as BulkActionFn,
+            "queryKill": executionsStore.queryKill as BulkActionFn,
+            "bulkKill": executionsStore.bulkKill as BulkActionFn,
         }
 
         if (queryBulkAction.value) {
@@ -964,9 +980,9 @@
                 options = {...options, ...params}
             }
 
-            const ac = actionMap[queryAction]()
+            const ac = actionMap[queryAction]
             return ac(options)
-                .then((r: any) => {
+                .then((r) => {
                     toast.success(t(success, {executionCount: affectedCount(r)}))
                     toggleAllUnselected()
                     dataTable.value?.reload()
@@ -978,9 +994,9 @@
                 options = {...options, ...params}
             }
 
-            const ac = actionMap[byIdAction]()
+            const ac = actionMap[byIdAction]
             return ac(options)
-                .then((r: any) => {
+                .then((r) => {
                     toast.success(t(success, {executionCount: affectedCount(r)}))
                     toggleAllUnselected()
                     dataTable.value?.reload()
@@ -1096,7 +1112,7 @@
             }, [
                 h(KsSwitch, {
                     modelValue: includeNonTerminated.value,
-                    "onUpdate:modelValue": (val: any) => {
+                    "onUpdate:modelValue": (val: unknown) => {
                         includeNonTerminated.value = Boolean(val)
                     },
                 }),
@@ -1110,17 +1126,17 @@
             h(KsCheckbox, {
                 modelValue: deleteLogs.value,
                 label: t("execution_deletion.logs"),
-                "onUpdate:modelValue": (val: any) => (deleteLogs.value = Boolean(val)),
+                "onUpdate:modelValue": (val: unknown) => (deleteLogs.value = Boolean(val)),
             }),
             h(KsCheckbox, {
                 modelValue: deleteMetrics.value,
                 label: t("execution_deletion.metrics"),
-                "onUpdate:modelValue": (val: any) => (deleteMetrics.value = Boolean(val)),
+                "onUpdate:modelValue": (val: unknown) => (deleteMetrics.value = Boolean(val)),
             }),
             h(KsCheckbox, {
                 modelValue: deleteStorage.value,
                 label: t("execution_deletion.storage"),
-                "onUpdate:modelValue": (val: any) => (deleteStorage.value = Boolean(val)),
+                "onUpdate:modelValue": (val: unknown) => (deleteStorage.value = Boolean(val)),
             }),
         ])
         KsMessageBox.confirm(message, t("confirmation")).then(() => {
@@ -1181,7 +1197,7 @@
                         }),
                         data: filtered.labels,
                     })
-                    .then((r: any) => {
+                    .then((r) => {
                         toast.success(t("Set labels done", {executionCount: affectedCount(r)}))
                         toggleAllUnselected()
                         dataTable.value?.reload()
@@ -1192,7 +1208,7 @@
                         executionsId: selection.value,
                         executionLabels: filtered.labels,
                     })
-                    .then((r: any) => {
+                    .then((r) => {
                         toast.success(t("Set labels done", {executionCount: affectedCount(r)}))
                         toggleAllUnselected()
                         dataTable.value?.reload()

@@ -2,7 +2,6 @@ package io.kestra.webserver.services;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -22,14 +21,17 @@ import io.kestra.core.repositories.TriggerRepositoryInterface;
 import io.kestra.core.scheduler.model.TriggerState;
 import io.kestra.core.scheduler.model.TriggerType;
 import io.kestra.core.scheduler.queue.TriggerEventQueue;
-import io.kestra.core.server.AsyncOperationListener;
 import io.kestra.core.server.AsyncOperationType;
 import io.kestra.core.services.AsyncOperationWaiter;
+import io.kestra.core.services.NotificationService;
 import io.kestra.core.utils.IdUtils;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 class TriggerStateServiceTest {
@@ -42,7 +44,7 @@ class TriggerStateServiceTest {
     private FlowRepositoryInterface flowRepository;
     private TriggerEventQueue triggerEventQueue;
     private AsyncOperationWaiter asyncOperationWaiter;
-    private RecordingAsyncOperationListener listener;
+    private NotificationService notificationService;
     private TriggerStateService triggerStateService;
 
     @BeforeEach
@@ -53,7 +55,7 @@ class TriggerStateServiceTest {
         triggerEventQueue = mock(TriggerEventQueue.class);
         BroadcastQueueInterface<ExecutionKilled> executionKilledQueue = mock(BroadcastQueueInterface.class);
         asyncOperationWaiter = mock(AsyncOperationWaiter.class);
-        listener = new RecordingAsyncOperationListener();
+        notificationService = mock(NotificationService.class);
 
         AbstractTrigger trigger = mock(AbstractTrigger.class);
         when(trigger.getId()).thenReturn(TRIGGER_ID);
@@ -68,7 +70,7 @@ class TriggerStateServiceTest {
             executionKilledQueue,
             asyncOperationWaiter,
             new AsyncOperationsConfiguration(Duration.ofSeconds(5)),
-            List.of(listener)
+            notificationService
         );
     }
 
@@ -79,9 +81,7 @@ class TriggerStateServiceTest {
 
         triggerStateService.unlockAllByIds(List.of(triggerId));
 
-        assertThat(listener.calls).hasSize(1);
-        assertThat(listener.calls.getFirst().operationType()).isEqualTo(AsyncOperationType.TRIGGER_UNLOCK);
-        assertThat(listener.calls.getFirst().itemCount()).isEqualTo(1);
+        verify(notificationService, times(1)).notifyAsyncOperation(any(), eq(AsyncOperationType.TRIGGER_UNLOCK), eq(1));
     }
 
     @Test
@@ -94,7 +94,7 @@ class TriggerStateServiceTest {
 
         triggerStateService.unlockTriggerById(triggerId);
 
-        assertThat(listener.calls).isEmpty();
+        verifyNoInteractions(notificationService);
     }
 
     private static TriggerState lockedTriggerState(TriggerId triggerId) {
@@ -106,17 +106,5 @@ class TriggerStateServiceTest {
             .locked(true)
             .type(TriggerType.POLLING)
             .build();
-    }
-
-    private record ListenerCall(String operationId, AsyncOperationType operationType, int itemCount) {
-    }
-
-    private static class RecordingAsyncOperationListener implements AsyncOperationListener {
-        private final List<ListenerCall> calls = new ArrayList<>();
-
-        @Override
-        public void onAsyncOperationCreated(String operationId, AsyncOperationType operationType, int itemCount) {
-            calls.add(new ListenerCall(operationId, operationType, itemCount));
-        }
     }
 }

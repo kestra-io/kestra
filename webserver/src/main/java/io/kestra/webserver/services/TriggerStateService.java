@@ -32,9 +32,9 @@ import io.kestra.core.scheduler.events.TriggerDeleted;
 import io.kestra.core.scheduler.model.TriggerState;
 import io.kestra.core.scheduler.model.TriggerType;
 import io.kestra.core.scheduler.queue.TriggerEventQueue;
-import io.kestra.core.server.AsyncOperationListener;
 import io.kestra.core.server.AsyncOperationType;
 import io.kestra.core.services.AsyncOperationWaiter;
+import io.kestra.core.services.NotificationService;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.webserver.models.api.ApiAsyncOperationResponse;
@@ -62,7 +62,7 @@ public class TriggerStateService {
     private final BroadcastQueueInterface<ExecutionKilled> executionKilledQueue;
     private final AsyncOperationWaiter asyncOperationWaiter;
     private final Duration asyncWaitTimeout;
-    private final List<AsyncOperationListener> asyncOperationListeners;
+    private final NotificationService notificationService;
 
     @Inject
     public TriggerStateService(final TriggerRepositoryInterface triggerRepository,
@@ -71,14 +71,14 @@ public class TriggerStateService {
         final BroadcastQueueInterface<ExecutionKilled> executionKilledQueue,
         final AsyncOperationWaiter asyncOperationWaiter,
         final AsyncOperationsConfiguration asyncOperationsConfiguration,
-        final List<AsyncOperationListener> asyncOperationListeners) {
+        final NotificationService notificationService) {
         this.triggerRepository = triggerRepository;
         this.flowRepository = flowRepository;
         this.triggerEventQueue = triggerEventQueue;
         this.executionKilledQueue = executionKilledQueue;
         this.asyncOperationWaiter = asyncOperationWaiter;
         this.asyncWaitTimeout = asyncOperationsConfiguration.waitTimeout();
-        this.asyncOperationListeners = asyncOperationListeners;
+        this.notificationService = notificationService;
     }
 
     /**
@@ -406,7 +406,7 @@ public class TriggerStateService {
             .reduce(Integer::sum)
             .blockOptional()
             .orElse(0);
-        asyncOperationListeners.forEach(listener -> listener.onAsyncOperationCreated(operationId, disabled ? AsyncOperationType.TRIGGER_DISABLE : AsyncOperationType.TRIGGER_ENABLE, count));
+        notificationService.notifyAsyncOperation(operationId, disabled ? AsyncOperationType.TRIGGER_DISABLE : AsyncOperationType.TRIGGER_ENABLE, count);
         return new ApiAsyncOperationResponse(operationId, count);
     }
 
@@ -533,7 +533,7 @@ public class TriggerStateService {
 
     private ApiAsyncOperationResponse submitBatch(List<TriggerId> triggers, BiConsumer<TriggerId, String> emit, AsyncOperationType operationType) {
         String operationId = IdUtils.create();
-        asyncOperationListeners.forEach(listener -> listener.onAsyncOperationCreated(operationId, operationType, triggers.size()));
+        notificationService.notifyAsyncOperation(operationId, operationType, triggers.size());
         for (TriggerId id : triggers) {
             emit.accept(id, operationId);
         }

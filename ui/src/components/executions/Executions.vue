@@ -81,7 +81,7 @@
                 <KsButton v-if="canUpdate" :icon="StateMachine" @click="changeStatusDialogVisible = !changeStatusDialogVisible">
                     {{ $t("change state") }}
                 </KsButton>
-                <KsButton v-if="canUpdate" :icon="Restart" @click="isOpenRestartModal = !isOpenRestartModal">
+                <KsButton v-if="canRestart" :icon="Restart" @click="isOpenRestartModal = !isOpenRestartModal">
                     {{ $t("restart") }}
                 </KsButton>
                 <KsButton v-if="canReplay" :icon="PlayBoxMultiple" @click="isOpenReplayModal = !isOpenReplayModal">
@@ -790,7 +790,11 @@
     })
 
     const canCheck = computed(() => {
-        return canDelete.value || canUpdate.value || canKill.value || canForceRun.value || canUnqueue.value
+        return canDelete.value || canUpdate.value || canKill.value || canForceRun.value || canUnqueue.value || canRestart.value || canReplay.value
+    })
+
+    const canRestart = computed(() => {
+        return authStore.user?.isAllowed(resource.EXECUTION, action.RESTART, props.namespace)
     })
 
     const canReplay = computed(() => {

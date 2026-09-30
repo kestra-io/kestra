@@ -16,6 +16,9 @@
     "./shiki": "./src/components/Data/KsMarkdown/shikiHighlighter.ts",
     "./components/*": "./src/components/*",
     "./src/assets/styles/*": "./src/assets/styles/*",
+    "./styles/color-palette": {
+      "sass": "./src/assets/styles/_color-palette.scss"
+    },
     "./package.json": "./package.json"
   },
   "files": [

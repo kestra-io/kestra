@@ -65,9 +65,8 @@
     import InformationOutline from "vue-material-design-icons/InformationOutline.vue"
     import Plus from "vue-material-design-icons/Plus.vue"
     import {usePluginsStore, type TriggerPluginDto} from "../../../stores/plugins"
-    import {triggerDisplayName} from "./triggerCatalog"
 
-    const props = defineProps<{ trigger: TriggerPluginDto }>()
+    const props = defineProps<{ trigger: TriggerPluginDto; displayName: string }>()
     defineEmits<{ add: [trigger: TriggerPluginDto] }>()
 
     const TOOLTIP_POPPER_STYLE = {
@@ -75,11 +74,10 @@
         fontSize: "var(--ks-font-size-xs)",
         lineHeight: "var(--ks-line-height-base)",
         padding: "0.625rem var(--ks-spacing-3)",
-        color: "var(--ks-content-primary)",
+        color: "var(--ks-text-primary)",
     }
 
     const pluginsStore = usePluginsStore()
-    const displayName = computed(() => triggerDisplayName(props.trigger))
     const descriptionParts = computed(() => (props.trigger.description ?? "").split(/(`[^`]+`)/g))
 </script>
 
@@ -178,7 +176,7 @@
                         font-size: var(--ks-font-size-sm);
                         padding: var(--ks-spacing-px) var(--ks-spacing-1);
                         border-radius: var(--ks-radius-xs);
-                        background: var(--ks-tag-background);
+                        background: var(--ks-bg-tag);
                         color: var(--ks-text-primary);
                     }
                 }

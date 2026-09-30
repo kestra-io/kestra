@@ -6,6 +6,7 @@
             v-bind="({...filteredProps(), ...$attrs} as any)"
             @change="emit('change', $event)"
             autosize
+            resize="none"
             type="textarea"
         >
             <template v-if="$slots.prepend" #prepend>
@@ -18,7 +19,7 @@
                 <slot />
             </template>
         </KsInput>
-        <KsButton class="hide" link v-if="!disabled && model" :icon="hidden ? EyeOffOutline : EyeOutline" @click="toggle" />
+        <KsButton class="hide" link v-if="!disabled && model" :aria-label="hidden ? $t('ks_password.show') : $t('ks_password.hide')" :icon="hidden ? EyeOffOutline : EyeOutline" @click="toggle" />
     </div>
 </template>
 

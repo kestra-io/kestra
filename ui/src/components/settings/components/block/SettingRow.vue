@@ -1,7 +1,9 @@
 <template>
     <div class="setting-row" :class="{'setting-row--stacked': stacked}">
         <div class="setting-row__info">
-            <KsText tag="div" class="setting-row__label">{{ label }}</KsText>
+            <KsText tag="div" class="setting-row__label">
+                <span v-if="required" class="setting-row__required">*</span>{{ label }}
+            </KsText>
             <KsText v-if="description || $slots.description" tag="div" size="small" class="setting-row__description">
                 <slot name="description">{{ description }}</slot>
             </KsText>
@@ -17,6 +19,7 @@
         label: string
         description?: string
         stacked?: boolean
+        required?: boolean
     }>()
 </script>
 
@@ -44,6 +47,11 @@
             align-self: flex-start;
             font-weight: 600;
             color: var(--ks-text-primary);
+        }
+
+        &__required {
+            margin-right: var(--ks-spacing-1);
+            color: var(--ks-text-error);
         }
 
         &__description {

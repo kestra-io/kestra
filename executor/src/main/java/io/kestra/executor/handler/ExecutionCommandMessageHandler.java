@@ -80,7 +80,7 @@ public class ExecutionCommandMessageHandler implements ExecutorMessageHandler<Ex
         // For existing executions, check kill switch before taking the lock.
         EvaluationType evaluationType = killSwitchService.evaluate(message);
         if (evaluationType != EvaluationType.PASS) {
-            var execution = executionStateStore.findById(message.executionId());
+            var execution = executionStateStore.findByIdWithoutAcl(message.executionId());
             if (execution != null && evaluationType.isKillSwitched(execution)) {
                 killSwitchActionService.handle(evaluationType, execution.getTenantId(), execution.getId());
                 return Optional.empty();
@@ -172,7 +172,7 @@ public class ExecutionCommandMessageHandler implements ExecutorMessageHandler<Ex
         AsyncOperationProcessedEvent.Outcome outcome = AsyncOperationProcessedEvent.Outcome.SUCCEEDED;
         String error = null;
         try {
-            var raw = executionStateStore.findById(command.sourceExecutionId());
+            var raw = executionStateStore.findByIdWithoutAcl(command.sourceExecutionId());
             if (raw == null) {
                 throw new IllegalStateException("Source execution not found: " + command.sourceExecutionId());
             }

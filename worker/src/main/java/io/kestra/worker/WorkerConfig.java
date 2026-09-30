@@ -9,14 +9,16 @@ import io.micronaut.core.bind.annotation.Bindable;
 /**
  * Worker configuration.
  *
- * @param pollingTriggerTimeout The maximum time a polling trigger evaluation is allowed to run on
- *        a worker before it is interrupted. This bounds evaluations that would otherwise block
- *        forever (e.g. a stuck {@code KafkaConsumer.poll()} during a consumer-group rebalance): on
- *        timeout the worker thread is freed and an error result is emitted so the scheduler releases
- *        the trigger evaluation lock instead of leaving the trigger silently stuck. Applies to
- *        polling triggers only (realtime triggers run for their whole lifetime by design). The
- *        default is deliberately generous so that legitimate long evaluations are never interrupted;
- *        lower it if faster recovery from hangs is desired.
+ * @param pollingTriggerTimeout How long the worker waits for a polling trigger evaluation before it
+ *        gives up on it. This bounds evaluations that would otherwise block forever (e.g. a stuck
+ *        {@code KafkaConsumer.poll()} during a consumer-group rebalance): at the deadline an error
+ *        result is emitted so the scheduler releases the trigger evaluation lock, instead of leaving the
+ *        trigger silently stuck. The evaluation itself keeps its worker thread until the plugin returns,
+ *        and the worker waits for that thread rather than taking new work on it, so it runs one thread
+ *        short until then. Only the plugin's own {@code kill()} can cut that short. Applies to polling triggers only
+ *        (realtime triggers run for their whole lifetime by design). The default is deliberately
+ *        generous so that legitimate long evaluations are never cut short; lower it if faster
+ *        recovery from hangs is desired.
  */
 @ConfigurationProperties("kestra.worker")
 public record WorkerConfig(

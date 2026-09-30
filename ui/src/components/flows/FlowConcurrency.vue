@@ -11,7 +11,7 @@
         {{ $t('flowConcurrency.loadError') }}
     </KsAlert>
     <div v-else-if="concurrencyLimit && flowStore.flow?.concurrency" data-test="concurrency-limit">
-        <KsCard class="mb-3">
+        <KsCard class="concurrency-summary mb-3">
             <div class="row mb-3">
                 <span class="col d-flex align-items-center">
                     <h5 class="m-3">RUNNING</h5> {{ concurrencyLimit.running }}/{{ flowStore.flow?.concurrency?.limit }} {{ $t('active-slots') }}
@@ -21,18 +21,16 @@
                 </span>
             </div>
             <div class="progressbar mb-3">
-                <KsProgress :stroke-width="16" color="#5BB8FF" :percentage="progress" :showText="false" />
+                <KsProgress :stroke-width="16" color="var(--ks-status-info)" :percentage="progress" :showText="false" />
             </div>
         </KsCard>
-        <KsCard>
-            <Executions
-                :restoreUrl="false"
-                :topbar="false"
-                :namespace="flowStore.flow?.namespace"
-                :flowId="flowStore.flow?.id"
-                filter
-            />
-        </KsCard>
+        <Executions
+            :restoreUrl="false"
+            :topbar="false"
+            :namespace="flowStore.flow?.namespace"
+            :flowId="flowStore.flow?.id"
+            filter
+        />
     </div>
     <!-- A limit record still counting slots for a flow that no longer declares a concurrency
          block: it cannot be rendered as a ratio, but we should display it anyway. -->
@@ -58,6 +56,7 @@
     import {useFlowStore} from "../../stores/flow"
     import {useClient} from "@kestra-io/kestra-sdk"
     import {apiUrl} from "override/utils/route"
+    import type {KestraHttpError} from "../../utils/kestraHttp"
     import Loading from "vue-material-design-icons/Loading.vue"
 
     defineOptions({inheritAttrs: false})
@@ -96,8 +95,9 @@
             )
 
             concurrencyLimit.value = response.data
-        } catch (err: any) {
-            if (err?.status === 404 || err?.response?.status === 404) {
+        } catch (err) {
+            const httpError = err as KestraHttpError | undefined
+            if (httpError?.status === 404 || httpError?.response?.status === 404) {
                 concurrencyLimit.value = undefined
             } else {
                 error.value = true
@@ -135,6 +135,10 @@
 
     :deep(.kel-card) {
         background-color: var(--ks-bg-surface);
+    }
+
+    .concurrency-summary {
+        margin-inline: var(--ks-spacing-6);
     }
 
     .text-center {

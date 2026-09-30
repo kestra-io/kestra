@@ -77,7 +77,7 @@ class WorkerQueueServiceTest {
             .data(
                 new WorkerTriggerData(
                     "tenant", "ns", "flow", null, null, null, null,
-                    Collections.emptyMap(), null, null, Collections.emptyMap()
+                    Collections.emptyMap(), null, Collections.emptyMap()
                 )
             )
             .build();

@@ -4,6 +4,7 @@
         entity="namespace"
         :value="props.field"
         :to="{name: 'namespaces/update', params: {id: props.field}}"
+        noIcon
     />
 </template>
 

@@ -424,7 +424,7 @@ class McpToolControllerTest {
         Thread.sleep(500);
 
         // When
-        client.toBlocking().exchange(DELETE("/api/v1/main/mcp/servers/" + serverId));
+        client.toBlocking().exchange(DELETE("/api/v1/main/mcp-servers/" + serverId));
 
         // Then
         assertThat(connectionClosed.await(5, TimeUnit.SECONDS)).isTrue();
@@ -459,7 +459,7 @@ class McpToolControllerTest {
 
         // When
         client.toBlocking().exchange(
-            PATCH("/api/v1/main/mcp/servers/" + serverId + "/toggle", "")
+            PATCH("/api/v1/main/mcp-servers/" + serverId + "/toggle", "")
                 .contentType(MediaType.APPLICATION_JSON)
         );
 

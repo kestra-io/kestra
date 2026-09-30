@@ -73,6 +73,8 @@
     import {useFlowStore} from "../../../stores/flow"
     import {useFlowFields} from "../utils/useFlowFields"
     import {removeNullAndUndefined} from "../utils/cleanUp"
+    import {getFlowFields} from "./flowFields"
+    import {useMiscStore} from "override/stores/misc"
     import {
         CREATE_TASK_FUNCTION_INJECTION_KEY,
         FULL_SOURCE_INJECTION_KEY,
@@ -80,26 +82,13 @@
     } from "../injectionKeys"
 
     const flowStore = useFlowStore()
+    const miscStore = useMiscStore()
 
     const props = defineProps<{hideHeader?: boolean; hostedInModal?: boolean}>()
 
     const emit = defineEmits<{(e: "close"): void}>()
 
-    const FLOW_FIELDS = [
-        "id",
-        "namespace",
-        "description",
-        "labels",
-        "inputs",
-        "variables",
-        "outputs",
-        "concurrency",
-        "retry",
-        "sla",
-        "checks",
-        "workerSelector",
-        "disabled",
-    ]
+    const FLOW_FIELDS = computed(() => getFlowFields(miscStore.configs?.edition))
 
     const bubbleCreate = inject(CREATE_TASK_FUNCTION_INJECTION_KEY, () => {})
     const flowYaml = inject(FULL_SOURCE_INJECTION_KEY, ref(""))
@@ -177,7 +166,7 @@
 
     const fields = computed(() => {
         const all = [...fieldsFromSchemaTop.value, ...fieldsFromSchemaRest.value]
-        return FLOW_FIELDS
+        return FLOW_FIELDS.value
             .map((key) => all.find((field) => field.fieldKey === key))
             .filter((field): field is NonNullable<typeof field> => Boolean(field))
     })

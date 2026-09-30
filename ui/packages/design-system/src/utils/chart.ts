@@ -1,6 +1,19 @@
 // Shared utilities for the Ks chart components. Deliberately outside components/Charts/:
 // consolidateChunks claims that directory for the lazy echarts chunk, and the barrel re-exports these.
 
+import {afterLastDot} from "./string"
+
+// A dotted value ending in a capitalised segment is a concrete class name, as in blueprintTaskTypes:
+// io.kestra.plugin.ee.assets.VM is a type, io.kestra.demo is a namespace and 10.5 a value.
+const CONCRETE_CLASS_PATTERN = /\.[A-Z][^.]*$/
+
+/** Display label of a chart category or series name: a type shows as its class name, the rest is capitalised. */
+export function categoryLabel(text: string): string {
+    return CONCRETE_CLASS_PATTERN.test(text)
+        ? afterLastDot(text) ?? text
+        : text.replace(/\w\S*/g, (word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+}
+
 export enum ChartFeature {
     LEGEND = "LEGEND",
     AXIS = "AXIS",

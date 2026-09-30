@@ -75,19 +75,19 @@
                                 v-if="logsStore.hasPreviousPage"
                                 type="default"
                                 :loading="isLoading"
-                                :aria-label="t('previous')"
+                                :aria-label="$t('previous')"
                                 @click="loadPrevious"
                             >
-                                {{ t("previous") }}
+                                {{ $t("previous") }}
                             </KsButton>
                             <KsButton
                                 v-if="logsStore.hasNextCursor"
                                 type="default"
                                 :loading="isLoading"
-                                :aria-label="t('next')"
+                                :aria-label="$t('next')"
                                 @click="loadNext"
                             >
-                                {{ t("next") }}
+                                {{ $t("next") }}
                             </KsButton>
                         </div>
                     </div>
@@ -122,16 +122,15 @@
     import {useRoute, useRouter} from "vue-router"
     import {routeFamily} from "../../utils/routeFamily"
     import {useI18n} from "vue-i18n"
-    import _merge from "lodash/merge"
-    import moment from "moment"
-    import {useLogFilter} from "../filter/configurations"
+    import {useLogFilter} from "../filter/configurations/logFilter"
     import {useValues} from "../filter/composables/useValues"
     import QuickFilters from "../filter/QuickFilters.vue"
     import useRestoreUrl from "../../composables/useRestoreUrl"
-    import {KsFilter as KSFilter} from "@kestra-io/design-system"
+    import {dateUtils, dayjs, KsFilter as KSFilter, deepMerge} from "@kestra-io/design-system"
 
     const {loadInit} = useRestoreUrl()
     import Sections from "../dashboard/sections/Sections.vue"
+    import type {Chart} from "../dashboard/types"
     import TopNavBar from "../../components/layout/TopNavBar.vue"
     import LogLine from "../logs/LogLine.vue"
     import {storageKeys} from "../../utils/constants"
@@ -271,9 +270,10 @@
     })
     const flowId = computed(() => route.params.id)
     const routeNamespace = computed(() => route.params.namespace ?? route.params.id)
-    const charts = computed(() => [
-        {...YAML_UTILS.parse(YAML_CHART), content: YAML_CHART},
-    ])
+    const charts = computed(() => {
+        const chart = YAML_UTILS.parse<Chart>(YAML_CHART)
+        return chart ? [{...chart, content: YAML_CHART}] : []
+    })
 
     const loadQuery = (base: any) => {
         const {page: _p, size: _s, sort: _so, logsPage: _lp, logsSize: _ls, ...routeFilters} = route.query
@@ -290,7 +290,7 @@
             queryFilter = normalizeRouteLevelFilter(queryFilter, effectiveLogLevel.value)
         }
 
-        return _merge(base, queryFilter)
+        return deepMerge(base, queryFilter)
     }
 
     let hasLoadedOnce = false
@@ -367,10 +367,10 @@
         }
 
         if (downloadTimeRange.value) {
-            params.startDate = moment()
-                .subtract(moment.duration(downloadTimeRange.value).as("milliseconds"))
-                .toISOString(true)
-            params.endDate = moment().toISOString(true)
+            params.startDate = dateUtils.toIsoKeepOffset(
+                dayjs().subtract(dayjs.duration(downloadTimeRange.value).as("milliseconds")),
+            )
+            params.endDate = dateUtils.toIsoKeepOffset(dayjs())
         } else {
             if (_sd) params.startDate = _sd
             if (_ed) params.endDate = _ed

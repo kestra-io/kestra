@@ -1,4 +1,5 @@
 import type {Meta, StoryObj} from "@storybook/vue3-vite"
+import {expect} from "storybook/test"
 import {ref} from "vue"
 import KsButton from "../../../src/components/Basic/KsButton/KsButton.vue"
 import KsDropdown from "../../../src/components/Navigation/KsDropdown/KsDropdown.vue"
@@ -127,4 +128,77 @@ export const WithDisabledItems: Story = {
             </div>
         `,
     }),
+}
+
+/** Destructive or exit actions – `danger` swaps the hover for the error palette */
+export const DangerItem: Story = {
+    render: () => ({
+        components: {KsButton, KsDropdown, KsDropdownItem, KsDropdownMenu},
+        template: `
+            <div style="padding:48px">
+                <ks-dropdown trigger="click">
+                    <ks-button>Options ▼</ks-button>
+                    <template #dropdown>
+                        <ks-dropdown-menu>
+                            <ks-dropdown-item>Edit</ks-dropdown-item>
+                            <ks-dropdown-item>Duplicate</ks-dropdown-item>
+                            <ks-dropdown-item divided danger>Delete</ks-dropdown-item>
+                        </ks-dropdown-menu>
+                    </template>
+                </ks-dropdown>
+            </div>
+        `,
+    }),
+}
+
+/**
+ * Split button – the label runs the default action, the caret opens the menu.
+ * The halves are plain `ElButton`s, so pass `buttonProps: {plain: true}` to get the
+ * secondary look that `KsButton` applies by default.
+ */
+export const SplitButton: Story = {
+    render: () => ({
+        components: {KsDropdown, KsDropdownItem, KsDropdownMenu},
+        template: `
+            <div style="padding:48px;display:flex;gap:16px;flex-wrap:wrap;align-items:center">
+                <ks-dropdown split-button type="primary">
+                    Save
+                    <template #dropdown>
+                        <ks-dropdown-menu>
+                            <ks-dropdown-item>Save as draft</ks-dropdown-item>
+                            <ks-dropdown-item>Save and execute</ks-dropdown-item>
+                        </ks-dropdown-menu>
+                    </template>
+                </ks-dropdown>
+                <ks-dropdown split-button type="default" :button-props="{plain: true}">
+                    Download
+                    <template #dropdown>
+                        <ks-dropdown-menu>
+                            <ks-dropdown-item>September 2026</ks-dropdown-item>
+                            <ks-dropdown-item>August 2026</ks-dropdown-item>
+                        </ks-dropdown-menu>
+                    </template>
+                </ks-dropdown>
+                <ks-dropdown split-button type="primary" disabled>
+                    Disabled
+                    <template #dropdown>
+                        <ks-dropdown-menu>
+                            <ks-dropdown-item>Option</ks-dropdown-item>
+                        </ks-dropdown-menu>
+                    </template>
+                </ks-dropdown>
+            </div>
+        `,
+    }),
+    async play({canvasElement}) {
+        const carets = Array.from(canvasElement.querySelectorAll<HTMLElement>(".kel-dropdown__caret-button"))
+        await expect(carets).toHaveLength(3)
+        // every variant separates its halves with a divider that stands out from the button fill
+        for (const caret of carets) {
+            const divider = getComputedStyle(caret, "::before")
+            await expect(divider.width).toBe("1px")
+            await expect(divider.opacity).toBe("1")
+            await expect(divider.backgroundColor).not.toBe(getComputedStyle(caret).backgroundColor)
+        }
+    },
 }

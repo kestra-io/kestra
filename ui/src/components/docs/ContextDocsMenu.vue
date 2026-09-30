@@ -34,7 +34,7 @@
                     </li>
                 </template>
                 <li v-else>
-                    Loading Menu...
+                    {{ $t("loading") }}
                 </li>
             </ul>
         </div>
@@ -135,7 +135,7 @@
 
         &.is-open {
             position: relative;
-            z-index: 1001;
+            z-index: calc(var(--ks-z-dropdown) + 1);
         }
     }
 
@@ -148,7 +148,7 @@
 
     .docsMenuContainer {
         position: absolute;
-        z-index: 1000;
+        z-index: var(--ks-z-dropdown);
         padding: 1rem 0.25rem 1rem 0.5rem;
         left: 28px;
         right: 28px;
@@ -156,7 +156,7 @@
         background-color: var(--ks-bg-surface);
         border-radius: 8px;
         border: 1px solid var(--ks-border-default);
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+        box-shadow: 0 10px 30px var(--ks-shadow-elevated);
         margin-top: 4px;
     }
 
@@ -203,7 +203,7 @@
             }
 
             &:hover {
-                color: var(--ks-primary);
+                color: var(--ks-text-link);
                 background-color: var(--ks-btn-secondary-bg-hover);
             }
 

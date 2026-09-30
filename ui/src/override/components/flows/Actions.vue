@@ -153,7 +153,7 @@
         deleteFlow: editorDeleteFlow,
     } = useFlowEditorActions()
 
-    const onSelectDashboard = (value: any) => {
+    const onSelectDashboard = (value: string) => {
         const key = dashboardStore.getUserDashboardStorageKey(route)
         localStorage.setItem(key, value)
         router.replace({
@@ -225,8 +225,9 @@
     }
 
     const restoreFlow = () => {
+        if (!flow.value?.source) return
         flowStore.createFlow({
-            flow: YAML_UTILS.deleteMetadata(flow.value?.source, "deleted"),
+            flow: YAML_UTILS.deleteMetadata(flow.value.source, "deleted"),
             restore: true,
         }).then(() => {
             unsavedChangesStore.unsavedChange = false

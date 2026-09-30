@@ -248,6 +248,26 @@ class SetTest {
         assertThat(kv.getValue(key).orElseThrow().value()).isEqualTo("200.1");
     }
 
+    @Test
+    void booleanTypeAcceptsTrueAndFalseCaseInsensitive() throws Exception {
+        String key = "bool_key";
+
+        KVStore kv = createAndPerformSetTask(key, "FALSE", KVType.BOOLEAN);
+        assertThat((Boolean) kv.getValue(key).orElseThrow().value()).isFalse();
+
+        kv = createAndPerformSetTask(key, "True", KVType.BOOLEAN);
+        assertThat((Boolean) kv.getValue(key).orElseThrow().value()).isTrue();
+    }
+
+    @Test
+    void booleanTypeRejectsInvalidValue() {
+        IllegalArgumentException exception = Assertions.assertThrows(
+            IllegalArgumentException.class,
+            () -> createAndPerformSetTask("invalid_bool", "yes", KVType.BOOLEAN)
+        );
+        assertThat(exception.getMessage()).contains("Cannot parse 'yes' as a BOOLEAN value");
+    }
+
     private KVStore createAndPerformSetTask(String key, String value, KVType type) throws Exception {
         Set set = Set.builder()
             .id(Set.class.getSimpleName())

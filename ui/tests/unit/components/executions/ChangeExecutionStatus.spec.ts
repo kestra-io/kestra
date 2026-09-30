@@ -1,11 +1,9 @@
 import {beforeEach, describe, expect, test, vi} from "vitest"
 import {h} from "vue"
-import {mount} from "@vue/test-utils"
 import {createPinia, setActivePinia} from "pinia"
-import {createI18n} from "vue-i18n"
-
 import ChangeExecutionStatus from "../../../../src/components/executions/ChangeExecutionStatus.vue"
 import type {Execution} from "../../../../src/stores/executions"
+import {i18nMount} from "../../i18nMount"
 
 const isAllowedMock = vi.fn().mockReturnValue(true)
 
@@ -17,26 +15,17 @@ vi.mock("../../../../src/utils/toast", () => ({
     useToast: () => ({success: vi.fn(), error: vi.fn()}),
 }))
 
-const i18n = createI18n({
-    legacy: false,
-    locale: "en",
-    missingWarn: false,
-    fallbackWarn: false,
-    messages: {
-        en: {
-            "change state": "Change state",
-            "actual state": "Actual state",
-            "select a state": "Select a state",
-            "close": "Close",
-            "are you sure change state": "Are you sure?",
-            "cancel": "Cancel",
-            "yes": "Yes",
-        },
-    },
-})
+const messages = {
+    "change state": "Change state",
+    "actual state": "Actual state",
+    "select a state": "Select a state",
+    "close": "Close",
+    "are you sure change state": "Are you sure?",
+    "cancel": "Cancel",
+    "yes": "Yes",
+}
 
 const globalConfig = {
-    plugins: [i18n],
     stubs: {
         KsPopover: {
             props: ["visible", "disabled"],
@@ -89,7 +78,8 @@ function buildExecution(state: string): Execution {
 }
 
 function mountChangeExecutionStatus(state: string) {
-    return mount(ChangeExecutionStatus, {
+    return i18nMount(ChangeExecutionStatus, {
+        messages,
         props: {execution: buildExecution(state)},
         slots: {
             trigger: (scope: {visible: boolean; enabled: boolean}) => h(

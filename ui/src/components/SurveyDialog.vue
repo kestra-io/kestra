@@ -74,6 +74,12 @@
         visible?: boolean
     }
 
+    interface SurveyEventData {
+        company_size?: string
+        use_cases?: string[]
+        newsletter_subscribed?: boolean
+    }
+
     const props = withDefaults(defineProps<Props>(), {
         visible: false,
     })
@@ -149,7 +155,7 @@
         emit("close")
     }
 
-    const trackSurveyEvent = (eventName: string, additionalData: Record<string, any> = {}) => {
+    const trackSurveyEvent = (eventName: string, additionalData: SurveyEventData = {}) => {
         const configs = miscStore.configs
 
         apiStore.posthogEvents({
@@ -164,19 +170,19 @@
 <style scoped lang="scss">
 :deep(.hello-survey-dialog) {
     border-radius: 8px;
-    border: 1px solid var(--ks-border-default, #404559);
+    border: 1px solid var(--ks-border-default);
 
     .kel-dialog {
         border-radius: 8px;
     }
 
     .kel-dialog__header {
-        background-color: var(--ks-bg-surface, #2c2f36);
-        border-bottom: 1px solid var(--ks-border-default, #404559);
+        background-color: var(--ks-bg-surface);
+        border-bottom: 1px solid var(--ks-border-default);
         padding: 20px 24px;
 
         .kel-dialog__title {
-            color: var(--ks-text-primary, #ffffff);
+            color: var(--ks-text-primary);
             font-size: var(--ks-font-size-md);
             font-weight: 600;
         }
@@ -184,12 +190,12 @@
 
     .kel-dialog__body {
         padding: 24px;
-        background-color: var(--ks-bg-surface, #2c2f36);
+        background-color: var(--ks-bg-surface);
     }
 
     .kel-dialog__footer {
-        background-color: var(--ks-bg-surface, #2c2f36);
-        border-top: 1px solid var(--ks-border-default, #404559);
+        background-color: var(--ks-bg-surface);
+        border-top: 1px solid var(--ks-border-default);
         padding: 20px 24px;
     }
 }
@@ -201,7 +207,7 @@
         margin-bottom: 32px;
 
         h4 {
-            color: var(--ks-text-primary, #ffffff);
+            color: var(--ks-text-primary);
             font-size: var(--ks-font-size-base);
             font-weight: 700;
             margin: 0 0 16px 0;
@@ -221,7 +227,7 @@
                 .kel-radio__input {
                     .kel-radio__inner {
                         background-color: transparent;
-                        border-color: #918BA9;
+                        border-color: var(--ks-icon-muted);
                         border-width: 2px;
                         width: 24px;
                         height: 24px;
@@ -233,13 +239,13 @@
 
                     &.is-checked .kel-radio__inner {
                         background-color: transparent;
-                        border-color: #8405FF;
+                        border-color: var(--ks-btn-primary-bg-default);
                         border-width: 2px;
 
                         &::after {
                             display: block;
                             content: '';
-                            background-color: #8405FF;
+                            background-color: var(--ks-btn-primary-bg-default);
                             width: 12px;
                             height: 12px;
                             border-radius: 50%;
@@ -252,7 +258,7 @@
                 }
 
                 .kel-radio__label {
-                    color: var(--ks-text-primary, #ffffff);
+                    color: var(--ks-text-primary);
                     padding-left: 8px;
                     font-size: var(--ks-font-size-sm);
                 }
@@ -273,13 +279,13 @@
                 .kel-checkbox__input {
                     .kel-checkbox__inner {
                         background-color: transparent;
-                        border-color: #918BA9;
+                        border-color: var(--ks-icon-muted);
                         width: 18px;
                         height: 18px;
                         border-radius: 2px;
 
                         &::after {
-                            border-color: var(--ks-white);
+                            border-color: var(--ks-btn-primary-text);
                             width: 6px;
                             height: 9px;
                             left: 4px;
@@ -288,13 +294,13 @@
                     }
 
                     &.is-checked .kel-checkbox__inner {
-                        background-color: var(--ks-btn-primary-bg-default, #7c3aed);
-                        border-color: var(--ks-btn-primary-bg-default, #7c3aed);
+                        background-color: var(--ks-btn-primary-bg-default);
+                        border-color: var(--ks-btn-primary-bg-default);
                     }
                 }
 
                 .kel-checkbox__label {
-                    color: var(--ks-text-primary, #ffffff);
+                    color: var(--ks-text-primary);
                     padding-left: 10px;
                     font-size: var(--ks-font-size-sm);
                     line-height: 22px;
@@ -310,13 +316,13 @@
             .kel-checkbox__input {
                 .kel-checkbox__inner {
                     background-color: transparent;
-                    border-color: #918BA9;
+                    border-color: var(--ks-icon-muted);
                     width: 18px;
                     height: 18px;
                     border-radius: 2px;
 
                     &::after {
-                        border-color: var(--ks-white);
+                        border-color: var(--ks-btn-primary-text);
                         width: 6px;
                         height: 9px;
                         left: 4px;
@@ -325,13 +331,13 @@
                 }
 
                 &.is-checked .kel-checkbox__inner {
-                    background-color: var(--ks-btn-primary-bg-default, #7c3aed);
-                    border-color: var(--ks-btn-primary-bg-default, #7c3aed);
+                    background-color: var(--ks-btn-primary-bg-default);
+                    border-color: var(--ks-btn-primary-bg-default);
                 }
             }
 
             .kel-checkbox__label {
-                color: var(--ks-text-secondary, #9ca3af);
+                color: var(--ks-text-secondary);
                 font-size: var(--ks-font-size-sm);
                 line-height: 22px;
                 padding-left: 10px;

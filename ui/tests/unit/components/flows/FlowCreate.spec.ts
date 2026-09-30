@@ -1,6 +1,7 @@
 import {describe, test, expect, vi, beforeEach, afterAll} from "vitest"
-import {mount, flushPromises} from "@vue/test-utils"
-import {createI18n} from "vue-i18n"
+import {flushPromises} from "@vue/test-utils"
+import {i18nMount} from "../../i18nMount"
+
 import {createPinia, setActivePinia} from "pinia"
 import {useFlowStore} from "../../../../src/stores/flow"
 import {RECIPE_PRESET_KEY} from "../../../../src/utils/storageKeys"
@@ -16,14 +17,12 @@ vi.mock("vue-router", () => ({
 
 import FlowCreate from "../../../../src/components/flows/FlowCreate.vue"
 
-const i18n = createI18n({legacy: false, locale: "en", missingWarn: false, fallbackWarn: false, messages: {en: {}}})
-
 let pinia: ReturnType<typeof createPinia>
 let flowStore: ReturnType<typeof useFlowStore>
 
-const mountCreate = () => mount(FlowCreate, {
+const mountCreate = () => i18nMount(FlowCreate, {
     global: {
-        plugins: [i18n, pinia],
+        plugins: [pinia],
         stubs: {
             TopNavBar: {template: "<div><slot name='actions' /></div>"},
             Actions: true,

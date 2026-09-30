@@ -178,6 +178,18 @@ public class GraphUtils {
             .collect(Collectors.toSet());
     }
 
+    /**
+     * A graph node carries a task run only when the flow revision the graph was built from
+     * still has that task at the same place in the hierarchy as the revision it ran on.
+     */
+    public static boolean hasTaskRun(GraphCluster graphCluster, String taskRunId) {
+        return nodes(graphCluster)
+            .stream()
+            .filter(AbstractGraphTask.class::isInstance)
+            .map(AbstractGraphTask.class::cast)
+            .anyMatch(node -> node.getTaskRun() != null && node.getTaskRun().getId().equals(taskRunId));
+    }
+
     private static Set<String> reachableEdgeSources(List<FlowGraph.Edge> edges, Set<String> fromUuids) {
         Map<String, List<FlowGraph.Edge>> edgesBySource = edges
             .stream()
@@ -637,15 +649,14 @@ public class GraphUtils {
     }
 
     private static List<TaskRun> findTaskRuns(Task task, Execution execution, TaskRun parent) {
-        List<TaskRun> taskRuns = execution != null ? execution.findTaskRunsByTaskId(task.getId()) : new ArrayList<>();
+        List<TaskRun> taskRuns = execution != null ? execution.findTaskRunsByTaskId(task.getId()) : List.of();
 
-        if (taskRuns.isEmpty()) {
-            return Collections.singletonList(null);
-        }
-
-        return taskRuns
+        List<TaskRun> matching = taskRuns
             .stream()
-            .filter(taskRun -> parent == null || (taskRun.getParentTaskRunId().equals(parent.getId())))
+            .filter(taskRun -> parent == null || parent.getId().equals(taskRun.getParentTaskRunId()))
             .toList();
+
+        // an empty result would drop the node from the graph and spin fillGraphDag's completion loop forever
+        return matching.isEmpty() ? Collections.singletonList(null) : matching;
     }
 }

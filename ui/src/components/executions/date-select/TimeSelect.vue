@@ -12,15 +12,12 @@
             <span v-if="allowInfinite">{{ $t('datepicker.leave empty for infinite') }}</span>
             <span v-else>{{ $t('datepicker.duration example') }}</span>
             <div class="mt-2 duration-examples">
-                <strong>Examples:</strong>
+                <strong>{{ $t("datepicker.examples") }}</strong>
                 <table class="duration-table">
                     <tbody>
-                        <tr><td>PT30M</td><td>&rarr; 30 minutes</td></tr>
-                        <tr><td>PT1H</td><td>&rarr; 1 hour</td></tr>
-                        <tr><td>P1D</td><td>&rarr; 1 day</td></tr>
-                        <tr><td>P7D</td><td>&rarr; 7 days</td></tr>
-                        <tr><td>P30D</td><td>&rarr; 30 days</td></tr>
-                        <tr><td>P1DT2H</td><td>&rarr; 1 day 2 hours</td></tr>
+                        <tr v-for="example in DURATION_EXAMPLES" :key="example">
+                            <td>{{ example }}</td><td>&rarr; {{ humanExample(example) }}</td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
@@ -33,6 +30,7 @@
     import {ref, computed, watch, PropType} from "vue"
     import DateSelect from "./DateSelect.vue"
     import {useI18n} from "vue-i18n"
+    import {durationUtils} from "@kestra-io/design-system"
 
     interface TimePreset {
         value?: string;
@@ -54,6 +52,9 @@
     })
 
     const timeRangeSelect = ref<string | undefined>(undefined)
+
+    const DURATION_EXAMPLES = ["PT30M", "PT1H", "P1D", "P7D", "P30D", "P1DT2H"]
+    const humanExample = (iso: string) => durationUtils.humanDuration(iso, {units: ["d", "h", "m"]})
 
     const label = (duration: string): string =>
         "datepicker." + (props.fromNow ? "last" : "") + duration

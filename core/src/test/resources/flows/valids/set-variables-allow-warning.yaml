@@ -1,0 +1,18 @@
+id: set-variables-allow-warning
+namespace: io.kestra.tests
+
+variables:
+  name: World
+
+tasks:
+  - id: set-vars
+    type: io.kestra.plugin.core.execution.SetVariables
+    variables:
+      message: Hello
+      name: Loïc
+    overwrite: false
+    allowFailure: true
+    allowWarning: true
+  - id: after
+    type: io.kestra.plugin.core.log.Log
+    message: "allowWarning honored, flow continued"

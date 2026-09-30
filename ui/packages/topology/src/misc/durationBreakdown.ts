@@ -1,8 +1,7 @@
-import type {Moment} from "moment"
-import {State} from "@kestra-io/design-system"
+import {State, type Dayjs} from "@kestra-io/design-system"
 
 export interface DurationHistoryEntry {
-    date: Moment | string | number;
+    date: Dayjs | string | number;
     state: string;
 }
 
@@ -30,7 +29,7 @@ function bucketOf(state: string): Bucket {
     return "queued"
 }
 
-function toMillis(date: Moment | string | number): number {
+function toMillis(date: Dayjs | string | number): number {
     if (typeof date === "number") return date
     if (typeof date === "string") return new Date(date).getTime()
     return date.valueOf()
@@ -74,4 +73,27 @@ export function computeDurationBreakdown(
         paused: spans.paused,
         isRunning,
     }
+}
+
+export interface TaskRunLike {
+    state?: {
+        histories?: DurationHistoryEntry[] | null;
+    } | null;
+}
+
+/**
+ * The duration, in milliseconds, of the longest task run in the list — the denominator an
+ * execution's task nodes scale their duration bar against so bar lengths are comparable.
+ * A task run with no history (never started) or a zero-duration one does not raise it.
+ */
+export function computeLongestTaskRunDuration(
+    taskRuns: TaskRunLike[],
+    now: number = Date.now(),
+): number {
+    return taskRuns.reduce((longest, taskRun) => {
+        const histories = taskRun.state?.histories
+        if (!histories?.length) return longest
+        const total = computeDurationBreakdown(histories, now).total
+        return total > longest ? total : longest
+    }, 0)
 }

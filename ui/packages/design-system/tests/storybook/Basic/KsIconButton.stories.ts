@@ -29,12 +29,17 @@ const meta: Meta<typeof KsIconButton> = {
         ariaLabel: {control: "text"},
         disabled: {control: "boolean"},
         filled: {control: "boolean"},
+        size: {
+            control: "select",
+            options: ["xs", "sm", "base", "lg", "xl"],
+        },
     },
     parameters: {
         docs: {
             description: {
                 component:
-                    "KsIconButton is a compact 24×24 icon-only button with optional tooltip and router-link support. " +
+                    "KsIconButton is a compact icon-only button with optional tooltip and router-link support. "
+                    + "`size` picks a glyph from the `--ks-icon-size-*` scale and the button box follows it; it defaults to `sm` (16px glyph, 24×24 box). " +
                     "It is the design-system replacement for the legacy `IconButton.vue` component. " +
                     "Pass an icon component (e.g. from vue-material-design-icons) as the default slot.",
             },
@@ -178,5 +183,33 @@ export const AriaLabel: Story = {
                 story: "When `ariaLabel` is set it takes precedence over `tooltip` for screen readers.",
             },
         },
+    },
+}
+
+/** Every step of the --ks-icon-size-* scale, with the button box following the glyph */
+export const Sizes: Story = {
+    render: (args) => ({
+        components: {KsIconButton, TrashIcon},
+        setup() {
+            return {args, sizes: ["xs", "sm", "base", "lg", "xl"] as const}
+        },
+        template: `<div style="padding:24px; display:flex; gap:16px; align-items:center">
+            <ks-icon-button v-for="size in sizes" :key="size" v-bind="args" :size="size" :aria-label="size">
+                <trash-icon />
+            </ks-icon-button>
+        </div>`,
+    }),
+    args: {},
+    async play({canvasElement}) {
+        const canvas = within(canvasElement)
+        const [xs, sm, base, lg, xl] = ["xs", "sm", "base", "lg", "xl"]
+            .map(size => canvas.getByRole("button", {name: size}))
+            .map(button => button.getBoundingClientRect().width)
+
+        await expect(sm).toBe(24)
+        await expect(xs).toBeLessThan(sm)
+        await expect(base).toBeGreaterThan(sm)
+        await expect(lg).toBeGreaterThan(base)
+        await expect(xl).toBeGreaterThan(lg)
     },
 }

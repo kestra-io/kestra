@@ -59,22 +59,6 @@ public class AiController {
         return toHttpResponse(result);
     }
 
-    @ExecuteOn(TaskExecutors.IO)
-    @Post(uri = "/generate/dashboard", produces = "application/yaml")
-    @Operation(tags = { "AI" }, summary = "Generate or regenerate a dashboard based on a prompt")
-    public HttpResponse<String> generateDashboard(
-        @RequestBody(description = "Prompt and context required for dashboard generation") @Body DashboardGenerationPrompt dashboardGenerationPrompt,
-        HttpRequest<?> httpRequest) {
-        AiServiceInterface service = aiServiceManager.getAiService(dashboardGenerationPrompt.getProviderId());
-        if (service == null) {
-            return HttpResponse.<String> status(HttpStatus.SERVICE_UNAVAILABLE).body("AI Copilot is not available: no AI provider is configured or reachable.");
-        }
-
-        GenerationResult result = service
-            .generateDashboard(new UserInfo(httpClientAddressResolver.resolve(httpRequest), httpRequest.getHeaders().get("X-Kestra-User-Id")), dashboardGenerationPrompt);
-        return toHttpResponse(result);
-    }
-
     protected HttpResponse<String> toHttpResponse(GenerationResult result) {
         MutableHttpResponse<String> response = HttpResponse.ok(result.content());
         result.remainingQuota().ifPresent(quota -> response.header("X-Kestra-AI-Quota", quota.toString()));
@@ -103,18 +87,6 @@ public class AiController {
         @JsonCreator
         public FlowGenerationPrompt(String conversationId, String userPrompt, String yaml, String namespace, String providerId) {
             super(conversationId, userPrompt, yaml, namespace);
-
-            this.providerId = providerId;
-        }
-    }
-
-    @Getter
-    public static class DashboardGenerationPrompt extends io.kestra.libs.copilot.models.in.DashboardGenerationPrompt {
-        private final String providerId;
-
-        @JsonCreator
-        public DashboardGenerationPrompt(String conversationId, String userPrompt, String yaml, String providerId) {
-            super(conversationId, userPrompt, yaml);
 
             this.providerId = providerId;
         }

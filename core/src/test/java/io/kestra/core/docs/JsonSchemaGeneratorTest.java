@@ -1,5 +1,7 @@
 package io.kestra.core.docs;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.net.URISyntaxException;
 import java.time.ZoneId;
 import java.util.Arrays;
@@ -13,15 +15,22 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
+import com.networknt.schema.SchemaRegistry;
+import com.networknt.schema.dialect.Dialects;
+
 import io.kestra.core.Helpers;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
+import io.kestra.core.models.assets.Custom;
+import io.kestra.core.models.assets.External;
 import io.kestra.core.models.dashboards.Dashboard;
 import io.kestra.core.models.dashboards.GraphStyle;
 import io.kestra.core.models.enums.MonacoLanguages;
+import io.kestra.core.models.flows.DependsOn;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.input.ReusableInputsInput;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
@@ -34,6 +43,7 @@ import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.plugins.RegisteredPlugin;
 import io.kestra.core.runners.RunContext;
+import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.plugin.core.dashboard.data.Executions;
 import io.kestra.plugin.core.debug.Return;
 import io.kestra.plugin.core.flow.Dag;
@@ -47,6 +57,8 @@ import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 import reactor.core.publisher.Flux;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
@@ -98,7 +110,9 @@ class JsonSchemaGeneratorTest {
             .orElseThrow();
 
         Map<String, Object> generate = jsonSchemaGenerator.properties(Task.class, cls);
-        assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).size(), is(6));
+        Map<String, Map<String, Object>> generatedProperties = (Map<String, Map<String, Object>>) generate.get("properties");
+        assertThat(generatedProperties.size(), is(7));
+        assertThat(generatedProperties.containsKey("assets"), is(true));
 
         Map<String, Object> format = properties(generate).get("format");
         assertThat(format.get("default"), is("{}"));
@@ -149,6 +163,64 @@ class JsonSchemaGeneratorTest {
         });
     }
 
+    @SuppressWarnings("unchecked")
+    @Test
+    void outputAssetsAcceptExpressionsAndFreeFormTypes() throws URISyntaxException {
+        Helpers.runApplicationContext((applicationContext) ->
+        {
+            JsonSchemaGenerator jsonSchemaGenerator = applicationContext.getBean(JsonSchemaGenerator.class);
+            Map<String, Object> generate = jsonSchemaGenerator.schemas(Flow.class);
+            var definitions = (Map<String, Map<String, Object>>) generate.get("definitions");
+
+            // an asset type provided by a plugin keeps its constant, which is what the editor autocompletes
+            assertThat(properties(definitions.get(External.class.getName())).get("type").get("const"), is(External.class.getName()));
+            // the custom asset is the free-form branch, so its type stays an open string
+            var customType = properties(definitions.get(Custom.class.getName())).get("type");
+            assertThat(customType.get("type"), is("string"));
+            assertThat(customType, not(hasKey("const")));
+
+            com.networknt.schema.Schema schema = SchemaRegistry.withDialect(Dialects.getDraft7()).getSchema(toolsJson(generate));
+            // the whole assets.outputs declaration is rendered at runtime, so an expression is as valid as a literal
+            assertThat(validate(schema, flowWithOutputAsset("id: trips", "namespace: \"{{ flow.namespace }}\"", "type: " + External.class.getName())), is(empty()));
+            assertThat(validate(schema, flowWithOutputAsset("id: \"{{ taskrun.value }}_trips\"", "type: " + External.class.getName())), is(empty()));
+            // a type no asset plugin provides is deserialized as a custom asset, so the schema accepts it as well
+            assertThat(validate(schema, flowWithOutputAsset("id: trips", "namespace: company.team", "type: com.acme.assets.Warehouse")), is(empty()));
+            // a literal is still held to its format
+            assertThat(validate(schema, flowWithOutputAsset("id: trips", "namespace: Company Team", "type: " + External.class.getName())), is(not(empty())));
+        });
+    }
+
+    private static String flowWithOutputAsset(String... assetProperties) {
+        return """
+            id: assets
+            namespace: company.team
+            tasks:
+              - id: log
+                type: io.kestra.plugin.core.log.Log
+                message: hello
+                assets:
+                  outputs:
+                    - %s
+            """.formatted(String.join("\n" + " ".repeat(10), assetProperties));
+    }
+
+    private static List<com.networknt.schema.Error> validate(com.networknt.schema.Schema schema, String flow) {
+        try {
+            return schema.validate(toolsJson(JacksonMapper.ofYaml().readTree(flow)));
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    // the schema validator reads Jackson 3 trees, the generator and the flow parser produce Jackson 2 ones
+    private static JsonNode toolsJson(Object value) {
+        try {
+            return JsonMapper.builder().build().readTree(JacksonMapper.ofJson().writeValueAsString(value));
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
     @Test
     void flowSchemaExcludesEeOnlyInputTypes() throws URISyntaxException {
         Helpers.runApplicationContext((applicationContext) ->
@@ -161,8 +233,42 @@ class JsonSchemaGeneratorTest {
             // the polymorphic anyOf/const subtype branches nor in the type/itemType enum arrays (REUSABLE_INPUTS was
             // leaking through the latter).
             assertThat(schema, not(containsString("REUSABLE_INPUTS")));
+            // the class name is not the type name, so it survives the string strip: the subtype's definitions and the
+            // anyOf branch reaching them by $ref have to go too, or a reusable-inputs input still validates, minus its
+            // discriminator
+            assertThat(schema, not(containsString("ReusableInputsInput")));
             // sanity: ordinary input types are still present
             assertThat(schema, containsString("EMAIL"));
+        });
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void excludedInputTypesLeaveNoBranchOrDefinitionBehind() throws URISyntaxException {
+        Helpers.runApplicationContext((applicationContext) ->
+        {
+            JsonSchemaGenerator jsonSchemaGenerator = applicationContext.getBean(JsonSchemaGenerator.class);
+
+            Map<String, Object> schema = jsonSchemaGenerator.schemas(Flow.class);
+            var definitions = (Map<String, Map<String, Object>>) schema.get("definitions");
+            var flow = definitions.get(Flow.class.getName());
+            var inputs = (Map<String, Object>) ((Map<String, Object>) flow.get("properties")).get("inputs");
+            var items = (Map<String, Object>) inputs.get("items");
+            var branches = (List<Map<String, Object>>) items.get("anyOf");
+
+            String excluded = ReusableInputsInput.class.getName();
+            assertThat(
+                "no anyOf branch may reach the excluded subtype",
+                branches.stream().map(branch -> String.valueOf(branch.get("$ref"))).toList(),
+                everyItem(not(containsString(excluded)))
+            );
+            assertThat(
+                "the excluded subtype's definitions, orphaned by the branch removal, must go with it",
+                definitions.keySet().stream().filter(key -> key.startsWith(excluded)).toList(), is(empty())
+            );
+            // a body definition shared with the surviving subtypes must stay
+            assertThat(definitions, hasKey(DependsOn.class.getName()));
+            assertThat(branches, hasSize(greaterThan(1)));
         });
     }
 
@@ -356,7 +462,7 @@ class JsonSchemaGeneratorTest {
     void testEnum() {
         Map<String, Object> generate = jsonSchemaGenerator.properties(Task.class, TaskWithEnum.class);
         assertThat(generate, is(not(nullValue())));
-        assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).size(), is(6));
+        assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).size(), is(7));
         assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).get("stringWithDefault").get("default"), is("default"));
         assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).get("uri").get("$internalStorageURI"), is(true));
     }
@@ -367,7 +473,7 @@ class JsonSchemaGeneratorTest {
         Map<String, Object> generate = jsonSchemaGenerator.properties(Task.class, BetaTask.class);
         assertThat(generate, is(not(nullValue())));
         assertThat(generate.get("$beta"), is(true));
-        assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).size(), is(2));
+        assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).size(), is(3));
         assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).get("beta").get("$beta"), is(true));
         assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).get("beta").get("$language"), is(MonacoLanguages.PYTHON.toString()));
     }
@@ -485,7 +591,8 @@ class JsonSchemaGeneratorTest {
     void pluginSchemaShouldNotResolveTaskAndTriggerSubtypes() {
         Map<String, Object> generate = jsonSchemaGenerator.properties(null, TaskWithSubTaskAndSubTrigger.class);
         var definitions = (Map<String, Map<String, Object>>) generate.get("$defs");
-        assertThat(definitions.size(), is(10));
+        // the assets declaration of the task base counts the custom asset, the free-form branch of assets.outputs
+        assertThat(definitions.size(), is(12));
     }
 
     @SuppressWarnings("unchecked")

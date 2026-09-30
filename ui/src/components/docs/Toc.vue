@@ -1,6 +1,5 @@
 <template>
     <KsAutocomplete
-        ref="search"
         class="flex-shrink-0"
         v-model="query"
         :fetchSuggestions="search"

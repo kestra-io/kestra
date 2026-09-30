@@ -1,11 +1,12 @@
 import {describe, expect, it, vi, beforeEach, afterEach} from "vitest"
 import {mount} from "@vue/test-utils"
 import {defineComponent} from "vue"
-import moment from "moment-timezone"
+import {dayjs} from "@kestra-io/design-system"
 import {storageKeys} from "../../../../../utils/constants"
 import DateColumn from "./Date.vue"
 
-vi.mock("@kestra-io/design-system", () => ({
+vi.mock("@kestra-io/design-system", async (importOriginal) => ({
+    ...(await importOriginal<typeof import("@kestra-io/design-system")>()),
     KsTooltip: defineComponent({
         name: "KsTooltip",
         props: {content: {type: String, default: undefined}},
@@ -16,7 +17,7 @@ vi.mock("@kestra-io/design-system", () => ({
 const FIELD = "2026-07-24T13:16:00.000Z"
 const TIMEZONE = "America/Los_Angeles"
 
-const inTimezone = (format: string) => moment(FIELD).tz(TIMEZONE).format(format)
+const inTimezone = (format: string) => dayjs(FIELD).tz(TIMEZONE).format(format)
 
 describe("dashboard table Date column", () => {
     beforeEach(() => localStorage.clear())
@@ -25,7 +26,7 @@ describe("dashboard table Date column", () => {
     it("should render the absolute date with a tooltip carrying the full value", () => {
         const wrapper = mount(DateColumn, {props: {field: FIELD}})
 
-        const expected = moment(FIELD).tz(moment.tz.guess()).format("llll")
+        const expected = dayjs(FIELD).tz(dayjs.tz.guess()).format("llll")
         const tooltip = wrapper.find("[data-test=tooltip]")
         expect(tooltip.exists()).toBe(true)
         expect(tooltip.attributes("data-content")).toBe(expected)
@@ -37,9 +38,9 @@ describe("dashboard table Date column", () => {
 
         const tooltip = wrapper.find("[data-test=tooltip]")
         expect(tooltip.exists()).toBe(true)
-        expect(tooltip.attributes("data-content")).toBe(moment(FIELD).tz(moment.tz.guess()).format("llll"))
+        expect(tooltip.attributes("data-content")).toBe(dayjs(FIELD).tz(dayjs.tz.guess()).format("llll"))
         expect(wrapper.find("span.date").text())
-            .toBe(moment(FIELD).tz(moment.tz.guess()).calendar(null, {sameElse: "L [at] LT"}))
+            .toBe(dayjs(FIELD).tz(dayjs.tz.guess()).calendar(null, {sameElse: "L [at] LT"}))
     })
 
     it("should render nothing when there is no field", () => {
@@ -64,7 +65,7 @@ describe("dashboard table Date column", () => {
         const wrapper = mount(DateColumn, {props: {field: FIELD, relative: true}})
 
         expect(wrapper.find("span.date").text())
-            .toBe(moment(FIELD).tz(TIMEZONE).calendar(null, {sameElse: "L [at] LT"}))
+            .toBe(dayjs(FIELD).tz(TIMEZONE).calendar(null, {sameElse: "L [at] LT"}))
     })
 
     it("should honour the date format from settings alongside the timezone", () => {

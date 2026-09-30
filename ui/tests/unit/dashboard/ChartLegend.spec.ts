@@ -16,4 +16,20 @@ describe("ChartLegend", () => {
         expect(wrapper.text()).toContain("Info (1292)")
         expect(wrapper.text()).toContain("Error (61)")
     })
+
+    test("renders duration aggregations through the provided formatter", () => {
+        const wrapper = mount(ChartLegend, {
+            props: {
+                items: [
+                    {label: "SUCCESS", color: "#028090", count: 6.3},
+                    {label: "FAILED", color: "#F05A5A", count: 0.11},
+                ],
+                formatValue: (value: number) => `${value.toFixed(2)}s`,
+            },
+        })
+
+        expect(wrapper.text()).toContain("Success (6.30s)")
+        expect(wrapper.text()).toContain("Failed (0.11s)")
+        expect(wrapper.text()).not.toContain("(6.3)")
+    })
 })

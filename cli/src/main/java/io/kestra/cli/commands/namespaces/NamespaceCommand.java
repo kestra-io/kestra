@@ -2,6 +2,7 @@ package io.kestra.cli.commands.namespaces;
 
 import io.kestra.cli.AbstractCommand;
 import io.kestra.cli.Kestra;
+import io.kestra.cli.commands.NoDatabaseCommandInterface;
 import io.kestra.cli.commands.namespaces.kv.KvCommand;
 
 import lombok.SneakyThrows;
@@ -17,7 +18,7 @@ import picocli.CommandLine;
     }
 )
 @Slf4j
-public class NamespaceCommand extends AbstractCommand {
+public class NamespaceCommand extends AbstractCommand implements NoDatabaseCommandInterface {
     @SneakyThrows
     @Override
     public Integer call() throws Exception {

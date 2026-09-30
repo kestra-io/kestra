@@ -3,14 +3,12 @@
         <span v-for="trigger in triggers" :key="uid(trigger)" :id="uid(trigger)" class="trigger-icon" @click.stop>
             <template v-if="trigger.disabled === undefined || trigger.disabled === false">
                 <KsPopover
-                    :ref="(el: any) => setPopoverRef(el, trigger)"
                     placement="left"
                     :persistent="true"
                     :title="`${$t('trigger details')}: ${trigger ? trigger.id : ''}`"
                     :width="500"
                     transition=""
                     :hideAfter="0"
-                    @show="handlePopoverShow"
                 >
                     <template #reference>
                         <TaskIcon :onlyIcon="true" :cls="trigger?.type" :loadIcon="pluginsStore.loadIcon" />
@@ -24,7 +22,7 @@
     </div>
 </template>
 <script setup lang="ts">
-    import {computed, ref, nextTick} from "vue"
+    import {computed} from "vue"
     import {usePluginsStore} from "../../stores/plugins"
     import * as Utils from "../../utils/utils"
     import {webhookUrl, WEBHOOK_TRIGGER_TYPE} from "../../utils/webhook"
@@ -45,7 +43,7 @@
         type: string;
         key?: string;
         disabled?: boolean;
-        [key: string]: any;
+        [key: string]: unknown;
     }
 
     const props = defineProps<{
@@ -55,8 +53,6 @@
     }>()
 
     const pluginsStore = usePluginsStore()
-
-    const popoverRefs = ref<Map<string, any>>(new Map())
 
     const triggers = computed<Trigger[]>(() => {
         if (props.flow && props.flow.triggers) {
@@ -72,22 +68,6 @@
 
     function uid(trigger: Trigger): string {
         return (props.flow ? props.flow.namespace + "-" + props.flow.id : props.execution?.id) + "-" + trigger.id
-    }
-
-    function setPopoverRef(el: any, trigger: Trigger) {
-        if (el) {
-            popoverRefs.value.set(uid(trigger), el)
-        }
-    }
-
-    function handlePopoverShow() {
-        nextTick(() => {
-            popoverRefs.value.forEach((popover) => {
-                if (popover?.popperRef?.popperInstanceRef) {
-                    popover.popperRef.popperInstanceRef.update()
-                }
-            })
-        })
     }
 
     const {t} = useI18n()

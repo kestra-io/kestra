@@ -12,6 +12,10 @@ import io.kestra.core.models.QueryFilter;
  * compatible with the format parsed by {@code QueryFilterFormatBinder}.
  *
  * <p>
+ * Nested AND/OR groups are supported: each group contributes a {@code [<logical>][<index>]} segment
+ * to its children's key, e.g. {@code filters[or][0][namespace][EQUALS]}.
+ *
+ * <p>
  * Example usage:
  * 
  * <pre>{@code
@@ -27,14 +31,35 @@ public final class QueryFilterTestUtils {
 
     public static Map<String, String> toQueryParams(List<QueryFilter> filters) {
         Map<String, String> result = new LinkedHashMap<>();
-        for (QueryFilter filter : filters) {
-            String baseKey = "filters[%s][%s]".formatted(
-                filter.field().value(),
-                filter.operation().name()
-            );
-            serializeValue(baseKey, filter.value(), result);
-        }
+        serializeFilters("filters", filters, result);
         return result;
+    }
+
+    private static void serializeFilters(String prefix, List<QueryFilter> filters, Map<String, String> result) {
+        for (QueryFilter filter : filters) {
+            serializeFilter(prefix, filter, result);
+        }
+    }
+
+    private static void serializeFilter(String prefix, QueryFilter filter, Map<String, String> result) {
+        if (filter.isNode()) {
+            List<QueryFilter> children = filter.children();
+            for (int i = 0; i < children.size(); i++) {
+                serializeFilter(
+                    "%s[%s][%d]".formatted(prefix, filter.logical().value(), i),
+                    children.get(i),
+                    result
+                );
+            }
+            return;
+        }
+
+        String baseKey = "%s[%s][%s]".formatted(
+            prefix,
+            filter.field().value(),
+            filter.operation().name()
+        );
+        serializeValue(baseKey, filter.value(), result);
     }
 
     @SuppressWarnings("unchecked")

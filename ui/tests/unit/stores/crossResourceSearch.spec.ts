@@ -122,7 +122,16 @@ describe("useCrossResourceSearchStore", () => {
     })
 
     it("marks a type as failed on request error without affecting the others", async () => {
-        mockSearchFlowsBySourceCode.mockRejectedValue({response: {data: {message: "Invalid regular expression"}}})
+        mockSearchFlowsBySourceCode.mockRejectedValue({
+            response: {
+                data: {
+                    type: "https://kestra.io/docs/api-reference/problems/bad-request",
+                    title: "Bad request",
+                    status: 400,
+                    detail: "Invalid regular expression",
+                },
+            },
+        })
         mockListSecrets.mockResolvedValue({results: [{namespace: "company.a", key: "aws-us-east-1-access-key"}]})
 
         const store = useCrossResourceSearchStore()

@@ -3,6 +3,7 @@ package io.kestra.cli.commands.plugins;
 import java.util.List;
 
 import io.kestra.cli.AbstractCommand;
+import io.kestra.cli.commands.NoDatabaseCommandInterface;
 import io.kestra.core.plugins.RegisteredPlugin;
 
 import io.micronaut.context.ApplicationContext;
@@ -16,7 +17,7 @@ import picocli.CommandLine.Spec;
     name = "list",
     description = "List all plugins already installed"
 )
-public class PluginListCommand extends AbstractCommand {
+public class PluginListCommand extends AbstractCommand implements NoDatabaseCommandInterface {
     @Spec
     CommandLine.Model.CommandSpec spec;
 

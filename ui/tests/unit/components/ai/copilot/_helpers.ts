@@ -34,6 +34,7 @@ export const ksStubs = {
     },
     KsDropdown: {name: "KsDropdown", props: ["trigger"], template: "<div class=\"ks-dropdown\"><slot /><slot name=\"dropdown\" /></div>"},
     KsDropdownMenu: {name: "KsDropdownMenu", template: "<div class=\"ks-dropdown-menu\"><slot /></div>"},
+    KsId: {name: "KsId", props: ["value", "shrink"], template: "<span>{{ value }}<slot /></span>"},
     KsDropdownItem: {name: "KsDropdownItem", emits: ["click"], template: "<button class=\"ks-dropdown-item\" @click=\"$emit('click')\"><slot /></button>"},
     KsCard: {name: "KsCard", template: "<div><slot /></div>"},
     KsText: {name: "KsText", props: ["size", "type"], template: "<span><slot /></span>"},
@@ -45,6 +46,10 @@ export const ksStubs = {
     KsMarkdown: {name: "KsMarkdown", props: ["content"], template: "<div class=\"ks-markdown\">{{ content }}</div>"},
     KsCollapse: {name: "KsCollapse", props: ["modelValue"], template: "<div><slot /></div>"},
     KsCollapseItem: {name: "KsCollapseItem", props: ["name", "title"], template: "<div><span class=\"collapse-title\"><slot name=\"title\">{{ title }}</slot></span><slot /></div>"},
+    // DiffView renders a real Monaco KsEditor in diff mode — too heavy for jsdom, and the copilot
+    // components only need to assert what's passed to it (`original`/`modelValue`), not that Monaco
+    // itself renders a diff.
+    KsEditor: {name: "KsEditor", props: ["modelValue", "original", "lang", "readOnly", "options"], template: "<div data-test=\"ks-editor\" />"},
 }
 
 /** Common `global` mount option for copilot component tests. */

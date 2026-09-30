@@ -18,6 +18,8 @@ import io.kestra.core.reporter.UsageReportConfig;
 import io.kestra.core.serializers.JacksonMapper;
 
 import io.grpc.Deadline;
+import io.grpc.Status;
+import io.grpc.StatusRuntimeException;
 import io.micronaut.core.annotation.Nullable;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -79,9 +81,16 @@ public class GrpcWorkerConnectionService implements WorkerConnectionService {
             String workerGroupId = response.getWorkerGroupId();
             log.info("Connected to controller, workerGroup: {}", workerGroupId);
             return new ConnectionResult(workerGroupId);
+        } catch (StatusRuntimeException e) {
+            // The controller reports why it refused or could not serve the connection, and its gRPC
+            // stack trace adds nothing to that description, so it is only kept for debugging.
+            String message = connectFailureMessage(e.getStatus());
+            log.error(message);
+            log.debug("Connect request to controller failed", e);
+            throw new WorkerConnectionFailedException(message);
         } catch (Exception e) {
             log.error("Failed to send connect request to controller", e);
-            throw new WorkerConnectionFailedException("Failed connecting to Kestra controller. Cause: " + e.getMessage());
+            throw new WorkerConnectionFailedException("Failed connecting to Kestra controller. Cause: " + e.getMessage(), e);
         }
     }
 
@@ -114,5 +123,11 @@ public class GrpcWorkerConnectionService implements WorkerConnectionService {
                 }
             }
         }
+    }
+
+    private static String connectFailureMessage(Status status) {
+        String description = status.getDescription() == null ? "no error description" : status.getDescription();
+        String cause = status.getCause() == null ? "" : " Cause: %s.".formatted(status.getCause().getMessage());
+        return "Failed connecting to Kestra controller (%s): %s%s".formatted(status.getCode(), description, cause);
     }
 }

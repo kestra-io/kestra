@@ -1,6 +1,6 @@
 import type {Meta, StoryObj} from "@storybook/vue3-vite"
 import {ref} from "vue"
-import {within, userEvent, expect} from "storybook/test"
+import {within, userEvent, expect, waitFor} from "storybook/test"
 import KsButton from "../../../src/components/Basic/KsButton/KsButton.vue"
 import KsDialog from "../../../src/components/Feedback/KsDialog.vue"
 import KsForm from "../../../src/components/Form/KsForm/KsForm.vue"
@@ -281,5 +281,36 @@ export const Fill: Story = {
 
         const body = document.querySelector(".kel-dialog__body > div") as HTMLElement
         await expect(body.scrollHeight).toBeGreaterThan(body.clientHeight)
+    },
+}
+
+/** `dirty` asks for confirmation when the dialog is dismissed with unsaved input */
+export const DirtyGuard: Story = {
+    render: () => ({
+        components: {KsButton, KsDialog, KsInput},
+        setup() {
+            const visible = ref(false)
+            const name = ref("")
+            return {visible, name}
+        },
+        template: `
+            <div style="padding:24px">
+                <ks-button type="primary" @click="visible = true">Open form</ks-button>
+                <ks-dialog v-model="visible" title="New item" :dirty="name !== ''">
+                    <ks-input v-model="name" placeholder="Name" data-testid="dirty-guard-name" />
+                    <template #footer>
+                        <ks-button @click="visible = false">Cancel</ks-button>
+                    </template>
+                </ks-dialog>
+            </div>
+        `,
+    }),
+    async play({canvasElement}) {
+        const canvas = within(canvasElement)
+        await userEvent.click(canvas.getByRole("button", {name: "Open form"}))
+        const input = await waitFor(() => document.querySelector<HTMLInputElement>("[data-testid=dirty-guard-name] input, input[data-testid=dirty-guard-name]")!)
+        await userEvent.type(input, "draft")
+        await userEvent.keyboard("{Escape}")
+        await waitFor(() => expect(document.querySelector(".kel-message-box")).toBeTruthy())
     },
 }

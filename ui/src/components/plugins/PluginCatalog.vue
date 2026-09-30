@@ -86,7 +86,7 @@
                     :iconCls="hasIcon(plugin.subGroup) ? plugin.subGroup : plugin.group"
                     :icons
                     :loadIcon="pluginsStore.loadIcon"
-                    :title="plugin.title.capitalize()"
+                    :title="enrichmentStore.getEnrichment(plugin)?.title ?? plugin.title.capitalize()"
                     :description="plugin.description"
                     :categories="plugin.categories"
                     :taskCount="taskCount(plugin)"
@@ -162,9 +162,10 @@
             return acc
         }, {})
 
-        const filtered = Object.values(grouped).flatMap(group =>
-            group.filter(p => p.subGroup).length ? group.filter(p => p.subGroup) : group.filter(p => !p.subGroup),
-        )
+        const filtered = Object.values(grouped).flatMap(group => {
+            const subGroups = group.filter(p => p.subGroup && isVisible(p))
+            return subGroups.length ? subGroups : group.filter(p => !p.subGroup)
+        })
 
         return filtered
             .filter((plugin, index, self) =>
@@ -235,8 +236,7 @@
         return baseList.value
             .filter(plugin => isPluginMatched(plugin, searchInput.value))
             .filter(plugin => matchesSelectedCategories(plugin))
-            .slice()
-            .sort(comparators[sortBy.value] ?? nameAsc)
+            .sort(comparators[sortBy.value])
     })
 
     const loadPluginIcons = async () => {
@@ -308,7 +308,6 @@
 </script>
 
 <style scoped lang="scss">
-    
     .filter-toolbar {
         display: flex;
         flex-wrap: wrap;
@@ -382,10 +381,6 @@
     }
 
     @media (max-width: 650px) {
-        .plugin-header {
-            padding: var(--ks-spacing-3);
-        }
-
         .plugins-container {
             padding-left: var(--ks-spacing-3);
             padding-right: var(--ks-spacing-3);

@@ -16,6 +16,7 @@ import io.kestra.core.contexts.configuration.RepositoryConfiguration;
 import io.kestra.core.exceptions.KestraRuntimeException;
 import io.kestra.core.repositories.log.LogsConfig;
 
+import io.micronaut.context.annotation.Value;
 import io.micronaut.core.annotation.Nullable;
 import jakarta.annotation.PreDestroy;
 import jakarta.inject.Singleton;
@@ -39,6 +40,7 @@ public class LogJdbcDataSourceProvider implements AutoCloseable {
     private final Settings jooqSettings;
     private final DataSource primaryDataSource;
     private final RepositoryConfiguration repositoryConfiguration;
+    private final boolean ephemeralDatabase;
 
     private boolean initialized;
     private HikariDataSource dedicatedDataSource;
@@ -49,15 +51,25 @@ public class LogJdbcDataSourceProvider implements AutoCloseable {
     public LogJdbcDataSourceProvider(final LogsConfig logsConfig,
         final Settings jooqSettings,
         @Nullable final DataSource primaryDataSource,
-        final RepositoryConfiguration repositoryConfiguration) {
+        final RepositoryConfiguration repositoryConfiguration,
+        @Value("${" + EphemeralDatabase.URL_PROPERTY + ":}") final String ephemeralDatabaseUrl) {
         this.logsConfig = logsConfig;
         this.jooqSettings = jooqSettings;
         this.primaryDataSource = primaryDataSource;
         this.repositoryConfiguration = repositoryConfiguration;
+        this.ephemeralDatabase = EphemeralDatabase.isEnabled(ephemeralDatabaseUrl);
     }
 
     private synchronized void ensureInitialized() {
         if (initialized) {
+            return;
+        }
+
+        // A dedicated log database is the one datasource an ephemeral run cannot repoint through
+        // configuration: overriding a property cannot remove it, and a blank URL would fail
+        // validation instead of disabling it. Keep the logs in the ephemeral database.
+        if (ephemeralDatabase) {
+            initialized = true;
             return;
         }
 

@@ -45,4 +45,26 @@ describe("createClientFacade", () => {
         expect(errorFn).toHaveBeenCalledTimes(1)
         expect(errorFn).toHaveBeenCalledWith(networkError, undefined, expect.any(Request), expect.anything())
     })
+
+    it("still runs client.interceptors.error.fns when stream fetch is aborted", async () => {
+        const abortError = new DOMException("Aborted", "AbortError")
+        vi.stubGlobal("fetch", vi.fn().mockRejectedValue(abortError))
+        const {useClient} = createClientFacade(client, formDataBodySerializer)
+
+        await expect(useClient().stream("https://example.test/stream", {id: 1}))
+            .rejects.toBe(abortError)
+
+        expect(errorFn).toHaveBeenCalledTimes(1)
+        expect(errorFn).toHaveBeenCalledWith(abortError, undefined, expect.any(Request), expect.anything())
+    })
+
+    it("returns a non-2xx stream response without running error interceptors", async () => {
+        vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response("nope", {status: 503})))
+        const {useClient} = createClientFacade(client, formDataBodySerializer)
+
+        const response = await useClient().stream("https://example.test/x", {})
+
+        expect(response.status).toBe(503)
+        expect(errorFn).not.toHaveBeenCalled()
+    })
 })

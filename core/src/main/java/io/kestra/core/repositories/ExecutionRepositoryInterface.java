@@ -65,6 +65,12 @@ public interface ExecutionRepositoryInterface extends QueryBuilderInterface<Exec
      */
     Optional<Execution> findLatestForStates(String tenantId, String namespace, String flowId, List<State.Type> states);
 
+    /**
+     * Same as {@link #findLatestForStates(String, String, String, List)} but without applying the caller's
+     * namespace ACL, for trusted callers that gate access themselves (e.g. a public App rendered anonymously).
+     */
+    Optional<Execution> findLatestForStatesWithoutAcl(String tenantId, String namespace, String flowId, List<State.Type> states);
+
     ArrayListTotal<Execution> find(
         Pageable pageable,
         @Nullable String tenantId,

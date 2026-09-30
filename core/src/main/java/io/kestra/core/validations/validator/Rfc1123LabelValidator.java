@@ -24,8 +24,8 @@ import jakarta.inject.Singleton;
 @Singleton
 public final class Rfc1123LabelValidator implements ConstraintValidator<Rfc1123Label, String> {
 
-    public static final int MAX_LENGTH = 64;
-    public static final String PATTERN = "^[a-z0-9]([a-z0-9-]{0,62}[a-z0-9])?$";
+    public static final int MAX_LENGTH = 63;
+    public static final String PATTERN = "^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$";
 
     private static final Pattern COMPILED = Pattern.compile(PATTERN);
 

@@ -37,6 +37,8 @@
     import KsButton from "../KsButton/KsButton.vue"
     import KsTooltip from "../../Feedback/KsTooltip.vue"
 
+    type IconSize = "xs" | "sm" | "base" | "lg" | "xl"
+
     defineOptions({inheritAttrs: false})
 
     const props = withDefaults(defineProps<{
@@ -47,6 +49,7 @@
         to?: string | Record<string, unknown>
         replace?: boolean
         filled?: boolean
+        size?: IconSize
     }>(), {
         tooltip: "",
         placement: "left",
@@ -55,6 +58,7 @@
         to: undefined,
         replace: false,
         filled: false,
+        size: "sm",
     })
 
     defineSlots<{
@@ -64,7 +68,12 @@
     const attrs = useAttrs()
     const buttonAttrs = computed(() => ({
         ...attrs,
-        class: ["ks-icon-button", {"ks-icon-button--filled": props.filled}, attrs.class],
+        class: [
+            "ks-icon-button",
+            `ks-icon-button--${props.size}`,
+            {"ks-icon-button--filled": props.filled},
+            attrs.class,
+        ],
     }))
 
     const buttonTag = computed(() => (props.to ? "router-link" : undefined))
@@ -73,10 +82,12 @@
 
 <style scoped lang="scss">
     .ks-icon-button {
+        --ks-icon-button-glyph: var(--ks-icon-size-sm);
+
         color: var(--ks-text-primary);
-        width: 24px;
-        height: 24px;
-        min-width: 24px;
+        width: calc(var(--ks-icon-button-glyph) + var(--ks-spacing-2));
+        height: calc(var(--ks-icon-button-glyph) + var(--ks-spacing-2));
+        min-width: calc(var(--ks-icon-button-glyph) + var(--ks-spacing-2));
         border-radius: var(--kel-border-radius-base);
         text-align: center;
         display: inline-flex;
@@ -87,9 +98,25 @@
 
         :deep(.material-design-icon),
         :deep(.material-design-icon > .material-design-icon__svg) {
-            width: var(--ks-icon-size-sm);
-            height: var(--ks-icon-size-sm);
+            width: var(--ks-icon-button-glyph);
+            height: var(--ks-icon-button-glyph);
         }
+    }
+
+    .ks-icon-button--xs {
+        --ks-icon-button-glyph: var(--ks-icon-size-xs);
+    }
+
+    .ks-icon-button--base {
+        --ks-icon-button-glyph: var(--ks-icon-size-base);
+    }
+
+    .ks-icon-button--lg {
+        --ks-icon-button-glyph: var(--ks-icon-size-lg);
+    }
+
+    .ks-icon-button--xl {
+        --ks-icon-button-glyph: var(--ks-icon-size-xl);
     }
 
     .ks-icon-button:not(.ks-icon-button--filled) {

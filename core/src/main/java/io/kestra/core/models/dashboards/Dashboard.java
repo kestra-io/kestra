@@ -3,6 +3,7 @@ package io.kestra.core.models.dashboards;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
@@ -14,12 +15,13 @@ import io.kestra.core.models.SoftDeletable;
 import io.kestra.core.models.dashboards.charts.Chart;
 import io.kestra.core.serializers.YamlParser;
 import io.kestra.core.utils.IdUtils;
+import io.kestra.core.validations.DashboardQueryTimeoutValidation;
+import io.kestra.core.validations.TenantId;
 
 import io.swagger.v3.oas.annotations.Hidden;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -36,7 +38,7 @@ public class Dashboard implements HasUID, SoftDeletable<Dashboard> {
     private static final String DEFAULT_MAIN_DEFINITION_RESOURCE = "dashboards/default_main_definition.yaml";
 
     @Hidden
-    @Pattern(regexp = "^[a-z0-9][a-z0-9_-]*")
+    @TenantId
     private String tenantId;
 
     @NotNull
@@ -52,6 +54,10 @@ public class Dashboard implements HasUID, SoftDeletable<Dashboard> {
     @Valid
     @Builder.Default
     private TimeWindow timeWindow = TimeWindow.builder().build();
+
+    /** Overrides {@code kestra.dashboards.query-timeout} for this dashboard's charts, up to the configured maximum. */
+    @DashboardQueryTimeoutValidation
+    private Duration queryTimeout;
 
     @Valid
     private List<Chart<?>> charts;

@@ -1,14 +1,12 @@
 import {describe, test, expect, vi, beforeEach} from "vitest"
-import {mount} from "@vue/test-utils"
 import {defineComponent, h, inject} from "vue"
-import {createI18n} from "vue-i18n"
 import {createRouter, createMemoryHistory} from "vue-router"
-import KestraDesignSystem from "../../../../src/index"
 import KsFilter from "../../../../src/components/Data/KsDataTable/KsFilter.vue"
 import {FILTER_CONTEXT_INJECTION_KEY} from "../../../../src/components/Data/KsDataTable/filter/utils/filterInjectionKeys"
 import {SAVED_FILTER_ANALYTICS_INJECTION_KEY} from "../../../../src/components/Data/KsDataTable/filter/utils/filterAnalytics"
 import {Comparators} from "../../../../src/components/Data/KsDataTable/filter/utils/filterTypes"
 import type {AppliedFilter, FilterContext, SavedFilter} from "../../../../src/index"
+import {i18nMount} from "../../i18nMount"
 
 const router = createRouter({
     history: createMemoryHistory(),
@@ -16,7 +14,7 @@ const router = createRouter({
 })
 
 const globalConfig = {
-    plugins: [createI18n({legacy: false, locale: "en"}), KestraDesignSystem, router],
+    plugins: [router],
     stubs: {
         "ks-popover": true,
         "ks-button": true,
@@ -29,7 +27,7 @@ const globalConfig = {
 
 describe("KsFilter", () => {
     test("renders without errors with minimal config", () => {
-        const wrapper = mount(KsFilter, {
+        const wrapper = i18nMount(KsFilter, {
             props: {
                 configuration: {title: "", keys: []},
             },
@@ -39,7 +37,7 @@ describe("KsFilter", () => {
     })
 
     test("renders filter section with top div", () => {
-        const wrapper = mount(KsFilter, {
+        const wrapper = i18nMount(KsFilter, {
             props: {
                 configuration: {title: "", keys: []},
             },
@@ -49,7 +47,7 @@ describe("KsFilter", () => {
     })
 
     test("emits filter event when appliedFilters change", async () => {
-        const wrapper = mount(KsFilter, {
+        const wrapper = i18nMount(KsFilter, {
             props: {
                 configuration: {title: "", keys: []},
             },
@@ -59,7 +57,7 @@ describe("KsFilter", () => {
     })
 
     test("does not render filter options when showOptions is false", () => {
-        const wrapper = mount(KsFilter, {
+        const wrapper = i18nMount(KsFilter, {
             props: {
                 configuration: {title: "", keys: []},
                 tableOptions: {},
@@ -99,11 +97,11 @@ describe("KsFilter saved-filter analytics", () => {
             },
         })
 
-        mount(KsFilter, {
+        i18nMount(KsFilter, {
             props: {configuration: {title: "", keys: []}, prefix: "test"},
             slots: {extra: () => h(Harness)},
             global: {
-                plugins: [createI18n({legacy: false, locale: "en"}), KestraDesignSystem, router],
+                plugins: [router],
                 provide: {[SAVED_FILTER_ANALYTICS_INJECTION_KEY as symbol]: tracker},
             },
         })
@@ -160,10 +158,10 @@ describe("KsFilter saved-filter analytics", () => {
                 return () => h("div")
             },
         })
-        mount(KsFilter, {
+        i18nMount(KsFilter, {
             props: {configuration: {title: "", keys: []}, prefix: "test"},
             slots: {extra: () => h(Harness)},
-            global: {plugins: [createI18n({legacy: false, locale: "en"}), KestraDesignSystem, router]},
+            global: {plugins: [router]},
         })
 
         expect(() => context!.saveFilter("X", "", [makeAppliedFilter()])).not.toThrow()

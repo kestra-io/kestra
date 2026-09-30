@@ -19,9 +19,10 @@
  * This module has no side effects beyond sizing the shared request gate: it never chdirs, never
  * reads `process.argv` and never writes a file unless a caller asks it to.
  */
-import {readFileSync} from "node:fs"
+import {existsSync, readFileSync} from "node:fs"
 import {dirname, relative, resolve} from "node:path"
 import {writeIfChanged} from "./files.ts"
+import {parseLocaleModule} from "./localeFiles.mjs"
 import {
     type Fingerprints,
     fingerprintOf,
@@ -29,7 +30,7 @@ import {
     readFingerprints,
     writeFingerprints,
 } from "./fingerprints.ts"
-import {placeholderProblems} from "./translationRules.mjs"
+import {placeholderProblems, untranslatedKeys} from "./translationRules.mjs"
 import {LANGUAGES} from "../../src/translations/languages.ts"
 
 /**
@@ -101,6 +102,35 @@ const withRequestSlot = createGate(CONCURRENCY)
 // PR gate then rejected a file the generator itself had produced.
 const PLACEHOLDER_RETRIES = 3
 
+// Locales whose `pluralRules` entry in `ui/src/translations/i18n.ts` reads [one, few, many], and
+// [zero, one, few, many] for a source that has a zero form. The general prompt line alone was not
+// enough: asked for a zero-first source, the model answered with three forms for 9 of 10 keys,
+// which those rules then render as the zero text for a count of 1.
+const SLAVIC_PLURAL_LOCALES = new Set(["pl", "ru"])
+
+/** vue-i18n separates plural forms with `|`; a literal pipe is escaped as `{'|'}`. */
+const pluralFormCount = (message: string) => message.replace(/\{'[^']*'\}/g, "").split("|").length
+
+/**
+ * How many plural forms a translation into `languageCode` must have, or `undefined` when any count
+ * is fine. English writes one | other, or zero | one | other; the Slavic rules need one more form.
+ */
+function expectedPluralForms(languageCode: string, english: string): number | undefined {
+    if (!SLAVIC_PLURAL_LOCALES.has(languageCode)) return undefined
+
+    const forms = pluralFormCount(english)
+    if (forms === 2) return 3
+    if (forms === 3) return 4
+    return undefined
+}
+
+/** A key-specific line for the prompt, because the general Plural Forms rule is easy to miss. */
+function pluralFormsInstruction(expected: number | undefined): string {
+    if (expected === 3) return "The text has two plural forms separated by `|` (one | other). Output exactly three forms separated by ` | `: one, few, many."
+    if (expected === 4) return "The text has three plural forms separated by `|`, and the first is the zero case (zero | one | other). Output exactly four forms separated by ` | `: zero, one, few, many."
+    return ""
+}
+
 /**
  * Translates one string, or returns `undefined` if the call failed.
  *
@@ -108,11 +138,12 @@ const PLACEHOLDER_RETRIES = 3
  * that key's fingerprint alone — recording it would claim a translation exists and suppress every
  * future retry.
  */
-async function requestTranslation(client: TranslationClient, text: string, targetLanguage: string): Promise<string | undefined> {
+async function requestTranslation(client: TranslationClient, text: string, targetLanguage: string, extraInstruction = ""): Promise<string | undefined> {
     const prompt = `Translate the text provided after "----------" into ${targetLanguage} for use in Kestra’s orchestration UI. Follow these guidelines:
         - Output Only the Translation: Provide only the translated text, with no additional commentary or explanation.
         - Maintain Technical Accuracy: Use correct translations for technical terms (avoid literal translations that change the meaning).
         - Reserved English Terms (Do Not Translate): Keep the following terms in English (adjusting capitalization or plural forms as needed): kv store, namespace, tenant, flow, subflow, task, log, blueprint, id, trigger, label, key, value, input, output, port, worker, backfill, healthcheck, min, max. For example, in German, "log" must remain "Log" in phrases: translate "Log level" as "Log-Ebene" (not "Protokoll-Ebene"), and "Task logs" stays "Task Logs" (not "Aufgabenprotokolle"). Keep the English spelling of these terms, but follow the capitalization rules of the target language rather than copying the source casing. German capitalizes every noun, so it is "Die beiden Flows", "Tasks hinzufügen" and "neben dem Flow", never "die beiden flows", "tasks hinzufügen" or "neben dem flow". In German, "tenant" must stay "Tenant" (never "Mandant" or "Mieter").
+        - A Capital at the Start of the String Is Not a Name: a common noun is capitalised only because the string starts with it, so "Credential <code>{name}</code> could not be deleted." and "Connection test failed" are ordinary prose. Translate the noun the way you would in the middle of a sentence ("la credencial", "die Anmeldedaten", "認証情報"). Only the reserved terms above and the acronyms and product names below stay in English, wherever they appear.
         - Acronyms, Formats and Product Names (Do Not Translate): Keep initialisms and format names exactly as written, in their original case, and never transliterate them into the target script: JSON, JSONL, YAML, YML, CSV, SQL, API, URL, URI, HTTP, HTTPS, UUID, UTC, ISO, RFC, CPU, TTL, JWT, OAuth, OIDC, SAML, SCIM, LDAP, SSO, IAM, RBAC, SLA, MCP, CLI, UI, AI. The same goes for product and vendor names such as Kestra, GitHub, GitLab, Slack, Docker, Kubernetes, Terraform, Python, Java, Claude, Codex and Gemini. Only the surrounding words are translated: "Raw JSON" becomes "Rohes JSON" in German and "Необработанный JSON" in Russian, never "Rohes JavaScript-Objektnotation" and never "Необработанный ДЖЕЙСОН".
         - UI Terminology Consistency: Ensure the translation sounds natural for a software interface. Avoid overly formal or word-for-word translations that feel unnatural in a UI. Use terminology that users expect in the target language, and pick the reading that fits a UI rather than the first dictionary sense: "Expand" is a UI control (German "Ausklappen", not "Erweitern"), "Creation" is "Erstellung" (not "Schöpfung"), "State" is not "Staat", "Execution" is not "Hinrichtung", "Duplicate" as a noun is not the verb "Duplizieren", and "Open" as a status is not the verb "Öffnen". Apply the same care in other languages to avoid false friends or misleading terms.
         - German Form of Address: German UI text addresses the reader informally, with "du" / "dein" / "dich". Never use "Sie", "Ihr" or "Ihnen". Where the English string is a bare action label (a button, a menu entry, a select placeholder), use the infinitive rather than an imperative: "Save" becomes "Speichern", "Select a namespace" becomes "Namespace auswählen". Where the English string is a sentence addressed to the reader, use the du-imperative: "Adjust your filters, or give it another go!" becomes "Passe deine Filter an oder versuch es noch einmal!".
@@ -136,15 +167,21 @@ async function requestTranslation(client: TranslationClient, text: string, targe
           - Polish writes the KV Store's pairs as "pary KV", never "pary Key-Value" or "pary klucz-wartość". The literal label syntax stays "Key:Value".
           - Polish keeps "kill" and "stop" apart: "zabić" / "Zabij" for the kill action, "zatrzymać" for stop. Collapsing them produces nonsense like "musisz zatrzymać egzekucję, aby ją zatrzymać".
         - Polish Prefers a Participle to a Short Relative Clause: when the English is a short noun phrase with a passive relative clause, use the Polish participle. "Executions triggered from Playground mode" is "egzekucje uruchomione w trybie Playground", not "egzekucje, które zostały uruchomione w trybie Playground". Keep the relative clause when the modifier is long.
-        - Polish Plural Forms: Polish has three plural forms (1 / 2-4 / 5+), and \`ui/src/translations/i18n.ts\` registers a pluralRules entry for "pl" so all three work. When the English source already uses the \`|\` plural syntax, write three Polish forms separated by \`|\` (e.g. "{count} plik | {count} pliki | {count} plików"). When the English source has NO \`|\`, do not introduce one: the call site does not pass a plural index, so extra forms would never be selected.
+        - Polish Plural Forms: Polish has three plural forms (1 / 2-4 / 5+), and \`ui/src/translations/i18n.ts\` registers a pluralRules entry for "pl" so all three work. When the English source has two forms separated by \`|\`, write three Polish forms (e.g. "{count} plik | {count} pliki | {count} plików"). When the English source has three forms, its first form is the zero case ("no files | file | files"): write four Polish forms, zero | one | few | many (e.g. "brak plików | plik | pliki | plików"). When the English source has NO \`|\`, do not introduce one: the call site does not pass a plural index, so extra forms would never be selected.
+        - Russian Plural Forms: Russian has three plural forms (1, 21, 31... / 2-4, 22-24... / the rest, including 11-14), and \`ui/src/translations/i18n.ts\` registers a pluralRules entry for "ru" so all three work. When the English source has two forms separated by \`|\`, write three Russian forms (e.g. "{count} файл | {count} файла | {count} файлов"). When the English source has three forms, its first form is the zero case ("no files | file | files"): write four Russian forms, zero | one | few | many (e.g. "нет файлов | файл | файла | файлов"). When the English source has NO \`|\`, do not introduce one: the call site does not pass a plural index, so extra forms would never be selected.
+        - Hindi Renders the Kill Action as "समाप्त": killing an Execution is a technical termination, not violence, so translate "kill" / "killed" / "killing" with "समाप्त करना" / "समाप्त" ("execution <code>{id}</code> को समाप्त करें", "<code>{executionCount}</code> execution(s) समाप्त"). Never use "मारना", "मार", "हत्या" or any other wording that reads as killing a person, and never leave the phrase in English: without this rule the model judges the whole string untranslatable and returns the English source unchanged, which the PR gate then rejects.
         - Never Explain, Never Apologise: the output is written straight into a UI file that users read, so it must be the translation and nothing else. If the text after "----------" looks empty, malformed or untranslatable, return it unchanged. Never return a sentence about the text, about this request, or about what you could not do. Two such replies have reached users as UI strings, both beginning "Es scheint, dass der Text, den Sie übersetzen möchten, nicht bereitgestellt wurde".
-        - State Labels in English: Keep status labels that are in all caps (e.g. WARNING, FAILED, SUCCESS, PAUSED, RUNNING) in English and in their original uppercase format.
+        - State Labels in English: Keep status labels that are in all caps (e.g. WARNING, FAILED, SUCCESS, PAUSED, RUNNING) in English and in their original uppercase format. This applies only to tokens that are already all caps in the source. A state word in ordinary casing ("Paused", "Running", "Failed", "{tool} failed", "Backfill paused") is prose: translate it, and never turn it into the uppercase label.
+        - Hindi State Words: in ordinary casing, "Failed" is "विफल", "Paused" is "रोका गया" and "Running" is "चल रहा है"; only the all-caps labels stay English.
+        - Hindi Glossary: "Plugin" / "Plugins" is "प्लगइन", "Template" is "टेम्पलेट" and "Defaults" is "डिफ़ॉल्ट", so "Task Defaults" is "Task डिफ़ॉल्ट" with the reserved "Task" kept in English.
+        - Never Change the Casing of Untranslated Words: a reserved term or acronym keeps the casing it has in the source ("Labels" stays "Labels", not "labels"; "Tenant ID" stays "Tenant ID"). Never answer with a key name or a camelCase identifier ("taskDefaults" is not a translation of "Task Defaults"), and never answer with the source lower-cased.
         - Preserve Variables: Placeholders are enclosed in a SINGLE pair of curly braces (e.g. \`{label}\`, \`{key}\`). Copy them verbatim: do not translate the name inside the braces, do not rename it, do not add or remove braces, and never turn \`{label}\` into \`{{label}}\` — vue-i18n rejects double braces with a "Not allowed nest placeholder" compile error. For example, "System {label}" must stay "System {label}" in the translated text. Reproduce exactly the same set of placeholders as the source string — never invent a placeholder the source does not have, and never drop one it does.
         - Preserve Literal Escapes: A \`{'...'}\` block is a literal, not a placeholder: it escapes a character vue-i18n would otherwise read as syntax. Copy it verbatim, keeping the braces and quotes. For example \`recipient{'@'}your-domain.com\` must keep \`{'@'}\` — writing a bare \`@\` makes the message fail to compile with "Invalid linked format".
         - Target Language Only: every word of the output must be in ${targetLanguage}, or one of the reserved English terms above. Never emit a word or phrase belonging to a different target language — a German phrase ("Limitach Nebenläufigkeit") once reached the Polish file this way and shipped to users.
 
         If the loaded dictionary has no key-value pairs to translate, it means we're adding a new language, and we need to translate all the keys from English to ${targetLanguage}.
 
+        ${extraInstruction}
         Here is the text to translate:
         ----------
         ${text}
@@ -174,22 +211,38 @@ async function requestTranslation(client: TranslationClient, text: string, targe
 
 /**
  * Translates one string and verifies the result interpolates exactly the placeholders its English
- * source does, rerolling while it does not.
+ * source does, has the plural form count a Slavic locale's rule expects, and, for a non-Latin-script
+ * locale, is not the English text handed back verbatim, rerolling while any of them holds.
  *
  * A translation that invents or drops a placeholder is not a cosmetic defect: vue-i18n renders the
  * invented one as an empty gap and silently loses the value behind the dropped one, and the PR gate
- * rejects it outright. Checking here keeps the generator from writing output that its own checker
- * refuses.
+ * rejects it outright. An English copy is worse in a different way: written and fingerprinted, it
+ * looks settled to every later run, so the only thing that ever caught it was the gate's English-copy
+ * rule, weeks later. Checking both here keeps the generator from writing output its own checker
+ * refuses; a copy that survives the rerolls is reported as a failure, which leaves the fingerprint
+ * alone and the key pending for the next run.
  */
-async function translateText(client: TranslationClient, key: string, text: string, targetLanguage: string): Promise<string | undefined> {
+async function translateText(client: TranslationClient, key: string, text: string, languageCode: string, targetLanguage: string): Promise<string | undefined> {
+    const expectedForms = expectedPluralForms(languageCode, text)
     for (let attempt = 0; attempt <= PLACEHOLDER_RETRIES; attempt++) {
-        const translated = await requestTranslation(client, text, targetLanguage)
+        const translated = await requestTranslation(client, text, targetLanguage, pluralFormsInstruction(expectedForms))
         if (translated === undefined) return undefined
 
-        const problems = placeholderProblems(key, translated, text)
-        if (problems.length === 0) return translated
+        if (expectedForms !== undefined && pluralFormCount(translated) !== expectedForms) {
+            console.log(`[${languageCode}] '${key}': expected ${expectedForms} plural forms, got ${pluralFormCount(translated)} - retrying (${attempt + 1}/${PLACEHOLDER_RETRIES})`)
+            continue
+        }
 
-        console.log(`'${key}': ${problems[0]} - retrying (${attempt + 1}/${PLACEHOLDER_RETRIES})`)
+        const problems = placeholderProblems(key, translated, text)
+        if (problems.length > 0) {
+            console.log(`'${key}': ${problems[0]} - retrying (${attempt + 1}/${PLACEHOLDER_RETRIES})`)
+            continue
+        }
+        if (untranslatedKeys(languageCode, {[key]: translated}, {[key]: text}).length > 0) {
+            console.log(`[${languageCode}] '${key}': the model returned the English text unchanged - retrying (${attempt + 1}/${PLACEHOLDER_RETRIES})`)
+            continue
+        }
+        return translated
     }
     return undefined
 }
@@ -318,7 +371,10 @@ export async function generateTranslations(options: GenerateTranslationsOptions)
     // request gate, which bounds how many translations are in flight at once.
     await Promise.all(languages.map(async ([languageCode, targetLanguage]) => {
         const targetPath = filePathFor(languageCode)
-        const targetFlat = flattenDict(JSON.parse(readFileSync(targetPath, "utf-8"))[languageCode] as NestedDict)
+        // A tenant type's folder is created with `en.json` alone, so its first generation has no file to read.
+        const targetFlat = flattenDict(
+            existsSync(targetPath) ? JSON.parse(readFileSync(targetPath, "utf-8"))[languageCode] as NestedDict : {},
+        )
 
         // Only strings are sent to the model; other leaves (numbers, booleans) are copied verbatim,
         // since "translating" them would just corrupt them.
@@ -330,7 +386,7 @@ export async function generateTranslations(options: GenerateTranslationsOptions)
         // matter, and the output ordering is rebuilt from en.json just below.
         const translated: FlatDict = {}
         await Promise.all(pending.map(async (key) => {
-            const value = await translateText(client, key, enFlat[key], targetLanguage)
+            const value = await translateText(client, key, enFlat[key], languageCode, targetLanguage)
             if (value === undefined) {
                 failedKeys.add(key)
                 console.log(`[${languageCode}] '${key}': translation failed, leaving the existing value in place.`)
@@ -392,18 +448,9 @@ export async function generateTranslations(options: GenerateTranslationsOptions)
 //   }
 //
 // These files contain only string values and nested objects (no imports, types
-// or function calls), which lets us evaluate them as plain object literals and
-// re-serialise them back to TypeScript after filling in the translations.
+// or function calls), which `parseLocaleModule` reads without evaluating them, and
+// we re-serialise them back to TypeScript after filling in the translations.
 // ---------------------------------------------------------------------------
-
-// Evaluate the body of a `*.locale.ts` default export into a plain object.
-// The files are pure data literals, so this is safe (and far simpler than parsing TS).
-function evalLocaleModule(source: string): {[lang: string]: NestedDict} {
-    const body = source
-        .replace(/export\s+default\s*/, "")
-        .replace(/;?\s*$/, "")
-    return new Function(`return (${body})`)() as {[lang: string]: NestedDict}
-}
 
 // Serialise a value back to TypeScript source, matching the existing 4-space
 // indentation and trailing-comma style. Keys are always quoted: many of them have to be
@@ -467,7 +514,7 @@ export async function translateLocaleFiles(options: TranslateLocaleFilesOptions)
         `${fingerprintsFile ? relative(dirname(fingerprintsFile), filePath) : filePath}|${key}`
 
     await Promise.all(localeFiles.map(async (filePath) => {
-        const data = evalLocaleModule(readFileSync(filePath, "utf-8"))
+        const data = parseLocaleModule(readFileSync(filePath, "utf-8")) as {[lang: string]: NestedDict}
         if (!data.en) {
             console.log(`Skipping ${filePath}: no 'en' base translations found.`)
             return
@@ -506,7 +553,7 @@ export async function translateLocaleFiles(options: TranslateLocaleFilesOptions)
 
             const translated: FlatDict = {}
             await Promise.all(pending.map(async (key) => {
-                const value = await translateText(client, key, enFlat[key], targetLanguage)
+                const value = await translateText(client, key, enFlat[key], code, targetLanguage)
                 if (value === undefined) {
                     failedKeys.add(key)
                     console.log(`[${filePath}] '${key}': translation failed, leaving the existing value in place.`)

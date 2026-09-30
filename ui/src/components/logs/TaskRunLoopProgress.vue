@@ -1,6 +1,7 @@
 <template>
     <div style="flex:1">
         <KsProgress
+            v-if="loopIterationCount > 0"
             :percentage="consolidatedTerminalStates / loopIterationCount * 100"
             :strokeWidth="7"
             :radius="81"
@@ -20,7 +21,7 @@
                         'filters[parentId][EQUALS]': executionId,
                         'filters[kind][EQUALS]': 'LOOP',
                         'filters[taskId][EQUALS]': taskId,
-                        'filters[state][EQUALS]': loopTerminatedSegment.state
+                        'filters[state][IN]': loopTerminatedSegment.state
                     }
                 }"
             >
@@ -43,7 +44,7 @@
         executionId: string;
         currentTaskRunId: string;
         taskId: string;
-        loopOutputsByTaskRunId: Record<string, { iterationCount: number; terminatedIterations: Record<string, number> }>;
+        loopOutputsByTaskRunId: Record<string, { iterationCount: number; terminatedIterations?: Record<string, number> }>;
     }>()
 
     const loopIterationCount = computed(() => {

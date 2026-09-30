@@ -31,7 +31,6 @@ import reactor.core.publisher.Mono;
 @NoArgsConstructor
 public abstract class AbstractWebhookTrigger extends AbstractTrigger {
     @Size(max = 256)
-    @NotNull
     @NotBlank
     @Schema(
         title = "The unique key that will be part of the URL.",

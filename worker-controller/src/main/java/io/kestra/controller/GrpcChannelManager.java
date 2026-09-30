@@ -31,6 +31,7 @@ import io.kestra.controller.grpc.ExecutionLogsServiceGrpc;
 import io.kestra.controller.grpc.KVMetadataServiceGrpc;
 import io.kestra.controller.grpc.NamespaceFileMetadataServiceGrpc;
 import io.kestra.controller.grpc.WorkerFlowMetaStoreServiceGrpc;
+import io.kestra.controller.grpc.auth.BasicAuthClientInterceptor;
 import io.kestra.controller.grpc.resolver.StaticNameResolverProvider;
 import io.kestra.controller.grpc.resolver.StorageNameResolverProvider;
 import io.kestra.core.contexts.KestraContext;
@@ -51,6 +52,7 @@ import io.grpc.MethodDescriptor;
 import io.grpc.NameResolverProvider;
 import io.grpc.NameResolverRegistry;
 import io.grpc.Status;
+import io.micronaut.core.annotation.Nullable;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import jakarta.inject.Inject;
@@ -142,6 +144,9 @@ public class GrpcChannelManager {
     private final WorkerControllersConfiguration controllersConfig;
     private final Provider<StorageInterface> storageInterface;
 
+    @Nullable
+    private final BasicAuthClientInterceptor basicAuthClientInterceptor;
+
     // Last known good list of storage-discovered endpoints — used to ride out transient storage failures.
     private volatile List<EquivalentAddressGroup> lastKnownStorageAddresses = List.of();
 
@@ -159,17 +164,21 @@ public class GrpcChannelManager {
      * @param controllersConfig the multi-endpoint controllers configuration.
      * @param storageInterface the internal storage used for STORAGE discovery. May be {@code null}
      *        when Kestra is started without storage (only STATIC/DNS are then usable).
+     * @param basicAuthClientInterceptor presents the basic authentication credentials on every call.
+     *        {@code null} when {@code kestra.grpc.basic-auth.enabled} is false.
      */
     @Inject
     public GrpcChannelManager(
         GrpcChannelConfiguration grpcChannelConfiguration,
         GrpcConfiguration grpcConfiguration,
         WorkerControllersConfiguration controllersConfig,
-        Provider<StorageInterface> storageInterface) {
+        Provider<StorageInterface> storageInterface,
+        @Nullable BasicAuthClientInterceptor basicAuthClientInterceptor) {
         this.grpcChannelConfiguration = grpcChannelConfiguration;
         this.grpcConfiguration = grpcConfiguration;
         this.controllersConfig = controllersConfig;
         this.storageInterface = storageInterface;
+        this.basicAuthClientInterceptor = basicAuthClientInterceptor;
         this.sharedExecutorService = Executors.newThreadPerTaskExecutor(Thread.ofVirtual().name("grpc-channel-", 0).factory());
     }
 
@@ -373,6 +382,10 @@ public class GrpcChannelManager {
      * @return the configured channel builder.
      */
     protected ManagedChannelBuilder<?> configureChannel(ManagedChannelBuilder<?> builder) {
+        if (basicAuthClientInterceptor != null) {
+            builder.intercept(basicAuthClientInterceptor);
+        }
+
         builder.enableRetry()
             .maxRetryAttempts(grpcChannelConfiguration.retry().maxAttempts())
             .userAgent(getUserAgent())

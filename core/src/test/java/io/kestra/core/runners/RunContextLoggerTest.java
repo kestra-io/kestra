@@ -174,12 +174,13 @@ class RunContextLoggerTest {
             false
         );
 
-        // When the outputs are decrypted while building the run variables
-        new RunVariables.DefaultBuilder(Optional.of(secretKey))
-            .withExecution(execution)
-            .withOutputs(outputs)
-            .withDecryptVariables(true)
-            .build(runContextLogger, PropertyContext.create(renderer));
+        // When the outputs are decrypted as the run context reads them
+        new DefaultRunContext.Builder()
+            .withSecretKey(Optional.of(secretKey))
+            .withLogger(runContextLogger)
+            .withVariables(Map.of("outputs", outputs))
+            .build()
+            .getVariables();
 
         // Then the decrypted plaintext is registered for log masking, exactly like a SECRET input
         runContextLogger.logger().info("the secret is {}", "my-super-secret-value");
@@ -390,6 +391,29 @@ class RunContextLoggerTest {
         assertThat(fileContent).contains("to file ******");
         // file-only: ContextAppender is not attached, so nothing reaches the inline queue
         assertThat(logs).isEmpty();
+    }
+
+    @Test
+    void shouldMaskThrowableWhenLoggingToFile() throws Exception {
+        Flow flow = TestsUtils.mockFlow();
+        Execution execution = TestsUtils.mockExecution(flow, Map.of());
+        RunContextLogger runContextLogger = new RunContextLogger(
+            logEntryEmitter,
+            LogEntry.of(execution),
+            Level.TRACE,
+            true
+        );
+        String secret = "super-secret-value";
+        runContextLogger.usedSecret(secret);
+
+        runContextLogger.logger().error("Task failure {}", secret, new Exception("Task failure %s".formatted(secret)));
+
+        runContextLogger.closeLogFile();
+        String fileContent = java.nio.file.Files.readString(runContextLogger.getLogFile().toPath());
+        assertThat(fileContent)
+            .contains("Task failure ******")
+            .contains("java.lang.Exception: Task failure ******")
+            .doesNotContain(secret);
     }
 
     @Test

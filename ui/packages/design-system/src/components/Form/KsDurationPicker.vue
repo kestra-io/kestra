@@ -10,6 +10,7 @@
                     v-model="days"
                     :disabled="disabled"
                     :min="0"
+                    @change="updateDuration"
                 />
             </div>
             <div class="ks-duration-picker__field">
@@ -21,6 +22,7 @@
                     v-model="hours"
                     :disabled="disabled"
                     :min="0"
+                    @change="updateDuration"
                 />
             </div>
             <div class="ks-duration-picker__field">
@@ -32,6 +34,7 @@
                     v-model="minutes"
                     :disabled="disabled"
                     :min="0"
+                    @change="updateDuration"
                 />
             </div>
             <div class="ks-duration-picker__field">
@@ -43,6 +46,7 @@
                     v-model="seconds"
                     :disabled="disabled"
                     :min="0"
+                    @change="updateDuration"
                 />
             </div>
         </div>
@@ -76,7 +80,7 @@
     const customDuration = ref("")
     const durationIssue = ref<string | null>(null)
 
-    const updateDuration = () => {
+    const serializeDuration = (): string | null => {
         let duration = "P"
         if (days.value > 0) duration += `${days.value}D`
 
@@ -87,20 +91,23 @@
             if (seconds.value > 0) duration += `${seconds.value}S`
         }
 
-        const finalDuration: string | null = duration === "P" ? null : duration
+        return duration === "P" ? null : duration
+    }
+
+    /** Wired to unit @change, not unit watchers: programmatic unit writes from applyDuration must not rewrite the text being typed. */
+    const updateDuration = () => {
+        const finalDuration = serializeDuration()
         customDuration.value = finalDuration ?? ""
         durationIssue.value = null
         emit("update:modelValue", finalDuration)
     }
 
-    const parseDuration = (durationString: string) => {
-        customDuration.value = durationString
-
+    const applyDuration = (durationString: string): boolean => {
         if (!durationString || durationString === "P") {
             days.value = 0
             hours.value = 0; minutes.value = 0; seconds.value = 0
             durationIssue.value = null
-            return
+            return true
         }
 
         const match = durationString.match(
@@ -109,8 +116,7 @@
 
         if (!match) {
             durationIssue.value = `Invalid ISO 8601 duration: ${durationString}`
-            emit("update:modelValue", null)
-            return
+            return false
         }
 
         days.value = parseInt(match[1] ?? "0")
@@ -118,21 +124,23 @@
         minutes.value = parseInt(match[3] ?? "0")
         seconds.value = parseInt(match[4] ?? "0")
         durationIssue.value = null
+        return true
     }
 
-    watch(days, updateDuration)
-    watch(hours, updateDuration)
-    watch(minutes, updateDuration)
-    watch(seconds, updateDuration)
+    const parseDuration = (durationString: string) => {
+        customDuration.value = durationString
+        emit("update:modelValue", applyDuration(durationString) ? serializeDuration() : null)
+    }
 
     watch(() => props.modelValue, (val: string | null | undefined) => {
         if (val && val !== customDuration.value) {
-            parseDuration(val)
+            customDuration.value = val
+            applyDuration(val)
         }
     })
 
     onMounted(() => {
-        parseDuration(props.modelValue ?? "")
+        applyDuration(props.modelValue ?? "")
         updateDuration()
     })
 </script>

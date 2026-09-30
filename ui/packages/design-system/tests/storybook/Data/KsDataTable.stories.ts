@@ -222,6 +222,44 @@ export const Empty: Story = {
     }),
 }
 
+export const LoadFailure: Story = {
+    name: "Load failure",
+    render: () => ({
+        components: {KsDataTable, KsTableColumn, KsButton},
+        setup() {
+            const attempts = ref(0)
+            const loadData = () => {
+                attempts.value += 1
+                return Promise.reject(new Error("boom"))
+            }
+            return {loadData, attempts}
+        },
+        template: `
+            <div style="padding: 24px">
+                <ks-data-table :data="[]" :total="0" :load-data="loadData" :current-page="1" :page-size="25" no-data-text="No flows found">
+                    <ks-table-column prop="id" label="Flow ID" />
+                    <template #error="{retry}">
+                        <p data-testid="load-error">Could not load the flows.</p>
+                        <ks-button size="small" @click="retry">Reload</ks-button>
+                    </template>
+                </ks-data-table>
+                <span data-testid="attempts">{{ attempts }}</span>
+            </div>
+        `,
+    }),
+    play: async ({canvasElement}) => {
+        const canvas = within(canvasElement)
+
+        // A rejected load must not be presented as an empty list.
+        await waitFor(() => expect(canvas.getByTestId("load-error")).toBeVisible())
+        expect(canvas.queryByText("No flows found")).toBeNull()
+
+        await waitFor(() => expect(canvas.getByTestId("attempts")).toHaveTextContent("1"))
+        await userEvent.click(canvas.getByRole("button", {name: "Reload"}))
+        await waitFor(() => expect(canvas.getByTestId("attempts")).toHaveTextContent("2"))
+    },
+}
+
 export const ForceExpandedRows: Story = {
     name: "Force-expanded rows",
     parameters: {
@@ -275,7 +313,7 @@ export const CustomContent: Story = {
                             <div
                                 v-for="row in pagedData"
                                 :key="row.id"
-                                style="border: 1px solid var(--ks-border-primary); border-radius: 8px; padding: 12px"
+                                style="border: 1px solid var(--ks-border-default); border-radius: 8px; padding: 12px"
                             >
                                 <strong style="font-size: 13px">{{ row.id }}</strong>
                                 <p style="margin: 4px 0; font-size: 12px; color: var(--ks-text-secondary)">{{ row.namespace }}</p>
@@ -345,7 +383,7 @@ export const FitHeight: Story = {
     render: () => ({
         components: {KsDataTable},
         template: `
-            <div style="height: 400px; display: flex; flex-direction: column; border: 1px solid var(--ks-border-primary); border-radius: 8px; overflow: hidden">
+            <div style="height: 400px; display: flex; flex-direction: column; border: 1px solid var(--ks-border-default); border-radius: 8px; overflow: hidden">
                 <ks-data-table :total="0" fit-height>
                     <template #table>
                         <div style="overflow-y: auto; height: 100%; padding: 8px">

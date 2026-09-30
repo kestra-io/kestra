@@ -5,11 +5,11 @@ import java.util.List;
 
 import io.kestra.core.models.flows.State;
 import io.kestra.core.runners.WorkerTrigger;
+import io.kestra.core.validations.TenantId;
 
 import io.micronaut.core.annotation.Nullable;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -22,7 +22,7 @@ import lombok.experimental.SuperBuilder;
 @NoArgsConstructor
 public class TriggerContext implements TriggerId {
     @Setter
-    @Pattern(regexp = "^[a-z0-9][a-z0-9_-]")
+    @TenantId
     private String tenantId;
 
     @NotNull

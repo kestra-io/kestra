@@ -6,12 +6,13 @@
         <KsTooltip
             v-if="isHoveringCode"
             :visible="copied"
-            content="Copied!"
+            :content="$t('copied')"
             placement="left"
             trigger="manual"
         >
             <KsButton
                 class="copy"
+                :aria-label="$t('copy')"
                 :icon="copied ? Check : ContentCopy"
                 link
                 @click="copyToClipboard"

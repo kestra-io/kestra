@@ -49,7 +49,7 @@ export interface PluginComponent {
     deprecated?: boolean;
     version?: string;
     description?: string;
-    properties?: Record<string, any>;
+    properties?: Record<string, unknown>;
     schema: JSONSchema;
     markdown?: string;
 }
@@ -62,6 +62,10 @@ export interface TriggerPluginDto {
     // "Debezium MongoDB"), resolved server-side from the plugin's own metadata rather than guessed
     // from the class package — see PluginController.ApiTriggerPlugin#pluginTitle.
     pluginTitle: string;
+    // The owning plugin artifact's manifest title (for example "NATS" for every NATS subgroup) -
+    // the disambiguation fallback for when pluginTitle itself resolves to a bare package segment;
+    // optional because older backends do not send it.
+    pluginGroupTitle?: string;
     description: string | null;
     group: "core" | "realtime" | "app";
     ee: boolean;
@@ -76,11 +80,22 @@ interface LoadOptions {
     hash?: number;
 }
 
-interface JsonSchemaDef {
-    $ref?: string,
-    allOf?: JsonSchemaDef[],
-    type?: string,
-    properties?: Record<string, any>,
+export interface JsonSchemaDef {
+    [key: string]: unknown;
+    $ref?: string;
+    allOf?: JsonSchemaDef[];
+    anyOf?: JsonSchemaDef[];
+    oneOf?: JsonSchemaDef[];
+    type?: string;
+    required?: string[];
+    items?: JsonSchemaDef;
+    properties?: Record<string, JsonSchemaDef>;
+    definitions?: Record<string, JsonSchemaDef>;
+}
+
+export interface RootJsonSchema extends JsonSchemaDef {
+    $ref: string;
+    definitions: Record<string, JsonSchemaDef>;
 }
 
 export function removeRefPrefix(refStr?: string): string {
@@ -239,15 +254,15 @@ export const usePluginsStore = defineStore("plugins", () => {
     const axios = useClient()
 
     const plugin = ref<PluginComponent>()
-    const versions = ref<string[]>()
+    const versions = ref<Record<string, string[]>>({})
     const plugins = ref<Plugin[]>()
 
     const pluginsDocumentation = ref<Record<string, PluginComponent>>({})
     const editorPlugin = ref<(PluginComponent & {cls: string})>()
-    const schemaType = ref<Record<string, any>>()
+    const schemaType = ref<Record<string, RootJsonSchema>>()
     const forceIncludeProperties = ref<string[]>()
 
-    const flowSchema = computed(() => {
+    const flowSchema = computed<RootJsonSchema>(() => {
         return schemaType.value?.flow ?? InitialFlowSchema
     })
     const flowDefinitions = computed(() => {
@@ -260,9 +275,10 @@ export const usePluginsStore = defineStore("plugins", () => {
         return flowRootSchema.value?.properties
     })
     const allTypes = computed(() => {
-        return plugins.value?.flatMap(p => Object.entries(p))
+        const declared = plugins.value?.flatMap(p => Object.entries(p))
             ?.filter(([key, value]) => isEntryAPluginElementPredicate(key, value))
             ?.flatMap(([, value]) => (value as PluginElement[]).map(({cls}) => cls)) ?? []
+        return [...declared, ...(plugins.value?.flatMap(({aliases}) => aliases ?? []) ?? [])]
     })
     const deprecatedTypes = computed(() => {
         const deprecatedPlugins = plugins.value?.flatMap(p => Object.entries(p))
@@ -279,7 +295,7 @@ export const usePluginsStore = defineStore("plugins", () => {
             return flowDefinitions.value?.[removeRefPrefix(obj.$ref)]
         }
         if (obj?.allOf) {
-            const def = obj.allOf.reduce((acc: any, item) => {
+            const def = obj.allOf.reduce<JsonSchemaDef>((acc, item) => {
                 if (item.$ref) {
                     const resolved = toRaw(flowDefinitions.value?.[removeRefPrefix(item.$ref)])
                     if (resolved?.type === "object" && resolved?.properties) {
@@ -342,10 +358,18 @@ export const usePluginsStore = defineStore("plugins", () => {
 
     async function listTriggers() {
         const response = await PluginsAPI.listTriggerPlugins() as unknown as {results: TriggerPluginDto[]; total: number}
-        return response?.results ?? []
+        // The triggers grid keys its cards by type, and duplicate keys corrupt Vue's keyed diff on
+        // every filter change (https://github.com/kestra-io/kestra/issues/18419), so drop duplicates
+        // even if the API misbehaves.
+        const seen = new Set<string>()
+        return (response?.results ?? []).filter(trigger => {
+            if (seen.has(trigger.type)) return false
+            seen.add(trigger.type)
+            return true
+        })
     }
 
-    async function listWithSubgroup(_options?: Record<string, any>) {
+    async function listWithSubgroup() {
         const response = await PluginsAPI.pluginBySubgroups() as Plugin[]
         plugins.value = response
         return response
@@ -355,7 +379,7 @@ export const usePluginsStore = defineStore("plugins", () => {
     async function ensurePlugins(): Promise<Plugin[]> {
         if (plugins.value) return plugins.value
         if (pluginsPending) return pluginsPending
-        pluginsPending = listWithSubgroup({includeDeprecated: false}).finally(() => {
+        pluginsPending = listWithSubgroup().finally(() => {
             pluginsPending = null
         })
         return pluginsPending
@@ -367,18 +391,22 @@ export const usePluginsStore = defineStore("plugins", () => {
         }
 
         const id = options.version ? `${options.cls}/${options.version}` : options.cls
-        const cacheKey = options.hash ? options.hash + id : id
+        // `all` returns a superset of the properties, so it gets its own key and never satisfies (or
+        // gets satisfied by) a request that did not ask for it.
+        const cacheKey = (options.all ? "all:" : "") + (options.hash ? options.hash + id : id)
         const cachedPluginDoc = pluginsDocumentation.value[cacheKey]
-        if (!options.all && cachedPluginDoc) {
-            nextTick(() => {
-                plugin.value = cachedPluginDoc
-            })
+        if (cachedPluginDoc) {
+            if (options.all !== true) {
+                nextTick(() => {
+                    plugin.value = cachedPluginDoc
+                })
+            }
             return cachedPluginDoc
         }
 
         // A 404 is a normal outcome here (e.g. as-you-type documentation for a not-yet-installed
-        // catalog type) — every caller handles it locally, so never trip the shared HTTP client's
-        // global not-found page.
+        // catalog type) — every caller handles it locally, so it must not raise the shared HTTP
+        // client's error toast.
         const requestOptions = {ignoreNotFound: true} as Parameters<typeof PluginsAPI.pluginDocumentation>[1]
         const data = (options.version
             ? await PluginsAPI.pluginDocumentationFromVersion({cls: options.cls, version: options.version, all: options.all}, requestOptions)
@@ -388,17 +416,16 @@ export const usePluginsStore = defineStore("plugins", () => {
             plugin.value = data
         }
 
-        if (!options.all) {
-            pluginsDocumentation.value[cacheKey] = data
-        }
+        pluginsDocumentation.value[cacheKey] = data
 
         return data
     }
 
     async function loadVersions(options: {cls: string; commit?: boolean}): Promise<{type: string, versions: string[]}> {
         const data = await PluginsAPI.pluginVersions({cls: options.cls}) as {type: string, versions: string[]}
+        
         if (options.commit !== false) {
-            versions.value = data.versions
+            versions.value[options.cls] = data.versions
         }
 
         return data
@@ -414,9 +441,10 @@ export const usePluginsStore = defineStore("plugins", () => {
 
     function loadSchemaType(options: {type: string}) {
         return PluginsAPI.schemasFromType({type: options.type as Parameters<typeof PluginsAPI.schemasFromType>[0]["type"]}).then(data => {
+            const schema = data as RootJsonSchema
             schemaType.value = schemaType.value || {}
-            schemaType.value[options.type] = data
-            return data
+            schemaType.value[options.type] = schema
+            return schema
         })
     }
 
@@ -472,6 +500,10 @@ export const usePluginsStore = defineStore("plugins", () => {
             return
         }
 
+        if (currentlyLoading?.cls !== cls || currentlyLoading?.version !== version) {
+            return
+        }
+
         editorPlugin.value = {
             cls,
             version,
@@ -503,16 +535,14 @@ export const usePluginsStore = defineStore("plugins", () => {
 
     function findPluginByCls(cls: string | null | undefined): Plugin | null {
         if (!cls || !plugins.value) return null
-        const subgroupMatch = plugins.value.find(p => p.subGroup && cls.startsWith(p.subGroup + "."))
-        if (subgroupMatch) return subgroupMatch
-        for (const plugin of plugins.value) {
-            for (const [key, value] of Object.entries(plugin)) {
-                if (isEntryAPluginElementPredicate(key, value) && value.some(el => el?.cls === cls)) {
-                    return plugin
-                }
-            }
-        }
-        return null
+        // A declared class, then a declared alias, then the package-prefix guess: an alias such as
+        // io.kestra.plugin.fs.http.Request shares no prefix with the group that owns it.
+        const declaring = plugins.value.filter(p => Object.entries(p)
+            .some(([key, value]) => isEntryAPluginElementPredicate(key, value) && value.some(el => el?.cls === cls)))
+        if (declaring.length) return declaring.find(p => p.subGroup) ?? declaring[0]
+        const aliasing = plugins.value.filter(p => p.aliases?.includes(cls))
+        if (aliasing.length) return aliasing.find(p => !p.subGroup) ?? aliasing[0]
+        return plugins.value.find(p => p.subGroup && cls.startsWith(p.subGroup + ".")) ?? null
     }
 
     function findPluginByName(name: string | null | undefined, subGroup?: string | null): Plugin | null {
@@ -541,8 +571,8 @@ export const usePluginsStore = defineStore("plugins", () => {
     }
 
     // Auto-install requests are best-effort and handled locally by their callers: a 403 (feature
-    // disabled) or a 404 (job evicted while the toast is still polling) must never trip the shared
-    // HTTP client's global error page or toast.
+    // disabled) or a 404 (job evicted while the install toast is still polling) must never stack the
+    // shared HTTP client's own error toast on top of it.
     const silentRequest = {ignoreNotFound: true, showMessageOnError: false}
 
     async function detectMissingPlugins(flowYaml: string): Promise<PluginAutoInstallDetectResult> {

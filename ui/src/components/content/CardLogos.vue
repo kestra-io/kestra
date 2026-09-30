@@ -7,7 +7,7 @@
                 height="125px"
                 loading="lazy"
                 :src="docStore.resourceUrl('/docs/tutorial/logos/logo-dark-version.png')"
-                alt="Dark version logo"
+                :alt="$t('dark_version')"
             >
             <p class="title">
                 {{ $t('dark_version') }}
@@ -24,7 +24,7 @@
                 height="125px"
                 loading="lazy"
                 :src="docStore.resourceUrl('/docs/tutorial/logos/logo-light-version.png')"
-                alt="Light version logo"
+                :alt="$t('light_version')"
             >
             <p class="title">
                 {{ $t('light_version') }}
@@ -41,7 +41,7 @@
                 height="125px"
                 loading="lazy"
                 :src="docStore.resourceUrl('/docs/tutorial/logos/logo-monogram-version.png')"
-                alt="Monogram version logo"
+                :alt="$t('monogram')"
             >
             <p class="title">
                 {{ $t('monogram') }}
@@ -77,7 +77,7 @@
         }
 
         p.description {
-            color: #B9B9BA;
+            color: var(--ks-text-secondary);
             font-size: var(--ks-font-size-base);
             font-weight: 400;
             line-height: var(--ks-font-size-lg);

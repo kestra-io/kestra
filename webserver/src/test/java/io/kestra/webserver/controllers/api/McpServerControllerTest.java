@@ -27,7 +27,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @KestraTest
 class McpServerControllerTest {
 
-    private static final String MCP_PATH = "/api/v1/main/mcp/servers";
+    private static final String MCP_PATH = "/api/v1/main/mcp-servers";
 
     @Inject
     @Client("/")

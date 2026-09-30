@@ -29,6 +29,8 @@ export type Plugin = {
     [pluginElement: string]: PluginElement[] | string | string[] | Record<string, any> | undefined;
 };
 
+// Element group names reach $t() as a bare variable in PluginUnified.vue, PluginCatalog.vue and EE's Plugin.vue.
+// i18n-keys: tasks, triggers, taskRunners, apps, appBlocks, charts, dataFilters, logExporters, additionalPlugins
 export function isEntryAPluginElementPredicate(key: string, value: any): value is PluginElement[] {
     return Array.isArray(value) &&
         !["categories", "controllers", "storages", "aliases", "guides"].includes(key) &&

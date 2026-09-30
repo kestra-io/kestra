@@ -1,12 +1,16 @@
 import NProgress from "nprogress"
 import type {Router} from "vue-router"
-import {configureClient, useClient} from "@kestra-io/kestra-sdk"
+import {configureClient, useClient, asProblem, type ProblemDetail} from "@kestra-io/kestra-sdk"
 
 let pendingRoute = false
 let requestsTotal = 0
 let requestsCompleted = 0
 
 const SKIP_PROGRESS = "__kestraSkipProgress"
+
+function skipProgress(opts: unknown): boolean {
+    return Boolean((opts as Record<string, unknown> | undefined)?.[SKIP_PROGRESS])
+}
 
 function progressComplete() {
     pendingRoute = false
@@ -37,8 +41,21 @@ function increaseProgress() {
 
 export interface KestraHttpError extends Error {
     status?: number
+    /**
+     * The RFC 9457 problem document, when the failure came from the Kestra API — which is every error the
+     * app raises against it. Prefer this, or the `asProblem` helper, over digging into `response.data`.
+     */
+    problem?: ProblemDetail
     response?: {
-        data: any
+        /**
+         * The parsed body: the problem document for any API error, an arbitrary body otherwise.
+         *
+         * Deliberately `unknown` rather than `any` so it cannot be dereferenced without a narrowing step
+         * — but note that a `catch (e: any)` call site defeats that, so the `noLegacyErrorFields` unit
+         * test is what actually keeps reads of the removed `message`/`_embedded`/`invalids` fields out.
+         * Use `problem`, or the `asProblem` helper, instead of narrowing this by hand.
+         */
+        data: unknown
         status: number
         statusText: string
         headers: Record<string, string>
@@ -48,12 +65,48 @@ export interface KestraHttpError extends Error {
     config?: {method: string; url: string; showMessageOnError?: boolean; ignoreNotFound?: boolean}
 }
 
+/**
+ * Whether this failure raises the global error toast, so a caller that reports failures itself can
+ * skip the ones already on screen. A 400 or a 401 is left to the caller, as is a failure with no
+ * response body, and so is anything the request opted out of.
+ */
+export function isReportedCentrally(error: KestraHttpError): boolean {
+    if (error.config?.showMessageOnError === false) return false
+    if (error.status === 404) return error.config?.ignoreNotFound !== true
+    return error.status !== 401 && error.status !== 400 && Boolean(error.response?.data)
+}
+
+/**
+ * Per-request options the interceptors above read. Declared here rather than derived from the
+ * SDK's own option type, which is bound to one edition's generated client.
+ */
+export interface KestraRequestOptions {
+    /** `false` silences the error toast, leaving the caller to report the failure. */
+    showMessageOnError?: boolean
+    /** Marks a 404 as an expected outcome the caller handles itself. */
+    ignoreNotFound?: boolean
+}
+
+/**
+ * Rebuilds an axios-like `data` object from an Error the SDK flattened a non-problem body onto. Only
+ * reached for responses from outside the API surface.
+ */
+function legacyData(error: KestraHttpError): Record<string, unknown> {
+    const data: Record<string, unknown> = {message: error.message}
+    for (const key of Object.keys(error)) {
+        if (key !== "status" && key !== "message" && key !== "problem") {
+            data[key] = (error as unknown as Record<string, unknown>)[key]
+        }
+    }
+    return data
+}
+
 export interface KestraHttpOptions {
     router?: Router
-    coreStore?: {message: unknown; error: unknown}
+    coreStore?: {message: unknown}
     beforeLogout?: () => void
     isLoggedIn?: () => boolean
-    onError?: (type: "message" | "error", error: unknown) => void
+    onError?: (error: unknown) => void
     onUnauthorized?: (navigateToLogin: () => void, error: KestraHttpError) => Promise<boolean> | boolean | void
 }
 
@@ -66,17 +119,17 @@ export function setupKestraHttp(
         coreStore,
         beforeLogout,
         isLoggedIn = () => false,
-        onError = (type: "message" | "error", error: unknown) => {
+        onError = (error: unknown) => {
             if (!coreStore) return
             const kestraError = error as KestraHttpError
-            if (type === "message") {
-                coreStore.message = {
-                    variant: "error",
-                    response: kestraError.response,
-                    content: kestraError.response?.data,
-                }
-            } else {
-                coreStore.error = kestraError.response?.status
+            coreStore.message = {
+                variant: "error",
+                problem: kestraError.problem,
+                status: kestraError.response?.status,
+                request: {
+                    method: kestraError.response?.config.method ?? "GET",
+                    url: kestraError.response?.config.url ?? "unknown url",
+                },
             }
         },
         onUnauthorized = (navigate: () => void) => {
@@ -96,17 +149,15 @@ export function setupKestraHttp(
     }
 
     function handleErrorCentrally(error: KestraHttpError): KestraHttpError {
-        const status = error.status
-        if (status === 404) {
-            /** Callers expecting a 404 can pass `showMessageOnError: false`
-             * to handle it locally instead of the global not-found page.
-            */
-            if (error.config?.ignoreNotFound !== true && error.config?.showMessageOnError !== false) {
-                onError("error", error)
-            }
-        } else if (status !== 401 && status !== 400 && error.response?.data && error.config?.showMessageOnError !== false) {
-            onError("message", error)
+        if (!isReportedCentrally(error)) return error
+
+        if (error.status === 404) {
+            // A 404 is reported where it happened rather than by swapping the page for the
+            // not-found screen: that hid which request failed and left no way back.
+            console.error(`${(error.config?.method ?? "GET").toUpperCase()} ${error.config?.url ?? ""} failed with 404`, error)
         }
+        onError(error)
+
         return error
     }
 
@@ -134,29 +185,35 @@ export function setupKestraHttp(
     }
 
     client.interceptors.request.use((request, opts: unknown) => {
-        if (typeof document !== "undefined" && !(opts as Record<string, unknown>)?.[SKIP_PROGRESS]) initProgress()
+        if (typeof document !== "undefined" && !skipProgress(opts)) initProgress()
         return request
     })
 
-    client.interceptors.response.use((response) => {
-        increaseProgress()
+    client.interceptors.response.use((response, _request, opts) => {
+        if (!skipProgress(opts)) increaseProgress()
         return response
     })
 
     client.interceptors.error.use((error, response, request, opts) => {
         const kestraError = error as KestraHttpError
         if (!response) {
-            increaseProgress()
+            if (!skipProgress(opts)) increaseProgress()
             return kestraError
         }
 
-        const data: Record<string, unknown> = {message: kestraError.message}
-        for (const key of Object.keys(kestraError)) {
-            if (key !== "status" && key !== "message") data[key] = (kestraError as unknown as Record<string, unknown>)[key]
-        }
+        // An API error is a problem document, and `response.data` IS that document — the same value the
+        // useClient facade attaches, so both call paths finally expose one identical shape. Anything else
+        // came from outside the API surface (Micronaut's own responses, the Apps error layout, plain text);
+        // keep reconstructing those from the flattened Error so they still reach their call sites.
+        const problem = asProblem(kestraError)
+        const data: Record<string, unknown> = problem
+            ? (problem as unknown as Record<string, unknown>)
+            : legacyData(kestraError)
+
         const responseHeaders: Record<string, string> = {}
         response.headers.forEach((value, key) => {responseHeaders[key] = value})
 
+        kestraError.problem = problem
         kestraError.response = {
             data,
             status: response.status,
@@ -172,15 +229,23 @@ export function setupKestraHttp(
         }
         kestraError.config = kestraError.response.config
 
-        if (kestraError.status === 400) return data as unknown as KestraHttpError
-
+        // A 400 rejects like any other error, so `instanceof Error`, `.status` and `.response` all hold on
+        // the status the bulk endpoints use. handleErrorCentrally still keeps it out of the global toast.
         return handleErrorCentrally(kestraError)
     })
 
     for (const target of [client, useClient()] as const) {
         const targetAny = target as unknown as Record<string, (...args: any[]) => Promise<any>>
         for (const method of ["get", "post", "put", "patch", "delete", "request", "stream"]) {
-            if (typeof targetAny[method] === "function") targetAny[method] = withAuthRetry(targetAny[method].bind(target))
+            if (typeof targetAny[method] !== "function") continue
+            let fn = targetAny[method].bind(target)
+            // stream() reads an open body (SSE and similar). Opt it out of the page loader, same as generated `sse` methods.
+            if (method === "stream") {
+                const inner = fn
+                fn = (url: string, data?: unknown, config: Record<string, unknown> = {}) =>
+                    inner(url, data, {...config, [SKIP_PROGRESS]: true})
+            }
+            targetAny[method] = withAuthRetry(fn)
         }
     }
 

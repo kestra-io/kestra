@@ -3,4 +3,4 @@ const MAXIMUM: number = 9_999_999
 
 const getRandomNumber = (minimum: number = MINIMUM, maximum: number = MAXIMUM): number => Math.floor(Math.random() * (maximum - minimum + 1)) + minimum
 
-export const getRandomID = (): string => `flow_${getRandomNumber()}`
+export const getRandomID = (prefix: string = "flow"): string => `${prefix}_${getRandomNumber()}`

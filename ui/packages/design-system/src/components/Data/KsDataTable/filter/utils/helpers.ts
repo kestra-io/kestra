@@ -1,6 +1,6 @@
 import type {LocationQuery} from "vue-router"
 import {type AppliedFilter, type FilterGroup, type LeafFilterGroup, type LogicalOperator, Comparators, isWrapperGroup} from "./filterTypes"
-import {MAX_RENDERABLE_NESTING_DEPTH} from "./constants"
+import {DATE_FILTER_KEY, MAX_RENDERABLE_NESTING_DEPTH} from "./constants"
 
 /**
  * Normalizes a `filters[...]` query-param value after vue-router (or
@@ -259,11 +259,25 @@ export const getUniqueFilters = <T extends { key: string; comparator?: any }>(fi
         ),
     )
 
+export const isFilterQueryKey = (key: string): boolean =>
+    key.startsWith("filters[") || key === DATE_FILTER_KEY
+
 export const clearFilterQueryParams = (query: Record<string, any>): void => {
     for (const key of Object.keys(query)) {
-        if (key.startsWith("filters[") || key === "dateFilter") delete query[key]
+        if (isFilterQueryKey(key)) delete query[key]
     }
 }
+
+/**
+ * Stable string over just the filter-carrying query entries, so a watcher fires when the filters
+ * change and not when `page`, `size` or `sort` do.
+ */
+export const filterQuerySignature = (query: LocationQuery | undefined): string =>
+    JSON.stringify(
+        Object.entries(query ?? {})
+            .filter(([key]) => isFilterQueryKey(key))
+            .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)),
+    )
 
 /**
  * Returns true if a `filters[...]` key has more `[and|or][N]` prefix segments than the chip UI

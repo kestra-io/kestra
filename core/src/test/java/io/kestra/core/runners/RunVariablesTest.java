@@ -1,12 +1,12 @@
 package io.kestra.core.runners;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
-import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -26,13 +26,13 @@ import io.kestra.core.models.flows.input.BoolInput;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.property.PropertyContext;
 import io.kestra.core.models.tasks.Task;
+import io.kestra.core.models.tasks.common.EncryptedString;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.runners.configuration.VariableConfiguration;
 import io.kestra.core.runners.pebble.PebbleEngineFactory;
 import io.kestra.core.services.KVStoreService;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.storages.kv.InternalKVStore;
-import io.kestra.core.storages.kv.KVStore;
 import io.kestra.core.storages.kv.KVValue;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.core.utils.IdUtils;
@@ -59,17 +59,15 @@ class RunVariablesTest {
 
     @MockBean(KVStoreService.class)
     KVStoreService testKVStoreService() {
-        return new KVStoreService() {
+        KVStoreService kvStoreService = Mockito.mock(KVStoreService.class, Mockito.CALLS_REAL_METHODS);
+        Mockito.doAnswer(invocation -> new InternalKVStore(invocation.getArgument(0), invocation.getArgument(1), storageInterface, kvMetadataStateStore) {
             @Override
-            public KVStore get(String tenant, String namespace, @Nullable String fromNamespace) {
-                return new InternalKVStore(tenant, namespace, storageInterface, kvMetadataStateStore) {
-                    @Override
-                    public Optional<KVValue> getValue(String key) {
-                        return Optional.of(new KVValue("value"));
-                    }
-                };
+            public Optional<KVValue> getValue(String key) {
+                return Optional.of(new KVValue("value"));
             }
-        };
+        }
+        ).when(kvStoreService).get(Mockito.any(), Mockito.any(), Mockito.any());
+        return kvStoreService;
     }
 
     @Test
@@ -538,5 +536,53 @@ class RunVariablesTest {
             }
             // Lists (e.g. parents) — record the path but don't recurse into list elements
         }
+    }
+
+    private static Map<String, Object> encryptedString() {
+        return new HashMap<>(Map.of("type", EncryptedString.TYPE, "value", "ciphertext"));
+    }
+
+    @Test
+    void shouldNotMutateExecutionInputsWhenBuildingVariables() {
+        // Given
+        Map<String, Object> nested = new HashMap<>(Map.of("key", encryptedString()));
+        Execution execution = Execution.builder()
+            .id("exec")
+            .namespace("io.kestra.tests")
+            .flowId("flow")
+            .flowRevision(1)
+            .state(new State())
+            .inputs(new HashMap<>(Map.of("nested", nested)))
+            .build();
+
+        // When
+        new RunVariables.DefaultBuilder()
+            .withExecution(execution)
+            .build(new RunContextLogger(), PropertyContext.create(renderer));
+
+        // Then
+        assertThat(nested.get("key")).isEqualTo(encryptedString());
+    }
+
+    @Test
+    void shouldNotMutateExecutionTriggerVariablesWhenBuildingVariables() {
+        // Given
+        Map<String, Object> triggerVariables = new HashMap<>(Map.of("token", encryptedString()));
+        Execution execution = Execution.builder()
+            .id("exec")
+            .namespace("io.kestra.tests")
+            .flowId("flow")
+            .flowRevision(1)
+            .state(new State())
+            .trigger(ExecutionTrigger.builder().id("trigger").type("io.kestra.trigger").variables(triggerVariables).build())
+            .build();
+
+        // When
+        new RunVariables.DefaultBuilder()
+            .withExecution(execution)
+            .build(new RunContextLogger(), PropertyContext.create(renderer));
+
+        // Then
+        assertThat(triggerVariables).doesNotContainKey("_context");
     }
 }

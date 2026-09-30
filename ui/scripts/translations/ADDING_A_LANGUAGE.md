@@ -19,7 +19,7 @@ This guide covers everything needed to ship a new UI locale end to end, based on
 | `pl` | Polish | Tone + declension overhauled 2026-08 (https://github.com/kestra-io/kestra/pull/18212, EE https://github.com/kestra-io/kestra-ee/pull/9984); custom plural rule (`polishPluralIndex` in `i18n.ts`) |
 | `pt` | Portuguese | |
 | `pt_BR` | Portuguese (Brazil) | Moment locale key differs: `pt-br` |
-| `ru` | Russian | Three-form plurals, deliberately left on the default rule (unreviewed) |
+| `ru` | Russian | Custom plural rule (`russianPluralIndex` in `i18n.ts`) |
 | `zh_CN` | Simplified Chinese | Moment locale key differs: `zh-cn` |
 
 Volume per new language (as of 2026-08): **~1,900 OSS keys** (`ui/src/translations/en.json`) + **~1,900 EE keys** (`ui-ee/src/translations/ee_translations/en.json` in EE) + the design-system `*.locale.ts` strings. All of it is generated via Gemini, one request per key, so a full new language is roughly 4,000 API calls - plan for the generator to run for a long time (run it in the background).
@@ -72,7 +72,7 @@ This list is hand-maintained and does NOT derive from `languages.ts` - forgettin
 
 ### 3.4 Plural rule (only if the language needs one)
 
-vue-i18n's default rule handles two-form languages (and `tr`, `vi`, `id`, `zh_TW` are fine with it). For a language with three or more plural forms (Slavic family, Arabic), add a custom rule to the `pluralRules` option in `ui/src/translations/i18n.ts`, next to `polishPluralIndex`, and have a native speaker review the three-form messages before enabling it - see the Russian comment there for why an unreviewed rule is worse than the default.
+vue-i18n's default rule handles two-form languages (and `tr`, `vi`, `id`, `zh_TW` are fine with it). For a language with three or more plural forms (Slavic family, Arabic), add a custom rule to the `pluralRules` option in `ui/src/translations/i18n.ts`, next to `polishPluralIndex` and `russianPluralIndex`, and add a matching "Plural Forms" line to the generator prompt so the model writes the form layout the rule expects. Audit the existing three-form messages of that locale before enabling the rule: a message whose English source has a zero form ("no workers | worker | workers") needs four forms (zero | one | few | many) under these rules, and a three-form one in that layout renders the zero text for a count of 1.
 
 ### 3.5 Write the language's generator rules BEFORE generating
 
@@ -104,11 +104,7 @@ Commit the locale files and the fingerprints files **together** - one without th
 
 If a handful of keys fail on every retry with `PROHIBITED_CONTENT`, that is a Gemini safety block, not a flake - reword the English source, never hand-write the translation.
 
-### 3.7 One out-of-pipeline file (known gap)
-
-`ui/src/components/plugins/PluginCard.locale.ts` holds all languages inline but sits in `ui/src`, outside the phase-2 glob (`packages/design-system/**/*.locale.ts`), so the generator will NOT add the new language to it. Its keys fall back to English if missed. Either extend the glob in `ui/scripts/translations/generate.ts` to cover it (preferred, one-line change) or accept the English fallback for its two short strings. Worth fixing in the same PR.
-
-### 3.8 Verify
+### 3.7 Verify
 
 ```bash
 cd ui
@@ -162,7 +158,7 @@ Manual smoke test on an EE-only surface (IAM, Tenants, Apps) to confirm the merg
   - OSS: `feat(core): add Turkish as a supported UI language`
   - EE: `feat(core): add Turkish as a supported UI language`
 - **Merge OSS first.** EE CI checks out OSS `develop` (or passes `--oss-root`), and the EE wrapper imports `kestra/src/translations/tr.json` from the sibling checkout - until the OSS PR is merged, EE CI cannot resolve the new locale and both the build and the translation gate fail.
-- The PR gate (`check-translations.mjs`) runs on both PRs before `npm ci`; the full `translations:check` runs locally and on the auto-translate workflow.
+- The gate (`check-translations.mjs`) runs on both PRs before `npm ci`, and again on the pushes that merge them; `npm run translations:check` runs the gate and then the compiler-backed comparer, locally and at the end of the auto-translate workflow.
 - After both merge, the scheduled auto-translate bot (every 3h on weekdays, both repos) keeps the new language filled as English keys evolve - no ongoing manual work.
 - No backport: a new language is a feature and ships from `develop` only.
 
@@ -175,7 +171,6 @@ OSS:
 - [ ] `i18n.ts`: plural rule, only if the language needs one
 - [ ] `generateTranslations.ts`: per-language rule block (form of address, reserved-term inflection, entity glossary) written and reviewed before generating
 - [ ] `translations:generate` run; locale JSON + `fingerprints.json` + design-system `*.locale.ts` + `fingerprints-design-system.json` committed together
-- [ ] `PluginCard.locale.ts` gap handled
 - [ ] `translations:check` + `check:types` green
 - [ ] Manual smoke test (language switch, dates, pagination, empty states)
 

@@ -1,6 +1,7 @@
 import {afterEach, beforeEach, describe, expect, it, vi} from "vitest"
-import {flushPromises, mount} from "@vue/test-utils"
-import {createI18n} from "vue-i18n"
+import {flushPromises} from "@vue/test-utils"
+import {i18nMount} from "../../i18nMount"
+
 import {createPinia} from "pinia"
 import {createMemoryHistory, createRouter, type Router} from "vue-router"
 import KestraDesignSystem from "@kestra-io/design-system"
@@ -29,14 +30,9 @@ const logWith = (message: string) => ({
 })
 
 function mountLogsWrapper(router: Router) {
-    return mount(LogsWrapper, {
+    return i18nMount(LogsWrapper, {
         global: {
-            plugins: [
-                createI18n({legacy: false, locale: "en", messages: {en: {}}}),
-                createPinia(),
-                router,
-                KestraDesignSystem,
-            ],
+            plugins: [createPinia(), router, KestraDesignSystem],
             stubs: {Sections: true, TopNavBar: true},
         },
     })

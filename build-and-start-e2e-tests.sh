@@ -20,7 +20,7 @@ echo "Building the image for this current repository"
 # background so the downloads overlap with the Gradle/npm build instead of
 # sitting on the critical path.
 BASE_IMAGE="$(sed -n 's/^ARG BASE_IMAGE="\(.*\)"/\1/p' Dockerfile)"
-docker pull -q "${BASE_IMAGE:-ghcr.io/kestra-io/kestra-base:latest-no-plugins}" > /dev/null 2>&1 &
+docker pull -q "${BASE_IMAGE:-ghcr.io/kestra-io/kestra-base:latest-slim}" > /dev/null 2>&1 &
 docker pull -q postgres > /dev/null 2>&1 &
 
 if [ "${E2E_USE_PREBUILT_EXE:-false}" = "true" ]; then
@@ -48,11 +48,8 @@ echo ""
 echo "Start time: $(date '+%Y-%m-%d %H:%M:%S')"
 start_time2=$(date +%s)
 
-echo "cd ./ui"
-cd ./ui
-
-echo 'sh ./run-e2e-tests.sh --kestra-docker-image-to-test "kestra/kestra:$LOCAL_IMAGE_VERSION"'
-./run-e2e-tests.sh --kestra-docker-image-to-test "kestra/kestra:$LOCAL_IMAGE_VERSION"
+echo './e2e/run-e2e-tests.sh --kestra-docker-image-to-test "kestra/kestra:$LOCAL_IMAGE_VERSION"'
+./e2e/run-e2e-tests.sh --kestra-docker-image-to-test "kestra/kestra:$LOCAL_IMAGE_VERSION"
 
 end_time2=$(date +%s)
 elapsed2=$(( end_time2 - start_time2 ))

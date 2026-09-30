@@ -1,0 +1,6 @@
+package io.kestra.repository.mysql.migration;
+
+import io.kestra.jdbc.migration.AbstractV2_0_26PurgeLegacyWorkerJobRunningMigrationTest;
+
+class MysqlV2_0_26PurgeLegacyWorkerJobRunningMigrationTest extends AbstractV2_0_26PurgeLegacyWorkerJobRunningMigrationTest {
+}

@@ -37,7 +37,6 @@
             <KsTree
                 :data="[namespace]"
                 defaultExpandAll
-                :props="({class: 'tree'} as any)"
                 class="h-auto p-2 rounded-full"
             >
                 <template #default="{data}">
@@ -48,7 +47,6 @@
                                 id: data.id,
                             },
                         }"
-                        tag="div"
                         class="node"
                     >
                         <div class="d-flex">
@@ -85,7 +83,7 @@
     import Action from "../../../components/namespaces/components/buttons/Action.vue"
     import {KsFilter as KSFilter} from "@kestra-io/design-system"
     import {routeQueryToQueryFilters} from "../../../utils/queryFilters"
-    import {useNamespacesFilter} from "../../../components/filter/configurations"
+    import {useNamespacesFilter} from "../../../components/filter/configurations/namespacesFilter"
     import resource from "../../../models/resource"
     import action from "../../../models/action"
 
@@ -103,6 +101,15 @@
         disabled?: boolean;
         children?: Node[];
         system?: boolean;
+    }
+
+    // Accumulator shape while building the hierarchy: children are keyed by label for O(1)
+    // lookup during the single pass over namespaces.value, then flattened to Node[] by build().
+    interface BuildNode {
+        id: string;
+        label: string;
+        description?: string;
+        children: Record<string, BuildNode>;
     }
 
     const route = useRoute()
@@ -137,11 +144,11 @@
             return []
         }
 
-        const map = {} as Node[]
+        const map: Record<string, BuildNode> = {}
 
         namespaces.value.forEach((item) => {
             const parts = item.id.split(".")
-            let currentLevel = map as any
+            let currentLevel: Record<string, BuildNode> = map
 
             parts.forEach((_part, index) => {
                 const label = parts.slice(0, index + 1).join(".")
@@ -152,19 +159,19 @@
                         id: label,
                         label,
                         description: isLeaf ? item.description : undefined,
-                        children: [],
+                        children: {},
                     }
                 currentLevel = currentLevel[label].children
             })
         })
 
-        const build = (nodes: Node[]): Node[] => {
+        const build = (nodes: Record<string, BuildNode>): Node[] => {
             return Object.values(nodes).map((node) => {
                 const result: Node = {
                     id: node.id,
                     label: node.label,
                     description: node.description,
-                    children: node.children ? build(node.children) : undefined,
+                    children: build(node.children),
                 }
                 return result
             })

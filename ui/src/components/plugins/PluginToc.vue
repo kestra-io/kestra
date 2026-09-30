@@ -1,5 +1,5 @@
 <template>
-    <KsSideBar class="plugin-toc" aria-label="Plugins">
+    <KsSideBar class="plugin-toc" :aria-label="$t('plugins.names')">
         <template #header>
             <KsSearch
                 class="plugin-toc__search"

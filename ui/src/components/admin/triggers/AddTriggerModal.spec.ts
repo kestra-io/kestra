@@ -62,6 +62,7 @@ function mountModal() {
         props: {
             visible: true,
             trigger: {type: "io.kestra.plugin.core.trigger.Schedule", name: "Schedule", pluginTitle: "core", description: null, group: "core", ee: false, icon: "", deprecated: null},
+            displayName: "Schedule",
         },
         global: {
             plugins: [i18n],
@@ -88,7 +89,9 @@ describe("AddTriggerModal", () => {
         const wrapper = mountModal()
         await flushPromises()
 
-        const vm = wrapper.vm as any
+        const vm = wrapper.vm as unknown as {
+            formModel: { namespace: string; flowId: string; triggerId: string }
+        }
         vm.formModel.namespace = "company.team"
         vm.formModel.flowId = "example"
         vm.formModel.triggerId = "schedule"

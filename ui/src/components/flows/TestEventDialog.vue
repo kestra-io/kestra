@@ -109,8 +109,9 @@
             : "",
     )
 
+    // The parent route resolves the user's default execution tab; naming a tab here ignored it.
     const executionRoute = (id: string) => ({
-        name: `${EXECUTION_PARENT_ROUTE}/gantt`,
+        name: EXECUTION_PARENT_ROUTE,
         params: {
             namespace: target.value?.namespace,
             flowId: target.value?.flowId,

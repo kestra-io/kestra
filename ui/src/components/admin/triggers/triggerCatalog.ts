@@ -6,14 +6,40 @@ export const MCP_TOOL_TYPE = "io.kestra.core.models.triggers.McpTool"
 export const isMcpTrigger = (trigger: Pick<TriggerPluginDto, "type">): boolean =>
     trigger.type === MCP_TOOL_TYPE || trigger.type.endsWith(".McpTool")
 
-export const triggerDisplayName = (trigger: Pick<TriggerPluginDto, "type" | "name" | "pluginTitle">): string => {
-    if (trigger.name && trigger.name !== "Trigger") return trigger.name
+type NamedTrigger = Pick<TriggerPluginDto, "type" | "name" | "pluginTitle" | "pluginGroupTitle">;
 
-    // Most plugins name their trigger class `Trigger`, so `trigger.name` above is useless for
-    // disambiguation. Fall back to the plugin's own declared, correctly-cased title (resolved
-    // server-side from its metadata) rather than guessing from the class package: two unrelated
-    // plugins can share a package segment (e.g. io.kestra.plugin.mongodb vs
-    // io.kestra.plugin.debezium.mongodb both end in "mongodb"), and a package-derived guess would
-    // collide the two under the same wrongly-cased "Mongodb" label.
-    return trigger.pluginTitle || getShortName(trigger.type)
+const GENERIC_REALTIME = /^realtimetrigger$/i
+
+const contextualize = (trigger: NamedTrigger, context: string | undefined): string => {
+    const name = trigger.name || getShortName(trigger.type)
+    if (!context) return name
+    if (GENERIC_REALTIME.test(name)) return `${context} Realtime`
+    const stripped = name.replace(/trigger$/i, "")
+    return stripped ? `${context} ${stripped}` : context
+}
+
+// Plugins conventionally name their trigger classes `Trigger`, `RealtimeTrigger`,
+// `CommandsTrigger`, ... so the raw class name renders walls of identical cards. Labels are
+// built against the whole catalog: a name that is unique stays as is, a colliding one gets the
+// plugin's own declared, correctly-cased title (never a package-derived guess: two unrelated
+// plugins can share a package segment, e.g. io.kestra.plugin.mongodb vs
+// io.kestra.plugin.debezium.mongodb). When even the subgroup title collides (both
+// io.kestra.plugin.nats.core and io.kestra.plugin.datagen.core fall back to a bare "core"),
+// the label escalates to the owning plugin artifact's title ("NATS", "Datagen").
+export const buildTriggerDisplayNames = (triggers: NamedTrigger[]): Map<string, string> => {
+    const labels = new Map<string, string>(triggers.map(trigger => {
+        const name = trigger.name || getShortName(trigger.type)
+        const isGeneric = GENERIC_REALTIME.test(name) || name === "Trigger"
+        return [trigger.type, isGeneric ? contextualize(trigger, trigger.pluginTitle) : name]
+    }))
+
+    for (const context of ["pluginTitle", "pluginGroupTitle"] as const) {
+        const counts = new Map<string, number>()
+        labels.forEach(label => counts.set(label, (counts.get(label) ?? 0) + 1))
+        triggers
+            .filter(trigger => (counts.get(labels.get(trigger.type)!) ?? 0) > 1 && trigger[context])
+            .forEach(trigger => labels.set(trigger.type, contextualize(trigger, trigger[context])))
+    }
+
+    return labels
 }

@@ -1,11 +1,43 @@
-import {describe, test, expect} from "vitest"
+import {describe, test, expect, vi} from "vitest"
 import {mount, flushPromises} from "@vue/test-utils"
+import {ElMessageBox} from "element-plus"
 import KestraDesignSystem from "../../../src/index"
 import KsDialog from "../../../src/components/Feedback/KsDialog.vue"
 
 const globalConfig = {plugins: [KestraDesignSystem]}
 
 describe("KsDialog", () => {
+    test("dirty asks for confirmation before an accidental close", () => {
+        const confirm = vi.spyOn(ElMessageBox, "confirm").mockReturnValue(new Promise(() => {}))
+        const wrapper = mount(KsDialog, {props: {modelValue: true, dirty: true}, global: globalConfig})
+        const done = vi.fn()
+
+        wrapper.findComponent({name: "ElDialog"}).props("beforeClose")(done)
+
+        expect(confirm).toHaveBeenCalledTimes(1)
+        expect(done).not.toHaveBeenCalled()
+        confirm.mockRestore()
+    })
+
+    test("dirtyMessage replaces the default confirmation text", () => {
+        const confirm = vi.spyOn(ElMessageBox, "confirm").mockReturnValue(new Promise(() => {}))
+        const wrapper = mount(KsDialog, {props: {modelValue: true, dirty: true, dirtyMessage: "Lose this run?"}, global: globalConfig})
+
+        wrapper.findComponent({name: "ElDialog"}).props("beforeClose")(vi.fn())
+
+        expect(confirm).toHaveBeenCalledWith("Lose this run?", expect.anything(), expect.anything())
+        confirm.mockRestore()
+    })
+
+    test("closes straight away when not dirty", () => {
+        const wrapper = mount(KsDialog, {props: {modelValue: true}, global: globalConfig})
+        const done = vi.fn()
+
+        wrapper.findComponent({name: "ElDialog"}).props("beforeClose")(done)
+
+        expect(done).toHaveBeenCalledTimes(1)
+    })
+
     test("renders when visible", () => {
         const wrapper = mount(KsDialog, {
             props: {modelValue: true, title: "Test Dialog"},

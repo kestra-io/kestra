@@ -186,21 +186,18 @@ public class Pause extends Task implements FlowableTask<Pause.Output> {
     @PluginProperty
     private Task onPause;
 
-    @Valid
     @Schema(
         title = "Inputs to be passed to the execution when it's resumed",
         description = "Before resuming the execution, the user will be prompted to fill in these inputs. The inputs can be used to pass additional data to the execution, which is useful for human-in-the-loop scenarios. The `onResume` inputs work the same way as regular [flow inputs](https://kestra.io/docs/workflow-components/inputs) — they can be of any type and can have default values. You can access those values in downstream tasks using the `onResume` output of the Pause task."
     )
     @PluginProperty
-    private List<Input<?>> onResume;
+    private List<@Valid Input<?>> onResume;
 
-    @Valid
-    protected List<Task> errors;
+    protected List<@Valid Task> errors;
 
-    @Valid
     @JsonProperty("finally")
     @Getter(AccessLevel.NONE)
-    protected List<Task> _finally;
+    protected List<@Valid Task> _finally;
 
     public List<Task> getFinally() {
         return this._finally;

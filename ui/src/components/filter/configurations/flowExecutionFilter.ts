@@ -116,9 +116,34 @@ export const useFlowExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                     searchable: true,
                 },
                 {
+                    key: "triggerId",
+                    label: t("filter.triggerId.label"),
+                    description: t("filter.triggerId.description"),
+                    comparators: [
+                        Comparators.EQUALS,
+                        Comparators.NOT_EQUALS,
+                        Comparators.CONTAINS,
+                        Comparators.STARTS_WITH,
+                        Comparators.ENDS_WITH,
+                    ],
+                    valueType: "text",
+                    searchable: true,
+                },
+                {
                     key: "parentId",
                     label: t("filter.parentId.label"),
                     description: t("filter.parentId.description"),
+                    comparators: [
+                        Comparators.EQUALS,
+                        Comparators.NOT_EQUALS,
+                    ],
+                    valueType: "text",
+                    searchable: true,
+                },
+                {
+                    key: "taskId",
+                    label: t("filter.taskId.label"),
+                    description: t("filter.taskId.description"),
                     comparators: [
                         Comparators.EQUALS,
                         Comparators.NOT_EQUALS,

@@ -9,13 +9,16 @@ import java.util.stream.Stream;
 import io.kestra.core.models.flows.Data;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.Input;
+import io.kestra.core.models.flows.Output;
 import io.kestra.core.models.flows.input.EeOnly;
 import io.kestra.core.models.flows.input.FormInput;
 import io.kestra.core.models.tasks.ExecutableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.AbstractTrigger;
+import io.kestra.core.runners.FlowInputOutput;
 import io.kestra.core.services.NamespaceService;
 import io.kestra.core.utils.ListUtils;
+import io.kestra.core.utils.PebbleUtil;
 import io.kestra.core.validations.FlowValidation;
 import io.kestra.plugin.core.trigger.AbstractWebhookTrigger;
 import io.kestra.plugin.core.trigger.Schedule;
@@ -27,6 +30,8 @@ import io.micronaut.validation.validator.constraints.ConstraintValidator;
 import io.micronaut.validation.validator.constraints.ConstraintValidatorContext;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolationException;
 
 import static io.kestra.core.models.Label.READ_ONLY;
 import static io.kestra.core.models.Label.SYSTEM_PREFIX;
@@ -113,6 +118,9 @@ public class FlowValidator implements ConstraintValidator<FlowValidation, Flow> 
         }
 
         findMissingInputsForTriggers(value).forEach(violations::add);
+
+        validateDeclaredInputValues(value, violations);
+        validateDeclaredOutputValues(value, violations);
 
         // system labels
         ListUtils.emptyOnNull(value.getLabels()).stream()
@@ -312,6 +320,119 @@ public class FlowValidator implements ConstraintValidator<FlowValidation, Flow> 
                             : Stream.of("Missing inputs for %s Trigger '%s', missing inputs: '%s'".formatted(triggerInputs.kind(), trigger.getId(), missingInputs));
                     })
             );
+    }
+
+    /**
+     * Validates the literal values a flow declares for its own inputs — input {@code defaults} and the values a
+     * trigger supplies to inputs — against each input's declared type and constraints, so a type mismatch (an
+     * {@code INT} default of {@code "abc"}) or an out-of-list {@code SELECT} value is rejected at save time instead
+     * of only failing when the flow runs. Pebble expressions are left untouched: they can only be resolved at runtime.
+     */
+    private void validateDeclaredInputValues(Flow value, List<String> violations) {
+        List<Input<?>> inputs = value.resolvableInputs();
+        if (inputs.isEmpty()) {
+            return;
+        }
+
+        for (Input<?> input : inputs) {
+            if (input.getDefaults() != null) {
+                literalValueViolation(input, input.getDefaults().toString())
+                    .ifPresent(message -> violations.add("Invalid default for input '%s': %s".formatted(input.getId(), message)));
+            }
+        }
+
+        if (ListUtils.emptyOnNull(value.getTriggers()).isEmpty()) {
+            return;
+        }
+
+        Map<String, Input<?>> inputsById = inputs.stream()
+            .collect(Collectors.toMap(Data::getId, input -> input, (first, second) -> first));
+
+        for (AbstractTrigger trigger : value.getTriggers()) {
+            inputsSuppliedBy(trigger).ifPresent(triggerInputs ->
+                triggerInputs.supplied().forEach((inputId, suppliedValue) -> {
+                    Input<?> input = inputsById.get(inputId);
+                    if (input != null) {
+                        literalValueViolation(input, suppliedValue)
+                            .ifPresent(message -> violations.add(
+                                "Invalid value for input '%s' supplied by %s Trigger '%s': %s".formatted(inputId, triggerInputs.kind(), trigger.getId(), message)));
+                    }
+                }));
+        }
+    }
+
+    /**
+     * Validates literal flow output values against their declared scalar type at save time. Pebble expressions are
+     * resolved at execution time and are intentionally skipped here.
+     */
+    private void validateDeclaredOutputValues(Flow value, List<String> violations) {
+        for (Output output : ListUtils.emptyOnNull(value.getOutputs())) {
+            literalOutputValueViolation(output)
+                .ifPresent(message -> violations.add("Invalid value for output '%s': %s".formatted(output.getId(), message)));
+        }
+    }
+
+    /**
+     * @return the constraint message when {@code rawValue} — a literal default or a value a trigger supplies — cannot
+     * satisfy the input's type or its own constraints, or empty when it is valid, is a Pebble expression, or is of a
+     * type that can only be resolved at execution time (e.g. {@code FILE}, {@code SECRET} or structured types).
+     */
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    private static Optional<String> literalValueViolation(Input<?> input, Object rawValue) {
+        if (rawValue == null) {
+            return Optional.empty();
+        }
+
+        String asString = rawValue.toString();
+        if (PebbleUtil.containsOpeningBlockDelimiter(asString)) {
+            return Optional.empty();
+        }
+
+        Object typed;
+        try {
+            typed = FlowInputOutput.parseScalarInputValue(input.getType(), rawValue).orElse(null);
+        } catch (Exception e) {
+            return Optional.of("`%s` is not a valid %s value".formatted(asString, input.getType()));
+        }
+
+        if (typed == null) {
+            return Optional.empty();
+        }
+
+        try {
+            ((Input) input).validate(typed);
+        } catch (ConstraintViolationException e) {
+            String message = e.getConstraintViolations().stream()
+                .map(ConstraintViolation::getMessage)
+                .collect(Collectors.joining(", "));
+            return Optional.of(message.isEmpty() ? "invalid value" : message);
+        }
+
+        return Optional.empty();
+    }
+
+    /**
+     * @return the constraint message when a static output literal cannot satisfy the output's declared scalar type, or
+     * empty when it is valid, dynamic, or non-scalar.
+     */
+    private static Optional<String> literalOutputValueViolation(Output output) {
+        Object rawValue = output.getValue();
+        if (rawValue == null) {
+            return Optional.empty();
+        }
+
+        String asString = rawValue.toString();
+        if (PebbleUtil.containsOpeningBlockDelimiter(asString)) {
+            return Optional.empty();
+        }
+
+        try {
+            FlowInputOutput.parseScalarInputValue(output.getType(), rawValue);
+        } catch (Exception e) {
+            return Optional.of("`%s` is not a valid %s value".formatted(asString, output.getType()));
+        }
+
+        return Optional.empty();
     }
 
     private static Optional<TriggerInputs> inputsSuppliedBy(AbstractTrigger trigger) {

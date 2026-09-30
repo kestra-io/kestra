@@ -1,6 +1,4 @@
 import {beforeEach, describe, expect, it, vi} from "vitest"
-import {mount} from "@vue/test-utils"
-import {createI18n} from "vue-i18n"
 import KestraDesignSystem from "@kestra-io/design-system"
 
 const executionState = {current: "SUCCESS"}
@@ -34,20 +32,14 @@ vi.mock("override/stores/auth", () => ({
 }))
 
 import ExecutionRootTopBar from "../../../../src/components/executions/ExecutionRootTopBar.vue"
-
-const i18n = createI18n({
-    legacy: false,
-    locale: "en",
-    missingWarn: false,
-    fallbackWarn: false,
-    messages: {en: {actions: "Actions"}},
-})
+import {i18nMount} from "../../i18nMount"
 
 function mountTopBar() {
-    return mount(ExecutionRootTopBar, {
+    return i18nMount(ExecutionRootTopBar, {
+        messages: {actions: "Actions"},
         props: {routeInfo: {title: "e", breadcrumb: []}},
         global: {
-            plugins: [i18n, KestraDesignSystem],
+            plugins: [KestraDesignSystem],
             stubs: {
                 TopNavBar: {template: "<div><slot name=\"actions\" /></div>"},
                 TriggerFlow: {template: "<button>Execute</button>"},

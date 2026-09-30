@@ -1,20 +1,15 @@
 import {describe, it, expect} from "vitest"
-import {mount} from "@vue/test-utils"
-import {createI18n} from "vue-i18n"
 import Add from "../../../src/components/no-code/components/Add.vue"
+import {i18nMount} from "../i18nMount"
 
-const i18n = createI18n({
-    legacy: false,
-    locale: "en",
-    messages: {en: {no_code: {
-        adding: "+ Add a {what}",
-        adding_default: "+ Add a new value",
-        adding_to: "+ Add to {what}",
-    }}},
-})
+const messages = {no_code: {
+    adding: "+ Add a {what}",
+    adding_default: "+ Add a new value",
+    adding_to: "+ Add to {what}",
+}}
 
 function render(props: {what?: string, to?: string} = {}) {
-    return mount(Add, {props, global: {plugins: [i18n]}})
+    return i18nMount(Add, {messages, props})
 }
 
 describe("Add", () => {

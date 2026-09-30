@@ -16,10 +16,36 @@
 // that exact instance, so the caller supplies its own. This keeps the runtime free of any hard
 // dependency (no axios, no @hey-api/*).
 
-import {EnterpriseFeatureError, type EnterpriseFeatureConfig} from "./errors"
+import {EnterpriseFeatureError, SdkVersionMismatchError, type EnterpriseFeatureConfig} from "./errors"
+import {KestraProblemError, isProblemDetail, type ProblemDetail} from "./problem"
 
-export {EnterpriseFeatureError} from "./errors"
+export {EnterpriseFeatureError, SdkVersionMismatchError} from "./errors"
 export type {EnterpriseFeatureConfig, EnterpriseFeatureMatch} from "./errors"
+
+/** Response header set by a Kestra server on every 404, naming its edition ("OSS" or "EE"). */
+const EDITION_HEADER = "X-Kestra-Edition"
+/**
+ * Response header set by a Kestra server on every 404, telling whether the request matched a route
+ * that exists on this server ("true") or matched no route at all ("false"). A matched route means the
+ * 404 came from application code running a genuine lookup, never from a route/feature that is simply
+ * absent — so it can never be an EE-only-route mismatch, regardless of {@link EnterpriseFeatureConfig.matchRoute}.
+ */
+const ROUTE_MATCHED_HEADER = "X-Kestra-Route-Matched"
+
+// Re-exported from the runtime entry (not the package root, which also pulls in the codegen-time
+// config/patch modules) so each SDK can surface problem handling without bundling the generator.
+export {
+    PROBLEM_TYPE_BASE,
+    KestraProblemError,
+    isProblemDetail,
+    parseProblem,
+    asProblem,
+    problemSlug,
+    isProblemType,
+} from "./problem"
+export type {ProblemDetail, ProblemFieldError} from "./problem"
+export {ProblemTypes} from "./problem-types"
+export type {ProblemType} from "./problem-types"
 
 /** Minimal structural shape of a @hey-api/client-fetch interceptor slot. */
 interface FetchInterceptor {
@@ -274,14 +300,19 @@ export function createConfigureClient<TClient extends ConfigurableFetchClient>(
             }
 
             if (!headers.has("accept")) {
+                // Every list below must include application/problem+json: errors are served as that type, and
+                // Kestra content-negotiation returns 403 when Accept excludes the produced type — so omitting
+                // it turns any error on these endpoints into a confusing 403.
                 if (opts.parseAs === "blob") {
-                    headers.set("accept", "application/octet-stream")
+                    headers.set("accept", "application/octet-stream, application/problem+json")
                     modified = true
                 } else if (opts.parseAs === "text") {
                     // Include application/octet-stream: some endpoints (e.g. exportPluginDefaults)
                     // advertise octet-stream in the OpenAPI spec but actually return text.
-                    // Kestra content-negotiation returns 403 when Accept excludes the produced type.
-                    headers.set("accept", "text/csv, text/plain, text/json, application/json, application/octet-stream")
+                    headers.set(
+                        "accept",
+                        "text/csv, text/plain, text/json, application/json, application/octet-stream, application/problem+json",
+                    )
                     modified = true
                 }
             }
@@ -302,12 +333,17 @@ export function createConfigureClient<TClient extends ConfigurableFetchClient>(
 
             const status = response.status
 
-            // An EE-only route 404s on an OSS server the same way a genuinely-missing resource
-            // does — matchRoute is what tells the two apart (it only matches the fixed set of
-            // EE-only routes, never an arbitrary "flow not found").
-            if (status === 404 && enterpriseFeature && request && opts?.url) {
+            // matchRoute alone can't tell a real not-found apart from an EE-only route; the route-matched/edition
+            // headers do — see EnterpriseFeatureError / SdkVersionMismatchError docs for the full rationale.
+            // A server that reports the route as matched ran application code to produce this 404, so it's
+            // always a genuine not-found — never treat it as an EE-only-route mismatch. Absent header (older
+            // server) falls back to the pre-existing matchRoute + edition heuristic below.
+            if (status === 404 && enterpriseFeature && request && opts?.url && response.headers.get(ROUTE_MATCHED_HEADER) !== "true") {
                 const match = enterpriseFeature.matchRoute(request.method, opts.url)
                 if (match) {
+                    if (response.headers.get(EDITION_HEADER) === "EE") {
+                        return new SdkVersionMismatchError({feature: match.feature, status})
+                    }
                     return new EnterpriseFeatureError({
                         feature: match.feature,
                         docsUrl: enterpriseFeature.docsUrl(match.feature),
@@ -317,6 +353,15 @@ export function createConfigureClient<TClient extends ConfigurableFetchClient>(
                 }
             }
 
+            // RFC 9457 problem document — the shape every Kestra error response uses. Content type is the
+            // primary signal; the structural check covers a proxy that rewrote it, and test fixtures.
+            const contentType = response.headers.get("content-type")
+            if (contentType?.includes("application/problem+json") || isProblemDetail(error)) {
+                return new KestraProblemError(error as ProblemDetail & Record<string, unknown>, status)
+            }
+
+            // Anything else: a body from outside the API surface — Micronaut's own non-API responses, the
+            // Apps runtime error layout, plain text. Flatten it onto an Error as before.
             const asObject = error !== null && typeof error === "object" ? error as Record<string, unknown> : undefined
             const rawMessage =
                 (error instanceof Error && error.message) ||

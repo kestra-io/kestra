@@ -1,20 +1,26 @@
-import {describe, test, expect, beforeAll} from "vitest"
+import {describe, test, expect, beforeAll, afterAll, vi} from "vitest"
 import {mount} from "@vue/test-utils"
 import KestraDesignSystem from "../../../src/index"
 import KsDateAgo from "../../../src/components/Data/KsDateAgo.vue"
-import {setMomentInstance, setDateFormatter} from "../../../src/date/index"
+import {DATE_FORMAT_STORAGE_KEY, TIMEZONE_STORAGE_KEY} from "../../../src/utils/date"
 
 const globalConfig = {plugins: [KestraDesignSystem]}
 
 const FIXED_DATE = "2024-01-15T10:00:00.000Z"
-const FROM_NOW = "a year ago"
-const FULL_DATE = "Jan 15, 2024 10:00 AM"
+const FROM_NOW = "2 hours ago"
+const FULL_DATE = "2024-01-15 10:00"
 
 beforeAll(() => {
-    setMomentInstance((_date?: any) => ({
-        fromNow: () => FROM_NOW,
-    }))
-    setDateFormatter((_date: string | Date, _format?: string) => FULL_DATE)
+    localStorage.setItem(TIMEZONE_STORAGE_KEY, "UTC")
+    localStorage.setItem(DATE_FORMAT_STORAGE_KEY, "YYYY-MM-DD HH:mm")
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date("2024-01-15T12:00:00.000Z"))
+})
+
+afterAll(() => {
+    vi.useRealTimers()
+    localStorage.removeItem(TIMEZONE_STORAGE_KEY)
+    localStorage.removeItem(DATE_FORMAT_STORAGE_KEY)
 })
 
 describe("KsDateAgo", () => {
@@ -48,6 +54,14 @@ describe("KsDateAgo", () => {
             global: globalConfig,
         })
         expect(wrapper.find("span").text()).toBe(FULL_DATE)
+    })
+
+    test("formats the full date with the format prop", () => {
+        const wrapper = mount(KsDateAgo, {
+            props: {date: FIXED_DATE, inverted: true, showTooltip: false, format: "YYYY"},
+            global: globalConfig,
+        })
+        expect(wrapper.find("span").text()).toBe("2024")
     })
 
     test("shows tooltip with full date when not inverted", () => {

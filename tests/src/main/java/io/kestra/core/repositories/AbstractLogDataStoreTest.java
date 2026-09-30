@@ -25,6 +25,7 @@ import io.kestra.core.models.QueryFilter.Logical;
 import io.kestra.core.models.QueryFilter.Op;
 import io.kestra.core.models.dashboards.AggregationType;
 import io.kestra.core.models.dashboards.ColumnDescriptor;
+import io.kestra.core.models.dashboards.filters.In;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionKind;
 import io.kestra.core.models.executions.LogEntry;
@@ -91,6 +92,7 @@ public abstract class AbstractLogDataStoreTest {
     protected String scopeTenant;
     protected String familyTenant;
     protected String pageTenant;
+    protected String keysetTenant;
 
     protected enum Group {
         LEVELS,
@@ -152,13 +154,14 @@ public abstract class AbstractLogDataStoreTest {
             .build()
     );
 
-    // Timestamps are relative to now, never fixed historical dates: retention-limited backends (Cloud Logging drops
-    // entries older than ~30 days, so they never become queryable) would make fixed-past fixtures un-runnable. The
-    // three points stay ordered (past < now < future) and all sit comfortably within retention. The TIME group has
-    // its own tenant, so only their relative order matters to the assertions — the absolute anchor is irrelevant.
-    private static final Instant T_NOW = Instant.now().minus(5, ChronoUnit.DAYS).truncatedTo(ChronoUnit.MILLIS);
-    private static final Instant T_PAST = T_NOW.minus(4, ChronoUnit.DAYS);
-    private static final Instant T_FUTURE = T_NOW.plus(4, ChronoUnit.DAYS);
+    // Timestamps are relative to now and kept within minutes of it, never fixed or multi-day-old dates: external
+    // backends drop or hide anything outside a narrow window — Datadog rejects logs more than ~18h old at intake, and
+    // Splunk's search job is bounded by latest=now — so fixtures aged by days never become queryable there. All three
+    // points stay in the recent past (so a latest=now window still covers them) and ordered (past < now < future); the
+    // TIME group has its own tenant, so only their relative order matters — the absolute anchor is irrelevant.
+    private static final Instant T_NOW = Instant.now().minus(30, ChronoUnit.MINUTES).truncatedTo(ChronoUnit.MILLIS);
+    private static final Instant T_PAST = T_NOW.minus(15, ChronoUnit.MINUTES);
+    private static final Instant T_FUTURE = T_NOW.plus(15, ChronoUnit.MINUTES);
     private static final ZonedDateTime T_NOW_ZDT = T_NOW.atZone(ZoneOffset.UTC);
     private static final List<LogEntry> TIME_LOGS = List.of(
         log(Level.INFO, "exec-past").timestamp(T_PAST).build(),
@@ -193,6 +196,18 @@ public abstract class AbstractLogDataStoreTest {
     // Pagination fixture: 102 entries for one execution (80 on taskId, 22 on taskId2/taskRunId2).
     static final String PAGE_EXEC = "exec-page";
 
+    // Keyset fixture: five entries sharing the EXACT same timestamp, so timestamp alone cannot paginate them
+    // (a page boundary can fall inside the group). Distinct levels give each backend a working tiebreaker:
+    // JDBC seeks on the unique (timestamp, key) row, Elasticsearch on (timestamp, level).
+    private static final Instant T_KEYSET = Instant.now().minus(10, ChronoUnit.MINUTES).truncatedTo(ChronoUnit.MILLIS);
+    private static final List<LogEntry> KEYSET_LOGS = List.of(
+        log(Level.TRACE, "exec-keyset").timestamp(T_KEYSET).message("m0").build(),
+        log(Level.DEBUG, "exec-keyset").timestamp(T_KEYSET).message("m1").build(),
+        log(Level.INFO, "exec-keyset").timestamp(T_KEYSET).message("m2").build(),
+        log(Level.WARN, "exec-keyset").timestamp(T_KEYSET).message("m3").build(),
+        log(Level.ERROR, "exec-keyset").timestamp(T_KEYSET).message("m4").build()
+    );
+
     @BeforeAll
     void seed() {
         levelsTenant = randomTenant();
@@ -203,6 +218,7 @@ public abstract class AbstractLogDataStoreTest {
         scopeTenant = randomTenant();
         familyTenant = randomTenant();
         pageTenant = randomTenant();
+        keysetTenant = randomTenant();
 
         // One bulk write per group (saveBatch) — far fewer requests than a save() per entry on remote backends.
         logDataStore.saveBatch(withTenant(levelsTenant, LEVELS_LOGS));
@@ -212,6 +228,7 @@ public abstract class AbstractLogDataStoreTest {
         logDataStore.saveBatch(withTenant(kindTenant, KIND_LOGS));
         logDataStore.saveBatch(withTenant(scopeTenant, SCOPE_LOGS));
         logDataStore.saveBatch(withTenant(familyTenant, FAMILY_LOGS));
+        logDataStore.saveBatch(withTenant(keysetTenant, KEYSET_LOGS));
 
         List<LogEntry> pageLogs = new ArrayList<>(102);
         for (int i = 0; i < 80; i++) {
@@ -510,6 +527,35 @@ public abstract class AbstractLogDataStoreTest {
     }
 
     @Test
+    void findAfterWithoutAcl_paginatesAcrossEqualTimestampsWithoutLossOrDuplicates() {
+        // Given: five logs sharing the exact same timestamp (timestamp alone cannot paginate them)
+        List<QueryFilter> filters = List.of();
+
+        // When: pages of size 2 are read, each seeking strictly after the last row of the previous page.
+        // The first page seeds from a timestamp before the fixture (key null), like the shipper's offset/lookback.
+        List<LogDataStoreInterface.KeyedLog> all = new ArrayList<>();
+        Instant afterTs = T_KEYSET.minus(1, ChronoUnit.MINUTES);
+        String afterKey = null;
+        while (true) {
+            List<LogDataStoreInterface.KeyedLog> page =
+                logDataStore.findAfterWithoutAcl(keysetTenant, filters, afterTs, afterKey, 2);
+            all.addAll(page);
+            if (page.size() < 2) {
+                break; // a non-full page marks exhaustion
+            }
+            LogDataStoreInterface.KeyedLog last = page.get(page.size() - 1);
+            afterTs = last.log().getTimestamp();
+            afterKey = last.key();
+        }
+
+        // Then: every row shipped exactly once, with a stable total order and no duplicate keys
+        assertThat(all).hasSize(5);
+        assertThat(all.stream().map(LogDataStoreInterface.KeyedLog::key).distinct().count()).isEqualTo(5L);
+        assertThat(all.stream().map(k -> k.log().getMessage()).toList())
+            .containsExactlyInAnyOrder("m0", "m1", "m2", "m3", "m4");
+    }
+
+    @Test
     void findAsync_returnsNonNormalKindWhenExecutionIdFilter() {
         // Same NORMAL-kind-default exception as find(): an EXECUTION_ID filter always returns that execution's logs.
         List<LogEntry> results = logDataStore.findAsync(kindTenant, List.of(cond(Field.EXECUTION_ID, Op.EQUALS, "exec-loop-kind"))).collectList().block();
@@ -648,6 +694,28 @@ public abstract class AbstractLogDataStoreTest {
         if (logDataStore.canAggregate()) {
             assertThat(results).hasSize(1);
             assertThat(results.getFirst().get("count")).isIn(3, 3L); // alpha, beta, gamma
+        } else {
+            assertThat(results).isEmpty();
+        }
+    }
+
+    @Test
+    void fetchData_narrowsOnEveryLevelFilter() throws Exception {
+        var results = logDataStore.fetchData(
+            levelsTenant,
+            Logs.builder().type(Logs.class.getName())
+                .columns(Map.of("count", ColumnDescriptor.<Logs.Fields> builder().field(Logs.Fields.LEVEL).agg(AggregationType.COUNT).build()))
+                .where(List.of(
+                    In.<Logs.Fields> builder().field(Logs.Fields.LEVEL).values(List.of("WARN", "ERROR")).build(),
+                    In.<Logs.Fields> builder().field(Logs.Fields.LEVEL).values(List.of("ERROR")).build()
+                ))
+                .build(),
+            ZonedDateTime.now().minusYears(10), ZonedDateTime.now().plusYears(10), null
+        );
+
+        if (logDataStore.canAggregate()) {
+            assertThat(results).hasSize(1);
+            assertThat(results.getFirst().get("count")).isIn(1, 1L);
         } else {
             assertThat(results).isEmpty();
         }

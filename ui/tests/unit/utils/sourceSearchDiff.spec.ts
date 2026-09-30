@@ -1,5 +1,5 @@
 import {describe, expect, it} from "vitest"
-import {computeSelectionSummary, distinctSkipReasons, type SourceSearchSelectionGroup} from "../../../src/utils/sourceSearchDiff"
+import {computeSelectionSummary, distinctSkipReasons, getSeparatorVariant, type SourceSearchSelectionGroup} from "../../../src/utils/sourceSearchDiff"
 import {crossSearchResultKey} from "../../../src/utils/crossResourceSearch"
 
 describe("distinctSkipReasons", () => {
@@ -68,5 +68,27 @@ describe("computeSelectionSummary", () => {
     it("returns zero counts for an empty selection", () => {
         expect(computeSelectionSummary([group("ns", "id", true, [1])], new Set()))
             .toEqual({selectedFlowCount: 0, selectedMatchCount: 0})
+    })
+})
+
+describe("getSeparatorVariant", () => {
+    it("should replace hyphens with underscores", () => {
+        expect(getSeparatorVariant("my-flow")).toBe("my_flow")
+    })
+
+    it("should replace underscores with hyphens", () => {
+        expect(getSeparatorVariant("my_flow")).toBe("my-flow")
+    })
+
+    it("should return null when the query has no separator", () => {
+        expect(getSeparatorVariant("myflow")).toBeNull()
+    })
+
+    it("should return null for mixed separators", () => {
+        expect(getSeparatorVariant("my-flow_name")).toBeNull()
+    })
+
+    it("should return null for an empty query", () => {
+        expect(getSeparatorVariant("")).toBeNull()
     })
 })

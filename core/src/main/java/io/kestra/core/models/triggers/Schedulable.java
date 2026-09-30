@@ -2,6 +2,7 @@ package io.kestra.core.models.triggers;
 
 import java.time.ZonedDateTime;
 import java.util.Map;
+import java.util.Optional;
 
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.annotations.PluginProperty;
@@ -11,7 +12,7 @@ import io.kestra.core.validations.TimezoneId;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
-public interface Schedulable extends PollingTriggerInterface {
+public interface Schedulable extends WorkerTriggerInterface {
 
     String PLUGIN_PROPERTY_RECOVER_MISSED_SCHEDULES = "recoverMissedSchedules";
 
@@ -34,6 +35,11 @@ public interface Schedulable extends PollingTriggerInterface {
     )
     @PluginProperty
     RecoverMissedSchedules getRecoverMissedSchedules();
+
+    /**
+     * Evaluate the trigger and produce a lightweight result.
+     */
+    Optional<TriggerEvaluationResult> eval(ConditionContext conditionContext, TriggerContext context) throws Exception;
 
     /**
      * Compute the previous evaluation of a trigger.

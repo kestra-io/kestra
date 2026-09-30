@@ -8,6 +8,7 @@ import {useRouteTabsStore} from "../../../stores/routeTabs"
 import {useAuthStore} from "override/stores/auth"
 import {useMiscStore} from "override/stores/misc"
 import {useActiveTab} from "../../../composables/useActiveTab"
+import {useNamespaceBreadcrumb} from "../../../composables/useNamespaceBreadcrumb"
 import {FLOW_PARENT_ROUTE, FLOW_TAB_ROUTES, isFlowTabAllowed} from "../flowTabs"
 
 export function useFlowRoot() {
@@ -34,19 +35,28 @@ export function useFlowRoot() {
         return route.params.namespace + "/" + route.params.id
     }
 
-    function load() {
-        if (flowStore.flow === undefined || previousFlow.value !== flowKey()) {
-            const query = {...route.query, allowDeleted: true}
-            return flowStore.loadFlow({
-                ...route.params,
-                ...query,
-            } as any).then(() => {
-                if (flowStore.flow) {
-                    deleted.value = Boolean(flowStore.flow.deleted)
-                    previousFlow.value = flowKey()
-                    flowStore.loadGraph({flow: flowStore.flow})
-                }
+    function isFlowLoaded(): boolean {
+        return flowStore.flow?.namespace === route.params.namespace && flowStore.flow?.id === route.params.id
+    }
+
+    async function load() {
+        if (previousFlow.value === flowKey() && isFlowLoaded()) return
+
+        // The route guard loads the flow into the store before this page mounts (FLOW_ENTITY_META),
+        // so fetching it again here would double every flow page open.
+        if (!isFlowLoaded()) {
+            await flowStore.loadFlow({
+                namespace: String(route.params.namespace),
+                id: String(route.params.id),
+                revision: route.query.revision ? String(route.query.revision) : undefined,
+                allowDeleted: true,
             })
+        }
+
+        if (flowStore.flow) {
+            deleted.value = Boolean(flowStore.flow.deleted)
+            previousFlow.value = flowKey()
+            flowStore.loadGraph({flow: flowStore.flow})
         }
     }
 
@@ -85,21 +95,15 @@ export function useFlowRoot() {
 
     const routeName = computed(() => route.params && route.params.id ? FLOW_PARENT_ROUTE : "")
 
+    const namespaceBreadcrumb = useNamespaceBreadcrumb(() => route.params.namespace?.toString(), {
+        tab: "flows",
+        root: {label: t("flows"), link: {name: "flows/list"}, scope: t("namespaces")},
+    })
+
     const routeInfo = computed(() => ({
         title: route.params.id.toString(),
-        breadcrumb: [
-            {
-                label: t("flows"),
-                link: {name: "flows/list"},
-            },
-            {
-                label: route.params.namespace,
-                link: {
-                    name: "namespaces/update/flows",
-                    params: {id: route.params.namespace},
-                },
-            },
-        ],
+        breadcrumb: namespaceBreadcrumb.value,
+        bookmarkLabel: `${route.params.namespace}: ${route.params.id}`,
         beta: route.meta?.beta as boolean | undefined,
     }))
 
@@ -148,6 +152,7 @@ export function useFlowRoot() {
         onUnmounted(() => {
             flowStore.flow = undefined
             flowStore.flowGraph = undefined
+            flowStore.invalidGraph = false
         })
     }
 

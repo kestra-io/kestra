@@ -1,57 +1,112 @@
 import {nextTick, ref} from "vue"
 import {createI18n, type I18n} from "vue-i18n"
 
-const translations = import.meta.glob(["./*.json", "!./en.json"])
-
 import {SUPPORT_LOCALES} from "./languages"
 
 type Locales = (typeof SUPPORT_LOCALES)[number]
+type TranslationValue = string | TranslationValue[] | {[key: string]: TranslationValue}
+type LocaleMessages = Record<string, TranslationValue>
+type TranslationMessages = Record<string, LocaleMessages>
+type TranslationModule = {default: TranslationMessages}
+type TranslationProvider = Record<string, () => Promise<TranslationModule>>
+type AppI18n = I18n<TranslationMessages, Record<string, unknown>, Record<string, unknown>, Locales, false>
 
-export const globalI18n = ref<I18n<any, any, any, Locales, false>["global"]>()
+const translations = import.meta.glob<TranslationModule>(["./*.json", "!./en.json"])
+
+export const globalI18n = ref<AppI18n["global"]>()
+
+/**
+ * What happens when `t()` is asked for a key no locale defines.
+ *
+ * - `throw`: the default under Vitest, so a component that renders a raw key fails its test.
+ * - `report`: the default everywhere else, including production builds. One `console.error` per
+ *   key, which is what the e2e suite listens for; the render itself still shows the key, as before.
+ * - `silent`: for Storybook, where isolated stories legitimately lack most namespaced keys.
+ */
+export type MissingKeyPolicy = "throw" | "report" | "silent"
+
+export const MISSING_KEY_MESSAGE = "[i18n] Missing translation key"
+
+let missingKeyPolicy: MissingKeyPolicy = import.meta.env.MODE === "test" ? "throw" : "report"
+const reportedMissingKeys = new Set<string>()
+
+export function setMissingKeyPolicy(policy: MissingKeyPolicy) {
+  missingKeyPolicy = policy
+}
+
+/**
+ * vue-i18n calls this once per locale in the fallback chain, so a key present in English but
+ * missing in the active locale reaches it too. Only the English miss is a bug: English is the
+ * source every locale is generated from, so a key absent there is absent everywhere.
+ */
+function onMissingKey(locale: string, key: string): void {
+  if (missingKeyPolicy === "silent" || locale !== "en") return
+
+  const message = `${MISSING_KEY_MESSAGE} "${key}" - it renders as its raw id`
+  if (missingKeyPolicy === "throw") throw new Error(message)
+  if (reportedMissingKeys.has(key)) return
+  reportedMissingKeys.add(key)
+  console.error(message)
+}
 
 /**
  * Plural selection for locales that vue-i18n's default rule gets wrong.
  *
  * Given three forms, the default rule picks index 1 for n === 1 and index 2 for
- * everything else, which is the [zero, one, other] shape. Polish is [one, few, many]:
- * 1, then 2-4, then 5+ with 12-14 as an exception. Without this rule a three-form
- * Polish message renders "1 pliki" and "2 plików" — both wrong, and the first is the
- * most common case.
+ * everything else, which is the [zero, one, other] shape. Polish and Russian are
+ * [one, few, many], so without a rule a three-form message renders "1 pliki" and
+ * "2 plików" - both wrong, and the first is the most common case.
  *
- * Russian has the same three-form structure and the same bug, but its messages have not
- * been reviewed against a correct rule, so it deliberately stays on the default.
+ * A message whose English source has a zero form ("no workers | worker | workers")
+ * needs four forms in these languages: [zero, one, few, many].
  *
  * @param choice the count being pluralised
  * @param choicesLength how many forms the message declares
+ * @param oneFewMany the [one, few, many] index for a non-negative count
  */
-function polishPluralIndex(choice: number, choicesLength: number): number {
+function slavicPluralIndex(choice: number, choicesLength: number, oneFewMany: (n: number) => number): number {
   if (choicesLength < 3) return choice === 1 ? 0 : 1
 
   const n = Math.abs(choice)
-  if (n === 1) return 0
+  if (choicesLength === 4) return n === 0 ? 0 : oneFewMany(n) + 1
 
-  const mod10 = n % 10
-  const mod100 = n % 100
-  // 2-4, 22-24, 32-34 … take the "few" form; 12-14 fall through to "many".
-  if (mod10 >= 2 && mod10 <= 4 && !(mod100 >= 12 && mod100 <= 14)) return 1
+  return oneFewMany(n)
+}
 
-  return 2
+/** Polish: 1, then 2-4, then 5+, with 12-14 as an exception. 21 is "many" ("21 plików"). */
+function polishPluralIndex(choice: number, choicesLength: number): number {
+  return slavicPluralIndex(choice, choicesLength, (n) => {
+    if (n === 1) return 0
+
+    const mod10 = n % 10
+    const mod100 = n % 100
+    if (mod10 >= 2 && mod10 <= 4 && !(mod100 >= 12 && mod100 <= 14)) return 1
+
+    return 2
+  })
+}
+
+/** Russian: 1, 21, 31... then 2-4, 22-24... then the rest, with 11-14 as exceptions. */
+function russianPluralIndex(choice: number, choicesLength: number): number {
+  return slavicPluralIndex(choice, choicesLength, (n) => {
+    const mod10 = n % 10
+    const mod100 = n % 100
+    if (mod10 === 1 && mod100 !== 11) return 0
+    if (mod10 >= 2 && mod10 <= 4 && !(mod100 >= 12 && mod100 <= 14)) return 1
+
+    return 2
+  })
 }
 
 export function setupI18n(options: {locale: Locales} = {locale: "en"}) {
-  const i18n = createI18n<false>({...options, pluralRules: {pl: polishPluralIndex}})
+  const i18n = createI18n<false>({...options, legacy: false, pluralRules: {pl: polishPluralIndex, ru: russianPluralIndex}, missing: onMissingKey, missingWarn: false})
   setI18nLanguage(i18n, options.locale)
   globalI18n.value = i18n.global
   return i18n
 }
 
-export function setI18nLanguage(i18n: I18n, locale: (typeof SUPPORT_LOCALES)[number]) {
-  if (i18n.mode === "legacy") {
-    i18n.global.locale = locale
-  } else {
-    // @ts-expect-error vue-i18n is not typed correctly it seems
-    i18n.global.locale.value = locale
-  }
+export function setI18nLanguage(i18n: AppI18n, locale: Locales) {
+  i18n.global.locale.value = locale
   /**
    * NOTE:
    * If you need to specify the language setting for headers, such as the `fetch` API, set it here.
@@ -63,20 +118,12 @@ export function setI18nLanguage(i18n: I18n, locale: (typeof SUPPORT_LOCALES)[num
   document.querySelector("html")?.setAttribute("lang", locale.replace(/_/g, "-"))
 }
 
-export async function loadLocaleMessages(i18n: I18n, locale: (typeof SUPPORT_LOCALES)[number], additionalTranslationsProvider: Record<string, () => Promise<any>>) {
-  let messages = {} as any
+export async function loadLocaleMessages(i18n: AppI18n, locale: Locales, additionalTranslationsProvider: TranslationProvider) {
+  const module = additionalTranslationsProvider[locale]
+    ? await additionalTranslationsProvider[locale]()
+    : await translations[`./${locale}.json`]()
 
-  if(additionalTranslationsProvider[locale]){
-    // load additional translations from the provider
-    const additionalTranslations = await additionalTranslationsProvider[locale]()
-    messages = additionalTranslations.default
-  }else{
-    // load locale messages with dynamic import
-    messages = await translations[`./${locale}.json`]()
-  }
-
-  // set locale and locale message
-  i18n.global.setLocaleMessage(locale, messages[locale])
+  i18n.global.setLocaleMessage(locale, module.default[locale])
 
   return nextTick()
 }

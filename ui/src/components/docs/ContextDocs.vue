@@ -233,7 +233,7 @@
         &:focus:not(.disabled) {
             background: var(--ks-bg-hover);
             border-color: var(--ks-border-strong);
-            color: var(--ks-primary);
+            color: var(--ks-text-link);
             outline: none;
         }
 

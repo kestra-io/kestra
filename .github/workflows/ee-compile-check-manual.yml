@@ -21,9 +21,11 @@ jobs:
   ee-compile:
     name: EE compile check
     runs-on: ubuntu-latest
+    # Above the curl ceiling in ee-compile-check, so curl's own error wins.
+    timeout-minutes: 50
     if: github.repository == 'kestra-io/kestra'
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: EE compile check (via Kestra webhook)
         uses: ./.github/actions/ee-compile-check
         with:

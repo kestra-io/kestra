@@ -10,7 +10,7 @@ import org.apache.commons.lang3.RandomStringUtils;
 import org.bouncycastle.crypto.generators.OpenBSDBCrypt;
 
 /**
- * Utility class for BasicAuth password hashing.
+ * Utility class for BasicAuth password hashing and constant-time credential comparison.
  *
  * <p>
  * Passwords at rest are stored as {@code bcrypt(sha512(salt|password))}.
@@ -97,6 +97,31 @@ public final class AuthUtils {
         } catch (Exception e) {
             // storedHash is malformed (e.g. a legacy SHA-512 hex string) – fail closed
             return false;
+        }
+    }
+
+    /**
+     * Compares two strings in constant time, regardless of where they first differ or of a length mismatch.
+     *
+     * <p>
+     * Comparing SHA-256 digests instead of the raw bytes avoids {@link MessageDigest#isEqual} short-circuiting
+     * on differing lengths, which would otherwise leak the length of the expected value.
+     *
+     * @return {@code true} if both strings are non-null and equal, {@code false} otherwise
+     */
+    public static boolean constantTimeEquals(String left, String right) {
+        if (left == null || right == null) {
+            return false;
+        }
+        return MessageDigest.isEqual(sha256(left), sha256(right));
+    }
+
+    private static byte[] sha256(String input) {
+        try {
+            return MessageDigest.getInstance("SHA-256").digest(input.getBytes(StandardCharsets.UTF_8));
+        } catch (NoSuchAlgorithmException e) {
+            // SHA-256 is required by the JVM spec — this cannot happen.
+            throw new IllegalStateException("SHA-256 not available", e);
         }
     }
 }

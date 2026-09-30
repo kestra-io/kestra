@@ -1,6 +1,9 @@
 package io.kestra.executor.handler;
 
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.function.Function;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -12,11 +15,21 @@ import org.mockito.quality.Strictness;
 
 import io.kestra.core.async.AsyncOperationProcessedEvent.Outcome;
 import io.kestra.core.async.AsyncOperationService;
+import io.kestra.core.executor.command.ChangeTaskRunState;
 import io.kestra.core.executor.command.Create;
 import io.kestra.core.executor.command.ExecutionCommand;
+import io.kestra.core.executor.command.ForceRun;
+import io.kestra.core.executor.command.Pause;
 import io.kestra.core.executor.command.Replay;
+import io.kestra.core.executor.command.Restart;
+import io.kestra.core.executor.command.Resume;
+import io.kestra.core.executor.command.ResumeFromBreakpoint;
+import io.kestra.core.executor.command.Unqueue;
+import io.kestra.core.executor.command.UpdateLabels;
+import io.kestra.core.executor.command.UpdateStatus;
 import io.kestra.core.killswitch.EvaluationType;
 import io.kestra.core.killswitch.KillSwitchService;
+import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionId;
 import io.kestra.core.models.flows.FlowWithSource;
@@ -39,6 +52,7 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -207,13 +221,36 @@ class ExecutionCommandMessageHandlerTest {
     }
 
     @Test
+    void shouldPersistCreatedAndReturnEmptyWhenKillSwitchIsIgnoreForNewExecution() {
+        // Given — a Create whose execution the kill switch marks IGNORE (the CLI ignore-execution case,
+        // by id / flow / namespace — the matching itself is covered by IgnoreExecutionServiceTest).
+        var flow = mock(FlowWithSource.class);
+        var processedFlow = ProcessedFlow.of(flow);
+        var execution = mockExecution("exec-1", "tenant", "ns", "flow-id");
+        when(execution.addLabel(any())).thenReturn(execution);
+        when(flowMetaStore.findByIdForRuntime(any(), any(), any(), any())).thenReturn(Optional.of(processedFlow));
+        when(executionService.create(eq(createCommand), eq(processedFlow))).thenReturn(execution);
+        when(killSwitchService.evaluate(execution)).thenReturn(EvaluationType.IGNORE);
+
+        // When
+        Optional<ExecutorContext> result = handler.handle(createCommand);
+
+        // Then — persisted as-is (tagged ignored) but never processed, so it stays in its CREATED state
+        assertThat(result).isEmpty();
+        verify(execution).addLabel(new Label(Label.KILL_SWITCH, "ignored"));
+        verify(executionStateStore).create(execution);
+        verify(executionEventMessageHandler, never()).handle(any());
+        verify(asyncOperationService).emitProcessedIfAsync(createCommand, "tenant", "exec-1", Outcome.SUCCEEDED, null);
+    }
+
+    @Test
     void shouldReturnEmptyAndLogWhenKillSwitchIsIgnoreForExistingExecution() {
         // Given — a non-Create/Replay command targeting an existing execution that is IGNORED
         var command = mock(ExecutionCommand.class);
         when(command.executionId()).thenReturn("exec-1");
         var execution = mockExecution("exec-1", "tenant", "ns", "flow-id");
         when(killSwitchService.evaluate(command)).thenReturn(EvaluationType.IGNORE);
-        when(executionStateStore.findById("exec-1")).thenReturn(execution);
+        when(executionStateStore.findByIdWithoutAcl("exec-1")).thenReturn(execution);
 
         // When
         Optional<ExecutorContext> result = handler.handle(command);
@@ -231,7 +268,7 @@ class ExecutionCommandMessageHandlerTest {
         var execution = mockExecution("exec-1", "tenant", "ns", "flow-id");
         when(execution.getState().getCurrent()).thenReturn(State.Type.RUNNING);
         when(killSwitchService.evaluate(command)).thenReturn(EvaluationType.KILL);
-        when(executionStateStore.findById("exec-1")).thenReturn(execution);
+        when(executionStateStore.findByIdWithoutAcl("exec-1")).thenReturn(execution);
 
         // When
         Optional<ExecutorContext> result = handler.handle(command);
@@ -249,7 +286,7 @@ class ExecutionCommandMessageHandlerTest {
         var execution = mockExecution("exec-1", "tenant", "ns", "flow-id");
         when(execution.getState().getCurrent()).thenReturn(State.Type.RUNNING);
         when(killSwitchService.evaluate(command)).thenReturn(EvaluationType.CANCEL);
-        when(executionStateStore.findById("exec-1")).thenReturn(execution);
+        when(executionStateStore.findByIdWithoutAcl("exec-1")).thenReturn(execution);
 
         // When
         Optional<ExecutorContext> result = handler.handle(command);
@@ -267,7 +304,7 @@ class ExecutionCommandMessageHandlerTest {
         var flow = mock(FlowWithSource.class);
         var newExecution = mockExecution("new-exec-id", "tenant", "ns", "flow-id");
         var context = mock(ExecutorContext.class);
-        when(executionStateStore.findById("source-exec-id")).thenReturn(sourceExecution);
+        when(executionStateStore.findByIdWithoutAcl("source-exec-id")).thenReturn(sourceExecution);
         when(flowMetaStore.findByExecutionForRuntime(any())).thenReturn(Optional.of(flow));
         when(executionService.replay(any(), eq(flow), isNull(), isNull(), any(), eq(true), eq("new-exec-id")))
             .thenReturn(newExecution);
@@ -284,7 +321,7 @@ class ExecutionCommandMessageHandlerTest {
     @Test
     void replayShouldEmitFailedOutcomeWhenSourceExecutionNotFound() {
         // Given — source execution does not exist
-        when(executionStateStore.findById("source-exec-id")).thenReturn(null);
+        when(executionStateStore.findByIdWithoutAcl("source-exec-id")).thenReturn(null);
 
         // When — must not throw
         assertThatCode(() -> handler.handle(replayCommand)).doesNotThrowAnyException();
@@ -296,7 +333,7 @@ class ExecutionCommandMessageHandlerTest {
     @Test
     void replayShouldEmitFailedOutcomeWhenFlowNotFound() {
         // Given
-        when(executionStateStore.findById("source-exec-id")).thenReturn(sourceExecution);
+        when(executionStateStore.findByIdWithoutAcl("source-exec-id")).thenReturn(sourceExecution);
         when(flowMetaStore.findByExecutionForRuntime(any())).thenReturn(Optional.empty());
 
         // When — must not throw
@@ -311,7 +348,7 @@ class ExecutionCommandMessageHandlerTest {
         // Given
         var flow = mock(FlowWithSource.class);
         var newExecution = mockExecution("new-exec-id", "tenant", "ns", "flow-id");
-        when(executionStateStore.findById("source-exec-id")).thenReturn(sourceExecution);
+        when(executionStateStore.findByIdWithoutAcl("source-exec-id")).thenReturn(sourceExecution);
         when(flowMetaStore.findByExecutionForRuntime(any())).thenReturn(Optional.of(flow));
         when(executionService.replay(any(), any(), any(), any(), any(), eq(true), eq("new-exec-id")))
             .thenReturn(newExecution);
@@ -331,7 +368,7 @@ class ExecutionCommandMessageHandlerTest {
         var newExecution = mockExecution("new-exec-id", "tenant", "ns", "flow-id");
         when(newExecution.getState().isTerminated()).thenReturn(true);
         when(newExecution.getState().getCurrent()).thenReturn(State.Type.KILLED);
-        when(executionStateStore.findById("source-exec-id")).thenReturn(sourceExecution);
+        when(executionStateStore.findByIdWithoutAcl("source-exec-id")).thenReturn(sourceExecution);
         when(flowMetaStore.findByExecutionForRuntime(any())).thenReturn(Optional.of(flow));
         when(executionService.replay(any(), eq(flow), isNull(), isNull(), any(), eq(true), eq("new-exec-id")))
             .thenReturn(newExecution);
@@ -355,7 +392,7 @@ class ExecutionCommandMessageHandlerTest {
         // Given
         var flow = mock(FlowWithSource.class);
         var newExecution = mockExecution("new-exec-id", "tenant", "ns", "flow-id");
-        when(executionStateStore.findById("source-exec-id")).thenReturn(sourceExecution);
+        when(executionStateStore.findByIdWithoutAcl("source-exec-id")).thenReturn(sourceExecution);
         when(flowMetaStore.findByExecutionForRuntime(any())).thenReturn(Optional.of(flow));
         when(executionService.replay(any(), eq(flow), isNull(), isNull(), any(), eq(true), eq("new-exec-id")))
             .thenReturn(newExecution);
@@ -378,7 +415,7 @@ class ExecutionCommandMessageHandlerTest {
         var flow = mock(FlowWithSource.class);
         var newExecution = mockExecution("new-exec-id", "tenant", "ns", "flow-id");
         var context = mock(ExecutorContext.class);
-        when(executionStateStore.findById("source-exec-id")).thenReturn(sourceExecution);
+        when(executionStateStore.findByIdWithoutAcl("source-exec-id")).thenReturn(sourceExecution);
         when(flowMetaStore.findByIdForRuntime("tenant", "ns", "flow-id", Optional.of(3))).thenReturn(Optional.of(ProcessedFlow.of(flow)));
         when(executionService.replay(any(), eq(flow), isNull(), eq(3), any(), eq(true), eq("new-exec-id")))
             .thenReturn(newExecution);
@@ -395,7 +432,211 @@ class ExecutionCommandMessageHandlerTest {
         verify(flowMetaStore, never()).findById(any(), any(), any(), any());
     }
 
+    // ---- lock-path command dispatch ----
+
+    @Test
+    void shouldRouteRestartCommandToRestart() throws Exception {
+        var existing = lockedExecution("exec-1", State.Type.FAILED);
+        var updated = lockedExecution("exec-1", State.Type.RESTARTED);
+        var flow = mock(FlowWithSource.class);
+        stubLock(existing, flow);
+        var command = Restart.from(existing, 3).withOperationId("op");
+        when(executionService.restart(existing, flow, 3, true)).thenReturn(updated);
+
+        Optional<ExecutorContext> result = handler.handle(command);
+
+        assertThat(result).isPresent();
+        assertThat(result.get().getExecution()).isEqualTo(updated);
+        verify(executionService).restart(existing, flow, 3, true);
+        verify(asyncOperationService).emitProcessedIfAsync(command, "tenant", "exec-1", Outcome.SUCCEEDED, null);
+    }
+
+    @Test
+    void shouldRoutePauseCommandToPause() throws Exception {
+        var existing = lockedExecution("exec-1", State.Type.RUNNING);
+        var updated = lockedExecution("exec-1", State.Type.PAUSED);
+        stubLock(existing, mock(FlowWithSource.class));
+        var command = Pause.from(existing).withOperationId("op");
+        when(executionService.pause(existing)).thenReturn(updated);
+
+        Optional<ExecutorContext> result = handler.handle(command);
+
+        assertThat(result).isPresent();
+        assertThat(result.get().getExecution()).isEqualTo(updated);
+        verify(executionService).pause(existing);
+        verify(asyncOperationService).emitProcessedIfAsync(command, "tenant", "exec-1", Outcome.SUCCEEDED, null);
+    }
+
+    @Test
+    void shouldRouteUnqueueCommandToUnqueueWithState() throws Exception {
+        var existing = lockedExecution("exec-1", State.Type.QUEUED);
+        var updated = lockedExecution("exec-1", State.Type.RUNNING);
+        stubLock(existing, mock(FlowWithSource.class));
+        var command = Unqueue.from(existing, State.Type.RUNNING).withOperationId("op");
+        when(executionService.unqueue(existing, State.Type.RUNNING)).thenReturn(updated);
+
+        Optional<ExecutorContext> result = handler.handle(command);
+
+        assertThat(result).isPresent();
+        assertThat(result.get().getExecution()).isEqualTo(updated);
+        verify(executionService).unqueue(existing, State.Type.RUNNING);
+    }
+
+    @Test
+    void shouldRouteForceRunCommandToForceRun() throws Exception {
+        var existing = lockedExecution("exec-1", State.Type.QUEUED);
+        var updated = lockedExecution("exec-1", State.Type.RUNNING);
+        var flow = mock(FlowWithSource.class);
+        stubLock(existing, flow);
+        var command = ForceRun.from(existing).withOperationId("op");
+        when(executionService.forceRun(existing, flow)).thenReturn(updated);
+
+        Optional<ExecutorContext> result = handler.handle(command);
+
+        assertThat(result).isPresent();
+        assertThat(result.get().getExecution()).isEqualTo(updated);
+        verify(executionService).forceRun(existing, flow);
+    }
+
+    @Test
+    void shouldRouteChangeTaskRunStateCommandWithTaskRunIdAndState() throws Exception {
+        var existing = lockedExecution("exec-1", State.Type.FAILED);
+        var updated = lockedExecution("exec-1", State.Type.RESTARTED);
+        var flow = mock(FlowWithSource.class);
+        stubLock(existing, flow);
+        var command = ChangeTaskRunState.from(existing, "taskrun-1", State.Type.SUCCESS).withOperationId("op");
+        when(executionService.changeTaskRunState(existing, flow, "taskrun-1", State.Type.SUCCESS)).thenReturn(updated);
+
+        Optional<ExecutorContext> result = handler.handle(command);
+
+        assertThat(result).isPresent();
+        assertThat(result.get().getExecution()).isEqualTo(updated);
+        verify(executionService).changeTaskRunState(existing, flow, "taskrun-1", State.Type.SUCCESS);
+    }
+
+    @Test
+    void shouldRouteUpdateLabelsCommandWithLabels() throws Exception {
+        var existing = lockedExecution("exec-1", State.Type.RUNNING);
+        var updated = lockedExecution("exec-1", State.Type.RUNNING);
+        stubLock(existing, mock(FlowWithSource.class));
+        var labels = List.of(new Label("team", "data"));
+        var command = UpdateLabels.from(existing, labels).withOperationId("op");
+        when(executionService.updateLabels(existing, labels)).thenReturn(updated);
+
+        Optional<ExecutorContext> result = handler.handle(command);
+
+        assertThat(result).isPresent();
+        assertThat(result.get().getExecution()).isEqualTo(updated);
+        verify(executionService).updateLabels(existing, labels);
+    }
+
+    @Test
+    void shouldRouteUpdateStatusCommandToChangeState() throws Exception {
+        var existing = lockedExecution("exec-1", State.Type.RUNNING);
+        var updated = lockedExecution("exec-1", State.Type.SUCCESS);
+        stubLock(existing, mock(FlowWithSource.class));
+        var command = UpdateStatus.from(existing, State.Type.SUCCESS).withOperationId("op");
+        when(executionService.changeState(existing, State.Type.SUCCESS)).thenReturn(updated);
+
+        Optional<ExecutorContext> result = handler.handle(command);
+
+        assertThat(result).isPresent();
+        assertThat(result.get().getExecution()).isEqualTo(updated);
+        verify(executionService).changeState(existing, State.Type.SUCCESS);
+    }
+
+    @Test
+    void shouldRouteResumeFromBreakpointCommandWithBreakpoints() throws Exception {
+        var existing = lockedExecution("exec-1", State.Type.BREAKPOINT);
+        var updated = lockedExecution("exec-1", State.Type.RUNNING);
+        stubLock(existing, mock(FlowWithSource.class));
+        var breakpoints = Optional.of("task-a");
+        var command = ResumeFromBreakpoint.from(existing, breakpoints).withOperationId("op");
+        when(executionService.resumeFromBreakpoint(existing, breakpoints)).thenReturn(updated);
+
+        Optional<ExecutorContext> result = handler.handle(command);
+
+        assertThat(result).isPresent();
+        assertThat(result.get().getExecution()).isEqualTo(updated);
+        verify(executionService).resumeFromBreakpoint(existing, breakpoints);
+    }
+
+    @Test
+    void shouldRouteResumeCommandToRunningWithInputsAndResumed() throws Exception {
+        var existing = lockedExecution("exec-1", State.Type.PAUSED);
+        var updated = lockedExecution("exec-1", State.Type.RUNNING);
+        var flow = mock(FlowWithSource.class);
+        stubLock(existing, flow);
+        var resumed = io.kestra.plugin.core.flow.Pause.Resumed.now();
+        Map<String, Object> inputs = Map.of("approved", true);
+        var command = Resume.from(existing, resumed, inputs).withOperationId("op");
+        when(executionService.resume(existing, flow, State.Type.RUNNING, inputs, resumed)).thenReturn(updated);
+
+        Optional<ExecutorContext> result = handler.handle(command);
+
+        assertThat(result).isPresent();
+        assertThat(result.get().getExecution()).isEqualTo(updated);
+        verify(executionService).resume(existing, flow, State.Type.RUNNING, inputs, resumed);
+    }
+
+    @Test
+    void shouldEmitFailedOutcomeWhenServiceThrowsInLockPath() throws Exception {
+        var existing = lockedExecution("exec-1", State.Type.RUNNING);
+        stubLock(existing, mock(FlowWithSource.class));
+        var command = Pause.from(existing).withOperationId("op");
+        when(executionService.pause(existing)).thenThrow(new RuntimeException("boom"));
+
+        Optional<ExecutorContext> result = handler.handle(command);
+
+        assertThat(result).isEmpty();
+        verify(asyncOperationService).emitProcessedIfAsync(eq(command), eq("tenant"), eq("exec-1"), eq(Outcome.FAILED), any());
+    }
+
+    @Test
+    void shouldEmitFailedOutcomeWhenFlowNotFoundInLockPath() {
+        var existing = lockedExecution("exec-1", State.Type.RUNNING);
+        stubLock(existing, null);
+        var command = Pause.from(existing).withOperationId("op");
+
+        Optional<ExecutorContext> result = handler.handle(command);
+
+        assertThat(result).isEmpty();
+        verifyNoInteractions(executionService);
+        verify(asyncOperationService).emitProcessedIfAsync(eq(command), eq("tenant"), eq("exec-1"), eq(Outcome.FAILED), any());
+    }
+
+    @Test
+    void shouldYieldNullForInvalidCommand() {
+        var existing = lockedExecution("exec-1", State.Type.RUNNING);
+        stubLock(existing, mock(FlowWithSource.class));
+        var command = new ExecutionCommand.Invalid("tenant", "ns", "flow-id", "exec-1", null, null);
+
+        Optional<ExecutorContext> result = handler.handle(command);
+
+        assertThat(result).isEmpty();
+        verifyNoInteractions(executionService);
+    }
+
     // ---- helpers ----
+
+    private void stubLock(Execution existing, FlowWithSource flow) {
+        when(killSwitchService.evaluate(any(ExecutionCommand.class))).thenReturn(EvaluationType.PASS);
+        if (flow != null) {
+            when(flowMetaStore.findByExecutionForRuntime(any())).thenReturn(Optional.of(flow));
+        }
+        when(executionStateStore.lock(any(), any())).thenAnswer(invocation -> {
+            Function<Execution, ExecutorContext> function = invocation.getArgument(1);
+            return Optional.ofNullable(function.apply(existing));
+        });
+    }
+
+    private Execution lockedExecution(String execId, State.Type current) {
+        var execution = mockExecution(execId, "tenant", "ns", "flow-id");
+        when(execution.getState().getCurrent()).thenReturn(current);
+        when(execution.getOutputs()).thenReturn(null);
+        when(execution.getTaskRunList()).thenReturn(null);
+        return execution;
+    }
 
     private Execution executionWithState(State.Type type) {
         var state = mock(State.class);

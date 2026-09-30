@@ -62,14 +62,14 @@
 
     function extractText(nodes: RootContent[]): string {
         return nodes.map((node): string => {
+            if ("children" in node) return extractText(node.children)
             // Leaf nodes carry their text in `value` (text, inlineCode, html, …)
-            if ("value" in node && !("children" in node)) return (node as any).value as string
-            if ("children" in node) return extractText((node as any).children as RootContent[])
+            if ("value" in node) return node.value
             return ""
         }).join("")
     }
 
-    function renderNodes(nodes: any[]): (VNode | string)[] {
+    function renderNodes(nodes: RootContent[]): (VNode | string)[] {
         const result: (VNode | string)[] = []
         for (const node of nodes) {
             const vnode = renderNode(node)
@@ -193,21 +193,21 @@
         const slots = innerHtml.trim()
             ? {default: () => [h("span", {innerHTML: props.xssProtection ? htmlEscape(innerHtml) : innerHtml})]}
             : undefined
-        return h(component as any, attrs, slots)
+        return h(component, attrs, slots)
     }
 
-    function renderNode(node: any): VNode | string | null {
-        switch (node.type as string) {
+    function renderNode(node: RootContent): VNode | string | null {
+        switch (node.type) {
         case "text":
-            return node.value as string
+            return node.value
 
         case "paragraph":
             return h("p", renderNodes(node.children))
 
         case "heading": {
-            const text = extractText(node.children as RootContent[])
+            const text = extractText(node.children)
             const slug = slugify(text)
-            const tag = `h${node.depth as number}` as "h1" | "h2" | "h3" | "h4" | "h5" | "h6"
+            const tag = `h${node.depth}` as const
             return h(tag, {id: slug, class: "ks-markdown__heading"}, [
                 ...renderNodes(node.children),
                 h("a", {
@@ -223,8 +223,8 @@
             return h("blockquote", {class: "ks-markdown__blockquote"}, renderNodes(node.children))
 
         case "code": {
-            const lang = (node.lang ?? "") as string
-            const value = node.value as string
+            const lang = node.lang ?? ""
+            const value = node.value
 
             if (lang === "mermaid") {
                 return h("div", {class: "ks-markdown__mermaid mermaid"}, value)
@@ -234,22 +234,20 @@
             const highlightedHtml = codeHighlights.value.get(key)
 
             return h("div", {class: "ks-markdown__code-block"}, [
-                h("div", {class: "ks-markdown__code-header"}, [
-                    lang ? h("span", {class: "ks-markdown__code-lang"}, lang) : null,
-                    h("button", {
-                        class: "ks-markdown__copy-btn",
-                        type: "button",
-                        title: "Copy to clipboard",
-                        onClick: (e: MouseEvent) => {
-                            const btn = e.currentTarget as HTMLButtonElement
-                            copyToClipboard(value).then(() => {
-                                // Swap the copy glyph for the check (not overlay it) for the confirm window.
-                                btn.classList.add("is-copied")
-                                setTimeout(() => btn.classList.remove("is-copied"), 2000)
-                            }).catch(() => { /* clipboard unavailable */ })
-                        },
-                    }, [h(Check, {class: "ks-markdown__copy-btn-ok"}), h(ContentCopy, {class: "ks-markdown__copy-btn-icon"})]),
-                ]),
+                lang ? h("span", {class: "ks-markdown__code-lang"}, lang) : null,
+                h("button", {
+                    class: "ks-markdown__copy-btn",
+                    type: "button",
+                    title: "Copy to clipboard",
+                    onClick: (e: MouseEvent) => {
+                        const btn = e.currentTarget as HTMLButtonElement
+                        copyToClipboard(value).then(() => {
+                            // Swap the copy glyph for the check (not overlay it) for the confirm window.
+                            btn.classList.add("is-copied")
+                            setTimeout(() => btn.classList.remove("is-copied"), 2000)
+                        }).catch(() => { /* clipboard unavailable */ })
+                    },
+                }, [h(Check, {class: "ks-markdown__copy-btn-ok"}), h(ContentCopy, {class: "ks-markdown__copy-btn-icon"})]),
                 highlightedHtml
                     ? h("div", {class: "ks-markdown__code-shiki", innerHTML: highlightedHtml})
                     : h("pre", {class: "ks-markdown__code-plain"}, [
@@ -259,13 +257,13 @@
         }
 
         case "inlineCode":
-            return h("code", {class: "ks-markdown__inline-code"}, node.value as string)
+            return h("code", {class: "ks-markdown__inline-code"}, node.value)
 
         case "list":
             return h(node.ordered ? "ol" : "ul", {class: "ks-markdown__list"}, renderNodes(node.children))
 
         case "listItem": {
-            const children = (node.children as any[]).flatMap((child: any): (VNode | string)[] => {
+            const children = node.children.flatMap((child): (VNode | string)[] => {
                 if (child.type === "paragraph") return renderNodes(child.children)
                 const vnode = renderNode(child)
                 return vnode !== null ? [vnode] : []
@@ -274,18 +272,14 @@
         }
 
         case "table": {
-            const align = node.align as (string | null)[] | null
-            const [headerRow, ...bodyRows] = node.children as any[]
+            const align = node.align
+            const [headerRow, ...bodyRows] = node.children
 
             // Column labels extracted from the header row
-            const headers = (headerRow.children as any[]).map((cell: any) =>
-                extractText(cell.children as RootContent[]),
-            )
+            const headers = headerRow.children.map((cell) => extractText(cell.children))
 
             // Pre-render all cell content: cellGrid[rowIdx][colIdx] = VNodes
-            const cellGrid = (bodyRows as any[]).map((row: any) =>
-                (row.children as any[]).map((cell: any) => renderNodes(cell.children)),
-            )
+            const cellGrid = bodyRows.map((row) => row.children.map((cell) => renderNodes(cell.children)))
 
             const data = cellGrid.map((_, i) => ({_idx: i}))
 
@@ -295,21 +289,21 @@
                     label,
                     // align is not in KsTableColumn's defineProps but is forwarded via $attrs
                     ...(cellAlign ? {align: cellAlign} : {}),
-                } as any, {
+                }, {
                     // oxlint-disable-next-line no-underscore-dangle
                     default: ({row}: {row: {_idx: number}}) => cellGrid[row._idx]?.[colIdx] ?? [],
                 })
             })
 
             return h("div", {class: "ks-markdown__table-wrapper"}, [
-                h(KsTable, {data} as any, {default: () => columns}),
+                h(KsTable, {data}, {default: () => columns}),
             ])
         }
 
         case "link": {
             const url = sanitizeUrl(node.url)
             if (props.components?.a) {
-                return h(props.components.a as any, {
+                return h(props.components.a, {
                     href: url,
                     title: node.title ?? undefined,
                     class: "ks-markdown__link",
@@ -329,15 +323,15 @@
         case "image": {
             const src = sanitizeUrl(node.url)
             if (props.components?.img) {
-                return h(props.components.img as any, {
+                return h(props.components.img, {
                     src,
-                    alt: (node.alt ?? "") as string,
+                    alt: node.alt ?? "",
                 })
             }
 
             return h("img", {
                 src,
-                alt: (node.alt ?? "") as string,
+                alt: node.alt ?? "",
                 title: node.title ?? undefined,
                 class: "ks-markdown__image",
             })
@@ -359,14 +353,14 @@
             return h("hr", {class: "ks-markdown__hr"})
 
         case "html": {
-            const customVNode = tryRenderCustomComponent(node.value as string)
+            const customVNode = tryRenderCustomComponent(node.value)
             if (customVNode) return customVNode
 
             if (props.html) {
                 if (props.xssProtection) {
-                    return h("span", {innerHTML: htmlEscape(node.value) as string, class: "ks-markdown__raw-html"})
+                    return h("span", {innerHTML: htmlEscape(node.value), class: "ks-markdown__raw-html"})
                 } else {
-                    return h("span", {innerHTML: node.value as string, class: "ks-markdown__raw-html"})
+                    return h("span", {innerHTML: node.value, class: "ks-markdown__raw-html"})
                 }
             } else {
                 return h("span", {innerText: node.value, class: "ks-markdown__raw-html"})
@@ -375,9 +369,9 @@
 
         // remark-directive: :::name{attrs}\ncontent\n:::
         case "containerDirective": {
-            const name = node.name as string
+            const name = node.name
             if (name === "alert") {
-                const type = (node.attributes as Record<string, string> | undefined)?.type ?? "info"
+                const type = node.attributes?.type ?? "info"
                 return h(KsAlert, {
                     type: type as "success" | "warning" | "info" | "error",
                     showIcon: false,
@@ -394,7 +388,7 @@
 
         default:
             if ("children" in node && Array.isArray(node.children)) {
-                return h("div", renderNodes(node.children as any[]))
+                return h("div", renderNodes(node.children))
             }
 
             return null
@@ -403,40 +397,45 @@
 
     // Depends on both `ast` and `codeHighlights` — re-evaluates when either changes.
     const markdownContent = computed<FunctionalComponent>(() => {
-        const children = renderNodes(ast.value.children as any[])
+        const children = renderNodes(ast.value.children)
         return () => children
     })
 
     async function highlightAllCodeBlocks(root: Root) {
         const blocks: {lang: string; value: string}[] = []
 
-        function collect(nodes: any[]) {
+        function collect(nodes: RootContent[]) {
             for (const node of nodes) {
                 if (node.type === "code" && node.lang !== "mermaid") {
-                    blocks.push({lang: node.lang ?? "", value: node.value as string})
+                    blocks.push({lang: node.lang ?? "", value: node.value})
                 }
-                if (Array.isArray(node.children)) collect(node.children as any[])
+                if ("children" in node) collect(node.children)
             }
         }
-        collect(root.children as any[])
+        collect(root.children)
         if (!blocks.length) return
 
         const hl = await getShiki()
         if (!hl) return
 
+        // Fetch every missing grammar at once: awaiting them per block serialized the
+        // requests for a document mixing languages.
+        const loaded = new Set(hl.getLoadedLanguages() as string[])
+        const missing = [...new Set(blocks.map((block) => block.lang))].filter((lang) => lang && !loaded.has(lang))
+        const unavailable = new Set<string>()
+        await Promise.all(missing.map(async (lang) => {
+            if (!await loadLanguageOnDemand(hl, lang)) unavailable.add(lang)
+        }))
+
+        // Snapshot after the awaits above, so the synchronous loop below cannot write back a
+        // map that a concurrent call has already superseded.
         const updated = new Map(codeHighlights.value)
 
         for (const block of blocks) {
             const key = `${block.lang}::${block.value}`
             if (updated.has(key)) continue
 
-            let lang = block.lang
-            if (lang && !(hl.getLoadedLanguages() as string[]).includes(lang)) {
-                // Not pre-registered: fetch it from Shiki's full bundle, or render as plain text.
-                if (!await loadLanguageOnDemand(hl, lang)) {
-                    lang = ""
-                }
-            }
+            const lang = unavailable.has(block.lang) ? "" : block.lang
 
             try {
                 const html = hl.codeToHtml(block.value, {
@@ -482,9 +481,8 @@
     .ks-markdown__code-shiki {
         .shiki {
             margin: 0;
-            padding: 2rem;
+            padding: var(--ks-spacing-3);
             overflow-x: auto;
-            background-color: var(--kel-bg-color-overlay);
             border-radius: var(--kel-border-radius-base);
 
             span { color: var(--shiki-light); }
@@ -501,6 +499,7 @@
 
     .ks-markdown {
         color: var(--ks-text-primary);
+        line-height: var(--ks-line-height-loose);
 
         h1, h2, h3, h4, h5, h6 {
             &.ks-markdown__heading {
@@ -546,60 +545,69 @@
             overflow: hidden;
             position: relative;
 
-            .ks-markdown__code-header {
+            .ks-markdown__code-lang {
                 position: absolute;
-                display: flex;
-                width: 100%;
-                align-items: center;
-                justify-content: flex-end;
-                padding: 4px 8px;
-                background-color: var(--ks-bg-elevated);
-                gap: 8px;
+                top: var(--ks-spacing-1);
+                right: var(--ks-spacing-1);
+                padding: var(--ks-spacing-1);
                 font-size: var(--ks-font-size-xs);
                 font-family: var(--kel-font-family-monospace), monospace;
                 color: var(--kel-text-color-placeholder);
+                transition: opacity 0.15s ease;
+            }
 
-                .ks-markdown__code-lang {
-                    flex: 1;
+            .ks-markdown__copy-btn {
+                position: absolute;
+                top: var(--ks-spacing-1);
+                right: var(--ks-spacing-1);
+                opacity: 0;
+                pointer-events: none;
+                transition: opacity 0.15s ease;
+                padding: var(--ks-spacing-1);
+                border: 0;
+                border-radius: var(--kel-border-radius-base);
+                background: var(--ks-bg-base);
+                cursor: pointer;
+                color: var(--kel-text-color-placeholder);
+                display: grid;
+                place-items: center;
+
+                &:hover {
+                    color: var(--kel-text-color-primary);
                 }
 
-                .ks-markdown__copy-btn {
-                    padding: var(--ks-spacing-1);
-                    right: -2px;
-                    top: 2px;
-                    position: relative;
-                    border: 0;
-                    background: var(--ks-bg-base);
-                    cursor: pointer;
-                    color: var(--kel-text-color-placeholder);
-                    display: grid;
-                    place-items: center;
+                /* The copy glyph and the confirm check occupy the same cell; only one is
+                   visible at a time (swapped via the .is-copied state), never overlaid. */
+                > * {
+                    grid-area: 1 / 1;
+                    transition: opacity 0.15s ease;
+                }
 
-                    &:hover {
-                        color: var(--kel-text-color-primary);
-                    }
+                .ks-markdown__copy-btn-ok {
+                    color: var(--ks-text-success);
+                    opacity: 0;
+                }
 
-                    /* The copy glyph and the confirm check occupy the same cell; only one is
-                       visible at a time (swapped via the .is-copied state), never overlaid. */
-                    > * {
-                        grid-area: 1 / 1;
-                        transition: opacity 0.15s ease;
-                    }
-
-                    .ks-markdown__copy-btn-ok {
-                        color: var(--ks-text-success);
+                &.is-copied {
+                    .ks-markdown__copy-btn-icon {
                         opacity: 0;
                     }
 
-                    &.is-copied {
-                        .ks-markdown__copy-btn-icon {
-                            opacity: 0;
-                        }
-
-                        .ks-markdown__copy-btn-ok {
-                            opacity: 1;
-                        }
+                    .ks-markdown__copy-btn-ok {
+                        opacity: 1;
                     }
+                }
+            }
+
+            &:hover,
+            &:focus-within {
+                .ks-markdown__code-lang {
+                    opacity: 0;
+                }
+
+                .ks-markdown__copy-btn {
+                    opacity: 1;
+                    pointer-events: auto;
                 }
             }
 

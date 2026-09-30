@@ -1,153 +1,217 @@
 <template>
-    <VueFlow
-        :id="id"
-        :defaultMarkerColor="cssVariable('--ks-topology-dash')"
-        fitViewOnInit
-        :nodesDraggable="false"
-        :nodesConnectable="false"
-        :elevateNodesOnSelect="false"
-        :elevateEdgesOnSelect="false"
+    <div class="topology-shell">
+        <FlowSummaryChip
+            v-if="flowId && !isReadOnly && isAllowedEdit"
+            class="topology-flow-bar"
+            :flowId="flowId"
+            :namespace="namespace"
+            :description="flowDescription"
+            :labels="flowLabels"
+            @editFlow="emit(EVENTS.EDIT_FLOW)"
+        />
+
+        <VueFlow
+            :id="id"
+            @mouseenter="canvasHovered = true"
+            @mouseleave="canvasHovered = false"
+            :defaultMarkerColor="cssVariable('--ks-topology-dash')"
+            :minZoom="MIN_ZOOM"
+            :defaultViewport="defaultViewport"
+            :nodesDraggable="false"
+            :nodesConnectable="false"
+            :elevateNodesOnSelect="false"
+            :elevateEdgesOnSelect="false"
+        >
+            <Background :color="cssVariable(GRAPH_BACKGROUND.color)" :gap="GRAPH_BACKGROUND.gap" :size="GRAPH_BACKGROUND.size" />
+
+            <template #node-cluster="clusterProps">
+                <ClusterNode
+                    v-bind="clusterProps"
+                    :icons="icons"
+                    :loadIcon="loadIcon"
+                    :replayEnabled="replayEnabled"
+                    @collapse="collapseCluster($event, true)"
+                    @addTrigger="emit(EVENTS.ADD_TRIGGER)"
+                    @edit="emit(EVENTS.EDIT, $event)"
+                    @delete="emit(EVENTS.DELETE, $event)"
+                    @duplicate="emit(EVENTS.DUPLICATE, $event)"
+                    @show-description="emit(EVENTS.SHOW_DESCRIPTION, $event)"
+                    @show-condition="emit(EVENTS.SHOW_CONDITION, $event)"
+                    @show-logs="emit(EVENTS.SHOW_LOGS, $event)"
+                    @show-outputs="emit(EVENTS.SHOW_OUTPUTS, $event)"
+                    @replay-task="emit(EVENTS.REPLAY_TASK, $event)"
+                    @add-error="emit('on-add-flowable-error', $event)"
+                />
+            </template>
+
+            <template #node-dot="dotProps">
+                <DotNode
+                    v-bind="dotProps"
+                />
+            </template>
+
+            <template #node-task="taskProps">
+                <TaskNode
+                    v-bind="taskProps"
+                    :icons="icons"
+                    :loadIcon="loadIcon"
+                    :playgroundEnabled="playgroundEnabled"
+                    :playgroundReadyToStart="playgroundReadyToStart"
+                    :replayEnabled="replayEnabled"
+                    :customActions="customActions"
+                    :showDetails="showDetails"
+                    @edit="emit(EVENTS.EDIT, $event)"
+                    @delete="emit(EVENTS.DELETE, $event)"
+                    @duplicate="emit(EVENTS.DUPLICATE, $event)"
+                    @run-task="emit(EVENTS.RUN_TASK, $event)"
+                    @expand="expand($event)"
+                    @open-link="emit(EVENTS.OPEN_LINK, $event)"
+                    @show-logs="emit(EVENTS.SHOW_LOGS, $event)"
+                    @show-outputs="emit(EVENTS.SHOW_OUTPUTS, $event)"
+                    @replay-task="emit(EVENTS.REPLAY_TASK, $event)"
+                    @show-description="emit(EVENTS.SHOW_DESCRIPTION, $event)"
+                    @show-condition="emit(EVENTS.SHOW_CONDITION, $event)"
+                    @show-custom-action="emit(EVENTS.SHOW_CUSTOM_ACTION, $event)"
+                    @show-details="emit(EVENTS.SHOW_DETAILS, $event)"
+                    @mouseover="onMouseOver($event)"
+                    @mouseleave="onMouseLeave()"
+                    @add-error="emit('on-add-flowable-error', $event)"
+                    @taskDragStart="onTaskDragStart"
+                    @taskDragEnd="onTaskDragEnd"
+                    :dragging="draggingNodeId === taskProps.id"
+                    :enableSubflowInteraction="enableSubflowInteraction"
+                >
+                    <template #details>
+                        <slot name="taskDetails" v-bind="taskProps" />
+                    </template>
+                    <template #taskActions="taskActionProps">
+                        <slot name="taskActions" v-bind="{...taskProps, ...taskActionProps}" />
+                    </template>
+                </TaskNode>
+            </template>
+
+            <template #node-custom="taskProps">
+                <BasicNode
+                    v-bind="taskProps"
+                    :icons="icons"
+                    :loadIcon="loadIcon"
+                />
+            </template>
+
+            <template #node-trigger="triggerProps">
+                <TriggerNode
+                    v-bind="triggerProps"
+                    :icons="icons"
+                    :loadIcon="loadIcon"
+                    :isReadOnly="isReadOnly"
+                    :isAllowedEdit="isAllowedEdit"
+                    @delete="emit(EVENTS.DELETE, $event)"
+                    @edit="emit(EVENTS.EDIT, $event)"
+                    @show-description="emit(EVENTS.SHOW_DESCRIPTION, $event)"
+                />
+            </template>
+
+            <template #node-collapsedcluster="CollapsedProps">
+                <CollapsedClusterNode
+                    v-bind="CollapsedProps"
+                    :icons="icons"
+                    :loadIcon="loadIcon"
+                    @expand="expand($event)"
+                    @edit="emit(EVENTS.EDIT, $event)"
+                    @delete="emit(EVENTS.DELETE, $event)"
+                    @duplicate="emit(EVENTS.DUPLICATE, $event)"
+                    @show-description="emit(EVENTS.SHOW_DESCRIPTION, $event)"
+                    @show-condition="emit(EVENTS.SHOW_CONDITION, $event)"
+                    @show-logs="emit(EVENTS.SHOW_LOGS, $event)"
+                    @show-outputs="emit(EVENTS.SHOW_OUTPUTS, $event)"
+                    @replay-task="emit(EVENTS.REPLAY_TASK, $event)"
+                    @add-error="emit('on-add-flowable-error', $event)"
+                />
+            </template>
+
+            <template #edge-edge="EdgeProps">
+                <EdgeNode
+                    v-bind="EdgeProps"
+                    :yamlSource="source"
+                    @add-task="emit(EVENTS.ADD_TASK, $event)"
+                    @drag-over-edge="dropEdgeId = $event"
+                    @drop-task="onDropTask"
+                    :isReadOnly="isReadOnly"
+                    :isAllowedEdit="isAllowedEdit"
+                />
+            </template>
+
+            <Controls :showZoom="false" :showInteractive="false" :showFitView="false">
+                <KsTooltip :content="$t('topology-graph.zoom-in')" placement="right">
+                    <ControlButton @click.stop="zoomIn()">
+                        <Plus />
+                    </ControlButton>
+                </KsTooltip>
+                <KsTooltip :content="$t('topology-graph.zoom-out')" placement="right">
+                    <ControlButton @click.stop="zoomOut()">
+                        <Minus />
+                    </ControlButton>
+                </KsTooltip>
+                <KsTooltip :content="$t('topology-graph.zoom-fit')" placement="right">
+                    <ControlButton @click.stop="fitView()">
+                        <Fullscreen />
+                    </ControlButton>
+                </KsTooltip>
+                <KsTooltip v-if="toggleOrientationButton" :content="$t('topology-graph.graph-orientation')" placement="right">
+                    <ControlButton @click.stop="emit('toggle-orientation', $event)">
+                        <component :is="isHorizontal ? AlignHorizontalCenter : AlignVerticalCenter" />
+                    </ControlButton>
+                </KsTooltip>
+                <KsTooltip :content="$t('download')" placement="right">
+                    <ControlButton @click.stop="toggleDropdown">
+                        <Download />
+                    </ControlButton>
+                </KsTooltip>
+                <KsTooltip v-if="collapsed.size > 0" :content="$t('expand all')" placement="right">
+                    <ControlButton @click.stop="uncollapseAll()">
+                        <ArrowExpandAll />
+                    </ControlButton>
+                </KsTooltip>
+                <ul v-if="isDropdownOpen" class="exporting">
+                    <li @click="exportAsImage('jpeg')" class="item">
+                        Export as .JPEG
+                    </li>
+                    <li @click="exportAsImage('png')" class="item">
+                        Export as .PNG
+                    </li>
+                </ul>
+            </Controls>
+        </VueFlow>
+    </div>
+
+    <div
+        v-if="dragGhost"
+        class="drag-ghost"
+        :style="{transform: `translate(${dragGhost.x}px, ${dragGhost.y}px)`}"
+        aria-hidden="true"
     >
-        <Background :patternColor="cssVariable('--ks-topology-bg')" />
-
-        <Panel v-if="showDetailsToggle" position="top-right">
-            <KsSwitch v-model="showExtraDetails" :activeText="$t('show more details')" size="small"/>
-        </Panel>
-
-        <template #node-cluster="clusterProps">
-            <ClusterNode
-                v-bind="clusterProps"
-                @collapse="collapseCluster($event, true)"
-            />
-        </template>
-
-        <template #node-dot="dotProps">
-            <DotNode
-                v-bind="dotProps as any"
-            />
-        </template>
-
-        <template #node-task="taskProps">
-            <TaskNode
-                v-bind="taskProps"
-                :icons="icons"
-                :loadIcon="loadIcon"
-                :playgroundEnabled="playgroundEnabled"
-                :playgroundReadyToStart="playgroundReadyToStart"
-                :replayEnabled="replayEnabled"
-                :customActions="customActions"
-                :showDetails="showDetails"
-                @edit="emit(EVENTS.EDIT, $event)"
-                @delete="emit(EVENTS.DELETE, $event)"
-                @run-task="emit(EVENTS.RUN_TASK, $event)"
-                @expand="expand($event)"
-                @open-link="emit(EVENTS.OPEN_LINK, $event)"
-                @show-logs="emit(EVENTS.SHOW_LOGS, $event)"
-                @show-outputs="emit(EVENTS.SHOW_OUTPUTS, $event)"
-                @replay-task="emit(EVENTS.REPLAY_TASK, $event)"
-                @show-description="emit(EVENTS.SHOW_DESCRIPTION, $event)"
-                @show-condition="emit(EVENTS.SHOW_CONDITION, $event)"
-                @show-custom-action="emit(EVENTS.SHOW_CUSTOM_ACTION, $event)"
-                @show-details="emit(EVENTS.SHOW_DETAILS, $event)"
-                @mouseover="onMouseOver($event)"
-                @mouseleave="onMouseLeave()"
-                @add-error="emit('on-add-flowable-error', $event)"
-                :enableSubflowInteraction="enableSubflowInteraction"
-            >
-                <template #details>
-                    <slot name="taskDetails" v-bind="taskProps" />
-                </template>
-            </TaskNode>
-        </template>
-
-        <template #node-custom="taskProps">
-            <BasicNode
-                v-bind="taskProps"
-                :icons="icons"
-                :loadIcon="loadIcon"
-            />
-        </template>
-
-        <template #node-trigger="triggerProps">
-            <TriggerNode
-                v-bind="triggerProps as any"
-                :icons="icons"
-                :loadIcon="loadIcon"
-                :isReadOnly="isReadOnly"
-                :isAllowedEdit="isAllowedEdit"
-                @delete="emit(EVENTS.DELETE, $event)"
-                @edit="emit(EVENTS.EDIT, $event)"
-                @show-description="emit(EVENTS.SHOW_DESCRIPTION, $event)"
-            />
-        </template>
-
-        <template #node-collapsedcluster="CollapsedProps">
-            <CollapsedClusterNode
-                v-bind="CollapsedProps as any"
-                @expand="expand($event)"
-            />
-        </template>
-
-        <template #edge-edge="EdgeProps">
-            <EdgeNode
-                v-bind="EdgeProps"
-                :yamlSource="source"
-                @add-task="emit(EVENTS.ADD_TASK, $event)"
-                :isReadOnly="isReadOnly"
-                :isAllowedEdit="isAllowedEdit"
-            />
-        </template>
-
-        <Controls v-if="controlsShown" :showZoom="false" :showInteractive="false" :showFitView="false">
-            <KsTooltip :content="$t('topology-graph.zoom-in')" placement="right">
-                <ControlButton @click.stop="zoomIn()">
-                    <Plus />
-                </ControlButton>
-            </KsTooltip>
-            <KsTooltip :content="$t('topology-graph.zoom-out')" placement="right">
-                <ControlButton @click.stop="zoomOut()">
-                    <Minus />
-                </ControlButton>
-            </KsTooltip>
-            <KsTooltip :content="$t('topology-graph.zoom-fit')" placement="right">
-                <ControlButton @click.stop="fitView()">
-                    <Fullscreen />
-                </ControlButton>
-            </KsTooltip>
-            <KsTooltip v-if="toggleOrientationButton" :content="$t('topology-graph.graph-orientation')" placement="right">
-                <ControlButton @click.stop="emit('toggle-orientation', $event)">
-                    <component :is="isHorizontal ? AlignHorizontalCenter : AlignVerticalCenter" />
-                </ControlButton>
-            </KsTooltip>
-            <KsTooltip :content="$t('download')" placement="right">
-                <ControlButton @click.stop="toggleDropdown">
-                    <Download />
-                </ControlButton>
-            </KsTooltip>
-            <KsTooltip v-if="collapsed.size > 0" :content="$t('expand all')" placement="right">
-                <ControlButton @click.stop="uncollapseAll()">
-                    <ArrowExpandAll />
-                </ControlButton>
-            </KsTooltip>
-            <ul v-if="isDropdownOpen" class="exporting">
-                <li @click="exportAsImage('jpeg')" class="item">
-                    Export as .JPEG
-                </li>
-                <li @click="exportAsImage('png')" class="item">
-                    Export as .PNG
-                </li>
-            </ul>
-        </Controls>
-    </VueFlow>
+        <component
+            :is="taskIconComponent"
+            class="drag-ghost-icon"
+            :cls="dragGhost.cls"
+            variable="--ks-topology-icon-color"
+            :icons="icons"
+            :loadIcon="loadIcon"
+            onlyIcon
+        />
+        <span class="drag-ghost-label">{{ dragGhost.label }}</span>
+    </div>
 </template>
 
 <script lang="ts" setup>
-    import {computed, nextTick, onMounted, provide, ref, watch} from "vue"
-    import {useVueFlow, VueFlow, Panel} from "@vue-flow/core"
+    import {computed, nextTick, onMounted, onUnmounted, provide, ref, watch} from "vue"
+    import {getRectOfNodes, useVueFlow, VueFlow, type GraphEdge, type GraphNode} from "@vue-flow/core"
+    import type {ViewportTransform} from "@vue-flow/core"
     import {ControlButton, Controls} from "@vue-flow/controls"
     import {Background} from "@vue-flow/background"
     import ClusterNode from "./nodes/ClusterNode.vue"
     import DotNode from "./nodes/DotNode.vue"
+    import FlowSummaryChip from "./nodes/FlowSummaryChip.vue"
     import EdgeNode from "./nodes/EdgeNode.vue"
     import TaskNode from "./nodes/TaskNode.vue"
     import TriggerNode from "./nodes/TriggerNode.vue"
@@ -159,12 +223,14 @@
     import AlignVerticalCenter from "vue-material-design-icons/AlignVerticalCenter.vue"
     import Download from "vue-material-design-icons/Download.vue"
     import ArrowExpandAll from "vue-material-design-icons/ArrowExpandAll.vue"
-    import {cssVar as cssVariable, State, KsSwitch, KsTooltip} from "@kestra-io/design-system"
-    import {CLUSTER_PREFIX} from "./utils/constants"
-    import {type CustomActionConfig, type ShowDetailsConfig, EVENTS, NODE_SIZES} from "./utils/constants"
+    import {cssVar as cssVariable, State, KsTooltip, useTaskIcon} from "@kestra-io/design-system"
+    import {CLUSTER_PREFIX, GRAPH_BACKGROUND, MIN_ZOOM, ZOOM_LOD} from "./utils/constants"
+    import {type CustomActionConfig, type ShowDetailsConfig, type LodLevel, EVENTS} from "./utils/constants"
     import * as VueFlowUtils from "./utils/vueFlowUtils"
-    import {useScreenshot} from "./composables/useScreenshot"
-    import {EXECUTION_INJECTION_KEY, SUBFLOWS_EXECUTIONS_INJECTION_KEY, SHOW_EXTRA_DETAILS_INJECTION_KEY} from "./injectionKeys"
+    import {afterLastDot} from "./utils/utils"
+    import {untilNodesMeasured, useScreenshot} from "./composables/useScreenshot"
+    import {EXECUTION_INJECTION_KEY, SUBFLOWS_EXECUTIONS_INJECTION_KEY, LOD_INJECTION_KEY, VALIDATION_ISSUES_INJECTION_KEY, FOCUSED_TASK_INJECTION_KEY, DROP_EDGE_INJECTION_KEY, DRAGGING_NODE_INJECTION_KEY, CANVAS_HOVERED_INJECTION_KEY, LONGEST_TASK_RUN_DURATION_INJECTION_KEY} from "./injectionKeys"
+    import {computeLongestTaskRunDuration} from "./misc/durationBreakdown"
     import BasicNode from "./nodes/BasicNode.vue"
 
     const props = withDefaults(defineProps<{
@@ -177,32 +243,39 @@
         flowGraph: VueFlowUtils.FlowGraph;
         flowId?: string;
         namespace?: string;
+        flowDescription?: string;
+        flowLabels?: [string, string][];
         expandedSubflows?: string[];
-        icons?: Record<string, any>;
+        icons?: Record<string, unknown>;
         // Per-class resolver for icons absent from `icons`, which only indexes the plugins
         // registered on this instance (kestra-io/kestra#18129).
-        loadIcon?: (cls: string) => Promise<any>;
+        loadIcon?: (cls: string) => Promise<unknown>;
         enableSubflowInteraction?: boolean;
-        execution?: any;
-        subflowsExecutions?: Record<string, any[]>;
+        execution?: VueFlowUtils.GraphExecution;
+        subflowsExecutions?: Record<string, VueFlowUtils.GraphExecution>;
         playgroundEnabled?: boolean;
         playgroundReadyToStart?: boolean;
         replayEnabled?: boolean;
-        getNodeDimensions?: (node: any, getNodeWidth: (node: any) => number, getNodeHeight: (node: any) => number) => { width: number, height: number };
+        getNodeDimensions?: VueFlowUtils.NodeDimensionsFn;
         customActions?: Record<string, CustomActionConfig>;
         showDetails?: Record<string, ShowDetailsConfig>;
-        showDetailsToggle?: boolean;
         // Bump this from the caller whenever data rendered *inside* the taskDetails slot (e.g.
         // live metrics or progress) changes but isn't itself part of `execution`/`flowGraph` — the
         // slot content is only re-evaluated when a node's graph data is regenerated.
         taskDetailsVersion?: number;
+        validationIssuesByTask?: Map<string, string[]>;
+        focusedTaskId?: string;
+        // For Storybook / tests only, to start the canvas pre-zoomed at a given level of detail.
+        defaultViewport?: Partial<ViewportTransform>;
     }>(), {
-        isHorizontal: true,
+        isHorizontal: false,
         isReadOnly: true,
         isAllowedEdit: false,
         toggleOrientationButton: false,
         flowId: undefined,
         namespace: undefined,
+        flowDescription: undefined,
+        flowLabels: () => [],
         expandedSubflows: () => [],
         icons: () => ({}),
         loadIcon: undefined,
@@ -215,48 +288,108 @@
         getNodeDimensions: undefined,
         customActions: () => ({}),
         showDetails: () => ({}),
-        showDetailsToggle: true,
         taskDetailsVersion: undefined,
+        validationIssuesByTask: undefined,
+        focusedTaskId: undefined,
+        defaultViewport: undefined,
     })
 
-    const isRunning = computed(() => State.isRunning(props.execution?.state?.current) === true)
+    const isRunning = computed(() => {
+        const current = props.execution?.state?.current
+        return current !== undefined && State.isRunning(current) === true
+    })
 
-    const showExtraDetails = ref(false)
-    const {getNodes, getEdges, getElements, onNodesInitialized, fitView, zoomIn, zoomOut, setElements, removeEdges, removeNodes, removeSelectedElements, vueFlowRef} = useVueFlow(props.id)
-    const edgeReplacer = ref({})
+    const vueFlowStore = useVueFlow(props.id)
+    const {getNodes, getEdges, getElements, onNodesInitialized, fitView, zoomIn, zoomOut, setElements, removeEdges, removeNodes, removeSelectedElements, vueFlowRef} = vueFlowStore
+    const edgeReplacer = ref<Record<string, string>>({})
     const hiddenNodes = ref<string[]>([])
     const collapsed = ref(new Set<string>())
-    const clusterToNode = ref([])
+    const clusterToNode = ref<VueFlowUtils.MinimalNode[]>([])
     const {capture} = useScreenshot()
 
-    const effectiveGetNodeDimensions = computed(() => {
-        return (node: any, getNodeWidth: (node: any) => number, getNodeHeight: (node: any) => number) => {
-            const baseHeight = getNodeHeight(node)
-            const dimensions = props.getNodeDimensions
-                ? props.getNodeDimensions(node, getNodeWidth, getNodeHeight)
-                : {width: getNodeWidth(node), height: baseHeight}
-
-            if (props.execution && (VueFlowUtils.isTaskNode(node) || VueFlowUtils.isTriggerNode(node) || VueFlowUtils.isCustomNode(node))) {
-                dimensions.width = NODE_SIZES.TASK_WIDTH_EXECUTION
-            }
-
-            if (VueFlowUtils.isTaskNode(node) && !showExtraDetails.value) {
-                return {...dimensions, height: baseHeight}
-            }
-
-            return dimensions
-        }
+    // Driven by zoom, never by state: crossing PILL/EXPANDED only changes what a node draws
+    // inside its (constant) footprint — see NODE_SIZES.TASK_HEIGHT in constants.ts.
+    const lod = computed<LodLevel>(() => {
+        const zoom = vueFlowStore.viewport.value.zoom
+        if (zoom < ZOOM_LOD.PILL) return "pill"
+        if (zoom > ZOOM_LOD.EXPANDED) return "expanded"
+        return "default"
     })
+
+    const effectiveGetNodeDimensions = computed(() =>
+        VueFlowUtils.buildEffectiveGetNodeDimensions(Boolean(props.execution), props.getNodeDimensions),
+    )
 
     provide(EXECUTION_INJECTION_KEY, computed(() => props.execution))
     provide(SUBFLOWS_EXECUTIONS_INJECTION_KEY, computed(() => props.subflowsExecutions))
-    provide(SHOW_EXTRA_DETAILS_INJECTION_KEY, showExtraDetails)
+    provide(LOD_INJECTION_KEY, lod)
+    provide(VALIDATION_ISSUES_INJECTION_KEY, computed(() => props.validationIssuesByTask ?? new Map()))
+    provide(FOCUSED_TASK_INJECTION_KEY, computed(() => props.focusedTaskId))
+    // Computed once for the whole graph rather than per node: `taskRunList` is execution-wide, so
+    // every TaskNode reducing over it independently would be N× the same work.
+    provide(LONGEST_TASK_RUN_DURATION_INJECTION_KEY, computed(() => computeLongestTaskRunDuration(props.execution?.taskRunList ?? [])))
 
+    const initialFitDone = ref(false)
+
+    const dropEdgeId = ref<string | undefined>(undefined)
+    const draggingNodeId = ref<string | undefined>(undefined)
+
+    // Every insertion point stays invisible until its own edge is hovered, so the canvas reads as
+    // if only a few places accept a task. Entering it at all now hints at all of them.
+    const canvasHovered = ref(false)
+    provide(CANVAS_HOVERED_INJECTION_KEY, computed(() => canvasHovered.value))
+
+    provide(DROP_EDGE_INJECTION_KEY, computed(() => dropEdgeId.value))
+    provide(DRAGGING_NODE_INJECTION_KEY, computed(() => Boolean(draggingNodeId.value)))
+
+    const taskIconComponent = useTaskIcon()
+    const dragGhost = ref<{label: string; cls?: string; x: number; y: number} | undefined>(undefined)
+
+    function onTaskDragStart({nodeId, label, cls}: {nodeId: string; label: string; cls?: string}) {
+        draggingNodeId.value = nodeId
+        dragGhost.value = {label, cls, x: -9999, y: -9999}
+        window.addEventListener("dragover", onGhostMove)
+    }
+
+    function onGhostMove(event: DragEvent) {
+        if (!dragGhost.value) return
+        // A drag leaving the window reports 0,0; keeping the last real point avoids a jump home.
+        if (!event.clientX && !event.clientY) return
+        dragGhost.value = {...dragGhost.value, x: event.clientX, y: event.clientY}
+    }
+
+    function onTaskDragEnd() {
+        dragGhost.value = undefined
+        window.removeEventListener("dragover", onGhostMove)
+        dropEdgeId.value = undefined
+        // Cleared a tick late so the click that ends the drag does not also open the task.
+        setTimeout(() => (draggingNodeId.value = undefined), 0)
+    }
+
+    function onDropTask({taskId, target}: {taskId: string; target: {refId: string}}) {
+        const id = afterLastDot(taskId)
+        onTaskDragEnd()
+        if (!id || id === target.refId) return
+        emit(EVENTS.MOVE_TASK, {taskId: id, target})
+    }
+
+    // A drag that ends outside any edge fires no drop, so the flags are cleared on the window too.
+    onMounted(() => {
+        window.addEventListener("dragend", onTaskDragEnd)
+        window.addEventListener("blur", onTaskDragEnd)
+    })
+
+    onUnmounted(() => {
+        window.removeEventListener("dragend", onTaskDragEnd)
+        window.removeEventListener("blur", onTaskDragEnd)
+        window.removeEventListener("dragover", onGhostMove)
+    })
 
     const emit = defineEmits(
         [
             EVENTS.EDIT,
             EVENTS.DELETE,
+            EVENTS.DUPLICATE,
             EVENTS.RUN_TASK,
             EVENTS.OPEN_LINK,
             EVENTS.SHOW_LOGS,
@@ -265,12 +398,15 @@
             EVENTS.SHOW_DESCRIPTION,
             "on-add-flowable-error",
             EVENTS.ADD_TASK,
+            EVENTS.ADD_TRIGGER,
+            EVENTS.EDIT_FLOW,
             "toggle-orientation",
             "loading",
             "expand-subflow",
             EVENTS.SHOW_CONDITION,
             EVENTS.SHOW_CUSTOM_ACTION,
             EVENTS.SHOW_DETAILS,
+            EVENTS.MOVE_TASK,
         ],
     )
 
@@ -286,16 +422,19 @@
         generateGraph()
     })
 
-    watch(showExtraDetails, () => {
-        generateGraph()
-    })
-
     watch(isRunning, () => {
         generateGraph()
     })
 
     const refitOnNodesInitialized = ref(false)
     onNodesInitialized(() => {
+        if (!initialFitDone.value) {
+            initialFitDone.value = true
+            // A caller passing its own starting zoom (Storybook, tests) means fitView() would
+            // immediately discard it.
+            if (!props.defaultViewport) fitView()
+            return
+        }
         if (refitOnNodesInitialized.value) {
             refitOnNodesInitialized.value = false
             fitView()
@@ -349,8 +488,8 @@
 
     const HOVERED_NODE_CLASS = "topology-node-hovered"
 
-    function setNodeInteractionClass(node: any, cls: string, add: boolean) {
-        const classes = (node.class || "").split(" ").filter(Boolean)
+    function setNodeInteractionClass(node: GraphNode | GraphEdge, cls: string, add: boolean) {
+        const classes = (typeof node.class === "string" ? node.class : "").split(" ").filter(Boolean)
         if (add) {
             if (!classes.includes(cls)) classes.push(cls)
         } else {
@@ -360,7 +499,7 @@
         node.class = classes.join(" ")
     }
 
-    const onMouseOver = (node: any) => {
+    const onMouseOver = (node: {uid: string}) => {
         VueFlowUtils.linkedElements(props.id, node.uid).forEach((n) => {
             if (n?.type === "task") {
                 setNodeInteractionClass(n, HOVERED_NODE_CLASS, true)
@@ -380,24 +519,42 @@
             })
     }
 
-    const collapseCluster = (clusterUid: string, regenerate: boolean) => {
-        const cluster: any = props.flowGraph.clusters.find(c => c.cluster.uid.endsWith(clusterUid))
+    // The flow-level `errors:` lane is synthesized by the frontend, so it is absent from
+    // `flowGraph.clusters` and collapsing it silently did nothing (kestra-io/kestra#19787).
+    const collapsibleClusters = computed(() => VueFlowUtils.withSyntheticErrorsLane(props.flowGraph))
+
+    const collapseCluster = (clusterUid: string, regenerate: boolean, targetNodeId?: string) => {
+        const cluster = collapsibleClusters.value.find(c => c.cluster.uid.endsWith(clusterUid))
         if (!cluster) return
         const nodeId = clusterUid.replace(CLUSTER_PREFIX, "")
-        collapsed.value.add(nodeId)
+        
+        const isRootCall = targetNodeId === undefined
+        const effectiveNodeId = targetNodeId || nodeId
+
+        if (isRootCall) {
+            collapsed.value.add(nodeId)
+        } else {
+            hiddenNodes.value.push(nodeId)
+        }
 
         hiddenNodes.value = hiddenNodes.value.concat(cluster.nodes)
         hiddenNodes.value = hiddenNodes.value.concat([cluster.cluster.uid] as string[])
         edgeReplacer.value = {
             ...edgeReplacer.value,
-            [cluster.cluster.uid]: nodeId,
-            [cluster.start]: nodeId,
-            [cluster.end]: nodeId,
+            [nodeId]: effectiveNodeId,
+            [cluster.cluster.uid]: effectiveNodeId,
+            ...(cluster.start ? {[cluster.start]: nodeId} : {}),
+            ...(cluster.end ? {[cluster.end]: nodeId} : {}),
         }
 
         for (let child of cluster.nodes) {
-            if (props.flowGraph.clusters.map(c => c.cluster.uid).includes(child)) {
-                collapseCluster(child, false)
+            if (collapsibleClusters.value.some(c => c.cluster.uid === child)) {
+                collapseCluster(child, false, effectiveNodeId)
+            } else {
+                edgeReplacer.value = {
+                    ...edgeReplacer.value,
+                    [child]: effectiveNodeId,
+                }
             }
         }
 
@@ -406,12 +563,12 @@
         }
     }
 
-    const expand = (expandData: any) => {
+    const expand = (expandData: {id: string; type?: string}) => {
         const taskTypesWithSubflows = [
             "io.kestra.core.tasks.flows.Flow", "io.kestra.core.tasks.flows.Subflow", "io.kestra.plugin.core.flow.Subflow",
             "io.kestra.core.tasks.flows.ForEachItem$ForEachItemExecutable", "io.kestra.plugin.core.flow.ForEachItem$ForEachItemExecutable",
         ]
-        if (taskTypesWithSubflows.includes(expandData.type) && !props.expandedSubflows.includes(expandData.id)) {
+        if (expandData.type && taskTypesWithSubflows.includes(expandData.type) && !props.expandedSubflows.includes(expandData.id)) {
             emit("expand-subflow", [...props.expandedSubflows, expandData.id])
             return
         }
@@ -420,7 +577,7 @@
         clusterToNode.value = []
         collapsed.value.delete(expandData.id)
 
-        collapsed.value.forEach(n => collapseCluster(n, false))
+        collapsed.value.forEach(n => collapseCluster(CLUSTER_PREFIX + n, false))
 
         generateGraph()
     }
@@ -434,25 +591,122 @@
         generateGraph()
     }
 
-    const controlsShown = ref(true)
     const isDropdownOpen = ref(false)
     const toggleDropdown = () => isDropdownOpen.value = !isDropdownOpen.value
-    function exportAsImage(type: "jpeg" | "png") {
+    // Always the whole graph, whichever way it is laid out and wherever the viewport sits: the
+    // capture covers the bounding box of every rendered node, so there is nothing to crop it to.
+    async function exportAsImage(type: "jpeg" | "png") {
         if (!vueFlowRef.value) {
             console.warn("Flow not found")
             return
         }
 
-        controlsShown.value = false
-        capture(vueFlowRef.value, {type, shouldDownload: true})
-            .then(() => controlsShown.value = true)
-            .finally(() => isDropdownOpen.value = false)
+        const renderedNodes = () => getNodes.value.filter(node => !node.hidden)
+
+        try {
+            await untilNodesMeasured(renderedNodes)
+            await capture(vueFlowRef.value, {type, bounds: getRectOfNodes(renderedNodes()), shouldDownload: true})
+        } finally {
+            isDropdownOpen.value = false
+        }
     }
 </script>
 
 <style scoped lang="scss">
+    /* The graph fills what is left: the flow bar takes its own row rather than floating over the
+       canvas, where it clipped the first cluster's badge at every open. */
+    .topology-shell {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        min-height: 0;
+    }
+
+    .topology-shell > :deep(.vue-flow) {
+        flex: 1;
+        min-height: 0;
+    }
+
+    .topology-flow-bar {
+        flex-shrink: 0;
+        border-width: 0 0 1px;
+        border-radius: 0;
+        box-shadow: none;
+    }
+
     :deep(.unused-path) {
         opacity: 0.3;
+    }
+
+    /* vue-flow flags its own node wrapper, which is the only element that knows a node can be
+       picked up and when it is being dragged. The pane sets `grab` for panning and every node
+       inherits it, so a node that cannot be moved has to opt back out. */
+    :deep(.vue-flow__node.draggable) {
+        cursor: grab;
+    }
+
+    :deep(.vue-flow__node:not(.draggable)) {
+        cursor: default;
+    }
+
+    :deep(.vue-flow__node.dragging) {
+        cursor: grabbing;
+        /* vue-flow writes `z-index: 1` inline on every node, so the card being dragged slides
+           *under* the ones that come later in the DOM; only `!important` outranks that. It stays
+           below the drop marker on purpose. */
+        z-index: 5 !important;
+    }
+
+    :deep(.vue-flow__node .node-wrapper) {
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    :deep(.vue-flow__node.dragging .node-wrapper) {
+        transform: scale(1.04);
+        box-shadow: 0 0.5rem 1rem var(--ks-shadow-elevated);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        :deep(.vue-flow__node .node-wrapper) {
+            transition: none;
+        }
+
+        :deep(.vue-flow__node.dragging .node-wrapper) {
+            transform: none;
+        }
+    }
+
+    .drag-ghost {
+        position: fixed;
+        top: 0;
+        left: 0;
+        z-index: 20;
+        display: flex;
+        align-items: center;
+        gap: var(--ks-spacing-2);
+        margin: var(--ks-spacing-2) 0 0 var(--ks-spacing-2);
+        padding: var(--ks-spacing-2) var(--ks-spacing-3);
+        max-width: 16rem;
+        background: var(--ks-bg-surface);
+        border: 1px solid var(--ks-border-strong);
+        border-radius: var(--ks-radius-base);
+        box-shadow: 0 0.5rem 1rem var(--ks-shadow-elevated);
+        pointer-events: none;
+        rotate: -2deg;
+    }
+
+    .drag-ghost-icon {
+        flex-shrink: 0;
+        width: var(--ks-icon-size-lg);
+        height: var(--ks-icon-size-lg);
+    }
+
+    .drag-ghost-label {
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        font-size: var(--ks-font-size-sm);
+        color: var(--ks-text-primary);
     }
 
     .exporting {
@@ -461,11 +715,11 @@
         left: 40px;
         padding: 0;
         margin: 0;
-        z-index: 1000;
+        z-index: var(--ks-z-dropdown);
         list-style-type: none;
         background: var(--ks-bg-surface);
-        border: 1px solid var(--ks-border-primary);
-        box-shadow: 0 12px 12px rgba(130, 103, 158, 0.1019607843);
+        border: 1px solid var(--ks-border-default);
+        box-shadow: 0 12px 12px var(--ks-shadow-elevated);
         border-radius: 5px;
         text-align:left;
 
@@ -477,11 +731,11 @@
             width: 110px;
 
             &:first-child{
-                border-bottom: 1px solid var(--ks-border-primary);
+                border-bottom: 1px solid var(--ks-border-default);
             }
 
             &:hover {
-                background: var(--ks-button-background-secondary-hover);;
+                background: var(--ks-btn-secondary-bg-hover);
             }
         }
     }

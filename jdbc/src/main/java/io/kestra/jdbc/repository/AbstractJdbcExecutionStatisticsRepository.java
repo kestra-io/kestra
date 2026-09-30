@@ -21,6 +21,7 @@ import org.jooq.SQLDialect;
 import org.jooq.SelectConditionStep;
 import org.jooq.impl.DSL;
 
+import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.executions.statistics.DailyExecutionStatistics;
 import io.kestra.core.models.executions.statistics.ExecutionStatistic;
 import io.kestra.core.models.flows.State;
@@ -50,7 +51,7 @@ public abstract class AbstractJdbcExecutionStatisticsRepository extends Abstract
     /** {@inheritDoc} **/
     @Override
     protected Condition defaultFilter(String tenantId) {
-        return tenantCondition(tenantId);
+        return tenantCondition(tenantId).and(aclCondition(QueryFilter.Resource.EXECUTION));
     }
 
     /** {@inheritDoc} **/

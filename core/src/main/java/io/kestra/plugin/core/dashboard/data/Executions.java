@@ -53,6 +53,28 @@ import lombok.experimental.SuperBuilder;
                           displayName: Executions
                           agg: COUNT
                 """
+        ),
+        @Example(
+            title = "Display the executions that ran for longer than ten seconds. A DURATION filter takes an ISO-8601 duration, or a number of seconds.",
+            full = true,
+            code = """
+                charts:
+                  - id: slow_executions
+                    type: io.kestra.plugin.core.dashboard.chart.Table
+                    chartOptions:
+                      displayName: Slow executions
+                    data:
+                      type: io.kestra.plugin.core.dashboard.data.Executions
+                      columns:
+                        id:
+                          field: ID
+                        duration:
+                          field: DURATION
+                      where:
+                        - field: DURATION
+                          type: GREATER_THAN
+                          value: PT10S
+                """
         )
     }
 )

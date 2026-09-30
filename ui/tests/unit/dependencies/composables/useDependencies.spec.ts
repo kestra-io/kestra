@@ -319,7 +319,7 @@ describe("useDependencies composable", () => {
     /** Calls that move the camera, i.e. the ones carrying a zoom on the series. */
     const cameraCalls = (calls: any[][]) => calls.filter((args) => args[0]?.series?.[0]?.zoom !== undefined)
 
-    async function mountWithChart(initialNodeID = "X") {
+    async function mountWithChart(initialNodeID = "X", dagView = false) {
         const chartMock = makeChartMock(NODE_POSITIONS, CANVAS_W, CANVAS_H)
         const graphRef = ref({
             fit:                vi.fn(),
@@ -343,7 +343,7 @@ describe("useDependencies composable", () => {
             setup() {
                 // Defaults to initialNodeID="X" (nonexistent) so no node is preselected,
                 // leaving selectedNodeID undefined and letting tests control selection.
-                const composable = useDependencies(graphRef as any, FLOW, initialNodeID, {}, fetchAssetDependencies)
+                const composable = useDependencies(graphRef as any, FLOW, initialNodeID, {}, fetchAssetDependencies, undefined, dagView)
                 return {composable}
             },
         })
@@ -370,6 +370,22 @@ describe("useDependencies composable", () => {
             [
                 expect.objectContaining({
                     series: [expect.objectContaining({zoom: 1.8, center: [100, 200]})],
+                }),
+                false,
+            ],
+        ])
+    })
+
+    it("fits the graph on mount instead of centring when the view is the asset view", async () => {
+        // center=[200, 250] is the extent midpoint of A/B/C, not the focus path's zoom=1.8 on A.
+        // zoom=0.7 pads the constraining dimension: (H - 2*60) / H with the 300-unit y spread
+        // contain-fitted to the 400px canvas.
+        const {mountCalls} = await mountWithChart("A", true)
+
+        expect(cameraCalls(mountCalls)).toEqual([
+            [
+                expect.objectContaining({
+                    series: [expect.objectContaining({zoom: expect.closeTo(0.7, 5), center: [200, 250]})],
                 }),
                 false,
             ],

@@ -130,8 +130,8 @@
 
     import {useMcpStore, type McpTool, type McpToolAnnotations} from "../../../../stores/mcp"
 
-    import {useMcpToolsFilter} from "../../../filter/configurations"
-    import {type ColumnConfig, useTableColumns} from "../../../../composables/useTableColumns"
+    import {useMcpToolsFilter} from "../../../filter/configurations/mcpToolsFilter"
+    import {useTableColumns, type ColumnConfig} from "@kestra-io/design-system"
     import {useToolFlowCreation} from "../useToolFlowCreation"
 
     import {KsButton, KsDataTable, KsFilter as KSFilter, KsId, KsTableColumn, KsTag, decodeSearchParams} from "@kestra-io/design-system"

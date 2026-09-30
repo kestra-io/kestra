@@ -4,7 +4,7 @@ namespace: io.kestra.tests
 tasks:
   - id: parallel
     type: io.kestra.plugin.core.flow.Parallel
-    onChildFailure: CANCELLED
+    onChildFailure: CANCEL
     errors:
       - id: e1
         type: io.kestra.plugin.core.log.Log

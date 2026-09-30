@@ -1,10 +1,10 @@
 import {describe, expect, test} from "vitest"
 import {mount} from "@vue/test-utils"
 import {createRouter, createWebHistory} from "vue-router"
-import NavBarAction from "../../../../src/components/layout/NavBarAction.vue"
 // The app registers the design system globally at bootstrap; unit mounts have to do it
 // themselves, and this spec is specifically about what KsButton puts in the DOM.
-import KsButton from "../../../../packages/design-system/src/components/Basic/KsButton/KsButton.vue"
+import KestraDesignSystem from "@kestra-io/design-system"
+import NavBarAction from "../../../../src/components/layout/NavBarAction.vue"
 
 const router = createRouter({
     history: createWebHistory(),
@@ -19,8 +19,7 @@ const mountAction = (props: Record<string, unknown>, attrs: Record<string, unkno
         props,
         attrs,
         global: {
-            plugins: [router],
-            components: {KsButton},
+            plugins: [router, KestraDesignSystem],
             // tests/unit/setup.ts stubs RouterLink with a bare `<a><slot /></a>` for the many
             // specs that mount without a router. This one installs a real router and is about
             // what actually reaches the DOM, so it needs the real component.
@@ -45,6 +44,15 @@ describe("NavBarAction", () => {
 
         expect(wrapper.find("button").exists()).toBe(true)
         expect(wrapper.find("a").exists()).toBe(false)
+    })
+
+    test("renders a download anchor when given an `href`", () => {
+        const wrapper = mountAction({label: "API", href: "/api/v1/main/executions/abc", download: "execution-abc.json"})
+
+        const link = wrapper.get("a")
+        expect(link.attributes("href")).toBe("/api/v1/main/executions/abc")
+        expect(link.attributes("download")).toBe("execution-abc.json")
+        expect(wrapper.find("button").exists()).toBe(false)
     })
 
     test("forwards data-test onto the rendered element so e2e can select it", async () => {

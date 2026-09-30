@@ -2,6 +2,7 @@ import {describe, expect, test, vi} from "vitest"
 import {mount} from "@vue/test-utils"
 import {createPinia} from "pinia"
 import {createRouter, createWebHistory} from "vue-router"
+import KestraDesignSystem from "@kestra-io/design-system"
 import Tabs from "../../../src/components/Tabs.vue"
 
 // Statically imported by Tabs.vue but only rendered for the blueprint modal; stub it
@@ -19,7 +20,7 @@ const mountTabs = (props: InstanceType<typeof Tabs>["$props"]) =>
     mount(Tabs, {
         props,
         global: {
-            plugins: [router, createPinia()],
+            plugins: [router, createPinia(), KestraDesignSystem],
             // The app registers the design system globally at bootstrap; this spec is
             // about whether the content <section> renders, so the bar can be stubbed.
             stubs: {

@@ -4,7 +4,9 @@ import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.BiConsumer;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -28,6 +30,7 @@ import io.kestra.core.runners.WorkerTaskResult;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.worker.Controller;
 import io.kestra.core.worker.models.WorkerContext;
+import io.kestra.worker.queues.WorkerQueueRegistry;
 
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
@@ -229,6 +232,47 @@ class GrpcWorkerIOSenderTest {
     }
 
     @Test
+    void shouldRequeueAndRedeliverWhenUnauthenticatedPersistsAfterRetry() throws Exception {
+        // Given - the initial send and its immediate retry both find the access token rejected, then the
+        // worker recovers its credentials and the next send succeeds.
+        AtomicInteger callCount = new AtomicInteger(0);
+        doAnswer(inv ->
+        {
+            OpaqueData req = inv.getArgument(0);
+            StreamObserver<OpaqueData> obs = inv.getArgument(1);
+            if (callCount.getAndIncrement() < 2) {
+                obs.onError(new StatusRuntimeException(Status.UNAUTHENTICATED.withDescription("Invalid or expired access token")));
+            } else {
+                obs.onNext(OpaqueData.newBuilder().setHeader(req.getHeader()).build());
+                obs.onCompleted();
+            }
+            return null;
+        }).when(grpcWorkerControllerService).sendWorkerTaskResults(any(), any());
+
+        WorkerTaskResult result = buildTaskResult(Map.of("key", "value"));
+
+        // When - the retry exhausts the single in-call attempt, so the result is re-queued instead of dropped.
+        taskResultSender.send(List.of(result));
+
+        // Then - the loop redrives until the controller receives the result (initial attempt, in-call retry,
+        // then redelivery). doOnLoop() runs inside the await because the failures arrive asynchronously on
+        // gRPC callback threads, so a single redrive could poll before the item is re-queued.
+        ArgumentCaptor<OpaqueData> captor = ArgumentCaptor.forClass(OpaqueData.class);
+        await()
+            .atMost(Duration.ofSeconds(10))
+            .untilAsserted(() ->
+            {
+                taskResultSender.doOnLoop();
+                verify(grpcWorkerControllerService, org.mockito.Mockito.atLeast(3))
+                    .sendWorkerTaskResults(captor.capture(), any());
+            });
+
+        WorkerTaskResult redelivered = deserialize(captor.getAllValues().getLast()).records().getFirst();
+        assertThat(redelivered.getTaskRun().getId()).isEqualTo(result.getTaskRun().getId());
+        assertThat(redelivered.getOutputs()).isEqualTo(Map.of("key", "value"));
+    }
+
+    @Test
     void shouldRedeliverFallbackResultWhenFallbackResendFailsWithRetryableError() throws Exception {
         // Given - the initial send is rejected with RESOURCE_EXHAUSTED (outputs too large), so the fallback
         // mapper fires and resends a stripped failed-state result; that fallback resend then fails once with
@@ -272,6 +316,69 @@ class GrpcWorkerIOSenderTest {
         assertThat(redelivered.getTaskRun().getId()).isEqualTo(result.getTaskRun().getId());
         assertThat(redelivered.getTaskRun().getState().getCurrent()).isEqualTo(State.Type.FAILED);
         assertThat(redelivered.getOutputs()).isNull();
+    }
+
+    @Test
+    void shouldWaitForTheControllerReplyBeforeStopping() throws Exception {
+        // Given
+        List<StreamObserver<OpaqueData>> pendingReplies = new CopyOnWriteArrayList<>();
+        GrpcWorkerIOSender<WorkerTaskResult> sender = stoppedSenderHoldingOneResult((request, observer) -> pendingReplies.add(observer), Duration.ofSeconds(30));
+
+        // When
+        Thread drain = Thread.ofVirtual().start(sender);
+        await().atMost(Duration.ofSeconds(5)).until(() -> pendingReplies.size() == 1);
+
+        // Then
+        assertThat(drain.join(Duration.ofMillis(500))).as("the drain waits for the reply").isFalse();
+        pendingReplies.getFirst().onCompleted();
+        assertThat(drain.join(Duration.ofSeconds(5))).isTrue();
+        assertThat(sender.hasUndeliveredResults()).isFalse();
+    }
+
+    @Test
+    void shouldReportUndeliveredResultsWhenSendFailsDuringShutdown() {
+        // Given
+        GrpcWorkerIOSender<WorkerTaskResult> sender = stoppedSenderHoldingOneResult(
+            (request, observer) -> observer.onError(new StatusRuntimeException(Status.UNAVAILABLE.withDescription("controller unreachable"))),
+            Duration.ofSeconds(30)
+        );
+
+        // When
+        sender.run();
+
+        // Then
+        assertThat(sender.hasUndeliveredResults()).isTrue();
+    }
+
+    @Test
+    void shouldReportUndeliveredResultsWhenControllerNeverReplies() {
+        // Given
+        GrpcWorkerIOSender<WorkerTaskResult> sender = stoppedSenderHoldingOneResult((request, observer) -> {}, Duration.ofMillis(200));
+
+        // When
+        sender.run();
+
+        // Then
+        assertThat(sender.hasUndeliveredResults()).isTrue();
+    }
+
+    private GrpcWorkerIOSender<WorkerTaskResult> stoppedSenderHoldingOneResult(BiConsumer<OpaqueData, StreamObserver<OpaqueData>> grpcSendMethod, Duration replyTimeout) {
+        WorkerQueueRegistry workerQueueRegistry = applicationContext.getBean(WorkerQueueRegistry.class);
+        WorkerContext workerContext = new WorkerContext("worker-" + IdUtils.create(), "", 1);
+        GrpcWorkerIOSender<WorkerTaskResult> sender = new GrpcWorkerIOSender<>(
+            workerQueueRegistry,
+            "test",
+            WorkerTaskResult.class,
+            GrpcWorkerIOSender.SendStrategy.PER_ITEM,
+            grpcSendMethod,
+            null,
+            true,
+            replyTimeout
+        );
+        sender.init(workerContext);
+        workerQueueRegistry.getOrCreate(workerContext, WorkerTaskResult.class).put(buildTaskResult(Map.of()));
+        sender.stop();
+        return sender;
     }
 
     private static WorkerTaskResult buildTaskResult(Map<String, Object> outputs) {

@@ -260,6 +260,17 @@ class FlowableUtilsTest {
     }
 
     @Test
+    void resolveValues_withNullElementInJsonArray_shouldThrow() {
+        // Given
+        RunContext runContext = runContextFactory.of();
+
+        // When / Then — a null iteration value is rejected (drives Loop to fail the execution)
+        assertThatThrownBy(() -> FlowableUtils.resolveValues(runContext, "[\"a\", null, \"c\"]"))
+            .isInstanceOf(IllegalVariableEvaluationException.class)
+            .hasMessageContaining("Found a null value inside the iteration values");
+    }
+
+    @Test
     void resolveValues_withStringJsonObject_shouldReturnListOfPairs() throws Exception {
         // Given
         RunContext runContext = runContextFactory.of();

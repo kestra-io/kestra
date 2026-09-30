@@ -1,10 +1,13 @@
 package io.kestra.executor;
 
+import io.kestra.core.debug.Breakpoint;
+import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import org.assertj.core.api.AssertionsForClassTypes;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +16,7 @@ import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.assets.Asset;
 import io.kestra.core.models.assets.AssetsInOut;
 import io.kestra.core.models.assets.Custom;
+import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionKind;
 import io.kestra.core.models.executions.TaskRun;
@@ -221,6 +225,60 @@ class ExecutorServiceTest {
         assertThat(result.getExecution().getTaskRunList()).extracting(TaskRun::getTaskId).containsExactly("inner");
     }
 
+    @Test
+    void shouldCancelExecutionWhenSLAViolatedWithCancelBehavior() throws Exception {
+        ExecutorContext result = executorService.handleExecutionChangedSLA(slaExecutor(SLA.Behavior.CANCEL, "false", null));
+
+        assertThat(result.getExecution().getState().getCurrent()).isEqualTo(State.Type.CANCELLED);
+    }
+
+    @Test
+    void shouldFailExecutionWhenSLAViolatedWithFailBehavior() throws Exception {
+        ExecutorContext result = executorService.handleExecutionChangedSLA(slaExecutor(SLA.Behavior.FAIL, "false", null));
+
+        assertThat(result.getExecution().getState().getCurrent()).isEqualTo(State.Type.FAILED);
+    }
+
+    @Test
+    void shouldAddLabelsWhenSLAViolatedWithNoneBehavior() throws Exception {
+        ExecutorContext result = executorService.handleExecutionChangedSLA(slaExecutor(SLA.Behavior.NONE, "false", List.of(new Label("sla", "violated"))));
+
+        assertThat(result.getExecution().getState().getCurrent()).isEqualTo(State.Type.CREATED);
+        assertThat(result.getExecution().getLabels()).contains(new Label("sla", "violated"));
+    }
+
+    @Test
+    void shouldNotChangeExecutionWhenSLASatisfied() throws Exception {
+        ExecutorContext executor = slaExecutor(SLA.Behavior.CANCEL, "true", null);
+
+        ExecutorContext result = executorService.handleExecutionChangedSLA(executor);
+
+        assertThat(result).isSameAs(executor);
+        assertThat(result.getExecution().getState().getCurrent()).isEqualTo(State.Type.CREATED);
+    }
+
+    private ExecutorContext slaExecutor(SLA.Behavior behavior, String assertExpr, List<Label> labels) {
+        SLA sla = ExecutionAssertionSLA.builder()
+            .id("sla")
+            .type(SLA.Type.EXECUTION_ASSERTION)
+            .behavior(behavior)
+            .labels(labels)
+            ._assert(assertExpr)
+            .build();
+        var task = Log.builder().id("task").type(Log.class.getName()).message("hello").build();
+        var flow = Flow.builder().tenantId("tenant").namespace("io.kestra.unit-test").id(IdUtils.create()).tasks(List.of(task)).sla(List.of(sla)).build();
+        var execution = Execution.builder()
+            .tenantId("tenant")
+            .id(IdUtils.create())
+            .namespace(flow.getNamespace())
+            .flowId(flow.getId())
+            .flowRevision(1)
+            .state(new State())
+            .build();
+
+        return new ExecutorContext(execution, FlowWithSource.of(flow, "flow-source"));
+    }
+
     private Asset asset(String id) {
         return Custom.builder().tenantId("tenant").namespace("io.kestra.unit-test").id(id).type("io.kestra.Custom").build();
     }
@@ -260,5 +318,46 @@ class ExecutorServiceTest {
         executorService.addWorkerTaskResult(executor, executor::getFlow, workerTaskResult);
 
         return executor;
+    }
+
+    @Test
+    void shouldNotReSuspendTaskJustResumedFromBreakpoint() throws Exception {
+        var hello = Log.builder().id("hello").type(Log.class.getName()).message("hello").build();
+        var flow = Flow.builder().tenantId("tenant").namespace("io.kestra.unit-test").id(IdUtils.create()).tasks(List.of(hello)).build();
+
+        State resumedState = new State(
+            State.Type.CREATED, List.of(
+                new State.History(State.Type.CREATED, Instant.now().minusSeconds(2)),
+                new State.History(State.Type.BREAKPOINT, Instant.now().minusSeconds(1)),
+                new State.History(State.Type.CREATED, Instant.now())
+            )
+        );
+
+        var taskRun = TaskRun.builder()
+            .tenantId("tenant")
+            .id(IdUtils.create())
+            .executionId(IdUtils.create())
+            .namespace(flow.getNamespace())
+            .flowId(flow.getId())
+            .taskId(hello.getId())
+            .state(resumedState)
+            .build();
+
+        var execution = Execution.builder()
+            .tenantId("tenant")
+            .id(taskRun.getExecutionId())
+            .namespace(flow.getNamespace())
+            .flowId(flow.getId())
+            .flowRevision(1)
+            .state(new State(State.Type.RUNNING, List.of(new State.History(State.Type.RUNNING, Instant.now()))))
+            .taskRunList(List.of(taskRun))
+            .breakpoints(List.of(new Breakpoint("hello", null)))
+            .build();
+
+        var executor = new ExecutorContext(execution, FlowWithSource.of(flow, "flow-source"));
+
+        ExecutorContext result = executorService.process(executor);
+
+        AssertionsForClassTypes.assertThat(result.getExecution().getState().getCurrent()).isNotEqualTo(State.Type.BREAKPOINT);
     }
 }

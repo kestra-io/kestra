@@ -1,5 +1,5 @@
-// shiki/core keeps the grammars below as the only ones in this chunk; every
-// other language is fetched on demand by loadLanguageOnDemand().
+// Only the grammars the app itself renders are in this chunk; every other language is a
+// separate chunk fetched on demand by loadLanguageOnDemand().
 import {createHighlighterCore, isSpecialLang, type HighlighterCore} from "shiki/core"
 
 export type {HighlighterCore}
@@ -16,42 +16,9 @@ import {createJavaScriptRegexEngine} from "shiki/engine/javascript"
 
 import GithubLight from "shiki/themes/github-light.mjs"
 import GithubDark from "shiki/themes/github-dark.mjs"
-import Bash from "shiki/langs/bash.mjs"
-import C from "shiki/langs/c.mjs"
-import Cpp from "shiki/langs/cpp.mjs"
-import Csharp from "shiki/langs/csharp.mjs"
-import Csv from "shiki/langs/csv.mjs"
-import Diff from "shiki/langs/diff.mjs"
-import Dockerfile from "shiki/langs/dockerfile.mjs"
-import Go from "shiki/langs/go.mjs"
-import Groovy from "shiki/langs/groovy.mjs"
-import Handlebars from "shiki/langs/handlebars.mjs"
-import Hcl from "shiki/langs/hcl.mjs"
-import Ini from "shiki/langs/ini.mjs"
-import Java from "shiki/langs/java.mjs"
-import Javascript from "shiki/langs/javascript.mjs"
 import Json from "shiki/langs/json.mjs"
-import Julia from "shiki/langs/julia.mjs"
-import Kotlin from "shiki/langs/kotlin.mjs"
-import Markdown from "shiki/langs/markdown.mjs"
-import Mermaid from "shiki/langs/mermaid.mjs"
-import Perl from "shiki/langs/perl.mjs"
-import Php from "shiki/langs/php.mjs"
-import Powershell from "shiki/langs/powershell.mjs"
 import Python from "shiki/langs/python.mjs"
-import R from "shiki/langs/r.mjs"
-import Ruby from "shiki/langs/ruby.mjs"
-import Rust from "shiki/langs/rust.mjs"
-import Scala from "shiki/langs/scala.mjs"
-import Shellsession from "shiki/langs/shellsession.mjs"
-import Sql from "shiki/langs/sql.mjs"
-import Systemd from "shiki/langs/systemd.mjs"
-import Toml from "shiki/langs/toml.mjs"
-import Twig from "shiki/langs/twig.mjs"
-import Typescript from "shiki/langs/typescript.mjs"
-import Xml from "shiki/langs/xml.mjs"
 import Yaml from "shiki/langs/yaml.mjs"
-import Html from "shiki/langs/html.mjs"
 
 export function getShiki(): Promise<HighlighterCore> {
     if (!promise) {
@@ -62,42 +29,9 @@ export function getShiki(): Promise<HighlighterCore> {
             return createHighlighterCore({
                 themes: [GithubDark, GithubLight],
                 langs: [
-                    Bash,
-                    C,
-                    Cpp,
-                    Csharp,
-                    Csv,
-                    Diff,
-                    Dockerfile,
-                    Go,
-                    Groovy,
-                    Handlebars,
-                    Hcl,
-                    Ini,
-                    Java,
-                    Javascript,
                     Json,
-                    Julia,
-                    Kotlin,
-                    Markdown,
-                    Mermaid,
-                    Perl,
-                    Php,
-                    Powershell,
                     Python,
-                    R,
-                    Ruby,
-                    Rust,
-                    Scala,
-                    Shellsession,
-                    Sql,
-                    Systemd,
-                    Toml,
-                    Twig,
-                    Typescript,
-                    Xml,
                     Yaml,
-                    Html,
                 ],
                 engine: jsEngine,
             })
@@ -109,13 +43,12 @@ export function getShiki(): Promise<HighlighterCore> {
 let bundledLanguages: Promise<Record<string, any>> | null = null
 
 /**
- * Registers a grammar that is not pre-registered above, from Shiki's full
- * bundle (one extra chunk, fetched once). Returns whether the language can be
- * passed to codeToHtml: false only for one Shiki does not know at all.
+ * Registers a grammar that is not pre-registered above. Shiki's langs index is a list of
+ * per-language dynamic imports, so this costs that index once plus the one grammar.
  */
 export async function loadLanguageOnDemand(highlighter: HighlighterCore, lang: string): Promise<boolean> {
     // text/plaintext/plain/txt/ansi render without a grammar and are absent from the
-    // bundle, so fetching it for one of them would download 5 MB to change nothing.
+    // index, so fetching it for one of them would download it to change nothing.
     if (isSpecialLang(lang)) {
         return true
     }

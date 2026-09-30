@@ -130,7 +130,6 @@
     "description": "Beschreibung",
     "show description": "Beschreibung anzeigen",
     "show details": "Details anzeigen",
-    "show more details": "Mehr Details anzeigen",
     "skipped": "Übersprungen",
     "revision": "Revision",
     "theme": "Theme",
@@ -441,7 +440,8 @@
       "invalid_description": "Beim Laden des Graphen ist ein Fehler aufgetreten. Bitte prüfe den Quellcode auf Fehler.",
       "load_error": "Der Topologiegraph konnte nicht geladen werden. Bitte versuche es erneut.",
       "add-task": "Task hinzufügen",
-      "add-trigger": "Trigger hinzufügen"
+      "add-trigger": "Trigger hinzufügen",
+      "child-count": "{count} Task | {count} Tasks"
     },
     "show task logs": "Task-Logs anzeigen",
     "show task condition": "Task-Bedingung anzeigen",
@@ -2606,6 +2606,9 @@
       "plugin_default": "Standard: {value}",
       "plugin_default_tooltip": "Standardwert aus den pluginDefaults des Flows",
       "required_missing": "Erforderliches Feld nicht gesetzt",
+      "required_unset_jump": "Zum ersten springen",
+      "required_unset_plural": "{count} Pflichtfelder sind noch nicht gesetzt",
+      "required_unset_singular": "1 Pflichtfeld ist noch nicht gesetzt",
       "save_blocked": {
         "message": "Behebe die Fehler vor dem Speichern.",
         "title": "Der Flow kann nicht gespeichert werden"

@@ -15,7 +15,7 @@ dependencies {
     def protobufVersion = "4.36.1" // aligned with Google Cloud libraries-bom (grpc 1.81 + protobuf 4.33.2)
     def bouncycastleVersion = "1.86"
     def mavenResolverVersion = "2.0.10"
-    def jollydayVersion = "2.20.0"
+    def jollydayVersion = "2.21.0"
     def jsonschemaVersion = "4.38.0"
     def kafkaVersion = "4.3.1"
     def opensearchVersion = "3.9.0"
@@ -36,7 +36,7 @@ dependencies {
     api enforcedPlatform("org.eclipse.jetty:jetty-bom:$jettyVersion")
     api platform("io.micronaut.platform:micronaut-platform:5.1.5")
     // we define cloud bom here for GCP, Azure and AWS so they are aligned for all plugins that use them (secret, storage, oss and ee plugins)
-    api platform('com.google.cloud:libraries-bom:26.88.1')
+    api platform('com.google.cloud:libraries-bom:26.89.0')
     api platform("com.azure:azure-sdk-bom:1.3.8")
     api platform('software.amazon.awssdk:bom:2.54.17')
     api platform("dev.langchain4j:langchain4j-bom:$langchain4jVersion")
@@ -116,7 +116,7 @@ dependencies {
         api "com.github.victools:jsonschema-module-jackson:$jsonschemaVersion"
         api "com.github.victools:jsonschema-module-swagger-2:$jsonschemaVersion"
         api "com.networknt:json-schema-validator:3.0.6"
-        api 'com.h2database:h2:2.5.250'
+        api 'com.h2database:h2:2.5.252'
         api 'com.mysql:mysql-connector-j:26.7.0'
         api 'org.postgresql:postgresql:42.7.13'
         api 'com.github.docker-java:docker-java:3.7.1'
@@ -159,7 +159,7 @@ dependencies {
         api "org.apache.kafka:kafka-streams-test-utils:$kafkaVersion"
         api "com.microsoft.playwright:playwright:1.61.0"
         api "org.awaitility:awaitility:4.3.0"
-        api "com.tngtech.archunit:archunit-junit5:1.4.2"
+        api "com.tngtech.archunit:archunit-junit5:1.5.1"
 
         // Kestra components
         api "io.kestra:core:$version"

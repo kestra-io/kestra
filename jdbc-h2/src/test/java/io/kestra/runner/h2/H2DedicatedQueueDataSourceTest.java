@@ -7,6 +7,7 @@ import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.QueueException;
 import io.kestra.jdbc.JooqDSLContextWrapper;
 import io.kestra.jdbc.QueueJdbcDataSourceProvider;
+import io.kestra.queue.jdbc.client.JdbcQueueCleaner;
 
 import io.micronaut.context.annotation.Property;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
@@ -25,6 +26,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Property(name = "kestra.queue.jdbc.type", value = "h2")
 @Property(name = "kestra.queue.jdbc.url", value = "jdbc:h2:mem:queue_dedicated;TIME ZONE=UTC;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=TRUE")
 @Property(name = "kestra.queue.jdbc.username", value = "sa")
+@Property(name = "kestra.jdbc.queue.cleaner.retention", value = "0s")
 @Property(name = "datasources.h2.url", value = "jdbc:h2:mem:queue_dedicated_primary;LOCK_TIMEOUT=30000;TIME ZONE=UTC;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE")
 class H2DedicatedQueueDataSourceTest {
 
@@ -36,6 +38,9 @@ class H2DedicatedQueueDataSourceTest {
 
     @Inject
     JooqDSLContextWrapper primaryWrapper;
+
+    @Inject
+    JdbcQueueCleaner queueCleaner;
 
     @Test
     void shouldUseDedicatedQueueDatasourceAndNotPrimary() throws QueueException {
@@ -87,5 +92,8 @@ class H2DedicatedQueueDataSourceTest {
                 .fetchOne(0, Integer.class)
         );
         assertThat(afterEmit).isGreaterThan(countInDedicated);
+
+        // The cleaner must use the same dedicated database as the publisher.
+        assertThat(queueCleaner.deleteQueue()).isGreaterThanOrEqualTo(1);
     }
 }

@@ -136,6 +136,7 @@ public class H2Repository<T> extends io.kestra.jdbc.AbstractJdbcRepository<T> {
         return new ArrayListTotal<>(map, totalCount);
     }
 
+    // The queue uses JdbcTableConfig and QueueJdbcDataSourceProvider directly, so it needs no H2Repository bean.
     static class H2Condition implements io.micronaut.context.condition.Condition {
         @Override
         public boolean matches(ConditionContext context) {

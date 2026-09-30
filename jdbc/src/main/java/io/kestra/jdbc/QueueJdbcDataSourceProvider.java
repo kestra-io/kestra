@@ -1,11 +1,14 @@
 package io.kestra.jdbc;
 
+import java.util.Map;
 import java.util.Optional;
+import java.util.Properties;
 
 import javax.sql.DataSource;
 
 import org.jooq.SQLDialect;
 import org.jooq.conf.Settings;
+import org.jooq.impl.DSL;
 
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
@@ -14,6 +17,7 @@ import io.kestra.core.contexts.configuration.RepositoryConfiguration;
 import io.kestra.core.exceptions.KestraRuntimeException;
 import io.kestra.jdbc.runner.QueueJdbcConfiguration;
 
+import io.micronaut.context.annotation.Value;
 import io.micronaut.core.annotation.Nullable;
 import jakarta.annotation.PreDestroy;
 import jakarta.inject.Singleton;
@@ -39,22 +43,26 @@ public class QueueJdbcDataSourceProvider implements AutoCloseable {
     private final DataSource primaryDataSource;
     private final JooqDSLContextWrapper primaryWrapper;
     private final RepositoryConfiguration repositoryConfiguration;
+    private final boolean ephemeralDatabase;
 
     private boolean initialized;
     private HikariDataSource dedicatedDataSource;
     private JooqDSLContextWrapper dedicatedWrapper;
+    private String table = "queues";
     private SQLDialect dialect;
 
     public QueueJdbcDataSourceProvider(final QueueJdbcConfiguration queueJdbcConfiguration,
         final Settings jooqSettings,
         @Nullable final DataSource primaryDataSource,
         @Nullable final JooqDSLContextWrapper primaryWrapper,
-        final RepositoryConfiguration repositoryConfiguration) {
+        final RepositoryConfiguration repositoryConfiguration,
+        @Value("${" + EphemeralDatabase.URL_PROPERTY + ":}") final String ephemeralDatabaseUrl) {
         this.queueJdbcConfiguration = queueJdbcConfiguration;
         this.jooqSettings = jooqSettings;
         this.primaryDataSource = primaryDataSource;
         this.primaryWrapper = primaryWrapper;
         this.repositoryConfiguration = repositoryConfiguration;
+        this.ephemeralDatabase = EphemeralDatabase.isEnabled(ephemeralDatabaseUrl);
     }
 
     private synchronized void ensureInitialized() {
@@ -62,41 +70,59 @@ public class QueueJdbcDataSourceProvider implements AutoCloseable {
             return;
         }
 
-        Optional<String> type = Optional.ofNullable(queueJdbcConfiguration.type());
+        // Ephemeral runs must keep queue traffic in the throwaway database, even if a dedicated URL is configured.
+        if (ephemeralDatabase) {
+            initialized = true;
+            return;
+        }
+
+        Map<String, Object> config = queueJdbcConfiguration.getJdbcConfig();
+        Optional.ofNullable(config.get("table")).ifPresent(value -> this.table = value.toString());
+        Optional<String> type = queueJdbcConfiguration.type();
         if (type.isPresent()) {
             SQLDialect resolvedDialect = toDialect(type.get());
             if (resolvedDialect != null) {
                 this.dialect = resolvedDialect;
-                if (queueJdbcConfiguration.url() != null) {
-                    String username = queueJdbcConfiguration.username();
-                    if (username == null || username.isBlank()) {
+                Object url = config.get("url");
+                if (url != null) {
+                    Object username = config.get("username");
+                    if (username == null || username.toString().isBlank()) {
                         throw new KestraRuntimeException(
-                            ("A dedicated queue database URL is configured ('kestra.queue.jdbc.url') but no username "
-                                + "('kestra.queue.jdbc.username'). Configure the credentials for the dedicated queue database "
-                                + "explicitly; they are never inherited from the main datasource.").formatted()
+                            """
+                                A dedicated queue database URL is configured ('kestra.queue.jdbc.url') but no username \
+                                ('kestra.queue.jdbc.username') is configured. Configure the credentials for the dedicated queue database \
+                                explicitly; they are never inherited from the main datasource."""
                         );
                     }
-                    HikariConfig hikariConfig = new HikariConfig();
-                    hikariConfig.setJdbcUrl(queueJdbcConfiguration.url());
-                    hikariConfig.setUsername(username);
-                    Optional.ofNullable(queueJdbcConfiguration.password()).ifPresent(p -> hikariConfig.setPassword(p));
-                    hikariConfig.setPoolName("kestra-queue-" + type.get());
+                    Properties properties = new Properties();
+                    config.forEach((key, value) ->
+                    {
+                        switch (key) {
+                            case "type", "table" -> {
+                                // These queue settings are not HikariCP properties.
+                            }
+                            case "url" -> properties.setProperty("jdbcUrl", value.toString());
+                            case "dataSourceProperties" -> ((Map<?, ?>) value).forEach((name, property) -> properties.setProperty("dataSource." + name, property.toString()));
+                            default -> properties.setProperty(key, value.toString());
+                        }
+                    });
+                    properties.putIfAbsent("poolName", "kestra-queue-" + type.get());
+                    HikariConfig hikariConfig = new HikariConfig(properties);
                     this.dedicatedDataSource = new HikariDataSource(hikariConfig);
                     this.dedicatedWrapper = new JooqDSLContextWrapper(
-                        org.jooq.impl.DSL.using(this.dedicatedDataSource, resolvedDialect, jooqSettings),
+                        DSL.using(this.dedicatedDataSource, resolvedDialect, jooqSettings),
                         this.dedicatedDataSource
                     );
                 } else {
-                    // No dedicated url: the queue will reuse the primary datasource, so the declared
-                    // queue dialect must match the main repository's dialect — otherwise we'd run the
-                    // wrong dialect's SQL (or have no JDBC datasource at all when the main repo isn't JDBC).
+                    // A shared datasource requires matching queue and repository dialects to avoid running incompatible SQL.
                     SQLDialect primaryDialect = toDialect(repositoryConfiguration.type());
                     if (primaryDialect != resolvedDialect) {
                         throw new KestraRuntimeException(
-                            ("Invalid queue store configuration: 'kestra.queue.jdbc.type=%s' does not match the main "
-                                + "repository ('kestra.repository.type=%s') and no 'kestra.queue.jdbc.url' is configured. "
-                                + "Configure a dedicated queue database URL, or set 'kestra.queue.jdbc.type' to match the "
-                                + "repository type.").formatted(type.get(), repositoryConfiguration.type())
+                            """
+                                Invalid queue store configuration: 'kestra.queue.jdbc.type=%s' does not match the main \
+                                repository ('kestra.repository.type=%s') and no 'kestra.queue.jdbc.url' is configured. \
+                                Configure a dedicated queue database URL, or set 'kestra.queue.jdbc.type' to match the \
+                                repository type.""".formatted(type.get(), repositoryConfiguration.type())
                         );
                     }
                 }
@@ -150,9 +176,12 @@ public class QueueJdbcDataSourceProvider implements AutoCloseable {
      */
     public String table() {
         ensureInitialized();
-        return queueJdbcConfiguration.table() != null ? queueJdbcConfiguration.table() : "queues";
+        return table;
     }
 
+    /**
+     * @return the explicitly configured queue dialect, or {@code null} when none is resolved.
+     */
     @Nullable
     public SQLDialect dialect() {
         ensureInitialized();

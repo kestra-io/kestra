@@ -5,6 +5,7 @@ import java.io.Serial;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
@@ -241,6 +242,25 @@ public class Property<T> {
         }
 
         return property.value;
+    }
+
+    /**
+     * Read a list property that holds no Pebble expression as a whole, without rendering it or caching anything on it.
+     * Items may still contain Pebble expressions, and stay unrendered.
+     *
+     * @return the items, or empty when the property is null or is itself a Pebble expression
+     */
+    public static <I> Optional<List<I>> asStaticList(Property<List<I>> property, Class<I> itemClazz) throws IllegalVariableEvaluationException {
+        if (property == null || property.expression == null) {
+            return Optional.empty();
+        }
+
+        String trimmedExpression = property.expression.trim();
+        if (PebbleUtil.startsWithOpeningBlockDelimiter(trimmedExpression) && PebbleUtil.endsWithClosingBlockDelimiter(trimmedExpression)) {
+            return Optional.empty();
+        }
+
+        return Optional.ofNullable(deserialize(trimmedExpression, MAPPER.getTypeFactory().constructCollectionLikeType(List.class, itemClazz)));
     }
 
     /**

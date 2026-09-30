@@ -269,15 +269,7 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
                                 // decrements exactly these, even if the definitions change while it runs
                                 if (executor.getExecution().getMetadata() != null) {
                                     executor.withExecution(
-                                        executor.getExecution().withMetadata(
-                                            executor.getExecution()
-                                                .getMetadata()
-                                                .withConcurrencyScopes(
-                                                    concurrencyLimits.stream()
-                                                        .map(ScopedConcurrencyLimit::uid)
-                                                        .toList()
-                                                )
-                                        ),
+                                        execution.withMetadata(execution.getMetadata().withConcurrencyScopes(concurrencyLimits.stream().map(ScopedConcurrencyLimit::uid).toList())),
                                         "handleConcurrencyLimit"
                                     );
                                 }
@@ -303,6 +295,7 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
                         // worker task
                         if (!executor.getWorkerTasks().isEmpty()) {
                             List<WorkerTaskResult> workerTaskResults = new ArrayList<>();
+                            final List<TaskRun> currentTaskRuns = executor.getExecution().getTaskRunList();
                             executor
                                 .getWorkerTasks()
                                 .forEach(throwConsumer(executorTask ->

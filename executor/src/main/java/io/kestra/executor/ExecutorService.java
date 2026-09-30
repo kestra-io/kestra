@@ -113,22 +113,17 @@ public class ExecutorService {
         for (int i = 0; i < limits.size(); i++) {
             ScopedConcurrencyLimit limit = limits.get(i);
             int runningCount = runningCounts.get(i);
-            Concurrency concurrency = limit.concurrency();
-            if (concurrency == null) {
-                continue;
-            }
-
-            if (runningCount < concurrency.getLimit()) {
+            if (runningCount < limit.concurrency().getLimit()) {
                 continue;
             }
 
             return switch (limit.concurrency().getBehavior()) {
                 case QUEUE -> {
-                    if (limit.scope() == ScopedConcurrencyLimit.Scope.FLOW && concurrency.getQueueLimit() != null && queuedCount >= concurrency.getQueueLimit()) {
+                    if (limit.scope() == ScopedConcurrencyLimit.Scope.FLOW && limit.concurrency().getQueueLimit() != null && queuedCount >= limit.concurrency().getQueueLimit()) {
                         Logs.logExecution(
                             executionRunning.getExecution(),
                             Level.INFO,
-                            "Execution cancelled: concurrency queue limit reached ({}/{})", queuedCount, concurrency.getQueueLimit()
+                            "Execution cancelled: concurrency queue limit reached ({}/{})", queuedCount, limit.concurrency().getQueueLimit()
                         );
 
                         yield executionRunning

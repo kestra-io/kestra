@@ -102,7 +102,7 @@ public class FlowWithException extends FlowWithSource {
             wrapper.set("labels", jsonNode.get("labels"));
             return JacksonMapper.ofJson().convertValue(wrapper, LabelsHolder.class).labels();
         } catch (IllegalArgumentException | NullPointerException e) {
-            // ListOrMapOfLabelDeserializer throws NullPointerException on null list entries, fall back to no labels.
+            // NullPointerException can occur during label deserialization (e.g., null list entries), fall back to no labels.
             return null;
         }
     }

@@ -1,10 +1,11 @@
 import {onActivated, onDeactivated, onMounted, onUnmounted, type Ref} from "vue"
 
-const ALWAYS_GLOBAL_IDS = new Set(["save", "command-menu", "clear", "redo"])
+const ALWAYS_GLOBAL_IDS = new Set(["save", "command-menu", "clear"])
 const IGNORES_OVERLAY_GUARD_IDS = new Set(["help"])
-// A clipboard shortcut yields to a real text selection, so `⌘C` over selected card text still
-// copies the text instead of the block; `isTypingTarget` only covers inputs and Monaco.
-const TEXT_SELECTION_GUARDED_IDS = new Set(["copy", "cut", "paste"])
+// A copy/cut shortcut yields to a real text selection, so `⌘C` over selected card text still
+// copies the text instead of the block; `isTypingTarget` only covers inputs and Monaco. Paste has
+// no equivalent native behavior to protect, since a non-editable selection can't be pasted over.
+const TEXT_SELECTION_GUARDED_IDS = new Set(["copy", "cut"])
 export const AUTHORING_OVERLAY_ATTRIBUTE = "data-authoring-overlay"
 
 export function isTypingTarget(target: EventTarget | null): boolean {

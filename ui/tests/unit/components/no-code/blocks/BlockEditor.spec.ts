@@ -1357,6 +1357,35 @@ describe("BlockEditor", () => {
             expect(parsed.tasks[0].id).toBe("http_task")
         })
 
+        it("moves focus to the neighboring block after a cut, so a follow-up paste still lands", async () => {
+            // Given — regression: cut left focusedId pointing at the deleted block, so
+            // moveFocus could not find it and a paste right after cut silently did nothing
+            const offsetParentSpy = vi.spyOn(HTMLElement.prototype, "offsetParent", "get").mockReturnValue(document.body)
+            const wrapper = mountBlockEditor()
+            const vm = wrapper.vm as unknown as {focusedId?: string}
+            vm.focusedId = "log_task"
+            await wrapper.vm.$nextTick()
+
+            // When
+            windowKeydown({key: "x", metaKey: true})
+            await flushPromises()
+            await wrapper.vm.$nextTick()
+
+            // Then — focus followed the deleted block's neighbor
+            expect(vm.focusedId).toBe("http_task")
+
+            // When — pasting right after the cut
+            windowKeydown({key: "v", metaKey: true})
+            await flushPromises()
+            await wrapper.vm.$nextTick()
+
+            // Then — the cut task landed back in the flow
+            const flowYamlUtils = await import("@kestra-io/topology/flow-yaml-utils")
+            const parsed = flowYamlUtils.parse(mockFlowYaml.value) as {tasks: {id: string}[]}
+            expect(parsed.tasks).toHaveLength(2)
+            offsetParentSpy.mockRestore()
+        })
+
         it("refuses to paste a cut task into the empty Triggers section", async () => {
             // Given — a task copied to the clipboard, then the empty Triggers sentinel focused
             const wrapper = mountBlockEditor()
@@ -1635,11 +1664,8 @@ tasks:
             // When
             const keys = wrapper.findAll("[data-test='block-editor-footer'] kbd").map(k => k.text())
 
-            // Then — Meta+Shift+p and Control+Shift+p collapse to a single symbol, whichever the
-            // platform renders (jsdom's own UA string does not identify as macOS)
-            expect(keys.slice(0, 5)).toEqual(["?", "↑", "↓", "↵", "a"])
-            expect(keys).toHaveLength(6)
-            expect(keys[5]).toMatch(/^(⌘⇧P|Ctrl\+Shift\+P)$/)
+            // Then — Meta+Shift+p and Control+Shift+p collapse to a single symbol
+            expect(keys).toEqual(["?", "↑", "↓", "↵", "a", "⌘⇧P"])
         })
 
         it("offers insert-before and reorder once a real block is focused", async () => {

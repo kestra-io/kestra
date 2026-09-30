@@ -18,18 +18,15 @@ const SIMPLE_KEY_DISPLAY: Record<string, string> = {
     Delete: "⌦",
 }
 
-const isMac = typeof navigator !== "undefined" && /Mac|iPhone|iPod|iPad/i.test(navigator.platform || navigator.userAgent || "")
-
 /**
  * `Meta` and `Control` are never two distinct bindings in this keymap — they are the same
- * shortcut written once per OS convention — so both resolve to the platform's own primary
- * modifier rather than always to `⌘`, which was wrong on Windows and Linux.
+ * shortcut written once per OS convention — so both resolve to the same glyph.
  */
 const MODIFIER_DISPLAY: Record<string, string> = {
-    Meta: isMac ? "⌘" : "Ctrl+",
-    Control: isMac ? "⌘" : "Ctrl+",
-    Shift: isMac ? "⇧" : "Shift+",
-    Alt: isMac ? "⌥" : "Alt+",
+    Meta: "⌘",
+    Control: "⌘",
+    Shift: "⇧",
+    Alt: "⌥",
 }
 
 function comboMainKeyDisplay(key: string): string {

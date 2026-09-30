@@ -1,4 +1,4 @@
-import {computed, ref} from "vue"
+import {ref} from "vue"
 import * as flowYamlUtils from "@kestra-io/topology/flow-yaml-utils"
 import {withFreeIds, type BlockSection} from "../../../utils/flowableBlockOps"
 
@@ -24,8 +24,6 @@ async function writeToSystemClipboard(block: Record<string, unknown>): Promise<v
 }
 
 export function useBlockClipboard() {
-    const hasClipboard = computed(() => clipboard.value !== undefined)
-
     function copy(section: BlockSection, block: Record<string, unknown>): void {
         const snapshot = flowYamlUtils.parse<Record<string, unknown>>(flowYamlUtils.stringify(block))
         if (!snapshot) return
@@ -42,7 +40,7 @@ export function useBlockClipboard() {
         return withFreeIds(clipboard.value.block, existingIds)
     }
 
-    return {hasClipboard, copy, canPasteInto, pasteFor}
+    return {copy, canPasteInto, pasteFor}
 }
 
 export type BlockClipboardApi = ReturnType<typeof useBlockClipboard>

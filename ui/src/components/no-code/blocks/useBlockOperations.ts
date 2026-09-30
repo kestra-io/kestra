@@ -77,17 +77,22 @@ export function useBlockOperations(ctx: BlockOperationsContext) {
         })
     }
 
+    function neighborBlockId(id: string): string | undefined {
+        const cards = focus.navigableCards()
+        const current = cards.find(el => el.getAttribute("data-block-id") === id)
+        const index = current ? cards.indexOf(current) : -1
+        const neighbor = cards.slice(index + 1).find(el => !current?.contains(el)) ?? cards[index - 1]
+        return neighbor?.getAttribute("data-block-id") ?? undefined
+    }
+
     function requestDeleteFocused() {
         const id = focus.focusedId.value
         if (!id) return
         if (sectionFromSentinel(id) || parentPathFromLaneSentinel(id)) return
         confirmDelete(focus.focusedBlockDisplayName(), focus.focusedBlockIsFlowable(), () => {
-            const cards = focus.navigableCards()
-            const current = cards.find(el => el.getAttribute("data-block-id") === id)
-            const index = current ? cards.indexOf(current) : -1
-            const neighbor = cards.slice(index + 1).find(el => !current?.contains(el)) ?? cards[index - 1]
+            const neighbor = neighborBlockId(id)
             focus.actionInFocused("[data-test='block-card-delete']")
-            focus.focusCanvasCard(neighbor?.getAttribute("data-block-id") ?? undefined)
+            focus.focusCanvasCard(neighbor)
         })
     }
 
@@ -178,7 +183,9 @@ export function useBlockOperations(ctx: BlockOperationsContext) {
         const focused = focusedBlockContext()
         if (focused) {
             ctx.clipboard.copy(focused.section, focused.data)
+            const neighbor = neighborBlockId(focus.focusedId.value ?? "")
             ctx.deleteAtPath(focused.path)
+            focus.focusCanvasCard(neighbor)
             return
         }
         cutSelected()

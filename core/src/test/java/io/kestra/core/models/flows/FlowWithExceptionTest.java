@@ -80,6 +80,25 @@ class FlowWithExceptionTest {
     }
 
     @Test
+    void shouldKeepFallbackWhenLabelsContainNullEntries() throws Exception {
+        JsonNode jsonNode = JacksonMapper.ofJson().readTree("""
+            {
+                "id": "failed-flow",
+                "namespace": "io.kestra.unittest",
+                "labels": [null],
+                "variables": {"env": "prod"}
+            }
+            """);
+
+        var flow = FlowWithException.from(jsonNode, new IllegalStateException("boom"));
+
+        assertThat(flow).isPresent();
+        assertThat(flow.get().getLabels()).isNull();
+        assertThat(flow.get().getVariables()).containsExactlyInAnyOrderEntriesOf(Map.of("env", "prod"));
+        assertThat(flow.get().getException()).isEqualTo("boom");
+    }
+
+    @Test
     void shouldReturnEmptyWhenIdOrNamespaceIsMissing() throws Exception {
         JsonNode jsonNode = JacksonMapper.ofJson().readTree("""
             {"labels": [{"key": "system.readOnly", "value": "true"}]}

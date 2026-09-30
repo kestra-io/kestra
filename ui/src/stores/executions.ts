@@ -33,6 +33,8 @@ import type {KestraRequestOptions} from "../utils/kestraHttp"
 
 export type {Check, ExecutionControllerApiValidateExecutionInputsResponseApiInputError as InputError} from "@kestra-io/kestra-sdk"
 
+export type ReviewDecision = "APPROVE" | "DENY"
+
 export interface ValidationResponse {
     checks?: Check[];
     inputs: Array<{
@@ -285,6 +287,33 @@ export const useExecutionsStore = defineStore("executions", () => {
     const validateResume = (options: { id: string; formData?: FormData }) => {
         return axios.post<ValidationResponse>(`${apiUrl()}/executions/${options.id}/actions/resume/validate`, Utils.toFormData(options.formData ?? {}), {
             timeout: 60 * 60 * 1000,
+        }).then(response => response.data)
+    }
+
+    // Stays on raw axios: multipart form-data body, and the review endpoints are not in the generated SDK yet.
+    const review = (options: { id: string; taskRunId: string; decision: ReviewDecision; formData?: FormData }) => {
+        return axios.post<Execution>(`${apiUrl()}/executions/${options.id}/actions/review`, Utils.toFormData(options.formData ?? {}), {
+            params: {taskRunId: options.taskRunId, decision: options.decision},
+            timeout: 60 * 60 * 1000,
+        }).then(response => response.data)
+    }
+
+    const validateReview = (options: { id: string; taskRunId: string; decision: ReviewDecision; formData?: FormData }) => {
+        return axios.post<ValidationResponse>(`${apiUrl()}/executions/${options.id}/actions/review/validate`, Utils.toFormData(options.formData ?? {}), {
+            params: {taskRunId: options.taskRunId, decision: options.decision},
+            timeout: 60 * 60 * 1000,
+        }).then(response => response.data)
+    }
+
+    const reviewAllowed = (options: { id: string; taskRunId: string }) => {
+        return axios.get<{allowed: boolean}>(`${apiUrl()}/executions/${options.id}/actions/review/allowed`, {
+            params: {taskRunId: options.taskRunId},
+        }).then(response => response.data.allowed)
+    }
+
+    const cancelApproval = (options: { id: string; taskRunId: string }) => {
+        return axios.post<Execution>(`${apiUrl()}/executions/${options.id}/actions/cancel-approval`, undefined, {
+            params: {taskRunId: options.taskRunId},
         }).then(response => response.data)
     }
 
@@ -917,6 +946,10 @@ export const useExecutionsStore = defineStore("executions", () => {
         bulkKill,
         queryKill,
         resume,
+        review,
+        validateReview,
+        cancelApproval,
+        reviewAllowed,
         resumeFromBreakpoint,
         validateResume,
         pause,

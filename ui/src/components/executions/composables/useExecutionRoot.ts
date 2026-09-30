@@ -32,6 +32,7 @@ export function useExecutionRoot() {
 
         return {
             title: route.params.id as string,
+            bookmarkLabel: `${ns}.${flowId}: ${route.params.id}`,
             breadcrumb: [
                 ...namespaceBreadcrumb.value,
                 {

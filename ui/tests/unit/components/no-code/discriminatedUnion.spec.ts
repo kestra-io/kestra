@@ -184,3 +184,31 @@ describe("plugin-discriminator guard", () => {
         expect(branches).toHaveLength(2)
     })
 })
+
+describe("summarizeImplementationValue with nested implementations", () => {
+    const definition = {
+        required: ["embeddingProvider", "embeddings"],
+        properties: {
+            type: {const: "EmbeddingStoreRetriever"},
+            embeddingProvider: {anyOf: []},
+            embeddings: {anyOf: []},
+            maxResults: {type: "integer"},
+        },
+    }
+
+    const textsOf = (value: Record<string, unknown>) => {
+        const summary = summarizeImplementationValue(value, definition as unknown as Schema)
+        return summary.kind === "parts" ? summary.parts.map((part) => part.text) : undefined
+    }
+
+    it("names a nested implementation instead of stringifying the object", () => {
+        expect(textsOf({
+            embeddingProvider: {type: "io.kestra.plugin.ai.provider.GoogleGemini"},
+            embeddings: {type: "io.kestra.plugin.ai.embeddings.PGVector"},
+        })).toEqual(["Google Gemini", "PG Vector"])
+    })
+
+    it("leaves out a value with no usable one-line form", () => {
+        expect(textsOf({embeddingProvider: {noType: true}, maxResults: 3})).toEqual(["3"])
+    })
+})

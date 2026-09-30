@@ -175,6 +175,18 @@ const MAX_SUMMARY_PARTS = 3
  * is set, never its value; the caller turns each part into display text (and translates the secret
  * fact) since that's locale-dependent.
  */
+// A nested implementation contributes its own name; anything else non-scalar has no useful
+// one-line form, so it is left out rather than rendered as "[object Object]".
+function summaryText(propertyValue: unknown): string | undefined {
+    if (propertyValue === undefined || propertyValue === null || propertyValue === "") return undefined
+    if (Array.isArray(propertyValue)) return undefined
+    if (typeof propertyValue === "object") {
+        const nestedType = (propertyValue as {type?: unknown}).type
+        return typeof nestedType === "string" ? humanizeClassName(nestedType.split(".").pop() ?? nestedType) : undefined
+    }
+    return String(propertyValue)
+}
+
 export function summarizeImplementationValue(value: Record<string, unknown> | undefined, definition: Schema): ImplementationSummary {
     if (!value) return {kind: "empty"}
 
@@ -186,16 +198,13 @@ export function summarizeImplementationValue(value: Record<string, unknown> | un
         return aRequired === bRequired ? 0 : aRequired ? -1 : 1
     })
 
-    const contributing = entries.filter(([key]) => {
-        const propertyValue = value[key]
-        return propertyValue !== undefined && propertyValue !== null && propertyValue !== ""
-    })
+    const contributing = entries.filter(([key]) => summaryText(value[key]) !== undefined)
     if (!contributing.length) return {kind: "empty"}
 
     const parts: ImplementationSummaryPart[] = contributing.slice(0, MAX_SUMMARY_PARTS).map(([key, propertySchema]) => ({
         key,
         secret: Boolean(propertySchema.$secret),
-        text: propertySchema.$secret ? undefined : String(value[key]),
+        text: propertySchema.$secret ? undefined : summaryText(value[key]),
     }))
 
     return {kind: "parts", parts, overflow: Math.max(0, contributing.length - MAX_SUMMARY_PARTS)}

@@ -34,7 +34,7 @@
             </div>
             <BlockEmptyDrop
                 variant="inline"
-                :label="addLabel"
+                :label="label"
                 :required="requiredMissing"
                 :aria-describedby="requiredMissing ? requiredMessageId : undefined"
                 data-test="plugin-implementation-add"
@@ -57,7 +57,7 @@
         <template v-else>
             <BlockEmptyDrop
                 variant="inline"
-                :label="addLabel"
+                :label="label"
                 :required="requiredMissing"
                 :aria-describedby="requiredMissing ? requiredMessageId : undefined"
                 data-test="plugin-implementation-add"
@@ -126,8 +126,6 @@
     const items = computed<Implementation[]>(() => Array.isArray(modelValue.value) ? modelValue.value : [])
 
     const hasValue = computed(() => !isArray.value && modelValue.value !== undefined && modelValue.value !== null)
-
-    const addLabel = computed(() => t("block_editor.inline_add", {label: label.value}))
 
     const requiredMessageId = useId()
 

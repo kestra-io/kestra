@@ -395,6 +395,31 @@ public class LoopCaseTest {
         }));
     }
 
+    public void loopEmptyValuesFromUri(Execution execution) throws InternalException {
+    assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+    assertThat(execution.getTaskRunList()).hasSize(3);
+
+    TaskRun loopTaskRun = execution.getTaskRunList()
+        .stream()
+        .filter(taskRun -> taskRun.getTaskId().equals("loop"))
+        .findFirst()
+        .orElseThrow();
+
+    assertThat(loopTaskRun.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+
+    assertThat(taskOutputService.getOutputs(loopTaskRun))
+        .containsEntry(Loop.ITERATION_COUNT_OUTPUT, 0);
+
+    List<Execution> subExecutions =
+        executionRepository.findLoopSubExecutions(
+            execution.getTenantId(),
+            execution.getId(),
+            null
+        );
+
+    assertThat(subExecutions).isEmpty();
+    }
+
     public void loopExpressionContext(Execution execution) throws InternalException {
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(execution.getTaskRunList()).hasSize(2);

@@ -842,10 +842,19 @@ public class ExecutorService {
                     Loop.NEXT_OFFSET_OUTPUT, init.nextOffset()
                 )
             );
-            for (int i = 0; i < init.values().size(); i++) {
-                var loopExecution = executor.getExecution().loopExecution(taskRun, i, null, init.values().get(i));
-                executor.withLoopExecution(loopExecution, "handleLoopExecution");
-            }
+            if (init.totalCount() == 0) {
+    // if no loop iteration, we end the task immediately
+    executor.withExecution(
+        executor.getExecution()
+            .withTaskRun(taskRun.withState(State.Type.SUCCESS)),
+        "handleLoop"
+    );
+} else {
+    for (int i = 0; i < init.values().size(); i++) {
+        var loopExecution = executor.getExecution().loopExecution(taskRun, i, null, init.values().get(i));
+        executor.withLoopExecution(loopExecution, "handleLoopExecution");
+    }
+}
         } else {
             var init = loop.initFromValues(runContext);
             // save the iteration information in outputs to know how many loop iterations we already triggered

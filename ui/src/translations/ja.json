@@ -217,6 +217,18 @@
     "launch execution": "実行",
     "triggered done": "実行<em>{name}</em>が正常にトリガーされました",
     "topology": "トポロジー",
+    "overviewChart": {
+      "switcherLabel": "チャート",
+      "loading": "チャートを読み込み中…",
+      "emptyDescription": "この実行がWorkerによってピックアップされるまで、トポロジーのみが利用可能です。",
+      "topologySubtitle": "FlowのTaskとそれらの接続方法の静的ビュー。",
+      "ganttSubtitle": "各Taskの実行Timeline。",
+      "logsSubtitle": "Task実行の詳細とログ。",
+      "noticeTitle": "トポロジーの代わりにガントを表示しています。",
+      "noticeBody": "このFlowは{count}個のTaskを実行します。グラフで読み取るには多すぎます。",
+      "showTopologyAnyway": "トポロジーをそのまま表示",
+      "dismissNotice": "このFlowでは今後表示しない"
+    },
     "date": "日付",
     "prev_execution": "前回の実行",
     "next_execution": "次回の実行",

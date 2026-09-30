@@ -217,6 +217,18 @@
     "launch execution": "Wykonaj",
     "triggered done": "Egzekucja <em>{name}</em> została pomyślnie uruchomiona",
     "topology": "Topologia",
+    "overviewChart": {
+      "switcherLabel": "Wykres",
+      "loading": "Ładowanie wykresu…",
+      "emptyDescription": "Topologia jest dostępna dopiero po odebraniu tego uruchomienia przez Workera.",
+      "topologySubtitle": "Statyczny widok Tasków Flow i sposobu ich połączenia.",
+      "ganttSubtitle": "Oś czasu, kiedy każdy Task został uruchomiony.",
+      "logsSubtitle": "Szczegóły Task Runa i jego logi.",
+      "noticeTitle": "Wyświetlanie Gantta zamiast topologii.",
+      "noticeBody": "Ten Flow uruchamia {count} Tasków — zbyt wiele, aby odczytać je na wykresie.",
+      "showTopologyAnyway": "Pokaż topologię mimo to",
+      "dismissNotice": "Nie pokazuj ponownie dla tego Flow"
+    },
     "date": "Data",
     "prev_execution": "Poprzednia egzekucja",
     "next_execution": "Następna egzekucja",

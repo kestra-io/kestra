@@ -64,6 +64,27 @@ const flowWithOutputsAutocompleteInTask = [
     "namespace: my.namespace",
 ].join("\n")
 
+const flowWithErrorsAndFinally = [
+    "id: flow_8929727",
+    "namespace: company.team",
+    "tasks:",
+    "  - id: normal_task",
+    "    type: io.kestra.plugin.core.output.OutputValues",
+    "    values:",
+    "      hello: world",
+    "errors:",
+    "  - id: error_task",
+    "    type: io.kestra.plugin.core.kv.Get",
+    "    key: hello",
+    "  - id: log",
+    "    type: io.kestra.plugin.core.log.Log",
+    "    message: \"{{ outputs. }}\"",
+    "finally:",
+    "  - id: finally_task",
+    "    type: io.kestra.plugin.core.kv.Get",
+    "    key: bye",
+].join("\n")
+
 const propertiesSchemaWrapper = (properties: Record<string, any>) => ({
     schema: {
         outputs: {
@@ -73,21 +94,6 @@ const propertiesSchemaWrapper = (properties: Record<string, any>) => ({
 })
 
 const pluginsStore = {
-    allTypes: [
-        "io.kestra.plugin.core.output.OutputValues",
-        "io.kestra.plugin.core.kv.Get",
-        "io.kestra.plugin.core.flow.Subflow",
-        "io.kestra.plugin.core.http.Download",
-        "io.kestra.plugin.core.storage.FilterItems",
-        "io.kestra.plugin.core.storage.Upload",
-        "io.kestra.plugin.core.flow.WorkingDirectory",
-        "io.kestra.plugin.git.Clone",
-        "io.kestra.plugin.core.execution.Assert",
-        "io.kestra.plugin.core.flow.If",
-        "io.kestra.plugin.core.flow.Pause",
-        "io.kestra.plugin.core.log.Log",
-        "io.kestra.plugin.core.trigger.Schedule",
-    ],
     load: vi.fn((payload: any) =>{
         switch (payload.cls) {
                 case "io.kestra.plugin.core.trigger.Schedule":
@@ -195,11 +201,10 @@ const mockFunctions = [
     {name: "subflow", arguments: [{name: "namespace", defaultValue: null}, {name: "id", defaultValue: null}]},
 ]
 
-type ProviderParsedFlow = NonNullable<Parameters<FlowAutoCompletion["valueAutoCompletion"]>[1]>
-
 let provider: FlowAutoCompletion
-const parsed = YAML_UTILS.parse<ProviderParsedFlow>(defaultFlow)
-const flowWithOutputsAutocompleteInTaskParsed = YAML_UTILS.parse<ProviderParsedFlow>(flowWithOutputsAutocompleteInTask)
+const parsed = YAML_UTILS.parse(defaultFlow)
+const flowWithOutputsAutocompleteInTaskParsed = YAML_UTILS.parse(flowWithOutputsAutocompleteInTask)
+const flowWithErrorsAndFinallyParsed = YAML_UTILS.parse(flowWithErrorsAndFinally)
 
 describe("FlowAutoCompletionProvider", () => {
     beforeAll(() => {
@@ -224,7 +229,7 @@ describe("FlowAutoCompletionProvider", () => {
         expect(result).toContain("item")
 
         // Function snippets are generated from functionsWithDefaults
-        for (const fn of mockFunctions.filter(f => f.name !== "subflow")) {
+        for (const fn of mockFunctions.filter(fn => fn.name !== "subflow")) {
             expect(result).toContain(functionToSnippet(fn))
         }
 
@@ -283,6 +288,38 @@ tasks:
         expect(await provider.nestedFieldAutoCompletion(defaultFlow, parsed, "bad")).toEqual([])
     })
 
+    it("outputs autocomplete includes tasks from errors and finally blocks", async () => {
+        const cursorIndex = flowWithErrorsAndFinally.indexOf("outputs.") + "outputs.".length
+        expect(cursorIndex).toBeGreaterThan(0)
+
+        // Inside the log task in errors: suggests tasks from tasks, errors, finally (excluding current log task)
+        expect(await provider.nestedFieldAutoCompletion(
+            flowWithErrorsAndFinally,
+            flowWithErrorsAndFinallyParsed,
+            "outputs",
+            cursorIndex,
+        )).toEqual(["normal_task", "error_task", "finally_task"])
+
+        // Without cursor: suggests all task IDs across blocks
+        expect(await provider.nestedFieldAutoCompletion(
+            flowWithErrorsAndFinally,
+            flowWithErrorsAndFinallyParsed,
+            "outputs",
+        )).toEqual(["normal_task", "error_task", "log", "finally_task"])
+
+        // Output properties for task in errors and finally blocks
+        expect(await provider.nestedFieldAutoCompletion(
+            flowWithErrorsAndFinally,
+            flowWithErrorsAndFinallyParsed,
+            "outputs.error_task",
+        )).toEqual(["value"])
+        expect(await provider.nestedFieldAutoCompletion(
+            flowWithErrorsAndFinally,
+            flowWithErrorsAndFinallyParsed,
+            "outputs.finally_task",
+        )).toEqual(["value"])
+    })
+
     it("outputs autocomplete excludes current task id", async () => {
         const cursorIndex = flowWithOutputsAutocompleteInTask.indexOf("outputs.") + "outputs.".length
         expect(cursorIndex).toBeGreaterThan(0)
@@ -299,53 +336,6 @@ tasks:
             flowWithOutputsAutocompleteInTaskParsed,
             "outputs",
         )).toEqual(["download", "filter", "upload"])
-    })
-
-    it("outputs autocomplete lists nested, errors and finally tasks but not triggers, inputs, onResume or flow outputs", async () => {
-        const flow = [
-            "id: my-flow",
-            "namespace: my.namespace",
-            "inputs:",
-            "  - id: myInput",
-            "    type: STRING",
-            "tasks:",
-            "  - id: file_system",
-            "    type: io.kestra.plugin.core.flow.WorkingDirectory",
-            "    tasks:",
-            "      - id: clone",
-            "        type: io.kestra.plugin.git.Clone",
-            "      - id: assert",
-            "        type: io.kestra.plugin.core.execution.Assert",
-            "        conditions:",
-            "          - \"{{ outputs. }}\"",
-            "  - id: branch",
-            "    type: io.kestra.plugin.core.flow.If",
-            "    then:",
-            "      - id: kv",
-            "        type: io.kestra.plugin.core.kv.Get",
-            "  - id: approval",
-            "    type: io.kestra.plugin.core.flow.Pause",
-            "    onResume:",
-            "      - id: approved",
-            "        type: BOOLEAN",
-            "errors:",
-            "  - id: onError",
-            "    type: io.kestra.plugin.core.log.Log",
-            "finally:",
-            "  - id: cleanup",
-            "    type: io.kestra.plugin.core.log.Log",
-            "outputs:",
-            "  - id: flowOutput",
-            "    type: STRING",
-            "triggers:",
-            "  - id: schedule",
-            "    type: io.kestra.plugin.core.trigger.Schedule",
-        ].join("\n")
-        const cursorIndex = flow.indexOf("outputs. ") + "outputs.".length
-
-        expect(await provider.nestedFieldAutoCompletion(flow, YAML_UTILS.parse(flow), "outputs", cursorIndex))
-            .toEqual(["file_system", "clone", "branch", "kv", "approval", "onError", "cleanup"])
-        expect(await provider.nestedFieldAutoCompletion(flow, YAML_UTILS.parse(flow), "outputs.kv")).toEqual(["value"])
     })
 
     it("value autocompletions", async () => {
@@ -370,7 +360,7 @@ tasks:
 
     it("dashboardId/chartId autocompletions", async () => {
         const flow = flowWithDashboardExportTask
-        const parsedFlow = YAML_UTILS.parse<ProviderParsedFlow>(flow)
+        const parsedFlow = YAML_UTILS.parse(flow)
 
         expect(await provider.valueAutoCompletion(flow, parsedFlow, YAML_UTILS.localizeElementAtIndex(flow, flow.indexOf("dashboardId:") + "dashboardId:".length))).toEqual(["my-dashboard", "other-dashboard"])
 

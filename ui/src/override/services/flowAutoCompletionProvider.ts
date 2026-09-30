@@ -11,6 +11,7 @@ import {useMcpStore} from "../../stores/mcp"
 import {useDashboardStore} from "../../stores/dashboard"
 import {isExportableChart} from "../../components/dashboard/composables/useDashboards"
 import {useNamespacesStore} from "override/stores/namespaces"
+import {isMap, isPair, isSeq, type YAMLMap} from "yaml"
 
 function distinct<T>(val: T[] | undefined): T[] {
     return Array.from(new Set(val ?? []))
@@ -19,18 +20,19 @@ function distinct<T>(val: T[] | undefined): T[] {
 interface ParsedFlow {
     id?: string;
     namespace?: string;
-    inputs?: {id?: string; type?: string; inputs?: {id?: string}[]}[];
+    inputs?: { id?: string; type?: string; inputs?: { id?: string }[] }[];
+    tasks?: { id?: string }[];
+    errors?: { id?: string }[];
+    finally?: { id?: string }[];
+    afterExecution?: { id?: string }[];
     variables?: Record<string, unknown>;
     labels?: Record<string, unknown>;
-    triggers?: {type: string}[];
+    triggers?: { type: string }[];
 }
 
 // Pebble functions only valid inside a flow-root input's `values`/`expression` (rendered on the
 // webserver). Suggested only in that context; the backend rejects them anywhere else.
 const INPUT_ONLY_FUNCTIONS = ["subflow"]
-
-// Root keys holding tasks; `triggers` types are registered plugins too, so they are filtered by key.
-const TASK_ROOT_KEYS = new Set(["tasks", "errors", "finally", "afterExecution"])
 
 /**
  * Only the namespaces-store members the completion reads. Typing the dependency this way keeps the
@@ -112,8 +114,8 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
             }
 
             const parents = localized.parents ?? []
-            const root = parents[0] as {inputs?: {id?: string}[]} | undefined
-            const inputDefinition = parents[parents.length - 1] as {id?: string} | undefined
+            const root = parents[0] as { inputs?: { id?: string }[] } | undefined
+            const inputDefinition = parents[parents.length - 1] as { id?: string } | undefined
             const rootInputs = root?.inputs
             if (!Array.isArray(rootInputs)) {
                 return false
@@ -121,18 +123,39 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
 
             // confirm the enclosing map is one of the flow-root input definitions (excludes task
             // properties named `values` and trigger `inputs`, which are key/value, not definitions)
-            return rootInputs.some((input: {id?: string}) => input?.id != null && input.id === inputDefinition?.id)
+            return rootInputs.some((input: { id?: string }) => input?.id != null && input.id === inputDefinition?.id)
         } catch {
             return false
         }
     }
 
-    // Matching on the plugin registry keeps input definitions such as `Pause.onResume` out.
-    private tasks(source: string): {id: string; type: string}[] {
-        const pluginTypes = new Set(this.pluginsStore.allTypes)
-        return YAML_UTILS.extractTypedBlocks(source)
-            .flatMap(({path, type, value: {id}}) =>
-                TASK_ROOT_KEYS.has(path.split(".")[0]) && typeof id === "string" && pluginTypes.has(type) ? [{id, type}] : [])
+    private tasks(source: string): YAMLMap[] {
+        const listProps = ["tasks", "errors", "finally", "afterExecution", "then", "else"] as const
+        const tasksFromListProps = listProps.flatMap(prop =>
+            YAML_UTILS.extractFieldFromMaps(source, prop).flatMap(match => (match as Record<string, any>)[prop] ?? []),
+        )
+        const tasksFromTaskProp = YAML_UTILS.extractFieldFromMaps(source, "task")
+            .map(task => task.task)
+            .flatMap(task => isMap(task) ? [task] : (YAML_UTILS.pairsToMap(task) ?? []))
+        const tasksFromCasesProp = YAML_UTILS.extractFieldFromMaps(source, "cases")
+            .flatMap(match => {
+                const cases = match.cases
+                if (Array.isArray(cases)) {
+                    return cases.flatMap(item => {
+                        if (isPair(item) && isSeq(item.value)) {
+                            return item.value.items
+                        }
+                        if (isMap(item)) {
+                            return [item]
+                        }
+                        return []
+                    })
+                }
+                return []
+            })
+
+        return [...tasksFromListProps, ...tasksFromTaskProp, ...tasksFromCasesProp]
+            .filter((task): task is YAMLMap => isMap(task) && Boolean(task.get("id")))
     }
 
     private cursorProbeIndexes(source: string, cursorIndex: number): number[] {
@@ -191,7 +214,9 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
     }
 
     private async outputsFor(taskId: string, source: string): Promise<string[]> {
-        const taskType = this.tasks(this.completionSource?.value ?? source).find(task => task.id === taskId)?.type
+        const taskType = this.tasks(this.completionSource?.value ?? source).filter(task => task.get("id") === taskId)
+            .map(task => task.get("type"))
+            ?.[0] as string | undefined
 
         if (!taskType) {
             return []
@@ -204,7 +229,7 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
         return Object.keys(pluginDoc?.schema?.outputs?.properties ?? {})
     }
 
-    private async triggerVars(flowAsJs?: {triggers?: {type: string}[]}): Promise<string[]> {
+    private async triggerVars(flowAsJs?: { triggers?: { type: string }[] }): Promise<string[]> {
         if (flowAsJs === undefined) {
             return Promise.resolve([])
         }
@@ -212,7 +237,7 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
         const fetchTriggerVarsByType = await Promise.all(
             distinct(flowAsJs?.triggers?.map(trigger => trigger.type))
                 .map(async triggerType => {
-                    const triggerDoc: {schema: JSONSchema} | undefined = await this.pluginsStore.load({
+                    const triggerDoc: { schema: JSONSchema } | undefined = await this.pluginsStore.load({
                         cls: triggerType,
                         commit: false,
                     }).catch(() => undefined)
@@ -228,8 +253,13 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
                 return Promise.resolve(parsed?.inputs?.map(input => input.id).filter((id): id is string => id !== undefined) ?? [])
             case "outputs": {
                 const currentTaskId = this.currentTaskIdAtCursor(source, cursorIndex)
-                return distinct(this.tasks(this.completionSource?.value ?? source).map(task => task.id))
-                    .filter(taskId => taskId !== currentTaskId)
+                const taskIdsFromSource = this.tasks(this.completionSource?.value ?? source)
+                    .map(task => task.get("id"))
+                    .filter((id): id is string => typeof id === "string")
+
+                return Promise.resolve(
+                    distinct(taskIdsFromSource).filter((taskId) => taskId !== currentTaskId),
+                )
             }
             case "labels":
                 return Promise.resolve(Object.keys(parsed?.labels ?? {}))
@@ -280,7 +310,7 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
     }
 
     private async subflowInputsAutoCompletion(namespace: string, flowId: string, revision: string | undefined, alreadyFilledInputs: string[]): Promise<string[]> {
-        const subflowUid = namespace + "." + flowId + (revision === undefined ? "" : `:${revision}`) 
+        const subflowUid = namespace + "." + flowId + (revision === undefined ? "" : `:${revision}`)
         if (this.flowsInputsCache?.[subflowUid] === undefined) {
             try {
                 const {inputs} = (await this.flowStore.loadFlow(
@@ -293,7 +323,7 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
                         deleted: true,
                     },
                 ))
-                this.flowsInputsCache[subflowUid] = inputs?.map((input: {id:string}) => `${input.id}`) ?? []
+                this.flowsInputsCache[subflowUid] = inputs?.map((input: { id: string }) => `${input.id}`) ?? []
             } catch {
                 return []
             }
@@ -310,7 +340,7 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
 
         const parentTask = yamlElement.parents?.[yamlElement.parents.length - 1]
 
-        switch(yamlElement.key) {
+        switch (yamlElement.key) {
             case "namespace": {
                 const availableNamespaces = this.namespacesStore.autocomplete
                 return availableNamespaces === undefined
@@ -320,7 +350,7 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
             case "flowId": {
                 if (typeof parentTask?.namespace === "string") {
                     let flowIds: string[] = (await this.flowStore.flowsByNamespace(parentTask.namespace))
-                        .map((flow: {id: string}) => flow.id)
+                        .map((flow: { id: string }) => flow.id)
                     if (parsed?.id !== undefined && parsed?.namespace === parentTask.namespace) {
                         flowIds = flowIds.filter(flowId => flowId !== parsed?.id)
                     }
@@ -379,7 +409,7 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
     async functionAutoCompletion(parsed: ParsedFlow | undefined, functionName: string, args: Record<string, string>): Promise<string[]> {
         let namespaceArg = args.namespace
         if (namespaceArg === undefined || namespaceArg === "flow.namespace") {
-           namespaceArg = parsed?.namespace === undefined ? "" : QUOTE + parsed.namespace + QUOTE
+            namespaceArg = parsed?.namespace === undefined ? "" : QUOTE + parsed.namespace + QUOTE
         }
         switch (functionName) {
             case "secret": {
@@ -394,7 +424,7 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
                 if (namespace === undefined) {
                     return Promise.resolve([])
                 }
-                return (await this.namespacesStore.kvsList({id: namespace})).map((kv: {key?: string}) => QUOTE + kv.key + QUOTE)
+                return (await this.namespacesStore.kvsList({id: namespace})).map((kv: { key?: string }) => QUOTE + kv.key + QUOTE)
             }
             case "tasksWithState": {
                 return State.arrayAllStates().map(({name}) => QUOTE + name + QUOTE)
@@ -414,7 +444,7 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
                         return Promise.resolve([])
                     }
                     let flowIds: string[] = (await this.flowStore.flowsByNamespace(namespace))
-                        .map((flow: {id: string}) => flow.id)
+                        .map((flow: { id: string }) => flow.id)
                     // avoid suggesting the flow itself: subflow() on its own id recurses (depth-capped)
                     if (parsed?.id !== undefined && parsed?.namespace === namespace) {
                         flowIds = flowIds.filter(flowId => flowId !== parsed?.id)

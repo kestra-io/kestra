@@ -1,6 +1,6 @@
 <template>
-    <div data-component="FILENAME_PLACEHOLDER">
-        <div ref="inlineLogsTarget" />
+    <div data-component="FILENAME_PLACEHOLDER" :class="{'logs-embedded': embedded}">
+        <div ref="inlineLogsTarget" :class="{'inline-logs-target-embed': embedded}" />
         <KsDialog
             v-model="fullscreenModalOpen"
             :title="$t('logs')"
@@ -15,6 +15,7 @@
 
         <Teleport v-if="logsTarget" :to="logsTarget">
             <KSFilter
+                v-if="!embedded"
                 :configuration="logExecutionsFilter"
                 :tableOptions="{
                     chart: {shown: false},
@@ -24,7 +25,7 @@
                 @search="filter = $event"
                 @filter="syncFromAppliedFilters"
             />
-            <div class="logs-toolbar" data-test="logs-toolbar">
+            <div v-if="!embedded" class="logs-toolbar" data-test="logs-toolbar">
                 <div class="logs-toolbar__left">
                     <template v-for="logLevel in currentLevelOrLower" :key="logLevel">
                         <LogLevelNavigator
@@ -66,7 +67,7 @@
             </div>
 
             <TaskRunDetails
-                v-if="!raw_view"
+                v-if="!effectiveRawView"
                 ref="logs"
                 :levelFilter="effectiveLevelValue"
                 :excludeMetas="(['namespace', 'flowId', 'taskId', 'executionId'] as any)"
@@ -78,7 +79,7 @@
                 @log-indices-by-level="setLogIndicesByLevel"
                 :targetFlow="executionsStore.flow"
                 :showProgressBar="false"
-                :fullHeight="fullscreenModalOpen"
+                :fullHeight="embedded || fullscreenModalOpen"
                 @scroll.capture.passive="rememberLogScroll"
                 @scroller-update="restoreLogScroll"
             />
@@ -209,9 +210,18 @@
 
     const props = withDefaults(defineProps<{
         playground?: boolean
+        /** Hides the filter bar and toolbar, forces the compact task-run view, and fills the given
+         *  container height instead of the standalone tab's own layout — used to embed the chart in
+         *  the Overview page. */
+        embedded?: boolean
     }>(), {
         playground: false,
+        embedded: false,
     })
+
+    // Raw/temporal view has no fill-to-container sizing mode, so embedding always uses the compact
+    // task-run tree — the same simplification already made by dropping the toolbar that toggles it.
+    const effectiveRawView = computed(() => props.embedded ? false : raw_view.value)
 
     const executionsStore = useExecutionsStore()
 
@@ -623,6 +633,20 @@
 </script>
 
 <style scoped lang="scss">
+    .logs-embedded {
+        flex: 1;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .inline-logs-target-embed {
+        flex: 1;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+    }
+
     .attempt-wrapper {
     background-color: var(--ks-bg-surface);
 

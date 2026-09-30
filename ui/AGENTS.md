@@ -508,3 +508,5 @@ When a needed token is missing, **add it** to all three of `ks-theme-light.scss`
 - **Radii:** `$border-radius` (0.25rem), `$border-radius-sm` (0.15rem), `$border-radius-lg` (0.5rem)
 
 These exist so the *design system itself* can compose tokens from a single palette. They are not API for feature code — feature code should reach the same values through `--ks-*` tokens.
+
+A package that genuinely needs the palette (`@kestra-io/topology`, an external app) imports it with `@use "@kestra-io/design-system/styles/color-palette"`, never through a `src/assets/styles/...` path: only the dedicated export resolves the same way on every OS and in the published package.

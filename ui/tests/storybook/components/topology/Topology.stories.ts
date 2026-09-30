@@ -1,6 +1,6 @@
 import type {Meta, StoryFn, StoryObj} from "@storybook/vue3-vite"
 import {expect} from "storybook/test"
-import {Topology, type FlowGraph} from "@kestra-io/topology"
+import {NODE_SIZES, Topology, type FlowGraph} from "@kestra-io/topology"
 import allowFailureDemo from "../../../fixtures/flowgraphs/allow-failure-demo.json"
 import eachSequential from "../../../fixtures/flowgraphs/each-sequential.json"
 import switchCaseLabels from "../../../fixtures/flowgraphs/switch-case-labels.json"
@@ -359,7 +359,7 @@ export const FootprintInvariance: StoryObj<typeof Topology> = {
 
         const dimensionsOf = (el: HTMLElement) => ({width: el.style.width, height: el.style.height})
 
-        expect(dimensionsOf(pill!)).toEqual({width: "218px", height: "56px"})
+        expect(dimensionsOf(pill!)).toEqual({width: `${NODE_SIZES.TASK_WIDTH}px`, height: `${NODE_SIZES.TASK_HEIGHT}px`})
         expect(dimensionsOf(atRest!)).toEqual(dimensionsOf(pill!))
         expect(dimensionsOf(expanded!)).toEqual(dimensionsOf(pill!))
     },

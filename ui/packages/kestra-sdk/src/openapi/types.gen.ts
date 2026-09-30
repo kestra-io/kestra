@@ -475,6 +475,8 @@ export type AssetsInOut = {
     outputs?: Array<Asset>;
 };
 
+export type AsyncOperationType = 'EXECUTION_KILL' | 'EXECUTION_PAUSE' | 'EXECUTION_RESUME' | 'EXECUTION_RESTART' | 'EXECUTION_REPLAY' | 'EXECUTION_FORCE_RUN' | 'EXECUTION_UNQUEUE' | 'EXECUTION_CHANGE_STATUS' | 'EXECUTION_SET_LABELS' | 'TRIGGER_UNLOCK' | 'TRIGGER_DELETE' | 'TRIGGER_DISABLE' | 'TRIGGER_ENABLE' | 'BACKFILL_PAUSE' | 'BACKFILL_RESUME' | 'BACKFILL_DELETE';
+
 /**
  * A backfill configuration.
  */
@@ -710,6 +712,14 @@ export type EventExecution = {
 
 export type EventFollowLogEvent = {
     data: FollowLogEvent;
+    id?: string | null;
+    name?: string | null;
+    comment?: string | null;
+    retry?: string | null;
+};
+
+export type EventNotification = {
+    data: Notification;
     id?: string | null;
     name?: string | null;
     comment?: string | null;
@@ -1562,6 +1572,41 @@ export type NamespaceFileRevision = {
 export type NamespaceLight = {
     id: string;
 };
+
+export type Notification = {
+    outcome?: NotificationOutcome | null;
+    ongoing?: boolean;
+    id?: string;
+    userId: string;
+    tenantId?: string | null;
+    type: string;
+    asyncOperationType?: AsyncOperationType | null;
+    title: string;
+    referenceId?: string | null;
+    succeededItems?: number | null;
+    failedItems?: number | null;
+    totalItems?: number | null;
+    read?: boolean;
+    createdDate: string;
+    updatedDate: string;
+};
+
+export type NotificationControllerApiMarkAllRead = {
+    updated?: number;
+};
+
+export type NotificationControllerApiNotificationHistory = {
+    notifications?: Array<Notification>;
+    serverTime?: string;
+    nextCursor?: string | null;
+};
+
+export type NotificationControllerApiNotificationsSince = {
+    notifications?: Array<Notification>;
+    serverTime?: string;
+};
+
+export type NotificationOutcome = 'SUCCEEDED' | 'PARTIAL' | 'FAILED';
 
 export type Output = {
     id: string;
@@ -2936,6 +2981,251 @@ export type GetProvidersResponses = {
 };
 
 export type GetProvidersResponse = GetProvidersResponses[keyof GetProvidersResponses];
+
+export type FollowData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/notifications/follow';
+};
+
+export type FollowErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type FollowError = FollowErrors[keyof FollowErrors];
+
+export type FollowResponses = {
+    /**
+     * follow 200 response
+     */
+    200: EventNotification;
+};
+
+export type FollowResponse = FollowResponses[keyof FollowResponses];
+
+export type HistoryData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * Cursor of the previous page, as `<createdDate>,<id>`. Omit for the first page.
+         */
+        before?: string | null;
+        /**
+         * Maximum number of notifications to return
+         */
+        limit?: number;
+    };
+    url: '/api/v1/notifications/history';
+};
+
+export type HistoryErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type HistoryError = HistoryErrors[keyof HistoryErrors];
+
+export type HistoryResponses = {
+    /**
+     * history 200 response
+     */
+    200: NotificationControllerApiNotificationHistory;
+};
+
+export type HistoryResponse = HistoryResponses[keyof HistoryResponses];
+
+export type MarkAllReadData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/notifications/read-all';
+};
+
+export type MarkAllReadErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type MarkAllReadError = MarkAllReadErrors[keyof MarkAllReadErrors];
+
+export type MarkAllReadResponses = {
+    /**
+     * markAllRead 200 response
+     */
+    200: NotificationControllerApiMarkAllRead;
+};
+
+export type MarkAllReadResponse = MarkAllReadResponses[keyof MarkAllReadResponses];
+
+export type PollSinceData = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * The server timestamp returned by a previous call to this endpoint (or to /history)
+         */
+        since: string;
+    };
+    url: '/api/v1/notifications/since';
+};
+
+export type PollSinceErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type PollSinceError = PollSinceErrors[keyof PollSinceErrors];
+
+export type PollSinceResponses = {
+    /**
+     * pollSince 200 response
+     */
+    200: NotificationControllerApiNotificationsSince;
+};
+
+export type PollSinceResponse = PollSinceResponses[keyof PollSinceResponses];
+
+export type UnreadCountData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/notifications/unread-count';
+};
+
+export type UnreadCountErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type UnreadCountError = UnreadCountErrors[keyof UnreadCountErrors];
+
+export type UnreadCountResponses = {
+    /**
+     * unreadCount 200 response
+     */
+    200: number;
+};
+
+export type UnreadCountResponse = UnreadCountResponses[keyof UnreadCountResponses];
+
+export type MarkReadData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/v1/notifications/{id}/read';
+};
+
+export type MarkReadErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type MarkReadError = MarkReadErrors[keyof MarkReadErrors];
+
+export type MarkReadResponses = {
+    /**
+     * markRead 200 response
+     */
+    200: unknown;
+};
+
+export type MarkUnreadData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/v1/notifications/{id}/unread';
+};
+
+export type MarkUnreadErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type MarkUnreadError = MarkUnreadErrors[keyof MarkUnreadErrors];
+
+export type MarkUnreadResponses = {
+    /**
+     * markUnread 200 response
+     */
+    200: unknown;
+};
 
 export type GetExpressionFiltersData = {
     body?: never;

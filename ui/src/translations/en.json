@@ -291,7 +291,22 @@
       "help": "Help",
       "issue": "Issue",
       "demo": "Demo",
-      "star": "Star us"
+      "star": "Star us",
+      "notifications": "Notifications"
+    },
+    "notifications": {
+      "heading": "Notifications",
+      "ongoing": "In progress",
+      "markAllRead": "Mark all as read",
+      "markUnread": "Mark as unread",
+      "markRead": "Mark as read",
+      "empty": "No notifications yet",
+      "emptyUnread": "No unread notifications",
+      "tabs": {
+        "all": "All",
+        "unread": "Unread"
+      },
+      "bellAriaLabel": "Notifications"
     },
     "source": "Source",
     "home": "Home",

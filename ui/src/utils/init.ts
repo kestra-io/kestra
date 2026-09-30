@@ -35,7 +35,7 @@ import {date as dateFilter} from "./filters"
 import createUnsavedChanged from "./unsavedChange"
 import createEventsRouter from "./eventsRouter"
 import "./global"
-import {useDocStore} from "../stores/doc"
+import {documentationGuard} from "./documentationGuard"
 import {entityNotFoundGuard} from "./routeEntityGuard"
 
 
@@ -62,24 +62,7 @@ export default async (
     const piniaStore = createPinia()
     app.use(piniaStore)
 
-    /**
-     * Manage docId initialization for Contextual docs
-     */
-    router.beforeEach((to, from) => {
-        // set the docId from the path
-        // so it has a default
-        const pathArray = to.path.split("/")
-        const docId = pathArray[pathArray.length-1]
-
-        const docStore = useDocStore()
-        docStore.docId = docId
-
-        // propagate showDocId query param
-        // to the next page to facilitate docs binding
-        if(to.query["showDocId"] === undefined && from.query["showDocId"] !== undefined){
-            return {path: to.path, query: {...to.query, showDocId: from.query["showDocId"]}}
-        }
-    })
+    router.beforeEach(documentationGuard)
 
     if(guards.beforeEach){
         router.beforeEach(guards.beforeEach.bind(null, router) as Parameters<typeof router.beforeEach>[0])

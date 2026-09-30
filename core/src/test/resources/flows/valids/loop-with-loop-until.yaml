@@ -1,0 +1,18 @@
+id: loop-with-loop-until
+namespace: io.kestra.tests
+
+tasks:
+  - id: loop
+    type: io.kestra.plugin.core.flow.Loop
+    values: ["value 1", "value 2"]
+    tasks:
+      - id: inner_wait
+        type: io.kestra.plugin.core.flow.LoopUntil
+        condition: "{{ false }}"
+        checkFrequency:
+          maxIterations: 2
+          interval: PT0.1S
+        tasks:
+          - id: log
+            type: io.kestra.plugin.core.log.Log
+            message: "iterating"

@@ -41,7 +41,16 @@
 
     const props = defineProps<{
         id?: string;
-        data: any;
+        data: {
+            color: string;
+            unused?: boolean;
+            canAddTrigger?: boolean;
+            collaspsible?: boolean;
+            taskNode?: {
+                type?: string;
+                task: {namespace?: string; flowId?: string; subflowId?: {namespace?: string; flowId?: string}};
+            };
+        };
     }>()
 
     const badgeStyle = computed(() => {

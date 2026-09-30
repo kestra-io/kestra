@@ -1,5 +1,5 @@
 export interface OutputProperty {
-    type?: string;
+    type?: string | string[];
 }
 
 export function resolveDeclaredOutputProperties(

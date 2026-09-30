@@ -1,0 +1,12 @@
+id: loop-pause-resume
+namespace: io.kestra.tests
+
+tasks:
+  - id: loop
+    type: io.kestra.plugin.core.flow.Loop
+    values:
+      - 1
+      - 2
+    tasks:
+      - id: pause
+        type: io.kestra.plugin.core.flow.Pause

@@ -95,8 +95,7 @@ class TriggerControllerTest {
     void shouldFindTriggersGivenQueryOnIdPrefix() throws FlowProcessingException, QueueException {
         // GIVEN
         Flow flow = generateFlow();
-        flowService.create(GenericFlow.of(flow));
-        createTriggersFromFlow(flow).forEach(jdbcTriggerRepository::save);
+        createFlowAndAwaitTriggers(flow);
 
         // WHEN
         PagedResults<ApiTriggerAndState> triggers = client.toBlocking().retrieve(
@@ -124,8 +123,7 @@ class TriggerControllerTest {
     void shouldFindTriggersGivenQueryOnNamespace() throws FlowProcessingException, QueueException {
         // GIVEN
         Flow flow = generateFlow();
-        flowService.create(GenericFlow.of(flow));
-        createTriggersFromFlow(flow).forEach(jdbcTriggerRepository::save);
+        createFlowAndAwaitTriggers(flow);
 
         // WHEN
         PagedResults<ApiTriggerAndState> triggers = client.toBlocking().retrieve(
@@ -169,8 +167,7 @@ class TriggerControllerTest {
     void searchTriggersSortsByNextExecutionDateAlias() throws FlowProcessingException, QueueException {
         // nextExecutionDate is a pre-2.0 alias of the real column next_evaluation_date
         Flow flow = generateFlow();
-        flowService.create(GenericFlow.of(flow));
-        createTriggersFromFlow(flow).forEach(jdbcTriggerRepository::save);
+        createFlowAndAwaitTriggers(flow);
 
         PagedResults<ApiTriggerAndState> triggers = client.toBlocking().retrieve(
             HttpRequest.GET(TRIGGER_PATH + "/search?filters[namespace][STARTS_WITH]=%s&sort=nextExecutionDate:asc".formatted(flow.getNamespace())),
@@ -185,9 +182,7 @@ class TriggerControllerTest {
     void shouldFindTriggersGivenFilterOnNamespace() throws FlowProcessingException, QueueException {
         // GIVEN
         Flow flow = generateFlow();
-        flowService.create(GenericFlow.of(flow));
-        List<TriggerState> states = createTriggersFromFlow(flow);
-        states.forEach(jdbcTriggerRepository::save);
+        createFlowAndAwaitTriggers(flow);
 
         // WHEN
         PagedResults<ApiTriggerAndState> triggers = client.toBlocking().retrieve(
@@ -965,6 +960,13 @@ class TriggerControllerTest {
         ).toList();
     }
 
+    private void createFlowAndAwaitTriggers(Flow flow) throws FlowProcessingException, QueueException {
+        flowService.create(GenericFlow.of(flow));
+        Awaitility.await().atMost(Duration.ofSeconds(30)).pollInterval(Duration.ofMillis(100))
+            .until(() -> createTriggersFromFlow(flow).stream()
+                .allMatch(state -> jdbcTriggerRepository.findByIdWithoutAcl(state).isPresent()));
+    }
+
     private TriggerState createTriggerFromFlow(Flow flow, Boolean disabled) {
         return TriggerState.builder()
             .flowId(flow.getId())
@@ -979,8 +981,7 @@ class TriggerControllerTest {
     @Test
     void shouldExportTriggersWithoutTenantId() throws FlowProcessingException, QueueException {
         Flow flow = generateFlow();
-        flowService.create(GenericFlow.of(flow));
-        createTriggersFromFlow(flow).forEach(jdbcTriggerRepository::save);
+        createFlowAndAwaitTriggers(flow);
 
         byte[] csvBytes = client.toBlocking().retrieve(
             HttpRequest.GET(TRIGGER_PATH + "/export/by-query/csv"),

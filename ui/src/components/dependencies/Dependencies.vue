@@ -8,6 +8,7 @@
             :groupFields="groupFields"
             :groupChips="groupChips"
             :activeGroup="activeGroup"
+            :relationKinds="relationKinds"
             @preview="isolateGroup"
             @toggle="toggleGroup"
         />
@@ -149,7 +150,7 @@
     import type {LayoutMode} from "./composables/useDependencies"
     import {useDagGrouping} from "./composables/useDagGrouping"
     import {routeFamily} from "../../utils/routeFamily"
-    import {FLOW, EXECUTION, NAMESPACE, ASSET, nodesOf} from "./utils/types"
+    import {FLOW, EXECUTION, NAMESPACE, ASSET, nodesOf, edgesOf} from "./utils/types"
     import type {Types, Node, Element} from "./utils/types"
 
     const props = defineProps<{
@@ -240,6 +241,10 @@
     const isDagCanvas = computed(() => Boolean(props.dagView) && layoutMode.value === "dag")
 
     const hasElements = computed(() => getElements().length > 0)
+
+    const relationKinds = computed(() => new Set(
+        edgesOf(getElements()).map((edge) => edge.kind).filter((kind): kind is string => Boolean(kind)),
+    ))
 
     const showToolbar = computed(() => Boolean(props.dagView) && !isLoading.value && hasElements.value)
 

@@ -130,7 +130,6 @@
     "description": "説明",
     "show description": "説明を表示",
     "show details": "詳細を表示",
-    "show more details": "詳細を表示",
     "skipped": "スキップされました",
     "revision": "リビジョン",
     "theme": "テーマ",
@@ -441,7 +440,8 @@
       "invalid_description": "グラフの読み込み中にエラーが発生しました。ソースコードにエラーがないか確認してください。",
       "load_error": "トポロジーグラフを読み込めませんでした。もう一度お試しください。",
       "add-task": "Taskを追加",
-      "add-trigger": "Triggerを追加"
+      "add-trigger": "Triggerを追加",
+      "child-count": "task {count}個 | task {count}個"
     },
     "show task logs": "Task Logsを表示",
     "show task condition": "タスク条件を表示",

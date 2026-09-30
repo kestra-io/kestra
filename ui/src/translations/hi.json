@@ -130,7 +130,6 @@
     "description": "विवरण",
     "show description": "विवरण दिखाएं",
     "show details": "विवरण दिखाएं",
-    "show more details": "अधिक विवरण दिखाएं",
     "skipped": "छोड़ा गया",
     "revision": "संशोधन",
     "theme": "थीम",
@@ -441,7 +440,8 @@
       "invalid_description": "ग्राफ़ लोड करते समय एक त्रुटि हुई। कृपया त्रुटियों के लिए स्रोत कोड की जाँच करें।",
       "load_error": "टोपोलॉजी ग्राफ़ लोड नहीं किया जा सका। कृपया पुनः प्रयास करें।",
       "add-task": "Task जोड़ें",
-      "add-trigger": "Trigger जोड़ें"
+      "add-trigger": "Trigger जोड़ें",
+      "child-count": "{count} task | {count} tasks"
     },
     "show task logs": "Task Logs दिखाएं",
     "show task condition": "कार्य की स्थिति दिखाएं",

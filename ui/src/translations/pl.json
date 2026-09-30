@@ -130,7 +130,6 @@
     "description": "Opis",
     "show description": "Pokaż opis",
     "show details": "Pokaż szczegóły",
-    "show more details": "Pokaż więcej szczegółów",
     "skipped": "Pominięto",
     "revision": "Wersja",
     "theme": "Motyw",
@@ -441,7 +440,8 @@
       "invalid_description": "Wystąpił błąd podczas ładowania grafu. Proszę sprawdzić kod źródłowy pod kątem błędów.",
       "load_error": "Nie udało się załadować grafu topologii. Spróbuj ponownie.",
       "add-task": "Dodaj task",
-      "add-trigger": "Dodaj trigger"
+      "add-trigger": "Dodaj trigger",
+      "child-count": "{count} task | {count} tasks"
     },
     "show task logs": "Pokaż logi Taska",
     "show task condition": "Pokaż warunek Taska",

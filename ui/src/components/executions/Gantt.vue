@@ -273,7 +273,7 @@
 
     const props = withDefaults(defineProps<{
         namespace?: string;
-        /** Hides the filter bar and fills the given container height instead of the standalone tab's own layout — used to embed the chart in the Overview page. */
+        /** Hides the filter bar and fills the container height the parent gives it. */
         embed?: boolean;
     }>(), {
         namespace: undefined,
@@ -290,8 +290,6 @@
 
     const TASKRUN_THRESHOLD = 50
     const COLORS = State.color()
-    // Embed mode: fill the container height the parent gives us instead of the standalone tab's
-    // own viewport-relative cap, via KsCard's bodyStyle prop rather than :deep().
     const EMBEDDED_BODY_STYLE = {display: "flex", flexDirection: "column", flex: "1", minHeight: "0"}
     const EMBEDDED_SCROLLER_STYLE = {flex: "1", minHeight: "0", maxHeight: "none"}
     const TASK_TYPES_TO_EXCLUDE = [

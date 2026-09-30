@@ -130,8 +130,8 @@
         loadExecution(route.params.id as string)
     })
 
-    // Loading — until the current execution's own graph has been fetched. Reset per execution so a
-    // stale graph carried over from the previous execution (PrevNext) can't be read as "ready".
+    // Reset per execution: the previous execution's graph survives a PrevNext navigation and would
+    // otherwise read as ready.
     const graphReady = ref(false)
     watch(() => execution.value?.id, () => {
         graphReady.value = false
@@ -141,14 +141,13 @@
     })
     const isLoading = computed(() => !graphReady.value)
 
-    // Empty — nothing has run yet, so Gantt/Logs have nothing to plot; Topology (built from the flow
-    // definition, not execution progress) stays available.
+    // Topology comes from the flow definition rather than execution progress, so it alone survives
+    // the empty state.
     const isEmptyState = computed(() =>
         !isLoading.value && (execution.value?.taskRunList?.length ?? 0) === 0,
     )
     const showData = computed(() => !isLoading.value && !isEmptyState.value)
 
-    // The flow the current execution belongs to — the key the per-flow chart preference is stored under.
     const currentFlow = computed(() => {
         const exec = execution.value
         return exec ? {namespace: exec.namespace, flowId: exec.flowId} : undefined

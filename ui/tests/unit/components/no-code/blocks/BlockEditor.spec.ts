@@ -1664,8 +1664,9 @@ tasks:
             // When
             const keys = wrapper.findAll("[data-test='block-editor-footer'] kbd").map(k => k.text())
 
-            // Then — Meta+Shift+p and Control+Shift+p collapse to a single symbol
-            expect(keys).toEqual(["?", "↑", "↓", "↵", "a", "⌘⇧P"])
+            // Then — Meta+Shift+p and Control+Shift+p collapse to a single symbol; jsdom's own
+            // UA does not identify as macOS, so the non-Mac label is what actually renders here
+            expect(keys).toEqual(["?", "↑", "↓", "↵", "a", "Ctrl+Shift+P"])
         })
 
         it("offers insert-before and reorder once a real block is focused", async () => {

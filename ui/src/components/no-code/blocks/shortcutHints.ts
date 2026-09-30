@@ -6,6 +6,10 @@ export interface FooterHint {
     i18nKey: string
 }
 
+export function computeIsMac(nav: {platform?: string; userAgent?: string} = navigator): boolean {
+    return /Mac|iPhone|iPod|iPad/i.test(nav.platform || nav.userAgent || "")
+}
+
 /** Keys with no modifier: shown verbatim, exactly as the binding declares them. */
 const SIMPLE_KEY_DISPLAY: Record<string, string> = {
     ArrowUp: "↑",
@@ -19,27 +23,18 @@ const SIMPLE_KEY_DISPLAY: Record<string, string> = {
 }
 
 /**
- * `Meta` and `Control` are never two distinct bindings in this keymap — they are the same
- * shortcut written once per OS convention — so both resolve to the same glyph.
+ * `Meta` (Mac) and `Control` (Windows/Linux) are never two distinct bindings in this keymap — the
+ * same shortcut written once per OS convention — so both resolve to the platform's own glyph
+ * rather than always to `⌘`, which read wrong on Windows and Linux.
  */
-const MODIFIER_DISPLAY: Record<string, string> = {
-    Meta: "⌘",
-    Control: "⌘",
-    Shift: "⇧",
-    Alt: "⌥",
+export function buildModifierDisplay(isMac: boolean): Record<string, string> {
+    return isMac
+        ? {Meta: "⌘", Control: "⌘", Shift: "⇧", Alt: "⌥"}
+        : {Meta: "Ctrl+", Control: "Ctrl+", Shift: "Shift+", Alt: "Alt+"}
 }
 
-function comboMainKeyDisplay(key: string): string {
-    if (key in SIMPLE_KEY_DISPLAY) return SIMPLE_KEY_DISPLAY[key]
-    return key.length === 1 ? key.toUpperCase() : key
-}
+const MODIFIER_DISPLAY: Record<string, string> = buildModifierDisplay(computeIsMac())
 
-function displayForKey(key: string): string {
-    if (!key.includes("+")) return SIMPLE_KEY_DISPLAY[key] ?? key
-    const parts = key.split("+")
-    const mainKey = comboMainKeyDisplay(parts[parts.length - 1])
-    const prefix = parts.slice(0, -1).map(mod => MODIFIER_DISPLAY[mod] ?? `${mod}+`).join("")
-    return `${prefix}${mainKey}`
 }
 
 const SHORTCUT_GROUP_ORDER: BlockEditorKeymapGroup[] = ["navigate", "insert", "edit", "global"]

@@ -355,11 +355,8 @@
     const didYouMeanTranslation = computed(() => splitTranslation(t, "source_search.did_you_mean", "suggestion"))
     const crossResourceSearchStore = useCrossResourceSearchStore()
     const suggestedQuery = computed(() => crossResourceSearchStore.suggestedQuery)
-<<<<<<< HEAD
-=======
 
     let searchPendingToken = 0
->>>>>>> 1dab350b61 (fix(ui): search alternate separators across resources)
 
     const resultsRef = ref<InstanceType<typeof SourceSearchResults> | null>(null)
 
@@ -712,12 +709,9 @@
 
     async function fetchResults() {
         if (!loadInit.value) return
-<<<<<<< HEAD
-=======
 
         const currentSearchPendingToken = searchPendingToken
 
->>>>>>> 1dab350b61 (fix(ui): search alternate separators across resources)
         searchPending.value = true
         if (!query.value) {
             if (currentSearchPendingToken === searchPendingToken) {
@@ -752,11 +746,7 @@
                 }, gen)
             }
         } finally {
-<<<<<<< HEAD
-            if (gen !== undefined && crossResourceSearchStore.isSearchCurrent(gen)) {
-=======
             if (currentSearchPendingToken === searchPendingToken) {
->>>>>>> 1dab350b61 (fix(ui): search alternate separators across resources)
                 searchPending.value = false
             }
         }

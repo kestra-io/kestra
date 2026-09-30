@@ -215,11 +215,7 @@ describe("useCrossResourceSearchStore", () => {
         )
     })
 
-<<<<<<< HEAD
-    it("clears the previous suggestion before checking a new query", async () => {
-=======
     it("clears the previous suggestion when starting a new search", async () => {
->>>>>>> 1dab350b61 (fix(ui): search alternate separators across resources)
         mockSearchFlowsBySourceCode.mockResolvedValue({
             results: [{namespace: "ns", id: "flow", editable: true, matches: []}],
         })
@@ -240,26 +236,16 @@ describe("useCrossResourceSearchStore", () => {
 
         expect(store.suggestedQuery).toBe("my_flow")
 
-<<<<<<< HEAD
-        await store.searchFlowSuggestion(
-            {
-                query: "",
-                ...flowFilters,
-            },
-            gen,
-        )
-=======
         await store.search({
             types: ["flows"],
             query: "new-flow",
             ...flowFilters,
         })
 
->>>>>>> 1dab350b61 (fix(ui): search alternate separators across resources)
         expect(store.suggestedQuery).toBeNull()
     })
 
-    it("returns null when the alternative query has no results", async () => {
+    it("does not update the suggestion when the alternative query has no results", async () => {
         mockSearchFlowsBySourceCode
             .mockResolvedValueOnce({results: []})
             .mockResolvedValueOnce({results: []})
@@ -282,7 +268,7 @@ describe("useCrossResourceSearchStore", () => {
         expect(store.suggestedQuery).toBeNull()
     })
 
-    it("returns null without searching when the query has no separator", async () => {
+    it("does not update the suggestion when the query has no separator", async () => {
         const store = useCrossResourceSearchStore()
 
         const gen = await store.search({
@@ -302,7 +288,7 @@ describe("useCrossResourceSearchStore", () => {
         expect(mockSearchFlowsBySourceCode).not.toHaveBeenCalled()
     })
 
-    it("returns null without searching for regex queries", async () => {
+    it("does not update the suggestion for regex queries", async () => {
         const store = useCrossResourceSearchStore()
 
         const gen = await store.search({
@@ -323,11 +309,8 @@ describe("useCrossResourceSearchStore", () => {
         expect(mockSearchFlowsBySourceCode).not.toHaveBeenCalled()
     })
 
-<<<<<<< HEAD
-    it("returns undefined when the suggestion request becomes stale", async () => {
-=======
+
     it("does not update the suggestion when the request becomes stale", async () => {
->>>>>>> 1dab350b61 (fix(ui): search alternate separators across resources)
         const suggestionRequest = deferred<{results: unknown[]}>()
 
         mockSearchFlowsBySourceCode
@@ -360,13 +343,8 @@ describe("useCrossResourceSearchStore", () => {
         suggestionRequest.resolve({
             results: [{namespace: "ns", id: "flow", editable: true, matches: []}],
         })
-<<<<<<< HEAD
-
-        expect(await suggestionPromise).toBeUndefined()
-=======
         await suggestionPromise
         expect(store.suggestedQuery).toBeNull()
->>>>>>> 1dab350b61 (fix(ui): search alternate separators across resources)
     })
 
     it("discards a namespace-file retry once the query has moved on", async () => {

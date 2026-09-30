@@ -121,7 +121,6 @@ export const useCrossResourceSearchStore = defineStore("crossResourceSearch", ()
     let generation = 0
     const nextGeneration = () => ++generation
     const isCurrent = (gen: number) => gen === generation
-    const isSearchCurrent = (gen: number) => isCurrent(gen)
 
     function reset() {
         nextGeneration()
@@ -161,11 +160,8 @@ export const useCrossResourceSearchStore = defineStore("crossResourceSearch", ()
     async function searchFlowSuggestion(params: FlowsSearchParams, gen: number): Promise<void> {
         if (!isCurrent(gen)) return
 
-<<<<<<< HEAD
         suggestedQuery.value = null
 
-=======
->>>>>>> 1dab350b61 (fix(ui): search alternate separators across resources)
         if (!params.query || params.regex) return
 
         const alternativeQuery = getSeparatorVariant(params.query)
@@ -472,10 +468,6 @@ export const useCrossResourceSearchStore = defineStore("crossResourceSearch", ()
         searchFlows,
         searchFlowSuggestion,
         suggestedQuery,
-<<<<<<< HEAD
-        isSearchCurrent,
-=======
->>>>>>> 1dab350b61 (fix(ui): search alternate separators across resources)
         searchFiles,
         searchKv,
         searchSecrets,

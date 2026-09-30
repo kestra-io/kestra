@@ -486,7 +486,10 @@ public class ExecutorService {
                     e
                 );
                 runContext.logger().error("Failed to render output values: {}", e.getMessage(), e);
-                newExecution = newExecution.withState(State.Type.FAILED);
+                // the outputs of a killed execution are expected to be missing, and failing it would turn the kill into a retryable failure
+                if (finalState != State.Type.KILLED) {
+                    newExecution = newExecution.withState(State.Type.FAILED);
+                }
             }
         }
 

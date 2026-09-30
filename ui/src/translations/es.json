@@ -217,6 +217,18 @@
     "launch execution": "Ejecutar",
     "triggered done": "Ejecución <em>{name}</em> se ha activado exitosamente",
     "topology": "Topología",
+    "overviewChart": {
+      "switcherLabel": "Gráfico",
+      "loading": "Cargando gráfico…",
+      "emptyDescription": "Solo la topología está disponible hasta que un worker recoja esta ejecución.",
+      "topologySubtitle": "Vista estática de las tasks del Flow y cómo se conectan.",
+      "ganttSubtitle": "Línea de tiempo de cuándo se ejecutó cada task.",
+      "logsSubtitle": "Detalles de la ejecución de la Task y sus logs.",
+      "noticeTitle": "Mostrando Gantt en lugar de la topología.",
+      "noticeBody": "Este Flow ejecuta {count} Tasks — demasiadas para leer en un gráfico.",
+      "showTopologyAnyway": "Mostrar topología de todos modos",
+      "dismissNotice": "No volver a mostrar esto para este flow"
+    },
     "date": "Fecha",
     "prev_execution": "Ejecución anterior",
     "next_execution": "Próxima ejecución",

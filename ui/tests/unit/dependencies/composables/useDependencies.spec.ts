@@ -295,6 +295,28 @@ describe("useDependencies composable", () => {
       })
     })
 
+    it("keeps flow nodes outside the asset DAG view on the default symbol so hover colours apply", async () => {
+      const {graphNodes} = mountControlled("A")
+      await nextTick()
+
+      graphNodes.value.forEach(n => expect(n.symbol).toBeUndefined())
+    })
+
+    it("draws flow nodes of the asset DAG view as image symbols", async () => {
+      const graphRef = makeGraphRef()
+      const fetchAssetDependencies = vi.fn().mockResolvedValue({data: makeControlledElements(), count: 4})
+      const wrapper = mount({
+        template: "<div></div>",
+        setup() {
+          return {composable: useDependencies(graphRef, FLOW, "A", {}, fetchAssetDependencies, undefined, true)}
+        },
+      })
+      await nextTick()
+
+      const {graphNodes} = wrapper.vm.composable as ReturnType<typeof useDependencies>
+      graphNodes.value.forEach(n => expect(String(n.symbol)).toMatch(/^image:\/\//))
+    })
+
     it("every edge carries emphasis.lineStyle with the hover edge colour", async () => {
       const {graphEdges} = mountControlled("A")
       await nextTick()
@@ -330,6 +352,41 @@ describe("useDependencies composable", () => {
         expect(blur?.itemStyle?.color).toBe(n.itemStyle?.color)
         expect(blur?.itemStyle?.opacity ?? 1).toBe(n.itemStyle?.opacity ?? 1)
       })
+    })
+  })
+
+  describe("edge arrow symbol", () => {
+    function mountWithEdgeKinds() {
+      const graphRef = makeGraphRef()
+      const fetchAssetDependencies = vi.fn().mockResolvedValue({
+        data: [
+          {data: {id: "A", type: "NODE", flow: "flow-a", namespace: "ns", metadata: {subtype: "FLOW"}}},
+          {data: {id: "B", type: "NODE", flow: "flow-b", namespace: "ns", metadata: {subtype: "FLOW"}}},
+          {data: {id: "C", type: "NODE", flow: "flow-c", namespace: "ns", metadata: {subtype: "FLOW"}}},
+          {data: {id: "e1", type: "EDGE", source: "A", target: "B", kind: "UPSTREAM_OF", directed: true}},
+          {data: {id: "e2", type: "EDGE", source: "A", target: "C", kind: "RELATED", directed: false}},
+        ],
+        count: 3,
+      })
+      return mount({
+        template: "<div></div>",
+        setup() {
+          const composable = useDependencies(graphRef, FLOW, "A", {}, fetchAssetDependencies)
+          return {composable}
+        },
+      })
+    }
+
+    it("suppresses the arrowhead only for the undirected (RELATED) edge", async () => {
+      const wrapper = mountWithEdgeKinds()
+      await nextTick()
+      const {graphEdges} = wrapper.vm.composable as ReturnType<typeof useDependencies>
+
+      const toDirected = graphEdges.value.find((e) => e.target === "B")
+      const toUndirected = graphEdges.value.find((e) => e.target === "C")
+
+      expect((toDirected?.symbol as string[] | undefined)?.[1]).toBe("arrow")
+      expect((toUndirected?.symbol as string[] | undefined)?.[1]).toBe("none")
     })
   })
 

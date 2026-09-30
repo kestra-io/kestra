@@ -2109,7 +2109,6 @@ public class ExecutionController {
             throw new BulkValidationException("One or more executions could not be replayed.", invalids);
         }
 
-        List<ProblemError> invalids = new ArrayList<>();
         for (Execution execution : executions) {
             if (!execution.getState().isTerminated()) {
                 invalids.add(executionProblem(

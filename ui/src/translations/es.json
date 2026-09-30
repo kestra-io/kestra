@@ -285,6 +285,13 @@
     "last execution status": "Último estado de ejecución",
     "jump to": "Ir a",
     "jump to...": "Saltar a...",
+    "global_search": {
+        "open_flow": "Abrir flow",
+        "flow_executions": "Ejecuciones del flow",
+        "move": "Mover",
+        "menu": "Menú",
+        "sources": "Menú + flows + namespaces"
+    },
     "contextBar": {
       "ai": "IA",
       "news": "Noticias",

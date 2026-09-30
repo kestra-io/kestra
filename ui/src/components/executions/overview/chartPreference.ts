@@ -1,10 +1,4 @@
-/**
- * Resolution logic for the Execution Overview chart switcher (kestra-ee#11414): which of
- * Topology / Gantt / Logs shows by default, and the per-flow persistence backing it.
- */
-
-/** Node count above which the adaptive default switches from Topology to Gantt. A placeholder,
- *  not a researched value — kept as a single named constant so it is trivial to tune later. */
+// Placeholder, not a researched value: no instrumentation on topology graph size exists yet.
 export const CHART_NODE_THRESHOLD = 40
 
 export type OverviewChart = "topology" | "gantt" | "logs"
@@ -16,15 +10,9 @@ export interface FlowRef {
 
 export interface ChartResolution {
     chart: OverviewChart
-    /** True only when the size-based rule picked Gantt over the Topology default — the one case the notice applies to. */
     adaptiveRuleFired: boolean
 }
 
-/**
- * Resolution order: a stored per-flow choice always wins; otherwise a flow with more nodes than
- * {@link CHART_NODE_THRESHOLD} defaults to Gantt (a dense graph reads better as a timeline),
- * everything else defaults to Topology.
- */
 export function resolveOverviewChart(
     storedChart: OverviewChart | undefined,
     nodeCount: number,
@@ -47,10 +35,6 @@ function flowStorageKey({namespace, flowId}: FlowRef): string {
     return `${namespace}/${flowId}`
 }
 
-/**
- * A localStorage-backed map keyed on `namespace/flowId`, capped at {@link MAX_STORED_FLOWS}
- * entries (least-recently-set evicted first) so it cannot grow unbounded across many flows.
- */
 export class BoundedFlowStore<V> {
     constructor(
         private readonly storageKey: string,

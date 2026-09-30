@@ -534,14 +534,17 @@ public class FlowService {
         return this.importFlow(tenantId, source, false);
     }
 
+    /**
+     * Imports a flow from its source, creating it or adding a revision to it.
+     * <p>
+     * A dry run applies every check of the actual import, side effects included, and only skips the write: a
+     * caller that dry-runs several flows before importing them relies on nothing being rejected later.
+     */
     public FlowWithSource importFlow(String tenantId, String source, boolean dryRun) throws FlowProcessingException {
         final GenericFlow flow = GenericFlow.fromYaml(tenantId, source);
 
-        // Best-effort, actual imports only: a dry run must keep reporting a missing plugin type as
-        // a validation failure without side effects.
-        if (!dryRun) {
-            pluginAutoInstallService.installMissingPlugins(source);
-        }
+        // Best-effort: installed before validation so a not-yet-installed plugin type does not fail the import.
+        pluginAutoInstallService.installMissingPlugins(source);
 
         Optional<FlowWithSource> maybeExisting = flowRepository.findByIdWithSource(
             flow.getTenantId(),
@@ -552,6 +555,7 @@ public class FlowService {
         );
 
         FlowWithSource flowToImport = flowParsingService.parse(flow, true);
+        modelValidator.validate(flowParsingService.parseForValidation(flowToImport));
         throwOnCyclicDependency(flowToImport);
 
         if (dryRun) {

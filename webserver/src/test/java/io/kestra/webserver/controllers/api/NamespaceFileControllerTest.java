@@ -21,6 +21,7 @@ import org.junit.jupiter.api.function.Executable;
 
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.junit.annotations.LoadFlows;
+import io.kestra.core.junit.assertions.Problems;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.storages.*;
@@ -34,8 +35,6 @@ import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.client.annotation.Client;
-import io.kestra.core.junit.assertions.Problems;
-import io.kestra.webserver.errors.ProblemTypes;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.http.client.multipart.MultipartBody;
 import io.micronaut.reactor.http.client.ReactorHttpClient;
@@ -143,7 +142,7 @@ class NamespaceFileControllerTest {
         client.toBlocking().exchange(HttpRequest.DELETE("/api/v1/main/namespaces/" + namespace + "/files?path=/test.txt", null));
 
         // Every revision the file ever held must read as gone, not just the one it was deleted at
-        for (int revision : new int[]{ 1, 2 }) {
+        for (int revision : new int[] { 1, 2 }) {
             HttpClientResponseException e = assertThrows(
                 HttpClientResponseException.class,
                 () -> client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/namespaces/" + namespace + "/files?path=/test.txt&revision=" + revision))
@@ -520,6 +519,7 @@ class NamespaceFileControllerTest {
                 "fileContent", "files.zip", zip(
                     List.of(
                         Map.entry("a.txt", "A"),
+                        Map.entry("_flows/valid.yml", "id: valid\nnamespace: " + namespace + "\ntasks:\n  - id: t\n    type: io.kestra.plugin.core.log.Log\n    message: Hello\n"),
                         Map.entry("../escape.txt", "BAD"),
                         Map.entry("_flows/broken.yml", "id: [broken"),
                         Map.entry("_flows/unknown.yml", "id: unknown\nnamespace: " + namespace + "\ntasks:\n  - id: t\n    type: io.kestra.plugin.core.log.Nope\n"),
@@ -547,18 +547,50 @@ class NamespaceFileControllerTest {
             .doesNotContain("\\n");
         assertThat(storageInterface.exists(TENANT_ID, namespace, toNamespacedStorageUri(namespace, URI.create("/a.txt")))).isFalse();
         assertThat(storageInterface.exists(TENANT_ID, namespace, toNamespacedStorageUri(namespace, URI.create("/c.txt")))).isFalse();
+        assertThat(flowRepository.findById(TENANT_ID, namespace, "valid")).isEmpty();
     }
 
     @Test
-    void shouldImportNothingFromTheArchiveWhenAnEntryConflictsWithAFile() throws IOException, URISyntaxException {
+    void shouldImportNothingFromTheArchiveWhenAFlowUpdateIsInvalid() throws IOException {
         String namespace = TestsUtils.randomNamespace();
-        namespaceFactory.of(TENANT_ID, namespace, storageInterface).putFile(Path.of("/data"), new ByteArrayInputStream("existing".getBytes()));
+        String flowSource = "id: updated\nnamespace: " + namespace + "\ntasks:\n  - id: t\n    type: io.kestra.plugin.core.log.Log\n";
+        client.toBlocking().exchange(
+            HttpRequest.POST(
+                "/api/v1/main/namespaces/" + namespace + "/files?path=/files.zip", MultipartBody.builder()
+                    .addPart("fileContent", "files.zip", zip(List.of(Map.entry("_flows/updated.yml", flowSource + "    message: Hello\n"))))
+                    .build()
+            ).contentType(MediaType.MULTIPART_FORM_DATA_TYPE)
+        );
+        MultipartBody body = MultipartBody.builder()
+            .addPart("fileContent", "files.zip", zip(List.of(Map.entry("a.txt", "A"), Map.entry("_flows/updated.yml", flowSource))))
+            .build();
+
+        HttpClientResponseException e = assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking().exchange(
+                HttpRequest.POST("/api/v1/main/namespaces/" + namespace + "/files?path=/files.zip", body)
+                    .contentType(MediaType.MULTIPART_FORM_DATA_TYPE)
+            )
+        );
+
+        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
+        assertThat(e.getResponse().getBody(String.class).orElse("")).contains("'_flows/updated.yml' (").contains("message: must not be null");
+        assertThat(storageInterface.exists(TENANT_ID, namespace, toNamespacedStorageUri(namespace, URI.create("/a.txt")))).isFalse();
+        assertThat(flowRepository.findById(TENANT_ID, namespace, "updated").get().getRevision()).isEqualTo(1);
+    }
+
+    @Test
+    void shouldImportNothingFromTheArchiveWhenAnEntryConflictsWithAnotherPath() throws IOException, URISyntaxException {
+        String namespace = TestsUtils.randomNamespace();
+        Namespace namespaceStorage = namespaceFactory.of(TENANT_ID, namespace, storageInterface);
+        namespaceStorage.putFile(Path.of("/data"), new ByteArrayInputStream("existing".getBytes()));
+        namespaceStorage.createDirectory(Path.of("/folder"));
         MultipartBody body = MultipartBody.builder()
             .addPart(
                 "fileContent", "files.zip", zip(
                     List.of(
                         Map.entry("a.txt", "A"),
                         Map.entry("data/x.txt", "X"),
+                        Map.entry("folder", "F"),
                         Map.entry("b", "B"),
                         Map.entry("b/c.txt", "C"),
                         Map.entry("d/e.txt", "E"),
@@ -577,8 +609,9 @@ class NamespaceFileControllerTest {
 
         assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
         assertThat(e.getResponse().getBody(String.class).orElse(""))
-            .contains("3 entries are invalid")
+            .contains("4 entries are invalid")
             .contains("'data/x.txt'")
+            .contains("'folder'")
             .contains("'b/c.txt'")
             .contains("'d'");
         assertThat(storageInterface.exists(TENANT_ID, namespace, toNamespacedStorageUri(namespace, URI.create("/a.txt")))).isFalse();

@@ -789,36 +789,40 @@
         return (routeFamily(route.name) === "flows/update") || (route.name === "executions/list")
     })
 
+    const isAllowedOnExecutions = (executionAction: string) => props.namespace
+        ? authStore.user?.isAllowed(resource.EXECUTION, executionAction, props.namespace)
+        : authStore.user?.hasAnyActionOnAnyNamespace(resource.EXECUTION, executionAction)
+
     const canCheck = computed(() => {
         return canDelete.value || canUpdate.value || canKill.value || canForceRun.value || canUnqueue.value || canRestart.value || canReplay.value
     })
 
     const canRestart = computed(() => {
-        return authStore.user?.isAllowed(resource.EXECUTION, action.RESTART, props.namespace)
+        return isAllowedOnExecutions(action.RESTART)
     })
 
     const canReplay = computed(() => {
-        return authStore.user?.isAllowed(resource.EXECUTION, action.REPLAY, props.namespace)
+        return isAllowedOnExecutions(action.REPLAY)
     })
 
     const canUpdate = computed(() => {
-        return authStore.user?.isAllowed(resource.EXECUTION, action.UPDATE, props.namespace)
+        return isAllowedOnExecutions(action.UPDATE)
     })
 
     const canDelete = computed(() => {
-        return authStore.user?.isAllowed(resource.EXECUTION, action.DELETE, props.namespace)
+        return isAllowedOnExecutions(action.DELETE)
     })
 
     const canKill = computed(() => {
-        return authStore.user?.isAllowed(resource.EXECUTION, action.KILL, props.namespace)
+        return isAllowedOnExecutions(action.KILL)
     })
 
     const canForceRun = computed(() => {
-        return authStore.user?.isAllowed(resource.EXECUTION, action.FORCE_RUN, props.namespace)
+        return isAllowedOnExecutions(action.FORCE_RUN)
     })
 
     const canUnqueue = computed(() => {
-        return authStore.user?.isAllowed(resource.EXECUTION, action.UNQUEUE, props.namespace)
+        return isAllowedOnExecutions(action.UNQUEUE)
     })
 
     const isAllowedEdit = computed(() => {

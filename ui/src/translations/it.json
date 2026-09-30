@@ -395,6 +395,37 @@
     "resumed title": "Riprendi esecuzione <code>{id}</code>",
     "resumed confirm": "Sei sicuro di voler riprendere l'esecuzione <code>{id}</code>?",
     "resumed done": "L'esecuzione è stata ripresa",
+    "approval": {
+      "review": "Revisione",
+      "title": "Rivedi l'esecuzione <code>{id}</code>",
+      "approve": "Approva",
+      "deny": "Nega",
+      "decision": "Decisione",
+      "decisions": {
+        "approved": "Approvato",
+        "denied": "Negato",
+        "expired": "Scaduto"
+      },
+      "by": "Revisionato da",
+      "on": "Revisionato il",
+      "comment": "Commento",
+      "comment hint": {
+        "optional": "Opzionale.",
+        "always": "È richiesto un commento.",
+        "on approve": "È richiesto un commento per approvare.",
+        "on deny": "È richiesto un commento per negare."
+      },
+      "comment required": "È richiesto un commento per questa decisione.",
+      "inputs invalid": "Alcuni input non sono validi: {errors}",
+      "review done": "La tua recensione è stata registrata",
+      "cancel request": "Annulla richiesta",
+      "cancel confirm": "Sei sicuro di voler annullare la richiesta di approvazione dell'esecuzione <code>{id}</code>? Nessun ramo decisionale verrà eseguito.",
+      "cancel done": "La richiesta di approvazione è stata annullata",
+      "banner": {
+        "pausing": "Questa esecuzione sta preparando una richiesta di approvazione e si metterà in pausa per una revisione.",
+        "paused": "Questa esecuzione è in attesa di revisione. Approvala o rifiutala per continuare."
+      }
+    },
     "resume from breakpoint title": "Riprendi l'esecuzione <code>{id}</code> dal punto di interruzione",
     "resume from breakpoint done": "L'esecuzione è ripresa dal breakpoint",
     "breakpoints": "Punti di interruzione",

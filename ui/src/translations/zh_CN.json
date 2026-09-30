@@ -395,6 +395,37 @@
     "resumed title": "恢复执行 <code>{id}</code>",
     "resumed confirm": "您确定要恢复执行 <code>{id}</code> 吗？",
     "resumed done": "执行已恢复",
+    "approval": {
+      "review": "审查",
+      "title": "查看执行 <code>{id}</code>",
+      "approve": "批准",
+      "deny": "拒绝",
+      "decision": "决策",
+      "decisions": {
+        "approved": "已批准",
+        "denied": "已拒绝",
+        "expired": "已过期"
+      },
+      "by": "审阅者",
+      "on": "已审核于",
+      "comment": "评论",
+      "comment hint": {
+        "optional": "可选。",
+        "always": "需要评论。",
+        "on approve": "批准需要评论。",
+        "on deny": "拒绝需要评论。"
+      },
+      "comment required": "此决定需要评论。",
+      "inputs invalid": "某些输入无效：{errors}",
+      "review done": "您的评论已记录",
+      "cancel request": "取消请求",
+      "cancel confirm": "您确定要取消执行 <code>{id}</code> 的审批请求吗？没有决策分支会运行。",
+      "cancel done": "审批请求已取消",
+      "banner": {
+        "pausing": "此执行正在准备审批请求，并将暂停以供审查。",
+        "paused": "此 Execution 正在等待审核。批准或拒绝以继续。"
+      }
+    },
     "resume from breakpoint title": "从断点恢复执行 `{id}`",
     "resume from breakpoint done": "执行已从断点恢复",
     "breakpoints": "断点",

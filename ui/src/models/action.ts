@@ -10,6 +10,7 @@ export default {
     REPLAY: "REPLAY",
     PAUSE: "PAUSE",
     RESUME: "RESUME",
+    REVIEW: "REVIEW",
     UNQUEUE: "UNQUEUE",
     FORCE_RUN: "FORCE_RUN",
     FOLLOW: "FOLLOW",

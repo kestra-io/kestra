@@ -54,19 +54,20 @@
         </KsAlert>
 
         <div class="chart-body" :aria-busy="isLoading">
-            <KsSkeleton v-if="isLoading" class="chart-panel" animated :rows="6" />
+            <KsSkeleton v-if="isLoading" class="chart-panel" animated :rows="6" data-test="chart-loading" />
             <KsEmpty
-                v-else-if="isEmptyState"
+                v-else-if="isEmptyState && activeChart !== 'topology'"
                 class="chart-panel"
                 :description="$t('overviewChart.emptyDescription')"
+                data-test="chart-empty"
             />
-            <div class="chart-panel" v-show="showData && activeChart === 'topology'">
+            <div class="chart-panel" v-show="!isLoading && activeChart === 'topology'" data-test="topology-panel">
                 <Topology :horizontalDefault="!verticalLayout" />
             </div>
-            <div v-if="showData && activeChart === 'gantt'" class="chart-panel">
+            <div v-if="showData && activeChart === 'gantt'" class="chart-panel" data-test="gantt-panel">
                 <Gantt embed />
             </div>
-            <div v-if="showData && activeChart === 'logs'" class="chart-panel">
+            <div v-if="showData && activeChart === 'logs'" class="chart-panel" data-test="logs-panel">
                 <Logs embedded />
             </div>
         </div>
@@ -110,6 +111,7 @@
     import {
         chartByFlowStore,
         chartNoticeDismissedByFlowStore,
+        countTaskNodes,
         resolveOverviewChart,
         type OverviewChart,
     } from "./chartPreference"
@@ -118,7 +120,8 @@
 
     const execution = computed(() => store.execution)
     const flowGraph = computed(() => store.flowGraph)
-    const nodeCount = computed(() => flowGraph.value?.nodes?.length ?? 0)
+    const flowGraphError = computed(() => store.flowGraphError)
+    const nodeCount = computed(() => countTaskNodes(flowGraph.value?.nodes))
 
     const loadExecution = (id: string) => store.loadExecution({id})
 
@@ -136,8 +139,10 @@
     watch(() => execution.value?.id, () => {
         graphReady.value = false
     })
-    watch(flowGraph, () => {
-        graphReady.value = true
+    // A failed fetch never reassigns flowGraph, so it has to flip graphReady on its own or the
+    // skeleton stays up forever.
+    watch([flowGraph, flowGraphError], ([graph, hasError]) => {
+        if (graph !== undefined || hasError) graphReady.value = true
     })
     const isLoading = computed(() => !graphReady.value)
 

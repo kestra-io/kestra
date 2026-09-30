@@ -1,3 +1,5 @@
+import {isTaskNode, type MinimalNode} from "@kestra-io/topology/vue-flow-utils"
+
 // Placeholder, not a researched value: no instrumentation on topology graph size exists yet.
 export const CHART_NODE_THRESHOLD = 40
 
@@ -11,6 +13,12 @@ export interface FlowRef {
 export interface ChartResolution {
     chart: OverviewChart
     adaptiveRuleFired: boolean
+}
+
+// The graph's raw node list includes the synthetic GraphClusterRoot/GraphClusterEnd nodes, which
+// would otherwise inflate both the notice copy and the adaptive threshold.
+export function countTaskNodes(nodes: MinimalNode[] | undefined): number {
+    return nodes?.filter(isTaskNode).length ?? 0
 }
 
 export function resolveOverviewChart(

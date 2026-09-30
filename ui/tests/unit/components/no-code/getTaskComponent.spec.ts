@@ -161,4 +161,19 @@ describe("getTaskComponent discriminated-union dispatch", () => {
         const component = getTaskComponent(property, retryDefinitions, "retry")
         expect(component.ksTaskName).not.toBe("plugin-implementation")
     })
+
+    it("keeps the counted-header list for a large short-name-discriminated array, like flow Input", () => {
+        // Input: @JsonSubTypes.Type(name = "STRING"/"INT"/.../"ARRAY") — 12+ short-named core types,
+        // not plugin-provided, so it needs the > 10 list fallback the plugin-implementation rule skips.
+        const inputDefinitions = Object.fromEntries(
+            ["STRING", "INT", "FLOAT", "BOOLEAN", "DATETIME", "DATE", "TIME", "DURATION", "FILE", "JSON", "ARRAY"]
+                .map((name) => [name, {type: "object", properties: {type: {const: name}}}]),
+        )
+        const property = {
+            type: "array",
+            items: {anyOf: Object.keys(inputDefinitions).map((name) => ({$ref: `#/definitions/${name}`}))},
+        }
+        const component = getTaskComponent(property, inputDefinitions, "inputs")
+        expect(component.ksTaskName).toBe("list")
+    })
 })

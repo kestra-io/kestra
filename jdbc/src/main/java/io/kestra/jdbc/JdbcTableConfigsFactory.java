@@ -16,6 +16,7 @@ import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.sla.SLAMonitor;
 import io.kestra.core.models.kv.PersistedKvMetadata;
 import io.kestra.core.models.namespaces.files.NamespaceFileMetadata;
+import io.kestra.core.models.notifications.Notification;
 import io.kestra.core.models.topologies.FlowTopology;
 import io.kestra.core.models.triggers.multipleflows.MultipleConditionWindow;
 import io.kestra.core.runners.*;
@@ -180,6 +181,12 @@ public class JdbcTableConfigsFactory {
     @Named("agentmessage")
     public InstantiableJdbcTableConfig agentMessage() {
         return new InstantiableJdbcTableConfig("agentmessage", AgentMessage.class, "ai_agent_message");
+    }
+
+    @Bean
+    @Named("notifications")
+    public InstantiableJdbcTableConfig notifications() {
+        return new InstantiableJdbcTableConfig("notifications", Notification.class, "notifications");
     }
 
     public static class InstantiableJdbcTableConfig extends JdbcTableConfig {

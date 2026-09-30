@@ -1,7 +1,7 @@
 package io.kestra.core.server;
 
 /**
- * The kind of operation an {@link AsyncOperationListener} is notified about.
+ * The kind of operation {@link io.kestra.core.services.NotificationService#notifyAsyncOperation} is notified about.
  */
 public enum AsyncOperationType {
     EXECUTION_KILL,

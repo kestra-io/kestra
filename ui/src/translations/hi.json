@@ -284,6 +284,13 @@
     "last execution status": "अंतिम निष्पादन स्थिति",
     "jump to": "यहाँ जाएँ",
     "jump to...": "कूदें...",
+    "global_search": {
+        "open_flow": "flow खोलें",
+        "flow_executions": "flow निष्पादन",
+        "move": "ले जाएँ",
+        "menu": "मेनू",
+        "sources": "मेनू + flows + namespaces"
+    },
     "contextBar": {
       "ai": "एआई",
       "news": "समाचार",

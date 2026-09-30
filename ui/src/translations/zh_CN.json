@@ -284,6 +284,13 @@
     "last execution status": "上次执行状态",
     "jump to": "跳转到",
     "jump to...": "跳转到...",
+    "global_search": {
+        "open_flow": "打开 flow",
+        "flow_executions": "flow 执行",
+        "move": "移动",
+        "menu": "菜单",
+        "sources": "菜单 + flows + namespaces"
+    },
     "contextBar": {
       "ai": "人工智能",
       "news": "新闻",

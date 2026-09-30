@@ -6,6 +6,7 @@ import type {EChartsType, ECElementEvent} from "echarts/core"
 import {State, cssVar} from "@kestra-io/design-system"
 import type {KsGraphNode, KsGraphEdge} from "@kestra-io/design-system"
 import type {ExecutionStatusEvent} from "@kestra-io/kestra-sdk"
+import {useToast} from "../../../utils/toast"
 import {useCoreStore} from "../../../stores/core"
 import {useFlowStore} from "../../../stores/flow"
 import {useExecutionsStore} from "../../../stores/executions"
@@ -111,6 +112,7 @@ export function useDependencies(
     const miscStore = useMiscStore()
 
     const {t} = useI18n({useScope: "global"})
+    const toast = useToast()
 
     const isLoading = ref(true)
     const isRendering = ref(true)
@@ -647,6 +649,8 @@ export function useDependencies(
                 chartEdges.value = graphEdges.value
                 captureAndFocusWhenReady()
             }
+        } catch {
+            toast.error(t("dependency.dag.hub.expand_failed"))
         } finally {
             expandingNodeID.value = undefined
         }

@@ -101,6 +101,12 @@ vi.mock("vue-router", () => ({
 
 vi.mock("vue-i18n", () => ({useI18n: () => ({t: (key: string) => key})}))
 
+const toastError = vi.fn()
+vi.mock("../../../../src/utils/toast", async (importOriginal) => ({
+  ...await importOriginal<typeof import("../../../../src/utils/toast")>(),
+  useToast: () => ({error: toastError}),
+}))
+
 // Minimal KsGraph ref mock that satisfies the KsGraphRef interface.
 function makeGraphRef() {
   return ref({
@@ -601,6 +607,19 @@ describe("useDependencies composable", () => {
 
       expect(nodeMeta(getElements, "hub-a")).toMatchObject({expandable: false, exhausted: true})
       expect(getElements()).toHaveLength(2)
+    })
+
+    it("shows an error toast and keeps the graph when the expand request fails", async () => {
+      toastError.mockClear()
+      const {getElements, expandNode, expandingNodeID} = mountWithHubs(new Error("boom"))
+      await nextTick()
+      await nextTick()
+
+      await expandNode("hub-a")
+
+      expect(toastError).toHaveBeenCalledTimes(1)
+      expect(getElements()).toHaveLength(2)
+      expect(expandingNodeID.value).toBeUndefined()
     })
 
     it("is a no-op when no expandAssetNode was supplied", async () => {

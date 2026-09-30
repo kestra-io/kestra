@@ -67,20 +67,20 @@
                         <span
                             v-if="breakdown.queued > 0"
                             class="split-bar-seg split-bar-queued"
-                data-test="duration-segment-queued"
+                            data-test="duration-segment-queued"
                             :style="{width: segmentWidths.queued + '%'}"
                         />
                         <span
                             v-if="breakdown.running > 0"
                             class="split-bar-seg split-bar-running"
-                data-test="duration-segment-running"
+                            data-test="duration-segment-running"
                             :class="{'split-bar-running-live': isActivelyRunning}"
                             :style="{width: segmentWidths.running + '%'}"
                         />
                         <span
                             v-if="breakdown.paused > 0"
                             class="split-bar-seg split-bar-paused"
-                data-test="duration-segment-paused"
+                            data-test="duration-segment-paused"
                             :style="{width: segmentWidths.paused + '%'}"
                         />
                     </div>

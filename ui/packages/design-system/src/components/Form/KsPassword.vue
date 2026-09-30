@@ -3,7 +3,7 @@
         <KsInput
             v-model="model"
             :class="hidden || disabled ? 'ks-password--masked' : ''"
-            v-bind="({...filteredProps(), ...$attrs} as any)"
+            v-bind="{...filteredProps(), ...$attrs}"
             @change="emit('change', $event)"
             autosize
             resize="none"

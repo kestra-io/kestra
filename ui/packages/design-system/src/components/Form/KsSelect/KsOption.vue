@@ -18,7 +18,7 @@
     defineOptions({inheritAttrs: false})
 
     const props = defineProps<{
-        value: any
+        value: string | number
         label?: string | number
         disabled?: boolean
     }>()

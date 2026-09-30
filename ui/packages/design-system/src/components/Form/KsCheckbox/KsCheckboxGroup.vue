@@ -2,7 +2,7 @@
     <ElCheckboxGroup
         v-model="model"
         :class="props.size ? `kel-checkbox-group--${props.size}` : undefined"
-        v-bind="({...filteredProps(), ...$attrs} as any)"
+        v-bind="{...filteredProps(), ...$attrs}"
         @change="emit('change', $event)"
     >
         <template v-if="$slots.default" #default>
@@ -26,7 +26,7 @@
     }>()
 
     const emit = defineEmits<{
-        change: [value: any[]]
+        change: [value: (boolean | string | number)[]]
     }>()
 
     defineSlots<{

@@ -2,7 +2,7 @@
     <ElRadioGroup
         v-model="model"
         :class="props.size ? `kel-radio-group--${props.size}` : undefined"
-        v-bind="({...filteredProps(), ...$attrs} as any)"
+        v-bind="{...filteredProps(), ...$attrs}"
         @change="emit('change', $event)"
     >
         <template v-if="$slots.default" #default>
@@ -25,7 +25,7 @@
     }>()
 
     const emit = defineEmits<{
-        change: [value: any]
+        change: [value: string | number | boolean | undefined]
     }>()
 
     defineSlots<{

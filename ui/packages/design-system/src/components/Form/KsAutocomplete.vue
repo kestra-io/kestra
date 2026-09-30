@@ -1,7 +1,7 @@
 <template>
     <ElAutocomplete
         v-model="model"
-        v-bind="({...filteredProps(), ...$attrs} as any)"
+        v-bind="{...filteredProps(), ...$attrs}"
         @select="emit('select', $event)"
     >
         <template v-if="$slots.default" #default="p">
@@ -23,13 +23,13 @@
 
     defineOptions({inheritAttrs: false})
 
-    const model = defineModel<any>()
+    const model = defineModel<string>()
 
     const props = withDefaults(defineProps<{
         placeholder?: string
         disabled?: boolean
         clearable?: boolean
-        fetchSuggestions?: (query: string, callback: (results: any[]) => void) => void
+        fetchSuggestions?: (query: string, callback: (results: Record<string, unknown>[]) => void) => void
         triggerOnFocus?: boolean
         valueKey?: string
     }>(), {
@@ -40,11 +40,11 @@
     })
 
     const emit = defineEmits<{
-        select: [item: any]
+        select: [item: Record<string, unknown>]
     }>()
 
     defineSlots<{
-        default?: (scope: {item: any}) => unknown
+        default?: (scope: {item: Record<string, unknown>}) => unknown
         prepend?(): unknown
         suffix?(): unknown
     }>()

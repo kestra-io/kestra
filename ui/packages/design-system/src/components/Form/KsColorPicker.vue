@@ -1,7 +1,7 @@
 <template>
     <ElColorPicker
         v-model="model"
-        v-bind="({...filteredProps(), ...$attrs} as any)"
+        v-bind="{...filteredProps(), ...$attrs}"
         @change="emit('change', $event)"
         @active-change="emit('activeChange', $event as string)"
     />

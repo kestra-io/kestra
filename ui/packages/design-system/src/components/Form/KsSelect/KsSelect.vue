@@ -1,5 +1,5 @@
 <template>
-    <ElSelect ref="elSelectRef" v-model="model" v-bind="({...filteredProps(), ...$attrs} as any)" :suffixIcon="resolvedSuffixIcon" :class="{'kel-select--fit': fit, 'kel-select--single-line-tags': singleLineTags}" @change="emit('change', $event)">
+    <ElSelect ref="elSelectRef" v-model="model" v-bind="({...filteredProps(), ...$attrs} as Record<string, unknown>)" :suffixIcon="resolvedSuffixIcon" :class="{'kel-select--fit': fit, 'kel-select--single-line-tags': singleLineTags}" @change="emit('change', $event)">
         <template v-if="$slots.default" #default>
             <slot />
         </template>
@@ -45,7 +45,7 @@
 
     defineOptions({inheritAttrs: false})
 
-    const model = defineModel<any>()
+    const model = defineModel<string | number | boolean | object | null | (string | number | boolean | object | null)[]>()
 
     const props = withDefaults(defineProps<{
         placeholder?: string
@@ -87,15 +87,15 @@
     })
 
     const emit = defineEmits<{
-        change: [value: any]
+        change: [value: unknown]
     }>()
 
     const elSelectRef = ref<InstanceType<typeof ElSelect>>()
 
     // Options passing ElSelect's own filter. `optionsArray` is exposed as a ComputedRef in the
     // Element Plus types but unwrapped on the instance proxy, hence the cast.
-    const visibleOptions = computed<Array<{visible: boolean; value: any}>>(() =>
-        ((elSelectRef.value as any)?.optionsArray ?? []).filter((o: {visible: boolean}) => o.visible),
+    const visibleOptions = computed<Array<{visible: boolean; value: unknown}>>(() =>
+        ((elSelectRef.value as InstanceType<typeof ElSelect> & {optionsArray?: Array<{visible: boolean; value: unknown}>})?.optionsArray ?? []).filter((o: {visible: boolean}) => o.visible),
     )
 
     // Selecting nothing is meaningless, so the action stays hidden until there is something to select.
@@ -125,7 +125,7 @@
         prefix?(): unknown
         header?(): unknown
         footer?(): unknown
-        label?(props: { value: any; label: string }): any
+        label?(props: { value: unknown; label: string }): unknown
         tag?(): unknown
     }>()
 

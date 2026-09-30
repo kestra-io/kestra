@@ -1,7 +1,7 @@
 <template>
     <ElDatePicker
         v-model="model"
-        v-bind="({...filteredProps(), ...$attrs} as any)"
+        v-bind="({...filteredProps(), ...$attrs} as Record<string, unknown>)"
         @change="emit('change', $event)"
     />
 </template>
@@ -12,7 +12,7 @@
 
     defineOptions({inheritAttrs: false})
 
-    const model = defineModel<any>()
+    const model = defineModel<Date | Date[] | string | string[] | null>()
 
     const props = withDefaults(defineProps<{
         type?: string
@@ -35,7 +35,7 @@
     })
 
     const emit = defineEmits<{
-        change: [value: any]
+        change: [value: Date | Date[] | string | string[] | null]
     }>()
 
     const filteredProps = useFilteredProps(props)

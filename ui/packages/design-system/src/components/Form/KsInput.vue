@@ -2,7 +2,7 @@
     <ElInput
         ref="elInputRef"
         v-model="model"
-        v-bind="({...filteredProps(), ...$attrs} as any)"
+        v-bind="{...filteredProps(), ...$attrs}"
         :class="reserveClearSpace ? 'ks-input--reserve-clear' : undefined"
         @change="emit('change', $event)"
     >
@@ -22,7 +22,7 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, ref} from "vue"
+    import {computed, ref, type Component} from "vue"
     import {ElInput} from "element-plus"
     import {useFilteredProps} from "../../utils/filteredProps"
 
@@ -43,7 +43,7 @@
         placeholder?: string
         disabled?: boolean
         showPassword?: boolean
-        suffixIcon?: any
+        suffixIcon?: Component | string
         clearable?: boolean
         size?: "large" | "default" | "small"
         name?: string

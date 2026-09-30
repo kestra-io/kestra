@@ -22,6 +22,7 @@
         </KsEmptyState>
         <template v-else>
             <KSFilter
+                v-if="!props.embed"
                 :configuration="ganttExecutionFilter"
                 :tableOptions="{
                     chart: {shown: false},
@@ -31,12 +32,13 @@
                 @search="search = $event"
                 @filter="onFilterChange"
             />
-            <div class="gantt-stage">
+            <div class="gantt-stage" :class="{'gantt-stage-embed': props.embed}">
                 <KsCard
                     id="gantt"
                     data-onboarding-target="execution-gantt"
                     shadow="never"
-                    :class="{'no-border': !hasValidDate, 'is-compact': verticalLayout}"
+                    :class="{'no-border': !hasValidDate, 'is-compact': verticalLayout, 'gantt-embedded': props.embed}"
+                    :bodyStyle="props.embed ? EMBEDDED_BODY_STYLE : undefined"
                 >
                     <template #header v-if="hasValidDate">
                         <div class="gantt-header">
@@ -75,6 +77,7 @@
                             keyField="id"
                             :buffer="0"
                             :updateInterval="0"
+                            :style="props.embed ? EMBEDDED_SCROLLER_STYLE : undefined"
                         >
                             <template #default="{item, index, active}">
                                 <DynamicScrollerItem
@@ -286,12 +289,13 @@
         parentEndPercent?: number;
     }
 
-    withDefaults(defineProps<{
+    const props = withDefaults(defineProps<{
         namespace?: string;
+        /** Hides the filter bar and fills the given container height instead of the standalone tab's own layout — used to embed the chart in the Overview page. */
         embed?: boolean;
     }>(), {
         namespace: undefined,
-        embed: true,
+        embed: false,
     })
 
     const {t} = useI18n()
@@ -304,6 +308,10 @@
 
     const TASKRUN_THRESHOLD = 50
     const COLORS = State.color()
+    // Embed mode: fill the container height the parent gives us instead of the standalone tab's
+    // own viewport-relative cap, via KsCard's bodyStyle prop rather than :deep().
+    const EMBEDDED_BODY_STYLE = {display: "flex", flexDirection: "column", flex: "1", minHeight: "0"}
+    const EMBEDDED_SCROLLER_STYLE = {flex: "1", minHeight: "0", maxHeight: "none"}
     const TASK_TYPES_TO_EXCLUDE = [
         "io.kestra.plugin.core.flow.ForEachItem$ForEachItemSplit",
         "io.kestra.plugin.core.flow.ForEachItem$ForEachItemMergeOutputs",
@@ -716,6 +724,13 @@
         margin-bottom: var(--ks-spacing-4);
     }
 
+    .gantt-stage-embed {
+        flex: 1;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+    }
+
     .kel-card {
         --gantt-offset-width: 5rem;
         --gantt-bar-width: 12rem;
@@ -726,6 +741,13 @@
         &.is-compact {
             --gantt-bar-width: 6rem;
             --gantt-duration-width: 0rem;
+        }
+
+        &.gantt-embedded {
+            flex: 1;
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
         }
 
         & :deep(.kel-card__header) {

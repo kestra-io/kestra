@@ -478,6 +478,26 @@ public abstract class AbstractTriggerRepositoryTest {
         assertThat(results.stream().map(TriggerState::getTriggerId).toList()).containsExactlyInAnyOrder("A", "C", "D");
     }
 
+    @Test
+    void shouldExcludeUnscheduledTriggersFromFindTriggersEligibleForScheduling() {
+        // GIVEN three states the vNode, lock and evaluation-date predicates all accept, differing only by
+        // type: one the scheduler evaluates, one it never evaluates, and one whose type is unset because
+        // V2_0_03TriggerMigration leaves it so on rows migrated from 1.x
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        triggerStateStore.save(trigger(tenant).triggerId("scheduled").type(TriggerType.SCHEDULE).locked(false).vnode(0).nextEvaluationDate(null).build());
+        triggerStateStore.save(trigger(tenant).triggerId("unscheduled").type(TriggerType.UNSCHEDULED).locked(false).vnode(0).nextEvaluationDate(null).build());
+        triggerStateStore.save(trigger(tenant).triggerId("migrated").type(null).locked(false).vnode(0).nextEvaluationDate(null).build());
+
+        // WHEN
+        List<TriggerState> results = triggerStateStore.findTriggersEligibleForScheduling(ZonedDateTime.now(), Set.of(0), false)
+            .stream().filter(it -> tenant.equals(it.getTenantId())).toList();
+
+        // THEN the unscheduled one is left out, and the untyped one stays eligible: excluding it instead
+        // would stop every schedule firing on an instance upgraded from 1.x
+        assertThat(results.stream().map(TriggerState::getTriggerId).toList())
+            .containsExactlyInAnyOrder("scheduled", "migrated");
+    }
+
     // -------------------------------------------------------------------------
     // FiltersTestCase fixtures and parameterized tests
     // -------------------------------------------------------------------------

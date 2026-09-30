@@ -21,6 +21,7 @@ import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowId;
 import io.kestra.core.models.flows.GenericFlow;
 import io.kestra.core.models.property.Property;
+import io.kestra.core.models.triggers.TriggerId;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.runners.Scheduler;
 import io.kestra.core.scheduler.SchedulerConfiguration;
@@ -31,10 +32,10 @@ import io.kestra.core.services.FlowService;
 import io.kestra.core.tasks.test.PollingTrigger;
 import io.kestra.core.utils.Await;
 import io.kestra.core.utils.IdUtils;
-import io.kestra.jdbc.JdbcTestUtils;
 import io.kestra.jdbc.repository.AbstractJdbcTriggerRepository;
 import io.kestra.plugin.core.debug.Return;
 import io.kestra.plugin.core.trigger.Schedule;
+import io.kestra.plugin.core.trigger.Webhook;
 import io.kestra.webserver.controllers.api.TriggerController.ApiCreateBackfillRequest;
 import io.kestra.webserver.controllers.api.TriggerController.SetDisabledRequest;
 import io.kestra.webserver.models.api.ApiAsyncOperationResponse;
@@ -75,9 +76,6 @@ class TriggerControllerTest {
     AbstractJdbcTriggerRepository jdbcTriggerRepository;
 
     @Inject
-    JdbcTestUtils jdbcTestUtils;
-
-    @Inject
     Scheduler scheduler;
 
     @Inject
@@ -85,8 +83,6 @@ class TriggerControllerTest {
 
     @BeforeEach
     protected void setup() {
-        jdbcTestUtils.drop();
-        jdbcTestUtils.migrate();
         Awaitility.await().atMost(Duration.ofSeconds(30)).pollInterval(Duration.ofMillis(100)).until(() -> scheduler.isActive());
     }
 
@@ -97,10 +93,17 @@ class TriggerControllerTest {
         Flow flow = generateFlow();
         createFlowAndAwaitTriggers(flow);
 
+        Flow unmatched = generateFlowWithTrigger(flow.getNamespace());
+        TriggerState unmatchedState = createTriggerFromFlow(unmatched, false);
+        flowService.create(GenericFlow.of(unmatched));
+        Awaitility.await().atMost(Duration.ofSeconds(30)).pollInterval(Duration.ofMillis(100))
+            .until(() -> jdbcTriggerRepository.findByIdWithoutAcl(unmatchedState).isPresent());
+
         // WHEN
         PagedResults<ApiTriggerAndState> triggers = client.toBlocking().retrieve(
             HttpRequest.GET(
-                TRIGGER_PATH + "/search?filters[q][EQUALS]=trigger-nextexec"
+                TRIGGER_PATH + "/search?filters[q][EQUALS]=trigger-nextexec&filters[namespace][EQUALS]=%s"
+                    .formatted(flow.getNamespace())
             ), Argument.of(PagedResults.class, ApiTriggerAndState.class)
         );
 
@@ -144,6 +147,52 @@ class TriggerControllerTest {
                 tuple("trigger-nextexec-polling", flow.getNamespace(), flow.getId()),
                 tuple("trigger-nextexec-schedule", flow.getNamespace(), flow.getId())
             );
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void shouldFindTriggersTheSchedulerDoesNotEvaluate() throws FlowProcessingException, QueueException {
+        // GIVEN a flow mixing a scheduled trigger with two the scheduler never evaluates (kestra-io/kestra#18379)
+        Flow flow = generateFlowWithUnscheduledTriggers();
+        flowService.create(GenericFlow.of(flow));
+        awaitTriggerStates(flow);
+
+        // WHEN
+        PagedResults<ApiTriggerAndState> triggers = client.toBlocking().retrieve(
+            HttpRequest.GET(TRIGGER_PATH + "/search?filters[namespace][EQUALS]=%s".formatted(flow.getNamespace())),
+            Argument.of(PagedResults.class, ApiTriggerAndState.class)
+        );
+
+        // THEN
+        assertThat(triggers.getResults())
+            .extracting(it -> it.state().triggerId(), it -> it.state().kind())
+            .containsExactlyInAnyOrder(
+                tuple("schedule", TriggerType.SCHEDULE),
+                tuple("webhook", TriggerType.UNSCHEDULED),
+                tuple("flow-trigger", TriggerType.UNSCHEDULED)
+            );
+    }
+
+    @Test
+    void shouldReturnConflictWhenTogglingATriggerTheSchedulerDoesNotEvaluate() throws FlowProcessingException, QueueException {
+        // GIVEN a webhook trigger, whose state the scheduler never reads
+        Flow flow = generateFlowWithUnscheduledTriggers();
+        flowService.create(GenericFlow.of(flow));
+        awaitTriggerStates(flow);
+
+        // WHEN
+        HttpClientResponseException e = assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking().exchange(
+                HttpRequest.PUT(
+                    TRIGGER_PATH + "/set-disabled",
+                    new TriggerController.ApiDisableTriggerRequest(flow.getNamespace(), flow.getId(), "webhook", true)
+                )
+            )
+        );
+
+        // THEN it is refused rather than stored as a flag nothing enforces
+        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.CONFLICT.getCode());
+        assertThat(e.getMessage()).contains("is not managed by the scheduler");
     }
 
     @Test
@@ -805,7 +854,7 @@ class TriggerControllerTest {
 
     @Test
     void shouldReturnUnprocessableEntityWhenCreatingBackfillOnNonScheduleTrigger() {
-        for (TriggerType type : List.of(TriggerType.POLLING, TriggerType.REALTIME)) {
+        for (TriggerType type : List.of(TriggerType.POLLING, TriggerType.REALTIME, TriggerType.UNSCHEDULED)) {
             // GIVEN
             TriggerState trigger = newRandomTriggerState(type);
             jdbcTriggerRepository.save(trigger);
@@ -948,6 +997,49 @@ class TriggerControllerTest {
             .build();
     }
 
+    private Flow generateFlowWithUnscheduledTriggers() {
+        return Flow.builder()
+            .tenantId(TENANT_ID)
+            .namespace("ns-" + IdUtils.create().toLowerCase())
+            .id(IdUtils.create())
+            .tasks(
+                Collections.singletonList(
+                    Return.builder()
+                        .id("task")
+                        .type(Return.class.getName())
+                        .format(Property.ofValue("return data"))
+                        .build()
+                )
+            )
+            .triggers(
+                List.of(
+                    Schedule.builder()
+                        .id("schedule")
+                        .type(Schedule.class.getName())
+                        .cron("*/1 * * * *")
+                        .build(),
+                    Webhook.builder()
+                        .id("webhook")
+                        .type(Webhook.class.getName())
+                        .key("a-secret-key")
+                        .build(),
+                    io.kestra.plugin.core.trigger.Flow.builder()
+                        .id("flow-trigger")
+                        .type(io.kestra.plugin.core.trigger.Flow.class.getName())
+                        .build()
+                )
+            )
+            .build();
+    }
+
+    private void awaitTriggerStates(Flow flow) {
+        Awaitility.await().atMost(Duration.ofSeconds(30)).pollInterval(Duration.ofMillis(100)).until(
+            () -> flow.getTriggers().stream().allMatch(
+                trigger -> jdbcTriggerRepository.findByIdWithoutAcl(TriggerId.of(flow, trigger)).isPresent()
+            )
+        );
+    }
+
     private List<TriggerState> createTriggersFromFlow(Flow flow) {
         return flow.getTriggers().stream().map(
             it -> TriggerState.builder()
@@ -984,7 +1076,9 @@ class TriggerControllerTest {
         createFlowAndAwaitTriggers(flow);
 
         byte[] csvBytes = client.toBlocking().retrieve(
-            HttpRequest.GET(TRIGGER_PATH + "/export/by-query/csv"),
+            HttpRequest.GET(
+                TRIGGER_PATH + "/export/by-query/csv?filters[namespace][EQUALS]=%s".formatted(flow.getNamespace())
+            ),
             Argument.of(byte[].class)
         );
 

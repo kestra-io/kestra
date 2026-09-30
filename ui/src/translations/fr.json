@@ -954,6 +954,10 @@
       "success": "Le déclencheur est débloqué"
     },
     "trigger disabled": "Le trigger est désactivé dans la source du flow",
+    "trigger not toggleable": "Ce trigger n'est pas évalué par le Scheduler, désactivez-le dans la source du flow",
+    "bulk not toggleable warning": "{count} trigger(s) sélectionné(s) seront ignorés : le Scheduler ne les évalue pas, ils ne peuvent donc être désactivés que dans la source du Flow.",
+    "bulk none applied": "Aucun trigger n'a été affecté : aucun des triggers sélectionnés n'a pu être traité.",
+    "bulk partially applied": "{count} sur {requested} triggers ont été traités, les autres ont été ignorés.",
     "trigger enable dialog": {
       "title": "Activer le trigger",
       "bulk title": "Activer {count} triggers",

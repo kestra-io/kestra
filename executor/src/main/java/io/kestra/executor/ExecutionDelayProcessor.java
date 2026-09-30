@@ -8,15 +8,19 @@ import java.util.Optional;
 import io.kestra.core.exceptions.FlowNotFoundException;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.ExecutionKind;
+import io.kestra.core.models.executions.LoopExecutionEvent;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.runners.ExecutionDelay;
 import io.kestra.core.runners.FlowMetaStoreInterface;
 import io.kestra.core.services.ExecutionService;
 import io.kestra.core.services.ExecutionService.ExecutionWithTaskRun;
 
+import io.kestra.executor.handler.LoopExecutionEventMessageHandler;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
@@ -43,6 +47,7 @@ public class ExecutionDelayProcessor {
     private final ExecutionService executionService;
     private final ExecutorService executorService;
     private final MetricRegistry metricRegistry;
+    private final DispatchQueueInterface<LoopExecutionEvent> loopExecutionEventQueue;
 
     @Inject
     public ExecutionDelayProcessor(
@@ -51,13 +56,15 @@ public class ExecutionDelayProcessor {
         FlowMetaStoreInterface flowMetaStore,
         ExecutionService executionService,
         ExecutorService executorService,
-        MetricRegistry metricRegistry) {
+        MetricRegistry metricRegistry,
+        DispatchQueueInterface<LoopExecutionEvent> loopExecutionEventQueue) {
         this.executionDelayStateStore = executionDelayStateStore;
         this.executionStateStore = executionStateStore;
         this.flowMetaStore = flowMetaStore;
         this.executionService = executionService;
         this.executorService = executorService;
         this.metricRegistry = metricRegistry;
+        this.loopExecutionEventQueue = loopExecutionEventQueue;
     }
 
     /**
@@ -101,7 +108,7 @@ public class ExecutionDelayProcessor {
                         executor = executor.withExecution(markAsExecution, "pausedRestart");
                     } else {
                         // if there is a taskRun it means we restart a paused task
-                        // The delay is only removed when it expires, so a Pause that was already resumed
+                        // The delay is only removed when it expires, so a Pause already resumed
                         // (manually via the API, or by a kill) still has a pending delay. Resuming it a
                         // second time would re-generate the Pause outputs without the onResume inputs and
                         // wipe them, so we skip the delay unless the task run is still paused.
@@ -125,6 +132,11 @@ public class ExecutionDelayProcessor {
                             executionDelay.getTaskRunId(),
                             executionDelay.getState()
                         );
+
+                        if (markAsExecution.getKind() == ExecutionKind.LOOP) {
+                            // notify the parent execution
+                            loopExecutionEventQueue.emit(new LoopExecutionEvent(markAsExecution.getLoopRun(), markAsExecution.getId(), markAsExecution.getState().getCurrent(), null));
+                        }
 
                         executor = executor.withExecution(markAsExecution, "pausedRestart");
                     }

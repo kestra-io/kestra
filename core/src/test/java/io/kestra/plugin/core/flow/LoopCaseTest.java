@@ -29,6 +29,7 @@ import jakarta.inject.Singleton;
 import static io.kestra.core.utils.Await.await;
 import static io.kestra.core.utils.Rethrow.throwPredicate;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatStream;
 
 @Singleton
 public class LoopCaseTest {
@@ -570,6 +571,16 @@ public class LoopCaseTest {
             String expectedValue = sub.getLoopRun().index() + " - " + sub.getLoopRun().value();
             return expectedValue.equals(taskOutputService.getOutputs(sub.getTaskRunList().getFirst()).get("value"));
         }));
+    }
+
+    public void loopWithPause(Execution execution) {
+        assertThat(execution.getTaskRunList()).hasSize(1);
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThatStream(execution.getState().getHistories().stream().map(h -> h.getState())).contains(State.Type.PAUSED);
+        assertThatStream(execution.getTaskRunList().getFirst().getState().getHistories().stream().map(h -> h.getState())).contains(State.Type.PAUSED);
+
+        var subExecutions = executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId(), null);
+        assertThat(subExecutions).hasSize(2);
     }
 
     private Execution findSubflowExecution(Execution parent) {

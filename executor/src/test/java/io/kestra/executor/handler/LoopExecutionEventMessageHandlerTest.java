@@ -353,6 +353,27 @@ class LoopExecutionEventMessageHandlerTest {
             .containsEntry(Loop.TERMINATED_ITERATIONS_OUTPUT, Map.of("FAILED", 1, "SKIPPED", 2));
     }
 
+    @Test
+    void shouldFailExecutionWhenRestartedMessageArrivesButExecutionIsNotPaused() throws InternalException {
+        // Given — a running (not paused) execution receives a RESTARTED loop event
+        var flow = flowRepository.create(GenericFlow.of(loopFlow()));
+        var execution = Execution.newExecution(flow, Collections.emptyList());
+        String loopTaskRunId = IdUtils.create();
+        var loopTaskRun = loopTaskRun(loopTaskRunId, execution);
+        executionRepository.save(execution.withTaskRunList(List.of(loopTaskRun)));
+
+        // When
+        var loopRun = new LoopRun(execution, "loop", loopTaskRunId, 0, null, "a", null);
+        var message = new LoopExecutionEvent(loopRun, execution.getId(), State.Type.RESTARTED, null);
+        var maybeExecutor = handler.handle(message);
+
+        // Then — the execution is failed instead of being resumed
+        assertThat(maybeExecutor).isPresent();
+        var taskRun = maybeExecutor.get().getExecution().findTaskRunByTaskRunId(loopTaskRunId);
+        assertThat(taskRun.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        assertThat(taskRun.lastAttempt().getState().getCurrent()).isEqualTo(State.Type.FAILED);
+    }
+
     private Flow loopFlow() {
         return loopFlow(true);
     }

@@ -130,7 +130,6 @@
     "description": "Beschreibung",
     "show description": "Beschreibung anzeigen",
     "show details": "Details anzeigen",
-    "show more details": "Mehr Details anzeigen",
     "skipped": "Übersprungen",
     "revision": "Revision",
     "theme": "Theme",
@@ -439,7 +438,10 @@
       "zoom-fit": "Anpassen",
       "invalid": "Graph-Fehler",
       "invalid_description": "Beim Laden des Graphen ist ein Fehler aufgetreten. Bitte prüfe den Quellcode auf Fehler.",
-      "load_error": "Der Topologiegraph konnte nicht geladen werden. Bitte versuche es erneut."
+      "load_error": "Der Topologiegraph konnte nicht geladen werden. Bitte versuche es erneut.",
+      "add-task": "Task hinzufügen",
+      "add-trigger": "Trigger hinzufügen",
+      "child-count": "{count} Task | {count} Tasks"
     },
     "show task logs": "Task-Logs anzeigen",
     "show task condition": "Task-Bedingung anzeigen",
@@ -1619,7 +1621,9 @@
       "raw": "Zeitliche Ansicht",
       "raw_details": "Vollständige Task-Logs und Flow-Logs im Rohformat nach Zeitstempel sortiert anzeigen",
       "compact": "Standardansicht",
-      "compact_details": "Task-Logs in einer kompakten Ansicht, gruppiert nach Task, anzeigen"
+      "compact_details": "Task-Logs in einer kompakten Ansicht, gruppiert nach Task, anzeigen",
+      "fullscreen": "Logs im Vollbild",
+      "exit_fullscreen": "Vollbild verlassen"
     },
     "execution_deletion": {
       "logs": "Logs löschen",
@@ -2519,6 +2523,9 @@
       "block_deleted": "{name} gelöscht",
       "card_aria_label": "Block {id} vom Typ {type}",
       "canvas_aria": "Canvas für Flow-Blöcke",
+      "chip_copied": "In die Zwischenablage kopiert",
+      "chip_hint": "Klicken Sie auf einen Chip, um ihn in das fokussierte Feld einzufügen, oder ziehen Sie ihn hinein",
+      "chip_inserted": "In das Feld eingefügt",
       "cluster_collapse_aria": "{id} einklappen",
       "cluster_expand_aria": "{id} ({count} Tasks) ausklappen",
       "collapsed_summary": "{count} Tasks",
@@ -2556,6 +2563,7 @@
       "depends_on_placeholder": "Tasks auswählen…",
       "depth_pill": "Tiefe {depth}",
       "drag_reorder": "Zum Neuanordnen ziehen",
+      "drop_forbidden": "Hier ablegen nicht möglich",
       "duplicate": "Duplizieren",
       "empty_add_hint": "oder drücke /, um nach Tasks zu suchen",
       "empty_add_lead": "Klicken, um {label} hinzuzufügen",
@@ -2584,6 +2592,9 @@
       "lane_then": "Then",
       "move_down": "Nach unten verschieben",
       "move_up": "Nach oben verschieben",
+      "namespace_files": "Namespace-Dateien",
+      "namespace_kv": "KV Store Keys",
+      "namespace_secrets": "Secrets",
       "no_data_matches": "Nichts entspricht deinem Filter",
       "no_recent": "Noch keine aktuellen Task-Typen",
       "no_task_results": "Keine passenden Task-Typen.",
@@ -2595,6 +2606,9 @@
       "plugin_default": "Standard: {value}",
       "plugin_default_tooltip": "Standardwert aus den pluginDefaults des Flows",
       "required_missing": "Erforderliches Feld nicht gesetzt",
+      "required_unset_jump": "Zum ersten springen",
+      "required_unset_plural": "{count} Pflichtfelder sind noch nicht gesetzt",
+      "required_unset_singular": "1 Pflichtfeld ist noch nicht gesetzt",
       "save_blocked": {
         "message": "Behebe die Fehler vor dem Speichern.",
         "title": "Der Flow kann nicht gespeichert werden"

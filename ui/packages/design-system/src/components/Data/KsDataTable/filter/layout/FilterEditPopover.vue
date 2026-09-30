@@ -130,7 +130,7 @@
         background: var(--ks-bg-elevated);
         border: 1px solid var(--ks-border-default);
         border-radius: 8px;
-        box-shadow: rgba(0, 0, 0, 0.09) 0px 3px 12px;
+        box-shadow: 0 3px 12px var(--ks-shadow-elevated);
         padding: 0;
         min-height: var(--ks-font-size-lg);
         max-width: 480px;

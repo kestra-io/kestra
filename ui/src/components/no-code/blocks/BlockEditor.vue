@@ -81,7 +81,6 @@
                             :icons="pluginsStore.icons"
                             :selectedId="activeSelectedId"
                             :focusedId="focusedId"
-                            :dnd="dndFor(lane.section)"
                             @add="(e) => openTaskPicker(lane.section, e)"
                             @select="(block) => selectBlock(lane.section, block)"
                             @open-split="(block) => selectBlock(lane.section, block, true)"
@@ -94,7 +93,6 @@
                             @duplicate-path="onDuplicateAtPath"
                             @add-at-path="openTaskPickerAtPath"
                             @update-depends-on="onUpdateDependsOn"
-                            @reorder="onNestedReorder"
                         />
                     </div>
                 </div>
@@ -106,7 +104,7 @@
             :shortcutGroups="shortcutGroups"
             :footerContext="footerContext"
             :footerHints="footerHints"
-            :undoState="undoState"
+            :undoState="visibleUndoState"
             @undo="performUndo"
         />
 
@@ -148,7 +146,7 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, ref, watch} from "vue"
+    import {computed, provide, ref, watch} from "vue"
     import {useI18n} from "vue-i18n"
     import FlowIcon from "vue-material-design-icons/FileDocumentOutline.vue"
     import Cog from "vue-material-design-icons/Cog.vue"
@@ -178,6 +176,7 @@
     import type {Crumb} from "../utils/useFieldNavigation"
     import {taskCrumbAt, useEditTarget} from "./useEditTarget"
     import {useBlockDragAndDrop} from "./useBlockDragAndDrop"
+    import {BLOCK_DRAG_INJECTION_KEY} from "../injectionKeys"
     import {useBlockOperations} from "./useBlockOperations"
     import {modalItemPathOf, useBlockSelection} from "./useBlockSelection"
     import {useBlockMutations} from "./useBlockMutations"
@@ -199,9 +198,12 @@
     import {useCanvasFocus} from "./useCanvasFocus"
     import {useTaskPicker} from "./useTaskPicker"
     import {buildFooterHints, buildShortcutGroups, type FooterHint} from "./shortcutHints"
+    import {flowDescriptionOf, flowLabelEntriesOf} from "./flowSummary"
     import {BLOCK_EDITOR_KEYMAP} from "./keymap"
+    import {useAuthoringSurface} from "./useAuthoringSurface"
     import type {NoCodeProps} from "../../flows/noCodeTypes"
     import {usePlaygroundRun} from "../../../composables/playground/usePlaygroundRun"
+    import {trackAuthoringAction} from "../../../utils/tabTracking"
 
     const {t} = useI18n()
     const flowStore = useFlowStore()
@@ -278,23 +280,9 @@
         }
     })
 
-    const flowDescription = computed<string | undefined>(() => {
-        const description = parsedFlow.value?.description
-        return typeof description === "string" ? description : undefined
-    })
+    const flowDescription = computed(() => flowDescriptionOf(parsedFlow.value))
 
-    const flowLabelEntries = computed<[string, string][]>(() => {
-        const labels = parsedFlow.value?.labels
-        if (Array.isArray(labels)) {
-            return labels
-                .filter((label): label is {key: string; value: unknown} => Boolean(label) && typeof label === "object" && "key" in label)
-                .map((label) => [String(label.key), String(label.value ?? "")])
-        }
-        if (labels && typeof labels === "object") {
-            return Object.entries(labels).map(([key, value]) => [key, String(value ?? "")])
-        }
-        return []
-    })
+    const flowLabelEntries = computed(() => flowLabelEntriesOf(parsedFlow.value))
 
     const editingItemPath = computed<string>(() => {
         if (!props.editingTask) return props.parentPath ?? ""
@@ -323,6 +311,7 @@
     function onInlineTaskEdited(newContent: string) {
         if (!editingPath.value) return
         applyYaml(updateBlockAtPath(flowYaml.value, editingPath.value, newContent))
+        trackAuthoringAction("task_edited", "no_code", {task_type: editingTaskData.value?.type as string | undefined})
     }
 
     // The entry now exists, so hand the tab over to the edit surface pointed at it.
@@ -352,6 +341,7 @@
     function onModalTaskEdited(newContent: string) {
         if (!modalPath.value) return
         applyYaml(updateBlockAtPath(flowYaml.value, modalPath.value, newContent))
+        trackAuthoringAction("task_edited", "no_code", {task_type: modalTaskData.value?.type as string | undefined})
     }
 
     function onModalOpenInTabs() {
@@ -491,6 +481,7 @@
         laneDisplayLabel: laneDisplayLabelFromPath,
         flowYaml,
         applyYaml,
+        surface: "no_code",
     })
 
     const {
@@ -514,7 +505,8 @@
         if (movedIndex >= lo && movedIndex <= hi) deselectIfCurrent(id)
     }
 
-    const {dndFor, reorder: onNestedReorder} = useBlockDragAndDrop(flowYaml, applyYaml, clearSelectionIfPathStale)
+    const dragContext = useBlockDragAndDrop(flowYaml, applyYaml, clearSelectionIfPathStale)
+    provide(BLOCK_DRAG_INJECTION_KEY, dragContext)
 
     const lanes = computed(() => buildSectionLanes(t, {
         triggers: parsedTriggers.value,
@@ -579,8 +571,7 @@
             return
         }
         if (id === "undo") {
-            performUndo()
-            return
+            return performUndo()
         }
         if (id === "command-menu") {
             openCommandMenu()
@@ -637,10 +628,15 @@
         }
     }
 
+    const authoringSurface = useAuthoringSurface(editorEl)
+
+    const visibleUndoState = computed(() => (authoringSurface.isActive() ? undoState.value : null))
+
     useBlockEditorKeyboard({
         keymap: BLOCK_EDITOR_KEYMAP,
-        dispatch: dispatchBlockEditorAction,
+        dispatch: (id, event) => (authoringSurface.isActive() ? dispatchBlockEditorAction(id, event) : false),
         isOverlayOpen: isAnyOverlayOpen,
+        root: editorEl,
     })
 
     const {

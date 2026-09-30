@@ -3,6 +3,7 @@ package io.kestra.jdbc.runner;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -147,12 +148,128 @@ public abstract class JdbcWorkerJobRunningStateStoreTest {
         assertThat(rawKeys()).containsExactly(current.uid());
     }
 
+    @Test
+    void shouldDiscardEntryThatFailsToDeserializeWhenProcessingDeadWorker() {
+        // Given a worker holding a genuine entry whose task type no longer resolves on
+        // this classpath — the same failure mode as a plugin being removed, renamed, or
+        // the value being written by a newer version after a downgrade — alongside a
+        // readable one.
+        String workerUid = "worker-with-poison-entry";
+        WorkerTaskRunning poisoned = workerTaskRunning(workerUid);
+        workerJobRunningStateStore.save(NoTransactionContext.INSTANCE, poisoned);
+        corruptTaskType(poisoned.uid(), Log.class.getName(), "io.kestra.plugin.core.removed.NoLongerOnClasspath");
+
+        WorkerTaskRunning readable = workerTaskRunning(workerUid);
+        workerJobRunningStateStore.save(NoTransactionContext.INSTANCE, readable);
+
+        // When
+        List<WorkerJobRunning> consumed = new ArrayList<>();
+        workerJobRunningStateStore.processWorkerJobsForDeadWorker(
+            NoTransactionContext.INSTANCE,
+            workerUid,
+            (txContext, workerJobRunning) -> consumed.add(workerJobRunning)
+        );
+
+        // Then the unreadable row is discarded rather than aborting the whole batch,
+        // and the readable entry behind it still gets reclaimed.
+        assertThat(consumed).hasSize(1);
+        assertThat(consumed.getFirst().uid()).isEqualTo(readable.uid());
+        assertThat(rawKeys()).containsExactly(readable.uid());
+    }
+
+    @Test
+    void shouldDeleteEntryOnlyWhenTheGivenWorkerStillHoldsIt() {
+        // Given
+        WorkerTaskRunning workerTaskRunning = workerTaskRunning("worker-a");
+        workerJobRunningStateStore.save(NoTransactionContext.INSTANCE, workerTaskRunning);
+
+        // When the lease has moved on to another worker
+        workerJobRunningStateStore.deleteByKeyAndWorker(NoTransactionContext.INSTANCE, workerTaskRunning.uid(), "worker-b");
+
+        // Then it is left alone
+        assertThat(existsByKey(workerTaskRunning.uid())).isTrue();
+
+        // When it is still held by the same worker
+        workerJobRunningStateStore.deleteByKeyAndWorker(NoTransactionContext.INSTANCE, workerTaskRunning.uid(), "worker-a");
+
+        // Then it is released
+        assertThat(existsByKey(workerTaskRunning.uid())).isFalse();
+    }
+
+    @Test
+    void shouldFindEntryOnlyForTheWorkerHoldingIt() {
+        // Given
+        WorkerTaskRunning workerTaskRunning = workerTaskRunning("worker-a");
+        workerJobRunningStateStore.save(NoTransactionContext.INSTANCE, workerTaskRunning);
+
+        // Then
+        assertThat(workerJobRunningStateStore.existsByKeyAndWorker(workerTaskRunning.uid(), "worker-a")).isTrue();
+        assertThat(workerJobRunningStateStore.existsByKeyAndWorker(workerTaskRunning.uid(), "worker-b")).isFalse();
+        assertThat(workerJobRunningStateStore.existsByKeyAndWorker(IdUtils.create(), "worker-a")).isFalse();
+    }
+
+    @Test
+    void shouldProcessOnlyEntriesOfGivenWorkersWhenProcessingOrphans() {
+        // Given
+        WorkerTaskRunning orphaned = workerTaskRunning("inactive-worker");
+        WorkerTaskRunning stillOwned = workerTaskRunning("running-worker");
+        workerJobRunningStateStore.save(NoTransactionContext.INSTANCE, orphaned);
+        workerJobRunningStateStore.save(NoTransactionContext.INSTANCE, stillOwned);
+
+        // When
+        List<WorkerJobRunning> consumed = new ArrayList<>();
+        workerJobRunningStateStore.processOrphanWorkerJobs(
+            NoTransactionContext.INSTANCE,
+            Set.of("inactive-worker"),
+            (txContext, workerJobRunning) -> consumed.add(workerJobRunning)
+        );
+
+        // Then
+        assertThat(consumed).hasSize(1);
+        assertThat(consumed.getFirst().uid()).isEqualTo(orphaned.uid());
+    }
+
+    @Test
+    void shouldProcessNothingWhenNoWorkerIsGivenForOrphans() {
+        // Given
+        workerJobRunningStateStore.save(NoTransactionContext.INSTANCE, workerTaskRunning());
+
+        // When
+        List<WorkerJobRunning> consumed = new ArrayList<>();
+        workerJobRunningStateStore.processOrphanWorkerJobs(
+            NoTransactionContext.INSTANCE,
+            Set.of(),
+            (txContext, workerJobRunning) -> consumed.add(workerJobRunning)
+        );
+
+        // Then
+        assertThat(consumed).isEmpty();
+    }
+
     private void insertRawEntry(String key, String json) {
         dslContextWrapper.transaction(
             configuration -> DSL.using(configuration)
                 .insertInto(DSL.table("worker_job_running"))
                 .set(KEY_FIELD, (Object) key)
                 .set(VALUE_FIELD, (Object) JSONB.valueOf(json))
+                .execute()
+        );
+    }
+
+    private void corruptTaskType(String key, String from, String to) {
+        String value = dslContextWrapper.transactionResult(
+            configuration -> DSL.using(configuration)
+                .select(VALUE_FIELD)
+                .from(DSL.table("worker_job_running"))
+                .where(KEY_FIELD.eq(key))
+                .fetchOne(VALUE_FIELD, String.class)
+        );
+
+        dslContextWrapper.transaction(
+            configuration -> DSL.using(configuration)
+                .update(DSL.table("worker_job_running"))
+                .set(VALUE_FIELD, (Object) JSONB.valueOf(value.replace("\"" + from + "\"", "\"" + to + "\"")))
+                .where(KEY_FIELD.eq(key))
                 .execute()
         );
     }

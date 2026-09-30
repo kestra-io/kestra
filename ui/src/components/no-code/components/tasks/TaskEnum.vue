@@ -20,8 +20,10 @@
 <script setup lang="ts">
     import {collapseEmptyValues} from "../utils/collapseEmptyValues"
 
+    type ModelValue = object | string | number | boolean | unknown[]
+
     withDefaults(defineProps<{
-        modelValue?: object | string | number | boolean | unknown[]
+        modelValue?: ModelValue
         schema?: Record<string, unknown>
         required?: boolean
         allowCreate?: boolean
@@ -39,10 +41,10 @@
     })
 
     const emit = defineEmits<{
-        "update:modelValue": [value: unknown]
+        "update:modelValue": [value: ModelValue | undefined]
     }>()
 
-    function onInput(value: unknown) {
+    function onInput(value: ModelValue) {
         emit("update:modelValue", collapseEmptyValues(value))
     }
 </script>

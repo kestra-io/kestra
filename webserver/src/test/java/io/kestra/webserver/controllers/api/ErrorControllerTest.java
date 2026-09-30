@@ -25,6 +25,7 @@ import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.AppenderBase;
+import io.micronaut.context.annotation.Property;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.client.annotation.Client;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
@@ -38,6 +39,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @MicronautTest
+@Property(name = "micronaut.server.max-request-size", value = "10GB")
 class ErrorControllerTest {
     @Inject
     @Client("/")
@@ -101,6 +103,18 @@ class ErrorControllerTest {
         );
 
         Problems.assertProblem(exception, ProblemTypes.INVALID_JSON);
+    }
+
+    @Test
+    void shouldReportPayloadTooLargeWhenBodyExceedsTheBufferLimit() {
+        HttpClientResponseException exception = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().retrieve(
+                POST("/api/v1/main/executions/labels/by-ids", "\"" + "x".repeat(10_500_000) + "\"").contentType(MediaType.APPLICATION_JSON)
+            )
+        );
+
+        Problems.assertProblem(exception, ProblemTypes.PAYLOAD_TOO_LARGE);
     }
 
     @Test

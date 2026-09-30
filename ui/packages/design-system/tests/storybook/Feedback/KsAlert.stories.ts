@@ -12,6 +12,7 @@ const meta: Meta<typeof KsAlert> = {
         closable: {control: "boolean"},
         effect: {control: "select", options: ["light", "dark"]},
         center: {control: "boolean"},
+        banner: {control: "boolean"},
     },
     parameters: {
         docs: {description: {component: "KsAlert is the Kestra design-system abstraction over `ElAlert` from Element Plus."}},
@@ -121,6 +122,41 @@ export const Centered: Story = {
     }),
 }
 
+
+/** Full-width system banner: square, bottom rule only, body text in the primary text colour */
+export const Banner: Story = {
+    render: () => ({
+        components: {KsAlert},
+        template: `
+            <div style="display:flex;flex-direction:column;gap:12px">
+                <ks-alert type="warning" title="Your license expires in 12 days." banner center :closable="false" />
+                <ks-alert type="error" title="Your license has expired." description="Contact your account manager to renew it." banner :closable="false" />
+                <ks-alert type="info" title="You are impersonating jane@example.com." banner :closable="false" />
+            </div>
+        `,
+    }),
+    async play({canvasElement}) {
+        const primary = document.createElement("span")
+        primary.style.color = "var(--ks-text-primary)"
+        canvasElement.append(primary)
+        const primaryColor = getComputedStyle(primary).color
+        primary.remove()
+
+        const banners = [...canvasElement.querySelectorAll(".kel-alert.is-banner")]
+        await expect(banners).toHaveLength(3)
+
+        for (const banner of banners) {
+            const styles = getComputedStyle(banner)
+            await expect([styles.borderTopWidth, styles.borderRightWidth, styles.borderBottomWidth, styles.borderLeftWidth])
+                .toEqual(["0px", "0px", "1px", "0px"])
+            await expect(styles.borderTopLeftRadius).toBe("0px")
+            await expect(styles.color).toBe(primaryColor)
+        }
+
+        const description = canvasElement.querySelector(".is-banner .kel-alert__description")
+        await expect(getComputedStyle(description as Element).color).toBe(primaryColor)
+    },
+}
 
 /** Closable */
 export const Closable: Story = {

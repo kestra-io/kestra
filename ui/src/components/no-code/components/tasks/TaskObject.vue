@@ -82,14 +82,15 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, inject, ref} from "vue"
+    import {computed, inject, ref, watch} from "vue"
     import {useI18n} from "vue-i18n"
     import ChevronDown from "vue-material-design-icons/ChevronDown.vue"
     import TaskDict from "./TaskDict.vue"
     import Wrapper from "./Wrapper.vue"
     import TaskObjectField from "./TaskObjectField.vue"
     import {collapseEmptyValues} from "./MixinTask"
-    import {DATA_TYPES_MAP_INJECTION_KEY} from "../../injectionKeys"
+    import {DATA_TYPES_MAP_INJECTION_KEY, FIELD_VALIDATION_ERRORS_INJECTION_KEY} from "../../injectionKeys"
+    import {hasErrorUnder} from "../../../../utils/validationErrors"
 
     defineOptions({
         inheritAttrs: false,
@@ -293,6 +294,25 @@
     const hasGroupedProperties = computed<boolean>(() => {
         return groupSections.value.length > 0 || deprecatedProperties.value.length > 0
     })
+
+    const validationErrors = inject(FIELD_VALIDATION_ERRORS_INJECTION_KEY, undefined)
+
+    const erroredGroups = computed<string[]>(() => {
+        const errors = validationErrors?.value
+        if (!errors?.size) return []
+        const holdsAnError = (properties: Entry[]) => properties.some(([key]) =>
+            hasErrorUnder(errors, props.root ? `${props.root}.${key}` : key))
+        return [
+            ...groupSections.value.filter(section => holdsAnError(section.properties)).map(section => section.key),
+            ...(holdsAnError(deprecatedProperties.value) ? ["deprecated"] : []),
+        ]
+    })
+
+    watch(() => erroredGroups.value.join("|"), () => {
+        for (const group of erroredGroups.value) {
+            if (!activeNames.value.includes(group)) activeNames.value.push(group)
+        }
+    }, {immediate: true})
 
     function onInput(value: any) {
         emit("update:modelValue", collapseEmptyValues(value))

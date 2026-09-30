@@ -1,6 +1,6 @@
 import * as flowYamlUtils from "@kestra-io/topology/flow-yaml-utils"
 
-import {pointerKeys, pointerSegments, type ValidationError} from "./validationErrors"
+import {fieldPathOf, pointerKeys, pointerSegments, type ValidationError} from "./validationErrors"
 
 export type BlockSection = "tasks" | "triggers" | "errors" | "finally" | "afterExecution"
 
@@ -730,7 +730,7 @@ export function groupValidationIssuesByTask(
             fieldStart = depth + (isWrappedLaneItem(node) && segments[depth + 1] === "task" ? 2 : 1)
         }
         if (taskId === undefined) continue
-        const field = friendlyField(segments.slice(fieldStart))
+        const field = fieldPathOf(segments.slice(fieldStart))
         const entry = field ? `${field}: ${detail}` : detail
         grouped.set(taskId, [...(grouped.get(taskId) ?? []), entry])
     }
@@ -742,12 +742,6 @@ function childAt(node: unknown, segment: string): unknown {
     if (!node || typeof node !== "object") return undefined
     const key = pointerKeys(segment).find(candidate => !UNSAFE_KEYS.has(candidate) && candidate in node)
     return key === undefined ? undefined : (node as Record<string, unknown>)[key]
-}
-
-function friendlyField(segments: string[]): string {
-    return segments.reduce((field, segment) => /^\d+$/.test(segment)
-        ? `${field}[${segment}]`
-        : `${field}${field ? "." : ""}${pointerKeys(segment).at(-1)}`, "")
 }
 
 export {collectAllIds}

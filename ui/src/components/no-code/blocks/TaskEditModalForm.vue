@@ -24,9 +24,11 @@
         BLOCK_SCHEMA_PATH_INJECTION_KEY,
         EDIT_TASK_FUNCTION_INJECTION_KEY,
         EDITING_TASK_INJECTION_KEY,
+        FIELD_VALIDATION_ERRORS_INJECTION_KEY,
         PARENT_PATH_INJECTION_KEY,
         REF_PATH_INJECTION_KEY,
     } from "../injectionKeys"
+    import {blockPointerPrefix, useFieldValidationErrors} from "../utils/useFieldValidationErrors"
 
     const props = defineProps<{
         task?: Record<string, unknown>
@@ -49,6 +51,7 @@
     provide(PARENT_PATH_INJECTION_KEY, props.parentPath)
     provide(REF_PATH_INJECTION_KEY, props.refPath)
     provide(EDITING_TASK_INJECTION_KEY, true)
+    provide(FIELD_VALIDATION_ERRORS_INJECTION_KEY, useFieldValidationErrors(() => blockPointerPrefix(props.parentPath, props.refPath)))
     provide(BLOCK_SCHEMA_PATH_INJECTION_KEY, computed(() => props.blockSchemaPath))
     provide(EDIT_TASK_FUNCTION_INJECTION_KEY, (parentPath, blockSchemaPath, refPath, split) => {
         emit("select-nested", parentPath, blockSchemaPath, refPath, split)

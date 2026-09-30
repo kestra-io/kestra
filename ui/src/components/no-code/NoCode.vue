@@ -48,6 +48,7 @@
         DEFAULT_NAMESPACE_INJECTION_KEY,
         EDIT_TASK_FUNCTION_INJECTION_KEY,
         EDITING_TASK_INJECTION_KEY,
+        FIELD_VALIDATION_ERRORS_INJECTION_KEY,
         FIELDNAME_INJECTION_KEY,
         FULL_SCHEMA_INJECTION_KEY,
         FULL_SOURCE_INJECTION_KEY,
@@ -70,6 +71,7 @@
     import {useScrollMemory} from "../../composables/useScrollMemory"
     import {defaultNamespace} from "../../composables/useNamespaces"
     import {LIST_FIELDS} from "./components/tasks/getTaskComponent"
+    import {blockPointerPrefix, useFieldValidationErrors} from "./utils/useFieldValidationErrors"
     const props = defineProps<NoCodeProps>()
 
     function shouldMerge(schema: any): boolean {
@@ -170,6 +172,12 @@
     provide(FULL_SCHEMA_INJECTION_KEY, computed(() => pluginsStore.flowSchema ?? {}))
     provide(ROOT_SCHEMA_INJECTION_KEY, computed(() => pluginsStore.flowRootSchema ?? {}))
     provide(SCHEMA_DEFINITIONS_INJECTION_KEY, computed(() => pluginsStore.flowDefinitions ?? {}))
+
+    provide(FIELD_VALIDATION_ERRORS_INJECTION_KEY, useFieldValidationErrors(() => {
+        if (props.creatingTask) return undefined
+        if (!props.editingTask) return []
+        return blockPointerPrefix(props.parentPath, props.refPath)
+    }))
 
     const emit = defineEmits<{
         (e: "createTask", parentPath: string, blockSchemaPath: string, refPath: number | undefined,  position: "after" | "before"): boolean | void;

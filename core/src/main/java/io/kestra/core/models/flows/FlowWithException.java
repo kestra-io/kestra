@@ -7,11 +7,13 @@ import java.util.Optional;
 
 import org.slf4j.Logger;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import io.kestra.core.models.Label;
 import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.serializers.ListOrMapOfLabelDeserializer;
 
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -96,23 +98,15 @@ public class FlowWithException extends FlowWithSource {
             if (!jsonNode.hasNonNull("labels")) {
                 return null;
             }
-            JsonNode labelsNode = jsonNode.get("labels");
-            if (labelsNode.isArray()) {
-                return JacksonMapper.ofJson().convertValue(labelsNode, new TypeReference<List<Label>>() {
-                });
-            }
-            if (labelsNode.isObject()) {
-                Map<String, Object> map = JacksonMapper.ofJson().convertValue(labelsNode, JacksonMapper.MAP_TYPE_REFERENCE);
-                return map.entrySet().stream()
-                    .filter(entry -> entry.getKey() != null && !entry.getKey().isEmpty() && entry.getValue() != null
-                        && !String.valueOf(entry.getValue()).isEmpty())
-                    .map(entry -> new Label(entry.getKey(), String.valueOf(entry.getValue())))
-                    .toList();
-            }
+            ObjectNode wrapper = JacksonMapper.ofJson().createObjectNode();
+            wrapper.set("labels", jsonNode.get("labels"));
+            return JacksonMapper.ofJson().convertValue(wrapper, LabelsHolder.class).labels();
         } catch (IllegalArgumentException e) {
             return null;
         }
-        return null;
+    }
+
+    private record LabelsHolder(@JsonDeserialize(using = ListOrMapOfLabelDeserializer.class) List<Label> labels) {
     }
 
     private static Map<String, Object> extractVariables(final JsonNode jsonNode) {

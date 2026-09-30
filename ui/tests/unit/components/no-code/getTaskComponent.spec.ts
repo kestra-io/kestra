@@ -142,4 +142,23 @@ describe("getTaskComponent discriminated-union dispatch", () => {
         const component = getTaskComponent(property, runnerDefinitions, "taskRunner")
         expect(component.ksTaskName).toBe("plugin-implementation")
     })
+
+    it("does not sweep up a core closed-set union discriminated by a short @JsonSubTypes name, like Retry", () => {
+        // AbstractRetry: @JsonSubTypes.Type(value = Constant.class, name = "constant"), etc. — a
+        // fixed, non-plugin set with its own established inline-switch UI (kestra#20012 E2E fallout).
+        const retryDefinitions = {
+            Constant: {type: "object", properties: {type: {const: "constant"}, interval: {type: "string"}}},
+            Exponential: {type: "object", properties: {type: {const: "exponential"}, interval: {type: "string"}}},
+            Random: {type: "object", properties: {type: {const: "random"}}},
+        }
+        const property = {
+            anyOf: [
+                {$ref: "#/definitions/Constant"},
+                {$ref: "#/definitions/Exponential"},
+                {$ref: "#/definitions/Random"},
+            ],
+        }
+        const component = getTaskComponent(property, retryDefinitions, "retry")
+        expect(component.ksTaskName).not.toBe("plugin-implementation")
+    })
 })

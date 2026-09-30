@@ -7,6 +7,7 @@ import {
     resolveImplementationLabel,
     summarizeImplementationValue,
 } from "../../../../src/components/no-code/components/tasks/discriminatedUnion"
+import type {Schema} from "../../../../src/components/no-code/components/tasks/getTaskComponent"
 
 describe("humanizeClassName", () => {
     it("splits a plain PascalCase name", () => {
@@ -129,5 +130,57 @@ describe("summarizeImplementationValue", () => {
             expect(summary.parts.some((part) => part.key === "type")).toBe(false)
             expect(summary.overflow).toBe(1)
         }
+    })
+})
+
+describe("resolveImplementationLabel with real-shaped schemas", () => {
+    const definitions: Record<string, Schema> = {
+        "io.kestra.plugin.ai.provider.OpenAI": {title: "Use OpenAI models", properties: {type: {const: "io.kestra.plugin.ai.provider.OpenAI"}}},
+        "io.kestra.plugin.ai.provider.Ollama": {title: "Use local Ollama models", properties: {type: {const: "io.kestra.plugin.ai.provider.Ollama"}}},
+    }
+
+    it("prefers the shared anyOf branch title over the per-implementation definition titles", () => {
+        const property: Schema = {
+            anyOf: [
+                {$ref: "#/definitions/io.kestra.plugin.ai.provider.OpenAI", title: "Language model provider"},
+                {$ref: "#/definitions/io.kestra.plugin.ai.provider.Ollama", title: "Language model provider"},
+            ],
+        }
+        const branches = getImplementationBranches(property, definitions)!
+        expect(resolveImplementationLabel(branches, "provider")).toBe("Language model provider")
+    })
+
+    it("falls back to the humanised key when the branches share no title", () => {
+        const property: Schema = {anyOf: [{$ref: "#/definitions/io.kestra.plugin.ai.provider.OpenAI"}, {$ref: "#/definitions/io.kestra.plugin.ai.provider.Ollama"}]}
+        const branches = getImplementationBranches(property, definitions)!
+        expect(resolveImplementationLabel(branches, "contentRetrievers")).toBe("Content retrievers")
+    })
+})
+
+describe("plugin-discriminator guard", () => {
+    it("does not treat a short, non-plugin @JsonSubTypes name as an implementation picker", () => {
+        // Shaped like AbstractRetry: @JsonSubTypes.Type(name = "constant"/"exponential"/"random") —
+        // a closed, compile-time set with its own established UI, not a plugin-provided union.
+        const definitions: Record<string, Schema> = {
+            Constant: {properties: {type: {const: "constant"}, interval: {type: "string"}}},
+            Exponential: {properties: {type: {const: "exponential"}, interval: {type: "string"}}},
+            Random: {properties: {type: {const: "random"}}},
+        }
+        const property: Schema = {
+            anyOf: [
+                {$ref: "#/definitions/Constant"},
+                {$ref: "#/definitions/Exponential"},
+                {$ref: "#/definitions/Random"},
+            ],
+        }
+        expect(getImplementationBranches(property, definitions)).toBeUndefined()
+    })
+
+    it("still matches when every branch resolves to a dotted fully-qualified class name", () => {
+        const branches = getImplementationBranches(
+            {anyOf: [{$ref: "#/definitions/io.kestra.plugin.ai.provider.GoogleGemini"}, {$ref: "#/definitions/io.kestra.plugin.ai.provider.OpenAI"}]},
+            providerDefinitions,
+        )
+        expect(branches).toHaveLength(2)
     })
 })

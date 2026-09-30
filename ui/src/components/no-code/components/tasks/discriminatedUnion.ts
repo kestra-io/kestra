@@ -3,12 +3,18 @@ import type {Schema} from "./getTaskComponent"
 export interface ImplementationBranch {
     ref: string
     definition: Schema
+    branchTitle?: string
 }
 
 function refOf(branch: Schema | undefined): string | undefined {
     if (!branch) return undefined
     if (branch.$ref) return branch.$ref
     return branch.allOf?.map(refOf).find((ref) => ref !== undefined)
+}
+
+function titleOf(branch: Schema | undefined): string | undefined {
+    if (!branch) return undefined
+    return branch.title ?? branch.allOf?.map(titleOf).find((title) => title !== undefined)
 }
 
 function resolveDefinition(ref: string, definitions: Record<string, Schema>): Schema | undefined {
@@ -52,14 +58,27 @@ export function resolveDiscriminator(definition: DiscriminatedDefinition | undef
     return undefined
 }
 
+// Kestra discriminates a *plugin-extensible* union (Task, TaskRunner, and every AI-plugin
+// interface) by the implementation's fully-qualified class name, since resolving it means loading
+// a dynamically-installed plugin class. A closed, compile-time set baked into core — Retry
+// strategies, SLA types — instead names itself with a short `@JsonSubTypes` name ("constant",
+// "MAX_DURATION"): finite, never plugin-provided, and already served by TaskAnyOf's inline
+// segmented switch. Requiring a dotted discriminator keeps this control scoped to the former.
+const FQCN_DISCRIMINATOR = /^[A-Za-z_$][\w$]*(\.[A-Za-z_$][\w$]*)+$/
+
+function isPluginDiscriminator(values: string[]): boolean {
+    return values.length > 0 && values.every((value) => FQCN_DISCRIMINATOR.test(value))
+}
+
 function discriminatedBranch(branch: Schema, definitions: Record<string, Schema>): ImplementationBranch | undefined {
     const ref = refOf(branch)
     if (!ref) return undefined
     const rawDefinition = resolveDefinition(ref, definitions)
     if (!rawDefinition) return undefined
     const definition = mergeDefinition(rawDefinition, definitions)
-    if (!resolveDiscriminator(definition)) return undefined
-    return {ref: ref.split("/").pop() ?? ref, definition}
+    const discriminator = resolveDiscriminator(definition)
+    if (!discriminator || !isPluginDiscriminator(discriminator)) return undefined
+    return {ref: ref.split("/").pop() ?? ref, definition, branchTitle: titleOf(branch)}
 }
 
 function branchesOf(property: Schema): Schema[] | undefined {
@@ -123,10 +142,19 @@ export function humanizePropertyKey(key: string): string {
  * carry no title at all.
  */
 export function resolveImplementationLabel(branches: ImplementationBranch[], fieldKey: string): string {
-    const sharedTitle = branches[0]?.definition.title
-    return sharedTitle && branches.every((branch) => branch.definition.title === sharedTitle)
-        ? sharedTitle
-        : humanizePropertyKey(fieldKey)
+    // The shared label lives on the anyOf branch (every provider branch is titled "Language model
+    // provider"), not on the resolved definition, whose title names the one implementation.
+    return sharedTitleOf(branches, (branch) => branch.branchTitle)
+        ?? sharedTitleOf(branches, (branch) => branch.definition.title)
+        ?? humanizePropertyKey(fieldKey)
+}
+
+function sharedTitleOf(
+    branches: ImplementationBranch[],
+    pick: (branch: ImplementationBranch) => string | undefined,
+): string | undefined {
+    const first = pick(branches[0])
+    return first && branches.every((branch) => pick(branch) === first) ? first : undefined
 }
 
 export interface ImplementationSummaryPart {

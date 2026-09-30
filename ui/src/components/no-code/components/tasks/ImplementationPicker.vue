@@ -81,10 +81,22 @@
         if (isVisible) search.value = ""
     })
 
+    // A plugin description is full markdown and often embeds whole YAML examples, so only the
+    // lead sentence is usable in a list of nineteen.
+    function leadSentence(text: string | undefined): string {
+        if (!text) return ""
+        const beforeBlock = text.split(/\n\s*(?:#{1,6}\s|```)/)[0]
+        const firstLine = beforeBlock.split(/\n\s*\n/)[0].replace(/\s+/g, " ").trim()
+        const sentenceEnd = firstLine.search(/\.(?:\s|$)/)
+        return sentenceEnd === -1 ? firstLine : firstLine.slice(0, sentenceEnd + 1)
+    }
+
     const options = computed(() => props.branches.map((branch) => ({
         branch,
         name: humanizeClassName(simpleClassName(branch.ref)),
-        description: branch.definition.description ?? branch.definition.markdownDescription ?? branch.definition.title ?? "",
+        description: leadSentence(
+            branch.definition.title ?? branch.definition.description ?? branch.definition.markdownDescription,
+        ),
     })))
 
     const filtered = computed(() => {
@@ -171,6 +183,10 @@
     font-size: var(--ks-font-size-xs);
     color: var(--ks-text-secondary);
     overflow-wrap: anywhere;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
 }
 
 .implementation-picker-option-check {

@@ -17,8 +17,13 @@
                 @expand-subflow="onExpandSubflow"
             />
             <div v-else-if="loading" v-ks-loading="true" style="height:100%;position:relative" />
-            <KsAlert v-else type="warning" :closable="false">
-                {{ $t("unable to generate graph") }}
+            <KsAlert v-else type="error" :closable="false" data-test="topology-graph-error">
+                <template #title>
+                    {{ $t("unable to generate graph") }}
+                </template>
+                <KsButton link size="small" @click="loadGraph()">
+                    {{ $t("retry") }}
+                </KsButton>
             </KsAlert>
         </div>
     </KsCard>

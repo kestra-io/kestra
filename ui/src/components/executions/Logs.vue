@@ -210,17 +210,14 @@
 
     const props = withDefaults(defineProps<{
         playground?: boolean
-        /** Hides the filter bar and toolbar, forces the compact task-run view, and fills the given
-         *  container height instead of the standalone tab's own layout — used to embed the chart in
-         *  the Overview page. */
+        /** Hides the filter bar and toolbar, and fills the container height the parent gives it. */
         embedded?: boolean
     }>(), {
         playground: false,
         embedded: false,
     })
 
-    // Raw/temporal view has no fill-to-container sizing mode, so embedding always uses the compact
-    // task-run tree — the same simplification already made by dropping the toolbar that toggles it.
+    // The raw view has no fill-to-container sizing mode, so embedding never offers it.
     const effectiveRawView = computed(() => props.embedded ? false : raw_view.value)
 
     const executionsStore = useExecutionsStore()

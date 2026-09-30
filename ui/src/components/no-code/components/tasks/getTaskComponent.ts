@@ -1,13 +1,17 @@
 import {pascalCase} from "change-case"
 import {resolve$ref} from "../../../../utils/utils"
 import {SECTIONS_IDS} from "../../utils/useFlowFields"
+import {isImplementationPicker} from "./discriminatedUnion"
 
 const TasksComponents = import.meta.glob<{ default: any }>("./Task*.vue", {eager: true})
 
 export interface Schema{
     $ref?: string;
     $required?: boolean;
-    type: string | {const: string};
+    type?: string | {const: string};
+    title?: string;
+    description?: string;
+    markdownDescription?: string;
     properties?: Record<string, Schema>;
     required?: string[];
     default?: any;
@@ -48,6 +52,10 @@ export function getType(property: any, definitions: Record<string, any>, key?: s
             return "list"
         }
 
+        if (isImplementationPicker(property, definitions)) {
+            return "plugin-implementation"
+        }
+
         return "complex"
     }
 
@@ -64,8 +72,8 @@ export function getType(property: any, definitions: Record<string, any>, key?: s
             return "dict"
         }
 
-        if (property.anyOf.length > 10 || key === "taskRunner") {
-            return "task"
+        if (isImplementationPicker(property, definitions)) {
+            return "plugin-implementation"
         }
         return "any-of"
     }
@@ -114,7 +122,15 @@ export function getType(property: any, definitions: Record<string, any>, key?: s
 
     if (property.type === "array") {
         const items = definitions ? resolve$ref({definitions: definitions}, property.items) : property.items
-        if (items?.anyOf?.length === 0 || items?.anyOf?.length > 10 || LIST_FIELDS.includes(key ?? "")) {
+        if (LIST_FIELDS.includes(key ?? "")) {
+            return "list"
+        }
+
+        if (isImplementationPicker(property, definitions)) {
+            return "plugin-implementation"
+        }
+
+        if (items?.anyOf?.length === 0) {
             return "list"
         }
 

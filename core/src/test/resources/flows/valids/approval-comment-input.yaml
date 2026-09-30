@@ -1,0 +1,9 @@
+id: approval-comment-input
+namespace: io.kestra.tests
+
+tasks:
+  - id: approval
+    type: io.kestra.plugin.core.flow.Approval
+    inputs:
+      - id: comment
+        type: STRING

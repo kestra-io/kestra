@@ -73,6 +73,7 @@ public class ExecutorService {
     private final TaskOutputService taskOutputService;
     private final ExecutionOutputService executionOutputService;
     private final PausedTaskNotifier pausedTaskNotifier;
+    private final ApprovalRequestHandler approvalRequestHandler;
 
     @Inject
     public ExecutorService(
@@ -90,7 +91,8 @@ public class ExecutorService {
         RunContextInitializer runContextInitializer,
         TaskOutputService taskOutputService,
         ExecutionOutputService executionOutputService,
-        PausedTaskNotifier pausedTaskNotifier) {
+        PausedTaskNotifier pausedTaskNotifier,
+        ApprovalRequestHandler approvalRequestHandler) {
         this.runContextFactory = runContextFactory;
         this.metricRegistry = metricRegistry;
         this.flowExecutorInterface = flowExecutorInterface;
@@ -106,6 +108,7 @@ public class ExecutorService {
         this.taskOutputService = taskOutputService;
         this.executionOutputService = executionOutputService;
         this.pausedTaskNotifier = pausedTaskNotifier;
+        this.approvalRequestHandler = approvalRequestHandler;
     }
 
     public ExecutionRunning processExecutionRunning(List<ScopedConcurrencyLimit> limits, List<Integer> runningCounts, int queuedCount, ExecutionRunning executionRunning) {
@@ -725,6 +728,7 @@ public class ExecutorService {
                             // if a Pause task defines an onPause, we must create a TaskRun for it; handleWorkerTasks will dispatch it.
                             onPauseTaskRuns.add(TaskRun.of(executor.getExecution(), ResolvedTask.of(pause.getOnPause())));
                         }
+                        case Approval approval when taskRun.getState().getCurrent() == State.Type.CREATED -> this.handleApprovalCreated(executor, approval, taskRun);
                         case Loop loop -> {
                             if (!loop.isMySubExecution(executor.getExecution(), taskRun)) {
                                 if (taskRun.getState().getCurrent() == State.Type.CREATED) {
@@ -901,6 +905,29 @@ public class ExecutorService {
             .toList();
     }
 
+    private void handleApprovalCreated(ExecutorContext executor, Approval approval, TaskRun taskRun) throws Exception {
+        approvalRequestHandler.validate(approval);
+
+        Map<String, Object> outputs = taskOutputService.getOutputs(taskRun);
+        if (outputs.get("decision") != null) {
+            return;
+        }
+
+        RunContext runContext = runContextFactory.of(executor.getFlow(), approval, executor.getExecution(), taskRun);
+        ApprovalRequestHandler.OpenedRequest opened = approvalRequestHandler.open(executor.getFlow(), executor.getExecution(), taskRun, approval, runContext);
+
+        Map<String, Object> updates = new HashMap<>();
+        if (opened.url() != null) {
+            updates.put("url", opened.url());
+        }
+        if (opened.caseId() != null) {
+            updates.put("caseId", opened.caseId());
+        }
+        if (!updates.isEmpty()) {
+            taskOutputService.saveOutputs(taskRun, MapUtils.merge(taskOutputService.getOutputs(taskRun), updates));
+        }
+    }
+
     /**
      * Determines whether a flowable should be retried and creates a delay to restart it from the beginning.
      */
@@ -951,6 +978,8 @@ public class ExecutorService {
                 // if a Pause task defines an onPause, we must create a TaskRun for it; handleWorkerTasks
                 // dispatches it like any other CREATED task run, immediately since it runs right after.
                 onPauseTaskRuns.add(TaskRun.of(executor.getExecution(), ResolvedTask.of(pause.getOnPause())));
+            } else if (task instanceof Approval approval) {
+                this.handleApprovalCreated(executor, approval, taskRun);
             }
         } catch (Exception e) {
             RunContext runContext = runContextFactory.of(executor.getFlow(), task, executor.getExecution(), taskRun);
@@ -1201,8 +1230,7 @@ public class ExecutorService {
                     RunContext runContext = runContextFactory.of(executor.getFlow(), executor.getExecution());
                     Optional<ExecutionDelay> delay = pausableTask.pauseDelay(workerTaskResult.getTaskRun(), runContext);
 
-                    // Approval's `due` output is written from this same date, not re-rendered later,
-                    // so it can't drift from the delay actually scheduled.
+                    // `due` is written from the scheduled delay date so the two cannot drift.
                     if (delay.isPresent() && task instanceof Approval) {
                         Map<String, Object> current = taskOutputService.getOutputs(workerTaskResult.getTaskRun());
                         Map<String, Object> merged = MapUtils.merge(current, Map.of("due", delay.get().getDate().toString()));
@@ -1231,8 +1259,7 @@ public class ExecutorService {
                     }
                 }));
 
-            // A sibling Approval still gating the pause (its own taskRun isn't PAUSED yet, even in this
-            // pass's own results) keeps the execution out of PAUSED, so it can keep running its onWait.
+            // A sibling Approval still running its onWait keeps the execution out of PAUSED.
             Set<String> pausedThisPass = workerTaskResults.stream()
                 .filter(workerTaskResult -> workerTaskResult.getTaskRun().getState().getCurrent() == State.Type.PAUSED)
                 .map(workerTaskResult -> workerTaskResult.getTaskRun().getId())

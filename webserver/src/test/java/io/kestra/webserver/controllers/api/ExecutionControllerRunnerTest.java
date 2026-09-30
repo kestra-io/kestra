@@ -62,6 +62,7 @@ import io.kestra.core.models.triggers.AbstractTriggerForExecution;
 import io.kestra.core.queues.*;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
+import io.kestra.core.runners.ApprovalRequestHandler;
 import io.kestra.core.runners.*;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.services.ExecutionService;
@@ -98,6 +99,7 @@ import io.micronaut.http.client.multipart.MultipartBody;
 import io.micronaut.http.sse.Event;
 import io.micronaut.reactor.http.client.ReactorHttpClient;
 import io.micronaut.reactor.http.client.ReactorSseClient;
+import io.micronaut.context.annotation.Replaces;
 import io.micronaut.test.annotation.MockBean;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -116,7 +118,13 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.clearInvocations;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @Slf4j
@@ -168,6 +176,17 @@ class ExecutionControllerRunnerTest {
 
     @Inject
     private TenantService tenantService;
+
+    @MockBean
+    @Replaces(ApprovalRequestHandler.NoopApprovalRequestHandler.class)
+    ApprovalRequestHandler approvalRequestHandler() throws Exception {
+        ApprovalRequestHandler mock = mock(ApprovalRequestHandler.class);
+        when(mock.open(any(), any(), any(), any(), any())).thenReturn(new ApprovalRequestHandler.OpenedRequest(null, null));
+        return mock;
+    }
+
+    @Inject
+    ApprovalRequestHandler approvalRequestHandler;
 
     @MockBean(TenantValidationFilter.class)
     public TenantValidationFilter getTenantValidationFilter() {
@@ -2662,6 +2681,48 @@ class ExecutionControllerRunnerTest {
 
         var notFound = assertThrows(HttpClientResponseException.class, () -> client.toBlocking().exchange(HttpRequest.DELETE("/api/v1/%s/executions/notfound".formatted(tenantId))));
         assertThat(notFound.getStatus().getCode()).isEqualTo(HttpStatus.NOT_FOUND.getCode());
+    }
+
+    @Test
+    @LoadFlows({ "flows/valids/approval-basic.yaml" })
+    void shouldCloseTheApprovalRequestWhenDeletingAPausedExecution() throws QueueException {
+        clearInvocations(approvalRequestHandler);
+        Execution paused = runnerUtils.runOneUntilPaused(TENANT_ID, TESTS_FLOW_NS, "approval-basic");
+
+        var response = client.toBlocking().exchange(HttpRequest.DELETE("/api/v1/main/executions/" + paused.getId()));
+
+        assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.NO_CONTENT.getCode());
+        verify(approvalRequestHandler, times(1)).closed(argThat(execution -> execution.getId().equals(paused.getId())), any(), any(), eq(ApprovalRequestHandler.Resolution.CANCELLED));
+    }
+
+    @Test
+    @LoadFlows({ "flows/valids/approval-basic.yaml" })
+    void shouldCloseTheApprovalRequestWhenBulkDeletingAPausedExecution() throws QueueException {
+        clearInvocations(approvalRequestHandler);
+        Execution paused = runnerUtils.runOneUntilPaused(TENANT_ID, TESTS_FLOW_NS, "approval-basic");
+
+        BulkResponse response = client.toBlocking().retrieve(
+            HttpRequest.DELETE("/api/v1/main/executions/by-ids?includeNonTerminated=true", List.of(paused.getId())),
+            BulkResponse.class
+        );
+
+        assertThat(response.getCount()).isEqualTo(1);
+        verify(approvalRequestHandler, times(1)).closed(argThat(execution -> execution.getId().equals(paused.getId())), any(), any(), eq(ApprovalRequestHandler.Resolution.CANCELLED));
+    }
+
+    @Test
+    @LoadFlows({ "flows/valids/approval-comment-input.yaml" })
+    void shouldKeepAnInputNamedCommentApartFromTheReviewerComment() throws Exception {
+        Execution paused = runnerUtils.runOneUntilPaused(TENANT_ID, TESTS_FLOW_NS, "approval-comment-input");
+
+        var body = MultipartBody.builder().addPart("kestra_review_comment", "reviewer note").addPart("comment", "input value").build();
+        HttpResponse<?> response = client.toBlocking().exchange(HttpRequest.POST(reviewUri(paused, "APPROVE", null), body).contentType(MediaType.MULTIPART_FORM_DATA_TYPE));
+        assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
+
+        Execution execution = awaitExecution(paused.getId(), exec -> exec.getState().isTerminated());
+        Map<String, Object> outputs = taskOutputService.getOutputs(execution.findTaskRunsByTaskId("approval").getFirst().toBuilder().tenantId(TENANT_ID).build());
+        assertThat(outputs.get("comment")).isEqualTo("reviewer note");
+        assertThat((Map<String, Object>) outputs.get("inputs")).containsEntry("comment", "input value");
     }
 
     @Test

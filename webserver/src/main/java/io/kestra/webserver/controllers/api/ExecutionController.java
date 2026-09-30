@@ -493,7 +493,7 @@ public class ExecutionController {
         @Parameter(description = "Whether to delete execution files in the internal storage", required = false) @QueryValue(defaultValue = "true") Boolean deleteStorage) throws IOException {
         Optional<Execution> execution = executionRepository.findById(tenantService.resolveTenant(), executionId);
         if (execution.isPresent()) {
-            executionService.delete(execution.get(), deleteLogs, deleteMetrics, deleteStorage);
+            deleteWithApprovals(execution.get(), deleteLogs, deleteMetrics, deleteStorage);
             return HttpResponse.status(HttpStatus.NO_CONTENT);
         } else {
             return HttpResponse.status(HttpStatus.NOT_FOUND);
@@ -534,6 +534,15 @@ public class ExecutionController {
         return deleteExecutions(executions, includeNonTerminated, deleteLogs, deleteMetrics, deleteStorage);
     }
 
+    private void deleteWithApprovals(Execution execution, boolean deleteLogs, boolean deleteMetrics, boolean deleteStorage) throws IOException {
+        try {
+            executionService.cancelOpenApprovals(execution, flowRepository.findByExecutionWithoutAcl(execution));
+        } catch (RuntimeException e) {
+            log.warn("Unable to close the approval requests of the execution '{}' before deleting it", execution.getId(), e);
+        }
+        executionService.delete(execution, deleteLogs, deleteMetrics, deleteStorage);
+    }
+
     private HttpResponse<?> deleteExecutions(List<Execution> executions, Boolean includeNonTerminated, Boolean deleteLogs, Boolean deleteMetrics, Boolean deleteStorage) throws IOException {
         validateBulkExecutionACL(executions, BulkOperation.DELETE);
 
@@ -551,7 +560,7 @@ public class ExecutionController {
         }
 
         executions
-            .forEach(throwConsumer(execution -> executionService.delete(execution, deleteLogs, deleteMetrics, deleteStorage)));
+            .forEach(throwConsumer(execution -> deleteWithApprovals(execution, deleteLogs, deleteMetrics, deleteStorage)));
 
         return HttpResponse.ok(BulkResponse.builder().count(executions.size()).build());
     }

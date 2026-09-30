@@ -41,6 +41,7 @@ import io.kestra.core.runners.FlowInputOutput;
 import io.kestra.core.runners.FollowExecutionEvent;
 import io.kestra.core.runners.LocalPathFactory;
 import io.kestra.core.runners.MultipleConditionEvent;
+import io.kestra.core.runners.ApprovalRequestHandler;
 import io.kestra.core.runners.PausedTaskNotifier;
 import io.kestra.core.runners.RunContextInitializer;
 import io.kestra.core.runners.RunContextLoggerFactory;
@@ -280,6 +281,7 @@ public final class ExecutorTestHarness {
                 Mockito.mock(FlowParsingService.class),
                 taskOutputService,
                 runContextFactory,
+                Mockito.mock(ApprovalRequestHandler.class),
                 executionOutputService,
                 executionCommandQueue,
                 killQueue,
@@ -331,7 +333,8 @@ public final class ExecutorTestHarness {
             Mockito.mock(RunContextInitializer.class),
             taskOutputService,
             executionOutputService,
-            new PausedTaskNotifier.NoopPausedTaskNotifier()
+            new PausedTaskNotifier.NoopPausedTaskNotifier(),
+            new ApprovalRequestHandler.NoopApprovalRequestHandler()
         );
 
         this.executionEventMessageHandler = new ExecutionEventMessageHandler(

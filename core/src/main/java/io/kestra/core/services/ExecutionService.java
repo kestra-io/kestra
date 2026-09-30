@@ -40,6 +40,7 @@ import io.kestra.core.queues.QueueException;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.LogDataStoreInterface;
 import io.kestra.core.repositories.MetricRepositoryInterface;
+import io.kestra.core.runners.ApprovalRequestHandler;
 import io.kestra.core.runners.FlowInputOutput;
 import io.kestra.core.runners.ProcessedFlow;
 import io.kestra.core.runners.RunContext;
@@ -92,6 +93,7 @@ public class ExecutionService {
     private final FlowParsingService flowParsingService;
     private final TaskOutputService taskOutputService;
     private final RunContextFactory runContextFactory;
+    private final ApprovalRequestHandler approvalRequestHandler;
     private final ExecutionOutputService executionOutputService;
     private final DispatchQueueInterface<ExecutionCommand> executionCommandQueue;
     private final BroadcastQueueInterface<ExecutionKilled> killQueue;
@@ -112,6 +114,7 @@ public class ExecutionService {
         FlowParsingService flowParsingService,
         TaskOutputService taskOutputService,
         RunContextFactory runContextFactory,
+        ApprovalRequestHandler approvalRequestHandler,
         ExecutionOutputService executionOutputService,
         DispatchQueueInterface<ExecutionCommand> executionCommandQueue,
         BroadcastQueueInterface<ExecutionKilled> killQueue,
@@ -129,6 +132,7 @@ public class ExecutionService {
         this.flowParsingService = Objects.requireNonNull(flowParsingService);
         this.taskOutputService = Objects.requireNonNull(taskOutputService);
         this.runContextFactory = Objects.requireNonNull(runContextFactory);
+        this.approvalRequestHandler = Objects.requireNonNull(approvalRequestHandler);
         this.executionOutputService = Objects.requireNonNull(executionOutputService);
         this.executionCommandQueue = Objects.requireNonNull(executionCommandQueue);
         this.killQueue = Objects.requireNonNull(killQueue);
@@ -757,6 +761,7 @@ public class ExecutionService {
 
     /** {@code resumed} supplies the reviewer identity; its target state is ignored since a decided Approval always resumes RUNNING. */
     public Execution decide(final Execution execution, FlowInterface flow, String taskRunId, Approval.Decision decision, @Nullable Map<String, Object> inputs, @Nullable Pause.Resumed resumed) throws Exception {
+        Approval approval = this.findPausedApproval(execution, flow, taskRunId);
         this.validateDecision(execution, flow, taskRunId, decision);
 
         final FlowWithSource flowWithSource = flow instanceof FlowWithSource fws ? fws : flowParsingService.parse(flow, false);
@@ -771,6 +776,7 @@ public class ExecutionService {
         taskOutputService.saveOutputs(decidedTaskRun, merged);
 
         this.eventPublisher.publishEvent(CrudEvent.of(execution, decidedExecution));
+        approvalRequestHandler.decided(decidedExecution, decidedTaskRun, approval, decision, _resumed);
         this.notifyLoopParent(decidedExecution, decidedExecution.getState().getCurrent());
         return decidedExecution;
     }
@@ -782,11 +788,15 @@ public class ExecutionService {
 
     /** Ends an Approval request without a decision: no branch runs and the task run is cancelled. */
     public Execution cancelApproval(final Execution execution, FlowInterface flow, String taskRunId, @Nullable Pause.Resumed resumed) throws Exception {
-        this.findPausedApproval(execution, flow, taskRunId);
+        Approval approval = this.findPausedApproval(execution, flow, taskRunId);
 
         final FlowWithSource flowWithSource = flow instanceof FlowWithSource fws ? fws : flowParsingService.parse(flow, false);
+        Map<String, Object> priorOutputs = taskOutputService.getOutputs(execution.findTaskRunByTaskRunId(taskRunId));
         Execution cancelled = this.markAs(execution, flowWithSource, taskRunId, State.Type.CANCELLED, null, resumed != null ? resumed : Pause.Resumed.now(State.Type.CANCELLED));
+        TaskRun cancelledTaskRun = cancelled.findTaskRunByTaskRunId(taskRunId);
+        taskOutputService.saveOutputs(cancelledTaskRun, MapUtils.merge(priorOutputs, taskOutputService.getOutputs(cancelledTaskRun)));
         this.eventPublisher.publishEvent(CrudEvent.of(execution, cancelled));
+        approvalRequestHandler.closed(cancelled, cancelledTaskRun, approval, ApprovalRequestHandler.Resolution.CANCELLED);
         this.notifyLoopParent(cancelled, State.Type.RESTARTED);
         this.notifyLoopParent(cancelled, cancelled.getState().getCurrent());
         return cancelled;
@@ -812,8 +822,6 @@ public class ExecutionService {
 
     private void validateDecisionComment(FlowInterface flow, Approval approval, Execution execution, TaskRun taskRun, Approval.Decision decision) throws IllegalVariableEvaluationException {
         RunContext runContext = runContextFactory.of(flow, approval, execution, taskRun);
-        // the executor reuses this task instance across every execution of the flow, so the property's
-        // render cache must be skipped or a later execution would reuse the first execution's value.
         Approval.CommentRequired commentRequired = runContext.render(approval.getCommentRequired().skipCache())
             .as(Approval.CommentRequired.class)
             .orElse(Approval.CommentRequired.NEVER);
@@ -1304,6 +1312,10 @@ public class ExecutionService {
             return execution;
         }
 
+        if (execution.getState().getCurrent() != State.Type.KILLING) {
+            this.closeOpenApprovals(execution, flow, ApprovalRequestHandler.Resolution.KILLED);
+        }
+
         Execution newExecution;
         State.Type killingOrAfterKillState = afterKillState.orElse(State.Type.KILLING);
         if (execution.getState().isPaused()) {
@@ -1333,6 +1345,37 @@ public class ExecutionService {
 
     public Execution kill(Execution execution, FlowInterface flow) {
         return this.kill(execution, flow, Optional.empty());
+    }
+
+    /** Closes the approval requests of an execution about to be deleted, loop sub-executions included, so that none stays open for an execution that no longer exists. */
+    public void cancelOpenApprovals(Execution execution, FlowInterface flow) {
+        if (execution.getState().isTerminated()) {
+            return;
+        }
+
+        this.closeOpenApprovals(execution, flow, ApprovalRequestHandler.Resolution.CANCELLED);
+
+        executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId(), null).stream()
+            .filter(subExecution -> !subExecution.getState().isTerminated())
+            .forEach(subExecution -> this.closeOpenApprovals(subExecution, flow, ApprovalRequestHandler.Resolution.CANCELLED));
+    }
+
+    private void closeOpenApprovals(Execution execution, FlowInterface flow, ApprovalRequestHandler.Resolution resolution) {
+        for (TaskRun taskRun : ListUtils.emptyOnNull(execution.getTaskRunList())) {
+            try {
+                final FlowWithSource flowWithSource = flow instanceof FlowWithSource fws ? fws : flowParsingService.parse(flow, false);
+                if (flowWithSource.findTaskByTaskId(taskRun.getTaskId()) instanceof Approval approval && this.isAwaitingDecision(approval, taskRun)) {
+                    approvalRequestHandler.closed(execution, taskRun, approval, resolution);
+                }
+            } catch (Exception e) {
+                log.warn("Unable to close the approval request of task run '{}'", taskRun.getId(), e);
+            }
+        }
+    }
+
+    private boolean isAwaitingDecision(Approval approval, TaskRun taskRun) throws InternalException {
+        boolean waiting = taskRun.getState().getCurrent() == State.Type.PAUSED || approval.isWaiting(taskRun);
+        return waiting && taskOutputService.getOutputs(taskRun).get("decision") == null;
     }
 
     /**

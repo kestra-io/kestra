@@ -12,7 +12,7 @@ const mockRoute = reactive({
 const search = vi.fn()
 const searchFlowSuggestion = vi.fn()
 
-const store = {
+const store = reactive({
     suggestedQuery: null,
     flows: {
         status: "done",
@@ -44,7 +44,7 @@ const store = {
     resourceCountFor: vi.fn(() => 0),
     statusFor: vi.fn(() => "idle"),
     errorMessageFor: vi.fn(() => ""),
-}
+})
 
 vi.mock("vue-router", () => ({
     useRoute: () => mockRoute,
@@ -54,19 +54,11 @@ vi.mock("vue-router", () => ({
     }),
 }))
 
-vi.mock("../../../../../src/composables/useRestoreUrl", () => ({
+vi.mock("../../../../src/composables/useRestoreUrl", () => ({
     default: () => ({loadInit: ref(true)}),
 }))
 
 vi.mock("../../../../src/stores/crossResourceSearch", () => ({
-    SEARCH_RESOURCE_TYPES: ["flows", "files", "kv", "secrets"],
-    crossSearchResultKey: vi.fn(() => "key"),
-    searchViewState: vi.fn(({hasQuery, loadInit, searchPending, anyCounting, matchCount}) => {
-        if (!loadInit || !hasQuery) return "empty"
-        if (searchPending || anyCounting) return "loading"
-        if (matchCount === 0) return "empty"
-        return "results"
-    }),
     useCrossResourceSearchStore: () => store,
 }))
 
@@ -74,7 +66,7 @@ vi.mock("@kestra-io/kestra-sdk/flows", () => ({
     searchFlowsBySourceCode: vi.fn(),
 }))
 
-vi.mock("../../../../../src/utils/toast", () => ({
+vi.mock("../../../../src/utils/toast", () => ({
     useToast: () => ({
         error: vi.fn(),
         success: vi.fn(),
@@ -82,7 +74,7 @@ vi.mock("../../../../../src/utils/toast", () => ({
     }),
 }))
 
-vi.mock("../../../../../src/composables/useRouteContext", () => ({
+vi.mock("../../../../src/composables/useRouteContext", () => ({
     default: vi.fn(),
 }))
 
@@ -104,6 +96,7 @@ describe("FlowsSearch", () => {
     })
 
     it("keeps the loading state when a previous search resolves after the query changes", async () => {
+        vi.useFakeTimers()
         let resolveSecondSearch!: (value: number) => void
 
         search
@@ -131,7 +124,7 @@ describe("FlowsSearch", () => {
         // Start a second query.
         mockRoute.query.q = "second-query"
         await flushPromises()
-        await new Promise((resolve) => setTimeout(resolve, 350))
+        await vi.advanceTimersByTimeAsync(300)
         await flushPromises()
 
         // The second search is now in flight.
@@ -146,8 +139,9 @@ describe("FlowsSearch", () => {
         await flushPromises()
 
         // The stale search must not clear the loading state.
-        expect(wrapper.find(".source-search__skeleton-rows").exists()).toBe(true)
+        expect(wrapper.find('[data-test="source-search-loading"]').exists()).toBe(true)
 
         wrapper.unmount()
+        vi.useRealTimers()
     })
 })

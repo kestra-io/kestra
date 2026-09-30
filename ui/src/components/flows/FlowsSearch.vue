@@ -226,7 +226,7 @@
         </div>
 
         <div v-else-if="showLoadingState" class="source-search__states">
-            <div class="source-search__skeleton-rows">
+            <div data-test="source-search-loading" class="source-search__skeleton-rows">
                 <KsSkeleton v-for="n in 4" :key="n" animated :rows="1" class="source-search__skeleton-row" />
             </div>
         </div>
@@ -712,14 +712,14 @@
 
         const currentSearchPendingToken = searchPendingToken
 
-        searchPending.value = true
         if (!query.value) {
-            if (currentSearchPendingToken === searchPendingToken) {
-                searchPending.value = false
-            }
+            searchPending.value = false
             crossResourceSearchStore.reset()
             return
         }
+
+        searchPending.value = true
+
         const currentQuery = query.value
 
         previewResponse.value = null

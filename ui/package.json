@@ -49,7 +49,7 @@
         "@vue-flow/core": "^1.48.2",
         "@vueuse/core": "^14.3.0",
         "ansi-to-html": "^0.7.2",
-        "axios": "1.18.1",
+        "axios": "1.20.0",
         "bootstrap": "^5.3.8",
         "change-case": "5.4.4",
         "cronstrue": "^3.24.0",
@@ -140,7 +140,7 @@
         "lightningcss-linux-x64-gnu": "^1.32.0"
     },
     "overrides": {
-        "axios": "1.18.1",
+        "axios": "1.20.0",
         "@popperjs/core": "npm:@sxzz/popperjs-es@^2.11.7",
         "@codecov/vite-plugin": {
             "vite": "$vite"

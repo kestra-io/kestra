@@ -49,6 +49,7 @@
                 class="field-help"
                 :content="inlineHelpText"
             />
+            <FieldValidationErrors :errors="fieldErrors" />
         </div>
     </div>
     <KsFormItem
@@ -134,26 +135,24 @@
             class="field-help"
             :content="inlineHelpText"
         />
-        <span
-            v-if="isMissingRequired"
-            class="required-missing"
-            data-test="field-required-missing"
-        >
-            <AlertCircleOutline class="required-missing-icon" />
-            {{ $t("block_editor.required_missing") }}
-        </span>
+        <FieldValidationErrors :errors="fieldErrors" />
+        <FieldValidationErrors
+            v-if="isMissingRequired && !fieldErrors.length"
+            :errors="[$t('block_editor.required_missing')]"
+            dataTest="field-required-missing"
+        />
     </KsFormItem>
 </template>
 
 <script setup lang="ts">
     import {computed, inject, ref, useTemplateRef} from "vue"
     import {useBlockComponent} from "./useBlockComponent"
-    import {FIELD_NAV_INJECTION_KEY, PLUGIN_DEFAULTS_INJECTION_KEY} from "../../injectionKeys"
+    import {FIELD_NAV_INJECTION_KEY, FIELD_VALIDATION_ERRORS_INJECTION_KEY, PLUGIN_DEFAULTS_INJECTION_KEY} from "../../injectionKeys"
 
     import ClearButton from "./ClearButton.vue"
     import {KsMarkdown} from "@kestra-io/design-system"
     import Help from "vue-material-design-icons/Information.vue"
-    import AlertCircleOutline from "vue-material-design-icons/AlertCircleOutline.vue"
+    import FieldValidationErrors from "../FieldValidationErrors.vue"
     import IconCodeTags from "vue-material-design-icons/CodeTags.vue"
     import TaskLabelWithBoolean from "./TaskLabelWithBoolean.vue"
 
@@ -190,6 +189,11 @@
     const hasSelectedASchema = ref(false)
 
     const pebbleState = ref(false)
+
+    const fieldPath = computed(() => props.rootOverride ?? (props.root ? `${props.root}.${props.fieldKey}` : props.fieldKey))
+
+    const validationErrors = inject(FIELD_VALIDATION_ERRORS_INJECTION_KEY, undefined)
+    const fieldErrors = computed<string[]>(() => validationErrors?.value.get(fieldPath.value) ?? [])
 
     const componentProps = computed(() => {
         return {
@@ -297,20 +301,6 @@
         align-items: center;
         padding: 0;
     }
-}
-
-.required-missing {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--ks-spacing-1);
-    margin-top: var(--ks-spacing-1);
-    font-size: var(--ks-font-size-xs);
-    color: var(--ks-text-error);
-}
-
-.required-missing-icon {
-    display: inline-flex;
-    font-size: var(--ks-font-size-sm);
 }
 
 .field-help {

@@ -130,7 +130,6 @@
     "description": "विवरण",
     "show description": "विवरण दिखाएं",
     "show details": "विवरण दिखाएं",
-    "show more details": "अधिक विवरण दिखाएं",
     "skipped": "छोड़ा गया",
     "revision": "संशोधन",
     "theme": "थीम",
@@ -441,7 +440,8 @@
       "invalid_description": "ग्राफ़ लोड करते समय एक त्रुटि हुई। कृपया त्रुटियों के लिए स्रोत कोड की जाँच करें।",
       "load_error": "टोपोलॉजी ग्राफ़ लोड नहीं किया जा सका। कृपया पुनः प्रयास करें।",
       "add-task": "Task जोड़ें",
-      "add-trigger": "Trigger जोड़ें"
+      "add-trigger": "Trigger जोड़ें",
+      "child-count": "{count} task | {count} tasks"
     },
     "show task logs": "Task Logs दिखाएं",
     "show task condition": "कार्य की स्थिति दिखाएं",
@@ -2563,6 +2563,7 @@
       "depends_on_placeholder": "टास्क चुनें…",
       "depth_pill": "गहराई {depth}",
       "drag_reorder": "पुनः क्रमित करने के लिए खींचें",
+      "drop_forbidden": "यहां छोड़ना संभव नहीं है",
       "duplicate": "डुप्लिकेट",
       "empty_add_hint": "या tasks खोजने के लिए / दबाएँ",
       "empty_add_lead": "{label} जोड़ने के लिए क्लिक करें",
@@ -2591,6 +2592,9 @@
       "lane_then": "फिर",
       "move_down": "नीचे ले जाएँ",
       "move_up": "ऊपर ले जाएँ",
+      "namespace_files": "namespace फ़ाइलें",
+      "namespace_kv": "KV Store Keys",
+      "namespace_secrets": "सीक्रेट्स",
       "no_data_matches": "आपके फ़िल्टर से कुछ भी मेल नहीं खाता",
       "no_recent": "अभी तक कोई हालिया task प्रकार नहीं हैं",
       "no_task_results": "कोई मिलान करने वाले task प्रकार नहीं।",
@@ -2602,6 +2606,9 @@
       "plugin_default": "डिफ़ॉल्ट: {value}",
       "plugin_default_tooltip": "flow के pluginDefaults से डिफ़ॉल्ट मान",
       "required_missing": "आवश्यक फ़ील्ड सेट नहीं है",
+      "required_unset_jump": "पहले पर जाएं",
+      "required_unset_plural": "{count} आवश्यक फ़ील्ड अभी तक सेट नहीं हैं",
+      "required_unset_singular": "1 आवश्यक फ़ील्ड अभी तक सेट नहीं है",
       "save_blocked": {
         "message": "सेव करने से पहले त्रुटियों को ठीक करें।",
         "title": "flow को सहेजा नहीं जा सकता"

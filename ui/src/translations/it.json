@@ -130,7 +130,6 @@
     "description": "Descrizione",
     "show description": "Mostra una descrizione",
     "show details": "Mostra dettagli",
-    "show more details": "Mostra più dettagli",
     "skipped": "Saltato",
     "revision": "Revisione",
     "theme": "Tema",
@@ -441,7 +440,8 @@
       "invalid_description": "Si è verificato un errore durante il caricamento del grafico. Si prega di controllare il codice sorgente per errori.",
       "load_error": "Impossibile caricare il grafico della topologia. Riprova.",
       "add-task": "Aggiungi task",
-      "add-trigger": "Aggiungi trigger"
+      "add-trigger": "Aggiungi trigger",
+      "child-count": "{count} task | {count} tasks"
     },
     "show task logs": "Mostra task logs",
     "show task condition": "Mostra condizione del task",
@@ -2563,6 +2563,7 @@
       "depends_on_placeholder": "Seleziona i task…",
       "depth_pill": "Profondità {depth}",
       "drag_reorder": "Trascina per riordinare",
+      "drop_forbidden": "Impossibile rilasciare qui",
       "duplicate": "Duplica",
       "empty_add_hint": "o premi / per cercare i task",
       "empty_add_lead": "Clicca per aggiungere {label}",
@@ -2591,6 +2592,9 @@
       "lane_then": "Poi",
       "move_down": "Sposta in basso",
       "move_up": "Sposta su",
+      "namespace_files": "File del namespace",
+      "namespace_kv": "KV Store Keys",
+      "namespace_secrets": "Segreti",
       "no_data_matches": "Nessun elemento corrisponde al tuo filtro",
       "no_recent": "Nessun tipo di task recente ancora",
       "no_task_results": "Nessun tipo di task corrispondente.",
@@ -2602,6 +2606,9 @@
       "plugin_default": "default: {value}",
       "plugin_default_tooltip": "Valore predefinito da pluginDefaults del flow",
       "required_missing": "Campo obbligatorio non impostato",
+      "required_unset_jump": "Vai al primo",
+      "required_unset_plural": "{count} campi obbligatori non sono ancora impostati",
+      "required_unset_singular": "1 campo obbligatorio non è ancora impostato",
       "save_blocked": {
         "message": "Correggi gli errori prima di salvare.",
         "title": "Impossibile salvare il flow"

@@ -108,6 +108,9 @@ public class ExecutionService {
     private BroadcastQueueInterface<ExecutionKilled> killQueue;
 
     @Inject
+    private DispatchQueueInterface<LoopExecutionEvent> loopExecutionEventQueue;
+
+    @Inject
     private AsyncOperationWaiter asyncOperationWaiter;
 
     @Inject
@@ -227,9 +230,18 @@ public class ExecutionService {
         return false;
     }
 
+    /**
+     * Pause a flowable task: set both the taskrun and the execution to {@link State.Type#PAUSED}.
+     */
     public Execution pauseFlowable(Execution execution, TaskRun updateFlowableTaskRun) throws InternalException {
+        return execution.withTaskRun(updateFlowableTaskRun.withStateAndAttempt(State.Type.PAUSED)).withState(State.Type.PAUSED);
+    }
 
-        return execution.withTaskRun(updateFlowableTaskRun.withState(State.Type.PAUSED)).withState(State.Type.PAUSED);
+    /**
+     * Resume a flowable task: set both the taskrun and the execution to {@link State.Type#RUNNING}.
+     */
+    public Execution resumeFlowable(Execution execution, TaskRun updateFlowableTaskRun) throws InternalException {
+        return execution.withTaskRun(updateFlowableTaskRun.withStateAndAttempt(State.Type.RUNNING)).withState(State.Type.RUNNING);
     }
 
     public Execution create(Create createCommand, ProcessedFlow processedFlow) {
@@ -674,7 +686,7 @@ public class ExecutionService {
                 }
                 newTaskRun = originalTaskRun.withState(targetState);
 
-                if (originalTaskRun.getAttempts() != null && !originalTaskRun.getAttempts().isEmpty()) {
+                if (!ListUtils.isEmpty(originalTaskRun.getAttempts())) {
                     List<TaskRunAttempt> attempts = new ArrayList<>(originalTaskRun.getAttempts());
                     attempts.set(attempts.size() - 1, attempts.getLast().withState(targetState));
                     newTaskRun = newTaskRun.withAttempts(attempts);
@@ -813,7 +825,7 @@ public class ExecutionService {
      * @throws Exception if the state of the execution cannot be updated
      */
     public Execution resume(Execution execution, FlowInterface flow, State.Type newState, Pause.Resumed resumed) throws Exception {
-        return this.resume(execution, flow, newState, (Map<String, Object>) null, resumed);
+        return this.resume(execution, flow, newState, null, resumed);
     }
 
     /**
@@ -920,7 +932,19 @@ public class ExecutionService {
 
         Execution unpausedExecution;
         if (pausedTaskRun.isPresent()) {
-            unpausedExecution = this.markAs(execution, flow, pausedTaskRun.get().getId(), newState, inputs, resumed);
+            final FlowWithSource flowWithSource = flow instanceof FlowWithSource fws ? fws : flowParsingService.parse(flow, false);
+            Task task = flowWithSource.findTaskByTaskId(pausedTaskRun.get().getTaskId());
+            if (task instanceof Loop) {
+                // find the first loop sub-execution that is paused and its corresponding taskrun
+                var subExecution = executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId(), task.getId())
+                    .stream()
+                    .filter(e -> e.getState().isPaused())
+                    .findFirst()
+                    .orElseThrow(() -> new IllegalArgumentException("No paused loop sub-execution found"));
+                return resume(subExecution, flow, newState, inputs, resumed);
+            } else {
+                unpausedExecution = this.markAs(execution, flow, pausedTaskRun.get().getId(), newState, inputs, resumed);
+            }
         } else {
             // we are in a manual execution pause, not triggered by the Pause task, so we just switch the execution to the new state.
             if (!execution.getState().isPaused()) {
@@ -930,6 +954,10 @@ public class ExecutionService {
         }
 
         this.eventPublisher.publishEvent(CrudEvent.of(execution, unpausedExecution));
+        if (execution.getKind() == ExecutionKind.LOOP) {
+            // notify the parent execution
+            loopExecutionEventQueue.emit(new LoopExecutionEvent(unpausedExecution.getLoopRun(), unpausedExecution.getId(), unpausedExecution.getState().getCurrent(), null, null));
+        }
         return unpausedExecution;
     }
 

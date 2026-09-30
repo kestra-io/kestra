@@ -1,5 +1,5 @@
 <template>
-    <ElOption v-bind="({...filteredProps(), ...$attrs} as any)">
+    <ElOption :value="value" :label="label" :disabled="disabled" v-bind="({...filteredProps(), ...$attrs} as Record<string, unknown>)">
         <template v-if="$slots['default']" #default>
             <slot />
         </template>
@@ -18,7 +18,7 @@
     defineOptions({inheritAttrs: false})
 
     const props = defineProps<{
-        value: any
+        value: string | number | boolean | Record<string, unknown>
         label?: string | number
         disabled?: boolean
     }>()
@@ -30,7 +30,7 @@
     const filteredProps = useFilteredProps(props)
 
     const colorMap = inject(KsSelectColorMapKey, undefined)
-    const color = computed(() => colorMap?.value?.[props.value])
+    const color = computed(() => (typeof props.value === 'string' || typeof props.value === 'number') ? colorMap?.value?.[props.value] : undefined)
 </script>
 
 <style lang="scss">

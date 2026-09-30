@@ -1,7 +1,7 @@
 <template>
     <ElCheckbox
         v-model="model"
-        v-bind="({...filteredProps(), ...$attrs} as any)"
+        v-bind="({...filteredProps(), ...$attrs} as Record<string, unknown>)"
         @change="emit('change', $event)"
     >
         <template v-if="$slots.default" #default>
@@ -17,7 +17,7 @@
 
     defineOptions({inheritAttrs: false})
 
-    const model = defineModel<any>()
+    const model = defineModel<boolean | string | number>()
 
     const props = withDefaults(defineProps<{
         value?: boolean | string | number
@@ -29,7 +29,7 @@
     })
 
     const emit = defineEmits<{
-        change: [value: any]
+        change: [value: boolean | string | number]
     }>()
 
     defineSlots<{

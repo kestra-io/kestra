@@ -1,7 +1,7 @@
 <template>
     <ElFormItem
         :class="{'is-inline-row': inline}"
-        v-bind="({...filteredProps(), ...$attrs} as any)"
+        v-bind="({...filteredProps(), ...$attrs} as Record<string, unknown>)"
     >
         <template v-if="$slots.default" #default>
             <slot />

@@ -40,7 +40,7 @@
         return !props.selectAll && (props.total === undefined || props.selectionCount < (props.total ?? 0))
     })
 
-    function toggle(value: boolean) {
+    function toggle(value: boolean | string | number) {
         if (!value) {
             emit("unselect")
         }

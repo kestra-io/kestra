@@ -35,7 +35,8 @@
             <div class="date-field">
                 <label class="form-label">{{ $t("filter.start_date") }}</label>
                 <KsDatePicker
-                    v-model="local.startDateValue"
+                    :modelValue="local.startDateValue as Date | null"
+                    @update:modelValue="local.startDateValue = $event as Date | null"
                     type="datetime"
                     :disabledDate="isAfterEndDate"
                     :placeholder="$t('filter.select_start_date')"
@@ -44,7 +45,8 @@
             <div class="date-field">
                 <label class="form-label">{{ $t("filter.end_date") }}</label>
                 <KsDatePicker
-                    v-model="local.endDateValue"
+                    :modelValue="local.endDateValue as Date | null"
+                    @update:modelValue="local.endDateValue = $event as Date | null"
                     type="datetime"
                     :defaultTime="endDateDefaultTime"
                     :disabledDate="isBeforeStartDate"

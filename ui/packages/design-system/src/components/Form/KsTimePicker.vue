@@ -1,7 +1,7 @@
 <template>
     <ElTimePicker
         v-model="model"
-        v-bind="({...filteredProps(), ...$attrs} as any)"
+        v-bind="({...filteredProps(), ...$attrs} as Record<string, unknown>)"
         @change="emit('change', $event)"
     />
 </template>
@@ -30,7 +30,7 @@
     })
 
     const emit = defineEmits<{
-        change: [value: any]
+        change: [value: unknown]
     }>()
 
     const filteredProps = useFilteredProps(props)

@@ -1,7 +1,7 @@
 <template>
     <ElInputNumber
         v-model="model"
-        v-bind="({...filteredProps(), ...$attrs} as any)"
+        v-bind="({...filteredProps(), ...$attrs} as Record<string, unknown>)"
         @change="emit('change', $event, undefined)"
     />
 </template>

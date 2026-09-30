@@ -2,7 +2,7 @@
     <ElInput
         v-model="model"
         class="ks-search"
-        v-bind="({...filteredProps(), ...$attrs} as any)"
+        v-bind="({...filteredProps(), ...$attrs} as Record<string, unknown>)"
         @change="emit('change', $event)"
     >
         <template #prefix>

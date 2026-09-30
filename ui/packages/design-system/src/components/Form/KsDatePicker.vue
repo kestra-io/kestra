@@ -1,18 +1,18 @@
 <template>
     <ElDatePicker
         v-model="model"
-        v-bind="({...filteredProps(), ...$attrs} as any)"
+        v-bind="({...filteredProps(), ...$attrs} as Record<string, unknown>)"
         @change="emit('change', $event)"
     />
 </template>
 
-<script setup lang="ts">
+<script setup lang="ts" generic="T extends string | number | Date | string[] | number[] | Date[] | [Date, Date] | [string, string] | [number, number] | null = string | number | Date | string[] | number[] | Date[] | [Date, Date] | [string, string] | [number, number] | null">
     import {ElDatePicker} from "element-plus"
     import {useFilteredProps} from "../../utils/filteredProps"
 
     defineOptions({inheritAttrs: false})
 
-    const model = defineModel<any>()
+    const model = defineModel<T>()
 
     const props = withDefaults(defineProps<{
         type?: string
@@ -35,7 +35,7 @@
     })
 
     const emit = defineEmits<{
-        change: [value: any]
+        change: [value: T]
     }>()
 
     const filteredProps = useFilteredProps(props)

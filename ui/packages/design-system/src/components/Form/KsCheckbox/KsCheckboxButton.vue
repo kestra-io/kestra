@@ -1,6 +1,6 @@
 <template>
     <ElCheckboxButton
-        v-bind="({...filteredProps(), ...$attrs} as any)"
+        v-bind="({...filteredProps(), ...$attrs} as Record<string, unknown>)"
         @change="emit('change', $event)"
     >
         <template v-if="$slots.default" #default>
@@ -23,7 +23,7 @@
     }>()
 
     const emit = defineEmits<{
-        change: [value: any]
+        change: [value: unknown]
     }>()
 
     defineSlots<{

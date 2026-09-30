@@ -1,12 +1,13 @@
 <template>
     <ElSwitch
         v-model="model"
-        v-bind="({...filteredProps(), ...$attrs} as any)"
+        v-bind="({...filteredProps(), ...$attrs} as Record<string, unknown>)"
         @change="emit('change', $event)"
     />
 </template>
 
 <script setup lang="ts">
+    import type {Component} from "vue"
     import {ElSwitch} from "element-plus"
     import {useFilteredProps} from "../../utils/filteredProps"
 
@@ -18,8 +19,8 @@
         disabled?: boolean
         activeText?: string
         inactiveText?: string
-        activeActionIcon?: any
-        inactiveActionIcon?: any
+        activeActionIcon?: Component | string
+        inactiveActionIcon?: Component | string
         size?: "large" | "default" | "small"
         activeValue?: boolean | string | number
         inactiveValue?: boolean | string | number

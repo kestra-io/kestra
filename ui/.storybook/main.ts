@@ -23,7 +23,7 @@ const config: StorybookConfig = {
 
         if (viteConfig.resolve) {
             const AliasConfig = [
-                ...(viteConfig.resolve.alias as any[]),
+                ...(viteConfig.resolve.alias as import("vite").Alias[]),
                 {find: "override", replacement: path.resolve(__dirname, "../src/override/")},
             ]
             viteConfig.resolve.alias = AliasConfig

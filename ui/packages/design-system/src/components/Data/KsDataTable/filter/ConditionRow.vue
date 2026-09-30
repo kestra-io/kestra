@@ -223,7 +223,8 @@
         }
     }
 
-    const changeField = (key: string) => {
+    const changeField = (key: string | undefined) => {
+        if (!key) return
         const config = props.allKeys.find((candidate) => candidate.key === key)
         const comparator = config?.comparators?.[0]
         if (!config || !comparator) return
@@ -243,7 +244,8 @@
         return [...pairByKey.values()]
     }
 
-    const changeComparator = (op: Comparators) => {
+    const changeComparator = (op: Comparators | undefined) => {
+        if (!op) return
         const wasMulti = isMulti.value
         const willBeMulti = keyConfig.value?.valueType === "multi-select" && !RANGE_COMPARATORS.includes(op)
         const shouldNormalizeKeyValues = keyConfig.value?.valueType === "key-value"
@@ -320,8 +322,10 @@
     })
     onBeforeUnmount(() => resizeObserver?.disconnect())
 
-    const onValueChange = (value: string | string[]) =>
+    const onValueChange = (value: string | string[] | undefined) => {
+        if (value === undefined) return
         emitUpdate(value, labelFor(value))
+    }
 
     const commitMulti = () => {
         const current = Array.isArray(props.filter.value) ? props.filter.value : []

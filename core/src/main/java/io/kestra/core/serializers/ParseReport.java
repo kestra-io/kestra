@@ -7,7 +7,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import io.kestra.core.models.validations.ValidateConstraintViolation.Violation;
+import io.kestra.core.models.validations.ValidationError;
 
 import jakarta.annotation.Nullable;
 
@@ -16,12 +16,12 @@ import jakarta.annotation.Nullable;
  * {@link #cleaned()} so the rest can still be deserialized and validated.
  */
 public record ParseReport(
-    List<Violation> unknownProperties,
+    List<ValidationError> unknownProperties,
     List<InvalidType> invalidTypes,
     @Nullable Map<String, Object> cleaned,
     List<Removal> removals
 ) {
-    public record InvalidType(Violation violation, String typeId) {
+    public record InvalidType(ValidationError error, String typeId) {
     }
 
     /** A plugin dropped from a list at {@code index}, or from a property when {@code index} is -1. */
@@ -72,6 +72,19 @@ public record ParseReport(
         return Arrays.stream(pointer.substring(1).split("/", -1))
             .map(segment -> segment.replace("~1", "/").replace("~0", "~"))
             .toList();
+    }
+
+    /** The friendly form of a path: {@code tasks[0].type}. */
+    static String toPath(List<String> segments) {
+        StringBuilder path = new StringBuilder();
+        for (String segment : segments) {
+            if (!segment.isEmpty() && segment.chars().allMatch(Character::isDigit)) {
+                path.append('[').append(segment).append(']');
+            } else {
+                path.append(path.isEmpty() ? "" : ".").append(segment);
+            }
+        }
+        return path.toString();
     }
 
     static String toPointer(List<String> segments) {

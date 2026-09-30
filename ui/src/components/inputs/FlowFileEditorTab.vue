@@ -298,7 +298,7 @@
 
     useViolationMarkers({
         editor: monacoEditor,
-        violations: computed(() => props.flow && previewSource.value === undefined ? flowStore.flowValidation?.violations : undefined),
+        errors: computed(() => props.flow && previewSource.value === undefined ? flowStore.flowValidation?.errors : undefined),
     })
 
     useReadOnlyYamlKeys({

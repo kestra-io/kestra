@@ -4,17 +4,17 @@ import type * as monaco from "monaco-editor/editor/editor.api"
 import {KsEditor} from "@kestra-io/design-system"
 
 import {useViolationMarkers} from "../../../../src/composables/useViolationMarkers"
-import type {LocatedViolation} from "../../../../src/utils/violationMarkers"
+import type {ValidationError} from "../../../../src/utils/validationErrors"
 
 const MarkedEditor = defineComponent({
     props: {
         source: {type: String, required: true},
-        violations: {type: Array as PropType<LocatedViolation[]>, required: true},
+        errors: {type: Array as PropType<ValidationError[]>, required: true},
     },
     setup(props) {
         const code = ref(props.source)
         const editor = shallowRef<monaco.editor.IStandaloneCodeEditor>()
-        useViolationMarkers({editor, violations: ref(props.violations)})
+        useViolationMarkers({editor, errors: ref(props.errors)})
 
         return () => (
             <div style="height: 520px">
@@ -62,21 +62,21 @@ triggers:
     type: io.kestra.plugin.core.trigger.Schedule   # missing cron
 `
 
-const unknownKey = {path: "/tasks/0/colour", message: "Unrecognized field \"colour\" (class io.kestra.plugin.core.log.Log), not marked as ignorable"}
-const missingMessage = {path: "/tasks/1/tasks/0/message", message: "must not be null"}
-const unknownType = {path: "/tasks/2/type", message: "Invalid type: io.kestra.plugin.core.log.Nope"}
-const missingCron = {path: "/triggers/0/cron", message: "must not be null"}
+const unknownKey = {pointer: "/tasks/0/colour", detail: "Unrecognized field \"colour\" (class io.kestra.plugin.core.log.Log), not marked as ignorable"}
+const missingMessage = {pointer: "/tasks/1/tasks/0/message", detail: "must not be null"}
+const unknownType = {pointer: "/tasks/2/type", detail: "Invalid type: io.kestra.plugin.core.log.Nope"}
+const missingCron = {pointer: "/triggers/0/cron", detail: "must not be null"}
 
-export const UnknownKey: Story = {args: {source: squiggles, violations: [unknownKey]}}
+export const UnknownKey: Story = {args: {source: squiggles, errors: [unknownKey]}}
 
-export const MissingKey: Story = {args: {source: squiggles, violations: [missingMessage]}}
+export const MissingKey: Story = {args: {source: squiggles, errors: [missingMessage]}}
 
-export const UnknownType: Story = {args: {source: squiggles, violations: [unknownType]}}
+export const UnknownType: Story = {args: {source: squiggles, errors: [unknownType]}}
 
 export const RootViolationStaysInThePanel: Story = {
-    args: {source: squiggles, violations: [{path: "/labels", message: "must not be empty"}]},
+    args: {source: squiggles, errors: [{pointer: "/labels", detail: "must not be empty"}]},
 }
 
 export const AllTogether: Story = {
-    args: {source: squiggles, violations: [unknownKey, missingMessage, unknownType, missingCron]},
+    args: {source: squiggles, errors: [unknownKey, missingMessage, unknownType, missingCron]},
 }

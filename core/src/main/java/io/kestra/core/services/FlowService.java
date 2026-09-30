@@ -39,6 +39,7 @@ import io.kestra.core.models.triggers.WorkerTriggerInterface;
 import io.kestra.core.models.validations.ManualConstraintViolation;
 import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.models.validations.ValidateConstraintViolation;
+import io.kestra.core.models.validations.ValidationError;
 import io.kestra.core.models.validations.ViolationPaths;
 import io.kestra.core.plugins.PluginAutoInstallService;
 import io.kestra.core.plugins.PluginRegistry;
@@ -77,7 +78,6 @@ import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
-import jakarta.validation.Path;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -420,29 +420,6 @@ public class FlowService {
         }
     }
 
-    private static List<ValidateConstraintViolation.Violation> locatedViolations(ConstraintViolationException e) {
-        if (e.getConstraintViolations() == null) {
-            return List.of();
-        }
-        // The second violation of an invalid type repeats Jackson's raw message on the same path.
-        Stream<? extends ConstraintViolation<?>> violations = e instanceof InvalidTypeConstraintViolationException
-            ? e.getConstraintViolations().stream().filter(v -> v.getMessage().equals(e.getMessage()))
-            : e.getConstraintViolations().stream();
-        return violations
-            .map(v -> located(v, ViolationPaths.toJsonPointer(v.getPropertyPath())))
-            .toList();
-    }
-
-    /** Bean validation messages do not name their property, which a marker placed on the enclosing block needs. */
-    private static ValidateConstraintViolation.Violation located(ConstraintViolation<?> violation, String pointer) {
-        String property = null;
-        for (Path.Node node : violation.getPropertyPath()) {
-            property = node.getName();
-        }
-        boolean named = property != null && !(violation instanceof ManualConstraintViolation<?>);
-        return new ValidateConstraintViolation.Violation(pointer, named ? property + ": " + violation.getMessage() : violation.getMessage());
-    }
-
     private static String formatValidationError(String message) {
         if (message.startsWith("Illegal flow source:")) {
             // Already formatted by YamlParser, return as-is
@@ -542,20 +519,20 @@ public class FlowService {
                     modelValidator.validate(parsedFlow);
                     throwOnCyclicDependency(parsedFlow);
                 } else {
-                    List<ValidateConstraintViolation.Violation> violations = new ArrayList<>(report.unknownProperties());
-                    List<String> lines = new ArrayList<>(report.unknownProperties().stream().map(ValidateConstraintViolation.Violation::message).toList());
+                    List<ValidationError> errors = new ArrayList<>(report.unknownProperties());
+                    List<String> lines = new ArrayList<>(report.unknownProperties().stream().map(ValidationError::detail).toList());
                     List<String> installNotices = new ArrayList<>();
                     for (ParseReport.InvalidType invalidType : report.invalidTypes()) {
                         if (isAutoInstallable(invalidType.typeId())) {
-                            installNotices.add(formatValidationError(invalidType.violation().message()) + AUTO_INSTALL_NOTICE);
+                            installNotices.add(formatValidationError(invalidType.error().detail()) + AUTO_INSTALL_NOTICE);
                         } else {
-                            violations.add(invalidType.violation());
-                            lines.add(invalidType.violation().message());
+                            errors.add(invalidType.error());
+                            lines.add(invalidType.error().detail());
                         }
                     }
                     modelValidator.isValid(parsedFlow).ifPresent(e -> e.getConstraintViolations().forEach(v ->
                         report.toSourcePointer(ViolationPaths.toJsonPointer(v.getPropertyPath())).ifPresent(pointer -> {
-                            violations.add(located(v, pointer));
+                            errors.add(new ValidationError(v.getMessage(), pointer, ViolationPaths.toFriendlyPath(v)));
                             lines.add(ViolationPaths.toFriendlyPath(v) + ": " + v.getMessage());
                         })
                     ));
@@ -563,17 +540,17 @@ public class FlowService {
                     if (!installNotices.isEmpty()) {
                         constraintsBuilder.infos(ListUtils.concat(relocationInfos, installNotices));
                     }
-                    if (violations.isEmpty()) {
+                    if (errors.isEmpty()) {
                         throwOnCyclicDependency(parsedFlow);
                     } else {
                         constraintsBuilder.constraints(formatValidationError(String.join("\n", lines)));
-                        constraintsBuilder.violations(violations);
+                        constraintsBuilder.errors(errors);
                     }
                 }
             } catch (ConstraintViolationException e) {
                 String friendlyMessage = formatValidationError(e.getMessage());
                 constraintsBuilder.constraints(friendlyMessage);
-                constraintsBuilder.violations(locatedViolations(e));
+                constraintsBuilder.errors(ValidationError.ofException(e));
             } catch (FlowProcessingException e) {
                 if (e.getCause() instanceof ConstraintViolationException cve) {
                     String friendlyMessage = formatValidationError(cve.getMessage());
@@ -584,7 +561,7 @@ public class FlowService {
                         constraintsBuilder.infos(List.of(friendlyMessage + AUTO_INSTALL_NOTICE));
                     } else {
                         constraintsBuilder.constraints(friendlyMessage);
-                        constraintsBuilder.violations(locatedViolations(cve));
+                        constraintsBuilder.errors(ValidationError.ofException(cve));
                     }
                 } else {
                     Throwable cause = e.getCause() != null ? e.getCause() : e;

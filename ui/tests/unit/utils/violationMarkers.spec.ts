@@ -13,7 +13,7 @@ tasks:
 `
 
 function markerAt(path: string) {
-    return violationMarkers(flow, [{path, message: "boom"}])[0]
+    return violationMarkers(flow, [{pointer: path, detail: "boom"}])[0]
 }
 
 describe("violationMarkers", () => {
@@ -23,11 +23,11 @@ describe("violationMarkers", () => {
         })
     })
 
-    it("marks each line of the enclosing block, leaving indentation, dashes and comments alone", () => {
-        expect(violationMarkers(flow, [{path: "/tasks/0/tasks/0/message", message: "boom"}])).toEqual([
-            {message: "boom", startLineNumber: 7, startColumn: 9, endLineNumber: 7, endColumn: 16},
-            {message: "boom", startLineNumber: 8, startColumn: 9, endLineNumber: 8, endColumn: 44},
-            {message: "boom", startLineNumber: 9, startColumn: 9, endLineNumber: 9, endColumn: 26},
+    it("marks each line of the enclosing block, naming the missing key, leaving indentation, dashes and comments alone", () => {
+        expect(violationMarkers(flow, [{pointer: "/tasks/0/tasks/0/message", detail: "boom"}])).toEqual([
+            {message: "message: boom", startLineNumber: 7, startColumn: 9, endLineNumber: 7, endColumn: 16},
+            {message: "message: boom", startLineNumber: 8, startColumn: 9, endLineNumber: 8, endColumn: 44},
+            {message: "message: boom", startLineNumber: 9, startColumn: 9, endLineNumber: 9, endColumn: 26},
         ])
     })
 
@@ -38,10 +38,10 @@ describe("violationMarkers", () => {
     })
 
     it("leaves a violation on the document root to the error panel", () => {
-        expect(violationMarkers(flow, [{path: "", message: "boom"}, {path: "/labels", message: "boom"}])).toEqual([])
+        expect(violationMarkers(flow, [{pointer: "", detail: "boom"}, {pointer: "/labels", detail: "boom"}, {detail: "unlocated"}])).toEqual([])
     })
 
     it("places nothing on a source that no longer parses", () => {
-        expect(violationMarkers("tasks: [", [{path: "/tasks/0/id", message: "boom"}])).toEqual([])
+        expect(violationMarkers("tasks: [", [{pointer: "/tasks/0/id", detail: "boom"}])).toEqual([])
     })
 })

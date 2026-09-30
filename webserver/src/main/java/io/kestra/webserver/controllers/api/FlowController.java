@@ -28,6 +28,7 @@ import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.validations.ManualConstraintViolation;
 import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.models.validations.ValidateConstraintViolation;
+import io.kestra.core.models.validations.ValidationError;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.security.SecurityConfiguration;
@@ -756,6 +757,7 @@ public class FlowController {
             modelValidator.validate(parsedTask);
         } catch (ConstraintViolationException e) {
             validateConstraintViolationBuilder.constraints(e.getMessage());
+            validateConstraintViolationBuilder.errors(ValidationError.ofException(e));
         } catch (RuntimeException re) {
             // In case of any error, we add a validation violation so the error is displayed in the UI.
             // We may change that by throwing an internal error and handle it in the UI, but this should not occur except for rare cases
@@ -780,6 +782,7 @@ public class FlowController {
             modelValidator.validate(parsedTrigger);
         } catch (ConstraintViolationException e) {
             validateConstraintViolationBuilder.constraints(e.getMessage());
+            validateConstraintViolationBuilder.errors(ValidationError.ofException(e));
         } catch (RuntimeException re) {
             // In case of any error, we add a validation violation so the error is displayed in the UI.
             // We may change that by throwing an internal error and handle it in the UI, but this should not occur except for rare cases
@@ -809,6 +812,7 @@ public class FlowController {
             }
         } catch (ConstraintViolationException e) {
             validateConstraintViolationBuilder.constraints(e.getMessage());
+            validateConstraintViolationBuilder.errors(ValidationError.ofException(e));
         } catch (RuntimeException re) {
             // In case of any error, we add a validation violation so the error is displayed in the UI.
             // We may change that by throwing an internal error and handle it in the UI, but this should not occur except for rare cases

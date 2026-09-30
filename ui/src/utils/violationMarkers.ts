@@ -1,9 +1,6 @@
 import {isMap, isPair, isScalar, isSeq, LineCounter, parseDocument, visit, type Node, type Pair} from "yaml"
 
-export interface LocatedViolation {
-    path: string;
-    message: string;
-}
+import type {ValidationError} from "./validationErrors"
 
 export interface ViolationMarker {
     message: string;
@@ -24,25 +21,32 @@ function pairTargets(pair: Pair): Node[] {
     return [pair.key as Node, ...(isScalar(pair.value) ? [pair.value] : [])]
 }
 
+interface Location {
+    targets: Node[];
+    /** The key the path names but the source lacks, so the marker sits on its enclosing block. */
+    missing?: string;
+}
+
 /** A path that stops short of its leaf, a missing key, marks the deepest node that exists, except the document root. */
-function locate(root: Node | null, segments: string[]): Node[] {
+function locate(root: Node | null, segments: string[]): Location {
     let node: Node | null | undefined = root
     for (const [depth, segment] of segments.entries()) {
         const isLeaf = depth === segments.length - 1
+        const missing = {targets: depth === 0 || !node ? [] : [node], missing: segment}
         if (isMap(node)) {
             const pair = node.items.find(item => isScalar(item.key) && String(item.key.value) === segment)
-            if (!pair) return depth === 0 ? [] : [node]
-            if (isLeaf && isPair(pair)) return pairTargets(pair)
+            if (!pair) return missing
+            if (isLeaf && isPair(pair)) return {targets: pairTargets(pair)}
             node = pair.value as Node | null
         } else if (isSeq(node)) {
             const item = node.items[Number(segment)] as Node | undefined
-            if (!item) return depth === 0 ? [] : [node]
+            if (!item) return missing
             node = item
         } else {
-            return depth === 0 || !node ? [] : [node]
+            return missing
         }
     }
-    return segments.length === 0 || !node ? [] : [node]
+    return {targets: segments.length === 0 || !node ? [] : [node]}
 }
 
 function scalarRanges(targets: Node[]): Range[] {
@@ -83,19 +87,21 @@ function lineSpans(source: string, ranges: Range[]): Range[] {
     return [...spans.values()]
 }
 
-export function violationMarkers(source: string, violations: LocatedViolation[] | undefined): ViolationMarker[] {
-    if (!violations?.length) return []
+export function violationMarkers(source: string, errors: ValidationError[] | undefined): ViolationMarker[] {
+    const located = errors?.filter(error => error.pointer && error.detail) ?? []
+    if (!located.length) return []
     const lineCounter = new LineCounter()
     const doc = parseDocument(source, {lineCounter})
     if (doc.errors.length) return []
 
-    return violations.flatMap(violation => {
-        const targets = locate(doc.contents, pointerSegments(violation.path))
+    return located.flatMap(error => {
+        const {targets, missing} = locate(doc.contents, pointerSegments(error.pointer!))
+        const message = missing && !/^\d+$/.test(missing) ? `${missing}: ${error.detail}` : error.detail!
         return lineSpans(source, scalarRanges(targets)).map(([start, end]) => {
             const from = lineCounter.linePos(start)
             const to = lineCounter.linePos(end)
             return {
-                message: violation.message,
+                message,
                 startLineNumber: from.line,
                 startColumn: from.col,
                 endLineNumber: to.line,

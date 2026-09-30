@@ -4,6 +4,7 @@ import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -24,12 +25,22 @@ public class ValidateConstraintViolation {
     private String namespace;
     private String flow;
 
+    @Schema(deprecated = true, description = "Every error message joined by a newline. Use `errors` instead.")
     private String constraints;
     private boolean outdated;
     private List<String> deprecationPaths;
     private List<String> warnings;
     private List<String> infos;
-    private List<Violation> violations;
+    @Schema(description = "One entry per error, present whenever `constraints` is.")
+    private List<ValidationError> errors;
+
+    /** Producers that only set {@code constraints} still expose one error per line of it. */
+    public List<ValidationError> getErrors() {
+        if ((errors != null && !errors.isEmpty()) || constraints == null) {
+            return errors;
+        }
+        return constraints.lines().map(String::strip).filter(line -> !line.isEmpty()).map(ValidationError::of).toList();
+    }
 
     @JsonIgnore
     public String getIdentity() {
@@ -39,11 +50,5 @@ public class ValidateConstraintViolation {
     @JsonIgnore
     public String getFlowId() {
         return namespace + "." + flow;
-    }
-
-    /**
-     * A single violation located by an RFC 6901 JSON Pointer into the submitted source, so an editor can place it.
-     */
-    public record Violation(String path, String message) {
     }
 }

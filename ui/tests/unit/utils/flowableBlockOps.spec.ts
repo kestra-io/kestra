@@ -1634,16 +1634,6 @@ tasks:
             expect(grouped.get("task1")).toEqual(["task1.task.message: must not be null"])
         })
 
-        it("splits a newline-joined multi-constraint entry into per-task issues", () => {
-            const grouped = groupValidationIssuesByTask([
-                "Validation error: log.log.task.message: must not be null\nlog_1.message: must not be null\na.a.task.message: must not be null\n",
-            ])
-
-            expect(grouped.get("log")).toEqual(["log.task.message: must not be null"])
-            expect(grouped.get("log_1")).toEqual(["message: must not be null"])
-            expect(grouped.get("a")).toEqual(["a.task.message: must not be null"])
-        })
-
         it("skips flow-level errors that carry no 'id:' head", () => {
             const grouped = groupValidationIssuesByTask(["flow must not be empty"])
 

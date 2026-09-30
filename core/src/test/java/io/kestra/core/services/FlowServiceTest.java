@@ -22,6 +22,7 @@ import io.kestra.core.models.property.Property;
 import io.kestra.core.models.topologies.FlowTopology;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.validations.ValidateConstraintViolation;
+import io.kestra.core.models.validations.ValidationError;
 import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.repositories.ConcurrencyLimitRepositoryInterface;
@@ -46,6 +47,7 @@ import io.micronaut.test.annotation.MockBean;
 import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.tuple;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -293,8 +295,9 @@ class FlowServiceTest {
 
         List<ValidateConstraintViolation> results = flowService.validate("my-tenant", List.of(new FlowSource(null, source)));
 
-        assertThat(results.getFirst().getViolations())
-            .containsExactly(new ValidateConstraintViolation.Violation("/tasks/0/tasks/1/message", "message: must not be null"));
+        assertThat(results.getFirst().getErrors())
+            .extracting(ValidationError::pointer, ValidationError::detail)
+            .containsExactly(tuple("/tasks/0/tasks/1/message", "must not be null"));
     }
 
     @Test
@@ -311,8 +314,8 @@ class FlowServiceTest {
 
         List<ValidateConstraintViolation> results = flowService.validate("my-tenant", List.of(new FlowSource(null, source)));
 
-        assertThat(results.getFirst().getViolations())
-            .extracting(ValidateConstraintViolation.Violation::path)
+        assertThat(results.getFirst().getErrors())
+            .extracting(ValidationError::pointer)
             .containsExactly("/tasks/0/unknownProp");
     }
 
@@ -339,8 +342,8 @@ class FlowServiceTest {
 
         List<ValidateConstraintViolation> results = flowService.validate("my-tenant", List.of(new FlowSource(null, source)));
 
-        assertThat(results.getFirst().getViolations())
-            .extracting(ValidateConstraintViolation.Violation::path)
+        assertThat(results.getFirst().getErrors())
+            .extracting(ValidationError::pointer)
             .containsExactlyInAnyOrder("/tasks/0/colour", "/tasks/1/tasks/0/shade", "/tasks/1/tasks/0/message", "/triggers/0/cron");
         assertThat(results.getFirst().getConstraints())
             .contains("Unrecognized field \"colour\"")
@@ -369,8 +372,8 @@ class FlowServiceTest {
 
         List<ValidateConstraintViolation> results = flowService.validate("my-tenant", List.of(new FlowSource(null, source)));
 
-        assertThat(results.getFirst().getViolations())
-            .extracting(ValidateConstraintViolation.Violation::path)
+        assertThat(results.getFirst().getErrors())
+            .extracting(ValidationError::pointer)
             .containsExactlyInAnyOrder("/tasks/0/colour", "/tasks/1/type", "/tasks/2/message", "/triggers/0/cron");
     }
 
@@ -386,9 +389,9 @@ class FlowServiceTest {
 
         List<ValidateConstraintViolation> results = flowService.validate("my-tenant", List.of(new FlowSource(null, source)));
 
-        assertThat(results.getFirst().getViolations())
+        assertThat(results.getFirst().getErrors())
             .singleElement()
-            .isEqualTo(new ValidateConstraintViolation.Violation("/tasks/0/type", "Invalid type: io.kestra.plugin.core.debug.UnknownTask"));
+            .isEqualTo(new ValidationError("Invalid type: io.kestra.plugin.core.debug.UnknownTask", "/tasks/0/type", "tasks[0].type"));
     }
 
     @Test

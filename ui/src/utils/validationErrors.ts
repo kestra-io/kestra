@@ -1,4 +1,11 @@
-/** Splits on newlines, not commas, since the backend joins violations with `\n` and some messages (e.g. Jackson's "Unrecognized field" error) legitimately contain commas. */
-export function splitValidationErrors(constraints?: string): string[] {
-    return constraints?.split(/[\r\n]+/).map((line) => line.trim()).filter(Boolean) ?? []
+/** An entry of the RFC 9457 `errors` member, as a validation result carries it. */
+export interface ValidationError {
+    detail?: string;
+    pointer?: string;
+    path?: string;
+}
+
+/** One readable line per error, e.g. `tasks[log].message: must not be null`. */
+export function validationErrorLines(errors?: ValidationError[]): string[] {
+    return (errors ?? []).flatMap(({detail, path}) => detail ? [path ? `${path}: ${detail}` : detail] : [])
 }

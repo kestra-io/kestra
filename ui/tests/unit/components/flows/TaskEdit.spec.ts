@@ -36,7 +36,7 @@ vi.mock("../../../../src/stores/flow", () => ({
     useFlowStore: () => ({
         flow: {namespace: "company.team"},
         flowParsed: {},
-        taskError: undefined,
+        taskErrors: undefined,
         validateTask: vi.fn(() => Promise.resolve({})),
     }),
 }))

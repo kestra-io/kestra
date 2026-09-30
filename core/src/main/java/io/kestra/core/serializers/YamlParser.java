@@ -23,7 +23,7 @@ import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException;
 
 import io.kestra.core.exceptions.InvalidTypeConstraintViolationException;
 import io.kestra.core.models.validations.ManualConstraintViolation;
-import io.kestra.core.models.validations.ValidateConstraintViolation.Violation;
+import io.kestra.core.models.validations.ValidationError;
 
 import jakarta.annotation.Nullable;
 import jakarta.validation.ConstraintViolationException;
@@ -70,7 +70,7 @@ public final class YamlParser {
      */
     @SuppressWarnings("unchecked")
     public static ParseReport scan(String input, Class<?> cls) {
-        List<Violation> unknownProperties = new ArrayList<>();
+        List<ValidationError> unknownProperties = new ArrayList<>();
         List<ParseReport.InvalidType> invalidTypes = new ArrayList<>();
         List<ParseReport.Removal> removals = new ArrayList<>();
         Map<String, Object> map;
@@ -90,7 +90,7 @@ public final class YamlParser {
                     if (removeAt(map, at) == null) {
                         break;
                     }
-                    unknownProperties.add(new Violation(sourcePointer(at, removals), unknown.getOriginalMessage()));
+                    unknownProperties.add(located(unknown.getOriginalMessage(), at, removals));
                 } else if (e.getCause() instanceof InvalidTypeIdException invalid) {
                     List<String> at = segments(invalid.getPath());
                     Integer index = removeAt(map, at);
@@ -99,10 +99,7 @@ public final class YamlParser {
                     }
                     List<String> type = new ArrayList<>(at);
                     type.add("type");
-                    invalidTypes.add(new ParseReport.InvalidType(
-                        new Violation(sourcePointer(type, removals), "Invalid type: " + invalid.getTypeId()),
-                        invalid.getTypeId()
-                    ));
+                    invalidTypes.add(new ParseReport.InvalidType(located("Invalid type: " + invalid.getTypeId(), type, removals), invalid.getTypeId()));
                     removals.add(new ParseReport.Removal(index < 0 ? at : at.subList(0, at.size() - 1), index));
                 } else {
                     break;
@@ -112,8 +109,9 @@ public final class YamlParser {
         return new ParseReport(unknownProperties, invalidTypes, map, removals);
     }
 
-    private static String sourcePointer(List<String> segments, List<ParseReport.Removal> removals) {
-        return ParseReport.toPointer(ParseReport.shift(segments, removals, removals.size()));
+    private static ValidationError located(String detail, List<String> segments, List<ParseReport.Removal> removals) {
+        List<String> source = ParseReport.shift(segments, removals, removals.size());
+        return new ValidationError(detail, ParseReport.toPointer(source), ParseReport.toPath(source));
     }
 
     private static List<String> segments(List<JsonMappingException.Reference> path) {

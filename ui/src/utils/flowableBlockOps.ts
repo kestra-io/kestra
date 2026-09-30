@@ -1,5 +1,4 @@
 import * as flowYamlUtils from "@kestra-io/topology/flow-yaml-utils"
-import {splitValidationErrors} from "./validationErrors"
 
 export type BlockSection = "tasks" | "triggers" | "errors" | "finally" | "afterExecution"
 
@@ -619,8 +618,7 @@ export function groupValidationIssuesByTask(
         existing.push(entry)
         grouped.set(id, existing)
     }
-    const lines = (errors ?? []).flatMap(raw => splitValidationErrors(raw))
-    for (const line of lines) {
+    for (const line of errors ?? []) {
         const cleaned = line.replace(/^\s*validation error\s*:\s*/i, "").trim()
         if (!cleaned) continue
 

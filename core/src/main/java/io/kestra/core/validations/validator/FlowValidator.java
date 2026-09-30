@@ -6,12 +6,17 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import io.kestra.core.exceptions.IllegalVariableEvaluationException;
+import io.kestra.core.models.assets.Asset;
+import io.kestra.core.models.assets.AssetIdentifier;
+import io.kestra.core.models.assets.AssetsDeclaration;
 import io.kestra.core.models.flows.Data;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.flows.Output;
 import io.kestra.core.models.flows.input.EeOnly;
 import io.kestra.core.models.flows.input.FormInput;
+import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.ExecutableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.AbstractTrigger;
@@ -32,6 +37,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
+import jakarta.validation.Validator;
 
 import static io.kestra.core.models.Label.READ_ONLY;
 import static io.kestra.core.models.Label.SYSTEM_PREFIX;
@@ -40,6 +46,9 @@ import static io.kestra.core.models.Label.SYSTEM_PREFIX;
 public class FlowValidator implements ConstraintValidator<FlowValidation, Flow> {
     @Inject
     private NamespaceService namespaceService;
+
+    @Inject
+    private Validator validator;
 
     @Override
     public boolean isValid(
@@ -156,6 +165,7 @@ public class FlowValidator implements ConstraintValidator<FlowValidation, Flow> 
             .collect(Collectors.toList());
 
         violations.addAll(EEViolations(value));
+        violations.addAll(assetsDeclarationViolations(value));
 
         if (!invalidTasks.isEmpty()) {
             violations.add(
@@ -184,6 +194,47 @@ public class FlowValidator implements ConstraintValidator<FlowValidation, Flow> 
             return false;
         } else {
             return true;
+        }
+    }
+
+    private List<String> assetsDeclarationViolations(Flow flow) {
+        List<String> violations = new ArrayList<>();
+        flow.allTasks().filter(Objects::nonNull)
+            .forEach(task -> violations.addAll(assetsDeclarationViolations("Task", task.getId(), task.getAssets())));
+        ListUtils.emptyOnNull(flow.getTriggers()).stream().filter(Objects::nonNull)
+            .forEach(trigger -> violations.addAll(assetsDeclarationViolations("Trigger", trigger.getId(), trigger.getAssets())));
+        return violations;
+    }
+
+    private List<String> assetsDeclarationViolations(String kind, String id, AssetsDeclaration assets) {
+        if (assets == null) {
+            return List.of();
+        }
+
+        List<String> violations = new ArrayList<>();
+        violations.addAll(declaredAssetViolations(kind, id, "inputs", assets.getInputs(), AssetIdentifier.class));
+        violations.addAll(declaredAssetViolations(kind, id, "outputs", assets.getOutputs(), Asset.class));
+        return violations;
+    }
+
+    private <T> List<String> declaredAssetViolations(String kind, String id, String field, Property<List<T>> declared, Class<T> itemClass) {
+        try {
+            List<T> items = Property.asStaticList(declared, itemClass).orElse(List.of());
+            if (items.stream().anyMatch(Objects::isNull)) {
+                return List.of("%s '%s' declares a malformed `assets.%s`: an item is empty or unreadable.".formatted(kind, id, field));
+            }
+
+            return items.stream()
+                .flatMap(item -> validator.validate(item).stream())
+                .filter(violation -> !(violation.getInvalidValue() instanceof String value && PebbleUtil.containsOpeningBlockDelimiter(value)))
+                .map(violation -> "%s '%s' declares an invalid asset in `assets.%s`: `%s` %s.".formatted(kind, id, field, violation.getPropertyPath(), violation.getMessage()))
+                .toList();
+        } catch (IllegalVariableEvaluationException e) {
+            if (PebbleUtil.containsOpeningBlockDelimiter(String.valueOf(declared))) {
+                return List.of();
+            }
+
+            return List.of("%s '%s' declares a malformed `assets.%s`: %s.".formatted(kind, id, field, e.getMessage()));
         }
     }
 

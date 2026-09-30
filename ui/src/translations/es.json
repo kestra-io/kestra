@@ -1009,6 +1009,7 @@
     "timezone": "Zona horaria",
     "add task": "Añadir una task",
     "unable to generate graph": "Se produjo un problema al generar el gráfico, lo que impide que se muestre la topología.",
+    "retry": "Reintentar",
     "attempts": "Intento(s)",
     "version": "Versión",
     "services": "Servicios",

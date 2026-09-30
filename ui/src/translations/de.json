@@ -394,6 +394,30 @@
     "resumed title": "Execution <code>{id}</code> fortsetzen",
     "resumed confirm": "Execution <code>{id}</code> wirklich fortsetzen?",
     "resumed done": "Die Execution wurde fortgesetzt",
+    "approval": {
+      "review": "Überprüfen",
+      "title": "Execution <code>{id}</code> überprüfen",
+      "approve": "Genehmigen",
+      "deny": "Verweigern",
+      "comment": "Kommentar",
+      "comment hint": {
+        "optional": "Optional.",
+        "always": "Ein Kommentar ist erforderlich.",
+        "on approve": "Ein Kommentar ist zur Genehmigung erforderlich.",
+        "on deny": "Ein Kommentar ist erforderlich, um abzulehnen."
+      },
+      "comment required": "Ein Kommentar ist für diese Entscheidung erforderlich.",
+      "inputs invalid": "Einige Inputs sind ungültig: {errors}",
+      "already decided": "Für diese Genehmigungsanfrage wurde bereits eine Entscheidung getroffen.",
+      "review done": "Deine Bewertung wurde aufgezeichnet",
+      "cancel request": "Anfrage abbrechen",
+      "cancel confirm": "Möchtest du die Genehmigungsanfrage für Execution <code>{id}</code> wirklich abbrechen? Es wird kein Entscheidungszweig ausgeführt.",
+      "cancel done": "Die Genehmigungsanfrage wurde abgebrochen",
+      "banner": {
+        "pausing": "Diese Execution bereitet eine Genehmigungsanfrage vor und wird für eine Überprüfung pausieren.",
+        "paused": "Diese Execution wartet auf eine Überprüfung. Genehmige oder lehne sie ab, um fortzufahren."
+      }
+    },
     "resume from breakpoint title": "Execution <code>{id}</code> ab Breakpoint fortsetzen",
     "resume from breakpoint done": "Die Execution wird ab dem Breakpoint fortgesetzt",
     "breakpoints": "Breakpoints",

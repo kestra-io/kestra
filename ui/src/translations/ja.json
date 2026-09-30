@@ -394,6 +394,30 @@
     "resumed title": "実行<code>{id}</code>を再開",
     "resumed confirm": "実行 <code>{id}</code> を再開してもよろしいですか？",
     "resumed done": "実行が再開されました",
+    "approval": {
+      "review": "レビュー",
+      "title": "実行 <code>{id}</code> をレビュー",
+      "approve": "承認",
+      "deny": "拒否",
+      "comment": "コメント",
+      "comment hint": {
+        "optional": "任意。",
+        "always": "コメントは必須です。",
+        "on approve": "承認にはコメントが必要です。",
+        "on deny": "拒否するにはコメントが必要です。"
+      },
+      "comment required": "この決定にはコメントが必要です。",
+      "inputs invalid": "一部の入力が無効です: {errors}",
+      "already decided": "この承認リクエストについては、すでに決定が下されています。",
+      "review done": "レビューが記録されました",
+      "cancel request": "リクエストをキャンセル",
+      "cancel confirm": "Execution <code>{id}</code> の承認リクエストをキャンセルしてもよろしいですか？決定ブランチは実行されません。",
+      "cancel done": "承認リクエストはキャンセルされました",
+      "banner": {
+        "pausing": "このExecutionは承認リクエストを準備しており、レビューのために一時停止します。",
+        "paused": "このExecutionはレビューを待機しています。続行するには承認または拒否してください。"
+      }
+    },
     "resume from breakpoint title": "ブレークポイントから実行 <code>{id}</code> を再開します",
     "resume from breakpoint done": "ブレークポイントから実行が再開されました",
     "breakpoints": "ブレークポイント",

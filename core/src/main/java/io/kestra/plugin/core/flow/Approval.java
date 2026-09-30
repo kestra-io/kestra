@@ -3,6 +3,7 @@ package io.kestra.plugin.core.flow;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -17,6 +18,7 @@ import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.NextTaskRun;
 import io.kestra.core.models.executions.TaskRun;
+import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.hierarchies.GraphCluster;
@@ -26,11 +28,14 @@ import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.FlowableTask;
 import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.core.models.tasks.Task;
+import io.kestra.core.runners.ApprovalRequestHandler;
 import io.kestra.core.runners.DefaultRunContext;
 import io.kestra.core.runners.ExecutionDelay;
 import io.kestra.core.runners.FlowableUtils;
 import io.kestra.core.runners.RunContext;
+import io.kestra.core.runners.Services;
 import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.services.TaskOutputService;
 import io.kestra.core.utils.DateUtils;
 import io.kestra.core.utils.GraphUtils;
 import io.kestra.core.utils.ListUtils;
@@ -129,6 +134,32 @@ public class Approval extends Task implements FlowableTask<Approval.Output>, Pau
     private Property<Behavior> expireBehavior = Property.ofValue(Behavior.CANCEL);
 
     @Schema(
+        title = "Title of the request, shown to the reviewers.",
+        description = "Enterprise Edition only."
+    )
+    private Property<String> title;
+
+    @Schema(
+        title = "Users and groups allowed to review the request.",
+        description = "Enterprise Edition only."
+    )
+    private Assignment assignment;
+
+    @JsonProperty("case")
+    @Getter(AccessLevel.NONE)
+    @Schema(
+        title = "Approval case opened for the request.",
+        description = "Enterprise Edition only. A case is opened even without this property, unless `enabled` is false."
+    )
+    private CaseConfig _case;
+
+    @Schema(
+        title = "Whether the assignees and the requester get in-app notifications, true when unset.",
+        description = "Enterprise Edition only."
+    )
+    private Property<Boolean> inAppNotification;
+
+    @Schema(
         title = "Tasks executed before the execution pauses."
     )
     @PluginProperty
@@ -154,6 +185,10 @@ public class Approval extends Task implements FlowableTask<Approval.Output>, Pau
 
     public List<Task> getFinally() {
         return this._finally;
+    }
+
+    public CaseConfig getCase() {
+        return this._case;
     }
 
     @Override
@@ -205,8 +240,7 @@ public class Approval extends Task implements FlowableTask<Approval.Output>, Pau
     @Override
     public List<NextTaskRun> resolveNexts(RunContext runContext, Execution execution, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
         if (this.decisionType(runContext) == null) {
-            // 'finally' is only scheduled here when onWait just terminated in error, since the Branch
-            // phase (which schedules it otherwise) is never reached in that case.
+            // the Branch phase never schedules 'finally' when onWait failed, so it is scheduled here.
             Optional<State.Type> waitState = this.resolveWaitState(runContext, execution, parentTaskRun);
             boolean onWaitFailed = waitState.isPresent() && waitState.get().isTerminatedInError();
 
@@ -253,9 +287,7 @@ public class Approval extends Task implements FlowableTask<Approval.Output>, Pau
 
         List<ResolvedTask> finallyTasks = FlowableUtils.resolveTasks(this.getFinally(), parentTaskRun);
 
-        // computeFinalState(null, ...) resolves immediately regardless of any real scheduled child, so it
-        // is only safe when there is truly nothing left to wait for — an empty branch (e.g. EXPIRED) with
-        // a configured 'finally' must still go through resolveState() so that finally is awaited.
+        // computeFinalState(null, ...) ignores real children, so an empty branch with a 'finally' must go through resolveState().
         if (ListUtils.isEmpty(childTasks) && ListUtils.isEmpty(finallyTasks)) {
             return Optional.of(execution.computeFinalState(null, parentTaskRun, this.isAllowFailure(), this.isAllowWarning()));
         }
@@ -292,7 +324,7 @@ public class Approval extends Task implements FlowableTask<Approval.Output>, Pau
         };
     }
 
-    /** SUCCEED/CANCEL/KILL only, recomputing the branch's own pre-{@link #applyBehavior} state so a genuine failure is never mistaken for one. */
+    /** Execution-level target state of a decided task run (SUCCEED/CANCEL/KILL only), empty when the branch itself failed. */
     @Override
     public Optional<State.Type> executionLevelOutcome(RunContext runContext, Execution execution, TaskRun taskRun) throws IllegalVariableEvaluationException {
         Decision.Type decision = this.decisionType(runContext);
@@ -347,22 +379,27 @@ public class Approval extends Task implements FlowableTask<Approval.Output>, Pau
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public Approval.Output outputs(RunContext runContext) throws Exception {
-        String url = this.executionUrl(runContext);
+        Map<String, Object> current = runContext.currentOutput();
         Decision.Type decision = this.decisionType(runContext);
+
+        String title = current != null && current.get("title") != null ? (String) current.get("title") : this.renderTitle(runContext);
+        String url = current != null && current.get("url") != null ? (String) current.get("url") : this.executionUrl(runContext);
+        String caseId = current == null ? null : (String) current.get("caseId");
 
         if (decision == null) {
             boolean autoApprove = runContext.render(this.autoApprove).as(Boolean.class).orElse(false);
             if (autoApprove) {
-                return Output.builder().url(url).decision(Decision.Type.APPROVED).auto(true).build();
+                return Output.builder().url(url).title(title).decision(Decision.Type.APPROVED).auto(true).build();
             }
-            return Output.builder().url(url).build();
+            return Output.builder().url(url).title(title).caseId(caseId).build();
         }
 
-        @SuppressWarnings("unchecked")
-        Map<String, Object> current = runContext.currentOutput();
         return Output.builder()
             .url(url)
+            .title(title)
+            .caseId(caseId)
             .decision(decision)
             .auto(Boolean.TRUE.equals(current.get("auto")))
             .by((String) current.get("by"))
@@ -371,6 +408,10 @@ public class Approval extends Task implements FlowableTask<Approval.Output>, Pau
             .inputs((Map<String, Object>) current.get("inputs"))
             .due(current.get("due") == null ? null : Instant.parse(current.get("due").toString()))
             .build();
+    }
+
+    private String renderTitle(RunContext runContext) throws IllegalVariableEvaluationException {
+        return this.title == null ? null : runContext.render(this.title).as(String.class).orElse(null);
     }
 
     private String executionUrl(RunContext runContext) {
@@ -431,6 +472,27 @@ public class Approval extends Task implements FlowableTask<Approval.Output>, Pau
     }
 
     @Override
+    public Map<String, Object> created(FlowInterface flow, Execution execution, TaskRun taskRun, RunContext runContext) throws Exception {
+        Services services = ((DefaultRunContext) runContext).services();
+        ApprovalRequestHandler approvalRequestHandler = services.additionalService(ApprovalRequestHandler.class);
+        approvalRequestHandler.validate(this);
+
+        if (services.additionalService(TaskOutputService.class).getOutputs(taskRun).get("decision") != null) {
+            return Map.of();
+        }
+
+        ApprovalRequestHandler.OpenedRequest opened = approvalRequestHandler.open(flow, execution, taskRun, this, runContext);
+        Map<String, Object> outputs = new HashMap<>();
+        if (opened.url() != null) {
+            outputs.put("url", opened.url());
+        }
+        if (opened.caseId() != null) {
+            outputs.put("caseId", opened.caseId());
+        }
+        return outputs;
+    }
+
+    @Override
     public Map<String, Object> pausedOutputs(RunContext runContext, Optional<ExecutionDelay> delay) {
         return delay.<Map<String, Object>>map(d -> Map.of("due", d.getDate().toString())).orElse(Map.of());
     }
@@ -466,6 +528,47 @@ public class Approval extends Task implements FlowableTask<Approval.Output>, Pau
 
         @Schema(title = "A link to the execution page.")
         private String url;
+
+        @Schema(title = "The rendered request title. Enterprise Edition only.")
+        private String title;
+
+        @Schema(title = "Identifier of the approval case. Enterprise Edition only.")
+        private String caseId;
+    }
+
+    @Builder
+    @AllArgsConstructor
+    @NoArgsConstructor
+    @Getter
+    @ToString
+    public static class Assignment {
+        @Schema(title = "Users allowed to review the request.")
+        private List<String> users;
+
+        @Schema(title = "Groups allowed to review the request.")
+        private List<String> groups;
+    }
+
+    @Builder
+    @AllArgsConstructor
+    @NoArgsConstructor
+    @Getter
+    @ToString
+    public static class CaseConfig {
+        @Schema(title = "Open an approval case for the request, true when unset.")
+        private Property<Boolean> enabled;
+
+        @Schema(title = "Identifier of an existing case of the same execution to reuse, for multi-step approvals.")
+        private Property<String> id;
+
+        @Schema(title = "Severity of the case.")
+        private Property<String> severity;
+
+        @Schema(title = "Description of the case.")
+        private Property<String> description;
+
+        @Schema(title = "Deadline of the case, defaults to `timeout`.")
+        private Property<Duration> sla;
     }
 
     public enum CommentRequired {

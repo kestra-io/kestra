@@ -276,6 +276,15 @@ public class ApprovalTest {
     }
 
     @Test
+    @LoadFlows({ "flows/valids/approval-ee-property.yaml" })
+    void shouldFailWhenAnEnterpriseOnlyPropertyIsUsed() throws Exception {
+        Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "approval-ee-property", null, null, Duration.ofSeconds(30));
+
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        assertThat(execution.findTaskRunsByTaskId("approval").getFirst().getState().getCurrent()).isEqualTo(State.Type.FAILED);
+    }
+
+    @Test
     @LoadFlows({ "flows/valids/approval-basic.yaml" })
     void shouldKillAnExecutionPausedOnAnApproval() throws Exception {
         Execution execution = runnerUtils.runOneUntilPaused(MAIN_TENANT, "io.kestra.tests", "approval-basic", null, null, Duration.ofSeconds(30));
@@ -290,7 +299,9 @@ public class ApprovalTest {
             killing
         );
 
-        assertThat(execution.findTaskRunsByTaskId("approval").getFirst().getState().getCurrent()).isEqualTo(State.Type.KILLED);
+        TaskRun approval = execution.findTaskRunsByTaskId("approval").getFirst();
+        assertThat(approval.getState().getCurrent()).isEqualTo(State.Type.KILLED);
+        assertThat(taskOutputService.getOutputs(approval)).containsKey("url");
         assertThat(execution.findTaskRunsByTaskId("approved")).isEmpty();
         assertThat(execution.findTaskRunsByTaskId("denied")).isEmpty();
     }
@@ -837,6 +848,26 @@ public class ApprovalTest {
         assertThat(execution.getState().getCurrent()).isEqualTo("APPROVED".equals(decisionType) ? State.Type.SUCCESS : State.Type.CANCELLED);
         assertThat(execution.findTaskRunsByTaskId("cleanup")).hasSize(1);
         assertThat(execution.findTaskRunsByTaskId("last")).hasSize("APPROVED".equals(decisionType) ? 1 : 0);
+    }
+
+    @Test
+    @LoadFlows({ "flows/valids/approval-finally-no-branch.yaml" })
+    void shouldNotRunFinallyWhenTheApprovalIsCancelled() throws Exception {
+        Execution execution = runnerUtils.runOneUntilPaused(MAIN_TENANT, "io.kestra.tests", "approval-finally-no-branch", null, null, Duration.ofSeconds(30));
+        String executionId = execution.getId();
+        Flow flow = flowRepository.findByExecution(execution);
+        String taskRunId = execution.findTaskRunsByTaskId("approval").getFirst().getId();
+
+        Execution cancelled = executionService.cancelApproval(execution, flow, taskRunId, null);
+
+        execution = runnerUtils.emitAndAwaitExecution(
+            e -> e.getId().equals(executionId) && e.getState().isTerminated()
+                && ListUtils.emptyOnNull(e.getTaskRunList()).stream().allMatch(t -> t.getState().isTerminated()),
+            cancelled
+        );
+
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.CANCELLED);
+        assertThat(execution.findTaskRunsByTaskId("cleanup")).isEmpty();
     }
 
     @Singleton

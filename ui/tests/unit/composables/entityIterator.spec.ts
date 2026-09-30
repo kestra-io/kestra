@@ -7,7 +7,7 @@ class TestEntityIterator<T> extends EntityIterator<T> {
     private readonly items: T[]
     private readonly totalCount: number
 
-    constructor(items: T[], fetchSize: number, options?: any, totalCount?: number) {
+    constructor(items: T[], fetchSize: number, options?: Record<string, unknown>, totalCount?: number) {
         super(fetchSize, options)
         this.items = items
         this.totalCount = totalCount ?? items.length

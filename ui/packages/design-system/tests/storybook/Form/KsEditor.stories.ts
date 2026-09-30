@@ -143,6 +143,7 @@ type EditorHandle = {
         getValue?: () => string
         getOriginalEditor?: () => unknown
         setPosition?: (position: {lineNumber: number; column: number}) => void
+        setSelection?: (range: {startLineNumber: number; startColumn: number; endLineNumber: number; endColumn: number}) => void
     } | undefined
 }
 
@@ -260,6 +261,23 @@ export const InsertTextAtCursor: Story = {
         }
     },
     parameters: {docs: {description: {story: "insertTextAtCursor() inserts arbitrary text at the current cursor position — used to insert an Inputs-panel chip into a focused expression field via click, mirroring the existing drag-and-drop insertion."}}},
+}
+
+export const InsertTextAtCursorReplacesSelection: Story = {
+    render: handleStory("insert-replaces-selection", "<div style=\"padding:24px;height:300px\"><ks-editor ref=\"editor\" v-model=\"value\" lang=\"yaml\" /></div>", "id: hello-world\n"),
+    play: async () => {
+        await settled("insert-replaces-selection")
+        const api = handles["insert-replaces-selection"]!
+        const editor = api.getEditor()
+
+        editor?.setSelection?.({startLineNumber: 1, startColumn: 1, endLineNumber: 1, endColumn: 3})
+        api.insertTextAtCursor("{{ flow.id }}")
+
+        if (editor?.getValue?.() !== "{{ flow.id }}: hello-world\n") {
+            throw new Error("insertTextAtCursor did not replace the active selection")
+        }
+    },
+    parameters: {docs: {description: {story: "insertTextAtCursor() replaces an active selection instead of inserting at its collapsed position, matching the plain-field chip-insertion behavior (insertAtCaret)."}}},
 }
 
 export const DiffResolvesDiffEditor: Story = {

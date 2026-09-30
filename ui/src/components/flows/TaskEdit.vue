@@ -301,6 +301,11 @@
 
     const onPanelFocusIn = (event: FocusEvent) => {
         panelHasFocus.value = true
+        if (event.target instanceof HTMLElement && event.target.closest(".monaco-editor")) {
+            armedField.value?.classList.remove(ARMED_FIELD_CLASS)
+            armedField.value = null
+            return
+        }
         if (isArmableField(event.target)) {
             armedField.value?.classList.remove(ARMED_FIELD_CLASS)
             armedField.value = event.target

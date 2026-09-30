@@ -588,10 +588,10 @@ export function useKsEditor(
     function insertTextAtCursor(text: string): void {
         const ed = localEditor.value
         if (!text || !isCodeEditor(ed)) return
-        const position = ed.getPosition()
-        if (!position) return
+        const selection = ed.getSelection()
+        if (!selection) return
         ed.executeEdits("insert-text", [{
-            range: new monaco.Range(position.lineNumber, position.column, position.lineNumber, position.column),
+            range: selection,
             text,
         }])
         ed.focus()

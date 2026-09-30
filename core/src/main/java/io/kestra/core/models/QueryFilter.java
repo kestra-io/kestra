@@ -926,6 +926,7 @@ public record QueryFilter(
                     Field.STATUS,
                     Field.SEVERITY,
                     Field.ASSIGNEE,
+                    Field.KIND,
                     Field.START_DATE,
                     Field.END_DATE,
                     Field.CREATED,

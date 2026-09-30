@@ -9,6 +9,7 @@
             />
         </template>
         <template #actions>
+            <ReviewLink v-if="execution" :execution="execution" />
             <template v-if="execution && isMobile">
                 <NavBarActionsDropdown>
                     <component
@@ -93,7 +94,7 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, type Component} from "vue"
+    import {computed, watch, type Component} from "vue"
     import {useIsMobile} from "../../composables/useIsMobile"
     import {State, type KsBreadcrumbItem} from "@kestra-io/design-system"
 
@@ -113,6 +114,11 @@
     import Pause from "./overview/components/actions/Pause.vue"
     import Restart from "./overview/components/actions/Restart.vue"
     import Resume from "./overview/components/actions/Resume.vue"
+    import Review from "./overview/components/actions/Review.vue"
+    import ReviewLink from "./ReviewLink.vue"
+    import CancelApproval from "./overview/components/actions/CancelApproval.vue"
+    import {findApprovalTask, findApprovalTaskRun} from "../../utils/approval"
+    import * as ExecutionUtils from "../../utils/executionUtils"
     import ResumeFromBreakpoint from "./overview/components/actions/ResumeFromBreakpoint.vue"
     import Unqueue from "./overview/components/actions/Unqueue.vue"
     import action from "../../models/action"
@@ -145,6 +151,8 @@
         | "kill"
         | "pause"
         | "resume"
+        | "review"
+        | "cancelApproval"
         | "resumeFromBreakpoint"
         | "unqueue"
         | "forceRun"
@@ -158,6 +166,8 @@
         kill: {component: Kill},
         pause: {component: Pause},
         resume: {component: Resume},
+        review: {component: Review},
+        cancelApproval: {component: CancelApproval},
         resumeFromBreakpoint: {component: ResumeFromBreakpoint},
         unqueue: {component: Unqueue},
         forceRun: {component: ForceRun},
@@ -165,6 +175,26 @@
         editFlow: {component: EditFlow},
         delete: {component: Delete},
     }
+
+    watch(
+        () => [execution.value?.id, execution.value?.flowRevision, execution.value?.state?.current] as const,
+        ([id, revision, current]) => {
+            const loaded = executionsStore.flow
+            if (id && current === "PAUSED" && (loaded?.id !== execution.value?.flowId || loaded?.namespace !== execution.value?.namespace || loaded?.revision !== revision)) {
+                executionsStore.loadFlowForExecutionByExecutionId({id}).catch(() => undefined)
+            }
+        },
+        {immediate: true},
+    )
+
+    const pausedOnApproval = computed(() =>
+        execution.value !== undefined && findApprovalTaskRun(execution.value, executionsStore.flow, "PAUSED") !== undefined,
+    )
+
+    const pausedBesideApproval = computed(() =>
+        execution.value !== undefined && executionsStore.flow !== undefined
+        && ExecutionUtils.findTaskRunsByState(execution.value, "PAUSED").some(taskRun => findApprovalTask(executionsStore.flow, taskRun.taskId) === undefined),
+    )
 
     /**
      * The single visible secondary action: the one action that only makes sense for the
@@ -183,7 +213,7 @@
         }
 
         if (State.isPaused(current)) {
-            return "resume"
+            return pausedOnApproval.value ? "review" : "resume"
         }
 
         if (State.isRunning(current)) {
@@ -207,7 +237,7 @@
             "restart",
             "replay",
             "kill",
-            isPaused ? "resume" : "pause",
+            ...(pausedOnApproval.value ? ["review" as const, "cancelApproval" as const, ...(pausedBesideApproval.value ? ["resume" as const] : [])] : [isPaused ? "resume" as const : "pause" as const]),
             "resumeFromBreakpoint",
             "unqueue",
             "forceRun",

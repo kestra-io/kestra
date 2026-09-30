@@ -157,6 +157,15 @@
                 </span>
             </div>
         </div>
+
+        <KsAlert
+            v-if="approvalBanner"
+            class="execution-banner__approval"
+            type="info"
+            :title="$t(approvalBanner)"
+            :closable="false"
+            data-test="approval-banner"
+        />
     </div>
 </template>
 
@@ -170,6 +179,7 @@
 
     import {Execution, useExecutionsStore} from "../../../stores/executions"
     import {useExecutionSummary} from "../../../composables/useExecutionSummary"
+    import {findApprovalTaskRun} from "../../../utils/approval"
     import {useMiscStore} from "override/stores/misc"
     import * as Utils from "../../../utils/utils"
     import {useToast} from "../../../utils/toast"
@@ -205,6 +215,15 @@
     const {t} = useI18n({useScope: "global"})
     const executionsStore = useExecutionsStore()
     const toast = useToast()
+
+    const approvalBanner = computed(() => {
+        // the generated SDK StateType does not list PAUSING until the SDK is regenerated
+        if ((props.execution.state.current as string) === State.PAUSING) {
+            return "approval.banner.pausing"
+        }
+
+        return findApprovalTaskRun(props.execution, executionsStore.flow, State.PAUSED) ? "approval.banner.paused" : undefined
+    })
 
     const isFailed = computed(() => State.isFailed(props.execution.state.current))
 

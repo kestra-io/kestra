@@ -1,5 +1,5 @@
 import {describe, expect, it} from "vitest"
-import {computeDurationBreakdown} from "../../../src/misc/durationBreakdown"
+import {computeDurationBreakdown, computeLongestTaskRunDuration} from "../../../src/misc/durationBreakdown"
 
 describe("computeDurationBreakdown", () => {
     it("should return zeroed breakdown when there is no history", () => {
@@ -132,5 +132,48 @@ describe("computeDurationBreakdown", () => {
         expect(result.queued).toBe(1_000)
         expect(result.running).toBe(2_000)
         expect(result.total).toBe(3_000)
+    })
+})
+
+describe("computeLongestTaskRunDuration", () => {
+    it("should return 0 when there are no task runs", () => {
+        expect(computeLongestTaskRunDuration([])).toBe(0)
+    })
+
+    it("should return 0 when every task run never started", () => {
+        const result = computeLongestTaskRunDuration([
+            {state: {histories: [{date: 0, state: "SKIPPED"}]}},
+            {state: {histories: []}},
+            {state: undefined},
+        ])
+
+        expect(result).toBe(0)
+    })
+
+    it("should return the sole task run's duration when there is only one", () => {
+        const result = computeLongestTaskRunDuration([
+            {state: {histories: [{date: 0, state: "RUNNING"}, {date: 2_000, state: "SUCCESS"}]}},
+        ])
+
+        expect(result).toBe(2_000)
+    })
+
+    it("should return the longest of several task run durations", () => {
+        const result = computeLongestTaskRunDuration([
+            {state: {histories: [{date: 0, state: "RUNNING"}, {date: 1_000, state: "SUCCESS"}]}},
+            {state: {histories: [{date: 0, state: "RUNNING"}, {date: 4_000, state: "SUCCESS"}]}},
+            {state: {histories: [{date: 0, state: "RUNNING"}, {date: 2_500, state: "SUCCESS"}]}},
+        ])
+
+        expect(result).toBe(4_000)
+    })
+
+    it("should keep growing the denominator for a still-running task run relative to now", () => {
+        const result = computeLongestTaskRunDuration(
+            [{state: {histories: [{date: 1_000, state: "RUNNING"}]}}],
+            3_500,
+        )
+
+        expect(result).toBe(2_500)
     })
 })

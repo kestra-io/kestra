@@ -145,7 +145,7 @@
         "@codecov/vite-plugin": {
             "vite": "$vite"
         },
-        "dompurify": "^3.4.13"
+        "dompurify": "^3.4.16"
     },
     "lint-staged": {
         "**/*.{scss,css}": [

@@ -20,7 +20,7 @@ import fs from "node:fs"
 import path from "node:path"
 import {fileURLToPath} from "node:url"
 import {allKeys, flattenStrings, leafKeys, placeholderProblems, shadowedOssKeys, untranslatedKeys} from "./translationRules.mjs"
-import {evalLocaleModule, staleLocaleEntries, untranslatedLocaleEntries} from "./localeFiles.mjs"
+import {parseLocaleModule, staleLocaleEntries, untranslatedLocaleEntries} from "./localeFiles.mjs"
 import {collectKeyEvidence, emptyEvidence, isScannedSourceFile, translationKeyUsages, translationNamespaceUsages, undefinedKeyUsages, undefinedNamespaceUsages, unusedDefinedKeys} from "./usageRules.ts"
 import {staleKeys} from "./fingerprintRules.mjs"
 
@@ -135,7 +135,7 @@ function checkStaleJson(result, label, dir, fingerprintsFile, fixHint) {
 function ossDefinedKeys() {
     const keys = new Set(allKeys(readLanguage(ossTranslationsDir, "en")))
     for (const localeFile of designSystemLocaleFiles) {
-        const data = evalLocaleModule(fs.readFileSync(localeFile, "utf-8"))
+        const data = parseLocaleModule(fs.readFileSync(localeFile, "utf-8"))
         for (const key of allKeys(data.en ?? {})) keys.add(key)
     }
     return keys

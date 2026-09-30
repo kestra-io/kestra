@@ -2,7 +2,7 @@ import type {Meta, StoryObj} from "@storybook/vue3-vite"
 import {expect, fn, userEvent, within} from "storybook/test"
 import {vueRouter} from "storybook-vue3-router"
 import NodeDetails from "../../../../src/components/dependencies/components/NodeDetails.vue"
-import {ASSET, FLOW} from "../../../../src/components/dependencies/utils/types"
+import {ASSET, EXECUTION, FLOW} from "../../../../src/components/dependencies/utils/types"
 
 const meta: Meta<typeof NodeDetails> = {
     title: "Components/Dependencies/NodeDetails",
@@ -65,10 +65,27 @@ export const CollapsedFlow: Story = {
             metadata: {subtype: FLOW, collapsed: true, totalDegree: 12000, expandable: true},
         },
     },
-    async play({canvasElement}) {
+    async play({canvasElement, args}) {
         const canvas = within(canvasElement)
 
         await expect(canvas.getByText(/12000 relations/)).toBeVisible()
+        await userEvent.click(canvasElement.querySelector("[data-test='expand-hub']")!)
+
+        await expect(args.onExpand).toHaveBeenCalledTimes(1)
+    },
+}
+
+export const CollapsedExecution: Story = {
+    args: {
+        node: {
+            id: "exec-hub", type: "NODE", flow: "exec-hub", namespace: "company.team",
+            metadata: {subtype: EXECUTION, collapsed: true, totalDegree: 500, expandable: true},
+        },
+    },
+    async play({canvasElement}) {
+        const canvas = within(canvasElement)
+
+        await expect(canvas.getByText(/500 relations/)).toBeVisible()
         await expect(canvasElement.querySelector("[data-test='expand-hub']")).toBeNull()
     },
 }

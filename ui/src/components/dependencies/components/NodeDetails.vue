@@ -96,7 +96,7 @@
     import ArrowLeft from "vue-material-design-icons/ArrowLeft.vue"
     import Link from "./Link.vue"
     import {normalizeStatus, statusIconOf, statusColorOf} from "../utils/assetStatus"
-    import {ASSET} from "../utils/types"
+    import {ASSET, FLOW} from "../utils/types"
     import type {Types, Node, AssetRun} from "../utils/types"
 
     const props = defineProps<{
@@ -127,10 +127,8 @@
 
     const isCollapsed = computed(() => Boolean(metadata.value.collapsed))
     const totalDegree = computed(() => metadata.value.totalDegree ?? 0)
-    // Only an ASSET whose own id survived anonymization has a `{id}/dependencies` route to re-fetch; an
-    // anonymized node (id stripped outside the caller's view grant) or a non-asset hub shows the count with
-    // no button. `props.node.id` is not the test: it falls back to the graph uid even once anonymized.
-    const canExpand = computed(() => metadata.value.subtype === ASSET && Boolean(metadata.value.expandable))
+    // Only an ASSET or FLOW whose own id survived anonymization has a route to re-fetch; check `expandable`, not `props.node.id`, since the latter falls back to the graph uid even once anonymized.
+    const canExpand = computed(() => (metadata.value.subtype === ASSET || metadata.value.subtype === FLOW) && Boolean(metadata.value.expandable))
 
     const status = computed(() =>
         (metadata.value.subtype === ASSET ? normalizeStatus(metadata.value.status) : undefined),

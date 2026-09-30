@@ -14,7 +14,7 @@ type HubInfo = {
     collapsed?: boolean;
     /** Set only when collapsed: the node's real relation count. */
     totalDegree?: number;
-    /** True only when this node's own id survived anonymization, so a "load more" re-fetch can actually resolve it. */
+    /** True only when this node's own id survived anonymization and its relations aren't already exhausted, so a "load more" re-fetch can actually resolve it. */
     expandable?: boolean;
 };
 

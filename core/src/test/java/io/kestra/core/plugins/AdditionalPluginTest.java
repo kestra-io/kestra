@@ -76,8 +76,8 @@ class AdditionalPluginTest {
     void shouldResolveAdditionalPluginSubtypes() {
         Map<String, Object> generate = jsonSchemaGenerator.properties(null, AdditionalPluginTest.AdditionalPluginTestTask.class);
         var definitions = (Map<String, Map<String, Object>>) generate.get("$defs");
-        // the assets declaration of the task base counts the custom asset, the free-form branch of assets.outputs
-        assertThat(definitions).hasSize(12);
+        // the assets declaration of the task base counts the custom asset, the free-form branch of assets.outputs, and the relation reference partOf/related point at
+        assertThat(definitions).hasSize(13);
         assertThat(definitions).containsKey("io.kestra.core.plugins.AdditionalPluginTest-AdditionalPluginTest1");
         assertThat(definitions).containsKey("io.kestra.core.plugins.AdditionalPluginTest-AdditionalPluginTest2");
     }

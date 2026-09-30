@@ -29,4 +29,10 @@ describe("resolveDefaultTab", () => {
         expect(resolveDefaultTab(mixed, "edit", "overview")).toBe("edit")
         expect(resolveDefaultTab([{path: "a"}] as RouteRecordRaw[], "edit", "overview")).toBe("overview")
     })
+
+    it("returns the fallback for a nullish requested value when a route has no meta.tab", () => {
+        const untagged = [{path: "a"}, {path: "b", meta: {}}, {meta: {tab: "edit"}}] as RouteRecordRaw[]
+        expect(resolveDefaultTab(untagged, undefined, "overview")).toBe("overview")
+        expect(resolveDefaultTab(untagged, null, "overview")).toBe("overview")
+    })
 })

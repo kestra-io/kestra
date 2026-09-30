@@ -2248,7 +2248,12 @@
         "groups": "Gruppi ({n})",
         "group_none": "Nessun raggruppamento",
         "group_dataset": "Dataset",
-        "ungrouped": "Non raggruppato"
+        "ungrouped": "Non raggruppato",
+        "hub": {
+          "notice": "Questo nodo ha {count} relazioni — vengono mostrate solo le più recenti per mantenere il grafico leggibile.",
+          "expand": "Carica altre relazioni"
+        },
+        "truncated": "Questo grafico era troppo grande per essere mostrato per intero; alcune relazioni sono state omesse."
       },
       "search": {
         "placeholders": {

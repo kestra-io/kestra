@@ -5,15 +5,7 @@
         :dirty="isDirty"
         data-test="change-password-dialog"
     >
-        <KsAlert
-            v-if="isManagedByConfig"
-            type="info"
-            :closable="false"
-            :title="$t('change_password.managed_by_config')"
-            data-test="change-password-managed-by-config"
-        />
-
-        <KsForm v-else labelPosition="top" :model="form" @submit.prevent="submit">
+        <KsForm labelPosition="top" :model="form" @submit.prevent="submit">
             <KsFormItem :label="$t('setup.form.username')">
                 <KsInput v-model="form.username" type="email" autocomplete="username" data-test="change-password-username" />
             </KsFormItem>
@@ -64,7 +56,6 @@
                 {{ $t("cancel") }}
             </KsButton>
             <KsButton
-                v-if="!isManagedByConfig"
                 type="primary"
                 :disabled="!canSubmit"
                 :loading="submitting"
@@ -98,8 +89,6 @@
     const isPasswordValid = ref(false)
     const submitting = ref(false)
     const serverErrors = ref<string[]>([])
-
-    const isManagedByConfig = computed(() => miscStore.configs?.isBasicAuthManagedByConfig === true)
 
     const isDirty = computed(() =>
         Object.values(form.value).some(Boolean) || confirmPassword.value.length > 0,

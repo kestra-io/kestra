@@ -32,7 +32,7 @@
 
                     <VersionMenuItem />
 
-                    <KsDropdownItem command="changePassword" data-test="change-password-menu-item">
+                    <KsDropdownItem v-if="canChangePassword" command="changePassword" data-test="change-password-menu-item">
                         <KsIcon size="base">
                             <LockReset />
                         </KsIcon>
@@ -50,7 +50,7 @@
         </template>
     </KsDropdown>
 
-    <ChangePasswordDialog v-model="changePasswordVisible" />
+    <ChangePasswordDialog v-if="canChangePassword" v-model="changePasswordVisible" />
 </template>
 
 <script setup lang="ts">
@@ -65,6 +65,7 @@
     import KS_LOGO from "../../../assets/ks-logo-small.svg"
     import * as BasicAuth from "../../../utils/basicAuth"
     import VersionMenuItem from "../../../components/layout/VersionMenuItem.vue"
+    import {useMiscStore} from "override/stores/misc"
     import ChangePasswordDialog from "../../../components/basicauth/ChangePasswordDialog.vue"
 
     const SLACK_URL = "https://kestra.io/slack?utm_source=app&utm_medium=referral&utm_campaign=top-auth"
@@ -73,7 +74,10 @@
     const router = useRouter()
     const axios = useClient()
 
+    const miscStore = useMiscStore()
+
     const changePasswordVisible = ref(false)
+    const canChangePassword = computed(() => miscStore.configs?.isBasicAuthManagedByConfig !== true)
 
     const startTutorial = computed(() => ({
         name: "ai",

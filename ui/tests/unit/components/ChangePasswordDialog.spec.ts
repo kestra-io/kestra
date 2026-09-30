@@ -11,7 +11,6 @@ const messages = {
         current_password: "Current password",
         new_password: "New password",
         success: "Updated",
-        managed_by_config: "Managed in the configuration file",
     },
 }
 
@@ -35,19 +34,8 @@ beforeEach(() => {
 })
 
 describe("ChangePasswordDialog", () => {
-    it("explains where to change the credentials instead of showing the form when they are managed by config", () => {
-        useMiscStore().configs = {isBasicAuthManagedByConfig: true}
-
-        const wrapper = mountDialog()
-
-        expect(wrapper.find("[data-test=change-password-managed-by-config]").exists()).toBe(true)
-        expect(wrapper.find("[data-test=change-password-current]").exists()).toBe(false)
-        expect(wrapper.find("[data-test=change-password-submit]").exists()).toBe(false)
-    })
-
     it("keeps the dialog open and shows the server's reason when the current password is wrong", async () => {
         const store = useMiscStore()
-        store.configs = {isBasicAuthManagedByConfig: false}
         const detail = "The current password is required and must be correct to change Basic Authentication credentials."
         vi.spyOn(store, "changeBasicAuth").mockRejectedValue({
             problem: {type: "about:blank", title: "Validation failed", status: 422, errors: [{detail}]},

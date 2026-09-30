@@ -463,8 +463,7 @@
       "title": "Change Password",
       "current_password": "Current password",
       "new_password": "New password",
-      "success": "Your credentials have been updated.",
-      "managed_by_config": "The Basic Authentication credentials are set in the Kestra configuration file. Change them there and restart Kestra."
+      "success": "Your credentials have been updated."
     },
     "invalid flow": "Invalid flow",
     "invalid yaml": "Invalid YAML",

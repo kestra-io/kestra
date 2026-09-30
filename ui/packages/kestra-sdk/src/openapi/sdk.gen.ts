@@ -90,6 +90,90 @@ export const _6667C843 = <ThrowOnError extends boolean = true>(parameters: {
 export const _02135D614 = <ThrowOnError extends boolean = true>(options?: Options<never, ThrowOnError>) => (options?.client ?? client).get<GetProvidersResponses, GetProvidersErrors, ThrowOnError>({ url: '/api/v1/main/ai/providers', ...options });
 
 /**
+ * Follow live notification updates for the authenticated user
+ *
+ * Server-Sent Events stream: pushes every notification created or updated for the current user, restricted to their currently accessible tenants. The SSE event id is `created` or `updated`.
+ */
+export const _04Ba2C44f = <ThrowOnError extends boolean = true>(options?: Options<never, ThrowOnError, FollowResponse>) => (options?.client ?? client).sse.get<FollowResponses, FollowErrors, ThrowOnError>({ url: '/api/v1/notifications/follow', ...options });
+
+/**
+ * Browse notification history
+ *
+ * Cursor-based (not offset-based): returns up to `limit` notifications older than `before`, most recent first, plus a `nextCursor` for the following page. Offset pagination is unsafe here because rows are purged on a rolling TTL while the user scrolls.
+ */
+export const _373Fe494 = <ThrowOnError extends boolean = true>(parameters?: {
+    before?: string | null;
+    limit?: number;
+}, options?: Options<never, ThrowOnError>) => {
+    const params = buildClientParams([parameters], [{ args: [{ in: 'query', key: 'before' }, { in: 'query', key: 'limit' }] }]);
+    return (options?.client ?? client).get<HistoryResponses, HistoryErrors, ThrowOnError>({
+        url: '/api/v1/notifications/history',
+        ...options,
+        ...params
+    });
+};
+
+/**
+ * Mark all of the authenticated user's notifications as read
+ *
+ * Only affects notifications for tenants the user currently has access to.
+ */
+export const _06C5Bb0B6 = <ThrowOnError extends boolean = true>(options?: Options<never, ThrowOnError>) => (options?.client ?? client).post<MarkAllReadResponses, MarkAllReadErrors, ThrowOnError>({ url: '/api/v1/notifications/read-all', ...options });
+
+/**
+ * Poll for notifications updated since a given instant
+ *
+ * Interval-polling delta endpoint: returns notifications updated strictly after `since`, plus a fresh server timestamp to pass as `since` on the next poll.
+ */
+export const _093D9545 = <ThrowOnError extends boolean = true>(parameters: {
+    since: string;
+}, options?: Options<never, ThrowOnError>) => {
+    const params = buildClientParams([parameters], [{ args: [{ in: 'query', key: 'since' }] }]);
+    return (options?.client ?? client).get<PollSinceResponses, PollSinceErrors, ThrowOnError>({
+        url: '/api/v1/notifications/since',
+        ...options,
+        ...params
+    });
+};
+
+/**
+ * Count unread notifications for the authenticated user
+ */
+export const _03Fd61D60 = <ThrowOnError extends boolean = true>(options?: Options<never, ThrowOnError>) => (options?.client ?? client).get<UnreadCountResponses, UnreadCountErrors, ThrowOnError>({ url: '/api/v1/notifications/unread-count', ...options });
+
+/**
+ * Mark a single notification as read
+ *
+ * Idempotent: a missing/already-read/foreign id is a no-op, not an error — the frontend never needs to special-case a 'not found' response for this action, and the global 404 handler never gets a chance to blow up the routed UI over what is functionally a success.
+ */
+export const eafa603 = <ThrowOnError extends boolean = true>(parameters: {
+    id: string;
+}, options?: Options<never, ThrowOnError>) => {
+    const params = buildClientParams([parameters], [{ args: [{ in: 'path', key: 'id' }] }]);
+    return (options?.client ?? client).post<MarkReadResponses, MarkReadErrors, ThrowOnError>({
+        url: '/api/v1/notifications/{id}/read',
+        ...options,
+        ...params
+    });
+};
+
+/**
+ * Mark a single notification as unread
+ *
+ * Idempotent: a missing/already-unread/foreign id is a no-op, not an error — same rationale as POST /{id}/read.
+ */
+export const _270358Dc = <ThrowOnError extends boolean = true>(parameters: {
+    id: string;
+}, options?: Options<never, ThrowOnError>) => {
+    const params = buildClientParams([parameters], [{ args: [{ in: 'path', key: 'id' }] }]);
+    return (options?.client ?? client).post<MarkUnreadResponses, MarkUnreadErrors, ThrowOnError>({
+        url: '/api/v1/notifications/{id}/unread',
+        ...options,
+        ...params
+    });
+};
+
+/**
  * Retrieve the list of available Pebble expression filters.
  */
 export const _078936A73 = <ThrowOnError extends boolean = true>(options?: Options<never, ThrowOnError>) => (options?.client ?? client).get<GetExpressionFiltersResponses, GetExpressionFiltersErrors, ThrowOnError>({ url: '/api/v1/pebble/filters', ...options });

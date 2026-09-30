@@ -1015,6 +1015,34 @@ export type FlowAction = {
      * The label displayed on this action.
      */
     label?: string | null;
+    /**
+     * The conditions under which this action is offered.
+     *
+     * All conditions must hold, and an action without conditions is always offered. A field the resource does not have reads as null, so `NOT_EQUALS`, `NOT_IN` and `NOT_CONTAINS` hold on it.
+     */
+    when?: Array<FlowActionCondition> | null;
+};
+
+/**
+ * A condition the resource an action is attached to must satisfy for the action to be offered.
+ */
+export type FlowActionCondition = {
+    /**
+     * The field of the resource this condition reads.
+     *
+     * A field such as `status` or `namespace`, or `metadata.<key>` on an asset.
+     */
+    field: string;
+    /**
+     * How the field is compared to the value.
+     */
+    op: QueryFilterOp;
+    /**
+     * The value the field is compared to.
+     *
+     * A list for `IN` and `NOT_IN`, ignored by `IS_NULL` and `IS_NOT_NULL`.
+     */
+    value?: string | number | boolean | Array<unknown> | null;
 };
 
 export type FlowControllerFlowWithDeprecatedTasks = {

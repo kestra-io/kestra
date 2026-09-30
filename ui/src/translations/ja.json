@@ -986,6 +986,7 @@
     "timezone": "タイムゾーン",
     "add task": "taskを追加",
     "unable to generate graph": "グラフの生成中に問題が発生したため、トポロジーを表示できません。",
+    "retry": "再試行",
     "attempts": "試行回数",
     "version": "バージョン",
     "services": "サービス",

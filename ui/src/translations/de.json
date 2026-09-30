@@ -986,6 +986,7 @@
     "timezone": "Zeitzone",
     "add task": "Task hinzufügen",
     "unable to generate graph": "Beim Generieren des Graphen ist ein Problem aufgetreten, wodurch die Topologie nicht angezeigt werden kann.",
+    "retry": "Erneut versuchen",
     "attempts": "Versuch(e)",
     "version": "Version",
     "services": "Dienste",

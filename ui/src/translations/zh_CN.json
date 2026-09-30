@@ -986,6 +986,7 @@
     "timezone": "时区",
     "add task": "添加任务",
     "unable to generate graph": "生成图表时发生问题，导致无法显示拓扑。",
+    "retry": "重试",
     "attempts": "尝试",
     "version": "版本",
     "services": "服务",

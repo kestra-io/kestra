@@ -986,6 +986,7 @@
     "timezone": "시간대",
     "add task": "task 추가",
     "unable to generate graph": "그래프 생성 중 문제가 발생하여 토폴로지를 표시할 수 없습니다.",
+    "retry": "재시도",
     "attempts": "시도 횟수",
     "version": "버전",
     "services": "서비스",

@@ -450,7 +450,7 @@ export const DurationBarRunningFootprint: StoryObj<typeof Topology> = {
         await new Promise((resolve) => setTimeout(resolve, 350))
 
         expect(dimensionsOf(node()!)).toEqual(before)
-        expect(dimensionsOf(node()!)).toEqual({width: "273px", height: "80px"})
+        expect(dimensionsOf(node()!)).toEqual({width: `${NODE_SIZES.TASK_WIDTH_EXECUTION}px`, height: `${NODE_SIZES.TASK_HEIGHT}px`})
     },
 }
 

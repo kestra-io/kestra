@@ -1,5 +1,7 @@
 import * as flowYamlUtils from "@kestra-io/topology/flow-yaml-utils"
 
+import {pointerKeys, pointerSegments, type ValidationError} from "./validationErrors"
+
 export type BlockSection = "tasks" | "triggers" | "errors" | "finally" | "afterExecution"
 
 const FLOWABLE_BRANCH_KEYS = ["tasks", "then", "else", "errors", "finally", "defaults", "cases"] as const
@@ -608,52 +610,52 @@ export function rewireDagDependency(
     return writeItem(next, downstreamIndex, downstream)
 }
 
+/**
+ * Groups located errors under the id of the deepest task their pointer runs through, the rest of the
+ * pointer naming the field. An error without a pointer is flow-level and stays out of the map.
+ */
 export function groupValidationIssuesByTask(
-    errors: string[] | undefined,
+    errors: ValidationError[] | undefined,
     flow?: Record<string, unknown>,
 ): Map<string, string[]> {
     const grouped = new Map<string, string[]>()
-    const add = (id: string, entry: string) => {
-        const existing = grouped.get(id) ?? []
-        existing.push(entry)
-        grouped.set(id, existing)
-    }
-    for (const line of errors ?? []) {
-        const cleaned = line.replace(/^\s*validation error\s*:\s*/i, "").trim()
-        if (!cleaned) continue
-
-        const idMatch = /^([A-Za-z0-9_-]+)(?:\.([A-Za-z0-9_.[\]-]+))?\s*:\s*(.+)$/.exec(cleaned)
-        if (idMatch) {
-            const [, id, field, message] = idMatch
-            add(id, field ? `${field}: ${message.trim()}` : message.trim())
-            continue
+    if (!flow) return grouped
+    for (const {pointer, detail} of errors ?? []) {
+        if (!pointer || !detail) continue
+        const segments = pointerSegments(pointer)
+        let node: unknown = flow
+        let taskId: string | undefined
+        let fieldStart = 0
+        for (const [depth, segment] of segments.entries()) {
+            const parent = node
+            node = childAt(node, segment)
+            if (node === undefined) break
+            if (!Array.isArray(parent) || !node || typeof node !== "object") continue
+            const task = displayTaskOf(node as Record<string, unknown>)
+            if (task.id == null) continue
+            taskId = String(task.id)
+            // A task inside a Dag is addressed through its wrapper, which the badge should not echo.
+            fieldStart = depth + (isWrappedLaneItem(node) && segments[depth + 1] === "task" ? 2 : 1)
         }
-
-        // The field can be a path of its own (`headers.Authorization`), and a task nested in a Dag
-        // is addressed through its `task` wrapper (`...].task.flowId`), which says nothing useful.
-        const pathMatch = /^(.+?\])(?:\.([A-Za-z0-9_.]+))?\s*:\s*(.+)$/.exec(cleaned)
-        if (!pathMatch) continue
-        const [, rawPath, rawField, message] = pathMatch
-        const taskPath = rawPath.replace(/^_/, "")
-        const field = rawField?.replace(/^task\./, "")
-        const entry = field ? `${field}: ${message.trim()}` : message.trim()
-
-        // A task constraint violation comes back id-keyed (`tasks[publish].message`), so the last
-        // bracket already names the task; only a numeric path has to be resolved against the flow.
-        const lastBracket = /\[["']?([^"'\]]+)["']?\]$/.exec(taskPath)?.[1]
-        if (lastBracket && !/^\d+$/.test(lastBracket)) {
-            add(lastBracket, entry)
-            continue
-        }
-
-        if (!flow) continue
-        const item = getAtPath(flow, taskPath)
-        if (!item || typeof item !== "object") continue
-        const id = displayTaskOf(item as Record<string, unknown>).id
-        if (id == null) continue
-        add(String(id), entry)
+        if (taskId === undefined) continue
+        const field = friendlyField(segments.slice(fieldStart))
+        const entry = field ? `${field}: ${detail}` : detail
+        grouped.set(taskId, [...(grouped.get(taskId) ?? []), entry])
     }
     return grouped
+}
+
+function childAt(node: unknown, segment: string): unknown {
+    if (Array.isArray(node)) return /^\d+$/.test(segment) ? node[Number(segment)] : undefined
+    if (!node || typeof node !== "object") return undefined
+    const key = pointerKeys(segment).find(candidate => !UNSAFE_KEYS.has(candidate) && candidate in node)
+    return key === undefined ? undefined : (node as Record<string, unknown>)[key]
+}
+
+function friendlyField(segments: string[]): string {
+    return segments.reduce((field, segment) => /^\d+$/.test(segment)
+        ? `${field}[${segment}]`
+        : `${field}${field ? "." : ""}${pointerKeys(segment).at(-1)}`, "")
 }
 
 export {collectAllIds}

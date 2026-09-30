@@ -911,7 +911,7 @@
     }
 
     const validationIssuesByTask = computed<Map<string, string[]>>(() =>
-        groupValidationIssuesByTask(flowStore.flowErrors, flowStore.flowParsed),
+        groupValidationIssuesByTask(flowStore.flowValidation?.errors, flowStore.flowParsed),
     )
 
     const taskPicker = useTaskPicker({

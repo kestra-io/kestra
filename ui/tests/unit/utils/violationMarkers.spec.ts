@@ -37,6 +37,15 @@ describe("violationMarkers", () => {
         })
     })
 
+    it("resolves the Java name of a renamed key, such as _finally, to its YAML key", () => {
+        const source = "finally:\n  - id: cleanup\n    type: io.kestra.plugin.core.log.Log\n"
+
+        expect(violationMarkers(source, [{pointer: "/_finally/0/message", detail: "must not be null"}])).toEqual([
+            {message: "message: must not be null", startLineNumber: 2, startColumn: 5, endLineNumber: 2, endColumn: 16},
+            {message: "message: must not be null", startLineNumber: 3, startColumn: 5, endLineNumber: 3, endColumn: 40},
+        ])
+    })
+
     it("leaves a violation on the document root to the error panel", () => {
         expect(violationMarkers(flow, [{pointer: "", detail: "boom"}, {pointer: "/labels", detail: "boom"}, {detail: "unlocated"}])).toEqual([])
     })

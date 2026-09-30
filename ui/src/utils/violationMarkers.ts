@@ -1,6 +1,6 @@
 import {isMap, isPair, isScalar, isSeq, LineCounter, parseDocument, visit, type Node, type Pair} from "yaml"
 
-import type {ValidationError} from "./validationErrors"
+import {pointerKeys, pointerSegments, type ValidationError} from "./validationErrors"
 
 export interface ViolationMarker {
     message: string;
@@ -11,10 +11,6 @@ export interface ViolationMarker {
 }
 
 type Range = [number, number]
-
-function pointerSegments(pointer: string): string[] {
-    return pointer.split("/").slice(1).map(segment => segment.replace(/~1/g, "/").replace(/~0/g, "~"))
-}
 
 /** An existing key is marked with its scalar value, or alone when it holds a block. */
 function pairTargets(pair: Pair): Node[] {
@@ -34,7 +30,8 @@ function locate(root: Node | null, segments: string[]): Location {
         const isLeaf = depth === segments.length - 1
         const missing = {targets: depth === 0 || !node ? [] : [node], missing: segment}
         if (isMap(node)) {
-            const pair = node.items.find(item => isScalar(item.key) && String(item.key.value) === segment)
+            const keys = pointerKeys(segment)
+            const pair = node.items.find(item => isScalar(item.key) && keys.includes(String(item.key.value)))
             if (!pair) return missing
             if (isLeaf && isPair(pair)) return {targets: pairTargets(pair)}
             node = pair.value as Node | null
@@ -96,7 +93,7 @@ export function violationMarkers(source: string, errors: ValidationError[] | und
 
     return located.flatMap(error => {
         const {targets, missing} = locate(doc.contents, pointerSegments(error.pointer!))
-        const message = missing && !/^\d+$/.test(missing) ? `${missing}: ${error.detail}` : error.detail!
+        const message = missing && !/^\d+$/.test(missing) ? `${pointerKeys(missing).at(-1)}: ${error.detail}` : error.detail!
         return lineSpans(source, scalarRanges(targets)).map(([start, end]) => {
             const from = lineCounter.linePos(start)
             const to = lineCounter.linePos(end)

@@ -186,7 +186,7 @@
     import AlertCircleOutline from "vue-material-design-icons/AlertCircleOutline.vue"
     import TaskEditPanes from "./TaskEditPanes.vue"
     import TaskEditData from "./TaskEditData.vue"
-    import {UNSET_REQUIRED_FIELDS_INJECTION_KEY} from "../no-code/injectionKeys"
+    import {UNSET_REQUIRED_FIELDS_INJECTION_KEY, NAVIGATE_TO_REQUIRED_FIELD_INJECTION_KEY} from "../no-code/injectionKeys"
     import type {UnsetRequiredField} from "../no-code/utils/requiredFields"
     import {openCollapsedGroups, scrollThenFocus} from "../no-code/utils/useFieldNavigation"
     import {canSaveFlowTemplate} from "../../utils/flowTemplate"
@@ -275,9 +275,21 @@
     provide(UNSET_REQUIRED_FIELDS_INJECTION_KEY, unsetRequiredFields)
     const unsetRequiredCount = computed(() => unsetRequiredFields.value.length)
 
+    const navigateToRequiredField = ref<((path: string) => boolean) | undefined>(undefined)
+    provide(NAVIGATE_TO_REQUIRED_FIELD_INJECTION_KEY, navigateToRequiredField)
+
     async function jumpToFirstUnsetRequired() {
-        const el = panelRef.value?.querySelector<HTMLElement>("[data-required-path]")
+        const first = unsetRequiredFields.value[0]
+        if (!first) return
+
+        const selector = `[data-required-path="${first.path}"]`
+        let el = panelRef.value?.querySelector<HTMLElement>(selector)
+        if (!el && navigateToRequiredField.value?.(first.path)) {
+            await nextTick()
+            el = panelRef.value?.querySelector<HTMLElement>(selector)
+        }
         if (!el) return
+
         openCollapsedGroups(el)
         await nextTick()
         scrollThenFocus(el)

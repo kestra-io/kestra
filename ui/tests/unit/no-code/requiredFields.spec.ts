@@ -1,5 +1,5 @@
 import {describe, it, expect} from "vitest"
-import {countUnsetRequiredFields, type PartialSchema} from "../../../src/components/no-code/utils/requiredFields"
+import {countUnsetRequiredFields, findRequiredFieldFrames, type PartialSchema} from "../../../src/components/no-code/utils/requiredFields"
 import {shouldDrillItem} from "../../../src/components/no-code/components/tasks/fieldNesting"
 
 describe("countUnsetRequiredFields", () => {
@@ -117,5 +117,80 @@ describe("countUnsetRequiredFields", () => {
     it("returns nothing for a schema-less or model-less input", () => {
         expect(countUnsetRequiredFields(undefined, undefined, {})).toEqual([])
         expect(countUnsetRequiredFields({}, {type: "object"}, {})).toEqual([])
+    })
+})
+
+describe("findRequiredFieldFrames", () => {
+    it("returns a frame for a drillable array item, so the jump can open it before focusing the field", () => {
+        const itemSchema = {
+            type: "object",
+            properties: {
+                url: {type: "string"},
+                connection: {type: "object", properties: {timeout: {type: "string"}}},
+            },
+            required: ["url"],
+        }
+        // Guards the premise: this item schema is the drillable case the frame exists for.
+        expect(shouldDrillItem(itemSchema, {})).toBe(true)
+
+        const schema = {type: "object", properties: {items: {type: "array", items: itemSchema}}}
+        const model = {items: [{url: "set"}, {}]}
+
+        const frames = findRequiredFieldFrames(model, schema, {}, "items[1].url")
+
+        expect(frames).toEqual([{path: "items[1]", label: "#2", schema: itemSchema}])
+    })
+
+    it("returns no frame for a non-drillable array item, since TaskArray already renders it inline", () => {
+        const itemSchema = {
+            type: "object",
+            properties: {when: {type: "string"}, message: {type: "string"}},
+            required: ["message"],
+        }
+        expect(shouldDrillItem(itemSchema, {})).toBe(false)
+
+        const schema = {type: "object", properties: {items: {type: "array", items: itemSchema}}}
+        const model = {items: [{when: "x"}]}
+
+        expect(findRequiredFieldFrames(model, schema, {}, "items[0].message")).toEqual([])
+    })
+
+    it("returns no frame for a top-level field that is already mounted", () => {
+        const schema = {type: "object", properties: {message: {type: "string"}}, required: ["message"]}
+
+        expect(findRequiredFieldFrames({}, schema, {}, "message")).toEqual([])
+    })
+
+    it("returns undefined when the path cannot be resolved against the schema", () => {
+        const schema = {type: "object", properties: {message: {type: "string"}}}
+
+        expect(findRequiredFieldFrames({}, schema, {}, "nope")).toBeUndefined()
+    })
+
+    it("nests a frame per drillable array crossed on the way to a deeply nested field", () => {
+        const innerItemSchema = {
+            type: "object",
+            properties: {
+                url: {type: "string"},
+                metadata: {type: "object", properties: {note: {type: "string"}}},
+            },
+            required: ["url"],
+        }
+        const outerItemSchema = {
+            type: "object",
+            properties: {
+                steps: {type: "array", items: innerItemSchema},
+                metadata: {type: "object", properties: {note: {type: "string"}}},
+            },
+        }
+        const schema = {type: "object", properties: {jobs: {type: "array", items: outerItemSchema}}}
+        const model = {jobs: [{steps: [{}]}]}
+
+        const frames = findRequiredFieldFrames(model, schema, {}, "jobs[0].steps[0].url")
+
+        expect(frames).toEqual([
+            {path: "jobs[0]", label: "#1", schema: outerItemSchema},
+            {path: "jobs[0].steps[0]", label: "#1", schema: innerItemSchema},
+        ])
     })
 })

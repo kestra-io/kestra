@@ -1,4 +1,6 @@
 import type {Schema} from "../components/tasks/getTaskComponent"
+import {shouldDrillItem, describeArrayItem} from "../components/tasks/fieldNesting"
+import type {NavFrame} from "./useFieldNavigation"
 
 export interface UnsetRequiredField {
     path: string
@@ -109,4 +111,57 @@ export function countUnsetRequiredFields(
             ? countUnsetRequiredFields(childValue, childSchema, definitions, childPath)
             : []
     })
+}
+
+/**
+ * Walks the same schema/model pair as {@link countUnsetRequiredFields} to compute the field-nav
+ * frames needed to reveal `targetPath` — one per drillable array item on the way there. A
+ * non-drillable array (its items render inline, never behind a `KsDrillRow`) contributes no frame.
+ * Returns `undefined` if `targetPath` cannot be resolved against the schema.
+ */
+export function findRequiredFieldFrames(
+    model: unknown,
+    schema: PartialSchema | undefined,
+    definitions: Definitions,
+    targetPath: string,
+    path = "",
+): NavFrame[] | undefined {
+    if (path === targetPath) return []
+    if (!schema) return undefined
+
+    const resolved = mergeAllOf(resolveRef(schema, definitions) ?? schema, definitions)
+
+    if (resolved.anyOf?.length) {
+        const branch = resolveAnyOfBranch(model, resolved, definitions)
+        return branch ? findRequiredFieldFrames(model, branch, definitions, targetPath, path) : undefined
+    }
+
+    const remainder = targetPath.slice(path.length)
+
+    if (Array.isArray(model) && resolved.items) {
+        const arrayMatch = /^\[(\d+)\]/.exec(remainder)
+        if (!arrayMatch) return undefined
+
+        const index = Number(arrayMatch[1])
+        const itemPath = `${path}[${index}]`
+        const item = model[index]
+        const rest = findRequiredFieldFrames(item, resolved.items, definitions, targetPath, itemPath)
+        if (rest === undefined) return undefined
+
+        return shouldDrillItem(resolved.items, definitions)
+            ? [{path: itemPath, label: describeArrayItem(item, index), schema: resolved.items}, ...rest]
+            : rest
+    }
+
+    if (!resolved.properties) return undefined
+
+    const keyMatch = /^\.?([^.[]+)/.exec(remainder)
+    if (!keyMatch) return undefined
+
+    const key = keyMatch[1]
+    const childSchema = resolved.properties[key]
+    const childValue = model && typeof model === "object" && !Array.isArray(model) ? (model as Record<string, unknown>)[key] : undefined
+    const childPath = path ? `${path}.${key}` : key
+
+    return childSchema ? findRequiredFieldFrames(childValue, childSchema, definitions, targetPath, childPath) : undefined
 }

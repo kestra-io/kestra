@@ -105,37 +105,37 @@ describe("openCollapsedGroups", () => {
         document.body.innerHTML = ""
     })
 
-    it("clicks open every collapsed ancestor group between the target and the form root", () => {
+    it("clicks open every collapsed ancestor group between the target and the form root, via TaskObject's data-* hooks rather than its class names", () => {
         document.body.innerHTML = `
-            <div class="group">
-                <button type="button" class="group-head"></button>
-                <div class="group-body">
+            <div class="renamed-group-wrapper" data-collapsible-group data-group-open="false">
+                <button type="button" class="renamed-group-toggle" data-group-toggle></button>
+                <div class="renamed-group-body">
                     <div id="target"><input /></div>
                 </div>
             </div>
         `
-        const group = document.querySelector(".group") as HTMLElement
-        const groupHead = document.querySelector(".group-head") as HTMLElement
-        groupHead.addEventListener("click", () => group.classList.add("is-open"))
+        const group = document.querySelector("[data-collapsible-group]") as HTMLElement
+        const groupToggle = document.querySelector("[data-group-toggle]") as HTMLElement
+        groupToggle.addEventListener("click", () => group.setAttribute("data-group-open", "true"))
         const target = document.getElementById("target") as HTMLElement
 
-        expect(group.classList.contains("is-open")).toBe(false)
+        expect(group.getAttribute("data-group-open")).toBe("false")
 
         openCollapsedGroups(target)
 
-        expect(group.classList.contains("is-open")).toBe(true)
+        expect(group.getAttribute("data-group-open")).toBe("true")
     })
 
     it("does nothing when no ancestor group is collapsed", () => {
         document.body.innerHTML = `
-            <div class="group is-open">
-                <button type="button" class="group-head"></button>
+            <div data-collapsible-group data-group-open="true">
+                <button type="button" data-group-toggle></button>
                 <div id="target"></div>
             </div>
         `
-        const groupHead = document.querySelector(".group-head") as HTMLElement
+        const groupToggle = document.querySelector("[data-group-toggle]") as HTMLElement
         const clicked = vi.fn()
-        groupHead.addEventListener("click", clicked)
+        groupToggle.addEventListener("click", clicked)
 
         openCollapsedGroups(document.getElementById("target") as HTMLElement)
 

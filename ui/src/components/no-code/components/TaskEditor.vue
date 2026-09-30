@@ -51,14 +51,14 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, inject, onActivated, provide, ref, toRaw, watch} from "vue"
+    import {computed, inject, onActivated, onBeforeUnmount, provide, ref, toRaw, watch} from "vue"
     import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
     import TaskObject from "./tasks/TaskObject.vue"
     import TaskObjectField from "./tasks/TaskObjectField.vue"
     import PluginSelect from "../../plugins/PluginSelect.vue"
     import FieldNavBreadcrumb from "./FieldNavBreadcrumb.vue"
     import {useFieldNavigation} from "../utils/useFieldNavigation"
-    import {countUnsetRequiredFields} from "../utils/requiredFields"
+    import {countUnsetRequiredFields, findRequiredFieldFrames} from "../utils/requiredFields"
     import {NoCodeElement, Schemas} from "../utils/types"
     import {getPath, setPath, cloneDeep, isDeepEqual} from "@kestra-io/design-system"
     import {
@@ -72,6 +72,7 @@
         FULL_SOURCE_INJECTION_KEY,
         PLUGIN_DEFAULTS_INJECTION_KEY,
         UNSET_REQUIRED_FIELDS_INJECTION_KEY,
+        NAVIGATE_TO_REQUIRED_FIELD_INJECTION_KEY,
     } from "../injectionKeys"
     import {removeNullAndUndefined} from "../utils/cleanUp"
     import {removeRefPrefix, usePluginsStore} from "../../../stores/plugins"
@@ -451,18 +452,33 @@
         }
     })
 
+    const requiredFieldsSchema = computed(() => ({...schema.value, properties: schema.value?.properties ?? properties.value}))
+
     const unsetRequiredFields = computed(() =>
-        countUnsetRequiredFields(
-            taskModel.value,
-            {...schema.value, properties: schema.value?.properties ?? properties.value},
-            definitions.value,
-        ),
+        countUnsetRequiredFields(taskModel.value, requiredFieldsSchema.value, definitions.value),
     )
 
     const unsetRequiredFieldsState = inject(UNSET_REQUIRED_FIELDS_INJECTION_KEY, undefined)
     watch(unsetRequiredFields, (value) => {
         if (unsetRequiredFieldsState) unsetRequiredFieldsState.value = value
     }, {immediate: true})
+
+    function navigateToRequiredField(path: string): boolean {
+        const frames = findRequiredFieldFrames(taskModel.value, requiredFieldsSchema.value, definitions.value, path)
+        if (!frames) return false
+
+        fieldNav.reset()
+        for (const frame of frames) fieldNav.push(frame)
+        return true
+    }
+
+    const navigateToRequiredFieldState = inject(NAVIGATE_TO_REQUIRED_FIELD_INJECTION_KEY, undefined)
+    if (navigateToRequiredFieldState) navigateToRequiredFieldState.value = navigateToRequiredField
+
+    onBeforeUnmount(() => {
+        if (unsetRequiredFieldsState) unsetRequiredFieldsState.value = []
+        if (navigateToRequiredFieldState) navigateToRequiredFieldState.value = undefined
+    })
 </script>
 
 <style scoped lang="scss">

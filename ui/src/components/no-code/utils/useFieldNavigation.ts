@@ -38,14 +38,16 @@ export function scrollThenFocus(el: HTMLElement, focusTarget?: HTMLElement | nul
 }
 
 /**
- * Opens every collapsed TaskObject group (`.group:not(.is-open)`) between el and the form root, so
- * a jump target hidden behind a collapsed section is actually visible before scrollThenFocus runs.
+ * Opens every collapsed TaskObject group (`[data-collapsible-group][data-group-open="false"]`)
+ * between el and the form root, so a jump target hidden behind a collapsed section is actually
+ * visible before scrollThenFocus runs. Reads TaskObject's `data-*` hooks rather than its class
+ * names, so a class rename there does not silently break the jump.
  */
 export function openCollapsedGroups(el: HTMLElement) {
     let current: HTMLElement | null = el
     while (current) {
-        if (current.classList.contains("group") && !current.classList.contains("is-open")) {
-            current.querySelector<HTMLElement>(":scope > .group-head")?.click()
+        if (current.hasAttribute("data-collapsible-group") && current.getAttribute("data-group-open") !== "true") {
+            current.querySelector<HTMLElement>(":scope > [data-group-toggle]")?.click()
         }
         current = current.parentElement
     }

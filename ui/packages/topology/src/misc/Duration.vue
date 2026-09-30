@@ -1,21 +1,24 @@
 <template>
     <template v-if="compact">
-        <div v-if="showCompactBar" class="split-bar compact-bar" aria-hidden="true">
+        <div v-if="showCompactBar" class="split-bar compact-bar" data-test="duration-compact-bar" aria-hidden="true">
             <span
                 v-if="breakdown.queued > 0"
                 class="split-bar-seg split-bar-queued"
-                :style="{width: shareOf(breakdown.queued) + '%'}"
+                data-test="duration-segment-queued"
+                :style="{width: segmentWidths.queued + '%'}"
             />
             <span
                 v-if="breakdown.running > 0"
                 class="split-bar-seg split-bar-running"
+                data-test="duration-segment-running"
                 :class="{'split-bar-running-live': isActivelyRunning}"
-                :style="{width: shareOf(breakdown.running) + '%'}"
+                :style="{width: segmentWidths.running + '%'}"
             />
             <span
                 v-if="breakdown.paused > 0"
                 class="split-bar-seg split-bar-paused"
-                :style="{width: shareOf(breakdown.paused) + '%'}"
+                data-test="duration-segment-paused"
+                :style="{width: segmentWidths.paused + '%'}"
             />
         </div>
     </template>
@@ -60,22 +63,25 @@
                     </template>
                 </div>
                 <template v-if="!neverRan">
-                    <div class="split-bar" aria-hidden="true">
+                    <div class="split-bar" data-test="duration-bar" aria-hidden="true">
                         <span
                             v-if="breakdown.queued > 0"
                             class="split-bar-seg split-bar-queued"
-                            :style="{width: shareOf(breakdown.queued) + '%'}"
+                data-test="duration-segment-queued"
+                            :style="{width: segmentWidths.queued + '%'}"
                         />
                         <span
                             v-if="breakdown.running > 0"
                             class="split-bar-seg split-bar-running"
+                data-test="duration-segment-running"
                             :class="{'split-bar-running-live': isActivelyRunning}"
-                            :style="{width: shareOf(breakdown.running) + '%'}"
+                            :style="{width: segmentWidths.running + '%'}"
                         />
                         <span
                             v-if="breakdown.paused > 0"
                             class="split-bar-seg split-bar-paused"
-                            :style="{width: shareOf(breakdown.paused) + '%'}"
+                data-test="duration-segment-paused"
+                            :style="{width: segmentWidths.paused + '%'}"
                         />
                     </div>
                     <div class="split-rows">
@@ -315,11 +321,25 @@
         return formatDuration(breakdown.value.total)
     })
 
-    function shareOf(part: number): number {
+    // Each segment is a share of `denominator`, which for a node bar is the execution's longest task
+    // run — a value that only refreshes with the execution while this component re-measures every
+    // `interval` ms. A still-running task therefore outgrows it between refreshes, so the widths are
+    // clamped as a running total: the bar fills, it never over-fills.
+    const segmentWidths = computed(() => {
         const denominator = props.denominator && props.denominator > 0 ? props.denominator : breakdown.value.total
-        if (denominator <= 0) return 0
-        return Math.min(100, (part / denominator) * 100)
-    }
+        let remaining = 100
+        const take = (part: number) => {
+            if (denominator <= 0) return 0
+            const width = Math.min(remaining, Math.max(0, (part / denominator) * 100))
+            remaining -= width
+            return width
+        }
+        return {
+            queued: take(breakdown.value.queued),
+            running: take(breakdown.value.running),
+            paused: take(breakdown.value.paused),
+        }
+    })
 
     function shareLabel(part: number): string {
         if (breakdown.value.total <= 0) return "0%"

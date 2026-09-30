@@ -278,7 +278,7 @@ describe("TaskNode anatomy", () => {
     it("should show no duration bar outside of an execution context", () => {
         const wrapper = mountTaskNode({})
 
-        expect(wrapper.find(".compact-bar").exists()).toBe(false)
+        expect(wrapper.find("[data-test=\"duration-compact-bar\"]").exists()).toBe(false)
     })
 
     it("should show no duration bar for a task that never ran", () => {
@@ -287,7 +287,7 @@ describe("TaskNode anatomy", () => {
             taskRuns: [taskRunWithHistory("my-task", [{date: 0, state: "SKIPPED"}])],
         })
 
-        expect(wrapper.find(".compact-bar").exists()).toBe(false)
+        expect(wrapper.find("[data-test=\"duration-compact-bar\"]").exists()).toBe(false)
     })
 
     it("should fill its own duration bar when it is the execution's longest task run", () => {
@@ -298,7 +298,7 @@ describe("TaskNode anatomy", () => {
             ],
         })
 
-        const running = wrapper.find(".split-bar-running")
+        const running = wrapper.find("[data-test=\"duration-segment-running\"]")
         expect(running.exists()).toBe(true)
         expect((running.element as HTMLElement).style.width).toBe("100%")
     })
@@ -312,7 +312,7 @@ describe("TaskNode anatomy", () => {
             ],
         })
 
-        const running = wrapper.find(".split-bar-running")
+        const running = wrapper.find("[data-test=\"duration-segment-running\"]")
         expect((running.element as HTMLElement).style.width).toBe("25%")
     })
 })

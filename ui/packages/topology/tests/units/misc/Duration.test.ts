@@ -267,7 +267,7 @@ describe("Duration", () => {
         })
 
         expect(wrapper.find("button.ks-duration-value").exists()).toBe(false)
-        expect(wrapper.find(".compact-bar").exists()).toBe(true)
+        expect(wrapper.find("[data-test=\"duration-compact-bar\"]").exists()).toBe(true)
     })
 
     it("should show no compact bar for a task that never ran", () => {
@@ -278,7 +278,7 @@ describe("Duration", () => {
             },
         })
 
-        expect(wrapper.find(".compact-bar").exists()).toBe(false)
+        expect(wrapper.find("[data-test=\"duration-compact-bar\"]").exists()).toBe(false)
     })
 
     it("should scale compact segments against the provided denominator instead of its own total", () => {
@@ -293,8 +293,32 @@ describe("Duration", () => {
             },
         })
 
-        const running = wrapper.find(".split-bar-running")
+        const running = wrapper.find("[data-test=\"duration-segment-running\"]")
         expect((running.element as HTMLElement).style.width).toBe("25%")
+    })
+
+    it("should not let the segments overfill the track when a run outgrows a stale denominator", () => {
+        // The denominator is the execution's longest task run and only refreshes with the execution,
+        // while this component re-measures on its own interval — so a still-running task outgrows it.
+        const wrapper = i18nMount(Duration, {
+            props: {
+                compact: true,
+                denominator: 1_000,
+                histories: [
+                    {date: 0, state: "CREATED"},
+                    {date: 1_000, state: "RUNNING"},
+                    {date: 4_000, state: "SUCCESS"},
+                ],
+            },
+        })
+
+        const widthOf = (name: string) => {
+            const el = wrapper.find(`[data-test="duration-segment-${name}"]`)
+            return el.exists() ? parseFloat((el.element as HTMLElement).style.width) : 0
+        }
+        const total = widthOf("queued") + widthOf("running") + widthOf("paused")
+
+        expect(total).toBeLessThanOrEqual(100)
     })
 
     it("should fall back to its own total for the tier-1 split bar when no denominator is provided", () => {
@@ -303,7 +327,7 @@ describe("Duration", () => {
             {date: 1_000, state: "SUCCESS"},
         ])
 
-        const running = wrapper.find(".split-bar-running")
+        const running = wrapper.find("[data-test=\"duration-segment-running\"]")
         expect((running.element as HTMLElement).style.width).toBe("100%")
     })
 })

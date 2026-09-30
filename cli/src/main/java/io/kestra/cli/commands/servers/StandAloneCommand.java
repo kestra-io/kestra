@@ -108,12 +108,11 @@ public class StandAloneCommand extends AbstractServerCommand {
 
         KestraContext.getContext().injectWorkerConfigs(workerThread);
 
-        // Flows must load after super.call(): it registers external plugins, without which their task types fail to resolve (https://github.com/kestra-io/kestra/issues/19736).
-        super.call();
-
         if (tenantId != null) {
             tenantIdSelectorService.get().createTenant(tenantId);
         }
+
+        super.call();
 
         if (flowPath != null) {
             try {

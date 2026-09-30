@@ -1,6 +1,9 @@
 import type {Meta, StoryObj} from "@storybook/vue3-vite"
+import {expect, screen, userEvent, waitFor, within} from "storybook/test"
 import CogOutline from "vue-material-design-icons/CogOutline.vue"
+import FolderOutline from "vue-material-design-icons/FolderOutline.vue"
 import KsBreadcrumb from "../../../src/components/Navigation/KsBreadcrumb/KsBreadcrumb.vue"
+import type {KsBreadcrumbItem, KsBreadcrumbLoader} from "../../../src/components/Navigation/KsBreadcrumb/types"
 
 const meta: Meta<typeof KsBreadcrumb> = {
     title: "Components/Navigation/KsBreadcrumb",
@@ -9,6 +12,30 @@ const meta: Meta<typeof KsBreadcrumb> = {
 }
 export default meta
 type Story = StoryObj<typeof KsBreadcrumb>
+
+const NAMESPACES: Record<string, string[]> = {
+    "": ["system", "company", "personal", "test"],
+    "company": ["team", "marketing", "finance"],
+    "company.finance": ["invoicing", "reporting"],
+    "company.finance.reporting": ["monthly", "quarterly"],
+}
+
+const after = <T,>(value: T, delay: number) => new Promise<T>((resolve) => setTimeout(() => resolve(value), delay))
+
+const contentOf = (parent: string, current?: string, delay = 300): KsBreadcrumbLoader => () => after(
+    (NAMESPACES[parent] ?? []).map((name) => {
+        const id = parent ? `${parent}.${name}` : name
+        return {
+            label: name,
+            onClick: () => {},
+            icon: FolderOutline,
+            tooltip: id,
+            current: id === current,
+            children: NAMESPACES[id] ? contentOf(id, current, delay) : undefined,
+        }
+    }),
+    delay,
+)
 
 export const Default: Story = {
     render: (args) => ({
@@ -115,6 +142,57 @@ export const WithLeading: Story = {
             </div>
         `,
     }),
+}
+
+/**
+ * A folder-style path. The root offers what lies under it, every other level the entries beside it, and
+ * hovering an entry with content flies out its own namespaces and flows, as deep as the tree goes.
+ */
+export const WithSiblings: Story = {
+    render: () => ({
+        components: {KsBreadcrumb},
+        setup() {
+            const items: KsBreadcrumbItem[] = [{label: "Namespaces", onClick: () => {}, children: contentOf("", "company")}]
+            return {items, titleSiblings: contentOf("", "company")}
+        },
+        template: `
+            <div style="padding:24px 24px 320px">
+                <ks-breadcrumb :items="items" title="company" :titleSiblings="titleSiblings" show-leading />
+            </div>
+        `,
+    }),
+    play: async ({canvasElement}) => {
+        const canvas = within(canvasElement)
+        const entry = (label: string) => screen.getAllByTestId("breadcrumb-entry").find((element) => element.textContent?.trim() === label)
+        await waitFor(() => expect(canvas.getAllByTestId("breadcrumb-menu-trigger")).toHaveLength(2))
+        await userEvent.hover(within(canvas.getByRole("heading")).getByTestId("breadcrumb-segment"))
+        await waitFor(() => expect(entry("personal")).toBeVisible())
+        await userEvent.hover(entry("company")!)
+        await waitFor(() => expect(entry("finance")).toBeVisible())
+        await userEvent.hover(entry("finance")!)
+        await waitFor(() => expect(entry("reporting")).toBeVisible())
+    },
+}
+
+/** A level with nothing to offer gets no chevron: here only the root has one, the current page does not. */
+export const EmptySiblings: Story = {
+    render: () => ({
+        components: {KsBreadcrumb},
+        setup() {
+            const items: KsBreadcrumbItem[] = [{label: "Namespaces", onClick: () => {}, children: contentOf("", undefined, 0)}]
+            return {items, titleSiblings: () => Promise.resolve([])}
+        },
+        template: `
+            <div style="padding:24px">
+                <ks-breadcrumb :items="items" title="only-namespace" :titleSiblings="titleSiblings" />
+            </div>
+        `,
+    }),
+    play: async ({canvasElement}) => {
+        const canvas = within(canvasElement)
+        await waitFor(() => expect(canvas.getAllByTestId("breadcrumb-menu-trigger")).toHaveLength(1))
+        await expect(within(canvas.getByRole("heading")).queryByTestId("breadcrumb-menu-trigger")).toBeNull()
+    },
 }
 
 export const TitleSlot: Story = {

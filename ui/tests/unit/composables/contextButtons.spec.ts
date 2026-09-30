@@ -5,6 +5,15 @@ vi.mock("../../../src/stores/api", () => ({
     useApiStore: () => ({feeds: mockFeeds.value}),
 }))
 
+const mockUnreadCount = {value: 0}
+vi.mock("../../../src/stores/notifications", () => ({
+    useNotificationsStore: () => ({
+        get unreadCount() {
+            return mockUnreadCount.value
+        },
+    }),
+}))
+
 vi.mock("@vueuse/core", async (importOriginal) => {
     const actual = await importOriginal<typeof import("@vueuse/core")>()
     return {...actual, useNetwork: () => ({isOnline: {value: true}})}
@@ -21,7 +30,7 @@ function mountButtons() {
             return () => null
         },
     })
-    i18nMount(Comp, {messages: {contextBar: {news: "News", docs: "Docs", help: "Help", issue: "Issue", demo: "Demo", star: "Star"}}})
+    i18nMount(Comp, {messages: {contextBar: {news: "News", docs: "Docs", help: "Help", issue: "Issue", demo: "Demo", star: "Star", notifications: "Notifications"}}})
     return api!
 }
 
@@ -29,10 +38,27 @@ describe("useContextButtons news unread", () => {
     beforeEach(() => {
         localStorage.clear()
         mockFeeds.value = []
+        mockUnreadCount.value = 0
     })
 
     afterAll(() => {
         localStorage.clear()
+    })
+
+    it("marks the notifications button unread when the store reports an unread count", () => {
+        mockUnreadCount.value = 3
+
+        const {buttons} = mountButtons()
+
+        expect(buttons.notifications.unread?.value).toBe(true)
+    })
+
+    it("marks the notifications button read when the store reports no unread count", () => {
+        mockUnreadCount.value = 0
+
+        const {buttons} = mountButtons()
+
+        expect(buttons.notifications.unread?.value).toBe(false)
     })
 
     it("is unread when no read date has been stored yet", () => {

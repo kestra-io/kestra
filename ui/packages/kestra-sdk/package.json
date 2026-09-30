@@ -24,6 +24,7 @@
     "./metrics": "./dist/metrics.js",
     "./misc": "./dist/misc.js",
     "./namespaces": "./dist/namespaces.js",
+    "./notifications": "./dist/notifications.js",
     "./outputs": "./dist/outputs.js",
     "./plugins": "./dist/plugins.js",
     "./secrets": "./dist/secrets.js",

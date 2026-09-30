@@ -47,6 +47,7 @@
             >
                 <AiMenuIcon />
             </KsIconButton>
+            <NotificationBell v-if="miscStore.configs" />
             <slot name="panel-toggle" />
         </template>
     </KsTopNavBar>
@@ -58,6 +59,7 @@
     import {KsIconButton} from "@kestra-io/design-system"
     import GlobalSearch from "./GlobalSearch.vue"
     import AiMenuIcon from "../ai/AiMenuIcon.vue"
+    import NotificationBell from "./NotificationBell.vue"
     import {useBookmarksStore} from "../../stores/bookmarks"
     import {useLayoutStore} from "../../stores/layout"
     import {useTopNavStore} from "../../stores/topNav"

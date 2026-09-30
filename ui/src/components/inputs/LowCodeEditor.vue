@@ -23,7 +23,6 @@
             :replayEnabled="replayEnabled"
             :getNodeDimensions="getNodeDimensions"
             :customActions="customActions"
-            :showDetailsToggle="props.showDetailsToggle && hasExtraDetails"
             :taskDetailsVersion="taskDetailsVersion"
             :validationIssuesByTask="validationIssuesByTask"
             :focusedTaskId="focusedTaskId"
@@ -357,7 +356,7 @@
     import {usePluginsStore} from "../../stores/plugins"
     import {useExecutionsStore} from "../../stores/executions"
     import {usePlaygroundStore} from "../../stores/playground"
-    import {useFlowStore} from "../../stores/flow"
+    import {useFlowStore, type ParsedFlow} from "../../stores/flow"
     import {useToast} from "../../utils/toast"
     import {useFederatedModule} from "../../remoteComponents/useFederatedModule"
     import {openFlowInNewTab} from "../../utils/openFlow"
@@ -405,7 +404,7 @@
     const TASK_SECTIONS = ["tasks", "errors", "finally", "afterExecution"]
 
     const indexTasks = (source: string | undefined): Record<string, any> => {
-        const parsed = YAML_UTILS.parse(source, false)
+        const parsed = YAML_UTILS.parse<ParsedFlow>(source, false)
         const result: Record<string, any> = {}
         TASK_SECTIONS.forEach((section) => collectTasksById(parsed?.[section], result))
         return result
@@ -477,14 +476,6 @@
             }
         }
         return result
-    })
-
-    const hasExtraDetails = computed(() => {
-        const types = taskAdditionalInfoRemote.value
-        return (augmentedFlowGraph.value?.nodes ?? []).some((n: any) =>
-            (n.task?.type && types[n.task.type]) ||
-            (n.task?.taskRunner?.type && types[n.task.taskRunner.type]),
-        )
     })
 
     // progressEvents are never reset across execution navigations (taskRunId is globally
@@ -614,7 +605,6 @@
             isAllowedEdit?: boolean;
             horizontalDefault?: boolean;
             toggleOrientationButton?: boolean;
-            showDetailsToggle?: boolean;
             expandedSubflows?: string[];
         }>(),
         {
@@ -626,7 +616,6 @@
             isAllowedEdit: false,
             horizontalDefault: undefined,
             toggleOrientationButton: true,
-            showDetailsToggle: true,
             expandedSubflows: () => [],
         })
 
@@ -635,7 +624,7 @@
         async (flowGraph) => {
             if (flowStore.flowParsed?.tasks?.length) return
             // props.source has taskRunner intact; graph nodes may have it stripped (forExecution)
-            const sourceParsed = props.source ? YAML_UTILS.parse(props.source) : null
+            const sourceParsed = props.source ? YAML_UTILS.parse<ParsedFlow>(props.source) : null
             const tasks = sourceParsed?.tasks?.length
                 ? sourceParsed.tasks
                 : (flowGraph?.nodes ?? [])
@@ -652,11 +641,11 @@
         () => props.source,
         async (source) => {
             if (!source) return
-            const parsed = YAML_UTILS.parse(source)
+            const parsed = YAML_UTILS.parse<ParsedFlow>(source)
             const sourceHasRunners = (parsed?.tasks ?? []).some((t: any) => t?.taskRunner?.type)
             const flowParsedHasRunners = (flowStore.flowParsed?.tasks ?? []).some((t: any) => t?.taskRunner?.type)
             if (sourceHasRunners && !flowParsedHasRunners) {
-                await resolveTaskTopologyDetails(parsed.tasks)
+                await resolveTaskTopologyDetails(parsed?.tasks ?? [])
             }
         },
         {immediate: true},
@@ -791,7 +780,7 @@
     }
 
     const onDelete = (event: any) => {
-        const flowParsed = YAML_UTILS.parse(flowSource.value)
+        const flowParsed = YAML_UTILS.parse<ParsedFlow>(flowSource.value)
         toast.confirm(
             t("delete task confirm", {taskId: event.id}),
             async () => {

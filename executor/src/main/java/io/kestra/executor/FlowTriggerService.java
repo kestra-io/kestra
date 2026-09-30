@@ -27,7 +27,6 @@ import io.kestra.core.services.ConditionService;
 import io.kestra.core.services.ExecutionOutputService;
 import io.kestra.core.services.FlowService;
 import io.kestra.core.utils.ListUtils;
-import io.kestra.core.utils.MapUtils;
 
 import jakarta.inject.Singleton;
 import lombok.AllArgsConstructor;
@@ -158,7 +157,9 @@ public class FlowTriggerService {
                 flowWithMultipleCondition -> multipleConditionStorage.process(
                     flowWithMultipleCondition.getFlow(),
                     flowWithMultipleCondition.getMultipleCondition(),
-                    buildOutputs(execution, executionOutputs),
+                    // the window is opened by whichever execution terminates first, even one that is not in dependsOn,
+                    // so outputs are only stored once an execution satisfies a condition
+                    null,
                     (txContext,
                         multipleConditionWindow) -> processMultipleConditionWindow(
                             txContext, flowWithMultipleCondition, multipleConditionWindow, execution, executionOutputs, multipleConditionStorage, resolved
@@ -194,6 +195,11 @@ public class FlowTriggerService {
 
         // merge current results into the window (with() preserves previously true results across executions)
         MultipleConditionWindow updatedWindow = multipleConditionWindow.with(results);
+        // keep the outputs of every execution that satisfied a condition, so they are all exposed once the trigger fires
+        boolean satisfiesACondition = results.containsValue(true);
+        if (satisfiesACondition) {
+            updatedWindow = updatedWindow.withOutputs(execution.getNamespace(), execution.getFlowId(), executionOutputs);
+        }
         multipleConditionStateStore.save(txContext, updatedWindow);
 
         if (
@@ -208,25 +214,14 @@ public class FlowTriggerService {
                 runContextFactory.of(resolved, execution),
                 resolved,
                 execution,
-                executionOutputs
+                // an execution that satisfies no condition can still fire an already satisfied window, its outputs must not leak
+                satisfiesACondition ? executionOutputs : null
             );
 
             return maybeExecution.orElse(null);
         }
 
         return null;
-    }
-
-    private Map<String, Object> buildOutputs(Execution execution, Map<String, Object> executionOutputs) {
-        if (MapUtils.isEmpty(executionOutputs)) {
-            return null;
-        }
-
-        return Map.of(
-            execution.getNamespace(), Map.of(
-                execution.getFlowId(), executionOutputs
-            )
-        );
     }
 
     private Map<String, Object> executionOutputs(Execution execution) {

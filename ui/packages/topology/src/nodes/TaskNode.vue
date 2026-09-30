@@ -23,6 +23,9 @@
         <template #details>
             <slot name="details" />
         </template>
+        <template #footer>
+            <Duration compact :histories="histories" :denominator="longestTaskRunDuration" />
+        </template>
         <template #content>
             <button
                 v-if="data.node.task && playgroundEnabled && playgroundReadyToStart"
@@ -75,6 +78,7 @@
         VALIDATION_ISSUES_INJECTION_KEY,
         FOCUSED_TASK_INJECTION_KEY,
         DRAGGING_NODE_INJECTION_KEY,
+        LONGEST_TASK_RUN_DURATION_INJECTION_KEY,
     } from "../injectionKeys"
 
     import PlayIcon from "vue-material-design-icons/Play.vue"
@@ -182,6 +186,7 @@
     const subflowsExecutions = inject(SUBFLOWS_EXECUTIONS_INJECTION_KEY)
     const lod = inject(LOD_INJECTION_KEY, computed(() => "default"))
     const isDraggingNode = inject(DRAGGING_NODE_INJECTION_KEY, undefined)
+    const longestTaskRunDuration = inject(LONGEST_TASK_RUN_DURATION_INJECTION_KEY, computed(() => 0))
 
     function onCardClick() {
         const task = props.data.node.task

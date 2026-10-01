@@ -20,7 +20,7 @@ import {
 } from "@kestra-io/design-system"
 import type {FilterGroup, LeafFilterGroup, WrapperGroup} from "@kestra-io/design-system"
 
-const leaf = (id: string, filters: any[]): LeafFilterGroup => ({id, kind: "leaf", filters})
+const leaf = (id: string, filters: unknown[]): LeafFilterGroup => ({id, kind: "leaf", filters} as never)
 const wrapper = (id: string, logical: "AND" | "OR", children: LeafFilterGroup[]): WrapperGroup =>
     ({id, kind: "wrapper", logical, children})
 
@@ -434,7 +434,7 @@ describe("Filter Helpers", () => {
             const startDate = new Date("2023-01-01")
             const endDate = new Date("2023-01-31")
             expect(isValidFilter({key: "timeRange", comparator: Comparators.GREATER_THAN_OR_EQUAL_TO, value: {startDate, endDate}})).toBe(true)
-            expect(isValidFilter({key: "timeRange", comparator: Comparators.GREATER_THAN_OR_EQUAL_TO, value: {startDate: null as any, endDate}})).toBe(false)
+            expect(isValidFilter({key: "timeRange", comparator: Comparators.GREATER_THAN_OR_EQUAL_TO, value: {startDate: null as never, endDate}})).toBe(false)
         })
     })
 
@@ -489,7 +489,7 @@ describe("Filter Helpers", () => {
 })
 
 describe("validStructureSignature", () => {
-    const valid = (key: string, comparator = Comparators.IN, value: any = ["x"]) => ({key, comparator, value})
+    const valid = (key: string, comparator = Comparators.IN, value: unknown = ["x"]) => ({key, comparator, value})
     const empty = (key: string) => ({key, comparator: Comparators.IN, value: []})
 
     it("ignores in-progress (empty) conditions", () => {
@@ -542,7 +542,7 @@ describe("validStructureSignature", () => {
 
 describe("pickStarterField", () => {
     const key = (k: string, comparators: Comparators[] = [Comparators.IN], groupable = true) =>
-        ({key: k, label: k, comparators, groupable}) as any
+        ({key: k, label: k, comparators, groupable}) as never
     const keys = [key("namespace"), key("flowId"), key("state", [Comparators.IN, Comparators.NOT_IN])]
 
     it("picks the first key not already used in the target leaf", () => {

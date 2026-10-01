@@ -2248,6 +2248,9 @@
         "groups": "Groups ({n})",
         "group_none": "No grouping",
         "group_dataset": "Dataset",
+        "group_consumer": "Consumer",
+        "no_consumer": "No consumer",
+        "hidden_consumer": "Hidden flow",
         "ungrouped": "Ungrouped",
         "hub": {
           "notice": "This node has {count} relations — only the most recent ones are shown to keep the graph readable.",

@@ -68,7 +68,7 @@
 
         <KsTableColumn className="row-action">
             <template #default="scope">
-                <KsIconButton :tooltip="$t('view metrics')" @click="openChart(scope.row)">
+                <KsIconButton :tooltip="$t('view metrics')" @click="openChart(scope.row as {name: string; type: string; taskId?: string | null})">
                     <ChartAreaspline />
                 </KsIconButton>
             </template>
@@ -161,7 +161,7 @@
     const chartCategories = ref<string[]>([])
     const chartSeries = ref<KsChartSeriesItem[] | null>(null)
 
-    const openChart = async (row: {name: string; type: string; taskId?: string}) => {
+    const openChart = async (row: {name: string; type: string; taskId?: string | null}) => {
         chartMetricName.value = row.name
         chartOpen.value = true
         chartLoading.value = true

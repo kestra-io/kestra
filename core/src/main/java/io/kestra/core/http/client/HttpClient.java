@@ -15,6 +15,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.regex.Matcher;
@@ -87,6 +88,7 @@ public class HttpClient implements Closeable {
     private final RunContext runContext;
     private final HttpConfiguration configuration;
     private ObservationRegistry observationRegistry;
+    private static final Set<HttpMethod> IDEMPOTENT_METHODS = Set.of(HttpMethod.GET, HttpMethod.HEAD);
 
     @Builder
     public HttpClient(RunContext runContext, @Nullable HttpConfiguration configuration) throws IllegalVariableEvaluationException {
@@ -583,12 +585,8 @@ public class HttpClient implements Closeable {
                     return true;
                 }
 
-                // HttpClientRequestException wraps a pre-response transport failure caught in the execute()
-                // block below. A connection refusal (ConnectException) never reached the server either way;
-                // anything else (e.g. a wrapped SocketException from a timeout or a mid-flight drop) is only
-                // safe to retry for methods explicitly marked idempotent-enough in the configuration, since the
-                // request may already have been processed by the origin.
                 if (throwable instanceof HttpClientRequestException httpEx) {
+                    // ConnectException means the request never reached the server, so any method is safe to retry.
                     return httpEx.getCause() instanceof ConnectException || retryTransportFailures;
                 }
 
@@ -625,7 +623,7 @@ public class HttpClient implements Closeable {
     /**
      * Resolves the retryable status codes for a given HTTP method: the method's entry in
      * {@code retryOnStatusCodesByMethod} if one is configured (matched case-insensitively), otherwise the
-     * global {@code retryOnStatusCodes}.
+     * global {@code retryOnStatusCodes} for GET/HEAD methods only.
      */
     @SuppressWarnings("unchecked")
     private List<Integer> resolveRetryableStatusCodes(String method) throws IllegalVariableEvaluationException {
@@ -641,7 +639,11 @@ public class HttpClient implements Closeable {
                 return codes;
             }
         }
-        // Fallback to the global list if no method-specific entry is found
+        //make sure non Idempotent methods don't retry on status codes
+        if (httpMethod == null || !IDEMPOTENT_METHODS.contains(httpMethod)) {
+            return List.of();
+        }
+        // Fallback to the global list if no method-specific entry is found for idempotent methods GET/HEAD only.
         return runContext.render(configuration.getRetryOnStatusCodes()).asList(Integer.class);
     }
 

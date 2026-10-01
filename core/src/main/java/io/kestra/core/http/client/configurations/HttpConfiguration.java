@@ -60,19 +60,20 @@ public class HttpConfiguration {
     @Builder.Default
     private final Property<Charset> defaultCharset = Property.ofValue(StandardCharsets.UTF_8);
 
-    @Schema(title = "Retry strategy for HTTP requests.")
+    @Schema(title = "Retry strategy for HTTP requests.", description = "retry is disabled by default.")
     @Builder.Default
     private AbstractRetry retry = Exponential.builder()
         .interval(Duration.ofMillis(1000))
         .maxInterval(Duration.ofSeconds(30))
-        .maxAttempts(3)
+        .maxAttempts(1)                                    
         .build();
 
     @Setter
     @Schema(
         title = "HTTP status codes that should be retried.",
-        description = "Used for any request method not given its own entry in `retryOnStatusCodesByMethod`. " +
-            "Defaults to the three gateway errors (502, 503, 504), which are safe to retry for any method."
+        description = "Used for idempotent methods (GET, HEAD) without their own entry in " +
+    "`retryOnStatusCodesByMethod`. Non-idempotent methods are never retried on a status code unless " +
+    "listed in `retryOnStatusCodesByMethod`. Defaults to 502, 503 and 504 for idempotent methods (GET, HEAD) only."
     )
     @Builder.Default
     private Property<List<Integer>> retryOnStatusCodes = Property.ofValue(List.of(502, 503, 504));

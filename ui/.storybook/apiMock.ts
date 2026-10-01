@@ -27,6 +27,8 @@
 // once per story, so a blank-looking story is traceable to the missing mock in one line instead of
 // surfacing as an HTML-string-shaped prop three components deep.
 
+import type {AxiosLikeResponse} from "@kestra-io/kestra-sdk"
+
 declare global {
     interface Window {
         __kestraRejectionReporter?: boolean
@@ -222,13 +224,18 @@ export function resolveApiRequest(method: string, rawUrl: string, context: {body
     return {status: 200, data: []}
 }
 
+/** A response for a `setMockClient()` double. The caller picks `T`, as it does against the real client. */
+export function mockResponse<T>(data: unknown, status = 200): AxiosLikeResponse<T> {
+    return {data: data as T, status, headers: {"content-type": "application/json"}}
+}
+
 /**
  * Axios-like adapter over {@link resolveApiRequest}, for stories that install their own
  * `setMockClient()` and need a default for the URIs they don't handle themselves.
  */
-export function mockClientFallback(method: string, uri: string, data?: unknown): {data: unknown; status: number; statusText: string; headers: Record<string, string>} {
+export function mockClientFallback<T>(method: string, uri: string, data?: unknown): AxiosLikeResponse<T> & {statusText: string} {
     const {status, data: payload} = resolveApiRequest(method, uri, {body: data})
-    return {data: payload, status, statusText: "OK", headers: {"content-type": "application/json"}}
+    return {...mockResponse<T>(payload, status), statusText: "OK"}
 }
 
 function jsonResponse({status, data}: {status: number; data: unknown}): Response {

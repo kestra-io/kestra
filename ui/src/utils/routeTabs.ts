@@ -7,5 +7,6 @@ import type {RouteRecordRaw} from "vue-router"
  * registered child route, which would otherwise make vue-router throw.
  */
 export function resolveDefaultTab(tabRoutes: RouteRecordRaw[], requested: string | null | undefined, fallback: string): string {
-    return tabRoutes.some((tabRoute) => tabRoute.meta?.tab === requested) ? (requested as string) : fallback
+    // A nullish `requested` would otherwise match a route without `meta.tab` (`undefined === undefined`).
+    return requested != null && tabRoutes.some((tabRoute) => tabRoute.meta?.tab === requested) ? requested : fallback
 }

@@ -148,6 +148,8 @@ import KsNoData from "./components/Data/KsNoData.vue"
 import KsTag from "./components/Data/KsTag/KsTag.vue"
 export type {KsTagType} from "./components/Data/KsTag/KsTag.vue"
 import KsText from "./components/Basic/KsText.vue"
+import KsThemePicker from "./components/Form/KsThemePicker/KsThemePicker.vue"
+export type {ThemeOption} from "./components/Form/KsThemePicker/KsThemePicker.vue"
 import KsTimeline from "./components/Data/KsTimeline/KsTimeline.vue"
 import KsTimelineItem from "./components/Data/KsTimeline/KsTimelineItem.vue"
 import KsTimePicker from "./components/Form/KsTimePicker.vue"
@@ -155,6 +157,7 @@ import KsTooltip from "./components/Feedback/KsTooltip.vue"
 import KsTopNavBar from "./components/Navigation/KsTopNavBar/KsTopNavBar.vue"
 import KsLogoBadge from "./components/Kestra/KsLogoBadge.vue"
 import KsTree from "./components/Data/KsTree.vue"
+export type {KsTreeNode} from "./components/Data/KsTree.vue"
 import KsJsonTree from "./components/Data/KsJsonTree.vue"
 import KsUpload from "./components/Form/KsUpload.vue"
 import KsSubMenu from "./components/Navigation/KsMenu/KsSubMenu.vue"
@@ -201,7 +204,7 @@ export {SECTIONS, CLUSTER_PREFIX} from "./utils/constants"
 export {dayjs, type Dayjs} from "./date/index"
 export type {KsChartSeriesItem} from "./components/Charts/KsEchart.vue"
 export type {KsGraphNode, KsGraphEdge} from "./components/Charts/KsGraph.vue"
-export type {KsBreadcrumbItem} from "./components/Navigation/KsBreadcrumb/types"
+export type {KsBreadcrumbItem, KsBreadcrumbLoader} from "./components/Navigation/KsBreadcrumb/types"
 export {Comparators} from "./components/Data/KsDataTable/filter/utils/filterTypes"
 export type {InputInstance, FormItemRule, FormRules, FormInstance, CascaderOption, CascaderProps} from "element-plus"
 export {TooltipType, ChartRenderer, ChartFeature, categoryLabel} from "./utils/chart"
@@ -379,6 +382,7 @@ const components: Record<string, Component> = {
     KsTag,
     KsLogoBadge,
     KsText,
+    KsThemePicker,
     KsTimeline,
     KsTimelineItem,
     KsTimePicker,
@@ -490,6 +494,7 @@ export {
     KsTag,
     KsLogoBadge,
     KsText,
+    KsThemePicker,
     KsTimeline,
     KsTimelineItem,
     KsTimePicker,
@@ -634,6 +639,7 @@ declare module "vue" {
         KsTag: typeof KsTag
         KsLogoBadge: typeof KsLogoBadge
         KsText: typeof KsText
+        KsThemePicker: typeof KsThemePicker
         KsTimeline: typeof KsTimeline
         KsTimelineItem: typeof KsTimelineItem
         KsTimePicker: typeof KsTimePicker

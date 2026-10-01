@@ -1,6 +1,6 @@
 <template>
     <div class="plugin-doc">
-        <template v-if="fetchPluginDocumentation && currentPlugin">
+        <template v-if="fetchPluginDocumentation && currentPlugin?.schema && currentPlugin.cls">
             <div class="dp-sticky">
                 <div class="dp-header">
                     <div class="dp-kicker">{{ packagePath }}</div>
@@ -67,8 +67,8 @@
                 <SchemaToHtml
                     class="plugin-schema"
                     :darkMode="isDarkTheme"
-                    :schema="currentPlugin?.schema"
-                    :pluginType="currentPlugin?.cls"
+                    :schema="currentPlugin.schema"
+                    :pluginType="currentPlugin.cls"
                     :forceIncludeProperties="pluginsStore.forceIncludeProperties"
                     noUrlChange
                     compact
@@ -281,6 +281,7 @@
     import {getTheme, copy} from "../../utils/utils"
     import {useMiscStore} from "override/stores/misc"
     import {usePluginsStore} from "../../stores/plugins"
+    import type {PluginComponent} from "../../stores/plugins"
     import {useI18n} from "vue-i18n"
     import GitHub from "vue-material-design-icons/Github.vue"
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
@@ -301,7 +302,7 @@
         overrideIntro?: string | null;
         absolute?: boolean;
         fetchPluginDocumentation?: boolean;
-        plugin?: any;
+        plugin?: PluginComponent | null;
     }>(), {
         overrideIntro: null,
         absolute: false,
@@ -331,13 +332,11 @@
     })
 
     const pluginName = computed(() => {
-        const parts = currentPlugin.value?.cls.split(".")
-        return parts[parts.length - 1]
+        return currentPlugin.value?.cls?.split(".").at(-1) ?? ""
     })
 
     const packagePath = computed(() => {
-        const parts = currentPlugin.value?.cls.split(".")
-        return parts.slice(0, -1).join(".")
+        return currentPlugin.value?.cls?.split(".").slice(0, -1).join(".") ?? ""
     })
 
     const pluginKind = computed(() => {

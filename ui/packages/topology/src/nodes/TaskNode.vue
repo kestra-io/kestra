@@ -7,18 +7,24 @@
         :class="classes"
         :icons="icons"
         :loadIcon="loadIcon"
+        :lod="lod"
         @mouseover="emit(EVENTS.MOUSE_OVER, $event)"
         @mouseleave="emit(EVENTS.MOUSE_LEAVE)"
+        :focused="isKeyboardFocused"
+        @cardClick="onCardClick"
+        @taskDragStart="emit(EVENTS.TASK_DRAG_START, $event)"
+        :dragging="props.dragging"
+        @taskDragEnd="emit(EVENTS.TASK_DRAG_END)"
     >
-        <template #badge>
+        <template #subtitle>
+            <span class="type-label">{{ typeLabel }}</span>
             <span v-if="runnerLabel" class="runner-badge" :title="runnerLabel">{{ runnerLabel }}</span>
         </template>
         <template #details>
-            <Transition name="details-slide">
-                <div v-if="globalShowExtraDetails" class="details-wrapper">
-                    <slot name="details" />
-                </div>
-            </Transition>
+            <slot name="details" />
+        </template>
+        <template #footer>
+            <Duration compact :histories="histories" :denominator="longestTaskRunDuration" />
         </template>
         <template #content>
             <button
@@ -40,6 +46,7 @@
                     <Duration :histories="histories" :interval="100" :attemptCount="taskRuns[0]?.attempts?.length" :subject="taskId" />
                 </span>
             </span>
+            <ValidationBadge :issues="validationIssues" />
         </template>
         <template #title-actions>
             <slot name="taskActions" :task="data.node.task" :actions="actions" :execution="taskExecution" :taskRuns="taskRunsWithDynamicChildren" :taskRun="taskRuns[0]">
@@ -54,34 +61,29 @@
     import {computed, inject} from "vue"
     import {useI18n} from "vue-i18n"
     import {Handle, Position} from "@vue-flow/core"
-    import {State, KsTooltip, SECTIONS, dayjs} from "@kestra-io/design-system"
+    import {KsTooltip, SECTIONS, dayjs} from "@kestra-io/design-system"
     import {type CustomActionConfig, type ShowDetailsConfig, EVENTS} from "../utils/constants"
     import Duration from "../misc/Duration.vue"
     import * as Utils from "../utils/utils"
-    import {getStatusStyle} from "../utils/status"
+    import {getStatusStyle, pickWorstState} from "../utils/status"
+    import {buildNodeActions, type NodeActionsContext} from "../utils/nodeActions"
+    import type {GraphExecution, GraphTaskRun} from "../utils/vueFlowUtils"
     import BasicNode from "./BasicNode.vue"
     import NodeMenu, {type NodeAction} from "./NodeMenu.vue"
+    import ValidationBadge from "./ValidationBadge.vue"
     import {
         EXECUTION_INJECTION_KEY,
         SUBFLOWS_EXECUTIONS_INJECTION_KEY,
-        SHOW_EXTRA_DETAILS_INJECTION_KEY,
+        LOD_INJECTION_KEY,
+        VALIDATION_ISSUES_INJECTION_KEY,
+        FOCUSED_TASK_INJECTION_KEY,
+        DRAGGING_NODE_INJECTION_KEY,
+        LONGEST_TASK_RUN_DURATION_INJECTION_KEY,
     } from "../injectionKeys"
 
-    import TextBoxSearch from "vue-material-design-icons/TextBoxSearch.vue"
-    import LocationExit from "vue-material-design-icons/LocationExit.vue"
-    import PlayBoxMultiple from "vue-material-design-icons/PlayBoxMultiple.vue"
-    import AlertOutline from "vue-material-design-icons/AlertOutline.vue"
-    import SendLock from "vue-material-design-icons/SendLock.vue"
-    import InformationOutline from "vue-material-design-icons/InformationOutline.vue"
-    import Pencil from "vue-material-design-icons/Pencil.vue"
-    import Delete from "vue-material-design-icons/Delete.vue"
-    import OpenInNew from "vue-material-design-icons/OpenInNew.vue"
-    import UnfoldMoreHorizontal from "vue-material-design-icons/UnfoldMoreHorizontal.vue"
-    import EyeOutline from "vue-material-design-icons/EyeOutline.vue"
     import PlayIcon from "vue-material-design-icons/Play.vue"
-    
 
-    interface TaskType {
+    export interface TaskType {
         id: string;
         type: string;
         default: null;
@@ -99,12 +101,11 @@
         flowId?: string;
     }
 
-    interface NodeData {
+    export interface NodeData {
         node: {
             uid: string;
             type?: string;
             task: TaskType;
-            taskRun: TaskRun
         };
         executionId?: string;
         color?: string;
@@ -112,31 +113,21 @@
         isFlowable?: boolean;
         expandable?: boolean;
         link?: {
-            namespace: string;
-            id: string;
+            namespace?: string;
+            id?: string;
             executionId?: string;
         };
     }
 
-    interface TaskRun {
-        id: string
-        taskId: string;
-        parentTaskRunId?: string;
-        state: {
-            current: [string, string];
-            duration?: string;
-            histories?: {date: string; state: string}[];
-        };
-        outputs?: {
-            executionId?: string;
-        } & Record<string, unknown>;
-        attempts?: unknown[];
-        value?: string;
-    }
-
-    interface ExpandData {
+    export interface ExpandData {
         id: string;
         type: string;
+    }
+
+    interface TaskRunsPayload {
+        id: string | undefined;
+        execution: GraphExecution | undefined;
+        taskRuns: GraphTaskRun[];
     }
 
     const props = withDefaults(defineProps<{
@@ -152,6 +143,7 @@
         replayEnabled?: boolean;
         customActions?: Record<string, CustomActionConfig>;
         showDetails?: Record<string, ShowDetailsConfig>;
+        dragging?: boolean;
     }>(), {
         sourcePosition: Position.Right,
         targetPosition: Position.Left,
@@ -161,6 +153,7 @@
         replayEnabled: false,
         customActions: () => ({}),
         showDetails: () => ({}),
+        dragging: false,
     })
 
     defineOptions({
@@ -169,29 +162,50 @@
     })
 
     const emit = defineEmits<{
-        (event: typeof EVENTS.EXPAND, data: any): void;
-        (event: typeof EVENTS.OPEN_LINK, data: any): void;
-        (event: typeof EVENTS.SHOW_LOGS, data: any): void;
-        (event: typeof EVENTS.SHOW_OUTPUTS, data: any): void;
-        (event: typeof EVENTS.REPLAY_TASK, data: any): void;
-        (event: typeof EVENTS.MOUSE_OVER, data: any): void;
+        (event: typeof EVENTS.EXPAND, data: ExpandData): void;
+        (event: typeof EVENTS.OPEN_LINK, data: {link: NodeData["link"]}): void;
+        (event: typeof EVENTS.SHOW_LOGS, data: TaskRunsPayload): void;
+        (event: typeof EVENTS.SHOW_OUTPUTS, data: TaskRunsPayload): void;
+        (event: typeof EVENTS.REPLAY_TASK, data: TaskRunsPayload): void;
+        (event: typeof EVENTS.MOUSE_OVER, data: NodeData["node"]): void;
         (event: typeof EVENTS.MOUSE_LEAVE): void;
-        (event: typeof EVENTS.ADD_ERROR, data: { task: any }): void;
-        (event: typeof EVENTS.EDIT, data: any) :void;
-        (event: typeof EVENTS.DELETE, data: any) :void;
-        (event: typeof EVENTS.ADD_TASK, data: any) :void;
-        (event: typeof EVENTS.SHOW_CONDITION, data: any) :void;
-        (event: typeof EVENTS.SHOW_DESCRIPTION, data: any) :void;
-        (event: typeof EVENTS.RUN_TASK, data: { task: any }) :void;
-        (event: typeof EVENTS.SHOW_CUSTOM_ACTION, data: { task: any; customAction: CustomActionConfig }) :void;
-        (event: typeof EVENTS.SHOW_DETAILS, data: { task: any; showDetails: ShowDetailsConfig }) :void;
+        (event: typeof EVENTS.ADD_ERROR, data: {task: TaskType}): void;
+        (event: typeof EVENTS.EDIT, data: {task: TaskType; section: string}) :void;
+        (event: typeof EVENTS.DELETE, data: {id: string | undefined; section: string}) :void;
+        (event: typeof EVENTS.DUPLICATE, data: {id?: string}) :void;
+        (event: typeof EVENTS.SHOW_CONDITION, data: {id: string | undefined; task: TaskType; section: string}) :void;
+        (event: typeof EVENTS.SHOW_DESCRIPTION, data: {id: string | undefined; description: string}) :void;
+        (event: typeof EVENTS.RUN_TASK, data: {task: TaskType}) :void;
+        (event: typeof EVENTS.SHOW_CUSTOM_ACTION, data: {task: TaskType; customAction: CustomActionConfig}) :void;
+        (event: typeof EVENTS.SHOW_DETAILS, data: {task: TaskType; showDetails: ShowDetailsConfig}) :void;
+        (event: typeof EVENTS.TASK_DRAG_START, payload: {nodeId: string; label: string; cls?: string}) :void;
+        (event: typeof EVENTS.TASK_DRAG_END) :void;
     }>()
 
     const execution = inject(EXECUTION_INJECTION_KEY)
     const subflowsExecutions = inject(SUBFLOWS_EXECUTIONS_INJECTION_KEY)
-    const globalShowExtraDetails = inject(SHOW_EXTRA_DETAILS_INJECTION_KEY)
+    const lod = inject(LOD_INJECTION_KEY, computed(() => "default"))
+    const isDraggingNode = inject(DRAGGING_NODE_INJECTION_KEY, undefined)
+    const longestTaskRunDuration = inject(LONGEST_TASK_RUN_DURATION_INJECTION_KEY, computed(() => 0))
+
+    function onCardClick() {
+        const task = props.data.node.task
+        if (props.data.isReadOnly || !task || isDraggingNode?.value) return
+        emit(EVENTS.EDIT, {task, section: SECTIONS.TASKS})
+    }
+
+    const focusedTaskId = inject(FOCUSED_TASK_INJECTION_KEY, undefined)
+    const isKeyboardFocused = computed(() => Boolean(taskId.value) && focusedTaskId?.value === taskId.value)
+
+    const validationIssuesByTask = inject(VALIDATION_ISSUES_INJECTION_KEY, undefined)
 
     const taskId = computed(() => Utils.afterLastDot(props.id))
+
+    const typeLabel = computed(() => Utils.shortPluginType(props.data.node.task?.type))
+
+    const validationIssues = computed<string[]>(() =>
+        validationIssuesByTask?.value?.get(taskId.value ?? "") ?? [],
+    )
 
     const runnerType = computed(() => props.data.node?.task?.taskRunner?.type)
 
@@ -226,52 +240,31 @@
 
     const taskRuns = computed(() => {
         return taskRunList.value.filter(
-            (t: TaskRun) => t.taskId === Utils.afterLastDot(props.data.node.uid),
+            (t) => t.taskId === Utils.afterLastDot(props.data.node.uid),
         )
     })
 
     // The task's own taskruns plus any dynamically-generated child taskruns (e.g. Ansible
     // plays/tasks) so "show task logs" surfaces their logs too, not just the task's root logs.
     const taskRunsWithDynamicChildren = computed(() => {
-        const ids = new Set(taskRuns.value.map((t: TaskRun) => t.id))
+        const ids = new Set(taskRuns.value.map((t) => t.id))
         const children = taskRunList.value.filter(
-            (t: TaskRun) => t.parentTaskRunId && ids.has(t.parentTaskRunId),
+            (t) => t.parentTaskRunId && ids.has(t.parentTaskRunId),
         )
         return [...taskRuns.value, ...children]
     })
 
     const state = computed(() => {
         if (!taskRuns.value?.length) {
-            return null
+            return undefined
         }
 
         if (taskRuns.value.length === 1) {
             return taskRuns.value[0].state.current
         }
 
-        const allStates = taskRuns.value.map((t: TaskRun) => t.state.current)
-
-        const SORT_STATUS: string[] = [
-            State.FAILED,
-            State.KILLED,
-            State.WARNING,
-            State.SKIPPED,
-            State.KILLING,
-            State.RUNNING,
-            State.SUCCESS,
-            State.RESTARTED,
-            State.CREATED,
-        ]
-
-        const result = allStates
-            .map((item: [string, string]) => {
-                const n = SORT_STATUS.indexOf(item[1])
-                return [n, item] as [number, [string, string]]
-            })
-            .sort()
-            .map((j: [number, [string, string]]) => j[1])
-
-        return result[0]
+        const allStates = taskRuns.value.map((t) => t.state.current)
+        return pickWorstState(allStates) ?? allStates[0]
     })
 
     const classes = computed(() => ({
@@ -303,12 +296,7 @@
                 link: {
                     namespace: subflowIdContainer.namespace,
                     id: subflowIdContainer.flowId,
-                    executionId: taskExecution.value?.taskRunList
-                        .filter((taskRun: TaskRun) =>
-                            taskRun.id === props.data.node.taskRun.id &&
-                            taskRun.outputs?.executionId,
-                        )
-                        ?.[0]?.outputs?.executionId,
+                    executionId: taskRuns.value.find((taskRun) => taskRun.outputs?.executionId)?.outputs?.executionId,
                 },
             }
         }
@@ -317,125 +305,45 @@
 
     const actionConfig = computed(() => {
         const taskType = props.data.node.task?.type as string | undefined
-        const runnerType = (props.data.node.task as any)?.taskRunner?.type as string | undefined
         if (!taskType) return undefined
-        const customAction = props.customActions?.[taskType] ?? (runnerType ? props.customActions?.[runnerType] : undefined)
-        if (customAction) return {config: customAction, eventName: EVENTS.SHOW_CUSTOM_ACTION} as const
+        const customAction = props.customActions?.[taskType] ?? (runnerType.value ? props.customActions?.[runnerType.value] : undefined)
+        if (customAction) return {config: customAction, eventName: "showCustomAction"} as const
         const showDetail = props.showDetails?.[taskType]
-        if (showDetail) return {config: showDetail, eventName: EVENTS.SHOW_DETAILS} as const
+        if (showDetail) return {config: showDetail, eventName: "showDetails"} as const
         return undefined
     })
 
     const {t} = useI18n()
 
     const actions = computed<NodeAction[]>(() => {
-        const task = props.data.node.task
-        const readOnly = props.data.isReadOnly
-        const list: NodeAction[] = []
-
-        if (task?.description) {
-            list.push({
-                key: "description",
-                label: t("show description"),
-                icon: InformationOutline,
-                onClick: () => emit(EVENTS.SHOW_DESCRIPTION, {id: taskId.value, description: task.description}),
-            })
+        const ctx: NodeActionsContext = {
+            task: props.data.node.task,
+            taskId: taskId.value ?? "",
+            isReadOnly: Boolean(props.data.isReadOnly),
+            isFlowable: Boolean(props.data.isFlowable),
+            expandable: Boolean(props.data.expandable),
+            taskExecution: taskExecution.value,
+            taskRuns: taskRuns.value,
+            taskRunsWithDynamicChildren: taskRunsWithDynamicChildren.value,
+            replayEnabled: props.replayEnabled,
+            link: dataWithLink.value.link,
+            actionConfig: actionConfig.value,
         }
-        if (task?.runIf) {
-            list.push({
-                key: "condition",
-                label: t("show task condition"),
-                icon: SendLock,
-                onClick: () => emit(EVENTS.SHOW_CONDITION, {id: taskId.value, task, section: SECTIONS.TASKS}),
-            })
-        }
-        if (taskExecution.value) {
-            list.push({
-                key: "logs",
-                label: t("show task logs"),
-                icon: TextBoxSearch,
-                onClick: () => emit(EVENTS.SHOW_LOGS, {id: taskId.value, execution: taskExecution.value, taskRuns: taskRunsWithDynamicChildren.value}),
-            })
-        }
-        if (taskExecution.value) {
-            list.push({
-                key: "outputs",
-                label: t("show task outputs"),
-                icon: LocationExit,
-                onClick: () => emit(EVENTS.SHOW_OUTPUTS, {id: taskId.value, execution: taskExecution.value, taskRuns: taskRuns.value}),
-            })
-        }
-        if (dataWithLink.value.link) {
-            list.push({
-                key: "open",
-                label: t("open"),
-                icon: OpenInNew,
-                onClick: () => emit(EVENTS.OPEN_LINK, {link: dataWithLink.value.link}),
-            })
-        }
-        if (props.data.expandable) {
-            list.push({
-                key: "expand",
-                label: t("expand"),
-                icon: UnfoldMoreHorizontal,
-                onClick: () => emit(EVENTS.EXPAND, expandData.value),
-            })
-        }
-        if (!taskExecution.value && !readOnly && props.data.isFlowable && !task?.errors?.length) {
-            list.push({
-                key: "add-error",
-                label: t("add error handler"),
-                icon: AlertOutline,
-                onClick: () => emit(EVENTS.ADD_ERROR, {task}),
-            })
-        }
-        if (!readOnly) {
-            list.push({
-                key: "edit",
-                label: t("edit"),
-                icon: Pencil,
-                onClick: () => emit(EVENTS.EDIT, {task, section: SECTIONS.TASKS}),
-            })
-        }
-        if (actionConfig.value && task) {
-            list.push({
-                key: "show-details",
-                label: actionConfig.value.config.label || t("show details"),
-                icon: EyeOutline,
-                onClick: () => onShowDetails(),
-            })
-        }
-        if (!readOnly) {
-            list.push({
-                key: "delete",
-                label: t("delete"),
-                icon: Delete,
-                danger: true,
-                divided: true,
-                onClick: () => emit(EVENTS.DELETE, {id: taskId.value, section: SECTIONS.TASKS}),
-            })
-        }
-        if (props.replayEnabled && taskExecution.value && taskRuns.value.length > 0) {
-            list.push({
-                key: "replay",
-                label: t("replay"),
-                icon: PlayBoxMultiple,
-                divided: true,
-                onClick: () => emit(EVENTS.REPLAY_TASK, {id: taskId.value, execution: taskExecution.value, taskRuns: taskRuns.value}),
-            })
-        }
-
-        return list
+        return buildNodeActions(ctx, t, {
+            onShowDescription: (payload) => emit(EVENTS.SHOW_DESCRIPTION, payload),
+            onShowCondition: (payload) => emit(EVENTS.SHOW_CONDITION, {...payload, task: props.data.node.task}),
+            onShowLogs: (payload) => emit(EVENTS.SHOW_LOGS, {...payload, execution: taskExecution.value, taskRuns: taskRunsWithDynamicChildren.value}),
+            onShowOutputs: (payload) => emit(EVENTS.SHOW_OUTPUTS, {...payload, execution: taskExecution.value, taskRuns: taskRuns.value}),
+            onOpenLink: (payload) => emit(EVENTS.OPEN_LINK, payload),
+            onExpand: (payload) => emit(EVENTS.EXPAND, payload),
+            onAddError: () => emit(EVENTS.ADD_ERROR, {task: props.data.node.task}),
+            onShowCustomAction: (payload) => emit(EVENTS.SHOW_CUSTOM_ACTION, {...payload, task: props.data.node.task}),
+            onShowDetails: (payload) => emit(EVENTS.SHOW_DETAILS, {...payload, task: props.data.node.task}),
+            onDuplicate: (payload) => emit(EVENTS.DUPLICATE, payload),
+            onDelete: (payload) => emit(EVENTS.DELETE, payload),
+            onReplayTask: (payload) => emit(EVENTS.REPLAY_TASK, {...payload, execution: taskExecution.value, taskRuns: taskRuns.value}),
+        }, expandData.value)
     })
-
-    function onShowDetails() {
-        if (!actionConfig.value || !props.data.node.task) return
-        if (actionConfig.value.eventName === EVENTS.SHOW_CUSTOM_ACTION) {
-            emit(EVENTS.SHOW_CUSTOM_ACTION, {task: props.data.node.task, customAction: actionConfig.value.config as CustomActionConfig})
-        } else {
-            emit(EVENTS.SHOW_DETAILS, {task: props.data.node.task, showDetails: actionConfig.value.config as ShowDetailsConfig})
-        }
-    }
 
 </script>
 
@@ -475,40 +383,22 @@ button.playground-button {
     white-space: nowrap;
 }
 
-.details-wrapper {
-    font-size: var(--ks-font-size-2xs);
-
-    &:has(> *) {
-        border-top: 1px solid var(--ks-border-default);
-        background: var(--ks-bg-base);
-    }
+.type-label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .runner-badge {
-    align-self: flex-start;
-    max-width: 100%;
-    margin-bottom: var(--ks-spacing-1);
-    padding: 0 var(--ks-spacing-2);
-    border-radius: var(--ks-radius-base);
+    flex-shrink: 0;
+    padding: 0 var(--ks-spacing-1);
+    border-radius: var(--ks-radius-xs);
     background-color: var(--ks-bg-tag);
     color: var(--ks-text-info);
-    font-size: var(--ks-font-size-2xs);
     font-weight: 600;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
 
-.details-slide-enter-active,
-.details-slide-leave-active {
-    transition: max-height 0.25s ease, opacity 0.25s ease;
-    overflow: hidden;
-    max-height: 200px;
-}
-
-.details-slide-enter-from,
-.details-slide-leave-to {
-    max-height: 0;
-    opacity: 0;
-}
 </style>

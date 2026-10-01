@@ -3,7 +3,8 @@ import NoCode from "../../../../src/components/no-code/NoCode.vue";
 import InitialSchema from "../../../../src/stores/flow-schema.json";
 import {vueRouter} from "storybook-vue3-router";
 import {useFlowStore} from "../../../../src/stores/flow";
-import {setMockClient} from "@kestra-io/kestra-sdk"
+import {setMockClient, type AxiosLikeClient} from "@kestra-io/kestra-sdk"
+import {mockResponse} from "../../../../.storybook/apiMock"
 
 
 export default {
@@ -44,7 +45,7 @@ const PLUGINS_RESPONSE = [{
 const Template: StoryFn<{flow: string; props?: Partial<InstanceType<typeof NoCode>["$props"]>}> = (args) => ({
     setup() {
         const flowStore = useFlowStore()
-        const axios: any = {}
+        const axios: Partial<AxiosLikeClient> = {}
 
         flowStore.flowYaml = args.flow
         const props = {
@@ -53,29 +54,21 @@ const Template: StoryFn<{flow: string; props?: Partial<InstanceType<typeof NoCod
             ...args.props
         }
 
-        axios.get = (url: string) => {
+        axios.get = async <T,>(url: string) => {
                 if (url.endsWith("plugins")) {
-                    return Promise.resolve({
-                        data: PLUGINS_RESPONSE
-                    })
+                    return mockResponse<T>(PLUGINS_RESPONSE)
                 }
                 if (url.endsWith("/flow")) {
-                    return Promise.resolve({
-                        data: InitialSchema
-                    })
+                    return mockResponse<T>(InitialSchema)
                 }
-                return Promise.resolve({
-                    data: []
-                })
+                return mockResponse<T>([])
             }
 
-        axios.post = (url: string) => {
+        axios.post = async <T,>(url: string) => {
                 if(url.endsWith("flows/validate/task")){
-                    return Promise.resolve({data: {}})
+                    return mockResponse<T>({})
                 }
-                return Promise.resolve({
-                    data: []
-                })
+                return mockResponse<T>([])
             }
 
             setMockClient(axios);

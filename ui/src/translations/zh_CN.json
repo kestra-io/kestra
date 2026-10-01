@@ -130,7 +130,6 @@
     "description": "描述",
     "show description": "显示描述",
     "show details": "显示详情",
-    "show more details": "显示更多详情",
     "skipped": "跳过",
     "revision": "修订版",
     "theme": "主题",
@@ -439,7 +438,10 @@
       "zoom-fit": "适应屏幕",
       "invalid": "图形错误",
       "invalid_description": "加载图表时发生错误。请检查源代码中的错误。",
-      "load_error": "无法加载拓扑图。请重试。"
+      "load_error": "无法加载拓扑图。请重试。",
+      "add-task": "添加 task",
+      "add-trigger": "添加 trigger",
+      "child-count": "{count} 个 task | {count} 个 task"
     },
     "show task logs": "显示任务日志",
     "show task condition": "显示任务条件",
@@ -457,6 +459,12 @@
     "email": "电子邮件",
     "password": "密码",
     "confirm password": "确认密码",
+    "change_password": {
+      "title": "更改密码",
+      "current_password": "当前密码",
+      "new_password": "新密码",
+      "success": "您的凭据已更新。"
+    },
     "invalid flow": "无效流程",
     "invalid yaml": "无效的 YAML",
     "inputs": "输入",
@@ -1422,7 +1430,7 @@
             "title": "flow 像代码一样编辑",
             "body": "我们为您添加了一个 `notify` task，没有使用 AI Copilot，这样您就可以看到直接编辑 YAML 是什么样子。它会将最终结果发布到 Slack。",
             "next": "查看 task 文档",
-            "callout": "来自 AI Copilot 的初稿只是一个起点；编辑器是您在 Code 或 No-Code 编辑器选项卡中迭代它的地方，它们都生成相同的 YAML，因此，无论您的 flow 如何构建，它都保持为代码。"
+            "callout": "来自 AI Copilot 的初稿只是一个起点；编辑器是您在 Code 或 No Code 编辑器选项卡中迭代它的地方，它们都生成相同的 YAML，因此，无论您的 flow 如何构建，它都保持为代码。"
           },
           "editor_help": {
             "title": "文档在 flow 旁边",
@@ -1619,7 +1627,9 @@
       "raw": "时间视图",
       "raw_details": "以原始、按时间戳排序的格式显示完整的 task logs 和 flow logs",
       "compact": "默认视图",
-      "compact_details": "按任务分组显示任务日志"
+      "compact_details": "按任务分组显示任务日志",
+      "fullscreen": "全屏日志",
+      "exit_fullscreen": "退出全屏"
     },
     "execution_deletion": {
       "logs": "删除日志",
@@ -2519,6 +2529,9 @@
       "block_deleted": "{name} 已删除",
       "card_aria_label": "类型为 {type} 的 Block {id}",
       "canvas_aria": "flow 块画布",
+      "chip_copied": "已复制到剪贴板",
+      "chip_hint": "点击标签可插入到当前聚焦的字段，或将其拖拽进去",
+      "chip_inserted": "已插入到字段中",
       "cluster_collapse_aria": "折叠 {id}",
       "cluster_expand_aria": "展开 {id} ({count} 个 task)",
       "collapsed_summary": "{count} 个 task",
@@ -2556,6 +2569,7 @@
       "depends_on_placeholder": "选择 tasks…",
       "depth_pill": "深度 {depth}",
       "drag_reorder": "拖动以重新排序",
+      "drop_forbidden": "无法放置到此处",
       "duplicate": "复制",
       "empty_add_hint": "或按 / 搜索 task",
       "empty_add_lead": "点击添加 {label}",
@@ -2584,6 +2598,9 @@
       "lane_then": "然后",
       "move_down": "下移",
       "move_up": "上移",
+      "namespace_files": "namespace 文件",
+      "namespace_kv": "键值存储键",
+      "namespace_secrets": "秘密",
       "no_data_matches": "没有匹配您筛选条件的结果",
       "no_recent": "暂无近期 task 类型",
       "no_task_results": "无匹配的 task 类型。",
@@ -2595,6 +2612,9 @@
       "plugin_default": "默认值: {value}",
       "plugin_default_tooltip": "来自 flow 的 pluginDefaults 的默认 value",
       "required_missing": "必填字段未设置",
+      "required_unset_jump": "跳转到第一个",
+      "required_unset_plural": "还有 {count} 个必填字段未设置",
+      "required_unset_singular": "还有 1 个必填字段未设置",
       "save_blocked": {
         "message": "保存前请修正错误。",
         "title": "无法保存 flow"

@@ -389,6 +389,10 @@ export type ApiTriggerAndState = {
  * Excludes internal scheduler fields (`tenantId`, `vnode`, `lastEventId`). The
  * scheduler's `type` is exposed as `kind` to not clash with the trigger definition's
  * `type` (the plugin class) when both are merged by API consumers.
+ *
+ *
+ * `disabled` is the runtime disable alone; a consumer deciding whether a trigger will fire has
+ * to read `sourceDisabled` as well, which mirrors the flow definition's own flag.
  */
 export type ApiTriggerState = {
     namespace: string;
@@ -400,6 +404,7 @@ export type ApiTriggerState = {
     backfill?: Backfill;
     stopAfter?: Array<StateType>;
     disabled?: boolean;
+    sourceDisabled?: boolean;
     locked?: boolean;
     workerId?: string;
     lastTriggeredDate?: string;
@@ -445,8 +450,17 @@ export type AssetIdentifier = {
 };
 
 export type AssetsDeclaration = {
+    /**
+     * Whether to auto-register assets referenced dynamically at runtime that are not statically declared in inputs or outputs.
+     */
     enableAuto?: PropertyBoolean;
+    /**
+     * The assets consumed as inputs.
+     */
     inputs?: PropertyListAssetIdentifier;
+    /**
+     * The assets produced as outputs.
+     */
     outputs?: PropertyListAsset;
     /**
      * Asset failure behavior
@@ -653,6 +667,7 @@ export type DashboardControllerDashboardResponse = {
     title: string;
     description?: string;
     timeWindow?: TimeWindow;
+    queryTimeout?: string;
     charts?: Array<ChartChartOption>;
     deleted: boolean;
     created?: string;
@@ -815,6 +830,7 @@ export type ExecutionMetadata = {
     originalCreatedDate: string;
     concurrencyScopes?: Array<string>;
     executionDepth?: number;
+    taskRunStatistic?: TaskRunStatistic;
 };
 
 export type ExecutionRepositoryInterfaceDateFilter = 'START_DATE' | 'END_DATE' | 'START_OR_END_DATE';
@@ -1511,6 +1527,7 @@ export type MiscControllerConfiguration = {
     isAiEnabled?: boolean;
     isAiApiKeyConfigured?: boolean;
     isBasicAuthInitialized?: boolean;
+    isBasicAuthManagedByConfig?: boolean;
     pluginsHash?: number;
     isPluginAutoInstallEnabled?: boolean;
 };
@@ -2223,6 +2240,9 @@ export type Task = {
     runIf?: string;
     allowWarning?: boolean;
     taskCache?: Cache;
+    /**
+     * Assets this task consumes as inputs or produces as outputs, for lineage tracking and the asset graph (Enterprise Edition). A flow declaring this property on a task is rejected in the open-source edition.
+     */
     assets?: AssetsDeclaration | null;
 };
 
@@ -2287,6 +2307,13 @@ export type TaskRunAttempt = {
     state: State;
     workerId?: string | null;
     logFile?: string | null;
+};
+
+export type TaskRunStatistic = {
+    count?: number;
+    durationSumMs?: number;
+    durationMinMs?: number | null;
+    durationMaxMs?: number | null;
 };
 
 export type TaskWithVersion = {
@@ -11026,7 +11053,7 @@ export type CreateBackfillErrors = {
      */
     409: ProblemDetail;
     /**
-     * If the backfill end date is not after its start date
+     * If the backfill end date is not after its start date, or if the trigger is not a schedule trigger
      */
     422: ProblemDetail;
     /**

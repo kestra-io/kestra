@@ -12,8 +12,10 @@ import org.mockito.Mockito;
 
 import io.kestra.core.assets.AssetService;
 import io.kestra.core.async.AsyncOperationService;
+import io.kestra.core.async.AsyncOperationsConfiguration;
 import io.kestra.core.contexts.KestraContext;
 import io.kestra.core.encryption.EncryptionConfig;
+import io.kestra.core.executor.WorkerJobRunningStateStore;
 import io.kestra.core.executor.command.ExecutionCommand;
 import io.kestra.core.killswitch.EvaluationType;
 import io.kestra.core.killswitch.KillSwitchService;
@@ -24,11 +26,14 @@ import io.kestra.core.models.executions.ExecutionKilled;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.LoopExecutionEvent;
 import io.kestra.core.models.executions.statistics.ExecutionStatistic;
-import io.kestra.core.queues.event.Event;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.triggers.multipleflows.MultipleConditionStateStore;
 import io.kestra.core.namespace.NamespaceFileMetadataStateStore;
+import io.kestra.core.queues.event.Event;
+import io.kestra.core.repositories.ExecutionRepositoryInterface;
+import io.kestra.core.repositories.LogDataStoreInterface;
+import io.kestra.core.repositories.MetricRepositoryInterface;
 import io.kestra.core.runners.DisabledReusableInputsExpander;
 import io.kestra.core.runners.ExecutionEvent;
 import io.kestra.core.runners.ExecutionEventType;
@@ -50,10 +55,14 @@ import io.kestra.core.runners.configuration.LocalFilesConfiguration;
 import io.kestra.core.runners.configuration.LoggingConfiguration;
 import io.kestra.core.runners.configuration.VariableConfiguration;
 import io.kestra.core.runners.pebble.PebbleEngineFactory;
+import io.kestra.core.scheduler.queue.TriggerEventQueue;
 import io.kestra.core.server.ServiceStateChangeEvent;
+import io.kestra.core.services.AsyncOperationWaiter;
 import io.kestra.core.services.ConcurrencyLimitResolver;
+import io.kestra.core.services.ConcurrencyLimitService;
 import io.kestra.core.services.ExecutionOutputService;
 import io.kestra.core.services.ExecutionService;
+import io.kestra.core.services.FlowParsingService;
 import io.kestra.core.services.MaintenanceService;
 import io.kestra.core.services.QuotaService;
 import io.kestra.core.services.TaskOutputService;
@@ -63,7 +72,6 @@ import io.kestra.core.services.configuration.TaskOutputConfiguration;
 import io.kestra.core.storages.NamespaceFactory;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.trace.TracerFactory;
-import io.kestra.core.scheduler.queue.TriggerEventQueue;
 import io.kestra.core.utils.ExecutorsUtils;
 import io.kestra.executor.ConcurrencySlotReleaseProcessor;
 import io.kestra.executor.DefaultExecutor;
@@ -149,6 +157,7 @@ public final class ExecutorTestHarness {
     private final KillSwitchService killSwitchService;
     private final KillSwitchActionService killSwitchActionService;
     private final WorkerTaskResultListener workerTaskResultListener;
+    private final WorkerJobRunningStateStore workerJobRunningStateStore;
     private final ConcurrencyLimitResolver concurrencyLimitResolver;
     private final QuotaService quotaService;
     private final AsyncOperationService asyncOperationService;
@@ -255,8 +264,27 @@ public final class ExecutorTestHarness {
         runContextFactoryRef[0] = runContextFactory;
         WorkerQueueService workerQueueService = new WorkerQueueService.Default();
 
-        // the executor-facing ExecutionService methods are pure and never touch its injected fields
-        this.executionService = Mockito.mock(ExecutionService.class, Mockito.CALLS_REAL_METHODS);
+        // a spy so tests can stub the methods that reach for other services while the rest stays real
+        this.executionService = Mockito.spy(
+            new ExecutionService(
+                Mockito.mock(StorageInterface.class),
+                Mockito.mock(ExecutionRepositoryInterface.class),
+                Mockito.mock(LogDataStoreInterface.class),
+                Mockito.mock(MetricRepositoryInterface.class),
+                Mockito.mock(FlowInputOutput.class),
+                Mockito.mock(ApplicationEventPublisher.class),
+                Mockito.mock(ConcurrencyLimitService.class),
+                Mockito.mock(FlowParsingService.class),
+                taskOutputService,
+                executionOutputService,
+                executionCommandQueue,
+                killQueue,
+                loopExecutionEventQueue,
+                Mockito.mock(AsyncOperationWaiter.class),
+                Mockito.mock(AsyncOperationsConfiguration.class),
+                Optional.empty()
+            )
+        );
         // every evaluate overload defaults to PASS; tests re-stub the overload they exercise
         this.killSwitchService = Mockito.mock(
             KillSwitchService.class,
@@ -264,6 +292,7 @@ public final class ExecutorTestHarness {
         );
         this.killSwitchActionService = Mockito.mock(KillSwitchActionService.class);
         this.workerTaskResultListener = Mockito.mock(WorkerTaskResultListener.class);
+        this.workerJobRunningStateStore = Mockito.mock(WorkerJobRunningStateStore.class);
         // a spy so tests can stub namespace/tenant limits while the OSS flow-scope default stays real
         this.concurrencyLimitResolver = Mockito.spy(new ConcurrencyLimitResolver());
         this.quotaService = Mockito.mock(QuotaService.class);
@@ -379,7 +408,8 @@ public final class ExecutorTestHarness {
             flowMetaStore,
             executionService,
             executorService,
-            metricRegistry
+            metricRegistry,
+            loopExecutionEventQueue
         );
         this.concurrencySlotReleaseProcessor = new ConcurrencySlotReleaseProcessor(
             concurrencyLimitStateStore,
@@ -423,6 +453,7 @@ public final class ExecutorTestHarness {
             executionStatisticQueue,
             triggerEventQueue,
             execution -> journal.add(new Trace.Emission(journal.size(), "executionTerminated", execution)),
+            workerJobRunningStateStore,
             executionCommandMessageHandler,
             executionEventMessageHandler,
             workerTaskResultMessageHandler,
@@ -772,6 +803,10 @@ public final class ExecutorTestHarness {
 
     public WorkerTaskResultListener workerTaskResultListener() {
         return workerTaskResultListener;
+    }
+
+    public WorkerJobRunningStateStore workerJobRunningStateStore() {
+        return workerJobRunningStateStore;
     }
 
     public ConcurrencyLimitResolver concurrencyLimitResolver() {

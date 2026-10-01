@@ -130,7 +130,6 @@
     "description": "Descrizione",
     "show description": "Mostra una descrizione",
     "show details": "Mostra dettagli",
-    "show more details": "Mostra più dettagli",
     "skipped": "Saltato",
     "revision": "Revisione",
     "theme": "Tema",
@@ -439,7 +438,10 @@
       "zoom-fit": "Adatta",
       "invalid": "Errore del grafico",
       "invalid_description": "Si è verificato un errore durante il caricamento del grafico. Si prega di controllare il codice sorgente per errori.",
-      "load_error": "Impossibile caricare il grafico della topologia. Riprova."
+      "load_error": "Impossibile caricare il grafico della topologia. Riprova.",
+      "add-task": "Aggiungi task",
+      "add-trigger": "Aggiungi trigger",
+      "child-count": "{count} task | {count} tasks"
     },
     "show task logs": "Mostra task logs",
     "show task condition": "Mostra condizione del task",
@@ -457,6 +459,12 @@
     "email": "Email",
     "password": "Password",
     "confirm password": "Conferma password",
+    "change_password": {
+      "title": "Cambia Password",
+      "current_password": "Password attuale",
+      "new_password": "Nuova password",
+      "success": "Le tue credenziali sono state aggiornate."
+    },
     "invalid flow": "Flow non valido",
     "invalid yaml": "YAML non valido",
     "inputs": "Inputs",
@@ -1422,7 +1430,7 @@
             "title": "I flow sono modificati come codice",
             "body": "Abbiamo aggiunto un task `notify` per te senza l'AI Copilot, così puoi vedere come appare la modifica diretta del YAML. Pubblica il risultato finale su Slack.",
             "next": "Consulta la documentazione del task",
-            "callout": "Una prima bozza generata da AI Copilot è solo un punto di partenza; l'editor è il luogo dove la si perfeziona in una scheda editor Code o No-Code, le quali producono entrambe lo stesso YAML, garantendo che il tuo flow rimanga come codice, indipendentemente da come sia stato creato."
+            "callout": "Una prima bozza generata da AI Copilot è solo un punto di partenza; l'editor è il luogo dove la si perfeziona in una scheda editor Code o No Code, le quali producono entrambe lo stesso YAML, garantendo che il tuo flow rimanga come codice, indipendentemente da come sia stato creato."
           },
           "editor_help": {
             "title": "La documentazione è accanto al flow",
@@ -1619,7 +1627,9 @@
       "raw": "Vista temporale",
       "raw_details": "Mostra i log completi dei task e i log dei flow in un formato raw, ordinato per timestamp",
       "compact": "Vista predefinita",
-      "compact_details": "Mostra i task logs in una vista compatta raggruppata per ogni task"
+      "compact_details": "Mostra i task logs in una vista compatta raggruppata per ogni task",
+      "fullscreen": "Logs a schermo intero",
+      "exit_fullscreen": "Esci dalla modalità a schermo intero"
     },
     "execution_deletion": {
       "logs": "Elimina logs",
@@ -2189,7 +2199,7 @@
     "playground": {
       "title": "Playground",
       "run_task_info": "Passa il mouse su qualsiasi task nell'editor del Flow Code e fai clic sul pulsante \"Run task\" per testare il tuo task.",
-      "play_icon_info": "Puoi anche fare clic sull'icona Play nelle viste No-Code o Topology.",
+      "play_icon_info": "Puoi anche fare clic sull'icona Play nelle viste No Code o Topology.",
       "toggle": "Playground",
       "run_task": "Esegui il task",
       "run_this_task": "Esegui questo task",
@@ -2519,6 +2529,9 @@
       "block_deleted": "{name} eliminato",
       "card_aria_label": "Blocco {id} di tipo {type}",
       "canvas_aria": "Canvas dei blocchi del flow",
+      "chip_copied": "Copiato negli appunti",
+      "chip_hint": "Fai clic su un chip per inserirlo nel campo attivo, oppure trascinalo",
+      "chip_inserted": "Inserito nel campo",
       "cluster_collapse_aria": "Comprimi {id}",
       "cluster_expand_aria": "Espandi {id} ({count} task)",
       "collapsed_summary": "{count} task",
@@ -2556,6 +2569,7 @@
       "depends_on_placeholder": "Seleziona i task…",
       "depth_pill": "Profondità {depth}",
       "drag_reorder": "Trascina per riordinare",
+      "drop_forbidden": "Impossibile rilasciare qui",
       "duplicate": "Duplica",
       "empty_add_hint": "o premi / per cercare i task",
       "empty_add_lead": "Clicca per aggiungere {label}",
@@ -2584,6 +2598,9 @@
       "lane_then": "Poi",
       "move_down": "Sposta in basso",
       "move_up": "Sposta su",
+      "namespace_files": "File del namespace",
+      "namespace_kv": "KV Store Keys",
+      "namespace_secrets": "Segreti",
       "no_data_matches": "Nessun elemento corrisponde al tuo filtro",
       "no_recent": "Nessun tipo di task recente ancora",
       "no_task_results": "Nessun tipo di task corrispondente.",
@@ -2595,6 +2612,9 @@
       "plugin_default": "default: {value}",
       "plugin_default_tooltip": "Valore predefinito da pluginDefaults del flow",
       "required_missing": "Campo obbligatorio non impostato",
+      "required_unset_jump": "Vai al primo",
+      "required_unset_plural": "{count} campi obbligatori non sono ancora impostati",
+      "required_unset_singular": "1 campo obbligatorio non è ancora impostato",
       "save_blocked": {
         "message": "Correggi gli errori prima di salvare.",
         "title": "Impossibile salvare il flow"

@@ -7,6 +7,8 @@
                     :persistent="true"
                     :title="`${$t('trigger details')}: ${trigger ? trigger.id : ''}`"
                     :width="500"
+                    :showArrow="true"
+                    :popperOptions="{strategy: 'fixed'}"
                     transition=""
                     :hideAfter="0"
                 >
@@ -14,7 +16,9 @@
                         <TaskIcon :onlyIcon="true" :cls="trigger?.type" :loadIcon="pluginsStore.loadIcon" />
                     </template>
                     <template #default>
-                        <TriggerVars :data="trigger" :execution="execution" @on-copy="copyLink(trigger)" />
+                        <div class="trigger-details">
+                            <TriggerVars :data="trigger" :execution="execution" @on-copy="copyLink(trigger)" />
+                        </div>
                     </template>
                 </KsPopover>
             </template>
@@ -101,5 +105,13 @@
         height: var(--ks-font-size-lg);
         margin-right: var(--ks-spacing-1);
         cursor: default;
+    }
+
+    .trigger-details {
+        max-height: calc(
+            100dvh - 2 * var(--ks-spacing-4) - 2 * var(--kel-popover-padding) -
+            var(--kel-popover-title-font-size) - var(--ks-spacing-3) - 2 * var(--ks-border-width-thin)
+        );
+        overflow-y: auto;
     }
 </style>

@@ -3,7 +3,6 @@ package io.kestra.webserver.services;
 import java.time.Duration;
 import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.Optional;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 
@@ -458,21 +457,19 @@ public class TriggerStateService {
     }
 
     /**
-     * Whether a live flow source still declares this trigger.
+     * Whether the revision the scheduler runs still declares this trigger.
      * <p>
-     * The read skips FLOW ACL. A denied read has to stay "still declared": treating it as missing
-     * would delete state for a trigger the flow still schedules. A soft-deleted flow is not a
-     * declaration. {@code findByIdWithoutAcl} returns that tombstone, and deleting the flow already
-     * emits {@code TriggerDeleted} for each trigger on it.
+     * {@link FlowRepositoryInterface#findByIdForExecutionWithoutAcl} is that revision: latest
+     * non-draft, non-deleted, and not filtered by FLOW ACL. A denied read stays "still declared".
+     * {@code findByIdWithoutAcl} would also return a soft-deleted tombstone and a draft, and neither
+     * is the revision the scheduler fires.
      */
     private boolean isDeclaredInFlow(TriggerId triggerId) {
-        return flowRepository.findByIdWithoutAcl(
+        return flowRepository.findByIdForExecutionWithoutAcl(
                 triggerId.getTenantId(),
                 triggerId.getNamespace(),
-                triggerId.getFlowId(),
-                Optional.empty()
+                triggerId.getFlowId()
             )
-            .filter(flow -> !flow.isDeleted())
             .map(flow -> ListUtils.emptyOnNull(flow.getTriggers()).stream()
                 .anyMatch(trigger -> trigger.getId().equals(triggerId.getTriggerId())))
             .orElse(false);

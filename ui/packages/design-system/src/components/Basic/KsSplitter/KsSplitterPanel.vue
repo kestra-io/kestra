@@ -1,5 +1,5 @@
 <template>
-    <ElSplitterPanel v-bind="({...filteredProps(), ...$attrs} as any)">
+    <ElSplitterPanel v-bind="({...filteredProps(), ...$attrs} as SplitterPanelProps)">
         <template v-if="$slots.default" #default>
             <slot />
         </template>
@@ -8,6 +8,7 @@
 
 <script setup lang="ts">
     import {ElSplitterPanel} from "element-plus"
+    import type {SplitterPanelProps} from "element-plus"
     import {useFilteredProps} from "../../../utils/filteredProps"
 
     defineOptions({inheritAttrs: false})

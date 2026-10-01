@@ -78,7 +78,7 @@
                                 class="log-row"
                                 :class="{'log-0': i === 0, 'log-row--selected': log.id && selection.includes(log.id)}"
                             >
-                                <el-checkbox
+                                <KsCheckbox
                                     v-if="log.id"
                                     class="log-row__checkbox"
                                     :modelValue="selection.includes(log.id)"
@@ -161,13 +161,12 @@
     import {useRoute, useRouter, type LocationQueryRaw} from "vue-router"
     import {routeFamily} from "../../utils/routeFamily"
     import {useI18n} from "vue-i18n"
-    import {ElMessageBox} from "element-plus"
     import Delete from "vue-material-design-icons/Delete.vue"
     import {useLogFilter} from "../filter/configurations/logFilter"
     import {useValues} from "../filter/composables/useValues"
     import QuickFilters from "../filter/QuickFilters.vue"
     import useRestoreUrl from "../../composables/useRestoreUrl"
-    import {KsFilter as KSFilter, deepMerge} from "@kestra-io/design-system"
+    import {KsFilter as KSFilter, KsMessageBox, deepMerge} from "@kestra-io/design-system"
 
     const {loadInit} = useRestoreUrl()
     import Sections from "../dashboard/sections/Sections.vue"
@@ -286,7 +285,7 @@
             return
         }
 
-        ElMessageBox.confirm(
+        KsMessageBox.confirm(
             t("bulk delete logs", {count}),
             t("confirmation"),
             {

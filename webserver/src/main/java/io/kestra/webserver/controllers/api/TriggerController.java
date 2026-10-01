@@ -339,9 +339,9 @@ public class TriggerController {
 
     @ExecuteOn(TaskExecutors.IO)
     @Delete(uri = "/{namespace}/{flowId}/{triggerId}")
-    @Operation(tags = { "Triggers" }, summary = "Delete a trigger")
+    @Operation(tags = { "Triggers" }, summary = "Delete orphan trigger state")
     @ApiResponse(responseCode = "204", description = "On success")
-    @ApiResponse(responseCode = "409", description = "If the trigger cannot be deleted")
+    @ApiResponse(responseCode = "409", description = "If the flow still declares the trigger, or the scheduler failed to delete the trigger state")
     public HttpResponse<Void> deleteTrigger(
         @Parameter(description = "The namespace") @PathVariable String namespace,
         @Parameter(description = "The flow id") @PathVariable String flowId,

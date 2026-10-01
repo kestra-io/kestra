@@ -1,5 +1,5 @@
 import {createApp} from "vue"
-import type {Router, RouteLocationNormalized} from "vue-router"
+import type {NavigationGuardReturn, Router, RouteLocationNormalized} from "vue-router"
 
 import "./utils/monacoEnvironment"
 import {setupPreloadErrorReloadHandler} from "./utils/preloadErrorReload"
@@ -79,7 +79,7 @@ function setupAxios(router: Router) {
     return useClient()
 }
 
-async function beforeResolve(router: Router, to: RouteLocationNormalized, from: RouteLocationNormalized): Promise<unknown> {
+async function beforeResolve(router: Router, to: RouteLocationNormalized, from: RouteLocationNormalized): Promise<NavigationGuardReturn> {
     if(to.path === from.path && to.query === from.query) {
         return // Prevent navigation if the path and query are the same
     }
@@ -143,8 +143,8 @@ async function beforeResolve(router: Router, to: RouteLocationNormalized, from: 
 }
 
 initApp(app, routes, null, en as Record<string, unknown>, {}, {
-    beforeEach: tenantGuard as (...args: unknown[]) => unknown,
-    beforeResolve: beforeResolve as (...args: unknown[]) => unknown,
+    beforeEach: tenantGuard,
+    beforeResolve,
 }).then(({router, piniaStore}) => {
     setupTenantRouter(router, app)
 

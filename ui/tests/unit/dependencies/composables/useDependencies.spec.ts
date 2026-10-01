@@ -298,6 +298,28 @@ describe("useDependencies composable", () => {
       graphNodes.value.forEach(n => expect(String(n.symbol)).toMatch(/^image:\/\//))
     })
 
+    it("isolating a multi-valued group keeps an asset that belongs to several of them", async () => {
+      const graphRef = makeGraphRef()
+      const node = (id: string) => ({data: {id, type: "NODE", flow: id, metadata: {subtype: "ASSET"}}})
+      const fetchAssetDependencies = vi.fn().mockResolvedValue({data: [node("shared"), node("only-a"), node("only-b")], count: 3})
+      const consumersOf: Record<string, string[]> = {shared: ["a", "b"], "only-a": ["a"], "only-b": ["b"]}
+      const wrapper = mount({
+        template: "<div></div>",
+        setup() {
+          const membersOf = ref((n: Node) => consumersOf[n.id])
+          return {composable: useDependencies(graphRef, FLOW, "shared", {}, fetchAssetDependencies, undefined, true, undefined, membersOf)}
+        },
+      })
+      await nextTick()
+      const {isolateGroup, shownNodeIDs} = wrapper.vm.composable as ReturnType<typeof useDependencies>
+
+      isolateGroup("a")
+      expect([...shownNodeIDs.value!].sort()).toEqual(["only-a", "shared"])
+
+      isolateGroup("b")
+      expect([...shownNodeIDs.value!].sort()).toEqual(["only-b", "shared"])
+    })
+
     it("every edge carries emphasis.lineStyle with the hover edge colour", async () => {
       const {graphEdges} = mountControlled("A")
       await nextTick()

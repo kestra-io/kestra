@@ -71,7 +71,7 @@
     import {useScrollMemory} from "../../composables/useScrollMemory"
     import {defaultNamespace} from "../../composables/useNamespaces"
     import {LIST_FIELDS} from "./components/tasks/getTaskComponent"
-    import {blockPointerPrefix, useFieldValidationErrors} from "./utils/useFieldValidationErrors"
+    import {blockPath, FLOW_ROOT_PATH, useFieldValidationErrors} from "./utils/useFieldValidationErrors"
     const props = defineProps<NoCodeProps>()
 
     function shouldMerge(schema: any): boolean {
@@ -175,8 +175,8 @@
 
     provide(FIELD_VALIDATION_ERRORS_INJECTION_KEY, useFieldValidationErrors(() => {
         if (props.creatingTask) return undefined
-        if (!props.editingTask) return []
-        return blockPointerPrefix(props.parentPath, props.refPath)
+        if (!props.editingTask) return FLOW_ROOT_PATH
+        return blockPath(props.parentPath, props.refPath)
     }))
 
     const emit = defineEmits<{

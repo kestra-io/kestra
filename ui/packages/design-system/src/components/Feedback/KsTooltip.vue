@@ -4,7 +4,7 @@
         :hideAfter="0"
         transition=""
         :effect="props.effect ?? 'light'"
-        v-bind="({...filteredProps(), ...$attrs} as any)"
+        v-bind="({...filteredProps(), ...$attrs} as ElTooltipProps)"
         :popperClass="popperClass"
     >
         <template v-if="$slots.default" #default>
@@ -18,7 +18,7 @@
 
 <script setup lang="ts">
     import {computed, useAttrs} from "vue"
-    import {ElTooltip} from "element-plus"
+    import {ElTooltip, type ElTooltipProps} from "element-plus"
     import {useFilteredProps} from "../../utils/filteredProps"
 
     defineOptions({inheritAttrs: false})

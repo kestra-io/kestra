@@ -4,7 +4,7 @@
         :hideAfter="0"
         transition=""
         :visible="internalVisible"
-        v-bind="({...filteredProps(), ...$attrs} as any)"
+        v-bind="({...filteredProps(), ...$attrs} as PopoverProps)"
         @update:visible="handleUpdateVisible"
         @hide="emit('hide')"
     >
@@ -18,7 +18,7 @@
 </template>
 
 <script setup lang="ts">
-    import {ElPopover} from "element-plus"
+    import {ElPopover, type PopoverProps} from "element-plus"
     import {ref, watch} from "vue"
     import {useFilteredProps} from "../../utils/filteredProps"
 

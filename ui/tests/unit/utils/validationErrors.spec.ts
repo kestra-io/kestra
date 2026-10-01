@@ -54,3 +54,19 @@ describe("hasErrorUnder", () => {
         expect(hasErrorUnder(errors, "options.header")).toBe(false)
     })
 })
+
+describe("errorsByFieldPath through a wrapper", () => {
+    it("should key a dag task's errors by the field, not by the wrapper", () => {
+        expect(errorsByFieldPath(
+            [{detail: "must not be null", pointer: "/tasks/0/tasks/0/task/message"}],
+            ["tasks", 0, "tasks", 0, "task"],
+        )).toEqual(new Map([["message", ["must not be null"]]]))
+    })
+
+    it("should key nothing by the field when the wrapper segment is missing from the prefix", () => {
+        expect(errorsByFieldPath(
+            [{detail: "must not be null", pointer: "/tasks/0/tasks/0/task/message"}],
+            ["tasks", 0, "tasks", 0],
+        )).toEqual(new Map([["task.message", ["must not be null"]]]))
+    })
+})

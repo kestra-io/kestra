@@ -82,7 +82,7 @@
         FULL_SOURCE_INJECTION_KEY,
         UPDATE_YAML_FUNCTION_INJECTION_KEY,
     } from "../injectionKeys"
-    import {useFieldValidationErrors} from "../utils/useFieldValidationErrors"
+    import {FLOW_ROOT_PATH, useFieldValidationErrors} from "../utils/useFieldValidationErrors"
 
     const flowStore = useFlowStore()
     const miscStore = useMiscStore()
@@ -97,7 +97,7 @@
     const flowYaml = inject(FULL_SOURCE_INJECTION_KEY, ref(""))
     const updateYaml = inject(UPDATE_YAML_FUNCTION_INJECTION_KEY, () => {})
 
-    provide(FIELD_VALIDATION_ERRORS_INJECTION_KEY, useFieldValidationErrors(() => []))
+    provide(FIELD_VALIDATION_ERRORS_INJECTION_KEY, useFieldValidationErrors(() => FLOW_ROOT_PATH))
 
     const flowId = computed(() => flowStore.flow?.id ?? "")
     const namespace = computed(() => flowStore.flow?.namespace ?? "")

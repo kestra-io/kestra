@@ -308,10 +308,15 @@
         ]
     })
 
+    let openedForErrors: string[] = []
+
     watch(() => erroredGroups.value.join("|"), () => {
         for (const group of erroredGroups.value) {
-            if (!activeNames.value.includes(group)) activeNames.value.push(group)
+            if (!openedForErrors.includes(group) && !activeNames.value.includes(group)) {
+                activeNames.value.push(group)
+            }
         }
+        openedForErrors = erroredGroups.value
     }, {immediate: true})
 
     function onInput(value: any) {

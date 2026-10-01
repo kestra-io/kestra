@@ -36,12 +36,14 @@ export const EXECUTION_TAB_ROUTES: RouteRecordRaw[] = [
         name: `${EXECUTION_PARENT_ROUTE}/gantt`,
         path: "gantt",
         component: () => import("./Gantt.vue"),
+        props: {showBanner: true},
         meta: {tab: "gantt", title: "gantt"},
     },
     {
         name: `${EXECUTION_PARENT_ROUTE}/logs`,
         path: "logs",
         component: () => import("./Logs.vue"),
+        props: {showBanner: true},
         meta: {tab: "logs", title: "logs"},
     },
     {

@@ -217,18 +217,6 @@
     "launch execution": "执行",
     "triggered done": "执行 <em>{name}</em> 成功触发",
     "topology": "拓扑",
-    "overviewChart": {
-      "switcherLabel": "图表",
-      "loading": "正在加载图表…",
-      "emptyDescription": "只有当 worker 接收此运行后，拓扑才可用。",
-      "topologySubtitle": "Flow 的 Task 静态视图及其连接方式。",
-      "ganttSubtitle": "每个 Task 运行的时间线。",
-      "logsSubtitle": "Task 运行详情及其 logs。",
-      "noticeTitle": "显示甘特图而非拓扑图。",
-      "noticeBody": "此 Flow 运行 {count} 个 Task — 数量过多，无法在图表上读取。",
-      "showTopologyAnyway": "无论如何显示拓扑",
-      "dismissNotice": "不再为此 Flow 显示此内容"
-    },
     "date": "日期",
     "prev_execution": "先前执行",
     "next_execution": "下一次执行",

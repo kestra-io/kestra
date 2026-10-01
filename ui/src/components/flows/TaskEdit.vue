@@ -525,7 +525,7 @@
         if (taskYaml.value) {
             lastValidatedValue.value = taskYaml.value
             flowStore.validateTask({task: taskYaml.value, section: props.section})
-                .then((result) => { localTaskErrors.value = (result as {errors?: ApiValidationError[]})?.errors })
+                .then((result) => { localTaskErrors.value = result?.errors })
                 .catch(() => { localTaskErrors.value = undefined })
         } else {
             localTaskErrors.value = undefined
@@ -539,7 +539,7 @@
                 task: taskYaml.value,
                 section: props.section,
             }).then((result) => {
-                localTaskErrors.value = (result as {errors?: ApiValidationError[]})?.errors
+                localTaskErrors.value = result?.errors
             }).catch(() => { /* leave prior errors in place on transient failure */ })
         }
         if (props.presentation === "panel") {

@@ -112,4 +112,21 @@ describe("useRestoreUrl", () => {
 
         expect(router.currentRoute.value.query).toEqual(SAVED_QUERY)
     })
+
+    it("keeps the saved query when the page cancels the restore with its own default filter", async () => {
+        const router = createTestRouter()
+        const key = "flows_update/executions_company.team_flowA_main_restore_url"
+        await router.push({name: "flows/update/executions", params: {tenant: "main", namespace: "company.team", id: "flowA"}})
+        window.sessionStorage.setItem(key, JSON.stringify(SAVED_QUERY))
+
+        wrapper = mountRestoreUrl(router)
+
+        // Mimics Executions.vue replacing its own URL with a default time range right
+        // after mount: a same-path navigation, so it also fires the save watcher.
+        await router.replace({query: {"filters[state][IN]": "FAILED"}})
+        await new Promise((resolve) => setTimeout(resolve, 150))
+
+        expect(router.currentRoute.value.query).toEqual({...SAVED_QUERY, "filters[state][IN]": "FAILED"})
+        expect(JSON.parse(window.sessionStorage.getItem(key) as string)).toMatchObject(SAVED_QUERY)
+    })
 })

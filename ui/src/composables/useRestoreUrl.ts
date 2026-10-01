@@ -86,7 +86,12 @@ export default function useRestoreUrl(options: UseRestoreUrlOptions = {}) {
         return raw ? JSON.parse(raw) : null
     })
 
+    let restoring = false
+
     const saveRestoreUrl = () => {
+        // The navigation that cancels our restore reaches this watcher first, so saving
+        // here would overwrite the very state the retry below is about to re-assert.
+        if (restoring) return
         if (!restoreUrl || route.query.noRestore) return
         if (Object.keys(route.query).length === 0) {
             window.sessionStorage.removeItem(localStorageName.value)
@@ -103,14 +108,19 @@ export default function useRestoreUrl(options: UseRestoreUrlOptions = {}) {
         // A page that rewrites its own URL on mount (e.g. the dashboard appending its
         // id param) cancels our replace and the restored filters are lost, so re-assert
         // them once that navigation has settled.
-        for (let attempt = 0; attempt < 2; attempt++) {
-            const {query, change} = getRestoredQuery(route)
-            if (!change) return
+        restoring = true
+        try {
+            for (let attempt = 0; attempt < 2; attempt++) {
+                const {query, change} = getRestoredQuery(route)
+                if (!change) return
 
-            const failure = await router.replace({query})
-            if (!isNavigationFailure(failure, NavigationFailureType.cancelled)) return
+                const failure = await router.replace({query})
+                if (!isNavigationFailure(failure, NavigationFailureType.cancelled)) return
 
-            await navigationSettled(router)
+                await navigationSettled(router)
+            }
+        } finally {
+            restoring = false
         }
     }
 

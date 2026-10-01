@@ -1684,6 +1684,14 @@ export type PagedResultsNamespace = {
 /**
  * Paged response for the offset-pagination endpoints (the vast majority of list APIs): a store that always knows its row count, so both `results` and `total` are always present. A store that may not know its total (e.g. an external log store) uses CursorOrOffsetPagedResults --- see that class for why the two are kept apart.
  */
+export type PagedResultsPluginControllerApiTicketingSystem = {
+    results: Array<PluginControllerApiTicketingSystem>;
+    total: number;
+};
+
+/**
+ * Paged response for the offset-pagination endpoints (the vast majority of list APIs): a store that always knows its row count, so both `results` and `total` are always present. A store that may not know its total (e.g. an external log store) uses CursorOrOffsetPagedResults --- see that class for why the two are kept apart.
+ */
 export type PagedResultsPluginControllerApiTriggerPlugin = {
     results: Array<PluginControllerApiTriggerPlugin>;
     total: number;
@@ -1769,6 +1777,20 @@ export type PluginArtifact = {
 export type PluginControllerApiPluginVersions = {
     type?: string;
     versions?: Array<string>;
+};
+
+/**
+ * A ticketing system offered by an installed plugin.
+ */
+export type PluginControllerApiTicketingSystem = {
+    /**
+     * the plugin manifest's declared title (`X-Kestra-Title`), stored verbatim on a case when a user picks it
+     */
+    name?: string;
+    /**
+     * icon key resolvable via `GET /api/v1/plugins/icons` --- the class of one task in this plugin that opens a ticket
+     */
+    icon?: string;
 };
 
 /**
@@ -3495,6 +3517,39 @@ export type GetSchemasFromTypeResponses = {
 };
 
 export type GetSchemasFromTypeResponse = GetSchemasFromTypeResponses[keyof GetSchemasFromTypeResponses];
+
+export type ListTicketingSystemsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/plugins/ticketing-systems';
+};
+
+export type ListTicketingSystemsErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type ListTicketingSystemsError = ListTicketingSystemsErrors[keyof ListTicketingSystemsErrors];
+
+export type ListTicketingSystemsResponses = {
+    /**
+     * listTicketingSystems 200 response
+     */
+    200: PagedResultsPluginControllerApiTicketingSystem;
+};
+
+export type ListTicketingSystemsResponse = ListTicketingSystemsResponses[keyof ListTicketingSystemsResponses];
 
 export type ListTriggerPluginsData = {
     body?: never;

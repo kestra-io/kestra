@@ -87,17 +87,17 @@
             return null
         }
 
-        if (!config.version || !config.uuid) {
-            return config
+        if (config.version) {
+            await docStore.initResourceUrlTemplate(config.version)
         }
 
-        await docStore.initResourceUrlTemplate(config.version)
-
-        apiStore.loadFeeds({
-            version: config.version,
-            iid: config.uuid,
-            uid: uid,
-        })
+        if (config.version && config.uuid) {
+            apiStore.loadFeeds({
+                version: config.version,
+                iid: config.uuid,
+                uid: uid,
+            })
+        }
 
         void initPosthogIfEnabled(config)
 

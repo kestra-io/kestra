@@ -1606,9 +1606,12 @@ public class ExecutionController {
     }
 
     private static void controlReplayable(Execution execution) {
-        if (!execution.getState().isTerminated()) {
+        State state = execution.getState();
+        // the Playground replays its own execution that is suspended on a breakpoint to reuse the tasks already run
+        boolean isSuspendedPlayground = ExecutionKind.PLAYGROUND == execution.getKind() && (state.isBreakpoint() || state.isPaused());
+        if (!state.isTerminated() && !isSuspendedPlayground) {
             throw new ConflictException(
-                "Cannot replay execution: current state is '%s', expected terminated.".formatted(execution.getState().getCurrent())
+                "Cannot replay execution: current state is '%s', expected terminated.".formatted(state.getCurrent())
             );
         }
     }

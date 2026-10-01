@@ -2229,6 +2229,13 @@
           "failed": "Fehlgeschlagen",
           "unknown": "Nicht getrackt"
         },
+        "kind": {
+          "produces": "Erzeugt",
+          "consumed_by": "Verbraucht von",
+          "upstream_of": "Upstream von",
+          "part_of": "Teil von",
+          "related": "Verwandt"
+        },
         "summary": {
           "fresh": "Alle {n} Assets sind aktuell",
           "issues": "{n} veraltet",

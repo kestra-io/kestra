@@ -89,7 +89,7 @@
             >
                 <template #default="scope">
                     <div class="text-nowrap">
-                        {{ scope.row.id }}
+                        {{ scope.row.id ?? scope.row.triggerId }}
                     </div>
                 </template>
             </KsTableColumn>
@@ -828,17 +828,18 @@
     }
 
     const confirmDeleteTrigger = (trigger: TriggerDeleteOptions) => {
+        const triggerLabel = trigger.id ?? trigger.triggerId
         toast.confirm(
-            t("delete trigger confirmation", {id: trigger.id}),
+            t("delete trigger confirmation", {id: triggerLabel}),
             () => TriggersAPI.deleteTrigger({
                 namespace: trigger.namespace,
                 flowId: trigger.flowId,
                 triggerId: trigger.triggerId,
             }).then(() => {
-                toast.success(t("delete trigger success", {id: trigger.id}))
+                toast.success(t("delete trigger success", {id: triggerLabel}))
                 dataTable.value?.reload()
             }).catch(error => {
-                toast.error(t("delete trigger error", {id: trigger.id}))
+                toast.error(t("delete trigger error", {id: triggerLabel}))
                 console.error(error)
             }),
             "warning",

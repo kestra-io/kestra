@@ -403,7 +403,13 @@ public interface StorageInterface extends AutoCloseable, Plugin {
             childPath = childPath + "/";
         }
         if (StorageContext.isKestraScheme(parent)) {
-            return StorageContext.toKestraUri(childPath);
+            // A legacy kestra:/// parent has no authority. toKestraUri would move the first segment
+            // into the authority, and a plugin that reads getPath() would then drop that segment.
+            URI canonical = StorageContext.toKestraUri(childPath);
+            if (parent.getAuthority() == null || parent.getAuthority().isEmpty()) {
+                return StorageContext.legacyKestraUri(canonical);
+            }
+            return canonical;
         }
         try {
             return new URI(parent.getScheme(), parent.getAuthority(), childPath, null, null);

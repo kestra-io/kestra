@@ -1,5 +1,5 @@
 import type {Meta, StoryObj} from "@storybook/vue3-vite"
-import {defineComponent, ref, shallowRef, type PropType} from "vue"
+import {defineComponent, ref, shallowRef, toRef, type PropType} from "vue"
 import type * as monaco from "monaco-editor/editor/editor.api"
 import {KsEditor} from "@kestra-io/design-system"
 
@@ -14,7 +14,7 @@ const MarkedEditor = defineComponent({
     setup(props) {
         const code = ref(props.source)
         const editor = shallowRef<monaco.editor.IStandaloneCodeEditor>()
-        useViolationMarkers({editor, errors: ref(props.errors)})
+        useViolationMarkers({editor, errors: toRef(props, "errors")})
 
         return () => (
             <div style="height: 520px">
@@ -79,4 +79,22 @@ export const RootViolationStaysInThePanel: Story = {
 
 export const AllTogether: Story = {
     args: {source: squiggles, errors: [unknownKey, missingMessage, unknownType, missingCron]},
+}
+
+const script = `id: script
+namespace: company.team
+
+tasks:
+  - id: transform
+    type: io.kestra.plugin.scripts.python.Script
+    script: |
+      import pandas as pd
+      df = pd.read_csv("in.csv")
+      print("done")
+    beforeCommands:
+      - pip install pandas
+`
+
+export const BlockScalarBodyStaysClean: Story = {
+    args: {source: script, errors: [{pointer: "/tasks/0/containerImage", detail: "must not be null"}]},
 }

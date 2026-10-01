@@ -1,8 +1,6 @@
 <template>
     <div data-component="FILENAME_PLACEHOLDER" :style="{'--execution-banner-height': `${bannerHeight}px`}">
-        <KsCard v-if="props.showBanner && execution" ref="bannerCard" class="execution-summary" shadow="always" :bodyStyle="BANNER_BODY_STYLE">
-            <Banner :execution />
-        </KsCard>
+        <ExecutionSummaryCard v-if="props.showBanner && execution" v-model:height="bannerHeight" :execution />
         <div ref="inlineLogsTarget" />
         <KsDialog
             v-model="fullscreenModalOpen"
@@ -107,7 +105,7 @@
                     data-test="logs-scroller"
                     data-scroll-key="raw-logs"
                     :class="{'fullscreen-logs': fullscreenModalOpen}"
-                    :style="{maxHeight: fullscreenModalOpen ? undefined : 'calc(100vh - 335px - var(--execution-banner-height, 0px))', marginTop: '0.5rem'}"
+                    :style="{maxHeight: fullscreenModalOpen ? undefined : 'max(15rem, calc(100vh - 335px - var(--execution-banner-height, 0px)))', marginTop: '0.5rem'}"
                     :buffer="200"
                     :prerender="20"
                     @scroll.capture.passive="rememberLogScroll"
@@ -142,13 +140,12 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, nextTick, ref, watch, useTemplateRef, onUnmounted, type ComponentPublicInstance} from "vue"
+    import {computed, nextTick, ref, watch, useTemplateRef, onUnmounted} from "vue"
     import {useRoute} from "vue-router"
     import {useI18n} from "vue-i18n"
-    import {useElementSize} from "@vueuse/core"
     import {useLogExecutionsFilter} from "../filter/configurations/logExecutionsFilter"
     import TaskRunDetails from "../logs/TaskRunDetails.vue"
-    import Banner from "./components/Banner.vue"
+    import ExecutionSummaryCard from "./components/ExecutionSummaryCard.vue"
     import LogDisplaySettings from "../logs/LogDisplaySettings.vue"
     import Download from "vue-material-design-icons/Download.vue"
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
@@ -203,8 +200,6 @@
         minHeight: "0",
     }
 
-    const BANNER_BODY_STYLE = {padding: "0", height: "100%"}
-
     // Cast helper for DynamicScroller slot items which lose type info
     function asLog(item: unknown): TemporalLog {
         return item as TemporalLog
@@ -216,7 +211,6 @@
 
     const props = withDefaults(defineProps<{
         playground?: boolean
-        /** Shows the execution summary card above the logs (the Executions detail page's Logs tab). */
         showBanner?: boolean
     }>(), {
         playground: false,
@@ -226,8 +220,7 @@
     const executionsStore = useExecutionsStore()
     const execution = computed(() => executionsStore.execution)
 
-    const bannerCard = useTemplateRef<ComponentPublicInstance>("bannerCard")
-    const {height: bannerHeight} = useElementSize(computed(() => props.showBanner ? bannerCard.value?.$el : undefined))
+    const bannerHeight = ref(0)
 
     // The kind this execution's logs belong to, or undefined for NORMAL (the backend default).
     const executionKind = computed<string | undefined>(() => {
@@ -637,15 +630,6 @@
 </script>
 
 <style scoped lang="scss">
-    .execution-summary {
-        flex-shrink: 0;
-        margin-bottom: var(--ks-spacing-4);
-        width: 100%;
-        border: 1px solid var(--ks-border-default);
-        border-radius: var(--ks-radius-base);
-        box-shadow: 0px 1px 4px 0px var(--ks-shadow-element);
-    }
-
     .attempt-wrapper {
     background-color: var(--ks-bg-surface);
 

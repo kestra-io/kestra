@@ -973,7 +973,6 @@
     "timezone": "Timezone",
     "add task": "Add a task",
     "unable to generate graph": "An issue occurred while generating the graph, which prevents the topology from displaying.",
-    "retry": "Retry",
     "attempts": "Attempt(s)",
     "version": "Version",
     "services": "Services",

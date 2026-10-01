@@ -1,7 +1,7 @@
 <template>
     <ElConfigProvider :locale="paginationLocale" namespace="kel">
         <ElPagination
-            v-bind="({...filteredProps(), ...$attrs} as any)"
+            v-bind="({...filteredProps(), ...$attrs} as PaginationProps)"
             @update:current-page="emit('update:currentPage', $event)"
             @update:page-size="emit('update:pageSize', $event)"
             @current-change="emit('currentChange', $event)"
@@ -11,7 +11,7 @@
 </template>
 
 <script setup lang="ts">
-    import {ElConfigProvider, ElPagination} from "element-plus"
+    import {ElConfigProvider, ElPagination, type PaginationProps} from "element-plus"
     import en from "element-plus/es/locale/lang/en"
     import {useFilteredProps} from "../../utils/filteredProps"
 

@@ -1,3 +1,5 @@
+import type {Task} from "@kestra-io/kestra-sdk"
+
 // FIXME: any - recursive generic, complex object traversal
 export function loopOver(item: unknown, predicate: (item: unknown) => boolean, result: unknown[] = []): unknown[] {
         if (result === undefined) {

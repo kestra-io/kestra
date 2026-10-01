@@ -668,6 +668,12 @@ public abstract class AbstractRunnerTest {
     }
 
     @Test
+    @ExecuteFlow("flows/valids/loop-break.yaml")
+    public void loopBreak(Execution execution) throws InternalException {
+        loopCaseTest.loopBreak(execution);
+    }
+
+    @Test
     @LoadFlows(value = { "flows/valids/minimal.yaml" }, tenantId = TENANT_1)
     void shouldScheduleOnDate() throws Exception {
         scheduleDateCaseTest.shouldScheduleOnDate(TENANT_1);

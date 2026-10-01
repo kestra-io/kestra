@@ -2,7 +2,7 @@
     <ElSegmented
         v-model="model"
         :class="props.disabled ? 'is-disabled' : undefined"
-        v-bind="({...filteredProps(), ...$attrs} as any)"
+        v-bind="({...filteredProps(), ...$attrs} as SegmentedProps)"
         @change="emit('change', $event)"
     >
         <template v-if="$slots.default" #default="scope">
@@ -19,7 +19,7 @@
 
 <script setup lang="ts">
     import {computed, type Component} from "vue"
-    import {ElSegmented} from "element-plus"
+    import {ElSegmented, type SegmentedProps} from "element-plus"
     import KsIcon from "../Basic/KsIcon.vue"
     import {useFilteredProps} from "../../utils/filteredProps"
 

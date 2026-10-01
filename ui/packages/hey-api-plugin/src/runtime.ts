@@ -47,15 +47,27 @@ export type {ProblemDetail, ProblemFieldError} from "./problem"
 export {ProblemTypes} from "./problem-types"
 export type {ProblemType} from "./problem-types"
 
+interface QueryFilter {
+    field?: string;
+    operation?: string;
+    value?: unknown;
+    logical?: string;
+    children?: QueryFilter[];
+}
+
 /** Minimal structural shape of a @hey-api/client-fetch interceptor slot. */
 interface FetchInterceptor {
     clear: () => void;
-    use: (fn: (...args: any[]) => any) => void;
+    use(fn: (...args: never[]) => unknown): void;
 }
 
 /** The subset of a @hey-api/client-fetch client that configureClient touches. */
 export interface ConfigurableFetchClient {
-    setConfig: (config: any) => unknown;
+    setConfig: (config: {
+        bodySerializer?: (body: unknown) => unknown;
+        querySerializer?: (query: Record<string, unknown>) => string;
+        [key: string]: unknown;
+    }) => unknown;
     interceptors: {
         request: FetchInterceptor;
         response: FetchInterceptor;
@@ -74,7 +86,7 @@ interface ResolvedRequestOptionsLike {
 
 /** The generated SDK's own multipart body serializer (from its vendored core). */
 interface FormDataBodySerializer {
-    bodySerializer: (...args: any[]) => any;
+    bodySerializer: (body: unknown) => unknown;
 }
 
 function serializeQueryValue(val: unknown): string | undefined {
@@ -120,7 +132,7 @@ export function createConfigureClient<TClient extends ConfigurableFetchClient>(
                 if (body !== null && typeof body === "object" && !Array.isArray(body) && Object.keys(body as Record<string, unknown>).length === 0) return ""
                 return JSON.stringify(body, (_key, value) => (typeof value === "bigint" ? value.toString() : value))
             },
-            querySerializer(query: Record<string, any>) {
+            querySerializer(query: Record<string, unknown>) {
                 const queryParameters = new URLSearchParams()
 
                 const isObjectRecord = (input: object): boolean => {
@@ -129,11 +141,11 @@ export function createConfigureClient<TClient extends ConfigurableFetchClient>(
                 }
 
                 const snapshotQueryValue = (
-                    input: any,
-                    seen = new WeakMap<object, any>(),
+                    input: unknown,
+                    seen = new WeakMap<object, unknown>(),
                     active = new WeakSet<object>(),
                     snapshotCustomObject = false,
-                ): any => {
+                ): unknown => {
                     if (input == null || typeof input !== "object") return input
 
                     const prototype = Object.getPrototypeOf(input)
@@ -183,7 +195,7 @@ export function createConfigureClient<TClient extends ConfigurableFetchClient>(
                     }
                 }
 
-                const serializeQueryFilterArray = (filters: any[], prefix = "filters", indexed = false): Array<[string, string]> | undefined => {
+                const serializeQueryFilterArray = (filters: QueryFilter[], prefix = "filters", indexed = false): Array<[string, string]> | undefined => {
                     if (filters.length === 0) return undefined
                     const parameters: Array<[string, string]> = []
                     for (let index = 0; index < filters.length; index++) {
@@ -195,7 +207,7 @@ export function createConfigureClient<TClient extends ConfigurableFetchClient>(
                     return parameters
                 }
 
-                const serializeQueryFilter = (filter: any, prefix: string): Array<[string, string]> | undefined => {
+                const serializeQueryFilter = (filter: QueryFilter, prefix: string): Array<[string, string]> | undefined => {
                     if (filter == null || typeof filter !== "object") return undefined
 
                     const {field, operation, value, logical, children} = filter
@@ -243,7 +255,7 @@ export function createConfigureClient<TClient extends ConfigurableFetchClient>(
                         throw new TypeError("Invalid QueryFilter array")
                     }
                     let serializedFilters: Array<[string, string]> | undefined
-                    let fallbackParam = param
+                    let fallbackParam: unknown = param
                     if (key === "filters" && Array.isArray(param)) {
                         fallbackParam = snapshotQueryValue(param, new WeakMap(), new WeakSet(), true)
                         try {
@@ -252,7 +264,7 @@ export function createConfigureClient<TClient extends ConfigurableFetchClient>(
                             throw new TypeError("Invalid QueryFilter array")
                         }
                         try {
-                            serializedFilters = serializeQueryFilterArray(fallbackParam)
+                            serializedFilters = serializeQueryFilterArray(fallbackParam as QueryFilter[])
                         } catch {
                             serializedFilters = undefined
                         }
@@ -260,10 +272,10 @@ export function createConfigureClient<TClient extends ConfigurableFetchClient>(
 
                     if (serializedFilters) {
                         for (const [filterKey, filterValue] of serializedFilters) queryParameters.append(filterKey, filterValue)
-                    } else if (key === "filters" && Array.isArray(param) && fallbackParam.length > 0) {
+                    } else if (key === "filters" && Array.isArray(param) && Array.isArray(fallbackParam) && fallbackParam.length > 0) {
                         throw new TypeError("Invalid QueryFilter array")
-                    } else if (fallbackParam instanceof Array) {
-                        fallbackParam.forEach((value: any) => {
+                    } else if (Array.isArray(fallbackParam)) {
+                        fallbackParam.forEach((value: unknown) => {
                             const ser = serializeQueryValue(value)
                             if (ser !== undefined) {
                                 queryParameters.append(key, ser)
@@ -288,7 +300,7 @@ export function createConfigureClient<TClient extends ConfigurableFetchClient>(
         // set 'Content-Type: null' to let the browser supply the multipart boundary automatically.
         // When no body is provided for those endpoints, we must not inject application/json —
         // Kestra will reject the request with 401 if Content-Type doesn't match multipart/form-data.
-        client.interceptors.request.use((request: Request, opts: ResolvedRequestOptionsLike): Request => {
+        client.interceptors.request.use((request: Request, opts: ResolvedRequestOptionsLike): Request | Promise<Request> => {
             const headers = new Headers(request.headers)
             let modified = false
 
@@ -328,7 +340,7 @@ export function createConfigureClient<TClient extends ConfigurableFetchClient>(
             response: Response | undefined,
             request: Request | undefined,
             opts: ResolvedRequestOptionsLike | undefined,
-        ): unknown => {
+        ): unknown | Promise<unknown> => {
             if (!response) return error
 
             const status = response.status

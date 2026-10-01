@@ -39,6 +39,19 @@ describe("provideEditorArtifacts", () => {
         expect(artifacts).toEqual([])
     })
 
+    it("resolves a copy lens when the key is a number (YAML parses `key: 12345` as numeric)", () => {
+        const numericKeyBlock: ArtifactBlock = {
+            ...webhookBlock,
+            value: {id: "webhook", type: WEBHOOK_TRIGGER_TYPE, key: 12345},
+        }
+
+        const artifacts = provideEditorArtifacts([numericKeyBlock], {namespace: "company.team", id: "my-flow", t})
+
+        expect(artifacts).toHaveLength(1)
+        const [payload] = artifacts[0].lens.command.arguments as [{text: string; message: string}]
+        expect(payload.text).toContain("/executions/webhook/company.team/my-flow/12345")
+    })
+
     it("skips blocks without a matching provider", () => {
         const logBlock: ArtifactBlock = {
             type: "io.kestra.plugin.core.log.Log",

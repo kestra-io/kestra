@@ -10,7 +10,6 @@
         :placeholder="$t('no_code.expression_placeholder', {field: root || 'value'})"
         @update:model-value="editorInput"
         @focus="onFocus"
-        @focusout="onBlur"
     />
 </template>
 
@@ -24,7 +23,7 @@
 
     const editorBindings = useEditorBindings()
     const editorRef = ref<KsEditorExposes>()
-    const {onFocus, onBlur} = useFocusedExpressionEditor(editorRef)
+    const {onFocus} = useFocusedExpressionEditor(editorRef)
 
     const props = defineProps({
         modelValue: {

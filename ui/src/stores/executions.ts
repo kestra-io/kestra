@@ -158,7 +158,6 @@ export const useExecutionsStore = defineStore("executions", () => {
     const progressEvents = ref<{taskId: string; taskRunId: string; step: string; timestamp: string}[]>([])
     const flow = ref<FlowForExecution | undefined>(undefined)
     const flowGraph = ref<FlowGraph | undefined>(undefined)
-    const flowGraphError = ref(false)
     const taskRunSelections = ref<Map<string, string>>(new Map())
     const namespaces = ref<string[]>([])
     const flowsExecutable = ref<FlowForExecution[]>([])
@@ -166,7 +165,6 @@ export const useExecutionsStore = defineStore("executions", () => {
     watch(execution, (newExecution) => {
         if(!newExecution){
             flowGraph.value = undefined
-            flowGraphError.value = false
             flow.value = undefined
             taskRunSelections.value.clear()
         }
@@ -704,13 +702,7 @@ export const useExecutionsStore = defineStore("executions", () => {
     /** Visits nodes shallowest first, so a parent is in `nodeByUid` before a child checks whether it is unused. */
     const loadAugmentedGraph = async (options: GraphOptions) => {
         const params = options.params ? options.params : {}
-        let graph: FlowGraph
-        try {
-            graph = await fetchGraph({id: options.id, params})
-        } catch (error) {
-            flowGraphError.value = true
-            throw error
-        }
+        const graph = await fetchGraph({id: options.id, params})
 
         const subflowPaths = graph.clusters
             ?.map(c => c.cluster)
@@ -748,7 +740,6 @@ export const useExecutionsStore = defineStore("executions", () => {
             }).forEach(edge => edge.unused = true)
 
         flowGraph.value = Object.assign({}, graph)
-        flowGraphError.value = false
 
         return graph
     }
@@ -832,7 +823,6 @@ export const useExecutionsStore = defineStore("executions", () => {
         progressEvents,
         flow,
         flowGraph,
-        flowGraphError,
         namespaces,
         flowsExecutable,
         restartExecution,

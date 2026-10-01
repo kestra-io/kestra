@@ -44,13 +44,13 @@
 <script setup lang="ts">
     import {ref} from "vue"
 
-    import {date as dateFilter} from "../../../../utils/filters"
+    import {date as dateFilter} from "../../../utils/filters"
     import {KsExecutionStatus} from "@kestra-io/design-system"
 
     import ArrowExpand from "vue-material-design-icons/ArrowExpand.vue"
     import Close from "vue-material-design-icons/Close.vue"
 
-    import {Histories} from "../../../../stores/executions"
+    import {Histories} from "../../../stores/executions"
 
     defineProps<{histories: Histories[]}>()
 

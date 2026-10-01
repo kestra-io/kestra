@@ -128,6 +128,7 @@
         :editorKey="modalItemPath"
         :parentPath="modalTarget.parentPath"
         :refPath="modalTarget.refPath"
+        :editedPath="modalPath"
         :blockSchemaPath="modalTarget.blockSchemaPath"
         :crumbs="modalCrumbs"
         :creating="modalTarget.creating"
@@ -170,13 +171,14 @@
     import BlockCommandMenu, {type BlockCommandMenuItem} from "./BlockCommandMenu.vue"
     import TaskEdit from "../../flows/TaskEdit.vue"
     import TaskEditModal from "./TaskEditModal.vue"
+    import {useFieldValidationErrors} from "../utils/useFieldValidationErrors"
     import BlockTaskPicker from "./BlockTaskPicker.vue"
     import BlockEditorStatusBar from "./BlockEditorStatusBar.vue"
     import {useBlockEditorProvides} from "./useBlockEditorProvides"
     import type {Crumb} from "../utils/useFieldNavigation"
     import {taskCrumbAt, useEditTarget} from "./useEditTarget"
     import {useBlockDragAndDrop} from "./useBlockDragAndDrop"
-    import {BLOCK_DRAG_INJECTION_KEY} from "../injectionKeys"
+    import {BLOCK_DRAG_INJECTION_KEY, FIELD_VALIDATION_ERRORS_INJECTION_KEY} from "../injectionKeys"
     import {useBlockOperations} from "./useBlockOperations"
     import {modalItemPathOf, useBlockSelection} from "./useBlockSelection"
     import {useBlockMutations} from "./useBlockMutations"
@@ -328,6 +330,8 @@
     const modalCrumbs = computed<Crumb[]>(() =>
         modalStack.value.map((target) => taskCrumbAt(flowYaml.value, modalItemPathOf(target))),
     )
+
+    provide(FIELD_VALIDATION_ERRORS_INJECTION_KEY, useFieldValidationErrors(() => editingPath.value || undefined))
 
     const alwaysResolved = computed(() => true)
 

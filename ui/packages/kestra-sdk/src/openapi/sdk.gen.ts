@@ -468,7 +468,7 @@ export const _38B0E6C0 = <ThrowOnError extends boolean = true>(parameters: {
 /**
  * Configure basic authentication for the instance.
  *
- * Sets up basic authentication credentials. Once credentials already exist, the request must also carry the current password.
+ * Sets up basic authentication credentials. Once credentials already exist, the request must also carry the current password. Rejected when the credentials are set in the configuration file.
  */
 export const _435C395a = <ThrowOnError extends boolean = true>(parameters: {
     tenant: string;

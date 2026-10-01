@@ -239,6 +239,8 @@
                 props: {
                     modelValue: state.radioValue,
                     options: state.valueOptions,
+                    allLabel: props.filterKey?.allLabel,
+                    allDescription: props.filterKey?.allDescription,
                 },
                 events: {
                     "update:modelValue": (value: string) => (state.radioValue = value),

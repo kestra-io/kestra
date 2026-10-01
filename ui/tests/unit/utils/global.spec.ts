@@ -110,8 +110,8 @@ describe("global string helpers", () => {
         })
 
         it("returns a 32-bit signed integer", () => {
-            const hash = hashCode("kestra-io/kestra")
-            expect(Number.isInteger(hash)).toBe(true)
+            const hash = hashCode("io.kestra.plugin.core.log.Log")
+            expect(hash).toBe(-1875787894)
             expect(hash).toBeGreaterThanOrEqual(-2147483648)
             expect(hash).toBeLessThanOrEqual(2147483647)
         })

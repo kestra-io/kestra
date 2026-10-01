@@ -846,6 +846,7 @@
     "restore": "Restaurar",
     "restore confirm": "Tem certeza de que deseja restaurar a revisão <code>{revision}</code>?",
     "bulk delete": "Tem certeza de que deseja excluir <code>{executionCount}</code> execução(ões)?",
+    "bulk delete logs": "Tem certeza de que deseja excluir {count} log(s)?",
     "bulk replay": "Tem certeza de que deseja reproduzir <code>{executionCount}</code> execução(ões)?",
     "bulk change state": "Tem certeza de que deseja alterar o estado de <code>{executionCount}</code> execução(ões)?",
     "bulk resume": "Tem certeza de que deseja retomar <code>{executionCount}</code> execução(ões)?",

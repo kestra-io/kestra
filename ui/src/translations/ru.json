@@ -846,6 +846,7 @@
     "restore": "Восстановить",
     "restore confirm": "Вы уверены, что хотите восстановить ревизию <code>{revision}</code>?",
     "bulk delete": "Вы уверены, что хотите удалить <code>{executionCount}</code> выполнение(я)?",
+    "bulk delete logs": "Вы уверены, что хотите удалить {count} log(s)?",
     "bulk replay": "Вы уверены, что хотите воспроизвести <code>{executionCount}</code> выполнение(я)?",
     "bulk change state": "Вы уверены, что хотите изменить состояние выполнения <code>{executionCount}</code>?",
     "bulk resume": "Вы уверены, что хотите возобновить <code>{executionCount}</code> выполнение(я)?",

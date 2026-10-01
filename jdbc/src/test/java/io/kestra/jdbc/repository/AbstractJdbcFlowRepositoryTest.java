@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import org.jooq.DSLContext;
+import org.jooq.JSONB;
 import org.jooq.impl.DSL;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -79,7 +80,7 @@ public abstract class AbstractJdbcFlowRepositoryTest extends io.kestra.core.repo
     }
 
     @Test
-    void invalidFlowShouldPreserveLabelsAndVariables() {
+    void invalidFlowShouldPreserveLabels() {
         String flowId = "invalid-labels-" + IdUtils.create();
         String namespace = "io.kestra.unittest";
         String sourceCode = """
@@ -100,7 +101,7 @@ public abstract class AbstractJdbcFlowRepositoryTest extends io.kestra.core.repo
                 .set(field("key"), namespace + "_" + flowId)
                 .set(field("source_code"), sourceCode)
                 .set(
-                    field("value"), JacksonMapper.ofJson().writeValueAsString(
+                    field("value"), (Object) JSONB.valueOf(JacksonMapper.ofJson().writeValueAsString(
                         Map.of(
                             "id", flowId,
                             "namespace", namespace,
@@ -112,7 +113,6 @@ public abstract class AbstractJdbcFlowRepositoryTest extends io.kestra.core.repo
                                 Map.of("key", "system.readOnly", "value", "true"),
                                 Map.of("key", "team", "value", "platform")
                             ),
-                            "variables", Map.of("env", "prod"),
                             "tasks", List.of(
                                 Map.of(
                                     "id", "broken",
@@ -121,7 +121,7 @@ public abstract class AbstractJdbcFlowRepositoryTest extends io.kestra.core.repo
                             ),
                             "source", sourceCode
                         )
-                    )
+                    ))
                 )
                 .execute();
         });
@@ -135,7 +135,6 @@ public abstract class AbstractJdbcFlowRepositoryTest extends io.kestra.core.repo
                 new Label("system.readOnly", "true"),
                 new Label("team", "platform")
             );
-            assertThat(flow.get().getVariables()).containsExactlyInAnyOrderEntriesOf(Map.of("env", "prod"));
             assertThat(flow.get().getSource()).contains(flowId);
 
             ArrayListTotal<Flow> filtered = flowRepository.find(

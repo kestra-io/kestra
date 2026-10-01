@@ -1,7 +1,5 @@
 package io.kestra.core.models.flows;
 
-import java.util.Map;
-
 import org.junit.jupiter.api.Test;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -13,7 +11,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class FlowWithExceptionTest {
     @Test
-    void shouldPreserveLabelsAndVariablesWhenLoadingFails() throws Exception {
+    void shouldPreserveLabelsWhenLoadingFails() throws Exception {
         JsonNode jsonNode = JacksonMapper.ofJson().readTree("""
             {
                 "id": "failed-flow",
@@ -24,7 +22,6 @@ class FlowWithExceptionTest {
                     {"key": "system.readOnly", "value": "true"},
                     {"key": "team", "value": "platform"}
                 ],
-                "variables": {"env": "prod"},
                 "source": "id: failed-flow\\nnamespace: io.kestra.unittest"
             }
             """);
@@ -36,7 +33,6 @@ class FlowWithExceptionTest {
             new Label("system.readOnly", "true"),
             new Label("team", "platform")
         );
-        assertThat(flow.get().getVariables()).containsExactlyInAnyOrderEntriesOf(Map.of("env", "prod"));
         assertThat(flow.get().getException()).contains("Invalid type");
         assertThat(flow.get().getSource()).contains("failed-flow");
         assertThat(flow.get().getTasks()).isEmpty();
@@ -48,8 +44,7 @@ class FlowWithExceptionTest {
             {
                 "id": "failed-flow",
                 "namespace": "io.kestra.unittest",
-                "labels": {"system.readOnly": "true"},
-                "variables": {"env": "prod"}
+                "labels": {"system.readOnly": "true"}
             }
             """);
 
@@ -57,17 +52,15 @@ class FlowWithExceptionTest {
 
         assertThat(flow).isPresent();
         assertThat(flow.get().getLabels()).containsExactly(new Label("system.readOnly", "true"));
-        assertThat(flow.get().getVariables()).containsExactlyInAnyOrderEntriesOf(Map.of("env", "prod"));
     }
 
     @Test
-    void shouldKeepFallbackWhenMetadataIsMalformed() throws Exception {
+    void shouldKeepFallbackWhenLabelsAreMalformed() throws Exception {
         JsonNode jsonNode = JacksonMapper.ofJson().readTree("""
             {
                 "id": "failed-flow",
                 "namespace": "io.kestra.unittest",
-                "labels": "not-a-list-or-map",
-                "variables": "not-an-object"
+                "labels": "not-a-list-or-map"
             }
             """);
 
@@ -75,7 +68,6 @@ class FlowWithExceptionTest {
 
         assertThat(flow).isPresent();
         assertThat(flow.get().getLabels()).isNull();
-        assertThat(flow.get().getVariables()).isNull();
         assertThat(flow.get().getException()).isEqualTo("boom");
     }
 
@@ -85,8 +77,7 @@ class FlowWithExceptionTest {
             {
                 "id": "failed-flow",
                 "namespace": "io.kestra.unittest",
-                "labels": [null],
-                "variables": {"env": "prod"}
+                "labels": [null]
             }
             """);
 
@@ -94,7 +85,6 @@ class FlowWithExceptionTest {
 
         assertThat(flow).isPresent();
         assertThat(flow.get().getLabels()).isNull();
-        assertThat(flow.get().getVariables()).containsExactlyInAnyOrderEntriesOf(Map.of("env", "prod"));
         assertThat(flow.get().getException()).isEqualTo("boom");
     }
 

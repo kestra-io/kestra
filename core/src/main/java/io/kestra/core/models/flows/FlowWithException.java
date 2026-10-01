@@ -2,7 +2,6 @@ package io.kestra.core.models.flows;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -39,10 +38,9 @@ public class FlowWithException extends FlowWithSource {
             .disabled(flow.isDisabled())
             .exception(exception.getMessage())
             .tasks(List.of())
-            // an execution is still created for a blocked flow and then failed, so it must keep carrying these:
+            // an execution is still created for a blocked flow and then failed, so it must keep carrying its labels:
             // dropping them leaves label-based filtering, notifications and SLA alerting blind to the failure
             .labels(flow.getLabels())
-            .variables(flow.getVariables())
             .source(flow.getSource())
             .build();
     }
@@ -83,7 +81,6 @@ public class FlowWithException extends FlowWithSource {
                 .exception(exception.getMessage())
                 .tasks(List.of())
                 .labels(extractLabels(jsonNode))
-                .variables(extractVariables(jsonNode))
                 .source(jsonNode.hasNonNull("source") ? jsonNode.get("source").asText() : null)
                 .build();
             return Optional.of(flow);
@@ -108,17 +105,6 @@ public class FlowWithException extends FlowWithSource {
     }
 
     private record LabelsHolder(@JsonDeserialize(using = ListOrMapOfLabelDeserializer.class) List<Label> labels) {
-    }
-
-    private static Map<String, Object> extractVariables(final JsonNode jsonNode) {
-        try {
-            if (!jsonNode.hasNonNull("variables")) {
-                return null;
-            }
-            return JacksonMapper.ofJson().convertValue(jsonNode.get("variables"), JacksonMapper.MAP_TYPE_REFERENCE);
-        } catch (IllegalArgumentException e) {
-            return null;
-        }
     }
 
     /** {@inheritDoc} **/

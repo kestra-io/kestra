@@ -37,14 +37,14 @@ const updateDashboardFn = vi.fn().mockResolvedValue({data: {}})
 const validateDashboardFn = vi.fn().mockResolvedValue({data: {}})
 
 vi.mock("@kestra-io/kestra-sdk/dashboards", () => ({
-    dashboard: (...args: any[]) => dashboardFn(...args),
+    dashboard: (...args: unknown[]) => dashboardFn(...args),
 }))
 
 vi.mock("@kestra-io/kestra-sdk", () => ({
     useClient: () => ({
         get: vi.fn(),
-        post: (...args: any[]) => validateDashboardFn(...args),
-        put: (...args: any[]) => updateDashboardFn(...args),
+        post: (...args: unknown[]) => validateDashboardFn(...args),
+        put: (...args: unknown[]) => updateDashboardFn(...args),
         delete: vi.fn(),
     }),
 }))

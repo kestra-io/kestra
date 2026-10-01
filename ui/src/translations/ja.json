@@ -683,7 +683,7 @@
     "discard execution confirmation": "未保存のinputがあります。このexecutionを破棄してもよろしいですか？",
     "unsaved changed ?": "保存されていない変更があります。このページを離れますか？",
     "session expired": "セッションの有効期限が切れました",
-    "session expired description": "中断したところから続行するには、もう一度サインインしてください。このページでの未保存の変更は保持されます。",
+    "session expired description": "続行するには再度サインインしてください。",
     "go to login": "ログインページへ移動",
     "server unreachable": "Kestraサーバーに到達できません",
     "server unreachable description": "このページを更新する前に、保存されていない作業（Flow YAMLなど）を安全な場所にコピーしてください。サーバーが応答すると、このバナーは消えます。",

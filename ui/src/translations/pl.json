@@ -683,7 +683,7 @@
     "discard execution confirmation": "Masz niezapisane Inputy. Czy na pewno chcesz odrzucić tę egzekucję?",
     "unsaved changed ?": "Masz niezapisane zmiany, czy chcesz opuścić tę stronę?",
     "session expired": "Twoja sesja wygasła",
-    "session expired description": "Zaloguj się ponownie, aby kontynuować od miejsca, w którym skończyłeś. Niezapisane zmiany na tej stronie zostaną zachowane.",
+    "session expired description": "Zaloguj się ponownie, aby kontynuować.",
     "go to login": "Przejdź do strony logowania",
     "server unreachable": "Nie można połączyć się z serwerem Kestra",
     "server unreachable description": "Skopiuj wszelkie niezapisane zmiany (na przykład YAML Flow) w bezpieczne miejsce przed odświeżeniem tej strony. Ten baner zniknie, gdy serwer ponownie odpowie.",

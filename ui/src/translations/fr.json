@@ -683,7 +683,7 @@
     "discard execution confirmation": "Vous avez des inputs non enregistrés. Êtes-vous sûr de vouloir abandonner cette exécution ?",
     "unsaved changed ?": "Vous avez des changements non sauvegardés, voulez-vous quitter la page ?",
     "session expired": "Votre session a expiré",
-    "session expired description": "Connectez-vous à nouveau pour reprendre là où vous vous êtes arrêté. Les modifications non enregistrées sur cette page sont conservées.",
+    "session expired description": "Connectez-vous à nouveau pour continuer.",
     "go to login": "Aller à la page de connexion",
     "server unreachable": "Impossible d'atteindre le serveur Kestra",
     "server unreachable description": "Copiez tout travail non enregistré (par exemple le YAML du Flow) dans un endroit sûr avant d'actualiser cette page. Cette bannière disparaîtra dès que le serveur répondra à nouveau.",

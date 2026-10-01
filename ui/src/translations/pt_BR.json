@@ -683,7 +683,7 @@
     "discard execution confirmation": "Você tem inputs não salvos. Tem certeza de que deseja descartar esta execução?",
     "unsaved changed ?": "Você tem alterações não salvas, deseja sair desta página?",
     "session expired": "Sua sessão expirou",
-    "session expired description": "Faça login novamente para continuar de onde parou. As alterações não salvas nesta página serão mantidas.",
+    "session expired description": "Faça login novamente para continuar.",
     "go to login": "Ir para a página de login",
     "server unreachable": "Não é possível conectar ao servidor Kestra",
     "server unreachable description": "Copie qualquer trabalho não salvo (por exemplo, o YAML do Flow) em um local seguro antes de atualizar esta página. Este banner desaparecerá assim que o servidor responder novamente.",

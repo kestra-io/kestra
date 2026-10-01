@@ -1763,6 +1763,7 @@ export type PluginPluginElementMetadata = {
     deprecated?: boolean;
     title?: string;
     description?: string;
+    aliases?: Array<string>;
 };
 
 export type PluginArtifact = {

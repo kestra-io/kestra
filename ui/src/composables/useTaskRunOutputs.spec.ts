@@ -21,6 +21,15 @@ vi.mock("override/utils/route", () => ({apiUrl: () => "/api/v1/main"}))
 
 import {useHasTaskRunOutputs, loadTaskRunOutputs, loadExecutionOutputs, callTaskRunEndpoint} from "./useTaskRunOutputs"
 
+function rejectionHandlerOf(mock: ReturnType<typeof vi.fn>) {
+    let handler: ((e: unknown) => unknown) | undefined
+    mock.mockReturnValueOnce({catch: (onRejected: (e: unknown) => unknown) => {
+        handler = onRejected
+        return new Promise(() => {})
+    }})
+    return () => handler!
+}
+
 describe("useTaskRunOutputs", () => {
     beforeEach(() => {
         taskOutputsInformationMock.mockReset()
@@ -84,6 +93,15 @@ describe("useTaskRunOutputs", () => {
 
         expect(hasOutputs.value).toBe(false)
         expect(forbidden.__kestra_handled).toBe(true)
+    })
+
+    test("still surfaces a failure other than a missing permission or a missing execution", async () => {
+        const handler = rejectionHandlerOf(taskOutputsInformationMock)
+
+        useHasTaskRunOutputs(ref("exec-failing"), ref("tr-1"), ref("SUCCESS"))
+        await flushPromises()
+
+        expect(() => handler()({status: 500})).toThrow()
     })
 
     test("loadTaskRunOutputs returns the fetched outputs", async () => {

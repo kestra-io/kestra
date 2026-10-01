@@ -26,20 +26,20 @@ describe("PrevNext", () => {
     })
 
     it("searches the flow's other executions when the user can list executions", async () => {
-        user.hasAnyAction.mockReturnValue(true)
+        user.hasAnyAction.mockImplementation((resource: string, act: string) => resource === "EXECUTION" && act === "LIST")
         const wrapper = mountPrevNext()
         await flushPromises()
 
         expect(findExecutions).toHaveBeenCalledTimes(2)
-        expect(wrapper.find("#buttons").exists()).toBe(true)
+        expect(wrapper.find("[data-test='prev-next']").exists()).toBe(true)
     })
 
     it("renders nothing and searches nothing when the user cannot list executions", async () => {
-        user.hasAnyAction.mockReturnValue(false)
+        user.hasAnyAction.mockImplementation((resource: string, act: string) => !(resource === "EXECUTION" && act === "LIST"))
         const wrapper = mountPrevNext()
         await flushPromises()
 
         expect(findExecutions).not.toHaveBeenCalled()
-        expect(wrapper.find("#buttons").exists()).toBe(false)
+        expect(wrapper.find("[data-test='prev-next']").exists()).toBe(false)
     })
 })

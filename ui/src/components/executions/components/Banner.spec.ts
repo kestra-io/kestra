@@ -18,7 +18,10 @@ const triggerScope = reactive({visible: false, enabled: false})
 const logsAllowed = vi.hoisted(() => ({value: true}))
 
 vi.mock("override/stores/auth", () => ({
-    useAuthStore: () => ({user: {isAllowed: () => logsAllowed.value}}),
+    useAuthStore: () => ({user: {
+        isAllowed: (resource: string, act: string, namespace: string) =>
+            (resource === "EXECUTION" && act === "ACCESS_LOGS" && namespace === "io.kestra.tests") === logsAllowed.value,
+    }}),
 }))
 
 const globalConfig = {

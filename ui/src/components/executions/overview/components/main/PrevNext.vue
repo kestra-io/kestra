@@ -1,5 +1,5 @@
 <template>
-    <div v-if="canList" id="buttons">
+    <div v-if="canList" id="buttons" data-test="prev-next">
         <KsButton
             :icon="ChevronLeft"
             :disabled="!results.previous"

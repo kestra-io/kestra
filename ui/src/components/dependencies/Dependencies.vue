@@ -180,9 +180,10 @@
         groupField,
         groupFields,
         groupOf,
+        membersOf,
         groupChips,
         dagPriority,
-    } = useDagGrouping(() => nodesOf(getElements()))
+    } = useDagGrouping(() => nodesOf(getElements()), () => edgesOf(getElements()))
 
     const graphOptions = computed(() => ({
         series: [{
@@ -234,7 +235,7 @@
         expandNode,
         expandingNodeID,
         graphTruncated,
-    } = useDependencies(graphRef, SUBTYPE, initialNodeID, route.params, props.fetchAssetDependencies, groupOf, Boolean(props.dagView), props.expandAssetNode)
+    } = useDependencies(graphRef, SUBTYPE, initialNodeID, route.params, props.fetchAssetDependencies, groupOf, Boolean(props.dagView), props.expandAssetNode, membersOf)
 
     const dagCanvasRef = ref<{
         zoomIn: () => void;

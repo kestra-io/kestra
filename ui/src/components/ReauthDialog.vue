@@ -10,8 +10,9 @@
         data-test="reauth-dialog"
     >
         <p>{{ $t('session expired description') }}</p>
+        <p v-if="openedLoginTab" data-test="reauth-tab-hint">{{ $t('sign in in a new tab hint') }}</p>
         <KsAlert v-if="failed" class="reauth-error" type="error" :closable="false" :title="$t('setup.validation.incorrect_creds')" />
-        <KsForm :model="credentials" @submit.prevent="submit">
+        <KsForm v-if="canSignInWithPassword && !openedLoginTab" :model="credentials" @submit.prevent="submit">
             <KsFormItem>
                 <KsInput
                     v-model="credentials.username"
@@ -35,12 +36,21 @@
                 </KsInput>
             </KsFormItem>
         </KsForm>
+        <KsButton v-if="canSignInWithPassword && loginUrl && !openedLoginTab" text type="primary" @click="openLoginTab">
+            {{ $t('use another sign-in method') }}
+        </KsButton>
         <template #footer>
             <KsButton @click="resolveReauth(false)">
                 {{ $t('go to login') }}
             </KsButton>
-            <KsButton type="primary" :loading="loading" :disabled="!canSubmit" @click="submit">
+            <KsButton v-if="openedLoginTab" type="primary" data-test="reauth-continue" @click="resolveReauth(true)">
+                {{ $t('continue after sign in') }}
+            </KsButton>
+            <KsButton v-else-if="canSignInWithPassword" type="primary" :loading="loading" :disabled="!canSubmit" @click="submit">
                 {{ $t('setup.login') }}
+            </KsButton>
+            <KsButton v-else-if="loginUrl" type="primary" data-test="reauth-open-tab" @click="openLoginTab">
+                {{ $t('sign in in a new tab') }}
             </KsButton>
         </template>
     </KsDialog>
@@ -52,11 +62,12 @@
     import LockOutline from "vue-material-design-icons/LockOutline.vue"
     import {resolveReauth, submitReauth, useReauthDialog} from "../composables/useReauthDialog"
 
-    const {visible} = useReauthDialog()
+    const {visible, loginUrl, canSignInWithPassword} = useReauthDialog()
 
     const credentials = ref({username: "", password: ""})
     const loading = ref(false)
     const failed = ref(false)
+    const openedLoginTab = ref(false)
 
     const canSubmit = computed(() => !loading.value && credentials.value.username.trim() !== "" && credentials.value.password !== "")
 
@@ -64,8 +75,14 @@
         if (!isVisible) {
             credentials.value = {username: "", password: ""}
             failed.value = false
+            openedLoginTab.value = false
         }
     })
+
+    function openLoginTab() {
+        window.open(loginUrl.value, "_blank", "noopener")
+        openedLoginTab.value = true
+    }
 
     async function submit() {
         if (!canSubmit.value) return

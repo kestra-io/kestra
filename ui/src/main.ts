@@ -75,7 +75,7 @@ function setupAxios(router: Router) {
                 return false
             }
 
-            if (await requestReauth(BasicAuth.signIn)) return true
+            if (await requestReauth({signIn: BasicAuth.signIn})) return true
             beforeLogout()
             navigateToLogin()
             return false

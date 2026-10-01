@@ -600,6 +600,8 @@ class ExecutionControllerTest {
 
         // Then
         assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
+        assertThat(ExecutionControllerRunnerTest.ExecutionCrudEventListener.events())
+            .anySatisfy(event -> assertThat(event.getModel().getId()).isEqualTo(execution.getId()));
         assertThat(latch.await(10, TimeUnit.SECONDS)).isTrue();
         // The terminated child and the task run of another branch are left alone.
         assertThat(interrupted.get().getTaskRunIds()).containsExactlyInAnyOrder(parentTaskRunId, runningChildTaskRunId);

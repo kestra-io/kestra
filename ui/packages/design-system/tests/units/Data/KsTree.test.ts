@@ -24,7 +24,7 @@ describe("KsTree", () => {
             props: {data: TREE_DATA},
             global: globalConfig,
         })
-        expect(typeof (wrapper.vm as any).getNode).toBe("function")
+        expect(typeof (wrapper.vm as InstanceType<typeof KsTree>).getNode).toBe("function")
     })
 
     test("exposes getCheckedNodes method", () => {
@@ -32,7 +32,7 @@ describe("KsTree", () => {
             props: {data: TREE_DATA},
             global: globalConfig,
         })
-        expect(typeof (wrapper.vm as any).getCheckedNodes).toBe("function")
+        expect(typeof (wrapper.vm as InstanceType<typeof KsTree>).getCheckedNodes).toBe("function")
     })
 
     test("exposes setCurrentKey method", () => {
@@ -40,7 +40,7 @@ describe("KsTree", () => {
             props: {data: TREE_DATA},
             global: globalConfig,
         })
-        expect(typeof (wrapper.vm as any).setCurrentKey).toBe("function")
+        expect(typeof (wrapper.vm as InstanceType<typeof KsTree>).setCurrentKey).toBe("function")
     })
 
     test("renders tree nodes with default-expand-all", () => {

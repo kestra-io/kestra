@@ -1,5 +1,6 @@
 import {beforeEach, describe, expect, it, vi} from "vitest"
 import {createPinia, setActivePinia} from "pinia"
+import type {ValidateConstraintViolation} from "@kestra-io/kestra-sdk"
 import {validateFlows} from "@kestra-io/kestra-sdk/flows"
 import {useFlowStore} from "./flow"
 
@@ -64,14 +65,14 @@ describe("flow store", () => {
 
     it("should keep the newest validation when an older response lands last", async () => {
         const store = useFlowStore()
-        let resolveOld: (value: unknown) => void = () => {}
+        let resolveOld: (value: ValidateConstraintViolation[]) => void = () => {}
         vi.mocked(validateFlows)
             .mockReturnValueOnce(new Promise(resolve => { resolveOld = resolve }) as ReturnType<typeof validateFlows>)
-            .mockResolvedValueOnce([{errors: [{detail: "new"}]}] as Awaited<ReturnType<typeof validateFlows>>)
+            .mockResolvedValueOnce([{index: 0, errors: [{detail: "new"}]}])
 
         const old = store.validateFlow({flow: "id: old"})
         await store.validateFlow({flow: "id: new"})
-        resolveOld([{errors: [{detail: "old"}]}])
+        resolveOld([{index: 0, errors: [{detail: "old"}]}])
         await old
 
         expect(store.flowErrors).toEqual(["new"])

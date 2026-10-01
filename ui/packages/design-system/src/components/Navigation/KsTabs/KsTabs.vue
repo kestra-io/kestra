@@ -1,13 +1,13 @@
 <template>
     <ElTabs
         v-model="model"
-        :type="type"
+        :type="computedType"
         :class="{
             'kel-tabs--box': props.type === 'box',
             'kel-tabs--segmented': props.type === 'segmented',
             'kel-tabs--pane-scroll': paneScroll,
         }"
-        v-bind="({...filteredProps(), ...$attrs} as any)"
+        v-bind="({...filteredProps() as Omit<Partial<typeof props>, 'type' | 'paneScroll'>, ...$attrs})"
     >
         <template v-if="$slots.default" #default>
             <slot />
@@ -17,7 +17,7 @@
 
 <script setup lang="ts">
     import {computed} from "vue"
-    import {ElTabs} from "element-plus"
+    import {ElTabs, type TabsProps} from "element-plus"
     import {useFilteredProps} from "../../../utils/filteredProps"
 
     defineOptions({inheritAttrs: false})
@@ -33,9 +33,12 @@
         default?(): unknown
     }>()
 
-    const type = computed(() =>
-        (props.type === "box" || props.type === "segmented" ? "" : props.type),
-    )
+    const computedType = computed<TabsProps["type"]>(() => {
+        if (props.type === "box" || props.type === "segmented") {
+            return ""
+        }
+        return props.type as TabsProps["type"]
+    })
 
     const filteredProps = useFilteredProps(props, ["type", "paneScroll"])
 </script>

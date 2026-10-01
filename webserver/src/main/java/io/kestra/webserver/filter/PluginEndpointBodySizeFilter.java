@@ -8,7 +8,7 @@ import io.micronaut.http.HttpStatus;
 import io.micronaut.http.annotation.RequestFilter;
 import io.micronaut.http.annotation.ServerFilter;
 
-@ServerFilter("/api/v1/*/plugins/*/endpoints/*")
+@ServerFilter("/api/v1/*/plugins/*/endpoints/**")
 public class PluginEndpointBodySizeFilter {
     static final long MAX_BODY_SIZE = 10 * 1024 * 1024;
 

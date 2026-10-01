@@ -24,7 +24,7 @@ class PluginEndpointBodySizeFilterTest {
     void shouldRejectPostWithContentLengthOverCap() {
         // Given - a body above MAX_BODY_SIZE on the plugin-endpoints path
         byte[] oversizedBody = new byte[(int) PluginEndpointBodySizeFilter.MAX_BODY_SIZE + 1];
-        MutableHttpRequest<?> request = HttpRequest.POST("/api/v1/main/plugins/io.kestra.plugin.core/endpoints/foo", oversizedBody);
+        MutableHttpRequest<?> request = HttpRequest.POST("/api/v1/main/plugins/io.kestra.plugin.core/endpoints/foo/exec1/tr1", oversizedBody);
 
         // When/Then
         HttpClientResponseException exception = assertThrows(
@@ -37,7 +37,7 @@ class PluginEndpointBodySizeFilterTest {
     @Test
     void shouldNotBlockSmallRequest() {
         // Given - a small request on the same path; downstream 404 is fine, 413 is not
-        MutableHttpRequest<?> request = HttpRequest.POST("/api/v1/main/plugins/io.kestra.plugin.core/endpoints/foo", "small body");
+        MutableHttpRequest<?> request = HttpRequest.POST("/api/v1/main/plugins/io.kestra.plugin.core/endpoints/foo/exec1/tr1", "small body");
 
         // When/Then
         HttpClientResponseException exception = assertThrows(

@@ -12,7 +12,7 @@ public class TestScanEndpoint implements PluginEndpoint {
     }
 
     @Override
-    public PluginEndpointResponse handle(PluginEndpointRequest request) {
+    public PluginEndpointResponse handle(PluginEndpointContext context) {
         return PluginEndpointResponse.of(Map.of("ok", true));
     }
 }

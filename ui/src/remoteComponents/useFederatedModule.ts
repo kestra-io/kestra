@@ -1,13 +1,13 @@
-import {ref, shallowReactive, markRaw, defineComponent, h, onErrorCaptured} from "vue"
+import {ref, shallowReactive, markRaw, defineComponent, h, onErrorCaptured, type Component} from "vue"
 import {apiUrlWithoutTenants} from "override/utils/route"
 import {loadRemote, registerRemotes, registerShared} from "@module-federation/enhanced/runtime"
 import * as PluginsAPI from "@kestra-io/kestra-sdk/plugins"
 import {KnownSlotsPropNames, ManifestsRegistry, type KnownSlotProps} from "@kestra-io/slot-contracts"
-import {PluginUiModuleWithGroup} from "@kestra-io/kestra-sdk"
+import {PluginUiModuleWithGroup, type Task} from "@kestra-io/kestra-sdk"
 import {getCsrfToken} from "../utils/csrf"
 
 
-function wrapWithErrorBoundary(inner: any) {
+function wrapWithErrorBoundary(inner: Component) {
     return defineComponent({
         name: "FederatedModuleBoundary",
         inheritAttrs: false,
@@ -41,7 +41,7 @@ function addCSSLinkIfNotAlreadyPresent(href: string) {
 
 export function useFederatedModule<T extends keyof typeof KnownSlotsPropNames>(slotName: T) {
 
-    const RemoteComponents = shallowReactive<Record<string, any>>({})
+    const RemoteComponents = shallowReactive<Record<string, Component>>({})
     const taskAdditionalInfoRemote = ref<Record<string, ManifestsRegistry[T]>>({})
 
     const manifestReady = ref(false)
@@ -122,9 +122,9 @@ export function useFederatedModule<T extends keyof typeof KnownSlotsPropNames>(s
                     const taskRoot = manifest.group ? taskTypeKey.slice(manifest.group.length + 1) : []
                     const remoteId = `${remoteName}/${taskRoot}/${slotName}`
                     
-                    let module: {default: any} | null = null
+                    let module: {default: Component} | null = null
                     try {
-                        module = await loadRemote<{default: any}>(remoteId)
+                        module = await loadRemote<{default: Component}>(remoteId)
                     } catch(err) {
                         console.error(`[FederatedModule] loadRemote FAILED for "${remoteId}":`, err)
                         continue
@@ -158,12 +158,19 @@ export function useFederatedModule<T extends keyof typeof KnownSlotsPropNames>(s
         return !!RemoteComponents[taskType]
     }
 
+    // A task runner's module wins only when the runner ships one, otherwise the task's own module is used.
+    function componentTypeFor(task?: Pick<Task, "type"> & {taskRunner?: Pick<Task, "type">}): string {
+        const runnerType = task?.taskRunner?.type
+        return runnerType && hasResolvedComponent(runnerType) ? runnerType : task?.type ?? ""
+    }
+
     return {
         RemoteComponent,
         taskAdditionalInfoRemote,
         manifestReady,
         resolveRemoteComponent,
         hasResolvedComponent,
+        componentTypeFor,
     }
 }
 

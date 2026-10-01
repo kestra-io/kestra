@@ -205,7 +205,9 @@ function renderTheme(tokens, localPaletteIndex, localValueIndex, selector) {
         const category = c.name.replace(/^ks\//, "").split("-")[0]
         const heading = category !== prev ? `\n${INDENT}/* ${category} */\n` : ""
         prev = category
-        const varName = c.name.replace(/\//g, "-")
+        // Lowercased to match Color-variables.json: custom properties are case-sensitive, so a
+        // name emitted as `--ks-Artwork-fill` here and listed lowercase there is two different tokens.
+        const varName = c.name.replace(/\//g, "-").toLowerCase()
         return `${heading}${INDENT}#{--${varName}}: ${resolveValue(c, localPaletteIndex, localValueIndex)};`
     }).join("\n").trim()
     return `${HEADER}\n@use "color-palette" as *;\n\n${selector} {\n${INDENT}${body}\n}\n`

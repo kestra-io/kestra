@@ -1,9 +1,9 @@
 import {afterEach, beforeEach, describe, expect, test, vi} from "vitest"
-import {flushPromises, mount} from "@vue/test-utils"
-import {createI18n} from "vue-i18n"
+import {flushPromises} from "@vue/test-utils"
+import {i18nMount} from "../../i18nMount"
+
 import {createPinia, setActivePinia} from "pinia"
 import KestraDesignSystem from "@kestra-io/design-system"
-
 import ExecutionLogs from "../../../../src/components/executions/Logs.vue"
 
 vi.mock("vue-router", () => ({
@@ -19,10 +19,7 @@ vi.mock("@kestra-io/kestra-sdk", () => ({
 }))
 
 const globalConfig = {
-    plugins: [
-        createI18n({legacy: false, locale: "en", fallbackWarn: false, missingWarn: false}),
-        KestraDesignSystem,
-    ],
+    plugins: [KestraDesignSystem],
     stubs: {
         KSFilter: true,
         TaskRunDetails: true,
@@ -47,7 +44,7 @@ describe("executions/Logs toolbar layout", () => {
 
     test("toolbar actions keep Download and Copy but no longer render a standalone Refresh", async () => {
         // Given
-        const wrapper = mount(ExecutionLogs, {global: globalConfig})
+        const wrapper = i18nMount(ExecutionLogs, {global: globalConfig})
         await flushPromises()
 
         // When

@@ -7,6 +7,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 import java.util.Optional;
 
+import io.kestra.webserver.configuration.CookiesConfiguration;
 import io.kestra.webserver.configuration.WebserverConfiguration;
 
 import io.micronaut.context.annotation.Requires;
@@ -21,6 +22,7 @@ import io.micronaut.http.cookie.Cookie;
 import io.micronaut.http.cookie.SameSite;
 import io.micronaut.security.csrf.CsrfConfiguration;
 import io.micronaut.security.csrf.generator.CsrfTokenGenerator;
+import io.micronaut.security.csrf.validator.CsrfTokenValidator;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
@@ -41,8 +43,10 @@ public class UiIndexService {
 
     private final String basePath;
     private final WebserverConfiguration webserverConfiguration;
+    private final CookiesConfiguration cookiesConfiguration;
     private final Optional<CsrfConfiguration> csrfConfiguration;
     private final Optional<CsrfTokenGenerator<HttpRequest<?>>> csrfTokenGenerator;
+    private final Optional<CsrfTokenValidator<HttpRequest<?>>> csrfTokenValidator;
 
     // Empty when the UI is not packaged on the classpath (backend-only builds).
     private final Optional<String> template;
@@ -51,13 +55,17 @@ public class UiIndexService {
     public UiIndexService(
         @Nullable @Value("${micronaut.server.context-path}") String basePath,
         WebserverConfiguration webserverConfiguration,
+        CookiesConfiguration cookiesConfiguration,
         Optional<CsrfConfiguration> csrfConfiguration,
-        Optional<CsrfTokenGenerator<HttpRequest<?>>> csrfTokenGenerator
+        Optional<CsrfTokenGenerator<HttpRequest<?>>> csrfTokenGenerator,
+        Optional<CsrfTokenValidator<HttpRequest<?>>> csrfTokenValidator
     ) {
         this.basePath = basePath;
         this.webserverConfiguration = Objects.requireNonNull(webserverConfiguration);
+        this.cookiesConfiguration = Objects.requireNonNull(cookiesConfiguration);
         this.csrfConfiguration = Objects.requireNonNull(csrfConfiguration);
         this.csrfTokenGenerator = Objects.requireNonNull(csrfTokenGenerator);
+        this.csrfTokenValidator = Objects.requireNonNull(csrfTokenValidator);
         this.template = load();
     }
 
@@ -75,10 +83,16 @@ public class UiIndexService {
 
         if (csrfConfiguration.isPresent() && csrfTokenGenerator.isPresent()) {
             // Reuse the existing cookie token so multiple tabs and BFCache-restored pages
-            // all share one stable token. Generate only when the cookie is absent.
+            // all share one stable token. Generate only when the cookie is absent or holds a
+            // token this instance cannot validate: a cookie left behind by another Kestra
+            // instance on the same host (an OSS deployment replaced by EE, a rotated
+            // kestra.encryption.secret-key) is signed with a key this instance rejects, and
+            // echoing it into the page would make every cookie-authenticated write fail CSRF
+            // validation until the browser's cookies are cleared.
             String csrfToken = request.getCookies()
                 .findCookie(csrfConfiguration.get().getCookieName())
                 .map(Cookie::getValue)
+                .filter(token -> isValidCsrfToken(request, token))
                 .orElseGet(() -> csrfTokenGenerator.get().generateCsrfToken(request));
 
             if (csrfToken != null) {
@@ -86,7 +100,7 @@ public class UiIndexService {
                 html = withCsrfMeta(template, "<meta name=\"csrf-token\" content=\"" + escaped + "\">");
                 csrfCookie = Cookie.of(csrfConfiguration.get().getCookieName(), csrfToken)
                     .httpOnly(true)
-                    .secure(request.isSecure())
+                    .secure(cookiesConfiguration.isSecure(request))
                     .sameSite(SameSite.Strict)
                     .path("/");
             }
@@ -101,6 +115,13 @@ public class UiIndexService {
             response.cookie(csrfCookie);
         }
         return response;
+    }
+
+    // Without a validator bean every cookie token is trusted, as it was before the check existed.
+    private boolean isValidCsrfToken(HttpRequest<?> request, String token) {
+        return csrfTokenValidator
+            .map(validator -> validator.validateCsrfToken(request, token))
+            .orElse(true);
     }
 
     // Plain concatenation rather than replaceFirst: a token is untrusted input for a regex replacement.

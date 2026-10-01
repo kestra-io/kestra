@@ -13,7 +13,7 @@ type Types = "namespaces" | "flows" | "executions";
  */
 export const createLink = (
     type: Types,
-    execution: Execution,
+    execution: Pick<Execution, "id" | "namespace" | "flowId" | "tenantId">,
     customID?: string,
 ): RouteLocationRaw => {
     if (!execution) return {}

@@ -63,7 +63,8 @@ describe("useFlowRoot", () => {
         flowStore.dependenciesCount = undefined
         loadDependencies.mockReset()
         loadFlow.mockReset()
-        loadFlow.mockResolvedValue(undefined)
+        // useFlowRoot ignores what loadFlow resolves with, so the stub does not build a whole flow.
+        loadFlow.mockResolvedValue(undefined as unknown as Awaited<ReturnType<typeof flowStore.loadFlow>>)
         vi.mocked(flowStore.loadGraph).mockReset()
     })
 

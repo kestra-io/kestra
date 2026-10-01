@@ -22,6 +22,7 @@ import io.micronaut.context.env.PropertyPlaceholderResolver;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.naming.NameUtils;
 import io.micronaut.core.naming.conventions.StringConvention;
+import io.micronaut.core.type.Argument;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 
@@ -215,12 +216,31 @@ public class AiServiceManager {
         );
     }
 
-    /** Returns the provider's custom headers with the names exactly as written, empty when it declares none. */
+    /**
+     * Returns the provider's custom headers with the names exactly as written, empty when it declares none.
+     * <p>
+     * Two property shapes have to be covered. A source of flat keys — environment variables, system properties,
+     * {@code @Property} — gives each header its own key, which the raw catalog holds verbatim. A YAML file instead
+     * hands Micronaut the whole {@code providers} list as the value of a single key, so nothing indexed ever
+     * reaches the raw catalog and the headers have to be read from the untyped value, which is left unconverted.
+     */
     private static Map<String, Object> rawCustomHeaders(String configurationPath, Environment environment) {
+        // The property may be written in either kebab or camel case, each landing under its own key.
+        List<String> paths = List.of(configurationPath + ".custom-headers", configurationPath + ".customHeaders");
         try {
-            Map<String, Object> headers = environment.getProperties(configurationPath + ".custom-headers", StringConvention.RAW);
-            // The property may also be written in camel case, which lands under a different raw key.
-            return headers.isEmpty() ? environment.getProperties(configurationPath + ".customHeaders", StringConvention.RAW) : headers;
+            for (String path : paths) {
+                Map<String, Object> headers = environment.getProperties(path, StringConvention.RAW);
+                if (!headers.isEmpty()) {
+                    return headers;
+                }
+            }
+            for (String path : paths) {
+                Map<String, Object> headers = environment.getProperty(path, Argument.mapOf(String.class, Object.class)).orElseGet(Map::of);
+                if (!headers.isEmpty()) {
+                    return headers;
+                }
+            }
+            return Map.of();
         } catch (Exception e) {
             // Reading raw properties resolves placeholders, which throws when one cannot be resolved: keep the
             // bound headers rather than aborting the startup over a single misconfigured value.

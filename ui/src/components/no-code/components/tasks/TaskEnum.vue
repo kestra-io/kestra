@@ -4,6 +4,8 @@
         @update:model-value="onInput"
         filterable
         :clearable="!required"
+        :allowCreate="allowCreate"
+        :defaultFirstOption="allowCreate"
         :placeholder="$t('no_code.choose_placeholder', {field: root?.split('.').pop() || 'value'})"
     >
         <KsOption
@@ -18,10 +20,13 @@
 <script setup lang="ts">
     import {collapseEmptyValues} from "../utils/collapseEmptyValues"
 
+    type ModelValue = object | string | number | boolean | unknown[]
+
     withDefaults(defineProps<{
-        modelValue?: object | string | number | boolean | unknown[]
+        modelValue?: ModelValue
         schema?: Record<string, unknown>
         required?: boolean
+        allowCreate?: boolean
         task?: Record<string, unknown>
         root?: string
         definitions?: Record<string, unknown>
@@ -29,16 +34,17 @@
         modelValue: undefined,
         schema: undefined,
         required: false,
+        allowCreate: false,
         task: undefined,
         root: undefined,
         definitions: undefined,
     })
 
     const emit = defineEmits<{
-        "update:modelValue": [value: unknown]
+        "update:modelValue": [value: ModelValue | undefined]
     }>()
 
-    function onInput(value: unknown) {
+    function onInput(value: ModelValue) {
         emit("update:modelValue", collapseEmptyValues(value))
     }
 </script>

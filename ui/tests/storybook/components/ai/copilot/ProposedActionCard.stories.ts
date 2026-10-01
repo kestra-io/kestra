@@ -44,3 +44,38 @@ export const ActionCard: Story = {
 export const Disabled: Story = {
     args: {action: {confirmationId: "c3", tool: "restart-execution", family: "MUTATE", summary: "Restart exec-42"}, disabled: true},
 }
+
+// A mutating action carrying the new flow YAML: shown as a diff instead of a raw arg, since there's
+// no flow currently open to diff against, it renders as a pure addition.
+export const ActionCardWithDiff: Story = {
+    args: {action: {
+        confirmationId: "c4",
+        tool: "create-flow",
+        family: "MUTATE",
+        summary: "Create the flow `company.team.my-flow`",
+        arguments: {
+            namespace: "company.team",
+            flowId: "my-flow",
+            body: "id: my-flow\nnamespace: company.team\ntasks:\n  - id: log\n    type: io.kestra.plugin.core.log.Log\n    message: Hello",
+        },
+    }},
+}
+
+// Same action, but a flow is currently open under the same namespace/id — the diff compares against
+// its live content, so additions and removals both show.
+export const ActionCardWithDiffAgainstCurrentFlow: Story = {
+    args: {
+        action: {
+            confirmationId: "c5",
+            tool: "update-flow",
+            family: "MUTATE",
+            summary: "Update the flow `company.team.my-flow`",
+            arguments: {
+                namespace: "company.team",
+                flowId: "my-flow",
+                body: "id: my-flow\nnamespace: company.team\ntasks:\n  - id: log\n    type: io.kestra.plugin.core.log.Log\n    message: Hello world",
+            },
+        },
+        currentFlowSource: "id: my-flow\nnamespace: company.team\ntasks:\n  - id: log\n    type: io.kestra.plugin.core.log.Log\n    message: Hello",
+    },
+}

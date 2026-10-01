@@ -91,4 +91,60 @@ describe("CopilotArtefactDraft", () => {
         expect(w.find("[data-test=\"copilot-draft-apply\"]").exists()).toBe(false)
         appSupported.value = false
     })
+
+    // Bug 1 (kestra-io/kestra#19330 review): the card must offer a way to decline a draft, not
+    // just apply or open it — otherwise a mirrored preview locks the main editor with no way out.
+    it("offers Dismiss alongside the other actions and emits it with the draft id", async () => {
+        const w = mountDraft({draftId: "d9", kind: "FLOW", yaml: "id: f", valid: true, constraints: null})
+        await w.find("[data-test=\"copilot-draft-dismiss\"]").trigger("click")
+        expect(w.emitted("dismiss")).toEqual([["d9"]])
+    })
+
+    it("offers Dismiss even when there are no other actions (e.g. an unsupported app draft)", () => {
+        appSupported.value = false
+        const w = mountDraft({draftId: "d10", kind: "APP", yaml: "id: my-app", valid: true, constraints: null})
+        expect(w.find("[data-test=\"copilot-draft-dismiss\"]").exists()).toBe(true)
+    })
+
+    it("hides the actions and shows a quiet status once dismissed", () => {
+        const w = mount(CopilotArtefactDraft, {
+            props: {draft: {draftId: "d11", kind: "FLOW", yaml: "id: f", valid: true, constraints: null}, dismissed: true},
+            global: mountGlobal,
+        })
+        expect(w.find("[data-test=\"copilot-draft-dismiss\"]").exists()).toBe(false)
+        expect(w.find("[data-test=\"copilot-draft-open\"]").exists()).toBe(false)
+        expect(w.find("[data-test=\"copilot-draft-apply\"]").exists()).toBe(false)
+        expect(w.find("[data-test=\"copilot-draft-dismissed\"]").text()).toContain("Dismissed")
+    })
+
+    // A draft that already saved successfully must not keep offering Apply — clicking it again would
+    // silently re-save the same content (kestra-io/kestra#19330 review round 2: `appliedDraftIds` was
+    // tracked in CopilotChat.vue but never reached this card, so it stayed fully interactive forever).
+    it("hides the actions and shows a quiet status once applied", () => {
+        const w = mount(CopilotArtefactDraft, {
+            props: {draft: {draftId: "d14", kind: "FLOW", yaml: "id: f", valid: true, constraints: null}, applied: true},
+            global: mountGlobal,
+        })
+        expect(w.find("[data-test=\"copilot-draft-dismiss\"]").exists()).toBe(false)
+        expect(w.find("[data-test=\"copilot-draft-open\"]").exists()).toBe(false)
+        expect(w.find("[data-test=\"copilot-draft-apply\"]").exists()).toBe(false)
+        expect(w.find("[data-test=\"copilot-draft-applied\"]").text()).toContain("Applied")
+    })
+
+    // Bug 2 (kestra-io/kestra#19330 review): CopilotChat.vue needs to know a draft was applied so it
+    // stops treating it as pending — the card only knows once `useApplyDraft.ts`'s apply actually wrote
+    // something, not merely that Apply was clicked (a cancelled confirm or a failed write emits nothing).
+    it("emits applied with the draft id once apply resolves true", async () => {
+        apply.mockResolvedValueOnce(true)
+        const w = mountDraft({draftId: "d12", kind: "FLOW", yaml: "id: f", valid: true, constraints: null})
+        await w.find("[data-test=\"copilot-draft-apply\"]").trigger("click")
+        expect(w.emitted("applied")).toEqual([["d12"]])
+    })
+
+    it("does not emit applied when apply resolves false (cancelled or failed)", async () => {
+        apply.mockResolvedValueOnce(false)
+        const w = mountDraft({draftId: "d13", kind: "FLOW", yaml: "id: f", valid: true, constraints: null})
+        await w.find("[data-test=\"copilot-draft-apply\"]").trigger("click")
+        expect(w.emitted("applied")).toBeUndefined()
+    })
 })

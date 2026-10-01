@@ -11,7 +11,7 @@ writing feature code against this package.
 ## Peer dependencies
 
 The package ships no framework of its own: `vue`, `element-plus`, `vue-i18n`, `vue-router`,
-`vue-material-design-icons`, `moment`, `moment-timezone`, `echarts`, `monaco-editor`, `bootstrap`
+`vue-material-design-icons`, `echarts`, `monaco-editor`, `bootstrap`
 and `yaml` are peer dependencies, so the host app owns their versions. See `peerDependencies` in
 [`package.json`](package.json) for the supported ranges.
 
@@ -134,10 +134,11 @@ npm run build               # tsdown: JS + per-component .d.ts + CSS into dist/
 npm run dev                 # same, in watch mode
 
 npm run test                # lint + types + unit + storybook, in parallel
-npm run unit:test           # vitest units only
-npm run storybook:test      # storybook component tests (needs chromium)
-npm run types:test          # vue-tsc --noEmit
-npm run lint:fix            # oxlint + eslint, with fixes
+npm run test:unit           # vitest units only
+npm run test:storybook      # storybook component tests (needs chromium)
+npm run check:types         # vue-tsc --noEmit
+npm run test:lint           # oxlint + eslint
+npm run lint                # oxlint + eslint, with fixes
 ```
 
 Every new `Ks*` component needs a Storybook story; prefer a story over a Vitest unit test when the

@@ -2,8 +2,10 @@ import {describe, it, expect, vi} from "vitest"
 import {createApp} from "vue"
 import {createRouter, createMemoryHistory} from "vue-router"
 
-import {setupTenantRouter} from "../../../src/composables/useTenant"
+import {setupTenantRouter, tenantGuard} from "../../../src/composables/useTenant"
 
+// Mirrors main.ts, where the guard goes through initApp: registering it after one of initApp's
+// awaits would leave the router's first navigation, started by app.use(router), without it.
 function buildRouter() {
     const router = createRouter({
         history: createMemoryHistory(),
@@ -13,6 +15,7 @@ function buildRouter() {
             {path: "/:tenant?/executions/:id", name: "executions/update", component: {template: "<div/>"}},
         ],
     })
+    router.beforeEach((to, from) => tenantGuard(router, to, from))
     const app = createApp({template: "<router-view/>"})
     app.use(router)
     setupTenantRouter(router, app)

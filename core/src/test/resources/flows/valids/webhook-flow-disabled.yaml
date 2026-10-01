@@ -1,0 +1,13 @@
+id: webhook-flow-disabled
+namespace: io.kestra.tests
+disabled: true
+
+tasks:
+  - id: out
+    type: io.kestra.plugin.core.debug.Return
+    format: "{{trigger | json }}"
+
+triggers:
+  - id: webhook
+    type: io.kestra.plugin.core.trigger.Webhook
+    key: webhook-flow-disabled-key

@@ -204,10 +204,15 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
         return buildTenantCondition(tenantId);
     }
 
-    // "executable" filtering must stay independent of read-ACL, since users with
-    // execute-but-not-read permission are exactly who these two methods serve.
+    @Override
+    protected Condition defaultFilter(String tenantId, boolean allowDeleted) {
+        return super.defaultFilter(tenantId, allowDeleted).and(aclCondition(Resource.FLOW));
+    }
+
+    // "executable" filtering stays independent of read-ACL and is scoped by the EXECUTION grant instead,
+    // since users with execute-but-not-read permission are exactly who these two methods serve.
     protected Condition defaultExecutionFilter(String tenantId) {
-        return this.defaultFilterWithNoACL(tenantId).and(DISABLED_FIELD.eq(false));
+        return this.defaultFilterWithNoACL(tenantId).and(DISABLED_FIELD.eq(false)).and(aclCondition(Resource.EXECUTION));
     }
 
     @Override
@@ -1229,7 +1234,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
             .getDslContextWrapper()
             .transactionResult(configuration ->
             {
-                DSLContext context = DSL.using(configuration);
+                DSLContext context = QueryTimeout.apply(configuration, descriptors.getQueryTimeout());
 
                 Map<String, ? extends ColumnDescriptor<Flows.Fields>> columnsWithoutDate = descriptors.getColumns().entrySet().stream()
                     .filter(entry -> entry.getValue().getField() == null || !dateFields().contains(entry.getValue().getField()))
@@ -1278,7 +1283,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
         boolean numeratorFilter) {
         return this.jdbcRepository.getDslContextWrapper().transactionResult(configuration ->
         {
-            DSLContext context = DSL.using(configuration);
+            DSLContext context = QueryTimeout.apply(configuration, dataFilter.getQueryTimeout());
             ColumnDescriptor<Flows.Fields> columnDescriptor = dataFilter.getColumns();
             Field<?> field = columnToField(columnDescriptor, getFieldsMapping());
             if (columnDescriptor.getAgg() != null) {

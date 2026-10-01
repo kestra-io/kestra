@@ -51,6 +51,8 @@ export const storageKeys = {
     FILTER_ORDER_PREFIX: "filter-order",
     LOGS_VIEW_TYPE: "logsViewType",
     SCROLL_MEMORY_PREFIX: "scroll",
+    TOPOLOGY_ORIENTATION: "topology-orientation",
+    DEFAULT_TOPOLOGY_ORIENTATION: "defaultTopologyOrientation",
 } as const
 
 export const executeFlowBehaviours = {
@@ -61,6 +63,11 @@ export const executeFlowBehaviours = {
 export const taskEditDefaultModes = {
     MODAL: "MODAL",
     TAB: "TAB",
+} as const
+
+export const topologyOrientations = {
+    VERTICAL: "VERTICAL",
+    HORIZONTAL: "HORIZONTAL",
 } as const
 
 export const stateDisplayValues = {

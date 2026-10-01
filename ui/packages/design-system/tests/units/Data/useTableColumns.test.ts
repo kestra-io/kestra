@@ -117,4 +117,17 @@ describe("useTableColumns persistence", () => {
 
         expect(table.visibleColumns.value).toEqual(["a", "b", "c"])
     })
+
+    test("keeps the stored columns that still exist and drops the rest", () => {
+        localStorage.setItem("columns_partly-stale", "gone,a,c")
+        const table = setup("partly-stale", [])
+        expect(table.visibleColumns.value).toEqual(["a", "c"])
+        expect(table.visibleCount.value).toBe(2)
+        expect(table.totalCount.value).toBe(COLUMNS.length)
+    })
+
+    test("prefers explicit initialVisibleColumns over the default flags", () => {
+        const table = setup("explicit", ["c"])
+        expect(table.visibleColumns.value).toEqual(["c"])
+    })
 })

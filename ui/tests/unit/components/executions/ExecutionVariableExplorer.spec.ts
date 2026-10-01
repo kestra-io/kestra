@@ -1,8 +1,8 @@
 import {beforeEach, describe, expect, test, vi} from "vitest"
-import {flushPromises, mount} from "@vue/test-utils"
-import {createPinia, setActivePinia} from "pinia"
-import {createI18n} from "vue-i18n"
+import {flushPromises} from "@vue/test-utils"
+import {i18nMount} from "../../i18nMount"
 
+import {createPinia, setActivePinia} from "pinia"
 import ExecutionVariableExplorer from "../../../../src/components/executions/outputs/ExecutionVariableExplorer.vue"
 import {useExecutionsStore} from "../../../../src/stores/executions"
 
@@ -26,35 +26,28 @@ vi.mock("../../../../src/components/executions/FilePreview.vue", () => ({
     },
 }))
 
-const i18n = createI18n({
-    legacy: false,
-    locale: "en",
-    messages: {
-        en: {
-            collapse: "Collapse",
-            expand: "Expand",
-            variables: "Variables",
-            triggers: "Triggers",
-            inputs: "Inputs",
-            flow_outputs: "Outputs",
-            variable_explorer: {
-                empty: "No variables",
-                n_items: "{count} items",
-                n_keys: "{count} keys",
-                one_item: "1 item",
-                one_key: "1 key",
-                raw_json: "Raw JSON",
-                search_placeholder: "Search",
-                select_prompt: "Select a variable",
-                tasks_outputs: "Task outputs",
-                tree: "Tree",
-            },
-        },
+const messages = {
+    collapse: "Collapse",
+    expand: "Expand",
+    variables: "Variables",
+    triggers: "Triggers",
+    inputs: "Inputs",
+    flow_outputs: "Outputs",
+    variable_explorer: {
+        empty: "No variables",
+        n_items: "{count} items",
+        n_keys: "{count} keys",
+        one_item: "1 item",
+        one_key: "1 key",
+        raw_json: "Raw JSON",
+        search_placeholder: "Search",
+        select_prompt: "Select a variable",
+        tasks_outputs: "Task outputs",
+        tree: "Tree",
     },
-})
+}
 
 const globalConfig = {
-    plugins: [i18n],
     stubs: {
         KsCollapse: {template: "<div><slot /></div>"},
         KsCollapseItem: {template: "<div><slot name=\"title\" /><slot /></div>"},
@@ -98,10 +91,10 @@ function mountExplorer(variables: Record<string, unknown>, trigger?: {id: string
         },
     }
 
-    return mount(ExecutionVariableExplorer, {global: globalConfig})
+    return i18nMount(ExecutionVariableExplorer, {messages, global: globalConfig})
 }
 
-async function selectVariable(wrapper: ReturnType<typeof mount>, itemName: string, sectionKey = "variables") {
+async function selectVariable(wrapper: ReturnType<typeof i18nMount>, itemName: string, sectionKey = "variables") {
     const sidebar = wrapper.findComponent({name: "SidebarList"})
     const item = (sidebar.props("sections") as any[])
         .find((section) => section.key === sectionKey)

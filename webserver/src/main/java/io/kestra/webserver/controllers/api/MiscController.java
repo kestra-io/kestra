@@ -20,8 +20,10 @@ import io.kestra.core.reporter.reports.FeatureUsageReport;
 import io.kestra.core.runners.pebble.PebbleExpressionService;
 import io.kestra.core.runners.pebble.PebbleFunction;
 import io.kestra.core.services.InstanceService;
+import io.kestra.core.services.VersionService;
 import io.kestra.core.utils.EditionProvider;
 import io.kestra.core.utils.VersionProvider;
+import io.kestra.webserver.configuration.CookiesConfiguration;
 import io.kestra.webserver.services.BasicAuthCredentials;
 import io.kestra.webserver.services.BasicAuthService;
 import io.kestra.webserver.services.ai.AiServiceManager;
@@ -63,6 +65,9 @@ public class MiscController {
     InstanceService instanceService;
 
     @Inject
+    VersionService versionService;
+
+    @Inject
     FeatureUsageReport featureUsageReport;
 
     @Inject
@@ -73,6 +78,9 @@ public class MiscController {
 
     @Inject
     SystemFlowsConfiguration systemFlowsConfiguration;
+
+    @Inject
+    CookiesConfiguration cookiesConfiguration;
 
     @io.micronaut.context.annotation.Value("${kestra.ui.charts.default-duration:PT24H}")
     private String chartDefaultDuration;
@@ -137,6 +145,7 @@ public class MiscController {
             .version(versionProvider.getVersion())
             .commitId(versionProvider.getRevision())
             .commitDate(versionProvider.getDate())
+            .versionUpgrade(versionService.pendingUpgradeNotice().orElse(null))
             .isCustomDashboardsEnabled(this.isCustomDashboardsEnabled())
             .isAnonymousUsageEnabled(this.usageReportConfig.enabled())
             .isUiAnonymousUsageEnabled(this.isUiAnonymousUsageEnabled)
@@ -149,6 +158,7 @@ public class MiscController {
             .isAiEnabled(applicationContext.containsBean(AiController.class))
             .isAiApiKeyConfigured(aiServiceManager.map(AiServiceManager::hasConfiguredProvider).orElse(false))
             .isBasicAuthInitialized(isBasicAuthInitialized())
+            .isBasicAuthManagedByConfig(basicAuthService.map(BasicAuthService::isManagedByConfig).orElse(false))
             .systemNamespace(systemFlowsConfiguration.namespace())
             .hiddenLabelsPrefixes(hiddenLabelsPrefixes)
             .url(kestraUrl)
@@ -207,13 +217,19 @@ public class MiscController {
     @ExecuteOn(TaskExecutors.IO)
     @Operation(
         tags = { "Misc" }, summary = "Configure basic authentication for the instance.",
-        description = "Sets up basic authentication credentials. Once credentials already exist, the request must also carry the current password."
+        description = "Sets up basic authentication credentials. Once credentials already exist, the request must also carry the current password. Rejected when the credentials are set in the configuration file."
     )
     public MutableHttpResponse<?> createBasicAuth(
         HttpRequest<?> request,
         @RequestBody @Valid @Body BasicAuthCredentials basicAuthCredentials) {
         BasicAuthService service = basicAuthService
             .orElseThrow(() -> new IllegalStateException("basicAuthService bean is required in OSS"));
+
+        if (service.isManagedByConfig()) {
+            throw new ValidationErrorException(List.of(
+                "Basic Authentication credentials are managed in the configuration file and cannot be changed from the API."
+            ));
+        }
 
         // Being authenticated is not enough to prove the caller still knows the *current*
         // password: isAuthenticated() caches verified tokens, so a password already rotated on
@@ -265,35 +281,39 @@ public class MiscController {
     @Post("/logout")
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = { "Misc" }, summary = "Clear the basic auth session cookie.")
-    public MutableHttpResponse<?> logout() {
+    public MutableHttpResponse<?> logout(HttpRequest<?> request) {
+        boolean secure = cookiesConfiguration.isSecure(request);
+
         Cookie cookie = Cookie.of(BasicAuthService.BASIC_AUTH_COOKIE_NAME, "")
             .path("/")
             .httpOnly(true)
+            .secure(secure)
             .sameSite(SameSite.Strict)
             .maxAge(0);
 
         Cookie flagCookie = Cookie.of(BasicAuthService.BASIC_AUTH_FLAG_COOKIE_NAME, "")
             .path("/")
             .httpOnly(false)
+            .secure(secure)
             .sameSite(SameSite.Strict)
             .maxAge(0);
 
         return HttpResponse.noContent().cookie(cookie).cookie(flagCookie);
     }
 
-    private static Cookie authCookie(HttpRequest<?> request, String username, String password) {
+    private Cookie authCookie(HttpRequest<?> request, String username, String password) {
         return Cookie.of(BasicAuthService.BASIC_AUTH_COOKIE_NAME, BasicAuthService.encodeToken(username, password))
             .path("/")
             .httpOnly(true)
-            .secure(request.isSecure())
+            .secure(cookiesConfiguration.isSecure(request))
             .sameSite(SameSite.Strict);
     }
 
-    private static Cookie authFlagCookie(HttpRequest<?> request) {
+    private Cookie authFlagCookie(HttpRequest<?> request) {
         return Cookie.of(BasicAuthService.BASIC_AUTH_FLAG_COOKIE_NAME, "true")
             .path("/")
             .httpOnly(false)
-            .secure(request.isSecure())
+            .secure(cookiesConfiguration.isSecure(request))
             .sameSite(SameSite.Strict);
     }
 
@@ -332,6 +352,8 @@ public class MiscController {
 
         ZonedDateTime commitDate;
 
+        VersionService.VersionUpgrade versionUpgrade;
+
         @JsonInclude
         Boolean isCustomDashboardsEnabled;
 
@@ -356,6 +378,8 @@ public class MiscController {
         Boolean isAiApiKeyConfigured;
 
         Boolean isBasicAuthInitialized;
+
+        Boolean isBasicAuthManagedByConfig;
 
         Long pluginsHash;
 

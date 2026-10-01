@@ -325,7 +325,7 @@
 
 .sidebar-context-menu {
     position: fixed;
-    z-index: 9999;
+    z-index: var(--ks-z-top);
     min-width: 12rem;
     padding: var(--ks-spacing-1);
     background: var(--ks-bg-elevated);

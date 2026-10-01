@@ -12,6 +12,8 @@ import io.kestra.core.async.AsyncOperation;
 import io.kestra.core.events.EventId;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.triggers.TriggerId;
+import io.kestra.core.serializers.Jackson3ListOrMapOfLabelDeserializer;
+import io.kestra.core.serializers.Jackson3ListOrMapOfLabelSerializer;
 import io.kestra.core.serializers.ListOrMapOfLabelDeserializer;
 import io.kestra.core.serializers.ListOrMapOfLabelSerializer;
 import io.kestra.core.validations.NoSystemLabelValidation;
@@ -41,6 +43,8 @@ public record CreateBackfillTrigger(
         ZonedDateTime end,
         Map<String, Object> inputs,
         @JsonSerialize(using = ListOrMapOfLabelSerializer.class)
-        @JsonDeserialize(using = ListOrMapOfLabelDeserializer.class) List<@NoSystemLabelValidation Label> labels) {
+        @JsonDeserialize(using = ListOrMapOfLabelDeserializer.class)
+        @tools.jackson.databind.annotation.JsonSerialize(using = Jackson3ListOrMapOfLabelSerializer.class)
+        @tools.jackson.databind.annotation.JsonDeserialize(using = Jackson3ListOrMapOfLabelDeserializer.class) List<@NoSystemLabelValidation Label> labels) {
     }
 }

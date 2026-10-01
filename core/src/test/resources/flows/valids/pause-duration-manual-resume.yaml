@@ -1,0 +1,17 @@
+id: pause-duration-manual-resume
+namespace: io.kestra.tests
+
+tasks:
+  - id: pause
+    type: io.kestra.plugin.core.flow.Pause
+    pauseDuration: PT5S
+    onResume:
+      - id: reason
+        type: STRING
+  - id: sleep
+    type: io.kestra.plugin.core.flow.Sleep
+    duration: PT10S
+  - id: last
+    type: io.kestra.plugin.core.output.OutputValues
+    values:
+      reason: "{{ outputs.pause.onResume.reason }}"

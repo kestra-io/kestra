@@ -50,7 +50,7 @@ export const useLogFilter = (): ComputedRef<FilterConfiguration> => {
                         },
                         searchable: true,
                     },
-                ] : []) as any,
+                ] : []) as FilterConfiguration["keys"],
                 {
                     key: "level",
                     label: t("filter.level_log_executions.label"),
@@ -140,7 +140,7 @@ export const useLogFilter = (): ComputedRef<FilterConfiguration> => {
                         Comparators.ENDS_WITH,
                     ],
                     valueType: "text",
-                }] : []) as any,
+                }] : []) as FilterConfiguration["keys"],
                 {
                     key: "taskId",
                     label: t("filter.taskId.label"),

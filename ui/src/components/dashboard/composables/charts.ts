@@ -1,8 +1,6 @@
 import {ref} from "vue"
 
-import moment from "moment"
-
-import {cssVar} from "@kestra-io/design-system"
+import {cssVar, dateUtils, dayjs, type Dayjs} from "@kestra-io/design-system"
 import {getSchemeValue} from "../../../utils/scheme"
 import {DateGrouping} from "../../../utils/utils"
 
@@ -12,6 +10,21 @@ export interface RankedStackedBars {
     totals: number[]
     othersCount: number
     othersNames: string[]
+}
+
+/**
+ * The subset of an ECharts payload the dashboard charts read, shared by the `echarts-click` handlers
+ * and the tooltip formatters. `KsBar`/`KsPie`/`KsEchart` emit `echarts-click` as `unknown` (the design
+ * system doesn't depend on echarts' own event types), so this narrows it once for every reader.
+ */
+export interface EchartsParams {
+    name?: string;
+    seriesName?: string;
+    seriesType?: string;
+    dataIndex?: number;
+    value?: unknown;
+    /** Present only for pie/donut chart items. */
+    percent?: number;
 }
 
 export const DEFAULT_BAR_CATEGORY_LIMIT = 8
@@ -78,11 +91,11 @@ export const MAX_FILLED_TIME_BUCKETS = 1000
  */
 export function fillTimeBucketLabels(rawDates: unknown[], grouping: DateGrouping): string[] {
     const labels = new Set<string>()
-    const parsed: moment.Moment[] = []
+    const parsed: Dayjs[] = []
 
     for (const raw of rawDates ?? []) {
         if (raw === null || raw === undefined) continue
-        const date = moment(raw as moment.MomentInput, moment.ISO_8601, true)
+        const date = dateUtils.parseIso(raw)
         if (date.isValid()) {
             labels.add(date.format(grouping.format))
             parsed.push(date)
@@ -92,11 +105,11 @@ export function fillTimeBucketLabels(rawDates: unknown[], grouping: DateGrouping
     }
 
     if (parsed.length) {
-        const max = moment.max(parsed)
-        const cursor = moment.min(parsed).clone().startOf(grouping.unit)
+        const max = dayjs.max(parsed)!
+        let cursor = dayjs.min(parsed)!.startOf(grouping.unit)
         for (let i = 0; cursor.isSameOrBefore(max) && i < MAX_FILLED_TIME_BUCKETS; i++) {
             labels.add(cursor.format(grouping.format))
-            cursor.add(1, grouping.unit)
+            cursor = cursor.add(1, grouping.unit)
         }
     }
 
@@ -119,7 +132,7 @@ function hashToHexColor(value: string): string {
     return `#${((hash >>> 0) & 0xffffff).toString(16).padStart(6, "0")}`
 }
 
-export function getConsistentHEXColor(_theme: "light" | "dark", value: string): string {
+export function getConsistentHEXColor(_theme: "light" | "dark", value: string | undefined): string {
     const status = (value?.includes(",") ? value.split(",").pop()?.trim() : value) ?? ""
 
     const tokenColor = status ? cssVar(`--ks-chart-${status.toLowerCase()}`) : ""

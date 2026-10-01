@@ -77,25 +77,27 @@ public class RunContextFactory {
     protected KestraConfiguration kestraConfiguration;
 
     @Inject
-    private RunContextLoggerFactory runContextLoggerFactory;
+    protected RunContextLoggerFactory runContextLoggerFactory;
 
     @Inject
-    private KVStoreService kvStoreService;
+    protected KVStoreService kvStoreService;
 
     @Inject
-    private NamespaceFactory namespaceFactory;
+    protected NamespaceFactory namespaceFactory;
 
     @Inject
-    private AssetManagerFactory assetManagerFactory;
+    protected AssetManagerFactory assetManagerFactory;
+
+    // Late injection: both read a repository, which a worker does not have, and a worker only ever
+    // builds a run context from variables — never from an execution.
+    @Inject
+    protected Provider<TaskOutputService> taskOutputServiceProvider;
 
     @Inject
-    private TaskOutputService taskOutputService;
+    protected Provider<ExecutionOutputService> executionOutputServiceProvider;
 
     @Inject
-    private ExecutionOutputService executionOutputService;
-
-    @Inject
-    private Provider<RunContextInitializer> runContextInitializerProvider;
+    protected Provider<RunContextInitializer> runContextInitializerProvider;
 
     // hacky
     public RunContextInitializer initializer() {
@@ -123,7 +125,7 @@ public class RunContextFactory {
             newRunVariablesBuilder()
                 .withFlow(flow)
                 .withExecution(execution)
-                .withOutputs(taskOutputService.computeOutputs(execution))
+                .withOutputs(taskOutputServiceProvider.get().computeOutputs(execution))
                 .withExecutionOutputs(executionOutputs(flow, execution))
         );
         Map<String, Object> variables = runVariablesBuilder.build(runContextLogger, PropertyContext.create(variableRenderer));
@@ -155,7 +157,7 @@ public class RunContextFactory {
             .withFlow(flow)
             .withTask(task)
             .withExecution(execution)
-            .withOutputs(taskOutputService.computeOutputs(execution))
+            .withOutputs(taskOutputServiceProvider.get().computeOutputs(execution))
             .withExecutionOutputs(executionOutputs(flow, execution))
             .withTaskRun(taskRun);
         Map<String, Object> variables = runVariablesBuilder.build(runContextLogger, PropertyContext.create(variableRenderer));
@@ -267,7 +269,7 @@ public class RunContextFactory {
         Execution realExecution = execution != null && execution.getLoopRun() != null ? execution.getLoopRun().parent() : execution;
 
         try {
-            return executionOutputService.getOutputs(realExecution);
+            return executionOutputServiceProvider.get().getOutputs(realExecution);
         } catch (InternalException e) {
             throw new KestraRuntimeException(e);
         }

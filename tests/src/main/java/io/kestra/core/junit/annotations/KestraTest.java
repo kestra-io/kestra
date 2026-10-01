@@ -62,4 +62,6 @@ public @interface KestraTest {
     boolean startApplication() default true;
 
     boolean resolveParameters() default true;
+
+    boolean deduceEnvironment() default true;
 }

@@ -1,8 +1,9 @@
 import { vueRouter } from "storybook-vue3-router";
 import type { Meta, StoryObj } from "@storybook/vue3";
 import { within, expect, waitFor } from "storybook/test";
-import { useExecutionsStore } from "../../../../src/stores/executions";
-import { useFlowStore } from "../../../../src/stores/flow";
+import { configureClient, type FlowForExecution, type StateType } from "@kestra-io/kestra-sdk";
+import { useExecutionsStore, type Execution } from "../../../../src/stores/executions";
+import { useFlowStore, type Flow } from "../../../../src/stores/flow";
 import Gantt from "../../../../src/components/executions/Gantt.vue";
 
 const NAMESPACE = "company.team.qa";
@@ -10,7 +11,9 @@ const FLOW_ID = "qa_flow_concurrency";
 const EXECUTION_ID = "12HqIIvMvw5K1k5Zksxgus";
 
 // States the Gantt renders an empty view for (an execution with no task runs).
-const STATE_OPTIONS = ["CREATED", "RUNNING", "PAUSED", "CANCELLED", "FAILED", "KILLED", "WARNING", "QUEUED"];
+const STATE_OPTIONS: StateType[] = ["CREATED", "RUNNING", "PAUSED", "CANCELLED", "FAILED", "KILLED", "WARNING", "QUEUED"];
+
+const AVERAGE_DURATION_MS = 20 * 60 * 1000;
 
 const FLOW = {
     id: FLOW_ID,
@@ -18,19 +21,36 @@ const FLOW = {
     tasks: [{ id: "hold", type: "io.kestra.plugin.core.flow.Sleep" }],
 };
 
-function executionWithState(current: string) {
+// ExecutionProgress renders nothing without a baseline, and its generated SDK call bypasses the axios
+// stub, so the fetch override is the only seam that gives the Running story a bar to assert on.
+function stubAverageDuration() {
+    const realFetch = globalThis.fetch.bind(globalThis);
+    configureClient({
+        fetch: (input: URL | RequestInfo, init?: RequestInit) => {
+            const url = input instanceof Request ? input.url : String(input);
+            if (!url.includes("/average-duration")) return realFetch(input, init);
+            return Promise.resolve(new Response(JSON.stringify({ avgDurationMs: AVERAGE_DURATION_MS, count: 12 }), {
+                status: 200,
+                headers: { "Content-Type": "application/json" },
+            }));
+        },
+    });
+}
+
+function executionWithState(current: StateType) {
     return {
         id: EXECUTION_ID,
         flowId: FLOW_ID,
         namespace: NAMESPACE,
         state: {
             current,
+            startDate: new Date(Date.now() - 5 * 60 * 1000).toISOString(),
             histories: [
-                { state: "CREATED", date: "2025-01-01T00:00:00.000Z" },
+                { state: "CREATED" as const, date: "2025-01-01T00:00:00.000Z" },
                 { state: current, date: "2025-01-01T00:00:01.000Z" },
             ],
         },
-        taskRunList: [],
+        taskRunList: [] as Execution["taskRunList"],
     };
 }
 
@@ -48,7 +68,7 @@ const ROUTER_ROUTES = [
     },
 ];
 
-type GanttStoryArgs = { state: string };
+type GanttStoryArgs = { state: StateType };
 
 const meta = {
     title: "Components/Executions/Gantt",
@@ -67,17 +87,19 @@ const meta = {
     decorators: [
         (_story: unknown, context: { args: GanttStoryArgs }) => ({
             setup() {
+                stubAverageDuration();
+
                 const state = context.args.state ?? "CANCELLED";
 
                 const executionsStore = useExecutionsStore();
-                executionsStore.execution = executionWithState(state) as any;
-                executionsStore.flow = FLOW as any;
+                executionsStore.execution = executionWithState(state) as Execution;
+                executionsStore.flow = FLOW as FlowForExecution;
 
                 const flowStore = useFlowStore();
                 flowStore.flow = {
                     ...FLOW,
                     concurrency: { limit: 1, behavior: "QUEUE" },
-                } as any;
+                } as Flow;
             },
             template: "<div style='height: 100vh'><story /></div>",
         }),

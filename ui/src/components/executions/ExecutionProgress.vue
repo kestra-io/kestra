@@ -1,11 +1,8 @@
 <template>
-    <div class="execution-progress">
+    <div v-if="averageDurationMs" class="execution-progress">
         <KsText size="small" class="progress-title">{{ $t("executionProgress.title") }}</KsText>
         <KsText size="small" class="progress-estimate">
-            <template v-if="!averageDurationMs">
-                {{ $t("executionProgress.noBaseline") }}
-            </template>
-            <template v-else-if="isPastEstimate">
+            <template v-if="isPastEstimate">
                 {{ $t("executionProgress.pastEstimate") }}
             </template>
             <template v-else>
@@ -35,7 +32,7 @@
     }>()
 
     // null until the baseline request answers, and when the flow has no execution history to
-    // estimate from — both cases render an empty bar.
+    // estimate from — both cases skip rendering the progress bar.
     const averageDurationMs = ref<number | null>(null)
 
     // Timezone-independent: Date.now() counts milliseconds since the UTC epoch, as does parsing the
@@ -84,7 +81,7 @@
             // the backend omits the field entirely when there is no history (non_null serialization)
             averageDurationMs.value = avgDurationMs ?? null
         } catch {
-            // no baseline: the bar stays empty rather than blocking the Gantt view
+            // no baseline: the progress bar is skipped rather than blocking the Gantt view
         }
     })
 

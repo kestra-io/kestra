@@ -1,6 +1,6 @@
 import {describe, test, expect, vi} from "vitest"
-import {shallowMount, flushPromises} from "@vue/test-utils"
-import {createI18n} from "vue-i18n"
+import {flushPromises} from "@vue/test-utils"
+import {i18nShallowMount} from "../../i18nMount"
 
 const fileMetaMock = vi.fn()
 
@@ -18,24 +18,16 @@ vi.mock("../../../../src/composables/useEditorBindings", () => ({
 
 import VarValue from "../../../../src/components/executions/VarValue.vue"
 
-const i18n = createI18n({
-    legacy: false,
-    locale: "en",
-    messages: {en: {download: "Download", jsonl: "JSONL", open: "Open"}},
-    missingWarn: false,
-    fallbackWarn: false,
-})
-
 describe("VarValue download link", () => {
     // Storage rewrites spaces in output file names to "+" and percent-encodes URI-special
     // characters, so an unencoded ?path= query double-decodes server-side and 422s.
     test("URL-encodes the storage path in the download link", async () => {
         fileMetaMock.mockResolvedValue({size: 6})
 
-        const wrapper = shallowMount(VarValue, {
+        const wrapper = i18nShallowMount(VarValue, {
+            messages: {download: "Download", jsonl: "JSONL", open: "Open"},
             props: {value: "kestra:///company/e1/abc-a%23b+c.txt", execution: {id: "exec-1"}},
             global: {
-                plugins: [i18n],
                 stubs: {
                     KsButtonGroup: {template: "<div><slot /></div>"},
                     KsButton: {inheritAttrs: false, template: "<a v-bind=\"$attrs\"><slot /></a>"},

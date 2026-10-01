@@ -1,10 +1,13 @@
 {
   "pl": {
+    "versionUpgradeNotice": {
+      "message": "Kestra został zaktualizowany do wersji {version} i może zawierać zmiany powodujące niezgodność, które wymagają aktualizacji Twoich Flowów.",
+      "cta": "Zobacz, co się zmieniło"
+    },
     "loading": "Ładowanie...",
     "more actions": "Więcej akcji",
     "recipe": {
       "create_flow": "Utwórz Flow",
-      "email": "Email",
       "execution": {
         "include_sub": "Uwzględnij podrzędne namespace'y",
         "include_sub_hint_off": "Ten alert wyzwolą tylko Flowy w dokładnie tym namespace'ie.",
@@ -52,7 +55,6 @@
       "section_title": "Utwórz systemowy Flow",
       "summary": {
         "any_namespace": "dowolnym namespace'ie",
-        "empty": "Skonfiguruj Trigger i co najmniej jeden kanał powiadomień, aby zobaczyć podgląd swojego Flow.",
         "exact_match": "dokładne dopasowanie",
         "execution": "Gdy Flow w {ns} ({scope}) osiągnie status {states}, zostanie wysłane powiadomienie przez {channels}.",
         "including_sub": "i podrzędne namespace'y",
@@ -62,7 +64,6 @@
         "other": "Gdy wyzwoli się Trigger {trigger}, zostanie wysłane powiadomienie przez {channels}.",
         "schedule": "Zgodnie z harmonogramem „{cron}” zostanie wysłane powiadomienie przez {channels}.",
         "selected_trigger": "wybrane",
-        "title": "Podsumowanie",
         "webhook": "Po odebraniu webhooka zostanie wysłane powiadomienie przez {channels}.",
         "preview_title": "Podgląd",
         "live": "LIVE"
@@ -70,7 +71,6 @@
       "then": {
         "no_channel_warning": "Wybierz co najmniej jeden kanał powiadomień.",
         "subtitle": "Wybierz sposób powiadamiania zespołu.",
-        "title": "Następnie powiadom",
         "unavailable_channels_warning": "{channels}: plugin nie jest zainstalowany dla tego typu Triggera, więc powiadomienie nie zostanie wysłane."
       },
       "trigger": {
@@ -91,7 +91,6 @@
       },
       "when": {
         "subtitle": "Wybierz, co uruchamia ten systemowy Flow.",
-        "title": "Gdy to nastąpi",
         "trigger_type": "Typ Triggera"
       },
       "hero_eyebrow": "Twój systemowy Flow",
@@ -131,7 +130,6 @@
     "description": "Opis",
     "show description": "Pokaż opis",
     "show details": "Pokaż szczegóły",
-    "show more details": "Pokaż więcej szczegółów",
     "skipped": "Pominięto",
     "revision": "Wersja",
     "theme": "Motyw",
@@ -214,7 +212,6 @@
     "executionProgress": {
       "title": "Postęp egzekucji",
       "estimatedRemaining": "Szacowany pozostały czas: {duration}",
-      "noBaseline": "Brak danych historycznych — nie można oszacować pozostałego czasu",
       "pastEstimate": "Trwa dłużej niż zwykle"
     },
     "launch execution": "Wykonaj",
@@ -297,7 +294,6 @@
       "star": "Daj nam gwiazdkę"
     },
     "source": "Źródło",
-    "source only": "Tylko źródło",
     "home": "Strona główna",
     "create": "Utwórz",
     "create_flow": "Utwórz Flow",
@@ -442,7 +438,10 @@
       "zoom-fit": "Dopasuj",
       "invalid": "Błąd grafu",
       "invalid_description": "Wystąpił błąd podczas ładowania grafu. Proszę sprawdzić kod źródłowy pod kątem błędów.",
-      "load_error": "Nie udało się załadować grafu topologii. Spróbuj ponownie."
+      "load_error": "Nie udało się załadować grafu topologii. Spróbuj ponownie.",
+      "add-task": "Dodaj task",
+      "add-trigger": "Dodaj trigger",
+      "child-count": "{count} task | {count} tasks"
     },
     "show task logs": "Pokaż logi Taska",
     "show task condition": "Pokaż warunek Taska",
@@ -460,6 +459,12 @@
     "email": "E-mail",
     "password": "Hasło",
     "confirm password": "Potwierdź hasło",
+    "change_password": {
+      "title": "Zmień hasło",
+      "current_password": "Obecne hasło",
+      "new_password": "Nowe hasło",
+      "success": "Twoje poświadczenia zostały zaktualizowane."
+    },
     "invalid flow": "Nieprawidłowy Flow",
     "invalid yaml": "Nieprawidłowy YAML",
     "inputs": "Inputs",
@@ -491,6 +496,9 @@
     },
     "download": "Pobierz",
     "jsonl": "JSONL",
+    "large_outputs": {
+      "value_truncated": "Wyświetlanie skróconego podglądu tej wartości {size}."
+    },
     "concurrency_limit": {
       "dialog_title": "Limity Concurrency",
       "warning": "Zmiana licznika może uszkodzić Concurrency, więc egzekucje mogą przekroczyć dozwolony limit."
@@ -679,7 +687,6 @@
     "open in new tab": "W nowej zakładce",
     "execute the flow": "Wykonaj Flow <code>{id}</code>",
     "discard execution confirmation": "Masz niezapisane Inputy. Czy na pewno chcesz odrzucić tę egzekucję?",
-    "discard changes confirmation": "Masz niezapisane zmiany. Czy na pewno chcesz je odrzucić?",
     "unsaved changed ?": "Masz niezapisane zmiany, czy chcesz opuścić tę stronę?",
     "unsaved changes": "Niezapisane zmiany",
     "unsaved changes warning": "Masz niezapisane zmiany. Jeśli opuścisz tę stronę, twoje zmiany zostaną utracone.",
@@ -848,9 +855,6 @@
     "bulk kill": "Czy na pewno chcesz zabić <code>{executionCount}</code> egzekucji?",
     "cancel": "Anuluj",
     "errorLogs": "Logi błędów",
-    "welcome_page": {
-      "guide": "Potrzebujesz wskazówek, aby uruchomić swój pierwszy Flow?"
-    },
     "product_tour": "Przewodnik po produkcie",
     "executions replayed": "<code>{executionCount}</code> egzekucja | <code>{executionCount}</code> egzekucje | <code>{executionCount}</code> egzekucji odtworzonych",
     "executions state changed": "Status <code>{executionCount}</code> egzekucji został zmieniony",
@@ -861,20 +865,9 @@
     "executions restarted": "<code>{executionCount}</code> egzekucja | <code>{executionCount}</code> egzekucje | <code>{executionCount}</code> egzekucji uruchomionych ponownie",
     "executions killed": "<code>{executionCount}</code> egzekucja zabita | <code>{executionCount}</code> egzekucje zabite | <code>{executionCount}</code> egzekucji zabitych",
     "executions deleted": "<code>{executionCount}</code> egzekucja | <code>{executionCount}</code> egzekucje | <code>{executionCount}</code> egzekucji usuniętych",
-    "invalid bulk replay": "Nie można uruchomić Replaya egzekucji",
-    "invalid bulk resume": "Nie można wznowić egzekucji",
-    "invalid bulk pause": "Nie można wstrzymać egzekucji",
-    "invalid bulk unqueue": "Nie można usunąć egzekucji z kolejki",
-    "invalid bulk force run": "Nie można wymusić uruchomienia egzekucji",
-    "invalid bulk restart": "Nie można ponownie uruchomić egzekucji",
-    "invalid bulk kill": "Nie można zabić egzekucji",
-    "invalid bulk delete": "Nie można usunąć egzekucji",
     "execution not found": "Nie znaleziono egzekucji {executionId}.",
-    "execution not in state PAUSED": "Egzekucja <code>{executionId}</code> nie jest w statusie PAUSED",
-    "execution already finished": "Egzekucja <code>{executionId}</code> już się zakończyła",
     "seeing old revision": "Widzisz starą wersję: {revision}",
     "export": "Eksportuj",
-    "exports": "Eksporty",
     "export_csv": "Eksportuj jako CSV",
     "flow_export": "Eksportuj Flow",
     "flow export": "Czy na pewno chcesz wyeksportować <code>{flowCount}</code> Flowów?",
@@ -886,7 +879,7 @@
     "flow delete": "Czy na pewno chcesz usunąć <code>{flowCount}</code> Flowów?",
     "delete flow error": "Nie udało się usunąć flow {id}",
     "flows deleted": "Usunięto <code>{count}</code> Flowów",
-    "flow disable": "Czy na pewno chcesz wyłączyć <code>{flowCount}</code> Flowów?",
+    "flow disable": "Czy na pewno chcesz wyłączyć {flowCount} Flow | {flowCount} Flowy | {flowCount} Flowów?<br/><br/>Wyłączenie Flow zapisuje <code>disabled: true</code> w Flow i tworzy nową wersję. Synchronizacja z zewnętrznego źródła, która nie zawiera <code>disabled: true</code>, ponownie włączy Flow.",
     "flow enable": "Czy na pewno chcesz włączyć <code>{flowCount}</code> Flowów?",
     "flows disabled": "Wyłączono <code>{count}</code> Flowów",
     "flows enabled": "Włączono <code>{count}</code> Flowów",
@@ -901,9 +894,7 @@
     "disabled": "Wyłączone",
     "before": "przed",
     "after": "po",
-    "dynamic": "Dynamiczny",
     "choice": "Choice",
-    "sequential": "Sekwencyjny",
     "can not delete": "Nie można usunąć tego Taska",
     "can not have less than 1 task": "Flow musi mieć co najmniej jeden Task. Dodaj kolejny Task przed usunięciem tego.",
     "task id": "ID Taska",
@@ -915,6 +906,7 @@
     "flow creation denied in namespace": "Nie masz uprawnień do tworzenia Flowów w namespace'ie `{namespace}`.",
     "readonly property": "Właściwość tylko do odczytu",
     "namespace and id readonly": "Właściwości `namespace` i `id` nie mogą być zmienione – są teraz ustawione na swoje początkowe wartości. Jeśli chcesz zmienić nazwę Flow lub jego namespace, utwórz nowy Flow i usuń stary.",
+    "flow metadata locked": "`id` i `namespace` nie mogą być zmienione po utworzeniu Flow.",
     "avg": "Średnia",
     "sum": "Suma",
     "min": "Min",
@@ -922,7 +914,6 @@
     "bar": "Słupkowy",
     "line": "Linia",
     "metric": "Metryka",
-    "aggregation": "Agregacja",
     "metric choice": "Brak dostępnych metryk dla tego Flow",
     "metric filter no match": "Brak metryk pasujących do „{term}”",
     "of": "z",
@@ -988,7 +979,6 @@
     "version": "Wersja",
     "services": "Usługi",
     "hostname": "Nazwa hosta",
-    "port": "Port",
     "file preview truncated": "Wyświetlana zawartość została skrócona",
     "file unavailable": "Plik niedostępny",
     "file unavailable description": "Ten plik nie jest już dostępny — mógł zostać usunięty lub wygasł.",
@@ -1078,6 +1068,7 @@
       },
       "revisions": {
         "history": "Historia wersji",
+        "load_error": "Nie można wczytać rewizji {revision}; mogła zostać usunięta.",
         "restore": {
           "success": "Wersja pliku została przywrócona"
         }
@@ -1098,7 +1089,6 @@
     "execute backfill": "Wykonaj Backfill",
     "relative": "Względny",
     "relative start date": "Względna data rozpoczęcia",
-    "now": "Teraz",
     "absolute": "Absolutny",
     "backfill": "Backfill",
     "Set labels": "Ustaw etykiety",
@@ -1173,6 +1163,7 @@
             "log_level": "Domyślny poziom logów",
             "log_display": "Domyślne wyświetlanie logów",
             "editor_type": "Domyślny typ edytora",
+            "topology_orientation": "Domyślna orientacja topologii",
             "execute_flow": "Uruchamianie Flow",
             "execute_default_tab": "Domyślna zakładka egzekucji",
             "flow_default_tab": "Domyślna zakładka Flow",
@@ -1187,6 +1178,7 @@
             "log_level": "Minimalny poziom logów wyświetlany w logach egzekucji.",
             "log_display": "Jak logi są prezentowane przy otwieraniu egzekucji.",
             "editor_type": "Edytor wyświetlany przy pierwszym otwarciu Flow.",
+            "topology_orientation": "Domyślna orientacja panelu Topology w edytorze Flow.",
             "execute_flow": "Gdzie otwierają się wyniki egzekucji po uruchomieniu.",
             "execute_default_tab": "Zakładka wybierana przy przejściu do egzekucji.",
             "flow_default_tab": "Zakładka wybierana przy przejściu do Flow.",
@@ -1199,6 +1191,10 @@
           "task_edit_default_mode_options": {
             "modal": "Modal",
             "tab": "Zakładka"
+          },
+          "topology_orientation_options": {
+            "vertical": "Pionowo",
+            "horizontal": "Poziomo"
           },
           "flow_template_reset": "Resetuj do domyślnego szablonu",
           "flow_template_error": {
@@ -1275,7 +1271,6 @@
       "label": "Promuj"
     },
     "demos": {
-      "enterprise_edition": "Enterprise Edition",
       "get_a_demo_button": "Uzyskaj Demo",
       "contact_sales": "Skontaktuj się z działem sprzedaży",
       "secrets": {
@@ -1394,6 +1389,7 @@
     "onboarding": {
       "tour": {
         "menu": "Przewodnik po produkcie",
+        "menu_resume": "Wznów przewodnik",
         "menu_description": "Zbuduj, uruchom i napraw Flow, a potem uruchom go zdarzeniem",
         "step_of": "Krok {current} z {total}",
         "actions": {
@@ -1434,7 +1430,7 @@
             "title": "Flowy edytuje się jak kod",
             "body": "Dodaliśmy dla Ciebie Taska <code>notify</code> bez AI Copilota, abyś zobaczył, jak wygląda bezpośrednia edycja YAML. Wysyła on końcowy wynik na Slacka.",
             "next": "Zobacz dokumentację Taska",
-            "callout": "Pierwszy szkic z AI Copilota jest tylko punktem wyjścia. W edytorze rozwijasz go w zakładce Code lub No-Code, a obie generują ten sam YAML, dzięki czemu Twój Flow pozostaje kodem niezależnie od tego, jak powstał."
+            "callout": "Pierwszy szkic z AI Copilota jest tylko punktem wyjścia. W edytorze rozwijasz go w zakładce Code lub No Code, a obie generują ten sam YAML, dzięki czemu Twój Flow pozostaje kodem niezależnie od tego, jak powstał."
           },
           "editor_help": {
             "title": "Dokumentacja jest obok Flow",
@@ -1631,7 +1627,9 @@
       "raw": "Widok czasowy",
       "raw_details": "Pokaż pełne logi Tasków i logi Flow w surowym formacie, uporządkowane po znaczniku czasu",
       "compact": "Widok domyślny",
-      "compact_details": "Pokaż logi Tasków w kompaktowym widoku pogrupowanym według Taska"
+      "compact_details": "Pokaż logi Tasków w kompaktowym widoku pogrupowanym według Taska",
+      "fullscreen": "Logs na pełnym ekranie",
+      "exit_fullscreen": "Wyjdź z trybu pełnoekranowego"
     },
     "execution_deletion": {
       "logs": "Usuń logi",
@@ -1659,7 +1657,6 @@
       "title": "Zacznij automatyzować z Kestrą",
       "sub_title": "Kliknij przycisk Wykonaj, aby uruchomić swoją pierwszą egzekucję workflow.",
       "namespace_sub_title": "Uruchom jeden lub więcej Flowów z tego namespace'u, aby wypełnić ten Dashboard.",
-      "namespace_guidance_desc": "Potrzebujesz wskazówek, jak zarządzać swoim namespace'em?",
       "need_help": "Potrzebujesz pomocy?"
     },
     "execution_guide": {
@@ -1701,18 +1698,15 @@
     "flows not imported": "Flowy niezaimportowane",
     "custom value": "Wartość niestandardowa",
     "chart": "Wykres",
-    "chart preview": "Podgląd wykresu",
     "no_code": {
       "toggle_pebble": "Przełącz edytor Pebble",
       "version_oss_placeholder": "Odblokuj wersjonowanie pluginów z Enterprise Edition",
-      "unnamed": "Bez nazwy",
       "adding": "+ Dodaj {what}",
       "adding_default": "+ Dodaj nową wartość",
-      "add_field": "Dodaj {field}",
       "clearSelection": "Wyczyść zaznaczenie",
       "labels": {
         "yaml": "Edytor YAML",
-        "no_code": "Edytor No-Code"
+        "no_code": "Edytor No Code"
       },
       "sections": {
         "deprecated": "Właściwości przestarzałe",
@@ -1981,6 +1975,9 @@
         "label": "Edytuj Dashboard",
         "chart": "Edytuj ten wykres"
       },
+      "creation": {
+        "label": "Utwórz Dashboard"
+      },
       "no_description": "Brak opisu",
       "no_description_hint": "Dodaj opis do tego Flow, aby udokumentować, co robi.<br>Markdown jest obsługiwany.",
       "others": "Inne",
@@ -2066,6 +2063,7 @@
         "title": "AI Copilot",
         "placeholder": "Powiedz mi, co zbudować…",
         "send": "Wyślij",
+        "stop": "Zatrzymaj",
         "mode": {
           "ask": "Pytaj",
           "edit": "Edytuj",
@@ -2138,7 +2136,7 @@
         },
         "unavailable": {
           "title": "AI Copilot nie jest dostępny",
-          "detail": "Żaden dostawca AI nie jest skonfigurowany. Poproś administratora o jego ustawienie.",
+          "detail": "Żaden dostawca AI nie jest skonfigurowany dla tej instancji. Skonfiguruj go w pliku konfiguracyjnym Kestra, aby włączyć AI Copilot.",
           "docs": "Wyświetl dokumentację"
         },
         "thinkingWords": [
@@ -2177,8 +2175,12 @@
         "draft": {
           "openInEditor": "Otwórz w edytorze",
           "apply": "Zastosuj",
+          "dismiss": "Odrzuć",
+          "dismissed": "Odrzucono",
+          "applied": "Zastosowano",
+          "previewBanner": "Przeglądasz zmianę zasugerowaną przez AI — edytor jest tylko do odczytu, dopóki jej nie zastosujesz lub nie odrzucisz.",
           "applyTitle": "Zastosuj Flow",
-          "applyConfirm": "Zastosować Flow {namespace}.{id}? Zostanie utworzony lub nadpisany, jeśli już istnieje.",
+          "applyConfirm": "Zapisać Flow {namespace}.{id} jako wersję roboczą do przeglądu? Zostanie utworzony lub, jeśli już istnieje, zostanie dodana nowa wersja robocza — wersje robocze nie są uruchamiane przez triggery ani subflow, dopóki nie zostaną opublikowane.",
           "applyConfirmDashboard": "Zastosować Dashboard {id}? Zostanie utworzony lub nadpisany, jeśli już istnieje.",
           "applyError": "Nie udało się zastosować Flow. Spróbuj ponownie.",
           "applyErrorDashboard": "Nie udało się zastosować Dashboardu. Spróbuj ponownie.",
@@ -2197,7 +2199,7 @@
     "playground": {
       "title": "Playground",
       "run_task_info": "Najedź kursorem na dowolny Task w edytorze Flow Code i kliknij „Run task”, aby przetestować swój Task.",
-      "play_icon_info": "Możesz też kliknąć ikonę Play w widoku No-Code lub Topology.",
+      "play_icon_info": "Możesz też kliknąć ikonę Play w widoku No Code lub Topology.",
       "toggle": "Playground",
       "run_task": "Uruchom Task",
       "run_this_task": "Uruchom ten Task",
@@ -2211,7 +2213,6 @@
     "submit": "Wyślij",
     "accept": "Zaakceptuj",
     "reject": "Odrzuć",
-    "draft_available": "Szkic zmiany jest dostępny w edytorze",
     "last modified": "Ostatnia modyfikacja",
     "run task in playground": "Uruchom Task w Playground",
     "defaultsToNamespaceFile": "Domyślnie plik namespace'u: <code>{name}</code>",
@@ -2443,8 +2444,8 @@
       "next_match": "Następne dopasowanie",
       "no_results_description": "Spróbuj rozszerzyć namespace, przełączyć zakres z powrotem na „Cały kod źródłowy” lub wyłączyć „Uwzględnij wielkość liter” i „Dopasuj całe słowo”.",
       "no_results_hidden_type": "Znaleziono {count} dopasowanie w {type}, którego nie wybrano. | Znaleziono {count} dopasowania w {type}, którego nie wybrano. | Znaleziono {count} dopasowań w {type}, którego nie wybrano.",
-      "no_results_in_types": "Brak dopasowań dla {query} w {types}",
       "no_results_title": "Brak wyników dla „{query}”",
+      "did_you_mean": "Czy chodziło ci o {suggestion}?",
       "open_flow": "Otwórz Flow",
       "open_in_editor": "Otwórz w edytorze",
       "open_in_kv": "Otwórz w KV Store",
@@ -2518,7 +2519,6 @@
     "pricing": "Cennik",
     "license": "Licencja",
     "block_editor": {
-      "add_error_task": "Dodaj Error Task",
       "add_switch_case": "Dodaj przypadek",
       "adding_to": "Nowy wpis w {section}",
       "add_task": "Dodaj Task",
@@ -2529,7 +2529,9 @@
       "block_deleted": "Usunięto {name}",
       "card_aria_label": "Blok {id} typu {type}",
       "canvas_aria": "Canvas bloków Flow",
-      "close_all": "Zamknij wszystkie zakładki",
+      "chip_copied": "Skopiowano do schowka",
+      "chip_hint": "Kliknij chip, aby wstawić go do aktywnego pola, lub przeciągnij go",
+      "chip_inserted": "Wstawiono do pola",
       "cluster_collapse_aria": "Zwiń {id}",
       "cluster_expand_aria": "Rozwiń {id} ({count} Tasków)",
       "collapsed_summary": "{count} Tasków",
@@ -2567,20 +2569,16 @@
       "depends_on_placeholder": "Wybierz Taski…",
       "depth_pill": "Głębokość {depth}",
       "drag_reorder": "Przeciągnij, aby zmienić kolejność",
+      "drop_forbidden": "Nie można tu upuścić",
       "duplicate": "Duplikuj",
-      "empty": "Brak Tasków i Triggerów. Dodaj swój pierwszy Task, aby rozpocząć.",
       "empty_add_hint": "lub naciśnij /, aby wyszukać Taski",
       "empty_add_lead": "Kliknij, aby dodać {label}",
-      "error_task_noun": "Error Task",
       "execution_context": "Kontekst egzekucji",
       "filter_data": "Filtruj dostępne dane…",
       "flow_inputs": "Inputy Flow",
-      "flowable_todo": "Zagnieżdżone Taski (edycja już wkrótce)",
       "footer": {
         "canvas": "Canvas",
-        "close_panel": "Zamknij panel",
         "command_menu": "Menu poleceń",
-        "editing": "Edytowanie bloku",
         "inserting": "Wstawianie",
         "selected": "Wybrano · {name}"
       },
@@ -2594,22 +2592,18 @@
       "lane_case": "Przypadek: {key}",
       "lane_defaults": "Domyślny",
       "lane_else": "Else",
-      "lane_empty": "Brak Tasków w {lane}",
       "lane_errors": "Errors",
       "lane_finally": "Finally",
       "lane_tasks": "Taski",
       "lane_then": "Then",
-      "loading_plugins": "Ładowanie pluginów…",
       "move_down": "Przenieś w dół",
       "move_up": "Przenieś w górę",
-      "nav_rail_empty": "Brak Tasków i Triggerów.",
-      "nav_rail_title": "Zarys",
-      "nested_count": "{count} zagnieżdżonych Tasków",
+      "namespace_files": "Pliki namespace'u",
+      "namespace_kv": "KV Store Keys",
+      "namespace_secrets": "Sekrety",
       "no_data_matches": "Brak wyników dla Twojego filtra",
-      "no_documentation": "Brak dokumentacji dla tego Taska",
       "no_recent": "Brak ostatnio używanych typów Tasków",
       "no_task_results": "Brak pasujących typów Tasków.",
-      "open_details": "Otwórz szczegóły",
       "open_in_split": "Otwórz w podziale",
       "output": "Output",
       "output_sub": "co ten Task produkuje",
@@ -2618,6 +2612,9 @@
       "plugin_default": "domyślny: {value}",
       "plugin_default_tooltip": "Wartość domyślna z pluginDefaults Flow",
       "required_missing": "Wymagane pole nieustawione",
+      "required_unset_jump": "Przejdź do pierwszego",
+      "required_unset_plural": "{count} wymaganych pól nie jest jeszcze ustawionych",
+      "required_unset_singular": "1 wymagane pole nie jest jeszcze ustawione",
       "save_blocked": {
         "message": "Napraw błędy przed zapisaniem.",
         "title": "Nie można zapisać Flow"
@@ -2647,8 +2644,6 @@
         "toggle": "Ta pomoc",
         "undo": "Cofnij"
       },
-      "split_into": "Widok {count}-kolumnowy",
-      "split_view": "Podzielony widok",
       "switch_case_key_placeholder": "Nowy klucz przypadku",
       "switch_case_key_taken": "Przypadek {key} już istnieje",
       "tab_apps": "Według aplikacji",
@@ -2670,6 +2665,9 @@
       "install_description": "Zainstaluj Kestrę jako aplikację, aby mieć szybszy dostęp i pełnoekranowy widok.",
       "install": "Zainstaluj",
       "dismiss": "Nie teraz"
-    }
+    },
+    "iteration": "Iteracja",
+    "iteration_number": "Iteracja {number}",
+    "delete_log_iteration": "Czy na pewno chcesz usunąć dziennik dla {iteration}?"
   }
 }

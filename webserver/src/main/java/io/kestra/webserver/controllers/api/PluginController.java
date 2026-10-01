@@ -709,7 +709,7 @@ public class PluginController {
             return HttpResponse.badRequest();
         }
 
-        RegisteredPlugin plugin = pluginRegistry.plugins(p -> p.group().equals(group))
+        RegisteredPlugin plugin = pluginRegistry.plugins(p -> group.equals(p.group()))
             .stream()
             .findFirst()
             .orElseThrow(NotFoundException::new);

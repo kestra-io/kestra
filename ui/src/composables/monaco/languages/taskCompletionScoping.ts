@@ -28,10 +28,10 @@ function probeIndexes(source: string, cursorIndex: number): number[] {
     return indexes
 }
 
-function probe<T>(source: string, cursorIndex: number, pick: (candidates: unknown[]) => T | undefined): T | undefined {
+function probe<T>(source: string, cursorIndex: number, pick: (candidates: unknown[], path?: string[]) => T | undefined): T | undefined {
     for (const probeIndex of probeIndexes(source, cursorIndex)) {
         const localized = YAML_UTILS.localizeElementAtIndex(source, probeIndex)
-        const found = pick([...(localized?.parents ?? []), localized?.value])
+        const found = pick([...(localized?.parents ?? []), localized?.value], localized?.path)
         if (found !== undefined) {
             return found
         }
@@ -55,8 +55,8 @@ function probeTaskLike(source: string, cursorIndex: number): TaskLike | undefine
     })
 }
 
-function probeTaskOwningCursor(source: string, cursorIndex: number): TaskLike | undefined {
-    return probe(source, cursorIndex, (candidates) => {
+function probeTaskOwningCursor(source: string, cursorIndex: number): {task: TaskLike; candidates: unknown[]; path?: string[]} | undefined {
+    return probe(source, cursorIndex, (candidates, path) => {
         const taskIndex = innermostTaskIndex(candidates)
         if (taskIndex === -1) {
             return undefined
@@ -65,7 +65,7 @@ function probeTaskOwningCursor(source: string, cursorIndex: number): TaskLike | 
         // `taskRunner:`…) whose keys come from its own schema, so the task must not scope them.
         return candidates.slice(taskIndex + 1).some(isMap)
             ? undefined
-            : (candidates[taskIndex] as TaskLike)
+            : {task: candidates[taskIndex] as TaskLike, candidates, path}
     })
 }
 
@@ -108,10 +108,18 @@ export function taskIdentityAtCursor(
     }
 
     try {
-        const task = probeTaskOwningCursor(source, cursorIndex)
+        const result = probeTaskOwningCursor(source, cursorIndex)
             ?? probeTaskOwningCursor(blankLineAtCursor(source, cursorIndex), cursorIndex)
-        if (!isTaskLike(task)) {
+        if (!result || !isTaskLike(result.task)) {
             return undefined
+        }
+
+        const {task, path} = result
+        if (path && path.length > 0) {
+            const isExcluded = ["triggers", "inputs", "outputs"].includes(path[0])
+            if (isExcluded) {
+                return undefined
+            }
         }
 
         return {

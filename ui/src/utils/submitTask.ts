@@ -1,4 +1,4 @@
-import _cloneDeep from "lodash/cloneDeep"
+import {cloneDeep, dayjs} from "@kestra-io/design-system"
 import {useExecutionsStore, type Execution} from "../stores/executions"
 import {Router, type useRoute} from "vue-router"
 import {Flow} from "../stores/flow"
@@ -7,12 +7,11 @@ import {DEFAULT_EXECUTION_TAB, DEFAULT_TAB_STORAGE_KEY, EXECUTION_TAB_ROUTES} fr
 import {resolveDefaultTab} from "./routeTabs"
 
 export const normalizeInputValues = (
-    submitor: { $moment: (date: any) => { toISOString: () => string; format: (format: string) => string } },
     inputsList: {id:string, type?: string}[] | undefined,
     values: Record<string, any>,
 ): Record<string, any> | undefined => {
 
-    let inputValuesCloned = _cloneDeep(values)
+    let inputValuesCloned = cloneDeep(values)
 
     for (const input of inputsList || []) {
         if (inputValuesCloned[input.id] === undefined || inputValuesCloned[input.id] === null || inputValuesCloned[input.id] === "") {
@@ -31,11 +30,11 @@ export const normalizeInputValues = (
         const inputValue = inputValuesCloned[inputName]
         if (inputValue !== undefined) {
             if (input.type === "DATETIME" && inputValue) {
-                normalized[inputName] = submitor.$moment(inputValue).toISOString()
+                normalized[inputName] = dayjs(inputValue).toISOString()
             } else if (input.type === "DATE" && inputValue) {
-                normalized[inputName] = submitor.$moment(inputValue).format("YYYY-MM-DD")
+                normalized[inputName] = dayjs(inputValue).format("YYYY-MM-DD")
             } else if (input.type === "TIME") {
-                normalized[inputName] = submitor.$moment(inputValue).format("hh:mm:ss")
+                normalized[inputName] = dayjs(inputValue).format("HH:mm:ss")
             } else {
                 normalized[inputName] = inputValue
             }
@@ -50,11 +49,10 @@ export const normalizeInputValues = (
 // normalizeInputValues() directly since triggerExecution() now builds its own FormData via
 // ExecutionsAPI.createExecution()'s multipart body serializer.
 export const inputsToFormData = (
-    submitor: { $moment: (date: any) => { toISOString: () => string; format: (format: string) => string } },
     inputsList: {id:string, type?: string}[] | undefined,
     values: Record<string, any>,
 ) => {
-    const normalized = normalizeInputValues(submitor, inputsList, values)
+    const normalized = normalizeInputValues(inputsList, values)
     if (!normalized) {
         return undefined
     }
@@ -71,14 +69,13 @@ export const executeTask = (
         $router: Router, 
         $route: ReturnType<typeof useRoute>, 
         $toast: () => { success: (message: string) => void }, 
-        $t: (key: string, params?: Record<string, any>) => string, 
-        $moment: (date: any) => { toISOString: () => string; format: (format: string) => string } 
+        $t: (key: string, params?: Record<string, any>) => string,
     }, 
     flow: Flow, 
     values: Record<string, any>,
     options: Omit<Parameters<ReturnType<typeof useExecutionsStore>["triggerExecution"]>[0], "formData" | "kind"> & { redirect?: boolean; newTab?: boolean; query?: Record<string, any>; nextStep?: boolean },
 ): Promise<Execution> => {
-    const formData = normalizeInputValues(submitor, flattenInputs(flow.inputs), values)
+    const formData = normalizeInputValues(flattenInputs(flow.inputs), values)
     const executionsStore = useExecutionsStore()
 
     return executionsStore

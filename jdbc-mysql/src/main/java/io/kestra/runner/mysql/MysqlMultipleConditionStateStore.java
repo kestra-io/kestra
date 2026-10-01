@@ -1,6 +1,6 @@
 package io.kestra.runner.mysql;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
 import java.time.ZoneOffset;
 
 import org.jooq.Condition;
@@ -21,7 +21,7 @@ public class MysqlMultipleConditionStateStore extends AbstractJdbcMultipleCondit
     }
 
     @Override
-    protected Condition getEndDataCondition() {
-        return field("end_date").lt(OffsetDateTime.now(ZoneOffset.UTC));
+    protected Condition getEndDateCondition(Instant now) {
+        return field("end_date").lt(now.atOffset(ZoneOffset.UTC));
     }
 }

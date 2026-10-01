@@ -4,10 +4,11 @@ import {expect, userEvent, waitFor, within} from "storybook/test";
 import {vueRouter} from "storybook-vue3-router";
 import {KsForm} from "@kestra-io/design-system";
 import InputsForm from "../../../../src/components/inputs/InputsForm.vue";
-import {flattenInputs, unflattenToForms, type FlowInput} from "../../../../src/utils/inputs";
+import {flattenInputs, unflattenToForms} from "../../../../src/utils/inputs";
 import type {InputMetaData, ValidationEventPayload} from "../../../../src/stores/executions";
 import type {Flow} from "../../../../src/stores/flow";
-import {setMockClient} from "@kestra-io/kestra-sdk"
+import {setMockClient, type AxiosLikeClient} from "@kestra-io/kestra-sdk"
+import {mockResponse} from "../../../../.storybook/apiMock"
 
 declare global {
     interface Window {
@@ -41,21 +42,21 @@ export default meta;
 type Story = StoryObj<typeof InputsForm>;
 
 const Sut = defineComponent((props: {inputs: InputMetaData[]}) => {
-    const axios: any = {}
+    const axios: Partial<AxiosLikeClient> = {}
 
-    axios.post = (uri: string) => {
+    axios.post = async <T,>(uri: string) => {
         if (!uri.endsWith("/validate")) {
-            return {data: []}
+            return mockResponse<T>([])
         }
-        return  Promise.resolve({data: {
-                "inputs": props.inputs.map(x => ({
-                    input: x,
-                    enabled: true,
-                    isDefault: false,
-                    errors: []
-                }))
-            }
-        })}
+        return mockResponse<T>({
+            "inputs": props.inputs.map(x => ({
+                input: x,
+                enabled: true,
+                isDefault: false,
+                errors: []
+            }))
+        })
+    }
 
     setMockClient(axios);
 
@@ -166,20 +167,20 @@ export const InputTypes: Story = {
 
 // Wizard harness: the validate mock expands FORM groups to dotted leaves, exactly like the
 // backend, so InputsForm receives the same flat-by-dotted-id metadata it does in production.
-const WizardSut = defineComponent((props: {inputs: FlowInput[]}) => {
-    const axios: any = {}
-    axios.post = (uri: string) => {
+const WizardSut = defineComponent((props: {inputs: InputMetaData[]}) => {
+    const axios: Partial<AxiosLikeClient> = {}
+    axios.post = async <T,>(uri: string) => {
         if (!uri.endsWith("/validate")) {
-            return {data: []}
+            return mockResponse<T>([])
         }
-        return Promise.resolve({data: {
+        return mockResponse<T>({
             inputs: flattenInputs(props.inputs).map(x => ({
                 input: x,
                 enabled: true,
                 isDefault: false,
                 errors: [],
             })),
-        }})
+        })
     }
     setMockClient(axios)
 
@@ -187,7 +188,7 @@ const WizardSut = defineComponent((props: {inputs: FlowInput[]}) => {
     const values = ref<Record<string, unknown> | undefined>({})
     return () => (<>
         <ks-form label-position="top">
-            <InputsForm initialInputs={props.inputs as InputMetaData[]} modelValue={values.value} mode="wizard"
+            <InputsForm initialInputs={props.inputs} modelValue={values.value} mode="wizard"
                         flow={FLOW}
                         onUpdate:modelValue={(value) => values.value = value}
                         onUpdate:onRecap={(value) => onRecap.value = value}
@@ -267,14 +268,14 @@ export const Wizard: Story = {
 // from flat dotted leaves + formGroups before handing it to InputsForm — we mirror both here. The
 // validate callback is DEFERRED into a queue the play function releases manually, so we can observe
 // the Next button reading "Loading…" mid-round-trip and prove goNext awaits it.
-const AppsWizardSut = defineComponent((props: {inputs: FlowInput[]; formGroups: Record<string, {displayName?: string; description?: string}>}) => {
+const AppsWizardSut = defineComponent((props: {inputs: InputMetaData[]; formGroups: Record<string, {displayName?: string; description?: string}>}) => {
     const initial = unflattenToForms(props.inputs, props.formGroups)
 
     const queue: (() => void)[] = []
     function onValidation(event: ValidationEventPayload) {
         // hold the callback; the play function releases it via window.__appsWizardFlush()
         queue.push(() => event.callback({
-            inputs: props.inputs.map(x => ({input: x as InputMetaData, enabled: true, isDefault: false, errors: []})),
+            inputs: props.inputs.map(x => ({input: x, enabled: true, isDefault: false, errors: []})),
         }))
     }
     window.__appsWizardPending = () => queue.length
@@ -381,14 +382,14 @@ export const InputSelect: Story = {
 // Replay harness: mirrors FlowRun.fillInputsFromExecution — once the form signals ready, every leaf
 // is prefilled from a previous execution's `inputs` through the component's prefillInputValue.
 const PrefillSut = defineComponent((props: {inputs: InputMetaData[]; executionInputs: Record<string, unknown>}) => {
-    const axios: any = {}
-    axios.post = (uri: string) => {
+    const axios: Partial<AxiosLikeClient> = {}
+    axios.post = async <T,>(uri: string) => {
         if (!uri.endsWith("/validate")) {
-            return {data: []}
+            return mockResponse<T>([])
         }
-        return Promise.resolve({data: {
+        return mockResponse<T>({
             inputs: props.inputs.map(x => ({input: x, enabled: true, isDefault: false, errors: []})),
-        }})
+        })
     }
     setMockClient(axios)
 
@@ -573,19 +574,19 @@ export const ClearedDefault: Story = {
 // The other two paths that seed MULTISELECT state: a trigger's stored inputs (a real array), and a
 // `defaults` value, which crosses the wire JSON-encoded as a string because Property serialises so.
 const StatePathSut = defineComponent((props: {inputs: InputMetaData[]; selectedTrigger?: SelectedTrigger}) => {
-    const axios: any = {}
-    axios.post = (uri: string) => {
+    const axios: Partial<AxiosLikeClient> = {}
+    axios.post = async <T,>(uri: string) => {
         if (!uri.endsWith("/validate")) {
-            return {data: []}
+            return mockResponse<T>([])
         }
-        return Promise.resolve({data: {
+        return mockResponse<T>({
             inputs: props.inputs.map(x => ({
                 input: x,
                 enabled: true,
                 isDefault: x.defaults !== undefined,
                 errors: [],
             })),
-        }})
+        })
     }
     setMockClient(axios)
 

@@ -11,7 +11,7 @@ const {fakeClient, fakeAxiosClient, nprogressStart, nprogressSet, nprogressDone}
         },
         get: vi.fn(), post: vi.fn(), put: vi.fn(), patch: vi.fn(), delete: vi.fn(), request: vi.fn(),
     },
-    fakeAxiosClient: {get: vi.fn(), post: vi.fn(), put: vi.fn(), patch: vi.fn(), delete: vi.fn()},
+    fakeAxiosClient: {get: vi.fn(), post: vi.fn(), put: vi.fn(), patch: vi.fn(), delete: vi.fn(), stream: vi.fn()},
     nprogressStart: vi.fn(),
     nprogressSet: vi.fn(),
     nprogressDone: vi.fn(),
@@ -43,6 +43,8 @@ describe("setupKestraHttp router NProgress hooks", () => {
     }
 
     beforeEach(() => {
+        nprogressStart.mockClear()
+        nprogressSet.mockClear()
         nprogressDone.mockClear()
     })
 
@@ -67,6 +69,36 @@ describe("setupKestraHttp router NProgress hooks", () => {
         await new Promise((r) => setTimeout(r, 60))
 
         expect(nprogressDone).toHaveBeenCalledTimes(1)
+    })
+
+    it("opts stream() out of NProgress, matching generated sse methods", async () => {
+        const innerStream = vi.fn().mockResolvedValue(new Response())
+        fakeAxiosClient.stream = innerStream
+        setupKestraHttp({})
+
+        await fakeAxiosClient.stream("/stream", {id: 1}, {signal: new AbortController().signal})
+
+        expect(innerStream).toHaveBeenCalledWith(
+            "/stream",
+            {id: 1},
+            expect.objectContaining({__kestraSkipProgress: true}),
+        )
+    })
+
+    it("does not start NProgress when a request opts out with __kestraSkipProgress", async () => {
+        setupKestraHttp({})
+        const onRequest = fakeClient.interceptors.request.use.mock.calls.at(-1)![0]
+        const onResponse = fakeClient.interceptors.response.use.mock.calls.at(-1)![0]
+        const onError = fakeClient.interceptors.error.use.mock.calls.at(-1)![0]
+        const skip = {__kestraSkipProgress: true}
+
+        onRequest(new Request("http://example.test/x"), skip)
+        onResponse(new Response(), new Request("http://example.test/x"), skip)
+        onError(new DOMException("Aborted", "AbortError"), undefined, new Request("http://example.test/x"), skip)
+        await new Promise((r) => setTimeout(r, 60))
+
+        expect(nprogressStart).not.toHaveBeenCalled()
+        expect(nprogressDone).not.toHaveBeenCalled()
     })
 })
 

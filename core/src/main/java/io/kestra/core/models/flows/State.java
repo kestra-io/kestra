@@ -262,6 +262,19 @@ public class State {
     }
 
     /**
+     * Checks whether the state is resuming after being suspended at a breakpoint.
+     *
+     * @return {@code true} if resuming from a breakpoint. Otherwise {@code false}.
+     */
+    @JsonIgnore
+    public boolean isResumingFromBreakpoint() {
+        if (!this.current.isCreated() || this.histories.size() < 2) {
+            return false;
+        }
+        return this.histories.get(this.histories.size() - 2).state.isBreakpoint();
+    }
+
+    /**
      * Return true if the execution has failed, then was restarted.
      * This is to disambiguate between a RESTARTED after PAUSED and RESTARTED after FAILED state.
      */

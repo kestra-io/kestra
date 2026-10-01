@@ -127,7 +127,11 @@
                     :title="$t('filter.options')"
                 />
             </template>
-            <FilterSettings @close="isSettingsVisible = false" />
+            <FilterSettings @close="isSettingsVisible = false">
+                <template v-if="$slots['data-options']" #extra-options>
+                    <slot name="data-options" />
+                </template>
+            </FilterSettings>
         </KsPopover>
 
         <slot name="extra" />

@@ -25,4 +25,7 @@ dependencies {
     api "org.junit.platform:junit-platform-launcher"
 
     testImplementation "com.tngtech.archunit:archunit-junit5"
+    // not needed to run: :cli pulls in the modules BaseArchitectureTest's io.kestra-wide scan would
+    // otherwise miss (webserver, jdbc*, queue*, script, storage-local, repository-memory).
+    testImplementation project(':cli')
 }

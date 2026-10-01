@@ -104,14 +104,14 @@ export const enableFlowsByQuery = (parameters?: Omit<Parameters<typeof _5B713B0f
  */
 export const exportFlowsByIds = (parameters: Omit<Parameters<typeof ae43B0>[0], 'tenant'> & {
     tenant?: string;
-}, options?: Omit<Parameters<typeof ae43B0>[1], 'throwOnError'>) => getDataOrThrow(ae43B0(addTenantToParameters(parameters), { ...options, parseAs: 'text' }));
+}, options?: Omit<Parameters<typeof ae43B0>[1], 'throwOnError'>) => getDataOrThrow(ae43B0(addTenantToParameters(parameters), options));
 
 /**
  * Export flows as a ZIP archive of yaml sources.
  */
 export const exportFlowsByQuery = (parameters?: Omit<Parameters<typeof _0715B9840>[0], 'tenant'> & {
     tenant?: string;
-}, options?: Omit<Parameters<typeof _0715B9840>[1], 'throwOnError'>) => getDataOrThrow(_0715B9840(addTenantToParameters(parameters), { ...options, parseAs: 'text' }));
+}, options?: Omit<Parameters<typeof _0715B9840>[1], 'throwOnError'>) => getDataOrThrow(_0715B9840(addTenantToParameters(parameters), options));
 
 /**
  * Export all flows as a streamed CSV file

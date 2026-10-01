@@ -48,6 +48,7 @@ public class KestraDocsContextTool implements AutoCloseable {
                 )
                 .clientName("Kestra/" + versionProvider.getVersion())
                 .toolExecutionTimeout(MCP_TIMEOUT)
+                .autoHealthCheck(false)
                 .build();
         } catch (Exception e) {
             log.warn("Failed to initialize Kestra docs MCP client, documentation context will be unavailable: {}", e.getMessage());

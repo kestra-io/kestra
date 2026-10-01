@@ -7,6 +7,7 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -138,6 +139,12 @@ public class TaskLogLineMatcher {
 
         if (match.otlp() != null && !match.otlp().isEmpty()) {
             processOtlp(match.otlp(), logger, runContext, instant, forwardTraces);
+            Map<String, Object> otlpOutputs = forwardOtlp(logger, runContext, instant, match.otlp(), logData, true);
+            if (!otlpOutputs.isEmpty()) {
+                Map<String, Object> outputs = new HashMap<>(match.outputs());
+                outputs.putAll(otlpOutputs);
+                return new TaskLogMatch(outputs, match.metrics(), match.logs(), match.assets(), match.otlp());
+            }
         }
 
         return match;
@@ -161,8 +168,9 @@ public class TaskLogLineMatcher {
      * {@code ::{...}::} framing — as produced by the
      * <a href="https://opentelemetry.io/docs/specs/otel/protocol/file-exporter/">OTLP File Exporter</a>.
      * <p>
-     * OTLP logs and metrics are forwarded to the {@link RunContext} exactly as for framed log
-     * lines; OTLP traces are only parsed and returned. Blank lines and lines that cannot be
+     * OTLP logs and metrics are forwarded to the {@link RunContext} as for framed log lines, except
+     * that a {@code ::{...}::} marker in a log body is logged as text; OTLP traces are only parsed
+     * and returned. Blank lines and lines that cannot be
      * parsed (e.g. a line truncated by file rotation) are skipped with a warning. The given
      * stream is fully consumed and closed.
      *
@@ -227,6 +235,13 @@ public class TaskLogLineMatcher {
      * untouched as they are only exposed to the caller for now.
      */
     private void processOtlp(OtlpRecord record, Logger logger, RunContext runContext, Instant customInstant, boolean forwardTraces) {
+    protected void handleOtlp(Logger logger, RunContext runContext, Instant instant, OtlpRecord record, String data) {
+        forwardOtlp(logger, runContext, instant, record, data, false);
+    }
+
+    // Only framed lines handle markers in log bodies, as parseOtlp has no way to return their outputs.
+    private Map<String, Object> forwardOtlp(Logger logger, RunContext runContext, Instant instant, OtlpRecord record, String data, boolean handleMarkers) {
+        Map<String, Object> outputs = new HashMap<>();
         ListUtils.emptyOnNull(record.resourceLogs()).stream()
             .flatMap(resourceLogs -> ListUtils.emptyOnNull(resourceLogs.scopeLogs()).stream())
             .flatMap(scopeLogs -> ListUtils.emptyOnNull(scopeLogs.logRecords()).stream())
@@ -248,6 +263,21 @@ public class TaskLogLineMatcher {
                     builder.log(logRecord.body() != null ? redactEncryptedOutputs(logRecord.body().asText()) : null);
                 } catch (Exception e) {
                     logger.warn("Invalid OTLP log", e);
+                    Instant logInstant = toInstant(logRecord.timeUnixNano(), instant);
+                    String body = logRecord.body() != null ? logRecord.body().asText() : null;
+                    Optional<Map<String, Object>> markerOutputs = handleMarkers && body != null ? markerOutputs(body, logger, runContext, logInstant) : Optional.empty();
+                    if (markerOutputs.isPresent()) {
+                        outputs.putAll(markerOutputs.get());
+                        return;
+                    }
+
+                    runContext
+                        .logger()
+                        .atLevel(otlpSeverityToLevel(logRecord))
+                        .addKeyValue(ORIGINAL_TIMESTAMP_KEY, logInstant)
+                        .log(body != null ? redactEncryptedOutputs(body) : null);
+                } catch (Exception e) {
+                    logger.warn("Invalid OTLP log '{}'", redactEncryptedOutputs(data), e);
                 }
             });
 
@@ -265,6 +295,19 @@ public class TaskLogLineMatcher {
 
         if (forwardTraces) {
             otlpSpanForwarder.forward(record.resourceSpans(), runContext, logger);
+                    logger.warn("Invalid OTLP metric '{}'", redactEncryptedOutputs(data), e);
+                }
+            });
+
+        return outputs;
+    }
+
+    // A body that only looks like a marker is logged as text, as it was before markers were handled here.
+    private Optional<Map<String, Object>> markerOutputs(String body, Logger logger, RunContext runContext, Instant instant) {
+        try {
+            return matches(body, logger, runContext, instant).map(TaskLogMatch::outputs);
+        } catch (Exception e) {
+            return Optional.empty();
         }
     }
 

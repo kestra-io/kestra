@@ -1,10 +1,8 @@
 import {describe, test, expect, beforeEach} from "vitest"
 import {nextTick} from "vue"
-import {mount} from "@vue/test-utils"
-import {createI18n} from "vue-i18n"
-import KestraDesignSystem from "../../../../src/index"
 import CustomColumns from "../../../../src/components/Data/KsDataTable/filter/segments/CustomColumns.vue"
 import type {ColumnConfig} from "../../../../src/components/Data/KsDataTable/filter/composables/useTableColumns"
+import {i18nMount} from "../../i18nMount"
 
 const COLUMNS: ColumnConfig[] = [
     {label: "A", prop: "a", default: true},
@@ -13,9 +11,8 @@ const COLUMNS: ColumnConfig[] = [
 ]
 
 const mountWith = (visibleColumns: string[], storageKey: string) =>
-    mount(CustomColumns, {
+    i18nMount(CustomColumns, {
         props: {storageKey, columns: COLUMNS, visibleColumns},
-        global: {plugins: [createI18n({legacy: false, locale: "en"}), KestraDesignSystem]},
     })
 
 const countOf = (wrapper: ReturnType<typeof mountWith>) =>
@@ -48,9 +45,8 @@ describe("CustomColumns", () => {
     // render. Resolution used to run against that empty snapshot and never re-ran, leaving the
     // counter on "0 of N" until a toggle recomputed it.
     test("counts the columns once they arrive after the first render", async () => {
-        const wrapper = mount(CustomColumns, {
+        const wrapper = i18nMount(CustomColumns, {
             props: {storageKey: "late-columns", columns: [] as ColumnConfig[], visibleColumns: []},
-            global: {plugins: [createI18n({legacy: false, locale: "en"}), KestraDesignSystem]},
         })
         await nextTick()
 

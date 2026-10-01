@@ -28,7 +28,7 @@
             <template #header>
                 <span v-html="$t('execute the flow', {id: flowId})" />
             </template>
-            <FlowRun ref="flowRunRef" :embed="true" :replaySubmit="submit" @execution-trigger="handleExecutionStart" :redirect="!playgroundStore.enabled" />
+            <FlowRun ref="flowRunRef" :embed="true" :renderLabels="renderLabels" :replaySubmit="submit" @execution-trigger="handleExecutionStart" :redirect="!playgroundStore.enabled" />
             <template #footer>
                 <FlowRunActions :flowRun="flowRunRef" />
             </template>
@@ -101,12 +101,7 @@
     import FlowRunActions from "./FlowRunActions.vue"
     import FlowWarningDialog from "./FlowWarningDialog.vue"
     import PlayOutlineIcon from "vue-material-design-icons/PlayOutline.vue"
-
-    interface ExecutableFlow {
-        id: string
-        deleted?: boolean
-        [key: string]: unknown
-    }
+    import type {FlowForExecution} from "@kestra-io/kestra-sdk"
 
     const props = withDefaults(defineProps<{
         flowId?: string
@@ -116,12 +111,14 @@
         flowSource?: string | null
         submit?: ((options: ReplaySubmitOptions) => void | Promise<void>) | null
         lazy?: boolean
+        renderLabels?: string[]
     }>(), {
         disabled: false,
         type: "primary",
         flowSource: null,
         submit: null,
         lazy: false,
+        renderLabels: undefined,
     })
 
     const {t} = useI18n({useScope: "global"})
@@ -135,7 +132,7 @@
     const isSelectFlowOpen = ref(false)
     const flowRunRef = ref<InstanceType<typeof FlowRun> | null>(null)
     const selectFlowRunRef = ref<InstanceType<typeof FlowRun> | null>(null)
-    const localFlow = ref<ExecutableFlow | undefined>(undefined)
+    const localFlow = ref<FlowForExecution | undefined>(undefined)
     const localNamespace = ref<string | undefined>(undefined)
 
     function trackExecutionAction(action: string) {

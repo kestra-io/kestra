@@ -12,7 +12,7 @@ import static com.tngtech.archunit.library.GeneralCodingRules.*;
  * Base architecture test with common rules that apply across all modules.
  * This class can be extended by specific modules to add their own rules while inheriting common constraints.
  */
-@AnalyzeClasses(packages = "io.kestra", importOptions = ImportOption.DoNotIncludeTests.class)
+@AnalyzeClasses(packages = "io.kestra", importOptions = {ImportOption.DoNotIncludeTests.class, ExcludeKestraCliEntryPoint.class})
 public class BaseArchitectureTest {
 
     @ArchTest
@@ -26,8 +26,13 @@ public class BaseArchitectureTest {
 
     @ArchTest
     static final ArchRule no_standard_stream = noClasses()
-        .that().doNotBelongToAnyOf(io.kestra.core.utils.ThreadUncaughtExceptionHandler.class)
-        .should(ACCESS_STANDARD_STREAMS);
+        .that().doNotBelongToAnyOf(
+            io.kestra.core.utils.ThreadUncaughtExceptionHandler.class,
+            io.kestra.cli.Kestra.class,
+            io.kestra.cli.BaseCommand.class
+        )
+        .should(ACCESS_STANDARD_STREAMS)
+        .because("the CLI entry point and its designated stdOut/stdErr helpers are the one legitimate place for console output");
 
     @ArchTest
     public static final ArchRule no_production_use_of_awaitility = noClasses()

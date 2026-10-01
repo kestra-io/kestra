@@ -1,4 +1,4 @@
-import {computed} from "vue"
+import {computed, type Component} from "vue"
 
 import {useRoute, useRouter} from "vue-router"
 import type {
@@ -42,8 +42,8 @@ export type MenuItem = {
     routes?: RouteRecordNameGeneric[];
     href?: RouteLocationRaw;
     icon?: {
-        element?: any;
-        class?: any;
+        element?: Component;
+        class?: string;
     };
     child?: MenuItem[];
     attributes?: {

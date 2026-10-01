@@ -5,6 +5,8 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -14,6 +16,8 @@ import io.kestra.core.junit.annotations.KestraTest;
 
 import io.micronaut.http.MediaType;
 import io.micronaut.runtime.server.EmbeddedServer;
+import io.micronaut.security.csrf.CsrfConfiguration;
+import io.micronaut.security.csrf.generator.CsrfTokenGenerator;
 import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -25,9 +29,16 @@ import static org.assertj.core.api.Assertions.assertThat;
 @KestraTest
 class UiControllerTest {
     private static final String FIXTURE_ASSET = "/ui/assets/asset-fixture-abc123.js";
+    private static final Pattern CSRF_META = Pattern.compile("<meta name=\"csrf-token\" content=\"([^\"]*)\">");
 
     @Inject
     EmbeddedServer embeddedServer;
+
+    @Inject
+    CsrfConfiguration csrfConfiguration;
+
+    @Inject
+    CsrfTokenGenerator<io.micronaut.http.HttpRequest<?>> csrfTokenGenerator;
 
     private final HttpClient client = HttpClient.newHttpClient();
 
@@ -111,6 +122,40 @@ class UiControllerTest {
     }
 
     @Test
+    void shouldReuseACsrfCookieTokenThisInstanceIssued() {
+        // Given
+        String token = csrfTokenGenerator.generateCsrfToken(io.micronaut.http.HttpRequest.GET("/ui/"));
+
+        // When
+        HttpResponse<byte[]> response = send(request("/ui/").header("Cookie", csrfConfiguration.getCookieName() + "=" + token).build());
+
+        // Then
+        assertThat(csrfMetaToken(response)).isEqualTo(token);
+        assertThat(response.headers().firstValue("Set-Cookie").orElseThrow()).startsWith(csrfConfiguration.getCookieName() + "=" + token);
+    }
+
+    @Test
+    void shouldReplaceACsrfCookieTokenSignedByAnotherInstance() {
+        // Given - a well-formed token whose signature no longer matches this instance's key
+        // (an OSS instance replaced by EE on the same host, a rotated encryption secret key)
+        String stale = "c3RhbGVTaWduYXR1cmU.c3RhbGVSYW5kb20";
+
+        // When
+        HttpResponse<byte[]> response = send(request("/ui/").header("Cookie", csrfConfiguration.getCookieName() + "=" + stale).build());
+
+        // Then - the page carries a fresh token and the cookie is rewritten to the same value
+        String fresh = csrfMetaToken(response);
+        assertThat(fresh).isNotEqualTo(stale);
+        assertThat(response.headers().firstValue("Set-Cookie").orElseThrow()).startsWith(csrfConfiguration.getCookieName() + "=" + fresh);
+    }
+
+    private static String csrfMetaToken(HttpResponse<byte[]> response) {
+        Matcher matcher = CSRF_META.matcher(new String(response.body(), StandardCharsets.UTF_8));
+        assertThat(matcher.find()).isTrue();
+        return matcher.group(1);
+    }
+
+    @Test
     void shouldFallbackToIndexForSpaHistoryModeRoutes() {
         // When - a deep link that matches no static asset
         HttpResponse<byte[]> response = send(request("/ui/main/flows/edit/io.kestra.tests/some-flow").build());
@@ -128,7 +173,7 @@ class UiControllerTest {
         // Every extension the UI build emits. A resource served as application/octet-stream instead of
         // its real type is fatal for a module script, a stylesheet or the PWA manifest, and invisible
         // until the app fails to boot in a browser.
-        strings = {"js", "mjs", "css", "html", "png", "svg", "ico", "woff2", "ttf", "webmanifest"}
+        strings = { "js", "mjs", "css", "html", "png", "svg", "ico", "woff2", "ttf", "webmanifest" }
     )
     void shouldResolveAMediaTypeForEveryExtensionTheUiShips(String extension) {
         assertThat(UiController.mediaTypeFor("file." + extension))

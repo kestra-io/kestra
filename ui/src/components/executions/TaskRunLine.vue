@@ -114,7 +114,7 @@
 
 <script setup lang="ts">
     import {computed} from "vue"
-    import {State, KsExecutionStatus} from "@kestra-io/design-system"
+    import {State, KsExecutionStatus, groupBy} from "@kestra-io/design-system"
     import TaskIcon from "../plugins/TaskIcon.vue"
     import TaskRunActions from "./TaskRunActions.vue"
     import {useStateFilter} from "../filter/composables/useStateFilter"
@@ -122,7 +122,6 @@
     import ChevronRight from "vue-material-design-icons/ChevronRight.vue"
     import ChevronDown from "vue-material-design-icons/ChevronDown.vue"
     import * as FlowUtils from "../../utils/flowUtils"
-    import _groupBy from "lodash/groupBy"
     import {Duration} from "@kestra-io/topology"
     import {usePluginsStore} from "../../stores/plugins"
     import {date as dateFilter, humanizeDuration} from "../../utils/filters"
@@ -182,7 +181,7 @@
         // Remove duplicate logs based on taskRunId and attemptNumber, keeping the one with the highest index (most recent)
         indexedLogs = Array.from(new Set(indexedLogs))
 
-        return _groupBy(indexedLogs, (indexedLog: any) => attemptUid(indexedLog.taskRunId, indexedLog.attemptNumber))
+        return groupBy(indexedLogs, (indexedLog: any) => attemptUid(indexedLog.taskRunId, indexedLog.attemptNumber))
     })
 
     // methods

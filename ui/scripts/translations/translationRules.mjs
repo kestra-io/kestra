@@ -42,7 +42,7 @@ export function leafKeys(obj, prefix = "") {
 /**
  * EE keys that collide with an OSS key, with the collision described.
  *
- * EE's locale files are layered over OSS's with `lodash.merge`, so a key defined on both sides
+ * EE's locale files are layered over OSS's with a deep merge, so a key defined on both sides
  * resolves to EE's value. Three shapes of that are all bugs, and only the first is visible when
  * leaf keys are compared to leaf keys:
  *
@@ -240,6 +240,13 @@ const ALLOWED_ENGLISH_KEYS = new Set([
     // Plugin-doc section label that Hindi keeps in English on every reroll, matching its sibling
     // nav labels ("Outputs", "Tasks") that stay English through the reserved-terms rule.
     "plugins.nav_metrics",
+    // EE tenant wizard, infrastructure nav and asset filters. A full generator pass translated their
+    // sibling "Tenant identity" but returned these three unchanged: "Secrets manager" names the feature
+    // being configured, "Flavor" is the cloud instance-size term, and the metadata-key label wraps a
+    // quoted interpolation the model keeps verbatim.
+    "tenant.create.steps.secret",
+    "tenant.type.infraNav.mappingsPage.flavor",
+    "assets.filter.table_column.assets.metadata_key",
 ])
 
 /**

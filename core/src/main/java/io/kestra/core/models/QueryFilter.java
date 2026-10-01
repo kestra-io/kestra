@@ -216,6 +216,13 @@ public record QueryFilter(
                 return List.of(Op.EQUALS, Op.NOT_EQUALS, Op.IN, Op.NOT_IN, Op.CONTAINS);
             }
         },
+        @JsonProperty("assetExpiry")
+        ASSET_EXPIRY("assetExpiry") {
+            @Override
+            public List<Op> supportedOp() {
+                return List.of(Op.EQUALS, Op.NOT_EQUALS, Op.IN, Op.NOT_IN);
+            }
+        },
         @JsonProperty("flowId")
         FLOW_ID("flowId") {
             @Override
@@ -584,7 +591,7 @@ public record QueryFilter(
             public List<Field> supportedField() {
                 return List.of(
                     Field.QUERY, Field.SCOPE, Field.FLOW_ID, Field.START_DATE, Field.END_DATE,
-                    Field.STATE, Field.LABELS, Field.TRIGGER_EXECUTION_ID, Field.CHILD_FILTER,
+                    Field.STATE, Field.LABELS, Field.TRIGGER_EXECUTION_ID, Field.TRIGGER_ID, Field.CHILD_FILTER,
                     Field.NAMESPACE, Field.KIND, Field.PARENT_ID, Field.TASK_ID
                 );
             }
@@ -724,6 +731,8 @@ public record QueryFilter(
                     Field.TYPE,
                     Field.NAMESPACE,
                     Field.METADATA,
+                    Field.STATUS,
+                    Field.ASSET_EXPIRY,
                     Field.UPDATED,
                     Field.LOCKED
                 );

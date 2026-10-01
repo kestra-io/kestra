@@ -1,6 +1,6 @@
 <template>
     <div class="plugin-doc">
-        <template v-if="fetchPluginDocumentation && currentPlugin">
+        <template v-if="fetchPluginDocumentation && currentPlugin?.schema && currentPlugin.cls">
             <div class="dp-sticky">
                 <div class="dp-header">
                     <div class="dp-kicker">{{ packagePath }}</div>
@@ -67,8 +67,8 @@
                 <SchemaToHtml
                     class="plugin-schema"
                     :darkMode="isDarkTheme"
-                    :schema="currentPlugin?.schema"
-                    :pluginType="currentPlugin?.cls"
+                    :schema="currentPlugin.schema"
+                    :pluginType="currentPlugin.cls"
                     :forceIncludeProperties="pluginsStore.forceIncludeProperties"
                     noUrlChange
                     compact
@@ -276,10 +276,12 @@
     import SchemaToHtml from "./schema/SchemaToHtml.vue"
     import {KsButton, KsInput, KsMarkdown, KsTag, KsTooltip} from "@kestra-io/design-system"
     import TaskIcon from "./TaskIcon.vue"
+    import {buildHighlightHtml} from "../../utils/crossResourceSearch"
     import {getPluginReleaseUrl} from "../../utils/pluginUtils"
     import {getTheme, copy} from "../../utils/utils"
     import {useMiscStore} from "override/stores/misc"
     import {usePluginsStore} from "../../stores/plugins"
+    import type {PluginComponent} from "../../stores/plugins"
     import {useI18n} from "vue-i18n"
     import GitHub from "vue-material-design-icons/Github.vue"
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
@@ -300,7 +302,7 @@
         overrideIntro?: string | null;
         absolute?: boolean;
         fetchPluginDocumentation?: boolean;
-        plugin?: any;
+        plugin?: PluginComponent | null;
     }>(), {
         overrideIntro: null,
         absolute: false,
@@ -330,13 +332,11 @@
     })
 
     const pluginName = computed(() => {
-        const parts = currentPlugin.value?.cls.split(".")
-        return parts[parts.length - 1]
+        return currentPlugin.value?.cls?.split(".").at(-1) ?? ""
     })
 
     const packagePath = computed(() => {
-        const parts = currentPlugin.value?.cls.split(".")
-        return parts.slice(0, -1).join(".")
+        return currentPlugin.value?.cls?.split(".").slice(0, -1).join(".") ?? ""
     })
 
     const pluginKind = computed(() => {
@@ -484,7 +484,7 @@
             const exMatch = rest.match(/`([^`]+)`\s*(?:—|-)/)
             const example = exMatch ? exMatch[1] : ""
             const desc = rest.replace(/`[^`]+`\s*(?:—|-)\s*/, "").replace(/\\\|/g, "|").trim()
-            rows.push({name, nameHtml: name, desc, descHtml: desc, example})
+            rows.push({name, nameHtml: buildHighlightHtml(name, ""), desc, descHtml: buildHighlightHtml(desc, ""), example})
         }
         return rows
     })
@@ -492,14 +492,12 @@
     const filteredPebbleRows = computed<PebbleRow[]>(() => {
         const q = introSearch.value.trim().toLowerCase()
         if (!q) return pebbleRows.value
-        const esc = q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
-        const re = new RegExp(`(${esc})`, "gi")
         return pebbleRows.value
             .filter(r => r.name.toLowerCase().includes(q) || r.desc.toLowerCase().includes(q) || r.example.toLowerCase().includes(q))
             .map(r => ({
                 ...r,
-                nameHtml: r.name.replace(re, "<mark class=\"dp-intro-hl\">$1</mark>"),
-                descHtml: r.desc.replace(re, "<mark class=\"dp-intro-hl\">$1</mark>"),
+                nameHtml: buildHighlightHtml(r.name, q),
+                descHtml: buildHighlightHtml(r.desc, q),
             }))
     })
 
@@ -1160,7 +1158,8 @@
     font-size: var(--ks-font-size-xs);
   }
 
-  :deep(.dp-intro-hl) {
+  .dp-intro-fn-name mark,
+  .dp-intro-fn-desc mark {
     background: color-mix(in srgb, var(--ks-primary-500) 18%, transparent);
     border-radius: 3px;
     padding: 0 2px;

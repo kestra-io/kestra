@@ -1,17 +1,8 @@
 import {describe, expect, it, vi} from "vitest"
 import {defineComponent, h} from "vue"
-import {mount} from "@vue/test-utils"
-import {createI18n} from "vue-i18n"
 import {TASK_ICON_INJECTION_KEY} from "@kestra-io/design-system"
 import BasicNode from "../../../src/nodes/BasicNode.vue"
-
-const i18n = createI18n({
-    legacy: false,
-    locale: "en",
-    messages: {en: {}},
-    missingWarn: false,
-    fallbackWarn: false,
-})
+import {i18nMount} from "../../../../../tests/unit/i18nMount"
 
 const CLS = "io.kestra.plugin.core.log.Log"
 
@@ -28,7 +19,7 @@ const TaskIconSpy = defineComponent({
 })
 
 function mountBasicNode(props: Record<string, unknown> = {}, slots: Record<string, string> = {}) {
-    return mount(BasicNode, {
+    return i18nMount(BasicNode, {
         props: {
             id: "root.my-task",
             data: {node: {task: {id: "my-task", type: CLS}}, color: "default"},
@@ -36,7 +27,6 @@ function mountBasicNode(props: Record<string, unknown> = {}, slots: Record<strin
             ...props,
         },
         global: {
-            plugins: [i18n],
             // KsTooltip wraps the title in an element-plus popper; render only its default slot.
             stubs: {KsTooltip: {template: "<span><slot /></span>"}},
             provide: {[TASK_ICON_INJECTION_KEY as symbol]: TaskIconSpy},
@@ -72,16 +62,16 @@ describe("BasicNode icons", () => {
 
 describe("BasicNode layout", () => {
     const slots = {
-        badge: "<span class='badge-marker'>badge</span>",
+        subtitle: "<span class='subtitle-marker'>Log</span>",
         "title-status": "<span class='status-marker'>status</span>",
         "title-actions": "<span class='actions-marker'>actions</span>",
     }
 
-    it("should render the badge above the title, outside the title row", () => {
+    it("should render the subtitle under the title, inside the content column", () => {
         const wrapper = mountBasicNode({}, slots)
 
-        expect(wrapper.find(".node-content > .badge-marker").exists()).toBe(true)
-        expect(wrapper.find(".node-title .badge-marker").exists()).toBe(false)
+        expect(wrapper.find(".node-content > .node-subtitle > .subtitle-marker").exists()).toBe(true)
+        expect(wrapper.find(".node-title .subtitle-marker").exists()).toBe(false)
     })
 
     it("should render the status and actions as direct children of the main content", () => {
@@ -92,5 +82,39 @@ describe("BasicNode layout", () => {
 
         expect(wrapper.find(".node-content .status-marker").exists()).toBe(false)
         expect(wrapper.find(".node-content .actions-marker").exists()).toBe(false)
+    })
+})
+
+describe("BasicNode levels of detail (kestra-io/kestra#19666)", () => {
+    const slots = {
+        subtitle: "<span class='subtitle-marker'>Log</span>",
+        "title-status": "<span class='status-marker'>status</span>",
+        "title-actions": "<span class='actions-marker'>actions</span>",
+        details: "<div class='details-marker'>details</div>",
+    }
+
+    it("should collapse to just the icon below the pill threshold", () => {
+        const wrapper = mountBasicNode({lod: "pill"}, slots)
+
+        expect(wrapper.find(".node-pill").exists()).toBe(true)
+        expect(wrapper.find(".subtitle-marker").exists()).toBe(false)
+        expect(wrapper.find(".status-marker").exists()).toBe(false)
+        expect(wrapper.find(".actions-marker").exists()).toBe(false)
+    })
+
+    it("should render the full card at the default level, with no details overlay", () => {
+        const wrapper = mountBasicNode({lod: "default"}, slots)
+
+        expect(wrapper.find(".node-pill").exists()).toBe(false)
+        expect(wrapper.find(".status-marker").exists()).toBe(true)
+        expect(wrapper.find(".subtitle-marker").exists()).toBe(true)
+        expect(wrapper.find(".details-marker").exists()).toBe(false)
+    })
+
+    it("should additionally render the details overlay above the expanded threshold", () => {
+        const wrapper = mountBasicNode({lod: "expanded"}, slots)
+
+        expect(wrapper.find(".status-marker").exists()).toBe(true)
+        expect(wrapper.find(".node-details-overlay .details-marker").exists()).toBe(true)
     })
 })

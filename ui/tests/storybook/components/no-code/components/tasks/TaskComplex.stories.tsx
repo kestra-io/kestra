@@ -24,7 +24,7 @@ export const WithProperties: Story = {
         setup() {
             provide(SCHEMA_DEFINITIONS_INJECTION_KEY, computed(() => ({})));
             provide(FULL_SCHEMA_INJECTION_KEY, ref({definitions: {}, $ref: ""}));
-            const model = ref({} as Record<string, any>);
+            const model = ref<Record<string, unknown>>({});
             return () => <div style={{display: "flex", gap: "16px"}}>
                 <div style={{width: "500px"}}>
                     <TaskComplex
@@ -63,7 +63,7 @@ export const WithRefSchema: Story = {
             };
             provide(SCHEMA_DEFINITIONS_INJECTION_KEY, computed(() => definitions));
             provide(FULL_SCHEMA_INJECTION_KEY, ref({definitions, $ref: ""}));
-            const model = ref({host: "localhost"} as Record<string, any>);
+            const model = ref<Record<string, unknown>>({host: "localhost"});
             return () => <div style={{display: "flex", gap: "16px"}}>
                 <div style={{width: "500px"}}>
                     <TaskComplex

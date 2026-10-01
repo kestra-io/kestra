@@ -1,4 +1,4 @@
-import _escape from "lodash/escape"
+import {escapeHtml} from "@kestra-io/design-system"
 
 export type SearchResourceType = "flows" | "files" | "kv" | "secrets"
 
@@ -56,7 +56,7 @@ export function buildHighlightSegments(text: string, query: string, caseSensitiv
  */
 export function buildHighlightHtml(text: string, query: string, caseSensitive = false): string {
     return buildHighlightSegments(text, query, caseSensitive)
-        .map((segment) => segment.matched ? `<mark>${_escape(segment.text)}</mark>` : _escape(segment.text))
+        .map((segment) => segment.matched ? `<mark>${escapeHtml(segment.text)}</mark>` : escapeHtml(segment.text))
         .join("")
 }
 
@@ -104,7 +104,7 @@ export function buildTermHighlightSegments(text: string, query: string, caseSens
 
 export function buildTermHighlightHtml(text: string, query: string, caseSensitive = false): string {
     return buildTermHighlightSegments(text, query, caseSensitive)
-        .map((segment) => segment.matched ? `<mark>${_escape(segment.text)}</mark>` : _escape(segment.text))
+        .map((segment) => segment.matched ? `<mark>${escapeHtml(segment.text)}</mark>` : escapeHtml(segment.text))
         .join("")
 }
 

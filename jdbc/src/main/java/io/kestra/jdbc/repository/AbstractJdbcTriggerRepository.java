@@ -57,7 +57,8 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcCrudRepo
         Triggers.Fields.TRIGGER_ID, "trigger_id",
         Triggers.Fields.EXECUTION_ID, "execution_id",
         Triggers.Fields.NEXT_EXECUTION_DATE, NEXT_EVALUATION_DATE_COLUMN,
-        Triggers.Fields.WORKER_ID, WORKER_ID_FIELD.getName()
+        Triggers.Fields.WORKER_ID, WORKER_ID_FIELD.getName(),
+        Triggers.Fields.DISABLED, "disabled"
     );
 
     @Override
@@ -183,7 +184,7 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcCrudRepo
 
     @Override
     protected Condition defaultFilter(String tenantId, boolean allowDeleted) {
-        return buildTenantCondition(tenantId);
+        return buildTenantCondition(tenantId).and(aclCondition(Resource.TRIGGER));
     }
 
     @Override
@@ -210,7 +211,7 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcCrudRepo
             .getDslContextWrapper()
             .transactionResult(configuration ->
             {
-                DSLContext context = DSL.using(configuration);
+                DSLContext context = QueryTimeout.apply(configuration, descriptors.getQueryTimeout());
 
                 Map<String, ? extends ColumnDescriptor<Triggers.Fields>> columnsWithoutDate = descriptors.getColumns().entrySet().stream()
                     .filter(entry -> entry.getValue().getField() == null || !dateFields().contains(entry.getValue().getField()))
@@ -260,7 +261,7 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcCrudRepo
         boolean numeratorFilter) {
         return this.jdbcRepository.getDslContextWrapper().transactionResult(configuration ->
         {
-            DSLContext context = DSL.using(configuration);
+            DSLContext context = QueryTimeout.apply(configuration, dataFilter.getQueryTimeout());
             ColumnDescriptor<ITriggers.Fields> columnDescriptor = dataFilter.getColumns();
             Field<?> field = columnToField(columnDescriptor, getFieldsMapping());
             if (columnDescriptor.getAgg() != null) {

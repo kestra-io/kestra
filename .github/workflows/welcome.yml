@@ -11,36 +11,38 @@ permissions: {}
 
 jobs:
   welcome:
-    # author_association misses organization members with private membership, so the permission lookup below is the authoritative check.
+    # author_association misses organization members with private membership, so the repository role lookup below is the authoritative check.
     if: ${{ github.event.pull_request.user.type != 'Bot' && !contains(fromJSON('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.pull_request.author_association) && (github.event.action == 'opened' || github.event.pull_request.merged) }}
     runs-on: ubuntu-latest
     steps:
       - name: Generate a bot token
         id: bot-token
-        uses: actions/create-github-app-token@v3
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
         with:
           client-id: ${{ secrets.GH_BOT_APP_ID }}
           private-key: ${{ secrets.GH_BOT_PRIVATE_KEY }}
           owner: kestra-io
           repositories: kestra
 
-      - name: Check the author's repository permission
-        id: permission
-        uses: actions/github-script@v9
+      - name: Check the author's repository role
+        id: role
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         with:
           github-token: ${{ steps.bot-token.outputs.token }}
           script: |
             const username = context.payload.pull_request.user.login;
             // The organization membership endpoint answers 404 for this repository-scoped token, which is
-            // indistinguishable from a genuine non-member, so read the author's repository permission instead:
-            // organization members inherit write access, outside contributors only ever get 'read'.
+            // indistinguishable from a genuine non-member, so read the author's repository role instead:
+            // organization members are granted at least 'triage' here, outside contributors only ever get 'read'.
+            // The 'permission' field of that same response reports a 'triage' role as 'read', so it cannot tell
+            // the two apart - the triage flag below is what separates them, and it holds for custom roles too.
             const {data} = await github.rest.repos.getCollaboratorPermissionLevel({...context.repo, username});
-            core.info(`@${username} has '${data.permission}' permission on ${context.repo.repo}.`);
-            core.setOutput('has-write-access', String(data.permission === 'admin' || data.permission === 'write'));
+            core.info(`@${username} has the '${data.role_name}' role on ${context.repo.repo}.`);
+            core.setOutput('is-outsider', String(!data.user.permissions.triage));
 
       - name: Welcome a first pull request
-        if: github.event.action == 'opened' && steps.permission.outputs.has-write-access == 'false'
-        uses: actions/github-script@v9
+        if: github.event.action == 'opened' && steps.role.outputs.is-outsider == 'true'
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
           # Kept out of the script itself: interpolated there, a backtick or ${ would break out and run as JS.
           OPENED_MESSAGE: |
@@ -87,8 +89,8 @@ jobs:
             });
 
       - name: Congratulate on a first merged pull request
-        if: github.event.action == 'closed' && steps.permission.outputs.has-write-access == 'false'
-        uses: actions/github-script@v9
+        if: github.event.action == 'closed' && steps.role.outputs.is-outsider == 'true'
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
           # Kept out of the script itself for the same reason as above: a backtick or ${ interpolated there would break out and run as JS.
           MERGED_MESSAGE: |

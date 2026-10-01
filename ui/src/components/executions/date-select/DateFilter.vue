@@ -66,7 +66,7 @@
     import {useRoute} from "vue-router"
     import DateRange from "../../layout/DateRange.vue"
     import TimeSelect from "./TimeSelect.vue"
-    import moment from "moment"
+    import {dateUtils, dayjs} from "@kestra-io/design-system"
 
     interface FilterValue {
         startDate?: string;
@@ -122,8 +122,8 @@
 
     const startDate = computed<string | undefined>(() => {
         if (normalizedQuery.value.startDate) return String(normalizedQuery.value.startDate)
-        if (moment && endDate.value) {
-            return moment(endDate.value).add(-30, "days").toISOString(true)
+        if (endDate.value) {
+            return dateUtils.toIsoKeepOffset(dayjs(endDate.value).add(-30, "days"))
         }
         return undefined
     })

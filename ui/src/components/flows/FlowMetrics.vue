@@ -70,15 +70,15 @@
 <script setup lang="ts">
     import {ref, computed, watch} from "vue"
     import {useRoute, useRouter} from "vue-router"
-    import moment from "moment"
     import {useI18n} from "vue-i18n"
     import {useFlowStore} from "../../stores/flow"
     import {getFormat} from "../dashboard/composables/charts"
     import {date as dateFilter} from "../../utils/filters"
-    import {cssVar, KsBar, KsLine, KsSegmented} from "@kestra-io/design-system"
+    import {cssVar, dayjs, KsBar, KsLine, KsSegmented} from "@kestra-io/design-system"
     import type {KsChartSeriesItem} from "@kestra-io/design-system"
     import {KsFilter as KSFilter} from "@kestra-io/design-system"
-    import {useFlowMetricFilter} from "../filter/configurations"
+    import {useFlowMetricFilter} from "../filter/configurations/metricFilters"
+    import type {MetricAggregations} from "@kestra-io/kestra-sdk"
 
     defineOptions({
         name: "FlowMetrics",
@@ -93,12 +93,7 @@
     const flowStore = useFlowStore()
 
     const isLoading = ref(false)
-    const metricsData = ref<Record<string, any>>({})
-
-    interface MetricAggregation {
-        date: string;
-        value?: number;
-    }
+    const metricsData = ref<Record<string, MetricAggregations>>({})
 
     const currentAggregation = computed(() => {
         return (route.query.aggregation as string) ?? "sum"
@@ -141,7 +136,7 @@
     })
 
     const displayedMetrics = computed(() => {
-        const metrics = (flowStore.metrics ?? []) as string[]
+        const metrics = flowStore.metrics ?? []
         if (selectedMetric.value) {
             return metrics.filter((m) => m === selectedMetric.value)
         }
@@ -154,29 +149,29 @@
     })
 
     // Distinguishes "this flow genuinely has no metrics" (info) from "your filter matched none of them"
-    const hasAnyMetrics = computed(() => ((flowStore.metrics as string[] | undefined)?.length ?? 0) > 0)
+    const hasAnyMetrics = computed(() => (flowStore.metrics?.length ?? 0) > 0)
 
     const filterTerm = computed(() => selectedMetric.value ?? selectedTextSearch.value ?? "")
 
     function getTimeRangeParams(): {startDate?: string; endDate?: string} {
         const timeRange = route.query["filters[timeRange][EQUALS]"] as string | undefined
         if (!timeRange) return {}
-        const endDate = moment().toISOString()
-        const startDate = moment().subtract(moment.duration(timeRange)).toISOString()
+        const endDate = dayjs().toISOString()
+        const startDate = dayjs().subtract(dayjs.duration(timeRange)).toISOString()
         return {startDate, endDate}
     }
 
     function getCategories(metric: string): string[] {
         const data = metricsData.value[metric]
         if (!data) return []
-        const aggregations = (data.aggregations ?? []) as MetricAggregation[]
+        const aggregations = data.aggregations ?? []
         return aggregations.map((e) => dateFilter(e.date, getFormat(data.groupBy)))
     }
 
     function getSeriesData(metric: string): KsChartSeriesItem[] {
         const data = metricsData.value[metric]
         if (!data) return []
-        const aggregations = (data.aggregations ?? []) as MetricAggregation[]
+        const aggregations = data.aggregations ?? []
         const aggregationLabel = currentAggregation.value.toLowerCase()
         return [
             {
@@ -201,7 +196,7 @@
         const aggregation = currentAggregation.value
         const timeRangeParams = getTimeRangeParams()
 
-        const newData: Record<string, any> = {}
+        const newData: Record<string, MetricAggregations> = {}
 
         await Promise.all(
             metrics.map(async (metric) => {

@@ -29,6 +29,9 @@ import io.kestra.core.models.QueryFilter.Logical;
 import io.kestra.core.models.QueryFilter.Op;
 import io.kestra.core.models.dashboards.AggregationType;
 import io.kestra.core.models.dashboards.ColumnDescriptor;
+import io.kestra.core.models.dashboards.filters.EqualTo;
+import io.kestra.core.models.dashboards.filters.GreaterThan;
+import io.kestra.core.models.dashboards.filters.In;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionKind;
 import io.kestra.core.models.executions.ExecutionTrigger;
@@ -407,7 +410,6 @@ public abstract class AbstractExecutionRepositoryTest {
     static Stream<QueryFilter> errorFilterCombinations() {
         return Stream.of(
             QueryFilter.builder().field(Field.TIME_RANGE).value("test").operation(Op.EQUALS).build(),
-            QueryFilter.builder().field(Field.TRIGGER_ID).value("test").operation(Op.EQUALS).build(),
             QueryFilter.builder().field(Field.EXECUTION_ID).value("test").operation(Op.EQUALS).build(),
             QueryFilter.builder().field(Field.WORKER_ID).value("test").operation(Op.EQUALS).build(),
             QueryFilter.builder().field(Field.LEVEL).value(Level.DEBUG).operation(Op.GREATER_THAN_OR_EQUAL_TO).build()
@@ -849,6 +851,85 @@ public abstract class AbstractExecutionRepositoryTest {
         assertThat(data).first().extracting("total").hasToString("2");
         // the DURATION column is exposed in seconds, keeping the sub-second part: 0.5s + 1.5s
         assertThat(((Number) data.getFirst().get("duration")).doubleValue()).isCloseTo(2.0d, within(0.001d));
+    }
+
+    @Test
+    protected void shouldFilterOnDurationGivenAnIso8601Value() throws IOException {
+        var tenantId = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        var executionCreateDate = Instant.now().minus(Duration.ofMinutes(5));
+
+        executionRepository.save(executionWithDuration(tenantId, executionCreateDate, Duration.ofMillis(500)));
+        Execution slowExecution = executionRepository.save(executionWithDuration(tenantId, executionCreateDate, Duration.ofMillis(1500)));
+
+        var now = ZonedDateTime.now();
+        ArrayListTotal<Map<String, Object>> data = executionRepository.fetchData(
+            tenantId, Executions.builder()
+                .type(Executions.class.getName())
+                .columns(Map.of("id", ColumnDescriptor.<Executions.Fields> builder().field(Executions.Fields.ID).build()))
+                .where(List.of(GreaterThan.<Executions.Fields> builder().field(Executions.Fields.DURATION).value("PT1S").build()))
+                .build(),
+            now.minusHours(1),
+            now,
+            null
+        );
+
+        assertThat(data).hasSize(1);
+        assertThat(data).first().hasFieldOrPropertyWithValue("id", slowExecution.getId());
+    }
+
+    @Test
+    protected void shouldNarrowOnEveryStateFilter() throws IOException {
+        var tenantId = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        var executionCreateDate = Instant.now().minus(Duration.ofMinutes(5));
+
+        Execution succeeded = executionRepository.save(executionWithDuration(tenantId, executionCreateDate, Duration.ofSeconds(1)));
+        executionRepository.save(
+            Execution.builder()
+                .tenantId(tenantId)
+                .id(IdUtils.create())
+                .namespace("io.kestra.unittest")
+                .flowId("some-execution")
+                .flowRevision(1)
+                .state(
+                    new State(
+                        Type.FAILED,
+                        List.of(new State.History(State.Type.CREATED, executionCreateDate), new State.History(Type.FAILED, executionCreateDate.plusSeconds(1)))
+                    )
+                )
+                .taskRunList(List.of())
+                .build()
+        );
+
+        var now = ZonedDateTime.now();
+        ArrayListTotal<Map<String, Object>> data = executionRepository.fetchData(
+            tenantId, Executions.builder()
+                .type(Executions.class.getName())
+                .columns(Map.of("id", ColumnDescriptor.<Executions.Fields> builder().field(Executions.Fields.ID).build()))
+                .where(List.of(
+                    In.<Executions.Fields> builder().field(Executions.Fields.STATE).values(List.of("SUCCESS", "FAILED")).build(),
+                    EqualTo.<Executions.Fields> builder().field(Executions.Fields.STATE).value("SUCCESS").build()
+                ))
+                .build(),
+            now.minusHours(1),
+            now,
+            null
+        );
+
+        assertThat(data).hasSize(1);
+        assertThat(data).first().hasFieldOrPropertyWithValue("id", succeeded.getId());
+    }
+
+    @Test
+    protected void shouldRejectADurationFilterThatIsNotADuration() {
+        var tenantId = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        var now = ZonedDateTime.now();
+        Executions<ColumnDescriptor<Executions.Fields>> dataFilter = Executions.<ColumnDescriptor<Executions.Fields>> builder()
+            .type(Executions.class.getName())
+            .columns(Map.of("id", ColumnDescriptor.<Executions.Fields> builder().field(Executions.Fields.ID).build()))
+            .where(List.of(GreaterThan.<Executions.Fields> builder().field(Executions.Fields.DURATION).value("1 second").build()))
+            .build();
+
+        assertThrows(InvalidQueryFiltersException.class, () -> executionRepository.fetchData(tenantId, dataFilter, now.minusHours(1), now, null));
     }
 
     private Execution executionWithDuration(String tenantId, Instant createDate, Duration duration) {

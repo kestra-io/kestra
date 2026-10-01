@@ -1,35 +1,26 @@
 import {describe, expect, it, beforeEach, afterEach, vi} from "vitest"
-import {mount} from "@vue/test-utils"
-import {createI18n} from "vue-i18n"
 import Duration from "../../../src/misc/Duration.vue"
 import {TIMEZONE_STORAGE_KEY} from "../../../src/utils/utils"
+import {i18nMount} from "../../../../../tests/unit/i18nMount"
 
-const i18n = createI18n({
-    legacy: false,
-    locale: "en",
-    // Every other key intentionally has no message so tests can assert on the raw key as fallback
-    // text. These two are the exception: they need real interpolation, to prove two different
-    // subjects produce two different aria-labels, and that the attempt count is not concatenated.
-    messages: {
-        en: {
-            state_history: {
-                aria_open_for: "Show the state history for {subject}",
-                attempt_count: "{count} attempts",
-            },
-        },
+// Every other key intentionally has no message so tests can assert on the raw key as fallback
+// text. These two are the exception: they need real interpolation, to prove two different
+// subjects produce two different aria-labels, and that the attempt count is not concatenated.
+const messages = {
+    state_history: {
+        aria_open_for: "Show the state history for {subject}",
+        attempt_count: "{count} attempts",
     },
-    missingWarn: false,
-    fallbackWarn: false,
-})
+}
 
 function mountDuration(
     histories: {date: string | number; state: string}[],
     extraProps: {attemptCount?: number; subject?: string; interval?: number} = {},
 ) {
-    return mount(Duration, {
+    return i18nMount(Duration, {
+        messages,
         props: {histories, ...extraProps},
         global: {
-            plugins: [i18n],
             stubs: {
                 KsPopover: {
                     template: "<div><slot name=\"reference\" /><slot /></div>",
@@ -262,5 +253,81 @@ describe("Duration", () => {
 
         const openButton = wrapper.findAll("button").find((btn) => btn.text() === "state_history.open")
         expect(openButton).toBeUndefined()
+    })
+
+    it("should render the compact bar without a popover or trigger button when compact", () => {
+        const wrapper = i18nMount(Duration, {
+            props: {
+                compact: true,
+                histories: [
+                    {date: 0, state: "RUNNING"},
+                    {date: 1_000, state: "SUCCESS"},
+                ],
+            },
+        })
+
+        expect(wrapper.find("button.ks-duration-value").exists()).toBe(false)
+        expect(wrapper.find("[data-test=\"duration-compact-bar\"]").exists()).toBe(true)
+    })
+
+    it("should show no compact bar for a task that never ran", () => {
+        const wrapper = i18nMount(Duration, {
+            props: {
+                compact: true,
+                histories: [{date: 0, state: "SKIPPED"}],
+            },
+        })
+
+        expect(wrapper.find("[data-test=\"duration-compact-bar\"]").exists()).toBe(false)
+    })
+
+    it("should scale compact segments against the provided denominator instead of its own total", () => {
+        const wrapper = i18nMount(Duration, {
+            props: {
+                compact: true,
+                denominator: 4_000,
+                histories: [
+                    {date: 0, state: "RUNNING"},
+                    {date: 1_000, state: "SUCCESS"},
+                ],
+            },
+        })
+
+        const running = wrapper.find("[data-test=\"duration-segment-running\"]")
+        expect((running.element as HTMLElement).style.width).toBe("25%")
+    })
+
+    it("should not let the segments overfill the track when a run outgrows a stale denominator", () => {
+        // The denominator is the execution's longest task run and only refreshes with the execution,
+        // while this component re-measures on its own interval — so a still-running task outgrows it.
+        const wrapper = i18nMount(Duration, {
+            props: {
+                compact: true,
+                denominator: 1_000,
+                histories: [
+                    {date: 0, state: "CREATED"},
+                    {date: 1_000, state: "RUNNING"},
+                    {date: 4_000, state: "SUCCESS"},
+                ],
+            },
+        })
+
+        const widthOf = (name: string) => {
+            const el = wrapper.find(`[data-test="duration-segment-${name}"]`)
+            return el.exists() ? parseFloat((el.element as HTMLElement).style.width) : 0
+        }
+        const total = widthOf("queued") + widthOf("running") + widthOf("paused")
+
+        expect(total).toBeLessThanOrEqual(100)
+    })
+
+    it("should fall back to its own total for the tier-1 split bar when no denominator is provided", () => {
+        const wrapper = mountDuration([
+            {date: 0, state: "RUNNING"},
+            {date: 1_000, state: "SUCCESS"},
+        ])
+
+        const running = wrapper.find("[data-test=\"duration-segment-running\"]")
+        expect((running.element as HTMLElement).style.width).toBe("100%")
     })
 })

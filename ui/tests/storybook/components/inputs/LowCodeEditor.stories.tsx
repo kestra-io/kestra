@@ -3,9 +3,10 @@ import {provide, ref} from "vue";
 import {TOPOLOGY_CLICK_INJECTION_KEY} from "../../../../src/components/no-code/injectionKeys";
 import {vueRouter} from "storybook-vue3-router";
 import LowCodeEditor from "../../../../src/components/inputs/LowCodeEditor.vue";
-import {setMockClient} from "@kestra-io/kestra-sdk"
+import {setMockClient, type AxiosLikeClient} from "@kestra-io/kestra-sdk"
 import {mockClientFallback} from "../../../../.storybook/apiMock";
 import allowFailureDemo from "../../../fixtures/flowgraphs/allow-failure-demo.json";
+import type {FlowGraph} from "@kestra-io/topology/vue-flow-utils";
 
 export default {
     title: "Components/Inputs/LowCodeEditor",
@@ -21,9 +22,9 @@ export default {
 
 const Template: StoryFn<typeof LowCodeEditor> = (args) => ({
     setup() {
-        const axios: any = {}
+        const axios: Partial<AxiosLikeClient> = {}
         provide(TOPOLOGY_CLICK_INJECTION_KEY, ref())
-        axios.get = async (uri: string) => mockClientFallback("GET", uri)
+        axios.get = async <T,>(uri: string) => mockClientFallback<T>("GET", uri)
         setMockClient(axios);
 
         return () => (<div style="width:600px; height:600px;">
@@ -34,7 +35,7 @@ const Template: StoryFn<typeof LowCodeEditor> = (args) => ({
 
 export const Default = Template.bind({});
 Default.args = {
-    flowGraph: allowFailureDemo,
+    flowGraph: allowFailureDemo as unknown as FlowGraph,
     flowId: "allow-failure-demo",
     namespace: "sanitychecks.flows.blueprints",
     execution: {},

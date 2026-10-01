@@ -216,4 +216,42 @@ class StateTest {
         // When / Then
         assertThat(State.Type.fail(task)).isEqualTo(State.Type.FAILED);
     }
+
+    @Test
+    void shouldBeResumingFromBreakpointWhenLastTransitionWasBreakpointThenCreated() {
+        // Given
+        State state = new State(
+            State.Type.CREATED, List.of(
+                new State.History(State.Type.CREATED, START),
+                new State.History(State.Type.BREAKPOINT, START.plusSeconds(1)),
+                new State.History(State.Type.CREATED, START.plusSeconds(2))
+            )
+        );
+
+        // When / Then
+        assertThat(state.isResumingFromBreakpoint()).isTrue();
+    }
+
+    @Test
+    void shouldNotBeResumingFromBreakpointOnFreshCreated() {
+        // Given
+        State state = new State(State.Type.CREATED, List.of(new State.History(State.Type.CREATED, START)));
+
+        // When / Then
+        assertThat(state.isResumingFromBreakpoint()).isFalse();
+    }
+
+    @Test
+    void shouldNotBeResumingFromBreakpointWhenCurrentIsNotCreated() {
+        // Given
+        State state = new State(
+            State.Type.RUNNING, List.of(
+                new State.History(State.Type.BREAKPOINT, START),
+                new State.History(State.Type.RUNNING, START.plusSeconds(1))
+            )
+        );
+
+        // When / Then
+        assertThat(state.isResumingFromBreakpoint()).isFalse();
+    }
 }

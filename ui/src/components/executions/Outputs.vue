@@ -7,7 +7,7 @@
         <div v-ks-loading="isLoading">
             <Vars
                 :execution="props.execution"
-                class="table-unrounded mt-1"
+                class="mt-1"
                 :data="outputs"
             />
         </div>

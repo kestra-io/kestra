@@ -264,13 +264,12 @@ public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> 
     @Builder.Default
     private List<State.Type> states = ListUtils.concat(State.Type.terminatedTypes(), List.of(PAUSED));
 
-    @Valid
     @Schema(
         title = "Dependencies on upstream flow executions",
         description = "Express dependencies on upstream flow executions, which must be met for the flow trigger to be evaluated."
     )
     @PluginProperty
-    private List<Dependency> dependsOn;
+    private List<@Valid Dependency> dependsOn;
 
     @Valid
     @Schema(

@@ -1,6 +1,7 @@
 import {ref, type Ref} from "vue"
 import * as monaco from "monaco-editor/editor/editor.api"
-import moment from "moment"
+import dayjs from "../date/dayjs"
+import {toIsoKeepOffset} from "../utils/date"
 
 export const DATE_PICKER_SUGGESTION_LABEL = "_DATE_PICKER_"
 
@@ -19,7 +20,7 @@ export interface EditorDatePickerContext {
 }
 
 export function useEditorDatePicker(ctx: EditorDatePickerContext) {
-    const startOfToday = moment().startOf("day")
+    const startOfToday = dayjs().startOf("day")
     const selectedDate = ref<Date>(startOfToday.toDate())
     const shown = ref(false)
     let widget: monaco.editor.IContentWidget | undefined
@@ -40,7 +41,7 @@ export function useEditorDatePicker(ctx: EditorDatePickerContext) {
                     endLineNumber: position.lineNumber,
                     endColumn: wordAtPosition?.endColumn ?? position.column,
                 },
-                text: `${moment(chosen).toISOString(true)} `,
+                text: `${toIsoKeepOffset(dayjs(chosen))} `,
                 forceMoveMarkers: true,
             }],
             () => null,

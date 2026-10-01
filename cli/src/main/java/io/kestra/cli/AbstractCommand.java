@@ -172,7 +172,7 @@ public abstract class AbstractCommand extends BaseCommand implements Callable<In
                             .build();
                         healthEndpoint = managementEndpoint.resolve("./health");
                     } catch (URISyntaxException e) {
-                        e.printStackTrace();
+                        log.error("Failed to build the management or health endpoint URI", e);
                     }
                     log.info("Management server running at {}", managementEndpoint);
                     log.info("Health endpoint is available at {}", healthEndpoint);
@@ -219,7 +219,7 @@ public abstract class AbstractCommand extends BaseCommand implements Callable<In
             try {
                 return yamlPropertySourceLoader.read("cli", new FileInputStream(this.config.toFile()));
             } catch (IOException e) {
-                e.printStackTrace();
+                log.error("Failed to read the CLI configuration file '{}'", this.config, e);
             }
         }
 

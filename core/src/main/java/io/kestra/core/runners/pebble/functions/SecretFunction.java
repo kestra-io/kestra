@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Consumer;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -37,6 +38,7 @@ public class SecretFunction implements KestraFunction {
     private static final String NAMESPACE_ARG = "namespace";
     private static final String KEY_ARG = "key";
     private static final String FULL_ARG = "full";
+    private static final String ERROR_ON_MISSING_ARG = "errorOnMissing";
     private static final String VALUE_KEY = "value";
     private static final String METADATA_KEY = "metadata";
 
@@ -48,7 +50,7 @@ public class SecretFunction implements KestraFunction {
 
     @Override
     public List<String> getArgumentNames() {
-        return List.of(KEY_ARG, NAMESPACE_ARG, SUBKEY_ARG, FULL_ARG);
+        return List.of(KEY_ARG, NAMESPACE_ARG, SUBKEY_ARG, FULL_ARG, ERROR_ON_MISSING_ARG);
     }
 
     @SuppressWarnings("unchecked")
@@ -74,9 +76,19 @@ public class SecretFunction implements KestraFunction {
             throw new PebbleException(null, "The 'secret' function cannot be called with both 'subkey' and 'full' arguments.", lineNumber, self.getName());
         }
 
+        final boolean errorOnMissing = Optional.ofNullable((Boolean) args.get(ERROR_ON_MISSING_ARG)).orElse(true);
+
         try {
             if (full) {
-                SecretObject secretObject = secretService.get().findSecretObject(flowTenantId, namespace, key);
+                SecretObject secretObject;
+                try {
+                    secretObject = secretService.get().findSecretObject(flowTenantId, namespace, key);
+                } catch (SecretNotFoundException e) {
+                    if (errorOnMissing) {
+                        throw e;
+                    }
+                    return null;
+                }
                 consumeSecret(context, secretObject.value());
 
                 Map<String, Object> result = new LinkedHashMap<>();
@@ -88,7 +100,15 @@ public class SecretFunction implements KestraFunction {
                 return result;
             }
 
-            String secret = secretService.get().findSecret(flowTenantId, namespace, key);
+            String secret;
+            try {
+                secret = secretService.get().findSecret(flowTenantId, namespace, key);
+            } catch (SecretNotFoundException e) {
+                if (errorOnMissing) {
+                    throw e;
+                }
+                return null;
+            }
 
             if (subkey != null && !subkey.isEmpty()) {
                 try {
@@ -134,6 +154,7 @@ public class SecretFunction implements KestraFunction {
         defaults.put(NAMESPACE_ARG, "flow.namespace");
         defaults.put(SUBKEY_ARG, null);
         defaults.put(FULL_ARG, null);
+        defaults.put(ERROR_ON_MISSING_ARG, null);
         return defaults;
     }
 

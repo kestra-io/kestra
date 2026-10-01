@@ -1,6 +1,6 @@
 import {describe, test, expect, vi, beforeEach} from "vitest"
-import {shallowMount, flushPromises} from "@vue/test-utils"
-import {createI18n} from "vue-i18n"
+import {flushPromises} from "@vue/test-utils"
+import {i18nShallowMount} from "../../i18nMount"
 
 const filePreviewMock = vi.fn()
 const fileContentMock = vi.fn()
@@ -28,27 +28,20 @@ const FULL_HTML = "<html><body><h1>Hi</h1><script>document.title='ok'</script></
 const BIG_SIZE = 11 * 1024 * 1024  // 11 MB — over the 10 MB threshold
 const SMALL_SIZE = 1024             // 1 KB — under threshold
 
-const i18n = createI18n({
-    legacy: false,
-    locale: "en",
-    messages: {
-        en: {
-            download: "Download",
-            loading: "Loading...",
-            file_preview: {
-                big_file_warning: "File is large ({size})",
-                load_anyway: "Load anyway",
-                load_error: "Failed to load the file preview.",
-                retry: "Retry",
-                html_asset_warning: "Local assets will not load.",
-                html_preview_title: "HTML file preview",
-            },
-        },
+const messages = {
+    download: "Download",
+    loading: "Loading...",
+    file_preview: {
+        big_file_warning: "File is large ({size})",
+        load_anyway: "Load anyway",
+        load_error: "Failed to load the file preview.",
+        retry: "Retry",
+        html_asset_warning: "Local assets will not load.",
+        html_preview_title: "HTML file preview",
     },
-})
+}
 
 const globalConfig = {
-    plugins: [i18n],
     stubs: {
         KsAlert: {template: "<div class=\"ks-alert-stub\"><slot /></div>"},
         KsButton: {template: "<button><slot /></button>"},
@@ -61,7 +54,8 @@ const globalConfig = {
 }
 
 function mountPreview(path: string) {
-    return shallowMount(FilePreview, {
+    return i18nShallowMount(FilePreview, {
+        messages,
         props: {path, executionId: "exec-1"},
         global: globalConfig,
     })
@@ -197,7 +191,8 @@ describe("FilePreview — HTML path", () => {
         fileMetaMock.mockResolvedValue({size: SMALL_SIZE})
         filePreviewMock.mockResolvedValue({content: "hello", type: "RAW", truncated: false})
 
-        const wrapper = shallowMount(FilePreview, {
+        const wrapper = i18nShallowMount(FilePreview, {
+            messages,
             props: {path: "kestra:///outputs/e1/abc-a%23b+c.txt", executionId: "exec-1"},
             global: {
                 ...globalConfig,
@@ -217,7 +212,8 @@ describe("FilePreview — HTML path", () => {
 
         // isHtmlFile runs during render (v-if), so an unguarded props.path.toLowerCase()
         // would throw synchronously on mount here.
-        const wrapper = shallowMount(FilePreview, {
+        const wrapper = i18nShallowMount(FilePreview, {
+            messages,
             props: {path: undefined as unknown as string, executionId: "exec-1"},
             global: globalConfig,
         })

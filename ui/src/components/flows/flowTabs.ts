@@ -1,4 +1,5 @@
 import type {RouteMeta, RouteRecordRaw} from "vue-router"
+import type {Me} from "override/stores/auth"
 import resource from "../../models/resource"
 import action from "../../models/action"
 import {resolveDefaultTab} from "../../utils/routeTabs"
@@ -12,7 +13,7 @@ export const FLOW_PARENT_ROUTE = "flows/update"
  * permissions on the flow's namespace. Colocated here (rather than duplicated in
  * `useFlowRoot` and kestra-ee's `FlowRoot.vue`) so both repos stay in sync.
  */
-export function isFlowTabAllowed(tabName: string, ctx: {user: any; namespace: string | undefined}): boolean {
+export function isFlowTabAllowed(tabName: string, ctx: {user: Pick<Me, "hasAny" | "isAllowed"> | undefined; namespace: string | undefined}): boolean {
     const {user, namespace} = ctx
     switch (tabName) {
     case "overview":

@@ -1,14 +1,15 @@
 <template>
-    <span
-        v-for="(error, index) in errors"
-        :key="`${index}:${error}`"
-        class="field-error"
-        role="alert"
-        :data-test="dataTest"
-    >
-        <AlertCircleOutline class="field-error-icon" aria-hidden="true" />
-        {{ error }}
-    </span>
+    <div v-if="errors.length" role="alert">
+        <span
+            v-for="(error, index) in errors"
+            :key="`${index}:${error}`"
+            class="field-error"
+            :data-test="dataTest"
+        >
+            <AlertCircleOutline class="field-error-icon" aria-hidden="true" />
+            {{ error }}
+        </span>
+    </div>
 </template>
 
 <script setup lang="ts">

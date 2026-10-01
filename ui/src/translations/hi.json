@@ -459,6 +459,12 @@
     "email": "ईमेल",
     "password": "पासवर्ड",
     "confirm password": "पासवर्ड की पुष्टि करें",
+    "change_password": {
+      "title": "पासवर्ड बदलें",
+      "current_password": "वर्तमान पासवर्ड",
+      "new_password": "नया पासवर्ड",
+      "success": "आपके क्रेडेंशियल अपडेट कर दिए गए हैं।"
+    },
     "invalid flow": "अमान्य flow",
     "invalid yaml": "अमान्य YAML",
     "inputs": "इनपुट्स",

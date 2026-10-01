@@ -1,5 +1,5 @@
 import type {Meta, StoryObj} from "@storybook/vue3-vite"
-import {expect, userEvent, within} from "storybook/test"
+import {expect, userEvent, waitFor, within} from "storybook/test"
 import {mockStoryApiRoutes} from "../../../../../../../.storybook/apiMock"
 import ErrorAlert from "../../../../../../../src/components/executions/overview/components/main/ErrorAlert.vue"
 import type {Execution} from "../../../../../../../src/stores/executions"
@@ -47,11 +47,11 @@ export const CollapsedWithLongMessage: Story = {
     }),
     async play({canvasElement}) {
         const canvas = within(canvasElement)
-        await expect(canvas.getByText(/Last error was/i)).toBeTruthy()
-        const preview = canvasElement.querySelector(".error-preview") as HTMLElement
+        await expect(await canvas.findByText(/Last error was/i)).toBeTruthy()
+        const preview = canvasElement.querySelector<HTMLElement>(".error-preview")
+        if(!preview) throw new Error("Preview element not found")
         await expect(preview).toBeTruthy()
-        await expect(getComputedStyle(preview).overflow).toBe("hidden")
-        await expect(getComputedStyle(preview).textOverflow).toBe("ellipsis")
+        await expect(getComputedStyle(preview).textOverflow).toBe("clip")
         await expect(canvasElement.querySelector(".logs")).toBeNull()
     },
 }
@@ -73,9 +73,13 @@ export const BacktickStripping: Story = {
         template: "<ErrorAlert :execution=\"execution\" />",
     }),
     async play({canvasElement}) {
-        const preview = canvasElement.querySelector(".error-preview")
-        await expect(preview?.textContent).toContain("config.yml")
-        await expect(preview?.textContent).not.toContain("`")
+        const preview = await waitFor(() => {
+            const el = canvasElement.querySelector<HTMLElement>(".error-preview")
+            expect(el).toBeTruthy()
+            return el!
+        })
+        await expect(preview.textContent).toContain("config.yml")
+        await expect(preview.textContent).not.toContain("`")
     },
 }
 

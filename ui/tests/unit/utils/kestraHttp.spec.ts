@@ -135,6 +135,16 @@ describe("setupKestraHttp central 404 handling", () => {
         expect(coreStore.message).toBeUndefined()
     })
 
+    it("does not report when handled(error) is called after the rejection crosses an async wrapper", async () => {
+        const {coreStore, notFound} = triggerNotFound()
+        const call = async () => { throw notFound }
+
+        await (async () => await call())().catch((e) => handled(e))
+        await new Promise((r) => setTimeout(r))
+
+        expect(coreStore.message).toBeUndefined()
+    })
+
     it("reports to the global store if handled(error) is NOT called", async () => {
         const {coreStore} = triggerNotFound()
         

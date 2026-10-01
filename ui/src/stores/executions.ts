@@ -261,7 +261,7 @@ export const useExecutionsStore = defineStore("executions", () => {
         return axios.post(`${apiUrl()}/executions/${options.executionId}/actions/interrupt`, {
             taskRunId: options.taskRunId,
             state: options.state,
-        }).then(response => response.data) as Promise<Execution>
+        })
     }
     const waitForStateChange = async (source: Execution) => {
         const updated = await ExecutionUtils.waitForState(axios, source) as Execution

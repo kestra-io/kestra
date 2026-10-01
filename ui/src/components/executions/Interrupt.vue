@@ -128,8 +128,7 @@
                 state: selectedStatus.value as string,
             })
             .then(() => {
-                // The interrupt is applied asynchronously by the Worker, so the response carries the
-                // execution as it was before it: re-follow the stream rather than store that snapshot.
+                // The interrupt is applied asynchronously by the Worker: re-follow the stream to pick up the new state.
                 emit("follow")
 
                 toast.success(t("interrupt done"))

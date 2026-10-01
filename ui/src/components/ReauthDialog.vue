@@ -43,8 +43,7 @@
 
 <script lang="ts" setup>
     import {computed, ref, watch} from "vue"
-    import {resolveReauth, useReauthDialog} from "../composables/useReauthDialog"
-    import * as BasicAuth from "../utils/basicAuth"
+    import {resolveReauth, submitReauth, useReauthDialog} from "../composables/useReauthDialog"
 
     const {visible} = useReauthDialog()
 
@@ -66,7 +65,7 @@
         loading.value = true
         failed.value = false
         try {
-            await BasicAuth.signIn(credentials.value)
+            await submitReauth(credentials.value)
             resolveReauth(true)
         } catch {
             failed.value = true

@@ -144,7 +144,7 @@ public class LocalStorage implements StorageInterface {
             // This can happen for concurrent deletion while traversing folders so we skip in such case
             @Override
             public FileVisitResult visitFileFailed(Path file, IOException exc) {
-                log.warn("Failed to visit file {} while searching all by prefix for path {}", file, prefix.getPath(), exc);
+                log.warn("Failed to visit file {} while searching all by prefix for path {}", file, StorageContext.logicalPath(prefix), exc);
                 return FileVisitResult.SKIP_SUBTREE;
             }
         });
@@ -204,7 +204,7 @@ public class LocalStorage implements StorageInterface {
     private static IOException newParentDirectoryFailure(URI uri, FileSystemException cause) {
         log.debug("Cannot create the parent directory of {}", uri, cause);
         if (cause instanceof FileAlreadyExistsException) {
-            return new FileAlreadyExistsException(uri.getPath(), null, "a file already exists in the parent hierarchy.");
+            return new FileAlreadyExistsException(StorageContext.logicalPath(uri), null, "a file already exists in the parent hierarchy.");
         }
         return new IOException("Cannot create the parent directory of the URI: " + uri.toString());
     }

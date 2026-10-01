@@ -198,6 +198,7 @@
     import {usePlaygroundRun} from "../../composables/playground/usePlaygroundRun"
     import {CHIP_DRAG_MIME, CHIP_SECTION_DRAG_MIME, isArmableField, insertAtCaret} from "./chipInsertion"
     import {resolveDeclaredOutputProperties, hasDeclaredOutputs as computeHasDeclaredOutputs} from "./taskOutputSchema"
+    import {flattenTaskIds} from "../../utils/flowableBlockOps"
     import {useContextSections} from "../../composables/useContextSections"
     import type {DataSection} from "./contextSections/types"
     import {trackChipInserted, trackChipCopied} from "../../utils/analytics/taskEditorEvents"
@@ -402,17 +403,6 @@
         }
         return null
     })
-
-    function flattenTaskIds(tasks: unknown, acc: string[]) {
-        if (!Array.isArray(tasks)) return
-        for (const task of tasks) {
-            if (task?.id) acc.push(String(task.id))
-            for (const key of ["tasks", "then", "else", "errors", "finally", "defaults"]) flattenTaskIds(task?.[key], acc)
-            if (task?.cases && typeof task.cases === "object") {
-                for (const branch of Object.values(task.cases)) flattenTaskIds(branch, acc)
-            }
-        }
-    }
 
     const currentTaskId = computed(() => String(props.taskId ?? props.task?.id ?? ""))
 

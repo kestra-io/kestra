@@ -224,7 +224,17 @@
     const currentSizeValue = computed(() => normalizeSize(props.pageSize))
     const internalSort = ref<string>()
 
-    const tableRef = ref<InstanceType<typeof KsTable>>()
+    type DataRow = NonNullable<typeof props.data>[number]
+
+    interface KsTableHandle {
+        toggleRowSelection: (row: DataRow, selected?: boolean) => void
+        clearSelection: () => void
+        toggleAllSelection: () => void
+        getSelectionRows: () => DataRow[]
+        toggleRowExpansion: (row: DataRow, expanded?: boolean) => void
+        $el?: HTMLElement
+    }
+    const tableRef = ref<KsTableHandle>()
     const container = ref<HTMLElement | null>(null)
     const hasSelection = ref(false)
     const lastCheckedIndex = ref<number | null>(null)
@@ -270,11 +280,12 @@
                 : s[rowKey as string] === row[rowKey as string],
         )
 
-        if (isShiftPressed.value && lastCheckedIndex.value !== null) {
+        if (currentIndex >= 0 && isShiftPressed.value && lastCheckedIndex.value !== null) {
             const start = Math.min(lastCheckedIndex.value, currentIndex)
             const end = Math.max(lastCheckedIndex.value, currentIndex)
             for (let i = start; i <= end; i++) {
-                tableRef.value?.toggleRowSelection(data[i], isChecked)
+                const pageRow = data[i]
+                if (pageRow !== undefined) tableRef.value?.toggleRowSelection(pageRow, isChecked)
             }
             await nextTick()
             const finalSelection = tableRef.value?.getSelectionRows() ?? []
@@ -399,16 +410,20 @@
         } else {
             const currentSelection = tableRef.value?.getSelectionRows() ?? []
             const rowKey = props.rowKey
-            const validSelection = currentSelection.filter((sel: unknown) => {
+            const validSelection = currentSelection.filter((sel) => {
                 const isFunction = typeof rowKey === "function"
                 return props.data.some(r => isFunction
                     ? (rowKey as (row: any) => any)(r) === (rowKey as (row: any) => any)(sel)
-                    : r[rowKey as string] === (sel as Record<string, unknown>)[rowKey as string])
+                    : r[rowKey as string] === sel[rowKey as string])
             })
             if (validSelection.length !== currentSelection.length) {
                 tableRef.value?.clearSelection()
-                hasSelection.value = false
+                for (const row of validSelection) {
+                    tableRef.value?.toggleRowSelection(row, true)
+                }
+                hasSelection.value = validSelection.length > 0
                 lastCheckedIndex.value = null
+                selectionChanged(validSelection)
             } else if (tableRef.value) {
                 selectionChanged(currentSelection)
             }

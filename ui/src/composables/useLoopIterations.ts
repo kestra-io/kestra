@@ -45,8 +45,11 @@ export function useLoopIterations(parentExecutionId: string, taskId: string) {
         }
     }
 
+    const error = ref<unknown>(undefined)
+
     async function fetchPage(targetPage: number): Promise<void> {
         loading.value = true
+        error.value = undefined
         try {
             const filters: Parameters<typeof executionsStore.findExecutions>[0] = {
                 "filters[parentId][EQUALS]": parentExecutionId,
@@ -68,6 +71,8 @@ export function useLoopIterations(parentExecutionId: string, taskId: string) {
             total.value = response.total ?? 0
             page.value = targetPage
             loaded.value = true
+        } catch (e) {
+            error.value = e
         } finally {
             loading.value = false
         }
@@ -94,6 +99,7 @@ export function useLoopIterations(parentExecutionId: string, taskId: string) {
         iterations,
         total,
         loading,
+        error,
         loaded,
         hasMore,
         needsPreview,

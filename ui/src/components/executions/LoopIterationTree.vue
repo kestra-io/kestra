@@ -19,6 +19,15 @@
                 </KsIcon>
             </div>
 
+            <KsAlert v-else-if="error" type="error">
+                {{ $t("loop_iterations_load_error") }}
+                <KsButton size="small" link @click="ensureLoaded">{{ $t("retry") }}</KsButton>
+            </KsAlert>
+
+            <div v-else-if="loaded && iterations.length === 0" class="loop-empty">
+                {{ $t("no_iterations") }}
+            </div>
+
             <div
                 v-for="iteration in iterations"
                 :key="iteration.id"
@@ -65,7 +74,7 @@
                     data-test="loop-load-more"
                     @click="loadMore"
                 >
-                    {{ $t("load 10 more") }}
+                    {{ $t("load_10_more") }}
                 </KsButton>
                 <KsButton
                     :tag="RouterLink"
@@ -73,7 +82,7 @@
                     link
                     :to="allExecutionsRoute"
                 >
-                    {{ $t("show all executions") }}
+                    {{ $t("show_all_executions") }}
                 </KsButton>
             </div>
 
@@ -114,6 +123,7 @@
         iterations,
         total,
         loading,
+        error,
         loaded,
         hasMore,
         needsPreview,
@@ -167,7 +177,7 @@
         font-size: var(--ks-font-size-sm);
 
         &__count {
-            color: var(--ks-text-tertiary);
+            color: var(--ks-text-muted);
         }
     }
 

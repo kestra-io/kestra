@@ -1,4 +1,5 @@
 import {vi} from "vitest";
+import {userEvent, waitFor, within} from "@storybook/test";
 
 // useLoopIterations (via executionsStore.findExecutions) and IterationTaskRuns both call their
 // generated SDK submodule functions directly, which go through the SDK's own internal client
@@ -69,6 +70,15 @@ export const Default: StoryObj<{total: number}> = {
     args: {
         total: 3,
     },
+    play: async ({canvasElement}) => {
+        const toggle = canvasElement.querySelector('[data-test="loop-iteration-toggle"]') as HTMLElement
+        await userEvent.click(toggle)
+
+        await waitFor(() => {
+            const rows = canvasElement.querySelectorAll('[data-test="loop-iteration-row"]')
+            if (rows.length !== 3) throw new Error(`expected 3 iteration rows, got ${rows.length}`)
+        })
+    },
 }
 
 // Click "Iterations" to expand — over the page size, so the preview footer (count, Load 10
@@ -77,5 +87,29 @@ export const OverThePreviewLimit: StoryObj<{total: number}> = {
     render: Template,
     args: {
         total: 12,
+    },
+    play: async ({canvasElement}) => {
+        const canvas = within(canvasElement)
+        const toggle = canvasElement.querySelector('[data-test="loop-iteration-toggle"]') as HTMLElement
+        await userEvent.click(toggle)
+
+        await waitFor(() => {
+            const rows = canvasElement.querySelectorAll('[data-test="loop-iteration-row"]')
+            if (rows.length !== 10) throw new Error(`expected 10 iteration rows on page 1, got ${rows.length}`)
+        })
+
+        // Asserts on the actual rendered English label — this is exactly the check that
+        // would have caught the raw-key-id rendering bug from #19603's review.
+        const loadMoreButton = canvasElement.querySelector('[data-test="loop-load-more"]') as HTMLElement
+        if (!loadMoreButton || loadMoreButton.textContent?.trim() !== "Load 10 more") {
+            throw new Error(`Load-more button text mismatch: "${loadMoreButton?.textContent}"`)
+        }
+
+        await userEvent.click(loadMoreButton)
+
+        await waitFor(() => {
+            const rows = canvasElement.querySelectorAll('[data-test="loop-iteration-row"]')
+            if (rows.length !== 12) throw new Error(`expected 12 iteration rows after load more, got ${rows.length}`)
+        })
     },
 }

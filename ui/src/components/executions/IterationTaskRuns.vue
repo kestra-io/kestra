@@ -20,6 +20,15 @@
             />
         </template>
     </div>
+    <KsAlert v-else-if="error" type="error">
+        {{ $t("loop_iterations_load_error") }}
+        <KsButton size="small" link @click="retryFetch">{{ $t("retry") }}</KsButton>
+    </KsAlert>
+    <div v-else class="loop-loading">
+        <KsIcon class="is-loading" :size="20">
+            <Loading />
+        </KsIcon>
+    </div>
 </template>
 
 <script setup lang="ts">
@@ -27,6 +36,8 @@
     import TaskRunLine from "./TaskRunLine.vue"
     import {useExecutionsStore, type Execution} from "../../stores/executions"
     import * as ExecutionsAPI from "@kestra-io/kestra-sdk/executions"
+    import {KsAlert, KsButton, KsIcon} from "@kestra-io/design-system"
+    import Loading from "vue-material-design-icons/Loading.vue"
     import * as FlowUtils from "../../utils/flowUtils"
 
     const props = defineProps<{
@@ -52,6 +63,8 @@
         return (task as {type?: string} | undefined)?.type === "io.kestra.plugin.core.flow.Loop"
     }
 
+    const error = ref<unknown>(undefined)
+
     // Reacts to executionId rather than fetching once on mount, so that if this component
     // instance is ever reused for a different iteration (the exact bug class fixed by the
     // :key additions on LoopIterationTree above), it refetches instead of showing stale data.
@@ -59,11 +72,22 @@
     // fetch for an executionId this component has since moved on from must not land on top
     // of a newer, already-resolved one — the same pattern executionsStore.loadExecution uses.
     let latestFetch = 0
-    watch(() => props.executionId, async (id) => {
+    async function fetchExecution(id: string) {
         const fetch = ++latestFetch
-        const data = await ExecutionsAPI.execution({executionId: id}) as unknown as Execution
-        if (fetch === latestFetch) execution.value = data
-    }, {immediate: true})
+        error.value = undefined
+        execution.value = undefined
+        try {
+            const data = await ExecutionsAPI.execution({executionId: id}) as unknown as Execution
+            if (fetch === latestFetch) execution.value = data
+        } catch (e) {
+            if (fetch === latestFetch) error.value = e
+        }
+    }
+    watch(() => props.executionId, (id) => fetchExecution(id), {immediate: true})
+
+    function retryFetch() {        
+        fetchExecution(props.executionId)
+    }
 </script>
 
 <style scoped lang="scss">

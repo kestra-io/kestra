@@ -5,15 +5,13 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.nullValue;
+import static org.assertj.core.api.Assertions.assertThat;
 
 class ApiLoopRunTest {
 
     @Test
     void ofNullLoopRun() {
-        assertThat(ApiLoopRun.of(null), is(nullValue()));
+        assertThat(ApiLoopRun.of(null)).isNull();
     }
 
     @Test
@@ -30,7 +28,7 @@ class ApiLoopRunTest {
 
         var api = ApiLoopRun.of(loopRun);
 
-        assertThat(api.taskId(), is("outer"));
-        assertThat(api.parents().getFirst().value(), is("Q1"));
+        assertThat(api.taskId()).isEqualTo("outer");
+        assertThat(api.parents().getFirst().value()).isEqualTo("Q1");
     }
 }

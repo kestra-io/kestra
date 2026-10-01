@@ -1,6 +1,6 @@
 import {computed, ref, Ref, watch} from "vue"
 import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
-import {KsEditor} from "@kestra-io/design-system"
+import {KsEditor, isDeepEqual} from "@kestra-io/design-system"
 
 import {usePlaygroundStore} from "../../stores/playground"
 
@@ -102,10 +102,8 @@ export default function useFlowEditorRunTaskButton(isCurrentTabFlow: Ref<boolean
             return
         }
 
-        const hv = highlightedLines.value as Record<string, unknown> | undefined
-
         // in case identical setting change nothing
-        if(hv && !Object.keys(hv).some((key) => hv[key] !== (res as Record<string, unknown>)[key])) {
+        if (isDeepEqual(highlightedLines.value, res)) {
             return
         }
 

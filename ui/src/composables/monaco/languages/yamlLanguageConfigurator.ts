@@ -174,14 +174,7 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
                 .map((s) => {
                     const r = {...s}
 
-                    if (typeof r.insertText === "string") {
-                        r.insertText = r.insertText.replaceAll("\\\\\"", "\"")
-                    } else if (typeof r.insertText === "object" && r.insertText !== null) {
-                        const textObj = r.insertText as { value?: string }
-                        if (typeof textObj.value === "string") {
-                            textObj.value = textObj.value.replaceAll("\\\\\"", "\"")
-                        }
-                    }
+                    r.insertText = r.insertText.replaceAll("\\\\\"", "\"")
 
                     if (typeof r.filterText === "string") {
                         r.filterText = r.filterText.replaceAll("\\\\\"", "\"")

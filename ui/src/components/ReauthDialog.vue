@@ -2,6 +2,7 @@
     <KsDialog
         :modelValue="visible"
         :title="$t('session expired')"
+        width="min(360px, 92vw)"
         alignCenter
         :closeOnClickModal="false"
         :closeOnPressEscape="false"
@@ -17,7 +18,9 @@
                     name="username"
                     :placeholder="$t('email')"
                     autocomplete="username"
-                />
+                >
+                    <template #prefix><KsIcon><AccountOutline /></KsIcon></template>
+                </KsInput>
             </KsFormItem>
             <KsFormItem>
                 <KsInput
@@ -27,7 +30,9 @@
                     :placeholder="$t('password')"
                     autocomplete="current-password"
                     @keyup.enter="submit"
-                />
+                >
+                    <template #prefix><KsIcon><LockOutline /></KsIcon></template>
+                </KsInput>
             </KsFormItem>
         </KsForm>
         <template #footer>
@@ -43,6 +48,8 @@
 
 <script lang="ts" setup>
     import {computed, ref, watch} from "vue"
+    import AccountOutline from "vue-material-design-icons/AccountOutline.vue"
+    import LockOutline from "vue-material-design-icons/LockOutline.vue"
     import {resolveReauth, submitReauth, useReauthDialog} from "../composables/useReauthDialog"
 
     const {visible} = useReauthDialog()

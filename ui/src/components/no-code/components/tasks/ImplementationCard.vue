@@ -1,6 +1,6 @@
 <template>
     <div class="implementation-card" :class="{'implementation-card--error': unresolved}" data-test="plugin-implementation-card">
-        <div class="implementation-card-head">
+        <div class="implementation-card-head" :class="{'implementation-card-head--open': expanded}">
             <button
                 type="button"
                 class="implementation-card-toggle"
@@ -157,6 +157,16 @@
     align-items: stretch;
     gap: var(--ks-spacing-1);
     padding-right: var(--ks-spacing-2);
+    border-radius: var(--ks-radius-base);
+}
+
+.implementation-card-head:hover {
+    background: var(--ks-bg-hover);
+}
+
+.implementation-card-head--open {
+    border-end-start-radius: 0;
+    border-end-end-radius: 0;
 }
 
 .implementation-card-toggle {
@@ -171,10 +181,6 @@
     cursor: pointer;
     text-align: left;
     border-radius: var(--ks-radius-base);
-}
-
-.implementation-card-toggle:hover {
-    background: var(--ks-bg-hover);
 }
 
 .implementation-card-toggle:focus-visible {

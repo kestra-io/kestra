@@ -162,7 +162,7 @@ public final class YamlParser {
 
     @Nullable
     private static Integer listIndex(List<?> list, String segment) {
-        if (segment.isEmpty() || !segment.chars().allMatch(Character::isDigit) || segment.length() > 9) {
+        if (!ParseReport.isIndex(segment)) {
             return null;
         }
         int index = Integer.parseInt(segment);
@@ -212,18 +212,11 @@ public final class YamlParser {
 
     /** Renders Jackson's reference chain as a document path such as {@code tasks[0].type}. */
     private static String propertyPath(JsonMappingException e, @Nullable String leaf) {
-        StringBuilder path = new StringBuilder();
-        for (JsonMappingException.Reference reference : e.getPath()) {
-            if (reference.getFieldName() != null) {
-                path.append(path.isEmpty() ? "" : ".").append(reference.getFieldName());
-            } else if (reference.getIndex() >= 0) {
-                path.append('[').append(reference.getIndex()).append(']');
-            }
-        }
+        List<String> path = segments(e.getPath());
         if (leaf != null) {
-            path.append(path.isEmpty() ? "" : ".").append(leaf);
+            path.add(leaf);
         }
-        return path.toString();
+        return ParseReport.toPath(path);
     }
 
     private static String formatYamlErrorMessage(String originalMessage, JsonProcessingException e) {

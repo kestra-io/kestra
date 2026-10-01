@@ -1,5 +1,5 @@
 import {vi} from "vitest";
-import {userEvent, waitFor, within} from "@storybook/test";
+import {userEvent, waitFor} from "storybook/test";
 
 // useLoopIterations (via executionsStore.findExecutions) and IterationTaskRuns both call their
 // generated SDK submodule functions directly, which go through the SDK's own internal client
@@ -89,7 +89,6 @@ export const OverThePreviewLimit: StoryObj<{total: number}> = {
         total: 12,
     },
     play: async ({canvasElement}) => {
-        const canvas = within(canvasElement)
         const toggle = canvasElement.querySelector('[data-test="loop-iteration-toggle"]') as HTMLElement
         await userEvent.click(toggle)
 

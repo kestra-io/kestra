@@ -56,9 +56,9 @@ interface QueryFilter {
 }
 
 /** Minimal structural shape of a @hey-api/client-fetch interceptor slot. */
-interface FetchInterceptor<Interceptor> {
+interface FetchInterceptor {
     clear: () => void;
-    use(fn: Interceptor): void;
+    use(fn: (...args: never[]) => unknown): void;
 }
 
 /** The subset of a @hey-api/client-fetch client that configureClient touches. */
@@ -69,9 +69,9 @@ export interface ConfigurableFetchClient {
         [key: string]: unknown;
     }) => unknown;
     interceptors: {
-        request: FetchInterceptor<(request: Request, options: ResolvedRequestOptionsLike) => Request | Promise<Request>>;
-        response: FetchInterceptor<(response: Response, request: Request, options: ResolvedRequestOptionsLike) => Response | Promise<Response>>;
-        error: FetchInterceptor<(error: unknown, response: Response | undefined, request: Request | undefined, options: ResolvedRequestOptionsLike) => unknown | Promise<unknown>>;
+        request: FetchInterceptor;
+        response: FetchInterceptor;
+        error: FetchInterceptor;
     };
 }
 
@@ -86,7 +86,7 @@ interface ResolvedRequestOptionsLike {
 
 /** The generated SDK's own multipart body serializer (from its vendored core). */
 interface FormDataBodySerializer {
-    bodySerializer: (body: unknown) => string | undefined;
+    bodySerializer: (body: unknown) => unknown;
 }
 
 function serializeQueryValue(val: unknown): string | undefined {

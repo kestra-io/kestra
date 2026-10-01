@@ -22,7 +22,7 @@ const defaultConfig: KestraSdkPlugin["Config"] = {
     config: {
         output: "kestra-sdk",
         methodNameBuilder(operation) {
-            const operationId = stripGetPrefix(operation.id)
+            const operationId = stripGetPrefix(operation.operationId ?? operation.id)
             // if its the "namespace" typescript reserved name, use
             // load as a prefix to avoid conflict
             if (operationId === "namespace") {

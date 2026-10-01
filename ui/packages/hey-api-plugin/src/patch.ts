@@ -1,5 +1,3 @@
-import type {OpenApiOperationObject, OpenApiSchemaObject} from "@hey-api/openapi-ts"
-
 /**
  * hey-api prefers a declared `application/json` request-body variant, mislabeling raw YAML source bodies (#340).
  * For string-schema YAML bodies, drop the JSON variant and put the YAML one first so the parser picks it.
@@ -15,23 +13,28 @@ function isRecord(value: unknown): value is Record<string, unknown> {
     return typeof value === "object" && value !== null
 }
 
-function isPlainString(schema: OpenApiSchemaObject.V3_1_X): boolean {
-    return !!schema && schema.type === "string" && schema.format !== "binary"
+function isPlainString(schema: unknown): boolean {
+    return isRecord(schema) && schema.type === "string" && schema.format !== "binary"
 }
 
-export function fixYamlSourceRequestBodyContentType(_method: string, _path: string, operation: OpenApiOperationObject.V3_1_X): void {
-    const requestBody = operation?.requestBody
-    const content = requestBody?.content
-    if (!content || typeof content !== "object") return
+export function fixYamlSourceRequestBodyContentType(_method: string, _path: string, operation: unknown): void {
+    if (!isRecord(operation) || !isRecord(operation.requestBody)) return
+    const requestBody = operation.requestBody
+    const content = requestBody.content
+    if (!isRecord(content)) return
 
-    const declaredYamlMediaType = YAML_MEDIA_TYPES.find((mediaType) => isPlainString(content[mediaType]?.schema as OpenApiSchemaObject.V3_1_X))
+    const schemaOf = (mediaType: string) => {
+        const media = content[mediaType]
+        return isRecord(media) ? media.schema : undefined
+    }
+    const declaredYamlMediaType = YAML_MEDIA_TYPES.find((mediaType) => isPlainString(schemaOf(mediaType)))
     if (!declaredYamlMediaType) return
 
     const yamlBody = content[declaredYamlMediaType]
-    if (isPlainString(content[JSON_MEDIA_TYPE]?.schema as OpenApiSchemaObject.V3_1_X)) delete content[JSON_MEDIA_TYPE]
+    if (isPlainString(schemaOf(JSON_MEDIA_TYPE))) delete content[JSON_MEDIA_TYPE]
     for (const mediaType of YAML_MEDIA_TYPES) delete content[mediaType]
 
-    requestBody!.content = {[CANONICAL_YAML_MEDIA_TYPE]: yamlBody, ...content}
+    requestBody.content = {[CANONICAL_YAML_MEDIA_TYPE]: yamlBody, ...content}
 }
 
 /**
@@ -47,15 +50,14 @@ export function fixYamlSourceRequestBodyContentType(_method: string, _path: stri
  *
  * Use as a `parser.patch.operations` hook (signature `(method, path, operation)`).
  */
-export function normalizeQueryFilterParams(_method: string, _path: string, operation: OpenApiOperationObject.V3_1_X): void {
-    const parameters = operation?.parameters
-    if (!Array.isArray(parameters)) return
+export function normalizeQueryFilterParams(_method: string, _path: string, operation: unknown): void {
+    if (!isRecord(operation) || !Array.isArray(operation.parameters)) return
 
-    for (const param of parameters) {
-        if (!param || typeof param !== "object" || param.in !== "query") continue
+    for (const param of operation.parameters) {
+        if (!isRecord(param) || param.in !== "query") continue
         const schema = param.schema
-        if (!schema || schema.type !== "array") continue
-        if (typeof schema.items?.$ref !== "string" || !schema.items.$ref.endsWith("/QueryFilter")) continue
+        if (!isRecord(schema) || schema.type !== "array") continue
+        if (!isRecord(schema.items) || typeof schema.items.$ref !== "string" || !schema.items.$ref.endsWith("/QueryFilter")) continue
 
         if (param.required === true && !schema.nullable) {
             delete param.required
@@ -72,9 +74,9 @@ export function normalizeQueryFilterParams(_method: string, _path: string, opera
  *
  * Use as a `parser.patch.schemas` hook keyed by `QueryFilter` (signature `(schema)`).
  */
-export function widenQueryFilterValue(schema: OpenApiSchemaObject.V3_1_X): void {
-    if (schema?.properties?.value) {
-        schema.properties.value = {} as OpenApiSchemaObject.V3_1_X
+export function widenQueryFilterValue(schema: unknown): void {
+    if (isRecord(schema) && isRecord(schema.properties) && schema.properties.value) {
+        schema.properties.value = {}
     }
 }
 
@@ -89,25 +91,20 @@ export function widenQueryFilterValue(schema: OpenApiSchemaObject.V3_1_X): void 
  * Use as a `parser.patch.schemas` hook keyed by `Flow` / `AbstractFlow` / `FlowWithSource`
  * (signature `(schema)`).
  */
-export function replaceFlowLabels(schema: OpenApiSchemaObject.V3_1_X): void {
-    if (!schema || typeof schema !== "object") return
+export function replaceFlowLabels(schema: unknown): void {
+    if (!isRecord(schema)) return
 
-    const labelsAsArray = () => {
-        const result: OpenApiSchemaObject.V3_1_X = {type: "array"}
-        const resultWithItems = result as Record<string, unknown>
-        resultWithItems.items = {$ref: "#/components/schemas/Label"}
-        return result
-    }
+    const labelsAsArray = () => ({type: "array", items: {$ref: "#/components/schemas/Label"}})
 
-    if (schema.properties?.labels) {
+    if (isRecord(schema.properties) && schema.properties.labels) {
         schema.properties.labels = labelsAsArray()
     }
     for (const composition of ["allOf", "anyOf", "oneOf"] as const) {
-        const compositionValue = (schema as Record<string, unknown>)[composition]
-        if (Array.isArray(compositionValue)) {
-            for (const part of compositionValue) {
-                if (part && typeof part === "object" && (part as OpenApiSchemaObject.V3_1_X).properties?.labels) {
-                    (part as OpenApiSchemaObject.V3_1_X).properties!.labels = labelsAsArray()
+        const parts = schema[composition]
+        if (Array.isArray(parts)) {
+            for (const part of parts) {
+                if (isRecord(part) && isRecord(part.properties) && part.properties.labels) {
+                    part.properties.labels = labelsAsArray()
                 }
             }
         }

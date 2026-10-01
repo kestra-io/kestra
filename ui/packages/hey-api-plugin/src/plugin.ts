@@ -1,6 +1,6 @@
 import {createHash} from "node:crypto"
 import {readFileSync} from "node:fs"
-import {$, type TypeTsDsl, type OpenApiOperationObject} from "@hey-api/openapi-ts"
+import {$, type IR, type TypeTsDsl} from "@hey-api/openapi-ts"
 import type {KestraSdkPlugin} from "./types"
 
 /**
@@ -15,9 +15,9 @@ import type {KestraSdkPlugin} from "./types"
  * Returns { paramName, typeSymbol } if simplification should be applied, null otherwise.
  */
 function detectBodySimplification(
-    operation: OpenApiOperationObject.V3_1_X,
-    querySymbol: (filter: Record<string, unknown>) => Parameters<typeof $.type.query>[0],
-): { paramName: string; typeSymbol: Parameters<typeof $.type.query>[0] } | null {
+    operation: IR.OperationObject,
+    querySymbol: KestraSdkPlugin["Instance"]["querySymbol"],
+): { paramName: string; typeSymbol: NonNullable<ReturnType<KestraSdkPlugin["Instance"]["querySymbol"]>> } | null {
     const bodySchema = operation.body?.schema
     if (!bodySchema?.$ref) return null
 
@@ -38,7 +38,7 @@ function detectBodySimplification(
     return {paramName, typeSymbol}
 }
 
-function computeHasRequiredParams(operation: OpenApiOperationObject.V3_1_X, excludeTenant = false): boolean {
+function computeHasRequiredParams(operation: IR.OperationObject, excludeTenant = false): boolean {
     const pathParams = operation.parameters?.path ? Object.values(operation.parameters.path) : []
     const queryParams = operation.parameters?.query ? Object.values(operation.parameters.query) : []
     return (

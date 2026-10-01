@@ -148,6 +148,7 @@
 
 <script setup lang="ts">
     import {computed, onBeforeUnmount, onMounted, ref, watch} from "vue"
+    import {useEventListener, useResizeObserver} from "@vueuse/core"
     import {useTopLayer} from "@kestra-io/design-system"
     import {useI18n} from "vue-i18n"
     import {useRoute, useRouter} from "vue-router"
@@ -443,10 +444,10 @@
 
     const clampDragOffset = () => {
         const rect = cardEl.value?.getBoundingClientRect()
-        if (!rect) {
+        const {x, y} = dragOffset.value
+        if (!rect || (x === 0 && y === 0)) {
             return
         }
-        const {x, y} = dragOffset.value
         const anchorLeft = rect.left - x
         const anchorTop = rect.top - y
         const clampedX = Math.max(DRAG_MARGIN - anchorLeft, Math.min(x, window.innerWidth - rect.width - DRAG_MARGIN - anchorLeft))
@@ -629,7 +630,8 @@
 
     watch(() => scene.value?.placement, () => (dragOffset.value = {x: 0, y: 0}))
 
-    watch(() => scene.value?.id, clampDragOffset, {flush: "post"})
+    useResizeObserver(cardEl, clampDragOffset)
+    useEventListener(window, "resize", clampDragOffset)
 
     watch(showIntro, (visible) => {
         if (visible) {
@@ -691,7 +693,6 @@
     )
 
     onMounted(async () => {
-        window.addEventListener("resize", clampDragOffset)
         const started = (await consumeStartQuery()) || (await autoStartOnEntryRoute())
         if (!started && tourStore.isGuidedActive && tourStore.state.tour.introSeen) {
             await runScene()
@@ -699,7 +700,6 @@
     })
 
     onBeforeUnmount(() => {
-        window.removeEventListener("resize", clampDragOffset)
         clearHighlight()
         stopPolling()
         stopDrag?.()

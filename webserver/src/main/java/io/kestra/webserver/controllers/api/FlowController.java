@@ -756,14 +756,13 @@ public class FlowController {
             var parsedTask = parseTaskTrigger(task, Task.class);
             modelValidator.validate(parsedTask);
         } catch (ConstraintViolationException e) {
-            validateConstraintViolationBuilder.constraints(e.getMessage());
             validateConstraintViolationBuilder.errors(ValidationError.ofException(e));
         } catch (RuntimeException re) {
             // In case of any error, we add a validation violation so the error is displayed in the UI.
             // We may change that by throwing an internal error and handle it in the UI, but this should not occur except for rare cases
             // in dev like incompatible plugin versions.
             log.error("Unable to validate the task", re);
-            validateConstraintViolationBuilder.constraints("Unable to validate the task: " + re.getMessage());
+            validateConstraintViolationBuilder.errors(List.of(ValidationError.of("Unable to validate the task: " + re.getMessage())));
         }
 
         return validateConstraintViolationBuilder.build();
@@ -781,14 +780,13 @@ public class FlowController {
             var parsedTrigger = parseTaskTrigger(trigger, AbstractTrigger.class);
             modelValidator.validate(parsedTrigger);
         } catch (ConstraintViolationException e) {
-            validateConstraintViolationBuilder.constraints(e.getMessage());
             validateConstraintViolationBuilder.errors(ValidationError.ofException(e));
         } catch (RuntimeException re) {
             // In case of any error, we add a validation violation so the error is displayed in the UI.
             // We may change that by throwing an internal error and handle it in the UI, but this should not occur except for rare cases
             // in dev like incompatible plugin versions.
             log.error("Unable to validate the trigger", re);
-            validateConstraintViolationBuilder.constraints("Unable to validate the trigger: " + re.getMessage());
+            validateConstraintViolationBuilder.errors(List.of(ValidationError.of("Unable to validate the trigger: " + re.getMessage())));
         }
         return validateConstraintViolationBuilder.build();
     }
@@ -811,14 +809,13 @@ public class FlowController {
                 modelValidator.validate(taskParse);
             }
         } catch (ConstraintViolationException e) {
-            validateConstraintViolationBuilder.constraints(e.getMessage());
             validateConstraintViolationBuilder.errors(ValidationError.ofException(e));
         } catch (RuntimeException re) {
             // In case of any error, we add a validation violation so the error is displayed in the UI.
             // We may change that by throwing an internal error and handle it in the UI, but this should not occur except for rare cases
             // in dev like incompatible plugin versions.
             log.error("Unable to validate the flow", re);
-            validateConstraintViolationBuilder.constraints("Unable to validate the flow: " + re.getMessage());
+            validateConstraintViolationBuilder.errors(List.of(ValidationError.of("Unable to validate the flow: " + re.getMessage())));
         }
         return validateConstraintViolationBuilder.build();
     }

@@ -113,7 +113,7 @@ class FlowServiceTest {
 
         // Then
         assertThat(results).hasSize(1);
-        assertThat(results.getFirst()).isEqualTo(new ValidateConstraintViolation(0, null, "io.kestra.unittest", "test", null, false, List.of(), List.of(), List.of(), null));
+        assertThat(results.getFirst()).isEqualTo(new ValidateConstraintViolation(0, null, "io.kestra.unittest", "test", false, List.of(), List.of(), List.of(), null));
     }
 
     @Test
@@ -132,7 +132,7 @@ class FlowServiceTest {
 
         // Then
         assertThat(results).hasSize(1);
-        assertThat(results.getFirst()).isEqualTo(new ValidateConstraintViolation(0, "flow.yaml", "io.kestra.unittest", "test", null, false, List.of(), List.of(), List.of(), null));
+        assertThat(results.getFirst()).isEqualTo(new ValidateConstraintViolation(0, "flow.yaml", "io.kestra.unittest", "test", false, List.of(), List.of(), List.of(), null));
     }
 
     @Test
@@ -156,7 +156,7 @@ class FlowServiceTest {
 
         // Then
         assertThat(results).hasSize(1);
-        assertThat(results.getFirst().getConstraints()).contains("pluginDefaults");
+        assertThat(results.getFirst().getErrors()).extracting(ValidationError::toLine).anyMatch(line -> line.contains("pluginDefaults"));
     }
 
     @Test
@@ -345,9 +345,6 @@ class FlowServiceTest {
         assertThat(results.getFirst().getErrors())
             .extracting(ValidationError::pointer)
             .containsExactlyInAnyOrder("/tasks/0/colour", "/tasks/1/tasks/0/shade", "/tasks/1/tasks/0/message", "/triggers/0/cron");
-        assertThat(results.getFirst().getConstraints())
-            .contains("Unrecognized field \"colour\"")
-            .contains("must not be null");
     }
 
     @Test

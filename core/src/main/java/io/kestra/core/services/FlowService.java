@@ -534,21 +534,17 @@ public class FlowService {
                     throwOnCyclicDependency(parsedFlow);
                 } else {
                     List<ValidationError> errors = new ArrayList<>(report.unknownProperties());
-                    List<String> lines = new ArrayList<>(report.unknownProperties().stream().map(ValidationError::detail).toList());
                     List<String> installNotices = new ArrayList<>();
                     for (ParseReport.InvalidType invalidType : report.invalidTypes()) {
                         if (isAutoInstallable(invalidType.typeId())) {
                             installNotices.add(formatValidationError(invalidType.error().detail()) + AUTO_INSTALL_NOTICE);
                         } else {
                             errors.add(invalidType.error());
-                            lines.add(invalidType.error().detail());
                         }
                     }
                     modelValidator.isValid(parsedFlow).ifPresent(e -> e.getConstraintViolations().forEach(v ->
-                        report.toSourcePointer(ViolationPaths.toJsonPointer(v.getPropertyPath())).ifPresent(pointer -> {
-                            errors.add(new ValidationError(v.getMessage(), pointer, ViolationPaths.toFriendlyPath(v)));
-                            lines.add(ViolationPaths.toFriendlyPath(v) + ": " + v.getMessage());
-                        })
+                        report.toSourcePointer(ViolationPaths.toJsonPointer(v.getPropertyPath()))
+                            .ifPresent(pointer -> errors.add(new ValidationError(v.getMessage(), pointer, ViolationPaths.toFriendlyPath(v))))
                     ));
 
                     if (!installNotices.isEmpty()) {
@@ -557,36 +553,31 @@ public class FlowService {
                     if (errors.isEmpty()) {
                         throwOnCyclicDependency(parsedFlow);
                     } else {
-                        constraintsBuilder.constraints(formatValidationError(String.join("\n", lines)));
                         constraintsBuilder.errors(errors);
                     }
                 }
             } catch (ConstraintViolationException e) {
-                String friendlyMessage = formatValidationError(e.getMessage());
-                constraintsBuilder.constraints(friendlyMessage);
                 constraintsBuilder.errors(ValidationError.ofException(e));
             } catch (FlowProcessingException e) {
                 if (e.getCause() instanceof ConstraintViolationException cve) {
-                    String friendlyMessage = formatValidationError(cve.getMessage());
                     // A missing plugin type is only recoverable when auto-install is on AND the type
                     // exists in the schema bundle: it is then a simple notice (installed on save); a
                     // type unknown to the bundle is a genuine error.
                     if (cve instanceof InvalidTypeConstraintViolationException invalidType && isAutoInstallable(invalidType.getTypeId())) {
-                        constraintsBuilder.infos(List.of(friendlyMessage + AUTO_INSTALL_NOTICE));
+                        constraintsBuilder.infos(List.of(formatValidationError(cve.getMessage()) + AUTO_INSTALL_NOTICE));
                     } else {
-                        constraintsBuilder.constraints(friendlyMessage);
                         constraintsBuilder.errors(ValidationError.ofException(cve));
                     }
                 } else {
                     Throwable cause = e.getCause() != null ? e.getCause() : e;
-                    constraintsBuilder.constraints("Unable to validate the flow: " + cause.getMessage());
+                    constraintsBuilder.errors(List.of(ValidationError.of("Unable to validate the flow: " + cause.getMessage())));
                 }
             } catch (RuntimeException e) {
                 // In case of any error, we add a validation violation so the error is displayed in the UI.
                 // We may change that by throwing an internal error and handle it in the UI, but this should not occur except for rare cases
                 // in dev like incompatible plugin versions.
                 log.error("Unable to validate the flow", e);
-                constraintsBuilder.constraints("Unable to validate the flow: " + e.getMessage());
+                constraintsBuilder.errors(List.of(ValidationError.of("Unable to validate the flow: " + e.getMessage())));
             }
 
             constraints.add(constraintsBuilder.build());

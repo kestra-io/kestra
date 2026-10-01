@@ -50,7 +50,7 @@
             <template #taskDetails="taskProps">
                 <slot name="taskDetails" v-bind="taskProps">
                     <TopologyDetailsRemote
-                        :taskType="taskProps.data.node?.task?.taskRunner?.type ?? taskProps.data.node?.task?.type"
+                        :taskType="detailsTypeFor(taskProps.data.node?.task)"
                         :task="taskWithSource(taskProps.data.node?.task)"
                         :execution="exec"
                         :namespace="props.namespace"
@@ -462,9 +462,9 @@
         return merged
     }
 
-    const {RemoteComponent: TopologyDetailsRemote, taskAdditionalInfoRemote, manifestReady, resolveRemoteComponent} = useFederatedModule("topology-details")
+    const {RemoteComponent: TopologyDetailsRemote, taskAdditionalInfoRemote, manifestReady, resolveRemoteComponent, componentTypeFor: detailsTypeFor} = useFederatedModule("topology-details")
     const {RemoteComponent: TaskDrawerRemote, resolveRemoteComponent: resolveDrawerComponent} = useFederatedModule("topology-task-drawer")
-    const {RemoteComponent: TopologyTaskModalRemote, resolveRemoteComponent: resolveTaskModalComponent} = useFederatedModule("topology-task-modal")
+    const {RemoteComponent: TopologyTaskModalRemote, resolveRemoteComponent: resolveTaskModalComponent, componentTypeFor: modalTypeFor} = useFederatedModule("topology-task-modal")
 
 
     const customActions = computed(() => {
@@ -1326,9 +1326,8 @@
     const showCustomAction = (event: { task: any; customAction: { label: string; taskProp: string; lang: string } }) => {
         const fullTask = taskWithSource(event.task)
         if (!event.customAction.taskProp) {
-            const runnerType = fullTask?.taskRunner?.type as string | undefined
             taskModalCtx.value = {
-                taskType: runnerType ?? fullTask?.type,
+                taskType: modalTypeFor(fullTask),
                 title: event.customAction.label,
                 task: fullTask,
                 execution: exec.value,

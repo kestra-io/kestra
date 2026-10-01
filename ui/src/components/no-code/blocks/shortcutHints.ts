@@ -40,11 +40,11 @@ function comboMainKeyDisplay(key: string): string {
     return key.length === 1 ? key.toUpperCase() : key
 }
 
-function displayForKey(key: string): string {
+export function displayForKey(key: string, modifiers: Record<string, string> = MODIFIER_DISPLAY): string {
     if (!key.includes("+")) return SIMPLE_KEY_DISPLAY[key] ?? key
     const parts = key.split("+")
     const mainKey = comboMainKeyDisplay(parts[parts.length - 1])
-    const prefix = parts.slice(0, -1).map(mod => MODIFIER_DISPLAY[mod] ?? `${mod}+`).join("")
+    const prefix = parts.slice(0, -1).map(mod => modifiers[mod] ?? `${mod}+`).join("")
     return `${prefix}${mainKey}`
 }
 

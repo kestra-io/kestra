@@ -1,6 +1,6 @@
 import {describe, it, expect} from "vitest"
 
-import {buildModifierDisplay, buildShortcutGroups, computeIsMac} from "../../../../../src/components/no-code/blocks/shortcutHints"
+import {buildModifierDisplay, buildShortcutGroups, computeIsMac, displayForKey} from "../../../../../src/components/no-code/blocks/shortcutHints"
 
 function allIds(groups: ReturnType<typeof buildShortcutGroups>): string[] {
     return groups.flatMap(group => group.bindings.map(binding => binding.id))
@@ -56,5 +56,22 @@ describe("buildModifierDisplay", () => {
         expect(display.Control).toBe("Ctrl+")
         expect(display.Shift).toBe("Shift+")
         expect(display.Alt).toBe("Alt+")
+    })
+})
+
+describe("displayForKey", () => {
+    const mac = buildModifierDisplay(true)
+    const windows = buildModifierDisplay(false)
+
+    it("composes a combo from the platform's modifiers", () => {
+        expect(displayForKey("Meta+s", mac)).toBe("⌘S")
+        expect(displayForKey("Meta+s", windows)).toBe("Ctrl+S")
+        expect(displayForKey("Meta+Shift+z", mac)).toBe("⌘⇧Z")
+        expect(displayForKey("Meta+Shift+z", windows)).toBe("Ctrl+Shift+Z")
+    })
+
+    it("renders a bare key the same on both platforms", () => {
+        expect(displayForKey("ArrowUp", mac)).toBe("↑")
+        expect(displayForKey("ArrowUp", windows)).toBe("↑")
     })
 })

@@ -15,8 +15,16 @@ interface UseRestoreUrlOptions {
 }
 
 function getLocalStorageName(route: RouteLocation): string {
-    const tenant = route.params.tenant
-    return `${route.name?.toString().replace("/", "_")}${route.params.tab ? "_" + route.params.tab : ""}${tenant ? "_" + tenant : ""}_restore_url`
+    // Only entity-identifying params present from first render: the dashboard route
+    // appends its `dashboard` param after mount, and including it here would change
+    // the key mid-restore, breaking the re-assert loop in goToRestoreUrl().
+    const scope = (["tab", "namespace", "id", "kind", "tenant"] as const)
+        .map((key) => route.params[key])
+        .filter((value) => value)
+        .map((value) => "_" + value)
+        .join("")
+
+    return `${route.name?.toString().replace("/", "_")}${scope}_restore_url`
 }
 
 function getRestoredUrlValue(route: RouteLocation) {

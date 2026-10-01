@@ -12,7 +12,7 @@ const chart = (data: Record<string, unknown> = {}) => ({
     id: "c",
     type: "io.kestra.plugin.core.dashboard.chart.Table",
     data: {type: EXECUTIONS, columns: {state: {field: "STATE"}}, ...data},
-}) as any
+}) as Record<string, unknown>
 
 describe("quickFilters", () => {
     describe("stateFilterForTab", () => {

@@ -67,6 +67,17 @@ describe("useTaskRunOutputs", () => {
         expect(taskOutputsInformationMock).toHaveBeenCalledTimes(2)
     })
 
+    test("treats a viewer without access to the outputs as having none, without raising an error", async () => {
+        const forbidden = {status: 403, __kestra_handled: false}
+        taskOutputsInformationMock.mockRejectedValue(forbidden)
+
+        const hasOutputs = useHasTaskRunOutputs(ref("exec-forbidden"), ref("tr-1"), ref("SUCCESS"))
+        await flushPromises()
+
+        expect(hasOutputs.value).toBe(false)
+        expect(forbidden.__kestra_handled).toBe(true)
+    })
+
     test("loadTaskRunOutputs returns the fetched outputs", async () => {
         taskRunOutputsMock.mockResolvedValue({body: {id: 1}})
 

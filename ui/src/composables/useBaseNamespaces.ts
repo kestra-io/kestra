@@ -30,9 +30,14 @@ export const useBaseNamespacesStore = () => {
 
     const axios = useClient()
 
+    let latestAutocomplete = 0
+
     async function loadAutocomplete(options?: {q?: string, ids?: string[], existingOnly?: boolean}) {
+        const current = ++latestAutocomplete
         const response = await NamespaceAPI.autocompleteNamespaces({existingOnly: false, ...options})
-        autocomplete.value = response
+        if (current === latestAutocomplete) {
+            autocomplete.value = response
+        }
         return response
     }
 

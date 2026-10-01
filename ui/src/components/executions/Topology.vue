@@ -29,6 +29,7 @@
     import LowCodeEditor from "../inputs/LowCodeEditor.vue"
     import {useExecutionsStore, type Execution} from "../../stores/executions"
     import {useFlowStore} from "../../stores/flow"
+    import {handledIf} from "../../utils/kestraHttp"
 
     withDefaults(defineProps<{
         horizontalDefault?: boolean
@@ -161,7 +162,9 @@
     function loadFlowSource() {
         const exec = execution.value
         if (!exec || flowStore.flow?.id === exec.flowId && flowStore.flow?.namespace === exec.namespace) return
-        flowStore.loadFlow({namespace: exec.namespace, id: exec.flowId})
+        flowStore.loadFlow({namespace: exec.namespace, id: exec.flowId}).catch((e: unknown) => {
+            if (!handledIf(e, [403])) throw e
+        })
     }
 
     function loadGraph(force?: boolean) {

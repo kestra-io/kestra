@@ -217,18 +217,6 @@
     "launch execution": "निष्पादित करें",
     "triggered done": "निष्पादन <em>{name}</em> सफलतापूर्वक ट्रिगर किया गया है",
     "topology": "टोपोलॉजी",
-    "overviewChart": {
-      "switcherLabel": "चार्ट",
-      "loading": "चार्ट लोड हो रहा है…",
-      "emptyDescription": "जब तक कोई worker इस रन को नहीं उठाता, तब तक केवल टोपोलॉजी उपलब्ध है।",
-      "topologySubtitle": "फ़्लो के Tasks का स्थिर दृश्य और वे कैसे कनेक्ट होते हैं।",
-      "ganttSubtitle": "प्रत्येक Task के चलने की Timeline।",
-      "logsSubtitle": "Task रन विवरण और उनके logs।",
-      "noticeTitle": "टोपोलॉजी के बजाय गैंट दिखा रहा है।",
-      "noticeBody": "यह Flow {count} Task चलाता है — ग्राफ़ पर पढ़ने के लिए बहुत ज़्यादा।",
-      "showTopologyAnyway": "फिर भी टोपोलॉजी दिखाएँ",
-      "dismissNotice": "इस Flow के लिए इसे दोबारा न दिखाएँ"
-    },
     "date": "दिनांक",
     "prev_execution": "पिछला निष्पादन",
     "next_execution": "अगली निष्पादन",

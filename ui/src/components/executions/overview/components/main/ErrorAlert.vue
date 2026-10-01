@@ -121,9 +121,7 @@
         margin: 0;
         color: var(--ks-text-error);
         font-size: var(--ks-font-size-sm);
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
+        overflow-wrap: anywhere;
     }
 
     #error {

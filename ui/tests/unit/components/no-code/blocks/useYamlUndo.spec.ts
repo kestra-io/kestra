@@ -1,4 +1,5 @@
 import {describe, it, expect, beforeEach, vi} from "vitest"
+import {nextTick, reactive} from "vue"
 
 import {useYamlUndo} from "../../../../../src/components/no-code/blocks/useYamlUndo"
 
@@ -8,6 +9,12 @@ function makeStore(namespace = "company.team", id = "flow_a") {
         flow: {namespace, id},
         onEdit: vi.fn(),
     }
+}
+
+// The bypass-write detection reacts to flowStore.flowYaml through a Vue `watch`, which only fires
+// on a reactive source — the plain object `makeStore()` returns is not one.
+function makeReactiveStore(namespace = "company.team", id = "flow_a") {
+    return reactive(makeStore(namespace, id))
 }
 
 const label = (name: string) => `deleted ${name}`
@@ -72,5 +79,83 @@ describe("useYamlUndo", () => {
 
         expect(other.performUndo()).toBe(false)
         expect(second.flowYaml).toBe("tasks: []")
+    })
+
+    it("redo restores exactly the edit undo just took back", () => {
+        const store = makeStore()
+        const surface = useYamlUndo(store, label)
+
+        surface.applyYaml("tasks: [a]")
+        surface.applyYaml("tasks: [a, b]")
+
+        expect(surface.performUndo()).toBe(true)
+        expect(store.flowYaml).toBe("tasks: [a]")
+
+        expect(surface.performRedo()).toBe(true)
+        expect(store.flowYaml).toBe("tasks: [a, b]")
+    })
+
+    it("reports an empty redo history so the shortcut leaves the browser's own redo alone", () => {
+        const surface = useYamlUndo(makeStore(), label)
+
+        expect(surface.performRedo()).toBe(false)
+    })
+
+    it("clears the redo history on a real edit, so redo cannot resurrect an abandoned branch", () => {
+        const store = makeStore()
+        const surface = useYamlUndo(store, label)
+
+        surface.applyYaml("tasks: [a]")
+        surface.performUndo()
+
+        surface.applyYaml("tasks: [c]")
+
+        expect(surface.performRedo()).toBe(false)
+        expect(store.flowYaml).toBe("tasks: [c]")
+    })
+
+    it("clears the redo history when something writes flowYaml outside applyYaml, e.g. the Code panel", async () => {
+        const store = makeReactiveStore()
+        const surface = useYamlUndo(store, label)
+
+        surface.applyYaml("tasks: [a]")
+        surface.performUndo()
+        await nextTick()
+
+        // A direct write, bypassing applyYaml — this is what FlowFileEditorTab.vue's
+        // editorUpdate does on every keystroke in the Code panel.
+        store.flowYaml = "tasks: [typed in the code panel]"
+        await nextTick()
+
+        // Then — redo must not resurrect the pre-keystroke state over what was just typed
+        expect(surface.performRedo()).toBe(false)
+        expect(store.flowYaml).toBe("tasks: [typed in the code panel]")
+    })
+
+    it("does not clear its own redo history when applyYaml/performUndo write flowYaml", async () => {
+        const store = makeReactiveStore()
+        const surface = useYamlUndo(store, label)
+
+        surface.applyYaml("tasks: [a]")
+        surface.applyYaml("tasks: [a, b]")
+        surface.performUndo()
+        await nextTick()
+
+        expect(surface.performRedo()).toBe(true)
+        expect(store.flowYaml).toBe("tasks: [a, b]")
+    })
+
+    it("caps the undo history at 100 entries, so at most that many edits are recoverable", () => {
+        const store = makeStore()
+        const surface = useYamlUndo(store, label)
+
+        for (let i = 0; i < 105; i++) surface.applyYaml(`tasks: [v${i}]`)
+
+        let undone = 0
+        while (surface.performUndo()) undone++
+
+        expect(undone).toBe(100)
+        // The oldest 5 edits (the scope's initial "tasks: []" plus v0-v3) fell off the cap.
+        expect(store.flowYaml).toBe("tasks: [v4]")
     })
 })

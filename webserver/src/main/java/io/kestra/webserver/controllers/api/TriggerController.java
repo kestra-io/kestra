@@ -353,7 +353,10 @@ public class TriggerController {
     @ExecuteOn(TaskExecutors.IO)
     @Delete(uri = "/delete/by-triggers")
     @Operation(tags = { "Triggers" }, summary = "Delete orphan trigger state for the given triggers")
-    @ApiResponse(responseCode = "202", description = "Accepted. Triggers the flow still declares are not deleted, and totalItems is the number of orphan deletes queued.", content = { @Content(schema = @Schema(implementation = ApiAsyncOperationResponse.class)) })
+    @ApiResponse(
+        responseCode = "202", description = "Accepted. Triggers the flow still declares are not deleted, and totalItems is the number of orphan deletes queued.",
+        content = { @Content(schema = @Schema(implementation = ApiAsyncOperationResponse.class)) }
+    )
     public MutableHttpResponse<ApiAsyncOperationResponse> deleteTriggersByIds(
         @Parameter(description = "The triggers to delete") @Body List<ApiTriggerId> triggers) {
         return HttpResponse.accepted().body(
@@ -364,7 +367,10 @@ public class TriggerController {
     @ExecuteOn(TaskExecutors.IO)
     @Delete(uri = "/delete/by-query")
     @Operation(tags = { "Triggers" }, summary = "Delete orphan trigger state matching the query")
-    @ApiResponse(responseCode = "202", description = "Accepted. Triggers the flow still declares are not deleted, and totalItems is the number of orphan deletes queued.", content = { @Content(schema = @Schema(implementation = ApiAsyncOperationResponse.class)) })
+    @ApiResponse(
+        responseCode = "202", description = "Accepted. Triggers the flow still declares are not deleted, and totalItems is the number of orphan deletes queued.",
+        content = { @Content(schema = @Schema(implementation = ApiAsyncOperationResponse.class)) }
+    )
     public MutableHttpResponse<ApiAsyncOperationResponse> deleteTriggersByQuery(
         @Parameter(description = "Filters. PHP-style nested query is used - examples: `filters[flowId][EQUALS]=hello-world`, `filters[namespace][CONTAINS]=test`")
         @QueryFilterFormat(Resource.TRIGGER) List<QueryFilter> filters) {

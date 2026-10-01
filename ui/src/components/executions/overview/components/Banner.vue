@@ -237,7 +237,7 @@
         name: "executions/list",
         query: {
             "filters[parentId][EQUALS]": matchesStatus("replay") ? props.execution.parentId ?? props.execution.id : props.execution.id,
-            sort: "state.startDate:desc",
+            sort: "state.endDate:desc",
         },
     }))
 

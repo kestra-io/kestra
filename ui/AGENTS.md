@@ -205,6 +205,10 @@ Guards are wired through `initApp`, and three things about that are easy to get 
 
 **There is one `beforeEach` slot.** OSS spends it on `tenantGuard` and can only do so because its auth guard is a `beforeResolve`; EE spends it on `authGuard`. A second `beforeEach` has to be composed into the existing one, or `initApp` has to grow to accept a list, rather than being registered afterwards, since "afterwards" is exactly the case that misses the first navigation.
 
+### Session loss and an unreachable server
+
+A 401 on a logged-out session opens `ReauthDialog` through `requestReauth(signIn)` and replays the failed request once the user signs in, so the page and its unsaved state survive; the edition supplies its own `signIn` from `onUnauthorized`. A request that fails without a response (or behind a 502/503/504) raises `ServerUnreachableBanner`, which clears on the next response. Don't add per-page handling for either, and don't clear `unsavedChange` before the user has chosen to leave.
+
 ### Unsaved input in modals (discard guard)
 
 Any modal/drawer where the user **enters data** must not silently lose it on an accidental dismissal. `KsDialog` and `KsDrawer` take a `dirty` prop and ask for confirmation themselves; never reimplement the confirm-before-discard logic per modal.

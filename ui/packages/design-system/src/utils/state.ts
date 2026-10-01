@@ -190,6 +190,13 @@ export const QUEUED = "QUEUED" as const
 export const RETRYING = "RETRYING" as const
 export const RETRIED = "RETRIED" as const
 export const BREAKPOINT = "BREAKPOINT" as const
+export const RESUBMITTED = "RESUBMITTED" as const
+
+const TERMINATED_STATES: readonly string[] = [SUCCESS, WARNING, FAILED, KILLED, CANCELLED, RETRIED, SKIPPED, RESUBMITTED]
+
+export function isTerminated(state: string) {
+    return TERMINATED_STATES.includes(state)
+}
 
 export function isRunning(state:string) {
     return STATES[state]?.isRunning

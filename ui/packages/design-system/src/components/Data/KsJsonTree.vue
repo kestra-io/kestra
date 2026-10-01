@@ -44,7 +44,11 @@
                 <span v-else-if="!row.isExpandable" class="json-tree__value" :class="`json-tree__value--${row.type}`">
                     {{ row.display }}
                 </span>
-                <span v-else-if="!row.isExpanded" class="json-tree__preview">
+                <span
+                    v-else-if="!row.isExpanded"
+                    class="json-tree__preview"
+                    @click.stop="toggle(row.path)"
+                >
                     {{ row.display }}
                 </span>
             </span>

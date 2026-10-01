@@ -1,5 +1,5 @@
 import type {Meta, StoryObj} from "@storybook/vue3-vite"
-import {expect, waitFor, within} from "storybook/test"
+import {expect, userEvent, waitFor, within} from "storybook/test"
 import KsJsonTree from "../../../src/components/Data/KsJsonTree.vue"
 import {KsCard} from "@kestra-io/design-system"
 
@@ -69,6 +69,12 @@ export const Collapsed: Story = {
             )
         },
     }),
+    play: async ({canvasElement}: {canvasElement: HTMLElement}) => {
+        const canvas = within(canvasElement)
+
+        await userEvent.click(canvas.getByText("3 keys"))
+        expect(canvas.getByText('"namespace"')).toBeTruthy()
+    },
 }
 
 export const DeeplyNested: Story = {

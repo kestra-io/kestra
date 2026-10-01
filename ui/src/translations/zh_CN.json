@@ -328,7 +328,6 @@
     "start date": "开始日期",
     "end date": "结束日期",
     "restart": "重新开始",
-    "restart latest revision": "重新开始最新修订版",
     "restart tooltip": "从 <code>{state}</code> 任务重新开始执行",
     "restarted": "执行已重启",
     "restart confirm": "您确定要重启执行 <code>{id}</code> 吗？",

@@ -328,7 +328,6 @@
     "start date": "開始日",
     "end date": "終了日",
     "restart": "再起動",
-    "restart latest revision": "最新のリビジョンを再起動",
     "restart tooltip": "<code>{state}</code>タスクから実行を再起動",
     "restarted": "実行が再開されました",
     "restart confirm": "実行 <code>{id}</code> を再起動してもよろしいですか？",

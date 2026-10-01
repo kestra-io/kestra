@@ -105,6 +105,10 @@ export default function useRestoreUrl(options: UseRestoreUrlOptions = {}) {
         // fires before router.replace's .then, and that reload must see loadInit=true.
         loadInit.value = true
 
+        // A second call would clear the flag below while the first is still awaiting its
+        // own replace, reopening the save window this guard closes.
+        if (restoring) return
+
         // A page that rewrites its own URL on mount (e.g. the dashboard appending its
         // id param) cancels our replace and the restored filters are lost, so re-assert
         // them once that navigation has settled.

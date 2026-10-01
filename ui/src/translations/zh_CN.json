@@ -130,7 +130,6 @@
     "description": "描述",
     "show description": "显示描述",
     "show details": "显示详情",
-    "show more details": "显示更多详情",
     "skipped": "跳过",
     "revision": "修订版",
     "theme": "主题",
@@ -441,7 +440,8 @@
       "invalid_description": "加载图表时发生错误。请检查源代码中的错误。",
       "load_error": "无法加载拓扑图。请重试。",
       "add-task": "添加 task",
-      "add-trigger": "添加 trigger"
+      "add-trigger": "添加 trigger",
+      "child-count": "{count} 个 task | {count} 个 task"
     },
     "show task logs": "显示任务日志",
     "show task condition": "显示任务条件",
@@ -459,6 +459,12 @@
     "email": "电子邮件",
     "password": "密码",
     "confirm password": "确认密码",
+    "change_password": {
+      "title": "更改密码",
+      "current_password": "当前密码",
+      "new_password": "新密码",
+      "success": "您的凭据已更新。"
+    },
     "invalid flow": "无效流程",
     "invalid yaml": "无效的 YAML",
     "inputs": "输入",
@@ -2532,6 +2538,8 @@
       "command_menu": {
         "context_flow": "context: flow",
         "context_selected": "context: {name}",
+        "copy": "复制 {name}",
+        "cut": "剪切 {name}",
         "delete": "删除 {name}",
         "duplicate": "复制 {name}",
         "goto": "前往 {section}",
@@ -2547,6 +2555,7 @@
         "insert_kind": "插入 {kind}",
         "no_match": "无匹配项",
         "open": "打开 {name}",
+        "paste": "粘贴",
         "save": "保存 flow",
         "search_placeholder": "输入命令或搜索 task…",
         "title": "命令菜单"
@@ -2563,6 +2572,7 @@
       "depends_on_placeholder": "选择 tasks…",
       "depth_pill": "深度 {depth}",
       "drag_reorder": "拖动以重新排序",
+      "drop_forbidden": "无法放置到此处",
       "duplicate": "复制",
       "empty_add_hint": "或按 / 搜索 task",
       "empty_add_lead": "点击添加 {label}",
@@ -2591,6 +2601,9 @@
       "lane_then": "然后",
       "move_down": "下移",
       "move_up": "上移",
+      "namespace_files": "namespace 文件",
+      "namespace_kv": "键值存储键",
+      "namespace_secrets": "秘密",
       "no_data_matches": "没有匹配您筛选条件的结果",
       "no_recent": "暂无近期 task 类型",
       "no_task_results": "无匹配的 task 类型。",
@@ -2602,6 +2615,9 @@
       "plugin_default": "默认值: {value}",
       "plugin_default_tooltip": "来自 flow 的 pluginDefaults 的默认 value",
       "required_missing": "必填字段未设置",
+      "required_unset_jump": "跳转到第一个",
+      "required_unset_plural": "还有 {count} 个必填字段未设置",
+      "required_unset_singular": "还有 1 个必填字段未设置",
       "save_blocked": {
         "message": "保存前请修正错误。",
         "title": "无法保存 flow"
@@ -2615,6 +2631,8 @@
         "clear": "关闭/清除选择",
         "collapse_expand": "折叠/展开",
         "command_palette": "命令菜单（上下文）",
+        "copy": "复制",
+        "cut": "剪切",
         "group_edit": "编辑",
         "group_global": "全局",
         "group_insert": "插入",
@@ -2623,6 +2641,8 @@
         "open": "打开选定的块",
         "open_split": "在分屏视图中打开选定的块",
         "or": "或",
+        "paste": "粘贴",
+        "redo": "重做",
         "reorder": "上移 / 下移",
         "save": "保存 flow",
         "step_into": "展开/进入组",

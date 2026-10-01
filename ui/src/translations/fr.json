@@ -130,7 +130,6 @@
     "description": "Description",
     "show description": "Afficher une description",
     "show details": "Afficher les détails",
-    "show more details": "Afficher plus de détails",
     "skipped": "Ignoré",
     "revision": "Révision",
     "theme": "Thème",
@@ -441,7 +440,8 @@
       "invalid_description": "Une erreur s'est produite lors du chargement du graphique. Veuillez vérifier le code source pour les erreurs.",
       "load_error": "Impossible de charger le graphe de topologie. Veuillez réessayer.",
       "add-task": "Ajouter une task",
-      "add-trigger": "Ajouter un trigger"
+      "add-trigger": "Ajouter un trigger",
+      "child-count": "{count} task | {count} tasks"
     },
     "show task logs": "Afficher les journaux de la tâche",
     "show task condition": "Afficher la condition de la task",
@@ -459,6 +459,12 @@
     "email": "E-mail",
     "password": "Mot de passe",
     "confirm password": "Confirmer le mot de passe",
+    "change_password": {
+      "title": "Changer le mot de passe",
+      "current_password": "Mot de passe actuel",
+      "new_password": "Nouveau mot de passe",
+      "success": "Vos identifiants ont été mis à jour."
+    },
     "invalid flow": "Flow invalide",
     "invalid yaml": "YAML invalide",
     "inputs": "Entrées",
@@ -2532,6 +2538,8 @@
       "command_menu": {
         "context_flow": "context: flow",
         "context_selected": "contexte : {name}",
+        "copy": "Copier {name}",
+        "cut": "Couper {name}",
         "delete": "Supprimer {name}",
         "duplicate": "Dupliquer {name}",
         "goto": "Aller à {section}",
@@ -2547,6 +2555,7 @@
         "insert_kind": "Insérer {kind}",
         "no_match": "Aucune correspondance",
         "open": "Ouvrir {name}",
+        "paste": "Coller",
         "save": "Enregistrer le flow",
         "search_placeholder": "Saisir une commande ou rechercher une task…",
         "title": "Menu de commandes"
@@ -2563,6 +2572,7 @@
       "depends_on_placeholder": "Sélectionner des tasks…",
       "depth_pill": "Profondeur {depth}",
       "drag_reorder": "Faites glisser pour réorganiser",
+      "drop_forbidden": "Impossible de déposer ici",
       "duplicate": "Dupliquer",
       "empty_add_hint": "ou appuyez sur / pour rechercher des tasks",
       "empty_add_lead": "Cliquez pour ajouter {label}",
@@ -2591,6 +2601,9 @@
       "lane_then": "Alors",
       "move_down": "Déplacer vers le bas",
       "move_up": "Déplacer vers le haut",
+      "namespace_files": "Fichiers du namespace",
+      "namespace_kv": "Clés du KV Store",
+      "namespace_secrets": "Secrets",
       "no_data_matches": "Aucun élément ne correspond à votre filtre",
       "no_recent": "Aucun type de task récent pour l'instant",
       "no_task_results": "Aucun type de task correspondant.",
@@ -2602,6 +2615,9 @@
       "plugin_default": "par défaut : {value}",
       "plugin_default_tooltip": "Valeur par défaut des pluginDefaults du flow",
       "required_missing": "Champ obligatoire non défini",
+      "required_unset_jump": "Aller au premier",
+      "required_unset_plural": "{count} champs obligatoires ne sont pas encore renseignés",
+      "required_unset_singular": "1 champ obligatoire n'est pas encore renseigné",
       "save_blocked": {
         "message": "Corrigez les erreurs avant d'enregistrer.",
         "title": "Impossible d'enregistrer le flow"
@@ -2615,6 +2631,8 @@
         "clear": "Fermer / effacer la sélection",
         "collapse_expand": "Réduire / développer",
         "command_palette": "Menu de commandes (contextuel)",
+        "copy": "Copier",
+        "cut": "Couper",
         "group_edit": "Modifier",
         "group_global": "Global",
         "group_insert": "Insérer",
@@ -2623,6 +2641,8 @@
         "open": "Ouvrir le bloc sélectionné",
         "open_split": "Ouvrir le bloc sélectionné en vue fractionnée",
         "or": "ou",
+        "paste": "Coller",
+        "redo": "Rétablir",
         "reorder": "Réorganiser vers le haut / vers le bas",
         "save": "Enregistrer le flow",
         "step_into": "Développer / entrer dans un groupe",

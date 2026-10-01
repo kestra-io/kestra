@@ -1,5 +1,5 @@
 import {computed, watch, type Ref} from "vue"
-import {useRoute, useRouter} from "vue-router"
+import {useRoute, useRouter, type LocationQueryRaw} from "vue-router"
 import {
     clearFilterQueryParams,
     encodeFilterGroupsToQuery,
@@ -70,7 +70,7 @@ export function useRouteSync({
         return cleanedLeaf.filters.length > 0 ? [cleanedLeaf] : []
     }
 
-    const writeSearchQueryParam = (query: Record<string, any>) => {
+    const writeSearchQueryParam = (query: LocationQueryRaw) => {
         const trimmed = searchQuery.value?.trim()
         delete query.q
         delete query.search

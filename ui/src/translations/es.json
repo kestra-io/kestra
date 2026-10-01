@@ -130,7 +130,6 @@
     "description": "Descripción",
     "show description": "Mostrar una descripción",
     "show details": "Mostrar detalles",
-    "show more details": "Mostrar más detalles",
     "skipped": "Omitido",
     "revision": "Revisión",
     "theme": "Tema",
@@ -441,7 +440,8 @@
       "invalid_description": "Ocurrió un error al cargar el gráfico. Por favor, verifica el código fuente en busca de errores.",
       "load_error": "No se pudo cargar el gráfico de topología. Inténtalo de nuevo.",
       "add-task": "Añadir task",
-      "add-trigger": "Añadir trigger"
+      "add-trigger": "Añadir trigger",
+      "child-count": "{count} task | {count} tasks"
     },
     "show task logs": "Mostrar task logs",
     "show task condition": "Mostrar condición de task",
@@ -459,6 +459,12 @@
     "email": "Correo electrónico",
     "password": "Contraseña",
     "confirm password": "Confirmar contraseña",
+    "change_password": {
+      "title": "Cambiar contraseña",
+      "current_password": "Contraseña actual",
+      "new_password": "Nueva contraseña",
+      "success": "Tus credenciales han sido actualizadas."
+    },
     "invalid flow": "Flujo inválido",
     "invalid yaml": "YAML inválido",
     "inputs": "Entradas",
@@ -2532,6 +2538,8 @@
       "command_menu": {
         "context_flow": "contexto: flow",
         "context_selected": "contexto: {name}",
+        "copy": "Copiar {name}",
+        "cut": "Cortar {name}",
         "delete": "Eliminar {name}",
         "duplicate": "Duplicar {name}",
         "goto": "Ir a {section}",
@@ -2547,6 +2555,7 @@
         "insert_kind": "Insertar {kind}",
         "no_match": "Sin coincidencias",
         "open": "Abrir {name}",
+        "paste": "Pegar",
         "save": "Guardar flow",
         "search_placeholder": "Escribe un comando o busca una task…",
         "title": "Menú de comandos"
@@ -2563,6 +2572,7 @@
       "depends_on_placeholder": "Seleccionar tasks…",
       "depth_pill": "Profundidad {depth}",
       "drag_reorder": "Arrastrar para reordenar",
+      "drop_forbidden": "No se puede soltar aquí",
       "duplicate": "Duplicar",
       "empty_add_hint": "o presiona / para buscar tasks",
       "empty_add_lead": "Haz clic para añadir {label}",
@@ -2591,6 +2601,9 @@
       "lane_then": "Entonces",
       "move_down": "Mover abajo",
       "move_up": "Mover arriba",
+      "namespace_files": "Archivos de namespace",
+      "namespace_kv": "KV Store Keys",
+      "namespace_secrets": "Secrets",
       "no_data_matches": "Nada coincide con tu filtro",
       "no_recent": "Aún no hay tipos de task recientes",
       "no_task_results": "No hay tipos de task que coincidan.",
@@ -2602,6 +2615,9 @@
       "plugin_default": "predeterminado: {value}",
       "plugin_default_tooltip": "Valor predeterminado de los pluginDefaults del flow",
       "required_missing": "Campo obligatorio no establecido",
+      "required_unset_jump": "Ir al primero",
+      "required_unset_plural": "{count} campos obligatorios no están definidos todavía",
+      "required_unset_singular": "1 campo obligatorio no está definido todavía",
       "save_blocked": {
         "message": "Corrige los errores antes de guardar.",
         "title": "No se puede guardar el flow"
@@ -2615,6 +2631,8 @@
         "clear": "Cerrar / borrar selección",
         "collapse_expand": "Contraer / expandir",
         "command_palette": "Menú de comandos (contextual)",
+        "copy": "Copiar",
+        "cut": "Cortar",
         "group_edit": "Editar",
         "group_global": "Global",
         "group_insert": "Insertar",
@@ -2623,6 +2641,8 @@
         "open": "Abrir bloque seleccionado",
         "open_split": "Abrir el bloque seleccionado en vista dividida",
         "or": "o",
+        "paste": "Pegar",
+        "redo": "Rehacer",
         "reorder": "Reordenar arriba / abajo",
         "save": "Guardar flow",
         "step_into": "Expandir / entrar en un grupo",

@@ -667,6 +667,7 @@ export type DashboardControllerDashboardResponse = {
     title: string;
     description?: string;
     timeWindow?: TimeWindow;
+    queryTimeout?: string;
     charts?: Array<ChartChartOption>;
     deleted: boolean;
     created?: string;
@@ -829,6 +830,7 @@ export type ExecutionMetadata = {
     originalCreatedDate: string;
     concurrencyScopes?: Array<string>;
     executionDepth?: number;
+    taskRunStatistic?: TaskRunStatistic;
 };
 
 export type ExecutionRepositoryInterfaceDateFilter = 'START_DATE' | 'END_DATE' | 'START_OR_END_DATE';
@@ -1525,6 +1527,7 @@ export type MiscControllerConfiguration = {
     isAiEnabled?: boolean;
     isAiApiKeyConfigured?: boolean;
     isBasicAuthInitialized?: boolean;
+    isBasicAuthManagedByConfig?: boolean;
     pluginsHash?: number;
     isPluginAutoInstallEnabled?: boolean;
 };
@@ -2304,6 +2307,13 @@ export type TaskRunAttempt = {
     state: State;
     workerId?: string | null;
     logFile?: string | null;
+};
+
+export type TaskRunStatistic = {
+    count?: number;
+    durationSumMs?: number;
+    durationMinMs?: number | null;
+    durationMaxMs?: number | null;
 };
 
 export type TaskWithVersion = {

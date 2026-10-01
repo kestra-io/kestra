@@ -12,6 +12,7 @@ import io.kestra.core.services.IgnoreExecutionService;
 import io.kestra.core.utils.Either;
 import io.kestra.queue.poller.QueuePoller;
 import io.kestra.queue.poller.QueuePollerConfiguration;
+import io.kestra.queue.poller.QueueWaker;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -33,14 +34,14 @@ public abstract class AbstractPollingSubscriber<T extends Event> extends Abstrac
 
     @Override
     public QueueSubscriber<T> subscribe(Consumer<Either<T, DeserializationException>> consumer) {
-        QueuePoller queuePoller = new QueuePoller(configuration, () -> this.poll(message -> processMessage(message, consumer)));
+        QueuePoller queuePoller = new QueuePoller(configuration, () -> this.poll(message -> processMessage(message, consumer)), waker());
 
         return internalSubscribe(queuePoller);
     }
 
     @Override
     public QueueSubscriber<T> subscribeBatch(Consumer<List<Either<T, DeserializationException>>> consumer) {
-        QueuePoller queuePoller = new QueuePoller(configuration, () -> this.pollBatch(message -> processBatchMessages(message, consumer)));
+        QueuePoller queuePoller = new QueuePoller(configuration, () -> this.pollBatch(message -> processBatchMessages(message, consumer)), waker());
 
         return internalSubscribe(queuePoller);
     }
@@ -54,6 +55,16 @@ public abstract class AbstractPollingSubscriber<T extends Event> extends Abstrac
      * Poll a batch of messages from the database or the message broker and consume it.
      */
     protected abstract Integer pollBatch(Consumer<List<byte[]>> messageConsumer);
+
+    /**
+     * The strategy used to wait between two poll attempts when the previous poll returned nothing.
+     * Defaults to a plain sleep. Backends that support a realtime wake-up mechanism (e.g. Postgres
+     * {@code LISTEN}/{@code NOTIFY}) should override this to shorten the wait on a notification,
+     * without ever exceeding the configured backoff (see {@link QueueWaker}).
+     */
+    protected QueueWaker waker() {
+        return QueueWaker.SLEEP;
+    }
 
     private QueueSubscriber<T> internalSubscribe(QueuePoller queuePoller) {
         this.queueService.execute(() ->

@@ -14,17 +14,34 @@ import java.util.concurrent.Callable;
 public class QueuePoller {
     private final QueuePollerConfiguration configuration;
     private final Callable<Integer> pollingQuery;
+    private final QueueWaker waker;
 
     /**
-     * Creates a new {@link QueuePoller} instance.
+     * Creates a new {@link QueuePoller} instance that waits between polls with a plain sleep.
      *
      * @param configuration the {@link QueuePollerConfiguration}.
      * @param pollingQuery the query to be executed.
      */
     public QueuePoller(final QueuePollerConfiguration configuration,
         final Callable<Integer> pollingQuery) {
+        this(configuration, pollingQuery, QueueWaker.SLEEP);
+    }
+
+    /**
+     * Creates a new {@link QueuePoller} instance.
+     *
+     * @param configuration the {@link QueuePollerConfiguration}.
+     * @param pollingQuery the query to be executed.
+     * @param waker the strategy used to wait between two poll attempts when nothing was polled;
+     *        pass {@link QueueWaker#SLEEP} for a plain backoff, or a notification-aware
+     *        implementation to shorten the wait on a realtime wake-up (see {@link QueueWaker}).
+     */
+    public QueuePoller(final QueuePollerConfiguration configuration,
+        final Callable<Integer> pollingQuery,
+        final QueueWaker waker) {
         this.configuration = Objects.requireNonNull(configuration);
         this.pollingQuery = Objects.requireNonNull(pollingQuery);
+        this.waker = Objects.requireNonNull(waker);
     }
 
     /**
@@ -59,7 +76,10 @@ public class QueuePoller {
             sleep = selectedSteps.isEmpty() ? configuration.minPollInterval() : selectedSteps.getLast().pollInterval();
         }
 
-        Thread.sleep(sleep);
+        // waker.await() honors `sleep` as a hard upper bound: a notification-aware waker may return
+        // earlier on a realtime wake-up, but never later, so a missed notification still results in
+        // a poll at the usual backoff cadence (see QueueWaker).
+        waker.await(sleep);
 
         return lastPoll;
     }

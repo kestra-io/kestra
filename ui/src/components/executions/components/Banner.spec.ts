@@ -15,6 +15,11 @@ vi.mock("@kestra-io/kestra-sdk/outputs", () => ({
 }))
 
 const triggerScope = reactive({visible: false, enabled: false})
+const logsAllowed = vi.hoisted(() => ({value: true}))
+
+vi.mock("override/stores/auth", () => ({
+    useAuthStore: () => ({user: {isAllowed: () => logsAllowed.value}}),
+}))
 
 const globalConfig = {
     stubs: {
@@ -71,6 +76,15 @@ describe("Banner", () => {
         setActivePinia(createPinia())
         triggerScope.visible = false
         triggerScope.enabled = false
+        logsAllowed.value = true
+    })
+
+    test("offers to copy the logs only to a user who can access them", () => {
+        expect(mountBanner().text()).toContain("copy logs")
+
+        logsAllowed.value = false
+
+        expect(mountBanner().text()).not.toContain("copy logs")
     })
 
     test("renders no chevron when the state change trigger is disabled", () => {

@@ -98,7 +98,7 @@
             <div class="execution-banner__actions">
                 <RunTimeline :histories="execution.state.histories ?? []" />
 
-                <KsButton :icon="ContentCopy" @click="copyLogs" link>
+                <KsButton v-if="canAccessLogs" :icon="ContentCopy" @click="copyLogs" link>
                     {{ $t("copy logs") }}
                 </KsButton>
 
@@ -180,6 +180,9 @@
     import {useExecutionSummary} from "../../../composables/useExecutionSummary"
     import {findApprovalTaskRun} from "../../../utils/approval"
     import {useMiscStore} from "override/stores/misc"
+    import {useAuthStore} from "override/stores/auth"
+    import resource from "../../../models/resource"
+    import action from "../../../models/action"
     import * as Utils from "../../../utils/utils"
     import {useToast} from "../../../utils/toast"
     import {handledIf} from "../../../utils/kestraHttp"
@@ -285,6 +288,9 @@
         },
         {immediate: true},
     )
+
+    const authStore = useAuthStore()
+    const canAccessLogs = computed(() => authStore.user?.isAllowed(resource.EXECUTION, action.ACCESS_LOGS, props.execution.namespace) ?? true)
 
     const copyLogs = () => {
         executionsStore

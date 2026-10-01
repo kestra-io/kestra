@@ -1,5 +1,6 @@
 import {ref, watch, type ComputedRef, type Ref} from "vue"
 import * as OutputsAPI from "@kestra-io/kestra-sdk/outputs"
+import type {KestraRequestOptions} from "../utils/kestraHttp"
 
 // Since Kestra 2.0, task run outputs are no longer embedded on the Execution
 // payload (`taskRun.outputs` is a deprecated pre-2.0 compatibility field) — they
@@ -16,12 +17,19 @@ function fetchTaskRunIdsWithOutputs(executionId: string, forceRefresh: boolean):
         }
     }
 
-    const pending = OutputsAPI.taskOutputsInformation(
-        {executionId},
-        {validateStatus: (status: number) => status === 200 || status === 404},
-    ).then((data) =>
+    const options: Parameters<typeof OutputsAPI.taskOutputsInformation>[1] & KestraRequestOptions & {validateStatus: (status: number) => boolean} = {
+        validateStatus: (status: number) => status === 200 || status === 404,
+        silentStatuses: [403],
+    }
+    const pending = OutputsAPI.taskOutputsInformation({executionId}, options).then((data) =>
         new Set((data ?? []).map((task) => task.taskRunId).filter((id): id is string => Boolean(id))),
-    )
+    ).catch((error: {status?: number}) => {
+        if (error?.status === 403) {
+            return new Set<string>()
+        }
+        taskRunIdsWithOutputsCache.delete(executionId)
+        throw error
+    })
 
     taskRunIdsWithOutputsCache.set(executionId, pending)
     return pending

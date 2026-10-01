@@ -72,9 +72,9 @@ export interface KestraHttpError extends Error {
         statusText: string
         headers: Record<string, string>
         request: {responseURL: string}
-        config: {method: string; url: string; showMessageOnError?: boolean; ignoreNotFound?: boolean}
+        config: {method: string; url: string; showMessageOnError?: boolean; ignoreNotFound?: boolean; silentStatuses?: number[]}
     }
-    config?: {method: string; url: string; showMessageOnError?: boolean; ignoreNotFound?: boolean}
+    config?: {method: string; url: string; showMessageOnError?: boolean; ignoreNotFound?: boolean; silentStatuses?: number[]}
 }
 
 /**
@@ -84,6 +84,7 @@ export interface KestraHttpError extends Error {
  */
 export function isReportedCentrally(error: KestraHttpError): boolean {
     if (error.config?.showMessageOnError === false) return false
+    if (error.status !== undefined && error.config?.silentStatuses?.includes(error.status)) return false
     if (error.status === 404) return error.config?.ignoreNotFound !== true
     return error.status !== 401 && error.status !== 400 && Boolean(error.response?.data)
 }
@@ -97,6 +98,8 @@ export interface KestraRequestOptions {
     showMessageOnError?: boolean
     /** Marks a 404 as an expected outcome the caller handles itself. */
     ignoreNotFound?: boolean
+    /** Statuses the caller expects and handles itself; any other failure still raises the error toast. */
+    silentStatuses?: number[]
 }
 
 /**
@@ -255,6 +258,7 @@ export function setupKestraHttp(
                 url: request?.url ?? "",
                 showMessageOnError: (opts as {showMessageOnError?: boolean} | undefined)?.showMessageOnError,
                 ignoreNotFound: (opts as {ignoreNotFound?: boolean} | undefined)?.ignoreNotFound,
+                silentStatuses: (opts as {silentStatuses?: number[]} | undefined)?.silentStatuses,
             },
         }
         kestraError.config = kestraError.response.config

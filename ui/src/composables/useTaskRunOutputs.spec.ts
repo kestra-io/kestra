@@ -67,6 +67,16 @@ describe("useTaskRunOutputs", () => {
         expect(taskOutputsInformationMock).toHaveBeenCalledTimes(2)
     })
 
+    test("treats a viewer without access to the outputs as having none, without raising an error", async () => {
+        taskOutputsInformationMock.mockRejectedValue({status: 403})
+
+        const hasOutputs = useHasTaskRunOutputs(ref("exec-forbidden"), ref("tr-1"), ref("SUCCESS"))
+        await flushPromises()
+
+        expect(hasOutputs.value).toBe(false)
+        expect(taskOutputsInformationMock).toHaveBeenCalledWith({executionId: "exec-forbidden"}, expect.objectContaining({silentStatuses: [403]}))
+    })
+
     test("loadTaskRunOutputs returns the fetched outputs", async () => {
         taskRunOutputsMock.mockResolvedValue({body: {id: 1}})
 

@@ -176,6 +176,24 @@ describe("setupKestraHttp central 404 handling", () => {
         expect(triggerNotFound({ignoreNotFound: true}).message).toBeUndefined()
         expect(triggerNotFound({showMessageOnError: false}).message).toBeUndefined()
     })
+
+    it("keeps the error toast away for a status listed in silentStatuses only", () => {
+        const trigger = (opts?: Record<string, unknown>) => {
+            const forbidden = Object.assign(new Error("403 Forbidden"), {status: 403, title: "Forbidden"})
+            const coreStore = {message: undefined as unknown, error: undefined as unknown}
+            setupKestraHttp({}, {coreStore})
+            const onErrorInterceptor = fakeClient.interceptors.error.use.mock.calls.at(-1)![0]
+            const rejected = onErrorInterceptor(forbidden, {...notFoundResponse, status: 403}, request, opts)
+            return {coreStore, rejected}
+        }
+
+        const silenced = trigger({silentStatuses: [403]})
+        const reported = trigger()
+
+        expect(silenced.rejected.config.silentStatuses).toEqual([403])
+        expect(silenced.coreStore.message).toBeUndefined()
+        expect(reported.coreStore.message).toBeDefined()
+    })
 })
 
 describe("isReportedCentrally", () => {
@@ -196,6 +214,12 @@ describe("isReportedCentrally", () => {
         expect(isReportedCentrally(failure(404, {ignoreNotFound: true}))).toBe(false)
         expect(isReportedCentrally(failure(500, {showMessageOnError: false}))).toBe(false)
         expect(isReportedCentrally({status: 0} as KestraHttpError)).toBe(false)
+    })
+
+    it("silences only the statuses a caller listed in silentStatuses", () => {
+        expect(isReportedCentrally(failure(403, {silentStatuses: [403]}))).toBe(false)
+        expect(isReportedCentrally(failure(500, {silentStatuses: [403]}))).toBe(true)
+        expect(isReportedCentrally(failure(403))).toBe(true)
     })
 })
 

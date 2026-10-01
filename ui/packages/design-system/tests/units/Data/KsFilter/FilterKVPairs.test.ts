@@ -1,9 +1,24 @@
-import {defineComponent, h, toRaw} from "vue"
+import {defineComponent, h, toRaw, type ComponentInternalInstance, type ComponentPublicInstance, type Ref} from "vue"
 import {describe, expect, test, vi} from "vitest"
 import {mount} from "@vue/test-utils"
 
 import FilterKVPairs from "../../../../src/components/Data/KsDataTable/filter/layout/FilterKVPairs.vue"
 import {Comparators} from "../../../../src/components/Data/KsDataTable/filter/utils/filterTypes"
+
+type KVPair = {key: string; value: string}
+
+interface FilterKVPairsSetupState {
+    newKey: Ref<string>
+    newValue: Ref<string>
+    detailPairs: Ref<KVPair[]>
+    addPair: () => void
+}
+
+type FilterKVPairsVM = ComponentPublicInstance & {
+    $: ComponentInternalInstance & {
+        setupState: FilterKVPairsSetupState
+    }
+}
 
 const KsInput = defineComponent({
     props: {modelValue: {type: String, default: ""}},
@@ -50,7 +65,7 @@ const mountPairs = (comparator: Comparators) => mount(FilterKVPairs, {
 })
 
 const addPair = async (wrapper: ReturnType<typeof mountPairs>, key: string, value: string) => {
-    const state = (wrapper.vm as any).$?.setupState
+    const state = (wrapper.vm as FilterKVPairsVM).$.setupState
     const rawState = toRaw(state)
     rawState.newKey.value = key
     rawState.newValue.value = value
@@ -106,7 +121,7 @@ describe("FilterKVPairs", () => {
         await wrapper.setProps({comparator: Comparators.EQUALS})
         await wrapper.vm.$nextTick()
 
-        const state = toRaw((wrapper.vm as any).$?.setupState)
+        const state = toRaw((wrapper.vm as FilterKVPairsVM).$.setupState)
         expect(state.detailPairs.value).toEqual([
             {key: "environment", value: "staging"},
             {key: "team", value: "platform"},

@@ -33,6 +33,12 @@ export function findTaskById(flow: unknown, taskId: string): {type?: string; id?
     return result.length > 0 ? result[0] : undefined
 }
 
+// Task objects at any depth under `tasks` (flowable children, then/else, errors, cases...), parents included.
+export function getAllTasks(tasks: unknown): any[] {
+    if (!tasks) return []
+    return loopOver(tasks, (value) => value instanceof Object && value.type !== undefined && value.id !== undefined)
+}
+
 export function getAllTaskIds(flow: any): string[] {
     if (!flow) return []
     const result: any[] = []

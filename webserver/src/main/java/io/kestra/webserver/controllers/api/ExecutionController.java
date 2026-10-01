@@ -1873,10 +1873,10 @@ public class ExecutionController {
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "/{executionId}/actions/interrupt", produces = MediaType.TEXT_JSON)
     @Operation(tags = { "Executions" }, summary = "Interrupt a running task run")
-    @ApiResponse(responseCode = "200", description = "On success", content = { @Content(schema = @Schema(implementation = Execution.class)) })
+    @ApiResponse(responseCode = "200", description = "On success")
     @ApiResponse(responseCode = "409", description = "if the task run cannot be interrupted")
     @ApiResponse(responseCode = "404", description = "if the execution or the task run is not found")
-    public HttpResponse<Execution> interruptTaskRun(
+    public HttpResponse<Void> interruptTaskRun(
         @Parameter(description = "The execution id") @PathVariable String executionId,
         @RequestBody(description = "the taskRun id and the state to apply to it") @Valid @Body StateRequest stateRequest) throws QueueException {
         if (State.Type.FAILED != stateRequest.state() && State.Type.CANCELLED != stateRequest.state()) {
@@ -1915,7 +1915,9 @@ public class ExecutionController {
                 .build()
         );
 
-        return HttpResponse.ok(execution);
+        eventPublisher.publishEvent(CrudEvent.of(execution, execution));
+
+        return HttpResponse.ok();
     }
 
     /**

@@ -869,12 +869,11 @@ class ExecutionControllerTest {
         });
 
         // When
-        HttpResponse<Execution> response = client.toBlocking().exchange(
+        HttpResponse<Void> response = client.toBlocking().exchange(
             POST(
                 "/api/v1/main/executions/" + execution.getId() + "/actions/interrupt",
                 new ExecutionController.StateRequest(parentTaskRunId, State.Type.CANCELLED)
-            ),
-            Execution.class
+            )
         );
 
         // Then

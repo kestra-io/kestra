@@ -115,7 +115,8 @@
     import {useExecutionsStore} from "../../../stores/executions"
     import {useExecutionsQueryScope} from "../../../composables/useExecutionsQueryScope"
     import {useTimelineRange, computeScrubberDomain, START_QUERY_KEY, END_QUERY_KEY, TIME_RANGE_QUERY_KEY} from "../../../composables/useTimelineRange"
-    import {useExecutionFilter, useFlowExecutionFilter} from "../../filter/configurations"
+    import {useExecutionFilter} from "../../filter/configurations/executionFilter"
+    import {useFlowExecutionFilter} from "../../filter/configurations/flowExecutionFilter"
     import {groupByNamespace, countByState, buildAxisTicks, axisTickFormat, isFailedLikeState, type TimelineExecution} from "../../../utils/executionsTimeline"
 
     const MAX_FETCHED_EXECUTIONS = 1000

@@ -131,7 +131,7 @@ describe("setupKestraHttp central 404 handling", () => {
         const {coreStore, notFound} = triggerNotFound()
         handled(notFound) // The caller's synchronous catch block executes and flags it
         
-        await Promise.resolve() // wait for queueMicrotask to fire
+        await new Promise(r => setTimeout(r, 0))
         expect(coreStore.message).toBeUndefined()
     })
 
@@ -148,7 +148,7 @@ describe("setupKestraHttp central 404 handling", () => {
     it("reports to the global store if handled(error) is NOT called", async () => {
         const {coreStore} = triggerNotFound()
         
-        await Promise.resolve() // wait for queueMicrotask to fire
+        await new Promise(r => setTimeout(r, 0))
         expect(coreStore.message).not.toBeUndefined()
     })
     beforeEach(() => {
@@ -157,7 +157,7 @@ describe("setupKestraHttp central 404 handling", () => {
 
     it("shows the failed request as a toast and logs it, instead of swapping the page for the not-found screen", async () => {
         const {coreStore} = triggerNotFound()
-        await Promise.resolve()
+        await new Promise(r => setTimeout(r, 0))
 
         expect(coreStore.message).toMatchObject({
             variant: "error",

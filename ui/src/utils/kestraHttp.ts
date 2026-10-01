@@ -77,6 +77,18 @@ export function handled(error: unknown) {
 }
 
 /**
+ * Conditionally marks an error as handled if its status (or response status) matches
+ * any of the provided expected statuses.
+ */
+export function handledIf(error: unknown, expectedStatuses: number[]) {
+    const err = error as {status?: number; response?: {status?: number}}
+    const status = err?.status ?? err?.response?.status
+    if (status !== undefined && expectedStatuses.includes(status)) {
+        handled(error)
+    }
+}
+
+/**
  * Whether this failure raises the global error toast, so a caller that reports failures itself can
  * skip the ones already on screen. A 400 or a 401 is left to the caller, as is a failure with no
  * response body.
@@ -148,7 +160,7 @@ export function setupKestraHttp(
     }
 
     function handleErrorCentrally(error: KestraHttpError): KestraHttpError {
-        queueMicrotask(() => {
+        setTimeout(() => {
             if (!isReportedCentrally(error)) return
 
             if (error.status === 404) {
@@ -157,7 +169,7 @@ export function setupKestraHttp(
                 console.error(`${(error.config?.method ?? "GET").toUpperCase()} ${error.config?.url ?? ""} failed with 404`, error)
             }
             onError(error)
-        })
+        }, 0)
 
         return error
     }

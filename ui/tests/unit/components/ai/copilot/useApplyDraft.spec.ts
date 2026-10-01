@@ -263,6 +263,15 @@ describe("useApplyDraft", () => {
         expect(applying.value).toBe(false)
     })
 
+    it("throws a non-404 error during the diff fetch instead of silently falling back to empty", async () => {
+        messageBox.mockResolvedValueOnce(undefined)
+        loadFlow.mockRejectedValueOnce(Object.assign(new Error("server error"), {status: 500}))
+        await useApplyDraft().apply(draft())
+        expect(messageBox).not.toHaveBeenCalled()
+        expect(createFlow).not.toHaveBeenCalled()
+        expect(alert).toHaveBeenCalled()
+    })
+
     it("still shows the confirm (before-source falls back to empty) when the persisted-flow fetch fails", async () => {
         messageBox.mockResolvedValueOnce(undefined)
         loadFlow.mockRejectedValueOnce(Object.assign(new Error("not found"), {status: 404}))

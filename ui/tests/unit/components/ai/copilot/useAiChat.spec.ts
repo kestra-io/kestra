@@ -153,7 +153,6 @@ describe("useAiChat", () => {
         expect(chat.messages.value.some((m) => m.role === "USER" && m.content === "hi")).toBe(true)
         expect(get).toHaveBeenCalledWith(
             "http://localhost/api/v1/main/ai/threads/t1",
-
         )
     })
 

@@ -185,11 +185,7 @@ export const useBlueprintsStore = defineStore("blueprints", () => {
         } catch (e: unknown) {
             const err = e as {status?: number; response?: {status?: number}}
             const status = err?.status || err?.response?.status
-            if (status === 422) {
-                handled(e)
-                validation.value = undefined
-                return
-            }
+            if (status === 422) handled(e)
             throw e
         }
     }

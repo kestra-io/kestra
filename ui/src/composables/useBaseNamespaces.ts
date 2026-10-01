@@ -139,7 +139,11 @@ export const useBaseNamespacesStore = () => {
             const data = await SecretsAPI.listSecrets({filters})
             return data
         } catch (e: unknown) {
-            if ((e as KestraHttpError).status === 404) { handled(e); return {total: 0, results: [], readOnly: false} }
+            if ((e as KestraHttpError).status === 404) {
+                handled(e)
+                return {total: 0, results: [], readOnly: false}
+            }
+
             throw e
         }
     }

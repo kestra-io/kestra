@@ -90,9 +90,9 @@
             const err = e as {status?: number; response?: {status?: number}}
             const status = err?.status || err?.response?.status
             if (status === 403 || status === 404) {
+                // User may not have ACCESS_LOGS permission — silently skip expected failures
                 handled(e)
             }
-            // User may not have ACCESS_LOGS permission — silently skip
         }
     })
 </script>

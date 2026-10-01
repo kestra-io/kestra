@@ -142,6 +142,7 @@ export function useApplyDraft() {
             }
             return true
         } catch (e) {
+            handled(e)
             await alertError(e, t("ai.copilot.draft.applyError"), t("ai.copilot.draft.applyTitle"))
             return false
         } finally {
@@ -224,6 +225,7 @@ export function useApplyDraft() {
             router.push({name: "dashboards/update", params: {dashboard: id, ...tenantParam()}})
             return true
         } catch (e) {
+            handled(e)
             await alertError(e, t("ai.copilot.draft.applyErrorDashboard"), t("ai.copilot.draft.applyTitleDashboard"))
             return false
         } finally {

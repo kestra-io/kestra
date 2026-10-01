@@ -387,10 +387,10 @@ export const useFlowStore = defineStore("flow", () => {
                 notifySaved(response.id, draft)
                 isCreating.value = false
             } catch (error: unknown) {
-                handled(error)
                 // Branch on the problem type alone. The status is deliberately not checked, so this keeps
                 // working if the type's status is ever revised.
                 if (isProblemType(error, ProblemTypes.ENTITY_ALREADY_EXISTS)) {
+                    handled(error)
                     const shouldRedirect = await KsMessageBox({
                         title: t("confirmation"),
                         message: () => h(KsMarkdown, {content: t("flow already exists message", {id: flowParsed.value?.id ?? "", namespace: flowParsed.value?.namespace ?? ""})}),
@@ -617,6 +617,11 @@ export const useFlowStore = defineStore("flow", () => {
             }
 
             return flow.value
+        }).catch(error => {
+            const status = error?.status || error?.response?.status
+            if (status === 409 || status === 422) handled(error)
+            throw error
+
         })
     }
 

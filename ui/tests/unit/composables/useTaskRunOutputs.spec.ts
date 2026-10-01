@@ -75,7 +75,7 @@ describe("useTaskRunOutputs", () => {
         expect(outputs).toEqual({body: {id: 1}})
         expect(taskRunOutputsMock).toHaveBeenCalledWith(
             {executionId: "exec-1", taskRunId: "tr-1"},
-            expect.objectContaining({validateStatus: expect.any(Function)}),
+
         )
     })
 
@@ -95,7 +95,7 @@ describe("useTaskRunOutputs", () => {
         expect(outputs).toEqual({key: "value"})
         expect(executionOutputsMock).toHaveBeenCalledWith(
             {executionId: "exec-1"},
-            expect.objectContaining({validateStatus: expect.any(Function)}),
+
         )
     })
 

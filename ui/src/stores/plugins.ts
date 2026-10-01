@@ -9,7 +9,7 @@ import {isEntryAPluginElementPredicate, type Plugin, type PluginElement, type Pl
 import type {JSONSchema} from "../components/plugins/schema/utils/schemaUtils"
 import {useClient} from "@kestra-io/kestra-sdk"
 import * as PluginsAPI from "@kestra-io/kestra-sdk/plugins"
-import {handled} from "../utils/kestraHttp"
+import {handled, handledIf} from "../utils/kestraHttp"
 
 /** Mirrors io.kestra.core.plugins.PluginInstallJob */
 export interface PluginArtifact {
@@ -411,11 +411,7 @@ export const usePluginsStore = defineStore("plugins", () => {
                 ? await PluginsAPI.pluginDocumentationFromVersion({cls: options.cls, version: options.version, all: options.all})
                 : await PluginsAPI.pluginDocumentation({cls: options.cls, all: options.all})) as PluginComponent
         } catch (e: unknown) {
-            const err = e as {status?: number; response?: {status?: number}}
-            if (err.status === 404 || err.response?.status === 404) {
-                handled(e)
-                throw e
-            }
+            handledIf(e, [404])
             throw e
         }
 
@@ -582,9 +578,7 @@ export const usePluginsStore = defineStore("plugins", () => {
             )
             return response.data
         } catch (e: unknown) {
-            const err = e as {status?: number; response?: {status?: number}}
-            const status = err?.status || err?.response?.status
-            if (status === 403 || status === 404) handled(e)
+            handledIf(e, [403, 404])
             throw e
         }
     }
@@ -597,9 +591,7 @@ export const usePluginsStore = defineStore("plugins", () => {
             )
             return response.data
         } catch (e: unknown) {
-            const err = e as {status?: number; response?: {status?: number}}
-            const status = err?.status || err?.response?.status
-            if (status === 403 || status === 404) handled(e)
+            handledIf(e, [403, 404])
             throw e
         }
     }

@@ -477,13 +477,13 @@ public class FlowController {
 
     protected List<FlowInterface> bulkUpdateOrCreate(@Nullable String namespace, List<GenericFlow> flows, Boolean delete, Boolean allowNamespaceChild) throws Exception {
 
-        // list all ids of updated flows
-        List<String> ids = flows
+        // list all uids of updated flows
+        Set<String> uids = flows
             .stream()
-            .map(GenericFlow::getId)
-            .toList();
+            .map(FlowId::uidWithoutRevision)
+            .collect(Collectors.toSet());
 
-        // delete all not in updated ids
+        // delete all not in updated uids
         List<FlowWithSource> deleted = new ArrayList<>();
         if (delete) {
             if (namespace != null) {
@@ -494,7 +494,7 @@ public class FlowController {
                     .findAllWithSource(tenantService.resolveTenant());
             }
             deleted = deleted.stream()
-                .filter(flow -> !ids.contains(flow.getId()))
+                .filter(flow -> !uids.contains(FlowId.uidWithoutRevision(flow)))
                 .toList();
         }
 
@@ -527,13 +527,7 @@ public class FlowController {
         }
 
         // multiple same flows
-        List<String> duplicate = flows
-            .stream()
-            .map(GenericFlow::getId)
-            .distinct()
-            .toList();
-
-        if (duplicate.size() < flows.size()) {
+        if (uids.size() < flows.size()) {
             throw new ConstraintViolationException(
                 Collections.singleton(
                     ManualConstraintViolation.of(
@@ -541,7 +535,7 @@ public class FlowController {
                         flows,
                         List.class,
                         "flow.id",
-                        duplicate
+                        List.copyOf(uids)
                     )
                 )
             );

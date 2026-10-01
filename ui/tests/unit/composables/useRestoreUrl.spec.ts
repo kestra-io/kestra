@@ -11,6 +11,7 @@ function createTestRouter(): Router {
         history: createMemoryHistory(),
         routes: [
             {name: "home", path: "/:tenant?/dashboards/:dashboard?", component: {template: "<div/>"}},
+            {name: "flows/update/executions", path: "/:tenant?/flows/edit/:namespace/:id/executions", component: {template: "<div/>"}},
         ],
     })
 }
@@ -85,5 +86,30 @@ describe("useRestoreUrl", () => {
         await new Promise((resolve) => setTimeout(resolve, 150))
 
         expect(router.currentRoute.value.query).toEqual(explicit)
+    })
+
+    it("does not restore another flow's saved query on a different flow's executions tab", async () => {
+        const router = createTestRouter()
+        await router.push({name: "flows/update/executions", params: {tenant: "main", namespace: "company.team", id: "flowA"}})
+        const flowA = mountRestoreUrl(router)
+        window.sessionStorage.setItem(flowA.vm.localStorageName as unknown as string, JSON.stringify(SAVED_QUERY))
+        flowA.unmount()
+
+        await router.push({name: "flows/update/executions", params: {tenant: "main", namespace: "company.team", id: "flowB"}})
+        wrapper = mountRestoreUrl(router)
+        await new Promise((resolve) => setTimeout(resolve, 150))
+
+        expect(router.currentRoute.value.query).toEqual({})
+    })
+
+    it("restores a flow's own saved query on its executions tab", async () => {
+        const router = createTestRouter()
+        await router.push({name: "flows/update/executions", params: {tenant: "main", namespace: "company.team", id: "flowA"}})
+        window.sessionStorage.setItem("flows_update/executions_company.team_flowA_main_restore_url", JSON.stringify(SAVED_QUERY))
+
+        wrapper = mountRestoreUrl(router)
+        await new Promise((resolve) => setTimeout(resolve, 150))
+
+        expect(router.currentRoute.value.query).toEqual(SAVED_QUERY)
     })
 })

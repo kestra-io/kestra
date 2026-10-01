@@ -886,7 +886,7 @@ function deleteFlowAndDependencies() {
             },
             {withCredentials: true, headers: textYamlHeader.headers},
         ).then(result => {
-            taskErrors.value = (result as {errors?: ValidationError[]}).errors
+            taskErrors.value = result.errors
             return result
         })
     }

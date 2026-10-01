@@ -54,19 +54,21 @@ public record ParseReport(
         for (int i = count - 1; i >= 0; i--) {
             Removal removal = removals.get(i);
             int depth = removal.parent().size();
-            if (removal.index() < 0 || shifted.size() <= depth || !shifted.subList(0, depth).equals(removal.parent())) {
+            if (removal.index() < 0 || shifted.size() <= depth || !shifted.subList(0, depth).equals(removal.parent())
+                || !isIndex(shifted.get(depth))) {
                 continue;
             }
-            try {
-                int index = Integer.parseInt(shifted.get(depth));
-                if (index >= removal.index()) {
-                    shifted.set(depth, String.valueOf(index + 1));
-                }
-            } catch (NumberFormatException e) {
-                // A map key under the same parent is not shifted.
+            int index = Integer.parseInt(shifted.get(depth));
+            if (index >= removal.index()) {
+                shifted.set(depth, String.valueOf(index + 1));
             }
         }
         return shifted;
+    }
+
+    /** A list index segment, short enough to fit an int. */
+    static boolean isIndex(String segment) {
+        return !segment.isEmpty() && segment.length() <= 9 && segment.chars().allMatch(Character::isDigit);
     }
 
     static List<String> segments(String pointer) {
@@ -82,7 +84,7 @@ public record ParseReport(
     static String toPath(List<String> segments) {
         StringBuilder path = new StringBuilder();
         for (String segment : segments) {
-            if (!segment.isEmpty() && segment.chars().allMatch(Character::isDigit)) {
+            if (isIndex(segment)) {
                 path.append('[').append(segment).append(']');
             } else {
                 path.append(path.isEmpty() ? "" : ".").append(segment);

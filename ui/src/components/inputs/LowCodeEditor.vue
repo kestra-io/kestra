@@ -23,7 +23,6 @@
             :replayEnabled="replayEnabled"
             :getNodeDimensions="getNodeDimensions"
             :customActions="customActions"
-            :showDetailsToggle="props.showDetailsToggle && hasExtraDetails"
             :taskDetailsVersion="taskDetailsVersion"
             :validationIssuesByTask="validationIssuesByTask"
             :focusedTaskId="focusedTaskId"
@@ -479,14 +478,6 @@
         return result
     })
 
-    const hasExtraDetails = computed(() => {
-        const types = taskAdditionalInfoRemote.value
-        return (augmentedFlowGraph.value?.nodes ?? []).some((n: any) =>
-            (n.task?.type && types[n.task.type]) ||
-            (n.task?.taskRunner?.type && types[n.task.taskRunner.type]),
-        )
-    })
-
     // progressEvents are never reset across execution navigations (taskRunId is globally
     // unique so old entries are harmless in isolation) — but filtering on taskId alone lets a
     // PREVIOUS taskRun's entries leak into a fresh run of the same task, or into a pre-execution
@@ -614,7 +605,6 @@
             isAllowedEdit?: boolean;
             horizontalDefault?: boolean;
             toggleOrientationButton?: boolean;
-            showDetailsToggle?: boolean;
             expandedSubflows?: string[];
         }>(),
         {
@@ -626,7 +616,6 @@
             isAllowedEdit: false,
             horizontalDefault: undefined,
             toggleOrientationButton: true,
-            showDetailsToggle: true,
             expandedSubflows: () => [],
         })
 

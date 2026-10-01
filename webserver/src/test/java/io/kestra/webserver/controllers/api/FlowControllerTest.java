@@ -1766,6 +1766,9 @@ class FlowControllerTest {
 
         assertThat(body.size()).isEqualTo(1);
         assertThat(body.get(0).getConstraints()).contains("Invalid type: io.kestra.plugin.core.debug.UnknownTask");
+        assertThat(body.get(0).getErrors())
+            .extracting(ValidationError::detail)
+            .containsExactly("Invalid type: io.kestra.plugin.core.debug.UnknownTask");
 
         resource = TestsUtils.class.getClassLoader().getResource("tasks/invalidTaskUnknownProp.json");
         task = Files.readString(Path.of(Objects.requireNonNull(resource).getPath()), Charset.defaultCharset());

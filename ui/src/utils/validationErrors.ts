@@ -1,9 +1,6 @@
-/** An entry of the RFC 9457 `errors` member, as a validation result carries it. */
-export interface ValidationError {
-    detail?: string;
-    pointer?: string;
-    path?: string;
-}
+import type {ValidationError} from "@kestra-io/kestra-sdk"
+
+export type {ValidationError}
 
 /** One readable line per error, e.g. `tasks[log].message: must not be null`. */
 export function validationErrorLines(errors?: ValidationError[]): string[] {

@@ -14,6 +14,7 @@
     </div>
     <TourOverlay v-if="loaded && route?.name && !route.meta?.anonymous" />
     <UnsavedChangesDialog />
+    <ReauthDialog />
     <DrillDownDrawer />
     <PwaInstallPrompt v-if="loaded && route?.name && !route.meta?.anonymous" />
 </template>
@@ -41,6 +42,7 @@
     import AppTopNavBar from "./components/layout/AppTopNavBar.vue"
     import DocIdDisplay from "./components/DocIdDisplay.vue"
     import UnsavedChangesDialog from "./components/UnsavedChangesDialog.vue"
+    import ReauthDialog from "./components/ReauthDialog.vue"
     import VersionUpgradeNotice from "./components/VersionUpgradeNotice.vue"
     import DrillDownDrawer from "./components/dashboard/DrillDownDrawer.vue"
     import PwaInstallPrompt from "./components/PwaInstallPrompt.vue"

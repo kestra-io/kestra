@@ -210,3 +210,18 @@ describe("setupKestraHttp server reachability", () => {
         expect(useServerReachability().unreachable.value).toBe(false)
     })
 })
+
+describe("setupKestraHttp 401 retry", () => {
+    it("replays the failed request once onUnauthorized reports a successful re-authentication", async () => {
+        const unauthorized = Object.assign(new Error("401"), {status: 401})
+        const get = vi.fn().mockRejectedValueOnce(unauthorized).mockResolvedValueOnce({data: "ok"})
+        fakeAxiosClient.get = get
+        const onUnauthorized = vi.fn().mockResolvedValue(true)
+
+        setupKestraHttp({}, {isLoggedIn: () => false, onUnauthorized})
+
+        await expect(fakeAxiosClient.get("/executions", {q: 1})).resolves.toEqual({data: "ok"})
+        expect(onUnauthorized).toHaveBeenCalledTimes(1)
+        expect(get).toHaveBeenCalledTimes(2)
+    })
+})

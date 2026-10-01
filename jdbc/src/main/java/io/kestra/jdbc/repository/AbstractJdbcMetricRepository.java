@@ -191,17 +191,6 @@ public abstract class AbstractJdbcMetricRepository extends AbstractJdbcCrudRepos
         @Nullable String tenantId,
         @Nullable String namespace,
         @Nullable String flowId,
-        @Nullable ZonedDateTime startDate,
-        ZonedDateTime endDate
-    ) {
-        return purge(tenantId, namespace, flowId, null, startDate, endDate, null);
-    }
-
-    @Override
-    public int purge(
-        @Nullable String tenantId,
-        @Nullable String namespace,
-        @Nullable String flowId,
         @Nullable String executionId,
         @Nullable ZonedDateTime startDate,
         ZonedDateTime endDate,

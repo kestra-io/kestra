@@ -226,7 +226,7 @@ public abstract class AbstractMetricRepositoryTest {
             .timestamp(recentTimestamp)
             .build());
 
-        int deleted = metricRepository.purge(tenant, "io.kestra.purge", "flow1", null, ZonedDateTime.now().minusDays(5));
+        int deleted = metricRepository.purge(tenant, "io.kestra.purge", "flow1", null, null, ZonedDateTime.now().minusDays(5), null);
         assertThat(deleted).isEqualTo(1);
 
         List<MetricEntry> remaining = metricRepository.findByExecutionId(tenant, "exec2", Pageable.from(1, 10));
@@ -280,7 +280,7 @@ public abstract class AbstractMetricRepositoryTest {
             .timestamp(timestamp)
             .build());
 
-        int deleted = metricRepository.purge(tenant, "company.team", null, null, ZonedDateTime.now());
+        int deleted = metricRepository.purge(tenant, "company.team", null, null, null, ZonedDateTime.now(), null);
         assertThat(deleted).isEqualTo(2);
 
         List<MetricEntry> other = metricRepository.findByExecutionId(tenant, "exec3", Pageable.from(1, 10));
@@ -333,7 +333,7 @@ public abstract class AbstractMetricRepositoryTest {
             .timestamp(t3)
             .build());
 
-        int deleted = metricRepository.purge(tenant, "ns", "flow", ZonedDateTime.now().minusDays(12), ZonedDateTime.now().minusDays(5));
+        int deleted = metricRepository.purge(tenant, "ns", "flow", null, ZonedDateTime.now().minusDays(12), ZonedDateTime.now().minusDays(5), null);
         assertThat(deleted).isEqualTo(1);
 
         assertThat(metricRepository.findByExecutionId(tenant, "exec1", Pageable.from(1, 10))).hasSize(1);
@@ -373,7 +373,7 @@ public abstract class AbstractMetricRepositoryTest {
             .timestamp(oldTimestamp)
             .build());
 
-        int deleted = metricRepository.purge(tenant1, null, null, null, ZonedDateTime.now());
+        int deleted = metricRepository.purge(tenant1, null, null, null, null, ZonedDateTime.now(), null);
         assertThat(deleted).isEqualTo(1);
 
         assertThat(metricRepository.findByExecutionId(tenant1, "exec1", Pageable.from(1, 10))).isEmpty();
@@ -383,7 +383,7 @@ public abstract class AbstractMetricRepositoryTest {
     @Test
     void shouldReturnZeroWhenNoMatchingMetricsToPurge() {
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
-        int deleted = metricRepository.purge(tenant, "non.existing.ns", null, null, ZonedDateTime.now());
+        int deleted = metricRepository.purge(tenant, "non.existing.ns", null, null, null, ZonedDateTime.now(), null);
         assertThat(deleted).isEqualTo(0);
     }
 

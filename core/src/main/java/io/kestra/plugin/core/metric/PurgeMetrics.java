@@ -11,7 +11,6 @@ import io.kestra.core.models.tasks.Task;
 import io.kestra.core.repositories.MetricRepositoryInterface;
 import io.kestra.core.runners.DefaultRunContext;
 import io.kestra.core.runners.RunContext;
-import io.kestra.core.utils.TypeConverter;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Min;
@@ -121,9 +120,8 @@ public class PurgeMetrics extends Task implements RunnableTask<PurgeMetrics.Outp
             runContext.acl().allowNamespace(renderedNamespace).check();
         }
 
-        String renderedStartDate = runContext.render(this.startDate).as(String.class).orElse(null);
-        ZonedDateTime rStartDate = renderedStartDate != null ? TypeConverter.toZonedDateTime(renderedStartDate) : null;
-        ZonedDateTime rEndDate = TypeConverter.toZonedDateTime(runContext.render(this.endDate).as(String.class).orElseThrow());
+        ZonedDateTime rStartDate = runContext.render(this.startDate).as(String.class).map(ZonedDateTime::parse).orElse(null);
+        ZonedDateTime rEndDate = ZonedDateTime.parse(runContext.render(this.endDate).as(String.class).orElseThrow());
         Integer renderedBatchSize = runContext.render(this.batchSize).as(Integer.class).orElse(null);
 
         int count = metricRepository.purge(

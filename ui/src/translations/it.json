@@ -996,7 +996,6 @@
     "timezone": "Fuso orario",
     "add task": "Aggiungi un task",
     "unable to generate graph": "Si è verificato un problema durante la generazione del grafico, che impedisce la visualizzazione della topologia.",
-    "retry": "Riprova",
     "attempts": "Tentativi",
     "version": "Versione",
     "services": "Servizi",

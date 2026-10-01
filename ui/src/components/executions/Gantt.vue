@@ -1,8 +1,6 @@
 <template>
     <div class="gantt-root" :style="{'--execution-banner-height': `${bannerHeight}px`}">
-        <KsCard v-if="props.showBanner && execution" ref="bannerCard" class="execution-summary" shadow="always" :bodyStyle="BANNER_BODY_STYLE">
-            <Banner :execution />
-        </KsCard>
+        <ExecutionSummaryCard v-if="props.showBanner && execution" v-model:height="bannerHeight" :execution />
         <ExecutionPending
             v-if="isQueued"
             :execution="execution!"
@@ -167,12 +165,12 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, watch, onUnmounted, useTemplateRef, type ComponentPublicInstance} from "vue"
+    import {ref, computed, watch, onUnmounted} from "vue"
     import {useI18n} from "vue-i18n"
     import {useRoute} from "vue-router"
 
     import {date as dateFilter} from "../../utils/filters"
-    import {useBreakpoints, breakpointsElement, useElementSize} from "@vueuse/core"
+    import {useBreakpoints, breakpointsElement} from "@vueuse/core"
     import {DynamicScroller, DynamicScrollerItem} from "vue-virtual-scroller"
     import "vue-virtual-scroller/dist/vue-virtual-scroller.css"
     import ChevronRight from "vue-material-design-icons/ChevronRight.vue"
@@ -203,7 +201,7 @@
     import TaskRunActions from "./TaskRunActions.vue"
     import ExecutionPending from "./ExecutionPending.vue"
     import ExecutionProgress from "./ExecutionProgress.vue"
-    import Banner from "./components/Banner.vue"
+    import ExecutionSummaryCard from "./components/ExecutionSummaryCard.vue"
     import emptyIllustration from "../../assets/empty_visuals/generic.svg"
     import {buildTaskRunHierarchy} from "../../utils/taskRunHierarchy"
     import {computeTaskBarPercents} from "../../utils/ganttSeries"
@@ -256,7 +254,6 @@
     const props = withDefaults(defineProps<{
         namespace?: string;
         embed?: boolean;
-        /** Shows the execution summary card above the chart (the Executions detail page's Gantt tab). */
         showBanner?: boolean;
     }>(), {
         namespace: undefined,
@@ -271,9 +268,7 @@
     const verticalLayout = useBreakpoints(breakpointsElement).smallerOrEqual("sm")
     const ganttExecutionFilter = useGanttExecutionFilter()
 
-    const BANNER_BODY_STYLE = {padding: "0", height: "100%"}
-    const bannerCard = useTemplateRef<ComponentPublicInstance>("bannerCard")
-    const {height: bannerHeight} = useElementSize(computed(() => props.showBanner ? bannerCard.value?.$el : undefined))
+    const bannerHeight = ref(0)
 
     const TASKRUN_THRESHOLD = 50
     const COLORS = State.color()
@@ -634,15 +629,6 @@
         flex-direction: column;
     }
 
-    .execution-summary {
-        flex-shrink: 0;
-        margin-bottom: var(--ks-spacing-4);
-        width: 100%;
-        border: 1px solid var(--ks-border-default);
-        border-radius: var(--ks-radius-base);
-        box-shadow: 0px 1px 4px 0px var(--ks-shadow-element);
-    }
-
     .gantt-progress {
         margin-bottom: var(--ks-spacing-4);
     }
@@ -701,7 +687,7 @@
             padding: 0;
 
             .vue-recycle-scroller {
-                max-height: calc(100vh - 223px - var(--execution-banner-height, 0px));
+                max-height: max(15rem, calc(100vh - 223px - var(--execution-banner-height, 0px)));
 
                 &::-webkit-scrollbar {
                     width: 5px;

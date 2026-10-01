@@ -100,6 +100,7 @@
 <style scoped lang="scss">
     .error-wrapper {
         position: relative;
+        min-width: 0;
     }
 
     .expand-btn {
@@ -126,18 +127,20 @@
         margin: 0;
         color: var(--ks-text-error);
         font-size: var(--ks-font-size-sm);
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
+        white-space: pre-wrap;
+        word-break: break-word;
+        overflow-wrap: anywhere;
     }
 
     #error {
+        min-width: 0;
         overflow: hidden;
 
         :deep(.kel-alert__content) {
             min-width: 0;
             width: 100%;
             gap: 0;
+            padding-right: var(--ks-spacing-7);
 
             .kel-alert__title > div,
             .kel-alert__title > span {

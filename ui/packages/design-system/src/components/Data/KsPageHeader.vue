@@ -1,5 +1,5 @@
 <template>
-    <ElPageHeader v-bind="({...filteredProps(), ...$attrs} as any)" @back="emit('back')">
+    <ElPageHeader v-bind="({...filteredProps(), ...$attrs} as PageHeaderProps)" @back="emit('back')">
         <template v-if="$slots.default" #default>
             <slot />
         </template>
@@ -22,13 +22,14 @@
 </template>
 
 <script setup lang="ts">
-    import {ElPageHeader} from "element-plus"
+    import {ElPageHeader, type PageHeaderProps} from "element-plus"
+    import type {Component} from "vue"
     import {useFilteredProps} from "../../utils/filteredProps"
 
     defineOptions({inheritAttrs: false})
 
     const props = defineProps<{
-        icon?: any
+        icon?: string | Component
         title?: string
         content?: string
     }>()

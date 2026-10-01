@@ -1,6 +1,7 @@
 <template>
     <DocIdDisplay />
     <ErrorToast v-if="coreStore.message" :noAutoHide="true" :message="coreStore.message" />
+    <ServerUnreachableBanner />
     <component :is="SdkDriftBanner" v-if="SdkDriftBanner" />
     <VersionUpgradeNotice v-if="loaded && route?.name && !route.meta?.anonymous" />
     <div id="app-shell">
@@ -34,6 +35,7 @@
     import {initPosthogIfEnabled} from "./utils/posthog"
     import {SAVED_FILTER_ANALYTICS_INJECTION_KEY, trackSavedFilter} from "./utils/savedFilterTracking"
     import ErrorToast from "./components/ErrorToast.vue"
+    import ServerUnreachableBanner from "./components/ServerUnreachableBanner.vue"
     import TourOverlay from "./components/onboarding/tour/TourOverlay.vue"
     import DefaultLayout from "override/components/layout/DefaultLayout.vue"
     import AppTopNavBar from "./components/layout/AppTopNavBar.vue"

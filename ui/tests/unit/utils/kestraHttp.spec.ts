@@ -31,6 +31,7 @@ vi.mock("nprogress", () => ({
 }))
 
 import {isReportedCentrally, setupKestraHttp} from "../../../src/utils/kestraHttp"
+import {markServerReachable, useServerReachability} from "../../../src/composables/useServerReachability"
 
 describe("setupKestraHttp router NProgress hooks", () => {
     let beforeEachCb: () => void
@@ -172,5 +173,40 @@ describe("isReportedCentrally", () => {
         expect(isReportedCentrally(failure(404, {ignoreNotFound: true}))).toBe(false)
         expect(isReportedCentrally(failure(500, {showMessageOnError: false}))).toBe(false)
         expect(isReportedCentrally({status: 0} as any)).toBe(false)
+    })
+})
+
+describe("setupKestraHttp server reachability", () => {
+    function interceptors() {
+        setupKestraHttp({}, {})
+        return {
+            onResponse: fakeClient.interceptors.response.use.mock.calls.at(-1)![0],
+            onError: fakeClient.interceptors.error.use.mock.calls.at(-1)![0],
+        }
+    }
+
+    beforeEach(() => {
+        markServerReachable()
+    })
+
+    it("flags the server unreachable on a response-less failure and clears it on the next response", () => {
+        const {onResponse, onError} = interceptors()
+        const {unreachable} = useServerReachability()
+
+        onError(new TypeError("Failed to fetch"), undefined, {signal: new AbortController().signal}, {})
+        expect(unreachable.value).toBe(true)
+
+        onResponse({status: 200}, {}, {})
+        expect(unreachable.value).toBe(false)
+    })
+
+    it("ignores a request the caller aborted", () => {
+        const {onError} = interceptors()
+        const controller = new AbortController()
+        controller.abort()
+
+        onError(new DOMException("aborted", "AbortError"), undefined, {signal: controller.signal}, {})
+
+        expect(useServerReachability().unreachable.value).toBe(false)
     })
 })

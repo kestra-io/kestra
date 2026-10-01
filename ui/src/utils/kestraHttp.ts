@@ -1,6 +1,7 @@
 import NProgress from "nprogress"
 import type {Router} from "vue-router"
 import {configureClient, useClient, asProblem, type ProblemDetail} from "@kestra-io/kestra-sdk"
+import {markServerReachable, markServerUnreachable} from "../composables/useServerReachability"
 
 let pendingRoute = false
 let requestsTotal = 0
@@ -190,6 +191,7 @@ export function setupKestraHttp(
     })
 
     client.interceptors.response.use((response, _request, opts) => {
+        markServerReachable()
         if (!skipProgress(opts)) increaseProgress()
         return response
     })
@@ -197,9 +199,12 @@ export function setupKestraHttp(
     client.interceptors.error.use((error, response, request, opts) => {
         const kestraError = error as KestraHttpError
         if (!response) {
+            const aborted = request?.signal?.aborted || kestraError.name === "AbortError"
+            if (!aborted) markServerUnreachable()
             if (!skipProgress(opts)) increaseProgress()
             return kestraError
         }
+        markServerReachable()
 
         // An API error is a problem document, and `response.data` IS that document — the same value the
         // useClient facade attaches, so both call paths finally expose one identical shape. Anything else

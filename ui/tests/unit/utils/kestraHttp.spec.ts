@@ -200,6 +200,15 @@ describe("setupKestraHttp server reachability", () => {
         expect(unreachable.value).toBe(false)
     })
 
+    it("flags the server unreachable when a gateway answers 503 in its place", () => {
+        const {onError} = interceptors()
+        const gatewayResponse = {status: 503, statusText: "Service Unavailable", url: "http://x/api", headers: {forEach: () => {}}}
+
+        onError(Object.assign(new Error("503"), {status: 503}), gatewayResponse, {method: "get", url: "/api"}, {})
+
+        expect(useServerReachability().unreachable.value).toBe(true)
+    })
+
     it("ignores a request the caller aborted", () => {
         const {onError} = interceptors()
         const controller = new AbortController()

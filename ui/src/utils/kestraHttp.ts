@@ -9,6 +9,9 @@ let requestsCompleted = 0
 
 const SKIP_PROGRESS = "__kestraSkipProgress"
 
+// A proxy or load balancer answering for a Kestra server that is down.
+const GATEWAY_STATUSES = new Set([502, 503, 504])
+
 function skipProgress(opts: unknown): boolean {
     return Boolean((opts as Record<string, unknown> | undefined)?.[SKIP_PROGRESS])
 }
@@ -204,7 +207,8 @@ export function setupKestraHttp(
             if (!skipProgress(opts)) increaseProgress()
             return kestraError
         }
-        markServerReachable()
+        if (GATEWAY_STATUSES.has(response.status)) markServerUnreachable()
+        else markServerReachable()
 
         // An API error is a problem document, and `response.data` IS that document — the same value the
         // useClient facade attaches, so both call paths finally expose one identical shape. Anything else

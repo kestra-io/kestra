@@ -9,7 +9,7 @@
         data-test="reauth-dialog"
     >
         <p>{{ $t('session expired description') }}</p>
-        <KsAlert v-if="failed" type="error" :closable="false" :title="$t('setup.validation.incorrect_creds')" />
+        <KsAlert v-if="failed" class="reauth-error" type="error" :closable="false" :title="$t('setup.validation.incorrect_creds')" />
         <KsForm :model="credentials" @submit.prevent="submit">
             <KsFormItem>
                 <KsInput
@@ -74,3 +74,9 @@
         }
     }
 </script>
+
+<style lang="scss" scoped>
+    .reauth-error {
+        margin-bottom: var(--ks-spacing-3);
+    }
+</style>

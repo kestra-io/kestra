@@ -2411,19 +2411,13 @@ export type Type = 'STRING' | 'SELECT' | 'INT' | 'FLOAT' | 'BOOL' | 'DATETIME' |
 
 export type ValidateConstraintViolation = {
     /**
-     * One entry per error, present whenever `constraints` is.
+     * One entry per error, empty when the source is valid.
      */
     errors?: Array<ValidationError>;
     index: number;
     filename?: string;
     namespace?: string;
     flow?: string;
-    /**
-     * Every error message joined by a newline. Use `errors` instead.
-     *
-     * @deprecated
-     */
-    constraints?: string;
     outdated?: boolean;
     deprecationPaths?: Array<string>;
     warnings?: Array<string>;

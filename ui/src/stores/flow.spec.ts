@@ -38,7 +38,6 @@ describe("flow store", () => {
         const store = useFlowStore()
 
         store.flowValidation = {
-            constraints: "ignored when errors are present",
             errors: [
                 {detail: "must not be null", pointer: "/tasks/0/type", path: "tasks[first].type"},
                 {detail: "Unable to validate the flow: boom"},

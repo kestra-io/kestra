@@ -25,24 +25,15 @@ public class ValidateConstraintViolation {
     private String namespace;
     private String flow;
 
-    @Schema(deprecated = true, description = "Every error message joined by a newline. Use `errors` instead.")
-    private String constraints;
     private boolean outdated;
     private List<String> deprecationPaths;
     private List<String> warnings;
     private List<String> infos;
-    @Schema(description = "One entry per error, present whenever `constraints` is.")
+    @Schema(description = "One entry per error, empty when the source is valid.")
     private List<ValidationError> errors;
 
-    /** Producers that only set {@code constraints} still expose one error per line of it. */
     public List<ValidationError> getErrors() {
-        if (errors != null && !errors.isEmpty()) {
-            return errors;
-        }
-        if (constraints == null) {
-            return List.of();
-        }
-        return constraints.lines().map(String::strip).filter(line -> !line.isEmpty()).map(ValidationError::of).toList();
+        return errors == null ? List.of() : errors;
     }
 
     @JsonIgnore

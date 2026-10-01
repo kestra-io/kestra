@@ -37,10 +37,18 @@ public record ValidationError(
         return new ValidationError(detail, null, null);
     }
 
-    /** One error per violation of {@code e}, skipping the duplicate Jackson message an invalid type carries. */
+    /** A readable line such as {@code tasks[log].message: must not be null}. */
+    public String toLine() {
+        return path == null || path.isEmpty() ? detail : path + ": " + detail;
+    }
+
+    /**
+     * One error per violation of {@code e}, skipping the duplicate Jackson message an invalid type carries.
+     * An exception without violations becomes a single unlocated error carrying its message.
+     */
     public static List<ValidationError> ofException(ConstraintViolationException e) {
-        if (e.getConstraintViolations() == null) {
-            return List.of();
+        if (e.getConstraintViolations() == null || e.getConstraintViolations().isEmpty()) {
+            return List.of(of(e.getMessage()));
         }
         Stream<? extends ConstraintViolation<?>> violations = e instanceof InvalidTypeConstraintViolationException
             ? e.getConstraintViolations().stream().filter(v -> v.getMessage().equals(e.getMessage()))

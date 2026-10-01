@@ -56,7 +56,6 @@ export interface Input {
 }
 
 export interface FlowValidations {
-    constraints?: string;
     outdated?: boolean;
     infos?: string[];
     warnings?: string[];
@@ -271,7 +270,7 @@ export const useFlowStore = defineStore("flow", () => {
 
         if (!source.trim()?.length) {
             flowValidation.value = {
-                constraints: t("flow must not be empty"),
+                errors: [{detail: t("flow must not be empty")}],
             }
             return
         }
@@ -308,7 +307,7 @@ export const useFlowStore = defineStore("flow", () => {
                     flowHaveTasks.value &&
                     flowBeforeEdit && (!flowBeforeEdit.errors || flowBeforeEdit.errors.every(e => typeof e.id === "string"))
                 ) {
-                    if (!value.constraints) fetchGraph()
+                    if (!value.errors?.length) fetchGraph()
                 }
 
                 return value
@@ -542,7 +541,7 @@ export const useFlowStore = defineStore("flow", () => {
             }
 
             flowValidation.value = {
-                constraints: data.exception,
+                errors: [{detail: data.exception}],
                 outdated: false,
                 infos: [],
             }
@@ -835,7 +834,7 @@ function deleteFlowAndDependencies() {
     }
 
     function validateFlow(options: { flow: string }) {
-        const flowValidationIssues: FlowValidations = {}
+        let creationDenied: string | undefined
         if(isCreating.value) {
             const {namespace} = YAML_UTILS.getMetadata<ParsedFlow>(options.flow)
             if(authStore.user && !authStore.user?.isAllowed(
@@ -843,23 +842,15 @@ function deleteFlowAndDependencies() {
                 action.CREATE,
                 namespace,
             )) {
-                flowValidationIssues.constraints = t("flow creation denied in namespace", {namespace})
+                creationDenied = t("flow creation denied in namespace", {namespace})
             }
         }
 
         return FlowsAPI.validateFlows({body: options.flow}, {withCredentials: true})
             .then(results => {
                 const validResults: FlowValidations = results[0] ?? {}
-
-                const constraintsArray = [validResults.constraints, flowValidationIssues.constraints].filter(Boolean)
-
-                if (constraintsArray.length) {
-                    validResults.constraints = constraintsArray.join("\n")
-                } else {
-                    delete validResults.constraints
-                }
-                if (flowValidationIssues.constraints) {
-                    validResults.errors = [...(validResults.errors ?? []), {detail: flowValidationIssues.constraints}]
+                if (creationDenied) {
+                    validResults.errors = [...(validResults.errors ?? []), {detail: creationDenied}]
                 }
 
                 flowValidation.value = validResults

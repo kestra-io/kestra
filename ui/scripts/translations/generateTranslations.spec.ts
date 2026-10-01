@@ -27,4 +27,31 @@ describe("generateTranslations", () => {
             rmSync(dir, {recursive: true, force: true})
         }
     })
+
+    it("rerolls a Slavic translation until it has the plural forms the locale rule reads", async () => {
+        const dir = mkdtempSync(join(tmpdir(), "translations-"))
+        writeFileSync(join(dir, "en.json"), JSON.stringify({en: {online: "no workers online | worker online | workers online"}}))
+        const replies = ["нет worker'ов онлайн | worker онлайн | worker'ы онлайн", "нет worker'ов онлайн | worker онлайн | worker'а онлайн | worker'ов онлайн"]
+        const prompts: string[] = []
+        const client = {
+            models: {
+                generateContent: async ({contents}: {contents: string}) => {
+                    prompts.push(contents)
+                    return {text: replies.shift()}
+                },
+            },
+        } as unknown as TranslationClient
+
+        try {
+            await generateTranslations({client, translationsDir: dir, languages: [["ru", "Russian"]]})
+
+            expect(prompts).toHaveLength(2)
+            expect(prompts[0]).toContain("Output exactly four forms")
+            expect(JSON.parse(readFileSync(join(dir, "ru.json"), "utf-8"))).toEqual({
+                ru: {online: "нет worker'ов онлайн | worker онлайн | worker'а онлайн | worker'ов онлайн"},
+            })
+        } finally {
+            rmSync(dir, {recursive: true, force: true})
+        }
+    })
 })

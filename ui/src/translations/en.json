@@ -130,7 +130,6 @@
     "description": "Description",
     "show description": "Show a description",
     "show details": "Show details",
-    "show more details": "Show more details",
     "skipped": "Skipped",
     "revision": "Revision",
     "theme": "Theme",
@@ -441,7 +440,8 @@
       "invalid_description": "An error occurred while loading the graph. Please check the source code for errors.",
       "load_error": "Could not load the topology graph. Please try again.",
       "add-task": "Add task",
-      "add-trigger": "Add a trigger"
+      "add-trigger": "Add a trigger",
+      "child-count": "{count} task | {count} tasks"
     },
     "show task logs": "Show task logs",
     "show task condition": "Show task condition",
@@ -459,6 +459,12 @@
     "email": "Email",
     "password": "Password",
     "confirm password": "Confirm password",
+    "change_password": {
+      "title": "Change Password",
+      "current_password": "Current password",
+      "new_password": "New password",
+      "success": "Your credentials have been updated."
+    },
     "invalid flow": "Invalid flow",
     "invalid yaml": "Invalid YAML",
     "inputs": "Inputs",
@@ -2532,6 +2538,8 @@
       "command_menu": {
         "context_flow": "context: flow",
         "context_selected": "context: {name}",
+        "copy": "Copy {name}",
+        "cut": "Cut {name}",
         "delete": "Delete {name}",
         "duplicate": "Duplicate {name}",
         "goto": "Go to {section}",
@@ -2547,6 +2555,7 @@
         "insert_kind": "Insert {kind}",
         "no_match": "No match",
         "open": "Open {name}",
+        "paste": "Paste",
         "save": "Save flow",
         "search_placeholder": "Type a command or search a task…",
         "title": "Command menu"
@@ -2606,6 +2615,9 @@
       "plugin_default": "default: {value}",
       "plugin_default_tooltip": "Default value from the flow's pluginDefaults",
       "required_missing": "Required field not set",
+      "required_unset_jump": "Jump to first",
+      "required_unset_plural": "{count} required fields are not set yet",
+      "required_unset_singular": "1 required field is not set yet",
       "save_blocked": {
         "message": "Fix the errors before saving.",
         "title": "Cannot save the flow"
@@ -2619,6 +2631,8 @@
         "clear": "Close / clear selection",
         "collapse_expand": "Collapse / expand",
         "command_palette": "Command menu (contextual)",
+        "copy": "Copy",
+        "cut": "Cut",
         "group_edit": "Edit",
         "group_global": "Global",
         "group_insert": "Insert",
@@ -2627,6 +2641,8 @@
         "open": "Open selected block",
         "open_split": "Open selected block in split view",
         "or": "or",
+        "paste": "Paste",
+        "redo": "Redo",
         "reorder": "Reorder up / down",
         "save": "Save flow",
         "step_into": "Expand / step into a group",

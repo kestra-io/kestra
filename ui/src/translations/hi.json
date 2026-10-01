@@ -130,7 +130,6 @@
     "description": "विवरण",
     "show description": "विवरण दिखाएं",
     "show details": "विवरण दिखाएं",
-    "show more details": "अधिक विवरण दिखाएं",
     "skipped": "छोड़ा गया",
     "revision": "संशोधन",
     "theme": "थीम",
@@ -441,7 +440,8 @@
       "invalid_description": "ग्राफ़ लोड करते समय एक त्रुटि हुई। कृपया त्रुटियों के लिए स्रोत कोड की जाँच करें।",
       "load_error": "टोपोलॉजी ग्राफ़ लोड नहीं किया जा सका। कृपया पुनः प्रयास करें।",
       "add-task": "Task जोड़ें",
-      "add-trigger": "Trigger जोड़ें"
+      "add-trigger": "Trigger जोड़ें",
+      "child-count": "{count} task | {count} tasks"
     },
     "show task logs": "Task Logs दिखाएं",
     "show task condition": "कार्य की स्थिति दिखाएं",
@@ -459,6 +459,12 @@
     "email": "ईमेल",
     "password": "पासवर्ड",
     "confirm password": "पासवर्ड की पुष्टि करें",
+    "change_password": {
+      "title": "पासवर्ड बदलें",
+      "current_password": "वर्तमान पासवर्ड",
+      "new_password": "नया पासवर्ड",
+      "success": "आपके क्रेडेंशियल अपडेट कर दिए गए हैं।"
+    },
     "invalid flow": "अमान्य flow",
     "invalid yaml": "अमान्य YAML",
     "inputs": "इनपुट्स",
@@ -2532,6 +2538,8 @@
       "command_menu": {
         "context_flow": "context: flow",
         "context_selected": "context: {name}",
+        "copy": "{name} कॉपी करें",
+        "cut": "{name} काटें",
         "delete": "{name} हटाएँ",
         "duplicate": "{name} की डुप्लिकेट बनाएँ",
         "goto": "{section} पर जाएं",
@@ -2547,6 +2555,7 @@
         "insert_kind": "{kind} डालें",
         "no_match": "कोई मिलान नहीं",
         "open": "{name} खोलें",
+        "paste": "चिपकाएँ",
         "save": "flow सेव करें",
         "search_placeholder": "एक कमांड टाइप करें या किसी task को खोजें…",
         "title": "कमांड मेनू"
@@ -2606,6 +2615,9 @@
       "plugin_default": "डिफ़ॉल्ट: {value}",
       "plugin_default_tooltip": "flow के pluginDefaults से डिफ़ॉल्ट मान",
       "required_missing": "आवश्यक फ़ील्ड सेट नहीं है",
+      "required_unset_jump": "पहले पर जाएं",
+      "required_unset_plural": "{count} आवश्यक फ़ील्ड अभी तक सेट नहीं हैं",
+      "required_unset_singular": "1 आवश्यक फ़ील्ड अभी तक सेट नहीं है",
       "save_blocked": {
         "message": "सेव करने से पहले त्रुटियों को ठीक करें।",
         "title": "flow को सहेजा नहीं जा सकता"
@@ -2619,6 +2631,8 @@
         "clear": "चयन बंद करें / साफ़ करें",
         "collapse_expand": "संकुचित करें / विस्तृत करें",
         "command_palette": "कमांड मेनू (प्रासंगिक)",
+        "copy": "कॉपी करें",
+        "cut": "काटें",
         "group_edit": "संपादित करें",
         "group_global": "वैश्विक",
         "group_insert": "डालें",
@@ -2627,6 +2641,8 @@
         "open": "चयनित ब्लॉक खोलें",
         "open_split": "चयनित ब्लॉक को स्प्लिट व्यू में खोलें",
         "or": "या",
+        "paste": "चिपकाएँ",
+        "redo": "फिर से करें",
         "reorder": "ऊपर/नीचे पुनर्व्यवस्थित करें",
         "save": "flow सेव करें",
         "step_into": "समूह में विस्तार/स्टेप इन करें",

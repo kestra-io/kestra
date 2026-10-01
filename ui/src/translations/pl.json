@@ -459,6 +459,12 @@
     "email": "E-mail",
     "password": "Hasło",
     "confirm password": "Potwierdź hasło",
+    "change_password": {
+      "title": "Zmień hasło",
+      "current_password": "Obecne hasło",
+      "new_password": "Nowe hasło",
+      "success": "Twoje poświadczenia zostały zaktualizowane."
+    },
     "invalid flow": "Nieprawidłowy Flow",
     "invalid yaml": "Nieprawidłowy YAML",
     "inputs": "Inputs",
@@ -2532,6 +2538,8 @@
       "command_menu": {
         "context_flow": "kontekst: Flow",
         "context_selected": "kontekst: {name}",
+        "copy": "Kopiuj {name}",
+        "cut": "Wytnij {name}",
         "delete": "Usuń {name}",
         "duplicate": "Duplikuj {name}",
         "goto": "Przejdź do {section}",
@@ -2547,6 +2555,7 @@
         "insert_kind": "Wstaw {kind}",
         "no_match": "Brak dopasowania",
         "open": "Otwórz {name}",
+        "paste": "Wklej",
         "save": "Zapisz Flow",
         "search_placeholder": "Wpisz polecenie lub wyszukaj Taska…",
         "title": "Menu poleceń"
@@ -2622,6 +2631,8 @@
         "clear": "Zamknij / wyczyść zaznaczenie",
         "collapse_expand": "Zwiń / rozwiń",
         "command_palette": "Menu poleceń (kontekstowe)",
+        "copy": "Kopiuj",
+        "cut": "Wytnij",
         "group_edit": "Edytuj",
         "group_global": "Globalne",
         "group_insert": "Wstaw",
@@ -2630,6 +2641,8 @@
         "open": "Otwórz wybrany blok",
         "open_split": "Otwórz wybrany blok w widoku dzielonym",
         "or": "lub",
+        "paste": "Wklej",
+        "redo": "Ponów",
         "reorder": "Zmień kolejność w górę / w dół",
         "save": "Zapisz Flow",
         "step_into": "Rozwiń / wejdź do grupy",

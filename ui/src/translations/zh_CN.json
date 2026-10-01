@@ -459,6 +459,12 @@
     "email": "电子邮件",
     "password": "密码",
     "confirm password": "确认密码",
+    "change_password": {
+      "title": "更改密码",
+      "current_password": "当前密码",
+      "new_password": "新密码",
+      "success": "您的凭据已更新。"
+    },
     "invalid flow": "无效流程",
     "invalid yaml": "无效的 YAML",
     "inputs": "输入",
@@ -2532,6 +2538,8 @@
       "command_menu": {
         "context_flow": "context: flow",
         "context_selected": "context: {name}",
+        "copy": "复制 {name}",
+        "cut": "剪切 {name}",
         "delete": "删除 {name}",
         "duplicate": "复制 {name}",
         "goto": "前往 {section}",
@@ -2547,6 +2555,7 @@
         "insert_kind": "插入 {kind}",
         "no_match": "无匹配项",
         "open": "打开 {name}",
+        "paste": "粘贴",
         "save": "保存 flow",
         "search_placeholder": "输入命令或搜索 task…",
         "title": "命令菜单"
@@ -2622,6 +2631,8 @@
         "clear": "关闭/清除选择",
         "collapse_expand": "折叠/展开",
         "command_palette": "命令菜单（上下文）",
+        "copy": "复制",
+        "cut": "剪切",
         "group_edit": "编辑",
         "group_global": "全局",
         "group_insert": "插入",
@@ -2630,6 +2641,8 @@
         "open": "打开选定的块",
         "open_split": "在分屏视图中打开选定的块",
         "or": "或",
+        "paste": "粘贴",
+        "redo": "重做",
         "reorder": "上移 / 下移",
         "save": "保存 flow",
         "step_into": "展开/进入组",

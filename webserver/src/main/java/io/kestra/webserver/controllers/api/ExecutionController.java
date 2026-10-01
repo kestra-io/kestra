@@ -1927,6 +1927,64 @@ public class ExecutionController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
+    @Post(uri = "/resume-from-breakpoint/by-ids")
+    @Operation(tags = { "Executions" }, summary = "Resume a list of executions suspended at a breakpoint, asynchronously")
+    @ApiResponse(responseCode = "202", description = "Accepted", content = { @Content(schema = @Schema(implementation = ApiAsyncOperationResponse.class)) })
+    @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = ProblemDetail.class)) })
+    public MutableHttpResponse<ApiAsyncOperationResponse> resumeExecutionsFromBreakpointByIds(
+        @RequestBody(description = "The list of executions id") @Body List<String> executionsId) throws Exception {
+        List<Execution> executions = getExecutionsByIds(executionsId, "be resumed from breakpoint");
+        return resumeExecutionsFromBreakpoint(executions);
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Post(uri = "/resume-from-breakpoint/by-query")
+    @Operation(tags = { "Executions" }, summary = "Resume executions suspended at a breakpoint, filtered by query parameters, asynchronously")
+    @ApiResponse(responseCode = "202", description = "Accepted", content = { @Content(schema = @Schema(implementation = ApiAsyncOperationResponse.class)) })
+    @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = ProblemDetail.class)) })
+    public MutableHttpResponse<ApiAsyncOperationResponse> resumeExecutionsFromBreakpointByQuery(
+        @Parameter(
+            description = "Filters. PHP-style nested query is used - examples: `filters[timeRange][EQUALS]=PT168H`, `filters[scope][EQUALS]=USER`, `filters[state][IN]=FAILED,CANCELLED`, `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`",
+            in = ParameterIn.QUERY
+        ) @QueryFilterFormat(Resource.EXECUTION) List<QueryFilter> filters) throws Exception {
+        var executions = getExecutions(QueryFilterUtils.replaceTimeRangeWithComputedStartDateFilter(filters));
+        return resumeExecutionsFromBreakpoint(executions);
+    }
+
+    private MutableHttpResponse<ApiAsyncOperationResponse> resumeExecutionsFromBreakpoint(List<Execution> executions) throws QueueException {
+        validateBulkExecutionACL(executions, BulkOperation.RESUME);
+
+        List<ProblemError> invalids = new ArrayList<>();
+
+        for (Execution execution : executions) {
+            if (!execution.getState().isBreakpoint()) {
+                invalids.add(
+                    executionProblem(execution.getId(), "execution not in state BREAKPOINT", ProblemTypes.CONFLICT)
+                );
+            } else if (ListUtils.isEmpty(execution.getBreakpoints())) {
+                invalids.add(
+                    executionProblem(execution.getId(), "execution has no breakpoint defined", ProblemTypes.CONFLICT)
+                );
+            } else if (!validateExecutionACL(execution)) {
+                invalids.add(
+                    executionProblem(execution.getId(), "user don't have the authorisation to resume this execution", ProblemTypes.FORBIDDEN)
+                );
+            }
+        }
+
+        if (!invalids.isEmpty()) {
+            throw new BulkValidationException("One or more executions could not be resumed from breakpoint.", invalids);
+        }
+
+        this.resumeFromBreakpointCounter.increment(executions.size());
+
+        return submitBatchAction(
+            executions,
+            (execution, opId) -> executionCommandQueue.emit(ResumeFromBreakpoint.from(execution, Optional.empty()).withOperationId(opId))
+        );
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "/{executionId}/actions/pause")
     @Operation(tags = { "Executions" }, summary = "Pause a running execution.")
     @ApiResponse(responseCode = "200", description = "On success", content = { @Content(schema = @Schema(implementation = Execution.class)) })

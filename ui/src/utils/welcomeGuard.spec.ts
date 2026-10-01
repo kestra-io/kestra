@@ -16,7 +16,7 @@ describe("isDashboardRoute", () => {
 describe("shouldShowWelcome", () => {
     beforeEach(() => {
         findFlows.mockReset()
-        user.hasAnyAction.mockReset().mockReturnValue(true)
+        user.hasAnyAction.mockReset().mockImplementation((resource: string, act: string) => resource === "FLOW" && act === "LIST")
     })
 
     it("shows the welcome page when no flow exists outside the tutorial namespace", async () => {
@@ -32,7 +32,7 @@ describe("shouldShowWelcome", () => {
     })
 
     it("does not look for flows when the user cannot list them", async () => {
-        user.hasAnyAction.mockReturnValue(false)
+        user.hasAnyAction.mockImplementation((resource: string, act: string) => !(resource === "FLOW" && act === "LIST"))
 
         expect(await shouldShowWelcome()).toBe(false)
         expect(findFlows).not.toHaveBeenCalled()

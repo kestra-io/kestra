@@ -39,7 +39,7 @@ describe("dashboard store listing", () => {
     })
 
     it("lists the custom dashboards for a user who can list them", {timeout: 20_000}, async () => {
-        user.hasAnyAction.mockReturnValue(true)
+        user.hasAnyAction.mockImplementation((resource: string, act: string) => resource === "DASHBOARD" && act === "LIST")
         const {useDashboardStore} = await import("./dashboard")
 
         const dashboards = await useDashboardStore().list({}, route)
@@ -49,7 +49,7 @@ describe("dashboard store listing", () => {
     })
 
     it("does not search for custom dashboards when the user cannot list them, and still offers the bundled one", {timeout: 20_000}, async () => {
-        user.hasAnyAction.mockReturnValue(false)
+        user.hasAnyAction.mockImplementation((resource: string, act: string) => !(resource === "DASHBOARD" && act === "LIST"))
         const {useDashboardStore} = await import("./dashboard")
 
         const dashboards = await useDashboardStore().list({}, route)

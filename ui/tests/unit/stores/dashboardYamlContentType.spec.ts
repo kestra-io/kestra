@@ -60,7 +60,7 @@ describe("dashboard store yaml writes", () => {
         setActivePinia(createPinia())
     })
 
-    const yamlContentType = (call: any[]) => call[2]?.headers?.["Content-Type"]
+    const yamlContentType = (call: unknown[]) => (call[2] as Record<string, any>)?.headers?.["Content-Type"]
 
     it("sends application/x-yaml when creating", {timeout: TEST_TIMEOUT_MS}, async () => {
         const {useDashboardStore} = await import("../../../src/stores/dashboard")

@@ -83,6 +83,7 @@ import FlowsSearch from "../../../../src/components/flows/FlowsSearch.vue"
 describe("FlowsSearch", () => {
     beforeEach(() => {
         vi.clearAllMocks()
+        vi.useFakeTimers()
         mockRoute.query = {q: "first-query"}
         store.suggestedQuery = null
 
@@ -92,11 +93,11 @@ describe("FlowsSearch", () => {
     })
 
     afterEach(() => {
+        vi.useRealTimers()
         document.title = ""
     })
 
     it("keeps the loading state when a previous search resolves after the query changes", async () => {
-        vi.useFakeTimers()
         let resolveSecondSearch!: (value: number) => void
 
         search
@@ -142,6 +143,5 @@ describe("FlowsSearch", () => {
         expect(wrapper.find('[data-test="source-search-loading"]').exists()).toBe(true)
 
         wrapper.unmount()
-        vi.useRealTimers()
     })
 })

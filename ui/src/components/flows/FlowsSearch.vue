@@ -356,7 +356,6 @@
     const crossResourceSearchStore = useCrossResourceSearchStore()
     const suggestedQuery = computed(() => crossResourceSearchStore.suggestedQuery)
 
-    let searchPendingToken = 0
 
     const resultsRef = ref<InstanceType<typeof SourceSearchResults> | null>(null)
 
@@ -664,6 +663,7 @@
             toast.warning(t("source_search.replace_apply_skipped", {count: response.skipped.length, reasons}))
         }
         previewResponse.value = null
+        startSearch()
         return fetchResults()
     }
 
@@ -707,13 +707,22 @@
         return applyReplace(flowsToApply)
     }
 
+    let searchPendingToken = 0
+
+    function startSearch() {
+        searchPendingToken++
+        searchPending.value = Boolean(query.value)
+    }
+
     async function fetchResults() {
         if (!loadInit.value) return
 
         const currentSearchPendingToken = searchPendingToken
 
         if (!query.value) {
-            searchPending.value = false
+            if (currentSearchPendingToken === searchPendingToken) {
+                searchPending.value = false
+            }
             crossResourceSearchStore.reset()
             return
         }
@@ -724,10 +733,8 @@
 
         previewResponse.value = null
 
-        let gen: number | undefined
-
         try {
-            gen = await crossResourceSearchStore.search({
+            const gen = await crossResourceSearchStore.search({
                 types: SEARCH_RESOURCE_TYPES,
                 query: currentQuery,
                 namespace: namespaceFilter.value,
@@ -758,8 +765,7 @@
         () => [query.value, namespaceFilter.value, JSON.stringify(searchFilters.value)].join("|"),
         () => {
             // Synchronous, so the debounce window is already covered by the loading state.
-            searchPendingToken++
-            searchPending.value = Boolean(query.value)
+            startSearch()
             debouncedFetch()
         },
     )
@@ -782,7 +788,8 @@
             selection.value = list.length > 0 ? {...list[0]} : null
         }
     })
-
+    
+    startSearch()
     fetchResults()
 </script>
 

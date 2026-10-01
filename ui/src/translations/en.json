@@ -217,18 +217,6 @@
     "launch execution": "Execute",
     "triggered done": "Execution <em>{name}</em> is successfully triggered",
     "topology": "Topology",
-    "overviewChart": {
-      "switcherLabel": "Chart",
-      "loading": "Loading chart…",
-      "emptyDescription": "Only the topology is available until a worker picks up this run.",
-      "topologySubtitle": "Static view of the flow's tasks and how they connect.",
-      "ganttSubtitle": "Timeline of when each task ran.",
-      "logsSubtitle": "Task run details and their logs.",
-      "noticeTitle": "Showing Gantt instead of the topology.",
-      "noticeBody": "This flow runs {count} tasks — too many to read on a graph.",
-      "showTopologyAnyway": "Show topology anyway",
-      "dismissNotice": "Don't show this again for this flow"
-    },
     "date": "Date",
     "prev_execution": "Previous execution",
     "next_execution": "Next execution",

@@ -1,6 +1,9 @@
 <template>
-    <div data-component="FILENAME_PLACEHOLDER" :class="{'logs-embedded': embedded}">
-        <div ref="inlineLogsTarget" :class="{'inline-logs-target-embed': embedded}" />
+    <div data-component="FILENAME_PLACEHOLDER" :style="{'--execution-banner-height': `${bannerHeight}px`}">
+        <KsCard v-if="props.showBanner && execution" ref="bannerCard" class="execution-summary" shadow="always" :bodyStyle="BANNER_BODY_STYLE">
+            <Banner :execution />
+        </KsCard>
+        <div ref="inlineLogsTarget" />
         <KsDialog
             v-model="fullscreenModalOpen"
             :title="$t('logs')"
@@ -15,7 +18,6 @@
 
         <Teleport v-if="logsTarget" :to="logsTarget">
             <KSFilter
-                v-if="!embedded"
                 :configuration="logExecutionsFilter"
                 :tableOptions="{
                     chart: {shown: false},
@@ -25,7 +27,7 @@
                 @search="filter = $event"
                 @filter="syncFromAppliedFilters"
             />
-            <div v-if="!embedded" class="logs-toolbar" data-test="logs-toolbar">
+            <div class="logs-toolbar" data-test="logs-toolbar">
                 <div class="logs-toolbar__left">
                     <template v-for="logLevel in currentLevelOrLower" :key="logLevel">
                         <LogLevelNavigator
@@ -67,7 +69,7 @@
             </div>
 
             <TaskRunDetails
-                v-if="!effectiveRawView"
+                v-if="!raw_view"
                 ref="logs"
                 :levelFilter="effectiveLevelValue"
                 :excludeMetas="(['namespace', 'flowId', 'taskId', 'executionId'] as any)"
@@ -79,7 +81,7 @@
                 @log-indices-by-level="setLogIndicesByLevel"
                 :targetFlow="executionsStore.flow"
                 :showProgressBar="false"
-                :fullHeight="embedded || fullscreenModalOpen"
+                :fullHeight="fullscreenModalOpen"
                 @scroll.capture.passive="rememberLogScroll"
                 @scroller-update="restoreLogScroll"
             />
@@ -105,7 +107,7 @@
                     data-test="logs-scroller"
                     data-scroll-key="raw-logs"
                     :class="{'fullscreen-logs': fullscreenModalOpen}"
-                    :style="{maxHeight: fullscreenModalOpen ? undefined : 'calc(100vh - 335px)', marginTop: '0.5rem'}"
+                    :style="{maxHeight: fullscreenModalOpen ? undefined : 'calc(100vh - 335px - var(--execution-banner-height, 0px))', marginTop: '0.5rem'}"
                     :buffer="200"
                     :prerender="20"
                     @scroll.capture.passive="rememberLogScroll"
@@ -140,11 +142,13 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, nextTick, ref, watch, useTemplateRef, onUnmounted} from "vue"
+    import {computed, nextTick, ref, watch, useTemplateRef, onUnmounted, type ComponentPublicInstance} from "vue"
     import {useRoute} from "vue-router"
     import {useI18n} from "vue-i18n"
+    import {useElementSize} from "@vueuse/core"
     import {useLogExecutionsFilter} from "../filter/configurations/logExecutionsFilter"
     import TaskRunDetails from "../logs/TaskRunDetails.vue"
+    import Banner from "./components/Banner.vue"
     import LogDisplaySettings from "../logs/LogDisplaySettings.vue"
     import Download from "vue-material-design-icons/Download.vue"
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
@@ -199,6 +203,8 @@
         minHeight: "0",
     }
 
+    const BANNER_BODY_STYLE = {padding: "0", height: "100%"}
+
     // Cast helper for DynamicScroller slot items which lose type info
     function asLog(item: unknown): TemporalLog {
         return item as TemporalLog
@@ -210,17 +216,18 @@
 
     const props = withDefaults(defineProps<{
         playground?: boolean
-        /** Hides the filter bar and toolbar, and fills the container height the parent gives it. */
-        embedded?: boolean
+        /** Shows the execution summary card above the logs (the Executions detail page's Logs tab). */
+        showBanner?: boolean
     }>(), {
         playground: false,
-        embedded: false,
+        showBanner: false,
     })
 
-    // The raw view has no fill-to-container sizing mode, so embedding never offers it.
-    const effectiveRawView = computed(() => props.embedded ? false : raw_view.value)
-
     const executionsStore = useExecutionsStore()
+    const execution = computed(() => executionsStore.execution)
+
+    const bannerCard = useTemplateRef<ComponentPublicInstance>("bannerCard")
+    const {height: bannerHeight} = useElementSize(computed(() => props.showBanner ? bannerCard.value?.$el : undefined))
 
     // The kind this execution's logs belong to, or undefined for NORMAL (the backend default).
     const executionKind = computed<string | undefined>(() => {
@@ -630,18 +637,13 @@
 </script>
 
 <style scoped lang="scss">
-    .logs-embedded {
-        flex: 1;
-        min-height: 0;
-        display: flex;
-        flex-direction: column;
-    }
-
-    .inline-logs-target-embed {
-        flex: 1;
-        min-height: 0;
-        display: flex;
-        flex-direction: column;
+    .execution-summary {
+        flex-shrink: 0;
+        margin-bottom: var(--ks-spacing-4);
+        width: 100%;
+        border: 1px solid var(--ks-border-default);
+        border-radius: var(--ks-radius-base);
+        box-shadow: 0px 1px 4px 0px var(--ks-shadow-element);
     }
 
     .attempt-wrapper {

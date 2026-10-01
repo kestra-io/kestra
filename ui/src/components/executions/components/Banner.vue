@@ -155,15 +155,15 @@
 
     import {dayjs, KsExecutionStatus, State} from "@kestra-io/design-system"
 
-    import {Execution, useExecutionsStore} from "../../../../stores/executions"
+    import {Execution, useExecutionsStore} from "../../../stores/executions"
     import {useMiscStore} from "override/stores/misc"
-    import * as Utils from "../../../../utils/utils"
-    import {useToast} from "../../../../utils/toast"
-    import {createLink} from "../utils/links"
+    import * as Utils from "../../../utils/utils"
+    import {useToast} from "../../../utils/toast"
+    import {createLink} from "../overview/utils/links"
     import {executionBannerRelations} from "override/components/executions/overview/OverviewExtensions"
 
-    import ChangeExecutionStatus from "../../ChangeExecutionStatus.vue"
-    import SetLabels from "../../SetLabels.vue"
+    import ChangeExecutionStatus from "../ChangeExecutionStatus.vue"
+    import SetLabels from "../SetLabels.vue"
     import {Duration} from "@kestra-io/topology"
     import RunTimeline from "./RunTimeline.vue"
 

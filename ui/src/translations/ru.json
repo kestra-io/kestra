@@ -217,18 +217,6 @@
     "launch execution": "Выполнить",
     "triggered done": "Выполнение <em>{name}</em> успешно запущено",
     "topology": "Топология",
-    "overviewChart": {
-      "switcherLabel": "Диаграмма",
-      "loading": "Загрузка диаграммы…",
-      "emptyDescription": "Только топология доступна, пока worker не подхватит этот запуск.",
-      "topologySubtitle": "Статическое представление Task'ов Flow и их связей.",
-      "ganttSubtitle": "Хронология выполнения каждого Task.",
-      "logsSubtitle": "Детали Task Runa и его logs.",
-      "noticeTitle": "Показан Gantt вместо топологии.",
-      "noticeBody": "Этот Flow запускает {count} Task | этот Flow запускает {count} Task | этот Flow запускает {count} Task — слишком много, чтобы отобразить на графике.",
-      "showTopologyAnyway": "Показать топологию в любом случае",
-      "dismissNotice": "Больше не показывать для этого Flow"
-    },
     "date": "Дата",
     "prev_execution": "Предыдущее выполнение",
     "next_execution": "Следующее выполнение",

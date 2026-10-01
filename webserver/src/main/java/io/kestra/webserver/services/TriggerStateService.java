@@ -466,12 +466,14 @@ public class TriggerStateService {
      */
     private boolean isDeclaredInFlow(TriggerId triggerId) {
         return flowRepository.findByIdForExecutionWithoutAcl(
-                triggerId.getTenantId(),
-                triggerId.getNamespace(),
-                triggerId.getFlowId()
+            triggerId.getTenantId(),
+            triggerId.getNamespace(),
+            triggerId.getFlowId()
+        )
+            .map(
+                flow -> ListUtils.emptyOnNull(flow.getTriggers()).stream()
+                    .anyMatch(trigger -> trigger.getId().equals(triggerId.getTriggerId()))
             )
-            .map(flow -> ListUtils.emptyOnNull(flow.getTriggers()).stream()
-                .anyMatch(trigger -> trigger.getId().equals(triggerId.getTriggerId())))
             .orElse(false);
     }
 

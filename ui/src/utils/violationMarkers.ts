@@ -114,6 +114,7 @@ export function violationMarkers(source: string, errors: ValidationError[] | und
     const doc = parseDocument(source, {lineCounter, uniqueKeys: false})
     if (doc.errors.length) return []
 
+    const seen = new Set<string>()
     return located.flatMap(error => {
         const {targets, missing, fallback} = locate(doc.contents, pointerSegments(error.pointer!))
         const message = missing && !/^\d+$/.test(missing) ? `${pointerKeys(missing).at(-1)}: ${error.detail}` : error.detail!
@@ -124,6 +125,9 @@ export function violationMarkers(source: string, errors: ValidationError[] | und
             const to = lineCounter.linePos(end)
             return {startLineNumber: from.line, startColumn: from.col, endLineNumber: to.line, endColumn: to.col}
         })
-        return lines.length ? [{message, lines}] : []
+        const key = JSON.stringify([message, lines])
+        if (!lines.length || seen.has(key)) return []
+        seen.add(key)
+        return [{message, lines}]
     })
 }

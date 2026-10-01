@@ -96,6 +96,11 @@ describe("violationMarkers", () => {
         expect(linesAt("id: a\nid: b\nnamespace: c\nunknown: d\n", "/unknown")).toHaveLength(1)
     })
 
+    it("marks the same violation once when it is reported twice", () => {
+        const twice = {pointer: "/tasks/0/tasks/0/message", detail: "boom"}
+        expect(violationMarkers(flow, [twice, {...twice}])).toHaveLength(1)
+    })
+
     it("leaves a violation on the document root to the error panel", () => {
         expect(violationMarkers(flow, [{pointer: "", detail: "boom"}, {pointer: "/labels", detail: "boom"}, {detail: "unlocated"}])).toEqual([])
     })

@@ -522,6 +522,41 @@ class TriggerControllerTest {
     }
 
     @Test
+    void shouldSkipDeclaredTriggersWhenDeletingByQuery() throws FlowProcessingException, QueueException {
+        // GIVEN
+        String namespace = "ns-" + IdUtils.create().toLowerCase();
+        Flow flow = generateFlowWithTrigger(namespace);
+        flowService.create(GenericFlow.of(flow));
+        TriggerState declared = createTriggerFromFlow(flow, true);
+        Awaitility.await().atMost(Duration.ofSeconds(30)).pollInterval(Duration.ofMillis(100))
+            .until(() -> jdbcTriggerRepository.findByIdWithoutAcl(declared).isPresent());
+        TriggerState orphan = TriggerState.builder()
+            .flowId(flow.getId())
+            .tenantId(flow.getTenantId())
+            .namespace(flow.getNamespace())
+            .triggerId("removed-from-flow")
+            .disabled(true)
+            .nextEvaluationDate(Instant.now().plus(Duration.ofDays(36500L)))
+            .vnode(VNodes.computeVNodeFromFlow(flow, schedulerConfiguration.vnodes()))
+            .build();
+        jdbcTriggerRepository.save(orphan);
+
+        // WHEN
+        HttpResponse<ApiAsyncOperationResponse> response = client.toBlocking().exchange(
+            HttpRequest.DELETE(TRIGGER_PATH + "/delete/by-query?filters[namespace][EQUALS]=" + namespace, null),
+            ApiAsyncOperationResponse.class
+        );
+
+        // THEN — only the orphan is queued for deletion
+        assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.ACCEPTED.getCode());
+        assertThat(response.body()).isNotNull();
+        assertThat(response.body().totalItems()).isEqualTo(1);
+        assertThat(jdbcTriggerRepository.findByIdWithoutAcl(declared)).isPresent();
+        Awaitility.await().atMost(Duration.ofSeconds(30)).pollInterval(Duration.ofMillis(100))
+            .until(() -> jdbcTriggerRepository.findByIdWithoutAcl(orphan).isEmpty());
+    }
+
+    @Test
     void shouldAcceptUnlockByIdsWhenLocked() throws FlowProcessingException, QueueException {
         // GIVEN
         TriggerState state = newLockedFlowBackedTrigger();

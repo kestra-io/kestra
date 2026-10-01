@@ -143,6 +143,7 @@
     import {BookmarkOutline, ChevronDown, CogOutline, ContentSaveOutline, Refresh} from "./utils/icons"
     import Table from "vue-material-design-icons/Table.vue"
     import {FILTER_CONTEXT_INJECTION_KEY} from "./utils/filterInjectionKeys"
+    import type {SavedFilter} from "./utils/filterTypes"
 
     import SaveFilters from "./segments/SaveFilters.vue"
     import SavedFilters from "./segments/SavedFilters.vue"
@@ -180,7 +181,7 @@
         )
     }
 
-    const handleLoad = (savedFilter: any) => {
+    const handleLoad = (savedFilter: SavedFilter) => {
         filter.loadSavedFilter(savedFilter)
         isSavedFiltersVisible.value = false
     }

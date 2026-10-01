@@ -23,17 +23,7 @@ interface Config {
     edition?: string
 }
 
-interface StatsGlobalData {
-    from: string
-    iid?: string
-    uid: string
-    app: {
-        version?: string
-        type?: string
-    }
-}
-
-function statsGlobalData(config: Config, uid: string): StatsGlobalData {
+function statsGlobalData(config: Config, uid: string) {
     return {
         from: "APP",
         iid: config.uuid,
@@ -82,7 +72,7 @@ export async function initPostHogForSetup(config: Config): Promise<void> {
 
         // PostHog can already be initialized (e.g. user logs out then logs back in without a full page refresh).
         // In that case we don't need to init again.
-        if ((posthog as { __loaded?: boolean })?.__loaded) {
+        if (posthog.__loaded) {
             installSurveyHooksOnce()
             return
         }

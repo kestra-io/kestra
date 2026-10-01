@@ -10,7 +10,7 @@
     />
     <ElStep
         v-else
-        v-bind="({...filteredProps(), ...$attrs} as any)"
+        v-bind="({...filteredProps(), ...$attrs})"
     >
         <template v-if="$slots.default" #default>
             <slot />
@@ -36,7 +36,7 @@
 </template>
 
 <script setup lang="ts">
-    import {ElStep, ElIcon} from "element-plus"
+    import {ElStep, ElIcon, type StepProps} from "element-plus"
     import CheckBold from "vue-material-design-icons/CheckBold.vue"
     import {inject, computed, type Ref} from "vue"
     import {useFilteredProps} from "../../../utils/filteredProps"
@@ -46,8 +46,8 @@
     const props = defineProps<{
         title?: string
         description?: string
-        icon?: any
-        status?: string
+        icon?: StepProps["icon"]
+        status?: StepProps["status"]
     }>()
 
     const filteredProps = useFilteredProps(props)

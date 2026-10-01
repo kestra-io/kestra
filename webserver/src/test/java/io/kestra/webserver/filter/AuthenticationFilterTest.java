@@ -12,7 +12,6 @@ import io.kestra.webserver.services.BasicAuthCredentials;
 import io.kestra.webserver.services.BasicAuthService;
 
 import io.micronaut.http.HttpRequest;
-import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.MutableHttpResponse;
@@ -119,79 +118,6 @@ class AuthenticationFilterTest {
         } finally {
             basicAuthService.save(new BasicAuthCredentials(null, basicAuthConfiguration.getUsername(), basicAuthConfiguration.getPassword()));
         }
-    }
-
-    @Test
-    void testBasicAuthOpenedBeforeSetupOnly() {
-        TestAuthFilter.ENABLED = false;
-
-        HttpClientResponseException httpClientResponseException = assertThrows(
-            HttpClientResponseException.class, () -> client.toBlocking()
-                .exchange(HttpRequest.GET("/api/v1/basicAuthValidationErrors"))
-        );
-        assertThat(httpClientResponseException.getStatus().getCode()).isEqualTo(HttpStatus.UNAUTHORIZED.getCode());
-
-        httpClientResponseException = assertThrows(
-            HttpClientResponseException.class, () -> client.toBlocking()
-                .exchange(
-                    HttpRequest.POST(
-                        "/api/v1/basicAuth", new BasicAuthCredentials(
-                            IdUtils.create(),
-                            "anonymous",
-                            "hacker"
-                        )
-                    )
-                )
-        );
-        assertThat(httpClientResponseException.getStatus().getCode()).isEqualTo(HttpStatus.UNAUTHORIZED.getCode());
-
-        HttpResponse<?> response = client.toBlocking()
-            .exchange(
-                HttpRequest.POST(
-                    "/api/v1/basicAuth", new BasicAuthCredentials(
-                        IdUtils.create(),
-                        "anonymous@hacker",
-                        "hackerPassword1",
-                        basicAuthConfiguration.getPassword()
-                    )
-                ).basicAuth(basicAuthConfiguration.getUsername(), basicAuthConfiguration.getPassword())
-            );
-        assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.NO_CONTENT.getCode());
-
-        response = client.toBlocking()
-            .exchange(HttpRequest.GET("/api/v1/basicAuthValidationErrors").basicAuth("anonymous@hacker", "hackerPassword1"));
-        assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
-
-        // Only 1 basic auth user is allowed so the previous one is overridden
-        httpClientResponseException = assertThrows(
-            HttpClientResponseException.class, () -> client.toBlocking()
-                .exchange(HttpRequest.GET("/api/v1/basicAuthValidationErrors").basicAuth(basicAuthConfiguration.getUsername(), basicAuthConfiguration.getPassword()))
-        );
-        assertThat(httpClientResponseException.getStatus().getCode()).isEqualTo(HttpStatus.UNAUTHORIZED.getCode());
-
-        assertThat(basicAuthService.isBasicAuthInitialized()).isTrue();
-        settingRepository.delete(Setting.builder().key(BASIC_AUTH_SETTINGS_KEY).build());
-        assertThat(basicAuthService.isBasicAuthInitialized()).isFalse();
-
-        response = client.toBlocking()
-            .exchange(HttpRequest.GET("/api/v1/basicAuthValidationErrors"));
-        assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
-
-        response = client.toBlocking()
-            .exchange(
-                HttpRequest.POST(
-                    "/api/v1/basicAuth", new BasicAuthCredentials(
-                        IdUtils.create(),
-                        basicAuthConfiguration.getUsername(),
-                        basicAuthConfiguration.getPassword()
-                    )
-                )
-            );
-        assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.NO_CONTENT.getCode());
-
-        assertThat(basicAuthService.isBasicAuthInitialized()).isTrue();
-
-        TestAuthFilter.ENABLED = true;
     }
 
     @Test

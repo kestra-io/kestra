@@ -459,6 +459,12 @@
     "email": "E-mail",
     "password": "Hasło",
     "confirm password": "Potwierdź hasło",
+    "change_password": {
+      "title": "Zmień hasło",
+      "current_password": "Obecne hasło",
+      "new_password": "Nowe hasło",
+      "success": "Twoje poświadczenia zostały zaktualizowane."
+    },
     "invalid flow": "Nieprawidłowy Flow",
     "invalid yaml": "Nieprawidłowy YAML",
     "inputs": "Inputs",

@@ -459,6 +459,12 @@
     "email": "メール",
     "password": "パスワード",
     "confirm password": "パスワードを確認",
+    "change_password": {
+      "title": "パスワードを変更",
+      "current_password": "現在のパスワード",
+      "new_password": "新しいパスワード",
+      "success": "認証情報が更新されました。"
+    },
     "invalid flow": "無効なFlow",
     "invalid yaml": "無効なYAML",
     "inputs": "Inputs",

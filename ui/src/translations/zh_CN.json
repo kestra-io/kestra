@@ -459,6 +459,12 @@
     "email": "电子邮件",
     "password": "密码",
     "confirm password": "确认密码",
+    "change_password": {
+      "title": "更改密码",
+      "current_password": "当前密码",
+      "new_password": "新密码",
+      "success": "您的凭据已更新。"
+    },
     "invalid flow": "无效流程",
     "invalid yaml": "无效的 YAML",
     "inputs": "输入",

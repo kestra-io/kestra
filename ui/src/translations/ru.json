@@ -459,6 +459,12 @@
     "email": "Email",
     "password": "Пароль",
     "confirm password": "Подтвердить пароль",
+    "change_password": {
+      "title": "Изменить пароль",
+      "current_password": "Текущий пароль",
+      "new_password": "Новый пароль",
+      "success": "Ваши учетные данные были обновлены."
+    },
     "invalid flow": "Неверный flow",
     "invalid yaml": "Неверный YAML",
     "inputs": "Входные данные",

@@ -459,6 +459,12 @@
     "email": "Email",
     "password": "Senha",
     "confirm password": "Confirmar senha",
+    "change_password": {
+      "title": "Alterar Senha",
+      "current_password": "Senha atual",
+      "new_password": "Nova senha",
+      "success": "Suas credenciais foram atualizadas."
+    },
     "invalid flow": "Flow inválido",
     "invalid yaml": "YAML inválido",
     "inputs": "Inputs",

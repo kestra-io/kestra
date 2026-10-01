@@ -459,6 +459,12 @@
     "email": "이메일",
     "password": "비밀번호",
     "confirm password": "비밀번호 확인",
+    "change_password": {
+      "title": "비밀번호 변경",
+      "current_password": "현재 비밀번호",
+      "new_password": "새 비밀번호",
+      "success": "자격 증명이 업데이트되었습니다."
+    },
     "invalid flow": "잘못된 Flow",
     "invalid yaml": "잘못된 YAML",
     "inputs": "Inputs",

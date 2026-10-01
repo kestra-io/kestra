@@ -1,0 +1,292 @@
+import {describe, test, expect, beforeEach} from "vitest"
+import {flushPromises} from "@vue/test-utils"
+import {createPinia, setActivePinia} from "pinia"
+import {computed, defineComponent, ref} from "vue"
+import KestraDesignSystem from "@kestra-io/design-system"
+import * as flowYamlUtils from "@kestra-io/topology/flow-yaml-utils"
+import BlockSectionLane from "../../../../../src/components/no-code/blocks/BlockSectionLane.vue"
+import {useBlockDragAndDrop} from "../../../../../src/components/no-code/blocks/useBlockDragAndDrop"
+import {BLOCK_DRAG_INJECTION_KEY} from "../../../../../src/components/no-code/injectionKeys"
+import {i18nMount} from "../../../i18nMount"
+
+const FLOW_WITH_IF_AND_LEAF = `
+id: my_flow
+namespace: company.team
+tasks:
+  - id: if_task
+    type: io.kestra.plugin.core.flow.If
+    condition: "{{ true }}"
+    then:
+      - id: nested_a
+        type: io.kestra.plugin.core.log.Log
+  - id: leaf_task
+    type: io.kestra.plugin.core.log.Log
+`.trim()
+
+const FLOW_WITH_TRIGGER_AND_TASKS = `
+id: my_flow
+namespace: company.team
+triggers:
+  - id: nightly
+    type: io.kestra.plugin.core.trigger.Schedule
+    cron: "0 3 * * *"
+tasks:
+  - id: leaf_task
+    type: io.kestra.plugin.core.log.Log
+  - id: other_task
+    type: io.kestra.plugin.core.log.Log
+`.trim()
+
+const FLOW_WITH_IF_AND_SEQUENTIAL = `
+id: my_flow
+namespace: company.team
+tasks:
+  - id: if_task
+    type: io.kestra.plugin.core.flow.If
+    condition: "{{ true }}"
+    then:
+      - id: nested_a
+        type: io.kestra.plugin.core.log.Log
+  - id: seq_task
+    type: io.kestra.plugin.core.flow.Sequential
+    tasks:
+      - id: seq_a
+        type: io.kestra.plugin.core.log.Log
+`.trim()
+
+describe("BlockSectionLane drag and drop", () => {
+    beforeEach(() => setActivePinia(createPinia()))
+
+    test("a real drag/drop sequence drags a top-level FlowableClusterCard by its header and drops it on the lane's trailing drop zone", async () => {
+        // Given — a top-level "tasks" lane holding a Flowable and a leaf task, rendered for real
+        // (no stubs), sharing the BlockDragContext BlockEditor provides
+        const flowYaml = ref(FLOW_WITH_IF_AND_LEAF)
+        const applyYaml = (yaml: string) => {
+            flowYaml.value = yaml
+        }
+        const dragContext = useBlockDragAndDrop(flowYaml, applyYaml, () => undefined)
+
+        const Host = defineComponent({
+            components: {BlockSectionLane},
+            setup() {
+                const tasks = computed(() => flowYamlUtils.parse<{tasks: Record<string, unknown>[]}>(flowYaml.value)!.tasks)
+                return {tasks, icon: {template: "<span />"}}
+            },
+            template: `
+                <BlockSectionLane
+                    section="tasks"
+                    title="Tasks"
+                    :icon="icon"
+                    addLabel="Add task"
+                    emptyLabel="task"
+                    endDropTest="tasks-end-drop"
+                    :playgroundEnabled="false"
+                    :supportsFlowable="true"
+                    :blocks="tasks"
+                />
+            `,
+        })
+
+        const wrapper = i18nMount(Host, {
+            global: {
+                plugins: [KestraDesignSystem],
+                provide: {[BLOCK_DRAG_INJECTION_KEY as unknown as string]: dragContext},
+            },
+        })
+
+        const header = wrapper.find("[data-test='flowable-cluster-header']")
+        const endDrop = wrapper.find("[data-test='tasks-end-drop']")
+        expect(header.exists()).toBe(true)
+        expect(header.attributes("draggable")).toBe("true")
+        expect(endDrop.exists()).toBe(true)
+
+        // When — the FlowableClusterCard header starts a drag and is dropped on the top-level
+        // lane's trailing drop zone, moving it after the leaf task
+        await header.trigger("dragstart", {dataTransfer: {}})
+        await endDrop.trigger("dragover", {dataTransfer: {}})
+        await endDrop.trigger("drop", {dataTransfer: {}})
+        await wrapper.vm.$nextTick()
+
+        // Then — the Flowable moved to the end of the top-level "tasks" list
+        const parsed = flowYamlUtils.parse<{tasks: {id: string}[]}>(flowYaml.value)!
+        expect(parsed.tasks.map((task) => task.id)).toEqual(["leaf_task", "if_task"])
+    })
+
+    test("a drop into a nested lane clears the insertion cue on the outer lane the pointer crossed", async () => {
+        const flowYaml = ref(FLOW_WITH_IF_AND_LEAF)
+        const applyYaml = (yaml: string) => {
+            flowYaml.value = yaml
+        }
+        const dragContext = useBlockDragAndDrop(flowYaml, applyYaml, () => undefined)
+
+        await import("../../../../../src/components/no-code/blocks/BranchLane.vue")
+
+        const Host = defineComponent({
+            components: {BlockSectionLane},
+            setup() {
+                const tasks = computed(() => flowYamlUtils.parse<{tasks: Record<string, unknown>[]}>(flowYaml.value)!.tasks)
+                return {tasks, icon: {template: "<span />"}}
+            },
+            template: `
+                <BlockSectionLane
+                    section="tasks"
+                    title="Tasks"
+                    :icon="icon"
+                    addLabel="Add task"
+                    emptyLabel="task"
+                    endDropTest="tasks-end-drop"
+                    :playgroundEnabled="false"
+                    :supportsFlowable="true"
+                    :blocks="tasks"
+                />
+            `,
+        })
+
+        const wrapper = i18nMount(Host, {
+            global: {
+                plugins: [KestraDesignSystem],
+                provide: {[BLOCK_DRAG_INJECTION_KEY as unknown as string]: dragContext},
+            },
+        })
+        await flushPromises()
+
+        const clusterHeader = wrapper.find("[data-test='flowable-cluster-header']")
+        const leaf = wrapper.findAll("[data-test='block-card']").at(-1)!
+        const nested = wrapper.find("[data-test='nested-block-card']")
+        expect(clusterHeader.exists()).toBe(true)
+        expect(nested.exists()).toBe(true)
+
+        await leaf.trigger("dragstart", {dataTransfer: {}})
+        await clusterHeader.trigger("dragover", {dataTransfer: {}})
+        expect(wrapper.find(".flowable-cluster").classes()).toContain("flowable-cluster--drag-over")
+
+        await nested.trigger("dragover", {dataTransfer: {}})
+        await nested.trigger("drop", {dataTransfer: {}})
+        await flushPromises()
+
+        const parsed = flowYamlUtils.parse<{tasks: {id: string, then?: {id: string}[]}[]}>(flowYaml.value)!
+        expect(parsed.tasks.map((task) => task.id)).toEqual(["if_task"])
+        expect(parsed.tasks[0].then!.map((task) => task.id)).toEqual(["leaf_task", "nested_a"])
+        expect(wrapper.find(".flowable-cluster").classes()).not.toContain("flowable-cluster--drag-over")
+    })
+
+    test("a forbidden lane leaves an internal drag's dragover un-prevented, and still swallows a drag that is not ours", async () => {
+        const flowYaml = ref(FLOW_WITH_TRIGGER_AND_TASKS)
+        const applyYaml = (yaml: string) => {
+            flowYaml.value = yaml
+        }
+        const dragContext = useBlockDragAndDrop(flowYaml, applyYaml, () => undefined)
+
+        const Host = defineComponent({
+            components: {BlockSectionLane},
+            setup() {
+                const parsed = computed(() => flowYamlUtils.parse<{triggers: Record<string, unknown>[], tasks: Record<string, unknown>[]}>(flowYaml.value)!)
+                return {parsed, icon: {template: "<span />"}}
+            },
+            template: `
+                <div>
+                    <BlockSectionLane
+                        section="triggers"
+                        title="Triggers"
+                        :icon="icon"
+                        addLabel="Add trigger"
+                        emptyLabel="trigger"
+                        listTest="triggers-list"
+                        endDropTest="triggers-end-drop"
+                        :playgroundEnabled="false"
+                        :blocks="parsed.triggers"
+                    />
+                    <BlockSectionLane
+                        section="tasks"
+                        title="Tasks"
+                        :icon="icon"
+                        addLabel="Add task"
+                        emptyLabel="task"
+                        listTest="tasks-list"
+                        endDropTest="tasks-end-drop"
+                        :playgroundEnabled="false"
+                        :supportsFlowable="true"
+                        :blocks="parsed.tasks"
+                    />
+                </div>
+            `,
+        })
+
+        const wrapper = i18nMount(Host, {
+            global: {
+                plugins: [KestraDesignSystem],
+                provide: {[BLOCK_DRAG_INJECTION_KEY as unknown as string]: dragContext},
+            },
+        })
+
+        const dragOverOn = (selector: string) => {
+            const target = wrapper.find(selector)
+            expect(target.exists()).toBe(true)
+            const event = new Event("dragover", {bubbles: true, cancelable: true})
+            target.element.dispatchEvent(event)
+            return event.defaultPrevented
+        }
+
+        expect(dragOverOn("[data-test='triggers-list'] [data-test='block-card']")).toBe(true)
+        expect(dragOverOn("[data-test='triggers-end-drop']")).toBe(true)
+
+        await wrapper.find("[data-test='tasks-list'] [data-test='block-card']").trigger("dragstart", {dataTransfer: {}})
+
+        expect(dragOverOn("[data-test='triggers-list'] [data-test='block-card']")).toBe(false)
+        expect(dragOverOn("[data-test='triggers-end-drop']")).toBe(false)
+        expect(dragOverOn("[data-test='tasks-list'] [data-test='block-card']")).toBe(true)
+        expect(dragOverOn("[data-test='tasks-end-drop']")).toBe(true)
+    })
+
+    test("a real drag/drop sequence moves a Flowable by its header into another cluster's lane", async () => {
+        const flowYaml = ref(FLOW_WITH_IF_AND_SEQUENTIAL)
+        const applyYaml = (yaml: string) => {
+            flowYaml.value = yaml
+        }
+        const dragContext = useBlockDragAndDrop(flowYaml, applyYaml, () => undefined)
+
+        await import("../../../../../src/components/no-code/blocks/BranchLane.vue")
+
+        const Host = defineComponent({
+            components: {BlockSectionLane},
+            setup() {
+                const tasks = computed(() => flowYamlUtils.parse<{tasks: Record<string, unknown>[]}>(flowYaml.value)!.tasks)
+                return {tasks, icon: {template: "<span />"}}
+            },
+            template: `
+                <BlockSectionLane
+                    section="tasks"
+                    title="Tasks"
+                    :icon="icon"
+                    addLabel="Add task"
+                    emptyLabel="task"
+                    endDropTest="tasks-end-drop"
+                    :playgroundEnabled="false"
+                    :supportsFlowable="true"
+                    :blocks="tasks"
+                />
+            `,
+        })
+
+        const wrapper = i18nMount(Host, {
+            global: {
+                plugins: [KestraDesignSystem],
+                provide: {[BLOCK_DRAG_INJECTION_KEY as unknown as string]: dragContext},
+            },
+        })
+        await flushPromises()
+
+        const sequentialHeader = wrapper.findAll("[data-test='flowable-cluster-header']").at(1)!
+        const thenCard = wrapper.find("[data-test='nested-block-card']")
+        expect(thenCard.exists()).toBe(true)
+
+        await sequentialHeader.trigger("dragstart", {dataTransfer: {}})
+        await thenCard.trigger("dragover", {dataTransfer: {}})
+        await thenCard.trigger("drop", {dataTransfer: {}})
+        await flushPromises()
+
+        const parsed = flowYamlUtils.parse<{tasks: {id: string, then?: {id: string}[]}[]}>(flowYaml.value)!
+        expect(parsed.tasks.map((task) => task.id)).toEqual(["if_task"])
+        expect(parsed.tasks[0].then!.map((task) => task.id)).toEqual(["seq_task", "nested_a"])
+    })
+})

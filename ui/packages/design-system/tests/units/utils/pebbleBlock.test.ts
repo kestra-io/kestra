@@ -55,6 +55,16 @@ describe("createPebbleEntryTracker", () => {
         expect(tracker.consumeEntered()).toBe(false)
     })
 
+    test("does not report leaving a block as a fresh entry", () => {
+        const tracker = createPebbleEntryTracker()
+        tracker.track(2)
+        tracker.consumeEntered()
+
+        tracker.track(null)
+
+        expect(tracker.consumeEntered()).toBe(false)
+    })
+
     test("reports moving straight from one block to another as a fresh entry", () => {
         const tracker = createPebbleEntryTracker()
         tracker.track(2)

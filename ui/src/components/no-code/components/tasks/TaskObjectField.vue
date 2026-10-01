@@ -1,21 +1,25 @@
 <template>
-    <component
-        v-if="simpleType === 'list' || simpleType === 'plugin-implementation'"
-        ref="taskComponent"
-        :is="type"
-        v-bind="componentProps"
-        :disabled
-        class="mt-1 mb-2 wrapper"
-    />
-    <component
-        v-else-if="frameRoot"
-        ref="taskComponent"
-        :is="type"
-        v-bind="componentProps"
-        :bare="true"
-        :disabled
-        class="wrapper"
-    />
+    <template v-if="simpleType === 'list' || simpleType === 'plugin-implementation'">
+        <component
+            ref="taskComponent"
+            :is="type"
+            v-bind="componentProps"
+            :disabled
+            class="mt-1 mb-2 wrapper"
+        />
+        <FieldValidationErrors :errors="fieldErrors" />
+    </template>
+    <template v-else-if="frameRoot">
+        <component
+            ref="taskComponent"
+            :is="type"
+            v-bind="componentProps"
+            :bare="true"
+            :disabled
+            class="wrapper"
+        />
+        <FieldValidationErrors :errors="fieldErrors" />
+    </template>
     <div v-else-if="isNestedObject" class="nested-card">
         <div class="nested-card-head">
             <span class="nested-card-label">{{ fieldKey }}</span>
@@ -189,8 +193,6 @@
     const hasSelectedASchema = ref(false)
 
     const pebbleState = ref(false)
-
-    const fieldPath = computed(() => props.rootOverride ?? (props.root ? `${props.root}.${props.fieldKey}` : props.fieldKey))
 
     const validationErrors = inject(FIELD_VALIDATION_ERRORS_INJECTION_KEY, undefined)
     const fieldErrors = computed<string[]>(() => validationErrors?.value.get(fieldPath.value) ?? [])

@@ -98,6 +98,7 @@
             :parentPath="modalTarget.parentPath"
             :refPath="modalTarget.refPath"
             :blockSchemaPath="modalTarget.blockSchemaPath"
+            :editedPath="modalPath"
             :crumbs="modalCrumbs"
             :creating="modalTarget.creating"
             @update:task="onModalTaskEdited"

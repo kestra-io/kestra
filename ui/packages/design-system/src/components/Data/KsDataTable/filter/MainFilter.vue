@@ -90,7 +90,7 @@
             }"
         >
             <FilterChip
-                :ref="(el: any) => setChipRef(cf.id, el)"
+                :ref="(el: Element | ComponentPublicInstance | null) => setChipRef(cf.id, el)"
                 :filter="cf"
                 :filterKey="keyConfigFor(cf)"
                 :class="{'read-only': filter.readOnly?.value}"
@@ -106,7 +106,7 @@
             class="filter-chip-wrap"
         >
             <FilterChip
-                :ref="(el: any) => setChipRef(gf.id, el)"
+                :ref="(el: Element | ComponentPublicInstance | null) => setChipRef(gf.id, el)"
                 :filter="gf"
                 :filterKey="keyConfigFor(gf)"
                 :class="{'read-only': filter.readOnly?.value}"
@@ -150,7 +150,7 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, inject, nextTick, computed, watch, onMounted, onUpdated, onBeforeUnmount} from "vue"
+    import {ref, inject, nextTick, computed, watch, onMounted, onUpdated, onBeforeUnmount, type ComponentPublicInstance} from "vue"
     import {useI18n} from "vue-i18n"
     import {useDebounceFn} from "@vueuse/core"
 
@@ -174,7 +174,8 @@
     const isCustomizeFiltersVisible = ref(false)
     const isAdvancedOpen = ref(false)
     const advancedAnchor = ref(".customize-button")
-    const chipRefs = ref<Record<string, any>>({})
+    type FilterChipInstance = InstanceType<typeof FilterChip>
+    const chipRefs = ref<Record<string, FilterChipInstance>>({})
     const filter = inject(FILTER_CONTEXT_INJECTION_KEY)!
 
     const openAdvanced = (anchor = ".customize-button") => {
@@ -210,9 +211,10 @@
         nextTick(() => chipRefs.value[newFilter.id]?.editPopover?.toggleDialog())
     }
 
-    const setChipRef = (filterId: string, el: any) => el
-        ? chipRefs.value[filterId] = el
-        : delete chipRefs.value[filterId]
+    const setChipRef = (filterId: string, el: Element | ComponentPublicInstance | null) => {
+        if (el && !(el instanceof Element)) chipRefs.value[filterId] = el as FilterChipInstance
+        else delete chipRefs.value[filterId]
+    }
 
     const hasValue = (value: AppliedFilter["value"]): boolean => {
         if (Array.isArray(value)) return value.length > 0

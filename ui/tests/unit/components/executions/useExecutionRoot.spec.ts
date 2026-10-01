@@ -1,6 +1,6 @@
 import {beforeEach, describe, expect, it, vi} from "vitest"
 import {reactive} from "vue"
-import {mount} from "@vue/test-utils"
+import {flushPromises, mount} from "@vue/test-utils"
 
 const route = reactive<{params: Record<string, string>}>({
     params: {namespace: "company.team", flowId: "demo_breadcrumb_fix", id: "exec-1"},
@@ -50,6 +50,20 @@ function mountExecutionRoot() {
         },
     })
 }
+
+describe("useExecutionRoot dependency count", () => {
+    const flowStore = useFlowStore()
+
+    it("loads the dependency count silently and survives a viewer without access to the flow", async () => {
+        vi.mocked(flowStore.loadDependencies).mockRejectedValueOnce({status: 403})
+
+        const wrapper = mountExecutionRoot()
+        await flushPromises()
+
+        expect(flowStore.loadDependencies).toHaveBeenCalledWith(expect.objectContaining({id: "demo_breadcrumb_fix"}), true, {showMessageOnError: false})
+        wrapper.unmount()
+    })
+})
 
 describe("useExecutionRoot unmount cleanup", () => {
     const flowStore = useFlowStore()

@@ -159,9 +159,9 @@ export function useFederatedModule<T extends keyof typeof KnownSlotsPropNames>(s
     }
 
     // A task runner's module wins only when the runner ships one, otherwise the task's own module is used.
-    function componentTypeFor(task?: Pick<Task, "type"> & {taskRunner?: Pick<Task, "type">}): string | undefined {
+    function componentTypeFor(task?: Pick<Task, "type"> & {taskRunner?: Pick<Task, "type">}): string {
         const runnerType = task?.taskRunner?.type
-        return runnerType && hasResolvedComponent(runnerType) ? runnerType : task?.type
+        return runnerType && hasResolvedComponent(runnerType) ? runnerType : task?.type ?? ""
     }
 
     return {

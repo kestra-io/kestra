@@ -1,38 +1,38 @@
-import {describe, expect, it} from "vitest"
+import {describe, it, expect} from "vitest"
 import {pageFromRoute} from "../../../src/utils/eventsRouter"
-import type {RouteLocationNormalized} from "vue-router"
+
+const makeRoute = (overrides = {}) => ({
+    path: "/test",
+    fullPath: "/test",
+    name: "test-route",
+    params: {},
+    query: {},
+    hash: "",
+    ...overrides,
+})
 
 describe("pageFromRoute", () => {
-    it("copies path, fullPath, and name directly from the provided route object", () => {
-        const route = {
-            path: "/test/path",
-            fullPath: "/test/path?q=1",
-            name: "testRoute",
-            params: {},
-            query: {},
-            hash: "",
-        } as unknown as RouteLocationNormalized
+    it("should copy path, fullPath, and name from the route", () => {
+        const route = makeRoute({
+            path: "/custom-path",
+            fullPath: "/custom-full-path",
+            name: "custom-name",
+        })
+        const result = pageFromRoute(route as any)
 
-        const result = pageFromRoute(route)
-
-        expect(result.path).toEqual("/test/path")
-        expect(result.fullPath).toEqual("/test/path?q=1")
-        expect(result.name).toEqual("testRoute")
+        expect(result.path).toBe("/custom-path")
+        expect(result.full_path).toBe("/custom-full-path")
+        expect(result.name).toBe("custom-name")
     })
 
-    it("converts route parameters into a list of objects formatted as {key, value}", () => {
-        const route = {
-            path: "/test/path",
-            fullPath: "/test/path",
+    it("should transform route params into a list of {key, value} pairs", () => {
+        const route = makeRoute({
             params: {
                 id: "123",
                 type: "flow",
             },
-            query: {},
-            hash: "",
-        } as unknown as RouteLocationNormalized
-
-        const result = pageFromRoute(route)
+        })
+        const result = pageFromRoute(route as any)
 
         expect(result.params).toEqual([
             {key: "id", value: "123"},
@@ -40,92 +40,84 @@ describe("pageFromRoute", () => {
         ])
     })
 
-    it("transforms a single-value query into {key, values: [value]}", () => {
-        const route = {
-            path: "/test/path",
-            fullPath: "/test/path",
-            params: {},
+    it("should transform single-value queries into a list of {key, values: [value]}", () => {
+        const route = makeRoute({
             query: {
-                search: "kestra",
+                tab: "executions",
+                sort: "desc",
             },
-            hash: "",
-        } as unknown as RouteLocationNormalized
+        })
+        const result = pageFromRoute(route as any)
 
-        const result = pageFromRoute(route)
-
-        expect(result.queries).toEqual([
-            {key: "search", values: ["kestra"]},
+        expect(result.query).toEqual([
+            {key: "tab", values: ["executions"]},
+            {key: "sort", values: ["desc"]},
         ])
     })
 
-    it("retains all of its values correctly for an array query", () => {
-        const route = {
-            path: "/test/path",
-            fullPath: "/test/path",
-            params: {},
+    it("should keep all values for array queries", () => {
+        const route = makeRoute({
             query: {
-                tags: ["tag1", "tag2"],
+                labels: [
+                    "env:prod",
+                    "team:backend",
+                ],
+                status: [
+                    "SUCCESS",
+                    "FAILED",
+                ],
             },
-            hash: "",
-        } as unknown as RouteLocationNormalized
+        })
+        const result = pageFromRoute(route as any)
 
-        const result = pageFromRoute(route)
-
-        expect(result.queries).toEqual([
-            {key: "tags", values: ["tag1", "tag2"]},
+        expect(result.query).toEqual([
+            {
+                key: "labels",
+                values: [
+                    "env:prod",
+                    "team:backend",
+                ],
+            },
+            {
+                key: "status",
+                values: [
+                    "SUCCESS",
+                    "FAILED",
+                ],
+            },
         ])
     })
 
-    it("omits an empty hash completely from the output, whereas a non-empty hash is kept", () => {
-        const routeEmptyHash = {
-            path: "/test/path",
-            fullPath: "/test/path",
-            params: {},
-            query: {},
+    it("should omit an empty hash from the output", () => {
+        const route = makeRoute({
             hash: "",
-        } as unknown as RouteLocationNormalized
+        })
+        const result = pageFromRoute(route as any)
 
-        const resultEmpty = pageFromRoute(routeEmptyHash)
-        expect(resultEmpty.hash).toBeUndefined()
-
-        const routeWithHash = {
-            path: "/test/path",
-            fullPath: "/test/path",
-            params: {},
-            query: {},
-            hash: "#section1",
-        } as unknown as RouteLocationNormalized
-
-        const resultWithHash = pageFromRoute(routeWithHash)
-        expect(resultWithHash.hash).toEqual("#section1")
+        expect(result.hash).toBeUndefined()
     })
 
-    it("extracts the origin property successfully from window.location.origin", () => {
-        const route = {
-            path: "/test/path",
-            fullPath: "/test/path",
-            params: {},
-            query: {},
-            hash: "",
-        } as unknown as RouteLocationNormalized
+    it("should preserve a non-empty hash in the output", () => {
+        const route = makeRoute({
+            hash: "#details",
+        })
+        const result = pageFromRoute(route as any)
 
-        const result = pageFromRoute(route)
-        
-        expect(result.origin).toEqual(window.location.origin)
+        expect(result.hash).toBe("#details")
     })
 
-    it("yields empty lists ([]) instead of undefined if a route has no parameters and no queries", () => {
-        const route = {
-            path: "/test/path",
-            fullPath: "/test/path",
-            params: {},
-            query: {},
-            hash: "",
-        } as unknown as RouteLocationNormalized
+    it("should get origin from window.location.origin", () => {
+        const route = makeRoute()
+        const result = pageFromRoute(route as any)
 
-        const result = pageFromRoute(route)
-        
+        expect(result.origin).toBe(window.location.origin)
+    })
+
+    it("should yield empty lists for a route with no params and no query", () => {
+        const route = makeRoute()
+        const result = pageFromRoute(route as any)
+
         expect(result.params).toEqual([])
-        expect(result.queries).toEqual([])
+        expect(result.query).toEqual([])
     })
 })

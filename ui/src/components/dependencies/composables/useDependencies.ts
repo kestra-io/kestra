@@ -104,6 +104,8 @@ export function useDependencies(
     dagView = false,
     /** Re-fetches one node's own sub-graph, for expanding a collapsed hub; asset view only. */
     expandAssetNode?: (nodeID: string) => Promise<ElementsResult>,
+    /** Every group a node belongs to; unlike `groupOf` it may be multi-valued. */
+    membersOf: Ref<((node: Node) => string[]) | undefined> = ref(undefined),
 ) {
     const coreStore = useCoreStore()
     const flowStore = useFlowStore()
@@ -146,7 +148,7 @@ export function useDependencies(
         // Only undefined means "no group": the ungrouped bucket is a real group keyed by the empty string.
         if (key === undefined) { isolatedIDs.value = null; return }
         const match = nodesOf(elements.value.data)
-            .filter((node) => (laneOf.value?.(node.id) ?? "") === key)
+            .filter((node) => (membersOf.value?.(node) ?? [laneOf.value?.(node.id) ?? ""]).includes(key))
             .map((node) => node.id)
         isolatedIDs.value = match.length ? new Set(match) : null
     }

@@ -95,7 +95,7 @@ describe("FlowUtils", () => {
     })
 
     it("getAllTasks returns nested tasks but not task runners", () => {
-        const flow = YAML_UTILS.parse<any>(`
+        const flow = YAML_UTILS.parse<{tasks: unknown}>(`
 id: nested
 namespace: io.kestra.tests
 
@@ -116,10 +116,10 @@ tasks:
       - id: else-log
         type: io.kestra.plugin.core.log.Log
 `)
-        const tasks = FlowUtils.getAllTasks(flow.tasks)
+        const tasks = FlowUtils.getAllTasks(flow?.tasks)
 
-        expect(tasks.map((t: any) => t.id)).toEqual(["wd", "dbt", "if", "then-log", "else-log"])
-        expect(tasks.find((t: any) => t.id === "dbt").taskRunner.type).toBe("io.kestra.plugin.scripts.runner.docker.Docker")
+        expect(tasks.map((t) => t.id)).toEqual(["wd", "dbt", "if", "then-log", "else-log"])
+        expect(tasks.find((t) => t.id === "dbt")).toMatchObject({taskRunner: {type: "io.kestra.plugin.scripts.runner.docker.Docker"}})
     })
 
     it("getAllTasks handles missing tasks", () => {

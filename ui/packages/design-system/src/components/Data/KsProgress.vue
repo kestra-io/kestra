@@ -1,11 +1,11 @@
 <template>
-    <ElProgress v-bind="({...filteredProps(), ...$attrs} as any)">
+    <ElProgress v-bind="({...filteredProps(), ...$attrs} as ProgressProps)">
         <slot/>
     </ElProgress>
 </template>
 
 <script setup lang="ts">
-    import {ElProgress} from "element-plus"
+    import {ElProgress, type ProgressProps} from "element-plus"
     import {useFilteredProps} from "../../utils/filteredProps"
     import {computed} from "vue"
 

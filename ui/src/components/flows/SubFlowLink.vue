@@ -71,7 +71,11 @@
             executionsStore
                 .loadExecution({id: props.executionId})
                 .then(value => {
-                    executionsStore.execution = value
+                    if (value) {
+                        executionsStore.applyLocalExecutionUpdate(value)
+                    } else {
+                        executionsStore.clearExecution()
+                    }
                     router.push({name: routeName.value, params: params(value)})
                 })
         } else {

@@ -31,6 +31,7 @@ vi.mock("../../../../src/stores/executions", () => ({
         resetLogs: vi.fn(),
         closeSSE: vi.fn(),
         followExecution: vi.fn(),
+        clearExecution: vi.fn(),
     }),
 }))
 

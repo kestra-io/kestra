@@ -108,7 +108,7 @@
   "src/components/docs/RecursiveToc.vue": 1,
   "src/components/docs/Toc.vue": 1,
   "src/components/docs/docsUtils.ts": 1,
-  "src/components/executions/ChangeStatus.vue": 8,
+  "src/components/executions/ChangeStatus.vue": 7,
   "src/components/executions/ExecutionRoot.vue": 1,
   "src/components/executions/ExecutionRootTopBar.vue": 1,
   "src/components/executions/FilePreview.vue": 1,

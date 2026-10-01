@@ -302,7 +302,7 @@
     import * as Utils from "../../utils/utils"
     import * as LogUtils from "../../utils/logs"
     import {buildTaskRunHierarchy} from "../../utils/taskRunHierarchy"
-    import {useClient, type FlowForExecution, type LogEntry, type TaskRunAttempt} from "@kestra-io/kestra-sdk"
+    import {useClient, type FlowForExecution, type LogEntry, type TaskRunAttempt, type FileMetas} from "@kestra-io/kestra-sdk"
 
     // Recursive component - self reference
     import TaskRunDetails from "./TaskRunDetails.vue"
@@ -830,7 +830,7 @@
             return
         }
 
-        const axiosResponse = await $http.get(
+        const axiosResponse = await $http.get<FileMetas>(
             `${apiUrl()}/executions/${followedExecution.value?.id}/file/metas?path=${path}`,
             {
                 validateStatus: (status: number) =>

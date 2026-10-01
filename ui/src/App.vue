@@ -87,6 +87,10 @@
             return null
         }
 
+        if (!config.version || !config.uuid) {
+            return config
+        }
+
         await docStore.initResourceUrlTemplate(config.version)
 
         apiStore.loadFeeds({

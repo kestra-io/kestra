@@ -68,16 +68,16 @@ export const useBlueprintsStore = defineStore("blueprints", () => {
         () => validation.value?.constraints ? [validation.value.constraints] : undefined,
     )
 
-    const getBlueprints = async (options: Options) => {
+    const getBlueprints = async (options: Options): Promise<{results: FlowBlueprint[]; total: number}> => {
         if (options.type === "community") {
             const PARAMS = {params: options.params, ...VALIDATE}
             const COMMUNITY = `${API_URL}/blueprints/kinds/${options.kind}/versions/${version}${edition === "OSS" ? "?ee=false" : ""}`
-            const response = await axios.get(COMMUNITY, PARAMS)
+            const response = await axios.get<{results: FlowBlueprint[]; total: number}>(COMMUNITY, PARAMS)
             return response.data
         }
 
         try {
-            const {data} = await axios.get(`${apiUrl()}/blueprints/custom`, {params: toCustomBlueprintParams(options.params)})
+            const {data} = await axios.get<{results: FlowBlueprint[]; total: number}>(`${apiUrl()}/blueprints/custom`, {params: toCustomBlueprintParams(options.params)})
             return data
         } catch (e: unknown) {
             if ((e as KestraHttpError).status === 401) return {results: [], total: 0}
@@ -100,7 +100,7 @@ export const useBlueprintsStore = defineStore("blueprints", () => {
     const getBlueprint = async (options: Options) => {
         if (options.type === "community") {
             const COMMUNITY = `${API_URL}/blueprints/kinds/${options.kind}/${options.id}/versions/${version}`
-            const response = await axios.get(COMMUNITY)
+            const response = await axios.get<Blueprint>(COMMUNITY)
             if (response.data?.id) {
                 trackBlueprintSelection(response.data.id)
             }
@@ -117,14 +117,14 @@ export const useBlueprintsStore = defineStore("blueprints", () => {
         return blueprintData
     }
 
-    const getBlueprintSource = async (options: Options) => {
+    const getBlueprintSource = async (options: Options): Promise<string> => {
         if (options.type === "community") {
             const COMMUNITY = `${API_URL}/blueprints/kinds/${options.kind}/${options.id}/versions/${version}/source`
-            const response = await axios.get(COMMUNITY)
+            const response = await axios.get<string>(COMMUNITY)
             return response.data
         }
 
-        const {data} = await axios.get(`${apiUrl()}/blueprints/custom/${options.id!}/source`)
+        const {data} = await axios.get<string>(`${apiUrl()}/blueprints/custom/${options.id!}/source`)
         return data
     }
 

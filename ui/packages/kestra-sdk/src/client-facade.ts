@@ -12,13 +12,19 @@ import type {BodySerializer} from "./openapi/core/bodySerializer.gen"
 // useClient().get/post(...) calls behave identically to generated endpoint calls, and existing
 // OSS/EE call sites are unchanged.
 
+export type RequestBody = object | unknown[] | FormData | Blob | string | null
+
 export interface AxiosLikeConfig {
     params?: Record<string, unknown>
     headers?: Record<string, string>
     responseType?: "json" | "text" | "blob"
     timeout?: number
     validateStatus?: (status: number) => boolean
-    data?:RequestBody
+    data?: RequestBody
+    showMessageOnError?: boolean
+    ignoreNotFound?: boolean
+    withCredentials?: boolean
+    __kestraSkipProgress?: boolean
     [key: string]: unknown
 }
 
@@ -34,7 +40,7 @@ export interface StreamConfig {
     headers?: Record<string, string>
     signal?: AbortSignal
 }
-export type RequestBody = Record<string, unknown> | unknown[] | FormData | Blob | string
+
 /** Minimal shape of the @hey-api/client-fetch client this facade reads. */
 interface InterceptedFetchClient {
     interceptors: {
@@ -89,7 +95,7 @@ export interface AxiosLikeClient {
      * fetch-level failure (abort, offline, CORS) still runs error interceptors — the same catch
      * axios-like methods already have.
      */
-    stream: (url: string, data?:RequestBody, config?: StreamConfig) => Promise<Response>
+    stream: (url: string, data?: RequestBody, config?: StreamConfig) => Promise<Response>
 }
 
 export function createClientFacade(
@@ -248,7 +254,7 @@ export function createClientFacade(
         stream: streamRequest,
     }
 
-     function assignMethod<K extends keyof AxiosLikeClient>(
+    function assignMethod<K extends keyof AxiosLikeClient>(
         target: AxiosLikeClient,
         key: K,
         value: AxiosLikeClient[K] | undefined,
@@ -259,7 +265,7 @@ export function createClientFacade(
     /** Set a mock client instance controlled in tests. */
     function setMockClient(mockClient: Partial<AxiosLikeClient> = {}) {
         for (const method of ["get", "post", "put", "delete", "patch", "stream"] as const) {
-             assignMethod(axiosLikeClient, method, mockClient[method]) 
+            assignMethod(axiosLikeClient, method, mockClient[method])
         }
     }
 

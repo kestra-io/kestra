@@ -414,7 +414,7 @@ public interface StorageInterface extends AutoCloseable, Plugin {
         try {
             return new URI(parent.getScheme(), parent.getAuthority(), childPath, null, null);
         } catch (URISyntaxException e) {
-            throw new IllegalArgumentException("Invalid storage URI '" + childPath + "'.", e);
+            throw new IllegalArgumentException("Invalid storage URI '%s'.".formatted(childPath), e);
         }
     }
 

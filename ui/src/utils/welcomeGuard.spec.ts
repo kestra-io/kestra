@@ -2,8 +2,9 @@ import {beforeEach, describe, expect, it, vi} from "vitest"
 import {isDashboardRoute, shouldShowWelcome} from "./welcomeGuard"
 import {TUTORIAL_NAMESPACE} from "./constants"
 
-const {findFlows} = vi.hoisted(() => ({findFlows: vi.fn()}))
+const {findFlows, user} = vi.hoisted(() => ({findFlows: vi.fn(), user: {hasAnyAction: vi.fn()}}))
 vi.mock("../stores/flow", () => ({useFlowStore: () => ({findFlows})}))
+vi.mock("override/stores/auth", () => ({useAuthStore: () => ({user})}))
 
 describe("isDashboardRoute", () => {
     it("matches only the home route", () => {
@@ -15,6 +16,7 @@ describe("isDashboardRoute", () => {
 describe("shouldShowWelcome", () => {
     beforeEach(() => {
         findFlows.mockReset()
+        user.hasAnyAction.mockReset().mockReturnValue(true)
     })
 
     it("shows the welcome page when no flow exists outside the tutorial namespace", async () => {
@@ -27,6 +29,13 @@ describe("shouldShowWelcome", () => {
         findFlows.mockResolvedValue(1)
 
         expect(await shouldShowWelcome()).toBe(false)
+    })
+
+    it("does not look for flows when the user cannot list them", async () => {
+        user.hasAnyAction.mockReturnValue(false)
+
+        expect(await shouldShowWelcome()).toBe(false)
+        expect(findFlows).not.toHaveBeenCalled()
     })
 
     it("counts only the flows outside the tutorial namespace", async () => {

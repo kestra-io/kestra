@@ -384,7 +384,9 @@
     import PlusBox from "vue-material-design-icons/PlusBox.vue"
     import FolderDownloadOutline from "vue-material-design-icons/FolderDownloadOutline.vue"
     import TypeIcon from "../utils/icons/Type.vue"
+    import type {TreeOptionProps} from "element-plus"
     import {escapeHtml, KsInput, KsTree} from "@kestra-io/design-system"
+    import type {KsTreeNode} from "@kestra-io/design-system"
     import {useI18n} from "vue-i18n"
     import {useRestrictDropTo} from "../../composables/useRestrictDropTo"
     import {useToast} from "../../utils/toast"
@@ -453,10 +455,6 @@
         filesStore.namespaceId = props.currentNS
     }
 
-    interface FileExplorerNode {
-        data: TreeNode;
-        parent: ElTreeNode;
-    }
 
     interface FlatTreeNode {
     path: string;
@@ -480,7 +478,16 @@
     const isRenaming = ref(false)
     const sidebar = ref<HTMLElement>()
     const {start: startRestrictDrop, isOutside: isDropOutsideSidebar} = useRestrictDropTo(sidebar)
-    const tree = ref<InstanceType<typeof KsTree>>()
+
+    interface FileExplorerTreeInstance {
+    getNode: (data: string | number | TreeNode) => ElTreeNode | undefined;
+    remove: (data: TreeNode | KsTreeNode<TreeNode>) => void;
+    append: (data: TreeNode, parent: TreeNode | string | number | KsTreeNode<TreeNode>) => void;
+    getCurrentKey: () => string | number | undefined;
+    setCurrentKey: (key?: string | number | null) => void;
+    } 
+
+    const tree = ref<FileExplorerTreeInstance>()
     const filePicker = ref<HTMLInputElement>()
     const folderPicker = ref<HTMLInputElement>()
     const dropdowns = ref<Record<string, {handleClose: () => void; handleOpen: () => void}>>({})
@@ -489,13 +496,8 @@
         data: TreeNode;
     }
 
-    interface FileExplorerTreeProps {
-        class: (data: TreeNode) => string;
-        isLeaf: string;
-    }
-
-    const treeProps: FileExplorerTreeProps = {
-        class: nodeClass,
+    const treeProps: TreeOptionProps = {
+        class: (data) => nodeClass(data as TreeNode),
         isLeaf: "leaf",
     }
 
@@ -897,9 +899,8 @@ function setDropdownRef(
             isRenaming.value = false
         }
 
-        const treeNode = tree.value?.getNode(node)
-        if (treeNode) {
-            treeNode.data.fileName = newName
+        if (node) {
+            node.data.fileName = newName
         }
         renameDialog.value = {...RENAME_DEFAULTS}
 
@@ -947,11 +948,13 @@ function setDropdownRef(
             .map(path => ({path, fileName: path.split("/").pop() ?? ""}))
     }
 
-    async function nodeMoved(draggedNode: FileExplorerNode) {
+    async function nodeMoved(draggedNode: KsTreeNode<TreeNode>) {
         // Guards the drag-and-drop move path, which bypasses the disabled toolbar actions
         if (!canManageFiles.value) {
-            tree.value?.remove(draggedNode.data.id)
-            tree.value?.append(draggedNode.data, nodeBeforeDrag.value?.parent)
+            tree.value?.remove(draggedNode)
+            if (nodeBeforeDrag.value?.parent) {
+                tree.value?.append(draggedNode.data, nodeBeforeDrag.value.parent)
+            }
             return
         }
         const newPath = filesStore.getPath(draggedNode.data.id) ?? ""
@@ -963,8 +966,10 @@ function setDropdownRef(
                 new: newPath,
             })
         } catch {
-            tree.value?.remove(draggedNode.data.id)
-            tree.value?.append(draggedNode.data, nodeBeforeDrag.value?.parent)
+            tree.value?.remove(draggedNode)
+            if (nodeBeforeDrag.value?.parent) {
+                tree.value?.append(draggedNode.data, nodeBeforeDrag.value.parent)
+            }
             bulkDragSiblings.value = undefined
             return
         }
@@ -1079,7 +1084,10 @@ function setDropdownRef(
                     namespace: props.currentNS ?? route.params.namespace as string,
                     path,
                 })
-                tree.value?.remove(node.id)
+                const treeNode = tree.value?.getNode(node.id)
+                if (treeNode) {
+                   tree.value?.remove(treeNode)
+                }
                 closeTab?.({
                     path,
                 })
@@ -1106,7 +1114,8 @@ function setDropdownRef(
 
     /** Re-fetches an already loaded folder, since the tree only diffs its own root level and would otherwise stay stale until a refresh. */
     function reloadFolder(path?: string) {
-        const node = path ? tree.value?.getNode(filesStore.findNodeByPath(path)?.id) : undefined
+        const nodeId = path ? filesStore.findNodeByPath(path)?.id : undefined
+        const node = nodeId ? tree.value?.getNode(nodeId) : undefined
         if (!node?.loaded) {
             return
         }

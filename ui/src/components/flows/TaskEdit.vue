@@ -322,6 +322,8 @@
             armedField.value.classList.remove(ARMED_FIELD_CLASS)
             armedField.value = null
         }
+        // Tabbing out of Monaco fires focusout while focus is still inside the panel.
+        if (leavingPanel) focusedExpressionEditorInsert.value = null
     }
 
     function insertAndNotify(field: HTMLInputElement | HTMLTextAreaElement, expr: string) {

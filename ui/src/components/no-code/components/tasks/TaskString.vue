@@ -40,7 +40,6 @@
             @update:model-value="onInput"
             @save="saveFlow"
             @focus="onFocus"
-            @focusout="onBlur"
             style="z-index: 1;"
         />
     </div>
@@ -66,7 +65,7 @@
     const saveFlow = inject(SAVE_FLOW_FUNCTION_INJECTION_KEY, () => {})
 
     const editorRef = ref<KsEditorExposes>()
-    const {onFocus, onBlur} = useFocusedExpressionEditor(editorRef)
+    const {onFocus} = useFocusedExpressionEditor(editorRef)
 
     const props = defineProps<{
         disabled?: boolean;

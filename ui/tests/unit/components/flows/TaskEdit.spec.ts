@@ -273,6 +273,61 @@ describe("TaskEdit", () => {
         expect(field.classList.contains("task-edit-chip-insert-target")).toBe(true)
     })
 
+    it("keeps the focused Monaco editor registered when focus moves to a chip control", async () => {
+        // An inline editor runs Monaco in tab-focus mode, so Tab out of it fires focusout while
+        // focus is still inside the panel.
+        const messageSpy = vi.spyOn(KsMessage, "success").mockImplementation(() => ({close: () => {}}))
+        const wrapper = mountTaskEdit()
+        await wrapper.vm.$nextTick()
+
+        const panel = wrapper.get("[data-test='task-edit-panel']").element as HTMLElement
+        const monacoEditor = document.createElement("div")
+        monacoEditor.className = "monaco-editor"
+        const monacoTextarea = document.createElement("textarea")
+        monacoEditor.appendChild(monacoTextarea)
+        const chip = document.createElement("button")
+        chip.className = "task-edit-data-chip"
+        panel.appendChild(monacoEditor)
+        panel.appendChild(chip)
+
+        await wrapper.get("[data-test='fake-editor-focus']").trigger("click")
+        monacoTextarea.dispatchEvent(new FocusEvent("focusin", {bubbles: true}))
+
+        monacoTextarea.dispatchEvent(new FocusEvent("focusout", {bubbles: true, relatedTarget: chip}))
+        chip.dispatchEvent(new FocusEvent("focusin", {bubbles: true}))
+
+        const inputs = wrapper.findAllComponents({name: "TaskEditData"}).find((c) => c.props("kind") === "inputs")
+        inputs?.vm.$emit("chip-activate", "{{ inputs.myInput }}")
+
+        expect(insertedChipText).toHaveBeenCalledWith("{{ inputs.myInput }}")
+        messageSpy.mockRestore()
+    })
+
+    it("drops the focused Monaco editor registration once focus leaves the panel", async () => {
+        const wrapper = mountTaskEdit()
+        await wrapper.vm.$nextTick()
+
+        const panel = wrapper.get("[data-test='task-edit-panel']").element as HTMLElement
+        const monacoEditor = document.createElement("div")
+        monacoEditor.className = "monaco-editor"
+        const monacoTextarea = document.createElement("textarea")
+        monacoEditor.appendChild(monacoTextarea)
+        panel.appendChild(monacoEditor)
+
+        await wrapper.get("[data-test='fake-editor-focus']").trigger("click")
+        monacoTextarea.dispatchEvent(new FocusEvent("focusin", {bubbles: true}))
+
+        const outside = document.createElement("input")
+        document.body.appendChild(outside)
+        monacoTextarea.dispatchEvent(new FocusEvent("focusout", {bubbles: true, relatedTarget: outside}))
+
+        const inputs = wrapper.findAllComponents({name: "TaskEditData"}).find((c) => c.props("kind") === "inputs")
+        inputs?.vm.$emit("chip-activate", "{{ inputs.myInput }}")
+
+        expect(insertedChipText).not.toHaveBeenCalled()
+        outside.remove()
+    })
+
     it("never fetches the KV/secrets/files context sections on the read-only execution surface", async () => {
         const wrapper = i18nMount(TaskEdit, {
             messages: {close: "Close"},

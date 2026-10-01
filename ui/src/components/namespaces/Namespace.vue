@@ -1,5 +1,5 @@
 <template>
-    <TopNavBar :title="details.title" :breadcrumb="details.breadcrumb">
+    <TopNavBar :title="details.title" :breadcrumb="details.breadcrumb" :titleSiblings="details.titleSiblings">
         <template #actions>
             <Actions />
         </template>

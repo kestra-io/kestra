@@ -19,7 +19,9 @@ function fetchTaskRunIdsWithOutputs(executionId: string, forceRefresh: boolean):
     const pending = OutputsAPI.taskOutputsInformation(
         {executionId},
         {validateStatus: (status: number) => status === 200 || status === 404},
-    ).then((data: any) => new Set<string>((data ?? []).map((task: any) => task.taskRunId).filter(Boolean)))
+    ).then((data) =>
+        new Set((data ?? []).map((task) => task.taskRunId).filter((id): id is string => Boolean(id))),
+    )
 
     taskRunIdsWithOutputsCache.set(executionId, pending)
     return pending

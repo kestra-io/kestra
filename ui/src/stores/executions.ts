@@ -465,6 +465,8 @@ export const useExecutionsStore = defineStore("executions", () => {
 
     const throttledExecutionUpdate = throttle((parsedExecution: Execution) => {
         const flowValue = flow.value
+        execution.value = parsedExecution
+        const currentExecution = execution.value
 
         if ((!flowValue ||
             parsedExecution.flowId !== flowValue.id ||
@@ -477,11 +479,11 @@ export const useExecutionsStore = defineStore("executions", () => {
                     revision: route.query.revision?.toString(),
                 },
             ).then(() => {
-                execution.value = parsedExecution
+                if (execution.value === currentExecution) {
+                    execution.value = parsedExecution
+                }
             })
         }
-
-        execution.value = parsedExecution
     }, 500)
 
     /**

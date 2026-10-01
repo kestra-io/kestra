@@ -1,5 +1,7 @@
 package io.kestra.webserver.controllers.api;
 
+import java.net.URI;
+import java.net.URL;
 import java.util.Base64;
 import java.util.List;
 import java.util.Map;
@@ -15,17 +17,21 @@ import io.kestra.core.docs.Plugin;
 import io.kestra.core.docs.PluginIcon;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.annotations.PluginSubGroup;
+import io.kestra.core.models.tasks.Task;
+import io.kestra.core.models.tasks.TicketingTaskInterface;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.ui.PluginDistribution;
 import io.kestra.core.models.ui.PluginUiManifest;
 import io.kestra.core.models.ui.PluginUiModuleWithGroup;
 import io.kestra.core.models.ui.TaskWithVersion;
+import io.kestra.core.plugins.ExternalPlugin;
 import io.kestra.core.plugins.RegisteredPlugin;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.plugin.core.debug.Return;
 import io.kestra.plugin.core.log.Log;
 import io.kestra.plugin.core.trigger.Schedule;
 import io.kestra.plugin.core.trigger.Webhook;
+import io.kestra.webserver.controllers.api.PluginController.ApiTicketingSystem;
 import io.kestra.webserver.controllers.api.PluginController.ApiTriggerPlugin;
 import io.kestra.webserver.responses.PagedResults;
 
@@ -563,6 +569,57 @@ class PluginControllerTest {
         assertThat(catalog).map(ApiTriggerPlugin::type).containsExactlyInAnyOrder(Schedule.class.getName(), Webhook.class.getName());
     }
 
+    @Test
+    void shouldReturnOneTicketingSystemPerPluginTitle() {
+        PluginController controller = new PluginController();
+
+        RegisteredPlugin github = pluginWithTasks("GitHub", CreateTicketTask.class, CloseTicketTask.class);
+        RegisteredPlugin githubOtherVersion = pluginWithTasks("GitHub", CreateTicketTask.class, CloseTicketTask.class);
+        RegisteredPlugin jira = pluginWithTasks("Atlassian Jira", CreateTicketTask.class);
+
+        List<ApiTicketingSystem> catalog = controller.toTicketingSystemCatalog(List.of(github, githubOtherVersion, jira));
+
+        assertThat(catalog).map(ApiTicketingSystem::name).containsExactly("Atlassian Jira", "GitHub");
+        assertThat(catalog)
+            .filteredOn(system -> system.name().equals("GitHub"))
+            .singleElement()
+            .extracting(ApiTicketingSystem::icon)
+            .isEqualTo(CreateTicketTask.class.getName());
+    }
+
+    @Test
+    void shouldIgnoreTasksThatDoNotImplementTheMarker() {
+        PluginController controller = new PluginController();
+
+        assertThat(controller.toTicketingSystemCatalog(List.of(pluginWithTasks("GitHub", SearchIssuesTask.class)))).isEmpty();
+    }
+
+    @Test
+    void shouldSkipAPluginWhoseManifestDeclaresNoTitle() throws Exception {
+        PluginController controller = new PluginController();
+
+        RegisteredPlugin uberJar = RegisteredPlugin.builder()
+            .manifest(new Manifest())
+            .externalPlugin(new ExternalPlugin(URI.create("file:/plugins/plugin-github-0.24.0.jar").toURL(), new URL[0]))
+            .tasks(List.of(CreateTicketTask.class))
+            .build();
+
+        // Without the guard the system would be named after the jar, be stored verbatim on a case,
+        // and never group with "GitHub".
+        assertThat(uberJar.title()).isEqualTo("plugin-github-0.24.0");
+        assertThat(controller.toTicketingSystemCatalog(List.of(uberJar))).isEmpty();
+    }
+
+    @Test
+    void should_list_ticketing_systems() {
+        PagedResults<ApiTicketingSystem> result = client.toBlocking().retrieve(
+            HttpRequest.GET(PATH + "/ticketing-systems"),
+            Argument.of(PagedResults.class, PluginController.ApiTicketingSystem.class)
+        );
+
+        assertThat(result.getTotal()).isZero();
+    }
+
     private static RegisteredPlugin pluginWithTitle(String title) {
         Manifest manifest = new Manifest();
         manifest.getMainAttributes().putValue("X-Kestra-Title", title);
@@ -574,5 +631,21 @@ class PluginControllerTest {
         Manifest manifest = new Manifest();
         manifest.getMainAttributes().putValue("X-Kestra-Title", "Core");
         return RegisteredPlugin.builder().manifest(manifest).triggers(List.of(triggers)).build();
+    }
+
+    @SafeVarargs
+    private static RegisteredPlugin pluginWithTasks(String title, Class<? extends Task>... tasks) {
+        Manifest manifest = new Manifest();
+        manifest.getMainAttributes().putValue("X-Kestra-Title", title);
+        return RegisteredPlugin.builder().manifest(manifest).tasks(List.of(tasks)).build();
+    }
+
+    private abstract static class CreateTicketTask extends Task implements TicketingTaskInterface {
+    }
+
+    private abstract static class CloseTicketTask extends Task implements TicketingTaskInterface {
+    }
+
+    private abstract static class SearchIssuesTask extends Task {
     }
 }

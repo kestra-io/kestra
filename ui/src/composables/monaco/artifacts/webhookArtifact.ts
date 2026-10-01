@@ -4,7 +4,8 @@ import {ARTIFACT_COPY_COMMAND, type EditorArtifactProvider} from "./editorArtifa
 export const webhookArtifactProvider: EditorArtifactProvider = {
     type: WEBHOOK_TRIGGER_TYPE,
     provide(block, context) {
-        const key = block.value?.key
+        const rawKey = block.value?.key
+        const key = typeof rawKey === "string" || typeof rawKey === "number" ? String(rawKey) : undefined
         if (block.path !== "triggers" || !key || !context.namespace || !context.id) {
             return []
         }

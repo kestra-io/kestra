@@ -2,6 +2,7 @@ package io.kestra.repository.h2.migration;
 
 import javax.sql.DataSource;
 
+import io.kestra.jdbc.QueueJdbcDataSourceProvider;
 import io.kestra.jdbc.migration.AbstractV2_0_02QueueMigration;
 import io.kestra.repository.h2.H2QueueEnabled;
 
@@ -15,16 +16,16 @@ import jakarta.inject.Singleton;
 @H2QueueEnabled
 public class V2_0_02QueueMigration extends AbstractV2_0_02QueueMigration {
 
-    private final DataSource dataSource;
+    private final QueueJdbcDataSourceProvider queueJdbcDataSourceProvider;
 
     @Inject
-    public V2_0_02QueueMigration(final DataSource dataSource) {
-        this.dataSource = dataSource;
+    public V2_0_02QueueMigration(final QueueJdbcDataSourceProvider queueJdbcDataSourceProvider) {
+        this.queueJdbcDataSourceProvider = queueJdbcDataSourceProvider;
     }
 
     @Override
     protected DataSource dataSource() {
-        return dataSource;
+        return queueJdbcDataSourceProvider.dataSource();
     }
 
     @Override

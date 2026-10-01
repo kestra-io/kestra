@@ -13,7 +13,7 @@ import type {KestraHttpError} from "../utils/kestraHttp"
 export {PagedResultsNamespace}
 
 type NamespaceSearchParameters = NonNullable<Parameters<typeof NamespaceAPI.searchNamespaces>[0]>
-type NamespaceSearchOptions = Omit<NamespaceSearchParameters, "sort"> & {commit?: boolean; sort?: string}
+export type NamespaceSearchOptions = Omit<NamespaceSearchParameters, "sort"> & {commit?: boolean; sort?: string}
 type DeleteKvsRequest = Omit<Parameters<typeof KvAPI.deleteKeyValues>[0], "namespace">
 
 function base(namespace: string) {
@@ -35,9 +35,14 @@ export const useBaseNamespacesStore = () => {
 
     const axios = useClient()
 
+    let latestAutocomplete = 0
+
     async function loadAutocomplete(options?: {q?: string, ids?: string[], existingOnly?: boolean}) {
+        const current = ++latestAutocomplete
         const response = await NamespaceAPI.autocompleteNamespaces({existingOnly: false, ...options})
-        autocomplete.value = response
+        if (current === latestAutocomplete) {
+            autocomplete.value = response
+        }
         return response
     }
 

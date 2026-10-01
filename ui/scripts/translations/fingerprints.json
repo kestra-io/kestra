@@ -561,6 +561,7 @@
   "dependency|dag|group_none": "a638b9f67ff0",
   "dependency|dag|groups": "3ba6cf9bfa76",
   "dependency|dag|hub|expand": "25097ac3a140",
+  "dependency|dag|hub|expand_failed": "267044be29fa",
   "dependency|dag|hub|notice": "24cc97382842",
   "dependency|dag|kind|consumed_by": "2ff3d02f67bc",
   "dependency|dag|kind|part_of": "3f32de002d09",

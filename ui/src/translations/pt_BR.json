@@ -2251,7 +2251,8 @@
         "ungrouped": "Não agrupado",
         "hub": {
           "notice": "Este nó tem {count} relações — apenas as mais recentes são mostradas para manter o gráfico legível.",
-          "expand": "Carregar mais relações"
+          "expand": "Carregar mais relações",
+          "expand_failed": "Não foi possível carregar mais relações. Por favor, tente novamente."
         },
         "truncated": "Este gráfico era muito grande para ser exibido na íntegra; algumas relações foram omitidas."
       },

@@ -190,7 +190,10 @@ export function setupKestraHttp(
 
     client.interceptors.request.use((request, opts: unknown) => {
         if (typeof document !== "undefined" && !skipProgress(opts)) initProgress()
-        return request
+        // Tells the basic-auth backend not to answer a 401 with WWW-Authenticate, which opens the native login dialog.
+        const headers = new Headers(request.headers)
+        headers.set("X-Requested-With", "XMLHttpRequest")
+        return new Request(request, {headers})
     })
 
     client.interceptors.response.use((response, _request, opts) => {

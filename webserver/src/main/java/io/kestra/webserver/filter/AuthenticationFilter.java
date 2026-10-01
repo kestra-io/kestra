@@ -88,11 +88,18 @@ public class AuthenticationFilter implements HttpServerFilter {
                         .orElse(false);
 
                     return Mono.just(HttpResponse.unauthorized())
-                        .map(response -> isFromLoginPage ? response : response.header("WWW-Authenticate", "Basic"));
+                        .map(response -> isFromLoginPage || isScriptedRequest(request) ? response : response.header("WWW-Authenticate", "Basic"));
                 }
 
                 return chain.proceed(request);
             });
+    }
+
+    /** Script requests handle their own 401, so they must not open the native login dialog. */
+    // Sec-Fetch-Dest is only sent over HTTPS or localhost, hence the X-Requested-With fallback.
+    private static boolean isScriptedRequest(HttpRequest<?> request) {
+        return "empty".equals(request.getHeaders().get("Sec-Fetch-Dest"))
+            || "XMLHttpRequest".equalsIgnoreCase(request.getHeaders().get("X-Requested-With"));
     }
 
     private static String normalizePath(String path) {

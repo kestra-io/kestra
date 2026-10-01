@@ -103,6 +103,18 @@ describe("setupKestraHttp router NProgress hooks", () => {
     })
 })
 
+describe("setupKestraHttp request headers", () => {
+    it("marks every request as scripted so the backend skips the WWW-Authenticate challenge", () => {
+        setupKestraHttp({})
+        const onRequest = fakeClient.interceptors.request.use.mock.calls.at(-1)![0]
+
+        const request = onRequest(new Request("http://example.test/x", {headers: {Accept: "application/json"}}), {})
+
+        expect(request.headers.get("X-Requested-With")).toBe("XMLHttpRequest")
+        expect(request.headers.get("Accept")).toBe("application/json")
+    })
+})
+
 describe("setupKestraHttp central 404 handling", () => {
     const notFoundResponse = {
         status: 404,

@@ -224,6 +224,29 @@ class AuthenticationFilterTest {
     }
 
     @Test
+    void shouldNotChallengeScriptedRequests() {
+        HttpClientResponseException fetchResponse = assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking()
+                .exchange(HttpRequest.GET("/api/v1/main/dashboards").header("Authorization", "").header("Sec-Fetch-Dest", "empty"))
+        );
+        assertThat(fetchResponse.getStatus().getCode()).isEqualTo(HttpStatus.UNAUTHORIZED.getCode());
+        assertThat(fetchResponse.getResponse().getHeaders().get("WWW-Authenticate")).isNull();
+
+        HttpClientResponseException xhrResponse = assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking()
+                .exchange(HttpRequest.GET("/api/v1/main/dashboards").header("Authorization", "").header("X-Requested-With", "XMLHttpRequest"))
+        );
+        assertThat(xhrResponse.getStatus().getCode()).isEqualTo(HttpStatus.UNAUTHORIZED.getCode());
+        assertThat(xhrResponse.getResponse().getHeaders().get("WWW-Authenticate")).isNull();
+
+        HttpClientResponseException navigationResponse = assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking()
+                .exchange(HttpRequest.GET("/api/v1/main/dashboards").header("Authorization", "").header("Sec-Fetch-Dest", "document"))
+        );
+        assertThat(navigationResponse.getResponse().getHeaders().get("WWW-Authenticate")).isEqualTo("Basic");
+    }
+
+    @Test
     void testAnonymous() {
         var response = client.toBlocking().exchange("/ping");
 

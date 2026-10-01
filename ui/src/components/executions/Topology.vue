@@ -154,7 +154,9 @@
     function loadFlowSource() {
         const exec = execution.value
         if (!exec || flowStore.flow?.id === exec.flowId && flowStore.flow?.namespace === exec.namespace) return
-        flowStore.loadFlow({namespace: exec.namespace, id: exec.flowId})
+        flowStore.loadFlow({namespace: exec.namespace, id: exec.flowId}, {silentStatuses: [403]}).catch((error: {status?: number}) => {
+            if (error?.status !== 403) throw error
+        })
     }
 
     function loadGraph(force?: boolean) {

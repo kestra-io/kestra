@@ -35,6 +35,17 @@ export function buildModifierDisplay(isMac: boolean): Record<string, string> {
 
 const MODIFIER_DISPLAY: Record<string, string> = buildModifierDisplay(computeIsMac())
 
+function comboMainKeyDisplay(key: string): string {
+    if (key in SIMPLE_KEY_DISPLAY) return SIMPLE_KEY_DISPLAY[key]
+    return key.length === 1 ? key.toUpperCase() : key
+}
+
+function displayForKey(key: string): string {
+    if (!key.includes("+")) return SIMPLE_KEY_DISPLAY[key] ?? key
+    const parts = key.split("+")
+    const mainKey = comboMainKeyDisplay(parts[parts.length - 1])
+    const prefix = parts.slice(0, -1).map(mod => MODIFIER_DISPLAY[mod] ?? `${mod}+`).join("")
+    return `${prefix}${mainKey}`
 }
 
 const SHORTCUT_GROUP_ORDER: BlockEditorKeymapGroup[] = ["navigate", "insert", "edit", "global"]

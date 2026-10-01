@@ -1,5 +1,6 @@
 import type {Schema} from "../components/tasks/getTaskComponent"
 import {shouldDrillItem, describeArrayItem} from "../components/tasks/fieldNesting"
+import {resolveDiscriminator} from "../components/tasks/discriminatedUnion"
 import type {NavFrame} from "./useFieldNavigation"
 
 export interface UnsetRequiredField {
@@ -46,7 +47,7 @@ function resolveAnyOfBranch(value: unknown, schema: PartialSchema, definitions: 
 
     if (value && typeof value === "object" && !Array.isArray(value) && "type" in value) {
         const discriminator = (value as {type?: unknown}).type
-        return resolvedBranches.find((branch) => branch.properties?.type?.const === discriminator)
+        return resolvedBranches.find((branch) => resolveDiscriminator(branch)?.includes(String(discriminator)))
     }
 
     const jsTypeToSchemaType: Record<string, string> = {

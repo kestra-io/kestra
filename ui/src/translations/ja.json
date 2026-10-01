@@ -130,7 +130,6 @@
     "description": "説明",
     "show description": "説明を表示",
     "show details": "詳細を表示",
-    "show more details": "詳細を表示",
     "skipped": "スキップされました",
     "revision": "リビジョン",
     "theme": "テーマ",
@@ -441,7 +440,8 @@
       "invalid_description": "グラフの読み込み中にエラーが発生しました。ソースコードにエラーがないか確認してください。",
       "load_error": "トポロジーグラフを読み込めませんでした。もう一度お試しください。",
       "add-task": "Taskを追加",
-      "add-trigger": "Triggerを追加"
+      "add-trigger": "Triggerを追加",
+      "child-count": "task {count}個 | task {count}個"
     },
     "show task logs": "Task Logsを表示",
     "show task condition": "タスク条件を表示",
@@ -459,6 +459,12 @@
     "email": "メール",
     "password": "パスワード",
     "confirm password": "パスワードを確認",
+    "change_password": {
+      "title": "パスワードを変更",
+      "current_password": "現在のパスワード",
+      "new_password": "新しいパスワード",
+      "success": "認証情報が更新されました。"
+    },
     "invalid flow": "無効なFlow",
     "invalid yaml": "無効なYAML",
     "inputs": "Inputs",
@@ -2606,6 +2612,9 @@
       "plugin_default": "デフォルト: {value}",
       "plugin_default_tooltip": "flowのpluginDefaultsからのデフォルト値",
       "required_missing": "必須フィールドが設定されていません",
+      "required_unset_jump": "最初へ移動",
+      "required_unset_plural": "{count} 件の必須フィールドがまだ設定されていません",
+      "required_unset_singular": "1 件の必須フィールドがまだ設定されていません",
       "save_blocked": {
         "message": "保存する前にエラーを修正してください。",
         "title": "flowを保存できません"

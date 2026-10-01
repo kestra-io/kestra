@@ -2248,7 +2248,13 @@
         "groups": "Groupes ({n})",
         "group_none": "Pas de regroupement",
         "group_dataset": "Jeu de données",
-        "ungrouped": "Non groupé"
+        "ungrouped": "Non groupé",
+        "hub": {
+          "notice": "Ce nœud a {count} relations — seules les plus récentes sont affichées pour maintenir la lisibilité du graphique.",
+          "expand": "Charger plus de relations",
+          "expand_failed": "Impossible de charger plus de relations. Veuillez réessayer."
+        },
+        "truncated": "Ce graphique était trop grand pour être affiché en entier ; certaines relations ont été omises."
       },
       "search": {
         "placeholders": {

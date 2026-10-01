@@ -1,6 +1,7 @@
 package io.kestra.core.runners;
 
 import java.time.Duration;
+import java.util.Map;
 import java.util.concurrent.TimeoutException;
 
 import io.kestra.core.models.executions.Execution;
@@ -24,6 +25,8 @@ public class MultipleConditionTriggerCaseTest {
     public static final String NAMESPACE = "io.kestra.tests.trigger";
 
     private static final String RESET_AFTER_FIRE_NAMESPACE = "io.kestra.tests.trigger.reset.after.fire";
+
+    private static final String DEPENDS_ON_OUTPUTS_NAMESPACE = "io.kestra.tests.trigger.depends.on.outputs";
 
     @Inject
     protected TestRunnerUtils runnerUtils;
@@ -212,6 +215,37 @@ public class MultipleConditionTriggerCaseTest {
         );
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertNoFurtherTriggerExecution(triggerExecution);
+    }
+
+    @SuppressWarnings("unchecked")
+    public void flowTriggerDependsOnOutputs() throws TimeoutException, QueueException {
+        // an execution that is not in dependsOn finishes first, so it is the one that opens the window
+        Execution unrelated = runnerUtils.runOne(
+            MAIN_TENANT, DEPENDS_ON_OUTPUTS_NAMESPACE + ".other", "flow-trigger-depends-on-outputs-unrelated"
+        );
+        assertThat(unrelated.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+
+        Execution flowA = runnerUtils.runOne(MAIN_TENANT, DEPENDS_ON_OUTPUTS_NAMESPACE, "flow-trigger-depends-on-outputs-flow-a");
+        assertThat(flowA.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        Execution flowB = runnerUtils.runOne(MAIN_TENANT, DEPENDS_ON_OUTPUTS_NAMESPACE, "flow-trigger-depends-on-outputs-flow-b");
+        assertThat(flowB.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+
+        Execution triggerExecution = runnerUtils.awaitFlowExecution(
+            e -> e.getState().getCurrent().equals(Type.SUCCESS),
+            MAIN_TENANT, DEPENDS_ON_OUTPUTS_NAMESPACE, "flow-trigger-depends-on-outputs-flow-listen"
+        );
+
+        Map<String, Object> outputs = (Map<String, Object>) triggerExecution.getTrigger().getVariables().get("outputs");
+        // the outputs of every upstream execution in dependsOn are kept, scoped by namespace and flow id
+        assertThat(outputs).containsEntry(
+            DEPENDS_ON_OUTPUTS_NAMESPACE, Map.of(
+                "flow-trigger-depends-on-outputs-flow-a", Map.of("value", "from_a"),
+                "flow-trigger-depends-on-outputs-flow-b", Map.of("value", "from_b")
+            )
+        );
+        // and nothing from an execution that is not in dependsOn
+        assertThat(outputs).doesNotContainKey(DEPENDS_ON_OUTPUTS_NAMESPACE + ".other");
+        assertThat(outputs.toString()).doesNotContain("do_not_leak");
     }
 
     private void assertNoFurtherTriggerExecution(Execution triggerExecution) {

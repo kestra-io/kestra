@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import io.kestra.core.models.property.Property;
 import org.apache.commons.lang3.tuple.Pair;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -200,6 +201,8 @@ public class Loop extends AbstractBranch<Loop.Output> {
     public static final String TERMINATED_ITERATIONS_OUTPUT = "terminatedIterations";
     public static final String NEXT_OFFSET_OUTPUT = "nextOffset";
     public static final String OUTPUTS_OUTPUT = "outputs";
+    // Internal bookkeeping: sub-execution statistics aggregated as task run statistics
+    public static final String TASK_RUN_STATISTIC_OUTPUT = "taskRunStatistic";
 
     private static final ObjectMapper ION_MAPPER = JacksonMapper.ofIon();
 
@@ -259,6 +262,18 @@ public class Loop extends AbstractBranch<Loop.Output> {
     @NotNull
     @PluginProperty
     private Loop.FetchType fetchType = FetchType.AUTO;
+
+    @Schema(
+        title = "A condition that determines whether the Loop should break its processing.",
+        description = """
+    A Pebble expression evaluated after each loop iteration. The loop will break and stop processing new iteration only when the expression evaluates to a truthy value (`true`, a non-empty string, a non-zero number).
+    Special variables are available:
+    - item: the current iteration item variables
+    - iteration.executionId: the current iteration execution id
+    - iteration.state: the current iteration execution state
+    - iteration.outputs: the current iteration execution outputs"""
+    )
+    private Property<String> breakWhen;
 
     @Override
     public GraphCluster tasksTree(Execution execution, TaskRun taskRun, List<String> parentValues) throws IllegalVariableEvaluationException {

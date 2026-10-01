@@ -49,7 +49,7 @@ export interface PluginComponent {
     deprecated?: boolean;
     version?: string;
     description?: string;
-    properties?: Record<string, any>;
+    properties?: Record<string, unknown>;
     schema: JSONSchema;
     markdown?: string;
 }
@@ -80,11 +80,22 @@ interface LoadOptions {
     hash?: number;
 }
 
-interface JsonSchemaDef {
-    $ref?: string,
-    allOf?: JsonSchemaDef[],
-    type?: string,
-    properties?: Record<string, any>,
+export interface JsonSchemaDef {
+    [key: string]: unknown;
+    $ref?: string;
+    allOf?: JsonSchemaDef[];
+    anyOf?: JsonSchemaDef[];
+    oneOf?: JsonSchemaDef[];
+    type?: string;
+    required?: string[];
+    items?: JsonSchemaDef;
+    properties?: Record<string, JsonSchemaDef>;
+    definitions?: Record<string, JsonSchemaDef>;
+}
+
+export interface RootJsonSchema extends JsonSchemaDef {
+    $ref: string;
+    definitions: Record<string, JsonSchemaDef>;
 }
 
 export function removeRefPrefix(refStr?: string): string {
@@ -248,10 +259,10 @@ export const usePluginsStore = defineStore("plugins", () => {
 
     const pluginsDocumentation = ref<Record<string, PluginComponent>>({})
     const editorPlugin = ref<(PluginComponent & {cls: string})>()
-    const schemaType = ref<Record<string, any>>()
+    const schemaType = ref<Record<string, RootJsonSchema>>()
     const forceIncludeProperties = ref<string[]>()
 
-    const flowSchema = computed(() => {
+    const flowSchema = computed<RootJsonSchema>(() => {
         return schemaType.value?.flow ?? InitialFlowSchema
     })
     const flowDefinitions = computed(() => {
@@ -284,7 +295,7 @@ export const usePluginsStore = defineStore("plugins", () => {
             return flowDefinitions.value?.[removeRefPrefix(obj.$ref)]
         }
         if (obj?.allOf) {
-            const def = obj.allOf.reduce((acc: any, item) => {
+            const def = obj.allOf.reduce<JsonSchemaDef>((acc, item) => {
                 if (item.$ref) {
                     const resolved = toRaw(flowDefinitions.value?.[removeRefPrefix(item.$ref)])
                     if (resolved?.type === "object" && resolved?.properties) {
@@ -358,7 +369,7 @@ export const usePluginsStore = defineStore("plugins", () => {
         })
     }
 
-    async function listWithSubgroup(_options?: Record<string, any>) {
+    async function listWithSubgroup() {
         const response = await PluginsAPI.pluginBySubgroups() as Plugin[]
         plugins.value = response
         return response
@@ -368,7 +379,7 @@ export const usePluginsStore = defineStore("plugins", () => {
     async function ensurePlugins(): Promise<Plugin[]> {
         if (plugins.value) return plugins.value
         if (pluginsPending) return pluginsPending
-        pluginsPending = listWithSubgroup({includeDeprecated: false}).finally(() => {
+        pluginsPending = listWithSubgroup().finally(() => {
             pluginsPending = null
         })
         return pluginsPending
@@ -430,9 +441,10 @@ export const usePluginsStore = defineStore("plugins", () => {
 
     function loadSchemaType(options: {type: string}) {
         return PluginsAPI.schemasFromType({type: options.type as Parameters<typeof PluginsAPI.schemasFromType>[0]["type"]}).then(data => {
+            const schema = data as RootJsonSchema
             schemaType.value = schemaType.value || {}
-            schemaType.value[options.type] = data
-            return data
+            schemaType.value[options.type] = schema
+            return schema
         })
     }
 
@@ -485,6 +497,10 @@ export const usePluginsStore = defineStore("plugins", () => {
             // catalog-only type: no local doc until the plugin is actually installed
             editorPlugin.value = undefined
             currentlyLoading = undefined
+            return
+        }
+
+        if (currentlyLoading?.cls !== cls || currentlyLoading?.version !== version) {
             return
         }
 

@@ -130,7 +130,6 @@
     "description": "Descrizione",
     "show description": "Mostra una descrizione",
     "show details": "Mostra dettagli",
-    "show more details": "Mostra più dettagli",
     "skipped": "Saltato",
     "revision": "Revisione",
     "theme": "Tema",
@@ -441,7 +440,8 @@
       "invalid_description": "Si è verificato un errore durante il caricamento del grafico. Si prega di controllare il codice sorgente per errori.",
       "load_error": "Impossibile caricare il grafico della topologia. Riprova.",
       "add-task": "Aggiungi task",
-      "add-trigger": "Aggiungi trigger"
+      "add-trigger": "Aggiungi trigger",
+      "child-count": "{count} task | {count} tasks"
     },
     "show task logs": "Mostra task logs",
     "show task condition": "Mostra condizione del task",
@@ -459,6 +459,12 @@
     "email": "Email",
     "password": "Password",
     "confirm password": "Conferma password",
+    "change_password": {
+      "title": "Cambia Password",
+      "current_password": "Password attuale",
+      "new_password": "Nuova password",
+      "success": "Le tue credenziali sono state aggiornate."
+    },
     "invalid flow": "Flow non valido",
     "invalid yaml": "YAML non valido",
     "inputs": "Inputs",
@@ -1424,7 +1430,7 @@
             "title": "I flow sono modificati come codice",
             "body": "Abbiamo aggiunto un task `notify` per te senza l'AI Copilot, così puoi vedere come appare la modifica diretta del YAML. Pubblica il risultato finale su Slack.",
             "next": "Consulta la documentazione del task",
-            "callout": "Una prima bozza generata da AI Copilot è solo un punto di partenza; l'editor è il luogo dove la si perfeziona in una scheda editor Code o No-code, le quali producono entrambe lo stesso YAML, garantendo che il tuo flow rimanga come codice, indipendentemente da come sia stato creato."
+            "callout": "Una prima bozza generata da AI Copilot è solo un punto di partenza; l'editor è il luogo dove la si perfeziona in una scheda editor Code o No Code, le quali producono entrambe lo stesso YAML, garantendo che il tuo flow rimanga come codice, indipendentemente da come sia stato creato."
           },
           "editor_help": {
             "title": "La documentazione è accanto al flow",
@@ -2193,7 +2199,7 @@
     "playground": {
       "title": "Playground",
       "run_task_info": "Passa il mouse su qualsiasi task nell'editor del Flow Code e fai clic sul pulsante \"Run task\" per testare il tuo task.",
-      "play_icon_info": "Puoi anche fare clic sull'icona Play nelle viste No-code o Topology.",
+      "play_icon_info": "Puoi anche fare clic sull'icona Play nelle viste No Code o Topology.",
       "toggle": "Playground",
       "run_task": "Esegui il task",
       "run_this_task": "Esegui questo task",
@@ -2532,6 +2538,8 @@
       "command_menu": {
         "context_flow": "contesto: flow",
         "context_selected": "contesto: {name}",
+        "copy": "Copia {name}",
+        "cut": "Taglia {name}",
         "delete": "Elimina {name}",
         "duplicate": "Duplica {name}",
         "goto": "Vai a {section}",
@@ -2547,6 +2555,7 @@
         "insert_kind": "Inserisci {kind}",
         "no_match": "Nessuna corrispondenza",
         "open": "Apri {name}",
+        "paste": "Incolla",
         "save": "Salva il flow",
         "search_placeholder": "Digita un comando o cerca un task...",
         "title": "Menu comandi"
@@ -2563,6 +2572,7 @@
       "depends_on_placeholder": "Seleziona i task…",
       "depth_pill": "Profondità {depth}",
       "drag_reorder": "Trascina per riordinare",
+      "drop_forbidden": "Impossibile rilasciare qui",
       "duplicate": "Duplica",
       "empty_add_hint": "o premi / per cercare i task",
       "empty_add_lead": "Clicca per aggiungere {label}",
@@ -2591,6 +2601,9 @@
       "lane_then": "Poi",
       "move_down": "Sposta in basso",
       "move_up": "Sposta su",
+      "namespace_files": "File del namespace",
+      "namespace_kv": "KV Store Keys",
+      "namespace_secrets": "Segreti",
       "no_data_matches": "Nessun elemento corrisponde al tuo filtro",
       "no_recent": "Nessun tipo di task recente ancora",
       "no_task_results": "Nessun tipo di task corrispondente.",
@@ -2601,7 +2614,30 @@
       "picker_more_results": "{count} altri, affina la tua ricerca",
       "plugin_default": "default: {value}",
       "plugin_default_tooltip": "Valore predefinito da pluginDefaults del flow",
+      "plugin_implementation": {
+        "change": "Modifica",
+        "choose_title": "Scegli {label}",
+        "count_available": "{count} disponibili",
+        "exactly_one": "1 implementazione",
+        "items_set": "{count} impostati",
+        "no_results_description": "{count} implementazioni sono installate su questa istanza. Una fornita da un plugin non installato non comparirà qui.",
+        "no_results_title": "Nessuna implementazione corrisponde a «{query}»",
+        "picker_count": "{shown} di {total}",
+        "remove": "Rimuovi {label}",
+        "remove_from": "Rimuovi {name} da {field}",
+        "replace": "Sostituisci…",
+        "search_placeholder": "Cerca…",
+        "secret_summary": "{label} da Secret",
+        "stored_value": "Valore memorizzato",
+        "summary_overflow": "+{count}",
+        "unresolved_message": "{type} non è una delle {count} implementazioni che questa istanza conosce per {label}. Il plugin potrebbe non essere installato oppure essere stato rimosso in un aggiornamento.",
+        "unresolved_name": "Implementazione sconosciuta",
+        "unresolved_untouched": "Il tuo YAML resta invariato. Non viene scritto nulla nel flow finché non sostituisci l'implementazione."
+      },
       "required_missing": "Campo obbligatorio non impostato",
+      "required_unset_jump": "Vai al primo",
+      "required_unset_plural": "{count} campi obbligatori non sono ancora impostati",
+      "required_unset_singular": "1 campo obbligatorio non è ancora impostato",
       "save_blocked": {
         "message": "Correggi gli errori prima di salvare.",
         "title": "Impossibile salvare il flow"
@@ -2615,6 +2651,8 @@
         "clear": "Chiudi / cancella selezione",
         "collapse_expand": "Comprimi / espandi",
         "command_palette": "Menu dei comandi (contestuale)",
+        "copy": "Copia",
+        "cut": "Taglia",
         "group_edit": "Modifica",
         "group_global": "Globale",
         "group_insert": "Inserisci",
@@ -2623,6 +2661,8 @@
         "open": "Apri blocco selezionato",
         "open_split": "Apri il blocco selezionato in visualizzazione divisa",
         "or": "o",
+        "paste": "Incolla",
+        "redo": "Ripeti",
         "reorder": "Riordina su / giù",
         "save": "Salva il flow",
         "step_into": "Espandi / entra in un gruppo",

@@ -130,6 +130,7 @@
 
     const {loadInit} = useRestoreUrl()
     import Sections from "../dashboard/sections/Sections.vue"
+    import type {Chart} from "../dashboard/types"
     import TopNavBar from "../../components/layout/TopNavBar.vue"
     import LogLine from "../logs/LogLine.vue"
     import {storageKeys} from "../../utils/constants"
@@ -269,9 +270,10 @@
     })
     const flowId = computed(() => route.params.id)
     const routeNamespace = computed(() => route.params.namespace ?? route.params.id)
-    const charts = computed(() => [
-        {...YAML_UTILS.parse(YAML_CHART), content: YAML_CHART},
-    ])
+    const charts = computed(() => {
+        const chart = YAML_UTILS.parse<Chart>(YAML_CHART)
+        return chart ? [{...chart, content: YAML_CHART}] : []
+    })
 
     const loadQuery = (base: any) => {
         const {page: _p, size: _s, sort: _so, logsPage: _lp, logsSize: _ls, ...routeFilters} = route.query

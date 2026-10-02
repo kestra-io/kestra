@@ -11,12 +11,12 @@ export const isFilterableLogField = (field: string): boolean =>
     Object.prototype.hasOwnProperty.call(FILTERABLE_LOG_FIELDS, field)
 
 export const buildValueFilterQuery = (
-    currentQuery: Record<string, any>,
+    currentQuery: Record<string, unknown>,
     field: string,
     value: string,
     negate: boolean,
     pageKey = "page",
-): Record<string, any> | null => {
+): Record<string, unknown> | null => {
     const comparators = FILTERABLE_LOG_FIELDS[field as keyof typeof FILTERABLE_LOG_FIELDS]
     if (!comparators) return null
 

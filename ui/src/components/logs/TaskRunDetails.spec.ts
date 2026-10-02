@@ -5,7 +5,7 @@ import {nextTick, reactive} from "vue"
 import KestraDesignSystem from "@kestra-io/design-system"
 
 const store = vi.hoisted(() => ({
-    executions: {} as Record<string, any>,
+    executions: {} as Record<string, unknown>,
 }))
 
 vi.mock("../../stores/executions", () => ({
@@ -62,7 +62,7 @@ describe("TaskRunDetails log loading across executions", () => {
         vi.useFakeTimers()
         openedStreams = []
         store.executions = reactive({
-            execution: undefined as any,
+            execution: undefined,
             logs: undefined,
             loadLogs: vi.fn(({executionId}: {executionId: string}) => Promise.resolve(logsFor(executionId))),
             followLogs: vi.fn(({id}: {id: string}) => {
@@ -105,14 +105,14 @@ describe("TaskRunDetails log loading across executions", () => {
         store.executions.execution = execution("exec-1", "SUCCESS")
         const wrapper = mountDetails()
         await flushPromises()
-        expect((wrapper.vm as any).filteredLogs).toEqual([{level: "INFO", message: "log of exec-1"}])
+        expect(wrapper.vm.filteredLogs).toEqual([{level: "INFO", message: "log of exec-1"}])
 
         store.executions.loadLogs.mockReturnValue(new Promise(() => {}))
         store.executions.execution = execution("exec-2", "RESTARTED")
         await nextTick()
         await flushPromises()
 
-        expect((wrapper.vm as any).filteredLogs).toEqual([])
+        expect(wrapper.vm.filteredLogs).toEqual([])
     })
 
     /**

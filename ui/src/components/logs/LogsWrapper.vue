@@ -167,7 +167,7 @@
         logLevel?: string;
         embed?: boolean;
         showFilters?: boolean;
-        filters?: Record<string, any>;
+        filters?: Record<string, unknown>;
         reloadLogs?: number;
         namespace?: string | null;
         restoreurl?: boolean;
@@ -275,7 +275,7 @@
         return chart ? [{...chart, content: YAML_CHART}] : []
     })
 
-    const loadQuery = (base: any) => {
+    const loadQuery = (base: Record<string, unknown>) => {
         const {page: _p, size: _s, sort: _so, logsPage: _lp, logsSize: _ls, ...routeFilters} = route.query
         let queryFilter = props.filters ?? {...routeFilters}
 
@@ -350,7 +350,7 @@
             page: _p, size: _s, sort: _so, logsPage: _lp, logsSize: _ls,
             level: _l, startDate: _sd, endDate: _ed, ...routeFilters
         } = route.query
-        const params: Record<string, any> = props.filters ? {...props.filters} : {...routeFilters}
+        const params: Record<string, unknown> = props.filters ? {...props.filters} : {...routeFilters}
 
         if (isFlowEdit.value) {
             params["filters[namespace][EQUALS]"] = routeNamespace.value
@@ -420,7 +420,7 @@
     }
 
     const selectLevel = (level: string) => {
-        const query: Record<string, any> = {...route.query}
+        const query: Record<string, unknown> = {...route.query}
         Object.keys(query)
             .filter((key) => key.startsWith("filters[level]"))
             .forEach((key) => delete query[key])
@@ -436,7 +436,7 @@
 
     const copyAllLogs = () => {
         const text = (logsStore.logs ?? [])
-            .map((l: any) => `${(l.level ?? "").padEnd(5)} ${l.timestamp} ${(l.message ?? "").replace(/\s+$/, "")}`)
+            .map((l) => `${(l.level ?? "").padEnd(5)} ${l.timestamp} ${(l.message ?? "").replace(/\s+$/, "")}`)
             .join("\n")
         Utils.copy(text)
         toast.success(t("logs_copied"))

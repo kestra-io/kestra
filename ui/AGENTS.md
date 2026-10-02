@@ -207,7 +207,7 @@ Guards are wired through `initApp`, and three things about that are easy to get 
 
 ### Session loss and an unreachable server
 
-A 401 on a logged-out session opens `ReauthDialog` through `requestReauth(signIn)` and replays the failed request once the user signs in, so the page and its unsaved state survive; the edition supplies its own `signIn` from `onUnauthorized`. A request that fails without a response (or behind a 502/503/504) raises `ServerUnreachableBanner`, which clears on the next response. Don't add per-page handling for either, and don't clear `unsavedChange` before the user has chosen to leave.
+A 401 on a logged-out session opens `ReauthDialog` through `requestReauth(signIn)` and replays the failed request once the user signs in, so the page and its unsaved state survive; the edition supplies its own `signIn` from `onUnauthorized`. A request that fails without a response (or behind a 502/503/504) raises `ServerUnreachableBanner`, which clears on the next response. Don't add per-page handling for either, and don't clear `unsavedChange` before the user has chosen to leave. The native basic-auth dialog is suppressed for fetch and XHR only: `EventSource` cannot set headers and relies on `Sec-Fetch-Dest`, which browsers send only over HTTPS or localhost, so on plain HTTP its streams can still open the dialog.
 
 ### Unsaved input in modals (discard guard)
 

@@ -695,6 +695,7 @@
     "sign in in a new tab": "Sign in in a new tab",
     "sign in in a new tab hint": "Sign in in the tab that just opened, then come back here and continue.",
     "continue after sign in": "Continue",
+    "sign in not confirmed": "We could not confirm that you are signed in. Sign in in the other tab, then continue.",
     "server unreachable": "Cannot reach the Kestra server",
     "server unreachable description": "Copy any unsaved work (for example the flow YAML) somewhere safe before refreshing this page. This banner disappears once the server responds again.",
     "unsaved changes": "Unsaved Changes",

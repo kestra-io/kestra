@@ -95,7 +95,6 @@ public class AuthenticationFilter implements HttpServerFilter {
             });
     }
 
-    /** Script requests handle their own 401, so they must not open the native login dialog. */
     // Sec-Fetch-Dest is only sent over HTTPS or localhost, hence the X-Requested-With fallback.
     private static boolean isScriptedRequest(HttpRequest<?> request) {
         return "empty".equals(request.getHeaders().get("Sec-Fetch-Dest"))

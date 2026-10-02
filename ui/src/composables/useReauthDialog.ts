@@ -1,31 +1,32 @@
 import {readonly, ref} from "vue"
 
-const visible = ref(false)
-const loginUrl = ref<string>()
-const canSignInWithPassword = ref(false)
-let pending: Promise<boolean> | undefined
-let settle: ((signedIn: boolean) => void) | undefined
-let signInHandler: SignIn | undefined
-
 export type SignIn = (credentials: {username: string, password: string}) => Promise<unknown>
 
 export interface ReauthOptions {
-    /** Shows the username and password form when set. */
     signIn?: SignIn
-    /** Lets the user sign in a new tab, for logins that cannot happen in the dialog (SSO, passwordless). */
     loginUrl?: string
+    confirm?: () => Promise<unknown>
+    username?: string
 }
 
-/** Concurrent callers share one dialog, one outcome and the options of the first caller. */
+const visible = ref(false)
+const loginUrl = ref<string>()
+const lockedUsername = ref<string>()
+const canSignInWithPassword = ref(false)
+let pending: Promise<boolean> | undefined
+let settle: ((signedIn: boolean) => void) | undefined
+let current: ReauthOptions = {}
+
 export function requestReauth(options: ReauthOptions): Promise<boolean> {
     pending ??= new Promise<boolean>((resolve) => {
-        signInHandler = options.signIn
+        current = options
         canSignInWithPassword.value = Boolean(options.signIn)
         loginUrl.value = options.loginUrl
+        lockedUsername.value = options.username
         settle = (signedIn) => {
             pending = undefined
             settle = undefined
-            signInHandler = undefined
+            current = {}
             visible.value = false
             resolve(signedIn)
         }
@@ -34,8 +35,14 @@ export function requestReauth(options: ReauthOptions): Promise<boolean> {
     return pending
 }
 
-export function submitReauth(credentials: {username: string, password: string}) {
-    return signInHandler?.(credentials) ?? Promise.reject(new Error("No re-authentication is pending."))
+export async function submitReauth(credentials: {username: string, password: string}) {
+    if (!current.signIn) throw new Error("No password sign-in is pending.")
+    await current.signIn(credentials)
+    await current.confirm?.()
+}
+
+export async function confirmReauth() {
+    await current.confirm?.()
 }
 
 export function resolveReauth(signedIn: boolean) {
@@ -47,5 +54,10 @@ export function isReauthOpen() {
 }
 
 export function useReauthDialog() {
-    return {visible: readonly(visible), loginUrl: readonly(loginUrl), canSignInWithPassword: readonly(canSignInWithPassword)}
+    return {
+        visible: readonly(visible),
+        loginUrl: readonly(loginUrl),
+        lockedUsername: readonly(lockedUsername),
+        canSignInWithPassword: readonly(canSignInWithPassword),
+    }
 }

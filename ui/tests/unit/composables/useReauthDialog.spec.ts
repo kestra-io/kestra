@@ -37,6 +37,18 @@ describe("useReauthDialog", () => {
         await withoutPassword
     })
 
+    it("confirms the session after a successful sign-in and rejects when it cannot be confirmed", async () => {
+        const confirm = vi.fn().mockRejectedValueOnce(new Error("not signed in")).mockResolvedValue(undefined)
+        const opened = requestReauth({signIn, confirm})
+
+        await expect(submitReauth({username: "a", password: "wrong"})).rejects.toThrow("not signed in")
+        await expect(submitReauth({username: "a", password: "right"})).resolves.toBeUndefined()
+        expect(confirm).toHaveBeenCalledTimes(2)
+
+        resolveReauth(false)
+        await opened
+    })
+
     it("opens a fresh dialog once the previous one is settled", async () => {
         const abandoned = requestReauth({signIn})
         resolveReauth(false)

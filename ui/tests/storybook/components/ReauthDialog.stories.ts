@@ -116,3 +116,29 @@ export const AnotherMethodNextToPassword: Story = {
         openWindow.mockRestore()
     },
 }
+
+export const ContinueBeforeSigningIn: Story = {
+    async play() {
+        const openWindow = spyOn(window, "open").mockReturnValue(null)
+        const outcome = fn()
+        open({loginUrl: "/ui/login", confirm: fn().mockRejectedValue(new Error("not signed in"))}).then(outcome)
+
+        await userEvent.click(await body().findByRole("button", {name: "Sign in in a new tab"}))
+        await userEvent.click(await body().findByRole("button", {name: "Continue"}))
+
+        await waitFor(async () => expect(await body().findByText(/could not confirm that you are signed in/)).toBeVisible())
+        await expect(outcome).not.toHaveBeenCalled()
+        openWindow.mockRestore()
+    },
+}
+
+export const LockedUsername: Story = {
+    async play() {
+        open({signIn: fn(), username: "me@example.com"})
+
+        const email = await body().findByPlaceholderText("Email")
+
+        await expect(email).toHaveValue("me@example.com")
+        await expect(email).toHaveAttribute("readonly")
+    },
+}

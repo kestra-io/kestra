@@ -494,7 +494,15 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
                 if (!declaredInputs.isEmpty() || !declaredOutputs.isEmpty()) {
                     bundles.add(new AssetsInOut(declaredInputs, declaredOutputs));
                 }
-                runContext.assets().emitted().forEach(emit -> bundles.add(new AssetsInOut(emit.inputs(), emit.outputs())));
+                for (AssetEmit emit : runContext.assets().emitted()) {
+                    try {
+                        emit.outputs().forEach(runContext::validate);
+                        bundles.add(new AssetsInOut(emit.inputs(), emit.outputs()));
+                    } catch (ConstraintViolationException e) {
+                        logger.warn("Skipping the assets emitted by task '{}': {}", taskRun.getTaskId(), violationsUnder("", e));
+                        assetEmission = TaskRunWithOutput.AssetEmission.FAILED;
+                    }
+                }
 
                 if (!bundles.isEmpty()) {
                     taskRun = taskRun.withAssetEmits(withDefaultInputNamespace(bundles, taskRun.getNamespace()));

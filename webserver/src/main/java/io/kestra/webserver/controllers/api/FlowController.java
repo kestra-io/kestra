@@ -478,6 +478,29 @@ public class FlowController {
 
     protected List<FlowInterface> bulkUpdateOrCreate(@Nullable String namespace, List<GenericFlow> flows, Boolean delete, Boolean allowNamespaceChild) throws Exception {
 
+        // list all uids of updated flows
+        Set<String> uids = flows
+            .stream()
+            .map(FlowId::uidWithoutRevision)
+            .collect(Collectors.toSet());
+
+        // delete all not in updated uids
+        List<FlowWithSource> deleted = new ArrayList<>();
+        if (delete) {
+            if (namespace != null) {
+                deleted = flowRepository
+                    .findByNamespaceWithSource(tenantService.resolveTenant(), namespace);
+            } else {
+                deleted = flowRepository
+                    .findAllWithSource(tenantService.resolveTenant());
+            }
+            deleted = deleted.stream()
+                .filter(flow -> !uids.contains(FlowId.uidWithoutRevision(flow)))
+                .toList();
+        }
+
+        validateBulkUpdate(flows, deleted);
+
         if (namespace != null) {
             // control namespace to update
             Set<ManualConstraintViolation<GenericFlow>> invalids = flows
@@ -505,13 +528,7 @@ public class FlowController {
         }
 
         // multiple same flows
-        List<String> duplicate = flows
-            .stream()
-            .map(GenericFlow::getId)
-            .distinct()
-            .toList();
-
-        if (duplicate.size() < flows.size()) {
+        if (uids.size() < flows.size()) {
             throw new ConstraintViolationException(
                 Collections.singleton(
                     ManualConstraintViolation.of(
@@ -519,40 +536,20 @@ public class FlowController {
                         flows,
                         List.class,
                         "flow.id",
-                        duplicate
+                        List.copyOf(uids)
                     )
                 )
             );
         }
 
-        // list all ids of updated flows
-        List<String> ids = flows
-            .stream()
-            .map(GenericFlow::getId)
-            .toList();
-
-        // delete all not in updated ids
-        List<FlowWithSource> deleted = new ArrayList<>();
-        if (delete) {
-            if (namespace != null) {
-                deleted = flowRepository
-                    .findByNamespaceWithSource(tenantService.resolveTenant(), namespace);
-            } else {
-                deleted = flowRepository
-                    .findAllWithSource(tenantService.resolveTenant());
-            }
-            deleted = deleted.stream()
-                .filter(flow -> !ids.contains(flow.getId()))
-                .peek(throwConsumer(flow -> flowService.delete(flow)))
-                .toList();
-        }
+        deleted.forEach(flowService::delete);
 
         // update or create flows
         List<? extends FlowInterface> updatedOrCreated = flows.stream()
             .map(
                 throwFunction(
                     flow -> flowRepository.findById(tenantService.resolveTenant(), flow.getNamespace(), flow.getId())
-                        .map(throwFunction(existing -> flowService.update(flow, existing)))
+                        .map(throwFunction(existing -> this.doUpdateFlow(flow, existing)))
                         .orElseGet(() -> this.doCreate(flow))
                 )
             )
@@ -604,6 +601,12 @@ public class FlowController {
 
     protected FlowWithSource doUpdateFlow(GenericFlow current, FlowInterface previous) throws FlowProcessingException, QueueException {
         return flowService.update(current, previous);
+    }
+
+    /**
+     * Called once by a bulk update with the flows to create or update and the flows to delete, before anything is written, so that an override can reject the whole request on a permission or policy check. It does not validate the content of the flows, which can still fail after the deletions.
+     */
+    protected void validateBulkUpdate(List<GenericFlow> flows, List<FlowWithSource> toDelete) {
     }
 
     @ExecuteOn(TaskExecutors.IO)

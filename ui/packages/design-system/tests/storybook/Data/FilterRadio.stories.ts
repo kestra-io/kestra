@@ -23,16 +23,10 @@ const KINDS = [
     {label: "Test", value: "TEST", description: "Executions triggered by Unit Tests"},
 ]
 
-// No assertion on the leading option here: its wording comes from the design system's own i18n,
-// which this harness does not register, so only the overridden case below can be asserted on text.
 export const Default: Story = {
     args: {modelValue: "ALL", options: KINDS},
 }
 
-/**
- * The execution kind filter: the unfiltered option is the only one that lists standard executions,
- * so it is named after what it shows rather than left as a generic "Default".
- */
 export const CustomAllOption: Story = {
     args: {
         modelValue: "ALL",

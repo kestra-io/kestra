@@ -55,8 +55,6 @@ export const useFlowExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                     description: t("filter.kind.description"),
                     comparators: [Comparators.EQUALS],
                     valueType: "radio",
-                    // The unfiltered option is what actually lists standard executions, since the
-                    // backend restricts to `kind IS NULL OR kind = 'NORMAL'` when no kind is chosen.
                     allLabel: t("filter.execution_kind.standard"),
                     allDescription: t("filter.execution_kind.standard_description"),
                     valueProvider: async () => {

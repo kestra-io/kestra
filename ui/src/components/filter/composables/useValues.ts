@@ -94,9 +94,7 @@ export function useValues(label: string | undefined, t?: ReturnType<typeof useI1
             },
         ],
         KINDS: [
-            // No NORMAL entry: a normal execution is persisted with a null kind, so filtering on
-            // "NORMAL" matches almost nothing. The unfiltered option already covers it, since the
-            // repository applies `kind IS NULL OR kind = 'NORMAL'` whenever no kind filter is set.
+            // No NORMAL: it is persisted as a null kind, which the unfiltered option already covers.
             {
                 label: t("filter.execution_kind.playground"),
                 description: t("filter.execution_kind.playground_description"),

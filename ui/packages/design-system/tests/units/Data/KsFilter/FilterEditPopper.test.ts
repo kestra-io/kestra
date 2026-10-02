@@ -8,6 +8,7 @@ import FilterMultiSelect from "../../../../src/components/Data/KsDataTable/filte
 import FilterDateTime from "../../../../src/components/Data/KsDataTable/filter/layout/FilterDateTime.vue"
 import FilterComparatorSelect from "../../../../src/components/Data/KsDataTable/filter/layout/FilterComparatorSelect.vue"
 import FilterFooter from "../../../../src/components/Data/KsDataTable/filter/layout/FilterFooter.vue"
+import FilterRadio from "../../../../src/components/Data/KsDataTable/filter/layout/FilterRadio.vue"
 import {Comparators, type AppliedFilter, type FilterKeyConfig} from "../../../../src/components/Data/KsDataTable/filter/utils/filterTypes"
 
 const levelKey: FilterKeyConfig = {
@@ -335,5 +336,60 @@ describe("FilterEditPopper time range", () => {
             const {startDate, endDate} = filter.value as {startDate: Date; endDate: Date}
             expect(startDate.getTime()).toBeLessThanOrEqual(endDate.getTime())
         })
+    })
+})
+
+// #17947: the kind filter renamed its unfiltered option to Standard and dropped NORMAL.
+const kindKey: FilterKeyConfig = {
+    key: "kind",
+    label: "Kind",
+    valueType: "radio",
+    comparators: [Comparators.EQUALS],
+    allLabel: "Standard",
+    allDescription: "Standard execution outside of Playground, loop or test",
+    valueProvider: async () => [
+        {label: "Playground", value: "PLAYGROUND"},
+        {label: "Loop", value: "LOOP"},
+    ],
+}
+
+describe("FilterEditPopper radio filter with a renamed unfiltered option", () => {
+    const mountKind = async (value: string) => {
+        const wrapper = i18nMount(FilterEditPopper, {
+            props: {
+                filter: {
+                    id: "f1",
+                    key: "kind",
+                    keyLabel: "Kind",
+                    comparator: Comparators.EQUALS,
+                    comparatorLabel: "Equals",
+                    value,
+                    valueLabel: value,
+                },
+                filterKey: kindKey,
+            },
+        })
+        await flushPromises()
+        return wrapper
+    }
+
+    test("restores a value that no option offers onto the unfiltered option", async () => {
+        // A filter bookmarked while NORMAL still existed would otherwise select nothing at all.
+        const wrapper = await mountKind("NORMAL")
+
+        expect(wrapper.findComponent(FilterRadio).props("modelValue")).toBe("ALL")
+    })
+
+    test("keeps a value that is still offered", async () => {
+        const wrapper = await mountKind("PLAYGROUND")
+
+        expect(wrapper.findComponent(FilterRadio).props("modelValue")).toBe("PLAYGROUND")
+    })
+
+    test("names the unfiltered option in the footer instead of saying Default", async () => {
+        const wrapper = await mountKind("NORMAL")
+
+        expect(wrapper.text()).toContain("Standard selected")
+        expect(wrapper.text()).not.toContain("Default selected")
     })
 })

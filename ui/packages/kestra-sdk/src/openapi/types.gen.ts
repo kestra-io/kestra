@@ -6772,6 +6772,56 @@ export type ReplayExecutionWithinputsResponses = {
 
 export type ReplayExecutionWithinputsResponse = ReplayExecutionWithinputsResponses[keyof ReplayExecutionWithinputsResponses];
 
+export type ValidateReplayExecutionData = {
+    body?: never;
+    path: {
+        /**
+         * the original execution id to clone
+         */
+        executionId: string;
+        tenant: string;
+    };
+    query?: {
+        /**
+         * The taskrun id
+         */
+        taskRunId?: string | null;
+        /**
+         * The flow revision to use for new execution
+         */
+        revision?: number | null;
+    };
+    url: '/api/v1/{tenant}/executions/{executionId}/actions/replay/validate';
+};
+
+export type ValidateReplayExecutionErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * if the execution cannot be replayed
+     */
+    409: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type ValidateReplayExecutionError = ValidateReplayExecutionErrors[keyof ValidateReplayExecutionErrors];
+
+export type ValidateReplayExecutionResponses = {
+    /**
+     * On success
+     */
+    200: unknown;
+};
+
 export type RestartExecutionData = {
     body?: never;
     path: {

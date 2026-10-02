@@ -10,7 +10,7 @@ export const MONACO_ERROR_SQUIGGLE_CLASS = "squiggly-error"
 
 /** Shows backend details verbatim in a markdown hover, like the plain-text marker message. */
 function plainText(message: string): monaco.IMarkdownString {
-    return {value: message.replace(/[\\`*_{}[\]()#+\-.!|<>~]/g, "\\$&")}
+    return {value: message.replace(/[\\`*_{}[\]()#+\-.!|<>~&]/g, "\\$&")}
 }
 
 export function useViolationMarkers(options: {

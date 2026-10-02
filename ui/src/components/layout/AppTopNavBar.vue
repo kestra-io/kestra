@@ -170,7 +170,7 @@
     )
 
     const bookmarked = computed(() =>
-        bookmarksStore.pages.some((page) => page.path === currentFavURI.value),
+        bookmarksStore.isBookmarked(currentFavURI.value),
     )
 
     const derivedBookmarkLabel = computed(() =>

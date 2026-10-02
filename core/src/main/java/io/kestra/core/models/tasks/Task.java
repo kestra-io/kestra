@@ -3,6 +3,7 @@ package io.kestra.core.models.tasks;
 import java.time.Duration;
 import java.util.Optional;
 
+import org.hibernate.validator.constraints.time.DurationMin;
 import org.slf4j.event.Level;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -99,9 +100,12 @@ abstract public class Task implements TaskInterface {
     @Valid
     private Cache taskCache;
 
-    @PluginProperty(hidden = true, group = PluginProperty.CORE_GROUP)
+    @PluginProperty(group = PluginProperty.CORE_GROUP)
     @Valid
     @Nullable
+    @Schema(
+        description = "Assets this task consumes as inputs or produces as outputs, for lineage tracking and the asset graph (Enterprise Edition). A flow declaring this property on a task is rejected in the open-source edition."
+    )
     private AssetsDeclaration assets;
 
     public Optional<Task> findById(String id) {

@@ -24,6 +24,7 @@
                 :blockSchemaPath
                 @update:model-value="onTaskTypeSelect"
             />
+            <FieldValidationErrors :errors="typeErrors" />
         </KsFormItem>
     </KsForm>
     <div @click="() => onTaskEditorClick(taskModel)">
@@ -57,12 +58,14 @@
     import TaskObjectField from "./tasks/TaskObjectField.vue"
     import PluginSelect from "../../plugins/PluginSelect.vue"
     import FieldNavBreadcrumb from "./FieldNavBreadcrumb.vue"
+    import FieldValidationErrors from "./FieldValidationErrors.vue"
     import {useFieldNavigation} from "../utils/useFieldNavigation"
     import {countUnsetRequiredFields, findRequiredFieldFrames} from "../utils/requiredFields"
     import {NoCodeElement, Schemas} from "../utils/types"
     import {getPath, setPath, cloneDeep, isDeepEqual} from "@kestra-io/design-system"
     import {
-        FIELDNAME_INJECTION_KEY, PARENT_PATH_INJECTION_KEY,
+        FIELDNAME_INJECTION_KEY, FIELD_VALIDATION_ERRORS_INJECTION_KEY,
+        PARENT_PATH_INJECTION_KEY,
         BLOCK_SCHEMA_PATH_INJECTION_KEY,
         FULL_SCHEMA_INJECTION_KEY,
         SCHEMA_DEFINITIONS_INJECTION_KEY,
@@ -126,6 +129,9 @@
         return merged
     })
     provide(PLUGIN_DEFAULTS_INJECTION_KEY, pluginDefaultsForType)
+
+    const validationErrors = inject(FIELD_VALIDATION_ERRORS_INJECTION_KEY, undefined)
+    const typeErrors = computed<string[]>(() => navStack.value.length ? [] : validationErrors?.value.get("type") ?? [])
 
     const rootLabel = computed(() =>
         taskModel.value?.id

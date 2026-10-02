@@ -1035,6 +1035,8 @@
         "folder": "Excluir pasta",
         "files": "Excluir {count} arquivos selecionados",
         "bulk_success": "Arquivos selecionados excluídos com sucesso.",
+        "bulk_partial_error": "Falha ao excluir {failedCount} arquivo(s). {totalCount} excluídos com sucesso.",
+        "all_failed_error": "Falha ao excluir os arquivos selecionados.",
         "folders": "Excluir {count} pastas selecionadas"
       },
       "move": {

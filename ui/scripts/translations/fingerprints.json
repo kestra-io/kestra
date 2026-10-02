@@ -1059,6 +1059,8 @@
   "namespace files|create|folder_error": "0ade1b9a0e39",
   "namespace files|create|folder_success": "6fe029a5297b",
   "namespace files|create|label": "4759498ac2a7",
+  "namespace files|delete|all_failed_error": "e93a9fc11c30",
+  "namespace files|delete|bulk_partial_error": "ef8266df30b0",
   "namespace files|delete|bulk_success": "251f7bdac3d2",
   "namespace files|delete|file": "28e18dc9db38",
   "namespace files|delete|file_error": "520645710873",

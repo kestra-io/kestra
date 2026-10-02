@@ -1035,6 +1035,8 @@
         "folder": "फ़ोल्डर हटाएं",
         "files": "{count} चयनित फ़ाइलें हटाएं",
         "bulk_success": "चयनित फ़ाइलें सफलतापूर्वक हटा दी गईं।",
+        "bulk_partial_error": "{failedCount} फ़ाइल(फ़ाइलों) को हटाने में विफल। {totalCount} सफल रहे।",
+        "all_failed_error": "चयनित फ़ाइलों को हटाने में विफल।",
         "folders": "{count} चयनित फ़ोल्डर हटाएं"
       },
       "move": {

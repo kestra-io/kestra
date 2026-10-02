@@ -1035,6 +1035,8 @@
         "folder": "Usuń folder",
         "files": "Usuń wybrane pliki ({count})",
         "bulk_success": "Wybrane pliki zostały pomyślnie usunięte.",
+        "bulk_partial_error": "Nie udało się usunąć {failedCount} pliku(ów). Pomyślnie usunięto {totalCount}.",
+        "all_failed_error": "Nie udało się usunąć wybranych plików.",
         "folders": "Usuń wybrane foldery ({count})"
       },
       "move": {

@@ -695,6 +695,7 @@
     "sign in in a new tab": "새 탭에서 로그인",
     "sign in in a new tab hint": "새 탭에서 로그인한 다음 여기로 돌아와 계속하세요.",
     "continue after sign in": "계속",
+    "sign in not confirmed": "로그인 상태를 확인할 수 없습니다. 다른 탭에서 로그인한 후 계속하세요.",
     "server unreachable": "Kestra 서버에 연결할 수 없습니다.",
     "server unreachable description": "이 페이지를 새로고침하기 전에 저장되지 않은 작업(예: Flow YAML)을 안전한 곳에 복사하세요. 서버가 다시 응답하면 이 배너는 사라집니다.",
     "unsaved changes": "저장되지 않은 변경 사항",

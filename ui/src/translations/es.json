@@ -695,6 +695,7 @@
     "sign in in a new tab": "Iniciar sesión en una nueva pestaña",
     "sign in in a new tab hint": "Inicia sesión en la pestaña que acaba de abrirse, luego regresa aquí y continúa.",
     "continue after sign in": "Continuar",
+    "sign in not confirmed": "No pudimos confirmar que hayas iniciado sesión. Inicia sesión en la otra pestaña y luego continúa.",
     "server unreachable": "No se puede conectar con el servidor de Kestra",
     "server unreachable description": "Copia cualquier trabajo no guardado (por ejemplo, el YAML del Flow) en un lugar seguro antes de actualizar esta página. Este banner desaparecerá una vez que el servidor responda de nuevo.",
     "unsaved changes": "Cambios no guardados",

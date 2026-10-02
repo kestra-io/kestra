@@ -133,7 +133,7 @@
                     :label="$t('labels')"
                 >
                     <template #default="scope">
-                        <Labels :labels="scope.row.labels" :max="3" @click.prevent.stop />
+                        <Labels :labels="filteredLabels(scope.row.labels)" :max="3" @click.prevent.stop />
                     </template>
                 </KsTableColumn>
 
@@ -353,7 +353,7 @@
     import {useTableColumns, type ColumnConfig} from "@kestra-io/design-system"
     import useRouteContext from "../../composables/useRouteContext"
     import {useFlowsTableExtension} from "override/components/flows/flowsTableExtension"
-    import type {ExecutionControllerLastExecutionResponse, Flow, QueryFilter} from "@kestra-io/kestra-sdk"
+    import type {ExecutionControllerLastExecutionResponse, Flow, Label, QueryFilter} from "@kestra-io/kestra-sdk"
     import useFlowsBulkActions from "./useFlowsBulkActions"
 
     const NON_NAVIGATING_TARGETS = "a, button, input, canvas, [role='button']"
@@ -622,6 +622,21 @@
     function handleExecutionStart() {
         showRunModal.value = false
         toast.success(t("execution_started"))
+    }
+
+    const filteredLabels = (labels?: Label[]) => {
+        const toIgnore = miscStore.configs?.hiddenLabelsPrefixes || []
+
+        const queryLabels = route.query?.labels
+        const allowedLabels = queryLabels
+            ? (Array.isArray(queryLabels) ? queryLabels : [queryLabels])
+                .filter((label): label is string => label !== null)
+                .map((label: string) => label.split(":")[0])
+            : []
+
+        return labels?.filter(label => {
+            return !toIgnore.some((prefix: string) => label.key.startsWith(prefix)) || allowedLabels.includes(label.key)
+        })
     }
 
     function getLastExecution(row: Flow) {

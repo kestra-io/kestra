@@ -133,7 +133,11 @@
                     :label="$t('labels')"
                 >
                     <template #default="scope">
-                        <Labels :labels="filteredLabels(scope.row.labels)" :max="3" @click.prevent.stop />
+                        <Labels
+                            :labels="filterHiddenLabels(scope.row.labels, miscStore.configs?.hiddenLabelsPrefixes, route.query)"
+                            :max="3"
+                            @click.prevent.stop
+                        />
                     </template>
                 </KsTableColumn>
 
@@ -307,6 +311,7 @@
     import {useRoute, useRouter, type LocationQuery} from "vue-router"
     import {useI18n} from "vue-i18n"
     import BreakableText from "../BreakableText"
+    import {filterHiddenLabels} from "../../utils/labels"
     import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
     import {useFlowFilter} from "../filter/configurations/flowFilter"
     import useRestoreUrl from "../../composables/useRestoreUrl"
@@ -353,7 +358,7 @@
     import {useTableColumns, type ColumnConfig} from "@kestra-io/design-system"
     import useRouteContext from "../../composables/useRouteContext"
     import {useFlowsTableExtension} from "override/components/flows/flowsTableExtension"
-    import type {ExecutionControllerLastExecutionResponse, Label, QueryFilter} from "@kestra-io/kestra-sdk"
+    import type {ExecutionControllerLastExecutionResponse, QueryFilter} from "@kestra-io/kestra-sdk"
     import type {Flow} from "../../stores/flow"
     import useFlowsBulkActions from "./useFlowsBulkActions"
 
@@ -623,21 +628,6 @@
     function handleExecutionStart() {
         showRunModal.value = false
         toast.success(t("execution_started"))
-    }
-
-    const filteredLabels = (labels?: Label[]) => {
-        const toIgnore = miscStore.configs?.hiddenLabelsPrefixes || []
-
-        const queryLabels = route.query?.labels
-        const allowedLabels = queryLabels
-            ? (Array.isArray(queryLabels) ? queryLabels : [queryLabels])
-                .filter((label): label is string => label !== null)
-                .map((label: string) => label.split(":")[0])
-            : []
-
-        return labels?.filter(label => {
-            return !toIgnore.some((prefix: string) => label.key.startsWith(prefix)) || allowedLabels.includes(label.key)
-        })
     }
 
     function getLastExecution(row: Flow) {

@@ -1,0 +1,68 @@
+suite: Deployment worker group labels
+
+templates:
+  - templates/deployment.yaml
+
+tests:
+  - it: labels the base worker deployment with the default worker group
+    set:
+      deployments:
+        standalone:
+          enabled: false
+        webserver:
+          enabled: false
+        worker:
+          enabled: true
+    asserts:
+      - equal:
+          path: spec.template.metadata.labels["kestra.io/worker-group"]
+          value: default
+
+  - it: labels a worker group deployment with its group name
+    set:
+      deployments:
+        standalone:
+          enabled: false
+        webserver:
+          enabled: false
+        worker:
+          enabled: false
+      workerGroups:
+        gpu:
+          enabled: true
+          workerThreads: 8
+    asserts:
+      - equal:
+          path: spec.template.metadata.labels["kestra.io/worker-group"]
+          value: gpu
+
+  - it: does not add the worker group label on non-worker deployments
+    set:
+      deployments:
+        standalone:
+          enabled: false
+        webserver:
+          enabled: true
+    asserts:
+      - notExists:
+          path: spec.template.metadata.labels["kestra.io/worker-group"]
+
+  - it: keeps the deployment selector unchanged so upgrades stay valid
+    set:
+      deployments:
+        standalone:
+          enabled: false
+        webserver:
+          enabled: false
+        worker:
+          enabled: true
+      workerGroups:
+        gpu:
+          enabled: true
+    asserts:
+      - equal:
+          path: spec.selector.matchLabels
+          value:
+            app.kubernetes.io/name: kestra
+            app.kubernetes.io/instance: RELEASE-NAME
+            app.kubernetes.io/component: worker

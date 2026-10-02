@@ -1,6 +1,16 @@
 import {defineComponent, h, inject, type Component, type ExtractPublicPropTypes, type InjectionKey, type PropType} from "vue"
 import fallbackIcon from "../assets/images/plugin-icon-fallback.svg"
 
+type PluginIconData = {
+    flowable: boolean
+    monochrome: boolean
+    hasIcon: boolean
+    iconUrl?: string
+    hash?: string
+}
+
+type PluginIconMap = Record<string, PluginIconData>
+
 /**
  * The contract any injected task-icon component must fulfil. Declared once as a
  * runtime props definition so FallbackTaskIcon and the TaskIconProps type stay
@@ -9,10 +19,10 @@ import fallbackIcon from "../assets/images/plugin-icon-fallback.svg"
 export const taskIconProps = {
     cls: {type: String, default: undefined},
     customIcon: {type: Object as PropType<{icon: string; monochrome?: boolean}>, default: undefined},
-    icons: {type: Object as PropType<Record<string, any>>, default: undefined},
+    icons: {type: Object as PropType<PluginIconMap>, default: undefined},
     onlyIcon: {type: Boolean, default: false},
     variable: {type: String, default: undefined},
-    loadIcon: {type: Function as PropType<(cls: string) => Promise<any>>, default: undefined},
+    loadIcon: {type: Function as PropType<(cls: string) => Promise<PluginIconData | undefined>>, default: undefined},
 } as const
 
 export type TaskIconProps = ExtractPublicPropTypes<typeof taskIconProps>

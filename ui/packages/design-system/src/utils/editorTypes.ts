@@ -1,4 +1,6 @@
 import type * as monaco from "monaco-editor/editor/editor.api"
+import type {TaskIconProps} from "../composables/taskIcon"
+import type {DatePickerInstance} from "../composables/useEditorDatePicker"
 
 export type EditorOptions = monaco.editor.IStandaloneEditorConstructionOptions & {
     renderSideBySide?: boolean
@@ -54,7 +56,7 @@ export interface KsEditorProps {
     inline?: boolean
     navbar?: boolean
     configureLanguage?: (editor: monaco.editor.ICodeEditor | undefined, language: string, schemaType?: string) => Promise<void>
-    loadTaskIcon?: (cls: string) => Promise<any>
+    loadTaskIcon?: TaskIconProps["loadIcon"]
     options?: KsEditorOptions
 }
 
@@ -78,5 +80,5 @@ export interface KsEditorTemplateRefs {
     editorRef: import("vue").Ref<HTMLDivElement | null>
     container: import("vue").Ref<HTMLDivElement | undefined>
     datePickerWrapper: import("vue").Ref<HTMLElement | undefined>
-    datePicker: import("vue").Ref<any>
+    datePicker: import("vue").Ref<DatePickerInstance>
 }

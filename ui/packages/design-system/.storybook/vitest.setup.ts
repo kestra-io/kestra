@@ -1,14 +1,21 @@
 import {vi} from "vitest"
 import {type AppContext} from "vue"
+import {type Environment} from "monaco-editor"
 
+declare global {
+    var _VSCODE_FILE_ROOT: string
+    var MonacoEnvironment: Environment | undefined
+}
 // monaco-editor's `editor.api` resolves worker URLs at module load via
 // FileAccess.toUri, which dereferences `globalThis._VSCODE_FILE_ROOT` or
 // a require-shim. Neither exists under sb-vitest's browser runner, so set
 // a dummy root so the module can load. Workers themselves are not exercised
 // in storybook tests.
-;(globalThis as any)._VSCODE_FILE_ROOT = "/"
-;(globalThis as any).MonacoEnvironment = (globalThis as any).MonacoEnvironment ?? {
-    getWorker: () => ({postMessage: () => {}, terminate: () => {}, addEventListener: () => {}, removeEventListener: () => {}}),
+globalThis._VSCODE_FILE_ROOT = "/"
+globalThis.MonacoEnvironment = globalThis.MonacoEnvironment ?? {
+    // getWorker: () => ({postMessage: () => {}, terminate: () => {}, addEventListener: () => {}, removeEventListener: () => {}}),
+    getWorker: () => Object.create(Worker.prototype) as Worker,
+
 }
 
 vi.mock("vue-i18n", () => ({

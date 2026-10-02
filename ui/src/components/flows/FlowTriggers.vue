@@ -45,9 +45,9 @@
                     <BackfillBanner
                         v-if="props.row.backfill"
                         :row="props.row"
-                        @pause="pauseBackfill(props.row)"
-                        @resume="unpauseBackfill(props.row)"
-                        @stop="deleteBackfill(props.row)"
+                        @pause="pauseBackfill(props.row as TriggerRow)"
+                        @resume="unpauseBackfill(props.row as TriggerRow)"
+                        @stop="deleteBackfill(props.row as TriggerRow)"
                     />
                     <LogsWrapper class="m-3" :filters="{...props.row, triggerId: props.row.id}" purgeFilters :withCharts="false" :reloadLogs embed />
                 </template>
@@ -122,7 +122,7 @@
                                 v-if="canViewExecutions"
                                 data-test="trigger-executions-link"
                                 :tooltip="$t('executions')"
-                                :to="triggerExecutionsRoute(scope.row)"
+                                :to="triggerExecutionsRoute(scope.row as TriggerRow)"
                             >
                                 <FormatListBulleted />
                             </KsIconButton>
@@ -139,7 +139,7 @@
                     <template v-if="isSchedule(scope.row.type) && !scope.row.backfill">
                         <KsButton
                             :icon="CalendarCollapseHorizontalOutline"
-                            @click="setBackfillModal(scope.row, true)"
+                            @click="setBackfillModal(scope.row as TriggerRow, true)"
                             :disabled="scope.row.disabled || scope.row.sourceDisabled"
                             size="small"
                             type="primary"
@@ -163,7 +163,7 @@
             <KsTableColumn columnKey="disable" :label="$t('enabled')" className="row-action" v-if="userCan(action.DISABLE)">
                 <template #default="scope">
                     <KsTooltip
-                        v-if="hasTrigger(scope.row)"
+                        v-if="hasTrigger(scope.row as TriggerRow)"
                         :content="$t('trigger disabled')"
                         :disabled="!scope.row.sourceDisabled"
                     >
@@ -171,7 +171,7 @@
                              moves when the row data changes, so cancelling the enable dialog leaves it intact. -->
                         <KsSwitch
                             :modelValue="!(scope.row.disabled || scope.row.sourceDisabled)"
-                            @update:modelValue="(value: string | number | boolean | undefined) => setDisabled(scope.row, Boolean(value))"
+                            @update:modelValue="(value: string | number | boolean | undefined) => setDisabled(scope.row as TriggerRow, Boolean(value))"
                             inlinePrompt
                             class="switch-text"
                             :disabled="scope.row.sourceDisabled"
@@ -183,14 +183,14 @@
             <KsTableColumn columnKey="row-actions" className="row-action" fixed="right">
                 <template #default="scope">
                     <div class="row-actions-cell">
-                        <KsTooltip v-if="canSendTestEvent(scope.row)" :content="$t('test_event.button')">
+                        <KsTooltip v-if="canSendTestEvent(scope.row as TriggerRow)" :content="$t('test_event.button')">
                             <KsButton
                                 data-onboarding-target="trigger-test-event-button"
                                 link
                                 size="small"
                                 :icon="FlashOutline"
                                 :aria-label="$t('test_event.button')"
-                                @click="sendTestEvent(scope.row)"
+                                @click="sendTestEvent(scope.row as TriggerRow)"
                             />
                         </KsTooltip>
                         <KsDropdown trigger="click" placement="bottom-end">
@@ -202,14 +202,14 @@
                             />
                             <template #dropdown>
                                 <KsDropdownMenu>
-                                    <KsDropdownItem @click="openDetails(scope.row)">
+                                    <KsDropdownItem @click="openDetails(scope.row as TriggerRow)">
                                         <TextSearch class="mr-1" />
                                         {{ $t("details") }}
                                     </KsDropdownItem>
                                     <KsDropdownItem
                                         v-if="userCan(action.RESTART)"
                                         :disabled="!scope.row.locked"
-                                        @click="restart(scope.row)"
+                                        @click="restart(scope.row as TriggerRow)"
                                     >
                                         <Restart class="mr-1" />
                                         {{ $t("restart") }}
@@ -217,7 +217,7 @@
                                     <KsDropdownItem
                                         v-if="userCan(action.UNLOCK) && scope.row.kind !== 'REALTIME'"
                                         :disabled="!scope.row.locked"
-                                        @click="unlock(scope.row)"
+                                        @click="unlock(scope.row as TriggerRow)"
                                     >
                                         <LockOff class="mr-1" />
                                         {{ $t("unlock") }}
@@ -226,7 +226,7 @@
                                         v-if="userCan(action.DELETE)"
                                         divided
                                         class="danger"
-                                        @click="confirmDeleteTrigger(scope.row)"
+                                        @click="confirmDeleteTrigger(scope.row as TriggerRow)"
                                     >
                                         <Delete class="mr-1" />
                                         {{ $t("delete") }}

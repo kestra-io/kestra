@@ -5,7 +5,8 @@ import {i18nMount} from "../../i18nMount"
 import {createPinia, setActivePinia} from "pinia"
 import KestraDesignSystem from "@kestra-io/design-system"
 import InputsForm from "../../../../src/components/inputs/InputsForm.vue"
-import {useExecutionsStore, type ValidationResponse} from "../../../../src/stores/executions"
+import {useExecutionsStore, type ValidationResponse, type InputMetaData} from "../../../../src/stores/executions"
+import type {Flow} from "../../../../src/stores/flow"
 
 vi.mock("vue-router", () => ({
     useRoute: () => ({query: {}, params: {}, name: "flow"}),
@@ -16,7 +17,7 @@ const globalConfig = {
     plugins: [KestraDesignSystem],
 }
 
-const flow = {namespace: "company.team", id: "get_data"} as any
+const flow = {namespace: "company.team", id: "get_data"} as unknown as Flow
 
 /**
  * Stubs the validate round-trip the way `FlowInputOutput` actually behaves: `defaults` is resolved
@@ -45,10 +46,10 @@ function stubValidate(id: string, defaults: boolean | undefined) {
 // Mounted for real (no `shallow`): the bug lives in el-switch's own setup, which resets a
 // non-boolean modelValue to false — a stubbed switch would happily accept the string "true"
 // and the regression would sail straight through.
-function mountForm(inputs: any[]) {
+function mountForm(inputs: (InputMetaData | Record<string, unknown>)[]) {
     return i18nMount(InputsForm, {
         global: globalConfig,
-        props: {flow, initialInputs: inputs as any},
+        props: {flow, initialInputs: inputs as unknown as InputMetaData[]},
     })
 }
 

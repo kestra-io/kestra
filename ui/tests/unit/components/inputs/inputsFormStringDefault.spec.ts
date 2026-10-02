@@ -5,7 +5,8 @@ import {i18nMount} from "../../i18nMount"
 import {createPinia, setActivePinia} from "pinia"
 import KestraDesignSystem from "@kestra-io/design-system"
 import InputsForm from "../../../../src/components/inputs/InputsForm.vue"
-import {useExecutionsStore, type ValidationResponse} from "../../../../src/stores/executions"
+import {useExecutionsStore, type ValidationResponse, type InputMetaData} from "../../../../src/stores/executions"
+import type {Flow} from "../../../../src/stores/flow"
 
 vi.mock("vue-router", () => ({
     useRoute: () => ({query: {}, params: {}, name: "flow"}),
@@ -16,7 +17,7 @@ const globalConfig = {
     plugins: [KestraDesignSystem],
 }
 
-const flow = {namespace: "company.team", id: "get_data"} as any
+const flow = {namespace: "company.team", id: "get_data"} as unknown as Flow
 
 /**
  * Stubs the validate round-trip the way `FlowInputOutput` actually behaves: `defaults` is resolved
@@ -55,11 +56,11 @@ function stubAlwaysResolving(id: string, value: string, input: Record<string, un
 
 // `shallow` keeps KsEditor out of jsdom: a STRING input renders as Monaco, which cannot be typed
 // into here.
-function mountForm(inputs: any[]) {
+function mountForm(inputs: (InputMetaData | Record<string, unknown>)[]) {
     return i18nMount(InputsForm, {
         global: globalConfig,
         shallow: true,
-        props: {flow, initialInputs: inputs as any},
+        props: {flow, initialInputs: inputs as unknown as InputMetaData[]},
     })
 }
 
@@ -176,7 +177,7 @@ describe("InputsForm STRING default", () => {
         expect(wrapper.vm.inputsValues.mystring).toBe("world")
 
         store.validateExecution = stubAlwaysResolving("mystring", "hello", {defaults: "hello"})
-        await wrapper.setProps({flow: {namespace: "company.team", id: "other_flow"} as any})
+        await wrapper.setProps({flow: {namespace: "company.team", id: "other_flow"} as unknown as Flow})
         await flushPromises()
 
         expect(wrapper.vm.inputsValues.mystring).toBe("hello")

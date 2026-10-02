@@ -60,7 +60,6 @@
   "packages/design-system/tests/units/Data/KsFilter/FilterKVPairs.test.ts": 2,
   "packages/design-system/tests/units/Data/KsTable.test.ts": 4,
   "packages/design-system/tests/units/Data/KsTree.test.ts": 3,
-  "packages/design-system/tests/units/Feedback/KsMessageBox.test.ts": 4,
   "packages/design-system/tests/units/Form/KsForm.test.ts": 3,
   "packages/kestra-sdk/src/client-facade.ts": 28,
   "src/components/docs/ContextChildCard.vue": 2,

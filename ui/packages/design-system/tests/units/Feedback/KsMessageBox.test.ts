@@ -1,5 +1,6 @@
 import {describe, test, expect, vi, beforeEach, afterEach} from "vitest"
 import {ElMessageBox} from "element-plus"
+import type {MessageBoxData} from "element-plus"
 import {KsMessageBox} from "../../../src/components/Feedback/KsMessageBox"
 
 vi.mock("element-plus", () => ({
@@ -16,10 +17,10 @@ vi.mock("element-plus", () => ({
 
 describe("KsMessageBox", () => {
     beforeEach(() => {
-        vi.mocked(ElMessageBox).mockResolvedValue("confirm" as any)
-        vi.mocked(ElMessageBox.alert).mockResolvedValue("confirm" as any)
-        vi.mocked(ElMessageBox.confirm).mockResolvedValue("confirm" as any)
-        vi.mocked(ElMessageBox.prompt).mockResolvedValue({value: "input", action: "confirm"} as any)
+        vi.mocked(ElMessageBox).mockResolvedValue({value: "", action: "confirm"} as MessageBoxData)
+        vi.mocked(ElMessageBox.alert).mockResolvedValue({value: "", action: "confirm"} as MessageBoxData)
+        vi.mocked(ElMessageBox.confirm).mockResolvedValue({value: "", action: "confirm"} as MessageBoxData)
+        vi.mocked(ElMessageBox.prompt).mockResolvedValue({value: "input", action: "confirm"} as MessageBoxData)
     })
 
     afterEach(() => {

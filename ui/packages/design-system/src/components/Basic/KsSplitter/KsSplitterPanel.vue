@@ -7,8 +7,7 @@
 </template>
 
 <script setup lang="ts">
-    import {ElSplitterPanel} from "element-plus"
-    import type {SplitterPanelProps} from "element-plus"
+   import {ElSplitterPanel, type SplitterPanelProps} from "element-plus"
     import {useFilteredProps} from "../../../utils/filteredProps"
 
     defineOptions({inheritAttrs: false})

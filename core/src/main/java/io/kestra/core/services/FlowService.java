@@ -412,27 +412,20 @@ public class FlowService {
         return pluginAutoInstallService.isEnabled() && pluginSchemaBundleService.containsType(typeId);
     }
 
-    /** Parses strictly and scans only a rejected source for its unknown keys and types, so a valid flow is parsed once. */
+    /** Parses strictly and scans only a rejected source for its problems, so a valid flow is parsed once. */
     private TolerantParse parseTolerantly(String tenantId, String source) throws FlowProcessingException {
         try {
-            return new TolerantParse(flowParsingService.parse(tenantId, source, true), ParseReport.clean());
+            return new TolerantParse(flowParsingService.parse(tenantId, source, true), null);
         } catch (FlowProcessingException e) {
             if (!(e.getCause() instanceof ConstraintViolationException)) {
                 throw e;
             }
-            ParseReport report = YamlParser.scan(source, FlowWithSource.class);
-            if (report.isClean() || report.cleaned() == null) {
+            ParseReport report = YamlParser.scan(source, FlowWithSource.class, "Flow");
+            if (!report.hasProblems()) {
                 throw e;
             }
-            return new TolerantParse(flowParsingService.parse(tenantId, toYaml(report.cleaned(), source), false), report);
-        }
-    }
-
-    private static String toYaml(Map<String, Object> map, String fallback) {
-        try {
-            return JacksonMapper.ofYaml().writeValueAsString(map);
-        } catch (JsonProcessingException e) {
-            return fallback;
+            Optional<String> recovered = report.recoveredSource();
+            return new TolerantParse(recovered.isPresent() ? flowParsingService.parse(tenantId, recovered.get(), false) : null, report);
         }
     }
 
@@ -514,46 +507,35 @@ public class FlowService {
                 TolerantParse parsed = parseTolerantly(tenantId, source);
                 FlowWithSource flow = parsed.flow();
                 ParseReport report = parsed.report();
-
-                Integer sentRevision = flow.getRevision();
-                if (sentRevision != null) {
-                    Integer lastRevision = Optional.ofNullable(flowRepository.lastRevision(tenantId, flow.getNamespace(), flow.getId())).orElse(0);
-                    constraintsBuilder.outdated(!sentRevision.equals(lastRevision + 1));
-                }
-
-                FlowWithSource parsedFlow = flowParsingService.parseForValidation(flow);
-                constraintsBuilder.deprecationPaths(deprecationPaths(parsedFlow));
-                constraintsBuilder.warnings(warnings(parsedFlow, tenantId));
                 List<String> relocationInfos = relocations(source).stream().map(relocation -> relocation.from() + " is replaced by " + relocation.to()).toList();
                 constraintsBuilder.infos(relocationInfos);
-                constraintsBuilder.flow(flow.getId());
-                constraintsBuilder.namespace(flow.getNamespace());
 
-                if (report.isClean()) {
-                    modelValidator.validate(parsedFlow);
-                    throwOnCyclicDependency(parsedFlow);
+                if (flow == null) {
+                    reportProblems(report, constraintsBuilder, relocationInfos, List.of());
                 } else {
-                    List<ValidationError> errors = new ArrayList<>(report.unknownProperties());
-                    List<String> installNotices = new ArrayList<>();
-                    for (ParseReport.InvalidType invalidType : report.invalidTypes()) {
-                        if (isAutoInstallable(invalidType.typeId())) {
-                            installNotices.add(formatValidationError(invalidType.error().detail()) + AUTO_INSTALL_NOTICE);
-                        } else {
-                            errors.add(invalidType.error());
-                        }
+                    Integer sentRevision = flow.getRevision();
+                    if (sentRevision != null) {
+                        Integer lastRevision = Optional.ofNullable(flowRepository.lastRevision(tenantId, flow.getNamespace(), flow.getId())).orElse(0);
+                        constraintsBuilder.outdated(!sentRevision.equals(lastRevision + 1));
                     }
-                    modelValidator.isValid(parsedFlow).ifPresent(e -> e.getConstraintViolations().forEach(v ->
-                        report.toSourcePointer(ViolationPaths.toJsonPointer(v.getPropertyPath()))
-                            .ifPresent(pointer -> errors.add(new ValidationError(v.getMessage(), pointer, ViolationPaths.toFriendlyPath(v))))
-                    ));
 
-                    if (!installNotices.isEmpty()) {
-                        constraintsBuilder.infos(ListUtils.concat(relocationInfos, installNotices));
-                    }
-                    if (errors.isEmpty()) {
+                    FlowWithSource parsedFlow = flowParsingService.parseForValidation(flow);
+                    constraintsBuilder.deprecationPaths(deprecationPaths(parsedFlow));
+                    constraintsBuilder.warnings(warnings(parsedFlow, tenantId));
+                    constraintsBuilder.flow(flow.getId());
+                    constraintsBuilder.namespace(flow.getNamespace());
+
+                    if (report == null) {
+                        modelValidator.validate(parsedFlow);
                         throwOnCyclicDependency(parsedFlow);
                     } else {
-                        constraintsBuilder.errors(errors);
+                        List<ValidationError> violations = modelValidator.isValid(parsedFlow).stream()
+                            .flatMap(e -> e.getConstraintViolations().stream())
+                            .flatMap(v -> report.locate(v).stream())
+                            .toList();
+                        if (!reportProblems(report, constraintsBuilder, relocationInfos, violations)) {
+                            throwOnCyclicDependency(parsedFlow);
+                        }
                     }
                 }
             } catch (ConstraintViolationException e) {
@@ -584,6 +566,27 @@ public class FlowService {
         });
 
         return constraints;
+    }
+
+    /** Sets the scan's problems on {@code builder}, auto-installable types as notices; returns whether any is an error. */
+    private boolean reportProblems(ParseReport report, ValidateConstraintViolation.ValidateConstraintViolationBuilder<?, ?> builder, List<String> infos, List<ValidationError> violations) {
+        List<ValidationError> errors = new ArrayList<>(report.errors());
+        List<String> installNotices = new ArrayList<>();
+        for (ParseReport.InvalidType invalidType : report.invalidTypes()) {
+            if (isAutoInstallable(invalidType.typeId())) {
+                installNotices.add(formatValidationError(invalidType.error().detail()) + AUTO_INSTALL_NOTICE);
+            } else {
+                errors.add(invalidType.error());
+            }
+        }
+        errors.addAll(violations);
+        if (!installNotices.isEmpty()) {
+            builder.infos(ListUtils.concat(infos, installNotices));
+        }
+        if (!errors.isEmpty()) {
+            builder.errors(errors);
+        }
+        return !errors.isEmpty();
     }
 
     public FlowWithSource importFlow(String tenantId, String source) throws FlowProcessingException {
@@ -1220,6 +1223,6 @@ public class FlowService {
         return new IllegalStateException("No repository found. Make sure the `kestra.repository.type` property is set.");
     }
 
-    private record TolerantParse(FlowWithSource flow, ParseReport report) {
+    private record TolerantParse(@Nullable FlowWithSource flow, @Nullable ParseReport report) {
     }
 }

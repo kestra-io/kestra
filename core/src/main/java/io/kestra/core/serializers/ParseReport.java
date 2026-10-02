@@ -3,49 +3,69 @@ package io.kestra.core.serializers;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
 import io.kestra.core.models.validations.ValidationError;
+import io.kestra.core.models.validations.ViolationPaths;
 
 import jakarta.annotation.Nullable;
+import jakarta.validation.ConstraintViolation;
 
 /**
- * What a tolerant scan of a source found: unknown properties and unknown plugin types, each removed from
- * {@link #cleaned()} so the rest can still be deserialized and validated.
+ * What a tolerant scan of a source found: every problem that stops a strict parse, located in the source,
+ * plus the source with those problems removed when the rest can still be deserialized and validated.
  */
-public record ParseReport(
-    List<ValidationError> unknownProperties,
-    List<InvalidType> invalidTypes,
-    @Nullable Map<String, Object> cleaned,
-    List<Removal> removals
-) {
+public final class ParseReport {
+    private final List<ValidationError> errors;
+    private final List<InvalidType> invalidTypes;
+    @Nullable
+    private final String recoveredSource;
+    private final List<Removal> removals;
+
+    ParseReport(List<ValidationError> errors, List<InvalidType> invalidTypes, @Nullable String recoveredSource, List<Removal> removals) {
+        this.errors = List.copyOf(errors);
+        this.invalidTypes = List.copyOf(invalidTypes);
+        this.recoveredSource = recoveredSource;
+        this.removals = List.copyOf(removals);
+    }
+
     public record InvalidType(ValidationError error, String typeId) {
     }
 
-    /** A plugin dropped from a list at {@code index}, or from a property when {@code index} is -1. */
+    /** A node dropped from a list at {@code index}, or from a property when {@code index} is -1. */
     record Removal(List<String> parent, int index) {
     }
 
-    public static ParseReport clean() {
-        return new ParseReport(List.of(), List.of(), null, List.of());
+    /** Problems other than unknown plugin types, which {@link #invalidTypes()} lists apart for auto-install. */
+    public List<ValidationError> errors() {
+        return errors;
     }
 
-    public boolean isClean() {
-        return unknownProperties.isEmpty() && invalidTypes.isEmpty();
+    public List<InvalidType> invalidTypes() {
+        return invalidTypes;
+    }
+
+    public boolean hasProblems() {
+        return !errors.isEmpty() || !invalidTypes.isEmpty();
+    }
+
+    /** The source without its problems, or empty when what is left still cannot be deserialized. */
+    public Optional<String> recoveredSource() {
+        return Optional.ofNullable(recoveredSource);
     }
 
     /**
-     * Maps a pointer into {@link #cleaned()} back to the source, or returns empty when the violation only
-     * exists because a plugin was removed (a list left empty, a required plugin property now missing).
+     * Locates a violation of the recovered source in the original one, or returns empty when it only exists
+     * because a node was removed (a list left empty, a required property now missing).
      */
-    public Optional<String> toSourcePointer(String pointer) {
-        List<String> segments = segments(pointer);
+    public Optional<ValidationError> locate(ConstraintViolation<?> violation) {
+        List<String> segments = segments(ViolationPaths.toJsonPointer(violation.getPropertyPath()));
         if (removals.stream().anyMatch(removal -> segments.equals(removal.parent()))) {
             return Optional.empty();
         }
-        return Optional.of(toPointer(shift(segments, removals, removals.size())));
+        String pointer = toPointer(shift(segments, removals, removals.size()));
+        return Optional.of(new ValidationError(violation.getMessage(), pointer, ViolationPaths.toFriendlyPath(violation)));
     }
 
     /** Undoes the index shifts of the first {@code count} removals, latest first. */

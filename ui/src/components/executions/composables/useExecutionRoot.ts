@@ -31,7 +31,7 @@ export function useExecutionRoot() {
             return {title: ""}
         }
 
-        return {
+        const base = {
             title: route.params.id as string,
             bookmarkLabel: `${ns}.${flowId}: ${route.params.id}`,
             breadcrumb: [
@@ -43,11 +43,63 @@ export function useExecutionRoot() {
                         params: {
                             namespace: ns,
                             id: flowId,
-                        },
+                        } as Record<string, string>,
                     },
                 },
             ],
         }
+
+        if (executionsStore.execution?.loopRun) {
+            const loopRun = executionsStore.execution.loopRun
+
+            if (loopRun.rootExecutionId) {
+                base.breadcrumb.push({
+                    label: t("root_execution"),
+                    link: {
+                        name: "executions/update",
+                        params: {
+                            namespace: ns,
+                            flowId: flowId,
+                            id: loopRun.rootExecutionId,
+                        },
+                    },
+                })
+            }
+
+            if (loopRun.parents && loopRun.parents.length > 0) {
+                loopRun.parents.forEach(p => {
+                    if (!p.executionId) return
+
+                    base.breadcrumb.push({
+                        label: `${p.taskId} (${p.value ?? p.index})`,
+                        link: {
+                            name: "executions/update",
+                            params: {
+                                namespace: ns,
+                                flowId: flowId,
+                                id: p.executionId,
+                            },
+                        },
+                    })
+                })
+            }
+
+            if (loopRun.taskId) {
+                base.breadcrumb.push({
+                    label: `${loopRun.taskId} (${loopRun.value ?? loopRun.index})`,
+                    link: {
+                        name: "executions/update",
+                        params: {
+                            namespace: ns,
+                            flowId: flowId,
+                            id: executionsStore.execution.id,
+                        },
+                    },
+                })
+            }
+        }
+
+        return base
     })
 
     const routeName = computed(() => route.params && route.params.id ? EXECUTION_PARENT_ROUTE : "")

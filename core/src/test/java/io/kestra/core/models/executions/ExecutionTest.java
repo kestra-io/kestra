@@ -22,6 +22,31 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class ExecutionTest {
 
     @Test
+    void shouldComputeRootExecutionIdAndParentsForNestedLoop() {
+        Execution rootExecution = Execution.builder()
+            .id("root-exec")
+            .originalId("root-exec")
+            .state(new State())
+            .build();
+
+        TaskRun level1TaskRun = TaskRun.builder().id("taskrun-1").taskId("task-1").state(new State()).build();
+        Execution level1Execution = rootExecution.loopExecution(level1TaskRun, 0, null, "a");
+
+        assertThat(level1Execution.getLoopRun().rootExecutionId()).isEqualTo("root-exec");
+        assertThat(level1Execution.getLoopRun().parents()).isNull();
+
+        TaskRun level2TaskRun = TaskRun.builder().id("taskrun-2").taskId("task-2").state(new State()).build();
+        Execution level2Execution = level1Execution.loopExecution(level2TaskRun, 1, "key", "b");
+
+        assertThat(level2Execution.getLoopRun().rootExecutionId()).isEqualTo("root-exec");
+        assertThat(level2Execution.getLoopRun().parents()).hasSize(1);
+
+        LoopRun.Parent level1Parent = level2Execution.getLoopRun().parents().get(0);
+        assertThat(level1Parent.executionId()).isEqualTo(level1Execution.getId());
+        assertThat(level1Parent.taskId()).isEqualTo("task-1");
+    }
+
+    @Test
     void findTaskRunByTaskRunIdIfPresentShouldReturnEmptyWhenTaskRunNotFound() {
         // Given
         Execution execution = Execution.builder()
@@ -241,10 +266,12 @@ class ExecutionTest {
     void shouldFindLastNotTerminatedWhenLastTaskRunIsTerminated() {
         // Given a task run list whose last run is terminated (SUCCESS) but is preceded by a running one
         Execution execution = Execution.builder()
-            .taskRunList(List.of(
-                TaskRun.builder().id("running").state(new State(State.Type.RUNNING, new State())).build(),
-                TaskRun.builder().id("success").state(new State(State.Type.SUCCESS, new State())).build()
-            ))
+            .taskRunList(
+                List.of(
+                    TaskRun.builder().id("running").state(new State(State.Type.RUNNING, new State())).build(),
+                    TaskRun.builder().id("success").state(new State(State.Type.SUCCESS, new State())).build()
+                )
+            )
             .build();
 
         // When looking for the last not terminated task run
@@ -261,10 +288,12 @@ class ExecutionTest {
     void shouldFindLastNotTerminatedWhenLastTaskRunIsPaused() {
         // Given a task run list whose last run is paused but is preceded by a running one
         Execution execution = Execution.builder()
-            .taskRunList(List.of(
-                TaskRun.builder().id("running").state(new State(State.Type.RUNNING, new State())).build(),
-                TaskRun.builder().id("paused").state(new State(State.Type.PAUSED, new State())).build()
-            ))
+            .taskRunList(
+                List.of(
+                    TaskRun.builder().id("running").state(new State(State.Type.RUNNING, new State())).build(),
+                    TaskRun.builder().id("paused").state(new State(State.Type.PAUSED, new State())).build()
+                )
+            )
             .build();
 
         // When looking for the last not terminated task run
@@ -281,10 +310,12 @@ class ExecutionTest {
     void shouldNotFindLastNotTerminatedWhenAllTaskRunsAreTerminated() {
         // Given a task run list where every run is terminated
         Execution execution = Execution.builder()
-            .taskRunList(List.of(
-                TaskRun.builder().id("failed").state(new State(State.Type.FAILED, new State())).build(),
-                TaskRun.builder().id("success").state(new State(State.Type.SUCCESS, new State())).build()
-            ))
+            .taskRunList(
+                List.of(
+                    TaskRun.builder().id("failed").state(new State(State.Type.FAILED, new State())).build(),
+                    TaskRun.builder().id("success").state(new State(State.Type.SUCCESS, new State())).build()
+                )
+            )
             .build();
 
         // When looking for the last not terminated task run

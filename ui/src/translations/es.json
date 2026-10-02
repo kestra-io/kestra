@@ -394,6 +394,30 @@
     "resumed title": "Reanudar ejecución <code>{id}</code>",
     "resumed confirm": "¿Estás seguro de que quieres reanudar la ejecución <code>{id}</code>?",
     "resumed done": "La ejecución se ha reanudado",
+    "approval": {
+      "review": "Revisar",
+      "title": "Revisar la ejecución <code>{id}</code>",
+      "approve": "Aprobar",
+      "deny": "Denegar",
+      "comment": "Comentario",
+      "comment hint": {
+        "optional": "Opcional.",
+        "always": "Se requiere un comentario.",
+        "on approve": "Se requiere un comentario para aprobar.",
+        "on deny": "Se requiere un comentario para denegar."
+      },
+      "comment required": "Se requiere un comentario para esta decisión.",
+      "inputs invalid": "Algunas entradas no son válidas: {errors}",
+      "already decided": "Ya se ha tomado una decisión sobre esta solicitud de aprobación.",
+      "review done": "Tu revisión ha sido registrada",
+      "cancel request": "Cancelar solicitud",
+      "cancel confirm": "¿Estás seguro de que quieres cancelar la solicitud de aprobación de la ejecución <code>{id}</code>? No se ejecutará ninguna rama de decisión.",
+      "cancel done": "La solicitud de aprobación ha sido cancelada",
+      "banner": {
+        "pausing": "Esta ejecución está preparando una solicitud de aprobación y se pausará para una revisión.",
+        "paused": "Esta ejecución está esperando una revisión. Apruébala o deniégala para continuar."
+      }
+    },
     "resume from breakpoint title": "Reanudar ejecución `<code>{id}</code>` desde el punto de interrupción",
     "resume from breakpoint done": "Ejecución reanudada desde el punto de interrupción",
     "breakpoints": "Puntos de interrupción",

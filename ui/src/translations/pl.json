@@ -394,6 +394,30 @@
     "resumed title": "Wznów egzekucję <code>{id}</code>",
     "resumed confirm": "Czy na pewno chcesz wznowić egzekucję <code>{id}</code>?",
     "resumed done": "Egzekucja została wznowiona",
+    "approval": {
+      "review": "Przegląd",
+      "title": "Przejrzyj egzekucję <code>{id}</code>",
+      "approve": "Zatwierdź",
+      "deny": "Odmów",
+      "comment": "Komentarz",
+      "comment hint": {
+        "optional": "Opcjonalnie.",
+        "always": "Komentarz jest wymagany.",
+        "on approve": "Komentarz jest wymagany do zatwierdzenia.",
+        "on deny": "Komentarz jest wymagany, aby odrzucić."
+      },
+      "comment required": "Komentarz jest wymagany dla tej decyzji.",
+      "inputs invalid": "Niektóre Inputy są nieprawidłowe: {errors}",
+      "already decided": "Decyzja w sprawie tego żądania zatwierdzenia została już podjęta.",
+      "review done": "Twoja recenzja została zapisana",
+      "cancel request": "Anuluj żądanie",
+      "cancel confirm": "Czy na pewno chcesz anulować prośbę o zatwierdzenie egzekucji <code>{id}</code>? Żadna gałąź decyzyjna nie zostanie uruchomiona.",
+      "cancel done": "Żądanie zatwierdzenia zostało anulowane",
+      "banner": {
+        "pausing": "Ta egzekucja przygotowuje prośbę o zatwierdzenie i zostanie wstrzymana do przeglądu.",
+        "paused": "Ta egzekucja czeka na weryfikację. Zatwierdź lub odrzuć, aby kontynuować."
+      }
+    },
     "resume from breakpoint title": "Wznów egzekucję <code>{id}</code> od Breakpointa",
     "resume from breakpoint done": "Egzekucja została wznowiona od Breakpointa",
     "breakpoints": "Breakpointy",

@@ -375,6 +375,39 @@ class FlowServiceTest {
     }
 
     @Test
+    void shouldKeepUnknownPropertiesWhenAnotherParseErrorFollows() {
+        String source = """
+            id: test
+            namespace: io.kestra.unittest
+            disabled: maybe
+            tasks:
+              - id: hello
+                type: io.kestra.plugin.core.log.Log
+                message: Hi
+                colour: purple
+            """;
+
+        List<ValidateConstraintViolation> results = flowService.validate("my-tenant", List.of(new FlowSource(null, source)));
+
+        assertThat(results.getFirst().getErrors())
+            .extracting(ValidationError::pointer)
+            .containsExactlyInAnyOrder("/tasks/0/colour", "/disabled");
+    }
+
+    @Test
+    void shouldReportAYamlSyntaxErrorAsAnError() {
+        String source = """
+            id: test
+            namespace: [io.kestra.unittest
+            """;
+
+        List<ValidateConstraintViolation> results = flowService.validate("my-tenant", List.of(new FlowSource(null, source)));
+
+        assertThat(results.getFirst().getErrors()).singleElement()
+            .extracting(ValidationError::detail).asString().startsWith("YAML parsing error");
+    }
+
+    @Test
     void shouldLocateAnInvalidTypeOnItsTypeProperty() {
         String source = """
             id: test

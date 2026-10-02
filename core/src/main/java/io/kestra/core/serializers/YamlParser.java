@@ -65,48 +65,63 @@ public final class YamlParser {
     }
 
     /**
-     * Scans the source for unknown properties and unknown plugin types, where a strict parse stops at the first one.
-     * Each is removed and the parse retried; any other failure ends the scan, and the real parse reports it.
+     * Scans the source for every problem a strict parse stops at, removing each and retrying. A problem whose
+     * node cannot be removed ends the scan, and the source is only recovered when a lenient parse can read it.
      */
     @SuppressWarnings("unchecked")
-    public static ParseReport scan(String input, Class<?> cls) {
-        List<ValidationError> unknownProperties = new ArrayList<>();
+    public static ParseReport scan(String input, Class<?> cls, String resource) {
+        List<ValidationError> errors = new ArrayList<>();
         List<ParseReport.InvalidType> invalidTypes = new ArrayList<>();
         List<ParseReport.Removal> removals = new ArrayList<>();
         Map<String, Object> map;
         try {
             map = NON_STRICT_MAPPER.readValue(input, Map.class);
         } catch (JsonProcessingException e) {
-            return new ParseReport(unknownProperties, invalidTypes, null, removals);
+            errors.addAll(ValidationError.ofException(toConstraintViolationException(input, resource, e)));
+            return new ParseReport(errors, invalidTypes, null, removals);
         }
 
-        while (unknownProperties.size() + invalidTypes.size() < MAX_PARSE_PROBLEMS) {
+        boolean recoverable = true;
+        while (errors.size() + invalidTypes.size() < MAX_PARSE_PROBLEMS) {
             try {
                 STRICT_MAPPER.convertValue(map, cls);
                 break;
             } catch (IllegalArgumentException e) {
-                if (e.getCause() instanceof UnrecognizedPropertyException unknown) {
-                    List<String> at = segments(unknown.getPath());
-                    if (removeAt(map, at) == null) {
-                        break;
-                    }
-                    unknownProperties.add(located(unknown.getOriginalMessage(), at, removals));
-                } else if (e.getCause() instanceof InvalidTypeIdException invalid) {
-                    List<String> at = segments(invalid.getPath());
-                    Integer index = removeAt(map, at);
-                    if (index == null) {
-                        break;
-                    }
+                if (!(e.getCause() instanceof JsonMappingException failure)) {
+                    errors.add(ValidationError.of(e.getMessage()));
+                    recoverable = false;
+                    break;
+                }
+                List<String> at = segments(failure.getPath());
+                if (failure instanceof InvalidTypeIdException invalid) {
                     List<String> type = new ArrayList<>(at);
                     type.add("type");
                     invalidTypes.add(new ParseReport.InvalidType(located("Invalid type: " + invalid.getTypeId(), type, removals), invalid.getTypeId()));
-                    removals.add(new ParseReport.Removal(index < 0 ? at : at.subList(0, at.size() - 1), index));
                 } else {
+                    String detail = failure.getCause() instanceof ConstraintViolationException cve ? cve.getMessage() : failure.getOriginalMessage();
+                    errors.add(located(detail, at, removals));
+                }
+                Integer index = removeAt(map, at);
+                if (index == null) {
+                    // A lenient parse ignores an unknown property, but stops at any other problem.
+                    recoverable = failure instanceof UnrecognizedPropertyException;
                     break;
+                }
+                if (!(failure instanceof UnrecognizedPropertyException)) {
+                    removals.add(new ParseReport.Removal(index < 0 ? at : at.subList(0, at.size() - 1), index));
                 }
             }
         }
-        return new ParseReport(unknownProperties, invalidTypes, map, removals);
+        return new ParseReport(errors, invalidTypes, recoverable ? toYaml(map) : null, removals);
+    }
+
+    @Nullable
+    private static String toYaml(Map<String, Object> map) {
+        try {
+            return NON_STRICT_MAPPER.writeValueAsString(map);
+        } catch (JsonProcessingException e) {
+            return null;
+        }
     }
 
     private static ValidationError located(String detail, List<String> segments, List<ParseReport.Removal> removals) {

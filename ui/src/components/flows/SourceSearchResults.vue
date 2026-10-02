@@ -53,7 +53,7 @@
                                         ? $t('source_search.select_all_in_flow', {namespace: group.namespace, id: group.id})
                                         : $t('source_search.cannot_select_read_only', {namespace: group.namespace, id: group.id})"
                                     @click.stop
-                                    @update:modelValue="(checked: boolean) => emit('toggle-flow', {namespace: group.namespace, id: group.id, checked})"
+                                    @update:modelValue="(checked: boolean | undefined) => checked !== undefined && emit('toggle-flow', {namespace: group.namespace, id: group.id, checked})"
                                 />
                                 <span class="result-group-title">
                                     <span class="result-group-namespace">{{ group.namespace }} /</span>
@@ -111,7 +111,7 @@
                                     :disabled="!group.editable"
                                     :aria-label="$t('source_search.select_match', {line: match.line})"
                                     @click.stop
-                                    @update:modelValue="(checked: boolean) => emit('toggle-match', {namespace: group.namespace, id: group.id, line: match.line, column: match.column, checked})"
+                                    @update:modelValue="(checked: boolean | undefined) => checked !== undefined && emit('toggle-match', {namespace: group.namespace, id: group.id, line: match.line, column: match.column, checked})"
                                 />
                                 <span class="result-match-lineno">{{ match.line }}</span>
                                 <KsTag v-if="secretKey(match.snippet)" size="small" class="result-match-secret">

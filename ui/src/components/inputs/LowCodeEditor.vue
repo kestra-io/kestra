@@ -306,6 +306,7 @@
     import {useEditorBindings} from "../../composables/useEditorBindings"
     import {loadTaskRunOutputs} from "../../composables/useTaskRunOutputs"
     import {TOPOLOGY_CLICK_INJECTION_KEY} from "../no-code/injectionKeys"
+    import type {BlockType} from "../no-code/utils/types"
     import BlockTaskPicker from "../no-code/blocks/BlockTaskPicker.vue"
     import TaskEditModal from "../no-code/blocks/TaskEditModal.vue"
     import UndoToast from "../no-code/blocks/UndoToast.vue"
@@ -409,7 +410,7 @@
     const playgroundStore = usePlaygroundStore()
     const flowStore = useFlowStore()
 
-    const exec = computed(() => executionsStore.execution ?? undefined)
+    const exec = computed<Execution | undefined>(() => (executionsStore.execution ?? undefined) as unknown as Execution | undefined)
 
     const tenant = computed(() => typeof route.params.tenant === "string" ? route.params.tenant : undefined)
 
@@ -938,7 +939,7 @@
         topologyClick.value = {
             action: "edit",
             params: {
-                section: sectionFromParentPath(target.parentPath),
+                section: sectionFromParentPath(target.parentPath) as BlockType,
                 id: String(id),
             },
         }

@@ -7,7 +7,7 @@
         :enterable="false"
     >
         <ElIcon
-            v-bind="({...filteredProps(), ...$attrs} as any)"
+            v-bind="({...filteredProps(), ...$attrs} as IconProps)"
             :size="resolvedSize"
             @click="emit('click', $event)"
         >
@@ -18,7 +18,7 @@
     </KsTooltip>
     <ElIcon
         v-else
-        v-bind="({...filteredProps(), ...$attrs} as any)"
+        v-bind="({...filteredProps(), ...$attrs} as IconProps)"
         :size="resolvedSize"
         @click="emit('click', $event)"
     >
@@ -30,7 +30,7 @@
 
 <script setup lang="ts">
     import {computed} from "vue"
-    import {ElIcon} from "element-plus"
+    import {ElIcon, type IconProps} from "element-plus"
     import {useFilteredProps} from "../../utils/filteredProps"
 
     defineOptions({inheritAttrs: false})

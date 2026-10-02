@@ -905,18 +905,27 @@ public abstract class AbstractExecutionRepositoryTest {
             .build();
         executionRepository.save(testExecution);
 
+        Execution playgroundExecution = executionRepository.save(
+            testExecution.toBuilder()
+                .id(IdUtils.create())
+                .kind(ExecutionKind.PLAYGROUND)
+                .build()
+        );
+
         var now = ZonedDateTime.now();
+        var dataFilter = Executions.builder()
+            .type(Executions.class.getName())
+            .columns(
+                Map.of(
+                    "count", ColumnDescriptor.<Executions.Fields> builder().field(Executions.Fields.ID).agg(AggregationType.COUNT).build(),
+                    "id", ColumnDescriptor.<Executions.Fields> builder().field(Executions.Fields.ID).build(),
+                    "date", ColumnDescriptor.<Executions.Fields> builder().field(Executions.Fields.START_DATE).build(),
+                    "duration", ColumnDescriptor.<Executions.Fields> builder().field(Executions.Fields.DURATION).build()
+                )
+            ).build();
         ArrayListTotal<Map<String, Object>> data = executionRepository.fetchData(
-            tenantId, Executions.builder()
-                .type(Executions.class.getName())
-                .columns(
-                    Map.of(
-                        "count", ColumnDescriptor.<Executions.Fields> builder().field(Executions.Fields.ID).agg(AggregationType.COUNT).build(),
-                        "id", ColumnDescriptor.<Executions.Fields> builder().field(Executions.Fields.ID).build(),
-                        "date", ColumnDescriptor.<Executions.Fields> builder().field(Executions.Fields.START_DATE).build(),
-                        "duration", ColumnDescriptor.<Executions.Fields> builder().field(Executions.Fields.DURATION).build()
-                    )
-                ).build(),
+            tenantId,
+            dataFilter,
             now.minusHours(1),
             now,
             null
@@ -926,6 +935,15 @@ public abstract class AbstractExecutionRepositoryTest {
         assertThat(data).first().hasFieldOrProperty("count");
         assertThat(data).first().extracting("count").hasToString("1");
         assertThat(data).first().hasFieldOrPropertyWithValue("id", execution.getId());
+
+        dataFilter.updateWhereWithGlobalFilters(
+            List.of(QueryFilter.builder().field(Field.KIND).operation(Op.EQUALS).value(ExecutionKind.PLAYGROUND).build()),
+            null,
+            null
+        );
+        data = executionRepository.fetchData(tenantId, dataFilter, now.minusHours(1), now, null);
+
+        assertThat(data).singleElement().hasFieldOrPropertyWithValue("id", playgroundExecution.getId());
     }
 
     @Test
@@ -1098,17 +1116,41 @@ public abstract class AbstractExecutionRepositoryTest {
             .build();
         executionRepository.save(testExecution);
 
+        executionRepository.save(
+            testExecution.toBuilder()
+                .id(IdUtils.create())
+                .kind(ExecutionKind.PLAYGROUND)
+                .build()
+        );
+        executionRepository.save(
+            testExecution.toBuilder()
+                .id(IdUtils.create())
+                .kind(ExecutionKind.PLAYGROUND)
+                .build()
+        );
+
         var now = ZonedDateTime.now();
+        var dataFilter = ExecutionsKPI.builder()
+            .type(ExecutionsKPI.class.getName())
+            .columns(ColumnDescriptor.<ExecutionsKPI.Fields> builder().field(ExecutionsKPI.Fields.ID).agg(AggregationType.COUNT).build())
+            .build();
         Double value = executionRepository.fetchValue(
-            tenantId, ExecutionsKPI.builder()
-                .type(ExecutionsKPI.class.getName())
-                .columns(ColumnDescriptor.<ExecutionsKPI.Fields> builder().field(ExecutionsKPI.Fields.ID).agg(AggregationType.COUNT).build())
-                .build(),
+            tenantId,
+            dataFilter,
             now.minusHours(1),
             now,
             false
         );
         assertEquals(1.0, value);
+
+        dataFilter.updateWhereWithGlobalFilters(
+            List.of(QueryFilter.builder().field(Field.KIND).operation(Op.EQUALS).value(ExecutionKind.PLAYGROUND).build()),
+            null,
+            null
+        );
+        value = executionRepository.fetchValue(tenantId, dataFilter, now.minusHours(1), now, false);
+
+        assertEquals(2.0, value);
     }
 
     @Test

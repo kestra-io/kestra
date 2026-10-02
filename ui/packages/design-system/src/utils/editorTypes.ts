@@ -80,5 +80,5 @@ export interface KsEditorTemplateRefs {
     editorRef: import("vue").Ref<HTMLDivElement | null>
     container: import("vue").Ref<HTMLDivElement | undefined>
     datePickerWrapper: import("vue").Ref<HTMLElement | undefined>
-    datePicker: import("vue").Ref<DatePickerInstance>
+    datePicker: import("vue").Ref<DatePickerInstance | undefined>
 }

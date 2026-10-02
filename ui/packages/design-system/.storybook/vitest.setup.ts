@@ -13,9 +13,12 @@ declare global {
 // in storybook tests.
 globalThis._VSCODE_FILE_ROOT = "/"
 globalThis.MonacoEnvironment = globalThis.MonacoEnvironment ?? {
-    // getWorker: () => ({postMessage: () => {}, terminate: () => {}, addEventListener: () => {}, removeEventListener: () => {}}),
-    getWorker: () => Object.create(Worker.prototype) as Worker,
-
+    getWorker: () => ({
+        postMessage() {},
+        terminate() {},
+        addEventListener() {},
+        removeEventListener() {},
+    }) as unknown as Worker,
 }
 
 vi.mock("vue-i18n", () => ({

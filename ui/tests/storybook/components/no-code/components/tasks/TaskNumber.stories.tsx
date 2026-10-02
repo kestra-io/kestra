@@ -16,15 +16,15 @@ export default meta;
 
 type Story = StoryObj<typeof TaskNumber>;
 
-const render: Story["render"] = (args: any) => ({
+const render: Story["render"] = (args) => ({
     setup() {
         provide(SCHEMA_DEFINITIONS_INJECTION_KEY, computed(() => ({})));
-        const model = ref<number | undefined>(args.modelValue);
+        const model = ref(args.modelValue);
         return () => <div style={{display: "flex", gap: "16px"}}>
             <div style={{width: "400px"}}>
                 <TaskNumber
                     modelValue={model.value}
-                    onUpdate:modelValue={(val: any) => model.value = val}
+                    onUpdate:modelValue={(val) => model.value = val}
                     schema={args.schema ?? {type: "number"}}
                 />
             </div>

@@ -223,7 +223,7 @@ public class TriggerController {
     @Operation(tags = { "Triggers" }, summary = "Create a backfill")
     @ApiResponse(responseCode = "200", description = "On success", content = { @Content(schema = @Schema(implementation = ApiTriggerState.class)) })
     @ApiResponse(responseCode = "409", description = "If the backfill cannot be created")
-    @ApiResponse(responseCode = "422", description = "If the backfill end date is not after its start date")
+    @ApiResponse(responseCode = "422", description = "If the backfill end date is not after its start date, or if the trigger is not a schedule trigger")
     public HttpResponse<ApiTriggerState> createBackfill(
         @Parameter(description = "The trigger that need the backfill to be created") @Body @Valid ApiCreateBackfillRequest request) {
         TriggerId triggerId = TriggerId.of(tenantService.resolveTenant(), request.namespace(), request.flowId(), request.triggerId());
@@ -339,9 +339,9 @@ public class TriggerController {
 
     @ExecuteOn(TaskExecutors.IO)
     @Delete(uri = "/{namespace}/{flowId}/{triggerId}")
-    @Operation(tags = { "Triggers" }, summary = "Delete a trigger")
+    @Operation(tags = { "Triggers" }, summary = "Delete orphan trigger state")
     @ApiResponse(responseCode = "204", description = "On success")
-    @ApiResponse(responseCode = "409", description = "If the trigger cannot be deleted")
+    @ApiResponse(responseCode = "409", description = "If the flow still declares the trigger, or the scheduler failed to delete the trigger state")
     public HttpResponse<Void> deleteTrigger(
         @Parameter(description = "The namespace") @PathVariable String namespace,
         @Parameter(description = "The flow id") @PathVariable String flowId,
@@ -352,8 +352,11 @@ public class TriggerController {
 
     @ExecuteOn(TaskExecutors.IO)
     @Delete(uri = "/delete/by-triggers")
-    @Operation(tags = { "Triggers" }, summary = "Delete given triggers asynchronously")
-    @ApiResponse(responseCode = "202", description = "Accepted", content = { @Content(schema = @Schema(implementation = ApiAsyncOperationResponse.class)) })
+    @Operation(tags = { "Triggers" }, summary = "Delete orphan trigger state for the given triggers")
+    @ApiResponse(
+        responseCode = "202", description = "Accepted. Triggers the flow still declares are not deleted, and totalItems is the number of orphan deletes queued.",
+        content = { @Content(schema = @Schema(implementation = ApiAsyncOperationResponse.class)) }
+    )
     public MutableHttpResponse<ApiAsyncOperationResponse> deleteTriggersByIds(
         @Parameter(description = "The triggers to delete") @Body List<ApiTriggerId> triggers) {
         return HttpResponse.accepted().body(
@@ -363,8 +366,11 @@ public class TriggerController {
 
     @ExecuteOn(TaskExecutors.IO)
     @Delete(uri = "/delete/by-query")
-    @Operation(tags = { "Triggers" }, summary = "Delete triggers by query parameters asynchronously")
-    @ApiResponse(responseCode = "202", description = "Accepted", content = { @Content(schema = @Schema(implementation = ApiAsyncOperationResponse.class)) })
+    @Operation(tags = { "Triggers" }, summary = "Delete orphan trigger state matching the query")
+    @ApiResponse(
+        responseCode = "202", description = "Accepted. Triggers the flow still declares are not deleted, and totalItems is the number of orphan deletes queued.",
+        content = { @Content(schema = @Schema(implementation = ApiAsyncOperationResponse.class)) }
+    )
     public MutableHttpResponse<ApiAsyncOperationResponse> deleteTriggersByQuery(
         @Parameter(description = "Filters. PHP-style nested query is used - examples: `filters[flowId][EQUALS]=hello-world`, `filters[namespace][CONTAINS]=test`")
         @QueryFilterFormat(Resource.TRIGGER) List<QueryFilter> filters) {

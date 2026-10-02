@@ -1,7 +1,9 @@
 import {vueRouter} from "storybook-vue3-router";
 import type {Meta, StoryObj} from "@storybook/vue3";
+import type {LogEntry, State} from "@kestra-io/kestra-sdk";
 import {expect, userEvent, waitFor} from "storybook/test";
-import {useExecutionsStore} from "../../../../src/stores/executions";
+import {useExecutionsStore, type Execution} from "../../../../src/stores/executions";
+import type {Log} from "../../../../src/stores/logs";
 import TaskRunDetails from "../../../../src/components/logs/TaskRunDetails.vue";
 
 const TASK_RUN_ID = "task-run-1";
@@ -13,17 +15,17 @@ const BASE_LOG = {
     executionId: "test-exec-id",
     thread: "main",
     attemptNumber: 0,
-    executionKind: "flow" as const,
+    executionKind: "NORMAL",
     taskRunId: TASK_RUN_ID,
     taskId: "my-task",
     level: "INFO",
-};
+} satisfies Partial<LogEntry>;
 
 // The four "Processed record NNN" lines collapse into ONE group item: normalizeLogTemplate
 // (src/utils/logs.ts) masks any run of 3+ digits, so they share a template key, and 4 consecutive
 // matches is over COLLAPSE_THRESHOLD (3). The surrounding lines have distinct templates and stay
 // ungrouped, which is what makes the group's boundaries observable.
-const FAKE_LOGS = [
+const FAKE_LOGS: Log[] = [
     {...BASE_LOG, index: 0, timestamp: "2025-01-01T00:00:00.000Z", message: "Starting my-task"},
     {...BASE_LOG, index: 1, timestamp: "2025-01-01T00:00:01.000Z", message: "Processed record 100"},
     {...BASE_LOG, index: 2, timestamp: "2025-01-01T00:00:02.000Z", message: "Processed record 200"},
@@ -32,7 +34,9 @@ const FAKE_LOGS = [
     {...BASE_LOG, index: 5, timestamp: "2025-01-01T00:00:05.000Z", message: "Finished my-task"},
 ];
 
-const TASK_RUN_STATE = {
+type SerializedState = Omit<State, "getDuration" | "getStartDate" | "getEndDate">;
+
+const TASK_RUN_STATE: SerializedState = {
     current: "SUCCESS",
     startDate: "2025-01-01T00:00:00Z",
     endDate: "2025-01-01T00:00:06Z",
@@ -44,7 +48,7 @@ const TASK_RUN_STATE = {
     ],
 };
 
-const SECOND_TASK_RUN_STATE = {
+const SECOND_TASK_RUN_STATE: SerializedState = {
     current: "SUCCESS",
     startDate: "2025-01-01T00:00:00Z",
     endDate: "2025-01-01T00:02:00Z",
@@ -82,8 +86,8 @@ const decorators = [
     () => ({
         setup() {
             const executionsStore = useExecutionsStore();
-            executionsStore.execution = FAKE_EXECUTION as any;
-            (executionsStore as any).loadLogs = async () => FAKE_LOGS;
+            executionsStore.execution = FAKE_EXECUTION as Execution;
+            executionsStore.loadLogs = async () => FAKE_LOGS;
         },
         template: "<div style='padding:1rem'><story /></div>",
     }),

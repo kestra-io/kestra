@@ -119,6 +119,7 @@
     import {useRouter, useRoute} from "vue-router"
     import {useI18n} from "vue-i18n"
     import {useToast} from "../../utils/toast"
+    import type {KestraHttpError} from "../../utils/kestraHttp"
     import {buildScheduleDateParam, isPastScheduleDate, isScheduleDayDisabled} from "../../utils/scheduleDate"
     import {dateUtils} from "@kestra-io/design-system"
     import {useCoreStore} from "../../stores/core"
@@ -244,8 +245,8 @@
             if (isSuccessfulFlowSaveOutcome(outcome)) {
                 await executionsStore.loadFlowForExecution({namespace, flowId: id, store: true})
             }
-        } catch (error: any) {
-            if (error?.status === 401) {
+        } catch (error) {
+            if ((error as KestraHttpError)?.status === 401) {
                 toast.error("401 Unauthorized", undefined, {duration: 2000})
             }
         } finally {
@@ -524,19 +525,6 @@
                 border-bottom-left-radius: var(--kel-border-radius-round);
                 border-bottom-right-radius: var(--kel-border-radius-round);
             }
-        }
-    }
-
-    .onboarding-glow {
-        animation: glowAnimation 1s infinite alternate;
-    }
-
-    @keyframes glowAnimation {
-        0% {
-            box-shadow: 0px 0px 0px 0px #8405FF;
-        }
-        100% {
-            box-shadow: 0px 0px 50px 2px #8405FF;
         }
     }
 

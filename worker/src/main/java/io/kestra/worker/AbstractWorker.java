@@ -17,6 +17,8 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.awaitility.core.ConditionTimeoutException;
+
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.runners.WorkerJob;
 import io.kestra.core.server.AbstractService;
@@ -31,12 +33,10 @@ import io.kestra.core.worker.WorkerGroups;
 import io.kestra.core.worker.models.WorkerContext;
 import io.kestra.worker.fetchers.JobFetcher;
 import io.kestra.worker.queues.MonitoredWorkerQueue;
-import io.kestra.worker.queues.WorkerQueueRegistry;
 import io.kestra.worker.senders.WorkerIOSender;
 
 import io.micronaut.context.event.ApplicationEventPublisher;
 import lombok.extern.slf4j.Slf4j;
-import org.awaitility.core.ConditionTimeoutException;
 
 import static io.kestra.core.server.Service.ServiceState.TERMINATED_FORCED;
 import static io.kestra.core.server.Service.ServiceState.TERMINATED_GRACEFULLY;
@@ -119,6 +119,14 @@ public abstract class AbstractWorker extends AbstractService {
     protected abstract String resolveWorkerGroupId();
 
     /**
+     * Returns how many fetched jobs this worker buffers while all its threads are busy, which also bounds the
+     * permits it advertises. Defaults to the thread count.
+     */
+    protected int jobBufferSize(int numThreads) {
+        return numThreads;
+    }
+
+    /**
      * Starts the worker.
      */
     public void start(int numThreads) {
@@ -137,6 +145,8 @@ public abstract class AbstractWorker extends AbstractService {
 
         this.setState(ServiceState.CREATED);
 
+        int jobBufferSize = jobBufferSize(numThreads);
+
         // create metrics to store thread count, pending jobs and running jobs, so we can have autoscaling easily
         this.metricRegistry.gauge(
             MetricRegistry.METRIC_WORKER_JOB_THREAD_COUNT,
@@ -146,12 +156,11 @@ public abstract class AbstractWorker extends AbstractService {
         );
         // Total max in-flight capacity = executing threads + buffered jobs. This is the
         // authoritative figure the controller uses for reservation math, and what the
-        // UI should display as the worker's "capacity total". Kept in sync with the
-        // buffer formula in WorkerQueueRegistry via the static helper.
+        // UI should display as the worker's "capacity total".
         this.metricRegistry.gauge(
             MetricRegistry.METRIC_WORKER_MAX_CONCURRENCY,
             MetricRegistry.METRIC_WORKER_MAX_CONCURRENCY_DESCRIPTION,
-            numThreads + WorkerQueueRegistry.bufferSize(numThreads),
+            numThreads + jobBufferSize,
             metricRegistry.workerGroupTags(workerGroupId)
         );
         // Tasks-completed throughput (tasks/s), surfaced in the Worker Group UI. The
@@ -159,7 +168,7 @@ public abstract class AbstractWorker extends AbstractService {
         // each heartbeat (see getMetrics) — no extra metric is registered.
         this.rateMeter = new RateMeter(metricRegistry, workerGroupId);
 
-        WorkerContext workerContext = new WorkerContext(getId(), workerGroupId, numThreads);
+        WorkerContext workerContext = new WorkerContext(getId(), workerGroupId, numThreads, jobBufferSize);
 
         disposables.add(maintenanceService.listen(new MaintenanceService.MaintenanceListener() {
             @Override
@@ -285,6 +294,11 @@ public abstract class AbstractWorker extends AbstractService {
         }
 
         stopAllWorkerIOThreads();
+
+        if (terminatedGracefully && workerIOSenders.stream().anyMatch(WorkerIOSender::hasUndeliveredResults)) {
+            log.warn("Some job results may not have reached the controller, so the worker reports a forced termination rather than a graceful one.");
+            return TERMINATED_FORCED;
+        }
         return terminatedGracefully ? TERMINATED_GRACEFULLY : TERMINATED_FORCED;
     }
 

@@ -91,6 +91,9 @@ kestra:
     http:
       denied-list:
         - http://dangerous-url.com
+        - http://169.254.169.254
+        - http://kestra_internal_db
+        - 10.0.0.0/8
 
   grpc:
     maxRetryAttempts: 1

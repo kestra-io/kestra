@@ -81,7 +81,7 @@
             color: var(--ks-text-dim);
 
             &:hover {
-                color: var(--ks-content-link, var(--ks-text-link));
+                color: var(--ks-text-link);
             }
         }
     }

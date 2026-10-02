@@ -13,7 +13,7 @@ import {
 } from "yaml"
 import {parseDocumentTyped, scalarKey} from "./document.ts"
 
-export type FieldMatch<T extends string> = Record<T, any> & {range: Range}
+export type FieldMatch<T extends string> = Record<T, unknown> & {range: Range}
 
 function pathOfPairs(ancestry: readonly (Document | Node | Pair)[]): string {
     return ancestry
@@ -60,7 +60,7 @@ export function extractFieldFromMaps<T extends string>(
 
 export interface TypedBlock {
     type: string;
-    value: Record<string, any>;
+    value: Record<string, unknown>;
     range: Range;
     path: string;
 }

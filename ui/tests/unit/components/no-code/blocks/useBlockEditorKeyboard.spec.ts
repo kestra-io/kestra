@@ -1,5 +1,5 @@
 import {describe, it, expect, vi, afterEach} from "vitest"
-import {defineComponent} from "vue"
+import {defineComponent, ref, type Ref} from "vue"
 import {mount} from "@vue/test-utils"
 
 import {useBlockEditorKeyboard, type BlockEditorKeyBindingLike} from "../../../../../src/components/no-code/blocks/useBlockEditorKeyboard"
@@ -9,17 +9,32 @@ const KEYMAP: BlockEditorKeyBindingLike[] = [
     {id: "delete", keys: ["Backspace", "Delete"]},
     {id: "command-menu", keys: ["Meta+Shift+p", "Control+Shift+p"]},
     {id: "save", keys: ["Meta+s", "Control+s"]},
+    {id: "undo", keys: ["Meta+z", "Control+z"]},
     {id: "clear", keys: ["Escape"]},
     {id: "help", keys: ["?"]},
     {id: "focus-panel", keys: ["Tab"]},
     {id: "insert-after", keys: ["a"]},
     {id: "insert-before", keys: ["Shift+a"]},
+    {id: "copy", keys: ["Meta+c", "Control+c"]},
+    {id: "paste", keys: ["Meta+v", "Control+v"]},
+    {id: "redo", keys: ["Meta+Shift+z", "Control+y"]},
 ]
 
-function mountWithKeyboard(dispatch: (id: string, event: KeyboardEvent) => void | boolean, isOverlayOpen?: () => boolean) {
+function stubTextSelection(hasSelection: boolean) {
+    return vi.spyOn(window, "getSelection").mockReturnValue({
+        isCollapsed: !hasSelection,
+        toString: () => (hasSelection ? "selected text" : ""),
+    } as Selection)
+}
+
+function mountWithKeyboard(
+    dispatch: (id: string, event: KeyboardEvent) => void | boolean,
+    isOverlayOpen?: () => boolean,
+    root?: Ref<HTMLElement | undefined | null>,
+) {
     const Comp = defineComponent({
         setup() {
-            useBlockEditorKeyboard({keymap: KEYMAP, dispatch, isOverlayOpen})
+            useBlockEditorKeyboard({keymap: KEYMAP, dispatch, isOverlayOpen, root})
             return () => null
         },
     })
@@ -159,6 +174,140 @@ describe("useBlockEditorKeyboard", () => {
         document.body.removeChild(input)
     })
 
+    it("leaves Ctrl+Z to a field inside the surface, so typing undoes the characters", () => {
+        // Given
+        const dispatch = vi.fn()
+        wrapper = mountWithKeyboard(dispatch)
+        const input = document.createElement("input")
+        document.body.appendChild(input)
+
+        // When
+        const event = dispatchKeydown(input, {key: "z", ctrlKey: true})
+
+        // Then — the field's own undo runs, the canvas does not rewind the flow
+        expect(dispatch).not.toHaveBeenCalled()
+        expect(event.defaultPrevented).toBe(false)
+        document.body.removeChild(input)
+    })
+
+    it("leaves Ctrl+Z to a Monaco editor", () => {
+        // Given — the Flow Code panel beside the canvas
+        const dispatch = vi.fn()
+        wrapper = mountWithKeyboard(dispatch)
+        const monacoRoot = document.createElement("div")
+        monacoRoot.className = "monaco-editor"
+        const textarea = document.createElement("textarea")
+        monacoRoot.appendChild(textarea)
+        document.body.appendChild(monacoRoot)
+
+        // When
+        const event = dispatchKeydown(textarea, {key: "z", ctrlKey: true})
+
+        // Then
+        expect(dispatch).not.toHaveBeenCalled()
+        expect(event.defaultPrevented).toBe(false)
+        document.body.removeChild(monacoRoot)
+    })
+
+    it("still dispatches Ctrl+Z from the canvas itself", () => {
+        // Given
+        const dispatch = vi.fn()
+        wrapper = mountWithKeyboard(dispatch)
+
+        // When
+        dispatchKeydown(window, {key: "z", ctrlKey: true})
+
+        // Then
+        expect(dispatch).toHaveBeenCalledWith("undo", expect.any(KeyboardEvent))
+    })
+
+    it("still dispatches Cmd+S from a field, including the surface's teleported modal", () => {
+        // Given — TaskEditModal is appendToBody, so it is never a DOM descendant of the canvas
+        const dispatch = vi.fn()
+        wrapper = mountWithKeyboard(dispatch)
+        const teleported = document.createElement("div")
+        const input = document.createElement("input")
+        teleported.appendChild(input)
+        document.body.appendChild(teleported)
+
+        // When
+        dispatchKeydown(input, {key: "s", metaKey: true})
+
+        // Then — saving is app-level; standing down here would hand the key to the browser
+        expect(dispatch).toHaveBeenCalledWith("save", expect.any(KeyboardEvent))
+        document.body.removeChild(teleported)
+    })
+
+    it("does not preventDefault when undo reports an empty history", () => {
+        // Given
+        const dispatch = vi.fn().mockReturnValue(false)
+        wrapper = mountWithKeyboard(dispatch)
+
+        // When
+        const event = dispatchKeydown(window, {key: "z", ctrlKey: true})
+
+        // Then — the browser's own undo is left alone
+        expect(dispatch).toHaveBeenCalledWith("undo", expect.any(KeyboardEvent))
+        expect(event.defaultPrevented).toBe(false)
+    })
+
+    it("leaves Cmd+S in a foreign editor to that editor, so one chord runs one save", () => {
+        // Given — the Flow Code panel registers its own window listener for this chord
+        const dispatch = vi.fn()
+        const surfaceRoot = document.createElement("div")
+        document.body.appendChild(surfaceRoot)
+        wrapper = mountWithKeyboard(dispatch, undefined, ref(surfaceRoot))
+        const monacoRoot = document.createElement("div")
+        monacoRoot.className = "monaco-editor"
+        const textarea = document.createElement("textarea")
+        monacoRoot.appendChild(textarea)
+        document.body.appendChild(monacoRoot)
+
+        // When
+        dispatchKeydown(textarea, {key: "s", metaKey: true})
+
+        // Then
+        expect(dispatch).not.toHaveBeenCalled()
+        document.body.removeChild(monacoRoot)
+        document.body.removeChild(surfaceRoot)
+    })
+
+    it("still answers Cmd+S typed in the surface's own teleported overlay", () => {
+        // Given — TaskEditModal is appendToBody, so it is claimed by the marker, not by containment
+        const dispatch = vi.fn()
+        const surfaceRoot = document.createElement("div")
+        document.body.appendChild(surfaceRoot)
+        wrapper = mountWithKeyboard(dispatch, undefined, ref(surfaceRoot))
+        const overlay = document.createElement("div")
+        overlay.setAttribute("data-authoring-overlay", "")
+        const input = document.createElement("input")
+        overlay.appendChild(input)
+        document.body.appendChild(overlay)
+
+        // When
+        dispatchKeydown(input, {key: "s", metaKey: true})
+
+        // Then
+        expect(dispatch).toHaveBeenCalledWith("save", expect.any(KeyboardEvent))
+        document.body.removeChild(overlay)
+        document.body.removeChild(surfaceRoot)
+    })
+
+    it("still answers Cmd+S from the canvas itself", () => {
+        // Given
+        const dispatch = vi.fn()
+        const surfaceRoot = document.createElement("div")
+        document.body.appendChild(surfaceRoot)
+        wrapper = mountWithKeyboard(dispatch, undefined, ref(surfaceRoot))
+
+        // When
+        dispatchKeydown(window, {key: "s", metaKey: true})
+
+        // Then
+        expect(dispatch).toHaveBeenCalledWith("save", expect.any(KeyboardEvent))
+        document.body.removeChild(surfaceRoot)
+    })
+
     it("blocks canvas shortcuts while an overlay owns the keys", () => {
         // Given
         const dispatch = vi.fn()
@@ -270,6 +419,91 @@ describe("useBlockEditorKeyboard", () => {
 
         // Then
         expect(dispatch).not.toHaveBeenCalled()
+    })
+
+    it("leaves Cmd+C to a real text selection, so copying selected card text still works", () => {
+        // Given
+        const dispatch = vi.fn()
+        wrapper = mountWithKeyboard(dispatch)
+        const selectionSpy = stubTextSelection(true)
+
+        // When
+        const event = dispatchKeydown(window, {key: "c", metaKey: true})
+
+        // Then
+        expect(dispatch).not.toHaveBeenCalled()
+        expect(event.defaultPrevented).toBe(false)
+        selectionSpy.mockRestore()
+    })
+
+    it("still dispatches Cmd+C when there is no text selection", () => {
+        // Given
+        const dispatch = vi.fn()
+        wrapper = mountWithKeyboard(dispatch)
+        const selectionSpy = stubTextSelection(false)
+
+        // When
+        dispatchKeydown(window, {key: "c", metaKey: true})
+
+        // Then
+        expect(dispatch).toHaveBeenCalledWith("copy", expect.any(KeyboardEvent))
+        selectionSpy.mockRestore()
+    })
+
+    it("does not let a text selection guard a non-clipboard shortcut", () => {
+        // Given — the guard is scoped to copy/cut, not every binding
+        const dispatch = vi.fn()
+        wrapper = mountWithKeyboard(dispatch)
+        const selectionSpy = stubTextSelection(true)
+
+        // When
+        dispatchKeydown(window, {key: "ArrowDown"})
+
+        // Then
+        expect(dispatch).toHaveBeenCalledWith("move", expect.any(KeyboardEvent))
+        selectionSpy.mockRestore()
+    })
+
+    it("still dispatches Cmd+V over a text selection, unlike copy and cut", () => {
+        // Given — a non-editable text selection has nothing native for paste to yield to
+        const dispatch = vi.fn()
+        wrapper = mountWithKeyboard(dispatch)
+        const selectionSpy = stubTextSelection(true)
+
+        // When
+        dispatchKeydown(window, {key: "v", metaKey: true})
+
+        // Then
+        expect(dispatch).toHaveBeenCalledWith("paste", expect.any(KeyboardEvent))
+        selectionSpy.mockRestore()
+    })
+
+    it("blocks redo while an overlay owns the keys, like every other canvas shortcut", () => {
+        // Given
+        const dispatch = vi.fn()
+        wrapper = mountWithKeyboard(dispatch, () => true)
+
+        // When
+        dispatchKeydown(window, {key: "z", metaKey: true, shiftKey: true})
+
+        // Then
+        expect(dispatch).not.toHaveBeenCalled()
+    })
+
+    it("leaves redo to a field inside the surface, like undo", () => {
+        // Given
+        const dispatch = vi.fn()
+        wrapper = mountWithKeyboard(dispatch)
+        const input = document.createElement("input")
+        document.body.appendChild(input)
+
+        // When
+        const event = dispatchKeydown(input, {key: "z", metaKey: true, shiftKey: true})
+
+        // Then
+        expect(dispatch).not.toHaveBeenCalled()
+        expect(event.defaultPrevented).toBe(false)
+        document.body.removeChild(input)
     })
 
     it("ignores an unmapped key", () => {

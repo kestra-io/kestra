@@ -1,17 +1,19 @@
 import {computed, ref, watch} from "vue"
 import {defineStore} from "pinia"
 
-import type {AxiosLikeConfig, AxiosLikeResponse} from "@kestra-io/kestra-sdk"
+import type {AxiosLikeConfig, AxiosLikeResponse, ExportFormat} from "@kestra-io/kestra-sdk"
 
 const response: AxiosLikeConfig = {responseType: "blob" as const}
 const validateStatus = (status: number) => status === 200 || status === 404
-/** Returns false when the export carried no rows: the backend answers 200 with an empty body,
- *  and writing that out hands the user a 0 byte file with no clue anything went wrong. */
-const downloadHandler = (res: AxiosLikeResponse, filename: string, extension: string): boolean => {
+/** Returns false when the export carried nothing the user can open. Only ION can end up that way:
+ *  a CSV export always carries its header row, so an empty chart is still a valid file, while ION
+ *  has no header concept and an empty chart really is a 0 byte body that looks like a failed
+ *  download. */
+const downloadHandler = (res: AxiosLikeResponse, filename: string, format: ExportFormat): boolean => {
     const blob = new Blob([res.data], {type: "application/octet-stream"})
-    if (blob.size === 0) return false
+    if (format === "ION" && blob.size === 0) return false
 
-    Utils.downloadUrl(window.URL.createObjectURL(blob), `${filename}.${extension}`)
+    Utils.downloadUrl(window.URL.createObjectURL(blob), `${filename}.${format.toLowerCase()}`)
     return true
 }
 
@@ -22,13 +24,24 @@ import * as Utils from "../utils/utils"
 import {routeFamily} from "../utils/routeFamily"
 
 import type {Dashboard, Chart, DashboardSettings} from "../components/dashboard/types.ts"
-import {ChartFiltersOverrides, useClient} from "@kestra-io/kestra-sdk"
+import {useClient, type ChartFiltersOverrides} from "@kestra-io/kestra-sdk"
 import * as DashboardsAPI from "@kestra-io/kestra-sdk/dashboards"
-import {removeRefPrefix, usePluginsStore} from "./plugins"
+import {removeRefPrefix, usePluginsStore, type JsonSchemaDef, type RootJsonSchema} from "./plugins"
 import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
 import {useUnsavedChangesStore} from "./unsavedChanges"
 import {useBookmarksStore} from "./bookmarks"
-import {RouteLocation} from "vue-router"
+import type {RouteLocation} from "vue-router"
+import type {KestraHttpError} from "../utils/kestraHttp"
+
+type ParsedDashboardSource = {id?: string} & Record<string, unknown>
+type DashboardListOptions = Omit<NonNullable<Parameters<typeof DashboardsAPI.searchDashboards>[0]>, "sort"> & {sort?: string}
+type LoadedChart = Chart & {raw: Chart}
+
+interface LoadChartResult {
+    error: string | null;
+    data: LoadedChart | null;
+    raw: Record<string, unknown>;
+}
 
 export const DEFAULT_DASHBOARD = {
     id: "default",
@@ -53,9 +66,9 @@ export const useDashboardStore = defineStore("dashboard", () => {
 
     const sourceCode = ref("")
     const sourceCodeOrigin = ref("")
-    const parsedSource = computed<{ id?: string, [key:string]: any } | undefined>((previous) => {
+    const parsedSource = computed<ParsedDashboardSource | undefined>((previous) => {
         try {
-            return YAML_UTILS.parse(sourceCode.value)
+            return YAML_UTILS.parse(sourceCode.value) as ParsedDashboardSource
         } catch {
             return previous
         }
@@ -71,7 +84,7 @@ export const useDashboardStore = defineStore("dashboard", () => {
 
     const axios = useClient()
 
-    async function list(options: Record<string, any>, route: RouteLocation): Promise<{ id: string; title: string; isDefault: boolean }[]> {
+    async function list(options: DashboardListOptions, route: RouteLocation): Promise<{ id: string; title: string; isDefault: boolean }[]> {
         const {sort, ...params} = options
         const res = await DashboardsAPI.searchDashboards({...params, size: 100, sort: sort ? [sort] : undefined})
         await loadDefaults()
@@ -272,8 +285,8 @@ export const useDashboardStore = defineStore("dashboard", () => {
         try {
             const {data} = await axios.post(`${apiUrl()}/dashboards/${id}/charts/${chartId}`, parameters, {showMessageOnError: false} as AxiosLikeConfig)
             return data
-        } catch (e: any) {
-            if (e.status === 404) return undefined
+        } catch (e: unknown) {
+            if ((e as KestraHttpError).status === 404) return undefined
             throw e
         }
     }
@@ -288,9 +301,9 @@ export const useDashboardStore = defineStore("dashboard", () => {
         return DashboardsAPI.previewChart(request)
     }
 
-    /** Resolves to false when the chart had nothing to export, so the caller can tell the user
-     *  instead of silently downloading an empty file. */
-    async function exportDashboard(dashboard: Dashboard, chart: Chart, parameters: ChartFiltersOverrides, format: "CSV" | "ION" = "CSV"): Promise<boolean> {
+    /** Resolves to false when the export carried nothing the user can open, so the caller can tell
+     *  them instead of silently downloading an empty file. Only ION resolves that way. */
+    async function exportDashboard(dashboard: Dashboard, chart: Chart, parameters: ChartFiltersOverrides, format: ExportFormat = "CSV"): Promise<boolean> {
         const isDefault = dashboard.id === "default"
 
         const path = isDefault ? "/charts/export" : `/${dashboard.id}/charts/${chart.id}/export`
@@ -300,41 +313,38 @@ export const useDashboardStore = defineStore("dashboard", () => {
 
         return axios
             .post(`${apiUrl()}/dashboards${path}?format=${format}`, payload, response)
-            .then((res) => downloadHandler(res, filename, format.toLowerCase()))
+            .then((res) => downloadHandler(res, filename, format))
     }
 
     const pluginsStore = usePluginsStore()
 
-    const InitialSchema = {}
+    const InitialSchema = {definitions: {}, $ref: ""}
 
-    const schema = computed<{
-            definitions: any,
-            $ref: string,
-    }>(() =>  {
+    const schema = computed<RootJsonSchema>(() =>  {
         return pluginsStore.schemaType?.dashboard ?? InitialSchema
     })
 
-    const definitions = computed<Record<string, any>>(() =>  {
+    const definitions = computed<Record<string, JsonSchemaDef>>(() =>  {
         return schema.value.definitions ?? {}
     })
 
-    function recursivelyLoopUpSchemaRef(a: any, defs: Record<string, any>): any {
-        if (a.$ref) {
-            const refKey = removeRefPrefix(a.$ref)
+    function recursivelyLoopUpSchemaRef(schemaValue: JsonSchemaDef | undefined, defs: Record<string, JsonSchemaDef>): JsonSchemaDef | undefined {
+        if (schemaValue?.$ref) {
+            const refKey = removeRefPrefix(schemaValue.$ref)
             return recursivelyLoopUpSchemaRef(defs[refKey], defs)
         }
-        return a
+        return schemaValue
     }
 
-    const rootSchema = computed<Record<string, any> | undefined>(() => {
+    const rootSchema = computed<JsonSchemaDef | undefined>(() => {
         return recursivelyLoopUpSchemaRef(schema.value, definitions.value)
     })
 
-    const rootProperties = computed<Record<string, any> | undefined>(() => {
+    const rootProperties = computed<Record<string, JsonSchemaDef> | undefined>(() => {
         return rootSchema.value?.properties
     })
 
-    async function loadChart(chart: any) {
+    async function loadChart(chart: Chart): Promise<LoadChartResult> {
         const yamlChart = YAML_UTILS.stringify(chart)
         if(selectedChart.value?.content === yamlChart){
             return {
@@ -343,14 +353,7 @@ export const useDashboardStore = defineStore("dashboard", () => {
                 raw: chart,
             }
         }
-        const result: { error: string | null; data: null | {
-            id?: string;
-            name?: string;
-            type?: string;
-            chartOptions?: Record<string, any>;
-            dataFilters?: any[];
-            charts?: any[];
-        }; raw: any } = {
+        const result: LoadChartResult = {
             error: null,
             data: null,
             raw: {},
@@ -363,14 +366,14 @@ export const useDashboardStore = defineStore("dashboard", () => {
             result.data = {...chart, content: yamlChart, raw: chart}
         }
 
-        selectedChart.value = typeof result.data === "object"
+        selectedChart.value = result.data
             ? {
                 ...result.data,
                 chartOptions: {
-                    ...result.data?.chartOptions,
+                    ...result.data.chartOptions,
                     width: 12,
                 },
-            } as any
+            }
             : undefined
         chartErrors.value = [result.error].filter(e => e !== null)
 

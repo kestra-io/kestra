@@ -15,7 +15,8 @@ import type {Meta, StoryObj} from "@storybook/vue3-vite";
 import {provide} from "vue";
 import {vueRouter} from "storybook-vue3-router";
 import FileExplorer, {FILES_OPEN_TAB_INJECTION_KEY, FILES_CLOSE_TAB_INJECTION_KEY} from "../../../../src/components/inputs/FileExplorer.vue";
-import {setMockClient} from "@kestra-io/kestra-sdk"
+import {setMockClient, type AxiosLikeClient} from "@kestra-io/kestra-sdk"
+import {mockResponse} from "../../../../.storybook/apiMock"
 
 const meta: Meta<typeof FileExplorer> = {
     title: "inputs/FileExplorer",
@@ -35,19 +36,17 @@ export default meta;
 export const Default: StoryObj<typeof FileExplorer> = {
     render: () => ({
         setup() {
-            const axios: any = {}
+            const axios: Partial<AxiosLikeClient> = {}
 
             provide(FILES_OPEN_TAB_INJECTION_KEY, () => {})
             provide(FILES_CLOSE_TAB_INJECTION_KEY, () => false)
 
 
-            axios.get = () => {
-                    return  Promise.resolve({data: [
-                        {fileName: "directory 1", type: "Directory"},
-                        {fileName: "directory 2", type: "Directory"},
-                        {fileName: "animals.txt", type: "File"},
-                    ]
-                })}
+            axios.get = async <T,>() => mockResponse<T>([
+                {fileName: "directory 1", type: "Directory"},
+                {fileName: "directory 2", type: "Directory"},
+                {fileName: "animals.txt", type: "File"},
+            ])
 
             setMockClient(axios);
 

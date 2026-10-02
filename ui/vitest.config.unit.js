@@ -13,6 +13,9 @@ export default defineProject({
     test: {
         name: "unit",
         environment: "jsdom",
+        // Vitest 4 requires projects with different maxWorkers (see the storybook
+        // project's maxWorkers: 2) to also have a unique sequence.groupOrder.
+        sequence: {groupOrder: 0},
         setupFiles: ["./tests/unit/setup.ts", "./tests/unit/leakGuard.ts"],
         // Keep node_modules warm in the worker instead of re-importing them per file (cumulative
         // import 285s -> 94s). The setup file's vi.resetModules() keeps modules per-file fresh.

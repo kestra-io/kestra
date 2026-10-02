@@ -17,7 +17,7 @@ const globalConfig = {
     plugins: [KestraDesignSystem],
 }
 
-const flow = {namespace: "company.team", id: "get_data"} as unknown as Flow
+const flow = {namespace: "company.team", id: "get_data"} as Flow
 
 /**
  * Stubs the validate round-trip the way `FlowInputOutput` actually behaves: `defaults` is resolved
@@ -49,7 +49,7 @@ function stubValidate(id: string, defaults: boolean | undefined) {
 function mountForm(inputs: (InputMetaData | Record<string, unknown>)[]) {
     return i18nMount(InputsForm, {
         global: globalConfig,
-        props: {flow, initialInputs: inputs as unknown as InputMetaData[]},
+        props: {flow, initialInputs: inputs as InputMetaData[]},
     })
 }
 

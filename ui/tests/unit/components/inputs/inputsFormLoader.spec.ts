@@ -17,14 +17,14 @@ const globalConfig = {
     plugins: [KestraDesignSystem],
 }
 
-const flow = {namespace: "io.kestra.tests", id: "my_flow"} as unknown as Flow
-const initialInputs = [{id: "region", type: "SELECT", values: ["a", "b"]}] as unknown as InputMetaData[]
+const flow = {namespace: "io.kestra.tests", id: "my_flow"} as Flow
+const initialInputs = [{id: "region", type: "SELECT", values: ["a", "b"]}] as InputMetaData[]
 
 function mountForm(inputs: (InputMetaData | Record<string, unknown>)[] = initialInputs) {
     return i18nMount(InputsForm, {
         global: globalConfig,
         shallow: true,
-        props: {flow, initialInputs: inputs as unknown as InputMetaData[]},
+        props: {flow, initialInputs: inputs as InputMetaData[]},
     })
 }
 

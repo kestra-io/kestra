@@ -17,7 +17,7 @@ const globalConfig = {
     plugins: [KestraDesignSystem],
 }
 
-const flow = {namespace: "company.team", id: "get_data"} as unknown as Flow
+const flow = {namespace: "company.team", id: "get_data"} as Flow
 
 /**
  * Stubs the validate round-trip the way `FlowInputOutput` actually behaves: `defaults` is resolved
@@ -60,7 +60,7 @@ function mountForm(inputs: (InputMetaData | Record<string, unknown>)[]) {
     return i18nMount(InputsForm, {
         global: globalConfig,
         shallow: true,
-        props: {flow, initialInputs: inputs as unknown as InputMetaData[]},
+        props: {flow, initialInputs: inputs as InputMetaData[]},
     })
 }
 
@@ -177,7 +177,7 @@ describe("InputsForm STRING default", () => {
         expect(wrapper.vm.inputsValues.mystring).toBe("world")
 
         store.validateExecution = stubAlwaysResolving("mystring", "hello", {defaults: "hello"})
-        await wrapper.setProps({flow: {namespace: "company.team", id: "other_flow"} as unknown as Flow})
+        await wrapper.setProps({flow: {namespace: "company.team", id: "other_flow"} as Flow})
         await flushPromises()
 
         expect(wrapper.vm.inputsValues.mystring).toBe("hello")

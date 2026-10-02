@@ -23,7 +23,7 @@ function mountWizard(meta: InputMetaData[], flow?: {tenantId?: string; namespace
     const Comp = defineComponent({
         setup() {
             api = useInputsWizard({
-                props: {initialInputs: FORM_INPUTS, mode: "wizard", flow: flow as unknown as Flow},
+                props: {initialInputs: FORM_INPUTS, mode: "wizard", flow: flow as Flow},
                 inputsMetaData,
                 inputsValues,
                 multiSelectInputs: reactive({}),

@@ -56,8 +56,6 @@
   "packages/design-system/src/utils/editorTypes.ts": 2,
   "packages/design-system/tests/storybook/Basic/KsScrollbar.stories.ts": 1,
   "packages/design-system/tests/storybook/Data/KsTable.stories.ts": 1,
-  "packages/design-system/tests/units/Data/KsFilter/ConditionRow.test.ts": 1,
-  "packages/design-system/tests/units/Data/KsFilter/FilterKVPairs.test.ts": 2,
   "packages/design-system/tests/units/Data/KsTable.test.ts": 4,
   "packages/design-system/tests/units/Data/KsTree.test.ts": 3,
   "packages/design-system/tests/units/Feedback/KsMessage.test.ts": 1,

@@ -5,6 +5,8 @@ import {i18nMount} from "../../i18nMount"
 import {createPinia, setActivePinia} from "pinia"
 import KestraDesignSystem, {KsMessage} from "@kestra-io/design-system"
 import InputsForm from "../../../../src/components/inputs/InputsForm.vue"
+import type {Flow} from "../../../../src/stores/flow"
+import type {InputMetaData} from "../../../../src/stores/executions"
 
 vi.mock("vue-router", () => ({
     useRoute: () => ({query: {}, params: {}, name: "flow"}),
@@ -22,7 +24,7 @@ vi.mock("override/utils/route", () => ({
 }))
 
 vi.mock("../../../../src/stores/executions", async (importOriginal) => {
-    const original = await importOriginal() as any
+    const original = await importOriginal<typeof import("../../../../src/stores/executions")>()
     return {
         ...original,
         useExecutionsStore: () => ({
@@ -40,15 +42,15 @@ vi.mock("../../../../src/stores/executions", async (importOriginal) => {
 const copyMock = vi.fn().mockResolvedValue(undefined)
 
 vi.mock("../../../../src/utils/utils", () => ({
-    copy: (...args: any[]) => copyMock(...args),
+    copy: (...args: unknown[]) => copyMock(...args),
 }))
 
 const globalConfig = {
     plugins: [KestraDesignSystem],
 }
 
-const flow = {namespace: "io.kestra.tests", id: "my_flow"} as any
-const initialInputs = [{id: "region", type: "STRING", required: false}] as any
+const flow = {namespace: "io.kestra.tests", id: "my_flow"} as Flow
+const initialInputs = [{id: "region", type: "STRING", required: false}] as InputMetaData[]
 
 function mountForm() {
     return i18nMount(InputsForm, {
@@ -77,7 +79,7 @@ describe("InputsForm copy/drag affordances", () => {
         const ksMessageSpy = vi.spyOn(KsMessage, "success")
 
         // When: copyInputRef is called for "region"
-        await (wrapper.vm as any).copyInputRef("region")
+        await wrapper.vm.copyInputRef("region")
 
         // Then: Utils.copy is called with the correct expression
         expect(copyMock).toHaveBeenCalledWith("{{ inputs.region }}")
@@ -97,7 +99,7 @@ describe("InputsForm copy/drag affordances", () => {
 
         // When: a drag is started for input "region"
         const event = {dataTransfer: dataTransferMock} as unknown as DragEvent
-        ;(wrapper.vm as any).onInputDragStart(event, "region")
+        wrapper.vm.onInputDragStart(event, "region")
 
         // Then: effectAllowed is "move" and the reference expression is in text/plain
         expect(dataTransferMock.effectAllowed).toBe("move")
@@ -112,6 +114,6 @@ describe("InputsForm copy/drag affordances", () => {
         const event = {dataTransfer: null} as unknown as DragEvent
 
         // Then: no error is thrown
-        expect(() => (wrapper.vm as any).onInputDragStart(event, "region")).not.toThrow()
+        expect(() => wrapper.vm.onInputDragStart(event, "region")).not.toThrow()
     })
 })

@@ -331,6 +331,8 @@
     "restart tooltip": "Uruchom ponownie egzekucję od Taska <code>{state}</code>",
     "restarted": "Egzekucja została uruchomiona ponownie",
     "restart confirm": "Czy na pewno chcesz ponownie uruchomić egzekucję <code>{id}</code>?",
+    "restart subflow warning": "Ta egzekucja została utworzona przez nadrzędną egzekucję i powinna zostać zrestartowana z jej poziomu. Ponowne uruchomienie jej samej pozostawi nadrzędną egzekucję w stanie FAILED, a jej kolejne Taski nie zostaną uruchomione. Przejdź do {parent}, aby ją zrestartować.",
+    "restart subflow warning link": "egzekucja nadrzędna",
     "replay": "Replay",
     "replay from task tooltip": "Utwórz podobną egzekucję, zaczynając od Taska <code>{taskId}</code>",
     "replay from beginning tooltip": "Utwórz podobną egzekucję, zaczynając od początku",

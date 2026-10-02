@@ -1987,6 +1987,7 @@
         "csv": "CSVにエクスポート",
         "ion": "ION にエクスポート"
       },
+      "ignoredFilters": "{filters} フィルターはこのチャートには適用されません。 | {filters} フィルターはこのチャートには適用されません。",
       "show_all_statuses": "すべてのステータスを表示",
       "quick_filters": {
         "all": "すべて",

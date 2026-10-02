@@ -1987,6 +1987,7 @@
         "csv": "Exportar para CSV",
         "ion": "Exportar para ION"
       },
+      "ignoredFilters": "O filtro {filters} não se aplica a este gráfico. | Os filtros {filters} não se aplicam a este gráfico.",
       "show_all_statuses": "Mostrar todos os estados",
       "quick_filters": {
         "all": "Todos",

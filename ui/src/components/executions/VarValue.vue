@@ -53,6 +53,10 @@
     <span v-else-if="value === null">
         <em>null</em>
     </span>
+    <!-- Only a real empty string; do not default missing values to this branch. -->
+    <span v-else-if="value === ''">
+        <em>{{ Utils.EMPTY_STRING_DISPLAY }}</em>
+    </span>
     <span v-else-if="emptyContainer">
         <em>{{ emptyContainer }}</em>
     </span>
@@ -108,13 +112,13 @@
     }
 
     const props = withDefaults(defineProps<{
-        value?: string | object | boolean | number;
+        value?: string | object | boolean | number | null;
         execution?: Execution;
         restrictUri?: boolean;
         /** Output key this value came from, used to name the download of a truncated value. */
         name?: string;
     }>(), {
-        value: "",
+        // No default for `value`: defaulting to "" made an omitted prop look like an empty string.
         execution: () => ({id: ""}),
         restrictUri: false,
         name: "output",

@@ -95,7 +95,7 @@
                                     </KsAlert>
                                 </div>
                                 <div class="viewer__scalar">
-                                    <code>{{ cappedRawValue }}</code>
+                                    <code>{{ scalarDisplay }}</code>
                                 </div>
                             </template>
                         </div>
@@ -181,7 +181,9 @@
 
     function previewText(value: unknown): string {
         if (value === null) return "null"
-        if (typeof value === "string") return value
+        if (typeof value === "string") {
+            return value === "" ? Utils.EMPTY_STRING_DISPLAY : value
+        }
         if (Array.isArray(value)) {
             return value.length === 1
                 ? t("variable_explorer.one_item")
@@ -434,6 +436,10 @@
 
     // Only what is rendered is clipped: copyValue still hands over the whole value.
     const cappedRawValue = computed(() => Utils.capForDisplay(rawValue.value))
+
+    const scalarDisplay = computed(() =>
+        selectedValue.value === "" ? Utils.EMPTY_STRING_DISPLAY : cappedRawValue.value,
+    )
 
     // The raw view only ever holds an object, so it previews as valid JSON rather than clipped text.
     const rawPreview = computed(() => Utils.boundForDisplay(selectedValue.value))

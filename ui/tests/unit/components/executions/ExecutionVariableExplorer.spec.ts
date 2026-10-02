@@ -4,7 +4,9 @@ import {i18nMount} from "../../i18nMount"
 
 import {createPinia, setActivePinia} from "pinia"
 import ExecutionVariableExplorer from "../../../../src/components/executions/outputs/ExecutionVariableExplorer.vue"
+import type {ExplorerItem, ExplorerSection} from "../../../../src/components/executions/outputs/SidebarList.vue"
 import {useExecutionsStore} from "../../../../src/stores/executions"
+import * as Utils from "../../../../src/utils/utils"
 
 vi.mock("vue-router", async (importOriginal) => ({
     ...(await importOriginal<typeof import("vue-router")>()),
@@ -94,12 +96,16 @@ function mountExplorer(variables: Record<string, unknown>, trigger?: {id: string
     return i18nMount(ExecutionVariableExplorer, {messages, global: globalConfig})
 }
 
+function sidebarSections(wrapper: ReturnType<typeof i18nMount>): ExplorerSection[] {
+    return wrapper.findComponent({name: "SidebarList"}).props("sections") as ExplorerSection[]
+}
+
 async function selectVariable(wrapper: ReturnType<typeof i18nMount>, itemName: string, sectionKey = "variables") {
     const sidebar = wrapper.findComponent({name: "SidebarList"})
-    const item = (sidebar.props("sections") as any[])
+    const item = sidebarSections(wrapper)
         .find((section) => section.key === sectionKey)
-        .items
-        .find((candidate: {label: string}) => candidate.label === itemName)
+        ?.items
+        .find((candidate) => candidate.label === itemName)
 
     await sidebar.vm.$emit("select", item)
     await flushPromises()
@@ -208,10 +214,9 @@ describe("ExecutionVariableExplorer", () => {
         })
         await flushPromises()
 
-        const sidebar = wrapper.findComponent({name: "SidebarList"})
-        const triggerItems = (sidebar.props("sections") as any[])
+        const triggerItems = sidebarSections(wrapper)
             .find((section) => section.key === "triggers")
-            .items as {label: string}[]
+            ?.items ?? []
 
         // trigger variables sit at the top level, id/type only under `_context` — mirroring
         // RunVariables.java, not the DTO's own `id` / `type` / `variables` fields.
@@ -227,5 +232,24 @@ describe("ExecutionVariableExplorer", () => {
         await selectVariable(wrapper, "_context", "triggers")
         expect(wrapper.findComponent({name: "ExpressionDebugger"}).props("expression"))
             .toBe("{{ trigger._context }}")
+    })
+
+    test("keeps an empty-string variable visible in the sidebar and scalar viewer", async () => {
+        const wrapper = mountExplorer({
+            empty: "",
+        })
+        await flushPromises()
+
+        const items = sidebarSections(wrapper)
+            .find((section) => section.key === "variables")
+            ?.items ?? []
+
+        const byLabel = Object.fromEntries(
+            items.map((item): [string, ExplorerItem] => [item.label, item]),
+        )
+        expect(byLabel.empty.preview).toBe(Utils.EMPTY_STRING_DISPLAY)
+
+        await selectVariable(wrapper, "empty")
+        expect(wrapper.find(".viewer__scalar").text()).toBe(Utils.EMPTY_STRING_DISPLAY)
     })
 })

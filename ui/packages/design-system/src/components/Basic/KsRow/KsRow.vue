@@ -1,5 +1,5 @@
 <template>
-    <ElRow v-bind="({...filteredProps(), ...$attrs} as any)">
+    <ElRow v-bind="{...filteredProps(), ...$attrs}">
         <template v-if="$slots.default" #default>
             <slot />
         </template>
@@ -7,16 +7,12 @@
 </template>
 
 <script setup lang="ts">
-    import {ElRow} from "element-plus"
+    import {ElRow, type RowProps} from "element-plus"
     import {useFilteredProps} from "../../../utils/filteredProps"
 
     defineOptions({inheritAttrs: false})
 
-    const props = defineProps<{
-        gutter?: number
-        justify?: "start" | "end" | "center" | "space-around" | "space-between" | "space-evenly"
-        align?: "top" | "middle" | "bottom"
-    }>()
+    const props = defineProps<RowProps>()
 
     const filteredProps = useFilteredProps(props)
 

@@ -533,6 +533,9 @@ export const useFlowStore = defineStore("flow", () => {
             return data
         }
 
+        // The previous flow's pointers would resolve against this source, squiggling the wrong lines.
+        flowValidation.value = undefined
+
         if (data.exception) {
             coreStore.message = {
                 title: "Invalid source code",
@@ -833,7 +836,10 @@ function deleteFlowAndDependencies() {
         dependenciesCount.value = undefined
     }
 
+    let latestValidation = 0
+
     function validateFlow(options: { flow: string }) {
+        const validation = ++latestValidation
         let creationDenied: string | undefined
         if(isCreating.value) {
             const {namespace} = YAML_UTILS.getMetadata<ParsedFlow>(options.flow)
@@ -853,7 +859,10 @@ function deleteFlowAndDependencies() {
                     validResults.errors = [...(validResults.errors ?? []), {detail: creationDenied}]
                 }
 
-                flowValidation.value = validResults
+                // A response overtaken by a newer validation describes a source the editor no longer holds.
+                if (validation === latestValidation) {
+                    flowValidation.value = validResults
+                }
                 return validResults
             })
     }

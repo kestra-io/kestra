@@ -1,20 +1,31 @@
 package io.kestra.core.services;
 
+import java.util.Optional;
+
+import io.kestra.core.async.AsyncOperationsConfiguration;
 import io.kestra.core.events.CrudEvent;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.queues.BroadcastQueueInterface;
+import io.kestra.core.queues.DispatchQueueInterface;
+import io.kestra.core.repositories.ExecutionRepositoryInterface;
+import io.kestra.core.repositories.LogDataStoreInterface;
+import io.kestra.core.repositories.MetricRepositoryInterface;
+import io.kestra.core.runners.FlowInputOutput;
+import io.kestra.core.storages.StorageInterface;
 
 import io.micronaut.context.event.ApplicationEventPublisher;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -27,8 +38,30 @@ class ExecutionServicePauseForceRunTest {
     @Mock
     private ConcurrencyLimitService concurrencyLimitService;
 
-    @InjectMocks
     private ExecutionService executionService;
+
+    @BeforeEach
+    @SuppressWarnings("unchecked")
+    void setUp() {
+        executionService = new ExecutionService(
+            mock(StorageInterface.class),
+            mock(ExecutionRepositoryInterface.class),
+            mock(LogDataStoreInterface.class),
+            mock(MetricRepositoryInterface.class),
+            mock(FlowInputOutput.class),
+            eventPublisher,
+            concurrencyLimitService,
+            mock(FlowParsingService.class),
+            mock(TaskOutputService.class),
+            mock(ExecutionOutputService.class),
+            mock(DispatchQueueInterface.class),
+            mock(BroadcastQueueInterface.class),
+            mock(DispatchQueueInterface.class),
+            mock(AsyncOperationWaiter.class),
+            mock(AsyncOperationsConfiguration.class),
+            Optional.empty()
+        );
+    }
 
     private final Flow flow = Flow.builder().id("flow").namespace("io.kestra.tests").build();
 

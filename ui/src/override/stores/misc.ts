@@ -3,7 +3,7 @@ import {apiUrl, apiUrlWithoutTenants} from "override/utils/route"
 import {useApiStore} from "../../stores/api"
 import * as BasicAuth from "../../utils/basicAuth"
 import {ref} from "vue"
-import {useClient, type AxiosLikeConfig, type MiscControllerConfiguration, type MiscControllerLoginConfiguration, type MiscControllerApiUsage} from "@kestra-io/kestra-sdk"
+import {useClient, type MiscControllerConfiguration, type MiscControllerLoginConfiguration, type MiscControllerApiUsage} from "@kestra-io/kestra-sdk"
 import {initPosthogIfEnabled} from "../../utils/posthog"
 import {ensureUid} from "../../utils/uid"
 import type {SelectedTheme} from "../../utils/utils"
@@ -68,7 +68,7 @@ export const useMiscStore = defineStore("misc", () => {
             const response = await axios.get<MiscControllerApiUsage>(`${apiUrl()}/usages/all`)
             return response.data
         }
-        return {} as MiscControllerApiUsage
+        return {}
     }
 
     async function addBasicAuth(options: {
@@ -114,7 +114,7 @@ export const useMiscStore = defineStore("misc", () => {
             username: options.username,
             password: options.password,
             currentPassword: options.currentPassword,
-        }, {showMessageOnError: false} )
+        }, {showMessageOnError: false})
     }
 
     return {

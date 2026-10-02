@@ -74,12 +74,12 @@ export const useBlueprintsStore = defineStore("blueprints", () => {
         if (options.type === "community") {
             const PARAMS = {params: options.params, ...VALIDATE}
             const COMMUNITY = `${API_URL}/blueprints/kinds/${options.kind}/versions/${version}${edition === "OSS" ? "?ee=false" : ""}`
-            const response = await axios.get<{results: FlowBlueprint[]; total: number}>(COMMUNITY, PARAMS)
+            const response = await axios.get<BlueprintSearchResult>(COMMUNITY, PARAMS)
             return response.data
         }
 
         try {
-            const {data} = await axios.get<{results: FlowBlueprint[]; total: number}>(`${apiUrl()}/blueprints/custom`, {params: toCustomBlueprintParams(options.params)})
+            const {data} = await axios.get<BlueprintSearchResult>(`${apiUrl()}/blueprints/custom`, {params: toCustomBlueprintParams(options.params)})
             return data
         } catch (e: unknown) {
             if ((e as KestraHttpError).status === 401) return {results: [], total: 0}

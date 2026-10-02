@@ -331,7 +331,8 @@ class DownloadTest {
             Arguments.of("attachment; filename*=UTF-8''report.csv", "report.csv"),
             Arguments.of("attachment; filename*=UTF-8''caf%C3%A9.csv", "café.csv"),
             Arguments.of("attachment; filename*=UTF-8''caf%C3%A9.csv; filename=\"cafe.csv\"", "café.csv"),
-            Arguments.of("attachment; filename=\"fallback.csv\"; filename*=UTF-8''100%.csv", "fallback.csv")
+            Arguments.of("attachment; filename=\"fallback.csv\"; filename*=UTF-8''100%.csv", "fallback.csv"),
+            Arguments.of("attachment; filename*=UTF-8''..%2Fevil.txt", "evil.txt")
         );
     }
 

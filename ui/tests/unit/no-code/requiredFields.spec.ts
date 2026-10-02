@@ -97,6 +97,30 @@ describe("countUnsetRequiredFields", () => {
         expect(result).toEqual([{path: "bar", label: "bar"}])
     })
 
+    it("resolves the anyOf branch whose discriminator is an enum alias, not just a const", () => {
+        const schema: PartialSchema = {
+            anyOf: [
+                {
+                    type: "object",
+                    properties: {
+                        type: {enum: ["io.kestra.plugin.ai.provider.OpenAI", "io.kestra.plugin.langchain4j.provider.OpenAI"]},
+                        modelName: {type: "string"},
+                    },
+                    required: ["modelName"],
+                },
+                {
+                    type: "object",
+                    properties: {type: {const: "io.kestra.plugin.ai.provider.GoogleGemini"}, apiKey: {type: "string"}},
+                    required: ["apiKey"],
+                },
+            ],
+        }
+
+        const result = countUnsetRequiredFields({type: "io.kestra.plugin.langchain4j.provider.OpenAI"}, schema, {})
+
+        expect(result).toEqual([{path: "modelName", label: "modelName"}])
+    })
+
     it("carries the required from an anyOf branch shaped as allOf: [{$ref}, {required}]", () => {
         const definitions = {A: {type: "object", properties: {a: {type: "string"}, extra: {type: "string"}}, required: ["a"]}}
         const schema = {anyOf: [{allOf: [{$ref: "#/definitions/A"}, {required: ["extra"]}]}]}

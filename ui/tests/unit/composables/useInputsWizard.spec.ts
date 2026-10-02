@@ -6,6 +6,7 @@ import {i18nMount} from "../i18nMount"
 import {useInputsWizard} from "../../../src/composables/useInputsWizard"
 import {executeFormValuesStorageKey} from "../../../src/utils/inputs"
 import type {InputMetaData} from "../../../src/stores/executions"
+import type {Flow} from "../../../src/stores/flow"
 
 const FLOW = {namespace: "company.team", id: "my-flow"}
 
@@ -17,12 +18,12 @@ const FORM_INPUTS = [
 
 function mountWizard(meta: InputMetaData[], flow?: {tenantId?: string; namespace: string; id: string; revision?: number}) {
     let api!: ReturnType<typeof useInputsWizard>
-    const inputsValues = reactive<Record<string, any>>({})
+    const inputsValues = reactive<Record<string, unknown>>({})
     const inputsMetaData = ref<InputMetaData[]>(meta)
     const Comp = defineComponent({
         setup() {
             api = useInputsWizard({
-                props: {initialInputs: FORM_INPUTS, mode: "wizard", flow: flow as any},
+                props: {initialInputs: FORM_INPUTS, mode: "wizard", flow: flow as Flow},
                 inputsMetaData,
                 inputsValues,
                 multiSelectInputs: reactive({}),
@@ -130,6 +131,6 @@ describe("useInputsWizard persistValues / restorePersistedValues", () => {
 
         expect(inputsValues["env.region"]).toBe("us-east")
         expect(inputsValues["notAnInput"]).toBeUndefined()
-        expect(({} as any).polluted).toBeUndefined()
+        expect(({} as Record<string, unknown>).polluted).toBeUndefined()
     })
 })

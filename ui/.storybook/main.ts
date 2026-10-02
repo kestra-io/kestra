@@ -1,6 +1,6 @@
 import path from "path"
 import {fileURLToPath} from "url"
-import {mergeConfig} from "vite"
+import {mergeConfig, type Alias} from "vite"
 import type {StorybookConfig} from "@storybook/vue3-vite"
 
 const config: StorybookConfig = {
@@ -23,7 +23,7 @@ const config: StorybookConfig = {
 
         if (viteConfig.resolve) {
             const AliasConfig = [
-                ...(viteConfig.resolve.alias as any[]),
+                ...(viteConfig.resolve.alias as Alias[] ?? []),
                 {find: "override", replacement: path.resolve(__dirname, "../src/override/")},
             ]
             viteConfig.resolve.alias = AliasConfig

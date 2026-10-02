@@ -1,8 +1,8 @@
 <template>
     <ElTag
         disableTransitions
-        v-bind="({...filteredProps(), ...$attrs} as any)"
-        :type="elType"
+        v-bind="({...filteredProps(), ...$attrs} as TagProps)"
+        :type="(elType as TagProps['type'])"
         :size="elSize"
         :class="{'kel-tag--default': type === undefined, 'kel-tag--error': type === 'error', 'kel-tag--xs': size === 'xs', 'kel-tag--truncate': truncate}"
         @close="emit('close')"
@@ -23,7 +23,7 @@
 </script>
 
 <script setup lang="ts">
-    import {ElTag} from "element-plus"
+    import {ElTag, type TagProps} from "element-plus"
     import {useFilteredProps} from "../../../utils/filteredProps"
     import {computed, type Component} from "vue"
 

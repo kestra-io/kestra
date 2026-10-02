@@ -162,17 +162,17 @@
                     <template #default="scope">
                         <div @click.prevent.stop>
                             <router-link
-                                v-if="lastExecutionByFlowReady && getLastExecution(scope.row)"
+                                v-if="lastExecutionByFlowReady && getLastExecution(scope.row as Flow)"
                                 :to="{
                                     name: 'executions/update',
                                     params: {
                                         namespace: scope.row.namespace,
                                         flowId: scope.row.id,
-                                        id: getLastExecution(scope.row)!.id
+                                        id: getLastExecution(scope.row as Flow)!.id
                                     }
                                 }"
                             >
-                                <KsDateAgo :date="getLastExecution(scope.row)?.startDate" inverted />
+                                <KsDateAgo :date="getLastExecution(scope.row as Flow)?.startDate" inverted />
                             </router-link>
                         </div>
                     </template>
@@ -186,7 +186,7 @@
                     <template #default="scope">
                         <div
                             @click.prevent.stop
-                            v-if="lastExecutionByFlowReady && getLastExecution(scope.row)"
+                            v-if="lastExecutionByFlowReady && getLastExecution(scope.row as Flow)"
                             class="d-flex justify-content-between align-items-center"
                         >
                             <router-link
@@ -195,11 +195,11 @@
                                     params: {
                                         namespace: scope.row.namespace,
                                         flowId: scope.row.id,
-                                        id: getLastExecution(scope.row)!.id
+                                        id: getLastExecution(scope.row as Flow)!.id
                                     }
                                 }"
                             >
-                                <KsExecutionStatus :status="getLastExecution(scope.row)!.status" size="small" />
+                                <KsExecutionStatus :status="getLastExecution(scope.row as Flow)!.status" size="small" />
                             </router-link>
                         </div>
                     </template>
@@ -212,9 +212,9 @@
                     className="row-graph"
                 >
                     <template #default="scope">
-                        <div :ref="(el) => observeChartBlock(el, chartKey(scope.row))" class="row-graph-cell">
+                        <div :ref="(el) => observeChartBlock(el, chartKey(scope.row as Flow))" class="row-graph-cell">
                             <TimeSeries
-                                v-if="activatedCharts.has(chartKey(scope.row))"
+                                v-if="activatedCharts.has(chartKey(scope.row as Flow))"
                                 :chart="mappedChart(scope.row.id, scope.row.namespace)"
                                 :filters="chartFilters()"
                                 showDefault
@@ -232,7 +232,7 @@
                     className="row-action"
                 >
                     <template #default="scope">
-                        <TriggerAvatar :flow="scope.row" />
+                        <TriggerAvatar :flow="(scope.row as Flow)" />
                     </template>
                 </KsTableColumn>
 
@@ -267,9 +267,9 @@
                 <template #default="scope">
                     <div class="flow-actions-cell">
                         <KsIconButton
-                            v-if="canExecute(scope.row)"
+                            v-if="canExecute(scope.row as Flow)"
                             :tooltip="$t('execute')"
-                            @click="openExecuteModal(scope.row)"
+                            @click="openExecuteModal(scope.row as Flow)"
                         >
                             <Play />
                         </KsIconButton>
@@ -353,7 +353,8 @@
     import {useTableColumns, type ColumnConfig} from "@kestra-io/design-system"
     import useRouteContext from "../../composables/useRouteContext"
     import {useFlowsTableExtension} from "override/components/flows/flowsTableExtension"
-    import type {ExecutionControllerLastExecutionResponse, Flow, Label, QueryFilter} from "@kestra-io/kestra-sdk"
+    import type {ExecutionControllerLastExecutionResponse, Label, QueryFilter} from "@kestra-io/kestra-sdk"
+    import type {Flow} from "../../stores/flow"
     import useFlowsBulkActions from "./useFlowsBulkActions"
 
     const NON_NAVIGATING_TARGETS = "a, button, input, canvas, [role='button']"

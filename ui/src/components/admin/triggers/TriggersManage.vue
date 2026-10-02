@@ -67,12 +67,12 @@
                     <BackfillBanner
                         v-if="props.row.backfill"
                         :row="props.row"
-                        @pause="pauseBackfill(props.row)"
-                        @resume="unpauseBackfill(props.row)"
-                        @stop="deleteBackfill(props.row)"
+                        @pause="pauseBackfill(props.row as TriggerRow)"
+                        @resume="unpauseBackfill(props.row as TriggerRow)"
+                        @stop="deleteBackfill(props.row as TriggerRow)"
                     />
                     <LogsWrapper
-                        v-if="hasLogsContent(props.row)"
+                        v-if="hasLogsContent(props.row as TriggerRow)"
                         class="m-3"
                         :filters="props.row"
                         :withCharts="false"
@@ -89,7 +89,7 @@
             >
                 <template #default="scope">
                     <div class="text-nowrap">
-                        {{ scope.row.id }}
+                        {{ scope.row.id ?? scope.row.triggerId }}
                     </div>
                 </template>
             </KsTableColumn>
@@ -189,7 +189,7 @@
                     <template v-else-if="isSchedule(scope.row.type) && authStore.user?.hasAnyAction(resource.TRIGGER, action.BACKFILL)">
                         <KsButton
                             :icon="CalendarCollapseHorizontalOutline"
-                            @click="setBackfillModal(scope.row, true)"
+                            @click="setBackfillModal(scope.row as TriggerRow, true)"
                             size="small"
                             type="primary"
                             :disabled="scope.row.disabled || scope.row.codeDisabled"
@@ -212,7 +212,7 @@
                              moves when the row data changes, so cancelling the enable dialog leaves it intact. -->
                         <KsSwitch
                             :modelValue="!(scope.row.disabled || scope.row.codeDisabled)"
-                            @update:modelValue="(value: string | number | boolean | undefined) => setDisabled(scope.row, Boolean(value))"
+                            @update:modelValue="(value: string | number | boolean | undefined) => setDisabled(scope.row as TriggerRow, Boolean(value))"
                             :disabled="scope.row.codeDisabled"
                         />
                     </KsTooltip>
@@ -237,14 +237,14 @@
                         />
                         <template #dropdown>
                             <KsDropdownMenu>
-                                <KsDropdownItem @click="openDetails(scope.row)">
+                                <KsDropdownItem @click="openDetails(scope.row as TriggerRow)">
                                     <TextSearch class="mr-1" />
                                     {{ $t("details") }}
                                 </KsDropdownItem>
                                 <KsDropdownItem
                                     v-if="authStore.user?.hasAnyAction(resource.TRIGGER, action.RESTART)"
                                     :disabled="!scope.row.locked"
-                                    @click="restart(scope.row)"
+                                    @click="restart(scope.row as TriggerRow)"
                                 >
                                     <Restart class="mr-1" />
                                     {{ $t("restart") }}
@@ -252,16 +252,26 @@
                                 <KsDropdownItem
                                     v-if="authStore.user?.hasAnyAction(resource.TRIGGER, action.UNLOCK) && scope.row.kind !== 'REALTIME'"
                                     :disabled="!scope.row.locked"
-                                    @click="unlock(scope.row)"
+                                    @click="unlock(scope.row as TriggerRow)"
                                 >
                                     <LockOff class="mr-1" />
                                     {{ $t("unlock") }}
                                 </KsDropdownItem>
+                                <KsTooltip
+                                    v-if="authStore.user?.hasAnyAction(resource.TRIGGER, action.DELETE) && !scope.row.missingSource"
+                                    :content="$t('delete trigger still declared')"
+                                    effect="light"
+                                >
+                                    <KsDropdownItem divided class="danger" disabled>
+                                        <Delete class="mr-1" />
+                                        {{ $t("delete") }}
+                                    </KsDropdownItem>
+                                </KsTooltip>
                                 <KsDropdownItem
-                                    v-if="authStore.user?.hasAnyAction(resource.TRIGGER, action.DELETE)"
+                                    v-else-if="authStore.user?.hasAnyAction(resource.TRIGGER, action.DELETE)"
                                     divided
                                     class="danger"
-                                    @click="confirmDeleteTrigger(scope.row)"
+                                    @click="confirmDeleteTrigger(scope.row as TriggerDeleteOptions)"
                                 >
                                     <Delete class="mr-1" />
                                     {{ $t("delete") }}
@@ -818,17 +828,18 @@
     }
 
     const confirmDeleteTrigger = (trigger: TriggerDeleteOptions) => {
+        const triggerLabel = trigger.id ?? trigger.triggerId
         toast.confirm(
-            t("delete trigger confirmation", {id: trigger.id}),
+            t("delete trigger confirmation", {id: triggerLabel}),
             () => TriggersAPI.deleteTrigger({
                 namespace: trigger.namespace,
                 flowId: trigger.flowId,
                 triggerId: trigger.triggerId,
             }).then(() => {
-                toast.success(t("delete trigger success", {id: trigger.id}))
+                toast.success(t("delete trigger success", {id: triggerLabel}))
                 dataTable.value?.reload()
             }).catch(error => {
-                toast.error(t("delete trigger error", {id: trigger.id}))
+                toast.error(t("delete trigger error", {id: triggerLabel}))
                 console.error(error)
             }),
             "warning",
@@ -841,7 +852,7 @@
             "delete",
             "bulk success delete triggers",
             undefined,
-            "WARNING: deleting triggers may lead to duplicate executions if the triggers are still active in flows",
+            t("delete triggers orphans only"),
         )
     }
 

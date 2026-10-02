@@ -1,9 +1,19 @@
 import {nextTick, ref, type Ref} from "vue"
 import * as flowYamlUtils from "@kestra-io/topology/flow-yaml-utils"
 import {KsMessageBox} from "@kestra-io/design-system"
-import {displayTaskOf, moveBlockAtPath, type BlockSection} from "../../../utils/flowableBlockOps"
-import {ALL_SECTIONS, parentPathFromLaneSentinel, sectionFromSentinel} from "./blockSections"
+import {
+    addBlockAtPath,
+    collectAllIds,
+    displayTaskOf,
+    isWrapperLane,
+    moveBlockAtPath,
+    wrapAsDagTask,
+    type BlockSection,
+} from "../../../utils/flowableBlockOps"
+import {ALL_SECTIONS, parentPathFromLaneSentinel, sectionFromParentPath, sectionFromSentinel} from "./blockSections"
 import type {CanvasFocusApi} from "./useCanvasFocus"
+import type {BlockClipboardApi} from "./useBlockClipboard"
+import {trackAuthoringAction} from "../../../utils/tabTracking"
 
 const CONFIRM_DIALOG_ESCAPE_GRACE_MS = 100
 
@@ -22,6 +32,24 @@ export interface BlockOperationsContext {
     deleteAtPath: (path: string) => void
     duplicateInSection: (section: BlockSection, id: unknown) => void
     duplicateAtPath: (path: string) => void
+    clipboard: BlockClipboardApi
+}
+
+interface PasteTarget {
+    section: BlockSection
+    parentPath: string
+    refIndex: number
+}
+
+function pathParentAndIndex(path: string): {parentPath: string; index: number} | undefined {
+    const match = path.match(/^(.*)\[(\d+)\]$/)
+    return match ? {parentPath: match[1], index: parseInt(match[2], 10)} : undefined
+}
+
+function blockDataAtPath(source: string, path: string): Record<string, unknown> | undefined {
+    const blockYaml = flowYamlUtils.extractBlockWithPath({source, path})
+    const item = blockYaml ? flowYamlUtils.parse<Record<string, unknown>>(blockYaml) : undefined
+    return item ? displayTaskOf(item) : undefined
 }
 
 export function useBlockOperations(ctx: BlockOperationsContext) {
@@ -49,17 +77,22 @@ export function useBlockOperations(ctx: BlockOperationsContext) {
         })
     }
 
+    function neighborBlockId(id: string): string | undefined {
+        const cards = focus.navigableCards()
+        const current = cards.find(el => el.getAttribute("data-block-id") === id)
+        const index = current ? cards.indexOf(current) : -1
+        const neighbor = cards.slice(index + 1).find(el => !current?.contains(el)) ?? cards[index - 1]
+        return neighbor?.getAttribute("data-block-id") ?? undefined
+    }
+
     function requestDeleteFocused() {
         const id = focus.focusedId.value
         if (!id) return
         if (sectionFromSentinel(id) || parentPathFromLaneSentinel(id)) return
         confirmDelete(focus.focusedBlockDisplayName(), focus.focusedBlockIsFlowable(), () => {
-            const cards = focus.navigableCards()
-            const current = cards.find(el => el.getAttribute("data-block-id") === id)
-            const index = current ? cards.indexOf(current) : -1
-            const neighbor = cards.slice(index + 1).find(el => !current?.contains(el)) ?? cards[index - 1]
+            const neighbor = neighborBlockId(id)
             focus.actionInFocused("[data-test='block-card-delete']")
-            focus.focusCanvasCard(neighbor?.getAttribute("data-block-id") ?? undefined)
+            focus.focusCanvasCard(neighbor)
         })
     }
 
@@ -70,13 +103,17 @@ export function useBlockOperations(ctx: BlockOperationsContext) {
     function selectedBlockData(): Record<string, unknown> | undefined {
         const id = ctx.selectedId.value
         if (!id) return undefined
-        if (ctx.selectedPath.value) {
-            const blockYaml = flowYamlUtils.extractBlockWithPath({source: ctx.flowYaml.value, path: ctx.selectedPath.value})
-            const item = blockYaml ? flowYamlUtils.parse<Record<string, unknown>>(blockYaml) : undefined
-            return item ? displayTaskOf(item) : undefined
-        }
+        if (ctx.selectedPath.value) return blockDataAtPath(ctx.flowYaml.value, ctx.selectedPath.value)
         const section = sectionOfSelected(id)
         return section ? ctx.sectionList(section).find(item => String(item.id) === id) : undefined
+    }
+
+    function selectedSection(): BlockSection | undefined {
+        const id = ctx.selectedId.value
+        if (!id) return undefined
+        const path = ctx.selectedPath.value
+        if (path) return sectionFromParentPath(pathParentAndIndex(path)?.parentPath ?? "")
+        return sectionOfSelected(id)
     }
 
     function deleteSelected() {
@@ -106,6 +143,100 @@ export function useBlockOperations(ctx: BlockOperationsContext) {
         }
         const section = sectionOfSelected(id)
         if (section) ctx.duplicateInSection(section, id)
+    }
+
+    function focusedBlockContext(): {section: BlockSection; path: string; data: Record<string, unknown>} | undefined {
+        const domId = focus.focusedId.value
+        if (!domId || sectionFromSentinel(domId) || parentPathFromLaneSentinel(domId)) return undefined
+        const path = focus.focusedBlockPath()
+        const located = path ? pathParentAndIndex(path) : undefined
+        if (!path || !located) return undefined
+        const data = blockDataAtPath(ctx.flowYaml.value, path)
+        if (!data) return undefined
+        return {section: sectionFromParentPath(located.parentPath), path, data}
+    }
+
+    function copySelected() {
+        const data = selectedBlockData()
+        const section = selectedSection()
+        if (data && section) ctx.clipboard.copy(section, data)
+    }
+
+    function copyFocusedOrSelected() {
+        const focused = focusedBlockContext()
+        if (focused) {
+            ctx.clipboard.copy(focused.section, focused.data)
+            return
+        }
+        copySelected()
+    }
+
+    function cutSelected() {
+        const data = selectedBlockData()
+        const section = selectedSection()
+        if (!data || !section) return
+        ctx.clipboard.copy(section, data)
+        deleteSelected()
+    }
+
+    function cutFocusedOrSelected() {
+        const focused = focusedBlockContext()
+        if (focused) {
+            ctx.clipboard.copy(focused.section, focused.data)
+            const neighbor = neighborBlockId(focus.focusedId.value ?? "")
+            ctx.deleteAtPath(focused.path)
+            focus.focusCanvasCard(neighbor)
+            return
+        }
+        cutSelected()
+    }
+
+    /** Where a paste would land: after the focused/selected block, or at the end of a focused section or lane. */
+    function pasteTarget(): PasteTarget | undefined {
+        const domId = focus.focusedId.value
+        const sentinelSection = sectionFromSentinel(domId)
+        if (sentinelSection) return {section: sentinelSection, parentPath: sentinelSection, refIndex: -1}
+
+        const laneParentPath = parentPathFromLaneSentinel(domId)
+        if (laneParentPath) return {section: sectionFromParentPath(laneParentPath), parentPath: laneParentPath, refIndex: -1}
+
+        const focused = focusedBlockContext()
+        if (focused) {
+            const located = pathParentAndIndex(focused.path)
+            if (located) return {section: focused.section, parentPath: located.parentPath, refIndex: located.index}
+        }
+
+        const id = ctx.selectedId.value
+        if (!id) return undefined
+        const path = ctx.selectedPath.value
+        if (path) {
+            const located = pathParentAndIndex(path)
+            return located ? {section: sectionFromParentPath(located.parentPath), parentPath: located.parentPath, refIndex: located.index} : undefined
+        }
+        const section = sectionOfSelected(id)
+        if (!section) return undefined
+        const index = ctx.sectionList(section).findIndex(item => String(item.id) === id)
+        return index >= 0 ? {section, parentPath: section, refIndex: index} : undefined
+    }
+
+    function canPasteHere(): boolean {
+        const target = pasteTarget()
+        return target !== undefined && ctx.clipboard.canPasteInto(target.section)
+    }
+
+    function pasteRelative(): boolean {
+        const target = pasteTarget()
+        if (!target) return false
+        const existingIds = collectAllIds(ctx.flowYaml.value)
+        const block = ctx.clipboard.pasteFor(target.section, existingIds)
+        if (!block) return false
+
+        const blockToInsert = isWrapperLane(ctx.flowYaml.value, target.parentPath) ? wrapAsDagTask(block) : block
+        const inserted = addBlockAtPath(ctx.flowYaml.value, target.parentPath, blockToInsert, target.refIndex, "after")
+        ctx.applyYaml(inserted)
+        trackAuthoringAction("task_added", "no_code", {task_type: block.type as string | undefined, position: "after"})
+        focus.focusCanvasCard(String(block.id))
+        return true
     }
 
     function moveFocused(direction: "up" | "down") {
@@ -145,6 +276,10 @@ export function useBlockOperations(ctx: BlockOperationsContext) {
         requestDeleteFocused,
         requestDeleteSelected,
         duplicateSelected,
+        copyFocusedOrSelected,
+        cutFocusedOrSelected,
+        canPasteHere,
+        pasteRelative,
         moveFocused,
         moveSelected,
     }

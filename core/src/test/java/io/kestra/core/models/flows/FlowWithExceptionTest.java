@@ -1,5 +1,8 @@
 package io.kestra.core.models.flows;
 
+import java.util.List;
+import java.util.Map;
+
 import org.junit.jupiter.api.Test;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -10,6 +13,26 @@ import io.kestra.core.serializers.JacksonMapper;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class FlowWithExceptionTest {
+    @Test
+    void shouldPreserveLabelsAndVariablesWhenFlowIsAvailable() {
+        FlowWithSource flow = FlowWithSource.builder()
+            .id("failed-flow")
+            .namespace("io.kestra.unittest")
+            .revision(1)
+            .labels(List.of(new Label("team", "platform")))
+            .variables(Map.of("env", "prod"))
+            .source("id: failed-flow\nnamespace: io.kestra.unittest")
+            .tasks(List.of())
+            .build();
+
+        var result = FlowWithException.from(flow, new IllegalStateException("boom"));
+
+        assertThat(result.getLabels()).containsExactly(new Label("team", "platform"));
+        assertThat(result.getVariables()).containsExactlyInAnyOrderEntriesOf(Map.of("env", "prod"));
+        assertThat(result.getException()).isEqualTo("boom");
+        assertThat(result.getTasks()).isEmpty();
+    }
+
     @Test
     void shouldPreserveLabelsWhenLoadingFails() throws Exception {
         JsonNode jsonNode = JacksonMapper.ofJson().readTree("""

@@ -9,7 +9,7 @@ const SRC = resolve(dirname(fileURLToPath(import.meta.url)), "../../../src")
 
 // The column-picker descriptions live in the design-system locale files, which
 // `registerDesignSystemI18n` merges into the app messages at bootstrap.
-const designSystemLocales = import.meta.glob<{default: Record<string, any>}>(
+const designSystemLocales = import.meta.glob<{default: Record<string, unknown>}>(
     "../../../packages/design-system/src/components/**/*.locale.ts",
     {eager: true},
 )
@@ -18,7 +18,7 @@ describe("table column descriptions", () => {
     it("resolves every filter.table_column.* key referenced in ui/src", () => {
         const messages = Object.values(designSystemLocales).reduce(
             (merged, module) => mergeMessages(merged, module.default.en ?? {}),
-            {...en.en} as Record<string, any>,
+            {...en.en} as Record<string, unknown>,
         )
 
         const unresolved = findUnresolvedTableColumnKeys(SRC, messages)

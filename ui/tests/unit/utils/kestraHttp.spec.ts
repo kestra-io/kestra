@@ -21,7 +21,7 @@ vi.mock("@kestra-io/kestra-sdk", () => ({
     configureClient: vi.fn(() => fakeClient),
     useClient: vi.fn(() => fakeAxiosClient),
     // Stands in for the real helper: recognises a problem document the SDK flattened onto the Error.
-    asProblem: (error: any) => (error?.type
+    asProblem: (error: Record<string, unknown>) => (error?.type
         ? {type: error.type, title: error.title, detail: error.detail, status: error.status}
         : undefined),
 }))
@@ -49,7 +49,7 @@ describe("setupKestraHttp router NProgress hooks", () => {
     })
 
     it("settles the progress counter via afterEach on a normal navigation", async () => {
-        setupKestraHttp({}, {router: router as any})
+        setupKestraHttp({}, {router: router as import("vue-router").Router})
 
         beforeEachCb()
         afterEachCb()
@@ -59,7 +59,7 @@ describe("setupKestraHttp router NProgress hooks", () => {
     })
 
     it("settles the progress counter via onError when a navigation throws instead of completing", async () => {
-        setupKestraHttp({}, {router: router as any})
+        setupKestraHttp({}, {router: router as import("vue-router").Router})
 
         // A guard throwing, or a failed async-component chunk import, rejects the
         // navigation and never calls afterEach - onError is the only place left to
@@ -159,7 +159,7 @@ describe("isReportedCentrally", () => {
         status,
         response: {data: {title: "problem"}},
         config: {method: "put", url: "/api/v1/main/flows/io.kestra/gone", ...config},
-    }) as any
+    }) as import("axios").AxiosError
 
     // What a caller reporting its own failures asks before adding a toast of its own: the flow
     // editor's save handler would otherwise duplicate the global toast on a deleted flow.
@@ -171,6 +171,6 @@ describe("isReportedCentrally", () => {
         expect(isReportedCentrally(failure(401))).toBe(false)
         expect(isReportedCentrally(failure(404, {ignoreNotFound: true}))).toBe(false)
         expect(isReportedCentrally(failure(500, {showMessageOnError: false}))).toBe(false)
-        expect(isReportedCentrally({status: 0} as any)).toBe(false)
+        expect(isReportedCentrally({status: 0} as import("axios").AxiosError)).toBe(false)
     })
 })

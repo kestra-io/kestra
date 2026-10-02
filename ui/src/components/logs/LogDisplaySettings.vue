@@ -60,17 +60,16 @@
     const clampEnabled = computed({
         get: () => logsBodyClamp.value > 0,
         set: (value: boolean) => {
-            logsBodyClamp.value = value ? lastClampValue.value : 0
+            logsBodyClamp.value = value ? (lastClampValue.value || 5) : 0
         },
     })
 
     const clampModel = computed({
         get: () => (clampEnabled.value ? logsBodyClamp.value : lastClampValue.value),
-        set: (val: number) => {
+        set: (val: number | null | undefined) => {
+            if (val == null || val < 1) return
             lastClampValue.value = val
-            if (clampEnabled.value) {
-                logsBodyClamp.value = val
-            }
+            logsBodyClamp.value = val
         },
     })
 </script>

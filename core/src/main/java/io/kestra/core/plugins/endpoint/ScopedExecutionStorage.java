@@ -33,6 +33,9 @@ public class ScopedExecutionStorage implements ScopedStorage {
         if (uri == null) {
             throw new IllegalArgumentException("A storage URI is required.");
         }
+        if (!StorageContext.KESTRA_SCHEME.equals(uri.getScheme())) {
+            throw new IllegalArgumentException("The storage URI '%s' must use the '%s' scheme.".formatted(uri, StorageContext.KESTRA_SCHEME));
+        }
         if (FileUtils.isParentTraversal(uri)) {
             throw new IllegalArgumentException("The storage URI '%s' must not use a relative '..' path.".formatted(uri));
         }

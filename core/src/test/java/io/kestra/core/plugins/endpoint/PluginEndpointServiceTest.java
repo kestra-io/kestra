@@ -7,6 +7,7 @@ import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.plugins.RegisteredPlugin;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.LogDataStoreInterface;
+import io.kestra.core.services.TaskOutputService;
 import io.kestra.core.storages.StorageInterface;
 import org.junit.jupiter.api.Test;
 
@@ -25,7 +26,7 @@ import static org.mockito.Mockito.when;
 
 class PluginEndpointServiceTest {
     private static final String TENANT = "main";
-    private static final String GROUP = "io.kestra.plugin.ai";
+    private static final String CLS = "io.kestra.plugin.ai.SomeTask";
     private static final String EXEC = "exec1";
     private static final String TR = "tr1";
     private static final String NS = "io.kestra.test";
@@ -56,7 +57,6 @@ class PluginEndpointServiceTest {
 
     private static RegisteredPlugin pluginWith(PluginEndpoint... endpoints) {
         RegisteredPlugin plugin = mock(RegisteredPlugin.class);
-        lenient().when(plugin.group()).thenReturn(GROUP);
         lenient().when(plugin.getEndpoints()).thenReturn(List.of(endpoints));
         return plugin;
     }
@@ -68,11 +68,11 @@ class PluginEndpointServiceTest {
     }
 
     private static PluginEndpointService service(PluginRegistry registry, ExecutionRepositoryInterface repo) {
-        return new PluginEndpointService(registry, repo, mock(StorageInterface.class), mock(LogDataStoreInterface.class));
+        return new PluginEndpointService(registry, repo, mock(StorageInterface.class), mock(LogDataStoreInterface.class), mock(TaskOutputService.class));
     }
 
     @Test
-    void shouldThrowNotFoundWhenGroupUnknown() {
+    void shouldThrowNotFoundWhenClassUnknown() {
         PluginEndpointService service = service(registryReturning(List.of()), execRepoReturning(Optional.of(execution())));
         assertThatThrownBy(() -> service.dispatch(TENANT, "unknown", "hello", EXEC, TR, Map.of(), Map.of()))
             .isInstanceOf(NotFoundException.class);
@@ -84,7 +84,7 @@ class PluginEndpointServiceTest {
         PluginEndpointService service = service(
             registryReturning(List.of(pluginWith(endpoint("hello", captured)))),
             execRepoReturning(Optional.of(execution())));
-        assertThatThrownBy(() -> service.dispatch(TENANT, GROUP, "nope", EXEC, TR, Map.of(), Map.of()))
+        assertThatThrownBy(() -> service.dispatch(TENANT, CLS, "nope", EXEC, TR, Map.of(), Map.of()))
             .isInstanceOf(NotFoundException.class);
     }
 
@@ -94,7 +94,7 @@ class PluginEndpointServiceTest {
         PluginEndpointService service = service(
             registryReturning(List.of(pluginWith(endpoint("hello", captured)))),
             execRepoReturning(Optional.empty()));
-        assertThatThrownBy(() -> service.dispatch(TENANT, GROUP, "hello", EXEC, TR, Map.of(), Map.of()))
+        assertThatThrownBy(() -> service.dispatch(TENANT, CLS, "hello", EXEC, TR, Map.of(), Map.of()))
             .isInstanceOf(NotFoundException.class);
     }
 
@@ -104,19 +104,24 @@ class PluginEndpointServiceTest {
         PluginEndpointService service = service(
             registryReturning(List.of(pluginWith(endpoint("hello", captured)))),
             execRepoReturning(Optional.of(execution())));
-        assertThatThrownBy(() -> service.dispatch(TENANT, GROUP, "hello", EXEC, "missing", Map.of(), Map.of()))
+        assertThatThrownBy(() -> service.dispatch(TENANT, CLS, "hello", EXEC, "missing", Map.of(), Map.of()))
             .isInstanceOf(NotFoundException.class);
     }
 
     @Test
-    void shouldInvokeHandleWithScopedContext() {
+    void shouldInvokeHandleWithScopedContext() throws Exception {
         AtomicReference<PluginEndpointContext> captured = new AtomicReference<>();
-        PluginEndpointService service = service(
+        TaskOutputService taskOutputService = mock(TaskOutputService.class);
+        when(taskOutputService.getOutputs(any())).thenReturn(Map.of("a", 1));
+        PluginEndpointService service = new PluginEndpointService(
             registryReturning(List.of(pluginWith(endpoint("hello", captured)))),
-            execRepoReturning(Optional.of(execution())));
+            execRepoReturning(Optional.of(execution())),
+            mock(StorageInterface.class),
+            mock(LogDataStoreInterface.class),
+            taskOutputService);
 
         PluginEndpointResponse response = service.dispatch(
-            TENANT, GROUP, "hello", EXEC, TR, Map.of("name", List.of("toto")), Map.of("k", "v"));
+            TENANT, CLS, "hello", EXEC, TR, Map.of("name", List.of("toto")), Map.of("k", "v"));
 
         assertThat(response).isNotNull();
         PluginEndpointContext ctx = captured.get();
@@ -147,7 +152,8 @@ class PluginEndpointServiceTest {
             registryReturning(List.of(pluginWith(endpoint))),
             execRepoReturning(Optional.of(execution())),
             mock(StorageInterface.class),
-            mock(LogDataStoreInterface.class)
+            mock(LogDataStoreInterface.class),
+            mock(TaskOutputService.class)
         ) {
             @Override protected void authorizeNamespace(String namespace) {
                 authorizedNamespace.set(namespace);
@@ -155,7 +161,7 @@ class PluginEndpointServiceTest {
             }
         };
 
-        assertThatThrownBy(() -> service.dispatch(TENANT, GROUP, "hello", EXEC, TR, Map.of(), Map.of()))
+        assertThatThrownBy(() -> service.dispatch(TENANT, CLS, "hello", EXEC, TR, Map.of(), Map.of()))
             .isInstanceOf(SecurityException.class);
         assertThat(authorizedNamespace.get()).isEqualTo(NS);
         assertThat(handleInvoked).isFalse();
@@ -173,7 +179,7 @@ class PluginEndpointServiceTest {
             registryReturning(List.of(pluginWith(boom))),
             execRepoReturning(Optional.of(execution())));
 
-        assertThatThrownBy(() -> service.dispatch(TENANT, GROUP, "boom", EXEC, TR, Map.of(), Map.of()))
+        assertThatThrownBy(() -> service.dispatch(TENANT, CLS, "boom", EXEC, TR, Map.of(), Map.of()))
             .isInstanceOf(PluginEndpointExecutionException.class)
             .hasMessageNotContaining("secret-detail-should-not-leak");
     }

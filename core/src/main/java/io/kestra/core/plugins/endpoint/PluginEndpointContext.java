@@ -19,9 +19,9 @@ public interface PluginEndpointContext {
 
     String taskRunId();
 
-    TaskRunLogs logs();
+    TaskRunLogsFetcher logs();
 
-    TaskRunOutputs outputs();
+    TaskRunOutputsFetcher outputs();
 
     ScopedStorage storage();
 

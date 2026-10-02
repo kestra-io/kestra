@@ -8,8 +8,8 @@ public record DefaultPluginEndpointContext(
     Map<String, Object> body,
     String executionId,
     String taskRunId,
-    TaskRunLogs logs,
-    TaskRunOutputs outputs,
+    TaskRunLogsFetcher logs,
+    TaskRunOutputsFetcher outputs,
     ScopedStorage storage
 ) implements PluginEndpointContext {
     public DefaultPluginEndpointContext {

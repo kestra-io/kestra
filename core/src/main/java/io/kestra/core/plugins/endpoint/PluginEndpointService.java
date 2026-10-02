@@ -2,10 +2,12 @@ package io.kestra.core.plugins.endpoint;
 
 import io.kestra.core.exceptions.NotFoundException;
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.plugins.RegisteredPlugin;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.LogDataStoreInterface;
+import io.kestra.core.services.TaskOutputService;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.ListUtils;
 import jakarta.inject.Inject;
@@ -20,23 +22,26 @@ public class PluginEndpointService {
     private final ExecutionRepositoryInterface executionRepository;
     private final StorageInterface storageInterface;
     private final LogDataStoreInterface logDataStore;
+    private final TaskOutputService taskOutputService;
 
     @Inject
     public PluginEndpointService(
         PluginRegistry pluginRegistry,
         ExecutionRepositoryInterface executionRepository,
         StorageInterface storageInterface,
-        LogDataStoreInterface logDataStore
+        LogDataStoreInterface logDataStore,
+        TaskOutputService taskOutputService
     ) {
         this.pluginRegistry = pluginRegistry;
         this.executionRepository = executionRepository;
         this.storageInterface = storageInterface;
         this.logDataStore = logDataStore;
+        this.taskOutputService = taskOutputService;
     }
 
     public PluginEndpointResponse dispatch(
         String tenantId,
-        String group,
+        String cls,
         String name,
         String executionId,
         String taskRunId,
@@ -52,21 +57,21 @@ public class PluginEndpointService {
 
         authorizeNamespace(namespace);
 
-        execution.findTaskRunByTaskRunIdIfPresent(taskRunId)
+        TaskRun taskRun = execution.findTaskRunByTaskRunIdIfPresent(taskRunId)
             .orElseThrow(() -> new NotFoundException("No taskRun '%s' found in execution '%s'.".formatted(taskRunId, executionId)));
 
-        RegisteredPlugin plugin = pluginRegistry.plugins(p -> group.equals(p.group()))
+        RegisteredPlugin plugin = pluginRegistry.plugins(p -> p.hasClass(cls))
             .stream()
             .findFirst()
-            .orElseThrow(() -> new NotFoundException("No plugin found for group '%s'.".formatted(group)));
+            .orElseThrow(() -> new NotFoundException("No plugin found for class '%s'.".formatted(cls)));
 
         PluginEndpoint endpoint = ListUtils.emptyOnNull(plugin.getEndpoints()).stream()
             .filter(e -> e.name().equals(name))
             .findFirst()
-            .orElseThrow(() -> new NotFoundException("No endpoint '%s' in plugin '%s'.".formatted(name, group)));
+            .orElseThrow(() -> new NotFoundException("No endpoint '%s' for plugin class '%s'.".formatted(name, cls)));
 
-        TaskRunLogs logs = new DefaultTaskRunLogs(logDataStore, tenantId, executionId, taskRunId);
-        TaskRunOutputs outputs = new DefaultTaskRunOutputs(execution, taskRunId);
+        TaskRunLogsFetcher logs = new DefaultTaskRunLogsFetcher(logDataStore, tenantId, executionId, taskRunId);
+        TaskRunOutputsFetcher outputs = new DefaultTaskRunOutputsFetcher(taskOutputService, taskRun);
         ScopedStorage storage = new ScopedExecutionStorage(storageInterface, tenantId, namespace, execution.getFlowId(), executionId);
 
         PluginEndpointContext context = new DefaultPluginEndpointContext(parameters, body, executionId, taskRunId, logs, outputs, storage);
@@ -74,7 +79,7 @@ public class PluginEndpointService {
         try {
             return endpoint.handle(context);
         } catch (Exception e) {
-            throw new PluginEndpointExecutionException(group, name, e);
+            throw new PluginEndpointExecutionException(cls, name, e);
         }
     }
 

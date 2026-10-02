@@ -23,7 +23,7 @@ class PluginEndpointBodySizeFilterTest {
     @Test
     void shouldRejectPostWithContentLengthOverCap() {
         // Given - a body above MAX_BODY_SIZE on the plugin-endpoints path
-        byte[] oversizedBody = new byte[(int) PluginEndpointBodySizeFilter.MAX_BODY_SIZE + 1];
+        byte[] oversizedBody = new byte[(int) PluginEndpointBodySizeFilter.DEFAULT_MAX_BODY_SIZE + 1];
         MutableHttpRequest<?> request = HttpRequest.POST("/api/v1/main/plugins/io.kestra.plugin.core/endpoints/foo/exec1/tr1", oversizedBody);
 
         // When/Then

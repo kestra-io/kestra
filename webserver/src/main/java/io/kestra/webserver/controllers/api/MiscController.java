@@ -156,6 +156,7 @@ public class MiscController {
                     .build()
             )
             .isAiEnabled(applicationContext.containsBean(AiController.class))
+            .isPluginEndpointsEnabled(applicationContext.containsBean(PluginEndpointController.class))
             .isAiApiKeyConfigured(aiServiceManager.map(AiServiceManager::hasConfiguredProvider).orElse(false))
             .isBasicAuthInitialized(isBasicAuthInitialized())
             .systemNamespace(systemFlowsConfiguration.namespace())
@@ -375,6 +376,9 @@ public class MiscController {
         Long pluginsHash;
 
         Boolean isPluginAutoInstallEnabled;
+
+        @JsonInclude
+        Boolean isPluginEndpointsEnabled;
     }
 
     @Value

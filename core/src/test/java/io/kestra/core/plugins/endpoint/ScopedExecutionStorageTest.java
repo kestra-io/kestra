@@ -109,6 +109,16 @@ class ScopedExecutionStorageTest {
     }
 
     @Test
+    void shouldRejectNonKestraScheme() throws Exception {
+        StorageInterface delegate = mock(StorageInterface.class);
+        URI uri = URI.create("file:///io/kestra/test/myflow/executions/exec1/out.txt");
+
+        assertThatThrownBy(() -> storage(delegate).getFile(uri))
+            .isInstanceOf(IllegalArgumentException.class);
+        verify(delegate, never()).get(any(), any(), any());
+    }
+
+    @Test
     void shouldRejectNullUri() throws Exception {
         StorageInterface delegate = mock(StorageInterface.class);
 

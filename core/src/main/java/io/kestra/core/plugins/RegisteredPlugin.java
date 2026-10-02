@@ -107,7 +107,7 @@ public class RegisteredPlugin {
             !rules.isEmpty() ||
             !additionalPlugins.isEmpty() ||
             !fileRenderers.isEmpty() ||
-            (endpoints != null && !endpoints.isEmpty());
+            !endpoints.isEmpty();
     }
 
     public boolean hasClass(String cls) {

@@ -6,13 +6,13 @@ import org.slf4j.event.Level;
 
 import java.util.List;
 
-public class DefaultTaskRunLogs implements TaskRunLogs {
+public class DefaultTaskRunLogsFetcher implements TaskRunLogsFetcher {
     private final LogDataStoreInterface logStore;
     private final String tenantId;
     private final String executionId;
     private final String taskRunId;
 
-    public DefaultTaskRunLogs(LogDataStoreInterface logStore, String tenantId, String executionId, String taskRunId) {
+    public DefaultTaskRunLogsFetcher(LogDataStoreInterface logStore, String tenantId, String executionId, String taskRunId) {
         this.logStore = logStore;
         this.tenantId = tenantId;
         this.executionId = executionId;

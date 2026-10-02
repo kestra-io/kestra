@@ -1,11 +1,10 @@
 package io.kestra.webserver.controllers.api;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import io.kestra.core.plugins.endpoint.PluginEndpointExecutionException;
 import io.kestra.core.plugins.endpoint.PluginEndpointResponse;
 import io.kestra.core.plugins.endpoint.PluginEndpointService;
-import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.tenant.TenantService;
+import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.http.HttpHeaders;
 import io.micronaut.http.HttpRequest;
@@ -26,17 +25,14 @@ import io.micronaut.scheduling.annotation.ExecuteOn;
 import jakarta.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.Locale;
 import java.util.Map;
 
 @Slf4j
 @Produces(MediaType.ALL)
+@Requires(property = "kestra.plugins.endpoint.enabled", notEquals = "false", defaultValue = "true")
 @Controller("/api/v1/{tenant}/plugins")
 public class PluginEndpointController {
-    private static final TypeReference<Map<String, Object>> JSON_OBJECT = new TypeReference<>() {};
-
     private final PluginEndpointService pluginEndpointService;
     private final TenantService tenantService;
 
@@ -46,49 +42,38 @@ public class PluginEndpointController {
         this.tenantService = tenantService;
     }
 
-    @Get("/{group}/endpoints/{name}/{executionId}/{taskRunId}")
+    @Get("/{cls}/endpoints/{name}/{executionId}/{taskRunId}")
     @ExecuteOn(TaskExecutors.IO)
     public HttpResponse<byte[]> get(
         HttpRequest<?> request,
-        @PathVariable String group,
+        @PathVariable String cls,
         @PathVariable String name,
         @PathVariable String executionId,
         @PathVariable String taskRunId
     ) {
-        return dispatch(request, group, name, executionId, taskRunId, Map.of());
+        return dispatch(request, cls, name, executionId, taskRunId, Map.of());
     }
 
-    @Post("/{group}/endpoints/{name}/{executionId}/{taskRunId}")
-    @Consumes(MediaType.ALL)
+    @Post("/{cls}/endpoints/{name}/{executionId}/{taskRunId}")
+    @Consumes(MediaType.APPLICATION_JSON)
     @ExecuteOn(TaskExecutors.IO)
     public HttpResponse<byte[]> post(
         HttpRequest<?> request,
-        @PathVariable String group,
+        @PathVariable String cls,
         @PathVariable String name,
         @PathVariable String executionId,
         @PathVariable String taskRunId,
-        @Nullable @Body byte[] body
+        @Nullable @Body Map<String, Object> body
     ) {
-        return dispatch(request, group, name, executionId, taskRunId, parseBody(body));
-    }
-
-    private static Map<String, Object> parseBody(@Nullable byte[] body) {
-        if (body == null || new String(body, StandardCharsets.UTF_8).isBlank()) {
+        // Micronaut parses the JSON object into the map (and returns 400 for a malformed or non-object
+        // body); a missing body binds to null, which this endpoint requires.
+        if (body == null) {
             throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "A JSON object body is required.");
         }
-        Map<String, Object> parsed;
-        try {
-            parsed = JacksonMapper.ofJson().readValue(body, JSON_OBJECT);
-        } catch (IOException e) {
-            throw new HttpStatusException(HttpStatus.BAD_REQUEST, "The request body must be a JSON object.");
-        }
-        if (parsed == null) {
-            throw new HttpStatusException(HttpStatus.BAD_REQUEST, "The request body must be a JSON object.");
-        }
-        return parsed;
+        return dispatch(request, cls, name, executionId, taskRunId, body);
     }
 
-    private HttpResponse<byte[]> dispatch(HttpRequest<?> request, String group, String name, String executionId, String taskRunId, Map<String, Object> body) {
+    private HttpResponse<byte[]> dispatch(HttpRequest<?> request, String cls, String name, String executionId, String taskRunId, Map<String, Object> body) {
         PluginEndpointResponse response;
         // TODO(kestra-ee#9994): handle() runs synchronously on the webserver IO thread with no
         // timeout; a hanging or CPU-spinning plugin can exhaust the pool. Run it off-thread with a
@@ -96,7 +81,7 @@ public class PluginEndpointController {
         try {
             response = pluginEndpointService.dispatch(
                 tenantService.resolveTenant(),
-                group,
+                cls,
                 name,
                 executionId,
                 taskRunId,
@@ -104,7 +89,7 @@ public class PluginEndpointController {
                 body
             );
         } catch (PluginEndpointExecutionException e) {
-            log.error("Plugin endpoint '{}/{}' failed.", group, name, e.getCause());
+            log.error("Plugin endpoint '{}/{}' failed.", cls, name, e.getCause());
             PluginEndpointResponse error = PluginEndpointResponse.of(Map.of("message", e.getMessage()));
             return harden(HttpResponse.serverError(error.body()), error);
         }

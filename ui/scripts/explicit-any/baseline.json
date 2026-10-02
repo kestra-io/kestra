@@ -18,7 +18,6 @@
   "packages/design-system/src/components/Feedback/KsResult.vue": 1,
   "packages/design-system/src/components/Feedback/KsTooltip.vue": 1,
   "packages/design-system/src/components/Form/KsAutocomplete.vue": 5,
-  "packages/design-system/src/components/Form/KsDatePicker.vue": 3,
   "packages/design-system/src/components/Navigation/KsDropdown/KsDropdownItem.vue": 2,
   "packages/design-system/src/components/Navigation/KsMenu/KsMenu.vue": 1,
   "packages/design-system/src/components/Navigation/KsMenu/KsMenuItem.vue": 2,

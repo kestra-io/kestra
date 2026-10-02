@@ -1,7 +1,8 @@
 <template>
     <div :id="containerID" />
+    <el-skeleton v-if="loading && generated === undefined && !props.short" animated :rows="3" class="chart" />
     <Bar
-        v-if="generated !== undefined"
+        v-else-if="generated !== undefined"
         :data="parsedData"
         :options="options"
         :plugins="chartOptions?.legend?.enabled ? [customBarLegend] : []"
@@ -24,7 +25,7 @@
 
     import {customBarLegend} from "../composables/useLegend";
     import {useTheme} from "../../../utils/utils";
-    import {defaultConfig, getConsistentHEXColor, chartSegmentDrillDown, pushChartDrillDown} from "../composables/charts";
+    import {defaultConfig, dashboardPixelRatio, getConsistentHEXColor, chartSegmentDrillDown, pushChartDrillDown} from "../composables/charts";
 
 
     import {useRoute, useRouter} from "vue-router";
@@ -60,6 +61,7 @@
 
     const options = computed(() => {
         return defaultConfig({
+            devicePixelRatio: dashboardPixelRatio(),
             skipNull: true,
             barThickness: 12,
             borderSkipped: false,
@@ -175,7 +177,7 @@
         return {labels, datasets};
     });
 
-    const {data: generated, generate} = useChartGenerator(props);
+    const {data: generated, loading, generate} = useChartGenerator(props);
 
     function refresh() {
         return generate(getDashboard(route, "id")!);

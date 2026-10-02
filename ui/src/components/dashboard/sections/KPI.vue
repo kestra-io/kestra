@@ -1,5 +1,7 @@
 <template>
-    <section v-if="data" id="kpi">
+    <el-skeleton v-if="loading && !data" animated :rows="1" />
+
+    <section v-else-if="data" id="kpi">
         <span class="pb-2">{{ getChartTitle(props.chart!) }}</span>
         <p class="m-0 fs-2 fw-bold">
             {{ getPropertyValue(data, "value") }}{{ percentageShown ? "%" : "" }}
@@ -27,7 +29,7 @@
 
     const route = useRoute();
 
-    const {percentageShown, EMPTY_TEXT, data, generate} = useChartGenerator(props);
+    const {percentageShown, EMPTY_TEXT, data, loading, generate} = useChartGenerator(props);
 
     function refresh() {
         return generate(getDashboard(route, "id")!);

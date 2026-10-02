@@ -5,6 +5,15 @@ import {getSchemeValue} from "../../../utils/scheme";
 
 import {useMiscStore} from "override/stores/misc";
 
+/**
+ * Dashboards hold many charts at once, so their canvases render at a capped pixel ratio rather than the full device
+ * resolution. Canvas memory grows with the square of that ratio, and flat fills and thin lines lose next to nothing.
+ */
+export const DASHBOARD_CHART_MAX_PIXEL_RATIO = 1.5;
+
+/** The chart.js `devicePixelRatio` option for dashboard charts: the device's ratio, capped. */
+export const dashboardPixelRatio = (): number => Math.min(window.devicePixelRatio || 1, DASHBOARD_CHART_MAX_PIXEL_RATIO);
+
 export function tooltip(tooltipModel: {
     title?: string[];
     body?: { lines: string[] }[];

@@ -55,13 +55,22 @@
                         </div>
                     </div>
 
-                    <div class="flex-grow-1">
+                    <div :ref="(el) => observeChartBlock(el, chart.id)" class="flex-grow-1">
                         <component
-                            ref="chartsComponents"
+                            v-if="activatedCharts.has(chart.id)"
+                            :ref="(el: Element | ComponentPublicInstance | null) => registerChartComponent(el, chart.id)"
                             :is="TYPES[chart.type as keyof typeof TYPES]"
                             :chart
                             :filters
                             :showDefault="props.showDefault"
+                        />
+                        <el-skeleton
+                            v-else
+                            animated
+                            :rows="isKPIChart(chart.type) ? 1 : 3"
+                            class="chart-placeholder"
+                            :class="{'is-kpi': isKPIChart(chart.type)}"
+                            :style="placeholderHeight(chart.id) ? {minHeight: `${placeholderHeight(chart.id)}px`} : undefined"
                         />
                     </div>
                 </div>
@@ -71,10 +80,11 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed} from "vue";
+    import {computed, type ComponentPublicInstance} from "vue";
 
     import type {Dashboard, Chart} from "../composables/useDashboards";
-    import {isKPIChart, isTableChart, getChartTitle} from "../composables/useDashboards";
+    import {isKPIChart, isTableChart, isCanvasChart, getChartTitle} from "../composables/useDashboards";
+    import {useLazyChartBlocks} from "../composables/useLazyChartBlocks";
     import {TYPES} from "../dashboard-types";
 
     import {useRoute} from "vue-router";
@@ -90,10 +100,16 @@
     import Download from "vue-material-design-icons/Download.vue";
     import Pencil from "vue-material-design-icons/Pencil.vue";
 
-    const chartsComponents = ref<{refresh(): void}[]>();
+    const chartsComponents = new Map<string, {refresh(): void}>();
 
+    function registerChartComponent(el: Element | ComponentPublicInstance | null, chartId: string) {
+        if (el) chartsComponents.set(chartId, el as unknown as {refresh(): void});
+        else chartsComponents.delete(chartId);
+    }
+
+    // Only mounted charts are in the map, so a recycled one is skipped here and reloads when it scrolls back in.
     function refreshCharts() {
-        (chartsComponents.value ?? []).forEach((component) => component.refresh());
+        chartsComponents.forEach((component) => component.refresh());
     }
 
     defineExpose({
@@ -106,6 +122,13 @@
         showDefault?: boolean;
         padding?: boolean;
     }>();
+
+    const chartTypesById = computed(() => new Map((props.charts ?? []).map((chart) => [chart.id, chart.type])));
+
+    // Charts mount as their block nears the viewport; the canvas ones are unmounted again once scrolled far away.
+    const {activatedCharts, observeChartBlock, placeholderHeight} = useLazyChartBlocks(
+        (chartId) => isCanvasChart(chartTypesById.value.get(chartId) ?? ""),
+    );
 
     const labels = (chart: Chart) => ({
         title: getChartTitle(chart),
@@ -176,6 +199,14 @@ section#charts {
 
         &:hover #charts_buttons {
             opacity: 1;
+        }
+
+        .chart-placeholder {
+            min-height: 200px; // roughly the height of a rendered chart, so activation does not shift the layout
+
+            &.is-kpi {
+                min-height: 0;
+            }
         }
     }
 

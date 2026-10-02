@@ -21,7 +21,7 @@ const serviceStatesFromSdk = (): ServiceServiceState[] => {
 describe("SERVICE_STATE_TO_EXECUTION_STATUS", () => {
     it("maps every service state to a valid execution status", () => {
         const invalidStatuses = Object.values(SERVICE_STATE_TO_EXECUTION_STATUS)
-            .filter(status => !Object.hasOwn(EXECUTION_STATUSES, status))
+            .filter(status => !Object.prototype.hasOwnProperty.call(EXECUTION_STATUSES, status))
 
         expect(invalidStatuses).toEqual([])
     })

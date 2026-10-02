@@ -14,6 +14,7 @@ import {
     executionLogsDownloadFilename,
     levelOrLower,
     chartColorFromLevel,
+    type LevelKey,
 } from "../../../src/utils/logs"
 import type {Log} from "../../../src/stores/logs"
 
@@ -181,8 +182,8 @@ describe("levelOrLower", () => {
     })
 
     it("degrades to something sensible rather than throwing for an unknown level", () => {
-        expect(() => levelOrLower("UNKNOWN" as any)).not.toThrow()
-        expect(levelOrLower("UNKNOWN" as any)).toEqual(["TRACE", "DEBUG", "INFO", "WARN", "ERROR"])
+        expect(() => levelOrLower("UNKNOWN" as unknown as LevelKey)).not.toThrow()
+        expect(levelOrLower("UNKNOWN" as unknown as LevelKey)).toEqual(["TRACE", "DEBUG", "INFO", "WARN", "ERROR"])
     })
 })
 
@@ -217,7 +218,7 @@ describe("chartColorFromLevel", () => {
     })
 
     it("returns a defined fallback for an unknown level rather than throwing", () => {
-        expect(() => chartColorFromLevel("UNKNOWN" as any)).not.toThrow()
-        expect(chartColorFromLevel("UNKNOWN" as any)).toBeNull()
+        expect(() => chartColorFromLevel("UNKNOWN" as unknown as LevelKey)).not.toThrow()
+        expect(chartColorFromLevel("UNKNOWN" as unknown as LevelKey)).toBeNull()
     })
 })

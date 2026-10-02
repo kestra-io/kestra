@@ -2,6 +2,8 @@ import {ref} from "vue"
 import {describe, it, expect, vi} from "vitest"
 import {useNoCodeHandlers, getCreateTabKey} from "../../../../src/components/flows/useNoCodePanels"
 
+type NoCodeActions = Parameters<typeof useNoCodeHandlers>[2]
+
 describe("useNoCodeHandlers.onCreateTask", () => {
     it("focuses the existing create-tab instead of opening a duplicate on repeated calls", () => {
         const openTabs = ref<string[]>([])
@@ -11,12 +13,13 @@ describe("useNoCodeHandlers.onCreateTask", () => {
         // independently, not just forward whatever it was given, or a mismatch between
         // onCreateTask's dedup key and the tab actually created (like the one that shipped
         // in #18321: the dedup check omitted the defaulted position) would go undetected.
-        const actions = {
+        const actions: NoCodeActions = {
             openAddTaskTab: vi.fn((_opener, parentPath, blockSchemaPath, refPath, position = "after") => {
-                openTabs.value = [...openTabs.value, getCreateTabKey({parentPath, refPath, blockSchemaPath, position} as any, counter++)]
+                openTabs.value = [...openTabs.value, getCreateTabKey({parentPath, refPath, blockSchemaPath, position}, counter++)]
             }),
             openEditTaskTab: vi.fn(),
-        } as any
+            closeTaskTab: vi.fn(),
+        }
 
         const handlers = useNoCodeHandlers(openTabs, focusTab, actions)
         const opener = {panelIndex: 0, tabIndex: 0}
@@ -38,12 +41,13 @@ describe("useNoCodeHandlers.onCreateTask", () => {
         const openTabs = ref<string[]>([])
         const focusTab = vi.fn()
         let counter = 0
-        const actions = {
+        const actions: NoCodeActions = {
             openAddTaskTab: vi.fn((_opener, parentPath, blockSchemaPath, refPath, position = "after") => {
-                openTabs.value = [...openTabs.value, getCreateTabKey({parentPath, refPath, blockSchemaPath, position} as any, counter++)]
+                openTabs.value = [...openTabs.value, getCreateTabKey({parentPath, refPath, blockSchemaPath, position}, counter++)]
             }),
             openEditTaskTab: vi.fn(),
-        } as any
+            closeTaskTab: vi.fn(),
+        }
 
         const handlers = useNoCodeHandlers(openTabs, focusTab, actions)
         const opener = {panelIndex: 0, tabIndex: 0}

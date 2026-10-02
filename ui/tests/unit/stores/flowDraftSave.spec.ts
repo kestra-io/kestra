@@ -1,14 +1,20 @@
 import {beforeAll, beforeEach, describe, expect, it, vi} from "vitest"
 import {createPinia, setActivePinia} from "pinia"
+import type * as FlowsAPI from "@kestra-io/kestra-sdk/flows"
+import type {Flow} from "../../../src/stores/flow"
+
+function makeFlow(draft: boolean): Flow {
+    return {id: "f", namespace: "ns", draft, source: ""}
+}
 
 // Capture the `draft` param the store sends to the backend on save.
 // Typed with varargs so `updateFlow.mock.calls.at(-1)?.[0]` type-checks; an argless
 // `vi.fn(() => …)` infers zero-length call tuples and trips TS2493 under vue-tsc.
-const updateFlow = vi.fn((..._args: any[]) => Promise.resolve({id: "f", namespace: "ns", draft: false, source: ""}))
-const createFlow = vi.fn((..._args: any[]) => Promise.resolve({id: "f", namespace: "ns", draft: false, source: ""}))
-const validateFlows = vi.fn(() => Promise.resolve([{}]))
+const updateFlow = vi.fn((..._args: Parameters<typeof FlowsAPI.updateFlow>) => Promise.resolve(makeFlow(false)))
+const createFlow = vi.fn((..._args: Parameters<typeof FlowsAPI.createFlow>) => Promise.resolve(makeFlow(false)))
+const validateFlows = vi.fn((..._args: Parameters<typeof FlowsAPI.validateFlows>) => Promise.resolve([{}]))
 // GET /flows/{namespace}/{id} - used by loadFlow() to fetch a flow's source
-const getFlow = vi.fn((..._args: any[]) => Promise.resolve({id: "f", namespace: "ns", draft: true, revision: 1, source: ""}))
+const getFlow = vi.fn((..._args: Parameters<typeof FlowsAPI.flow>) => Promise.resolve(makeFlow(true)))
 
 vi.mock("@kestra-io/kestra-sdk", () => ({
     useClient: () => ({get: vi.fn(() => Promise.resolve({status: 200, data: {}}))}),
@@ -44,7 +50,7 @@ async function freshStore() {
     store.isCreating = false
     // saveAll() returns early ("blocked") when flow.value is unset; seed an existing flow so the
     // save path actually reaches the client. draft here is the *current* state the no-arg save reads.
-    store.flow = {id: "f", namespace: "ns", draft: false} as any
+    store.flow = makeFlow(false)
     return store
 }
 
@@ -85,7 +91,7 @@ describe("flow draft save — draft resolution per entry point", () => {
 
     it("saveAll(false) publishes (draft=false)", async () => {
         const store = await freshStore()
-        store.flow = {id: "f", namespace: "ns", draft: true} as any
+        store.flow = makeFlow(true)
         await store.saveAll(false)
         expect(lastDraftParam())
             .toBe(false)
@@ -100,7 +106,7 @@ describe("flow draft save — draft resolution per entry point", () => {
 
     it("saveAll() with no argument preserves the flow's current draft state (draft → draft)", async () => {
         const store = await freshStore()
-        store.flow = {id: "f", namespace: "ns", draft: true} as any
+        store.flow = makeFlow(true)
         await store.saveAll()
         expect(lastDraftParam())
             .toBe(true)
@@ -108,7 +114,7 @@ describe("flow draft save — draft resolution per entry point", () => {
 
     it("saveAll() with no argument on a published flow stays published (draft=false)", async () => {
         const store = await freshStore()
-        store.flow = {id: "f", namespace: "ns", draft: false} as any
+        store.flow = makeFlow(false)
         await store.saveAll()
         expect(lastDraftParam())
             .toBe(false)
@@ -139,7 +145,7 @@ describe("flow draft save — draft resolution per entry point", () => {
     it("publishDraft(target) fetches the target's source via loadFlow(store:false) and publishes it", async () => {
         const store = await freshStore()
         store.flowYaml = ""
-        const target = {id: "f", namespace: "ns", draft: true} as any
+        const target = makeFlow(true)
 
         getFlow.mockResolvedValueOnce({id: "f", namespace: "ns", draft: true, revision: 1, source: VALID_FLOW})
 
@@ -160,7 +166,7 @@ describe("flow draft save — draft resolution per entry point", () => {
         const unsavedEdits = `${VALID_FLOW}  # unsaved local edit\n`
         store.flowYaml = unsavedEdits
         store.flowYamlOrigin = VALID_FLOW
-        const target = {id: "f", namespace: "ns", draft: true} as any
+        const target = makeFlow(true)
 
         const savedDraftSource = VALID_FLOW.replace("hi", "saved draft revision")
         getFlow.mockResolvedValueOnce({id: "f", namespace: "ns", draft: true, revision: 1, source: savedDraftSource})

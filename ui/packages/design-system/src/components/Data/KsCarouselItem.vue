@@ -1,5 +1,5 @@
 <template>
-    <ElCarouselItem v-bind="({...filteredProps(), ...$attrs} as any)">
+    <ElCarouselItem v-bind="({...filteredProps(), ...$attrs} as CarouselItemProps)">
         <template v-if="$slots.default" #default>
             <slot />
         </template>
@@ -7,7 +7,7 @@
 </template>
 
 <script setup lang="ts">
-    import {ElCarouselItem} from "element-plus"
+    import {ElCarouselItem, type CarouselItemProps} from "element-plus"
     import {useFilteredProps} from "../../utils/filteredProps"
 
     defineOptions({inheritAttrs: false})

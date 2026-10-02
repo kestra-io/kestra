@@ -5,6 +5,7 @@ import java.util.Optional;
 
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.ExecutionKind;
 import io.kestra.core.models.flows.Concurrency;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.runners.ExecutionQueuedStateStore;
@@ -69,6 +70,12 @@ public class ConcurrencySlotReleaseProcessor {
      */
     public Optional<Execution> release(ExecutorContext executor, boolean terminatedByThisCycle) {
         Execution execution = executor.getExecution();
+
+        // LOOP executions are virtual iterations that never acquired a concurrency slot;
+        // they inherit the parent's metadata but must not release the parent's slot.
+        if (execution.getKind() == ExecutionKind.LOOP) {
+            return Optional.empty();
+        }
 
         try {
             // release the scopes the execution was admitted under — not the currently defined

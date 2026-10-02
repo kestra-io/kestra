@@ -328,7 +328,6 @@
     "start date": "Data di inizio",
     "end date": "Data di fine",
     "restart": "Riavvia",
-    "restart latest revision": "Riavvia ultima revisione",
     "restart tooltip": "Riavvia l'esecuzione dal task <code>{state}</code>",
     "restarted": "L'esecuzione è Riavviata",
     "restart confirm": "Sei sicuro di voler riavviare l'esecuzione <code>{id}</code>?",

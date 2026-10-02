@@ -141,6 +141,12 @@ public class DefaultNamespaceFileMetadataStateStore implements NamespaceFileMeta
 
     /** {@inheritDoc} */
     @Override
+    public NamespaceFileMetadata saveRevision(NamespaceFileMetadata item, int revision) {
+        return repository.saveRevision(item, revision);
+    }
+
+    /** {@inheritDoc} */
+    @Override
     public NamespaceFileMetadata delete(NamespaceFileMetadata item) throws IOException {
         return repository.delete(item);
     }

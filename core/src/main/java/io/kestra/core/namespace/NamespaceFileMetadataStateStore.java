@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 
+import io.kestra.core.exceptions.NamespaceFileRevisionConflictException;
 import io.kestra.core.models.namespaces.files.NamespaceFileMetadata;
 
 import jakarta.annotation.Nullable;
@@ -97,6 +98,17 @@ public interface NamespaceFileMetadataStateStore {
      * @return the saved namespace file metadata entry
      */
     NamespaceFileMetadata save(NamespaceFileMetadata item);
+
+    /**
+     * Record a namespace file entry as revision {@code revision} of its path, provided no entry holds that revision yet.
+     *
+     * @param item the namespace file metadata entry to record
+     * @param revision the revision to record it as
+     * @return the recorded namespace file metadata entry
+     * @throws NamespaceFileRevisionConflictException if an entry already holds {@code revision} for that path
+     * @see io.kestra.core.repositories.NamespaceFileMetadataRepositoryInterface#saveRevision(NamespaceFileMetadata, int)
+     */
+    NamespaceFileMetadata saveRevision(NamespaceFileMetadata item, int revision);
 
     /**
      * Soft-delete a namespace file metadata entry.

@@ -189,6 +189,19 @@ public abstract class AbstractJdbcRepository<T> {
     }
 
     /**
+     * Insert the entity, failing with an integrity constraint violation if a row already holds its key.
+     *
+     * @see #persist(T, DSLContext, Map) for an upsert
+     */
+    public void insert(T entity, DSLContext dslContext, Map<Field<Object>, Object> fields) {
+        dslContext
+            .insertInto(table)
+            .set(KEY_FIELD, key(entity))
+            .set(fields)
+            .execute();
+    }
+
+    /**
      * Turns a column-to-value map into a column-to-{@code EXCLUDED}/{@code VALUES(...)} map, so the
      * update clause of an upsert re-references the row already bound by the insert clause instead of
      * binding the (potentially large) value a second time. jOOQ renders this per-dialect: the

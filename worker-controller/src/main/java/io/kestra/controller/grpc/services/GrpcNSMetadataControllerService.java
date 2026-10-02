@@ -11,10 +11,12 @@ import io.kestra.controller.grpc.*;
 import io.kestra.controller.messages.MessageFormat;
 import io.kestra.controller.messages.MessageFormats;
 import io.kestra.controller.messages.RequestOrResponseHeaderFactory;
+import io.kestra.core.exceptions.NamespaceFileRevisionConflictException;
 import io.kestra.core.models.namespaces.files.NamespaceFileMetadata;
 import io.kestra.core.namespace.NamespaceFileMetadataStateStore;
 import io.kestra.core.worker.models.WorkerInfo;
 
+import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -210,7 +212,7 @@ public class GrpcNSMetadataControllerService extends NamespaceFileMetadataServic
                 item = item.toBuilder().tenantId(request.getTenantId()).build();
             }
 
-            NamespaceFileMetadata result = stateStore.save(item);
+            NamespaceFileMetadata result = request.hasRevision() ? stateStore.saveRevision(item, request.getRevision()) : stateStore.save(item);
 
             OpaqueData response = OpaqueData.newBuilder()
                 .setHeader(RequestOrResponseHeaderFactory.create(workerInfo.getWorkerId()))
@@ -219,6 +221,8 @@ public class GrpcNSMetadataControllerService extends NamespaceFileMetadataServic
 
             responseObserver.onNext(response);
             responseObserver.onCompleted();
+        } catch (NamespaceFileRevisionConflictException e) {
+            responseObserver.onError(Status.ALREADY_EXISTS.withDescription(e.getMessage()).asRuntimeException());
         } catch (Exception e) {
             log.error("Error during save", e);
             responseObserver.onError(e);

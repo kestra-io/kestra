@@ -4,10 +4,15 @@ import java.io.ByteArrayInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Proxy;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.Assertions;
@@ -606,6 +611,68 @@ class InternalNamespaceTest {
             assertThat(new String(is.readAllBytes())).isEqualTo(COLLIDING_FILE_CONTENT);
         }
         assertThat(namespace.getFileMetadata(COLLIDING_FILE).getType()).isEqualTo(FileAttributes.FileType.File);
+    }
+
+    @Test
+    void shouldBackEveryIndexedRevisionInStorageWhenTheSameFileIsSavedConcurrently() throws IOException, URISyntaxException {
+        // Given a file at revision 1 and two saves of it in flight at once, as when a user clicks Save again while a
+        // slow save is still pending: the second save reads the current revision before the first one has committed.
+        final String namespaceId = TestsUtils.randomNamespace();
+        final Path file = Path.of("/QlikMKTOptimaSales/scripts/insert.py");
+        final InternalNamespace firstSave = new InternalNamespace(log, MAIN_TENANT, namespaceId, storageInterface, namespaceFileMetadataStateStore);
+
+        firstSave.putFile(file, new ByteArrayInputStream("initial".getBytes()));
+        NamespaceFileMetadata readBeforeTheFirstSaveCommitted = namespaceFileMetadataStateStore.findByPath(MAIN_TENANT, namespaceId, file.toString(), null, false).orElseThrow();
+
+        final InternalNamespace secondSave = new InternalNamespace(
+            log, MAIN_TENANT, namespaceId, storageInterface,
+            readingOnceFromSnapshot(file, readBeforeTheFirstSaveCommitted)
+        );
+
+        // When both saves complete, one after the other
+        firstSave.putFile(file, new ByteArrayInputStream("first save".getBytes()), Namespace.Conflicts.OVERWRITE);
+        secondSave.putFile(file, new ByteArrayInputStream("second save".getBytes()), Namespace.Conflicts.OVERWRITE);
+
+        // Then every revision the index records has its own object in storage, and the latest one holds the last save
+        List<Integer> indexedRevisions = namespaceFileMetadataStateStore.findAllVersionsByPaths(MAIN_TENANT, namespaceId, List.of(file.toString())).stream()
+            .map(NamespaceFileMetadata::getRevision)
+            .sorted()
+            .toList();
+        List<Integer> revisionsMissingFromStorage = new ArrayList<>();
+        for (int revision : indexedRevisions) {
+            if (!storageInterface.exists(MAIN_TENANT, namespaceId, NamespaceFile.of(namespaceId, file, revision).storagePath().toUri())) {
+                revisionsMissingFromStorage.add(revision);
+            }
+        }
+
+        assertThat(indexedRevisions).as("each save gets its own revision").containsExactly(1, 2, 3);
+        assertThat(revisionsMissingFromStorage).as("indexed revisions with no backing object in storage").isEmpty();
+        try (InputStream is = firstSave.getFileContent(file, null)) {
+            assertThat(new String(is.readAllBytes())).isEqualTo("second save");
+        }
+    }
+
+    /**
+     * Returns the state store, except that the first lookup of {@code path} answers with {@code snapshot}: what a
+     * save reads when it looks the file up before a concurrent save of the same file has committed.
+     */
+    private NamespaceFileMetadataStateStore readingOnceFromSnapshot(Path path, NamespaceFileMetadata snapshot) {
+        AtomicBoolean snapshotServed = new AtomicBoolean();
+        return (NamespaceFileMetadataStateStore) Proxy.newProxyInstance(
+            NamespaceFileMetadataStateStore.class.getClassLoader(),
+            new Class<?>[] { NamespaceFileMetadataStateStore.class },
+            (proxy, method, args) ->
+            {
+                if (method.getName().equals("findByPath") && path.toString().equals(args[2]) && snapshotServed.compareAndSet(false, true)) {
+                    return Optional.of(snapshot);
+                }
+                try {
+                    return method.invoke(namespaceFileMetadataStateStore, args);
+                } catch (InvocationTargetException e) {
+                    throw e.getCause();
+                }
+            }
+        );
     }
 
     /**

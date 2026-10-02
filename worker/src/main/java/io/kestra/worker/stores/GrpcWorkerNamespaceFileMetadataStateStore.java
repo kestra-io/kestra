@@ -10,11 +10,14 @@ import io.kestra.controller.grpc.*;
 import io.kestra.controller.messages.MessageFormat;
 import io.kestra.controller.messages.MessageFormats;
 import io.kestra.controller.messages.RequestOrResponseHeaderFactory;
+import io.kestra.core.exceptions.NamespaceFileRevisionConflictException;
 import io.kestra.core.models.namespaces.files.NamespaceFileMetadata;
 import io.kestra.core.namespace.DefaultNamespaceFileMetadataStateStore;
 import io.kestra.core.namespace.NamespaceFileMetadataStateStore;
 import io.kestra.core.worker.models.WorkerInfo;
 
+import io.grpc.Status;
+import io.grpc.StatusRuntimeException;
 import io.micronaut.context.annotation.Replaces;
 import io.micronaut.context.annotation.Requires;
 import jakarta.annotation.Nullable;
@@ -182,5 +185,27 @@ public class GrpcWorkerNamespaceFileMetadataStateStore implements NamespaceFileM
 
         OpaqueData response = stub.save(request);
         return MESSAGE_FORMAT.fromByteString(response.getMessage(), NamespaceFileMetadata.class);
+    }
+
+    @Override
+    public NamespaceFileMetadata saveRevision(NamespaceFileMetadata item, int revision) {
+        log.trace("Saving namespace file metadata revision via gRPC: namespace={}, path={}, revision={}", item.getNamespace(), item.getPath(), revision);
+
+        NamespaceFileMetadataSaveRequest request = NamespaceFileMetadataSaveRequest.newBuilder()
+            .setHeader(RequestOrResponseHeaderFactory.create(workerInfo.getWorkerId()))
+            .setMessage(MESSAGE_FORMAT.toByteString(item))
+            .setTenantId(item.getTenantId())
+            .setRevision(revision)
+            .build();
+
+        try {
+            OpaqueData response = stub.save(request);
+            return MESSAGE_FORMAT.fromByteString(response.getMessage(), NamespaceFileMetadata.class);
+        } catch (StatusRuntimeException e) {
+            if (Status.Code.ALREADY_EXISTS == e.getStatus().getCode()) {
+                throw new NamespaceFileRevisionConflictException(e.getStatus().getDescription());
+            }
+            throw e;
+        }
     }
 }

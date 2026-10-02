@@ -9,10 +9,14 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.jooq.*;
 import org.jooq.Record;
+import org.jooq.exception.DataAccessException;
+import org.jooq.exception.SQLStateClass;
 import org.jooq.impl.DSL;
 
+import io.kestra.core.exceptions.NamespaceFileRevisionConflictException;
 import io.kestra.core.models.FetchVersion;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.TenantAndNamespace;
@@ -221,5 +225,49 @@ public abstract class AbstractJdbcNamespaceFileMetadataRepository extends Abstra
 
                 return nsFileMetadataToPersist;
             });
+    }
+
+    @Override
+    public NamespaceFileMetadata saveRevision(NamespaceFileMetadata namespaceFileMetadata, int revision) {
+        try {
+            return this.jdbcRepository
+                .getDslContextWrapper()
+                .transactionResult(configuration ->
+                {
+                    DSLContext context = DSL.using(configuration);
+
+                    Optional<NamespaceFileMetadata> maybePrevious = this.findByPath(namespaceFileMetadata.getTenantId(), namespaceFileMetadata.getNamespace(), namespaceFileMetadata.getPath());
+                    if (maybePrevious.filter(previous -> previous.isDirectory() == namespaceFileMetadata.isDirectory() && previous.getRevision() >= revision).isPresent()) {
+                        throw revisionConflict(namespaceFileMetadata, revision);
+                    }
+
+                    NamespaceFileMetadata nsFileMetadataToPersist = namespaceFileMetadata.asLast().toBuilder()
+                        .deleted(false)
+                        .revision(revision)
+                        .created(maybePrevious.map(NamespaceFileMetadata::getCreated).orElse(Instant.now()))
+                        .build();
+
+                    // A plain insert, not an upsert: the primary key holds the revision, so a concurrent writer of the same revision fails here.
+                    this.jdbcRepository.insert(nsFileMetadataToPersist, context, this.jdbcRepository.persistFields(nsFileMetadataToPersist));
+
+                    maybePrevious.ifPresent(previous ->
+                    {
+                        NamespaceFileMetadata previousAsNotLast = previous.toBuilder().last(false).build();
+                        this.jdbcRepository.persist(previousAsNotLast, context, this.jdbcRepository.persistFields(previousAsNotLast));
+                    });
+
+                    return nsFileMetadataToPersist;
+                });
+        } catch (RuntimeException e) {
+            DataAccessException dataAccessException = ExceptionUtils.throwableOfType(e, DataAccessException.class);
+            if (dataAccessException != null && dataAccessException.sqlStateClass() == SQLStateClass.C23_INTEGRITY_CONSTRAINT_VIOLATION) {
+                throw revisionConflict(namespaceFileMetadata, revision);
+            }
+            throw e;
+        }
+    }
+
+    private static NamespaceFileRevisionConflictException revisionConflict(NamespaceFileMetadata namespaceFileMetadata, int revision) {
+        return new NamespaceFileRevisionConflictException(namespaceFileMetadata.getNamespace(), namespaceFileMetadata.getPath(), revision);
     }
 }

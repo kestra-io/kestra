@@ -107,6 +107,8 @@ message NamespaceFileMetadataSaveRequest {
   bytes message = 2;
   // The tenant ID
   string tenant_id = 3;
+  // When set, record the entry as this revision, failing with ALREADY_EXISTS if the revision is already recorded
+  optional int32 revision = 4;
 }
 
 // Request to find a namespace file metadata entry by path, with optional version filter

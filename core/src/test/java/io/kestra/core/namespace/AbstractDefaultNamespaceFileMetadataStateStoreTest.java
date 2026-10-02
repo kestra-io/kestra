@@ -1,11 +1,19 @@
 package io.kestra.core.namespace;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.Test;
 
+import io.kestra.core.exceptions.NamespaceFileRevisionConflictException;
 import io.kestra.core.models.namespaces.files.NamespaceFileMetadata;
 import io.kestra.core.utils.TestsUtils;
 
@@ -421,6 +429,76 @@ public abstract class AbstractDefaultNamespaceFileMetadataStateStoreTest {
         // Then
         assertThat(v1.getRevision()).isEqualTo(1);
         assertThat(v2.getRevision()).isEqualTo(2);
+    }
+
+    @Test
+    void shouldRetirePreviousRevisionWhenSaveRevisionGivenNextRevision() throws IOException {
+        // Given
+        String tenantId = TestsUtils.randomTenant();
+        String namespace = TestsUtils.randomNamespace();
+        String path = "/claimed.txt";
+        stateStore.saveRevision(NamespaceFileMetadata.builder().tenantId(tenantId).namespace(namespace).path(path).size(10L).build(), 1);
+
+        // When
+        stateStore.saveRevision(NamespaceFileMetadata.builder().tenantId(tenantId).namespace(namespace).path(path).size(20L).build(), 2);
+
+        // Then
+        assertThat(stateStore.findByPath(tenantId, namespace, path, null, false))
+            .hasValueSatisfying(latest ->
+            {
+                assertThat(latest.getRevision()).isEqualTo(2);
+                assertThat(latest.getSize()).isEqualTo(20L);
+            });
+        assertThat(stateStore.findByPath(tenantId, namespace, path, 1, false)).hasValueSatisfying(first -> assertThat(first.isLast()).isFalse());
+    }
+
+    @Test
+    void shouldRecordARevisionOnceGivenConcurrentWriters() throws Exception {
+        // Given
+        String tenantId = TestsUtils.randomTenant();
+        String namespace = TestsUtils.randomNamespace();
+        String path = "/contended.txt";
+        int writers = 4;
+        stateStore.saveRevision(NamespaceFileMetadata.builder().tenantId(tenantId).namespace(namespace).path(path).size(10L).build(), 1);
+
+        // When
+        ExecutorService executor = Executors.newFixedThreadPool(writers);
+        CountDownLatch start = new CountDownLatch(1);
+        List<Future<NamespaceFileMetadata>> saves = new ArrayList<>();
+        try {
+            for (int i = 0; i < writers; i++) {
+                long size = 100L + i;
+                saves.add(executor.submit(() ->
+                {
+                    start.await();
+                    return stateStore.saveRevision(NamespaceFileMetadata.builder().tenantId(tenantId).namespace(namespace).path(path).size(size).build(), 2);
+                }));
+            }
+            start.countDown();
+
+            List<Long> recordedSizes = new ArrayList<>();
+            int conflicts = 0;
+            for (Future<NamespaceFileMetadata> save : saves) {
+                try {
+                    recordedSizes.add(save.get(30, TimeUnit.SECONDS).getSize());
+                } catch (ExecutionException e) {
+                    assertThat(e.getCause()).isInstanceOf(NamespaceFileRevisionConflictException.class);
+                    conflicts++;
+                }
+            }
+
+            // Then
+            assertThat(recordedSizes).hasSize(1);
+            assertThat(conflicts).isEqualTo(writers - 1);
+            assertThat(stateStore.findByPath(tenantId, namespace, path, null, false))
+                .hasValueSatisfying(latest ->
+                {
+                    assertThat(latest.getRevision()).isEqualTo(2);
+                    assertThat(latest.getSize()).isEqualTo(recordedSizes.getFirst());
+                });
+        } finally {
+            executor.shutdownNow();
+        }
     }
 
     @Test

@@ -5,7 +5,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -14,6 +16,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 
 import io.kestra.core.exceptions.ConflictException;
+import io.kestra.core.exceptions.NamespaceFileRevisionConflictException;
 import io.kestra.core.models.namespaces.files.NamespaceFileMetadata;
 import io.kestra.core.namespace.NamespaceFileMetadataStateStore;
 
@@ -33,6 +36,8 @@ import static io.kestra.core.utils.Rethrow.throwConsumer;
  */
 @Slf4j
 public class InternalNamespace implements Namespace {
+
+    private static final int MAX_REVISION_ATTEMPTS = 10;
 
     private final String namespace;
     private final String tenant;
@@ -404,26 +409,44 @@ public class InternalNamespace implements Namespace {
 
         ensureNoFileInHierarchy(normalizedPath);
 
+        try (ReplayableContent replayableContent = new ReplayableContent(content)) {
+            for (int attempt = 1;; attempt++) {
+                try {
+                    return putFileRevision(normalizedPath, replayableContent, onAlreadyExist);
+                } catch (NamespaceFileRevisionConflictException e) {
+                    if (attempt >= MAX_REVISION_ATTEMPTS) {
+                        throw e;
+                    }
+                    logger.debug("File '{}' was written concurrently in namespace '{}', retrying with the next revision.", normalizedPath, namespace);
+                }
+            }
+        }
+    }
+
+    private List<NamespaceFile> putFileRevision(final Path normalizedPath, final ReplayableContent content, final Conflicts onAlreadyExist) throws IOException, URISyntaxException {
         Optional<NamespaceFileMetadata> inRepository = discardConflictingEntry(findByPath(normalizedPath, true), false, normalizedPath);
-        int currentRevision = inRepository.map(NamespaceFileMetadata::getRevision).orElse(0);
-        NamespaceFile namespaceFile = NamespaceFile.of(namespace, normalizedPath, currentRevision + 1);
+        int revision = inRepository.map(NamespaceFileMetadata::getRevision).orElse(0) + 1;
+        NamespaceFile namespaceFile = NamespaceFile.of(namespace, normalizedPath, revision);
         Path storagePath = namespaceFile.storagePath();
         // Remove Windows letter
         URI cleanUri = new URI(storagePath.toUri().toString().replaceFirst("^file:///[a-zA-Z]:", ""));
 
         List<NamespaceFile> createdFiles = new ArrayList<>();
         if (inRepository.isEmpty()) {
-            storage.put(tenant, namespace, cleanUri, content);
+            try (InputStream inputStream = content.open()) {
+                storage.put(tenant, namespace, cleanUri, inputStream);
+            }
 
             createdFiles.addAll(mkDirs(normalizedPath.toString()));
 
-            stateStore.save(
+            stateStore.saveRevision(
                 NamespaceFileMetadata.builder()
                     .tenantId(tenant)
                     .namespace(namespace)
                     .path(normalizedPath.toString())
                     .size(storage.getAttributes(tenant, namespace, cleanUri).getSize())
-                    .build()
+                    .build(),
+                revision
             );
 
             logger.debug(
@@ -436,12 +459,15 @@ public class InternalNamespace implements Namespace {
 
             createdFiles.add(namespaceFile);
         } else if (onAlreadyExist == Conflicts.OVERWRITE || inRepository.get().isDeleted()) {
-            storage.put(tenant, namespace, cleanUri, content);
+            try (InputStream inputStream = content.open()) {
+                storage.put(tenant, namespace, cleanUri, inputStream);
+            }
 
             createdFiles.addAll(mkDirs(normalizedPath.toString()));
 
-            stateStore.save(
-                inRepository.get().toBuilder().size(storage.getAttributes(tenant, namespace, cleanUri).getSize()).deleted(false).build()
+            stateStore.saveRevision(
+                inRepository.get().toBuilder().size(storage.getAttributes(tenant, namespace, cleanUri).getSize()).deleted(false).build(),
+                revision
             );
 
             if (inRepository.get().isDeleted()) {
@@ -616,5 +642,33 @@ public class InternalNamespace implements Namespace {
         toDelete.forEach(stateStore::save);
 
         return toDelete.stream().map(NamespaceFile::fromMetadata).toList();
+    }
+
+    /**
+     * The content of a file write, copied to a temporary file the first time it is read so that a write which lost
+     * the race for a revision can store it again under the next one.
+     */
+    private static final class ReplayableContent implements AutoCloseable {
+        private final InputStream source;
+        private Path buffer;
+
+        private ReplayableContent(InputStream source) {
+            this.source = source;
+        }
+
+        private InputStream open() throws IOException {
+            if (buffer == null) {
+                buffer = Files.createTempFile("namespace-file-", null);
+                Files.copy(source, buffer, StandardCopyOption.REPLACE_EXISTING);
+            }
+            return Files.newInputStream(buffer);
+        }
+
+        @Override
+        public void close() throws IOException {
+            if (buffer != null) {
+                Files.deleteIfExists(buffer);
+            }
+        }
     }
 }

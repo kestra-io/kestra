@@ -7,6 +7,7 @@ import java.util.Optional;
 import org.junit.jupiter.api.Test;
 
 import io.kestra.controller.grpc.NamespaceFileMetadataServiceGrpc.NamespaceFileMetadataServiceBlockingStub;
+import io.kestra.core.exceptions.NamespaceFileRevisionConflictException;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.namespaces.files.NamespaceFileMetadata;
 import io.kestra.core.namespace.NamespaceFileMetadataStateStore;
@@ -16,6 +17,7 @@ import io.micronaut.context.annotation.Property;
 import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @KestraTest
 @Property(name = "test.context.id", value = "grpc-ns-file")
@@ -317,6 +319,19 @@ class GrpcWorkerNamespaceFileMetadataStateStoreTest extends AbstractGrpcMetaStor
         assertThat(result.getPath()).isEqualTo("/saved.py");
         assertThat(result.getSize()).isEqualTo(42L);
         assertThat(result.getRevision()).isEqualTo(1);
+    }
+
+    @Test
+    void shouldThrowRevisionConflictWhenSaveRevisionGivenRevisionAlreadyRecorded() {
+        // Given
+        String tenantId = TestsUtils.randomTenant();
+        String namespace = TestsUtils.randomNamespace();
+        NamespaceFileMetadata entry = NamespaceFileMetadata.builder()
+            .tenantId(tenantId).namespace(namespace).path("/claimed.py").size(42L).build();
+        nsStateStore.saveRevision(entry, 1);
+
+        // When / Then
+        assertThatThrownBy(() -> grpcWorkerNsStore.saveRevision(entry, 1)).isInstanceOf(NamespaceFileRevisionConflictException.class);
     }
 
     @Test

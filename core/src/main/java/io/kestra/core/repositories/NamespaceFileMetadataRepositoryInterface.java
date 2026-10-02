@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import io.kestra.core.exceptions.NamespaceFileRevisionConflictException;
 import io.kestra.core.models.FetchVersion;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.namespaces.files.NamespaceFileMetadata;
@@ -39,6 +40,21 @@ public interface NamespaceFileMetadataRepositoryInterface {
     }
 
     NamespaceFileMetadata save(NamespaceFileMetadata namespaceFileMetadata);
+
+    /**
+     * Records the given file entry as revision {@code revision} of its path and makes it the latest one, provided no
+     * entry holds that revision yet.
+     * <p>
+     * This is the compare-and-set a file write relies on: the writer picks the next revision, stores the content
+     * under it, then claims it here, so two concurrent writers can never both record the same revision and the
+     * index can never point at a revision whose content was not written.
+     *
+     * @param namespaceFileMetadata the file entry to record
+     * @param revision the revision to record it as
+     * @return the recorded entry
+     * @throws NamespaceFileRevisionConflictException if an entry already holds {@code revision} for that path
+     */
+    NamespaceFileMetadata saveRevision(NamespaceFileMetadata namespaceFileMetadata, int revision);
 
     /**
      * Purge (hard delete) a list of namespace files metadata. If no version is specified, all versions are purged.

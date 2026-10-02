@@ -1692,6 +1692,8 @@
     "execution_started": "Выполнение началось!",
     "execution_failed": "Выполнение не удалось!",
     "last error was": "Последняя ошибка была",
+    "execution_paused": "Выполнение приостановлено",
+    "execution_paused_description": "Это выполнение ожидает проверки и возобновления.",
     "active": "Активно",
     "flows imported": "Потоки импортированы",
     "flows not imported": "Flows не импортированы",

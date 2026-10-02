@@ -1692,6 +1692,8 @@
     "execution_started": "Die Execution wurde gestartet!",
     "execution_failed": "Execution fehlgeschlagen!",
     "last error was": "Letzter Fehler war",
+    "execution_paused": "Execution pausiert",
+    "execution_paused_description": "Diese Execution wartet auf Validierung und Wiederaufnahme.",
     "active": "Aktiv",
     "flows imported": "Flows importiert",
     "flows not imported": "Flows nicht importiert",

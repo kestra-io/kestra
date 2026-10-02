@@ -1692,6 +1692,8 @@
     "execution_started": "执行已开始！",
     "execution_failed": "执行失败！",
     "last error was": "上次错误是",
+    "execution_paused": "执行已暂停",
+    "execution_paused_description": "此执行正在等待验证和恢复。",
     "active": "活动",
     "flows imported": "Flow已导入",
     "flows not imported": "未导入的Flows",

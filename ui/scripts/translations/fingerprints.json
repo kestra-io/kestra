@@ -786,6 +786,8 @@
   "execution_deletion|metrics": "6f304d11bc35",
   "execution_deletion|storage": "d5269107916f",
   "execution_failed": "f7b898fecc75",
+  "execution_paused": "59cabef65d44",
+  "execution_paused_description": "cfbabf93ee50",
   "execution_guide|get_started|text": "7e6d03bc1622",
   "execution_guide|get_started|title": "983f31101864",
   "execution_guide|namespaces|text": "709625dae825",

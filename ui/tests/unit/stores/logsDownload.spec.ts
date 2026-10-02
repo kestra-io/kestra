@@ -55,11 +55,12 @@ describe("logs store downloadLogs", () => {
     })
 
     it("should opt out of the global error toast on a failed page", async () => {
-        searchLogs.mockRejectedValueOnce(new Error("boom"))
+        const error = new Error("boom")
+        searchLogs.mockRejectedValueOnce(error)
 
         await useLogsStore().downloadLogs({})
 
-        expect(searchLogs.mock.calls[0][1]).toEqual({showMessageOnError: false})
+        expect((error as {__kestra_handled?: boolean}).__kestra_handled).toBe(true)
     })
 
     it("should follow nextCursor under cursor pagination until an empty page", async () => {

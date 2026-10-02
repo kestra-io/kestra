@@ -3,7 +3,6 @@ import type {Me} from "override/stores/auth"
 import resource from "../../models/resource"
 import action from "../../models/action"
 import {resolveDefaultTab} from "../../utils/routeTabs"
-import {ENTITY_REQUEST_OPTIONS} from "../../utils/routeEntityGuard"
 
 /** Parent route name for the Flows detail page. */
 export const FLOW_PARENT_ROUTE = "flows/update"
@@ -137,7 +136,7 @@ export const FLOW_ENTITY_META: RouteMeta = {
             id: String(to.params.id),
             revision: to.query.revision ? String(to.query.revision) : undefined,
             allowDeleted: true,
-        }, ENTITY_REQUEST_OPTIONS)
+        })
     },
 }
 

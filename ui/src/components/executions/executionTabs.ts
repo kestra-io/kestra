@@ -1,6 +1,5 @@
 import type {RouteMeta, RouteRecordRaw} from "vue-router"
 import {resolveDefaultTab} from "../../utils/routeTabs"
-import {ENTITY_REQUEST_OPTIONS} from "../../utils/routeEntityGuard"
 
 /** Parent route name for the Executions detail page. */
 export const EXECUTION_PARENT_ROUTE = "executions/update"
@@ -87,7 +86,7 @@ export const EXECUTION_TAB_ROUTES: RouteRecordRaw[] = [
 export const EXECUTION_ENTITY_META: RouteMeta = {
     entity: async (to) => {
         const {useExecutionsStore} = await import("../../stores/executions")
-        return useExecutionsStore().loadExecution({id: String(to.params.id)}, ENTITY_REQUEST_OPTIONS)
+        return useExecutionsStore().loadExecution({id: String(to.params.id)})
     },
 }
 

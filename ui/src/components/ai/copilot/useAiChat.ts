@@ -17,6 +17,7 @@ import {useClient} from "@kestra-io/kestra-sdk"
 import type {AgentMessageRole, AgentMessageType, AgentThreadStatus, ApiDecision} from "@kestra-io/kestra-sdk"
 import {apiUrl} from "override/utils/route"
 import {uid} from "../../../utils/utils"
+import {handled} from "../../../utils/kestraHttp"
 import {streamSse, SseHttpError} from "./streamSse"
 import {
     AiEvent,
@@ -144,11 +145,15 @@ export function useAiChat() {
         if (nextThreadTitle.value) {
             request = {...request, title: nextThreadTitle.value}
         }
-        // `showMessageOnError: false` keeps the global error toast quiet: when no AI provider is
+        // We catch the error below to keep the global error toast quiet: when no AI provider is
         // configured the agentic endpoints (`AiAgentController`, `@Requires` the AiServiceManager
         // bean) aren't registered, so this create 404s — surfaced as the copilot's own
         // "unavailable" state by sendChat instead.
-        const {data} = await client.post<ThreadSummary>(base(), request, {showMessageOnError: false})
+        const {data} = await client.post<ThreadSummary>(base(), request).catch(e => {
+            const status = e?.status || e?.response?.status
+            if (status === 404) handled(e)
+            throw e
+        })
         thread.value = data
         status.value = data.status
         nextThreadTitle.value = null
@@ -177,13 +182,16 @@ export function useAiChat() {
     /** Rehydrates an existing thread's transcript on reload. Sorts messages by uid. */
     async function loadThread(threadId: string): Promise<void> {
         idleWaitGeneration++
-        // `showMessageOnError: false` keeps the global error toast quiet for an expected 404 — the
+        // We catch the error below to keep the global error toast quiet for an expected 404 — the
         // thread no longer exists (e.g. an evicted OSS in-memory conversation, or a deleted one) —
         // handled here by forgetting the remembered id and starting a fresh session.
         const response = await client
-            .get<ThreadDetail>(`${base()}/${threadId}`, {showMessageOnError: false})
+            .get<ThreadDetail>(`${base()}/${threadId}`)
             .catch((e: {status?: number; response?: {status?: number}}) => {
-                if (e?.status === 404 || e?.response?.status === 404) return null
+                if (e?.status === 404 || e?.response?.status === 404) {
+                    handled(e)
+                    return null
+                }
                 throw e
             })
         if (!response) {
@@ -370,7 +378,11 @@ export function useAiChat() {
         for (;;) {
             if (generation !== idleWaitGeneration || thread.value?.uid !== threadId) return
             try {
-                const {data} = await client.get<ThreadDetail>(`${base()}/${threadId}`, {showMessageOnError: false})
+                const {data} = await client.get<ThreadDetail>(`${base()}/${threadId}`).catch(e => {
+                    const status = e?.status || e?.response?.status
+                    if (status === 404) handled(e)
+                    throw e
+                })
                 if (generation !== idleWaitGeneration || thread.value?.uid !== threadId) return
                 if (data.status === "IDLE") {
                     status.value = "IDLE"

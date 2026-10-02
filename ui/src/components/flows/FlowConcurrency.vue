@@ -55,6 +55,7 @@
     import {KsExecutionStatus} from "@kestra-io/design-system"
     import {useFlowStore} from "../../stores/flow"
     import {useClient} from "@kestra-io/kestra-sdk"
+    import {handled} from "../../utils/kestraHttp"
     import {apiUrl} from "override/utils/route"
     import type {KestraHttpError} from "../../utils/kestraHttp"
     import Loading from "vue-material-design-icons/Loading.vue"
@@ -91,13 +92,13 @@
         try {
             const response = await axios.get(
                 `${apiUrl()}/concurrency-limit/${flowStore.flow.namespace}/${flowStore.flow.id}`,
-                {ignoreNotFound: true, showMessageOnError: false},
             )
 
             concurrencyLimit.value = response.data
         } catch (err) {
             const httpError = err as KestraHttpError | undefined
             if (httpError?.status === 404 || httpError?.response?.status === 404) {
+                handled(err)
                 concurrencyLimit.value = undefined
             } else {
                 error.value = true

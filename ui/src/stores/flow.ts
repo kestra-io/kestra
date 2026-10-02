@@ -8,6 +8,7 @@ import {useCoreStore} from "./core"
 import {useUnsavedChangesStore} from "./unsavedChanges"
 import {defineStore} from "pinia"
 import type {FlowGraph} from "@kestra-io/topology/vue-flow-utils"
+import {handled} from "../utils/kestraHttp"
 import {makeToast} from "../utils/toast"
 import {InputType} from "../utils/inputs"
 import {globalI18n} from "../translations/i18n"
@@ -28,7 +29,7 @@ import * as MetricsAPI from "@kestra-io/kestra-sdk/metrics"
 import {defaultNamespace} from "../composables/useNamespaces"
 import {useApiStore} from "./api"
 import {flowTaskStats, isExampleFlow, primaryTriggerType} from "../utils/analytics/activation"
-import type {KestraHttpError, KestraRequestOptions} from "../utils/kestraHttp"
+import type {KestraHttpError} from "../utils/kestraHttp"
 import {splitValidationErrors} from "../utils/validationErrors"
 
 const textYamlHeader = {
@@ -389,6 +390,7 @@ export const useFlowStore = defineStore("flow", () => {
                 // Branch on the problem type alone. The status is deliberately not checked, so this keeps
                 // working if the type's status is ever revised.
                 if (isProblemType(error, ProblemTypes.ENTITY_ALREADY_EXISTS)) {
+                    handled(error)
                     const shouldRedirect = await KsMessageBox({
                         title: t("confirmation"),
                         message: () => h(KsMarkdown, {content: t("flow already exists message", {id: flowParsed.value?.id ?? "", namespace: flowParsed.value?.namespace ?? ""})}),
@@ -503,7 +505,6 @@ export const useFlowStore = defineStore("flow", () => {
 
     async function loadFlow(
         options: { namespace: string, id: string, revision?: string, allowDeleted?: boolean, source?: boolean, store?: boolean, deleted?: boolean },
-        requestOptions?: KestraRequestOptions,
     ) {
         const key = `${options.namespace}/${options.id}`
         if (options.store !== false) {
@@ -517,7 +518,7 @@ export const useFlowStore = defineStore("flow", () => {
                 revision: options.revision ? Number(options.revision) : undefined,
                 allowDeleted: options.allowDeleted,
                 source: true,
-            }, requestOptions) as Flow & {exception?: string}
+            }) as Flow & {exception?: string}
         } catch (e) {
             // A deleted flow answers 404 with a problem document rather than the flow, and the one
             // caller (subflow-input autocompletion) only reads `inputs`, so an empty flow stands in.
@@ -602,8 +603,7 @@ export const useFlowStore = defineStore("flow", () => {
         return FlowsAPI.createFlow({
             body: options.flow,
             draft: options.draft ?? false,
-            showMessageOnError: false,
-        } as Parameters<typeof FlowsAPI.createFlow>[0]).then(data => {
+        }).then(data => {
             const creationPanels = localStorage.getItem(`el-fl-creation-${creationId.value}`) ?? YAML_UTILS.stringify([])
             localStorage.setItem(`el-fl-${flow.value!.namespace}-${flow.value!.id}`, creationPanels)
 
@@ -617,6 +617,11 @@ export const useFlowStore = defineStore("flow", () => {
             }
 
             return flow.value
+        }).catch(error => {
+            const status = error?.status || error?.response?.status
+            if (status === 409 || status === 422) handled(error)
+            throw error
+
         })
     }
 
@@ -761,7 +766,6 @@ function deleteFlowAndDependencies() {
         }
         return FlowsAPI.generateFlowGraphFromSource(
             {subflows, body: flowSource},
-            {showMessageOnError: false} as Parameters<typeof FlowsAPI.generateFlowGraphFromSource>[1],
         )
             .then(data => {
                 invalidGraph.value = false
@@ -779,14 +783,18 @@ function deleteFlowAndDependencies() {
 
                 return data
             }).catch(error => {
-                if (error.status === 422 && (!subflows || subflows.length === 0)) {
+                const status = error?.status || error?.response?.status
+                if (status === 422 || status === 404) {
+                    handled(error)
+                }
+                if (status === 422 && (!subflows || subflows.length === 0)) {
                     // flowGraph is deliberately left on the last good layout rather than cleared,
                     // so invalidGraph is what tells the canvas it is showing stale nodes.
                     invalidGraph.value = true
                     return Promise.resolve(error.response)
                 }
 
-                if ([404, 422].includes(error.status) && subflows && subflows.length > 0) {
+                if ([404, 422].includes(status) && subflows && subflows.length > 0) {
                     coreStore.message = {
                         title: "Couldn't expand subflow",
                         content: asProblem(error)?.detail,

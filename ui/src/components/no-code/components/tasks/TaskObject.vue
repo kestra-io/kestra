@@ -9,6 +9,17 @@
                 </Wrapper>
             </template>
 
+            <Wrapper v-for="[unknownKey, unknownValue] in unknownProperties" :key="`unknown-${unknownKey}`">
+                <template #tasks>
+                    <TaskUnknownField
+                        :fieldKey="unknownKey"
+                        :value="unknownValue"
+                        :errors="errorsAt(unknownKey)"
+                        @remove="onObjectInput(unknownKey, undefined)"
+                    />
+                </template>
+            </Wrapper>
+
             <div v-if="mainProperties.length && hasGroupedProperties" class="form-groups">
                 <div
                     v-for="section in groupSections"
@@ -88,6 +99,8 @@
     import TaskDict from "./TaskDict.vue"
     import Wrapper from "./Wrapper.vue"
     import TaskObjectField from "./TaskObjectField.vue"
+    import TaskUnknownField from "./TaskUnknownField.vue"
+    import {unknownPropertiesOf} from "./unknownProperties"
     import {collapseEmptyValues} from "./MixinTask"
     import {DATA_TYPES_MAP_INJECTION_KEY, FIELD_VALIDATION_ERRORS_INJECTION_KEY} from "../../injectionKeys"
     import {hasErrorUnder} from "../../../../utils/validationErrors"
@@ -296,6 +309,15 @@
     })
 
     const validationErrors = inject(FIELD_VALIDATION_ERRORS_INJECTION_KEY, undefined)
+
+    const errorsAt = (key: string): string[] =>
+        validationErrors?.value.get(props.root ? `${props.root}.${key}` : key) ?? []
+
+    const unknownProperties = computed<Entry[]>(() => unknownPropertiesOf(
+        props.modelValue,
+        props.properties ?? props.schema?.properties,
+        Boolean(props.schema?.additionalProperties),
+    ))
 
     const erroredGroups = computed<string[]>(() => {
         const errors = validationErrors?.value

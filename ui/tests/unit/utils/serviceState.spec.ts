@@ -21,7 +21,7 @@ describe("SERVICE_STATE_TO_EXECUTION_STATUS", () => {
     it("maps every service state to a valid execution status", () => {
         const statuses = Object.values(SERVICE_STATE_TO_EXECUTION_STATUS)
         for (const status of statuses) {
-            expect(status in EXECUTION_STATUSES).toBe(true)
+            expect(Object.keys(EXECUTION_STATUSES)).toContain(status)
         }
     })
 

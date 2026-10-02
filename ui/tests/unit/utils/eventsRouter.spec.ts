@@ -1,7 +1,8 @@
 import {describe, it, expect} from "vitest"
+import type {RouteLocationNormalized} from "vue-router"
 import {pageFromRoute} from "../../../src/utils/eventsRouter"
 
-const makeRoute = (overrides = {}) => ({
+const makeRoute = (overrides: Partial<RouteLocationNormalized> = {}) => ({
     path: "/test",
     fullPath: "/test",
     name: "test-route",
@@ -9,7 +10,7 @@ const makeRoute = (overrides = {}) => ({
     query: {},
     hash: "",
     ...overrides,
-})
+}) as unknown as RouteLocationNormalized
 
 describe("pageFromRoute", () => {
     it("should copy path, fullPath, and name from the route", () => {
@@ -18,10 +19,10 @@ describe("pageFromRoute", () => {
             fullPath: "/custom-full-path",
             name: "custom-name",
         })
-        const result = pageFromRoute(route as any)
+        const result = pageFromRoute(route)
 
         expect(result.path).toBe("/custom-path")
-        expect(result.full_path).toBe("/custom-full-path")
+        expect(result.fullPath).toBe("/custom-full-path")
         expect(result.name).toBe("custom-name")
     })
 
@@ -32,7 +33,7 @@ describe("pageFromRoute", () => {
                 type: "flow",
             },
         })
-        const result = pageFromRoute(route as any)
+        const result = pageFromRoute(route)
 
         expect(result.params).toEqual([
             {key: "id", value: "123"},
@@ -47,9 +48,9 @@ describe("pageFromRoute", () => {
                 sort: "desc",
             },
         })
-        const result = pageFromRoute(route as any)
+        const result = pageFromRoute(route)
 
-        expect(result.query).toEqual([
+        expect(result.queries).toEqual([
             {key: "tab", values: ["executions"]},
             {key: "sort", values: ["desc"]},
         ])
@@ -68,9 +69,9 @@ describe("pageFromRoute", () => {
                 ],
             },
         })
-        const result = pageFromRoute(route as any)
+        const result = pageFromRoute(route)
 
-        expect(result.query).toEqual([
+        expect(result.queries).toEqual([
             {
                 key: "labels",
                 values: [
@@ -92,7 +93,7 @@ describe("pageFromRoute", () => {
         const route = makeRoute({
             hash: "",
         })
-        const result = pageFromRoute(route as any)
+        const result = pageFromRoute(route)
 
         expect(result.hash).toBeUndefined()
     })
@@ -101,23 +102,23 @@ describe("pageFromRoute", () => {
         const route = makeRoute({
             hash: "#details",
         })
-        const result = pageFromRoute(route as any)
+        const result = pageFromRoute(route)
 
         expect(result.hash).toBe("#details")
     })
 
     it("should get origin from window.location.origin", () => {
         const route = makeRoute()
-        const result = pageFromRoute(route as any)
+        const result = pageFromRoute(route)
 
         expect(result.origin).toBe(window.location.origin)
     })
 
     it("should yield empty lists for a route with no params and no query", () => {
         const route = makeRoute()
-        const result = pageFromRoute(route as any)
+        const result = pageFromRoute(route)
 
         expect(result.params).toEqual([])
-        expect(result.query).toEqual([])
+        expect(result.queries).toEqual([])
     })
 })

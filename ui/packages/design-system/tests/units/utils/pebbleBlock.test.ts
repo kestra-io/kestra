@@ -1,10 +1,50 @@
 import {describe, test, expect} from "vitest"
 import {
     createPebbleEntryTracker,
+    isOffsetInPebbleBlock,
     isPebbleEnabled,
     PEBBLE_SCHEMA_TYPES,
     pebbleBlockKeyAtOffset,
 } from "../../../src/utils/pebbleBlock"
+
+describe("isOffsetInPebbleBlock", () => {
+    test("returns false outside any block", () => {
+        expect(isOffsetInPebbleBlock("hello world", 0)).toBe(false)
+        expect(isOffsetInPebbleBlock("hello world", 5)).toBe(false)
+    })
+
+    test("returns true inside print blocks {{ ... }}", () => {
+        const text = "message: {{ inputs.name }}"
+        expect(isOffsetInPebbleBlock(text, 12)).toBe(true)
+        expect(isOffsetInPebbleBlock(text, 18)).toBe(true)
+    })
+
+    test("returns true inside statement blocks {% ... %}", () => {
+        const text = "{% if inputs.foo %}"
+        expect(isOffsetInPebbleBlock(text, 5)).toBe(true)
+        expect(isOffsetInPebbleBlock(text, 13)).toBe(true)
+    })
+
+    test("returns true right after {% and right before %}", () => {
+        const text = "{% %}"
+        expect(isOffsetInPebbleBlock(text, 2)).toBe(true)
+        expect(isOffsetInPebbleBlock(text, 3)).toBe(true)
+    })
+
+    test("returns false right after closing %}", () => {
+        const text = "{% if x %} y"
+        expect(isOffsetInPebbleBlock(text, 10)).toBe(false)
+        expect(isOffsetInPebbleBlock(text, 11)).toBe(false)
+    })
+
+    test("handles mixed print and statement blocks on one line", () => {
+        const text = "a {{ x }} b {% if y %} c"
+        expect(isOffsetInPebbleBlock(text, 5)).toBe(true)
+        expect(isOffsetInPebbleBlock(text, 10)).toBe(false)
+        expect(isOffsetInPebbleBlock(text, 18)).toBe(true)
+        expect(isOffsetInPebbleBlock(text, 23)).toBe(false)
+    })
+})
 
 describe("pebbleBlockKeyAtOffset", () => {
     const text = "a {{ foo }} b"
@@ -31,6 +71,25 @@ describe("pebbleBlockKeyAtOffset", () => {
 
         expect(pebbleBlockKeyAtOffset(twoBlocks, 5)).toBe(2)
         expect(pebbleBlockKeyAtOffset(twoBlocks, 13)).toBe(10)
+    })
+
+    test("returns the offset of opening delimiter for statement blocks {% ... %}", () => {
+        const stmt = "task: {% if inputs.valid %}"
+        expect(pebbleBlockKeyAtOffset(stmt, 12)).toBe(6)
+    })
+
+    test("returns null for a cursor wedged between opening characters of a statement block", () => {
+        const wedged = "x{% %}"
+        expect(pebbleBlockKeyAtOffset(wedged, 2)).toBeNull()
+        expect(pebbleBlockKeyAtOffset(wedged, 3)).toBe(1)
+    })
+
+    test("gives correct keys to mixed print and statement blocks on the same line", () => {
+        const mixed = "a {{ x }} b {% for item in items %} c"
+        expect(pebbleBlockKeyAtOffset(mixed, 5)).toBe(2)
+        expect(pebbleBlockKeyAtOffset(mixed, 10)).toBeNull()
+        expect(pebbleBlockKeyAtOffset(mixed, 20)).toBe(12)
+        expect(pebbleBlockKeyAtOffset(mixed, 36)).toBeNull()
     })
 })
 

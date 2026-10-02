@@ -548,11 +548,16 @@
     &__panel--main {
         border: 1px solid var(--ks-border-default);
         border-radius: var(--ks-spacing-2);
+        padding-inline-end: var(--ks-spacing-2);
         overflow: hidden;
     }
 
     &__panel--sidebar {
         background-color: var(--ks-bg-base);
+    }
+
+    &__panel--viewer {
+        overflow: auto;
     }
 
     &__panel--debug {

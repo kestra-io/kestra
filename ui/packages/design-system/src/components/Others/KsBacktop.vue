@@ -1,6 +1,6 @@
 <template>
     <ElBacktop
-        v-bind="({...filteredProps(), ...$attrs} as any)"
+        v-bind="{...filteredProps(), ...$attrs}"
         @click="(evt) => emit('click', evt)"
     >
         <template v-if="$slots.default" #default>
@@ -10,17 +10,12 @@
 </template>
 
 <script setup lang="ts">
-    import {ElBacktop} from "element-plus"
+    import {ElBacktop, type BacktopProps} from "element-plus"
     import {useFilteredProps} from "../../utils/filteredProps"
 
     defineOptions({inheritAttrs: false})
 
-    const props = defineProps<{
-        visibilityHeight?: number
-        target?: string
-        right?: number
-        bottom?: number
-    }>()
+    const props = defineProps<BacktopProps>()
 
     const emit = defineEmits<{
         click: [evt: MouseEvent]

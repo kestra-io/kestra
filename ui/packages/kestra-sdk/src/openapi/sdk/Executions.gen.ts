@@ -334,7 +334,7 @@ export const validateReplayExecution = (parameters: Omit<Parameters<typeof _6Fa1
 }, options?: Omit<Parameters<typeof _6Fa166Fb>[1], 'throwOnError'>) => getDataOrThrow(_6Fa166Fb(addTenantToParameters(parameters), options));
 
 /**
- * Restart a new execution from an old one
+ * Restart an execution
  */
 export const restartExecution = (parameters: Omit<Parameters<typeof _06Fa01237>[0], 'tenant'> & {
     tenant?: string;

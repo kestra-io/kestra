@@ -1855,7 +1855,9 @@ export const _6Fa166Fb = <ThrowOnError extends boolean = true>(parameters: {
 };
 
 /**
- * Restart a new execution from an old one
+ * Restart an execution
+ *
+ * Restarts the execution from its failed task runs, on the revision it already ran on. Passing a revision creates a new execution instead, which is deprecated: use the replay action for that.
  */
 export const _06Fa01237 = <ThrowOnError extends boolean = true>(parameters: {
     executionId: string;

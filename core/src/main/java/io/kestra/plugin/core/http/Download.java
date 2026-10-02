@@ -4,6 +4,10 @@ import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.net.URI;
+import java.net.URLDecoder;
+import java.nio.charset.Charset;
+import java.nio.charset.IllegalCharsetNameException;
+import java.nio.charset.UnsupportedCharsetException;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
@@ -164,16 +168,35 @@ public class Download extends AbstractHttp implements RunnableTask<Download.Outp
             String filename = null;
             for (String part : parts) {
                 String stripped = part.strip();
-                if (stripped.startsWith("filename")) {
-                    filename = stripped.substring(stripped.lastIndexOf('=') + 1);
-                }
                 if (stripped.startsWith("filename*")) {
-                    // following https://datatracker.ietf.org/doc/html/rfc5987 the filename* should be <ENCODING>'(lang)'<filename>
-                    filename = stripped.substring(stripped.lastIndexOf('\'') + 2, stripped.length() - 1);
+                    // RFC 5987: filename* uses the format <charset>'<language>'<encoded-value>
+                    // Extract charset and encoded value, then percent-decode with that charset.
+                    // The parameter value starts immediately after the '=' sign.
+                    String value = stripped.substring(stripped.indexOf('=') + 1).strip();
+                    int firstApos = value.indexOf('\'');
+                    if (firstApos >= 0) {
+                        String charsetName = value.substring(0, firstApos);
+                        int secondApos = value.indexOf('\'', firstApos + 1);
+                        String encodedFilename = secondApos >= 0
+                            ? value.substring(secondApos + 1)
+                            : value.substring(firstApos + 1);
+                        try {
+                            Charset charset = Charset.forName(charsetName.isEmpty() ? "UTF-8" : charsetName);
+                            filename = URLDecoder.decode(encodedFilename, charset);
+                        } catch (IllegalCharsetNameException | UnsupportedCharsetException ex) {
+                            // Fall back to raw encoded value if charset is unrecognisable
+                            filename = encodedFilename;
+                        }
+                    } else {
+                        // No apostrophe delimiter found; treat the whole value as the filename
+                        filename = value;
+                    }
+                } else if (stripped.startsWith("filename")) {
+                    filename = stripped.substring(stripped.lastIndexOf('=') + 1);
                 }
             }
             // filename may be in double-quotes
-            if (filename != null && filename.charAt(0) == '"') {
+            if (filename != null && !filename.isEmpty() && filename.charAt(0) == '"') {
                 filename = filename.substring(1, filename.length() - 1);
             }
             // if filename contains a path: use only the last part to avoid security issues due to host file overwriting

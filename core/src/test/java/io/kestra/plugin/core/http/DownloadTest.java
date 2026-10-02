@@ -301,6 +301,44 @@ class DownloadTest {
         assertThat(output.getUri().toString()).endsWith("file.with%5B%5Dbrackets.txt");
     }
 
+    @Test
+    void contentDispositionFilenameStarAscii() throws Exception {
+        EmbeddedServer embeddedServer = applicationContext.getBean(EmbeddedServer.class);
+        embeddedServer.start();
+
+        Download task = Download.builder()
+            .id(DownloadTest.class.getSimpleName())
+            .type(DownloadTest.class.getName())
+            .uri(Property.ofValue(embeddedServer.getURI() + "/content-disposition-filename-star-ascii"))
+            .build();
+
+        RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of());
+
+        Download.Output output = task.run(runContext);
+
+        // filename*=UTF-8''report.csv must produce report.csv, not eport.cs
+        assertThat(output.getUri().toString()).endsWith("report.csv");
+    }
+
+    @Test
+    void contentDispositionFilenameStarUnicode() throws Exception {
+        EmbeddedServer embeddedServer = applicationContext.getBean(EmbeddedServer.class);
+        embeddedServer.start();
+
+        Download task = Download.builder()
+            .id(DownloadTest.class.getSimpleName())
+            .type(DownloadTest.class.getName())
+            .uri(Property.ofValue(embeddedServer.getURI() + "/content-disposition-filename-star-unicode"))
+            .build();
+
+        RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of());
+
+        Download.Output output = task.run(runContext);
+
+        // filename*=UTF-8''caf%C3%A9.csv must decode to café.csv (spaces become '+' internally)
+        assertThat(output.getUri().toString()).endsWith("caf%C3%A9.csv");
+    }
+
     @Controller()
     public static class SlackWebController {
         @Get("sample.csv")
@@ -372,6 +410,18 @@ class DownloadTest {
         public HttpResponse<byte[]> contentDispositionWithBrackets() {
             return HttpResponse.ok("Hello World".getBytes())
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"file.with[]brackets.txt\"");
+        }
+
+        @Get("content-disposition-filename-star-ascii")
+        public HttpResponse<byte[]> contentDispositionFilenameStarAscii() {
+            return HttpResponse.ok("id,value\n1,example\n".getBytes())
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename*=UTF-8''report.csv");
+        }
+
+        @Get("content-disposition-filename-star-unicode")
+        public HttpResponse<byte[]> contentDispositionFilenameStarUnicode() {
+            return HttpResponse.ok("id,value\n1,example\n".getBytes())
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename*=UTF-8''caf%C3%A9.csv");
         }
     }
 }

@@ -26,6 +26,10 @@
     .description {
         color: var(--ks-text-primary);
         margin: 0;
+
+        p {
+            margin: 0;
+        }
     }
 
     #paused {

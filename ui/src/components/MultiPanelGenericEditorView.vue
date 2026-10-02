@@ -180,17 +180,15 @@
     }
 
     .default-theme{
-            :deep(.kel-splitter__horizontal > .kel-splitter-bar){
-        width: 4px !important;
-        height: 100% !important;
-        cursor: ew-resize !important;
-    }
+        :deep(.kel-splitter__horizontal > .kel-splitter-bar){
+            width: 2px !important;
+        }
 
-    :deep(.kel-splitter__vertical > .kel-splitter-bar){
-        height: 4px !important;
-        width: 100% !important;
-        cursor: ns-resize !important;
-    }
+        :deep(.kel-splitter__vertical > .kel-splitter-bar){
+            height: 4px !important;
+            width: 100% !important;
+            cursor: ns-resize;
+        }
 
         :deep(.kel-splitter-panel) {
             background-color: var(--ks-bg-surface);

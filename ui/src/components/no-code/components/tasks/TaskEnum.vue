@@ -44,7 +44,7 @@
         "update:modelValue": [value: ModelValue | undefined]
     }>()
 
-    function onInput(value: ModelValue) {
+    function onInput(value: ModelValue | undefined) {
         emit("update:modelValue", collapseEmptyValues(value))
     }
 </script>

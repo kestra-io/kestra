@@ -21,8 +21,6 @@
   "packages/design-system/src/components/Form/KsCheckbox/KsCheckbox.vue": 3,
   "packages/design-system/src/components/Form/KsCheckbox/KsCheckboxGroup.vue": 3,
   "packages/design-system/src/components/Form/KsDatePicker.vue": 3,
-  "packages/design-system/src/components/Form/KsSelect/KsOption.vue": 2,
-  "packages/design-system/src/components/Form/KsSelect/KsSelect.vue": 7,
   "packages/design-system/src/components/Navigation/KsDropdown/KsDropdownItem.vue": 2,
   "packages/design-system/src/components/Navigation/KsMenu/KsMenu.vue": 1,
   "packages/design-system/src/components/Navigation/KsMenu/KsMenuItem.vue": 2,

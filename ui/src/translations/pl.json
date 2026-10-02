@@ -130,7 +130,6 @@
     "description": "Opis",
     "show description": "Pokaż opis",
     "show details": "Pokaż szczegóły",
-    "show more details": "Pokaż więcej szczegółów",
     "skipped": "Pominięto",
     "revision": "Wersja",
     "theme": "Motyw",
@@ -329,7 +328,6 @@
     "start date": "Data rozpoczęcia",
     "end date": "Data zakończenia",
     "restart": "Uruchom ponownie",
-    "restart latest revision": "Uruchom ponownie najnowszą wersję",
     "restart tooltip": "Uruchom ponownie egzekucję od Taska <code>{state}</code>",
     "restarted": "Egzekucja została uruchomiona ponownie",
     "restart confirm": "Czy na pewno chcesz ponownie uruchomić egzekucję <code>{id}</code>?",
@@ -441,7 +439,8 @@
       "invalid_description": "Wystąpił błąd podczas ładowania grafu. Proszę sprawdzić kod źródłowy pod kątem błędów.",
       "load_error": "Nie udało się załadować grafu topologii. Spróbuj ponownie.",
       "add-task": "Dodaj task",
-      "add-trigger": "Dodaj trigger"
+      "add-trigger": "Dodaj trigger",
+      "child-count": "{count} task | {count} tasks"
     },
     "show task logs": "Pokaż logi Taska",
     "show task condition": "Pokaż warunek Taska",
@@ -459,6 +458,12 @@
     "email": "E-mail",
     "password": "Hasło",
     "confirm password": "Potwierdź hasło",
+    "change_password": {
+      "title": "Zmień hasło",
+      "current_password": "Obecne hasło",
+      "new_password": "Nowe hasło",
+      "success": "Twoje poświadczenia zostały zaktualizowane."
+    },
     "invalid flow": "Nieprawidłowy Flow",
     "invalid yaml": "Nieprawidłowy YAML",
     "inputs": "Inputs",
@@ -1424,7 +1429,7 @@
             "title": "Flowy edytuje się jak kod",
             "body": "Dodaliśmy dla Ciebie Taska <code>notify</code> bez AI Copilota, abyś zobaczył, jak wygląda bezpośrednia edycja YAML. Wysyła on końcowy wynik na Slacka.",
             "next": "Zobacz dokumentację Taska",
-            "callout": "Pierwszy szkic z AI Copilota jest tylko punktem wyjścia. W edytorze rozwijasz go w zakładce Code lub No-code, a obie generują ten sam YAML, dzięki czemu Twój Flow pozostaje kodem niezależnie od tego, jak powstał."
+            "callout": "Pierwszy szkic z AI Copilota jest tylko punktem wyjścia. W edytorze rozwijasz go w zakładce Code lub No Code, a obie generują ten sam YAML, dzięki czemu Twój Flow pozostaje kodem niezależnie od tego, jak powstał."
           },
           "editor_help": {
             "title": "Dokumentacja jest obok Flow",
@@ -1700,7 +1705,7 @@
       "clearSelection": "Wyczyść zaznaczenie",
       "labels": {
         "yaml": "Edytor YAML",
-        "no_code": "Edytor No-code"
+        "no_code": "Edytor No Code"
       },
       "sections": {
         "deprecated": "Właściwości przestarzałe",
@@ -2193,7 +2198,7 @@
     "playground": {
       "title": "Playground",
       "run_task_info": "Najedź kursorem na dowolny Task w edytorze Flow Code i kliknij „Run task”, aby przetestować swój Task.",
-      "play_icon_info": "Możesz też kliknąć ikonę Play w widoku No-code lub Topology.",
+      "play_icon_info": "Możesz też kliknąć ikonę Play w widoku No Code lub Topology.",
       "toggle": "Playground",
       "run_task": "Uruchom Task",
       "run_this_task": "Uruchom ten Task",
@@ -2270,8 +2275,10 @@
     "bulk delete triggers": "Czy na pewno chcesz usunąć {count} Triggerów?",
     "bulk success delete triggers": "Pomyślnie usunięto {count} Triggerów",
     "delete trigger confirmation": "Czy na pewno chcesz usunąć Trigger {id}? OSTRZEŻENIE: usunięcie Triggera może prowadzić do zduplikowanych egzekucji, jeśli Trigger jest nadal aktywny w jakimś Flow",
+    "delete trigger still declared": "Ten trigger jest nadal zadeklarowany w flow. Usuń go z flow lub użyj Restart.",
     "delete trigger success": "Trigger {id} został pomyślnie usunięty",
     "delete trigger error": "Błąd podczas usuwania Triggera {id}",
+    "delete triggers orphans only": "Usunięty zostanie tylko stan trigger, który nie jest już zadeklarowany w flow. Trigger nadal zadeklarowane w flow zostaną zachowane.",
     "revision deleted": "Wersja {revision} została pomyślnie usunięta",
     "delete revision confirm": "Czy na pewno chcesz usunąć wersję {revision}?",
     "delete revision error": "Błąd podczas usuwania wersji {revision}: {error}",
@@ -2532,6 +2539,8 @@
       "command_menu": {
         "context_flow": "kontekst: Flow",
         "context_selected": "kontekst: {name}",
+        "copy": "Kopiuj {name}",
+        "cut": "Wytnij {name}",
         "delete": "Usuń {name}",
         "duplicate": "Duplikuj {name}",
         "goto": "Przejdź do {section}",
@@ -2547,6 +2556,7 @@
         "insert_kind": "Wstaw {kind}",
         "no_match": "Brak dopasowania",
         "open": "Otwórz {name}",
+        "paste": "Wklej",
         "save": "Zapisz Flow",
         "search_placeholder": "Wpisz polecenie lub wyszukaj Taska…",
         "title": "Menu poleceń"
@@ -2563,6 +2573,7 @@
       "depends_on_placeholder": "Wybierz Taski…",
       "depth_pill": "Głębokość {depth}",
       "drag_reorder": "Przeciągnij, aby zmienić kolejność",
+      "drop_forbidden": "Nie można tu upuścić",
       "duplicate": "Duplikuj",
       "empty_add_hint": "lub naciśnij /, aby wyszukać Taski",
       "empty_add_lead": "Kliknij, aby dodać {label}",
@@ -2591,6 +2602,9 @@
       "lane_then": "Then",
       "move_down": "Przenieś w dół",
       "move_up": "Przenieś w górę",
+      "namespace_files": "Pliki namespace'u",
+      "namespace_kv": "KV Store Keys",
+      "namespace_secrets": "Sekrety",
       "no_data_matches": "Brak wyników dla Twojego filtra",
       "no_recent": "Brak ostatnio używanych typów Tasków",
       "no_task_results": "Brak pasujących typów Tasków.",
@@ -2601,7 +2615,30 @@
       "picker_more_results": "Jeszcze {count}, doprecyzuj wyszukiwanie",
       "plugin_default": "domyślny: {value}",
       "plugin_default_tooltip": "Wartość domyślna z pluginDefaults Flow",
+      "plugin_implementation": {
+        "change": "Zmień",
+        "choose_title": "Wybierz {label}",
+        "count_available": "{count} dostępnych",
+        "exactly_one": "1 implementacja",
+        "items_set": "{count} ustawionych",
+        "no_results_description": "Na tej instancji zainstalowano {count} implementacji. Implementacja z niezainstalowanej wtyczki nie pojawi się tutaj.",
+        "no_results_title": "Żadna implementacja nie pasuje do „{query}”",
+        "picker_count": "{shown} z {total}",
+        "remove": "Usuń {label}",
+        "remove_from": "Usuń {name} z {field}",
+        "replace": "Zastąp…",
+        "search_placeholder": "Szukaj…",
+        "secret_summary": "{label} z Secret",
+        "stored_value": "Zapisana wartość",
+        "summary_overflow": "+{count}",
+        "unresolved_message": "{type} nie jest jedną z {count} implementacji znanych tej instancji dla {label}. Wtyczka może nie być zainstalowana lub została usunięta podczas aktualizacji.",
+        "unresolved_name": "Nieznana implementacja",
+        "unresolved_untouched": "Twój YAML pozostaje niezmieniony. Nic nie zostanie zapisane w przepływie, dopóki nie zastąpisz implementacji."
+      },
       "required_missing": "Wymagane pole nieustawione",
+      "required_unset_jump": "Przejdź do pierwszego",
+      "required_unset_plural": "{count} wymaganych pól nie jest jeszcze ustawionych",
+      "required_unset_singular": "1 wymagane pole nie jest jeszcze ustawione",
       "save_blocked": {
         "message": "Napraw błędy przed zapisaniem.",
         "title": "Nie można zapisać Flow"
@@ -2615,6 +2652,8 @@
         "clear": "Zamknij / wyczyść zaznaczenie",
         "collapse_expand": "Zwiń / rozwiń",
         "command_palette": "Menu poleceń (kontekstowe)",
+        "copy": "Kopiuj",
+        "cut": "Wytnij",
         "group_edit": "Edytuj",
         "group_global": "Globalne",
         "group_insert": "Wstaw",
@@ -2623,6 +2662,8 @@
         "open": "Otwórz wybrany blok",
         "open_split": "Otwórz wybrany blok w widoku dzielonym",
         "or": "lub",
+        "paste": "Wklej",
+        "redo": "Ponów",
         "reorder": "Zmień kolejność w górę / w dół",
         "save": "Zapisz Flow",
         "step_into": "Rozwiń / wejdź do grupy",

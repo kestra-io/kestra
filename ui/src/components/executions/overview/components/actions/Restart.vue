@@ -285,8 +285,9 @@
             return false
         }
 
-        const isRunning = State.isRunning(props.execution.state.current)
-        return props.isReplay ? !isRunning : props.execution.state.current === State.FAILED
+        return props.isReplay
+            ? State.isTerminated(props.execution.state.current)
+            : props.execution.state.current === State.FAILED
     })
 
     const tooltip = computed(() =>
@@ -369,7 +370,7 @@
         const response = await (executionsStore[method] as any)({
             executionId: props.execution.id,
             taskRunId: props.taskRun && props.isReplay ? props.taskRun.id : undefined,
-            revision: revisionsSelected.value,
+            revision: props.isReplay ? revisionsSelected.value : undefined,
         })
 
         const newExecution = response

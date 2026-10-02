@@ -184,16 +184,16 @@ export const useExecutionsStore = defineStore("executions", () => {
     const axios = useClient()
 
     // Actions
-    const restartExecution = (options: { executionId: string; revision?: number }) => {
-        return ExecutionsAPI.restartExecution({executionId: options.executionId, revision: options.revision}) as unknown as Promise<Execution>
+    const restartExecution = (options: { executionId: string }) => {
+        return ExecutionsAPI.restartExecution({executionId: options.executionId}) as unknown as Promise<Execution>
     }
 
-    const bulkRestartExecution = (options: { executionsId: string[]; latestRevision?: boolean }) => {
-        return ExecutionsAPI.restartExecutionsByIds({body: options.executionsId, latestRevision: options.latestRevision})
+    const bulkRestartExecution = (options: { executionsId: string[] }) => {
+        return ExecutionsAPI.restartExecutionsByIds({body: options.executionsId})
     }
 
-    const queryRestartExecution = (options: FilterQuery & { latestRevision?: boolean }) => {
-        return ExecutionsAPI.restartExecutionsByQuery({filters: routeQueryToQueryFilters(options), latestRevision: options.latestRevision})
+    const queryRestartExecution = (options: FilterQuery) => {
+        return ExecutionsAPI.restartExecutionsByQuery({filters: routeQueryToQueryFilters(options)})
     }
 
     const bulkResumeExecution = (options: { executionsId: string[] }) => {
@@ -466,6 +466,8 @@ export const useExecutionsStore = defineStore("executions", () => {
 
     const throttledExecutionUpdate = throttle((parsedExecution: Execution) => {
         const flowValue = flow.value
+        execution.value = parsedExecution
+        const currentExecution = execution.value
 
         if ((!flowValue ||
             parsedExecution.flowId !== flowValue.id ||
@@ -478,11 +480,11 @@ export const useExecutionsStore = defineStore("executions", () => {
                     revision: route.query.revision?.toString(),
                 },
             ).then(() => {
-                execution.value = parsedExecution
+                if (execution.value === currentExecution) {
+                    execution.value = parsedExecution
+                }
             })
         }
-
-        execution.value = parsedExecution
     }, 500)
 
     /**

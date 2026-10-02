@@ -1,5 +1,5 @@
 <template>
-    <ElSubMenu v-bind="({...filteredProps(), ...$attrs} as any)">
+    <ElSubMenu v-bind="({...filteredProps(), ...$attrs} as Record<string, unknown>)">
         <template v-if="$slots.default" #default>
             <slot />
         </template>

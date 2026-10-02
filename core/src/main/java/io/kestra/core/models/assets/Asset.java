@@ -82,6 +82,14 @@ public abstract class Asset implements HasUID, SoftDeletable<Asset>, Plugin {
     }
 
     /**
+     * @deprecated since 1.3.x, use {@link #toUpdated(Asset, boolean)}; keeps the stored type like before.
+     */
+    @Deprecated
+    public <T extends Asset> T toUpdated(T previousAsset) {
+        return toUpdated(previousAsset, false);
+    }
+
+    /**
      * Merges this asset over {@code previousAsset}, which is {@code null} on creation.
      *
      * @param previousAsset the stored asset this one is merged over, or {@code null} when creating.

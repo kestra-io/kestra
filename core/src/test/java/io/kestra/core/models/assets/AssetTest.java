@@ -21,6 +21,20 @@ class AssetTest {
     }
 
     @Test
+    @SuppressWarnings("deprecation")
+    void shouldKeepPreviousTypeWithDeprecatedOverload() {
+        // Given
+        Custom previous = Custom.builder().namespace("io.kestra").id("my-asset").type("EC2").build();
+        Custom incoming = Custom.builder().namespace("io.kestra").id("my-asset").type("VM").build();
+
+        // When
+        Custom updated = incoming.toUpdated(previous);
+
+        // Then
+        assertThat(updated.getType()).isEqualTo("EC2");
+    }
+
+    @Test
     void shouldReplaceTypeWhenTypeChangeIsAllowed() {
         // Given
         Custom previous = Custom.builder()

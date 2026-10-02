@@ -68,7 +68,9 @@ export const useBlueprintsStore = defineStore("blueprints", () => {
         () => validation.value?.constraints ? [validation.value.constraints] : undefined,
     )
 
-    const getBlueprints = async (options: Options): Promise<{results: FlowBlueprint[]; total: number}> => {
+    type BlueprintSearchResult = {results: FlowBlueprint[]; total: number}
+
+    const getBlueprints = async (options: Options): Promise<BlueprintSearchResult> => {
         if (options.type === "community") {
             const PARAMS = {params: options.params, ...VALIDATE}
             const COMMUNITY = `${API_URL}/blueprints/kinds/${options.kind}/versions/${version}${edition === "OSS" ? "?ee=false" : ""}`

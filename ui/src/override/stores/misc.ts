@@ -3,11 +3,7 @@ import {apiUrl, apiUrlWithoutTenants} from "override/utils/route"
 import {useApiStore} from "../../stores/api"
 import * as BasicAuth from "../../utils/basicAuth"
 import {ref} from "vue"
-<<<<<<< HEAD
-import {useClient, type AxiosLikeConfig, type MiscControllerConfiguration} from "@kestra-io/kestra-sdk"
-=======
-import {useClient, type MiscControllerConfiguration, type MiscControllerLoginConfiguration, type MiscControllerApiUsage} from "@kestra-io/kestra-sdk"
->>>>>>> b05671a162 (refactor(core): replace explicit any with real types in client-facade)
+import {useClient, type AxiosLikeConfig, type MiscControllerConfiguration, type MiscControllerLoginConfiguration, type MiscControllerApiUsage} from "@kestra-io/kestra-sdk"
 import {initPosthogIfEnabled} from "../../utils/posthog"
 import {ensureUid} from "../../utils/uid"
 import type {SelectedTheme} from "../../utils/utils"
@@ -118,7 +114,7 @@ export const useMiscStore = defineStore("misc", () => {
             username: options.username,
             password: options.password,
             currentPassword: options.currentPassword,
-        }, {showMessageOnError: false} as AxiosLikeConfig)
+        }, {showMessageOnError: false} )
     }
 
     return {

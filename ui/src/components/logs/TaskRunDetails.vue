@@ -837,6 +837,9 @@
                     status === 200 || status === 404 || status === 422,
             },
         )
+        if (axiosResponse.status !== 200) {
+            return
+        }
         logFileSizeByPath.value[path] = Utils.humanFileSize(
             axiosResponse.data.size,
         )

@@ -120,7 +120,7 @@ export const useDashboardStore = defineStore("dashboard", () => {
 
     async function loadDefaultDefinitions() {
         if (!defaultDefinitions.value) {
-            const res = await axios.get<{main: string; flow: string; namespace: string}>(`${apiUrl()}/dashboards/defaults/definitions`)
+            const res = await axios.get<NonNullable<typeof defaultDefinitions.value>>(`${apiUrl()}/dashboards/defaults/definitions`)
             defaultDefinitions.value = res.data
         }
         return defaultDefinitions.value!
@@ -283,7 +283,7 @@ export const useDashboardStore = defineStore("dashboard", () => {
 
     async function generate(id: Dashboard["id"], chartId: Chart["id"], parameters: ChartFiltersOverrides) {
         try {
-            const {data} = await axios.post<ChartResults>(`${apiUrl()}/dashboards/${id}/charts/${chartId}`, parameters, {showMessageOnError: false} as AxiosLikeConfig)
+            const {data} = await axios.post<ChartResults>(`${apiUrl()}/dashboards/${id}/charts/${chartId}`, parameters, {showMessageOnError: false} )
             return data
         } catch (e: unknown) {
             if ((e as KestraHttpError).status === 404) return undefined

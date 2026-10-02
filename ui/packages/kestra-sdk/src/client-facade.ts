@@ -12,7 +12,7 @@ import type {BodySerializer} from "./openapi/core/bodySerializer.gen"
 // useClient().get/post(...) calls behave identically to generated endpoint calls, and existing
 // OSS/EE call sites are unchanged.
 
-export type RequestBody = object | unknown[] | FormData | Blob | string | null
+export type RequestBody = unknown
 
 export interface AxiosLikeConfig {
     params?: Record<string, unknown>

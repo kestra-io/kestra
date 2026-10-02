@@ -1,6 +1,7 @@
 package io.kestra.core.models.validations;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
@@ -32,6 +33,11 @@ public class ValidateConstraintViolation {
 
     public List<ValidationError> getErrors() {
         return errors == null ? List.of() : errors;
+    }
+
+    @Deprecated
+    public String getConstraints() {
+        return getErrors().stream().map(ValidationError::toLine).collect(Collectors.joining("\n"));
     }
 
     @JsonIgnore

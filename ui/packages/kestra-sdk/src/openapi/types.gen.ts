@@ -2411,6 +2411,10 @@ export type Type = 'STRING' | 'SELECT' | 'INT' | 'FLOAT' | 'BOOL' | 'DATETIME' |
 
 export type ValidateConstraintViolation = {
     errors?: Array<ValidationError>;
+    /**
+     * @deprecated
+     */
+    constraints?: string;
     index: number;
     filename?: string;
     namespace?: string;

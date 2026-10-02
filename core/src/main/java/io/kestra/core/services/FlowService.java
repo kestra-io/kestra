@@ -511,7 +511,9 @@ public class FlowService {
                 constraintsBuilder.infos(relocationInfos);
 
                 if (flow == null) {
-                    reportProblems(report, constraintsBuilder, relocationInfos, List.of());
+                    ScanProblems problems = scanProblems(report, List.of());
+                    constraintsBuilder.infos(ListUtils.concat(relocationInfos, problems.installNotices()));
+                    constraintsBuilder.errors(problems.errors());
                 } else {
                     Integer sentRevision = flow.getRevision();
                     if (sentRevision != null) {
@@ -533,8 +535,12 @@ public class FlowService {
                             .flatMap(e -> e.getConstraintViolations().stream())
                             .flatMap(v -> report.locate(v).stream())
                             .toList();
-                        if (!reportProblems(report, constraintsBuilder, relocationInfos, violations)) {
+                        ScanProblems problems = scanProblems(report, violations);
+                        constraintsBuilder.infos(ListUtils.concat(relocationInfos, problems.installNotices()));
+                        if (problems.errors().isEmpty()) {
                             throwOnCyclicDependency(parsedFlow);
+                        } else {
+                            constraintsBuilder.errors(problems.errors());
                         }
                     }
                 }
@@ -568,8 +574,8 @@ public class FlowService {
         return constraints;
     }
 
-    /** Sets the scan's problems on {@code builder}, auto-installable types as notices; returns whether any is an error. */
-    private boolean reportProblems(ParseReport report, ValidateConstraintViolation.ValidateConstraintViolationBuilder<?, ?> builder, List<String> infos, List<ValidationError> violations) {
+    /** Splits the scan's problems into errors and notices, auto-installable plugin types being only notices. */
+    private ScanProblems scanProblems(ParseReport report, List<ValidationError> violations) {
         List<ValidationError> errors = new ArrayList<>(report.errors());
         List<String> installNotices = new ArrayList<>();
         for (ParseReport.InvalidType invalidType : report.invalidTypes()) {
@@ -580,13 +586,7 @@ public class FlowService {
             }
         }
         errors.addAll(violations);
-        if (!installNotices.isEmpty()) {
-            builder.infos(ListUtils.concat(infos, installNotices));
-        }
-        if (!errors.isEmpty()) {
-            builder.errors(errors);
-        }
-        return !errors.isEmpty();
+        return new ScanProblems(errors, installNotices);
     }
 
     public FlowWithSource importFlow(String tenantId, String source) throws FlowProcessingException {
@@ -1224,5 +1224,8 @@ public class FlowService {
     }
 
     private record TolerantParse(@Nullable FlowWithSource flow, @Nullable ParseReport report) {
+    }
+
+    private record ScanProblems(List<ValidationError> errors, List<String> installNotices) {
     }
 }

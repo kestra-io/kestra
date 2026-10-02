@@ -328,7 +328,6 @@
     "start date": "Date de début",
     "end date": "Date de fin",
     "restart": "Relancer",
-    "restart latest revision": "Relancer avec la dernière révision",
     "restart tooltip": "Relancer l'exécution depuis la tâche dans l'état <code>{state}</code>",
     "restarted": "L'exécution est redémarrée",
     "restart confirm": "Voulez-vous vraiment redémarrer l'exécution <code>{id}</code> ?",

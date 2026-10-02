@@ -328,7 +328,6 @@
     "start date": "시작 날짜",
     "end date": "종료 날짜",
     "restart": "재시작",
-    "restart latest revision": "최신 수정본으로 재시작",
     "restart tooltip": "<code>{state}</code> Task에서 실행을 재시작합니다.",
     "restarted": "실행이 다시 시작되었습니다.",
     "restart confirm": "실행 <code>{id}</code>를 다시 시작하시겠습니까?",

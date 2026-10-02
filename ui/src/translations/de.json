@@ -328,7 +328,6 @@
     "start date": "Startdatum",
     "end date": "Enddatum",
     "restart": "Neu starten",
-    "restart latest revision": "Neueste Revision neu starten",
     "restart tooltip": "Die Execution ab dem Task <code>{state}</code> neu starten",
     "restarted": "Execution wird neu gestartet",
     "restart confirm": "Execution <code>{id}</code> wirklich neu starten?",

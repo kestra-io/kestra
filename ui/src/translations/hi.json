@@ -328,7 +328,6 @@
     "start date": "प्रारंभ तिथि",
     "end date": "समाप्ति तिथि",
     "restart": "पुनः प्रारंभ करें",
-    "restart latest revision": "नवीनतम पुनरीक्षण पुनः प्रारंभ करें",
     "restart tooltip": "<code>{state}</code> task से निष्पादन पुनः प्रारंभ करें",
     "restarted": "Execution पुनः आरंभ हो गया है",
     "restart confirm": "क्या आप वाकई execution <code>{id}</code> को पुनरारंभ करना चाहते हैं?",

@@ -328,7 +328,6 @@
     "start date": "Data rozpoczęcia",
     "end date": "Data zakończenia",
     "restart": "Uruchom ponownie",
-    "restart latest revision": "Uruchom ponownie najnowszą wersję",
     "restart tooltip": "Uruchom ponownie egzekucję od Taska <code>{state}</code>",
     "restarted": "Egzekucja została uruchomiona ponownie",
     "restart confirm": "Czy na pewno chcesz ponownie uruchomić egzekucję <code>{id}</code>?",

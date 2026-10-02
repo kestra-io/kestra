@@ -328,7 +328,6 @@
     "start date": "Дата начала",
     "end date": "Дата окончания",
     "restart": "Перезапуск",
-    "restart latest revision": "Перезапустить последнюю редакцию",
     "restart tooltip": "Перезапустить выполнение с <code>{state}</code> task",
     "restarted": "Выполнение перезапущено",
     "restart confirm": "Вы уверены, что хотите перезапустить выполнение <code>{id}</code>?",

@@ -3,6 +3,10 @@ import {useStorage} from "@vueuse/core"
 
 const LOCAL_STORAGE_KEY = "starred.bookmarks"
 
+function normalizePath(path: string) {
+    return path.replace(/%5B/gi, "[").replace(/%5D/gi, "]")
+}
+
 interface Page {
     path: string;
     label?: string;
@@ -17,23 +21,48 @@ interface Page {
 export const useBookmarksStore = defineStore("bookmarks", () => {
     const pages = useStorage<Page[]>(LOCAL_STORAGE_KEY, [])
 
+    function normalizePages(newPages: Page[]) {
+        return newPages.reduce<Page[]>((acc, page) => {
+            const normalizedPage = {...page, path: normalizePath(page.path)}
+            const existingIndex = acc.findIndex(p => p.path === normalizedPage.path)
+
+            if (existingIndex === -1) {
+                acc.push(normalizedPage)
+                return acc
+            }
+
+            if (acc[existingIndex].custom !== true && normalizedPage.custom === true) {
+                acc[existingIndex] = normalizedPage
+            }
+
+            return acc
+        }, [])
+    }
+
+    pages.value = normalizePages(pages.value)
+
     function add(page: Page) {
-        if (!pages.value.find(p => p.path === page.path)) {
+        const normalizedPage = {...page, path: normalizePath(page.path)}
+
+        if (!isBookmarked(normalizedPage.path)) {
             // Stamped as derived so `refreshLabel` may re-derive it: without the flag it would be
             // indistinguishable from a pre-existing entry, which is deliberately left alone.
-            pages.value = [...pages.value, {custom: false, ...page}]
+            pages.value = [...pages.value, {custom: false, ...normalizedPage}]
         }
     }
 
     function remove(page: Page) {
-        pages.value = pages.value.filter(p => p.path !== page.path)
+        const path = normalizePath(page.path)
+        pages.value = pages.value.filter(p => p.path !== path)
     }
 
     function rename(page: Page) {
+        const path = normalizePath(page.path)
+
         pages.value = pages.value.map(p => {
             // Confirming the editor without changing anything must not freeze the label's
             // language: only a label the user actually altered counts as theirs.
-            if (p.path !== page.path || p.label === page.label) return p
+            if (p.path !== path || p.label === page.label) return p
 
             return {...p, label: page.label, custom: true}
         })
@@ -46,15 +75,22 @@ export const useBookmarksStore = defineStore("bookmarks", () => {
      * re-derived: one the user typed, and one from before the flag existed, are left alone.
      */
     function refreshLabel(page: Page) {
+        const path = normalizePath(page.path)
+
         pages.value = pages.value.map(p =>
-            p.path === page.path && p.custom === false && p.label !== page.label
+            p.path === path && p.custom === false && p.label !== page.label
                 ? {...p, label: page.label}
                 : p,
         )
     }
 
     function updateAll(newPages: Array<Page>) {
-        pages.value = [...newPages]
+        pages.value = normalizePages(newPages)
+    }
+
+    function isBookmarked(path: string) {
+        const normalizedPath = normalizePath(path)
+        return pages.value.some(page => page.path === normalizedPath)
     }
 
     return {
@@ -64,5 +100,6 @@ export const useBookmarksStore = defineStore("bookmarks", () => {
         rename,
         refreshLabel,
         updateAll,
+        isBookmarked,
     }
 })

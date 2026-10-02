@@ -1,5 +1,7 @@
 import {beforeEach, describe, expect, it, vi} from "vitest"
 import {createPinia, setActivePinia} from "pinia"
+import type * as FlowsAPI from "@kestra-io/kestra-sdk/flows"
+import type * as ExecutionsAPI from "@kestra-io/kestra-sdk/executions"
 
 vi.mock("vue-router", () => ({
     useRoute: () => ({query: {}, params: {}}),
@@ -13,12 +15,12 @@ vi.mock("@kestra-io/kestra-sdk", () => ({
 const {flowApi, executionApi} = vi.hoisted(() => ({flowApi: vi.fn(), executionApi: vi.fn()}))
 
 vi.mock("@kestra-io/kestra-sdk/flows", () => ({
-    flow: (...args: any[]) => flowApi(...args),
+    flow: (...args: Parameters<typeof FlowsAPI.flow>) => flowApi(...args),
     validateFlows: vi.fn(() => Promise.resolve([{}])),
 }))
 
 vi.mock("@kestra-io/kestra-sdk/executions", () => ({
-    execution: (...args: any[]) => executionApi(...args),
+    execution: (...args: Parameters<typeof ExecutionsAPI.execution>) => executionApi(...args),
 }))
 
 vi.mock("../../../src/utils/toast", () => ({

@@ -3,6 +3,7 @@ import {createPinia, setActivePinia} from "pinia"
 import KestraDesignSystem from "@kestra-io/design-system"
 import MultiPanelGenericEditorView from "../../../src/components/MultiPanelGenericEditorView.vue"
 import {i18nMount} from "../i18nMount"
+import type {EditorElement, Tab} from "../../../src/utils/multiPanelTypes"
 
 vi.mock("vue-router", () => ({
     useRoute: () => ({query: {}, params: {}, name: "flow"}),
@@ -25,12 +26,16 @@ const globalConfig = {
     plugins: [KestraDesignSystem],
 }
 
-const editorElements = [
+const codeTab: Tab = {
+    uid: "code",
+    button: {label: "Code", icon: {template: "<span/>"}},
+    component: {template: "<div/>"},
+}
+
+const editorElements: EditorElement[] = [
     {
-        uid: "code",
-        button: {label: "Code", icon: {template: "<span/>"}},
-        component: {template: "<div/>"},
-        deserialize: (v: string) => v === "code" ? {uid: "code", component: {template: "<div/>"}} as any : undefined,
+        ...codeTab,
+        deserialize: (v: string) => v === "code" ? codeTab : undefined,
     },
 ]
 
@@ -44,6 +49,10 @@ function mountEditor({withBottomPanel = true} = {}) {
         },
         slots: withBottomPanel ? {"bottom-panel": "<div />"} : {},
     })
+}
+
+function splitOrientationOf(wrapper: ReturnType<typeof mountEditor>) {
+    return (wrapper.vm as unknown as {splitOrientation: "vertical" | "horizontal"}).splitOrientation
 }
 
 describe("MultiPanelGenericEditorView split orientation", () => {
@@ -62,7 +71,7 @@ describe("MultiPanelGenericEditorView split orientation", () => {
         const wrapper = mountEditor()
 
         // Then: splitOrientation is "vertical"
-        expect((wrapper.vm as any).splitOrientation).toBe("vertical")
+        expect(splitOrientationOf(wrapper)).toBe("vertical")
     })
 
     test("hides the toggle button when there is no bottom panel", () => {
@@ -88,13 +97,13 @@ describe("MultiPanelGenericEditorView split orientation", () => {
     test("toggles orientation to horizontal when button is clicked", async () => {
         // Given: default vertical orientation
         const wrapper = mountEditor()
-        expect((wrapper.vm as any).splitOrientation).toBe("vertical")
+        expect(splitOrientationOf(wrapper)).toBe("vertical")
 
         // When: the toggle button is clicked
         await wrapper.find(".orientation-toggle").trigger("click")
 
         // Then: orientation switches to horizontal
-        expect((wrapper.vm as any).splitOrientation).toBe("horizontal")
+        expect(splitOrientationOf(wrapper)).toBe("horizontal")
     })
 
     test("persists orientation toggle to localStorage", async () => {
@@ -117,7 +126,7 @@ describe("MultiPanelGenericEditorView split orientation", () => {
         const wrapper = mountEditor()
 
         // Then: splitOrientation starts as horizontal
-        expect((wrapper.vm as any).splitOrientation).toBe("horizontal")
+        expect(splitOrientationOf(wrapper)).toBe("horizontal")
     })
 
     test("toggles back to vertical after two clicks", async () => {
@@ -130,6 +139,6 @@ describe("MultiPanelGenericEditorView split orientation", () => {
         await btn.trigger("click")
 
         // Then: back to vertical
-        expect((wrapper.vm as any).splitOrientation).toBe("vertical")
+        expect(splitOrientationOf(wrapper)).toBe("vertical")
     })
 })

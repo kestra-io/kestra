@@ -1,6 +1,7 @@
 import {beforeEach, describe, expect, it, vi} from "vitest"
 import {createPinia, setActivePinia} from "pinia"
 import {KsMessageBox} from "@kestra-io/design-system"
+import type * as FlowsAPI from "@kestra-io/kestra-sdk/flows"
 
 const axiosGet = vi.fn()
 const axiosPost = vi.fn()
@@ -37,8 +38,8 @@ vi.mock("@kestra-io/kestra-sdk", () => ({
 
 // validateFlow()/saveFlow() go through the SDK's flows submodule, not useClient()'s axios instance
 vi.mock("@kestra-io/kestra-sdk/flows", () => ({
-    validateFlows: (...args: any[]) => validateFlows(...args),
-    updateFlow: (...args: any[]) => updateFlow(...args),
+    validateFlows: (...args: Parameters<typeof FlowsAPI.validateFlows>) => validateFlows(...args),
+    updateFlow: (...args: Parameters<typeof FlowsAPI.updateFlow>) => updateFlow(...args),
 }))
 
 vi.mock("@kestra-io/design-system", async (importOriginal) => {
@@ -46,6 +47,9 @@ vi.mock("@kestra-io/design-system", async (importOriginal) => {
     const KsNotification = Object.assign(vi.fn(), {closeAll: vi.fn()})
     return {...actual, KsMessageBox: vi.fn(), KsNotification}
 })
+
+// element-plus types the resolved value as `MessageBoxInputData & Action`, which no literal satisfies
+const CONFIRMED = "confirm" as unknown as Awaited<ReturnType<typeof KsMessageBox>>
 
 const FLOW_YAML = [
     "id: my-flow",
@@ -60,7 +64,7 @@ async function setupOutdatedStore() {
     const {useFlowStore} = await import("../../../src/stores/flow")
     const store = useFlowStore()
 
-    store.flow = {id: "my-flow", namespace: "my.ns", revision: 1} as any
+    store.flow = {id: "my-flow", namespace: "my.ns", revision: 1, source: ""}
     store.flowYaml = FLOW_YAML
     store.flowYamlOrigin = ""
     store.isCreating = false
@@ -99,7 +103,7 @@ describe("flow store outdated save confirmation", () => {
     })
 
     it("overwrites the outdated revision when the prompt is confirmed", async () => {
-        vi.mocked(KsMessageBox).mockResolvedValue("confirm" as any)
+        vi.mocked(KsMessageBox).mockResolvedValue(CONFIRMED)
 
         const store = await setupOutdatedStore()
         const outcome = await store.saveAll()
@@ -133,7 +137,7 @@ describe("flow store outdated save confirmation", () => {
     })
 
     it("overwrites the outdated revision via save() when the prompt is confirmed", async () => {
-        vi.mocked(KsMessageBox).mockResolvedValue("confirm" as any)
+        vi.mocked(KsMessageBox).mockResolvedValue(CONFIRMED)
 
         const store = await setupOutdatedStore()
         const outcome = await store.save()

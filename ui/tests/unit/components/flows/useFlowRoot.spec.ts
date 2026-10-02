@@ -80,7 +80,7 @@ describe("useFlowRoot", () => {
         const scope = effectScope()
         const flowRoot = scope.run(() => useFlowRoot())!
 
-        flowStore.flow = {id: "myflow", namespace: "company.team"} as any
+        flowStore.flow = {id: "myflow", namespace: "company.team", source: ""}
         await nextTick()
         await vi.advanceTimersByTimeAsync(1000)
         await nextTick()
@@ -100,7 +100,7 @@ describe("useFlowRoot", () => {
     })
 
     it("reuses the flow the route guard loaded, instead of fetching it a second time", async () => {
-        flowStore.flow = {id: "myflow", namespace: "company.team"} as any
+        flowStore.flow = {id: "myflow", namespace: "company.team", source: ""}
         const scope = effectScope()
 
         scope.run(() => useFlowRoot().setupLifecycle())
@@ -113,7 +113,7 @@ describe("useFlowRoot", () => {
     })
 
     it("fetches the flow when the store holds another one", async () => {
-        flowStore.flow = {id: "otherflow", namespace: "company.team"} as any
+        flowStore.flow = {id: "otherflow", namespace: "company.team", source: ""}
         const scope = effectScope()
 
         scope.run(() => useFlowRoot().setupLifecycle())

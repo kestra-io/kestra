@@ -1,5 +1,6 @@
 package io.kestra.plugin.core.flow;
 
+import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -8,6 +9,7 @@ import java.util.Optional;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
+import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
@@ -23,9 +25,11 @@ import io.kestra.core.models.tasks.FlowableTask;
 import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.DefaultRunContext;
+import io.kestra.core.runners.ExecutionDelay;
 import io.kestra.core.runners.FlowableUtils;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.utils.DateUtils;
 import io.kestra.core.utils.GraphUtils;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.UriProvider;
@@ -47,7 +51,7 @@ import lombok.experimental.SuperBuilder;
     description = """
         Runs `onWait`, then pauses the execution until a reviewer decides `onApprove` or `onDeny` from the UI, the `/executions/{id}/actions/review` API, or an EE app.
 
-        A denial ends the request without running `onDeny`'s tasks unless configured otherwise; see `denyBehavior`."""
+        `onDeny` always runs on a denial; `denyBehavior` (`CANCEL` by default) then decides what happens to the execution."""
 )
 @Plugin(
     examples = {
@@ -104,6 +108,27 @@ public class Approval extends Task implements FlowableTask<Approval.Output>, Pau
     @NotNull
     @Builder.Default
     private Property<Boolean> autoApprove = Property.ofValue(false);
+
+    @Schema(
+        title = "What happens to the execution after `onApprove` finishes."
+    )
+    @NotNull
+    @Builder.Default
+    private Property<Behavior> approveBehavior = Property.ofValue(Behavior.CONTINUE);
+
+    @Schema(
+        title = "What happens to the execution after `onDeny` finishes."
+    )
+    @NotNull
+    @Builder.Default
+    private Property<Behavior> denyBehavior = Property.ofValue(Behavior.CANCEL);
+
+    @Schema(
+        title = "What happens to the execution when the request expires without a decision."
+    )
+    @NotNull
+    @Builder.Default
+    private Property<Behavior> expireBehavior = Property.ofValue(Behavior.CANCEL);
 
     @Schema(
         title = "Tasks executed before the execution pauses."
@@ -210,14 +235,33 @@ public class Approval extends Task implements FlowableTask<Approval.Output>, Pau
 
     @Override
     public Optional<State.Type> resolveState(RunContext runContext, Execution execution, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
-        if (this.decisionType(runContext) == null && this.isWaiting(parentTaskRun)) {
+        Decision.Type decision = this.decisionType(runContext);
+        if (decision == null && this.isWaiting(parentTaskRun)) {
             return this.resolveWaitState(runContext, execution, parentTaskRun);
         }
 
+        Optional<State.Type> branchState = this.resolveBranchState(runContext, execution, parentTaskRun);
+
+        if (branchState.isEmpty() || decision == null || branchState.get().isTerminatedInError()) {
+            return branchState;
+        }
+
+        Behavior behavior = runContext.render(this.behaviorFor(decision).skipCache()).as(Behavior.class).orElse(Behavior.CONTINUE);
+        return Optional.of(this.applyBehavior(behavior, branchState.get()));
+    }
+
+    /** The Branch phase's own resolved state, before a configured behavior is mapped over it. */
+    private Optional<State.Type> resolveBranchState(RunContext runContext, Execution execution, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
         List<ResolvedTask> childTasks = ListUtils.emptyOnNull(this.childTasks(runContext, parentTaskRun)).stream()
             .filter(resolvedTask -> !resolvedTask.getTask().getDisabled())
             .toList();
-        if (ListUtils.isEmpty(childTasks)) {
+
+        List<ResolvedTask> finallyTasks = FlowableUtils.resolveTasks(this.getFinally(), parentTaskRun);
+
+        // guessFinalState(null, ...) resolves immediately regardless of any real scheduled child, so it
+        // is only safe when there is truly nothing left to wait for — an empty branch (e.g. EXPIRED) with
+        // a configured 'finally' must still go through resolveState() so that finally is awaited.
+        if (ListUtils.isEmpty(childTasks) && ListUtils.isEmpty(finallyTasks)) {
             return Optional.of(execution.guessFinalState(null, parentTaskRun, this.isAllowFailure(), this.isAllowWarning()));
         }
 
@@ -225,12 +269,53 @@ public class Approval extends Task implements FlowableTask<Approval.Output>, Pau
             execution,
             childTasks,
             FlowableUtils.resolveTasks(this.getErrors(), parentTaskRun),
-            FlowableUtils.resolveTasks(this.getFinally(), parentTaskRun),
+            finallyTasks,
             parentTaskRun,
             runContext,
             this.isAllowFailure(),
             this.isAllowWarning()
         );
+    }
+
+    private Property<Behavior> behaviorFor(Decision.Type decision) {
+        return switch (decision) {
+            case APPROVED -> this.approveBehavior;
+            case DENIED -> this.denyBehavior;
+            case EXPIRED -> this.expireBehavior;
+        };
+    }
+
+    /** A branch that resolved without error is mapped through the configured behavior; a genuine failure inside the branch is never hidden by it. */
+    private State.Type applyBehavior(Behavior behavior, State.Type branchState) {
+        return switch (behavior) {
+            case CONTINUE -> branchState;
+            case WARN -> State.Type.WARNING;
+            case FAIL -> State.Type.FAILED;
+            case SUCCEED -> State.Type.SUCCESS;
+            case CANCEL -> State.Type.CANCELLED;
+            case KILL -> State.Type.KILLED;
+        };
+    }
+
+    /** The execution-level target state for a terminal decided task run (SUCCEED/CANCEL/KILL only), recomputing the branch's own pre-{@link #applyBehavior} state so a genuine failure is never mistaken for one. */
+    public Optional<State.Type> executionLevelOutcome(RunContext runContext, Execution execution, TaskRun taskRun) throws IllegalVariableEvaluationException {
+        Decision.Type decision = this.decisionType(runContext);
+        if (decision == null) {
+            return Optional.empty();
+        }
+
+        Optional<State.Type> branchState = this.resolveBranchState(runContext, execution, taskRun);
+        if (branchState.isEmpty() || branchState.get().isTerminatedInError()) {
+            return Optional.empty();
+        }
+
+        Behavior behavior = runContext.render(this.behaviorFor(decision).skipCache()).as(Behavior.class).orElse(Behavior.CONTINUE);
+        return switch (behavior) {
+            case SUCCEED -> Optional.of(State.Type.SUCCESS);
+            case CANCEL -> Optional.of(State.Type.CANCELLED);
+            case KILL -> Optional.of(State.Type.KILLED);
+            case CONTINUE, WARN, FAIL -> Optional.empty();
+        };
     }
 
     /** Empty while onWait runs, its error state if onWait just failed, PAUSED otherwise (immediately, when onWait is empty). */
@@ -304,6 +389,7 @@ public class Approval extends Task implements FlowableTask<Approval.Output>, Pau
             .on((String) current.get("on"))
             .comment((String) current.get("comment"))
             .inputs((Map<String, Object>) current.get("inputs"))
+            .due((String) current.get("due"))
             .build();
     }
 
@@ -339,6 +425,29 @@ public class Approval extends Task implements FlowableTask<Approval.Output>, Pau
         return State.Type.RUNNING;
     }
 
+    @Override
+    public Optional<ExecutionDelay> pauseDelay(TaskRun taskRun, RunContext runContext) throws IllegalVariableEvaluationException, InternalException {
+        if (this.getTimeout() == null) {
+            return Optional.empty();
+        }
+
+        // the executor reuses this task instance across every execution of the flow, so the property's
+        // render cache must be skipped or a later execution would reuse the first execution's value.
+        Duration timeout = runContext.render(this.getTimeout().skipCache()).as(Duration.class).orElse(null);
+        if (timeout == null) {
+            return Optional.empty();
+        }
+
+        // state is unused for Approval: ExecutionDelayProcessor calls decide(EXPIRED) instead of markAs.
+        return Optional.of(ExecutionDelay.builder()
+            .taskRunId(taskRun.getId())
+            .executionId(taskRun.getExecutionId())
+            .date(DateUtils.plusOrThrow(taskRun.getState().maxDate(), timeout))
+            .state(State.Type.FAILED)
+            .delayType(ExecutionDelay.DelayType.RESUME_FLOW)
+            .build());
+    }
+
     @Builder
     @Getter
     public static class Output implements io.kestra.core.models.tasks.Output {
@@ -360,6 +469,9 @@ public class Approval extends Task implements FlowableTask<Approval.Output>, Pau
         @Schema(title = "Values entered in the review dialog.")
         private Map<String, Object> inputs;
 
+        @Schema(title = "When the request expires without a decision, computed from `timeout`. Empty without one.")
+        private String due;
+
         @Schema(title = "A link to the execution page.")
         private String url;
     }
@@ -377,6 +489,15 @@ public class Approval extends Task implements FlowableTask<Approval.Output>, Pau
         ALWAYS,
         ON_DENY,
         ON_APPROVE
+    }
+
+    public enum Behavior {
+        CONTINUE,
+        WARN,
+        FAIL,
+        SUCCEED,
+        CANCEL,
+        KILL
     }
 
     @Builder

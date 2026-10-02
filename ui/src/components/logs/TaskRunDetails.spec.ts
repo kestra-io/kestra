@@ -5,7 +5,14 @@ import {nextTick, reactive} from "vue"
 import KestraDesignSystem from "@kestra-io/design-system"
 
 const store = vi.hoisted(() => ({
-    executions: {} as Record<string, unknown>,
+    executions: {} as {
+        execution: {id: string; state: {current: string}} | undefined
+        logs: unknown
+        loadLogs: ReturnType<typeof vi.fn>
+        followLogs: ReturnType<typeof vi.fn>
+        loadFlowForExecution: ReturnType<typeof vi.fn>
+        subscribeToExecution: ReturnType<typeof vi.fn>
+    },
 }))
 
 vi.mock("../../stores/executions", () => ({
@@ -105,14 +112,15 @@ describe("TaskRunDetails log loading across executions", () => {
         store.executions.execution = execution("exec-1", "SUCCESS")
         const wrapper = mountDetails()
         await flushPromises()
-        expect(wrapper.vm.filteredLogs).toEqual([{level: "INFO", message: "log of exec-1"}])
+        const vm = wrapper.vm as unknown as {filteredLogs: unknown[]}
+        expect(vm.filteredLogs).toEqual([{level: "INFO", message: "log of exec-1"}])
 
         store.executions.loadLogs.mockReturnValue(new Promise(() => {}))
         store.executions.execution = execution("exec-2", "RESTARTED")
         await nextTick()
         await flushPromises()
 
-        expect(wrapper.vm.filteredLogs).toEqual([])
+        expect(vm.filteredLogs).toEqual([])
     })
 
     /**

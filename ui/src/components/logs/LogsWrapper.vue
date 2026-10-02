@@ -119,7 +119,7 @@
 
 <script setup lang="ts">
     import {ref, computed, nextTick, watch, useTemplateRef} from "vue"
-    import {useRoute, useRouter} from "vue-router"
+    import {useRoute, useRouter, type LocationQueryRaw} from "vue-router"
     import {routeFamily} from "../../utils/routeFamily"
     import {useI18n} from "vue-i18n"
     import {useLogFilter} from "../filter/configurations/logFilter"
@@ -167,7 +167,7 @@
         logLevel?: string;
         embed?: boolean;
         showFilters?: boolean;
-        filters?: Record<string, unknown>;
+        filters?: LocationQueryRaw;
         reloadLogs?: number;
         namespace?: string | null;
         restoreurl?: boolean;
@@ -420,7 +420,7 @@
     }
 
     const selectLevel = (level: string) => {
-        const query: Record<string, unknown> = {...route.query}
+        const query: LocationQueryRaw = {...route.query}
         Object.keys(query)
             .filter((key) => key.startsWith("filters[level]"))
             .forEach((key) => delete query[key])

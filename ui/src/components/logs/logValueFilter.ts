@@ -1,3 +1,5 @@
+import type {LocationQuery, LocationQueryRaw} from "vue-router"
+
 export const FILTERABLE_LOG_FIELDS = {
     namespace: {for: "IN", out: "NOT_IN"},
     flowId: {for: "EQUALS", out: "NOT_EQUALS"},
@@ -11,12 +13,12 @@ export const isFilterableLogField = (field: string): boolean =>
     Object.prototype.hasOwnProperty.call(FILTERABLE_LOG_FIELDS, field)
 
 export const buildValueFilterQuery = (
-    currentQuery: Record<string, unknown>,
+    currentQuery: LocationQuery | LocationQueryRaw,
     field: string,
     value: string,
     negate: boolean,
     pageKey = "page",
-): Record<string, unknown> | null => {
+): LocationQueryRaw | null => {
     const comparators = FILTERABLE_LOG_FIELDS[field as keyof typeof FILTERABLE_LOG_FIELDS]
     if (!comparators) return null
 

@@ -62,7 +62,7 @@
                 @mouse-leave="() => highlightHoveredTask(-1)"
             >
                 <template #absolute>
-                    <ContentSave v-if="!flow" :class="{'save-disabled': !isDirty}" @click="isDirty && saveFileContent()" />
+                    <ContentSave v-if="!flow" :class="{'save-disabled': !isDirty || isSavingFile}" @click="isDirty && saveFileContent()" />
                 </template>
                 <template v-if="playgroundStore.enabled" #widget-content>
                     <PlaygroundRunTaskButton :taskId="highlightedLines?.taskId" />
@@ -396,15 +396,24 @@
         await save()
     }
 
+    // The tab stays dirty until the request returns, so without this a click during a slow save sends the file again.
+    const isSavingFile = ref(false)
+
     const saveFileContent = async () => {
         clearTimeout(timeout.value)
-        if(!namespace.value || !props.path || props.flow) return
-        await namespacesStore.saveOrCreateFile({
-            namespace: namespace.value,
-            path: props.path,
-            content: editorContent.value || "",
-        })
-        savedSourceNS.value = source.value
+        if(!namespace.value || !props.path || props.flow || isSavingFile.value) return
+        const content = source.value
+        isSavingFile.value = true
+        try {
+            await namespacesStore.saveOrCreateFile({
+                namespace: namespace.value,
+                path: props.path,
+                content: content || "",
+            })
+            savedSourceNS.value = content
+        } finally {
+            isSavingFile.value = false
+        }
     }
 
     const handleGlobalSave = (event: KeyboardEvent) => {

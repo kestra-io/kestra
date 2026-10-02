@@ -6,7 +6,7 @@
     >
         <ElButton
             :aria-label="tooltip"
-            v-bind="({...filteredProps(), ...$attrs} as any)"
+            v-bind="({...filteredProps(), ...$attrs})"
             :class="{'is-square': square}"
             @click="emit('click', $event)"
             plain
@@ -24,7 +24,7 @@
     </KsTooltip>
     <ElButton
         v-else
-        v-bind="({...filteredProps(), ...$attrs} as any)"
+        v-bind="({...filteredProps(), ...$attrs})"
         :class="{'is-square': square}"
         @click="emit('click', $event)"
         plain
@@ -48,32 +48,18 @@
 <script setup lang="ts">
     import type {Component} from "vue"
 
-    import {ElButton} from "element-plus"
+    import {ElButton,type ButtonProps} from "element-plus"
 
     import {useFilteredProps} from "../../../utils/filteredProps"
     import KsTooltip from "../../Feedback/KsTooltip.vue"
 
     defineOptions({inheritAttrs: false})
 
-    const props = defineProps<{
-        type?: KsButtonType
-        size?: "small" | "default" | "large" | ""
-        disabled?: boolean
-        icon?: string | object
-        nativeType?: "button" | "submit" | "reset"
-        loading?: boolean
-        text?: boolean
-        link?: boolean
-        bg?: boolean
-        autofocus?: boolean
-        round?: boolean
-        circle?: boolean
-        square?: boolean
-        color?: string
-        tag?: string | Component
-        tooltip?: string
-        tooltipPlacement?: string
-    }>()
+   const props = defineProps<ButtonProps & {
+    square?: boolean
+    tooltip?: string
+    tooltipPlacement?: string
+}>()
 
     const emit = defineEmits<{
         click: [evt: MouseEvent]

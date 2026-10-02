@@ -4122,7 +4122,7 @@ export const _3139A61a = <ThrowOnError extends boolean = true>(parameters: {
 };
 
 /**
- * Delete triggers by query parameters asynchronously
+ * Delete orphan trigger state matching the query
  */
 export const _0675820B5 = <ThrowOnError extends boolean = true>(parameters: {
     tenant: string;
@@ -4142,7 +4142,7 @@ export const _0675820B5 = <ThrowOnError extends boolean = true>(parameters: {
 };
 
 /**
- * Delete given triggers asynchronously
+ * Delete orphan trigger state for the given triggers
  */
 export const _03C4Fde05 = <ThrowOnError extends boolean = true>(parameters: {
     tenant: string;
@@ -4328,7 +4328,7 @@ export const _077995F6c = <ThrowOnError extends boolean = true>(parameters: {
 };
 
 /**
- * Delete a trigger
+ * Delete orphan trigger state
  */
 export const _04B613E73 = <ThrowOnError extends boolean = true>(parameters: {
     namespace: string;

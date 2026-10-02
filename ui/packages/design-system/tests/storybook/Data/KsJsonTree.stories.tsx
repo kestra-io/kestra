@@ -73,7 +73,7 @@ export const Collapsed: Story = {
         const canvas = within(canvasElement)
 
         await userEvent.click(canvas.getByText("variable_explorer.n_keys"))
-        expect(canvas.getByText('"namespace"')).toBeTruthy()
+        await waitFor(() => expect(canvas.getByText('"namespace"')).toBeTruthy())
     },
 }
 

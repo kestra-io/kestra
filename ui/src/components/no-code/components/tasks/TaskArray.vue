@@ -162,7 +162,7 @@
     import Wrapper from "./Wrapper.vue"
     import {BLOCK_SCHEMA_PATH_INJECTION_KEY, FIELD_NAV_INJECTION_KEY, SCHEMA_DEFINITIONS_INJECTION_KEY} from "../../injectionKeys"
     import {useBlockComponent} from "./useBlockComponent"
-    import {summarizeValue, shouldDrillItem} from "./fieldNesting"
+    import {summarizeValue, shouldDrillItem, describeArrayItem} from "./fieldNesting"
 
     defineOptions({inheritAttrs: false})
 
@@ -175,7 +175,7 @@
     const emits = defineEmits(["update:modelValue"])
     const props = withDefaults(defineProps<{
         schema?: any;
-        modelValue?: (string | number | boolean | undefined)[] | string | number | boolean | null;
+        modelValue?: (string | number | boolean | Record<string, unknown> | undefined)[] | string | number | boolean | null;
         required?: boolean;
         root?: string;
     }>(), {
@@ -200,10 +200,7 @@
     )
 
     function itemLabel(element: any, index: number): string {
-        if (element && typeof element === "object" && !Array.isArray(element)) {
-            return String(element.id ?? element.name ?? element.type ?? `#${index + 1}`)
-        }
-        return `#${index + 1}`
+        return describeArrayItem(element, index)
     }
 
     function itemPreview(element: any): string {

@@ -729,6 +729,29 @@ class FlowControllerTest {
     }
 
     @Test
+    void shouldCreateBothFlowsGivenSameIdInDifferentNamespacesWhenBulkUpdate() {
+        String id = "samebulkid";
+        String flows = String.join(
+            "---\n", Arrays.asList(
+                generateFlowAsString(id, "io.kestra.bulk.first", "a"),
+                generateFlowAsString(id, "io.kestra.bulk.second", "a")
+            )
+        );
+
+        List<FlowWithSource> created = client.toBlocking()
+            .retrieve(
+                HttpRequest.POST("/api/v1/main/flows/bulk?delete=false", flows)
+                    .contentType(MediaType.APPLICATION_YAML),
+                Argument.listOf(FlowWithSource.class)
+            );
+
+        assertThat(created).extracting(AbstractFlow::getNamespace).containsExactlyInAnyOrder("io.kestra.bulk.first", "io.kestra.bulk.second");
+
+        client.toBlocking().exchange(DELETE("/api/v1/main/flows/io.kestra.bulk.first/" + id));
+        client.toBlocking().exchange(DELETE("/api/v1/main/flows/io.kestra.bulk.second/" + id));
+    }
+
+    @Test
     void deletedFlow() {
         Flow flow = generateFlow(TEST_NAMESPACE, "a");
 
@@ -1037,7 +1060,7 @@ class FlowControllerTest {
             HttpRequest.GET("/api/v1/main/flows/distinct-namespaces"), Argument.listOf(String.class)
         );
 
-        assertThat(namespaces.size()).isEqualTo(18);
+        assertThat(namespaces.size()).isEqualTo(20);
     }
 
     @Test

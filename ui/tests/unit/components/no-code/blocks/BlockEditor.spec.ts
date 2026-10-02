@@ -72,6 +72,30 @@ triggers:
 
 const EMPTY_YAML = "id: my_flow\nnamespace: company.team"
 
+const YAML_WITH_TWO_SEQUENTIALS = `
+id: my_flow
+namespace: company.team
+tasks:
+  - id: outer_seq
+    type: io.kestra.plugin.core.flow.Sequential
+    tasks:
+      - id: n0
+        type: io.kestra.plugin.core.log.Log
+        message: n0
+      - id: n1
+        type: io.kestra.plugin.core.log.Log
+        message: n1
+      - id: n2
+        type: io.kestra.plugin.core.log.Log
+        message: n2
+  - id: target_seq
+    type: io.kestra.plugin.core.flow.Sequential
+    tasks:
+      - id: t0
+        type: io.kestra.plugin.core.log.Log
+        message: t0
+`.trim()
+
 const YAML_WITH_DUPLICATE_IDS = `
 id: my_flow
 namespace: company.team
@@ -355,6 +379,7 @@ const messages = {
 
 import BlockEditor from "../../../../../src/components/no-code/blocks/BlockEditor.vue"
 import {storageKeys, taskEditDefaultModes} from "../../../../../src/utils/constants"
+import {parseBlock} from "../../../utils/parsedBlock"
 
 // --- Global mount config ---
 
@@ -685,8 +710,7 @@ describe("BlockEditor", () => {
             await wrapper.vm.$nextTick()
 
             // Then
-            const flowYamlUtils = await import("@kestra-io/topology/flow-yaml-utils")
-            const parsed = flowYamlUtils.parse(mockFlowYaml.value)
+            const parsed = parseBlock(mockFlowYaml.value)
             expect(parsed.tasks).toHaveLength(2)
             expect(parsed.tasks[0].message).toBe("Updated message")
             expect(parsed.tasks[1].id).toBe("http_task")
@@ -721,8 +745,7 @@ describe("BlockEditor", () => {
             await wrapper.vm.$nextTick()
 
             // Then
-            const flowYamlUtils = await import("@kestra-io/topology/flow-yaml-utils")
-            const parsed = flowYamlUtils.parse(mockFlowYaml.value)
+            const parsed = parseBlock(mockFlowYaml.value)
             expect(parsed.tasks).toHaveLength(1)
         })
 
@@ -737,8 +760,7 @@ describe("BlockEditor", () => {
             await wrapper.vm.$nextTick()
 
             // Then
-            const flowYamlUtils = await import("@kestra-io/topology/flow-yaml-utils")
-            const parsed = flowYamlUtils.parse(mockFlowYaml.value)
+            const parsed = parseBlock(mockFlowYaml.value)
             const thenLen = Array.isArray(parsed.tasks[1].then) ? parsed.tasks[1].then.length : 0
             expect(thenLen).toBe(0)
             expect(parsed.tasks[1].else[0].id).toBe("nested_b")
@@ -756,8 +778,7 @@ describe("BlockEditor", () => {
             await wrapper.vm.$nextTick()
 
             // Then
-            const flowYamlUtils = await import("@kestra-io/topology/flow-yaml-utils")
-            const parsed = flowYamlUtils.parse(mockFlowYaml.value)
+            const parsed = parseBlock(mockFlowYaml.value)
             expect(parsed.tasks).toHaveLength(3)
             expect(parsed.tasks.some((t: Record<string, unknown>) =>
                 String(t.id).startsWith("log_task_copy"),
@@ -775,8 +796,7 @@ describe("BlockEditor", () => {
             await wrapper.vm.$nextTick()
 
             // Then
-            const flowYamlUtils = await import("@kestra-io/topology/flow-yaml-utils")
-            const parsed = flowYamlUtils.parse(mockFlowYaml.value)
+            const parsed = parseBlock(mockFlowYaml.value)
             expect(parsed.tasks[1].then).toHaveLength(2)
             expect(String(parsed.tasks[1].then[1].id)).toMatch(/^nested_a_copy/)
         })
@@ -808,13 +828,12 @@ describe("BlockEditor", () => {
             vm.picker.insertTask("io.kestra.plugin.core.log.Log")
             await wrapper.vm.$nextTick()
 
-            const flowYamlUtils = await import("@kestra-io/topology/flow-yaml-utils")
-            const parsed = flowYamlUtils.parse(mockFlowYaml.value)
+            const parsed = parseBlock(mockFlowYaml.value)
             expect(parsed.tasks[1].then).toHaveLength(2)
         })
 
-        function createBlockInList(wrapper: ReturnType<typeof i18nMount>) {
-            const provides = (wrapper.vm.$ as unknown as {provides: Record<symbol, unknown>}).provides
+        function createBlockInList(editor: ReturnType<typeof i18nMount>) {
+            const provides = (editor.vm.$ as unknown as {provides: Record<symbol, unknown>}).provides
             const key = Object.getOwnPropertySymbols(provides)
                 .find(symbol => symbol.description === "creating-function-injection-key")!
             return provides[key] as (parentPath: string, blockSchemaPath: string, refPath?: number) => void
@@ -961,8 +980,7 @@ describe("BlockEditor", () => {
             await wrapper.vm.$nextTick()
 
             // Then — the order is reversed in the store YAML
-            const flowYamlUtils = await import("@kestra-io/topology/flow-yaml-utils")
-            const parsed = flowYamlUtils.parse(mockFlowYaml.value)
+            const parsed = parseBlock(mockFlowYaml.value)
             expect(parsed.tasks[0].id).toBe("http_task")
             expect(parsed.tasks[1].id).toBe("log_task")
         })
@@ -981,9 +999,9 @@ describe("BlockEditor", () => {
             const vm = wrapper.vm as unknown as {
                 activeSelectedPath: string | undefined
                 activeSelectedId: string | undefined
-                dndFor: (section: string) => {
-                    handleDragStart: (event: DragEvent, index: number) => void
-                    handleDrop: (event: DragEvent, index: number) => void
+                dragContext: {
+                    beginDrag: (path: string) => void
+                    dropAt: (parentPath: string, index: number) => void
                 }
             }
             expect(vm.activeSelectedPath).toBe("tasks[1].then[0]")
@@ -991,9 +1009,8 @@ describe("BlockEditor", () => {
 
             // When — prime drag from tasks[0], then drop on tasks[1]
             // This shifts the flowable from [1] to [0], making tasks[1].then[0] stale
-            const mockEvent = {preventDefault: () => undefined, dataTransfer: {effectAllowed: ""}} as unknown as DragEvent
-            vm.dndFor("tasks").handleDragStart(mockEvent, 0)
-            vm.dndFor("tasks").handleDrop(mockEvent, 1)
+            vm.dragContext.beginDrag("tasks[0]")
+            vm.dragContext.dropAt("tasks", 1)
             await wrapper.vm.$nextTick()
 
             // Then — stale path is detected and selection cleared
@@ -1013,6 +1030,10 @@ describe("BlockEditor", () => {
             const vm = wrapper.vm as unknown as {
                 activeSelectedPath: string | undefined
                 activeSelectedId: string | undefined
+                dragContext: {
+                    beginDrag: (path: string) => void
+                    dropAt: (parentPath: string, index: number) => void
+                }
             }
             expect(vm.activeSelectedPath).toBe("tasks[1].then[0]")
             expect(vm.activeSelectedId).toBe("nested_a")
@@ -1020,12 +1041,75 @@ describe("BlockEditor", () => {
             // When — a DIFFERENT lane of the same flowable (else) is reordered.
             // The old index-only check matched the outer tasks[1] and wrongly
             // cleared; keying on the reordered parentPath must leave it alone.
-            cluster.vm.$emit("reorder", "tasks[1].else", 0, 1)
+            vm.dragContext.beginDrag("tasks[1].else[0]")
+            vm.dragContext.dropAt("tasks[1].else", 1)
             await wrapper.vm.$nextTick()
 
             // Then — the then-lane selection is untouched
             expect(vm.activeSelectedPath).toBe("tasks[1].then[0]")
             expect(vm.activeSelectedId).toBe("nested_a")
+        })
+
+        it("clears a source-lane selection made stale by a cross-parent move", async () => {
+            // Given — outer_seq holds n0, n1, n2; n2 is selected at tasks[0].tasks[2]
+            mockFlowYaml.value = YAML_WITH_TWO_SEQUENTIALS
+            wrapper = i18nMount(BlockEditor, {locales: messages, ...makeConfig()})
+            const cluster = wrapper.findComponent({name: "FlowableClusterCard"})
+            await cluster.vm.$emit("select", "tasks[0].tasks[2]")
+            await wrapper.vm.$nextTick()
+            await wrapper.vm.$nextTick()
+
+            const vm = wrapper.vm as unknown as {
+                activeSelectedPath: string | undefined
+                activeSelectedId: string | undefined
+                dragContext: {
+                    beginDrag: (path: string) => void
+                    dropAt: (parentPath: string, index: number) => void
+                }
+            }
+            expect(vm.activeSelectedPath).toBe("tasks[0].tasks[2]")
+            expect(vm.activeSelectedId).toBe("n2")
+
+            // When — n0 is dragged out of outer_seq into target_seq: n2 shifts from
+            // index 2 to index 1 in outer_seq's tasks lane
+            vm.dragContext.beginDrag("tasks[0].tasks[0]")
+            vm.dragContext.dropAt("tasks[1].tasks", 0)
+            await wrapper.vm.$nextTick()
+
+            // Then — the stale selection on n2 is cleared, not left pointing at a shifted sibling
+            expect(vm.activeSelectedId).toBeUndefined()
+            expect(vm.activeSelectedPath).toBeUndefined()
+        })
+
+        it("clears a destination-lane selection made stale by a cross-parent move", async () => {
+            // Given — target_seq holds only t0, selected at tasks[1].tasks[0]
+            mockFlowYaml.value = YAML_WITH_TWO_SEQUENTIALS
+            wrapper = i18nMount(BlockEditor, {locales: messages, ...makeConfig()})
+            const cluster = wrapper.findComponent({name: "FlowableClusterCard"})
+            await cluster.vm.$emit("select", "tasks[1].tasks[0]")
+            await wrapper.vm.$nextTick()
+            await wrapper.vm.$nextTick()
+
+            const vm = wrapper.vm as unknown as {
+                activeSelectedPath: string | undefined
+                activeSelectedId: string | undefined
+                dragContext: {
+                    beginDrag: (path: string) => void
+                    dropAt: (parentPath: string, index: number) => void
+                }
+            }
+            expect(vm.activeSelectedPath).toBe("tasks[1].tasks[0]")
+            expect(vm.activeSelectedId).toBe("t0")
+
+            // When — n0 is dropped in front of t0: t0 shifts from index 0 to index 1
+            vm.dragContext.beginDrag("tasks[0].tasks[0]")
+            vm.dragContext.dropAt("tasks[1].tasks", 0)
+            await wrapper.vm.$nextTick()
+
+            // Then — the stale selection is cleared rather than left resolving to n0,
+            // the block that was just dropped in
+            expect(vm.activeSelectedId).toBeUndefined()
+            expect(vm.activeSelectedPath).toBeUndefined()
         })
 
         it("emits update:selectedId when selectedId changes via v-model", async () => {
@@ -1064,7 +1148,7 @@ describe("BlockEditor", () => {
 
         it("Delete key removes the selected leaf task after confirmation", async () => {
             // Given
-            const wrapper = mountBlockEditor()
+            wrapper = mountBlockEditor()
             await wrapper.find("[data-test='block-card']").trigger("click")
             await wrapper.vm.$nextTick()
 
@@ -1075,14 +1159,13 @@ describe("BlockEditor", () => {
 
             // Then
             expect(confirmMock).toHaveBeenCalledTimes(1)
-            const flowYamlUtils = await import("@kestra-io/topology/flow-yaml-utils")
-            const parsed = flowYamlUtils.parse(mockFlowYaml.value)
+            const parsed = parseBlock(mockFlowYaml.value)
             expect(parsed.tasks).toHaveLength(1)
         })
 
         it("Backspace key removes the selected leaf task after confirmation", async () => {
             // Given
-            const wrapper = mountBlockEditor()
+            wrapper = mountBlockEditor()
             await wrapper.find("[data-test='block-card']").trigger("click")
             await wrapper.vm.$nextTick()
 
@@ -1092,15 +1175,14 @@ describe("BlockEditor", () => {
             await wrapper.vm.$nextTick()
 
             // Then
-            const flowYamlUtils = await import("@kestra-io/topology/flow-yaml-utils")
-            const parsed = flowYamlUtils.parse(mockFlowYaml.value)
+            const parsed = parseBlock(mockFlowYaml.value)
             expect(parsed.tasks).toHaveLength(1)
         })
 
         it("does not delete when the confirmation is cancelled", async () => {
             // Given
             confirmMock.mockRejectedValue(new Error("cancel"))
-            const wrapper = mountBlockEditor()
+            wrapper = mountBlockEditor()
             await wrapper.find("[data-test='block-card']").trigger("click")
             await wrapper.vm.$nextTick()
 
@@ -1110,8 +1192,7 @@ describe("BlockEditor", () => {
             await wrapper.vm.$nextTick()
 
             // Then
-            const flowYamlUtils = await import("@kestra-io/topology/flow-yaml-utils")
-            const parsed = flowYamlUtils.parse(mockFlowYaml.value)
+            const parsed = parseBlock(mockFlowYaml.value)
             expect(parsed.tasks).toHaveLength(2)
         })
 
@@ -1122,7 +1203,7 @@ describe("BlockEditor", () => {
             // the filter behaves like a real browser for this test.
             const offsetParentSpy = vi.spyOn(HTMLElement.prototype, "offsetParent", "get").mockReturnValue(document.body)
             mockFlowYaml.value = YAML_WITH_FLOWABLE
-            const wrapper = mountBlockEditor()
+            wrapper = mountBlockEditor()
             await flushPromises()
             await wrapper.vm.$nextTick()
             // Triggers has no items in this fixture, so its empty-section sentinel is the
@@ -1157,7 +1238,7 @@ describe("BlockEditor", () => {
             // this file that don't model that sentinel, so focusedId is set directly here to
             // exercise BlockEditor's own lane-sentinel handling in isolation.
             mockFlowYaml.value = YAML_WITH_FLOWABLE
-            const wrapper = mountBlockEditor()
+            wrapper = mountBlockEditor()
             await flushPromises()
             const vm = wrapper.vm as unknown as {
                 focusedId?: string
@@ -1187,8 +1268,7 @@ describe("BlockEditor", () => {
             expect(vm.taskPickerVisible).toBe(true)
             vm.picker.insertTask("io.kestra.plugin.core.log.Log")
             await wrapper.vm.$nextTick()
-            const flowYamlUtils = await import("@kestra-io/topology/flow-yaml-utils")
-            const parsed = flowYamlUtils.parse(mockFlowYaml.value) as {tasks: {errors?: unknown[]}[]; errors?: unknown[]}
+            const parsed = parseBlock(mockFlowYaml.value) as {tasks: {errors?: unknown[]}[]; errors?: unknown[]}
             expect(parsed.tasks[1].errors).toHaveLength(1)
             expect(parsed.errors).toBeUndefined()
         })
@@ -1196,7 +1276,7 @@ describe("BlockEditor", () => {
         it("ignores Delete on an empty-section sentinel instead of opening a confirm dialog", async () => {
             // Given — regression: the confirm dialog used to open with the internal
             // sentinel id leaked as the block name ("Delete __section:errors?")
-            const wrapper = mountBlockEditor()
+            wrapper = mountBlockEditor()
             const vm = wrapper.vm as unknown as {focusedId?: string}
             vm.focusedId = "__section:errors"
             await wrapper.vm.$nextTick()
@@ -1220,7 +1300,7 @@ describe("BlockEditor", () => {
             // Given — regression: focus used to be cleared entirely, so the next
             // ArrowDown restarted navigation from the very top of the canvas
             const offsetParentSpy = vi.spyOn(HTMLElement.prototype, "offsetParent", "get").mockReturnValue(document.body)
-            const wrapper = mountBlockEditor()
+            wrapper = mountBlockEditor()
             const vm = wrapper.vm as unknown as {focusedId?: string}
             vm.focusedId = "log_task"
             await wrapper.vm.$nextTick()
@@ -1233,6 +1313,126 @@ describe("BlockEditor", () => {
             // Then — log_task is gone and its next sibling took the focus ring
             expect(vm.focusedId).toBe("http_task")
             offsetParentSpy.mockRestore()
+        })
+
+        it("Cmd+C then Cmd+V pastes a copy of the focused task after itself", async () => {
+            // Given
+            const wrapper = mountBlockEditor()
+            const vm = wrapper.vm as unknown as {focusedId?: string}
+            vm.focusedId = "log_task"
+            await wrapper.vm.$nextTick()
+
+            // When
+            windowKeydown({key: "c", metaKey: true})
+            windowKeydown({key: "v", metaKey: true})
+            await flushPromises()
+            await wrapper.vm.$nextTick()
+
+            // Then — the pasted copy collides with the original id and is disambiguated
+            const flowYamlUtils = await import("@kestra-io/topology/flow-yaml-utils")
+            const parsed = flowYamlUtils.parse(mockFlowYaml.value) as {tasks: {id: string}[]}
+            expect(parsed.tasks).toHaveLength(3)
+            expect(parsed.tasks[0].id).toBe("log_task")
+            expect(parsed.tasks[1].id).not.toBe("log_task")
+            expect(parsed.tasks[2].id).toBe("http_task")
+        })
+
+        it("Cmd+X cuts the focused task without a confirm prompt", async () => {
+            // Given — a cut is not a delete: it must not go through confirmDelete
+            const wrapper = mountBlockEditor()
+            const vm = wrapper.vm as unknown as {focusedId?: string}
+            vm.focusedId = "log_task"
+            await wrapper.vm.$nextTick()
+
+            // When
+            windowKeydown({key: "x", metaKey: true})
+            await flushPromises()
+            await wrapper.vm.$nextTick()
+
+            // Then
+            expect(confirmMock).not.toHaveBeenCalled()
+            const flowYamlUtils = await import("@kestra-io/topology/flow-yaml-utils")
+            const parsed = flowYamlUtils.parse(mockFlowYaml.value) as {tasks: {id: string}[]}
+            expect(parsed.tasks).toHaveLength(1)
+            expect(parsed.tasks[0].id).toBe("http_task")
+        })
+
+        it("moves focus to the neighboring block after a cut, so a follow-up paste still lands", async () => {
+            // Given — regression: cut left focusedId pointing at the deleted block, so
+            // moveFocus could not find it and a paste right after cut silently did nothing
+            const offsetParentSpy = vi.spyOn(HTMLElement.prototype, "offsetParent", "get").mockReturnValue(document.body)
+            const wrapper = mountBlockEditor()
+            const vm = wrapper.vm as unknown as {focusedId?: string}
+            vm.focusedId = "log_task"
+            await wrapper.vm.$nextTick()
+
+            // When
+            windowKeydown({key: "x", metaKey: true})
+            await flushPromises()
+            await wrapper.vm.$nextTick()
+
+            // Then — focus followed the deleted block's neighbor
+            expect(vm.focusedId).toBe("http_task")
+
+            // When — pasting right after the cut
+            windowKeydown({key: "v", metaKey: true})
+            await flushPromises()
+            await wrapper.vm.$nextTick()
+
+            // Then — the cut task landed back in the flow
+            const flowYamlUtils = await import("@kestra-io/topology/flow-yaml-utils")
+            const parsed = flowYamlUtils.parse(mockFlowYaml.value) as {tasks: {id: string}[]}
+            expect(parsed.tasks).toHaveLength(2)
+            offsetParentSpy.mockRestore()
+        })
+
+        it("refuses to paste a cut task into the empty Triggers section", async () => {
+            // Given — a task copied to the clipboard, then the empty Triggers sentinel focused
+            const wrapper = mountBlockEditor()
+            const vm = wrapper.vm as unknown as {focusedId?: string}
+            vm.focusedId = "log_task"
+            await wrapper.vm.$nextTick()
+            windowKeydown({key: "c", metaKey: true})
+
+            // When
+            vm.focusedId = "__section:triggers"
+            await wrapper.vm.$nextTick()
+            windowKeydown({key: "v", metaKey: true})
+            await flushPromises()
+            await wrapper.vm.$nextTick()
+
+            // Then — nothing landed in Triggers, and Tasks is unaffected
+            const flowYamlUtils = await import("@kestra-io/topology/flow-yaml-utils")
+            const parsed = flowYamlUtils.parse(mockFlowYaml.value) as {tasks: unknown[]; triggers?: unknown[]}
+            expect(parsed.triggers).toBeUndefined()
+            expect(parsed.tasks).toHaveLength(2)
+        })
+
+        it("Cmd+Shift+Z redoes an edit that Cmd+Z just undid", async () => {
+            // Given
+            const wrapper = mountBlockEditor()
+            const vm = wrapper.vm as unknown as {focusedId?: string}
+            vm.focusedId = "log_task"
+            await wrapper.vm.$nextTick()
+            windowKeydown({key: "x", metaKey: true})
+            await flushPromises()
+            await wrapper.vm.$nextTick()
+
+            // When
+            windowKeydown({key: "z", metaKey: true})
+            await flushPromises()
+            await wrapper.vm.$nextTick()
+            const flowYamlUtils = await import("@kestra-io/topology/flow-yaml-utils")
+            expect((flowYamlUtils.parse(mockFlowYaml.value) as {tasks: unknown[]}).tasks).toHaveLength(2)
+
+            windowKeydown({key: "z", metaKey: true, shiftKey: true})
+            await flushPromises()
+            await wrapper.vm.$nextTick()
+
+            // Then — back to the cut state
+            const parsed = flowYamlUtils.parse(mockFlowYaml.value) as {tasks: {id: string}[]}
+            expect(parsed.tasks).toHaveLength(1)
+            expect(parsed.tasks[0].id).toBe("http_task")
         })
 
         describe("native Tab harmony (roving tabindex)", () => {
@@ -1248,9 +1448,10 @@ describe("BlockEditor", () => {
 
             it("makes only the focused card a Tab stop", async () => {
                 // Given
-                const wrapper = i18nMount(BlockEditor, {locales: messages, ...makeConfig(), attachTo: document.body})
-                const vm = wrapper.vm as unknown as {focusedId?: string}
-                const cardTabindexes = () => wrapper.findAll("[data-test='block-card']")
+                const editor = i18nMount(BlockEditor, {locales: messages, ...makeConfig(), attachTo: document.body})
+                wrapper = editor
+                const vm = editor.vm as unknown as {focusedId?: string}
+                const cardTabindexes = () => editor.findAll("[data-test='block-card']")
                     .map(c => `${c.attributes("data-block-id")}:${c.attributes("tabindex")}`)
                 expect(cardTabindexes()).toEqual(["log_task:-1", "http_task:-1"])
 
@@ -1265,7 +1466,7 @@ describe("BlockEditor", () => {
 
             it("keeps the canvas container as the Tab entry point only while nothing is focused", async () => {
                 // Given
-                const wrapper = i18nMount(BlockEditor, {locales: messages, ...makeConfig(), attachTo: document.body})
+                wrapper = i18nMount(BlockEditor, {locales: messages, ...makeConfig(), attachTo: document.body})
                 const vm = wrapper.vm as unknown as {focusedId?: string}
                 const canvas = wrapper.find(".block-editor-canvas")
                 expect(canvas.attributes("tabindex")).toBe("0")
@@ -1283,7 +1484,7 @@ describe("BlockEditor", () => {
 
             it("syncs the focus ring from real DOM focus (Tab or click landing on a card)", async () => {
                 // Given
-                const wrapper = i18nMount(BlockEditor, {locales: messages, ...makeConfig(), attachTo: document.body})
+                wrapper = i18nMount(BlockEditor, {locales: messages, ...makeConfig(), attachTo: document.body})
                 const vm = wrapper.vm as unknown as {focusedId?: string}
 
                 // When — real focus lands on a card, as native Tab or a click would
@@ -1298,7 +1499,7 @@ describe("BlockEditor", () => {
 
             it("moves real DOM focus when navigating with the arrows", async () => {
                 // Given
-                const wrapper = i18nMount(BlockEditor, {locales: messages, ...makeConfig(), attachTo: document.body})
+                wrapper = i18nMount(BlockEditor, {locales: messages, ...makeConfig(), attachTo: document.body})
 
                 // When
                 windowKeydown({key: "ArrowDown"})
@@ -1314,7 +1515,7 @@ describe("BlockEditor", () => {
 
         it("does not fire Delete when the event target is an input", async () => {
             // Given
-            const wrapper = mountBlockEditor()
+            wrapper = mountBlockEditor()
             await wrapper.find("[data-test='block-card']").trigger("click")
             await wrapper.vm.$nextTick()
             const originalLength = 2
@@ -1331,14 +1532,13 @@ describe("BlockEditor", () => {
 
             // Then — no deletion
             expect(confirmMock).not.toHaveBeenCalled()
-            const flowYamlUtils = await import("@kestra-io/topology/flow-yaml-utils")
-            const parsed = flowYamlUtils.parse(mockFlowYaml.value)
+            const parsed = parseBlock(mockFlowYaml.value)
             expect(parsed.tasks).toHaveLength(originalLength)
         })
 
         it("Alt+ArrowDown reorders the selected task to the second position", async () => {
             // Given
-            const wrapper = mountBlockEditor()
+            wrapper = mountBlockEditor()
             await wrapper.find("[data-test='block-card']").trigger("click")
             await wrapper.vm.$nextTick()
 
@@ -1347,8 +1547,7 @@ describe("BlockEditor", () => {
             await wrapper.vm.$nextTick()
 
             // Then
-            const flowYamlUtils = await import("@kestra-io/topology/flow-yaml-utils")
-            const parsed = flowYamlUtils.parse(mockFlowYaml.value)
+            const parsed = parseBlock(mockFlowYaml.value)
             expect(parsed.tasks).toHaveLength(2)
             expect(parsed.tasks[0].id).toBe("http_task")
             expect(parsed.tasks[1].id).toBe("log_task")
@@ -1356,7 +1555,7 @@ describe("BlockEditor", () => {
 
         it("Alt+ArrowUp reorders the selected task to the first position", async () => {
             // Given
-            const wrapper = mountBlockEditor()
+            wrapper = mountBlockEditor()
             const cards = wrapper.findAll("[data-test='block-card']")
             await cards[1].trigger("click")
             await wrapper.vm.$nextTick()
@@ -1366,8 +1565,7 @@ describe("BlockEditor", () => {
             await wrapper.vm.$nextTick()
 
             // Then
-            const flowYamlUtils = await import("@kestra-io/topology/flow-yaml-utils")
-            const parsed = flowYamlUtils.parse(mockFlowYaml.value)
+            const parsed = parseBlock(mockFlowYaml.value)
             expect(parsed.tasks[0].id).toBe("http_task")
             expect(parsed.tasks[1].id).toBe("log_task")
         })
@@ -1377,7 +1575,7 @@ describe("BlockEditor", () => {
             // on a block already open in the dock, so navigating with the keyboard and
             // pressing Alt+ArrowDown right away silently did nothing).
             const offsetParentSpy = vi.spyOn(HTMLElement.prototype, "offsetParent", "get").mockReturnValue(document.body)
-            const wrapper = mountBlockEditor()
+            wrapper = mountBlockEditor()
             windowKeydown({key: "ArrowDown"}) // focus the empty Triggers section
             await wrapper.vm.$nextTick()
             windowKeydown({key: "ArrowDown"}) // focus log_task
@@ -1388,8 +1586,7 @@ describe("BlockEditor", () => {
             await wrapper.vm.$nextTick()
 
             // Then
-            const flowYamlUtils = await import("@kestra-io/topology/flow-yaml-utils")
-            const parsed = flowYamlUtils.parse(mockFlowYaml.value)
+            const parsed = parseBlock(mockFlowYaml.value)
             expect(parsed.tasks[0].id).toBe("http_task")
             expect(parsed.tasks[1].id).toBe("log_task")
             offsetParentSpy.mockRestore()
@@ -1413,7 +1610,7 @@ tasks:
       - id: then_c
         type: io.kestra.plugin.core.log.Log
 `.trim()
-            const wrapper = mountBlockEditor()
+            wrapper = mountBlockEditor()
             const cluster = wrapper.findComponent({name: "FlowableClusterCard"})
 
             // Simulate selecting then_a (index 0 in then lane) via openNestedEdit path
@@ -1430,8 +1627,7 @@ tasks:
             await wrapper.vm.$nextTick()
 
             // Then — then_a has moved twice and is now at index 2
-            const flowYamlUtils = await import("@kestra-io/topology/flow-yaml-utils")
-            const parsed = flowYamlUtils.parse(mockFlowYaml.value)
+            const parsed = parseBlock(mockFlowYaml.value)
             expect(parsed.tasks[0].then[0].id).toBe("then_b")
             expect(parsed.tasks[0].then[1].id).toBe("then_c")
             expect(parsed.tasks[0].then[2].id).toBe("then_a")
@@ -1468,8 +1664,9 @@ tasks:
             // When
             const keys = wrapper.findAll("[data-test='block-editor-footer'] kbd").map(k => k.text())
 
-            // Then — Meta+Shift+p and Control+Shift+p collapse to a single symbol
-            expect(keys).toEqual(["?", "↑", "↓", "↵", "a", "⌘⇧P"])
+            // Then — Meta+Shift+p and Control+Shift+p collapse to a single symbol; jsdom's own
+            // UA does not identify as macOS, so the non-Mac label is what actually renders here
+            expect(keys).toEqual(["?", "↑", "↓", "↵", "a", "Ctrl+Shift+P"])
         })
 
         it("offers insert-before and reorder once a real block is focused", async () => {
@@ -1727,8 +1924,7 @@ tasks:
             await wrapper.vm.$nextTick()
 
             // Then
-            const flowYamlUtils = await import("@kestra-io/topology/flow-yaml-utils")
-            const parsed = flowYamlUtils.parse(mockFlowYaml.value) as {tasks: {type: string}[]}
+            const parsed = parseBlock(mockFlowYaml.value) as {tasks: {type: string}[]}
             expect(parsed.tasks).toHaveLength(3)
             expect(parsed.tasks[2].type).toBe("io.kestra.plugin.core.flow.If")
             expect(pickerEl()).toBeNull()
@@ -1942,10 +2138,42 @@ tasks:
             await flushPromises()
 
             // Then
-            const flowYamlUtils = await import("@kestra-io/topology/flow-yaml-utils")
-            const parsed = flowYamlUtils.parse(mockFlowYaml.value) as {tasks: {type: string}[]}
+            const parsed = parseBlock(mockFlowYaml.value) as {tasks: {type: string}[]}
             expect(parsed.tasks).toHaveLength(3)
             expect(parsed.tasks[1].type).toBe("io.kestra.plugin.core.flow.If")
+        })
+
+        it("hides copy/cut and renders paste disabled when nothing is focused or copied", async () => {
+            // Given
+            wrapper = i18nMount(BlockEditor, {locales: messages, ...makeConfig()})
+
+            // When
+            const menu = await openCommandMenu()
+
+            // Then
+            const items = menu.props("items") as {id: string; disabled?: boolean}[]
+            expect(items.some(item => item.id === "copy")).toBe(false)
+            expect(items.some(item => item.id === "cut")).toBe(false)
+            expect(items.find(item => item.id === "paste")?.disabled).toBe(true)
+        })
+
+        it("renders paste enabled once a matching-section task is on the clipboard", async () => {
+            // Given
+            wrapper = i18nMount(BlockEditor, {locales: messages, ...makeConfig()})
+            const vm = wrapper.vm as unknown as {focusedId?: string}
+            vm.focusedId = "log_task"
+            let menu = await openCommandMenu()
+            const copyItem = (menu.props("items") as {id: string; run: () => void}[]).find(item => item.id === "copy")
+            copyItem!.run()
+            vm.focusedId = "http_task"
+            await wrapper.vm.$nextTick()
+
+            // When
+            menu = await openCommandMenu()
+
+            // Then
+            const items = menu.props("items") as {id: string; disabled?: boolean}[]
+            expect(items.find(item => item.id === "paste")?.disabled).toBe(false)
         })
     })
 })

@@ -3,7 +3,7 @@ import {describe, it, expect, vi, beforeEach} from "vitest"
 // --- mocks (hoisted) ---
 const push = vi.fn()
 let routeName: string | undefined = undefined
-let routeParams: Record<string, any> = {}
+let routeParams: RouteParams = {}
 vi.mock("vue-router", () => ({
     useRouter: () => ({push}),
     useRoute: () => ({name: routeName, params: routeParams}),
@@ -69,7 +69,7 @@ const problem = (detail: string) => ({
 const alreadyExists = problem("A flow with id 'my-flow' already exists in namespace 'company.team'.")
 const dashboardExists = problem("A dashboard with id 'my-dash' already exists.")
 
-import type {RouteLocationNormalizedLoaded} from "vue-router"
+import type {RouteLocationNormalizedLoaded, RouteParams} from "vue-router"
 import {useApplyDraft, isViewingFlow} from "../../../../../src/components/ai/copilot/useApplyDraft"
 
 const draft = (over = {}) => ({draftId: "d1", kind: "FLOW" as const, yaml: "id: my-flow\nnamespace: company.team", valid: true, constraints: null, ...over})

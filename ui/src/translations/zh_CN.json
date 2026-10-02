@@ -331,6 +331,8 @@
     "restart tooltip": "从 <code>{state}</code> 任务重新开始执行",
     "restarted": "执行已重启",
     "restart confirm": "您确定要重启执行 <code>{id}</code> 吗？",
+    "restart subflow warning": "此执行由父执行创建，应从父执行处重新启动。单独重新启动此执行将使父执行处于 FAILED 状态，并且其后续任务将不会运行。请前往 {parent} 重新启动。",
+    "restart subflow warning link": "父级 Execution",
     "replay": "重放",
     "replay from task tooltip": "从任务 <code>{taskId}</code> 创建相似的执行",
     "replay from beginning tooltip": "从头开始创建相似的执行",

@@ -331,6 +331,8 @@
     "restart tooltip": "Die Execution ab dem Task <code>{state}</code> neu starten",
     "restarted": "Execution wird neu gestartet",
     "restart confirm": "Execution <code>{id}</code> wirklich neu starten?",
+    "restart subflow warning": "Diese Execution wurde von einer übergeordneten Execution erstellt und sollte von dort neu gestartet werden. Ein alleiniger Neustart würde die übergeordnete Execution im FAILED-Status belassen und ihre nächsten Tasks würden nicht ausgeführt. Gehe zur {parent}, um sie neu zu starten.",
+    "restart subflow warning link": "übergeordnete Execution",
     "replay": "Replay",
     "replay from task tooltip": "Eine ähnliche Execution ab dem Task <code>{taskId}</code> erstellen",
     "replay from beginning tooltip": "Eine ähnliche Execution von Anfang an erstellen",

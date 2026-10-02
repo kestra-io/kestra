@@ -331,6 +331,8 @@
     "restart tooltip": "Перезапустить выполнение с <code>{state}</code> task",
     "restarted": "Выполнение перезапущено",
     "restart confirm": "Вы уверены, что хотите перезапустить выполнение <code>{id}</code>?",
+    "restart subflow warning": "Эта egzekucja была создана родительской egzekucją и должна быть перезапущена оттуда. Перезапуск только этой egzekucji оставит родительскую egzekucję в статусе FAILED, и ее следующие Task'и не будут запущены. Перейдите к {parent}, чтобы перезапустить ее.",
+    "restart subflow warning link": "родительская egzekucja",
     "replay": "Повтор",
     "replay from task tooltip": "Создать аналогичное выполнение, начиная с задачи <code>{taskId}</code>",
     "replay from beginning tooltip": "Создать аналогичное выполнение, начиная с начала",

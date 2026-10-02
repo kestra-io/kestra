@@ -331,6 +331,8 @@
     "restart tooltip": "<code>{state}</code> Task에서 실행을 재시작합니다.",
     "restarted": "실행이 다시 시작되었습니다.",
     "restart confirm": "실행 <code>{id}</code>를 다시 시작하시겠습니까?",
+    "restart subflow warning": "이 Execution은 상위 Execution에 의해 생성되었으므로 거기서부터 다시 시작해야 합니다. 이 Execution만 다시 시작하면 상위 Execution은 FAILED 상태로 남아 다음 Task가 실행되지 않습니다. 다시 시작하려면 {parent}로 이동하세요.",
+    "restart subflow warning link": "상위 execution",
     "replay": "재실행",
     "replay from task tooltip": "<code>{taskId}</code> Task에서 재실행",
     "replay from beginning tooltip": "처음부터 재실행",

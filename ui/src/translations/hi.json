@@ -331,6 +331,8 @@
     "restart tooltip": "<code>{state}</code> task से निष्पादन पुनः प्रारंभ करें",
     "restarted": "Execution पुनः आरंभ हो गया है",
     "restart confirm": "क्या आप वाकई execution <code>{id}</code> को पुनरारंभ करना चाहते हैं?",
+    "restart subflow warning": "यह execution एक पैरेंट execution द्वारा बनाई गई थी और इसे वहीं से पुनरारंभ किया जाना चाहिए। इसे अकेले पुनरारंभ करने से पैरेंट execution FAILED हो जाती है और इसके अगले Task नहीं चलेंगे। इसे पुनरारंभ करने के लिए {parent} पर जाएं।",
+    "restart subflow warning link": "पैरेंट execution",
     "replay": "पुनः चलाएँ",
     "replay from task tooltip": "Task <code>{taskId}</code> से शुरू होने वाला एक समान निष्पादन बनाएँ",
     "replay from beginning tooltip": "शुरुआत से शुरू होने वाला एक समान निष्पादन बनाएँ",

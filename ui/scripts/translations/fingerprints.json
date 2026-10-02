@@ -1583,6 +1583,8 @@
   "restart": "6b983a81e5e8",
   "restart confirm": "e4194dce3193",
   "restart execution title": "6fb38fe9b6d8",
+  "restart subflow warning": "1adc317ffdd7",
+  "restart subflow warning link": "e46a55f26d1d",
   "restart tooltip": "f1bc99be321d",
   "restarted": "a784d2eeade9",
   "restore": "a76e13b98392",

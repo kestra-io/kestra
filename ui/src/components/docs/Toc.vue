@@ -6,9 +6,6 @@
         popperClass="doc-toc-search-popper"
         :placeholder="$t('search')"
     >
-        <template #prefix>
-            <Magnify />
-        </template>
         <template #default="{item}">
             <RouterLink
                 :to="{path: '/' + item.parsedUrl}"
@@ -35,7 +32,6 @@
     import RecursiveToc from "./RecursiveToc.vue"
     import {buildDocsSections, buildDocsToc} from "./docsUtils"
     import ArrowRight from "vue-material-design-icons/ArrowRight.vue"
-    import Magnify from "vue-material-design-icons/Magnify.vue"
 
     interface SearchResult {
         parsedUrl: string;

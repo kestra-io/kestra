@@ -1,11 +1,11 @@
 <template>
     <ElAutocomplete
         v-model="model"
-        v-bind="({...filteredProps(), ...$attrs} as any)"
-        @select="emit('select', $event)"
+        v-bind="({...filteredProps(), ...$attrs} as AutocompleteProps)"
+        @select="emit('select', $event as T)"
     >
         <template v-if="$slots.default" #default="p">
-            <slot v-bind="p" />
+            <slot :item="p.item as T" />
         </template>
         <template v-if="$slots.prepend" #prepend>
             <slot name="prepend" />
@@ -16,20 +16,20 @@
     </ElAutocomplete>
 </template>
 
-<script setup lang="ts">
-    import {ElAutocomplete} from "element-plus"
+<script setup lang="ts" generic="T">
+    import {ElAutocomplete, type AutocompleteProps} from "element-plus"
 
     import {useFilteredProps} from "../../utils/filteredProps"
 
     defineOptions({inheritAttrs: false})
 
-    const model = defineModel<any>()
+    const model = defineModel<string>()
 
     const props = withDefaults(defineProps<{
         placeholder?: string
         disabled?: boolean
         clearable?: boolean
-        fetchSuggestions?: (query: string, callback: (results: any[]) => void) => void
+        fetchSuggestions?: (query: string, callback: (results: T[]) => void) => void
         triggerOnFocus?: boolean
         valueKey?: string
     }>(), {
@@ -40,11 +40,11 @@
     })
 
     const emit = defineEmits<{
-        select: [item: any]
+        select: [item: T]
     }>()
 
     defineSlots<{
-        default?: (scope: {item: any}) => unknown
+        default?: (scope: {item: T}) => unknown
         prepend?(): unknown
         suffix?(): unknown
     }>()

@@ -1,4 +1,4 @@
-import {onMounted, computed, ref} from "vue";
+import {onMounted, onBeforeUnmount, computed, ref} from "vue";
 
 import {useRoute} from "vue-router";
 import type {RouteParams, RouteLocation} from "vue-router";
@@ -42,6 +42,7 @@ export function getDashboard(route: RouteLocation, type: "key" | "id"): string |
 
 import {FilterObject} from "../../../utils/filters";
 import {Chart, Parameters, Request} from "../types.ts";
+import {chartLoadQueue} from "./chartLoadQueue";
 
 
 
@@ -49,9 +50,19 @@ export const isKPIChart = (type: string): boolean => type === "io.kestra.plugin.
 
 export const isTableChart = (type: string): boolean => type === "io.kestra.plugin.core.dashboard.chart.Table";
 
+/**
+ * Charts backed by a chart.js canvas. These dominate a dashboard's memory - a canvas backing store is sized by the
+ * chart's box times the device pixel ratio squared - so they are the ones worth unmounting when scrolled out of view.
+ */
+export const isCanvasChart = (type: string): boolean => [
+    "io.kestra.plugin.core.dashboard.chart.Bar",
+    "io.kestra.plugin.core.dashboard.chart.Pie",
+    "io.kestra.plugin.core.dashboard.chart.TimeSeries",
+].includes(type);
+
 export const getChartTitle = (chart: Chart): string => chart.chartOptions?.displayName ?? chart.id;
 
-export const getPropertyValue = (data: Record<string, any>, property: "value" | "description"): string => data.results?.[0]?.[property];
+export const getPropertyValue = (data: Record<string, any> | undefined, property: "value" | "description"): string => data?.results?.[0]?.[property];
 
 export const isPaginationEnabled = (chart: Chart): boolean => chart.chartOptions?.pagination?.enabled ?? false;
 
@@ -68,29 +79,47 @@ export function useChartGenerator(props: {chart: Chart; filters: FilterObject[];
     const EMPTY_TEXT = t("dashboards.empty");
 
     const data = ref();
+    const loading = ref(false);
+    let isMounted = true;
+    onBeforeUnmount(() => {
+        isMounted = false;
+    });
+
     async function generate(id: string, pagination?: { pageNumber: number; pageSize: number }, customFilters?: FilterObject[]) {
         const filters = customFilters ?? props.filters.concat(decodeSearchParams(route.query) ?? []);
         const parameters: Parameters = {...pagination, filters: (filters ?? {})};
 
-        if (!props.showDefault) {
-            data.value = await dashboardStore.generate(id, props.chart.id, parameters);
-        } else {
-            if (!props.chart.content){
-                throw new Error("Chart content must exist for preview.");
-            }
+        loading.value = true;
+        try {
+            const result = await chartLoadQueue.enqueue(() => {
+                // the component may have been unmounted while waiting for a load slot
+                if (!isMounted) return Promise.resolve(undefined);
 
-            const request: Request = {chart: props.chart.content, globalFilter: parameters};
-            data.value = await dashboardStore.chartPreview(request);
+                if (!props.showDefault) {
+                    return dashboardStore.generate(id, props.chart.id, parameters);
+                }
+
+                if (!props.chart.content){
+                    throw new Error("Chart content must exist for preview.");
+                }
+
+                const request: Request = {chart: props.chart.content, globalFilter: parameters};
+                return dashboardStore.chartPreview(request);
+            });
+
+            if (!isMounted) return;
+            data.value = result;
+            return data.value;
+        } finally {
+            loading.value = false;
         }
-
-        return data.value;
     };
 
     onMounted(async () => {
         if (includeHooks) await generate(getDashboard(route, "id") as string);
     });
 
-    return {percentageShown, EMPTY_TEXT, data, generate};
+    return {percentageShown, EMPTY_TEXT, data, loading, generate};
 }
 
 export * from "../types";

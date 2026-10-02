@@ -3,9 +3,10 @@
         class="d-flex flex-row align-items-center justify-content-center h-100"
     >
         <div>
+            <el-skeleton v-if="loading && generated === undefined" animated :rows="3" class="chart" />
             <component
                 :is="chartOptions?.graphStyle === 'PIE' ? Pie : Doughnut"
-                v-if="generated !== undefined"
+                v-else-if="generated !== undefined"
                 :data="parsedData"
                 :options="options"
                 :plugins="
@@ -34,7 +35,7 @@
 
     import {Doughnut, Pie} from "vue-chartjs";
 
-    import {defaultConfig, getConsistentHEXColor, chartSegmentDrillDown, pushChartDrillDown} from "../composables/charts";
+    import {defaultConfig, dashboardPixelRatio, getConsistentHEXColor, chartSegmentDrillDown, pushChartDrillDown} from "../composables/charts";
     import {totalsDurationLegend, totalsLegend} from "../composables/useLegend";
 
     import moment from "moment";
@@ -85,6 +86,7 @@
 
     const options = computed(() => {
         return defaultConfig({
+            devicePixelRatio: dashboardPixelRatio(),
             plugins: {
                 ...(chartOptions?.legend?.enabled
                     ? {
@@ -222,7 +224,7 @@
         };
     });
 
-    const {data: generated, generate} = useChartGenerator(props);
+    const {data: generated, loading, generate} = useChartGenerator(props);
 
     function refresh() {
         return generate(getDashboard(route, "id")!);

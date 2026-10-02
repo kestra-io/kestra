@@ -162,12 +162,22 @@
         return !!href && router.resolve(href).name === route.name
     })
 
-    const currentFavURI = computed(() =>
-        route.fullPath
-            .replace(/[&?]page=[^&]*/gi, "")
-            .replace(/\?&/, "?")
-            .replace(/\?$/, ""),
-    )
+    const currentFavURI = computed(() => {
+        const query = {...route.query}
+        delete query.page
+
+        const timeRangeKey = "filters[timeRange][EQUALS]"
+        const timeRange = query[timeRangeKey]
+        const defaultTimeRange = miscStore.configs?.chartDefaultDuration ?? "PT24H"
+        if (
+            (route.meta.tab === "overview" || route.meta.tab === "executions") &&
+            timeRange === defaultTimeRange
+        ) {
+            delete query[timeRangeKey]
+        }
+
+        return router.resolve({path: route.path, query, hash: route.hash}).fullPath
+    })
 
     const bookmarked = computed(() =>
         bookmarksStore.pages.some((page) => page.path === currentFavURI.value),

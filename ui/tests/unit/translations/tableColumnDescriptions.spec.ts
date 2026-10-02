@@ -3,13 +3,13 @@ import {dirname, resolve} from "node:path"
 import {fileURLToPath} from "node:url"
 
 import en from "../../../src/translations/en.json"
-import {findUnresolvedTableColumnKeys, mergeMessages} from "./tableColumnGuard"
+import {findUnresolvedTableColumnKeys, mergeMessages, type Messages} from "./tableColumnGuard"
 
 const SRC = resolve(dirname(fileURLToPath(import.meta.url)), "../../../src")
 
 // The column-picker descriptions live in the design-system locale files, which
 // `registerDesignSystemI18n` merges into the app messages at bootstrap.
-const designSystemLocales = import.meta.glob<{default: Record<string, unknown>}>(
+const designSystemLocales = import.meta.glob<{default: Record<string, Messages>}>(
     "../../../packages/design-system/src/components/**/*.locale.ts",
     {eager: true},
 )
@@ -18,7 +18,7 @@ describe("table column descriptions", () => {
     it("resolves every filter.table_column.* key referenced in ui/src", () => {
         const messages = Object.values(designSystemLocales).reduce(
             (merged, module) => mergeMessages(merged, module.default.en ?? {}),
-            {...en.en} as Record<string, unknown>,
+            {...en.en} as unknown as Messages,
         )
 
         const unresolved = findUnresolvedTableColumnKeys(SRC, messages)

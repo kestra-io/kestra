@@ -4,6 +4,7 @@ import {
     TOUR_SCENES,
     sceneIdsOf,
     stepGroupsOf,
+    type TourScene,
 } from "../../../src/components/onboarding/tour/tourScenes"
 import {
     TOUR_FLOW_ID,
@@ -38,7 +39,7 @@ const completedOn = (
     route: {name: string; params?: Record<string, unknown>},
 ) => {
     const scene = TOUR_SCENES.find((candidate) => candidate.id === id)
-    return Boolean(scene?.completedByUser?.({route: {params: {}, ...route}} as import("vue-router").RouteLocationNormalizedLoaded))
+    return Boolean(scene?.completedByUser?.({route: {params: {}, ...route}} as unknown as Parameters<NonNullable<TourScene["completedByUser"]>>[0]))
 }
 
 describe("product tour scenes", () => {

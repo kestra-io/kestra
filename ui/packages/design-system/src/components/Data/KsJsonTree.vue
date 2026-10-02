@@ -30,7 +30,7 @@
                     type="button"
                     class="json-tree__caret"
                     :aria-label="row.isExpanded ? $t('collapse') : $t('expand')"
-                    @click="toggle(row.path)"
+                    @click.stop="toggle(row.path)"
                 >
                     <ChevronDown v-if="row.isExpanded" :size="14" />
                     <ChevronRight v-else :size="14" />
@@ -47,7 +47,7 @@
                 <span
                     v-else-if="!row.isExpanded"
                     class="json-tree__preview"
-                    @click.stop="toggle(row.path)"
+                    @click="toggle(row.path)"
                 >
                     {{ row.display }}
                 </span>

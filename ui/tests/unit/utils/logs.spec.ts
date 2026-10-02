@@ -1,4 +1,5 @@
-import {describe, expect, it} from "vitest"
+import {afterEach, beforeEach, describe, expect, it} from "vitest"
+import {LOG_LEVELS} from "@kestra-io/design-system"
 import {
     detectStructured,
     parseStructured,
@@ -11,6 +12,8 @@ import {
     formatLogsAsText,
     logsDownloadFilename,
     executionLogsDownloadFilename,
+    levelOrLower,
+    chartColorFromLevel,
 } from "../../../src/utils/logs"
 import type {Log} from "../../../src/stores/logs"
 
@@ -159,5 +162,62 @@ describe("download filenames", () => {
 
     it("builds an execution logs filename with the execution id", () => {
         expect(executionLogsDownloadFilename("exec-42", date)).toBe("kestra-execution-20260604090703-exec-42.log")
+    })
+})
+
+describe("levelOrLower", () => {
+    it("returns every level for TRACE", () => {
+        expect(levelOrLower("TRACE")).toEqual(["TRACE", "DEBUG", "INFO", "WARN", "ERROR"])
+    })
+
+    it("returns only ERROR for ERROR", () => {
+        expect(levelOrLower("ERROR")).toEqual(["ERROR"])
+    })
+
+    it("includes ERROR when WARN is selected, confirming ordering direction", () => {
+        const result = levelOrLower("WARN")
+        expect(result).toContain("ERROR")
+        expect(result).toEqual(["WARN", "ERROR"])
+    })
+
+    it("degrades to something sensible rather than throwing for an unknown level", () => {
+        expect(() => levelOrLower("UNKNOWN" as any)).not.toThrow()
+        expect(levelOrLower("UNKNOWN" as any)).toEqual(["TRACE", "DEBUG", "INFO", "WARN", "ERROR"])
+    })
+})
+
+describe("chartColorFromLevel", () => {
+    const levelColors: Record<string, string> = {
+        "--log-chart-error": "#ff0000",
+        "--log-chart-warn": "#ffa500",
+        "--log-chart-info": "#0000ff",
+        "--log-chart-debug": "#800080",
+        "--log-chart-trace": "#808080",
+    }
+
+    beforeEach(() => {
+        for (const [prop, val] of Object.entries(levelColors)) {
+            document.documentElement.style.setProperty(prop, val)
+        }
+    })
+
+    afterEach(() => {
+        for (const prop of Object.keys(levelColors)) {
+            document.documentElement.style.removeProperty(prop)
+        }
+    })
+
+    it("returns a distinct colour per level and respects alpha", () => {
+        const colors = LOG_LEVELS.map(level => chartColorFromLevel(level))
+        expect(new Set(colors).size).toBe(LOG_LEVELS.length)
+        expect(colors.every(c => c !== null)).toBe(true)
+
+        expect(chartColorFromLevel("ERROR")).toBe("rgba(255,0,0,1)")
+        expect(chartColorFromLevel("ERROR", 0.5)).toBe("rgba(255,0,0,0.5)")
+    })
+
+    it("returns a defined fallback for an unknown level rather than throwing", () => {
+        expect(() => chartColorFromLevel("UNKNOWN" as any)).not.toThrow()
+        expect(chartColorFromLevel("UNKNOWN" as any)).toBeNull()
     })
 })

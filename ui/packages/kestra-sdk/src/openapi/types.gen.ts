@@ -5610,7 +5610,9 @@ export type RestartExecutionsByIdsData = {
     };
     query?: {
         /**
-         * If latest revision should be used
+         * Deprecated, will be removed in 2.2: creates new executions on the latest revision, use replay instead.
+         *
+         * @deprecated
          */
         latestRevision?: boolean | null;
     };
@@ -5658,7 +5660,9 @@ export type RestartExecutionsByQueryData = {
          */
         filters?: Array<QueryFilter> | null;
         /**
-         * If latest revision should be used
+         * Deprecated, will be removed in 2.2: creates new executions on the latest revision, use replay instead.
+         *
+         * @deprecated
          */
         latestRevision?: boolean | null;
     };
@@ -6772,6 +6776,56 @@ export type ReplayExecutionWithinputsResponses = {
 
 export type ReplayExecutionWithinputsResponse = ReplayExecutionWithinputsResponses[keyof ReplayExecutionWithinputsResponses];
 
+export type ValidateReplayExecutionData = {
+    body?: never;
+    path: {
+        /**
+         * the original execution id to clone
+         */
+        executionId: string;
+        tenant: string;
+    };
+    query?: {
+        /**
+         * The taskrun id
+         */
+        taskRunId?: string | null;
+        /**
+         * The flow revision to use for new execution
+         */
+        revision?: number | null;
+    };
+    url: '/api/v1/{tenant}/executions/{executionId}/actions/replay/validate';
+};
+
+export type ValidateReplayExecutionErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * if the execution cannot be replayed
+     */
+    409: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type ValidateReplayExecutionError = ValidateReplayExecutionErrors[keyof ValidateReplayExecutionErrors];
+
+export type ValidateReplayExecutionResponses = {
+    /**
+     * On success
+     */
+    200: unknown;
+};
+
 export type RestartExecutionData = {
     body?: never;
     path: {
@@ -6783,7 +6837,9 @@ export type RestartExecutionData = {
     };
     query?: {
         /**
-         * The flow revision to use for new execution
+         * Deprecated, will be removed in 2.2: creates a new execution on this revision, use replay instead.
+         *
+         * @deprecated
          */
         revision?: number | null;
     };
@@ -11504,7 +11560,7 @@ export type DeleteTriggersByQueryError = DeleteTriggersByQueryErrors[keyof Delet
 
 export type DeleteTriggersByQueryResponses = {
     /**
-     * Accepted
+     * Accepted. Triggers the flow still declares are not deleted, and totalItems is the number of orphan deletes queued.
      */
     202: ApiAsyncOperationResponse;
 };
@@ -11539,7 +11595,7 @@ export type DeleteTriggersByIdsError = DeleteTriggersByIdsErrors[keyof DeleteTri
 
 export type DeleteTriggersByIdsResponses = {
     /**
-     * Accepted
+     * Accepted. Triggers the flow still declares are not deleted, and totalItems is the number of orphan deletes queued.
      */
     202: ApiAsyncOperationResponse;
 };
@@ -11930,7 +11986,7 @@ export type DeleteTriggerErrors = {
      */
     403: ProblemDetail;
     /**
-     * If the trigger cannot be deleted
+     * If the flow still declares the trigger, or the scheduler failed to delete the trigger state
      */
     409: ProblemDetail;
     /**

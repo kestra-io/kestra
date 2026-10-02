@@ -286,6 +286,7 @@ public class State {
         CREATED,
         SUBMITTED,
         RUNNING,
+        PAUSING,
         PAUSED,
         RESTARTED,
         KILLING,
@@ -319,7 +320,7 @@ public class State {
         }
 
         public boolean isRunning() {
-            return this == Type.RUNNING || this == Type.KILLING;
+            return this == Type.RUNNING || this == Type.KILLING || this == Type.PAUSING;
         }
 
         public boolean onlyRunning() {

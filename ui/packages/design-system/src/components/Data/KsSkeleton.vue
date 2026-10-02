@@ -1,5 +1,5 @@
 <template>
-    <ElSkeleton v-bind="({...filteredProps(), ...$attrs} as any)">
+    <ElSkeleton v-bind="({...filteredProps(), ...$attrs} as SkeletonProps)">
         <template v-if="$slots.default" #default>
             <slot />
         </template>
@@ -10,7 +10,7 @@
 </template>
 
 <script setup lang="ts">
-    import {ElSkeleton} from "element-plus"
+    import {ElSkeleton, type SkeletonProps} from "element-plus"
     import {useFilteredProps} from "../../utils/filteredProps"
 
     defineOptions({inheritAttrs: false})

@@ -251,7 +251,7 @@
                         </code>
                     </template>
                     <template v-else-if="col.prop === 'trigger'">
-                        <TriggerAvatar :execution="scope.row" />
+                        <TriggerAvatar :execution="(scope.row as Execution)" />
                     </template>
                     <template v-else-if="col.prop === 'trigger.variables.executionId'">
                         <RouterLink
@@ -270,7 +270,7 @@
                         <span v-else>-</span>
                     </template>
                     <template v-else-if="cellComponents[col.prop]">
-                        <component :is="cellComponents[col.prop]" :execution="scope.row" />
+                        <component :is="cellComponents[col.prop]" :execution="(scope.row as Execution)" />
                     </template>
                 </template>
                 <template v-if="col.prop === 'taskRunList.taskId'" #header="scope">

@@ -67,7 +67,33 @@ export const effectiveEditorFontSize = computed(
     () => editorFontSizeOverride.value ?? MONO_BASE_PX[appFontSizeMode.value],
 )
 
-export const logsDensity = useStorage<LogDensity>("logsDensity", "normal")
-export const logsBodyClamp = useStorage<number>("logsBodyClamp", 0)
-export const logsPrettyJson = useStorage<boolean>("logsPrettyJson", true)
-export const logsExpandByDefault = useStorage<boolean>("logsExpandByDefault", false)
+export const logsDensity = useStorage<LogDensity>("logsDensity", "normal", localStorage, {
+    serializer: {
+        read: (v) => (v === "compact" || v === "normal" || v === "expanded" ? v : "normal"),
+        write: (v) => v,
+    },
+})
+
+export const logsBodyClamp = useStorage<number>("logsBodyClamp", 0, localStorage, {
+    serializer: {
+        read: (v) => {
+            const n = Number(v)
+            return Number.isFinite(n) ? n : 0
+        },
+        write: (v) => String(v),
+    },
+})
+
+export const logsPrettyJson = useStorage<boolean>("logsPrettyJson", true, localStorage, {
+    serializer: {
+        read: (v) => (v === "true" ? true : v === "false" ? false : true),
+        write: (v) => String(v),
+    },
+})
+
+export const logsExpandByDefault = useStorage<boolean>("logsExpandByDefault", false, localStorage, {
+    serializer: {
+        read: (v) => (v === "true" ? true : v === "false" ? false : false),
+        write: (v) => String(v),
+    },
+})

@@ -9,7 +9,7 @@ import "./apiMock"
 // sets __BROWSER__=false even in browser environments.
 // Suppress it so test output stays clean.
 const origWarn = console.warn.bind(console)
-console.warn = (...args: any[]) => {
+console.warn = (...args: unknown[]) => {
     if (typeof args[0] === "string" && args[0].includes("decodeEntities")) return
     origWarn(...args)
 }

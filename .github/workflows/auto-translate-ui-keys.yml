@@ -33,6 +33,7 @@ jobs:
   plan:
     name: Branches
     runs-on: ubuntu-latest
+    if: github.repository == 'kestra-io/kestra' || github.event_name == 'workflow_dispatch'
     outputs:
       branches: ${{ steps.list.outputs.branches }}
     steps:

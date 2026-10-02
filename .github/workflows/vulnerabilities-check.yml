@@ -15,6 +15,7 @@ jobs:
   dependency-check:
     name: Dependency Check
     runs-on: ubuntu-latest
+    if: github.repository == 'kestra-io/kestra'
     steps:
       # Checkout
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -53,6 +54,7 @@ jobs:
   develop-image-check:
     name: Image Check (develop)
     runs-on: ubuntu-latest
+    if: github.repository == 'kestra-io/kestra'
     permissions:
       contents: read
       security-events: write
@@ -76,8 +78,7 @@ jobs:
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
           image-ref: kestra/kestra:develop
-          format: 'template'
-          template: '@/contrib/sarif.tpl'
+          format: 'sarif'
           severity: 'CRITICAL,HIGH'
           output: 'trivy-results.sarif'
           skip-dirs: /app/plugins
@@ -91,6 +92,7 @@ jobs:
   latest-image-check:
     name: Image Check (latest)
     runs-on: ubuntu-latest
+    if: github.repository == 'kestra-io/kestra'
     permissions:
       contents: read
       security-events: write
@@ -114,7 +116,7 @@ jobs:
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
           image-ref: kestra/kestra:latest
-          format: table
+          format: 'sarif'
           skip-dirs: /app/plugins
           scanners: vuln
           severity: 'CRITICAL,HIGH'

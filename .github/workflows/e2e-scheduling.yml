@@ -20,6 +20,7 @@ concurrency:
 
 jobs:
   e2e:
+    if: github.repository == 'kestra-io/kestra'
     uses: kestra-io/actions/.github/workflows/kestra-oss-e2e-tests.yml@main
     secrets:
       OTLP_ENDPOINT: ${{ secrets.OTLP_ENDPOINT }}
@@ -30,7 +31,7 @@ jobs:
   otel-export-trace:
     name: OpenTelemetry - Export Trace
     runs-on: ubuntu-latest
-    if: always()
+    if: always() && github.repository == 'kestra-io/kestra'
     needs: [ e2e ]
     env:
       OTLP_ENDPOINT: ${{ secrets.OTLP_ENDPOINT }}

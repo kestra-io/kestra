@@ -95,7 +95,7 @@ export function useExecutionRoot() {
             follow()
             window.addEventListener("popstate", follow)
 
-            dependenciesCount.value = (await flowStore.loadDependencies({namespace: route.params.namespace as string, id: route.params.flowId as string, subtype: "FLOW"}, true)).count
+            dependenciesCount.value = (await flowStore.loadDependencies({namespace: route.params.namespace as string, id: route.params.flowId as string, subtype: "FLOW"}, true, {showMessageOnError: false}).catch(() => ({count: 0}))).count
             previousExecutionId.value = route.params.id as string
         })
 

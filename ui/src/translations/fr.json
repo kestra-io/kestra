@@ -1687,6 +1687,8 @@
     "execution_started": "L'exécution a commencé !",
     "execution_failed": "Échec de l'exécution !",
     "last error was": "La dernière erreur était",
+    "execution_paused": "Exécution mise en pause",
+    "execution_paused_description": "Cette exécution est en attente de validation et de reprise.",
     "active": "Actif",
     "flows imported": "Flux importés",
     "flows not imported": "Flows non importés",

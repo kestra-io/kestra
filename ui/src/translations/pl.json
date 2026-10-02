@@ -1687,6 +1687,8 @@
     "execution_started": "Egzekucja została uruchomiona!",
     "execution_failed": "Egzekucja nie powiodła się!",
     "last error was": "Ostatni błąd to",
+    "execution_paused": "Egzekucja wstrzymana",
+    "execution_paused_description": "Ta egzekucja oczekuje na walidację i wznowienie.",
     "active": "Aktywny",
     "flows imported": "Zaimportowano Flowy",
     "flows not imported": "Flowy niezaimportowane",

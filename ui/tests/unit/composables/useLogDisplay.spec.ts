@@ -178,8 +178,6 @@ describe("useLogDisplay", () => {
 
     it("has density padding for every density offered by the picker", async () => {
         const {DENSITY_PADDING} = await import("../../../src/composables/useLogDisplay")
-        const {default: settingsSource} = {default: null}
-        void settingsSource
         expect(Object.keys(DENSITY_PADDING).sort()).toEqual(["compact", "expanded", "normal"])
         expect(DENSITY_PADDING.compact).toBe("2px")
         expect(DENSITY_PADDING.normal).toBe("5px")

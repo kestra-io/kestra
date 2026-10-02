@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.TimeoutException;
 
@@ -31,6 +32,7 @@ import io.kestra.core.repositories.LogDataStoreInterface;
 import io.kestra.core.serializers.YamlParser;
 import io.kestra.core.services.ExecutionService;
 import io.kestra.core.services.FlowService;
+import io.kestra.core.services.TaskOutputService;
 import io.kestra.core.utils.Await;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.plugin.core.flow.Pause;
@@ -61,6 +63,9 @@ class ExecutionServiceTest {
 
     @Inject
     FlowService flowService;
+
+    @Inject
+    TaskOutputService taskOutputService;
 
     @Inject
     ExecutionRepositoryInterface executionRepository;
@@ -131,6 +136,8 @@ class ExecutionServiceTest {
         assertThat(restart.getId()).isNotEqualTo(execution.getId());
         assertThat(restart.getTaskRunList().get(2).getId()).isNotEqualTo(execution.getTaskRunList().get(2).getId());
         assertThat(restart.getLabels()).contains(new Label(Label.RESTARTED, "true"));
+
+        assertThat(taskOutputService.getOutputs(restart.getTaskRunList().get(0))).containsEntry("values", Map.of("value", "kept"));
     }
 
     @Test
@@ -511,6 +518,21 @@ class ExecutionServiceTest {
         assertThat(killed.getState().getCurrent()).isEqualTo(State.Type.KILLING);
         assertThat(killed.findTaskRunsByTaskId("pause").getFirst().getState().getCurrent()).isEqualTo(State.Type.KILLED);
         assertThat(killed.getState().getHistories()).hasSize(5);
+    }
+
+    @Test
+    @LoadFlows({ "flows/valids/minimal.yaml" })
+    void shouldKillExecutionSuspendedAtBreakpoint() {
+        Flow flow = flowRepository.findById(MAIN_TENANT, "io.kestra.tests", "minimal").orElseThrow();
+        Execution execution = Execution.newExecution(flow, Collections.emptyList())
+            .withBreakpoints(List.of(Breakpoint.of("date")))
+            .withTaskRunList(List.of(TaskRun.builder().id("taskrun").state(new State(State.Type.BREAKPOINT)).build()))
+            .withState(State.Type.BREAKPOINT);
+
+        Execution killed = executionService.kill(execution, flow);
+
+        assertThat(killed.getState().getCurrent()).isEqualTo(State.Type.KILLING);
+        assertThat(killed.getTaskRunList().getFirst().getState().getCurrent()).isEqualTo(State.Type.CREATED);
     }
 
     @Test

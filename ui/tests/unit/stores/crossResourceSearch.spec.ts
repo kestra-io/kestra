@@ -247,17 +247,14 @@ describe("useCrossResourceSearchStore", () => {
 
     it("clears an existing suggestion when the alternative query has no results", async () => {
         mockSearchFlowsBySourceCode
-            .mockResolvedValueOnce({
-                results: [{namespace: "ns", id: "flow", editable: true, matches: []}],
-            })
-            .mockResolvedValueOnce({
-                results: [{namespace: "ns", id: "flow", editable: true, matches: []}],
-            })
             .mockResolvedValueOnce({results: []})
+            .mockResolvedValueOnce({
+                results: [{namespace: "ns", id: "flow", editable: true, matches: []}],
+            })
             .mockResolvedValueOnce({results: []})
 
         const store = useCrossResourceSearchStore()
-        const initialGen = await store.search({
+        const gen = await store.search({
             types: ["flows"],
             query: "my-flow",
             ...flowFilters,
@@ -268,20 +265,14 @@ describe("useCrossResourceSearchStore", () => {
                 query: "my-flow",
                 ...flowFilters,
             },
-            initialGen,
+            gen,
         )
 
         expect(store.suggestedQuery).toBe("my_flow")
 
-        const gen = await store.search({
-            types: ["flows"],
-            query: "new-flow",
-            ...flowFilters,
-        })
-
         await store.searchFlowSuggestion(
             {
-                query: "new-flow",
+                query: "my-flow",
                 ...flowFilters,
             },
             gen,

@@ -355,8 +355,6 @@
     const didYouMeanTranslation = computed(() => splitTranslation(t, "source_search.did_you_mean", "suggestion"))
     const crossResourceSearchStore = useCrossResourceSearchStore()
     const suggestedQuery = computed(() => crossResourceSearchStore.suggestedQuery)
-
-
     const resultsRef = ref<InstanceType<typeof SourceSearchResults> | null>(null)
 
     const selection = ref<CrossSearchSelection | null>(null)
@@ -720,14 +718,10 @@
         const currentSearchPendingToken = searchPendingToken
 
         if (!query.value) {
-            if (currentSearchPendingToken === searchPendingToken) {
-                searchPending.value = false
-            }
+            searchPending.value = false
             crossResourceSearchStore.reset()
             return
         }
-
-        searchPending.value = true
 
         const currentQuery = query.value
 

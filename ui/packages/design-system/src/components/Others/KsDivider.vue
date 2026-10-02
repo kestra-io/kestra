@@ -1,5 +1,5 @@
 <template>
-    <ElDivider v-bind="({...filteredProps(), ...$attrs} as any)">
+    <ElDivider v-bind="{...filteredProps(), ...$attrs}">
         <template v-if="$slots.default" #default>
             <slot />
         </template>
@@ -7,16 +7,12 @@
 </template>
 
 <script setup lang="ts">
-    import {ElDivider} from "element-plus"
+    import {ElDivider, type DividerProps} from "element-plus"
     import {useFilteredProps} from "../../utils/filteredProps"
 
     defineOptions({inheritAttrs: false})
 
-    const props = defineProps<{
-        direction?: "horizontal" | "vertical"
-        contentPosition?: "left" | "center" | "right"
-        borderStyle?: string
-    }>()
+    const props = defineProps<DividerProps>()
 
     const filteredProps = useFilteredProps(props)
 

@@ -21,9 +21,13 @@ vi.mock("@kestra-io/kestra-sdk", () => ({
     }),
 }))
 
-const {followExecutionMock} = vi.hoisted(() => ({followExecutionMock: vi.fn()}))
+const {followExecutionMock, flowFromExecutionByIdMock} = vi.hoisted(() => ({
+    followExecutionMock: vi.fn(),
+    flowFromExecutionByIdMock: vi.fn(),
+}))
 vi.mock("@kestra-io/kestra-sdk/executions", () => ({
     followExecution: followExecutionMock,
+    flowFromExecutionById: flowFromExecutionByIdMock,
 }))
 
 // Build a fake SDK follow stream: the SDK fires `onSseEvent` for each event (exposing its id)
@@ -45,10 +49,64 @@ function fakeFollowStream(events: FakeEvent[]) {
 // per test via vi.resetModules() re-runs those singleton registrations and throws
 const {useExecutionsStore} = await import("../../../src/stores/executions")
 
+// A follow stream the test can release one event at a time. `onSseEvent` fires
+// immediately before the execution is yielded, matching the SDK.
+function controllableFollowStream() {
+    const queue: FakeEvent[] = []
+    let pending: ((result: IteratorResult<Record<string, unknown>>) => void) | undefined
+    let ended = false
+    let options: {onSseEvent?: (event: {id?: string}) => void} = {}
+
+    const deliver = () => {
+        if (!pending) return
+        if (queue.length === 0) {
+            if (!ended) return
+            const resolve = pending
+            pending = undefined
+            resolve({value: undefined, done: true})
+            return
+        }
+        const event = queue.shift()!
+        options.onSseEvent?.({id: event.sseId})
+        const resolve = pending
+        pending = undefined
+        resolve({value: event.execution, done: false})
+    }
+
+    followExecutionMock.mockImplementation((_params: unknown, nextOptions: {onSseEvent?: (event: {id?: string}) => void}) => {
+        options = nextOptions
+        return Promise.resolve({
+            stream: {
+                [Symbol.asyncIterator]() {
+                    return this
+                },
+                next() {
+                    return new Promise<IteratorResult<Record<string, unknown>>>((resolve) => {
+                        pending = resolve
+                        deliver()
+                    })
+                },
+            },
+        })
+    })
+
+    return {
+        push(event: FakeEvent) {
+            queue.push(event)
+            deliver()
+        },
+        end() {
+            ended = true
+            deliver()
+        },
+    }
+}
+
 describe("executions store follow stream", () => {
     beforeEach(() => {
         setActivePinia(createPinia())
         followExecutionMock.mockReset()
+        flowFromExecutionByIdMock.mockReset()
     })
 
     it("skips the start stub, forwards real events, and ends without error on completion", async () => {
@@ -120,5 +178,59 @@ describe("executions store follow stream", () => {
 
         await vi.waitFor(() => expect(aborted).toBe(true))
         expect(onEnd).not.toHaveBeenCalled()
+    })
+
+    it("does not rewind a finished execution when an earlier flow request resolves late", async () => {
+        // The route guard loads the execution, not the flow, so the first SSE event
+        // always starts /flow. A short run can reach SUCCESS before that request returns.
+        const flowRequests: Array<{resolve: (flow: unknown) => void; promise: Promise<unknown>}> = []
+        flowFromExecutionByIdMock.mockImplementation(() => {
+            let resolve: (flow: unknown) => void = () => {}
+            const promise = new Promise((done) => {
+                resolve = done
+            })
+            flowRequests.push({resolve, promise})
+            return promise
+        })
+
+        const stream = controllableFollowStream()
+        const store = useExecutionsStore()
+        store.followExecution({id: "exec-1"}, (key) => key)
+        await vi.waitFor(() => expect(followExecutionMock).toHaveBeenCalled())
+
+        const running = {
+            id: "exec-1",
+            namespace: "ns",
+            flowId: "flow",
+            flowRevision: 1,
+            state: {current: "RUNNING"},
+        }
+        const success = {
+            ...running,
+            state: {current: "SUCCESS"},
+        }
+
+        stream.push({sseId: "progress", execution: running})
+        await vi.waitFor(() => expect(store.execution?.state?.current).toBe("RUNNING"))
+
+        stream.push({sseId: "end", execution: success})
+        stream.end()
+        await vi.waitFor(() => expect(store.execution?.state?.current).toBe("SUCCESS"))
+
+        expect(flowRequests.length).toBeGreaterThan(0)
+        const earliest = flowRequests[0]
+        const flow = {id: "flow", namespace: "ns", revision: 1}
+        for (const request of flowRequests.slice(1)) {
+            request.resolve(flow)
+            await request.promise
+        }
+
+        earliest.resolve(flow)
+        await earliest.promise
+        // Let that response land. This is the moment the page used to flip back to RUNNING.
+        await new Promise((resolve) => setTimeout(resolve, 0))
+
+        expect(store.execution?.state?.current).toBe("SUCCESS")
+        expect(store.flow).toMatchObject(flow)
     })
 })

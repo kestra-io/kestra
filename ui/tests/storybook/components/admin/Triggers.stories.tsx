@@ -20,8 +20,8 @@ vi.mock("@kestra-io/kestra-sdk/plugins", () => ({
 import type {Meta, StoryFn, StoryObj} from "@storybook/vue3-vite";
 import Triggers from "../../../../src/components/admin/triggers/Triggers.vue";
 import {vueRouter} from "storybook-vue3-router";
-import {setMockClient, type ApiTriggerAndState} from "@kestra-io/kestra-sdk"
-import {mockClientFallback} from "../../../../.storybook/apiMock";
+import {setMockClient, type ApiTriggerAndState, type AxiosLikeClient} from "@kestra-io/kestra-sdk"
+import {mockClientFallback, mockResponse} from "../../../../.storybook/apiMock";
 
 const meta: Meta<typeof Triggers> = {
     title: "Components/Admin/Triggers",
@@ -124,30 +124,28 @@ const Template: StoryFn<{triggers: ApiTriggerAndState[]}> = (args) => ({
     setup() {
         mockState.triggers = args.triggers
 
-        const store: any = {}
-        store.get = async function (uri: string) {
+        const store: Partial<AxiosLikeClient> = {}
+        store.get = async function<T>(uri: string) {
             if (uri.includes("/distinct-namespaces")) {
-                return {
-                    data: [
-                        "io.kestra.company",
-                        "company.team",
-                        "io.kestra.plugin",
-                        "io.kestra",
-                    ]
-                }
+                return mockResponse<T>([
+                    "io.kestra.company",
+                    "company.team",
+                    "io.kestra.plugin",
+                    "io.kestra",
+                ])
             }
 
             // Anything this story doesn't answer itself falls back to the shared table in
             // .storybook/apiMock.ts, which reports the route if nothing there covers it either.
-            return mockClientFallback("GET", uri)
+            return mockClientFallback<T>("GET", uri)
         }
 
-        store.post = async function (uri: string, data?: unknown) {
-            return mockClientFallback("POST", uri, data)
+        store.post = async function<T>(uri: string, data?: unknown) {
+            return mockClientFallback<T>("POST", uri, data)
         }
 
-        store.put = async function (uri: string, data?: unknown) {
-            return mockClientFallback("PUT", uri, data)
+        store.put = async function<T>(uri: string, data?: unknown) {
+            return mockClientFallback<T>("PUT", uri, data)
         }
 
         setMockClient(store);

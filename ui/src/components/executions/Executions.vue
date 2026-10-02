@@ -396,12 +396,9 @@
             <KsButton @click="isOpenRestartModal = false">
                 {{ $t('cancel') }}
             </KsButton>
-            <KsButton @click="restartExecutions(true)">
-                {{ $t('restart latest revision') }}
-            </KsButton>
             <KsButton
                 type="primary"
-                @click="restartExecutions(false)"
+                @click="restartExecutions"
             >
                 {{ $t('ok') }}
             </KsButton>
@@ -1074,14 +1071,13 @@
         )
     }
 
-    const restartExecutions = (latestRevision: boolean) => {
+    const restartExecutions = () => {
         isOpenRestartModal.value = false
 
         genericConfirmCallback(
             "queryRestartExecution",
             "bulkRestartExecution",
             "executions restarted",
-            {latestRevision: latestRevision},
         )
     }
 

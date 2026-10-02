@@ -4,7 +4,6 @@ import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
-import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -29,7 +28,6 @@ public class ValidateConstraintViolation {
     private List<String> deprecationPaths;
     private List<String> warnings;
     private List<String> infos;
-    @Schema(description = "One entry per error, empty when the source is valid.")
     private List<ValidationError> errors;
 
     public List<ValidationError> getErrors() {

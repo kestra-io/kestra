@@ -2410,9 +2410,6 @@ export type TriggerType = 'SCHEDULE' | 'POLLING' | 'REALTIME';
 export type Type = 'STRING' | 'SELECT' | 'INT' | 'FLOAT' | 'BOOL' | 'DATETIME' | 'DATE' | 'TIME' | 'DURATION' | 'FILE' | 'JSON' | 'ION' | 'URI' | 'SECRET' | 'ARRAY' | 'MULTISELECT' | 'YAML' | 'EMAIL' | 'FORM' | 'REUSABLE_INPUTS';
 
 export type ValidateConstraintViolation = {
-    /**
-     * One entry per error, empty when the source is valid.
-     */
     errors?: Array<ValidationError>;
     index: number;
     filename?: string;

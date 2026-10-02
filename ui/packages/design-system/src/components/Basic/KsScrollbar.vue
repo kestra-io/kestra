@@ -1,5 +1,5 @@
 <template>
-    <ElScrollbar ref="scrollbarRef" v-bind="({...filteredProps(), ...$attrs} as any)">
+    <ElScrollbar ref="scrollbarRef" v-bind="({...filteredProps(), ...$attrs} as ScrollbarProps)">
         <template v-if="$slots.default" #default>
             <slot />
         </template>
@@ -8,7 +8,7 @@
 
 <script setup lang="ts">
     import {useTemplateRef} from "vue"
-    import {ElScrollbar} from "element-plus"
+    import {ElScrollbar, type ScrollbarInstance, type ScrollbarProps} from "element-plus"
     import {useFilteredProps} from "../../utils/filteredProps"
 
     defineOptions({inheritAttrs: false})
@@ -22,12 +22,22 @@
         default?(): unknown
     }>()
 
-    const scrollbarRef = useTemplateRef<InstanceType<typeof ElScrollbar>>("scrollbarRef")
+    const scrollbarRef = useTemplateRef<ScrollbarInstance>("scrollbarRef")
 
     const filteredProps = useFilteredProps(props)
 
+    function scrollTo(xCord: number, yCord?: number): void
+    function scrollTo(options: ScrollToOptions): void
+    function scrollTo(arg: number | ScrollToOptions, yCord?: number): void {
+        if (typeof arg === "number") {
+            scrollbarRef.value?.scrollTo(arg, yCord)
+        } else {
+            scrollbarRef.value?.scrollTo(arg)
+        }
+    }
+
     defineExpose({
-        scrollTo: (...args: any[]) => (scrollbarRef.value?.scrollTo as any)?.(...args),
+        scrollTo,
         setScrollTop: (top: number) => scrollbarRef.value?.setScrollTop(top),
         setScrollLeft: (left: number) => scrollbarRef.value?.setScrollLeft(left),
         update: () => scrollbarRef.value?.update(),

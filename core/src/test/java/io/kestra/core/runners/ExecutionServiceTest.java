@@ -514,6 +514,21 @@ class ExecutionServiceTest {
     }
 
     @Test
+    @LoadFlows({ "flows/valids/minimal.yaml" })
+    void shouldKillExecutionSuspendedAtBreakpoint() {
+        Flow flow = flowRepository.findById(MAIN_TENANT, "io.kestra.tests", "minimal").orElseThrow();
+        Execution execution = Execution.newExecution(flow, Collections.emptyList())
+            .withBreakpoints(List.of(Breakpoint.of("date")))
+            .withTaskRunList(List.of(TaskRun.builder().id("taskrun").state(new State(State.Type.BREAKPOINT)).build()))
+            .withState(State.Type.BREAKPOINT);
+
+        Execution killed = executionService.kill(execution, flow);
+
+        assertThat(killed.getState().getCurrent()).isEqualTo(State.Type.KILLING);
+        assertThat(killed.getTaskRunList().getFirst().getState().getCurrent()).isEqualTo(State.Type.CREATED);
+    }
+
+    @Test
     @LoadFlows({ "flows/valids/pause-test.yaml" })
     void shouldNotRestartPausedExecution() throws Exception {
         Execution execution = runnerUtils.runOneUntilPaused(MAIN_TENANT, "io.kestra.tests", "pause-test");

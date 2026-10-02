@@ -328,7 +328,6 @@
     "start date": "Data de início",
     "end date": "Data de término",
     "restart": "Reiniciar",
-    "restart latest revision": "Reiniciar última revisão",
     "restart tooltip": "Reiniciar a execução a partir da task <code>{state}</code>",
     "restarted": "A execução foi reiniciada",
     "restart confirm": "Tem certeza de que deseja reiniciar a execução <code>{id}</code>?",

@@ -2,12 +2,17 @@ package io.kestra.plugin.core.http;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.stream.Stream;
 import java.util.zip.GZIPOutputStream;
 
 import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import com.google.common.collect.ImmutableMap;
 
@@ -25,6 +30,7 @@ import io.micronaut.http.HttpHeaders;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.annotation.Controller;
 import io.micronaut.http.annotation.Get;
+import io.micronaut.http.annotation.QueryValue;
 import io.micronaut.runtime.server.EmbeddedServer;
 import jakarta.inject.Inject;
 import reactor.core.publisher.Flux;
@@ -301,42 +307,32 @@ class DownloadTest {
         assertThat(output.getUri().toString()).endsWith("file.with%5B%5Dbrackets.txt");
     }
 
-    @Test
-    void contentDispositionFilenameStarAscii() throws Exception {
+    @ParameterizedTest
+    @MethodSource("filenameStarHeaders")
+    void shouldStoreDecodedFilenameWhenContentDispositionHasFilenameStar(String contentDisposition, String expectedFilename) throws Exception {
         EmbeddedServer embeddedServer = applicationContext.getBean(EmbeddedServer.class);
         embeddedServer.start();
 
         Download task = Download.builder()
             .id(DownloadTest.class.getSimpleName())
             .type(DownloadTest.class.getName())
-            .uri(Property.ofValue(embeddedServer.getURI() + "/content-disposition-filename-star-ascii"))
+            .uri(Property.ofValue(embeddedServer.getURI() + "/content-disposition-raw?header=" + URLEncoder.encode(contentDisposition, StandardCharsets.UTF_8)))
             .build();
 
         RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of());
 
         Download.Output output = task.run(runContext);
 
-        // filename*=UTF-8''report.csv must produce report.csv, not eport.cs
-        assertThat(output.getUri().toString()).endsWith("report.csv");
+        assertThat(output.getUri().toString()).endsWith("/" + expectedFilename);
     }
 
-    @Test
-    void contentDispositionFilenameStarUnicode() throws Exception {
-        EmbeddedServer embeddedServer = applicationContext.getBean(EmbeddedServer.class);
-        embeddedServer.start();
-
-        Download task = Download.builder()
-            .id(DownloadTest.class.getSimpleName())
-            .type(DownloadTest.class.getName())
-            .uri(Property.ofValue(embeddedServer.getURI() + "/content-disposition-filename-star-unicode"))
-            .build();
-
-        RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of());
-
-        Download.Output output = task.run(runContext);
-
-        // filename*=UTF-8''caf%C3%A9.csv must decode to café.csv (spaces become '+' internally)
-        assertThat(output.getUri().toString()).endsWith("caf%C3%A9.csv");
+    static Stream<Arguments> filenameStarHeaders() {
+        return Stream.of(
+            Arguments.of("attachment; filename*=UTF-8''report.csv", "report.csv"),
+            Arguments.of("attachment; filename*=UTF-8''caf%C3%A9.csv", "café.csv"),
+            Arguments.of("attachment; filename*=UTF-8''caf%C3%A9.csv; filename=\"cafe.csv\"", "café.csv"),
+            Arguments.of("attachment; filename=\"fallback.csv\"; filename*=UTF-8''100%.csv", "fallback.csv")
+        );
     }
 
     @Controller()
@@ -412,16 +408,10 @@ class DownloadTest {
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"file.with[]brackets.txt\"");
         }
 
-        @Get("content-disposition-filename-star-ascii")
-        public HttpResponse<byte[]> contentDispositionFilenameStarAscii() {
+        @Get("content-disposition-raw")
+        public HttpResponse<byte[]> contentDispositionRaw(@QueryValue String header) {
             return HttpResponse.ok("id,value\n1,example\n".getBytes())
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename*=UTF-8''report.csv");
-        }
-
-        @Get("content-disposition-filename-star-unicode")
-        public HttpResponse<byte[]> contentDispositionFilenameStarUnicode() {
-            return HttpResponse.ok("id,value\n1,example\n".getBytes())
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename*=UTF-8''caf%C3%A9.csv");
+                .header(HttpHeaders.CONTENT_DISPOSITION, header);
         }
     }
 }

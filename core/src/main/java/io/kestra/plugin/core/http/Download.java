@@ -6,8 +6,6 @@ import java.io.FileOutputStream;
 import java.net.URI;
 import java.net.URLDecoder;
 import java.nio.charset.Charset;
-import java.nio.charset.IllegalCharsetNameException;
-import java.nio.charset.UnsupportedCharsetException;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
@@ -166,49 +164,55 @@ public class Download extends AbstractHttp implements RunnableTask<Download.Outp
             // Content-Disposition parts are separated by ';'
             String[] parts = contentDisposition.split(";");
             String filename = null;
+            String extendedFilename = null;
             for (String part : parts) {
-                String stripped = part.strip();
-                if (stripped.startsWith("filename*")) {
-                    // RFC 5987: filename* uses the format <charset>'<language>'<encoded-value>
-                    // Extract charset and encoded value, then percent-decode with that charset.
-                    // The parameter value starts immediately after the '=' sign.
-                    String value = stripped.substring(stripped.indexOf('=') + 1).strip();
-                    int firstApos = value.indexOf('\'');
-                    if (firstApos >= 0) {
-                        String charsetName = value.substring(0, firstApos);
-                        int secondApos = value.indexOf('\'', firstApos + 1);
-                        String encodedFilename = secondApos >= 0
-                            ? value.substring(secondApos + 1)
-                            : value.substring(firstApos + 1);
-                        try {
-                            Charset charset = Charset.forName(charsetName.isEmpty() ? "UTF-8" : charsetName);
-                            filename = URLDecoder.decode(encodedFilename, charset);
-                        } catch (IllegalCharsetNameException | UnsupportedCharsetException ex) {
-                            // Fall back to raw encoded value if charset is unrecognisable
-                            filename = encodedFilename;
-                        }
-                    } else {
-                        // No apostrophe delimiter found; treat the whole value as the filename
-                        filename = value;
-                    }
-                } else if (stripped.startsWith("filename")) {
-                    filename = stripped.substring(stripped.lastIndexOf('=') + 1);
+                int separator = part.indexOf('=');
+                if (separator < 0) {
+                    continue;
+                }
+                String name = part.substring(0, separator).strip();
+                String value = unquote(part.substring(separator + 1).strip());
+                if ("filename*".equalsIgnoreCase(name)) {
+                    extendedFilename = decodeExtendedValue(value);
+                } else if ("filename".equalsIgnoreCase(name)) {
+                    filename = value;
                 }
             }
-            // filename may be in double-quotes
-            if (filename != null && !filename.isEmpty() && filename.charAt(0) == '"') {
-                filename = filename.substring(1, filename.length() - 1);
+            // RFC 6266 section 4.3: filename* wins over filename whatever their order.
+            if (extendedFilename != null) {
+                filename = extendedFilename;
             }
-            // if filename contains a path: use only the last part to avoid security issues due to host file overwriting
-            if (filename != null && filename.contains(File.separator)) {
-                filename = filename.substring(filename.lastIndexOf(File.separator) + 1);
+            if (filename != null) {
+                filename = filename.substring(Math.max(filename.lastIndexOf('/'), filename.lastIndexOf('\\')) + 1);
             }
-            return filename;
+            return filename == null || filename.isBlank() || ".".equals(filename) || "..".equals(filename) ? null : filename;
         } catch (Exception e) {
             // if we cannot parse the Content-Disposition header, we return null
             runContext.logger().debug("Unable to parse the Content-Disposition header: {}", contentDisposition, e);
             return null;
         }
+    }
+
+    private static String decodeExtendedValue(String value) {
+        int firstQuote = value.indexOf('\'');
+        int secondQuote = firstQuote < 0 ? -1 : value.indexOf('\'', firstQuote + 1);
+        if (secondQuote < 0) {
+            return null;
+        }
+        try {
+            Charset charset = Charset.forName(value.substring(0, firstQuote));
+            // URLDecoder is a form decoder: keep a literal '+' instead of turning it into a space.
+            return URLDecoder.decode(value.substring(secondQuote + 1).replace("+", "%2B"), charset);
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
+    }
+
+    private static String unquote(String value) {
+        if (value.length() >= 2 && value.charAt(0) == '"' && value.charAt(value.length() - 1) == '"') {
+            return value.substring(1, value.length() - 1);
+        }
+        return value;
     }
 
     private String filenameFromURI(URI uri) {

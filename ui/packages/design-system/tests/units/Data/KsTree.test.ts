@@ -1,6 +1,7 @@
 import {describe, test, expect} from "vitest"
 import {h} from "vue"
 import {mount} from "@vue/test-utils"
+import {type ComponentExposed} from "vue-component-type-helpers"
 import KestraDesignSystem from "../../../src/index"
 import KsTree from "../../../src/components/Data/KsTree.vue"
 
@@ -24,7 +25,7 @@ describe("KsTree", () => {
             props: {data: TREE_DATA},
             global: globalConfig,
         })
-        expect(typeof (wrapper.vm as InstanceType<typeof KsTree>).getNode).toBe("function")
+        expect(typeof (wrapper.vm as ComponentExposed<typeof KsTree>).getNode).toBe("function")
     })
 
     test("exposes getCheckedNodes method", () => {
@@ -32,7 +33,7 @@ describe("KsTree", () => {
             props: {data: TREE_DATA},
             global: globalConfig,
         })
-        expect(typeof (wrapper.vm as InstanceType<typeof KsTree>).getCheckedNodes).toBe("function")
+        expect(typeof (wrapper.vm as ComponentExposed<typeof KsTree>).getCheckedNodes).toBe("function")
     })
 
     test("exposes setCurrentKey method", () => {
@@ -40,7 +41,7 @@ describe("KsTree", () => {
             props: {data: TREE_DATA},
             global: globalConfig,
         })
-        expect(typeof (wrapper.vm as InstanceType<typeof KsTree>).setCurrentKey).toBe("function")
+        expect(typeof (wrapper.vm as ComponentExposed<typeof KsTree>).setCurrentKey).toBe("function")
     })
 
     test("renders tree nodes with default-expand-all", () => {
@@ -63,7 +64,7 @@ describe("KsTree", () => {
                 props: {label: "label", isLeaf: "leaf"},
                 load: (_node: unknown, resolve: (data: typeof file[]) => void) => resolve([file]),
             },
-            slots: {default: ({data}: {data: typeof file}) => h("span", {class: "item"}, data.label)},
+            slots: {default: ({data}: {data: Record<string | number | symbol, unknown>}) => h("span", {class: "item"}, String(data.label))},
             global: globalConfig,
         })
         const item = wrapper.find(".item")

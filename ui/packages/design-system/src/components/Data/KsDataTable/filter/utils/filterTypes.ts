@@ -96,6 +96,9 @@ export interface FilterKeyConfig {
     comparatorLabels?: Partial<Record<Comparators, string>>;
     /** When `true`, renders colored status tags in multi-select value display. */
     colored?: boolean;
+    /** Overrides the leading unfiltered option of a `radio` filter, by default "Default" / "Show default". */
+    allLabel?: string;
+    allDescription?: string;
 }
 
 export interface FilterValue {

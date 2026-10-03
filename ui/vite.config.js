@@ -79,12 +79,14 @@ export default defineConfig(({mode}) => {
             },
         },
         resolve: {
-            preserveSymlinks: true,
-            dedupe: ["echarts", "vue-echarts", "dayjs", "vue", "vue-router", "vue-i18n", "@vueuse/core", "pinia", "@vue-flow/core", "@vue-flow/background", "@vue-flow/controls"],
-            alias: [
-                {find: "override", replacement: path.resolve(__dirname, "src/override/")},
-            ],
-        },
+    preserveSymlinks: true,
+    dedupe: ["echarts", "vue-echarts", "dayjs", "vue", "vue-router", "vue-i18n", "@vueuse/core", "pinia", "@vue-flow/core"],
+    alias: [
+      {find: "override", replacement: path.resolve(__dirname, "src/override/")},
+      {find: /^@kestra-io\/kestra-sdk(?:\/(.*))?$/, replacement: path.resolve(__dirname, "src/utils/emptyMock.ts")},
+      {find: "@kestra-io/kestra-sdk", replacement: path.resolve(__dirname, "src/utils/emptyMock.ts")}
+    ]
+  },
         plugins: [
             symlinkAlias(__dirname),
             loaderFragment(),

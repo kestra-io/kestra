@@ -501,9 +501,8 @@ public class DefaultRunContext extends RunContext {
         }
 
         try {
-            // FIXME there seems to be a bug as the metric name is never used
-            metricEntry.register(this.meterRegistry, this.metricPrefix(), metricEntry.getDescription(), this.metricsTags());
-        } catch (IllegalArgumentException e) {
+            // FIXME there seems to be a bug as the metric name is never used 
+              this.meterRegistry.register(metricEntry, metricsTags(), metricPrefix());
             // https://github.com/micrometer-metrics/micrometer/issues/877
             // https://github.com/micrometer-metrics/micrometer/issues/2399
             if (!e.getMessage().contains("Collector already registered")) {

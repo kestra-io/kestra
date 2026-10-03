@@ -30,7 +30,6 @@ import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextInitializer;
 import io.kestra.core.runners.RunContextLogger;
 import io.kestra.core.runners.WorkerTrigger;
-import io.kestra.core.server.ServerConfig;
 import io.kestra.core.trace.Tracer;
 import io.kestra.core.utils.Logs;
 import io.kestra.core.worker.models.WorkerTriggerResult;
@@ -52,7 +51,6 @@ public class WorkerTriggerProcessor extends AbstractWorkerJobProcessor<WorkerTri
     private final WorkerQueue<LogEntry> workerLogQueue;
     private final WorkerQueue<WorkerTriggerResult> workerTriggerResultQueue;
     private final RunContextInitializer runContextInitializer;
-    private final ServerConfig serverConfig;
     private final Duration pollingTriggerTimeout;
 
     // Whoever gets here first reports the trigger: the evaluation, or the worker giving up on it.
@@ -67,13 +65,11 @@ public class WorkerTriggerProcessor extends AbstractWorkerJobProcessor<WorkerTri
         WorkerQueue<LogEntry> workerLogQueue,
         WorkerQueue<WorkerTriggerResult> workerTriggerResultQueue,
         ExecutionKilledManager executionKilledManager,
-        ServerConfig serverConfig,
         Duration pollingTriggerTimeout) {
         super(workerGroup, metricRegistry, workerSecurityService, tracer, executionKilledManager);
         this.workerLogQueue = workerLogQueue;
         this.workerTriggerResultQueue = workerTriggerResultQueue;
         this.runContextInitializer = runContextInitializer;
-        this.serverConfig = serverConfig;
         this.pollingTriggerTimeout = pollingTriggerTimeout;
     }
 
@@ -122,12 +118,7 @@ public class WorkerTriggerProcessor extends AbstractWorkerJobProcessor<WorkerTri
                         io.kestra.core.models.flows.State.Type state = callJob(workerCallable);
 
                         // Lost against onTimeout(): reporting here would be a second result for one evaluation.
-                        // A force-stop must not report either: the result deletes the running entry, and the
-                        // liveness coordinator then has nothing to turn into TriggerWorkerLost. NEVER still
-                        // reports, because that strategy is not reclaimed and the trigger would stay locked.
-                        if (deferResultAfterShutdownInterrupt()) {
-                            reported.compareAndSet(false, true);
-                        } else if (reported.compareAndSet(false, true)) {
+                        if (reported.compareAndSet(false, true)) {
                             Throwable exception = workerCallable.getException();
                             if (exception != null || !state.equals(SUCCESS)) {
                                 this.handleTriggerError(workerTrigger, triggerContext, conditionContext, exception);
@@ -149,11 +140,8 @@ public class WorkerTriggerProcessor extends AbstractWorkerJobProcessor<WorkerTri
                         );
                         io.kestra.core.models.flows.State.Type state = callJob(workerCallable);
 
-                        // Same as a polling trigger: a force-stop leaves the running entry for TriggerWorkerLost.
-                        if (deferResultAfterShutdownInterrupt()) {
-                            reported.compareAndSet(false, true);
-                        } else if (workerCallable.getException() != null || !state.equals(SUCCESS)) {
-                            // here the realtime trigger fail before the publisher being call so we create a fail execution
+                        // here the realtime trigger fail before the publisher being call so we create a fail execution
+                        if (workerCallable.getException() != null || !state.equals(SUCCESS)) {
                             this.handleRealtimeTriggerError(workerTrigger, triggerContext, conditionContext, runContext, workerCallable.getException());
                         } else if (!workerCallable.isErrorReported()) {
                             // The publisher terminated cleanly (stream ended, stop or kill): send a terminal
@@ -163,9 +151,7 @@ public class WorkerTriggerProcessor extends AbstractWorkerJobProcessor<WorkerTri
                         }
                     }
                 } catch (Exception e) {
-                    if (deferResultAfterShutdownInterrupt()) {
-                        reported.compareAndSet(false, true);
-                    } else if (reported.compareAndSet(false, true)) {
+                    if (reported.compareAndSet(false, true)) {
                         this.handleTriggerError(workerTrigger, triggerContext, conditionContext, e);
                     }
                 } finally {
@@ -206,11 +192,6 @@ public class WorkerTriggerProcessor extends AbstractWorkerJobProcessor<WorkerTri
      */
     @Override
     public void onTimeout(WorkerTrigger workerTrigger) {
-        if (deferResultAfterShutdownInterrupt()) {
-            // The force-stop already owns this trigger. A timeout result would delete its running entry.
-            reported.compareAndSet(false, true);
-            return;
-        }
         if (!reported.compareAndSet(false, true)) {
             // The evaluation returned just as the deadline passed and reported itself.
             return;
@@ -231,20 +212,7 @@ public class WorkerTriggerProcessor extends AbstractWorkerJobProcessor<WorkerTri
         killCurrentCallable();
     }
 
-    /**
-     * Whether this evaluation was torn down by a force-stop whose jobs the coordinator will reclaim.
-     * Publishing a result would delete the running entry before that reclaim, so the scheduler would
-     * see a finished trigger instead of {@code TriggerWorkerLost}.
-     */
-    private boolean deferResultAfterShutdownInterrupt() {
-        return isShutdownInterrupted() && serverConfig.workerTaskRestartStrategy().isRestartable();
-    }
-
     private void handleTriggerError(WorkerTrigger workerTrigger, TriggerContext triggerContext, ConditionContext conditionContext, Throwable e) {
-        if (deferResultAfterShutdownInterrupt()) {
-            reported.compareAndSet(false, true);
-            return;
-        }
         String[] tags = metricRegistry.tags(workerTrigger, workerGroup);
 
         metricRegistry
@@ -295,10 +263,6 @@ public class WorkerTriggerProcessor extends AbstractWorkerJobProcessor<WorkerTri
     }
 
     private void publishTriggerExecution(WorkerTrigger workerTrigger, Optional<TriggerEvaluationResult> evaluate) {
-        if (deferResultAfterShutdownInterrupt()) {
-            reported.compareAndSet(false, true);
-            return;
-        }
         metricRegistry
             .counter(
                 MetricRegistry.METRIC_WORKER_TRIGGER_EXECUTION_COUNT,

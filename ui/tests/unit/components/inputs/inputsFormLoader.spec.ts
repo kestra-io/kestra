@@ -5,7 +5,8 @@ import {i18nMount} from "../../i18nMount"
 import {createPinia, setActivePinia} from "pinia"
 import KestraDesignSystem from "@kestra-io/design-system"
 import InputsForm from "../../../../src/components/inputs/InputsForm.vue"
-import {useExecutionsStore} from "../../../../src/stores/executions"
+import {useExecutionsStore, type InputMetaData} from "../../../../src/stores/executions"
+import type {Flow} from "../../../../src/stores/flow"
 
 vi.mock("vue-router", () => ({
     useRoute: () => ({query: {}, params: {}, name: "flow"}),
@@ -16,14 +17,14 @@ const globalConfig = {
     plugins: [KestraDesignSystem],
 }
 
-const flow = {namespace: "io.kestra.tests", id: "my_flow"} as any
-const initialInputs = [{id: "region", type: "SELECT", values: ["a", "b"]}] as any
+const flow = {namespace: "io.kestra.tests", id: "my_flow"} as Flow
+const initialInputs = [{id: "region", type: "SELECT", values: ["a", "b"]}] as InputMetaData[]
 
-function mountForm(inputs: any = initialInputs) {
+function mountForm(inputs: (InputMetaData | Record<string, unknown>)[] = initialInputs) {
     return i18nMount(InputsForm, {
         global: globalConfig,
         shallow: true,
-        props: {flow, initialInputs: inputs},
+        props: {flow, initialInputs: inputs as InputMetaData[]},
     })
 }
 

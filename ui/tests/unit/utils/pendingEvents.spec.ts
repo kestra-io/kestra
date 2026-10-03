@@ -3,7 +3,7 @@ import {PendingEventsBuffer} from "../../../src/utils/analytics/pendingEvents"
 
 describe("PendingEventsBuffer", () => {
     it("prunes by age and respects max size", () => {
-        const buffer = new PendingEventsBuffer<string, Record<string, any>>({
+        const buffer = new PendingEventsBuffer<string, Record<string, unknown>>({
             maxItems: 2,
             maxAgeMs: 1000,
         })
@@ -20,7 +20,7 @@ describe("PendingEventsBuffer", () => {
     })
 
     it("clears items", () => {
-        const buffer = new PendingEventsBuffer<number, Record<string, any>>({
+        const buffer = new PendingEventsBuffer<number, Record<string, unknown>>({
             maxItems: 3,
             maxAgeMs: 1000,
         })

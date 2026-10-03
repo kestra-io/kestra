@@ -21,7 +21,6 @@ import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.runners.RunContext;
-import io.kestra.core.storages.StorageContext;
 import io.kestra.core.utils.TypeConverter;
 
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -190,8 +189,8 @@ public class Download extends AbstractHttp implements RunnableTask<Download.Outp
     }
 
     private String filenameFromURI(URI uri) {
-        String path = StorageContext.isKestraScheme(uri) ? StorageContext.logicalPath(uri) : uri.getPath();
-        if (path == null || path.isEmpty()) {
+        String path = uri.getPath();
+        if (path == null) {
             return null;
         }
 
@@ -209,7 +208,7 @@ public class Download extends AbstractHttp implements RunnableTask<Download.Outp
     public static class Output implements io.kestra.core.models.tasks.Output {
         @Schema(
             title = "The URI of the downloaded file in Kestra's internal storage.",
-            description = "This is an internal Kestra storage URI (e.g. `kestra://namespace/flow/executions/.../filename`), not an HTTP URL. " +
+            description = "This is an internal Kestra storage URI (e.g. `kestra:///namespace/flow/executions/.../filename`), not an HTTP URL. " +
                 "The actual storage backend (local filesystem, S3, GCS, Azure Blob, etc.) is determined by your Kestra configuration. " +
                 "Pass this URI to subsequent tasks using `{{ outputs.<task_id>.uri }}`."
         )

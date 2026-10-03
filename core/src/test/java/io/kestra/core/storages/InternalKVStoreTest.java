@@ -126,7 +126,7 @@ class InternalKVStoreTest {
 
         kv.put(TEST_KV_KEY, new KVValueAndMetadata(new KVMetadata("description", Duration.ofMinutes(5)), complexValue));
         URI uri = kv.storageUri(TEST_KV_KEY);
-        URI metadataURI = URI.create(StorageContext.logicalPath(uri) + ".metadata");
+        URI metadataURI = URI.create(uri.getPath() + ".metadata");
         assertThat(storageInterface.exists(MAIN_TENANT, kv.namespace(), uri)).isTrue();
         assertThat(storageInterface.exists(MAIN_TENANT, kv.namespace(), metadataURI)).isTrue();
 
@@ -143,7 +143,7 @@ class InternalKVStoreTest {
 
         kv.put(TEST_KV_KEY, new KVValueAndMetadata(null, complexValue));
         URI uri = kv.storageUri(TEST_KV_KEY);
-        URI metadataURI = URI.create(StorageContext.logicalPath(uri) + ".metadata");
+        URI metadataURI = URI.create(uri.getPath() + ".metadata");
         assertThat(storageInterface.exists(MAIN_TENANT, kv.namespace(), uri)).isTrue();
         assertThat(storageInterface.exists(MAIN_TENANT, kv.namespace(), metadataURI)).isFalse();
 

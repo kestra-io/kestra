@@ -257,46 +257,37 @@ public abstract class AbstractServiceLivenessCoordinatorTest {
         workerQueueId = "<null>".equals(workerQueueId) ? null : workerQueueId;
         // Given - create first worker.
         WorkerAgent worker = (WorkerAgent) newWorker();
-        WorkerAgent newWorker = null;
-        try {
-            worker.start(1);
+        worker.start(1);
 
-            // A fresh trigger id, so a TriggerWorkerLost left by the other parameter case cannot satisfy this one.
-            WorkerTrigger workerTrigger = workerTrigger(Duration.ofSeconds(5), workerQueueId, IdUtils.create());
+        WorkerTrigger workerTrigger = workerTrigger(Duration.ofSeconds(5), workerQueueId);
 
-            CountDownLatch lostLatch = new CountDownLatch(1);
-            CountDownLatch receivedLatch = new CountDownLatch(1);
-            triggerEventQueue.addListener(event ->
-            {
-                if (!event.uid().equals(workerTrigger.uid())) {
-                    return;
-                }
-                if (event instanceof TriggerReceived) {
-                    receivedLatch.countDown();
-                }
-                if (event instanceof TriggerWorkerLost) {
-                    lostLatch.countDown();
-                }
-            });
-
-            workerJobEventQueue.emit(null, WorkerJobEvent.of(workerTrigger, null));
-            assertThat(receivedLatch.await(30, TimeUnit.SECONDS)).isTrue();
-            // WHEN - force-stop the first worker. This reports TERMINATED_FORCED and withholds the
-            // trigger result, so the running entry stays until the coordinator emits TriggerWorkerLost.
-            worker.stopNow();
-
-            // WHEN - create second worker (this will revoke previously one).
-            newWorker = (WorkerAgent) newWorker();
-            newWorker.start(1);
-
-            // THEN - the scheduler is notified instead of the job being re-emitted to a worker.
-            assertThat(lostLatch.await(30, TimeUnit.SECONDS)).isTrue();
-        } finally {
-            worker.close();
-            if (newWorker != null) {
-                newWorker.close();
+        CountDownLatch lostLatch = new CountDownLatch(1);
+        CountDownLatch receivedLatch = new CountDownLatch(1);
+        triggerEventQueue.addListener(event ->
+        {
+            if (!event.uid().equals(workerTrigger.uid())) {
+                return;
             }
-        }
+            if (event instanceof TriggerReceived) {
+                receivedLatch.countDown();
+            }
+            if (event instanceof TriggerWorkerLost) {
+                lostLatch.countDown();
+            }
+        });
+
+        workerJobEventQueue.emit(null, WorkerJobEvent.of(workerTrigger, null));
+        assertThat(receivedLatch.await(30, TimeUnit.SECONDS)).isTrue();
+        // WHEN - stop first worker.
+        worker.stopNow(); // simulate a non-graceful stop (hard shutdown, crash, etc.).
+
+        // WHEN - create second worker (this will revoke previously one).
+        WorkerAgent newWorker = (WorkerAgent) newWorker();
+        newWorker.start(1);
+
+        // THEN - the scheduler is notified instead of the job being re-emitted to a worker.
+        assertThat(lostLatch.await(30, TimeUnit.SECONDS)).isTrue();
+        newWorker.close();
     }
 
     @Test
@@ -535,10 +526,10 @@ public abstract class AbstractServiceLivenessCoordinatorTest {
             .build();
     }
 
-    private WorkerTrigger workerTrigger(Duration sleep, String workerQueueId, String triggerId) {
+    private WorkerTrigger workerTrigger(Duration sleep, String workerQueueId) {
         SleepTrigger trigger = SleepTrigger.builder()
             .type(SleepTrigger.class.getName())
-            .id(triggerId)
+            .id("unit-test")
             .duration(sleep.toMillis())
             .workerSelector(workerQueueId != null ? new io.kestra.core.models.tasks.WorkerSelector(java.util.List.of(workerQueueId), null) : null)
             .build();

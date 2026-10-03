@@ -27,6 +27,9 @@ public class Slugify {
     }
 
     public static String toStartCase(String input) {
-        return DASH_PATTERN.matcher(input).replaceAll(match -> " " + match.group(1).toUpperCase());
+        String result = DASH_PATTERN.matcher(input)
+            .replaceAll(match -> " " + match.group(1).toUpperCase());
+        return result.isEmpty() ? result
+            : Character.toUpperCase(result.charAt(0)) + result.substring(1);
     }
 }

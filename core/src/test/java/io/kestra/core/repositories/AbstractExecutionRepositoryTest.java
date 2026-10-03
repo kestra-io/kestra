@@ -1375,6 +1375,34 @@ public abstract class AbstractExecutionRepositoryTest {
             .containsOnly(exec1);
     }
 
+    @Test
+    protected void shouldStoreAndQueryPausingState() {
+        var tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        var execution = executionRepository.save(builder(tenant, State.Type.PAUSING, null).build());
+
+        assertThat(executionRepository.findById(tenant, execution.getId()))
+            .as("findById should return the execution stored with state PAUSING")
+            .isPresent()
+            .get()
+            .extracting(e -> e.getState().getCurrent())
+            .isEqualTo(State.Type.PAUSING);
+
+        assertThat(
+            executionRepository.find(
+                Pageable.from(1, 10), tenant,
+                List.of(
+                    QueryFilter.builder()
+                        .field(QueryFilter.Field.STATE)
+                        .operation(Op.EQUALS)
+                        .value(List.of(State.Type.PAUSING.name()))
+                        .build()
+                )
+            )
+        ).as("find execution EQUALS STATE PAUSING")
+            .usingRecursiveFieldByFieldElementComparatorOnFields("id")
+            .containsOnly(execution);
+    }
+
     record ExecutionSortTestData(Execution createdExecution, Execution successExecution, Execution runningExecution, Execution failedExecution) {
         static ExecutionSortTestData insertExecutionsTestData(String tenant, ExecutionRepositoryInterface executionRepository) {
             final Instant clock = Instant.now();

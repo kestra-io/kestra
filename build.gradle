@@ -32,8 +32,9 @@ plugins {
     // OWASP dependency check
     id "org.owasp.dependencycheck" version "13.0.0" apply false
 
-    // Formatting
+    // Kestra gradle plugin
     id "io.kestra.gradle.spotless-conventions" version '1.2.11'
+    id 'io.kestra.gradle.repository-conventions' version '1.2.11'
 }
 
 idea {

@@ -1048,7 +1048,7 @@
         align-items: center;
         justify-content: center;
         background-color: color-mix(in srgb, var(--ks-border-focus) 15%, transparent);
-        transition: all 0.2s ease;
+        transition: background-color 200ms ease, border-color 200ms ease;
         border: 2px dashed var(--ks-border-default);
         border-radius: 4px;
         margin: 8px;

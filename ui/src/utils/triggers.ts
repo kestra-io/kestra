@@ -1,14 +1,18 @@
 import * as TriggersAPI from "@kestra-io/kestra-sdk/triggers"
+import type {
+    SearchTriggersData,
+    SearchTriggersForFlowData,
+} from "@kestra-io/kestra-sdk/openapi"
+import type {LocationQuery} from "vue-router"
 
-interface TriggerSearchOptions {
-    sort?: string;
-    [key: string]: any;
+type TriggerSearchOptions = Omit<NonNullable<SearchTriggersData["query"]>, "sort"> & {
+    sort?: string | null
 }
 
-interface TriggerFindOptions {
-    namespace: string;
-    flowId: string;
-    [key: string]: any;
+type TriggerFindOptions = Omit<NonNullable<SearchTriggersForFlowData["query"]>, "sort"> & {
+    namespace: string
+    flowId: string
+    sort?: string | null
 }
 
 export interface TriggerDeleteOptions {
@@ -28,7 +32,7 @@ export async function searchTriggersForFlow(options: TriggerFindOptions) {
     return TriggersAPI.searchTriggersForFlow({...rest, sort: sort ? [sort] : undefined} as Parameters<typeof TriggersAPI.searchTriggersForFlow>[0])
 }
 
-export async function exportTriggersAsCSV(options: any) {
+export async function exportTriggersAsCSV(options: LocationQuery) {
     const response: unknown = await TriggersAPI.exportTriggers({
         filters: options.filters,
     }, {

@@ -1,8 +1,16 @@
 import {ensureUid} from "./uid"
+import type {PostHog} from "posthog-js"
+
+type PosthogConfig = {
+    isUiAnonymousUsageEnabled?: boolean
+    uuid?: string
+    version?: string
+    edition?: string
+}
 
 type PosthogCapturePayload = {
     event: string;
-    properties: Record<string, any>;
+    properties: Record<string, unknown>;
     enqueuedAt: number;
 };
 
@@ -11,14 +19,14 @@ const POSTHOG_QUEUE_MAX_AGE_MS = 5 * 60 * 1000 // 5 minutes
 
 let posthogInitPromise: Promise<void> | undefined
 let posthogQueue: PosthogCapturePayload[] = []
-let posthogClient: any | undefined
-let posthogLoadPromise: Promise<any> | undefined
+let posthogClient: PostHog | undefined
+let posthogLoadPromise: Promise<PostHog | undefined> | undefined
 
-function isPosthogDisabled(configs: Record<string, any> | undefined) {
+function isPosthogDisabled(configs: PosthogConfig | undefined){
     return configs?.isUiAnonymousUsageEnabled === false || import.meta.env.MODE === "development"
 }
 
-export function isPosthogEnabled(configs: Record<string, any> | undefined) {
+export function isPosthogEnabled(configs: PosthogConfig | undefined) {
     return !isPosthogDisabled(configs)
 }
 
@@ -69,7 +77,7 @@ function flushQueue() {
     }
 }
 
-async function ensurePosthogClient(configs: Record<string, any> | undefined) {
+async function ensurePosthogClient(configs: PosthogConfig | undefined) {
     if (isLoaded()) return posthogClient
     if (configs === undefined) return undefined
     if (isPosthogDisabled(configs)) {
@@ -115,9 +123,9 @@ export function disablePosthog() {
 }
 
 export function capturePosthogEvent(
-    configs: Record<string, any> | undefined,
-    eventName: string,
-    properties: Record<string, any>,
+    configs: PosthogConfig | undefined,
+eventName: string,
+properties: Record<string, unknown>,
 ) {
     if (isPosthogDisabled(configs)) {
         disablePosthog()
@@ -152,8 +160,8 @@ export function capturePosthogEvent(
 }
 
 export async function identifyPosthogUser(
-    configs: Record<string, any> | undefined,
-    properties: Record<string, any>,
+    configs: PosthogConfig | undefined,
+properties: Record<string, unknown>,
 ) {
     if (isPosthogDisabled(configs)) {
         disablePosthog()
@@ -172,7 +180,7 @@ export async function identifyPosthogUser(
     }
 }
 
-export async function initPosthogIfEnabled(configs: Record<string, any> | undefined) {
+export async function initPosthogIfEnabled(configs: PosthogConfig | undefined) {
     if (isPosthogDisabled(configs)) {
         disablePosthog()
         return

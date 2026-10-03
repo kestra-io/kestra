@@ -50,8 +50,8 @@ export interface KestraHttpError extends Error {
         /**
          * The parsed body: the problem document for any API error, an arbitrary body otherwise.
          *
-         * Deliberately `unknown` rather than `any` so it cannot be dereferenced without a narrowing step
-         * — but note that a `catch (e: any)` call site defeats that, so the `noLegacyErrorFields` unit
+* Deliberately `unknown` so it cannot be dereferenced without a narrowing step.
+* A legacy untyped catch site can defeat that, so the `noLegacyErrorFields`
          * test is what actually keeps reads of the removed `message`/`_embedded`/`invalids` fields out.
          * Use `problem`, or the `asProblem` helper, instead of narrowing this by hand.
          */
@@ -161,8 +161,8 @@ export function setupKestraHttp(
         return error
     }
 
-    function withAuthRetry<F extends (...args: any[]) => Promise<any>>(fn: F): F {
-        return (async (...args: Parameters<F>) => {
+function withAuthRetry<F extends (...args: never[]) => Promise<unknown>>(fn: F): F {
+            return (async (...args: Parameters<F>) => {
             try {
                 return await fn(...args)
             } catch (error) {
@@ -235,7 +235,7 @@ export function setupKestraHttp(
     })
 
     for (const target of [client, useClient()] as const) {
-        const targetAny = target as unknown as Record<string, (...args: any[]) => Promise<any>>
+const targetAny = target as unknown as Record<string, (...args: never[]) => Promise<unknown>>
         for (const method of ["get", "post", "put", "patch", "delete", "request", "stream"]) {
             if (typeof targetAny[method] !== "function") continue
             let fn = targetAny[method].bind(target)

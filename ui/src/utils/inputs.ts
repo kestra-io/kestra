@@ -134,8 +134,8 @@ export function buildWizardSteps(inputs: InputMetaData[] | undefined): WizardSte
     return result
 }
 
-export function normalize(type: InputType | undefined, value: any) {
-    let res = value
+export function normalize(type: InputType | undefined, value: unknown) {
+        let res = value
 
     if (type === "BOOL") {
         // `defaults` is a Property, which serialises as its expression string, so `defaults: true`
@@ -147,7 +147,7 @@ export function normalize(type: InputType | undefined, value: any) {
     } else if (value === null || value === undefined) {
         res = undefined
     } else if (type === "DATE" || type === "DATETIME") {
-        res = dayjs(res).toISOString()
+        res = dayjs(res as string | number).toISOString()
     } else if (type === "TIME") {
         const [hours, minutes, seconds = "0"] = String(res).split(":")
         res = dayjs()
@@ -156,6 +156,7 @@ export function normalize(type: InputType | undefined, value: any) {
             .minute(Number(minutes))
             .second(Number(seconds))
             .toString()
+
     } else if (type === "ARRAY" || type === "MULTISELECT" || type === "JSON" || type === "ION") {
         if (typeof res !== "string") {
             res = JSON.stringify(res).toString()

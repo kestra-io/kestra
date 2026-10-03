@@ -1,7 +1,18 @@
 import {LOG_LEVELS} from "@kestra-io/design-system"
 import {cssVar} from "@kestra-io/design-system"
 import type {Log} from "../stores/logs"
+import type {Component} from "vue"
 
+export interface Tab {
+    uid: string
+    button: {
+        icon: Component
+        label: string
+        disabled?: boolean
+        disabledTooltip?: string
+    }
+    component: Component
+}
 export type LevelKey = typeof LOG_LEVELS[number];
 
 export const STRUCTURED_PARSE_LIMIT = 100_000
@@ -88,7 +99,7 @@ export function chartColorFromLevel(level: LevelKey, alpha = 1) {
     return `rgba(${r},${g},${b},${alpha})`
 }
 
-export function sort(value: Record<string, any>) {
+export function sort(value: Record<string, unknown>) {
     return Object.keys(value)
         .sort((a, b) => {
             return index(LOG_LEVELS, a) - index(LOG_LEVELS, b)
@@ -98,7 +109,7 @@ export function sort(value: Record<string, any>) {
                 obj[key] = value[key]
                 return obj
             },
-            {} as Record<string, any>,
+            {} as Record<string, unknown>,
         )
 }
 

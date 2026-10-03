@@ -16,9 +16,18 @@ import static org.assertj.core.api.Assertions.assertThat;
 class H2ExecutionDelayStateStoreTest extends AbstractExecutionDelayStateStoreTest {
 
     @Test
-    void shouldConsumeOnlyDueDelaysWhenJvmTimezoneIsNonUtc() {
+    void shouldConsumeOnlyDueDelaysWhenJvmTimezoneIsAsiaKolkata() {
+        assertOnlyDueDelaysAreConsumedWhenJvmTimezoneIs("Asia/Kolkata");
+    }
+
+    @Test
+    void shouldConsumeOnlyDueDelaysWhenJvmTimezoneIsNewYork() {
+        assertOnlyDueDelaysAreConsumedWhenJvmTimezoneIs("America/New_York");
+    }
+
+    private void assertOnlyDueDelaysAreConsumedWhenJvmTimezoneIs(String timezone) {
         TimeZone originalTimeZone = TimeZone.getDefault();
-        TimeZone.setDefault(TimeZone.getTimeZone("Asia/Kolkata"));
+        TimeZone.setDefault(TimeZone.getTimeZone(timezone));
         try {
             Instant now = Instant.parse("2031-01-15T10:00:00Z");
             store().save(delay("overdue", now.minusSeconds(3600)));

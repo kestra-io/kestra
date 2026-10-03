@@ -11,14 +11,14 @@
  *     payload (multiple `data:` lines are joined with "\n")
  *   - lines starting with ":" are comments and ignored
  */
-import {parseProblem, useClient} from "@kestra-io/kestra-sdk"
+import {parseProblem, useClient, type RequestBody} from "@kestra-io/kestra-sdk"
 import type {AiEventName, AiSseFrame} from "./types"
 
 export interface StreamSseOptions {
     /** Absolute URL to POST to. */
     url: string
     /** Request body — JSON-serialised. */
-    body: unknown
+    body: RequestBody
     /** Called once per fully-parsed event frame. */
     onFrame: (frame: AiSseFrame) => void
     /** Abort signal to cancel the in-flight stream (e.g. component unmount). */

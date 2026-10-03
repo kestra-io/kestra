@@ -9,7 +9,7 @@ const validateStatus = (status: number) => status === 200 || status === 404
  *  a CSV export always carries its header row, so an empty chart is still a valid file, while ION
  *  has no header concept and an empty chart really is a 0 byte body that looks like a failed
  *  download. */
-const downloadHandler = (res: AxiosLikeResponse, filename: string, format: ExportFormat): boolean => {
+const downloadHandler = (res: AxiosLikeResponse<Blob>, filename: string, format: ExportFormat): boolean => {
     const blob = new Blob([res.data], {type: "application/octet-stream"})
     if (format === "ION" && blob.size === 0) return false
 
@@ -23,8 +23,8 @@ import {useMiscStore} from "override/stores/misc"
 import * as Utils from "../utils/utils"
 import {routeFamily} from "../utils/routeFamily"
 
-import type {Dashboard, Chart, DashboardSettings} from "../components/dashboard/types.ts"
-import {useClient, type ChartFiltersOverrides} from "@kestra-io/kestra-sdk"
+import type {Dashboard, Chart, DashboardSettings, ChartResults} from "../components/dashboard/types.ts"
+import {useClient, type ChartFiltersOverrides, type ValidateConstraintViolation} from "@kestra-io/kestra-sdk"
 import * as DashboardsAPI from "@kestra-io/kestra-sdk/dashboards"
 import {removeRefPrefix, usePluginsStore, type JsonSchemaDef, type RootJsonSchema} from "./plugins"
 import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
@@ -120,7 +120,7 @@ export const useDashboardStore = defineStore("dashboard", () => {
 
     async function loadDefaultDefinitions() {
         if (!defaultDefinitions.value) {
-            const res = await axios.get(`${apiUrl()}/dashboards/defaults/definitions`)
+            const res = await axios.get<NonNullable<typeof defaultDefinitions.value>>(`${apiUrl()}/dashboards/defaults/definitions`)
             defaultDefinitions.value = res.data
         }
         return defaultDefinitions.value!
@@ -277,13 +277,13 @@ export const useDashboardStore = defineStore("dashboard", () => {
     }
 
     async function validateDashboard(source: Dashboard["sourceCode"]) {
-        const {data} = await axios.post(`${apiUrl()}/dashboards/validate`, source ?? "", yaml)
+        const {data} = await axios.post<ValidateConstraintViolation>(`${apiUrl()}/dashboards/validate`, source ?? "", yaml)
         return data
     }
 
     async function generate(id: Dashboard["id"], chartId: Chart["id"], parameters: ChartFiltersOverrides) {
         try {
-            const {data} = await axios.post(`${apiUrl()}/dashboards/${id}/charts/${chartId}`, parameters, {showMessageOnError: false} as AxiosLikeConfig)
+            const {data} = await axios.post<ChartResults>(`${apiUrl()}/dashboards/${id}/charts/${chartId}`, parameters, {showMessageOnError: false})
             return data
         } catch (e: unknown) {
             if ((e as KestraHttpError).status === 404) return undefined
@@ -292,7 +292,7 @@ export const useDashboardStore = defineStore("dashboard", () => {
     }
 
     async function validateChart(source: string) {
-        const {data} = await axios.post(`${apiUrl()}/dashboards/validate/chart`, source, yaml)
+        const {data} = await axios.post<ValidateConstraintViolation>(`${apiUrl()}/dashboards/validate/chart`, source, yaml)
         chartErrors.value = data.constraints ? [data.constraints] : []
         return data
     }
@@ -312,7 +312,7 @@ export const useDashboardStore = defineStore("dashboard", () => {
         const filename = `chart__${chart.id}`
 
         return axios
-            .post(`${apiUrl()}/dashboards${path}?format=${format}`, payload, response)
+            .post<Blob>(`${apiUrl()}/dashboards${path}?format=${format}`, payload, response)
             .then((res) => downloadHandler(res, filename, format))
     }
 

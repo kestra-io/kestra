@@ -7,7 +7,7 @@ import {createClientFacade} from "./client-facade"
 
 // Types only: the operations live on their per-tag subpaths, or all together on `./all`.
 export type * from "./openapi/types.gen"
-export type {AxiosLikeConfig, AxiosLikeResponse, AxiosLikeClient, StreamConfig} from "./client-facade"
+export type {AxiosLikeConfig, AxiosLikeResponse, AxiosLikeClient, StreamConfig, RequestBody} from "./client-facade"
 
 // RFC 9457 problem details — the API's single error shape. Re-exported here so app code imports error
 // handling from the SDK it already depends on, rather than reaching into the shared runtime package.

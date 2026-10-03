@@ -55,7 +55,7 @@
     import {useI18n} from "vue-i18n"
     import {KsMessage, KsIcon} from "@kestra-io/design-system"
     import type {FormInstance} from "@kestra-io/design-system"
-    import {useClient} from "@kestra-io/kestra-sdk"
+    import {useClient, type MiscControllerLoginConfiguration} from "@kestra-io/kestra-sdk"
     import type {KestraHttpError} from "../../utils/kestraHttp"
 
     import AccountOutline from "vue-material-design-icons/AccountOutline.vue"
@@ -121,7 +121,7 @@
 
 
     const checkServerInitialization = async () => {
-        const response = await axios.get(`${apiUrlWithoutTenants()}/configs/login`, {timeout: 10000})
+        const response = await axios.get<MiscControllerLoginConfiguration>(`${apiUrlWithoutTenants()}/configs/login`, {timeout: 10000})
         return response.data?.isBasicAuthInitialized
     }
 

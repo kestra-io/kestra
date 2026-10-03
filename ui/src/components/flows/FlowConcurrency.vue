@@ -54,7 +54,7 @@
     import Empty from "../layout/empty/Empty.vue"
     import {KsExecutionStatus} from "@kestra-io/design-system"
     import {useFlowStore} from "../../stores/flow"
-    import {useClient} from "@kestra-io/kestra-sdk"
+    import {useClient, type ConcurrencyLimit} from "@kestra-io/kestra-sdk"
     import {apiUrl} from "override/utils/route"
     import type {KestraHttpError} from "../../utils/kestraHttp"
     import Loading from "vue-material-design-icons/Loading.vue"
@@ -66,11 +66,11 @@
 
     const loading = ref(false)
     const error = ref(false)
-    const concurrencyLimit = ref<{ tenantId: string; namespace: string; flowId: string; running: number } | undefined>(undefined)
+    const concurrencyLimit = ref<ConcurrencyLimit | undefined>(undefined)
 
     const progress = computed(() => {
         if (!flowStore.flow?.concurrency || concurrencyLimit.value === undefined) return 0
-        return (concurrencyLimit.value.running / flowStore.flow.concurrency.limit) * 100
+        return ((concurrencyLimit.value.running ?? 0) / flowStore.flow.concurrency.limit) * 100
     })
 
     // A leftover record holding slots for a flow that no longer declares a concurrency block.
@@ -89,7 +89,7 @@
         error.value = false
 
         try {
-            const response = await axios.get(
+            const response = await axios.get<ConcurrencyLimit>(
                 `${apiUrl()}/concurrency-limit/${flowStore.flow.namespace}/${flowStore.flow.id}`,
                 {ignoreNotFound: true, showMessageOnError: false},
             )

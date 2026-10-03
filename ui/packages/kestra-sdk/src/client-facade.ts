@@ -1,4 +1,5 @@
 import type {ResolvedRequestOptions} from "./openapi/client"
+import type {BodySerializer} from "./openapi/core/bodySerializer.gen"
 
 // App-only half of a Kestra SDK: the axios-like fetch facade + the useClient()/setMockClient()
 // accessors. This is intentionally NOT in the shared @kestra-io/hey-api-plugin package and NOT part
@@ -12,16 +13,23 @@ import type {ResolvedRequestOptions} from "./openapi/client"
 // useClient().get/post(...) calls behave identically to generated endpoint calls, and existing
 // OSS/EE call sites are unchanged.
 
+export type RequestBody = unknown
+
 export interface AxiosLikeConfig {
     params?: Record<string, unknown>
     headers?: Record<string, string>
     responseType?: "json" | "text" | "blob"
     timeout?: number
     validateStatus?: (status: number) => boolean
-    [key: string]: any
+    data?: RequestBody
+    showMessageOnError?: boolean
+    ignoreNotFound?: boolean
+    withCredentials?: boolean
+    __kestraSkipProgress?: boolean
+    [key: string]: unknown
 }
 
-export interface AxiosLikeResponse<T = any> {
+export interface AxiosLikeResponse<T = unknown> {
     data: T
     status: number
     headers: Record<string, string>
@@ -37,16 +45,16 @@ export interface StreamConfig {
 /** Minimal shape of the @hey-api/client-fetch client this facade reads. */
 interface InterceptedFetchClient {
     interceptors: {
-        request: { fns: Array<((request: Request, options: any) => Request | Promise<Request>) | null> }
-        response: { fns: Array<((response: Response, request: Request, options: any) => Response | Promise<Response>) | null> }
+        request: { fns: Array<((request: Request, options: ResolvedRequestOptions) => Request | Promise<Request>) | null> }
+        response: { fns: Array<((response: Response, request: Request, options: ResolvedRequestOptions) => Response | Promise<Response>) | null> }
         // `response` is undefined for a network-level failure (offline, CORS block, abort), which
         // never produces a Response — see the network-error catch below.
-        error: { fns: Array<((error: unknown, response: Response | undefined, request: Request, options: any) => unknown) | null> }
+        error: { fns: Array<((error: unknown, response: Response | undefined, request: Request, options: ResolvedRequestOptions) => unknown) | null> }
     }
 }
 
 interface FormDataBodySerializer {
-    bodySerializer: (...args: any[]) => any
+    bodySerializer: BodySerializer
 }
 
 
@@ -73,11 +81,11 @@ export interface ClientFacade {
 
 export interface AxiosLikeClient {
     defaults: { headers: { common: Record<string, string> } }
-    get: <T = any>(url: string, config?: AxiosLikeConfig) => Promise<AxiosLikeResponse<T>>
-    post: <T = any>(url: string, data?: any, config?: AxiosLikeConfig) => Promise<AxiosLikeResponse<T>>
-    put: <T = any>(url: string, data?: any, config?: AxiosLikeConfig) => Promise<AxiosLikeResponse<T>>
-    delete: <T = any>(url: string, config?: AxiosLikeConfig) => Promise<AxiosLikeResponse<T>>
-    patch: <T = any>(url: string, data?: any, config?: AxiosLikeConfig) => Promise<AxiosLikeResponse<T>>
+    get: <T = unknown>(url: string, config?: AxiosLikeConfig) => Promise<AxiosLikeResponse<T>>
+    post: <T = unknown>(url: string, data?: RequestBody, config?: AxiosLikeConfig) => Promise<AxiosLikeResponse<T>>
+    put: <T = unknown>(url: string, data?: RequestBody, config?: AxiosLikeConfig) => Promise<AxiosLikeResponse<T>>
+    delete: <T = unknown>(url: string, config?: AxiosLikeConfig) => Promise<AxiosLikeResponse<T>>
+    patch: <T = unknown>(url: string, data?: RequestBody, config?: AxiosLikeConfig) => Promise<AxiosLikeResponse<T>>
     /**
      * POSTs `data` and resolves with the RAW `Response`, body unconsumed, so callers can read it
      * incrementally — e.g. POST-based SSE streams, which `EventSource` cannot issue. Runs the same
@@ -88,7 +96,7 @@ export interface AxiosLikeClient {
      * fetch-level failure (abort, offline, CORS) still runs error interceptors — the same catch
      * axios-like methods already have.
      */
-    stream: (url: string, data?: any, config?: StreamConfig) => Promise<Response>
+    stream: (url: string, data?: RequestBody, config?: StreamConfig) => Promise<Response>
 }
 
 export function createClientFacade(
@@ -101,7 +109,7 @@ export function createClientFacade(
     async function axiosLikeRequest<T>(
         method: string,
         url: string,
-        data?: any,
+        data?: RequestBody,
         config: AxiosLikeConfig = {},
     ): Promise<AxiosLikeResponse<T>> {
         const fullUrl = withQuery(url, config.params)
@@ -198,7 +206,7 @@ export function createClientFacade(
     }
 
     /** See {@link AxiosLikeClient.stream} — raw-Response variant of axiosLikeRequest for streaming endpoints. */
-    async function streamRequest(url: string, data?: any, config: StreamConfig = {}): Promise<Response> {
+    async function streamRequest(url: string, data?: RequestBody, config: StreamConfig = {}): Promise<Response> {
         const headers = new Headers({...commonHeaders, ...(config.headers ?? {})})
         let body: BodyInit | undefined
         if (data !== undefined) {
@@ -239,20 +247,26 @@ export function createClientFacade(
 
     const axiosLikeClient: AxiosLikeClient = {
         defaults: {headers: {common: commonHeaders}},
-        get: <T = any>(url: string, config?: AxiosLikeConfig) => axiosLikeRequest<T>("GET", url, undefined, config),
-        post: <T = any>(url: string, data?: any, config?: AxiosLikeConfig) => axiosLikeRequest<T>("POST", url, data, config),
-        put: <T = any>(url: string, data?: any, config?: AxiosLikeConfig) => axiosLikeRequest<T>("PUT", url, data, config),
-        delete: <T = any>(url: string, config?: AxiosLikeConfig) => axiosLikeRequest<T>("DELETE", url, config?.data, config),
-        patch: <T = any>(url: string, data?: any, config?: AxiosLikeConfig) => axiosLikeRequest<T>("PATCH", url, data, config),
+        get: <T = unknown>(url: string, config?: AxiosLikeConfig) => axiosLikeRequest<T>("GET", url, undefined, config),
+        post: <T = unknown>(url: string, data?: RequestBody, config?: AxiosLikeConfig) => axiosLikeRequest<T>("POST", url, data, config),
+        put: <T = unknown>(url: string, data?: RequestBody, config?: AxiosLikeConfig) => axiosLikeRequest<T>("PUT", url, data, config),
+        delete: <T = unknown>(url: string, config?: AxiosLikeConfig) => axiosLikeRequest<T>("DELETE", url, config?.data, config),
+        patch: <T = unknown>(url: string, data?: RequestBody, config?: AxiosLikeConfig) => axiosLikeRequest<T>("PATCH", url, data, config),
         stream: streamRequest,
+    }
+
+    function assignMethod<K extends keyof AxiosLikeClient>(
+        target: AxiosLikeClient,
+        key: K,
+        value: AxiosLikeClient[K] | undefined,
+    ) {
+        if (value !== undefined) target[key] = value
     }
 
     /** Set a mock client instance controlled in tests. */
     function setMockClient(mockClient: Partial<AxiosLikeClient> = {}) {
         for (const method of ["get", "post", "put", "delete", "patch", "stream"] as const) {
-            if (mockClient[method]) {
-                (axiosLikeClient as any)[method] = mockClient[method] as any
-            }
+            assignMethod(axiosLikeClient, method, mockClient[method])
         }
     }
 

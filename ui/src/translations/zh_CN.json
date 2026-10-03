@@ -1690,6 +1690,7 @@
     "loop_iterations_load_error": "加载迭代失败",
     "retry": "重试",
     "no_iterations": "暂无迭代",
+    "no_failed_iterations": "没有失败的迭代",
     "cron": "定时任务",
     "execution_started": "执行已开始！",
     "execution_failed": "执行失败！",

@@ -47,17 +47,11 @@
         depth: number;
     }>()
 
-    // `executionsStore.loadExecution` commits to the store's single shared `execution` ref —
-    // the same one the whole Gantt page renders from. Calling it here for one iteration would
-    // silently replace the entire page's data with that iteration's, cascading further at each
-    // nested Loop. So this fetches straight from the API instead, keeping the result local.
+    // Fetches directly rather than via executionsStore.loadExecution, which would overwrite
+    // the shared execution the whole Gantt page renders from.
     const executionsStore = useExecutionsStore()
     const execution = ref<Execution>()
 
-    // Read fresh from the store on every call, exactly like Gantt.vue's own equivalent check
-    // (taskTypeByTaskRunId), rather than caching `executionsStore.flow` once at setup — a stale
-    // or not-yet-populated snapshot here fails silently (no thrown error) rather than crashing,
-    // since findTaskById tolerates an undefined flow, so nesting would just quietly never appear.
     function isLoopTask(taskRun: {taskId: string}): boolean {
         const task = FlowUtils.findTaskById(executionsStore.flow, taskRun.taskId)
         return (task as {type?: string} | undefined)?.type === "io.kestra.plugin.core.flow.Loop"
@@ -65,12 +59,7 @@
 
     const error = ref<unknown>(undefined)
 
-    // Reacts to executionId rather than fetching once on mount, so that if this component
-    // instance is ever reused for a different iteration (the exact bug class fixed by the
-    // :key additions on LoopIterationTree above), it refetches instead of showing stale data.
-    // The counter guards against the same instance's *own* out-of-order responses: a slow
-    // fetch for an executionId this component has since moved on from must not land on top
-    // of a newer, already-resolved one — the same pattern executionsStore.loadExecution uses.
+    // Counter guards against a stale response landing after a newer fetch starts.
     let latestFetch = 0
     async function fetchExecution(id: string) {
         const fetch = ++latestFetch

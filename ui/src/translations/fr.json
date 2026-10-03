@@ -1690,6 +1690,7 @@
     "loop_iterations_load_error": "Échec du chargement des itérations",
     "retry": "Réessayer",
     "no_iterations": "Pas encore d'itérations",
+    "no_failed_iterations": "Aucune itération échouée",
     "cron": "Cron",
     "execution_started": "L'exécution a commencé !",
     "execution_failed": "Échec de l'exécution !",

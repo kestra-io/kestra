@@ -14,12 +14,7 @@ export interface LoopIterationRow {
     };
 }
 
-/**
- * Fetches and paginates the iterations of a single Loop task run, identified by the execution
- * that contains it, the Loop's taskId, and (once you're inside an iteration that is itself
- * inside a Loop) that iteration's own execution id. Each nested Loop gets its own instance of
- * this composable, so depth is unbounded by construction rather than by an explicit limit.
- */
+// One instance per Loop; nested loops get their own instance, so depth is unbounded.
 export function useLoopIterations(parentExecutionId: string, taskId: string) {
     const executionsStore = useExecutionsStore()
 

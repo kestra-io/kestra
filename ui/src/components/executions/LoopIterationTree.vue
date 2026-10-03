@@ -25,7 +25,7 @@
             </KsAlert>
 
             <div v-else-if="loaded && iterations.length === 0" class="loop-empty">
-                {{ $t("no_iterations") }}
+                {{ $t(failedOnly ? "no_failed_iterations" : "no_iterations") }}
             </div>
 
             <div
@@ -104,7 +104,7 @@
     import ChevronDown from "vue-material-design-icons/ChevronDown.vue"
     import Loading from "vue-material-design-icons/Loading.vue"
     import {Duration} from "@kestra-io/topology"
-    import {KsExecutionStatus, KsButton, KsCheckbox, KsIcon} from "@kestra-io/design-system"
+    import {KsAlert, KsExecutionStatus, KsButton, KsCheckbox, KsIcon} from "@kestra-io/design-system"
     import SubFlowLink from "../flows/SubFlowLink.vue"
     import IterationTaskRuns from "./IterationTaskRuns.vue"
     import {useLoopIterations} from "../../composables/useLoopIterations"
@@ -134,8 +134,7 @@
     } = useLoopIterations(props.executionId, props.taskId)
 
     const expanded = ref(false)
-    // Which iteration rows have their task runs expanded — per-row, not all-or-nothing,
-    // so opening one iteration's detail doesn't fetch or render the other nine on this page.
+    // Per-row so expanding one iteration doesn't fetch the others.
     const expandedRows = reactive(new Set<string>())
 
     function onToggle() {

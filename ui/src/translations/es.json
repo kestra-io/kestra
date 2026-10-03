@@ -1690,6 +1690,7 @@
     "loop_iterations_load_error": "No se pudieron cargar las iteraciones",
     "retry": "Reintentar",
     "no_iterations": "Aún no hay iteraciones",
+    "no_failed_iterations": "No hay iteraciones fallidas",
     "cron": "Cron",
     "execution_started": "¡La ejecución ha comenzado!",
     "execution_failed": "¡Ejecución fallida!",

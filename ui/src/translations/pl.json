@@ -1690,6 +1690,7 @@
     "loop_iterations_load_error": "Nie udało się załadować iteracji",
     "retry": "Ponów",
     "no_iterations": "Brak iteracji",
+    "no_failed_iterations": "Brak nieudanych iteracji",
     "cron": "Cron",
     "execution_started": "Egzekucja została uruchomiona!",
     "execution_failed": "Egzekucja nie powiodła się!",

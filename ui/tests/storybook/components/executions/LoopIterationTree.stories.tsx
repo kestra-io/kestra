@@ -2,10 +2,7 @@ import {vi} from "vitest";
 import {userEvent, waitFor} from "storybook/test";
 import {vueRouter} from "storybook-vue3-router";
 
-// useLoopIterations (via executionsStore.findExecutions) and IterationTaskRuns both call their
-// generated SDK submodule functions directly, which go through the SDK's own internal client
-// rather than the axios instance setMockClient() swaps - so each is intercepted at the submodule
-// level, the same way Triggers.stories.tsx mocks searchTriggers.
+// Mocked at the SDK submodule level, like Triggers.stories.tsx, since both calls bypass axios.
 const mockState = vi.hoisted(() => ({total: 3}))
 
 function iterationRow(index: number, value: string) {
@@ -104,8 +101,7 @@ export const Default: StoryObj<{total: number}> = {
     },
 }
 
-// Click "Iterations" to expand — over the page size, so the preview footer (count, Load 10
-// more, Show all executions) and the "Failed iterations only" filter both appear.
+// Over the page size — preview footer and failed-only filter both appear.
 export const OverThePreviewLimit: StoryObj<{total: number}> = {
     render: (args) => ({
         setup() {
@@ -132,10 +128,7 @@ export const OverThePreviewLimit: StoryObj<{total: number}> = {
             if (rows.length !== 10) throw new Error(`expected 10 iteration rows on page 1, got ${rows.length}`)
         })
 
-        // Asserts on the actual rendered English label — this is exactly the check that
-        // would have caught the raw-key-id rendering bug from #19603's review. Waited for
-        // separately from the rows above: KsButton is a component, not a native element, so
-        // its data-test attribute can land in the DOM a render tick after the rows do.
+        // Waited for separately: KsButton's data-test attribute can land a render tick late.
         let loadMoreButton: HTMLElement | null = null
         await waitFor(() => {
             loadMoreButton = canvasElement.querySelector('[data-test="loop-load-more"]') as HTMLElement | null

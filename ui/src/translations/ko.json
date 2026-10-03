@@ -1690,6 +1690,7 @@
     "loop_iterations_load_error": "반복 로드 실패",
     "retry": "다시 시도",
     "no_iterations": "아직 반복이 없습니다",
+    "no_failed_iterations": "실패한 반복이 없습니다",
     "cron": "크론",
     "execution_started": "실행이 시작되었습니다!",
     "execution_failed": "실행 실패!",

@@ -1690,6 +1690,7 @@
     "loop_iterations_load_error": "पुनरावृत्तियाँ लोड करने में विफल",
     "retry": "पुनः प्रयास करें",
     "no_iterations": "अभी तक कोई पुनरावृत्ति नहीं",
+    "no_failed_iterations": "कोई विफल पुनरावृत्ति नहीं",
     "cron": "क्रॉन",
     "execution_started": "निष्पादन शुरू हो गया है!",
     "execution_failed": "निष्पादन FAILED!",

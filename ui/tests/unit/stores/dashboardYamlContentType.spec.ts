@@ -95,4 +95,14 @@ describe("dashboard store yaml writes", () => {
         ])
         expect(post.mock.calls.map(yamlContentType)).toEqual(["application/x-yaml", "application/x-yaml"])
     })
+
+    it("reports each chart validation error as its own line", {timeout: TEST_TIMEOUT_MS}, async () => {
+        const {useDashboardStore} = await import("../../../src/stores/dashboard")
+        const store = useDashboardStore()
+        post.mockResolvedValueOnce({data: {errors: [{detail: "must not be null", path: "chartOptions"}, {detail: "boom"}]}})
+
+        await store.validateChart("id: c")
+
+        expect(store.chartErrors).toEqual(["chartOptions: must not be null", "boom"])
+    })
 })

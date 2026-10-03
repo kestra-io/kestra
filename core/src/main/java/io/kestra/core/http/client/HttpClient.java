@@ -14,6 +14,8 @@ import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.regex.Matcher;
@@ -58,9 +60,11 @@ import io.kestra.core.http.KestraMediaTypes;
 import io.kestra.core.http.client.apache.*;
 import io.kestra.core.http.client.configurations.DigestAuthConfiguration;
 import io.kestra.core.http.client.configurations.HttpConfiguration;
+import io.kestra.core.http.client.configurations.HttpMethod;
 import io.kestra.core.runners.DefaultRunContext;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.utils.RetryUtils;
 
 import io.micrometer.common.KeyValues;
 import io.micrometer.core.instrument.binder.httpcomponents.hc5.ApacheHttpClientContext;
@@ -84,6 +88,7 @@ public class HttpClient implements Closeable {
     private final RunContext runContext;
     private final HttpConfiguration configuration;
     private ObservationRegistry observationRegistry;
+    private static final Set<HttpMethod> IDEMPOTENT_METHODS = Set.of(HttpMethod.GET, HttpMethod.HEAD);
 
     @Builder
     public HttpClient(RunContext runContext, @Nullable HttpConfiguration configuration) throws IllegalVariableEvaluationException {
@@ -546,24 +551,114 @@ public class HttpClient implements Closeable {
     private <T> HttpResponse<T> request(
         HttpRequest request,
         HttpClientContext httpClientContext,
-        HttpClientResponseHandler<HttpResponse<T>> responseHandler) throws HttpClientException {
+        HttpClientResponseHandler<HttpResponse<T>> responseHandler) throws HttpClientException, IllegalVariableEvaluationException {
         validateUri(request.getUri());
 
-        try {
-            return this.client.execute(request.to(runContext), httpClientContext, responseHandler);
-        } catch (SocketException e) {
-            throw new HttpClientRequestException(e.getMessage(), request, e);
-        } catch (IOException e) {
-            if (e instanceof SSLHandshakeException) {
-                throw new HttpClientRequestException(e.getMessage(), request, e);
-            }
+        String method = request.getMethod();
+        List<Integer> retryableCodes = resolveRetryableStatusCodes(method);
+        boolean retryTransportFailures = isMethodEligibleForTransportRetry(method);
 
-            if (e.getCause() instanceof HttpClientException httpClientException) {
-                throw httpClientException;
-            }
+        return RetryUtils.<HttpResponse<T>, HttpClientException> of(
+            configuration.getRetry(),
+            retryFailed ->
+            {
+                if (retryFailed.getCause() instanceof HttpClientException ex) {
+                    return ex;
+                }
 
-            throw new RuntimeException(e);
+                throw new IllegalStateException(
+                    "Retry failed with an unexpected exception type",
+                    retryFailed.getCause()
+                );
+            }
+        ).run(
+            (res, throwable) ->
+            {
+                if (throwable instanceof HttpClientResponseException ex) {
+                    return retryableCodes.contains(
+                        ex.getResponse().getStatus().getCode()
+                    );
+                }
+
+                // A TLS handshake failure never put a byte on the wire, so it is always safe to retry.
+                if (throwable instanceof SSLHandshakeException) {
+                    return true;
+                }
+
+                if (throwable instanceof HttpClientRequestException httpEx) {
+                    // ConnectException means the request never reached the server, so any method is safe to retry.
+                    return httpEx.getCause() instanceof ConnectException || retryTransportFailures;
+                }
+
+                if (throwable instanceof SocketException) {
+                    return retryTransportFailures;
+                }
+
+                return false;
+            },
+            () ->
+            {
+                try {
+                    return this.client.execute(
+                        request.to(runContext),
+                        httpClientContext,
+                        responseHandler
+                    );
+                } catch (SocketException | SSLHandshakeException e) {
+                    throw new HttpClientRequestException(
+                        e.getMessage(),
+                        request,
+                        e
+                    );
+                } catch (IOException e) {
+                    if (e.getCause() instanceof HttpClientException ex) {
+                        throw ex;
+                    }
+                    throw new RuntimeException(e);
+                }
+            }
+        );
+    }
+
+    /**
+     * Resolves the retryable status codes for a given HTTP method: the method's entry in
+     * {@code retryOnStatusCodesByMethod} if one is configured (matched case-insensitively), otherwise the
+     * global {@code retryOnStatusCodes} for GET/HEAD methods only.
+     */
+    @SuppressWarnings("unchecked")
+    private List<Integer> resolveRetryableStatusCodes(String method) throws IllegalVariableEvaluationException {
+        HttpMethod httpMethod = HttpMethod.fromString(method);
+
+        if (httpMethod != null && configuration.getRetryOnStatusCodesByMethod() != null) {
+            Map<HttpMethod, List<Integer>> byMethod = runContext
+                .render(configuration.getRetryOnStatusCodesByMethod())
+                .asMap(HttpMethod.class, List.class);
+
+            List<Integer> codes = byMethod.get(httpMethod);
+            if (codes != null) {
+                return codes;
+            }
         }
+        //make sure non Idempotent methods don't retry on status codes
+        if (httpMethod == null || !IDEMPOTENT_METHODS.contains(httpMethod)) {
+            return List.of();
+        }
+        // Fallback to the global list if no method-specific entry is found for idempotent methods GET/HEAD only.
+        return runContext.render(configuration.getRetryOnStatusCodes()).asList(Integer.class);
+    }
+
+    /**
+    * Whether this method can retry transport failures such as timeouts
+    * or connection drops that occur after data has been sent.
+    * Non-standard HTTP methods are not eligible.
+    */
+    private boolean isMethodEligibleForTransportRetry(String method) throws IllegalVariableEvaluationException {
+        HttpMethod httpMethod = HttpMethod.fromString(method);
+
+        return httpMethod != null && runContext
+            .render(configuration.getRetryableTransportFailureMethods())
+            .asList(HttpMethod.class)
+            .contains(httpMethod);
     }
 
     @SuppressWarnings("unchecked")

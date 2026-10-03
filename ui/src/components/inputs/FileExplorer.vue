@@ -1010,7 +1010,8 @@
 
     async function removeItems() {
         if(confirmation.value.nodes === undefined) return
-        await Promise.all(confirmation.value.nodes.map(async (node) => {
+        
+        const results = await Promise.allSettled(confirmation.value.nodes.map(async (node) => {
             const path = filesStore.getPath(node.id) ?? ""
             try {
                 await namespacesStore.deleteFileDirectory({
@@ -1023,11 +1024,21 @@
                 })
             } catch (error) {
                 console.error(`Failed to delete file: ${node.fileName}`, error)
-                toast.error(t("namespace files.delete.file_error", {name: node.fileName}))
+                throw error
             }
         }))
+        
         confirmation.value = {visible: false, nodes: []}
-        toast.success(t("namespace files.delete.bulk_success"))
+
+        const failedCount = results.filter(r => r.status === "rejected").length
+
+        if (failedCount === 0) {
+            toast.success(t("namespace files.delete.bulk_success"))
+        } else if (failedCount < results.length) {
+            toast.error(t("namespace files.delete.bulk_partial_error", {totalCount: results.length, failedCount}))
+        } else {
+            toast.error(t("namespace files.delete.all_failed_error"))
+        }
     }
 
     async function addFolder(folder?: {fileName: string, children?: TreeNode[]}, creation?: boolean) {

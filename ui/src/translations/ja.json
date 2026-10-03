@@ -1034,6 +1034,8 @@
         "folder": "フォルダーを削除",
         "files": "{count} 個の選択されたファイルを削除",
         "bulk_success": "選択されたファイルは正常に削除されました。",
+        "bulk_partial_error": "{failedCount} 個のファイルの削除に失敗しました。{totalCount} 個は成功しました。",
+        "all_failed_error": "選択したファイルの削除に失敗しました。",
         "folders": "{count} 個の選択されたフォルダーを削除"
       },
       "move": {

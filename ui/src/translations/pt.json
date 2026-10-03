@@ -1034,6 +1034,8 @@
         "folder": "Deletar pasta",
         "files": "Excluir {count} arquivos selecionados",
         "bulk_success": "Ficheiros selecionados eliminados com sucesso.",
+        "bulk_partial_error": "Falha ao eliminar {failedCount} ficheiro(s). {totalCount} com sucesso.",
+        "all_failed_error": "Falha ao eliminar os ficheiros selecionados.",
         "folders": "Excluir {count} pastas selecionadas"
       },
       "move": {

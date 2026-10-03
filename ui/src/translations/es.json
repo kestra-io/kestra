@@ -1034,6 +1034,8 @@
         "folder": "Eliminar carpeta",
         "files": "Eliminar {count} archivos seleccionados",
         "bulk_success": "Archivos seleccionados eliminados correctamente.",
+        "bulk_partial_error": "No se pudieron eliminar {failedCount} archivo(s). {totalCount} con éxito.",
+        "all_failed_error": "No se pudieron eliminar los archivos seleccionados.",
         "folders": "Eliminar {count} carpetas seleccionadas"
       },
       "move": {

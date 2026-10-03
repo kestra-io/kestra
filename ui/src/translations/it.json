@@ -1034,6 +1034,8 @@
         "folder": "Elimina cartella",
         "files": "Elimina {count} file selezionati",
         "bulk_success": "File selezionati eliminati con successo.",
+        "bulk_partial_error": "Impossibile eliminare {failedCount} file. {totalCount} eliminati con successo.",
+        "all_failed_error": "Impossibile eliminare i file selezionati.",
         "folders": "Elimina {count} cartelle selezionate"
       },
       "move": {

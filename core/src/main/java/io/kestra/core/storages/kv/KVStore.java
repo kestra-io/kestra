@@ -35,7 +35,8 @@ public interface KVStore {
 
     static URI storageUri(String key, String namespace, int revision) {
         String fileName = kvFileName(key, revision);
-        return URI.create(StorageContext.KESTRA_PROTOCOL + StorageContext.kvPrefix(namespace) + (fileName.isEmpty() ? fileName : ("/" + fileName)));
+        String suffix = fileName.isEmpty() ? "" : "/" + fileName;
+        return StorageContext.toKestraUri(StorageContext.kvPrefix(namespace) + suffix);
     }
 
     static String kvFileName(String key, int revision) {

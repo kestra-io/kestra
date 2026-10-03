@@ -6,7 +6,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PushbackInputStream;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.security.MessageDigest;
@@ -281,16 +280,8 @@ public class WebhookBodyService {
      */
     private static URI partStorageUri(Flow flow, String executionId, int index, String filename) {
         // Only the file name is kept: the caller could otherwise reach outside the execution directory.
-        String name = encodePathSegment(FilenameUtils.getName(filename));
-        return URI.create("%s/%s/%d/%s".formatted(executionUri(flow, executionId), PARTS_DIRECTORY, index, name));
-    }
-
-    private static String encodePathSegment(String segment) {
-        try {
-            return new URI(null, null, "/" + segment, null).getRawPath().substring(1);
-        } catch (URISyntaxException e) {
-            throw new IllegalArgumentException("Invalid file name '%s' in a multipart webhook request.".formatted(segment), e);
-        }
+        // The name is appended to the decoded path. Concatenating it onto the URI string rejects a space and parses '#' as a fragment.
+        return executionChild(flow, executionId, PARTS_DIRECTORY + "/" + index + "/" + FilenameUtils.getName(filename));
     }
 
     /**
@@ -298,7 +289,15 @@ public class WebhookBodyService {
      * own, so it needs neither a number nor anything the caller chose.
      */
     private static URI bodyStorageUri(Flow flow, String executionId) {
-        return URI.create("%s/%s/%s".formatted(executionUri(flow, executionId), PARTS_DIRECTORY, BODY_FILE));
+        return executionChild(flow, executionId, PARTS_DIRECTORY + "/" + BODY_FILE);
+    }
+
+    private static URI executionChild(Flow flow, String executionId, String relative) {
+        String base = StorageContext.logicalPath(executionUri(flow, executionId));
+        if (!base.endsWith("/")) {
+            base = base + "/";
+        }
+        return StorageContext.toKestraUri(base + relative);
     }
 
     private static URI executionUri(Flow flow, String executionId) {

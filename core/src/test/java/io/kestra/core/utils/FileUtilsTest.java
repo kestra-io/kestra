@@ -24,6 +24,17 @@ class FileUtilsTest {
         assertThat(FileUtils.getExtension("/file/hello.file.with.multiple.dots.txt")).isEqualTo(".txt");
     }
 
+    @Test
+    void shouldGetExtensionFromTheLastSegmentOfAKestraUri() {
+        assertThat(FileUtils.getExtension(URI.create("kestra://report.ion"))).isEqualTo(".ion");
+        assertThat(FileUtils.getExtension(URI.create("kestra:///report.ion"))).isEqualTo(".ion");
+        assertThat(FileUtils.getExtension(URI.create("kestra://v1.2/README"))).isNull();
+        assertThat(FileUtils.getExtension(URI.create("kestra://my.namespace/README"))).isNull();
+        assertThat(FileUtils.getExtension(URI.create("kestra://v1.2/file.txt"))).isEqualTo(".txt");
+        assertThat(FileUtils.getExtension(URI.create("kestra://ns/dir/report.ion"))).isEqualTo(".ion");
+        assertThat(FileUtils.getExtension(URI.create("kestra:///v1.2/README"))).isNull();
+    }
+
     @ParameterizedTest
     @ValueSource(
         strings = {
@@ -56,6 +67,9 @@ class FileUtilsTest {
             // These must be rejected regardless of the host OS.
             "kestra:///ns/flow/exec/x/../../../escaped.txt",
             "kestra:///ns/flow/exec/x%2F..%2F..%2F..%2Fescaped.txt",
+            // The first segment of a canonical URI is the authority, so ".." there is not in getPath().
+            "kestra://../etc/passwd",
+            "kestra://..%2F..%2Fetc/passwd",
         }
     )
     void isParentTraversal_true(String path) {

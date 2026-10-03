@@ -12,6 +12,7 @@ import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
+import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
 
 import jakarta.inject.Inject;
@@ -44,7 +45,7 @@ class ReverseTest {
 
         Reverse.Output run = result.run(runContext);
 
-        assertThat(run.getUri().getPath()).endsWith(".yml");
+        assertThat(StorageContext.logicalPath(run.getUri())).endsWith(".yml");
         assertThat(CharStreams.toString(new InputStreamReader(storageInterface.get(MAIN_TENANT, null, run.getUri())))).isEqualTo("3\n2\n1\n");
     }
 }

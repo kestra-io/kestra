@@ -148,6 +148,7 @@
 
 <script setup lang="ts">
     import {computed, onBeforeUnmount, onMounted, ref, watch} from "vue"
+    import {useEventListener, useResizeObserver} from "@vueuse/core"
     import {useTopLayer} from "@kestra-io/design-system"
     import {useI18n} from "vue-i18n"
     import {useRoute, useRouter} from "vue-router"
@@ -439,6 +440,23 @@
 
     let stopDrag: (() => void) | null = null
 
+    const DRAG_MARGIN = 20
+
+    const clampDragOffset = () => {
+        const rect = cardEl.value?.getBoundingClientRect()
+        const {x, y} = dragOffset.value
+        if (!rect || (x === 0 && y === 0)) {
+            return
+        }
+        const anchorLeft = rect.left - x
+        const anchorTop = rect.top - y
+        const clampedX = Math.max(DRAG_MARGIN - anchorLeft, Math.min(x, window.innerWidth - rect.width - DRAG_MARGIN - anchorLeft))
+        const clampedY = Math.max(DRAG_MARGIN - anchorTop, Math.min(y, window.innerHeight - rect.height - DRAG_MARGIN - anchorTop))
+        if (clampedX !== x || clampedY !== y) {
+            dragOffset.value = {x: clampedX, y: clampedY}
+        }
+    }
+
     const onCardMouseDown = (event: MouseEvent) => {
         if (event.button !== 0) {
             return
@@ -454,7 +472,7 @@
         const start = {x: event.clientX, y: event.clientY}
         const startOffset = {...dragOffset.value}
         const startRect = cardEl.value?.getBoundingClientRect()
-        const margin = 20
+        const margin = DRAG_MARGIN
 
         const onMouseMove = (moveEvent: MouseEvent) => {
             if (!startRect) {
@@ -611,6 +629,9 @@
     watch(() => scene.value?.id, () => applyHighlight())
 
     watch(() => scene.value?.placement, () => (dragOffset.value = {x: 0, y: 0}))
+
+    useResizeObserver(cardEl, clampDragOffset)
+    useEventListener(window, "resize", clampDragOffset)
 
     watch(showIntro, (visible) => {
         if (visible) {

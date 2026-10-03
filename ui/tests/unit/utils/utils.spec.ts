@@ -1,5 +1,5 @@
 import {afterAll, afterEach, beforeEach, describe, expect, it, vi} from "vitest"
-import {getTheme, getSelectedTheme, switchTheme, type SelectedTheme, flatten, executionVars, getDateGrouping, downloadUrl} from "../../../src/utils/utils"
+import {getTheme, getSelectedTheme, switchTheme, type SelectedTheme, flatten, executionVars, getDateGrouping, downloadUrl, humanFileSize, humanTextSize} from "../../../src/utils/utils"
 
 function mockSystemPrefersDark(prefersDark: boolean) {
     vi.stubGlobal("matchMedia", vi.fn().mockImplementation((query: string) => ({
@@ -175,5 +175,51 @@ describe("executionVars()", () => {
 
     it("returns an empty list when data is undefined", () => {
         expect(executionVars(undefined as unknown as Record<string, unknown>)).toEqual([])
+    })
+})
+
+describe("humanFileSize()", () => {
+    it("returns size below threshold as bytes with unit", () => {
+        expect(humanFileSize(0)).toBe("0 B")
+        expect(humanFileSize(500)).toBe("500 B")
+        expect(humanFileSize(1023)).toBe("1023 B")
+    })
+
+    it("uses binary units by default with 1 decimal place", () => {
+        expect(humanFileSize(1024)).toBe("1.0 KiB")
+        expect(humanFileSize(1024 * 1024)).toBe("1.0 MiB")
+        expect(humanFileSize(1024 * 1024 * 1024)).toBe("1.0 GiB")
+    })
+
+    it("switches to powers of 1000 when si is true", () => {
+        expect(humanFileSize(1000, true)).toBe("1.0 kB")
+        expect(humanFileSize(1000 * 1000, true)).toBe("1.0 MB")
+        expect(humanFileSize(1000 * 1000 * 1000, true)).toBe("1.0 GB")
+    })
+
+    it("controls decimal places using dp, including dp: 0", () => {
+        expect(humanFileSize(1536, false, 0)).toBe("2 KiB")
+        expect(humanFileSize(1536, false, 2)).toBe("1.50 KiB")
+        expect(humanFileSize(1500, true, 0)).toBe("2 kB")
+        expect(humanFileSize(1500, true, 2)).toBe("1.50 kB")
+    })
+
+    it("formats negative sizes correctly without treating them as below threshold", () => {
+        expect(humanFileSize(-500)).toBe("-500 B")
+        expect(humanFileSize(-1024)).toBe("-1.0 KiB")
+        expect(humanFileSize(-1000, true)).toBe("-1.0 kB")
+    })
+
+    it("returns literal 0B when input is undefined", () => {
+        expect(humanFileSize(undefined as unknown as number)).toBe("0B")
+    })
+})
+
+describe("humanTextSize()", () => {
+    it("measures UTF-8 byte length so multi-byte characters count as more than one byte", () => {
+        expect(humanTextSize("hello")).toBe("5 B")
+        expect(humanTextSize("€")).toBe("3 B")
+        expect(humanTextSize("🚀")).toBe("4 B")
+        expect(humanTextSize("🚀".repeat(256))).toBe("1.0 KiB")
     })
 })

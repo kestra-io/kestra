@@ -393,6 +393,30 @@
     "resumed title": "Retomar execução <code>{id}</code>",
     "resumed confirm": "Tem certeza de que deseja retomar a execução <code>{id}</code>?",
     "resumed done": "Execução foi retomada",
+    "approval": {
+      "review": "Revisar",
+      "title": "Revisar egzekucja <code>{id}</code>",
+      "approve": "Aprovar",
+      "deny": "Negar",
+      "comment": "Comentário",
+      "comment hint": {
+        "optional": "Opcional.",
+        "always": "Um comentário é obrigatório.",
+        "on approve": "Um comentário é obrigatório para aprovar.",
+        "on deny": "Um comentário é obrigatório para negar."
+      },
+      "comment required": "Um comentário é obrigatório para esta decisão.",
+      "inputs invalid": "Alguns inputs são inválidos: {errors}",
+      "already decided": "Uma decisão já foi tomada sobre esta solicitação de aprovação.",
+      "review done": "Sua avaliação foi registrada",
+      "cancel request": "Cancelar solicitação",
+      "cancel confirm": "Tem certeza de que deseja cancelar a solicitação de aprovação da execução <code>{id}</code>? Nenhuma ramificação de decisão será executada.",
+      "cancel done": "A solicitação de aprovação foi cancelada",
+      "banner": {
+        "pausing": "Esta execução está preparando uma solicitação de aprovação e será pausada para revisão.",
+        "paused": "Esta egzekucja está aguardando uma revisão. Aprove ou negue para continuar."
+      }
+    },
     "resume from breakpoint title": "Retomar execução <code>{id}</code> a partir do ponto de interrupção",
     "resume from breakpoint done": "A execução é retomada a partir do ponto de interrupção",
     "breakpoints": "Pontos de interrupção",

@@ -393,6 +393,30 @@
     "resumed title": "Resume execution <code>{id}</code>",
     "resumed confirm": "Are you sure you want to resume execution <code>{id}</code>?",
     "resumed done": "Execution is resumed",
+    "approval": {
+      "review": "Review",
+      "title": "Review execution <code>{id}</code>",
+      "approve": "Approve",
+      "deny": "Deny",
+      "comment": "Comment",
+      "comment hint": {
+        "optional": "Optional.",
+        "always": "A comment is required.",
+        "on approve": "A comment is required to approve.",
+        "on deny": "A comment is required to deny."
+      },
+      "comment required": "A comment is required for this decision.",
+      "inputs invalid": "Some inputs are invalid: {errors}",
+      "already decided": "A decision has already been taken on this approval request.",
+      "review done": "Your review has been recorded",
+      "cancel request": "Cancel request",
+      "cancel confirm": "Are you sure you want to cancel the approval request of execution <code>{id}</code>? No decision branch will run.",
+      "cancel done": "The approval request has been cancelled",
+      "banner": {
+        "pausing": "This execution is preparing an approval request and will pause for a review.",
+        "paused": "This execution is waiting for a review. Approve or deny it to continue."
+      }
+    },
     "resume from breakpoint title": "Resume execution <code>{id}</code> from breakpoint",
     "resume from breakpoint done": "Execution is resumed from breakpoint",
     "breakpoints": "Breakpoints",

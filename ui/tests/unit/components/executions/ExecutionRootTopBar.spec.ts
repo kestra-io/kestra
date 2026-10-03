@@ -13,6 +13,7 @@ vi.mock("vue-router", () => ({
 vi.mock("../../../../src/stores/executions", () => ({
     useExecutionsStore: () => ({
         execution: {id: "e", namespace: "ns", flowId: "f", state: executionState, labels: []},
+        loadFlowForExecutionByExecutionId: vi.fn(),
     }),
 }))
 

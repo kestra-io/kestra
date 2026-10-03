@@ -1,5 +1,7 @@
 package io.kestra.core.models.property;
 
+import io.kestra.core.utils.PebbleUtil;
+
 import io.micronaut.context.annotation.Context;
 import jakarta.validation.valueextraction.ExtractedValue;
 import jakarta.validation.valueextraction.ValueExtractor;
@@ -14,7 +16,17 @@ public class PropertyValueExtractor implements ValueExtractor<Property<@Extracte
 
     @Override
     public void extractValues(Property<?> originalValue, ValueReceiver receiver) {
-        // this will disable validation at save time but enable it at runtime when the value would be populated
-        receiver.value(null, originalValue.getValue());
+        Object value = originalValue.getValue();
+
+        // Validate an expression that is not a Pebble expression, converted to its declared type.
+        String expression = originalValue.getExpression();
+        if (value == null && expression != null && !PebbleUtil.containsOpeningBlockDelimiter(expression)) {
+            value = originalValue.literalValue();
+        }
+
+        // Validate a property that has a default value.
+        if (value != null) {
+            receiver.value(null, value);
+        }
     }
 }

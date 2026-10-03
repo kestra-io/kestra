@@ -556,6 +556,10 @@
         background-color: var(--ks-bg-base);
     }
 
+    &__panel--viewer {
+        overflow: auto;
+    }
+
     &__panel--debug {
         border-left: 1px solid var(--ks-border-default);
     }

@@ -1678,6 +1678,8 @@ public class ExecutorService {
             TaskRun parentTaskRun = execution.findTaskRunByTaskRunId(workerTaskResult.getTaskRun().getParentTaskRunId());
             Task parentTask = flow.get().findTaskByTaskId(parentTaskRun.getTaskId());
             if (parentTask instanceof WorkingDirectory) {
+                // a WorkingDirectory runs all its children on one worker, so children reported by another worker were left by a run that was resubmitted
+                taskRuns.replaceAll(taskRun -> isLeftByResubmittedRun(taskRun, workerTaskResult.getTaskRun()) ? taskRun.withState(State.Type.RESUBMITTED) : taskRun);
                 taskRuns.add(workerTaskResult.getTaskRun());
             }
         }
@@ -1690,6 +1692,20 @@ public class ExecutorService {
         if (taskRuns.size() > ListUtils.emptyOnNull(execution.getTaskRunList()).size()) {
             executor.withExecution(execution.withTaskRunList(taskRuns), "addAdditionalTaskRun");
         }
+    }
+
+    private static boolean isLeftByResubmittedRun(TaskRun sibling, TaskRun child) {
+        String siblingWorkerId = lastWorkerId(sibling);
+        String childWorkerId = lastWorkerId(child);
+        return child.getParentTaskRunId().equals(sibling.getParentTaskRunId())
+            && sibling.getState().getCurrent() != State.Type.RESUBMITTED
+            && siblingWorkerId != null
+            && childWorkerId != null
+            && !siblingWorkerId.equals(childWorkerId);
+    }
+
+    private static String lastWorkerId(TaskRun taskRun) {
+        return ListUtils.isEmpty(taskRun.getAttempts()) ? null : taskRun.getAttempts().getLast().getWorkerId();
     }
 
     public void log(Logger log, boolean in, WorkerJob value) {

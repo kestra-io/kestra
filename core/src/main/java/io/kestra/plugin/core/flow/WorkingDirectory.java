@@ -252,8 +252,15 @@ public class WorkingDirectory extends Sequential implements NamespaceFilesInterf
         // subtask must not terminate the WorkingDirectory while a sibling's terminal result is still in flight
         boolean hasInFlightSubtask = ListUtils.emptyOnNull(execution.getTaskRunList()).stream()
             .anyMatch(taskRun -> parentTaskRun.getId().equals(taskRun.getParentTaskRunId()) && !taskRun.getState().isTerminated());
+        if (hasInFlightSubtask) {
+            return Optional.empty();
+        }
 
-        return hasInFlightSubtask ? Optional.empty() : super.resolveState(runContext, execution, parentTaskRun);
+        // children left by a resubmitted run were run again under new task runs, only the current run decides the state
+        List<TaskRun> currentRun = ListUtils.emptyOnNull(execution.getTaskRunList()).stream()
+            .filter(taskRun -> !(parentTaskRun.getId().equals(taskRun.getParentTaskRunId()) && taskRun.getState().getCurrent() == State.Type.RESUBMITTED))
+            .toList();
+        return super.resolveState(runContext, execution.withTaskRunList(currentRun), parentTaskRun);
     }
 
     public WorkerTask workerTask(TaskRun parent, Task task, RunContext runContext) {

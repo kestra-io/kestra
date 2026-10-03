@@ -1,11 +1,15 @@
 import {describe, it, expect, vi, beforeEach, afterEach} from "vitest"
+import {createMemoryHistory, createRouter} from "vue-router"
 import {openFlowInNewTab} from "../../../src/utils/openFlow"
 
-function fakeRouter(tenant?: string) {
-    return {
-        currentRoute: {value: {params: {tenant}}},
-        resolve: vi.fn(() => ({href: "/resolved/href"})),
-    }
+function makeRouter() {
+    return createRouter({
+        history: createMemoryHistory(),
+        routes: [
+            {name: "flows/update/edit", path: "/:tenant?/flows/:namespace/:id/:tab?", component: {template: "<div />"}},
+            {name: "executions/update/topology", path: "/:tenant?/executions/:namespace/:flowId/:id/:tab?", component: {template: "<div />"}},
+        ],
+    })
 }
 
 describe("openFlowInNewTab", () => {
@@ -19,12 +23,14 @@ describe("openFlowInNewTab", () => {
         openSpy.mockRestore()
     })
 
-    it("opens the flow edit route in a new browser tab, preserving the tenant", () => {
-        const router = fakeRouter("main")
+    it("opens the flow edit route in a new browser tab, preserving the tenant", async () => {
+        const router = makeRouter()
+        const resolveSpy = vi.spyOn(router, "resolve")
+        await router.push({name: "flows/update/edit", params: {tenant: "main", namespace: "company.team", id: "root", tab: "edit"}})
 
-        openFlowInNewTab({namespace: "company.team", flowId: "child_flow", tab: "edit"}, router as any)
+        openFlowInNewTab({namespace: "company.team", flowId: "child_flow", tab: "edit"}, router)
 
-        expect(router.resolve).toHaveBeenCalledWith({
+        expect(resolveSpy).toHaveBeenCalledWith({
             name: "flows/update/edit",
             params: {
                 namespace: "company.team",
@@ -32,18 +38,27 @@ describe("openFlowInNewTab", () => {
                 tenant: "main",
             },
         })
-        expect(openSpy).toHaveBeenCalledWith("/resolved/href", "_blank")
+        expect(openSpy).toHaveBeenCalledWith(router.resolve({
+            name: "flows/update/edit",
+            params: {
+                namespace: "company.team",
+                id: "child_flow",
+                tenant: "main",
+            },
+        }).href, "_blank")
     })
 
-    it("opens the execution topology when an executionId is given", () => {
-        const router = fakeRouter("main")
+    it("opens the execution topology when an executionId is given", async () => {
+        const router = makeRouter()
+        const resolveSpy = vi.spyOn(router, "resolve")
+        await router.push({name: "flows/update/edit", params: {tenant: "main", namespace: "company.team", id: "root", tab: "edit"}})
 
         openFlowInNewTab(
             {namespace: "company.team", flowId: "child_flow", executionId: "exec-123"},
-            router as any,
+            router,
         )
 
-        expect(router.resolve).toHaveBeenCalledWith({
+        expect(resolveSpy).toHaveBeenCalledWith({
             name: "executions/update/topology",
             params: {
                 namespace: "company.team",
@@ -52,15 +67,25 @@ describe("openFlowInNewTab", () => {
                 tenant: "main",
             },
         })
-        expect(openSpy).toHaveBeenCalledWith("/resolved/href", "_blank")
+        expect(openSpy).toHaveBeenCalledWith(router.resolve({
+            name: "executions/update/topology",
+            params: {
+                namespace: "company.team",
+                flowId: "child_flow",
+                id: "exec-123",
+                tenant: "main",
+            },
+        }).href, "_blank")
     })
 
-    it("still opens a new tab when there is no tenant (OSS)", () => {
-        const router = fakeRouter(undefined)
+    it("still opens a new tab when there is no tenant (OSS)", async () => {
+        const router = makeRouter()
+        const resolveSpy = vi.spyOn(router, "resolve")
+        await router.push({name: "flows/update/edit", params: {namespace: "company.team", id: "root", tab: "edit"}})
 
-        openFlowInNewTab({namespace: "company.team", flowId: "child_flow", tab: "edit"}, router as any)
+        openFlowInNewTab({namespace: "company.team", flowId: "child_flow", tab: "edit"}, router)
 
-        expect(router.resolve).toHaveBeenCalledWith({
+        expect(resolveSpy).toHaveBeenCalledWith({
             name: "flows/update/edit",
             params: {
                 namespace: "company.team",
@@ -68,6 +93,13 @@ describe("openFlowInNewTab", () => {
                 tenant: undefined,
             },
         })
-        expect(openSpy).toHaveBeenCalledWith("/resolved/href", "_blank")
+        expect(openSpy).toHaveBeenCalledWith(router.resolve({
+            name: "flows/update/edit",
+            params: {
+                namespace: "company.team",
+                id: "child_flow",
+                tenant: undefined,
+            },
+        }).href, "_blank")
     })
 })

@@ -1,5 +1,6 @@
 import {afterEach, beforeEach, describe, expect, it, vi} from "vitest"
 import {effectScope, nextTick} from "vue"
+import type {Flow} from "../../../../src/stores/flow"
 
 vi.mock("vue-router", () => ({
     useRoute: () => ({
@@ -57,6 +58,8 @@ describe("useFlowRoot", () => {
     const loadDependencies = vi.mocked(flowStore.loadDependencies)
     const loadFlow = vi.mocked(flowStore.loadFlow)
 
+    const makeFlow = (id: string): Flow => ({id, namespace: "company.team", source: ""})
+
     beforeEach(() => {
         vi.useFakeTimers()
         flowStore.flow = undefined
@@ -80,7 +83,7 @@ describe("useFlowRoot", () => {
         const scope = effectScope()
         const flowRoot = scope.run(() => useFlowRoot())!
 
-        flowStore.flow = {id: "myflow", namespace: "company.team"} as any
+        flowStore.flow = makeFlow("myflow")
         await nextTick()
         await vi.advanceTimersByTimeAsync(1000)
         await nextTick()
@@ -100,7 +103,7 @@ describe("useFlowRoot", () => {
     })
 
     it("reuses the flow the route guard loaded, instead of fetching it a second time", async () => {
-        flowStore.flow = {id: "myflow", namespace: "company.team"} as any
+        flowStore.flow = makeFlow("myflow")
         const scope = effectScope()
 
         scope.run(() => useFlowRoot().setupLifecycle())
@@ -113,7 +116,7 @@ describe("useFlowRoot", () => {
     })
 
     it("fetches the flow when the store holds another one", async () => {
-        flowStore.flow = {id: "otherflow", namespace: "company.team"} as any
+        flowStore.flow = makeFlow("otherflow")
         const scope = effectScope()
 
         scope.run(() => useFlowRoot().setupLifecycle())

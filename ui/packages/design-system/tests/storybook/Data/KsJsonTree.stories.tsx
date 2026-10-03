@@ -1,5 +1,5 @@
 import type {Meta, StoryObj} from "@storybook/vue3-vite"
-import {expect, waitFor, within} from "storybook/test"
+import {expect, fn, userEvent, waitFor, within} from "storybook/test"
 import KsJsonTree from "../../../src/components/Data/KsJsonTree.vue"
 import {KsCard} from "@kestra-io/design-system"
 
@@ -64,12 +64,21 @@ export const Collapsed: Story = {
         setup() {
             return () => (
                 <KsCard style="font-size:13px;padding:1rem">
-                    <KsJsonTree {...args} />
+                    <KsJsonTree {...args} onSelect={selectSpy} />
                 </KsCard>
             )
         },
     }),
+    play: async ({canvasElement}: {canvasElement: HTMLElement}) => {
+        const canvas = within(canvasElement)
+
+        await userEvent.click(canvas.getByText("variable_explorer.n_keys"))
+        await waitFor(() => expect(canvas.getByText('"namespace"')).toBeTruthy())
+        await waitFor(() => expect(selectSpy).toHaveBeenCalledWith(".meta", NESTED_OBJECT.meta))
+    },
 }
+
+const selectSpy = fn()
 
 export const DeeplyNested: Story = {
     args: {

@@ -41,6 +41,17 @@
                     class="kind"
                 >{{ typeName }}</KsText>
             </div>
+
+            <div
+                v-if="tests"
+                :class="['tests', tests.state]"
+                :title="testsTooltip"
+            >
+                <KsIcon size="xs" :color="dbtTestColorOf(tests.state)">
+                    <component :is="dbtTestIconOf(tests.state)" />
+                </KsIcon>
+                <KsText size="small" class="tests-label">{{ testsLabel }}</KsText>
+            </div>
         </div>
 
         <Handle type="source" :position="Position.Right" />
@@ -56,11 +67,13 @@
     import PackageVariantClosed from "vue-material-design-icons/PackageVariantClosed.vue"
     import {usePluginsStore} from "../../../../stores/plugins"
     import {statusIconOf, statusColorOf, normalizeStatus} from "../../utils/assetStatus"
+    import {normalizeDbtTests, dbtTestIconOf, dbtTestColorOf} from "../../utils/dbtTests"
     import {DAG_SELECTED, DAG_HOVERED, DAG_TRACED, DAG_SHOWN} from "../../utils/dagConstants"
+    import type {DbtTestFields} from "../../utils/types"
 
     const props = defineProps<{
         id: string;
-        data: {
+        data: DbtTestFields & {
             name: string;
             iconCls?: string;
             isFlow?: boolean;
@@ -82,6 +95,16 @@
     const status = computed(() => normalizeStatus(props.data.status))
     const typeName = computed(() => (props.data.assetType ? stringUtils.afterLastDot(props.data.assetType) : undefined))
     const statusLabel = computed(() => t(`dependency.dag.status.${status.value}`))
+
+    const tests = computed(() => normalizeDbtTests(props.data.dbtTestStatus, props.data.dbtTestsTotal, props.data.dbtTestsFailed))
+
+    const testsLabel = computed(() => (tests.value
+        ? t(`dependency.dag.tests.${tests.value.state}`, tests.value, tests.value.total)
+        : undefined))
+
+    const testsTooltip = computed(() => (tests.value
+        ? t(`dependency.dag.tests.tooltip.${tests.value.state}`, tests.value, tests.value.total)
+        : undefined))
 
     /** One class, not several booleans: the states are exclusive and stacking them clashed. */
     const cardState = computed(() => {
@@ -113,6 +136,7 @@
         box-sizing: border-box;
         overflow: hidden;
         padding: var(--ks-spacing-2);
+        padding-left: var(--ks-spacing-4);
         border: 1px solid var(--ks-border-subtle);
         border-radius: var(--ks-radius-base);
         background: var(--ks-bg-surface);
@@ -221,6 +245,30 @@
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
+        }
+
+        .tests {
+            display: flex;
+            align-items: center;
+            gap: var(--ks-spacing-2);
+            min-width: 0;
+        }
+
+        .tests-label {
+            min-width: 0;
+            font-size: var(--ks-font-size-xs);
+            color: var(--ks-text-secondary);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .tests.warn .tests-label {
+            color: var(--ks-text-warning);
+        }
+
+        .tests.fail .tests-label {
+            color: var(--ks-text-error);
         }
 
         &.fresh .age {

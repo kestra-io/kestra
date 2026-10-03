@@ -63,8 +63,9 @@
     import type {LayoutMode} from "../../composables/useDependencies"
     import type {GroupField, GroupChip} from "../../composables/useDagGrouping"
     import {normalizeStatus, compactAge} from "../../utils/assetStatus"
+    import {normalizeDbtTests} from "../../utils/dbtTests"
     import {ASSET} from "../../utils/types"
-    import type {Node} from "../../utils/types"
+    import type {Node, DbtTestFields} from "../../utils/types"
 
     const props = defineProps<{
         nodes: Node[];
@@ -85,7 +86,7 @@
 
     const assets = computed(() => props.nodes
         .filter((node) => node.metadata.subtype === ASSET)
-        .map((node) => node.metadata as {status?: string; updated?: string}))
+        .map((node) => node.metadata as DbtTestFields & {status?: string; updated?: string}))
 
     const summaryParts = computed<[key: string, value: string | number][]>(() => {
         if (!assets.value.length) {
@@ -93,16 +94,26 @@
         }
 
         const counts = {fresh: 0, stale: 0, failed: 0, unknown: 0}
-        assets.value.forEach((asset) => counts[normalizeStatus(asset.status)]++)
+        let testsFailed = 0
+        assets.value.forEach((asset) => {
+            counts[normalizeStatus(asset.status)]++
+            if (normalizeDbtTests(asset.dbtTestStatus, asset.dbtTestsTotal, asset.dbtTestsFailed)?.state === "fail") {
+                testsFailed++
+            }
+        })
 
         const updates = assets.value
             .map((asset) => Date.parse(asset.updated ?? ""))
             .filter((epoch) => !Number.isNaN(epoch))
         const lastRun = updates.length ? compactAge(new Date(Math.max(...updates)).toISOString()) : undefined
 
+        // Freshness alone would print "All n fresh" over a card whose dbt tests are failing.
         const parts: [key: string, value: string | number][] = []
         if (counts.failed) {
             parts.push(["dependency.dag.summary.failed", counts.failed])
+        }
+        if (testsFailed) {
+            parts.push(["dependency.dag.summary.tests_failed", testsFailed])
         }
         if (counts.stale) {
             parts.push(["dependency.dag.summary.issues", counts.stale])

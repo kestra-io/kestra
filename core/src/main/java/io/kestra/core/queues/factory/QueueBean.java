@@ -1,4 +1,4 @@
-package io.kestra.queue;
+package io.kestra.core.queues.factory;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;

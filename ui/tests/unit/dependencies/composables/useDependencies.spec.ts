@@ -7,9 +7,33 @@ import {setActivePinia, createPinia} from "pinia"
 import {mount} from "@vue/test-utils"
 import {useNamespacesStore} from "override/stores/namespaces"
 import {AxiosResponse} from "axios"
+import type {EChartsType} from "echarts/core"
 import {useFlowStore} from "../../../../src/stores/flow"
 import {RouteParams} from "vue-router"
 import {getDependencies} from "../../../fixtures/dependencies/getDependencies"
+
+type NodeStyleState = {
+    itemStyle?: {
+        color?: string
+        borderColor?: string
+        borderWidth?: number
+        opacity?: number
+    }
+}
+
+type EdgeStyleState = {
+    lineStyle?: {
+        color?: string
+        opacity?: number
+    }
+}
+
+type ChartCameraOption = {
+    series?: Array<{
+        zoom?: number
+        center?: [number, number]
+    }>
+}
 
 // ─── CSS var sentinels ────────────────────────────────────────────────────────
 // Set recognisable values so we can assert which colour path each node took,
@@ -265,8 +289,9 @@ describe("useDependencies composable", () => {
       await nextTick()
 
       graphNodes.value.forEach(n => {
-        expect((n.emphasis as any)?.itemStyle?.color).toBe("hovered-bg")
-        expect((n.emphasis as any)?.itemStyle?.borderColor).toBe("hovered-border")
+        const emphasis = n.emphasis as NodeStyleState | undefined
+        expect(emphasis?.itemStyle?.color).toBe("hovered-bg")
+        expect(emphasis?.itemStyle?.borderColor).toBe("hovered-border")
       })
     })
 
@@ -275,7 +300,8 @@ describe("useDependencies composable", () => {
       await nextTick()
 
       graphEdges.value.forEach(e => {
-        expect((e.emphasis as any)?.lineStyle?.color).toBe("hovered-edge")
+        const emphasis = e.emphasis as EdgeStyleState | undefined
+        expect(emphasis?.lineStyle?.color).toBe("hovered-edge")
       })
     })
 
@@ -291,7 +317,8 @@ describe("useDependencies composable", () => {
       expect(nodeA.itemStyle?.color).toBe("selected-bg")
       // blur must mirror base so ECharts doesn't override the selection colour
       // when another node is hovered.
-      expect((nodeA.blur as any)?.itemStyle?.color).toBe("selected-bg")
+      const blur = nodeA.blur as NodeStyleState | undefined
+      expect(blur?.itemStyle?.color).toBe("selected-bg")
     })
 
     it("unselected nodes have blur.itemStyle matching their default base colour", async () => {
@@ -299,8 +326,9 @@ describe("useDependencies composable", () => {
       await nextTick()
 
       graphNodes.value.forEach(n => {
-        expect((n.blur as any)?.itemStyle?.color).toBe(n.itemStyle?.color)
-        expect((n.blur as any)?.itemStyle?.opacity ?? 1).toBe(n.itemStyle?.opacity ?? 1)
+        const blur = n.blur as NodeStyleState | undefined
+        expect(blur?.itemStyle?.color).toBe(n.itemStyle?.color)
+        expect(blur?.itemStyle?.opacity ?? 1).toBe(n.itemStyle?.opacity ?? 1)
       })
     })
   })
@@ -317,16 +345,17 @@ describe("useDependencies composable", () => {
     const CANVAS_H = 400
 
     /** Calls that move the camera, i.e. the ones carrying a zoom on the series. */
-    const cameraCalls = (calls: any[][]) => calls.filter((args) => args[0]?.series?.[0]?.zoom !== undefined)
+    const cameraCalls = (calls: unknown[][]) =>
+        calls.filter((args) => (args[0] as ChartCameraOption | undefined)?.series?.[0]?.zoom !== undefined)
 
     async function mountWithChart(initialNodeID = "X", dagView = false) {
         const chartMock = makeChartMock(NODE_POSITIONS, CANVAS_W, CANVAS_H)
-        const graphRef = ref({
+        const graphRef: Parameters<typeof useDependencies>[0] = ref({
             fit:                vi.fn(),
             zoomIn:             vi.fn(),
             zoomOut:            vi.fn(),
             exportAsImage:      vi.fn(),
-            getEchartsInstance: vi.fn(() => chartMock),
+            getEchartsInstance: vi.fn(() => chartMock as unknown as EChartsType),
             $el:                document.createElement("div"),
         })
         const fetchAssetDependencies = vi.fn().mockResolvedValue({
@@ -343,7 +372,7 @@ describe("useDependencies composable", () => {
             setup() {
                 // Defaults to initialNodeID="X" (nonexistent) so no node is preselected,
                 // leaving selectedNodeID undefined and letting tests control selection.
-                const composable = useDependencies(graphRef as any, FLOW, initialNodeID, {}, fetchAssetDependencies, undefined, dagView)
+                const composable = useDependencies(graphRef, FLOW, initialNodeID, {}, fetchAssetDependencies, undefined, dagView)
                 return {composable}
             },
         })
@@ -417,9 +446,7 @@ describe("useDependencies composable", () => {
         await nextTick()
         await nextTick()
 
-        const focusCalls = chartMock.setOption.mock.calls.filter(
-            (args: any[]) => args[0]?.series?.[0]?.zoom !== undefined,
-        )
+        const focusCalls = cameraCalls(chartMock.setOption.mock.calls)
         expect(focusCalls).toHaveLength(0)
     })
   })

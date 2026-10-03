@@ -32,6 +32,7 @@ vi.mock("nprogress", () => ({
 
 import type {Router} from "vue-router"
 import {isReportedCentrally, setupKestraHttp, type KestraHttpError} from "../../../src/utils/kestraHttp"
+import {markServerReachable, markServerUnreachable, useServerReachability} from "../../../src/composables/useServerReachability"
 
 describe("setupKestraHttp router NProgress hooks", () => {
     let beforeEachCb: () => void
@@ -100,6 +101,27 @@ describe("setupKestraHttp router NProgress hooks", () => {
 
         expect(nprogressStart).not.toHaveBeenCalled()
         expect(nprogressDone).not.toHaveBeenCalled()
+    })
+})
+
+describe("setupKestraHttp request headers", () => {
+    it("marks same-origin requests as scripted so the backend skips the WWW-Authenticate challenge", () => {
+        setupKestraHttp({})
+        const onRequest = fakeClient.interceptors.request.use.mock.calls.at(-1)![0]
+
+        const request = onRequest(new Request(`${window.location.origin}/api/v1/x`, {headers: {Accept: "application/json"}}), {})
+
+        expect(request.headers.get("X-Requested-With")).toBe("XMLHttpRequest")
+        expect(request.headers.get("Accept")).toBe("application/json")
+    })
+
+    it("leaves cross-origin requests alone so they never trigger a CORS preflight", () => {
+        setupKestraHttp({})
+        const onRequest = fakeClient.interceptors.request.use.mock.calls.at(-1)![0]
+
+        const request = onRequest(new Request("https://api.example.test/v1/x"), {})
+
+        expect(request.headers.has("X-Requested-With")).toBe(false)
     })
 })
 
@@ -173,5 +195,78 @@ describe("isReportedCentrally", () => {
         expect(isReportedCentrally(failure(404, {ignoreNotFound: true}))).toBe(false)
         expect(isReportedCentrally(failure(500, {showMessageOnError: false}))).toBe(false)
         expect(isReportedCentrally({status: 0} as KestraHttpError)).toBe(false)
+    })
+})
+
+describe("setupKestraHttp server reachability", () => {
+    const kestraApiRequest = () => new Request(`${window.location.origin}/api/v1/x`)
+
+    function interceptors() {
+        setupKestraHttp({}, {})
+        return {
+            onResponse: fakeClient.interceptors.response.use.mock.calls.at(-1)![0],
+            onError: fakeClient.interceptors.error.use.mock.calls.at(-1)![0],
+        }
+    }
+
+    beforeEach(() => {
+        markServerReachable()
+    })
+
+    it("flags the server unreachable on a response-less failure and clears it on the next response", () => {
+        const {onResponse, onError} = interceptors()
+        const {unreachable} = useServerReachability()
+
+        onError(new TypeError("Failed to fetch"), undefined, kestraApiRequest(), {})
+        expect(unreachable.value).toBe(true)
+
+        onResponse({status: 200}, kestraApiRequest(), {})
+        expect(unreachable.value).toBe(false)
+    })
+
+    it("ignores failures and successes of requests that are not Kestra API calls", () => {
+        const {onResponse, onError} = interceptors()
+        const {unreachable} = useServerReachability()
+
+        onError(new TypeError("Failed to fetch"), undefined, new Request("https://api.example.test/v1/reports/events"), {})
+        expect(unreachable.value).toBe(false)
+
+        markServerUnreachable()
+        onResponse({status: 200}, new Request("https://api.example.test/v1/feeds"), {})
+        expect(unreachable.value).toBe(true)
+    })
+
+    it("flags the server unreachable when a gateway answers 503 in its place", () => {
+        const {onError} = interceptors()
+        const gatewayResponse = {status: 503, statusText: "Service Unavailable", url: "http://x/api", headers: {forEach: () => {}}}
+
+        onError(Object.assign(new Error("503"), {status: 503}), gatewayResponse, kestraApiRequest(), {})
+
+        expect(useServerReachability().unreachable.value).toBe(true)
+    })
+
+    it("ignores a request the caller aborted", () => {
+        const {onError} = interceptors()
+        const controller = new AbortController()
+        controller.abort()
+
+        onError(new DOMException("aborted", "AbortError"), undefined, new Request(`${window.location.origin}/api/v1/x`, {signal: controller.signal}), {})
+
+        expect(useServerReachability().unreachable.value).toBe(false)
+    })
+})
+
+describe("setupKestraHttp 401 retry", () => {
+    it("replays the failed request once onUnauthorized reports a successful re-authentication", async () => {
+        const unauthorized = Object.assign(new Error("401"), {status: 401})
+        const get = vi.fn().mockRejectedValueOnce(unauthorized).mockResolvedValueOnce({data: "ok"})
+        fakeAxiosClient.get = get
+        const onUnauthorized = vi.fn().mockResolvedValue(true)
+
+        setupKestraHttp({}, {isLoggedIn: () => false, onUnauthorized})
+
+        await expect(fakeAxiosClient.get("/executions", {q: 1})).resolves.toEqual({data: "ok"})
+        expect(onUnauthorized).toHaveBeenCalledTimes(1)
+        expect(get).toHaveBeenCalledTimes(2)
     })
 })

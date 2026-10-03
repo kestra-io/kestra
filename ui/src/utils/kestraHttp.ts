@@ -1,12 +1,23 @@
 import NProgress from "nprogress"
 import type {Router} from "vue-router"
 import {configureClient, useClient, asProblem, type ProblemDetail} from "@kestra-io/kestra-sdk"
+import {markServerReachable, markServerUnreachable} from "../composables/useServerReachability"
 
 let pendingRoute = false
 let requestsTotal = 0
 let requestsCompleted = 0
 
 const SKIP_PROGRESS = "__kestraSkipProgress"
+
+const GATEWAY_STATUSES = new Set([502, 503, 504])
+
+function isKestraApiRequest(request?: Request): boolean {
+    return Boolean(request?.url) && new URL(request!.url, window.location.href).pathname.includes("/api/v1/")
+}
+
+function isSameOrigin(request: Request): boolean {
+    return new URL(request.url, window.location.href).origin === window.location.origin
+}
 
 function skipProgress(opts: unknown): boolean {
     return Boolean((opts as Record<string, unknown> | undefined)?.[SKIP_PROGRESS])
@@ -186,10 +197,14 @@ export function setupKestraHttp(
 
     client.interceptors.request.use((request, opts: unknown) => {
         if (typeof document !== "undefined" && !skipProgress(opts)) initProgress()
-        return request
+        if (!isSameOrigin(request)) return request
+        const headers = new Headers(request.headers)
+        headers.set("X-Requested-With", "XMLHttpRequest")
+        return new Request(request, {headers})
     })
 
-    client.interceptors.response.use((response, _request, opts) => {
+    client.interceptors.response.use((response, request, opts) => {
+        if (isKestraApiRequest(request)) markServerReachable()
         if (!skipProgress(opts)) increaseProgress()
         return response
     })
@@ -197,8 +212,14 @@ export function setupKestraHttp(
     client.interceptors.error.use((error, response, request, opts) => {
         const kestraError = error as KestraHttpError
         if (!response) {
+            const aborted = request?.signal?.aborted || kestraError.name === "AbortError"
+            if (!aborted && isKestraApiRequest(request)) markServerUnreachable()
             if (!skipProgress(opts)) increaseProgress()
             return kestraError
+        }
+        if (isKestraApiRequest(request)) {
+            if (GATEWAY_STATUSES.has(response.status)) markServerUnreachable()
+            else markServerReachable()
         }
 
         // An API error is a problem document, and `response.data` IS that document — the same value the

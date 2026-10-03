@@ -198,6 +198,53 @@ class LoopExecutionEventMessageHandlerTest {
     }
 
     @Test
+    void shouldWaitForRunningIterationsAfterBreakWhen() throws InternalException {
+        // Given — two iterations are running when the first one satisfies breakWhen
+        var logTask = Log.builder().id("log").type(Log.class.getName()).message("Hello").build();
+        var flow = flowRepository.create(GenericFlow.of(loopFlowWithBreakWhen(logTask, true, "{{ item.value == 'a' }}")));
+        var execution = Execution.newExecution(flow, Collections.emptyList());
+        String loopTaskRunId = IdUtils.create();
+        var loopTaskRun = loopTaskRun(loopTaskRunId, execution);
+        executionRepository.save(execution.withTaskRunList(List.of(loopTaskRun)));
+        taskOutputService.saveOutputs(
+            loopTaskRun, Map.of(
+                Loop.ITERATION_COUNT_OUTPUT, 3,
+                Loop.RUNNING_ITERATIONS_OUTPUT, 2,
+                Loop.TERMINATED_ITERATIONS_OUTPUT, Collections.emptyMap()
+            )
+        );
+
+        // When — the first running iteration completes and requests the loop break
+        var firstMessage = new LoopExecutionEvent(
+            new LoopRun(execution, "loop", loopTaskRunId, 0, null, "a", null),
+            execution.getId(),
+            State.Type.SUCCESS,
+            null,
+            null
+        );
+        var firstResult = handler.handle(firstMessage);
+
+        // Then — the loop remains running until the other in-flight iteration completes
+        assertThat(firstResult).isEmpty();
+        assertThat(taskOutputService.getOutputs(loopTaskRun))
+            .containsEntry(Loop.RUNNING_ITERATIONS_OUTPUT, 1)
+            .containsEntry(Loop.TERMINATED_ITERATIONS_OUTPUT, Map.of("SUCCESS", 1, "SKIPPED", 1));
+
+        var secondMessage = new LoopExecutionEvent(
+            new LoopRun(execution, "loop", loopTaskRunId, 1, null, "b", null),
+            execution.getId(),
+            State.Type.SUCCESS,
+            null,
+            null
+        );
+        var secondResult = handler.handle(secondMessage);
+
+        assertThat(secondResult).isPresent();
+        assertThat(secondResult.get().getExecution().findTaskRunByTaskRunId(loopTaskRunId).getState().getCurrent())
+            .isEqualTo(State.Type.SUCCESS);
+    }
+
+    @Test
     void shouldAccumulateTerminatedIterationsPerStateWhenTransmitFailedIsDisabled() throws InternalException {
         // Given — transmitFailed disabled: a failing iteration is counted per-state instead of
         // immediately terminating the loop

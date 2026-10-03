@@ -13,6 +13,7 @@ import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.jupiter.api.Test;
 
 import io.kestra.core.storage.StorageTestSuite;
+import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageObject;
 import io.kestra.core.utils.IdUtils;
 
@@ -39,9 +40,35 @@ class LocalStorageTest extends StorageTestSuite {
             new ByteArrayInputStream("Hello World".getBytes())
         );
 
-        assertThat(put.getPath(), not(longObjectName));
-        String suffix = put.getPath().substring(7); // we remove the random 5 char + '-'
+        String returned = StorageContext.logicalPath(put);
+        assertThat(returned, not(longObjectName));
+        String suffix = returned.substring(7); // leading slash, 5 random chars, and '-'
         assertTrue(longObjectName.endsWith(suffix));
+    }
+
+    @Test
+    void shouldStoreCanonicalUriAtTheSameDiskPathAsLegacyUri() throws IOException {
+        String tenantId = IdUtils.create();
+        URI canonical = URI.create("kestra://namespace/folder/sub/script.py");
+        storageInterface.put(tenantId, "namespace", canonical, new ByteArrayInputStream("same".getBytes()));
+
+        Path stored = Path.of("/tmp/unittest", tenantId, "namespace/folder/sub/script.py");
+        Path droppedAuthority = Path.of("/tmp/unittest", tenantId, "folder/sub/script.py");
+        assertTrue(Files.exists(stored));
+        assertFalse(Files.exists(droppedAuthority));
+        assertTrue(storageInterface.exists(tenantId, "namespace", URI.create("kestra:///namespace/folder/sub/script.py")));
+    }
+
+    @Test
+    void shouldRejectTraversalHiddenInTheAuthority() {
+        assertThrows(
+            IllegalArgumentException.class,
+            () -> storageInterface.get(IdUtils.create(), null, URI.create("kestra://../etc/passwd"))
+        );
+        assertThrows(
+            IllegalArgumentException.class,
+            () -> storageInterface.get(IdUtils.create(), null, URI.create("kestra://..%2F..%2Fetc/passwd"))
+        );
     }
 
     // GHSA-qw4v-6w32-xx9h: a Windows-style backslash traversal must not escape the storage

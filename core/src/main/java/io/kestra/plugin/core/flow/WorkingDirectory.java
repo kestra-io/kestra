@@ -13,6 +13,8 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
+import org.hibernate.validator.constraints.time.DurationMin;
+
 import com.fasterxml.jackson.core.type.TypeReference;
 
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
@@ -33,14 +35,13 @@ import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.VoidOutput;
 import io.kestra.core.runners.*;
 import io.kestra.core.serializers.FileSerde;
+import io.kestra.core.storages.StorageContext;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.NamespaceFilesUtils;
 import io.kestra.core.validations.WorkingDirectoryTaskValidation;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import org.hibernate.validator.constraints.time.DurationMin;
-
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -385,7 +386,7 @@ public class WorkingDirectory extends Sequential implements NamespaceFilesInterf
 
     @Override
     public Outputs outputs(final RunContext runContext) throws IOException {
-        URI uri = URI.create("kestra://" + runContext.storage().getContextBaseURI() + "/").resolve(OUTPUTS_FILE);
+        URI uri = StorageContext.toKestraUri(StorageContext.logicalPath(runContext.storage().getContextBaseURI()) + "/" + OUTPUTS_FILE);
 
         if (!runContext.storage().isFileExist(uri)) {
             // no outputs files was captured for that tasks

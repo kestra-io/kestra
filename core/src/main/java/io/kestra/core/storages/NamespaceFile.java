@@ -1,7 +1,6 @@
 package io.kestra.core.storages;
 
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.util.Objects;
 import java.util.regex.Matcher;
@@ -73,25 +72,31 @@ public record NamespaceFile(
             return of(namespace, (Path) null, revision);
         }
 
-        Path path = Path.of(WindowsUtils.windowsToUnixPath(uri.getPath()));
         final NamespaceFile namespaceFile;
         if (uri.getScheme() != null) {
-            if (!uri.getScheme().equalsIgnoreCase("kestra")) {
+            if (!uri.getScheme().equalsIgnoreCase(StorageContext.KESTRA_SCHEME)) {
                 throw new IllegalArgumentException(
                     String.format(
                         "Invalid Kestra URI scheme. Expected 'kestra', but was '%s'.", uri
                     )
                 );
             }
-            if (!uri.getPath().startsWith(StorageContext.namespaceFilePrefix(namespace))) {
+            String internal = WindowsUtils.windowsToUnixPath(StorageContext.logicalPath(uri));
+            if (FileUtils.isParentTraversal(internal)) {
+                throw new IllegalArgumentException("File should be accessed with their full path and not using relative '..' path.");
+            }
+            String prefix = StorageContext.namespaceFilePrefix(namespace);
+            if (!internal.startsWith(prefix)) {
                 throw new IllegalArgumentException(
                     String.format(
                         "Invalid Kestra URI. Expected prefix for namespace '%s', but was %s.", namespace, uri
                     )
                 );
             }
-            namespaceFile = of(namespace, Path.of(StorageContext.namespaceFilePrefix(namespace)).relativize(path), revision);
+            Path path = Path.of(internal);
+            namespaceFile = of(namespace, Path.of(prefix).relativize(path), revision);
         } else {
+            Path path = Path.of(WindowsUtils.windowsToUnixPath(uri.getPath()));
             namespaceFile = of(namespace, path, revision);
         }
 
@@ -125,7 +130,7 @@ public record NamespaceFile(
         if (path == null || path.equals(Path.of("/"))) {
             return new NamespaceFile(
                 "",
-                URI.create(StorageContext.KESTRA_PROTOCOL + StorageContext.namespaceFilePrefix(namespace) + "/"),
+                StorageContext.toKestraUri(StorageContext.namespaceFilePrefix(namespace) + "/"),
                 namespace,
                 // Directory always has a single revision
                 1
@@ -152,14 +157,17 @@ public record NamespaceFile(
         // preserved unchanged — keeping "a b.txt" and "a+b.txt" as two distinct stored objects.
         String uriPath = namespacePrefixPath.resolve(storagePath).toString().replace("\\", "/")
             + (isDirectory(path) ? "/" : "");
+        if (FileUtils.isParentTraversal(uriPath)) {
+            throw new IllegalArgumentException("File should be accessed with their full path and not using relative '..' path.");
+        }
         try {
             return new NamespaceFile(
                 pathWithoutLeadingSlash,
-                new URI(StorageContext.KESTRA_SCHEME, "", uriPath, null),
+                StorageContext.toKestraUri(uriPath),
                 namespace,
                 revision
             );
-        } catch (URISyntaxException e) {
+        } catch (IllegalArgumentException e) {
             throw new IllegalArgumentException("Invalid namespace file path: " + path, e);
         }
     }
@@ -199,7 +207,7 @@ public record NamespaceFile(
      * @return The {@link Path}.
      */
     public Path storagePath() {
-        return Path.of(uri().getPath());
+        return Path.of(StorageContext.logicalPath(uri()));
     }
 
     /**

@@ -16,6 +16,7 @@ import com.google.common.io.CharStreams;
 
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.storages.FileAttributes;
+import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.storages.StorageObject;
 import io.kestra.core.utils.IdUtils;
@@ -156,22 +157,25 @@ public abstract class StorageTestSuite {
 
         List<URI> res = storageInterface.allByPrefix(MAIN_TENANT, namespaceName, URI.create("kestra:///filesByPrefix_test_namespace/"), false);
         assertThat(res).containsExactlyInAnyOrder(
-            URI.create("kestra:///filesByPrefix_test_namespace/file.txt"), URI.create("kestra:///filesByPrefix_test_namespace/another_file.json"),
-            URI.create("kestra:///filesByPrefix_test_namespace/folder/file.txt"), URI.create("kestra:///filesByPrefix_test_namespace/folder/some.yaml"),
-            URI.create("kestra:///filesByPrefix_test_namespace/folder/sub/script.py")
+            StorageContext.toKestraUri("/filesByPrefix_test_namespace/file.txt"),
+            StorageContext.toKestraUri("/filesByPrefix_test_namespace/another_file.json"),
+            StorageContext.toKestraUri("/filesByPrefix_test_namespace/folder/file.txt"),
+            StorageContext.toKestraUri("/filesByPrefix_test_namespace/folder/some.yaml"),
+            StorageContext.toKestraUri("/filesByPrefix_test_namespace/folder/sub/script.py")
         );
 
         res = storageInterface.allByPrefix("tenant", namespaceName, URI.create("/filesByPrefix_test_namespace"), false);
-        assertThat(res).containsExactlyInAnyOrder(URI.create("kestra:///filesByPrefix_test_namespace/tenant_file.txt"));
+        assertThat(res).containsExactlyInAnyOrder(StorageContext.toKestraUri("/filesByPrefix_test_namespace/tenant_file.txt"));
 
         res = storageInterface.allByPrefix(MAIN_TENANT, namespaceName, URI.create("/filesByPrefix_test_namespace/folder"), false);
         assertThat(res).containsExactlyInAnyOrder(
-            URI.create("kestra:///filesByPrefix_test_namespace/folder/file.txt"), URI.create("kestra:///filesByPrefix_test_namespace/folder/some.yaml"),
-            URI.create("kestra:///filesByPrefix_test_namespace/folder/sub/script.py")
+            StorageContext.toKestraUri("/filesByPrefix_test_namespace/folder/file.txt"),
+            StorageContext.toKestraUri("/filesByPrefix_test_namespace/folder/some.yaml"),
+            StorageContext.toKestraUri("/filesByPrefix_test_namespace/folder/sub/script.py")
         );
 
         res = storageInterface.allByPrefix(MAIN_TENANT, namespaceName, URI.create("/filesByPrefix_test_namespace/folder/sub"), false);
-        assertThat(res).containsExactlyInAnyOrder(URI.create("kestra:///filesByPrefix_test_namespace/folder/sub/script.py"));
+        assertThat(res).containsExactlyInAnyOrder(StorageContext.toKestraUri("/filesByPrefix_test_namespace/folder/sub/script.py"));
 
         res = storageInterface.allByPrefix(MAIN_TENANT, namespaceName, URI.create("/filesByPrefix_test_namespace/non-existing"), false);
         assertThat(res).isEmpty();
@@ -185,13 +189,17 @@ public abstract class StorageTestSuite {
 
         List<URI> res = storageInterface.allByPrefix(MAIN_TENANT, "some_namespace", URI.create("kestra:///some_namespace/"), true);
         assertThat(res)
-            .containsExactlyInAnyOrder(URI.create("kestra:///some_namespace/file.txt"), URI.create("kestra:///some_namespace/folder/"), URI.create("kestra:///some_namespace/folder/sub/"));
+            .containsExactlyInAnyOrder(
+                StorageContext.toKestraUri("/some_namespace/file.txt"),
+                StorageContext.toKestraUri("/some_namespace/folder/"),
+                StorageContext.toKestraUri("/some_namespace/folder/sub/")
+            );
 
         res = storageInterface.allByPrefix("tenant", "some_namespace", URI.create("/some_namespace"), true);
-        assertThat(res).containsExactlyInAnyOrder(URI.create("kestra:///some_namespace/tenant_file.txt"));
+        assertThat(res).containsExactlyInAnyOrder(StorageContext.toKestraUri("/some_namespace/tenant_file.txt"));
 
         res = storageInterface.allByPrefix(MAIN_TENANT, "some_namespace", URI.create("/some_namespace/folder"), true);
-        assertThat(res).containsExactlyInAnyOrder(URI.create("kestra:///some_namespace/folder/sub/"));
+        assertThat(res).containsExactlyInAnyOrder(StorageContext.toKestraUri("/some_namespace/folder/sub/"));
     }
 
     //region test LIST
@@ -710,7 +718,7 @@ public abstract class StorageTestSuite {
             storageInterface.get(tenantId, prefix, new URI("/" + prefix + "/storage/put.yml"))
         );
 
-        assertThat(putFromAnother.toString()).isEqualTo(new URI("kestra:///" + prefix + "/storage/put_from_another.yml").toString());
+        assertThat(putFromAnother).isEqualTo(StorageContext.toKestraUri("/" + prefix + "/storage/put_from_another.yml"));
         InputStream get = storageInterface.get(tenantId, prefix, new URI("/" + prefix + "/storage/put_from_another.yml"));
         assertThat(CharStreams.toString(new InputStreamReader(get))).isEqualTo(CONTENT_STRING);
     }
@@ -729,6 +737,34 @@ public abstract class StorageTestSuite {
         );
         InputStream getScheme = storageInterface.get(tenantId, prefix, new URI("/" + prefix + "/storage/get.yml"));
         assertThat(CharStreams.toString(new InputStreamReader(getScheme))).isEqualTo(CONTENT_STRING);
+    }
+
+    @Test
+    void shouldResolveCanonicalAndLegacyUriToTheSameObject() throws Exception {
+        String prefix = IdUtils.create();
+        String tenantId = IdUtils.create();
+        String path = "/" + prefix + "/folder/sub/script.py";
+        URI legacy = new URI("kestra", "", path, null, null);
+        URI canonical = StorageContext.toKestraUri(path);
+
+        storageInterface.put(tenantId, prefix, legacy, new ByteArrayInputStream(CONTENT_STRING.getBytes()));
+
+        assertThat(canonical.toString()).startsWith("kestra://").doesNotContain(":///");
+        assertThat(canonical.getAuthority()).isEqualTo(prefix);
+        assertThat(storageInterface.getPath(canonical)).isEqualTo(storageInterface.getPath(legacy));
+        try (InputStream canonicalStream = storageInterface.get(tenantId, prefix, canonical)) {
+            assertThat(CharStreams.toString(new InputStreamReader(canonicalStream))).isEqualTo(CONTENT_STRING);
+        }
+        try (InputStream legacyStream = storageInterface.get(tenantId, prefix, legacy)) {
+            assertThat(CharStreams.toString(new InputStreamReader(legacyStream))).isEqualTo(CONTENT_STRING);
+        }
+
+        URI canonicalDir = StorageContext.toKestraUri("/" + prefix + "/folder/");
+        URI legacyDir = new URI("kestra", "", "/" + prefix + "/folder/", null, null);
+        assertThat(storageInterface.allByPrefix(tenantId, prefix, canonicalDir, false))
+            .containsExactly(StorageContext.toKestraUri(path));
+        assertThat(storageInterface.allByPrefix(tenantId, prefix, legacyDir, false))
+            .containsExactly(StorageContext.toKestraUri(path));
     }
 
     @Test
@@ -754,7 +790,7 @@ public abstract class StorageTestSuite {
         URI put = putFile(tenantId, "/" + prefix + "/storage/put.yml");
         InputStream get = storageInterface.get(tenantId, prefix, new URI("/" + prefix + "/storage/put.yml"));
 
-        assertThat(put.toString()).isEqualTo(new URI("kestra:///" + prefix + "/storage/put.yml").toString());
+        assertThat(put).isEqualTo(StorageContext.toKestraUri("/" + prefix + "/storage/put.yml"));
         assertThat(CharStreams.toString(new InputStreamReader(get))).isEqualTo(CONTENT_STRING);
     }
 
@@ -765,7 +801,7 @@ public abstract class StorageTestSuite {
         URI put = putInstanceFile("/" + prefix + "/storage/put.yml");
         InputStream get = storageInterface.getInstanceResource(prefix, new URI("/" + prefix + "/storage/put.yml"));
 
-        assertThat(put.toString()).isEqualTo(new URI("kestra:///" + prefix + "/storage/put.yml").toString());
+        assertThat(put).isEqualTo(StorageContext.toKestraUri("/" + prefix + "/storage/put.yml"));
         assertThat(CharStreams.toString(new InputStreamReader(get))).isEqualTo(CONTENT_STRING);
     }
     //endregion
@@ -887,9 +923,9 @@ public abstract class StorageTestSuite {
             new URI(null, null, "/" + namespace + "/storage/", null)
         );
 
-        URI expected = new URI("kestra", "", filePath, null, null);
+        URI expected = StorageContext.toKestraUri(filePath);
         assertTrue(deleted.contains(expected));
-        assertTrue(deleted.stream().anyMatch(uri -> filePath.equals(uri.getPath())));
+        assertTrue(deleted.stream().anyMatch(uri -> filePath.equals(StorageContext.logicalPath(uri))));
         assertFalse(storageInterface.exists(tenantId, namespace, fileUri));
     }
     //endregion
@@ -1101,7 +1137,7 @@ public abstract class StorageTestSuite {
             "/" + prefix + "/storage/level1/level2/1.yml"
         );
 
-        assertThat(deleted).containsExactlyInAnyOrder(res.stream().map(s -> URI.create("kestra://" + s)).toArray(URI[]::new));
+        assertThat(deleted).containsExactlyInAnyOrder(res.stream().map(StorageContext::toKestraUri).toArray(URI[]::new));
 
         assertThrows(FileNotFoundException.class, () ->
         {
@@ -1138,7 +1174,7 @@ public abstract class StorageTestSuite {
             "/" + prefix + "/storage/level1/level2/1.yml"
         );
 
-        assertThat(deleted).containsExactlyInAnyOrder(res.stream().map(s -> URI.create("kestra://" + s)).toArray(URI[]::new));
+        assertThat(deleted).containsExactlyInAnyOrder(res.stream().map(StorageContext::toKestraUri).toArray(URI[]::new));
 
         assertThrows(FileNotFoundException.class, () ->
         {

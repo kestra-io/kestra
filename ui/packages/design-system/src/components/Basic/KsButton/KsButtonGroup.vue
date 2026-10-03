@@ -1,5 +1,5 @@
 <template>
-    <ElButtonGroup v-bind="({...filteredProps(), ...$attrs} as any)">
+    <ElButtonGroup v-bind="({...filteredProps(), ...$attrs})">
         <template v-if="$slots.default" #default>
             <slot />
         </template>
@@ -7,16 +7,13 @@
 </template>
 
 <script setup lang="ts">
-    import {ElButtonGroup} from "element-plus"
+    import {ElButtonGroup, type ButtonGroupProps} from "element-plus"
 
     import {useFilteredProps} from "../../../utils/filteredProps"
 
     defineOptions({inheritAttrs: false})
 
-    const props = defineProps<{
-        size?: "small" | "default" | "large" | ""
-        direction?: "horizontal" | "vertical"
-    }>()
+    const props = defineProps<ButtonGroupProps>()
 
     const filteredProps = useFilteredProps(props)
 

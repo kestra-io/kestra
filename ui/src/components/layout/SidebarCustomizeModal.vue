@@ -69,9 +69,6 @@
             <KsButton type="default" @click="onReset">
                 {{ $t("reset to defaults") }}
             </KsButton>
-            <KsButton type="primary" @click="visible = false">
-                {{ $t("close") }}
-            </KsButton>
         </template>
     </KsDialog>
 </template>

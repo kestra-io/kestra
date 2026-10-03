@@ -10,6 +10,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -48,6 +49,11 @@ import io.kestra.worker.WorkerSecurityService;
 import io.kestra.worker.processors.internals.WorkerTaskCallable;
 import io.kestra.worker.queues.WorkerQueue;
 import io.kestra.worker.services.ExecutionKilledManager;
+import jakarta.annotation.Nullable;
+import io.micronaut.context.annotation.Value;
+import io.kestra.core.models.tasks.TaskRunStatistic;
+import io.kestra.core.queues.DispatchQueueInterface;
+import jakarta.inject.Inject;
 
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
@@ -71,6 +77,12 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
     // QUEUEs
     private final WorkerQueue<WorkerTaskResult> workerTaskResultQueue;
     private final WorkerQueue<MetricEntry> workerMetricQueue;
+    private final DispatchQueueInterface<TaskRunStatistic> taskRunStatisticQueue;
+
+    // taskrun-statistics flag, disabled by default
+    @Inject
+    @Value("${kestra.task-run-statistics.enabled:false}")
+    private boolean taskRunStatisticsEnabled;
 
     public WorkerTaskProcessor(final String workerId,
         final String workerGroup,
@@ -82,7 +94,8 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
         final RunContextLoggerFactory runContextLoggerFactory,
         final WorkerQueue<WorkerTaskResult> workerTaskResultQueue,
         final WorkerQueue<MetricEntry> workerMetricQueue,
-        final ExecutionKilledManager executionKilledManager) {
+        final ExecutionKilledManager executionKilledManager,
+       @Nullable final DispatchQueueInterface<TaskRunStatistic> taskRunStatisticQueue) {
         super(workerGroup, metricRegistry, workerSecurityService, tracer, executionKilledManager);
         this.runContextInitializer = runContextInitializer;
         this.runContextLoggerFactory = runContextLoggerFactory;
@@ -91,6 +104,7 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
         this.serverConfig = serverConfig;
         this.workerTaskResultQueue = workerTaskResultQueue;
         this.workerMetricQueue = workerMetricQueue;
+        this.taskRunStatisticQueue = taskRunStatisticQueue;
     }
 
     /**
@@ -177,6 +191,15 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
         }
     }
 
+    /**
+     * Asynchronously emits a raw taskRun-statistic row for the indexer to persist.
+     */
+    private void emitTaskRunStatistic(TaskRun taskRun) {
+        // An end date should always be set, but use the current date as a safety belt
+        Instant bucket = taskRun.getState().getEndDate().orElse(Instant.now()).truncatedTo(ChronoUnit.MINUTES);
+        this.taskRunStatisticQueue.emitAsync(new TaskRunStatistic(taskRun, bucket));
+    }
+
     private WorkerTaskResult runTask(WorkerTask workerTask, boolean cleanUp) {
         return runTask(workerTask, cleanUp, null);
     }
@@ -207,6 +230,10 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
             ) {
                 WorkerTaskResult workerTaskResult = new WorkerTaskResult(workerTask.getTaskRun().withState(State.Type.KILLED));
                 workerTaskResultQueue.put(workerTaskResult);
+
+                if(taskRunStatisticsEnabled){
+                    emitTaskRunStatistic(workerTaskResult.getTaskRun());
+                }
                 // We cannot remove the execution ID from the killed cache in case the worker is processing
                 // multiple tasks of the execution which can happen due to parallel processing.
                 return workerTaskResult;
@@ -245,6 +272,9 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
                                     TaskRun taskRun = workerTask.getTaskRun().withAttempts(attempts).withState(SUCCESS);
                                     WorkerTaskResult workerTaskResult = new WorkerTaskResult(taskRun, outputMap);
                                     workerTaskResultQueue.put(workerTaskResult);
+                                    if(taskRunStatisticsEnabled){
+                                        emitTaskRunStatistic(workerTaskResult.getTaskRun());
+                                    }
                                     return workerTaskResult;
                                 }
                             }
@@ -345,6 +375,14 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
 
             WorkerTaskResult workerTaskResult = new WorkerTaskResult(taskRun, dynamicTaskRuns, taskRunWithOutput.outputs());
             workerTaskResultQueue.put(workerTaskResult);
+
+            try {
+                if(taskRunStatisticsEnabled){
+                    emitTaskRunStatistic(workerTaskResult.getTaskRun());
+                }
+            } catch (Exception e) {
+                runContext.logger().warn("Failed to emit task run statistic for task '{}'", workerTask.getTask().getId(), e);
+            }
 
             // upload the cache file, hash may not be present if we didn't succeed in computing it
             if (

@@ -7,6 +7,8 @@ import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.MetricEntry;
 import io.kestra.core.models.executions.statistics.ExecutionStatistic;
+import io.kestra.core.models.tasks.TaskRunStatistic;
+import io.kestra.core.repositories.TaskRunStatisticRepositoryInterface;
 import io.kestra.core.queues.*;
 import io.kestra.core.queues.event.DispatchEvent;
 import io.kestra.core.repositories.ExecutionStatisticsRepositoryInterface;
@@ -24,6 +26,7 @@ import io.micronaut.context.event.ApplicationEventPublisher;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
+import io.micronaut.context.annotation.Value;
 
 /**
  * This class is responsible for batch-indexing asynchronously queue messages.
@@ -42,12 +45,18 @@ public class DefaultIndexer extends AbstractService implements Indexer {
     private final ExecutionStatisticsRepositoryInterface executionStatisticsRepository;
     private final DispatchQueueInterface<ExecutionStatistic> executionStatisticQueue;
 
+    private final TaskRunStatisticRepositoryInterface  taskRunStatisticsRepository;
+    private final DispatchQueueInterface<TaskRunStatistic>  taskRunStatisticQueue;
+
     private final MetricRegistry metricRegistry;
     // Thread-safe: populated by run() but iterated from doStop() on the context-close thread.
     private final List<QueueSubscriber<?>> subscribers = new CopyOnWriteArrayList<>();
 
     private final IgnoreExecutionService ignoreExecutionService;
     private final QueueService queueService;
+
+    // taskrun-statistics flag, disabled by default
+    private final boolean taskRunStatisticsEnabled;
 
     @Inject
     public DefaultIndexer(
@@ -60,7 +69,10 @@ public class DefaultIndexer extends AbstractService implements Indexer {
         MetricRegistry metricRegistry,
         ApplicationEventPublisher<ServiceStateChangeEvent> eventPublisher,
         IgnoreExecutionService ignoreExecutionService,
-        QueueService queueService) {
+        QueueService queueService,
+        TaskRunStatisticRepositoryInterface  taskRunStatisticsRepository,
+        DispatchQueueInterface<TaskRunStatistic>  taskRunStatisticQueue,
+        @Value("${kestra.task-run-statistics.enabled:false}") boolean taskRunStatisticsEnabled) {
         super(ServiceType.INDEXER, eventPublisher);
 
         this.logRepository = logRepository;
@@ -72,7 +84,9 @@ public class DefaultIndexer extends AbstractService implements Indexer {
         this.metricRegistry = metricRegistry;
         this.ignoreExecutionService = ignoreExecutionService;
         this.queueService = queueService;
-
+        this.taskRunStatisticsRepository = taskRunStatisticsRepository;
+        this.taskRunStatisticQueue = taskRunStatisticQueue;
+        this.taskRunStatisticsEnabled = taskRunStatisticsEnabled;
         setState(ServiceState.CREATED);
     }
 
@@ -93,6 +107,9 @@ public class DefaultIndexer extends AbstractService implements Indexer {
         this.sendBatch(logQueue, logRepository);
         this.sendBatch(metricQueue, metricRepository);
         this.sendBatch(executionStatisticQueue, executionStatisticsRepository);
+        if(taskRunStatisticsEnabled){
+            this.sendBatch(taskRunStatisticQueue, taskRunStatisticsRepository);
+        }
     }
 
     protected <T extends DispatchEvent> void sendBatch(DispatchQueueInterface<T> queueInterface, IndexingRepository<T> indexingRepository) {

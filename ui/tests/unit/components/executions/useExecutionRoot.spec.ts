@@ -186,7 +186,7 @@ describe("useExecutionRoot breadcrumbs", () => {
         const breadcrumb = "breadcrumb" in root.routeInfo.value ? root.routeInfo.value.breadcrumb! : []
 
         expect(breadcrumb.length).toBe(7)
-        
+
         const rootCrumb = breadcrumb[4]
         expect(rootCrumb.label).toBe("root_execution")
         expect((rootCrumb.link as {params: {id: string}}).params.id).toBe("exec-root")
@@ -214,7 +214,7 @@ describe("useExecutionRoot breadcrumbs", () => {
         const breadcrumb = "breadcrumb" in root.routeInfo.value ? root.routeInfo.value.breadcrumb! : []
 
         expect(breadcrumb.length).toBe(5)
-        
+
         const currentCrumb = breadcrumb[4]
         expect(currentCrumb.label).toBe("regions (EMEA)")
         expect((currentCrumb.link as {params: {id: string}}).params.id).toBe("exec-historical")

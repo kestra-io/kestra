@@ -24,7 +24,7 @@ class ExecutionTest {
     void shouldComputeRootExecutionIdAndParentsForNestedLoop() {
         Execution rootExecution = Execution.builder()
             .id("root-exec")
-            .originalId("root-exec")
+            .originalId("prior-replayed-exec")
             .state(new State())
             .build();
 
@@ -265,12 +265,10 @@ class ExecutionTest {
     void shouldFindLastNotTerminatedWhenLastTaskRunIsTerminated() {
         // Given a task run list whose last run is terminated (SUCCESS) but is preceded by a running one
         Execution execution = Execution.builder()
-            .taskRunList(
-                List.of(
-                    TaskRun.builder().id("running").state(new State(State.Type.RUNNING, new State())).build(),
-                    TaskRun.builder().id("success").state(new State(State.Type.SUCCESS, new State())).build()
-                )
-            )
+            .taskRunList(List.of(
+                TaskRun.builder().id("running").state(new State(State.Type.RUNNING, new State())).build(),
+                TaskRun.builder().id("success").state(new State(State.Type.SUCCESS, new State())).build()
+            ))
             .build();
 
         // When looking for the last not terminated task run
@@ -287,12 +285,10 @@ class ExecutionTest {
     void shouldFindLastNotTerminatedWhenLastTaskRunIsPaused() {
         // Given a task run list whose last run is paused but is preceded by a running one
         Execution execution = Execution.builder()
-            .taskRunList(
-                List.of(
-                    TaskRun.builder().id("running").state(new State(State.Type.RUNNING, new State())).build(),
-                    TaskRun.builder().id("paused").state(new State(State.Type.PAUSED, new State())).build()
-                )
-            )
+            .taskRunList(List.of(
+                TaskRun.builder().id("running").state(new State(State.Type.RUNNING, new State())).build(),
+                TaskRun.builder().id("paused").state(new State(State.Type.PAUSED, new State())).build()
+            ))
             .build();
 
         // When looking for the last not terminated task run
@@ -309,12 +305,10 @@ class ExecutionTest {
     void shouldNotFindLastNotTerminatedWhenAllTaskRunsAreTerminated() {
         // Given a task run list where every run is terminated
         Execution execution = Execution.builder()
-            .taskRunList(
-                List.of(
-                    TaskRun.builder().id("failed").state(new State(State.Type.FAILED, new State())).build(),
-                    TaskRun.builder().id("success").state(new State(State.Type.SUCCESS, new State())).build()
-                )
-            )
+            .taskRunList(List.of(
+                TaskRun.builder().id("failed").state(new State(State.Type.FAILED, new State())).build(),
+                TaskRun.builder().id("success").state(new State(State.Type.SUCCESS, new State())).build()
+            ))
             .build();
 
         // When looking for the last not terminated task run

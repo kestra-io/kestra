@@ -2696,6 +2696,8 @@
     },
     "iteration": "Iteration",
     "iteration_number": "Iteration {number}",
-    "delete_log_iteration": "Are you sure you want to delete the log for {iteration}?"
+    "delete_log_iteration": "Are you sure you want to delete the log for {iteration}?",
+    "in flight": "In flight",
+    "not started": "Not started"
   }
 }

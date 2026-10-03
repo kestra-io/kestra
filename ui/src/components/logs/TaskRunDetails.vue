@@ -271,6 +271,7 @@
                         :loopOutputsByTaskRunId="loopOutputsByTaskRunId"
                         :executionId="followedExecution.id"
                         :taskId="asTaskRun(currentTaskRun).taskId"
+                        :loopTaskState="asTaskRun(currentTaskRun).state.current"
                     />
                 </div>
             </DynamicScrollerItem>
@@ -345,7 +346,7 @@
         return typeof el === "object" && el !== null && "expandAll" in el && "scrollToLog" in el
     }
 
-    type LoopOutputs = {iterationCount: number; terminatedIterations?: Record<string, number>}
+    type LoopOutputs = {iterationCount: number; terminatedIterations?: Record<string, number>; runningIterations?: number}
 
     function isLoopOutputs(outputs: Record<string, unknown> | null): outputs is LoopOutputs {
         return outputs !== null && typeof outputs.iterationCount === "number"

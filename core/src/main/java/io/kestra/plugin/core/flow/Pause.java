@@ -298,7 +298,7 @@ public class Pause extends Task implements FlowableTask<Pause.Output>, PausableT
     }
 
     @Override
-    public Map<String, Object> resumeOutputs(Map<String, Object> inputs, Resumed resumed) {
+    public Map<String, Object> resumeOutputs(Map<String, Object> inputs, Resumed resumed, @Nullable Approval.Decision decision) {
         Output build = Output.builder()
             .onResume(inputs)
             .resumed(resumed)

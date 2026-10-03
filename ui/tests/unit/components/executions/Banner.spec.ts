@@ -3,7 +3,7 @@ import {reactive} from "vue"
 import {createPinia, setActivePinia} from "pinia"
 import ChevronDown from "vue-material-design-icons/ChevronDown.vue"
 import ChevronUp from "vue-material-design-icons/ChevronUp.vue"
-import Banner from "../../../../src/components/executions/overview/components/Banner.vue"
+import Banner from "../../../../src/components/executions/components/Banner.vue"
 import type {Execution} from "../../../../src/stores/executions"
 import {i18nMount} from "../../i18nMount"
 

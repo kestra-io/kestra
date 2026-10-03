@@ -121,7 +121,7 @@
                                                     <Warning class="attempt_warn me-3" />
                                                 </KsTooltip>
                                             </div>
-                                            <div :style="'width: ' + (100 / (dates.length + 1)) * dates.length + '%'">
+                                            <div class="task-bar">
                                                 <div :style="taskBarStyle(item)" class="task-progress">
                                                     <KsProgress
                                                         :left="Math.min(item.left, 90)"
@@ -801,7 +801,7 @@
                 }
 
                 .task-label {
-                    flex: 1 1 12rem;
+                    flex: 0 0 12rem;
                     min-width: 0;
                     display: flex;
                     align-items: center;
@@ -869,6 +869,11 @@
                     top: 50%;
                     transform: translateY(-50%);
                     padding: 0;
+                }
+
+                .task-bar {
+                    flex: 1 1 0;
+                    min-width: 0;
                 }
 
                 .task-progress {

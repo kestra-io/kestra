@@ -395,6 +395,15 @@ public class InternalNamespace implements Namespace {
         return findByPath(normalizedPath).isPresent();
     }
 
+    @Override
+    public void ensureCanPutFile(Path path) throws IOException {
+        final Path normalizedPath = NamespaceFile.normalize(path);
+
+        ensureNoFileInHierarchy(normalizedPath);
+        // Deleted entries are left out of the lookup, so nothing gets purged here.
+        discardConflictingEntry(findByPath(normalizedPath), false, normalizedPath);
+    }
+
     /**
      * {@inheritDoc}
      **/

@@ -4,8 +4,13 @@ import {buildTaskRunHierarchy} from "../../../src/utils/taskRunHierarchy"
 
 type TestTaskRun = {id: string; parentTaskRunId?: string; start?: number}
 
-const flatten = (taskRunList: TestTaskRun[], compareSiblings?: (a: TestTaskRun, b: TestTaskRun) => number) =>
-    buildTaskRunHierarchy(taskRunList, compareSiblings).map(({task, depth}) => [task.id, depth])
+const flatten = (
+    taskRunList: TestTaskRun[],
+    compareSiblings?: (a: TestTaskRun, b: TestTaskRun) => number,
+) =>
+    buildTaskRunHierarchy(taskRunList, compareSiblings).map(
+        ({task, depth}) => [task.id, depth],
+    )
 
 describe("buildTaskRunHierarchy", () => {
     it("returns an empty array for an empty list", () => {
@@ -61,11 +66,69 @@ describe("buildTaskRunHierarchy", () => {
             {id: "early-child", parentTaskRunId: "early", start: 10},
         ]
 
-        expect(flatten(taskRunList, (a, b) => (a.start ?? 0) - (b.start ?? 0))).toEqual([
+        expect(
+            flatten(
+                taskRunList,
+                (a, b) => (a.start ?? 0) - (b.start ?? 0),
+            ),
+        ).toEqual([
             ["early", 0],
             ["early-child", 1],
             ["late-child", 1],
             ["late", 0],
+        ])
+    })
+
+    it("annotates each task with its sibling index", () => {
+        const taskRunList: TestTaskRun[] = [
+            {id: "parent"},
+            {id: "child-a", parentTaskRunId: "parent"},
+            {id: "child-b", parentTaskRunId: "parent"},
+            {id: "child-c", parentTaskRunId: "parent"},
+        ]
+
+        expect(
+            buildTaskRunHierarchy(taskRunList).map(
+                ({task, depth, siblingIndex}) => [
+                    task.id,
+                    depth,
+                    siblingIndex,
+                ],
+            ),
+        ).toEqual([
+            ["parent", 0, 0],
+            ["child-a", 1, 0],
+            ["child-b", 1, 1],
+            ["child-c", 1, 2],
+        ])
+    })
+
+    it("alternates sibling blocks and keeps descendants in their parent's block", () => {
+        const taskRunList: TestTaskRun[] = [
+            {id: "parent-a"},
+            {id: "child-a", parentTaskRunId: "parent-a"},
+            {id: "grandchild-a", parentTaskRunId: "child-a"},
+            {id: "parent-b"},
+            {id: "child-b", parentTaskRunId: "parent-b"},
+            {id: "grandchild-b", parentTaskRunId: "child-b"},
+        ]
+
+        expect(
+            buildTaskRunHierarchy(taskRunList).map(
+                ({task, depth, blockIndex, isBlockStart}) => [
+                    task.id,
+                    depth,
+                    blockIndex,
+                    isBlockStart,
+                ],
+            ),
+        ).toEqual([
+            ["parent-a", 0, 0, false],
+            ["child-a", 1, 0, false],
+            ["grandchild-a", 2, 0, false],
+            ["parent-b", 0, 1, true],
+            ["child-b", 1, 1, false],
+            ["grandchild-b", 2, 1, false],
         ])
     })
 

@@ -88,7 +88,11 @@
                                     <div class="d-flex flex-column">
                                         <div
                                             class="gantt-row d-flex cursor-icon"
-                                            :class="{'is-expanded': selectedTaskRuns.includes(item.id)}"
+                                            :class="{
+                                                'is-expanded': selectedTaskRuns.includes(item.id),
+                                                'gantt-block-alt': item.blockIndex % 2 === 1,
+                                                'gantt-block-start': item.isBlockStart,
+                                            }"
                                             @click="onTaskSelect(item.id)"
                                         >
                                             <div
@@ -253,6 +257,9 @@
     interface TaskWrapper {
         task: TaskRun;
         depth: number;
+        siblingIndex: number;
+        blockIndex: number;
+        isBlockStart: boolean;
     }
 
     interface SeriesItem {
@@ -269,6 +276,9 @@
         executionId?: string;
         attempts: number;
         depth: number | undefined;
+        siblingIndex: number;
+        blockIndex: number;
+        isBlockStart: boolean;
         parentEndPercent?: number;
     }
 
@@ -522,6 +532,9 @@
                 executionId: task.outputs?.executionId as string | undefined,
                 attempts: task.attempts ? task.attempts.length : 1,
                 depth: taskWrapper.depth,
+                siblingIndex: taskWrapper.siblingIndex,
+                blockIndex: taskWrapper.blockIndex,
+                isBlockStart: taskWrapper.isBlockStart,
                 parentEndPercent: barPercents.parentEndPercent,
             }
             newSeries.push(seriesItem)
@@ -790,6 +803,14 @@
                 padding-right: var(--ks-spacing-8);
                 background: var(--ks-dropdown-bg);
                 border-top: 1px solid var(--ks-border-default);
+
+                &.gantt-block-alt {
+                    background: color-mix(in srgb, var(--ks-dropdown-bg), white 5.5%);
+                }
+
+                &.gantt-block-start {
+                    box-shadow: inset 0 2px 0 var(--ks-border-default);
+                }
 
                 &.is-expanded {
                     background: var(--ks-dropdown-bg-active);

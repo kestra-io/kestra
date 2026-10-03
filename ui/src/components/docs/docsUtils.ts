@@ -1,3 +1,5 @@
+import type {DocMetadata} from "../../stores/doc"
+
 export const SECTIONS = {
     "Get Started with Kestra": [
         "Quickstart",
@@ -42,15 +44,6 @@ export const DISABLED_PAGES = [
     "docs/terraform/resources",
 ]
 
-export interface DocsMetadata {
-    title: string;
-    sidebarTitle?: string;
-    description?: string;
-    hideSidebar?: boolean;
-    isHomepage?: boolean;
-    parsedUrl?: string;
-}
-
 export interface DocsTocItem {
     path: string;
     title: string;
@@ -58,7 +51,7 @@ export interface DocsTocItem {
     children?: DocsTocItem[];
 }
 
-export function buildDocsToc(rawStructure: Record<string, DocsMetadata> | undefined): DocsTocItem[] | undefined {
+export function buildDocsToc(rawStructure: Record<string, DocMetadata> | undefined): DocsTocItem[] | undefined {
     if (rawStructure === undefined) {
         return undefined
     }

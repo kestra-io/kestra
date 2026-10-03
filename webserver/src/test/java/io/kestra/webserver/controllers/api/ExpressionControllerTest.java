@@ -1,5 +1,6 @@
 package io.kestra.webserver.controllers.api;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeoutException;
@@ -10,7 +11,12 @@ import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.junit.annotations.LoadFlows;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.queues.QueueException;
+import io.kestra.core.runners.KVMetadataStateStore;
 import io.kestra.core.runners.TestRunnerUtils;
+import io.kestra.core.storages.StorageInterface;
+import io.kestra.core.storages.kv.InternalKVStore;
+import io.kestra.core.storages.kv.KVStore;
+import io.kestra.core.storages.kv.KVValueAndMetadata;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.webserver.tenants.TenantValidationFilter;
 
@@ -38,6 +44,12 @@ class ExpressionControllerTest {
     @Inject
     protected TestRunnerUtils runnerUtils;
 
+    @Inject
+    private KVMetadataStateStore kvMetadataStateStore;
+
+    @Inject
+    private StorageInterface storageInterface;
+
     @MockBean(TenantService.class)
     public TenantService getTenantService() {
         return mock(TenantService.class);
@@ -61,6 +73,15 @@ class ExpressionControllerTest {
             type: io.kestra.plugin.core.log.Log
             message: "{{ vars.region }}"
         """;
+
+    private ExpressionController.EvaluatedExpression eval(Map<String, Object> body) {
+        return client.toBlocking().retrieve(
+            HttpRequest
+                .POST("/api/v1/" + TENANT_ID + "/expressions/eval", body)
+                .contentType(MediaType.APPLICATION_JSON_TYPE),
+            Argument.of(ExpressionController.EvaluatedExpression.class)
+        );
+    }
 
     private ExpressionController.RenderedExpressions render(Map<String, Object> body) {
         return client.toBlocking().retrieve(
@@ -152,5 +173,38 @@ class ExpressionControllerTest {
         assertThat(rendered).containsEntry("literal", "literal");
         assertThat(rendered).containsEntry("{{ vars.region }}", "{{ vars.region }}");
         assertThat(rendered).containsEntry("{{ now() }}", "{{ now() }}");
+    }
+
+    @Test
+    void shouldResolveWithTheFullEngineWhenEvaluating() {
+        when(tenantService.resolveTenant()).thenReturn(TENANT_ID);
+
+        var result = eval(Map.of("flow", FLOW_SOURCE, "expression", "{{ vars.region | upper }}-{{ 1 + 1 }}"));
+
+        assertThat(result.error()).isNull();
+        assertThat(result.result()).isEqualTo("US-EAST-1-2");
+    }
+
+    @Test
+    void shouldResolveKvWhenEvaluating() throws IOException {
+        when(tenantService.resolveTenant()).thenReturn(TENANT_ID);
+        KVStore kv = new InternalKVStore(TENANT_ID, TESTS_FLOW_NS, storageInterface, kvMetadataStateStore);
+        kv.put("eval-key", new KVValueAndMetadata(null, "eval-value"));
+
+        var result = eval(Map.of("flow", FLOW_SOURCE, "expression", "{{ kv('eval-key') }}"));
+
+        assertThat(result.error()).isNull();
+        assertThat(result.result()).isEqualTo("eval-value");
+    }
+
+    @Test
+    void shouldReturnErrorWhenExpressionCannotBeEvaluated() {
+        when(tenantService.resolveTenant()).thenReturn(TENANT_ID);
+
+        var result = eval(Map.of("flow", FLOW_SOURCE, "expression", "{{ vars.unknown }}"));
+
+        // unlike /render, an unresolvable expression is reported rather than echoed back raw
+        assertThat(result.result()).isNull();
+        assertThat(result.error()).contains("unknown");
     }
 }

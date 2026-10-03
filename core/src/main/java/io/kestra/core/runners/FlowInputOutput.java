@@ -220,10 +220,10 @@ public class FlowInputOutput {
                         .orElse(true);
 
                     if (!uploadFiles || !acceptsFile) {
-                        URI from = URI.create(
-                            "kestra://" + StorageContext
-                                .forInput(execution, inputId, fileName)
-                                .getContextStorageURI()
+                        URI from = StorageContext.toKestraUri(
+                            StorageContext.logicalPath(
+                                StorageContext.forInput(execution, inputId, fileName).getContextStorageURI()
+                            )
                         );
                         // Releases the part now it has been read.
                         IOUtils.closeQuietly(fileUpload);
@@ -467,10 +467,12 @@ public class FlowInputOutput {
 
             // Reject a file upload bound to an input that doesn't accept one.
             if (resolvable.isFromFileUpload() && !acceptsFileUpload(input.getType())) {
-                resolvable.resolveWithError(InputOutputValidationException.of(
-                    "A file upload is only accepted by an input of type FILE, but this input is of type %s.".formatted(input.getType()),
-                    input
-                ));
+                resolvable.resolveWithError(
+                    InputOutputValidationException.of(
+                        "A file upload is only accepted by an input of type FILE, but this input is of type %s.".formatted(input.getType()),
+                        input
+                    )
+                );
                 return resolvable.get();
             }
 
@@ -682,8 +684,10 @@ public class FlowInputOutput {
                     yield b;
                 }
 
-                if (!(current instanceof String s &&
-                    (s.equalsIgnoreCase("true") || s.equalsIgnoreCase("false")))) {
+                if (
+                    !(current instanceof String s &&
+                        (s.equalsIgnoreCase("true") || s.equalsIgnoreCase("false")))
+                ) {
                     throw new IllegalArgumentException("Unable to parse `" + current + "` as a boolean");
                 }
 

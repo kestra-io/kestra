@@ -44,6 +44,7 @@ import io.kestra.core.junit.annotations.FlakyTest;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.junit.annotations.LoadFlows;
 import io.kestra.core.junit.annotations.LoadFlowsWithTenant;
+import io.kestra.core.junit.assertions.Problems;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionKilled;
@@ -70,6 +71,7 @@ import io.kestra.core.services.ExecutionService;
 import io.kestra.core.services.TaskOutputService;
 import io.kestra.core.storages.Namespace;
 import io.kestra.core.storages.NamespaceFactory;
+import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.core.utils.Await;
@@ -79,9 +81,10 @@ import io.kestra.plugin.core.flow.PausableTask;
 import io.kestra.plugin.core.trigger.Webhook;
 import io.kestra.plugin.core.trigger.WebhookResponse;
 import io.kestra.webserver.controllers.api.ExecutionController.StateRequest;
-import io.kestra.webserver.models.api.ApiAsyncOperationResponse;
 import io.kestra.webserver.errors.ProblemDetail;
 import io.kestra.webserver.errors.ProblemError;
+import io.kestra.webserver.errors.ProblemTypes;
+import io.kestra.webserver.models.api.ApiAsyncOperationResponse;
 import io.kestra.webserver.responses.BulkResponse;
 import io.kestra.webserver.responses.PagedResults;
 import io.kestra.webserver.services.ActorResolver;
@@ -94,8 +97,6 @@ import io.micronaut.core.type.Argument;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.http.*;
 import io.micronaut.http.client.annotation.Client;
-import io.kestra.core.junit.assertions.Problems;
-import io.kestra.webserver.errors.ProblemTypes;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.http.client.multipart.MultipartBody;
 import io.micronaut.http.sse.Event;
@@ -574,8 +575,8 @@ class ExecutionControllerRunnerTest {
         assertThat(result.getState().getHistories()).map(State.History::getState).contains(State.Type.CREATED);
         assertThat(result.getFlowId()).isEqualTo("inputs");
         assertThat(result.getInputs().get("float")).isEqualTo(42.42);
-        assertThat(result.getInputs().get("file").toString()).startsWith("kestra:///io/kestra/tests/inputs/executions/");
-        assertThat(result.getInputs().get("file").toString()).startsWith("kestra:///io/kestra/tests/inputs/executions/");
+        assertThat(result.getInputs().get("file").toString()).startsWith("kestra://io/kestra/tests/inputs/executions/");
+        assertThat(result.getInputs().get("file").toString()).startsWith("kestra://io/kestra/tests/inputs/executions/");
         assertThat(result.getInputs().containsKey("bool")).isTrue();
         assertThat(result.getInputs().get("bool")).isNull();
         assertThat(result.getLabels()).containsExactlyInAnyOrder(
@@ -1689,9 +1690,10 @@ class ExecutionControllerRunnerTest {
 
         URI uri = URI.create((String) variables.get("uri"));
         assertThat(uri.getScheme()).isEqualTo("kestra");
-        assertThat(uri.getPath()).isEqualTo(
+        assertThat(StorageContext.logicalPath(uri)).isEqualTo(
             "/io/kestra/tests/webhook-store-body/executions/" + execution.getId() + "/webhook/body"
         );
+        assertThat(uri.toString()).startsWith("kestra://io/");
         assertThat(storageInterface.get(TENANT_ID, TESTS_FLOW_NS, uri).readAllBytes()).isEqualTo(content);
         assertThat(variables.get("body")).isNull();
     }

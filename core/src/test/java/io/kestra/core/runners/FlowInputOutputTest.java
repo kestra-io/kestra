@@ -751,6 +751,7 @@ class FlowInputOutputTest {
     @ValueSource(
         strings = {
             "kestra:///io/kestra/tests/executions/abc/tasks/hello/run1/results.ion",
+            "kestra://io/kestra/tests/executions/abc/tasks/hello/run1/results.ion",
             "jdbc:duckdb:",
             "file:///tmp/myfile.csv",
             "http://localhost:8080/api",
@@ -802,6 +803,7 @@ class FlowInputOutputTest {
     @ValueSource(
         strings = {
             "kestra:///io/kestra/tests/executions/abc/tasks/hello/run1/results.ion",
+            "kestra://io/kestra/tests/executions/abc/tasks/hello/run1/results.ion",
             "jdbc:duckdb:",
             "file:///tmp/myfile.csv",
             "http://localhost:8080/api",
@@ -1450,7 +1452,7 @@ class FlowInputOutputTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"yes", "1", "maybe", "xyz"})
+    @ValueSource(strings = { "yes", "1", "maybe", "xyz" })
     void shouldRejectInvalidBooleanInput(String value) {
         // Given
         BoolInput input = BoolInput.builder()
@@ -1476,7 +1478,7 @@ class FlowInputOutputTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"true", "false", "TRUE", "False"})
+    @ValueSource(strings = { "true", "false", "TRUE", "False" })
     void shouldAcceptValidBooleanStringInput(String value) {
         // Given
         BoolInput input = BoolInput.builder()
@@ -1499,7 +1501,7 @@ class FlowInputOutputTest {
     }
 
     @ParameterizedTest
-    @ValueSource(booleans = {true, false})
+    @ValueSource(booleans = { true, false })
     void shouldAcceptBooleanInput(boolean value) {
         // Given
         BoolInput input = BoolInput.builder()

@@ -50,7 +50,7 @@ vi.mock("override/stores/misc", () => ({
 
 const TEST_TIMEOUT_MS = 20_000
 
-const route = {name: "home", params: {tenant: "main"}, query: {}} as any
+const route = {name: "home", params: {tenant: "main"}, query: {}} as Record<string, unknown>
 
 describe("dashboard store tenant defaults", () => {
     beforeEach(() => {

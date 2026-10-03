@@ -11,7 +11,7 @@ import Markdown from "../../../../src/components/dashboard/sections/Markdown.vue
 import en from "../../../../src/translations/en.json"
 import {i18nMount} from "../../i18nMount"
 
-function mountMarkdown(chart: any) {
+function mountMarkdown(chart: Record<string, unknown>) {
     return i18nMount(Markdown, {
         locales: en,
         props: {chart, filters: [], showDefault: false},

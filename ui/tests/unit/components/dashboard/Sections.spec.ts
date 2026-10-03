@@ -42,7 +42,7 @@ vi.mock("../../../../src/components/dashboard/dashboard-types", () => ({
 import Sections from "../../../../src/components/dashboard/sections/Sections.vue"
 import en from "../../../../src/translations/en.json"
 
-function mountSections(charts: any[], stubs?: Record<string, any>) {
+function mountSections(charts: Record<string, unknown>[], stubs?: Record<string, unknown>) {
     return i18nMount(Sections, {
         locales: en,
         props: {

@@ -469,7 +469,7 @@ public class Execution implements SoftDeletable<Execution>, TenantInterface, Has
         if (this.loopRun != null) {
             return this.loopRun.rootExecutionId();
         }
-        return this.originalId != null ? this.originalId : this.id;
+        return this.id;
     }
 
     /**
@@ -508,12 +508,10 @@ public class Execution implements SoftDeletable<Execution>, TenantInterface, Has
      */
     public TaskRun findTaskRunByTaskRunId(String id) throws InternalException {
         return findTaskRunByTaskRunIdIfPresent(id)
-            .orElseThrow(
-                () -> new InternalException(
-                    "Can't find taskrun with taskrunId '" + id + "' on execution '" + this.id + "' "
-                        + this.toStringState()
-                )
-            );
+            .orElseThrow(() -> new InternalException(
+                "Can't find taskrun with taskrunId '" + id + "' on execution '" + this.id + "' "
+                    + this.toStringState()
+            ));
     }
 
     /**

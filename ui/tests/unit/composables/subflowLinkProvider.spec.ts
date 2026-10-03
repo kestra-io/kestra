@@ -1,4 +1,5 @@
 import {describe, it, expect, vi, beforeEach, afterEach} from "vitest"
+import type {Router} from "vue-router"
 import {
     buildSubflowLinks,
     createFlowExistenceChecker,
@@ -103,7 +104,7 @@ describe("createSubflowLinkOpener", () => {
 
     it("ignores foreign schemes without navigating", () => {
         const router = fakeRouter()
-        const opener = createSubflowLinkOpener(router as any)
+        const opener = createSubflowLinkOpener(router as unknown as Router)
 
         expect(opener.open({scheme: "https", query: ""})).toBe(false)
         expect(router.resolve).not.toHaveBeenCalled()
@@ -112,7 +113,7 @@ describe("createSubflowLinkOpener", () => {
 
     it("returns false when the query cannot be decoded", () => {
         const router = fakeRouter()
-        const opener = createSubflowLinkOpener(router as any)
+        const opener = createSubflowLinkOpener(router as unknown as Router)
 
         expect(opener.open({scheme: SUBFLOW_LINK_SCHEME, query: "%%%"})).toBe(false)
         expect(openSpy).not.toHaveBeenCalled()
@@ -120,7 +121,7 @@ describe("createSubflowLinkOpener", () => {
 
     it("opens the referenced flow on its edit tab in a new browser tab", () => {
         const router = fakeRouter()
-        const opener = createSubflowLinkOpener(router as any)
+        const opener = createSubflowLinkOpener(router as unknown as Router)
         const query = encodeSubflowTarget({namespace: "ns", flowId: "f"})
 
         expect(opener.open({scheme: SUBFLOW_LINK_SCHEME, query})).toBe(true)

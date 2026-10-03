@@ -1,5 +1,5 @@
 <template>
-    <ElCol v-bind="({...filteredProps(), ...$attrs} as any)">
+    <ElCol v-bind="{...filteredProps(), ...$attrs}">
         <template v-if="$slots.default" #default>
             <slot />
         </template>
@@ -7,7 +7,7 @@
 </template>
 
 <script setup lang="ts">
-    import {ElCol} from "element-plus"
+    import {ElCol, type ColProps} from "element-plus"
 
     import {useFilteredProps} from "../../../utils/filteredProps"
 
@@ -15,11 +15,11 @@
 
     const props = defineProps<{
         span?: number
-        xs?: number | object
-        sm?: number | object
-        md?: number | object
-        lg?: number | object
-        xl?: number | object
+        xs?: ColProps["xs"]
+        sm?: ColProps["sm"]
+        md?: ColProps["md"]
+        lg?: ColProps["lg"]
+        xl?: ColProps["xl"]
     }>()
 
     const filteredProps = useFilteredProps(props)

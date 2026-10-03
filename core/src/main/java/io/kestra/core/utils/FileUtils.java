@@ -10,6 +10,8 @@ import java.util.Optional;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 
+import io.kestra.core.storages.StorageContext;
+
 /**
  * Utility methods for manipulating files.
  */
@@ -93,7 +95,7 @@ public final class FileUtils {
      * @return the string file name.
      */
     public static String getFileName(final URI uri) {
-        String path = uri.getPath();
+        String path = StorageContext.isKestraScheme(uri) ? StorageContext.logicalPath(uri) : uri.getPath();
         return path.substring(path.lastIndexOf('/') + 1);
     }
 
@@ -104,7 +106,12 @@ public final class FileUtils {
      * @return true if there is a relative parent path traversal
      */
     public static boolean isParentTraversal(URI uri) {
-        return uri != null && isParentTraversal(uri.getPath());
+        if (uri == null) {
+            return false;
+        }
+        // Kestra authority is part of the key. kestra://../secret keeps ".." out of getPath().
+        String path = StorageContext.isKestraScheme(uri) ? StorageContext.logicalPath(uri) : uri.getPath();
+        return isParentTraversal(path);
     }
 
     /**

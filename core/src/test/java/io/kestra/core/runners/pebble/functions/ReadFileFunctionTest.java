@@ -148,7 +148,7 @@ class ReadFileFunctionTest {
 
     @Test
     void readInternalStorageFile() throws IOException, IllegalVariableEvaluationException {
-        // task output URI format: 'kestra:///$namespace/$flowId/executions/$executionId/tasks/$taskName/$taskRunId/$random.ion'
+        // task output URI format: 'kestra://$namespace/$flowId/executions/$executionId/tasks/$taskName/$taskRunId/$random.ion'
         String namespace = "my.namespace";
         String flowId = "flow";
         String executionId = IdUtils.create();
@@ -183,7 +183,7 @@ class ReadFileFunctionTest {
 
     @Test
     void readInternalStorageURI() throws IOException, IllegalVariableEvaluationException {
-        // task output URI format: 'kestra:///$namespace/$flowId/executions/$executionId/tasks/$taskName/$taskRunId/$random.ion'
+        // task output URI format: 'kestra://$namespace/$flowId/executions/$executionId/tasks/$taskName/$taskRunId/$random.ion'
         String namespace = "my.namespace";
         String flowId = "flow";
         String executionId = IdUtils.create();

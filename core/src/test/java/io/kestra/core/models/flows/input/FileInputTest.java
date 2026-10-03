@@ -109,4 +109,32 @@ class FileInputTest {
         // Empty extensions list should not enforce any validation
         assertDoesNotThrow(() -> anyInput.validate(URI.create("file:///path/to/any.file")));
     }
+
+    @Test
+    void shouldTakeTheExtensionFromTheFileNameSegment() {
+        final FileInput markdown = FileInput.builder()
+            .id("notes")
+            .allowedFileExtensions(List.of(".md"))
+            .build();
+
+        assertDoesNotThrow(() -> markdown.validate(URI.create("kestra://v1.2/README.md")));
+        assertDoesNotThrow(() -> markdown.validate(URI.create("kestra:///v1.2/README.md")));
+        assertThrows(ConstraintViolationException.class, () -> markdown.validate(URI.create("kestra://v1.2/README")));
+
+        final FileInput ion = FileInput.builder()
+            .id("ion")
+            .allowedFileExtensions(List.of(".ion"))
+            .build();
+        assertDoesNotThrow(() -> ion.validate(URI.create("kestra://report.ion")));
+        assertDoesNotThrow(() -> ion.validate(URI.create("kestra:///report.ion")));
+
+        // A dot in an earlier segment is not the extension. lastIndexOf on the whole path
+        // treated kestra://v1.2/README as ".2/readme" and would have allowed it.
+        final FileInput bogus = FileInput.builder()
+            .id("bogus")
+            .allowedFileExtensions(List.of(".2/readme"))
+            .build();
+        assertThrows(ConstraintViolationException.class, () -> bogus.validate(URI.create("kestra://v1.2/README")));
+        assertThrows(ConstraintViolationException.class, () -> bogus.validate(URI.create("kestra:///v1.2/README")));
+    }
 }

@@ -54,7 +54,7 @@ public class GrpcWorkerIOSenderFactory {
             {
                 Logs.logTaskRun(result.getTaskRun(), Level.ERROR, RESULT_TOO_LARGE_MESSAGE);
                 logEntryEmitter.emits(taskRunLogEntry(result.getTaskRun(), RESULT_TOO_LARGE_MESSAGE));
-                return result.withTaskRun(result.getTaskRun().withStateAndAttempt(State.Type.FAILED)).withOutputs(null);
+                return result.withTaskRun(result.getTaskRun().withStateAndAttempt(State.Type.FAILED)).withoutOutputs();
             },
             // Task results must survive a transient network partition: re-queue and redrive rather than
             // drop, otherwise a completed task is left stuck RUNNING because its result is lost.

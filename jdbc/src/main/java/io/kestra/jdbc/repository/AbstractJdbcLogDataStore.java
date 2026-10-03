@@ -228,10 +228,11 @@ public abstract class AbstractJdbcLogDataStore extends AbstractJdbcCrudRepositor
         // With a key, seek strictly after the (timestamp, key) row; without one (first run or a legacy date-only
         // offset), fall back to a strict timestamp lower bound (which matches the previous START_DATE behaviour).
         Field<OffsetDateTime> dateField = field(DATE_COLUMN, OffsetDateTime.class);
+        Field<String> keyField = keySeekField();
         OffsetDateTime after = afterTimestamp.atOffset(ZoneOffset.UTC);
         Condition seek = afterKey == null
             ? dateField.gt(after)
-            : DSL.row(dateField, KEY_FIELD).gt(DSL.row(DSL.val(after), DSL.val(afterKey)));
+            : DSL.row(dateField, keyField).gt(DSL.row(DSL.val(after), DSL.val(afterKey)));
 
         final Condition finalCondition = condition;
         return this.jdbcRepository.getDslContextWrapper().transactionResult(configuration ->
@@ -241,11 +242,19 @@ public abstract class AbstractJdbcLogDataStore extends AbstractJdbcCrudRepositor
                 .where(this.defaultFilter(tenantId))
                 .and(finalCondition)
                 .and(seek)
-                .orderBy(dateField.asc(), KEY_FIELD.asc())
+                .orderBy(dateField.asc(), keyField.asc())
                 .limit(pageSize)
                 .fetch()
                 .map(record -> new KeyedLog(record.get(KEY_FIELD), this.jdbcRepository.map(record)))
         );
+    }
+
+    // The key column used to order and seek a keyset page. LogPosition picks the resume offset key (a FriendlyId,
+    // which is case-sensitive Base62) with String.compareTo, so the seek must order key case-sensitively too; a
+    // dialect whose default collation is case-insensitive overrides this, otherwise a same-timestamp boundary row
+    // whose key sorts differently under the two orders is re-shipped on the next run.
+    protected Field<String> keySeekField() {
+        return KEY_FIELD;
     }
 
     @Override

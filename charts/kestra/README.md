@@ -338,6 +338,7 @@ JDBC queue tables — this is irreversible. Back up your database before upgradi
 | common.extraVolumeMounts | list | `[]` | Extra volume mounts to add to containers. |
 | common.extraVolumes | list | `[]` | Extra volumes to add to pods. |
 | common.initContainers | list | `[]` | Additional init containers to run before main container. |
+| common.jvm.extraOpts | string | `""` | Extra JVM options, injected through `_JAVA_OPTIONS` so they override the image defaults (`-XX:MaxRAMPercentage=50.0` and `-XX:MaxDirectMemorySize=256M`). Raise `-XX:MaxDirectMemorySize` here if a component needs more direct memory than the 256M default. |
 | common.jvm.forceActiveProcessors | object | `{"count":"auto","enabled":false,"value":2}` | Sometimes you can have problems with cgroup and cpu limits, then you can force the JVM to use a specific number of processors. |
 | common.kind | string | `"Deployment"` | Kind of deployment (Deployment or StatefulSet). |
 | common.labels | object | `{}` | Labels applied to all resources. |
@@ -461,7 +462,6 @@ JDBC queue tables — this is irreversible. Back up your database before upgradi
 
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
-| common.jvm.extraOpts | string | `""` |  |
 | common.updateStrategy | object | `{}` | StatefulSet update strategy. |
 | extraManifests | list | `[]` | Extra Kubernetes manifests to deploy with the chart. |
 | fullnameOverride | string | `""` |  |

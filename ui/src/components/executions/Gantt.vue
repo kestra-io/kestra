@@ -91,7 +91,11 @@
                                             :class="{'is-expanded': selectedTaskRuns.includes(item.id)}"
                                             @click="onTaskSelect(item.id)"
                                         >
-                                            <div v-if="!verticalLayout" class="d-inline-flex">
+                                            <div
+                                                v-if="!verticalLayout"
+                                                class="d-inline-flex gantt-chevron"
+                                                :style="{'--depth': item.depth || 0}"
+                                            >
                                                 <ChevronRight v-if="!selectedTaskRuns.includes(item.id)" />
                                                 <ChevronDown v-else />
                                             </div>
@@ -798,6 +802,11 @@
 
                 > * {
                     padding: 1rem .25rem;
+                }
+
+                .gantt-chevron {
+                    flex-shrink: 0;
+                    transform: translateX(calc(var(--depth, 0) * 30.5px));
                 }
 
                 .task-label {

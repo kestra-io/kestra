@@ -11,10 +11,12 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 
 import io.kestra.core.http.HttpRequest.ByteArrayRequestBody;
 import io.kestra.core.http.HttpRequest.MultipartFormDataRequestBody;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.plugin.core.trigger.AbstractWebhookTrigger.FetchType;
 
@@ -35,6 +37,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -71,7 +74,7 @@ class WebhookBodyServiceTest {
             "result.jpg",
             MediaType.IMAGE_JPEG,
             6L,
-            URI.create("kestra:///io/kestra/tests/webhook/executions/" + EXECUTION_ID + "/webhook/0/result.jpg")
+            URI.create("kestra://io/kestra/tests/webhook/executions/" + EXECUTION_ID + "/webhook/0/result.jpg")
         ));
         assertThat(parts.getLast()).isInstanceOf(MultipartFormDataRequestBody.FormFieldPart.class);
         assertThat(new String(((MultipartFormDataRequestBody.FormFieldPart) parts.getLast()).content(), StandardCharsets.UTF_8))
@@ -93,7 +96,7 @@ class WebhookBodyServiceTest {
 
         // Then — only the file name is kept, so the part cannot be written outside the execution directory
         assertThat(((MultipartFormDataRequestBody.FilePart) parts.getFirst()).uri())
-            .isEqualTo(URI.create("kestra:///io/kestra/tests/webhook/executions/" + EXECUTION_ID + "/webhook/0/evil.jpg"));
+            .isEqualTo(URI.create("kestra://io/kestra/tests/webhook/executions/" + EXECUTION_ID + "/webhook/0/evil.jpg"));
     }
 
     @Test
@@ -114,7 +117,7 @@ class WebhookBodyServiceTest {
 
         // Then
         assertThat(parts)
-            .extracting(part -> ((MultipartFormDataRequestBody.FilePart) part).uri().getPath())
+            .extracting(part -> StorageContext.logicalPath(((MultipartFormDataRequestBody.FilePart) part).uri()))
             .containsExactly(
                 "/io/kestra/tests/webhook/executions/" + EXECUTION_ID + "/webhook/0/result.jpg",
                 "/io/kestra/tests/webhook/executions/" + EXECUTION_ID + "/webhook/1/result.jpg"
@@ -153,7 +156,7 @@ class WebhookBodyServiceTest {
 
         // Then - the body is stored rather than carried, so the trigger only gets its URI
         assertThat(body.storedUri())
-            .isEqualTo(URI.create("kestra:///io/kestra/tests/webhook/executions/" + EXECUTION_ID + "/webhook/body"));
+            .isEqualTo(URI.create("kestra://io/kestra/tests/webhook/executions/" + EXECUTION_ID + "/webhook/body"));
         assertThat(body.requestBody()).isNull();
         assertThat(captured.toByteArray()).isEqualTo(content);
     }
@@ -217,6 +220,41 @@ class WebhookBodyServiceTest {
     }
 
     @Test
+    void shouldKeepReservedCharactersInThePartFilename() throws IOException {
+        StorageInterface storage = mock(StorageInterface.class);
+        when(storage.put(eq(FLOW.getTenantId()), eq(FLOW.getNamespace()), any(URI.class), any(InputStream.class)))
+            .thenAnswer(invocation -> {
+                invocation.getArgument(3, InputStream.class).transferTo(OutputStream.nullOutputStream());
+                return invocation.getArgument(2, URI.class);
+            });
+        WebhookBodyService service = new WebhookBodyService(storage);
+        MultipartBody body = body(
+            fileUpload("space", "a b.txt", MediaType.TEXT_PLAIN, "s".getBytes(StandardCharsets.UTF_8)),
+            fileUpload("hash", "report#1.csv", MediaType.TEXT_PLAIN, "h".getBytes(StandardCharsets.UTF_8)),
+            fileUpload("plus", "a+b.txt", MediaType.TEXT_PLAIN, "p".getBytes(StandardCharsets.UTF_8)),
+            fileUpload("percent", "100%.txt", MediaType.TEXT_PLAIN, "n".getBytes(StandardCharsets.UTF_8))
+        );
+
+        service.collect(body, FLOW, EXECUTION_ID, MediaType.MULTIPART_FORM_DATA).block();
+
+        ArgumentCaptor<URI> uris = ArgumentCaptor.forClass(URI.class);
+        verify(storage, times(4)).put(eq(FLOW.getTenantId()), eq(FLOW.getNamespace()), uris.capture(), any(InputStream.class));
+        String prefix = "/io/kestra/tests/webhook/executions/" + EXECUTION_ID + "/webhook/";
+        assertThat(uris.getAllValues()).extracting(StorageContext::logicalPath).containsExactly(
+            prefix + "0/a b.txt",
+            prefix + "1/report#1.csv",
+            prefix + "2/a+b.txt",
+            prefix + "3/100%.txt"
+        );
+        assertThat(uris.getAllValues()).extracting(URI::toString).containsExactly(
+            "kestra://io/kestra/tests/webhook/executions/" + EXECUTION_ID + "/webhook/0/a%20b.txt",
+            "kestra://io/kestra/tests/webhook/executions/" + EXECUTION_ID + "/webhook/1/report%231.csv",
+            "kestra://io/kestra/tests/webhook/executions/" + EXECUTION_ID + "/webhook/2/a+b.txt",
+            "kestra://io/kestra/tests/webhook/executions/" + EXECUTION_ID + "/webhook/3/100%25.txt"
+        );
+    }
+
+    @Test
     void shouldDeleteEverythingStoredForTheExecutionWhenCallCreatesNone() throws IOException {
         // Given
         StorageInterface storage = storage();
@@ -251,7 +289,7 @@ class WebhookBodyServiceTest {
             .thenAnswer(invocation ->
             {
                 invocation.getArgument(3, InputStream.class).transferTo(captured);
-                return URI.create("kestra://" + invocation.getArgument(2, URI.class).getPath());
+                return StorageContext.toKestraUri(StorageContext.logicalPath(invocation.getArgument(2, URI.class)));
             });
         return storage;
     }

@@ -31,7 +31,7 @@ describe("KsForm", () => {
             props: {model: {}},
             global: globalConfig,
         })
-        expect(typeof (wrapper.vm as any).validate).toBe("function")
+        expect(typeof (wrapper.vm as InstanceType<typeof KsForm>).validate).toBe("function")
     })
 
     test("exposes resetFields method", () => {
@@ -39,7 +39,7 @@ describe("KsForm", () => {
             props: {model: {}},
             global: globalConfig,
         })
-        expect(typeof (wrapper.vm as any).resetFields).toBe("function")
+        expect(typeof (wrapper.vm as InstanceType<typeof KsForm>).resetFields).toBe("function")
     })
 
     test("exposes clearValidate method", () => {
@@ -47,7 +47,7 @@ describe("KsForm", () => {
             props: {model: {}},
             global: globalConfig,
         })
-        expect(typeof (wrapper.vm as any).clearValidate).toBe("function")
+        expect(typeof (wrapper.vm as InstanceType<typeof KsForm>).clearValidate).toBe("function")
     })
 })
 

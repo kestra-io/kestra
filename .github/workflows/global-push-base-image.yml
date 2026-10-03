@@ -23,6 +23,7 @@ jobs:
   build-and-push:
     name: Build and Push kestra-base (${{ matrix.variant.cache-tag }})
     runs-on: ubuntu-latest
+    if: github.repository == 'kestra-io/kestra'
     strategy:
       matrix:
         variant:

@@ -50,8 +50,9 @@
             <template #taskDetails="taskProps">
                 <slot name="taskDetails" v-bind="taskProps">
                     <TopologyDetailsRemote
-                        :taskType="detailsTypeFor(taskProps.data.node?.task)"
-                        :task="taskWithSource(taskProps.data.node?.task)"
+                        v-if="isTask(taskProps.data.node?.task)"
+                        :taskType="detailsTypeFor(taskProps.data.node.task)"
+                        :task="taskWithSource(taskProps.data.node.task)"
                         :execution="exec"
                         :namespace="props.namespace"
                         :flowId="props.flowId"
@@ -119,14 +120,14 @@
         />
 
         <KsDialog
-            v-if="isTaskModalOpen && taskModalCtx"
+            v-if="isTaskModalOpen && taskModalCtx?.task && taskModalCtx?.taskType"
             v-model="isTaskModalOpen"
-            :title="taskModalCtx.title ?? taskModalCtx.task?.id ?? 'Task details'"
+            :title="taskModalCtx.title ?? taskModalCtx.task.id ?? 'Task details'"
             :destroyOnClose="true"
             :appendToBody="true"
             scrollable
         >
-            <TopologyTaskModalRemote v-bind="(taskModalCtx as any)" />
+            <TopologyTaskModalRemote v-bind="taskModalCtx" />
         </KsDialog>
 
         <KsDrawer v-if="isDrawerOpen && selectedTask" v-model="isDrawerOpen">
@@ -176,7 +177,7 @@
                             class="taskrun-card"
                             v-ks-loading="isLoadingTaskRunOutputs(taskRun.id)"
                         >
-                            <div v-if="selectedTask.taskRuns.length > 1" class="taskrun-card__header">
+                            <div v-if="selectedTask.taskRuns && selectedTask.taskRuns.length > 1" class="taskrun-card__header">
                                 <KsExecutionStatus size="small" :status="taskRun.state.current" />
                                 <code class="taskrun-card__value">{{ taskRun.value ?? taskRun.id }}</code>
                             </div>
@@ -194,7 +195,7 @@
                 <KsTabPane :label="$t('metrics')" name="metrics" lazy>
                     <div class="tab-body outputs-view">
                         <section v-for="taskRun in selectedTask.taskRuns" :key="taskRun.id" class="taskrun-card">
-                            <div v-if="selectedTask.taskRuns.length > 1" class="taskrun-card__header">
+                            <div v-if="selectedTask.taskRuns && selectedTask.taskRuns.length > 1" class="taskrun-card__header">
                                 <KsExecutionStatus size="small" :status="taskRun.state.current" />
                                 <code class="taskrun-card__value">{{ taskRun.value ?? taskRun.id }}</code>
                             </div>
@@ -240,11 +241,12 @@
                     :inline="true"
                     :options="{fullHeight: false}"
                     :navbar="false"
-                    :modelValue="selectedTask[customActionMeta.taskProp]"
+                    :modelValue="customActionModelValue"
                     :lang="customActionMeta.lang"
                     class="mt-3"
                 />
                 <TaskDrawerRemote
+                    v-if="isTask(selectedTask)"
                     :taskType="selectedTask.type"
                     :task="taskWithSource(selectedTask)"
                     :execution="exec"
@@ -292,17 +294,19 @@
     import PlayBoxMultiple from "vue-material-design-icons/PlayBoxMultiple.vue"
 
     import {Topology, NodeMenu} from "@kestra-io/topology"
+    import type {CustomActionConfig, FlowGraph} from "@kestra-io/topology"
     import {LOG_LEVELS, SECTIONS, State, KsMarkdown, KsEditor, KsDialog, vKsLoading} from "@kestra-io/design-system"
     import type {LevelKey} from "../../utils/logs"
-    import {Execution} from "@kestra-io/kestra-sdk"
+    import type {Execution, TaskRun, PagedResultsMetricEntry, Task} from "@kestra-io/kestra-sdk"
     import * as MetricsAPI from "@kestra-io/kestra-sdk/metrics"
     import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
-    import type {FlowGraph, AddTaskTarget} from "@kestra-io/topology/vue-flow-utils"
+    import type {AddTaskTarget} from "@kestra-io/topology/vue-flow-utils"
+    import type {KnownSlotProps} from "@kestra-io/slot-contracts"
     import TaskRunActions from "../executions/TaskRunActions.vue"
     import {useEditorBindings} from "../../composables/useEditorBindings"
     import {loadTaskRunOutputs} from "../../composables/useTaskRunOutputs"
-    import {getAllTasks} from "../../utils/flowUtils"
     import {TOPOLOGY_CLICK_INJECTION_KEY} from "../no-code/injectionKeys"
+    import type {BlockType} from "../no-code/utils/types"
     import BlockTaskPicker from "../no-code/blocks/BlockTaskPicker.vue"
     import TaskEditModal from "../no-code/blocks/TaskEditModal.vue"
     import UndoToast from "../no-code/blocks/UndoToast.vue"
@@ -362,6 +366,36 @@
     import {useFederatedModule} from "../../remoteComponents/useFederatedModule"
     import {openFlowInNewTab} from "../../utils/openFlow"
 
+    interface FlowTask {
+        id?: string;
+        type?: string;
+        version?: string;
+        description?: string;
+        runIf?: string;
+        taskRunner?: {
+            type?: string;
+            version?: string;
+            [key: string]: unknown;
+        };
+        tasks?: FlowTask[];
+        [key: string]: unknown;
+    }
+
+    type TaskModalContext = KnownSlotProps["topology-task-modal"] & {
+        title?: string;
+    }
+
+    interface DrawerTaskInspection {
+        id?: string;
+        description?: string;
+        runIf?: string;
+        execution?: Execution;
+        taskRuns?: TaskRun[];
+        type?: string;
+        taskRunner?: { type?: string; [key: string]: unknown };
+        [key: string]: unknown;
+    }
+
     const EXCLUDED_NODE_ACTIONS = ["outputs", "replay", "edit"]
 
     const router = useRouter()
@@ -376,9 +410,9 @@
     const playgroundStore = usePlaygroundStore()
     const flowStore = useFlowStore()
 
-    const exec = computed(() => executionsStore.execution as any as Execution)
+    const exec = computed<Execution | undefined>(() => (executionsStore.execution ?? undefined) as unknown as Execution | undefined)
 
-    const tenant = computed(() => route.params.tenant as string | undefined)
+    const tenant = computed(() => typeof route.params.tenant === "string" ? route.params.tenant : undefined)
 
     const flowSource = computed(() => flowStore.flowYaml || props.source)
 
@@ -386,17 +420,23 @@
         playgroundStore.enabled ? (executionsStore.flowGraph ?? props.flowGraph) : props.flowGraph,
     )
 
-    const collectTasksById = (node: unknown, into: Record<string, any>) => {
+    const isTask = (value: unknown): value is FlowTask & Task =>
+        typeof value === "object" && value !== null
+        && "id" in value && typeof value.id === "string" && value.id !== ""
+        && "type" in value && typeof value.type === "string" && value.type !== ""
+
+    const runnerOf = (task: FlowTask | undefined) => task?.taskRunner
+
+    const collectTasksById = (node: unknown, into: Record<string, FlowTask>) => {
         if (Array.isArray(node)) {
             node.forEach((item) => collectTasksById(item, into))
             return
         }
         if (!node || typeof node !== "object") return
-        const candidate = node as Record<string, any>
-        if (typeof candidate.id === "string" && typeof candidate.type === "string" && !(candidate.id in into)) {
-            into[candidate.id] = candidate
+        if (isTask(node) && !(node.id in into)) {
+            into[node.id] = node
         }
-        Object.values(candidate).forEach((value) => collectTasksById(value, into))
+        Object.values(node).forEach((value) => collectTasksById(value, into))
     }
 
     // Only the root task collections: an `inputs`, `outputs`, `sla` or `triggers` entry carries an
@@ -404,9 +444,9 @@
     // shares its id.
     const TASK_SECTIONS = ["tasks", "errors", "finally", "afterExecution"]
 
-    const indexTasks = (source: string | undefined): Record<string, any> => {
+    const indexTasks = (source: string | undefined): Record<string, FlowTask> => {
         const parsed = YAML_UTILS.parse<ParsedFlow>(source, false)
-        const result: Record<string, any> = {}
+        const result: Record<string, FlowTask> = {}
         TASK_SECTIONS.forEach((section) => collectTasksById(parsed?.[section], result))
         return result
     }
@@ -415,7 +455,7 @@
     // disagree.
     const sourceTaskById = computed(() => indexTasks(flowSource.value))
 
-    const runnersOf = (byId: Record<string, any>): Record<string, any> =>
+    const runnersOf = (byId: Record<string, FlowTask>): Record<string, FlowTask["taskRunner"]> =>
         Object.fromEntries(
             Object.entries(byId)
                 .filter(([, task]) => task?.taskRunner?.type)
@@ -424,7 +464,7 @@
 
     // Runner-specific fallback, needed by the graph augmentation alone: in execution view flowYaml
     // can be a stale draft whose taskRunner is gone while props.source still has it.
-    const taskRunnerById = computed((): Record<string, any> => {
+    const taskRunnerById = computed((): Record<string, FlowTask["taskRunner"]> => {
         const fromFlowSource = runnersOf(sourceTaskById.value)
         if (Object.keys(fromFlowSource).length || flowSource.value === props.source) return fromFlowSource
         return runnersOf(indexTasks(props.source))
@@ -439,11 +479,12 @@
         if (!graph) return graph
         const byId = taskRunnerById.value
         let injected = false
-        const nodes = (graph.nodes ?? []).map((n: any) => {
-            const taskRunner = n.task?.id ? byId[n.task.id] : undefined
-            if (!taskRunner?.type || n.task?.taskRunner?.type) return n
+        const nodes = (graph.nodes ?? []).map((n) => {
+            const task = n.task
+            const taskRunner = task?.id ? byId[task.id] : undefined
+            if (!task || !taskRunner?.type || runnerOf(task)?.type) return n
             injected = true
-            return {...n, task: {...n.task, taskRunner}}
+            return {...n, task: {...task, taskRunner}}
         })
         return injected ? {...graph, nodes} : graph
     })
@@ -454,13 +495,15 @@
     // `tasks` is the children flattened to id and type, and `taskRunner` is re-injected into the
     // node, so the node's copy of either is derived rather than executed and source wins — but only
     // where source has them, otherwise the node's reduced copy is all there is.
-    const taskWithSource = (task: Record<string, any> | undefined) => {
-        const fromSource = task?.id ? sourceTaskById.value[task.id] : undefined
-        if (!task || !fromSource) return task
-        const merged = {...fromSource, ...task}
-        if (fromSource.tasks !== undefined) merged.tasks = fromSource.tasks
-        if (fromSource.taskRunner !== undefined) merged.taskRunner = fromSource.taskRunner
-        return merged
+    const taskWithSource = <T extends FlowTask>(task: T): T => {
+        const fromSource = task.id ? sourceTaskById.value[task.id] : undefined
+        if (!fromSource) return task
+        return {
+            ...fromSource,
+            ...task,
+            tasks: fromSource.tasks ?? task.tasks,
+            taskRunner: fromSource.taskRunner ?? task.taskRunner,
+        }
     }
 
     const {RemoteComponent: TopologyDetailsRemote, taskAdditionalInfoRemote, manifestReady, resolveRemoteComponent, componentTypeFor: detailsTypeFor} = useFederatedModule("topology-details")
@@ -468,11 +511,14 @@
     const {RemoteComponent: TopologyTaskModalRemote, resolveRemoteComponent: resolveTaskModalComponent, componentTypeFor: modalTypeFor} = useFederatedModule("topology-task-modal")
 
 
+    const isCustomActionConfig = (value: unknown): value is CustomActionConfig =>
+        typeof value === "object" && value !== null && "label" in value && typeof value.label === "string"
+
     const customActions = computed(() => {
-        const result: Record<string, { label: string; taskProp: string; lang: string }> = {}
+        const result: Record<string, CustomActionConfig> = {}
         for (const [type, info] of Object.entries(taskAdditionalInfoRemote.value)) {
-            const ca = (info as any)?.customAction
-            if (ca?.label) {
+            const ca = info && "customAction" in info ? info.customAction : undefined
+            if (isCustomActionConfig(ca) && ca.label) {
                 result[type] = ca
             }
         }
@@ -485,8 +531,8 @@
     // view with no run at all. Resolve this task's CURRENT taskRun from the execution and filter
     // on that instead: no current taskRun means nothing to show.
     const currentTaskRunId = (taskId: string | undefined): string | undefined => {
-        const list = exec.value?.taskRunList as any[] | undefined
-        const filtered = list?.filter((r: any) => r.taskId === taskId) ?? []
+        const list = exec.value?.taskRunList
+        const filtered = list?.filter((r) => r.taskId === taskId) ?? []
         return filtered[filtered.length - 1]?.id
     }
 
@@ -506,7 +552,7 @@
         return loadTaskRunOutputs(executionId, runId)
     }
 
-    const fetchTaskMetrics = (taskId: string | undefined) => ({page, size, sort, taskRunId}: {page?: number, size?: number, sort?: string, taskRunId?: string} = {}) => {
+    const fetchTaskMetrics = (taskId: string | undefined) => ({page, size, sort, taskRunId}: {page?: number, size?: number, sort?: string, taskRunId?: string} = {}): Promise<PagedResultsMetricEntry> => {
         const executionId = exec.value?.id
         if (!executionId || !taskId) return Promise.resolve({results: [], total: 0})
         return MetricsAPI.searchByExecution({
@@ -528,17 +574,22 @@
     })
 
     const isTaskModalOpen = ref(false)
-    const taskModalCtx = ref<Record<string, any> | null>(null)
+    const taskModalCtx = ref<TaskModalContext | null>(null)
 
-    provide("kestra:openTaskModal", (ctx: Record<string, any>) => {
+    provide("kestra:openTaskModal", (ctx: TaskModalContext) => {
         taskModalCtx.value = ctx
         isTaskModalOpen.value = true
     })
 
-    function getNodeDimensions(node: any, getNodeWidth: (node: any) => number, getNodeHeight: (node: any) => number) {
+    function getNodeDimensions(
+        node: FlowGraph["nodes"][number],
+        getNodeWidth: (node: FlowGraph["nodes"][number]) => number,
+        getNodeHeight: (node: FlowGraph["nodes"][number]) => number,
+    ) {
         const taskType = node?.task?.type
-        const runnerType = node?.task?.taskRunner?.type
-        const addInfo = taskAdditionalInfoRemote.value[taskType] ?? taskAdditionalInfoRemote.value[runnerType]
+        const runnerType = runnerOf(node?.task)?.type
+        const addInfo = (taskType ? taskAdditionalInfoRemote.value[taskType] : undefined) ??
+            (runnerType ? taskAdditionalInfoRemote.value[runnerType] : undefined)
         const hasExecution = !!executionsStore.execution?.id
         const height = hasExecution
             ? (addInfo?.heightWithExecution ?? addInfo?.height ?? getNodeHeight(node))
@@ -547,13 +598,12 @@
             width: getNodeWidth(node),
             height,
         }
-    };
+    }
 
-    const resolveTaskTopologyDetails = async (tasks: any[] = []) => {
+    const resolveTaskTopologyDetails = async (tasks: FlowTask[] = []) => {
         const taskTypes = new Set<string>()
         const runnerTypes = new Set<string>()
-        // Nested tasks (WorkingDirectory, If, Parallel...) render their own nodes, so they need their UI modules too.
-        getAllTasks(tasks).forEach((task: any) => {
+        tasks.forEach((task) => {
             if (!task?.type) {
                 return
             }
@@ -601,7 +651,7 @@
             flowGraph: FlowGraph;
             flowId?: string;
             namespace?: string;
-            execution?: Record<string, any>;
+            execution?: Partial<Execution>;
             isReadOnly?: boolean;
             source?: string;
             isAllowedEdit?: boolean;
@@ -627,11 +677,9 @@
             if (flowStore.flowParsed?.tasks?.length) return
             // props.source has taskRunner intact; graph nodes may have it stripped (forExecution)
             const sourceParsed = props.source ? YAML_UTILS.parse<ParsedFlow>(props.source) : null
-            const tasks = sourceParsed?.tasks?.length
+            const tasks: FlowTask[] = sourceParsed?.tasks?.length
                 ? sourceParsed.tasks
-                : (flowGraph?.nodes ?? [])
-                    .filter((n: any) => n.task?.type)
-                    .map((n: any) => ({type: n.task.type, version: n.task.version, taskRunner: n.task.taskRunner}))
+                : (flowGraph?.nodes ?? []).flatMap((n) => n.task?.type ? [n.task] : [])
             await resolveTaskTopologyDetails(tasks)
         },
         {immediate: true},
@@ -643,11 +691,11 @@
         () => props.source,
         async (source) => {
             if (!source) return
-            const parsed = YAML_UTILS.parse<ParsedFlow>(source)
-            const sourceHasRunners = getAllTasks(parsed?.tasks).some((t: any) => t?.taskRunner?.type)
-            const flowParsedHasRunners = getAllTasks(flowStore.flowParsed?.tasks).some((t: any) => t?.taskRunner?.type)
-            if (sourceHasRunners && !flowParsedHasRunners) {
-                await resolveTaskTopologyDetails(parsed?.tasks ?? [])
+            const sourceTasks: FlowTask[] = YAML_UTILS.parse<ParsedFlow>(source)?.tasks ?? []
+            const flowParsedTasks: FlowTask[] = flowStore.flowParsed?.tasks ?? []
+            const hasRunner = (task: FlowTask) => Boolean(task.taskRunner?.type)
+            if (sourceTasks.some(hasRunner) && !flowParsedTasks.some(hasRunner)) {
+                await resolveTaskTopologyDetails(sourceTasks)
             }
         },
         {immediate: true},
@@ -700,17 +748,17 @@
     const isInspectOpen = ref(false)
     const inspectTab = ref<"logs" | "outputs" | "metrics">("logs")
     const isReplayPickerOpen = ref(false)
-    const selectedTask = ref()
+    const selectedTask = ref<DrawerTaskInspection | null>(null)
     const taskRunOutputsById = ref<Record<string, Record<string, unknown>>>({})
     const loadingOutputsTaskRunIds = ref<Set<string>>(new Set())
-    const replayExecution = ref()
-    const replayTaskRun = ref()
+    const replayExecution = ref<Execution>()
+    const replayTaskRun = ref<TaskRun>()
     const replayRef = ref<InstanceType<typeof Restart>>()
 
     const authStore = useAuthStore()
 
     const replayEnabled = computed(() => {
-        const currentExecution = executionsStore.execution as any
+        const currentExecution = executionsStore.execution
         if (!currentExecution?.state || State.isRunning(currentExecution.state.current)) {
             return false
         }
@@ -761,7 +809,7 @@
                     nextTick(() => {
                         fitView()
                     })
-                }, 50) as any
+                }, 50)
             })
             resizeObserver.observe(vueFlow.value)
         }
@@ -769,7 +817,7 @@
 
     // Topology renders the whole graph, so every graph-originated mutation needs the graph
     // regenerated from the new YAML — unlike the No-code canvas, which never reads flowGraph.
-    const {undoState, applyYaml: applyYamlWithUndo, deleteWithUndo, performUndo, performRedo} = useYamlUndo(
+    const {undoState, applyYaml: applyYamlWithUndo, deleteWithUndo, performUndo} = useYamlUndo(
         flowStore,
         (name: string) => t("block_editor.block_deleted", {name}),
     )
@@ -781,7 +829,7 @@
         })
     }
 
-    const onDelete = (event: any) => {
+    const onDelete = (event: {id: string; section?: string}) => {
         const flowParsed = YAML_UTILS.parse<ParsedFlow>(flowSource.value)
         toast.confirm(
             t("delete task confirm", {taskId: event.id}),
@@ -790,7 +838,7 @@
                 if (
                     section === SECTIONS.TASKS.toLowerCase() &&
                     flowParsed?.tasks?.length === 1 &&
-                    flowParsed.tasks.map((e: any) => e.id).includes(event.id)
+                    flowParsed.tasks.some((e) => e.id === event.id)
                 ) {
                     coreStore.message = {
                         variant: "error",
@@ -799,7 +847,7 @@
                     }
                     return
                 }
-                const taskType = flowParsed?.tasks?.find((e: any) => e.id === event.id)?.type as string | undefined
+                const taskType = flowParsed?.tasks?.find((e) => e.id === event.id)?.type
                 deleteWithUndo(event.id, () => {
                     const source = flowSource.value ?? ""
                     // A trigger is not a task, so it resolves to no task lane and takes the section path.
@@ -841,11 +889,11 @@
     }
 
     const onEditTask = (event: {
-        task: Record<string, any>;
+        task: FlowTask;
         section?: string;
     }) => {
-        const section = (event.section ?? SECTIONS.TASKS).toLowerCase() as BlockSection
-        const target = resolveTaskInsertionTarget(flowSource.value ?? "", section, event.task.id)
+        const section = sectionFromParentPath((event.section ?? SECTIONS.TASKS).toLowerCase())
+        const target = event.task.id ? resolveTaskInsertionTarget(flowSource.value ?? "", section, event.task.id) : undefined
         if (!target) return
         pushModalTarget({
             parentPath: target.parentPath,
@@ -880,7 +928,8 @@
     function onModalTaskEdited(newContent: string) {
         if (!modalPath.value) return
         applyGraphYaml(updateBlockAtPath(flowSource.value, modalPath.value, newContent))
-        trackAuthoringAction("task_edited", "topology", {task_type: modalTaskData.value?.type as string | undefined})
+        const taskType = modalTaskData.value?.type
+        trackAuthoringAction("task_edited", "topology", {task_type: typeof taskType === "string" ? taskType : undefined})
     }
 
     function onModalOpenInTabs() {
@@ -890,7 +939,7 @@
         topologyClick.value = {
             action: "edit",
             params: {
-                section: sectionFromParentPath(target.parentPath) as any,
+                section: sectionFromParentPath(target.parentPath) as BlockType,
                 id: String(id),
             },
         }
@@ -925,7 +974,7 @@
                 ? undefined
                 : resolveTaskInsertionTarget(yaml, "triggers", id)
             const target = inTasks
-                ?? (asTrigger ? {...asTrigger, section: "triggers" as BlockSection} : undefined)
+                ?? (asTrigger ? {...asTrigger, section: sectionFromParentPath("triggers")} : undefined)
             if (!target) return
             pushModalTarget({
                 parentPath: target.parentPath,
@@ -934,7 +983,7 @@
             })
         },
         sectionList: (section) => {
-            const list = YAML_UTILS.parse<Record<string, any>>(flowSource.value ?? "")?.[section]
+            const list = YAML_UTILS.parse<ParsedFlow>(flowSource.value ?? "")?.[section]
             return Array.isArray(list) ? list : []
         },
         sectionDisplayLabel: (section) => sectionDisplayLabel(t, section),
@@ -961,7 +1010,7 @@
     onBeforeUnmount(() => window.removeEventListener("keydown", onPickerEscape))
 
     const shortcutsOpen = ref(false)
-    const shortcutGroups = buildShortcutGroups({supportsClipboard: false})
+    const shortcutGroups = buildShortcutGroups()
     const commandMenuOpen = ref(false)
     const flowPropertiesOpen = ref(false)
 
@@ -1003,7 +1052,7 @@
         if (updated === flowSource.value) return false
         applyGraphYaml(updated)
         trackAuthoringAction("task_duplicated", "topology", {
-            task_type: sourceTaskById.value[node.id]?.type as string | undefined,
+            task_type: sourceTaskById.value[node.id]?.type,
         })
         return true
     }
@@ -1026,7 +1075,7 @@
         if (updated === flowSource.value) return false
         applyGraphYaml(updated)
         trackAuthoringAction("task_moved", "topology", {
-            task_type: sourceTaskById.value[node.id]?.type as string | undefined,
+            task_type: sourceTaskById.value[node.id]?.type,
         })
         return true
     }
@@ -1096,8 +1145,6 @@
             return reorderFocusedTask(event.key === "ArrowDown" ? "down" : "up") ? undefined : false
         case "undo":
             return performUndo()
-        case "redo":
-            return performRedo()
         case "save":
             saveFlow()
             return
@@ -1165,7 +1212,7 @@
 
 
 
-    const onAddFlowableError = (event: {task: Record<string, any>}) => {
+    const onAddFlowableError = (event: {task: {id: string}}) => {
         const target = errorsLaneTarget(flowSource.value ?? "", event.task.id)
         if (!target) return
         taskPicker.openTaskPickerAtPath(target.parentPath, target.refIndex)
@@ -1224,7 +1271,7 @@
         fitViewOrientation()
     }
 
-    const openFlow = (data: any) => {
+    const openFlow = (data: { link: { namespace: string; id: string; executionId?: string } }) => {
         openFlowInNewTab(
             {
                 namespace: data.link.namespace,
@@ -1236,7 +1283,7 @@
         )
     }
 
-    const openInspect = (event: unknown, tab: "logs" | "outputs" | "metrics") => {
+    const openInspect = (event: DrawerTaskInspection, tab: "logs" | "outputs" | "metrics") => {
         resetDrawerSections()
         selectedTask.value = event
         inspectTab.value = tab
@@ -1244,9 +1291,9 @@
         isDrawerOpen.value = true
     }
 
-    const showLogs = (event: string) => openInspect(event, "logs")
+    const showLogs = (event: DrawerTaskInspection) => openInspect(event, "logs")
 
-    const showOutputs = (event: unknown) => openInspect(event, "outputs")
+    const showOutputs = (event: DrawerTaskInspection) => openInspect(event, "outputs")
 
     function isLoadingTaskRunOutputs(taskRunId: string): boolean {
         return loadingOutputsTaskRunIds.value.has(taskRunId)
@@ -1284,14 +1331,14 @@
         {immediate: true},
     )
 
-    const openReplayDialog = (taskExecution: unknown, taskRun: unknown) => {
+    const openReplayDialog = (taskExecution: Execution | undefined, taskRun: TaskRun) => {
         replayExecution.value = taskExecution
         replayTaskRun.value = taskRun
         isDrawerOpen.value = false
         nextTick(() => replayRef.value?.open())
     }
 
-    const onReplayTask = (event: {execution: unknown; taskRuns: unknown[]}) => {
+    const onReplayTask = (event: {execution?: Execution; taskRuns: TaskRun[]}) => {
         if (event.taskRuns.length === 1) {
             openReplayDialog(event.execution, event.taskRuns[0])
             return
@@ -1310,28 +1357,40 @@
         logLevel.value = toLevelKey(level)
     }
 
-    const showDescription = (event: string) => {
+    const showDescription = (event: FlowTask) => {
         resetDrawerSections()
         selectedTask.value = event
         isShowDescriptionOpen.value = true
         isDrawerOpen.value = true
     }
 
-    const showCondition = (event: {task: string}) => {
+    const showCondition = (event: {task: FlowTask}) => {
         resetDrawerSections()
         selectedTask.value = event.task
         isShowConditionOpen.value = true
         isDrawerOpen.value = true
     }
 
-    const customActionMeta = ref<{ label: string; taskProp: string; lang: string }>()
+    const customActionMeta = ref<CustomActionConfig>()
     const isShowCustomActionOpen = ref(false)
 
-    const showCustomAction = (event: { task: any; customAction: { label: string; taskProp: string; lang: string } }) => {
+    const customActionModelValue = computed(() => {
+        if (!selectedTask.value || !customActionMeta.value?.taskProp) return ""
+        const value = selectedTask.value[customActionMeta.value.taskProp]
+        if (typeof value === "string") return value
+        if (value == null) return ""
+        if (typeof value === "object") return YAML_UTILS.stringify(value)
+        return String(value)
+    })
+
+    const showCustomAction = (event: { task: FlowTask; customAction: CustomActionConfig }) => {
         const fullTask = taskWithSource(event.task)
         if (!event.customAction.taskProp) {
+            if (!isTask(fullTask)) return
+            const taskType = modalTypeFor(fullTask)
+            if (!taskType) return
             taskModalCtx.value = {
-                taskType: modalTypeFor(fullTask),
+                taskType,
                 title: event.customAction.label,
                 task: fullTask,
                 execution: exec.value,
@@ -1339,9 +1398,9 @@
                 flowId: props.flowId,
                 tenant: tenant.value,
                 source: flowSource.value,
-                progress: taskProgress(fullTask?.id),
-                fetchOutputs: fetchTaskOutputs(fullTask?.id),
-                fetchMetrics: fetchTaskMetrics(fullTask?.id),
+                progress: taskProgress(fullTask.id),
+                fetchOutputs: fetchTaskOutputs(fullTask.id),
+                fetchMetrics: fetchTaskMetrics(fullTask.id),
             }
             isTaskModalOpen.value = true
             return
@@ -1353,7 +1412,7 @@
         isDrawerOpen.value = true
     }
 
-    const expandSubflow = (event: any) => {
+    const expandSubflow = (event: string[]) => {
         emit("expand-subflow", event)
     }
 </script>

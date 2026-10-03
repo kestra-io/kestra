@@ -67,7 +67,8 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
         Executions.Fields.LABELS, "labels",
         Executions.Fields.START_DATE, "start_date",
         Executions.Fields.END_DATE, "end_date",
-        Executions.Fields.TRIGGER_EXECUTION_ID, "trigger_execution_id"
+        Executions.Fields.TRIGGER_EXECUTION_ID, "trigger_execution_id",
+        Executions.Fields.KIND, "kind"
     );
 
     @Override
@@ -251,6 +252,10 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
             return filter.field() == QueryFilter.Field.KIND;
         }
         return filter.children().stream().anyMatch(AbstractJdbcExecutionRepository::containsLeafForKind);
+    }
+
+    private static boolean hasKindFilter(@Nullable List<? extends AbstractFilter<Executions.Fields>> filters) {
+        return filters != null && filters.stream().anyMatch(filter -> filter.getField() == Executions.Fields.KIND);
     }
 
     @Override
@@ -565,8 +570,10 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
                 );
 
                 // Apply Where filter
-                selectConditionStep = where(selectConditionStep, filterService, descriptors.getWhere(), fieldsMapping)
-                    .and(NORMAL_KIND_CONDITION);
+                selectConditionStep = where(selectConditionStep, filterService, descriptors.getWhere(), fieldsMapping);
+                if (!hasKindFilter(descriptors.getWhere())) {
+                    selectConditionStep = selectConditionStep.and(NORMAL_KIND_CONDITION);
+                }
 
                 List<? extends ColumnDescriptor<Executions.Fields>> columnsWithoutDateWithOutAggs = columnsWithoutDate.values().stream()
                     .filter(column -> column.getAgg() == null)
@@ -610,12 +617,15 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
                 .from(this.jdbcRepository.getTable())
                 .where(this.defaultFilter(tenantId));
 
-            var selectConditionStep = where(
+            SelectConditionStep<Record> selectConditionStep = where(
                 selectStep,
                 filterService,
                 filters,
                 getFieldsMapping()
-            ).and(NORMAL_KIND_CONDITION);
+            );
+            if (!hasKindFilter(filters)) {
+                selectConditionStep = selectConditionStep.and(NORMAL_KIND_CONDITION);
+            }
 
             Record result = selectConditionStep.fetchOne();
             if (result != null) {
@@ -783,7 +793,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
 
             Stream<?> values = descriptor instanceof In inFilter ? inFilter.getValues().stream()
                 : descriptor instanceof EqualTo equalToFilter ? Stream.of(equalToFilter.getValue())
-                : Stream.empty();
+                    : Stream.empty();
             List<State.Type> states = values.map(value -> State.Type.valueOf(value.toString())).toList();
 
             if (!states.isEmpty()) {

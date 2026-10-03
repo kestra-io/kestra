@@ -11560,7 +11560,7 @@ export type DeleteTriggersByQueryError = DeleteTriggersByQueryErrors[keyof Delet
 
 export type DeleteTriggersByQueryResponses = {
     /**
-     * Accepted
+     * Accepted. Triggers the flow still declares are not deleted, and totalItems is the number of orphan deletes queued.
      */
     202: ApiAsyncOperationResponse;
 };
@@ -11595,7 +11595,7 @@ export type DeleteTriggersByIdsError = DeleteTriggersByIdsErrors[keyof DeleteTri
 
 export type DeleteTriggersByIdsResponses = {
     /**
-     * Accepted
+     * Accepted. Triggers the flow still declares are not deleted, and totalItems is the number of orphan deletes queued.
      */
     202: ApiAsyncOperationResponse;
 };
@@ -11986,7 +11986,7 @@ export type DeleteTriggerErrors = {
      */
     403: ProblemDetail;
     /**
-     * If the trigger cannot be deleted
+     * If the flow still declares the trigger, or the scheduler failed to delete the trigger state
      */
     409: ProblemDetail;
     /**

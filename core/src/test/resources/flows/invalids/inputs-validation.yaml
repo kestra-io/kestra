@@ -38,6 +38,44 @@ inputs:
     type: MULTISELECT
     itemType: SELECT
 
+  - id: array5
+    type: ARRAY
+    itemType: OBJECT
+
+  - id: object1
+    type: OBJECT
+    properties:
+      - id: attachment
+        type: FILE
+
+  - id: table1
+    type: TABLE
+    columns:
+      - id: size
+        type: INT
+      - id: size
+        type: STRING
+
+  - id: table2
+    type: TABLE
+    columns:
+      - id: region
+        type: STRING
+        dependsOn:
+          inputs:
+            - size
+      - id: size
+        type: INT
+
+  - id: table3
+    type: TABLE
+    rows:
+      min: 3
+      max: 1
+    columns:
+      - id: size
+        type: INT
+
 tasks:
   - id: hello
     type: io.kestra.plugin.core.log.Log

@@ -216,7 +216,7 @@ describe("ConditionRow key-value comparator changes", () => {
             },
         })
 
-        const opSelect: any = wrapper.findComponent(".cond-op")
+        const opSelect = wrapper.findComponent(".cond-op")
         opSelect.vm.$emit("update:modelValue", Comparators.EQUALS)
         await nextTick()
 

@@ -1,36 +1,45 @@
 package io.kestra.executor;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.jooq.exception.DataAccessException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.Mockito;
 
+import io.kestra.core.metrics.MetricConfig;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Concurrency;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.State;
-import io.kestra.core.runners.ExecutionQueuedStateStore;
 import io.kestra.core.runners.FlowMetaStoreInterface;
 import io.kestra.core.runners.ScopedConcurrencyLimit;
 import io.kestra.core.services.ConcurrencyLimitResolver;
 import io.kestra.core.utils.IdUtils;
+import io.kestra.executor.testkit.InMemoryConcurrencyLimitStateStore;
+import io.kestra.executor.testkit.InMemoryExecutionQueuedStateStore;
+import io.kestra.executor.testkit.NoopTransactionContext;
 import io.kestra.plugin.core.log.Log;
+
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 
 /**
  * The release decision of {@link ConcurrencySlotReleaseProcessor}: a slot is given back only when
- * the execution actually claimed one and this cycle is the one that terminated it.
  */
 class ConcurrencySlotReleaseProcessorTest {
 
-    private ConcurrencyLimitStateStore stateStore;
+    private InMemoryConcurrencyLimitStateStore stateStore;
+    private InMemoryExecutionQueuedStateStore queuedStore;
+    private MetricRegistry metricRegistry;
     private ConcurrencySlotReleaseProcessor processor;
     private FlowWithSource flow;
 
@@ -49,13 +58,18 @@ class ConcurrencySlotReleaseProcessorTest {
         ConcurrencyLimitResolver resolver = Mockito.mock(ConcurrencyLimitResolver.class);
         Mockito.when(resolver.resolveLimits(Mockito.any())).thenReturn(List.of(ScopedConcurrencyLimit.ofFlow(definition)));
 
-        this.stateStore = Mockito.mock(ConcurrencyLimitStateStore.class);
+        // the real in-memory store (held to the store contracts) instead of a mock: the tests read the
+        // counter back rather than verifying a call. Every test starts with the flow holding its one slot.
+        this.stateStore = new InMemoryConcurrencyLimitStateStore();
+        this.queuedStore = new InMemoryExecutionQueuedStateStore();
+        this.metricRegistry = new MetricRegistry(new SimpleMeterRegistry(), new MetricConfig(null, null, null, Map.of()));
+        this.stateStore.increment(NoopTransactionContext.INSTANCE, flow);
         this.processor = new ConcurrencySlotReleaseProcessor(
             stateStore,
             resolver,
-            Mockito.mock(ExecutionQueuedStateStore.class),
+            queuedStore,
             Mockito.mock(FlowMetaStoreInterface.class),
-            Mockito.mock(MetricRegistry.class, Mockito.RETURNS_DEEP_STUBS)
+            metricRegistry
         );
     }
 
@@ -68,8 +82,6 @@ class ConcurrencySlotReleaseProcessorTest {
 
         // When
         processor.release(cycle(created(), execution), true);
-
-        // Then
         verifyReleased();
     }
 
@@ -80,8 +92,6 @@ class ConcurrencySlotReleaseProcessorTest {
 
         // When
         processor.release(cycle(created(), execution), true);
-
-        // Then
         verifyReleased();
     }
 
@@ -93,8 +103,6 @@ class ConcurrencySlotReleaseProcessorTest {
 
         // When
         processor.release(cycle(execution, execution), false);
-
-        // Then
         verifyNotReleased();
     }
 
@@ -107,8 +115,6 @@ class ConcurrencySlotReleaseProcessorTest {
 
         // When
         processor.release(cycle(created().withState(State.Type.RUNNING).withState(State.Type.KILLING), killed), true);
-
-        // Then
         verifyReleased();
     }
 
@@ -121,8 +127,6 @@ class ConcurrencySlotReleaseProcessorTest {
 
         // When
         processor.release(cycle(killed, killed), false);
-
-        // Then
         verifyNotReleased();
     }
 
@@ -134,8 +138,6 @@ class ConcurrencySlotReleaseProcessorTest {
 
         // When
         processor.release(cycle(created().withState(State.Type.QUEUED), execution), true);
-
-        // Then
         verifyNotReleased();
     }
 
@@ -146,8 +148,6 @@ class ConcurrencySlotReleaseProcessorTest {
 
         // When
         processor.release(cycle(created(), execution), true);
-
-        // Then
         verifyNotReleased();
     }
 
@@ -158,8 +158,6 @@ class ConcurrencySlotReleaseProcessorTest {
 
         // When
         processor.release(cycle(created().withState(State.Type.RUNNING), execution), true);
-
-        // Then
         verifyReleased();
     }
 
@@ -171,9 +169,9 @@ class ConcurrencySlotReleaseProcessorTest {
         ConcurrencySlotReleaseProcessor unlimited = new ConcurrencySlotReleaseProcessor(
             stateStore,
             noLimit,
-            Mockito.mock(ExecutionQueuedStateStore.class),
+            queuedStore,
             Mockito.mock(FlowMetaStoreInterface.class),
-            Mockito.mock(MetricRegistry.class, Mockito.RETURNS_DEEP_STUBS)
+            metricRegistry
         );
         // an execution without the claim stamp: nothing tells the processor which scopes to give
         // back, and the flow declares none either
@@ -181,10 +179,24 @@ class ConcurrencySlotReleaseProcessorTest {
 
         // When
         Optional<Execution> popped = unlimited.release(cycle(created().withState(State.Type.RUNNING), execution), true);
-
-        // Then
         assertThat(popped).isEmpty();
         verifyNotReleased();
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = State.Type.class, names = { "FAILED", "CANCELLED" })
+    void shouldReleaseSlotWhenFormerlyQueuedExecutionTerminatesInError(State.Type errorState) {
+        // Given: an execution that was queued, then popped (stamping its claim) and now holds the
+        // slot — its history is CREATED → QUEUED → RUNNING, one step away from the short-circuit
+        // shape (CREATED → FAILED/CANCELLED) that must not release
+        Execution running = stamped(created().withState(State.Type.QUEUED).withState(State.Type.RUNNING));
+
+        // When: it terminates in error during its actual run
+        processor.release(cycle(running, running.withState(errorState)), true);
+
+        // Then: a genuine run failure releases the slot like any termination — the short-circuit
+        // guard only holds when the error state follows CREATED directly
+        verifyReleased();
     }
 
     @Test
@@ -196,16 +208,14 @@ class ConcurrencySlotReleaseProcessorTest {
         ConcurrencySlotReleaseProcessor unlimited = new ConcurrencySlotReleaseProcessor(
             stateStore,
             noLimit,
-            Mockito.mock(ExecutionQueuedStateStore.class),
+            queuedStore,
             Mockito.mock(FlowMetaStoreInterface.class),
-            Mockito.mock(MetricRegistry.class, Mockito.RETURNS_DEEP_STUBS)
+            metricRegistry
         );
         Execution execution = stamped(created().withState(State.Type.RUNNING).withState(State.Type.SUCCESS));
 
         // When
         unlimited.release(cycle(created().withState(State.Type.RUNNING), execution), true);
-
-        // Then
         verifyReleased();
     }
 
@@ -214,14 +224,20 @@ class ConcurrencySlotReleaseProcessorTest {
         // Given: the release runs after the terminated execution row has been committed, so letting
         // a database failure escape would reach the queue subscriber's fatal-error handling and
         // shut the instance down
+        ConcurrencyLimitStateStore failing = Mockito.mock(ConcurrencyLimitStateStore.class);
         Mockito
-            .when(stateStore.releaseThenPop(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any()))
+            .when(failing.releaseThenPop(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any()))
             .thenThrow(new DataAccessException("deadlock"));
+        ConcurrencyLimitResolver resolver = Mockito.mock(ConcurrencyLimitResolver.class);
+        Mockito.when(resolver.resolveLimits(Mockito.any())).thenReturn(List.of(ScopedConcurrencyLimit.ofFlow(flow)));
+        ConcurrencySlotReleaseProcessor onFailingStore = new ConcurrencySlotReleaseProcessor(
+            failing, resolver, queuedStore, Mockito.mock(FlowMetaStoreInterface.class), metricRegistry
+        );
         Execution execution = stamped(created().withState(State.Type.RUNNING).withState(State.Type.SUCCESS));
         ExecutorContext executor = cycle(created().withState(State.Type.RUNNING), execution);
 
         // When / Then
-        assertThatCode(() -> assertThat(processor.release(executor, true)).isEmpty()).doesNotThrowAnyException();
+        assertThatCode(() -> assertThat(onFailingStore.release(executor, true)).isEmpty()).doesNotThrowAnyException();
     }
 
     // --- fixtures
@@ -242,11 +258,13 @@ class ConcurrencySlotReleaseProcessorTest {
         return new ExecutorContext(entry, flow).withExecution(current, "test");
     }
 
+    /** The one slot the flow held at setup was given back. */
     private void verifyReleased() {
-        Mockito.verify(stateStore).releaseThenPop(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
+        assertThat(stateStore.running(flow)).isZero();
     }
 
+    /** The slot is still held: nothing was released. */
     private void verifyNotReleased() {
-        Mockito.verify(stateStore, Mockito.never()).releaseThenPop(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
+        assertThat(stateStore.running(flow)).isEqualTo(1);
     }
 }

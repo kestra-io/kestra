@@ -1,6 +1,6 @@
 import Revisions from "./Revisions.vue";
 import {ComponentPropsAndSlots, StoryObj} from "@storybook/vue3-vite";
-import {expect, fn, spyOn, waitFor} from "storybook/test";
+import {expect, fn, spyOn, userEvent, waitFor, within} from "storybook/test";
 import {vueRouter} from "storybook-vue3-router";
 import {nextTick, ref} from "vue";
 import {useFlowStore} from "../../stores/flow";
@@ -180,4 +180,78 @@ export const DeleteSelectedRevision: Story = {
             expect(canvasElement.querySelector(".revision-grid-col")).not.toBeNull()
         );
     }
+};
+
+let delayedSource: Promise<string>;
+let finishSource: (source: string) => void;
+
+export const LatestSelectionWins: Story = {
+    loaders: [async () => {
+        await import("@kestra-io/design-system/components/Form/KsEditor.vue");
+        return {};
+    }],
+    render: () => ({
+        components: {Revisions},
+        setup() {
+            delayedSource = new Promise(resolve => {finishSource = resolve});
+            const revisionsList = [
+                {revision: 1, source: "FIRST_REVISION"},
+                {revision: 3},
+                {revision: 4, source: "CURRENT_REVISION"},
+            ];
+            return {revisionsList, loadSource: () => delayedSource};
+        },
+        template: '<div style="height: 100vh"><Revisions lang="text" :revisions="revisionsList" :revisionSource="loadSource" :editRouteQuery="false" /></div>',
+    }),
+    async play({canvasElement}) {
+        const canvas = within(canvasElement);
+        const left = within(canvasElement.querySelector('[data-test="revision-left"]') as HTMLElement);
+        await userEvent.click(left.getByRole("combobox"));
+        await userEvent.click(within(document.body).getByRole("option", {name: "Revision 1"}));
+        await waitFor(() => expect(canvas.getByText("FIRST_REVISION")).toBeVisible(), {timeout: 10000});
+        await expect(canvas.getByText("CURRENT_REVISION")).toBeVisible();
+        finishSource("OBSOLETE_REVISION");
+        await delayedSource;
+        await nextTick();
+        await nextTick();
+        await expect(canvas.queryByText("OBSOLETE_REVISION")).not.toBeInTheDocument();
+        await expect(canvas.getByText("FIRST_REVISION")).toBeVisible();
+    },
+};
+
+export const RefreshHistoricalComparison: Story = {
+    loaders: LatestSelectionWins.loaders,
+    render: () => ({
+        components: {Revisions},
+        setup() {
+            const revisionsList = ref([
+                {revision: 1, source: "FIRST_REVISION"},
+                {revision: 3, source: "HISTORICAL_REVISION"},
+                {revision: 4, source: "CURRENT_REVISION"},
+            ]);
+            function refresh() {
+                revisionsList.value = [
+                    {revision: 1, source: "REFRESHED_FIRST_REVISION"},
+                    {revision: 3, source: "REFRESHED_HISTORICAL_REVISION"},
+                    {revision: 4, source: "CURRENT_REVISION"},
+                    {revision: 9, source: "NEW_CURRENT_REVISION"},
+                ];
+            }
+            return {revisionsList, refresh, loadSource: () => Promise.resolve(undefined)};
+        },
+        template: '<div style="height: 100vh"><button @click="refresh">Refresh revisions</button><Revisions lang="text" :revisions="revisionsList" :revisionSource="loadSource" :editRouteQuery="false" /></div>',
+    }),
+    async play({canvasElement}) {
+        const canvas = within(canvasElement);
+        const right = within(canvasElement.querySelector('[data-test="revision-right"]') as HTMLElement);
+        await userEvent.click(right.getByRole("combobox"));
+        await userEvent.click(within(document.body).getByRole("option", {name: "Revision 1"}));
+        await waitFor(() => expect(canvas.getByText("FIRST_REVISION")).toBeVisible(), {timeout: 10000});
+        await userEvent.click(canvas.getByRole("button", {name: "Refresh revisions"}));
+        await waitFor(() => expect(canvas.getByText("REFRESHED_FIRST_REVISION")).toBeVisible());
+        await expect(canvas.getByText("REFRESHED_HISTORICAL_REVISION")).toBeVisible();
+        await expect(canvas.queryByText("NEW_CURRENT_REVISION")).not.toBeInTheDocument();
+        await expect(canvas.getByText("Revision 1", {exact: true})).toBeVisible();
+        await expect(canvas.getByText("Revision 3", {exact: true})).toBeVisible();
+    },
 };

@@ -3,8 +3,6 @@
   "packages/design-system/src/components/Basic/KsButton/KsButton.vue": 2,
   "packages/design-system/src/components/Basic/KsButton/KsButtonGroup.vue": 1,
   "packages/design-system/src/components/Basic/KsContainer/KsMain.vue": 1,
-  "packages/design-system/src/components/Basic/KsIcon.vue": 2,
-  "packages/design-system/src/components/Basic/KsLink.vue": 2,
   "packages/design-system/src/components/Basic/KsRow/KsCol.vue": 1,
   "packages/design-system/src/components/Basic/KsRow/KsRow.vue": 1,
   "packages/design-system/src/components/Basic/KsScrollbar.vue": 3,

@@ -111,6 +111,10 @@ public class ExecutionCommandMessageHandler implements ExecutorMessageHandler<Ex
                         executionService.changeState(execution, updateStatusCommand.state());
                     case ResumeFromBreakpoint resumeFromBreakpointCommand ->
                         executionService.resumeFromBreakpoint(execution, resumeFromBreakpointCommand.breakpoints());
+                    case Resume resumeCommand when resumeCommand.decision() != null ->
+                        executionService.decide(execution, flow, resumeCommand.taskRunId(), resumeCommand.decision(), resumeCommand.resumeInputs(), resumeCommand.resumed());
+                    case CancelApproval cancelCommand ->
+                        executionService.cancelApproval(execution, flow, cancelCommand.taskRunId(), cancelCommand.resumed());
                     case Resume resumeCommand ->
                         executionService.resume(execution, flow, State.Type.RUNNING, resumeCommand.resumeInputs(), resumeCommand.resumed());
                     case ExecutionCommand.Invalid ignored -> {

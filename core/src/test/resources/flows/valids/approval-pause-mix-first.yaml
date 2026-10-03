@@ -1,0 +1,11 @@
+id: approval-pause-mix-first
+namespace: io.kestra.tests
+
+tasks:
+  - id: parallel
+    type: io.kestra.plugin.core.flow.Parallel
+    tasks:
+      - id: approval
+        type: io.kestra.plugin.core.flow.Approval
+      - id: pause
+        type: io.kestra.plugin.core.flow.Pause

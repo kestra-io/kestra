@@ -11,7 +11,6 @@ import com.google.common.hash.Hashing;
 @SuppressWarnings({ "deprecation" })
 abstract public class IdUtils {
     private static final HashFunction HASH_FUNCTION = Hashing.md5();
-    private static final char ID_SEPARATOR = '_';
 
     public static String create() {
         return FriendlyId.createFriendlyId();
@@ -25,8 +24,30 @@ abstract public class IdUtils {
         );
     }
 
+    /**
+     * Produces a collision-safe identifier from the given parts.
+     *
+     * <p>Each non-null part is length-prefixed ({@code length:content}) so that
+     * different logical part arrays always produce different output, regardless of
+     * what characters appear inside individual parts.  For example,
+     * {@code fromParts("team", "x_y")} and {@code fromParts("team_x", "y")}
+     * produce distinct strings — a guarantee that a plain separator-based join
+     * cannot provide when parts may contain the separator character.
+     *
+     * <p>Null parts are silently skipped, so
+     * {@code fromParts(null, "a", "b")} equals {@code fromParts("a", "b")}.
+     *
+     * @param parts the parts to encode
+     * @return a collision-safe identifier string
+     */
     public static String fromParts(String... parts) {
-        return fromPartsAndSeparator(ID_SEPARATOR, parts);
+        StringBuilder sb = new StringBuilder();
+        for (String str : parts) {
+            if (str != null) {
+                sb.append(str.length()).append(':').append(str);
+            }
+        }
+        return sb.toString();
     }
 
     public static String fromPartsAndSeparator(char separator, String... parts) {

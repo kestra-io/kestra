@@ -12,7 +12,6 @@ import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.kv.PersistedKvMetadata;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.KvMetadataRepositoryInterface;
-import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.storages.kv.KVEntry;
 import io.kestra.core.storages.kv.KVStore;
@@ -107,7 +106,7 @@ public class KVService {
             .map(throwFunction(uri ->
             {
                 boolean deleted = this.storage.delete(tenant, namespace, uri);
-                URI metadataURI = URI.create(StorageContext.logicalPath(uri) + ".metadata");
+                URI metadataURI = URI.create(uri.getPath() + ".metadata");
                 if (this.storage.exists(tenant, namespace, metadataURI)) {
                     this.storage.delete(tenant, namespace, metadataURI);
                 }

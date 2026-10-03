@@ -1229,14 +1229,11 @@ public class ExecutionController {
             return null;
         }
 
-        String filePath = StorageContext.logicalPath(path);
-        // A decoded authority can put ".." after a prefix that startsWith would still accept.
-        if (FileUtils.isParentTraversal(filePath)) {
-            throw new IllegalArgumentException("File should be accessed with their full path and not using relative '..' path.");
-        }
-        String prefix = StorageContext.logicalPath(StorageContext.forExecution(execution).getExecutionStorageURI());
+        String prefix = StorageContext
+            .forExecution(execution)
+            .getExecutionStorageURI().getPath();
 
-        if (filePath.startsWith(prefix)) {
+        if (path.getPath().startsWith(prefix)) {
             return null;
         }
 
@@ -1251,12 +1248,12 @@ public class ExecutionController {
         // maybe state
         StorageContext context = StorageContext.forFlow(flow.get());
         prefix = context.getStateStorePrefix(null, false, null);
-        if (filePath.startsWith(prefix)) {
+        if (path.getPath().startsWith(prefix)) {
             return null;
         }
 
         prefix = context.getStateStorePrefix(null, true, null);
-        if (filePath.startsWith(prefix)) {
+        if (path.getPath().startsWith(prefix)) {
             return null;
         }
 

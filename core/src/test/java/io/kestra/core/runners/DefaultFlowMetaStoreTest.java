@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 
 import io.kestra.core.exceptions.FlowBlockedException;
 import io.kestra.core.exceptions.FlowProcessingException;
+import io.kestra.core.exceptions.UnknownPropertyException;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
@@ -386,6 +387,48 @@ class DefaultFlowMetaStoreTest {
         assertThat(resolved).isPresent();
         assertThat(resolved.get()).isNotInstanceOf(FlowWithException.class);
         assertThat(resolved.get().getId()).isEqualTo(flow.getId());
+    }
+
+    /**
+     * A 1.x flow whose trigger carries a property 2.0 removed cannot be deserialized, so the repository hands
+     * over a {@link FlowWithException}. Re-parsing it for runtime fails the same way, and that stored
+     * FlowWithException is what the executor gets back — never a flow with the trigger's filtering dropped.
+     */
+    @Test
+    void shouldKeepTheStoredFlowWithExceptionOnTheExecutionPath() {
+        // Given the flow as the repository deserialized it: unparsable, kept with its source only
+        String legacySource = """
+            id: legacy
+            namespace: io.kestra.tests
+            tasks:
+              - id: log
+                type: io.kestra.plugin.core.log.Log
+                message: hello
+            triggers:
+              - id: on_foreach
+                type: io.kestra.plugin.core.trigger.Flow
+                states: [SUCCESS]
+                conditions:
+                  - type: io.kestra.plugin.core.condition.ExecutionFlow
+                    namespace: io.kestra.tests
+                    flowId: dep-foreach
+            """;
+        FlowWithSource stored = FlowWithException.from(
+            createFlow().toBuilder().revision(1).source(legacySource).build(),
+            new UnknownPropertyException("Unrecognized property \"conditions\" on trigger \"on_foreach\"")
+        );
+        // a real parsing service: the re-parse must fail on its own, not because a mock said so
+        DefaultFlowMetaStore metaStore = metaStore(stored, new FlowParsingService());
+
+        // When
+        Optional<FlowWithSource> resolved = metaStore.findByExecutionForRuntime(executionOf(stored));
+
+        // Then the flow stays unparsable and carries no trigger: nothing can fire from it
+        assertThat(resolved).isPresent();
+        assertThat(resolved.get()).isInstanceOf(FlowWithException.class);
+        assertThat(((FlowWithException) resolved.get()).getException())
+            .isEqualTo("Flow '" + stored.getNamespace() + "/" + stored.getId() + "': Unrecognized property \"conditions\" on trigger \"on_foreach\"");
+        assertThat(resolved.get().getTriggers()).isNull();
     }
 
     @Test

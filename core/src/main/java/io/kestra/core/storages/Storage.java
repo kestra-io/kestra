@@ -8,6 +8,8 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
 
+import io.kestra.core.models.annotations.Beta;
+
 import jakarta.annotation.Nullable;
 
 /**
@@ -175,4 +177,24 @@ public interface Storage {
     Optional<StorageContext.Task> getTaskStorageContext();
 
     List<FileAttributes> list(URI uri) throws IOException;
+
+    /**
+     * Requests a time-limited signed URL for the given file, if the storage backend supports it.
+     *
+     * @return the signed URL, or empty if the storage backend does not support (or has disabled) signed URLs
+     * @throws IOException if signing was attempted but failed
+     */
+    @Beta
+    Optional<SignedUrl> sign(URI uri, SignedUrlCapable.Operation operation, Duration ttl) throws IOException;
+
+    /**
+     * Copies {@code source} into Kestra's storage under {@code name}, server-side if the storage backend
+     * supports it. Unlike {@link #putFile(InputStream, String)}, the target is always built under
+     * {@link #getContextBaseURI()}: the caller cannot choose the destination.
+     *
+     * @return the URI of the copied object, or empty if the storage backend cannot perform a server-side copy
+     * @throws IOException if the copy was attempted but failed
+     */
+    @Beta
+    Optional<URI> copyFrom(String name, URI source) throws IOException;
 }

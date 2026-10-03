@@ -1,6 +1,7 @@
 package io.kestra.core.models.tasks.runners;
 
 import java.io.IOException;
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
@@ -10,6 +11,7 @@ import java.util.Map;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
+import io.kestra.core.models.annotations.Beta;
 import io.kestra.core.models.property.Property;
 
 /**
@@ -50,6 +52,18 @@ public interface TaskCommands {
 
     default List<Path> relativeWorkingDirectoryFilesPaths() throws IOException {
         return this.relativeWorkingDirectoryFilesPaths(false);
+    }
+
+    /**
+     * Input files whose rendered value is a {@code kestra://} URI, for a runner that opted into
+     * {@link RemoteRunnerInterface#supportsDirectInputFiles()}. Kept separate from the regular input
+     * files staged in the working directory so the runner can access them directly instead.
+     *
+     * @return the relative path each file should end up at, mapped to its internal storage URI
+     */
+    @Beta
+    default Map<String, URI> getDirectInputFiles() {
+        return Map.of();
     }
 
     default List<Path> relativeWorkingDirectoryFilesPaths(boolean includeDirectories) throws IOException {

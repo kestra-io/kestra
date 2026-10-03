@@ -131,7 +131,9 @@ export function duplicateBlock(source: string, section: BlockSection, id: string
     const existingIds = collectAllIds(source)
     const newId = uniqueId(String(parsed.id), existingIds)
     existingIds.add(newId)
-    const duplicate = renameNestedIds({...parsed, id: newId}, existingIds)
+    const idMap = new Map<string, string>()
+    const renamed = renameNestedIds({...parsed, id: newId}, existingIds, uniqueId, idMap)
+    const duplicate = rewireDependsOnInSubtree(renamed, idMap)
 
     const path = flowYamlUtils.getPathFromSectionAndId({source, section, id})
     const match = path?.match(/\[(\d+)\]$/)
@@ -157,9 +159,14 @@ export function duplicateBlockAtPath(source: string, path: string): string {
     const displayItem = displayTaskOf(parsed)
     const newId = uniqueId(String(displayItem.id), existingIds)
     existingIds.add(newId)
+    const idMap = new Map<string, string>()
+    const renamedTask = rewireDependsOnInSubtree(
+        renameNestedIds({...displayItem, id: newId}, existingIds, uniqueId, idMap),
+        idMap,
+    )
     const duplicate = isWrappedLaneItem(parsed)
-        ? {...parsed, task: renameNestedIds({...displayItem, id: newId}, existingIds)}
-        : renameNestedIds({...parsed, id: newId}, existingIds)
+        ? {...parsed, task: renamedTask}
+        : renamedTask
 
     const parentPath = pathParent(path)
     const match = path.match(/\[(\d+)\]$/)
@@ -190,16 +197,20 @@ function uniqueId(baseId: string, existingIds: Set<string>): string {
     return `${candidate}_${counter}`
 }
 
+type IdRenamer = (id: string, takenIds: Set<string>) => string
+
 function renameNestedIds(
     node: Record<string, unknown>,
     takenIds: Set<string>,
+    renameId: IdRenamer,
+    idMap: Map<string, string>,
 ): Record<string, unknown> {
     const result: Record<string, unknown> = {...node}
     for (const key of FLOWABLE_BRANCH_KEYS) {
         const val = node[key]
         if (Array.isArray(val)) {
             result[key] = (val as Record<string, unknown>[]).map(item =>
-                renameTaskNode(item, takenIds),
+                renameTaskNode(item, takenIds, renameId, idMap),
             )
         } else if (key === "cases" && val && typeof val === "object" && !Array.isArray(val)) {
             const casesObj = val as Record<string, unknown>
@@ -207,7 +218,7 @@ function renameNestedIds(
             for (const [caseKey, caseVal] of Object.entries(casesObj)) {
                 if (Array.isArray(caseVal)) {
                     newCases[caseKey] = (caseVal as Record<string, unknown>[]).map(item =>
-                        renameTaskNode(item, takenIds),
+                        renameTaskNode(item, takenIds, renameId, idMap),
                     )
                 } else {
                     newCases[caseKey] = caseVal
@@ -222,14 +233,95 @@ function renameNestedIds(
 function renameTaskNode(
     node: Record<string, unknown>,
     takenIds: Set<string>,
+    renameId: IdRenamer,
+    idMap: Map<string, string>,
 ): Record<string, unknown> {
     if (!node || typeof node !== "object") return node
-    if (isWrappedLaneItem(node)) return {...node, task: renameTaskNode(node.task, takenIds)}
+    if (isWrappedLaneItem(node)) return {...node, task: renameTaskNode(node.task, takenIds, renameId, idMap)}
     const originalId = typeof node.id === "string" ? node.id : undefined
-    if (originalId === undefined) return renameNestedIds(node, takenIds)
-    const newId = uniqueId(originalId, takenIds)
+    if (originalId === undefined) return renameNestedIds(node, takenIds, renameId, idMap)
+    const newId = renameId(originalId, takenIds)
     takenIds.add(newId)
-    return renameNestedIds({...node, id: newId}, takenIds)
+    if (newId !== originalId) idMap.set(originalId, newId)
+    return renameNestedIds({...node, id: newId}, takenIds, renameId, idMap)
+}
+
+function keepIdOrRename(id: string, takenIds: Set<string>): string {
+    return takenIds.has(id) ? nextAvailableId(id, takenIds) : id
+}
+
+/**
+ * Rewrites a Dag lane item's `dependsOn` entries through `idMap`, so renaming a task does not
+ * dangle the edges that pointed at its old id. `dependsOn` lives on the wrapper (sibling to
+ * `task`), which `renameTaskNode` never touches since it only ever renames a node's own `id`.
+ */
+function rewireDependsOnInSubtree(
+    node: Record<string, unknown>,
+    idMap: Map<string, string>,
+): Record<string, unknown> {
+    if (!node || typeof node !== "object") return node
+    if (isWrappedLaneItem(node)) {
+        const task = rewireDependsOnInSubtree(node.task, idMap)
+        if (!Array.isArray(node.dependsOn)) return {...node, task}
+        return {
+            ...node,
+            task,
+            dependsOn: (node.dependsOn as unknown[]).map(dep =>
+                typeof dep === "string" ? (idMap.get(dep) ?? dep) : dep,
+            ),
+        }
+    }
+
+    const result: Record<string, unknown> = {...node}
+    for (const key of FLOWABLE_BRANCH_KEYS) {
+        const val = node[key]
+        if (Array.isArray(val)) {
+            result[key] = (val as Record<string, unknown>[]).map(item => rewireDependsOnInSubtree(item, idMap))
+        } else if (key === "cases" && val && typeof val === "object" && !Array.isArray(val)) {
+            const casesObj = val as Record<string, unknown>
+            const newCases: Record<string, unknown> = {}
+            for (const [caseKey, caseVal] of Object.entries(casesObj)) {
+                newCases[caseKey] = Array.isArray(caseVal)
+                    ? (caseVal as Record<string, unknown>[]).map(item => rewireDependsOnInSubtree(item, idMap))
+                    : caseVal
+            }
+            result[key] = newCases
+        }
+    }
+    return result
+}
+
+/**
+ * Renames only the ids of `block` (and its nested Flowable lanes) that collide with
+ * `existingIds`, so a task pasted into another flow keeps its ids where it can and only
+ * disambiguates where it must — unlike `duplicateBlock`, which always mints a new id. Any
+ * `dependsOn` inside the same subtree is rewired to follow. A Pebble expression referencing a
+ * renamed id (e.g. `{{ outputs.<oldId>.value }}`) is not: matching that safely without a real
+ * Pebble parser is out of scope here, so such a reference is left pointing at the old id.
+ */
+export function withFreeIds(
+    block: Record<string, unknown>,
+    existingIds: Set<string>,
+): Record<string, unknown> {
+    const idMap = new Map<string, string>()
+    const renamed = renameTaskNode(block, new Set(existingIds), keepIdOrRename, idMap)
+    return rewireDependsOnInSubtree(renamed, idMap)
+}
+
+/** Collects every task id under `tasks`, walking nested Flowable lanes, for the Inputs panel and paste. */
+export function flattenTaskIds(tasks: unknown, acc: string[]): void {
+    if (!Array.isArray(tasks)) return
+    for (const rawTask of tasks) {
+        const task = rawTask as Record<string, unknown> | undefined
+        if (task?.id) acc.push(String(task.id))
+        for (const key of FLOWABLE_BRANCH_KEYS) {
+            if (key === "cases") continue
+            flattenTaskIds(task?.[key], acc)
+        }
+        if (task?.cases && typeof task.cases === "object") {
+            for (const branch of Object.values(task.cases as Record<string, unknown>)) flattenTaskIds(branch, acc)
+        }
+    }
 }
 
 function collectAllIds(source: string): Set<string> {
@@ -287,6 +379,90 @@ export function reorderAtPath(source: string, parentPath: string, fromIndex: num
     } catch {
         return source
     }
+}
+
+export type MoveRefusalReason = "cycle" | "section" | "lane"
+
+export type MoveVerdict = {allowed: true} | {allowed: false; reason: MoveRefusalReason}
+
+function sectionOfPath(path: string): string {
+    const [first] = flowYamlUtils.parsePath(path)
+    return String(first)
+}
+
+/** True when `candidatePath` is `ancestorPath` itself, or nested under it. */
+function isDescendantOrSelfPath(candidatePath: string, ancestorPath: string): boolean {
+    const candidateSegments = flowYamlUtils.parsePath(candidatePath)
+    const ancestorSegments = flowYamlUtils.parsePath(ancestorPath)
+    if (candidateSegments.length < ancestorSegments.length) return false
+    return ancestorSegments.every((segment, index) => segment === candidateSegments[index])
+}
+
+/** Renumbers `path` for the array shrinking by one at `removedParentPath[removedIndex]`, so a path through a later sibling of the removed block still resolves once that sibling has shifted down. */
+function pathAfterRemoval(path: string, removedParentPath: string, removedIndex: number): string {
+    const pathSegments = flowYamlUtils.parsePath(path)
+    const removedSegments = flowYamlUtils.parsePath(removedParentPath)
+    if (pathSegments.length <= removedSegments.length) return path
+    if (!removedSegments.every((segment, index) => segment === pathSegments[index])) return path
+
+    const siblingIndex = pathSegments[removedSegments.length]
+    if (typeof siblingIndex !== "number" || siblingIndex <= removedIndex) return path
+
+    const renumbered = [...pathSegments]
+    renumbered[removedSegments.length] = siblingIndex - 1
+    return flowYamlUtils.joinPath(renumbered)
+}
+
+export function listLengthAtPath(source: string, path: string): number {
+    try {
+        const parsed = flowYamlUtils.parse<Record<string, unknown>>(source)
+        const list = parsed ? getAtPath(parsed, path) : undefined
+        return Array.isArray(list) ? list.length : 0
+    } catch {
+        return 0
+    }
+}
+
+/** Refuses a cycle (into the block's own subtree), a cross-section move (by the path's first segment, so a task-level `errors` lane counts as `tasks` while the flow-level `errors` section does not), and any cross-parent move touching a Dag's `{task: ...}`-wrapped lane, since that needs `dependsOn` rewiring a drag-drop move does not attempt — including between two different Dags, where the shapes match but the ids don't. */
+export function canMoveBlockToPath(source: string, fromPath: string, toParentPath: string): MoveVerdict {
+    if (isDescendantOrSelfPath(toParentPath, fromPath)) return {allowed: false, reason: "cycle"}
+    if (sectionOfPath(fromPath) !== sectionOfPath(toParentPath)) return {allowed: false, reason: "section"}
+
+    const fromParentPath = pathParent(fromPath)
+    if (fromParentPath !== toParentPath && (isWrapperLane(source, fromParentPath) || isWrapperLane(source, toParentPath))) {
+        return {allowed: false, reason: "lane"}
+    }
+
+    return {allowed: true}
+}
+
+/** Extracts the block at `fromPath` and re-inserts it at index `toIndex` of `toParentPath`'s list, correcting for the same-parent case where the removal shifts every later index down by one; returns `source` unchanged when `canMoveBlockToPath` refuses the move. */
+export function moveBlockToPath(source: string, fromPath: string, toParentPath: string, toIndex: number): string {
+    if (!canMoveBlockToPath(source, fromPath, toParentPath).allowed) return source
+
+    const blockYaml = flowYamlUtils.extractBlockWithPath({source, path: fromPath})
+    if (!blockYaml) return source
+
+    const fromParentPath = pathParent(fromPath)
+    const fromIndexMatch = fromPath.match(/\[(\d+)\]$/)
+    const fromIndex = fromIndexMatch ? parseInt(fromIndexMatch[1], 10) : undefined
+
+    const withoutSource = deleteBlockAtPath(source, fromPath)
+    const renumberedToParentPath = fromIndex !== undefined
+        ? pathAfterRemoval(toParentPath, fromParentPath, fromIndex)
+        : toParentPath
+
+    let adjustedIndex = toIndex
+    if (fromParentPath === toParentPath && fromIndex !== undefined && fromIndex < toIndex) {
+        adjustedIndex = toIndex - 1
+    }
+    if (adjustedIndex < 0) adjustedIndex = 0
+
+    const destinationLength = listLengthAtPath(withoutSource, renumberedToParentPath)
+
+    return adjustedIndex >= destinationLength
+        ? flowYamlUtils.insertBlockWithPath({source: withoutSource, parentPath: renumberedToParentPath, newBlock: blockYaml, position: "after"})
+        : flowYamlUtils.insertBlockWithPath({source: withoutSource, parentPath: renumberedToParentPath, newBlock: blockYaml, refPath: adjustedIndex, position: "before"})
 }
 
 export function moveBlockAtPath(source: string, path: string, direction: "up" | "down"): string {
@@ -370,7 +546,7 @@ export function buildMinimalTask(fqcn: string, existingIds?: Set<string>): Recor
     return {id, type: fqcn}
 }
 
-function nextAvailableId(baseId: string, existingIds: Set<string>): string {
+export function nextAvailableId(baseId: string, existingIds: Set<string>): string {
     if (!existingIds.has(baseId)) return baseId
     let counter = 1
     while (existingIds.has(`${baseId}_${counter}`)) counter++

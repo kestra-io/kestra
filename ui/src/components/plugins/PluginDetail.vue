@@ -100,7 +100,7 @@
         const plugin = owningPlugin.value
         if (!cls || !plugin) return null
         for (const [key, value] of Object.entries(plugin)) {
-            if (isEntryAPluginElementPredicate(key, value) && value.some(el => el?.cls === cls)) {
+            if (isEntryAPluginElementPredicate(key, value) && value.some(el => el?.cls === cls || el?.aliases?.includes(cls))) {
                 const i18nKey = `pluginPage.elementType.${key}`
                 return te(i18nKey) ? t(i18nKey) : null
             }

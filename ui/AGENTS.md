@@ -449,9 +449,9 @@ If your `<style>` block needs to exist:
 | `KsTabs` / `KsTabPane` | Tabbed interface |
 | `KsMenu` / `KsMenuItem` | Hierarchical menu |
 | `KsDropdown` / `KsDropdownMenu` / `KsDropdownItem` | Dropdown menu; pass `danger` on an item to give a destructive or exit action (delete, log out) the error-coloured hover |
-| `KsTopNavBar` | Top navigation bar |
+| `KsTopNavBar` | Top navigation bar; `titleSiblings` reaches the breadcrumb's current page |
 | `KsSideBar` / `KsSideBarSection` / `KsSideBarItem` | Left sidebar shell (header / scrollable body / footer slots), section with title, and styled link primitive with icon, active and locked states |
-| `KsBreadcrumb` / `KsBreadcrumbItem` | Breadcrumb navigation |
+| `KsBreadcrumb` / `KsBreadcrumbItem` | Breadcrumb navigation. An item's `siblings` loader (or `children` on the first item, and the `titleSiblings` prop for the current page) adds a chevron whose hover menu lists that level, headed by the level above (its `scope` when the label is not the right name for its content); an entry with a `children` loader flies out its own content to the right, as deep as the tree goes. Level loaders run as soon as the bar renders and an empty result shows no chevron; fly-outs load on hover. Namespace and flow pages build theirs with `useNamespaceBreadcrumb` |
 | `KsSteps` / `KsStep` | Step / wizard progress indicator |
 
 ## Utilities (import from the design system)
@@ -508,3 +508,5 @@ When a needed token is missing, **add it** to all three of `ks-theme-light.scss`
 - **Radii:** `$border-radius` (0.25rem), `$border-radius-sm` (0.15rem), `$border-radius-lg` (0.5rem)
 
 These exist so the *design system itself* can compose tokens from a single palette. They are not API for feature code — feature code should reach the same values through `--ks-*` tokens.
+
+A package that genuinely needs the palette (`@kestra-io/topology`, an external app) imports it with `@use "@kestra-io/design-system/styles/color-palette"`, never through a `src/assets/styles/...` path: only the dedicated export resolves the same way on every OS and in the published package.

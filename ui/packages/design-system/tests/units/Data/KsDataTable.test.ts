@@ -1,9 +1,19 @@
-import {describe, test, expect} from "vitest"
+import {describe, test, expect, vi} from "vitest"
 import KsDataTable from "../../../src/components/Data/KsDataTable/KsDataTable.vue"
 import KsBulkSelect from "../../../src/components/Data/KsDataTable/KsBulkSelect.vue"
 import KsTableColumn from "../../../src/components/Data/KsTable/KsTableColumn.vue"
 import KsTable from "../../../src/components/Data/KsTable/KsTable.vue"
 import {i18nMount} from "../i18nMount"
+import KsPagination from "../../../src/components/Data/KsPagination.vue"
+
+type PaginationProps = {
+    currentPage: number
+    pageSize: number
+}
+
+type SortProps = {
+    sortKeyMapper?: (key: string) => string
+}
 
 const SAMPLE_DATA = [
     {id: "flow-001", namespace: "company.team", status: "SUCCESS"},
@@ -94,66 +104,74 @@ describe("KsDataTable", () => {
         const wrapper = i18nMount(KsDataTable, {
             props: {data: [], total: 0},
         })
-        expect((wrapper.vm as any).isLoading).toBeDefined()
+
+        expect(wrapper.vm.isLoading).toBeDefined()
     })
 
     test("exposes clearSelection method", () => {
         const wrapper = i18nMount(KsDataTable, {
             props: {data: [], total: 0},
         })
-        expect(typeof (wrapper.vm as any).clearSelection).toBe("function")
+        expect(typeof wrapper.vm.clearSelection).toBe("function")
     })
 
     test("exposes setSelection method", () => {
         const wrapper = i18nMount(KsDataTable, {
             props: {data: [], total: 0},
         })
-        expect(typeof (wrapper.vm as any).setSelection).toBe("function")
+        expect(typeof wrapper.vm.setSelection).toBe("function")
     })
 
     test("exposes getSelectionRows method", () => {
         const wrapper = i18nMount(KsDataTable, {
             props: {data: [], total: 0},
         })
-        expect(typeof (wrapper.vm as any).getSelectionRows).toBe("function")
+        expect(typeof wrapper.vm.getSelectionRows).toBe("function")
     })
 
     test("exposes toggleAllSelection method", () => {
         const wrapper = i18nMount(KsDataTable, {
             props: {data: [], total: 0},
         })
-        expect(typeof (wrapper.vm as any).toggleAllSelection).toBe("function")
+        expect(typeof wrapper.vm.toggleAllSelection).toBe("function")
     })
 
     test("exposes toggleRowExpansion method", () => {
         const wrapper = i18nMount(KsDataTable, {
             props: {data: [], total: 0},
         })
-        expect(typeof (wrapper.vm as any).toggleRowExpansion).toBe("function")
+        expect(typeof wrapper.vm.toggleRowExpansion).toBe("function")
     })
 
     test("exposes waitTableRender method", () => {
         const wrapper = i18nMount(KsDataTable, {
             props: {data: [], total: 0},
         })
-        expect(typeof (wrapper.vm as any).waitTableRender).toBe("function")
+        expect(typeof wrapper.vm.waitTableRender).toBe("function")
     })
 
-    test("emits page-changed on page change", async () => {
+    test("emits page-changed on page change", () => {
         const wrapper = i18nMount(KsDataTable, {
             props: {data: SAMPLE_DATA, total: 100, pageSize: 10},
         })
-        // Trigger size change to emit page-changed
-        await (wrapper.vm as any).onSizeChange(25)
+
+        const pagination = wrapper.findComponent(KsPagination)
+
+        pagination.vm.$emit("sizeChange", 25)
+
         expect(wrapper.emitted("page-changed")).toBeTruthy()
         expect(wrapper.emitted("page-changed")?.[0]).toEqual([{page: 1, size: 25}])
     })
 
-    test("emits page-changed with correct page on page change", async () => {
+    test("emits page-changed with correct page on page change", () => {
         const wrapper = i18nMount(KsDataTable, {
             props: {data: SAMPLE_DATA, total: 100, pageSize: 10},
         })
-        await (wrapper.vm as any).onPageChange(3)
+
+        const pagination = wrapper.findComponent(KsPagination)
+
+        pagination.vm.$emit("currentChange", 3)
+
         expect(wrapper.emitted("page-changed")?.[0]).toEqual([{page: 3, size: 10}])
     })
 
@@ -189,11 +207,11 @@ describe("KsDataTable", () => {
             `,
             setup: () => ({
                 data: SAMPLE_DATA,
-                rowSelectable: (row: any) => row.status !== "RUNNING",
+                rowSelectable: (row: (typeof SAMPLE_DATA)[number]) => row.status !== "RUNNING",
             }),
         })
         const table = wrapper.findComponent(KsDataTable)
-        ;(table.vm as any).setSelection([SAMPLE_DATA[0]])
+        table.vm.setSelection([SAMPLE_DATA[0]])
         await wrapper.vm.$nextTick()
         const bulk = wrapper.findComponent(KsBulkSelect)
         expect(bulk.exists()).toBe(true)
@@ -204,32 +222,38 @@ describe("KsDataTable", () => {
         const wrapper = i18nMount(KsDataTable, {
             props: {data: [], total: 0, loading: false},
         })
-        expect((wrapper.vm as any).isLoading).toBe(false)
+        expect(wrapper.vm.isLoading).toBe(false)
         await wrapper.setProps({loading: true})
-        expect((wrapper.vm as any).isLoading).toBe(true)
+        expect(wrapper.vm.isLoading).toBe(true)
     })
 
     test("can set isLoading directly from outside", () => {
         const wrapper = i18nMount(KsDataTable, {
             props: {data: [], total: 0},
         })
-        ;(wrapper.vm as any).isLoading = true
-        expect((wrapper.vm as any).isLoading).toBe(true)
+        wrapper.vm.isLoading = true
+        expect(wrapper.vm.isLoading).toBe(true)
     })
 
-    test("emits update:currentPage on page change (v-model contract)", async () => {
+    test("emits update:currentPage on page change (v-model contract)", () => {
         const wrapper = i18nMount(KsDataTable, {
             props: {data: SAMPLE_DATA, total: 100, pageSize: 10, currentPage: 1},
         })
-        await (wrapper.vm as any).onPageChange(4)
+        const pagination = wrapper.findComponent(KsPagination)
+
+        pagination.vm.$emit("currentChange", 4)
         expect(wrapper.emitted("update:currentPage")?.[0]).toEqual([4])
     })
 
-    test("emits update:currentPage and update:pageSize on size change", async () => {
+    test("emits update:currentPage and update:pageSize on size change", () => {
         const wrapper = i18nMount(KsDataTable, {
             props: {data: SAMPLE_DATA, total: 100, pageSize: 10, currentPage: 3},
         })
-        await (wrapper.vm as any).onSizeChange(50)
+
+        const pagination = wrapper.findComponent(KsPagination)
+
+        pagination.vm.$emit("sizeChange", 50)
+
         expect(wrapper.emitted("update:currentPage")?.[0]).toEqual([1])
         expect(wrapper.emitted("update:pageSize")?.[0]).toEqual([50])
     })
@@ -241,7 +265,7 @@ describe("KsDataTable", () => {
         })
         await new Promise<void>((resolve) => setTimeout(resolve, 0))
         expect(loadCount).toBe(1)
-        ;(wrapper.vm as any).resetAndReload()
+        wrapper.vm.resetAndReload()
         expect(wrapper.emitted("update:currentPage")?.[0]).toEqual([1])
         expect(wrapper.emitted("page-changed")?.[0]).toEqual([{page: 1, size: 25}])
         await new Promise<void>((resolve) => setTimeout(resolve, 0))
@@ -255,7 +279,7 @@ describe("KsDataTable", () => {
         })
         await new Promise<void>((resolve) => setTimeout(resolve, 0))
         expect(loadCount).toBe(1)
-        ;(wrapper.vm as any).resetAndReload()
+        wrapper.vm.resetAndReload()
         await new Promise<void>((resolve) => setTimeout(resolve, 0))
         expect(loadCount).toBe(2)
         expect(wrapper.emitted("update:currentPage")).toBeFalsy()
@@ -278,7 +302,9 @@ describe("KsDataTable", () => {
         await new Promise<void>((resolve) => setTimeout(resolve, 0))
         expect(loadCallCount).toBe(1)
 
-        await (wrapper.vm as any).onPageChange(3)
+        const pagination = wrapper.findComponent(KsPagination)
+
+        pagination.vm.$emit("currentChange", 3)
         await new Promise<void>((resolve) => setTimeout(resolve, 0))
 
         expect(loadCallCount).toBe(1)
@@ -303,7 +329,7 @@ describe("KsDataTable", () => {
         await new Promise<void>((resolve) => setTimeout(resolve, 0))
         loads.length = 0
 
-        ;(wrapper.vm as unknown as {resetAndReload: () => void}).resetAndReload()
+        wrapper.vm.resetAndReload()
         wrapper.setProps({pageSize: 10})
         await new Promise<void>((resolve) => setTimeout(resolve, 0))
 
@@ -328,7 +354,7 @@ describe("KsDataTable", () => {
     const tick = () => new Promise<void>((resolve) => setTimeout(resolve, 0))
     const lastLoad = (loads: Load[]): Load => loads[loads.length - 1]
 
-    const mountWithSpy = (props: Record<string, any>): Load[] => {
+    const mountWithSpy = (props: PaginationProps): Load[] => {
         const loads: Load[] = []
         i18nMount(KsDataTable, {
             props: {
@@ -418,7 +444,7 @@ describe("KsDataTable", () => {
         expect(lastLoad(loads)).toEqual({page: 3, size: 50, sort: undefined})
     })
 
-    const mountWithSortSpy = (props: Record<string, any>) => {
+    const mountWithSortSpy = (props: SortProps) => {
         const loads: Load[] = []
         const wrapper = i18nMount(KsDataTable, {
             props: {
@@ -459,5 +485,45 @@ describe("KsDataTable", () => {
             props: {data: SAMPLE_DATA, total: 3},
         })
         expect(wrapper.find(".ks-data-table-body--fit").exists()).toBe(false)
+    })
+
+    test("keeps rows that are still on the page when part of the selection is stale", async () => {
+        const wrapper = i18nMount(KsDataTable, {
+            props: {data: SAMPLE_DATA, total: 3, selectable: true, rowKey: "id"},
+        })
+        const table = wrapper.findComponent(KsTable)
+        const exposed = table.vm.$.exposed as {
+            getSelectionRows: () => unknown[]
+            toggleRowSelection: (row: unknown, selected?: boolean) => void
+            clearSelection: () => void
+        }
+        const kept = SAMPLE_DATA[0]
+        const gone = {id: "gone", namespace: "company.team", status: "SUCCESS"}
+        vi.spyOn(exposed, "getSelectionRows").mockReturnValue([kept, gone])
+        const toggle = vi.spyOn(exposed, "toggleRowSelection")
+        const clear = vi.spyOn(exposed, "clearSelection")
+
+        await wrapper.setProps({data: [kept, SAMPLE_DATA[1]]})
+
+        expect(clear).toHaveBeenCalled()
+        expect(toggle).toHaveBeenCalledWith(kept, true)
+        expect(wrapper.emitted("selection-change")?.at(-1)?.[0]).toEqual([kept])
+    })
+
+    test("does not toggle a missing row when a shift-click lands off the page", async () => {
+        const wrapper = i18nMount(KsDataTable, {
+            props: {data: SAMPLE_DATA, total: 3, selectable: true, rowKey: "id"},
+        })
+        const table = wrapper.findComponent(KsTable)
+        const exposed = table.vm.$.exposed as {
+            toggleRowSelection: (row: unknown, selected?: boolean) => void
+        }
+        const toggle = vi.spyOn(exposed, "toggleRowSelection")
+
+        table.vm.$emit("select", [SAMPLE_DATA[0]], SAMPLE_DATA[0])
+        await wrapper.find(".ks-data-table-content").trigger("click", {shiftKey: true})
+        table.vm.$emit("select", [], {id: "missing"})
+
+        expect(toggle).not.toHaveBeenCalled()
     })
 })

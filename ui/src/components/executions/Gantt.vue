@@ -901,7 +901,7 @@
                 border-top: 1px solid var(--ks-border-default);
 
                 &.gantt-block-alt {
-                    background: color-mix(in srgb, var(--ks-dropdown-bg), white 5.5%);
+                    background: color-mix(in srgb, var(--ks-dropdown-bg), var(--ks-white) 5.5%);
                 }
 
                 &.gantt-block-start {
@@ -937,7 +937,7 @@
                 .gantt-rail {
                     position: absolute;
                     display: block;
-                    background: #4d5061;
+                    background: var(--ks-border-default);
                 }
 
                 .gantt-rail--vertical {

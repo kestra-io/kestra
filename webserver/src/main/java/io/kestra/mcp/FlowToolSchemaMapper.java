@@ -346,7 +346,7 @@ public class FlowToolSchemaMapper {
             case INT -> "integer";
             case FLOAT -> "number";
             case BOOL -> "boolean";
-            case ARRAY, MULTISELECT -> "array";
+            case ARRAY, MULTISELECT, TABLE -> "array";
             case FORM, REUSABLE_INPUTS -> throw new IllegalStateException("FORM and REUSABLE_INPUTS inputs must be expanded before resolution");
         };
     }

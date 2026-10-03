@@ -3,12 +3,14 @@
         class="block-empty-drop"
         :class="[`block-empty-drop--${variant}`, dropState !== 'idle' ? `block-empty-drop--drop-${dropState}` : '', {'block-empty-drop--required': required}]"
         type="button"
+        :disabled="disabled"
+        :aria-disabled="disabled"
         :data-test="dataTest"
         @click="emit('add', $event)"
     >
         <span class="block-empty-drop-lead">
             <PlusCircleOutline class="block-empty-drop-ico" />
-            {{ leadLabel }}
+            <slot>{{ leadLabel }}</slot>
         </span>
 
         <span v-if="hint && dropState === 'idle'" class="block-empty-drop-hint">{{ hint }}</span>
@@ -23,15 +25,21 @@
     const {t} = useI18n()
 
     const props = withDefaults(defineProps<{
-        label: string
+        /** The thing being added, interpolated into the default lead text. Not needed with the slot. */
+        label?: string
         variant?: "empty" | "inline"
         hint?: string
         dataTest?: string
+        disabled?: boolean
         dropState?: "idle" | "allowed" | "forbidden"
         /** Marks the empty state with the same border/background as an unset required field. */
         required?: boolean
     }>(), {
+        label: "",
         variant: "inline",
+        hint: undefined,
+        dataTest: undefined,
+        disabled: false,
         dropState: "idle",
         required: false,
     })
@@ -67,6 +75,14 @@
             outline: none;
             border-color: var(--ks-border-focus);
             box-shadow: 0 0 0 2px var(--ks-border-focus);
+        }
+
+        &:disabled,
+        &:disabled:hover {
+            cursor: not-allowed;
+            color: var(--ks-text-inactive);
+            border-color: var(--ks-border-default);
+            background: transparent;
         }
     }
 

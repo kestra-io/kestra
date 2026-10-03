@@ -156,7 +156,7 @@ export function normalize(type: InputType | undefined, value: any) {
             .minute(Number(minutes))
             .second(Number(seconds))
             .toString()
-    } else if (type === "ARRAY" || type === "MULTISELECT" || type === "JSON" || type === "ION") {
+    } else if (type === "ARRAY" || type === "MULTISELECT" || type === "TABLE" || type === "JSON" || type === "ION") {
         if (typeof res !== "string") {
             res = JSON.stringify(res).toString()
         }

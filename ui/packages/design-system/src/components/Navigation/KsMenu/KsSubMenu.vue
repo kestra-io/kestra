@@ -1,5 +1,5 @@
 <template>
-    <ElSubMenu v-bind="({...filteredProps(), ...$attrs} as any)">
+    <ElSubMenu v-bind="({...filteredProps(), ...$attrs} as SubMenuProps)">
         <template v-if="$slots.default" #default>
             <slot />
         </template>
@@ -10,20 +10,12 @@
 </template>
 
 <script setup lang="ts">
-    import {ElSubMenu} from "element-plus"
+    import {ElSubMenu, type SubMenuProps} from "element-plus"
     import {useFilteredProps} from "../../../utils/filteredProps"
 
     defineOptions({inheritAttrs: false})
 
-    const props = defineProps<{
-        index: string
-        showTimeout?: number
-        hideTimeout?: number
-        popperClass?: string
-        disabled?: boolean
-        teleported?: boolean
-        popperOffset?: number
-    }>()
+    const props = defineProps<SubMenuProps>()
 
     defineSlots<{
         default?(): unknown

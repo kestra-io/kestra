@@ -1,6 +1,6 @@
 <template>
     <ElMenu
-        v-bind="({...filteredProps(), ...$attrs} as any)"
+        v-bind="{...filteredProps(), ...$attrs}"
         @select="(index, indexPath) => emit('select', index, indexPath)"
     >
         <template v-if="$slots.default" #default>
@@ -10,16 +10,12 @@
 </template>
 
 <script setup lang="ts">
-    import {ElMenu} from "element-plus"
+    import {ElMenu, type MenuProps} from "element-plus"
     import {useFilteredProps} from "../../../utils/filteredProps"
 
     defineOptions({inheritAttrs: false})
 
-    const props = defineProps<{
-        mode?: "horizontal" | "vertical"
-        defaultActive?: string
-        collapse?: boolean
-    }>()
+    const props = defineProps<MenuProps>()
 
     const emit = defineEmits<{
         select: [index: string, indexPath: string[]]

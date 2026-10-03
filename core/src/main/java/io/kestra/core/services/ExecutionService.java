@@ -49,6 +49,7 @@ import io.kestra.core.utils.ListUtils;
 import io.kestra.plugin.core.flow.Loop;
 import io.kestra.plugin.core.flow.LoopUntil;
 import io.kestra.plugin.core.flow.Pause;
+import io.kestra.plugin.core.flow.PausableTask;
 import io.kestra.plugin.core.flow.WorkingDirectory;
 
 import io.micronaut.context.event.ApplicationEventPublisher;
@@ -691,23 +692,13 @@ public class ExecutionService {
                 TaskRun newTaskRun;
 
                 State.Type targetState = newState;
-                if (task instanceof Pause pauseTask) {
+                if (task instanceof PausableTask pausableTask) {
                     State.Type terminalState = newState == State.Type.RUNNING ? State.Type.SUCCESS : newState;
                     Pause.Resumed _resumed = resumed != null ? resumed : Pause.Resumed.now(terminalState);
-                    Map<String, Object> outputs = pauseTask.generateOutputs(onResumeInputs, _resumed);
+                    Map<String, Object> outputs = pausableTask.resumeOutputs(onResumeInputs, _resumed);
                     taskOutputService.saveOutputs(originalTaskRun, outputs);
 
-                    // if it's a Pause task with no subtask, we terminate the task
-                    if (ListUtils.isEmpty(pauseTask.getErrors()) && ListUtils.isEmpty(pauseTask.getFinally())) {
-                        if (newState == State.Type.RUNNING) {
-                            targetState = State.Type.SUCCESS;
-                        } else if (newState == State.Type.KILLING) {
-                            targetState = State.Type.KILLED;
-                        }
-                    } else {
-                        // we should set the state to RUNNING so that subtasks are executed
-                        targetState = State.Type.RUNNING;
-                    }
+                    targetState = pausableTask.resumedTaskRunState(newState);
                 }
                 newTaskRun = originalTaskRun.withState(targetState);
 
@@ -866,8 +857,8 @@ public class ExecutionService {
         return getFirstPausedTaskOr(execution, flow)
             .flatMap(task ->
             {
-                if (task.isPresent() && task.get() instanceof Pause pauseTask) {
-                    return Mono.just(flowInputOutput.resolveInputs(pauseTask.getOnResume(), flow, execution, Map.of()));
+                if (task.isPresent() && task.get() instanceof PausableTask pausableTask) {
+                    return Mono.just(flowInputOutput.resolveInputs(pausableTask.resumeInputs(), flow, execution, Map.of()));
                 } else {
                     return Mono.just(Collections.emptyList());
                 }
@@ -888,8 +879,8 @@ public class ExecutionService {
         return getFirstPausedTaskOr(execution, flow)
             .flatMap(task ->
             {
-                if (task.isPresent() && task.get() instanceof Pause pauseTask) {
-                    return flowInputOutput.validateExecutionInputs(pauseTask.getOnResume(), flow, execution, inputs);
+                if (task.isPresent() && task.get() instanceof PausableTask pausableTask) {
+                    return flowInputOutput.validateExecutionInputs(pausableTask.resumeInputs(), flow, execution, inputs);
                 } else {
                     return Mono.just(Collections.emptyList());
                 }
@@ -909,8 +900,8 @@ public class ExecutionService {
         return getFirstPausedTaskOr(execution, flow)
             .flatMap(task ->
             {
-                if (task.isPresent() && task.get() instanceof Pause pauseTask) {
-                    return flowInputOutput.readExecutionInputs(pauseTask.getOnResume(), flow, execution, inputs);
+                if (task.isPresent() && task.get() instanceof PausableTask pausableTask) {
+                    return flowInputOutput.readExecutionInputs(pausableTask.resumeInputs(), flow, execution, inputs);
                 } else {
                     return Mono.just(Collections.<String, Object> emptyMap());
                 }

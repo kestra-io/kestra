@@ -157,7 +157,7 @@ import lombok.experimental.SuperBuilder;
         )
     }
 )
-public class Pause extends Task implements FlowableTask<Pause.Output> {
+public class Pause extends Task implements FlowableTask<Pause.Output>, PausableTask {
     @Schema(
         title = "Duration of the pause - if not set, the task will wait forever to be manually resumed except if a timeout is set, in this case, the timeout will be honored.",
         description = "The duration is a string in [ISO 8601 Duration](https://en.wikipedia.org/wiki/ISO_8601#Durations) format, e.g. `PT1H` for 1 hour, `PT30M` for 30 minutes, `PT10S` for 10 seconds, `P1D` for 1 day, etc. If no pauseDuration and no timeout are configured, the execution will never end until it's manually resumed from the UI or API.",
@@ -292,13 +292,33 @@ public class Pause extends Task implements FlowableTask<Pause.Output> {
         );
     }
 
-    public Map<String, Object> generateOutputs(Map<String, Object> inputs, Resumed resumed) {
+    @Override
+    public List<Input<?>> resumeInputs() {
+        return this.onResume;
+    }
+
+    @Override
+    public Map<String, Object> resumeOutputs(Map<String, Object> inputs, Resumed resumed) {
         Output build = Output.builder()
             .onResume(inputs)
             .resumed(resumed)
             .build();
 
         return JacksonMapper.toMap(build);
+    }
+
+    @Override
+    public State.Type resumedTaskRunState(State.Type newState) {
+        if (ListUtils.isEmpty(this.getErrors()) && ListUtils.isEmpty(this.getFinally())) {
+            if (newState == State.Type.RUNNING) {
+                return State.Type.SUCCESS;
+            } else if (newState == State.Type.KILLING) {
+                return State.Type.KILLED;
+            }
+            return newState;
+        }
+
+        return State.Type.RUNNING;
     }
 
     @Builder

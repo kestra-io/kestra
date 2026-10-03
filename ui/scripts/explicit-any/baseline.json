@@ -37,7 +37,6 @@
   "packages/design-system/src/components/Form/KsSwitch.vue": 3,
   "packages/design-system/src/components/Form/KsTimePicker.vue": 2,
   "packages/design-system/src/components/Form/KsUpload.vue": 6,
-  "packages/design-system/src/components/Navigation/KsDropdown/KsDropdownItem.vue": 2,
   "packages/design-system/src/components/Navigation/KsMenu/KsMenu.vue": 1,
   "packages/design-system/src/components/Navigation/KsMenu/KsSubMenu.vue": 1,
   "packages/design-system/src/components/Navigation/KsSteps/KsStep.vue": 2,

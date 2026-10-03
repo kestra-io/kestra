@@ -1,5 +1,5 @@
 import {afterAll, afterEach, beforeEach, describe, expect, it, vi} from "vitest"
-import {getTheme, getSelectedTheme, switchTheme, type SelectedTheme, flatten, executionVars, getDateGrouping, downloadUrl} from "../../../src/utils/utils"
+import {getTheme, getSelectedTheme, switchTheme, type SelectedTheme, flatten, executionVars, getDateGrouping, downloadUrl, asArray, deepEqual, getValueAtJsonPath, hexToRgba, extractFileNameFromContentDisposition} from "../../../src/utils/utils"
 
 function mockSystemPrefersDark(prefersDark: boolean) {
     vi.stubGlobal("matchMedia", vi.fn().mockImplementation((query: string) => ({
@@ -175,5 +175,82 @@ describe("executionVars()", () => {
 
     it("returns an empty list when data is undefined", () => {
         expect(executionVars(undefined as unknown as Record<string, unknown>)).toEqual([])
+    })
+})
+
+describe("asArray()", () => {
+    it("wraps a single value in an array", () => {
+        expect(asArray("flow")).toEqual(["flow"])
+    })
+
+    it("passes an array through as the same instance", () => {
+        const array = ["a", "b"]
+        expect(asArray(array)).toBe(array)
+    })
+
+    it("returns an empty array for undefined", () => {
+        expect(asArray(undefined)).toEqual([])
+    })
+})
+
+describe("deepEqual()", () => {
+    it("is true for structurally equal objects", () => {
+        expect(deepEqual({a: 1, b: {c: [1, 2]}}, {a: 1, b: {c: [1, 2]}})).toBe(true)
+    })
+
+    it("is false when a nested value differs", () => {
+        expect(deepEqual({a: 1, b: {c: [1, 2]}}, {a: 1, b: {c: [1, 3]}})).toBe(false)
+    })
+})
+
+describe("getValueAtJsonPath()", () => {
+    const schema = {definitions: {task: {properties: {id: {type: "string"}}}}}
+
+    it("reads a nested value", () => {
+        expect(getValueAtJsonPath(schema, "#/definitions/task/properties/id")).toEqual({type: "string"})
+    })
+
+    it("returns undefined for a path that does not exist", () => {
+        expect(getValueAtJsonPath(schema, "#/definitions/trigger/properties")).toBeUndefined()
+    })
+})
+
+describe("hexToRgba()", () => {
+    it("expands a 3-digit hex", () => {
+        expect(hexToRgba("#f80", 1)).toBe("rgba(255,136,0,1)")
+    })
+
+    it("handles a 6-digit hex", () => {
+        expect(hexToRgba("#1A2b3C", 1)).toBe("rgba(26,43,60,1)")
+    })
+
+    it("applies the opacity", () => {
+        expect(hexToRgba("#000000", 0.5)).toBe("rgba(0,0,0,0.5)")
+    })
+
+    it("throws Bad Hex for a malformed value", () => {
+        expect(() => hexToRgba("#12345", 1)).toThrow("Bad Hex")
+        expect(() => hexToRgba("ffffff", 1)).toThrow("Bad Hex")
+    })
+})
+
+describe("extractFileNameFromContentDisposition()", () => {
+    it("percent-decodes the filename*=UTF-8'' form", () => {
+        expect(extractFileNameFromContentDisposition("attachment; filename*=UTF-8''r%C3%A9sum%C3%A9%20final.csv"))
+            .toBe("résumé final.csv")
+    })
+
+    it("reads the quoted filename=\"...\" form", () => {
+        expect(extractFileNameFromContentDisposition("attachment; filename=\"flow export.yaml\"")).toBe("flow export.yaml")
+    })
+
+    it("reads the bare filename=... form", () => {
+        expect(extractFileNameFromContentDisposition("attachment; filename=logs.txt")).toBe("logs.txt")
+    })
+
+    it("returns null for a missing or empty header", () => {
+        expect(extractFileNameFromContentDisposition(undefined)).toBeNull()
+        expect(extractFileNameFromContentDisposition(null)).toBeNull()
+        expect(extractFileNameFromContentDisposition("")).toBeNull()
     })
 })

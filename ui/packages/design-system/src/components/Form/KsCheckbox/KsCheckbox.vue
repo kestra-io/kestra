@@ -1,8 +1,8 @@
 <template>
     <ElCheckbox
         v-model="model"
-        v-bind="({...filteredProps(), ...$attrs} as any)"
-        @change="emit('change', $event)"
+        v-bind="({...filteredProps(), ...$attrs} as CheckboxProps)"
+        @change="emit('change', $event as T)"
     >
         <template v-if="$slots.default" #default>
             <slot />
@@ -10,14 +10,14 @@
     </ElCheckbox>
 </template>
 
-<script setup lang="ts">
-    import {ElCheckbox} from "element-plus"
+<script setup lang="ts" generic="T extends CheckboxValueType">
+    import {ElCheckbox, type CheckboxProps, type CheckboxValueType} from "element-plus"
 
     import {useFilteredProps} from "../../../utils/filteredProps"
 
     defineOptions({inheritAttrs: false})
 
-    const model = defineModel<any>()
+    const model = defineModel<T>()
 
     const props = withDefaults(defineProps<{
         value?: boolean | string | number
@@ -29,7 +29,7 @@
     })
 
     const emit = defineEmits<{
-        change: [value: any]
+        change: [value: T]
     }>()
 
     defineSlots<{

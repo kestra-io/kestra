@@ -1,6 +1,6 @@
 <template>
     <ElRadioButton
-        v-bind="({...filteredProps(), ...$attrs} as any)"
+        v-bind="({...filteredProps(), ...$attrs} as RadioButtonProps)"
         @change="emit('change', $event)"
     >
         <template v-if="$slots.default" #default>
@@ -10,7 +10,7 @@
 </template>
 
 <script setup lang="ts">
-    import {ElRadioButton} from "element-plus"
+    import {ElRadioButton, type RadioButtonProps} from "element-plus"
     import {useFilteredProps} from "../../../utils/filteredProps"
 
     defineOptions({inheritAttrs: false})
@@ -22,7 +22,7 @@
     }>()
 
     const emit = defineEmits<{
-        change: [value: any]
+        change: [event: Event]
     }>()
 
     defineSlots<{

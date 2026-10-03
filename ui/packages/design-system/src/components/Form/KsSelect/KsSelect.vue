@@ -1,5 +1,5 @@
 <template>
-    <ElSelect ref="elSelectRef" v-model="model" v-bind="({...filteredProps(), ...$attrs} as any)" :suffixIcon="resolvedSuffixIcon" :class="{'kel-select--fit': fit, 'kel-select--single-line-tags': singleLineTags}" @change="emit('change', $event)">
+    <ElSelect ref="elSelectRef" :modelValue="(model as SelectPropsPublic['modelValue'])" v-bind="({...filteredProps(), ...$attrs} as SelectPropsPublic)" :suffixIcon="resolvedSuffixIcon" :class="{'kel-select--fit': fit, 'kel-select--single-line-tags': singleLineTags}" @update:modelValue="(value: T) => (model = value)" @change="emit('change', $event)">
         <template v-if="$slots.default" #default>
             <slot />
         </template>
@@ -35,9 +35,9 @@
     </ElSelect>
 </template>
 
-<script setup lang="ts">
+<script setup lang="ts" generic="T">
     import {type Component, computed, h, markRaw, provide, ref, toRef} from "vue"
-    import {ElSelect} from "element-plus"
+    import {ElSelect, type SelectPropsPublic} from "element-plus"
     import Loading from "vue-material-design-icons/Loading.vue"
     import KsIcon from "../../Basic/KsIcon.vue"
     import {useFilteredProps} from "../../../utils/filteredProps"
@@ -45,7 +45,7 @@
 
     defineOptions({inheritAttrs: false})
 
-    const model = defineModel<any>()
+    const model = defineModel<T>()
 
     const props = withDefaults(defineProps<{
         placeholder?: string
@@ -87,21 +87,23 @@
     })
 
     const emit = defineEmits<{
-        change: [value: any]
+        change: [value: T]
     }>()
+
+    type SelectOptionState = {visible: boolean; value: unknown}
 
     const elSelectRef = ref<InstanceType<typeof ElSelect>>()
 
     // Options passing ElSelect's own filter. `optionsArray` is exposed as a ComputedRef in the
     // Element Plus types but unwrapped on the instance proxy, hence the cast.
-    const visibleOptions = computed<Array<{visible: boolean; value: any}>>(() =>
-        ((elSelectRef.value as any)?.optionsArray ?? []).filter((o: {visible: boolean}) => o.visible),
+    const visibleOptions = computed<SelectOptionState[]>(() =>
+        ((elSelectRef.value as {optionsArray?: SelectOptionState[]} | undefined)?.optionsArray ?? []).filter(o => o.visible),
     )
 
     // Selecting nothing is meaningless, so the action stays hidden until there is something to select.
     const showSelectAll = computed(() => Boolean(props.selectAll && props.multiple && visibleOptions.value.length))
 
-    const selectedValues = computed(() => new Set(Array.isArray(model.value) ? model.value : []))
+    const selectedValues = computed(() => new Set<unknown>(Array.isArray(model.value) ? model.value : []))
 
     const allVisibleSelected = computed(() =>
         visibleOptions.value.length > 0 && visibleOptions.value.every(o => selectedValues.value.has(o.value)),
@@ -113,9 +115,9 @@
 
     const toggleSelectAll = (): void => {
         const values = visibleOptions.value.map(o => o.value)
-        model.value = allVisibleSelected.value
+        model.value = (allVisibleSelected.value
             ? [...selectedValues.value].filter(v => !values.includes(v))
-            : [...new Set([...selectedValues.value, ...values])]
+            : [...new Set([...selectedValues.value, ...values])]) as T
         // Closing also clears the filter query, so the next open starts from the full list.
         elSelectRef.value?.blur()
     }
@@ -125,7 +127,7 @@
         prefix?(): unknown
         header?(): unknown
         footer?(): unknown
-        label?(props: { value: any; label: string }): any
+        label?(props: { value: T; label: string }): unknown
         tag?(): unknown
     }>()
 

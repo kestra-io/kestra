@@ -28,6 +28,8 @@ import io.kestra.core.runners.RunContextInitializer;
 import io.kestra.core.runners.Worker;
 import io.kestra.core.runners.WorkerTrigger;
 import io.kestra.core.runners.WorkerTriggerData;
+import io.kestra.core.server.ServerConfig;
+import io.kestra.core.server.WorkerTaskRestartStrategy;
 import io.kestra.core.tasks.test.SleepTrigger;
 import io.kestra.core.trace.TracerFactory;
 import io.kestra.core.worker.WorkerGroups;
@@ -64,6 +66,9 @@ class WorkerTriggerProcessorTest {
 
     @Inject
     private TracerFactory tracerFactory;
+
+    @Inject
+    private ServerConfig serverConfig;
 
     @AfterAll
     static void releaseBlockedEvaluations() {
@@ -155,6 +160,61 @@ class WorkerTriggerProcessorTest {
     }
 
     @Test
+    void shouldNotEmitTriggerResultWhenShutdownInterruptsTheEvaluation() throws Exception {
+        ShutdownInterruptTrigger.started = new CountDownLatch(1);
+        WorkerTrigger workerTrigger = workerTrigger(
+            ShutdownInterruptTrigger.builder()
+                .id("shutdown")
+                .type(ShutdownInterruptTrigger.class.getName())
+                .build()
+        );
+        WorkerQueue<WorkerTriggerResult> results = new InMemoryWorkerQueue<>(10);
+        WorkerTriggerProcessor processor = processor(results, serverConfig, Duration.ofMinutes(1));
+
+        Future<?> processing = submit(() -> processor.process(workerTrigger));
+        assertThat(ShutdownInterruptTrigger.started.await(10, TimeUnit.SECONDS)).isTrue();
+
+        processor.signalShutdownInterrupt();
+
+        processing.get(10, TimeUnit.SECONDS);
+        assertThat(results.poll(Duration.ofMillis(300)))
+            .as("a force-stopped trigger must keep its running entry for TriggerWorkerLost")
+            .isNull();
+    }
+
+    @Test
+    void shouldEmitTriggerResultWhenShutdownInterruptsButRestartStrategyIsNever() throws Exception {
+        ShutdownInterruptTrigger.started = new CountDownLatch(1);
+        WorkerTrigger workerTrigger = workerTrigger(
+            ShutdownInterruptTrigger.builder()
+                .id("shutdown-never")
+                .type(ShutdownInterruptTrigger.class.getName())
+                .build()
+        );
+        WorkerQueue<WorkerTriggerResult> results = new InMemoryWorkerQueue<>(10);
+        ServerConfig neverRestart = new ServerConfig(
+            serverConfig.terminationGracePeriod(),
+            WorkerTaskRestartStrategy.NEVER,
+            serverConfig.liveness(),
+            serverConfig.preview(),
+            serverConfig.standalone(),
+            serverConfig.service()
+        );
+        WorkerTriggerProcessor processor = processor(results, neverRestart, Duration.ofMinutes(1));
+
+        Future<?> processing = submit(() -> processor.process(workerTrigger));
+        assertThat(ShutdownInterruptTrigger.started.await(10, TimeUnit.SECONDS)).isTrue();
+
+        processor.signalShutdownInterrupt();
+
+        processing.get(10, TimeUnit.SECONDS);
+        WorkerTriggerResult result = results.poll(Duration.ofSeconds(5));
+        assertThat(result)
+            .as("NEVER is not reclaimed by the coordinator, so the trigger must still be reported")
+            .isNotNull();
+    }
+
+    @Test
     void shouldEmitTriggerResultWhenEvaluationCompletesInTime() throws Exception {
         WorkerTrigger workerTrigger = workerTrigger(
             SleepTrigger.builder().id("sleep").type(SleepTrigger.class.getName()).duration(1L).build()
@@ -185,6 +245,10 @@ class WorkerTriggerProcessorTest {
     }
 
     private WorkerTriggerProcessor processor(WorkerQueue<WorkerTriggerResult> results) {
+        return processor(results, serverConfig, TIMEOUT);
+    }
+
+    private WorkerTriggerProcessor processor(WorkerQueue<WorkerTriggerResult> results, ServerConfig config, Duration timeout) {
         return new WorkerTriggerProcessor(
             WorkerGroups.DEFAULT_ID,
             metricRegistry,
@@ -194,7 +258,8 @@ class WorkerTriggerProcessorTest {
             new InMemoryWorkerQueue<>(10),
             results,
             executionKilledManager,
-            TIMEOUT
+            config,
+            timeout
         );
     }
 
@@ -247,6 +312,29 @@ class WorkerTriggerProcessorTest {
                 }
             }
             if (interrupted) {
+                Thread.currentThread().interrupt();
+            }
+            return Optional.empty();
+        }
+
+        @Override
+        public Duration getInterval() {
+            return Duration.ofSeconds(1);
+        }
+    }
+
+    @SuperBuilder
+    @NoArgsConstructor
+    public static class ShutdownInterruptTrigger extends AbstractTrigger implements PollingTriggerInterface {
+        // Static so run-context initialization does not try to serialize the latch.
+        static volatile CountDownLatch started = new CountDownLatch(1);
+
+        @Override
+        public Optional<TriggerEvaluationResult> eval(ConditionContext conditionContext, TriggerContext context) {
+            started.countDown();
+            try {
+                Thread.sleep(Duration.ofMinutes(1).toMillis());
+            } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
             }
             return Optional.empty();

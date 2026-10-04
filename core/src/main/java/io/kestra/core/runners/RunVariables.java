@@ -212,7 +212,7 @@ public final class RunVariables {
     /**
      * Creates an immutable map representation of the given {@link LoopRun}.
      */
-    static Map<String, Object> of(LoopRun loopRun) {
+    public static Map<String, Object> of(LoopRun loopRun) {
         Map<String, Object> loopRunMap = HashMap.newHashMap(3);
         loopRunMap.put("index", loopRun.index());
         if (loopRun.key() != null) {

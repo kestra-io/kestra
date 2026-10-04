@@ -53,33 +53,53 @@ function onMissingKey(locale: string, key: string): void {
  * Plural selection for locales that vue-i18n's default rule gets wrong.
  *
  * Given three forms, the default rule picks index 1 for n === 1 and index 2 for
- * everything else, which is the [zero, one, other] shape. Polish is [one, few, many]:
- * 1, then 2-4, then 5+ with 12-14 as an exception. Without this rule a three-form
- * Polish message renders "1 pliki" and "2 plików" — both wrong, and the first is the
- * most common case.
+ * everything else, which is the [zero, one, other] shape. Polish and Russian are
+ * [one, few, many], so without a rule a three-form message renders "1 pliki" and
+ * "2 plików" - both wrong, and the first is the most common case.
  *
- * Russian has the same three-form structure and the same bug, but its messages have not
- * been reviewed against a correct rule, so it deliberately stays on the default.
+ * A message whose English source has a zero form ("no workers | worker | workers")
+ * needs four forms in these languages: [zero, one, few, many].
  *
  * @param choice the count being pluralised
  * @param choicesLength how many forms the message declares
+ * @param oneFewMany the [one, few, many] index for a non-negative count
  */
-function polishPluralIndex(choice: number, choicesLength: number): number {
+function slavicPluralIndex(choice: number, choicesLength: number, oneFewMany: (n: number) => number): number {
   if (choicesLength < 3) return choice === 1 ? 0 : 1
 
   const n = Math.abs(choice)
-  if (n === 1) return 0
+  if (choicesLength === 4) return n === 0 ? 0 : oneFewMany(n) + 1
 
-  const mod10 = n % 10
-  const mod100 = n % 100
-  // 2-4, 22-24, 32-34 … take the "few" form; 12-14 fall through to "many".
-  if (mod10 >= 2 && mod10 <= 4 && !(mod100 >= 12 && mod100 <= 14)) return 1
+  return oneFewMany(n)
+}
 
-  return 2
+/** Polish: 1, then 2-4, then 5+, with 12-14 as an exception. 21 is "many" ("21 plików"). */
+function polishPluralIndex(choice: number, choicesLength: number): number {
+  return slavicPluralIndex(choice, choicesLength, (n) => {
+    if (n === 1) return 0
+
+    const mod10 = n % 10
+    const mod100 = n % 100
+    if (mod10 >= 2 && mod10 <= 4 && !(mod100 >= 12 && mod100 <= 14)) return 1
+
+    return 2
+  })
+}
+
+/** Russian: 1, 21, 31... then 2-4, 22-24... then the rest, with 11-14 as exceptions. */
+function russianPluralIndex(choice: number, choicesLength: number): number {
+  return slavicPluralIndex(choice, choicesLength, (n) => {
+    const mod10 = n % 10
+    const mod100 = n % 100
+    if (mod10 === 1 && mod100 !== 11) return 0
+    if (mod10 >= 2 && mod10 <= 4 && !(mod100 >= 12 && mod100 <= 14)) return 1
+
+    return 2
+  })
 }
 
 export function setupI18n(options: {locale: Locales} = {locale: "en"}) {
-  const i18n = createI18n<false>({...options, legacy: false, pluralRules: {pl: polishPluralIndex}, missing: onMissingKey, missingWarn: false})
+  const i18n = createI18n<false>({...options, legacy: false, pluralRules: {pl: polishPluralIndex, ru: russianPluralIndex}, missing: onMissingKey, missingWarn: false})
   setI18nLanguage(i18n, options.locale)
   globalI18n.value = i18n.global
   return i18n

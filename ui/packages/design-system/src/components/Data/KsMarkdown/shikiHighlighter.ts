@@ -1,6 +1,7 @@
 // Only the grammars the app itself renders are in this chunk; every other language is a
 // separate chunk fetched on demand by loadLanguageOnDemand().
 import {createHighlighterCore, isSpecialLang, type HighlighterCore} from "shiki/core"
+import type {DynamicImportLanguageRegistration} from "@shikijs/types"
 
 export type {HighlighterCore}
 export {isSpecialLang}
@@ -40,7 +41,7 @@ export function getShiki(): Promise<HighlighterCore> {
     return promise
 }
 
-let bundledLanguages: Promise<Record<string, any>> | null = null
+let bundledLanguages: Promise<Record<string, DynamicImportLanguageRegistration>> | null = null
 
 /**
  * Registers a grammar that is not pre-registered above. Shiki's langs index is a list of

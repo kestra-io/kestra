@@ -95,8 +95,7 @@ class TriggerControllerTest {
     void shouldFindTriggersGivenQueryOnIdPrefix() throws FlowProcessingException, QueueException {
         // GIVEN
         Flow flow = generateFlow();
-        flowService.create(GenericFlow.of(flow));
-        createTriggersFromFlow(flow).forEach(jdbcTriggerRepository::save);
+        createFlowAndAwaitTriggers(flow);
 
         // WHEN
         PagedResults<ApiTriggerAndState> triggers = client.toBlocking().retrieve(
@@ -124,8 +123,7 @@ class TriggerControllerTest {
     void shouldFindTriggersGivenQueryOnNamespace() throws FlowProcessingException, QueueException {
         // GIVEN
         Flow flow = generateFlow();
-        flowService.create(GenericFlow.of(flow));
-        createTriggersFromFlow(flow).forEach(jdbcTriggerRepository::save);
+        createFlowAndAwaitTriggers(flow);
 
         // WHEN
         PagedResults<ApiTriggerAndState> triggers = client.toBlocking().retrieve(
@@ -169,8 +167,7 @@ class TriggerControllerTest {
     void searchTriggersSortsByNextExecutionDateAlias() throws FlowProcessingException, QueueException {
         // nextExecutionDate is a pre-2.0 alias of the real column next_evaluation_date
         Flow flow = generateFlow();
-        flowService.create(GenericFlow.of(flow));
-        createTriggersFromFlow(flow).forEach(jdbcTriggerRepository::save);
+        createFlowAndAwaitTriggers(flow);
 
         PagedResults<ApiTriggerAndState> triggers = client.toBlocking().retrieve(
             HttpRequest.GET(TRIGGER_PATH + "/search?filters[namespace][STARTS_WITH]=%s&sort=nextExecutionDate:asc".formatted(flow.getNamespace())),
@@ -185,9 +182,7 @@ class TriggerControllerTest {
     void shouldFindTriggersGivenFilterOnNamespace() throws FlowProcessingException, QueueException {
         // GIVEN
         Flow flow = generateFlow();
-        flowService.create(GenericFlow.of(flow));
-        List<TriggerState> states = createTriggersFromFlow(flow);
-        states.forEach(jdbcTriggerRepository::save);
+        createFlowAndAwaitTriggers(flow);
 
         // WHEN
         PagedResults<ApiTriggerAndState> triggers = client.toBlocking().retrieve(
@@ -411,25 +406,154 @@ class TriggerControllerTest {
     }
 
     @Test
-    void shouldDeleteTriggerWhenExists() throws FlowProcessingException, QueueException {
-        // GIVEN
-        Flow flow1 = generateFlowWithTrigger(IdUtils.create().toLowerCase());
-        TriggerState state = createTriggerFromFlow(flow1, true);
-        flowService.create(GenericFlow.of(flow1));
+    void shouldRejectDeleteWhenFlowStillDeclaresTheTrigger() throws FlowProcessingException, QueueException {
+        // GIVEN — deleting state while the flow still declares the trigger would unschedule
+        // it until Kestra restarts (see #18476).
+        Flow flow = generateFlowWithTrigger(IdUtils.create().toLowerCase());
+        TriggerState state = createTriggerFromFlow(flow, true);
+        flowService.create(GenericFlow.of(flow));
 
         Awaitility.await().atMost(Duration.ofSeconds(30)).pollInterval(Duration.ofMillis(100)).until(() -> jdbcTriggerRepository.findByIdWithoutAcl(state).isPresent());
 
         // WHEN
+        HttpClientResponseException e = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().exchange(
+                HttpRequest.DELETE(TRIGGER_PATH + "/" + state.getNamespace() + "/" + state.getFlowId() + "/" + state.getTriggerId()),
+                Void.class
+            )
+        );
+
+        // THEN
+        Problems.assertProblem(e, ProblemTypes.CONFLICT);
+        assertThat(Problems.detail(e)).contains("the flow still declares it");
+        assertThat(jdbcTriggerRepository.findByIdWithoutAcl(state)).isPresent();
+    }
+
+    @Test
+    void shouldDeleteOrphanTriggerWhenFlowNoLongerDeclaresIt() throws FlowProcessingException, QueueException {
+        // GIVEN — leftover state after the trigger was removed from the flow YAML
+        Flow flow = generateFlowWithTrigger(IdUtils.create().toLowerCase());
+        flowService.create(GenericFlow.of(flow));
+        TriggerState orphan = TriggerState.builder()
+            .flowId(flow.getId())
+            .tenantId(flow.getTenantId())
+            .namespace(flow.getNamespace())
+            .triggerId("removed-from-flow")
+            .disabled(true)
+            .nextEvaluationDate(Instant.now().plus(Duration.ofDays(36500L)))
+            .vnode(VNodes.computeVNodeFromFlow(flow, schedulerConfiguration.vnodes()))
+            .build();
+        jdbcTriggerRepository.save(orphan);
+
+        // WHEN
         HttpResponse<Void> response = client.toBlocking()
             .exchange(
-                HttpRequest.DELETE(TRIGGER_PATH + "/" + state.getNamespace() + "/" + state.getFlowId() + "/" + state.getTriggerId()),
+                HttpRequest.DELETE(TRIGGER_PATH + "/" + orphan.getNamespace() + "/" + orphan.getFlowId() + "/" + orphan.getTriggerId()),
                 Void.class
             );
 
         // THEN
         assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.NO_CONTENT.getCode());
         Awaitility.await().atMost(Duration.ofSeconds(30)).pollInterval(Duration.ofMillis(100))
-            .until(() -> jdbcTriggerRepository.findByIdWithoutAcl(state).isEmpty());
+            .until(() -> jdbcTriggerRepository.findByIdWithoutAcl(orphan).isEmpty());
+    }
+
+    @Test
+    void shouldDeleteOrphanTriggerWhenFlowDeclaresNoTriggers() throws FlowProcessingException, QueueException {
+        // GIVEN — leftover state on a flow whose triggers list is null must not 500
+        Flow flow = generateFlowWithTrigger(IdUtils.create().toLowerCase()).toBuilder()
+            .triggers(null)
+            .build();
+        flowService.create(GenericFlow.of(flow));
+        TriggerState orphan = TriggerState.builder()
+            .flowId(flow.getId())
+            .tenantId(flow.getTenantId())
+            .namespace(flow.getNamespace())
+            .triggerId("removed-from-flow")
+            .disabled(true)
+            .nextEvaluationDate(Instant.now().plus(Duration.ofDays(36500L)))
+            .vnode(VNodes.computeVNodeFromFlow(flow, schedulerConfiguration.vnodes()))
+            .build();
+        jdbcTriggerRepository.save(orphan);
+
+        // WHEN
+        HttpResponse<Void> response = client.toBlocking()
+            .exchange(
+                HttpRequest.DELETE(TRIGGER_PATH + "/" + orphan.getNamespace() + "/" + orphan.getFlowId() + "/" + orphan.getTriggerId()),
+                Void.class
+            );
+
+        // THEN
+        assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.NO_CONTENT.getCode());
+        Awaitility.await().atMost(Duration.ofSeconds(30)).pollInterval(Duration.ofMillis(100))
+            .until(() -> jdbcTriggerRepository.findByIdWithoutAcl(orphan).isEmpty());
+    }
+
+    @Test
+    void shouldSkipDeclaredTriggersWhenDeletingByIds() throws FlowProcessingException, QueueException {
+        // GIVEN
+        Flow flow = generateFlowWithTrigger(IdUtils.create().toLowerCase());
+        flowService.create(GenericFlow.of(flow));
+        TriggerState declared = createTriggerFromFlow(flow, true);
+        Awaitility.await().atMost(Duration.ofSeconds(30)).pollInterval(Duration.ofMillis(100))
+            .until(() -> jdbcTriggerRepository.findByIdWithoutAcl(declared).isPresent());
+        TriggerState orphan = newRandomTriggerState();
+        jdbcTriggerRepository.save(orphan);
+
+        List<TriggerController.ApiTriggerId> triggers = List.of(
+            new TriggerController.ApiTriggerId(declared.getNamespace(), declared.getFlowId(), declared.getTriggerId()),
+            new TriggerController.ApiTriggerId(orphan.getNamespace(), orphan.getFlowId(), orphan.getTriggerId())
+        );
+
+        // WHEN
+        HttpResponse<ApiAsyncOperationResponse> response = client.toBlocking().exchange(
+            HttpRequest.DELETE(TRIGGER_PATH + "/delete/by-triggers", triggers),
+            ApiAsyncOperationResponse.class
+        );
+
+        // THEN — only the orphan is queued for deletion
+        assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.ACCEPTED.getCode());
+        assertThat(response.body()).isNotNull();
+        assertThat(response.body().totalItems()).isEqualTo(1);
+        assertThat(jdbcTriggerRepository.findByIdWithoutAcl(declared)).isPresent();
+        Awaitility.await().atMost(Duration.ofSeconds(30)).pollInterval(Duration.ofMillis(100))
+            .until(() -> jdbcTriggerRepository.findByIdWithoutAcl(orphan).isEmpty());
+    }
+
+    @Test
+    void shouldSkipDeclaredTriggersWhenDeletingByQuery() throws FlowProcessingException, QueueException {
+        // GIVEN
+        String namespace = "ns-" + IdUtils.create().toLowerCase();
+        Flow flow = generateFlowWithTrigger(namespace);
+        flowService.create(GenericFlow.of(flow));
+        TriggerState declared = createTriggerFromFlow(flow, true);
+        Awaitility.await().atMost(Duration.ofSeconds(30)).pollInterval(Duration.ofMillis(100))
+            .until(() -> jdbcTriggerRepository.findByIdWithoutAcl(declared).isPresent());
+        TriggerState orphan = TriggerState.builder()
+            .flowId(flow.getId())
+            .tenantId(flow.getTenantId())
+            .namespace(flow.getNamespace())
+            .triggerId("removed-from-flow")
+            .disabled(true)
+            .nextEvaluationDate(Instant.now().plus(Duration.ofDays(36500L)))
+            .vnode(VNodes.computeVNodeFromFlow(flow, schedulerConfiguration.vnodes()))
+            .build();
+        jdbcTriggerRepository.save(orphan);
+
+        // WHEN
+        HttpResponse<ApiAsyncOperationResponse> response = client.toBlocking().exchange(
+            HttpRequest.DELETE(TRIGGER_PATH + "/delete/by-query?filters[namespace][EQUALS]=" + namespace, null),
+            ApiAsyncOperationResponse.class
+        );
+
+        // THEN — only the orphan is queued for deletion
+        assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.ACCEPTED.getCode());
+        assertThat(response.body()).isNotNull();
+        assertThat(response.body().totalItems()).isEqualTo(1);
+        assertThat(jdbcTriggerRepository.findByIdWithoutAcl(declared)).isPresent();
+        Awaitility.await().atMost(Duration.ofSeconds(30)).pollInterval(Duration.ofMillis(100))
+            .until(() -> jdbcTriggerRepository.findByIdWithoutAcl(orphan).isEmpty());
     }
 
     @Test
@@ -965,6 +1089,13 @@ class TriggerControllerTest {
         ).toList();
     }
 
+    private void createFlowAndAwaitTriggers(Flow flow) throws FlowProcessingException, QueueException {
+        flowService.create(GenericFlow.of(flow));
+        Awaitility.await().atMost(Duration.ofSeconds(30)).pollInterval(Duration.ofMillis(100))
+            .until(() -> createTriggersFromFlow(flow).stream()
+                .allMatch(state -> jdbcTriggerRepository.findByIdWithoutAcl(state).isPresent()));
+    }
+
     private TriggerState createTriggerFromFlow(Flow flow, Boolean disabled) {
         return TriggerState.builder()
             .flowId(flow.getId())
@@ -979,8 +1110,7 @@ class TriggerControllerTest {
     @Test
     void shouldExportTriggersWithoutTenantId() throws FlowProcessingException, QueueException {
         Flow flow = generateFlow();
-        flowService.create(GenericFlow.of(flow));
-        createTriggersFromFlow(flow).forEach(jdbcTriggerRepository::save);
+        createFlowAndAwaitTriggers(flow);
 
         byte[] csvBytes = client.toBlocking().retrieve(
             HttpRequest.GET(TRIGGER_PATH + "/export/by-query/csv"),

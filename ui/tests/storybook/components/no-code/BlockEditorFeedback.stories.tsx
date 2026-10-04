@@ -10,8 +10,9 @@ import MultiPanelTabs from "../../../../src/components/MultiPanelTabs.vue"
 import PluginDocumentation from "../../../../src/components/plugins/PluginDocumentation.vue"
 import {useFlowStore} from "../../../../src/stores/flow"
 import {usePlaygroundStore} from "../../../../src/stores/playground"
-import {usePluginsStore} from "../../../../src/stores/plugins"
+import {usePluginsStore, type PluginComponent} from "../../../../src/stores/plugins"
 import {setMockClient} from "@kestra-io/kestra-sdk"
+import {mockResponse} from "../../../../.storybook/apiMock"
 import type {Panel} from "../../../../src/utils/multiPanelTypes"
 import {CICD_PIPELINE_YAML, mockNoCodeTransport, seedIfTaskSchema} from "./blockEditorFeedbackFixtures"
 import {storageKeys, taskEditDefaultModes} from "../../../../src/utils/constants"
@@ -571,7 +572,7 @@ export const F3ConfigureFlowableProperties: Story = {
 // `pluginsStore.load()` checks this cache before ever reaching the (mocked,
 // empty) network call, and TaskEditor calls `load()` on mount, which would
 // otherwise clobber a value assigned after setup().
-const HTTP_REQUEST_OUTPUTS_SCHEMA = {
+const HTTP_REQUEST_OUTPUTS_SCHEMA: PluginComponent = {
     cls: "io.kestra.plugin.core.http.Request",
     schema: {
         outputs: {
@@ -582,8 +583,8 @@ const HTTP_REQUEST_OUTPUTS_SCHEMA = {
                 code: {type: "integer"},
             },
         },
-    } as any,
-} as any
+    },
+}
 
 const seedHttpRequestOutputsSchema = () => {
     const pluginsStore = usePluginsStore()
@@ -725,8 +726,7 @@ export const F5SourceFidelity: Story = {
 export const F6DocumentationCurrentState: Story = {
     render: () => ({
         setup() {
-            const axios: any = {get: () => Promise.resolve({data: [], status: 200, headers: {}})}
-            setMockClient(axios)
+            setMockClient({get: async <T,>() => mockResponse<T>([])})
             return () => <PluginDocumentation overrideIntro="This is the documentation panel's current implementation." />
         },
     }),

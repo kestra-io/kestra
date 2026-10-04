@@ -6,7 +6,7 @@ import * as FilesAPI from "@kestra-io/kestra-sdk/files"
 import * as KvAPI from "@kestra-io/kestra-sdk/kv"
 import * as SecretsAPI from "@kestra-io/kestra-sdk/secrets"
 import * as NamespacesAPI from "@kestra-io/kestra-sdk/namespaces"
-import {asProblem, type SourceSearchScope} from "@kestra-io/kestra-sdk"
+import {asProblem, type QueryFilter, type SourceSearchScope} from "@kestra-io/kestra-sdk"
 
 import {groupByNamespace, type CrossSearchSelection, type SearchResourceType, type SearchStatus} from "../utils/crossResourceSearch"
 import {getSeparatorVariant, type SourceSearchResult} from "../utils/sourceSearchDiff"
@@ -20,6 +20,10 @@ const SEARCH_PAGE_SIZE = 200
 const NAMESPACE_FETCH_CONCURRENCY = 8
 
 const isTruncated = (total: number | undefined, shown: number) => total !== undefined && shown < total
+
+function searchErrorMessage(error: unknown): string | undefined {
+    return asProblem(error)?.detail ?? (error instanceof Error ? error.message : undefined)
+}
 
 async function runBounded<T>(items: T[], limit: number, task: (item: T) => Promise<void>) {
     let cursor = 0
@@ -107,6 +111,7 @@ export const useCrossResourceSearchStore = defineStore("crossResourceSearch", ()
     const files = ref<FilesTypeState>({status: "idle", namespaces: []})
     const kv = ref<KvTypeState>({status: "idle", groups: []})
     const secrets = ref<SecretsTypeState>({status: "idle", groups: []})
+    const suggestedQuery = ref<string | null>(null)
 
     /**
      * Every search run gets a generation; a resolution only writes to the shared state while its
@@ -123,6 +128,7 @@ export const useCrossResourceSearchStore = defineStore("crossResourceSearch", ()
         files.value = {status: "idle", namespaces: []}
         kv.value = {status: "idle", groups: []}
         secrets.value = {status: "idle", groups: []}
+        suggestedQuery.value = null
     }
 
     async function searchFlows(params: FlowsSearchParams, gen: number = nextGeneration()) {
@@ -145,17 +151,22 @@ export const useCrossResourceSearchStore = defineStore("crossResourceSearch", ()
             })
             if (!isCurrent(gen)) return
             flows.value = {status: "done", results: (response.results ?? []) as SourceSearchResult[], total: response.total}
-        } catch (e: any) {
+        } catch (e: unknown) {
             if (!isCurrent(gen)) return
-            flows.value = {status: "failed", results: [], errorMessage: asProblem(e)?.detail ?? e?.message}
+            flows.value = {status: "failed", results: [], errorMessage: searchErrorMessage(e)}
         }
     }
 
-    async function searchFlowSuggestion(params: FlowsSearchParams, gen: number): Promise<string | null | undefined> {
-        if (!params.query || params.regex) return null
+    async function searchFlowSuggestion(params: FlowsSearchParams, gen: number): Promise<void> {
+        if (!isCurrent(gen)) return
+
+        suggestedQuery.value = null
+
+        if (!params.query || params.regex) return
+
         const alternativeQuery = getSeparatorVariant(params.query)
 
-        if (!alternativeQuery) return null
+        if (!alternativeQuery) return
 
         try {
             const response = await FlowsAPI.searchFlowsBySourceCode({
@@ -169,12 +180,13 @@ export const useCrossResourceSearchStore = defineStore("crossResourceSearch", ()
                 namespace: params.namespace,
             })
 
-            if (!isCurrent(gen)) return undefined
-            if ((response.results ?? []).length === 0) return null
+            if (!isCurrent(gen)) return
+            if ((response.results ?? []).length === 0) return
 
-            return alternativeQuery
+            suggestedQuery.value = alternativeQuery
         } catch {
-            return isCurrent(gen) ? null : undefined
+            if (!isCurrent(gen)) return
+            suggestedQuery.value = null
         }
     }
 
@@ -194,8 +206,8 @@ export const useCrossResourceSearchStore = defineStore("crossResourceSearch", ()
         try {
             const paths = await FilesAPI.searchNamespaceFiles({namespace, q: query}) ?? []
             setNamespaceFileState({namespace, status: "done", paths}, gen)
-        } catch (e: any) {
-            setNamespaceFileState({namespace, status: "failed", paths: [], errorMessage: asProblem(e)?.detail ?? e?.message}, gen)
+        } catch (e: unknown) {
+            setNamespaceFileState({namespace, status: "failed", paths: [], errorMessage: searchErrorMessage(e)}, gen)
         }
     }
 
@@ -215,9 +227,9 @@ export const useCrossResourceSearchStore = defineStore("crossResourceSearch", ()
             namespaces = params.namespace
                 ? [params.namespace]
                 : (await NamespacesAPI.autocompleteNamespaces({existingOnly: true}) as unknown as string[] ?? [])
-        } catch (e: any) {
+        } catch (e: unknown) {
             if (!isCurrent(gen)) return
-            files.value = {status: "failed", namespaces: [], errorMessage: asProblem(e)?.detail ?? e?.message}
+            files.value = {status: "failed", namespaces: [], errorMessage: searchErrorMessage(e)}
             return
         }
 
@@ -255,7 +267,7 @@ export const useCrossResourceSearchStore = defineStore("crossResourceSearch", ()
 
         kv.value = {status: "counting", groups: kv.value.groups}
         try {
-            const filters: any[] = [{field: "q", operation: "EQUALS", value: params.query}]
+            const filters: QueryFilter[] = [{field: "q", operation: "EQUALS", value: params.query}]
             if (params.namespace) filters.push({field: "namespace", operation: "EQUALS", value: params.namespace})
 
             const response = await KvAPI.listAllKeys({filters, page: 1, size: SEARCH_PAGE_SIZE})
@@ -271,9 +283,9 @@ export const useCrossResourceSearchStore = defineStore("crossResourceSearch", ()
                     expirationDate: entry.expirationDate,
                 })),
             }
-        } catch (e: any) {
+        } catch (e: unknown) {
             if (!isCurrent(gen)) return
-            kv.value = {status: "failed", groups: [], errorMessage: asProblem(e)?.detail ?? e?.message}
+            kv.value = {status: "failed", groups: [], errorMessage: searchErrorMessage(e)}
         }
     }
 
@@ -285,7 +297,7 @@ export const useCrossResourceSearchStore = defineStore("crossResourceSearch", ()
 
         secrets.value = {status: "counting", groups: secrets.value.groups}
         try {
-            const filters: any[] = [{field: "q", operation: "EQUALS", value: params.query}]
+            const filters: QueryFilter[] = [{field: "q", operation: "EQUALS", value: params.query}]
             if (params.namespace) filters.push({field: "namespace", operation: "EQUALS", value: params.namespace})
 
             const response = await SecretsAPI.listSecrets({filters, page: 1, size: SEARCH_PAGE_SIZE})
@@ -296,14 +308,15 @@ export const useCrossResourceSearchStore = defineStore("crossResourceSearch", ()
                 total: response.total,
                 groups: groupByNamespace(results, (entry) => entry.namespace ?? "", (entry) => ({key: entry.key})),
             }
-        } catch (e: any) {
+        } catch (e: unknown) {
             if (!isCurrent(gen)) return
-            secrets.value = {status: "failed", groups: [], errorMessage: asProblem(e)?.detail ?? e?.message}
+            secrets.value = {status: "failed", groups: [], errorMessage: searchErrorMessage(e)}
         }
     }
 
     async function search(params: CrossResourceSearchParams): Promise<number> {
         const gen = nextGeneration()
+        suggestedQuery.value = null
         const tasks: Promise<void>[] = []
 
         if (params.types.includes("flows")) {
@@ -454,6 +467,7 @@ export const useCrossResourceSearchStore = defineStore("crossResourceSearch", ()
         search,
         searchFlows,
         searchFlowSuggestion,
+        suggestedQuery,
         searchFiles,
         searchKv,
         searchSecrets,

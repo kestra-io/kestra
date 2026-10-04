@@ -273,7 +273,7 @@
     function downloadContent(currentTaskRunId: string) {
         executionsStore.downloadLogs({
             executionId: props.execution.id,
-            params: {taskRunId: currentTaskRunId},
+            params: {"filters[taskRunId][EQUALS]": currentTaskRunId},
         }).then((response: unknown) => {
             Utils.downloadUrl(window.URL.createObjectURL(new Blob([response as BlobPart])), downloadNameFor(currentTaskRunId))
         })
@@ -282,7 +282,7 @@
     function copyContent(currentTaskRunId: string) {
         executionsStore.downloadLogs({
             executionId: props.execution.id,
-            params: {taskRunId: currentTaskRunId},
+            params: {"filters[taskRunId][EQUALS]": currentTaskRunId},
         }).then((response: unknown) => {
             Utils.copy(response as string).then(() => {
                 coreStore.message = {

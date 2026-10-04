@@ -4,6 +4,7 @@ import {
     TOUR_SCENES,
     sceneIdsOf,
     stepGroupsOf,
+    type TourScene,
 } from "../../../src/components/onboarding/tour/tourScenes"
 import {
     TOUR_FLOW_ID,
@@ -19,7 +20,17 @@ import {
 } from "../../../src/components/onboarding/tour/tourFlows"
 import en from "../../../src/translations/en.json"
 
-const translations = (en as any).en.onboarding.tour
+const translations = (en as {
+    en: {
+        onboarding: {
+            tour: {
+                scenes: Record<string, Record<string, string>>
+                steps: Record<string, string>
+                [key: string]: unknown
+            }
+        }
+    }
+}).en.onboarding.tour
 
 const TOUR_FLOW_PARAMS = {namespace: TOUR_NAMESPACE, id: TOUR_FLOW_ID}
 
@@ -28,7 +39,7 @@ const completedOn = (
     route: {name: string; params?: Record<string, unknown>},
 ) => {
     const scene = TOUR_SCENES.find((candidate) => candidate.id === id)
-    return Boolean(scene?.completedByUser?.({route: {params: {}, ...route}} as any))
+    return Boolean(scene?.completedByUser?.({route: {params: {}, ...route}} as unknown as Parameters<NonNullable<TourScene["completedByUser"]>>[0]))
 }
 
 describe("product tour scenes", () => {
@@ -63,7 +74,7 @@ describe("product tour scenes", () => {
 
     it("shows every callout it has copy for", () => {
         const withCopy = Object.entries(translations.scenes)
-            .filter(([, copy]) => (copy as any).callout)
+            .filter(([, copy]) => copy.callout)
             .map(([id]) => id)
         const withFlag = TOUR_SCENES.filter((scene) => scene.callout).map((scene) => scene.id)
 

@@ -3,6 +3,7 @@ import {flushPromises} from "@vue/test-utils"
 import {i18nMount} from "../../i18nMount"
 
 import {createPinia, setActivePinia} from "pinia"
+import type {ExplorerSection} from "../../../../src/components/executions/outputs/SidebarList.vue"
 import ExecutionVariableExplorer from "../../../../src/components/executions/outputs/ExecutionVariableExplorer.vue"
 import {useExecutionsStore} from "../../../../src/stores/executions"
 
@@ -227,5 +228,32 @@ describe("ExecutionVariableExplorer", () => {
         await selectVariable(wrapper, "_context", "triggers")
         expect(wrapper.findComponent({name: "ExpressionDebugger"}).props("expression"))
             .toBe("{{ trigger._context }}")
+    })
+
+    test("offers render() for a variable holding a Pebble expression and leaves literals alone", async () => {
+        const wrapper = mountExplorer({
+            greeting: "Hello {{ inputs.name }}",
+            conditional: "{% if true %}yes{% endif %}",
+            plain: "Hello world",
+        })
+        await flushPromises()
+
+        const items = (wrapper.findComponent({name: "SidebarList"}).props("sections") as ExplorerSection[])
+            .find((section) => section.key === "variables")!
+            .items
+        expect(items.map((item) => [item.label, item.type])).toEqual([
+            ["greeting", "expression"],
+            ["conditional", "expression"],
+            ["plain", "string"],
+        ])
+        expect(items[0].expression).toBe("vars.greeting")
+
+        await selectVariable(wrapper, "greeting")
+        expect(wrapper.findComponent({name: "ExpressionDebugger"}).props("expression"))
+            .toBe("{{ render(vars.greeting) }}")
+
+        await selectVariable(wrapper, "plain")
+        expect(wrapper.findComponent({name: "ExpressionDebugger"}).props("expression"))
+            .toBe("{{ vars.plain }}")
     })
 })

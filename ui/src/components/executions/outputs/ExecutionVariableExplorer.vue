@@ -207,6 +207,17 @@
         }))
     }
 
+    function isPebbleExpression(value: unknown): boolean {
+        return typeof value === "string" && (value.includes("{{") || value.includes("{%"))
+    }
+
+    function variableItems(record: Record<string, unknown> | undefined): ExplorerItem[] {
+        return itemsFromRecord(record, "vars").map((item) => isPebbleExpression(item.value)
+            ? {...item, type: "expression", debugExpression: `render(${item.expression})`}
+            : item,
+        )
+    }
+
     /** Mirrors RunVariables: trigger variables sit at the top level, id and type under `_context`. */
     function triggerRecord(trigger: Execution["trigger"]): Record<string, unknown> | undefined {
         if (!trigger) return undefined
@@ -358,7 +369,7 @@
     const sections = computed<ExplorerSection[]>(() => {
         const exec = execution.value
         return [
-            {key: "variables", label: t("variables"), items: itemsFromRecord(exec?.variables, "vars")},
+            {key: "variables", label: t("variables"), items: variableItems(exec?.variables)},
             {key: "triggers", label: t("triggers"), items: itemsFromRecord(triggerRecord(exec?.trigger), "trigger")},
             {key: "inputs", label: t("flow_inputs"), items: itemsFromRecord(exec?.inputs, "inputs")},
             {key: "tasksOutputs", label: t("variable_explorer.tasks_outputs"), items: taskItems.value},
@@ -459,7 +470,7 @@
         const baseExpressionPath = sections.value.find((section) =>
             section.items.some(i => i.expression === item.expression))?.key === "flowOutputs"
             ? `execution.${item.expression}`
-            : item.expression
+            : item.debugExpression ?? item.expression
 
         // if there is only one item in the tree, select it by default to save users one click
         // specially useful for files

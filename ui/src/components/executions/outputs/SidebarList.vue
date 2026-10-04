@@ -62,6 +62,7 @@
         type: string;
         preview: string;
         expression: string;
+        debugExpression?: string;
         taskRunId?: string;
         searchText?: string;
     }

@@ -60,7 +60,6 @@ import io.kestra.core.http.KestraMediaTypes;
 import io.kestra.core.http.client.apache.*;
 import io.kestra.core.http.client.configurations.DigestAuthConfiguration;
 import io.kestra.core.http.client.configurations.HttpConfiguration;
-import io.kestra.core.http.client.configurations.HttpMethod;
 import io.kestra.core.runners.DefaultRunContext;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.serializers.JacksonMapper;
@@ -88,7 +87,7 @@ public class HttpClient implements Closeable {
     private final RunContext runContext;
     private final HttpConfiguration configuration;
     private ObservationRegistry observationRegistry;
-    private static final Set<HttpMethod> IDEMPOTENT_METHODS = Set.of(HttpMethod.GET, HttpMethod.HEAD);
+    private static final Set<String> IDEMPOTENT_METHODS = Set.of("GET", "HEAD");
 
     @Builder
     public HttpClient(RunContext runContext, @Nullable HttpConfiguration configuration) throws IllegalVariableEvaluationException {
@@ -580,18 +579,13 @@ public class HttpClient implements Closeable {
                     );
                 }
 
-                // A TLS handshake failure never put a byte on the wire, so it is always safe to retry.
-                if (throwable instanceof SSLHandshakeException) {
-                    return true;
-                }
-
                 if (throwable instanceof HttpClientRequestException httpEx) {
                     // ConnectException means the request never reached the server, so any method is safe to retry.
-                    return httpEx.getCause() instanceof ConnectException || retryTransportFailures;
-                }
-
-                if (throwable instanceof SocketException) {
-                    return retryTransportFailures;
+                    Throwable cause = httpEx.getCause();
+                    if (cause instanceof SSLHandshakeException) {
+                        return false;
+                    }
+                    return cause instanceof ConnectException || retryTransportFailures;
                 }
 
                 return false;
@@ -627,38 +621,36 @@ public class HttpClient implements Closeable {
      */
     @SuppressWarnings("unchecked")
     private List<Integer> resolveRetryableStatusCodes(String method) throws IllegalVariableEvaluationException {
-        HttpMethod httpMethod = HttpMethod.fromString(method);
-
-        if (httpMethod != null && configuration.getRetryOnStatusCodesByMethod() != null) {
-            Map<HttpMethod, List<Integer>> byMethod = runContext
+        if (configuration.getRetryOnStatusCodesByMethod() != null) {
+            Map<String, List<Integer>> byMethod = runContext
                 .render(configuration.getRetryOnStatusCodesByMethod())
-                .asMap(HttpMethod.class, List.class);
+                .asMap(String.class, List.class);
 
-            List<Integer> codes = byMethod.get(httpMethod);
-            if (codes != null) {
-                return codes;
+            for (Map.Entry<String, List<Integer>> entry : byMethod.entrySet()) {
+                if (entry.getKey().equalsIgnoreCase(method)) {
+                    return entry.getValue();
+                }
             }
         }
-        //make sure non Idempotent methods don't retry on status codes
-        if (httpMethod == null || !IDEMPOTENT_METHODS.contains(httpMethod)) {
+
+        // Methods other than GET and HEAD are not retried on a status code unless configured per method.
+        if (!IDEMPOTENT_METHODS.contains(method.toUpperCase(Locale.ROOT))) {
             return List.of();
         }
-        // Fallback to the global list if no method-specific entry is found for idempotent methods GET/HEAD only.
+
         return runContext.render(configuration.getRetryOnStatusCodes()).asList(Integer.class);
     }
 
     /**
-    * Whether this method can retry transport failures such as timeouts
-    * or connection drops that occur after data has been sent.
-    * Non-standard HTTP methods are not eligible.
-    */
+     * Whether this method can retry transport failures such as timeouts
+     * or connection drops that occur after data has been sent.
+     */
     private boolean isMethodEligibleForTransportRetry(String method) throws IllegalVariableEvaluationException {
-        HttpMethod httpMethod = HttpMethod.fromString(method);
-
-        return httpMethod != null && runContext
+        return runContext
             .render(configuration.getRetryableTransportFailureMethods())
-            .asList(HttpMethod.class)
-            .contains(httpMethod);
+            .asList(String.class)
+            .stream()
+            .anyMatch(configured -> configured.equalsIgnoreCase(method));
     }
 
     @SuppressWarnings("unchecked")

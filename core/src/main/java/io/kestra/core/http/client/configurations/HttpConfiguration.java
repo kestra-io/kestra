@@ -88,7 +88,7 @@ public class HttpConfiguration {
             "processed by the origin risks duplicating the effect. Example: " +
             "`{GET: [429, 500, 502, 503, 504], HEAD: [429, 500, 502, 503, 504]}`."
     )
-    private Property<Map<HttpMethod, List<Integer>>> retryOnStatusCodesByMethod;
+    private Property<Map<String, List<Integer>>> retryOnStatusCodesByMethod;
 
     @Setter
     @Schema(
@@ -98,7 +98,7 @@ public class HttpConfiguration {
             "is retried. Defaults to GET and HEAD HTTP methods."
     )
     @Builder.Default
-    private Property<List<HttpMethod>> retryableTransportFailureMethods = Property.ofValue(List.of(HttpMethod.GET, HttpMethod.HEAD));
+    private Property<List<String>> retryableTransportFailureMethods = Property.ofValue(List.of("GET", "HEAD"));
 
     @Schema(title = "The enabled log.")
     @PluginProperty

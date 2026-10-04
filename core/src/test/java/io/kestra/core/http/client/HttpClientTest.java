@@ -44,7 +44,6 @@ import io.kestra.core.http.HttpRequest;
 import io.kestra.core.http.HttpResponse;
 import io.kestra.core.http.HttpSseEvent;
 import io.kestra.core.http.client.configurations.HttpConfiguration;
-import io.kestra.core.http.client.configurations.HttpMethod;
 import io.kestra.core.http.client.configurations.ProxyConfiguration;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.executions.Execution;
@@ -700,7 +699,7 @@ class HttpClientTest {
     void shouldRetryPostOnStatusCodeWhenConfiguredByMethod()
         throws IllegalVariableEvaluationException, HttpClientException, IOException {
         HttpConfiguration configuration = withRetry(3)
-            .retryOnStatusCodesByMethod(Property.ofValue(Map.of(HttpMethod.POST, List.of(502))))
+            .retryOnStatusCodesByMethod(Property.ofValue(Map.of("POST", List.of(502))))
             .build();
 
         try (HttpClient client = client(b -> b.configuration(configuration))) {
@@ -722,7 +721,7 @@ class HttpClientTest {
                 b -> b.configuration(
                     withRetry(3)
                         .retryOnStatusCodes(Property.ofValue(List.of(404)))
-                        .retryOnStatusCodesByMethod(Property.ofValue(Map.of(HttpMethod.GET, List.of(500))))
+                        .retryOnStatusCodesByMethod(Property.ofValue(Map.of("GET", List.of(500))))
                         .build()
                 )
             )
@@ -746,7 +745,7 @@ class HttpClientTest {
                 b -> b.configuration(
                     withRetry(3)
                         .retryOnStatusCodes(Property.ofValue(List.of(404)))
-                        .retryOnStatusCodesByMethod(Property.ofValue(Map.of(HttpMethod.GET, List.of(500))))
+                        .retryOnStatusCodesByMethod(Property.ofValue(Map.of("GET", List.of(500))))
                         .build()
                 )
             )
@@ -788,7 +787,7 @@ class HttpClientTest {
     @Test
     void shouldRetryPostOnConnectionResetWhenMethodConfigured() throws Exception {
         HttpConfiguration configuration = withRetry(3)
-            .retryableTransportFailureMethods(Property.ofValue(List.of(HttpMethod.POST)))
+            .retryableTransportFailureMethods(Property.ofValue(List.of("POST")))
             .build();
 
         try (

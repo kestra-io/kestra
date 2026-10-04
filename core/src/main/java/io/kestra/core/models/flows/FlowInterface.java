@@ -1,6 +1,8 @@
 package io.kestra.core.models.flows;
 
+import java.time.Duration;
 import java.util.AbstractMap;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -22,10 +24,12 @@ import io.kestra.core.models.SoftDeletable;
 import io.kestra.core.models.TenantInterface;
 import io.kestra.core.models.flows.quota.Quota;
 import io.kestra.core.models.flows.sla.SLA;
+import io.kestra.core.models.flows.sla.types.MaxDurationSLA;
 import io.kestra.core.models.tasks.WorkerSelector;
 import io.kestra.core.queues.event.BroadcastEvent;
 import io.kestra.core.runners.ReusableInputsExpander;
 import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.utils.ListUtils;
 
 import io.micronaut.core.annotation.Nullable;
 
@@ -116,6 +120,28 @@ public interface FlowInterface extends FlowId, SoftDeletable<FlowInterface>, Ten
 
     default List<SLA> getSla() {
         return List.of();
+    }
+
+    default Duration getTimeout() {
+        return null;
+    }
+
+    /**
+     * Returns all SLAs for this flow, including any top-level timeout converted into a {@link MaxDurationSLA}.
+     */
+    default List<SLA> allSLA() {
+        List<SLA> slas = new ArrayList<>(ListUtils.emptyOnNull(getSla()));
+        if (getTimeout() != null && slas.stream().noneMatch(s -> "flow-timeout".equals(s.getId()))) {
+            slas.add(
+                MaxDurationSLA.builder()
+                    .id("flow-timeout")
+                    .type(SLA.Type.MAX_DURATION)
+                    .behavior(SLA.Behavior.FAIL)
+                    .duration(getTimeout())
+                    .build()
+            );
+        }
+        return slas;
     }
 
     String getSource();

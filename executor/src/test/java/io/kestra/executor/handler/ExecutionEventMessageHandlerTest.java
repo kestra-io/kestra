@@ -8,12 +8,15 @@ import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import static org.mockito.ArgumentMatchers.argThat;
+
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.killswitch.EvaluationType;
 import io.kestra.core.killswitch.KillSwitchService;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionKind;
 import io.kestra.core.models.flows.Concurrency;
+import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.GenericFlow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.flows.quota.Quota;
@@ -274,5 +277,26 @@ class ExecutionEventMessageHandlerTest {
 
         // Then
         verify(slaMonitorStateStore, never()).save(any());
+    }
+
+    @Test
+    void shouldCreateSlaMonitorForFlowTimeout() {
+        // Given
+        var flowWithTimeout = Flow.builder()
+            .id("flow-with-timeout")
+            .namespace("io.kestra.tests")
+            .timeout(Duration.ofMinutes(5))
+            .tasks(Collections.emptyList())
+            .build();
+        var flow = flowRepository.create(GenericFlow.of(flowWithTimeout));
+        var execution = Execution.newExecution(flow, null, Collections.emptyList(), Optional.empty(), ExecutionKind.NORMAL);
+        executionRepository.save(execution);
+        var executionEvent = new ExecutionEvent(execution, ExecutionEventType.CREATED);
+
+        // When
+        executionEventMessageHandler.handle(executionEvent);
+
+        // Then
+        verify(slaMonitorStateStore).save(argThat(monitor -> "flow-timeout".equals(monitor.getSlaId())));
     }
 }

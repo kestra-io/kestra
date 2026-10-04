@@ -92,7 +92,7 @@ public class SLAMonitorProcessor {
             FlowWithSource flow = flowMetaStore.findByExecutionForRuntime(execution).orElseThrow(() -> new FlowNotFoundException(execution));
             // null-safe: removing the LAST SLA from the flow leaves getSla() null, and an NPE
             // here would roll back processExpired() and wedge the whole SLA loop on the retry
-            Optional<SLA> sla = ListUtils.emptyOnNull(flow.getSla()).stream().filter(s -> s.getId().equals(slaMonitor.getSlaId())).findFirst();
+            Optional<SLA> sla = ListUtils.emptyOnNull(flow.allSLA()).stream().filter(s -> s.getId().equals(slaMonitor.getSlaId())).findFirst();
             if (sla.isEmpty()) {
                 // this can happen in case the flow has been updated and the SLA removed
                 log.debug("Cannot find the SLA '{}' in the flow for execution '{}', ignoring it.", slaMonitor.getSlaId(), slaMonitor.getExecutionId());

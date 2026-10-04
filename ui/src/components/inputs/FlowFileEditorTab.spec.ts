@@ -149,4 +149,23 @@ describe("FlowFileEditorTab", () => {
         expect(saveOrCreateFile).toHaveBeenCalledTimes(1)
         expect(saveOrCreateFile).toHaveBeenCalledWith({namespace: "io.kestra.test", path: "data.txt", content: "edited content"})
     })
+
+    it("should send the newer content when saving again after editing during a pending save", async () => {
+        fileMetadata.mockResolvedValue({size: 1024})
+        let finishSave: () => void = () => {}
+        saveOrCreateFile.mockReturnValueOnce(new Promise<void>((resolve) => finishSave = resolve)).mockResolvedValue(undefined)
+
+        const wrapper = mountTab()
+        await flushPromises()
+        const editor = wrapper.findComponent({name: "KsEditor"})
+        editor.vm.$emit("update:model-value", "edited content")
+        editor.vm.$emit("save")
+        editor.vm.$emit("update:model-value", "edited again")
+        editor.vm.$emit("save")
+        finishSave()
+        await flushPromises()
+
+        expect(saveOrCreateFile).toHaveBeenCalledTimes(2)
+        expect(saveOrCreateFile).toHaveBeenLastCalledWith({namespace: "io.kestra.test", path: "data.txt", content: "edited again"})
+    })
 })

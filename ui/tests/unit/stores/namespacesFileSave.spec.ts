@@ -54,6 +54,17 @@ describe("namespaces store saveOrCreateFile", () => {
         expect(await ((postMock.mock.calls[1][1] as FormData).get("fileContent") as Blob).text()).toBe("v2")
     })
 
+    test("does not send a save again while the same content of that file is already on its way", async () => {
+        const first = pendingRequest()
+        postMock.mockReturnValueOnce(first.promise)
+
+        const saves = [save("data.txt", "v1"), save("data.txt", "v1"), save("data.txt", "v1")]
+        first.resolve()
+        await Promise.all(saves)
+
+        expect(postMock).toHaveBeenCalledTimes(1)
+    })
+
     test("still sends the next save of a file when the previous one failed", async () => {
         postMock.mockRejectedValueOnce(new Error("timeout"))
 

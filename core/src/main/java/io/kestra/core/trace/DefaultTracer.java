@@ -15,14 +15,12 @@ class DefaultTracer implements Tracer {
     private final OpenTelemetry openTelemetry;
     private final io.opentelemetry.api.trace.Tracer tracer;
     private final String spanNamePrefix;
-    private final TraceLevel level; // FIXME useless for now as we didn't handle FINE level
     private final Attributes baseAttributes;
 
-    DefaultTracer(OpenTelemetry openTelemetry, io.opentelemetry.api.trace.Tracer tracer, String spanNamePrefix, TraceLevel level, Attributes baseAttributes) {
+    DefaultTracer(OpenTelemetry openTelemetry, io.opentelemetry.api.trace.Tracer tracer, String spanNamePrefix, Attributes baseAttributes) {
         this.openTelemetry = openTelemetry;
         this.tracer = tracer;
         this.spanNamePrefix = spanNamePrefix;
-        this.level = level;
         this.baseAttributes = baseAttributes;
     }
 

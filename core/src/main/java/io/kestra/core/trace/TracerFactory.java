@@ -30,7 +30,7 @@ public class TracerFactory {
         TraceLevel level = levelFromConfiguration(clazz.getName());
         Attributes attributes = TraceUtils.attributesFrom(clazz);
         return level == TraceLevel.DISABLED || openTelemetry.isEmpty() || tracer.isEmpty() ? new NoopTracer()
-            : new DefaultTracer(openTelemetry.get(), tracer.get(), spanNamePrefix, level, attributes);
+            : new DefaultTracer(openTelemetry.get(), tracer.get(), spanNamePrefix, attributes);
     }
 
     /**

@@ -52,14 +52,14 @@
 
     interface VariableRow {
         key: string;
-        value: any;
+        value: unknown;
         date?: boolean;
         subflow?: boolean;
     }
 
     const props = withDefaults(
         defineProps<{
-            data: Record<string, any>;
+            data: Record<string, unknown>;
             keyLabelTranslationKey?: string;
         }>(),
         {

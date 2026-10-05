@@ -1,6 +1,5 @@
 import {beforeEach, describe, expect, it, vi} from "vitest"
 import {createPinia, setActivePinia} from "pinia"
-import {reactive} from "vue"
 
 vi.mock("vue-router", () => ({
     useRoute: () => ({query: {}, params: {}}),
@@ -28,14 +27,14 @@ describe("playground readyToStart", () => {
     beforeEach(() => {
         setActivePinia(createPinia())
         confirmMock.mockReset()
-        Object.assign(flowStore, reactive({
+        Object.assign(flowStore, {
             flow: {id: "f", namespace: "ns", revision: 1, inputs: []},
             haveChange: false,
             flowErrors: undefined,
             isCreating: false,
             saveAll: vi.fn().mockResolvedValue("saved"),
             loadGraph: vi.fn().mockResolvedValue(undefined),
-        }))
+        })
         Object.assign(executionsStore, {
             execution: undefined,
             triggerExecution: vi.fn(),
@@ -68,5 +67,21 @@ describe("playground readyToStart", () => {
         await store.runUntilTask("t1")
 
         expect(store.readyToStart).toBe(false)
+    })
+
+    it("should stay busy while the trigger request is in flight", async () => {
+        let resolveTrigger: (execution: undefined) => void = () => {}
+        executionsStore.triggerExecution = vi.fn(() => new Promise((resolve) => {
+            resolveTrigger = resolve
+        }))
+        const store = usePlaygroundStore()
+
+        const run = store.runUntilTask("t1")
+        await vi.waitFor(() => expect(executionsStore.triggerExecution).toHaveBeenCalled())
+
+        expect(store.readyToStart).toBe(false)
+        resolveTrigger(undefined)
+        await run
+        expect(store.readyToStart).toBe(true)
     })
 })

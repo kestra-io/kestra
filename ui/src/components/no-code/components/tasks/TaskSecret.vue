@@ -17,7 +17,7 @@
         disabled?: boolean;
         schema?: Schema;
         root?: string;
-        task?: any;
+        task?: Record<string, unknown>;
     }>()
 
     const modelValue = defineModel<string>({default: ""})

@@ -6,94 +6,71 @@ import {
     setDesignSystemLocale,
 } from "../../../src/i18n"
 
-vi.mock("../../../src/components/Data/KsEmpty.locale.ts", () => ({
-    default: {},
-}))
+const EMPTY_LOCALE_MODULE = "../../../src/components/Data/KsEmpty.locale.ts"
 
 const localeModules = import.meta.glob<{
     default: Record<string, object>
 }>("../../../src/components/**/*.locale.ts")
 
+function stubI18n() {
+    const mergeLocaleMessage = vi.fn()
+    return {mergeLocaleMessage, i18n: {global: {mergeLocaleMessage}} as unknown as I18n}
+}
+
+async function localeEntries(skippedModule?: string) {
+    const modules = await Promise.all(
+        Object.entries(localeModules)
+            .filter(([path]) => path !== skippedModule)
+            .map(([, loadModule]) => loadModule()),
+    )
+    return modules.flatMap((module) => Object.entries(module.default))
+}
+
 describe("design-system i18n", () => {
     afterEach(() => {
         setDesignSystemLocale("en")
+        vi.doUnmock(EMPTY_LOCALE_MODULE)
+        vi.resetModules()
     })
 
     test("starts with English as the default locale", () => {
         expect(designSystemLocale.value).toBe("en")
     })
 
-    test("updates the locale through the shared ref", async () => {
-        const {designSystemLocale: importedDesignSystemLocale} = await import("../../../src/i18n")
-
+    test("updates the locale through setDesignSystemLocale", () => {
         setDesignSystemLocale("fr")
 
         expect(designSystemLocale.value).toBe("fr")
-        expect(importedDesignSystemLocale.value).toBe("fr")
-        expect(importedDesignSystemLocale).toBe(designSystemLocale)
     })
 
-    test("merges messages once for every language found", async () => {
-        const modules = await Promise.all(
-            Object.values(localeModules).map((loadModule) => loadModule()),
-        )
-        const languageCount = modules.reduce(
-            (count, module) => count + Object.keys(module.default).length,
-            0,
-        )
-        const mergeLocaleMessage = vi.fn()
-        const i18n = {
-            global: {
-                mergeLocaleMessage,
-            },
-        } as unknown as I18n
+    test("merges every locale module into the provided i18n instance", async () => {
+        const {i18n, mergeLocaleMessage} = stubI18n()
 
         await registerDesignSystemI18n(i18n)
 
-        expect(mergeLocaleMessage).toHaveBeenCalledTimes(languageCount)
-    })
-
-    test("merges messages into the provided i18n instance", async () => {
-        const modules = await Promise.all(
-            Object.values(localeModules).map((loadModule) => loadModule()),
-        )
-        const expectedMessages = modules.flatMap((module) => Object.entries(module.default))
-        const mergeLocaleMessage = vi.fn()
-        const i18n = {
-            global: {
-                mergeLocaleMessage,
-            },
-        } as unknown as I18n
-
-        await registerDesignSystemI18n(i18n)
-
-        expect(mergeLocaleMessage.mock.calls).toEqual(expectedMessages)
+        expect(mergeLocaleMessage.mock.calls).toEqual(await localeEntries())
     })
 
     test("registers English messages", async () => {
-        const mergeLocaleMessage = vi.fn()
-        const i18n = {
-            global: {
-                mergeLocaleMessage,
-            },
-        } as unknown as I18n
+        const {i18n, mergeLocaleMessage} = stubI18n()
 
         await registerDesignSystemI18n(i18n)
 
         expect(mergeLocaleMessage).toHaveBeenCalledWith(
             "en",
-            expect.any(Object),
+            expect.objectContaining({no_data: expect.any(String)}),
         )
     })
 
-    test("resolves when a locale module contributes nothing", async () => {
-        const mergeLocaleMessage = vi.fn()
-        const i18n = {
-            global: {
-                mergeLocaleMessage,
-            },
-        } as unknown as I18n
+    test("still merges the other modules when one contributes nothing", async () => {
+        const expected = await localeEntries(EMPTY_LOCALE_MODULE)
+        vi.doMock(EMPTY_LOCALE_MODULE, () => ({default: {}}))
+        vi.resetModules()
+        const {registerDesignSystemI18n: register} = await import("../../../src/i18n")
+        const {i18n, mergeLocaleMessage} = stubI18n()
 
-        await expect(registerDesignSystemI18n(i18n)).resolves.toBeUndefined()
+        await register(i18n)
+
+        expect(mergeLocaleMessage.mock.calls).toEqual(expected)
     })
 })

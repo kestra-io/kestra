@@ -321,7 +321,7 @@ describe("TaskNode anatomy", () => {
         expect((running.element as HTMLElement).style.width).toBe("25%")
     })
 
-    it("should draw its duration bar in the card's footer, not just hand it to a slot nothing renders", () => {
+    it("should render the duration bar in the card footer", () => {
         const wrapper = mountTaskNode({
             execution: {state: {current: "SUCCESS"}},
             taskRuns: [

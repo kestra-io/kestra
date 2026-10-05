@@ -29,7 +29,7 @@ function bucketOf(state: string): Bucket {
     return "queued"
 }
 
-function toMillis(date: Dayjs | string | number): number {
+export function toMillis(date: Dayjs | string | number): number {
     if (typeof date === "number") return date
     if (typeof date === "string") return new Date(date).getTime()
     return date.valueOf()

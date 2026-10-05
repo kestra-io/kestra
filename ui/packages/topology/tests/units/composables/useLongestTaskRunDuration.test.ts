@@ -57,6 +57,19 @@ describe("useLongestTaskRunDuration", () => {
         expect(vi.getTimerCount()).toBe(0)
     })
 
+    it("should start ticking again when a task run starts after every run was terminal", async () => {
+        const {runs, longest} = mountComposable([run([0, "RUNNING"], [2_000, "SUCCESS"])])
+        expect(vi.getTimerCount()).toBe(0)
+
+        runs.value = [...runs.value, run([8_000, "RUNNING"])]
+        await nextTick()
+        vi.advanceTimersByTime(4_000)
+        await nextTick()
+
+        expect(vi.getTimerCount()).toBe(1)
+        expect(longest.value).toBe(4_000)
+    })
+
     it("should clear its ticker when the owner unmounts", () => {
         const {wrapper} = mountComposable([run([0, "RUNNING"])])
         expect(vi.getTimerCount()).toBe(1)

@@ -1,7 +1,7 @@
 <template>
     <div
         class="node-wrapper"
-        :class="{'node-wrapper--dragging': dragging, 'node-wrapper--pill': lod === 'pill', 'node-wrapper--with-footer': hasFooter}"
+        :class="{'node-wrapper--dragging': dragging, 'node-wrapper--pill': lod === 'pill', 'node-wrapper--with-footer': $slots.footer}"
         :draggable="movable"
         @mouseover="mouseover"
         @mouseleave="mouseleave"
@@ -18,7 +18,7 @@
             <div
                 class="node-core"
                 :style="nodeStyle"
-                :class="[classes, {'node-core--focused': focused, 'node-core--with-footer': hasFooter}]"
+                :class="[classes, {'node-core--focused': focused, 'node-core--with-footer': $slots.footer}]"
             >
                 <div class="main-content">
                     <DragVertical v-if="movable" class="node-grip" aria-hidden="true" />
@@ -45,7 +45,7 @@
                     <slot name="title-status" />
                     <slot name="title-actions" />
                 </div>
-                <div v-if="hasFooter" class="node-footer">
+                <div v-if="$slots.footer" class="node-footer">
                     <slot name="footer" />
                 </div>
             </div>
@@ -59,7 +59,7 @@
 </template>
 
 <script lang="ts" setup>
-    import {computed, inject, useSlots} from "vue"
+    import {computed, inject} from "vue"
     import {
         KsTooltip,
         useTaskIcon,
@@ -166,9 +166,6 @@
     })
 
     const taskIconComponent = useTaskIcon()
-
-    const slots = useSlots()
-    const hasFooter = computed(() => Boolean(slots.footer))
 
     function mouseover() {
         emit(EVENTS.MOUSE_OVER, props.data.node)

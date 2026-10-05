@@ -39,9 +39,10 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, ref, onMounted} from "vue"
+    import {computed, ref, onMounted, type PropType} from "vue"
     import {escapeHtml} from "@kestra-io/design-system"
     import Play from "vue-material-design-icons/Play.vue"
+    import type {Breakpoint, Execution} from "@kestra-io/kestra-sdk"
     import {useExecutionsStore} from "../../../../../stores/executions"
     import {useAuthStore} from "override/stores/auth"
     import resource from "../../../../../models/resource"
@@ -54,7 +55,7 @@
 
     const props = defineProps({
         execution: {
-            type: Object,
+            type: Object as PropType<Execution>,
             required: true,
         },
     })
@@ -102,7 +103,7 @@
                 store: true,
             })
             if (props.execution.breakpoints) {
-                selectedBreakpoints.value = props.execution.breakpoints.map((b: any) => b.value ? `${b.id}.${b.value}` : b.id)
+                selectedBreakpoints.value = props.execution.breakpoints.map((b: Breakpoint) => b.value ? `${b.id}.${b.value}` : b.id)
             }
         }
     })

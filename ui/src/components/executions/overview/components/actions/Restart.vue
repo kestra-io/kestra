@@ -208,6 +208,7 @@
     import NavBarAction from "../../../../layout/NavBarAction.vue"
     import {asItemKey} from "../../../../layout/navBarActionsContext"
     import {splitTranslation} from "../../../../../utils/splitTranslation"
+    import type {FlowForExecution} from "@kestra-io/kestra-sdk"
 
     defineOptions({inheritAttrs: false})
 
@@ -260,7 +261,7 @@
     })
     const parentWarning = computed(() => splitTranslation(t, "restart subflow warning", "parent"))
 
-    const currentFlow = ref<any | undefined>(undefined)
+    const currentFlow = ref<FlowForExecution | undefined>(undefined)
     const hasInputs = computed(() => (currentFlow.value?.inputs?.length ?? 0) > 0)
     const hasOriginalInputs = computed(() => {
         const inputs = props.execution.inputs
@@ -395,14 +396,15 @@
     }
 
     const restart = async () => {
-        const method = `${replayOrRestart.value}Execution` as keyof typeof executionsStore
-        const response = await (executionsStore[method] as any)({
-            executionId: props.execution.id,
-            taskRunId: props.taskRun && props.isReplay ? props.taskRun.id : undefined,
-            revision: props.isReplay ? revisionsSelected.value : undefined,
-        })
-
-        const newExecution = response
+        const newExecution = props.isReplay
+            ? await executionsStore.replayExecution({
+                executionId: props.execution.id,
+                taskRunId: props.taskRun ? props.taskRun.id : undefined,
+                revision: revisionsSelected.value,
+            })
+            : await executionsStore.restartExecution({
+                executionId: props.execution.id,
+            })
 
         toast.success(t(props.isReplay ? "replayed" : "restarted"))
 

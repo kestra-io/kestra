@@ -108,7 +108,7 @@ export function index(based: readonly string[], value: string) {
     return idx === -1 ? Number.MAX_SAFE_INTEGER : idx
 }
 
-export function levelOrLower(level: LevelKey) {
+export function levelOrLower(level: LevelKey | undefined) {
     const levels: LevelKey[] = []
     for (const currentLevel of LOG_LEVELS) {
         levels.push(currentLevel)

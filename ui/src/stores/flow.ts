@@ -29,7 +29,7 @@ import {defaultNamespace} from "../composables/useNamespaces"
 import {useApiStore} from "./api"
 import {flowTaskStats, isExampleFlow, primaryTriggerType} from "../utils/analytics/activation"
 import type {KestraHttpError, KestraRequestOptions} from "../utils/kestraHttp"
-import {splitValidationErrors} from "../utils/validationErrors"
+import {validationErrorLines, type ValidationError} from "../utils/validationErrors"
 
 const textYamlHeader = {
     headers: {
@@ -56,11 +56,11 @@ export interface Input {
 }
 
 export interface FlowValidations {
-    constraints?: string;
     outdated?: boolean;
     infos?: string[];
     warnings?: string[];
     deprecationPaths?: string[];
+    errors?: ValidationError[];
 }
 
 export type Flow = Omit<FlowWithSource, "disabled" | "draft" | "deleted" | "tasks"> & {
@@ -144,7 +144,7 @@ export const useFlowStore = defineStore("flow", () => {
     const filesSaveAll = ref<(() => Promise<void>) | null>(null)
     const hasDirtyEditorFiles = ref<boolean>(false)
     const flowValidation = ref<FlowValidations>()
-    const taskError = ref<string>()
+    const taskErrors = ref<ValidationError[]>()
     const metrics = ref<string[]>()
     const tasksWithMetrics = ref<string[]>()
     const executeFlow = ref<boolean>(false)
@@ -270,7 +270,7 @@ export const useFlowStore = defineStore("flow", () => {
 
         if (!source.trim()?.length) {
             flowValidation.value = {
-                constraints: t("flow must not be empty"),
+                errors: [{detail: t("flow must not be empty")}],
             }
             return
         }
@@ -307,7 +307,7 @@ export const useFlowStore = defineStore("flow", () => {
                     flowHaveTasks.value &&
                     flowBeforeEdit && (!flowBeforeEdit.errors || flowBeforeEdit.errors.every(e => typeof e.id === "string"))
                 ) {
-                    if (!value.constraints) fetchGraph()
+                    if (!value.errors?.length) fetchGraph()
                 }
 
                 return value
@@ -541,7 +541,7 @@ export const useFlowStore = defineStore("flow", () => {
             }
 
             flowValidation.value = {
-                constraints: data.exception,
+                errors: [{detail: data.exception}],
                 outdated: false,
                 infos: [],
             }
@@ -834,7 +834,7 @@ function deleteFlowAndDependencies() {
     }
 
     function validateFlow(options: { flow: string }) {
-        const flowValidationIssues: FlowValidations = {}
+        let creationDenied: string | undefined
         if(isCreating.value) {
             const {namespace} = YAML_UTILS.getMetadata<ParsedFlow>(options.flow)
             if(authStore.user && !authStore.user?.isAllowed(
@@ -842,20 +842,15 @@ function deleteFlowAndDependencies() {
                 action.CREATE,
                 namespace,
             )) {
-                flowValidationIssues.constraints = t("flow creation denied in namespace", {namespace})
+                creationDenied = t("flow creation denied in namespace", {namespace})
             }
         }
 
         return FlowsAPI.validateFlows({body: options.flow}, {withCredentials: true})
             .then(results => {
                 const validResults: FlowValidations = results[0] ?? {}
-
-                const constraintsArray = [validResults.constraints, flowValidationIssues.constraints].filter(Boolean)
-
-                if (constraintsArray.length) {
-                    validResults.constraints = constraintsArray.join("\n")
-                } else {
-                    delete validResults.constraints
+                if (creationDenied) {
+                    validResults.errors = [...(validResults.errors ?? []), {detail: creationDenied}]
                 }
 
                 flowValidation.value = validResults
@@ -873,7 +868,7 @@ function deleteFlowAndDependencies() {
             },
             {withCredentials: true, headers: textYamlHeader.headers},
         ).then(result => {
-            taskError.value = result.constraints
+            taskErrors.value = result.errors
             return result
         })
     }
@@ -997,7 +992,7 @@ function deleteFlowAndDependencies() {
                 ? [`${t(key + ".description")} ${t(key + ".details")}`]
                 : []
 
-        const constraintsError = splitValidationErrors(flowValidation.value?.constraints)
+        const constraintsError = validationErrorLines(flowValidation.value?.errors)
 
         const errors = [...flowExistsError, ...constraintsError]
 
@@ -1060,7 +1055,7 @@ function deleteFlowAndDependencies() {
         filesSaveAll,
         hasDirtyEditorFiles,
         flowValidation,
-        taskError,
+        taskErrors,
         metrics,
         tasksWithMetrics,
         executeFlow,

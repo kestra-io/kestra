@@ -22,6 +22,7 @@ import io.kestra.core.models.property.Property;
 import io.kestra.core.models.topologies.FlowTopology;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.validations.ValidateConstraintViolation;
+import io.kestra.core.models.validations.ValidationError;
 import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.repositories.ConcurrencyLimitRepositoryInterface;
@@ -46,6 +47,7 @@ import io.micronaut.test.annotation.MockBean;
 import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.tuple;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -111,7 +113,7 @@ class FlowServiceTest {
 
         // Then
         assertThat(results).hasSize(1);
-        assertThat(results.getFirst()).isEqualTo(new ValidateConstraintViolation(0, null, "io.kestra.unittest", "test", null, false, List.of(), List.of(), List.of()));
+        assertThat(results.getFirst()).isEqualTo(new ValidateConstraintViolation(0, null, "io.kestra.unittest", "test", false, List.of(), List.of(), List.of(), null));
     }
 
     @Test
@@ -130,7 +132,7 @@ class FlowServiceTest {
 
         // Then
         assertThat(results).hasSize(1);
-        assertThat(results.getFirst()).isEqualTo(new ValidateConstraintViolation(0, "flow.yaml", "io.kestra.unittest", "test", null, false, List.of(), List.of(), List.of()));
+        assertThat(results.getFirst()).isEqualTo(new ValidateConstraintViolation(0, "flow.yaml", "io.kestra.unittest", "test", false, List.of(), List.of(), List.of(), null));
     }
 
     @Test
@@ -154,7 +156,7 @@ class FlowServiceTest {
 
         // Then
         assertThat(results).hasSize(1);
-        assertThat(results.getFirst().getConstraints()).contains("pluginDefaults");
+        assertThat(results.getFirst().getErrors()).extracting(ValidationError::toLine).anyMatch(line -> line.contains("pluginDefaults"));
     }
 
     @Test
@@ -273,6 +275,153 @@ class FlowServiceTest {
         FlowWithSource flow = create("findByIdTest", "test", 1);
         FlowWithSource saved = flowRepository.create(GenericFlow.of(flow));
         assertThat(flowService.findById(null, saved.getNamespace(), saved.getId()).isPresent()).isTrue();
+    }
+
+    @Test
+    void shouldLocateAMissingPropertyOfANestedTaskByJsonPointer() {
+        String source = """
+            id: test
+            namespace: io.kestra.unittest
+            tasks:
+              - id: seq
+                type: io.kestra.plugin.core.flow.Sequential
+                tasks:
+                  - id: first
+                    type: io.kestra.plugin.core.log.Log
+                    message: ok
+                  - id: second
+                    type: io.kestra.plugin.core.log.Log
+            """;
+
+        List<ValidateConstraintViolation> results = flowService.validate("my-tenant", List.of(new FlowSource(null, source)));
+
+        assertThat(results.getFirst().getErrors())
+            .extracting(ValidationError::pointer, ValidationError::detail)
+            .containsExactly(tuple("/tasks/0/tasks/1/message", "must not be null"));
+    }
+
+    @Test
+    void shouldLocateAnUnknownPropertyByJsonPointer() {
+        String source = """
+            id: test
+            namespace: io.kestra.unittest
+            tasks:
+              - id: log
+                type: io.kestra.plugin.core.log.Log
+                message: ok
+                unknownProp: nope
+            """;
+
+        List<ValidateConstraintViolation> results = flowService.validate("my-tenant", List.of(new FlowSource(null, source)));
+
+        assertThat(results.getFirst().getErrors())
+            .extracting(ValidationError::pointer)
+            .containsExactly("/tasks/0/unknownProp");
+    }
+
+    @Test
+    void shouldReportUnknownAndMissingPropertiesTogether() {
+        String source = """
+            id: test
+            namespace: io.kestra.unittest
+            tasks:
+              - id: hello
+                type: io.kestra.plugin.core.log.Log
+                message: Hi
+                colour: purple
+              - id: nested
+                type: io.kestra.plugin.core.flow.Sequential
+                tasks:
+                  - id: silent
+                    type: io.kestra.plugin.core.log.Log
+                    shade: dark
+            triggers:
+              - id: daily
+                type: io.kestra.plugin.core.trigger.Schedule
+            """;
+
+        List<ValidateConstraintViolation> results = flowService.validate("my-tenant", List.of(new FlowSource(null, source)));
+
+        assertThat(results.getFirst().getErrors())
+            .extracting(ValidationError::pointer)
+            .containsExactlyInAnyOrder("/tasks/0/colour", "/tasks/1/tasks/0/shade", "/tasks/1/tasks/0/message", "/triggers/0/cron");
+    }
+
+    @Test
+    void shouldReportEveryProblemAroundAnInvalidTypeAtItsSourcePosition() {
+        String source = """
+            id: test
+            namespace: io.kestra.unittest
+            tasks:
+              - id: hello
+                type: io.kestra.plugin.core.log.Log
+                message: Hi
+                colour: purple
+              - id: ghost
+                type: io.kestra.plugin.core.log.Nope
+                shade: dark
+              - id: silent
+                type: io.kestra.plugin.core.log.Log
+            triggers:
+              - id: daily
+                type: io.kestra.plugin.core.trigger.Schedule
+            """;
+
+        List<ValidateConstraintViolation> results = flowService.validate("my-tenant", List.of(new FlowSource(null, source)));
+
+        assertThat(results.getFirst().getErrors())
+            .extracting(ValidationError::pointer)
+            .containsExactlyInAnyOrder("/tasks/0/colour", "/tasks/1/type", "/tasks/2/message", "/triggers/0/cron");
+    }
+
+    @Test
+    void shouldKeepUnknownPropertiesWhenAnotherParseErrorFollows() {
+        String source = """
+            id: test
+            namespace: io.kestra.unittest
+            disabled: maybe
+            tasks:
+              - id: hello
+                type: io.kestra.plugin.core.log.Log
+                message: Hi
+                colour: purple
+            """;
+
+        List<ValidateConstraintViolation> results = flowService.validate("my-tenant", List.of(new FlowSource(null, source)));
+
+        assertThat(results.getFirst().getErrors())
+            .extracting(ValidationError::pointer)
+            .containsExactlyInAnyOrder("/tasks/0/colour", "/disabled");
+    }
+
+    @Test
+    void shouldReportAYamlSyntaxErrorAsAnError() {
+        String source = """
+            id: test
+            namespace: [io.kestra.unittest
+            """;
+
+        List<ValidateConstraintViolation> results = flowService.validate("my-tenant", List.of(new FlowSource(null, source)));
+
+        assertThat(results.getFirst().getErrors()).singleElement()
+            .extracting(ValidationError::detail).asString().startsWith("YAML parsing error");
+    }
+
+    @Test
+    void shouldLocateAnInvalidTypeOnItsTypeProperty() {
+        String source = """
+            id: test
+            namespace: io.kestra.unittest
+            tasks:
+              - id: log
+                type: io.kestra.plugin.core.debug.UnknownTask
+            """;
+
+        List<ValidateConstraintViolation> results = flowService.validate("my-tenant", List.of(new FlowSource(null, source)));
+
+        assertThat(results.getFirst().getErrors())
+            .singleElement()
+            .isEqualTo(new ValidationError("Invalid type: io.kestra.plugin.core.debug.UnknownTask", "/tasks/0/type", "tasks[0].type"));
     }
 
     @Test

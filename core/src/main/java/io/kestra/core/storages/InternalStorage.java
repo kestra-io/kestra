@@ -66,7 +66,7 @@ public class InternalStorage implements Storage {
      **/
     @Override
     public Namespace namespace() {
-        return namespaceFactory.of(logger, context.getTenantId(), context.getNamespace(), storage);
+        return namespaceFactory.of(logger, context.getTenantId(), context.getNamespace());
     }
 
     /**
@@ -82,7 +82,7 @@ public class InternalStorage implements Storage {
                 context.getTenantId(), context.getNamespace() // from Tenant/Namespace
             );
         }
-        return namespaceFactory.of(logger, context.getTenantId(), namespace, storage);
+        return namespaceFactory.of(logger, context.getTenantId(), namespace);
     }
 
     /**

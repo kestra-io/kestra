@@ -1,9 +1,10 @@
 import {computed, provide, ref} from "vue";
 import TaskString from "../../../../../../src/components/no-code/components/tasks/TaskString.vue";
 import {Meta, StoryObj} from "@storybook/vue3-vite";
-import {expect} from "storybook/test";
+import {expect, userEvent, waitFor, within} from "storybook/test";
 import {vueRouter} from "storybook-vue3-router";
-import {SCHEMA_DEFINITIONS_INJECTION_KEY} from "../../../../../../src/components/no-code/injectionKeys";
+import {FOCUSED_EXPRESSION_EDITOR_INJECTION_KEY, SCHEMA_DEFINITIONS_INJECTION_KEY} from "../../../../../../src/components/no-code/injectionKeys";
+import type {Schema} from "../../../../../../src/components/no-code/components/tasks/getTaskComponent";
 
 const meta: Meta<typeof TaskString> = {
     title: "Components/NoCode/TaskString",
@@ -69,6 +70,49 @@ export const DurationPicker: Story = {
         modelValue: "PT1H30M",
         schema: {type: "string", format: "duration"},
         root: "timeout",
+    },
+};
+
+export const RegistersFocusedExpressionEditor: Story = {
+    render: (args) => ({
+        setup() {
+            provide(SCHEMA_DEFINITIONS_INJECTION_KEY, computed(() => ({})));
+            const focusedExpressionEditorInsert = ref<((text: string) => void) | null>(null);
+            provide(FOCUSED_EXPRESSION_EDITOR_INJECTION_KEY, focusedExpressionEditorInsert);
+            const model = ref(args.modelValue);
+            const mounted = ref(true);
+            return () => <div style={{width: "500px"}}>
+                {mounted.value && <TaskString
+                    modelValue={model.value}
+                    onUpdate:modelValue={(val) => model.value = val}
+                    schema={args.schema}
+                    root={args.root}
+                />}
+                <button data-testid="unmount-field" onClick={() => mounted.value = false}>unmount</button>
+                <span data-testid="focused-state">{focusedExpressionEditorInsert.value ? "registered" : "cleared"}</span>
+            </div>
+        },
+    }),
+    args: {
+        modelValue: "Hello, World!",
+        schema: {type: "string"} as Schema,
+        root: "description",
+    },
+    play: async ({canvasElement}) => {
+        // Monaco runs inline editors in tab-focus mode, so Tab fires focusout while focus is still
+        // inside the panel: the registration has to survive a blur and go only on unmount.
+        const canvas = within(canvasElement);
+        const editorContainer = await waitFor(() => canvas.getByTestId("monaco-editor"), {timeout: 15000});
+        const input = within(editorContainer).getByRole("textbox");
+
+        await userEvent.click(input);
+        await waitFor(() => expect(canvas.getByTestId("focused-state")).toHaveTextContent("registered"));
+
+        await userEvent.click(document.body);
+        await waitFor(() => expect(canvas.getByTestId("focused-state")).toHaveTextContent("registered"));
+
+        await userEvent.click(canvas.getByTestId("unmount-field"));
+        await waitFor(() => expect(canvas.getByTestId("focused-state")).toHaveTextContent("cleared"));
     },
 };
 

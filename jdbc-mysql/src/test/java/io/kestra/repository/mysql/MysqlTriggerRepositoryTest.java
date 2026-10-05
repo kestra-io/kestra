@@ -27,11 +27,25 @@ public class MysqlTriggerRepositoryTest extends AbstractTriggerRepositoryTest {
         triggerStateStore.save(trigger(tenant, "my_search_beta"));
 
         // When searching for that word
-        ArrayListTotal<TriggerState> entries = search(tenant, "search", Op.EQUALS);
+        ArrayListTotal<TriggerState> entries = find(tenant, query("search", Op.EQUALS));
 
         // Then only the FULLTEXT match is returned, so the LIKE scan was not run
         assertThat(entries).extracting(TriggerState::getFlowId).containsExactly("search_alpha");
         assertThat(entries.getTotal()).isEqualTo(1);
+    }
+
+    @Test
+    void shouldMatchAnUnderscoredFlowIdAsOneWord() {
+        // Given the searched flow id, and another flow id starting with its last part
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        triggerStateStore.save(trigger(tenant, "my_flow"));
+        triggerStateStore.save(trigger(tenant, "flow_daily"));
+
+        // When searching for that flow id
+        ArrayListTotal<TriggerState> entries = find(tenant, query("my_flow", Op.EQUALS));
+
+        // Then only that flow id is returned
+        assertThat(entries).extracting(TriggerState::getFlowId).containsExactly("my_flow");
     }
 
     @Test
@@ -43,19 +57,36 @@ public class MysqlTriggerRepositoryTest extends AbstractTriggerRepositoryTest {
         triggerStateStore.save(trigger(tenant, "other_flow"));
 
         // When excluding that word
-        ArrayListTotal<TriggerState> entries = search(tenant, "search", Op.NOT_EQUALS);
+        ArrayListTotal<TriggerState> entries = find(tenant, query("search", Op.NOT_EQUALS));
 
         // Then both kinds of match are excluded
         assertThat(entries).extracting(TriggerState::getFlowId).containsExactly("other_flow");
         assertThat(entries.getTotal()).isEqualTo(1);
     }
 
-    private ArrayListTotal<TriggerState> search(String tenant, String query, Op operation) {
-        return triggerRepository.find(
-            Pageable.from(1, 10),
-            tenant,
-            List.of(QueryFilter.builder().field(Field.QUERY).value(query).operation(operation).build())
-        );
+    @Test
+    void shouldKeepSubstringMatchesWhenTheSearchIsInAnOrGroup() {
+        // Given a flow id only containing the searched word, one matching the other branch of the OR, and one matching neither
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        triggerStateStore.save(trigger(tenant, "my_search_beta"));
+        triggerStateStore.save(trigger(tenant, "other_flow"));
+        triggerStateStore.save(trigger(tenant, "unrelated_flow"));
+
+        // When searching for that word OR that other flow id
+        QueryFilter otherFlow = QueryFilter.builder().field(Field.FLOW_ID).value("other_flow").operation(Op.EQUALS).build();
+        QueryFilter searchOrOtherFlow = QueryFilter.builder().logical(QueryFilter.Logical.OR).children(List.of(query("search", Op.EQUALS), otherFlow)).build();
+        ArrayListTotal<TriggerState> entries = find(tenant, searchOrOtherFlow);
+
+        // Then the substring match is still returned with the other branch
+        assertThat(entries).extracting(TriggerState::getFlowId).containsExactlyInAnyOrder("my_search_beta", "other_flow");
+    }
+
+    private ArrayListTotal<TriggerState> find(String tenant, QueryFilter filter) {
+        return triggerRepository.find(Pageable.from(1, 10), tenant, List.of(filter));
+    }
+
+    private static QueryFilter query(String value, Op operation) {
+        return QueryFilter.builder().field(Field.QUERY).value(value).operation(operation).build();
     }
 
     private static TriggerState trigger(String tenant, String flowId) {

@@ -68,7 +68,8 @@ public class MysqlRepository<T> extends AbstractJdbcRepository<T> {
             likeCondition = likeCondition.or(DSL.coalesce(f, DSL.inline("")).like(pattern, '\\'));
         }
 
-        String booleanQuery = Arrays.stream(query.split("\\p{IsPunct}|\\s+"))
+        // Split like the InnoDB parser, which keeps '_' inside words, so an id like 'my_flow' is matched as one word.
+        String booleanQuery = Arrays.stream(query.split("[^\\p{L}\\p{N}_]+"))
             .filter(s -> s.length() >= 3)
             .map(s -> "+" + s + "*")
             .collect(Collectors.joining(" "));
@@ -110,16 +111,16 @@ public class MysqlRepository<T> extends AbstractJdbcRepository<T> {
     private static DSLContext renderFullTextConditionAs(DSLContext context, Function<FullTextCondition, Condition> part, AtomicBoolean rendered) {
         return DSL.using(context.configuration().deriveAppending(VisitListener.onVisitStart(visit ->
         {
-            if (visit.queryPart() instanceof FullTextCondition condition && !isNegated(visit)) {
+            if (visit.queryPart() instanceof FullTextCondition condition && isRequiredForEveryRow(visit)) {
                 visit.queryPart(part.apply(condition));
                 rendered.set(true);
             }
         })));
     }
 
-    // A negated search keeps both parts, otherwise it would return the rows only the other part matches.
-    private static boolean isNegated(VisitContext visit) {
-        return Arrays.stream(visit.queryParts()).anyMatch(QOM.Not.class::isInstance);
+    // Under NOT or OR, the row count no longer tells whether the FULLTEXT match found anything, so both parts are kept.
+    private static boolean isRequiredForEveryRow(VisitContext visit) {
+        return Arrays.stream(visit.queryParts()).noneMatch(part -> part instanceof QOM.Not || part instanceof QOM.Or || part instanceof QOM.Xor);
     }
 
     @Override

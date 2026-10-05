@@ -148,6 +148,7 @@
 
 <script setup lang="ts">
     import {computed, provide, ref, watch} from "vue"
+    import {useShownValidationErrors} from "../utils/useFieldValidationErrors"
     import {useI18n} from "vue-i18n"
     import FlowIcon from "vue-material-design-icons/FileDocumentOutline.vue"
     import Cog from "vue-material-design-icons/Cog.vue"
@@ -240,8 +241,10 @@
         }
     }
 
+    const shownValidationErrors = useShownValidationErrors()
+
     const validationIssuesByTask = computed<Map<string, string[]>>(() =>
-        groupValidationIssuesByTask(flowStore.flowValidation?.errors, flowStore.flowParsed),
+        groupValidationIssuesByTask(shownValidationErrors.value, flowStore.flowParsed),
     )
 
     const inlineEditPanel = ref()

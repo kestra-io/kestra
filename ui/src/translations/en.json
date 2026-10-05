@@ -473,6 +473,7 @@
       "title": "Input/Output",
       "search_placeholder": "Search Key or value...",
       "tasks_outputs": "Tasks outputs",
+      "expression": "Expression",
       "tree": "Tree",
       "raw_json": "Raw JSON",
       "select_prompt": "Select a variable to inspect its value.",

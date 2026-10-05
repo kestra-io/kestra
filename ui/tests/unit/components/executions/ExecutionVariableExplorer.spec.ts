@@ -110,6 +110,47 @@ describe("ExecutionVariableExplorer", () => {
         setActivePinia(createPinia())
     })
 
+    test("uses render for variables containing expressions", async () => {
+        const wrapper = mountExplorer({
+            greeting: "Hello {{ inputs.name }}",
+        })
+
+        await flushPromises()
+        await selectVariable(wrapper, "greeting")
+
+        expect(wrapper.findComponent({name: "ExpressionDebugger"}).props("expression"))
+            .toBe("{{ render(vars.greeting) }}")
+    })
+
+    test("uses render for variables containing expressions", async () => {
+        const wrapper = mountExplorer({
+            greeting: "Hello {{ inputs.name }}",
+        })
+
+        await flushPromises()
+        await selectVariable(wrapper, "greeting")
+
+        expect(wrapper.findComponent({name: "ExpressionDebugger"}).props("expression"))
+            .toBe("{{ render(vars.greeting) }}")
+    })
+
+    test("marks expression-valued variables in the sidebar", async () => {
+        const wrapper = mountExplorer({
+            greeting: "Hello {{ inputs.name }}",
+            plain: "Hello world",
+        })
+
+        await flushPromises()
+
+        const sidebar = wrapper.findComponent({name: "SidebarList"})
+        const variables = (sidebar.props("sections") as any[])
+            .find((section) => section.key === "variables")
+            .items
+
+        expect(variables.find((item: any) => item.label === "greeting").isExpression).toBe(true)
+        expect(variables.find((item: any) => item.label === "plain").isExpression).toBe(false)
+    })
+
     test("previews a nested file selected from the tree", async () => {
         const fileUri = "kestra:///outputs/report.txt"
         const wrapper = mountExplorer({

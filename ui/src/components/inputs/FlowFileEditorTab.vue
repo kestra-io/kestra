@@ -107,6 +107,7 @@
     import {useProductTourStore} from "../../stores/productTour"
     import useFlowEditorRunTaskButton from "../../composables/playground/useFlowEditorRunTaskButton"
     import {useReadOnlyYamlKeys} from "../../composables/useReadOnlyYamlKeys"
+    import {useViolationMarkers} from "../../composables/useViolationMarkers"
 
     import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
     import {KsEditor} from "@kestra-io/design-system"
@@ -294,6 +295,11 @@
         && !flowStore.isCreating
         && !flowStore.isReadOnly
         && previewSource.value === undefined)
+
+    useViolationMarkers({
+        editor: monacoEditor,
+        errors: computed(() => props.flow && previewSource.value === undefined ? flowStore.flowValidation?.errors : undefined),
+    })
 
     useReadOnlyYamlKeys({
         editor: monacoEditor,

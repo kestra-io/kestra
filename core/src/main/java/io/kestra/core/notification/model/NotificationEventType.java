@@ -1,4 +1,4 @@
-package io.kestra.core.models.notifications;
+package io.kestra.core.notification.model;
 
 public enum NotificationEventType {
     CREATED,

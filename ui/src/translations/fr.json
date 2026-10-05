@@ -291,7 +291,22 @@
       "help": "Aide",
       "issue": "Problème",
       "demo": "Démo",
-      "star": "Ajoutez-nous aux favoris"
+      "star": "Ajoutez-nous aux favoris",
+      "notifications": "Notifications"
+    },
+    "notifications": {
+      "heading": "Notifications",
+      "ongoing": "En cours",
+      "markAllRead": "Tout marquer comme lu",
+      "markUnread": "Marquer comme non lu",
+      "markRead": "Marquer comme lu",
+      "empty": "Aucune notification pour l'instant",
+      "emptyUnread": "Aucune notification non lue",
+      "tabs": {
+        "all": "Tout",
+        "unread": "Non lu"
+      },
+      "bellAriaLabel": "Notifications"
     },
     "source": "Source",
     "home": "Accueil",

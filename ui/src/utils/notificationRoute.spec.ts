@@ -86,6 +86,59 @@ describe("resolveNotificationRoute", () => {
         expect(await resolveNotificationRoute(buildNotification({type: "SOME_PRODUCER_TYPE", referenceId: "id-1"})))
             .toEqual({name: "some/route", params: {id: "id-1"}})
     })
+
+    it("routes an execution-targeted ASYNC_OPERATION to executions/list filtered by operationId", async () => {
+        const {resolveNotificationRoute} = await import("./notificationRoute")
+
+        const route = await resolveNotificationRoute(buildNotification({
+            type: "ASYNC_OPERATION",
+            asyncOperationType: "EXECUTION_RESTART",
+            resourceType: "EXECUTION",
+            referenceId: "op-1",
+        }))
+
+        expect(route).toEqual({
+            name: "executions/list",
+            params: {},
+            query: {"filters[operationId][EQUALS]": "op-1"},
+        })
+    })
+
+    it("routes a trigger-targeted ASYNC_OPERATION to the triggers manage tab filtered by operationId", async () => {
+        const {resolveNotificationRoute} = await import("./notificationRoute")
+
+        const route = await resolveNotificationRoute(buildNotification({
+            type: "ASYNC_OPERATION",
+            asyncOperationType: "TRIGGER_DISABLE",
+            resourceType: "TRIGGER",
+            referenceId: "op-2",
+        }))
+
+        expect(route).toEqual({
+            name: "admin/triggers",
+            params: {tab: "manage"},
+            query: {"filters[operationId][EQUALS]": "op-2"},
+        })
+    })
+
+    it("routes a backfill-targeted ASYNC_OPERATION to the triggers manage tab", async () => {
+        const {resolveNotificationRoute} = await import("./notificationRoute")
+
+        const route = await resolveNotificationRoute(buildNotification({
+            type: "ASYNC_OPERATION",
+            asyncOperationType: "BACKFILL_PAUSE",
+            resourceType: "TRIGGER",
+            referenceId: "op-3",
+        }))
+
+        expect(route?.name).toBe("admin/triggers")
+    })
+
+    it("returns null for an ASYNC_OPERATION with no resourceType", async () => {
+        const {resolveNotificationRoute} = await import("./notificationRoute")
+
+        expect(await resolveNotificationRoute(buildNotification({type: "ASYNC_OPERATION", referenceId: "op-4"}))).toBeNull()
+    })
 })
 
 describe("isNotificationLinkable", () => {
@@ -94,6 +147,7 @@ describe("isNotificationLinkable", () => {
 
         expect(isNotificationLinkable("HUMAN_TASK_PENDING")).toBe(true)
         expect(isNotificationLinkable("SYSTEM_EXECUTION_FAILED")).toBe(true)
+        expect(isNotificationLinkable("ASYNC_OPERATION")).toBe(true)
         expect(isNotificationLinkable("GENERIC")).toBe(false)
         expect(isNotificationLinkable("SOME_FUTURE_TYPE")).toBe(false)
     })

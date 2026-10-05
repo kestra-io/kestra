@@ -1,6 +1,6 @@
 package io.kestra.repository.mysql;
 
-import io.kestra.core.models.notifications.Notification;
+import io.kestra.core.notification.model.Notification;
 import io.kestra.core.repositories.RepositoryBean;
 import io.kestra.jdbc.repository.AbstractJdbcNotificationRepository;
 

@@ -291,7 +291,22 @@
       "help": "도움말",
       "issue": "문제",
       "demo": "데모",
-      "star": "우리를 Star 하세요"
+      "star": "우리를 Star 하세요",
+      "notifications": "알림"
+    },
+    "notifications": {
+      "heading": "알림",
+      "ongoing": "진행 중",
+      "markAllRead": "모두 읽음으로 표시",
+      "markUnread": "읽지 않음으로 표시",
+      "markRead": "읽음으로 표시",
+      "empty": "아직 알림이 없습니다.",
+      "emptyUnread": "읽지 않은 알림 없음",
+      "tabs": {
+        "all": "모두",
+        "unread": "읽지 않음"
+      },
+      "bellAriaLabel": "알림"
     },
     "source": "소스",
     "home": "홈",

@@ -210,6 +210,15 @@ export const useExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                     valueType: "text",
                     searchable: true,
                 },
+                {
+                    // QueryFilter.Field.OPERATION_ID supports EQUALS only, so there is no comparator to offer.
+                    key: "operationId",
+                    label: t("filter.operationId.label"),
+                    description: t("filter.operationId.description"),
+                    comparators: [Comparators.EQUALS],
+                    valueType: "text",
+                    searchable: true,
+                },
             ],
         }
     })

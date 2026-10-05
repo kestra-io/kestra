@@ -51,6 +51,7 @@ describe("notifications store", () => {
         vi.resetModules()
         vi.useFakeTimers()
         axiosGet.mockReset()
+        axiosGet.mockResolvedValue({data: 0})
         axiosPost.mockClear()
         MockEventSource.instances = []
         vi.stubGlobal("EventSource", MockEventSource)
@@ -297,7 +298,9 @@ describe("notifications store", () => {
     })
 
     it("startSSE() merges a created/updated notification pushed over the stream and refreshes the unread count", async () => {
-        axiosGet.mockResolvedValueOnce({data: 1})
+        axiosGet
+            .mockResolvedValueOnce({data: 0})
+            .mockResolvedValueOnce({data: 1})
         const {useNotificationsStore} = await import("./notifications")
         const store = useNotificationsStore()
 

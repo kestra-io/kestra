@@ -102,6 +102,8 @@
   "../../packages/design-system/src/components/Data/KsDataTable/KsFilter.locale.ts|filter|name|label": "dcd1d5223f73",
   "../../packages/design-system/src/components/Data/KsDataTable/KsFilter.locale.ts|filter|no columns found": "2b979ccd3759",
   "../../packages/design-system/src/components/Data/KsDataTable/KsFilter.locale.ts|filter|no options found": "051fc485fc05",
+  "../../packages/design-system/src/components/Data/KsDataTable/KsFilter.locale.ts|filter|operationId|description": "e49585a4a3c0",
+  "../../packages/design-system/src/components/Data/KsDataTable/KsFilter.locale.ts|filter|operationId|label": "05a6857f87c5",
   "../../packages/design-system/src/components/Data/KsDataTable/KsFilter.locale.ts|filter|operator": "5e8d7eea75a5",
   "../../packages/design-system/src/components/Data/KsDataTable/KsFilter.locale.ts|filter|options": "873f78e9e081",
   "../../packages/design-system/src/components/Data/KsDataTable/KsFilter.locale.ts|filter|or": "829e5b28af38",

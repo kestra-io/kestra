@@ -6,7 +6,7 @@ import io.kestra.core.mcp.models.McpSessionEvent;
 import io.kestra.core.models.executions.*;
 import io.kestra.core.models.executions.statistics.ExecutionStatistic;
 import io.kestra.core.models.flows.FlowInterface;
-import io.kestra.core.models.notifications.NotificationEvent;
+import io.kestra.core.notification.model.NotificationEvent;
 import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.queues.KeyedDispatchQueueInterface;

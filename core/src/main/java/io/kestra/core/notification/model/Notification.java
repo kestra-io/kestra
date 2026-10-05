@@ -1,9 +1,8 @@
-package io.kestra.core.models.notifications;
+package io.kestra.core.notification.model;
 
 import java.time.Instant;
 
 import io.kestra.core.models.HasUID;
-import io.kestra.core.server.AsyncOperationType;
 
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
@@ -21,11 +20,6 @@ import lombok.NoArgsConstructor;
  * <p>
  * {@code referenceId} is the correlation key producers use to update an existing notification
  * (e.g. an async operation's progress) instead of creating a new one for every event.
- * <p>
- * {@code type} is the {@link NotificationType#key()} of the producer's type rather than the
- * interface itself: a producer outside this module (e.g. an EE feature) contributes its own
- * {@link NotificationType} implementation, so the wire/storage representation has to be the plain
- * key rather than a polymorphic value this module cannot deserialize.
  */
 @Builder(toBuilder = true)
 @Getter
@@ -34,7 +28,7 @@ import lombok.NoArgsConstructor;
 public class Notification implements HasUID {
     private String id;
 
-    @NotNull
+    @Nullable
     private String userId;
 
     @Nullable
@@ -42,14 +36,24 @@ public class Notification implements HasUID {
 
     @NotNull
     @Builder.Default
-    private String type = CoreNotificationType.GENERIC.key();
+    private String type = CoreNotificationType.GENERIC.name();
 
     /**
-     * The specific kind of operation this notification reports on, for {@link CoreNotificationType#ASYNC_OPERATION}.
-     * {@code null} for every other type.
+     * The {@link AsyncOperationType#name()} of the specific operation this notification reports on,
+     * for {@link CoreNotificationType#ASYNC_OPERATION}; {@code null} for every other type. Stored as
+     * the plain name rather than the interface itself, for the same reason {@link #type} is — see
+     * that field's Javadoc.
      */
     @Nullable
-    private AsyncOperationType asyncOperationType;
+    private String asyncOperationType;
+
+    /**
+     * The kind of resource {@link #asyncOperationType} targets, captured at creation time since this
+     * module cannot otherwise recover it from the stored name alone. {@code null} for every type but
+     * {@link CoreNotificationType#ASYNC_OPERATION}.
+     */
+    @Nullable
+    private AsyncOperationType.ResourceType resourceType;
 
     @NotNull
     private String title;
@@ -62,7 +66,10 @@ public class Notification implements HasUID {
     private String referenceId;
 
     /**
-     * Progress indicators, unused until a progress-reporting producer exists.
+     * Progress indicators for {@link CoreNotificationType#ASYNC_OPERATION}, {@code null} for every
+     * other type. These are <strong>not</strong> persisted: the source of truth is the
+     * {@code notification_items} table (see {@link NotificationItem}), one row per targeted
+     * resource.
      */
     @Nullable
     private Integer succeededItems;

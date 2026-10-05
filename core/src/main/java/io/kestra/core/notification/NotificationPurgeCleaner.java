@@ -1,4 +1,4 @@
-package io.kestra.core.services;
+package io.kestra.core.notification;
 
 import io.kestra.core.annotations.RequiresExecutor;
 

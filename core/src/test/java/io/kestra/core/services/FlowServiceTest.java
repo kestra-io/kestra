@@ -28,9 +28,9 @@ import io.kestra.core.repositories.ConcurrencyLimitRepositoryInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.repositories.FlowTopologyRepositoryInterface;
 import io.kestra.core.runners.ConcurrencyLimit;
+import io.kestra.core.runners.FlowMetaStoreInterface;
 import io.kestra.core.runners.pebble.PebbleExpressionService;
 import io.kestra.core.runners.pebble.PebbleFunction;
-import io.kestra.core.runners.FlowMetaStoreInterface;
 import io.kestra.core.scheduler.events.TriggerCreated;
 import io.kestra.core.scheduler.events.TriggerEvent;
 import io.kestra.core.scheduler.events.TriggerFlowRevisionUpdated;
@@ -44,6 +44,7 @@ import io.kestra.plugin.core.trigger.Schedule;
 import io.micronaut.context.annotation.Replaces;
 import io.micronaut.test.annotation.MockBean;
 import jakarta.inject.Inject;
+import jakarta.validation.ConstraintViolationException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -223,6 +224,23 @@ class FlowServiceTest {
         assertThat(fromDb.isPresent()).isTrue();
         assertThat(fromDb.get().getRevision()).isEqualTo(1);
         assertThat(fromDb.get().getSource()).isEqualTo(oldSource);
+    }
+
+    @Test
+    void shouldRejectImportWhenFlowViolatesConstraints() {
+        String source = """
+            id: import_invalid
+            namespace: some.namespace
+            tasks:
+            - id: task
+              type: io.kestra.plugin.core.log.Log""";
+
+        assertThatThrownBy(() -> flowService.importFlow("my-tenant", source, true))
+            .isInstanceOf(ConstraintViolationException.class)
+            .hasMessageContaining("message: must not be null");
+        assertThatThrownBy(() -> flowService.importFlow("my-tenant", source))
+            .isInstanceOf(ConstraintViolationException.class);
+        assertThat(flowRepository.findById("my-tenant", "some.namespace", "import_invalid")).isEmpty();
     }
 
     @Test
@@ -1591,9 +1609,11 @@ class FlowServiceTest {
         FlowWithSource created = flowService.create(GenericFlow.fromYaml(TenantService.MAIN_TENANT, source));
         FlowWithSource deleted = flowService.delete(created);
 
-        assertThatThrownBy(() -> flowService.getFlowIfExecutableOrThrow(
-            deleted.getTenantId(), deleted.getNamespace(), deleted.getId(), Optional.of(deleted.getRevision())
-        ))
+        assertThatThrownBy(
+            () -> flowService.getFlowIfExecutableOrThrow(
+                deleted.getTenantId(), deleted.getNamespace(), deleted.getId(), Optional.of(deleted.getRevision())
+            )
+        )
             .isInstanceOf(NoSuchElementException.class)
             .hasMessage("Requested Flow is not found.");
     }
@@ -1613,9 +1633,11 @@ class FlowServiceTest {
         FlowWithSource created = flowService.create(GenericFlow.fromYaml(TenantService.MAIN_TENANT, source));
         FlowWithSource deleted = flowService.delete(created);
 
-        assertThatThrownBy(() -> flowService.getFlowIfExecutableOrThrow(
-            deleted.getTenantId(), deleted.getNamespace(), deleted.getId(), Optional.of(deleted.getRevision() - 1)
-        ))
+        assertThatThrownBy(
+            () -> flowService.getFlowIfExecutableOrThrow(
+                deleted.getTenantId(), deleted.getNamespace(), deleted.getId(), Optional.of(deleted.getRevision() - 1)
+            )
+        )
             .isInstanceOf(NoSuchElementException.class)
             .hasMessage("Requested Flow is not found.");
     }

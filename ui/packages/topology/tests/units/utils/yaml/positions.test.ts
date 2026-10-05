@@ -188,3 +188,55 @@ describe("getTypeAtPosition", () => {
         expect(result).toBeNull()
     })
 })
+
+describe("getTypeAtPosition with nested taskRunner", () => {
+    const yamlString = `
+tasks:
+  - id: python
+    type: io.kestra.plugin.scripts.python.Script
+    taskRunner:
+      type: io.kestra.plugin.scripts.runner.docker.Docker
+    containerImage: test
+    script: test
+`
+    const validTypes = [
+        "io.kestra.plugin.scripts.python.Script",
+        "io.kestra.plugin.scripts.runner.docker.Docker",
+    ]
+
+    test("cursor inside taskRunner.type resolves to the task runner type", () => {
+        const result = YamlUtils.getTypeAtPosition(yamlString, {lineNumber: 6, column: 10}, validTypes)
+        expect(result).toBe("io.kestra.plugin.scripts.runner.docker.Docker")
+    })
+
+    test("sibling property after taskRunner resolves to the parent task type", () => {
+        const containerImage = YamlUtils.getTypeAtPosition(yamlString, {lineNumber: 7, column: 10}, validTypes)
+        expect(containerImage).toBe("io.kestra.plugin.scripts.python.Script")
+
+        const script = YamlUtils.getTypeAtPosition(yamlString, {lineNumber: 8, column: 10}, validTypes)
+        expect(script).toBe("io.kestra.plugin.scripts.python.Script")
+    })
+})
+
+describe("getVersionAtPosition with nested taskRunner", () => {
+    const yamlString = `
+tasks:
+  - id: versioned
+    type: parent.Type
+    version: 1.0.0
+    taskRunner:
+      type: runner.Type
+      version: 2.0.0
+    containerImage: test
+`
+
+    test("cursor inside taskRunner.version resolves to the task runner version", () => {
+        const result = YamlUtils.getVersionAtPosition(yamlString, {lineNumber: 8, column: 10})
+        expect(result).toBe("2.0.0")
+    })
+
+    test("sibling property after taskRunner resolves to the parent version", () => {
+        const result = YamlUtils.getVersionAtPosition(yamlString, {lineNumber: 9, column: 10})
+        expect(result).toBe("1.0.0")
+    })
+})

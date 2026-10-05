@@ -33,8 +33,8 @@ export function getTypeAtPosition(
     const cursorIndex =
         lineCounter.lineStarts[position.lineNumber - 1] + position.column
 
-    for (const type of types.reverse()) {
-        if (cursorIndex >= type.range[0]) {
+    for (const type of [...types].reverse()) {
+        if (cursorIndex >= type.range[0] && cursorIndex <= type.range[1]) {
             return typeof type.type === "string" ? type.type : null
         }
     }
@@ -51,8 +51,8 @@ export function getVersionAtPosition(
     const cursorIndex =
         lineCounter.lineStarts[position.lineNumber - 1] + position.column
 
-    for (const version of versions.reverse()) {
-        if (cursorIndex >= version.range[0]) {
+    for (const version of [...versions].reverse()) {
+        if (cursorIndex >= version.range[0] && cursorIndex <= version.range[1]) {
             return version.version == null ? undefined : String(version.version)
         }
     }

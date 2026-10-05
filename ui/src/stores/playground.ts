@@ -279,15 +279,15 @@ export const usePlaygroundStore = defineStore("playground", () => {
 
     async function startRun(taskId?: string, runDownstreamTasks = false, customFormData?: Record<string, unknown>) {
         if(flowStore.isCreating){
+            let outcome
             try {
-                const outcome = await flowStore.saveAsDraft()
-                if (isSuccessfulFlowSaveOutcome(outcome)) {
-                    await navigateToEdit(taskId, runDownstreamTasks)
-                    // Leaving the create view unmounts the editor, which turns the playground off.
-                    enabled.value = true
-                }
+                outcome = await flowStore.saveAsDraft()
             } finally {
                 readyToStart.value = true
+            }
+            if (isSuccessfulFlowSaveOutcome(outcome)) {
+                await navigateToEdit(taskId, runDownstreamTasks)
+                enabled.value = true
             }
             return
         }

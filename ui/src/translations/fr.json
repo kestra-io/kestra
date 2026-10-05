@@ -2235,7 +2235,6 @@
       "run_all_tasks": "Exécuter toutes les tasks",
       "history": "Dernières 10 exécutions",
       "clear_history": "Effacer l'historique",
-      "confirm_create": "Vous ne pouvez pas exécuter le playground lors de la création d'un flow. Lancer une exécution de playground créera le flow.",
       "tooltip_persistence": "Si vous désactivez et réactivez le Playground, les informations restent tant que vous restez sur la page."
     },
     "submit": "Soumettre",

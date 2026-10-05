@@ -2235,7 +2235,6 @@
       "run_all_tasks": "Esegui Tutti i Task",
       "history": "Ultime 10 esecuzioni",
       "clear_history": "Cancella cronologia",
-      "confirm_create": "Non puoi eseguire il playground mentre crei un flow. Avviare un'esecuzione del playground creerà il flow.",
       "tooltip_persistence": "Se disattivi e riattivi il Playground, le informazioni rimangono finché resti sulla pagina."
     },
     "submit": "Invia",

@@ -2235,7 +2235,6 @@
       "run_all_tasks": "Uruchom wszystkie Taski",
       "history": "Ostatnie 10 uruchomień",
       "clear_history": "Wyczyść historię",
-      "confirm_create": "Nie można uruchomić Playground w trakcie tworzenia Flow. Uruchomienie Playground utworzy Flow.",
       "tooltip_persistence": "Jeśli wyłączysz i ponownie włączysz Playground, informacje pozostaną, dopóki pozostaniesz na stronie."
     },
     "submit": "Wyślij",

@@ -7,7 +7,7 @@
 </template>
 
 <script setup lang="ts">
-    import {ElCol, type ColProps} from "element-plus"
+    import {ElCol, type ColSize} from "element-plus"
 
     import {useFilteredProps} from "../../../utils/filteredProps"
 
@@ -15,11 +15,11 @@
 
     const props = defineProps<{
         span?: number
-        xs?: ColProps["xs"]
-        sm?: ColProps["sm"]
-        md?: ColProps["md"]
-        lg?: ColProps["lg"]
-        xl?: ColProps["xl"]
+        xs?: ColSize
+        sm?: ColSize
+        md?: ColSize
+        lg?: ColSize
+        xl?: ColSize
     }>()
 
     const filteredProps = useFilteredProps(props)

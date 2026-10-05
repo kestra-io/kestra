@@ -21,6 +21,7 @@ import {apiUrl, apiUrlWithoutTenants, basePath} from "override/utils/route"
 import {useMiscStore} from "override/stores/misc"
 
 import * as Utils from "../utils/utils"
+import {validationErrorLines} from "../utils/validationErrors"
 import {routeFamily} from "../utils/routeFamily"
 
 import type {Dashboard, Chart, DashboardSettings} from "../components/dashboard/types.ts"
@@ -293,7 +294,7 @@ export const useDashboardStore = defineStore("dashboard", () => {
 
     async function validateChart(source: string) {
         const {data} = await axios.post(`${apiUrl()}/dashboards/validate/chart`, source, yaml)
-        chartErrors.value = data.constraints ? [data.constraints] : []
+        chartErrors.value = validationErrorLines(data.errors)
         return data
     }
 
@@ -360,8 +361,9 @@ export const useDashboardStore = defineStore("dashboard", () => {
         }
         const errors = await validateChart(yamlChart)
 
-        if (errors.constraints) {
-            result.error = errors.constraints
+        const errorLines = validationErrorLines(errors.errors)
+        if (errorLines.length) {
+            result.error = errorLines.join("\n")
         } else {
             result.data = {...chart, content: yamlChart, raw: chart}
         }

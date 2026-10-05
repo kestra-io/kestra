@@ -1,18 +1,28 @@
-
 import {describe, expect, it, vi} from "vitest"
 import type {ComposerTranslation} from "vue-i18n"
 import {SECTIONS} from "@kestra-io/design-system"
-import {
-    buildNodeActions,
-    type NodeActionsContext,
-    type NodeActionCallbacks,
-} from "../../../src/utils/nodeActions"
-import type {CustomActionConfig, ShowDetailsConfig} from "../../../src/utils/constants"
+import {buildNodeActions, type NodeActionCallbacks, type NodeActionsContext} from "../../../src/utils/nodeActions"
 
 const t = ((key: string) => key) as unknown as ComposerTranslation
+const expandData = {id: "subflow-node", type: "io.kestra.plugin.core.flow.Subflow"}
+const execution = {id: "execution-1"}
+const taskRuns = [{id: "run-1"}]
+const config = {label: "Task Details", taskProp: "task", lang: "yaml"}
+const task = {id: "task-1", description: "My task", runIf: "{{ inputs.enabled }}"}
+const link = {namespace: "company.team", id: "subflow"}
+const everything: Partial<NodeActionsContext> = {
+    task,
+    taskExecution: execution,
+    taskRuns,
+    taskRunsWithDynamicChildren: [...taskRuns, {id: "dynamic-run-1"}],
+    link,
+    expandable: true,
+    replayEnabled: true,
+    actionConfig: {eventName: "showDetails", config},
+}
 
-function createCallbacks() {
-    return {
+function setup(overrides: Partial<NodeActionsContext> = {}) {
+    const callbacks = {
         onShowDescription: vi.fn(),
         onShowCondition: vi.fn(),
         onShowLogs: vi.fn(),
@@ -26,12 +36,7 @@ function createCallbacks() {
         onDelete: vi.fn(),
         onReplayTask: vi.fn(),
     } satisfies NodeActionCallbacks
-}
-
-function createContext(
-    overrides: Partial<NodeActionsContext> = {},
-): NodeActionsContext {
-    return {
+    const actions = buildNodeActions({
         taskId: "task-1",
         task: {id: "task-1"},
         isReadOnly: false,
@@ -41,572 +46,101 @@ function createContext(
         taskRunsWithDynamicChildren: [],
         replayEnabled: false,
         ...overrides,
+    }, t, callbacks, expandData)
+    return {
+        callbacks,
+        actions,
+        keys: actions.map((action) => action.key),
+        action: (key: string) => actions.find((action) => action.key === key)!,
     }
 }
 
 describe("buildNodeActions", () => {
-
-    // TEST 1: Description action
-    it("adds the description action only when a description exists", () => {
-        const callbacks = createCallbacks()
-
-        const withDescription = buildNodeActions(
-            createContext({
-                task: {id: "task-1", description: "My task"},
-            }),
-            t,
-            callbacks,
-            {id: "task-1", type: "task"},
-        )
-
-        const withoutDescription = buildNodeActions(
-            createContext(),
-            t,
-            callbacks,
-            {id: "task-1", type: "task"},
-        )
-
-        expect(withDescription.map(action => action.key))
-            .toContain("description")
-
-        expect(withoutDescription.map(action => action.key))
-            .not.toContain("description")
-
-        const action = withDescription.find(
-            item => item.key === "description",
-        )!
-
-        action.onClick()
-
-        expect(callbacks.onShowDescription).toHaveBeenCalledWith({
-            id: "task-1",
-            description: "My task",
-        })
+    it("returns every applicable action in a stable order", () => {
+        expect(setup(everything).keys).toEqual([
+            "description",
+            "condition",
+            "logs",
+            "outputs",
+            "open",
+            "expand",
+            "show-details",
+            "duplicate",
+            "delete",
+            "replay",
+        ])
     })
 
-    // TEST 2: Condition action 
-    it("adds the condition action only when runIf exists", () => {
-        const callbacks = createCallbacks()
+    it("calls each action's callback with its payload", () => {
+        const {callbacks, actions} = setup(everything)
 
-        const task = {
-            id: "task-1",
-            runIf: "true",
-        }
+        actions.forEach((action) => action.onClick())
 
-        const withCondition = buildNodeActions(
-            createContext({task}),
-            t,
-            callbacks,
-            {id: "task-1", type: "task"},
-        )
-
-        const withoutCondition = buildNodeActions(
-            createContext(),
-            t,
-            callbacks,
-            {id: "task-1", type: "task"},
-        )
-
-        expect(withCondition.map(action => action.key))
-            .toContain("condition")
-
-        expect(withoutCondition.map(action => action.key))
-            .not.toContain("condition")
-
-        withCondition.find(
-            action => action.key === "condition",
-        )!.onClick()
-
-        expect(callbacks.onShowCondition).toHaveBeenCalledWith({
-            id: "task-1",
-            task,
-            section: SECTIONS.TASKS,
-        })
+        expect(callbacks.onShowDescription).toHaveBeenCalledWith({id: "task-1", description: "My task"})
+        expect(callbacks.onShowCondition).toHaveBeenCalledWith({id: "task-1", task, section: SECTIONS.TASKS})
+        expect(callbacks.onShowLogs).toHaveBeenCalledWith({id: "task-1", execution, taskRuns: everything.taskRunsWithDynamicChildren})
+        expect(callbacks.onShowOutputs).toHaveBeenCalledWith({id: "task-1", execution, taskRuns})
+        expect(callbacks.onOpenLink).toHaveBeenCalledWith({link})
+        expect(callbacks.onExpand).toHaveBeenCalledWith(expandData)
+        expect(callbacks.onShowDetails).toHaveBeenCalledWith({task, showDetails: config})
+        expect(callbacks.onShowCustomAction).not.toHaveBeenCalled()
+        expect(callbacks.onDuplicate).toHaveBeenCalledWith({id: "task-1"})
+        expect(callbacks.onDelete).toHaveBeenCalledWith({id: "task-1", section: SECTIONS.TASKS})
+        expect(callbacks.onReplayTask).toHaveBeenCalledWith({id: "task-1", execution, taskRuns})
     })
 
-    // TEST 3: Logs action
-    it("adds logs and outputs when an execution exists", () => {
-    const callbacks = createCallbacks()
+    it("offers only add-error, duplicate and delete for a bare writable task", () => {
+        const {callbacks, keys, action} = setup()
 
-    const execution = { id: "execution-1" }
-    const taskRuns = [{ id: "run-1" }]
-    const taskRunsWithDynamicChildren = [{ id: "dynamic-run-1" }]
+        action("add-error").onClick()
 
-    const actions = buildNodeActions(
-        createContext({
-        taskExecution: execution,
-        taskRuns,
-        taskRunsWithDynamicChildren,
-        }),
-        t,
-        callbacks,
-        { id: "task-1", type: "task" },
-    )
-
-    const actionKeys = actions.map((action) => action.key)
-
-    expect(actionKeys).toContain("logs")
-    expect(actionKeys).toContain("outputs")
-
-    actions.find((action) => action.key === "logs")!.onClick()
-    expect(callbacks.onShowLogs).toHaveBeenCalledWith({
-        id: "task-1",
-        execution,
-        taskRuns: taskRunsWithDynamicChildren,
+        expect(keys).toEqual(["add-error", "duplicate", "delete"])
+        expect(callbacks.onAddError).toHaveBeenCalledWith({task: {id: "task-1"}})
     })
 
-    actions.find((action) => action.key === "outputs")!.onClick()
-    expect(callbacks.onShowOutputs).toHaveBeenCalledWith({
-        id: "task-1",
-        execution,
-        taskRuns,
-    })
+    it("offers nothing on a bare read-only task", () => {
+        expect(setup({isReadOnly: true}).keys).toEqual([])
     })
 
-    //TEST 4: execution absent  
-    it("does not add logs and outputs when execution is absent", () => {
-    const callbacks = createCallbacks()
-
-    const actions = buildNodeActions(
-        createContext(),
-        t,
-        callbacks,
-        { id: "task-1", type: "task" },
-    )
-
-    const actionKeys = actions.map((action) => action.key)
-
-    expect(actionKeys).not.toContain("logs")
-    expect(actionKeys).not.toContain("outputs")
+    it.each<[string, Partial<NodeActionsContext>]>([
+        ["an execution exists", {taskExecution: execution}],
+        ["the task is not flowable", {isFlowable: false}],
+        ["the task already has error handlers", {task: {id: "task-1", errors: [{id: "handler"}]}}],
+    ])("hides add-error when %s", (_, overrides) => {
+        expect(setup(overrides).keys).not.toContain("add-error")
     })
 
-    // TEST 5: Open Action
-    it("adds the open action only when a link exists", () => {
-    const callbacks = createCallbacks()
-    const link = { id: "link-1" }
-
-    const withLink = buildNodeActions(
-        createContext({ link }),
-        t,
-        callbacks,
-        { id: "task-1", type: "task" },
-    )
-
-    const withoutLink = buildNodeActions(
-        createContext(),
-        t,
-        callbacks,
-        { id: "task-1", type: "task" },
-    )
-
-    expect(withLink.map((action) => action.key)).toContain("open")
-    expect(withoutLink.map((action) => action.key)).not.toContain("open")
-
-    withLink.find((action) => action.key === "open")!.onClick()
-
-    expect(callbacks.onOpenLink).toHaveBeenCalledWith({ link })
+    it.each<[string, Partial<NodeActionsContext>]>([
+        ["replay is disabled", {...everything, replayEnabled: false}],
+        ["there is no execution", {...everything, taskExecution: undefined}],
+        ["there are no task runs", {...everything, taskRuns: []}],
+    ])("hides replay when %s", (_, overrides) => {
+        expect(setup(overrides).keys).not.toContain("replay")
     })
 
-    //TEST 6: Expand Action
-    it("adds the expand action and passes expandData to the callback", () => {
-    const callbacks = createCallbacks()
-    const expandData = {id: "task-1", type: "task"}
+    it("marks delete as danger and divides duplicate, delete and replay from the rest", () => {
+        const {actions} = setup(everything)
 
-    const actions = buildNodeActions(
-        createContext({expandable: true}),
-        t,
-        callbacks,
-        expandData,
-    )
-
-    expect(actions.map((action) => action.key)).toContain("expand")
-
-    actions.find((action) => action.key === "expand")!.onClick()
-
-    expect(callbacks.onExpand).toHaveBeenCalledWith(expandData)
+        expect(actions.filter((action) => action.danger).map((action) => action.key)).toEqual(["delete"])
+        expect(actions.filter((action) => action.divided).map((action) => action.key)).toEqual(["duplicate", "delete", "replay"])
     })
 
-    //TEST 7: Add error action    
-    it("adds the add-error action only when all conditions are satisfied", () => {
-    const callbacks = createCallbacks()
+    it("routes a showCustomAction click to onShowCustomAction", () => {
+        const {callbacks, action} = setup({...everything, actionConfig: {eventName: "showCustomAction", config}})
 
-    const actions = buildNodeActions(
-        createContext({
-        isReadOnly: false,
-        isFlowable: true,
-        task: {id: "task-1"},
-        }),
-        t,
-        callbacks,
-        {id: "task-1", type: "task"},
-    )
+        action("show-details").onClick()
 
-    expect(actions.map((action) => action.key)).toContain("add-error")
-
-    actions.find((action) => action.key === "add-error")!.onClick()
-
-    expect(callbacks.onAddError).toHaveBeenCalledWith({
-        task: {id: "task-1"},
-    })
-    })
-    //TEST 8
-    it("does not add add-error when an execution exists", () => {
-    const actions = buildNodeActions(
-        createContext({
-        taskExecution: {id: "execution-1"},
-        }),
-        t,
-        createCallbacks(),
-        {id: "task-1", type: "task"},
-    )
-
-    expect(actions.map((action) => action.key)).not.toContain("add-error")
-    })
-    //TEST 9
-    it("does not add add-error in read-only mode", () => {
-    const actions = buildNodeActions(
-        createContext({isReadOnly: true}),
-        t,
-        createCallbacks(),
-        {id: "task-1", type: "task"},
-    )
-
-    expect(actions.map((action) => action.key)).not.toContain("add-error")
-    })
-    //TEST 10
-    it("does not add add-error when the task is not flowable", () => {
-    const actions = buildNodeActions(
-        createContext({isFlowable: false}),
-        t,
-        createCallbacks(),
-        {id: "task-1", type: "task"},
-    )
-
-    expect(actions.map((action) => action.key)).not.toContain("add-error")
-    })
-    //TEST 11
-    it("does not add add-error when the task has errors", () => {
-    const actions = buildNodeActions(
-        createContext({
-        task: {id: "task-1", errors: ["Something went wrong"]},
-        }),
-        t,
-        createCallbacks(),
-        {id: "task-1", type: "task"},
-    )
-
-    expect(actions.map((action) => action.key)).not.toContain("add-error")
+        expect(callbacks.onShowCustomAction).toHaveBeenCalledWith({task, customAction: config})
+        expect(callbacks.onShowDetails).not.toHaveBeenCalled()
     })
 
-    //TEST 12:Test read-only mode  
-    it("does not add duplicate and delete actions in read-only mode", () => {
-    const actions = buildNodeActions(
-        createContext({isReadOnly: true}),
-        t,
-        createCallbacks(),
-        {id: "task-1", type: "task"},
-    )
-
-    const actionKeys = actions.map((action) => action.key)
-
-    expect(actionKeys).not.toContain("duplicate")
-    expect(actionKeys).not.toContain("delete")
+    it("labels the details action with config.label, falling back to the translation", () => {
+        expect(setup(everything).action("show-details").label).toBe("Task Details")
+        expect(setup({...everything, actionConfig: {eventName: "showDetails", config: {...config, label: ""}}}).action("show-details").label)
+            .toBe("show details")
     })
 
-    //TEST 13: Test writable mode and callback payloads
-    it("adds duplicate and delete actions in writable mode", () => {
-    const callbacks = createCallbacks()
-
-    const actions = buildNodeActions(
-        createContext({isReadOnly: false}),
-        t,
-        callbacks,
-        {id: "task-1", type: "task"},
-    )
-
-    const actionKeys = actions.map((action) => action.key)
-
-    expect(actionKeys).toContain("duplicate")
-    expect(actionKeys).toContain("delete")
-
-    actions.find((action) => action.key === "duplicate")!.onClick()
-
-    expect(callbacks.onDuplicate).toHaveBeenCalledWith({
-        id: "task-1",
-    })
-
-    actions.find((action) => action.key === "delete")!.onClick()
-
-    expect(callbacks.onDelete).toHaveBeenCalledWith({
-        id: "task-1",
-        section: SECTIONS.TASKS,
-    })
-    })
-
-    // TEST 14: Custom Action Callback
-    it("routes showCustomAction to the custom action callback", () => {
-    const callbacks = createCallbacks()
-
-    const config = {
-        taskProp: "task",
-        lang: "en",
-    } as CustomActionConfig
-
-    const actionConfig = {
-        eventName: "showCustomAction" as const,
-        config,
-    }
-
-    const task = {id: "task-1"}
-
-    const actions = buildNodeActions(
-        createContext({
-        task,
-        actionConfig,
-        }),
-        t,
-        callbacks,
-        {id: "task-1", type: "task"},
-    )
-
-    expect(actions.map((action) => action.key)).toContain("show-details")
-
-    actions.find((action) => action.key === "show-details")!.onClick()
-
-    expect(callbacks.onShowCustomAction).toHaveBeenCalledWith({
-        task,
-        customAction: config,
-    })
-
-    expect(callbacks.onShowDetails).not.toHaveBeenCalled()
-    })
-
-    // TEST 15: Show Details Callback
-    it("routes showDetails to the details callback", () => {
-    const callbacks = createCallbacks()
-
-    const config = {
-        label: "Task Details",
-    } as ShowDetailsConfig
-
-    const actionConfig = {
-        eventName: "showDetails" as const,
-        config,
-    }
-
-    const task = {id: "task-1"}
-
-    const actions = buildNodeActions(
-        createContext({
-        task,
-        actionConfig,
-        }),
-        t,
-        callbacks,
-        {id: "task-1", type: "task"},
-    )
-
-    expect(actions.map((action) => action.key)).toContain("show-details")
-
-    actions.find((action) => action.key === "show-details")!.onClick()
-
-    expect(callbacks.onShowDetails).toHaveBeenCalledWith({
-        task,
-        showDetails: config,
-    })
-
-    expect(callbacks.onShowCustomAction).not.toHaveBeenCalled()
-    })
-
-    //TEST 16: Replay Task Callback
-    it("adds replay when enabled with an execution and task runs", () => {
-    const callbacks = createCallbacks()
-
-    const execution = {id: "execution-1"}
-    const taskRuns = [{id: "run-1"}]
-
-    const actions = buildNodeActions(
-        createContext({
-        replayEnabled: true,
-        taskExecution: execution,
-        taskRuns,
-        }),
-        t,
-        callbacks,
-        {id: "task-1", type: "task"},
-    )
-
-    expect(actions.map((action) => action.key)).toContain("replay")
-
-    actions.find((action) => action.key === "replay")!.onClick()
-
-    expect(callbacks.onReplayTask).toHaveBeenCalledWith({
-        id: "task-1",
-        execution,
-        taskRuns,
-    })
-    })
-
-    // TEST 17: Replay Task Callback Disabled
-    it("does not add replay when replay is disabled", () => {
-    const actions = buildNodeActions(
-        createContext({
-        replayEnabled: false,
-        taskExecution: {id: "execution-1"},
-        taskRuns: [{id: "run-1"}],
-        }),
-        t,
-        createCallbacks(),
-        {id: "task-1", type: "task"},
-    )
-
-    expect(actions.map((action) => action.key)).not.toContain("replay")
-    })
-
-    //TEST 18: when execution is absent
-    it("does not add replay when execution is absent", () => {
-    const actions = buildNodeActions(
-        createContext({
-        replayEnabled: true,
-        taskRuns: [{id: "run-1"}],
-        }),
-        t,
-        createCallbacks(),
-        {id: "task-1", type: "task"},
-    )
-
-    expect(actions.map((action) => action.key)).not.toContain("replay")
-    })
-
-    // TEST 19: when task runs are empty
-    it("does not add replay when task runs are empty", () => {
-    const actions = buildNodeActions(
-        createContext({
-        replayEnabled: true,
-        taskExecution: {id: "execution-1"},
-        taskRuns: [],
-        }),
-        t,
-        createCallbacks(),
-        {id: "task-1", type: "task"},
-    )
-
-    expect(actions.map((action) => action.key)).not.toContain("replay")
-    })
-
-    // TEST 20: the configured details label is preferred
-    it("uses the configured label for the details action", () => {
-    const callbacks = createCallbacks()
-
-    const task = {id: "task-1"}
-    const config = {
-        label: "My Task Details",
-    } as ShowDetailsConfig
-
-    const actionConfig = {
-        eventName: "showDetails" as const,
-        config,
-    }
-
-    const actions = buildNodeActions(
-        createContext({task, actionConfig}),
-        t,
-        callbacks,
-        {id: "task-1", type: "task"},
-    )
-
-    const detailsAction = actions.find(
-        (action) => action.key === "show-details",
-    )
-
-    expect(detailsAction).toBeDefined()
-    expect(detailsAction?.label).toBe("My Task Details")
-    })
-
-    //test 21: the stable action order
-    it("keeps actions in a stable order", () => {
-    const task = {
-        id: "task-1",
-        description: "A task description",
-        runIf: "true",
-    }
-
-    const actions = buildNodeActions(
-        createContext({
-        task,
-        taskExecution: {id: "execution-1"},
-        taskRuns: [{id: "run-1"}],
-        taskRunsWithDynamicChildren: [{id: "run-1"}],
-        link: {
-            namespace: "company",
-            id: "flow-1",
-            executionId: "execution-1",
-        },
-        expandable: true,
-        replayEnabled: true,
-        actionConfig: {
-            eventName: "showDetails" as const,
-            config: {label: "Task Details"} as ShowDetailsConfig,
-        },
-        }),
-        t,
-        createCallbacks(),
-        {id: "task-1", type: "task"},
-    )
-
-    expect(actions.map((action) => action.key)).toEqual([
-        "description",
-        "condition",
-        "logs",
-        "outputs",
-        "open",
-        "expand",
-        "show-details",
-        "duplicate",
-        "delete",
-        "replay",
-    ])
-    })
-
-    // TEST 22: the translated fallback is used when the details label is missing
-    it("uses the translated fallback when the details label is missing", () => {
-    const callbacks = createCallbacks()
-    const task = {id: "task-1"}
-
-    const actionConfig = {
-        eventName: "showDetails" as const,
-        config: {} as ShowDetailsConfig,
-    }
-
-    const actions = buildNodeActions(
-        createContext({task, actionConfig}),
-        t,
-        callbacks,
-        {id: "task-1", type: "task"},
-    )
-
-    const detailsAction = actions.find(
-        (action) => action.key === "show-details",
-    )
-
-    expect(detailsAction).toBeDefined()
-    expect(detailsAction?.label).toBe("show details")
-    })
-
-    // TEST 23: the delete action is marked as dangerous
-    it("marks the delete action as dangerous", () => {
-    const actions = buildNodeActions(
-        createContext(),
-        t,
-        createCallbacks(),
-        {id: "task-1", type: "task"},
-    )
-
-    const deleteAction = actions.find(
-        (action) => action.key === "delete",
-    )
-
-    expect(deleteAction).toBeDefined()
-    expect(deleteAction?.danger).toBe(true)
+    it("hides the details action when there is no task to show", () => {
+        expect(setup({...everything, task: undefined}).keys).not.toContain("show-details")
     })
 })

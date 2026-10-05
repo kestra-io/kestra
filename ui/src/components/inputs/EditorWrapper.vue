@@ -91,6 +91,7 @@
 <script lang="ts">
     export const FILES_SET_DIRTY_INJECTION_KEY = Symbol("files-set-dirty-injection-key") as InjectionKey<(payload: { path: string; dirty: boolean }) => void>;
     export const FILES_UPDATE_CONTENT_INJECTION_KEY = Symbol("files-update-content-injection-key") as InjectionKey<(payload: { path: string; content: string }) => void>;
+    export const FILES_REFRESH_CONTENT_INJECTION_KEY = Symbol("files-refresh-content-injection-key") as InjectionKey<Ref<Record<string, { content: string }>>>;
 
     export interface EditorTabProps {
         name: string;
@@ -102,7 +103,7 @@
 </script>
 
 <script setup lang="ts">
-    import {computed, onActivated, onMounted, ref, provide, onBeforeUnmount, watch, InjectionKey, inject} from "vue";
+    import {computed, onActivated, onMounted, ref, provide, onBeforeUnmount, watch, InjectionKey, inject, Ref} from "vue";
     import {useRoute, useRouter} from "vue-router";
     import {apiUrl} from "override/utils/route";
     import type * as monaco from "monaco-editor/esm/vs/editor/editor.api";
@@ -339,6 +340,13 @@
 
 
     const updateContent = inject(FILES_UPDATE_CONTENT_INJECTION_KEY);
+
+    const externalContentUpdates = inject(FILES_REFRESH_CONTENT_INJECTION_KEY, undefined);
+    watch(() => (props.path ? externalContentUpdates?.value[props.path] : undefined), (update) => {
+        if (!update || props.flow) return;
+        sourceNS.value = update.content;
+        savedSourceNS.value = update.content;
+    });
 
     function editorUpdate(newValue: string){
         if (editorContent.value === newValue) {

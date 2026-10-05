@@ -4,6 +4,7 @@ import type {Meta, StoryObj} from "@storybook/vue3-vite"
 import {expect, spyOn, userEvent, waitFor, within} from "storybook/test"
 import {vueRouter} from "storybook-vue3-router"
 import {configureClient} from "@kestra-io/kestra-sdk"
+import {KsNotification} from "@kestra-io/design-system"
 
 import {apiFetch, mockStoryApiRoutes} from "../../../.storybook/apiMock"
 import FlowRevisions from "./FlowRevisions.vue"
@@ -28,11 +29,15 @@ function revision(revisionNumber: number, description: string): FlowRevision {
 
 let revisions: FlowRevision[]
 let storyRouter: Router
-let responseMode: "save-error" | "refresh-error" | "delayed-refresh" | undefined
+let responseMode: "save-error" | "refresh-error" | "delayed-refresh" | "unchanged-save" | "validation-error" | undefined
 let refreshStarted: Promise<void>
 let refreshFinished: Promise<void>
 let signalRefreshStarted: () => void
 let finishRefresh: () => void
+let validationStarted: Promise<void>
+let validationFinished: Promise<void>
+let signalValidationStarted: () => void
+let finishValidation: () => void
 
 function errorResponse(detail: string): Response {
     return Response.json({type: "about:blank", title: "Error", status: 400, detail}, {status: 400})
@@ -54,6 +59,8 @@ const meta: Meta<typeof FlowRevisions> = {
         responseMode = undefined
         refreshStarted = new Promise(resolve => {signalRefreshStarted = resolve})
         refreshFinished = new Promise(resolve => {finishRefresh = resolve})
+        validationStarted = new Promise(resolve => {signalValidationStarted = resolve})
+        validationFinished = new Promise(resolve => {finishValidation = resolve})
         revisions = [
             revision(1, "RESTORED_REVISION_ONE"),
             revision(3, "HISTORICAL_REVISION_THREE"),
@@ -62,6 +69,7 @@ const meta: Meta<typeof FlowRevisions> = {
         mockStoryApiRoutes({
             [`GET /flows/${NAMESPACE}/${FLOW_ID}/revisions`]: () => revisions,
             [`PUT /flows/${NAMESPACE}/${FLOW_ID}`]: ({body}: {body?: unknown}) => {
+                if (responseMode === "unchanged-save") return revisions[revisions.length - 1]
                 const saved = {...revision(9, "RESTORED_REVISION_ONE"), source: String(body)}
                 revisions = [...revisions, saved]
                 return saved
@@ -77,6 +85,11 @@ const meta: Meta<typeof FlowRevisions> = {
                 const url = input instanceof Request ? input.url : String(input)
                 const method = init?.method ?? (input instanceof Request ? input.method : "GET")
                 if (responseMode === "save-error" && method === "PUT") return errorResponse("Restore failed")
+                if (responseMode === "validation-error" && method === "POST" && url.includes("/flows/validate")) {
+                    signalValidationStarted()
+                    await validationFinished
+                    return errorResponse("Validation failed")
+                }
                 if (method === "GET" && url.includes(`/flows/${NAMESPACE}/${FLOW_ID}/revisions`) && revisions.some(item => item.revision === 9)) {
                     if (responseMode === "refresh-error") return errorResponse("Revision refresh failed")
                     if (responseMode === "delayed-refresh") {
@@ -88,6 +101,7 @@ const meta: Meta<typeof FlowRevisions> = {
             }})
             onUnmounted(() => {
                 finishRefresh()
+                finishValidation()
                 configureClient({fetch: apiFetch})
             })
             const flowStore = useFlowStore()
@@ -154,10 +168,54 @@ export const CancelRestore: Story = {
 
 async function confirmRestore(canvasElement: HTMLElement) {
     const canvas = within(canvasElement)
-    await waitFor(() => expect(canvas.getByText(/HISTORICAL_REVISION_THREE/)).toBeVisible(), {timeout: 10000})
+    await waitFor(() => expect(canvas.getByTestId("restore-left")).toBeEnabled(), {timeout: 10000})
     await userEvent.click(canvas.getByTestId("restore-left"))
     const dialog = within(await within(document.body).findByRole("dialog", {name: "Confirmation"}))
     await userEvent.click(dialog.getByRole("button", {name: "OK"}))
+}
+
+export const UnchangedRestore: Story = {
+    beforeEach() {
+        responseMode = "unchanged-save"
+        revisions[1].source = revisions[2].source
+    },
+    async play({canvasElement}) {
+        const canvas = within(canvasElement)
+        const loadRevisions = spyOn(useFlowStore(), "loadRevisions")
+        const push = spyOn(storyRouter, "push")
+        await confirmRestore(canvasElement)
+        await waitFor(() => expect(loadRevisions).toHaveBeenCalledWith({namespace: NAMESPACE, id: FLOW_ID, store: false}))
+        await loadRevisions.mock.results.at(-1)?.value
+        await push.mock.results.at(-1)?.value
+        await waitFor(() => expect(canvas.getByTestId("restore-left")).toBeEnabled())
+        await expect(storyRouter.currentRoute.value.query).toEqual({revisionLeft: "3", revisionRight: "4", keep: "filter"})
+        await expect(canvas.getByText("Revision 3", {exact: true})).toBeVisible()
+        await expect(canvas.getByText("Revision 4 (current)", {exact: true})).toBeVisible()
+        await expect(revisions.map(item => item.revision)).toEqual([1, 3, 4])
+        await expect(useFlowStore().haveChange).toBe(false)
+    },
+}
+
+export const ValidationFailure: Story = {
+    beforeEach() {responseMode = "validation-error"},
+    async play({canvasElement}) {
+        KsNotification.closeAll()
+        await waitFor(() => expect(within(document.body).queryByText("Successfully saved")).not.toBeInTheDocument())
+        await confirmRestore(canvasElement)
+        await validationStarted
+        try {
+            await within(document.body).findByText("Successfully saved")
+            const canvas = within(canvasElement)
+            await waitFor(() => expect(canvas.getByText("Revision 9 (current)", {exact: true})).toBeVisible())
+            await expect(storyRouter.currentRoute.value.query).toEqual({revisionLeft: "4", revisionRight: "9", keep: "filter"})
+            await expect(useFlowStore().haveChange).toBe(false)
+            await expect(useFlowStore().flowYamlOrigin).toBe(useFlowStore().flow?.source)
+        } finally {
+            finishValidation()
+        }
+        await within(document.body).findByText("Validation failed")
+        await expect(storyRouter.currentRoute.value.query).toEqual({revisionLeft: "4", revisionRight: "9", keep: "filter"})
+    },
 }
 
 export const SaveFailure: Story = {

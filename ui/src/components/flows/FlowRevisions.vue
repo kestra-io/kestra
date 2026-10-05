@@ -100,7 +100,7 @@
 
         try {
             const saved = await flowStore.saveFlow({flow: revisionSource})
-            await flowStore.initYamlSource()
+            flowStore.initYamlSource().catch(onRestoreError)
             toast.saved(saved.id)
 
             const loaded = await flowStore.loadRevisions({namespace, id, store: false})
@@ -108,7 +108,7 @@
 
             flowStore.revisions = loaded
             revisions.value = loaded
-            if (route.path !== revisionsPath || previousRevision === undefined || saved.revision === undefined) return
+            if (route.path !== revisionsPath || previousRevision === undefined || saved.revision === undefined || saved.revision === previousRevision) return
 
             await router.push({
                 query: {
@@ -118,9 +118,13 @@
                 },
             })
         } catch (error: unknown) {
-            if (!isReportedCentrally(error as KestraHttpError)) {
-                toast.error(asProblem(error)?.detail ?? t("error"))
-            }
+            onRestoreError(error)
+        }
+    }
+
+    function onRestoreError(error: unknown) {
+        if (!isReportedCentrally(error as KestraHttpError)) {
+            toast.error(asProblem(error)?.detail ?? t("error"))
         }
     }
 

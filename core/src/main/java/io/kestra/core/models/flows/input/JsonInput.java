@@ -2,6 +2,7 @@ package io.kestra.core.models.flows.input;
 
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -16,7 +17,6 @@ import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.validations.ManualConstraintViolation;
 import io.kestra.core.serializers.JacksonMapper;
 
-import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -51,17 +51,16 @@ public class JsonInput extends Input<Object> {
             List<Error> errors = schema.validate(inputNode);
 
             if (!errors.isEmpty()) {
-                throw ManualConstraintViolation.toConstraintViolationException(
-                    errors.stream()
-                        .map(error -> (ConstraintViolation<?>) ManualConstraintViolation.of(
-                            "it must match the json schema: " + error.getMessage(),
-                            this,
-                            JsonInput.class,
-                            locationOf(error),
-                            input
-                        ))
-                        .collect(Collectors.toCollection(LinkedHashSet::new))
-                );
+                Set<ManualConstraintViolation<JsonInput>> violations = errors.stream()
+                    .map(error -> ManualConstraintViolation.of(
+                        "it must match the json schema: " + error.getMessage(),
+                        this,
+                        JsonInput.class,
+                        locationOf(error),
+                        input
+                    ))
+                    .collect(Collectors.toCollection(LinkedHashSet::new));
+                throw ManualConstraintViolation.toConstraintViolationException(violations);
             }
         } catch (ConstraintViolationException e) {
             // The violations above are a RuntimeException, so without this they are caught below and rewrapped into

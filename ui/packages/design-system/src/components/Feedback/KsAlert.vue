@@ -1,5 +1,5 @@
 <template>
-    <ElAlert :class="{'is-banner': banner}" v-bind="({...filteredProps(), ...$attrs} as any)">
+    <ElAlert :class="{'is-banner': banner}" v-bind="{...filteredProps(), ...$attrs}">
         <template v-if="$slots.default" #default>
             <slot />
         </template>

@@ -521,6 +521,7 @@ export function useKsEditor(
                 emit("focusout", isCodeEditor(ed) ? ed.getValue() : undefined)
                 isFocused.value = false
             })
+            ed.onDidFocusEditorText?.(() => emit("focus"))
             if (mergedOptions.value.shouldFocus) {
                 ed.onDidFocusEditorText?.(() => { isFocused.value = true })
                 ed.focus()
@@ -597,18 +598,26 @@ export function useKsEditor(
         editorResolved.value?.focus()
     }
 
-    function onDrop(event: DragEvent) {
-        const text = event.dataTransfer?.getData("text/plain")
-        if (!text || !isCodeEditor(localEditor.value)) return
+    function insertTextAtCursor(text: string): void {
         const ed = localEditor.value
-        const target = ed.getTargetAtClientPoint(event.clientX, event.clientY)
-        const position = target?.position ?? ed.getPosition()
-        if (!position) return
-        ed.executeEdits("drop-insert", [{
-            range: new monaco.Range(position.lineNumber, position.column, position.lineNumber, position.column),
+        if (!text || !isCodeEditor(ed)) return
+        const selection = ed.getSelection()
+        if (!selection) return
+        ed.executeEdits("insert-text", [{
+            range: selection,
             text,
         }])
         ed.focus()
+    }
+
+    function onDrop(event: DragEvent) {
+        const text = event.dataTransfer?.getData("text/plain")
+        const ed = localEditor.value
+        if (!text || !isCodeEditor(ed)) return
+        const target = ed.getTargetAtClientPoint(event.clientX, event.clientY)
+        const position = target?.position ?? ed.getPosition()
+        if (position) ed.setPosition(position)
+        insertTextAtCursor(text)
     }
 
     function destroy() {
@@ -765,6 +774,7 @@ export function useKsEditor(
         clearLinesRangeHighlights,
         addContentWidget,
         removeContentWidget,
+        insertTextAtCursor,
         getEditor,
     }
 }

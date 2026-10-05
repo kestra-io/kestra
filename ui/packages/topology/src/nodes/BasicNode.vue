@@ -1,7 +1,7 @@
 <template>
     <div
         class="node-wrapper"
-        :class="{'node-wrapper--dragging': dragging, 'node-wrapper--pill': lod === 'pill'}"
+        :class="{'node-wrapper--dragging': dragging, 'node-wrapper--pill': lod === 'pill', 'node-wrapper--with-footer': hasFooter}"
         :draggable="movable"
         @mouseover="mouseover"
         @mouseleave="mouseleave"
@@ -18,7 +18,7 @@
             <div
                 class="node-core"
                 :style="nodeStyle"
-                :class="[classes, {'node-core--focused': focused}]"
+                :class="[classes, {'node-core--focused': focused, 'node-core--with-footer': hasFooter}]"
             >
                 <div class="main-content">
                     <DragVertical v-if="movable" class="node-grip" aria-hidden="true" />
@@ -45,6 +45,9 @@
                     <slot name="title-status" />
                     <slot name="title-actions" />
                 </div>
+                <div v-if="hasFooter" class="node-footer">
+                    <slot name="footer" />
+                </div>
             </div>
             <Transition name="node-details-overlay">
                 <div v-if="lod === 'expanded' && $slots.details" class="node-details-overlay">
@@ -56,7 +59,7 @@
 </template>
 
 <script lang="ts" setup>
-    import {computed, inject} from "vue"
+    import {computed, inject, useSlots} from "vue"
     import {
         KsTooltip,
         useTaskIcon,
@@ -164,6 +167,9 @@
 
     const taskIconComponent = useTaskIcon()
 
+    const slots = useSlots()
+    const hasFooter = computed(() => Boolean(slots.footer))
+
     function mouseover() {
         emit(EVENTS.MOUSE_OVER, props.data.node)
     }
@@ -249,6 +255,10 @@
             align-items: center;
             justify-content: center;
             width: 100%;
+            height: 100%;
+        }
+
+        &.node-wrapper--with-footer {
             height: 100%;
         }
     }
@@ -344,6 +354,23 @@
 
     .node-core--execution .main-content {
         width: 273px;
+    }
+
+    .node-core--with-footer {
+        height: 100%;
+        box-sizing: border-box;
+
+        .main-content {
+            flex-shrink: 0;
+        }
+    }
+
+    .node-footer {
+        flex: 1;
+        display: flex;
+        align-items: flex-end;
+        min-height: 0;
+        padding: 0 var(--ks-spacing-2) var(--ks-spacing-2);
     }
 
     .node-content {

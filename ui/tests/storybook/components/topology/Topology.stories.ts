@@ -1,5 +1,5 @@
 import type {Meta, StoryFn, StoryObj} from "@storybook/vue3-vite"
-import {expect} from "storybook/test"
+import {expect, waitFor} from "storybook/test"
 import {NODE_SIZES, Topology, type FlowGraph} from "@kestra-io/topology"
 import allowFailureDemo from "../../../fixtures/flowgraphs/allow-failure-demo.json"
 import eachSequential from "../../../fixtures/flowgraphs/each-sequential.json"
@@ -411,6 +411,31 @@ DurationBarComparison.args = {
     isHorizontal: false,
     execution: DURATION_BAR_EXECUTION,
 }
+DurationBarComparison.play = async ({canvasElement}) => {
+    const nodeOf = (taskId: string) => canvasElement.querySelector(`[data-id="root.${taskId}"]`) as HTMLElement | null
+    const barOf = (taskId: string) => nodeOf(taskId)?.querySelector("[data-test=\"duration-compact-bar\"]") as HTMLElement | null
+    const filledWidthOf = (taskId: string) =>
+        Array.from(barOf(taskId)!.querySelectorAll<HTMLElement>(".split-bar-seg"))
+            .reduce((sum, segment) => sum + segment.getBoundingClientRect().width, 0)
+
+    await waitFor(() => expect(barOf("transform_data")).not.toBeNull())
+
+    expect(barOf("quick_query")).not.toBeNull()
+    expect(barOf("load_warehouse")).not.toBeNull()
+    expect(barOf("notify_team")).toBeNull()
+
+    const longest = filledWidthOf("transform_data")
+    expect(filledWidthOf("quick_query")).toBeLessThan(longest / 2)
+    expect(filledWidthOf("load_warehouse")).toBeLessThan(longest)
+
+    for (const taskId of ["quick_query", "transform_data", "notify_team"]) {
+        const box = nodeOf(taskId)!.getBoundingClientRect()
+        const card = nodeOf(taskId)!.querySelector(".node-core")!.getBoundingClientRect()
+        expect(nodeOf(taskId)!.style.height).toBe(`${NODE_SIZES.TASK_HEIGHT}px`)
+        expect(Math.round(card.height)).toBe(Math.round(box.height))
+        expect(Math.round(card.top)).toBe(Math.round(box.top))
+    }
+}
 
 // A running task's bar keeps updating every tick — the node's laid-out box must not move as a
 // result (kestra-io/kestra#19666's hard constraint, the reason this issue's slot was reserved).
@@ -444,6 +469,7 @@ export const DurationBarRunningFootprint: StoryObj<typeof Topology> = {
         const node = () => canvasElement.querySelector("[data-id=\"root.quick_query\"]") as HTMLElement | null
 
         await expect(node()).not.toBeNull()
+        await waitFor(() => expect(node()!.querySelector(".node-footer [data-test=\"duration-compact-bar\"] .split-bar-running-live")).not.toBeNull())
         const dimensionsOf = (el: HTMLElement) => ({width: el.style.width, height: el.style.height})
         const before = dimensionsOf(node()!)
 

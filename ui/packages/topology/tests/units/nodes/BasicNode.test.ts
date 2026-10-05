@@ -83,6 +83,20 @@ describe("BasicNode layout", () => {
         expect(wrapper.find(".node-content .status-marker").exists()).toBe(false)
         expect(wrapper.find(".node-content .actions-marker").exists()).toBe(false)
     })
+
+    it("should render the footer inside the card, below the main content", () => {
+        const wrapper = mountBasicNode({}, {...slots, footer: "<div class='footer-marker'>bar</div>"})
+
+        expect(wrapper.find(".node-core > .main-content + .node-footer > .footer-marker").exists()).toBe(true)
+        expect(wrapper.find(".node-core").classes()).toContain("node-core--with-footer")
+    })
+
+    it("should render no footer band when no footer is given", () => {
+        const wrapper = mountBasicNode({}, slots)
+
+        expect(wrapper.find(".node-footer").exists()).toBe(false)
+        expect(wrapper.find(".node-core").classes()).not.toContain("node-core--with-footer")
+    })
 })
 
 describe("BasicNode levels of detail (kestra-io/kestra#19666)", () => {
@@ -91,6 +105,7 @@ describe("BasicNode levels of detail (kestra-io/kestra#19666)", () => {
         "title-status": "<span class='status-marker'>status</span>",
         "title-actions": "<span class='actions-marker'>actions</span>",
         details: "<div class='details-marker'>details</div>",
+        footer: "<div class='footer-marker'>bar</div>",
     }
 
     it("should collapse to just the icon below the pill threshold", () => {
@@ -100,6 +115,7 @@ describe("BasicNode levels of detail (kestra-io/kestra#19666)", () => {
         expect(wrapper.find(".subtitle-marker").exists()).toBe(false)
         expect(wrapper.find(".status-marker").exists()).toBe(false)
         expect(wrapper.find(".actions-marker").exists()).toBe(false)
+        expect(wrapper.find(".footer-marker").exists()).toBe(false)
     })
 
     it("should render the full card at the default level, with no details overlay", () => {
@@ -109,6 +125,7 @@ describe("BasicNode levels of detail (kestra-io/kestra#19666)", () => {
         expect(wrapper.find(".status-marker").exists()).toBe(true)
         expect(wrapper.find(".subtitle-marker").exists()).toBe(true)
         expect(wrapper.find(".details-marker").exists()).toBe(false)
+        expect(wrapper.find(".node-footer .footer-marker").exists()).toBe(true)
     })
 
     it("should additionally render the details overlay above the expanded threshold", () => {
@@ -116,5 +133,6 @@ describe("BasicNode levels of detail (kestra-io/kestra#19666)", () => {
 
         expect(wrapper.find(".status-marker").exists()).toBe(true)
         expect(wrapper.find(".node-details-overlay .details-marker").exists()).toBe(true)
+        expect(wrapper.find(".node-footer .footer-marker").exists()).toBe(true)
     })
 })

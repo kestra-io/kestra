@@ -11,11 +11,10 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import io.kestra.core.models.notifications.CoreNotificationType;
-import io.kestra.core.models.notifications.Notification;
-import io.kestra.core.repositories.NotificationRepositoryInterface;
-import io.kestra.core.services.CurrentUserProvider;
-import io.kestra.core.services.NotificationService;
+import io.kestra.core.notification.NotificationRepositoryInterface;
+import io.kestra.core.notification.NotificationService;
+import io.kestra.core.notification.model.CoreNotificationType;
+import io.kestra.core.notification.model.Notification;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.webserver.controllers.api.NotificationController.ApiMarkAllRead;
 import io.kestra.webserver.controllers.api.NotificationController.ApiNotificationHistory;
@@ -36,8 +35,8 @@ import reactor.core.Disposable;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * OSS has a single implicit identity ({@link CurrentUserProvider#DEFAULT_USER_ID}), so unlike an
- * edition with real per-user auth, every notification created here belongs to the same user and
+ * OSS resolves no real user ({@link NotificationController#resolveCurrentUserId()} defaults to
+ * {@code null}) — every notification created here belongs to that same {@code null} "user", and
  * there is no cross-user/cross-tenant visibility to exercise.
  */
 @MicronautTest(environments = { "test", "h2" }, transactional = false)
@@ -60,9 +59,9 @@ public class NotificationControllerTest {
     private NotificationService notificationService;
 
     /**
-     * OSS's single implicit user means every test in this class shares the same notifications;
-     * without this, count- and order-sensitive assertions (unread count, history pagination) would
-     * depend on execution order.
+     * OSS's shared {@code null} "user" means every test in this class shares the same
+     * notifications; without this, count- and order-sensitive assertions (unread count, history
+     * pagination) would depend on execution order.
      */
     @BeforeEach
     void cleanUpNotifications() {
@@ -73,8 +72,8 @@ public class NotificationControllerTest {
         return notificationRepository.create(
             Notification.builder()
                 .id(IdUtils.create())
-                .userId(CurrentUserProvider.DEFAULT_USER_ID)
-                .type(CoreNotificationType.GENERIC.key())
+                .userId(null)
+                .type(CoreNotificationType.GENERIC.name())
                 .title("title")
                 .read(read)
                 .createdDate(createdDate)
@@ -99,7 +98,7 @@ public class NotificationControllerTest {
     void shouldFollowLiveNotificationCreatedForCurrentUser() throws Exception {
         HttpRequest<?> request = HttpRequest.GET(API_V1_NOTIFICATIONS + "/follow").accept(MediaType.TEXT_EVENT_STREAM_TYPE);
 
-        // OSS's single implicit user means the broadcast queue may still be delivering another
+        // OSS's shared null "user" means the broadcast queue may still be delivering another
         // test's backlog when this subscription opens; filter for our own notification's id
         // instead of assuming the first delivered event is ours.
         AtomicReference<String> expectedId = new AtomicReference<>();
@@ -112,7 +111,7 @@ public class NotificationControllerTest {
             // give the SSE connection time to register server-side before the notification is created.
             // Goes through NotificationService (not the repository directly) since that's the seam that emits NotificationEvents.
             Thread.sleep(300);
-            Notification created = notificationService.notify(CurrentUserProvider.DEFAULT_USER_ID, null, CoreNotificationType.GENERIC, "title", null);
+            Notification created = notificationService.notify(null, null, CoreNotificationType.GENERIC, "title", null);
             expectedId.set(created.getId());
 
             Event<Notification> received = future.get(5, TimeUnit.SECONDS);
@@ -163,7 +162,7 @@ public class NotificationControllerTest {
         HttpResponse<Object> response = client.toBlocking().exchange(request);
 
         assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.NO_CONTENT.getCode());
-        assertThat(notificationRepository.findById(CurrentUserProvider.DEFAULT_USER_ID, created.getId()).orElseThrow().isRead()).isTrue();
+        assertThat(notificationRepository.findById(null, created.getId()).orElseThrow().isRead()).isTrue();
     }
 
     @Test
@@ -174,7 +173,7 @@ public class NotificationControllerTest {
         HttpResponse<Object> response = client.toBlocking().exchange(request);
 
         assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.NO_CONTENT.getCode());
-        assertThat(notificationRepository.findById(CurrentUserProvider.DEFAULT_USER_ID, created.getId()).orElseThrow().isRead()).isFalse();
+        assertThat(notificationRepository.findById(null, created.getId()).orElseThrow().isRead()).isFalse();
     }
 
     @Test
@@ -197,6 +196,6 @@ public class NotificationControllerTest {
         ApiMarkAllRead response = client.toBlocking().retrieve(request, ApiMarkAllRead.class);
 
         assertThat(response.updated()).isEqualTo(1);
-        assertThat(notificationRepository.findById(CurrentUserProvider.DEFAULT_USER_ID, created.getId()).orElseThrow().isRead()).isTrue();
+        assertThat(notificationRepository.findById(null, created.getId()).orElseThrow().isRead()).isTrue();
     }
 }

@@ -157,7 +157,11 @@
             return null
         }
 
-        return {name: route.name, params: {tenant: notification.tenantId ?? undefined, ...route.params}}
+        return {
+            name: route.name,
+            params: {tenant: notification.tenantId ?? undefined, ...route.params},
+            ...(route.query ? {query: route.query} : {}),
+        }
     }
 
     // No-op whenever referenceRouteTo() has nothing to offer.

@@ -291,7 +291,22 @@
       "help": "Hilfe",
       "issue": "Issue",
       "demo": "Demo",
-      "star": "Gib uns einen Stern"
+      "star": "Gib uns einen Stern",
+      "notifications": "Benachrichtigungen"
+    },
+    "notifications": {
+      "heading": "Benachrichtigungen",
+      "ongoing": "In Bearbeitung",
+      "markAllRead": "Alle als gelesen markieren",
+      "markUnread": "Als ungelesen markieren",
+      "markRead": "Als gelesen markieren",
+      "empty": "Noch keine Benachrichtigungen",
+      "emptyUnread": "Keine ungelesenen Benachrichtigungen",
+      "tabs": {
+        "all": "Alle",
+        "unread": "Ungelesen"
+      },
+      "bellAriaLabel": "Benachrichtigungen"
     },
     "source": "Quelle",
     "home": "Startseite",

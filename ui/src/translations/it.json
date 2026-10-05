@@ -291,7 +291,22 @@
       "help": "Aiuto",
       "issue": "Problema",
       "demo": "Demo",
-      "star": "Metti una stella"
+      "star": "Metti una stella",
+      "notifications": "Notifiche"
+    },
+    "notifications": {
+      "heading": "Notifiche",
+      "ongoing": "In corso",
+      "markAllRead": "Segna tutti come letti",
+      "markUnread": "Segna come non letto",
+      "markRead": "Segna come letto",
+      "empty": "Nessuna notifica ancora",
+      "emptyUnread": "Nessuna notifica non letta",
+      "tabs": {
+        "all": "Tutto",
+        "unread": "Non letto"
+      },
+      "bellAriaLabel": "Notifiche"
     },
     "source": "Fonte",
     "home": "Home",

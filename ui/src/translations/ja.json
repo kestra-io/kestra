@@ -291,7 +291,22 @@
       "help": "ヘルプ",
       "issue": "問題",
       "demo": "デモ",
-      "star": "お気に入りに追加"
+      "star": "お気に入りに追加",
+      "notifications": "通知"
+    },
+    "notifications": {
+      "heading": "通知",
+      "ongoing": "進行中",
+      "markAllRead": "すべて既読にする",
+      "markUnread": "未読にする",
+      "markRead": "既読にする",
+      "empty": "まだ通知はありません",
+      "emptyUnread": "未読の通知はありません",
+      "tabs": {
+        "all": "すべて",
+        "unread": "未読"
+      },
+      "bellAriaLabel": "通知"
     },
     "source": "ソース",
     "home": "ホーム",

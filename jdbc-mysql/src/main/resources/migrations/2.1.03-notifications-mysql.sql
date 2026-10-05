@@ -2,7 +2,7 @@ CREATE TABLE IF NOT EXISTS `notifications` (
     `key`           VARCHAR(250) NOT NULL PRIMARY KEY,
     `value`         TEXT         NOT NULL,
     `id`            VARCHAR(150) GENERATED ALWAYS AS (value ->> '$.id') STORED NOT NULL,
-    `user_id`       VARCHAR(150) GENERATED ALWAYS AS (value ->> '$.userId') STORED NOT NULL,
+    `user_id`       VARCHAR(150) GENERATED ALWAYS AS (value ->> '$.userId') STORED,
     `tenant_id`     VARCHAR(150) GENERATED ALWAYS AS (value ->> '$.tenantId') STORED,
     `type`          VARCHAR(50)  GENERATED ALWAYS AS (value ->> '$.type') STORED NOT NULL,
     `read`          BOOL         GENERATED ALWAYS AS (value ->> '$.read' = 'true') STORED NOT NULL,

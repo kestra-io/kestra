@@ -1,4 +1,4 @@
-package io.kestra.core.repositories;
+package io.kestra.core.notification;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -8,9 +8,9 @@ import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 
-import io.kestra.core.models.notifications.CoreNotificationType;
-import io.kestra.core.models.notifications.Notification;
-import io.kestra.core.repositories.NotificationRepositoryInterface.NotificationCursor;
+import io.kestra.core.notification.NotificationRepositoryInterface.NotificationCursor;
+import io.kestra.core.notification.model.CoreNotificationType;
+import io.kestra.core.notification.model.Notification;
 import io.kestra.core.utils.TestsUtils;
 
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
@@ -28,7 +28,7 @@ public abstract class AbstractNotificationRepositoryTest {
             .id(userId + "-" + suffix)
             .userId(userId)
             .tenantId(tenantId)
-            .type(CoreNotificationType.GENERIC.key())
+            .type(CoreNotificationType.GENERIC.name())
             .title("title-" + suffix)
             .read(read)
             .createdDate(createdDate)
@@ -62,11 +62,11 @@ public abstract class AbstractNotificationRepositoryTest {
         Notification withRef = notification(userId, "n1", null, Instant.now(), false).toBuilder().referenceId("op-1").build();
         notificationRepository.create(withRef);
 
-        Optional<Notification> found = notificationRepository.findByUserTypeAndReferenceId(userId, CoreNotificationType.GENERIC.key(), "op-1");
+        Optional<Notification> found = notificationRepository.findByUserTypeAndReferenceId(userId, CoreNotificationType.GENERIC.name(), "op-1");
         assertThat(found).isPresent();
         assertThat(found.get().getId()).isEqualTo(userId + "-n1");
 
-        assertThat(notificationRepository.findByUserTypeAndReferenceId(userId, CoreNotificationType.GENERIC.key(), "op-unknown")).isEmpty();
+        assertThat(notificationRepository.findByUserTypeAndReferenceId(userId, CoreNotificationType.GENERIC.name(), "op-unknown")).isEmpty();
     }
 
     @Test

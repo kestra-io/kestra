@@ -12,8 +12,8 @@ import org.jooq.Condition;
 import org.jooq.Field;
 import org.jooq.impl.DSL;
 
-import io.kestra.core.models.notifications.Notification;
-import io.kestra.core.repositories.NotificationRepositoryInterface;
+import io.kestra.core.notification.NotificationRepositoryInterface;
+import io.kestra.core.notification.model.Notification;
 
 import io.micronaut.data.model.Pageable;
 import jakarta.annotation.Nullable;
@@ -45,15 +45,20 @@ public class AbstractJdbcNotificationRepository extends AbstractJdbcCrudReposito
     }
 
     @Override
-    public Optional<Notification> findById(String userId, String id) {
-        return findOne(DSL.noCondition(), field("user_id").eq(userId).and(field("id").eq(id)));
+    public Optional<Notification> findById(@Nullable String userId, String id) {
+        return findOne(DSL.noCondition(), userIdCondition(userId).and(field("id").eq(id)));
     }
 
     @Override
-    public Optional<Notification> findByUserTypeAndReferenceId(String userId, String type, String referenceId) {
+    public Optional<Notification> findById(String id) {
+        return findOne(DSL.noCondition(), field("id").eq(id));
+    }
+
+    @Override
+    public Optional<Notification> findByUserTypeAndReferenceId(@Nullable String userId, String type, String referenceId) {
         return findOne(
             DSL.noCondition(),
-            field("user_id").eq(userId)
+            userIdCondition(userId)
                 .and(field("type").eq(type))
                 .and(field("reference_id").eq(referenceId))
         );
@@ -65,8 +70,8 @@ public class AbstractJdbcNotificationRepository extends AbstractJdbcCrudReposito
     }
 
     @Override
-    public List<Notification> findByUser(String userId, Set<String> accessibleTenantIds, @Nullable NotificationCursor cursor, int limit) {
-        Condition condition = field("user_id").eq(userId).and(accessibleTenantsCondition(accessibleTenantIds));
+    public List<Notification> findByUser(@Nullable String userId, Set<String> accessibleTenantIds, @Nullable NotificationCursor cursor, int limit) {
+        Condition condition = userIdCondition(userId).and(accessibleTenantsCondition(accessibleTenantIds));
 
         if (cursor != null) {
             OffsetDateTime cursorDate = toOffsetDateTime(cursor.createdDate());
@@ -86,8 +91,8 @@ public class AbstractJdbcNotificationRepository extends AbstractJdbcCrudReposito
     }
 
     @Override
-    public List<Notification> findByUserSince(String userId, Set<String> accessibleTenantIds, Instant since) {
-        Condition condition = field("user_id").eq(userId)
+    public List<Notification> findByUserSince(@Nullable String userId, Set<String> accessibleTenantIds, Instant since) {
+        Condition condition = userIdCondition(userId)
             .and(accessibleTenantsCondition(accessibleTenantIds))
             .and(field("updated_date").greaterThan(toOffsetDateTime(since)));
 
@@ -95,8 +100,8 @@ public class AbstractJdbcNotificationRepository extends AbstractJdbcCrudReposito
     }
 
     @Override
-    public long countUnread(String userId, Set<String> accessibleTenantIds) {
-        Condition condition = field("user_id").eq(userId)
+    public long countUnread(@Nullable String userId, Set<String> accessibleTenantIds) {
+        Condition condition = userIdCondition(userId)
             .and(field("read").isFalse())
             .and(accessibleTenantsCondition(accessibleTenantIds));
 
@@ -111,7 +116,7 @@ public class AbstractJdbcNotificationRepository extends AbstractJdbcCrudReposito
     }
 
     @Override
-    public boolean markRead(String userId, String id) {
+    public boolean markRead(@Nullable String userId, String id) {
         return findById(userId, id)
             .map(notification ->
             {
@@ -122,7 +127,7 @@ public class AbstractJdbcNotificationRepository extends AbstractJdbcCrudReposito
     }
 
     @Override
-    public boolean markUnread(String userId, String id) {
+    public boolean markUnread(@Nullable String userId, String id) {
         return findById(userId, id)
             .map(notification ->
             {
@@ -133,8 +138,8 @@ public class AbstractJdbcNotificationRepository extends AbstractJdbcCrudReposito
     }
 
     @Override
-    public List<Notification> markAllRead(String userId, Set<String> accessibleTenantIds) {
-        Condition condition = field("user_id").eq(userId)
+    public List<Notification> markAllRead(@Nullable String userId, Set<String> accessibleTenantIds) {
+        Condition condition = userIdCondition(userId)
             .and(field("read").isFalse())
             .and(accessibleTenantsCondition(accessibleTenantIds));
 
@@ -150,11 +155,26 @@ public class AbstractJdbcNotificationRepository extends AbstractJdbcCrudReposito
     }
 
     @Override
-    public int deleteByQuery(Instant readOlderThan, Instant createdOlderThan) {
-        Condition condition = field("read").isTrue().and(field("updated_date").lessThan(toOffsetDateTime(readOlderThan)))
-            .or(field("created_date").lessThan(toOffsetDateTime(createdOlderThan)));
+    public List<Notification> findToPurge(Instant readOlderThan, Instant createdOlderThan) {
+        return find(DSL.noCondition(), purgeCondition(readOlderThan, createdOlderThan));
+    }
 
-        return purge(DSL.noCondition(), condition);
+    @Override
+    public int deleteByQuery(Instant readOlderThan, Instant createdOlderThan) {
+        return purge(DSL.noCondition(), purgeCondition(readOlderThan, createdOlderThan));
+    }
+
+    private Condition purgeCondition(Instant readOlderThan, Instant createdOlderThan) {
+        return field("read").isTrue().and(field("updated_date").lessThan(toOffsetDateTime(readOlderThan)))
+            .or(field("created_date").lessThan(toOffsetDateTime(createdOlderThan)));
+    }
+
+    /**
+     * {@code userId} is {@code null} for OSS's single implicit user (no real user model) — compared
+     * explicitly against {@code IS NULL} rather than relying on jOOQ's {@code eq(null)} translation.
+     */
+    private static Condition userIdCondition(@Nullable String userId) {
+        return userId == null ? field("user_id").isNull() : field("user_id").eq(userId);
     }
 
     /**

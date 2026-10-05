@@ -475,7 +475,7 @@ export type AssetsInOut = {
     outputs?: Array<Asset>;
 };
 
-export type AsyncOperationType = 'EXECUTION_KILL' | 'EXECUTION_PAUSE' | 'EXECUTION_RESUME' | 'EXECUTION_RESTART' | 'EXECUTION_REPLAY' | 'EXECUTION_FORCE_RUN' | 'EXECUTION_UNQUEUE' | 'EXECUTION_CHANGE_STATUS' | 'EXECUTION_SET_LABELS' | 'TRIGGER_UNLOCK' | 'TRIGGER_DELETE' | 'TRIGGER_DISABLE' | 'TRIGGER_ENABLE' | 'BACKFILL_PAUSE' | 'BACKFILL_RESUME' | 'BACKFILL_DELETE';
+export type AsyncOperationTypeResourceType = 'EXECUTION' | 'TRIGGER';
 
 /**
  * A backfill configuration.
@@ -1578,10 +1578,11 @@ export type Notification = {
     outcome?: NotificationOutcome | null;
     ongoing?: boolean;
     id?: string;
-    userId: string;
+    userId?: string | null;
     tenantId?: string | null;
     type: string;
-    asyncOperationType?: AsyncOperationType | null;
+    asyncOperationType?: string | null;
+    resourceType?: AsyncOperationTypeResourceType | null;
     title: string;
     referenceId?: string | null;
     succeededItems?: number | null;
@@ -2074,7 +2075,7 @@ export type QueryFilter = {
     children?: Array<QueryFilter>;
 };
 
-export type QueryFilterField = 'q' | 'scope' | 'namespace' | 'kind' | 'POLICY_SCOPE' | 'ENFORCEMENT' | 'labels' | 'tags' | 'metadata' | 'assetExpiry' | 'flowId' | 'flowRevision' | 'id' | 'assetId' | 'type' | 'action' | 'created' | 'updated' | 'startDate' | 'endDate' | 'expirationDate' | 'state' | 'status' | 'SEVERITY' | 'ASSIGNEE' | 'email' | 'timeRange' | 'parentId' | 'triggerExecutionId' | 'triggerId' | 'triggerState' | 'executionId' | 'taskId' | 'loopRunValue' | 'taskRunId' | 'attemptNumber' | 'childFilter' | 'workerId' | 'existingOnly' | 'userId' | 'resources' | 'details' | 'level' | 'path' | 'parentPath' | 'version' | 'enabled' | 'username' | 'name' | 'groupList' | 'external_id' | 'expired_at' | 'instance_owner' | 'source' | 'locked' | 'lastTriggeredDate' | 'nextExecutionDate' | 'artifactId';
+export type QueryFilterField = 'q' | 'scope' | 'namespace' | 'kind' | 'POLICY_SCOPE' | 'ENFORCEMENT' | 'labels' | 'tags' | 'metadata' | 'assetExpiry' | 'flowId' | 'flowRevision' | 'id' | 'assetId' | 'type' | 'action' | 'created' | 'updated' | 'startDate' | 'endDate' | 'expirationDate' | 'state' | 'status' | 'SEVERITY' | 'ASSIGNEE' | 'email' | 'timeRange' | 'parentId' | 'triggerExecutionId' | 'triggerId' | 'triggerState' | 'executionId' | 'taskId' | 'loopRunValue' | 'operationId' | 'operationOutcome' | 'taskRunId' | 'attemptNumber' | 'childFilter' | 'workerId' | 'existingOnly' | 'userId' | 'resources' | 'details' | 'level' | 'path' | 'parentPath' | 'version' | 'enabled' | 'username' | 'name' | 'groupList' | 'external_id' | 'expired_at' | 'instance_owner' | 'source' | 'locked' | 'lastTriggeredDate' | 'nextExecutionDate' | 'artifactId';
 
 export type QueryFilterLogical = 'and' | 'or';
 
@@ -2980,14 +2981,14 @@ export type GetProvidersResponses = {
 
 export type GetProvidersResponse = GetProvidersResponses[keyof GetProvidersResponses];
 
-export type FollowData = {
+export type ListenUserNotificationsData = {
     body?: never;
     path?: never;
     query?: never;
     url: '/api/v1/notifications/follow';
 };
 
-export type FollowErrors = {
+export type ListenUserNotificationsErrors = {
     /**
      * Authentication required
      */
@@ -3002,16 +3003,16 @@ export type FollowErrors = {
     500: ProblemDetail;
 };
 
-export type FollowError = FollowErrors[keyof FollowErrors];
+export type ListenUserNotificationsError = ListenUserNotificationsErrors[keyof ListenUserNotificationsErrors];
 
-export type FollowResponses = {
+export type ListenUserNotificationsResponses = {
     /**
-     * follow 200 response
+     * listenUserNotifications 200 response
      */
     200: EventNotification;
 };
 
-export type FollowResponse = FollowResponses[keyof FollowResponses];
+export type ListenUserNotificationsResponse = ListenUserNotificationsResponses[keyof ListenUserNotificationsResponses];
 
 export type HistoryData = {
     body?: never;

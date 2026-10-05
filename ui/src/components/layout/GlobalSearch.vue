@@ -73,7 +73,7 @@
 
 <script setup lang="ts">
     import {ref, computed, onMounted, onUnmounted, nextTick, watch} from "vue"
-    import {useTopLayer} from "@kestra-io/design-system"
+    import {useTopLayer, KsSearch} from "@kestra-io/design-system"
     import {useRouter} from "vue-router"
     import {useLeftMenu} from "override/components/useLeftMenu"
     import type {MenuItem} from "override/components/useLeftMenu"
@@ -101,7 +101,7 @@
     const query = ref("")
     const isOpen = ref(false)
     const topLayer = useTopLayer()
-    const searchInput = ref<{ focus?: () => void } | null>(null)
+    const searchInput = ref<InstanceType<typeof KsSearch> | null>(null)
     const activeIndex = ref(0)
     const scopeStack = ref<ScopeNode[]>([])
 
@@ -198,7 +198,7 @@
         isOpen.value = true
         activeIndex.value = 0
         nextTick(() => {
-            searchInput.value?.focus?.()
+            searchInput.value?.focus()
         })
     }
 
@@ -234,7 +234,7 @@
         scopeStack.value = [...scopeStack.value, {title: item.title, items: item.children}]
         query.value = ""
         activeIndex.value = 0
-        nextTick(() => searchInput.value?.focus?.())
+        nextTick(() => searchInput.value?.focus())
     }
 
     const onItemClick = (item: SearchItem) => {

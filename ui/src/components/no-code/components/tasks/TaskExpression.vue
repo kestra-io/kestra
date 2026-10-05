@@ -25,16 +25,10 @@
     const editorRef = ref<KsEditorExposes>()
     const {onFocus} = useFocusedExpressionEditor(editorRef)
 
-    const props = defineProps({
-        modelValue: {
-            type: [String, Object],
-            default: undefined,
-        },
-        root: {
-            type: String,
-            default: undefined,
-        },
-    })
+    const props = defineProps<{
+        modelValue?: unknown;
+        root?: string;
+    }>()
 
     function editorInput(value: string) {
         localEditorValue.value = value

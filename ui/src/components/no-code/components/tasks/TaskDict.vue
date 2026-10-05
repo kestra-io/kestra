@@ -11,7 +11,7 @@
             <Wrapper v-for="(item, index) in currentValue" :key="rowKey(item)" class="item-wrapper">
                 <template #tasks>
                     <InputText
-                        :ref="el => { if (el) keyInputRefs[index] = el }"
+                        :ref="el => setKeyInputRef(index, el)"
                         :modelValue="item[0]"
                         @update:model-value="onKey(index, $event)"
                         margin="m-0"
@@ -42,7 +42,7 @@
             <KsRow v-for="(item, index) in currentValue" :key="rowKey(item)" :gutter="10" class="w-100" style="align-items: center;" :data-testid="`task-dict-item-${item[0]}-${index}`">
                 <KsCol :span="6">
                     <InputText
-                        :ref="el => { if (el) keyInputRefs[index] = el }"
+                        :ref="el => setKeyInputRef(index, el)"
                         :modelValue="item[0]"
                         @update:model-value="onKey(index, $event)"
                         margin="m-0"
@@ -81,6 +81,18 @@
     import Add from "../Add.vue"
     import Wrapper from "./Wrapper.vue"
     import {useBlockComponent} from "./useBlockComponent"
+    import type {Schema} from "./getTaskComponent"
+
+    type DictSchema = Schema & {additionalProperties?: Schema}
+
+    interface Focusable {
+        focus(): void;
+    }
+
+    function isFocusable(value: unknown): value is Focusable {
+        return typeof value === "object" && value !== null && "focus" in value &&
+            typeof (value as Focusable).focus === "function"
+    }
 
     const {te} = useI18n()
 
@@ -89,8 +101,8 @@
     })
 
     const props = withDefaults(defineProps<{
-        modelValue?: Record<string, any>;
-        schema?: any;
+        modelValue?: Record<string, unknown>;
+        schema?: DictSchema;
         root?: string;
         disabled?: boolean;
     }>(), {
@@ -112,8 +124,14 @@
         ) : undefined
     })
 
-    const currentValue = ref<[string, any][]>([])
-    const keyInputRefs: Record<number, any> = {}
+    const currentValue = ref<[string, unknown][]>([])
+    const keyInputRefs: Record<number, Focusable> = {}
+
+    function setKeyInputRef(index: number, el: unknown) {
+        if (isFocusable(el)) {
+            keyInputRefs[index] = el
+        }
+    }
 
     const localEdit = ref(false)
 
@@ -152,7 +170,9 @@
         emit("update:modelValue", Object.fromEntries(currentValue.value.filter(pair => pair[0] !== "" && pair[1] !== undefined)))
     }, 200)
 
-    const emit = defineEmits(["update:modelValue"])
+    const emit = defineEmits<{
+        (e: "update:modelValue", value: Record<string, unknown>): void;
+    }>()
 
     function getKey(key: string) {
         if (!props.root) return key
@@ -168,7 +188,7 @@
         emitUpdate()
     }
 
-    function onValueChange(key: number, val: any) {
+    function onValueChange(key: number, val: unknown) {
         currentValue.value[key][1] = val
         emitUpdate()
     }

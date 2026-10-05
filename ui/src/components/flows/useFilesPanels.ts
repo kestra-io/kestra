@@ -168,8 +168,12 @@ export function useFilesPanels(panels: Ref<Panel[]>, namespace: Ref<string | und
             // parallelize saving of files
             await Promise.all(
                 files.map(file => namespacesStore.saveOrCreateFile(file.file)
-                    // only remove the dirty flag once the file was saved
-                    .then(() => file.tab.dirty = false))
+                    // only remove the dirty flag once the file was saved, and only if nothing was typed meanwhile
+                    .then(() => {
+                        if (file.tab.content === file.file.content) {
+                            file.tab.dirty = false;
+                        }
+                    }))
             );
         }
     });

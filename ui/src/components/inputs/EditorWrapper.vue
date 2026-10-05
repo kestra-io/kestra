@@ -409,15 +409,26 @@
         }
     };
 
+    // The tab stays dirty until the request returns, so without this a click during a slow save sends the file again.
+    const sendingContent = ref<string>();
+
     const saveFileContent = async () => {
         clearTimeout(timeout.value);
-        if(!namespace.value || !props.path || props.flow || !canWriteFiles.value) return
-        await namespacesStore.saveOrCreateFile({
-            namespace: namespace.value,
-            path: props.path,
-            content: editorContent.value || "",
-        });
-        savedSourceNS.value = source.value;
+        const content = source.value;
+        if(!namespace.value || !props.path || props.flow || !canWriteFiles.value || content === sendingContent.value) return
+        sendingContent.value = content;
+        try {
+            await namespacesStore.saveOrCreateFile({
+                namespace: namespace.value,
+                path: props.path,
+                content: content || "",
+            });
+            savedSourceNS.value = content;
+        } finally {
+            if (sendingContent.value === content) {
+                sendingContent.value = undefined;
+            }
+        }
     }
 
     const handleGlobalSave = (event: KeyboardEvent) => {

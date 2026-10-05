@@ -71,7 +71,7 @@ public class PlaygroundRetentionService {
 
     private void purge(Execution newRun) throws IOException {
         List<Execution> previousRuns = executionRepository
-            .find(Pageable.UNPAGED.withSort(Sort.of(Sort.Order.desc(Execution.STATE_START_DATE_FIELD))), newRun.getTenantId(), sameUserAndFlow(newRun))
+            .find(newestFirst(), newRun.getTenantId(), sameUserAndFlow(newRun))
             .stream()
             .filter(run -> !run.getId().equals(newRun.getId()))
             .toList();
@@ -96,6 +96,10 @@ public class PlaygroundRetentionService {
         }
         taskOutputService.purge(expiredRuns);
         executionOutputService.purge(expiredRuns);
+    }
+
+    private Pageable newestFirst() {
+        return Pageable.UNPAGED.withSort(Sort.of(Sort.Order.desc(executionRepository.sortMapping().apply(Execution.STATE_START_DATE_FIELD))));
     }
 
     private static List<QueryFilter> sameUserAndFlow(Execution run) {

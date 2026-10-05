@@ -122,7 +122,7 @@ describe("flow draft save — draft resolution per entry point", () => {
 
     it("saveAll() sends an invalid published flow to the backend", async () => {
         const store = await freshStore()
-        validateFlows.mockResolvedValue([{constraints: "Invalid task configuration"}])
+        validateFlows.mockResolvedValue([{index: 0, errors: [{detail: "Invalid task configuration"}]}])
 
         await store.saveAll()
 
@@ -132,7 +132,7 @@ describe("flow draft save — draft resolution per entry point", () => {
 
     it("save() sends an invalid published flow to the backend", async () => {
         const store = await freshStore()
-        validateFlows.mockResolvedValue([{constraints: "Invalid task configuration"}])
+        validateFlows.mockResolvedValue([{index: 0, errors: [{detail: "Invalid task configuration"}]}])
 
         await store.save()
 

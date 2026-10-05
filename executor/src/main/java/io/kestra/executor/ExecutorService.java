@@ -24,7 +24,6 @@ import io.kestra.core.models.assets.AssetUser;
 import io.kestra.core.models.assets.AssetsDeclaration;
 import io.kestra.core.models.assets.AssetsInOut;
 import io.kestra.core.models.executions.*;
-import io.kestra.core.models.flows.Concurrency;
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.State;
@@ -625,7 +624,8 @@ public class ExecutorService {
                     if (task.getRetry() != null) {
                         AbstractRetry retry = task.getRetry();
                         behavior = retry.getBehavior();
-                        nextRetryDate = behavior.equals(AbstractRetry.Behavior.CREATE_NEW_EXECUTION) ? taskRun.nextRetryDate(retry, executor.getExecution()) : retriedTaskRun.nextRetryDate(retry);
+                        nextRetryDate = behavior.equals(AbstractRetry.Behavior.CREATE_NEW_EXECUTION) ? taskRun.nextRetryDate(retry, executor.getExecution())
+                            : retriedTaskRun.nextRetryDate(retry);
                     } else {
                         // Case parent task has a retry
                         Task parentTaskWithRetry = searchForParentTaskWithRetry(taskRun, executor);
@@ -636,7 +636,8 @@ public class ExecutorService {
                                 behavior = retry.getBehavior();
                                 nextRetryDate = behavior.equals(AbstractRetry.Behavior.CREATE_NEW_EXECUTION) ? taskRun.nextRetryDate(retry, executor.getExecution())
                                     : taskRun.nextRetryDate(retry);
-                                nextRetryDate = behavior.equals(AbstractRetry.Behavior.CREATE_NEW_EXECUTION) ? taskRun.nextRetryDate(retry, executor.getExecution()) : retriedTaskRun.nextRetryDate(retry);
+                                nextRetryDate = behavior.equals(AbstractRetry.Behavior.CREATE_NEW_EXECUTION) ? taskRun.nextRetryDate(retry, executor.getExecution())
+                                    : retriedTaskRun.nextRetryDate(retry);
                             }
                         }
                         // Case flow has a retry

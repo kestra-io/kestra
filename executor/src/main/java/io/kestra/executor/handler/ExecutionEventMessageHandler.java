@@ -199,6 +199,12 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
                                     case CANCEL -> execution.withState(State.Type.CANCELLED);
                                 };
 
+                                metricRegistry
+                                    .counter(
+                                        MetricRegistry.METRIC_EXECUTOR_QUOTA_EXCEEDED_COUNT, MetricRegistry.METRIC_EXECUTOR_QUOTA_EXCEEDED_COUNT_DESCRIPTION, metricRegistry.tags(execution)
+                                    )
+                                    .increment();
+
                                 return executor.withExecution(newExecution, "processQuotas");
                             }
 
@@ -209,75 +215,75 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
                             if (execution.getKind() != ExecutionKind.LOOP) {
                                 List<ScopedConcurrencyLimit> concurrencyLimits = concurrencyLimitResolver.resolveLimits(flow);
                                 if (!concurrencyLimits.isEmpty()) {
-                                ExecutionRunning executionRunning = ExecutionRunning.builder()
-                                    .tenantId(executor.getFlow().getTenantId())
-                                    .namespace(executor.getFlow().getNamespace())
-                                    .flowId(executor.getFlow().getId())
-                                    .execution(executor.getExecution())
-                                    .concurrencyState(ExecutionRunning.ConcurrencyState.CREATED)
-                                    .build();
+                                    ExecutionRunning executionRunning = ExecutionRunning.builder()
+                                        .tenantId(executor.getFlow().getTenantId())
+                                        .namespace(executor.getFlow().getNamespace())
+                                        .flowId(executor.getFlow().getId())
+                                        .execution(executor.getExecution())
+                                        .concurrencyState(ExecutionRunning.ConcurrencyState.CREATED)
+                                        .build();
 
-                                ExecutionRunning processed = concurrencyLimitStateStore.countThenProcess(
-                                    flow,
-                                    concurrencyLimits,
-                                    (txContext, runningCounts) ->
-                                    {
-                                        Integer queueLimit = flow.getConcurrency() == null
-                                            ? null
-                                            : flow.getConcurrency().getQueueLimit();
+                                    ExecutionRunning processed = concurrencyLimitStateStore.countThenProcess(
+                                        flow,
+                                        concurrencyLimits,
+                                        (txContext, runningCounts) ->
+                                        {
+                                            Integer queueLimit = flow.getConcurrency() == null
+                                                ? null
+                                                : flow.getConcurrency().getQueueLimit();
 
-                                        int queuedCount = queueLimit == null
-                                            ? 0
-                                            : executionQueuedStateStore.count(
-                                                txContext,
-                                                flow.getTenantId(),
-                                                flow.getNamespace(),
-                                                flow.getId()
+                                            int queuedCount = queueLimit == null
+                                                ? 0
+                                                : executionQueuedStateStore.count(
+                                                    txContext,
+                                                    flow.getTenantId(),
+                                                    flow.getNamespace(),
+                                                    flow.getId()
+                                                );
+
+                                            ExecutionRunning computed = executorService.processExecutionRunning(
+                                                concurrencyLimits,
+                                                runningCounts,
+                                                queuedCount,
+                                                executionRunning.withExecution(execution)
                                             );
 
-                                        ExecutionRunning computed = executorService.processExecutionRunning(
-                                            concurrencyLimits,
-                                            runningCounts,
-                                            queuedCount,
-                                            executionRunning.withExecution(execution)
-                                        );
+                                            if (
+                                                computed.getConcurrencyState() == ExecutionRunning.ConcurrencyState.RUNNING
+                                                    && !computed.getExecution().getState().isTerminated()
+                                            ) {
+                                                return Pair.of(computed, true);
+                                            }
 
-                                        if (
-                                            computed.getConcurrencyState() == ExecutionRunning.ConcurrencyState.RUNNING
-                                                && !computed.getExecution().getState().isTerminated()
-                                        ) {
-                                            return Pair.of(computed, true);
+                                            if (computed.getConcurrencyState() == ExecutionRunning.ConcurrencyState.QUEUED) {
+                                                executionQueuedStateStore.save(
+                                                    txContext,
+                                                    ExecutionQueued.fromExecutionRunning(computed)
+                                                );
+                                            }
+
+                                            return Pair.of(computed, false);
                                         }
-
-                                        if (computed.getConcurrencyState() == ExecutionRunning.ConcurrencyState.QUEUED) {
-                                            executionQueuedStateStore.save(
-                                                txContext,
-                                                ExecutionQueued.fromExecutionRunning(computed)
-                                            );
-                                        }
-
-                                        return Pair.of(computed, false);
-                                    }
-                                );
-
-                                // if the execution is queued or terminated due to concurrency limit, we stop here
-                                if (processed.getExecution().getState().isTerminated() || processed.getConcurrencyState() == ExecutionRunning.ConcurrencyState.QUEUED) {
-                                    if (processed.getExecution().getState().getCurrent().isTerminatedInError()) {
-                                        Span.current().setStatus(StatusCode.ERROR, "Execution ended in state " + processed.getExecution().getState().getCurrent().name());
-                                    }
-                                    return executor.withExecution(processed.getExecution(), "handleConcurrencyLimit");
-                                }
-
-                                // the execution claimed one slot in every scope: remember them so the release
-                                // decrements exactly these, even if the definitions change while it runs
-                                if (executor.getExecution().getMetadata() != null) {
-                                    executor.withExecution(
-                                        execution.withMetadata(execution.getMetadata().withConcurrencyScopes(concurrencyLimits.stream().map(ScopedConcurrencyLimit::uid).toList())),
-                                        "handleConcurrencyLimit"
                                     );
+
+                                    // if the execution is queued or terminated due to concurrency limit, we stop here
+                                    if (processed.getExecution().getState().isTerminated() || processed.getConcurrencyState() == ExecutionRunning.ConcurrencyState.QUEUED) {
+                                        if (processed.getExecution().getState().getCurrent().isTerminatedInError()) {
+                                            Span.current().setStatus(StatusCode.ERROR, "Execution ended in state " + processed.getExecution().getState().getCurrent().name());
+                                        }
+                                        return executor.withExecution(processed.getExecution(), "handleConcurrencyLimit");
+                                    }
+
+                                    // the execution claimed one slot in every scope: remember them so the release
+                                    // decrements exactly these, even if the definitions change while it runs
+                                    if (executor.getExecution().getMetadata() != null) {
+                                        executor.withExecution(
+                                            execution.withMetadata(execution.getMetadata().withConcurrencyScopes(concurrencyLimits.stream().map(ScopedConcurrencyLimit::uid).toList())),
+                                            "handleConcurrencyLimit"
+                                        );
+                                    }
                                 }
                             }
-                        }
                         }
 
                         // handle execution changed SLA
@@ -299,7 +305,6 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
                         // worker task
                         if (!executor.getWorkerTasks().isEmpty()) {
                             List<WorkerTaskResult> workerTaskResults = new ArrayList<>();
-                            final List<TaskRun> currentTaskRuns = executor.getExecution().getTaskRunList();
                             executor
                                 .getWorkerTasks()
                                 .forEach(throwConsumer(executorTask ->

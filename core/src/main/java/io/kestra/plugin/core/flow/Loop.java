@@ -231,7 +231,7 @@ public class Loop extends AbstractBranch<Loop.Output> {
             """
     )
     @PluginProperty
-    private Integer concurrencyLimit = 1;
+    private Integer concurrencyLimit = 0;
 
     @Builder.Default
     @Schema(

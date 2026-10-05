@@ -4,7 +4,17 @@ import {createPinia} from "pinia"
 import {createI18n} from "vue-i18n"
 import {createMemoryHistory, createRouter} from "vue-router"
 import {KsButton, KsDropdown, KsDropdownItem, KsDropdownMenu} from "@kestra-io/design-system"
+import type {State, StateType} from "@kestra-io/kestra-sdk"
+import type {Execution} from "../../stores/executions"
 import TaskRunActions from "./TaskRunActions.vue"
+
+function state(current: StateType): State {
+    return {current, histories: [], getDuration: "PT0S", getStartDate: "", getEndDate: ""}
+}
+
+function executionProps(id: string): Execution {
+    return {id, flowId: "flow-1", namespace: "ns-1", flowRevision: 1, originalId: id, metadata: {originalCreatedDate: ""}, state: state("SUCCESS")}
+}
 
 async function mountActions(type: string, grouped = false) {
     const router = createRouter({
@@ -15,13 +25,13 @@ async function mountActions(type: string, grouped = false) {
         ],
     })
     await router.push({name: "topology", params: {tenant: "test-tenant", id: "parent-execution"}})
-    const taskRun = {id: "task-run", taskId: "loop", state: {current: "RUNNING"}}
+    const taskRun = {id: "task-run", taskId: "loop", state: state("RUNNING")}
     const wrapper = mount(TaskRunActions, {
         attachTo: document.body,
         props: {
             taskRun,
             taskRuns: grouped ? [taskRun, {...taskRun, id: "another-task-run"}] : undefined,
-            execution: {id: "parent-execution", namespace: "tests", flowId: "loop-flow", state: {current: "RUNNING"}},
+            execution: {...executionProps("parent-execution"), namespace: "tests", flowId: "loop-flow", state: state("RUNNING")},
             flow: {tasks: [{id: "parallel", type: "io.kestra.plugin.core.flow.Parallel", tasks: [{id: "loop", type}]}]},
         },
         global: {
@@ -79,8 +89,8 @@ describe("TaskRunActions", () => {
         const {wrapper, router} = await mountActions("io.kestra.plugin.core.log.Log")
         await wrapper.setProps({
             taskType: "io.kestra.plugin.core.flow.Loop",
-            taskRun: {id: "subflow-task-run", taskId: "subflow-loop", state: {current: "RUNNING"}},
-            execution: {id: "subflow-execution", namespace: "tests", flowId: "child-flow", state: {current: "RUNNING"}},
+            taskRun: {id: "subflow-task-run", taskId: "subflow-loop", state: state("RUNNING")},
+            execution: {...executionProps("subflow-execution"), namespace: "tests", flowId: "child-flow", state: state("RUNNING")},
         })
         const iterations = wrapper.findAllComponents(KsDropdownItem).find(item => item.text() === "Iterations")
 

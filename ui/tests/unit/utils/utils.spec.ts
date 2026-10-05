@@ -199,21 +199,17 @@ describe("humanFileSize()", () => {
         expect(humanFileSize(1024, false, 0)).toBe("1 KiB")
     })
 
-    // A large negative must scale into units, not be mistaken for a sub-threshold value.
     it("formats a negative size rather than treating it as below the threshold", () => {
         expect(humanFileSize(-1024)).toBe("-1.0 KiB")
     })
 
-    // The size arrives as undefined when it is 0, and the quirk is a spaceless "0B".
     it("returns the literal '0B' for undefined", () => {
         expect(humanFileSize(undefined as unknown as number)).toBe("0B")
     })
 })
 
 describe("humanTextSize()", () => {
-    // "€" is one character but three UTF-8 bytes, so the byte count must win.
     it("measures the UTF-8 byte length, counting a multi-byte character as more than one byte", () => {
-        expect("€".length).toBe(1)
         expect(humanTextSize("€")).toBe("3 B")
     })
 })

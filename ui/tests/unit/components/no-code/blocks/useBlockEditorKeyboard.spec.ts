@@ -15,7 +15,17 @@ const KEYMAP: BlockEditorKeyBindingLike[] = [
     {id: "focus-panel", keys: ["Tab"]},
     {id: "insert-after", keys: ["a"]},
     {id: "insert-before", keys: ["Shift+a"]},
+    {id: "copy", keys: ["Meta+c", "Control+c"]},
+    {id: "paste", keys: ["Meta+v", "Control+v"]},
+    {id: "redo", keys: ["Meta+Shift+z", "Control+y"]},
 ]
+
+function stubTextSelection(hasSelection: boolean) {
+    return vi.spyOn(window, "getSelection").mockReturnValue({
+        isCollapsed: !hasSelection,
+        toString: () => (hasSelection ? "selected text" : ""),
+    } as Selection)
+}
 
 function mountWithKeyboard(
     dispatch: (id: string, event: KeyboardEvent) => void | boolean,
@@ -409,6 +419,91 @@ describe("useBlockEditorKeyboard", () => {
 
         // Then
         expect(dispatch).not.toHaveBeenCalled()
+    })
+
+    it("leaves Cmd+C to a real text selection, so copying selected card text still works", () => {
+        // Given
+        const dispatch = vi.fn()
+        wrapper = mountWithKeyboard(dispatch)
+        const selectionSpy = stubTextSelection(true)
+
+        // When
+        const event = dispatchKeydown(window, {key: "c", metaKey: true})
+
+        // Then
+        expect(dispatch).not.toHaveBeenCalled()
+        expect(event.defaultPrevented).toBe(false)
+        selectionSpy.mockRestore()
+    })
+
+    it("still dispatches Cmd+C when there is no text selection", () => {
+        // Given
+        const dispatch = vi.fn()
+        wrapper = mountWithKeyboard(dispatch)
+        const selectionSpy = stubTextSelection(false)
+
+        // When
+        dispatchKeydown(window, {key: "c", metaKey: true})
+
+        // Then
+        expect(dispatch).toHaveBeenCalledWith("copy", expect.any(KeyboardEvent))
+        selectionSpy.mockRestore()
+    })
+
+    it("does not let a text selection guard a non-clipboard shortcut", () => {
+        // Given — the guard is scoped to copy/cut, not every binding
+        const dispatch = vi.fn()
+        wrapper = mountWithKeyboard(dispatch)
+        const selectionSpy = stubTextSelection(true)
+
+        // When
+        dispatchKeydown(window, {key: "ArrowDown"})
+
+        // Then
+        expect(dispatch).toHaveBeenCalledWith("move", expect.any(KeyboardEvent))
+        selectionSpy.mockRestore()
+    })
+
+    it("still dispatches Cmd+V over a text selection, unlike copy and cut", () => {
+        // Given — a non-editable text selection has nothing native for paste to yield to
+        const dispatch = vi.fn()
+        wrapper = mountWithKeyboard(dispatch)
+        const selectionSpy = stubTextSelection(true)
+
+        // When
+        dispatchKeydown(window, {key: "v", metaKey: true})
+
+        // Then
+        expect(dispatch).toHaveBeenCalledWith("paste", expect.any(KeyboardEvent))
+        selectionSpy.mockRestore()
+    })
+
+    it("blocks redo while an overlay owns the keys, like every other canvas shortcut", () => {
+        // Given
+        const dispatch = vi.fn()
+        wrapper = mountWithKeyboard(dispatch, () => true)
+
+        // When
+        dispatchKeydown(window, {key: "z", metaKey: true, shiftKey: true})
+
+        // Then
+        expect(dispatch).not.toHaveBeenCalled()
+    })
+
+    it("leaves redo to a field inside the surface, like undo", () => {
+        // Given
+        const dispatch = vi.fn()
+        wrapper = mountWithKeyboard(dispatch)
+        const input = document.createElement("input")
+        document.body.appendChild(input)
+
+        // When
+        const event = dispatchKeydown(input, {key: "z", metaKey: true, shiftKey: true})
+
+        // Then
+        expect(dispatch).not.toHaveBeenCalled()
+        expect(event.defaultPrevented).toBe(false)
+        document.body.removeChild(input)
     })
 
     it("ignores an unmapped key", () => {

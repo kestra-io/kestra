@@ -696,7 +696,7 @@
                 gap: $spacer * 0.5;
 
                 &--selected {
-                    background-color: var(--ks-background-active);
+                    background-color: var(--ks-bg-active);
                 }
 
                 &__checkbox {

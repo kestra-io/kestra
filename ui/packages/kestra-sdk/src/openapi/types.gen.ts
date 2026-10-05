@@ -2411,15 +2411,37 @@ export type TriggerType = 'SCHEDULE' | 'POLLING' | 'REALTIME';
 export type Type = 'STRING' | 'SELECT' | 'INT' | 'FLOAT' | 'BOOL' | 'DATETIME' | 'DATE' | 'TIME' | 'DURATION' | 'FILE' | 'JSON' | 'ION' | 'URI' | 'SECRET' | 'ARRAY' | 'MULTISELECT' | 'YAML' | 'EMAIL' | 'FORM' | 'REUSABLE_INPUTS';
 
 export type ValidateConstraintViolation = {
+    errors?: Array<ValidationError>;
+    /**
+     * @deprecated
+     */
+    constraints?: string;
     index: number;
     filename?: string;
     namespace?: string;
     flow?: string;
-    constraints?: string;
     outdated?: boolean;
     deprecationPaths?: Array<string>;
     warnings?: Array<string>;
     infos?: Array<string>;
+};
+
+/**
+ * A single validation error, located in the submitted source.
+ */
+export type ValidationError = {
+    /**
+     * What is wrong.
+     */
+    detail?: string;
+    /**
+     * RFC 6901 JSON Pointer locating the error in the submitted document.
+     */
+    pointer?: string;
+    /**
+     * Human-friendly path locating the error, naming tasks and inputs by id. Not a JSON Pointer.
+     */
+    path?: string;
 };
 
 export type VersionServiceVersionUpgrade = {

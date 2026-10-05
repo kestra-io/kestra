@@ -193,7 +193,6 @@ class LogStreamingServiceTest {
 
     private static FollowLogEvent event(Level level, String taskId, String taskRunId, Integer attempt, String message) {
         return new FollowLogEvent(
-            null,
             "io.kestra.demo",
             "demo-flow",
             taskId,
@@ -203,7 +202,6 @@ class LogStreamingServiceTest {
             null,
             Instant.now(),
             level,
-            "main",
             message,
             null,
             null

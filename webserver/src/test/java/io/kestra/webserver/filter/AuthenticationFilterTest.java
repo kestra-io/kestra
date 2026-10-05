@@ -14,17 +14,24 @@ import io.kestra.webserver.services.BasicAuthService;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.MediaType;
+import io.micronaut.http.MutableHttpRequest;
 import io.micronaut.http.MutableHttpResponse;
+import io.micronaut.http.uri.UriMatchTemplate;
 import io.micronaut.http.client.annotation.Client;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.http.client.multipart.MultipartBody;
 import io.micronaut.reactor.http.client.ReactorHttpClient;
+import io.micronaut.web.router.RouteAttributes;
+import io.micronaut.web.router.UriRouteInfo;
+import io.micronaut.web.router.UriRouteMatch;
 import jakarta.inject.Inject;
 import reactor.core.publisher.Mono;
 
 import static io.kestra.webserver.services.BasicAuthService.BASIC_AUTH_SETTINGS_KEY;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 @KestraTest
 class AuthenticationFilterTest {
@@ -150,6 +157,29 @@ class AuthenticationFilterTest {
     }
 
     @Test
+    void shouldNotChallengeScriptedRequests() {
+        HttpClientResponseException fetchResponse = assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking()
+                .exchange(HttpRequest.GET("/api/v1/main/dashboards").header("Authorization", "").header("Sec-Fetch-Dest", "empty"))
+        );
+        assertThat(fetchResponse.getStatus().getCode()).isEqualTo(HttpStatus.UNAUTHORIZED.getCode());
+        assertThat(fetchResponse.getResponse().getHeaders().get("WWW-Authenticate")).isNull();
+
+        HttpClientResponseException xhrResponse = assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking()
+                .exchange(HttpRequest.GET("/api/v1/main/dashboards").header("Authorization", "").header("X-Requested-With", "XMLHttpRequest"))
+        );
+        assertThat(xhrResponse.getStatus().getCode()).isEqualTo(HttpStatus.UNAUTHORIZED.getCode());
+        assertThat(xhrResponse.getResponse().getHeaders().get("WWW-Authenticate")).isNull();
+
+        HttpClientResponseException navigationResponse = assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking()
+                .exchange(HttpRequest.GET("/api/v1/main/dashboards").header("Authorization", "").header("Sec-Fetch-Dest", "document"))
+        );
+        assertThat(navigationResponse.getResponse().getHeaders().get("WWW-Authenticate")).isEqualTo("Basic");
+    }
+
+    @Test
     void testAnonymous() {
         var response = client.toBlocking().exchange("/ping");
 
@@ -257,6 +287,21 @@ class AuthenticationFilterTest {
                 HttpRequest.GET("/api/v1/main/dashboards"), null
             )
         ).block();
+        assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.UNAUTHORIZED.getCode());
+    }
+
+    @Test
+    void shouldRequireAuthenticationWhenResolvedRouteIsApiRegardlessOfPathSpelling() {
+        UriMatchTemplate template = UriMatchTemplate.of("/api/v1/{tenant}/dashboards");
+        UriRouteInfo<?, ?> routeInfo = mock(UriRouteInfo.class);
+        when(routeInfo.getUriMatchTemplate()).thenReturn(template);
+        UriRouteMatch<?, ?> routeMatch = mock(UriRouteMatch.class);
+        when(routeMatch.getRouteInfo()).thenAnswer(invocation -> routeInfo);
+        MutableHttpRequest<?> request = HttpRequest.GET("/some/path/that/does/not/look/like/the/api");
+        RouteAttributes.setRouteMatch(request, routeMatch);
+
+        MutableHttpResponse<?> response = Mono.from(filter.doFilter(request, null)).block();
+
         assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.UNAUTHORIZED.getCode());
     }
 

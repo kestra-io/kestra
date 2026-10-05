@@ -9,6 +9,7 @@ import com.google.common.collect.ImmutableMap;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.ExecutionMetadata;
 import io.kestra.core.models.executions.LoopRun;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.FlowInterface;
@@ -59,6 +60,7 @@ public final class RunVariables {
         "vars",
         // Execution
         "execution",
+        "execution.attemptNumber",
         "execution.id",
         "execution.originalId",
         "execution.outputs",
@@ -249,6 +251,10 @@ public final class RunVariables {
         if (execution.getState() != null) { // can occur in tests
             executionMap.put("state", execution.getState().getCurrent());
         }
+
+        Optional.ofNullable(execution.getMetadata())
+            .map(ExecutionMetadata::getAttemptNumber)
+            .ifPresent(attemptNumber -> executionMap.put("attemptNumber", attemptNumber));
 
         Optional.ofNullable(execution.getState()).map(State::getStartDate)
             .ifPresent(startDate -> executionMap.put("startDate", startDate));

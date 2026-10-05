@@ -20,7 +20,7 @@
     import {useExecutionsStore, type Execution} from "../../stores/executions"
     import {EXECUTION_PARENT_ROUTE} from "./executionTabs"
     import * as ExecutionUtils from "../../utils/executionUtils"
-    import FlowRun from "../../components/flows/FlowRun.vue"
+    import FlowRun, {type ReplaySubmitOptions} from "../../components/flows/FlowRun.vue"
     import PlayBoxMultiple from "vue-material-design-icons/PlayBoxMultiple.vue"
     import {useClient} from "@kestra-io/kestra-sdk"
 
@@ -43,7 +43,7 @@
 
     const axios = useClient()
 
-    const handleReplaySubmit = async ({inputs, breakpoints}: any) => {
+    const handleReplaySubmit = async ({inputs, breakpoints}: ReplaySubmitOptions) => {
 
         const formData = inputsToFormData(flow.value?.inputs, inputs)
         const replayed = await executionsStore.replayExecutionWithInputs({

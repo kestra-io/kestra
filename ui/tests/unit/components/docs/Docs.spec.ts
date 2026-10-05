@@ -17,7 +17,7 @@ vi.mock("vue-router", () => ({
 }))
 
 const fetchResource = vi.fn().mockResolvedValue({metadata: {title: "Outputs"}, content: "doc content"})
-const docStoreState = reactive<{resourceUrlTemplate?: string, pageMetadata?: any}>({
+const docStoreState = reactive<{resourceUrlTemplate?: string, pageMetadata?: Record<string, unknown>}>({
     resourceUrlTemplate: undefined,
     pageMetadata: undefined,
 })

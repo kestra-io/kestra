@@ -41,15 +41,16 @@ public final class ViolationPaths {
                 pointer.setLength(0);
                 continue;
             }
-            if (node.getName() != null) {
-                for (String segment : segmentsOf(node.getName())) {
-                    pointer.append('/').append(escape(segment));
-                }
-            }
+            // A node's index or key is its position in the previous node's collection, so it comes first.
             if (node.getIndex() != null) {
                 pointer.append('/').append(node.getIndex());
             } else if (node.getKey() != null) {
                 pointer.append('/').append(escape(String.valueOf(node.getKey())));
+            }
+            if (node.getName() != null) {
+                for (String segment : segmentsOf(node.getName())) {
+                    pointer.append('/').append(escape(segment));
+                }
             }
         }
         return pointer.toString();

@@ -127,7 +127,7 @@ export const readAppliedLevelFilter = (filters: AppliedFilter[]): LevelFilterVal
 }
 
 export const normalizeRouteLevelFilter = (
-    query: Record<string, any>,
+    query: LocationQueryRaw,
     level: LevelFilterValue | string | undefined,
 ) => {
     const normalized = {...query}

@@ -93,7 +93,7 @@
     })
 
     interface Task {
-        id: string;
+        id?: string;
         type: string;
         [key: string]: unknown;
     }

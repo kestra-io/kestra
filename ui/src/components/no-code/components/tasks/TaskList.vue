@@ -198,7 +198,7 @@
         })
     }
 
-    const fullSchema = inject(FULL_SCHEMA_INJECTION_KEY, ref<Record<string, any>>({}))
+    const fullSchema = inject(FULL_SCHEMA_INJECTION_KEY, ref({}))
 
     const blockSchema = computed(() => getValueAtJsonPath(fullSchema.value, blockSchemaPath.value) ?? {})
 

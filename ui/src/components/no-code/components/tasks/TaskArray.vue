@@ -161,6 +161,7 @@
     import Add from "../Add.vue"
     import Wrapper from "./Wrapper.vue"
     import {BLOCK_SCHEMA_PATH_INJECTION_KEY, FIELD_NAV_INJECTION_KEY, SCHEMA_DEFINITIONS_INJECTION_KEY} from "../../injectionKeys"
+    import type {Schema} from "./getTaskComponent"
     import {useBlockComponent} from "./useBlockComponent"
     import {summarizeValue, shouldDrillItem, describeArrayItem} from "./fieldNesting"
 
@@ -193,7 +194,7 @@
         props.root?.split(".").pop()?.replace(/\[\d+\]$/, "") || undefined)
 
     const fieldNav = inject(FIELD_NAV_INJECTION_KEY, undefined)
-    const definitions = inject(SCHEMA_DEFINITIONS_INJECTION_KEY, ref<Record<string, any>>({}))
+    const definitions = inject(SCHEMA_DEFINITIONS_INJECTION_KEY, ref<Record<string, Schema>>({}))
 
     const canDrillItems = computed(() =>
         Boolean(fieldNav) && shouldDrillItem(props.schema?.items, definitions.value),

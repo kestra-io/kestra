@@ -1,4 +1,5 @@
 import {pascalCase} from "change-case"
+import {isPlainObject} from "@kestra-io/design-system"
 import {resolve$ref} from "../../../../utils/utils"
 import {SECTIONS_IDS} from "../../utils/useFlowFields"
 import {isImplementationPicker} from "./discriminatedUnion"
@@ -25,6 +26,29 @@ export interface Schema{
     pattern?: string;
     $language?: string;
     $secret?: boolean;
+}
+
+function isOptionalSchemaList(value: unknown): boolean {
+    return value === undefined || (Array.isArray(value) && value.every(isSchema))
+}
+
+export function isSchema(value: unknown): value is Schema {
+    if (!isPlainObject(value)) {
+        return false
+    }
+    const {$ref, type, properties, required, allOf, anyOf, oneOf, items} = value
+    return ($ref === undefined || typeof $ref === "string")
+        && (type === undefined || typeof type === "string")
+        && (properties === undefined || isSchemaRecord(properties))
+        && (required === undefined || (Array.isArray(required) && required.every(key => typeof key === "string")))
+        && isOptionalSchemaList(allOf)
+        && isOptionalSchemaList(anyOf)
+        && isOptionalSchemaList(oneOf)
+        && (items === undefined || isSchema(items))
+}
+
+export function isSchemaRecord(value: unknown): value is Record<string, Schema> {
+    return isPlainObject(value) && Object.values(value).every(isSchema)
 }
 
 export const LIST_FIELDS = SECTIONS_IDS.filter(id => id !== "outputs")

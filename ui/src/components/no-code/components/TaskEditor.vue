@@ -60,7 +60,8 @@
     import {useFieldNavigation} from "../utils/useFieldNavigation"
     import {countUnsetRequiredFields, findRequiredFieldFrames} from "../utils/requiredFields"
     import {NoCodeElement, Schemas} from "../utils/types"
-    import {getPath, setPath, cloneDeep, isDeepEqual} from "@kestra-io/design-system"
+    import {getPath, setPath, cloneDeep, isDeepEqual, isPlainObject} from "@kestra-io/design-system"
+    import {isSchema, type Schema} from "./tasks/getTaskComponent"
     import {
         FIELDNAME_INJECTION_KEY, PARENT_PATH_INJECTION_KEY,
         BLOCK_SCHEMA_PATH_INJECTION_KEY,
@@ -189,7 +190,7 @@
     }, {immediate: true})
 
     const fullSchema = inject(FULL_SCHEMA_INJECTION_KEY, ref<{
-        definitions: Record<string, any>,
+        definitions: Record<string, Schema>,
         $ref: string,
     }>({
         definitions: {},
@@ -282,7 +283,7 @@
         return {}
     })
 
-    const definitions = inject(SCHEMA_DEFINITIONS_INJECTION_KEY, ref<Record<string, any>>({}))
+    const definitions = inject(SCHEMA_DEFINITIONS_INJECTION_KEY, ref<Record<string, Schema>>({}))
 
     const resolvedTypes = computed<string[]>(() => {
         return typeMap.value[selectedTaskType.value ?? ""] || []
@@ -317,7 +318,8 @@
                     cls: val,
                     version: taskModel.value?.version,
                 })
-                versionedSchema.value = schema?.properties
+                const pluginSchema: unknown = schema?.properties
+                versionedSchema.value = isSchema(pluginSchema) ? pluginSchema : undefined
             } catch {
                 versionedSchema.value = undefined
             } finally {
@@ -330,7 +332,8 @@
 
     const resolvedType = computed<string>(() => {
         if(resolvedTypes.value.length > 1 && selectedTaskType.value){
-            const dataType = taskModel.value?.data?.type
+            const data = taskModel.value?.data
+            const dataType = isPlainObject(data) ? data.type : undefined
             if(dataType){
                 for(const typeLocal of resolvedTypes.value){
                     const schema = definitions.value?.[typeLocal]
@@ -381,13 +384,15 @@
         if(resolvedTypes.value.length > 1){
             const schemas = resolvedSchemas.value
 
-            const commonProps = Object.keys(schemas[0].properties).filter((key) => {
-                return schemas.every((s) => s.properties[key] !== undefined)
+            const firstProperties = schemas[0]?.properties ?? {}
+
+            const commonProps = Object.keys(firstProperties).filter((key) => {
+                return schemas.every((s) => s?.properties?.[key] !== undefined)
             }).reduce((acc, key) => {
                 if (schemas.every((s) => {
-                    return isDeepEqual(schemas[0].properties[key], s.properties[key])
+                    return isDeepEqual(firstProperties[key], s?.properties?.[key])
                 })) {
-                    acc[key] = schemas[0].properties[key]
+                    acc[key] = firstProperties[key]
                 }
                 return acc
             }, {} as Record<string, any>)

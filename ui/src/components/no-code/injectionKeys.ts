@@ -4,6 +4,7 @@ import {Panel} from "../../utils/multiPanelTypes"
 import type {FieldNavigation} from "./utils/useFieldNavigation"
 import type {BlockDragContext} from "./blocks/useBlockDragAndDrop"
 import type {UnsetRequiredField} from "./utils/requiredFields"
+import type {Schema} from "./components/tasks/getTaskComponent"
 
 export const BLOCK_SCHEMA_PATH_INJECTION_KEY = Symbol("block-schema-path-injection-key") as InjectionKey<ComputedRef<string>>
 export const FULL_SOURCE_INJECTION_KEY = Symbol("flow-injection-key") as InjectionKey<ComputedRef<string>>
@@ -20,7 +21,7 @@ export const EDIT_TASK_FUNCTION_INJECTION_KEY = Symbol("edit-function-injection-
 export const CLOSE_TASK_FUNCTION_INJECTION_KEY = Symbol("close-function-injection-key") as InjectionKey<() => void>
 export const UPDATE_YAML_FUNCTION_INJECTION_KEY = Symbol("update-function-injection-key") as InjectionKey<(yaml: string) => void>
 export const SAVE_FLOW_FUNCTION_INJECTION_KEY = Symbol("save-flow-function-injection-key") as InjectionKey<() => void>
-export const PANEL_INJECTION_KEY = Symbol("panel-injection-key") as InjectionKey<Ref<any>>
+export const PANEL_INJECTION_KEY = Symbol("panel-injection-key") as InjectionKey<Ref<unknown>>
 
 export const TOPOLOGY_CLICK_INJECTION_KEY = Symbol("topology-click-injection-key") as InjectionKey<Ref<TopologyClickParams | undefined>>
 export const VISIBLE_PANELS_INJECTION_KEY = Symbol("visible-panels-injection-key") as InjectionKey<Ref<Panel[]>>
@@ -30,14 +31,14 @@ export const EDITOR_HIGHLIGHT_INJECTION_KEY = Symbol("editor-highlight-injection
 export const EDITOR_WRAPPER_INJECTION_KEY = Symbol("editor-wrapper-injection-key") as InjectionKey<boolean>
 export const FOCUSED_EXPRESSION_EDITOR_INJECTION_KEY = Symbol("focused-expression-editor-injection-key") as InjectionKey<Ref<((text: string) => void) | null>>
 
-export const ROOT_SCHEMA_INJECTION_KEY = Symbol("root-schema-injection-key") as InjectionKey<Ref<Record<string, any>>>
+export const ROOT_SCHEMA_INJECTION_KEY = Symbol("root-schema-injection-key") as InjectionKey<Ref<Schema>>
 
 export const FULL_SCHEMA_INJECTION_KEY = Symbol("full-schema-injection-key") as InjectionKey<Ref<{
-            definitions: Record<string, any>,
+            definitions: Record<string, Schema>,
             $ref: string,
         }>>
 
-export const SCHEMA_DEFINITIONS_INJECTION_KEY = Symbol("schema-definitions-injection-key") as InjectionKey<ComputedRef<Record<string, any>>>
+export const SCHEMA_DEFINITIONS_INJECTION_KEY = Symbol("schema-definitions-injection-key") as InjectionKey<ComputedRef<Record<string, Schema>>>
 
 export const DATA_TYPES_MAP_INJECTION_KEY = Symbol("data-types-injection-key") as InjectionKey<ComputedRef<Record<string, string[] | undefined>>>
 

@@ -128,6 +128,7 @@
     import {useRouter} from "vue-router"
 
     import {KsEditor, copyToClipboard} from "@kestra-io/design-system"
+    import {isSchemaRecord, type Schema} from "../../no-code/components/tasks/getTaskComponent"
     import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
     import CheckIcon from "vue-material-design-icons/Check.vue"
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
@@ -171,12 +172,16 @@
 
     // Provide schema injection context so TaskObject can resolve $ref fields
     // (e.g. inherited labels, workerSelector from parent trigger types).
+    const triggerDefinitions = computed<Record<string, Schema>>(() => {
+        const definitions: unknown = triggerPlugin.value?.schema?.definitions
+        return isSchemaRecord(definitions) ? definitions : {}
+    })
     provide(FULL_SCHEMA_INJECTION_KEY, computed(() => ({
         ...(triggerPlugin.value?.schema ?? {}),
-        definitions: triggerPlugin.value?.schema?.definitions ?? {},
+        definitions: triggerDefinitions.value,
         $ref: "",
     })))
-    provide(SCHEMA_DEFINITIONS_INJECTION_KEY, computed(() => triggerPlugin.value?.schema?.definitions ?? {}))
+    provide(SCHEMA_DEFINITIONS_INJECTION_KEY, triggerDefinitions)
     provide(BLOCK_SCHEMA_PATH_INJECTION_KEY, computed(() => {
         return props.trigger.type ? `#/definitions/${props.trigger.type}` : ""
     }))

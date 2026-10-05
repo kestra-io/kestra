@@ -3,7 +3,7 @@ import {mount, type VueWrapper} from "@vue/test-utils"
 import {createPinia, setActivePinia} from "pinia"
 import {createI18n} from "vue-i18n"
 import KestraDesignSystem from "@kestra-io/design-system"
-import Restart from "./Restart.vue"
+import Restart from "../../../../src/components/executions/overview/components/actions/Restart.vue"
 
 vi.mock("vue-router", () => ({
     useRoute: () => ({query: {}, params: {}, name: "executions/update"}),

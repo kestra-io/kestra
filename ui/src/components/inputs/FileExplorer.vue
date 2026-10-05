@@ -1010,7 +1010,6 @@
 
     async function removeItems() {
         if(confirmation.value.nodes === undefined) return
-        
         const results = await Promise.allSettled(confirmation.value.nodes.map(async (node) => {
             const path = filesStore.getPath(node.id) ?? ""
             try {
@@ -1027,7 +1026,6 @@
                 throw error
             }
         }))
-        
         confirmation.value = {visible: false, nodes: []}
 
         const failedCount = results.filter(r => r.status === "rejected").length

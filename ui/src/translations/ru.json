@@ -1035,7 +1035,7 @@
         "folder": "Удалить папку",
         "files": "Удалить {count} выбранных файлов",
         "bulk_success": "Выбранные файлы успешно удалены.",
-        "bulk_partial_error": "Не удалось удалить {failedCount} файл(ов). {totalCount} удалено успешно.",
+        "bulk_partial_error": "Не удалось удалить {failedCount} из выбранных {totalCount} файлов.",
         "all_failed_error": "Не удалось удалить выбранные файлы.",
         "folders": "Удалить {count} выбранных папок"
       },

@@ -1035,7 +1035,7 @@
         "folder": "Supprimer le dossier",
         "files": "Supprimer {count} fichiers sélectionnés",
         "bulk_success": "Fichiers sélectionnés supprimés avec succès.",
-        "bulk_partial_error": "Échec de la suppression de {failedCount} fichier(s). {totalCount} ont réussi.",
+        "bulk_partial_error": "Échec de la suppression de {failedCount} des {totalCount} fichier(s) sélectionné(s).",
         "all_failed_error": "Échec de la suppression des fichiers sélectionnés.",
         "folders": "Supprimer {count} dossiers sélectionnés"
       },

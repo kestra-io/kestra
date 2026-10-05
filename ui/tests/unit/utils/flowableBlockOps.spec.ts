@@ -14,15 +14,17 @@ import {
     errorsLaneTarget,
     flattenTaskIds,
     groupValidationIssuesByTask,
-    rewireDagDependency,
+    healDagRemoval,
     isFlowableType,
     isWrappedLaneItem,
     isWrapperLane,
+    listLengthAtPath,
     moveBlockAtPath,
     moveBlockToPath,
     nextAvailableId,
     reorderAtPath,
     resolveBlockDomId,
+    rewireDagDependency,
     taskEditPathFor,
     updateBlock,
     updateBlockAtPath,
@@ -1790,6 +1792,163 @@ tasks:
 
         it("leaves the source untouched when the inserted id is not in the lane", () => {
             expect(rewireDagDependency(DAG, LANE, "absent", {fromId: "fetch_orders"})).toBe(DAG)
+        })
+    })
+
+    describe("healDagRemoval", () => {
+        const DAG = `id: dag_healing
+namespace: qa
+tasks:
+  - id: pipeline
+    type: io.kestra.plugin.core.flow.Dag
+    tasks:
+      - task:
+          id: fetch_orders
+          type: io.kestra.plugin.core.log.Log
+      - task:
+          id: process_orders
+          type: io.kestra.plugin.core.log.Log
+        dependsOn:
+          - fetch_orders
+      - task:
+          id: ship_orders
+          type: io.kestra.plugin.core.log.Log
+        dependsOn:
+          - process_orders
+      - task:
+          id: notify_customer
+          type: io.kestra.plugin.core.log.Log
+        dependsOn:
+          - process_orders
+      - task:
+          id: independent_task
+          type: io.kestra.plugin.core.log.Log
+`
+        const LANE = "tasks[0].tasks"
+        const dagOf = (source: string) => {
+            const lane = flowYamlUtils.parse<DagProbeFlow>(source)!.tasks[0]!.tasks ?? []
+            return Object.fromEntries(lane.map(item => [item.task.id, item.dependsOn ?? null]))
+        }
+
+        it("leaves remaining dependsOn untouched when removing a leaf task", () => {
+            const next = healDagRemoval(DAG, LANE, "ship_orders")
+
+            expect(dagOf(next)).toEqual({
+                fetch_orders: null,
+                process_orders: ["fetch_orders"],
+                ship_orders: ["process_orders"],
+                notify_customer: ["process_orders"],
+                independent_task: null,
+            })
+        })
+
+        it("rewires dependents onto removed task's own dependencies when removing a middle task", () => {
+            const next = healDagRemoval(DAG, LANE, "process_orders")
+
+            expect(dagOf(next)).toEqual({
+                fetch_orders: null,
+                process_orders: ["fetch_orders"],
+                ship_orders: ["fetch_orders"],
+                notify_customer: ["fetch_orders"],
+                independent_task: null,
+            })
+        })
+
+        it("cleans up dependsOn when removing a task that dependents rely on but has no dependencies itself", () => {
+            const next = healDagRemoval(DAG, LANE, "fetch_orders")
+
+            expect(dagOf(next)).toEqual({
+                fetch_orders: null,
+                process_orders: null,
+                ship_orders: ["process_orders"],
+                notify_customer: ["process_orders"],
+                independent_task: null,
+            })
+        })
+
+        it("changes nothing when removing a task that nothing depends on", () => {
+            const next = healDagRemoval(DAG, LANE, "independent_task")
+
+            expect(next).toBe(DAG)
+        })
+
+        it("ensures no dangling reference to the removed id survives anywhere", () => {
+            const next = healDagRemoval(DAG, LANE, "process_orders")
+
+            const allDeps = Object.values(dagOf(next)).filter(Boolean).flat()
+            expect(allDeps).not.toContain("process_orders")
+        })
+
+        it("deduplicates inherited dependencies when dependent already has them", () => {
+            const DIAMOND_DAG = `id: diamond_dag
+namespace: qa
+tasks:
+  - id: pipeline
+    type: io.kestra.plugin.core.flow.Dag
+    tasks:
+      - task:
+          id: root
+          type: io.kestra.plugin.core.log.Log
+      - task:
+          id: middle
+          type: io.kestra.plugin.core.log.Log
+        dependsOn:
+          - root
+      - task:
+          id: merge
+          type: io.kestra.plugin.core.log.Log
+        dependsOn:
+          - root
+          - middle
+`
+            const next = healDagRemoval(DIAMOND_DAG, LANE, "middle")
+
+            expect(dagOf(next)).toEqual({
+                root: null,
+                middle: ["root"],
+                merge: ["root"],
+            })
+        })
+
+        it("returns source unchanged for absent removedId, missing lane, or invalid YAML", () => {
+            expect(healDagRemoval(DAG, LANE, "non_existent")).toBe(DAG)
+            expect(healDagRemoval(DAG, "tasks[0].missing_lane", "fetch_orders")).toBe(DAG)
+            expect(healDagRemoval("::: invalid yaml", LANE, "fetch_orders")).toBe("::: invalid yaml")
+        })
+    })
+
+    describe("listLengthAtPath", () => {
+        const NESTED_FLOW = `id: nested_flow
+namespace: company.team
+tasks:
+  - id: seq
+    type: io.kestra.plugin.core.flow.Sequential
+    tasks:
+      - id: t1
+        type: io.kestra.plugin.core.log.Log
+      - id: t2
+        type: io.kestra.plugin.core.log.Log
+      - id: t3
+        type: io.kestra.plugin.core.log.Log
+  - id: flat_task
+    type: io.kestra.plugin.core.log.Log
+`
+
+        it("returns the length of a list at a nested path", () => {
+            expect(listLengthAtPath(NESTED_FLOW, "tasks")).toBe(2)
+            expect(listLengthAtPath(NESTED_FLOW, "tasks[0].tasks")).toBe(3)
+        })
+
+        it("returns 0 for a path that does not exist or is not a list", () => {
+            expect(listLengthAtPath(NESTED_FLOW, "tasks[0].nonexistent")).toBe(0)
+            expect(listLengthAtPath(NESTED_FLOW, "missing_root")).toBe(0)
+            expect(listLengthAtPath(NESTED_FLOW, "tasks[0].id")).toBe(0)
+            expect(listLengthAtPath(NESTED_FLOW, "id")).toBe(0)
+        })
+
+        it("returns 0 for invalid YAML or empty input", () => {
+            expect(listLengthAtPath(":::invalid yaml", "tasks")).toBe(0)
+            expect(listLengthAtPath("", "tasks")).toBe(0)
         })
     })
 

@@ -189,7 +189,7 @@ export const useBlueprintsStore = defineStore("blueprints", () => {
         await axios.delete(`${apiUrl()}/blueprints/flows/${idToDelete}`)
     }
 
-    const useFlowBlueprintTemplate = async (id: string, inputs: Record<string, object>): Promise<{generatedFlowSource: string}> => {
+    const useFlowBlueprintTemplate = async (id: string, inputs: Record<string, unknown>): Promise<{generatedFlowSource: string}> => {
         const {data} = await axios.post<{generatedFlowSource: string}>(`${apiUrl()}/blueprints/flows/${id}/use-template`, {templateArgumentsInputs: inputs})
         return data
     }

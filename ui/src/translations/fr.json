@@ -694,6 +694,7 @@
     "sign in in a new tab": "Se connecter dans un nouvel onglet",
     "sign in in a new tab hint": "Connecte-toi dans l'onglet qui vient de s'ouvrir, puis reviens ici et continue.",
     "continue after sign in": "Continuer",
+    "sign in failed": "Impossible de se connecter. Vérifie ta connexion et réessaie.",
     "sign in not confirmed": "Nous n'avons pas pu confirmer que vous êtes connecté. Connectez-vous dans l'autre onglet, puis continuez.",
     "server unreachable": "Impossible d'atteindre le serveur Kestra",
     "server unreachable description": "Copiez tout travail non enregistré (par exemple le YAML du Flow) dans un endroit sûr avant d'actualiser cette page. Cette bannière disparaîtra dès que le serveur répondra à nouveau.",

@@ -694,6 +694,7 @@
     "sign in in a new tab": "在新标签页中登录",
     "sign in in a new tab hint": "在刚打开的标签页中登录，然后回到这里继续。",
     "continue after sign in": "继续",
+    "sign in failed": "无法登录。请检查您的网络连接并重试。",
     "sign in not confirmed": "我们无法确认您已登录。请在另一个标签页中登录，然后继续。",
     "server unreachable": "无法连接到 Kestra 服务器",
     "server unreachable description": "在刷新此页面之前，请将所有未保存的工作（例如 Flow YAML）复制到安全位置。此横幅将在服务器响应后消失。",

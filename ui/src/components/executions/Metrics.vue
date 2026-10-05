@@ -27,7 +27,7 @@
 
     const props = defineProps<{
         embed?: boolean;
-        taskRun: { id?: string; [key: string]: unknown };
+        taskRun: Record<string, unknown>;
         execution: Execution;
     }>()
 

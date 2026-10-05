@@ -3719,7 +3719,9 @@ class ExecutionControllerRunnerTest {
                 .contentType(MediaType.MULTIPART_FORM_DATA_TYPE),
             Execution.class
         );
-        Execution ended = awaitExecution(tenantId, created.getId(), e -> e.getState().isTerminated());
+        // the run ends once its breakpoint branch is killed, and the sibling's result lands afterwards
+        Execution ended = awaitExecution(tenantId, created.getId(), e -> e.getState().isTerminated()
+            && e.findTaskRunsByTaskId("slow").getFirst().getState().isTerminated());
 
         assertThat(ended.getState().getCurrent()).isEqualTo(State.Type.KILLED);
         assertThat(ended.findTaskRunsByTaskId("a").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);

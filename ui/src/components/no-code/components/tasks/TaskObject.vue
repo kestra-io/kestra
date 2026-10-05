@@ -322,7 +322,8 @@
         }
     }
 
-    .kel-popper.singleton-tooltip {
+    .kel-popper.ks-tooltip.singleton-tooltip.is-light,
+    .kel-popper.ks-tooltip.singleton-tooltip.is-dark {
         max-width: 300px !important;
         background: var(--ks-bg-overlay);
     }

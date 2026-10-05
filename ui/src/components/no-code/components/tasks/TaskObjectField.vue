@@ -148,6 +148,7 @@
 <script setup lang="ts">
     import {computed, inject, ref, useTemplateRef} from "vue"
     import {useBlockComponent} from "./useBlockComponent"
+    import type {Schema} from "./getTaskComponent"
     import {FIELD_NAV_INJECTION_KEY, PLUGIN_DEFAULTS_INJECTION_KEY} from "../../injectionKeys"
 
     import ClearButton from "./ClearButton.vue"
@@ -157,13 +158,13 @@
     import IconCodeTags from "vue-material-design-icons/CodeTags.vue"
     import TaskLabelWithBoolean from "./TaskLabelWithBoolean.vue"
 
-    const modelValue = defineModel<any>()
+    const modelValue = defineModel<unknown>()
 
     const props = withDefaults(defineProps<{
-        schema: any;
+        schema: Schema;
         root?: string;
         fieldKey: string;
-        task: any;
+        task: Record<string, unknown>;
         required?: string[];
         disabled?: boolean;
         siblingKeys?: string[];
@@ -197,7 +198,7 @@
             "onUpdate:modelValue": (value: Record<string, any> | string | number | boolean | Array<any>) => {
                 modelValue.value = value
             },
-            "onUpdate:selectedSchema": (value: any) => {
+            "onUpdate:selectedSchema": (value: Schema | undefined) => {
                 hasSelectedASchema.value = value !== undefined
             },
             pebble: pebbleState.value,
@@ -277,7 +278,7 @@
     const isObjectAnyOf = computed(() => {
         const anyOf = props.schema?.anyOf
         if (!Array.isArray(anyOf) || anyOf.length === 0) return false
-        return anyOf.every((s: any) => s.$ref || s.allOf || s.type === "object")
+        return anyOf.every((s: Schema) => s.$ref || s.allOf || s.type === "object")
     })
 
     const isNestedObject = computed(() =>

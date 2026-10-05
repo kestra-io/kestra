@@ -81,6 +81,7 @@
     import Add from "../Add.vue"
     import Wrapper from "./Wrapper.vue"
     import {useBlockComponent} from "./useBlockComponent"
+    import type {Schema} from "./getTaskComponent"
 
     const {te} = useI18n()
 
@@ -89,8 +90,8 @@
     })
 
     const props = withDefaults(defineProps<{
-        modelValue?: Record<string, any>;
-        schema?: any;
+        modelValue?: Record<string, unknown>;
+        schema?: Schema;
         root?: string;
         disabled?: boolean;
     }>(), {
@@ -112,8 +113,8 @@
         ) : undefined
     })
 
-    const currentValue = ref<[string, any][]>([])
-    const keyInputRefs: Record<number, any> = {}
+    const currentValue = ref<[string, unknown][]>([])
+    const keyInputRefs: Record<number, {focus: () => void}> = {}
 
     const localEdit = ref(false)
 
@@ -168,7 +169,7 @@
         emitUpdate()
     }
 
-    function onValueChange(key: number, val: any) {
+    function onValueChange(key: number, val: unknown) {
         currentValue.value[key][1] = val
         emitUpdate()
     }

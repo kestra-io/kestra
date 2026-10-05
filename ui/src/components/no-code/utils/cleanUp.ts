@@ -1,8 +1,8 @@
-function isNullOrUndefined(value: any): boolean {
+function isNullOrUndefined(value: unknown): boolean {
     return value === null || value === undefined
 }
 
-export function removeNullAndUndefined(obj: any): any {
+export function removeNullAndUndefined(obj: unknown): unknown {
     if (Array.isArray(obj)) {
         const ar = obj
             .map(item => removeNullAndUndefined(item))
@@ -10,11 +10,11 @@ export function removeNullAndUndefined(obj: any): any {
 
         return ar.length > 0 ? ar : undefined
     }
-    if (typeof obj === "object") {
-        const newObj: any = {}
+    if (typeof obj === "object" && obj !== null) {
+        const newObj: Record<string, unknown> = {}
         let hasValue = false
         for (const key in obj) {
-            const rawValue = obj[key]
+            const rawValue = (obj as Record<string, unknown>)[key]
             if(isNullOrUndefined(rawValue)) {
                 continue
             }

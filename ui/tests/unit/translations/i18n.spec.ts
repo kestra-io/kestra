@@ -1,7 +1,7 @@
 import {afterEach, describe, expect, it, vi} from "vitest"
 import {setMissingKeyPolicy, setupI18n} from "../../../src/translations/i18n"
 
-const i18nWith = (messages: Record<string, unknown>) => setupI18n({locale: "en", messages: {en: messages}} as any)
+const i18nWith = (messages: Record<string, unknown>) => setupI18n({locale: "en", messages: {en: messages}} as Parameters<typeof setupI18n>[0])
 
 describe("missing translation keys", () => {
     afterEach(() => {

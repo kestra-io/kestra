@@ -44,11 +44,8 @@ function lastRequest() {
     return {request, url: new URL(request.url)}
 }
 
-describe("executions store — bulk restart revision forwarding", () => {
+describe("executions store - bulk restart", () => {
     beforeAll(async () => {
-        // A baseUrl is required: the generated client builds an absolute URL, and a relative one
-        // fails to parse under jsdom. `fetch` is injected rather than stubbed globally so the spy
-        // only ever sees SDK traffic.
         const {configureClient} = await import("@kestra-io/kestra-sdk")
         configureClient({baseUrl: "http://localhost", fetch: fetchSpy})
         ;({useExecutionsStore} = await import("../../../src/stores/executions"))
@@ -60,39 +57,27 @@ describe("executions store — bulk restart revision forwarding", () => {
         localStorage.clear()
     })
 
-    it("forwards latestRevision as a query param for restart by-ids", async () => {
+    it("restarts by ids on the original revision", async () => {
         const store = useExecutionsStore()
 
-        await store.bulkRestartExecution({executionsId: ["exec-1", "exec-2"], latestRevision: true})
+        await store.bulkRestartExecution({executionsId: ["exec-1", "exec-2"]})
 
         expect(fetchSpy).toHaveBeenCalledTimes(1)
         const {request, url} = lastRequest()
         expect(url.pathname).toBe("/api/v1/main/executions/restart/by-ids")
-        // the revision choice is forwarded as a query param, not smuggled into the body
-        expect(url.searchParams.get("latestRevision")).toBe("true")
-        // the execution ids stay in the request body
+        expect(url.searchParams.has("latestRevision")).toBe(false)
         expect(await request.text()).toBe(JSON.stringify(["exec-1", "exec-2"]))
     })
 
-    it("forwards latestRevision=false (original revision) by-ids", async () => {
+    it("restarts by query on the original revision", async () => {
         const store = useExecutionsStore()
 
-        await store.bulkRestartExecution({executionsId: ["exec-1"], latestRevision: false})
-
-        // false must survive as an explicit value — dropping it would silently mean "latest"
-        expect(lastRequest().url.searchParams.get("latestRevision")).toBe("false")
-    })
-
-    it("forwards latestRevision as a query param for restart by-query", async () => {
-        const store = useExecutionsStore()
-
-        await store.queryRestartExecution({latestRevision: true, "filters[namespace][PREFIX]": "io.kestra.tests"})
+        await store.queryRestartExecution({"filters[namespace][PREFIX]": "io.kestra.tests"})
 
         expect(fetchSpy).toHaveBeenCalledTimes(1)
         const {url} = lastRequest()
         expect(url.pathname).toBe("/api/v1/main/executions/restart/by-query")
-        expect(url.searchParams.get("latestRevision")).toBe("true")
-        // latestRevision is peeled off before the rest becomes filters, so it never leaks in as one
+        expect(url.searchParams.has("latestRevision")).toBe(false)
         expect(url.searchParams.get("filters[namespace][PREFIX]")).toBe("io.kestra.tests")
     })
 })

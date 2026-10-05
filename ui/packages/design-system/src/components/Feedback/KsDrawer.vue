@@ -7,7 +7,7 @@
         :size="resizable ? drawerSize : ''"
         :appendToBody="true"
         :beforeClose="guardedBeforeClose"
-        v-bind="({...filteredProps(), ...$attrs} as any)"
+        v-bind="{...filteredProps(), ...$attrs}"
         :class="{'full-screen': fullScreen && !resizable}"
         @resize-end="onResizeEnd"
         @before-close="emit('before-close', $event)"

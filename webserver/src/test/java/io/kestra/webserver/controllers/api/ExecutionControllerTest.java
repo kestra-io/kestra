@@ -18,6 +18,8 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import com.google.common.collect.ImmutableMap;
 
@@ -474,13 +476,14 @@ class ExecutionControllerTest {
         Assertions.assertTrue(response.inputs().stream().allMatch(ExecutionController.ApiValidateExecutionInputsResponse.ApiInputAndValue::enabled));
     }
 
-    @Test
+    @ParameterizedTest
+    @ValueSource(strings = { "system.label:system", "system:value" })
     @LoadFlows(value = { "flows/valids/minimal.yaml" })
-    void shouldRefuseSystemLabelsWhenCreatingAnExecution() {
+    void shouldRefuseSystemLabelsWhenCreatingAnExecution(String label) {
         var error = assertThrows(
             HttpClientResponseException.class, () -> client.toBlocking().retrieve(
                 HttpRequest
-                    .POST("/api/v1/main/executions/io.kestra.tests/minimal?labels=system.label:system", null)
+                    .POST("/api/v1/main/executions/io.kestra.tests/minimal?labels=" + label, null)
                     .contentType(MediaType.MULTIPART_FORM_DATA_TYPE),
                 Execution.class
             )

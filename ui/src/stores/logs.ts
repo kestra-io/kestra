@@ -244,7 +244,7 @@ export const useLogsStore = defineStore("logs", () => {
         return LogsAPI.deleteLogsByIds({body: ids})
     }
 
-    function queryDeleteLogs(filters: Record<string, any>) {
+    function queryDeleteLogs(filters: Record<string, unknown>) {
         return LogsAPI.deleteLogsByQuery({filters: routeQueryToQueryFilters(filters)})
     }
 

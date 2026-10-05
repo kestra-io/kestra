@@ -21,7 +21,7 @@ import {apiUrl, apiUrlWithoutTenants, basePath} from "override/utils/route"
 import {useMiscStore} from "override/stores/misc"
 
 import * as Utils from "../utils/utils"
-import {validationErrorLines} from "../utils/validationErrors"
+import {validationErrorLines, type ValidationError} from "../utils/validationErrors"
 import {routeFamily} from "../utils/routeFamily"
 
 import type {Dashboard, Chart, DashboardSettings} from "../components/dashboard/types.ts"
@@ -244,6 +244,8 @@ export const useDashboardStore = defineStore("dashboard", () => {
         activeDashboard.value = data
         sourceCode.value = data.sourceCode ?? ""
         sourceCodeOrigin.value = sourceCode.value
+        latestValidation++
+        setValidationErrors(undefined)
 
         return activeDashboard.value
     }
@@ -277,8 +279,15 @@ export const useDashboardStore = defineStore("dashboard", () => {
         return deleted
     }
 
+    let latestValidation = 0
+
     async function validateDashboard(source: Dashboard["sourceCode"]) {
+        const validation = ++latestValidation
         const {data} = await axios.post(`${apiUrl()}/dashboards/validate`, source ?? "", yaml)
+        // A response overtaken by a newer validation describes a source the editor no longer holds.
+        if (validation === latestValidation) {
+            setValidationErrors(data.errors)
+        }
         return data
     }
 
@@ -383,6 +392,13 @@ export const useDashboardStore = defineStore("dashboard", () => {
     }
 
     const errors = ref<string[] | undefined>()
+    const validationErrors = ref<ValidationError[]>()
+
+    function setValidationErrors(located: ValidationError[] | undefined) {
+        validationErrors.value = located
+        const lines = validationErrorLines(located)
+        errors.value = lines.length ? lines : undefined
+    }
 
     return {
         activeDashboard,
@@ -410,6 +426,7 @@ export const useDashboardStore = defineStore("dashboard", () => {
         export: exportDashboard,
         loadChart,
         errors,
+        validationErrors,
 
         schema,
         definitions,

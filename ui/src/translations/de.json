@@ -389,6 +389,8 @@
       "valid_description": "Die Tasks davor sind unverändert, daher werden ihre Outputs wiederverwendet. Ein Replay auf einer anderen Revision ist niemals vollständig deterministisch: Secrets, Datei-Inputs und externe Systeme aufrufende Ausdrücke können etwas anderes als den ursprünglichen Run zurückgeben.",
       "refused_title": "Revision {revision} kann nicht von Task {taskId} wiedergegeben werden.",
       "refused_description": "Eine Task, ein Input oder eine Variable, deren Ergebnis wiederverwendet werden würde, ist in dieser Revision anders definiert.",
+      "error_title": "Konnte nicht prüfen, ob Revision {revision} von Task {taskId} wiedergegeben werden kann.",
+      "error_description": "Du kannst immer noch ein Replay durchführen. Der Server wendet dieselben Regeln an, wenn das Replay startet, und lehnt es ab, wenn die Revision inkompatibel ist.",
       "whole_action": "Die gesamte Execution stattdessen wiederholen",
       "whole_title": "Revision {revision} kann als ganze Execution wiederholt werden.",
       "whole_description": "Es werden keine früheren Ergebnisse wiederverwendet, daher wird jeder Task bei Revision {revision} erneut ausgeführt. Die ursprüngliche Execution wird beibehalten und verknüpft.",

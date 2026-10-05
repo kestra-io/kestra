@@ -389,6 +389,8 @@
       "valid_description": "As Tasks anteriores permanecem inalteradas, então seus outputs são reutilizados. Replay em outra revisão nunca é totalmente determinístico: secrets, inputs de arquivo e expressões que chamam sistemas externos podem retornar algo diferente da execução original.",
       "refused_title": "A revisão {revision} não pode ser reproduzida a partir da Task {taskId}.",
       "refused_description": "Uma task, input ou variável cujo resultado seria reutilizado é definida de forma diferente nesta revisão.",
+      "error_title": "Não foi possível verificar se a revisão {revision} pode ser reproduzida a partir da Task {taskId}.",
+      "error_description": "Você ainda pode fazer o replay. O servidor aplica as mesmas regras quando o replay começa e o recusa se a revisão for incompatível.",
       "whole_action": "Reproduzir a execução inteira em vez disso",
       "whole_title": "A revisão {revision} pode ser reproduzida como uma execução completa.",
       "whole_description": "Nenhum resultado anterior é reutilizado, então cada Task é executada novamente na revisão {revision}. A execução original é mantida e vinculada.",

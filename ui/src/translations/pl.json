@@ -389,6 +389,8 @@
       "valid_description": "Zadania poprzedzające są niezmienione, więc ich outputy są ponownie używane. Replay na innej wersji nigdy nie jest w pełni deterministyczny: sekrety, inputy plików i wyrażenia wywołujące systemy zewnętrzne mogą zwrócić coś innego niż oryginalne uruchomienie.",
       "refused_title": "Wersja {revision} nie może zostać odtworzona z Taska {taskId}.",
       "refused_description": "Zadanie, input lub zmienna, której wynik miałby zostać ponownie użyty, jest zdefiniowana inaczej w tej wersji.",
+      "error_title": "Nie można sprawdzić, czy wersja {revision} może zostać odtworzona z Taska {taskId}.",
+      "error_description": "Nadal możesz uruchomić Replay. Serwer stosuje te same zasady, gdy Replay się rozpoczyna i odrzuca je, jeśli wersja jest niekompatybilna.",
       "whole_action": "Zamiast tego powtórz całą egzekucję",
       "whole_title": "Wersja {revision} może zostać ponownie uruchomiona jako cała egzekucja.",
       "whole_description": "Nie są ponownie używane wcześniejsze wyniki, więc każde Task uruchamia się ponownie w wersji {revision}. Oryginalna egzekucja jest zachowana i połączona.",

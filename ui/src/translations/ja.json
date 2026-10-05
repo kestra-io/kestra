@@ -389,6 +389,8 @@
       "valid_description": "その前のタスクは変更されていないため、その出力は再利用されます。別のリビジョンでリプレイしても、完全に決定論的になることはありません。Secret、ファイル input、および外部システムを呼び出す式は、元の実行とは異なるものを返す可能性があります。",
       "refused_title": "リビジョン {revision} は Task {taskId} からリプレイできません。",
       "refused_description": "結果が再利用されるはずのタスク、入力、または変数が、このリビジョンでは異なる方法で定義されています。",
+      "error_title": "リビジョン {revision} が Task {taskId} からリプレイ可能か確認できませんでした。",
+      "error_description": "引き続きリプレイできます。サーバーはリプレイ開始時に同じルールを適用し、リビジョンに互換性がない場合は拒否します。",
       "whole_action": "代わりにExecution全体をリプレイする",
       "whole_title": "リビジョン {revision} は、完全な実行としてリプレイできます。",
       "whole_description": "以前の結果は再利用されないため、すべてのTaskはリビジョン {revision} で再度実行されます。元のExecutionは保持され、リンクされます。",

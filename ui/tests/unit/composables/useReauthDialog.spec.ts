@@ -1,5 +1,5 @@
 import {describe, it, expect, vi} from "vitest"
-import {isReauthOpen, requestReauth, resolveReauth, submitReauth, useReauthDialog} from "../../../src/composables/useReauthDialog"
+import {isReauthOpen, recheckReauth, requestReauth, resolveReauth, submitReauth, useReauthDialog} from "../../../src/composables/useReauthDialog"
 
 describe("useReauthDialog", () => {
     const signIn = vi.fn().mockResolvedValue(undefined)
@@ -47,6 +47,21 @@ describe("useReauthDialog", () => {
 
         resolveReauth(false)
         await opened
+    })
+
+    it("closes on its own when the session comes back while the window was in the background", async () => {
+        let signedIn = false
+        const opened = requestReauth({loginUrl: "/ui/login", confirm: async () => {
+            if (!signedIn) throw new Error("still signed out")
+        }})
+
+        await recheckReauth()
+        expect(isReauthOpen()).toBe(true)
+
+        signedIn = true
+        window.dispatchEvent(new Event("focus"))
+
+        await expect(opened).resolves.toBe(true)
     })
 
     it("opens a fresh dialog once the previous one is settled", async () => {

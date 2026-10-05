@@ -16,6 +16,7 @@ const canSignInWithPassword = ref(false)
 let pending: Promise<boolean> | undefined
 let settle: ((signedIn: boolean) => void) | undefined
 let current: ReauthOptions = {}
+let rechecking = false
 
 export function requestReauth(options: ReauthOptions): Promise<boolean> {
     pending ??= new Promise<boolean>((resolve) => {
@@ -24,6 +25,7 @@ export function requestReauth(options: ReauthOptions): Promise<boolean> {
         loginUrl.value = options.loginUrl
         lockedUsername.value = options.username
         settle = (signedIn) => {
+            window.removeEventListener("focus", recheckReauth)
             pending = undefined
             settle = undefined
             current = {}
@@ -31,6 +33,7 @@ export function requestReauth(options: ReauthOptions): Promise<boolean> {
             resolve(signedIn)
         }
         visible.value = true
+        window.addEventListener("focus", recheckReauth)
     })
     return pending
 }
@@ -43,6 +46,20 @@ export async function submitReauth(credentials: {username: string, password: str
 
 export async function confirmReauth() {
     await current.confirm?.()
+}
+
+export async function recheckReauth() {
+    const settleOpened = settle
+    if (!settleOpened || !current.confirm || rechecking) return
+    rechecking = true
+    try {
+        await current.confirm()
+        if (settle === settleOpened) settleOpened(true)
+    } catch {
+        // still signed out: the dialog stays open
+    } finally {
+        rechecking = false
+    }
 }
 
 export function resolveReauth(signedIn: boolean) {

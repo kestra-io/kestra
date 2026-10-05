@@ -1,4 +1,4 @@
-import {describe, it, expect, vi, beforeEach} from "vitest"
+import {describe, it, expect, vi, beforeEach, afterEach} from "vitest"
 
 // vi.mock(...) below is hoisted above these declarations, so the fixtures it
 // references must come from vi.hoisted() rather than plain top-level consts.
@@ -32,7 +32,8 @@ vi.mock("nprogress", () => ({
 
 import type {Router} from "vue-router"
 import {isReportedCentrally, setupKestraHttp, type KestraHttpError} from "../../../src/utils/kestraHttp"
-import {markServerReachable, markServerUnreachable, useServerReachability} from "../../../src/composables/useServerReachability"
+import {markServerReachable, markServerUnreachable, UNREACHABLE_DELAY, useServerReachability} from "../../../src/composables/useServerReachability"
+import {isReauthOpen, requestReauth, resolveReauth} from "../../../src/composables/useReauthDialog"
 
 describe("setupKestraHttp router NProgress hooks", () => {
     let beforeEachCb: () => void
@@ -210,18 +211,35 @@ describe("setupKestraHttp server reachability", () => {
     }
 
     beforeEach(() => {
+        vi.useFakeTimers()
         markServerReachable()
     })
 
-    it("flags the server unreachable on a response-less failure and clears it on the next response", () => {
+    afterEach(() => {
+        vi.useRealTimers()
+    })
+
+    it("flags the server unreachable once a response-less failure outlasts the delay, and clears it on the next response", () => {
         const {onResponse, onError} = interceptors()
         const {unreachable} = useServerReachability()
 
         onError(new TypeError("Failed to fetch"), undefined, kestraApiRequest(), {})
+        expect(unreachable.value).toBe(false)
+        vi.advanceTimersByTime(UNREACHABLE_DELAY)
         expect(unreachable.value).toBe(true)
 
         onResponse({status: 200}, kestraApiRequest(), {})
         expect(unreachable.value).toBe(false)
+    })
+
+    it("does not flag a lone failure that a response clears within the delay, such as a request cut by a page unload", () => {
+        const {onResponse, onError} = interceptors()
+
+        onError(new TypeError("Failed to fetch"), undefined, kestraApiRequest(), {})
+        onResponse({status: 200}, kestraApiRequest(), {})
+        vi.advanceTimersByTime(UNREACHABLE_DELAY)
+
+        expect(useServerReachability().unreachable.value).toBe(false)
     })
 
     it("ignores failures and successes of requests that are not Kestra API calls", () => {
@@ -229,9 +247,11 @@ describe("setupKestraHttp server reachability", () => {
         const {unreachable} = useServerReachability()
 
         onError(new TypeError("Failed to fetch"), undefined, new Request("https://api.example.test/v1/reports/events"), {})
+        vi.advanceTimersByTime(UNREACHABLE_DELAY)
         expect(unreachable.value).toBe(false)
 
         markServerUnreachable()
+        vi.advanceTimersByTime(UNREACHABLE_DELAY)
         onResponse({status: 200}, new Request("https://api.example.test/v1/feeds"), {})
         expect(unreachable.value).toBe(true)
     })
@@ -241,6 +261,7 @@ describe("setupKestraHttp server reachability", () => {
         const gatewayResponse = {status: 503, statusText: "Service Unavailable", url: "http://x/api", headers: {forEach: () => {}}}
 
         onError(Object.assign(new Error("503"), {status: 503}), gatewayResponse, kestraApiRequest(), {})
+        vi.advanceTimersByTime(UNREACHABLE_DELAY)
 
         expect(useServerReachability().unreachable.value).toBe(true)
     })
@@ -251,6 +272,7 @@ describe("setupKestraHttp server reachability", () => {
         controller.abort()
 
         onError(new DOMException("aborted", "AbortError"), undefined, new Request(`${window.location.origin}/api/v1/x`, {signal: controller.signal}), {})
+        vi.advanceTimersByTime(UNREACHABLE_DELAY)
 
         expect(useServerReachability().unreachable.value).toBe(false)
     })
@@ -268,5 +290,61 @@ describe("setupKestraHttp 401 retry", () => {
         await expect(fakeAxiosClient.get("/executions", {q: 1})).resolves.toEqual({data: "ok"})
         expect(onUnauthorized).toHaveBeenCalledTimes(1)
         expect(get).toHaveBeenCalledTimes(2)
+    })
+
+    it("replays a 401 that was in flight while the user signed back in, without opening the dialog again", async () => {
+        const unauthorized = Object.assign(new Error("401"), {status: 401})
+        let loggedIn = false
+        const get = vi.fn().mockImplementationOnce(async () => {
+            loggedIn = true
+            throw unauthorized
+        }).mockResolvedValueOnce({data: "ok"})
+        fakeAxiosClient.get = get
+        const onUnauthorized = vi.fn()
+
+        setupKestraHttp({}, {isLoggedIn: () => loggedIn, onUnauthorized})
+
+        await expect(fakeAxiosClient.get("/executions")).resolves.toEqual({data: "ok"})
+        expect(onUnauthorized).not.toHaveBeenCalled()
+        expect(get).toHaveBeenCalledTimes(2)
+    })
+
+    it("does not replay a 401 for a session that was already signed in when the request left", async () => {
+        const unauthorized = Object.assign(new Error("401"), {status: 401})
+        const get = vi.fn().mockRejectedValue(unauthorized)
+        fakeAxiosClient.get = get
+
+        setupKestraHttp({}, {isLoggedIn: () => true})
+
+        await expect(fakeAxiosClient.get("/executions")).rejects.toBe(unauthorized)
+        expect(get).toHaveBeenCalledTimes(1)
+    })
+})
+
+describe("setupKestraHttp session recovery", () => {
+    afterEach(() => {
+        resolveReauth(false)
+    })
+
+    it("closes the dialog when an API call succeeds and the session is confirmed, as after a sign-in in another tab", async () => {
+        setupKestraHttp({}, {})
+        const onResponse = fakeClient.interceptors.response.use.mock.calls.at(-1)![0]
+        const outcome = requestReauth({loginUrl: "/ui/login", confirm: vi.fn().mockResolvedValue(undefined)})
+
+        onResponse({status: 200}, new Request(`${window.location.origin}/api/v1/x`), {})
+
+        await expect(outcome).resolves.toBe(true)
+    })
+
+    it("keeps the dialog open when a successful call does not prove the session is back", async () => {
+        setupKestraHttp({}, {})
+        const onResponse = fakeClient.interceptors.response.use.mock.calls.at(-1)![0]
+        const confirm = vi.fn().mockRejectedValue(new Error("anonymous endpoint"))
+        requestReauth({loginUrl: "/ui/login", confirm})
+
+        onResponse({status: 200}, new Request(`${window.location.origin}/api/v1/configs`), {})
+        await vi.waitFor(() => expect(confirm).toHaveBeenCalled())
+
+        expect(isReauthOpen()).toBe(true)
     })
 })

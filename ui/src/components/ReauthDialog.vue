@@ -11,7 +11,7 @@
     >
         <p>{{ $t('session expired description') }}</p>
         <p v-if="openedLoginTab" data-test="reauth-tab-hint">{{ $t('sign in in a new tab hint') }}</p>
-        <KsAlert v-if="failed" class="reauth-error" type="error" :closable="false" :title="$t('setup.validation.incorrect_creds')" />
+        <KsAlert v-if="failed" class="reauth-error" type="error" :closable="false" :title="failed === 'credentials' ? $t('setup.validation.incorrect_creds') : $t('sign in failed')" />
         <KsAlert v-if="notConfirmed" class="reauth-error" type="error" :closable="false" :title="$t('sign in not confirmed')" />
         <KsForm v-if="canSignInWithPassword && !openedLoginTab" :model="credentials" @submit.prevent>
             <KsFormItem>
@@ -68,7 +68,7 @@
 
     const credentials = ref({username: "", password: ""})
     const loading = ref(false)
-    const failed = ref(false)
+    const failed = ref<"credentials" | "other" | false>(false)
     const notConfirmed = ref(false)
     const openedLoginTab = ref(false)
 
@@ -106,8 +106,9 @@
         try {
             await submitReauth(credentials.value)
             resolveReauth(true)
-        } catch {
-            failed.value = true
+        } catch (error) {
+            const status = (error as {status?: number}).status
+            failed.value = status === 401 || status === 403 ? "credentials" : "other"
         } finally {
             loading.value = false
         }

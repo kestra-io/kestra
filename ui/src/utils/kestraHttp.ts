@@ -2,6 +2,7 @@ import NProgress from "nprogress"
 import type {Router} from "vue-router"
 import {configureClient, useClient, asProblem, type ProblemDetail} from "@kestra-io/kestra-sdk"
 import {markServerReachable, markServerUnreachable} from "../composables/useServerReachability"
+import {isReauthOpen, recheckReauth} from "../composables/useReauthDialog"
 
 let pendingRoute = false
 let requestsTotal = 0
@@ -174,13 +175,18 @@ export function setupKestraHttp(
 
     function withAuthRetry<F extends (...args: any[]) => Promise<any>>(fn: F): F {
         return (async (...args: Parameters<F>) => {
+            const wasLoggedIn = isLoggedIn()
             try {
                 return await fn(...args)
             } catch (error) {
                 const kestraError = error as KestraHttpError
-                if (kestraError.status === 401 && !isLoggedIn()) {
-                    const shouldRetry = await onUnauthorized(navigateToLogin, kestraError)
-                    if (shouldRetry) return fn(...args)
+                if (kestraError.status === 401) {
+                    if (!isLoggedIn()) {
+                        const shouldRetry = await onUnauthorized(navigateToLogin, kestraError)
+                        if (shouldRetry) return fn(...args)
+                    } else if (!wasLoggedIn) {
+                        return fn(...args)
+                    }
                 }
                 throw error
             }
@@ -204,7 +210,10 @@ export function setupKestraHttp(
     })
 
     client.interceptors.response.use((response, request, opts) => {
-        if (isKestraApiRequest(request)) markServerReachable()
+        if (isKestraApiRequest(request)) {
+            markServerReachable()
+            if (isReauthOpen()) void recheckReauth()
+        }
         if (!skipProgress(opts)) increaseProgress()
         return response
     })

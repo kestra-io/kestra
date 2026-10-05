@@ -47,7 +47,7 @@ export const Open: Story = {
 
 export const WrongPassword: Story = {
     async play() {
-        const signIn = fn().mockRejectedValue(new Error("Unauthorized"))
+        const signIn = fn().mockRejectedValue(Object.assign(new Error("Unauthorized"), {status: 401}))
         open({signIn})
 
         await userEvent.type(await body().findByPlaceholderText("Email"), "me@example.com")
@@ -57,6 +57,19 @@ export const WrongPassword: Story = {
         await expect(await body().findByText(/Invalid username or password/)).toBeVisible()
         await expect(signIn).toHaveBeenCalledWith({username: "me@example.com", password: "wrong"})
         await expect(body().getByText("Your session has expired")).toBeVisible()
+    },
+}
+
+export const SignInFailsForAnotherReason: Story = {
+    async play() {
+        open({signIn: fn().mockRejectedValue(new TypeError("Failed to fetch"))})
+
+        await userEvent.type(await body().findByPlaceholderText("Email"), "me@example.com")
+        await userEvent.type(body().getByPlaceholderText("Password"), "secret")
+        await userEvent.click(body().getByRole("button", {name: "Login"}))
+
+        await expect(await body().findByText(/Could not sign in/)).toBeVisible()
+        await expect(body().queryByText(/Invalid username or password/)).toBeNull()
     },
 }
 

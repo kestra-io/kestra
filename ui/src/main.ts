@@ -75,7 +75,13 @@ function setupAxios(router: Router) {
                 return false
             }
 
-            if (await requestReauth({signIn: BasicAuth.signIn})) return true
+            const reauthenticated = await requestReauth({
+                signIn: BasicAuth.signIn,
+                confirm: async () => {
+                    if (!BasicAuth.isLoggedIn()) throw new Error("The basic-auth session is not back yet.")
+                },
+            })
+            if (reauthenticated) return true
             beforeLogout()
             navigateToLogin()
             return false

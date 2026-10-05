@@ -40,6 +40,8 @@ export interface InputError {
     // true when the error is a render/resolution failure (broken field: e.g. a SELECT `expression` or an
     // input `defaults` Pebble expression that threw) rather than a value validation error
     renderError?: boolean;
+    /** Where the offending value sits inside a structured input, as `disks[2].size_gb`; absent when it is about the input as a whole. */
+    path?: string;
 }
 
 export interface ValidationResponse {
@@ -86,6 +88,8 @@ export interface InputMetaData {
     dependsOn?: unknown;
     /** Set on a FORM input only: the children it groups, mirroring the backend `FormInput.inputs`. */
     inputs?: InputMetaData[];
+    /** Set on a JSON input only: the schema its value is validated against, mirroring `JsonInput.jsonSchema`. */
+    jsonSchema?: string;
 }
 
 /** Mirrors the backend `FilePreview`: `content` is renderer-specific (text, rows, base64, ...). */

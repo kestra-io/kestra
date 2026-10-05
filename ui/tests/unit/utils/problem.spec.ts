@@ -9,7 +9,14 @@ import {
     problemSlug,
     type ProblemDetail,
 } from "@kestra-io/kestra-sdk"
-import {problemBulkBody} from "../../../src/utils/problem"
+import {
+    problemBulkBody,
+    problemDetail,
+    problemFieldLabel,
+    problemFieldMessage,
+    problemTitle,
+    toToastMessage,
+} from "../../../src/utils/problem"
 
 const problem = (overrides: Partial<ProblemDetail> = {}): ProblemDetail => ({
     type: "https://kestra.io/docs/api-reference/problems/entity-already-exists",
@@ -113,6 +120,49 @@ describe("parseProblem", () => {
     })
 })
 
+describe("problemTitle", () => {
+    const t = (key: string) => (key === "errors.problems.entity-already-exists.title" ? "Localized Title" : key)
+    const te = (key: string) => key === "errors.problems.entity-already-exists.title"
+
+    it("prefers a localized translation when a key exists", () => {
+        expect(problemTitle(problem(), t, te)).toBe("Localized Title")
+    })
+
+    it("falls back to the problem's own title, then to the generic title", () => {
+        expect(problemTitle(problem(), t, () => false)).toBe("Entity already exists")
+        expect(problemTitle(undefined, t, () => false)).toBe("errors.generic.title")
+    })
+})
+
+describe("problemDetail", () => {
+    it("returns the localized detail when a key exists", () => {
+        const prob = problem({type: "https://kestra.io/docs/api-reference/problems/service-unavailable"})
+        const te = (key: string) => key === "errors.problems.service-unavailable.detail"
+        expect(problemDetail(prob, (key) => `${key}!`, te)).toBe("errors.problems.service-unavailable.detail!")
+    })
+})
+
+describe("problemFieldLabel", () => {
+    it("prefers the field path over the pointer", () => {
+        expect(problemFieldLabel({path: "tasks[my-task].type", pointer: "/tasks/0/type", detail: "invalid"}))
+            .toBe("tasks[my-task].type")
+        expect(problemFieldLabel({pointer: "/tasks/0/type", detail: "invalid"})).toBe("/tasks/0/type")
+    })
+})
+
+describe("problemFieldMessage", () => {
+    it("passes the field label to a localized template", () => {
+        const t = (key: string, named?: Record<string, unknown>) => `${key}:${named?.value}`
+        const te = (key: string) => key === "errors.problems.missing-field.detail"
+        const message = problemFieldMessage(
+            {type: "https://kestra.io/docs/api-reference/problems/missing-field", path: "tasks[0].id", detail: "must not be blank"},
+            t,
+            te,
+        )
+        expect(message).toBe("errors.problems.missing-field.detail:tasks[0].id")
+    })
+})
+
 describe("problemBulkBody", () => {
     const t = (key: string) => key
     const te = () => false
@@ -129,5 +179,18 @@ describe("problemBulkBody", () => {
     it("falls back to a message when the failure carries no items, rather than a blank toast body", () => {
         expect(problemBulkBody(problem({errors: []}), t, te)).toBe(problem().detail)
         expect(problemBulkBody(undefined, t, te)).toBe("errors.generic.content")
+    })
+})
+
+describe("toToastMessage", () => {
+    it("unwraps a problem error with its per-field violations and the requested variant", () => {
+        const prob = problem({errors: [{detail: "must not be blank", path: "tasks[0].id"}]})
+        expect(toToastMessage(new KestraProblemError(prob), "warning")).toEqual({variant: "warning", problem: prob, status: 409})
+    })
+
+    it("degrades to a generic error toast when the error is not a problem document", () => {
+        for (const error of [new Error("unexpected crash"), "raw string error", null]) {
+            expect(toToastMessage(error)).toEqual({variant: "error", problem: undefined, status: undefined})
+        }
     })
 })

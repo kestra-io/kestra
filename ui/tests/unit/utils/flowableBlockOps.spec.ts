@@ -12,18 +12,23 @@ import {
     duplicateBlock,
     duplicateBlockAtPath,
     errorsLaneTarget,
+    flattenTaskIds,
     groupValidationIssuesByTask,
-    rewireDagDependency,
+    healDagRemoval,
     isFlowableType,
     isWrappedLaneItem,
     isWrapperLane,
+    listLengthAtPath,
     moveBlockAtPath,
     moveBlockToPath,
+    nextAvailableId,
     reorderAtPath,
     resolveBlockDomId,
+    rewireDagDependency,
     taskEditPathFor,
     updateBlock,
     updateBlockAtPath,
+    withFreeIds,
     wrapAsDagTask,
 } from "../../../src/utils/flowableBlockOps"
 import {parseBlock} from "./parsedBlock"
@@ -624,6 +629,36 @@ triggers:
             const parsed = parseBlock(result)
             expect(parsed.tasks).toHaveLength(2)
         })
+
+        it("rewires dependsOn between two tasks nested inside a duplicated Dag", () => {
+            // Given — step_b depends on step_a, both inside the Dag being duplicated
+            const flowWithNestedDag = `
+id: my_flow
+namespace: company.team
+tasks:
+  - id: my_dag
+    type: io.kestra.plugin.core.flow.Dag
+    tasks:
+      - task:
+          id: step_a
+          type: io.kestra.plugin.core.log.Log
+      - task:
+          id: step_b
+          type: io.kestra.plugin.core.log.Log
+        dependsOn:
+          - step_a
+`.trim()
+
+            // When
+            const result = duplicateBlock(flowWithNestedDag, "tasks", "my_dag")
+
+            // Then — the duplicate's internal ids are new, and dependsOn follows the rename
+            const parsed = flowYamlUtils.parse<DagProbeFlow>(result)
+            const copy = parsed!.tasks[1]
+            const copyStepAId = copy.tasks![0].task.id
+            expect(copyStepAId).not.toBe("step_a")
+            expect(copy.tasks![1].dependsOn).toEqual([copyStepAId])
+        })
     })
 
     describe("duplicateBlockAtPath", () => {
@@ -711,6 +746,36 @@ tasks:
             const parsed = parseBlock(result)
             expect(parsed.tasks[0].cases.prod).toHaveLength(2)
             expect(String(parsed.tasks[0].cases.prod[1].id)).toMatch(/^prod_log_copy/)
+        })
+
+        it("rewires dependsOn between two tasks nested inside a duplicated Dag, addressed by path", () => {
+            // Given — step_b depends on step_a, both inside the Dag being duplicated
+            const flowWithNestedDag = `
+id: my_flow
+namespace: company.team
+tasks:
+  - id: my_dag
+    type: io.kestra.plugin.core.flow.Dag
+    tasks:
+      - task:
+          id: step_a
+          type: io.kestra.plugin.core.log.Log
+      - task:
+          id: step_b
+          type: io.kestra.plugin.core.log.Log
+        dependsOn:
+          - step_a
+`.trim()
+
+            // When
+            const result = duplicateBlockAtPath(flowWithNestedDag, "tasks[0]")
+
+            // Then
+            const parsed = flowYamlUtils.parse<DagProbeFlow>(result)
+            const copy = parsed!.tasks[1]
+            const copyStepAId = copy.tasks![0].task.id
+            expect(copyStepAId).not.toBe("step_a")
+            expect(copy.tasks![1].dependsOn).toEqual([copyStepAId])
         })
     })
 
@@ -1370,6 +1435,142 @@ afterExecution:
         })
     })
 
+    describe("withFreeIds", () => {
+        function ifBlock(): Record<string, unknown> {
+            return {
+                id: "if_task",
+                type: "io.kestra.plugin.core.flow.If",
+                then: [{id: "nested_a", type: "io.kestra.plugin.core.log.Log"}],
+                else: [{id: "nested_b", type: "io.kestra.plugin.core.log.Log"}],
+            }
+        }
+
+        it("keeps every id unchanged when none collides with the destination flow", () => {
+            // Given
+            const existingIds = new Set(["unrelated_task"])
+
+            // When
+            const result = withFreeIds(ifBlock(), existingIds)
+
+            // Then
+            expect(result.id).toBe("if_task")
+            expect((result.then as Record<string, unknown>[])[0].id).toBe("nested_a")
+            expect((result.else as Record<string, unknown>[])[0].id).toBe("nested_b")
+        })
+
+        it("renames only the colliding ids, walking the nested then/else lanes of an If", () => {
+            // Given — the top-level id and the "then" child both collide, the "else" child does not
+            const existingIds = new Set(["if_task", "nested_a"])
+
+            // When
+            const result = withFreeIds(ifBlock(), existingIds)
+
+            // Then
+            const thenId = (result.then as Record<string, unknown>[])[0].id
+            const elseId = (result.else as Record<string, unknown>[])[0].id
+            expect(result.id).not.toBe("if_task")
+            expect(thenId).not.toBe("nested_a")
+            expect(elseId).toBe("nested_b")
+            expect(new Set([result.id, thenId, elseId]).size).toBe(3)
+        })
+
+        it("does not mutate the existingIds set passed in by the caller", () => {
+            // Given
+            const existingIds = new Set(["task_a"])
+
+            // When
+            withFreeIds({id: "task_a", type: "io.kestra.plugin.core.log.Log"}, existingIds)
+
+            // Then
+            expect(existingIds).toEqual(new Set(["task_a"]))
+        })
+
+        function dagBlock(): Record<string, unknown> {
+            return {
+                id: "my_dag",
+                type: "io.kestra.plugin.core.flow.Dag",
+                tasks: [
+                    {task: {id: "step_a", type: "io.kestra.plugin.core.log.Log"}},
+                    {task: {id: "step_b", type: "io.kestra.plugin.core.log.Log"}, dependsOn: ["step_a"]},
+                ],
+            }
+        }
+
+        it("rewires an internal dependsOn edge when the referenced id collides and gets renamed", () => {
+            // Given — step_a already exists in the destination flow, so it must be renamed on paste
+            const existingIds = new Set(["step_a"])
+
+            // When
+            const result = withFreeIds(dagBlock(), existingIds)
+
+            // Then — step_b's dependsOn follows step_a's new id rather than dangling
+            const tasks = result.tasks as {task: {id: string}; dependsOn?: string[]}[]
+            const renamedId = tasks[0].task.id
+            expect(renamedId).not.toBe("step_a")
+            expect(tasks[1].dependsOn).toEqual([renamedId])
+        })
+
+        it("leaves dependsOn untouched when nothing in the pasted subtree collides", () => {
+            // Given
+            const existingIds = new Set(["unrelated_task"])
+
+            // When
+            const result = withFreeIds(dagBlock(), existingIds)
+
+            // Then
+            const tasks = result.tasks as {task: {id: string}; dependsOn?: string[]}[]
+            expect(tasks[0].task.id).toBe("step_a")
+            expect(tasks[1].dependsOn).toEqual(["step_a"])
+        })
+    })
+
+    describe("nextAvailableId", () => {
+        it("returns the base id untouched when it is free", () => {
+            // Given
+
+            // When
+            const id = nextAvailableId("log", new Set(["other"]))
+
+            // Then
+            expect(id).toBe("log")
+        })
+
+        it("appends an incrementing suffix until a free id is found", () => {
+            // Given
+
+            // When
+            const id = nextAvailableId("log", new Set(["log", "log_1", "log_2"]))
+
+            // Then
+            expect(id).toBe("log_3")
+        })
+    })
+
+    describe("flattenTaskIds", () => {
+        it("collects ids from nested Flowable lanes, matching the Inputs panel and paste", () => {
+            // Given
+            const parsed = flowYamlUtils.parse<{tasks: Record<string, unknown>[]}>(FLOW_WITH_FLOWABLE)
+            const ids: string[] = []
+
+            // When
+            flattenTaskIds(parsed?.tasks, ids)
+
+            // Then
+            expect(new Set(ids)).toEqual(new Set(["leaf_task", "if_task", "nested_a", "nested_b"]))
+        })
+
+        it("returns no ids for a non-array input", () => {
+            // Given
+            const ids: string[] = []
+
+            // When
+            flattenTaskIds(undefined, ids)
+
+            // Then
+            expect(ids).toEqual([])
+        })
+    })
+
     describe("buildMinimalTask", () => {
         it("produces an object with the given type", () => {
             // Given
@@ -1591,6 +1792,163 @@ tasks:
 
         it("leaves the source untouched when the inserted id is not in the lane", () => {
             expect(rewireDagDependency(DAG, LANE, "absent", {fromId: "fetch_orders"})).toBe(DAG)
+        })
+    })
+
+    describe("healDagRemoval", () => {
+        const DAG = `id: dag_healing
+namespace: qa
+tasks:
+  - id: pipeline
+    type: io.kestra.plugin.core.flow.Dag
+    tasks:
+      - task:
+          id: fetch_orders
+          type: io.kestra.plugin.core.log.Log
+      - task:
+          id: process_orders
+          type: io.kestra.plugin.core.log.Log
+        dependsOn:
+          - fetch_orders
+      - task:
+          id: ship_orders
+          type: io.kestra.plugin.core.log.Log
+        dependsOn:
+          - process_orders
+      - task:
+          id: notify_customer
+          type: io.kestra.plugin.core.log.Log
+        dependsOn:
+          - process_orders
+      - task:
+          id: independent_task
+          type: io.kestra.plugin.core.log.Log
+`
+        const LANE = "tasks[0].tasks"
+        const dagOf = (source: string) => {
+            const lane = flowYamlUtils.parse<DagProbeFlow>(source)!.tasks[0]!.tasks ?? []
+            return Object.fromEntries(lane.map(item => [item.task.id, item.dependsOn ?? null]))
+        }
+
+        it("leaves remaining dependsOn untouched when removing a leaf task", () => {
+            const next = healDagRemoval(DAG, LANE, "ship_orders")
+
+            expect(dagOf(next)).toEqual({
+                fetch_orders: null,
+                process_orders: ["fetch_orders"],
+                ship_orders: ["process_orders"],
+                notify_customer: ["process_orders"],
+                independent_task: null,
+            })
+        })
+
+        it("rewires dependents onto removed task's own dependencies when removing a middle task", () => {
+            const next = healDagRemoval(DAG, LANE, "process_orders")
+
+            expect(dagOf(next)).toEqual({
+                fetch_orders: null,
+                process_orders: ["fetch_orders"],
+                ship_orders: ["fetch_orders"],
+                notify_customer: ["fetch_orders"],
+                independent_task: null,
+            })
+        })
+
+        it("cleans up dependsOn when removing a task that dependents rely on but has no dependencies itself", () => {
+            const next = healDagRemoval(DAG, LANE, "fetch_orders")
+
+            expect(dagOf(next)).toEqual({
+                fetch_orders: null,
+                process_orders: null,
+                ship_orders: ["process_orders"],
+                notify_customer: ["process_orders"],
+                independent_task: null,
+            })
+        })
+
+        it("changes nothing when removing a task that nothing depends on", () => {
+            const next = healDagRemoval(DAG, LANE, "independent_task")
+
+            expect(next).toBe(DAG)
+        })
+
+        it("ensures no dangling reference to the removed id survives anywhere", () => {
+            const next = healDagRemoval(DAG, LANE, "process_orders")
+
+            const allDeps = Object.values(dagOf(next)).filter(Boolean).flat()
+            expect(allDeps).not.toContain("process_orders")
+        })
+
+        it("deduplicates inherited dependencies when dependent already has them", () => {
+            const DIAMOND_DAG = `id: diamond_dag
+namespace: qa
+tasks:
+  - id: pipeline
+    type: io.kestra.plugin.core.flow.Dag
+    tasks:
+      - task:
+          id: root
+          type: io.kestra.plugin.core.log.Log
+      - task:
+          id: middle
+          type: io.kestra.plugin.core.log.Log
+        dependsOn:
+          - root
+      - task:
+          id: merge
+          type: io.kestra.plugin.core.log.Log
+        dependsOn:
+          - root
+          - middle
+`
+            const next = healDagRemoval(DIAMOND_DAG, LANE, "middle")
+
+            expect(dagOf(next)).toEqual({
+                root: null,
+                middle: ["root"],
+                merge: ["root"],
+            })
+        })
+
+        it("returns source unchanged for absent removedId, missing lane, or invalid YAML", () => {
+            expect(healDagRemoval(DAG, LANE, "non_existent")).toBe(DAG)
+            expect(healDagRemoval(DAG, "tasks[0].missing_lane", "fetch_orders")).toBe(DAG)
+            expect(healDagRemoval("::: invalid yaml", LANE, "fetch_orders")).toBe("::: invalid yaml")
+        })
+    })
+
+    describe("listLengthAtPath", () => {
+        const NESTED_FLOW = `id: nested_flow
+namespace: company.team
+tasks:
+  - id: seq
+    type: io.kestra.plugin.core.flow.Sequential
+    tasks:
+      - id: t1
+        type: io.kestra.plugin.core.log.Log
+      - id: t2
+        type: io.kestra.plugin.core.log.Log
+      - id: t3
+        type: io.kestra.plugin.core.log.Log
+  - id: flat_task
+    type: io.kestra.plugin.core.log.Log
+`
+
+        it("returns the length of a list at a nested path", () => {
+            expect(listLengthAtPath(NESTED_FLOW, "tasks")).toBe(2)
+            expect(listLengthAtPath(NESTED_FLOW, "tasks[0].tasks")).toBe(3)
+        })
+
+        it("returns 0 for a path that does not exist or is not a list", () => {
+            expect(listLengthAtPath(NESTED_FLOW, "tasks[0].nonexistent")).toBe(0)
+            expect(listLengthAtPath(NESTED_FLOW, "missing_root")).toBe(0)
+            expect(listLengthAtPath(NESTED_FLOW, "tasks[0].id")).toBe(0)
+            expect(listLengthAtPath(NESTED_FLOW, "id")).toBe(0)
+        })
+
+        it("returns 0 for invalid YAML or empty input", () => {
+            expect(listLengthAtPath(":::invalid yaml", "tasks")).toBe(0)
+            expect(listLengthAtPath("", "tasks")).toBe(0)
         })
     })
 

@@ -1,5 +1,6 @@
 import {describe, it, expect, vi} from "vitest"
 import {defineComponent, h, nextTick} from "vue"
+import type {GraphSeriesOption} from "echarts"
 import KestraDesignSystem from "@kestra-io/design-system"
 
 // Shared across calls so the navigation test can assert on it; a fresh spy per useRouter()
@@ -94,12 +95,16 @@ function mountGraphView(dagView: boolean) {
     })
 }
 
+interface GraphOptions {
+    series: GraphSeriesOption[]
+}
+
 // The flow, execution and namespace views regressed repeatedly by inheriting the asset
 // view's behaviour; these pin the dagView gate in both directions.
 describe("dependencies Dependencies.vue — asset-view gating", () => {
     it("passes emphasis.focus none to the chart unless the asset view opts in", () => {
         const focusOf = (wrapper: ReturnType<typeof mountGraphView>) =>
-            (wrapper.findComponent(KsGraphStub).props("options") as any).series[0].emphasis.focus
+            (wrapper.findComponent(KsGraphStub).props("options") as GraphOptions).series[0].emphasis?.focus
 
         expect(focusOf(mountGraphView(false))).toBe("none")
         expect(focusOf(mountGraphView(true))).toBe("adjacency")

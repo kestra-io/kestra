@@ -3,6 +3,7 @@
         class="block-empty-drop"
         :class="[`block-empty-drop--${variant}`, dropState !== 'idle' ? `block-empty-drop--drop-${dropState}` : '', {'block-empty-drop--required': required}]"
         type="button"
+        :disabled="disabled"
         :data-test="dataTest"
         @click="emit('add', $event)"
     >
@@ -30,10 +31,12 @@
         dropState?: "idle" | "allowed" | "forbidden"
         /** Marks the empty state with the same border/background as an unset required field. */
         required?: boolean
+        disabled?: boolean
     }>(), {
         variant: "inline",
         dropState: "idle",
         required: false,
+        disabled: false,
     })
 
     const emit = defineEmits<{
@@ -67,6 +70,13 @@
             outline: none;
             border-color: var(--ks-border-focus);
             box-shadow: 0 0 0 2px var(--ks-border-focus);
+        }
+
+        &:disabled {
+            color: var(--ks-text-inactive);
+            border-color: var(--ks-border-default);
+            background: transparent;
+            cursor: not-allowed;
         }
     }
 

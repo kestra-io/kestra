@@ -1337,7 +1337,7 @@ public class ExecutionController {
     }
 
     private URI nsFileToInternalStorageURI(URI path, Execution execution) throws IOException {
-        Namespace namespace = namespaceFactory.of(execution.getTenantId(), execution.getNamespace(), storageInterface);
+        Namespace namespace = namespaceFactory.of(execution.getTenantId(), execution.getNamespace());
         return namespace.get(Path.of(path.getPath())).uri();
     }
 

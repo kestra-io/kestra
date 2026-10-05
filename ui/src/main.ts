@@ -14,6 +14,7 @@ import routes from "./routes/routes"
 import en from "./translations/en.json"
 import {setupTenantRouter, tenantGuard} from "./composables/useTenant"
 import * as BasicAuth from "./utils/basicAuth"
+import {isReauthOpen, requestReauth} from "./composables/useReauthDialog"
 import {getCsrfToken} from "./utils/csrf"
 import {useCoreStore} from "./stores/core"
 import {useLayoutStore} from "./stores/layout"
@@ -64,6 +65,27 @@ function setupAxios(router: Router) {
         router,
         beforeLogout,
         isLoggedIn: () => !!BasicAuth.isLoggedIn(),
+        onUnauthorized: async (navigateToLogin, error) => {
+            const isLoginRequest = Boolean(error.config?.url?.endsWith("/login"))
+            if (isLoginRequest && isReauthOpen()) return false
+
+            if (isLoginRequest || router.currentRoute.value.meta.anonymous) {
+                beforeLogout()
+                navigateToLogin()
+                return false
+            }
+
+            const reauthenticated = await requestReauth({
+                signIn: BasicAuth.signIn,
+                confirm: async () => {
+                    if (!BasicAuth.isLoggedIn()) throw new Error("The basic-auth session is not back yet.")
+                },
+            })
+            if (reauthenticated) return true
+            beforeLogout()
+            navigateToLogin()
+            return false
+        },
     })
 
     // Add CSRF token to every request - covers both generated-endpoint calls and

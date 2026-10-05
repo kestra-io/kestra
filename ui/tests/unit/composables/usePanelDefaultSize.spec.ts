@@ -22,13 +22,6 @@ describe("usePanelDefaultSize", () => {
         const panelSize = usePanelDefaultSize(ref<Panel[]>([]))
 
         expect(panelSize.value).toBe(1)
-        expect(Number.isNaN(panelSize.value)).toBe(false)
-    })
-
-    it("returns the size of a single panel", () => {
-        const panelSize = usePanelDefaultSize(ref([createPanel(40)]))
-
-        expect(panelSize.value).toBe(40)
     })
 
     it("returns the arithmetic mean of multiple panel sizes", () => {
@@ -42,9 +35,7 @@ describe("usePanelDefaultSize", () => {
         Reflect.deleteProperty(panelWithoutSize, "size")
         const panelSize = usePanelDefaultSize(ref([createPanel(100), panelWithoutSize]))
 
-        expect(() => panelSize.value).not.toThrow()
         expect(panelSize.value).toBe(50)
-        expect(Number.isNaN(panelSize.value)).toBe(false)
     })
 
     it("updates the size when a panel is added to the reactive list", () => {

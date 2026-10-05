@@ -168,8 +168,6 @@
   "tests/unit/stores/executionsFileContent.spec.ts": 2,
   "tests/unit/stores/flowDraftSave.spec.ts": 9,
   "tests/unit/stores/flowOutdatedSave.spec.ts": 5,
-  "tests/unit/stores/logsCursor.spec.ts": 1,
-  "tests/unit/stores/logsSearchRace.spec.ts": 5,
   "tests/unit/stores/pluginsDocumentationCache.spec.ts": 1,
   "tests/unit/stores/pluginsEnrichment.spec.ts": 6,
   "tests/unit/stores/pluginsFetchIcons.spec.ts": 1,

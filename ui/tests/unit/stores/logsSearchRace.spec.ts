@@ -1,19 +1,22 @@
 import {beforeEach, describe, expect, it, vi} from "vitest"
 import {setActivePinia, createPinia} from "pinia"
+import type {QueryFilter} from "@kestra-io/kestra-sdk"
 
 const searchLogs = vi.fn()
 
 vi.mock("@kestra-io/kestra-sdk/logs", () => ({
-    searchLogs: (...args: any[]) => searchLogs(...args),
+    searchLogs: (...args: Parameters<typeof import("@kestra-io/kestra-sdk/logs").searchLogs>) => searchLogs(...args),
     deleteLogsFromFlow: vi.fn(),
 }))
 
 import {useLogsStore} from "../../../src/stores/logs"
 
+type SearchLogsParams = Parameters<typeof import("@kestra-io/kestra-sdk/logs").searchLogs>[0]
+
 const log = (level: string) => ({level, message: `a ${level} line`})
 
-const levelFilterOf = (params: any) => params.filters
-    ?.find((filter: any) => filter.field === "level")?.value
+const levelFilterOf = (params: SearchLogsParams) => params?.filters
+    ?.find((filter: QueryFilter) => filter.field === "level")?.value
 
 describe("logs store search ordering", () => {
     beforeEach(() => {
@@ -25,7 +28,7 @@ describe("logs store search ordering", () => {
         const store = useLogsStore()
 
         let resolveStale: (value: unknown) => void = () => {}
-        searchLogs.mockImplementation((params: any) => levelFilterOf(params) === "DEBUG"
+        searchLogs.mockImplementation((params: SearchLogsParams) => levelFilterOf(params) === "DEBUG"
             ? new Promise((resolve) => {
                 resolveStale = resolve
             })
@@ -44,8 +47,8 @@ describe("logs store search ordering", () => {
     it("publishes the newest search even when it answers last", async () => {
         const store = useLogsStore()
 
-        searchLogs.mockImplementation((params: any) => Promise.resolve(
-            params.page === 1
+        searchLogs.mockImplementation((params: SearchLogsParams) => Promise.resolve(
+            params?.page === 1
                 ? {results: [log("DEBUG")], total: 1}
                 : {results: [log("ERROR")], total: 1},
         ))

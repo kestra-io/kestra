@@ -4,7 +4,7 @@ import {setActivePinia, createPinia} from "pinia"
 const searchLogs = vi.fn()
 
 vi.mock("@kestra-io/kestra-sdk/logs", () => ({
-    searchLogs: (...args: any[]) => searchLogs(...args),
+    searchLogs: (...args: Parameters<typeof import("@kestra-io/kestra-sdk/logs").searchLogs>) => searchLogs(...args),
     deleteLogsFromFlow: vi.fn().mockResolvedValue({}),
 }))
 

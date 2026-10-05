@@ -4,22 +4,17 @@ import {useDocStore} from "../../stores/doc"
 
 const KESTRA_DOCS_PREFIX = /^(?:https?:\/\/(?:www\.)?kestra\.io)?\/docs(?:\/|(?=[#?]|$))/
 
-/**
- * checks if a link points to the Kestra docs (absolute or root-relative)
- */
 function isKestraDocsLink(href: string) {
     return KESTRA_DOCS_PREFIX.test(href)
 }
 
-/**
- * "https://kestra.io/docs/workflow-components/inputs/?x#y" -> "workflow-components/inputs"
- * @returns path usable in the integrated docs
- */
-function toIntegratedDocsPath(href: string) {
-    return href
+function toIntegratedDocsPath(href: string, currentPath: string) {
+    const rest = href
         .replace(KESTRA_DOCS_PREFIX, "")
         .replace(/[#?].*$/, "")
         .replace(/\/$/, "")
+    const docsRoot = currentPath.replace(/(^|\/)docs(\/.*)?$/, "$1docs")
+    return path.normalize(docsRoot + "/" + rest).replace(/\/$/, "")
 }
 
 /**
@@ -59,7 +54,7 @@ export function useDocsLink(hrefInput: Ref<string>, currentPath: Ref<string>) {
             return normalizeRemoteHref(hrefInput.value)
         }
         if (isKestraDocsLink(hrefInput.value)) {
-            return toIntegratedDocsPath(hrefInput.value)
+            return toIntegratedDocsPath(hrefInput.value, currentPath.value)
         }
         let relativeLink = normalizeDocsPath(hrefInput.value)
         if (pageMetadata.value?.isIndex === false) {

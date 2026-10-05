@@ -265,7 +265,14 @@ public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> 
     )
     @Builder.Default
     private List<State.Type> states = ListUtils.concat(State.Type.terminatedTypes(), List.of(PAUSED));
-
+    @Nullable
+    @Positive
+    @Schema(
+        title = "Only fire after this many failed executions in a row",
+        description = "When set, the trigger fires only if the current execution and the previous executions of the same flow, up to this count, all ended in a failed state. Leave empty to fire on every matching execution."
+    )
+    @PluginProperty
+    private Integer consecutiveFailures;
     @Schema(
         title = "Dependencies on upstream flow executions",
         description = "Express dependencies on upstream flow executions, which must be met for the flow trigger to be evaluated."

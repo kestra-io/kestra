@@ -1,5 +1,7 @@
 package io.kestra.executor;
-
+import io.kestra.core.repositories.ExecutionRepositoryInterface;
+import io.micronaut.data.model.Pageable;
+import io.micronaut.data.model.Sort;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.function.Predicate;
@@ -43,16 +45,24 @@ public class FlowTriggerService {
     private final FlowService flowService;
     private final FlowMetaStoreInterface flowMetaStore;
     private final ExecutionOutputService executionOutputService;
+    private final ExecutionRepositoryInterface executionRepository;
     private final ExecutionDepthConfiguration executionDepthConfiguration;
 
-    public FlowTriggerService(ConditionService conditionService, RunContextFactory runContextFactory, FlowService flowService, FlowMetaStoreInterface flowMetaStore,
+    public FlowTriggerService(
+        ConditionService conditionService,
+        RunContextFactory runContextFactory,
+        FlowService flowService,
+        FlowMetaStoreInterface flowMetaStore,
         ExecutionOutputService executionOutputService,
-        ExecutionDepthConfiguration executionDepthConfiguration) {
+        ExecutionRepositoryInterface executionRepository,
+        ExecutionDepthConfiguration executionDepthConfiguration
+    ) {
         this.conditionService = conditionService;
         this.runContextFactory = runContextFactory;
         this.flowService = flowService;
         this.flowMetaStore = flowMetaStore;
         this.executionOutputService = executionOutputService;
+        this.executionRepository = executionRepository;
         this.executionDepthConfiguration = executionDepthConfiguration;
     }
 
@@ -281,6 +291,11 @@ public class FlowTriggerService {
         return flowTriggers(flow).map(trigger -> new FlowWithFlowTrigger(flow, trigger))
             // filter on the execution state the flow listen to
             .filter(flowWithFlowTrigger -> flowWithFlowTrigger.getTrigger().getStates().contains(execution.getState().getCurrent()))
+            // filter on consecutive failures when configured
+            .filter(flowWithFlowTrigger -> hasEnoughConsecutiveFailures(
+                flowWithFlowTrigger.getTrigger(),
+                execution
+            ))
             // validate flow triggers conditions excluding multiple conditions; an unrenderable `when` is a
             // misconfiguration, so it is logged on both sides and the trigger does not fire
             .filter(flowWithFlowTrigger -> {
@@ -292,6 +307,46 @@ public class FlowTriggerService {
                 }
             })
             .toList();
+    }
+
+
+    private boolean hasEnoughConsecutiveFailures(
+        io.kestra.plugin.core.trigger.Flow trigger,
+        Execution current
+    ) {
+        Integer needed = trigger.getConsecutiveFailures();
+    
+        if (needed == null) {
+            return true;
+        }
+    
+        if (!current.getState().getCurrent().isFailed()) {
+            return false;
+        }
+    
+        if (needed == 1) {
+            return true;
+        }
+    
+        List<Execution> previous = executionRepository
+            .findByFlowId(
+                current.getTenantId(),
+                current.getNamespace(),
+                current.getFlowId(),
+                Pageable.from(
+                    1,
+                    needed + 1,
+                    Sort.of(Sort.Order.desc("state.startDate"))
+                )
+            )
+            .stream()
+            .filter(e -> !e.getId().equals(current.getId()))
+            .filter(ExecutionKind::isNormal)
+            .limit(needed - 1)
+            .toList();
+    
+        return previous.size() == needed - 1
+            && previous.stream().allMatch(e -> e.getState().getCurrent().isFailed());
     }
 
     /**
@@ -336,3 +391,6 @@ public class FlowTriggerService {
         private final io.kestra.plugin.core.trigger.Flow trigger;
     }
 }
+
+
+

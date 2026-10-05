@@ -165,6 +165,7 @@ public final class ExecutorTestHarness {
     private final QuotaService quotaService;
     private final AsyncOperationService asyncOperationService;
     private final FlowTriggerService flowTriggerService;
+    private ExecutionRepositoryInterface executionRepository;
     private final MultipleConditionStateStore multipleConditionStateStore;
     private final ExecutionService executionService;
     private final KitRunContextFactory runContextFactory;
@@ -305,12 +306,14 @@ public final class ExecutorTestHarness {
         // FlowService, and the trigger paths only use removeUnwanted() (recursion guard) — stub it to allow processing
         FlowService flowService = Mockito.mock(FlowService.class);
         Mockito.when(flowService.removeUnwanted(Mockito.any(), Mockito.any())).thenReturn(true);
+
         this.flowTriggerService = new FlowTriggerService(
             new ConditionService(),
             runContextFactory,
             flowService,
             flowMetaStore,
             executionOutputService,
+            Mockito.mock(ExecutionRepositoryInterface.class),
             new ExecutionDepthConfiguration(100)
         );
         this.multipleConditionStateStore = new InMemoryMultipleConditionStateStore();

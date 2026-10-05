@@ -33,7 +33,7 @@ import io.kestra.core.services.FlowService;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.executor.testkit.InMemoryMultipleConditionStateStore;
 import io.kestra.plugin.core.log.Log;
-
+import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 
@@ -50,7 +50,7 @@ import static org.mockito.Mockito.when;
 @MicronautTest
 class FlowTriggerServiceTest {
     private static final List<Label> EMPTY_LABELS = List.of();
-
+    
     @Inject
     private TestRunContextFactory runContextFactory;
     @Inject
@@ -62,12 +62,23 @@ class FlowTriggerServiceTest {
     @Inject
     private ExecutionDepthConfiguration executionDepthConfiguration;
     private FlowMetaStoreInterface flowMetaStore;
+    private ExecutionRepositoryInterface executionRepository;
     private FlowTriggerService flowTriggerService;
 
     @BeforeEach
     void setUp() {
         flowMetaStore = mock(FlowMetaStoreInterface.class);
-        flowTriggerService = new FlowTriggerService(conditionService, runContextFactory, flowService, flowMetaStore, executionOutputService, executionDepthConfiguration);
+        executionRepository = mock(ExecutionRepositoryInterface.class);
+    
+        flowTriggerService = new FlowTriggerService(
+            conditionService,
+            runContextFactory,
+            flowService,
+            flowMetaStore,
+            executionOutputService,
+            executionRepository,
+            executionDepthConfiguration
+        );
     }
 
     @Test
@@ -662,6 +673,132 @@ class FlowTriggerServiceTest {
         assertThat(resultingExecutionsToRun.getFirst().getFlowId()).isEqualTo(flowWithFlowTrigger.getId());
     }
 
+    @Test
+    void shouldFireAfterConsecutiveFailures() {
+        var flow = aSimpleFlow();
+
+        var trigger = io.kestra.plugin.core.trigger.Flow.builder()
+            .id("flowTrigger")
+            .states(List.of(State.Type.FAILED))
+            .consecutiveFailures(3)
+            .build();
+
+        var current = Execution.newExecution(flow, EMPTY_LABELS)
+            .withState(State.Type.FAILED);
+
+        var previous1 = Execution.newExecution(flow, EMPTY_LABELS)
+            .withState(State.Type.FAILED);
+
+        var previous2 = Execution.newExecution(flow, EMPTY_LABELS)
+            .withState(State.Type.FAILED);
+
+        when(executionRepository.findByFlowId(
+            any(),
+            any(),
+            any(),
+            any()
+        )).thenReturn(new io.kestra.core.repositories.ArrayListTotal<>(
+            List.of(current, previous1, previous2),
+            3
+        ));
+
+        var targetFlow = Flow.builder()
+            .id("target-flow")
+            .namespace(TEST_NAMESPACE)
+            .tenantId(MAIN_TENANT)
+            .tasks(List.of(simpleLogTask()))
+            .triggers(List.of(trigger))
+            .build();
+
+        var result = flowTriggerService.computeExecutionsFromFlowTriggerConditions(
+            current,
+            targetFlow
+        );
+
+        assertThat(result).hasSize(1);
+    }
+
+    @Test
+    void shouldNotFireWhenPreviousExecutionSucceeded() {
+        var flow = aSimpleFlow();
+
+        var trigger = io.kestra.plugin.core.trigger.Flow.builder()
+            .id("flowTrigger")
+            .states(List.of(State.Type.FAILED))
+            .consecutiveFailures(3)
+            .build();
+
+        var current = Execution.newExecution(flow, EMPTY_LABELS)
+            .withState(State.Type.FAILED);
+
+        var previousFailed = Execution.newExecution(flow, EMPTY_LABELS)
+            .withState(State.Type.FAILED);
+
+        var previousSucceeded = Execution.newExecution(flow, EMPTY_LABELS)
+            .withState(State.Type.SUCCESS);
+
+        when(executionRepository.findByFlowId(any(), any(), any(), any()))
+            .thenReturn(new io.kestra.core.repositories.ArrayListTotal<>(
+                List.of(current, previousFailed, previousSucceeded),
+                3
+            ));
+
+        var targetFlow = Flow.builder()
+            .id("target-flow")
+            .namespace(TEST_NAMESPACE)
+            .tenantId(MAIN_TENANT)
+            .tasks(List.of(simpleLogTask()))
+            .triggers(List.of(trigger))
+            .build();
+
+        var result = flowTriggerService.computeExecutionsFromFlowTriggerConditions(
+            current,
+            targetFlow
+        );
+
+        assertThat(result).isEmpty();
+    }
+    
+
+    @Test
+    void shouldNotFireWhenNotEnoughPreviousFailures() {
+        var flow = aSimpleFlow();
+
+        var trigger = io.kestra.plugin.core.trigger.Flow.builder()
+            .id("flowTrigger")
+            .states(List.of(State.Type.FAILED))
+            .consecutiveFailures(3)
+            .build();
+
+        var current = Execution.newExecution(flow, EMPTY_LABELS)
+            .withState(State.Type.FAILED);
+
+        var previousFailed = Execution.newExecution(flow, EMPTY_LABELS)
+            .withState(State.Type.FAILED);
+
+        when(executionRepository.findByFlowId(any(), any(), any(), any()))
+            .thenReturn(new io.kestra.core.repositories.ArrayListTotal<>(
+                List.of(current, previousFailed),
+                2
+            ));
+
+        var targetFlow = Flow.builder()
+            .id("target-flow")
+            .namespace(TEST_NAMESPACE)
+            .tenantId(MAIN_TENANT)
+            .tasks(List.of(simpleLogTask()))
+            .triggers(List.of(trigger))
+            .build();
+
+        var result = flowTriggerService.computeExecutionsFromFlowTriggerConditions(
+            current,
+            targetFlow
+        );
+
+        assertThat(result).isEmpty();
+    }
+
+    
     private static io.kestra.plugin.core.trigger.Flow flowTriggerWithNoConditions() {
         return io.kestra.plugin.core.trigger.Flow.builder()
             .id("flowTrigger")
@@ -683,8 +820,15 @@ class FlowTriggerServiceTest {
             when(outputService.getOutputs(argThat(e -> e != null && execution.getId().equals(e.getId()))))
                 .thenReturn(execution.getOutputs());
         }
-        return new FlowTriggerService(conditionService, runContextFactory, flowService, flowMetaStore, outputService, executionDepthConfiguration);
-    }
+        return new FlowTriggerService(
+            conditionService,
+            runContextFactory,
+            flowService,
+            flowMetaStore,
+            outputService,
+            executionRepository,
+            executionDepthConfiguration
+        );    }
 
     @SuppressWarnings("removal")
     private static Execution successfulExecutionWithOutputs(Flow flow, Map<String, Object> outputs) {

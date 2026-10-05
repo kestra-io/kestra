@@ -18,6 +18,7 @@ import io.kestra.core.models.flows.FlowId;
 import io.kestra.core.models.flows.FlowWithException;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.models.property.Property;
 import io.kestra.core.models.triggers.multipleflows.MultipleCondition;
 import io.kestra.core.models.triggers.multipleflows.MultipleConditionStateStore;
 import io.kestra.core.models.triggers.multipleflows.MultipleConditionWindow;
@@ -556,14 +557,14 @@ class FlowTriggerServiceTest {
 
     @Test
     void computeExecutionsFromFlowTriggers_whenInvalidExpression() {
-        // Given - malformed Pebble expression causes IllegalVariableEvaluationException, treated as false
+        // Given - a trigger-level `when` that cannot be rendered (unknown variable)
         var simpleFlow = aSimpleFlow();
         var flowWithFlowTrigger = Flow.builder()
             .id("flow-with-flow-trigger")
             .namespace(TEST_NAMESPACE)
             .tenantId(MAIN_TENANT)
             .tasks(List.of(simpleLogTask()))
-            .triggers(List.of(flowTriggerWithWhen("{{ invalid-pebble-expression() }}")))
+            .triggers(List.of(flowTriggerWithWhen("{{ namespace }}")))
             .build();
         var simpleFlowExecution = Execution.newExecution(simpleFlow, EMPTY_LABELS).withState(State.Type.SUCCESS);
 
@@ -573,7 +574,66 @@ class FlowTriggerServiceTest {
             flowWithFlowTrigger
         );
 
-        // Then
+        // Then the trigger does not fire (the misconfiguration is logged on both the evaluated execution and the
+        // flow that owns the trigger, see FlowTriggerInvalidWhenCycleTest)
+        assertThat(resultingExecutionsToRun).isEmpty();
+    }
+
+    @Test
+    void shouldNotFireWhenDependsOnTriggerLevelWhenCannotBeRendered() {
+        // Given - a dependsOn trigger whose trigger-level `when` references an unknown variable
+        var upstream = aSimpleFlow();
+        var flowWithFlowTrigger = Flow.builder()
+            .id("flow-with-flow-trigger")
+            .namespace(TEST_NAMESPACE)
+            .tenantId(MAIN_TENANT)
+            .tasks(List.of(simpleLogTask()))
+            .triggers(List.of(flowTriggerDependingOn(upstream, "{{ namespace }}")))
+            .build();
+        var simpleFlowExecution = Execution.newExecution(upstream, EMPTY_LABELS).withState(State.Type.SUCCESS);
+
+        // When
+        var resultingExecutionsToRun = flowTriggerService.computeExecutionsFromFlowTriggerDependsOn(
+            simpleFlowExecution,
+            flowWithFlowTrigger,
+            new SatisfiedWindowStateStore()
+        );
+
+        // Then the trigger does not fire (the misconfiguration is logged, not turned into an execution)
+        assertThat(resultingExecutionsToRun).isEmpty();
+    }
+
+    @Test
+    void shouldNotFireWhenDependencyLevelWhenCannotBeRendered() {
+        // Given - a dependsOn entry whose own `when` references an unknown variable
+        var upstream = aSimpleFlow();
+        var dependency = io.kestra.plugin.core.trigger.Flow.Dependency.builder()
+            .namespace(upstream.getNamespace())
+            .flowId(upstream.getId())
+            .when(Property.ofExpression("{{ namespace }}"))
+            .build();
+        var trigger = io.kestra.plugin.core.trigger.Flow.builder()
+            .id("flowTrigger")
+            .type(io.kestra.plugin.core.trigger.Flow.class.getName())
+            .dependsOn(List.of(dependency))
+            .build();
+        var flowWithFlowTrigger = Flow.builder()
+            .id("flow-with-flow-trigger")
+            .namespace(TEST_NAMESPACE)
+            .tenantId(MAIN_TENANT)
+            .tasks(List.of(simpleLogTask()))
+            .triggers(List.of(trigger))
+            .build();
+        var simpleFlowExecution = Execution.newExecution(upstream, EMPTY_LABELS).withState(State.Type.SUCCESS);
+
+        // When
+        var resultingExecutionsToRun = flowTriggerService.computeExecutionsFromFlowTriggerDependsOn(
+            simpleFlowExecution,
+            flowWithFlowTrigger,
+            new SatisfiedWindowStateStore()
+        );
+
+        // Then the trigger does not fire; the unrenderable dependency condition is logged, not fired as an execution
         assertThat(resultingExecutionsToRun).isEmpty();
     }
 

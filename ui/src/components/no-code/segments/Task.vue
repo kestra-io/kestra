@@ -102,11 +102,11 @@
                         section: validationSection.value,
                     })
                 }
-            }, 500) as any
+            }, 500)
         }
     }
 
-    const timer = ref<number>()
+    const timer = ref<ReturnType<typeof setTimeout>>()
     const lastValidatedValue = ref<string>()
 
 

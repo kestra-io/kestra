@@ -9,6 +9,7 @@ import com.google.common.collect.ImmutableMap;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.ExecutionMetadata;
 import io.kestra.core.models.executions.LoopRun;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.FlowInterface;
@@ -59,10 +60,8 @@ public final class RunVariables {
         "vars",
         // Execution
         "execution",
-        "execution.flowId",
-        "execution.hasRetryAttempt",
+        "execution.attemptNumber",
         "execution.id",
-        "execution.namespace",
         "execution.originalId",
         "execution.outputs",
         "execution.startDate",
@@ -248,18 +247,14 @@ public final class RunVariables {
         ImmutableMap.Builder<String, Object> executionMap = ImmutableMap.builder();
 
         executionMap.put("id", execution.getId());
-        Optional.ofNullable(execution.getNamespace()).ifPresent(namespace -> executionMap.put("namespace", namespace));
-        Optional.ofNullable(execution.getFlowId()).ifPresent(flowId -> executionMap.put("flowId", flowId));
 
         if (execution.getState() != null) { // can occur in tests
             executionMap.put("state", execution.getState().getCurrent());
         }
 
-        executionMap.put(
-            "hasRetryAttempt",
-            ListUtils.emptyOnNull(execution.getTaskRunList()).stream()
-                .anyMatch(taskRun -> ListUtils.emptyOnNull(taskRun.getAttempts()).size() > 1)
-        );
+        Optional.ofNullable(execution.getMetadata())
+            .map(ExecutionMetadata::getAttemptNumber)
+            .ifPresent(attemptNumber -> executionMap.put("attemptNumber", attemptNumber));
 
         Optional.ofNullable(execution.getState()).map(State::getStartDate)
             .ifPresent(startDate -> executionMap.put("startDate", startDate));

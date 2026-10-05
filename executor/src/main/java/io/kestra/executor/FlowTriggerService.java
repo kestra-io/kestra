@@ -305,14 +305,14 @@ public class FlowTriggerService {
      */
     private void logUnrenderableWhen(RunContext upstreamRunContext, Flow flow, AbstractTrigger trigger, InternalException error) {
         upstreamRunContext.logger().warn(
-            "Could not evaluate the `when` condition of flow trigger '{}' on flow '{}.{}': {}",
+            "Could not evaluate the `when` condition of flow trigger '{}' on flow '{}.{}', the downstream flow will not be started: {}",
             trigger.getId(),
             flow.getNamespace(),
             flow.getId(),
             error.getMessage()
         );
         runContextFactory.of(flow, trigger).logger().error(
-            "The `when` condition of flow trigger '{}' could not be rendered: {}",
+            "The `when` condition of flow trigger '{}' could not be rendered, the downstream flow will not be started: {}",
             trigger.getId(),
             error.getMessage(),
             error

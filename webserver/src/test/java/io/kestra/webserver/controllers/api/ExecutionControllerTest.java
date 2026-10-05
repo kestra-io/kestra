@@ -557,8 +557,9 @@ class ExecutionControllerTest {
         assertThat(exception.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
     }
 
-    @Test
-    void shouldNotPartiallyApplyLabelsWhenSetLabelsOnTerminatedByIdsRejectsASystemLabel() {
+    @ParameterizedTest
+    @ValueSource(strings = { Label.CORRELATION_ID, "system" })
+    void shouldNotPartiallyApplyLabelsWhenSetLabelsOnTerminatedByIdsRejectsASystemLabel(String key) {
         Execution execution1 = terminatedExecution();
         Execution execution2 = terminatedExecution();
 
@@ -569,7 +570,7 @@ class ExecutionControllerTest {
                     "/api/v1/main/executions/labels/by-ids",
                     new ExecutionController.SetLabelsByIdsRequest(
                         List.of(execution1.getId(), execution2.getId()),
-                        List.of(new Label(Label.CORRELATION_ID, "spoofed"))
+                        List.of(new Label(key, "spoofed"))
                     )
                 )
             )
@@ -579,7 +580,7 @@ class ExecutionControllerTest {
         // the batch is all-or-nothing: neither execution gained the spoofed label
         for (Execution execution : List.of(execution1, execution2)) {
             Execution reloaded = client.toBlocking().retrieve(GET("/api/v1/main/executions/" + execution.getId()), Execution.class);
-            assertThat(reloaded.getLabels()).doesNotContain(new Label(Label.CORRELATION_ID, "spoofed"));
+            assertThat(reloaded.getLabels()).doesNotContain(new Label(key, "spoofed"));
         }
     }
 

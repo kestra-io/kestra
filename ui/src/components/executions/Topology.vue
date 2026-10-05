@@ -27,7 +27,7 @@
     import {ref, computed, watch, onMounted, onUnmounted} from "vue"
     import {stringUtils, State, levelToRequestParams, throttle} from "@kestra-io/design-system"
     import LowCodeEditor from "../inputs/LowCodeEditor.vue"
-    import {useExecutionsStore} from "../../stores/executions"
+    import {useExecutionsStore, type Execution} from "../../stores/executions"
     import {useFlowStore} from "../../stores/flow"
 
     withDefaults(defineProps<{
@@ -43,16 +43,16 @@
     const executionsStore = useExecutionsStore()
     const flowStore = useFlowStore()
 
-    // FIXME: any - execution and flowGraph are untyped domain objects from the store
-    const execution = computed(() => executionsStore.execution as any) // FIXME: any
+    // execution is Execution | undefined — the store's ref is already typed.
+    const execution = computed(() => executionsStore.execution)
     const flowGraph = computed(() => executionsStore.flowGraph)
 
     const loading = ref(true)
     const previousExecutionId = ref<string | undefined>(undefined)
     const expandedSubflows = ref<string[]>([])
     const previousExpandedSubflows = ref<string[]>([])
-    // FIXME: any - SSE objects don't have a consistent type in this codebase
-    const sseBySubflow = ref<Record<string, any>>({}) // FIXME: any
+    // sseBySubflow holds the subscription handles returned by subscribeToExecution.
+    const sseBySubflow = ref<Record<string, {close: () => void}>>({})
 
     // Live lifecycle-step progress (see RunContext#emitProgress) rides the existing follow-logs
     // SSE as a typed field, so plugin topology-details slots can track per-step progress in real
@@ -111,7 +111,14 @@
         {immediate: true},
     )
 
-    const throttledExecutionUpdate = throttle(function(subflow: string, subflowExecution: any) { // FIXME: any
+    // The backend adds runtime `outputs` to task runs (e.g. subflow executionId), but this
+    // field is not part of the OpenAPI-generated SDK type — following the same pattern as
+    // TaskRunDetails.vue which intersects the execution task run type with the outputs shape.
+    type TaskRunWithOutputs = NonNullable<Execution["taskRunList"]>[number] & {
+        outputs?: {executionId?: string; [key: string]: unknown}
+    }
+
+    const throttledExecutionUpdate = throttle(function(subflow: string, subflowExecution: Execution) {
         const previousExecution = executionsStore.subflowsExecutions[subflow]
         executionsStore.addSubflowExecution({
             subflow,
@@ -205,7 +212,7 @@
     }
 
     function addSSE(subflow: string, generateGraphOnWaiting?: boolean) {
-        let parentExecution = execution.value
+        let parentExecution: Execution | undefined = execution.value
 
         const parentSubflows = expandedSubflows.value.filter(expandedSubflow => subflow.includes(expandedSubflow + "."))
             .sort((s1, s2) => s2.length - s1.length)
@@ -219,8 +226,7 @@
             return
         }
 
-        const taskIdMatchingTaskrun = parentExecution.taskRunList
-            .filter((taskRun: {taskId: string}) => taskRun.taskId === stringUtils.afterLastDot(subflow))?.[0]
+        const taskIdMatchingTaskrun = (parentExecution.taskRunList ?? []).filter((taskRun): taskRun is TaskRunWithOutputs => taskRun.taskId === stringUtils.afterLastDot(subflow))?.[0]
         const executionId = taskIdMatchingTaskrun?.outputs?.executionId
 
         if (!executionId) {

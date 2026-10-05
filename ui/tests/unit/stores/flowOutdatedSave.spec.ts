@@ -7,13 +7,8 @@ import type {Flow} from "../../../src/stores/flow"
 const axiosGet = vi.fn()
 const axiosPost = vi.fn()
 const axiosPut = vi.fn()
-const validateFlows = vi.fn((..._args: Parameters<typeof FlowsAPI.validateFlows>) => Promise.resolve([{outdated: true}]))
-const updateFlow = vi.fn((..._args: Parameters<typeof FlowsAPI.updateFlow>) => Promise.resolve({
-    id: "my-flow",
-    namespace: "my.ns",
-    revision: 2,
-    source: FLOW_YAML,
-}))
+const validateFlows = vi.fn<typeof FlowsAPI.validateFlows>()
+const updateFlow = vi.fn<typeof FlowsAPI.updateFlow>()
 const CONFIRMED = "confirm" as unknown as Awaited<ReturnType<typeof KsMessageBox>>
 
 vi.mock("nprogress", () => ({
@@ -88,9 +83,9 @@ describe("flow store outdated save confirmation", () => {
         updateFlow.mockReset()
 
         // /flows/validate -> backend flags the in-progress edit as outdated
-        validateFlows.mockResolvedValue([{outdated: true}])
+        validateFlows.mockResolvedValue([{outdated: true}] as Awaited<ReturnType<typeof FlowsAPI.validateFlows>>)
         // /flows/{ns}/{id} (save) -> succeeds
-        updateFlow.mockResolvedValue({id: "my-flow", namespace: "my.ns", revision: 2, source: FLOW_YAML})
+        updateFlow.mockResolvedValue({id: "my-flow", namespace: "my.ns", revision: 2, source: FLOW_YAML} as Awaited<ReturnType<typeof FlowsAPI.updateFlow>>)
 
         setActivePinia(createPinia())
         localStorage.clear()
@@ -120,7 +115,7 @@ describe("flow store outdated save confirmation", () => {
     })
 
     it("does not prompt when the edited revision is up to date", async () => {
-        validateFlows.mockResolvedValue([{outdated: false}])
+        validateFlows.mockResolvedValue([{}] as Awaited<ReturnType<typeof FlowsAPI.validateFlows>>)
 
         const store = await setupOutdatedStore()
         const outcome = await store.saveAll()

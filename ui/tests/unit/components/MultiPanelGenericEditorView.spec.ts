@@ -39,11 +39,6 @@ const editorElements: EditorElement[] = [
     },
 ]
 
-function splitOrientationOf(wrapper: ReturnType<typeof mountEditor>) {
-    // Vue unwraps setup refs on the component proxy, so the exposed value is the raw orientation string.
-    return (wrapper.vm as unknown as {splitOrientation: "vertical" | "horizontal"}).splitOrientation
-}
-
 function mountEditor({withBottomPanel = true} = {}) {
     return i18nMount(MultiPanelGenericEditorView, {
         global: globalConfig,
@@ -72,7 +67,7 @@ describe("MultiPanelGenericEditorView split orientation", () => {
         const wrapper = mountEditor()
 
         // Then: splitOrientation is "vertical"
-        expect(splitOrientationOf(wrapper)).toBe("vertical")
+        expect(wrapper.vm.splitOrientation).toBe("vertical")
     })
 
     test("hides the toggle button when there is no bottom panel", () => {
@@ -98,13 +93,13 @@ describe("MultiPanelGenericEditorView split orientation", () => {
     test("toggles orientation to horizontal when button is clicked", async () => {
         // Given: default vertical orientation
         const wrapper = mountEditor()
-        expect(splitOrientationOf(wrapper)).toBe("vertical")
+        expect(wrapper.vm.splitOrientation).toBe("vertical")
 
         // When: the toggle button is clicked
         await wrapper.find(".orientation-toggle").trigger("click")
 
         // Then: orientation switches to horizontal
-        expect(splitOrientationOf(wrapper)).toBe("horizontal")
+        expect(wrapper.vm.splitOrientation).toBe("horizontal")
     })
 
     test("persists orientation toggle to localStorage", async () => {
@@ -127,7 +122,7 @@ describe("MultiPanelGenericEditorView split orientation", () => {
         const wrapper = mountEditor()
 
         // Then: splitOrientation starts as horizontal
-        expect(splitOrientationOf(wrapper)).toBe("horizontal")
+        expect(wrapper.vm.splitOrientation).toBe("horizontal")
     })
 
     test("toggles back to vertical after two clicks", async () => {
@@ -140,6 +135,6 @@ describe("MultiPanelGenericEditorView split orientation", () => {
         await btn.trigger("click")
 
         // Then: back to vertical
-        expect(splitOrientationOf(wrapper)).toBe("vertical")
+        expect(wrapper.vm.splitOrientation).toBe("vertical")
     })
 })

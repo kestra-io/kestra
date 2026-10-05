@@ -21,10 +21,9 @@ export interface AxiosLikeConfig {
     responseType?: "json" | "text" | "blob"
     timeout?: number
     validateStatus?: (status: number) => boolean
-    data?: RequestBody
+    data?: unknown
     showMessageOnError?: boolean
     ignoreNotFound?: boolean
-    withCredentials?: boolean
     __kestraSkipProgress?: boolean
     [key: string]: unknown
 }

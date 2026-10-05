@@ -13,7 +13,7 @@
  * and `confirm` turns are POST SSE streams read via `streamSse`.
  */
 import {ref, computed, getCurrentScope, onScopeDispose} from "vue"
-import {useClient, type RequestBody} from "@kestra-io/kestra-sdk"
+import {useClient} from "@kestra-io/kestra-sdk"
 import type {AgentMessageRole, AgentMessageType, AgentThreadStatus, ApiDecision} from "@kestra-io/kestra-sdk"
 import {apiUrl} from "override/utils/route"
 import {uid} from "../../../utils/utils"
@@ -106,7 +106,7 @@ export function useAiChat() {
     let activeAssistant: ChatMessage | null = null
     let abort: AbortController | null = null
     /** The last chat/confirm request, so an empty/failed turn can be retried without retyping. */
-    let lastTurn: {url: string; body: RequestBody} | null = null
+    let lastTurn: {url: string; body: unknown} | null = null
 
     /** True when a new chat turn may be sent. */
     const canSend = computed(() => status.value === "IDLE" && !streaming.value)
@@ -314,7 +314,7 @@ export function useAiChat() {
     }
 
     /** Shared streaming driver for both chat and confirm turns. */
-    async function runStream(url: string, body: RequestBody): Promise<void> {
+    async function runStream(url: string, body: unknown): Promise<void> {
         streaming.value = true
         status.value = "RUNNING"
         notice.value = null

@@ -18,6 +18,8 @@ describe("executionLabels", () => {
 
     it("shouldRejectOtherSystemLabels", () => {
         expect(isForbiddenUserSystemLabel("system.username")).toBe(true)
+        expect(isForbiddenUserSystemLabel("system")).toBe(true)
+        expect(isForbiddenUserSystemLabel("systems")).toBe(false)
         expect(hasForbiddenUserSystemLabels([{key: "system.from", value: "ui"}])).toBe(true)
         expect(hasForbiddenUserSystemLabels([{key: "system.correlationId", value: "abc"}])).toBe(false)
         expect(hasForbiddenUserSystemLabels([{key: "env", value: "prod"}])).toBe(false)

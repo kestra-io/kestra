@@ -302,6 +302,10 @@
   "../../packages/design-system/src/components/Form/KsPasswordRequirements.locale.ts|password_requirements|match": "49665aad0be4",
   "../../packages/design-system/src/components/Form/KsPasswordRequirements.locale.ts|password_requirements|number": "89ec94c7b26d",
   "../../packages/design-system/src/components/Form/KsPasswordRequirements.locale.ts|password_requirements|uppercase": "ef5dd11c37f9",
+  "../../packages/design-system/src/components/Navigation/KsBreadcrumb/KsBreadcrumb.locale.ts|breadcrumb_empty": "49abaf804ab3",
+  "../../packages/design-system/src/components/Navigation/KsBreadcrumb/KsBreadcrumb.locale.ts|breadcrumb_hidden": "6bfc90bf8ad8",
+  "../../packages/design-system/src/components/Navigation/KsBreadcrumb/KsBreadcrumb.locale.ts|breadcrumb_in": "313e011c9fd2",
+  "../../packages/design-system/src/components/Navigation/KsBreadcrumb/KsBreadcrumb.locale.ts|breadcrumb_siblings": "29706c6e3b59",
   "../../packages/design-system/src/components/Navigation/KsTopNavBar/KsTopNavBar.locale.ts|topnav_bookmark": "e90b220bc470",
   "../../packages/design-system/src/components/Navigation/KsTopNavBar/KsTopNavBar.locale.ts|topnav_dock_toggle": "ed98852805c9",
   "../../packages/design-system/src/components/Navigation/KsTopNavBar/KsTopNavBar.locale.ts|topnav_sidebar_toggle": "c02651240c87"

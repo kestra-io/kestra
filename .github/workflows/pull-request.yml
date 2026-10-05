@@ -249,7 +249,8 @@ jobs:
           owner: kestra-io
           repositories: kestra-ee
 
-      # The same-name EE branch when the PR has a companion, otherwise the branch it targets.
+      # The same-name EE branch when the PR has a companion, otherwise the branch it targets. A stacked
+      # PR targets another OSS branch, which has no EE counterpart, hence the fall back to develop.
       - name: Resolve the EE branch
         id: ee-branch
         if: steps.ee-token.outputs.token != ''
@@ -258,11 +259,14 @@ jobs:
           HEAD_REF: ${{ github.head_ref }}
           BASE_REF: ${{ github.base_ref }}
         run: |
-          if gh api "repos/kestra-io/kestra-ee/branches/$HEAD_REF" --silent 2>/dev/null; then
-            echo "ref=$HEAD_REF" >> "$GITHUB_OUTPUT"
-          else
-            echo "ref=$BASE_REF" >> "$GITHUB_OUTPUT"
-          fi
+          for candidate in "$HEAD_REF" "$BASE_REF" develop; do
+            if gh api "repos/kestra-io/kestra-ee/branches/$candidate" --silent 2>/dev/null; then
+              echo "ref=$candidate" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+          done
+          echo "::error::No kestra-ee branch found for $HEAD_REF, $BASE_REF or develop."
+          exit 1
 
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         name: Checkout - EE sources
@@ -317,7 +321,6 @@ jobs:
     uses: kestra-io/actions/.github/workflows/kestra-oss-frontend-tests.yml@main
     secrets:
       GITHUB_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
   design-system-frontend:
     name: Frontend - Design System tests
@@ -360,8 +363,6 @@ jobs:
     uses: kestra-io/actions/.github/workflows/kestra-oss-backend-tests.yml@main
     secrets:
       GITHUB_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
       GOOGLE_SERVICE_ACCOUNT: ${{ secrets.GOOGLE_SERVICE_ACCOUNT }}
       DEVELOCITY_ACCESS_KEY: ${{ secrets.DEVELOCITY_ACCESS_KEY }}
     with:

@@ -1,5 +1,7 @@
 import ArrowRightBold from "vue-material-design-icons/ArrowRightBold.vue"
 import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
+import ContentCut from "vue-material-design-icons/ContentCut.vue"
+import ContentPaste from "vue-material-design-icons/ContentPaste.vue"
 import ContentSave from "vue-material-design-icons/ContentSave.vue"
 import DeleteOutline from "vue-material-design-icons/DeleteOutline.vue"
 import OpenInNew from "vue-material-design-icons/OpenInNew.vue"
@@ -31,6 +33,11 @@ export interface BlockCommandMenuContext {
     saveFlow: () => void
     taskEntries: PickerEntry[]
     insertTaskType: (fqcn: string) => void
+    /** Absent on the topology surface, which does not wire clipboard actions into its command menu yet. */
+    copyFocused?: () => void
+    cutFocused?: () => void
+    pasteRelative?: () => void
+    canPaste?: boolean
 }
 
 function focusedSubject(ctx: BlockCommandMenuContext) {
@@ -120,6 +127,26 @@ export function buildCommandMenuItems(ctx: BlockCommandMenuContext): BlockComman
             shortcut: "D",
             run: then(ctx.duplicateFocused),
         })
+        if (ctx.copyFocused) {
+            items.push({
+                id: "copy",
+                group: t("block_editor.command_menu.group_block"),
+                title: t("block_editor.command_menu.copy", {name}),
+                icon: ContentCopy,
+                shortcut: "⌘C",
+                run: then(ctx.copyFocused),
+            })
+        }
+        if (ctx.cutFocused) {
+            items.push({
+                id: "cut",
+                group: t("block_editor.command_menu.group_block"),
+                title: t("block_editor.command_menu.cut", {name}),
+                icon: ContentCut,
+                shortcut: "⌘X",
+                run: then(ctx.cutFocused),
+            })
+        }
         items.push({
             id: "delete",
             group: t("block_editor.command_menu.group_block"),
@@ -127,6 +154,18 @@ export function buildCommandMenuItems(ctx: BlockCommandMenuContext): BlockComman
             icon: DeleteOutline,
             shortcut: "⌫",
             run: then(ctx.deleteFocused),
+        })
+    }
+
+    if (ctx.pasteRelative) {
+        items.push({
+            id: "paste",
+            group: t("block_editor.command_menu.group_block"),
+            title: t("block_editor.command_menu.paste"),
+            icon: ContentPaste,
+            shortcut: "⌘V",
+            disabled: !ctx.canPaste,
+            run: then(ctx.pasteRelative),
         })
     }
 

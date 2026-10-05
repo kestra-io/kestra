@@ -1,5 +1,5 @@
 <template>
-    <TopNavBar :title="routeInfo?.title" :breadcrumb="routeInfo?.breadcrumb">
+    <TopNavBar :title="routeInfo?.title" :breadcrumb="routeInfo?.breadcrumb" :bookmarkLabel="routeInfo?.bookmarkLabel">
         <template #title>
             {{ routeInfo?.title }}
             <Badge

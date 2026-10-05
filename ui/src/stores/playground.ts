@@ -6,9 +6,7 @@ import {Execution, useExecutionsStore} from "./executions"
 import {normalize} from "../utils/inputs"
 import {useRoute, useRouter} from "vue-router"
 import {State, isDeepEqual} from "@kestra-io/design-system"
-import {useToast} from "../utils/toast"
-import {useI18n} from "vue-i18n"
-import {Flow, useFlowStore} from "./flow"
+import {Flow, isSuccessfulFlowSaveOutcome, useFlowStore} from "./flow"
 import type {FlowForExecution} from "@kestra-io/kestra-sdk"
 import {useFileExplorerStore} from "./fileExplorer"
 import type {KestraHttpError} from "../utils/kestraHttp"
@@ -51,7 +49,7 @@ export const usePlaygroundStore = defineStore("playground", () => {
 
     function navigateToEdit(runUntilTaskId?: string, runDownstreamTasks?: boolean) {
         const flowParsed = flowStore.flow
-        router.push({
+        return router.push({
             name: "flows/update/edit",
             params: {
                 id: flowParsed?.id,
@@ -229,8 +227,6 @@ export const usePlaygroundStore = defineStore("playground", () => {
     const showInputPrompt = ref(false)
     const actionOptions = ref<{taskId?: string, runDownstreamTasks?: boolean}>()
 
-    const toast = useToast()
-
     // Ensure Files panel reflects changes after Playground executions (e.g., Namespace/Tenant sync tasks)
     // When an execution transitions from a non-final state to a final state, refresh the files tree
     // @see https://github.com/kestra-io/plugin-git/issues/188
@@ -265,14 +261,26 @@ export const usePlaygroundStore = defineStore("playground", () => {
         }
     }
 
-    const {t} = useI18n()
-
     async function runUntilTask(taskId?: string, runDownstreamTasks = false, customFormData?: Record<string, unknown>) {
         if(readyToStart.value === false) {
             console.warn("Playground is not ready to start, latest execution is still in progress")
             return
         }
         if (flowStore.haveChange && flowStore.flowErrors) {
+            return
+        }
+        if (flowStore.isCreating) {
+            starting.value = true
+            let outcome
+            try {
+                outcome = await flowStore.saveAsDraft()
+            } finally {
+                starting.value = false
+            }
+            if (isSuccessfulFlowSaveOutcome(outcome)) {
+                await navigateToEdit(taskId, runDownstreamTasks)
+                enabled.value = true
+            }
             return
         }
         starting.value = true
@@ -284,18 +292,7 @@ export const usePlaygroundStore = defineStore("playground", () => {
     }
 
     async function startRun(taskId?: string, runDownstreamTasks = false, customFormData?: Record<string, unknown>) {
-        if(flowStore.isCreating){
-            toast.confirm(
-                t("playground.confirm_create"),
-                async () => {
-                    await flowStore.saveAll()
-                    navigateToEdit(taskId, runDownstreamTasks)
-                },
-            )
-            return
-        }
-
-        await flowStore.saveAll()
+        await flowStore.saveAsDraft()
         // get the next task id to break on. If current task is provided to breakpoint,
         // the task specified by the user will not be executed.
         const {nextTasksIds, graph} = await getNextTaskIds(runDownstreamTasks ? undefined : taskId) ?? {}

@@ -7,16 +7,29 @@ import KestraDesignSystem from "@kestra-io/design-system"
 import Table from "../../../../src/components/dependencies/components/Table.vue"
 import Link from "../../../../src/components/dependencies/components/Link.vue"
 import en from "../../../../src/translations/en.json"
+import {NODE, FLOW, EXECUTION, ASSET} from "../../../../src/components/dependencies/utils/types"
+import type {Element, Types} from "../../../../src/components/dependencies/utils/types"
 
 // The flow, execution and namespace views share this table with the asset view, and have
 // regressed by inheriting its behaviour; these pin the subtype gate in both directions.
 describe("dependencies Table.vue — asset-view gating", () => {
-    const row = (subtype: string, id: string) =>
-        ({data: {id, type: "NODE", flow: subtype === "ASSET" ? "db.schema.customers" : "my-flow", namespace: "ns", metadata: subtype === "EXECUTION" ? {subtype, id: "exec-1", state: "SUCCESS"} : {subtype}}}) as any
+    const row = (subtype: Types, id: string): Element => ({
+        data: {
+            id,
+            type: NODE,
+            flow: subtype === ASSET ? "db.schema.customers" : "my-flow",
+            namespace: "ns",
+            metadata: subtype === EXECUTION
+                ? {subtype: EXECUTION, id: "exec-1", state: "SUCCESS"}
+                : subtype === ASSET
+                    ? {subtype: ASSET}
+                    : {subtype: FLOW},
+        },
+    })
 
-    const mountTable = (subtype: string, elements: any[]) => i18nMount(Table, {
+    const mountTable = (subtype: Types, elements: Element[]) => i18nMount(Table, {
         locales: en,
-        props: {elements, selected: undefined, subtype: subtype as any},
+        props: {elements, selected: undefined, subtype},
         global: {plugins: [KestraDesignSystem], stubs: {RouterLink: RouterLinkStub}},
     })
 
@@ -25,7 +38,7 @@ describe("dependencies Table.vue — asset-view gating", () => {
         wrapper.findAll("section#right").map((right) => right.findAllComponents(RouterLinkStub).length)
 
     it("keeps the Link name and the guarded arrow outside the asset view", async () => {
-        const wrapper = mountTable("EXECUTION", [row("FLOW", "f1"), row("EXECUTION", "e1")])
+        const wrapper = mountTable(EXECUTION, [row(FLOW, "f1"), row(EXECUTION, "e1")])
         // Element Plus registers table columns a couple of ticks after mount.
         await nextTick()
         await nextTick()
@@ -37,7 +50,7 @@ describe("dependencies Table.vue — asset-view gating", () => {
     })
 
     it("keeps the plain code name and the unguarded arrow in the asset view", async () => {
-        const wrapper = mountTable("ASSET", [row("ASSET", "a1"), row("FLOW", "f1")])
+        const wrapper = mountTable(ASSET, [row(ASSET, "a1"), row(FLOW, "f1")])
         await nextTick()
         await nextTick()
         await nextTick()

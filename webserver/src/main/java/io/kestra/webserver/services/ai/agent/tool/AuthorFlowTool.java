@@ -8,6 +8,7 @@ import io.kestra.core.ai.agent.models.ArtefactDraft;
 import io.kestra.core.ai.agent.models.ArtefactKind;
 import io.kestra.core.models.flows.FlowSource;
 import io.kestra.core.models.validations.ValidateConstraintViolation;
+import io.kestra.core.models.validations.ValidationError;
 import io.kestra.core.services.FlowService;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.libs.copilot.exceptions.AiException;
@@ -105,8 +106,8 @@ public class AuthorFlowTool implements AiAuthoringTool {
     private String validate(final String tenant, final String yaml) {
         List<ValidateConstraintViolation> violations = flowService.validate(tenant, List.of(new FlowSource(null, yaml)));
         String constraints = violations.stream()
-            .map(ValidateConstraintViolation::getConstraints)
-            .filter(Objects::nonNull)
+            .flatMap(violation -> violation.getErrors().stream())
+            .map(ValidationError::toLine)
             .collect(Collectors.joining("; "));
         return constraints.isEmpty() ? null : constraints;
     }

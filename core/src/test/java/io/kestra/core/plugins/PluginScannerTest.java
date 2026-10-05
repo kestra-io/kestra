@@ -33,4 +33,15 @@ class PluginScannerTest {
         RegisteredPlugin scan = pluginScanner.scan();
         assertThat(scan.getManifest().getMainAttributes().getValue("X-Kestra-Group")).isEqualTo("io.kestra.plugin.core");
     }
+
+    @Test
+    void shouldDiscoverPluginEndpoints() {
+        PluginScanner pluginScanner = new PluginScanner(PluginScannerTest.class.getClassLoader());
+
+        RegisteredPlugin core = pluginScanner.scan();
+
+        assertThat(core.getEndpoints())
+            .anySatisfy(endpoint -> assertThat(endpoint)
+                .isInstanceOf(io.kestra.core.plugins.endpoint.TestScanEndpoint.class));
+    }
 }

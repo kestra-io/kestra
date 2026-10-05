@@ -383,6 +383,18 @@
     "modify inputs": "Inputs ändern",
     "replay inputs new required": "Diese Revision hat Inputs. Du wirst aufgefordert, sie auszufüllen.",
     "replay select taskrun": "Wähle den Task-Run aus, ab dem der Replay starten soll:",
+    "replayCheck": {
+      "checking": "Prüfe, ob Revision {revision} von Task {taskId} wiedergegeben werden kann.",
+      "valid_title": "Revision {revision} kann ab Task {taskId} wiedergegeben werden.",
+      "valid_description": "Die Tasks davor sind unverändert, daher werden ihre Outputs wiederverwendet. Ein Replay auf einer anderen Revision ist niemals vollständig deterministisch: Secrets, Datei-Inputs und externe Systeme aufrufende Ausdrücke können etwas anderes als den ursprünglichen Run zurückgeben.",
+      "refused_title": "Revision {revision} kann nicht von Task {taskId} wiedergegeben werden.",
+      "refused_description": "Eine Task, ein Input oder eine Variable, deren Ergebnis wiederverwendet werden würde, ist in dieser Revision anders definiert.",
+      "whole_action": "Die gesamte Execution stattdessen wiederholen",
+      "whole_title": "Revision {revision} kann als ganze Execution wiederholt werden.",
+      "whole_description": "Es werden keine früheren Ergebnisse wiederverwendet, daher wird jeder Task bei Revision {revision} erneut ausgeführt. Die ursprüngliche Execution wird beibehalten und verknüpft.",
+      "confirm_from_task": "Replay ab Task",
+      "confirm_whole": "Ganze Execution wiederholen"
+    },
     "change execution state done": "Execution-Status aktualisiert",
     "mark as": "Als <code>{status}</code> markieren",
     "unqueue as": "Als <code>{status}</code> aus der Warteschlange entfernen",

@@ -383,6 +383,18 @@
     "modify inputs": "修改inputs",
     "replay inputs new required": "此修订版有inputs。系统将提示您填写它们。",
     "replay select taskrun": "选择要重放的task运行：",
+    "replayCheck": {
+      "checking": "正在检查修订版本 {revision} 是否可以从 Task {taskId} 重放。",
+      "valid_title": "版本 {revision} 可以从 Task {taskId} 重放。",
+      "valid_description": "它之前的 Task 未更改，因此它们的 output 被重用。在另一个 revision 上 Replay 永远不是完全确定性的：Secret、文件 input 和调用外部系统的表达式可能会返回与原始运行不同的内容。",
+      "refused_title": "修订版本 {revision} 无法从 Task {taskId} 重放。",
+      "refused_description": "此版本中，将要重用的 Task、input 或变量的结果定义不同。",
+      "whole_action": "改为重放整个 execution",
+      "whole_title": "版本 {revision} 可以作为整个执行进行重放。",
+      "whole_description": "没有重用早期结果，因此每个 Task 都会在版本 {revision} 上再次运行。原始 Execution 将被保留并链接。",
+      "confirm_from_task": "从 Task 重放",
+      "confirm_whole": "重放整个 Execution"
+    },
     "change execution state done": "执行状态已更新",
     "mark as": "标记为 <code>{status}</code>",
     "unqueue as": "取消排队为<code>{status}</code>",

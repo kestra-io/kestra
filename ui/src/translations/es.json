@@ -383,6 +383,18 @@
     "modify inputs": "Modificar inputs",
     "replay inputs new required": "Esta revisión tiene inputs. Se le pedirá que los complete.",
     "replay select taskrun": "Seleccione la ejecución de task para reproducir desde:",
+    "replayCheck": {
+      "checking": "Comprobando si la revisión {revision} se puede reproducir desde la task {taskId}.",
+      "valid_title": "La revisión {revision} se puede reproducir desde la Task {taskId}.",
+      "valid_description": "Las tasks anteriores no se modifican, por lo que sus outputs se reutilizan. La reproducción en otra revisión nunca es completamente determinista: los secrets, los inputs de archivos y las expresiones que llaman a sistemas externos pueden devolver algo diferente de la ejecución original.",
+      "refused_title": "La revisión {revision} no se puede reproducir desde la Task {taskId}.",
+      "refused_description": "Una task, input o variable cuyo resultado sería reutilizado se define de manera diferente en esta revisión.",
+      "whole_action": "Reproducir toda la ejecución en su lugar",
+      "whole_title": "La revisión {revision} se puede reproducir como una ejecución completa.",
+      "whole_description": "No se reutilizan resultados anteriores, por lo que cada Task se ejecuta de nuevo en la revisión {revision}. La ejecución original se mantiene y se vincula.",
+      "confirm_from_task": "Replay desde la task",
+      "confirm_whole": "Reproducir toda la ejecución"
+    },
     "change execution state done": "Estado de ejecución actualizado",
     "mark as": "Marcar como <code>{status}</code>",
     "unqueue as": "Desencolar como <code>{status}</code>",

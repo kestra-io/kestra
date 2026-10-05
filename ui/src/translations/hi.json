@@ -383,6 +383,18 @@
     "modify inputs": "इनपुट्स संशोधित करें",
     "replay inputs new required": "इस संशोधन में inputs हैं। आपको इन्हें भरने के लिए कहा जाएगा।",
     "replay select taskrun": "जिस task रन को पुनः चलाना है, उसे चुनें:",
+    "replayCheck": {
+      "checking": "जाँचा जा रहा है कि क्या revision {revision} को Task {taskId} से रीप्ले किया जा सकता है।",
+      "valid_title": "रिवीजन {revision} को Task {taskId} से रीप्ले किया जा सकता है।",
+      "valid_description": "इसके पहले के Task अपरिवर्तित हैं, इसलिए उनके आउटपुट का पुन: उपयोग किया जाता है। किसी अन्य Revision पर Replay करना कभी भी पूरी तरह से नियतात्मक नहीं होता है: secrets, फ़ाइल इनपुट और बाहरी सिस्टम को कॉल करने वाले एक्सप्रेशन मूल रन से कुछ अलग लौटा सकते हैं।",
+      "refused_title": "रिवीजन {revision} को Task {taskId} से रीप्ले नहीं किया जा सकता।",
+      "refused_description": "एक Task, input या variable जिसका परिणाम पुन: उपयोग किया जाएगा, इस revision में अलग तरह से परिभाषित किया गया है।",
+      "whole_action": "इसके बजाय पूरी execution को रीप्ले करें",
+      "whole_title": "रिवीजन {revision} को पूरी execution के रूप में फिर से चलाया जा सकता है।",
+      "whole_description": "पहले के कोई भी परिणाम दोबारा उपयोग नहीं किए जाते हैं, इसलिए हर Task revision {revision} पर फिर से चलता है। मूल execution को रखा जाता है और लिंक किया जाता है।",
+      "confirm_from_task": "Task से रीप्ले करें",
+      "confirm_whole": "पूरी execution को फिर से चलाएँ"
+    },
     "change execution state done": "निष्पादन स्थिति अपडेट की गई",
     "mark as": "<code>{status}</code> के रूप में चिह्नित करें",
     "unqueue as": "<code>{status}</code> के रूप में अनक्यू करें",

@@ -18,6 +18,12 @@ describe("useNamespaces", () => {
         expect(iterator).toBeInstanceOf(NamespaceIterator)
         expect(iterator.fetchSize).toBe(25)
     })
+
+    it("forwards the options to the iterator", () => {
+        const iterator = useNamespaces(25, {existing: true})
+
+        expect(iterator.options).toEqual({existing: true})
+    })
 })
 
 describe("NamespaceIterator", () => {
@@ -43,7 +49,7 @@ describe("NamespaceIterator", () => {
 
         it("passes extra options to the store call", async () => {
             searchMock.mockResolvedValue({results: [], total: 0})
-            const iterator = new NamespaceIterator(15, {q: "engineering"})
+            const iterator = new NamespaceIterator(15, {existing: true})
 
             await iterator.fetchCall()
 
@@ -53,7 +59,7 @@ describe("NamespaceIterator", () => {
                 sort: "id:asc",
                 page: 1,
                 size: 15,
-                q: "engineering",
+                existing: true,
             })
         })
 

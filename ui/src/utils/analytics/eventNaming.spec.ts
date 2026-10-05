@@ -1,8 +1,7 @@
 import {describe, expect, it} from "vitest"
-import {resolvePosthogEventName} from "./eventNaming"
-
-const fixtures: [string, Record<string, any>, string][] = [
-    ["flow_execution", {action: "executed"}, "app.flow.executed"],
+import {resolvePosthogEventName, type EventProperties} from "./eventNaming"
+const fixtures: [string, EventProperties, string][] = [
+        ["flow_execution", {action: "executed"}, "app.flow.executed"],
     ["flow_execution", {action: "open_modal"}, "app.execute-modal.opened"],
     ["flow_execution", {action: "submit"}, "app.execute-modal.submitted"],
     ["flow_created", {}, "app.flow.created"],

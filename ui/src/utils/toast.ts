@@ -42,7 +42,7 @@ export const makeToast = (t: (t:string, options?: Record<string, string>) => str
     }
     
     return {
-        confirm: function(message:string, callback: () => Promise<any>, type = "warning" as const, showCancelButton = true) {
+        confirm: function(message:string, callback: () => void | Promise<void>, type = "warning" as const, showCancelButton = true) {
             return KsMessageBox
                 .confirm(typeof message === "string" ? MarkdownWrap(message || t("toast confirm")) : h(message), t("confirmation"), {type, showCancelButton})
                 .then(() => callback())
@@ -50,7 +50,7 @@ export const makeToast = (t: (t:string, options?: Record<string, string>) => str
                     // User cancelled
                 })
         },
-        saved: function(name:string, title?:string, options?: Record<string, any>) {
+        saved: function(name:string, title?:string, options?: Record<string, unknown>) {
             savedNotificationHandles.forEach((handle) => handle.close())
             const message = options?.multiple
                 ? t("multiple saved done", {name})
@@ -63,7 +63,7 @@ export const makeToast = (t: (t:string, options?: Record<string, string>) => str
                 ...options,
             })]
         },
-        deleted: function(name:string, title?:string, options?: Record<string, any>) {
+        deleted: function(name:string, title?:string, options?: Record<string, unknown>) {
             KsNotification({
                     title: title || t("deleted"),
                     message: wrapMessage(t("deleted confirm", {name: name})),
@@ -72,7 +72,7 @@ export const makeToast = (t: (t:string, options?: Record<string, string>) => str
                 ...options,
             })
         },
-        success: function(message:string, title?:string, options?: Record<string, any>) {
+        success: function(message:string, title?:string, options?: Record<string, unknown>) {
             KsNotification({
                     title: title || t("success"),
                     message: wrapMessage(message),
@@ -81,7 +81,7 @@ export const makeToast = (t: (t:string, options?: Record<string, string>) => str
                 ...options,
             })
         },
-        warning: function(message:string, title?:string, options?: Record<string, any>) {
+        warning: function(message:string, title?:string, options?: Record<string, unknown>) {
             KsNotification({
                     title: title || t("warning"),
                     message: wrapMessage(message),
@@ -90,7 +90,7 @@ export const makeToast = (t: (t:string, options?: Record<string, string>) => str
                 ...options,
             })
         },
-        error: function(message: ToastMessageBody, title?:string, options?: Record<string, any>) {
+        error: function(message: ToastMessageBody, title?:string, options?: Record<string, unknown>) {
             KsNotification({
                     title: title ?? t("error"),
                     message: wrapMessage(message),

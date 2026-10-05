@@ -48,7 +48,14 @@ const SECRET_OBJECTS: Record<string, string> = {
     secret: "secret",
     token: "token",
 }
-
+export type EventProperties = {
+    action?: string
+    secret_type?: string
+    onboarding?: {
+        event?: string
+        action?: string
+    }
+}
 const ONBOARDING_NAMES: Record<string, string> = {
     tour_offered: "app.onboarding-tour.offered",
     tour_started: "app.onboarding-tour.started",
@@ -67,33 +74,40 @@ const ONBOARDING_NAMES: Record<string, string> = {
     flow_executed_during_tutorial: "app.onboarding-step.viewed",
 }
 
-function resolveEditorTabAction(properties: Record<string, any>): string {
-    return EDITOR_TAB_ACTION_NAMES[properties.action] ?? "editor_tab_action"
+function resolveEditorTabAction(properties: EventProperties): string {
+    const action = properties.action
+    return action ? EDITOR_TAB_ACTION_NAMES[action] ?? "editor_tab_action" : "editor_tab_action"
 }
 
-function resolveOssAuth(properties: Record<string, any>): string {
-    return OSSAUTH_NAMES[properties.action] ?? "app.oss-auth.completed"
+function resolveOssAuth(properties: EventProperties): string {
+    const action = properties.action
+    return action ? OSSAUTH_NAMES[action] ?? "app.oss-auth.completed" : "app.oss-auth.completed"
 }
 
-function resolveFlowExecution(properties: Record<string, any>): string {
-    return FLOW_EXECUTION_NAMES[properties.action] ?? "flow_execution"
+function resolveFlowExecution(properties: EventProperties): string {
+    const action = properties.action
+    return action ? FLOW_EXECUTION_NAMES[action] ?? "flow_execution" : "flow_execution"
 }
 
-function resolveOnboarding(properties: Record<string, any>): string {
+function resolveOnboarding(properties: EventProperties): string {
     const onboarding = properties.onboarding ?? {}
-    return ONBOARDING_NAMES[onboarding.event]
-        ?? ONBOARDING_NAMES[onboarding.action]
+    const event = onboarding.event
+    const action = onboarding.action
+
+    return (event ? ONBOARDING_NAMES[event] : undefined)
+        ?? (action ? ONBOARDING_NAMES[action] : undefined)
         ?? "onboarding"
 }
 
-function resolveSecret(action: "created" | "updated"): (properties: Record<string, any>) => string {
+function resolveSecret(action: "created" | "updated"): (properties: EventProperties) => string {
     return (properties) => {
-        const object = SECRET_OBJECTS[properties.secret_type]
+        const secretType = properties.secret_type
+        const object = secretType ? SECRET_OBJECTS[secretType] : undefined
         return object ? `app.${object}.${action}` : `secret_${action}`
     }
 }
 
-const SPLIT_EVENT_RESOLVERS: Record<string, (properties: Record<string, any>) => string> = {
+const SPLIT_EVENT_RESOLVERS: Record<string, (properties: EventProperties) => string> = {
     flow_execution: resolveFlowExecution,
     secret_created: resolveSecret("created"),
     secret_updated: resolveSecret("updated"),
@@ -102,7 +116,7 @@ const SPLIT_EVENT_RESOLVERS: Record<string, (properties: Record<string, any>) =>
     onboarding: resolveOnboarding,
 }
 
-export function resolvePosthogEventName(type: string, properties: Record<string, any>): string {
+export function resolvePosthogEventName(type: string, properties: EventProperties): string {
     const lowerType = type.toLowerCase()
 
     const splitResolver = SPLIT_EVENT_RESOLVERS[lowerType]

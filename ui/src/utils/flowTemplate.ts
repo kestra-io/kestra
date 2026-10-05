@@ -1,8 +1,13 @@
 import action from "../models/action"
 import resource from "../models/resource"
+import {Me} from "../override/stores/auth"
 
-export function canSaveFlowTemplate(isEdit: boolean, user: any, item: any, dataType: string) {
-    if (item === undefined) {
+type FlowTemplateItem = {
+    namespace?: string
+}
+
+export function canSaveFlowTemplate(isEdit: boolean, user: Me | undefined, item: FlowTemplateItem, dataType: string) {
+            if (item === undefined) {
         return  true
     }
 
@@ -18,9 +23,15 @@ export function canSaveFlowTemplate(isEdit: boolean, user: any, item: any, dataT
 }
 
 export function saveFlowTemplate(self: {
-    templateStore: any,
-    flowStore: any,
-    $toast: () => any,
+    templateStore: {
+    saveTemplate: (data: {template: string}) => Promise<{id: string}>
+},
+    flowStore: {
+    saveFlow: (data: {flow: string}) => Promise<{id: string}>
+},
+    $toast: () => {
+    saved: (name: string) => void
+},
 }, file: string, dataType: string) {
     return (dataType === "template" ? self.templateStore.saveTemplate({template: file}) : self.flowStore.saveFlow({flow: file}))
         .then((response: { id: string }) => {

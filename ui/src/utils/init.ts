@@ -94,15 +94,24 @@ export default async (
         allowComposition: true,
         legacy: false,
         warnHtmlMessage: false,
-    } as any) // FIXME: any
+     } as Parameters<typeof setupI18n>[0]) // FIXME: any
 
     // Merge design-system locales before first render, so parent computeds
     // that call t() on design-system keys don't cache the raw key.
     await registerDesignSystemI18n(i18n)
 
     if(locale !== "en"){
-        await loadLocaleMessages(i18n, locale, additionalTranslations as any) // FIXME: additional translations provider lacks its module type
-        await setI18nLanguage(i18n, locale)
+
+        await loadLocaleMessages(
+            i18n,
+            locale as Parameters<typeof loadLocaleMessages>[1],
+            additionalTranslations as Parameters<typeof loadLocaleMessages>[2],
+        )
+        await setI18nLanguage(
+            i18n,
+            locale as Parameters<typeof setI18nLanguage>[1],
+        )
+
     }
     setDesignSystemLocale(locale)
     app.use(i18n)

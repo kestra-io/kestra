@@ -10,6 +10,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -33,6 +34,7 @@ import io.kestra.core.models.topologies.FlowRelation;
 import io.kestra.core.models.topologies.FlowTopology;
 import io.kestra.core.models.topologies.FlowTopologyGraph;
 import io.kestra.core.models.validations.ValidateConstraintViolation;
+import io.kestra.core.models.validations.ValidationError;
 import io.kestra.core.repositories.FlowTopologyRepositoryInterface;
 import io.kestra.core.repositories.LocalFlowRepositoryLoader;
 import io.kestra.core.serializers.YamlParser;
@@ -66,10 +68,10 @@ import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static io.micronaut.http.HttpRequest.*;
 import static io.micronaut.http.HttpStatus.*;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.tuple;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.everyItem;
-import static org.hamcrest.Matchers.nullValue;
 import static org.junit.jupiter.api.Assertions.*;
 
 @KestraTest
@@ -726,6 +728,29 @@ class FlowControllerTest {
         client.toBlocking().exchange(DELETE("/api/v1/main/flows/io.kestra.bulk/flow1"));
         client.toBlocking().exchange(DELETE("/api/v1/main/flows/io.kestra.bulk/flow2"));
         client.toBlocking().exchange(DELETE("/api/v1/main/flows/io.kestra.bulk/flow3"));
+    }
+
+    @Test
+    void shouldCreateBothFlowsGivenSameIdInDifferentNamespacesWhenBulkUpdate() {
+        String id = "samebulkid";
+        String flows = String.join(
+            "---\n", Arrays.asList(
+                generateFlowAsString(id, "io.kestra.bulk.first", "a"),
+                generateFlowAsString(id, "io.kestra.bulk.second", "a")
+            )
+        );
+
+        List<FlowWithSource> created = client.toBlocking()
+            .retrieve(
+                HttpRequest.POST("/api/v1/main/flows/bulk?delete=false", flows)
+                    .contentType(MediaType.APPLICATION_YAML),
+                Argument.listOf(FlowWithSource.class)
+            );
+
+        assertThat(created).extracting(AbstractFlow::getNamespace).containsExactlyInAnyOrder("io.kestra.bulk.first", "io.kestra.bulk.second");
+
+        client.toBlocking().exchange(DELETE("/api/v1/main/flows/io.kestra.bulk.first/" + id));
+        client.toBlocking().exchange(DELETE("/api/v1/main/flows/io.kestra.bulk.second/" + id));
     }
 
     @Test
@@ -1484,7 +1509,7 @@ class FlowControllerTest {
         assertThat(body.get(1).getDeprecationPaths()).containsExactlyInAnyOrder("tasks[0]", "tasks[0].additionalProperty", "tasks[1]", "tasks[1].additionalProperty");
         assertThat(
             body, everyItem(
-                Matchers.hasProperty("constraints", nullValue())
+                Matchers.hasProperty("errors", Matchers.empty())
             )
         );
 
@@ -1495,10 +1520,10 @@ class FlowControllerTest {
 
         body = response.body();
         assertThat(body.size()).isEqualTo(2);
-        assertThat(body.getFirst().getConstraints()).contains("Unrecognized field \"unknownProp\"");
+        assertThat(errorLines(body.getFirst())).contains("Unrecognized field \"unknownProp\"");
         // The unknown type is absent from the schema bundle (none in the test env), so even with
         // auto-install enabled it stays a hard constraint.
-        assertThat(body.get(1).getConstraints()).contains("Invalid type: io.kestra.plugin.core.debug.UnknownTask");
+        assertThat(errorLines(body.get(1))).contains("Invalid type: io.kestra.plugin.core.debug.UnknownTask");
     }
 
     @Test
@@ -1565,7 +1590,7 @@ class FlowControllerTest {
         assertTrue(violations.get(1).getWarnings().isEmpty());
         assertTrue(violations.get(1).getInfos().isEmpty());
 
-        assertThat(violations).extracting("constraints").containsOnlyNulls();
+        assertThat(violations).allSatisfy(violation -> assertThat(violation.getErrors()).isEmpty());
     }
 
     @Test
@@ -1606,15 +1631,15 @@ class FlowControllerTest {
         assertTrue(violations.getFirst().getWarnings().isEmpty());
         assertTrue(violations.getFirst().getInfos().isEmpty());
 
-        // Second flow is invalid, so most properties should be null or have default values
+        // An unknown property no longer stops validation, so the rest of the report is still computed
         assertEquals("invalidFlow1.yaml", violations.get(1).getFilename());
         assertFalse(violations.get(1).isOutdated());
-        assertNull(violations.get(1).getDeprecationPaths());
-        assertNull(violations.get(1).getWarnings());
-        assertNull(violations.get(1).getInfos());
+        assertThat(violations.get(1).getDeprecationPaths()).isEmpty();
+        assertThat(violations.get(1).getWarnings()).isEmpty();
+        assertThat(violations.get(1).getInfos()).isEmpty();
 
-        assertNull(violations.getFirst().getConstraints());
-        assertThat(violations.get(1).getConstraints()).contains("Unrecognized field \"unknownProp\"");
+        assertThat(violations.getFirst().getErrors()).isEmpty();
+        assertThat(errorLines(violations.get(1))).contains("Unrecognized field \"unknownProp\"");
     }
 
     @Test
@@ -1646,22 +1671,22 @@ class FlowControllerTest {
         List<ValidateConstraintViolation> violations = response.body();
         assertEquals(2, violations.size());
 
-        // First flow is invalid, so most properties should be null or have default values
+        // An unknown property no longer stops validation, so the rest of the report is still computed
         assertEquals("invalidFlow1.yaml", violations.getFirst().getFilename());
         assertFalse(violations.getFirst().isOutdated());
-        assertNull(violations.getFirst().getDeprecationPaths());
-        assertNull(violations.getFirst().getWarnings());
-        assertNull(violations.getFirst().getInfos());
+        assertThat(violations.getFirst().getDeprecationPaths()).isEmpty();
+        assertThat(violations.getFirst().getWarnings()).isEmpty();
+        assertThat(violations.getFirst().getInfos()).isEmpty();
 
         // Second flow references an unknown task type: it is absent from the schema bundle
         // (none in the test env), so even with auto-install enabled it stays a hard constraint.
         assertEquals("invalidFlow2.yaml", violations.get(1).getFilename());
         assertFalse(violations.get(1).isOutdated());
-        assertNull(violations.get(1).getDeprecationPaths());
-        assertNull(violations.get(1).getInfos());
+        assertThat(violations.get(1).getDeprecationPaths()).isEmpty();
+        assertThat(violations.get(1).getInfos()).isEmpty();
 
-        assertThat(violations.getFirst().getConstraints()).contains("Unrecognized field \"unknownProp\"");
-        assertThat(violations.get(1).getConstraints()).contains("Invalid type: io.kestra.plugin.core.debug.UnknownTask");
+        assertThat(errorLines(violations.getFirst())).contains("Unrecognized field \"unknownProp\"");
+        assertThat(errorLines(violations.get(1))).contains("Invalid type: io.kestra.plugin.core.debug.UnknownTask");
     }
 
     @Test
@@ -1751,7 +1776,7 @@ class FlowControllerTest {
         assertThat(body.size()).isEqualTo(1);
         assertThat(
             body, everyItem(
-                Matchers.hasProperty("constraints", nullValue())
+                Matchers.hasProperty("errors", Matchers.empty())
             )
         );
 
@@ -1763,7 +1788,10 @@ class FlowControllerTest {
         body = response.body();
 
         assertThat(body.size()).isEqualTo(1);
-        assertThat(body.get(0).getConstraints()).contains("Invalid type: io.kestra.plugin.core.debug.UnknownTask");
+        assertThat(errorLines(body.get(0))).contains("Invalid type: io.kestra.plugin.core.debug.UnknownTask");
+        assertThat(body.get(0).getErrors())
+            .extracting(ValidationError::detail)
+            .containsExactly("Invalid type: io.kestra.plugin.core.debug.UnknownTask");
 
         resource = TestsUtils.class.getClassLoader().getResource("tasks/invalidTaskUnknownProp.json");
         task = Files.readString(Path.of(Objects.requireNonNull(resource).getPath()), Charset.defaultCharset());
@@ -1773,7 +1801,7 @@ class FlowControllerTest {
         body = response.body();
 
         assertThat(body.size()).isEqualTo(1);
-        assertThat(body.get(0).getConstraints()).contains("Unrecognized field \"unknownProp\"");
+        assertThat(errorLines(body.get(0))).contains("Unrecognized field \"unknownProp\"");
 
         resource = TestsUtils.class.getClassLoader().getResource("tasks/invalidTaskMissingProp.json");
         task = Files.readString(Path.of(Objects.requireNonNull(resource).getPath()), Charset.defaultCharset());
@@ -1783,7 +1811,10 @@ class FlowControllerTest {
         body = response.body();
 
         assertThat(body.size()).isEqualTo(1);
-        assertThat(body.get(0).getConstraints()).contains("message: must not be null");
+        assertThat(errorLines(body.get(0))).contains("message: must not be null");
+        assertThat(body.get(0).getErrors())
+            .extracting(ValidationError::detail, ValidationError::pointer)
+            .containsExactly(tuple("must not be null", "/message"));
     }
 
     @Test
@@ -1799,7 +1830,7 @@ class FlowControllerTest {
         assertThat(body.size()).isEqualTo(1);
         assertThat(
             body, everyItem(
-                Matchers.hasProperty("constraints", nullValue())
+                Matchers.hasProperty("errors", Matchers.empty())
             )
         );
 
@@ -1811,7 +1842,7 @@ class FlowControllerTest {
         body = response.body();
 
         assertThat(body.size()).isEqualTo(1);
-        assertThat(body.get(0).getConstraints()).contains("Invalid type: io.kestra.plugin.core.debug.UnknownTrigger");
+        assertThat(errorLines(body.get(0))).contains("Invalid type: io.kestra.plugin.core.debug.UnknownTrigger");
 
         resource = TestsUtils.class.getClassLoader().getResource("triggers/invalidTriggerUnknownProp.json");
         task = Files.readString(Path.of(Objects.requireNonNull(resource).getPath()), Charset.defaultCharset());
@@ -1821,7 +1852,7 @@ class FlowControllerTest {
         body = response.body();
 
         assertThat(body.size()).isEqualTo(1);
-        assertThat(body.get(0).getConstraints()).contains("Unrecognized field \"unknownProp\"");
+        assertThat(errorLines(body.get(0))).contains("Unrecognized field \"unknownProp\"");
 
         resource = TestsUtils.class.getClassLoader().getResource("triggers/invalidTriggerMissingProp.json");
         task = Files.readString(Path.of(Objects.requireNonNull(resource).getPath()), Charset.defaultCharset());
@@ -1831,7 +1862,7 @@ class FlowControllerTest {
         body = response.body();
 
         assertThat(body.size()).isEqualTo(1);
-        assertThat(body.get(0).getConstraints()).contains("cron: must not be null");
+        assertThat(errorLines(body.get(0))).contains("cron: must not be null");
     }
 
     @Test
@@ -2238,5 +2269,9 @@ class FlowControllerTest {
                     .build()
             )
             .build();
+    }
+
+    private static String errorLines(ValidateConstraintViolation violation) {
+        return violation.getErrors().stream().map(ValidationError::toLine).collect(Collectors.joining("\n"));
     }
 }

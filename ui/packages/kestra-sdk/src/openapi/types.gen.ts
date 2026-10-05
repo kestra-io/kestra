@@ -1527,6 +1527,7 @@ export type MiscControllerConfiguration = {
     isAiEnabled?: boolean;
     isAiApiKeyConfigured?: boolean;
     isBasicAuthInitialized?: boolean;
+    isBasicAuthManagedByConfig?: boolean;
     pluginsHash?: number;
     isPluginAutoInstallEnabled?: boolean;
 };
@@ -1683,6 +1684,14 @@ export type PagedResultsNamespace = {
 /**
  * Paged response for the offset-pagination endpoints (the vast majority of list APIs): a store that always knows its row count, so both `results` and `total` are always present. A store that may not know its total (e.g. an external log store) uses CursorOrOffsetPagedResults --- see that class for why the two are kept apart.
  */
+export type PagedResultsPluginControllerApiTicketingSystem = {
+    results: Array<PluginControllerApiTicketingSystem>;
+    total: number;
+};
+
+/**
+ * Paged response for the offset-pagination endpoints (the vast majority of list APIs): a store that always knows its row count, so both `results` and `total` are always present. A store that may not know its total (e.g. an external log store) uses CursorOrOffsetPagedResults --- see that class for why the two are kept apart.
+ */
 export type PagedResultsPluginControllerApiTriggerPlugin = {
     results: Array<PluginControllerApiTriggerPlugin>;
     total: number;
@@ -1754,6 +1763,7 @@ export type PluginPluginElementMetadata = {
     deprecated?: boolean;
     title?: string;
     description?: string;
+    aliases?: Array<string>;
 };
 
 export type PluginArtifact = {
@@ -1768,6 +1778,20 @@ export type PluginArtifact = {
 export type PluginControllerApiPluginVersions = {
     type?: string;
     versions?: Array<string>;
+};
+
+/**
+ * A ticketing system offered by an installed plugin.
+ */
+export type PluginControllerApiTicketingSystem = {
+    /**
+     * the plugin manifest's declared title (`X-Kestra-Title`), stored verbatim on a case when a user picks it
+     */
+    name?: string;
+    /**
+     * icon key resolvable via `GET /api/v1/plugins/icons` --- the class of one task in this plugin that opens a ticket
+     */
+    icon?: string;
 };
 
 /**
@@ -2386,15 +2410,37 @@ export type TriggerType = 'SCHEDULE' | 'POLLING' | 'REALTIME';
 export type Type = 'STRING' | 'SELECT' | 'INT' | 'FLOAT' | 'BOOL' | 'DATETIME' | 'DATE' | 'TIME' | 'DURATION' | 'FILE' | 'JSON' | 'ION' | 'URI' | 'SECRET' | 'ARRAY' | 'MULTISELECT' | 'YAML' | 'EMAIL' | 'FORM' | 'REUSABLE_INPUTS';
 
 export type ValidateConstraintViolation = {
+    errors?: Array<ValidationError>;
+    /**
+     * @deprecated
+     */
+    constraints?: string;
     index: number;
     filename?: string;
     namespace?: string;
     flow?: string;
-    constraints?: string;
     outdated?: boolean;
     deprecationPaths?: Array<string>;
     warnings?: Array<string>;
     infos?: Array<string>;
+};
+
+/**
+ * A single validation error, located in the submitted source.
+ */
+export type ValidationError = {
+    /**
+     * What is wrong.
+     */
+    detail?: string;
+    /**
+     * RFC 6901 JSON Pointer locating the error in the submitted document.
+     */
+    pointer?: string;
+    /**
+     * Human-friendly path locating the error, naming tasks and inputs by id. Not a JSON Pointer.
+     */
+    path?: string;
 };
 
 export type VersionServiceVersionUpgrade = {
@@ -3494,6 +3540,39 @@ export type GetSchemasFromTypeResponses = {
 };
 
 export type GetSchemasFromTypeResponse = GetSchemasFromTypeResponses[keyof GetSchemasFromTypeResponses];
+
+export type ListTicketingSystemsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/plugins/ticketing-systems';
+};
+
+export type ListTicketingSystemsErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type ListTicketingSystemsError = ListTicketingSystemsErrors[keyof ListTicketingSystemsErrors];
+
+export type ListTicketingSystemsResponses = {
+    /**
+     * listTicketingSystems 200 response
+     */
+    200: PagedResultsPluginControllerApiTicketingSystem;
+};
+
+export type ListTicketingSystemsResponse = ListTicketingSystemsResponses[keyof ListTicketingSystemsResponses];
 
 export type ListTriggerPluginsData = {
     body?: never;
@@ -5553,7 +5632,9 @@ export type RestartExecutionsByIdsData = {
     };
     query?: {
         /**
-         * If latest revision should be used
+         * Deprecated, will be removed in 2.2: creates new executions on the latest revision, use replay instead.
+         *
+         * @deprecated
          */
         latestRevision?: boolean | null;
     };
@@ -5601,7 +5682,9 @@ export type RestartExecutionsByQueryData = {
          */
         filters?: Array<QueryFilter> | null;
         /**
-         * If latest revision should be used
+         * Deprecated, will be removed in 2.2: creates new executions on the latest revision, use replay instead.
+         *
+         * @deprecated
          */
         latestRevision?: boolean | null;
     };
@@ -6715,6 +6798,56 @@ export type ReplayExecutionWithinputsResponses = {
 
 export type ReplayExecutionWithinputsResponse = ReplayExecutionWithinputsResponses[keyof ReplayExecutionWithinputsResponses];
 
+export type ValidateReplayExecutionData = {
+    body?: never;
+    path: {
+        /**
+         * the original execution id to clone
+         */
+        executionId: string;
+        tenant: string;
+    };
+    query?: {
+        /**
+         * The taskrun id
+         */
+        taskRunId?: string | null;
+        /**
+         * The flow revision to use for new execution
+         */
+        revision?: number | null;
+    };
+    url: '/api/v1/{tenant}/executions/{executionId}/actions/replay/validate';
+};
+
+export type ValidateReplayExecutionErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * if the execution cannot be replayed
+     */
+    409: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type ValidateReplayExecutionError = ValidateReplayExecutionErrors[keyof ValidateReplayExecutionErrors];
+
+export type ValidateReplayExecutionResponses = {
+    /**
+     * On success
+     */
+    200: unknown;
+};
+
 export type RestartExecutionData = {
     body?: never;
     path: {
@@ -6726,7 +6859,9 @@ export type RestartExecutionData = {
     };
     query?: {
         /**
-         * The flow revision to use for new execution
+         * Deprecated, will be removed in 2.2: creates a new execution on this revision, use replay instead.
+         *
+         * @deprecated
          */
         revision?: number | null;
     };
@@ -11447,7 +11582,7 @@ export type DeleteTriggersByQueryError = DeleteTriggersByQueryErrors[keyof Delet
 
 export type DeleteTriggersByQueryResponses = {
     /**
-     * Accepted
+     * Accepted. Triggers the flow still declares are not deleted, and totalItems is the number of orphan deletes queued.
      */
     202: ApiAsyncOperationResponse;
 };
@@ -11482,7 +11617,7 @@ export type DeleteTriggersByIdsError = DeleteTriggersByIdsErrors[keyof DeleteTri
 
 export type DeleteTriggersByIdsResponses = {
     /**
-     * Accepted
+     * Accepted. Triggers the flow still declares are not deleted, and totalItems is the number of orphan deletes queued.
      */
     202: ApiAsyncOperationResponse;
 };
@@ -11873,7 +12008,7 @@ export type DeleteTriggerErrors = {
      */
     403: ProblemDetail;
     /**
-     * If the trigger cannot be deleted
+     * If the flow still declares the trigger, or the scheduler failed to delete the trigger state
      */
     409: ProblemDetail;
     /**

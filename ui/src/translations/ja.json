@@ -331,6 +331,8 @@
     "restart tooltip": "<code>{state}</code>タスクから実行を再起動",
     "restarted": "実行が再開されました",
     "restart confirm": "実行 <code>{id}</code> を再起動してもよろしいですか？",
+    "restart subflow warning": "このExecutionは親Executionによって作成されたため、そこから再起動する必要があります。これ単独で再起動すると、親ExecutionはFAILEDのままになり、次のTaskは実行されません。再起動するには、{parent}に移動してください。",
+    "restart subflow warning link": "親 Execution",
     "replay": "リプレイ",
     "replay from task tooltip": "Task <code>{taskId}</code>から開始する同様の実行を作成",
     "replay from beginning tooltip": "最初から開始する同様の実行を作成",

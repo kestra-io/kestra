@@ -22,7 +22,7 @@
 
     const {routeInfo, routeName, ready, tabs, setupLifecycle} = useExecutionRoot()
 
-    useRouteContext(routeInfo as any, false)
+    useRouteContext(routeInfo, false)
 
     setupLifecycle()
 </script>

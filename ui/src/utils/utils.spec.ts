@@ -1,5 +1,5 @@
 import {afterAll, afterEach, beforeEach, describe, expect, it, vi} from "vitest"
-import {getTheme, getSelectedTheme, switchTheme, type SelectedTheme, flatten, executionVars, getDateGrouping, downloadUrl} from "./utils"
+import {getTheme, getSelectedTheme, switchTheme, type SelectedTheme, flatten, executionVars, getDateGrouping, downloadUrl, splitFirst, getParentNamespaces, isFile, isIon} from "./utils"
 
 function mockSystemPrefersDark(prefersDark: boolean) {
     vi.stubGlobal("matchMedia", vi.fn().mockImplementation((query: string) => ({
@@ -175,5 +175,86 @@ describe("executionVars()", () => {
 
     it("returns an empty list when data is undefined", () => {
         expect(executionVars(undefined as unknown as Record<string, unknown>)).toEqual([])
+    })
+})
+describe("splitFirst()", () => {
+    it("drops the first segment and rejoins the rest", () => {
+        expect(splitFirst("a/b/c", "/")).toBe("b/c")
+        expect(splitFirst("namespace/flow/task/output", "/")).toBe("flow/task/output")
+        expect(splitFirst("a:b:c", ":")).toBe("b:c")
+    })
+
+    it("returns an empty string when the separator is absent", () => {
+        expect(splitFirst("abc", "/")).toBe("")
+        expect(splitFirst("no_separator", ":")).toBe("")
+        expect(splitFirst("", "/")).toBe("")
+    })
+
+    it("returns an empty string when there is only one segment before the separator", () => {
+        expect(splitFirst("a/", "/")).toBe("")
+    })
+})
+
+describe("getParentNamespaces()", () => {
+    it("returns every ancestor of a nested namespace, in order", () => {
+        expect(getParentNamespaces("a.b.c")).toEqual(["a", "a.b", "a.b.c"])
+        expect(getParentNamespaces("company.team.project")).toEqual([
+            "company",
+            "company.team",
+            "company.team.project",
+        ])
+    })
+
+    it("returns nothing extra for a root-level namespace", () => {
+        expect(getParentNamespaces("company")).toEqual(["company"])
+        expect(getParentNamespaces("root")).toEqual(["root"])
+    })
+
+    it("returns an empty array for empty or falsy namespace", () => {
+        expect(getParentNamespaces("")).toEqual([])
+    })
+})
+
+describe("isFile()", () => {
+    it("returns true for an internal-storage file URI", () => {
+        expect(isFile("kestra:///company/flow/execution/file.txt")).toBe(true)
+        expect(isFile("kestra:///output.ion")).toBe(true)
+        expect(isFile("nsfile:///data/input.csv")).toBe(true)
+    })
+
+    it("returns false for an ordinary string or non-file values", () => {
+        expect(isFile("ordinary-string")).toBe(false)
+        expect(isFile("https://example.com/file.txt")).toBe(false)
+        expect(isFile("/local/path/file.txt")).toBe(false)
+        expect(isFile("")).toBe(false)
+        expect(isFile(null)).toBe(false)
+        expect(isFile(undefined)).toBe(false)
+        expect(isFile(123)).toBe(false)
+        expect(isFile({})).toBe(false)
+    })
+})
+
+describe("isIon()", () => {
+    it("returns true only for a file URI ending in .ion, case-insensitively", () => {
+        expect(isIon("kestra:///data/output.ion")).toBe(true)
+        expect(isIon("kestra:///data/OUTPUT.ION")).toBe(true)
+        expect(isIon("kestra:///data/records.Ion")).toBe(true)
+        expect(isIon("nsfile:///data/output.ion")).toBe(true)
+    })
+
+    it("returns false for a file URI with a different extension", () => {
+        expect(isIon("kestra:///data/output.csv")).toBe(false)
+        expect(isIon("kestra:///data/output.json")).toBe(false)
+        expect(isIon("kestra:///data/output.txt")).toBe(false)
+    })
+
+    it("returns false for a non-file value that merely ends in .ion", () => {
+        expect(isIon("regular-text.ion")).toBe(false)
+        expect(isIon("https://example.com/data.ion")).toBe(false)
+        expect(isIon("/local/path/test.ion")).toBe(false)
+        expect(isIon(".ion")).toBe(false)
+        expect(isIon(null)).toBe(false)
+        expect(isIon(undefined)).toBe(false)
+        expect(isIon({uri: "kestra:///data/output.ion"})).toBe(false)
     })
 })

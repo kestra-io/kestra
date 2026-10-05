@@ -6,6 +6,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
@@ -65,7 +66,7 @@ public class InternalStorage implements Storage {
      **/
     @Override
     public Namespace namespace() {
-        return namespaceFactory.of(logger, context.getTenantId(), context.getNamespace(), storage);
+        return namespaceFactory.of(logger, context.getTenantId(), context.getNamespace());
     }
 
     /**
@@ -81,7 +82,7 @@ public class InternalStorage implements Storage {
                 context.getTenantId(), context.getNamespace() // from Tenant/Namespace
             );
         }
-        return namespaceFactory.of(logger, context.getTenantId(), namespace, storage);
+        return namespaceFactory.of(logger, context.getTenantId(), namespace);
     }
 
     /**
@@ -264,22 +265,15 @@ public class InternalStorage implements Storage {
     }
 
     /**
-     * Appends a raw filename to the logical storage path. The name is not concatenated onto
-     * {@code base.toString()}, which would treat {@code #} as a fragment and reject a space.
+     * Builds a storage URI by appending a raw filename to the base URI path using the quoting
+     * {@link URI#URI(String, String, String, String)} constructor, so that URI-special characters
+     * (e.g. {@code #}, {@code %}, space) in the filename are percent-encoded rather than parsed
+     * as URI syntax. This prevents fragment truncation and escape mis-decoding.
      */
     private static URI buildStorageUri(URI base, String rawName) throws IOException {
         try {
-            String basePath = StorageContext.logicalPath(base);
-            if (basePath.isEmpty()) {
-                basePath = "/";
-            }
-            if (!basePath.endsWith(PATH_SEPARATOR)) {
-                basePath = basePath + PATH_SEPARATOR;
-            }
-            // Re-render from the logical path. getHost() is null for a legal namespace segment
-            // such as my_namespace, and getPath() drops that segment on a canonical URI.
-            return StorageContext.toKestraUri(basePath + rawName);
-        } catch (IllegalArgumentException e) {
+            return new URI(base.getScheme(), base.getHost(), base.getPath() + PATH_SEPARATOR + rawName, null);
+        } catch (URISyntaxException e) {
             throw new IOException("Cannot build storage URI for file name '%s'.".formatted(rawName), e);
         }
     }

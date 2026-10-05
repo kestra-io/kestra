@@ -64,7 +64,7 @@ class ReadFileFunctionTest {
         upsertNsFile(nsFile.getPath(), false, namespace, "Hello from version 2");
 
         // Deleting the file takes every revision it holds at this point with it
-        Namespace namespaceStorage = namespaceFactory.of(MAIN_TENANT, namespace, storageInterface);
+        Namespace namespaceStorage = namespaceFactory.of(MAIN_TENANT, namespace);
         namespaceStorage.delete(Path.of(nsFile.getPath()));
 
         // Upsert will remove the `deleted` flag and create a new version with the new content
@@ -148,7 +148,7 @@ class ReadFileFunctionTest {
 
     @Test
     void readInternalStorageFile() throws IOException, IllegalVariableEvaluationException {
-        // task output URI format: 'kestra://$namespace/$flowId/executions/$executionId/tasks/$taskName/$taskRunId/$random.ion'
+        // task output URI format: 'kestra:///$namespace/$flowId/executions/$executionId/tasks/$taskName/$taskRunId/$random.ion'
         String namespace = "my.namespace";
         String flowId = "flow";
         String executionId = IdUtils.create();
@@ -183,7 +183,7 @@ class ReadFileFunctionTest {
 
     @Test
     void readInternalStorageURI() throws IOException, IllegalVariableEvaluationException {
-        // task output URI format: 'kestra://$namespace/$flowId/executions/$executionId/tasks/$taskName/$taskRunId/$random.ion'
+        // task output URI format: 'kestra:///$namespace/$flowId/executions/$executionId/tasks/$taskName/$taskRunId/$random.ion'
         String namespace = "my.namespace";
         String flowId = "flow";
         String executionId = IdUtils.create();
@@ -375,7 +375,7 @@ class ReadFileFunctionTest {
     }
 
     private URI upsertNsFile(String filePath, boolean nsInAuthority, String namespace, String value) throws IOException, URISyntaxException {
-        Namespace namespaceStorage = namespaceFactory.of(MAIN_TENANT, namespace, storageInterface);
+        Namespace namespaceStorage = namespaceFactory.of(MAIN_TENANT, namespace);
         namespaceStorage.putFile(Path.of("/" + filePath), new ByteArrayInputStream(value.getBytes()));
         return URI.create("nsfile://" + (nsInAuthority ? namespace : "") + "/" + filePath);
     }

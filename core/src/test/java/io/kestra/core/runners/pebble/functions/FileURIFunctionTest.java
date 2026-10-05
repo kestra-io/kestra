@@ -12,7 +12,6 @@ import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.runners.VariableRenderer;
 import io.kestra.core.storages.Namespace;
 import io.kestra.core.storages.NamespaceFactory;
-import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.TestsUtils;
 
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
@@ -32,8 +31,6 @@ class FileURIFunctionTest {
     @Inject
     NamespaceFactory namespaceFactory;
 
-    @Inject
-    StorageInterface storageInterface;
 
     @Test
     void fileURIFunction() throws IllegalVariableEvaluationException {
@@ -49,7 +46,7 @@ class FileURIFunctionTest {
             "fileA", "test"
         );
         String render = variableRenderer.render("{{ fileURI(fileA) }}", variables);
-        assertThat(render).isEqualTo("kestra://my/namespace/_files/test");
+        assertThat(render).isEqualTo("kestra:///my/namespace/_files/test");
     }
 
     @Test
@@ -82,7 +79,7 @@ class FileURIFunctionTest {
         Map<String, Object> variables = getVariables(namespace);
 
         String render = variableRenderer.render("{{ fileURI('" + filePath + "') }}", variables);
-        assertThat(render).isEqualTo("kestra://" + namespace.replace(".", "/") + "/_files/" + filePath + ".v2");
+        assertThat(render).isEqualTo("kestra:///" + namespace.replace(".", "/") + "/_files/" + filePath + ".v2");
 
         String readContent = variableRenderer.render("{{ read('" + filePath + "') }}", variables);
         assertThat(readContent).isEqualTo("Version 2");
@@ -99,7 +96,7 @@ class FileURIFunctionTest {
         Map<String, Object> variables = getVariables(namespace);
 
         String render = variableRenderer.render("{{ fileURI('" + filePath + "', revision=1) }}", variables);
-        assertThat(render).isEqualTo("kestra://" + namespace.replace(".", "/") + "/_files/" + filePath);
+        assertThat(render).isEqualTo("kestra:///" + namespace.replace(".", "/") + "/_files/" + filePath);
 
         String readContent = variableRenderer.render("{{ read('" + filePath + "', revision=1) }}", variables);
         assertThat(readContent).isEqualTo("Version 1");
@@ -113,7 +110,7 @@ class FileURIFunctionTest {
         Map<String, Object> variables = getVariables(namespace);
 
         String render = variableRenderer.render("{{ fileURI('" + filePath + "') }}", variables);
-        assertThat(render).isEqualTo("kestra://" + namespace.replace(".", "/") + "/_files/" + filePath);
+        assertThat(render).isEqualTo("kestra:///" + namespace.replace(".", "/") + "/_files/" + filePath);
     }
 
     @Test
@@ -123,7 +120,7 @@ class FileURIFunctionTest {
         upsertNsFile(filePath, namespace, "Version 1");
         upsertNsFile(filePath, namespace, "Version 2");
 
-        Namespace namespaceStorage = namespaceFactory.of(MAIN_TENANT, namespace, storageInterface);
+        Namespace namespaceStorage = namespaceFactory.of(MAIN_TENANT, namespace);
         namespaceStorage.delete(Path.of("/" + filePath));
 
         Map<String, Object> variables = getVariables(namespace);
@@ -136,7 +133,7 @@ class FileURIFunctionTest {
     }
 
     private void upsertNsFile(String filePath, String namespace, String value) throws IOException, URISyntaxException {
-        Namespace namespaceStorage = namespaceFactory.of(MAIN_TENANT, namespace, storageInterface);
+        Namespace namespaceStorage = namespaceFactory.of(MAIN_TENANT, namespace);
         namespaceStorage.putFile(Path.of("/" + filePath), new ByteArrayInputStream(value.getBytes()));
     }
 

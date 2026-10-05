@@ -18,7 +18,6 @@ import io.kestra.core.models.property.Property;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.serializers.JacksonMapper;
-import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.IdUtils;
 
@@ -66,7 +65,7 @@ class ConcatTest {
         String s = CharStreams.toString(new InputStreamReader(new FileInputStream(file)));
 
         assertThat(CharStreams.toString(new InputStreamReader(storageInterface.get(MAIN_TENANT, null, run.getUri())))).isEqualTo(s + "\n" + s + "\n");
-        assertThat(StorageContext.logicalPath(run.getUri())).endsWith(".yml");
+        assertThat(run.getUri().getPath()).endsWith(".yml");
     }
 
     @Test

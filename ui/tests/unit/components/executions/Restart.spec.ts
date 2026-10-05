@@ -105,7 +105,7 @@ describe("Restart (subflow child)", () => {
 describe("Restart (replay revision check)", () => {
     const taskRun = {id: "tr1", taskId: "transform", attempts: [{}]}
 
-    async function openReplayDialog(validateReplay: () => Promise<unknown>) {
+    async function openReplayDialog(validateReplay: () => Promise<unknown>, radio = 1) {
         setActivePinia(createPinia())
         const executionsStore = useExecutionsStore()
         const flowStore = useFlowStore()
@@ -131,8 +131,8 @@ describe("Restart (replay revision check)", () => {
 
         await wrapper.find("button").trigger("click")
         await nextTick()
-        await wrapper.findAll("input[type='radio']")[1].setValue(true)
         await vi.waitFor(() => expect(wrapper.find("[data-test='replay-confirm']").exists()).toBe(true))
+        if (radio !== 0) await wrapper.findAll("input[type='radio']")[radio].setValue(true)
         await nextTick()
 
         return {wrapper, executionsStore}
@@ -149,10 +149,11 @@ describe("Restart (replay revision check)", () => {
     })
 
     it("shouldBlockTheReplayAndOfferTheWholeExecutionWhenTheRevisionIsRefused", async () => {
-        const refusal = {problem: {status: 409, title: "Conflict", detail: "Input 'name' has been removed."}}
+        const refusal = {problem: {type: "about:blank", status: 409, title: "Conflict", detail: "Input 'name' has been removed."}}
         const {wrapper, executionsStore} = await openReplayDialog(() => Promise.reject(Object.assign(new Error("Conflict"), refusal)))
 
         await vi.waitFor(() => expect(wrapper.find("[data-test='replay-check-refused']").exists()).toBe(true))
+        expect(wrapper.find("[data-test='replay-check-refused']").text()).toContain("Input 'name' has been removed.")
         expect(wrapper.find("[data-test='replay-confirm']").attributes("disabled")).toBeDefined()
 
         await wrapper.find("[data-test='replay-whole-instead']").trigger("click")
@@ -163,5 +164,23 @@ describe("Restart (replay revision check)", () => {
         await wrapper.find("[data-test='replay-confirm']").trigger("click")
 
         expect(executionsStore.replayExecution).toHaveBeenCalledWith(expect.objectContaining({taskRunId: undefined, revision: 2}))
+    })
+
+    it("shouldNotBlockTheReplayWhenTheCheckFailsWithoutAVerdict", async () => {
+        const {wrapper} = await openReplayDialog(() => Promise.reject(new Error("Network Error")))
+
+        await vi.waitFor(() => expect(wrapper.find("[data-test='replay-check-error']").exists()).toBe(true))
+
+        expect(wrapper.find("[data-test='replay-check-refused']").exists()).toBe(false)
+        expect(wrapper.find("[data-test='replay-confirm']").text()).toBe("Replay from task")
+        expect(wrapper.find("[data-test='replay-confirm']").attributes("disabled")).toBeUndefined()
+    })
+
+    it("shouldNotValidateWhenTheOriginalRevisionIsSelected", async () => {
+        const {wrapper, executionsStore} = await openReplayDialog(() => Promise.resolve(), 0)
+
+        expect(executionsStore.validateReplay).not.toHaveBeenCalled()
+        expect(wrapper.find("[data-test='replay-check-valid']").exists()).toBe(false)
+        expect(wrapper.find("[data-test='replay-confirm']").attributes("disabled")).toBeUndefined()
     })
 })

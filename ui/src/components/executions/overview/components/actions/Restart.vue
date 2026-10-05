@@ -143,6 +143,16 @@
                 :title="$t('replayCheck.checking', checkParams)"
             />
             <KsAlert
+                v-else-if="replayCheck.status === 'error'"
+                type="warning"
+                :closable="false"
+                showIcon
+                class="mt-3"
+                data-test="replay-check-error"
+                :title="$t('replayCheck.error_title', checkParams)"
+                :description="$t('replayCheck.error_description')"
+            />
+            <KsAlert
                 v-else-if="replayCheck.status === 'valid'"
                 type="success"
                 :closable="false"
@@ -323,7 +333,7 @@
         return revisionsSelected.value
     })
 
-    type ReplayCheck = {status: "idle" | "checking" | "valid"} | {status: "refused", detail?: string}
+    type ReplayCheck = {status: "idle" | "checking" | "valid" | "error"} | {status: "refused", detail?: string}
 
     const replayCheck = ref<ReplayCheck>({status: "idle"})
     const replayWhole = ref(false)
@@ -490,6 +500,7 @@
 
     watch([isOpen, needsReplayCheck, effectiveRevision], async () => {
         const sequence = ++replayCheckSequence
+        // A new revision needs its own verdict, so the whole-execution choice is dropped with it.
         if (isOpen.value) replayWhole.value = false
 
         if (!isOpen.value || !needsReplayCheck.value) {
@@ -506,7 +517,12 @@
             })
             if (sequence === replayCheckSequence) replayCheck.value = {status: "valid"}
         } catch (error) {
-            if (sequence === replayCheckSequence) replayCheck.value = {status: "refused", detail: asProblem(error)?.detail}
+            if (sequence === replayCheckSequence) {
+                const problem = asProblem(error)
+                replayCheck.value = problem?.status === 409
+                    ? {status: "refused", detail: problem.detail}
+                    : {status: "error"}
+            }
         }
     })
 

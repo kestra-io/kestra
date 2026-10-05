@@ -389,6 +389,8 @@
         "valid_description": "The tasks before it are unchanged, so their outputs are reused. Replaying on another revision is never fully deterministic: secrets, file inputs and expressions calling external systems can return something different from the original run.",
         "refused_title": "Revision {revision} cannot be replayed from task {taskId}.",
         "refused_description": "A task, input or variable whose result would be reused is defined differently in this revision.",
+        "error_title": "Could not check whether revision {revision} can be replayed from task {taskId}.",
+        "error_description": "You can still replay. The server applies the same rules when the replay starts and refuses it if the revision is incompatible.",
         "whole_action": "Replay the whole execution instead",
         "whole_title": "Revision {revision} can be replayed as a whole execution.",
         "whole_description": "No earlier results are reused, so every task runs again on revision {revision}. The original execution is kept and linked.",

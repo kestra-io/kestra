@@ -80,13 +80,15 @@ export const RegistersFocusedExpressionEditor: Story = {
             const focusedExpressionEditorInsert = ref<((text: string) => void) | null>(null);
             provide(FOCUSED_EXPRESSION_EDITOR_INJECTION_KEY, focusedExpressionEditorInsert);
             const model = ref(args.modelValue);
+            const mounted = ref(true);
             return () => <div style={{width: "500px"}}>
-                <TaskString
+                {mounted.value && <TaskString
                     modelValue={model.value}
                     onUpdate:modelValue={(val) => model.value = val}
                     schema={args.schema}
                     root={args.root}
-                />
+                />}
+                <button data-testid="unmount-field" onClick={() => mounted.value = false}>unmount</button>
                 <span data-testid="focused-state">{focusedExpressionEditorInsert.value ? "registered" : "cleared"}</span>
             </div>
         },
@@ -97,7 +99,8 @@ export const RegistersFocusedExpressionEditor: Story = {
         root: "description",
     },
     play: async ({canvasElement}) => {
-        // Regression: Monaco fields must register/clear so a chip click doesn't fall through to clipboard copy.
+        // Monaco runs inline editors in tab-focus mode, so Tab fires focusout while focus is still
+        // inside the panel: the registration has to survive a blur and go only on unmount.
         const canvas = within(canvasElement);
         const editorContainer = await waitFor(() => canvas.getByTestId("monaco-editor"), {timeout: 15000});
         const input = within(editorContainer).getByRole("textbox");
@@ -106,6 +109,9 @@ export const RegistersFocusedExpressionEditor: Story = {
         await waitFor(() => expect(canvas.getByTestId("focused-state")).toHaveTextContent("registered"));
 
         await userEvent.click(document.body);
+        await waitFor(() => expect(canvas.getByTestId("focused-state")).toHaveTextContent("registered"));
+
+        await userEvent.click(canvas.getByTestId("unmount-field"));
         await waitFor(() => expect(canvas.getByTestId("focused-state")).toHaveTextContent("cleared"));
     },
 };

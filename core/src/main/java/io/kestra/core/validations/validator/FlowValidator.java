@@ -378,7 +378,7 @@ public class FlowValidator implements ConstraintValidator<FlowValidation, Flow> 
      * type that can only be resolved at execution time (e.g. {@code FILE}, {@code SECRET} or structured types).
      */
     @SuppressWarnings({"unchecked", "rawtypes"})
-    private static Optional<String> literalValueViolation(Input<?> input, Object rawValue) {
+    public static Optional<String> literalValueViolation(Input<?> input, Object rawValue) {
         if (rawValue == null) {
             return Optional.empty();
         }

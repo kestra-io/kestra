@@ -107,6 +107,6 @@ public class AssertTest {
 
         Exception exception = assertThrows(Exception.class, () -> task.run(runContext));
 
-        assertThat(exception.getMessage()).contains("1 assertions failed");
+        assertThat(exception.getMessage()).contains("1 assertion failed");
     }
 }

@@ -2959,7 +2959,8 @@ public class ExecutionController {
 
         public record ApiInputError(
             @NotNull @Parameter(description = "The error message") String message,
-            @Parameter(description = "Whether this is a render/resolution failure (the field is broken) rather than a value validation error") boolean renderError) {
+            @Parameter(description = "Whether this is a render/resolution failure (the field is broken) rather than a value validation error") boolean renderError,
+            @Parameter(description = "Where the offending value sits inside a structured input, e.g. `disks[2].size_gb`. Null when the error is about the input as a whole") String path) {
         }
 
         public record ApiCheckFailure(
@@ -2986,7 +2987,7 @@ public class ExecutionController {
                         Optional.ofNullable(it.exceptions())
                             .map(
                                 exSet -> exSet.stream()
-                                    .map(e -> new ApiInputError(e.getMessage(), e.isRenderError()))
+                                    .map(e -> new ApiInputError(e.getMessage(), e.isRenderError(), e.getPath()))
                                     .toList()
                             )
                             .orElse(List.of())

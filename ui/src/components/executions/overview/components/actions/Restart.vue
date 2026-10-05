@@ -133,8 +133,53 @@
                 </KsFormItem>
             </KsForm>
 
+            <KsAlert
+                v-if="replayCheck.status === 'checking'"
+                type="info"
+                :closable="false"
+                showIcon
+                class="mt-3"
+                data-test="replay-check-checking"
+                :title="$t('replayCheck.checking', checkParams)"
+            />
+            <KsAlert
+                v-else-if="replayCheck.status === 'valid'"
+                type="success"
+                :closable="false"
+                showIcon
+                class="mt-3"
+                data-test="replay-check-valid"
+                :title="$t('replayCheck.valid_title', checkParams)"
+                :description="$t('replayCheck.valid_description')"
+            />
+            <template v-else-if="replayCheck.status === 'refused'">
+                <KsAlert
+                    v-if="replayWhole"
+                    type="info"
+                    :closable="false"
+                    showIcon
+                    class="mt-3"
+                    data-test="replay-check-whole"
+                    :title="$t('replayCheck.whole_title', checkParams)"
+                    :description="$t('replayCheck.whole_description', checkParams)"
+                />
+                <KsAlert
+                    v-else
+                    type="error"
+                    :closable="false"
+                    showIcon
+                    class="mt-3"
+                    data-test="replay-check-refused"
+                    :title="$t('replayCheck.refused_title', checkParams)"
+                    :description="replayCheck.detail || $t('replayCheck.refused_description')"
+                />
+                <KsButton v-if="!replayWhole" class="mt-2" data-test="replay-whole-instead" @click="replayWhole = true">
+                    {{ $t("replayCheck.whole_action") }}
+                </KsButton>
+            </template>
+
             <template v-if="hasInputs">
-                <template v-if="!taskRun">
+                <template v-if="!replayTaskRun">
                     <h4 class="section-title">
                         {{ $t("replay inputs") }}:
                     </h4>
@@ -158,8 +203,8 @@
             <KsButton @click="isOpen = false">
                 {{ $t("cancel") }}
             </KsButton>
-            <KsButton type="primary" @click="handleReplayExecute">
-                {{ $t("execute") }}
+            <KsButton type="primary" :disabled="replayBlocked" data-test="replay-confirm" @click="handleReplayExecute">
+                {{ replayTaskRun ? $t("replayCheck.confirm_from_task") : $t("replayCheck.confirm_whole") }}
             </KsButton>
         </template>
     </KsDialog>
@@ -182,7 +227,7 @@
 
         <ReplayWithInputs
             :execution="execution"
-            :taskRun="taskRun"
+            :taskRun="replayTaskRun"
             :revision="revisionsSelected"
             @execution-trigger="closeReplayWithInputsModal"
         />
@@ -198,6 +243,7 @@
     import {useFlowStore} from "../../../../../stores/flow"
     import {useAuthStore} from "override/stores/auth"
     import {useExecutionsStore} from "../../../../../stores/executions"
+    import {asProblem} from "@kestra-io/kestra-sdk"
     import action from "../../../../../models/action"
     import resource from "../../../../../models/resource"
     import ReplayWithInputs from "../../../ReplayWithInputs.vue"
@@ -276,6 +322,24 @@
         }
         return revisionsSelected.value
     })
+
+    type ReplayCheck = {status: "idle" | "checking" | "valid"} | {status: "refused", detail?: string}
+
+    const replayCheck = ref<ReplayCheck>({status: "idle"})
+    const replayWhole = ref(false)
+    let replayCheckSequence = 0
+
+    const replayTaskRun = computed(() => props.isReplay && !replayWhole.value ? props.taskRun : undefined)
+    const needsReplayCheck = computed(() =>
+        props.isReplay
+        && !!props.taskRun
+        && effectiveRevision.value !== undefined
+        && effectiveRevision.value !== props.execution.flowRevision,
+    )
+    const replayBlocked = computed(() =>
+        replayCheck.value.status === "checking" || (replayCheck.value.status === "refused" && !replayWhole.value),
+    )
+    const checkParams = computed(() => ({revision: effectiveRevision.value, taskId: props.taskRun?.taskId}))
 
     const revisionsOptions = computed(() =>
         (flowStore.revisions || [])
@@ -377,7 +441,7 @@
     const handleReplayExecute = () => {
         isOpen.value = false
 
-        if (hasInputs.value && (!canReuseInputs.value || (!props.taskRun && inputMode.value === "modify"))) {
+        if (hasInputs.value && (!canReuseInputs.value || (!replayTaskRun.value && inputMode.value === "modify"))) {
             openReplayWithInputsDialog()
             return
         }
@@ -398,7 +462,7 @@
         const method = `${replayOrRestart.value}Execution` as keyof typeof executionsStore
         const response = await (executionsStore[method] as any)({
             executionId: props.execution.id,
-            taskRunId: props.taskRun && props.isReplay ? props.taskRun.id : undefined,
+            taskRunId: replayTaskRun.value?.id,
             revision: props.isReplay ? revisionsSelected.value : undefined,
         })
 
@@ -423,6 +487,28 @@
     }
 
     watch(isOpen, (newValue) => newValue && props.isReplay && loadRevision())
+
+    watch([isOpen, needsReplayCheck, effectiveRevision], async () => {
+        const sequence = ++replayCheckSequence
+        if (isOpen.value) replayWhole.value = false
+
+        if (!isOpen.value || !needsReplayCheck.value) {
+            replayCheck.value = {status: "idle"}
+            return
+        }
+
+        replayCheck.value = {status: "checking"}
+        try {
+            await executionsStore.validateReplay({
+                executionId: props.execution.id,
+                taskRunId: props.taskRun?.id,
+                revision: effectiveRevision.value,
+            })
+            if (sequence === replayCheckSequence) replayCheck.value = {status: "valid"}
+        } catch (error) {
+            if (sequence === replayCheckSequence) replayCheck.value = {status: "refused", detail: asProblem(error)?.detail}
+        }
+    })
 
     watch(effectiveRevision, async (newRevision, oldRevision) => {
         if (!isOpen.value || newRevision === undefined || newRevision === oldRevision) return

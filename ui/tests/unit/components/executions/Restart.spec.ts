@@ -3,12 +3,21 @@ import {mount, type VueWrapper} from "@vue/test-utils"
 import {createPinia, setActivePinia} from "pinia"
 import {createI18n} from "vue-i18n"
 import KestraDesignSystem from "@kestra-io/design-system"
+import {nextTick} from "vue"
+import en from "../../../../src/translations/en.json"
+import {useExecutionsStore} from "../../../../src/stores/executions"
+import {useFlowStore} from "../../../../src/stores/flow"
 import Restart from "../../../../src/components/executions/overview/components/actions/Restart.vue"
 
 vi.mock("vue-router", () => ({
     useRoute: () => ({query: {}, params: {}, name: "executions/update"}),
     useRouter: () => ({push: vi.fn(), resolve: vi.fn(() => ({href: ""})), currentRoute: {value: {params: {}}}}),
 }))
+
+vi.mock("../../../../src/utils/toast", () => {
+    const toast = () => ({success: vi.fn(), error: vi.fn(), confirm: vi.fn()})
+    return {useToast: toast, makeToast: toast}
+})
 
 const mounted: VueWrapper[] = []
 
@@ -90,5 +99,69 @@ describe("Restart (subflow child)", () => {
         await openDialog(wrapper)
 
         expect(wrapper.find("[data-test='restart-subflow-warning']").exists()).toBe(false)
+    })
+})
+
+describe("Restart (replay revision check)", () => {
+    const taskRun = {id: "tr1", taskId: "transform", attempts: [{}]}
+
+    async function openReplayDialog(validateReplay: () => Promise<unknown>) {
+        setActivePinia(createPinia())
+        const executionsStore = useExecutionsStore()
+        const flowStore = useFlowStore()
+        flowStore.revisions = [{revision: 1}, {revision: 2}] as typeof flowStore.revisions
+        flowStore.loadRevisions = vi.fn()
+        executionsStore.loadFlowForExecution = vi.fn().mockResolvedValue({inputs: []})
+        executionsStore.validateReplay = vi.fn(validateReplay) as typeof executionsStore.validateReplay
+        executionsStore.replayExecution = vi.fn().mockResolvedValue({id: "replayed", namespace: "tests", flowId: "flow1"}) as typeof executionsStore.replayExecution
+
+        const wrapper = mount(Restart, {
+            props: {
+                isReplay: true,
+                taskRun,
+                attemptIndex: 0,
+                execution: {id: "exec1", namespace: "tests", flowId: "flow1", flowRevision: 1, state: {current: "SUCCESS"}},
+            },
+            global: {
+                plugins: [createI18n({legacy: false, locale: "en", missingWarn: false, fallbackWarn: false, messages: en}), KestraDesignSystem],
+                stubs: {KsDialog: {template: "<div><slot /><slot name='footer' /></div>"}},
+            },
+        })
+        mounted.push(wrapper)
+
+        await wrapper.find("button").trigger("click")
+        await nextTick()
+        await wrapper.findAll("input[type='radio']")[1].setValue(true)
+        await vi.waitFor(() => expect(wrapper.find("[data-test='replay-confirm']").exists()).toBe(true))
+        await nextTick()
+
+        return {wrapper, executionsStore}
+    }
+
+    it("shouldValidateTheLatestRevisionBeforeReplayingFromTheTask", async () => {
+        const {wrapper, executionsStore} = await openReplayDialog(() => Promise.resolve())
+
+        await vi.waitFor(() => expect(wrapper.find("[data-test='replay-check-valid']").exists()).toBe(true))
+
+        expect(executionsStore.validateReplay).toHaveBeenCalledWith({executionId: "exec1", taskRunId: "tr1", revision: 2})
+        expect(wrapper.find("[data-test='replay-confirm']").text()).toBe("Replay from task")
+        expect(wrapper.find("[data-test='replay-confirm']").attributes("disabled")).toBeUndefined()
+    })
+
+    it("shouldBlockTheReplayAndOfferTheWholeExecutionWhenTheRevisionIsRefused", async () => {
+        const refusal = {problem: {status: 409, title: "Conflict", detail: "Input 'name' has been removed."}}
+        const {wrapper, executionsStore} = await openReplayDialog(() => Promise.reject(Object.assign(new Error("Conflict"), refusal)))
+
+        await vi.waitFor(() => expect(wrapper.find("[data-test='replay-check-refused']").exists()).toBe(true))
+        expect(wrapper.find("[data-test='replay-confirm']").attributes("disabled")).toBeDefined()
+
+        await wrapper.find("[data-test='replay-whole-instead']").trigger("click")
+
+        expect(wrapper.find("[data-test='replay-confirm']").text()).toBe("Replay whole execution")
+        expect(wrapper.find("[data-test='replay-confirm']").attributes("disabled")).toBeUndefined()
+
+        await wrapper.find("[data-test='replay-confirm']").trigger("click")
+
+        expect(executionsStore.replayExecution).toHaveBeenCalledWith(expect.objectContaining({taskRunId: undefined, revision: 2}))
     })
 })

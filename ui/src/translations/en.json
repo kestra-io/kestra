@@ -383,6 +383,18 @@
     "modify inputs": "Modify inputs",
     "replay inputs new required": "This revision has inputs. You will be prompted to fill them in.",
     "replay select taskrun": "Select the task run to replay from:",
+    "replayCheck": {
+        "checking": "Checking whether revision {revision} can be replayed from task {taskId}.",
+        "valid_title": "Revision {revision} can be replayed from task {taskId}.",
+        "valid_description": "The tasks before it are unchanged, so their outputs are reused. Replaying on another revision is never fully deterministic: secrets, file inputs and expressions calling external systems can return something different from the original run.",
+        "refused_title": "Revision {revision} cannot be replayed from task {taskId}.",
+        "refused_description": "A task, input or variable whose result would be reused is defined differently in this revision.",
+        "whole_action": "Replay the whole execution instead",
+        "whole_title": "Revision {revision} can be replayed as a whole execution.",
+        "whole_description": "No earlier results are reused, so every task runs again on revision {revision}. The original execution is kept and linked.",
+        "confirm_from_task": "Replay from task",
+        "confirm_whole": "Replay whole execution"
+    },
     "change execution state done": "Execution state updated",
     "mark as": "Mark as <code>{status}</code>",
     "unqueue as": "Unqueue as <code>{status}</code>",

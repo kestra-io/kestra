@@ -4,7 +4,12 @@
             class="loop-toggle"
             :style="{'--depth': depth}"
             data-test="loop-iteration-toggle"
+            role="button"
+            tabindex="0"
+            :aria-expanded="expanded"
             @click="onToggle"
+            @keydown.enter="onToggle"
+            @keydown.space.prevent="onToggle"
         >
             <ChevronDown v-if="expanded" />
             <ChevronRight v-else />
@@ -34,10 +39,15 @@
                 class="loop-iteration-row"
                 data-test="loop-iteration-row"
             >
-                <div 
+                <div
                     class="loop-iteration-row__main"
                     :style="{'--depth': depth + 1}"
+                    role="button"
+                    tabindex="0"
+                    :aria-expanded="expandedRows.has(iteration.id)"
                     @click="toggleRow(iteration.id)"
+                    @keydown.enter="toggleRow(iteration.id)"
+                    @keydown.space.prevent="toggleRow(iteration.id)"
                 >
                     <ChevronDown v-if="expandedRows.has(iteration.id)" class="loop-iteration-row__chevron" />
                     <ChevronRight v-else class="loop-iteration-row__chevron" />
@@ -98,7 +108,7 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, reactive} from "vue"
+    import {ref, reactive, computed} from "vue"
     import {RouterLink} from "vue-router"
     import ChevronRight from "vue-material-design-icons/ChevronRight.vue"
     import ChevronDown from "vue-material-design-icons/ChevronDown.vue"
@@ -117,7 +127,7 @@
         depth?: number;
     }>()
 
-    const depth = props.depth ?? 0
+    const depth = computed(() => props.depth ?? 0)
 
     const {
         iterations,
@@ -134,7 +144,6 @@
     } = useLoopIterations(props.executionId, props.taskId)
 
     const expanded = ref(false)
-    // Per-row so expanding one iteration doesn't fetch the others.
     const expandedRows = reactive(new Set<string>())
 
     function onToggle() {

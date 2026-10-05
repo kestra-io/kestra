@@ -2,7 +2,7 @@ import {vi} from "vitest";
 import {userEvent, waitFor} from "storybook/test";
 import {vueRouter} from "storybook-vue3-router";
 
-// Mocked at the SDK submodule level, like Triggers.stories.tsx, since both calls bypass axios.
+// SDK submodule mock - both calls bypass axios.
 const mockState = vi.hoisted(() => ({total: 3}))
 
 function iterationRow(index: number, value: string) {

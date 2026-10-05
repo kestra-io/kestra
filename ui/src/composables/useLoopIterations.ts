@@ -1,7 +1,6 @@
 import {ref, computed} from "vue"
 import {useExecutionsStore} from "../stores/executions"
 
-/** Iterations are fetched this many at a time, at every depth, never more on a single load. */
 export const LOOP_ITERATIONS_PAGE_SIZE = 10
 
 export interface LoopIterationRow {
@@ -14,7 +13,6 @@ export interface LoopIterationRow {
     };
 }
 
-// One instance per Loop; nested loops get their own instance, so depth is unbounded.
 export function useLoopIterations(parentExecutionId: string, taskId: string) {
     const executionsStore = useExecutionsStore()
 
@@ -26,7 +24,6 @@ export function useLoopIterations(parentExecutionId: string, taskId: string) {
     const loaded = ref(false)
 
     const hasMore = computed(() => iterations.value.length < total.value)
-    /** Below the page size, the tree is the whole answer: no preview footer, no drill-down. */
     const needsPreview = computed(() => total.value > LOOP_ITERATIONS_PAGE_SIZE)
 
     function toRow(execution: Record<string, unknown>): LoopIterationRow {
@@ -42,7 +39,9 @@ export function useLoopIterations(parentExecutionId: string, taskId: string) {
 
     const error = ref<unknown>(undefined)
 
+    let latestFetch = 0
     async function fetchPage(targetPage: number): Promise<void> {
+        const fetch = ++latestFetch
         loading.value = true
         error.value = undefined
         try {
@@ -60,6 +59,7 @@ export function useLoopIterations(parentExecutionId: string, taskId: string) {
             }
 
             const response = await executionsStore.findExecutions(filters)
+            if (fetch !== latestFetch) return
             const rows = (response.results ?? []).map(toRow)
 
             iterations.value = targetPage === 1 ? rows : [...iterations.value, ...rows]
@@ -67,13 +67,13 @@ export function useLoopIterations(parentExecutionId: string, taskId: string) {
             page.value = targetPage
             loaded.value = true
         } catch (e) {
+            if (fetch !== latestFetch) return
             error.value = e
         } finally {
-            loading.value = false
+            if (fetch === latestFetch) loading.value = false
         }
     }
 
-    /** First expand: loads page 1. No-op if already loaded, so re-expanding is free. */
     function ensureLoaded() {
         if (loaded.value || loading.value) return Promise.resolve()
         return fetchPage(1)
@@ -87,6 +87,7 @@ export function useLoopIterations(parentExecutionId: string, taskId: string) {
     function setFailedOnly(value: boolean) {
         failedOnly.value = value
         loaded.value = false
+        iterations.value = []
         return fetchPage(1)
     }
 

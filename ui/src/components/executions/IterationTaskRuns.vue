@@ -34,6 +34,7 @@
 <script setup lang="ts">
     import {ref, watch} from "vue"
     import TaskRunLine from "./TaskRunLine.vue"
+    import LoopIterationTree from "./LoopIterationTree.vue"
     import {useExecutionsStore, type Execution} from "../../stores/executions"
     import * as ExecutionsAPI from "@kestra-io/kestra-sdk/executions"
     import {KsAlert, KsButton, KsIcon} from "@kestra-io/design-system"
@@ -47,8 +48,7 @@
         depth: number;
     }>()
 
-    // Fetches directly rather than via executionsStore.loadExecution, which would overwrite
-    // the shared execution the whole Gantt page renders from.
+    // Avoids executionsStore.loadExecution, which would overwrite the shared execution.
     const executionsStore = useExecutionsStore()
     const execution = ref<Execution>()
 
@@ -59,7 +59,6 @@
 
     const error = ref<unknown>(undefined)
 
-    // Counter guards against a stale response landing after a newer fetch starts.
     let latestFetch = 0
     async function fetchExecution(id: string) {
         const fetch = ++latestFetch
@@ -74,7 +73,7 @@
     }
     watch(() => props.executionId, (id) => fetchExecution(id), {immediate: true})
 
-    function retryFetch() {        
+    function retryFetch() {    
         fetchExecution(props.executionId)
     }
 </script>

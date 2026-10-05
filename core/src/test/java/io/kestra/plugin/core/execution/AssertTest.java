@@ -90,4 +90,23 @@ public class AssertTest {
         assertThat(execution.getTaskRunList()).hasSize(2);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
     }
+
+    @Test
+    void shouldFailWhenConditionEvaluatesToNull() {
+        Assert task = Assert.builder()
+            .id(IdUtils.create())
+            .type(Assert.class.getName())
+            .conditions(
+                List.of(
+                    "{{ null }}"
+                )
+            )
+            .build();
+
+        RunContext runContext = TestsUtils.mockRunContext(runContextFactory, task, Map.of());
+
+        Exception exception = assertThrows(Exception.class, () -> task.run(runContext));
+
+        assertThat(exception.getMessage()).contains("1 assertions failed");
+    }
 }

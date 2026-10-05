@@ -55,7 +55,7 @@ tasks:
         const marker = markers[0]
 
         expect(marker.taskId).toBe("sample_id")
-        expect(marker.message).toBe('Duplicate task id: "sample_id"')
+        expect(marker.message).toBe("Duplicate task id: \"sample_id\"")
         expect(marker.startLineNumber).toBe(7)
         expect(marker.startColumn).toBe(9)
         expect(marker.endLineNumber).toBe(7)
@@ -80,7 +80,7 @@ tasks:
         const markers = findDuplicateTaskIds(yaml)
         expect(markers).toHaveLength(1)
         expect(markers[0].taskId).toBe("child_duplicate")
-        expect(markers[0].message).toBe('Duplicate task id: "child_duplicate"')
+        expect(markers[0].message).toBe("Duplicate task id: \"child_duplicate\"")
     })
 
     test("duplicates inside errors and inside finally are found", () => {
@@ -127,7 +127,7 @@ tasks:
         const markers = findDuplicateTaskIds(yaml)
         expect(markers).toHaveLength(1)
         expect(markers[0].taskId).toBe("shared_task_id")
-        expect(markers[0].message).toBe('Duplicate task id: "shared_task_id"')
+        expect(markers[0].message).toBe("Duplicate task id: \"shared_task_id\"")
     })
 
     test("malformed YAML returns an empty array instead of throwing", () => {

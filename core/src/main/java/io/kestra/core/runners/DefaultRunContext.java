@@ -413,8 +413,11 @@ public class DefaultRunContext extends RunContext {
                     logger().warn("Unable to delete the log file {}", logger.getLogFile().toPath());
                 }
                 return logFileURI;
-            } catch (IOException e) {
-                throw new RuntimeException(e);
+            } catch (Exception e) {
+                logger().warn("Failed to upload log file to storage", e);
+                if (isInterrupted(e)) {
+                    Thread.currentThread().interrupt();
+                }
             }
         }
         return null;
@@ -425,6 +428,22 @@ public class DefaultRunContext extends RunContext {
     @JsonIgnore
     public URI getStorageOutputPrefix() {
         return storage.getContextBaseURI();
+    }
+
+    private static boolean isAbortedException(Throwable t) {
+        if (t == null) {
+            return false;
+        }
+        String className = t.getClass().getName();
+        return "software.amazon.awssdk.core.exception.AbortedException".equals(className) ||
+            "com.amazonaws.AbortedException".equals(className);
+    }
+
+    private static boolean isInterrupted(Throwable e) {
+        return e instanceof InterruptedException ||
+            e.getCause() instanceof InterruptedException ||
+            isAbortedException(e) ||
+            isAbortedException(e.getCause());
     }
 
     /**

@@ -52,8 +52,7 @@ public record Label(
     public static final String MCP_SESSION_ID = SYSTEM_PREFIX + "mcpSessionId";
 
     /**
-     * Whether the key is reserved for Kestra: {@value #SYSTEM} itself or anything under it. The bare key counts
-     * because labels nest on `.` in {@link #toNestedMap(List)}, so it would collide with every system label.
+     * Includes the bare {@code system} key, which would collide with every system label once labels nest on {@code .} in {@link #toNestedMap(List)}.
      */
     public static boolean isSystem(@Nullable String key) {
         return key != null && (key.equals(SYSTEM) || key.startsWith(SYSTEM_PREFIX));

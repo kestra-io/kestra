@@ -34,7 +34,7 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 @Singleton
 @Slf4j
 @WebServerEnabled
-@Requires(property = "kestra.tutorial-flows.enabled", value = "true", defaultValue = "true")
+@Requires(property = "kestra.tutorialFlows.enabled", value = "true", defaultValue = "true")
 public class FlowAutoLoaderService implements FlowAutoLoader {
 
     public static final Pattern NAMESPACE_FROM_FLOW_SOURCE_PATTERN = Pattern.compile("^namespace: \\S*", Pattern.MULTILINE);

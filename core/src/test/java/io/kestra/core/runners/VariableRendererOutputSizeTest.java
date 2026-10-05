@@ -14,7 +14,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @MicronautTest
-@Property(name = "kestra.variables.max-output-size", value = "1000")
+@Property(name = "kestra.variables.maxOutputSize", value = "1000")
 class VariableRendererOutputSizeTest {
     @Inject
     VariableRenderer variableRenderer;

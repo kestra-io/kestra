@@ -19,7 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @MicronautTest
-@Property(name = "kestra.variables.recursive-rendering", value = "true")
+@Property(name = "kestra.variables.recursiveRendering", value = "true")
 class RecursivePebbleVariableRendererTest {
     @Inject
     VariableRenderer variableRenderer;

@@ -575,7 +575,7 @@ public class ExecutorService {
                     Optional<WorkerTaskResult> flowableResult = this.childWorkerTaskResult(executor.getFlow(), executor.getExecution(), taskRun, runContext);
                     if (flowableResult.isPresent()) {
                         list.add(flowableResult.get());
-                        // fail-fast: a flowable that just resolved to FAILED asks to interrupt its still-running children
+                        // failFast: a flowable that just resolved to FAILED asks to interrupt its still-running children
                         if (flowableResult.get().getTaskRun().getState().isFailed() && task instanceof OnChildFailureInterface onChildFailure) {
                             this.interruptOnChildFailure(executor, onChildFailure, taskRun, runContext);
                         }

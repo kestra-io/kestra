@@ -26,8 +26,8 @@ class MetaStoreCacheConfigTest {
         try (
             ApplicationContext ctx = ApplicationContext.run(
                 Map.of(
-                    "kestra.worker.metastore-cache.maximum-size", "500",
-                    "kestra.worker.metastore-cache.expire-after-access", "PT10M"
+                    "kestra.worker.metastoreCache.maximumSize", "500",
+                    "kestra.worker.metastoreCache.expireAfterAccess", "PT10M"
                 )
             )
         ) {

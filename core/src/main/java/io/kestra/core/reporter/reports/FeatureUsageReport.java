@@ -23,7 +23,7 @@ import lombok.experimental.SuperBuilder;
 import lombok.extern.jackson.Jacksonized;
 
 @Singleton
-@Requires(property = "kestra.server-type", pattern = "STANDALONE|EXECUTOR|WEBSERVER")
+@Requires(property = "kestra.serverType", pattern = "STANDALONE|EXECUTOR|WEBSERVER")
 public class FeatureUsageReport extends AbstractReportable<FeatureUsageReport.UsageEvent> {
 
     private final FlowRepositoryInterface flowRepository;
@@ -34,7 +34,7 @@ public class FeatureUsageReport extends AbstractReportable<FeatureUsageReport.Us
     @Inject
     public FeatureUsageReport(FlowRepositoryInterface flowRepository,
         ExecutionStatisticsRepositoryInterface executionStatisticRepository,
-        @Value("${kestra.server-type}") ServerType serverType,
+        @Value("${kestra.serverType}") ServerType serverType,
         MetricRegistry metricRegistry) {
         super(Types.USAGE, Schedules.hourly(), true);
         this.flowRepository = flowRepository;

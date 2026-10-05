@@ -23,7 +23,7 @@ import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest(environments = "memory")
-@Property(name = "kestra.server-type", value = "STANDALONE")
+@Property(name = "kestra.serverType", value = "STANDALONE")
 class ReadExecutionLogsToolTest {
     private static final String NAMESPACE = "io.kestra.test.ai";
     private static final AgentCallContext.Context CONTEXT = AgentCallContext.Context.ofTenant(MAIN_TENANT);

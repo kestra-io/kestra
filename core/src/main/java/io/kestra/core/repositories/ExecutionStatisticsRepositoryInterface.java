@@ -11,7 +11,7 @@ import io.kestra.core.utils.DateUtils;
 import io.micronaut.core.annotation.Nullable;
 
 /**
- * Repository for the pre-aggregated execution-statistics table (see {@link ExecutionStatistic}).
+ * Repository for the pre-aggregated executionStatistics table (see {@link ExecutionStatistic}).
  * <p>
  * Only {@link IndexingRepository#saveBatch} is used by the indexer to persist incoming raw rows.
  * {@link #statistics} exposes the aggregated read path that consumers (dashboards, SLA tracking,

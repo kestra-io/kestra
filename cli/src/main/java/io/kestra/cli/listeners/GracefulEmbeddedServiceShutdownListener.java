@@ -25,7 +25,7 @@ import lombok.extern.slf4j.Slf4j;
 @Singleton
 @Slf4j
 @Order(Ordered.LOWEST_PRECEDENCE)
-@Requires(property = "kestra.server-type")
+@Requires(property = "kestra.serverType")
 public class GracefulEmbeddedServiceShutdownListener implements ApplicationEventListener<ShutdownEvent> {
     @Inject
     ServiceRegistry serviceRegistry;

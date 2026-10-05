@@ -28,7 +28,7 @@ import static io.kestra.core.server.ServiceLivenessManager.OnStateTransitionFail
  * Moreover, this class periodically send state updates (a.k.a. heartbeats) to indicate service's liveness.
  */
 @Context
-@Requires(property = "kestra.server-type")
+@Requires(property = "kestra.serverType")
 @Requires(beans = ServiceLivenessUpdater.class)
 @Slf4j
 public class ServiceLivenessManager extends AbstractServiceLivenessTask {

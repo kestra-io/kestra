@@ -34,7 +34,7 @@ import lombok.extern.slf4j.Slf4j;
  * the {@link io.kestra.worker.WorkerAgent} would make one evict the other in STANDALONE mode.
  */
 @Singleton
-@Requires(property = "kestra.server-type", pattern = "(EXECUTOR|STANDALONE)")
+@Requires(property = "kestra.serverType", pattern = "(EXECUTOR|STANDALONE)")
 @Slf4j
 public class SystemWorker extends AbstractWorker {
 

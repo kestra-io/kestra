@@ -150,7 +150,7 @@ class GrpcWorkerIOSenderTest {
         assertThat(logEntry.getLevel()).isEqualTo(Level.ERROR);
         assertThat(logEntry.getTaskRunId()).isEqualTo(taskRun.getId());
         assertThat(logEntry.getAttemptNumber()).isZero();
-        assertThat(logEntry.getMessage()).contains("kestra.grpc.max-inbound-message-size");
+        assertThat(logEntry.getMessage()).contains("kestra.grpc.maxInboundMessageSize");
     }
 
     @Test

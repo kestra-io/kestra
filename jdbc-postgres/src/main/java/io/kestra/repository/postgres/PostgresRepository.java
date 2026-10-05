@@ -34,7 +34,7 @@ import static io.kestra.jdbc.repository.AbstractJdbcRepository.KEY_FIELD;
 import static io.kestra.jdbc.repository.AbstractJdbcRepository.VALUE_FIELD;
 
 @Requires(condition = PostgresRepository.PostgresCondition.class)
-@Requires(property = "kestra.server-type", notEquals = "WORKER")
+@Requires(property = "kestra.serverType", notEquals = "WORKER")
 @EachBean(JdbcTableConfig.class)
 public class PostgresRepository<T> extends io.kestra.jdbc.AbstractJdbcRepository<T> {
 

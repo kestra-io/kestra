@@ -49,7 +49,7 @@ public class PostgresMigrationLock implements MigrationLock {
     @Inject
     public PostgresMigrationLock(final DataSource dataSource,
         @Nullable final DataSourceResolver dataSourceResolver,
-        @Property(name = "kestra.migration.lock-acquire-timeout", defaultValue = "PT1H") final Duration lockTimeout) {
+        @Property(name = "kestra.migration.lockAcquireTimeout", defaultValue = "PT1H") final Duration lockTimeout) {
         this.dataSource = dataSourceResolver != null ? dataSourceResolver.resolve(dataSource) : dataSource;
         this.lockTimeout = lockTimeout;
     }
@@ -77,7 +77,7 @@ public class PostgresMigrationLock implements MigrationLock {
             }
             if (System.currentTimeMillis() >= deadline) {
                 throw new IllegalStateException(
-                    "Could not acquire PostgreSQL migration lock within %s (configurable via kestra.migration.lock-acquire-timeout)"
+                    "Could not acquire PostgreSQL migration lock within %s (configurable via kestra.migration.lockAcquireTimeout)"
                         .formatted(lockTimeout)
                 );
             }

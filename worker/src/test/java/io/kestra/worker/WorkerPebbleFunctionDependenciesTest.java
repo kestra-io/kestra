@@ -35,7 +35,7 @@ class WorkerPebbleFunctionDependenciesTest {
             .environments("test", "workerservertype")
             .start()) {
 
-            assertThat(context.getRequiredProperty("kestra.server-type", String.class))
+            assertThat(context.getRequiredProperty("kestra.serverType", String.class))
                 .as("a wrong environment name would leave the context on its default server type and pass vacuously")
                 .isEqualTo("WORKER");
 

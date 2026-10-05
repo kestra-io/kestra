@@ -15,7 +15,7 @@ public final class EphemeralDatabase {
      * {@code DB_CLOSE_DELAY=-1}, since H2 discards an in-memory database once the last connection
      * to it closes.
      */
-    public static final String URL_PROPERTY = "kestra.ephemeral-database.url";
+    public static final String URL_PROPERTY = "kestra.ephemeralDatabase.url";
 
     /**
      * Whether {@link #URL_PROPERTY} opts this run in, so that everything deciding on it agrees on

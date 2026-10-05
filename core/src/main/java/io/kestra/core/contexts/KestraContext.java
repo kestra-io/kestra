@@ -34,11 +34,11 @@ public abstract class KestraContext {
     private static final AtomicReference<KestraContext> INSTANCE = new AtomicReference<>();
 
     // Properties
-    public static final String KESTRA_SERVER_TYPE = "kestra.server-type";
-    public static final String KESTRA_ALLOCATED_CPU_CORES = "kestra.allocated-cpu-cores";
+    public static final String KESTRA_SERVER_TYPE = "kestra.serverType";
+    public static final String KESTRA_ALLOCATED_CPU_CORES = "kestra.allocatedCpuCores";
 
     // Those properties are injected bases on the CLI args.
-    private static final String KESTRA_WORKER_MAX_NUM_THREADS = "kestra.worker.max-num-threads";
+    private static final String KESTRA_WORKER_MAX_NUM_THREADS = "kestra.worker.maxNumThreads";
 
     /**
      * Gets the current {@link KestraContext}.

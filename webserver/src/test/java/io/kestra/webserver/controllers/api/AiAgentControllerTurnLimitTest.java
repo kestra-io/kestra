@@ -47,7 +47,7 @@ import static org.mockito.Mockito.when;
  * of user turns, a new chat turn is refused. Cap is set to 1 here so the second turn is refused.
  */
 @KestraTest
-@Property(name = "kestra.ai.agent.max-turns-per-thread", value = "1")
+@Property(name = "kestra.ai.agent.maxTurnsPerThread", value = "1")
 class AiAgentControllerTurnLimitTest {
     private static final String BASE = "/api/v1/" + TenantService.MAIN_TENANT + "/ai/threads";
 

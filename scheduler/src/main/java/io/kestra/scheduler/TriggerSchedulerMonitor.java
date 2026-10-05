@@ -28,7 +28,7 @@ import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 
 @Singleton
-@Requires(property = "kestra.server-type", pattern = "(SCHEDULER|STANDALONE)")
+@Requires(property = "kestra.serverType", pattern = "(SCHEDULER|STANDALONE)")
 public class TriggerSchedulerMonitor implements Runnable {
 
     private static final Logger LOG = LoggerFactory.getLogger(TriggerSchedulerMonitor.class);

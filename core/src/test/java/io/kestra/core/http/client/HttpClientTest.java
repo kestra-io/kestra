@@ -236,13 +236,13 @@ class HttpClientTest {
                 HttpRequest.of(URI.create("http://dangerous-url.com")),
                 String.class
             ));
-            assertThat(exception.getMessage()).isEqualTo("The URI http://dangerous-url.com is in the configured denied list (kestra.tasks.http.denied-list).");
+            assertThat(exception.getMessage()).isEqualTo("The URI http://dangerous-url.com is in the configured denied list (kestra.tasks.http.deniedList).");
 
             exception = assertThrows(IllegalArgumentException.class, () -> client.request(
                 HttpRequest.of(URI.create("http://dangerous-url.com/path")),
                 String.class
             ));
-            assertThat(exception.getMessage()).isEqualTo("The URI http://dangerous-url.com/path is in the configured denied list (kestra.tasks.http.denied-list).");
+            assertThat(exception.getMessage()).isEqualTo("The URI http://dangerous-url.com/path is in the configured denied list (kestra.tasks.http.deniedList).");
         }
     }
 
@@ -253,7 +253,7 @@ class HttpClientTest {
                 HttpRequest.of(URI.create("http://dangerous-url.com./")),
                 String.class
             ));
-            assertThat(exception.getMessage()).isEqualTo("The URI http://dangerous-url.com./ is in the configured denied list (kestra.tasks.http.denied-list).");
+            assertThat(exception.getMessage()).isEqualTo("The URI http://dangerous-url.com./ is in the configured denied list (kestra.tasks.http.deniedList).");
         }
     }
 
@@ -264,7 +264,7 @@ class HttpClientTest {
                 HttpRequest.of(URI.create("http://169.254.43518/latest/meta-data/")),
                 String.class
             ));
-            assertThat(exception.getMessage()).isEqualTo("The URI http://169.254.43518/latest/meta-data/ is in the configured denied list (kestra.tasks.http.denied-list).");
+            assertThat(exception.getMessage()).isEqualTo("The URI http://169.254.43518/latest/meta-data/ is in the configured denied list (kestra.tasks.http.deniedList).");
         }
     }
 
@@ -275,7 +275,7 @@ class HttpClientTest {
                 HttpRequest.of(URI.create("http://kestra_internal_db/x")),
                 String.class
             ));
-            assertThat(exception.getMessage()).isEqualTo("The URI http://kestra_internal_db/x is in the configured denied list (kestra.tasks.http.denied-list).");
+            assertThat(exception.getMessage()).isEqualTo("The URI http://kestra_internal_db/x is in the configured denied list (kestra.tasks.http.deniedList).");
         }
     }
 
@@ -286,7 +286,7 @@ class HttpClientTest {
                 HttpRequest.of(URI.create("http://2852039166/latest/meta-data/")),
                 String.class
             ));
-            assertThat(exception.getMessage()).isEqualTo("The URI http://2852039166/latest/meta-data/ is in the configured denied list (kestra.tasks.http.denied-list).");
+            assertThat(exception.getMessage()).isEqualTo("The URI http://2852039166/latest/meta-data/ is in the configured denied list (kestra.tasks.http.deniedList).");
         }
     }
 
@@ -297,7 +297,7 @@ class HttpClientTest {
                 HttpRequest.of(URI.create("http://10.1.2.3/x")),
                 String.class
             ));
-            assertThat(exception.getMessage()).isEqualTo("The URI http://10.1.2.3/x is in the configured denied list (kestra.tasks.http.denied-list).");
+            assertThat(exception.getMessage()).isEqualTo("The URI http://10.1.2.3/x is in the configured denied list (kestra.tasks.http.deniedList).");
         }
     }
 
@@ -308,7 +308,7 @@ class HttpClientTest {
                 HttpRequest.of(URI.create(embeddedServerUri + "/http/redirect-to-denied")),
                 String.class
             ));
-            assertThat(exception.getMessage()).isEqualTo("The URI http://dangerous-url.com/ is in the configured denied list (kestra.tasks.http.denied-list).");
+            assertThat(exception.getMessage()).isEqualTo("The URI http://dangerous-url.com/ is in the configured denied list (kestra.tasks.http.deniedList).");
         }
     }
 

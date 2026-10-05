@@ -107,12 +107,12 @@ class UiIndexServiceTest {
         assertThat(html).contains("KESTRA_GOOGLE_ANALYTICS = 'GA-123';");
         assertThat(html).contains("<title>My Kestra</title>");
         assertThat(html).contains("<meta name=\"custom\" content=\"here\">");
-        assertThat(html).doesNotContain("<meta name=\"html-head\" content=\"replace\">");
+        assertThat(html).doesNotContain("<meta name=\"htmlHead\" content=\"replace\">");
     }
 
     @Test
     void shouldUseUtf8ByteLengthForContentLengthWhenHtmlHeadContainsNonAscii() {
-        // Given - a html-head whose UTF-8 byte length differs from its character count
+        // Given - a htmlHead whose UTF-8 byte length differs from its character count
         String htmlHead = "<meta name=\"description\" content=\"héllo wörld — 日本語\">";
         UiIndexService service = service(null, new WebserverConfiguration(null, null, htmlHead));
 

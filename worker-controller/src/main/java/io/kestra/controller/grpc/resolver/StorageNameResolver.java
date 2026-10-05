@@ -24,7 +24,7 @@ import lombok.extern.slf4j.Slf4j;
  * <p>
  * On {@link #start(Listener2)} it pushes an initial resolution and schedules a periodic refresh
  * using the configured interval. Each tick queries the supplier and notifies the listener only
- * when the resolved set of addresses actually changes, to avoid churning the gRPC load-balancing
+ * when the resolved set of addresses actually changes, to avoid churning the gRPC loadBalancing
  * pool.
  * <p>
  * Each address is passed through the channel's {@link ProxyDetector}, so that the standard JVM proxy

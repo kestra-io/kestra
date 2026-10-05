@@ -16,7 +16,7 @@ public enum KVWorkerAccess {
      */
     CONTROLLER;
 
-    public static final String CONFIG_KEY = "kestra.kv.worker-access";
+    public static final String CONFIG_KEY = "kestra.kv.workerAccess";
 
     @JsonCreator
     public static KVWorkerAccess fromString(final String value) {

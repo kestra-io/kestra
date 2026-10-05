@@ -14,7 +14,7 @@ import jakarta.inject.Inject;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 @KestraTest()
-@Property(name = "kestra.server-type", value = "WEBSERVER")
+@Property(name = "kestra.serverType", value = "WEBSERVER")
 class MiscUsageControllerTest {
 
     @Inject

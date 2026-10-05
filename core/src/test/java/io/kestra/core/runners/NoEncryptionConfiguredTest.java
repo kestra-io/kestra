@@ -42,7 +42,7 @@ public class NoEncryptionConfiguredTest implements TestPropertyProvider {
     @Override
     public @NonNull Map<String, String> getProperties() {
         Map<String, String> properties = new HashMap<>();
-        properties.put("kestra.encryption.secret-key", null);
+        properties.put("kestra.encryption.secretKey", null);
         return properties;
     }
 

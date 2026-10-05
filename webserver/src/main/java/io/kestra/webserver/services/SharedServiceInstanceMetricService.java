@@ -23,7 +23,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Singleton
-@Requires(property = "kestra.server-type", value = "WEBSERVER")
+@Requires(property = "kestra.serverType", value = "WEBSERVER")
 public class SharedServiceInstanceMetricService {
     private final ServiceType serverType;
 
@@ -38,7 +38,7 @@ public class SharedServiceInstanceMetricService {
     private final MetricRegistry metricRegistry;
 
     public SharedServiceInstanceMetricService(
-        @Value("${kestra.server-type}") ServiceType serverType,
+        @Value("${kestra.serverType}") ServiceType serverType,
         MetricConfig metricConfig,
         ServiceInstanceRepositoryInterface serviceInstanceRepository, MetricRegistry metricRegistry) {
         this.serverType = serverType;

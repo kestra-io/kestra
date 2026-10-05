@@ -7,7 +7,7 @@ import io.micronaut.core.annotation.Nullable;
 public record TasksConfiguration(
     @Nullable TmpDir tmpDir) {
 
-    @ConfigurationProperties("tmp-dir")
+    @ConfigurationProperties("tmpDir")
     public record TmpDir(@Nullable String path) {
     }
 }

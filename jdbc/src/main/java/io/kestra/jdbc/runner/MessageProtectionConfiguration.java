@@ -3,7 +3,7 @@ package io.kestra.jdbc.runner;
 import io.micronaut.context.annotation.ConfigurationProperties;
 import lombok.Getter;
 
-@ConfigurationProperties("kestra.jdbc.queues.message-protection")
+@ConfigurationProperties("kestra.jdbc.queues.messageProtection")
 @Getter
 public class MessageProtectionConfiguration {
     boolean enabled = false;

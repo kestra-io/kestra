@@ -32,7 +32,7 @@ public class H2MigrationLock implements MigrationLock {
 
     @Inject
     public H2MigrationLock(
-        @Property(name = "kestra.migration.lock-acquire-timeout", defaultValue = "PT1H") final Duration lockTimeout) {
+        @Property(name = "kestra.migration.lockAcquireTimeout", defaultValue = "PT1H") final Duration lockTimeout) {
         this.lockTimeout = lockTimeout;
     }
 
@@ -40,7 +40,7 @@ public class H2MigrationLock implements MigrationLock {
     public void acquire() throws Exception {
         if (!lock.tryLock(lockTimeout.toMillis(), TimeUnit.MILLISECONDS)) {
             throw new IllegalStateException(
-                "Could not acquire H2 migration lock within " + lockTimeout + " (configurable via kestra.migration.lock-acquire-timeout)"
+                "Could not acquire H2 migration lock within " + lockTimeout + " (configurable via kestra.migration.lockAcquireTimeout)"
             );
         }
     }

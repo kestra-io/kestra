@@ -29,7 +29,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @KestraTest(startWorker = false)
-@Property(name = "kestra.server-type", value = "EXECUTOR")
+@Property(name = "kestra.serverType", value = "EXECUTOR")
 @org.junit.jupiter.api.parallel.Execution(org.junit.jupiter.api.parallel.ExecutionMode.SAME_THREAD)
 public abstract class AbstractQueueLagTest {
 

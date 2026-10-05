@@ -226,7 +226,7 @@ public class AiServiceManager {
      */
     private static Map<String, Object> rawCustomHeaders(String configurationPath, Environment environment) {
         // The property may be written in either kebab or camel case, each landing under its own key.
-        List<String> paths = List.of(configurationPath + ".custom-headers", configurationPath + ".customHeaders");
+        List<String> paths = List.of(configurationPath + ".customHeaders", configurationPath + ".customHeaders");
         try {
             for (String path : paths) {
                 Map<String, Object> headers = environment.getProperties(path, StringConvention.RAW);

@@ -17,7 +17,7 @@ import static io.kestra.core.utils.Rethrow.throwConsumer;
 
 @Singleton
 @Slf4j
-@Requires(property = "kestra.configurations.delete-files-on-start", value = StringUtils.TRUE, defaultValue = StringUtils.FALSE)
+@Requires(property = "kestra.configurations.deleteFilesOnStart", value = StringUtils.TRUE, defaultValue = StringUtils.FALSE)
 public class DeleteConfigurationApplicationListeners {
     @Inject
     Environment environment;

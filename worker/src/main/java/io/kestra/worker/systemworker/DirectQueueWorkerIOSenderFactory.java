@@ -21,7 +21,7 @@ import jakarta.inject.Singleton;
  * not triggers.
  */
 @Factory
-@Requires(property = "kestra.server-type", pattern = "(EXECUTOR|STANDALONE)")
+@Requires(property = "kestra.serverType", pattern = "(EXECUTOR|STANDALONE)")
 public class DirectQueueWorkerIOSenderFactory {
 
     @Singleton

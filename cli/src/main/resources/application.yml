@@ -57,7 +57,7 @@ micronaut:
       enabled: false
     csrf:
       enabled: true
-      signature-key: ${kestra.encryption.secret-key:}
+      signature-key: ${kestra.encryption.secretKey:}
       cookie-name: csrfToken
       filter:
         enabled: false
@@ -67,13 +67,13 @@ micronaut:
     # One cache per icon index: the methods behind them take no argument, so they all resolve to the same cache
     # key and sharing a cache would make them serve each other's entries. Each therefore holds a single entry.
     plugin-icons:
-      maximum-size: 1
+      maximumSize: 1
     plugin-icons-metadata:
-      maximum-size: 1
+      maximumSize: 1
     plugin-group-icons:
-      maximum-size: 1
+      maximumSize: 1
     plugin-group-icons-metadata:
-      maximum-size: 1
+      maximumSize: 1
   http:
     client:
       read-idle-timeout: 60s
@@ -155,21 +155,21 @@ endpoints:
     sensitive: false
 
 kestra:
-  tutorial-flows:
+  tutorialFlows:
     # Automatically loads all tutorial flows at startup.
     enabled: true
 
   webserver:
     # Browser security response headers, added to every HTTP response (UI and API).
-    # Set a value to "" to disable that single header, or security-headers.enabled to false to disable the whole filter.
-    security-headers:
+    # Set a value to "" to disable that single header, or securityHeaders.enabled to false to disable the whole filter.
+    securityHeaders:
       enabled: true
-      frame-options: SAMEORIGIN
-      content-type-options: nosniff
-      referrer-policy: strict-origin-when-cross-origin
-      # content-security-policy: "default-src 'self'; ..." # tune for the UI before enforcing
-      # content-security-policy-report-only: true # report-only intermediate step
-      # strict-transport-security: "max-age=31536000; includeSubDomains" # only sent when this server sees the request as HTTPS
+      frameOptions: SAMEORIGIN
+      contentTypeOptions: nosniff
+      referrerPolicy: strict-origin-when-cross-origin
+      # contentSecurityPolicy: "default-src 'self'; ..." # tune for the UI before enforcing
+      # contentSecurityPolicyReportOnly: true # report-only intermediate step
+      # strictTransportSecurity: "max-age=31536000; includeSubDomains" # only sent when this server sees the request as HTTPS
 
   retries:
     attempts: 5
@@ -178,17 +178,17 @@ kestra:
     maxDelay: ""
 
   server:
-    basic-auth:
+    basicAuth:
       # These URLs will not be authenticated, by default we open some of the Micronaut default endpoints but not all for security reasons
-      open-urls:
+      openUrls:
         - "/ping"
         - "/api/v1/executions/webhook/"
         - "/api/v1/main/executions/webhook/"
         - "/api/v1/*/executions/webhook/"
 
     preview:
-      initial-rows: 100
-      max-rows: 5000
+      initialRows: 100
+      maxRows: 5000
 
     # The expected time for this server to complete all its tasks before initiating a graceful shutdown.
     terminationGracePeriod: 5m
@@ -206,8 +206,8 @@ kestra:
       heartbeatInterval: 3s
     service:
       purge:
-        initial-delay: 1h
-        fixed-delay: 1d
+        initialDelay: 1h
+        fixedDelay: 1d
         retention: 30d
   controller:
     port: 50051
@@ -219,21 +219,21 @@ kestra:
           - host: localhost
             port: ${kestra.controller.port}
   queue:
-    message-protection:
+    messageProtection:
       enabled: true
       limit: 1048576
 
   jdbc:
     queues:
-      min-poll-interval: 25ms
-      max-poll-interval: 500ms
-      poll-switch-interval: 60s
+      minPollInterval: 25ms
+      maxPollInterval: 500ms
+      pollSwitchInterval: 60s
 
   plugins:
     # No default: the schema bundle ships inside the Kestra JAR as the /plugins-schema.json
     # classpath resource, so no instance needs to fetch it. Set this only to point at a bundle
     # hosted somewhere yourself ({version} is replaced by the running stable version).
-    schema-bundle-url-template: ""
+    schemaBundleUrlTemplate: ""
     repositories:
       central:
         url: https://repo.maven.apache.org/maven2/
@@ -250,9 +250,9 @@ kestra:
         values:
           recoverMissedSchedules: ALL
   variables:
-    env-vars-prefix: ENV_
-    cache-enabled: true
-    cache-size: 1000
+    envVarsPrefix: ENV_
+    cacheEnabled: true
+    cacheSize: 1000
 
   metrics:
     sharedServiceInstanceMetrics:
@@ -267,32 +267,32 @@ kestra:
   traces:
     root: DISABLED
 
-  ui-anonymous-usage-report:
+  uiAnonymousUsageReport:
     enabled: true
 
   ui:
     charts:
-      default-duration: PT24H
+      defaultDuration: PT24H
 
-  anonymous-usage-report:
+  anonymousUsageReport:
     enabled: true
     uri: https://api.kestra.io/v1/reports/server-events
-    initial-delay: 5m
-    fixed-delay: 1h
+    initialDelay: 5m
+    fixedDelay: 1h
 
-  hidden-labels:
+  hiddenLabels:
     prefixes:
       - system.
       - internal.
 
-  async-operations:
-    wait-timeout: PT30S
+  asyncOperations:
+    waitTimeout: PT30S
 
   tasks:
     sdk:
       authentication:
-        username: ${kestra.server.basic-auth.username:}
-        password: ${kestra.server.basic-auth.password:}
+        username: ${kestra.server.basicAuth.username:}
+        password: ${kestra.server.basicAuth.password:}
 
 otel:
   exclusions:

@@ -21,7 +21,7 @@ import jakarta.inject.Inject;
  * This class is used for service registration and liveness.
  */
 @Context
-@Requires(property = "kestra.server-type", pattern = "(WEBSERVER|STANDALONE)")
+@Requires(property = "kestra.serverType", pattern = "(WEBSERVER|STANDALONE)")
 public final class WebserverService implements Service {
 
     private final AtomicBoolean shutdown = new AtomicBoolean(false);

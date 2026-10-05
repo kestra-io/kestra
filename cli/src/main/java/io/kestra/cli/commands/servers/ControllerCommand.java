@@ -32,7 +32,7 @@ public class ControllerCommand extends AbstractServerCommand {
     @SuppressWarnings("unused")
     public static Map<String, Object> propertiesOverrides() {
         return Map.of(
-            "kestra.server-type", ServerType.CONTROLLER
+            "kestra.serverType", ServerType.CONTROLLER
         );
     }
 

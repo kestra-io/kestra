@@ -735,7 +735,7 @@ public class FlowService {
      * Only edges that fire unconditionally are counted (no {@code disabled}/{@code runIf} on a Subflow
      * task, no {@code when}/{@code conditions} on a Flow trigger or its {@code dependsOn} entries): a
      * cycle gated by a condition may be intentional and terminating, and this cannot decide whether the
-     * condition ever goes false. {@code kestra.execution.depth.max-depth}
+     * condition ever goes false. {@code kestra.execution.depth.maxDepth}
      * ({@link io.kestra.core.runners.configuration.ExecutionDepthConfiguration}) bounds that case, and
      * any other cycle this static check cannot see, at runtime instead.
      * <p>

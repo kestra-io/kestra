@@ -510,7 +510,7 @@ public class Execution implements SoftDeletable<Execution>, TenantInterface, Has
     /**
      * Find a task run by its task run id if present, else return an empty optional.
      *
-     * @see #findTaskRunByTaskRunId(String) for a fail-fast alternative
+     * @see #findTaskRunByTaskRunId(String) for a failFast alternative
      */
     public Optional<TaskRun> findTaskRunByTaskRunIdIfPresent(String id) {
         return ListUtils.emptyOnNull(this.taskRunList)

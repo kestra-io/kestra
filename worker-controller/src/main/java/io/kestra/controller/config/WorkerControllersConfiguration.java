@@ -20,8 +20,8 @@ import static io.kestra.controller.config.ControllerConfiguration.DEFAULT_GRPC_P
  * <p>
  * Supports three discovery strategies:
  * <ul>
- * <li>STATIC: Explicit list of controller endpoints with gRPC load-balancing</li>
- * <li>DNS: DNS A-record resolution with gRPC load-balancing</li>
+ * <li>STATIC: Explicit list of controller endpoints with gRPC loadBalancing</li>
+ * <li>DNS: DNS A-record resolution with gRPC loadBalancing</li>
  * <li>STORAGE: Dynamic discovery via Kestra internal storage (controllers self-register)</li>
  * </ul>
  * <p>
@@ -115,7 +115,7 @@ public record WorkerControllersConfiguration(
     /**
      * Load balancing configuration.
      */
-    @ConfigurationProperties("load-balancing")
+    @ConfigurationProperties("loadBalancing")
     public record LoadBalancing(
         @Bindable(defaultValue = "ROUND_ROBIN") Policy policy) {
         /**
@@ -147,7 +147,7 @@ public record WorkerControllersConfiguration(
     /**
      * Health check configuration for dead controller detection.
      */
-    @ConfigurationProperties("health-check")
+    @ConfigurationProperties("healthCheck")
     public record HealthCheck(
         @Bindable(defaultValue = "true") boolean enabled) {
     }
@@ -157,7 +157,7 @@ public record WorkerControllersConfiguration(
      * 
      * @param enabled
      */
-    @ConfigurationProperties("wait-for-ready")
+    @ConfigurationProperties("waitForReady")
     public record WaitForReady(
         @Bindable(defaultValue = "true") boolean enabled,
         @Bindable(defaultValue = "PT30S") Duration deadline) {

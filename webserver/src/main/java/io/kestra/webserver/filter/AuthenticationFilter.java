@@ -25,7 +25,7 @@ import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
 @Filter(Filter.MATCH_ALL_PATTERN)
-@Requires(property = "kestra.server-type", pattern = "(WEBSERVER|STANDALONE)")
+@Requires(property = "kestra.serverType", pattern = "(WEBSERVER|STANDALONE)")
 @Requires(property = "micronaut.security.enabled", notEquals = "true")
 public class AuthenticationFilter implements HttpServerFilter {
     private static final Integer ORDER = ServerFilterPhase.SECURITY.order();

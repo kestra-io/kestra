@@ -22,7 +22,7 @@ public record SecurityConfiguration(
      * @param maxNumberOfEntries the maximum number of entries allowed in the archive.
      * @param maxEntrySize the maximum uncompressed size, in bytes, allowed for a single entry.
      */
-    @ConfigurationProperties("zip-bomb-protection")
+    @ConfigurationProperties("zipBombProtection")
     public record ZipBombProtectionConfiguration(
         @Bindable(defaultValue = "false") Boolean enabled,
         @Nullable Integer maxNumberOfEntries,

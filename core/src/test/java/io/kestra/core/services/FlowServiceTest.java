@@ -772,7 +772,7 @@ class FlowServiceTest {
             )
             .build();
 
-        // Then it must not be rejected as a cycle here — kestra.execution.depth.max-depth bounds it instead
+        // Then it must not be rejected as a cycle here — kestra.execution.depth.maxDepth bounds it instead
         flowService.create(GenericFlow.of(flowA));
         assertThat(flowRepository.findById(flowA.getTenantId(), flowA.getNamespace(), flowA.getId())).isPresent();
     }
@@ -826,7 +826,7 @@ class FlowServiceTest {
             )
             .build();
 
-        // Then it must not be rejected as a cycle here — kestra.execution.depth.max-depth bounds it instead
+        // Then it must not be rejected as a cycle here — kestra.execution.depth.maxDepth bounds it instead
         flowService.create(GenericFlow.of(flowA));
         assertThat(flowRepository.findById(flowA.getTenantId(), flowA.getNamespace(), flowA.getId())).isPresent();
     }

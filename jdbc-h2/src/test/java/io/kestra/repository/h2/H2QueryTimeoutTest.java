@@ -14,7 +14,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class H2QueryTimeoutTest {
     @Test
     void shouldCancelAQueryThatRunsPastTheTimeout() {
-        DSLContext context = DSL.using("jdbc:h2:mem:query-timeout;DB_CLOSE_DELAY=-1");
+        DSLContext context = DSL.using("jdbc:h2:mem:queryTimeout;DB_CLOSE_DELAY=-1");
         context.execute("CREATE ALIAS IF NOT EXISTS SLEEP FOR 'java.lang.Thread.sleep(long)'");
 
         assertThatThrownBy(() -> context.transactionResult(configuration ->

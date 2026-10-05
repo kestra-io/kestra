@@ -47,7 +47,7 @@ import static io.kestra.core.server.Service.ServiceState.*;
  */
 @Slf4j
 @Context
-@Requires(property = "kestra.server-type", pattern = "(EXECUTOR|STANDALONE)")
+@Requires(property = "kestra.serverType", pattern = "(EXECUTOR|STANDALONE)")
 public class DefaultServiceLivenessCoordinator extends AbstractServiceLivenessTask {
 
     private static final int DEFAULT_SCHEDULE_JITTER_MAX_MS = 500;
@@ -276,7 +276,7 @@ public class DefaultServiceLivenessCoordinator extends AbstractServiceLivenessTa
         });
     }
 
-    @Scheduled(initialDelay = "${kestra.server.service.purge.initial-delay}", fixedDelay = "${kestra.server.service.purge.fixed-delay}")
+    @Scheduled(initialDelay = "${kestra.server.service.purge.initialDelay}", fixedDelay = "${kestra.server.service.purge.fixedDelay}")
     public void purgeEmptyInstances() {
         int purged = serviceInstanceRepository.purgeEmptyInstances(Instant.now().minus(purgeRetention));
         log.info("Purged {} service instances", purged);

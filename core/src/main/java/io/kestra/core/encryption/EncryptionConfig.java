@@ -11,15 +11,15 @@ import jakarta.inject.Singleton;
  * Singleton bean holding the application encryption secret key.
  * <p>
  * This is the single source of truth for the system encryption key configured
- * via the {@code kestra.encryption.secret-key} application property.
+ * via the {@code kestra.encryption.secretKey} application property.
  */
 @Singleton
 public class EncryptionConfig {
 
-    public static final String CONFIG_KEY = "${kestra.encryption.secret-key}";
+    public static final String CONFIG_KEY = "${kestra.encryption.secretKey}";
 
     /** Key used in the worker configs map to propagate the encryption key via gRPC. */
-    public static final String WORKER_CONFIG_KEY = "encryption.secret-key";
+    public static final String WORKER_CONFIG_KEY = "encryption.secretKey";
 
     private volatile Optional<String> secretKey;
 

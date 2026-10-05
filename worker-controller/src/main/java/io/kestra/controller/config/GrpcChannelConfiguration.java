@@ -49,11 +49,11 @@ public record GrpcChannelConfiguration(
 
         /** Duration bounds cannot be expressed with a jakarta constraint, so they are checked here. */
         public Retry {
-            requirePositive(initialBackoff, "initial-backoff");
-            requirePositive(maxBackoff, "max-backoff");
+            requirePositive(initialBackoff, "initialBackoff");
+            requirePositive(maxBackoff, "maxBackoff");
             if (maxBackoff.compareTo(initialBackoff) < 0) {
                 throw new IllegalArgumentException(
-                    "Property kestra.grpc.channel.retry.max-backoff must be greater than or equal to initial-backoff, but was %s for an initial backoff of %s."
+                    "Property kestra.grpc.channel.retry.maxBackoff must be greater than or equal to initialBackoff, but was %s for an initial backoff of %s."
                         .formatted(maxBackoff, initialBackoff)
                 );
             }

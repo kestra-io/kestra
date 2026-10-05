@@ -30,7 +30,7 @@ class GrpcChannelConfigurationTest {
     void shouldStillBindMaxAttemptsBelowSpecMinimum() {
         // A single attempt asks for no retry, so it must bind rather than break the server at startup
         try (ApplicationContext context = ApplicationContext.run(
-            PropertySource.of("test", Map.of("kestra.grpc.channel.retry.max-attempts", "1")))) {
+            PropertySource.of("test", Map.of("kestra.grpc.channel.retry.maxAttempts", "1")))) {
 
             assertThat(context.getBean(GrpcChannelConfiguration.class).retry().maxAttempts()).isEqualTo(1);
         }
@@ -38,16 +38,16 @@ class GrpcChannelConfigurationTest {
 
     @Test
     void shouldRejectNonPositiveBackoff() {
-        assertThatThrownBy(() -> loadRetry(Map.of("kestra.grpc.channel.retry.initial-backoff", "0s")))
+        assertThatThrownBy(() -> loadRetry(Map.of("kestra.grpc.channel.retry.initialBackoff", "0s")))
             .rootCause()
-            .hasMessageContaining("kestra.grpc.channel.retry.initial-backoff must be a positive duration");
+            .hasMessageContaining("kestra.grpc.channel.retry.initialBackoff must be a positive duration");
     }
 
     @Test
     void shouldRejectMaxBackoffBelowInitialBackoff() {
-        assertThatThrownBy(() -> loadRetry(Map.of("kestra.grpc.channel.retry.max-backoff", "100ms")))
+        assertThatThrownBy(() -> loadRetry(Map.of("kestra.grpc.channel.retry.maxBackoff", "100ms")))
             .rootCause()
-            .hasMessageContaining("kestra.grpc.channel.retry.max-backoff must be greater than or equal to initial-backoff");
+            .hasMessageContaining("kestra.grpc.channel.retry.maxBackoff must be greater than or equal to initialBackoff");
     }
 
     private static void loadRetry(Map<String, Object> properties) {

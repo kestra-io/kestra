@@ -42,7 +42,7 @@ import static io.micronaut.http.HttpRequest.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
-@io.micronaut.context.annotation.Property(name = "kestra.server-type", value = "WEBSERVER")
+@io.micronaut.context.annotation.Property(name = "kestra.serverType", value = "WEBSERVER")
 class McpToolControllerTest {
 
     private static final String MCP_TOOL_PATH = "/api/v1/main/mcp";

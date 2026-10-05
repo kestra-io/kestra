@@ -24,7 +24,7 @@ class RunContextSDKTest {
     }
 
     @Test
-    @Property(name = "kestra.tasks.sdk.authentication.api-token", value = "test-key")
+    @Property(name = "kestra.tasks.sdk.authentication.apiToken", value = "test-key")
     void sdkAuthShouldReturnApiKeyWhenSet() {
         RunContext runContext = runContextInitializer.forExecutor((DefaultRunContext) runContextFactory.of());
 
@@ -53,7 +53,7 @@ class RunContextSDKTest {
 
     @Test
     @Property(name = "kestra.tasks.sdk.authentication.url", value = "https://my-instance.io")
-    @Property(name = "kestra.tasks.sdk.authentication.api-token", value = "test-key")
+    @Property(name = "kestra.tasks.sdk.authentication.apiToken", value = "test-key")
     void sdkAuthShouldReturnUrlAlongsideApiKeyWhenSet() {
         RunContext runContext = runContextInitializer.forExecutor((DefaultRunContext) runContextFactory.of());
 
@@ -76,7 +76,7 @@ class RunContextSDKTest {
 
     @Test
     @Property(name = "kestra.tasks.sdk.authentication.url", value = "   ")
-    @Property(name = "kestra.tasks.sdk.authentication.api-token", value = "test-key")
+    @Property(name = "kestra.tasks.sdk.authentication.apiToken", value = "test-key")
     void sdkAuthShouldFilterOutBlankUrl() {
         RunContext runContext = runContextInitializer.forExecutor((DefaultRunContext) runContextFactory.of());
 

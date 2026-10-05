@@ -22,7 +22,7 @@ class ServerCommandValidatorTest {
     @Test
     void noServerCommandIssued() {
         // deduceEnvironment(false) prevents picking up the "test" environment
-        // (and its application-test.yml which sets kestra.server-type), so we
+        // (and its application-test.yml which sets kestra.serverType), so we
         // can verify the validator is genuinely absent when no server command
         // is issued.
         try (
@@ -42,7 +42,7 @@ class ServerCommandValidatorTest {
                 .environments("test")
                 .properties(
                     Map.of(
-                        "kestra.server-type", "webserver",
+                        "kestra.serverType", "webserver",
                         "kestra.queue.type", "memory",
                         "kestra.repository.type", "memory",
                         "kestra.storage.type", "local"
@@ -56,7 +56,7 @@ class ServerCommandValidatorTest {
                 .deduceEnvironment(false)
                 .properties(
                     Map.of(
-                        "kestra.server-type", "webserver",
+                        "kestra.serverType", "webserver",
                         "kestra.repository.type", "h2",
                         "kestra.queue.type", "h2",
                         "datasources.h2.url", "jdbc:h2:mem:test-cmd-validator;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE",
@@ -116,7 +116,7 @@ class ServerCommandValidatorTest {
                 .deduceEnvironment(false)
                 .properties(
                     Map.of(
-                        "kestra.server-type", "worker",
+                        "kestra.serverType", "worker",
                         "kestra.storage.type", "local",
                         "kestra.repository.type", "h2",
                         "datasources.h2.url", "jdbc:h2:mem:test-worker-ignored;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE",

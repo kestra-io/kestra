@@ -19,8 +19,8 @@ import io.micronaut.core.bind.annotation.Bindable;
  * <p>
  * Two caps are enforced at parse time:
  * <ul>
- * <li>{@code max-depth} — how deeply nested {@code [and|or][N]} groups may go in a single URL param.</li>
- * <li>{@code max-width} — how many children any single tree node may have.</li>
+ * <li>{@code maxDepth} — how deeply nested {@code [and|or][N]} groups may go in a single URL param.</li>
+ * <li>{@code maxWidth} — how many children any single tree node may have.</li>
  * </ul>
  * Both caps default to a hard floor ({@value #FLOOR_DEPTH}, {@value #FLOOR_WIDTH}). Configured values
  * below the floor are clamped at construction time with a WARN-level log; the bean never exposes a value below the floor.
@@ -28,7 +28,7 @@ import io.micronaut.core.bind.annotation.Bindable;
  * Per-Resource overrides are independent of the global value — they may be tighter or looser than the global cap,
  * but still subject to the same floor.
  */
-@ConfigurationProperties("kestra.webserver.query-filter")
+@ConfigurationProperties("kestra.webserver.queryFilter")
 public record QueryFilterConfiguration(
     @Bindable(defaultValue = "3") int maxDepth,
     @Bindable(defaultValue = "20") int maxWidth,
@@ -42,14 +42,14 @@ public record QueryFilterConfiguration(
     public QueryFilterConfiguration {
         if (maxDepth < FLOOR_DEPTH) {
             log.warn(
-                "kestra.webserver.query-filter.max-depth ({}) is below the floor of {} - clamping to {}",
+                "kestra.webserver.queryFilter.maxDepth ({}) is below the floor of {} - clamping to {}",
                 maxDepth, FLOOR_DEPTH, FLOOR_DEPTH
             );
             maxDepth = FLOOR_DEPTH;
         }
         if (maxWidth < FLOOR_WIDTH) {
             log.warn(
-                "kestra.webserver.query-filter.max-width ({}) is below the floor of {} - clamping to {}",
+                "kestra.webserver.queryFilter.maxWidth ({}) is below the floor of {} - clamping to {}",
                 maxWidth, FLOOR_WIDTH, FLOOR_WIDTH
             );
             maxWidth = FLOOR_WIDTH;
@@ -68,14 +68,14 @@ public record QueryFilterConfiguration(
             Integer width = limits.maxWidth();
             if (depth != null && depth < FLOOR_DEPTH) {
                 log.warn(
-                    "kestra.webserver.query-filter.resources.{}.max-depth ({}) is below the floor of {} - clamping to {}",
+                    "kestra.webserver.queryFilter.resources.{}.maxDepth ({}) is below the floor of {} - clamping to {}",
                     key, depth, FLOOR_DEPTH, FLOOR_DEPTH
                 );
                 depth = FLOOR_DEPTH;
             }
             if (width != null && width < FLOOR_WIDTH) {
                 log.warn(
-                    "kestra.webserver.query-filter.resources.{}.max-width ({}) is below the floor of {} - clamping to {}",
+                    "kestra.webserver.queryFilter.resources.{}.maxWidth ({}) is below the floor of {} - clamping to {}",
                     key, width, FLOOR_WIDTH, FLOOR_WIDTH
                 );
                 width = FLOOR_WIDTH;

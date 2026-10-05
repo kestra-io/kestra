@@ -170,8 +170,8 @@ describe("LoopIterationTree", () => {
             }
             return {results: [], total: 0}
         })
-        mockExecutionApi.mockImplementation(async (params: any) => {
-            const execId = params?.executionId;
+        mockExecutionApi.mockImplementation(async (params: {executionId?: string}) => {
+            const execId = params.executionId;
             if (execId === "outer-1" || execId === "root-execution") {
                 return {
                     id: "outer-1",

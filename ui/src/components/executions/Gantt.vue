@@ -228,23 +228,7 @@
     const TICK_FORMAT = "HH:mm:ss"
     const PRECISE_TICK_FORMAT = "HH:mm:ss.SSS"
 
-    interface TaskRun {
-        id: string;
-        taskId: string;
-        parentTaskRunId?: string;
-        value?: string;
-        flowId?: string;
-        namespace?: string;
-        outputs?: Record<string, unknown>;
-        attempts?: unknown[];
-        state: {
-            current: string;
-            histories: Array<{
-                state: string;
-                date: string;
-            }>;
-        };
-    }
+    type TaskRun = NonNullable<Execution["taskRunList"]>[number] & {outputs?: Record<string, unknown>}
 
     interface TaskWrapper {
         task: TaskRun;

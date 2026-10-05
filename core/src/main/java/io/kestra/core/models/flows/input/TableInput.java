@@ -18,6 +18,7 @@ import lombok.experimental.SuperBuilder;
 @SuperBuilder
 @Getter
 @NoArgsConstructor
+@EeOnly
 @TableInputValidation
 public class TableInput extends Input<List<?>> {
     @Schema(
@@ -25,7 +26,7 @@ public class TableInput extends Input<List<?>> {
         description = "Each column is a regular input declaration (e.g. `INT` with `min`/`max`, `STRING` with a `validator`) " +
             "applied to the corresponding key of every row. The value is a list of objects, referenced as " +
             "`{{ inputs.myTable[0].myColumn }}` or iterated with `ForEach`. Columns follow the same rules as the " +
-            "properties of an `OBJECT` input."
+            "properties of an `OBJECT` input. This input type is only available in the Enterprise Edition."
     )
     @NotNull
     @Valid

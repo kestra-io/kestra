@@ -17,6 +17,7 @@ import lombok.experimental.SuperBuilder;
 @SuperBuilder
 @Getter
 @NoArgsConstructor
+@EeOnly
 @ObjectInputValidation
 public class ObjectInput extends Input<Map<String, Object>> {
     @Schema(
@@ -24,7 +25,8 @@ public class ObjectInput extends Input<Map<String, Object>> {
         description = "Each property is a regular input declaration (e.g. `INT` with `min`/`max`, `STRING` with a `validator`) " +
             "resolved and validated against the corresponding key of the submitted object. The value is referenced as " +
             "`{{ inputs.myObject.myProperty }}`. Properties cannot be of type `OBJECT`, `TABLE`, `ARRAY`, `FORM`, `FILE`, " +
-            "`SECRET`, `JSON`, `ION` or `YAML`, and cannot declare `defaults`, `prefill`, `dependsOn` or an `expression`."
+            "`SECRET`, `JSON`, `ION` or `YAML`, and cannot declare `defaults`, `prefill`, `dependsOn` or an `expression`. " +
+            "This input type is only available in the Enterprise Edition."
     )
     @NotNull
     @Valid

@@ -369,67 +369,6 @@ public class InputsTest {
     }
 
     @Test
-    @LoadFlows(value = { "flows/valids/inputs.yaml" }, tenantId = "tenant19")
-    void inputObject() {
-        HashMap<String, Object> map = new HashMap<>(inputs);
-        map.put("disk", "{\"size_gb\": \"20\", \"mountpoint\": \"/data\"}");
-
-        Map<String, Object> typeds = typedInputs(map, "tenant19");
-
-        assertThat(typeds.get("disk")).isEqualTo(Map.of("size_gb", 20, "mountpoint", "/data"));
-    }
-
-    @Test
-    @LoadFlows(value = { "flows/valids/inputs.yaml" }, tenantId = "tenant20")
-    void inputObjectFailed() {
-        HashMap<String, Object> map = new HashMap<>(inputs);
-        map.put("disk", "{\"size_gb\": 5, \"mountpoint\": \"data\"}");
-
-        InputOutputValidationException e = assertThrows(InputOutputValidationException.class, () -> typedInputs(map, "tenant20"));
-
-        assertThat(e.getMessage()).contains("Invalid value for input `disk`. Cause: property `size_gb`: it must be more than `10`");
-        assertThat(e.getMessage()).contains("Invalid value for input `disk`. Cause: property `mountpoint`: it must match the pattern `^/.*`");
-    }
-
-    @Test
-    @LoadFlows(value = { "flows/valids/inputs.yaml" }, tenantId = "tenant21")
-    void inputTable() {
-        HashMap<String, Object> map = new HashMap<>(inputs);
-        map.put("disks", "[{\"size_gb\": \"20\", \"mountpoint\": \"/data\"}, {\"size_gb\": 30, \"mountpoint\": \"/logs\"}]");
-
-        Map<String, Object> typeds = typedInputs(map, "tenant21");
-
-        assertThat(typeds.get("disks")).isEqualTo(List.of(
-            Map.of("size_gb", 20, "mountpoint", "/data"),
-            Map.of("size_gb", 30, "mountpoint", "/logs")
-        ));
-    }
-
-    @Test
-    @LoadFlows(value = { "flows/valids/inputs.yaml" }, tenantId = "tenant22")
-    void inputTableFailed() {
-        HashMap<String, Object> map = new HashMap<>(inputs);
-        map.put("disks", "[{\"size_gb\": 20, \"mountpoint\": \"/data\"}, {\"size_gb\": 5, \"mountpoint\": \"logs\"}]");
-
-        InputOutputValidationException e = assertThrows(InputOutputValidationException.class, () -> typedInputs(map, "tenant22"));
-
-        assertThat(e.getMessage()).contains("Invalid value for input `disks`. Cause: row 2, column `size_gb`: it must be more than `10`");
-        assertThat(e.getMessage()).contains("Invalid value for input `disks`. Cause: row 2, column `mountpoint`: it must match the pattern `^/.*`");
-        assertThat(e.getMessage()).doesNotContain("row 1");
-    }
-
-    @Test
-    @LoadFlows(value = { "flows/valids/inputs.yaml" }, tenantId = "tenant23")
-    void inputTableTooManyRows() {
-        HashMap<String, Object> map = new HashMap<>(inputs);
-        map.put("disks", "[{\"size_gb\": 20}, {\"size_gb\": 30}, {\"size_gb\": 40}]");
-
-        InputOutputValidationException e = assertThrows(InputOutputValidationException.class, () -> typedInputs(map, "tenant23"));
-
-        assertThat(e.getMessage()).contains("Invalid value for input `disks`. Cause: it must have at most `2` rows");
-    }
-
-    @Test
     @LoadFlows(value = { "flows/valids/inputs.yaml" }, tenantId = "tenant14")
     void inputEmptyJson() {
         HashMap<String, Object> map = new HashMap<>(inputs);

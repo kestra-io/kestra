@@ -162,6 +162,7 @@
     import Wrapper from "./Wrapper.vue"
     import {BLOCK_SCHEMA_PATH_INJECTION_KEY, FIELD_NAV_INJECTION_KEY, SCHEMA_DEFINITIONS_INJECTION_KEY} from "../../injectionKeys"
     import {useBlockComponent} from "./useBlockComponent"
+    import type {Schema} from "./getTaskComponent"
     import {summarizeValue, shouldDrillItem, describeArrayItem} from "./fieldNesting"
 
     defineOptions({inheritAttrs: false})
@@ -174,7 +175,7 @@
 
     const emits = defineEmits(["update:modelValue"])
     const props = withDefaults(defineProps<{
-        schema?: any;
+        schema?: Schema;
         modelValue?: (string | number | boolean | Record<string, unknown> | undefined)[] | string | number | boolean | null;
         required?: boolean;
         root?: string;
@@ -193,17 +194,20 @@
         props.root?.split(".").pop()?.replace(/\[\d+\]$/, "") || undefined)
 
     const fieldNav = inject(FIELD_NAV_INJECTION_KEY, undefined)
-    const definitions = inject(SCHEMA_DEFINITIONS_INJECTION_KEY, ref<Record<string, any>>({}))
+    const definitions = inject(
+        SCHEMA_DEFINITIONS_INJECTION_KEY,
+        computed<Record<string, Schema>>(() => ({})),
+    )
 
     const canDrillItems = computed(() =>
         Boolean(fieldNav) && shouldDrillItem(props.schema?.items, definitions.value),
     )
 
-    function itemLabel(element: any, index: number): string {
+    function itemLabel(element: unknown, index: number): string {
         return describeArrayItem(element, index)
     }
 
-    function itemPreview(element: any): string {
+    function itemPreview(element: unknown): string {
         const summary = summarizeValue(element)
         if (summary.kind === "empty") return t("no_code.nav.not_set")
         if (summary.kind === "count") return t("no_code.nav.items", {count: summary.count})
@@ -231,7 +235,7 @@
         ].includes(componentType.value.ksTaskName)
     })
 
-    const items = ref<any[]>([])
+    const items = ref<unknown[]>([])
     const localEdit = ref(false)
 
     watch(() => props.modelValue, (value) => {
@@ -244,7 +248,7 @@
             : !Array.isArray(value) ? [value] : [...value]
     }, {immediate: true, deep: true})
 
-    function emitItems(value: any) {
+    function emitItems(value: unknown[] | undefined) {
         localEdit.value = true
         emits("update:modelValue", value)
     }

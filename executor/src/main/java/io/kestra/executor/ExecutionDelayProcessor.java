@@ -21,7 +21,6 @@ import io.kestra.core.services.ExecutionService;
 import io.kestra.core.services.ExecutionService.ExecutionWithTaskRun;
 import io.kestra.core.services.TaskOutputService;
 
-import io.kestra.executor.handler.LoopExecutionEventMessageHandler;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
@@ -60,7 +59,7 @@ public class ExecutionDelayProcessor {
         ExecutionService executionService,
         ExecutorService executorService,
         MetricRegistry metricRegistry,
-        TaskOutputService taskOutputService) {
+        TaskOutputService taskOutputService,
         DispatchQueueInterface<LoopExecutionEvent> loopExecutionEventQueue) {
         this.executionDelayStateStore = executionDelayStateStore;
         this.executionStateStore = executionStateStore;

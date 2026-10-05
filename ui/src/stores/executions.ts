@@ -88,8 +88,10 @@ export interface InputMetaData {
     dependsOn?: unknown;
     /** Set on a FORM input only: the children it groups, mirroring the backend `FormInput.inputs`. */
     inputs?: InputMetaData[];
-    /** Set on a JSON input only: the schema its value is validated against, mirroring `JsonInput.jsonSchema`. */
-    jsonSchema?: string;
+    /** Set on a TABLE input only: one input definition per column, each evaluated once per row. */
+    columns?: InputMetaData[];
+    minRows?: number;
+    maxRows?: number;
 }
 
 /** Mirrors the backend `FilePreview`: `content` is renderer-specific (text, rows, base64, ...). */

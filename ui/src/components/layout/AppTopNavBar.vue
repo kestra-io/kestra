@@ -162,12 +162,21 @@
         return !!href && router.resolve(href).name === route.name
     })
 
-    const currentFavURI = computed(() =>
-        route.fullPath
+    const currentFavURI = computed(() => {
+        const fallback = route.fullPath
             .replace(/[&?]page=[^&]*/gi, "")
             .replace(/\?&/, "?")
-            .replace(/\?$/, ""),
-    )
+            .replace(/\?$/, "")
+        const query = Object.fromEntries(
+            Object.entries(route.query).filter(([key]) => key.toLowerCase() !== "page"),
+        )
+
+        return router.resolve({
+            path: route.path ?? fallback.split(/[?#]/)[0],
+            query,
+            hash: route.hash,
+        }).fullPath ?? fallback
+    })
 
     const bookmarked = computed(() =>
         bookmarksStore.isBookmarked(currentFavURI.value),

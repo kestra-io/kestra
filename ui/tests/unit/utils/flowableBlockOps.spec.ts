@@ -14,6 +14,7 @@ import {
     errorsLaneTarget,
     flattenTaskIds,
     groupValidationIssuesByTask,
+    issuesToShow,
     healDagRemoval,
     isFlowableType,
     isWrappedLaneItem,
@@ -1982,6 +1983,33 @@ afterExecution:
 `.trim()) as Record<string, unknown>
 
         const group = (...errors: {pointer?: string, detail: string}[]) => groupValidationIssuesByTask(errors, flow)
+
+        const saved = `
+tasks:
+  - id: fetch_data
+    type: io.kestra.plugin.core.http.Request
+`.trim()
+
+        it("holds back the issues of a block the saved flow does not have yet", () => {
+            const issues = group({pointer: "/tasks/0/uri", detail: "must not be null"}, {pointer: "/tasks/1/then/0/message", detail: "must not be null"})
+
+            const shown = issuesToShow(issues, saved, false)
+
+            expect(shown.has("fetch_data")).toBe(true)
+            expect(shown.has("nested_then")).toBe(false)
+        })
+
+        it("shows every issue once a save has been attempted", () => {
+            const issues = group({pointer: "/tasks/1/then/0/message", detail: "must not be null"})
+
+            expect(issuesToShow(issues, saved, true).has("nested_then")).toBe(true)
+        })
+
+        it("holds back every issue while the flow has never been saved", () => {
+            const issues = group({pointer: "/tasks/0/uri", detail: "must not be null"})
+
+            expect(issuesToShow(issues, "", false).size).toBe(0)
+        })
 
         it("names the missing field after the task that lacks it", () => {
             expect(group({pointer: "/tasks/0/uri", detail: "must not be null"}).get("fetch_data")).toEqual(["uri: must not be null"])

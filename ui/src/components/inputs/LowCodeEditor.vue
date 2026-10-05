@@ -346,6 +346,7 @@
         errorsLaneTarget,
         moveBlockAtPath,
         groupValidationIssuesByTask,
+        issuesToShow,
         updateBlockAtPath,
         type BlockSection,
     } from "../../utils/flowableBlockOps"
@@ -902,7 +903,11 @@
     }
 
     const validationIssuesByTask = computed<Map<string, string[]>>(() =>
-        groupValidationIssuesByTask(flowStore.flowValidation?.errors, flowStore.flowParsed),
+        issuesToShow(
+            groupValidationIssuesByTask(flowStore.flowValidation?.errors, flowStore.flowParsed),
+            flowStore.flowYamlOrigin,
+            flowStore.saveAttempted,
+        ),
     )
 
     const taskPicker = useTaskPicker({

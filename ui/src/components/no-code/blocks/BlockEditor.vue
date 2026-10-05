@@ -159,6 +159,7 @@
     import {usePluginsStore} from "../../../stores/plugins"
     import {
         groupValidationIssuesByTask,
+        issuesToShow,
         isFlowableType,
         updateBlockAtPath,
         type BlockSection,
@@ -239,7 +240,11 @@
     }
 
     const validationIssuesByTask = computed<Map<string, string[]>>(() =>
-        groupValidationIssuesByTask(flowStore.flowValidation?.errors, flowStore.flowParsed),
+        issuesToShow(
+            groupValidationIssuesByTask(flowStore.flowValidation?.errors, flowStore.flowParsed),
+            flowStore.flowYamlOrigin,
+            flowStore.saveAttempted,
+        ),
     )
 
     const inlineEditPanel = ref()

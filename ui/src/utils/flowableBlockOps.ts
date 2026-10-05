@@ -703,6 +703,25 @@ export function rewireDagDependency(
 }
 
 /**
+ * Keeps only the issues of blocks the saved flow already has: a block added in this session is
+ * incomplete by construction, so flagging it the moment it lands reads as a mistake the user made.
+ * A save attempt reveals every issue, since that is the point where they are what blocks the user.
+ */
+export function issuesToShow(
+    issues: Map<string, string[]>,
+    savedSource: string | undefined,
+    saveAttempted: boolean,
+): Map<string, string[]> {
+    if (saveAttempted || issues.size === 0) return issues
+    const saved = savedSource ? collectAllIds(savedSource) : new Set<string>()
+    const shown = new Map<string, string[]>()
+    for (const [id, entries] of issues) {
+        if (saved.has(id)) shown.set(id, entries)
+    }
+    return shown
+}
+
+/**
  * Groups located errors under the id of the deepest task their pointer runs through, the rest of the
  * pointer naming the field. An error without a pointer is flow-level and stays out of the map.
  */

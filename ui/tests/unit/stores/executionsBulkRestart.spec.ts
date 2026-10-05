@@ -8,7 +8,7 @@ import {setActivePinia, createPinia} from "pinia"
 // test honest about what the app sends on the wire.
 // Typed with varargs so `fetchSpy.mock.calls[0]?.[0]` type-checks; an argless `vi.fn(() => …)`
 // infers zero-length call tuples and trips TS2493 under vue-tsc.
-const fetchSpy = vi.fn(async (..._args: any[]) => new Response(JSON.stringify({count: 1}), {
+const fetchSpy = vi.fn(async (..._args: Parameters<typeof fetch>) => new Response(JSON.stringify({count: 1}), {
     status: 200,
     headers: {"content-type": "application/json"},
 }))

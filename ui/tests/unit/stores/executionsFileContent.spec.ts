@@ -1,6 +1,14 @@
 import {beforeEach, describe, expect, test, vi} from "vitest"
 import {createPinia, setActivePinia} from "pinia"
 
+// The shape of the request config the store hands to the SDK client's get(), limited to the
+// fields these tests read back.
+type FileRequestConfig = {
+    params?: Record<string, unknown>
+    responseType?: string
+    transformResponse?: ((data: string) => unknown) | ((data: string) => unknown)[]
+}
+
 vi.mock("vue-router", () => ({
     useRoute: () => ({query: {}, params: {}}),
     useRouter: () => ({
@@ -45,7 +53,7 @@ describe("executions store fileContent", () => {
 
         expect(content).toBe("<html><body>full</body></html>")
 
-        const [url, config] = getMock.mock.calls[0] as [string, Record<string, any>]
+        const [url, config] = getMock.mock.calls[0] as [string, FileRequestConfig]
         // Hits /file (full bytes), NOT /file/preview (row/byte capped).
         expect(url).toBe("http://localhost:8080/api/v1/main/executions/exec-1/file")
         expect(url).not.toContain("/preview")
@@ -59,11 +67,12 @@ describe("executions store fileContent", () => {
 
         await store.fileContent({executionId: "exec-1", path: "kestra:///outputs/page.html"})
 
-        const config = (getMock.mock.calls[0] as [string, Record<string, any>])[1]
+        const config = (getMock.mock.calls[0] as [string, FileRequestConfig])[1]
         const transform = Array.isArray(config.transformResponse) ? config.transformResponse[0] : config.transformResponse
+        expect(transform).toBeDefined()
         // A raw JSON-looking string must be returned verbatim, not parsed into an object.
         const jsonLike = "{\"not\":\"parsed\"}"
-        expect(transform(jsonLike)).toBe(jsonLike)
+        expect(transform?.(jsonLike)).toBe(jsonLike)
     })
 
     test("propagates a request failure so callers can surface an error state", async () => {

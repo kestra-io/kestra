@@ -1,5 +1,5 @@
 import {describe, test, expect} from "vitest"
-import {nextTick} from "vue"
+import {nextTick, type ComponentPublicInstance} from "vue"
 import ConditionRow from "../../../../src/components/Data/KsDataTable/filter/ConditionRow.vue"
 import FilterMultiSelect from "../../../../src/components/Data/KsDataTable/filter/layout/FilterMultiSelect.vue"
 import {Comparators, type AppliedFilter, type FilterKeyConfig} from "../../../../src/components/Data/KsDataTable/filter/utils/filterTypes"
@@ -216,7 +216,7 @@ describe("ConditionRow key-value comparator changes", () => {
             },
         })
 
-        const opSelect = wrapper.findComponent(".cond-op")
+        const opSelect = wrapper.findComponent<ComponentPublicInstance>(".cond-op")
         opSelect.vm.$emit("update:modelValue", Comparators.EQUALS)
         await nextTick()
 

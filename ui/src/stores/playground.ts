@@ -269,6 +269,20 @@ export const usePlaygroundStore = defineStore("playground", () => {
         if (flowStore.haveChange && flowStore.flowErrors) {
             return
         }
+        if (flowStore.isCreating) {
+            starting.value = true
+            let outcome
+            try {
+                outcome = await flowStore.saveAsDraft()
+            } finally {
+                starting.value = false
+            }
+            if (isSuccessfulFlowSaveOutcome(outcome)) {
+                await navigateToEdit(taskId, runDownstreamTasks)
+                enabled.value = true
+            }
+            return
+        }
         starting.value = true
         try {
             await startRun(taskId, runDownstreamTasks, customFormData)
@@ -278,26 +292,7 @@ export const usePlaygroundStore = defineStore("playground", () => {
     }
 
     async function startRun(taskId?: string, runDownstreamTasks = false, customFormData?: Record<string, unknown>) {
-        if(flowStore.isCreating){
-            let outcome
-            try {
-                outcome = await flowStore.saveAsDraft()
-            } finally {
-                readyToStart.value = true
-            }
-            if (isSuccessfulFlowSaveOutcome(outcome)) {
-                await navigateToEdit(taskId, runDownstreamTasks)
-                enabled.value = true
-            }
-            return
-        }
-
-        try {
-            await flowStore.saveAsDraft()
-        } catch (error) {
-            readyToStart.value = true
-            throw error
-        }
+        await flowStore.saveAsDraft()
         // get the next task id to break on. If current task is provided to breakpoint,
         // the task specified by the user will not be executed.
         const {nextTasksIds, graph} = await getNextTaskIds(runDownstreamTasks ? undefined : taskId) ?? {}

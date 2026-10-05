@@ -62,6 +62,7 @@
     import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
     import {SCHEMA_DEFINITIONS_INJECTION_KEY} from "../../injectionKeys"
     import {useBlockComponent} from "./useBlockComponent"
+    import type {Schema} from "./getTaskComponent"
     import TaskString from "./TaskString.vue"
     import TaskEnum from "./TaskEnum.vue"
 
@@ -217,7 +218,7 @@
     }
 
     const schemaByType = computed(() => {
-        return schemas.value.reduce((acc: Record<string, any>, schema: any) => {
+        return schemas.value.reduce((acc: Record<string, Schema>, schema: Schema) => {
             acc[makeKey(schema) ?? ""] = schema
             return acc
         }, {})
@@ -279,7 +280,7 @@
             .map((schemaRef: string) => `${schemaRef}.`)
             .join("")
 
-        return schemas.value.map((schema: any) => {
+        return schemas.value.map((schema: Schema) => {
             const schemaRef = schema.$ref
                 ? schema.$ref.split("/").pop()
                 : schema.type
@@ -300,7 +301,7 @@
                 value: schemaRef,
                 id: cleanSchemaRef,
             }
-        }).filter((schema: any) => schema.value !== undefined)
+        }).filter((schema: {value?: string}) => schema.value !== undefined)
     })
 
     watch(() => constantType.value, (val) => {
@@ -328,7 +329,7 @@
 
     onMounted(() => {
         if (durationSchema.value || constraintOnlySchemas.value) return
-        let schema = schemaOptions.value?.find((item: any) =>
+        let schema = schemaOptions.value?.find((item: {value: string}) =>
             item.value === model.value?.type ||
             (typeof model.value === "string" && item.value === "string") ||
             (typeof model.value === "number" && item.value === "integer") ||
@@ -340,7 +341,7 @@
         )
 
         if (!schema && model.value && typeof model.value === "object" && !Array.isArray(model.value) && model.value.type) {
-            schema = schemaOptions.value?.find((item: any) => {
+            schema = schemaOptions.value?.find((item: {value: string}) => {
                 const raw = definitions.value[item.value] ?? schemaByType.value[item.value]
                 return consolidateAllOfSchemas(raw, definitions.value)?.properties?.type?.const === model.value.type
             })
@@ -362,7 +363,7 @@
 
     function onSelectType(value: string) {
         if (typeof model.value === "string" && (value === "object" || value === "array")) {
-            let parsedValue: any = {}
+            let parsedValue: Record<string, unknown> | unknown[] = {}
             try {
                 parsedValue = YAML_UTILS.parse(model.value) ?? {}
                 if (value === "array" && !Array.isArray(parsedValue)) {
@@ -394,14 +395,14 @@
         delayedSelectedSchema.value = value
     }
 
-    function onAnyOfInput(value: any) {
+    function onAnyOfInput(value: Record<string, unknown> | unknown) {
         if (constantType.value?.length && typeof value === "object") {
             value.type = constantType.value
         }
         onInput(value)
     }
 
-    function onInput(value: any) {
+    function onInput(value: unknown) {
         model.value = value
     }
 

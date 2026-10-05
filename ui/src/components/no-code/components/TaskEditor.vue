@@ -109,7 +109,7 @@
     const pluginDefaultsForType = computed<Record<string, unknown>>(() => {
         const type = selectedTaskType.value || taskModel.value?.type
         if (!type) return {}
-        let parsed: any
+        let parsed: Record<string, unknown> | unknown[] | unknown
         try {
             parsed = YAML_UTILS.parse(fullSource.value)
         } catch {
@@ -169,7 +169,7 @@
             return firstAnyOf?.properties?.type !== undefined
         }
         if(Array.isArray(firstAnyOf.allOf)){
-            return firstAnyOf.allOf.some((item: any) => {
+            return firstAnyOf.allOf.some((item: Schemas) => {
                 return resolve$ref(fullSchema.value, item)
                     .properties?.type !== undefined
             })
@@ -234,7 +234,7 @@
 
     const typeMap = computed<Record<string, string[]>>(() => {
         if (fieldDefinition.value?.anyOf) {
-            const f = fieldDefinition.value.anyOf.reduce((acc: Record<string, string[]>, item: any) => {
+            const f = fieldDefinition.value.anyOf.reduce((acc: Record<string, string[]>, item: Schemas) => {
                 if (item.$ref) {
                     const resolvedItem = getValueAtJsonPath(fullSchema.value, item.$ref)
                     if (resolvedItem?.allOf) {

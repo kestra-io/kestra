@@ -1,15 +1,16 @@
 import {getType} from "./getTaskComponent"
 import {resolve$ref} from "../../../../utils/utils"
+import type {Schema} from "./getTaskComponent"
 
 const OBJECT_LIKE_TYPES = new Set(["object", "complex"])
 
-function branchesOf(schema: any): any[] {
+function branchesOf(schema: Schema): Schema[] {
     return schema?.anyOf ?? schema?.oneOf ?? []
 }
 
 export function looksLikeObject(
-    schema: any,
-    definitions: Record<string, any>,
+    schema: Schema,
+    definitions: Record<string, Schema>,
     key?: string,
 ): boolean {
     if (!schema) return false
@@ -26,12 +27,12 @@ export function looksLikeObject(
     return false
 }
 
-function resolvedProperties(schema: any, definitions: Record<string, any>): Record<string, any> {
+function resolvedProperties(schema: Schema, definitions: Record<string, Schema>): Record<string, Schema> {
     const resolved = resolve$ref({definitions}, schema)
     if (!resolved) return {}
     if (resolved.properties) return resolved.properties
     return (resolved.allOf ?? []).reduce(
-        (acc: Record<string, any>, item: any) => ({
+        (acc: Record<string, Schema>, item: Schema) => ({
             ...acc,
             ...(resolve$ref({definitions}, item)?.properties ?? {}),
         }),
@@ -40,8 +41,8 @@ function resolvedProperties(schema: any, definitions: Record<string, any>): Reco
 }
 
 export function shouldDrillItem(
-    schema: any,
-    definitions: Record<string, any>,
+    schema: Schema,
+    definitions: Record<string, Schema>,
     key?: string,
 ): boolean {
     if (!schema) return false
@@ -57,7 +58,7 @@ export function shouldDrillItem(
 
     if (!looksLikeObject(schema, definitions, key)) return false
 
-    return Object.values(resolvedProperties(schema, definitions)).some((prop: any) => {
+    return Object.values(resolvedProperties(schema, definitions)).some((prop: Schema) => {
         const type = getType(prop, definitions)
         if (OBJECT_LIKE_TYPES.has(type)) return true
         if (type === "list" || type === "array") return looksLikeObject(prop?.items, definitions)
@@ -95,7 +96,7 @@ function afterLastDot(value: string): string {
     return index >= 0 ? value.slice(index + 1) : value
 }
 
-function isEmpty(value: any): boolean {
+function isEmpty(value: unknown): boolean {
     if (value === null || value === undefined) return true
     if (Array.isArray(value)) return value.length === 0
     if (typeof value === "object") return Object.keys(value).length === 0
@@ -103,11 +104,11 @@ function isEmpty(value: any): boolean {
     return false
 }
 
-function isScalar(value: any): boolean {
+function isScalar(value: unknown): boolean {
     return value === null || value === undefined || typeof value !== "object"
 }
 
-function scalarText(value: any): string {
+function scalarText(value: unknown): string {
     if (value === null || value === undefined) return ""
     if (Array.isArray(value)) {
         return value.every(isScalar) ? value.map(String).join(", ") : `${value.length} items`
@@ -116,7 +117,7 @@ function scalarText(value: any): string {
     return String(value)
 }
 
-export function summarizeValue(value: any): ValueSummary {
+export function summarizeValue(value: unknown): ValueSummary {
     if (isEmpty(value)) return {kind: "empty"}
 
     if (Array.isArray(value)) {

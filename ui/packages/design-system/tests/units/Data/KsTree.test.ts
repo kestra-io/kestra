@@ -5,6 +5,8 @@ import {type ComponentExposed} from "vue-component-type-helpers"
 import KestraDesignSystem from "../../../src/index"
 import KsTree from "../../../src/components/Data/KsTree.vue"
 
+type KsTreeExposed = ComponentExposed<typeof KsTree>
+
 const globalConfig = {plugins: [KestraDesignSystem]}
 
 const TREE_DATA = [
@@ -25,7 +27,7 @@ describe("KsTree", () => {
             props: {data: TREE_DATA},
             global: globalConfig,
         })
-        expect(typeof (wrapper.vm as ComponentExposed<typeof KsTree>).getNode).toBe("function")
+        expect(typeof (wrapper.vm as KsTreeExposed).getNode).toBe("function")
     })
 
     test("exposes getCheckedNodes method", () => {
@@ -33,7 +35,7 @@ describe("KsTree", () => {
             props: {data: TREE_DATA},
             global: globalConfig,
         })
-        expect(typeof (wrapper.vm as ComponentExposed<typeof KsTree>).getCheckedNodes).toBe("function")
+        expect(typeof (wrapper.vm as KsTreeExposed).getCheckedNodes).toBe("function")
     })
 
     test("exposes setCurrentKey method", () => {
@@ -41,7 +43,7 @@ describe("KsTree", () => {
             props: {data: TREE_DATA},
             global: globalConfig,
         })
-        expect(typeof (wrapper.vm as ComponentExposed<typeof KsTree>).setCurrentKey).toBe("function")
+        expect(typeof (wrapper.vm as KsTreeExposed).setCurrentKey).toBe("function")
     })
 
     test("renders tree nodes with default-expand-all", () => {

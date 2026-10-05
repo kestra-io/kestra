@@ -4,6 +4,8 @@ import KestraDesignSystem from "../../../src/index"
 import KsForm from "../../../src/components/Form/KsForm/KsForm.vue"
 import KsFormItem from "../../../src/components/Form/KsForm/KsFormItem.vue"
 
+type KsFormExposed = InstanceType<typeof KsForm>
+
 const globalConfig = {plugins: [KestraDesignSystem]}
 
 describe("KsForm", () => {
@@ -31,7 +33,7 @@ describe("KsForm", () => {
             props: {model: {}},
             global: globalConfig,
         })
-        expect(typeof (wrapper.vm as InstanceType<typeof KsForm>).validate).toBe("function")
+        expect(typeof (wrapper.vm as KsFormExposed).validate).toBe("function")
     })
 
     test("exposes resetFields method", () => {
@@ -39,7 +41,7 @@ describe("KsForm", () => {
             props: {model: {}},
             global: globalConfig,
         })
-        expect(typeof (wrapper.vm as InstanceType<typeof KsForm>).resetFields).toBe("function")
+        expect(typeof (wrapper.vm as KsFormExposed).resetFields).toBe("function")
     })
 
     test("exposes clearValidate method", () => {
@@ -47,7 +49,7 @@ describe("KsForm", () => {
             props: {model: {}},
             global: globalConfig,
         })
-        expect(typeof (wrapper.vm as InstanceType<typeof KsForm>).clearValidate).toBe("function")
+        expect(typeof (wrapper.vm as KsFormExposed).clearValidate).toBe("function")
     })
 })
 

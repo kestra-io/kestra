@@ -1,6 +1,8 @@
 package io.kestra.core.models.flows.input;
 
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -8,11 +10,13 @@ import com.networknt.schema.Error;
 import com.networknt.schema.Schema;
 import com.networknt.schema.SchemaRegistry;
 import com.networknt.schema.dialect.Dialects;
+import com.networknt.schema.path.NodePath;
 
 import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.validations.ManualConstraintViolation;
 import io.kestra.core.serializers.JacksonMapper;
 
+import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -48,13 +52,21 @@ public class JsonInput extends Input<Object> {
 
             if (!errors.isEmpty()) {
                 throw ManualConstraintViolation.toConstraintViolationException(
-                    "it must match the json schema: " + errors,
-                    this,
-                    JsonInput.class,
-                    getId(),
-                    input
+                    errors.stream()
+                        .map(error -> (ConstraintViolation<?>) ManualConstraintViolation.of(
+                            "it must match the json schema: " + error.getMessage(),
+                            this,
+                            JsonInput.class,
+                            locationOf(error),
+                            input
+                        ))
+                        .collect(Collectors.toCollection(LinkedHashSet::new))
                 );
             }
+        } catch (ConstraintViolationException e) {
+            // The violations above are a RuntimeException, so without this they are caught below and rewrapped into
+            // one "Invalid JSON schema" error, losing both their locations and the fact that the schema is fine.
+            throw e;
         } catch (JsonProcessingException | JacksonException e) {
             throw ManualConstraintViolation.toConstraintViolationException(
                 "Invalid JSON content or schema: " + e.getMessage(),
@@ -72,5 +84,25 @@ public class JsonInput extends Input<Object> {
                 jsonSchema
             );
         }
+    }
+
+    /**
+     * Renders where a schema error sits inside the value, as {@code id.a[0].b}. Built from the path elements rather
+     * than {@link NodePath#toString()}, whose notation follows the schema's {@code PathType}.
+     */
+    private String locationOf(Error error) {
+        NodePath location = error.getInstanceLocation();
+        StringBuilder path = new StringBuilder(getId());
+
+        for (int i = 0; i < location.getNameCount(); i++) {
+            Object element = location.getElement(i);
+            if (element instanceof Integer index) {
+                path.append('[').append(index).append(']');
+            } else {
+                path.append('.').append(element);
+            }
+        }
+
+        return path.toString();
     }
 }

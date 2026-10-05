@@ -50,6 +50,7 @@ import io.micronaut.http.multipart.CompletedPart;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
+import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.constraints.NotNull;
 import reactor.core.publisher.Flux;
@@ -451,7 +452,7 @@ public class FlowInputOutput {
                 } catch (ConstraintViolationException e) {
                     Input<?> finalInput = input;
                     Set<InputOutputValidationException> exceptions = e.getConstraintViolations().stream()
-                        .map(c -> InputOutputValidationException.of(c.getMessage(), finalInput))
+                        .map(c -> InputOutputValidationException.of(c.getMessage(), finalInput, pathOf(c, finalInput)))
                         .collect(Collectors.toSet());
                     resolvable.resolveWithError(exceptions);
                 }
@@ -463,6 +464,23 @@ public class FlowInputOutput {
         }
 
         return resolvable.get();
+    }
+
+    /**
+     * The violation's property path when it points inside the value ({@code id.a[0].b}), null when it is about the
+     * input as a whole. Bean-validation violations on the input's own fields are not value locations, so the path is
+     * only kept when it continues past the id with a {@code .} or a {@code [}.
+     */
+    private static String pathOf(ConstraintViolation<?> violation, Input<?> input) {
+        String path = violation.getPropertyPath().toString();
+        String id = input.getId();
+
+        if (!path.startsWith(id) || path.length() == id.length()) {
+            return null;
+        }
+
+        char next = path.charAt(id.length());
+        return next == '.' || next == '[' ? path : null;
     }
 
     public static Object resolveDefaultValue(Input<?> input, PropertyContext renderer) throws IllegalVariableEvaluationException {

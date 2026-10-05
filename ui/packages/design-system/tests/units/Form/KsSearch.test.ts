@@ -39,6 +39,24 @@ describe("KsSearch", () => {
         expect(wrapper.find(".kel-input.is-disabled").exists()).toBe(true)
     })
 
+    test("focus moves the caret into the inner input, blur takes it back out", async () => {
+        const wrapper = mount(KsSearch, {
+            global: globalConfig,
+            attachTo: document.body,
+        })
+        const input = wrapper.find("input").element
+
+        wrapper.vm.focus()
+        await wrapper.vm.$nextTick()
+        expect(document.activeElement).toBe(input)
+
+        wrapper.vm.blur()
+        await wrapper.vm.$nextTick()
+        expect(document.activeElement).not.toBe(input)
+
+        wrapper.unmount()
+    })
+
     test("v-model two-way binding", async () => {
         const wrapper = mount(KsSearch, {
             props: {modelValue: "hello", "onUpdate:modelValue": (v: string) => wrapper.setProps({modelValue: v})},

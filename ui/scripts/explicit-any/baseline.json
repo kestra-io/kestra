@@ -114,7 +114,6 @@
   "tests/unit/composables/useBlueprintPlugins.spec.ts": 2,
   "tests/unit/leakGuard.ts": 1,
   "tests/unit/monacoCssEscapePolyfill.ts": 2,
-  "tests/unit/setup.ts": 6,
   "tests/unit/stores/entityLoadRace.spec.ts": 2,
   "tests/unit/stores/executionsBulkRestart.spec.ts": 1,
   "tests/unit/stores/executionsFileContent.spec.ts": 2,

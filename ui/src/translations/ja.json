@@ -2221,7 +2221,6 @@
       "run_all_tasks": "すべてのタスクを実行",
       "history": "直近10回の実行",
       "clear_history": "履歴をクリア",
-      "confirm_create": "フローを作成中はプレイグラウンドを実行できません。プレイグラウンドの実行を開始すると、flowが作成されます。",
       "tooltip_persistence": "Playgroundをオフにしてから再度オンにすると、ページに留まっている限り情報は保持されます。"
     },
     "submit": "送信",

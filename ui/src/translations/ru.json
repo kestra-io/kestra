@@ -2221,7 +2221,6 @@
       "run_all_tasks": "Запустить все Tasks",
       "history": "Последние 10 запусков",
       "clear_history": "Очистить историю",
-      "confirm_create": "Вы не можете запустить playground во время создания flow. Запуск playground создаст flow.",
       "tooltip_persistence": "Если вы выключите и снова включите Playground, информация останется, пока вы находитесь на странице."
     },
     "submit": "Отправить",

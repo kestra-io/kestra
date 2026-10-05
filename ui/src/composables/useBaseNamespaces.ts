@@ -13,6 +13,9 @@ const slashPrefix = (path: string) => (path.startsWith("/") ? path : `/${path}`)
 const safePath = (path: string) => encodeURIComponent(path).replace(/%2C|%2F/g, "/");
 export const VALIDATE = {validateStatus: (status: number) => status === 200 || status === 404};
 
+// The server picks a file's next revision without locking, so two overlapping saves of one file can record a revision that was never stored.
+const pendingFileSaves = new Map<string, {content: string; save: Promise<void>; settled: Promise<void>}>();
+
 export const useBaseNamespacesStore = () => {
     const namespace = ref<any>(undefined);
     const namespaces = ref<any[] | undefined>(undefined);
@@ -202,7 +205,24 @@ export const useBaseNamespacesStore = () => {
         return response.data ?? [];
     }
 
-    async function createFile(this: any, payload: {namespace: string; path: string; content: string}) {
+    function createFile(payload: {namespace: string; path: string; content: string}): Promise<void> {
+        const key = `${payload.namespace}:${slashPrefix(payload.path)}`;
+        const pending = pendingFileSaves.get(key);
+        if (pending?.content === payload.content) {
+            return pending.save;
+        }
+        const save = (pending?.settled ?? Promise.resolve()).then(() => postFile(payload));
+        const settled = save.then(() => undefined, () => undefined);
+        pendingFileSaves.set(key, {content: payload.content, save, settled});
+        settled.then(() => {
+            if (pendingFileSaves.get(key)?.settled === settled) {
+                pendingFileSaves.delete(key);
+            }
+        });
+        return save;
+    }
+
+    async function postFile(payload: {namespace: string; path: string; content: string}) {
         const DATA = new FormData();
         const BLOB = new Blob([payload.content], {type: "text/plain"});
         DATA.append("fileContent", BLOB);

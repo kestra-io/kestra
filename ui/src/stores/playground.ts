@@ -128,7 +128,8 @@ export const usePlaygroundStore = defineStore("playground", () => {
             })
 
             if(!isEqual(lastExecutionFlow.inputs, flowStore.flow.inputs)
-                || !isEqual(lastExecutionFlow.labels, flowStore.flow.labels)){
+                || !isEqual(lastExecutionFlow.labels, flowStore.flow.labels)
+                || !isEqual(lastExecutionFlow.variables, flowStore.flow.variables)){
                 return false
             };
         }

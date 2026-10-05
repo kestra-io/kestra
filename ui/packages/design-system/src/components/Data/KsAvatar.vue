@@ -1,5 +1,5 @@
 <template>
-    <ElAvatar v-bind="({...filteredProps(), ...$attrs} as any)">
+    <ElAvatar v-bind="({...filteredProps(), ...$attrs} as AvatarProps)">
         <template v-if="$slots.default" #default>
             <slot />
         </template>
@@ -7,7 +7,8 @@
 </template>
 
 <script setup lang="ts">
-    import {ElAvatar} from "element-plus"
+    import {ElAvatar, type AvatarProps} from "element-plus"
+    import type {Component} from "vue"
 
     import {useFilteredProps} from "../../utils/filteredProps"
 
@@ -19,7 +20,7 @@
         src?: string
         alt?: string
         fit?: "fill" | "contain" | "cover" | "none" | "scale-down"
-        icon?: any
+        icon?: string | Component
     }>()
 
     const filteredProps = useFilteredProps(props)

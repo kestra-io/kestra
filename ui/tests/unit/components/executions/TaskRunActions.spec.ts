@@ -150,7 +150,7 @@ describe("TaskRunActions", () => {
 
         expect(executionsStore.downloadLogs).toHaveBeenCalledWith({
             executionId: "ex-3",
-            params: {taskRunId: "tr-2"},
+            params: {"filters[taskRunId][EQUALS]": "tr-2"},
         })
     })
 
@@ -175,7 +175,7 @@ describe("TaskRunActions", () => {
 
         expect(executionsStore.downloadLogs).toHaveBeenCalledWith({
             executionId: "ex-4",
-            params: {taskRunId: "tr-2"},
+            params: {"filters[taskRunId][EQUALS]": "tr-2"},
         })
     })
 

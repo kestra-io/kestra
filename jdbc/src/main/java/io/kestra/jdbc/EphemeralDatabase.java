@@ -6,8 +6,8 @@ package io.kestra.jdbc;
  * A command opting in sets {@link #URL_PROPERTY} to an in-memory H2 URL. Every JDBC datasource is
  * then repointed at that URL, and no pool is ever opened against the datasource the user configured
  * — see {@code io.kestra.runner.memory.EphemeralDatasourceRewriter} and
- * {@link LogJdbcDataSourceProvider}, the only two places in the codebase that build a connection
- * pool.
+ * {@link LogJdbcDataSourceProvider} and {@link QueueJdbcDataSourceProvider}, which build dedicated
+ * connection pools.
  */
 public final class EphemeralDatabase {
     /**

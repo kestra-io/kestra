@@ -3678,11 +3678,12 @@ class ExecutionControllerRunnerTest {
 
     @Test
     @LoadFlows(value = { "flows/valids/minimal.yaml" }, tenantId = "shouldreplayplaygroundatbreakpoint")
-    void shouldReplayOnlyPlaygroundExecutionWhenSuspendedAtBreakpoint() {
+    void shouldReplayOnlyPlaygroundExecutionWhenEndedAtBreakpoint() {
         String tenantId = "shouldreplayplaygroundatbreakpoint";
         when(tenantService.resolveTenant()).thenReturn(tenantId);
 
-        Execution playground = triggerSuspendedExecution(tenantId, "&kind=PLAYGROUND");
+        Execution playground = triggerAtBreakpoint(tenantId, "&kind=PLAYGROUND", e -> e.getState().isTerminated());
+        assertThat(playground.getState().getCurrent()).isEqualTo(State.Type.KILLED);
         Execution playgroundReplay = client.toBlocking().retrieve(
             POST(
                 "/api/v1/%s/executions/%s/actions/replay?taskRunId=%s".formatted(tenantId, playground.getId(), playground.getTaskRunList().getFirst().getId()),
@@ -3692,7 +3693,7 @@ class ExecutionControllerRunnerTest {
         );
         assertThat(playgroundReplay.getId()).isNotEqualTo(playground.getId());
 
-        Execution regular = triggerSuspendedExecution(tenantId, "");
+        Execution regular = triggerAtBreakpoint(tenantId, "", e -> e.getState().isBreakpoint());
         HttpClientResponseException e = assertThrows(
             HttpClientResponseException.class,
             () -> client.toBlocking().retrieve(
@@ -3707,14 +3708,44 @@ class ExecutionControllerRunnerTest {
         assertThat(e.getMessage()).contains("Cannot replay execution: current state is 'BREAKPOINT', expected terminated.");
     }
 
-    private Execution triggerSuspendedExecution(String tenantId, String extraQuery) {
+    @Test
+    @LoadFlowsWithTenant({ "flows/valids/playground-parallel-breakpoint.yaml" })
+    void shouldEndPlaygroundAtBreakpointAndReplayParallelSiblingWhenReplayed(String tenantId) {
+        when(tenantService.resolveTenant()).thenReturn(tenantId);
+
+        Execution created = client.toBlocking().retrieve(
+            HttpRequest
+                .POST("/api/v1/%s/executions/%s/playground-parallel-breakpoint?kind=PLAYGROUND&breakpoints=b".formatted(tenantId, TESTS_FLOW_NS), null)
+                .contentType(MediaType.MULTIPART_FORM_DATA_TYPE),
+            Execution.class
+        );
+        Execution ended = awaitExecution(tenantId, created.getId(), e -> e.getState().isTerminated());
+
+        assertThat(ended.getState().getCurrent()).isEqualTo(State.Type.KILLED);
+        assertThat(ended.findTaskRunsByTaskId("a").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(ended.findTaskRunsByTaskId("slow").getFirst().getState().getCurrent()).as("a sibling already on a worker finishes").isEqualTo(State.Type.SUCCESS);
+        TaskRun breakpointTaskRun = ended.findTaskRunsByTaskId("b").getFirst();
+        assertThat(breakpointTaskRun.getState().getCurrent()).isEqualTo(State.Type.KILLED);
+
+        Execution replay = client.toBlocking().retrieve(
+            POST("/api/v1/%s/executions/%s/actions/replay?taskRunId=%s".formatted(tenantId, ended.getId(), breakpointTaskRun.getId()), ImmutableMap.of()),
+            Execution.class
+        );
+        Execution replayed = awaitExecution(tenantId, replay.getId(), e -> e.getState().isTerminated());
+
+        assertThat(replayed.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(replayed.findTaskRunsByTaskId("slow").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(replayed.findTaskRunsByTaskId("b").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+    }
+
+    private Execution triggerAtBreakpoint(String tenantId, String extraQuery, Predicate<Execution> until) {
         Execution execution = client.toBlocking().retrieve(
             HttpRequest
                 .POST("/api/v1/" + tenantId + "/executions/" + TESTS_FLOW_NS + "/minimal?breakpoints=date" + extraQuery, null)
                 .contentType(MediaType.MULTIPART_FORM_DATA_TYPE),
             Execution.class
         );
-        return awaitExecution(execution.getId(), State.Type.BREAKPOINT);
+        return awaitExecution(tenantId, execution.getId(), until);
     }
 
     @Test

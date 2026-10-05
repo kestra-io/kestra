@@ -7726,6 +7726,10 @@ export type DeleteFlowsByIdsData = {
 
 export type DeleteFlowsByIdsErrors = {
     /**
+     * Validation errors
+     */
+    400: ProblemDetail;
+    /**
      * Authentication required
      */
     401: ProblemDetail;

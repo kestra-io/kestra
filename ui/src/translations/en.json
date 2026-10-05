@@ -331,6 +331,8 @@
     "restart tooltip": "Restart the execution from the <code>{state}</code> task",
     "restarted": "Execution is Restarted",
     "restart confirm": "Are you sure you want to restart execution <code>{id}</code>?",
+    "restart subflow warning": "This execution was created by a parent execution and should be restarted from there. Restarting it alone leaves the parent execution FAILED and its next tasks will not run. Go to the {parent} to restart it.",
+    "restart subflow warning link": "parent execution",
     "replay": "Replay",
     "replay from task tooltip": "Create a similar execution starting from task <code>{taskId}</code>",
     "replay from beginning tooltip": "Create a similar execution starting from the beginning",

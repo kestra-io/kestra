@@ -331,6 +331,8 @@
     "restart tooltip": "Relancer l'exécution depuis la tâche dans l'état <code>{state}</code>",
     "restarted": "L'exécution est redémarrée",
     "restart confirm": "Voulez-vous vraiment redémarrer l'exécution <code>{id}</code> ?",
+    "restart subflow warning": "Cette exécution a été créée par une exécution parente et doit être redémarrée à partir de celle-ci. La redémarrer seule laisse l'exécution parente FAILED et ses prochaines tasks ne s'exécuteront pas. Accédez au {parent} pour la redémarrer.",
+    "restart subflow warning link": "exécution parente",
     "replay": "Rejouer",
     "replay from task tooltip": "Créer une nouvelle exécution similaire démarrant de la tâche <code>{taskId}</code>",
     "replay from beginning tooltip": "Créer une nouvelle exécution similaire depuis le début",

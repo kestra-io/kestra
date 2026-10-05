@@ -331,6 +331,8 @@
     "restart tooltip": "Riavvia l'esecuzione dal task <code>{state}</code>",
     "restarted": "L'esecuzione è Riavviata",
     "restart confirm": "Sei sicuro di voler riavviare l'esecuzione <code>{id}</code>?",
+    "restart subflow warning": "Questa esecuzione è stata creata da un'esecuzione padre e dovrebbe essere riavviata da lì. Riavviarla da sola lascia l'esecuzione padre FAILED e i suoi Task successivi non verranno eseguiti. Vai a {parent} per riavviarla.",
+    "restart subflow warning link": "esecuzione padre",
     "replay": "Ripeti",
     "replay from task tooltip": "Crea un'esecuzione simile a partire dal task <code>{taskId}</code>",
     "replay from beginning tooltip": "Crea un'esecuzione simile a partire dall'inizio",

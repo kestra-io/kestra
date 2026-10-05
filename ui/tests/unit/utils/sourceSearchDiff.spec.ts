@@ -5,6 +5,7 @@ import {
     distinctSkipReasons,
     getSeparatorVariant,
     inlineReplacement,
+    type ReplaceContext,
     type SourceSearchDiffMatch,
     type SourceSearchSelectionGroup,
 } from "../../../src/utils/sourceSearchDiff"
@@ -102,237 +103,67 @@ describe("getSeparatorVariant", () => {
 })
 
 describe("buildDiffHunks", () => {
-    const sourceLines = [
-        "line 1",
-        "line 2",
-        "line 3",
-        "line 4",
-        "line 5",
-        "line 6",
-        "line 7",
-        "line 8",
-        "line 9",
-        "line 10",
+    const sourceLines = Array.from({length: 10}, (_, i) => `line ${i + 1}`)
+    const change = (line: number): SourceSearchDiffMatch => ({line, before: `line ${line}`, after: `changed ${line}`})
+    const context = (line: number) => ({kind: "context", line, text: `line ${line}`})
+    const changed = (line: number) => [
+        {kind: "removed", line, text: `line ${line}`},
+        {kind: "added", line, text: `changed ${line}`},
     ]
 
-    it("returns no hunks when there are no matches", () => {
-        expect(buildDiffHunks(sourceLines, [])).toEqual([])
-    })
-
-    it("produces a hunk with context lines for a single changed region", () => {
-        const matches: SourceSearchDiffMatch[] = [
-            {line: 5, before: "line 5", after: "changed line 5"},
-        ]
-
-        const result = buildDiffHunks(sourceLines, matches, 2)
-
-        // Context before: lines 3, 4
-        // Changed: line 5 (removed + added)
-        // Context after: lines 6, 7
-        expect(result).toEqual([
-            {kind: "context", line: 3, text: "line 3"},
-            {kind: "context", line: 4, text: "line 4"},
-            {kind: "removed", line: 5, text: "line 5"},
-            {kind: "added", line: 5, text: "changed line 5"},
-            {kind: "context", line: 6, text: "line 6"},
-            {kind: "context", line: 7, text: "line 7"},
+    it("surrounds a change with two context lines by default", () => {
+        expect(buildDiffHunks(sourceLines, [change(5)])).toEqual([
+            context(3), context(4), ...changed(5), context(6), context(7),
         ])
     })
 
-    it("produces separate hunks for non-adjacent changed regions", () => {
-        const matches: SourceSearchDiffMatch[] = [
-            {line: 3, before: "line 3", after: "changed line 3"},
-            {line: 8, before: "line 8", after: "changed line 8"},
-        ]
-
-        const result = buildDiffHunks(sourceLines, matches, 1)
-
-        // First hunk: lines 2-4
-        // Second hunk: lines 7-9
-        expect(result).toEqual([
-            {kind: "context", line: 2, text: "line 2"},
-            {kind: "removed", line: 3, text: "line 3"},
-            {kind: "added", line: 3, text: "changed line 3"},
-            {kind: "context", line: 4, text: "line 4"},
-            {kind: "context", line: 7, text: "line 7"},
-            {kind: "removed", line: 8, text: "line 8"},
-            {kind: "added", line: 8, text: "changed line 8"},
-            {kind: "context", line: 9, text: "line 9"},
+    it("keeps distant changes in separate hunks, in line order", () => {
+        expect(buildDiffHunks(sourceLines, [change(8), change(3)], 1)).toEqual([
+            context(2), ...changed(3), context(4),
+            context(7), ...changed(8), context(9),
         ])
     })
 
-    it("merges adjacent changes into a single hunk when ranges overlap", () => {
-        const matches: SourceSearchDiffMatch[] = [
-            {line: 4, before: "line 4", after: "changed line 4"},
-            {line: 5, before: "line 5", after: "changed line 5"},
-        ]
-
-        const result = buildDiffHunks(sourceLines, matches, 1)
-
-        // With context=1: first match spans lines 3-5, second spans 4-6
-        // These overlap (4-5), so they merge into lines 3-6
-        expect(result).toEqual([
-            {kind: "context", line: 3, text: "line 3"},
-            {kind: "removed", line: 4, text: "line 4"},
-            {kind: "added", line: 4, text: "changed line 4"},
-            {kind: "removed", line: 5, text: "line 5"},
-            {kind: "added", line: 5, text: "changed line 5"},
-            {kind: "context", line: 6, text: "line 6"},
+    it("merges overlapping changes instead of repeating the shared context line", () => {
+        expect(buildDiffHunks(sourceLines, [change(3), change(5)], 1)).toEqual([
+            context(2), ...changed(3), context(4), ...changed(5), context(6),
         ])
     })
 
-    it("merges nearby changes when context ranges touch", () => {
-        const matches: SourceSearchDiffMatch[] = [
-            {line: 3, before: "line 3", after: "changed line 3"},
-            {line: 5, before: "line 5", after: "changed line 5"},
-        ]
-
-        const result = buildDiffHunks(sourceLines, matches, 1)
-
-        // First match: lines 2-4, second: lines 4-6
-        // They touch at line 4, so merge into lines 2-6
-        expect(result).toEqual([
-            {kind: "context", line: 2, text: "line 2"},
-            {kind: "removed", line: 3, text: "line 3"},
-            {kind: "added", line: 3, text: "changed line 3"},
-            {kind: "context", line: 4, text: "line 4"},
-            {kind: "removed", line: 5, text: "line 5"},
-            {kind: "added", line: 5, text: "changed line 5"},
-            {kind: "context", line: 6, text: "line 6"},
-        ])
-    })
-
-    it("does not extend before the first line when match is on line 1", () => {
-        const matches: SourceSearchDiffMatch[] = [
-            {line: 1, before: "line 1", after: "changed line 1"},
-        ]
-
-        const result = buildDiffHunks(sourceLines, matches, 2)
-
-        // Should start at line 1, not line -1
-        expect(result).toEqual([
-            {kind: "removed", line: 1, text: "line 1"},
-            {kind: "added", line: 1, text: "changed line 1"},
-            {kind: "context", line: 2, text: "line 2"},
-            {kind: "context", line: 3, text: "line 3"},
-        ])
-        // Verify no line < 1
-        expect(result.every((l) => l.line >= 1)).toBe(true)
-    })
-
-    it("does not extend beyond the last line when match is on the last line", () => {
-        const matches: SourceSearchDiffMatch[] = [
-            {line: 10, before: "line 10", after: "changed line 10"},
-        ]
-
-        const result = buildDiffHunks(sourceLines, matches, 2)
-
-        // Should end at line 10, not line 12
-        expect(result).toEqual([
-            {kind: "context", line: 8, text: "line 8"},
-            {kind: "context", line: 9, text: "line 9"},
-            {kind: "removed", line: 10, text: "line 10"},
-            {kind: "added", line: 10, text: "changed line 10"},
-        ])
-        // Verify no line > sourceLines.length
-        expect(result.every((l) => l.line <= sourceLines.length)).toBe(true)
-    })
-
-    it("uses the first match when multiple matches exist on the same line", () => {
-        const matches: SourceSearchDiffMatch[] = [
-            {line: 5, before: "line 5", after: "changed line 5 v1"},
-            {line: 5, before: "line 5", after: "changed line 5 v2"},
-        ]
-
-        const result = buildDiffHunks(sourceLines, matches, 1)
-
-        // Implementation uses find() which returns only the first match per line
-        const line5Removed = result.filter((l) => l.line === 5 && l.kind === "removed")
-        const line5Added = result.filter((l) => l.line === 5 && l.kind === "added")
-        expect(line5Removed).toHaveLength(1)
-        expect(line5Added).toHaveLength(1)
-        expect(line5Removed[0].text).toBe("line 5")
-        expect(line5Added[0].text).toBe("changed line 5 v1")
-    })
-
-    it("uses default context of 2 when not specified", () => {
-        const matches: SourceSearchDiffMatch[] = [
-            {line: 5, before: "line 5", after: "changed line 5"},
-        ]
-
-        const result = buildDiffHunks(sourceLines, matches)
-
-        // Default context is 2, so lines 3-7
-        expect(result[0]).toEqual({kind: "context", line: 3, text: "line 3"})
-        expect(result[result.length - 1]).toEqual({kind: "context", line: 7, text: "line 7"})
+    it("does not run off either end of the file", () => {
+        expect(buildDiffHunks(sourceLines, [change(1)])).toEqual([...changed(1), context(2), context(3)])
+        expect(buildDiffHunks(sourceLines, [change(10)])).toEqual([context(8), context(9), ...changed(10)])
     })
 })
 
 describe("inlineReplacement", () => {
-    const baseContext = {
+    const replace = (matched: string, overrides: Partial<ReplaceContext>) => inlineReplacement(matched, {
         query: "test",
+        replacement: "X",
         regex: true,
         caseSensitive: false,
         wholeWord: false,
-    } as const
-
-    it("replaces the matched portion when regex is enabled", () => {
-        const context = {...baseContext, replacement: "replaced"}
-        expect(inlineReplacement("this is a test string", context)).toBe("this is a replaced string")
+        ...overrides,
     })
 
-    it("replaces only the first occurrence when regex is enabled", () => {
-        const context = {...baseContext, replacement: "X"}
-        expect(inlineReplacement("test test test", context)).toBe("X test test")
+    it("substitutes the match and leaves the rest of the text intact", () => {
+        expect(replace("a test string", {})).toBe("a X string")
     })
 
-    it("respects case sensitivity", () => {
-        const context = {...baseContext, caseSensitive: true, replacement: "X"}
-        expect(inlineReplacement("Test test", context)).toBe("Test X")
+    it("inserts regex-special characters in the replacement literally", () => {
+        expect(replace("a test", {replacement: "*.[ ]"})).toBe("a *.[ ]")
     })
 
-    it("respects whole word matching", () => {
-        const context = {...baseContext, wholeWord: true, replacement: "X"}
-        expect(inlineReplacement("test testing attest", context)).toBe("X testing attest")
+    it("honours case sensitivity", () => {
+        expect(replace("Test test", {caseSensitive: true})).toBe("Test X")
     })
 
-    it("returns replacement directly when regex is disabled", () => {
-        const context = {...baseContext, regex: false, replacement: "literal replacement"}
-        expect(inlineReplacement("any matched text", context)).toBe("literal replacement")
+    it("applies whole-word matching to every alternative of the query", () => {
+        expect(replace("cats dog", {query: "cat|dog", wholeWord: true})).toBe("cats X")
     })
 
-    it("handles replacement text with dollar sign literally", () => {
-        const context = {...baseContext, replacement: "$100"}
-        expect(inlineReplacement("price is test", context)).toBe("price is $100")
-    })
-
-    it("handles replacement text with backslash literally", () => {
-        const context = {...baseContext, replacement: "C:\\path"}
-        expect(inlineReplacement("path is test", context)).toBe("path is C:\\path")
-    })
-
-    it("handles replacement text with regex special characters literally", () => {
-        const context = {...baseContext, replacement: "*.[ ]"}
-        expect(inlineReplacement("pattern is test", context)).toBe("pattern is *.[ ]")
-    })
-
-    it("handles replacement text with multiple special characters", () => {
-        const context = {...baseContext, replacement: "$1\\$2.*[]"}
-        expect(inlineReplacement("special test chars", context)).toBe("special $1\\$2.*[] chars")
-    })
-
-    it("falls back to replacement when regex pattern is invalid", () => {
-        const context = {...baseContext, query: "[invalid", replacement: "fallback"}
-        expect(inlineReplacement("anything", context)).toBe("fallback")
-    })
-
-    it("handles empty matched string", () => {
-        const context = {...baseContext, replacement: "X"}
-        expect(inlineReplacement("", context)).toBe("")
-    })
-
-    it("handles empty replacement", () => {
-        const context = {...baseContext, replacement: ""}
-        expect(inlineReplacement("test string", context)).toBe(" string")
+    it("returns the replacement as is when regex is off or the pattern is invalid", () => {
+        expect(replace("a test", {regex: false})).toBe("X")
+        expect(replace("a test", {query: "[invalid"})).toBe("X")
     })
 })

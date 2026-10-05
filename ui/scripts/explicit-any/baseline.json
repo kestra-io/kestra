@@ -57,6 +57,5 @@
   "src/utils/toast.ts": 6,
   "src/utils/triggers.ts": 3,
   "src/utils/unsavedChange.ts": 1,
-  "src/utils/utils.ts": 14,
-  "tests/unit/setup.ts": 6
+  "src/utils/utils.ts": 14
 }

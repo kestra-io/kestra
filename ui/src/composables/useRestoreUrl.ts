@@ -21,7 +21,14 @@ function getLocalStorageName(route: RouteLocation): string {
 
 function getRestoredUrlValue(route: RouteLocation) {
     const raw = window.sessionStorage.getItem(getLocalStorageName(route))
-    return raw ? JSON.parse(raw) : null
+    if (!raw) return null
+
+    try {
+        return JSON.parse(raw)
+    } catch {
+        // Prevent crashes from malformed sessionStorage data
+        return null
+    }
 }
 
 export function getRestoredQuery(route: RouteLocation) {

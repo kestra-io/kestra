@@ -11,7 +11,7 @@ const flowStore = reactive({
     haveChange: false,
     flowErrors: undefined,
     isCreating: false,
-    saveAll: vi.fn(() => Promise.resolve()),
+    saveAsDraft: vi.fn(() => Promise.resolve()),
     loadGraph: vi.fn(() => Promise.resolve(graph)),
     loadFlow: vi.fn(() => Promise.resolve(previousFlow)),
 })

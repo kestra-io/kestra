@@ -1,5 +1,6 @@
 import {beforeEach, describe, expect, test, vi} from "vitest"
 import {createPinia, setActivePinia} from "pinia"
+import type {AxiosLikeConfig} from "@kestra-io/kestra-sdk"
 
 vi.mock("vue-router", () => ({
     useRoute: () => ({query: {}, params: {}}),
@@ -45,7 +46,7 @@ describe("executions store fileContent", () => {
 
         expect(content).toBe("<html><body>full</body></html>")
 
-        const [url, config] = getMock.mock.calls[0] as [string, Record<string, any>]
+        const [url, config] = getMock.mock.calls[0] as [string, AxiosLikeConfig]
         // Hits /file (full bytes), NOT /file/preview (row/byte capped).
         expect(url).toBe("http://localhost:8080/api/v1/main/executions/exec-1/file")
         expect(url).not.toContain("/preview")
@@ -59,7 +60,7 @@ describe("executions store fileContent", () => {
 
         await store.fileContent({executionId: "exec-1", path: "kestra:///outputs/page.html"})
 
-        const config = (getMock.mock.calls[0] as [string, Record<string, any>])[1]
+        const config = (getMock.mock.calls[0] as [string, AxiosLikeConfig])[1]
         const transform = Array.isArray(config.transformResponse) ? config.transformResponse[0] : config.transformResponse
         // A raw JSON-looking string must be returned verbatim, not parsed into an object.
         const jsonLike = "{\"not\":\"parsed\"}"

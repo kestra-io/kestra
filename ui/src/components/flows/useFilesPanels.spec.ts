@@ -1,16 +1,20 @@
-import {describe, expect, it, vi} from "vitest"
+import {beforeEach, describe, expect, it, vi} from "vitest"
 import {mount} from "@vue/test-utils"
 import {defineComponent, h, inject, ref, type Ref} from "vue"
 
 import {getTabFromFilesTab, useFilesPanels} from "./useFilesPanels"
 import {FILES_CLOSE_TAB_INJECTION_KEY} from "../inputs/FileExplorer.vue"
-import type {Panel} from "../../utils/multiPanelTypes"
+import {FILES_REFRESH_CONTENT_INJECTION_KEY, FILES_UPDATE_CONTENT_INJECTION_KEY} from "../inputs/FlowFileEditorTab.vue"
+import type {Panel, TabLive} from "../../utils/multiPanelTypes"
+
+const saveOrCreateFile = vi.fn()
+const flowStore: {haveChange: boolean; filesSaveAll?: (() => Promise<void>) | null} = {haveChange: false}
 
 vi.mock("override/stores/namespaces", () => ({
-    useNamespacesStore: () => ({}),
+    useNamespacesStore: () => ({saveOrCreateFile}),
 }))
 vi.mock("../../stores/flow", () => ({
-    useFlowStore: () => ({haveChange: false}),
+    useFlowStore: () => flowStore,
 }))
 vi.mock("../../composables/usePanelDefaultSize", () => ({
     usePanelDefaultSize: () => ({defaultSize: ref(50)}),
@@ -37,10 +41,14 @@ const tabFor = (path: string) => getTabFromFilesTab({
 function mountWithTabs(paths: string[]) {
     const panels: Ref<Panel[]> = ref([])
     let closeTab!: (tab: {path: string}) => boolean
+    let updateContent!: (payload: {path: string; content: string}) => void
+    let refreshedContents!: Ref<Record<string, {content: string}>>
 
     const Child = defineComponent({
         setup() {
             closeTab = inject(FILES_CLOSE_TAB_INJECTION_KEY)!
+            updateContent = inject(FILES_UPDATE_CONTENT_INJECTION_KEY)!
+            refreshedContents = inject(FILES_REFRESH_CONTENT_INJECTION_KEY)!
             return () => null
         },
     })
@@ -54,7 +62,7 @@ function mountWithTabs(paths: string[]) {
         },
     }))
 
-    return {panels, closeTab}
+    return {panels, closeTab, updateContent, refreshedContents}
 }
 
 const openPaths = (panels: Ref<Panel[]>) =>
@@ -108,4 +116,43 @@ describe("useFilesPanels close handler", () => {
         expect(openPaths(panels)).toEqual(["code-a.txt", "code-b.txt"])
     })
 
+})
+
+describe("useFilesPanels save all", () => {
+    beforeEach(() => {
+        saveOrCreateFile.mockReset()
+    })
+
+    function editFile(path: string, content: string) {
+        const mounted = mountWithTabs([path])
+        mounted.updateContent({path, content})
+        const tab = mounted.panels.value[0].tabs[0] as TabLive
+        tab.dirty = true
+        return mounted
+    }
+
+    it("should give the editor the saved content as its new baseline", async () => {
+        saveOrCreateFile.mockResolvedValue(undefined)
+        const {panels, refreshedContents} = editFile("data.txt", "edited")
+
+        await flowStore.filesSaveAll!()
+
+        expect(saveOrCreateFile).toHaveBeenCalledWith({namespace: "io.kestra.test", path: "data.txt", content: "edited"})
+        expect((panels.value[0].tabs[0] as TabLive).dirty).toBe(false)
+        expect(refreshedContents.value["data.txt"]).toEqual({content: "edited"})
+    })
+
+    it("should keep a file dirty when it was edited while it was being saved", async () => {
+        let finishSave: () => void = () => {}
+        saveOrCreateFile.mockReturnValue(new Promise<void>((resolve) => finishSave = resolve))
+        const {panels, updateContent, refreshedContents} = editFile("data.txt", "edited")
+
+        const saving = flowStore.filesSaveAll!()
+        updateContent({path: "data.txt", content: "edited again"})
+        finishSave()
+        await saving
+
+        expect((panels.value[0].tabs[0] as TabLive).dirty).toBe(true)
+        expect(refreshedContents.value["data.txt"]).toBeUndefined()
+    })
 })

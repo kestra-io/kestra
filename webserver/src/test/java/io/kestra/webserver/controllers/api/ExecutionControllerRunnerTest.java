@@ -3677,6 +3677,47 @@ class ExecutionControllerRunnerTest {
     }
 
     @Test
+    @LoadFlows(value = { "flows/valids/minimal.yaml" }, tenantId = "shouldreplayplaygroundatbreakpoint")
+    void shouldReplayOnlyPlaygroundExecutionWhenSuspendedAtBreakpoint() {
+        String tenantId = "shouldreplayplaygroundatbreakpoint";
+        when(tenantService.resolveTenant()).thenReturn(tenantId);
+
+        Execution playground = triggerSuspendedExecution(tenantId, "&kind=PLAYGROUND");
+        Execution playgroundReplay = client.toBlocking().retrieve(
+            POST(
+                "/api/v1/%s/executions/%s/actions/replay?taskRunId=%s".formatted(tenantId, playground.getId(), playground.getTaskRunList().getFirst().getId()),
+                ImmutableMap.of()
+            ),
+            Execution.class
+        );
+        assertThat(playgroundReplay.getId()).isNotEqualTo(playground.getId());
+
+        Execution regular = triggerSuspendedExecution(tenantId, "");
+        HttpClientResponseException e = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().retrieve(
+                POST(
+                    "/api/v1/%s/executions/%s/actions/replay?taskRunId=%s".formatted(tenantId, regular.getId(), regular.getTaskRunList().getFirst().getId()),
+                    ImmutableMap.of()
+                ),
+                Execution.class
+            )
+        );
+        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.CONFLICT.getCode());
+        assertThat(e.getMessage()).contains("Cannot replay execution: current state is 'BREAKPOINT', expected terminated.");
+    }
+
+    private Execution triggerSuspendedExecution(String tenantId, String extraQuery) {
+        Execution execution = client.toBlocking().retrieve(
+            HttpRequest
+                .POST("/api/v1/" + tenantId + "/executions/" + TESTS_FLOW_NS + "/minimal?breakpoints=date" + extraQuery, null)
+                .contentType(MediaType.MULTIPART_FORM_DATA_TYPE),
+            Execution.class
+        );
+        return awaitExecution(execution.getId(), State.Type.BREAKPOINT);
+    }
+
+    @Test
     @LoadFlows({ "flows/valids/logs.yaml" })
     void shouldReturnBadRequestWhenKillByIdsCalledOnInvalidExecutions() {
         Execution execution = client.toBlocking().retrieve(
@@ -3898,7 +3939,7 @@ class ExecutionControllerRunnerTest {
     private URI createNsFile(boolean nsInAuthority) throws IOException, URISyntaxException {
         String namespace = "io.kestra.tests";
         String filePath = "file.txt";
-        Namespace namespaceStorage = namespaceFactory.of(MAIN_TENANT, namespace, storageInterface);
+        Namespace namespaceStorage = namespaceFactory.of(MAIN_TENANT, namespace);
         namespaceStorage.putFile(Path.of("/" + filePath), new ByteArrayInputStream("Hello World".getBytes()));
         return URI.create("nsfile://" + (nsInAuthority ? namespace : "") + "/" + filePath);
     }

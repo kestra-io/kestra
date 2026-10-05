@@ -1,3 +1,5 @@
+import type {ColumnConfig} from "../composables/useTableColumns"
+
 export enum Comparators {
     EQUALS = "=",
     NOT_EQUALS = "!=",
@@ -163,7 +165,7 @@ export interface FilterConfiguration {
 
 export interface TableProperties {
     shown: boolean;
-    columns?: any[];
+    columns?: ColumnConfig[];
     storageKey?: string;
     displayColumns?: string[];
 }

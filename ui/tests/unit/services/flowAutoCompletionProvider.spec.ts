@@ -1,7 +1,11 @@
 import {describe, expect, it, vi, beforeAll, beforeEach} from "vitest"
-import {FlowAutoCompletion} from "override/services/flowAutoCompletionProvider"
+import {FlowAutoCompletion, type NamespacesStoreLike} from "override/services/flowAutoCompletionProvider"
 import {fillExpressionCache, functionToSnippet} from "../../../src/services/autoCompletionProvider"
 import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
+import type {useFlowStore} from "../../../src/stores/flow"
+import type {usePluginsStore} from "../../../src/stores/plugins"
+import type {useMcpStore} from "../../../src/stores/mcp"
+import type {useDashboardStore} from "../../../src/stores/dashboard"
 
 const defaultFlow = `inputs:
   - id: input1
@@ -64,7 +68,7 @@ const flowWithOutputsAutocompleteInTask = [
     "namespace: my.namespace",
 ].join("\n")
 
-const propertiesSchemaWrapper = (properties: Record<string, any>) => ({
+const propertiesSchemaWrapper = (properties: Record<string, unknown>) => ({
     schema: {
         outputs: {
             properties,
@@ -88,7 +92,7 @@ const pluginsStore = {
         "io.kestra.plugin.core.log.Log",
         "io.kestra.plugin.core.trigger.Schedule",
     ],
-    load: vi.fn((payload: any) =>{
+    load: vi.fn((payload: Parameters<ReturnType<typeof usePluginsStore>["load"]>[0]) =>{
         switch (payload.cls) {
                 case "io.kestra.plugin.core.trigger.Schedule":
                     return Promise.resolve(propertiesSchemaWrapper({
@@ -108,7 +112,7 @@ const pluginsStore = {
                     return Promise.reject("404")
             }
     }),
-} as any
+}
 
 const flowStore = {
     loadFlow: vi.fn(({namespace, id, revision}) => {
@@ -143,7 +147,7 @@ const flowStore = {
         }
         return Promise.reject("404")
     }),
-} as any
+}
 
 const namespacesStore = {
     datatypeNamespaces: undefined,
@@ -164,11 +168,11 @@ const namespacesStore = {
         }
         return []
     }),
-} as any
+}
 
 const mcpStore = {
     list: vi.fn(() => Promise.resolve({results: [{id: "default"}, {id: "analytics-server"}], total: 2})),
-} as any
+}
 
 const dashboardStore = {
     searchIds: vi.fn(() => Promise.resolve([{id: "my-dashboard", title: "My Dashboard"}, {id: "other-dashboard", title: "Other"}])),
@@ -184,7 +188,7 @@ const dashboardStore = {
         }
         return Promise.resolve([])
     }),
-} as any
+}
 
 const mockFunctions = [
     {name: "kv", arguments: [{name: "key", defaultValue: "'my_key'"}, {name: "namespace", defaultValue: "flow.namespace"}, {name: "errorOnMissing", defaultValue: null}]},
@@ -196,6 +200,16 @@ const mockFunctions = [
 ]
 
 type ProviderParsedFlow = NonNullable<Parameters<FlowAutoCompletion["valueAutoCompletion"]>[1]>
+
+function newProvider() {
+    return new FlowAutoCompletion(
+        flowStore as unknown as ReturnType<typeof useFlowStore>,
+        pluginsStore as unknown as ReturnType<typeof usePluginsStore>,
+        namespacesStore as unknown as NamespacesStoreLike,
+        mcpStore as unknown as ReturnType<typeof useMcpStore>,
+        dashboardStore as unknown as ReturnType<typeof useDashboardStore>,
+    )
+}
 
 let provider: FlowAutoCompletion
 const parsed = YAML_UTILS.parse<ProviderParsedFlow>(defaultFlow)
@@ -211,11 +225,11 @@ describe("FlowAutoCompletionProvider", () => {
     // only passes in declaration order.
     beforeEach(() => {
         vi.clearAllMocks()
-        provider = new FlowAutoCompletion(flowStore, pluginsStore, namespacesStore, mcpStore, dashboardStore)
+        provider = newProvider()
     })
 
     it("root autocompletions include variables and function snippets", async () => {
-        const result = await new FlowAutoCompletion(flowStore, pluginsStore, namespacesStore, mcpStore, dashboardStore).rootFieldAutoCompletion()
+        const result = await newProvider().rootFieldAutoCompletion()
 
         // Variables come first
         expect(result).toContain("outputs")

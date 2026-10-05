@@ -1047,6 +1047,8 @@
         "folder": "폴더 삭제",
         "files": "{count}개의 선택된 파일 삭제",
         "bulk_success": "선택한 파일이 성공적으로 삭제되었습니다.",
+        "bulk_partial_error": "선택한 {totalCount}개 파일 중 {failedCount}개를 삭제하지 못했습니다.",
+        "all_failed_error": "선택한 파일을 삭제하지 못했습니다.",
         "folders": "{count}개의 선택된 폴더 삭제"
       },
       "move": {

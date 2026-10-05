@@ -1047,6 +1047,8 @@
         "folder": "Ordner löschen",
         "files": "{count} ausgewählte Dateien löschen",
         "bulk_success": "Ausgewählte Dateien erfolgreich gelöscht.",
+        "bulk_partial_error": "Fehler beim Löschen von {failedCount} der ausgewählten {totalCount} Datei(en).",
+        "all_failed_error": "Fehler beim Löschen der ausgewählten Dateien.",
         "folders": "{count} ausgewählte Ordner löschen"
       },
       "move": {

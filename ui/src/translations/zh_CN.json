@@ -1047,6 +1047,8 @@
         "folder": "删除文件夹",
         "files": "删除 {count} 个已选择的文件",
         "bulk_success": "所选文件已成功删除。",
+        "bulk_partial_error": "未能删除所选 {totalCount} 个文件中的 {failedCount} 个。",
+        "all_failed_error": "删除所选文件失败。",
         "folders": "删除 {count} 个已选文件夹"
       },
       "move": {

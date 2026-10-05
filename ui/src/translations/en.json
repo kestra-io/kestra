@@ -1047,6 +1047,8 @@
         "folder": "Delete folder",
         "files": "Delete {count} selected files",
         "bulk_success": "Selected files deleted successfully.",
+        "bulk_partial_error": "Failed to delete {failedCount} of the selected {totalCount} file(s).",
+        "all_failed_error": "Failed to delete the selected files.",
         "folders": "Delete {count} selected folders"
       },
       "move": {

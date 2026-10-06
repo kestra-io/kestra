@@ -14,9 +14,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public abstract class ExecutionDelayStateStoreContract {
 
+    // Far from the wall clock so a step-free fixed clock can drive the store.
     protected static final Instant ANCHOR = Instant.parse("2031-01-15T10:00:00Z");
 
-    private static final Instant DRAIN = Instant.parse("2040-01-01T00:00:00Z");
+    // Just past the latest date this contract inserts, so teardown cannot delete a
+    // pending delay another suite left in the shared kestra_unit database.
+    private static final Instant DRAIN = ANCHOR.plusSeconds(3601);
 
     protected abstract ExecutionDelayStateStore store();
 

@@ -32,7 +32,9 @@ import io.kestra.core.repositories.LogDataStoreInterface;
 import io.kestra.core.serializers.YamlParser;
 import io.kestra.core.services.ExecutionService;
 import io.kestra.core.services.FlowService;
+import io.kestra.core.services.KVStoreService;
 import io.kestra.core.services.TaskOutputService;
+import io.kestra.core.storages.kv.KVValueAndMetadata;
 import io.kestra.core.utils.Await;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.plugin.core.flow.Pause;
@@ -55,6 +57,7 @@ class ExecutionServiceTest {
     public static final String TENANT_1 = "tenant1";
     public static final String TENANT_2 = "tenant2";
     public static final String TENANT_3 = "tenant3";
+
     @Inject
     ExecutionService executionService;
 
@@ -66,6 +69,9 @@ class ExecutionServiceTest {
 
     @Inject
     TaskOutputService taskOutputService;
+
+    @Inject
+    KVStoreService kvStoreService;
 
     @Inject
     ExecutionRepositoryInterface executionRepository;
@@ -771,5 +777,107 @@ class ExecutionServiceTest {
         assertThat(restarted.getId()).isEqualTo(newExecution.getId());
         assertThat(restarted.getOriginalId()).isEqualTo(newExecution.getId());
         assertThat(restarted.getTaskRunList()).isEmpty();
+    }
+
+    @Test
+    @LoadFlows({ "flows/valids/replay-kv-flow.yaml" })
+    void replayKvFlowRemovesStaleHandlers() throws Exception {
+        var kvStore = kvStoreService.get(MAIN_TENANT, "io.kestra.tests", null);
+        kvStore.put("fail_flag", new KVValueAndMetadata(null, "yes"));
+
+        Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "replay-kv-flow");
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        assertThat(execution.getTaskRunList()).hasSize(4);
+
+        kvStore.put("fail_flag", new KVValueAndMetadata(null, "no"));
+
+        Flow flow = flowRepository.findByExecution(execution);
+        String boomTaskRunId = execution.findTaskRunByTaskIdAndValue("boom", List.of()).getId();
+
+        Execution replay = executionService.replay(execution, flow, boomTaskRunId, null, Optional.empty());
+
+        assertThat(replay.getState().getCurrent()).isEqualTo(State.Type.RESTARTED);
+        assertThat(replay.getTaskRunList()).hasSize(2);
+        assertThat(replay.findTaskRunByTaskIdAndValue("ok", List.of()).getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(replay.findTaskRunByTaskIdAndValue("boom", List.of()).getState().getCurrent()).isEqualTo(State.Type.RESTARTED);
+        assertThat(replay.getTaskRunList().stream().noneMatch(tr -> tr.getTaskId().equals("on_error"))).isTrue();
+        assertThat(replay.getTaskRunList().stream().noneMatch(tr -> tr.getTaskId().equals("fin"))).isTrue();
+
+        Execution completed = runnerUtils.emitAndAwaitExecution(
+            e -> e.getId().equals(replay.getId()) && e.getState().isTerminated(),
+            replay,
+            Duration.ofSeconds(30)
+        );
+        assertThat(completed.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(completed.getTaskRunList().stream().filter(tr -> tr.getTaskId().equals("after")).count()).isEqualTo(1);
+        assertThat(completed.getTaskRunList().stream().filter(tr -> tr.getTaskId().equals("fin")).count()).isEqualTo(1);
+        assertThat(completed.getTaskRunList().stream().anyMatch(tr -> tr.getTaskId().equals("on_error"))).isFalse();
+    }
+
+    @Test
+    @LoadFlows({ "flows/valids/replay-handler-scope.yaml" })
+    void replayHandlerScopeRemovesStaleHandlers() throws Exception {
+        Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "replay-handler-scope");
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+
+        Flow flow = flowRepository.findByExecution(execution);
+        String boomTaskRunId = execution.findTaskRunByTaskIdAndValue("boom", List.of()).getId();
+
+        Execution replay = executionService.replay(execution, flow, boomTaskRunId, null, Optional.empty());
+
+        assertThat(replay.getState().getCurrent()).isEqualTo(State.Type.RESTARTED);
+        assertThat(replay.findTaskRunByTaskIdAndValue("before", List.of()).getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(replay.findTaskRunByTaskIdAndValue("upstream", List.of()).getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(replay.findTaskRunByTaskIdAndValue("upstream_inner", List.of()).getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(replay.findTaskRunByTaskIdAndValue("upstream_finally", List.of()).getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(replay.findTaskRunByTaskIdAndValue("guarded", List.of()).getState().getCurrent()).isEqualTo(State.Type.RUNNING);
+        assertThat(replay.findTaskRunByTaskIdAndValue("boom", List.of()).getState().getCurrent()).isEqualTo(State.Type.RESTARTED);
+        assertThat(replay.getTaskRunList().stream().noneMatch(tr -> tr.getTaskId().equals("guarded_error"))).isTrue();
+        assertThat(replay.getTaskRunList().stream().noneMatch(tr -> tr.getTaskId().equals("guarded_finally"))).isTrue();
+        assertThat(replay.getTaskRunList().stream().noneMatch(tr -> tr.getTaskId().equals("on_error"))).isTrue();
+        assertThat(replay.getTaskRunList().stream().noneMatch(tr -> tr.getTaskId().equals("fin"))).isTrue();
+
+        Execution completed = runnerUtils.emitAndAwaitExecution(
+            e -> e.getId().equals(replay.getId()) && e.getState().isTerminated(),
+            replay,
+            Duration.ofSeconds(30)
+        );
+        assertThat(completed.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        assertThat(completed.getTaskRunList().stream().filter(tr -> tr.getTaskId().equals("guarded_error")).count()).isEqualTo(1);
+        assertThat(completed.getTaskRunList().stream().filter(tr -> tr.getTaskId().equals("guarded_finally")).count()).isEqualTo(1);
+        assertThat(completed.getTaskRunList().stream().filter(tr -> tr.getTaskId().equals("on_error")).count()).isEqualTo(1);
+        assertThat(completed.getTaskRunList().stream().filter(tr -> tr.getTaskId().equals("fin")).count()).isEqualTo(1);
+        assertThat(completed.getTaskRunList().stream().filter(tr -> tr.getTaskId().equals("upstream_finally")).count()).isEqualTo(1);
+    }
+
+    @Test
+    @LoadFlows({ "flows/valids/replay-after-execution.yaml" })
+    void replayRemovesStaleAfterExecution() throws Exception {
+        var kvStore = kvStoreService.get(MAIN_TENANT, "io.kestra.tests", null);
+        kvStore.put("fail_flag", new KVValueAndMetadata(null, "yes"));
+
+        Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "replay-after-execution");
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        assertThat(execution.getTaskRunList().stream().anyMatch(tr -> tr.getTaskId().equals("afterExecution"))).isTrue();
+
+        kvStore.put("fail_flag", new KVValueAndMetadata(null, "no"));
+
+        Flow flow = flowRepository.findByExecution(execution);
+        String task2TaskRunId = execution.findTaskRunByTaskIdAndValue("task2", List.of()).getId();
+
+        Execution replay = executionService.replay(execution, flow, task2TaskRunId, null, Optional.empty());
+
+        assertThat(replay.getState().getCurrent()).isEqualTo(State.Type.RESTARTED);
+        assertThat(replay.getTaskRunList().stream().noneMatch(tr -> tr.getTaskId().equals("afterExecution"))).isTrue();
+        assertThat(replay.getTaskRunList().stream().noneMatch(tr -> tr.getTaskId().equals("fin"))).isTrue();
+
+        Execution completed = runnerUtils.emitAndAwaitExecution(
+            e -> e.getId().equals(replay.getId()) && e.getState().isTerminated(),
+            replay,
+            Duration.ofSeconds(30)
+        );
+        assertThat(completed.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(completed.getTaskRunList().stream().filter(tr -> tr.getTaskId().equals("afterExecution")).count()).isEqualTo(1);
+        assertThat(completed.getTaskRunList().stream().filter(tr -> tr.getTaskId().equals("fin")).count()).isEqualTo(1);
     }
 }

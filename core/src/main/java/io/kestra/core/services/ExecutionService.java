@@ -561,6 +561,43 @@ public class ExecutionService {
             // Worker task, we need to remove all child in order to be restarted
             this.removeWorkerTask(flow, execution, taskRunToRestart, mappingTaskRunId)
                 .forEach(r -> newTaskRuns.removeIf(taskRun -> taskRun.getId().equals(r)));
+
+            Set<String> handlerTaskIdsToRemove = new HashSet<>();
+            ListUtils.emptyOnNull(flow.getErrors()).forEach(t -> handlerTaskIdsToRemove.addAll(extractAllTaskIdsRecursive(t)));
+            ListUtils.emptyOnNull(flow.getFinally()).forEach(t -> handlerTaskIdsToRemove.addAll(extractAllTaskIdsRecursive(t)));
+            ListUtils.emptyOnNull(flow.getAfterExecution()).forEach(t -> handlerTaskIdsToRemove.addAll(extractAllTaskIdsRecursive(t)));
+            for (String restartTaskRunId : taskRunToRestart) {
+                TaskRun restartTaskRun = execution.findTaskRunByTaskRunId(restartTaskRunId);
+                if (restartTaskRun == null) {
+                    continue;
+                }
+                Task task = flow.findTaskByTaskId(restartTaskRun.getTaskId());
+                if (task instanceof FlowableTask<?> flowableTask) {
+                    ListUtils.emptyOnNull(flowableTask.getErrors()).forEach(t -> handlerTaskIdsToRemove.addAll(extractAllTaskIdsRecursive(t)));
+                    ListUtils.emptyOnNull(flowableTask.getFinally()).forEach(t -> handlerTaskIdsToRemove.addAll(extractAllTaskIdsRecursive(t)));
+                }
+            }
+            TaskRun replayTaskRun = execution.findTaskRunByTaskRunId(taskRunId);
+            if (replayTaskRun != null) {
+                String replayTaskId = replayTaskRun.getTaskId();
+                handlerTaskIdsToRemove.remove(replayTaskId);
+                String currentParentId = replayTaskRun.getParentTaskRunId();
+                while (currentParentId != null) {
+                    final String lookupId = currentParentId;
+                    TaskRun parentTaskRun = findExecutionWithTaskRun(execution, lookupId)
+                        .map(ExecutionWithTaskRun::taskRun)
+                        .orElse(null);
+
+                    if (parentTaskRun != null) {
+                        handlerTaskIdsToRemove.remove(parentTaskRun.getTaskId());
+                        currentParentId = parentTaskRun.getParentTaskRunId();
+                    } else {
+                        currentParentId = null;
+                    }
+                }
+            }
+
+            newTaskRuns.removeIf(taskRun -> handlerTaskIdsToRemove.contains(taskRun.getTaskId()));
         }
 
         // Build and launch new execution
@@ -1351,6 +1388,20 @@ public class ExecutionService {
                 newExecutionId,
                 toRestart ? alterState : null
             );
+    }
+
+    private Set<String> extractAllTaskIdsRecursive(Task task) {
+        Set<String> ids = new HashSet<>();
+        if (task == null) {
+            return ids;
+        }
+        ids.add(task.getId());
+        if (task instanceof FlowableTask<?> flowableTask) {
+            for (Task child : ListUtils.emptyOnNull(flowableTask.allChildTasks())) {
+                ids.addAll(extractAllTaskIdsRecursive(child));
+            }
+        }
+        return ids;
     }
 
     private Set<String> taskRunWithAncestors(Execution execution, List<TaskRun> taskRuns) {

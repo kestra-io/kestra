@@ -1,0 +1,26 @@
+id: replay-after-execution
+namespace: io.kestra.tests
+
+tasks:
+  - id: task1
+    type: io.kestra.plugin.core.log.Log
+    message: "task1 executed"
+
+  - id: task2
+    type: io.kestra.plugin.core.execution.Fail
+    condition: "{{ kv('fail_flag') == 'yes' }}"
+    errorMessage: "task2 failed"
+
+  - id: task3
+    type: io.kestra.plugin.core.log.Log
+    message: "task3 executed"
+
+afterExecution:
+  - id: afterExecution
+    type: io.kestra.plugin.core.log.Log
+    message: "afterExecution executed"
+
+finally:
+  - id: fin
+    type: io.kestra.plugin.core.log.Log
+    message: "fin executed"

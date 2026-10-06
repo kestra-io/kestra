@@ -61,7 +61,13 @@
     import {computed, inject} from "vue"
     import {useI18n} from "vue-i18n"
     import {Handle, Position} from "@vue-flow/core"
-    import {KsTooltip, SECTIONS, dayjs} from "@kestra-io/design-system"
+    import {
+        KsTooltip,
+        SECTIONS,
+        dayjs,
+        type PluginIconData,
+        type PluginIconMap,
+    } from "@kestra-io/design-system"
     import {type CustomActionConfig, type ShowDetailsConfig, EVENTS} from "../utils/constants"
     import Duration from "../misc/Duration.vue"
     import * as Utils from "../utils/utils"
@@ -135,8 +141,8 @@
         sourcePosition?: Position;
         targetPosition?: Position;
         id: string;
-        icons?: Record<string, unknown>;
-        loadIcon?: (cls: string) => Promise<unknown>;
+        icons?: PluginIconMap;
+        loadIcon?: (cls: string) => Promise<PluginIconData | undefined>;
         enableSubflowInteraction?: boolean;
         playgroundEnabled: boolean;
         playgroundReadyToStart: boolean;

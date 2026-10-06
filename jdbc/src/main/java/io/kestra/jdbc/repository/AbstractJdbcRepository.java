@@ -502,63 +502,62 @@ public abstract class AbstractJdbcRepository {
         QueryFilter.Field field,
         Object value,
         QueryFilter.Op operation) {
-        // Convert the field name to lowercase and quote it
-        Name columnName = getColumnName(field);
+        org.jooq.Field<Object> column = getColumn(field);
 
         // Default handling for other fields
         return switch (operation) {
             case EQUALS -> {
                 Object v = primitiveOrToString(value);
-                yield v == null ? DSL.field(columnName).isNull() : DSL.field(columnName).eq(v);
+                yield v == null ? column.isNull() : column.eq(v);
             }
             case NOT_EQUALS -> {
                 Object v = primitiveOrToString(value);
-                yield v == null ? DSL.field(columnName).isNotNull() : DSL.field(columnName).ne(v);
+                yield v == null ? column.isNotNull() : column.ne(v);
             }
             case GREATER_THAN -> {
                 if (value == null) {
                     throw new InvalidQueryFiltersException("GREATER_THAN operation requires a non-null value");
                 }
-                yield DSL.field(columnName).greaterThan(value);
+                yield column.greaterThan(value);
             }
             case LESS_THAN -> {
                 if (value == null) {
                     throw new InvalidQueryFiltersException("LESS_THAN operation requires a non-null value");
                 }
-                yield DSL.field(columnName).lessThan(value);
+                yield column.lessThan(value);
             }
             case IN -> {
                 if (value == null) {
                     throw new InvalidQueryFiltersException("IN operation requires a non-null value");
                 }
-                yield DSL.field(columnName).in(ListUtils.convertToListString(value));
+                yield column.in(ListUtils.convertToListString(value));
             }
             case NOT_IN -> {
                 if (value == null) {
                     throw new InvalidQueryFiltersException("NOT_IN operation requires a non-null value");
                 }
-                yield DSL.field(columnName).notIn(ListUtils.convertToListString(value));
+                yield column.notIn(ListUtils.convertToListString(value));
             }
             case STARTS_WITH -> {
                 String s = requireStringValue(value, "STARTS_WITH");
-                yield DSL.field(columnName).startsWith(s);
+                yield column.startsWith(s);
             }
             case ENDS_WITH -> {
                 String s = requireStringValue(value, "ENDS_WITH");
-                yield DSL.field(columnName).endsWith(s);
+                yield column.endsWith(s);
             }
             case CONTAINS -> {
                 String s = requireStringValue(value, "CONTAINS");
-                yield DSL.field(columnName).contains(s);
+                yield column.contains(s);
             }
             case REGEX -> {
                 String s = requireStringValue(value, "REGEX");
-                yield DSL.field(columnName).likeRegex(s);
+                yield column.likeRegex(s);
             }
             case PREFIX -> {
                 String s = requireStringValue(value, "PREFIX");
-                yield DSL.field(columnName).eq(s)
-                    .or(DSL.field(columnName).startsWith(s + "."));
+                yield column.eq(s)
+                    .or(column.startsWith(s + "."));
             }
             default -> throw new InvalidQueryFiltersException("Unsupported operation: " + operation);
         };
@@ -597,6 +596,10 @@ public abstract class AbstractJdbcRepository {
 
     protected Name getColumnName(QueryFilter.Field field) {
         return DSL.quotedName(field.name().toLowerCase());
+    }
+
+    protected org.jooq.Field<Object> getColumn(QueryFilter.Field field) {
+        return DSL.field(getColumnName(field));
     }
 
     protected Condition findQueryCondition(String query) {

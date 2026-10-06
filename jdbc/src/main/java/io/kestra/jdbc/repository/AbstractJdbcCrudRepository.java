@@ -513,7 +513,7 @@ public abstract class AbstractJdbcCrudRepository<T> extends AbstractJdbcReposito
         List<QueryFilter> filters,
         Pageable pageable,
         QueryFilter.Resource resource) {
-        Field<String> column = DSL.field(getColumnName(field), String.class);
+        Field<String> column = getColumn(field).coerce(String.class);
         Condition where = defaultFilter(tenantId).and(filter(filters, null, resource));
 
         return this.jdbcRepository

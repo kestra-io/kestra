@@ -2221,7 +2221,6 @@
       "run_all_tasks": "모든 Task 실행",
       "history": "최근 10회 실행",
       "clear_history": "기록 지우기",
-      "confirm_create": "flow를 생성하는 동안에는 playground를 실행할 수 없습니다. playground 실행을 시작하면 flow가 생성됩니다.",
       "tooltip_persistence": "Playground를 끄고 다시 켜면, 페이지에 머무르는 동안 정보가 유지됩니다."
     },
     "submit": "제출",

@@ -52,7 +52,6 @@ import jakarta.inject.Singleton;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 
-import static io.kestra.core.utils.Rethrow.throwConsumer;
 import static io.kestra.core.utils.Rethrow.throwFunction;
 
 @Singleton
@@ -486,7 +485,10 @@ public class ExecutorService {
                     e
                 );
                 runContext.logger().error("Failed to render output values: {}", e.getMessage(), e);
-                newExecution = newExecution.withState(State.Type.FAILED);
+                // the outputs of a killed execution are expected to be missing, and failing it would turn the kill into a retryable failure
+                if (finalState != State.Type.KILLED) {
+                    newExecution = newExecution.withState(State.Type.FAILED);
+                }
             }
         }
 
@@ -574,10 +576,25 @@ public class ExecutorService {
                     nextTaskRuns.addAll(this.childNextsTaskRun(executor, taskRun, runContext));
                     Optional<WorkerTaskResult> flowableResult = this.childWorkerTaskResult(executor.getFlow(), executor.getExecution(), taskRun, runContext);
                     if (flowableResult.isPresent()) {
-                        list.add(flowableResult.get());
-                        // fail-fast: a flowable that just resolved to FAILED asks to interrupt its still-running children
-                        if (flowableResult.get().getTaskRun().getState().isFailed() && task instanceof OnChildFailureInterface onChildFailure) {
-                            this.interruptOnChildFailure(executor, onChildFailure, taskRun, runContext);
+                        Optional<ExecutionDelay> flowableRetry = flowableRetryDelay(executor, task, taskRun, flowableResult.get());
+                        if (flowableRetry.isPresent()) {
+                            executionDelays.add(flowableRetry.get());
+                            executor.withExecution(
+                                executor.getExecution()
+                                    .withTaskRun(
+                                        taskRun.withStateAndAttempt(State.Type.FAILED)
+                                            .withState(State.Type.RETRYING)
+                                    )
+                                    .withState(State.Type.RETRYING),
+                                "handleRetryFlowable"
+                            );
+                            // do NOT add the result: the parent must not terminate
+                        } else {
+                            list.add(flowableResult.get());
+                            // fail-fast: a flowable that just resolved to FAILED asks to interrupt its still-running children
+                            if (flowableResult.get().getTaskRun().getState().isFailed() && task instanceof OnChildFailureInterface onChildFailure) {
+                                this.interruptOnChildFailure(executor, onChildFailure, taskRun, runContext);
+                            }
                         }
                     }
                 } catch (ConstraintViolationException e) {
@@ -617,7 +634,8 @@ public class ExecutorService {
                         AbstractRetry retry = parentTaskWithRetry != null ? parentTaskWithRetry.getRetry() : null;
                         if (retry != null) {
                             // The parent's errors/finally tasks (e.g. AllowFailure.errors) must complete before the retry timer is allowed to fire.
-                            if (!isErrorOrFinallyHandlingPending(taskRun, parentTaskWithRetry, executor, nextTaskRuns)) {
+                            if (retry.getBehavior() != AbstractRetry.Behavior.RETRY_FLOWABLE
+                                    && !isErrorOrFinallyHandlingPending(taskRun, parentTaskWithRetry, executor, nextTaskRuns)) {
                                 behavior = retry.getBehavior();
                                 nextRetryDate = behavior.equals(AbstractRetry.Behavior.CREATE_NEW_EXECUTION) ? taskRun.nextRetryDate(retry, executor.getExecution()) : retriedTaskRun.nextRetryDate(retry);
                             }
@@ -798,6 +816,43 @@ public class ExecutorService {
         this.addWorkerTaskResults(executor, list);
 
         return executor;
+    }
+
+    /**
+     * Determines whether a flowable should be retried and creates a delay to restart it from the beginning.
+     */
+    private Optional<ExecutionDelay> flowableRetryDelay(ExecutorContext executor, Task task, TaskRun taskRun, WorkerTaskResult result) {
+        AbstractRetry retry = task.getRetry();
+
+        if (retry == null
+            || retry.getBehavior() != AbstractRetry.Behavior.RETRY_FLOWABLE
+            || !result.getTaskRun().getState().isTerminated()) {
+            return Optional.empty();
+        }
+
+        // allowFailure / AllowFailure can resolve the flowable to WARNING or SUCCESS even though a child failed,
+        // so decide from the children rather than from the flowable's resolved state
+        boolean childFailed = executor.getExecution().findChildren(taskRun).stream()
+            .anyMatch(child -> child.getState().isFailed());
+        if (!childFailed) {
+            return Optional.empty();
+        }
+
+        // null once maxAttempts / maxDuration is reached, so the flowable then terminates normally
+        Instant nextRetryDate = taskRun.nextRetryDate(retry);
+        if (nextRetryDate == null) {
+            return Optional.empty();
+        }
+
+        return Optional.of(
+            ExecutionDelay.builder()
+                .taskRunId(taskRun.getId())
+                .executionId(executor.getExecution().getId())
+                .date(nextRetryDate)
+                .state(State.Type.RUNNING)
+                .delayType(ExecutionDelay.DelayType.RESTART_FLOWABLE)
+                .build()
+        );
     }
 
     /**
@@ -1091,7 +1146,7 @@ public class ExecutorService {
             workerTaskResults
                 .stream()
                 .filter(workerTaskResult -> workerTaskResult.getTaskRun().getState().getCurrent() == State.Type.PAUSED)
-                .forEach(throwConsumer(workerTaskResult ->
+                .forEach(Rethrow.throwConsumer(workerTaskResult ->
                 {
                     try {
                         Task task = executor.getFlow().findTaskByTaskId(workerTaskResult.getTaskRun().getTaskId());

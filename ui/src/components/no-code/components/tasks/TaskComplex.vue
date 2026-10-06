@@ -19,8 +19,8 @@
     defineOptions({inheritAttrs: false})
 
     const props = withDefaults(defineProps<{
-        schema: any,
-        properties?: Record<string, any>,
+        schema?: Schema,
+        properties?: Record<string, Schema>,
         bare?: boolean,
     }>(), {
         properties: undefined,

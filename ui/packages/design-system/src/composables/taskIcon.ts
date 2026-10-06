@@ -1,7 +1,7 @@
 import {defineComponent, h, inject, type Component, type ExtractPublicPropTypes, type InjectionKey, type PropType} from "vue"
 import fallbackIcon from "../assets/images/plugin-icon-fallback.svg"
 
-type PluginIconData = {
+export type PluginIconData = {
     flowable: boolean
     monochrome: boolean
     hasIcon: boolean
@@ -9,7 +9,7 @@ type PluginIconData = {
     hash?: string
 }
 
-type PluginIconMap = Record<string, PluginIconData>
+export type PluginIconMap = Record<string, PluginIconData>
 
 /**
  * The contract any injected task-icon component must fulfil. Declared once as a

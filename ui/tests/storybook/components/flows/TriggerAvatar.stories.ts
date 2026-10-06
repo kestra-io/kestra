@@ -68,3 +68,23 @@ export const Webhook: Story = {
         },
     },
 }
+
+export const RedisList: Story = {
+    args: {
+        flow: {
+            ...flow,
+            triggers: [{...flow.triggers[0], type: "io.kestra.plugin.redis.list.Trigger", key: "mytriggerkey"}],
+        },
+    },
+    async play({canvasElement, args}) {
+        const trigger = args.flow!.triggers![0]
+        await userEvent.hover(within(canvasElement).getByRole("img", {name: trigger.type}))
+
+        const body = within(canvasElement.ownerDocument.body)
+        const copyButton = await body.findByRole("button", {name: "Copy URL"})
+        await userEvent.click(copyButton)
+
+        expect(navigator.clipboard.writeText).not.toHaveBeenCalled()
+        expect(body.queryByText("Webhook link copied.")).not.toBeInTheDocument()
+    },
+}

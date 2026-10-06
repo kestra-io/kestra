@@ -6535,6 +6535,54 @@ export type ForceRunExecutionResponses = {
 
 export type ForceRunExecutionResponse = ForceRunExecutionResponses[keyof ForceRunExecutionResponses];
 
+export type InterruptTaskRunData = {
+    /**
+     * the taskRun id and the state to apply to it
+     */
+    body: ExecutionControllerStateRequest;
+    path: {
+        /**
+         * The execution id
+         */
+        executionId: string;
+        tenant: string;
+    };
+    query?: never;
+    url: '/api/v1/{tenant}/executions/{executionId}/actions/interrupt';
+};
+
+export type InterruptTaskRunErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * if the execution or the task run is not found
+     */
+    404: ProblemDetail;
+    /**
+     * if the task run cannot be interrupted
+     */
+    409: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type InterruptTaskRunError = InterruptTaskRunErrors[keyof InterruptTaskRunErrors];
+
+export type InterruptTaskRunResponses = {
+    /**
+     * On success
+     */
+    200: unknown;
+};
+
 export type KillExecutionData = {
     body?: never;
     path: {

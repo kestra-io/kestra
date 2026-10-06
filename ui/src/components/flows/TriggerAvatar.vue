@@ -16,7 +16,7 @@
                         <TaskIcon :onlyIcon="true" :cls="trigger?.type" :loadIcon="pluginsStore.loadIcon" />
                     </template>
                     <template #default>
-                        <div class="trigger-details">
+                        <div class="trigger-details" data-test="trigger-details">
                             <TriggerVars :data="trigger" :execution="execution" @on-copy="copyLink(trigger)" />
                         </div>
                     </template>

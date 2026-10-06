@@ -1,7 +1,7 @@
 import {describe, expect, it, vi} from "vitest"
-import {canSaveFlowTemplate} from "../../../src/utils/flowTemplate"
-import action from "../../../src/models/action"
-import resource from "../../../src/models/resource"
+import {canSaveFlowTemplate} from "./flowTemplate"
+import action from "../models/action"
+import resource from "../models/resource"
 
 describe("canSaveFlowTemplate", () => {
     const item = {namespace: "io.kestra.tests"}

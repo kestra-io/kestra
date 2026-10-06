@@ -597,9 +597,9 @@ public class ExecutorService {
                             }
                         }
                     }
-                } catch (ConstraintViolationException e) {
-                    // An invalid flowable configuration fails the flowable task run, which terminates the
-                    // execution cleanly (failing the execution while the task run stays RUNNING would loop).
+                } catch (ConstraintViolationException | InternalException e) {
+                    // An invalid flowable configuration fails the flowable task run, which terminates the execution cleanly (failing the execution while the task run stays RUNNING would loop).
+                    // An InternalException is thrown when the onChildFailure value is CONTINUE or UNKNOWN, which never trigger an interrupt.
                     runContext.logger().error("Failed to process flowable task {}: {}", taskRun.getId(), e.getMessage(), e);
                     executor.withExecution(executor.getExecution().withTaskRun(taskRun.withState(State.Type.FAILED)), "flowableValidation");
                 }

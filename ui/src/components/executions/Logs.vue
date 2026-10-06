@@ -251,7 +251,6 @@
 
     // Narrow the type from the composable's union return type
     const effectiveLevelValue = computed(() => effectiveLevel.value as LevelFilterValue | undefined)
-    const routeLevelValue = computed(() => routeLevel.value as LevelFilterValue | undefined)
 
     const filter = ref<string | undefined>(undefined)
     const openedTaskrunsCount = ref(0)
@@ -443,9 +442,8 @@
         raw_view.value ? ViewGrid : ViewList,
     )
 
-    const currentLevelOrLower = computed(() =>
-        LogUtils.levelOrLower(routeLevelValue.value?.value as LogUtils.LevelKey | undefined),
-    )
+    // Keep listing every level: the old code passed the whole {value, direction} filter object, which never matched a level, so truncation here would change behavior.
+    const currentLevelOrLower = computed(() => LogUtils.levelOrLower(undefined))
 
     const countByLogLevel = computed(() =>
         Object.fromEntries(

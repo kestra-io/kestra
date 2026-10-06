@@ -1,4 +1,5 @@
 import {describe, test, expect} from "vitest"
+import {nextTick} from "vue"
 import {mount} from "@vue/test-utils"
 import KestraDesignSystem from "../../../src/index"
 import KsTimePicker from "../../../src/components/Form/KsTimePicker.vue"
@@ -43,5 +44,27 @@ describe("KsTimePicker", () => {
             global: globalConfig,
         })
         expect(wrapper.find(".kel-input--large").exists()).toBe(true)
+    })
+
+    test("forwards data and aria attributes to the input rather than to the tooltip", () => {
+        const wrapper = mount(KsTimePicker, {
+            attrs: {"data-test": "cell", "aria-invalid": "true", "aria-describedby": "cell-error", "aria-label": "Deadline"},
+            global: globalConfig,
+        })
+        const input = wrapper.find("input")
+        expect(input.attributes("data-test")).toBe("cell")
+        expect(input.attributes("aria-invalid")).toBe("true")
+        expect(input.attributes("aria-describedby")).toBe("cell-error")
+        expect(input.attributes("aria-label")).toBe("Deadline")
+    })
+
+    test("removes a forwarded attribute once it is no longer passed", async () => {
+        const wrapper = mount(KsTimePicker, {
+            attrs: {"aria-invalid": "true"},
+            global: globalConfig,
+        })
+        await wrapper.setProps({"aria-invalid": undefined})
+        await nextTick()
+        expect(wrapper.find("input").attributes("aria-invalid")).toBeUndefined()
     })
 })

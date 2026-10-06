@@ -26,7 +26,7 @@ const DISABLE_START = /(?:\/\/|\/\*|<!--)[^\n]*design-system-disable-start/
 const DISABLE_END = /(?:\/\/|\/\*|<!--)[^\n]*design-system-disable-end/
 
 // Specs and stories sit next to their sources; their fixtures are not themed UI.
-const TEST_FILE = /\.(spec|stories)\.[jt]sx?$/
+const TEST_FILE = /\.(spec|test|stories)\.[jt]sx?$/
 
 const sources = (dir: string): string[] =>
     readdirSync(dir, {withFileTypes: true}).flatMap((entry) => {

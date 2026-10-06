@@ -161,6 +161,7 @@ export default defineConfig(({mode}) => {
                 "src/**/*.stories.{ts,tsx}",
                 "tests/storybook/**/*.stories.{ts,tsx}",
                 "packages/design-system/src/**/*.{ts,vue}",
+                "!packages/design-system/src/**/*.test.ts",
                 "node_modules/@kestra-io/design-system/src/**/*.{ts,vue}",
             ],
             include: [

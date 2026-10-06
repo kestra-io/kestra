@@ -38,6 +38,7 @@
         "**/scripts/**",
         "**/tests/**",
         "**/*.spec.ts",
+        "**/*.test.ts",
         "**/*.stories.ts",
         "**/*.stories.tsx"
       ],

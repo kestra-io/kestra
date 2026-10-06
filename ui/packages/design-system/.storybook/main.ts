@@ -5,7 +5,7 @@ import type {StorybookConfig} from "@storybook/vue3-vite"
 const srcDir = resolve(import.meta.dirname, "../src")
 
 const config: StorybookConfig = {
-    stories: ["../tests/storybook/**/*.stories.@(ts|tsx)"],
+    stories: ["../src/**/*.stories.@(ts|tsx)", "../tests/storybook/**/*.stories.@(ts|tsx)"],
     addons: [
         "@storybook/addon-themes",
         "@storybook/addon-vitest",

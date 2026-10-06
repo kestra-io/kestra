@@ -14,7 +14,7 @@ const sources = (dir: string): string[] =>
     readdirSync(dir, {withFileTypes: true}).flatMap((entry) => {
         const full = join(dir, entry.name)
         if (entry.isDirectory()) return sources(full)
-        return /\.(vue|ts|js)$/.test(entry.name) && !/\.(spec|stories)\.[jt]s$/.test(entry.name) ? [full] : []
+        return /\.(vue|ts|js)$/.test(entry.name) && !/\.(spec|test|stories)\.[jt]s$/.test(entry.name) ? [full] : []
     })
 
 /** Returns `path:line (tokens)` for every file using Element Plus directly; empty when clean. */

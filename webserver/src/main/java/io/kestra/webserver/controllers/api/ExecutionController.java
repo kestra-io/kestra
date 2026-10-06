@@ -541,6 +541,10 @@ public class ExecutionController {
                 invalids.add(
                     executionProblem(execution.getId(), "execution not found", ProblemTypes.NOT_FOUND)
                 );
+            } else if (!validateExecutionACL(execution)) {
+                invalids.add(
+                    executionProblem(execution.getId(), "user don't have the authorisation to delete this execution", ProblemTypes.FORBIDDEN)
+                );
             }
         }
         if (!invalids.isEmpty()) {
@@ -1853,6 +1857,10 @@ public class ExecutionController {
             if (!execution.getState().canChangeStatus()) {
                 invalids.add(
                     executionProblem(execution.getId(), "execution not in a terminated state or is killed", ProblemTypes.CONFLICT)
+                );
+            } else if (!validateExecutionACL(execution)) {
+                invalids.add(
+                    executionProblem(execution.getId(), "user don't have the authorisation to change the state of this execution", ProblemTypes.FORBIDDEN)
                 );
             }
         }

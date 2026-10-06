@@ -1,4 +1,5 @@
 import {describe, it, expect, vi, beforeEach} from "vitest"
+import type {Tab} from "../../../src/utils/multiPanelTypes"
 
 const eventsMock = vi.fn()
 const posthogEventsMock = vi.fn()
@@ -33,6 +34,14 @@ import {
     trackAuthoringAction,
 } from "../../../src/utils/tabTracking"
 
+function makeTab(uid: string): Tab {
+    return {
+        uid,
+        button: {icon: null, label: uid},
+        component: null,
+    }
+}
+
 beforeEach(() => {
     eventsMock.mockReset()
     posthogEventsMock.mockReset()
@@ -50,7 +59,7 @@ describe("getTabType", () => {
         ["blueprints", "blueprint"],
         ["files", "files_browser"],
     ])("maps standard tab %s to %s", (uid, expected) => {
-        expect(getTabType({uid} as any)).toBe(expected)
+        expect(getTabType(makeTab(uid))).toBe(expected)
     })
 
     it.each([
@@ -61,78 +70,78 @@ describe("getTabType", () => {
         ["afterExecution", "afterExecution_no_code"],
     ])("maps nocode tab with parentPath containing %s to %s", (parentPath, expected) => {
         const uid = `nocode-0000-${JSON.stringify({parentPath: `flow.${parentPath}[0]`})}`
-        expect(getTabType({uid} as any)).toBe(expected)
+        expect(getTabType(makeTab(uid))).toBe(expected)
     })
 
     it("defaults to task_no_code for nocode tabs with unrecognised or missing parentPath", () => {
         const uidWithUnknown = `nocode-0000-${JSON.stringify({parentPath: "customHandler"})}`
-        expect(getTabType({uid: uidWithUnknown} as any)).toBe("task_no_code")
+        expect(getTabType(makeTab(uidWithUnknown))).toBe("task_no_code")
 
         const uidWithoutPath = `nocode-0000-${JSON.stringify({})}`
-        expect(getTabType({uid: uidWithoutPath} as any)).toBe("task_no_code")
+        expect(getTabType(makeTab(uidWithoutPath))).toBe("task_no_code")
     })
 
     it("returns flow_code for malformed nocode tabs without throwing", () => {
-        expect(getTabType({uid: "nocode-invalid-json"} as any)).toBe("flow_code")
+        expect(getTabType(makeTab("nocode-invalid-json"))).toBe("flow_code")
     })
 
     it("returns sensible default flow_code for unrecognised tabs without throwing", () => {
-        expect(getTabType({uid: "unknown"} as any)).toBe("flow_code")
-        expect(getTabType({uid: ""} as any)).toBe("flow_code")
-        expect(getTabType({uid: "settings"} as any)).toBe("flow_code")
+        expect(getTabType(makeTab("unknown"))).toBe("flow_code")
+        expect(getTabType(makeTab(""))).toBe("flow_code")
+        expect(getTabType(makeTab("settings"))).toBe("flow_code")
     })
 })
 
 describe("getTabMetadata", () => {
     it("extracts documentation_page from plugins store for doc tab", () => {
         mockPluginsStore.editorPlugin = {cls: "io.kestra.plugin.core.log.Log"}
-        expect(getTabMetadata({uid: "doc"} as any)).toEqual({
+        expect(getTabMetadata(makeTab("doc"))).toEqual({
             documentation_page: "io.kestra.plugin.core.log.Log",
         })
     })
 
     it("returns empty metadata for doc tab when plugin has no class", () => {
         mockPluginsStore.editorPlugin = undefined
-        expect(getTabMetadata({uid: "doc"} as any)).toEqual({})
+        expect(getTabMetadata(makeTab("doc"))).toEqual({})
     })
 
     it("extracts blueprint_name from blueprints store for blueprints tab", () => {
         mockBlueprintsStore.blueprint = {id: "bp-docker-build"}
-        expect(getTabMetadata({uid: "blueprints"} as any)).toEqual({
+        expect(getTabMetadata(makeTab("blueprints"))).toEqual({
             blueprint_name: "bp-docker-build",
         })
     })
 
     it("returns empty metadata for blueprints tab when blueprint has no id", () => {
         mockBlueprintsStore.blueprint = undefined
-        expect(getTabMetadata({uid: "blueprints"} as any)).toEqual({})
+        expect(getTabMetadata(makeTab("blueprints"))).toEqual({})
     })
 
     it("extracts task_type from nocode tab payload", () => {
         const uid = `nocode-0000-${JSON.stringify({taskType: "io.kestra.plugin.core.log.Log"})}`
-        expect(getTabMetadata({uid} as any)).toEqual({
+        expect(getTabMetadata(makeTab(uid))).toEqual({
             task_type: "io.kestra.plugin.core.log.Log",
         })
     })
 
     it("returns empty metadata for nocode tab when taskType is absent or payload is invalid", () => {
         const uidWithoutTask = `nocode-0000-${JSON.stringify({action: "create"})}`
-        expect(getTabMetadata({uid: uidWithoutTask} as any)).toEqual({})
+        expect(getTabMetadata(makeTab(uidWithoutTask))).toEqual({})
 
-        expect(getTabMetadata({uid: "nocode-bad-json"} as any)).toEqual({})
+        expect(getTabMetadata(makeTab("nocode-bad-json"))).toEqual({})
     })
 
     it("returns empty metadata for other tabs", () => {
-        expect(getTabMetadata({uid: "code"} as any)).toEqual({})
-        expect(getTabMetadata({uid: "topology"} as any)).toEqual({})
-        expect(getTabMetadata({uid: "files"} as any)).toEqual({})
+        expect(getTabMetadata(makeTab("code"))).toEqual({})
+        expect(getTabMetadata(makeTab("topology"))).toEqual({})
+        expect(getTabMetadata(makeTab("files"))).toEqual({})
     })
 })
 
 describe("trackTabOpen and trackTabClose", () => {
     it("emits open event with classified tab type and metadata", () => {
         mockPluginsStore.editorPlugin = {cls: "io.kestra.plugin.core.http.Request"}
-        trackTabOpen({uid: "doc"} as any)
+        trackTabOpen(makeTab("doc"))
 
         expect(eventsMock).toHaveBeenCalledTimes(1)
         const [backendPayload, backendOptions] = eventsMock.mock.calls[0]
@@ -153,7 +162,7 @@ describe("trackTabOpen and trackTabClose", () => {
 
     it("emits close event with classified tab type and metadata", () => {
         const uid = `nocode-0000-${JSON.stringify({parentPath: "triggers", taskType: "io.kestra.plugin.core.trigger.Schedule"})}`
-        trackTabClose({uid} as any)
+        trackTabClose(makeTab(uid))
 
         expect(eventsMock).toHaveBeenCalledTimes(1)
         const [backendPayload] = eventsMock.mock.calls[0]
@@ -233,7 +242,7 @@ describe("error handling and resilience", () => {
             throw new Error("Network failure")
         })
 
-        expect(() => trackTabOpen({uid: "code"} as any)).not.toThrow()
+        expect(() => trackTabOpen(makeTab("code"))).not.toThrow()
         expect(() => trackFileOpen("test.py")).not.toThrow()
         expect(() => trackBlueprintSelection("test-bp")).not.toThrow()
     })
@@ -243,7 +252,7 @@ describe("error handling and resilience", () => {
             throw new Error("PostHog unavailable")
         })
 
-        expect(() => trackTabClose({uid: "topology"} as any)).not.toThrow()
+        expect(() => trackTabClose(makeTab("topology"))).not.toThrow()
     })
 })
 

@@ -673,13 +673,18 @@ public class Execution implements SoftDeletable<Execution>, TenantInterface, Has
     }
 
     public boolean isTerminated(List<ResolvedTask> resolvedTasks, TaskRun parentTaskRun) {
-        long terminatedCount = this
+        // Per-task coverage: every resolved task must have at least one terminated task run.
+        // A bare count of terminated task runs can be inflated by a duplicated task run
+        // (e.g. a retry race appending a second run for the same task id), letting the
+        // execution report terminated while a task never ran.
+        Set<String> terminatedTaskUids = this
             .findTaskRunByTasks(resolvedTasks, parentTaskRun)
             .stream()
             .filter(taskRun -> taskRun.getState().isTerminated())
-            .count();
+            .map(taskRun -> IdUtils.fromParts(taskRun.getTaskId(), taskRun.getValue()))
+            .collect(Collectors.toSet());
 
-        return terminatedCount == resolvedTasks.size();
+        return resolvedTasks.stream().allMatch(resolvedTask -> terminatedTaskUids.contains(IdUtils.fromParts(resolvedTask.getTask().getId(), resolvedTask.getValue())));
     }
 
     public boolean hasWarning() {
@@ -773,25 +778,25 @@ public class Execution implements SoftDeletable<Execution>, TenantInterface, Has
     public State.Type guessFinalState(List<ResolvedTask> currentTasks, TaskRun parentTaskRun,
         boolean allowFailure, boolean allowWarning, State.Type terminalState) {
         List<TaskRun> taskRuns = this.findTaskRunByTasks(currentTasks, parentTaskRun);
-        var state = this
-            .findLastByState(taskRuns, State.Type.KILLED)
-            .map(taskRun -> taskRun.getState().getCurrent())
-            .or(
-                () -> this
-                    .findLastByState(taskRuns, State.Type.FAILED)
-                    .map(taskRun -> taskRun.getState().getCurrent())
-            )
-            .or(
-                () -> this
-                    .findLastByState(taskRuns, State.Type.WARNING)
-                    .map(taskRun -> taskRun.getState().getCurrent())
-            )
-            .or(
-                () -> this
-                    .findLastByState(taskRuns, State.Type.PAUSED)
-                    .map(taskRun -> taskRun.getState().getCurrent())
-            )
-            .orElse(terminalState);
+
+        // Single pass over taskRuns, tracking the highest-priority terminal state found.
+        // Priority order: KILLED > FAILED > CANCELLED > WARNING > PAUSED
+        State.Type state = terminalState;
+        for (TaskRun taskRun : taskRuns) {
+            State.Type current = taskRun.getState().getCurrent();
+            if (current == State.Type.KILLED) {
+                state = State.Type.KILLED;
+                break; // highest priority, no need to continue
+            } else if (current == State.Type.FAILED && state != State.Type.KILLED) {
+                state = State.Type.FAILED;
+            } else if (current == State.Type.CANCELLED && state != State.Type.KILLED && state != State.Type.FAILED) {
+                state = State.Type.CANCELLED;
+            } else if (current == State.Type.WARNING && state != State.Type.KILLED && state != State.Type.FAILED && state != State.Type.CANCELLED) {
+                state = State.Type.WARNING;
+            } else if (current == State.Type.PAUSED && state == terminalState) {
+                state = State.Type.PAUSED;
+            }
+        }
 
         if (state == State.Type.FAILED && allowFailure) {
             if (allowWarning) {

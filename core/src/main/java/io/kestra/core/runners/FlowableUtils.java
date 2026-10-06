@@ -75,9 +75,11 @@ public class FlowableUtils {
             return Collections.singletonList(currentTasks.getFirst().toNextTaskRun(execution));
         }
 
-        // first created, leave
-        Optional<TaskRun> lastCreated = execution.findLastCreated(taskRuns);
-        if (lastCreated.isPresent()) {
+        // if it has any created/submitted or running, we leave
+        if (
+            taskRuns.stream()
+                .anyMatch(taskRun -> taskRun.getState().isCreated() || taskRun.getState().getCurrent() == State.Type.SUBMITTED || taskRun.getState().isRunning() || taskRun.getState().getCurrent() == State.Type.RETRYING)
+        ) {
             return Collections.emptyList();
         }
 
@@ -127,9 +129,11 @@ public class FlowableUtils {
             );
         }
 
-        // first created, leave
-        Optional<TaskRun> lastCreated = execution.findLastCreated(taskRuns);
-        if (lastCreated.isPresent()) {
+        // if it has any created/submitted or running, we leave
+        if (
+            taskRuns.stream()
+                .anyMatch(taskRun -> taskRun.getState().isCreated() || taskRun.getState().getCurrent() == State.Type.SUBMITTED || taskRun.getState().isRunning() || taskRun.getState().getCurrent() == State.Type.RETRYING)
+        ) {
             return Collections.emptyList();
         }
 

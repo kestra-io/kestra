@@ -2264,9 +2264,12 @@
         },
         "recent_runs": "Ejecuciones recientes",
         "group_by": "Agrupar por",
-        "groups": "Grupos ({n})",
+        "groups": "Grupos",
         "group_none": "Sin agrupación",
         "group_dataset": "Dataset",
+        "group_consumer": "Consumidor",
+        "no_consumer": "Ningún consumidor",
+        "hidden_consumer": "Flow oculto",
         "ungrouped": "Sin agrupar",
         "hub": {
           "notice": "Este nodo tiene {count} relaciones; solo se muestran las más recientes para mantener el gráfico legible.",

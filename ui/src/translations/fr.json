@@ -2264,9 +2264,12 @@
         },
         "recent_runs": "Exécutions récentes",
         "group_by": "Grouper par",
-        "groups": "Groupes ({n})",
+        "groups": "Groupes",
         "group_none": "Pas de regroupement",
         "group_dataset": "Jeu de données",
+        "group_consumer": "Consommateur",
+        "no_consumer": "Aucun consommateur",
+        "hidden_consumer": "Flow masqué",
         "ungrouped": "Non groupé",
         "hub": {
           "notice": "Ce nœud a {count} relations — seules les plus récentes sont affichées pour maintenir la lisibilité du graphique.",

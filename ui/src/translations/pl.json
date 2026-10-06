@@ -2264,9 +2264,12 @@
         },
         "recent_runs": "Ostatnie uruchomienia",
         "group_by": "Grupuj według",
-        "groups": "Grupy ({n})",
+        "groups": "Grupy",
         "group_none": "Bez grupowania",
         "group_dataset": "Zbiór danych",
+        "group_consumer": "Konsument",
+        "no_consumer": "Brak konsumenta",
+        "hidden_consumer": "Ukryty Flow",
         "ungrouped": "Bez grupy",
         "hub": {
           "notice": "Ten węzeł ma {count} relacji — pokazano tylko najnowsze, aby wykres był czytelny.",

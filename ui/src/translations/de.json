@@ -2264,9 +2264,12 @@
         },
         "recent_runs": "Letzte Runs",
         "group_by": "Gruppieren nach",
-        "groups": "Gruppen ({n})",
+        "groups": "Gruppen",
         "group_none": "Keine Gruppierung",
         "group_dataset": "Dataset",
+        "group_consumer": "Consumer",
+        "no_consumer": "Kein Consumer",
+        "hidden_consumer": "Versteckter Flow",
         "ungrouped": "Ungruppiert",
         "hub": {
           "notice": "Dieser Knoten hat {count} Relationen – nur die jüngsten werden angezeigt, um den Graphen lesbar zu halten.",

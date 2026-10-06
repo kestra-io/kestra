@@ -2264,9 +2264,12 @@
         },
         "recent_runs": "最近运行",
         "group_by": "分组依据",
-        "groups": "分组（{n}）",
+        "groups": "组",
         "group_none": "无分组",
         "group_dataset": "数据集",
+        "group_consumer": "消费者",
+        "no_consumer": "无消费者",
+        "hidden_consumer": "隐藏 Flow",
         "ungrouped": "未分组",
         "hub": {
           "notice": "此节点有 {count} 个关系 — 仅显示最新的关系以保持图表可读。",

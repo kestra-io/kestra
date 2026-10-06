@@ -129,6 +129,15 @@
                     @follow="emit('follow', $event)"
                 />
 
+                <Interrupt
+                    component="KsDropdownItem"
+                    :key="`interrupt-${currentTaskRun.id}-${currentAttemptIndex}-${selectedAttempt?.state.startDate}`"
+                    :execution="execution"
+                    :taskRun="currentTaskRun"
+                    :attemptIndex="currentAttemptIndex"
+                    @follow="emit('follow', $event)"
+                />
+
                 <NodeMenuItem
                     v-for="action in nodeActions"
                     :key="action.key"
@@ -165,6 +174,7 @@
     import Restart from "./overview/components/actions/Restart.vue"
     import Metrics from "./Metrics.vue"
     import ChangeStatus from "./ChangeStatus.vue"
+    import Interrupt from "./Interrupt.vue"
     import Outputs from "./Outputs.vue"
     import WorkerInfo from "./WorkerInfo.vue"
     import TaskEdit from "../flows/TaskEdit.vue"

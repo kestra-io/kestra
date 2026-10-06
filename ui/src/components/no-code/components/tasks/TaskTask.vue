@@ -20,6 +20,7 @@
 </template>
 
 <script setup lang="ts">
+    import {Schema} from "./getTaskComponent"
     import {computed, inject, ref} from "vue"
     import {
         PARENT_PATH_INJECTION_KEY,
@@ -69,7 +70,7 @@
         const schema = localSchema.value
 
         if(schema?.anyOf && Array.isArray(schema.anyOf)){
-            const titles: string[] = schema.anyOf.map((s: any) => s.allOf?.find((a: any) => a.title)?.title ?? s.title)
+            const titles: string[] = schema.anyOf.map((s: Schema) => s.allOf?.find((a: Schema) => a.title)?.title ?? s.title)
 
             if(titles.every((title) => title === titles[0])){
                 return titles[0]

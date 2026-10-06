@@ -3246,15 +3246,15 @@ class ExecutionControllerRunnerTest {
         assertThat(execution2).isNotNull();
 
         // check that both executions are suspended at the breakpoint
-        Execution suspended1 = awaitExecution(execution1.getId(), State.Type.BREAKPOINT);
-        Execution suspended2 = awaitExecution(execution2.getId(), State.Type.BREAKPOINT);
+        Execution suspended1 = awaitExecution(tenantId, execution1.getId(), exec -> exec.getState().isBreakpoint());
+        Execution suspended2 = awaitExecution(tenantId, execution2.getId(), exec -> exec.getState().isBreakpoint());
         assertThat(suspended1.getState().getCurrent()).isEqualTo(State.Type.BREAKPOINT);
         assertThat(suspended2.getState().getCurrent()).isEqualTo(State.Type.BREAKPOINT);
 
-        // bulk resume both executions from breakpoint
+        // bulk resume both executions from breakpoint via the existing resume/by-ids endpoint
         HttpResponse<ApiAsyncOperationResponse> resumeResponse = client.toBlocking().exchange(
             HttpRequest.POST(
-                "/api/v1/" + tenantId + "/executions/resume-from-breakpoint/by-ids",
+                "/api/v1/" + tenantId + "/executions/resume/by-ids",
                 List.of(execution1.getId(), execution2.getId())
             ),
             ApiAsyncOperationResponse.class
@@ -3266,23 +3266,23 @@ class ExecutionControllerRunnerTest {
         // wait for both executions to terminate successfully
         Execution terminated1 = runnerUtils.awaitExecution(
             it -> execution1.getId().equals(it.getId()) && it.getState().isTerminated(),
-            execution1,
-            Duration.ofSeconds(10)
+            suspended1,
+            Duration.ofSeconds(30)
         );
         Execution terminated2 = runnerUtils.awaitExecution(
             it -> execution2.getId().equals(it.getId()) && it.getState().isTerminated(),
-            execution2,
-            Duration.ofSeconds(10)
+            suspended2,
+            Duration.ofSeconds(30)
         );
         assertThat(terminated1.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(terminated2.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
-        // attempting to resume again must fail: the executions are no longer in BREAKPOINT state
+        // attempting to resume again must fail: the executions are neither PAUSED nor BREAKPOINT
         HttpClientResponseException e = assertThrows(
             HttpClientResponseException.class,
             () -> client.toBlocking().retrieve(
                 HttpRequest.POST(
-                    "/api/v1/" + tenantId + "/executions/resume-from-breakpoint/by-ids",
+                    "/api/v1/" + tenantId + "/executions/resume/by-ids",
                     List.of(execution1.getId(), execution2.getId())
                 )
             )

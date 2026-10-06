@@ -6,10 +6,29 @@ import {createPinia} from "pinia"
 import {createMemoryHistory, createRouter, type Router} from "vue-router"
 import KestraDesignSystem from "@kestra-io/design-system"
 
+interface LogFilter {
+    field: string
+    value: string
+}
+
+interface SearchLogsParams {
+    size?: number
+    cursor?: string
+    filters?: LogFilter[]
+}
+
+interface LogsWrapperVm {
+    logTableOptions: {
+        chart: {
+            shown: boolean
+        }
+    }
+}
+
 const searchLogs = vi.fn()
 
 vi.mock("@kestra-io/kestra-sdk/logs", () => ({
-    searchLogs: (...args: any[]) => searchLogs(...args),
+    searchLogs: (...args: unknown[]) => searchLogs(...args),
     deleteLogsFromFlow: vi.fn(),
 }))
 
@@ -71,7 +90,7 @@ describe("LogsWrapper cursor pagination", () => {
 
     // A two-page cursor store: page 0 (p0) → page 1 (p1, last page with data) → empty.
     const useTwoPageCursorStore = () => {
-        searchLogs.mockImplementation((params: any) => {
+        searchLogs.mockImplementation((params: SearchLogsParams) => {
             if (params.size === 1) return Promise.resolve({results: [], total: 0})
             switch (params.cursor) {
             case undefined:
@@ -120,12 +139,12 @@ describe("LogsWrapper cursor pagination", () => {
     it("hides the chart toggle in cursor mode but keeps it in offset mode", async () => {
         useTwoPageCursorStore()
         const cursorWrapper = await mountAtLogsList()
-        expect((cursorWrapper.vm as any).logTableOptions.chart.shown).toBe(false)
+        expect((cursorWrapper.vm as unknown as LogsWrapperVm).logTableOptions.chart.shown).toBe(false)
 
         searchLogs.mockReset()
         searchLogs.mockResolvedValue({results: [logWith("offset")], total: 1, type: "OFFSET"})
         const offsetWrapper = await mountAtLogsList()
-        expect((offsetWrapper.vm as any).logTableOptions.chart.shown).toBe(true)
+        expect((offsetWrapper.vm as unknown as LogsWrapperVm).logTableOptions.chart.shown).toBe(true)
     })
 
     // Cursor stores can't produce per-level counts, so the level quick-filter chips are hidden by
@@ -140,9 +159,9 @@ describe("LogsWrapper cursor pagination", () => {
 
     it("shows the level-navigator chips in offset mode when counts are available", async () => {
         const countsByLevel: Record<string, number> = {TRACE: 5, DEBUG: 5, INFO: 5, WARN: 2, ERROR: 0}
-        searchLogs.mockImplementation((params: any) => {
+        searchLogs.mockImplementation((params: SearchLogsParams) => {
             if (params.size === 1) {
-                const level = params.filters?.find((f: any) => f.field === "level")?.value
+                const level = params.filters?.find((f) => f.field === "level")?.value
                 return Promise.resolve({total: countsByLevel[level] ?? 0})
             }
             return Promise.resolve({results: [logWith("offset")], total: 1, type: "OFFSET"})

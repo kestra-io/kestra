@@ -140,7 +140,6 @@
   "tests/unit/components/executions/useExecutionRoot.spec.ts": 4,
   "tests/unit/components/flows/useFlowRoot.spec.ts": 3,
   "tests/unit/components/flows/useNoCodePanels.spec.ts": 4,
-  "tests/unit/components/logs/logsWrapperCursor.spec.ts": 6,
   "tests/unit/components/logs/logsWrapperInitialLoad.spec.ts": 4,
   "tests/unit/components/logs/logsWrapperPaginationWiring.spec.ts": 2,
   "tests/unit/components/plugins/TaskIcon.spec.ts": 3,

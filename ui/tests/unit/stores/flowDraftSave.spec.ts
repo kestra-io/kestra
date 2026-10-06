@@ -185,4 +185,17 @@ describe("flow draft save — draft resolution per entry point", () => {
         expect(lastDraftParam())
             .toBe(false)
     })
+
+    it("reports a flow created as a draft as created", async () => {
+        const store = await freshStore()
+        store.isCreating = true
+        const {useApiStore} = await import("../../../src/stores/api")
+        const posthogEvents = vi.spyOn(useApiStore(), "posthogEvents").mockImplementation(() => {})
+
+        await store.saveAsDraft()
+
+        expect(createFlow.mock.calls.at(-1)?.[0]).toMatchObject({draft: true})
+        expect(posthogEvents).toHaveBeenCalledWith(expect.objectContaining({type: "FLOW_CREATED", is_draft: true}))
+        localStorage.clear()
+    })
 })

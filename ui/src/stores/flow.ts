@@ -615,9 +615,7 @@ export const useFlowStore = defineStore("flow", () => {
             localStorage.removeItem(`el-fl-creation-${creationId.value}`)
             creationId.value = undefined
 
-            if (!options.draft) {
-                trackFlowCreated(flow.value, options.restore === true)
-            }
+            trackFlowCreated(flow.value, options.restore === true, options.draft === true)
 
             return flow.value
         })
@@ -626,7 +624,7 @@ export const useFlowStore = defineStore("flow", () => {
     // Only on creation: saveFlow() fires on every editor save, which would drown the signal.
     // restoreFlow() also goes through createFlow(), on a flow_id that already reported a creation -
     // flagged rather than dropped so activation can exclude it downstream.
-    function trackFlowCreated(created: Flow, isRestore: boolean) {
+    function trackFlowCreated(created: Flow, isRestore: boolean, isDraft: boolean) {
         const {taskCount, pluginCount} = flowTaskStats(created.tasks)
 
         useApiStore().posthogEvents({
@@ -638,6 +636,7 @@ export const useFlowStore = defineStore("flow", () => {
             trigger_type: primaryTriggerType(created.triggers),
             is_example: isExampleFlow(created.namespace),
             is_restore: isRestore,
+            is_draft: isDraft,
         })
     }
 

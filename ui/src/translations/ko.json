@@ -289,7 +289,8 @@
         "flow_executions": "flow 실행",
         "move": "이동",
         "menu": "메뉴",
-        "sources": "메뉴 + flows + namespaces"
+        "sources": "메뉴 + flows + namespaces",
+        "search_failed": "flows 또는 namespaces를 불러오지 못했습니다"
     },
     "contextBar": {
       "ai": "AI",

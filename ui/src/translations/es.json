@@ -289,7 +289,8 @@
         "flow_executions": "Ejecuciones del flow",
         "move": "Mover",
         "menu": "Menú",
-        "sources": "Menú + flows + namespaces"
+        "sources": "Menú + flows + namespaces",
+        "search_failed": "No se pudieron cargar los flows o namespaces"
     },
     "contextBar": {
       "ai": "IA",

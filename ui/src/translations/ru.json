@@ -289,7 +289,8 @@
         "flow_executions": "Выполнения flow",
         "move": "Переместить",
         "menu": "Меню",
-        "sources": "Меню + flows + namespaces"
+        "sources": "Меню + flows + namespaces",
+        "search_failed": "Не удалось загрузить flows или namespaces"
     },
     "contextBar": {
       "ai": "ИИ",

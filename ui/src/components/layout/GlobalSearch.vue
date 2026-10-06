@@ -25,69 +25,81 @@
                         </KsSearch>
 
                         <div class="results" role="listbox">
-                            <KsScrollbar v-if="results.length > 0" class="results-scroll">
+                            <KsScrollbar v-if="hasResultRows" class="results-scroll">
                                 <ul id="global-search-listbox" class="results-list">
                                     <template v-for="(item, index) in results" :key="itemKey(item, index)">
-                                    <li v-if="headingFor(index)" class="result-heading" role="presentation">
-                                        <span>{{ headingLabel(item) }}</span>
-                                        <span class="result-count">{{ groupCount(item) }}</span>
-                                    </li>
-                                    <li
-                                        :id="`global-search-option-${index}`"
-                                        class="result-item"
-                                        :class="{active: index === activeIndex}"
-                                        role="option"
-                                        :aria-selected="index === activeIndex"
-                                        @mouseenter="activeIndex = index"
-                                    >
-                                        <component
-                                            :is="item.kind === 'link' ? 'router-link' : 'button'"
-                                            v-bind="item.kind === 'link' ? {to: item.href} : {type: 'button'}"
-                                            class="result-link d-flex gap-2"
-                                            @click="onItemClick(item)"
+                                        <li v-if="headingFor(index)" class="result-heading" role="presentation">
+                                            <span>{{ headingLabel(item) }}</span>
+                                            <span class="result-count">{{ groupCount(item) }}</span>
+                                        </li>
+                                        <li
+                                            :id="`global-search-option-${index}`"
+                                            class="result-item"
+                                            :class="{active: index === activeIndex}"
+                                            role="option"
+                                            :aria-selected="index === activeIndex"
+                                            @mouseenter="activeIndex = index"
                                         >
-                                            <div class="result-title d-flex gap-2 nav-item-title">
-                                                <component v-if="item.icon?.element" :is="{...item.icon.element}" class="align-middle" />
-                                                <span v-if="item.parentTitle" class="result-parent">
-                                                    <template v-for="(part, partIndex) in highlightMatch(item.parentTitle, query)" :key="partIndex">
-                                                        <mark v-if="part.match" class="result-match">{{ part.text }}</mark>
-                                                        <template v-else>{{ part.text }}</template>
-                                                    </template>
-                                                </span>
-                                                <span v-if="item.parentTitle" class="result-separator">/</span>
-                                                <span class="result-leaf">
-                                                    <template v-for="(part, partIndex) in highlightMatch(item.title, query)" :key="partIndex">
-                                                        <mark v-if="part.match" class="result-match">{{ part.text }}</mark>
-                                                        <template v-else>{{ part.text }}</template>
-                                                    </template>
-                                                </span>
-                                                <span v-if="item.namespace" class="result-namespace">
-                                                    <template v-for="(part, partIndex) in highlightMatch(item.namespace, query)" :key="partIndex">
-                                                        <mark v-if="part.match" class="result-match">{{ part.text }}</mark>
-                                                        <template v-else>{{ part.text }}</template>
-                                                    </template>
-                                                </span>
-                                            </div>
-                                            <span
-                                                v-if="index === activeIndex && item.executionsHref"
-                                                class="result-actions d-none d-sm-flex"
-                                            >
-                                                <span class="result-hint">
-                                                    <kbd>↵</kbd> {{ $t("global_search.open_flow") }}
-                                                </span>
-                                                <button type="button" class="result-action" @click.stop.prevent="openExecutions(item)">
+                                            <div class="result-row d-flex gap-2">
+                                                <component
+                                                    :is="item.kind === 'link' ? 'router-link' : 'button'"
+                                                    v-bind="item.kind === 'link' ? {to: item.href} : {type: 'button'}"
+                                                    class="result-link d-flex gap-2"
+                                                    @click="onItemClick(item)"
+                                                >
+                                                    <div class="result-title d-flex gap-2 nav-item-title">
+                                                        <component v-if="item.icon?.element" :is="{...item.icon.element}" class="align-middle" />
+                                                        <span v-if="item.parentTitle" class="result-parent">
+                                                            <template v-for="(part, partIndex) in highlightMatch(item.parentTitle, query)" :key="partIndex">
+                                                                <mark v-if="part.match" class="result-match">{{ part.text }}</mark>
+                                                                <template v-else>{{ part.text }}</template>
+                                                            </template>
+                                                        </span>
+                                                        <span v-if="item.parentTitle" class="result-separator">/</span>
+                                                        <span class="result-leaf">
+                                                            <template v-for="(part, partIndex) in highlightMatch(item.title, query)" :key="partIndex">
+                                                                <mark v-if="part.match" class="result-match">{{ part.text }}</mark>
+                                                                <template v-else>{{ part.text }}</template>
+                                                            </template>
+                                                        </span>
+                                                        <span v-if="item.namespace" class="result-namespace">
+                                                            <template v-for="(part, partIndex) in highlightMatch(item.namespace, query)" :key="partIndex">
+                                                                <mark v-if="part.match" class="result-match">{{ part.text }}</mark>
+                                                                <template v-else>{{ part.text }}</template>
+                                                            </template>
+                                                        </span>
+                                                    </div>
+                                                    <span
+                                                        v-if="index === activeIndex && item.executionsHref"
+                                                        class="result-hint d-none d-sm-flex align-items-center"
+                                                    >
+                                                        <kbd>↵</kbd> {{ $t("global_search.open_flow") }}
+                                                    </span>
+                                                    <span
+                                                        v-else-if="index === activeIndex"
+                                                        class="result-hint d-none d-sm-flex align-items-center"
+                                                    >
+                                                        <span>{{ $t("jump to") }}</span>
+                                                    </span>
+                                                </component>
+                                                <KsButton
+                                                    v-if="index === activeIndex && item.executionsHref"
+                                                    link
+                                                    size="small"
+                                                    class="result-action d-none d-sm-inline-flex"
+                                                    @click.stop="openExecutions(item)"
+                                                >
                                                     <kbd>→</kbd> {{ $t("executions") }}
-                                                </button>
-                                            </span>
-                                            <span
-                                                v-else-if="index === activeIndex"
-                                                class="result-hint d-none d-sm-flex align-items-center"
-                                            >
-                                                <span>{{ $t("jump to") }}</span>
-                                            </span>
-                                        </component>
-                                    </li>
+                                                </KsButton>
+                                            </div>
+                                        </li>
                                     </template>
+                                    <li v-if="showEntityHints && entitiesLoading" class="result-status" role="status">
+                                        {{ $t("loading") }}
+                                    </li>
+                                    <li v-else-if="showEntityHints && entitiesError" class="result-status" role="status">
+                                        {{ $t("global_search.search_failed") }}
+                                    </li>
                                 </ul>
                             </KsScrollbar>
                             <div v-else class="empty">
@@ -122,6 +134,7 @@
     import * as NamespaceAPI from "@kestra-io/kestra-sdk/namespaces"
     import action from "../../models/action"
     import resource from "../../models/resource"
+    import {isFlowTabAllowed} from "../flows/flowTabs"
     import Magnify from "vue-material-design-icons/Magnify.vue"
     import FileDocumentOutline from "vue-material-design-icons/FileDocumentOutline.vue"
     import FolderOpenOutline from "vue-material-design-icons/FolderOpenOutline.vue"
@@ -167,11 +180,15 @@
 
     const query = ref("")
     const entities = ref<PaletteEntity[]>([])
+    const entityTotals = ref({flow: 0, namespace: 0})
+    const entitiesLoading = ref(false)
+    const entitiesError = ref(false)
     let searchTicket = 0
     const isOpen = ref(false)
     const topLayer = useTopLayer()
     const searchInput = ref<InstanceType<typeof KsSearch> | null>(null)
     const activeIndex = ref(0)
+    const activeKey = ref<string | null>(null)
     const scopeStack = ref<ScopeNode[]>([])
 
     const scopePrefix = computed(() => {
@@ -273,6 +290,10 @@
         return showEntityHints.value ? [...entityResults.value, ...menu] : menu
     })
 
+    const hasResultRows = computed(() =>
+        results.value.length > 0 || (showEntityHints.value && (entitiesLoading.value || entitiesError.value)),
+    )
+
     const headingFor = (index: number): boolean => {
         if (!showEntityHints.value) {
             return false
@@ -287,8 +308,12 @@
         return t("global_search.menu")
     }
 
-    const groupCount = (item: SearchItem): number =>
-        results.value.filter(candidate => candidate.destination === item.destination).length
+    const groupCount = (item: SearchItem): number => {
+        if (item.destination === "flow" || item.destination === "namespace") {
+            return entityTotals.value[item.destination]
+        }
+        return results.value.filter(candidate => candidate.destination === item.destination).length
+    }
 
     const openExecutions = (item: SearchItem) => {
         if (!item.executionsHref) {
@@ -304,115 +329,72 @@
         }
         const tenant = route.params.tenant
         const tenantId = Array.isArray(tenant) ? tenant[0] : tenant
-        try {
-            const [flows, namespaces] = await Promise.all([
-                FlowsAPI.searchFlows({
+        const user = authStore.user
+        const canListFlows = !!user?.hasAnyActionOnAnyNamespace(resource.FLOW, action.LIST)
+        const canListNamespaces = !!user?.hasAnyActionOnAnyNamespace(resource.NAMESPACE, action.LIST)
+        const [flowsOutcome, namespacesOutcome] = await Promise.allSettled([
+            canListFlows
+                ? FlowsAPI.searchFlows({
                     page: 1,
                     size: PALETTE_ENTITY_LIMIT,
                     filters: [flowOrNamespaceFilter(q)],
-                }),
-                NamespaceAPI.searchNamespaces({
+                })
+                : Promise.resolve(undefined),
+            canListNamespaces
+                ? NamespaceAPI.searchNamespaces({
                     page: 1,
                     size: PALETTE_ENTITY_LIMIT,
                     filters: [namespaceFilter(q)],
-                }),
-            ])
-            if (!isOpen.value || ticket !== searchTicket) {
-                return
-            }
-            const user = authStore.user
-            entities.value = paletteEntities(
-                flows.results ?? [],
-                namespaces.results ?? [],
-                tenantId || undefined,
-                namespace => !!user?.isAllowed(resource.EXECUTION, action.VIEW, namespace),
-            )
-        } catch {
-            if (ticket === searchTicket) {
-                entities.value = []
-            }
+                })
+                : Promise.resolve(undefined),
+        ])
+        if (!isOpen.value || ticket !== searchTicket) {
+            return
         }
+        const flows = flowsOutcome.status === "fulfilled" ? flowsOutcome.value : undefined
+        const namespaces = namespacesOutcome.status === "fulfilled" ? namespacesOutcome.value : undefined
+        entitiesError.value = (canListFlows && flowsOutcome.status === "rejected")
+            || (canListNamespaces && namespacesOutcome.status === "rejected")
+        entityTotals.value = {
+            flow: flows?.total ?? 0,
+            namespace: namespaces?.total ?? 0,
+        }
+        entities.value = paletteEntities(
+            flows?.results ?? [],
+            namespaces?.results ?? [],
+            tenantId || undefined,
+            namespace => isFlowTabAllowed("executions", {user, namespace}),
+        )
+        entitiesLoading.value = false
     }, 200)
 
-    const eventInsideSearch = (event: Event) => {
-        const modal = document.querySelector(".search-modal")
-        return event.target instanceof Node && !!modal?.contains(event.target)
+    const isEditorTarget = (target: EventTarget | null) => {
+        const el = target as HTMLElement | null
+        return Boolean(el?.closest?.(".monaco-editor"))
     }
 
-    const focusSearchInput = () => {
-        searchInput.value?.focus?.()
-        const input = document.querySelector<HTMLInputElement>(".search-modal input")
-        if (input && document.activeElement !== input) {
-            input.focus()
-        }
-    }
-
-    // Capture phase: the flow editor treats Ctrl+K as its own chord and keeps the caret, so a bubble listener opens the palette without ever receiving the following keys.
     const keyDown = (e: KeyboardEvent) => {
         if ((e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey && e.key.toLowerCase() === "k") {
+            if (isEditorTarget(e.target)) {
+                return
+            }
             e.preventDefault()
-            e.stopPropagation()
             openSearch()
             return
         }
 
-        if (!isOpen.value || eventInsideSearch(e)) {
-            return
-        }
-
-        if (e.key === "Escape") {
+        if (e.key === "Escape" && isOpen.value) {
             e.preventDefault()
-            e.stopPropagation()
             closeSearch()
-            return
         }
-
-        if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
-            e.preventDefault()
-            e.stopPropagation()
-            query.value += e.key
-            focusSearchInput()
-            return
-        }
-
-        if (e.key === "Backspace") {
-            e.preventDefault()
-            e.stopPropagation()
-            if (query.value.length === 0 && scopeStack.value.length > 0) {
-                scopeStack.value = scopeStack.value.slice(0, -1)
-                activeIndex.value = 0
-            } else {
-                query.value = query.value.slice(0, -1)
-            }
-            focusSearchInput()
-            return
-        }
-
-        if (e.key === "ArrowDown" || e.key === "ArrowUp" || e.key === "ArrowRight" || e.key === "Enter" || e.key === "Tab") {
-            e.preventDefault()
-            e.stopPropagation()
-            onInputKeydown(e)
-            focusSearchInput()
-        }
-    }
-
-    let reclaimingFocus = false
-
-    const reclaimSearchFocus = (event: FocusEvent) => {
-        if (reclaimingFocus || !isOpen.value || eventInsideSearch(event)) {
-            return
-        }
-        reclaimingFocus = true
-        focusSearchInput()
-        reclaimingFocus = false
     }
 
     const openSearch = () => {
         isOpen.value = true
         activeIndex.value = 0
+        activeKey.value = null
         nextTick(() => {
-            focusSearchInput()
-            requestAnimationFrame(focusSearchInput)
+            searchInput.value?.focus?.()
         })
     }
 
@@ -421,11 +403,22 @@
         isOpen.value = false
         query.value = ""
         entities.value = []
+        entityTotals.value = {flow: 0, namespace: 0}
+        entitiesLoading.value = false
+        entitiesError.value = false
         activeIndex.value = 0
+        activeKey.value = null
         scopeStack.value = []
     }
 
     const itemKey = (item: SearchItem, index: number): string => {
+        if (item.destination === "flow") {
+            return `flow:${item.namespace ?? ""}:${item.title}`
+        }
+        if (item.destination === "namespace") {
+            return `namespace:${item.title}`
+        }
+
         const href = item.href
         if (typeof href === "string") {
             return href
@@ -435,7 +428,10 @@
                 return href.path
             }
             if ("name" in href && href.name != null) {
-                return `name:${String(href.name)}`
+                const params = "params" in href && href.params && typeof href.params === "object" ? href.params : undefined
+                const namespace = params && "namespace" in params ? String(params.namespace ?? "") : ""
+                const id = params && "id" in params ? String(params.id ?? "") : ""
+                return `name:${String(href.name)}:${namespace}:${id || item.title}`
             }
         }
 
@@ -450,7 +446,8 @@
         scopeStack.value = [...scopeStack.value, {title: item.title, items: item.children}]
         query.value = ""
         activeIndex.value = 0
-        nextTick(() => focusSearchInput())
+        activeKey.value = null
+        nextTick(() => searchInput.value?.focus?.())
     }
 
     const onItemClick = (item: SearchItem) => {
@@ -500,7 +497,7 @@
             activeIndex.value = Math.max(activeIndex.value - 1, 0)
         } else if (e.key === "ArrowRight") {
             const item = results.value[activeIndex.value]
-            if (item?.executionsHref) {
+            if (item?.executionsHref && isCaretAtEnd(e)) {
                 e.preventDefault()
                 openExecutions(item)
             }
@@ -518,31 +515,62 @@
         }
     }
 
+    const isCaretAtEnd = (e: KeyboardEvent): boolean => {
+        const target = e.target
+        if (!(target instanceof HTMLInputElement) && !(target instanceof HTMLTextAreaElement)) {
+            return false
+        }
+        return target.selectionStart === target.value.length && target.selectionEnd === target.value.length
+    }
 
     onMounted(() => {
-        window.addEventListener("keydown", keyDown, true)
-        window.addEventListener("focusin", reclaimSearchFocus, true)
+        window.addEventListener("keydown", keyDown)
     })
 
     onUnmounted(() => {
-        window.removeEventListener("keydown", keyDown, true)
-        window.removeEventListener("focusin", reclaimSearchFocus, true)
+        window.removeEventListener("keydown", keyDown)
     })
+
+    const resetEntities = () => {
+        entities.value = []
+        entityTotals.value = {flow: 0, namespace: 0}
+        entitiesLoading.value = false
+        entitiesError.value = false
+    }
 
     watch(query, () => {
         activeIndex.value = 0
+        activeKey.value = null
         const q = query.value.trim()
         const ticket = ++searchTicket
         if (!isOpen.value || !q || scopeStack.value.length > 0) {
-            entities.value = []
+            resetEntities()
             return
         }
+        const user = authStore.user
+        if (!user?.hasAnyActionOnAnyNamespace(resource.FLOW, action.LIST)
+            && !user?.hasAnyActionOnAnyNamespace(resource.NAMESPACE, action.LIST)) {
+            resetEntities()
+            return
+        }
+        entities.value = []
+        entityTotals.value = {flow: 0, namespace: 0}
+        entitiesError.value = false
+        entitiesLoading.value = true
         loadEntities(q, ticket)
     })
 
     watch(results, () => {
         if (!isOpen.value) {
             return
+        }
+
+        if (activeKey.value) {
+            const found = results.value.findIndex((item, index) => itemKey(item, index) === activeKey.value)
+            if (found >= 0) {
+                activeIndex.value = found
+                return
+            }
         }
 
         activeIndex.value = Math.min(activeIndex.value, Math.max(results.value.length - 1, 0))
@@ -553,6 +581,8 @@
             return
         }
 
+        const item = results.value[activeIndex.value]
+        activeKey.value = item ? itemKey(item, activeIndex.value) : null
         scrollActiveOptionIntoView()
     })
 </script>
@@ -666,20 +696,21 @@
             font-weight: var(--ks-font-weight-semibold);
         }
 
-        .result-actions {
-            margin-left: auto;
+        .result-row {
             align-items: center;
-            gap: var(--ks-spacing-3);
+            width: 100%;
         }
 
         .result-action {
-            border: 0;
-            background: transparent;
+            flex: 0 0 auto;
             color: var(--ks-text-secondary);
-            font: inherit;
-            font-size: var(--ks-font-size-sm);
-            cursor: pointer;
             white-space: nowrap;
+        }
+
+        .result-status {
+            padding: var(--ks-spacing-1) var(--ks-spacing-2);
+            color: var(--ks-text-secondary);
+            font-size: var(--ks-font-size-sm);
         }
 
         .search-footer {
@@ -706,7 +737,9 @@
             text-decoration: none;
             align-items: center;
             transition: none;
-            width: 100%;
+            flex: 1 1 auto;
+            min-width: 0;
+            width: auto;
             border: 0;
             background: transparent;
             text-align: left;
@@ -732,9 +765,10 @@
             white-space: nowrap;
         }
 
-        .result-item.active .result-link {
+        .result-item.active .result-row {
             background-color: var(--ks-btn-secondary-bg-hover);
             color: var(--ks-text-primary);
+            border-radius: var(--ks-radius-base);
         }
 
         .result-hint {
@@ -743,10 +777,6 @@
             font-size: var(--ks-font-size-sm);
             white-space: nowrap;
             transition: none;
-        }
-
-        .result-actions .result-hint {
-            margin-left: 0;
         }
 
         .empty {

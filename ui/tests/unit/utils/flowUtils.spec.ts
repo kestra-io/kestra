@@ -155,30 +155,17 @@ tasks:
         expect(FlowUtils.loopOver("value", () => true)).toEqual(["value"])
     })
 
-    it("getAllTaskIds returns task ids from top-level and nested tasks", () => {
-        const flow = {
-            tasks: [
-                {
-                    id: "parent",
-                    type: "io.kestra.plugin.core.flow.Parallel",
-                    tasks: [
-                        {
-                            id: "child",
-                            type: "io.kestra.plugin.core.log.Log",
-                        },
-                    ],
-                },
-                {
-                    id: "top-level",
-                    type: "io.kestra.plugin.core.log.Log",
-                },
-            ],
-        }
+    it("getAllTaskIds returns task ids from top-level and deeply nested tasks", () => {
+        const flow = YAML_UTILS.parse(flowable)
 
         expect(FlowUtils.getAllTaskIds(flow)).toEqual([
-            "parent",
-            "child",
-            "top-level",
+            "nest-1",
+            "nest-2",
+            "nest-3",
+            "nest-4",
+            "1-1",
+            "1-2",
+            "end",
         ])
     })
 
@@ -216,6 +203,25 @@ tasks:
         ])
     })
 
+    it("getAllTaskIds includes tasks from finally and afterExecution", () => {
+        const flow = {
+            tasks: [
+                {id: "main", type: "io.kestra.plugin.core.log.Log"},
+            ],
+            finally: [
+                {id: "finally-task", type: "io.kestra.plugin.core.log.Log"},
+            ],
+            afterExecution: [
+                {id: "after-execution-task", type: "io.kestra.plugin.core.log.Log"},
+            ],
+        }
+
+        expect(FlowUtils.getAllTaskIds(flow)).toEqual([
+            "main",
+            "finally-task",
+            "after-execution-task",
+        ])
+    })
     it("getAllTaskIds removes duplicate task ids", () => {
         const flow = {
             tasks: [

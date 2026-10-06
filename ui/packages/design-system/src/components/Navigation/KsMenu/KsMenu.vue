@@ -15,7 +15,7 @@
 
     defineOptions({inheritAttrs: false})
 
-    const props = defineProps<MenuProps>()
+    const props = defineProps<Partial<Pick<MenuProps, "mode" | "defaultActive" | "collapse">>>()
 
     const emit = defineEmits<{
         select: [index: string, indexPath: string[]]

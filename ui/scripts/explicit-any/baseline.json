@@ -26,8 +26,6 @@
   "packages/design-system/src/components/Form/KsSwitch.vue": 3,
   "packages/design-system/src/components/Form/KsTimePicker.vue": 2,
   "packages/design-system/src/components/Form/KsUpload.vue": 6,
-  "packages/design-system/src/components/Navigation/KsMenu/KsMenu.vue": 1,
-  "packages/design-system/src/components/Navigation/KsMenu/KsSubMenu.vue": 1,
   "packages/design-system/tests/storybook/Basic/KsScrollbar.stories.ts": 1,
   "packages/design-system/tests/storybook/Data/KsTable.stories.ts": 1,
   "packages/design-system/tests/units/Data/KsFilter/ConditionRow.test.ts": 1,

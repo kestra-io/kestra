@@ -1871,7 +1871,7 @@ public class ExecutionController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Post(uri = "/{executionId}/actions/interrupt", produces = MediaType.TEXT_JSON)
+    @Post(uri = "/{executionId}/actions/interrupt")
     @Operation(tags = { "Executions" }, summary = "Interrupt a running task run")
     @ApiResponse(responseCode = "200", description = "On success")
     @ApiResponse(responseCode = "409", description = "if the task run cannot be interrupted")

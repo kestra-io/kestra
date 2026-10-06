@@ -223,7 +223,14 @@
     import AlignVerticalCenter from "vue-material-design-icons/AlignVerticalCenter.vue"
     import Download from "vue-material-design-icons/Download.vue"
     import ArrowExpandAll from "vue-material-design-icons/ArrowExpandAll.vue"
-    import {cssVar as cssVariable, State, KsTooltip, useTaskIcon} from "@kestra-io/design-system"
+    import {
+        cssVar as cssVariable,
+        State,
+        KsTooltip,
+        useTaskIcon,
+        type PluginIconData,
+        type PluginIconMap,
+    } from "@kestra-io/design-system"
     import {CLUSTER_PREFIX, GRAPH_BACKGROUND, MIN_ZOOM, ZOOM_LOD} from "./utils/constants"
     import {type CustomActionConfig, type ShowDetailsConfig, type LodLevel, EVENTS} from "./utils/constants"
     import * as VueFlowUtils from "./utils/vueFlowUtils"
@@ -246,10 +253,10 @@
         flowDescription?: string;
         flowLabels?: [string, string][];
         expandedSubflows?: string[];
-        icons?: Record<string, unknown>;
+        icons?: PluginIconMap;
         // Per-class resolver for icons absent from `icons`, which only indexes the plugins
         // registered on this instance (kestra-io/kestra#18129).
-        loadIcon?: (cls: string) => Promise<unknown>;
+        loadIcon?: (cls: string) => Promise<PluginIconData | undefined>;
         enableSubflowInteraction?: boolean;
         execution?: VueFlowUtils.GraphExecution;
         subflowsExecutions?: Record<string, VueFlowUtils.GraphExecution>;

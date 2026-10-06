@@ -1,0 +1,31 @@
+import {describe, expect, it} from "vitest"
+import {dirname, resolve} from "node:path"
+import {fileURLToPath} from "node:url"
+
+import en from "./en.json"
+import {findUnresolvedTableColumnKeys, mergeMessages, type Messages} from "../../tests/unit/translations/tableColumnGuard"
+
+const SRC = resolve(dirname(fileURLToPath(import.meta.url)), "..")
+
+// The column-picker descriptions live in the design-system locale files, which
+// `registerDesignSystemI18n` merges into the app messages at bootstrap.
+const designSystemLocales = import.meta.glob<{default: Record<string, Messages>}>(
+    "../../packages/design-system/src/components/**/*.locale.ts",
+    {eager: true},
+)
+
+describe("table column descriptions", () => {
+    it("resolves every filter.table_column.* key referenced in ui/src", () => {
+        const messages = Object.values(designSystemLocales).reduce(
+            (merged, module) => mergeMessages(merged, module.default.en ?? {}),
+            {...en.en} as unknown as Messages,
+        )
+
+        const unresolved = findUnresolvedTableColumnKeys(SRC, messages)
+
+        expect(
+            unresolved,
+            `Add the missing English descriptions to the design-system locale file, then run \`npm run translations:generate\`:\n${unresolved.join("\n")}`,
+        ).toEqual([])
+    })
+})

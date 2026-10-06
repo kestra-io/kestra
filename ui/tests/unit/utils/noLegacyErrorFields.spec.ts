@@ -37,6 +37,7 @@ const ALLOWED: Array<{file: string; reason: string}> = [
 function sourceFiles(): string[] {
     return SCANNED_DIRS.flatMap((dir) =>
         globSync(`${dir}/**/*.{ts,vue,js}`, {cwd: ROOT})
+            .map((file) => file.replaceAll("\\", "/"))
             .filter((file) => !file.includes("node_modules") && !file.includes("/dist/") && !/\.(spec|test)\.ts$/.test(file)),
     )
 }
@@ -58,7 +59,7 @@ describe("no legacy error fields", () => {
             const content = readFileSync(join(ROOT, file), "utf8")
             content.split("\n").forEach((line, index) => {
                 if (pattern.test(line)) {
-                    offenders.push(`${relative(ROOT, join(ROOT, file))}:${index + 1}: ${line.trim()}`)
+                    offenders.push(`${relative(ROOT, join(ROOT, file)).replaceAll("\\", "/")}:${index + 1}: ${line.trim()}`)
                 }
             })
         }

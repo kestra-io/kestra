@@ -4,21 +4,31 @@ import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.io.UncheckedIOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.function.IntFunction;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.MethodSource;
+import org.mockito.MockedConstruction;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.SequenceWriter;
@@ -26,17 +36,34 @@ import com.google.common.io.CharStreams;
 
 import io.kestra.core.context.TestRunContextFactory;
 import io.kestra.core.junit.annotations.KestraTest;
+import io.kestra.core.metrics.MetricRegistry;
+import io.kestra.core.models.executions.TaskRun;
+import io.kestra.core.models.flows.State;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.runners.RunContext;
+import io.kestra.core.runners.WorkerTask;
+import io.kestra.core.runners.WorkingDir;
 import io.kestra.core.serializers.FileSerde;
+import io.kestra.core.storages.Storage;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.Rethrow;
+import io.kestra.worker.processors.internals.WorkerTaskCallable;
 
 import jakarta.inject.Inject;
 
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.catchThrowable;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockConstruction;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
 
 @KestraTest
 class SplitTest {
@@ -200,6 +227,332 @@ class SplitTest {
         assertThat(levels).containsOnly("ERROR", "WARN", "INFO");
     }
 
+    @ParameterizedTest
+    @MethodSource("splitCases")
+    void shouldFailWithoutPublishingWhenFinalWriteFails(SplitMode mode, Format format) throws Exception {
+        SplitFixture fixture = splitFixture(mode, format, 9);
+        IOException writeFailure = new IOException("Cannot write the final split records.");
+        List<WriterFault> writers = new ArrayList<>();
+        Throwable failure;
+
+        try (var outputs = mockOutputs(fixture, writers, index -> index == 0 ? writeFailure : null, index -> null)) {
+            failure = catchThrowable(() -> fixture.task().run(fixture.runContext()));
+        }
+
+        assertThat(failure).isInstanceOf(IOException.class);
+        assertThat(writers.getFirst().writes).isPositive();
+        assertWritersClosed(writers, 3);
+        assertNoPublicationAndSourcePreserved(fixture);
+    }
+
+    @ParameterizedTest
+    @EnumSource(SplitMode.class)
+    void shouldCloseAllWritersAndSuppressFailuresWhenMultipleFinalWritesFail(SplitMode mode) throws Exception {
+        SplitFixture fixture = splitFixture(mode, Format.TEXT, 9);
+        List<IOException> failures = IntStream.range(0, 3)
+            .mapToObj(index -> new IOException("Cannot finalize split writer %d.".formatted(index)))
+            .toList();
+        List<WriterFault> writers = new ArrayList<>();
+        Throwable failure;
+
+        try (var outputs = mockOutputs(fixture, writers, failures::get, index -> null)) {
+            failure = catchThrowable(() -> fixture.task().run(fixture.runContext()));
+        }
+
+        assertThat(failure).isInstanceOf(IOException.class).isIn(failures);
+        assertThat(failure.getSuppressed()).containsExactlyInAnyOrderElementsOf(
+            failures.stream().filter(exception -> exception != failure).toList()
+        );
+        assertWritersClosed(writers, 3);
+        assertNoPublicationAndSourcePreserved(fixture);
+    }
+
+    @ParameterizedTest
+    @EnumSource(SplitMode.class)
+    void shouldPreserveFailureWhenWritersThrowTheSameException(SplitMode mode) throws Exception {
+        SplitFixture fixture = splitFixture(mode, Format.TEXT, 9);
+        IOException writeFailure = new IOException("Cannot write the final split records.");
+        List<WriterFault> writers = new ArrayList<>();
+        Throwable failure;
+
+        try (var outputs = mockOutputs(fixture, writers, index -> writeFailure, index -> null)) {
+            failure = catchThrowable(() -> fixture.task().run(fixture.runContext()));
+        }
+
+        assertThat(failure).isSameAs(writeFailure);
+        assertThat(failure.getSuppressed()).isEmpty();
+        assertWritersClosed(writers, 3);
+        assertNoPublicationAndSourcePreserved(fixture);
+    }
+
+    @ParameterizedTest
+    @EnumSource(SplitMode.class)
+    void shouldPreserveWriteFailureWhenCleanupAlsoFails(SplitMode mode) throws Exception {
+        SplitFixture fixture = splitFixture(mode, Format.TEXT, 9);
+        Split task = Split.builder()
+            .from(fixture.task().getFrom())
+            .partitions(fixture.task().getPartitions())
+            .regexPattern(fixture.task().getRegexPattern())
+            .separator(Property.ofValue("x".repeat(FileSerde.BUFFER_SIZE)))
+            .build();
+        IOException writeFailure = new IOException("Cannot write a split record.");
+        List<WriterFault> writers = new ArrayList<>();
+        Throwable failure;
+
+        try (
+            var outputs = mockOutputs(
+                fixture, writers, index -> writeFailure,
+                index -> new IOException("Cannot close split writer %d.".formatted(index))
+            )
+        ) {
+            failure = catchThrowable(() -> task.run(fixture.runContext()));
+        }
+
+        assertThat(failure).isSameAs(writeFailure);
+        assertThat(failure.getSuppressed()).containsExactlyInAnyOrderElementsOf(
+            writers.stream().map(writer -> writer.closeFailure).toList()
+        );
+        assertWritersClosed(writers, mode == SplitMode.PARTITIONS ? 3 : 1);
+        assertNoPublicationAndSourcePreserved(fixture);
+    }
+
+    @ParameterizedTest
+    @EnumSource(SplitMode.class)
+    void shouldPreserveReadFailureWhenCleanupAlsoFails(SplitMode mode) throws Exception {
+        SplitFixture fixture = splitFixture(mode, Format.TEXT, 9);
+        UncheckedIOException readFailure = new UncheckedIOException(new IOException("Cannot read the split input."));
+        doAnswer(invocation -> new FilterInputStream((InputStream) invocation.callRealMethod()) {
+            private boolean read;
+
+            @Override
+            public int read(byte[] bytes, int offset, int length) throws IOException {
+                if (read) {
+                    throw readFailure;
+                }
+                read = true;
+                return super.read(bytes, offset, length);
+            }
+
+            @Override
+            public int available() {
+                return 0;
+            }
+        }).when(fixture.storage()).getFile(fixture.source());
+        List<WriterFault> writers = new ArrayList<>();
+        Throwable failure;
+
+        try (
+            var outputs = mockOutputs(
+                fixture, writers, index -> null,
+                index -> new IOException("Cannot close split writer %d.".formatted(index))
+            )
+        ) {
+            failure = catchThrowable(() -> fixture.task().run(fixture.runContext()));
+        }
+
+        assertThat(failure).isSameAs(readFailure);
+        assertThat(failure.getSuppressed()).containsExactlyInAnyOrderElementsOf(
+            writers.stream().map(writer -> writer.closeFailure).toList()
+        );
+        assertWritersClosed(writers, 3);
+        assertNoPublicationAndSourcePreserved(fixture);
+    }
+
+    @ParameterizedTest
+    @EnumSource(SplitMode.class)
+    void shouldCloseRegisteredWritersWhenCreatingAnotherWriterFails(SplitMode mode) throws Exception {
+        SplitFixture fixture = splitFixture(mode, Format.TEXT, 9);
+        WorkingDir workingDir = spy(fixture.runContext().workingDir());
+        doReturn(workingDir).when(fixture.runContext()).workingDir();
+        IOException creationFailure = new IOException("Cannot create another split file.");
+        int[] createdFiles = { 0 };
+        doAnswer(invocation ->
+        {
+            if (++createdFiles[0] == 2) {
+                throw creationFailure;
+            }
+            return invocation.callRealMethod();
+        }).when(workingDir).createTempFile(".txt");
+        IOException closeFailure = new IOException("Cannot close the first split writer.");
+        List<WriterFault> writers = new ArrayList<>();
+        Throwable failure;
+
+        try (var outputs = mockOutputs(fixture, writers, index -> null, index -> closeFailure)) {
+            failure = catchThrowable(() -> fixture.task().run(fixture.runContext()));
+        }
+
+        assertThat(failure).isSameAs(creationFailure);
+        assertThat(failure.getSuppressed()).containsExactly(closeFailure);
+        assertWritersClosed(writers, 1);
+        assertNoPublicationAndSourcePreserved(fixture);
+    }
+
+    @ParameterizedTest
+    @MethodSource("splitCases")
+    void shouldFailWithoutPublishingWhenCloseFailsAfterFlush(SplitMode mode, Format format) throws Exception {
+        SplitFixture fixture = splitFixture(mode, format, 9);
+        IOException closeFailure = new IOException("Cannot close a flushed split writer.");
+        List<WriterFault> writers = new ArrayList<>();
+        Throwable failure;
+
+        try (var outputs = mockOutputs(fixture, writers, index -> null, index -> index == 0 ? closeFailure : null)) {
+            failure = catchThrowable(() -> fixture.task().run(fixture.runContext()));
+        }
+
+        assertThat(failure).isInstanceOf(IOException.class);
+        assertWritersClosed(writers, 3);
+        for (WriterFault writer : writers) {
+            assertThat(Files.size(writer.path)).isPositive();
+        }
+        assertNoPublicationAndSourcePreserved(fixture);
+    }
+
+    @Test
+    void shouldReportFailedWorkerWhenFinalWriteFails() throws Exception {
+        SplitFixture fixture = splitFixture(SplitMode.PARTITIONS, Format.TEXT, 9);
+        WorkerTask workerTask = WorkerTask.builder()
+            .task(fixture.task())
+            .taskRun(TaskRun.builder().id("split-finalization").build())
+            .build();
+        WorkerTaskCallable callable = new WorkerTaskCallable(workerTask, fixture.task(), fixture.runContext(), mock(MetricRegistry.class), null);
+        IOException writeFailure = new IOException("Cannot write the final split records.");
+        List<WriterFault> writers = new ArrayList<>();
+        ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+        State.Type state;
+
+        try (var outputs = mockOutputs(fixture, writers, index -> index == 0 ? writeFailure : null, index -> null)) {
+            state = callable.call();
+        } finally {
+            Thread.currentThread().setContextClassLoader(classLoader);
+        }
+
+        assertThat(state).isEqualTo(State.Type.FAILED);
+        assertThat(callable.getException()).isSameAs(writeFailure);
+        assertThat(callable.getTaskOutput()).isNull();
+        assertWritersClosed(writers, 3);
+        assertNoPublicationAndSourcePreserved(fixture);
+    }
+
+    @ParameterizedTest
+    @EnumSource(SplitMode.class)
+    void shouldReturnEmptyOutputWhenInputIsEmpty(SplitMode mode) throws Exception {
+        SplitFixture fixture = splitFixture(mode, Format.TEXT, 0);
+
+        assertThat(fixture.task().run(fixture.runContext()).getUris()).isEmpty();
+        assertNoPublicationAndSourcePreserved(fixture);
+    }
+
+    @ParameterizedTest
+    @EnumSource(Format.class)
+    void shouldReturnEmptyOutputWhenNoRecordsMatchRegex(Format format) throws Exception {
+        SplitFixture fixture = splitFixture(SplitMode.REGEX, format, 9);
+        Split task = Split.builder()
+            .from(fixture.task().getFrom())
+            .regexPattern(Property.ofValue("not-present"))
+            .build();
+
+        assertThat(task.run(fixture.runContext()).getUris()).isEmpty();
+        assertNoPublicationAndSourcePreserved(fixture);
+    }
+
+    private static Stream<Arguments> splitCases() {
+        return Stream.of(SplitMode.values())
+            .flatMap(mode -> Stream.of(Format.values()).map(format -> Arguments.of(mode, format)));
+    }
+
+    private SplitFixture splitFixture(SplitMode mode, Format format, int count) throws Exception {
+        URI source;
+        if (format == Format.ION) {
+            source = storageUploadIon(
+                IntStream.range(0, count)
+                    .mapToObj(index -> Map.<String, Object> of("id", index, "group", "g%d".formatted(index % 3)))
+                    .toList()
+            );
+        } else {
+            Path path = Files.createTempFile("split-input-", ".txt");
+            Files.write(
+                path, IntStream.range(0, count)
+                    .mapToObj(index -> "[g%d] record %d".formatted(index % 3, index))
+                    .toList()
+            );
+            try (InputStream input = Files.newInputStream(path)) {
+                source = storageInterface.put(
+                    MAIN_TENANT, null,
+                    URI.create("/file/storage/%s/input.txt".formatted(IdUtils.create())), input
+                );
+            } finally {
+                Files.deleteIfExists(path);
+            }
+        }
+
+        byte[] sourceBytes;
+        try (InputStream input = storageInterface.get(MAIN_TENANT, null, source)) {
+            sourceBytes = input.readAllBytes();
+        }
+        RunContext runContext = spy(runContextFactory.of());
+        Storage storage = spy(runContext.storage());
+        doReturn(storage).when(runContext).storage();
+        Split.SplitBuilder<?, ?> builder = Split.builder().id("split-finalization").from(Property.ofValue(source.toString()));
+        switch (mode) {
+            case PARTITIONS -> builder.partitions(Property.ofValue(3));
+            case REGEX -> builder.regexPattern(Property.ofValue(format == Format.ION ? "group:\"(g\\d)\"" : "\\[(g\\d)\\]"));
+        }
+        return new SplitFixture(builder.build(), runContext, storage, source, sourceBytes);
+    }
+
+    private MockedConstruction<FileOutputStream> mockOutputs(SplitFixture fixture, List<WriterFault> writers,
+        IntFunction<IOException> writeFailure, IntFunction<IOException> closeFailure) {
+        Path workingDir = fixture.runContext().workingDir().path().toAbsolutePath().normalize();
+        return mockConstruction(FileOutputStream.class, (stream, context) ->
+        {
+            Object destination = context.arguments().getFirst();
+            Path path = (destination instanceof File file ? file.toPath() : Path.of((String) destination)).toAbsolutePath().normalize();
+            OutputStream delegate = Files.newOutputStream(path);
+            if (path.startsWith(workingDir)) {
+                WriterFault writer = new WriterFault(path, delegate, writeFailure.apply(writers.size()), closeFailure.apply(writers.size()));
+                writers.add(writer);
+                delegate = writer;
+            }
+            OutputStream output = delegate;
+            doAnswer(invocation ->
+            {
+                output.write(invocation.getArgument(0), invocation.getArgument(1), invocation.getArgument(2));
+                return null;
+            }).when(stream).write(any(byte[].class), anyInt(), anyInt());
+            doAnswer(invocation ->
+            {
+                output.write((byte[]) invocation.getArgument(0));
+                return null;
+            }).when(stream).write(any(byte[].class));
+            doAnswer(invocation ->
+            {
+                output.write((Integer) invocation.getArgument(0));
+                return null;
+            }).when(stream).write(anyInt());
+            doAnswer(invocation ->
+            {
+                output.flush();
+                return null;
+            }).when(stream).flush();
+            doAnswer(invocation ->
+            {
+                output.close();
+                return null;
+            }).when(stream).close();
+        });
+    }
+
+    private void assertWritersClosed(List<WriterFault> writers, int count) {
+        assertThat(writers).hasSize(count).allMatch(writer -> writer.closes > 0);
+    }
+
+    private void assertNoPublicationAndSourcePreserved(SplitFixture fixture) throws IOException {
+        verify(fixture.storage(), never()).putFile(any(File.class));
+        try (InputStream input = storageInterface.get(MAIN_TENANT, null, fixture.source())) {
+            assertThat(input.readAllBytes()).isEqualTo(fixture.sourceBytes());
+        }
+    }
+
     private List<String> content(int count) {
         return IntStream
             .range(0, count)
@@ -287,6 +640,63 @@ class SplitTest {
             }
         }
         return records;
+    }
+
+    private enum SplitMode {
+        PARTITIONS,
+        REGEX
+    }
+
+    private enum Format {
+        TEXT,
+        ION
+    }
+
+    private record SplitFixture(Split task, RunContext runContext, Storage storage, URI source, byte[] sourceBytes) {
+    }
+
+    private static final class WriterFault extends OutputStream {
+        private final Path path;
+        private final OutputStream delegate;
+        private final IOException writeFailure;
+        private final IOException closeFailure;
+        private int writes;
+        private int closes;
+
+        private WriterFault(Path path, OutputStream delegate, IOException writeFailure, IOException closeFailure) {
+            this.path = path;
+            this.delegate = delegate;
+            this.writeFailure = writeFailure;
+            this.closeFailure = closeFailure;
+        }
+
+        @Override
+        public void write(int value) throws IOException {
+            write(new byte[] { (byte) value }, 0, 1);
+        }
+
+        @Override
+        public void write(byte[] bytes, int offset, int length) throws IOException {
+            writes++;
+            if (writeFailure != null) {
+                throw writeFailure;
+            }
+            delegate.write(bytes, offset, length);
+        }
+
+        @Override
+        public void flush() throws IOException {
+            delegate.flush();
+        }
+
+        @Override
+        public void close() throws IOException {
+            closes++;
+            delegate.close();
+            if (closeFailure != null) {
+                throw closeFailure;
+            }
+        }
     }
 
 }

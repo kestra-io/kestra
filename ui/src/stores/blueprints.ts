@@ -8,6 +8,7 @@ import {useMiscStore} from "override/stores/misc"
 
 import {trackBlueprintSelection} from "../utils/tabTracking"
 import type {KestraHttpError} from "../utils/kestraHttp"
+import {validationErrorLines, type ValidationError} from "../utils/validationErrors"
 import {Input} from "./flow.ts"
 import type {ValidationResponse} from "./executions"
 
@@ -62,11 +63,12 @@ export const useBlueprintsStore = defineStore("blueprints", () => {
 
     const validateYAML = ref<boolean>(true) // Used to enable/disable YAML validation in Monaco editor, for the purpose of Templated Blueprints
 
-    const validation = ref<{constraints?: string} | undefined>(undefined)
+    const validation = ref<{errors?: ValidationError[]} | undefined>(undefined)
 
-    const validationErrors = computed<string[] | undefined>(
-        () => validation.value?.constraints ? [validation.value.constraints] : undefined,
-    )
+    const validationErrors = computed<string[] | undefined>(() => {
+        const lines = validationErrorLines(validation.value?.errors)
+        return lines.length ? lines : undefined
+    })
 
     const getBlueprints = async (options: Options) => {
         if (options.type === "community") {
@@ -176,7 +178,7 @@ export const useBlueprintsStore = defineStore("blueprints", () => {
     }
 
     const validateFlowBlueprint = async (source: string): Promise<void> => {
-        const {data} = await axios.post<{constraints?: string}>(`${apiUrl()}/blueprints/flows/validate`, source, {
+        const {data} = await axios.post<{errors?: ValidationError[]}>(`${apiUrl()}/blueprints/flows/validate`, source, {
             headers: {"Content-Type": "application/x-yaml"},
             showMessageOnError: false,
         })

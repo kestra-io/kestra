@@ -1,6 +1,4 @@
 {
-  "packages/design-system/src/components/Basic/KsScrollbar.vue": 3,
-  "packages/design-system/src/components/Basic/KsText.vue": 1,
   "packages/design-system/src/components/Data/KsDataTable/KsDataTable.vue": 31,
   "packages/design-system/src/components/Data/KsTable/KsTable.test.ts": 4,
   "packages/design-system/src/components/Form/KsAutocomplete.vue": 5,

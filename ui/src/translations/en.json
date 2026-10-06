@@ -5,6 +5,12 @@
       "cta": "See what changed"
     },
     "loading": "Loading...",
+    "namespace_files_tip": {
+      "title": "Manage your scripts as Namespace Files",
+      "description": "Instead of writing your script inline, open the Files panel, add it as a file (e.g. main.py) and run it from your flow:",
+      "open_files": "Open Files",
+      "dont_show_again": "Don't show again"
+    },
     "more actions": "More actions",
     "recipe": {
       "create_flow": "Create flow",

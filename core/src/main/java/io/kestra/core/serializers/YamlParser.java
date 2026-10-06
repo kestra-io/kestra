@@ -4,7 +4,9 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -14,13 +16,16 @@ import org.apache.commons.io.IOUtils;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.exc.InvalidTypeIdException;
 import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException;
 
 import io.kestra.core.exceptions.InvalidTypeConstraintViolationException;
 import io.kestra.core.models.validations.ManualConstraintViolation;
+import io.kestra.core.models.validations.ValidationError;
 
+import jakarta.annotation.Nullable;
 import jakarta.validation.ConstraintViolationException;
 
 public final class YamlParser {
@@ -30,6 +35,8 @@ public final class YamlParser {
 
     private static final ObjectMapper STRICT_MAPPER = NON_STRICT_MAPPER.copy()
         .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, true);
+
+    private static final int MAX_PARSE_PROBLEMS = 50;
 
     public static boolean isValidExtension(Path path) {
         return FilenameUtils.getExtension(path.toFile().getAbsolutePath()).equals("yaml") || FilenameUtils.getExtension(path.toFile().getAbsolutePath()).equals("yml");
@@ -55,6 +62,126 @@ public final class YamlParser {
 
             throw e;
         }
+    }
+
+    /**
+     * Scans the source for every problem a strict parse stops at, removing each and retrying. A problem whose
+     * node cannot be removed ends the scan, and the source is only recovered when a lenient parse can read it.
+     */
+    @SuppressWarnings("unchecked")
+    public static ParseReport scan(String input, Class<?> cls, String resource) {
+        List<ValidationError> errors = new ArrayList<>();
+        List<ParseReport.InvalidType> invalidTypes = new ArrayList<>();
+        List<ParseReport.Removal> removals = new ArrayList<>();
+        Map<String, Object> map;
+        try {
+            map = NON_STRICT_MAPPER.readValue(input, Map.class);
+        } catch (JsonProcessingException e) {
+            errors.addAll(ValidationError.ofException(toConstraintViolationException(input, resource, e)));
+            return new ParseReport(errors, invalidTypes, null, removals);
+        }
+
+        boolean recoverable = true;
+        while (errors.size() + invalidTypes.size() < MAX_PARSE_PROBLEMS) {
+            try {
+                STRICT_MAPPER.convertValue(map, cls);
+                break;
+            } catch (IllegalArgumentException e) {
+                if (!(e.getCause() instanceof JsonMappingException failure)) {
+                    errors.add(ValidationError.of(e.getMessage()));
+                    recoverable = false;
+                    break;
+                }
+                List<String> at = segments(failure.getPath());
+                if (failure instanceof InvalidTypeIdException invalid) {
+                    List<String> type = new ArrayList<>(at);
+                    type.add("type");
+                    invalidTypes.add(new ParseReport.InvalidType(located("Invalid type: " + invalid.getTypeId(), type, removals), invalid.getTypeId()));
+                } else {
+                    String detail = failure.getCause() instanceof ConstraintViolationException cve ? cve.getMessage() : failure.getOriginalMessage();
+                    errors.add(located(detail, at, removals));
+                }
+                Integer index = removeAt(map, at);
+                if (index == null) {
+                    // A lenient parse ignores an unknown property, but stops at any other problem.
+                    recoverable = failure instanceof UnrecognizedPropertyException;
+                    break;
+                }
+                if (!(failure instanceof UnrecognizedPropertyException)) {
+                    removals.add(new ParseReport.Removal(index < 0 ? at : at.subList(0, at.size() - 1), index));
+                }
+            }
+        }
+        return new ParseReport(errors, invalidTypes, recoverable ? toYaml(map) : null, removals);
+    }
+
+    @Nullable
+    private static String toYaml(Map<String, Object> map) {
+        try {
+            return NON_STRICT_MAPPER.writeValueAsString(map);
+        } catch (JsonProcessingException e) {
+            return null;
+        }
+    }
+
+    private static ValidationError located(String detail, List<String> segments, List<ParseReport.Removal> removals) {
+        List<String> source = ParseReport.shift(segments, removals, removals.size());
+        return new ValidationError(detail, ParseReport.toPointer(source), ParseReport.toPath(source));
+    }
+
+    private static List<String> segments(List<JsonMappingException.Reference> path) {
+        List<String> segments = new ArrayList<>(path.size());
+        for (JsonMappingException.Reference reference : path) {
+            if (reference.getFieldName() != null) {
+                segments.add(reference.getFieldName());
+            } else if (reference.getIndex() >= 0) {
+                segments.add(String.valueOf(reference.getIndex()));
+            }
+        }
+        return segments;
+    }
+
+    /** Removes the node at {@code path}: returns its list index, -1 for a map key, or null when it is not there. */
+    @Nullable
+    private static Integer removeAt(Object root, List<String> path) {
+        if (path.isEmpty()) {
+            return null;
+        }
+        Object parent = root;
+        for (String segment : path.subList(0, path.size() - 1)) {
+            parent = child(parent, segment);
+            if (parent == null) {
+                return null;
+            }
+        }
+        String leaf = path.getLast();
+        if (parent instanceof Map<?, ?> map && map.containsKey(leaf)) {
+            map.remove(leaf);
+            return -1;
+        }
+        Integer index = parent instanceof List<?> list ? listIndex(list, leaf) : null;
+        if (index != null) {
+            ((List<?>) parent).remove(index.intValue());
+        }
+        return index;
+    }
+
+    @Nullable
+    private static Object child(Object node, String segment) {
+        if (node instanceof Map<?, ?> map) {
+            return map.get(segment);
+        }
+        Integer index = node instanceof List<?> list ? listIndex(list, segment) : null;
+        return index == null ? null : ((List<?>) node).get(index);
+    }
+
+    @Nullable
+    private static Integer listIndex(List<?> list, String segment) {
+        if (!ParseReport.isIndex(segment)) {
+            return null;
+        }
+        int index = Integer.parseInt(segment);
+        return index < list.size() ? index : null;
     }
 
     private static <T> String type(Class<T> cls) {
@@ -98,6 +225,15 @@ public final class YamlParser {
         }
     }
 
+    /** Renders Jackson's reference chain as a document path such as {@code tasks[0].type}. */
+    private static String propertyPath(JsonMappingException e, @Nullable String leaf) {
+        List<String> path = segments(e.getPath());
+        if (leaf != null) {
+            path.add(leaf);
+        }
+        return ParseReport.toPath(path);
+    }
+
     private static String formatYamlErrorMessage(String originalMessage, JsonProcessingException e) {
         StringBuilder friendlyMessage = new StringBuilder();
         if (originalMessage.contains("Expected a field name")) {
@@ -131,14 +267,14 @@ public final class YamlParser {
                         "Invalid type: " + invalidTypeIdException.getTypeId(),
                         target,
                         (Class<T>) target.getClass(),
-                        invalidTypeIdException.getPathReference(),
+                        propertyPath(invalidTypeIdException, "type"),
                         null
                     ),
                     ManualConstraintViolation.of(
                         e.getMessage(),
                         target,
                         (Class<T>) target.getClass(),
-                        invalidTypeIdException.getPathReference(),
+                        propertyPath(invalidTypeIdException, "type"),
                         null
                     )
                 )
@@ -152,7 +288,7 @@ public final class YamlParser {
                         e.getCause() == null ? message : message + "\nCaused by: " + e.getCause().getMessage(),
                         target,
                         (Class<T>) target.getClass(),
-                        unrecognizedPropertyException.getPathReference(),
+                        propertyPath(unrecognizedPropertyException, null),
                         null
                     )
                 )

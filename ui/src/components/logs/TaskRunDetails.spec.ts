@@ -37,7 +37,7 @@ const execution = (id: string, state: string) => ({
     taskRunList: [],
 })
 
-const logsFor = (id: string) => [{level: "INFO", message: `log of ${id}`}]
+const logsFor = (id: string) => [{level: "INFO", taskRunId: "tr-1", message: `log of ${id}`}]
 
 function mountDetails() {
     return mount(TaskRunDetails, {
@@ -105,7 +105,7 @@ describe("TaskRunDetails log loading across executions", () => {
         store.executions.execution = execution("exec-1", "SUCCESS")
         const wrapper = mountDetails()
         await flushPromises()
-        expect((wrapper.vm as any).filteredLogs).toEqual([{level: "INFO", message: "log of exec-1"}])
+        expect((wrapper.vm as any).filteredLogs).toEqual([{level: "INFO", taskRunId: "tr-1", message: "log of exec-1"}])
 
         store.executions.loadLogs.mockReturnValue(new Promise(() => {}))
         store.executions.execution = execution("exec-2", "RESTARTED")
@@ -133,5 +133,20 @@ describe("TaskRunDetails log loading across executions", () => {
         const stream = await store.executions.followLogs.mock.results[0].value
         vi.advanceTimersByTime(5000)
         expect(stream.close).not.toHaveBeenCalled()
+    })
+
+    it("should show the logs of an execution that failed before any task run", async () => {
+        store.executions.loadLogs.mockResolvedValue([
+            {level: "ERROR", message: "Execution is FAILED due to concurrency limit exceeded"},
+            {level: "INFO", taskRunId: "tr-other", message: "log of another task run"},
+        ])
+        store.executions.execution = execution("exec-1", "FAILED")
+        const wrapper = mountDetails()
+        await flushPromises()
+
+        const block = wrapper.find("[data-test=\"execution-logs\"]")
+        expect(block.text()).toContain("concurrency limit exceeded")
+        expect(block.text()).not.toContain("another task run")
+        expect(wrapper.emitted("log-indices-by-level")?.at(-1)).toEqual([{ERROR: ["-1/0"]}])
     })
 })

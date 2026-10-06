@@ -2,11 +2,13 @@ package io.kestra.core.executor.command;
 
 import java.time.Instant;
 
+import io.kestra.core.events.Actor;
 import io.kestra.core.events.EventId;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.State;
 
 import io.micronaut.core.annotation.Nullable;
+import lombok.With;
 
 public record Unqueue(String tenantId,
     String namespace,
@@ -15,7 +17,8 @@ public record Unqueue(String tenantId,
     Instant timestamp,
     EventId eventId,
     @Nullable State.Type state,
-    @jakarta.annotation.Nullable String operationId) implements ExecutionCommand {
+    @jakarta.annotation.Nullable String operationId,
+    @With @Nullable Actor actor) implements ExecutionCommand {
     public static Unqueue from(Execution execution, @Nullable State.Type state) {
         return new Unqueue(
             execution.getTenantId(),
@@ -25,11 +28,12 @@ public record Unqueue(String tenantId,
             Instant.now(),
             EventId.create(),
             state,
+            null,
             null
         );
     }
 
     public Unqueue withOperationId(String operationId) {
-        return new Unqueue(tenantId, namespace, flowId, executionId, timestamp, eventId, state, operationId);
+        return new Unqueue(tenantId, namespace, flowId, executionId, timestamp, eventId, state, operationId, actor);
     }
 }

@@ -2,10 +2,12 @@ package io.kestra.core.executor.command;
 
 import java.time.Instant;
 
+import io.kestra.core.events.Actor;
 import io.kestra.core.events.EventId;
 import io.kestra.core.models.executions.Execution;
 
 import jakarta.annotation.Nullable;
+import lombok.With;
 
 public record ForceRun(String tenantId,
     String namespace,
@@ -13,7 +15,8 @@ public record ForceRun(String tenantId,
     String executionId,
     Instant timestamp,
     EventId eventId,
-    @Nullable String operationId) implements ExecutionCommand {
+    @Nullable String operationId,
+    @With @Nullable Actor actor) implements ExecutionCommand {
 
     public static ForceRun from(Execution execution) {
         return new ForceRun(
@@ -23,11 +26,12 @@ public record ForceRun(String tenantId,
             execution.getId(),
             Instant.now(),
             EventId.create(),
+            null,
             null
         );
     }
 
     public ForceRun withOperationId(String operationId) {
-        return new ForceRun(tenantId, namespace, flowId, executionId, timestamp, eventId, operationId);
+        return new ForceRun(tenantId, namespace, flowId, executionId, timestamp, eventId, operationId, actor);
     }
 }

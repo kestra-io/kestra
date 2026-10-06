@@ -6,7 +6,7 @@ export interface Crumb {
 }
 
 export interface NavFrame extends Crumb {
-    schema: any;
+    schema: Record<string, unknown>;
 }
 
 const SCROLL_STABLE_FRAMES = 3

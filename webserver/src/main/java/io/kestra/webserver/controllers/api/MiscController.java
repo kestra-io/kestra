@@ -156,8 +156,10 @@ public class MiscController {
                     .build()
             )
             .isAiEnabled(applicationContext.containsBean(AiController.class))
+            .isPluginEndpointsEnabled(applicationContext.containsBean(PluginEndpointController.class))
             .isAiApiKeyConfigured(aiServiceManager.map(AiServiceManager::hasConfiguredProvider).orElse(false))
             .isBasicAuthInitialized(isBasicAuthInitialized())
+            .isBasicAuthManagedByConfig(basicAuthService.map(BasicAuthService::isManagedByConfig).orElse(false))
             .systemNamespace(systemFlowsConfiguration.namespace())
             .hiddenLabelsPrefixes(hiddenLabelsPrefixes)
             .url(kestraUrl)
@@ -216,13 +218,19 @@ public class MiscController {
     @ExecuteOn(TaskExecutors.IO)
     @Operation(
         tags = { "Misc" }, summary = "Configure basic authentication for the instance.",
-        description = "Sets up basic authentication credentials. Once credentials already exist, the request must also carry the current password."
+        description = "Sets up basic authentication credentials. Once credentials already exist, the request must also carry the current password. Rejected when the credentials are set in the configuration file."
     )
     public MutableHttpResponse<?> createBasicAuth(
         HttpRequest<?> request,
         @RequestBody @Valid @Body BasicAuthCredentials basicAuthCredentials) {
         BasicAuthService service = basicAuthService
             .orElseThrow(() -> new IllegalStateException("basicAuthService bean is required in OSS"));
+
+        if (service.isManagedByConfig()) {
+            throw new ValidationErrorException(List.of(
+                "Basic Authentication credentials are managed in the configuration file and cannot be changed from the API."
+            ));
+        }
 
         // Being authenticated is not enough to prove the caller still knows the *current*
         // password: isAuthenticated() caches verified tokens, so a password already rotated on
@@ -372,9 +380,14 @@ public class MiscController {
 
         Boolean isBasicAuthInitialized;
 
+        Boolean isBasicAuthManagedByConfig;
+
         Long pluginsHash;
 
         Boolean isPluginAutoInstallEnabled;
+
+        @JsonInclude
+        Boolean isPluginEndpointsEnabled;
     }
 
     @Value

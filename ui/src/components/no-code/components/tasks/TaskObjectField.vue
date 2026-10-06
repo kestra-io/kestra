@@ -1,6 +1,6 @@
 <template>
     <component
-        v-if="simpleType === 'list'"
+        v-if="simpleType === 'list' || simpleType === 'plugin-implementation'"
         ref="taskComponent"
         :is="type"
         v-bind="componentProps"

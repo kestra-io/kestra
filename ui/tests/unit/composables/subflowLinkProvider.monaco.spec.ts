@@ -1,7 +1,7 @@
 import {describe, expect, it} from "vitest"
 
-;(globalThis as any).MonacoEnvironment = {
-    getWorker: () => ({postMessage(){}, terminate(){}, addEventListener(){}, removeEventListener(){}}),
+globalThis.MonacoEnvironment = {
+    getWorker: () => ({postMessage(){}, terminate(){}, addEventListener(){}, removeEventListener(){}}) as unknown as Worker,
 }
 
 import * as monaco from "monaco-editor/editor/editor.api.js"

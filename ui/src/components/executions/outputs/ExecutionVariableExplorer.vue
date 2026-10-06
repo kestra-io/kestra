@@ -559,10 +559,6 @@
         background-color: var(--ks-bg-base);
     }
 
-    &__panel--viewer {
-        overflow: auto;
-    }
-
     &__panel--debug {
         border-left: 1px solid var(--ks-border-default);
     }
@@ -581,8 +577,10 @@
 .viewer {
     display: flex;
     flex-direction: column;
-    width: 100%;
-    min-height: 100%;
+    width: calc(100% - var(--ks-spacing-2));
+    height: 100%;
+    min-height: 0;
+    overflow: auto;
     background-color: var(--ks-bg-surface);
 
     &__header {

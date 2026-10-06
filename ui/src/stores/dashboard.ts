@@ -283,12 +283,20 @@ export const useDashboardStore = defineStore("dashboard", () => {
 
     async function validateDashboard(source: Dashboard["sourceCode"]) {
         const validation = ++latestValidation
-        const {data} = await axios.post(`${apiUrl()}/dashboards/validate`, source ?? "", yaml)
         // A response overtaken by a newer validation describes a source the editor no longer holds.
-        if (validation === latestValidation) {
-            setValidationErrors(data.errors)
+        const isLatest = () => validation === latestValidation
+        try {
+            const {data} = await axios.post(`${apiUrl()}/dashboards/validate`, source ?? "", yaml)
+            if (isLatest()) {
+                setValidationErrors(data.errors)
+            }
+            return data
+        } catch (error) {
+            if (isLatest()) {
+                setValidationErrors(undefined)
+            }
+            throw error
         }
-        return data
     }
 
     async function generate(id: Dashboard["id"], chartId: Chart["id"], parameters: ChartFiltersOverrides) {

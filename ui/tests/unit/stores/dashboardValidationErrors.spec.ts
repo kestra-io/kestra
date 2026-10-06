@@ -79,6 +79,18 @@ describe("dashboard store validation errors", () => {
         expect(store.errors).toBeUndefined()
     })
 
+    it("drops the errors when the latest validation fails", {timeout: TEST_TIMEOUT_MS}, async () => {
+        const {useDashboardStore} = await import("../../../src/stores/dashboard")
+        const store = useDashboardStore()
+        post.mockResolvedValueOnce({data: {errors: [invalidChartId]}}).mockRejectedValueOnce(new Error("boom"))
+
+        await store.validateDashboard("id: a")
+        await expect(store.validateDashboard("id: b")).rejects.toThrow("boom")
+
+        expect(store.validationErrors).toBeUndefined()
+        expect(store.errors).toBeUndefined()
+    })
+
     it("drops the errors of the previous dashboard when another one loads", {timeout: TEST_TIMEOUT_MS}, async () => {
         const {useDashboardStore} = await import("../../../src/stores/dashboard")
         const store = useDashboardStore()

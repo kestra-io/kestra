@@ -25,7 +25,7 @@
     import {computed} from "vue"
     import {usePluginsStore} from "../../stores/plugins"
     import * as Utils from "../../utils/utils"
-    import {webhookUrl} from "../../utils/webhook"
+    import {webhookUrl, WEBHOOK_TRIGGER_TYPES} from "../../utils/webhook"
     import TriggerVars from "./TriggerVars.vue"
     import TaskIcon from "../plugins/TaskIcon.vue"
     import {useI18n} from "vue-i18n"
@@ -74,7 +74,7 @@
     const toast = useToast()
 
     async function copyLink(trigger: Trigger) {
-        if (trigger.key && props.flow) {
+        if (WEBHOOK_TRIGGER_TYPES.includes(trigger.type) && trigger.key && props.flow) {
             const url = webhookUrl({namespace: props.flow.namespace, id: props.flow.id, key: trigger.key})
             try {
                 await Utils.copy(url)

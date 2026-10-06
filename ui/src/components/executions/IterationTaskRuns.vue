@@ -73,7 +73,7 @@
     }
     watch(() => props.executionId, (id) => fetchExecution(id), {immediate: true})
 
-    function retryFetch() {    
+    function retryFetch() {
         fetchExecution(props.executionId)
     }
 </script>

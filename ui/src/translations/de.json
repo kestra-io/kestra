@@ -349,6 +349,10 @@
     "no": "Nein",
     "change state done": "Der Task-Status wurde aktualisiert",
     "change state confirm": "Möchtest du den Status des Task-Runs für den Task <code>{task}</code> in Execution <code>{id}</code> wirklich ändern?<br/>Die Execution wird dann ab dem nächsten Task neu gestartet, und die übergeordnete Execution, falls vorhanden, ebenfalls.",
+    "interrupt": "Unterbrechen",
+    "interrupt confirm": "Möchtest du den Task Run für den Task <code>{task}</code> in Execution <code>{id}</code> wirklich unterbrechen?<br/>Dadurch wird der laufende Task im Worker beendet und sein Status festgelegt.",
+    "interrupt done": "Task Run wurde unterbrochen",
+    "interrupt target state": "Ziel-Status",
     "change state current state": "Aktueller Status:",
     "change state hint": {
       "WARNING": [
@@ -2221,7 +2225,6 @@
       "run_all_tasks": "Alle Tasks ausführen",
       "history": "Letzte 10 Runs",
       "clear_history": "Verlauf löschen",
-      "confirm_create": "Du kannst den Playground nicht ausführen, während du einen Flow erstellst. Wenn du einen Playground-Run startest, wird der Flow erstellt.",
       "tooltip_persistence": "Wenn du den Playground aus- und wieder einschaltest, bleiben die Informationen erhalten, solange du auf der Seite bleibst."
     },
     "submit": "Absenden",

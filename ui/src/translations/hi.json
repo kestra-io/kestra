@@ -349,6 +349,10 @@
     "no": "नहीं",
     "change state done": "कार्य की स्थिति को अपडेट किया गया है",
     "change state confirm": "क्या आप execution <code>{id}</code> में <code>{task}</code> task के लिए task run state बदलना चाहते हैं?<br/>यह अगली task से execution को फिर से शुरू करेगा और यदि कोई हो तो पैरेंट execution को फिर से शुरू करेगा।",
+    "interrupt": "बाधित करें",
+    "interrupt confirm": "क्या आप execution <code>{id}</code> में <code>{task}</code> task के लिए task run को बाधित करना चाहते हैं?<br/>यह worker के अंदर चल रहे task को समाप्त कर देगा और उसकी स्थिति निर्धारित करेगा।",
+    "interrupt done": "Task रन बाधित हो गया है",
+    "interrupt target state": "लक्ष्य स्थिति",
     "change state current state": "वर्तमान स्थिति है:",
     "change state hint": {
       "WARNING": [
@@ -2221,7 +2225,6 @@
       "run_all_tasks": "सभी Tasks चलाएं",
       "history": "पिछले 10 रन",
       "clear_history": "इतिहास साफ़ करें",
-      "confirm_create": "आप एक flow बनाते समय playground नहीं चला सकते। एक playground रन शुरू करने से flow बन जाएगा।",
       "tooltip_persistence": "यदि आप Playground को बंद करके फिर से चालू करते हैं, तो जानकारी तब तक बनी रहती है जब तक आप पृष्ठ पर रहते हैं।"
     },
     "submit": "प्रस्तुत करें",

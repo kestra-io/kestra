@@ -4,7 +4,7 @@
         :width="resolvedWidth"
         :class="{'is-form-layout': formLayout, 'is-fill': fill}"
         :beforeClose="guardedBeforeClose"
-        v-bind="({...filteredProps(), ...$attrs} as any)"
+        v-bind="{...filteredProps(), ...$attrs}"
         @close="emit('close')"
     >
         <template v-if="$slots.default" #default>

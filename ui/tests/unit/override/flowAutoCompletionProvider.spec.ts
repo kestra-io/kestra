@@ -1,15 +1,19 @@
 import {describe, expect, it} from "vitest"
-import {FlowAutoCompletion} from "../../../src/override/services/flowAutoCompletionProvider"
+import {FlowAutoCompletion, type NamespacesStoreLike} from "../../../src/override/services/flowAutoCompletionProvider"
+import type {useFlowStore} from "../../../src/stores/flow"
+import type {usePluginsStore} from "../../../src/stores/plugins"
+import type {useMcpStore} from "../../../src/stores/mcp"
+import type {useDashboardStore} from "../../../src/stores/dashboard"
 
 // The `inputs` / `inputs.<form>` branches of nestedFieldAutoCompletion are pure functions of
 // `parsed` and never touch the injected stores, so stub stores are enough.
 function provider() {
     return new FlowAutoCompletion(
-        {} as any,
-        {} as any,
-        {} as any,
-        {} as any,
-        {} as any,
+        {} as unknown as ReturnType<typeof useFlowStore>,
+        {} as unknown as ReturnType<typeof usePluginsStore>,
+        {} as unknown as NamespacesStoreLike,
+        {} as unknown as ReturnType<typeof useMcpStore>,
+        {} as unknown as ReturnType<typeof useDashboardStore>,
     )
 }
 

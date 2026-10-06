@@ -1,8 +1,8 @@
 import {afterEach, beforeEach, describe, expect, it} from "vitest"
 import {defineComponent, h} from "vue"
 import {mount, VueWrapper} from "@vue/test-utils"
-import {createRouter, createMemoryHistory, type Router} from "vue-router"
-import useRestoreUrl from "../../../src/composables/useRestoreUrl"
+import {createRouter, createMemoryHistory, type Router, type RouteLocation} from "vue-router"
+import useRestoreUrl, {getRestoredQuery} from "../../../src/composables/useRestoreUrl"
 
 const SAVED_QUERY = {"filters[timeRange][EQUALS]": "PT24H"}
 
@@ -26,6 +26,12 @@ function mountRestoreUrl(router: Router) {
 
 describe("useRestoreUrl", () => {
     let wrapper: VueWrapper
+
+    const mockRoute = {
+        name: "home",
+        params: {tenant: "main"},
+        query: {}
+    } as unknown as RouteLocation
 
     beforeEach(() => {
         window.sessionStorage.clear()
@@ -85,5 +91,46 @@ describe("useRestoreUrl", () => {
         await new Promise((resolve) => setTimeout(resolve, 150))
 
         expect(router.currentRoute.value.query).toEqual(explicit)
+    })
+
+    it("restores a stored query in full via getRestoredQuery", () => {
+        const stored = {filter: "test", sort: "asc"}
+        window.sessionStorage.setItem("home_main_restore_url", JSON.stringify(stored))
+        const result = getRestoredQuery(mockRoute)
+        expect(result.query).toEqual({filter: "test", sort: "asc"})
+        expect(result.change).toBe(true)
+    })
+
+    it("yields an empty query rather than undefined when nothing is stored", () => {
+        const result = getRestoredQuery(mockRoute)
+        expect(result.query).toEqual({})
+        expect(result.change).toBe(false)
+        expect(result.localStorageValue).toBeNull()
+    })
+
+    it("ignores a malformed stored value instead of throwing", () => {
+        window.sessionStorage.setItem("home_main_restore_url", "{ invalid json }")
+        expect(() => getRestoredQuery(mockRoute)).not.toThrow()
+        
+        const result = getRestoredQuery(mockRoute)
+        expect(result.query).toEqual({})
+        expect(result.change).toBe(false)
+        expect(result.localStorageValue).toBeNull()
+    })
+
+    it("ensures array-valued query parameters survive the round trip", () => {
+        const stored = {tags: ["a", "b"]}
+        window.sessionStorage.setItem("home_main_restore_url", JSON.stringify(stored))
+        const result = getRestoredQuery(mockRoute)
+        expect(result.query).toEqual({tags: ["a", "b"]})
+        expect(result.change).toBe(true)
+    })
+
+    it("distinguishes an explicitly empty stored query from nothing stored", () => {
+        window.sessionStorage.setItem("home_main_restore_url", JSON.stringify({}))
+        const result = getRestoredQuery(mockRoute)
+        expect(result.query).toEqual({})
+        expect(result.change).toBe(false)
+        expect(result.localStorageValue).toEqual({})
     })
 })

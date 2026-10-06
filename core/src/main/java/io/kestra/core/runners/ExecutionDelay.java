@@ -39,7 +39,7 @@ public class ExecutionDelay implements HasUID {
 
     /**
      * For previous version, return RESUME_FLOW by default as it was the only case
-     * 
+     *
      * @return DelayType representing the action to do when
      */
     public DelayType getDelayType() {
@@ -50,6 +50,7 @@ public class ExecutionDelay implements HasUID {
         RESUME_FLOW,
         RESTART_FAILED_TASK,
         RESTART_FAILED_FLOW,
-        CONTINUE_FLOWABLE
+        RESTART_FLOWABLE,
+        CONTINUE_FLOWABLE,
     }
 }

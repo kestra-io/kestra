@@ -174,6 +174,6 @@ describe("executionVars()", () => {
     })
 
     it("returns an empty list when data is undefined", () => {
-        expect(executionVars(undefined as any)).toEqual([])
+        expect(executionVars(undefined as unknown as Record<string, unknown>)).toEqual([])
     })
 })

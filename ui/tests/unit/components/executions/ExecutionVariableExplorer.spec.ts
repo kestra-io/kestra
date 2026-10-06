@@ -4,6 +4,7 @@ import {i18nMount} from "../../i18nMount"
 
 import {createPinia, setActivePinia} from "pinia"
 import ExecutionVariableExplorer from "../../../../src/components/executions/outputs/ExecutionVariableExplorer.vue"
+import type {ExplorerSection, ExplorerItem} from "../../../../src/components/executions/outputs/SidebarList.vue"
 import {useExecutionsStore} from "../../../../src/stores/executions"
 
 vi.mock("vue-router", async (importOriginal) => ({
@@ -96,10 +97,9 @@ function mountExplorer(variables: Record<string, unknown>, trigger?: {id: string
 
 async function selectVariable(wrapper: ReturnType<typeof i18nMount>, itemName: string, sectionKey = "variables") {
     const sidebar = wrapper.findComponent({name: "SidebarList"})
-    const item = (sidebar.props("sections") as any[])
-        .find((section) => section.key === sectionKey)
-        .items
-        .find((candidate: {label: string}) => candidate.label === itemName)
+    const sections = sidebar.props("sections") as ExplorerSection[]
+    const section = sections.find((section) => section.key === sectionKey)
+    const item = section!.items.find((candidate: ExplorerItem) => candidate.label === itemName)
 
     await sidebar.vm.$emit("select", item)
     await flushPromises()
@@ -209,9 +209,9 @@ describe("ExecutionVariableExplorer", () => {
         await flushPromises()
 
         const sidebar = wrapper.findComponent({name: "SidebarList"})
-        const triggerItems = (sidebar.props("sections") as any[])
+        const triggerItems = (sidebar.props("sections") as ExplorerSection[])
             .find((section) => section.key === "triggers")
-            .items as {label: string}[]
+            .items as ExplorerItem[]
 
         // trigger variables sit at the top level, id/type only under `_context` — mirroring
         // RunVariables.java, not the DTO's own `id` / `type` / `variables` fields.

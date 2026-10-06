@@ -40,6 +40,8 @@ vi.mock("../../../../src/components/executions/executionTabs", () => ({
 }))
 
 import {useFlowStore} from "../../../../src/stores/flow"
+import type {Flow} from "../../../../src/stores/flow"
+import type {FlowGraph} from "@kestra-io/topology/vue-flow-utils"
 import {useExecutionRoot} from "../../../../src/components/executions/composables/useExecutionRoot"
 
 function mountExecutionRoot() {
@@ -61,8 +63,8 @@ describe("useExecutionRoot unmount cleanup", () => {
     })
 
     it("clears the flow store when navigating away from any flow", () => {
-        flowStore.flow = {namespace: "company.team", id: "some-other-flow"} as any
-        flowStore.flowGraph = {} as any
+        flowStore.flow = {namespace: "company.team", id: "some-other-flow"} as Flow
+        flowStore.flowGraph = {} as FlowGraph
 
         const wrapper = mountExecutionRoot()
         route.params = {}
@@ -73,8 +75,8 @@ describe("useExecutionRoot unmount cleanup", () => {
     })
 
     it("keeps the flow store when navigating to that flow's edit page (breadcrumb, #10722)", () => {
-        flowStore.flow = {namespace: "company.team", id: "demo_breadcrumb_fix"} as any
-        flowStore.flowGraph = {some: "graph"} as any
+        flowStore.flow = {namespace: "company.team", id: "demo_breadcrumb_fix"} as Flow
+        flowStore.flowGraph = {some: "graph"} as FlowGraph
 
         const wrapper = mountExecutionRoot()
 

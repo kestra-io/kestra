@@ -10,6 +10,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import io.kestra.core.models.flows.Flow;
 import org.slf4j.event.Level;
 
 import io.kestra.core.exceptions.FlowNotFoundException;
@@ -297,14 +298,13 @@ public class ExecutorCore {
                 executorService.log(log, false, executor);
             }
 
-            // the terminated state can come from the execution queue, in this case we always have a flow in the executor
-            // or from a worker task in an afterExecution block, in this case we need to load the flow
-            if (executor.getFlow() == null && executor.getExecution().getState().isTerminated()) {
+            // If we come from the execution queue, we always have a flow in the executor, otherwise we load it
+            if (executor.getFlow() == null) {
                 var execution = executor.getExecution();
                 FlowWithSource flow = flowMetaStore.findByExecutionForRuntime(execution).orElseThrow(() -> new FlowNotFoundException(execution));
                 executor = executor.withFlow(flow);
             }
-            boolean isTerminated = executor.getFlow() != null && executionService.isTerminated(executor.getFlow(), executor.getExecution());
+            boolean isTerminated = executionService.isTerminated(executor.getFlow(), executor.getExecution());
 
             Execution execution = executor.getExecution();
             // Fire flow triggers for every distinct state transition that occurred in this cycle.
@@ -315,7 +315,7 @@ public class ExecutorCore {
             List<State.Type> transitions = executor.getStateTransitions();
             for (int i = 1; i < transitions.size(); i++) {
                 State.Type transitionState = transitions.get(i);
-                processFlowTriggers(transitionState == execution.getState().getCurrent() ? execution : execution.withState(transitions.get(i)));
+                processFlowTriggers(executor.getFlow(), transitionState == execution.getState().getCurrent() ? execution : execution.withState(transitions.get(i)));
             }
 
             // IMPORTANT: this must be done before emitting the last execution message so that all consumers are notified that the execution ends.
@@ -338,7 +338,7 @@ public class ExecutorCore {
                     executionQueue.emit(popped.get());
 
                     // process flow triggers to allow listening on RUNNING state after a QUEUED state
-                    processFlowTriggers(popped.get());
+                    processFlowTriggers(executor.getFlow(), popped.get());
                 }
 
                 if (terminatedByThisCycle) {
@@ -524,14 +524,16 @@ public class ExecutorCore {
         return false;
     }
 
-    private void processFlowTriggers(Execution execution) throws QueueException {
+    private void processFlowTriggers(Flow flow, Execution execution) throws QueueException {
         flowTriggerProcessingTimer.record(throwRunnable(() ->
         {
             Collection<FlowWithSource> allFlows = flowMetaStore.allLastVersion();
+            boolean shouldRetry = shouldRetry(flow, execution);
 
             // directly process simple conditions
             flowTriggerService.withFlowTriggersOnly(allFlows.stream())
                 .filter(f -> ListUtils.isEmpty(f.getTrigger().getDependsOn()))
+                .filter(f -> !f.getTrigger().isWaitForAllRetries() || !shouldRetry) // filter out triggers that wait for all retries for executions that should retry
                 .map(f -> f.getFlow())
                 .distinct() // as computeExecutionsFromFlowTriggers is based on flow, we must map FlowWithFlowTrigger to a flow and distinct to avoid multiple execution for the same flow
                 .flatMap(f -> flowTriggerService.computeExecutionsFromFlowTriggerConditions(execution, f).stream())
@@ -540,9 +542,17 @@ public class ExecutorCore {
             // send multiple conditions to the multiple condition queue for later processing
             flowTriggerService.withFlowTriggersOnly(allFlows.stream())
                 .filter(f -> !ListUtils.isEmpty(f.getTrigger().getDependsOn()))
+                .filter(f -> !f.getTrigger().isWaitForAllRetries() || !shouldRetry) // filter out triggers that wait for all retries for executions that should retry
                 .map(f -> new MultipleConditionEvent(f.getFlow(), execution))
                 .distinct() // we can have multiple MultipleConditionEvent if a flow contains multiple triggers as it would lead to multiple FlowWithFlowTrigger
                 .forEach(throwConsumer(multipleCondition -> multipleConditionEventQueue.emit(multipleCondition)));
         }));
+    }
+
+    private boolean shouldRetry(Flow flow, Execution execution) {
+        if (execution.getState().isFailed() && flow.getRetry() != null) {
+            return executionService.nextRetryDate(flow.getRetry(), execution) != null;
+        }
+        return false;
     }
 }

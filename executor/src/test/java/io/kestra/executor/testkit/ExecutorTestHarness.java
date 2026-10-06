@@ -184,20 +184,20 @@ public final class ExecutorTestHarness {
         this.concurrencyLimitStateStore = new InMemoryConcurrencyLimitStateStore();
         this.taskOutputRepository = new InMemoryTaskOutputRepository();
         this.executionOutputRepository = new InMemoryExecutionOutputRepository();
-        this.killQueue = new RecordingBroadcastQueue<>("kill", journal);
-        this.loopExecutionEventQueue = new RecordingDispatchQueue<>("loopExecutionEvent", journal);
-        this.workerJobEventQueue = new RecordingKeyedDispatchQueue<>("workerJobEvent", journal);
-        this.subflowExecutionResultQueue = new RecordingDispatchQueue<>("subflowExecutionResult", journal);
-        this.executionQueue = new RecordingDispatchQueue<>("execution", journal);
-        this.followExecutionEventQueue = new RecordingBroadcastQueue<>("followExecutionEvent", journal);
-        this.executionCommandQueue = new RecordingDispatchQueue<>("executionCommand", journal);
-        this.executionEventQueue = new RecordingDispatchQueue<>("executionEvent", journal);
-        this.workerTaskResultQueue = new RecordingDispatchQueue<>("workerTaskResult", journal);
-        this.subflowExecutionEndQueue = new RecordingDispatchQueue<>("subflowExecutionEnd", journal);
-        this.multipleConditionEventQueue = new RecordingDispatchQueue<>("multipleConditionEvent", journal);
-        this.executionStatisticQueue = new RecordingDispatchQueue<>("executionStatistic", journal);
+        this.killQueue = new RecordingBroadcastQueue<>(Trace.KILL, journal);
+        this.loopExecutionEventQueue = new RecordingDispatchQueue<>(Trace.LOOP_EXECUTION_EVENT, journal);
+        this.workerJobEventQueue = new RecordingKeyedDispatchQueue<>(Trace.WORKER_JOB_EVENT, journal);
+        this.subflowExecutionResultQueue = new RecordingDispatchQueue<>(Trace.SUBFLOW_EXECUTION_RESULT, journal);
+        this.executionQueue = new RecordingDispatchQueue<>(Trace.EXECUTION, journal);
+        this.followExecutionEventQueue = new RecordingBroadcastQueue<>(Trace.FOLLOW_EXECUTION_EVENT, journal);
+        this.executionCommandQueue = new RecordingDispatchQueue<>(Trace.EXECUTION_COMMAND, journal);
+        this.executionEventQueue = new RecordingDispatchQueue<>(Trace.EXECUTION_EVENT, journal);
+        this.workerTaskResultQueue = new RecordingDispatchQueue<>(Trace.WORKER_TASK_RESULT, journal);
+        this.subflowExecutionEndQueue = new RecordingDispatchQueue<>(Trace.SUBFLOW_EXECUTION_END, journal);
+        this.multipleConditionEventQueue = new RecordingDispatchQueue<>(Trace.MULTIPLE_CONDITION_EVENT, journal);
+        this.executionStatisticQueue = new RecordingDispatchQueue<>(Trace.EXECUTION_STATISTIC, journal);
         TriggerEventQueue triggerEventQueue = Mockito.mock(TriggerEventQueue.class);
-        Mockito.doAnswer(invocation -> journal.add(new Trace.Emission(journal.size(), "triggerEvent", invocation.getArgument(0)))).when(triggerEventQueue).send(Mockito.any());
+        Mockito.doAnswer(invocation -> journal.add(new Trace.Emission(journal.size(), Trace.TRIGGER_EVENT, invocation.getArgument(0)))).when(triggerEventQueue).send(Mockito.any());
         this.queues = List.of(
             executionQueue, executionEventQueue, workerTaskResultQueue, executionCommandQueue, subflowExecutionResultQueue,
             subflowExecutionEndQueue, multipleConditionEventQueue, loopExecutionEventQueue, killQueue
@@ -467,7 +467,7 @@ public final class ExecutorTestHarness {
             loopExecutionEventQueue,
             executionStatisticQueue,
             triggerEventQueue,
-            execution -> journal.add(new Trace.Emission(journal.size(), "executionTerminated", execution)),
+            execution -> journal.add(new Trace.Emission(journal.size(), Trace.EXECUTION_TERMINATED, execution)),
             workerJobRunningStateStore,
             executionCommandMessageHandler,
             executionEventMessageHandler,
@@ -848,14 +848,15 @@ public final class ExecutorTestHarness {
         return executionService;
     }
 
-    /**
-     * The kit's {@link KitRunContextFactory} — for hand-wiring executor collaborators
-     * (e.g. {@code FlowTriggerService}) outside the harness in service-level tests.
-     */
+    /** The clock every executor component reads; tests move it by hand. */
     public MutableClock clock() {
         return clock;
     }
 
+    /**
+     * The kit's {@link KitRunContextFactory} — for hand-wiring executor collaborators
+     * (e.g. {@code FlowTriggerService}) outside the harness in service-level tests.
+     */
     public KitRunContextFactory runContextFactory() {
         return runContextFactory;
     }

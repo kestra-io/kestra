@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import io.kestra.core.models.flows.State;
@@ -22,6 +23,11 @@ public abstract class ExecutionDelayStateStoreContract {
     private static final Instant DRAIN = ANCHOR.plusSeconds(3601);
 
     protected abstract ExecutionDelayStateStore store();
+
+    @BeforeEach
+    void clearLeftoversFromEarlierClasses() {
+        store().processExpired(DRAIN, delay -> { });
+    }
 
     @AfterEach
     void drainRemainingDelays() {
@@ -47,6 +53,16 @@ public abstract class ExecutionDelayStateStoreContract {
         store().processExpired(ANCHOR, consumed::add);
 
         assertThat(consumed).extracting(ExecutionDelay::getTaskRunId).containsOnly("overdue");
+    }
+
+    @Test
+    void shouldConsumeADelayDueExactlyAtTheGivenInstant() {
+        store().save(delay("due-now", ANCHOR));
+
+        List<ExecutionDelay> consumed = new ArrayList<>();
+        store().processExpired(ANCHOR, consumed::add);
+
+        assertThat(consumed).extracting(ExecutionDelay::getTaskRunId).containsOnly("due-now");
     }
 
     @Test

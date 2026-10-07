@@ -200,9 +200,10 @@ describe("useExecutionRoot breadcrumbs", () => {
         expect((currentCrumb.link as {params: {id: string}}).params.id).toBe("exec-2")
     })
 
-    it("handles historical loop executions without rootExecutionId gracefully", () => {
+    it("falls back to parentId when rootExecutionId is absent", () => {
         executionsStore.execution = mockExecution({
             id: "exec-historical",
+            parentId: "exec-parent",
             loopRun: {
                 taskId: "regions",
                 value: "EMEA",
@@ -213,10 +214,32 @@ describe("useExecutionRoot breadcrumbs", () => {
         const root = useExecutionRoot()
         const breadcrumb = "breadcrumb" in root.routeInfo.value ? root.routeInfo.value.breadcrumb! : []
 
-        expect(breadcrumb.length).toBe(5)
+        expect(breadcrumb.length).toBe(6)
 
-        const currentCrumb = breadcrumb[4]
+        const rootCrumb = breadcrumb[4]
+        expect(rootCrumb.label).toBe("root_execution")
+        expect((rootCrumb.link as {params: {id: string}}).params.id).toBe("exec-parent")
+
+        const currentCrumb = breadcrumb[5]
         expect(currentCrumb.label).toBe("regions (EMEA)")
         expect((currentCrumb.link as {params: {id: string}}).params.id).toBe("exec-historical")
+    })
+
+    it("truncates long loop values in breadcrumbs", () => {
+        executionsStore.execution = mockExecution({
+            id: "exec-1",
+            loopRun: {
+                rootExecutionId: "exec-root",
+                taskId: "process",
+                value: "{\"key\": \"very-long-json-payload-that-exceeds-limit\"}",
+                parents: [],
+            },
+        })
+
+        const root = useExecutionRoot()
+        const breadcrumb = "breadcrumb" in root.routeInfo.value ? root.routeInfo.value.breadcrumb! : []
+
+        const currentCrumb = breadcrumb[5]
+        expect(currentCrumb.label).toBe("process ({\"key\": \"very-long-j…)")
     })
 })

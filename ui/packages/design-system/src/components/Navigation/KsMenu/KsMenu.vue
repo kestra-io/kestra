@@ -10,12 +10,16 @@
 </template>
 
 <script setup lang="ts">
-    import {ElMenu, type MenuProps} from "element-plus"
+    import {ElMenu} from "element-plus"
     import {useFilteredProps} from "../../../utils/filteredProps"
 
     defineOptions({inheritAttrs: false})
 
-    const props = defineProps<Partial<Pick<MenuProps, "mode" | "defaultActive" | "collapse">>>()
+    const props = defineProps<{
+        mode?: "horizontal" | "vertical"
+        defaultActive?: string
+        collapse?: boolean
+    }>()
 
     const emit = defineEmits<{
         select: [index: string, indexPath: string[]]

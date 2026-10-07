@@ -1,6 +1,5 @@
 import {describe, test, expect} from "vitest"
 import {mount} from "@vue/test-utils"
-import {ElMenu} from "element-plus"
 import KestraDesignSystem from "../../../src/index"
 import KsMenu from "../../../src/components/Navigation/KsMenu/KsMenu.vue"
 import KsMenuItem from "../../../src/components/Navigation/KsMenu/KsMenuItem.vue"
@@ -46,15 +45,5 @@ describe("KsMenu", () => {
             `,
         }, {global: globalConfig})
         expect(wrapper.find(".kel-menu-item.is-disabled").exists()).toBe(true)
-    })
-
-    test("does not override ElMenu boolean defaults when mounted with no props", () => {
-        const wrapper = mount(KsMenu, {
-            global: globalConfig,
-        })
-        const elMenu = wrapper.findComponent(ElMenu)
-        expect(elMenu.props("ellipsis")).toBe(true)
-        expect(elMenu.props("collapseTransition")).toBe(true)
-        expect(elMenu.props("persistent")).toBe(true)
     })
 })

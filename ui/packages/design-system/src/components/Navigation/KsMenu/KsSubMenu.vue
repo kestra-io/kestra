@@ -10,12 +10,20 @@
 </template>
 
 <script setup lang="ts">
-    import {ElSubMenu, type SubMenuProps} from "element-plus"
+    import {ElSubMenu} from "element-plus"
     import {useFilteredProps} from "../../../utils/filteredProps"
 
     defineOptions({inheritAttrs: false})
 
-    const props = defineProps<SubMenuProps>()
+    const props = defineProps<{
+        index: string
+        showTimeout?: number
+        hideTimeout?: number
+        popperClass?: string
+        disabled?: boolean
+        teleported?: boolean
+        popperOffset?: number
+    }>()
 
     defineSlots<{
         default?(): unknown

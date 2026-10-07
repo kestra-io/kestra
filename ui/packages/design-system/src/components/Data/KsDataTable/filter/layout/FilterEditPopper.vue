@@ -272,7 +272,9 @@
             }
             return ""
         case "radio":
-            return state.radioValue === "ALL" ? `${props.filterKey?.allLabel ?? "Default"} selected` : state.radioValue
+            return state.radioValue === "ALL"
+                ? t("filter.option_selected", {label: props.filterKey?.allLabel ?? t("filter.hierarchy.all")})
+                : state.radioValue
         default:
             return ""
         }
@@ -484,8 +486,6 @@
                         : null
                 break
             case "radio":
-                // A bookmark saved before NORMAL was dropped still carries it, and it matches no
-                // option: restore it onto the unfiltered one, which is what it always listed.
                 state.radioValue = typeof filter.value === "string" && state.valueOptions?.some(option => option.value === filter.value)
                     ? filter.value
                     : "ALL"

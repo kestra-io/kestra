@@ -53,7 +53,6 @@ describe("execution filter configurations declare triggerId", () => {
     })
 })
 
-// #17947: a standard execution is persisted with a null kind, so filtering on "NORMAL" missed it.
 describe("execution kind filter offers Standard instead of a broken NORMAL option", () => {
     it.each([
         ["useExecutionFilter", () => useExecutionFilter()],
@@ -63,7 +62,6 @@ describe("execution kind filter offers Standard instead of a broken NORMAL optio
         const kind = config.value.keys.find((k: {key: string}) => k.key === "kind")
 
         expect(kind).toBeDefined()
-        // t() hands back the key: this harness registers no design-system i18n.
         expect(kind!.allLabel).toBe("filter.execution_kind.standard")
         expect(kind!.allDescription).toBe("filter.execution_kind.standard_description")
     })

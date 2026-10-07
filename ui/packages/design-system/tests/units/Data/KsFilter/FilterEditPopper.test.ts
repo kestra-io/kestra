@@ -339,14 +339,13 @@ describe("FilterEditPopper time range", () => {
     })
 })
 
-// #17947: the kind filter renamed its unfiltered option to Standard and dropped NORMAL.
 const kindKey: FilterKeyConfig = {
     key: "kind",
     label: "Kind",
     valueType: "radio",
     comparators: [Comparators.EQUALS],
     allLabel: "Standard",
-    allDescription: "Standard execution outside of Playground, loop or test",
+    allDescription: "Standard execution outside of Playground, Loop or Test",
     valueProvider: async () => [
         {label: "Playground", value: "PLAYGROUND"},
         {label: "Loop", value: "LOOP"},
@@ -356,6 +355,7 @@ const kindKey: FilterKeyConfig = {
 describe("FilterEditPopper radio filter with a renamed unfiltered option", () => {
     const mountKind = async (value: string) => {
         const wrapper = i18nMount(FilterEditPopper, {
+            messages: {filter: {option_selected: "{label} selected", hierarchy: {all: "Default"}}},
             props: {
                 filter: {
                     id: "f1",
@@ -374,7 +374,6 @@ describe("FilterEditPopper radio filter with a renamed unfiltered option", () =>
     }
 
     test("restores a value that no option offers onto the unfiltered option", async () => {
-        // A filter bookmarked while NORMAL still existed would otherwise select nothing at all.
         const wrapper = await mountKind("NORMAL")
 
         expect(wrapper.findComponent(FilterRadio).props("modelValue")).toBe("ALL")

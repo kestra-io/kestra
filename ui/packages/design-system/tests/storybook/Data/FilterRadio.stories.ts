@@ -32,7 +32,7 @@ export const CustomAllOption: Story = {
         modelValue: "ALL",
         options: KINDS,
         allLabel: "Standard",
-        allDescription: "Standard execution outside of Playground, loop or test",
+        allDescription: "Standard execution outside of Playground, Loop or Test",
     },
     play: async ({canvas}) => {
         await expect(canvas.getByText("Standard")).toBeVisible()
@@ -45,6 +45,6 @@ export const OptionSelected: Story = {
         modelValue: "PLAYGROUND",
         options: KINDS,
         allLabel: "Standard",
-        allDescription: "Standard execution outside of Playground, loop or test",
+        allDescription: "Standard execution outside of Playground, Loop or Test",
     },
 }

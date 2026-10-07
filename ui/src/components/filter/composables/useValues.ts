@@ -94,7 +94,6 @@ export function useValues(label: string | undefined, t?: ReturnType<typeof useI1
             },
         ],
         KINDS: [
-            // No NORMAL: it is persisted as a null kind, which the unfiltered option already covers.
             {
                 label: t("filter.execution_kind.playground"),
                 description: t("filter.execution_kind.playground_description"),

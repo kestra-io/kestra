@@ -30,7 +30,7 @@ vi.mock("vue-i18n", () => ({
 const deleteDashboardFn = vi.fn()
 
 vi.mock("@kestra-io/kestra-sdk", () => ({
-    useClient: () => ({get: vi.fn(), post: vi.fn(), put: vi.fn(), delete: (...args: any[]) => deleteDashboardFn(...args)}),
+    useClient: () => ({get: vi.fn(), post: vi.fn(), put: vi.fn(), delete: (...args: unknown[]) => deleteDashboardFn(...args)}),
 }))
 
 vi.mock("@kestra-io/kestra-sdk/dashboards", () => ({}))

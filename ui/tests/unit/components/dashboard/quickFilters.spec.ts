@@ -5,6 +5,7 @@ import {
     chartConstrainsState,
     ALL_STATES,
 } from "../../../../src/components/dashboard/sections/quickFilters"
+import type {Chart} from "../../../../src/components/dashboard/types"
 
 const EXECUTIONS = "io.kestra.plugin.core.dashboard.data.Executions"
 
@@ -12,7 +13,7 @@ const chart = (data: Record<string, unknown> = {}) => ({
     id: "c",
     type: "io.kestra.plugin.core.dashboard.chart.Table",
     data: {type: EXECUTIONS, columns: {state: {field: "STATE"}}, ...data},
-}) as any
+}) as Chart
 
 describe("quickFilters", () => {
     describe("stateFilterForTab", () => {

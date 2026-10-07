@@ -57,11 +57,10 @@ class SchedulerEndpointTest {
 
     @Test
     void shouldReturnOneEntryPerSchedulableTrigger() {
+        var first = triggerEvaluationContextOf("flow-a", "io.kestra.test", 1, "every-minute");
+        var second = triggerEvaluationContextOf("flow-b", "io.kestra.test", 2, "hourly");
         when(schedulableTriggerFetcher.getSchedulableTriggers(any(), any(), eq(VNODES)))
-            .thenReturn(List.of(
-                triggerEvaluationContextOf("flow-a", "io.kestra.test", 1, "every-minute"),
-                triggerEvaluationContextOf("flow-b", "io.kestra.test", 2, "hourly")
-            ));
+            .thenReturn(List.of(first, second));
 
         var result = endpoint.running();
 

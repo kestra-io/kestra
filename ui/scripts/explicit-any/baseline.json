@@ -43,7 +43,6 @@
   "src/components/no-code/utils/useFieldNavigation.ts": 1,
   "src/stores/entityLoadRace.spec.ts": 2,
   "src/stores/executions.bulkRestart.spec.ts": 1,
-  "src/stores/executions.fileContent.spec.ts": 2,
   "src/stores/flow.draftSave.spec.ts": 9,
   "src/stores/flow.outdatedSave.spec.ts": 5,
   "src/stores/logs.cursor.spec.ts": 1,

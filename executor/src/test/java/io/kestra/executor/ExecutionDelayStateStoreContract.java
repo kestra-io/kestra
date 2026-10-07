@@ -15,21 +15,19 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public abstract class ExecutionDelayStateStoreContract {
 
-    // Far from the wall clock so a fixed clock can drive the store and no real-clock poller
-    // reaches these rows; the contract starts no Executor and stores nothing else in this table.
+    // Far from the wall clock so a fixed clock can drive the store; the contract starts no Executor.
     protected static final Instant ANCHOR = Instant.parse("2031-01-15T10:00:00Z");
 
-    // Just past the latest date this contract inserts, so teardown cannot delete a
-    // pending delay another suite left in the shared kestra_unit database.
+    // Just past this contract's last row. It also deletes any other delay due before then, which the
+    // shared kestra_unit database can hold, so it must stay inside this class' own date range.
     private static final Instant DRAIN = ANCHOR.plusSeconds(3601);
 
     protected abstract ExecutionDelayStateStore store();
 
-    /** Runs before each drain, so subclasses can set up state the drain and the tests both rely on. */
+    /** Runs around each drain, so subclasses can set up state the drain and the tests both rely on. */
     protected void prepare() {
     }
 
-    /** Runs after each drain, so subclasses can undo what {@link #prepare()} changed. */
     protected void cleanup() {
     }
 

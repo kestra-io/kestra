@@ -1,5 +1,6 @@
 import {describe, it, expect, vi} from "vitest"
 import {flushPromises} from "@vue/test-utils"
+import type {Stubs} from "@vue/test-utils"
 import {i18nMount} from "../../i18nMount"
 
 import KestraDesignSystem from "@kestra-io/design-system"
@@ -41,8 +42,9 @@ vi.mock("../../../../src/components/dashboard/dashboard-types", () => ({
 
 import Sections from "../../../../src/components/dashboard/sections/Sections.vue"
 import en from "../../../../src/translations/en.json"
+import type {Chart} from "../../../../src/components/dashboard/types"
 
-function mountSections(charts: any[], stubs?: Record<string, any>) {
+function mountSections(charts: Chart[], stubs?: Stubs) {
     return i18nMount(Sections, {
         locales: en,
         props: {

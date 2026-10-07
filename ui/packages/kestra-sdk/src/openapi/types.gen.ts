@@ -2080,11 +2080,10 @@ export type ServerInstanceType = 'SERVER' | 'STANDALONE';
 export type ServiceServiceState = 'CREATED' | 'RUNNING' | 'ERROR' | 'DISCONNECTED' | 'TERMINATING' | 'TERMINATED_GRACEFULLY' | 'TERMINATED_FORCED' | 'NOT_RUNNING' | 'INACTIVE' | 'MAINTENANCE';
 
 export type ServiceInstance = {
-    server?: ServerInstance;
-    metrics?: Array<Metric>;
-    state?: ServiceServiceState;
     id?: string;
     type?: ServiceType;
+    state?: ServiceServiceState;
+    server?: ServerInstance;
     createdAt?: string;
     updatedAt?: string;
     events?: Array<ServiceInstanceTimestampedEvent>;
@@ -2093,6 +2092,7 @@ export type ServiceInstance = {
             [key: string]: unknown;
         };
     };
+    metrics?: Array<Metric>;
     seqId?: number;
 };
 
@@ -2208,9 +2208,6 @@ export type State = {
     readonly endDate?: string | null;
     current: StateType;
     histories: Array<StateHistory>;
-    readonly getDuration: string;
-    readonly getStartDate: string;
-    readonly getEndDate: string;
 };
 
 export type StateHistory = {

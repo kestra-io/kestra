@@ -44,7 +44,7 @@ dependencies {
     api platform("io.qameta.allure:allure-bom:2.35.5")
 
     constraints {
-        api("io.opentelemetry.proto:opentelemetry-proto:1.11.0-alpha")
+        api("io.opentelemetry.proto:opentelemetry-proto:1.11.1-alpha")
         // align protobuf across mysql-connector, Google Cloud libs, micrometer-otlp and grpc
         api("com.google.protobuf:protobuf-java:$protobufVersion")
         api("com.google.protobuf:protobuf-java-util:$protobufVersion")

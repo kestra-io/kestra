@@ -36,13 +36,21 @@ public abstract class ExecutionDelayStateStoreContract {
     @BeforeEach
     void clearLeftoversFromEarlierClasses() {
         prepare();
-        store().processExpired(DRAIN, delay -> { });
+        try {
+            store().processExpired(DRAIN, delay -> { });
+        } catch (RuntimeException e) {
+            cleanup();
+            throw e;
+        }
     }
 
     @AfterEach
     void drainRemainingDelays() {
-        store().processExpired(DRAIN, delay -> { });
-        cleanup();
+        try {
+            store().processExpired(DRAIN, delay -> { });
+        } finally {
+            cleanup();
+        }
     }
 
     @Test

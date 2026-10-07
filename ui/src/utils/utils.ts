@@ -1,6 +1,4 @@
-import {computed} from "vue"
 import {copyToClipboard, dateUtils, dayjs, fileUtils, type Dayjs} from "@kestra-io/design-system"
-import {useMiscStore} from "override/stores/misc"
 
 export type Optional<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;
 
@@ -464,14 +462,6 @@ export function getParentNamespaces(namespace: string): string[] {
     }
 
     return parents
-}
-
-export const useTheme = () => {
-    const miscStore = useMiscStore()
-    return computed<"light" | "dark">(() => {
-        void miscStore.theme
-        return getTheme()
-    })
 }
 
 export function resolve$ref(fullSchema: Record<string, any>, obj: Record<string, any>) {

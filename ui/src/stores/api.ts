@@ -1,12 +1,11 @@
 import axios from "axios"
 import {cloneDeep} from "@kestra-io/design-system"
 import {defineStore} from "pinia"
-import {ref} from "vue"
+import {ref, watch} from "vue"
 import {useMiscStore} from "override/stores/misc"
-import {capturePosthogEvent, disablePosthog} from "../utils/posthog"
 import {ensureUid} from "../utils/uid"
 import {PendingEventsBuffer} from "../utils/analytics/pendingEvents"
-import {resolvePosthogEventName} from "../utils/analytics/eventNaming"
+import {sendPosthogEvent} from "../utils/analytics/posthogEvents"
 import type {MiscControllerConfiguration} from "@kestra-io/kestra-sdk"
 import type {PageInfo} from "../utils/eventsRouter"
 
@@ -79,6 +78,10 @@ function buildEventPayload(data: EventData, configs: Configs, uid: string) {
 
 export const useApiStore = defineStore("api", () => {
     const feeds = ref<Feed[]>([])
+
+    watch(() => useMiscStore().configs, () => {
+        void flushQueuedEvents()
+    })
 
     async function loadFeeds(options: { iid: string; uid: string; version: string }) {
         const response = await axios.get<FeedResponse>(`${API_URL}/v1/feeds`, {
@@ -167,43 +170,7 @@ export const useApiStore = defineStore("api", () => {
     }
 
     function posthogEvents<T extends EventData>(data: T & {date?: string; counter?: number}) {
-        const miscStore = useMiscStore()
-        const configs = miscStore.configs
-        if (configs?.isUiAnonymousUsageEnabled === false) {
-            disablePosthog()
-            return
-        }
-
-        const type = data.type
-        const finalData: Record<string, unknown> = {}
-        Object.assign(finalData, cloneDeep(data))
-
-        delete finalData.type
-        delete finalData.date
-        delete finalData.counter
-
-        const eventName = type === "PAGE" ? "$pageview" : resolvePosthogEventName(data.type, finalData)
-
-        if (type === "PAGE") {
-            const origin = data.page?.origin ?? window.location.origin
-            const path = data.page?.path ?? window.location.pathname
-            const host = (() => {
-                try {
-                    return new URL(origin).host
-                } catch {
-                    return window.location.host
-                }
-            })()
-            const fullPath = data.page?.fullPath
-            const currentUrl = fullPath ? `${origin}${fullPath}` : `${origin}${path}`
-
-            finalData.$current_url = currentUrl
-            finalData.$pathname = path
-            finalData.$host = host
-            finalData.$title = document.title
-        }
-
-        capturePosthogEvent(configs, eventName, finalData)
+        sendPosthogEvent(useMiscStore().configs, data)
     }
 
     async function pluginsInformation() {

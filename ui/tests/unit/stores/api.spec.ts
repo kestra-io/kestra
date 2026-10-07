@@ -97,6 +97,26 @@ describe("api store events", () => {
         expect(capturePosthogEvent).toHaveBeenCalledTimes(1)
     })
 
+    it("flushes the queued events by itself once the configs arrive", async () => {
+        const {useApiStore} = await import("../../../src/stores/api")
+        const {useMiscStore} = await import("override/stores/misc")
+
+        const apiStore = useApiStore()
+        const miscStore = useMiscStore()
+
+        await apiStore.events({type: "PAGE"})
+        expect(axiosPost).not.toHaveBeenCalled()
+
+        miscStore.configs = {
+            uuid: "iid-3",
+            isAnonymousUsageEnabled: true,
+            isUiAnonymousUsageEnabled: true,
+        }
+
+        await vi.waitFor(() => expect(axiosPost).toHaveBeenCalledTimes(1))
+        expect(axiosPost.mock.calls[0][1].iid).toBe("iid-3")
+    })
+
     it("drops events when analytics is disabled", async () => {
         const {useApiStore} = await import("../../../src/stores/api")
         const {useMiscStore} = await import("override/stores/misc")

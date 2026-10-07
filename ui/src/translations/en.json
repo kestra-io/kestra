@@ -349,6 +349,10 @@
     "no": "No",
     "change state done": "Task state has been updated",
     "change state confirm": "Are you sure you want to change the task run state for the <code>{task}</code> task in execution <code>{id}</code>?<br/>It will then restart the execution from the next task and restart the parent execution if any.",
+    "interrupt": "Interrupt",
+    "interrupt confirm": "Are you sure you want to interrupt the task run for the <code>{task}</code> task in execution <code>{id}</code>?<br/>It will terminate the running task inside the worker and set its state.",
+    "interrupt done": "Task run has been interrupted",
+    "interrupt target state": "Target state",
     "change state current state": "Current status is:",
     "change state hint": {
       "WARNING": [
@@ -450,6 +454,11 @@
     "show task source": "Show task source",
     "stream": "Stream",
     "execution statistics": "Execution statistics",
+    "execution_banner": {
+      "revision": "Revision {revision}",
+      "attempts": "{count} attempt | {count} attempts",
+      "tasks": "{completed}/{count} task | {completed}/{count} tasks"
+    },
     "concurrency limits": "Concurrency Limits",
     "system overview": "System Overview",
     "usage": "Usage",
@@ -560,6 +569,7 @@
       "blueprints": "blueprint | blueprints"
     },
     "plugins": {
+      "ui_load_error": "A plugin component failed to load.",
       "autoInstall": {
         "failed": "Plugin installation failed",
         "failedHint": "The flow was not saved. Fix the issue or remove the plugin from the flow, then save again.",
@@ -1713,6 +1723,7 @@
     "custom value": "Custom value",
     "chart": "Chart",
     "no_code": {
+      "task_details": "Task details",
       "toggle_pebble": "Toggle Pebble editor",
       "version_oss_placeholder": "Unlock Plugin Versioning with Enterprise Edition",
       "adding": "+ Add a {what}",
@@ -1768,7 +1779,8 @@
         "inputs": "Select an input field type",
         "charts": "Select a chart type",
         "where": "Select a filter type",
-        "numerator": "Select a numerator"
+        "numerator": "Select a numerator",
+        "namespace_first": "Select a namespace first"
       },
       "creation": {
         "default": "Add",
@@ -2221,7 +2233,6 @@
       "run_all_tasks": "Run All Tasks",
       "history": "Last 10 runs",
       "clear_history": "Clear history",
-      "confirm_create": "You cannot run the playground while creating a flow. Launching a playground run will create the flow.",
       "tooltip_persistence": "If you turn Playground off and back on, the information remains as long as you stay on the page."
     },
     "submit": "Submit",
@@ -2415,6 +2426,7 @@
         "label": "{count} Error(s)"
       }
     },
+    "invalid_source_code": "Invalid source code",
     "source_search": {
       "cannot_select_read_only": "Cannot select — you lack edit permission on {namespace} / {id}",
       "collapse_all": "Collapse all",

@@ -321,6 +321,7 @@
     import * as FlowUtils from "../../utils/flowUtils"
     import FilePreview from "../executions/FilePreviewDrawer.vue"
     import {apiUrl} from "override/utils/route"
+    import {executionFileUrl} from "../../utils/executionUtils"
     import * as Utils from "../../utils/utils"
     import * as LogUtils from "../../utils/logs"
     import {buildTaskRunHierarchy} from "../../utils/taskRunHierarchy"
@@ -860,7 +861,7 @@
     }
 
     function fileUrl(path: string): string {
-        return `${apiUrl()}/executions/${followedExecution.value?.id}/file?path=${path}`
+        return executionFileUrl(followedExecution.value?.id, path)
     }
 
     async function fetchAndStoreLogFileSize(path: string) {

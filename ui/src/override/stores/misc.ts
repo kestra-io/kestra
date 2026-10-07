@@ -1,76 +1,61 @@
-import {defineStore} from "pinia"
-import {apiUrl, apiUrlWithoutTenants} from "override/utils/route"
-import {useApiStore} from "../../stores/api"
-import * as BasicAuth from "../../utils/basicAuth"
 import {ref} from "vue"
-import {useClient, type AxiosLikeConfig, type MiscControllerConfiguration} from "@kestra-io/kestra-sdk"
+import {defineStore} from "pinia"
+import type {MiscControllerConfiguration} from "@kestra-io/kestra-sdk"
+import * as MiscAPI from "@kestra-io/kestra-sdk/misc"
+import * as BasicAuth from "../../utils/basicAuth"
 import {initPosthogIfEnabled} from "../../utils/posthog"
 import {ensureUid} from "../../utils/uid"
 import type {SelectedTheme} from "../../utils/utils"
-
-
+import {useApiStore} from "../../stores/api"
 
 export const useMiscStore = defineStore("misc", () => {
-
     const configs = ref<MiscControllerConfiguration>()
     const contextInfoBarOpenTab = ref("")
-    // AI Copilot is the first / default context-dock tab.
     const lastContextTab = ref("ai")
     const theme = ref<SelectedTheme>("syncWithSystem")
-    // A prompt to seed into the AI Copilot composer the next time it renders. Set by entry
-    // points ("Fix with AI", the editor shortcut, …) via `promptCopilot`; consumed and cleared
-    // by CopilotChat. `null` means nothing pending.
+    /** Seeded by entry points such as "Fix with AI", then consumed and cleared by CopilotChat. */
     const copilotPrompt = ref<string | null>(null)
-    // Title for the thread the seeded prompt should start; only used when `copilotNewThread` is set.
+    /** Only read when `copilotNewThread` is set. */
     const copilotThreadTitle = ref<string | null>(null)
-    // When true, the seeded prompt starts a fresh thread instead of continuing the active one.
-    // Never set in OSS: without the EE thread list there is no way back to the previous
-    // conversation, so a reset would silently discard it. The EE store override honours it.
+    /** Never set in OSS: without the EE thread list, a fresh thread would discard the previous conversation. */
     const copilotNewThread = ref(false)
 
-    /** Opens the AI Copilot context-dock tab. */
     function openCopilot() {
         lastContextTab.value = "ai"
         contextInfoBarOpenTab.value = "ai"
     }
 
-    /** Opens the AI Copilot context-dock tab and seeds its composer with `prompt`. */
     function promptCopilot(prompt: string, options?: {title?: string, newThread?: boolean}) {
         copilotPrompt.value = prompt
         copilotThreadTitle.value = options?.title ?? null
         openCopilot()
     }
 
-    const axios = useClient()
-
-
+    /** Flushes, best effort, the analytics events queued before the configs were known. */
     async function loadConfigs() {
-        const response = await axios.get(`${apiUrlWithoutTenants()}/configs`)
-        configs.value = response.data
-        // Best-effort: flush any queued analytics events once configs are known.
+        const data = await MiscAPI.configuration()
+        configs.value = data
         void useApiStore().flushQueuedEvents()
-        return response.data
+        return data
     }
 
-    // Public, unauthenticated endpoint exposing only what the login/setup UI needs.
-    async function loadLoginConfig() {
-        const response = await axios.get(`${apiUrlWithoutTenants()}/configs/login`)
-        return response.data
+    /** Public endpoint exposing only what the login and setup pages need. */
+    function loadLoginConfig() {
+        return MiscAPI.loginConfiguration()
     }
 
-    async function loadBasicAuthValidationErrors() {
-        const response = await axios.get(`${apiUrlWithoutTenants()}/basicAuthValidationErrors`)
-        return response.data
+    function loadBasicAuthValidationErrors() {
+        return MiscAPI.basicAuthConfigErrors()
     }
 
     async function loadAllUsages() {
         if (configs.value?.isBasicAuthInitialized && BasicAuth.isLoggedIn()) {
-            const response = await axios.get(`${apiUrl()}/usages/all`)
-            return response.data
+            return MiscAPI.usages()
         }
         return []
     }
 
+    /** Creating the account logs the caller in, so the full configuration loads right after to drive analytics. */
     async function addBasicAuth(options: {
         username: string;
         password: string;
@@ -78,23 +63,19 @@ export const useMiscStore = defineStore("misc", () => {
         const email = options.username
         const uid = ensureUid()
 
-        await axios.post(`${apiUrl()}/basicAuth`, {
+        await MiscAPI.createBasicAuth({
             uid,
             username: email,
             password: options.password,
         })
 
-        // The call above logs the caller in (it sets the auth cookie on success), so the
-        // full configuration can now be loaded to drive analytics for this event.
         const freshConfigs = await loadConfigs()
 
         if (freshConfigs?.isUiAnonymousUsageEnabled === true) {
             void initPosthogIfEnabled(freshConfigs)
         }
 
-        const apiStore = useApiStore()
-
-        return apiStore.posthogEvents({
+        return useApiStore().posthogEvents({
             type: "ossauth",
             iid: freshConfigs?.uuid,
             uid,
@@ -109,12 +90,12 @@ export const useMiscStore = defineStore("misc", () => {
         password: string;
         currentPassword: string;
     }) {
-        await axios.post(`${apiUrl()}/basicAuth`, {
+        await MiscAPI.createBasicAuth({
             uid: ensureUid(),
             username: options.username,
             password: options.password,
             currentPassword: options.currentPassword,
-        }, {showMessageOnError: false} as AxiosLikeConfig)
+        }, {showMessageOnError: false} as Parameters<typeof MiscAPI.createBasicAuth>[1])
     }
 
     return {

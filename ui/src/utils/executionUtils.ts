@@ -40,3 +40,7 @@ export function waitForState($http: KestraClient, execution: Execution) {
         return statePredicate(execution, current)
     })
 }
+
+export function executionFileUrl(executionId: string | undefined, path: string): string {
+    return `${apiUrl()}/executions/${executionId}/file?path=${encodeURIComponent(path)}`
+}

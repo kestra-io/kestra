@@ -1,15 +1,17 @@
 import {describe, it, expect, vi, beforeEach} from "vitest"
 import {setActivePinia, createPinia} from "pinia"
 
-const axiosGet = vi.fn()
-const axiosPost = vi.fn().mockResolvedValue({data: {}})
+const configuration = vi.fn()
+const createBasicAuth = vi.fn().mockResolvedValue(undefined)
 
 vi.mock("@kestra-io/kestra-sdk", () => ({
     useClient: () => ({
-        get: axiosGet,
-        post: axiosPost,
+        get: vi.fn(),
+        post: vi.fn(),
     }),
 }))
+
+vi.mock("@kestra-io/kestra-sdk/misc", () => ({configuration, createBasicAuth}))
 
 const initPosthogIfEnabled = vi.fn()
 const capturePosthogEvent = vi.fn()
@@ -29,8 +31,8 @@ vi.mock("../../../src/utils/uid", () => ({
 describe("misc store addBasicAuth", () => {
     beforeEach(() => {
         vi.resetModules()
-        axiosGet.mockReset()
-        axiosPost.mockClear()
+        configuration.mockReset()
+        createBasicAuth.mockClear()
         initPosthogIfEnabled.mockClear()
         capturePosthogEvent.mockClear()
         disablePosthog.mockClear()
@@ -38,9 +40,7 @@ describe("misc store addBasicAuth", () => {
     })
 
     it("loads the full (now-authenticated) configs after the basicAuth POST succeeds, and uses them for analytics", async () => {
-        axiosGet.mockResolvedValue({
-            data: {isBasicAuthInitialized: true, isUiAnonymousUsageEnabled: true, uuid: "instance-uuid"},
-        })
+        configuration.mockResolvedValue({isBasicAuthInitialized: true, isUiAnonymousUsageEnabled: true, uuid: "instance-uuid"})
 
         const {useMiscStore} = await import("override/stores/misc")
         const miscStore = useMiscStore()
@@ -48,11 +48,11 @@ describe("misc store addBasicAuth", () => {
         await miscStore.addBasicAuth({username: "admin@kestra.io", password: "StrongPass1"})
 
         // POST happens before any config is fetched (the endpoint is public/unauthenticated at that point).
-        expect(axiosPost).toHaveBeenCalledTimes(1)
-        expect(axiosPost.mock.calls[0][0]).toMatch(/\/basicAuth$/)
+        expect(createBasicAuth).toHaveBeenCalledTimes(1)
+        expect(createBasicAuth.mock.calls[0][0]).toMatchObject({username: "admin@kestra.io", password: "StrongPass1"})
 
         // The store now holds the freshly (authenticated) loaded configs.
-        expect(axiosGet.mock.calls[0][0]).toMatch(/\/configs$/)
+        expect(configuration).toHaveBeenCalledTimes(1)
         expect(miscStore.configs).toEqual({isBasicAuthInitialized: true, isUiAnonymousUsageEnabled: true, uuid: "instance-uuid"})
 
         // Analytics init/event use the freshly loaded configs, not a stale/undefined value.
@@ -64,9 +64,7 @@ describe("misc store addBasicAuth", () => {
     })
 
     it("skips posthog init when analytics is disabled, but still fires the ossauth event", async () => {
-        axiosGet.mockResolvedValue({
-            data: {isBasicAuthInitialized: true, isUiAnonymousUsageEnabled: false, uuid: "instance-uuid-2"},
-        })
+        configuration.mockResolvedValue({isBasicAuthInitialized: true, isUiAnonymousUsageEnabled: false, uuid: "instance-uuid-2"})
 
         const {useMiscStore} = await import("override/stores/misc")
         const miscStore = useMiscStore()

@@ -1,47 +1,39 @@
 import {computed, ref, watch} from "vue"
 import {defineStore} from "pinia"
-
-import type {AxiosLikeConfig, AxiosLikeResponse, ExportFormat} from "@kestra-io/kestra-sdk"
-
-const response: AxiosLikeConfig = {responseType: "blob" as const}
-const validateStatus = (status: number) => status === 200 || status === 404
-/** Returns false when the export carried nothing the user can open. Only ION can end up that way:
- *  a CSV export always carries its header row, so an empty chart is still a valid file, while ION
- *  has no header concept and an empty chart really is a 0 byte body that looks like a failed
- *  download. */
-const downloadHandler = (res: AxiosLikeResponse, filename: string, format: ExportFormat): boolean => {
-    const blob = new Blob([res.data], {type: "application/octet-stream"})
-    if (format === "ION" && blob.size === 0) return false
-
-    Utils.downloadUrl(window.URL.createObjectURL(blob), `${filename}.${format.toLowerCase()}`)
-    return true
-}
-
+import type {RouteLocation} from "vue-router"
+import {useClient, type AxiosLikeConfig, type ChartFiltersOverrides, type ExportFormat} from "@kestra-io/kestra-sdk"
+import * as DashboardsAPI from "@kestra-io/kestra-sdk/dashboards"
+import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
 import {apiUrl, apiUrlWithoutTenants, basePath} from "override/utils/route"
 import {useMiscStore} from "override/stores/misc"
-
 import * as Utils from "../utils/utils"
 import {validationErrorLines, type ValidationError} from "../utils/validationErrors"
 import {routeFamily} from "../utils/routeFamily"
-
+import type {KestraHttpError} from "../utils/kestraHttp"
 import type {Dashboard, Chart, DashboardSettings} from "../components/dashboard/types.ts"
-import {useClient, type ChartFiltersOverrides} from "@kestra-io/kestra-sdk"
-import * as DashboardsAPI from "@kestra-io/kestra-sdk/dashboards"
 import {removeRefPrefix, usePluginsStore, type JsonSchemaDef, type RootJsonSchema} from "./plugins"
-import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
 import {useUnsavedChangesStore} from "./unsavedChanges"
 import {useBookmarksStore} from "./bookmarks"
-import type {RouteLocation} from "vue-router"
-import type {KestraHttpError} from "../utils/kestraHttp"
 
 type ParsedDashboardSource = {id?: string} & Record<string, unknown>
 type DashboardListOptions = Omit<NonNullable<Parameters<typeof DashboardsAPI.searchDashboards>[0]>, "sort"> & {sort?: string}
 type LoadedChart = Chart & {raw: Chart}
+type DefaultDefinitions = {main: string, flow: string, namespace: string}
 
 interface LoadChartResult {
     error: string | null;
     data: LoadedChart | null;
     raw: Record<string, unknown>;
+}
+
+/** Returns false when the export carried nothing the user can open. Only ION can: a CSV always carries
+ *  its header row, while an empty ION chart is a 0 byte body that looks like a failed download. */
+const downloadHandler = (data: Blob, filename: string, format: ExportFormat): boolean => {
+    const blob = new Blob([data], {type: "application/octet-stream"})
+    if (format === "ION" && blob.size === 0) return false
+
+    Utils.downloadUrl(window.URL.createObjectURL(blob), `${filename}.${format.toLowerCase()}`)
+    return true
 }
 
 export const DEFAULT_DASHBOARD = {
@@ -56,14 +48,9 @@ export const useDashboardStore = defineStore("dashboard", () => {
     const selectedChart = ref<Chart>()
     const activeDashboard = ref<Dashboard>()
     const defaultDashboards = ref<DashboardSettings>()
-    const defaultDefinitions = ref<{
-        main: string,
-        flow: string,
-        namespace: string,
-    }>()
+    const defaultDefinitions = ref<DefaultDefinitions>()
     const chartErrors = ref<string[]>([])
     const isCreating = ref<boolean>(false)
-    // const readonlyToastShown = ref(false)
 
     const sourceCode = ref("")
     const sourceCodeOrigin = ref("")
@@ -104,16 +91,14 @@ export const useDashboardStore = defineStore("dashboard", () => {
         return dashboardList.value
     }
 
-    /** Loads the tenant default dashboards; an instance that cannot store dashboards has none and does not serve the route. */
+    /** Loads the tenant default dashboards, none when the instance cannot store dashboards. The route is
+     *  only in the EE SDK (`dashboards-admin`), so it goes through the raw client to stay edition-agnostic. */
     async function loadDefaults() {
         if (useMiscStore().configs?.isCustomDashboardsEnabled === false) {
             defaultDashboards.value = {}
             return defaultDashboards.value
         }
 
-        // "get default dashboards" lives under a different SDK tag per edition (dashboards in OSS,
-        // dashboards-admin in EE) but the same REST path, so go through the raw client to stay
-        // edition-agnostic (same approach as the custom-blueprint reads).
         const {data} = await axios.get<DashboardSettings>(`${apiUrl()}/dashboards/settings/default-dashboards`)
         defaultDashboards.value = data
         return defaultDashboards.value
@@ -121,24 +106,25 @@ export const useDashboardStore = defineStore("dashboard", () => {
 
     async function loadDefaultDefinitions() {
         if (!defaultDefinitions.value) {
-            const res = await axios.get(`${apiUrl()}/dashboards/defaults/definitions`)
-            defaultDefinitions.value = res.data
+            defaultDefinitions.value = await DashboardsAPI.defaultDashboardDefinitions() as DefaultDefinitions
         }
         return defaultDefinitions.value!
     }
 
-    // side-effect-free lookups for autocompletion, deliberately not going through
-    // list()/load() which mutate dashboardList/activeDashboard and would clobber
-    // whatever the user is currently viewing/editing elsewhere in the app.
+    /** Side-effect-free lookup for autocompletion: `list()` and `load()` would replace the dashboard on screen. */
     async function searchIds(): Promise<{ id: string; title?: string }[]> {
-        const res = await axios.get(`${apiUrl()}/dashboards?size=100`)
-        return (res.data as { results: { id: string; title?: string }[] }).results
+        const res = await DashboardsAPI.searchDashboards({size: 100})
+        return res.results as { id: string; title?: string }[]
     }
 
     async function chartsById(id: Dashboard["id"]): Promise<Chart[]> {
-        const res = await axios.get(`${apiUrl()}/dashboards/${id}`, {validateStatus})
-        if (res.status === 404) return []
-        return (res.data as Dashboard).charts ?? []
+        try {
+            const dashboard = await DashboardsAPI.dashboard({id}, {ignoreNotFound: true} as Parameters<typeof DashboardsAPI.dashboard>[1]) as Dashboard
+            return dashboard.charts ?? []
+        } catch (e: unknown) {
+            if ((e as KestraHttpError).status === 404) return []
+            throw e
+        }
     }
 
     async function saveDefaults(defaultDashboardsRequest: DashboardSettings) {
@@ -167,31 +153,28 @@ export const useDashboardStore = defineStore("dashboard", () => {
         return KEY_MAP[routeFamily(route.name)]
     }
 
+    /** The route's dashboard param, else the user's last pick, else the tenant default, else the bundled one. */
     const getDashboardId = async (route: RouteLocation): Promise<string> => {
         const routeName = route.name ? routeFamily(route.name) : undefined
         if(!routeName || !DASHBOARD_ROUTES.includes(routeName)){
             throw new Error("invalid route in getDashboard: "+routeName?.toString())
         }
 
-        // URL
         if(route.params?.dashboard && typeof route.params.dashboard === "string" && route.params.dashboard !== "default"){
             return route.params.dashboard
         }
 
-        // Localstorage
         const key = getUserDashboardStorageKey(route)
         const userDashboard = localStorage.getItem(key)
         if(userDashboard){
             return userDashboard
         }
 
-        // tenant default
         const defaultTenantDashboard = await getTenantDefaultDashboardId(route)
         if(defaultTenantDashboard) {
             return defaultTenantDashboard
         }
 
-        // default
         return "default"
     }
 
@@ -250,7 +233,8 @@ export const useDashboardStore = defineStore("dashboard", () => {
         return activeDashboard.value
     }
 
-    /** Dashboard writes are Enterprise-only routes, absent from the OSS SDK, so they go through the raw client; the backend only routes application/x-yaml, not application/yaml. */
+    /** Dashboard writes are EE-only routes, absent from the OSS SDK, so they go through the raw client.
+     *  The backend only routes `application/x-yaml`, not `application/yaml`. */
     const yaml = {headers: {"Content-Type": "application/x-yaml"}}
 
     async function create(source: Dashboard["sourceCode"]) {
@@ -281,9 +265,9 @@ export const useDashboardStore = defineStore("dashboard", () => {
 
     let latestValidation = 0
 
+    /** Drops a response overtaken by a newer validation: it describes a source the editor no longer holds. */
     async function validateDashboard(source: Dashboard["sourceCode"]) {
         const validation = ++latestValidation
-        // A response overtaken by a newer validation describes a source the editor no longer holds.
         const isLatest = () => validation === latestValidation
         try {
             const {data} = await axios.post(`${apiUrl()}/dashboards/validate`, source ?? "", yaml)
@@ -322,16 +306,11 @@ export const useDashboardStore = defineStore("dashboard", () => {
     /** Resolves to false when the export carried nothing the user can open, so the caller can tell
      *  them instead of silently downloading an empty file. Only ION resolves that way. */
     async function exportDashboard(dashboard: Dashboard, chart: Chart, parameters: ChartFiltersOverrides, format: ExportFormat = "CSV"): Promise<boolean> {
-        const isDefault = dashboard.id === "default"
+        const data = dashboard.id === "default"
+            ? await DashboardsAPI.exportChart({format, chart: chart.content ?? "", globalFilter: parameters})
+            : await DashboardsAPI.exportDashboardChart({format, id: dashboard.id, chartId: chart.id ?? "", ...parameters})
 
-        const path = isDefault ? "/charts/export" : `/${dashboard.id}/charts/${chart.id}/export`
-        const payload = isDefault ? {chart: chart.content, globalFilter: parameters} : parameters
-
-        const filename = `chart__${chart.id}`
-
-        return axios
-            .post(`${apiUrl()}/dashboards${path}?format=${format}`, payload, response)
-            .then((res) => downloadHandler(res, filename, format))
+        return downloadHandler(data, `chart__${chart.id}`, format)
     }
 
     const pluginsStore = usePluginsStore()

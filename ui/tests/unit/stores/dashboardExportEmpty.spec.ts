@@ -3,7 +3,7 @@ import {setActivePinia, createPinia} from "pinia"
 
 import type {Chart, Dashboard} from "../../../src/components/dashboard/types"
 
-const post = vi.fn()
+const exportChart = vi.fn()
 const downloadUrl = vi.fn()
 
 vi.mock("@kestra-io/design-system", () => ({
@@ -33,10 +33,10 @@ vi.mock("vue-i18n", () => ({
 }))
 
 vi.mock("@kestra-io/kestra-sdk", () => ({
-    useClient: () => ({get: vi.fn(), post, put: vi.fn(), delete: vi.fn()}),
+    useClient: () => ({get: vi.fn(), post: vi.fn(), put: vi.fn(), delete: vi.fn()}),
 }))
 
-vi.mock("@kestra-io/kestra-sdk/dashboards", () => ({}))
+vi.mock("@kestra-io/kestra-sdk/dashboards", () => ({exportChart}))
 
 vi.mock("../../../src/utils/utils", async (importOriginal) => ({
     ...(await importOriginal<typeof import("../../../src/utils/utils")>()),
@@ -60,7 +60,7 @@ const CHART: Chart = {id: "a-chart", type: "io.kestra.plugin.core.dashboard.char
 describe("dashboard store chart export", () => {
     beforeEach(() => {
         vi.resetModules()
-        post.mockReset()
+        exportChart.mockReset()
         downloadUrl.mockReset()
         window.URL.createObjectURL = vi.fn(() => "blob:a-url")
         localStorage.clear()
@@ -70,7 +70,7 @@ describe("dashboard store chart export", () => {
     // A chart with no rows used to answer 200 with an empty body, which the handler below refused
     // to write out. CSV now always carries its header row, so there is a file worth handing over.
     it("downloads a header-only CSV export rather than reporting it as empty", async () => {
-        post.mockResolvedValue({data: "chart_namespace,chart_execution_id\r\n"})
+        exportChart.mockResolvedValue("chart_namespace,chart_execution_id\r\n")
         const {useDashboardStore} = await import("../../../src/stores/dashboard")
 
         const exported = await useDashboardStore().export(DASHBOARD, CHART, {}, "CSV")
@@ -82,7 +82,7 @@ describe("dashboard store chart export", () => {
     // ION has no header concept, so an empty chart really is 0 bytes there and writing it out
     // hands the user a file that looks like a failed download.
     it("still refuses a 0 byte ION export", async () => {
-        post.mockResolvedValue({data: ""})
+        exportChart.mockResolvedValue("")
         const {useDashboardStore} = await import("../../../src/stores/dashboard")
 
         const exported = await useDashboardStore().export(DASHBOARD, CHART, {}, "ION")
@@ -92,7 +92,7 @@ describe("dashboard store chart export", () => {
     })
 
     it("downloads an ION export that carries rows", async () => {
-        post.mockResolvedValue({data: "{chart_namespace:a_namespace}\n"})
+        exportChart.mockResolvedValue("{chart_namespace:a_namespace}\n")
         const {useDashboardStore} = await import("../../../src/stores/dashboard")
 
         const exported = await useDashboardStore().export(DASHBOARD, CHART, {}, "ION")

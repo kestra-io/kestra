@@ -21,6 +21,7 @@ import {apiUrl, apiUrlWithoutTenants, basePath} from "override/utils/route"
 import {useMiscStore} from "override/stores/misc"
 
 import * as Utils from "../utils/utils"
+import {validationErrorLines, type ValidationError} from "../utils/validationErrors"
 import {routeFamily} from "../utils/routeFamily"
 
 import type {Dashboard, Chart, DashboardSettings, ChartResults} from "../components/dashboard/types.ts"
@@ -243,6 +244,8 @@ export const useDashboardStore = defineStore("dashboard", () => {
         activeDashboard.value = data
         sourceCode.value = data.sourceCode ?? ""
         sourceCodeOrigin.value = sourceCode.value
+        latestValidation++
+        setValidationErrors(undefined)
 
         return activeDashboard.value
     }
@@ -276,9 +279,26 @@ export const useDashboardStore = defineStore("dashboard", () => {
         return deleted
     }
 
+    let latestValidation = 0
+
     async function validateDashboard(source: Dashboard["sourceCode"]) {
         const {data} = await axios.post<ValidateConstraintViolation>(`${apiUrl()}/dashboards/validate`, source ?? "", yaml)
         return data
+        const validation = ++latestValidation
+        // A response overtaken by a newer validation describes a source the editor no longer holds.
+        const isLatest = () => validation === latestValidation
+        try {
+            const {data} = await axios.post(`${apiUrl()}/dashboards/validate`, source ?? "", yaml)
+            if (isLatest()) {
+                setValidationErrors(data.errors)
+            }
+            return data
+        } catch (error) {
+            if (isLatest()) {
+                setValidationErrors(undefined)
+            }
+            throw error
+        }
     }
 
     async function generate(id: Dashboard["id"], chartId: Chart["id"], parameters: ChartFiltersOverrides) {
@@ -294,6 +314,8 @@ export const useDashboardStore = defineStore("dashboard", () => {
     async function validateChart(source: string) {
         const {data} = await axios.post<ValidateConstraintViolation>(`${apiUrl()}/dashboards/validate/chart`, source, yaml)
         chartErrors.value = data.constraints ? [data.constraints] : []
+        const {data} = await axios.post(`${apiUrl()}/dashboards/validate/chart`, source, yaml)
+        chartErrors.value = validationErrorLines(data.errors)
         return data
     }
 
@@ -360,8 +382,9 @@ export const useDashboardStore = defineStore("dashboard", () => {
         }
         const errors = await validateChart(yamlChart)
 
-        if (errors.constraints) {
-            result.error = errors.constraints
+        const errorLines = validationErrorLines(errors.errors)
+        if (errorLines.length) {
+            result.error = errorLines.join("\n")
         } else {
             result.data = {...chart, content: yamlChart, raw: chart}
         }
@@ -381,6 +404,13 @@ export const useDashboardStore = defineStore("dashboard", () => {
     }
 
     const errors = ref<string[] | undefined>()
+    const validationErrors = ref<ValidationError[]>()
+
+    function setValidationErrors(located: ValidationError[] | undefined) {
+        validationErrors.value = located
+        const lines = validationErrorLines(located)
+        errors.value = lines.length ? lines : undefined
+    }
 
     return {
         activeDashboard,
@@ -408,6 +438,7 @@ export const useDashboardStore = defineStore("dashboard", () => {
         export: exportDashboard,
         loadChart,
         errors,
+        validationErrors,
 
         schema,
         definitions,

@@ -33,6 +33,7 @@ import io.kestra.core.models.tasks.logs.LogExporter;
 import io.kestra.core.models.tasks.runners.TaskRunner;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.ui.PluginUiModule;
+import io.kestra.core.plugins.endpoint.PluginEndpoint;
 import io.kestra.core.preview.FileRenderer;
 import io.kestra.core.repositories.LogDataStoreInterface;
 import io.kestra.core.secret.SecretPluginInterface;
@@ -136,6 +137,8 @@ public class PluginScanner {
         List<Class<? extends RulePluginInterface>> rules = new ArrayList<>();
         List<Class<? extends AdditionalPlugin>> additionalPlugins = new ArrayList<>();
         List<Class<? extends FileRenderer>> fileRenderers = new ArrayList<>();
+        List<PluginEndpoint> endpoints = new ArrayList<>();
+        Set<String> endpointNames = new HashSet<>();
         List<String> guides = new ArrayList<>();
         Map<String, Class<?>> aliases = new HashMap<>();
         Map<String, List<PluginUiModule>> pluginUiManifest = new HashMap<>();
@@ -225,6 +228,15 @@ public class PluginScanner {
                         log.debug("Loading fileRenderer plugin: '{}'", plugin.getClass());
                         fileRenderers.add(fileRenderer.getClass());
                     }
+                    case PluginEndpoint endpoint -> {
+                        log.debug("Loading PluginEndpoint plugin: '{}'", plugin.getClass());
+                        if (endpointNames.add(endpoint.name())) {
+                            endpoints.add(endpoint);
+                        } else {
+                            log.warn("Duplicate plugin endpoint name '{}' in '{}', keeping the first.",
+                                endpoint.name(), plugin.getClass());
+                        }
+                    }
                     default -> {
                     }
                 }
@@ -298,6 +310,7 @@ public class PluginScanner {
             .rules(rules)
             .additionalPlugins(additionalPlugins)
             .fileRenderers(fileRenderers)
+            .endpoints(endpoints)
             .aliases(
                 aliases.entrySet().stream().collect(
                     Collectors.toMap(

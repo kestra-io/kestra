@@ -16,7 +16,7 @@
                         :label="k"
                     >
                         <template #default="scope">
-                            <button v-if="k === 'running'" class="edit-running" @click="openDialog(scope.row)">
+                            <button v-if="k === 'running'" class="edit-running" @click="openDialog(scope.row as ConcurrencyLimit)">
                                 {{ scope.row[k] }}
                                 <IconEdit />
                             </button>

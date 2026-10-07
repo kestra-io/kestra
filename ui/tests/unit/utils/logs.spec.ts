@@ -11,6 +11,8 @@ import {
     formatLogsAsText,
     logsDownloadFilename,
     executionLogsDownloadFilename,
+    levelOrLower,
+    type LevelKey,
 } from "../../../src/utils/logs"
 import type {Log} from "../../../src/stores/logs"
 
@@ -159,5 +161,23 @@ describe("download filenames", () => {
 
     it("builds an execution logs filename with the execution id", () => {
         expect(executionLogsDownloadFilename("exec-42", date)).toBe("kestra-execution-20260604090703-exec-42.log")
+    })
+})
+
+describe("levelOrLower", () => {
+    it("returns every level for TRACE", () => {
+        expect(levelOrLower("TRACE")).toEqual(["TRACE", "DEBUG", "INFO", "WARN", "ERROR"])
+    })
+
+    it("returns only ERROR for ERROR", () => {
+        expect(levelOrLower("ERROR")).toEqual(["ERROR"])
+    })
+
+    it("includes ERROR when WARN is selected, confirming ordering direction", () => {
+        expect(levelOrLower("WARN")).toEqual(["WARN", "ERROR"])
+    })
+
+    it("returns every level when no level is given, as Logs.vue relies on", () => {
+        expect(levelOrLower(undefined as unknown as LevelKey)).toEqual(["TRACE", "DEBUG", "INFO", "WARN", "ERROR"])
     })
 })

@@ -51,7 +51,7 @@ describe("toast.saved", () => {
 
     it("shouldNotDismissUnrelatedNotificationsWhenSaved", () => {
         // Given an unrelated notification (e.g. the plugin auto-install progress toast)
-        const unrelatedHandle = KsNotification({title: "Installing 1 plugin"} as any)
+        const unrelatedHandle = KsNotification({title: "Installing 1 plugin"} as Record<string, unknown>)
         const toast = makeToast(t)
 
         // When

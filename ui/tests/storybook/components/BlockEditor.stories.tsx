@@ -202,7 +202,7 @@ export const DagWithInvalidSubtask: Story = {
         setup() {
             const flowStore = useFlowStore()
             flowStore.flowYaml = YAML_DAG_INVALID_SUBTASK
-            flowStore.flowValidation = {constraints: "Validation error: log.log.task.message: must not be null\n"}
+            flowStore.flowValidation = {errors: [{detail: "must not be null", pointer: "/tasks/0/tasks/2/task/message", path: "tasks[my_dag].tasks[2].task.message"}]}
             return () => (
                 <div style="height: 600px; border: 1px solid var(--ks-border-default); border-radius: var(--ks-radius-base); overflow: hidden;">
                     <BlockEditor />

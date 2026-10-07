@@ -1,6 +1,6 @@
 import {afterEach, beforeEach, describe, expect, it} from "vitest"
 import {dayjs} from "@kestra-io/design-system"
-import {date, humanizeNumber} from "../../../src/utils/filters"
+import {date, humanizeDuration, humanizeNumber} from "../../../src/utils/filters"
 import {storageKeys} from "../../../src/utils/constants"
 
 describe("humanizeNumber", () => {
@@ -67,5 +67,56 @@ describe("date", () => {
         localStorage.setItem(storageKeys.TIMEZONE_STORAGE_KEY, "UTC")
 
         expect(date(INSTANT, "iso")).toBe("2026-07-24 13:16:00.000")
+    })
+})
+
+describe("humanizeDuration", () => {
+    // humanDuration reads the unit language from localStorage, so a leftover "lang" from
+    // another test would swap "s"/"m"/"h" for their translations and break these assertions.
+    afterEach(() => {
+        localStorage.removeItem("lang")
+    })
+
+    it("formats a sub-second duration rather than rounding it away", () => {
+        // The trailing-decimal padding (.5s -> .50s) is the branch a single-digit case exercises.
+        expect(humanizeDuration(0.5)).toBe("0.50s")
+    })
+
+    it.each([
+        ["seconds", 5, "5s"],
+        ["minutes", 60, "1m"],
+        ["hours", 3600, "1h"],
+    ])("renders %s with their own unit", (_label, seconds, expected) => {
+        expect(humanizeDuration(seconds)).toBe(expected)
+    })
+
+    it("renders the significant units of a duration that spans several", () => {
+        // largest is capped at 2, so an hour-and-a-bit shows hours and minutes but drops the seconds.
+        expect(humanizeDuration(3661)).toBe("1h, 1m")
+        expect(humanizeDuration(90061)).toBe("1d, 1h")
+    })
+
+    it("renders zero as a real value rather than an empty string", () => {
+        expect(humanizeDuration(0)).toBe("0s")
+    })
+
+    // Durations are read off execution records that can be missing, so a nullish value must
+    // degrade to a label rather than throw on the hot path every execution row goes through.
+    it.each([
+        ["undefined", undefined],
+        ["null", null],
+    ])("does not throw for %s", (_label, value) => {
+        expect(() => humanizeDuration(value as unknown as number)).not.toThrow()
+        expect(humanizeDuration(value as unknown as number)).toBe("0s")
+    })
+
+    it("handles a negative duration rather than producing nonsense", () => {
+        // A clock skew between workers can yield a negative span; it must still format to a
+        // real, non-empty unit label instead of "NaN" or an empty string.
+        const result = humanizeDuration(-5)
+
+        expect(result).not.toBe("")
+        expect(result).not.toMatch(/nan/i)
+        expect(result).toBe("5s")
     })
 })

@@ -121,7 +121,7 @@
         <KsDialog
             v-if="isTaskModalOpen && taskModalCtx"
             v-model="isTaskModalOpen"
-            :title="taskModalCtx.title ?? taskModalCtx.task?.id ?? 'Task details'"
+            :title="taskModalCtx.title ?? taskModalCtx.task?.id ?? $t('no_code.task_details')"
             :destroyOnClose="true"
             :appendToBody="true"
             scrollable
@@ -301,6 +301,7 @@
     import TaskRunActions from "../executions/TaskRunActions.vue"
     import {useEditorBindings} from "../../composables/useEditorBindings"
     import {loadTaskRunOutputs} from "../../composables/useTaskRunOutputs"
+    import {getAllTasks} from "../../utils/flowUtils"
     import {TOPOLOGY_CLICK_INJECTION_KEY} from "../no-code/injectionKeys"
     import BlockTaskPicker from "../no-code/blocks/BlockTaskPicker.vue"
     import TaskEditModal from "../no-code/blocks/TaskEditModal.vue"
@@ -551,7 +552,8 @@
     const resolveTaskTopologyDetails = async (tasks: any[] = []) => {
         const taskTypes = new Set<string>()
         const runnerTypes = new Set<string>()
-        tasks.forEach((task: any) => {
+        // Nested tasks (WorkingDirectory, If, Parallel...) render their own nodes, so they need their UI modules too.
+        getAllTasks(tasks).forEach((task: any) => {
             if (!task?.type) {
                 return
             }
@@ -642,8 +644,8 @@
         async (source) => {
             if (!source) return
             const parsed = YAML_UTILS.parse<ParsedFlow>(source)
-            const sourceHasRunners = (parsed?.tasks ?? []).some((t: any) => t?.taskRunner?.type)
-            const flowParsedHasRunners = (flowStore.flowParsed?.tasks ?? []).some((t: any) => t?.taskRunner?.type)
+            const sourceHasRunners = getAllTasks(parsed?.tasks).some((t: any) => t?.taskRunner?.type)
+            const flowParsedHasRunners = getAllTasks(flowStore.flowParsed?.tasks).some((t: any) => t?.taskRunner?.type)
             if (sourceHasRunners && !flowParsedHasRunners) {
                 await resolveTaskTopologyDetails(parsed?.tasks ?? [])
             }
@@ -767,7 +769,7 @@
 
     // Topology renders the whole graph, so every graph-originated mutation needs the graph
     // regenerated from the new YAML — unlike the No-code canvas, which never reads flowGraph.
-    const {undoState, applyYaml: applyYamlWithUndo, deleteWithUndo, performUndo} = useYamlUndo(
+    const {undoState, applyYaml: applyYamlWithUndo, deleteWithUndo, performUndo, performRedo} = useYamlUndo(
         flowStore,
         (name: string) => t("block_editor.block_deleted", {name}),
     )
@@ -900,7 +902,7 @@
     }
 
     const validationIssuesByTask = computed<Map<string, string[]>>(() =>
-        groupValidationIssuesByTask(flowStore.flowErrors, flowStore.flowParsed),
+        groupValidationIssuesByTask(flowStore.flowValidation?.errors, flowStore.flowParsed),
     )
 
     const taskPicker = useTaskPicker({
@@ -959,7 +961,7 @@
     onBeforeUnmount(() => window.removeEventListener("keydown", onPickerEscape))
 
     const shortcutsOpen = ref(false)
-    const shortcutGroups = buildShortcutGroups()
+    const shortcutGroups = buildShortcutGroups({supportsClipboard: false})
     const commandMenuOpen = ref(false)
     const flowPropertiesOpen = ref(false)
 
@@ -1094,6 +1096,8 @@
             return reorderFocusedTask(event.key === "ArrowDown" ? "down" : "up") ? undefined : false
         case "undo":
             return performUndo()
+        case "redo":
+            return performRedo()
         case "save":
             saveFlow()
             return

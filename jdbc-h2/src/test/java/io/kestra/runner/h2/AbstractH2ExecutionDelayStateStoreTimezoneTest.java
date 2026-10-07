@@ -3,14 +3,18 @@ package io.kestra.runner.h2;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.TimeZone;
 
 import org.jooq.Field;
 import org.jooq.impl.DSL;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 
 import io.kestra.core.models.flows.State;
 import io.kestra.core.runners.ExecutionDelay;
 import io.kestra.executor.AbstractExecutionDelayStateStoreTest;
+import io.kestra.executor.ExecutionDelayStateStore;
 import io.kestra.jdbc.JooqDSLContextWrapper;
 
 import jakarta.inject.Inject;
@@ -22,38 +26,55 @@ abstract class AbstractH2ExecutionDelayStateStoreTimezoneTest extends AbstractEx
     // Pins the current DDL and must change with any fix to executordelayed."date".
     private static final Field<String> STORED_DATE = DSL.field("CAST(\"date\" AS VARCHAR)", String.class);
 
-    @Inject
-    protected JooqDSLContextWrapper dslContextWrapper;
+    private final JooqDSLContextWrapper dslContextWrapper;
 
-    // The JVM zone must match the session zone the URL sets: jOOQ turns a LocalDateTime into a
-    // Timestamp using the JVM zone, so a mismatched pair would hide a bad cutoff bind.
-    protected void assertOnlyDueDelaysAreConsumed(String timezone, String expectedOverdueDate, String expectedFutureDate) {
-        TimeZone originalTimeZone = TimeZone.getDefault();
-        TimeZone.setDefault(TimeZone.getTimeZone(timezone));
+    @Inject
+    public AbstractH2ExecutionDelayStateStoreTimezoneTest(ExecutionDelayStateStore executionDelayStateStore,
+        JooqDSLContextWrapper dslContextWrapper) {
+        super(executionDelayStateStore);
+        this.dslContextWrapper = Objects.requireNonNull(dslContextWrapper);
+    }
+
+    private TimeZone originalTimeZone;
+
+    // The JVM zone must match the session zone the datasource URL sets, because jOOQ converts the
+    // cutoff with Timestamp.valueOf, which reads the JVM zone. A mismatch would hide a bad bind, so
+    // the zone is set for every test in the subclass, not only the timezone-specific one.
+    @BeforeEach
+    void useSessionZone() {
+        originalTimeZone = TimeZone.getDefault();
+        TimeZone.setDefault(TimeZone.getTimeZone(sessionZone()));
+    }
+
+    @AfterEach
+    void restoreJvmZone() {
+        TimeZone.setDefault(originalTimeZone);
+    }
+
+    /** Must match the TIME ZONE= of this class' datasource URL. */
+    protected abstract String sessionZone();
+
+    protected void assertOnlyDueDelaysAreConsumed(String expectedOverdueDate, String expectedFutureDate) {
         Instant now = Instant.parse("2031-01-15T10:00:00Z");
         List<ExecutionDelay> consumed = new ArrayList<>();
 
-        try {
-            dslContextWrapper.transaction(configuration ->
-            {
-                var context = DSL.using(configuration);
-                store().save(delay("overdue", now.minusSeconds(3600)));
-                store().save(delay("not-yet-due", now.plusSeconds(3600)));
+        dslContextWrapper.transaction(configuration ->
+        {
+            var context = DSL.using(configuration);
+            store().save(delay("overdue", now.minusSeconds(3600)));
+            store().save(delay("not-yet-due", now.plusSeconds(3600)));
 
-                List<String> storedDates = context
-                    .select(STORED_DATE)
-                    .from(DSL.table("executordelayed"))
-                    .orderBy(DSL.field(DSL.quotedName("date")))
-                    .fetch(STORED_DATE);
-                assertThat(storedDates).containsExactly(expectedOverdueDate, expectedFutureDate);
+            List<String> storedDates = context
+                .select(STORED_DATE)
+                .from(DSL.table("executordelayed"))
+                .orderBy(DSL.field(DSL.quotedName("date")))
+                .fetch(STORED_DATE);
+            assertThat(storedDates).containsExactly(expectedOverdueDate, expectedFutureDate);
 
-                store().processExpired(now, consumed::add);
-            });
+            store().processExpired(now, consumed::add);
+        });
 
-            assertThat(consumed).extracting(ExecutionDelay::getTaskRunId).containsOnly("overdue");
-        } finally {
-            TimeZone.setDefault(originalTimeZone);
-        }
+        assertThat(consumed).extracting(ExecutionDelay::getTaskRunId).containsOnly("overdue");
     }
 
     private static ExecutionDelay delay(String taskRunId, Instant date) {

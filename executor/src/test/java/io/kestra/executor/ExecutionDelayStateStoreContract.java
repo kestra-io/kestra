@@ -15,7 +15,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public abstract class ExecutionDelayStateStoreContract {
 
-    // Far from the wall clock so a step-free fixed clock can drive the store.
+    // Far from the wall clock so a fixed clock can drive the store and no real-clock poller
+    // reaches these rows; the contract starts no Executor and stores nothing else in this table.
     protected static final Instant ANCHOR = Instant.parse("2031-01-15T10:00:00Z");
 
     // Just past the latest date this contract inserts, so teardown cannot delete a

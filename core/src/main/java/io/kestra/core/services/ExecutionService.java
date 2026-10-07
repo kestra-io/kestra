@@ -238,7 +238,8 @@ public class ExecutionService {
             .collect(Collectors.toMap(TaskRun::getId, t -> t));
 
         List<TaskRun> newTaskRuns = execution.getTaskRunList().stream()
-            .map(taskRun -> {
+            .map(taskRun ->
+            {
                 if (taskRun.getId().equals(flowableTaskRunId)) {
                     return taskRun.run();
                 }
@@ -545,11 +546,33 @@ public class ExecutionService {
                 );
             }
 
+            // the successors of the replayed task run run again, they are dropped
+            Set<String> originalTaskRunToRemove = GraphUtils.successors(graphCluster, Set.of(taskRunId))
+                .stream()
+                .filter(task -> task instanceof AbstractGraphTask)
+                .map(task -> ((AbstractGraphTask) task))
+                .filter(task -> task.getTaskRun() != null)
+                .map(task -> task.getTaskRun().getId())
+                .filter(id -> !taskRunToRestart.contains(id))
+                .collect(Collectors.toCollection(HashSet::new));
+
+            // Worker task, we need to remove all child in order to be restarted
+            originalTaskRunToRemove.addAll(this.workerTaskChildren(flow, execution, graphCluster, taskRunToRestart));
+
+            // the stale error, finally and afterExecution task runs are dropped too, they run again if needed
+            Set<String> handlerTaskIds = this.handlerTaskIdsToRemove(execution, flow, taskRunToRestart);
+            execution.getTaskRunList()
+                .stream()
+                .filter(taskRun -> handlerTaskIds.contains(taskRun.getTaskId()))
+                .map(TaskRun::getId)
+                .forEach(originalTaskRunToRemove::add);
+
             Map<String, String> mappingTaskRunId = this.mapTaskRunId(execution, false);
 
             newTaskRuns.addAll(
                 execution.getTaskRunList()
                     .stream()
+                    .filter(originalTaskRun -> !originalTaskRunToRemove.contains(originalTaskRun.getId()))
                     .map(throwFunction(originalTaskRun ->
                     {
                         TaskRun newTaskRun = this.mapTaskRun(
@@ -566,32 +589,10 @@ public class ExecutionService {
                     .toList()
             );
 
-            // remove all child for replay task id
-            Set<String> originalTaskRunToRemove = GraphUtils.successors(graphCluster, Set.of(taskRunId))
-                .stream()
-                .filter(task -> task instanceof AbstractGraphTask)
-                .map(task -> ((AbstractGraphTask) task))
-                .filter(task -> task.getTaskRun() != null)
-                .filter(task -> !task.getTaskRun().getId().equals(taskRunId))
-                .filter(task -> !taskRunToRestart.contains(task.getTaskRun().getId()))
-                .map(s -> s.getTaskRun().getId())
-                .collect(Collectors.toSet());
-
-            Set<String> taskRunToRemove = originalTaskRunToRemove
-                .stream()
-                .map(mappingTaskRunId::get)
-                .collect(Collectors.toSet());
-
-            taskRunToRemove
-                .forEach(r -> newTaskRuns.removeIf(taskRun -> taskRun.getId().equals(r)));
-
+            // removed task runs must not come back as non-terminated task runs
             Set<String> untouchedTaskRunIds = new HashSet<>(taskRunToRestart);
             untouchedTaskRunIds.addAll(originalTaskRunToRemove);
             this.restartNonTerminatedTaskRuns(flow, execution, newTaskRuns, untouchedTaskRunIds, mappingTaskRunId, newExecutionId);
-
-            // Worker task, we need to remove all child in order to be restarted
-            this.removeWorkerTask(flow, execution, taskRunToRestart, mappingTaskRunId)
-                .forEach(r -> newTaskRuns.removeIf(taskRun -> taskRun.getId().equals(r)));
         }
 
         // Build and launch new execution
@@ -613,6 +614,36 @@ public class ExecutionService {
             eventPublisher.publishEvent(CrudEvent.create(newExecution));
         }
         return newExecution;
+    }
+
+    private Set<String> handlerTaskIdsToRemove(Execution execution, Flow flow, Set<String> taskRunToRestart) throws InternalException {
+        Set<String> handlerTaskIds = new HashSet<>();
+        handlerTaskIds.addAll(extractAllTaskIdsRecursive(flow.getErrors()));
+        handlerTaskIds.addAll(extractAllTaskIdsRecursive(flow.getFinally()));
+        handlerTaskIds.addAll(extractAllTaskIdsRecursive(flow.getAfterExecution()));
+
+        Set<String> restartedTaskIds = new HashSet<>();
+        for (TaskRun taskRun : execution.getTaskRunList()) {
+            if (!taskRunToRestart.contains(taskRun.getId())) {
+                continue;
+            }
+
+            restartedTaskIds.add(taskRun.getTaskId());
+            if (flow.findTaskByTaskId(taskRun.getTaskId()) instanceof FlowableTask<?> flowableTask) {
+                handlerTaskIds.addAll(extractAllTaskIdsRecursive(flowableTask.getErrors()));
+                handlerTaskIds.addAll(extractAllTaskIdsRecursive(flowableTask.getFinally()));
+            }
+        }
+
+        handlerTaskIds.removeAll(restartedTaskIds);
+        return handlerTaskIds;
+    }
+
+    private Set<String> extractAllTaskIdsRecursive(@Nullable List<Task> tasks) {
+        return ListUtils.emptyOnNull(tasks)
+            .stream()
+            .flatMap(task -> extractAllTaskIdsRecursive(task).stream())
+            .collect(Collectors.toSet());
     }
 
     private Execution applyNewRevision(Flow flow, Execution newExecution) {
@@ -1306,6 +1337,14 @@ public class ExecutionService {
     }
 
     private Set<String> removeWorkerTask(Flow flow, Execution execution, Set<String> taskRunToRestart, Map<String, String> mappingTaskRunId) throws InternalException {
+        return this.workerTaskChildren(flow, execution, GraphUtils.of(flow, execution), taskRunToRestart)
+            .stream()
+            .map(mappingTaskRunId::get)
+            .collect(Collectors.toSet());
+    }
+
+    /** Original ids of the worker task children to restart, computed on the caller's graph. */
+    private Set<String> workerTaskChildren(Flow flow, Execution execution, GraphCluster graphCluster, Set<String> taskRunToRestart) throws InternalException {
         Set<String> workerTaskRunId = taskRunToRestart
             .stream()
             .filter(throwPredicate(s ->
@@ -1316,15 +1355,13 @@ public class ExecutionService {
             }))
             .collect(Collectors.toSet());
 
-        GraphCluster graphCluster = GraphUtils.of(flow, execution);
-
         return GraphUtils.successors(graphCluster, workerTaskRunId)
             .stream()
             .filter(task -> task instanceof AbstractGraphTask)
             .map(task -> (AbstractGraphTask) task)
             .filter(task -> task.getTaskRun() != null)
             .filter(s -> !workerTaskRunId.contains(s.getTaskRun().getId()))
-            .map(s -> mappingTaskRunId.get(s.getTaskRun().getId()))
+            .map(s -> s.getTaskRun().getId())
             .collect(Collectors.toSet());
     }
 
@@ -1382,6 +1419,20 @@ public class ExecutionService {
                 newExecutionId,
                 toRestart ? alterState : null
             );
+    }
+
+    private Set<String> extractAllTaskIdsRecursive(Task task) {
+        Set<String> ids = new HashSet<>();
+        if (task == null) {
+            return ids;
+        }
+        ids.add(task.getId());
+        if (task instanceof FlowableTask<?> flowableTask) {
+            for (Task child : ListUtils.emptyOnNull(flowableTask.allChildTasks())) {
+                ids.addAll(extractAllTaskIdsRecursive(child));
+            }
+        }
+        return ids;
     }
 
     private Set<String> taskRunWithAncestors(Execution execution, List<TaskRun> taskRuns) {

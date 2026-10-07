@@ -257,6 +257,12 @@ export const useExecutionsStore = defineStore("executions", () => {
             state: options.state as Parameters<typeof ExecutionsAPI.updateTaskRunState>[0]["state"],
         }) as unknown as Promise<Execution>
     }
+    const interrupt = (options: { executionId: string; taskRunId: string; state: string }) => {
+        return axios.post(`${apiUrl()}/executions/${options.executionId}/actions/interrupt`, {
+            taskRunId: options.taskRunId,
+            state: options.state,
+        })
+    }
     const waitForStateChange = async (source: Execution) => {
         const updated = await ExecutionUtils.waitForState(axios, source) as Execution
         execution.value = updated
@@ -914,6 +920,7 @@ export const useExecutionsStore = defineStore("executions", () => {
         replayExecutionWithInputs,
         changeExecutionStatus,
         changeStatus,
+        interrupt,
         waitForStateChange,
         kill,
         bulkKill,

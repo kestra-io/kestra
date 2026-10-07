@@ -110,19 +110,19 @@ const routes: KestraRouteRecord[] = [
     {name: "errors/404-wildcard", path: "/:tenant?/:pathMatch(.*)", component: Errors, props: {code: 404}},
 
     //Demo Pages
-    {name: "dashboards/create", path: "/:tenant?/dashboards/new", component: () => import("../components/demo/Dashboards.vue")},
-    {name: "dashboards/update", path: "/:tenant?/dashboards/:dashboard/edit", component: () => import("../components/demo/Dashboards.vue")},
-    {name: "apps/list", path: "/:tenant?/apps", component: () => import("../components/demo/Apps.vue")},
-    {name: "tests/list", path: "/:tenant?/tests", component: () => import("../components/demo/Tests.vue")},
-    {name: "assets/list", path: "/:tenant?/assets", component: () => import("../components/demo/Assets.vue")},
-    {name: "cases/list", path: "/:tenant?/cases", component: () => import("../components/demo/Cases.vue")},
-    {name: "admin/iam", path: "/:tenant?/admin/iam", component: () => import("../components/demo/IAM.vue")},
-    {name: "admin/tenants/list", path: "/:tenant?/admin/tenants/list", component: () => import("../components/demo/Tenants.vue")},
-    {name: "admin/auditlogs/list", path: "/:tenant?/admin/auditlogs", component: () => import("../components/demo/AuditLogs.vue")},
-    {name: "admin/quotas/list", path: "/:tenant?/admin/quotas", component: () => import("../components/demo/Quotas.vue")},
-    {name: "admin/policies", path: "/:tenant?/admin/policies", component: () => import("../components/demo/Policies.vue")},
-    {name: "admin/instance", path: "/:tenant?/admin/instance", component: () => import("../components/demo/Instance.vue")},
-    {name: "promote/targets", path: "/:tenant?/promote/targets", component: () => import("../components/demo/Promote.vue")},
+    {name: "dashboards/create", path: "/:tenant?/dashboards/new", component: () => import("../components/demo/Dashboards.vue"), ossOnly: true},
+    {name: "dashboards/update", path: "/:tenant?/dashboards/:dashboard/edit", component: () => import("../components/demo/Dashboards.vue"), ossOnly: true},
+    {name: "apps/list", path: "/:tenant?/apps", component: () => import("../components/demo/Apps.vue"), ossOnly: true},
+    {name: "tests/list", path: "/:tenant?/tests", component: () => import("../components/demo/Tests.vue"), ossOnly: true},
+    {name: "assets/list", path: "/:tenant?/assets", component: () => import("../components/demo/Assets.vue"), ossOnly: true},
+    {name: "cases/list", path: "/:tenant?/cases", component: () => import("../components/demo/Cases.vue"), ossOnly: true},
+    {name: "admin/iam", path: "/:tenant?/admin/iam", component: () => import("../components/demo/IAM.vue"), ossOnly: true},
+    {name: "admin/tenants/list", path: "/:tenant?/admin/tenants/list", component: () => import("../components/demo/Tenants.vue"), ossOnly: true},
+    {name: "admin/auditlogs/list", path: "/:tenant?/admin/auditlogs", component: () => import("../components/demo/AuditLogs.vue"), ossOnly: true},
+    {name: "admin/quotas/list", path: "/:tenant?/admin/quotas", component: () => import("../components/demo/Quotas.vue"), ossOnly: true},
+    {name: "admin/policies", path: "/:tenant?/admin/policies", component: () => import("../components/demo/Policies.vue"), ossOnly: true},
+    {name: "admin/instance", path: "/:tenant?/admin/instance", component: () => import("../components/demo/Instance.vue"), ossOnly: true},
+    {name: "promote/targets", path: "/:tenant?/promote/targets", component: () => import("../components/demo/Promote.vue"), ossOnly: true},
 ]
 
 export default routes

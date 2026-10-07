@@ -225,6 +225,65 @@ describe("useExecutionRoot breadcrumbs", () => {
         expect((currentCrumb.link as {params: {id: string}}).params.id).toBe("exec-historical")
     })
 
+    it("does not fall back to parentId for legacy nested loop when rootExecutionId is absent", () => {
+        executionsStore.execution = mockExecution({
+            id: "exec-historical-nested",
+            parentId: "exec-level1",
+            loopRun: {
+                taskId: "quarters",
+                value: "Q1",
+                parents: [
+                    {
+                        executionId: "exec-level1",
+                        taskId: "regions",
+                        value: "EMEA",
+                    },
+                ],
+            },
+        })
+
+        const root = useExecutionRoot()
+        const breadcrumb = "breadcrumb" in root.routeInfo.value ? root.routeInfo.value.breadcrumb! : []
+
+        expect(breadcrumb.some(b => b.label === "root_execution")).toBe(false)
+    })
+
+    it("resolves root by walking loopRun.parent for legacy nested loop", () => {
+        executionsStore.execution = mockExecution({
+            id: "exec-historical-nested",
+            parentId: "exec-level1",
+            loopRun: {
+                taskId: "quarters",
+                value: "Q1",
+                parents: [
+                    {
+                        executionId: "exec-level1",
+                        taskId: "regions",
+                        value: "EMEA",
+                    },
+                ],
+                parent: mockExecution({
+                    id: "exec-level1",
+                    parentId: "exec-root",
+                    loopRun: {
+                        taskId: "regions",
+                        value: "EMEA",
+                        parent: mockExecution({
+                            id: "exec-root",
+                        }),
+                    },
+                }),
+            },
+        })
+
+        const root = useExecutionRoot()
+        const breadcrumb = "breadcrumb" in root.routeInfo.value ? root.routeInfo.value.breadcrumb! : []
+
+        const rootCrumb = breadcrumb.find(b => b.label === "root_execution")
+        expect(rootCrumb).toBeDefined()
+        expect((rootCrumb!.link as {params: {id: string}}).params.id).toBe("exec-root")
+    })
+
     it("truncates long loop values in breadcrumbs", () => {
         executionsStore.execution = mockExecution({
             id: "exec-1",

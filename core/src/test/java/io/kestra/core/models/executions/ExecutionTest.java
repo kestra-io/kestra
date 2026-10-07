@@ -52,8 +52,36 @@ class ExecutionTest {
     }
 
     @Test
-    void shouldFallBackToParentIdWhenLoopExecutionLacksRootExecutionId() {
-        // Given a historical loop execution without rootExecutionId
+    void shouldResolveRootExecutionIdForLegacyNestedLoopExecution() {
+        // Given a chain of legacy loop executions without rootExecutionId
+        Execution rootExecution = Execution.builder()
+            .id("root-exec")
+            .state(new State())
+            .build();
+        Execution level1LegacyExecution = Execution.builder()
+            .id("level1-exec")
+            .parentId("root-exec")
+            .loopRun(new LoopRun(rootExecution, "task-1", "taskrun-1", 0, null, "a", null))
+            .state(new State())
+            .build();
+        Execution level2LegacyExecution = Execution.builder()
+            .id("level2-exec")
+            .parentId("level1-exec")
+            .loopRun(new LoopRun(level1LegacyExecution, "task-2", "taskrun-2", 1, null, "b", List.of(new LoopRun.Parent("level1-exec", "task-1", 0, null, "a"))))
+            .state(new State())
+            .build();
+        TaskRun level3TaskRun = TaskRun.builder().id("taskrun-3").taskId("task-3").state(new State()).build();
+
+        // When nesting a third loop level from the level-2 legacy execution
+        Execution level3Execution = level2LegacyExecution.loopExecution(level3TaskRun, 2, "key", "c");
+
+        // Then rootExecutionId resolves to the root execution, not the intermediate parent
+        assertThat(level3Execution.getLoopRun().rootExecutionId()).isEqualTo("root-exec");
+    }
+
+    @Test
+    void shouldLeaveRootExecutionIdNullWhenLegacyLoopExecutionHasNoParentReference() {
+        // Given a detached historical loop execution without rootExecutionId or parent reference
         Execution historicalLoopExecution = Execution.builder()
             .id("level1-exec")
             .parentId("root-exec")
@@ -65,8 +93,8 @@ class ExecutionTest {
         // When nesting a second loop level
         Execution level2Execution = historicalLoopExecution.loopExecution(level2TaskRun, 1, "key", "b");
 
-        // Then rootExecutionId falls back to the parentId
-        assertThat(level2Execution.getLoopRun().rootExecutionId()).isEqualTo("root-exec");
+        // Then rootExecutionId remains null rather than pointing to an unverified parent
+        assertThat(level2Execution.getLoopRun().rootExecutionId()).isNull();
     }
 
     @Test

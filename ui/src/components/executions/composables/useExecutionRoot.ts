@@ -62,7 +62,18 @@ export function useExecutionRoot() {
 
         if (executionsStore.execution?.loopRun) {
             const loopRun = executionsStore.execution.loopRun
-            const rootId = loopRun.rootExecutionId ?? executionsStore.execution.parentId
+            let rootId = loopRun.rootExecutionId
+            if (!rootId) {
+                if (!loopRun.parents || loopRun.parents.length === 0) {
+                    rootId = executionsStore.execution.parentId
+                } else {
+                    let ancestor = loopRun.parent
+                    while (ancestor?.loopRun) {
+                        ancestor = ancestor.loopRun.parent
+                    }
+                    rootId = ancestor?.id
+                }
+            }
 
             if (rootId) {
                 base.breadcrumb.push({

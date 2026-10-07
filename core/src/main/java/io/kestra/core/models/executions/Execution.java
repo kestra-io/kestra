@@ -470,7 +470,11 @@ public class Execution implements SoftDeletable<Execution>, TenantInterface, Has
             if (this.loopRun.rootExecutionId() != null) {
                 return this.loopRun.rootExecutionId();
             }
-            return this.parentId != null ? this.parentId : this.id;
+            Execution ancestor = this.loopRun.parent();
+            while (ancestor != null && ancestor.getLoopRun() != null) {
+                ancestor = ancestor.getLoopRun().parent();
+            }
+            return ancestor != null ? ancestor.getId() : null;
         }
         return this.id;
     }

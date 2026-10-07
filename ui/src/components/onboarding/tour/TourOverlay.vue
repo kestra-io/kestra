@@ -298,14 +298,13 @@
 
         return `path("M0,0 L${window.innerWidth},0 L${window.innerWidth},${window.innerHeight} L0,${window.innerHeight} Z `
             + `M${left + cr},${top} `
-            + `L${left + w - cr},${top} `
-            + `A${cr},${cr} 0 0 1 ${left + w},${top + cr} `
-            + `L${left + w},${top + h - cr} `
-            + `A${cr},${cr} 0 0 1 ${left + w - cr},${top + h} `
-            + `L${left + cr},${top + h} `
-            + `A${cr},${cr} 0 0 1 ${left},${top + h - cr} `
-            + `L${left},${top + cr} `
-            + `A${cr},${cr} 0 0 1 ${left + cr},${top} Z")`
+            + `A${cr},${cr} 0 0 0 ${left},${top + cr} `
+            + `L${left},${top + h - cr} `
+            + `A${cr},${cr} 0 0 0 ${left + cr},${top + h} `
+            + `L${left + w - cr},${top + h} `
+            + `A${cr},${cr} 0 0 0 ${left + w},${top + h - cr} `
+            + `L${left + w},${top + cr} `
+            + `A${cr},${cr} 0 0 0 ${left + w - cr},${top} Z")`
     }
 
     const dialogOpen = () =>

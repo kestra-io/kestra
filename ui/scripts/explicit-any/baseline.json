@@ -107,8 +107,6 @@
   "tests/unit/components/dashboard/Markdown.spec.ts": 1,
   "tests/unit/components/dashboard/Sections.spec.ts": 2,
   "tests/unit/components/dashboard/quickFilters.spec.ts": 1,
-  "tests/unit/components/executions/ExecutionVariableExplorer.spec.ts": 2,
-  "tests/unit/components/executions/useExecutionRoot.spec.ts": 4,
   "tests/unit/components/flows/useFlowRoot.spec.ts": 3,
   "tests/unit/components/flows/useNoCodePanels.spec.ts": 4,
   "tests/unit/components/logs/logsWrapperCursor.spec.ts": 6,

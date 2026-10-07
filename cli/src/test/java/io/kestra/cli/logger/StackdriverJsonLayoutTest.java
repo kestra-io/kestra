@@ -116,6 +116,7 @@ class StackdriverJsonLayoutTest {
     }
 
     private static Map<String, Object> render(StackdriverJsonLayout layout, LoggingEvent event) throws Exception {
-        return MAPPER.readValue(layout.doLayout(event), new TypeReference<>() {});
+        return MAPPER.readValue(layout.doLayout(event), new TypeReference<>() {
+        });
     }
 }

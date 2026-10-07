@@ -545,11 +545,8 @@ public class DefaultServiceLivenessCoordinator extends AbstractServiceLivenessTa
                 return true;
             }
 
-            // A kill only reaches workers that are still alive, so a dead worker's task run is still
-            // RUNNING inside an execution that was already killed, and resubmitting it would run the
-            // task — with its real side effects — for an execution nobody can act on any more. Only
-            // the states that mean "stop working" count here: FAILED or SUCCESS can themselves be
-            // the consequence of losing the worker, and those task runs still deserve recovery.
+            // Only an explicit stop counts: FAILED or SUCCESS can themselves be the consequence of
+            // losing the worker, and recovering those task runs is what the resubmission is for.
             State.Type executionState = execution.getState().getCurrent();
             if (State.Type.KILLING == executionState || State.Type.KILLED == executionState || State.Type.CANCELLED == executionState) {
                 return true;

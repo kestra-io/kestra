@@ -1,11 +1,13 @@
-import type {MenuItem} from "override/components/useLeftMenu"
+import type { MenuItem } from "override/components/useLeftMenu"
 
 export function menuSectionId(section: MenuItem): string {
     return section.id ?? section.title.toLowerCase().replaceAll(" ", "-")
 }
 
 export function flattenMenuItems(menu: MenuItem[]): MenuItem[] {
-    return menu.flatMap((section) => section.child ?? [])
+    return menu.flatMap((item) =>
+        item.child ? [item, ...flattenMenuItems(item.child)] : [item],
+    )
 }
 
 export function resolveSectionItemIds(

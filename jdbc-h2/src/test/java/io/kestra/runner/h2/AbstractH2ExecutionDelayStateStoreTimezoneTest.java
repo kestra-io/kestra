@@ -25,6 +25,8 @@ abstract class AbstractH2ExecutionDelayStateStoreTimezoneTest extends AbstractEx
     @Inject
     protected JooqDSLContextWrapper dslContextWrapper;
 
+    // The JVM zone must match the session zone the URL sets: jOOQ turns a LocalDateTime into a
+    // Timestamp using the JVM zone, so a mismatched pair would hide a bad cutoff bind.
     protected void assertOnlyDueDelaysAreConsumed(String timezone, String expectedOverdueDate, String expectedFutureDate) {
         TimeZone originalTimeZone = TimeZone.getDefault();
         TimeZone.setDefault(TimeZone.getTimeZone(timezone));

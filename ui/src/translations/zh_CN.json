@@ -2006,6 +2006,7 @@
         "csv": "导出为 CSV",
         "ion": "导出到 ION"
       },
+      "ignoredFilters": "{filters} 筛选器不适用于此图表。 | {filters} 筛选器不适用于此图表。",
       "show_all_statuses": "显示所有状态",
       "quick_filters": {
         "all": "全部",

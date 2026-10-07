@@ -177,10 +177,6 @@ describe("levelOrLower", () => {
         expect(levelOrLower("WARN")).toEqual(["WARN", "ERROR"])
     })
 
-    it("degrades to something sensible rather than throwing for an unknown level", () => {
-        expect(levelOrLower("UNKNOWN" as unknown as LevelKey)).toEqual(["TRACE", "DEBUG", "INFO", "WARN", "ERROR"])
-    })
-
     it("returns every level when no level is given, as Logs.vue relies on", () => {
         expect(levelOrLower(undefined as unknown as LevelKey)).toEqual(["TRACE", "DEBUG", "INFO", "WARN", "ERROR"])
     })

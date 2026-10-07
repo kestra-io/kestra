@@ -21,6 +21,6 @@ class TruthUtilsTest {
         assertThat(TruthUtils.isFalsy("0")).isTrue();
         assertThat(TruthUtils.isFalsy("-0")).isTrue();
         assertThat(TruthUtils.isFalsy("")).isTrue();
-        assertThat(TruthUtils.isFalsy(null)).isTrue();
+        assertThat(TruthUtils.isFalsy(null)).isFalse();
     }
 }

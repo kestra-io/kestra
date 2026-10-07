@@ -1,7 +1,7 @@
 import {describe, test, expect, vi, beforeEach} from "vitest"
 import {createPinia, setActivePinia} from "pinia"
 
-const miscState = vi.hoisted(() => ({configs: undefined as Record<string, any> | undefined}))
+const miscState = vi.hoisted(() => ({configs: undefined as Record<string, unknown> | undefined}))
 vi.mock("override/stores/misc", () => ({
     useMiscStore: () => ({configs: miscState.configs}),
 }))

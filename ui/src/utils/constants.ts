@@ -53,6 +53,18 @@ export const storageKeys = {
     SCROLL_MEMORY_PREFIX: "scroll",
     TOPOLOGY_ORIENTATION: "topology-orientation",
     DEFAULT_TOPOLOGY_ORIENTATION: "defaultTopologyOrientation",
+    DEFAULT_LOG_LEVEL: "defaultLogLevel",
+    LOG_DISPLAY: "logDisplay",
+    LOGS_FONT_SIZE: "logsFontSize",
+    EDITOR_FONT_FAMILY: "editorFontFamily",
+    EDITOR_FONT_SIZE: "editorFontSize",
+    AUTOFOLD_TEXT_EDITOR: "autofoldTextEditor",
+    HOVER_TEXT_EDITOR: "hoverTextEditor",
+    EDITOR_PLAYGROUND: "editorPlayground",
+    FLOW_DEFAULT_TAB: "flowDefaultTab",
+    EXECUTION_DEFAULT_TAB: "executeDefaultTab",
+    TRIGGERS_DEFAULT_TAB: "triggersDefaultTab",
+    LANG: "lang",
 } as const
 
 export const executeFlowBehaviours = {

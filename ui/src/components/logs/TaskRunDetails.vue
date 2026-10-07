@@ -312,7 +312,7 @@
     import LogLine from "./LogLine.vue"
     import {State, levelToRequestParams, type LevelFilterValue, type Scheduled, groupBy, throttle, dayjs} from "@kestra-io/design-system"
     import "vue-virtual-scroller/dist/vue-virtual-scroller.css"
-    import {logDisplayTypes} from "../../utils/constants"
+    import {logDisplayTypes, storageKeys} from "../../utils/constants"
     import {DynamicScroller, DynamicScrollerItem, type DynamicScrollerExposed} from "vue-virtual-scroller"
     import {useCoreStore} from "../../stores/core"
     import {useExecutionsStore, type Execution} from "../../stores/executions"
@@ -603,7 +603,7 @@
 
     const autoExpandTaskRunStates = computed<string[]>(() => {
         switch (
-            localStorage.getItem("logDisplay") ||
+            localStorage.getItem(storageKeys.LOG_DISPLAY) ||
             logDisplayTypes.DEFAULT
         ) {
         case logDisplayTypes.ERROR:

@@ -18,8 +18,10 @@ public abstract class ExecutionDelayStateStoreContract {
     // Far from the wall clock so a fixed clock can drive the store; the contract starts no Executor.
     protected static final Instant ANCHOR = Instant.parse("2031-01-15T10:00:00Z");
 
-    // Just past this contract's last row. It also deletes any other delay due before then, which the
-    // shared kestra_unit database can hold, so it must stay inside this class' own date range.
+    // Just past this contract's last row. processExpired takes a cutoff, not a key set, so this
+    // deletes every delay due before it, including rows another class left in the shared database.
+    // That is safe only because the module runs maxParallelForks = 1: such a row can exist only if
+    // an earlier suite created it, and that suite has already finished, so nothing resumes it.
     private static final Instant DRAIN = ANCHOR.plusSeconds(3601);
 
     protected abstract ExecutionDelayStateStore store();

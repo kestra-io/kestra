@@ -14,7 +14,7 @@ vi.mock("override/stores/misc", () => ({
 import Header from "../../../../src/components/dashboard/components/Header.vue"
 import {i18nShallowMount} from "../../i18nMount"
 
-function mountHeader(dashboard: any) {
+function mountHeader(dashboard: Record<string, unknown>) {
     return i18nShallowMount(Header, {messages: {overview: "Overview"}, props: {dashboard}})
 }
 

@@ -1,3 +1,4 @@
+import {nextTick} from "vue"
 import {describe, it, expect, afterAll, beforeEach, vi} from "vitest"
 
 describe("useLogDisplay", () => {
@@ -136,5 +137,97 @@ describe("useLogDisplay", () => {
 
         logsFontSizeOverride.value = null
         expect(logsFontSize.value).toBe(14)
+    })
+
+    it("reads stored preference values on first access", async () => {
+        localStorage.setItem("logsDensity", "compact")
+        localStorage.setItem("logsBodyClamp", "10")
+        localStorage.setItem("logsPrettyJson", "false")
+        localStorage.setItem("logsExpandByDefault", "true")
+
+        const {logsDensity, logsBodyClamp, logsPrettyJson, logsExpandByDefault} =
+            await import("./useLogDisplay")
+
+        expect(logsDensity.value).toBe("compact")
+        expect(logsBodyClamp.value).toBe(10)
+        expect(logsPrettyJson.value).toBe(false)
+        expect(logsExpandByDefault.value).toBe(true)
+    })
+
+    it("writes back preference values when changed", async () => {
+        const {logsDensity, logsBodyClamp, logsPrettyJson, logsExpandByDefault} =
+            await import("./useLogDisplay")
+
+        logsDensity.value = "expanded"
+        await nextTick()
+        expect(localStorage.getItem("logsDensity")).toBe("expanded")
+
+        logsBodyClamp.value = 5
+        await nextTick()
+        expect(localStorage.getItem("logsBodyClamp")).toBe("5")
+
+        logsPrettyJson.value = false
+        await nextTick()
+        expect(localStorage.getItem("logsPrettyJson")).toBe("false")
+
+        logsExpandByDefault.value = true
+        await nextTick()
+        expect(localStorage.getItem("logsExpandByDefault")).toBe("true")
+    })
+
+    it("missing stored values fall back to documented defaults", async () => {
+        const {logsDensity, logsBodyClamp, logsPrettyJson, logsExpandByDefault} =
+            await import("./useLogDisplay")
+
+        expect(logsDensity.value).toBe("normal")
+        expect(logsBodyClamp.value).toBe(0)
+        expect(logsPrettyJson.value).toBe(true)
+        expect(logsExpandByDefault.value).toBe(false)
+    })
+
+    it("malformed stored value falls back to the default instead of throwing", async () => {
+        localStorage.setItem("logsFontSize", "not-a-number")
+        localStorage.setItem("editorFontSize", "invalid")
+
+        const {logsFontSize, effectiveEditorFontSize, logsDensity, logsBodyClamp, logsPrettyJson, logsExpandByDefault} =
+            await import("./useLogDisplay")
+
+        expect(() => logsFontSize.value).not.toThrow()
+        expect(logsFontSize.value).toBe(12)
+        expect(() => effectiveEditorFontSize.value).not.toThrow()
+        expect(effectiveEditorFontSize.value).toBe(12)
+
+        expect(() => logsDensity.value).not.toThrow()
+        expect(() => logsBodyClamp.value).not.toThrow()
+        expect(() => logsPrettyJson.value).not.toThrow()
+        expect(() => logsExpandByDefault.value).not.toThrow()
+    })
+
+    it("same preference shared between two callers stays in sync", async () => {
+        const first = await import("./useLogDisplay")
+        const second = await import("./useLogDisplay")
+
+        first.logsDensity.value = "compact"
+        expect(second.logsDensity.value).toBe("compact")
+
+        second.logsPrettyJson.value = false
+        expect(first.logsPrettyJson.value).toBe(false)
+
+        first.logsBodyClamp.value = 15
+        expect(second.logsBodyClamp.value).toBe(15)
+
+        second.logsExpandByDefault.value = true
+        expect(first.logsExpandByDefault.value).toBe(true)
+    })
+
+    it("DENSITY_PADDING has an entry for every density the picker offers", async () => {
+        const {DENSITY_PADDING} = await import("./useLogDisplay")
+        const pickerDensities = ["compact", "normal", "expanded"] as const
+
+        for (const density of pickerDensities) {
+            expect(DENSITY_PADDING[density]).toBeDefined()
+            expect(typeof DENSITY_PADDING[density]).toBe("string")
+            expect(DENSITY_PADDING[density].length).toBeGreaterThan(0)
+        }
     })
 })

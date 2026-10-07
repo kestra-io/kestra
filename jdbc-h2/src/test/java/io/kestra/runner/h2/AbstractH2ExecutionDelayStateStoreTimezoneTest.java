@@ -8,8 +8,6 @@ import java.util.TimeZone;
 
 import org.jooq.Field;
 import org.jooq.impl.DSL;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 
 import io.kestra.core.models.flows.State;
 import io.kestra.core.runners.ExecutionDelay;
@@ -40,14 +38,16 @@ abstract class AbstractH2ExecutionDelayStateStoreTimezoneTest extends AbstractEx
     // The JVM zone must match the session zone the datasource URL sets, because jOOQ converts the
     // cutoff with Timestamp.valueOf, which reads the JVM zone. A mismatch would hide a bad bind, so
     // the zone is set for every test in the subclass, not only the timezone-specific one.
-    @BeforeEach
-    void useSessionZone() {
+    // JUnit always runs a superclass @BeforeEach before a subclass one, so the zone is set from the
+    // hook the contract calls at the start of its own drain instead of from a callback of our own.
+    @Override
+    protected void prepare() {
         originalTimeZone = TimeZone.getDefault();
         TimeZone.setDefault(TimeZone.getTimeZone(sessionZone()));
     }
 
-    @AfterEach
-    void restoreJvmZone() {
+    @Override
+    protected void cleanup() {
         TimeZone.setDefault(originalTimeZone);
     }
 

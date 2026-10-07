@@ -25,14 +25,24 @@ public abstract class ExecutionDelayStateStoreContract {
 
     protected abstract ExecutionDelayStateStore store();
 
+    /** Runs before each drain, so subclasses can set up state the drain and the tests both rely on. */
+    protected void prepare() {
+    }
+
+    /** Runs after each drain, so subclasses can undo what {@link #prepare()} changed. */
+    protected void cleanup() {
+    }
+
     @BeforeEach
     void clearLeftoversFromEarlierClasses() {
+        prepare();
         store().processExpired(DRAIN, delay -> { });
     }
 
     @AfterEach
     void drainRemainingDelays() {
         store().processExpired(DRAIN, delay -> { });
+        cleanup();
     }
 
     @Test

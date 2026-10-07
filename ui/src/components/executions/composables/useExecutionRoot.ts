@@ -1,12 +1,21 @@
 import {ref, computed, onMounted, onUnmounted, watch} from "vue"
 import {useRoute} from "vue-router"
 import {useI18n} from "vue-i18n"
+import type {KsBreadcrumbItem} from "@kestra-io/design-system"
 
 import {useFlowStore} from "../../../stores/flow"
 import {useExecutionsStore} from "../../../stores/executions"
 import {useNamespaceBreadcrumb} from "../../../composables/useNamespaceBreadcrumb"
 import {EXECUTION_PARENT_ROUTE, EXECUTION_TAB_ROUTES} from "../executionTabs"
 import {isExecutionTabEnabled} from "override/components/executions/executionTabsExtension"
+
+const MAX_CRUMB_VALUE_LENGTH = 20
+
+function formatLoopCrumbLabel(taskId: string | undefined, value: string | undefined, index: number | undefined): string {
+    const raw = value ?? (index !== undefined ? String(index) : "")
+    const displayValue = raw.length > MAX_CRUMB_VALUE_LENGTH ? `${raw.slice(0, MAX_CRUMB_VALUE_LENGTH)}…` : raw
+    return taskId ? `${taskId} (${displayValue})` : displayValue
+}
 
 export function useExecutionRoot() {
     const {t} = useI18n()
@@ -31,28 +40,31 @@ export function useExecutionRoot() {
             return {title: ""}
         }
 
+        const breadcrumb: KsBreadcrumbItem[] = [
+            ...namespaceBreadcrumb.value,
+            {
+                label: flowId,
+                link: {
+                    name: "flows/update",
+                    params: {
+                        namespace: ns,
+                        id: flowId,
+                    },
+                },
+            },
+        ]
+
         const base = {
             title: route.params.id as string,
             bookmarkLabel: `${ns}.${flowId}: ${route.params.id}`,
-            breadcrumb: [
-                ...namespaceBreadcrumb.value,
-                {
-                    label: flowId,
-                    link: {
-                        name: "flows/update",
-                        params: {
-                            namespace: ns,
-                            id: flowId,
-                        } as Record<string, string>,
-                    },
-                },
-            ],
+            breadcrumb,
         }
 
         if (executionsStore.execution?.loopRun) {
             const loopRun = executionsStore.execution.loopRun
+            const rootId = loopRun.rootExecutionId ?? executionsStore.execution.parentId
 
-            if (loopRun.rootExecutionId) {
+            if (rootId) {
                 base.breadcrumb.push({
                     label: t("root_execution"),
                     link: {
@@ -60,7 +72,7 @@ export function useExecutionRoot() {
                         params: {
                             namespace: ns,
                             flowId: flowId,
-                            id: loopRun.rootExecutionId,
+                            id: rootId,
                         },
                     },
                 })
@@ -71,7 +83,7 @@ export function useExecutionRoot() {
                     if (!p.executionId) return
 
                     base.breadcrumb.push({
-                        label: `${p.taskId} (${p.value ?? p.index})`,
+                        label: formatLoopCrumbLabel(p.taskId, p.value, p.index),
                         link: {
                             name: "executions/update",
                             params: {
@@ -86,7 +98,7 @@ export function useExecutionRoot() {
 
             if (loopRun.taskId) {
                 base.breadcrumb.push({
-                    label: `${loopRun.taskId} (${loopRun.value ?? loopRun.index})`,
+                    label: formatLoopCrumbLabel(loopRun.taskId, loopRun.value, loopRun.index),
                     link: {
                         name: "executions/update",
                         params: {

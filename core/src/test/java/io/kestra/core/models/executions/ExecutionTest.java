@@ -23,27 +23,50 @@ class ExecutionTest {
 
     @Test
     void shouldComputeRootExecutionIdAndParentsForNestedLoop() {
+        // Given a root execution and task runs for two loop levels
         Execution rootExecution = Execution.builder()
             .id("root-exec")
             .originalId("prior-replayed-exec")
             .state(new State())
             .build();
-
         TaskRun level1TaskRun = TaskRun.builder().id("taskrun-1").taskId("task-1").state(new State()).build();
+        TaskRun level2TaskRun = TaskRun.builder().id("taskrun-2").taskId("task-2").state(new State()).build();
+
+        // When creating the first loop level
         Execution level1Execution = rootExecution.loopExecution(level1TaskRun, 0, null, "a");
 
+        // Then rootExecutionId matches the root and parents is null
         assertThat(level1Execution.getLoopRun().rootExecutionId()).isEqualTo("root-exec");
         assertThat(level1Execution.getLoopRun().parents()).isNull();
 
-        TaskRun level2TaskRun = TaskRun.builder().id("taskrun-2").taskId("task-2").state(new State()).build();
+        // When nesting a second loop level
         Execution level2Execution = level1Execution.loopExecution(level2TaskRun, 1, "key", "b");
 
+        // Then rootExecutionId is propagated and parents contains the level 1 ancestor
         assertThat(level2Execution.getLoopRun().rootExecutionId()).isEqualTo("root-exec");
         assertThat(level2Execution.getLoopRun().parents()).hasSize(1);
 
         LoopRun.Parent level1Parent = level2Execution.getLoopRun().parents().get(0);
         assertThat(level1Parent.executionId()).isEqualTo(level1Execution.getId());
         assertThat(level1Parent.taskId()).isEqualTo("task-1");
+    }
+
+    @Test
+    void shouldFallBackToParentIdWhenLoopExecutionLacksRootExecutionId() {
+        // Given a historical loop execution without rootExecutionId
+        Execution historicalLoopExecution = Execution.builder()
+            .id("level1-exec")
+            .parentId("root-exec")
+            .loopRun(new LoopRun(null, "task-1", "taskrun-1", 0, null, "a", null))
+            .state(new State())
+            .build();
+        TaskRun level2TaskRun = TaskRun.builder().id("taskrun-2").taskId("task-2").state(new State()).build();
+
+        // When nesting a second loop level
+        Execution level2Execution = historicalLoopExecution.loopExecution(level2TaskRun, 1, "key", "b");
+
+        // Then rootExecutionId falls back to the parentId
+        assertThat(level2Execution.getLoopRun().rootExecutionId()).isEqualTo("root-exec");
     }
 
     @Test

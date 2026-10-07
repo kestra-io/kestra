@@ -461,13 +461,16 @@ public class Execution implements SoftDeletable<Execution>, TenantInterface, Has
             this.fixtures,
             ExecutionKind.LOOP,
             this.breakpoints,
-            new LoopRun(this, computeRootExecutionId(), taskRun.getTaskId(), taskRun.getId(), index, key, value, computeParents())
+            new LoopRun(this, taskRun.getTaskId(), taskRun.getId(), index, key, value, computeParents(), computeRootExecutionId())
         );
     }
 
     private String computeRootExecutionId() {
         if (this.loopRun != null) {
-            return this.loopRun.rootExecutionId();
+            if (this.loopRun.rootExecutionId() != null) {
+                return this.loopRun.rootExecutionId();
+            }
+            return this.parentId != null ? this.parentId : this.id;
         }
         return this.id;
     }

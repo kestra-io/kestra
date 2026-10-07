@@ -41,29 +41,29 @@ const KsButtonStub = {
     name: "KsButton",
     props: ["loading", "tag", "to", "size", "link"],
     emits: ["click"],
-    template: '<button class="ks-button-stub" @click="$emit(\'click\')"><slot /></button>',
+    template: "<button class=\"ks-button-stub\" @click=\"$emit('click')\"><slot /></button>",
 }
 
 const KsCheckboxStub = {
     name: "KsCheckbox",
     props: ["modelValue"],
     emits: ["update:modelValue"],
-    template: '<input type="checkbox" class="ks-checkbox-stub" :checked="modelValue" @change="$emit(\'update:modelValue\', $event.target.checked)" />',
+    template: "<input type=\"checkbox\" class=\"ks-checkbox-stub\" :checked=\"modelValue\" @change=\"$emit('update:modelValue', $event.target.checked)\" />",
 }
 
 const stubs = {
-    KsAlert: {template: '<div class="ks-alert-stub"><slot /></div>'},
+    KsAlert: {template: "<div class=\"ks-alert-stub\"><slot /></div>"},
     KsButton: KsButtonStub,
     KsCheckbox: KsCheckboxStub,
-    KsIcon: {template: '<div><slot /></div>'},
-    KsExecutionStatus: {template: '<span class="status-stub" />'},
-    SubFlowLink: {template: '<span class="subflow-link-stub" />'},
-    Duration: {template: '<span class="duration-stub" />'},
-    TaskRunLine: {props: ["currentTaskRun"], template: '<div class="task-run-line-stub">{{ currentTaskRun.taskId }}<slot /></div>'},
-    ChevronRight: {template: '<i />'},
-    ChevronDown: {template: '<i />'},
-    Loading: {template: '<i />'},
-    RouterLink: {template: '<a><slot /></a>'},
+    KsIcon: {template: "<div><slot /></div>"},
+    KsExecutionStatus: {template: "<span class=\"status-stub\" />"},
+    SubFlowLink: {template: "<span class=\"subflow-link-stub\" />"},
+    Duration: {template: "<span class=\"duration-stub\" />"},
+    TaskRunLine: {props: ["currentTaskRun"], template: "<div class=\"task-run-line-stub\">{{ currentTaskRun.taskId }}<slot /></div>"},
+    ChevronRight: {template: "<i />"},
+    ChevronDown: {template: "<i />"},
+    Loading: {template: "<i />"},
+    RouterLink: {template: "<a><slot /></a>"},
 }
 
 function mountTree(props = {}) {
@@ -106,7 +106,7 @@ describe("LoopIterationTree", () => {
         mockFindExecutions.mockResolvedValue({results: [iterationExecution("it-1", "EMEA")], total: 1})
         const wrapper = mountTree()
 
-        await wrapper.find('[data-test="loop-iteration-toggle"]').trigger("click")
+        await wrapper.find("[data-test=\"loop-iteration-toggle\"]").trigger("click")
         await wrapper.vm.$nextTick()
         await flushPromises()
 
@@ -125,12 +125,12 @@ describe("LoopIterationTree", () => {
         mockExecutionApi.mockResolvedValue({id: "it-1", namespace: "company.team", flowId: "nested_loop_demo", taskRunList: []})
 
         const wrapper = mountTree()
-        await wrapper.find('[data-test="loop-iteration-toggle"]').trigger("click")
+        await wrapper.find("[data-test=\"loop-iteration-toggle\"]").trigger("click")
         await flushPromises()
 
         expect(mockExecutionApi).not.toHaveBeenCalled()
 
-        const rows = wrapper.findAll(".loop-iteration-row__main")
+        const rows = wrapper.findAll(".loop-iteration-row-main")
         expect(rows).toHaveLength(2)
 
         await rows[0].trigger("click")
@@ -146,18 +146,18 @@ describe("LoopIterationTree", () => {
             .mockResolvedValueOnce({results: [iterationExecution("it-1", "EMEA")], total: 1})
 
         const wrapper = mountTree()
-        await wrapper.find('[data-test="loop-iteration-toggle"]').trigger("click")
+        await wrapper.find("[data-test=\"loop-iteration-toggle\"]").trigger("click")
         await flushPromises()
 
         expect(wrapper.find(".ks-alert-stub").exists()).toBe(true)
-        expect(wrapper.find('[data-test="loop-iteration-row"]').exists()).toBe(false)
+        expect(wrapper.find("[data-test=\"loop-iteration-row\"]").exists()).toBe(false)
 
         await wrapper.find(".ks-alert-stub button").trigger("click")
         await flushPromises()
 
         expect(mockFindExecutions).toHaveBeenCalledTimes(2)
         expect(wrapper.find(".ks-alert-stub").exists()).toBe(false)
-        expect(wrapper.find('[data-test="loop-iteration-row"]').exists()).toBe(true)
+        expect(wrapper.find("[data-test=\"loop-iteration-row\"]").exists()).toBe(true)
     })
 
     it("expands a nested Loop inside an iteration's task runs", async () => {
@@ -171,7 +171,7 @@ describe("LoopIterationTree", () => {
             return {results: [], total: 0}
         })
         mockExecutionApi.mockImplementation(async (params: {executionId?: string}) => {
-            const execId = params.executionId;
+            const execId = params.executionId
             if (execId === "outer-1" || execId === "root-execution") {
                 return {
                     id: "outer-1",
@@ -186,10 +186,10 @@ describe("LoopIterationTree", () => {
             taskId === "per_quarter" ? {type: "io.kestra.plugin.core.flow.Loop"} : {type: "io.kestra.plugin.core.flow.Commands"})
 
         const wrapper = mountTree()
-        await wrapper.find('[data-test="loop-iteration-toggle"]').trigger("click")
+        await wrapper.find("[data-test=\"loop-iteration-toggle\"]").trigger("click")
         await flushPromises()
 
-        const mainRow = wrapper.find(".loop-iteration-row__main")
+        const mainRow = wrapper.find(".loop-iteration-row-main")
         await mainRow.trigger("click")
         await wrapper.vm.$nextTick()
         await flushPromises()
@@ -199,7 +199,7 @@ describe("LoopIterationTree", () => {
         })
 
         const nestedTree = wrapper.findAll(".loop-iteration-tree")[1]
-        await nestedTree.find('[data-test="loop-iteration-toggle"]').trigger("click")
+        await nestedTree.find("[data-test=\"loop-iteration-toggle\"]").trigger("click")
         await flushPromises()
 
         expect(mockFindExecutions).toHaveBeenCalledWith(expect.objectContaining({

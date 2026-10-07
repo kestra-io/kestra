@@ -84,6 +84,11 @@ export function useLoopIterations(parentExecutionId: string, taskId: string) {
         return fetchPage(page.value + 1)
     }
 
+    function retry() {
+        if (loading.value) return Promise.resolve()
+        return fetchPage(loaded.value ? page.value + 1 : 1)
+    }
+
     function setFailedOnly(value: boolean) {
         failedOnly.value = value
         loaded.value = false
@@ -102,6 +107,7 @@ export function useLoopIterations(parentExecutionId: string, taskId: string) {
         failedOnly,
         ensureLoaded,
         loadMore,
+        retry,
         setFailedOnly,
     }
 }

@@ -13,8 +13,8 @@
         >
             <ChevronDown v-if="expanded" />
             <ChevronRight v-else />
-            <span class="loop-toggle__label">{{ $t("iterations") }}</span>
-            <span v-if="loaded" class="loop-toggle__count">{{ total }}</span>
+            <span class="loop-toggle-label">{{ $t("iterations") }}</span>
+            <span v-if="loaded" class="loop-toggle-count">{{ total }}</span>
         </div>
 
         <template v-if="expanded">
@@ -26,7 +26,7 @@
 
             <KsAlert v-else-if="error" type="error">
                 {{ $t("loop_iterations_load_error") }}
-                <KsButton size="small" link @click="ensureLoaded">{{ $t("retry") }}</KsButton>
+                <KsButton size="small" link @click="retry">{{ $t("retry") }}</KsButton>
             </KsAlert>
 
             <div v-else-if="loaded && iterations.length === 0" class="loop-empty">
@@ -40,7 +40,7 @@
                 data-test="loop-iteration-row"
             >
                 <div
-                    class="loop-iteration-row__main"
+                    class="loop-iteration-row-main"
                     :style="{'--depth': depth + 1}"
                     role="button"
                     tabindex="0"
@@ -49,11 +49,11 @@
                     @keydown.enter="toggleRow(iteration.id)"
                     @keydown.space.prevent="toggleRow(iteration.id)"
                 >
-                    <ChevronDown v-if="expandedRows.has(iteration.id)" class="loop-iteration-row__chevron" />
-                    <ChevronRight v-else class="loop-iteration-row__chevron" />
+                    <ChevronDown v-if="expandedRows.has(iteration.id)" class="loop-iteration-row-chevron" />
+                    <ChevronRight v-else class="loop-iteration-row-chevron" />
                     <KsExecutionStatus size="small" :status="iteration.state.current" />
-                    <span class="loop-iteration-row__value">{{ iteration.value }}</span>
-                    <Duration class="loop-iteration-row__duration" :histories="iteration.state.histories" />
+                    <span class="loop-iteration-row-value">{{ iteration.value }}</span>
+                    <Duration class="loop-iteration-row-duration" :histories="iteration.state.histories" />
                     <SubFlowLink
                         :executionId="iteration.id"
                         :namespace="namespace"
@@ -140,6 +140,7 @@
         failedOnly,
         ensureLoaded,
         loadMore,
+        retry,
         setFailedOnly,
     } = useLoopIterations(props.executionId, props.taskId)
 
@@ -183,10 +184,10 @@
         cursor: pointer;
         color: var(--ks-text-secondary);
         font-size: var(--ks-font-size-sm);
+    }
 
-        &__count {
-            color: var(--ks-text-muted);
-        }
+    .loop-toggle-count {
+        color: var(--ks-text-muted);
     }
 
     .loop-loading {
@@ -195,34 +196,32 @@
         padding: var(--ks-spacing-2);
     }
 
-    .loop-iteration-row {
-        &__main {
-            display: flex;
-            align-items: center;
-            gap: var(--ks-spacing-2);
-            padding: var(--ks-spacing-1) var(--ks-spacing-4);
-            padding-left: calc(var(--ks-spacing-4) + var(--depth, 0) * var(--ks-spacing-5));
-            border-bottom: 1px solid var(--ks-border-default);
-            cursor: pointer;
-        }
+    .loop-iteration-row-main {
+        display: flex;
+        align-items: center;
+        gap: var(--ks-spacing-2);
+        padding: var(--ks-spacing-1) var(--ks-spacing-4);
+        padding-left: calc(var(--ks-spacing-4) + var(--depth, 0) * var(--ks-spacing-5));
+        border-bottom: 1px solid var(--ks-border-default);
+        cursor: pointer;
+    }
 
-        &__value {
-            flex-grow: 1;
-            font-family: var(--kel-font-family-monospace);
-            font-size: var(--ks-font-size-sm);
-        }
+    .loop-iteration-row-value {
+        flex-grow: 1;
+        font-family: var(--kel-font-family-monospace);
+        font-size: var(--ks-font-size-sm);
+    }
 
-        &__chevron {
-            flex-shrink: 0;
-            color: var(--ks-icon-muted);
-        }
+    .loop-iteration-row-chevron {
+        flex-shrink: 0;
+        color: var(--ks-icon-muted);
+    }
 
-        &__duration {
-            flex-shrink: 0;
-            font-family: var(--kel-font-family-monospace);
-            font-size: var(--ks-font-size-xs);
-            color: var(--ks-text-primary);
-        }
+    .loop-iteration-row-duration {
+        flex-shrink: 0;
+        font-family: var(--kel-font-family-monospace);
+        font-size: var(--ks-font-size-xs);
+        color: var(--ks-text-primary);
     }
 
     .loop-preview-footer {

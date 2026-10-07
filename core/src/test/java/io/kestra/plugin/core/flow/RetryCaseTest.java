@@ -96,6 +96,13 @@ public class RetryCaseTest {
         runAndAssertThereWasTwoRetriesAndFinishedFailed(flow);
     }
 
+    public void retryNewExecutionSubflowOutputs(String tenant) throws TimeoutException, QueueException {
+        Execution execution = runnerUtils.runOne(tenant, "io.kestra.tests", "subflow-retry-new-execution-parent", Duration.ofSeconds(30));
+
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.findTaskRunsByTaskId("read").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+    }
+
     private void runAndAssertThereWasTwoRetriesAndFinishedFailed(Flow flow) throws TimeoutException, QueueException {
         runnerUtils.runOne(
             Execution.newExecution(flow, null),

@@ -344,8 +344,9 @@ public class ExecutorCore {
                     releaseWorkingDirectoryLeases(executor);
                 }
 
-                // if there is a parent, we send a subflow execution result to it
-                if (ExecutableUtils.isSubflow(execution)) {
+                // Send a SubflowExecutionEnd if there is a parent execution.
+                // Exclude RETRIED executions as they are replaced by a new one with the same trigger, which will report to the parent itself.
+                if (State.Type.RETRIED != execution.getState().getCurrent() && ExecutableUtils.isSubflow(execution)) {
                     // locate the parent execution to find the parent task run
                     String parentExecutionId = (String) execution.getTrigger().getVariables().get("executionId");
                     String taskRunId = (String) execution.getTrigger().getVariables().get("taskRunId");

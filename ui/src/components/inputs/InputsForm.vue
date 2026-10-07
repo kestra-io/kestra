@@ -940,8 +940,12 @@
     })
     updateDefaults()
 
+    let stopInputsWatch: (() => void) | undefined
+    let unmounted = false
+
     validateInputs().then(() => {
-        watch(
+        if (unmounted) return
+        stopInputsWatch = watch(
             () => ({...inputsValues}),
             (val) => {
                 if (JSON.stringify(val) !== JSON.stringify(previousInputsValues.value)) {
@@ -980,6 +984,8 @@
     })
 
     onBeforeUnmount(() => {
+        unmounted = true
+        stopInputsWatch?.()
         if (keyListener) {
             document.removeEventListener("keydown", keyListener)
         }

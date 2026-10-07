@@ -129,6 +129,22 @@ describe("PluginInstallToast", () => {
         expect(getInstallJobMock.mock.calls.length).toBe(callsAtFailure)
     })
 
+    it("does not start polling when unmounted before the first poll resolves", async () => {
+        let resolveFirstPoll: (value: PluginInstallJob) => void = () => {}
+        getInstallJobMock
+            .mockImplementationOnce(() => new Promise<PluginInstallJob>((resolve) => { resolveFirstPoll = resolve }))
+            .mockResolvedValue(job("RUNNING"))
+
+        wrapper = await mountToast()
+        wrapper.unmount()
+        wrapper = undefined
+        resolveFirstPoll(job("RUNNING"))
+        await flushPromises()
+
+        await tick(4)
+        expect(getInstallJobMock).toHaveBeenCalledOnce()
+    })
+
     it("shows the plugin's human title when the store knows it", async () => {
         findPluginByNameMock.mockImplementation((name: string) => name === "plugin-aws" ? {title: "Amazon Web Services"} : null)
         getInstallJobMock.mockResolvedValue(job("RUNNING"))

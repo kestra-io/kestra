@@ -22,8 +22,7 @@ public class MysqlExecutionDelayStateStore extends AbstractJdbcExecutionDelaySta
 
     @Override
     protected Temporal getNow(Instant now) {
-        // 'date' column in the table is in UTC
-        // convert 'now' to UTC LocalDateTime to avoid any timezone/offset interpretation by the database.
+        // 'date' holds a UTC wall clock, matching DATETIME(6) with no zone.
         return LocalDateTime.ofInstant(now, ZoneOffset.UTC);
     }
 }

@@ -21,7 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 abstract class AbstractH2ExecutionDelayStateStoreTimezoneTest extends AbstractExecutionDelayStateStoreTest {
 
-    // Pins the current DDL and must change with any fix to executordelayed."date".
+    // Pins the current DDL; update with any fix to executordelayed."date".
     private static final Field<String> STORED_DATE = DSL.field("CAST(\"date\" AS VARCHAR)", String.class);
 
     private final JooqDSLContextWrapper dslContextWrapper;
@@ -35,11 +35,9 @@ abstract class AbstractH2ExecutionDelayStateStoreTimezoneTest extends AbstractEx
 
     private TimeZone originalTimeZone;
 
-    // The JVM zone must match the session zone the datasource URL sets, because jOOQ converts the
-    // cutoff with Timestamp.valueOf, which reads the JVM zone. A mismatch would hide a bad bind, so
-    // the zone is set for every test in the subclass, not only the timezone-specific one.
-    // JUnit always runs a superclass @BeforeEach before a subclass one, so the zone is set from the
-    // hook the contract calls at the start of its own drain instead of from a callback of our own.
+    // jOOQ binds the cutoff with Timestamp.valueOf, which reads the JVM zone, so it must equal the
+    // TIME ZONE= of this class' datasource URL or a bad cutoff bind stays invisible. Set from the
+    // contract's own hook because JUnit runs a superclass @BeforeEach first.
     @Override
     protected void prepare() {
         originalTimeZone = TimeZone.getDefault();
@@ -51,7 +49,6 @@ abstract class AbstractH2ExecutionDelayStateStoreTimezoneTest extends AbstractEx
         TimeZone.setDefault(originalTimeZone);
     }
 
-    /** Must match the TIME ZONE= of this class' datasource URL. */
     protected abstract String sessionZone();
 
     protected void assertOnlyDueDelaysAreConsumed(String expectedOverdueDate, String expectedFutureDate) {

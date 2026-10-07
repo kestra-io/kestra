@@ -349,6 +349,10 @@
     "no": "Nie",
     "change state done": "Status Taska został zaktualizowany",
     "change state confirm": "Czy na pewno chcesz zmienić status Task Runa dla Taska <code>{task}</code> w egzekucji <code>{id}</code>?<br/>Egzekucja zostanie wtedy uruchomiona ponownie od następnego Taska, a nadrzędna egzekucja, jeśli istnieje, również.",
+    "interrupt": "Przerwij",
+    "interrupt confirm": "Czy na pewno chcesz przerwać Task Run dla Taska <code>{task}</code> w egzekucji <code>{id}</code>?<br/>Spowoduje to zakończenie uruchomionego Taska w Workerze i ustawienie jego stanu.",
+    "interrupt done": "Uruchomienie Taska zostało przerwane",
+    "interrupt target state": "Stan docelowy",
     "change state current state": "Aktualny status:",
     "change state hint": {
       "WARNING": [
@@ -450,6 +454,11 @@
     "show task source": "Pokaż źródło Taska",
     "stream": "Strumień",
     "execution statistics": "Statystyki egzekucji",
+    "execution_banner": {
+      "revision": "Wersja {revision}",
+      "attempts": "{count} próba | {count} próby | {count} prób",
+      "tasks": "{completed}/{count} task | {completed}/{count} tasks | {completed}/{count} tasks"
+    },
     "concurrency limits": "Limity Concurrency",
     "system overview": "Przegląd systemu",
     "usage": "Użycie",
@@ -560,6 +569,7 @@
       "blueprints": "blueprint | blueprinty"
     },
     "plugins": {
+      "ui_load_error": "Nie udało się załadować komponentu pluginu.",
       "autoInstall": {
         "failed": "Instalacja pluginu nie powiodła się",
         "failedHint": "Flow nie został zapisany. Napraw problem lub usuń plugin z flow, a następnie zapisz ponownie.",
@@ -1713,6 +1723,7 @@
     "custom value": "Wartość niestandardowa",
     "chart": "Wykres",
     "no_code": {
+      "task_details": "Szczegóły Task",
       "toggle_pebble": "Przełącz edytor Pebble",
       "version_oss_placeholder": "Odblokuj wersjonowanie pluginów z Enterprise Edition",
       "adding": "+ Dodaj {what}",
@@ -1768,7 +1779,8 @@
         "inputs": "Wybierz typ pola Input",
         "charts": "Wybierz typ wykresu",
         "where": "Wybierz typ filtra",
-        "numerator": "Wybierz licznik"
+        "numerator": "Wybierz licznik",
+        "namespace_first": "Najpierw wybierz namespace"
       },
       "creation": {
         "default": "Dodaj",
@@ -2414,6 +2426,7 @@
         "label": "{count} Błąd(y)"
       }
     },
+    "invalid_source_code": "Nieprawidłowy kod źródłowy",
     "source_search": {
       "cannot_select_read_only": "Nie można wybrać — brak uprawnień do edycji dla {namespace} / {id}",
       "collapse_all": "Zwiń wszystko",

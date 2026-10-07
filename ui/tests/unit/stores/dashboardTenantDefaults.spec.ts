@@ -1,5 +1,6 @@
 import {describe, it, expect, vi, beforeEach} from "vitest"
 import {setActivePinia, createPinia} from "pinia"
+import type {RouteLocation} from "vue-router"
 
 vi.mock("@kestra-io/design-system", () => ({
     stringUtils: {afterLastDot: (s: string) => s?.split(".").pop() ?? s},
@@ -50,7 +51,7 @@ vi.mock("override/stores/misc", () => ({
 
 const TEST_TIMEOUT_MS = 20_000
 
-const route = {name: "home", params: {tenant: "main"}, query: {}} as any
+const route: RouteLocation = {name: "home", params: {tenant: "main"}, query: {}, path: "/main", fullPath: "/main", hash: "", matched: [], meta: {}, redirectedFrom: undefined}
 
 describe("dashboard store tenant defaults", () => {
     beforeEach(() => {

@@ -10,8 +10,9 @@ vi.mock("../../../../src/stores/dashboard", () => ({
 import Markdown from "../../../../src/components/dashboard/sections/Markdown.vue"
 import en from "../../../../src/translations/en.json"
 import {i18nMount} from "../../i18nMount"
+import type {Chart} from "../../../../src/components/dashboard/types"
 
-function mountMarkdown(chart: Record<string, unknown>) {
+function mountMarkdown(chart: Chart) {
     return i18nMount(Markdown, {
         locales: en,
         props: {chart, filters: [], showDefault: false},

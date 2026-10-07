@@ -2,22 +2,18 @@ import {describe, expect, it} from "vitest"
 import {parseQuery, stringifyQuery} from "vue-router"
 import {Comparators, encodeFilterGroupsToQuery, keyOfComparator} from "@kestra-io/design-system"
 import type {QueryFilter} from "@kestra-io/kestra-sdk"
-import {createConfigureClient} from "../../../packages/hey-api-plugin/src/runtime"
+import {createConfigureClient, type ConfigurableFetchClient} from "../../../packages/hey-api-plugin/src/runtime"
 import {routeQueryToQueryFilters} from "../../../src/utils/queryFilters"
 
-interface MockConfig {
-    querySerializer: (query: Record<string, unknown>) => string;
-}
-
 const serializeQuery = (query: Record<string, unknown>) => {
-    let config: MockConfig;
+    let config: Parameters<ConfigurableFetchClient["setConfig"]>[0] = {}
     const slot = {clear() {}, use() {}}
-    const client = {
-        setConfig(value: MockConfig) { config = value },
+    const client: ConfigurableFetchClient = {
+        setConfig(value) { config = value },
         interceptors: {request: slot, response: slot, error: slot},
     }
-    createConfigureClient(client as never, {bodySerializer() {}})()
-    return config.querySerializer(query) as string
+    createConfigureClient(client, {bodySerializer() {}})()
+    return config.querySerializer?.(query)
 }
 
 const serializeQueryFilters = (filters: QueryFilter[]) => serializeQuery({filters})

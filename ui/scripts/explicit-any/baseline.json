@@ -140,12 +140,6 @@
   "tests/unit/components/dashboard/quickFilters.spec.ts": 1,
   "tests/unit/components/executions/ExecutionVariableExplorer.spec.ts": 2,
   "tests/unit/components/executions/useExecutionRoot.spec.ts": 4,
-  "tests/unit/components/inputs/InputsFormCopyDrag.spec.ts": 7,
-  "tests/unit/components/inputs/inputsFormBoolDefault.spec.ts": 3,
-  "tests/unit/components/inputs/inputsFormLoader.spec.ts": 3,
-  "tests/unit/components/inputs/inputsFormStringDefault.spec.ts": 4,
-  "tests/unit/components/flows/useFlowRoot.spec.ts": 3,
-  "tests/unit/components/flows/useNoCodePanels.spec.ts": 4,
   "tests/unit/components/logs/logsWrapperCursor.spec.ts": 6,
   "tests/unit/components/logs/logsWrapperInitialLoad.spec.ts": 4,
   "tests/unit/components/logs/logsWrapperPaginationWiring.spec.ts": 2,
@@ -174,9 +168,6 @@
   "tests/unit/stores/pluginsLoadIcon.spec.ts": 3,
   "tests/unit/stores/pluginsLookup.spec.ts": 2,
   "tests/unit/utils/flowableBlockOps.spec.ts": 8,
-  "tests/unit/utils/kestraHttp.spec.ts": 5,
-  "tests/unit/utils/pendingEvents.spec.ts": 2,
-  "tests/unit/utils/openFlow.spec.ts": 3,
   "tests/unit/utils/queryFilters.spec.ts": 6,
   "tests/unit/utils/recipeToYaml.spec.ts": 14
 }

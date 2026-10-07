@@ -83,9 +83,18 @@ describe("flow store outdated save confirmation", () => {
         updateFlow.mockReset()
 
         // /flows/validate -> backend flags the in-progress edit as outdated
-        validateFlows.mockResolvedValue([{outdated: true}] as Awaited<ReturnType<typeof FlowsAPI.validateFlows>>)
+        validateFlows.mockResolvedValue([{index: 0, outdated: true}])
         // /flows/{ns}/{id} (save) -> succeeds
-        updateFlow.mockResolvedValue({id: "my-flow", namespace: "my.ns", revision: 2, source: FLOW_YAML} as Awaited<ReturnType<typeof FlowsAPI.updateFlow>>)
+        updateFlow.mockResolvedValue({
+            id: "my-flow",
+            namespace: "my.ns",
+            revision: 2,
+            source: FLOW_YAML,
+            disabled: false,
+            draft: false,
+            deleted: false,
+            tasks: [],
+        })
 
         setActivePinia(createPinia())
         localStorage.clear()
@@ -115,7 +124,7 @@ describe("flow store outdated save confirmation", () => {
     })
 
     it("does not prompt when the edited revision is up to date", async () => {
-        validateFlows.mockResolvedValue([{}] as Awaited<ReturnType<typeof FlowsAPI.validateFlows>>)
+        validateFlows.mockResolvedValue([{index: 0, outdated: false}])
 
         const store = await setupOutdatedStore()
         const outcome = await store.saveAll()

@@ -13,8 +13,6 @@ import type {BodySerializer} from "./openapi/core/bodySerializer.gen"
 // useClient().get/post(...) calls behave identically to generated endpoint calls, and existing
 // OSS/EE call sites are unchanged.
 
-export type RequestBody = unknown
-
 export interface AxiosLikeConfig {
     params?: Record<string, unknown>
     headers?: Record<string, string>
@@ -81,10 +79,10 @@ export interface ClientFacade {
 export interface AxiosLikeClient {
     defaults: { headers: { common: Record<string, string> } }
     get: <T = unknown>(url: string, config?: AxiosLikeConfig) => Promise<AxiosLikeResponse<T>>
-    post: <T = unknown>(url: string, data?: RequestBody, config?: AxiosLikeConfig) => Promise<AxiosLikeResponse<T>>
-    put: <T = unknown>(url: string, data?: RequestBody, config?: AxiosLikeConfig) => Promise<AxiosLikeResponse<T>>
+    post: <T = unknown>(url: string, data?: unknown, config?: AxiosLikeConfig) => Promise<AxiosLikeResponse<T>>
+    put: <T = unknown>(url: string, data?: unknown, config?: AxiosLikeConfig) => Promise<AxiosLikeResponse<T>>
     delete: <T = unknown>(url: string, config?: AxiosLikeConfig) => Promise<AxiosLikeResponse<T>>
-    patch: <T = unknown>(url: string, data?: RequestBody, config?: AxiosLikeConfig) => Promise<AxiosLikeResponse<T>>
+    patch: <T = unknown>(url: string, data?: unknown, config?: AxiosLikeConfig) => Promise<AxiosLikeResponse<T>>
     /**
      * POSTs `data` and resolves with the RAW `Response`, body unconsumed, so callers can read it
      * incrementally — e.g. POST-based SSE streams, which `EventSource` cannot issue. Runs the same
@@ -95,7 +93,7 @@ export interface AxiosLikeClient {
      * fetch-level failure (abort, offline, CORS) still runs error interceptors — the same catch
      * axios-like methods already have.
      */
-    stream: (url: string, data?: RequestBody, config?: StreamConfig) => Promise<Response>
+    stream: (url: string, data?: unknown, config?: StreamConfig) => Promise<Response>
 }
 
 export function createClientFacade(
@@ -108,7 +106,7 @@ export function createClientFacade(
     async function axiosLikeRequest<T>(
         method: string,
         url: string,
-        data?: RequestBody,
+        data?: unknown,
         config: AxiosLikeConfig = {},
     ): Promise<AxiosLikeResponse<T>> {
         const fullUrl = withQuery(url, config.params)
@@ -205,7 +203,7 @@ export function createClientFacade(
     }
 
     /** See {@link AxiosLikeClient.stream} — raw-Response variant of axiosLikeRequest for streaming endpoints. */
-    async function streamRequest(url: string, data?: RequestBody, config: StreamConfig = {}): Promise<Response> {
+    async function streamRequest(url: string, data?: unknown, config: StreamConfig = {}): Promise<Response> {
         const headers = new Headers({...commonHeaders, ...(config.headers ?? {})})
         let body: BodyInit | undefined
         if (data !== undefined) {
@@ -247,10 +245,10 @@ export function createClientFacade(
     const axiosLikeClient: AxiosLikeClient = {
         defaults: {headers: {common: commonHeaders}},
         get: <T = unknown>(url: string, config?: AxiosLikeConfig) => axiosLikeRequest<T>("GET", url, undefined, config),
-        post: <T = unknown>(url: string, data?: RequestBody, config?: AxiosLikeConfig) => axiosLikeRequest<T>("POST", url, data, config),
-        put: <T = unknown>(url: string, data?: RequestBody, config?: AxiosLikeConfig) => axiosLikeRequest<T>("PUT", url, data, config),
+        post: <T = unknown>(url: string, data?: unknown, config?: AxiosLikeConfig) => axiosLikeRequest<T>("POST", url, data, config),
+        put: <T = unknown>(url: string, data?: unknown, config?: AxiosLikeConfig) => axiosLikeRequest<T>("PUT", url, data, config),
         delete: <T = unknown>(url: string, config?: AxiosLikeConfig) => axiosLikeRequest<T>("DELETE", url, config?.data, config),
-        patch: <T = unknown>(url: string, data?: RequestBody, config?: AxiosLikeConfig) => axiosLikeRequest<T>("PATCH", url, data, config),
+        patch: <T = unknown>(url: string, data?: unknown, config?: AxiosLikeConfig) => axiosLikeRequest<T>("PATCH", url, data, config),
         stream: streamRequest,
     }
 

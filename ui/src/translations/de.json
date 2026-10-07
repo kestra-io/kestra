@@ -328,10 +328,11 @@
     "start date": "Startdatum",
     "end date": "Enddatum",
     "restart": "Neu starten",
-    "restart latest revision": "Neueste Revision neu starten",
     "restart tooltip": "Die Execution ab dem Task <code>{state}</code> neu starten",
     "restarted": "Execution wird neu gestartet",
     "restart confirm": "Execution <code>{id}</code> wirklich neu starten?",
+    "restart subflow warning": "Diese Execution wurde von einer übergeordneten Execution erstellt und sollte von dort neu gestartet werden. Ein alleiniger Neustart würde die übergeordnete Execution im FAILED-Status belassen und ihre nächsten Tasks würden nicht ausgeführt. Gehe zur {parent}, um sie neu zu starten.",
+    "restart subflow warning link": "übergeordnete Execution",
     "replay": "Replay",
     "replay from task tooltip": "Eine ähnliche Execution ab dem Task <code>{taskId}</code> erstellen",
     "replay from beginning tooltip": "Eine ähnliche Execution von Anfang an erstellen",
@@ -348,6 +349,10 @@
     "no": "Nein",
     "change state done": "Der Task-Status wurde aktualisiert",
     "change state confirm": "Möchtest du den Status des Task-Runs für den Task <code>{task}</code> in Execution <code>{id}</code> wirklich ändern?<br/>Die Execution wird dann ab dem nächsten Task neu gestartet, und die übergeordnete Execution, falls vorhanden, ebenfalls.",
+    "interrupt": "Unterbrechen",
+    "interrupt confirm": "Möchtest du den Task Run für den Task <code>{task}</code> in Execution <code>{id}</code> wirklich unterbrechen?<br/>Dadurch wird der laufende Task im Worker beendet und sein Status festgelegt.",
+    "interrupt done": "Task Run wurde unterbrochen",
+    "interrupt target state": "Ziel-Status",
     "change state current state": "Aktueller Status:",
     "change state hint": {
       "WARNING": [
@@ -449,6 +454,11 @@
     "show task source": "Task-Quelle anzeigen",
     "stream": "Stream",
     "execution statistics": "Execution-Statistiken",
+    "execution_banner": {
+      "revision": "Revision {revision}",
+      "attempts": "{count} Versuch | {count} Versuche",
+      "tasks": "{completed}/{count} Task | {completed}/{count} Tasks"
+    },
     "concurrency limits": "Concurrency-Limits",
     "system overview": "Systemübersicht",
     "usage": "Verwendung",
@@ -559,6 +569,7 @@
       "blueprints": "Blueprint | Blueprints"
     },
     "plugins": {
+      "ui_load_error": "Eine Plugin-Komponente konnte nicht geladen werden.",
       "autoInstall": {
         "failed": "Plugin-Installation fehlgeschlagen",
         "failedHint": "Der Flow wurde nicht gespeichert. Behebe das Problem oder entferne das Plugin aus dem Flow und speichere erneut.",
@@ -688,6 +699,17 @@
     "execute the flow": "Den Flow <code>{id}</code> ausführen",
     "discard execution confirmation": "Du hast ungespeicherte Inputs. Möchtest du diese Execution wirklich verwerfen?",
     "unsaved changed ?": "Du hast ungespeicherte Änderungen. Möchtest du diese Seite verlassen?",
+    "session expired": "Deine Sitzung ist abgelaufen",
+    "session expired description": "Melde dich erneut an, um fortzufahren.",
+    "go to login": "Zur Login-Seite gehen",
+    "use another sign-in method": "Eine andere Anmeldemethode verwenden",
+    "sign in in a new tab": "In einem neuen Tab anmelden",
+    "sign in in a new tab hint": "Melde dich im gerade geöffneten Tab an, kehre dann hierher zurück und fahre fort.",
+    "continue after sign in": "Weiter",
+    "sign in failed": "Anmeldung fehlgeschlagen. Überprüfe deine Verbindung und versuche es erneut.",
+    "sign in not confirmed": "Wir konnten nicht bestätigen, dass du angemeldet bist. Melde dich im anderen Tab an und fahre dann fort.",
+    "server unreachable": "Kestra-Server nicht erreichbar",
+    "server unreachable description": "Kopiere alle ungespeicherten Arbeiten (z. B. den Flow YAML) an einen sicheren Ort, bevor du diese Seite aktualisierst. Dieses Banner verschwindet, sobald der Server wieder antwortet.",
     "unsaved changes": "Nicht gespeicherte Änderungen",
     "unsaved changes warning": "Du hast ungespeicherte Änderungen. Wenn du diese Seite verlässt, gehen sie verloren.",
     "leave page": "Seite verlassen",
@@ -1035,6 +1057,8 @@
         "folder": "Ordner löschen",
         "files": "{count} ausgewählte Dateien löschen",
         "bulk_success": "Ausgewählte Dateien erfolgreich gelöscht.",
+        "bulk_partial_error": "Fehler beim Löschen von {failedCount} der ausgewählten {totalCount} Datei(en).",
+        "all_failed_error": "Fehler beim Löschen der ausgewählten Dateien.",
         "folders": "{count} ausgewählte Ordner löschen"
       },
       "move": {
@@ -1699,6 +1723,7 @@
     "custom value": "Benutzerdefinierter Wert",
     "chart": "Diagramm",
     "no_code": {
+      "task_details": "Task-Details",
       "toggle_pebble": "Pebble-Editor umschalten",
       "version_oss_placeholder": "Plugin-Versionierung mit der Enterprise Edition freischalten",
       "adding": "+ {what} hinzufügen",
@@ -1754,7 +1779,8 @@
         "inputs": "Input-Typ auswählen",
         "charts": "Diagrammtyp auswählen",
         "where": "Filtertyp auswählen",
-        "numerator": "Zähler auswählen"
+        "numerator": "Zähler auswählen",
+        "namespace_first": "Zuerst einen Namespace auswählen"
       },
       "creation": {
         "default": "Hinzufügen",
@@ -2207,7 +2233,6 @@
       "run_all_tasks": "Alle Tasks ausführen",
       "history": "Letzte 10 Runs",
       "clear_history": "Verlauf löschen",
-      "confirm_create": "Du kannst den Playground nicht ausführen, während du einen Flow erstellst. Wenn du einen Playground-Run startest, wird der Flow erstellt.",
       "tooltip_persistence": "Wenn du den Playground aus- und wieder einschaltest, bleiben die Informationen erhalten, solange du auf der Seite bleibst."
     },
     "submit": "Absenden",
@@ -2276,8 +2301,10 @@
     "bulk delete triggers": "Möchtest du wirklich {count} Trigger löschen?",
     "bulk success delete triggers": "{count} Trigger wurden erfolgreich gelöscht",
     "delete trigger confirmation": "Möchtest du den Trigger {id} wirklich löschen? WARNUNG: Das Löschen eines Triggers kann zu doppelten Executions führen, wenn der Trigger noch in einem Flow aktiv ist",
+    "delete trigger still declared": "Dieser trigger ist noch im flow deklariert. Entferne ihn aus dem flow oder verwende Restart.",
     "delete trigger success": "Trigger {id} wurde erfolgreich gelöscht",
     "delete trigger error": "Fehler beim Löschen des Triggers {id}",
+    "delete triggers orphans only": "Nur trigger-State, der nicht mehr im flow deklariert ist, wird gelöscht. Trigger, die noch im flow deklariert sind, bleiben erhalten.",
     "revision deleted": "Revision {revision} wurde erfolgreich gelöscht",
     "delete revision confirm": "Möchtest du die Revision {revision} wirklich löschen?",
     "delete revision error": "Fehler beim Löschen der Revision {revision}: {error}",
@@ -2399,6 +2426,7 @@
         "label": "{count} Fehler"
       }
     },
+    "invalid_source_code": "Ungültiger Quellcode",
     "source_search": {
       "cannot_select_read_only": "Kann nicht ausgewählt werden – dir fehlt die Bearbeitungsberechtigung für {namespace} / {id}",
       "collapse_all": "Alle einklappen",

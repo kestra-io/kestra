@@ -328,10 +328,11 @@
     "start date": "Data rozpoczęcia",
     "end date": "Data zakończenia",
     "restart": "Uruchom ponownie",
-    "restart latest revision": "Uruchom ponownie najnowszą wersję",
     "restart tooltip": "Uruchom ponownie egzekucję od Taska <code>{state}</code>",
     "restarted": "Egzekucja została uruchomiona ponownie",
     "restart confirm": "Czy na pewno chcesz ponownie uruchomić egzekucję <code>{id}</code>?",
+    "restart subflow warning": "Ta egzekucja została utworzona przez nadrzędną egzekucję i powinna zostać zrestartowana z jej poziomu. Ponowne uruchomienie jej samej pozostawi nadrzędną egzekucję w stanie FAILED, a jej kolejne Taski nie zostaną uruchomione. Przejdź do {parent}, aby ją zrestartować.",
+    "restart subflow warning link": "egzekucja nadrzędna",
     "replay": "Replay",
     "replay from task tooltip": "Utwórz podobną egzekucję, zaczynając od Taska <code>{taskId}</code>",
     "replay from beginning tooltip": "Utwórz podobną egzekucję, zaczynając od początku",
@@ -348,6 +349,10 @@
     "no": "Nie",
     "change state done": "Status Taska został zaktualizowany",
     "change state confirm": "Czy na pewno chcesz zmienić status Task Runa dla Taska <code>{task}</code> w egzekucji <code>{id}</code>?<br/>Egzekucja zostanie wtedy uruchomiona ponownie od następnego Taska, a nadrzędna egzekucja, jeśli istnieje, również.",
+    "interrupt": "Przerwij",
+    "interrupt confirm": "Czy na pewno chcesz przerwać Task Run dla Taska <code>{task}</code> w egzekucji <code>{id}</code>?<br/>Spowoduje to zakończenie uruchomionego Taska w Workerze i ustawienie jego stanu.",
+    "interrupt done": "Uruchomienie Taska zostało przerwane",
+    "interrupt target state": "Stan docelowy",
     "change state current state": "Aktualny status:",
     "change state hint": {
       "WARNING": [
@@ -449,6 +454,11 @@
     "show task source": "Pokaż źródło Taska",
     "stream": "Strumień",
     "execution statistics": "Statystyki egzekucji",
+    "execution_banner": {
+      "revision": "Wersja {revision}",
+      "attempts": "{count} próba | {count} próby | {count} prób",
+      "tasks": "{completed}/{count} task | {completed}/{count} tasks | {completed}/{count} tasks"
+    },
     "concurrency limits": "Limity Concurrency",
     "system overview": "Przegląd systemu",
     "usage": "Użycie",
@@ -559,6 +569,7 @@
       "blueprints": "blueprint | blueprinty"
     },
     "plugins": {
+      "ui_load_error": "Nie udało się załadować komponentu pluginu.",
       "autoInstall": {
         "failed": "Instalacja pluginu nie powiodła się",
         "failedHint": "Flow nie został zapisany. Napraw problem lub usuń plugin z flow, a następnie zapisz ponownie.",
@@ -688,6 +699,17 @@
     "execute the flow": "Wykonaj Flow <code>{id}</code>",
     "discard execution confirmation": "Masz niezapisane Inputy. Czy na pewno chcesz odrzucić tę egzekucję?",
     "unsaved changed ?": "Masz niezapisane zmiany, czy chcesz opuścić tę stronę?",
+    "session expired": "Twoja sesja wygasła",
+    "session expired description": "Zaloguj się ponownie, aby kontynuować.",
+    "go to login": "Przejdź do strony logowania",
+    "use another sign-in method": "Użyj innej metody logowania",
+    "sign in in a new tab": "Zaloguj się w nowej zakładce",
+    "sign in in a new tab hint": "Zaloguj się w nowo otwartej zakładce, a następnie wróć tutaj i kontynuuj.",
+    "continue after sign in": "Kontynuuj",
+    "sign in failed": "Nie udało się zalogować. Sprawdź połączenie i spróbuj ponownie.",
+    "sign in not confirmed": "Nie mogliśmy potwierdzić, że jesteś zalogowany. Zaloguj się w innej zakładce, a następnie kontynuuj.",
+    "server unreachable": "Nie można połączyć się z serwerem Kestra",
+    "server unreachable description": "Skopiuj wszelkie niezapisane zmiany (na przykład YAML Flow) w bezpieczne miejsce przed odświeżeniem tej strony. Ten baner zniknie, gdy serwer ponownie odpowie.",
     "unsaved changes": "Niezapisane zmiany",
     "unsaved changes warning": "Masz niezapisane zmiany. Jeśli opuścisz tę stronę, twoje zmiany zostaną utracone.",
     "leave page": "Opuść stronę",
@@ -1035,6 +1057,8 @@
         "folder": "Usuń folder",
         "files": "Usuń wybrane pliki ({count})",
         "bulk_success": "Wybrane pliki zostały pomyślnie usunięte.",
+        "bulk_partial_error": "Nie udało się usunąć {failedCount} z wybranych {totalCount} plików.",
+        "all_failed_error": "Nie udało się usunąć wybranych plików.",
         "folders": "Usuń wybrane foldery ({count})"
       },
       "move": {
@@ -1699,6 +1723,7 @@
     "custom value": "Wartość niestandardowa",
     "chart": "Wykres",
     "no_code": {
+      "task_details": "Szczegóły Task",
       "toggle_pebble": "Przełącz edytor Pebble",
       "version_oss_placeholder": "Odblokuj wersjonowanie pluginów z Enterprise Edition",
       "adding": "+ Dodaj {what}",
@@ -1754,7 +1779,8 @@
         "inputs": "Wybierz typ pola Input",
         "charts": "Wybierz typ wykresu",
         "where": "Wybierz typ filtra",
-        "numerator": "Wybierz licznik"
+        "numerator": "Wybierz licznik",
+        "namespace_first": "Najpierw wybierz namespace"
       },
       "creation": {
         "default": "Dodaj",
@@ -2207,7 +2233,6 @@
       "run_all_tasks": "Uruchom wszystkie Taski",
       "history": "Ostatnie 10 uruchomień",
       "clear_history": "Wyczyść historię",
-      "confirm_create": "Nie można uruchomić Playground w trakcie tworzenia Flow. Uruchomienie Playground utworzy Flow.",
       "tooltip_persistence": "Jeśli wyłączysz i ponownie włączysz Playground, informacje pozostaną, dopóki pozostaniesz na stronie."
     },
     "submit": "Wyślij",
@@ -2276,8 +2301,10 @@
     "bulk delete triggers": "Czy na pewno chcesz usunąć {count} Triggerów?",
     "bulk success delete triggers": "Pomyślnie usunięto {count} Triggerów",
     "delete trigger confirmation": "Czy na pewno chcesz usunąć Trigger {id}? OSTRZEŻENIE: usunięcie Triggera może prowadzić do zduplikowanych egzekucji, jeśli Trigger jest nadal aktywny w jakimś Flow",
+    "delete trigger still declared": "Ten trigger jest nadal zadeklarowany w flow. Usuń go z flow lub użyj Restart.",
     "delete trigger success": "Trigger {id} został pomyślnie usunięty",
     "delete trigger error": "Błąd podczas usuwania Triggera {id}",
+    "delete triggers orphans only": "Usunięty zostanie tylko stan trigger, który nie jest już zadeklarowany w flow. Trigger nadal zadeklarowane w flow zostaną zachowane.",
     "revision deleted": "Wersja {revision} została pomyślnie usunięta",
     "delete revision confirm": "Czy na pewno chcesz usunąć wersję {revision}?",
     "delete revision error": "Błąd podczas usuwania wersji {revision}: {error}",
@@ -2399,6 +2426,7 @@
         "label": "{count} Błąd(y)"
       }
     },
+    "invalid_source_code": "Nieprawidłowy kod źródłowy",
     "source_search": {
       "cannot_select_read_only": "Nie można wybrać — brak uprawnień do edycji dla {namespace} / {id}",
       "collapse_all": "Zwiń wszystko",

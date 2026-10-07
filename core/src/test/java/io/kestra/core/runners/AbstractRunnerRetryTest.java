@@ -144,4 +144,28 @@ public abstract class AbstractRunnerRetryTest {
     void retryWithFlowableErrors(Execution execution) {
         retryCaseTest.retryWithFlowableErrors(execution);
     }
+
+    @Test
+    @ExecuteFlow("flows/valids/retry-flowable-behavior.yaml")
+    void retryFlowableBehavior(Execution execution) {
+        retryCaseTest.retryFlowableBehavior(execution);
+    }
+
+    @Test
+    @ExecuteFlow("flows/valids/retry-flowable-behavior-success.yaml")
+    void retryFlowableBehaviorSuccess(Execution execution) {
+        retryCaseTest.retryFlowableBehaviorSuccess(execution);
+    }
+
+    @Test
+    @ExecuteFlow("flows/valids/retry-flowable-behavior-allow-failure.yaml")
+    void retryFlowableBehaviorAllowFailure(Execution execution) {
+        retryCaseTest.retryFlowableBehaviorAllowFailure(execution);
+    }
+
+    @Test
+    @ExecuteFlow("flows/valids/retry-flowable-behavior-nested-leaf.yaml")
+    void retryFlowableBehaviorNestedLeaf(Execution execution) {
+        retryCaseTest.retryFlowableBehaviorNestedLeaf(execution);
+    }
 }

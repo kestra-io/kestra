@@ -5,13 +5,14 @@ import {API_URL} from "./api"
 
 const PATH_PLACEHOLDER = "{path}"
 
-interface DocMetadata {
+export interface DocMetadata {
     parsedUrl?: string;
     title: string;
     description?: string;
     release?: string;
     isHomepage?: boolean;
     hideSidebar?: boolean;
+    sidebarTitle?: string;
     [key: string]: unknown;
 }
 

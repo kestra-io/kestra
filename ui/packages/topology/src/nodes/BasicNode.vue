@@ -57,7 +57,12 @@
 
 <script lang="ts" setup>
     import {computed, inject} from "vue"
-    import {KsTooltip, useTaskIcon} from "@kestra-io/design-system"
+    import {
+        KsTooltip,
+        useTaskIcon,
+        type PluginIconData,
+        type PluginIconMap,
+    } from "@kestra-io/design-system"
     import DragVertical from "vue-material-design-icons/DragVertical.vue"
     import {EVENTS} from "../utils/constants"
     import type {LodLevel} from "../utils/constants"
@@ -143,10 +148,10 @@
         disabled?: boolean;
         state?: string;
         data: BasicNodeData;
-        icons?: Record<string, unknown>;
+        icons?: PluginIconMap;
         // Resolves an icon the `icons` index doesn't carry; without it a node whose plugin isn't
         // in the index has no way to ever get an icon (kestra-io/kestra#18129).
-        loadIcon?: (cls: string) => Promise<unknown>;
+        loadIcon?: (cls: string) => Promise<PluginIconData | undefined>;
         class?: string | string[] | Record<string, boolean>;
         focused?: boolean;
         dragging?: boolean;

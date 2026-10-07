@@ -121,7 +121,7 @@
         <KsDialog
             v-if="isTaskModalOpen && taskModalCtx"
             v-model="isTaskModalOpen"
-            :title="taskModalCtx.title ?? taskModalCtx.task?.id ?? 'Task details'"
+            :title="taskModalCtx.title ?? taskModalCtx.task?.id ?? $t('no_code.task_details')"
             :destroyOnClose="true"
             :appendToBody="true"
             scrollable
@@ -902,7 +902,7 @@
     }
 
     const validationIssuesByTask = computed<Map<string, string[]>>(() =>
-        groupValidationIssuesByTask(flowStore.flowErrors, flowStore.flowParsed),
+        groupValidationIssuesByTask(flowStore.flowValidation?.errors, flowStore.flowParsed),
     )
 
     const taskPicker = useTaskPicker({

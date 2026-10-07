@@ -41,7 +41,7 @@
 
     const MAX_CELL_CHARS = 2000
 
-    type PreviewCell = string | number | boolean | null | PreviewCell[] | {[key: string]: PreviewCell}
+    export type PreviewCell = string | number | boolean | null | PreviewCell[] | {[key: string]: PreviewCell}
 
     const props = defineProps({
         value: {

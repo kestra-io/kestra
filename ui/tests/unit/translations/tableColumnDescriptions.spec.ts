@@ -2,15 +2,15 @@ import {describe, expect, it} from "vitest"
 import {dirname, resolve} from "node:path"
 import {fileURLToPath} from "node:url"
 
-import en from "./en.json"
-import {findUnresolvedTableColumnKeys, mergeMessages, type Messages} from "../../tests/unit/translations/tableColumnGuard"
+import en from "../../../src/translations/en.json"
+import {findUnresolvedTableColumnKeys, mergeMessages, type Messages} from "./tableColumnGuard"
 
-const SRC = resolve(dirname(fileURLToPath(import.meta.url)), "..")
+const SRC = resolve(dirname(fileURLToPath(import.meta.url)), "../../../src")
 
 // The column-picker descriptions live in the design-system locale files, which
 // `registerDesignSystemI18n` merges into the app messages at bootstrap.
 const designSystemLocales = import.meta.glob<{default: Record<string, Messages>}>(
-    "../../packages/design-system/src/components/**/*.locale.ts",
+    "../../../packages/design-system/src/components/**/*.locale.ts",
     {eager: true},
 )
 

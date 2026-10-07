@@ -163,6 +163,7 @@ export default defineConfig(({mode}) => {
                 "packages/design-system/src/**/*.{ts,vue}",
                 "!packages/design-system/src/**/*.test.ts",
                 "node_modules/@kestra-io/design-system/src/**/*.{ts,vue}",
+                "!node_modules/@kestra-io/design-system/src/**/*.test.ts",
             ],
             include: [
                 "debug",

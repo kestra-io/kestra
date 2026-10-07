@@ -10,7 +10,9 @@ import {routeQueryToQueryFilters} from "../utils/queryFilters"
 import {
     TaskRun,
     useClient,
+    type Check,
     type Execution as SDKExecution,
+    type ExecutionControllerApiValidateExecutionInputsResponseApiInputError as InputError,
     type ExecutionRepositoryInterfaceFlowFilter,
     type FlowForExecution,
     type Label,
@@ -29,18 +31,7 @@ import {useApiStore} from "./api"
 import {executionLocation, isExampleFlow} from "../utils/analytics/activation"
 import type {KestraRequestOptions} from "../utils/kestraHttp"
 
-export interface Check {
-    message: string
-    style: string
-    behavior: string
-}
-
-export interface InputError {
-    message: string;
-    // true when the error is a render/resolution failure (broken field: e.g. a SELECT `expression` or an
-    // input `defaults` Pebble expression that threw) rather than a value validation error
-    renderError?: boolean;
-}
+export type {Check, ExecutionControllerApiValidateExecutionInputsResponseApiInputError as InputError} from "@kestra-io/kestra-sdk"
 
 export interface ValidationResponse {
     checks?: Check[];

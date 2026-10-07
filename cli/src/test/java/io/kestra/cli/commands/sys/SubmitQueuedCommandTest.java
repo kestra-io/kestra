@@ -54,12 +54,10 @@ class SubmitQueuedCommandTest {
     private ByteArrayOutputStream output;
     private PrintStream capturedOut;
     private PrintStream originalOut;
-    private String originalThreadName;
 
     @BeforeEach
     void setUp() {
         originalOut = System.out;
-        originalThreadName = Thread.currentThread().getName();
         output = new ByteArrayOutputStream();
         capturedOut = new PrintStream(output, true, StandardCharsets.UTF_8);
         System.setOut(capturedOut);
@@ -68,7 +66,6 @@ class SubmitQueuedCommandTest {
     @AfterEach
     void tearDown() {
         System.setOut(originalOut);
-        Thread.currentThread().setName(originalThreadName);
         capturedOut.close();
     }
 

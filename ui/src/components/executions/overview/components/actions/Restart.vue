@@ -417,13 +417,11 @@
     })
 </script>
 
-<style lang="scss">
-    .ks-restart-tooltip--no-pointer {
-        pointer-events: none;
-    }
-</style>
-
 <style scoped lang="scss">
+:global(.ks-restart-tooltip--no-pointer) {
+    pointer-events: none;
+}
+
 .modal-header {
     .modal-title {
         font-size: var(--ks-font-size-base);

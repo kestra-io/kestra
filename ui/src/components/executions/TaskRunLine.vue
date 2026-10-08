@@ -32,14 +32,14 @@
             <KsTooltip>
                 <template #content>
                     {{ $t("from") }} :
-                    {{ dateFilter(selectedAttempt(currentTaskRun).state.startDate) }}
+                    {{ dateFilter(selectedAttempt(currentTaskRun).state.startDate ?? "") }}
                     <br>
                     {{ $t("to") }} :
-                    {{ dateFilter(selectedAttempt(currentTaskRun).state.endDate) }}
+                    {{ dateFilter(selectedAttempt(currentTaskRun).state.endDate ?? "") }}
                     <br>
                     <Clock />
                     <strong>{{ $t("duration") }}:</strong>
-                    {{ humanizeDuration(selectedAttempt(currentTaskRun).state.duration) }}
+                    {{ humanizeDuration(selectedAttempt(currentTaskRun).state.duration ?? "") }}
                 </template>
                 <span>
                     <span class="me-1 fw-bold">{{ currentTaskRun.taskId }}</span>
@@ -125,19 +125,31 @@
     import {Duration} from "@kestra-io/topology"
     import {usePluginsStore} from "../../stores/plugins"
     import {date as dateFilter, humanizeDuration} from "../../utils/filters"
+    import type {Execution} from "../../stores/executions"
+    import type {Log} from "../../stores/logs"
+    import type {FlowForExecution, TaskRunAttempt} from "@kestra-io/kestra-sdk"
 
     const pluginsStore = usePluginsStore()
     const {navigateToStateFilter} = useStateFilter()
 
+    // The taskruns rendered here come from the logs view (TaskRunDetails.vue), which extends the
+    // SDK TaskRun with a subflow `outputs` map the UI reads to detect subflow taskruns.
+    type TaskRunProps = NonNullable<Execution["taskRunList"]>[number] & {
+        outputs?: {executionId?: string; [key: string]: unknown}
+    }
+
+    // Log lines as consumed here: filtered, then re-indexed per attempt.
+    type IndexedLog = Log & {index: number}
+
     interface Props {
-        currentTaskRun: any
-        followedExecution: any
-        flow?: any
+        currentTaskRun: TaskRunProps
+        followedExecution?: Execution
+        flow?: FlowForExecution
         forcedAttemptNumber?: number
         taskRunId?: string
         selectedAttemptNumberByTaskRunId?: Record<string, number>
         shownAttemptsUid?: string[]
-        logs?: any[]
+        logs?: Log[]
         filter?: string
         hideHeader?: boolean
         depth?: number
@@ -163,58 +175,58 @@
     }>()
 
     // computed
-    const currentTaskRuns = computed(() =>
-        props.followedExecution?.taskRunList?.filter((tr: any) => props.taskRunId ? tr.id === props.taskRunId : true) ?? [],
+    const currentTaskRuns = computed<TaskRunProps[]>(() =>
+        props.followedExecution?.taskRunList?.filter((tr) => props.taskRunId ? tr.id === props.taskRunId : true) ?? [],
     )
 
-    const taskRunById = computed(() =>
-        Object.fromEntries(currentTaskRuns.value.map((taskRun: any) => [taskRun.id, taskRun])),
+    const taskRunById = computed<Record<string, TaskRunProps>>(() =>
+        Object.fromEntries(currentTaskRuns.value.map((taskRun) => [taskRun.id, taskRun])),
     )
 
-    const logsWithIndexByAttemptUid = computed(() => {
-        let indexedLogs = props.logs
-            .filter((logLine: any) =>
-                (logLine?.message ?? "").toLowerCase().includes(props.filter) || isSubflow(taskRunById.value[logLine.taskRunId]),
+    const logsWithIndexByAttemptUid = computed<Record<string, IndexedLog[]>>(() => {
+        let indexedLogs: IndexedLog[] = props.logs
+            .filter((logLine) =>
+                (logLine?.message ?? "").toLowerCase().includes(props.filter) || isSubflow(logLine.taskRunId ? taskRunById.value[logLine.taskRunId] : undefined),
             )
-            .map((logLine: any, index: number) => ({...logLine, index}))
+            .map((logLine, index) => ({...logLine, index}))
 
         // Remove duplicate logs based on taskRunId and attemptNumber, keeping the one with the highest index (most recent)
         indexedLogs = Array.from(new Set(indexedLogs))
 
-        return groupBy(indexedLogs, (indexedLog: any) => attemptUid(indexedLog.taskRunId, indexedLog.attemptNumber))
+        return groupBy(indexedLogs, (indexedLog) => attemptUid(indexedLog.taskRunId ?? "", indexedLog.attemptNumber ?? 0))
     })
 
     // methods
-    function attempts(taskRun: any): any[] {
-        if (props.followedExecution.state.current === State.RUNNING || props.forcedAttemptNumber === undefined) {
+    function attempts(taskRun: TaskRunProps): TaskRunAttempt[] {
+        if (props.followedExecution?.state.current === State.RUNNING || props.forcedAttemptNumber === undefined) {
             return taskRun.attempts ?? [{state: taskRun.state}]
         }
         return taskRun.attempts ? [taskRun.attempts[props.forcedAttemptNumber]] : []
     }
 
-    function isSubflow(taskRun: any): boolean {
-        return taskRun?.outputs?.executionId
+    function isSubflow(taskRun: TaskRunProps | undefined): boolean {
+        return !!taskRun?.outputs?.executionId
     }
 
-    function selectedAttempt(taskRun: any): any {
+    function selectedAttempt(taskRun: TaskRunProps): TaskRunAttempt {
         return attempts(taskRun)[props.selectedAttemptNumberByTaskRunId[taskRun.id] ?? 0]
     }
 
-    function taskType(taskRun: any): string | undefined {
+    function taskType(taskRun: TaskRunProps): string | undefined {
         if (!taskRun) return undefined
         const task = FlowUtils.findTaskById(props.flow, taskRun.taskId)
         const parentTaskRunId = taskRun.parentTaskRunId
         if (task === undefined && parentTaskRunId) {
             return taskType(taskRunById.value[parentTaskRunId])
         }
-        return task ? (task as any).type : undefined
+        return task?.type
     }
 
     function attemptUid(taskRunId: string, attemptNumber: number): string {
         return `${taskRunId}-${attemptNumber}`
     }
 
-    function shouldDisplayChevron(taskRun: any): boolean {
+    function shouldDisplayChevron(taskRun: TaskRunProps): boolean {
         return shouldDisplayLogs(taskRun.id)
     }
 

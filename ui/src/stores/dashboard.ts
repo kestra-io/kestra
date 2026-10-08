@@ -282,13 +282,11 @@ export const useDashboardStore = defineStore("dashboard", () => {
     let latestValidation = 0
 
     async function validateDashboard(source: Dashboard["sourceCode"]) {
-        const {data} = await axios.post<ValidateConstraintViolation>(`${apiUrl()}/dashboards/validate`, source ?? "", yaml)
-        return data
         const validation = ++latestValidation
         // A response overtaken by a newer validation describes a source the editor no longer holds.
         const isLatest = () => validation === latestValidation
         try {
-            const {data} = await axios.post(`${apiUrl()}/dashboards/validate`, source ?? "", yaml)
+            const {data} = await axios.post<ValidateConstraintViolation>(`${apiUrl()}/dashboards/validate`, source ?? "", yaml)
             if (isLatest()) {
                 setValidationErrors(data.errors)
             }
@@ -313,8 +311,6 @@ export const useDashboardStore = defineStore("dashboard", () => {
 
     async function validateChart(source: string) {
         const {data} = await axios.post<ValidateConstraintViolation>(`${apiUrl()}/dashboards/validate/chart`, source, yaml)
-        chartErrors.value = data.constraints ? [data.constraints] : []
-        const {data} = await axios.post(`${apiUrl()}/dashboards/validate/chart`, source, yaml)
         chartErrors.value = validationErrorLines(data.errors)
         return data
     }

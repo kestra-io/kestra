@@ -594,7 +594,7 @@ export const useExecutionsStore = defineStore("executions", () => {
 
     /** The whole file as text, unlike `filePreview` which caps rows and bytes, so an HTML preview gets a valid document. */
     const fileContent = (options: { executionId: string; path: string }): Promise<string> => {
-        return ExecutionsAPI.downloadFileFromExecution(options).then(file => file.text())
+        return ExecutionsAPI.downloadFileFromExecution(options, {parseAs: "text"}) as unknown as Promise<string>
     }
 
     const setLabels = (options: { executionId: string; labels: Label[] }) => {

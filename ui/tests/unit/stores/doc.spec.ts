@@ -14,6 +14,7 @@ describe("doc store", () => {
         get.mockReset()
     })
 
+    /** Doc links resolve the same whether a caller passes the path with or without a leading slash. */
     it("builds resource URLs from the version template, whatever the slashes", () => {
         const store = useDocStore()
         store.initResourceUrlTemplate("1.3.0")
@@ -23,6 +24,7 @@ describe("doc store", () => {
         expect(store.resourceUrl(undefined, "search")).toBe("https://api.kestra.io/v1/search/versions/1.3.0")
     })
 
+    /** The page title and URL come from a response header, not from the markdown body. */
     it("reads the page metadata from the response header", async () => {
         get.mockResolvedValue({data: "# Flows", headers: {"x-kestra-metadata": JSON.stringify({title: "Flows", parsedUrl: "/docs/flows"})}})
         const store = useDocStore()
@@ -33,6 +35,7 @@ describe("doc store", () => {
         expect(resource).toEqual({content: "# Flows", metadata: {title: "Flows", parsedUrl: "/docs/flows"}})
     })
 
+    /** Opening a doc by id records the page path it resolved to. */
     it("remembers the page a doc id resolved to", async () => {
         get.mockResolvedValue({data: "# Flows", headers: {"x-kestra-metadata": JSON.stringify({title: "Flows", parsedUrl: "/docs/flows"})}})
         const store = useDocStore()
@@ -44,6 +47,7 @@ describe("doc store", () => {
         expect(store.docPath).toBe("/docs/flows")
     })
 
+    /** Highlights render as text, so no markup may survive, nested or not (code-scanning alert 88). */
     it("turns a search highlight into plain text, nested tags included", async () => {
         get.mockResolvedValue({data: {results: [
             {url: "/docs/flows", title: "Flows", highlights: ["Run a <em>flow</em><br/>on a <strong>schedule</strong>"]},
@@ -58,6 +62,7 @@ describe("doc store", () => {
         expect(nested.preview).not.toMatch(/<[^>]*>/)
     })
 
+    /** A query containing `&`, `#` or `+` must reach the search API intact. */
     it("sends the search query as typed, even with characters a URL would cut", async () => {
         get.mockResolvedValue({data: {results: []}})
         const store = useDocStore()

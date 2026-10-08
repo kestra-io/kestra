@@ -20,6 +20,7 @@ const activeAt = async (path: string, tabs: RouteTab[]) => {
 }
 
 describe("activeScopeTab", () => {
+    /** The sidebar highlights the most specific tab, never a parent route, a header or an excluded entry. */
     it("picks the tab with the longest route the page sits under, never a header or an excluded tab", async () => {
         const tabs = [
             tab("Admin", "/admin"),
@@ -31,6 +32,7 @@ describe("activeScopeTab", () => {
         expect(await activeAt("/admin/stats/instance", tabs)).toBe("Stats")
     })
 
+    /** Switching sub-views keeps an entity's tab active, while another entity on the same route does not get it. */
     it("keeps an entity's tab active across its sub-views, but not on another entity", async () => {
         const tabs = [tab("Hello", {name: "flows/update", params: {namespace: "company", id: "hello", tab: "overview"}})]
 
@@ -42,6 +44,7 @@ describe("activeScopeTab", () => {
 describe("route tabs store", () => {
     beforeEach(() => setActivePinia(createPinia()))
 
+    /** A page unmounting late must not wipe the tabs the next page has already set. */
     it("lets only the owner that set the tabs clear them", () => {
         const store = useRouteTabsStore()
         const owner = Symbol("owner")

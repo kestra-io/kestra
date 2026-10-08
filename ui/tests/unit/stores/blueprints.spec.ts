@@ -17,6 +17,7 @@ describe("blueprints store", () => {
         post.mockReset()
     })
 
+    /** The custom blueprints API filters through `filters[...]` keys, not plain `q` and `tags` params. */
     it("turns the custom blueprint search and tags into API filters", async () => {
         get.mockResolvedValue({data: {results: [], total: 0}})
 
@@ -27,6 +28,7 @@ describe("blueprints store", () => {
         })
     })
 
+    /** A user without access to custom blueprints sees an empty list, while real errors still surface. */
     it("shows no custom blueprints to a caller the server does not authenticate, and rethrows anything else", async () => {
         get.mockRejectedValueOnce({status: 401})
         await expect(useBlueprintsStore().getBlueprints({type: "custom"})).resolves.toEqual({results: [], total: 0})
@@ -35,6 +37,7 @@ describe("blueprints store", () => {
         await expect(useBlueprintsStore().getBlueprints({type: "custom"})).rejects.toEqual({status: 500})
     })
 
+    /** OSS asks the community catalog for its own version, without the Enterprise blueprints. */
     it("asks for the OSS community blueprints of this version only", async () => {
         get.mockResolvedValue({data: {results: []}})
 
@@ -43,6 +46,7 @@ describe("blueprints store", () => {
         expect(get.mock.calls[0][0]).toBe("https://api.kestra.io/v1/blueprints/kinds/flow/versions/1.3.0?ee=false")
     })
 
+    /** The flow blueprint editor shows these lines as its validation errors. */
     it("lists the validation errors of a flow blueprint source, and none once it is valid", async () => {
         const store = useBlueprintsStore()
 

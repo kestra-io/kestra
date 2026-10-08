@@ -8,12 +8,14 @@ import java.util.Collections;
 import java.util.Deque;
 import java.util.IdentityHashMap;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 import javax.sql.DataSource;
 
 import org.jooq.ConnectionProvider;
 import org.jooq.DSLContext;
+import org.jooq.SQLDialect;
 import org.jooq.TransactionalCallable;
 import org.jooq.TransactionalRunnable;
 import org.jooq.exception.DataAccessException;
@@ -95,6 +97,15 @@ public class JooqDSLContextWrapper {
      * one — keep the work short.
      */
     public void requireNewTransaction(TransactionalRunnable transactional) {
+        requireNewTransaction(transactional, context -> {}, context -> {});
+    }
+
+    /**
+     * Same as {@link #requireNewTransaction(TransactionalRunnable)}, running {@code before} and {@code after} on the dedicated
+     * connection, outside the transaction and in auto-commit mode. {@code after} always runs, once the transaction is committed or
+     * rolled back, which is what a session-scoped lock needs to be released.
+     */
+    public void requireNewTransaction(TransactionalRunnable transactional, Consumer<DSLContext> before, Consumer<DSLContext> after) {
         DEADLOCK_RETRYER.<Void> run(
             () ->
             {
@@ -102,18 +113,33 @@ public class JooqDSLContextWrapper {
                     // Same configuration (dialect, settings, execute listeners), but jOOQ-managed
                     // transactions on this connection instead of the thread-bound ones.
                     ConnectionProvider connectionProvider = new DefaultConnectionProvider(connection);
-                    DSL.using(
+                    DSLContext context = DSL.using(
                         dslContext.configuration()
                             .derive(connectionProvider)
                             .derive(new DefaultTransactionProvider(connectionProvider))
-                    )
-                        .transaction(transactional);
+                    );
+                    before.accept(context);
+                    try {
+                        context.transaction(transactional);
+                    } catch (RuntimeException e) {
+                        try {
+                            after.accept(context);
+                        } catch (RuntimeException afterException) {
+                            e.addSuppressed(afterException);
+                        }
+                        throw e;
+                    }
+                    after.accept(context);
                 } catch (SQLException e) {
                     throw new DataAccessException("Unable to run a transaction on a new connection", e);
                 }
                 return null;
             }
         );
+    }
+
+    public SQLDialect dialect() {
+        return dslContext.dialect().family();
     }
 
     /**

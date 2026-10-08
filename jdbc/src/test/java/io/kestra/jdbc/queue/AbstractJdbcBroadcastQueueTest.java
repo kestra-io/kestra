@@ -5,6 +5,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -13,6 +15,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import io.kestra.core.queues.BroadcastQueueInterface;
+import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueSubscriber;
 import io.kestra.jdbc.JdbcTestUtils;
 import io.kestra.jdbc.QueueJdbcDataSourceProvider;
@@ -80,6 +83,38 @@ public abstract class AbstractJdbcBroadcastQueueTest {
             await()
                 .atMost(Duration.ofSeconds(10))
                 .untilAsserted(() -> assertThat(received).containsExactlyInAnyOrder(1, 2));
+        } finally {
+            subscriber.close();
+        }
+    }
+
+    @Test
+    void shouldDeliverAllMessagesWhenPublishedConcurrently() throws Exception {
+        int publishers = 8;
+        int messagesPerPublisher = 250;
+        Set<Integer> received = ConcurrentHashMap.newKeySet();
+        QueueSubscriber<TestBroadcast> subscriber = broadcastQueue.subscriber().subscribe(e -> received.add(e.getLeft().id()));
+
+        try (var executor = Executors.newFixedThreadPool(publishers)) {
+            List<CompletableFuture<Void>> futures = new ArrayList<>();
+            for (int publisher = 0; publisher < publishers; publisher++) {
+                int first = publisher * messagesPerPublisher;
+                futures.add(CompletableFuture.runAsync(() ->
+                {
+                    for (int i = first; i < first + messagesPerPublisher; i++) {
+                        try {
+                            broadcastQueue.emit(new TestBroadcast("key-" + i, i));
+                        } catch (QueueException e) {
+                            throw new IllegalStateException(e);
+                        }
+                    }
+                }, executor));
+            }
+            CompletableFuture.allOf(futures.toArray(CompletableFuture[]::new)).get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
+
+            await()
+                .atMost(Duration.ofSeconds(10))
+                .untilAsserted(() -> assertThat(received).hasSize(publishers * messagesPerPublisher));
         } finally {
             subscriber.close();
         }

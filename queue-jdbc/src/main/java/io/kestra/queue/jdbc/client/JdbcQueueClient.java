@@ -6,11 +6,15 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.jooq.*;
 import org.jooq.Record;
+import org.jooq.exception.DataAccessException;
 import org.jooq.exception.DataException;
 import org.jooq.impl.DSL;
 
@@ -46,6 +50,11 @@ public class JdbcQueueClient {
         VALUE,
         CREATED
     );
+
+    private static final int ADVISORY_LOCK_NAMESPACE = 0x4B51;
+    private static final int LOCK_TIMEOUT_SECONDS = 10;
+
+    private final Map<String, ReentrantLock> localLocks = new ConcurrentHashMap<>();
 
     private final Table<Record> queueTable;
 
@@ -94,7 +103,7 @@ public class JdbcQueueClient {
      */
     public void publish(String queue, @Nullable String routingKey, String key, String value, boolean newTransaction) throws QueueException {
         try {
-            runInTransaction(newTransaction, configuration ->
+            runInTransaction(newTransaction, queue, configuration ->
             {
                 DSLContext context = DSL.using(configuration);
 
@@ -148,9 +157,12 @@ public class JdbcQueueClient {
         publish(messages, false);
     }
 
+    /**
+     * @param newTransaction see {@link #publish(String, String, String, String, boolean)}; all the messages must then belong to the same queue.
+     */
     public void publish(List<PublishedMessage> messages, boolean newTransaction) throws QueueException {
         try {
-            runInTransaction(newTransaction, configuration ->
+            runInTransaction(newTransaction, messages.isEmpty() ? null : messages.getFirst().queue(), configuration ->
             {
                 DSLContext context = DSL.using(configuration);
 
@@ -182,12 +194,56 @@ public class JdbcQueueClient {
         }
     }
 
-    private void runInTransaction(boolean newTransaction, TransactionalRunnable transactional) {
-        if (newTransaction) {
-            dslContextWrapper.requireNewTransaction(transactional);
-        } else {
+    /**
+     * With {@code newTransaction}, publishers of the same queue are serialized from their INSERT to their COMMIT, so that rows of
+     * a queue become visible in offset order, which is what a broadcast cursor relies on.
+     */
+    private void runInTransaction(boolean newTransaction, @Nullable String queue, TransactionalRunnable transactional) {
+        if (!newTransaction) {
             dslContextWrapper.transaction(transactional);
+            return;
         }
+
+        if (queue == null) {
+            dslContextWrapper.requireNewTransaction(transactional);
+            return;
+        }
+
+        switch (dslContextWrapper.dialect()) {
+            case POSTGRES -> dslContextWrapper.requireNewTransaction(conf ->
+            {
+                // Released by Postgres when the transaction ends, after the commit. The function returns void, hence the wrapping query,
+                // and the timeout is set in the same statement to save a round trip.
+                DSL.using(conf).fetch(
+                    "select count(*) from (select pg_advisory_xact_lock(?, hashtext(?)) from (select set_config('lock_timeout', ?, true)) as lock_config) as queue_lock",
+                    ADVISORY_LOCK_NAMESPACE, queue, LOCK_TIMEOUT_SECONDS + "s"
+                );
+                transactional.run(conf);
+            });
+            case MYSQL, MARIADB -> dslContextWrapper.requireNewTransaction(
+                transactional,
+                context ->
+                {
+                    Object acquired = context.fetchValue("select get_lock(?, ?)", mysqlLockName(queue), LOCK_TIMEOUT_SECONDS);
+                    if (!(acquired instanceof Number number) || number.intValue() != 1) {
+                        throw new DataAccessException("Unable to lock the queue '%s' to publish a message within %d seconds.".formatted(queue, LOCK_TIMEOUT_SECONDS));
+                    }
+                },
+                context -> context.fetch("select release_lock(?)", mysqlLockName(queue))
+            );
+            case H2 ->
+            {
+                // H2 is embedded, so a lock local to the JVM is enough. It is taken once the connection is held, like the other dialects.
+                ReentrantLock lock = localLocks.computeIfAbsent(queue, key -> new ReentrantLock());
+                dslContextWrapper.requireNewTransaction(transactional, context -> lock.lock(), context -> lock.unlock());
+            }
+            default -> dslContextWrapper.requireNewTransaction(transactional);
+        }
+    }
+
+    private static String mysqlLockName(String queue) {
+        // MySQL lock names are limited to 64 characters.
+        return "kestra_queue_" + UUID.nameUUIDFromBytes(queue.getBytes(StandardCharsets.UTF_8));
     }
 
     public Integer subscribeDispatch(String queue, @Nullable List<String> routingKeys, Consumer<byte[]> consumer) {

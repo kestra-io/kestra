@@ -39,6 +39,7 @@
             <button
                 type="button"
                 class="ks-duration-value"
+                data-test="duration-value"
                 :disabled="!hasHistory"
                 :aria-label="ariaLabel"
             >

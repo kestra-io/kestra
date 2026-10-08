@@ -109,7 +109,7 @@ describe("CopilotChat", () => {
     it("surfaces a translated error alert from the error code", () => {
         state.error.value = "turnInProgress"
         const w = mountChat()
-        const alert = w.find(".ks-alert")
+        const alert = w.find("[data-test='copilot-error']")
         expect(alert.exists()).toBe(true)
         expect(alert.text()).toBe("A turn is already in progress.")
     })
@@ -249,7 +249,7 @@ describe("CopilotChat", () => {
     it("surfaces the turn-cap error with a start-a-new-chat message", () => {
         state.error.value = "turnCap"
         const w = mountChat()
-        expect(w.find(".ks-alert").text()).toContain("start a new chat")
+        expect(w.find("[data-test='copilot-error']").text()).toContain("start a new chat")
     })
 
     it("switches thread when the thread controls emit select", async () => {

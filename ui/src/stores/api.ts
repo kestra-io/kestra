@@ -79,7 +79,9 @@ function buildEventPayload(data: EventData, configs: Configs, uid: string) {
 export const useApiStore = defineStore("api", () => {
     const feeds = ref<Feed[]>([])
 
-    watch(() => useMiscStore().configs, () => {
+    const miscStore = useMiscStore()
+
+    watch(() => miscStore.configs, () => {
         void flushQueuedEvents()
     })
 
@@ -107,7 +109,6 @@ export const useApiStore = defineStore("api", () => {
     }
 
     async function flushQueuedEvents() {
-        const miscStore = useMiscStore()
         const configs = miscStore.configs
 
         // Can't decide yet.
@@ -133,7 +134,6 @@ export const useApiStore = defineStore("api", () => {
     }
 
     async function events<T extends EventData>(data: T, options: EventsOptions = {}) {
-        const miscStore = useMiscStore()
         const configs = miscStore.configs
 
         // If configs aren't ready yet, buffer and replay later.
@@ -170,7 +170,7 @@ export const useApiStore = defineStore("api", () => {
     }
 
     function posthogEvents<T extends EventData>(data: T & {date?: string; counter?: number}) {
-        sendPosthogEvent(useMiscStore().configs, data)
+        sendPosthogEvent(miscStore.configs, data)
     }
 
     async function pluginsInformation() {

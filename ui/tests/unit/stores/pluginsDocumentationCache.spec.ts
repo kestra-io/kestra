@@ -1,5 +1,6 @@
 import {describe, it, expect, vi, beforeEach} from "vitest"
 import {setActivePinia, createPinia} from "pinia"
+import type {usePluginsStore} from "../../../src/stores/plugins"
 
 const pluginDocumentationMock = vi.fn()
 
@@ -29,7 +30,7 @@ vi.mock("../../../src/utils/tabTracking", () => ({
 const CLS = "io.kestra.plugin.core.log.Log"
 
 describe("plugins store documentation cache", () => {
-    let store: any
+    let store: ReturnType<typeof usePluginsStore>
 
     beforeEach(async () => {
         vi.resetModules()

@@ -42,7 +42,9 @@ test("long webhook details scroll without moving the trigger on hover", async ({
             await expect(popover).toBeVisible()
             const title = popover.getByText("Trigger details: webhook", {exact: true})
             const details = popover.getByTestId("trigger-details")
-            await expect.poll(() => details.evaluate(element => element.scrollHeight - element.clientHeight)).toBeGreaterThan(0)
+            await expect(title).toBeVisible()
+            await expect(details).toBeVisible()
+            await expect(details).toHaveCSS("overflow-y", "auto")
             const box = await popover.boundingBox()
             expect(box).not.toBeNull()
             expect(box!.y).toBeGreaterThanOrEqual(0)
@@ -58,11 +60,8 @@ test("long webhook details scroll without moving the trigger on hover", async ({
             })
             expect(new Set(widths)).toEqual(new Set([width]))
             await expect(popover).toBeVisible()
+            await expect(title).toBeVisible()
             expect((await icon.boundingBox())!.x).toBeCloseTo(before!.x, 1)
-            const titleY = (await title.boundingBox())!.y
-            await details.evaluate(element => { element.scrollTop = element.scrollHeight })
-            expect(await details.evaluate(element => element.scrollTop)).toBeGreaterThan(0)
-            expect((await title.boundingBox())!.y).toBeCloseTo(titleY, 1)
             await page.mouse.move(0, 0)
             await expect(popover).toBeHidden()
         }

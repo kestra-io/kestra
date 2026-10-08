@@ -81,7 +81,7 @@ describe("pluginsEnrichment store — fetchEnrichment titles", () => {
                     {group: "io.kestra.plugin.core", subGroup: "io.kestra.plugin.core.debug", title: "Debug"},
                     {group: "io.kestra.plugin.core", subGroup: null, title: "Core Plugins and tasks"},
                     {group: "io.kestra.plugin.x", subGroup: "io.kestra.plugin.x.y"},
-                ]} as AxiosResponse)
+                ]} as AxiosResponse<unknown>)
             }
             return Promise.reject(new Error("unavailable"))
         })

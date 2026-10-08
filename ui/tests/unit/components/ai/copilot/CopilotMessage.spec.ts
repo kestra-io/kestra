@@ -45,7 +45,7 @@ describe("CopilotMessage", () => {
     it("renders assistant text as a styled bubble through the markdown renderer", () => {
         const w = mountMessage({id: "2", role: "ASSISTANT", type: "TEXT", content: "**bold** answer"})
         expect(w.find(".copilot-bubble-assistant").exists()).toBe(true)
-        const md = w.find(".ks-markdown")
+        const md = w.find("[data-test='copilot-assistant-markdown']")
         expect(md.exists()).toBe(true)
         expect(md.text()).toContain("**bold** answer")
     })

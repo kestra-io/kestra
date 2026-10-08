@@ -68,10 +68,10 @@ describe("ErrorToastContainer", () => {
     })
 
     it("shows a copyable trace id only when one is present", () => {
-        expect(mountContainer({detail: "boom"}).find(".ks-id").exists()).toBe(false)
+        expect(mountContainer({detail: "boom"}).find("[data-test='error-toast-trace-id']").exists()).toBe(false)
 
         const w = mountContainer({detail: "boom", traceId: "4bf92f3577b34da6a3ce929d0e0e4736"})
-        expect(w.find(".ks-id").text()).toBe("4bf92f3577b34da6a3ce929d0e0e4736")
+        expect(w.find("[data-test='error-toast-trace-id']").text()).toBe("4bf92f3577b34da6a3ce929d0e0e4736")
     })
 
     it("localizes a field error that carries its own problem type", () => {

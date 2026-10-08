@@ -349,6 +349,10 @@
     "no": "Nein",
     "change state done": "Der Task-Status wurde aktualisiert",
     "change state confirm": "Möchtest du den Status des Task-Runs für den Task <code>{task}</code> in Execution <code>{id}</code> wirklich ändern?<br/>Die Execution wird dann ab dem nächsten Task neu gestartet, und die übergeordnete Execution, falls vorhanden, ebenfalls.",
+    "interrupt": "Unterbrechen",
+    "interrupt confirm": "Möchtest du den Task Run für den Task <code>{task}</code> in Execution <code>{id}</code> wirklich unterbrechen?<br/>Dadurch wird der laufende Task im Worker beendet und sein Status festgelegt.",
+    "interrupt done": "Task Run wurde unterbrochen",
+    "interrupt target state": "Ziel-Status",
     "change state current state": "Aktueller Status:",
     "change state hint": {
       "WARNING": [
@@ -450,6 +454,11 @@
     "show task source": "Task-Quelle anzeigen",
     "stream": "Stream",
     "execution statistics": "Execution-Statistiken",
+    "execution_banner": {
+      "revision": "Revision {revision}",
+      "attempts": "{count} Versuch | {count} Versuche",
+      "tasks": "{completed}/{count} Task | {completed}/{count} Tasks"
+    },
     "concurrency limits": "Concurrency-Limits",
     "system overview": "Systemübersicht",
     "usage": "Verwendung",
@@ -560,6 +569,7 @@
       "blueprints": "Blueprint | Blueprints"
     },
     "plugins": {
+      "ui_load_error": "Eine Plugin-Komponente konnte nicht geladen werden.",
       "autoInstall": {
         "failed": "Plugin-Installation fehlgeschlagen",
         "failedHint": "Der Flow wurde nicht gespeichert. Behebe das Problem oder entferne das Plugin aus dem Flow und speichere erneut.",
@@ -1047,6 +1057,8 @@
         "folder": "Ordner löschen",
         "files": "{count} ausgewählte Dateien löschen",
         "bulk_success": "Ausgewählte Dateien erfolgreich gelöscht.",
+        "bulk_partial_error": "Fehler beim Löschen von {failedCount} der ausgewählten {totalCount} Datei(en).",
+        "all_failed_error": "Fehler beim Löschen der ausgewählten Dateien.",
         "folders": "{count} ausgewählte Ordner löschen"
       },
       "move": {
@@ -1711,6 +1723,7 @@
     "custom value": "Benutzerdefinierter Wert",
     "chart": "Diagramm",
     "no_code": {
+      "task_details": "Task-Details",
       "toggle_pebble": "Pebble-Editor umschalten",
       "version_oss_placeholder": "Plugin-Versionierung mit der Enterprise Edition freischalten",
       "adding": "+ {what} hinzufügen",
@@ -1766,7 +1779,8 @@
         "inputs": "Input-Typ auswählen",
         "charts": "Diagrammtyp auswählen",
         "where": "Filtertyp auswählen",
-        "numerator": "Zähler auswählen"
+        "numerator": "Zähler auswählen",
+        "namespace_first": "Zuerst einen Namespace auswählen"
       },
       "creation": {
         "default": "Hinzufügen",
@@ -2219,7 +2233,6 @@
       "run_all_tasks": "Alle Tasks ausführen",
       "history": "Letzte 10 Runs",
       "clear_history": "Verlauf löschen",
-      "confirm_create": "Du kannst den Playground nicht ausführen, während du einen Flow erstellst. Wenn du einen Playground-Run startest, wird der Flow erstellt.",
       "tooltip_persistence": "Wenn du den Playground aus- und wieder einschaltest, bleiben die Informationen erhalten, solange du auf der Seite bleibst."
     },
     "submit": "Absenden",
@@ -2413,6 +2426,7 @@
         "label": "{count} Fehler"
       }
     },
+    "invalid_source_code": "Ungültiger Quellcode",
     "source_search": {
       "cannot_select_read_only": "Kann nicht ausgewählt werden – dir fehlt die Bearbeitungsberechtigung für {namespace} / {id}",
       "collapse_all": "Alle einklappen",

@@ -190,7 +190,7 @@
     import type {UnsetRequiredField} from "../no-code/utils/requiredFields"
     import {openCollapsedGroups, scrollThenFocus} from "../no-code/utils/useFieldNavigation"
     import {canSaveFlowTemplate} from "../../utils/flowTemplate"
-    import {splitValidationErrors} from "../../utils/validationErrors"
+    import {validationErrorLines, type ValidationError as ApiValidationError} from "../../utils/validationErrors"
     import ValidationError from "./ValidationError.vue"
     import {usePluginsStore} from "../../stores/plugins"
     import {useAuthStore} from "override/stores/auth"
@@ -406,9 +406,9 @@
 
     const flowStore = useFlowStore()
     const {sections: contextDataSections} = useContextSections(computed(() => props.readOnly ? undefined : props.namespace))
-    const localTaskError = ref<string | undefined>()
+    const localTaskErrors = ref<ApiValidationError[] | undefined>()
     const errors = computed(() => {
-        const split = splitValidationErrors(localTaskError.value)
+        const split = validationErrorLines(localTaskErrors.value)
         return split.length === 0 ? undefined : split
     })
     const pluginMarkdown = computed(() => {
@@ -575,10 +575,10 @@
         if (taskYaml.value) {
             lastValidatedValue.value = taskYaml.value
             flowStore.validateTask({task: taskYaml.value, section: props.section})
-                .then((result) => { localTaskError.value = (result as {constraints?: string})?.constraints })
-                .catch(() => { localTaskError.value = undefined })
+                .then((result) => { localTaskErrors.value = result?.errors })
+                .catch(() => { localTaskErrors.value = undefined })
         } else {
-            localTaskError.value = undefined
+            localTaskErrors.value = undefined
         }
     }
 
@@ -589,7 +589,7 @@
                 task: taskYaml.value,
                 section: props.section,
             }).then((result) => {
-                localTaskError.value = (result as {constraints?: string})?.constraints
+                localTaskErrors.value = result?.errors
             }).catch(() => { /* leave prior errors in place on transient failure */ })
         }
         if (props.presentation === "panel") {

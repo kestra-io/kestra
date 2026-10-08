@@ -1,5 +1,6 @@
 package io.kestra.core.runners;
 
+import io.kestra.core.models.executions.TaskRunAttempt;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.Collections;
@@ -771,5 +772,66 @@ class ExecutionServiceTest {
         assertThat(restarted.getId()).isEqualTo(newExecution.getId());
         assertThat(restarted.getOriginalId()).isEqualTo(newExecution.getId());
         assertThat(restarted.getTaskRunList()).isEmpty();
+    }
+
+    @Test
+    @LoadFlows("flows/valids/minimal.yaml")
+    void retryFlowableShouldWipeDescendantsAndStartNewAttempt() throws Exception {
+        Flow flow = flowRepository.findById(MAIN_TENANT, "io.kestra.tests", "minimal").orElseThrow();
+
+        TaskRun flowable = TaskRun.builder()
+            .id("flowable")
+            .taskId("seq1")
+            .state(new State(State.Type.RETRYING))
+            .attempts(List.of(TaskRunAttempt.builder().state(new State(State.Type.FAILED)).build()))
+            .build();
+
+        TaskRun child = TaskRun.builder()
+            .id("child")
+            .taskId("get_token")
+            .parentTaskRunId("flowable")
+            .state(new State(State.Type.SUCCESS))
+            .build();
+
+        TaskRun grandChild = TaskRun.builder()
+            .id("grandchild")
+            .taskId("inner")
+            .parentTaskRunId("child")
+            .state(new State(State.Type.FAILED))
+            .build();
+
+        TaskRun unrelated = TaskRun.builder()
+            .id("unrelated")
+            .taskId("other")
+            .state(new State(State.Type.SUCCESS))
+            .build();
+
+        Execution execution = Execution.newExecution(flow, Collections.emptyList())
+            .withTaskRunList(List.of(flowable, child, grandChild, unrelated))
+            .withState(State.Type.RETRYING);
+
+        Execution result = executionService.retryFlowable(execution, "flowable");
+
+        assertThat(result.getState().getCurrent()).isEqualTo(State.Type.RUNNING);
+        assertThat(result.getTaskRunList())
+            .extracting(TaskRun::getId)
+            .containsExactlyInAnyOrder("flowable", "unrelated");
+
+        TaskRun restarted = result.findTaskRunByTaskRunId("flowable");
+        assertThat(restarted.getState().getCurrent()).isEqualTo(State.Type.RUNNING);
+        assertThat(restarted.getAttempts()).hasSize(2);
+    }
+
+    @Test
+    @LoadFlows("flows/valids/minimal.yaml")
+    void retryFlowableShouldGoBackToRunningWhenNoTaskRun() throws Exception {
+        Flow flow = flowRepository.findById(MAIN_TENANT, "io.kestra.tests", "minimal").orElseThrow();
+
+        Execution execution = Execution.newExecution(flow, Collections.emptyList())
+            .withState(State.Type.RETRYING);
+    
+        Execution result = executionService.retryFlowable(execution, "unknown");
+
+        assertThat(result.getState().getCurrent()).isEqualTo(State.Type.RUNNING);
     }
 }

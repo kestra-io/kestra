@@ -36,6 +36,7 @@ import io.kestra.core.storages.StorageSplitInterface;
 import io.kestra.core.utils.RegexUtils;
 
 import io.micronaut.core.convert.format.ReadableBytesTypeConverter;
+import jakarta.annotation.Nullable;
 
 import static io.kestra.core.utils.Rethrow.throwFunction;
 
@@ -140,6 +141,7 @@ public abstract class StorageService {
     private static List<Path> partition(RunContext runContext, String extension, SplitStrategy strategy, int partition) throws IOException {
         List<Path> files = new ArrayList<>();
         List<RecordWriter> writers = new ArrayList<>();
+        Throwable processingFailure = null;
 
         try {
             for (int i = 0; i < partition; i++) {
@@ -154,8 +156,11 @@ public abstract class StorageService {
                 writers.get(index).write(iterator.next());
                 index = index >= writers.size() - 1 ? 0 : index + 1;
             }
+        } catch (IOException | RuntimeException | Error e) {
+            processingFailure = e;
+            throw e;
         } finally {
-            closeQuietly(runContext, writers);
+            closeWriters(runContext, writers, processingFailure);
         }
 
         return files.stream().filter(p -> p.toFile().length() > 0).toList();
@@ -165,6 +170,7 @@ public abstract class StorageService {
         List<Path> files = new ArrayList<>();
         Map<String, RecordWriter> writers = new HashMap<>();
         Pattern pattern = Pattern.compile(regexPattern);
+        Throwable processingFailure = null;
 
         try {
             Iterator<Object> iterator = strategy.records();
@@ -186,20 +192,33 @@ public abstract class StorageService {
                     writer.write(record);
                 }
             }
+        } catch (IOException | RuntimeException | Error e) {
+            processingFailure = e;
+            throw e;
         } finally {
-            closeQuietly(runContext, writers.values());
+            closeWriters(runContext, writers.values(), processingFailure);
         }
 
         return files.stream().filter(p -> p.toFile().length() > 0).toList();
     }
 
-    private static void closeQuietly(RunContext runContext, Iterable<RecordWriter> writers) {
+    private static void closeWriters(RunContext runContext, Iterable<RecordWriter> writers, @Nullable Throwable processingFailure) throws IOException {
+        IOException closeFailure = null;
         for (RecordWriter writer : writers) {
             try {
                 writer.close();
             } catch (IOException e) {
                 runContext.logger().error("Failed to close split writer", e);
+                Throwable failure = processingFailure != null ? processingFailure : closeFailure;
+                if (failure == null) {
+                    closeFailure = e;
+                } else if (failure != e) {
+                    failure.addSuppressed(e);
+                }
             }
+        }
+        if (closeFailure != null) {
+            throw closeFailure;
         }
     }
 

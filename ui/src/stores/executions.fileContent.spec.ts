@@ -27,13 +27,13 @@ describe("executions store fileContent", () => {
 
     test("returns the whole file verbatim, without parsing a body that looks like JSON", async () => {
         const jsonLike = "{\"not\":\"parsed\"}"
-        downloadFileFromExecution.mockResolvedValue(new Blob([jsonLike]))
+        downloadFileFromExecution.mockResolvedValue(jsonLike)
         const store = useExecutionsStore()
 
         const content = await store.fileContent({executionId: "exec-1", path: "kestra:///outputs/report.html"})
 
         expect(content).toBe(jsonLike)
-        expect(downloadFileFromExecution).toHaveBeenCalledWith({executionId: "exec-1", path: "kestra:///outputs/report.html"})
+        expect(downloadFileFromExecution).toHaveBeenCalledWith({executionId: "exec-1", path: "kestra:///outputs/report.html"}, {parseAs: "text"})
     })
 
     test("propagates a request failure so callers can surface an error state", async () => {

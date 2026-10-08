@@ -32,8 +32,7 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, ref, watch} from "vue"
-    import {useRoute} from "vue-router"
+    import {computed, ref} from "vue"
 
     import {use, graphic} from "echarts/core"
     import {BarChart, LineChart} from "echarts/charts"
@@ -447,8 +446,6 @@
         refresh,
         total: computed(() => generated.value?.total ?? 0),
     })
-
-    watch(() => route.params.filters, () => refresh(), {deep: true})
 </script>
 
 <style scoped lang="scss">

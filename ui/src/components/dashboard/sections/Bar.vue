@@ -45,8 +45,7 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, ref, watch} from "vue"
-    import {useRoute} from "vue-router"
+    import {computed, ref} from "vue"
     import {useI18n} from "vue-i18n"
     import {QueryFilter} from "@kestra-io/kestra-sdk"
 
@@ -257,8 +256,6 @@
     }
 
     defineExpose({refresh})
-
-    watch(() => route.params.filters, () => refresh(), {deep: true})
 </script>
 
 <style scoped lang="scss">

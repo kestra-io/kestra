@@ -25,8 +25,7 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, watch} from "vue"
-    import {useRoute} from "vue-router"
+    import {computed} from "vue"
 
     import {KsProgress, KsSkeleton} from "@kestra-io/design-system"
     import {QueryFilter} from "@kestra-io/kestra-sdk"
@@ -46,7 +45,6 @@
         showDefault: false,
     })
 
-    const route = useRoute()
     const theme = useTheme()
 
     const {percentageShown, data, loading, generate} = useChartGenerator(props.dashboardId, props)
@@ -68,8 +66,6 @@
     }
 
     defineExpose({refresh})
-
-    watch(() => route.params.filters, refresh, {deep: true})
 </script>
 
 <style scoped lang="scss">

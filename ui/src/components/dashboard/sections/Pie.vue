@@ -33,8 +33,7 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, ref, watch} from "vue"
-    import {useRoute} from "vue-router"
+    import {computed, ref} from "vue"
 
     import {KsPie, KsSkeleton, ChartFeature, TooltipType, dateUtils, durationUtils, type KsChartSeriesItem} from "@kestra-io/design-system"
 
@@ -146,8 +145,6 @@
     }
 
     defineExpose({refresh})
-
-    watch(() => route.params.filters, () => refresh(), {deep: true})
 </script>
 
 <style scoped lang="scss">

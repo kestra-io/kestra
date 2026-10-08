@@ -18,10 +18,7 @@ public abstract class ExecutionDelayStateStoreContract {
     // Far from the wall clock so a fixed clock can drive the store; the contract starts no Executor.
     protected static final Instant ANCHOR = Instant.parse("2031-01-15T10:00:00Z");
 
-    // Just past this contract's last row. processExpired takes a cutoff, not a key set, so this
-    // deletes every delay due before it, including rows another class left in the shared database.
-    // That is safe only because the module runs maxParallelForks = 1: such a row can exist only if
-    // an earlier suite created it, and that suite has already finished, so nothing resumes it.
+    // processExpired takes a cutoff rather than a key set, so this also deletes rows left by earlier classes.
     private static final Instant DRAIN = ANCHOR.plusSeconds(3601);
 
     protected abstract ExecutionDelayStateStore store();

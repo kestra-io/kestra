@@ -21,6 +21,7 @@ import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.QueryFilter.Resource;
 import io.kestra.core.models.flows.*;
 import io.kestra.core.models.hierarchies.FlowGraph;
+import io.kestra.core.models.namespaces.NamespaceInterface;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.topologies.FlowTopology;
 import io.kestra.core.models.topologies.FlowTopologyGraph;
@@ -512,7 +513,7 @@ public class FlowController {
                 .stream()
                 .filter(
                     flow -> flow.getNamespace() == null
-                        || (!flow.getNamespace().equals(namespace) && (!flow.getNamespace().startsWith(namespace) || !allowNamespaceChild))
+                        || (!flow.getNamespace().equals(namespace) && (!NamespaceInterface.isDescendantOrSelf(namespace, flow.getNamespace()) || !allowNamespaceChild))
                 )
                 .map(
                     flow -> ManualConstraintViolation.of(

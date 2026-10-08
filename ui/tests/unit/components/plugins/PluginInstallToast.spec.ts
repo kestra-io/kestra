@@ -30,11 +30,8 @@ function job(status: PluginInstallJob["status"], overrides: Partial<PluginInstal
     return {
         id: "job-1",
         status,
-        artifacts: [{groupId: "io.kestra.plugin", artifactId: "plugin-aws", extension: "jar", classifier: null, version: "1.0.0"}],
+        artifacts: [{groupId: "io.kestra.plugin", artifactId: "plugin-aws", extension: "jar", version: "1.0.0"}],
         progress: {},
-        startedAt: null,
-        finishedAt: null,
-        error: null,
         ...overrides,
     }
 }
@@ -144,8 +141,8 @@ describe("PluginInstallToast", () => {
     it("matches each artifact's own progress entry, not a prefix-sharing sibling", async () => {
         const running = job("RUNNING", {
             artifacts: [
-                {groupId: "io.kestra.plugin", artifactId: "plugin-aws", extension: "jar", classifier: null, version: "1.0.0"},
-                {groupId: "io.kestra.plugin", artifactId: "plugin-aws-s3", extension: "jar", classifier: null, version: "1.0.0"},
+                {groupId: "io.kestra.plugin", artifactId: "plugin-aws", extension: "jar", version: "1.0.0"},
+                {groupId: "io.kestra.plugin", artifactId: "plugin-aws-s3", extension: "jar", version: "1.0.0"},
             ],
             progress: {
                 "io/kestra/plugin/plugin-aws-1.0.0.jar": {resource: "plugin-aws", transferred: 50, total: 100, state: "PROGRESSING"},

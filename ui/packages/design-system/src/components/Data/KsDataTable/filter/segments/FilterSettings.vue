@@ -37,12 +37,7 @@
     const chartShown = computed(() => filter.tableOptions.value?.chart?.shown !== false)
     const localChartVisible = ref(filter.chartVisible.value)
 
-    const refreshCallback = () => {
-        if (filter.tableOptions.value?.refresh?.callback) {
-            filter.tableOptions.value.refresh.callback()
-        }
-        filter.refreshData()
-    }
+    const refreshCallback = () => filter.refreshData()
 
     watch(() => filter.chartVisible.value, (value) => {
         localChartVisible.value = value ?? true

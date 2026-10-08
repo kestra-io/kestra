@@ -1767,7 +1767,7 @@ public class ExecutionController {
     @ApiResponse(responseCode = "409", description = "if the task run state cannot be changed")
     public Mono<HttpResponse<Execution>> updateTaskRunState(
         @Parameter(description = "The execution id") @PathVariable String executionId,
-        @RequestBody(description = "the taskRun id and state to apply") @Body StateRequest stateRequest) throws Exception {
+        @RequestBody(description = "the taskRun id and state to apply") @Valid @Body StateRequest stateRequest) throws Exception {
         Execution execution = executionRepository.findById(tenantService.resolveTenant(), executionId).orElseThrow(NotFoundException::new);
 
         if (!execution.getState().canChangeStatus()) {

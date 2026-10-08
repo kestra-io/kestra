@@ -46,15 +46,31 @@
 </script>
 
 <script setup lang="ts">
-    import {ElButton, type ButtonProps} from "element-plus"
+    import type {Component} from "vue"
+
+    import {ElButton} from "element-plus"
 
     import {useFilteredProps} from "../../../utils/filteredProps"
     import KsTooltip from "../../Feedback/KsTooltip.vue"
 
     defineOptions({inheritAttrs: false})
 
-    const props = defineProps<ButtonProps & {
+    const props = defineProps<{
+        type?: KsButtonType
+        size?: "small" | "default" | "large" | ""
+        disabled?: boolean
+        icon?: string | object
+        nativeType?: "button" | "submit" | "reset"
+        loading?: boolean
+        text?: boolean
+        link?: boolean
+        bg?: boolean
+        autofocus?: boolean
+        round?: boolean
+        circle?: boolean
         square?: boolean
+        color?: string
+        tag?: string | Component
         tooltip?: string
         tooltipPlacement?: string
     }>()

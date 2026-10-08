@@ -976,6 +976,7 @@ public class ExecutionController {
         )
     )
     @ApiResponse(responseCode = "409", description = "if the flow is disabled")
+    @ApiResponse(responseCode = "422", description = "Validation errors", content = { @Content(schema = @Schema(implementation = ProblemDetail.class)) })
     @ApiResponse(responseCode = "200", description = "On execution created", content = { @Content(schema = @Schema(implementation = ExecutionResponse.class)) })
     @SingleResult
     public Publisher<ExecutionResponse> createExecution(
@@ -1507,6 +1508,7 @@ public class ExecutionController {
     )
     @ApiResponse(responseCode = "200", description = "On success", content = { @Content(schema = @Schema(implementation = Execution.class)) })
     @ApiResponse(responseCode = "409", description = "if the execution cannot be replayed")
+    @ApiResponse(responseCode = "422", description = "Validation errors", content = { @Content(schema = @Schema(implementation = ProblemDetail.class)) })
     public Mono<HttpResponse<Execution>> replayExecutionWithinputs(
         @Parameter(description = "the original execution id to clone") @PathVariable String executionId,
         @Parameter(description = "The taskrun id") @Nullable @QueryValue String taskRunId,

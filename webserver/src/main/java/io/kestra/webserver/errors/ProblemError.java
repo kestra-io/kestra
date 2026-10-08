@@ -7,6 +7,7 @@ import java.util.Set;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import io.kestra.core.exceptions.InputOutputValidationException;
 import io.kestra.core.models.validations.ValidationError;
 
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -63,6 +64,29 @@ public record ProblemError(
 
     public static ProblemError of(String detail, String pointer, String path) {
         return new ProblemError(detail, pointer, path, null);
+    }
+
+    public static List<ProblemError> ofInputErrors(final InputOutputValidationException exception) {
+        if (exception == null) {
+            return List.of();
+        }
+        if (exception.getExceptions() != null && !exception.getExceptions().isEmpty()) {
+            return exception.getExceptions().stream()
+                .map(ProblemError::ofInputError)
+                .toList();
+        }
+        return List.of(ofInputError(exception));
+    }
+
+    public static ProblemError ofInputError(final InputOutputValidationException exception) {
+        if (exception.getInputId() != null && !exception.getInputId().isEmpty()) {
+            return of(
+                exception.getMessage(),
+                "/inputs/" + exception.getInputId(),
+                "inputs[" + exception.getInputId() + "]"
+            );
+        }
+        return of(exception.getMessage());
     }
 
     /** One rejected item of a bulk operation, identified by path and by its own problem type. */

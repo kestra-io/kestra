@@ -4,6 +4,7 @@ plugins {
     id("io.github.ben-manes.versions.settings") version "0.64.0"
     id 'io.kestra.gradle.test-scheduling' version '1.2.11'
     id 'io.kestra.gradle.logger' version '1.2.11'
+    id 'org.gradle.toolchains.foojay-resolver-convention' version '1.0.0'
 }
 
 // Longest test modules first, measured with dev-tools/analyze-test-heap.sh. Gradle's scheduler has

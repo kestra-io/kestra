@@ -68,7 +68,7 @@ export const effectiveEditorFontSize = computed(
     () => editorFontSizeOverride.value ?? MONO_BASE_PX[appFontSizeMode.value],
 )
 
-export const logsDensity = useStorage<LogDensity>("logsDensity", "normal")
-export const logsBodyClamp = useStorage<number>("logsBodyClamp", 0)
-export const logsPrettyJson = useStorage<boolean>("logsPrettyJson", true)
-export const logsExpandByDefault = useStorage<boolean>("logsExpandByDefault", false)
+export const logsDensity = useStorage<LogDensity>(storageKeys.LOGS_DENSITY, "normal")
+export const logsBodyClamp = useStorage<number>(storageKeys.LOGS_BODY_CLAMP, 0)
+export const logsPrettyJson = useStorage<boolean>(storageKeys.LOGS_PRETTY_JSON, true)
+export const logsExpandByDefault = useStorage<boolean>(storageKeys.LOGS_EXPAND_BY_DEFAULT, false)

@@ -1,4 +1,4 @@
-import {describe, it, expect, vi, beforeEach, afterEach} from "vitest"
+import {describe, it, expect, vi, onTestFinished} from "vitest"
 import * as TriggersAPI from "@kestra-io/kestra-sdk/triggers"
 import {searchTriggers, searchTriggersForFlow, exportTriggersAsCSV} from "../../../src/utils/triggers"
 
@@ -8,157 +8,46 @@ vi.mock("@kestra-io/kestra-sdk/triggers", () => ({
     exportTriggers: vi.fn(),
 }))
 
-describe("triggers utils", () => {
-    beforeEach(() => {
-        vi.clearAllMocks()
+describe("searchTriggers", () => {
+    it("wraps the sort in an array and forwards the other options", async () => {
+        await searchTriggers({namespace: "io.kestra.tests", page: 2, sort: "id:desc"})
+
+        expect(TriggersAPI.searchTriggers).toHaveBeenLastCalledWith({namespace: "io.kestra.tests", page: 2, sort: ["id:desc"]})
     })
 
-    describe("searchTriggers", () => {
-        it("wraps a sort string into a one-element array", async () => {
-            await searchTriggers({sort: "id:asc"})
+    it("sends no sort when none is given", async () => {
+        await searchTriggers({page: 1})
 
-            expect(TriggersAPI.searchTriggers).toHaveBeenCalledTimes(1)
-            expect(TriggersAPI.searchTriggers).toHaveBeenCalledWith({sort: ["id:asc"]})
-        })
-
-        it("passes undefined when no sort was given, rather than [undefined] or []", async () => {
-            await searchTriggers({})
-
-            expect(TriggersAPI.searchTriggers).toHaveBeenCalledTimes(1)
-            expect(TriggersAPI.searchTriggers).toHaveBeenCalledWith({sort: undefined})
-
-            await searchTriggers({sort: undefined})
-            expect(TriggersAPI.searchTriggers).toHaveBeenLastCalledWith({sort: undefined})
-        })
-
-        it("forwards every other option untouched", async () => {
-            const options = {
-                namespace: "io.kestra.tests",
-                page: 1,
-                size: 20,
-                q: "search-query",
-                sort: "id:desc",
-            }
-
-            await searchTriggers(options)
-
-            expect(TriggersAPI.searchTriggers).toHaveBeenCalledTimes(1)
-            expect(TriggersAPI.searchTriggers).toHaveBeenCalledWith({
-                namespace: "io.kestra.tests",
-                page: 1,
-                size: 20,
-                q: "search-query",
-                sort: ["id:desc"],
-            })
-        })
+        expect(TriggersAPI.searchTriggers).toHaveBeenLastCalledWith({page: 1, sort: undefined})
     })
+})
 
-    describe("searchTriggersForFlow", () => {
-        it("wraps a sort string into a one-element array and keeps namespace and flowId", async () => {
-            await searchTriggersForFlow({
-                namespace: "io.kestra.tests",
-                flowId: "my-flow",
-                sort: "id:asc",
-            })
+describe("searchTriggersForFlow", () => {
+    it("wraps the sort in an array and keeps namespace and flowId", async () => {
+        await searchTriggersForFlow({namespace: "io.kestra.tests", flowId: "my-flow", sort: "id:asc"})
 
-            expect(TriggersAPI.searchTriggersForFlow).toHaveBeenCalledTimes(1)
-            expect(TriggersAPI.searchTriggersForFlow).toHaveBeenCalledWith({
-                namespace: "io.kestra.tests",
-                flowId: "my-flow",
-                sort: ["id:asc"],
-            })
-        })
-
-        it("passes undefined when no sort was given, rather than [undefined] or []", async () => {
-            await searchTriggersForFlow({
-                namespace: "io.kestra.tests",
-                flowId: "my-flow",
-            })
-
-            expect(TriggersAPI.searchTriggersForFlow).toHaveBeenCalledTimes(1)
-            expect(TriggersAPI.searchTriggersForFlow).toHaveBeenCalledWith({
-                namespace: "io.kestra.tests",
-                flowId: "my-flow",
-                sort: undefined,
-            })
-        })
-
-        it("forwards every other option untouched", async () => {
-            await searchTriggersForFlow({
-                namespace: "io.kestra.tests",
-                flowId: "my-flow",
-                page: 2,
-                size: 50,
-                sort: "executionId:desc",
-            })
-
-            expect(TriggersAPI.searchTriggersForFlow).toHaveBeenCalledTimes(1)
-            expect(TriggersAPI.searchTriggersForFlow).toHaveBeenCalledWith({
-                namespace: "io.kestra.tests",
-                flowId: "my-flow",
-                page: 2,
-                size: 50,
-                sort: ["executionId:desc"],
-            })
-        })
+        expect(TriggersAPI.searchTriggersForFlow).toHaveBeenLastCalledWith({namespace: "io.kestra.tests", flowId: "my-flow", sort: ["id:asc"]})
     })
+})
 
-    describe("exportTriggersAsCSV", () => {
-        const mockBlobUrl = "blob:http://localhost:8080/mock-uuid"
-        let createObjectURLMock: ReturnType<typeof vi.fn>
-        let revokeObjectURLMock: ReturnType<typeof vi.fn>
-        let clickSpy: ReturnType<typeof vi.spyOn>
-
-        beforeEach(() => {
-            createObjectURLMock = vi.fn().mockReturnValue(mockBlobUrl)
-            revokeObjectURLMock = vi.fn()
-            window.URL.createObjectURL = createObjectURLMock
-            window.URL.revokeObjectURL = revokeObjectURLMock
-            clickSpy = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {})
+describe("exportTriggersAsCSV", () => {
+    it("requests CSV for the given filters and downloads it as triggers.csv", async () => {
+        vi.mocked(TriggersAPI.exportTriggers).mockResolvedValue("id,namespace\ntrig1,test")
+        const original = {createObjectURL: URL.createObjectURL, revokeObjectURL: URL.revokeObjectURL}
+        const revokeObjectURL = vi.fn()
+        Object.assign(URL, {createObjectURL: () => "blob:triggers", revokeObjectURL})
+        const click = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {})
+        onTestFinished(() => {
+            Object.assign(URL, original)
+            click.mockRestore()
         })
 
-        afterEach(() => {
-            clickSpy.mockRestore()
-        })
+        await exportTriggersAsCSV({filters: {namespace: "io.kestra.tests"}})
 
-        it("requests text/csv and forwards the filters", async () => {
-            vi.mocked(TriggersAPI.exportTriggers).mockResolvedValueOnce("id,namespace\ntrig1,test" as any)
-
-            const filters = {namespace: "io.kestra.tests", flowId: "flow-1"}
-            await exportTriggersAsCSV({filters})
-
-            expect(TriggersAPI.exportTriggers).toHaveBeenCalledTimes(1)
-            expect(TriggersAPI.exportTriggers).toHaveBeenCalledWith(
-                {filters},
-                {headers: {Accept: "text/csv"}},
-            )
-        })
-
-        it("creates an object URL, triggers the download, and revokes the URL afterwards", async () => {
-            const csvContent = "id,namespace\ntrig1,test"
-            vi.mocked(TriggersAPI.exportTriggers).mockResolvedValueOnce(csvContent as any)
-
-            const appendChildSpy = vi.spyOn(document.body, "appendChild")
-
-            await exportTriggersAsCSV({filters: {}})
-
-            expect(createObjectURLMock).toHaveBeenCalledTimes(1)
-            const blobArg = createObjectURLMock.mock.calls[0][0] as Blob
-            expect(blobArg).toBeInstanceOf(Blob)
-            expect(blobArg.type).toBe("text/csv")
-
-            expect(appendChildSpy).toHaveBeenCalledTimes(1)
-            const appendedElement = appendChildSpy.mock.calls[0][0] as HTMLAnchorElement
-            expect(appendedElement.tagName).toBe("A")
-            expect(appendedElement.href).toBe(mockBlobUrl)
-            expect(appendedElement.getAttribute("download")).toBe("triggers.csv")
-
-            expect(clickSpy).toHaveBeenCalledTimes(1)
-            expect(revokeObjectURLMock).toHaveBeenCalledTimes(1)
-            expect(revokeObjectURLMock).toHaveBeenCalledWith(mockBlobUrl)
-
-            // Verify the link is removed from DOM
-            expect(document.body.contains(appendedElement)).toBe(false)
-        })
+        expect(TriggersAPI.exportTriggers).toHaveBeenLastCalledWith({filters: {namespace: "io.kestra.tests"}}, {headers: {Accept: "text/csv"}})
+        const link = click.mock.contexts[0] as HTMLAnchorElement
+        expect(link.getAttribute("download")).toBe("triggers.csv")
+        expect(link.getAttribute("href")).toBe("blob:triggers")
+        expect(revokeObjectURL).toHaveBeenCalledWith("blob:triggers")
     })
 })

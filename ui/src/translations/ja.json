@@ -454,6 +454,11 @@
     "show task source": "Taskソースを表示",
     "stream": "ストリーム",
     "execution statistics": "実行統計",
+    "execution_banner": {
+      "revision": "リビジョン {revision}",
+      "attempts": "{count} 回の試行 | {count} 回の試行",
+      "tasks": "task {completed}/{count} 個 | task {completed}/{count} 個"
+    },
     "concurrency limits": "同時実行制限",
     "system overview": "システム概要",
     "usage": "使用",
@@ -564,6 +569,7 @@
       "blueprints": "Blueprint | Blueprint"
     },
     "plugins": {
+      "ui_load_error": "プラグインのコンポーネントを読み込めませんでした。",
       "autoInstall": {
         "failed": "プラグインのインストールに失敗しました",
         "failedHint": "flow は保存されませんでした。問題を修正するか、flow から plugin を削除してから再度保存してください。",
@@ -1717,6 +1723,7 @@
     "custom value": "カスタム value",
     "chart": "チャート",
     "no_code": {
+      "task_details": "タスクの詳細",
       "toggle_pebble": "ペブルエディタを切り替え",
       "version_oss_placeholder": "エンタープライズエディションでプラグインバージョニングをアンロック",
       "adding": "+ {what}を追加",
@@ -1772,7 +1779,8 @@
         "inputs": "入力フィールドタイプを選択",
         "charts": "チャートタイプを選択",
         "where": "フィルタータイプを選択",
-        "numerator": "分子を選択"
+        "numerator": "分子を選択",
+        "namespace_first": "先に namespace を選択してください"
       },
       "creation": {
         "default": "追加",
@@ -2418,6 +2426,7 @@
         "label": "{count} エラー"
       }
     },
+    "invalid_source_code": "無効なソースコード",
     "source_search": {
       "cannot_select_read_only": "選択できません — {namespace} / {id} の編集権限がありません",
       "collapse_all": "すべて折りたたむ",

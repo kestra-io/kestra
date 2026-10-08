@@ -174,10 +174,10 @@
                 </KsTooltip>
                 <ul v-if="isDropdownOpen" class="exporting">
                     <li @click="exportAsImage('jpeg')" class="item">
-                        Export as .JPEG
+                        {{ $t("export_as", {format: "JPEG"}) }}
                     </li>
                     <li @click="exportAsImage('png')" class="item">
-                        Export as .PNG
+                        {{ $t("export_as", {format: "PNG"}) }}
                     </li>
                 </ul>
             </Controls>

@@ -106,7 +106,7 @@
   "../../packages/design-system/src/components/Data/KsDataTable/KsFilter.locale.ts|filter|or": "829e5b28af38",
   "../../packages/design-system/src/components/Data/KsDataTable/KsFilter.locale.ts|filter|parentId|description": "73dacff75b3f",
   "../../packages/design-system/src/components/Data/KsDataTable/KsFilter.locale.ts|filter|parentId|label": "9db1a8a9cb7c",
-  "../../packages/design-system/src/components/Data/KsDataTable/KsFilter.locale.ts|filter|periodic refresh": "445f9c8b8819",
+  "../../packages/design-system/src/components/Data/KsDataTable/KsFilter.locale.ts|filter|auto refresh": "c7c026a80acf",
   "../../packages/design-system/src/components/Data/KsDataTable/KsFilter.locale.ts|filter|raw_apply": "31e392d1c037",
   "../../packages/design-system/src/components/Data/KsDataTable/KsFilter.locale.ts|filter|raw_placeholder": "a969ae3479a7",
   "../../packages/design-system/src/components/Data/KsDataTable/KsFilter.locale.ts|filter|raw_revert": "0026c5053478",

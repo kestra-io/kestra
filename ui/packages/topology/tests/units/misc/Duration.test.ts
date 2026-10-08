@@ -57,7 +57,7 @@ describe("Duration", () => {
     it("should disable the trigger and show a dash when there is no history", () => {
         const wrapper = mountDuration([])
 
-        const trigger = wrapper.find("button.ks-duration-value")
+        const trigger = wrapper.find("[data-test='duration-value']")
         expect(trigger.text()).toBe("—")
         expect(trigger.attributes("disabled")).toBeDefined()
     })
@@ -186,27 +186,27 @@ describe("Duration", () => {
             {date: 1, state: "SUCCESS"},
         ])
         expect(oneMillisecond.find(".duration-total").text()).toContain("1ms")
-        expect(oneMillisecond.find("button.ks-duration-value").text()).not.toContain("1ms")
+        expect(oneMillisecond.find("[data-test='duration-value']").text()).not.toContain("1ms")
 
         const overOneSecond = mountDuration([
             {date: 0, state: "CREATED"},
             {date: 13_558, state: "SUCCESS"},
         ])
         expect(overOneSecond.find(".duration-total").text()).toContain("13.55s")
-        expect(overOneSecond.find("button.ks-duration-value").text()).toContain("13.55s")
+        expect(overOneSecond.find("[data-test='duration-value']").text()).toContain("13.55s")
     })
 
     it("should use a generic aria-label by default and a subject-specific one when provided", () => {
         const withoutSubject = mountDuration([
             {date: "2026-08-07T15:36:15.804Z", state: "SUCCESS"},
         ])
-        expect(withoutSubject.find("button.ks-duration-value").attributes("aria-label")).toBe("state_history.aria_open")
+        expect(withoutSubject.find("[data-test='duration-value']").attributes("aria-label")).toBe("state_history.aria_open")
 
         const withSubject = mountDuration(
             [{date: "2026-08-07T15:36:15.804Z", state: "SUCCESS"}],
             {subject: "extract"},
         )
-        expect(withSubject.find("button.ks-duration-value").attributes("aria-label")).toBe("Show the state history for extract")
+        expect(withSubject.find("[data-test='duration-value']").attributes("aria-label")).toBe("Show the state history for extract")
     })
 
     it("should disambiguate a task's attempt-level trigger from its aggregate row via the subject", () => {
@@ -215,8 +215,8 @@ describe("Duration", () => {
         const aggregate = mountDuration(RETRIED_HISTORY, {subject: "flaky"})
         const attempt = mountDuration(RETRIED_HISTORY, {subject: "flaky, Attempt 2"})
 
-        const aggregateLabel = aggregate.find("button.ks-duration-value").attributes("aria-label")
-        const attemptLabel = attempt.find("button.ks-duration-value").attributes("aria-label")
+        const aggregateLabel = aggregate.find("[data-test='duration-value']").attributes("aria-label")
+        const attemptLabel = attempt.find("[data-test='duration-value']").attributes("aria-label")
 
         expect(aggregateLabel).toBe("Show the state history for flaky")
         expect(attemptLabel).toBe("Show the state history for flaky, Attempt 2")
@@ -234,7 +234,7 @@ describe("Duration", () => {
             {date: 3_000, state: "RETRYING"},
         ]
         const wrapper = mountDuration(firstAttempt, {interval: 100})
-        const label = () => wrapper.find("button.ks-duration-value").text()
+        const label = () => wrapper.find("[data-test='duration-value']").text()
 
         // RETRYING is not a running state, so the elapsed time is frozen at the last transition.
         expect(label()).toBe("3.00s")
@@ -266,7 +266,7 @@ describe("Duration", () => {
             },
         })
 
-        expect(wrapper.find("button.ks-duration-value").exists()).toBe(false)
+        expect(wrapper.find("[data-test='duration-value']").exists()).toBe(false)
         expect(wrapper.find("[data-test=\"duration-compact-bar\"]").exists()).toBe(true)
     })
 

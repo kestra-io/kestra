@@ -1,6 +1,6 @@
 import {describe, it, expect, vi, beforeEach} from "vitest"
 import {setActivePinia, createPinia} from "pinia"
-import type {usePluginsStore} from "../../../src/stores/plugins"
+import type {usePluginsStore} from "./plugins"
 
 const pluginDocumentationMock = vi.fn()
 

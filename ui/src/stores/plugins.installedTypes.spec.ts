@@ -1,7 +1,7 @@
 import {describe, it, expect, vi, beforeEach} from "vitest"
 import type {MockedFunction} from "vitest"
 import {setActivePinia, createPinia} from "pinia"
-import type {usePluginsStore} from "../../../src/stores/plugins"
+import type {usePluginsStore} from "./plugins"
 import type {listPlugins as listPluginsFn} from "@kestra-io/kestra-sdk/plugins"
 
 vi.mock("@kestra-io/kestra-sdk", () => ({

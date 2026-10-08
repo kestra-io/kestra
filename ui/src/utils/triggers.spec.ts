@@ -1,6 +1,6 @@
 import {describe, it, expect, vi, onTestFinished} from "vitest"
 import * as TriggersAPI from "@kestra-io/kestra-sdk/triggers"
-import {searchTriggers, searchTriggersForFlow, exportTriggersAsCSV} from "../../../src/utils/triggers"
+import {searchTriggers, searchTriggersForFlow, exportTriggersAsCSV} from "./triggers"
 
 vi.mock("@kestra-io/kestra-sdk/triggers", () => ({
     searchTriggers: vi.fn(),

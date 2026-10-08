@@ -1,6 +1,6 @@
 import {describe, it, expect, vi, afterAll, beforeEach} from "vitest"
 import {setActivePinia, createPinia} from "pinia"
-import type {usePluginsStore} from "../../../src/stores/plugins"
+import type {usePluginsStore} from "./plugins"
 import type {PluginControllerPluginIconResponse, PluginIcon} from "@kestra-io/kestra-sdk"
 
 const getMock = vi.fn()

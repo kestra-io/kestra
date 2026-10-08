@@ -1,7 +1,7 @@
 import {describe, it, expect, vi, beforeEach} from "vitest"
 import {setActivePinia, createPinia} from "pinia"
 import axios, {type AxiosResponse} from "axios"
-import type {usePluginsEnrichmentStore, PluginVersion} from "../../../src/stores/pluginsEnrichment"
+import type {usePluginsEnrichmentStore, PluginVersion} from "./pluginsEnrichment"
 
 vi.mock("axios")
 vi.mock("./api", () => ({API_URL: "https://api.test"}))

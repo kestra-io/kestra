@@ -1,7 +1,7 @@
 import {describe, it, expect, vi, beforeEach} from "vitest"
 import {setActivePinia, createPinia} from "pinia"
-import type {usePluginsStore} from "../../../src/stores/plugins"
-import type {useBlueprintPlugins} from "../../../src/composables/useBlueprintPlugins"
+import type {usePluginsStore} from "../stores/plugins"
+import type {useBlueprintPlugins} from "./useBlueprintPlugins"
 
 vi.mock("@kestra-io/kestra-sdk", () => ({
     useClient: () => ({get: vi.fn(), post: vi.fn()}),

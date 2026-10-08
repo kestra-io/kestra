@@ -38,13 +38,13 @@ describe("ProposedActionCard", () => {
         expect(steps[0].text()).toContain("tests/ai-summarize.test.yml")
         expect(reject(w).text()).toBe("Reply to revise")
         expect(approve(w).text()).toBe("Approve & execute")
-        expect(w.find(".ks-tag").exists()).toBe(false) // no family tag on a plan
+        expect(w.find("[data-test='copilot-proposed-family']").exists()).toBe(false) // no family tag on a plan
     })
 
     it("renders an action card: generic title, family tag, Reject + Approve, and the summary", () => {
         const w = mountCard(mutateAction)
         expect(w.text()).toContain("Proposed action")
-        expect(w.find(".ks-tag").text()).toBe("MUTATE")
+        expect(w.find("[data-test='copilot-proposed-family']").text()).toBe("MUTATE")
         expect(w.text()).toContain("Restart exec-1")
         expect(w.findAll(".proposed-step")).toHaveLength(0) // no steps → summary text
         expect(reject(w).text()).toBe("Reject")

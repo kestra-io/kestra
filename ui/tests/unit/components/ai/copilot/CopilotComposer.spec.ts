@@ -12,7 +12,7 @@ const sendBtn = (w: ReturnType<typeof mountComposer>) => w.find("[data-test=\"co
 
 describe("CopilotComposer", () => {
     it("offers the three modes ordered by capability (Ask / Plan / Edit)", () => {
-        const labels = mountComposer().findAll(".ks-dropdown-item").map((b) => b.text())
+        const labels = mountComposer().findAll("[data-test='copilot-mode-option']").map((b) => b.text())
         expect(labels).toEqual(["Ask", "Plan", "Edit"])
     })
 
@@ -50,7 +50,7 @@ describe("CopilotComposer", () => {
     it("relays mode changes from the dropdown via update:mode", async () => {
         const w = mountComposer()
         // The dropdown items are Ask / Plan / Edit; clicking "Plan" (index 1) emits PLAN.
-        await w.findAll(".ks-dropdown-item")[1].trigger("click")
+        await w.findAll("[data-test='copilot-mode-option']")[1].trigger("click")
         expect(w.emitted("update:mode")?.[0]).toEqual(["PLAN"])
     })
 

@@ -50,7 +50,7 @@ describe("TaskEditModal", () => {
     describe("authoring-overlay marker", () => {
         afterEach(() => {
             document.body.className = ""
-            document.body.querySelectorAll(".el-overlay, .el-dialog").forEach(node => node.remove())
+            document.body.replaceChildren()
         })
 
         it("reaches a field inside the rendered dialog", async () => {

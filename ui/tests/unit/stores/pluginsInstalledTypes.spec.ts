@@ -1,5 +1,8 @@
 import {describe, it, expect, vi, beforeEach} from "vitest"
+import type {MockedFunction} from "vitest"
 import {setActivePinia, createPinia} from "pinia"
+import type {usePluginsStore} from "../../../src/stores/plugins"
+import type {listPlugins as listPluginsFn} from "@kestra-io/kestra-sdk/plugins"
 
 vi.mock("@kestra-io/kestra-sdk", () => ({
     useClient: () => ({get: vi.fn(), post: vi.fn()}),
@@ -20,15 +23,15 @@ vi.mock("../../../src/utils/tabTracking", () => ({
 }))
 
 describe("plugins store installed types", () => {
-    let store: any
-    let listPlugins: any
+    let store: ReturnType<typeof usePluginsStore>
+    let listPlugins: MockedFunction<typeof listPluginsFn>
 
     beforeEach(async () => {
         vi.clearAllMocks()
         setActivePinia(createPinia())
         const {usePluginsStore} = await import("../../../src/stores/plugins")
         store = usePluginsStore()
-        listPlugins = (await import("@kestra-io/kestra-sdk/plugins")).listPlugins
+        listPlugins = vi.mocked((await import("@kestra-io/kestra-sdk/plugins")).listPlugins)
     })
 
     it("includes element classes and aliases so renamed task types count as installed", async () => {

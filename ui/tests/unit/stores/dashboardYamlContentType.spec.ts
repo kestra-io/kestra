@@ -1,5 +1,6 @@
 import {describe, it, expect, vi, beforeEach} from "vitest"
 import {setActivePinia, createPinia} from "pinia"
+import type {AxiosRequestConfig} from "axios"
 
 vi.mock("@kestra-io/design-system", () => ({
     stringUtils: {afterLastDot: (s: string) => s?.split(".").pop() ?? s},
@@ -60,7 +61,7 @@ describe("dashboard store yaml writes", () => {
         setActivePinia(createPinia())
     })
 
-    const yamlContentType = (call: any[]) => call[2]?.headers?.["Content-Type"]
+    const yamlContentType = (call: unknown[]) => (call[2] as AxiosRequestConfig | undefined)?.headers?.["Content-Type"]
 
     it("sends application/x-yaml when creating", {timeout: TEST_TIMEOUT_MS}, async () => {
         const {useDashboardStore} = await import("../../../src/stores/dashboard")

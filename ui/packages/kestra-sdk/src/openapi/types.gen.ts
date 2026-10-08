@@ -1530,6 +1530,7 @@ export type MiscControllerConfiguration = {
     isBasicAuthManagedByConfig?: boolean;
     pluginsHash?: number;
     isPluginAutoInstallEnabled?: boolean;
+    isPluginEndpointsEnabled?: boolean;
 };
 
 export type MiscControllerEnvironment = {
@@ -7725,6 +7726,10 @@ export type DeleteFlowsByIdsData = {
 
 export type DeleteFlowsByIdsErrors = {
     /**
+     * Validation errors
+     */
+    400: ProblemDetail;
+    /**
      * Authentication required
      */
     401: ProblemDetail;
@@ -11111,6 +11116,88 @@ export type GetTaskRunOutputsResponses = {
 };
 
 export type GetTaskRunOutputsResponse = GetTaskRunOutputsResponses[keyof GetTaskRunOutputsResponses];
+
+export type Get1Data = {
+    body?: never;
+    path: {
+        cls: string;
+        name: string;
+        executionId: string;
+        taskRunId: string;
+        tenant: string;
+    };
+    query?: never;
+    url: '/api/v1/{tenant}/plugins/{cls}/endpoints/{name}/{executionId}/{taskRunId}';
+};
+
+export type Get1Errors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type Get1Error = Get1Errors[keyof Get1Errors];
+
+export type Get1Responses = {
+    /**
+     * get_1 200 response
+     */
+    200: Blob | File;
+};
+
+export type Get1Response = Get1Responses[keyof Get1Responses];
+
+export type PostData = {
+    body?: {
+        [key: string]: {
+            [key: string]: unknown;
+        };
+    };
+    path: {
+        cls: string;
+        name: string;
+        executionId: string;
+        taskRunId: string;
+        tenant: string;
+    };
+    query?: never;
+    url: '/api/v1/{tenant}/plugins/{cls}/endpoints/{name}/{executionId}/{taskRunId}';
+};
+
+export type PostErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type PostError = PostErrors[keyof PostErrors];
+
+export type PostResponses = {
+    /**
+     * post 200 response
+     */
+    200: Blob | File;
+};
+
+export type PostResponse = PostResponses[keyof PostResponses];
 
 export type ListSecretsData = {
     body?: never;

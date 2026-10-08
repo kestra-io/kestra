@@ -1111,7 +1111,6 @@
     "pause backfills": "backfillを一時停止",
     "backfill executions": "backfill実行",
     "execute backfill": "backfillを実行",
-    "relative": "相対",
     "relative start date": "相対開始日",
     "absolute": "絶対",
     "backfill": "Backfill",

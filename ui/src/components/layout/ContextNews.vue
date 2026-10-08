@@ -74,6 +74,7 @@
     .post {
         position: relative;
         display: flex;
+        flex-wrap: wrap;
         gap: 0.75rem;
         align-items: flex-start;
         margin: 0 1rem;

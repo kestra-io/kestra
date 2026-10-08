@@ -1,5 +1,7 @@
 import {describe, it, expect, vi, beforeEach} from "vitest"
 import {setActivePinia, createPinia} from "pinia"
+import type {Plugin} from "../../../src/utils/pluginUtils"
+import type {usePluginsStore} from "../../../src/stores/plugins"
 
 vi.mock("@kestra-io/kestra-sdk", () => ({
     useClient: () => ({get: vi.fn(), post: vi.fn()}),
@@ -15,7 +17,7 @@ vi.mock("../../../src/utils/tabTracking", () => ({
     trackPluginDocumentationView: vi.fn(),
 }))
 
-const idOf = (p: any) => `${p?.name ?? ""}#${p?.subGroup ?? ""}`
+const idOf = (p?: Plugin | null) => `${p?.name ?? ""}#${p?.subGroup ?? ""}`
 
 const PARENT = {
     name: "gcp",
@@ -91,7 +93,7 @@ const DOCKER_CLI = {
 }
 
 describe("plugins store lookups", () => {
-    let store: any
+    let store: ReturnType<typeof usePluginsStore>
 
     beforeEach(async () => {
         setActivePinia(createPinia())

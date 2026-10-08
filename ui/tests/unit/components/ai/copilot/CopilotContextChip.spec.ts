@@ -19,7 +19,7 @@ const KsId = {name: "KsId", props: {value: {type: String, default: ""}, shrink: 
 const mountChip = (scope: ScopeBinding) =>
     mount(CopilotContextChip, {props: {scope}, global: {plugins: [i18n], stubs: {KsTag, KsIcon, KsId}}})
 
-const ids = (w: ReturnType<typeof mountChip>) => w.findAll("code.ks-id").map((c) => c.text())
+const ids = (w: ReturnType<typeof mountChip>) => w.findAll("[data-test='copilot-context-id']").map((c) => c.text())
 const pillText = (w: ReturnType<typeof mountChip>, part: string) => w.get(`[data-test="copilot-context-${part}"]`).find("span").text()
 
 describe("CopilotContextChip", () => {
